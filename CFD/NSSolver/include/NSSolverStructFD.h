@@ -1,0 +1,123 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file         NSSolverStructFD.h
+//! @brief        NS solver for struct grid with finite difference method.
+//! @author       MIN Yaobing, MA Yankai.
+
+#pragma once
+#include "NSSolverStruct.h"
+
+namespace PHSPACE
+{
+class NSSolverStructFD : public NSSolverStruct
+{
+public:
+    NSSolverStructFD();
+    ~NSSolverStructFD();
+private:
+    void AllocateGlobalVar  (Grid *gridIn);
+    void DeAllocateGlobalVar(Grid *gridIn);
+    
+    void Primitive2Conservative(RDouble prim[5], RDouble q[5]);
+    void Conservative2Primitive(RDouble q[5], RDouble prim[5]);
+    
+    void InFlowBC3D(Grid *gridIn, BCRegion *BCRegion);
+    void OutFlowBC3D(Grid *gridIn, BCRegion *BCRegion);
+    void SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion);
+    void VisWallADI3D(Grid *gridIn, BCRegion *BCRegion);
+    void VisWallISO3D(Grid *gridIn, BCRegion *BCRegion);
+    void FarFieldRiemannInvariants(Grid *gridIn, BCRegion *BCRegion);
+    void CornerPoint(Grid *gridIn);
+    
+    void GetIndependentVariablesforStructHighOrder(Grid *gridIn);
+    void GetDependentVariablesforStructHighOrder(Grid *gridIn);
+    void ObtainBoundaryValue(Grid *gridIn);
+    void ObtainGamaAndTemperature(Grid *gridIn);
+    void ObtainPressureFactor(Grid *gridIn);
+    void ObtainViscousCoef(Grid *gridIn);
+    void ObtainGradientCellCenter(Grid *gridIn);
+    
+    void Boundary(Grid *gridIn);
+    void ComputeGamaAndTemperature(Grid *gridIn);
+    void CalPressureFactor(Grid *gridIn);
+    void ComputeViscousCoeff(Grid *gridIn);
+    void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
+    
+    void ZeroResiduals(Grid *grid);
+    void InitFlowAsRestart();
+    void InitLocalMemory(Grid *gridIn);
+    void SetWeightedInterpolationCoef(Grid *gridIn);
+    
+    int total_negative;
+    double EPSILON;//! epsilon within weighted interpolation
+    string fluxname;
+    FieldProxy *qlProxy;          //! r,u,v,w,p.
+    FieldProxy *qrProxy;          //! r,u,v,w,p.
+    FieldProxy *fluxProxy;
+
+    RDouble6D *WeightedInterpolationCoef;
+    
+    string gradient_method;
+    FieldProxy *UVWTproxy;
+    FieldProxy *UVWTfaceIproxy;
+    FieldProxy *UVWTfaceJproxy;
+    FieldProxy *UVWTfaceKproxy;
+    FieldProxy *dqdxFaceProxy;
+    FieldProxy *dqdyFaceProxy;
+    FieldProxy *dqdzFaceProxy;
+    
+    void InviscidFlux(Grid *grid);
+
+    void GetFaceVariable(Grid *gridIn, int nsurf); 
+    void GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn, int nsurf); 
+    
+    void InterpolationRUVWP5th(RDouble Coef[30], RDouble PrimPlate[5][5], RDouble Primhalf[5]);
+    void InterpolationRUVWP3rd(RDouble Prim[5][5], RDouble Primhalf[5]);
+
+    RDouble BasicWeightedInterpolation5th(RDouble Coef[30], RDouble QmPlate[5]);
+    RDouble BasicInterpolation3rd(RDouble Qp[5], int m);
+    RDouble Limiter_ThirdSmooth(const RDouble &x, const RDouble &y);
+    
+    void GetFaceInviscidFlux(Grid *gridIn, int nsurf);
+    void FluxSteger(Grid *gridIn, int nsurf);
+    void FluxRoe(Grid *gridIn, int nsurf);
+    void FluxDifference(Grid *gridIn, int nsurf);
+    
+    void GetUVWTproxy(Grid *gridIn);
+    void GetUVWTfaceproxy(Grid *gridIn, int nsurf);
+    void GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf);
+    void ComputeGradientCellCenter(Grid *gridIn);
+    
+    void ViscousFlux(Grid *gridIn);
+    void GetViscousFlux(Grid *gridIn, int iSurface);
+    void GetGradientAtFace(Grid *gridIn, int nSurface);
+    
+    void GetGradientAtFaceconservation(Grid *gridIn, int nSurface);
+    void GetGradientAtFacechainrule(Grid *gridIn, int nSurface);
+    void GetGradientAtFaceCorrectionAtPhysicalBoundary(Grid *gridin, int iSurface);
+
+    void SpectrumRadius(Grid *grid);
+    void SpectrumRadiusInviscid(Grid *gridIn);
+    void SpectrumRadiusViscous(Grid *gridIn);
+    void TimeStep(Grid *gridIn);
+    void ReduceMaxTimeStep(Grid *gridIn, RDouble globalMinDt);
+    void Spectrum(Grid *gridIn);
+    void SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void LUSGSInitializationStructHighOrder(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ);
+    void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
+
+    void GetMXDQ(RDouble *prim, RDouble KX, RDouble KY, RDouble KZ, RDouble *dq, RDouble *f, RDouble radius, int ipn);
+    void SolutionFix(FieldProxy *qProxy, RDouble prim[5], int i, int j, int k);
+};
+
+}

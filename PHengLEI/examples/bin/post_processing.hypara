@@ -1,0 +1,15 @@
+#########################################################################
+#                     General Control Parameter                         #
+#########################################################################
+// gridfile:       The partitioned Grid file path, using relative path,
+//				   which is relative to the working directory.
+// gridfile:       The flow data file
+
+string gridfile           = "./grid/rae2822_vis2d.fts";
+string restartNSFile           = "results/flow.dat";
+string turbfile           = "results/turb.dat";
+
+
+// ifvfd :       0 - NSSolverStruct using Finite Volume Method;
+//               1 - NSSolverStruct using Finite Differ Method;
+int    ifvfd         = 0;

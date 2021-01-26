@@ -1,0 +1,40 @@
+#include "Param_NSSolverUnstruct.h"
+#include "GlobalDataBase.h"
+
+namespace PHSPACE
+{
+
+LIB_EXPORT Param_NSSolverUnstruct::Param_NSSolverUnstruct()
+{
+
+}
+
+LIB_EXPORT Param_NSSolverUnstruct::~Param_NSSolverUnstruct()
+{
+
+}
+
+LIB_EXPORT void Param_NSSolverUnstruct::Init()
+{
+	Param_NSSolver::Init();
+	uns_scheme_name = GlobalDataBase::GetStrParaFromDB("uns_scheme_name");
+
+    gradientName = GlobalDataBase::GetStrParaFromDB("gradientName");
+
+    limitVector = GlobalDataBase::GetIntParaFromDB("limitVector");
+
+    limitVariables = GlobalDataBase::GetIntParaFromDB("limitVariables");
+
+    skewnessAngle = GlobalDataBase::GetDoubleParaFromDB("skewnessAngle");
+
+    sliceAxis = GlobalDataBase::GetIntParaFromDB("sliceAxis");
+
+    slicePostion = GlobalDataBase::GetDoubleParaFromDB("slicePostion");
+
+    mgCFLScale = GlobalDataBase::GetDoubleParaFromDB("mgCFLScale");
+
+    mgCorrectionLimit = GlobalDataBase::GetDoubleParaFromDB("mgCorrectionLimit");
+
+}
+
+}

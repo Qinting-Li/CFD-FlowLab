@@ -1,0 +1,809 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+###########################################################################
+#                       Default parameters for Grid conversion            #
+###########################################################################
+// gridtype: Grid type for generation, conversion, reconstruction, merging.
+//           0 -- Unstructured grid.
+//           1 -- Structured grid.
+//           2 -- Hybrid grid, include both of unstructured and structured grid.
+// gridobj:  Task type of grid treatment.
+//           0 -- Grid generation of typical case, such as cylinder, flat plate, etc.
+//           1 -- Grid conversion, from other grid data to PHenglEI, such as Fluent, CGNS.
+//           2 -- Grid refinement.
+//           3 -- Grid merging, merge two blocks into one block.
+//           5 -- Grid repairing, repair the original grid in order to remove the negative volume cells.
+//           6 -- Grid mirroring, mirror a symmetry grid to whole grid.
+// multiblock: Multi-block grid or not, only for structured grid conversion.
+//             0 -- Not.
+//             1 -- Yes.
+// grid_database_index: Case of typical case, only for gridobj=0.
+//             1 -- Laminar flat plate of subsonic flow.
+//             2 -- Laminar flat plate of supersonic flow.
+//             3 -- Turbulent flat plate of subsonic flow.
+//             4 -- Turbulent flat plate of supersonic flow.
+// iadapt: Adaptation number for unstructure grid.
+// iovrlap: Overlapping(overset) grid or not.
+//             0 -- NON-overlapping grid.
+//             1 -- Overlapping grid.
+// SymmetryFaceVector: The vector of symmetry face.
+//             0 -- X axis.
+//             1 -- Y axis.
+//             2 -- Z axis.
+int gridtype            = 0;
+int gridobj             = 1;
+int multiblock          = 0;
+int grid_database_index = 3;
+int iadapt              = 0;
+int iovrlap             = 0;
+int SymmetryFaceVector  = 1;
+
+// axisup: Type of Cartisien coordinates system, used in grid conversion.
+//         1 -- Y upward. (default)
+//         2 -- Z upward.
+int axisup = 1;
+
+// omit_no_bound_bc: What's boundary condition for the type of "no_boundary_condition".
+//                   0 -- Interface. (default)
+//                   1 -- Physical boundary condition, used in Hybrid solver.
+int omit_no_bound_bc = 0;
+
+//-----------------------------------------------------------------------
+#                           Grid data type                              #
+//-----------------------------------------------------------------------
+// from_gtype/to_gtype: Type of grid data type in grid conversion process.
+//                     -1 -- MULTI_TYPE.
+//                      1 -- PHengLEI, *.fts.
+//                      2 -- CGNS, *.cgns.
+//                      3 -- Plot3D type of structured grid, *.dat/*.grd.
+//                      4 -- Fieldview type of unstructured grid, *.dat/*.inp.
+//                      5 -- Fluent, *.cas/*.msh.
+//                      6 -- Ustar, mgrid.in.
+//                      7 -- Hybrid, include both of unstructured and structured grid, *.fts.
+//                      8 -- GMSH, *.msh.
+// dumpOldGrid: If dump out the old grid file.
+//              0 -- Not. (default)
+//              1 -- Yes.
+int from_gtype  = 2;
+int to_gtype    = 1;
+int dumpOldGrid = 0;
+
+//-----------------------------------------------------------------------
+#                           File path                                   #
+//-----------------------------------------------------------------------
+// from_gfile: path of original data file for unstructure grid convert from.
+// out_gfile:  path of target file for grid convert to, *.fts type of file usually.
+string from_gfile = "./grid/rae2822_hybrid2d.cas";
+string out_gfile  = "./grid/flat_laminr_133_85_2d.fts";
+
+// ----------------- some advanced choices ------------------------------
+// iunsteady: The Grid is for unsteady simulation or not.
+int iunsteady = 0;
+int iale      = 0;
+
+// fileformat: Ustar Grid file format.
+//             0 -- BINARY.
+//             1 -- ASCII.
+int fileformat = 0;
+
+// .skl meaning skeleton.
+string original_grid_info_file = "./grid/FLUENT_test.skl";
+
+// Parameters for hybrid solver.
+// mixgrid_uns: path of unstructure grid file for hybrid solver, *.fts type.
+// mixgrid_str: path of structure grid file for hybrid solver, *.fts type.
+// mixgrid_str_bc: path of structure grid boundary condition file for hybrid solver.
+string mixgrid_uns    = "./grid/rae2822_uns2d_4.fts";
+string mixgrid_str    = "./grid/flat_laminr_133_85_2d.fts";
+string mixgrid_str_bc = "./grid/flat_laminr_133_85_2d.inp";
+
+// Some parameters for structured overlapping grid.
+int    codeOfDigHoles      = 1;
+string holeBasicFileName   = "./oversetGridView/holeBasicFile.inp";
+string holeFullFileName    = "./oversetGridView/holeFullFile.dat";
+string linkFileName        = "./oversetGridView/topology.dat";
+string zoneInverseFileName = "./oversetGridView/zoneInverseMapping.inp";
+
+// ----------------- Adaptive Mesh Refine -------------------------------
+// In this file, the original_grid_file is used of the partition part.
+// If use it dependently, abstract it here.
+string adapt_grid_file  = "./grid/sphere_mixed_adapt1.fts";
+string geometryFileName = "./grid/jsm.igs";
+
+// geometryUnit: Geometry unit.
+//               1 -- meter.
+//               2 -- millimeter.
+//               3 -- inch.
+// exclusiveCase: Parallel projection exclusive case.
+//                0 -- NON case.
+//                1 -- JSM-C2-NPOFF case.
+//                2 -- CHNT.
+// projectOrgPoint: If the original wall points need to be projected or not.
+int geometryUnit = 1;
+int anisoRefine  = 0;
+int isProject    = 0;
+int readDist     = 0;
+int isDeform     = 0;
+int exclusiveCase   = 0;    // 0: NON case; 1: JSM-C2-NPOFF case; 2: CHNT.
+int projectOrgPoint = 0;    // if project original wall points.
+
+// ----------------- RBF Parameters -------------------------------------
+// symmetryPlane: Which symmetry plane is used in the mesh.
+//                0 -- without symmetry.
+//                1 -- plane of x=0.
+//                2 -- plane of y=0.
+//                3 -- plane of z=0.
+int numberOfReferenceCP = 10;
+double influenceRadius  = 20;
+int symmetryPlane       = 3;    // 1: plane of x=0; 2: plane of y=0; 3: plane of z=0;
+
+#########################################################################
+#                       Default parameters for Partition                #
+#########################################################################
+// pgridtype: The grid type.
+//            0 -- unstruct grid.
+//            1 -- struct grid.
+//            2 -- refine structured grid.
+// maxproc: The number of partition zones that want to be divided into.
+int pgridtype = 0;
+int maxproc   = 4;
+
+// traceMark: Trace mark or not, only for structured grid partition.
+//            0 -- Not.
+//            1 -- Yes.
+// blockIndexOfMark: the block index of mark, only for structured grid partition.
+// cellIndexOfMark: the cell index of mark, only for structured grid partition.
+int traceMark        = 0;
+int blockIndexOfMark = 0;
+int cellIndexOfMark[] = [185,30,1];
+
+//-----------------------------------------------------------------------
+#                           File path                                   #
+//-----------------------------------------------------------------------
+// original_grid_file: Original grid file that want to be divided(PHengLEI type, *.fts).
+// partition_grid_file: Target partition grid file(PHengLEI type, *.fts).
+string original_grid_file  = "./grid/sphere_mixed.fts";
+string partition_grid_file = "./grid/sphere_mixed__4.fts";
+
+// ------------------ Sompe advanced parameters -------------------------
+// omit_no_bound_bc: What's boundary condition for the type of "no_boundary_condition".
+//                   0 -- Interface. (default)
+//                   1 -- Physical boundary condition, used in Hybrid solver.
+// npartmethod: Method of interface reconstruction, default is 1.
+// parallelPartMethod: Method of parallel partition, this is set only when execute parallel partition. It would be skipped when serial partition.
+//                   1 -- Using ParMetis for homogeneous MPI.
+//                   2 -- Using Metis for homogeneous MPI.
+//                   3 -- using METIS partition for homogeneous OpenMP.
+// parmetisBalance: Used to specify the imbalance tolerance.
+//                   1 -- perfect balance.
+//             maxproc -- perfect imbalance.
+//                1.05 -- recommended.
+
+int omit_no_bound_bc        = 0;
+int npartmethod             = 1;
+int parallelPartitionMethod = 2;
+double parmetisBalance = 1.05;
+
+// numberOfMultigrid: Number of multi-grid levels, ONLY used for structured grid.
+//                    1 -- single level.
+//                    2 -- 2 level.
+//                    N -- N level, ..., et al.
+int numberOfMultigrid = 1;
+
+#########################################################################
+#                     Default parameters for CFD simulation             #
+#########################################################################
+// maxSimuStep: The max simulation step, don't care simulation is restart or not.
+// intervalStepFlow: The step intervals for flow variables file 'flow.dat' saved.
+// intervalStepPlot: The step intervals for tecplot visual file 'tecflow.dat' saved.
+// intervalStepForce: The step intervals for aerodynamics coefficients file 'aircoef.dat' saved.
+// intervalStepRes: The step intervals for residual file 'res.dat' saved.
+// ifLowSpeedPrecon: Precondition process to accelerate convergence for low speed flow.
+//                   0 -- no precondition process. (default, mach > 0.3)
+//                   1 -- carry out precondition process. (mach number <= 0.3)
+
+int maxSimuStep       = 20000;
+
+int intervalStepFlow  = 1000;
+int intervalStepPlot  = 1000;
+int intervalStepForce = 100;
+int intervalStepRes   = 10;
+int ifLowSpeedPrecon  = 0;
+
+// compressible:
+//               0 -- incompressible flow.
+//               1 -- compressible flow. (default)
+int compressible = 1;
+
+//-----------------------------------------------------------------------
+#                           CFD Control Parameter                       #
+//-----------------------------------------------------------------------
+// refMachNumber: Mach number.
+// attackd: Angle of attack.
+// angleSlide: Angle of sideslip.
+// inflowParaType: The type of inflow parameters.
+//                 0 -- the nondimensional conditions.
+//                 1 -- the flight conditions.
+//                 2 -- the experiment conditions.
+//                 3 -- the subsonic boundary conditions.
+// refReNumber: Reynolds number, which is based unit length, unit of 1/m.
+// refDimensionalTemperature: Dimensional reference temperature, or the total temperature only for the experiment condition.
+// freestream_vibration_temperature: Dimensional freestream vibration temperature.
+// refDimensionalPressure: Dimensional reference pressure, or the total pressure only for the experiment condition.
+// height: Fly height, unit of km.
+// wallTemperature: Temprature of the solid wall, minus value is for adiabatic boundary condition.
+// dump_Q: Dump out thermal flux Q of solid wall.
+//         0 -- no dump out.
+//         1 -- dump out wall Q only.
+//         2 -- dump out wall Q & the typical position Q of ball.
+//         3 -- dump out wall Q & the typical position Q of cone.
+//         4 -- dump out wall Q & the typical position Q of double sphere.
+// gridScaleFactor: The customizable unit of the grid, default value is 1.0 for meter.Common dimensions like:
+//                    1 dm = 0.1  m.
+//                    1 cm = 0.01 m.
+//                    1 mm = 0.001m.
+//                    1 inch             = 0.0254m.
+//                    1 foot = 12 inches = 0.3048m.
+//                    1 yard = 3  feet   = 0.9144m.
+// forceRefenenceLength, forceRefenenceLengthSpanWise, forceRefenenceArea: Reference length, SpanWise length and area, independent of grid unit.
+// TorqueRefX, TorqueRefY, TorqueRefZ: Reference point, independent of grid unit.
+// radiationCoef: The radiation coefficient on wall, it is used to compute the radiation heat flux on wall when the boundary
+//                condition is radiation equilibrium temperature, and 0.8 is the default value.
+
+double refMachNumber = 0.73;
+double attackd       = 2.79;
+double angleSlide    = 0.00;
+
+int inflowParaType = 0;
+double refReNumber = 6.5e6;
+double refDimensionalTemperature = 288.15;
+double freestream_vibration_temperature = 10000.00;
+
+//int inflowParaType = 1;
+//double height = 0.001;
+
+//int inflowParaType = 2;
+//double refDimensionalTemperature = 6051.024;    // The total temperature, T*(1+(refGama-1)*M*M/2).
+//double refDimensionalPressure = 4.299696E09;    // The total pressure, p*(T0/T)^(refGama/(refGama-1)).
+
+//int inflowParaType = 3;
+//int nsubsonicInlet  = 1;
+//int nsubsonicOutlet = 1;
+//string inLetFileName  = "./bin/subsonicInlet.hypara";
+//string outLetFileName = "./bin/subsonicOutlet.hypara";
+//double refDimensionalTemperature = 288.144;
+//double refDimensionalPressure = 1.01313E05;
+
+double wallTemperature = -1.0;
+int    dump_Q = 0;
+
+double radiationCoef = 0.8;
+double gridScaleFactor = 1.0;
+
+double forceRefenenceLengthSpanWise = 1.0;    // unit of meter.
+double forceRefenenceLength = 1.0;            // unit of meter.
+double forceRefenenceArea = 1.0;              // unit of meter^2.
+double TorqueRefX = 0.0;                      // unit of meter. 
+double TorqueRefY = 0.0;                      // unit of meter.
+double TorqueRefZ = 0.0;                      // unit of meter.
+
+// directionMethod: The method of determining direction.
+//                  1 -- using direciton.
+//                  2 -- using face normal.
+// subsonicInletTotalPressure: The dimensional total pressure of subsonic inlet if height > 0, else non-dimensional.
+// subsonicInletTotalTemperature: The dimensional total temperature of subsonic inlet if height > 0, else non-dimensional.
+// direction_inlet: The direction of inlet.
+// subsonicOutletTotalPressure: The dimensional total pressure of subsonic outlet if height > 0, else non-dimensional.
+// subsonicOutletTotalTemperature: The dimensional total temperature of subsonic outlet if height > 0, else non-dimensional.
+// direction_outlet: The direction of outlet.
+int    directionMethod = 2;
+double subsonicInletTotalPressure = 1.2e6;
+double subsonicInletTotalTemperature = 1300;
+double direction_inlet[] = 1, 0, 0;
+
+double subsonicOutletTotalPressure = 17.8571428;
+double subsonicOutletTotalTemperature = 1.0;
+double direction_outlet[] = 1, 0, 0;
+
+//-----------------------------------------------------------------------
+#                           Spatial Discretisation                      #
+//-----------------------------------------------------------------------
+#*******************************************************************
+#                         Struct Solver                            *
+#*******************************************************************
+// inviscidSchemeName: Spatial discretisation scheme of struct grid.
+//                     Using this when solve structered grid or hybrid.
+//                     -- "vanleer", "steger", "hlle", "lax_f".
+//                     -- "roe", "modified_roe".
+//                     -- "ausm+", "ausm+w", "ausm+up", "ausmdv", "ausmpw".
+// str_limiter_name: Limiter of struct grid.
+//                     -- "vanalbada", "vanleer", "minmod", "smooth", "minvan", "3rdsmooth", "3rd_minmod_smooth".
+//                     -- "nolim", no limiter.
+//                     -- "vanalbada_clz", clz supersonic version.
+string inviscidSchemeName = "roe";
+string str_limiter_name   = "vanalbada";
+
+#*******************************************************************
+#                         UnStruct Solver or Common                *
+#*******************************************************************
+// viscousType: Viscous model.
+//           0 -- Euler.
+//           1 -- Lamilar.
+//           2 -- Algebraic.
+//           3 -- 1eq turbulent.
+//           4 -- 2eq turbulent.
+// viscousName: Laminar or tubulent model.
+//              -- "0eq-bl".
+//              -- "1eq-sa".
+//              -- "2eq-kw-menter-sst".
+//              -- "2eq-kw-menter-bsl".
+//              -- "2eq-kw-wilcox-1988".
+//              -- "2eq-kw-wilcox-1998".
+//              -- "2eq-kw-kok-tnt".
+//              -- "2eq-kw-wilcox-2006".
+//              -- "easm-kw-2003".
+//              -- "easm-kw-2005".
+// DESType: Type of DES.
+//          0 -- RANS. (default)
+//          1 -- DES.
+//          2 -- DDES.
+//          3 -- IDDES.
+// uns_scheme_name: Spatial discretisation scheme of Unstruct grid.
+//                  Using this when solve Unstructered grid or hybrid.
+//                  -- "vanleer", "roe", "steger", "kfvs", "lax_f", "hlle".
+//                  -- "ausm+", "ausmdv", "ausm+w", "ausmpw", "ausmpwplus".
+// uns_limiter_name: Limiter of Unstruct grid.
+//                   -- "barth", "vencat", "vanleer", "minmod".
+//                   -- "vanalbada", "smooth", "nnd", "lpz", "1st".
+//                   -- "nolim", no limiter.
+// uns_vis_name: Discretisation method of viscous term.
+//               -- "std", "test", "aver", "new1", "new2".
+// uns_gradient: Gradient reconstruction method.
+//                 -- "default", "ggcell", "ggnode", "lsq".
+// ivencat: Variation of vencat limiter.
+//          0 -- org method, it is independent of grid scale.
+//          1 -- new method, it is dependent of grid scale.
+//          4 -- Ustar limiter model, without grid size unitary.
+//          7 -- default used.
+// venkatCoeff: Cofficient of vencat, when using vencat limter.
+// limitVariables: Limit model (It is useful only if limitVector is 0).
+//                 0 -- limit only for pressure and denstiny, then get the min value.
+//                 1 -- limit for every variables, then get the min value.
+// limitVector:
+//              0 -- Each variable use the same limiter coefficient.
+//              1 -- Each variable use the respective limiter coefficients.
+// reconmeth:
+//              0 -- When reconstruct face value, Q+, Q- use respective limiter coefficients.
+//              1 -- Q+, Q- use the min limiter coefficients of left and right cell.
+// skewnessAngle: The skewness angle of grid cells.
+// roeEntropyFixMethod: Entropy fix (correction) method.
+//              1 -- direct fix, which limits the minimum eigenvalue directly.
+//              2 -- multi-dimensional fix, which is derived from structured solver and now is only valid for struct solver.
+//              3 -- Harten type, which is default used.
+// roeEntropyScale: Entropy fix (correction) coefficient scale, default is 1.0.
+//                  It is used to scale the default Roe entropy fix coefficients.
+
+//int    viscousType    = 0;
+//string viscousName = "Euler";
+
+//int    viscousType    = 1;
+//string viscousName = "laminar";
+
+int    viscousType    = 3;
+string viscousName = "1eq-sa";
+
+//int    viscousType    = 4;
+//string viscousName = "2eq-kw-menter-sst";
+
+int DESType = 0;
+
+string uns_scheme_name  = "roe";
+string uns_limiter_name = "vencat";
+string uns_vis_name     = "test";
+string gradientName     = "ggnode";
+
+int    ivencat     = 7;
+double venkatCoeff = 5.0;
+int reconmeth      = 1;
+int limitVariables = 0;
+int limitVector    = 0;
+double limit_angle = 0;
+double skewnessAngle = 60.0;
+
+int roeEntropyFixMethod = 3;
+double roeEntropyScale  = 1.0;
+
+//-----------------------------------------------------------------------
+#                       Temporal Discretisation                         #
+//-----------------------------------------------------------------------
+// iunsteady: Steady or unsteady.
+//            0 -- steady.
+//            1 -- unsteay.
+// physicalTimeStep: The nondimensional physical time step.
+// ifStartFromSteadyResults: The unsteady simulation is start from steady flowfield or not, 0 is for no and else is for yes.
+// ifStaticsFlowField: Statistical variables for DES simulation.
+// startStatisticStep: Outer step when start statistics.
+//                     when the value is larger than "maxSimuStep", it is useless.
+// min_sub_iter: The min sub iteration of unsteady simulation.
+// max_sub_iter: The max sub iteration of unsteady simulation.
+// tol_sub_iter: The tolerance of sub iteration of unsteady simulation.
+// tscheme: Temporal Discretisation method.
+//               1 -- Runge-Kutta Multi-State.
+//               2 -- Point implicit.
+//               3 -- Full implicit.
+//               4 -- LU-SGS.
+//               5 -- Block LU-SGS.
+//               6 -- Jacobian iteration.
+//               7 -- Lower G-S iteration.
+//               8 -- Upper G-S iteration.
+//               9 -- Lower/Upper G-S iteration.
+// iSimplifyViscousTerm: Simplify the computation of viscous term in the Block LU-SGS method. The default value assigns 1 that could speed up the computation.
+//                       Otherwise, the viscous Jacobian matrix Mv should be computed that will increase the memory and time in iteration of the BLUSGS method.
+// CFLStart: Started cfl number.
+// CFLEnd: End cfl number.
+// CFLVaryStep: The number of step when cfl increase from CFLStart to CFLEnd.
+// ktmax: Dtratio. dt[i] = MIN(dt[i], ktmax * dtmin / vol[i])
+// swapDq: Communication dq between forward/backward sweep of LUSGS or not, default is 0.
+// nLUSGSSweeps: Sub iteration of LU-SGS or Block LU-SGS.
+// LUSGSTolerance: Sub iter tolerance of LU-SGS or Block LU-SGS.
+// ifLocalTimeStep: Time step method.
+//               0 --Local.
+//               1 --Global.
+// visl_min: Minimum value of laminar viscosity coefficient.
+// turbCFLScale: Turbulence model cfl number factor.
+// iale: Arbitrary Lagrangian-Eulerian method.
+//               0 -- no ALE method.
+//               1 -- ALE method for non-moving grids.
+//               2 -- ALE method for moving grids.
+//               3 -- ALE method for deforming grids.
+// wallFunctionType: The type of wall function to implement.
+//               0 -- no wall function. (default)
+//               1 -- standard wall function.
+//               2 -- Pab3D wall function.
+// RKStage: The number of Runge-Kutta step.
+// lamda: Cofficient of Runge-Kutta step.
+
+int    iunsteady        = 0;
+double physicalTimeStep = 0.01;
+int    ifStartFromSteadyResults = 0;
+int    ifStaticsFlowField = 0;
+int    startStatisticStep = 800000;
+
+int    min_sub_iter = 50;
+int    max_sub_iter = 50;
+double tol_sub_iter = 0.01;
+
+int    tscheme      = 4;
+int    iSimplifyViscousTerm = 1;
+int    ifLocalTimeStep = 0;
+double CFLStart     = 0.01;
+double CFLEnd       = 10.0;
+int    CFLVaryStep  = 500;
+
+double ktmax        = 1.0e10;
+
+int    swapDq       = 1;
+
+int    nLUSGSSweeps = 1;
+double LUSGSTolerance = 0.01;
+int    order        = 2;
+
+double visl_min = 0.01;
+double turbCFLScale = 1.0;
+
+double timemax  = 1.0e10;
+double dtsave   = -1.0;
+int    iale     = 0;
+int    ialetype = 2;
+int    maxale   = 10;
+double dtau     = 0.001;
+double dtau_max = 1E-01;
+
+int wallFunctionType = 0;
+
+int RKStage    = 2;
+double lamda[] = 0.5, 1.0;
+
+//int RKStage    = 1;
+//double lamda[] = 1.0;
+
+//int RKStage    = 4;
+//double lamda[] = [0.25, 0.33333333333, 0.5, 1.0];
+
+//-----------------------------------------------------------------------
+#                           File In or Out                              #
+//-----------------------------------------------------------------------
+// numberOfGridGroups: The number of grid groups.
+// gridfile: The partitioned Grid file path, using relative path,
+//           which is relative to the working directory.
+// IMPORTANT WARNING: The file index should be ignored,
+//                    e.g. if the partitioned grid is rae2822_hybrid2d__4_0.fts,
+//                    please use 'rae2822_hybrid2d__4.fts' here!
+// isPlotVolumeField: If dump out the field results to visulization.
+// walldistMethod: The method to compute wall distance.
+//                 0 -- accurate but not fast enough.
+//                 1 -- fast but not accurate enough.
+//                 2 -- super fast but more non-accurate!
+// resSaveFile: The file path to save the residual convergence process, write data for every default (intervalStepRes) steps.
+// turbresfile: The file path to save the residual convergence process of turbulence, write data for every default (intervalStepRes) steps.
+// aircoeffile: The file path to save the aerodynamic force coefficients convergence process, write data for every default (intervalStepForce) steps.
+// restartNSFile: The file path to write restart flowfield variables, write data for every default (intervalStepFlow) steps.
+// turbfile: The file path to write restart flowfield variables of turbulence , write data for every default(intervalStepFlow) steps.
+// visualfile: The visualization file path of flowfield , write data for every default (intervalStepPlot) steps.
+// wall_aircoefile: The file path to save flowfield variables of wall, write data for every default steps.
+int    numberOfGridGroups = 1;
+string gridfile           = "./grid/rae2822_hybrid2d__4.fts";
+
+int    walldistMethod     = 1;
+
+string resSaveFile        = "results/res.dat";
+string turbresfile        = "results/turbres.dat";
+string aircoeffile        = "results/aircoef.dat";
+
+string restartNSFile      = "results/flow.dat";
+string turbfile           = "results/turb.dat";
+
+string visualfile         = "results/tecflow.plt";
+string Qwall_file         = "results/Qwall.dat";
+string wall_aircoefile    = "results/wall_aircoef.dat";
+
+string surfacefile        = "";
+
+string wall_varfile       = "";
+
+string componentDefineFile = "bin/component.hypara";
+string jetDefineFile       = "bin/jet.hypara";
+
+string componentforcefile = "results/component_aircoef.dat";
+
+string overset_gridfile   = "iblank.ovs";
+
+int    isPlotVolumeField  = 0;
+
+// visualfileType: The file type of visualfile.
+//                 0 -- Tecplot binary.
+//                 1 -- Tecplot ASCII.
+
+int visualfileType = 1;
+
+// visualSlice: The slice of tecflow.
+//              0 -- Do not save slice data.
+//              1 -- comput and save it to sliceFile.
+// sliceAxis: Normal vector of slice.
+//            1 -- X_DIR.
+//            2 -- Y_DIR.
+//            3 -- Z_DIR.
+// slicePostion: Coordinate of slice.
+
+int    visualSlice  = 0;
+int    sliceAxis    = 1;
+double slicePostion = -0.5;
+string sliceFile    = "results/Slice.plt";
+
+// min-max box of the visual block.
+double lowerPlotFieldBox[] = [0.0 0.0 0.0];
+double upperPlotFieldBox[] = [1.0 1.0 1.0];
+
+// nVisualVariables: Number of variables want to be dumped for tecplot visualization.
+// visualVariables : Variable types dumped, listed as following:
+//                   -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6),
+//                   -- viscosityLaminar(7), viscosityTurbulent(8), 
+//                   -- vorticity_x(9), vorticity_y(10), vorticity_z(11), vorticityMagnitude(12),
+//                   -- strain_rate(13), Q_criteria(14), Cp(15), timeStep(16), volume(17),
+//                   -- modeledTKE(18), modeleddissipationrate(19), SSTF1(20), SSTF2(21), vibration temperature(33), electron temperature(34),
+//                   -- gradientUx(41), gradientUy(42), gradientVx(43), gradientVy(44).
+// Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
+// Variables order must from small to big.
+int nVisualVariables = 8;
+int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
+
+// dumpStandardModel: Dump many standard model data.
+//                    1 -- Turbulent flat plate.
+int dumpStandardModel = 0;
+
+//-----------------------------------------------------------------------
+#                           Turbulence Parameter                        #
+//-----------------------------------------------------------------------
+// turbInterval: Iteration number of turbulence.
+// kindOfTurbSource: Kinds of turbulent source.
+//                   0 -- Original.
+//                   1 -- Edwards.
+//                   2 -- new.
+// mod_turb_res: If modify the residuals for the cells next to the wall or not, default is 0.
+
+int turbInterval     = 1;
+int turb_vis_kind    = 2;
+int kindOfTurbSource = 0;
+int mod_turb_res     = 0;
+double turb_relax    = 1.0;
+double turb_min_coef = 1.0e-1;
+double freeStreamViscosity = 1.0e-3;
+double muoo          = 1.0e-1;
+double kwoo          = 1.0;
+
+# maximum eddy viscosity (myt/my) max.
+double eddyViscosityLimit = 1.0e10;
+double sdilim       = 1.0e20;
+double coef_kvist   = 1.0;
+int monitor_vistmax = 0;
+
+//-----------------------------------------------------------------------
+#                           Other Parameter                             #
+//-----------------------------------------------------------------------
+// dg_high_order:
+//               0 -- generic order accuracy.
+//               1 -- high order accuracy.
+// iapplication:
+//               0 -- NS.
+//               1 -- MHD.
+// nm: Equation number of the physics, but is out of commision now.
+//               4 -- for 2D.
+//               5 -- for 3D.
+// nchem:
+//               0 -- without chemical reaction flow.
+//               1 -- the chemical reaction flow is considered.
+// nchemsrc:
+//               0 -- the source terms are not computed.
+//               1 -- the source terms are computed.
+// nchemrad:
+//               0 -- compute the spectrum radius without considering chemical reaction flow.
+//               1 -- compute the spectrum radius that need to count the contribution from chemical reaction flow.
+// ntmodel: The thermodynamic temperature model.
+//               1 -- One-temperature model.
+//               2 -- Two-temperature model.
+//               3 -- Three-temperature model.
+// catalyticCoef:
+//             0.0 -- full non-catalytic wall boundary condition.
+//             1.0 -- full catalytic wall boundary condition.
+//             in range of (0.0, 1.0) -- partial catalytic condition, the value indicates the catalytic coefficient.
+// gasfile: Indicates the gas model, 9 models are provided, namely "Gu5", "Gu7", "Gu11", "Pa5", "Pa7", "Pa11", "DK5", "DK7", "DK11".
+//            "Gu" -- indicates the Gupta Model, three-Type Models are embeded in the library, namely, the 5-species-6-reactions, the 7-species-9-reactions, the 11-species-20-reactions.
+//            "Pa" -- indicates the Park  Model, three-Type Models are embeded in the library, namely, the 5-species-17-reactions, the 7-species-22-reactions, the 11-species-48-reactions.
+//            "DK" -- indicates the Dunn-Kang Model, three-Type Models are embeded in the library, namely, the 5-species-11-reactions, the 7-species-15-reactions, the 11-species-26-reactions.
+//            For self-definition model, the gasfile is used to indicate the file path of the new gas model.
+// speciesName: Used to list the names of each species, while each species name is separated by the symbol of comma.
+// initMassFraction: Used to list the initial mass fractions of species in accordance with the sequence of names in the parameter speciesName.
+// ifStartFromPerfectGasResults: The chemical reaction simulation is start from perfect gas flowfield or not, 0 is for no and else is for yes.
+
+int dg_high_order = 0;
+int iapplication  = 0;
+int nm            = 5;
+
+// MHD
+double bxoo       = 0.0;
+double byoo       = 0.0;
+double bzoo       = 0.0;
+
+double refGama    = 1.4;
+double prl        = 0.72;
+double prt        = 0.90;
+double sc_l       = 0.5;
+double sc_t       = 0.5;
+
+int    nchem      = 0;
+int    nchemsrc   = 1;
+int    nchemrad   = 1;
+int    ntmodel    = 1;
+int    nChemicalFlowStep = 0;
+double catalyticCoef = 0.0;
+string gasfile    = "DK5";
+//string gasfile    = "./chemical/Dunn-Kang_air5s11r.dat";
+string speciesName = "O, O2, NO, N, N2";
+string initMassFraction = "0.0, 0.23, 0.0, 0.0, 0.77";
+
+//string speciesName = "O, O2, NO, N, NO+, N2, e-";
+//string initMassFraction = "0.0, 0.23, 0.0, 0.0, 0.0, 0.77, 0.0";
+
+//string speciesName = "O, O2, NO, N, O+, O2+, NO+, N+, N2+, N2, e-";
+//string initMassFraction = "0.0, 0.23, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.77, 0.0";
+
+int    ifStartFromPerfectGasResults = 0;
+
+#########################################################################
+// Multi-Grid parameters.
+// nMGLevel: The number of level of Multi-Grid.
+//           <= 1 -- Single-level.
+//           >  1 -- multi-level.
+// MGPreIteration: For each grid, the number of pre-smoothing steps.
+// n_post: For each grid, the number of post-smoothing steps.
+// MGCoarsestIteration: For the coarest grid the number of smoothing steps.
+// MGFasType: V-multi cycle or W-multi cycle.
+//            1 -- V-multi cycle.
+//            2 -- W-multi cycle.
+// flowInitStep: Flow initialization step, 0 - 500 is suggested.
+//               Multi-Grid : Number of steps computing on coarse grid, during flow initialization.
+//               Single-Grid: Number of steps computing using first-order with vanleer, during flow initialization.
+// mgCFLScale: CFL number enlarge times for coarse grid.
+// mprol: Multi-grid interpolation method, interpolation from coarse cell to fine grid.
+//        1 -- zero order.
+//        2 -- first-order. (default)
+// mgCorrectionLimit: Multi-grid correction limit.
+
+int nMGLevel = 1;
+int MGCoarsestIteration = 1;
+int MGPreIteration = 1;
+int MGFasType = 1;
+int n_post = 0;
+int flowInitStep = 100;
+int mprol = 2;
+double mgCFLScale = 1.0;
+double mgCorrectionLimit = 0.01;
+
+//--------------- Some parameter for turbulent model --------------------
+// neasm: The variation of kw turbulent model.
+// ismooth_turb: Residual smooth for turb or not.
+// SSTProductType: The type of product term based on vorticity for SST.
+// SAProductType: The type of product term based on vorticity for SA.
+int neasm = -3;
+int SSTProductType = 0;
+int ismooth_turb = 0;
+int SAProductType = 2;
+
+// ----------------- Overset Grid parameter -----------------------------
+int    codeOfDigHoles       = 1;
+int    codeOfTurbulentModel = 0;
+string masterFileName       = "./grid/searchFile.inp";
+string holeBasicFileName    = "./grid/holeBasicFile.inp";
+string holeFullFileName     = "./grid/holeFullFile.dat";
+string linkFileName         = "./grid/topology.dat";
+string zoneInverseFileName  = "./grid/zoneInverseMapping.inp";
+
+#########################################################################
+#                       High Order Struct Solver                        #
+#########################################################################
+// ifvfd:
+//        0 -- NSSolverStruct using Finite Volume Method.
+//        1 -- NSSolverStruct using Finite Differ Method.
+// SolverStructOrder: Spatial discretisation order of NS equations with struct grid.
+//                    <= 2 -- finite volume method.
+//                    >= 3 -- finite difference order. (to be completed)
+//                       0 -- default.
+// str_highorder_interpolation_epsilon: Epsilon in weighted interpolation, bigger epsilon, better convergence,
+//                                      smaller epsilon, robuster for shock-detecting.
+// str_highorder_interpolation_type:
+//                    -- "classical", "test".
+// str_highorder_flux_name:
+//                    -- "roe", "steger".
+// structhighordergradient:
+//                    -- "conservation", "chain_rule".
+int    ifvfd                               = 0;
+int    SolverStructOrder                   = 0;
+double str_highorder_interpolation_epsilon = 1.0e-6;
+string str_highorder_interpolation_type    = "test";
+string str_highorder_flux_name             = "steger";
+string structhighordergradient             = "conservation";
+
+// ----------------- Advanced choices -----------------------------------
+// outtimesc: Time stepping scheme for the outer loop.
+// MUSCLCoefXk: The parameter of MUSCL interpolations, belongs to [-1, 1].
+//             -1 -- seconde-order fully-upwind differencing.
+//              0 -- seconde-order upwind-biased differencing.
+//       0.333333 -- third-order upwind-biased differencing.
+//              1 -- seconde-order central differencing.
+// MUSCLCoefXb: The limiter parameter.
+//              0 -- the effect of the limiter is cancelled, means the first-order interpolations.
+// allReduceStep: Iteration intervals for MPI AllReduce operation, default is 1.
+string outtimesc   = "impbd2";
+double MUSCLCoefXk = -1;
+double MUSCLCoefXb = 1.0;
+int  allReduceStep = 1;
+
+// ---------------- ATP read --------------------------------------------
+//@int    inflowParaType            = 0;
+//@double refReNumber               = 2.329418E08;
+//@double refDimensionalTemperature = 288.144;
+//@double refDimensionalPressure    = 1.01313E05;
+//@double height                    = -0.001;
+//@int nsubsonicInlet               = 0;
+//@int nsubsonicOutlet              = 0;
+//@string inLetFileName             = "./bin/subsonicInlet.hypara";
+//@string outLetFileName            = "./bin/subsonicOutlet.hypara";

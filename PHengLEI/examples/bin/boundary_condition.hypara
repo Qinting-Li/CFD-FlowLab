@@ -1,0 +1,50 @@
+# nBoundaryConditons: number of global boundary conditions.
+# bcName            : Boundary Condition Name.
+# bcType						: Boundary Condition Type.
+# dumpHingeMoment   : whether or not dump monment of hinge(0/1, if 0 the moment of hinge is zero)
+# localCoordAxis0   : lcoal coordinates axis, defined for calculation of moment of hinge.
+# localCoordAxis1   : lcoal coordinates axis, defined for calculation of moment of hinge(rotation around the axis O->Z).
+int nBoundaryConditons = 0;
+string bcName = "DownWall";
+{
+  int bcType = 2;
+  double forceRefenenceLength = 1.0;
+  double forceRefenenceLengthSpanWise = 1.0;
+  double forceRefenenceArea   = 1.0;
+  double TorqueRefX      = 0.0;
+  double TorqueRefY      = 0.0;
+  double TorqueRefZ      = 0.0;
+}
+string bcName = "UpWall";
+{
+  int bcType = 2;
+  double forceRefenenceLength = 1.0;
+  double forceRefenenceLengthSpanWise = 1.0;
+  double forceRefenenceArea   = 1.0;
+  double TorqueRefX      = 0.0;
+  double TorqueRefY      = 0.0;
+  double TorqueRefZ      = 0.0;
+  int    dumpHingeMoment    =  0;
+  double localCoordAxis0[] = [3.81856010431 -0.52758233177 0.9137994038];
+  double localCoordAxis1[] = [3.93624962598 -0.13193438962 0.2285170661];
+}
+string bcName = "Farfield";
+{
+  int bcType = 4;
+}
+
+# 'bcType' is defined as following:
+#	   99: PERIODIC              
+#	 - 2 : WAKE                  
+#  - 1 : INTERFACE             
+#	   0 : NO_BOUNDARY_CONDITION 
+#    1 : EXTRAPOLATION         
+#	   2 : SOLID_SURFACE         
+#	   3 : SYMMETRY              
+#	   4 : FARFIELD              
+#	   5 : INFLOW                
+#	   6 : OUTFLOW               
+#	   52: PRESSURE_INLET		    
+#	   62: PRESSURE_OUTLET		   
+#	   61: OUTFLOW_CONFINED      
+#	   7 : POLE                  

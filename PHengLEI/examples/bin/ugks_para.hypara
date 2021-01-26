@@ -1,0 +1,170 @@
+#########################################################################
+#                     General Control Parameter                         #
+#########################################################################
+// maxSimuStep: the max simulation step, don't care simulation is restart or not.
+// intervalStepFlow:       the step intervals for 'flow.dat    ' saved.
+// intervalStepPlot:   the step intervals for 'tecflow.dat ' saved.
+// intervalStepForce:   the step intervals for 'aircoef.dat ' saved.
+// intervalStepRes:    the step intervals for 'res.dat     ' saved.
+// nstart:      0 -- 重新计算(有流场置为2) 
+//              1 -- 续算步数重置 2-续算 !
+//               其它值 -- 无条件重算(流场存在与否) 
+// stopnow:     0 -- continue,1 -- stop
+// isdim:       0 -- dimensionless, 1 -- dimension
+// data_pos:    0 -- data on the nodes of grids, 1 -- data on the center of grids
+// nm:          equation number of the physics. 
+//                  4 - for 2D
+//                  5 - for 3D
+// u_num,v_num,w_num:                 Dicrete number in velocity space  
+int    nstart       = 0;
+int    intervalStepFlow        = 1;
+int    maxSimuStep  = 1;
+int    intervalStepPlot    = 1;
+int    intervalStepForce    = 1000;
+int    intervalStepRes     = 1;
+int stopnow     =     0;
+int isdim       =     0;
+int data_pos    =     0;
+int u_num        =     5;
+int v_num        =     5;
+int w_num        =     5;
+int nm          =     5;
+int outnstep = 1;
+#########################################################################
+#                        CFD Control Parameter                          #
+#########################################################################
+// height:                            Fly height, unit of km.
+// refMachNumber:             Mach number.
+// refReNumber:                          Reynolds number, which is based unit length, unit of 1/m.
+// attackd:                           Angle of attack.
+// angleSlide:                         Angle of yaw.
+// refDimensionalTemperature: dimensional reference temperature, or the total temperature only for the experiment condition.
+// refDimensionalPressure:    dimensional reference pressure   , or the total pressure    only for the experiment condition.
+// refDimensionalDensity: dimensional reference density, or the total density only for the experiment condition.
+// refDimensionalSonicSpeed:    dimensional reference velocity, or the total velocity    only for the experiment condition.   
+// gridScaleFactor: The customizable unit of the grid, default value is 1.0 for meter.Common dimensions like:
+//                    1 dm = 0.1  m.
+//                    1 cm = 0.01 m.
+//                    1 mm = 0.001m.
+//                    1 inch             = 0.0254m.
+//                    1 foot = 12 inches = 0.3048m.
+//                    1 yard = 3  feet   = 0.9144m.
+double height                   = -25.0;
+double refGama                    = 1.6666666666666666666666666666667d0;
+double refMachNumber    = -0.3;
+double refReNumber                 = -10000.0;
+double attackd                  = 0.0;
+double angleSlide                = 0.00;
+double refDimensionalTemperature  = 273.0;         
+double refDimensionalPressure     = -101325.;      
+double refDimensionalDensity      =  8.58175e-09;        
+double refDimensionalSonicSpeed     = 50.0;  
+double wallTemperature                              = 273.0;
+int    inflowParaType                     = 0;
+int    inflowtype                         = 0;
+double gridScaleFactor = 1.0;
+string str_limiter_name      =   "minmod";
+double prt       =     0.667;
+
+#########################################################################
+#                            Force Parameter                            #
+#########################################################################
+//nwholefield  ： 1 - whole field, 0 - half field  
+//forceRefenenceLength : the reciprocal of mesh magnification 
+//forceRefenenceFLength : Real reference length(characteristic length)
+//forceRefenenceArea : Real reference Area
+//TorqueRefX, TorqueRefY, TorqueRefZ: Real reference Coordinate 
+int    nwholefield          =  0;
+double forceRefenenceLength = 1.;
+double forceRefenenceFLength = 1.;
+double forceRefenenceArea   = 1.0;
+double TorqueRefX      = 0.0;
+double TorqueRefY      = 0.0;
+double TorqueRefZ      = 0.0;
+
+#########################################################################
+#                              Filename Parameter                       #
+#########################################################################
+// gridfile:              GridFolder
+// isPlotVolumeField:          If dump out the field results to visulization
+// nVisualVariables:  number of variables want to be dumped for tecplot visualization.
+// visualVariables :  variable types dumped, listed as following:
+//                      -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6)
+//                      -- viscosityLaminar(7), viscosityTurbulent(8), vorticity(9),  vorticityMagnitude(10).
+//visualSlice:			  The slice of tecflow
+//							0 - Do not save slice data
+//							1 - comput and save it to sliceFile
+//sliceAxis:			  Normal vector of slice
+//							1 - X_DIR
+//							2 - Y_DIR
+//							3 - Z_DIR
+//slicePostion:			  Coordinate of slice
+int    numberOfGridGroups   =   1;
+string gridfile             =   "./grid/cavity_10_0__4.fts";
+string resSaveFile              =   "results/res.dat";
+string aircoeffile          =   "results/aircoef.dat";
+string restartNSFile             =   "results/flow.dat";
+string visualfile           =   "results/tecflow.plt";
+int    nVisualVariables     =   5;
+int    visualVariables[]   =   [0, 1, 2, 3, 4, 6, 11];
+int    isPlotVolumeField         =   0;
+
+int    visualSlice		  = 0;
+int    sliceAxis		  = 1;
+double slicePostion		  = -0.5;
+string sliceFile		  = "results/Slice.plt";
+
+#########################################################################
+#                            Multigrid Parameter                        #
+#########################################################################
+// nMGLevel: 	   The number of level of Multi-Grid
+//  			<= 1 : Single level.
+//              >  1 : multi-level.              
+int nMGLevel  =     1;
+
+#########################################################################
+#                              Step Parameter                           #
+#########################################################################
+//  cfl      : 100.0-CFL                                                             
+double cfl      =      0.1;
+
+#########################################################################
+#                              Technic Parameter                        #
+#########################################################################
+// nlhs    : 1-explicit   2-标准LUSGS    3-混合通量LUSGS        
+//           4-SW通量分裂法全矩阵LUSGS   5-LU分解               
+//           6-三步RK     7-四步RK       8-五步RK                         
+int nlhs      =      2;
+int cdom      =      1;
+
+#########################################################################
+#                           Other Parameter                             #
+#########################################################################
+// iapplication: 0 - NS
+//               1 - MHD
+// nm:           equation number of the physics , but is out of commision now. 
+//                   4 - for 2D
+//                   5 - for 3D
+//SolverStructOrder > 2,FD method
+//iale      : 0, no ALE method,
+//            1, ALE method for non-moving grids
+//		      2,  ALE method for moving grids
+//		      3,  ALE method for deforming grids
+//// iapplication: 0 - NS,chemical,there is maybe problem
+//                 1 - MHD
+int SolverStructOrder    =   0;
+int iunsteady               =   0;
+int iale                    =   0;
+int iviscous                =   1;
+int    iapplication         =   1;
+
+//ALE parameter
+int    maxale               =   10;
+double dtau                 =   0.001;
+double timemax              =   1.0e10;
+int    ialetype             =   2;
+double dtsave               =   -1.0;
+string outtimesc            =   "impbd2";
+int nchem         = 0;
+double prl       =     0.72;
+//double prt       =     0.9;

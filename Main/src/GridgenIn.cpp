@@ -1,0 +1,457 @@
+#include <string>
+#include "GridgenIn.h"
+#include "BC_Struct.h"
+#include "TK_Parse.h"
+#include "Glb_Dimension.h"
+#include "Math_BasisFunction.h"
+#include "TK_Exit.h"
+#include "Geo_StructGrid.h"
+#include "GridType.h"
+
+#pragma warning (disable:913)
+namespace PHSPACE
+{
+void ReadGridgen(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
+{
+    int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
+    //fileformat : Grid file format.
+    //             1 --- ASCII
+    //             0 --- BINARY
+    if (fileFormat == 1)
+    {
+        ReadGridgenCoorASCII(gridgenFile, numberOfBlocks, structGrids);
+    }
+    else if(fileFormat == 0)
+    {
+        ReadGridgenCoor(gridgenFile, numberOfBlocks, structGrids);
+    }
+    ReadGridgenBC(structGrids, numberOfBlocks, BCFile);
+}
+
+void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+{
+    fstream file;
+    file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(coordinateFile);
+    }
+
+    CharVecSizeType sizeOfIntType = sizeof(int);
+
+    file.read(reinterpret_cast <char *> (&numberOfBlocks), sizeOfIntType);
+
+    structGrids = new Grid *[numberOfBlocks];
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        int ni, nj, nk;
+        file.read(reinterpret_cast <char *> (&ni), sizeOfIntType);
+        file.read(reinterpret_cast <char *> (&nj), sizeOfIntType);
+        file.read(reinterpret_cast <char *> (&nk), sizeOfIntType);
+
+        GridID *index = new GridID(iZone);
+        StructGrid *grid = StructGridCast(CreateGridGeneral(STRUCTGRID, index, 0, GetDim()));
+        structGrids[iZone] = grid;
+        grid->SetNI(ni);
+        grid->SetNJ(nj);
+        grid->SetNK(nk);
+
+        grid->SetBasicDimension();
+
+        int nTotalNode = grid->GetNTotalNode();
+        RDouble *x = new RDouble[nTotalNode];
+        RDouble *y = new RDouble[nTotalNode];
+        RDouble *z = new RDouble[nTotalNode];
+        grid->SetX(x);
+        grid->SetY(y);
+        grid->SetZ(z);
+        grid->SetArrayLayout();
+
+        int wordWidth = 8;
+
+        cout << setiosflags(ios::right);
+        cout << " iZone = " << setw(wordWidth) << iZone;
+        cout << " numberOfBlocks = " << setw(wordWidth) << numberOfBlocks;
+        cout << " ni, nj, nk = ";
+        cout << setw(wordWidth) << ni;
+        cout << setw(wordWidth) << nj;
+        cout << setw(wordWidth) << nk;
+        cout << "\n";
+        //cin.get();
+    }
+
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        StructGrid *grid = StructGridCast(structGrids[iZone]);
+        grid->ReadXYZ(file);
+    }
+    file.close();
+    file.clear();
+}
+
+void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+{
+    fstream file;
+    file.open(coordinateFile.c_str(),ios_base::in);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(coordinateFile);
+    }
+    file >> numberOfBlocks;
+
+    structGrids = new Grid *[numberOfBlocks];
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        int ni,nj,nk;
+        file >> ni;
+        file >> nj;
+        file >> nk;
+
+        GridID *index = new GridID(iZone);
+        StructGrid *grid = StructGridCast(CreateGridGeneral(STRUCTGRID, index, 0, GetDim()));
+        structGrids[iZone] = grid;
+        grid->SetNI(ni);
+        grid->SetNJ(nj);
+        grid->SetNK(nk);
+
+        grid->SetBasicDimension();
+
+        int nTotalNode = grid->GetNTotalNode();
+        RDouble *x = new RDouble[nTotalNode];
+        RDouble *y = new RDouble[nTotalNode];
+        RDouble *z = new RDouble[nTotalNode];
+        grid->SetX(x);
+        grid->SetY(y);
+        grid->SetZ(z);
+        grid->SetArrayLayout();
+
+        int wordWidth = 8;
+
+        cout << setiosflags(ios::right);
+        cout << " iZone = " << setw(wordWidth) << iZone;
+        cout << " numberOfBlocks = " << setw(wordWidth) << numberOfBlocks;
+        cout << " ni, nj, nk = ";
+        cout << setw(wordWidth) << ni;
+        cout << setw(wordWidth) << nj;
+        cout << setw(wordWidth) << nk;
+        cout << "\n";
+    }
+
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        StructGrid *grid = StructGridCast(structGrids[iZone]);
+        grid->ReadXYZ(file);
+    }
+    file.close();
+    file.clear();
+}
+
+void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &BCFile)
+{
+    fstream file;
+    file.open(BCFile.c_str(),ios_base::in);
+    if(!file)
+    {
+        TK_Exit::FileOpenErrorExit(BCFile);
+    }
+
+    string line,word;
+    string separator  = " =\t\r\n#$,;";
+
+    ReadNewLine(file, line);
+    line = FindNextWord(line, word, separator);
+    int flowSolverID;
+    from_string <int> (flowSolverID, word, std::dec);
+    cout << "flow_solver_id = " << flowSolverID << "\n";
+
+    ReadNewLine(file, line);
+    line = FindNextWord(line, word, separator);
+    int numberOfBlocks;
+    from_string <int> (numberOfBlocks, word, std::dec);
+    cout << "number_of_blocks = " << numberOfBlocks << "\n";
+
+    if (numberOfBlocks != inputNumberOfBlocks)
+    {
+        TK_Exit::ExceptionExit("边界文件分块数与网格文件分块数不一致!\n");
+    }
+
+    int nDim = GetDim();
+
+    bool blockProcessFlag = false;
+
+    using namespace PHMPI;
+
+    CreatetZoneProcessorID_INP(numberOfBlocks);
+    int *blockProcessorINP = GetZoneProcessorID_INP();
+
+    string boundaryName[100] = {"NO_BOUNDARY_CONDITION", "EXTRAPOLATION", "SOLID_SURFACE", "SYMMETRY", 
+                            "FARFIELD", "INFLOW", "OUTFLOW", "POLE", "Wall_8", "Wall_9", "Wall_10", "Wall_11", 
+                            "Wall_12", "Wall_13", "Wall_14", "Wall_15", "Wall_16", "Wall_17", "Wall_18", "Wall_19",
+                            "Wall_20", "Wall_21", "Wall_22", "Wall_23", "Wall_24", "Wall_25", "Wall_26", "Wall_27", 
+                            "Wall_28", "Wall_29", "Wall_30", "Wall_31", "Wall_32", "Wall_33", "Wall_34", "Wall_35",
+                            "Wall_36", "Wall_37", "Wall_38", "Wall_39", "Wall_40", "Wall_41", "Wall_42", "Wall_43",
+                            "Wall_44", "Wall_45", "Wall_46", "Wall_47", "Wall_48", "Wall_49", "Wall_50"};
+    boundaryName[52] = "PRESSURE_INLET";
+    boundaryName[62] = "PRESSURE_OUTLET";
+    boundaryName[71] = "POLE1";
+    boundaryName[72] = "POLE2";
+    boundaryName[73] = "POLE3";
+    boundaryName[81] = "PATCH_FACE1";
+    boundaryName[82] = "PATCH_FACE2";
+    boundaryName[83] = "PATCH_FACE3";
+    boundaryName[84] = "PATCH_FACE4";
+    boundaryName[85] = "PATCH_FACE5";
+    boundaryName[86] = "PATCH_FACE6";
+    boundaryName[87] = "PATCH_FACE7";
+    boundaryName[88] = "PATCH_FACE8";
+    boundaryName[89] = "PATCH_FACE9";
+    boundaryName[90] = "PATCH_FACE10";
+    boundaryName[99] = "PERIODIC";
+
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        StructGrid *grid = StructGridCast(structGrids[iZone]);
+
+        int ni, nj, nk;
+        ReadNewLine(file, line);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (ni,word, std::dec);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (nj, word, std::dec);
+        nk = 1;
+        if (nDim == THREE_D)
+        {
+            line = FindNextWord(line, word, separator);
+            from_string <int> (nk, word, std::dec);
+        }
+
+        cout << "ni,nj,nk = " << ni << " " << nj << " " << nk << "\n";
+        int ndif = ABS(ni - grid->GetNI()) + ABS(nj - grid->GetNJ()) + ABS(nk - grid->GetNK()) ;
+        if (ndif != 0)
+        {
+            cout << "第" << iZone + 1 << "块边界条件文件里的维数与网格文件中的维数不一致!\n";
+        }
+
+        line = FindNextWord(line, word, separator);
+
+
+        if (word == "proc")
+        {
+            blockProcessFlag = true;
+            line = FindNextWord(line, word, separator);
+            int proc = 0;
+            from_string <int> (proc, word, std::dec);
+            blockProcessorINP[iZone] = proc;
+        }
+
+        string blockname;
+        ReadNewLine(file, line);
+        line = FindNextWord(line, blockname, separator);
+        int numberOfBCRegion;
+        ReadNewLine(file, line);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (numberOfBCRegion, word, std::dec);
+
+        grid->CreateCompositeBCRegion(numberOfBCRegion);
+        CompositeBCRegion * compositeBCRegion = grid->GetCompositeBCRegion();
+        for (int iBCRegion = 0; iBCRegion < numberOfBCRegion; ++ iBCRegion)
+        {
+            int imin, imax, jmin, jmax, kmin, kmax, BCType;
+            ReadNewLine(file, line);
+            line = FindNextWord(line, word, separator);
+            from_string <int> (imin, word, std::dec);
+            line = FindNextWord(line, word, separator);
+            from_string <int> (imax, word, std::dec);
+
+            line = FindNextWord(line, word, separator);
+            from_string <int> (jmin, word, std::dec);
+            line = FindNextWord(line, word, separator);
+            from_string <int> (jmax, word, std::dec);
+
+            if (nDim == THREE_D)
+            {
+                line = FindNextWord(line, word, separator);
+                from_string <int> (kmin, word, std::dec);
+                line = FindNextWord(line, word, separator);
+                from_string <int> (kmax, word, std::dec);
+            }
+            else
+            {
+                kmin = 1;
+                kmax = 1;
+            }
+
+            line = FindNextWord(line, word, separator);
+            from_string <int> (BCType, word, std::dec);
+
+            BCRegion *BCRegions = new BCRegion(iZone, iBCRegion);
+            compositeBCRegion->SetBCRegion(iBCRegion, BCRegions);
+            BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+            BCRegions->SetBCType(BCType);
+
+            string bcName;
+            line = FindNextWord(line, bcName, separator);
+            if (bcName == "")
+            {
+                if (BCType == -1)
+                {
+                    bcName = "Connection";
+                }
+                else
+                {
+                    bcName = boundaryName[BCType];
+                    if ((BCType >7) && (BCType <51))
+                    {
+                        BCType = 2;
+                        BCRegions->SetBCType(BCType);
+                    }
+                }
+                BCRegions->SetBCName(bcName);
+            }
+            else
+            {
+                BCRegions->SetBCName(bcName);
+            }
+
+            if (BCType < 0)
+            {
+                int nbt, originalBlockIndex;
+                ReadNewLine(file, line);
+                line = FindNextWord(line, word, separator);
+                from_string <int> (imin, word, std::dec);
+                line = FindNextWord(line, word, separator);
+                from_string <int> (imax, word, std::dec);
+
+                line = FindNextWord(line, word, separator);
+                from_string <int> (jmin, word, std::dec);
+                line = FindNextWord(line, word, separator);
+                from_string <int> (jmax, word, std::dec);
+
+                if (nDim == THREE_D)
+                {
+                    line = FindNextWord(line, word, separator);
+                    from_string <int> (kmin, word, std::dec);
+                    line = FindNextWord(line, word, separator);
+                    from_string <int> (kmax, word, std::dec);
+                }
+                else
+                {
+                    kmin = 1;
+                    kmax = 1;
+                }
+
+                line = FindNextWord(line, word, separator);
+                from_string <int> (originalBlockIndex , word, std::dec);
+                nbt = originalBlockIndex - 1;
+                BCRegions->SetTargetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+                BCRegions->SetTargetRegionBlock(nbt);
+                if (nDim == THREE_D)
+                {
+                    BCRegions->ComputeRelativeParameters();
+                }
+            }
+            //BCType=99，periodic boundary condition. The processing is the same with the interface BC，only the relationship is needed
+            //only for the case that the corresponding faces are in the same block, and the left face is the same with the right one
+            if (BCType == 99)  ///The BC type (the seventh column)should be set as 99 
+            {
+                int BCTypeModified; //the modified BC type -1
+                int iminTarget, imaxTarget, jminTarget, jmaxTarget, kminTarget, kmaxTarget;  //target face information
+                
+                //BCRegion->SetBCType(PHENGLEI::INTERFACE);
+                BCTypeModified = -1; //if the bc is periodic，processing it as interface
+                BCRegions->SetBCType(BCTypeModified);
+                                                
+                if (imin == imax)  //i direction		
+                {	//jmin，jmax，kmin，kmax in the target face is the same with the source face
+                    
+                    jmin = - jmin;
+                    jmax = - jmax;
+                    BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+
+                    jminTarget = jmin;
+                    jmaxTarget = jmax;
+                    kminTarget = kmin;
+                    kmaxTarget = kmax;
+
+                    if (imin == 1)  
+                    {
+                        iminTarget = ni;
+                        imaxTarget = ni;  
+                    }
+                    else      
+                    {
+                        iminTarget = 1;
+                        imaxTarget = 1;  
+                    }
+                }
+                if (jmin == jmax)  //j direction	
+                {	//imin，imax，kmin，kmax in the target face is the same with the source face
+
+                    imin = - imin;
+                    imax = - imax;
+                    BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+
+                    iminTarget = imin;
+                    imaxTarget = imax;
+                    kminTarget = kmin;
+                    kmaxTarget = kmax;
+                    
+                    if (jmin == 1)  
+                    {
+                        jminTarget = nj;
+                        jmaxTarget = nj;  
+                    }
+                    else      
+                    {
+                        jminTarget = 1;
+                        jmaxTarget = 1;
+                    }
+                }
+                if (kmin == kmax)  //k direction
+                {
+                    //imin，imax，jmin，jmax in the target face is the same with the source face
+                    imin = - imin;
+                    imax = - imax;
+                    BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+
+                    iminTarget = imin;
+                    imaxTarget = imax;
+                    jminTarget = jmin;
+                    jmaxTarget = jmax;
+                    
+                    if (kmin == 1)  
+                    {
+                        kminTarget = nk;
+                        kmaxTarget = nk;  
+                    }
+                    else      
+                    {
+                        kminTarget = 1;
+                        kmaxTarget = 1;  
+                    }
+                }
+
+                int nbTarget = iZone;  //targer block id is the same with the source one
+
+                BCRegions->SetTargetIJKRegion(iminTarget, imaxTarget, jminTarget, jmaxTarget, kminTarget, kmaxTarget);
+                BCRegions->SetTargetRegionBlock(nbTarget);
+                
+                if (nDim == THREE_D)
+                {
+                    BCRegions->ComputeRelativeParameters();
+                }
+            }
+        }
+    }
+
+    if(!blockProcessFlag)
+    {
+        delete []blockProcessorINP;
+        SetZoneProcessID_INP(0);
+    }
+
+    file.close();
+    file.clear();
+}
+
+}

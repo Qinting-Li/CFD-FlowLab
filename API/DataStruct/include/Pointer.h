@@ -1,0 +1,176 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file      Pointer.h
+//! @brief     Pointer operation for multi-dimensional array.
+//! @author    He Xin, Bell.
+
+#pragma once
+#include <vector>
+using namespace std;
+
+namespace PHSPACE
+{
+template < typename T >
+T* NewPointer(int nlen)
+{
+    T * variable = new T [nlen];
+	
+    return variable;
+}
+
+template < typename T >
+T** NewPointer2(int nm, int nlen)
+{
+    T ** vv = new T * [ nm ];
+	vv[0] = new T[ nm * nlen ];
+    for ( int m = 1; m < nm; ++ m )
+    {
+        vv[m] = &vv[m-1][nlen];
+    }
+    return vv;
+}
+
+template < typename T >
+T** NewPointer2(int nm, int *nlen)
+{
+    int count = 0;
+
+    for ( int m = 0; m < nm; ++ m )
+    {
+        count += nlen[m];
+    }
+
+    T ** vv = new T * [ nm ];
+	vv[0] = new T[ count ];
+    for ( int m = 1; m < nm; ++ m )
+    {
+        vv[m] = &vv[m-1][ nlen[m-1] ];
+    }
+    return vv;
+}
+
+
+template < typename T >
+T*** NewPointer3(int ni, int nj, int nk)
+{
+	T *** v3 = new T ** [ ni ];
+	v3[0]    = new T *  [ ni * nj ];
+	v3[0][0] = new T    [ ni * nj * nk ];
+
+	for ( int i = 1; i < ni; ++ i )
+	{
+		v3[i] = &v3[i-1][nj];
+	}
+
+	for ( int j = 1; j < nj; ++ j )
+	{
+		v3[0][j] = &v3[0][j-1][nk];
+	}
+
+	for ( int i = 1; i < ni; ++ i )
+	{
+		v3[i][0] = &v3[i-1][nj-1][nk];
+		for ( int j = 1; j < nj; ++ j )
+		{
+			v3[i][j] = &v3[i][j-1][nk];
+		}
+	}
+
+	return v3;
+}
+
+template < typename T >
+T *** NewPointer3(int nCell, int nEqn, const int * nlen)
+{
+    int count = 0;
+
+    for ( int m = 0; m < nCell; ++ m )
+    {
+        count += nEqn * nlen[m];
+    }
+
+    T *** v3 = new T ** [ nCell ];
+    v3[0]    = new T *  [ nCell * nEqn ];
+    v3[0][0] = new T    [ count ];
+
+    for ( int i = 1; i < nCell; ++ i )
+    {
+        v3[i] = &v3[i-1][nEqn];
+    }
+
+    for ( int j = 1; j < nEqn; ++ j )
+    {
+        v3[0][j] = &v3[0][j-1][nlen[0]];
+    }
+
+    for ( int i = 1; i < nCell; ++ i )
+    {
+        v3[i][0] = &v3[i-1][nEqn-1][nlen[i-1]];
+        for ( int j = 1; j < nEqn; ++ j )
+        {
+            v3[i][j] = &v3[i][j-1][nlen[i]];
+        }
+    }
+
+    return v3;
+}
+
+template < typename T >
+T** NewFastPointer(vector < T * > &vec)
+{
+	T ** vv = new T * [ vec.size() ];
+	for ( int m = 0; m < vec.size(); ++ m )
+	{
+		vv[m] = vec[m];
+	}
+	return vv;
+}
+
+template < typename T >
+void DelPointer(T *& v)
+{
+	if ( !v ) return;
+	delete [] v;
+    v = 0;
+}
+
+template < typename T >
+void DelPointer2(T ** v)
+{
+    if ( !v ) return;
+    delete [] v[0];
+    delete [] v;
+}
+
+
+template < typename T >
+void DelPointer3(T *** v3)
+{
+	delete [] v3[0][0];
+	delete [] v3[0];
+	delete [] v3;
+}
+
+
+template < typename T >
+void DelFastPointer( T ** v )
+{
+	delete [] v;
+}
+
+template < typename T >
+void FreePointer(T *& pointer)
+{
+	if ( !pointer ) return;
+	delete pointer; pointer = 0;
+}
+}
