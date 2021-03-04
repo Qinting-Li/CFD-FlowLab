@@ -1,0 +1,8 @@
+3                                                 //! Set the total number of probes.
+Probe1                                            //! Set the name of probe.
+0.0254 0.0253 0.0                                 //! Set the coordinate x,y,z of probe,unit of m.
+Probe2
+0.0508 0.0253 0.0
+Probe3
+0.0762 0.0253 0.0
+
