@@ -4,18 +4,18 @@ using namespace std;
 namespace PHSPACE
 {
 
-SuperChar::SuperChar()
+DataChar::DataChar()
 {
 	data = new vector<char>;
     pos  = 0;
 }
 
-SuperChar::~SuperChar()
+DataChar::~DataChar()
 {
 	delete data;
 }
 
-void SuperChar::moveto(CharVecSizeType pos)
+void DataChar::moveto(CharVecSizeType pos)
 {
 	if ( ( 0 < pos ) && ( pos < size() ) )
 	{
@@ -36,31 +36,31 @@ void SuperChar::moveto(CharVecSizeType pos)
 	}
 }
 
-void SuperChar::forward_position(CharVecSizeType size)
+void DataChar::forward_position(CharVecSizeType size)
 {
 	pos += size;
 }
 
-CharVecSizeType SuperChar::size()
+CharVecSizeType DataChar::size()
 {
 	return data->size();
 }
 
-char * SuperChar::begin()
+char * DataChar::begin()
 { 
     //当size为零时要考虑
     if ( this->size() == 0 ) return 0;
     return &( (*data)[0] );
 }
 
-char * SuperChar::data_pointer()
+char * DataChar::data_pointer()
 { 
     //当size为零时要考虑
     if ( this->size() == 0 ) return 0;
     return &( (*data)[pos] );
 }
 
-void SuperChar::to_string(string &str)
+void DataChar::to_string(string &str)
 {
 	if ( size() )
 	{
@@ -68,7 +68,7 @@ void SuperChar::to_string(string &str)
 	}
 }
 
-void SuperChar::write(void * data, CharVecSizeType size)
+void DataChar::write(void * data, CharVecSizeType size)
 {
 	if ( size <= 0 ) return;
 
@@ -76,31 +76,31 @@ void SuperChar::write(void * data, CharVecSizeType size)
 	forward_position(size);
 }
 
-void SuperChar::read(void * data, CharVecSizeType size)
+void DataChar::read(void * data, CharVecSizeType size)
 {
 	if ( size <= 0 ) return;
 	memcpy(data, data_pointer(), size);
 	forward_position(size);
 }
 
-void SuperChar::write(void * data, CharVecSizeType size, int pos)
+void DataChar::write(void * data, CharVecSizeType size, int pos)
 {
 	moveto(pos);
 	write(data, size);
 }
 
-void SuperChar::read(void * data, CharVecSizeType size, int pos)
+void DataChar::read(void * data, CharVecSizeType size, int pos)
 {
 	moveto(pos);
 	read(data, size);
 }
 
-void SuperChar::resize(CharVecSizeType size)
+void DataChar::resize(CharVecSizeType size)
 {
 	this->data->resize(size);
 }
 
-void SuperChar::readfile(fstream &file)
+void DataChar::readfile(fstream &file)
 {
     CharVecSizeType nlen = this->size();
 	if ( nlen <= 0 ) return;
@@ -110,7 +110,7 @@ void SuperChar::readfile(fstream &file)
 	file.read(data, nlen);
 }
 
-void SuperChar::writefile(fstream &file)
+void DataChar::writefile(fstream &file)
 {
     CharVecSizeType nlen = this->size();
 	if ( nlen <= 0 ) return;
@@ -128,15 +128,15 @@ DataContainer::DataContainer(DataContainer * rhs)
 	finish = 1;
 	pos  = 0;
 	elem_pos = 0;
-	data = new vector< SuperChar * >;
+	data = new vector< DataChar * >;
 	ContainerSizeType nelement = rhs->element_size();
 	data->resize(nelement);
 	for ( ContainerSizeType i = 0; i < nelement; ++ i )
 	{
-		SuperChar * rhsData = rhs->getiter(i);
+		DataChar * rhsData = rhs->getiter(i);
 		CharVecSizeType nlen = rhsData->size();
 
-		SuperChar * sectionData = new SuperChar;
+		DataChar * sectionData = new DataChar;
 		sectionData->resize(nlen);
 
 		sectionData->moveto_begin();
@@ -155,8 +155,8 @@ DataContainer::DataContainer()
 	max_unit_size = 102400000;
 	start  = 0;
 	finish = 1;
-	data = new vector< SuperChar * >;
-	data->push_back(new SuperChar());
+	data = new vector< DataChar * >;
+	data->push_back(new DataChar());
 	pos  = 0;
 	elem_pos = 0;
 }
@@ -176,14 +176,14 @@ ContainerSizeType DataContainer::element_size()
 	return data->size();
 }
 
-SuperChar * DataContainer::getcurr()
+DataChar * DataContainer::getcurr()
 {
 	//假定当前element总是和pos自洽的
 	elem_pos = pos / max_unit_size;
 	return (*data)[elem_pos];
 }
 
-SuperChar * DataContainer::getiter(ContainerSizeType i)
+DataChar * DataContainer::getiter(ContainerSizeType i)
 {
 	return (*data)[i];
 }
@@ -360,7 +360,7 @@ void DataContainer::element_resize(ContainerSizeType new_size)
 
 		for ( ContainerSizeType i = ist; i != ied; ++ i )
 		{
-			data->push_back( new SuperChar() );
+			data->push_back( new DataChar() );
 		}
 	}
 }
@@ -458,7 +458,7 @@ void DataContainer::append(void * data, CharVecSizeType size)
 	getcurr()->write(data,size);
 }
 
-void DataContainer::destroy(SuperChar *iter)
+void DataContainer::destroy(DataChar *iter)
 {
 	delete iter;
 }

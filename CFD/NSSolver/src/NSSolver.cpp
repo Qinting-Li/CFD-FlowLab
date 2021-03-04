@@ -120,14 +120,6 @@ void NSSolver::Post()
         TecOutAverageFlow(actkeyTecOutAverageFlow);
         delete actkeyTecOutAverageFlow;
     }
-
-    if (IsNeedDESStatistics())
-    {
-        ActionKey *actkeyDumpAverageFlow = new ActionKey();
-        FillActionKey(actkeyDumpAverageFlow, DUMP_AVERAGE_FLOW, 0);
-        DumpAverageFlow(actkeyDumpAverageFlow);
-        delete actkeyDumpAverageFlow;
-    }
 }
 
 void NSSolver::PostSolve(Grid *grid, int stage, int level)
@@ -157,13 +149,6 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
         {
             Turbulent_Flat_Plate_Output_NASA(grid);
         }
-        //FlatPlateOutput(grid);
-        //SupersonicFlatPlateOutput(grid);
-        //Turbulent_Flat_Plate_Output(grid);            
-        //SupersonicTurbulentPlateOutput(grid);
-        //RAE_2822_Output(grid);
-        //DumpSingleAirfoilCp(grid);
-        //M6Wing_Output(grid);
     }
 
     if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
@@ -173,15 +158,6 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
         FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
         DumpRestartData(actkeyDumpRestartData);
         delete actkeyDumpRestartData;
-
-        if (IsNeedDESStatistics())
-        {
-            //! To dump Average Flow if necessary. 
-            ActionKey *actkeyDumpAverageFlow = new ActionKey();
-            FillActionKey(actkeyDumpAverageFlow, DUMP_AVERAGE_FLOW, level);
-            DumpAverageFlow(actkeyDumpAverageFlow);
-            delete actkeyDumpAverageFlow;
-        }
     }
 
     if (outnstep % intervalStepPlot == 0 && isSubIterationDump)

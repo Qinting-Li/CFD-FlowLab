@@ -109,6 +109,8 @@ public:
     //! Compute inviscid and viscous flux and source terms.
     void UpdateResiduals(int iSolver, int level);
 
+    void UpdateResidualsOnlyforMixGrid(int iSolver, int level);
+
     //! Compute pressure factor for entropy fix (Method 2).
     void PressureFactor(int iSolver, int level);
 
@@ -184,7 +186,8 @@ private:
     void CommunicateGenericArray(int iSolver, int level);
     void CommunicateGradientArray(int iSolver, int level);
     void CommunicateSpecificArray(int iSolver, int level, string arrayName, int nEquation);
-    void CommunicateGradientOnlyForMixGrid();
+    void CommunicateGradientandLimitOnlyForMixGrid();
+    void CommunicateQlQrOnlyforMixGrid();
     void CommunicateFacefluxOnlyforMixGrid();
 
     void LHS(int iSolver, int level, FieldProxy **resProxy, const RDouble &coef);

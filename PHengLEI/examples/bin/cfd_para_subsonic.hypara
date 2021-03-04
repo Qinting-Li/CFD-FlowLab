@@ -131,7 +131,7 @@ double venkatCoeff      = 50.0;
 // CFLEnd: The CFL number, [0.1, 100].
 //         The bigger the value, the convergence faster but lower robustness.
 // nLUSGSSweeps: Number of Sub-iteration of LU-SGS.
-//               0 -- is recommended for structured solver.
+//               1 -- is recommended for structured solver.
 //             1-3 -- is recommended for unstructured solver.
 
 int iunsteady = 0;

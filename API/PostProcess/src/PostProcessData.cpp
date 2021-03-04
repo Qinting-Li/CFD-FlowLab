@@ -18,8 +18,8 @@ PostProcessData::PostProcessData()
     cmy = 0;
     cmz = 0;
 
-    clTot   = 0;
-    cdTot   = 0;
+    clTot    = 0;
+    cdTot    = 0;
     cd_pr    = 0;
     cd_sf    = 0;
     cd_cl2pa = 0;
@@ -33,27 +33,27 @@ PostProcessData::PostProcessData()
 
 PostProcessData::~PostProcessData()
 {
-    delete []partBCID;
+    delete [] partBCID;
 
-    delete []cfx;
-    delete []cfy;
-    delete []cfz;
-    delete []cpx;
-    delete []cpy;
-    delete []cpz;
-    delete []cmx;
-    delete []cmy;
-    delete []cmz;
+    delete [] cfx;
+    delete [] cfy;
+    delete [] cfz;
+    delete [] cpx;
+    delete [] cpy;
+    delete [] cpz;
+    delete [] cmx;
+    delete [] cmy;
+    delete [] cmz;
 
-    delete []clTot;
-    delete []cdTot;
-    delete []cd_pr;
-    delete []cd_sf;
-    delete []cd_cl2pa;
-    delete []xcp;
-    delete []side;
+    delete [] clTot;
+    delete [] cdTot;
+    delete [] cd_pr;
+    delete [] cd_sf;
+    delete [] cd_cl2pa;
+    delete [] xcp;
+    delete [] side;
 
-    delete []hingeMoment;
+    delete [] hingeMoment;
 }
 
 void PostProcessData::SetNWallPart(int numberofSolidWallPartIn)
@@ -68,7 +68,7 @@ void PostProcessData::SetNPart(int numberofTotalPartIn)
 
 void PostProcessData::SetPartBCID(int *partBCIDIn)
 {
-    if(this->partBCID)
+    if (this->partBCID)
     {
         delete this->partBCID;
     }
@@ -77,7 +77,7 @@ void PostProcessData::SetPartBCID(int *partBCIDIn)
 
 void PostProcessData::SetCfx(RDouble *cfxIn)
 {
-    if(this->cfx)
+    if (this->cfx)
     {
         delete this->cfx;
     }
@@ -86,7 +86,7 @@ void PostProcessData::SetCfx(RDouble *cfxIn)
 
 void PostProcessData::SetCfy(RDouble *cfyIn)
 {
-    if(this->cfy)
+    if (this->cfy)
     {
         delete this->cfy;
     }
@@ -95,7 +95,7 @@ void PostProcessData::SetCfy(RDouble *cfyIn)
 
 void PostProcessData::SetCfz(RDouble *cfzIn)
 {
-    if(this->cfz)
+    if (this->cfz)
     {
         delete this->cfz;
     }
@@ -104,7 +104,7 @@ void PostProcessData::SetCfz(RDouble *cfzIn)
 
 void PostProcessData::SetCpx(RDouble *cpxIn)
 {
-    if(this->cpx)
+    if (this->cpx)
     {
         delete this->cpx;
     }
@@ -113,7 +113,7 @@ void PostProcessData::SetCpx(RDouble *cpxIn)
 
 void PostProcessData::SetCpy(RDouble *cpyIn)
 {
-    if(this->cpy)
+    if (this->cpy)
     {
         delete this->cpy;
     }
@@ -122,7 +122,7 @@ void PostProcessData::SetCpy(RDouble *cpyIn)
 
 void PostProcessData::SetCpz(RDouble *cpzIn)
 {
-    if(this->cpz)
+    if (this->cpz)
     {
         delete this->cpz;
     }
@@ -131,7 +131,7 @@ void PostProcessData::SetCpz(RDouble *cpzIn)
 
 void PostProcessData::SetCmx(RDouble *cmxIn)
 {
-    if(this->cmx)
+    if (this->cmx)
     {
         delete this->cmx;
     }
@@ -140,7 +140,7 @@ void PostProcessData::SetCmx(RDouble *cmxIn)
 
 void PostProcessData::SetCmy(RDouble *cmyIn)
 {
-    if(this->cmy)
+    if (this->cmy)
     {
         delete this->cmy;
     }
@@ -149,7 +149,7 @@ void PostProcessData::SetCmy(RDouble *cmyIn)
 
 void PostProcessData::SetCmz(RDouble *cmzIn)
 {
-    if(this->cmz)
+    if (this->cmz)
     {
         delete this->cmz;
     }
@@ -158,7 +158,7 @@ void PostProcessData::SetCmz(RDouble *cmzIn)
 
 void PostProcessData::SetClTot(RDouble *clTotIn)
 {
-    if(this->clTot)
+    if (this->clTot)
     {
         delete this->clTot;
     }
@@ -167,7 +167,7 @@ void PostProcessData::SetClTot(RDouble *clTotIn)
 
 void PostProcessData::SetCdTot(RDouble *cdTotIn)
 {
-    if(this->cdTot)
+    if (this->cdTot)
     {
         delete this->cdTot;
     }
@@ -176,7 +176,7 @@ void PostProcessData::SetCdTot(RDouble *cdTotIn)
 
 void PostProcessData::SetCdPr(RDouble *cd_prIn)
 {
-    if(this->cd_pr)
+    if (this->cd_pr)
     {
         delete this->cd_pr;
     }
@@ -185,7 +185,7 @@ void PostProcessData::SetCdPr(RDouble *cd_prIn)
 
 void PostProcessData::SetCdSf(RDouble *cd_sfIn)
 {
-    if(this->cd_sf)
+    if (this->cd_sf)
     {
         delete this->cd_sf;
     }
@@ -194,7 +194,7 @@ void PostProcessData::SetCdSf(RDouble *cd_sfIn)
 
 void PostProcessData::SetCdCl2Pa(RDouble *cd_cl2paIn)
 {
-    if(this->cd_cl2pa)
+    if (this->cd_cl2pa)
     {
         delete this->cd_cl2pa;
     }
@@ -203,7 +203,7 @@ void PostProcessData::SetCdCl2Pa(RDouble *cd_cl2paIn)
 
 void PostProcessData::SetXcp(RDouble *xcpIn)
 {
-    if(this->xcp)
+    if (this->xcp)
     {
         delete this->xcp;
     }
@@ -212,7 +212,7 @@ void PostProcessData::SetXcp(RDouble *xcpIn)
 
 void PostProcessData::SetSide(RDouble *sideIn)
 {
-    if(this->side)
+    if (this->side)
     {
         delete this->side;
     }
@@ -221,7 +221,7 @@ void PostProcessData::SetSide(RDouble *sideIn)
 
 void PostProcessData::SetHingeMoment(RDouble *hingeMomentIn)
 {
-    if(this->hingeMoment)
+    if (this->hingeMoment)
     {
         delete this->hingeMoment;
     }
@@ -244,87 +244,87 @@ int *PostProcessData::GetPartBCID()
 };
 
 RDouble *PostProcessData::GetCfx()
-{ 
+{
     return this->cfx; 
 };
 
 RDouble *PostProcessData::GetCfy() 
-{ 
+{
     return this->cfy; 
 };
 
 RDouble *PostProcessData::GetCfz() 
-{ 
+{
     return this->cfz; 
 };
 
 RDouble *PostProcessData::GetCpx() 
-{ 
+{
     return this->cpx; 
 };
 
 RDouble *PostProcessData::GetCpy() 
-{ 
+{
     return this->cpy; 
 };
 
 RDouble *PostProcessData::GetCpz() 
-{ 
+{
     return this->cpz; 
 };
 
 RDouble *PostProcessData::GetCmx() 
-{ 
+{
     return this->cmx; 
 };
 
 RDouble *PostProcessData::GetCmy() 
-{ 
+{
     return this->cmy; 
 };
 
 RDouble *PostProcessData::GetCmz() 
-{ 
+{
     return this->cmz; 
 };
 
 RDouble *PostProcessData::GetClTot() 
-{ 
+{
     return this->clTot; 
 };
 
 RDouble *PostProcessData::GetCdTot() 
-{ 
+{
     return this->cdTot; 
 };
 
 RDouble *PostProcessData::GetCdPr() 
-{ 
+{
     return this->cd_pr; 
 };
 
 RDouble *PostProcessData::GetCdSf() 
-{ 
+{
     return this->cd_sf; 
 };
 
 RDouble *PostProcessData::GetCdCl2Pa() 
-{ 
+{
     return this->cd_cl2pa; 
 };
 
 RDouble *PostProcessData::GetXcp() 
-{ 
+{
     return this->xcp; 
 };
 
 RDouble *PostProcessData::GetSide() 
-{ 
+{
     return this->side; 
 };
 
 RDouble *PostProcessData::GetHingeMoment() 
-{ 
+{
     return this->hingeMoment; 
 };
 

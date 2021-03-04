@@ -1,4 +1,5 @@
 #include "Geo_MultiGridInfo_Struct.h"
+
 namespace PHSPACE
 {
 Geo_MultiGridInfo_Struct::Geo_MultiGridInfo_Struct()

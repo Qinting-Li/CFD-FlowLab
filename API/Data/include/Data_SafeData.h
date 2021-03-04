@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -27,50 +27,51 @@ namespace PHSPACE
 class Data_SafeData
 {
 private:
-	string          name;
-	void            *data;
-	int             type;
-	int             size;
+    string name;
+    void  *data;
+    int    type;
+    int    size;
+
 public:
-	//! Construct function.
-	Data_SafeData(const string &name,void *data,int type, int size);
+    //! Construct function.
+    Data_SafeData(const string &name, void *data, int type, int size);
 
-	//! Copy Construct function.
-	Data_SafeData( const Data_SafeData & rhs );
+    //! Copy Construct function.
+    Data_SafeData(const Data_SafeData &rhs);
 
-	//! Destructor, free memory.
-	~Data_SafeData();
+    //! Destructor, free memory.
+    ~Data_SafeData();
 
-	//! OverWrite old data by new type and size data.
-	void OverWrite(void *data,int type,int size);
+    //! OverWrite old data by new type and size data.
+    void OverWrite(void *data, int type, int size);
 
-	//! Print Data to window.
-	void ShowData();
+    //! Print Data to window.
+    void ShowData();
 
-	//! Returns data's name.
-	string GetName() const;
+    //! Returns data's name.
+    string GetName() const;
 
-	//! Returns data's type.
-	int GetType() const;
+    //! Returns data's type.
+    int GetType() const;
 
-	//! Returns data's size.
-	int GetSize() const;
+    //! Returns data's size.
+    int GetSize() const;
 
-	//! Returns pointer to the data.
-	void * GetData() const;
+    //! Returns pointer to the data.
+    void * GetData() const;
 
-	//! Override operator < used by set<Data_SafeData>, sort by name.
-	bool operator < ( const Data_SafeData & rhs ) const;
+    //! Override operator < used by set<Data_SafeData>, sort by name.
+    bool operator < (const Data_SafeData &rhs) const;
+
 private:
-
     //! Override operator < used by set<Data_SafeData>.
-	Data_SafeData & operator = ( const Data_SafeData & rhs );
+    Data_SafeData & operator = (const Data_SafeData &rhs);
 
     //! Invoking function copy_data_sub.
-	void CopyData(void *data,int type,int size);
+    void CopyData(void *data, int type, int size);
 
     //! Invoking function delete_void.
-	void DeleteData();
+    void DeleteData();
 };
 
 }

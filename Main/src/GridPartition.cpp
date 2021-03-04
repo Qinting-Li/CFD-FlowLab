@@ -27,10 +27,6 @@ void PartitionGrid()
     {
         PartitionStructGrid();
     }
-    else
-    {
-        RefineStructGrid();
-    }
 }
 
 void PartitionStructGrid()

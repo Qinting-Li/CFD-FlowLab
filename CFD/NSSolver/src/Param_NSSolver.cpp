@@ -57,16 +57,6 @@ LIB_EXPORT void Param_NSSolver::Init()
 
     primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
 
-    subsonicInletTotalPressure = GlobalDataBase::GetDoubleParaFromDB("subsonicInletTotalPressure");
-
-    subsonicInletTotalTemperature = GlobalDataBase::GetDoubleParaFromDB("subsonicInletTotalTemperature");
-
-    subsonicOutletTotalPressure = GlobalDataBase::GetDoubleParaFromDB("subsonicOutletTotalPressure");
-
-    subsonicOutletTotalTemperature = GlobalDataBase::GetDoubleParaFromDB("subsonicOutletTotalTemperature");
-
-    subsonicDirectionType   = GlobalDataBase::GetIntParaFromDB("directionMethod");
-
     numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
 }
 

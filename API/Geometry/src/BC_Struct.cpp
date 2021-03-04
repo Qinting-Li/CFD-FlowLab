@@ -3,6 +3,7 @@
 #include "Math_BasisFunction.h"
 #include "OversetGridFactory.h"
 #include "BC.h"
+
 namespace PHSPACE
 {
 BCRegion::BCRegion(int zoneID, uint_t regionID)
@@ -40,6 +41,36 @@ BCRegion::~BCRegion()
     {
         delete bcData;
     }
+}
+
+Data_Param * BCRegion::GetBCDataParam(){
+
+    vector<BoundaryCondition *> * globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
+    if (bcData == NULL)
+    {
+        if (globalBCList != NULL)
+        {
+            vector<BoundaryCondition *>::iterator iter;
+            string bcRegionName = this->GetBCName();
+            for (iter = globalBCList->begin(); iter != globalBCList->end(); iter++)
+            {
+                string globalBCName = (*iter)->GetBCName();
+                Data_Param * globalBCParam = (*iter)->GetBCParamDataBase();
+                Data_Param * bcData = new Data_Param(*globalBCParam);
+                if (globalBCName == bcRegionName)
+                {
+                    this->SetBCDataParam(bcData);
+                }
+            }
+        }
+        else
+        {
+            Data_Param * bcData = new Data_Param();
+            this->SetBCDataParam(bcData);
+        }
+        return bcData;
+    }
+    return bcData;
 }
 
 void BCRegion::ComputeRelativeParameters()
@@ -504,32 +535,6 @@ void CompositeBCRegion::CopyCompositeBCRegion(CompositeBCRegion * rightHandSide)
 
 BCRegion * CompositeBCRegion::GetBCRegion(uint_t iBCRegion) const 
 {
-    vector<BoundaryCondition *> * globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
-    Data_Param * bcData = (*bcregions)[iBCRegion]->GetBCDataParam();
-    if (bcData == NULL)
-    {
-        if (globalBCList != NULL)
-        {
-            vector<BoundaryCondition *>::iterator iter;
-            string bcRegionName = (*bcregions)[iBCRegion]->GetBCName();
-            for (iter = globalBCList->begin(); iter != globalBCList->end(); iter++)
-            {
-                string globalBCName = (*iter)->GetBCName();
-                Data_Param * globalBCParam = (*iter)->GetBCParamDataBase();
-                if (globalBCName == bcRegionName)
-                {
-                    (*bcregions)[iBCRegion]->SetBCDataParam(globalBCParam);
-                }
-            }
-        }
-        else
-        {
-            Data_Param * bcData = new Data_Param();
-            (*bcregions)[iBCRegion]->SetBCDataParam(bcData);
-        }
-        return (*bcregions)[iBCRegion];
-    }
-
     return (*bcregions)[iBCRegion]; 
 }
 
@@ -721,6 +726,11 @@ void CompositeBCRegion::SetIFaceInfo()
 			}
         }
 	}
+}
+
+int* CompositeBCRegion::GetIFaceInfo()
+{
+    return face_of_bcregion;
 }
 
 void CompositeBCRegion::ProcessBCInfo()

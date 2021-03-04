@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -11,8 +11,9 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Geo_StructGrid.h
 //! @brief     It is type of Structured geometry grid.
-//!			   The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid
+//!            The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid
 //! @author    He Xin, Bell.
+
 #pragma once
 #include "Geo_Grid.h"
 #include "Geo_OversetGridTopo_Struct.h"
@@ -77,6 +78,12 @@ private:
 	Geo_OversetGridTopo_Struct *oversetGridTopology;
   
 	PHDouble2D localFrame;
+
+    //! Probes nearest node dimension of i,j,k directions.
+    vector <int> probesNearestNI;
+    vector <int> probesNearestNJ;
+    vector <int> probesNearestNK;
+
 public:
 	LIB_EXPORT StructGrid();
     LIB_EXPORT ~StructGrid();
@@ -173,6 +180,24 @@ public:
 	//! Returns the node dimension of K direction (nk).
 	int  GetNK() const;
 
+    //! Set the probes nearest node dimension of I direction (ni).
+    void SetProbesNearestNI(vector <int> probesNearestNI);
+
+    //! Set the probes nearest node dimension of J direction (nj).
+    void SetProbesNearestNJ(vector <int> probesNearestNJ);
+
+    //! Set the probes nearest node dimension of K direction (nk).
+    void SetProbesNearestNK(vector <int> probesNearestNK);
+
+    //! Returns Set the probes nearest node dimension of I direction (ni).
+    vector <int> GetProbesNearestNI() const;
+
+    //! Returns the probes nearest node dimension of J direction (nj).
+    vector <int> GetProbesNearestNJ() const;
+
+    //! Returns Set the probes nearest node dimension of K direction (nk).
+    vector <int> GetProbesNearestNK() const;
+
 	//! Returns the cell iteration index, for example: if layer = 0, then ist = 1, ied = ni-1. 
 	void GetCellIterationIndex(int & ist, int & ied, int & jst, int & jed, int & kst, int & ked, int layer = 0);
 
@@ -264,6 +289,8 @@ public:
     void UploadGridInfoOnlyforStructHighOrder_mission6(DataContainer *&dataContainer, const int &neighborZoneIndex);
     void UploadGridInfoOnlyforStructHighOrder_mission7(DataContainer *&dataContainer, const int &neighborZoneIndex);
     void UploadGridInfoOnlyforStructHighOrder_mission8(DataContainer *&dataContainer, const int &neighborZoneIndex);
+    void UploadGridInfoOnlyforStructHighOrder_mission9(DataContainer *&dataContainer, const int &neighborZoneIndex);
+    void UploadGridInfoOnlyforStructHighOrder_mission10(DataContainer *&dataContainer, const int &neighborZoneIndex);
 
 
     void DownloadGridInfoOnlyforStructHighOrder_mission1(DataContainer *&dataContainer, const int &neighborZoneIndex);
@@ -274,6 +301,8 @@ public:
     void DownloadGridInfoOnlyforStructHighOrder_mission6(DataContainer *&dataContainer, const int &neighborZoneIndex);
     void DownloadGridInfoOnlyforStructHighOrder_mission7(DataContainer *&dataContainer, const int &neighborZoneIndex);
     void DownloadGridInfoOnlyforStructHighOrder_mission8(DataContainer *&dataContainer, const int &neighborZoneIndex);
+    void DownloadGridInfoOnlyforStructHighOrder_mission9(DataContainer *&dataContainer, const int &neighborZoneIndex);
+    void DownloadGridInfoOnlyforStructHighOrder_mission10(DataContainer *&dataContainer, const int &neighborZoneIndex);
          
     Int1D *DiscretePrecisionKXI;
     Int1D *DiscretePrecisionETA;
@@ -326,16 +355,16 @@ public:
 	//! Write grid information to file
 	LIB_EXPORT void WriteGrid(fstream & file);
 
-	//! Encode data from supercontainer to virtual file.
+	//! Encode data from datacontainer to virtual file.
 	LIB_EXPORT void Encode(DataContainer * cdata, int flag);
 	
-	//! Decode data from virtual file to supercontainer.
+	//! Decode data from virtual file to datacontainer.
 	LIB_EXPORT void Decode(DataContainer * cdata, int flag);
 
 	//! Revise the zone index of neighbor zones( cxh 20180522 ).
 	LIB_EXPORT void ReviseNeighborZoneIndex( int zoneStart );
 	
-	//! Update coordinate data to supercontainer.
+	//! Update coordinate data to datacontainer.
 	LIB_EXPORT void UpdateCoordinate(DataContainer * cdata);
 
 	//! Get grid's min and max distance. 
@@ -441,6 +470,8 @@ private:
     void AllocateMetricsStructHighOrder(ActionKey *actkey);
     void ComputeMetricsStructHighOrder2D(ActionKey *actkey);
     void ComputeMetricsStructHighOrder3D(ActionKey *actkey);
+    void ComputeMetricsStructHighOrder2D_HDCS(ActionKey *actkey);
+    void ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey);
     void GhostMetricsStructHighOrder2D(ActionKey *actkey);    
     void GhostMetricsStructHighOrder3D(ActionKey *actkey);
 

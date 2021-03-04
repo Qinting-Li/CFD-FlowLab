@@ -1,12 +1,3 @@
-//! @file   HOBasisFunction.cpp
-//! @brief	basis function, such as monomial, orthogonalized etc.\n
-//!
-//! @author		liming, gxq.
-//! @email       
-//! @date		2019-10-17
-//! @version	A001
-//! @copyright
-
 #include "HODefine.h"
 #include "HOShapeFunction.h"
 

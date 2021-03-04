@@ -230,6 +230,13 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
     grid->UpdateDataPtr("gradUVWTCellCenterY", gradUVWTCellCenterY);
     grid->UpdateDataPtr("gradUVWTCellCenterZ", gradUVWTCellCenterZ);
 
+    RDouble4D *rotNSgradValueX = new RDouble4D(I, J, K, N, fortranArray);
+    RDouble4D *rotNSgradValueY = new RDouble4D(I, J, K, N, fortranArray);
+    RDouble4D *rotNSgradValueZ = new RDouble4D(I, J, K, N, fortranArray);
+    grid->UpdateDataPtr("rotNSgradValueX", rotNSgradValueX);
+    grid->UpdateDataPtr("rotNSgradValueY", rotNSgradValueY);
+    grid->UpdateDataPtr("rotNSgradValueZ", rotNSgradValueZ);
+
     RDouble4D *gradTemperatureFaceX = new RDouble4D(IFACE, JFACE, KFACE, T, fortranArray);
     RDouble4D *gradTemperatureFaceY = new RDouble4D(IFACE, JFACE, KFACE, T, fortranArray);
     RDouble4D *gradTemperatureFaceZ = new RDouble4D(IFACE, JFACE, KFACE, T, fortranArray);
@@ -425,6 +432,13 @@ void NSSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
     delete gradUVWTCellCenterX;
     delete gradUVWTCellCenterY;
     delete gradUVWTCellCenterZ;
+
+    RDouble4D *rotNSgradValueX = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueX"));
+    RDouble4D *rotNSgradValueY = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueY"));
+    RDouble4D *rotNSgradValueZ = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueZ"));
+    delete rotNSgradValueX;
+    delete rotNSgradValueY;
+    delete rotNSgradValueZ;
 
     RDouble4D *ql1 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1"));
     RDouble4D *qr1 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1"));
@@ -651,6 +665,13 @@ void NSSolverStruct::DumpRestartH5(ActionKey *actkey)
         {
             RDouble physicalTime   = GlobalDataBase::GetDoubleParaFromDB("physicalTime");
             WriteData(actkey->filepos, &physicalTime, "physicalTime");
+
+            if (IsNeedDESStatistics())
+            {
+                int nStatisticalStep = 0;
+                GlobalDataBase::GetData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+                WriteData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
+            }
         }
     }
 
@@ -701,6 +722,12 @@ void NSSolverStruct::DumpRestartH5(ActionKey *actkey)
 
         RDouble4D &residualn2 = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_n2"));
         WriteData(grploc, &residualn2(ist, jst, kst, mst), "res_unsteady_n2");
+
+        if (IsNeedDESStatistics())
+        {
+            RDouble4D &qAverage = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage"));
+            WriteData(grploc, &qAverage(ist, jst, kst, mst), "qAverage");
+        }
     }
 
     H5Gclose(grploc);
@@ -791,13 +818,11 @@ void NSSolverStruct::ReadRestartH5(ActionKey *actkey)
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     int nEquation = GetNumberOfEquations();
-
     Range M(0, nEquation - 1);
     int mst = M.first();
     int med = M.last();
 
     RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    //RFloat * primitiveVariables = &q(ist, jst, kst, mst);
 
     int outIterStep = 0;
     ReadData(actkey->filepos, &outIterStep, "outnstep");
@@ -850,6 +875,7 @@ void NSSolverStruct::ReadRestartH5(ActionKey *actkey)
     RDouble4D &residual   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"         ));
     RDouble4D &residualn1 = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_n1"));
     RDouble4D &residualn2 = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_n2"));
+    RDouble4D &qAverage = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage"));
 
     int ifStartFromSteadyResults = parameters->GetIfStartFromSteadyResults();
     RDouble physicalTime = 0.0;
@@ -882,6 +908,24 @@ void NSSolverStruct::ReadRestartH5(ActionKey *actkey)
         ReadData(grploc, &residual(ist, jst, kst, mst), "res");
         ReadData(grploc, &residualn1(ist, jst, kst, mst), "res_unsteady_n1");
         ReadData(grploc, &residualn2(ist, jst, kst, mst), "res_unsteady_n2");
+    }
+
+    int nStatisticalStep = 0;
+    int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
+    int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
+    bool isReadAverageFlow = ifStaticsFlowField && (outIterStep >= startStatisticStep);
+    if(isReadAverageFlow)
+    {
+        ReadData(grploc, &qAverage(ist, jst, kst, mst), "qAverage");
+
+        ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
+        GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+    }
+    else
+    {
+        qAverage = primitiveVariables;
+
+        GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
     }
 
     GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
@@ -4342,6 +4386,9 @@ void NSSolverStruct::InitFlowAsRestart()
     residualn1 = 0.0;
     residualn2 = 0.0;
 
+    int nStatisticalStep = 0;
+    GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+
     //! Store the historical sum of InviscidFlux, ViscousFlux, et al., \n
     //! exclusive of DualTimeSourceFlux, used in UpdateUnsteadyFlow for the Rn in the dualtime method.
     RDouble4D &resTmp = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_tmp"));
@@ -4471,6 +4518,14 @@ void NSSolverStruct::Boundary(Grid *gridIn)     //! Set the boundary conditions.
         {
             PressureOutletBC(grid, BCRegion);
         }
+        else if (BCType == MASS_FLOW_INLET)
+        {          
+            MassFlowInletBC(grid, BCRegion);
+        }
+        else if (BCType == MASS_FLOW_OUTLET)
+        {            
+            MassFlowOutletBC(grid, BCRegion);
+        }
         else if (BCType == EXTERNAL_BC)
         {
             OutFlowBC3D(grid, BCRegion);
@@ -4507,6 +4562,182 @@ void NSSolverStruct::CornerPoint(Grid *gridIn)
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
 
     FillCornerPoint3D(q, ni, nj, nk, nEquation);
+}
+
+void NSSolverStruct::calculateBCArea(Grid *gridIn, BCRegion *bcRegion)
+{
+    Data_Param *bcData = bcRegion->GetBCDataParam();
+    
+    //BC total area does not change with calculating, so it only calculates once.
+    if (bcData->IsExist("BCTotalArea", PHDOUBLE, 1))
+    {
+        return;
+    }
+
+    using namespace PHMPI;
+    int zoneID = gridIn->GetZoneID();
+    string bcName = bcRegion->GetBCName();
+    RDouble BCTotalArea = 0.0;
+
+    //one processor may owe some zones, so calculate all BC area in one processor.
+    int nLocalZones = GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; iZone++)
+    {
+        int iZoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+        Grid * iGrid = PHSPACE::GetGrid(iZoneID);
+
+        StructGrid *grid = StructGridCast(iGrid);
+        
+        CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            BCRegion *jBCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+            string jBCName = jBCRegion->GetBCName();
+
+            //judge the same BC region according the BC name.
+            if (jBCName == bcName)
+            {
+                int ist, ied, jst, jed, kst, ked;
+                int in, jn, kn;
+                jBCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+                int iSurface = jBCRegion->GetFaceDirection() + 1;
+                RDouble4D &area = *(grid->GetFaceArea());
+
+                for (int k = kst; k <= ked; ++ k)
+                {
+                    for (int j = jst; j <= jed; ++ j)
+                    {
+                        for (int i = ist; i <= ied; ++ i)
+                        {
+                            jBCRegion->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+                            BCTotalArea += area(in,jn,kn,iSurface);
+                        }
+                    }
+                }
+            }        
+        }
+    }
+
+    //get the total area in all processors with the same BC name.
+    RDouble GLB_BCTotalArea;
+    PH_AllReduce(&BCTotalArea, &GLB_BCTotalArea, 1, MPI_SUM);
+    BCTotalArea = GLB_BCTotalArea;
+
+    for (int iZone = 0; iZone < nLocalZones; iZone++)
+    {
+        int iZoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+        Grid * iGrid = PHSPACE::GetGrid(iZoneID);
+
+        StructGrid *grid = StructGridCast(iGrid);
+
+        CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            BCRegion *jBCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+            string jBCName = jBCRegion->GetBCName();
+
+            if (jBCName == bcName)
+            {
+                Data_Param *bcData = jBCRegion->GetBCDataParam();
+                bcData->UpdateData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
+            }
+        }
+    }   
+}
+
+void NSSolverStruct::calculateMassFluxRatio(Grid *gridIn, BCRegion *bcRegion)
+{
+    using namespace PHMPI;
+    int zoneID = gridIn->GetZoneID();
+    string BCName = bcRegion->GetBCName();
+    Data_Param * bcData = bcRegion->GetBCDataParam();
+    RDouble massFlow = 0.0;
+    bcData->GetData("massFlow", &massFlow, PHDOUBLE, 1);
+    RDouble massFlux = 0.0;
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
+
+    //one processor may owe some zones, so calculate all BC mass flux in one processor.
+    //in fact, massflux need calculte once in one step, but I dont find a good method to judge if it is
+    //calculated or not, so it will calculate more times, may cost a little more time.
+    int nLocalZones = GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; iZone++)
+    {
+        int iZoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+        Grid * iGrid = PHSPACE::GetGrid(iZoneID);
+        StructGrid *grid = StructGridCast(iGrid);
+
+        CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            BCRegion *jBCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+            string jBCName = jBCRegion->GetBCName();
+
+            //judge the same BC region according the BC name.
+            if (jBCName == BCName)
+            {
+                int ist, ied, jst, jed, kst, ked;
+                int in, jn, kn;
+                int is, js, ks;
+                RDouble nxs, nys, nzs;
+                int layer = 1;
+                jBCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+                int iSurface = jBCRegion->GetFaceDirection() + 1;
+                int lr       = jBCRegion->GetFaceLeftOrRightIndex();
+                RDouble4D &area = *(grid->GetFaceArea());
+                RDouble4D &xfn  = *(grid->GetFaceNormalX());
+                RDouble4D &yfn  = *(grid->GetFaceNormalY());
+                RDouble4D &zfn  = *(grid->GetFaceNormalZ());
+                RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));               
+                using namespace IDX;
+                for (int k = kst; k <= ked; ++ k)
+                {
+                    for (int j = jst; j <= jed; ++ j)
+                    {
+                        for (int i = ist; i <= ied; ++ i)
+                        {
+                            jBCRegion->GetInsideCellIndex(i, j, k, is, js, ks, layer);
+                            jBCRegion->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+
+                            if (ABS(q(is, js, ks, IU)) > LARGE)
+                            {
+                                q(is, js, ks, IR) = primitiveVarFarfield[IR];
+                                q(is, js, ks, IU) = primitiveVarFarfield[IU];
+                                q(is, js, ks, IV) = primitiveVarFarfield[IV];
+                                q(is, js, ks, IW) = primitiveVarFarfield[IW];
+                            }
+
+                            nxs = lr * xfn(in, jn, kn, iSurface);
+                            nys = lr * yfn(in, jn, kn, iSurface);
+                            nzs = lr * zfn(in, jn, kn, iSurface);
+                            RDouble vn_c1 = q(is, js, ks, IU) * nxs + q(is, js, ks, IV) * nys + q(is, js, ks, IW) * nzs;
+
+                            massFlux += q(is, js, ks, IR) * vn_c1 * area(in, jn, kn, iSurface);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //get the total area in all processors with the same BC name.
+    RDouble GLB_MassFlux;
+    PH_AllReduce(&massFlux, &GLB_MassFlux, 1, MPI_SUM);
+
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
+    
+    //calculte the dimensional mass flux in this BC name region.
+    GLB_MassFlux *= refDimensionalDensity * refDimensionalSonicSpeed * refMachNumber;
+    RDouble massFluxRatio = massFlow / (GLB_MassFlux + TINY);
+
+    massFluxRatio = MAX(0.8, MIN(massFluxRatio, 1.2));
+    bcData->UpdateData("massFluxRatio", &massFluxRatio, PHDOUBLE, 1);
 }
 
 void NSSolverStruct::OutFlowBC3D(Grid *gridIn, BCRegion *BCRegion)
@@ -5238,37 +5469,29 @@ void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion)
 {
     using namespace IDX;
 
-    RDouble direction_inlet[3], direction_outlet[3];
-
     Param_NSSolverStruct *parameters = GetControlParameters();
+    Data_Param *bcData = BCRegion->GetBCDataParam();
 
-    RDouble subsonicInletTotalPressure     = parameters->GetSubsonicInletTotalPressure();
-    RDouble subsonicInletTotalTemperature  = parameters->GetSubsonicInletTotalTemperature();
-    RDouble subsonicOutletTotalPressure    = parameters->GetSubsonicOutletTotalPressure();
-    RDouble subsonicOutletTotalTemperature = parameters->GetSubsonicOutletTotalTemperature();
-    int subsonicDirectionType              = parameters->GetSubsonicDirectionType();
+    RDouble totalPressure, totalTemperature, direction_inlet[3];
+    bcData->GetData("totalPressure", &totalPressure, PHDOUBLE, 1);
+    bcData->GetData("totalTemperature", &totalTemperature, PHDOUBLE, 1);
+    bcData->GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
 
-    GlobalDataBase::GetData("direction_inlet", direction_inlet, PHDOUBLE, 3);
-    GlobalDataBase::GetData("direction_outlet", direction_outlet, PHDOUBLE, 3);
+    //! Dimensional.
+    RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
+    RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
+    RDouble dynamic_pressure = refDimensionalDensity * velocity * velocity;
+    RDouble refGama = parameters->GetRefGama();
+    RDouble gama1 = refGama - 1;
 
-    RDouble refMachNumber = 1.0;
+    //! Nondimensionalization.
+    totalPressure /= dynamic_pressure;
+    totalTemperature /= refDimensionalTemperature;
 
-    RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
-    if(height > 0.0)
-    {
-        //! Dimensional.
-        RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
-        RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
-        RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
-        refMachNumber = parameters->GetRefMachNumber();
-
-        RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
-        RDouble dynamic_pressure = refDimensionalDensity * velocity * velocity;
-        subsonicInletTotalPressure /= dynamic_pressure;
-        subsonicInletTotalTemperature /= refDimensionalTemperature;
-        subsonicOutletTotalPressure /= dynamic_pressure;
-        subsonicOutletTotalTemperature /= refDimensionalTemperature;
-    }
+    RDouble coefficientOfStateEquation = 1.0/(refGama * refMachNumber * refMachNumber);
 
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -5278,8 +5501,6 @@ void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion)
     RDouble4D &xfn = *(grid->GetFaceNormalX());
     RDouble4D &yfn = *(grid->GetFaceNormalY());
     RDouble4D &zfn = *(grid->GetFaceNormalZ());
-
-    RDouble refGama = parameters->GetRefGama();
 
     int nEquation = GetNumberOfEquations();
 
@@ -5301,10 +5522,10 @@ void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion)
         {
             for (int i = ist; i <= ied; ++ i)
             {
-				BCRegion->GetInsideCellIndex(i, j, k, is, js, ks, 1);
+                BCRegion->GetInsideCellIndex(i, j, k, is, js, ks, 1);
                 RestrictIndex(is, js, ks, ni-1, nj-1, nk-1);
 
-				BCRegion->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+                BCRegion->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
 
                 nxs = lr * xfn(in,jn,kn,iSurface);
                 nys = lr * yfn(in,jn,kn,iSurface);
@@ -5312,64 +5533,279 @@ void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion)
 
                 for (int layer = 1; layer <= 1; ++ layer)
                 {
-					BCRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
+                    BCRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
 
-                    for (int m = 0; m < nEquation; ++ m)
-                    {
-                        q(it, jt, kt, m) = q(is, js, ks, m);
-                    }
+                    //get inner cell flow field information.
+                    RDouble rin = q(is, js, ks, IR);
+                    RDouble V2in = q(is, js, ks, IU) * q(is, js, ks, IU) + q(is, js, ks, IV) * q(is, js, ks, IV)
+                        + q(is, js, ks, IW) * q(is, js, ks, IW);
+                    RDouble pin = q(is, js, ks, IP);
 
-                    if (subsonicDirectionType == 2)
-                    {
-                        //! Vertical to the face normal.
-                        direction_inlet[0] = nxs;
-                        direction_inlet[1] = nys;
-                        direction_inlet[2] = nzs;
-                    }
+                    //calculate the total energy, total enthalpy and sound speed.
+                    RDouble totalEnergy = pin/(rin * gama1) + 0.5 * V2in;
+                    RDouble totalEnthalpy = (refGama * coefficientOfStateEquation / gama1) * totalTemperature;
+                    RDouble c2 = refGama * pin/rin;
+                    
+                    //calculate the riemann invariants R+.
+                    RDouble Riemann = 2.0 * sqrt(c2) / gama1;
+                    Riemann += q(is, js, ks, IU) * nxs + q(is, js, ks, IV) * nys + q(is, js, ks, IW) * nzs;
 
-                    RDouble alpha = direction_inlet[0];
-                    RDouble beita = direction_inlet[1];
-                    RDouble theta = direction_inlet[2];
+                    RDouble theta = nxs * direction_inlet[0] + nys * direction_inlet[1] + nzs * direction_inlet[2];
 
-                    RDouble gama1 = refGama - 1;
+                    RDouble totalc2 = gama1 * (totalEnthalpy - (totalEnergy + pin / rin)+0.5 * V2in) + c2;
 
-                    RDouble p = q(is, js, ks, IP);
-                    RDouble u = q(is, js, ks, IU);
-                    RDouble v = q(is, js, ks, IV);
-                    RDouble w = q(is, js, ks, IW);
-                    RDouble r = q(is, js, ks, IR);
+                    RDouble a =  1.0 + 0.5 * gama1 * theta * theta;
+                    RDouble b = -1.0 * gama1 * theta * Riemann;
+                    RDouble c =  0.5 * gama1 * Riemann * Riemann - 2.0 * totalc2 / gama1;
 
-                    RDouble cd = sqrt(fabs(refGama * p / r));
-                    RDouble vn = u * nxs + v * nys + w * nzs;
-                    RDouble v2 = u * u + v * v + w * w;
-                    RDouble R  = vn - 2. * cd / gama1;
-                    RDouble costheta = - vn / sqrt(v2);
+                    RDouble d = b * b - 4.0 * a * c;
+                    d = sqrt(max(0.0, d));
+                    RDouble Vin   = (-b + d)/(2.0*a);
+                    Vin   = max(0.0, Vin);
+                    V2in = Vin * Vin;
 
-                    RDouble c02   = cd * cd + gama1 * v2 / 2.0;
-                    RDouble temp1 = (gama1 * costheta * costheta + 2) * c02 / (gama1 * R * R);
-                    RDouble temp2 = gama1 / 2.0;
-                    RDouble cb    = - R * gama1 * (1 + costheta * sqrt(fabs(temp1 - temp2))) / (gama1 * costheta * costheta + 2);
-                    RDouble cb2   = cb * cb;
+                    c2 = totalc2 - 0.5 * gama1 * V2in;
 
-                    RDouble Tb = MIN(subsonicInletTotalTemperature * (cb2 / c02), subsonicInletTotalTemperature * 0.999);
-                    RDouble Pb = MIN(subsonicInletTotalPressure * pow(Tb / subsonicInletTotalTemperature, refGama / gama1), subsonicInletTotalPressure * 0.999);
-                    RDouble rhob  = Pb * refGama * refMachNumber * refMachNumber / Tb;
-                    RDouble temp3 = subsonicInletTotalTemperature / (refGama * refMachNumber * refMachNumber) - Pb / rhob;
-                    RDouble Vb    = sqrt(fabs(2 * (refGama / gama1) * temp3));
+                    RDouble Mach2 = V2in / c2;
+                    Mach2 = min(1.0, Mach2);
+                    V2in = Mach2 * c2;
+                    Vin     = sqrt(V2in);
+                    c2 = totalc2 - 0.5 * gama1 * V2in;
 
-                    q(it, jt, kt, IR) = rhob;
-                    q(it, jt, kt, IU) = Vb * alpha;
-                    q(it, jt, kt, IV) = Vb * beita;
-                    q(it, jt, kt, IW) = Vb * theta;
-                    q(it, jt, kt, IP) = Pb;
+                    RDouble tin = c2 / (refGama * coefficientOfStateEquation);
+                    pin = totalPressure * pow((tin/totalTemperature), refGama / gama1);
+                    rin = pin/(coefficientOfStateEquation * tin);
+
+                    q(it, jt, kt, IR) = rin;
+                    q(it, jt, kt, IU) = Vin * direction_inlet[0];
+                    q(it, jt, kt, IV) = Vin * direction_inlet[1];
+                    q(it, jt, kt, IW) = Vin * direction_inlet[2];
+                    q(it, jt, kt, IP) = pin;
                 }
 
-				BCRegion->GetGhostCellIndex(i, j, k, it, jt, kt, 2);
+                int it2, jt2, kt2;
+                BCRegion->GetGhostCellIndex(i, j, k, it2, jt2, kt2, 2);
 
                 for (int m = 0; m < nEquation; ++ m)
                 {
-                    q(it, jt, kt, m) = q(i + s_lr3d[0], j + s_lr3d[1], k + s_lr3d[2], m);
+                    q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                 }
+            }
+        }
+    }
+}
+
+void NSSolverStruct::MassFlowInletBC(Grid *gridIn, BCRegion *BCRegion){
+    
+    calculateBCArea(gridIn, BCRegion);
+
+    // get the basic mesh information.
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble4D &xfn = *(grid->GetFaceNormalX());
+    RDouble4D &yfn = *(grid->GetFaceNormalY());
+    RDouble4D &zfn = *(grid->GetFaceNormalZ());
+    RDouble4D &area = *(grid->GetFaceArea());
+
+    // get the flow field information.
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    int nEquation = GetNumberOfEquations();
+
+    using namespace IDX;  
+    Data_Param *bcData = BCRegion->GetBCDataParam();
+
+    // get the basic variables for mass flow in boundary.
+    RDouble totalTemperature, massFlow, BCTotalArea, direction_inlet[3];
+    bcData->GetData("massFlow", &massFlow, PHDOUBLE, 1);
+    bcData->GetData("totalTemperature", &totalTemperature, PHDOUBLE, 1);
+    bcData->GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);   
+    bcData->GetData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
+
+    //! Dimensional.
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
+    RDouble refGama = parameters->GetRefGama();
+
+    //! Nondimensionalization.
+    massFlow /= BCTotalArea;
+    totalTemperature /= refDimensionalTemperature;
+    RDouble coefficientOfStateEquation = 1.0/(refGama * refMachNumber * refMachNumber);        
+
+    int ist, ied, jst, jed, kst, ked;
+    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+    int iSurface = BCRegion->GetFaceDirection() + 1;
+    int *s_lr3d  = BCRegion->GetFaceDirectionIndex();
+    int lr       = BCRegion->GetFaceLeftOrRightIndex();
+    int is, js, ks, it, jt, kt;
+    int in, jn, kn;
+    RDouble nxs, nys, nzs;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                BCRegion->GetInsideCellIndex(i, j, k, is, js, ks, 1);
+                RestrictIndex(is, js, ks, ni-1, nj-1, nk-1);
+
+                BCRegion->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+
+                nxs = lr * xfn(in,jn,kn,iSurface);
+                nys = lr * yfn(in,jn,kn,iSurface);
+                nzs = lr * zfn(in,jn,kn,iSurface);
+
+                for (int layer = 1; layer <= 1; ++ layer)
+                {
+                    BCRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
+                    
+                    q(it, jt, kt, IR) = q(is, js, ks, IR);
+                    RDouble Vnb   = massFlow/ (refDimensionalDensity*refDimensionalSonicSpeed*refMachNumber) / q(is, js, ks, IR);  //注意：此处massFlow为单位面积流量
+                    
+                    q(it, jt, kt, IU) = Vnb * direction_inlet[0];
+                    q(it, jt, kt, IV) = Vnb * direction_inlet[1];
+                    q(it, jt, kt, IW) = Vnb * direction_inlet[2];
+
+                    //square of the stagnation sound speed.
+                    RDouble c2   = refGama * coefficientOfStateEquation * totalTemperature;       
+                    //square of the critical sound speed.
+                    RDouble c2_ct = 2.0 * c2 / (refGama+1.0); 
+                    RDouble lamd2 = Vnb * Vnb / c2_ct;
+                    RDouble tb    = totalTemperature * (1.0 - (refGama - 1.0)/(refGama + 1.0) * lamd2);
+                    q(it, jt, kt, IP) = q(is, js, ks, IR) * coefficientOfStateEquation * tb;
+                }
+
+                int it2, jt2, kt2;
+                BCRegion->GetGhostCellIndex(i, j, k, it2, jt2, kt2, 2);
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    q(it2, jt2, kt2, m) = q(it, jt, kt, m);
+                }
+            }
+        }
+    }
+}
+
+void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, BCRegion *bcRegion)
+{
+    // calculate BC area and mass flux ratio of this BC region.
+    calculateBCArea(gridIn, bcRegion);
+    calculateMassFluxRatio(gridIn, bcRegion);
+
+    using namespace IDX;
+    //! Dimensional.
+    Param_NSSolverStruct *parameters = GetControlParameters();  
+    RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
+    RDouble refGama = parameters->GetRefGama();
+
+    Data_Param *bcData = bcRegion->GetBCDataParam();
+    RDouble massFluxRatio, massFlow, BCTotalArea;
+    bcData->GetData("massFluxRatio", &massFluxRatio, PHDOUBLE, 1);
+    bcData->GetData("massFlow", &massFlow, PHDOUBLE, 1);
+    bcData->GetData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
+    
+    //! Nondimensionalization.
+    RDouble coefficientOfStateEquation = 1.0/(refGama * refMachNumber * refMachNumber);
+
+    // fluxDensity : rho * u;
+    RDouble fluxDensity = massFlow/(refDimensionalDensity * refDimensionalDensity * refMachNumber)/BCTotalArea;
+    
+    RDouble mfTbCoeff = 0.5 * (refGama - 1.0) / refGama / coefficientOfStateEquation * 
+        (1.0 - massFluxRatio * massFluxRatio);
+
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble4D &xfn = *(grid->GetFaceNormalX());
+    RDouble4D &yfn = *(grid->GetFaceNormalY());
+    RDouble4D &zfn = *(grid->GetFaceNormalZ());
+    RDouble4D &area = *(grid->GetFaceArea());
+
+    int nEquation = GetNumberOfEquations();
+
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+
+    int ist, ied, jst, jed, kst, ked;
+    bcRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+    int iSurface = bcRegion->GetFaceDirection() + 1;
+    int *s_lr3d  = bcRegion->GetFaceDirectionIndex();
+    int lr       = bcRegion->GetFaceLeftOrRightIndex();
+    int is, js, ks, it, jt, kt;
+    int in, jn, kn;
+    RDouble nxs, nys, nzs;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                bcRegion->GetInsideCellIndex(i, j, k, is, js, ks, 1);
+                RestrictIndex(is, js, ks, ni-1, nj-1, nk-1);
+                bcRegion->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+
+                nxs = lr * xfn(in, jn, kn, iSurface);
+                nys = lr * yfn(in, jn, kn, iSurface);
+                nzs = lr * zfn(in, jn, kn, iSurface);
+
+                //! calculate the temperature of the inside cell.
+                RDouble staticTemperature = q(is, js, ks, IP) / q(is, js, ks, IR) / coefficientOfStateEquation;
+                
+                RDouble tb   = staticTemperature + mfTbCoeff * (q(is, js, ks, IU) * q(is, js, ks, IU) +
+                    q(is, js, ks, IV) * q(is, js, ks, IV) + q(is, js, ks, IW) * q(is, js, ks, IW));
+                
+                if(tb < TINY) tb = staticTemperature;
+                RDouble pb   = q(is, js, ks, IP) * pow(tb / staticTemperature, refGama / (refGama - 1.0));
+                RDouble rb = pb / tb / coefficientOfStateEquation;
+
+                RDouble ub   = q(is, js, ks, IU) * massFluxRatio;
+                RDouble vb   = q(is, js, ks, IV) * massFluxRatio;
+                RDouble wb   = q(is, js, ks, IW) * massFluxRatio;
+                
+                //! judge the unusual situation, Vn < 0.
+                RDouble Vn  = ub * nxs + vb * nys + wb * nzs;
+                if(Vn < 0.0)
+                {
+                    Vn = fluxDensity / rb;
+                    ub = Vn * xfn[i];
+                    vb = Vn * yfn[i];
+                    wb = Vn * zfn[i];
+                } 
+
+                // if the outlet is supersonic flow.
+                RDouble cb = sqrt(refGama * coefficientOfStateEquation * tb);  
+                if(Vn >= cb)
+                {
+                    rb = q(is, js, ks, IR);
+                    ub = q(is, js, ks, IU);
+                    vb = q(is, js, ks, IV);
+                    wb = q(is, js, ks, IW);
+                    pb = q(is, js, ks, IP);
+                }
+
+                //! allocate value to the ghost cell.
+                for (int layer = 1; layer <= 2; ++ layer)
+                {
+                    bcRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);                   
+                    q(it, jt, kt, IR) = rb;
+                    q(it, jt, kt, IU) = ub;
+                    q(it, jt, kt, IV) = vb;
+                    q(it, jt, kt, IW) = wb;
+                    q(it, jt, kt, IP) = pb;
+                }                
             }
         }
     }
@@ -5380,18 +5816,18 @@ void NSSolverStruct::PressureOutletBC(Grid *gridIn, BCRegion *BCRegion)
     using namespace IDX;
 
     Param_NSSolverStruct *parameters = GetControlParameters();
-    RDouble subsonicOutletTotalPressure = parameters->GetSubsonicOutletTotalPressure();
-    RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
-    if(height > 0.0)
-    {
-        //! Dimensional.
-        RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
-        RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
-        RDouble refMachNumber = parameters->GetRefMachNumber();
-        RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
-        RDouble dynamicPressure = refDimensionalDensity * velocity * velocity;
-        subsonicOutletTotalPressure /= dynamicPressure;
-    }
+    Data_Param *bcData = BCRegion->GetBCDataParam();
+
+    RDouble staticPressure;
+    bcData->GetData("staticPressure", &staticPressure, PHDOUBLE, 1);
+
+    //! Dimensional.
+    RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
+    RDouble dynamicPressure = refDimensionalDensity * velocity * velocity;
+    staticPressure /= dynamicPressure;
 
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -5426,7 +5862,7 @@ void NSSolverStruct::PressureOutletBC(Grid *gridIn, BCRegion *BCRegion)
                         q(it, jt, kt, iEquation) = q(is, js, ks, iEquation);
                     }
 
-                    q(it, jt, kt, IP) = subsonicOutletTotalPressure;
+                    q(it, jt, kt, IP) = staticPressure;
                 }
             }
         }
@@ -7271,19 +7707,8 @@ void NSSolverStruct::ViscousFlux(Grid *gridIn)
         CorrectViscousFlux(grid, fluxProxy, iSurface);
 #endif
 
-        if(systemgridtype == MIXGRID)
-        {
-            //! for mixgrid:
-            //! 1. store flux;
-            //! 2. BC flux be replaced by those of unstruct;
-            //! 3. load flux to res.
-            CopyViscousfluxProxytoGlobalfacefluxOnlyforMixGrid(grid, fluxProxy, iSurface);
-        }
-        else
-        {
-            //! To compute the fluxes of cells by plusing the fluxes of all the surrounded faces.
-            LoadFlux(grid, fluxProxy, iSurface);
-        }
+        //! To compute the fluxes of cells by plusing the fluxes of all the surrounded faces.
+        LoadFlux(grid, fluxProxy, iSurface);
     }
 
     delete fluxProxy;
@@ -10065,110 +10490,116 @@ void NSSolverStruct::LoadFlux(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
 #endif
 }
 
-void NSSolverStruct::CopyInviscidfluxProxytoGlobalfacefluxOnlyforMixGrid(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
+void NSSolverStruct::UpdateQlQrOnlyforMixGrid(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
 
-    RDouble4D &flux_source = fluxProxy->GetField_STR();
+    FieldProxy * qlProxy = new FieldProxy();
+    FieldProxy * qrProxy = new FieldProxy();
 
-    RDouble4D *flux_target;
-    if (iSurface == 1)
+    int nDim = GetDim();
+    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
     {
-        flux_target = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxI")));
-    }
-    else if (iSurface == 2)
-    {
-        flux_target = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxJ")));
-    }
-    else
-    {
-        flux_target = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxK")));
-    }
-    
-    int il1,jl1,kl1;
-    GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-    int ist = 1;
-    int jst = 1;
-    int kst = 1;
-    int ied = ni - 1 + il1;
-    int jed = nj - 1 + jl1;
-    int ked = nk - 1 + kl1;
-
-    if(nk == 1)
-    {
-        ked = 1;
-    }
-
-    for(int m = 0; m < 5; ++m)
-    {
-        for(int k = kst; k <= ked; ++k)
+        if (iSurface == 1)
         {
-            for(int j = jst; j <= jed; ++j)
-            {
-                for(int i = ist; i <= ied; ++i)
-                {
-                    (*flux_target)(i, j, k, m) = flux_source(i, j, k, m);
-                }
-            }
+            qlProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1")));
+            qrProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1")));
         }
+        else if (iSurface == 2)
+        {
+            qlProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2")));
+            qrProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr2")));
+        }
+        else
+        {
+            qlProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql3")));
+            qrProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr3")));
+        }
+
+        //! Apply the limiter to compute left-side variable QL and right-side variable QR.
+        GetInvFaceVar (grid, qlProxy, qrProxy, iSurface);
+
+        //! Modify the variables of the wall boundary faces-clz begin.
+        CorrectFaceVar(grid, qlProxy, qrProxy, iSurface);
     }
+
+    delete qlProxy;
+    delete qrProxy;
 }
 
-void NSSolverStruct::CopyViscousfluxProxytoGlobalfacefluxOnlyforMixGrid(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
+void NSSolverStruct::UpdateInviscidfluxOnlyforMixGrid(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
 
-    RDouble4D &flux_source = fluxProxy->GetField_STR();
+    int structureScheme = GlobalDataBase::GetIntParaFromDB("str_scheme");
+    INVScheme inviscidScheme = GetINVScheme(structureScheme);
 
-    RDouble4D *flux_target;
-    if (iSurface == 1)
-    {
-        flux_target = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxI")));
-    }
-    else if (iSurface == 2)
-    {
-        flux_target = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxJ")));
-    }
-    else
-    {
-        flux_target = &(*reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxK")));
-    }
-    
-    int il1,jl1,kl1;
-    GetNsurfIndex(iSurface, il1, jl1, kl1);
+    FieldProxy * qlProxy = new FieldProxy();
+    FieldProxy * qrProxy = new FieldProxy();
+    FieldProxy * fluxProxy = new FieldProxy();
 
-    int ist = 1;
-    int jst = 1;
-    int kst = 1;
-    int ied = ni - 1 + il1;
-    int jed = nj - 1 + jl1;
-    int ked = nk - 1 + kl1;
-
-    if(nk == 1)
+    int nDim = GetDim();
+    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
     {
-        ked = 1;
-    }
-
-    for(int m = 0; m < 5; ++m)
-    {
-        for(int k = kst; k <= ked; ++k)
+        if (iSurface == 1)
         {
-            for(int j = jst; j <= jed; ++j)
-            {
-                for(int i = ist; i <= ied; ++i)
-                {
-                    (*flux_target)(i, j, k, m) = flux_source(i, j, k, m);
-                }
-            }
+            qlProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1")));
+            qrProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1")));
+            fluxProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxI")));
         }
+        else if (iSurface == 2)
+        {
+            qlProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2")));
+            qrProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr2")));
+            fluxProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxJ")));
+        }
+        else
+        {
+            qlProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql3")));
+            qrProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr3")));
+            fluxProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxK")));
+        }
+
+        //! To compute the inviscid flux of the faces using the QL and QR.
+        InviscidFluxWrap(grid, qlProxy, qrProxy, fluxProxy, inviscidScheme, iSurface);
     }
+
+    delete qlProxy;
+    delete qrProxy;
+    delete fluxProxy;
+}
+
+void NSSolverStruct::UpdateViscousfluxOnlyforMixGrid(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int viscousType = parameters->GetViscousType();
+    if (viscousType == 0) return;
+
+    FieldProxy * fluxProxy = new FieldProxy();
+
+    int nDim = GetDim();
+    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
+    {
+        if (iSurface == 1)
+        {
+            fluxProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxI")));
+        }
+        else if (iSurface == 2)
+        {
+            fluxProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxJ")));
+        }
+        else
+        {
+            fluxProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxK")));
+        }
+
+        ReconGradVolWeightedwithCorrection(gridIn, iSurface);
+
+        CompVisFluxnew(grid, fluxProxy, iSurface);
+    }
+    delete fluxProxy;
 }
 
 void NSSolverStruct::LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn)
@@ -11000,19 +11431,8 @@ void NSSolverStruct::ComputeInviscidFlux(Grid *gridIn, FieldProxy *qlProxy, Fiel
     //! To correct the inviscid flux on wall.
     //CorrectInviscidFlux(grid, fluxProxy, iSurface);
 
-    if(systemgridtype == MIXGRID)
-    {
-        //! for mixgrid:
-        //! 1. store flux;
-        //! 2. BC flux be replaced by those of unstruct;
-        //! 3. load flux to res.
-        CopyInviscidfluxProxytoGlobalfacefluxOnlyforMixGrid(grid, fluxProxy, iSurface);
-    }
-    else
-    {
-        //! To compute the summation of fluxes on faces.
-        LoadFlux(grid, fluxProxy, iSurface);
-    }
+    //! To compute the summation of fluxes on faces.
+    LoadFlux(grid, fluxProxy, iSurface);
 
     delete fluxProxy;
 }
@@ -13688,141 +14108,6 @@ void NSSolverStruct::SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq)
     delete []Q;
 }
 
-void NSSolverStruct::ComputeInterfaceGrad(int level)
-{
-    Param_NSSolverStruct *parameters = GetControlParameters();
-    int gridTypeSystem = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (gridTypeSystem != MIXGRID) return;
-
-    StructGrid *grid = reinterpret_cast<StructGrid *> (GetGrid(level));
-    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
-    if (interfaceInfo == 0)
-    {
-        return;
-    }
-
-    int nTemperatureModel = parameters->GetTemperatureModel();
-    int nEquation = GetNumberOfEquations();
-
-    RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &temperatures = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
-
-    RDouble4D &xfv  = *(grid->GetFaceVectorX());
-    RDouble4D &yfv  = *(grid->GetFaceVectorY());
-    RDouble4D &zfv  = *(grid->GetFaceVectorZ());
-    RDouble3D &vol  = *(grid->GetCellVolume());
-
-    int nDim = GetDim();
-    int ja = 1;
-    int ka = 1;
-    if (nDim == TWO_D)
-    {
-        ka = 0;
-    }
-    if (nDim == ONE_D)
-    {
-        ja = 0;
-    }
-
-    GreenGeo3D greenGeo3D;
-
-    for (int iGhostCellLayer = GetNumberOfGhostCellLayers() - 1; iGhostCellLayer >= 0; -- iGhostCellLayer)
-    {
-        Data_ParamFieldSuite *dsend = interfaceInfo->GetSendDataStorage(iGhostCellLayer);
-        RDouble **dqdx = reinterpret_cast <RDouble **> (dsend->GetDataPtr("dqdx"));
-        RDouble **dqdy = reinterpret_cast <RDouble **> (dsend->GetDataPtr("dqdy"));
-        RDouble **dqdz = reinterpret_cast <RDouble **> (dsend->GetDataPtr("dqdz"));
-
-        StructGrid *fineGrid = StructGridCast(grid->GetFinestGrid());
-        InterfaceInfo *fineGridInterfaceInfo = fineGrid->GetInterfaceInfo();
-
-        int nIFace = fineGridInterfaceInfo->GetNIFace();
-
-        for (int iFace = 0; iFace < nIFace; ++ iFace)
-        {
-            int is, js, ks;
-            fineGrid->GetSourceIndexIJK(iFace, iGhostCellLayer+1, is, js, ks);
-            fineGrid->RemapMultigridIJK(level, is, js, ks);
-
-            Get_SPM(is, js, ks,  ja, ka, nDim, &greenGeo3D, xfv, yfv, zfv, vol);
-
-            for (int iEquation = 0; iEquation < nEquation; ++ iEquation)
-            {
-                DXDYDZ(primitiveVariables, &greenGeo3D, is, js, ks,  ja, ka, iEquation, dqdx[iEquation][iFace], dqdy[iEquation][iFace], dqdz[iEquation][iFace]);
-            }
-        }
-        RDouble **dtdx = reinterpret_cast <RDouble **> (dsend->GetDataPtr("dtdx"));
-        RDouble **dtdy = reinterpret_cast <RDouble **> (dsend->GetDataPtr("dtdy"));
-        RDouble **dtdz = reinterpret_cast <RDouble **> (dsend->GetDataPtr("dtdz"));
-
-        for (int iFace = 0; iFace < nIFace; ++ iFace)
-        {
-            int is, js, ks;
-            fineGrid->GetSourceIndexIJK(iFace, iGhostCellLayer+1, is, js, ks);
-            fineGrid->RemapMultigridIJK(level, is, js, ks);
-
-            Get_SPM(is, js, ks,  ja, ka, nDim, &greenGeo3D, xfv, yfv, zfv,vol);
-
-            for (int iTempModel = 0; iTempModel < nTemperatureModel; ++ iTempModel)
-            {
-                DXDYDZ(temperatures, &greenGeo3D, is, js, ks,  ja, ka, iTempModel, dtdx[iTempModel][iFace], dtdy[iTempModel][iFace], dtdz[iTempModel][iFace]);
-            }
-        }
-
-        RDouble **limit = reinterpret_cast <RDouble **> (dsend->GetDataPtr("limit"));
-
-        CalLimiters(grid, iGhostCellLayer, limit[0], &primitiveVariables, dqdx, dqdy, dqdz);
-    }
-}
-
-void NSSolverStruct::CalLimiters(Grid *gridIn, int iGhostCellLayer, RDouble *limit, RDouble4D *q, RDouble **dqdx, RDouble **dqdy, RDouble **dqdz)
-{
-    StructGrid *grid = reinterpret_cast <StructGrid *> (gridIn);
-    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
-    if (interfaceInfo == 0)
-    {
-        return;
-    }
-
-    int nEquation = GetNumberOfEquations();
-
-    int uns_limiter = GlobalDataBase::GetIntParaFromDB("uns_limiter");
-    if (uns_limiter >= ILMT_STRUCT) return;
-
-    int nIFace = interfaceInfo->GetNIFace();
-
-    for (int iFace = 0; iFace < nIFace; ++ iFace)
-    {
-        limit[iFace] = one;
-    }
-
-    if (uns_limiter == ILMT_FIRST)
-    {
-        for (int iFace = 0; iFace < nIFace; ++ iFace)
-        {
-            limit[iFace] = zero;
-        }
-    }
-
-    if (uns_limiter == ILMT_NOLIM) return;
-    if (uns_limiter == ILMT_FIRST) return;
-
-    using namespace IDX;
-
-    if (uns_limiter == ILMT_BARTH)
-    {
-        BarthLimiterINF(grid, iGhostCellLayer, limit, q, dqdx[IR], dqdy[IR], dqdz[IR], IR);
-        BarthLimiterINF(grid, iGhostCellLayer, limit, q, dqdx[IP], dqdy[IP], dqdz[IP], IP);
-    }
-    else if (uns_limiter == ILMT_VENCAT)
-    {
-        for (int iEquation = 0; iEquation < nEquation; ++ iEquation)
-        {
-            VencatLimiterINF(grid, iGhostCellLayer, limit, q, dqdx[iEquation], dqdy[iEquation], dqdz[iEquation], iEquation);
-        }
-    }
-}
-
 void NSSolverStruct::UploadInterfaceData(ActionKey *actkey)
 {
     Param_NSSolverStruct *parameters = GetControlParameters();
@@ -13993,7 +14278,78 @@ void NSSolverStruct::DecompressArrayFromInterface(DataContainer *&dataContainer,
     }
 }
 
-void NSSolverStruct::CompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
+void NSSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+    CompositeBCRegion * composite_bcregion = finestGrid->GetCompositeBCRegion();//Add by zhangyong
+    RDouble4D &rotNSgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueX"));
+    RDouble4D &rotNSgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueY"));
+    RDouble4D &rotNSgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueZ"));
+
+    rotNSgradValueX = 0.0;
+    rotNSgradValueY = 0.0;
+    rotNSgradValueZ = 0.0;
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+    double rotationAngle        = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle*PI/180;
+    if(nEquation > 0)
+    {
+        RDouble4D &fieldRecvNSX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+        RDouble4D &fieldRecvNSY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+        RDouble4D &fieldRecvNSZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int it, jt, kt;
+                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+                finestGrid->RemapMultigridIJK(level, it, jt, kt);
+                int *ibcregions = composite_bcregion->GetIFaceInfo();
+                int ibcregion = ibcregions[iFace];
+                BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                string bcName = bcregion->GetBCName();
+                if ( bcName == "Periodic_up" )
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        rotNSgradValueY(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * cos(2*PI-rotationAngle) - fieldRecvNSZ(it, jt, kt, m) * sin(2*PI-rotationAngle);
+                        rotNSgradValueZ(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * sin(2*PI-rotationAngle) + fieldRecvNSZ(it, jt, kt, m) * cos(2*PI-rotationAngle);
+                    }
+                }
+                else if( bcName == "Periodic_down" )
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        rotNSgradValueY(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * cos(rotationAngle) - fieldRecvNSZ(it, jt, kt, m) * sin(rotationAngle);
+                        rotNSgradValueZ(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * sin(rotationAngle) + fieldRecvNSZ(it, jt, kt, m) * cos(rotationAngle);
+                    }
+                }
+
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    fieldRecvNSY(it, jt, kt, m) = rotNSgradValueY(it, jt, kt, m);
+                    fieldRecvNSZ(it, jt, kt, m) = rotNSgradValueZ(it, jt, kt, m);
+                }
+            }
+        }
+    }
+}
+
+void NSSolverStruct::CompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int level = grid->GetLevel();
@@ -14016,6 +14372,9 @@ void NSSolverStruct::CompressGradientToInterfaceOnlyForMixGrid(DataContainer *&d
     RDouble4D &dqdy_cc = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdy_cc_ruvwpt"));
     RDouble4D &dqdz_cc = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdz_cc_ruvwpt"));
 
+    RDouble limitcoefofinterface = GlobalDataBase::GetDoubleParaFromDB("limitcoefofinterface");
+    int limitVector = GlobalDataBase::GetIntParaFromDB("limitVector");
+
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
         int iFace = interfaceIndexContainerForSend[iLocalFace];
@@ -14029,10 +14388,24 @@ void NSSolverStruct::CompressGradientToInterfaceOnlyForMixGrid(DataContainer *&d
             PHWrite(dataContainer, dqdy_cc(is, js, ks, m));
             PHWrite(dataContainer, dqdz_cc(is, js, ks, m));
         }
+
+        if(limitVector == 0)
+        {
+            //! scalar
+            PHWrite(dataContainer, limitcoefofinterface);
+        }
+        else
+        {
+            PHWrite(dataContainer, limitcoefofinterface);
+            PHWrite(dataContainer, limitcoefofinterface);
+            PHWrite(dataContainer, limitcoefofinterface);
+            PHWrite(dataContainer, limitcoefofinterface);
+            PHWrite(dataContainer, limitcoefofinterface);
+        }
     }
 }
 
-void NSSolverStruct::DecompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
+void NSSolverStruct::DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int level = grid->GetLevel();
@@ -14054,12 +14427,13 @@ void NSSolverStruct::DecompressGradientToInterfaceOnlyForMixGrid(DataContainer *
     RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
     RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
     RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
-
-    int gridtypeofneighborZone = PHMPI::GetZoneGridType(neighborZoneIndex);
     
     RDouble dqdx_cc_ruvwpt[6];
     RDouble dqdy_cc_ruvwpt[6];
     RDouble dqdz_cc_ruvwpt[6];
+
+    int limitVector = GlobalDataBase::GetIntParaFromDB("limitVector");
+    RDouble limitofunstr_nouse = 0.0;
 
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
@@ -14074,28 +14448,39 @@ void NSSolverStruct::DecompressGradientToInterfaceOnlyForMixGrid(DataContainer *
             PHRead(dataContainer, dqdz_cc_ruvwpt[m]);
         }
 
-        if(gridtypeofneighborZone == STRUCTGRID)
+        if(limitVector == 0)
         {
-            gradUVWTCellCenterX(it, jt, kt, 0) = dqdx_cc_ruvwpt[1]; //grad of U
-            gradUVWTCellCenterY(it, jt, kt, 0) = dqdy_cc_ruvwpt[1]; //grad of U
-            gradUVWTCellCenterZ(it, jt, kt, 0) = dqdz_cc_ruvwpt[1]; //grad of U
-
-            gradUVWTCellCenterX(it, jt, kt, 1) = dqdx_cc_ruvwpt[2]; //grad of V
-            gradUVWTCellCenterY(it, jt, kt, 1) = dqdy_cc_ruvwpt[2]; //grad of V
-            gradUVWTCellCenterZ(it, jt, kt, 1) = dqdz_cc_ruvwpt[2]; //grad of V
-
-            gradUVWTCellCenterX(it, jt, kt, 2) = dqdx_cc_ruvwpt[3]; //grad of W
-            gradUVWTCellCenterY(it, jt, kt, 2) = dqdy_cc_ruvwpt[3]; //grad of W
-            gradUVWTCellCenterZ(it, jt, kt, 2) = dqdz_cc_ruvwpt[3]; //grad of W
-
-            gradUVWTCellCenterX(it, jt, kt, 3) = dqdx_cc_ruvwpt[5]; //grad of T
-            gradUVWTCellCenterY(it, jt, kt, 3) = dqdy_cc_ruvwpt[5]; //grad of T
-            gradUVWTCellCenterZ(it, jt, kt, 3) = dqdz_cc_ruvwpt[5]; //grad of T
+            //! scalar
+            PHRead(dataContainer, limitofunstr_nouse);
         }
+        else
+        {
+            PHRead(dataContainer, limitofunstr_nouse);
+            PHRead(dataContainer, limitofunstr_nouse);
+            PHRead(dataContainer, limitofunstr_nouse);
+            PHRead(dataContainer, limitofunstr_nouse);
+            PHRead(dataContainer, limitofunstr_nouse);
+        }
+
+        gradUVWTCellCenterX(it, jt, kt, 0) = dqdx_cc_ruvwpt[1]; //grad of U
+        gradUVWTCellCenterY(it, jt, kt, 0) = dqdy_cc_ruvwpt[1]; //grad of U
+        gradUVWTCellCenterZ(it, jt, kt, 0) = dqdz_cc_ruvwpt[1]; //grad of U
+        
+        gradUVWTCellCenterX(it, jt, kt, 1) = dqdx_cc_ruvwpt[2]; //grad of V
+        gradUVWTCellCenterY(it, jt, kt, 1) = dqdy_cc_ruvwpt[2]; //grad of V
+        gradUVWTCellCenterZ(it, jt, kt, 1) = dqdz_cc_ruvwpt[2]; //grad of V
+        
+        gradUVWTCellCenterX(it, jt, kt, 2) = dqdx_cc_ruvwpt[3]; //grad of W
+        gradUVWTCellCenterY(it, jt, kt, 2) = dqdy_cc_ruvwpt[3]; //grad of W
+        gradUVWTCellCenterZ(it, jt, kt, 2) = dqdz_cc_ruvwpt[3]; //grad of W
+        
+        gradUVWTCellCenterX(it, jt, kt, 3) = dqdx_cc_ruvwpt[5]; //grad of T
+        gradUVWTCellCenterY(it, jt, kt, 3) = dqdy_cc_ruvwpt[5]; //grad of T
+        gradUVWTCellCenterZ(it, jt, kt, 3) = dqdz_cc_ruvwpt[5]; //grad of T
     }
 }
 
-void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
+void NSSolverStruct::CompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int level = grid->GetLevel();
@@ -14113,39 +14498,101 @@ void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&d
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
     dataContainer->moveto_begin();
-
-    Param_NSSolverStruct *parameters = GetControlParameters();
-    int viscousType = parameters->GetViscousType();
     
-    RDouble dataforupload = 0.0;
-
-    if(viscousType <= 0)
+    RDouble4D &QLI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1"));
+    RDouble4D &QLJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2"));
+    RDouble4D &QLK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql3"));
+    RDouble4D &QRI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1"));
+    RDouble4D &QRJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr2"));
+    RDouble4D &QRK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr3"));
+    
+    RDouble qface[5];
+    for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
-        //! Euler
-        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+        int iFace = interfaceIndexContainerForSend[iLocalFace];
+        
+        int is, js, ks;
+        finestGrid->GetSourceIndexIJK(iFace, 1, is, js, ks);
+        finestGrid->RemapMultigridIJK(level, is, js, ks);
+        
+        int id, jd, kd;
+        int i_lr, j_lr, k_lr;
+        finestGrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+        
+        if (i_lr != 0)
         {
-            for (int m = 0; m < 5; ++ m)
+            //! I_face
+            if (i_lr == -1)
             {
-                PHWrite(dataContainer, dataforupload);
+                //! left boundary
+                qface[0] = QRI(is, js, ks, 0);
+                qface[1] = QRI(is, js, ks, 1);
+                qface[2] = QRI(is, js, ks, 2);
+                qface[3] = QRI(is, js, ks, 3);
+                qface[4] = QRI(is, js, ks, 4);
+            }
+            else
+            {
+                //! right boundary
+                qface[0] = QLI(is, js, ks, 0);
+                qface[1] = QLI(is, js, ks, 1);
+                qface[2] = QLI(is, js, ks, 2);
+                qface[3] = QLI(is, js, ks, 3);
+                qface[4] = QLI(is, js, ks, 4);
             }
         }
-    }
-    else
-    {
-        //! laminar
-        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+        else if (j_lr != 0)
         {
-            for (int m = 0; m < 5; ++ m)
+            //! J_face
+            if (j_lr == -1)
             {
-                PHWrite(dataContainer, dataforupload);
-                PHWrite(dataContainer, dataforupload);
+                //! left boundary
+                qface[0] = QRJ(is, js, ks, 0);
+                qface[1] = QRJ(is, js, ks, 1);
+                qface[2] = QRJ(is, js, ks, 2);
+                qface[3] = QRJ(is, js, ks, 3);
+                qface[4] = QRJ(is, js, ks, 4);
+            }
+            else
+            {
+                //! right boundary
+                qface[0] = QLJ(is, js, ks, 0);
+                qface[1] = QLJ(is, js, ks, 1);
+                qface[2] = QLJ(is, js, ks, 2);
+                qface[3] = QLJ(is, js, ks, 3);
+                qface[4] = QLJ(is, js, ks, 4);
             }
         }
+        else
+        {
+            //! K_face
+            if (k_lr == -1)
+            {
+                //! left boundary
+                qface[0] = QRK(is, js, ks, 0);
+                qface[1] = QRK(is, js, ks, 1);
+                qface[2] = QRK(is, js, ks, 2);
+                qface[3] = QRK(is, js, ks, 3);
+                qface[4] = QRK(is, js, ks, 4);
+            }
+            else
+            {
+                //! right boundary
+                qface[0] = QLK(is, js, ks, 0);
+                qface[1] = QLK(is, js, ks, 1);
+                qface[2] = QLK(is, js, ks, 2);
+                qface[3] = QLK(is, js, ks, 3);
+                qface[4] = QLK(is, js, ks, 4);
+            }
+        }
+        for (int m = 0; m < 5; ++ m)
+        {
+            PHWrite(dataContainer, qface[m]);
+        }
     }
-    
 }
 
-void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
+void NSSolverStruct::DecompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int level = grid->GetLevel();
@@ -14164,8 +14611,395 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
 
     dataContainer->moveto_begin();
 
+    RDouble4D &QLI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1"));
+    RDouble4D &QLJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2"));
+    RDouble4D &QLK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql3"));
+    RDouble4D &QRI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1"));
+    RDouble4D &QRJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr2"));
+    RDouble4D &QRK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr3"));
+    
+    RDouble qface[5];
+    for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+    {
+        int iFace = interfaceIndexContainerForReceive[iLocalFace];
+        int it, jt, kt;
+        finestGrid->GetTargetIndexIJK(iFace, 1, it, jt, kt);
+        finestGrid->RemapMultigridIJK(level, it, jt, kt);
+        
+        for (int m = 0; m < 5; ++ m)
+        {
+            PHRead(dataContainer, qface[m]);
+        }
+        
+        int id, jd, kd;
+        int i_lr, j_lr, k_lr;
+        finestGrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+        if (i_lr != 0)
+        {
+            //! I_face
+            if (i_lr == -1)
+            {
+                //! left boundary
+                QLI(it, jt, kt, 0) = qface[0];
+                QLI(it, jt, kt, 1) = qface[1];
+                QLI(it, jt, kt, 2) = qface[2];
+                QLI(it, jt, kt, 3) = qface[3];
+                QLI(it, jt, kt, 4) = qface[4];
+            }
+            else
+            {
+                //! right boundary
+                QRI(it, jt, kt, 0) = qface[0];
+                QRI(it, jt, kt, 1) = qface[1];
+                QRI(it, jt, kt, 2) = qface[2];
+                QRI(it, jt, kt, 3) = qface[3];
+                QRI(it, jt, kt, 4) = qface[4];
+            }
+        }
+        else if (j_lr != 0)
+        {
+            //! J_face
+            if (j_lr == -1)
+            {
+                //! left boundary
+                QLJ(it, jt, kt, 0) = qface[0];
+                QLJ(it, jt, kt, 1) = qface[1];
+                QLJ(it, jt, kt, 2) = qface[2];
+                QLJ(it, jt, kt, 3) = qface[3];
+                QLJ(it, jt, kt, 4) = qface[4];
+            }
+            else
+            {
+                //! right boundary
+                QRJ(it, jt, kt, 0) = qface[0];
+                QRJ(it, jt, kt, 1) = qface[1];
+                QRJ(it, jt, kt, 2) = qface[2];
+                QRJ(it, jt, kt, 3) = qface[3];
+                QRJ(it, jt, kt, 4) = qface[4];
+            }
+        }
+        else
+        {
+            //! K_face
+            if (k_lr == -1)
+            {
+                //! left boundary
+                QLK(it, jt, kt, 0) = qface[0];
+                QLK(it, jt, kt, 1) = qface[1];
+                QLK(it, jt, kt, 2) = qface[2];
+                QLK(it, jt, kt, 3) = qface[3];
+                QLK(it, jt, kt, 4) = qface[4];
+            }
+            else
+            {
+                //! right boundary
+                QRK(it, jt, kt, 0) = qface[0];
+                QRK(it, jt, kt, 1) = qface[1];
+                QRK(it, jt, kt, 2) = qface[2];
+                QRK(it, jt, kt, 3) = qface[3];
+                QRK(it, jt, kt, 4) = qface[4];
+            }
+        }
+    }
+}
+
+
+void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    int gridtypeofcurrentZone = grid->Type();
+    int gridtypeofneighborZone = PHMPI::GetZoneGridType(neighborZoneIndex);
+    if(gridtypeofcurrentZone == gridtypeofneighborZone)
+    {
+        RDouble uploadData = 0.0;
+        dataContainer->moveto_begin();
+        PHWrite(dataContainer, uploadData);
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
     Param_NSSolverStruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
+
+    if(viscousType <= 0)
+    {
+        //! Euler
+        RDouble4D &faceInviscidfluxI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxI"));
+        RDouble4D &faceInviscidfluxJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxJ"));
+        RDouble4D &faceInviscidfluxK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxK"));
+
+        RDouble flux[5];
+        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+        {
+            int iFace = interfaceIndexContainerForSend[iLocalFace];
+            
+            int is, js, ks;
+            finestGrid->GetSourceIndexIJK(iFace, 1, is, js, ks);
+            finestGrid->RemapMultigridIJK(level, is, js, ks);
+            
+            int id, jd, kd;
+            int i_lr, j_lr, k_lr;
+            finestGrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+            
+            if (i_lr != 0)
+            {
+                //! I_face
+                if (i_lr == -1)
+                {
+                    //! left boundary
+                    flux[0] = faceInviscidfluxI(is, js, ks, 0);
+                    flux[1] = faceInviscidfluxI(is, js, ks, 1);
+                    flux[2] = faceInviscidfluxI(is, js, ks, 2);
+                    flux[3] = faceInviscidfluxI(is, js, ks, 3);
+                    flux[4] = faceInviscidfluxI(is, js, ks, 4);
+                }
+                else
+                {
+                    //! right boundary
+                    flux[0] = - faceInviscidfluxI(is + 1, js, ks, 0);
+                    flux[1] = - faceInviscidfluxI(is + 1, js, ks, 1);
+                    flux[2] = - faceInviscidfluxI(is + 1, js, ks, 2);
+                    flux[3] = - faceInviscidfluxI(is + 1, js, ks, 3);
+                    flux[4] = - faceInviscidfluxI(is + 1, js, ks, 4);
+                }
+            }
+            else if (j_lr != 0)
+            {
+                //! J_face
+                if (j_lr == -1)
+                {
+                    //! left boundary
+                    flux[0] = faceInviscidfluxJ(is, js, ks, 0);
+                    flux[1] = faceInviscidfluxJ(is, js, ks, 1);
+                    flux[2] = faceInviscidfluxJ(is, js, ks, 2);
+                    flux[3] = faceInviscidfluxJ(is, js, ks, 3);
+                    flux[4] = faceInviscidfluxJ(is, js, ks, 4);
+                }
+                else
+                {
+                    //! right boundary
+                    flux[0] = - faceInviscidfluxJ(is, js + 1, ks, 0);
+                    flux[1] = - faceInviscidfluxJ(is, js + 1, ks, 1);
+                    flux[2] = - faceInviscidfluxJ(is, js + 1, ks, 2);
+                    flux[3] = - faceInviscidfluxJ(is, js + 1, ks, 3);
+                    flux[4] = - faceInviscidfluxJ(is, js + 1, ks, 4);
+                }
+            }
+            else
+            {
+                //! K_face
+                if (k_lr == -1)
+                {
+                    //! left boundary
+                    flux[0] = faceInviscidfluxK(is, js, ks, 0);
+                    flux[1] = faceInviscidfluxK(is, js, ks, 1);
+                    flux[2] = faceInviscidfluxK(is, js, ks, 2);
+                    flux[3] = faceInviscidfluxK(is, js, ks, 3);
+                    flux[4] = faceInviscidfluxK(is, js, ks, 4);
+                }
+                else
+                {
+                    //! right boundary
+                    flux[0] = - faceInviscidfluxK(is, js, ks + 1, 0);
+                    flux[1] = - faceInviscidfluxK(is, js, ks + 1, 1);
+                    flux[2] = - faceInviscidfluxK(is, js, ks + 1, 2);
+                    flux[3] = - faceInviscidfluxK(is, js, ks + 1, 3);
+                    flux[4] = - faceInviscidfluxK(is, js, ks + 1, 4);
+                }
+            }
+        
+            for (int m = 0; m < 5; ++ m)
+            {
+                PHWrite(dataContainer, flux[m]);
+            }
+        }
+    }
+    else
+    {
+        //! laminar
+        RDouble4D &faceInviscidfluxI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxI"));
+        RDouble4D &faceInviscidfluxJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxJ"));
+        RDouble4D &faceInviscidfluxK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxK"));
+
+        RDouble4D &faceViscousfluxI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxI"));
+        RDouble4D &faceViscousfluxJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxJ"));
+        RDouble4D &faceViscousfluxK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxK"));
+
+        RDouble Inviscidflux[5];
+        RDouble Viscousflux[5];
+        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+        {
+            int iFace = interfaceIndexContainerForSend[iLocalFace];
+            
+            int is, js, ks;
+            finestGrid->GetSourceIndexIJK(iFace, 1, is, js, ks);
+            finestGrid->RemapMultigridIJK(level, is, js, ks);
+            
+            int id, jd, kd;
+            int i_lr, j_lr, k_lr;
+            finestGrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+            
+            if (i_lr != 0)
+            {
+                //! I_face
+                if (i_lr == -1)
+                {
+                    //! left boundary
+                    Inviscidflux[0] = faceInviscidfluxI(is, js, ks, 0);
+                    Inviscidflux[1] = faceInviscidfluxI(is, js, ks, 1);
+                    Inviscidflux[2] = faceInviscidfluxI(is, js, ks, 2);
+                    Inviscidflux[3] = faceInviscidfluxI(is, js, ks, 3);
+                    Inviscidflux[4] = faceInviscidfluxI(is, js, ks, 4);
+
+                    Viscousflux[0] = faceViscousfluxI(is, js, ks, 0);
+                    Viscousflux[1] = faceViscousfluxI(is, js, ks, 1);
+                    Viscousflux[2] = faceViscousfluxI(is, js, ks, 2);
+                    Viscousflux[3] = faceViscousfluxI(is, js, ks, 3);
+                    Viscousflux[4] = faceViscousfluxI(is, js, ks, 4);
+                }
+                else
+                {
+                    //! right boundary
+                    Inviscidflux[0] = - faceInviscidfluxI(is + 1, js, ks, 0);
+                    Inviscidflux[1] = - faceInviscidfluxI(is + 1, js, ks, 1);
+                    Inviscidflux[2] = - faceInviscidfluxI(is + 1, js, ks, 2);
+                    Inviscidflux[3] = - faceInviscidfluxI(is + 1, js, ks, 3);
+                    Inviscidflux[4] = - faceInviscidfluxI(is + 1, js, ks, 4);
+
+                    Viscousflux[0] = - faceViscousfluxI(is + 1, js, ks, 0);
+                    Viscousflux[1] = - faceViscousfluxI(is + 1, js, ks, 1);
+                    Viscousflux[2] = - faceViscousfluxI(is + 1, js, ks, 2);
+                    Viscousflux[3] = - faceViscousfluxI(is + 1, js, ks, 3);
+                    Viscousflux[4] = - faceViscousfluxI(is + 1, js, ks, 4);
+                }
+            }
+            else if (j_lr != 0)
+            {
+                //! J_face
+                if (j_lr == -1)
+                {
+                    //! left boundary
+                    Inviscidflux[0] = faceInviscidfluxJ(is, js, ks, 0);
+                    Inviscidflux[1] = faceInviscidfluxJ(is, js, ks, 1);
+                    Inviscidflux[2] = faceInviscidfluxJ(is, js, ks, 2);
+                    Inviscidflux[3] = faceInviscidfluxJ(is, js, ks, 3);
+                    Inviscidflux[4] = faceInviscidfluxJ(is, js, ks, 4);
+
+                    Viscousflux[0] = faceViscousfluxJ(is, js, ks, 0);
+                    Viscousflux[1] = faceViscousfluxJ(is, js, ks, 1);
+                    Viscousflux[2] = faceViscousfluxJ(is, js, ks, 2);
+                    Viscousflux[3] = faceViscousfluxJ(is, js, ks, 3);
+                    Viscousflux[4] = faceViscousfluxJ(is, js, ks, 4);
+                }
+                else
+                {
+                    //! right boundary
+                    Inviscidflux[0] = - faceInviscidfluxJ(is, js + 1, ks, 0);
+                    Inviscidflux[1] = - faceInviscidfluxJ(is, js + 1, ks, 1);
+                    Inviscidflux[2] = - faceInviscidfluxJ(is, js + 1, ks, 2);
+                    Inviscidflux[3] = - faceInviscidfluxJ(is, js + 1, ks, 3);
+                    Inviscidflux[4] = - faceInviscidfluxJ(is, js + 1, ks, 4);
+
+                    Viscousflux[0] = - faceViscousfluxJ(is, js + 1, ks, 0);
+                    Viscousflux[1] = - faceViscousfluxJ(is, js + 1, ks, 1);
+                    Viscousflux[2] = - faceViscousfluxJ(is, js + 1, ks, 2);
+                    Viscousflux[3] = - faceViscousfluxJ(is, js + 1, ks, 3);
+                    Viscousflux[4] = - faceViscousfluxJ(is, js + 1, ks, 4);
+                }
+            }
+            else
+            {
+                //! K_face
+                if (k_lr == -1)
+                {
+                    //! left boundary
+                    Inviscidflux[0] = faceInviscidfluxK(is, js, ks, 0);
+                    Inviscidflux[1] = faceInviscidfluxK(is, js, ks, 1);
+                    Inviscidflux[2] = faceInviscidfluxK(is, js, ks, 2);
+                    Inviscidflux[3] = faceInviscidfluxK(is, js, ks, 3);
+                    Inviscidflux[4] = faceInviscidfluxK(is, js, ks, 4);
+
+                    Viscousflux[0] = faceViscousfluxK(is, js, ks, 0);
+                    Viscousflux[1] = faceViscousfluxK(is, js, ks, 1);
+                    Viscousflux[2] = faceViscousfluxK(is, js, ks, 2);
+                    Viscousflux[3] = faceViscousfluxK(is, js, ks, 3);
+                    Viscousflux[4] = faceViscousfluxK(is, js, ks, 4);
+                }
+                else
+                {
+                    //! right boundary
+                    Inviscidflux[0] = - faceInviscidfluxK(is, js, ks + 1, 0);
+                    Inviscidflux[1] = - faceInviscidfluxK(is, js, ks + 1, 1);
+                    Inviscidflux[2] = - faceInviscidfluxK(is, js, ks + 1, 2);
+                    Inviscidflux[3] = - faceInviscidfluxK(is, js, ks + 1, 3);
+                    Inviscidflux[4] = - faceInviscidfluxK(is, js, ks + 1, 4);
+
+                    Viscousflux[0] = - faceViscousfluxK(is, js, ks + 1, 0);
+                    Viscousflux[1] = - faceViscousfluxK(is, js, ks + 1, 1);
+                    Viscousflux[2] = - faceViscousfluxK(is, js, ks + 1, 2);
+                    Viscousflux[3] = - faceViscousfluxK(is, js, ks + 1, 3);
+                    Viscousflux[4] = - faceViscousfluxK(is, js, ks + 1, 4);
+                }
+            }
+            for (int m = 0; m < 5; ++ m)
+            {
+                PHWrite(dataContainer, Inviscidflux[m]);
+                PHWrite(dataContainer, Viscousflux[m]);
+            }
+        }
+    }
+    
+}
+
+void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    int gridtypeofcurrentZone = grid->Type();
+    int gridtypeofneighborZone = PHMPI::GetZoneGridType(neighborZoneIndex);
+    if(gridtypeofcurrentZone == gridtypeofneighborZone)
+    {
+        RDouble downdData = 0.0;
+        dataContainer->moveto_begin();
+        PHRead(dataContainer, downdData);
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int viscousType = parameters->GetViscousType();
+
+    RDouble coefofstrflux = GlobalDataBase::GetDoubleParaFromDB("coefofstrflux");
+    RDouble coefofunstrflux = 1.0 - coefofstrflux;
 
     if(viscousType <= 0)
     {
@@ -14196,20 +15030,20 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
                 if (i_lr == -1)
                 {
                     //! left boundary
-                    faceInviscidfluxI(it + 1, jt, kt, 0) = flux[0];
-                    faceInviscidfluxI(it + 1, jt, kt, 1) = flux[1];
-                    faceInviscidfluxI(it + 1, jt, kt, 2) = flux[2];
-                    faceInviscidfluxI(it + 1, jt, kt, 3) = flux[3];
-                    faceInviscidfluxI(it + 1, jt, kt, 4) = flux[4];
+                    faceInviscidfluxI(it + 1, jt, kt, 0) = (coefofunstrflux * flux[0] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 0));
+                    faceInviscidfluxI(it + 1, jt, kt, 1) = (coefofunstrflux * flux[1] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 1));
+                    faceInviscidfluxI(it + 1, jt, kt, 2) = (coefofunstrflux * flux[2] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 2));
+                    faceInviscidfluxI(it + 1, jt, kt, 3) = (coefofunstrflux * flux[3] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 3));
+                    faceInviscidfluxI(it + 1, jt, kt, 4) = (coefofunstrflux * flux[4] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 4));
                 }
                 else
                 {
                     //! right boundary
-                    faceInviscidfluxI(it, jt, kt, 0) = - flux[0];
-                    faceInviscidfluxI(it, jt, kt, 1) = - flux[1];
-                    faceInviscidfluxI(it, jt, kt, 2) = - flux[2];
-                    faceInviscidfluxI(it, jt, kt, 3) = - flux[3];
-                    faceInviscidfluxI(it, jt, kt, 4) = - flux[4];
+                    faceInviscidfluxI(it, jt, kt, 0) = ( - coefofunstrflux * flux[0] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 0));
+                    faceInviscidfluxI(it, jt, kt, 1) = ( - coefofunstrflux * flux[1] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 1));
+                    faceInviscidfluxI(it, jt, kt, 2) = ( - coefofunstrflux * flux[2] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 2));
+                    faceInviscidfluxI(it, jt, kt, 3) = ( - coefofunstrflux * flux[3] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 3));
+                    faceInviscidfluxI(it, jt, kt, 4) = ( - coefofunstrflux * flux[4] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 4));
                 }
             }
             else if (j_lr != 0)
@@ -14218,20 +15052,20 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
                 if (j_lr == -1)
                 {
                     //! left boundary
-                    faceInviscidfluxJ(it, jt + 1, kt, 0) = flux[0];
-                    faceInviscidfluxJ(it, jt + 1, kt, 1) = flux[1];
-                    faceInviscidfluxJ(it, jt + 1, kt, 2) = flux[2];
-                    faceInviscidfluxJ(it, jt + 1, kt, 3) = flux[3];
-                    faceInviscidfluxJ(it, jt + 1, kt, 4) = flux[4];
+                    faceInviscidfluxJ(it, jt + 1, kt, 0) = (coefofunstrflux * flux[0] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 0));
+                    faceInviscidfluxJ(it, jt + 1, kt, 1) = (coefofunstrflux * flux[1] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 1));
+                    faceInviscidfluxJ(it, jt + 1, kt, 2) = (coefofunstrflux * flux[2] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 2));
+                    faceInviscidfluxJ(it, jt + 1, kt, 3) = (coefofunstrflux * flux[3] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 3));
+                    faceInviscidfluxJ(it, jt + 1, kt, 4) = (coefofunstrflux * flux[4] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 4));
                 }
                 else
                 {
                     //! right boundary
-                    faceInviscidfluxJ(it, jt, kt, 0) = - flux[0];
-                    faceInviscidfluxJ(it, jt, kt, 1) = - flux[1];
-                    faceInviscidfluxJ(it, jt, kt, 2) = - flux[2];
-                    faceInviscidfluxJ(it, jt, kt, 3) = - flux[3];
-                    faceInviscidfluxJ(it, jt, kt, 4) = - flux[4];
+                    faceInviscidfluxJ(it, jt, kt, 0) = ( - coefofunstrflux * flux[0] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 0));
+                    faceInviscidfluxJ(it, jt, kt, 1) = ( - coefofunstrflux * flux[1] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 1));
+                    faceInviscidfluxJ(it, jt, kt, 2) = ( - coefofunstrflux * flux[2] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 2));
+                    faceInviscidfluxJ(it, jt, kt, 3) = ( - coefofunstrflux * flux[3] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 3));
+                    faceInviscidfluxJ(it, jt, kt, 4) = ( - coefofunstrflux * flux[4] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 4));
                 }
             }
             else
@@ -14240,20 +15074,20 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
                 if (k_lr == -1)
                 {
                     //! left boundary
-                    faceInviscidfluxK(it, jt, kt + 1, 0) = flux[0];
-                    faceInviscidfluxK(it, jt, kt + 1, 1) = flux[1];
-                    faceInviscidfluxK(it, jt, kt + 1, 2) = flux[2];
-                    faceInviscidfluxK(it, jt, kt + 1, 3) = flux[3];
-                    faceInviscidfluxK(it, jt, kt + 1, 4) = flux[4];
+                    faceInviscidfluxK(it, jt, kt + 1, 0) = (coefofunstrflux * flux[0] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 0));
+                    faceInviscidfluxK(it, jt, kt + 1, 1) = (coefofunstrflux * flux[1] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 1));
+                    faceInviscidfluxK(it, jt, kt + 1, 2) = (coefofunstrflux * flux[2] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 2));
+                    faceInviscidfluxK(it, jt, kt + 1, 3) = (coefofunstrflux * flux[3] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 3));
+                    faceInviscidfluxK(it, jt, kt + 1, 4) = (coefofunstrflux * flux[4] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 4));
                 }
                 else
                 {
                     //! right boundary
-                    faceInviscidfluxK(it, jt, kt, 0) = - flux[0];
-                    faceInviscidfluxK(it, jt, kt, 1) = - flux[1];
-                    faceInviscidfluxK(it, jt, kt, 2) = - flux[2];
-                    faceInviscidfluxK(it, jt, kt, 3) = - flux[3];
-                    faceInviscidfluxK(it, jt, kt, 4) = - flux[4];
+                    faceInviscidfluxK(it, jt, kt, 0) = (- coefofunstrflux * flux[0] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 0));
+                    faceInviscidfluxK(it, jt, kt, 1) = (- coefofunstrflux * flux[1] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 1));
+                    faceInviscidfluxK(it, jt, kt, 2) = (- coefofunstrflux * flux[2] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 2));
+                    faceInviscidfluxK(it, jt, kt, 3) = (- coefofunstrflux * flux[3] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 3));
+                    faceInviscidfluxK(it, jt, kt, 4) = (- coefofunstrflux * flux[4] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 4));
                 }
             }
         }
@@ -14293,32 +15127,32 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
                 if (i_lr == -1)
                 {
                     //! left boundary
-                    faceInviscidfluxI(it + 1, jt, kt, 0) = Inviscidflux[0];
-                    faceInviscidfluxI(it + 1, jt, kt, 1) = Inviscidflux[1];
-                    faceInviscidfluxI(it + 1, jt, kt, 2) = Inviscidflux[2];
-                    faceInviscidfluxI(it + 1, jt, kt, 3) = Inviscidflux[3];
-                    faceInviscidfluxI(it + 1, jt, kt, 4) = Inviscidflux[4];
+                    faceInviscidfluxI(it + 1, jt, kt, 0) = (coefofunstrflux * Inviscidflux[0] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 0));
+                    faceInviscidfluxI(it + 1, jt, kt, 1) = (coefofunstrflux * Inviscidflux[1] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 1));
+                    faceInviscidfluxI(it + 1, jt, kt, 2) = (coefofunstrflux * Inviscidflux[2] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 2));
+                    faceInviscidfluxI(it + 1, jt, kt, 3) = (coefofunstrflux * Inviscidflux[3] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 3));
+                    faceInviscidfluxI(it + 1, jt, kt, 4) = (coefofunstrflux * Inviscidflux[4] + coefofstrflux * faceInviscidfluxI(it + 1, jt, kt, 4));
 
-                    faceViscousfluxI(it + 1, jt, kt, 0) = Viscousflux[0];
-                    faceViscousfluxI(it + 1, jt, kt, 1) = Viscousflux[1];
-                    faceViscousfluxI(it + 1, jt, kt, 2) = Viscousflux[2];
-                    faceViscousfluxI(it + 1, jt, kt, 3) = Viscousflux[3];
-                    faceViscousfluxI(it + 1, jt, kt, 4) = Viscousflux[4];
+                    faceViscousfluxI(it + 1, jt, kt, 0) = (coefofunstrflux * Viscousflux[0] + coefofstrflux * faceViscousfluxI(it + 1, jt, kt, 0));
+                    faceViscousfluxI(it + 1, jt, kt, 1) = (coefofunstrflux * Viscousflux[1] + coefofstrflux * faceViscousfluxI(it + 1, jt, kt, 1));
+                    faceViscousfluxI(it + 1, jt, kt, 2) = (coefofunstrflux * Viscousflux[2] + coefofstrflux * faceViscousfluxI(it + 1, jt, kt, 2));
+                    faceViscousfluxI(it + 1, jt, kt, 3) = (coefofunstrflux * Viscousflux[3] + coefofstrflux * faceViscousfluxI(it + 1, jt, kt, 3));
+                    faceViscousfluxI(it + 1, jt, kt, 4) = (coefofunstrflux * Viscousflux[4] + coefofstrflux * faceViscousfluxI(it + 1, jt, kt, 4));
                 }
                 else
                 {
                     //! right boundary
-                    faceInviscidfluxI(it, jt, kt, 0) = - Inviscidflux[0];
-                    faceInviscidfluxI(it, jt, kt, 1) = - Inviscidflux[1];
-                    faceInviscidfluxI(it, jt, kt, 2) = - Inviscidflux[2];
-                    faceInviscidfluxI(it, jt, kt, 3) = - Inviscidflux[3];
-                    faceInviscidfluxI(it, jt, kt, 4) = - Inviscidflux[4];
+                    faceInviscidfluxI(it, jt, kt, 0) = (- coefofunstrflux * Inviscidflux[0] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 0));
+                    faceInviscidfluxI(it, jt, kt, 1) = (- coefofunstrflux * Inviscidflux[1] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 1));
+                    faceInviscidfluxI(it, jt, kt, 2) = (- coefofunstrflux * Inviscidflux[2] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 2));
+                    faceInviscidfluxI(it, jt, kt, 3) = (- coefofunstrflux * Inviscidflux[3] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 3));
+                    faceInviscidfluxI(it, jt, kt, 4) = (- coefofunstrflux * Inviscidflux[4] + coefofstrflux * faceInviscidfluxI(it, jt, kt, 4));
 
-                    faceViscousfluxI(it, jt, kt, 0) = - Viscousflux[0];
-                    faceViscousfluxI(it, jt, kt, 1) = - Viscousflux[1];
-                    faceViscousfluxI(it, jt, kt, 2) = - Viscousflux[2];
-                    faceViscousfluxI(it, jt, kt, 3) = - Viscousflux[3];
-                    faceViscousfluxI(it, jt, kt, 4) = - Viscousflux[4];
+                    faceViscousfluxI(it, jt, kt, 0) = (- coefofunstrflux * Viscousflux[0] + coefofstrflux * faceViscousfluxI(it, jt, kt, 0));
+                    faceViscousfluxI(it, jt, kt, 1) = (- coefofunstrflux * Viscousflux[1] + coefofstrflux * faceViscousfluxI(it, jt, kt, 1));
+                    faceViscousfluxI(it, jt, kt, 2) = (- coefofunstrflux * Viscousflux[2] + coefofstrflux * faceViscousfluxI(it, jt, kt, 2));
+                    faceViscousfluxI(it, jt, kt, 3) = (- coefofunstrflux * Viscousflux[3] + coefofstrflux * faceViscousfluxI(it, jt, kt, 3));
+                    faceViscousfluxI(it, jt, kt, 4) = (- coefofunstrflux * Viscousflux[4] + coefofstrflux * faceViscousfluxI(it, jt, kt, 4));
                 }
             }
             else if (j_lr != 0)
@@ -14327,32 +15161,32 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
                 if (j_lr == -1)
                 {
                     //! left boundary
-                    faceInviscidfluxJ(it, jt + 1, kt, 0) = Inviscidflux[0];
-                    faceInviscidfluxJ(it, jt + 1, kt, 1) = Inviscidflux[1];
-                    faceInviscidfluxJ(it, jt + 1, kt, 2) = Inviscidflux[2];
-                    faceInviscidfluxJ(it, jt + 1, kt, 3) = Inviscidflux[3];
-                    faceInviscidfluxJ(it, jt + 1, kt, 4) = Inviscidflux[4];
+                    faceInviscidfluxJ(it, jt + 1, kt, 0) = (coefofunstrflux * Inviscidflux[0] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 0));
+                    faceInviscidfluxJ(it, jt + 1, kt, 1) = (coefofunstrflux * Inviscidflux[1] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 1));
+                    faceInviscidfluxJ(it, jt + 1, kt, 2) = (coefofunstrflux * Inviscidflux[2] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 2));
+                    faceInviscidfluxJ(it, jt + 1, kt, 3) = (coefofunstrflux * Inviscidflux[3] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 3));
+                    faceInviscidfluxJ(it, jt + 1, kt, 4) = (coefofunstrflux * Inviscidflux[4] + coefofstrflux * faceInviscidfluxJ(it, jt + 1, kt, 4));
 
-                    faceViscousfluxJ(it, jt + 1, kt, 0) = Viscousflux[0];
-                    faceViscousfluxJ(it, jt + 1, kt, 1) = Viscousflux[1];
-                    faceViscousfluxJ(it, jt + 1, kt, 2) = Viscousflux[2];
-                    faceViscousfluxJ(it, jt + 1, kt, 3) = Viscousflux[3];
-                    faceViscousfluxJ(it, jt + 1, kt, 4) = Viscousflux[4];
+                    faceViscousfluxJ(it, jt + 1, kt, 0) = (coefofunstrflux * Viscousflux[0] + coefofstrflux * faceViscousfluxJ(it, jt + 1, kt, 0));
+                    faceViscousfluxJ(it, jt + 1, kt, 1) = (coefofunstrflux * Viscousflux[1] + coefofstrflux * faceViscousfluxJ(it, jt + 1, kt, 1));
+                    faceViscousfluxJ(it, jt + 1, kt, 2) = (coefofunstrflux * Viscousflux[2] + coefofstrflux * faceViscousfluxJ(it, jt + 1, kt, 2));
+                    faceViscousfluxJ(it, jt + 1, kt, 3) = (coefofunstrflux * Viscousflux[3] + coefofstrflux * faceViscousfluxJ(it, jt + 1, kt, 3));
+                    faceViscousfluxJ(it, jt + 1, kt, 4) = (coefofunstrflux * Viscousflux[4] + coefofstrflux * faceViscousfluxJ(it, jt + 1, kt, 4));
                 }
                 else
                 {
                     //! right boundary
-                    faceInviscidfluxJ(it, jt, kt, 0) = - Inviscidflux[0];
-                    faceInviscidfluxJ(it, jt, kt, 1) = - Inviscidflux[1];
-                    faceInviscidfluxJ(it, jt, kt, 2) = - Inviscidflux[2];
-                    faceInviscidfluxJ(it, jt, kt, 3) = - Inviscidflux[3];
-                    faceInviscidfluxJ(it, jt, kt, 4) = - Inviscidflux[4];
+                    faceInviscidfluxJ(it, jt, kt, 0) = (- coefofunstrflux * Inviscidflux[0] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 0));
+                    faceInviscidfluxJ(it, jt, kt, 1) = (- coefofunstrflux * Inviscidflux[1] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 1));
+                    faceInviscidfluxJ(it, jt, kt, 2) = (- coefofunstrflux * Inviscidflux[2] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 2));
+                    faceInviscidfluxJ(it, jt, kt, 3) = (- coefofunstrflux * Inviscidflux[3] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 3));
+                    faceInviscidfluxJ(it, jt, kt, 4) = (- coefofunstrflux * Inviscidflux[4] + coefofstrflux * faceInviscidfluxJ(it, jt, kt, 4));
 
-                    faceViscousfluxJ(it, jt, kt, 0) = - Viscousflux[0];
-                    faceViscousfluxJ(it, jt, kt, 1) = - Viscousflux[1];
-                    faceViscousfluxJ(it, jt, kt, 2) = - Viscousflux[2];
-                    faceViscousfluxJ(it, jt, kt, 3) = - Viscousflux[3];
-                    faceViscousfluxJ(it, jt, kt, 4) = - Viscousflux[4];
+                    faceViscousfluxJ(it, jt, kt, 0) = (- coefofunstrflux * Viscousflux[0] + coefofstrflux * faceViscousfluxJ(it, jt, kt, 0));
+                    faceViscousfluxJ(it, jt, kt, 1) = (- coefofunstrflux * Viscousflux[1] + coefofstrflux * faceViscousfluxJ(it, jt, kt, 1));
+                    faceViscousfluxJ(it, jt, kt, 2) = (- coefofunstrflux * Viscousflux[2] + coefofstrflux * faceViscousfluxJ(it, jt, kt, 2));
+                    faceViscousfluxJ(it, jt, kt, 3) = (- coefofunstrflux * Viscousflux[3] + coefofstrflux * faceViscousfluxJ(it, jt, kt, 3));
+                    faceViscousfluxJ(it, jt, kt, 4) = (- coefofunstrflux * Viscousflux[4] + coefofstrflux * faceViscousfluxJ(it, jt, kt, 4));
                 }
             }
             else
@@ -14361,32 +15195,32 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
                 if (k_lr == -1)
                 {
                     //! left boundary
-                    faceInviscidfluxK(it, jt, kt + 1, 0) = Inviscidflux[0];
-                    faceInviscidfluxK(it, jt, kt + 1, 1) = Inviscidflux[1];
-                    faceInviscidfluxK(it, jt, kt + 1, 2) = Inviscidflux[2];
-                    faceInviscidfluxK(it, jt, kt + 1, 3) = Inviscidflux[3];
-                    faceInviscidfluxK(it, jt, kt + 1, 4) = Inviscidflux[4];
+                    faceInviscidfluxK(it, jt, kt + 1, 0) = (coefofunstrflux * Inviscidflux[0] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 0));
+                    faceInviscidfluxK(it, jt, kt + 1, 1) = (coefofunstrflux * Inviscidflux[1] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 1));
+                    faceInviscidfluxK(it, jt, kt + 1, 2) = (coefofunstrflux * Inviscidflux[2] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 2));
+                    faceInviscidfluxK(it, jt, kt + 1, 3) = (coefofunstrflux * Inviscidflux[3] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 3));
+                    faceInviscidfluxK(it, jt, kt + 1, 4) = (coefofunstrflux * Inviscidflux[4] + coefofstrflux * faceInviscidfluxK(it, jt, kt + 1, 4));
 
-                    faceViscousfluxK(it, jt, kt + 1, 0) = Viscousflux[0];
-                    faceViscousfluxK(it, jt, kt + 1, 1) = Viscousflux[1];
-                    faceViscousfluxK(it, jt, kt + 1, 2) = Viscousflux[2];
-                    faceViscousfluxK(it, jt, kt + 1, 3) = Viscousflux[3];
-                    faceViscousfluxK(it, jt, kt + 1, 4) = Viscousflux[4];
+                    faceViscousfluxK(it, jt, kt + 1, 0) = (coefofunstrflux * Viscousflux[0] + coefofstrflux * faceViscousfluxK(it, jt, kt + 1, 0));
+                    faceViscousfluxK(it, jt, kt + 1, 1) = (coefofunstrflux * Viscousflux[1] + coefofstrflux * faceViscousfluxK(it, jt, kt + 1, 1));
+                    faceViscousfluxK(it, jt, kt + 1, 2) = (coefofunstrflux * Viscousflux[2] + coefofstrflux * faceViscousfluxK(it, jt, kt + 1, 2));
+                    faceViscousfluxK(it, jt, kt + 1, 3) = (coefofunstrflux * Viscousflux[3] + coefofstrflux * faceViscousfluxK(it, jt, kt + 1, 3));
+                    faceViscousfluxK(it, jt, kt + 1, 4) = (coefofunstrflux * Viscousflux[4] + coefofstrflux * faceViscousfluxK(it, jt, kt + 1, 4));
                 }
                 else
                 {
                     //! right boundary
-                    faceInviscidfluxK(it, jt, kt, 0) = - Inviscidflux[0];
-                    faceInviscidfluxK(it, jt, kt, 1) = - Inviscidflux[1];
-                    faceInviscidfluxK(it, jt, kt, 2) = - Inviscidflux[2];
-                    faceInviscidfluxK(it, jt, kt, 3) = - Inviscidflux[3];
-                    faceInviscidfluxK(it, jt, kt, 4) = - Inviscidflux[4];
+                    faceInviscidfluxK(it, jt, kt, 0) = (- coefofunstrflux * Inviscidflux[0] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 0));
+                    faceInviscidfluxK(it, jt, kt, 1) = (- coefofunstrflux * Inviscidflux[1] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 1));
+                    faceInviscidfluxK(it, jt, kt, 2) = (- coefofunstrflux * Inviscidflux[2] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 2));
+                    faceInviscidfluxK(it, jt, kt, 3) = (- coefofunstrflux * Inviscidflux[3] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 3));
+                    faceInviscidfluxK(it, jt, kt, 4) = (- coefofunstrflux * Inviscidflux[4] + coefofstrflux * faceInviscidfluxK(it, jt, kt, 4));
 
-                    faceViscousfluxK(it, jt, kt, 0) = - Viscousflux[0];
-                    faceViscousfluxK(it, jt, kt, 1) = - Viscousflux[1];
-                    faceViscousfluxK(it, jt, kt, 2) = - Viscousflux[2];
-                    faceViscousfluxK(it, jt, kt, 3) = - Viscousflux[3];
-                    faceViscousfluxK(it, jt, kt, 4) = - Viscousflux[4];
+                    faceViscousfluxK(it, jt, kt, 0) = (- coefofunstrflux * Viscousflux[0] + coefofstrflux * faceViscousfluxK(it, jt, kt, 0));
+                    faceViscousfluxK(it, jt, kt, 1) = (- coefofunstrflux * Viscousflux[1] + coefofstrflux * faceViscousfluxK(it, jt, kt, 1));
+                    faceViscousfluxK(it, jt, kt, 2) = (- coefofunstrflux * Viscousflux[2] + coefofstrflux * faceViscousfluxK(it, jt, kt, 2));
+                    faceViscousfluxK(it, jt, kt, 3) = (- coefofunstrflux * Viscousflux[3] + coefofstrflux * faceViscousfluxK(it, jt, kt, 3));
+                    faceViscousfluxK(it, jt, kt, 4) = (- coefofunstrflux * Viscousflux[4] + coefofstrflux * faceViscousfluxK(it, jt, kt, 4));
                 }
             }
         }
@@ -14442,10 +15276,15 @@ void NSSolverStruct::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fie
 
     StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
     InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+    CompositeBCRegion * composite_bcregion = finestGrid->GetCompositeBCRegion();
 
     int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
     int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
     int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle*PI/180;
 
     dataContainer->moveto_begin();
 
@@ -14462,6 +15301,35 @@ void NSSolverStruct::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fie
             for (int m = 0; m < nEquation; ++ m)
             {
                 PHRead(dataContainer, fieldRecv(it, jt, kt, m));
+            }
+            if( periodicType == 2 )
+            {
+                int *ibcregions = composite_bcregion->GetIFaceInfo();
+                int ibcregion = ibcregions[iFace];
+                BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                string bcName = bcregion->GetBCName();
+                if(bcName == "Periodic_up"||bcName == "Periodic_down")
+                {
+                    double rotfg[3]={0, 0, 0};
+                    if ( bcName == "Periodic_up" )
+                    {
+                        rotfg[0] = fieldRecv(it, jt, kt, 1);
+                        rotfg[1] = fieldRecv(it, jt, kt, 2) * cos(2*PI-rotationAngle) - fieldRecv(it, jt, kt, 3) * sin(2*PI-rotationAngle);
+                        rotfg[2] = fieldRecv(it, jt, kt, 2) * sin(2*PI-rotationAngle) + fieldRecv(it, jt, kt, 3) * cos(2*PI-rotationAngle);
+
+                    }
+                    else if( bcName == "Periodic_down" )
+                    {
+                        rotfg[0] = fieldRecv(it, jt, kt, 1);
+                        rotfg[1] = fieldRecv(it, jt, kt, 2) * cos(rotationAngle) - fieldRecv(it, jt, kt, 3) * sin(rotationAngle);
+                        rotfg[2] = fieldRecv(it, jt, kt, 2) * sin(rotationAngle) + fieldRecv(it, jt, kt, 3) * cos(rotationAngle);
+                    }
+
+                    for ( int m = 1; m <= 3; ++ m )
+                    {
+                        fieldRecv(it, jt, kt, m) = rotfg[m-1];
+                    }
+                }
             }
         }
     }
@@ -14486,6 +15354,29 @@ GradientCellCenter *NSSolverStruct::GetGradientCellCenterUVWT(Grid *gridIn)
 LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisualization)
 {
     StructGrid *grid = StructGridCast(postVisualization->GetGrid());
+
+
+    if (postVisualization->GetFlowType() == AverageFlow)
+    {
+        RDouble4D &qAverage = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage"));
+
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_DENSITY);
+        postVisualization->UpdateVisualNodeVarPtr(varName, qAverage, IDX::IR);
+
+        varName = postVisualization->GetVariableName(PHSPACE::VISUAL_U);
+        postVisualization->UpdateVisualNodeVarPtr(varName, qAverage, IDX::IU);
+
+        varName = postVisualization->GetVariableName(PHSPACE::VISUAL_V);
+        postVisualization->UpdateVisualNodeVarPtr(varName, qAverage, IDX::IV);
+
+        varName = postVisualization->GetVariableName(PHSPACE::VISUAL_W);
+        postVisualization->UpdateVisualNodeVarPtr(varName, qAverage, IDX::IW);
+
+        varName = postVisualization->GetVariableName(PHSPACE::VISUAL_PRESSURE);
+        postVisualization->UpdateVisualNodeVarPtr(varName, qAverage, IDX::IP);
+
+        return;
+    }
 
     RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &temperatures       = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
@@ -14636,8 +15527,9 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
             }
         }
     }
-    //*/
-    if(WantVisualField(grid))
+
+    int visualField = parameters->GetIsPlotVolumeField();
+    if(WantVisualField(grid) || visualField == TEC_SPACE::BlockVisual)
     {
         //! Vorticity, Vorticity, by Q value.
         RDouble3D * vorticity_x, * vorticity_y, * vorticity_z, * vorticityMagnitude, * strain_rate, * Q_criteria;
@@ -14742,6 +15634,53 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
 
 }
 
+LIB_EXPORT void NSSolverStruct::ComputePostProbesVariables(Post_Probes * postProbesVar)
+{
+    StructGrid *grid = StructGridCast(postProbesVar->GetGrid());
+
+    RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &temperatures       = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+
+    using namespace IDX;
+    if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_DENSITY))
+    {
+        string varName = postProbesVar->GetProbeVariableName(PHSPACE::PROBE_DENSITY);
+        postProbesVar->UpdateProbeVarPtr(varName, primitiveVariables, IDX::IR);
+    }
+
+    if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_U))
+    {
+        string varName = postProbesVar->GetProbeVariableName(PHSPACE::PROBE_U);
+        postProbesVar->UpdateProbeVarPtr(varName, primitiveVariables, IDX::IU);
+    }
+
+    if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_V))
+    {
+        string varName = postProbesVar->GetProbeVariableName(PHSPACE::PROBE_V);
+        postProbesVar->UpdateProbeVarPtr(varName, primitiveVariables, IDX::IV);
+    }
+
+    if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_W))
+    {
+        string varName = postProbesVar->GetProbeVariableName(PHSPACE::PROBE_W);
+        postProbesVar->UpdateProbeVarPtr(varName, primitiveVariables, IDX::IW);
+    }
+
+    if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_PRESSURE))
+    {
+        string varName = postProbesVar->GetProbeVariableName(PHSPACE::PROBE_PRESSURE);
+        postProbesVar->UpdateProbeVarPtr(varName, primitiveVariables, IDX::IP);
+    }
+
+    if(postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_TEMPERATURE))
+    {
+        string varName = postProbesVar->GetProbeVariableName(PHSPACE::PROBE_TEMPERATURE);
+        postProbesVar->UpdateProbeVarPtr(varName, temperatures, IDX::ITT);
+    }
+}
+
 LIB_EXPORT void NSSolverStruct::InitControlParameters()
 {
     FreeControlParameters();
@@ -14749,14 +15688,6 @@ LIB_EXPORT void NSSolverStruct::InitControlParameters()
     controlParameters->Init();
 }
 
-void NSSolverStruct::ComputeHybridInterface()
-{
-    int nLevel = static_cast<int>(GetNumberOfMultiGrid());
-    for (int iLevel = 0; iLevel < nLevel; ++ iLevel)
-    {
-        this->ComputeInterfaceGrad(iLevel);
-    }
-}
 
 LIB_EXPORT Param_NSSolverStruct *NSSolverStruct::GetControlParameters() const
 {
@@ -14764,3 +15695,4 @@ LIB_EXPORT Param_NSSolverStruct *NSSolverStruct::GetControlParameters() const
 }
 
 }
+

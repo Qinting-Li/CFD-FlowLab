@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -11,9 +11,10 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Region.h
 //! @brief     It defines the region, that is defined as the computational domain.
-//!			   It is used to manage the geometry, solvers, fields and so on.
+//!            It is used to manage the geometry, solvers, fields and so on.
 //!            It is one of the most important classes in PHengLEI.
 //! @author    Bell, He Xin.
+
 #pragma once
 #include "Pointer.h"
 #include "TK_Exit.h"
@@ -141,6 +142,9 @@ public:
 
     //! Fix the grid type according to the lay out information read from file.
     LIB_EXPORT void ClassifyGridSystem();
+
+    //! Monitor the probes according to location. 
+    LIB_EXPORT void MonitorProbes();
 
     void ReSetBoundaryConditionByGlobalBC();
 

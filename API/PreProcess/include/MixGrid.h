@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -25,22 +25,22 @@ class Grid;
 class StructGrid;
 class UnstructGrid;
 
-const int MULTI_TYPE      = -1;
-const int FANTASY_TYPE    = 1;
-const int CGNS_TYPE       = 2;
-const int GRIDGEN_TYPE    = 3;
-const int FIELDVIEW_TYPE  = 4;
-const int FLUENT_TYPE     = 5;
-const int USTAR_TYPE      = 6;
-const int MIXGRID_TYPE    = 7;
-const int GMSH_TYPE       = 8;
+const int MULTI_TYPE     = -1;
+const int FANTASY_TYPE   = 1;
+const int CGNS_TYPE      = 2;
+const int GRIDGEN_TYPE   = 3;
+const int FIELDVIEW_TYPE = 4;
+const int FLUENT_TYPE    = 5;
+const int USTAR_TYPE     = 6;
+const int MIXGRID_TYPE   = 7;
+const int GMSH_TYPE      = 8;
 
 namespace GRID_DATABASE
 {
-	const int LAMINAR_FLAT_PLATE_SUBSONIC     = 1;
-	const int LAMINAR_FLAT_PLATE_SUPERSONIC   = 2;
-	const int TURBULENT_FLAT_PLATE_SUBSONIC   = 3;
-	const int TURBULENT_FLAT_PLATE_SUPERSONIC = 4;
+    const int LAMINAR_FLAT_PLATE_SUBSONIC     = 1;
+    const int LAMINAR_FLAT_PLATE_SUPERSONIC   = 2;
+    const int TURBULENT_FLAT_PLATE_SUBSONIC   = 3;
+    const int TURBULENT_FLAT_PLATE_SUPERSONIC = 4;
 }
 
 typedef void (*CREATE_SINGLE_GRID)(Grid *comm_grid);
@@ -50,7 +50,7 @@ typedef void (*GENE_SIMPLE_GRID)(StructGrid *grid, MESH2D_GENE mesh2dgen);
 
 void GeneGridgen(Grid **&strgrids, int &nBlocks, GENE_SIMPLE_GRID gene_simle_grid, MESH2D_GENE mesh2dgen);
 
-void GetPlateRect     (IntDBase &int_para, RDoubleDBase &real_para, RDouble2D *&xx, RDouble2D *&yy);
+void GetPlateRect(IntDBase &int_para, RDoubleDBase &real_para, RDouble2D *&xx, RDouble2D *&yy);
 void GetPlateRect2Part(IntDBase &int_para, RDoubleDBase &real_para, RDouble2D *&xx, RDouble2D *&yy);
 void SetGridXYZ (StructGrid *grid, int ni, int nj, int nk, RDouble2D &x2d, RDouble2D &y2d);
 void SetBcRegion(StructGrid *grid, VInt &imin, VInt &imax, VInt &jmin, VInt &jmax, VInt &kmin, VInt &kmax, VInt &bctype);
@@ -63,42 +63,40 @@ void GetExpCoef(RDouble target_ratio, int dim, RDouble &coef);
 
 using namespace PHSPACE;
 
-
-void Fantasy2Ustar  ();
+void Fantasy2Ustar();
 void Fantasy2Ustar2D();
-void Fantasy2Ustar3D();				// Bell 20120827 add
+void Fantasy2Ustar3D();
 
 void ReProcessBCInfo(Grid **grids, int nBlocks);
-void ReadLnkFile(const string & fileName_in, Grid **grids, int nBlocks);
+void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks);
 void FantasyWriteToGrd(const string &cel_file, Grid **grids, int nBlocks);
 void FantasyWriteToInp(const string &bnd_file, Grid **grids, int nBlocks);
 
+void ReadUstarGrid(const string &gridfile, UnstructGrid *grid);
+void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid);
 
-void ReadUstarGrid(const string &gridfile, UnstructGrid * grid);
-void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid * grid);	// Bell 20130416 add
+void StrGridToUnsGrid(StructGrid *grid, UnstructGrid *uns_grid);
+void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid);
 
-void StrGridToUnsGrid(StructGrid * grid, UnstructGrid * uns_grid);
-void StrGridToUnsGrid(Grid ** grids, int nBlocks, UnstructGrid * uns_grid);
-
-void WriteLnkFile (const string &gridFileName, Grid **grids_in, int nBlocks);
+void WriteLnkFile(const string &gridFileName, Grid **grids_in, int nBlocks);
 void CheckMeshMultigrid(Grid **grids_in, int nBlocks);
 void WriteToBcname(const string &gridFileName, Grid **grids_in, int nBlocks);
 void WriteBcDirFile(const string &gridFileName, Grid **grids_in, int nBlocks);
 void WriteBcFileFromFTS(const string &gridFileName, Grid **grids_in, int nBlocks);
 
-void GetUnsIndex(StructGrid *grid, DataStruct_AdtTree<int,RDouble> *adtTree, int &count, RDouble tol, Int3D &unsindex, RDouble *xuns, RDouble *yuns, RDouble *zuns);
+void GetUnsIndex(StructGrid *grid, DataStruct_AdtTree<int, RDouble> *adtTree, int &count, RDouble tol, Int3D &unsindex, RDouble *xuns, RDouble *yuns, RDouble *zuns);
 
-void FillSection(Grid ** grids, int nBlocks, CGNSBase *base_cgns, BaseElement *base_elem, Int3D **unsindexlist);
+void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *base_elem, Int3D **unsindexlist);
 
 class Ustar2Fantasy
 {
 private:
-	string mapfilename;
-	map<int, int> bcmap;
+    string mapfilename;
+    map<int, int> bcmap;
 public:
-	Ustar2Fantasy(string mapfile_in);
-	~Ustar2Fantasy();
-	int TranslateBC(int bctype);
+    Ustar2Fantasy(string mapfile_in);
+    ~Ustar2Fantasy();
+    int TranslateBC(int bctype);
 };
 
 }

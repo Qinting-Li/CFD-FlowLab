@@ -1,11 +1,3 @@
-/*----------------------------------------------*\
-	 This is High-Order Unstructure Solvers platform of NNW for DG and DG/FV using C++
-     The HOStandardElement.cpp is used to declare HighOrderStandardElementBase, HighOrderStandardCell, HighOrderStandardFace.
-\*----------------------------------------------*/
-//! @file      HOStandardElement.cpp
-//! @brief     HOStandardElement define for High Order Solver.
-//! @author    Li Ming, Gong Xiaoquan, Zhang Jian.
-
 #include <vector>
 
 #include "HOBasisFunction.h"

@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -26,75 +26,73 @@ namespace PHSPACE
 class VirtualFile
 {
 private:
-	int key;
-	fstream *file;
-	DataContainer *cdata;
+    int key;
+    fstream *file;
+    DataContainer *cdata;
 
 public:
-	VirtualFile(fstream * file) { this->file = file; key = 0; }
-	VirtualFile(DataContainer * cdata) { this->cdata = cdata; key = 1; }
+    VirtualFile(fstream * file) { this->file = file; key = 0; }
+    VirtualFile(DataContainer * cdata) { this->cdata = cdata; key = 1; }
 
 public:
+    //! Read data from file or datacontainer.
+    //! @param[in] data    data address.
+    //! @param[in] size    data size.
+    void read(void * data, streamsize size);
 
-	//! Read data from file or supercontainer.
-	//! @param[in] data		data address.
-	//! @param[in] size		data size.
-	void read(void * data, streamsize size);
+    //! Write data to file or datacontainer.
+    //! @param[in] data    data address.
+    //! @param[in] size    data size.
+    void write(void * data, streamsize size);
 
-	//! Write data to file or supercontainer.
-	//! @param[in] data		data address.
-	//! @param[in] size		data size.
-	void write(void * data, streamsize size);
+    //! Begin to read.
+    void BeginReadWork();
 
-	//! Begin to read.
-	void BeginReadWork();
+    //! Mark section end only for key = 0.
+    void EndReadWork();
 
-	//! Mark section end only for key=0.
-	void EndReadWork();
+    //! Mark and write section_begin only for key = 0.
+    void BeginWriteWork();
+    
+    //! Do something to end writing.
+    void EndWriteWork();
 
-	//! Mark and write section_begin only for key=0.
-	void BeginWriteWork();
-	
-	//! Do something to end writing.
-	void EndWriteWork();
-
-	//! Read data length.
-	void ReadDataLength();
-	
-	//! Write section_begin.
-	void ReservePlaceholder();
-	
-	//! Return 0 or file pointer location.
-	streamsize GetCurrentPosition();
-
-private:
-
-	//! section_begin assignment.
-	void MarkSectionBegin();
-
-	//! section_end assignment.
-	void MarkSectionEnd();
-	
-	//! Return section_begin.
-	streamsize GetSectionBegin();
-	
-	//! Return section_end.
-	streamsize GetSectionEnd();
-	
-	//! Move to some position.
-	void MoveToPosition(streamsize section_pos);
-	
-	//! Move to the begin of section.
-	void MoveToSectionBegin();
-	
-	//! Move to the end of section.
-	void MoveToSectionEnd();
-	
-	//! Calculate the data_len and write it.
-	void WriteDataLength();
+    //! Read data length.
+    void ReadDataLength();
+    
+    //! Write section_begin.
+    void ReservePlaceholder();
+    
+    //! Return 0 or file pointer location.
+    streamsize GetCurrentPosition();
 
 private:
-	streamsize section_begin, section_end, data_len;
+    //! section_begin assignment.
+    void MarkSectionBegin();
+
+    //! section_end assignment.
+    void MarkSectionEnd();
+    
+    //! Return section_begin.
+    streamsize GetSectionBegin();
+    
+    //! Return section_end.
+    streamsize GetSectionEnd();
+    
+    //! Move to some position.
+    void MoveToPosition(streamsize section_pos);
+    
+    //! Move to the begin of section.
+    void MoveToSectionBegin();
+    
+    //! Move to the end of section.
+    void MoveToSectionEnd();
+    
+    //! Calculate the data_len and write it.
+    void WriteDataLength();
+
+private:
+    streamsize section_begin, section_end, data_len;
 };
 
 #include "IO_VirtualFile.hxx"

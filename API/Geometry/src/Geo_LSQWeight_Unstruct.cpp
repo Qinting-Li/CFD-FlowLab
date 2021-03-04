@@ -1,4 +1,5 @@
 #include "Geo_LSQWeight_Unstruct.h"
+
 namespace PHSPACE
 {
 LIB_EXPORT Geo_LSQWeight_Unstruct::Geo_LSQWeight_Unstruct()

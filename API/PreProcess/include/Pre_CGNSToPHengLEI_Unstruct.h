@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,6 +12,7 @@
 //! @file      Pre_CGNSToPHengLEI_Unstruct.h
 //! @brief     Grid conversion from CGNS to PHengLEI.
 //! @author    Bell, He Xin.
+
 #pragma once
 #include "Pre_GridConversion.h"
 #include "GridBase.h"
@@ -20,33 +21,33 @@ using namespace std;
 namespace PHSPACE
 {
 //! @brief Pre_CGNSToPHengLEI_Unstruct class defines the method of 
-//! Grid conversion from CGNS format to PHengLEI.\n
+//! Grid conversion from CGNS format to PHengLEI.
 class Pre_CGNSToPHengLEI_Unstruct : public Pre_GridConversion
 {
 public:
-	//! @param[in] Grid file name of field view grid.\n
-	LIB_EXPORT Pre_CGNSToPHengLEI_Unstruct(const string & gridFileName);
+    //! @param[in] Grid file name of field view grid.
+    LIB_EXPORT Pre_CGNSToPHengLEI_Unstruct(const string &gridFileName);
 
-	LIB_EXPORT ~Pre_CGNSToPHengLEI_Unstruct();
+    LIB_EXPORT ~Pre_CGNSToPHengLEI_Unstruct();
 
 public:
-	//! Dump additional information.
-	LIB_EXPORT void WriteAdditionalInformation(const string & targetGridFileName, Grid ** grids_in);
+    //! Dump additional information.
+    LIB_EXPORT void WriteAdditionalInformation(const string &targetGridFileName, Grid **grids_in);
 
 private:
-	//! Read the information of original grid.
-	void ReadGrid();
+    //! Read the information of original grid.
+    void ReadGrid();
 
-	//! Perform the grid conversion.
-	void Conversion();
+    //! Perform the grid conversion.
+    void Conversion();
 
-private:	
-	CGNSFactory * factory_cgns;
+private:
+    CGNSFactory * factory_cgns;
 };
 
 namespace FIELDVIEW_SPACE
 {
-	
+
 }
 
 #include "Pre_CGNSToPHengLEI_Unstruct.hxx"

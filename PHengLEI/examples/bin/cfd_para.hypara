@@ -146,6 +146,16 @@ int numberOfReferenceCP = 10;
 double influenceRadius  = 20;
 int symmetryPlane       = 3;    // 1: plane of x=0; 2: plane of y=0; 3: plane of z=0;
 
+// ----------------- Periodic Parameters --------------------------------
+// Notice:Rotational periodicity only support rotation along the X axis!
+// periodicType: Which periodic boundary is used.
+//               0 -- without Periodic Boundary.
+//               1 -- Translational periodicity.
+//               2 -- Rotational periodicity.
+int periodicType = 0; 
+double translationLength[] = [0.0,0.0,0.0];
+double rotationAngle = 0.0;
+
 #########################################################################
 #                       Default parameters for Partition                #
 #########################################################################
@@ -205,6 +215,7 @@ int numberOfMultigrid = 1;
 // maxSimuStep: The max simulation step, don't care simulation is restart or not.
 // intervalStepFlow: The step intervals for flow variables file 'flow.dat' saved.
 // intervalStepPlot: The step intervals for tecplot visual file 'tecflow.dat' saved.
+// intervalStepSample: The step intervals for monitored probes variables file 'sample.dat' saved.
 // intervalStepForce: The step intervals for aerodynamics coefficients file 'aircoef.dat' saved.
 // intervalStepRes: The step intervals for residual file 'res.dat' saved.
 // ifLowSpeedPrecon: Precondition process to accelerate convergence for low speed flow.
@@ -215,6 +226,7 @@ int maxSimuStep       = 20000;
 
 int intervalStepFlow  = 1000;
 int intervalStepPlot  = 1000;
+int intervalStepSample = 1000;
 int intervalStepForce = 100;
 int intervalStepRes   = 10;
 int ifLowSpeedPrecon  = 0;
@@ -295,24 +307,6 @@ double forceRefenenceArea = 1.0;              // unit of meter^2.
 double TorqueRefX = 0.0;                      // unit of meter. 
 double TorqueRefY = 0.0;                      // unit of meter.
 double TorqueRefZ = 0.0;                      // unit of meter.
-
-// directionMethod: The method of determining direction.
-//                  1 -- using direciton.
-//                  2 -- using face normal.
-// subsonicInletTotalPressure: The dimensional total pressure of subsonic inlet if height > 0, else non-dimensional.
-// subsonicInletTotalTemperature: The dimensional total temperature of subsonic inlet if height > 0, else non-dimensional.
-// direction_inlet: The direction of inlet.
-// subsonicOutletTotalPressure: The dimensional total pressure of subsonic outlet if height > 0, else non-dimensional.
-// subsonicOutletTotalTemperature: The dimensional total temperature of subsonic outlet if height > 0, else non-dimensional.
-// direction_outlet: The direction of outlet.
-int    directionMethod = 2;
-double subsonicInletTotalPressure = 1.2e6;
-double subsonicInletTotalTemperature = 1300;
-double direction_inlet[] = 1, 0, 0;
-
-double subsonicOutletTotalPressure = 17.8571428;
-double subsonicOutletTotalTemperature = 1.0;
-double direction_outlet[] = 1, 0, 0;
 
 //-----------------------------------------------------------------------
 #                           Spatial Discretisation                      #
@@ -555,7 +549,7 @@ string turbfile           = "results/turb.dat";
 string visualfile         = "results/tecflow.plt";
 string Qwall_file         = "results/Qwall.dat";
 string wall_aircoefile    = "results/wall_aircoef.dat";
-
+string probesflowfile     = "results/sample.dat";
 string surfacefile        = "";
 
 string wall_varfile       = "";
@@ -610,6 +604,19 @@ int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
 //                    1 -- Turbulent flat plate.
 int dumpStandardModel = 0;
 
+// ifSetProbesToMonitor: Set probes location to Monitor.
+//              0 -- Do not monitor.
+//              1 -- To monitor and save data to files.
+// probesDefineFile: probes location information file.
+// nProbeVariables: Number of variables want to be dumped for probes monitered.
+// probeVariables : Variable types dumped, listed as following:
+//                   -- density(0), u(1), v(2), w(3), pressure(4), temperature(5).
+// Important Warning: Array size of probeVariables MUST be equal to nProbeVariables!!!
+// probeVariables order must from small to big.
+int    ifSetProbesToMonitor  = 0;
+string probesDefineFile      = "bin/probes_location.hypara";
+int nProbeVariables  = 6;
+int probeVariables[] = [0, 1, 2, 3, 4, 5];
 //-----------------------------------------------------------------------
 #                           Turbulence Parameter                        #
 //-----------------------------------------------------------------------
@@ -776,11 +783,14 @@ string zoneInverseFileName  = "./grid/zoneInverseMapping.inp";
 // structhighordergradient:
 //                    -- "conservation", "chain_rule".
 int    ifvfd                               = 0;
+string str_highorder_solver                = "WCNS";
 int    SolverStructOrder                   = 0;
 double str_highorder_interpolation_epsilon = 1.0e-6;
 string str_highorder_interpolation_type    = "test";
 string str_highorder_flux_name             = "steger";
 string structhighordergradient             = "conservation";
+double coefofstrflux        = 0.5;
+double limitcoefofinterface = 0.0;
 
 // ----------------- Advanced choices -----------------------------------
 // outtimesc: Time stepping scheme for the outer loop.

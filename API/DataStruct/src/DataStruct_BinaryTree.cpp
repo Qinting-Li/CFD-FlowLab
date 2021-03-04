@@ -1,5 +1,6 @@
 #include "DataStruct_BinaryTree.h"
 using namespace std;
+
 namespace PHSPACE
 {
 DataStruct_BinaryTree::DataStruct_BinaryTree( int * startPointLabel, int numberOfZones, int numberOfPoints )

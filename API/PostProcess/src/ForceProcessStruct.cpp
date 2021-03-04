@@ -1,4 +1,4 @@
-#include "ForceProcessStruct.h" 
+#include "ForceProcessStruct.h"
 #include "BC_Struct.h"
 #include "Glb_Dimension.h"
 #include "GradientOperation.h"
@@ -54,7 +54,7 @@ void ForceProcessStruct::InitValueField()
         int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         int neqn  = nm + nchem;
 
-        int nTemperatureModel = GlobalDataBase::GetIntParaFromDB( "ntmodel" );
+        int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
 
         Range T(0, nTemperatureModel - 1);
         RDouble4D *t = new RDouble4D(I, J, K, T, fortranArray);
@@ -109,7 +109,7 @@ void ForceProcessStruct::AirForceCoef(int iZone)
     uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
     for (int iPart = 0; iPart < nTBC; ++ iPart)
     {
-        if(!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
+        if (!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
 
         AirForceCoefParts(iZone, iPart);
     }
@@ -123,9 +123,9 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    RDouble4D & q    = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("q"));
-    RDouble3D & visl = * reinterpret_cast< RDouble3D * > (grid->GetDataPtr("visl"));
-    RDouble3D & vist = * reinterpret_cast< RDouble3D * > (grid->GetDataPtr("vist"));
+    RDouble4D & q    = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("q"));
+    RDouble3D & visl = * reinterpret_cast<RDouble3D *>(grid->GetDataPtr("visl"));
+    RDouble3D & vist = * reinterpret_cast<RDouble3D *>(grid->GetDataPtr("vist"));
 
     RDouble refReNumber = GlobalDataBase::GetDoubleParaFromDB("refReNumber");
     RDouble oreynolds = 1.0 / refReNumber;
@@ -143,7 +143,7 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     RDouble localCoordAxis1[3];
     RDouble hingeMoment = 0.0;
 
-    if(partID == ALL_PART)
+    if (partID == ALL_PART)
     {
         TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
         TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
@@ -163,7 +163,7 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     }
 
     using namespace IDX;
-    RDouble *prim_inf = reinterpret_cast< RDouble * > (GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble *prim_inf = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
     RDouble poo = prim_inf[IP];
 
     RDouble4D & xfn  = * (grid->GetFaceNormalX());
@@ -175,7 +175,7 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     RDouble4D & area = * (grid->GetFaceArea());
     RDouble3D & vol  = * (grid->GetCellVolume());
 
-    RDouble cfx,cfy,cfz,cpx,cpy,cpz,cmx,cmy,cmz;
+    RDouble cfx, cfy, cfz, cpx, cpy, cpz, cmx, cmy, cmz;
     cfx = 0.0;
     cfy = 0.0;
     cfz = 0.0;
@@ -188,9 +188,9 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
 
     int ndim = GetDim();
 
-    //RDouble **gradPrimtiveVarFaceX = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("gradPrimtiveVarFaceX"  ) );
-    //RDouble **gradPrimtiveVarFaceY = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("gradPrimtiveVarFaceY"  ) );
-    //RDouble **gradPrimtiveVarFaceZ = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("gradPrimtiveVarFaceZ"  ) );
+    //RDouble **gradPrimtiveVarFaceX = reinterpret_cast<RDouble **>( grid->GetDataPtr("gradPrimtiveVarFaceX"));
+    //RDouble **gradPrimtiveVarFaceY = reinterpret_cast<RDouble **>( grid->GetDataPtr("gradPrimtiveVarFaceY"));
+    //RDouble **gradPrimtiveVarFaceZ = reinterpret_cast<RDouble **>( grid->GetDataPtr("gradPrimtiveVarFaceZ"));
 
     using namespace IDX;
 
@@ -205,10 +205,10 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
         int bctype = bcregion->GetBCType();
         
         int ist, ied, jst, jed, kst, ked;
-        bcregion->GetIJKRegion(ist,ied,jst,jed,kst,ked);
+        bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
         
         bool isNeedComputeAirForce = (bctype == PHENGLEI::SOLID_SURFACE);
-        if(isNeedComputeAirForce && partID != ALL_PART)
+        if (isNeedComputeAirForce && partID != ALL_PART)
         {
             const string & bcName = bcregion->GetBCName();
             isNeedComputeAirForce = isNeedComputeAirForce && (bcName == partBCName);
@@ -217,7 +217,7 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
 
         if (!isNeedComputeAirForce)
         {
-            ix += ( ied - ist + 1 ) * ( jed - jst + 1 ) * ( ked - kst + 1 );
+            ix += (ied - ist + 1) * (jed - jst + 1) * (ked - kst + 1);
             continue;
         }
 
@@ -226,21 +226,21 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
         int nsurf = bcregion->GetFaceDirection() + 1;
         int lr    = bcregion->GetFaceLeftOrRightIndex();
 
-        int id,jd,kd;
+        int id, jd, kd;
         GetBCFaceIDX(s_lr3d, id, jd, kd);
 
-        int in,jn,kn,i1,j1,k1,il,jl,kl;
-        RDouble pw,p1,p2,cp;
-        //RDouble store,fact;
-        RDouble dfx,dfy,dfz,dpx,dpy,dpz,dmx,dmy,dmz,fvsx,fvsy,fvsz;
-        RDouble nxs,nys,nzs,ns,nx,ny,nz;
-        RDouble dudx,dudy,dudz,dvdx,dvdy,dvdz,dwdx,dwdy,dwdz;
-        RDouble xc,yc,zc;
+        int in, jn, kn, i1, j1, k1, il, jl, kl;
+        RDouble pw, p1, p2, cp;
+        //RDouble store, fact;
+        RDouble dfx, dfy, dfz, dpx, dpy, dpz, dmx, dmy, dmz, fvsx, fvsy, fvsz;
+        RDouble nxs, nys, nzs, ns, nx, ny, nz;
+        RDouble dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz;
+        RDouble xc, yc, zc;
 
-        RDouble vsl,vst;
-        RDouble vis,divv2p3;
-        RDouble txx,tyy,tzz;
-        RDouble txy,txz,tyz;
+        RDouble vsl, vst;
+        RDouble vis, divv2p3;
+        RDouble txx, tyy, tzz;
+        RDouble txy, txz, tyz;
 
         for (int k = kst; k <= ked; ++ k)
         {
@@ -252,14 +252,14 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                     jn = j + jd;
                     kn = k + kd;
 
-                    nxs = xfn (in,jn,kn,nsurf);
-                    nys = yfn (in,jn,kn,nsurf);
-                    nzs = zfn (in,jn,kn,nsurf);
-                    ns  = area(in,jn,kn,nsurf);
+                    nxs = xfn (in, jn, kn, nsurf);
+                    nys = yfn (in, jn, kn, nsurf);
+                    nzs = zfn (in, jn, kn, nsurf);
+                    ns  = area(in, jn, kn, nsurf);
 
-                    nx  = lr * nxs * ns;
-                    ny  = lr * nys * ns;
-                    nz  = lr * nzs * ns;
+                    nx = lr * nxs * ns;
+                    ny = lr * nys * ns;
+                    nz = lr * nzs * ns;
 
                     i1 = i - s_lr3d[0];
                     j1 = j - s_lr3d[1];
@@ -269,15 +269,15 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                     jl = j + s_lr3d[1];
                     kl = k + s_lr3d[2];
 
-                    p2 = q(i1,j1,k1,IP);
-                    p1 = q(i ,j ,k ,IP);
+                    p2 = q(i1, j1, k1, IP);
+                    p1 = q(i, j, k, IP);
 
-                    //pressure drag
+                    //! pressure drag.
                     //store = two3rd * p1 - half * p2;
-                    //fact  = half * MAX(SIGN(one,store),zero);
-                    //pw    = p1 + fact * ( p1 - p2 );
-                    pw    = p1;
-                    cp    = two * ( pw - poo );
+                    //fact  = half * MAX(SIGN(one, store), zero);
+                    //pw    = p1 + fact * (p1 - p2);
+                    pw = p1;
+                    cp = two * (pw - poo);
 
                     dpx = nx * cp;
                     dpy = ny * cp;
@@ -294,32 +294,32 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                             if (nsurf == 1)
                             {
                                 //Get ith-facevector on the wall surface;
-                                Get_GEO_I(i,j,k,in,in,ndim,geometry3D,xfv,yfv,zfv,vol);
-                                //Get derivative to the wall in i-direction of u,v,w;
-                                DXDYDZ_I(q,geometry3D,i,j,k,ndim,IU ,dudx,dudy,dudz,lr);
-                                DXDYDZ_I(q,geometry3D,i,j,k,ndim,IV ,dvdx,dvdy,dvdz,lr);
-                                DXDYDZ_I(q,geometry3D,i,j,k,ndim,IW ,dwdx,dwdy,dwdz,lr);
-                                vsl = half * ( visl(i,j,k) + visl(i+lr,j,k) );
+                                Get_GEO_I(i, j, k, in, in, ndim, geometry3D, xfv, yfv, zfv, vol);
+                                //! Get derivative to the wall in i-direction of u, v, w.
+                                DXDYDZ_I(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
+                                DXDYDZ_I(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
+                                DXDYDZ_I(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
+                                vsl = half * (visl(i, j, k) + visl(i+lr, j, k));
                             }
-                            else if(nsurf == 2)
+                            else if (nsurf == 2)
                             {
-                                //Get jth-facevector on the wall surface;
-                                Get_GEO_J(i,j,k,jn,jn,ndim,geometry3D,xfv,yfv,zfv,vol);
-                                //Get derivative to the wall in j-direction of u,v,w;
-                                DXDYDZ_J(q,geometry3D,i,j,k,ndim,IU ,dudx,dudy,dudz,lr);
-                                DXDYDZ_J(q,geometry3D,i,j,k,ndim,IV ,dvdx,dvdy,dvdz,lr);
-                                DXDYDZ_J(q,geometry3D,i,j,k,ndim,IW ,dwdx,dwdy,dwdz,lr);
-                                vsl = half * ( visl(i,j,k) + visl(i,j+lr,k) );
+                                //! Get jth-facevector on the wall surface.
+                                Get_GEO_J(i, j, k, jn, jn, ndim, geometry3D, xfv, yfv, zfv, vol);
+                                //! Get derivative to the wall in j-direction of u, v, w.
+                                DXDYDZ_J(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
+                                DXDYDZ_J(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
+                                DXDYDZ_J(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
+                                vsl = half * (visl(i, j, k) + visl(i, j+lr, k));
                             }
                             else
                             {
-                                //Get kth-facevector on the wall surface;
-                                Get_GEO_K(i,j,k,kn,kn,ndim,geometry3D,xfv,yfv,zfv,vol);
-                                //Get derivative to the wall in k-direction of u,v,w;
-                                DXDYDZ_K(q,geometry3D,i,j,k,ndim,IU ,dudx,dudy,dudz,lr);
-                                DXDYDZ_K(q,geometry3D,i,j,k,ndim,IV ,dvdx,dvdy,dvdz,lr);
-                                DXDYDZ_K(q,geometry3D,i,j,k,ndim,IW ,dwdx,dwdy,dwdz,lr);
-                                vsl = half * ( visl(i,j,k) + visl(i,j,k+lr) );
+                                //! Get kth-facevector on the wall surface.
+                                Get_GEO_K(i, j, k, kn, kn, ndim, geometry3D, xfv, yfv, zfv, vol);
+                                //! Get derivative to the wall in k-direction of u, v, w.
+                                DXDYDZ_K(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
+                                DXDYDZ_K(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
+                                DXDYDZ_K(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
+                                vsl = half * (visl(i, j, k) + visl(i, j, k+lr));
                             }
 
                         //dudx = gradPrimtiveVarFaceX[IU][ix];
@@ -334,15 +334,15 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                         //dwdy = gradPrimtiveVarFaceY[IW][ix];
                         //dwdz = gradPrimtiveVarFaceZ[IW][ix];
 
-                        //因为壁面湍流粘性系数为0，不需要考虑。
-                        vsl = half * (visl(il,jl,kl) + visl(i,j,k));
-                        //vst = half * ( vist(il,jl,kl) + vist(i,j,k) );
+                        //! 因为壁面湍流粘性系数为0，不需要考虑.
+                        vsl = half * (visl(il, jl, kl) + visl(i, j, k));
+                        //vst = half * (vist(il, jl, kl) + vist(i, j, k));
                         vst = 0.0;
                         vis = vsl + vst;
 
                         divv2p3 = two3rd * (dudx + dvdy + dwdz);
 
-                        // stress components
+                        //! stress components.
                         txx = vis * (two * dudx - divv2p3);
                         tyy = vis * (two * dvdy - divv2p3);
                         tzz = vis * (two * dwdz - divv2p3);
@@ -361,7 +361,7 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                         delete geometry3D;
                     }
 
-                    grid->FaceCoor(in,jn,kn,nsurf,xc,yc,zc);
+                    grid->FaceCoor(in, jn, kn, nsurf, xc, yc, zc);
 
                     dmx = (yc - TorqueRefY) * dfz - (zc - TorqueRefZ) * dfy;
                     dmy = (zc - TorqueRefZ) * dfx - (xc - TorqueRefX) * dfz;
@@ -379,11 +379,11 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                     cmy += dmy;
                     cmz += dmz;
 
-                    if( dumpHingeMoment )
+                    if (dumpHingeMoment)
                     {
                         Post_ForceMoment forceMoment;
-                        RDouble point[3] = {xc, yc, zc};
-                        RDouble faceForce[3] = { dfx, dfy, dfz};
+                        RDouble point[3] = { xc, yc, zc };
+                        RDouble faceForce[3] = { dfx, dfy, dfz };
                         hingeMoment += forceMoment.ComputeMoment(point, localCoordAxis0, localCoordAxis1, faceForce);
                     }
 
@@ -393,15 +393,15 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
         }
     }
 
-    this->CollectData->write(&cfx,sizeof(RDouble));
-    this->CollectData->write(&cfy,sizeof(RDouble));
-    this->CollectData->write(&cfz,sizeof(RDouble));
-    this->CollectData->write(&cpx,sizeof(RDouble));
-    this->CollectData->write(&cpy,sizeof(RDouble));
-    this->CollectData->write(&cpz,sizeof(RDouble));
-    this->CollectData->write(&cmx,sizeof(RDouble));
-    this->CollectData->write(&cmy,sizeof(RDouble));
-    this->CollectData->write(&cmz,sizeof(RDouble));
+    this->CollectData->write(&cfx, sizeof(RDouble));
+    this->CollectData->write(&cfy, sizeof(RDouble));
+    this->CollectData->write(&cfz, sizeof(RDouble));
+    this->CollectData->write(&cpx, sizeof(RDouble));
+    this->CollectData->write(&cpy, sizeof(RDouble));
+    this->CollectData->write(&cpz, sizeof(RDouble));
+    this->CollectData->write(&cmx, sizeof(RDouble));
+    this->CollectData->write(&cmy, sizeof(RDouble));
+    this->CollectData->write(&cmz, sizeof(RDouble));
     this->CollectData->write(&hingeMoment, sizeof(RDouble));
 }
 
@@ -429,43 +429,43 @@ void ForceProcessStruct::DecodeData(DataContainer *data)
     PHRead(data, numberofTotalPart);
     ForceData->SetNPart(numberofTotalPart);
 
-    int		*partBCID       = new int     [ numberofTotalPart ];
-    RDouble *cfx            = new RDouble [ numberofTotalPart ];
-    RDouble *cfy            = new RDouble [ numberofTotalPart ];
-    RDouble *cfz            = new RDouble [ numberofTotalPart ];
-    RDouble *cpx            = new RDouble [ numberofTotalPart ];
-    RDouble *cpy            = new RDouble [ numberofTotalPart ];
-    RDouble *cpz            = new RDouble [ numberofTotalPart ];
-    RDouble *cmx            = new RDouble [ numberofTotalPart ];
-    RDouble *cmy            = new RDouble [ numberofTotalPart ];
-    RDouble *cmz            = new RDouble [ numberofTotalPart ];
-    RDouble *cl_tot         = new RDouble [ numberofTotalPart ];
-    RDouble *cd_tot         = new RDouble [ numberofTotalPart ];
-    RDouble *cd_pr          = new RDouble [ numberofTotalPart ];
-    RDouble *cd_sf          = new RDouble [ numberofTotalPart ];
-    RDouble *cd_cl2pa       = new RDouble [ numberofTotalPart ];
-    RDouble *xcp            = new RDouble [ numberofTotalPart ];
-    RDouble *side           = new RDouble [ numberofTotalPart ];
-    RDouble *hingeMoment    = new RDouble [ numberofTotalPart ];
+    int *partBCID        = new int     [numberofTotalPart];
+    RDouble *cfx         = new RDouble [numberofTotalPart];
+    RDouble *cfy         = new RDouble [numberofTotalPart];
+    RDouble *cfz         = new RDouble [numberofTotalPart];
+    RDouble *cpx         = new RDouble [numberofTotalPart];
+    RDouble *cpy         = new RDouble [numberofTotalPart];
+    RDouble *cpz         = new RDouble [numberofTotalPart];
+    RDouble *cmx         = new RDouble [numberofTotalPart];
+    RDouble *cmy         = new RDouble [numberofTotalPart];
+    RDouble *cmz         = new RDouble [numberofTotalPart];
+    RDouble *cl_tot      = new RDouble [numberofTotalPart];
+    RDouble *cd_tot      = new RDouble [numberofTotalPart];
+    RDouble *cd_pr       = new RDouble [numberofTotalPart];
+    RDouble *cd_sf       = new RDouble [numberofTotalPart];
+    RDouble *cd_cl2pa    = new RDouble [numberofTotalPart];
+    RDouble *xcp         = new RDouble [numberofTotalPart];
+    RDouble *side        = new RDouble [numberofTotalPart];
+    RDouble *hingeMoment = new RDouble [numberofTotalPart];
 
-    PHRead(data, partBCID,      numberofTotalPart);
-    PHRead(data, cfx,           numberofTotalPart);
-    PHRead(data, cfy,           numberofTotalPart);
-    PHRead(data, cfz,           numberofTotalPart);
-    PHRead(data, cpx,           numberofTotalPart);
-    PHRead(data, cpy,           numberofTotalPart);
-    PHRead(data, cpz,           numberofTotalPart);
-    PHRead(data, cmx,           numberofTotalPart);
-    PHRead(data, cmy,           numberofTotalPart);
-    PHRead(data, cmz,           numberofTotalPart);
-    PHRead(data, cl_tot,        numberofTotalPart);
-    PHRead(data, cd_tot,        numberofTotalPart);
-    PHRead(data, cd_pr,         numberofTotalPart);
-    PHRead(data, cd_sf,         numberofTotalPart);
-    PHRead(data, cd_cl2pa,      numberofTotalPart);
-    PHRead(data, xcp,           numberofTotalPart);
-    PHRead(data, side,          numberofTotalPart);
-    PHRead(data, hingeMoment,   numberofTotalPart);
+    PHRead(data, partBCID,    numberofTotalPart);
+    PHRead(data, cfx,         numberofTotalPart);
+    PHRead(data, cfy,         numberofTotalPart);
+    PHRead(data, cfz,         numberofTotalPart);
+    PHRead(data, cpx,         numberofTotalPart);
+    PHRead(data, cpy,         numberofTotalPart);
+    PHRead(data, cpz,         numberofTotalPart);
+    PHRead(data, cmx,         numberofTotalPart);
+    PHRead(data, cmy,         numberofTotalPart);
+    PHRead(data, cmz,         numberofTotalPart);
+    PHRead(data, cl_tot,      numberofTotalPart);
+    PHRead(data, cd_tot,      numberofTotalPart);
+    PHRead(data, cd_pr,       numberofTotalPart);
+    PHRead(data, cd_sf,       numberofTotalPart);
+    PHRead(data, cd_cl2pa,    numberofTotalPart);
+    PHRead(data, xcp,         numberofTotalPart);
+    PHRead(data, side,        numberofTotalPart);
+    PHRead(data, hingeMoment, numberofTotalPart);
 
     ForceData->SetPartBCID(partBCID);
 
@@ -504,23 +504,21 @@ void ForceProcessStruct::CompValueField()
 
         ComputeGamaAndTemperature(grid);
         ComputeViscousLaminarCoefficient(grid);
-
     }
-
 }
 
 void ForceProcessStruct::ComputeGamaAndTemperature(Grid *grid_in)
 {
     StructGrid *grid = StructGridCast(grid_in);
 
-    RDouble4D &q = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("q"));
-    RDouble4D &t = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("t"));
+    RDouble4D &q = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("q"));
+    RDouble4D &t = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("t"));
 
     int nm = 5;
-    GlobalDataBase::GetData("nm",&nm,PHINT,1);
+    GlobalDataBase::GetData("nm", &nm, PHINT, 1);
 
     int nchem = 0;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
 
     int neqn = nm + nchem;
 
@@ -538,14 +536,13 @@ void ForceProcessStruct::ComputeGamaAndTemperature(Grid *grid_in)
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                RDouble &rm = q(i,j,k,IR);
-                RDouble &pm = q(i,j,k,IP);
-                //gama(i,j,k) = refGama;
-                t(i,j,k,ITT)  = pm / (coefficientOfStateEquation * rm * omav);
+                RDouble &rm = q(i, j, k, IR);
+                RDouble &pm = q(i, j, k, IP);
+                //gama(i, j, k) = refGama;
+                t(i, j, k, ITT)  = pm / (coefficientOfStateEquation * rm * omav);
             }
         }
     }
-
 }
 
 void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
@@ -555,11 +552,11 @@ void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    RDouble3D &visl = * reinterpret_cast< RDouble3D * > (grid->GetDataPtr("visl"));
-    RDouble4D &t    = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("t"));
+    RDouble3D &visl = * reinterpret_cast<RDouble3D *>(grid->GetDataPtr("visl"));
+    RDouble4D &t    = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("t"));
 
     RDouble tsuth;
-    GlobalDataBase::GetData("tsuth",&tsuth,PHDOUBLE,1);
+    GlobalDataBase::GetData("tsuth", &tsuth, PHDOUBLE, 1);
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
@@ -572,8 +569,8 @@ void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                RDouble tm = t(i,j,k,ITT);
-                visl(i,j,k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
+                RDouble tm = t(i, j, k, ITT);
+                visl(i, j, k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
             }
         }
     }
@@ -582,14 +579,14 @@ void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
 
     if (wallTemperature <= 0.0)
     {
-        GhostCell3D(visl,ni,nj,nk);
+        GhostCell3D(visl, ni, nj, nk);
     }
     else
     {
         int idx_bc[2];
         idx_bc[0] = 0;
 
-        idx_bc[1] =  ni;
+        idx_bc[1] = ni;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -597,13 +594,13 @@ void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
                 for (int m = 0; m <= 1; ++ m)
                 {
                     int i = idx_bc[m];
-                    RDouble tm = t(i,j,k,ITT);
-                    visl(i,j,k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
+                    RDouble tm = t(i, j, k, ITT);
+                    visl(i, j, k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
                 }
             }
         }
 
-        idx_bc[1] =  nj;
+        idx_bc[1] = nj;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int i = ist; i <= ied; ++ i)
@@ -611,15 +608,15 @@ void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
                 for (int m = 0; m <= 1; ++ m)
                 {
                     int j = idx_bc[m];
-                    RDouble tm = t(i,j,k,ITT);
-                    visl(i,j,k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
+                    RDouble tm = t(i, j, k, ITT);
+                    visl(i, j, k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
                 }
             }
         }
 
         if (GetDim() == THREE_D)
         {
-            idx_bc[1] =  nk;
+            idx_bc[1] = nk;
             for (int j = jst; j <= jed; ++ j)
             {
                 for (int i = ist; i <= ied; ++ i)
@@ -627,8 +624,8 @@ void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
                     for (int m = 0; m <= 1; ++ m)
                     {
                         int k = idx_bc[m];
-                        RDouble tm = t(i,j,k,ITT);
-                        visl(i,j,k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
+                        RDouble tm = t(i, j, k, ITT);
+                        visl(i, j, k) = tm * sqrt(tm) * (1.0 + tsuth) / (tm + tsuth);
                     }
                 }
             }

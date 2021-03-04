@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -23,26 +23,25 @@ namespace PHSPACE
 class TK_Warning
 {
 public:
+    //! Print warning information because of function will be deprecated.
+    //! @param[in] oldFunctionName    old function's name which will be deprecated.
+    LIB_EXPORT static void FunctionDeprecation(const string &oldFunctionName);
 
-	//! Print waring information because of function will be deprecated.
-	//! @param[in] oldFunctionName:	old function's name which will be deprecated.
-	LIB_EXPORT static void FunctionDeprecation(const string &oldFunctionName);
+    //! Print warning information because of function will be deprecated.
+    //! @param[in] oldFunctionName    old function's name which will be deprecated.
+    //! @param[in] newFunctionName    new function's name.
+    LIB_EXPORT static void FunctionDeprecation(const string &oldFunctionName, const string &newFunctionName);
 
-	//! Print waring information because of function will be deprecated.
-	//! @param[in] oldFunctionName:	old function's name which will be deprecated.
-	//! @param[in] newFunctionName: new function's name.
-	LIB_EXPORT static void FunctionDeprecation(const string &oldFunctionName, const string &newFunctionName);
+    //! Print warning information to the window.
+    //! @param[in] information    the warning information will be print to the window.
+    LIB_EXPORT static void Warning(const string &information);
 
-	//! Print waring information to the window.
-	//! @param[in] information:	the warning information will be print to the window.
-	LIB_EXPORT static void Warning(const string & information);
-
-	//! Print waring information because of variable's value is not recommended.
-	template < typename T >
-	static void UnexpectedVarValue(const string & variableName, const T & value);
+    //! Print warning information because of variable's value is not recommended.
+    template < typename T >
+    static void UnexpectedVarValue(const string &variableName, const T &value);
 
 private:
-	TK_Warning();
+    TK_Warning();
 };
 
 #include "TK_Warning.hxx"

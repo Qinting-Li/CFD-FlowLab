@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -36,7 +36,7 @@ const int STRPATCHGRID_CONFIG = 11;
 const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
-const int SEQUENTIAL          = 21;
+const int INTEGRATIVE_SOLVER  = 21;
 const int POST_PROCESSING     = 99;
 
 const RDouble half            = 0.5;
@@ -126,23 +126,23 @@ const int SPALART_ALLMARAS       = 11;
 const int KW_SST                 = 12;
 
 const int MULTI_STAGE            = 1;
-const int LU_SGS   	             = 4;
-const int Block_LU_SGS   	     = 5;
+const int LU_SGS                 = 4;
+const int Block_LU_SGS           = 5;
 
 const int OneRefineOneDeform     = 1;
 const int DeformAfterAllRefine   = 2;
 
-const int X_DIR     = 1;
-const int Y_DIR     = 2;
-const int Z_DIR     = 3;
+const int X_DIR    = 1;
+const int Y_DIR    = 2;
+const int Z_DIR    = 3;
 
-const int PHINT     = 1;
-const int PHFLOAT   = 2;
-const int PHDOUBLE  = 3;
-const int PHSTRING  = 4;
-const int PHBOOL    = 5;
+const int PHINT    = 1;
+const int PHFLOAT  = 2;
+const int PHDOUBLE = 3;
+const int PHSTRING = 4;
+const int PHBOOL   = 5;
 
-const RDouble SAME_POINT_TOL = static_cast <RDouble> (1.0e-12);
+const RDouble SAME_POINT_TOL = static_cast<RDouble> (1.0e-12);
 
 namespace IDX
 {
@@ -179,20 +179,20 @@ const int ITE  = 2;
 
 namespace TEC_SPACE
 {
-const int ORDERED		  = 0;
-const int FELINESEG		  = 1;
-const int FETRIANGLE	  = 2;
+const int ORDERED         = 0;
+const int FELINESEG       = 1;
+const int FETRIANGLE      = 2;
 const int FEQUADRILATERAL = 3;
-const int FETETRAHEDRON	  = 4;
-const int FEBRICK		  = 5;
-const int FEPOLYGON		  = 6;
-const int FEPOLYHEDRON	  = 7;
+const int FETETRAHEDRON   = 4;
+const int FEBRICK         = 5;
+const int FEPOLYGON       = 6;
+const int FEPOLYHEDRON    = 7;
 
-const int WriteBoundary	  = 0;
-const int WriteBlock	  = 1;
-const int Writecomplete	  = 2;
+const int WriteBoundary   = 0;
+const int WriteBlock      = 1;
+const int Writecomplete   = 2;
 
 const int BoundaryVisual  = 0;
-const int FieldVisual	  = 1;
-const int BlockVisual	  = 2;
+const int FieldVisual     = 1;
+const int BlockVisual     = 2;
 }

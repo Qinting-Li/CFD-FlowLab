@@ -165,6 +165,36 @@ inline int  StructGrid::GetNK() const
 	return nodeTopology->GetNK();
 }
 
+inline void StructGrid::SetProbesNearestNI(vector <int> probesNearestNI) 
+{
+    this->probesNearestNI = probesNearestNI;
+}
+
+inline void StructGrid::SetProbesNearestNJ(vector <int> probesNearestNJ) 
+{
+    this->probesNearestNJ = probesNearestNJ;
+}
+
+inline void StructGrid::SetProbesNearestNK(vector <int> probesNearestNK) 
+{
+    this->probesNearestNK = probesNearestNK;
+}
+
+inline vector <int> StructGrid::GetProbesNearestNI() const
+{
+    return probesNearestNI ;
+}
+
+inline vector <int> StructGrid::GetProbesNearestNJ() const 
+{
+    return probesNearestNJ ;
+}
+
+inline vector <int> StructGrid::GetProbesNearestNK() const
+{ 
+    return probesNearestNK ;
+}
+
 inline void StructGrid::GetCellIterationIndex(int & ist, int & ied, int & jst, int & jed, int & kst, int & ked, int layer)
 {
 	int ni = nodeTopology->GetNI();

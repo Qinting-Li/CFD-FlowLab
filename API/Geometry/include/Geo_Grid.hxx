@@ -258,3 +258,22 @@ inline void Grid::SetIBlock( int iBlockIn )
 {
 	this->iBlock = iBlockIn;
 }
+
+inline int Grid::GetZoneProbesNumber() const
+{
+    return zoneProbesNumber;
+}
+
+inline void Grid::SetZoneProbesNumber(int zoneProbesNumberIn)
+{
+    this->zoneProbesNumber = zoneProbesNumberIn;
+}
+inline vector<vector<RDouble> > Grid::GetProbesCoordinates() const
+{
+    return probesCoordinates;
+}
+
+inline void Grid::SetProbesCoordinates(vector<vector<RDouble> > &probesCoordinatesIn)
+{
+    this->probesCoordinates = probesCoordinatesIn;
+}

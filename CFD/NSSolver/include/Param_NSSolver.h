@@ -102,16 +102,6 @@ public:
 
     RDouble * GetPrimitiveVarFarfield() const;
 
-    RDouble GetSubsonicInletTotalPressure() const;
-
-    RDouble GetSubsonicInletTotalTemperature() const;
-
-    RDouble GetSubsonicOutletTotalPressure() const;
-
-    RDouble GetSubsonicOutletTotalTemperature() const;
-
-    int GetSubsonicDirectionType() const;
-
     int GetNumberOfSpecies() const;
     
 private:
@@ -175,16 +165,6 @@ private:
     RDouble massFractionN2;
 
     RDouble * primitiveVarFarfield;
-
-    RDouble subsonicInletTotalPressure;
-
-    RDouble subsonicInletTotalTemperature;
-
-    RDouble subsonicOutletTotalPressure;
-
-    RDouble subsonicOutletTotalTemperature;
-
-    int subsonicDirectionType;
 
     int numberOfSpecies; //! The number of species.
 };

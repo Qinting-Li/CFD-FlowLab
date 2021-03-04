@@ -1,11 +1,3 @@
-/*----------------------------------------------*\
-	 This is High-Order Unstructure Solvers platform of NNW for DG and DG/FV using C++
-     The HOGaussJacobiQuadrature.cpp is used to define Gauss Jacobi Quadrature equation.
-\*----------------------------------------------*/
-//! @file      HOGaussJacobiQuadrature.cpp
-//! @brief     compute Gauss Jacobi Quadrature define Gauss Jacobi Quadrature equation.
-//! @author    Li Ming, Gong Xiaoquan, Zhang Jian.
-
 #include "HODefine.h"
 #include "HOStandardElement.h"
 #include "HOGaussJacobiQuadrature.h"

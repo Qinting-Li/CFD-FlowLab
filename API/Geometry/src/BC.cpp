@@ -22,6 +22,7 @@
 #include "Geo_OversetGridTopo_Struct.h"
 #include "BC_Unstruct.h"
 using namespace std;
+
 namespace PHSPACE
 {
 vector<BoundaryCondition *> * GlobalBoundaryCondition::globalBCList = 0;
@@ -499,6 +500,9 @@ map<int,string> CreatFantasybctype()
     Fantasybctype[1001]	= "PRESSURE_INLET_PLATE";
     Fantasybctype[1002]	= "PRESSURE_OUTLET_PLATE";
     Fantasybctype[1000]	= "OVERSET";
+
+    Fantasybctype[53]	= "MASS_FLOW_INLET";
+    Fantasybctype[63]	= "MASS_FLOW_OUTLET";
 
     //const int EXTERNAL_BC           =   9;
     ////Added by Guo Yongheng 20160815: external overlap cells label

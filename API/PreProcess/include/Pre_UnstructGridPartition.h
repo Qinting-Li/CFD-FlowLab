@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,6 +12,7 @@
 //! @file      Geo_UnstructGridPartition.h
 //! @brief     Unstructured grid partition: serial and parallel.
 //! @author    Bell.
+
 #pragma once
 #include "Geo_UnstructGrid.h"
 #include "TK_Exit.h"
@@ -33,114 +34,114 @@ const int METIS_OPENMP_METHOD = 3;
 
 namespace PHSPACE
 {
-//! @brief Pre_UnstructGridPartition class defines the method of unstructured grid partition:\n
-//! Serial grid partition using single processor.\n
+//! @brief Pre_UnstructGridPartition class defines the method of unstructured grid partition.
+//! Serial grid partition using single processor.
 //! Parallel grid partition using many processors.
 class Pre_UnstructGridPartition
 {
-	static const int NOT_IN_THIS_ZONE = -2;
-	static const int IN_THIS_ZONE     = -1;
+    static const int NOT_IN_THIS_ZONE = -2;
+    static const int IN_THIS_ZONE     = -1;
 private:
-	//! The original source grid that want to be decomposed.
-	UnstructGrid * gridSource;
+    //! The original source grid that want to be decomposed.
+    UnstructGrid * gridSource;
 
-	//! The partition grids, which is divided from original grid.
-	Grid ** grids;
+    //! The partition grids, which is divided from original grid.
+    Grid ** grids;
 
-	//! The number of new partition wanted.\n
-	//! For serial partition, it is equal to the max processor.\n
-	//! For parallel partition, it is equal to the GLOBAL max processor.\n
-	int maxProcessor;
+    //! The number of new partition wanted.
+    //! For serial partition, it is equal to the max processor.
+    //! For parallel partition, it is equal to the GLOBAL max processor.
+    int maxProcessor;
 
-	//! Original grid file name, if the original grid does not converted from grid file,\n
-	//! it could be NON, that is mean orgGridFileName = "".
-	string orgGridFileName;
+    //! Original grid file name, if the original grid does not converted from grid file,
+    //! it could be NON, that is mean orgGridFileName = "".
+    string orgGridFileName;
 
-	//! Parallel partition method:\n
-	//!   1 -- using ParMETIS for homogeneous MPI;\n
-	//!   2 -- using METIS for homogeneous MPI.
-	//!   3 -- using METIS partition for homogeneous OpenMP.
-	int parallelPartitionMethod;
+    //! Parallel partition method:
+    //!   1 -- using ParMETIS for homogeneous MPI.
+    //!   2 -- using METIS for homogeneous MPI.
+    //!   3 -- using METIS partition for homogeneous OpenMP.
+    int parallelPartitionMethod;
 
-	//! OpenMP partition method:\n
-	//!   0 -- NON used.\n
-	//!   1 -- Equally partition for each zone.
-	int ompPartMethod;
+    //! OpenMP partition method:
+    //!   0 -- NON used.
+    //!   1 -- Equally partition for each zone.
+    int ompPartMethod;
 public:
-	//! @param[in] gridSource		     Original source grid need to be decomposed.
-	//! @param[in] nPartitionBlocks	     The number of GLOBAL blocks wanted. It is equal to the number of decomposed \n
-	//!								     zones for serial unstructured grid partition.
-	//! @param[in] buildInterfaceMethod  Interfaces building method, used default value of '1' PLEASE!
-	//! @param[in] parallelPartitionMethod Parallel partition method:\n
-	//!  - # 1 using ParMETIS for homogeneous MPI;\n
-	//!  - # 2 using METIS for homogeneous MPI.
-	//!  - # 3 using METIS partition for homogeneous OpenMP.
-	LIB_EXPORT Pre_UnstructGridPartition(UnstructGrid * gridSource, int nPartitionBlocks, 
-		         int buildInterfaceMethod, string orgGridFileName = "", int parallelPartitionMethod = SERIAL_PARTITION);
-	LIB_EXPORT ~Pre_UnstructGridPartition();
+    //! @param[in] gridSource          Original source grid need to be decomposed.
+    //! @param[in] nPartitionBlocks    The number of GLOBAL blocks wanted. It is equal to the number of decomposed 
+    //!                                zones for serial unstructured grid partition.
+    //! @param[in] buildInterfaceMethod  Interfaces building method, used default value of '1' PLEASE!
+    //! @param[in] parallelPartitionMethod Parallel partition method:
+    //!  - # 1 using ParMETIS for homogeneous MPI.
+    //!  - # 2 using METIS for homogeneous MPI.
+    //!  - # 3 using METIS partition for homogeneous OpenMP.
+    LIB_EXPORT Pre_UnstructGridPartition(UnstructGrid *gridSource, int nPartitionBlocks, int buildInterfaceMethod, 
+                                         string orgGridFileName = "", int parallelPartitionMethod = SERIAL_PARTITION);
+    LIB_EXPORT ~Pre_UnstructGridPartition();
 
 public:
-	//! Unstructured grid partition serially.
-	LIB_EXPORT void PartitionGridSerial(const string &out_grid_file);
+    //! Unstructured grid partition serially.
+    LIB_EXPORT void PartitionGridSerial(const string &out_grid_file);
 
-	//! Unstructured grid partition parallel.
-	LIB_EXPORT void PartitionGridParallel(const string &out_grid_file);
+    //! Unstructured grid partition parallel.
+    LIB_EXPORT void PartitionGridParallel(const string &out_grid_file);
 
-	//! Dump out the partition grid to file of .fts format.
-	LIB_EXPORT void DumpPartitionGrids(const string &out_grid_file);
+    //! Dump out the partition grid to file of .fts format.
+    LIB_EXPORT void DumpPartitionGrids(const string &out_grid_file);
 
-	//! Returns the partition grids.
-	Grid ** GetPartitionGrids();
+    //! Returns the partition grids.
+    Grid ** GetPartitionGrids();
 
-	//! Set parallel partition method:\n
-	//!   1 -- using ParMETIS;\n
-	//!   2 -- using METIS.
-	void SetParallelPartitionMethod(int parallelPartitionMethod);
+    //! Set parallel partition method:
+    //!   1 -- using ParMETIS.
+    //!   2 -- using METIS.
+    void SetParallelPartitionMethod(int parallelPartitionMethod);
 
-	//void SetOMPPartMethod(int ompPartMethod);
+    //void SetOMPPartMethod(int ompPartMethod);
 
 private:
-	void Init();
-	Grid ** CreateAllPartGrid();
-	void CreatePartition();		
-	void ComputeGridForPartition(UnstructGrid *gridpart, int izone);
-	void GetVertexDist();
-	bool IsParallelPartition();	
-	int GetMaxProcessorIndexInThisZone();
-	idx_t * CreatePartitionSerial(UnstructGrid *grid, int maxProcessor);
-	idx_t * CreatePartitionParallel(UnstructGrid *grid, int maxProcessor, idx_t * vtxdist);
-	void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy);
-	void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, int * neighborCell, idx_t * vtxdist);
-	void MetisGrid(idx_t nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part);
-	void ParMetisGrid(int nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part, idx_t * vtxdist);
-	void ConvertPartNumberToGlobal(idx_t * part, int nTotalCell);
-	void CommunicateNeiborCell(int * neighborCell);
-	void SwapInterface(int * neighborCell, int izone, int jzone);
-	bool FindMatchPart(UnstructGrid *grid, int izone_t, int iface_t, int ie_t, int *interface_interfaceid_t);
-	void ReconInterfaces(Grid **grids, int izone, int maxProcessor);
-	void BuildInterfaceLink(Grid **grids, int maxProcessor);
+    void Init();
+    Grid ** CreateAllPartGrid();
+    void CreatePartition();
+    void ComputeGridForPartition(UnstructGrid *gridpart, int izone);
+    void GetVertexDist();
+    bool IsParallelPartition();
+    int GetMaxProcessorIndexInThisZone();
+    idx_t * CreatePartitionSerial(UnstructGrid *grid, int maxProcessor);
+    idx_t * CreatePartitionParallel(UnstructGrid *grid, int maxProcessor, idx_t *vtxdist);
+    void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy);
+    void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, int *neighborCell, idx_t *vtxdist);
+    void MetisGrid(idx_t nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part);
+    void ParMetisGrid(int nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part, idx_t *vtxdist);
+    void ConvertPartNumberToGlobal(idx_t *part, int nTotalCell);
+    void CommunicateNeiborCell(int *neighborCell);
+    void SwapInterface(int *neighborCell, int izone, int jzone);
+    bool FindMatchPart(UnstructGrid *grid, int izone_t, int iface_t, int ie_t, int *interface_interfaceid_t);
+    void ReconInterfaces(Grid **grids, int izone, int maxProcessor);
+    void BuildInterfaceLink(Grid **grids, int maxProcessor);
 
-	void FillnTCellofEachZone(int *& nTCellOfZones);
+    void FillnTCellofEachZone(int *&nTCellOfZones);
 
-	void DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks);
-	void DumpSerialPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks);
-	void DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks, int * block_index_in);
+    void DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks);
+    void DumpSerialPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks);
+    void DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks, int *block_index_in);
 
-	//! Compute the processor index that each cell belongs to.
-	void ComputeCellMark();
+    //! Compute the processor index that each cell belongs to.
+    void ComputeCellMark();
 
-	void SetProcessorList();
-	bool DoseProcExist(int iproc);
+    void SetProcessorList();
+    bool DoseProcExist(int iproc);
 
-	void FreeLocal2All();
-	void CreateLocal2All(int izone, UnstructGrid *gridpart);
+    void FreeLocal2All();
+    void CreateLocal2All(int izone, UnstructGrid *gridpart);
 
-	void ComputeNodeMark(int izone, UnstructGrid *gridpart);
-	void ComputeFaceMark(int izone, UnstructGrid *gridpart);
+    void ComputeNodeMark(int izone, UnstructGrid *gridpart);
+    void ComputeFaceMark(int izone, UnstructGrid *gridpart);
 
-	int * GetNode2All   (int izone, UnstructGrid *gridpart);
-	int * GetFace2All   (int izone, UnstructGrid *gridpart);
-	int * GetCell2All   (int izone, UnstructGrid *gridpart);
+    int * GetNode2All(int izone, UnstructGrid *gridpart);
+    int * GetFace2All(int izone, UnstructGrid *gridpart);
+    int * GetCell2All(int izone, UnstructGrid *gridpart);
 
     //! Compute the point to zone ID.
     void ComputePoint2ZoneID();
@@ -148,111 +149,111 @@ private:
     //! Compute the total cell number of the node in computing the node value.
     void ComputeCellNumberForNodeValue();
 
-	void SetCoorPart(UnstructGrid *gridpart);
-	void SetLinkPart(int izone, UnstructGrid *gridpart);
-	void SetWallDist(UnstructGrid *gridpart);
+    void SetCoorPart(UnstructGrid *gridpart);
+    void SetLinkPart(int izone, UnstructGrid *gridpart);
+    void SetWallDist(UnstructGrid *gridpart);
 
-	void SetNodeNumberOfEachFaceAndFace2Node(UnstructGrid *gridpart);
-	void SetFace2CellAndBC(int izone, UnstructGrid *gridpart);
-	void SetInterfaceInfoPart(int izone, UnstructGrid *gridpart);
+    void SetNodeNumberOfEachFaceAndFace2Node(UnstructGrid *gridpart);
+    void SetFace2CellAndBC(int izone, UnstructGrid *gridpart);
+    void SetInterfaceInfoPart(int izone, UnstructGrid *gridpart);
 
     //! Set the interpoint information in the partition for izone.
-    //! @param[in]   izone        the number of zone
-    //! @param[in]   gridpart     the grid after partition.
+    //! @param[in] izone       the number of zone.
+    //! @param[in] gridpart    the grid after partition.
     void SetInterpointInfoPart(int izone, UnstructGrid *gridpart);
 
     //! Modify the interpoint information in the partition for izone.
-    //! @param[in]   izone        the number of zone
-    //! @param[in]   grids        the grid after partition.
+    //! @param[in] izone    the number of zone.
+    //! @param[in] grids    the grid after partition.
     void ModifyInterpointInfoPart(Grid **grids);
-	void SetInterfaceInfoPartForParallelPartition(int izone, UnstructGrid *gridpart);
-	void SetNTotalCell(int izone, UnstructGrid *gridpart);
-	int  GetNTotalCell(int izone, idx_t *part);
+    void SetInterfaceInfoPartForParallelPartition(int izone, UnstructGrid *gridpart);
+    void SetNTotalCell(int izone, UnstructGrid *gridpart);
+    int  GetNTotalCell(int izone, idx_t *part);
 
-	void CommunicateInterfaceTopo();
-	void SwapInterfaceTopo(int izone, int jzone);
-	void SetInterfaceInfoPartInOrgBC(Grid ** grids);
-	void SetInterfaceInfoPartInOrgBC(int izone, UnstructGrid *gridpart);
-	void BuildInterfaceLinkForParallelPartition(Grid ** grids);
+    void CommunicateInterfaceTopo();
+    void SwapInterfaceTopo(int izone, int jzone);
+    void SetInterfaceInfoPartInOrgBC(Grid **grids);
+    void SetInterfaceInfoPartInOrgBC(int izone, UnstructGrid *gridpart);
+    void BuildInterfaceLinkForParallelPartition(Grid **grids);
 
-	void CheckDoseNeedPartitionAdditionalData();
-	//void PartitionCellToNode();
-	void WriteAdditionalData(const string &out_grid_file);
-	void WriteCellToNode(const string &out_grid_file);
-	void WriteCellToNode( fstream & file, UnstructGrid * gridPart );
+    void CheckDoseNeedPartitionAdditionalData();
+    //void PartitionCellToNode();
+    void WriteAdditionalData(const string &out_grid_file);
+    void WriteCellToNode(const string &out_grid_file);
+    void WriteCellToNode(fstream &file, UnstructGrid *gridPart);
 
     //! Write the interpoint information into the file.
-    //! @param[in]   out_grid_file       the file name for output.
+    //! @param[in] out_grid_file    the file name for output.
     void WriteInterpointInfo(const string &out_grid_file);
 
     //! Write the interpoint information into the file.
-    //! @param[in]   file           the file  for output.
-    //! @param[in]   gridPart       the grid after partition.
+    //! @param[in] file        the file  for output.
+    //! @param[in] gridPart    the grid after partition.
     void WriteInterpointInfo(fstream &file, UnstructGrid *gridPart);
 
-	void WriteFaceBC(const string &out_grid_file);
-	void WriteFaceBC( fstream & file, UnstructGrid * gridPart );
-	void WriteWallDist(const string &out_grid_file);
-	void WriteWallDist(ActionKey *actkey, UnstructGrid * gridPart);
+    void WriteFaceBC(const string &out_grid_file);
+    void WriteFaceBC(fstream &file, UnstructGrid *gridPart);
+    void WriteWallDist(const string &out_grid_file);
+    void WriteWallDist(ActionKey *actkey, UnstructGrid *gridPart);
 
-	void ComputeGlobalToLocalCellToNodeMapping(UnstructGrid * gridpart, int izone);	
+    void ComputeGlobalToLocalCellToNodeMapping(UnstructGrid *gridpart, int izone);
 
-	int  GetNumberofLocalZones();
+    int GetNumberofLocalZones();
 
-	bool IsBelongtoThisZone(int faceMark);
+    bool IsBelongtoThisZone(int faceMark);
 
 private:
-	//! The node/face/cell index mapping from new partition to old zone.
-	int * node2all, * face2all, * cell2all;
+    //! The node/face/cell index mapping from new partition to old zone.
+    int * node2all, * face2all, * cell2all;
 
-	//! pointNumber2zoneID: the sequence of grid points that can be repeated,corresponding to zoneID. 
-	//! point2ZoneID: According to the sequence of grid points pointNumber2zoneID, the corresponding number of zoneID.
-	//! pointPosition2zoneID: Position of point number in pointNumber2zoneID, pointNumber2zoneID is repeatable.
-	int * pointNumber2zoneID, * point2ZoneID, * pointPosition2zoneID;
+    //! pointNumber2zoneID: the sequence of grid points that can be repeated, corresponding to zoneID.
+    //! point2ZoneID: According to the sequence of grid points pointNumber2zoneID, the corresponding number of zoneID.
+    //! pointPosition2zoneID: Position of point number in pointNumber2zoneID, pointNumber2zoneID is repeatable.
+    int * pointNumber2zoneID, * point2ZoneID, * pointPosition2zoneID;
 
     //! cellNumberForNodeValue is the number of cells used to compute the value of each node.
     int * cellNumberForNodeValue;
 
-	//! The part(processor) index that each cell belongs to.
-	idx_t * part;
+    //! The part(processor) index that each cell belongs to.
+    idx_t * part;
 
-	//! The local cell/node/face index in the new partition.\n
-	//! In other words, the index mapping from old zone to new partition.
-	int * cell_mark, * node_mark, * face_mark;
+    //! The local cell/node/face index in the new partition.
+    //! In other words, the index mapping from old zone to new partition.
+    int * cell_mark, * node_mark, * face_mark;
 
-	//! Interface re-construct method.\n
-	//! -# 1   : Construct by local search in the original grid.\n
-	//! -# else: Construct by global search among all of the decomposed grids.
-	int npartmethod;
+    //! Interface re-construct method.
+    //! -# 1   : Construct by local search in the original grid.
+    //! -# else: Construct by global search among all of the decomposed grids.
+    int npartmethod;
 
-	//! Vertex distribution.\n
-	//! For grid partition, each cell is a vertex in the partition graph.
-	idx_t * vtxdist;
+    //! Vertex distribution.
+    //! For grid partition, each cell is a vertex in the partition graph.
+    idx_t * vtxdist;
 
-	//! The processor list that plan to be partition.\n
-	//! For serial partition, the list up through 0 to maxProcessor (but not included).\n
-	//! For parallel partition, the list include the processors in this zone.
-	set< int > processorList;
+    //! The processor list that plan to be partition.
+    //! For serial partition, the list up through 0 to maxProcessor (but not included).
+    //! For parallel partition, the list include the processors in this zone.
+    set<int> processorList;
 
-	//! The following several pointers are temporary used.
-	//! Local interface index of the faces that belong to the original BC interfaces.\n
-	//! Local BC face index of the faces that belong to the original BC interfaces.
-	int * interfaceIndexInBC_send;
-	int * interfaceIndexInBC_recv, * partIndexInNewPartion_recv;
-	int * part2GlobalZoneIndex, * part2LocalZoneIndex;
-	int * nIFaceInOrgBC;
+    //! The following several pointers are temporary used.
+    //! Local interface index of the faces that belong to the original BC interfaces.
+    //! Local BC face index of the faces that belong to the original BC interfaces.
+    int * interfaceIndexInBC_send;
+    int * interfaceIndexInBC_recv, * partIndexInNewPartion_recv;
+    int * part2GlobalZoneIndex, * part2LocalZoneIndex;
+    int * nIFaceInOrgBC;
 
-	//! Does need partition cell to node.
-	bool partitionCellToNode;
+    //! Does need partition cell to node.
+    bool partitionCellToNode;
 
-	//! Does need partition face BC information.
-	bool partitionFaceBC;
+    //! Does need partition face BC information.
+    bool partitionFaceBC;
 
-	//! Does need partition WallDist information.
-	bool partitionWallDist;
+    //! Does need partition WallDist information.
+    bool partitionWallDist;
 
-	//! Number of parts in each processor, if metis is used to parallel partition.
-	int nPartInEachProcIfMetis;
+    //! Number of parts in each processor, if metis is used to parallel partition.
+    int nPartInEachProcIfMetis;
 };
 
 #include "Pre_UnstructGridPartition.hxx"

@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -21,31 +21,31 @@ using namespace std;
 namespace PHSPACE
 {
 
-//! @brief Data_IndexData stores the data's name and address(pointer to the data). 
+//! @brief Data_IndexData stores the data's name and address(pointer to the data).
 //! It doesn't allocate or free memory for the data.
 class Data_IndexData
 {
 private:
-	string  name;
-	void   *data;
+    string name;
+    void  *data;
 public:
-	//! Default constructor.
-	Data_IndexData();
+    //! Default constructor.
+    Data_IndexData();
 
-	//! Constructor using name and data.
-	Data_IndexData(const string &name, void *data);
+    //! Constructor using name and data.
+    Data_IndexData(const string &name, void *data);
 
-	//! Destructor, do nothing.
-	~Data_IndexData();
+    //! Destructor, do nothing.
+    ~Data_IndexData();
 
-	//! Returns data's name.
-	string GetName() const;
+    //! Returns data's name.
+    string GetName() const;
 
-	//! Return pointer to the data.
-	void * GetData() const;
+    //! Return pointer to the data.
+    void * GetData() const;
 
-	//! Override operator < used by set<Data_IndexData>, sort by name.
-	bool operator < ( const Data_IndexData & rhs) const;
+    //! Override operator < used by set<Data_IndexData>, sort by name.
+    bool operator < (const Data_IndexData & rhs) const;
 };
 
 }

@@ -1,138 +1,138 @@
-inline void Pre_WalldistCompute::RotateAxis(const RDouble * oldR, RDouble * newR)
+inline void Pre_WalldistCompute::RotateAxis(const RDouble *oldR, RDouble *newR)
 {
-	if(walldistComputeMethod != FAST_METHOD) 
-	{
-		PHSPACE::SetField(newR, oldR, 3);
-		return;
-	}
+    if (walldistComputeMethod != FAST_METHOD)
+    {
+        PHSPACE::SetField(newR, oldR, 3);
+        return;
+    }
 
-	switch (rotateAxis)
-	{
-	case 0:
-		PHSPACE::SetField(newR, oldR, 3);
-		return;
-		break;
-	case 1:
-		RotateAxisX(oldR, newR, rotateDegree);
-		break;
-	case 2:
-		RotateAxisY(oldR, newR, rotateDegree);
-		break;
-	case 3:
-		RotateAxisZ(oldR, newR, rotateDegree);
-		break;
-	default:
-		PHSPACE::SetField(newR, oldR, 3);
-		break;
-	}
+    switch (rotateAxis)
+    {
+    case 0:
+        PHSPACE::SetField(newR, oldR, 3);
+        return;
+        break;
+    case 1:
+        RotateAxisX(oldR, newR, rotateDegree);
+        break;
+    case 2:
+        RotateAxisY(oldR, newR, rotateDegree);
+        break;
+    case 3:
+        RotateAxisZ(oldR, newR, rotateDegree);
+        break;
+    default:
+        PHSPACE::SetField(newR, oldR, 3);
+        break;
+    }
 }
 
-inline std::size_t WallStructure::GetNumberOfWallFaces() 
+inline std::size_t WallStructure::GetNumberOfWallFaces()
 {
-	return xfc.size();
+    return xfc.size();
 }
 
-inline std::size_t WallStructure::GetNumberOfWallPoints() 
+inline std::size_t WallStructure::GetNumberOfWallPoints()
 {
-	return x.size(); 
+    return x.size();
 }
 
-inline WallStructure::value_type & WallStructure::GetX() 
+inline WallStructure::value_type & WallStructure::GetX()
 {
-	return x; 
+    return x;
 }
 
-inline WallStructure::value_type & WallStructure::GetY() 
+inline WallStructure::value_type & WallStructure::GetY()
 {
-	return y;
+    return y;
 }
 
-inline WallStructure::value_type & WallStructure::GetZ() 
+inline WallStructure::value_type & WallStructure::GetZ()
 {
-	return z; 
+    return z;
 }
 
-inline WallStructure::value_type & WallStructure::GetXFaceCenter() 
+inline WallStructure::value_type & WallStructure::GetXFaceCenter()
 {
-	return xfc; 
+    return xfc;
 }
 
-inline WallStructure::value_type & WallStructure::GetYFaceCenter() 
+inline WallStructure::value_type & WallStructure::GetYFaceCenter()
 {
-	return yfc;
+    return yfc;
 }
 
-inline WallStructure::value_type & WallStructure::GetZFaceCenter() 
-{ 
-	return zfc;
+inline WallStructure::value_type & WallStructure::GetZFaceCenter()
+{
+    return zfc;
 }
 
-inline WallStructure::value_type & WallStructure::GetXFaceNormal() 
+inline WallStructure::value_type & WallStructure::GetXFaceNormal()
 {
-	return xfn; 
+    return xfn;
 }
 
-inline WallStructure::value_type & WallStructure::GetYFaceNormal() 
+inline WallStructure::value_type & WallStructure::GetYFaceNormal()
 {
-	return yfn;
+    return yfn;
 }
 
-inline WallStructure::value_type & WallStructure::GetZFaceNormal() 
+inline WallStructure::value_type & WallStructure::GetZFaceNormal()
 {
-	return zfn;
+    return zfn;
 }
 
 inline int * WallStructure::GetWallFace2Node()
 {
-	return wallFace2Node; 
+    return wallFace2Node;
 }
 
-inline int * WallStructure::GetnPointPerFace() 
+inline int * WallStructure::GetnPointPerFace()
 {
-	return nPointPerFace;
+    return nPointPerFace;
 }
 
-inline int * WallStructure::GetNodePosition() 
+inline int * WallStructure::GetNodePosition()
 {
-	return nodePosition;
+    return nodePosition;
 }
 
-inline void WallStructure::SetWallFace2Node(int * wallFace2Node)
+inline void WallStructure::SetWallFace2Node(int *wallFace2Node)
 {
-	this->wallFace2Node = wallFace2Node;
+    this->wallFace2Node = wallFace2Node;
 }
 
-inline void WallStructure::SetnPointPerFace(int * nPointPerFace)
+inline void WallStructure::SetnPointPerFace(int *nPointPerFace)
 {
-	this->nPointPerFace = nPointPerFace;
+    this->nPointPerFace = nPointPerFace;
 }
 
-inline void WallStructure::SetNodePosition(int * nodePosition)
+inline void WallStructure::SetNodePosition(int *nodePosition)
 {
-	this->nodePosition = nodePosition;
+    this->nodePosition = nodePosition;
 }
 
 inline RDouble * WallStructure::GetBox()
 {
-	return this->box;
+    return this->box;
 }
 
 inline RDouble WallStructure::GetDistance()
 {
-	return distance;
+    return distance;
 }
 
 inline void WallStructure::SetDistance(RDouble dist)
 {
-	distance = dist;
+    distance = dist;
 }
 
 inline int WallStructure::GetIBlock()
 {
-	return iBlock;
+    return iBlock;
 }
 
-inline void WallStructure::SetIBlock( int iBlockIn )
+inline void WallStructure::SetIBlock(int iBlockIn)
 {
-	this->iBlock = iBlockIn;
+    this->iBlock = iBlockIn;
 }

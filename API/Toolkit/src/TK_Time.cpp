@@ -28,7 +28,7 @@ LIB_EXPORT double GetWallTime()
 #ifndef WIN32
     struct timeval va1;
 
-    ErrCode = gettimeofday(&va1,(struct timezone *)0);
+    ErrCode = gettimeofday(&va1, (struct timezone *)0);
 
     now_time[0] = va1.tv_sec;
     now_time[1] = va1.tv_usec;
@@ -41,7 +41,7 @@ LIB_EXPORT double GetWallTime()
     now_time[1] = 0;
 #endif
 
-    if(count == 1)
+    if (count == 1)
     {
         first_time[0] = now_time[0];
         first_time[1] = now_time[1];
@@ -52,8 +52,8 @@ LIB_EXPORT double GetWallTime()
     now_time[0] -= first_time[0];
     now_time[1] -= first_time[1];
 
-    GreenTime = now_time[0] + 0.000001*now_time[1];
-    GreenTime = GreenTime/iCLK_TCK;
+    GreenTime = now_time[0] + 0.000001 * now_time[1];
+    GreenTime = GreenTime / iCLK_TCK;
 
     return GreenTime;
 }
@@ -66,19 +66,18 @@ LIB_EXPORT double GetWallTimeForResidual()
 
     static double time0 = 0.0;
 
-    if(count == 1)
+    if (count == 1)
     {
-        time0 = (double) clock() / CLOCKS_PER_SEC;
+        time0 = (double)clock() / CLOCKS_PER_SEC;
 
         count = 2;
     }
 
-    GreenTime = (double) clock() / CLOCKS_PER_SEC - time0;
+    GreenTime = (double)clock() / CLOCKS_PER_SEC - time0;
 
     return GreenTime;
 }
 
-//! Xu QingXin added 2012.10.17 and Modified 2012.10.23.
 LIB_EXPORT int GetCPUTime(double *ptr_time)
 {
     int ErrCode = 0;
@@ -110,7 +109,7 @@ LIB_EXPORT int GetCPUTime(double *ptr_time)
 
     now_time[CPUTimeIndex] += now_time[SYSTimeIndex];
 
-    if(count == 1)
+    if (count == 1)
     {
         first_time[CPUTimeIndex] = now_time[CPUTimeIndex];
         first_time[SYSTimeIndex] = now_time[SYSTimeIndex];
@@ -121,10 +120,10 @@ LIB_EXPORT int GetCPUTime(double *ptr_time)
     now_time[CPUTimeIndex] -= first_time[CPUTimeIndex];
     now_time[SYSTimeIndex] -= first_time[SYSTimeIndex];
 
-    time_array[CPUTimeIndex] = now_time[CPUTimeIndex]*1.0/iCLK_TCK;
-    time_array[SYSTimeIndex] = now_time[SYSTimeIndex]*1.0/iCLK_TCK;
+    time_array[CPUTimeIndex] = now_time[CPUTimeIndex] * 1.0 / iCLK_TCK;
+    time_array[SYSTimeIndex] = now_time[SYSTimeIndex] * 1.0 / iCLK_TCK;
 
-    if( ptr_time )
+    if (ptr_time)
     {
         ptr_time[CPUTimeIndex] = time_array[CPUTimeIndex];
         ptr_time[SYSTimeIndex] = time_array[SYSTimeIndex];
@@ -133,7 +132,6 @@ LIB_EXPORT int GetCPUTime(double *ptr_time)
     return ErrCode;
 }
 
-//! Xu QingXin added 2012.10.17 and Modified 2012.11.22.
 LIB_EXPORT int WriStatTime()
 {
     using namespace PHMPI;
@@ -144,7 +142,7 @@ LIB_EXPORT int WriStatTime()
 
     double *time_array = new double[2]();
 
-    ErrCode   = GetCPUTime(time_array);
+    ErrCode = GetCPUTime(time_array);
     wall_time = GetWallTime();
 
     cpu_time = time_array[CPUTimeIndex];
@@ -180,7 +178,7 @@ LIB_EXPORT int WriStatTime()
     double total_sys_time  = 0.;
     double total_wall_time = 0.;
 
-    if( number_of_processor <= 1 )
+    if (number_of_processor <= 1)
     {
         number_of_processor = 1;
 
@@ -203,7 +201,7 @@ LIB_EXPORT int WriStatTime()
 
         double *time_array = new double[3];
 
-        if( myid == root_proc )
+        if (myid == root_proc)
         {
             max_sys_time  = sys_time;
             max_cpu_time  = cpu_time;
@@ -217,17 +215,17 @@ LIB_EXPORT int WriStatTime()
             total_cpu_time  = cpu_time;
             total_wall_time = wall_time;
 
-            for( int i = 1; i < number_of_processor; ++i )
+            for (int i = 1; i < number_of_processor; ++ i)
             {
                 proc = PH_Receive(time_array, 3*sizeof(double), tag);
 
-                if( time_array[SYSTimeIndex]  > max_sys_time  ) max_sys_time  = time_array[SYSTimeIndex];
-                if( time_array[CPUTimeIndex]  > max_cpu_time  ) max_cpu_time  = time_array[CPUTimeIndex];
-                if( time_array[WallTimeIndex] > max_wall_time ) max_wall_time = time_array[WallTimeIndex];
+                if (time_array[SYSTimeIndex]  > max_sys_time ) max_sys_time  = time_array[SYSTimeIndex];
+                if (time_array[CPUTimeIndex]  > max_cpu_time ) max_cpu_time  = time_array[CPUTimeIndex];
+                if (time_array[WallTimeIndex] > max_wall_time) max_wall_time = time_array[WallTimeIndex];
 
-                if( time_array[SYSTimeIndex]  < min_sys_time  ) min_sys_time  = time_array[SYSTimeIndex];
-                if( time_array[CPUTimeIndex]  < min_cpu_time  ) min_cpu_time  = time_array[CPUTimeIndex];
-                if( time_array[WallTimeIndex] < min_wall_time ) min_wall_time = time_array[WallTimeIndex];
+                if (time_array[SYSTimeIndex]  < min_sys_time ) min_sys_time  = time_array[SYSTimeIndex];
+                if (time_array[CPUTimeIndex]  < min_cpu_time ) min_cpu_time  = time_array[CPUTimeIndex];
+                if (time_array[WallTimeIndex] < min_wall_time) min_wall_time = time_array[WallTimeIndex];
 
                 total_sys_time  += time_array[SYSTimeIndex];
                 total_cpu_time  += time_array[CPUTimeIndex];
@@ -246,7 +244,7 @@ LIB_EXPORT int WriStatTime()
         delete [] time_array;
     }
 
-    if( myid == root_proc )
+    if (myid == root_proc)
     {
         cout << cs << endl;
     }
@@ -272,7 +270,7 @@ LIB_EXPORT int WriStatTime(const char *title, double *last_time)
     cpu_time = time_array[CPUTimeIndex];
     sys_time = time_array[SYSTimeIndex];
 
-    if( last_time )
+    if (last_time)
     {
         time_array[0]           = sys_time;
         sys_time               -= last_time[SYSTimeIndex];
@@ -295,8 +293,8 @@ LIB_EXPORT int WriStatTime(const char *title, double *last_time)
 
     oss.setf(ios::fixed);
     oss.precision(3);
-    oss << title << " Time Statistics: SYS=" << sys_time
-        << ", CPU=" << cpu_time << ", Wall=" << wall_time;
+    oss << title << " Time Statistics: SYS = " << sys_time
+        << ", CPU=" << cpu_time << ", Wall = " << wall_time;
     cs = oss.str();
     oss.flags();
 
@@ -305,7 +303,7 @@ LIB_EXPORT int WriStatTime(const char *title, double *last_time)
     return ErrCode;
 }
 
-LIB_EXPORT void StartTime( double *last_time )
+LIB_EXPORT void StartTime(double *last_time)
 {
     double *ptr_time  = new double[2];
 
@@ -322,7 +320,8 @@ LIB_EXPORT void StartTime( double *last_time )
 #ifdef WIN32
 LIB_EXPORT TimeSpan::TimeSpan()
 {
-    last_time = GetWallTime(); now_time = last_time;
+    last_time = GetWallTime();
+    now_time = last_time;
 }
 #else
 TimeSpan::TimeSpan()

@@ -5,6 +5,7 @@
 #include "GridType.h"
 #include "Geo_SimpleGrid.h"
 #include "Constants.h"
+
 namespace PHSPACE
 {
 InterfacePatch::InterfacePatch()

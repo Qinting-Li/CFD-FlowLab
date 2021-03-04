@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,8 +12,9 @@
 //! @file      Task_ServerUpdateInterpoint.h
 //! @brief     Communication pattern of update interpoint data.
 //!            It is not recommended for the learners in the first stage.
-//! @author    Wan Yun Bo.
+//! @author    Wan Yunbo.
 //! @time      2019.12.9.
+
 #pragma once
 #include "Task.h"
 namespace PHSPACE
@@ -50,8 +51,8 @@ private:
 
     //! communicate the interpoint using MPI.
     //! @param[in] actkey       the actkey store the information of the interpoint.
-    //! @param[in] sendBuffer       a super container containing the data for sending.
-    //! @param[in] receivedBuffer       a super container containing the data for receiving.
+    //! @param[in] sendBuffer       a data container containing the data for sending.
+    //! @param[in] receivedBuffer       a data container containing the data for receiving.
     //! @param[in] iZone       the number of sending zone.
     //! @param[in] jZone       the number of receiving zone.
     //! @param[in] requestContainer       a vector of MPI_Request.

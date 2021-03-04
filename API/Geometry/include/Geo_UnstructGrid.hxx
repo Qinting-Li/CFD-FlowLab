@@ -57,6 +57,11 @@ inline void UnstructGrid::SetBlankIndex(int *iblank)
 	this->iblank = iblank; 
 }
 
+inline void UnstructGrid::SetProbesNearestCellID(vector <int> probesNearestCellID)
+{
+    this->probesNearestCellID = probesNearestCellID; 
+}
+
 inline int * UnstructGrid::GetLeftCellOfFace() const 
 { 
 	return this->faceTopology->GetLeftCellOfFace();
@@ -266,6 +271,11 @@ inline int UnstructGrid::GetNBCRegionUnstruct(void) const
 inline int * UnstructGrid::GetBlankIndex(void) const 
 {
 	return iblank; 
+}
+
+inline vector <int> UnstructGrid::GetProbesNearestCellID() const 
+{
+    return probesNearestCellID; 
 }
 
 inline RDouble * UnstructGrid::GetWallDist() const

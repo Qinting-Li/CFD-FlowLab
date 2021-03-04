@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,8 +12,9 @@
 //! @file      Geo_Grid.h
 //! @brief     This file is part of PHengLEI Technology software library.
 //!            It defines the class 'Grid', which is the base class of geometry grid.
-//!			   The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid
+//!            The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid.
 //! @author    Bell, He Xin.
+
 #pragma once
 #include "LinkStruct.h"
 #include "Geo_GridIndex.h"
@@ -114,6 +115,12 @@ protected:
 	//! which block the grid belongs to.
 	int iBlock;
 
+    //! The probes number.
+    int zoneProbesNumber;
+
+    //! The probes coordinates.
+    vector<vector<RDouble> > probesCoordinates;
+
 private:
 	int own_database;
 
@@ -161,6 +168,12 @@ public:
 	void SetOversetInfoProxy(OversetInfoProxy *oversetInfoProxy);
 	
 	void SetOversetInformationProxy( OversetInformationProxy * oversetInformationProxyIn );
+
+    //! Assigns the probes number of each zone grid.
+    void SetZoneProbesNumber(int zoneProbesNumberIn);
+
+    //! Assigns the probes coordinates of each zone grid.
+    void SetProbesCoordinates(vector<vector<RDouble> > &probesCoordinatesIn);
 
 	//! Returns the grid type.
 	//! -# 0 : UNSTRUCTGRID
@@ -222,6 +235,12 @@ public:
 	OversetInfoProxy *GetOversetInfoProxy() const;
 
 	OversetInformationProxy *GetOversetInformationProxy() const;
+
+    //! Returns the probes number of each zone grid.
+    int GetZoneProbesNumber() const;
+
+    //! Returns the probes coordinates of each zone grid.
+    vector<vector<RDouble> > GetProbesCoordinates() const;
 
 	//! Returns the coarser level grid, in multi-grid method.
 	Grid *Next();
@@ -314,16 +333,16 @@ public:
 	//! Write grid to file.
 	LIB_EXPORT virtual void WriteGrid(fstream &file) = 0;
 
-	//! Compress the grid data structure into super container.
+	//! Compress the grid data structure into data container.
 	LIB_EXPORT virtual void Encode(DataContainer *cdata, int flag) = 0;
 
-	//! Decompress the grid data structure from super container.
+	//! Decompress the grid data structure from data container.
 	LIB_EXPORT virtual void Decode(DataContainer *cdata, int flag) = 0;
 
-	//! Decompress the grid data structure from super container.
+	//! Decompress the grid data structure from data container.
 	LIB_EXPORT virtual void ReviseNeighborZoneIndex( int zoneStart ) = 0;
 
-	//! Update the grid coordinates from super container.
+	//! Update the grid coordinates from data container.
 	LIB_EXPORT virtual void UpdateCoordinate(DataContainer *cdata) = 0;
 
 	//! Initialize the grid after the object has been created.
@@ -353,7 +372,7 @@ public:
 	//! Compute node weight for Least Square Approach.
     LIB_EXPORT virtual void ComputeWeight() = 0;
 
-	//! Compute the minimum and maximum distance between two grid nodes in whole computational zones.
+    //! Compute the minimum and maximum distance between two grid nodes in whole computational zones.
     LIB_EXPORT virtual void GetMinMaxDS(RDouble &dismin, RDouble &dismax) = 0;
 
 	//! Compute the minimum and maximum distance between two grid nodes on Boundary, 

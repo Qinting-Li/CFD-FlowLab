@@ -6,6 +6,7 @@
 #ifdef USE_ARRAY_OPT
 #include "PHOpt.h"
 #endif
+
 namespace PHSPACE
 {
 

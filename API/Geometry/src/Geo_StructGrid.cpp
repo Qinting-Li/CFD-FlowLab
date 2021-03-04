@@ -76,6 +76,10 @@ LIB_EXPORT StructGrid::StructGrid()
 	cellMetrics = 0;
 	dynamicGridMetrics = 0;
 	oversetGridTopology = 0;
+
+    probesNearestNI.resize(0);
+    probesNearestNJ.resize(0);
+    probesNearestNK.resize(0);
 }
 
 LIB_EXPORT void StructGrid::InitGrid(GridID *index, int level, int dim, int type)
@@ -109,6 +113,10 @@ LIB_EXPORT StructGrid::~StructGrid()
     delete walldist;
 	delete composite_bcregion;
     delete iblank;
+
+    probesNearestNI.clear();
+    probesNearestNJ.clear();
+    probesNearestNK.clear();
 
 	//! Added by Guo Yongheng 20160818.
 	//DeleteLinkPointStructure();  
@@ -2823,6 +2831,11 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
     StructGrid *fgrid = StructGridCast( this->GetFinestGrid() );
     int level = this->GetLevel();
 
+    CompositeBCRegion * composite_bcregion = fgrid->GetCompositeBCRegion();
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle*PI/180;
+
     RDouble3D &vol = *this->GetCellVolume();
     RDouble3D &xcc = *this->GetCellCenterX();
     RDouble3D &ycc = *this->GetCellCenterY();
@@ -2853,13 +2866,35 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
         cdata->read(&ycc(it,jt,kt),sizeof(RDouble));
 		cdata->read(&zcc(it,jt,kt),sizeof(RDouble));
 		cdata->read(&vol(it,jt,kt),sizeof(RDouble));
+
+		int *ibcregions = composite_bcregion->GetIFaceInfo();
+		int ibcregion = ibcregions[iface];
+		BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+		string bcName = bcregion->GetBCName();
+        if( periodicType == 2 )
+        {
+            double rotcell[3]={0,0,0};
+            if ( bcName == "Periodic_up" )
+            {
+                rotcell[1] = ycc(it,jt,kt) * cos(2*PI-rotationAngle) - zcc(it,jt,kt) * sin(2*PI-rotationAngle);
+                rotcell[2] = ycc(it,jt,kt) * sin(2*PI-rotationAngle) + zcc(it,jt,kt) * cos(2*PI-rotationAngle);
+            }
+            else if( bcName == "Periodic_down" )
+            {
+                rotcell[1] = ycc(it,jt,kt) * cos(rotationAngle) - zcc(it,jt,kt) * sin(rotationAngle);
+                rotcell[2] = ycc(it,jt,kt) * sin(rotationAngle) + zcc(it,jt,kt) * cos(rotationAngle);
+            }
+            ycc(it,jt,kt)=rotcell[1];
+            zcc(it,jt,kt)=rotcell[2];
+        }
         ////////////////////////////////////////////////////////////////////////////////////
         if (!ifCommunicateNodeLocation)
         {
             continue;
         }
-        RDouble Data_1st_Layer[4][3];
-        RDouble Data_2nd_Layer[4][3];
+        RDouble Data_1st_Layer[4][3]={0};
+        RDouble Data_2nd_Layer[4][3]={0};
+
         for(int nodeID = 0; nodeID < 4; ++nodeID)
         {
             cdata->read(&Data_1st_Layer[nodeID][0], sizeof(RDouble));
@@ -2869,6 +2904,34 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
             cdata->read(&Data_2nd_Layer[nodeID][0], sizeof(RDouble));
             cdata->read(&Data_2nd_Layer[nodeID][1], sizeof(RDouble));
             cdata->read(&Data_2nd_Layer[nodeID][2], sizeof(RDouble));
+            if( periodicType == 2 )
+            {
+                RDouble rotData_1st[3]={0};
+                RDouble rotData_2nd[3]={0};
+
+                if ( bcName == "Periodic_up" )
+                {
+                    rotData_1st[1] = Data_1st_Layer[nodeID][1] * cos(2*PI-rotationAngle) - Data_1st_Layer[nodeID][2] * sin(2*PI-rotationAngle);
+                    rotData_1st[2] = Data_1st_Layer[nodeID][1] * sin(2*PI-rotationAngle) + Data_1st_Layer[nodeID][2] * cos(2*PI-rotationAngle);
+
+                    rotData_2nd[1] = Data_2nd_Layer[nodeID][1] * cos(2*PI-rotationAngle) - Data_2nd_Layer[nodeID][2] * sin(2*PI-rotationAngle);
+                    rotData_2nd[2] = Data_2nd_Layer[nodeID][1] * sin(2*PI-rotationAngle) + Data_2nd_Layer[nodeID][2] * cos(2*PI-rotationAngle);
+                }
+                else if( bcName == "Periodic_down" )
+                {
+                    rotData_1st[1] = Data_1st_Layer[nodeID][1] * cos(rotationAngle) - Data_1st_Layer[nodeID][2] * sin(rotationAngle);
+                    rotData_1st[2] = Data_1st_Layer[nodeID][1] * sin(rotationAngle) + Data_1st_Layer[nodeID][2] * cos(rotationAngle);
+
+                    rotData_2nd[1] = Data_2nd_Layer[nodeID][1] * cos(rotationAngle) - Data_2nd_Layer[nodeID][2] * sin(rotationAngle);
+                    rotData_2nd[2] = Data_2nd_Layer[nodeID][1] * sin(rotationAngle) + Data_2nd_Layer[nodeID][2] * cos(rotationAngle);
+
+                }
+                Data_1st_Layer[nodeID][1] = rotData_1st[1];
+                Data_1st_Layer[nodeID][2] = rotData_1st[2];
+
+                Data_2nd_Layer[nodeID][1] = rotData_2nd[1];
+                Data_2nd_Layer[nodeID][2] = rotData_2nd[2];
+            }
         }  
 
         int IJKofNodes_1st_Layer[4][3];
@@ -2894,7 +2957,7 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
             yy(IJKofNodes_2nd_Layer[nodeID][0], IJKofNodes_2nd_Layer[nodeID][1], IJKofNodes_2nd_Layer[nodeID][2]) = Data_2nd_Layer[abcdID][1];
             zz(IJKofNodes_2nd_Layer[nodeID][0], IJKofNodes_2nd_Layer[nodeID][1], IJKofNodes_2nd_Layer[nodeID][2]) = Data_2nd_Layer[abcdID][2];
         }
-    }     
+    }
 }
 
 bool StructGrid::CommunicateNodeLocation()
@@ -4618,6 +4681,12 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct * link)
 
     int ibface = 0;
 
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    RDouble translationLength[3] = {0.0};
+    GlobalDataBase::GetData("translationLength", &translationLength, PHDOUBLE, 3);
+    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle*PI/180;
+
 	CompositeBCRegion * composite_bcregion = this->GetCompositeBCRegion();
 	int nBCRegion = composite_bcregion->GetnBCRegion();
 
@@ -4641,12 +4710,39 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct * link)
 				for ( int i = imin; i <= imax; ++ i )
 				{
 					bcregion->GetBoundaryFaceIndex(i, j, k, il, jl, kl);
-
+				
 					ir = irot[nsurf - 1];
 					jr = jrot[nsurf - 1];
 					kr = krot[nsurf - 1];
 
                     GetFaceCoorList(il,jl,kl,ir,jr,kr,ijk,nlist,xlist,ylist,zlist,xx,yy,zz);
+                    
+                    if(bcregion->GetBCName() == "Periodic_up")
+                    {
+                        if( periodicType == 1)
+                        {
+                            for ( int m = 0; m < nlist; ++ m )
+                            {
+                                xlist[m] += translationLength[0];
+                                ylist[m] += translationLength[1];
+                                zlist[m] += translationLength[2];
+                            }
+                        }
+                        else if(periodicType == 2)
+                        {
+                            double rotPoint[3]={0, 0, 0};
+                            for ( int m = 0; m < nlist; ++ m )
+                            {
+                                rotPoint[0] = xlist[m];
+                                rotPoint[1] = ylist[m] * cos(rotationAngle) - zlist[m] * sin(rotationAngle);
+                                rotPoint[2] = ylist[m] * sin(rotationAngle) + zlist[m] * cos(rotationAngle);
+                                xlist[m] = rotPoint[0];
+                                ylist[m] = rotPoint[1];
+                                zlist[m] = rotPoint[2];
+                            }
+                        }
+                    }
+
 					GetCoorIndexList(&coor_tree, tol, pcount, xlist, ylist, zlist, nlist, pindex);
                     Create_Link_Info(pindex, zoneIndex, iface, fcount, facelist, zoneid, faceid, link);
 
@@ -5227,6 +5323,11 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
 	InterfaceInfo * fiinfo = fgrid->GetInterfaceInfo();
     int level = grid->GetLevel();
 
+    CompositeBCRegion * composite_bcregion = fgrid->GetCompositeBCRegion();
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+    double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle*PI/180;
+
     for ( int ngst = GetNumberOfGhostCellLayers() - 1; ngst >= 0; -- ngst )
     {
 		Data_ParamFieldSuite * drecv = iinfo->GetRecvDataStorage(ngst);
@@ -5239,6 +5340,37 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
 			int it,jt,kt;
 			fgrid->GetTargetIndexIJK(iface,ngst+1,it,jt,kt);
 			fgrid->RemapMultigridIJK(level,it,jt,kt);
+
+            //! Rotate vector for periodic boundary at the end of communication for InterfaceValue.
+            int *ibcregions = composite_bcregion->GetIFaceInfo();
+            int ibcregion = ibcregions[iface];
+            BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            string bcName = bcregion->GetBCName();
+            //! Rotate process only for vector in rotational periodicity.
+            if( neqn >= 4 && periodicType == 2 )
+            {
+                if(bcName == "Periodic_up"||bcName == "Periodic_down")
+                {
+                    double rotfg[3]={0, 0, 0};
+                    if ( bcName == "Periodic_up" )
+                    {
+                        rotfg[0] = fg[1][iface];
+                        rotfg[1] = fg[2][iface] * cos(2*PI-rotationAngle) - fg[3][iface] * sin(2*PI-rotationAngle);
+                        rotfg[2] = fg[2][iface] * sin(2*PI-rotationAngle) + fg[3][iface] * cos(2*PI-rotationAngle);
+                    }
+                    else if( bcName == "Periodic_down" )
+                    {
+                        rotfg[0] = fg[1][iface];
+                        rotfg[1] = fg[2][iface] * cos(rotationAngle) - fg[3][iface] * sin(rotationAngle);
+                        rotfg[2] = fg[2][iface] * sin(rotationAngle) + fg[3][iface] * cos(rotationAngle);
+                    }
+
+                    for ( int m = 1; m <= 3; ++ m )
+                    {
+                        fg[m][iface] = rotfg[m-1];
+                    }
+                }
+            }
 			for ( int m = 0; m < neqn; ++ m )
 			{
 				(*f)(it,jt,kt,m) = fg[m][iface];

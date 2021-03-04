@@ -62,6 +62,7 @@ LIB_EXPORT UnstructGrid::UnstructGrid()
     bcRegionUnstruct = NULL;
 	cell2coarsegridcell  = 0;
 	averageVolume = -1.0;
+    probesNearestCellID.resize(0);
 }
 
 LIB_EXPORT UnstructGrid::~UnstructGrid()
@@ -112,6 +113,8 @@ LIB_EXPORT UnstructGrid::~UnstructGrid()
         }
         delete [] bcRegionUnstruct;
     }
+
+    probesNearestCellID.clear();
 }
 
 LIB_EXPORT void UnstructGrid::InitGrid(GridID *index, int level, int dim, int type)
@@ -7081,7 +7084,7 @@ void CompNodeVar(UnstructGrid *grid, RDouble *qNode, RDouble *q)
             }
         }
         nodePosition += nodeNumberOfEachFace[iFace];
-    }
+    }    
 
     delete []weight;
 }

@@ -444,7 +444,7 @@ void Controller::Relaxation(int iSolver, int level)
 {
     using namespace PHSPACE;
     int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
-    if (ifvfd == 1 && iSolver == NS_SOLVER)
+    if (ifvfd == 1)
     {
         PreSolveforStructHighOrder(iSolver, level);
     }
@@ -491,6 +491,19 @@ void Controller::Relaxation(int iSolver, int level)
         TimeStep(iSolver, level);
 
         BLUSGS(iSolver, level);
+    }
+    else
+    {
+        //! default
+        LoadResiduals(iSolver, level);
+        
+        UpdateResiduals(iSolver, level);
+        
+        SpectrumRadius(iSolver, level);
+        
+        TimeStep(iSolver, level);
+        
+        LUSGS(iSolver, level);
     }
 }
 
@@ -694,6 +707,19 @@ void Controller::ZeroResiduals(int iSolver, int level)
 
 void Controller::UpdateResiduals(int iSolver, int level)
 {
+    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
+
+    if((systemGridType == MIXGRID && iSolver == 0 && ifvfd == 0) || (iSolver == 0 && ifvfd == 1 && highordersolvername.substr(0, 4) == "HDCS"))
+    {
+        //! ugly codes, modify later.
+        //! for mixgrid, more variables need communication for conservation.
+        //! InvscidFlux() and ViscousFlux() must be breaked into a lot of small functions.
+        UpdateResidualsOnlyforMixGrid(iSolver, level);
+        return;
+    }
+
     using namespace PHMPI;
 
     SetBoundaryValueOfField(iSolver, level);
@@ -720,34 +746,98 @@ void Controller::UpdateResiduals(int iSolver, int level)
 
         solver->UpdateResiduals(grid);
     }
+}
 
-    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+void Controller::UpdateResidualsOnlyforMixGrid(int iSolver, int level)
+{
+    using namespace PHMPI;
 
-    if(systemGridType == MIXGRID && iSolver == 0 && ifvfd == 0)
-    {
-        CommunicateFacefluxOnlyforMixGrid();
+    SetBoundaryValueOfField(iSolver, level);
+
+    UpdateIndependentField(iSolver, level);
+
+    int nLocalZones = GetNumberofLocalZones();
 
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-            
-            Zone *zone = GetZone(zoneID);
-            if (!zone)
-            {
-                continue;
-            }
-            
-            Grid *grid = GetGrid(zoneID, level);
-            CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-            
-            solver->LoadGlobalfacefluxtoResOnlyforMixGrid(grid);
+            continue;
         }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->UpdateQlQrOnlyforMixGrid(grid);
+    }
+    CommunicateQlQrOnlyforMixGrid();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->UpdateInviscidfluxOnlyforMixGrid(grid);
+
+        solver->UpdateViscousfluxOnlyforMixGrid(grid);
+    }
+    CommunicateFacefluxOnlyforMixGrid();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+        
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+        solver->LoadGlobalfacefluxtoResOnlyforMixGrid(grid);
+    }
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->SourceFlux(grid);
     }
 }
+
 
 void Controller::LoadResiduals(int iSolver, int level)
 {
@@ -852,6 +942,10 @@ void Controller::ComputeGradient(int iSolver, int level)
          else if(gridtypeoflocalzone == UNSTRUCTGRID)
          {
             solver->ComputeGradient(grid);
+            if(MIXGRID == systemGridType && ifvfd == 0)
+            {
+                solver->ComputelimiterOnlyForMixGrid(grid);
+            }
         }
     }
 
@@ -926,7 +1020,8 @@ void Controller::ComputeBlendFunctionSST(int iSolver, int level)
     int nLocalZones = GetNumberofLocalZones();
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int systemGridType = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (iSolver == NS_SOLVER || viscousType != 4 || 0 != level)
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if (iSolver == NS_SOLVER || viscousType != 4 || 0 != level || ifvfd == 1)
     {
         return;
     }
@@ -980,36 +1075,51 @@ void Controller::SetBoundaryValueOfField(int iSolver, int level)
 
 void Controller::PreSolveforStructHighOrder(int iSolver, int level)
 {
-    //int mission_Comm( q_FD                                     ) = 5;
-    //int mission_Comm( rtem                                     ) = 6;
-    //int mission_Comm( rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) = 7;
-    //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) = 8;
+    //int mission_Comm( q_FD                                     ) =  5;
+    //int mission_Comm( rtem                                     ) =  6;
+    //int mission_Comm( rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) =  7;
+    //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) =  8;
+    //int mission_Comm( vist, gradqturb                          ) =  9;
+    //int mission_Comm( vist, gradqturb, blending                ) = 10;
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
 
-    GetIndependentVariablesforStructHighOrder(iSolver, level);
+    if(iSolver == 0)
+    {
+        GetIndependentVariablesforStructHighOrder(iSolver, level);
+        this->region->CommGridInfoOnlyforStructHighOrder(5);
 
-    this->region->CommGridInfoOnlyforStructHighOrder(5);
-    
-    GetDependentVariablesforStructHighOrder(iSolver, level);
-    
-    if(viscousType == 0)
-    {
-        //! Euler, no gradient communicated.
-        this->region->CommGridInfoOnlyforStructHighOrder(6);
-    }
-    else
-    {
-        string gradient_method = GlobalDataBase::GetStrParaFromDB("structhighordergradient");
-        if (gradient_method.substr(0,10) == "chain_rule")
+        GetDependentVariablesforStructHighOrder(iSolver, level);
+        if(viscousType == 0)
         {
-            this->region->CommGridInfoOnlyforStructHighOrder(7);
+            //! Euler, no gradient communicated.
+            this->region->CommGridInfoOnlyforStructHighOrder(6);
         }
         else
         {
-            this->region->CommGridInfoOnlyforStructHighOrder(8);
+            string gradient_method = GlobalDataBase::GetStrParaFromDB("structhighordergradient");
+            if (gradient_method.substr(0,10) == "chain_rule")
+            {
+                this->region->CommGridInfoOnlyforStructHighOrder(7);
+            }
+            else
+            {
+                this->region->CommGridInfoOnlyforStructHighOrder(8);
+            }
         }
-    }    
+    }
+    else if(iSolver == 1)
+    {
+        GetDependentVariablesforStructHighOrder(iSolver, level);
+        if(viscousType == 3)
+        {
+            this->region->CommGridInfoOnlyforStructHighOrder(9);
+        }
+        else if(viscousType == 4)
+        {
+            this->region->CommGridInfoOnlyforStructHighOrder(10);
+        }
+    }
 }
 
 void Controller::GetIndependentVariablesforStructHighOrder(int iSolver, int level)
@@ -1213,25 +1323,19 @@ void Controller::LUSGSInitialization(int iSolver, int level, int nSweep, FieldPr
         }
 
         Grid *grid = GetGrid(zoneID, level);
-        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);               
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        //! Memory allocating.
+        dqProxy[iZone] = solver->CreateFieldProxy(grid);
+        LUplusDQ[iZone]= solver->CreateFieldProxy(grid);
         
         int gridtype = grid->Type();
-        if (iSolver == NS_SOLVER && ifvfd == 1 && gridtype == STRUCTGRID)
+        if (ifvfd == 1 && gridtype == STRUCTGRID)
         {
-            FieldProxy *dq   = solver->GetFieldProxy(grid, solver->CastName("dq"));
-            FieldProxy *dRHS = solver->GetFieldProxy(grid, solver->CastName("dRHS"));
-
-            dqProxy[iZone] = dq;
-            LUplusDQ[iZone] = dRHS;
-
             solver->LUSGSInitializationStructHighOrder(grid, dqProxy[iZone], LUplusDQ[iZone]);
         }
         else
         {
-            //! Memory allocating.
-            dqProxy[iZone] = solver->CreateFieldProxy(grid);
-            LUplusDQ[iZone]= solver->CreateFieldProxy(grid); 
-
             //! The delta Flux is initialized by zero, which will be used in the forward sweep.
             solver->FillField(grid, LUplusDQ[iZone], zero);
             
@@ -1250,7 +1354,7 @@ void Controller::LUSGSInitialization(int iSolver, int level, int nSweep, FieldPr
                 //! Multi-sweep, init by zero.
                 solver->FillField(grid, dqProxy[iZone], zero);
             }
-        }      
+        }
     }
 }
 
@@ -1324,7 +1428,7 @@ void Controller::LUSGS(int iSolver, int level)
     {
         RDouble sweepNormal = 0.0;
 
-        if ((systemGridType == MIXGRID || ifvfd == 1) && iSolver == NS_SOLVER)
+        if (systemGridType == MIXGRID || ifvfd == 1)
         {
             CommunicationDQ(iSolver, level, dqProxy);
 
@@ -1487,7 +1591,7 @@ void Controller::UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy)
     }
 }
 
-void Controller::CommunicateGradientOnlyForMixGrid()
+void Controller::CommunicateGradientandLimitOnlyForMixGrid()
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
@@ -1533,7 +1637,7 @@ void Controller::CommunicateGradientOnlyForMixGrid()
                 //! Compress the send information into the actkey.
                 Grid *grid = PHSPACE::GetGrid(iZone, 0);
 
-                solver->CompressGradientToInterfaceOnlyForMixGrid(sendBuffer, grid, neighborZone);
+                solver->CompressGradientandLimitToInterfaceOnlyForMixGrid(sendBuffer, grid, neighborZone);
             }
         }
     }
@@ -1629,7 +1733,7 @@ void Controller::CommunicateGradientOnlyForMixGrid()
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -1649,13 +1753,13 @@ void Controller::CommunicateGradientOnlyForMixGrid()
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(neighborZone, 0);
 
                 Grid *grid = PHSPACE::GetGrid(neighborZone, 0);
 
-                solver->DecompressGradientToInterfaceOnlyForMixGrid(receiveData, grid, iZone);
+                solver->DecompressGradientandLimitToInterfaceOnlyForMixGrid(receiveData, grid, iZone);
 
                 ++count;
             }
@@ -1682,8 +1786,13 @@ void Controller::CommunicateGradientOnlyForMixGrid()
     requestContainer.clear();
 }
 
-void Controller::CommunicateFacefluxOnlyforMixGrid()
+void Controller::CommunicateQlQrOnlyforMixGrid()
 {
+    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    if(systemGridType != MIXGRID)
+    {
+        return;
+    }
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
     vector <PH_Request > requestContainer;
@@ -1746,7 +1855,7 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
                     }
                     else
                     {
-                        solver->CompressFacefluxToInterfaceOnlyForMixGrid(sendBuffer, grid, neighborZone);
+                        solver->CompressQlQrToInterfaceOnlyForMixGrid(sendBuffer, grid, neighborZone);
                     }
                 }
             }
@@ -1844,7 +1953,7 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
         int gridtypeofiZone = PHMPI::GetZoneGridType(iZone);
@@ -1868,7 +1977,7 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(neighborZone, 0);
 
@@ -1889,9 +1998,211 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
                     }
                     else
                     {
-                        solver->DecompressFacefluxToInterfaceOnlyForMixGrid(receiveData, grid, iZone);
+                        solver->DecompressQlQrToInterfaceOnlyForMixGrid(receiveData, grid, iZone);
                     }
                 }
+
+                ++count;
+            }
+        }
+    }
+
+    //! Step4: Free the buffers.
+    for (int iDim = 0; iDim < receivedDataBuffer.size(); ++ iDim)
+    {
+        for (int jDim = 0; jDim < receivedDataBuffer[iDim].size(); ++ jDim)
+        {
+            delete receivedDataBuffer[iDim][jDim];
+        }
+    }
+    receivedDataBuffer.clear();
+    for (int iDim = 0; iDim < sendDataBuffer.size(); ++ iDim)
+    {
+        for (int jDim = 0; jDim < sendDataBuffer[iDim].size(); ++ jDim)
+        {
+            delete sendDataBuffer[iDim][jDim];
+        }
+    }
+    sendDataBuffer.clear();
+    requestContainer.clear();
+}
+
+
+void Controller::CommunicateFacefluxOnlyforMixGrid()
+{
+    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    if(systemGridType != MIXGRID)
+    {
+        return;
+    }
+
+    int currentProcessor = PHMPI::GetCurrentProcessorID();
+    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    vector <PH_Request > requestContainer;
+    vector <vector <DataContainer *> > receivedDataBuffer;
+    vector <vector <DataContainer *> > sendDataBuffer;
+    receivedDataBuffer.resize(numberOfSimulationZones);
+    sendDataBuffer.resize(numberOfSimulationZones);
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+
+    //! Step 0: Compressing data firstly.
+    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    {
+        int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+        if (currentProcessor == sendProcessor)
+        {
+            sendDataBuffer[iZone].resize(numberOfNeighbor);
+        }
+
+        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+        {
+            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+
+            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+
+            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+            {
+                continue;
+            }
+
+            //! Allocate and compress the buffers for sending.
+            DataContainer *sendBuffer = 0;
+            if (currentProcessor == sendProcessor)
+            {
+                sendBuffer = new DataContainer;
+                sendDataBuffer[iZone][iNeighbor] = sendBuffer;
+
+                //CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                CFDSolver *solver = GetCFDSolver(iZone, 0);
+                //! Compress the send information into the actkey.
+                Grid *grid = PHSPACE::GetGrid(iZone, 0);
+
+                solver->CompressFacefluxToInterfaceOnlyForMixGrid(sendBuffer, grid, neighborZone);
+            }
+        }
+    }
+
+    //! Step 1: Communication.
+    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    {
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+
+        //! Communicating.
+        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+        {
+            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+
+            int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+
+            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+            {
+                continue;
+            }
+
+            //! Allocate the buffers for sending and receiving.
+            DataContainer *receivedBuffer = 0;
+            DataContainer *sendBuffer = 0;
+            if (currentProcessor == receiveProcessor)
+            {
+                receivedBuffer = new DataContainer;
+                receivedDataBuffer[iZone].push_back(receivedBuffer);
+            }
+            if (currentProcessor == sendProcessor)
+            {
+                sendBuffer = sendDataBuffer[iZone][iNeighbor];
+            }
+
+            int tag = iZone;
+
+            //if (sendProcessor == receiveProcessor)
+            //{
+            //    continue;
+            //}
+
+            //! Communication.
+            if (currentProcessor == sendProcessor)
+            {
+                if (sendProcessor != receiveProcessor)
+                {
+                    streamsize nlen = sendBuffer->size();
+
+                    //! Send the data to neighbors.
+                    send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
+                }
+            }
+            if (currentProcessor == receiveProcessor)
+            {
+                //! Get the neighbor order: which order that 'iZone' on neighbors of neighborZone.
+                int neighborOrer = -1;
+                ZoneNeighbor *globalNeighborZonesTemp = zoneConnectivity->GetZoneNeighbor(neighborZone);
+                int numberOfNeighborTemp = globalNeighborZonesTemp->GetNumberOfNeighbor();
+
+                for (int neighborID = 0; neighborID < numberOfNeighborTemp; ++ neighborID)
+                {
+                    int neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(neighborID);
+                    if (neighborZoneTemp == iZone)
+                    {
+                        neighborOrer = neighborID;
+                        break;
+                    }
+                }
+
+                ASSERT(neighborOrer != -1);
+
+                if (sendProcessor != receiveProcessor)
+                {
+                    //! The data length of the received data is same to the length that send to the neighbor.
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+
+                    //! Receive data from neighbors.
+                    receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
+                }
+                else
+                {
+                    SWAP(receivedDataBuffer[iZone].back(), sendDataBuffer[iZone][iNeighbor]);
+                }
+            }
+        }
+    }
+
+    //! Step2: MPI waiting for Non-blocking communications.
+    if (PHMPI::GetNumberOfProcessor() > 1)
+    {
+        PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
+    }
+
+    //! Step3: Translate the data container.
+    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    {
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+
+        int count = 0;
+        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+        {
+            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+
+            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+
+            if (currentProcessor == receiveProcessor)
+            {
+                DataContainer *receiveData = receivedDataBuffer[iZone][count];
+
+                //! Because get into here when currentProcessor==receiveProcessor,
+                //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
+
+                //! Decompress the interface data from data-container.
+                //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
+                CFDSolver *solver = GetCFDSolver(neighborZone, 0);
+
+                Grid *grid = PHSPACE::GetGrid(neighborZone, 0);
+
+                solver->DecompressFacefluxToInterfaceOnlyForMixGrid(receiveData, grid, iZone);
 
                 ++count;
             }
@@ -2072,7 +2383,7 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -2092,7 +2403,7 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 int localZoneID = region->GetProcessGlobalZoneIndexToLocalZoneIndex(neighborZone);
                 CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
 
@@ -2266,7 +2577,7 @@ void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayNa
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -2286,7 +2597,7 @@ void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayNa
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
 
@@ -2347,17 +2658,23 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
 
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     int ifvfd = PHSPACE::GlobalDataBase::GetIntParaFromDB("ifvfd");
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+
     //! gradient has been communicated in another place for ifvfd == 1.
-    if (systemGridType == STRUCTGRID && ifvfd != 1)
+    if (systemGridType == STRUCTGRID && ifvfd == 0)
     {
-        int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
-        int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
-        int nNSEquation = GlobalDataBase::GetIntParaFromDB("nm");
-        int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-        int nSpeciesNumber = nLaminar + nChemical - nNSEquation;
+		int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+		int currentProcessor = PHMPI::GetCurrentProcessorID();
 
         if (iSolver == NS_SOLVER)
         {
+            //! NSSolver, GradientCommunication for struct high order has been done at another place, with another function.
+            int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+            int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
+            int nNSEquation = GlobalDataBase::GetIntParaFromDB("nm");
+            int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
+            int nSpeciesNumber = nLaminar + nChemical - nNSEquation;
+
             int nTotalVariable = nTemperatureModel + 3;
             CommunicateSpecificArray(iSolver, level, "gradUVWTCellCenterX", nTotalVariable);
             CommunicateSpecificArray(iSolver, level, "gradUVWTCellCenterY", nTotalVariable);
@@ -2368,7 +2685,31 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 CommunicateSpecificArray(iSolver, level, "dcdx", nSpeciesNumber);
                 CommunicateSpecificArray(iSolver, level, "dcdy", nSpeciesNumber);
                 CommunicateSpecificArray(iSolver, level, "dcdz", nSpeciesNumber);
-        }
+             }
+            if( periodicType == 2 )
+            {
+                for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+                {
+                    int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+                    ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+                    int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+                    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+                    {
+                        int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+                        int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+                        if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+                        {
+                            continue;
+                        }
+                        if (currentProcessor == sendProcessor)
+                        {
+                            CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                            Grid *grid = PHSPACE::GetGrid(iZone, level);
+                            solver->RotateVectorFromInterface(grid, iZone, nTotalVariable);
+                        }
+                    }
+                }
+            }
         }
         else if (iSolver == TURB_SOLVER)
         {
@@ -2376,13 +2717,37 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(iSolver, level, "gradTurbulentCellCenterX", nEquation);
             CommunicateSpecificArray(iSolver, level, "gradTurbulentCellCenterY", nEquation);
             CommunicateSpecificArray(iSolver, level, "gradTurbulentCellCenterZ", nEquation);
+            if( periodicType == 2 )
+            {
+                for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+                {
+                    int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+                    ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+                    int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+                    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+                    {
+                        int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+                        int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+                        if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+                        {
+                            continue;
+                        }
+                        if (currentProcessor == sendProcessor)
+                        {
+                            CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                            Grid *grid = PHSPACE::GetGrid(iZone, level);
+                            solver->RotateVectorFromInterface(grid, iZone, nEquation);
+                        }
+                    }
+                }
+            }
         }
     }
     else if(systemGridType == MIXGRID && ifvfd == 0)
     {
         if (iSolver == NS_SOLVER)
         {
-            CommunicateGradientOnlyForMixGrid();
+            CommunicateGradientandLimitOnlyForMixGrid();
         }
         else if (iSolver == TURB_SOLVER)
         {
@@ -2764,24 +3129,6 @@ void Controller::PostSolve(int level)
     int nZones = GetNumberofGlobalZones();
     int iSolver = this->GetSolverIndex();
     int nPostSolve = GetNPostSolve(iSolver, level);
-
-    //! Compute the hybrid interface data in structured grid.
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
-        {
-            continue;
-        }
-        Grid *grid = GetGrid(iZone, level);
-        if(grid->Type() != STRUCTGRID)
-        {
-            continue;
-        }
-
-        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
-        solver->ComputeHybridInterface();
-    }
 
     //! Face Communication and other post tasks, such as residual computing.
     for (int n = 0; n < nPostSolve; ++ n)

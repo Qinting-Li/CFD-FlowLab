@@ -18,6 +18,7 @@
 #include "Solver.h"
 #include "Geometry.h"
 #include "Post_Visual.h"
+#include "Post_Probes.h"
 #include "IO_HDF5File.h"
 
 namespace PHSPACE
@@ -69,13 +70,18 @@ public:
     virtual void ComputeGradient(Grid *grid);
     virtual void ComputeGradientCellCenter(Grid *grid);
     virtual void ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *grid){};
+    virtual void ComputelimiterOnlyForMixGrid(Grid *grid){};
     //! Compute blend function F1 & F2.
     virtual void Crossing(Grid *grid);
     virtual void Blending(Grid *grid);
 
+    virtual void UpdateQlQrOnlyforMixGrid(Grid *grid){};
+    virtual void UpdateInviscidfluxOnlyforMixGrid(Grid *grid){};
+    virtual void UpdateViscousfluxOnlyforMixGrid(Grid *grid){};
+    virtual void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *grid){};
+
     //! Inviscid flux.
     virtual void InviscidFlux(Grid *grid);
-    virtual void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *grid){};
 
     //! Viscous flux.
     virtual void ViscousFlux (Grid *grid);
@@ -195,6 +201,8 @@ public:
 
     //! Prepare post visualization variables, store it in to grid's postVisualization database.
     LIB_EXPORT virtual void ComputePostVisualVariables(Post_Visual *postVisualization) {};
+    //! Prepare monitored probes variables for post-processing , store it into postProbesVar database.
+    LIB_EXPORT virtual void ComputePostProbesVariables(Post_Probes *postProbesVar) {};
 
     virtual FieldProxy * GetFieldProxy(Grid *grid, const string &field_name);
 
@@ -207,9 +215,16 @@ public:
 
     virtual void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn) {};
     virtual void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn) {};
+    
+    //! Rotate gradient vector for periodic boundary in both NSSolver and TurbSolver.
+    virtual void RotateVectorFromInterface(Grid *grid, const int &neighborZoneIndex, const int &neqn) {};
 
-    virtual void CompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
-    virtual void DecompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
+    virtual void CompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
+    virtual void DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
+
+    virtual void CompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
+    virtual void DecompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
+
 
     virtual void CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
     virtual void DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex){};
@@ -252,10 +267,6 @@ public:
     virtual void InitFlowAsReadingRestart();
     virtual void InitFlowAsReadingRestart(ActionKey *actkey);
 
-    //! To dump Average Flow if necessary.
-    virtual void DumpAverageFlow(ActionKey *actkey);
-    //! To read Average Flow if necessary.
-    virtual void ReadAverageFlow(ActionKey *actkey);
     //! To output Average Flow for visualization by tecplot format.
     virtual void TecOutAverageFlow(ActionKey *actkey);
 
@@ -304,10 +315,6 @@ public:
     virtual void DumpRestartH5(ActionKey *actkey);
     virtual void ReadRestartH5(ActionKey *actkey);
 
-    virtual void DumpStatisticalFlow(ActionKey *actkey);
-    virtual void ReadStatisticalFlow(ActionKey *actkey);
-
-    virtual void ComputeHybridInterface();
 
     virtual void FillField(Grid *grid, FieldProxy *fieldProxy, RDouble value);
     virtual void FillField(Grid *grid, FieldProxy *field1Proxy, FieldProxy *field2Proxy);

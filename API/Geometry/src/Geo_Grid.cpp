@@ -17,6 +17,8 @@ namespace PHSPACE
 
 Grid::Grid()
 {
+    zoneProbesNumber = 0;
+    probesCoordinates.resize(0);
 }
 
 LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)
@@ -70,6 +72,8 @@ Grid::~Grid()
 
 	delete iinfo;
     delete interpointInformation;
+    
+    probesCoordinates.clear();
 }
 
 LIB_EXPORT Grid *Grid::GetFinestGrid()

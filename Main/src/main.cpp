@@ -1,6 +1,6 @@
-//! @file   main.cpp.
-//! @brief  PHengLEI's main entrance.
-//! @author Bell.
+//! @file      main.cpp.
+//! @brief     PHengLEI's main entrance.
+//! @author    Bell.
 //!                     1. Introduction of PHengLEI
 //!    PHengLEI is a Computational Fluid Dynamics (CFD) software platform developed
 //! by China Aerodynamics Research and Development Center (CARDC).

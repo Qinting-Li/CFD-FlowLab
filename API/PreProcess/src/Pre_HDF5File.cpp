@@ -7,6 +7,7 @@
 #include "BC_Unstruct.h"
 #include "PHIO.h"
 #include "TK_Log.h"
+#include "GlobalDataBase.h"
 
 namespace PHSPACE
 {
@@ -1147,9 +1148,9 @@ void IO_HDF5Read::ReadStructGrid(hid_t loc_id, int iZone)
     ReadGridCoordinates(grpData, grid);
     strGrid->SetArrayLayout();
 
+    ReadStrBCName(grpData, grid);
     ReadBCRegion(grpData, grid);
     ReadInterfaceInfo(grpData, grid);
-    ReadStrBCName(grpData, grid);
 
     grid->ReviseNeighborZoneIndex(zoneStart);
     AddGrid(grid);
@@ -1166,11 +1167,8 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
 
     StructGrid *grid = StructGridCast(gridIn);
 
-    int nBCRegion = 0;
-    ReadData(grpData, &nBCRegion, "nBCRegion");
-
-    grid->CreateCompositeBCRegion(nBCRegion);
     CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+	int nBCRegion = compositeBCRegion->GetnBCRegion();
 
     int gridIndex = grid->GetZoneID();
     int **BCInfor = ReadIntTwoRow(grpData, "BCInfor");
@@ -1181,8 +1179,7 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         int index = 0;
-        BCRegion *bcregion = new BCRegion(gridIndex, iBCRegion);
-        compositeBCRegion->SetBCRegion(iBCRegion, bcregion);
+        BCRegion *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
 
         iMin   = BCInfor[iBCinfo][index++];
         iMax   = BCInfor[iBCinfo][index++];
@@ -1194,6 +1191,16 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
         sLr    = BCInfor[iBCinfo][index++];
         sNd    = BCInfor[iBCinfo][index++];
         iBCinfo ++;
+        
+        //! Restore periodic boundary bcType and correct read information only for PARTITION_GRID task.
+        if ( GetTaskCode() == PARTITION_GRID)
+        {
+            if(bcregion->GetBCName() == "Periodic_up"|| bcregion->GetBCName() == "Periodic_down")
+            {
+                bcType = PHENGLEI::PERIODIC;
+                iBCinfo ++;
+            }
+        }
 
         bcregion->SetIJKRegion(iMin,iMax,jMin,jMax,kMin,kMax);
         bcregion->SetBCType(bcType);
@@ -1228,17 +1235,24 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
 void IO_HDF5Read::ReadStrBCName(hid_t loc_id, Grid *gridIn)
 {
     hid_t  grpData;
+    
+    grpData = OpenGroup(loc_id, "BCRegion");
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int nBCRegion = 0;
+    ReadData(grpData, &nBCRegion, "nBCRegion");
+
+    grid->CreateCompositeBCRegion(nBCRegion);
+    H5Gclose(grpData);
 
     grpData = OpenGroup(loc_id, "BCName");
-
-    StructGrid *grid = StructGridCast(gridIn);
+    int gridIndex = grid->GetZoneID();
     CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
 
     char *BCName = ReadCharData(grpData, "BCName");
-
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
     string *BCNameList = new string[nBCRegion];
     uint_long count = 0;
+
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
         while (BCName[count] != '\0')
@@ -1251,9 +1265,11 @@ void IO_HDF5Read::ReadStrBCName(hid_t loc_id, Grid *gridIn)
 
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        BCRegion *bcregion = compositeBCRegion->GetBCRegion(ibcregion);
+        BCRegion *bcregion = new BCRegion(gridIndex, ibcregion);
+        compositeBCRegion->SetBCRegion(ibcregion, bcregion);
+
         bcregion->SetBCName(BCNameList[ibcregion]);
-        
+
         int bctype = bcregion->GetBCType();
         if ((bctype >7) && (bctype <51))
         {

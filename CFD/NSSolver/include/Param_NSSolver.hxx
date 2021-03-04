@@ -123,31 +123,6 @@ inline RDouble * Param_NSSolver::GetPrimitiveVarFarfield() const
     return primitiveVarFarfield;
 }
 
-inline RDouble Param_NSSolver::GetSubsonicInletTotalPressure() const
-{
-    return subsonicInletTotalPressure;
-}
-
-inline RDouble Param_NSSolver::GetSubsonicInletTotalTemperature() const
-{
-    return subsonicInletTotalTemperature;
-}
-
-inline RDouble Param_NSSolver::GetSubsonicOutletTotalPressure() const
-{
-    return subsonicOutletTotalPressure;
-}
-
-inline RDouble Param_NSSolver::GetSubsonicOutletTotalTemperature() const
-{
-    return subsonicOutletTotalTemperature;
-}
-
-inline int Param_NSSolver::GetSubsonicDirectionType() const
-{
-    return subsonicDirectionType;
-}
-
 inline int Param_NSSolver::GetNumberOfSpecies() const
 {
     return numberOfSpecies;

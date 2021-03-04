@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -10,9 +10,9 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      DataStruct_KDTree.h
-//! @brief     DataStruct_KDTree defines a k-dimension Tree data structure
-//!			   The tree starts from root node, and has a coordinates range limit.
-//!			   The node's definition refers to DataStruct_KDNode 
+//! @brief     DataStruct_KDTree defines a k-dimension Tree data structure.
+//!            The tree starts from root node, and has a coordinates range limit.
+//!            The node's definition refers to DataStruct_KDNode.
 //! @author    hekun.
 
 #pragma once

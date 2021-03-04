@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -11,8 +11,8 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      DataContainer.h
 //! @brief     It defines kernel data structure of PHengLEI, named 'DataContainer'.
-//!			   All types of data are standardized into SuperChar. "Three-In-One" data is designed: 
-//!			   1 - MPI communication; 2 - File I/O; 3 - Communication for hybrid parallel.
+//!            All types of data are standardized into DataChar. "Three-In-One" data is designed:
+//!            1 - MPI communication; 2 - File I/O; 3 - Communication for hybrid parallel.
 //! @author    Bell, Xu Qingxin, He Xin.
 
 #pragma once
@@ -24,12 +24,12 @@ using namespace std;
 
 namespace PHSPACE
 {
-class SuperChar;
+class DataChar;
 typedef vector< char >::size_type CharVecSizeType;
-typedef vector< SuperChar * >::size_type ContainerSizeType;
+typedef vector< DataChar * >::size_type ContainerSizeType;
 typedef string::size_type	StringSizeType;
-//DataContainer的设计应该是弥补原有SuperChar的不足
-//在接口上对外应该和原来的SuperChar表现一致
+//DataContainer的设计应该是弥补原有DataChar的不足
+//在接口上对外应该和原来的DataChar表现一致
 //至少在设计理念上应该是这样的
 class DataContainer
 {
@@ -40,7 +40,7 @@ public:
 	DataContainer();
 	~DataContainer();
 private:
-	vector< SuperChar * > *data;
+	vector< DataChar * > *data;
 	iterator start;
 	iterator finish;
 	CharVecSizeType pos, elem_pos, max_unit_size;
@@ -48,10 +48,10 @@ private:
 public:
 
     //!get data from vector *data.
-	SuperChar * getcurr();
+	DataChar * getcurr();
 
     //!return vector *data's value at the site of i
-    SuperChar * getiter(ContainerSizeType i);
+    DataChar * getiter(ContainerSizeType i);
 
     //!return start;
     iterator begin() { return start; };
@@ -60,7 +60,7 @@ public:
     iterator end() { return finish; };
 
     //!invoking delete function to delete *iter
-    void destroy(SuperChar *iter);
+    void destroy(DataChar *iter);
 
     //!invoking destroy function to delete *iter data,start with ist and end with ied.
     //!@param[in ]: ist  begin position.\n
@@ -132,7 +132,7 @@ public:
 
 private:	
 
-    //!use new SuperChar object fill up ,until the size equal new_size.
+    //!use new DataChar object fill up ,until the size equal new_size.
     void element_resize(ContainerSizeType new_size);
 
     //!return max_unit_size - remainder;
@@ -140,24 +140,24 @@ private:
 	
 public:  
 
-    //!invoking SuperChar::read function
+    //!invoking DataChar::read function
     //! @param[in ]:   *data :  target object.\n
     //! @param[in ]:
     void static_read (void * data, CharVecSizeType size);
 
-    //!invoking SuperChar::write function
+    //!invoking DataChar::write function
     //! @param[in ]: *data :source object.\n
     //! @param[in ]:
 	void static_write(void * data, CharVecSizeType size);
 
 
-    //!invoking SuperChar::read function with two parameter
+    //!invoking DataChar::read function with two parameter
     //! @param[in ]:   *data :  target object.\n
     //! @param[in ]:
     //! @param[in ]:
     void static_read (CharVecSizeType begin, void * data, CharVecSizeType size);
 
-    //!invoking SuperChar::write function with two parameter
+    //!invoking DataChar::write function with two parameter
     //! @param[in ]:  *data  :source object.\n
     //! @param[in ]:
     //! @param[in ]:
@@ -196,11 +196,11 @@ public:
 	     ContainerSizeType *ptr_elem_len, ContainerSizeType *ptr_elem_num );
 };
 
-class SuperChar
+class DataChar
 {
 public:
-	SuperChar();
-	~SuperChar();
+	DataChar();
+	~DataChar();
 public:
 
     //!

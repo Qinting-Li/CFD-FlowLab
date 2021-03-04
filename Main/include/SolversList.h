@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -24,6 +24,7 @@
 #include "TurbSolver.h"               //! Base turbulent solver.
 #include "TurbSolverStruct.h"           //! Structured turbulent solver.
 #include "TurbSolverUnstr.h"          //! Unstructured turbulent solver.
+#include "TurbSolverStructFD.h"           //! Structured FD turbulent solver.
 
 
 #ifdef USE_NSDEMO

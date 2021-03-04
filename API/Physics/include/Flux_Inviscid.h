@@ -13,6 +13,7 @@
 //! @brief     Inviscid (convection) flux computing, including number of inviscid scheme,
 //!            such as Roe, Steger-Warmming, Van Leer, HLLC, AUSM, etc.
 //! @author    Bell, He Xin.
+
 #pragma once
 #include "FaceProxy.h"
 namespace PHSPACE

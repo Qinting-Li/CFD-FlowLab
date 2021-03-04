@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -9,10 +9,10 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file		DataStruct_Sort.h
-//! @brief		DataStruct_Sort is usually used combined with set of STL, e.g. set<DataStruct_Sort<int>>. 
-//!				DataStruct_Sort objects stored in set is sorted by comparing its' value. 
-//! @author		Zhang Jian.
+//! @file      DataStruct_Sort.h
+//! @brief     DataStruct_Sort is usually used combined with set of STL, e.g. set<DataStruct_Sort<int>>.
+//!            DataStruct_Sort objects stored in set is sorted by comparing its' value.
+//! @author    Zhang Jian.
 
 #pragma once
 namespace PHSPACE

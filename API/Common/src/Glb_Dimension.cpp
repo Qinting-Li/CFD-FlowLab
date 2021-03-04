@@ -15,4 +15,3 @@ LIB_EXPORT void SetDim(int dim)
 }
 
 }
-

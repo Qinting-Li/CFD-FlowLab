@@ -1123,7 +1123,7 @@ void CombinGrid::SwapInterfaceData()
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     WriteLogFile("        Translating data ...");
     for (int iZone = 0; iZone < numberOfGlobalZones; ++ iZone)
     {
@@ -1145,7 +1145,7 @@ void CombinGrid::SwapInterfaceData()
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
                 int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(neighborZone);
 
-                //! Decompress the interface data from supercontainer.
+                //! Decompress the interface data from datacontainer.
                 DecompressInterfaceData(neighborZone, receiveData, iZone);
 
                 ++ count;

@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -18,7 +18,7 @@
 #include "PHSimpleArray.h"
 
 #ifdef WIN32
-//! Shield compiling waring C4800 and C4805 (by zhangjian).
+//! Shield compiling warning C4800 and C4805 (by zhangjian).
 //! The warning is because result &= ascendingFlag_[i].
 //! After verification, this code is come from blitz/aray/storage.h.
 #pragma warning(disable: 4800)

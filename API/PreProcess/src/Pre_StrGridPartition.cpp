@@ -59,6 +59,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 
 	int iovrlap = 0;
     GlobalDataBase::GetData("iovrlap",&iovrlap,PHINT,1);
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
 
 	int numberOfProcessors = this->GetNumberOfProcessors();
 	
@@ -93,7 +94,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 	OutputPartitionedGrid();
 	
 	int ndim = PHSPACE::GetDim();
-	if ( ndim == TWO_D || iovrlap == 1 )
+	if ( ndim == TWO_D || iovrlap == 1|| (ndim == THREE_D && periodicType != 0))
 	{
 		Grid ** grids    = new Grid * [numberOfBasicBlocks];
 		for ( int izone = 0; izone < numberOfBasicBlocks; ++ izone )
@@ -116,11 +117,11 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
         WriteLnkFile(partition_grid_file, parititionGrids, numberOfBasicBlocks);
 		CheckMeshMultigrid(parititionGrids, numberOfBasicBlocks);
 
-        /*string faceBCFileName = ChangeExtensionOfFileName( original_grid_file, "bc" );	
+        string faceBCFileName = ChangeExtensionOfFileName( original_grid_file, "bc" );	
         if(SerialFileExist( faceBCFileName ))
         {
             WriteBcFileFromFTS(partition_grid_file, parititionGrids, numberOfBasicBlocks);
-        }*/
+        }
 
 		for ( int izone = 0; izone < numberOfBasicBlocks; ++ izone )
 		{
@@ -137,8 +138,8 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 		GridTranslator * gridTranslator = new GridTranslator(parititionGrids, numberOfBasicBlocks); 
  		gridTranslator->Run();
  
-        /*string faceBCFileName = ChangeExtensionOfFileName( original_grid_file, "bc" );	
-        if( SerialFileExist( faceBCFileName ) ) WriteBcFileFromFTS(partition_grid_file, parititionGrids, numberOfBasicBlocks);*/
+        string faceBCFileName = ChangeExtensionOfFileName( original_grid_file, "bc" );	
+        if( SerialFileExist( faceBCFileName ) ) WriteBcFileFromFTS(partition_grid_file, parititionGrids, numberOfBasicBlocks);
  
  		delete gridTranslator;
  	}

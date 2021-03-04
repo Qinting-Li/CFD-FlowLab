@@ -32,7 +32,7 @@ void InitFantasyMPIForSepMode()
     if (numberOfProcessor <= numberOfGridProcessor)
     {
         ostringstream oss;
-        oss << "Error: numberOfTotalProcessor = "<< numberOfProcessor << "Error: numberOfGridProcessor = "<< numberOfGridProcessor << endl;
+        oss << "Error: numberOfTotalProcessor = " << numberOfProcessor << "Error: numberOfGridProcessor = " << numberOfGridProcessor << endl;
 
         PHMPI::FreeBlockData();
         cout << oss.str() << endl;
@@ -58,58 +58,58 @@ void InitFantasyMPIForSepMode()
 
 namespace PHMPI
 {
-//! Kernel Global Variables\n
-//! To control the whole PHengLEI software architecture,\n
-//! especially for parallel computational.\n
-//! The zones(grid blocks are including) information is defined here.\n
+//! Kernel Global Variables.
+//! To control the whole PHengLEI software architecture,
+//! especially for parallel computational.
+//! The zones (grid blocks are including) information is defined here.
 //! -# myID               :  Index of the current processor.
 //! -# numberOfProcessor  :  The total number of processors used by this procedure.
 //! -# server             :  Index of the server processor, default 0.
-//! -# nZones             :  The total number of global zones that used in parallel approach.\n
+//! -# nZones             :  The total number of global zones that used in parallel approach.
 //!                          It is equal to the sum of zones in all processors.
 //! Zones lay out information:
 //! -# block_proc :  The processor index of each zone(grid).
 //! -# block_type :  The grid type of each zone(grid), structured or unstructured.
 //! -# block_idx  :  The zone(block) index of each zone(grid).
 //! -# block_file :  The processor index that manage data in each zone(grid).
-int csmode       = 0;               // Initialization()
+int csmode     = 0;    // Initialization()
 
-int server       = 0;               // Initialization()
-int myID         = 0;               // Initialization()
-int gridServer   = 0;
-int nZones       = 0;
+int server     = 0;    // Initialization()
+int myID       = 0;    // Initialization()
+int gridServer = 0;
+int nZones     = 0;
 
 //! Some special zones information for HYBRID SOLVER.
-int *nZones_in_proc = 0;           // Initialization()
+int *nZones_in_proc = 0;    // Initialization()
 
 VVInt zone_over_link;
 
-int numberOfProcessor         = 1;  // Initialization()
+int numberOfProcessor         = 1;    // Initialization()
 int numberOfGridProcessor     = 0;
 int numberofZoneInThisProcess = 0;
-int numberofFiles             = 0;  // Initialization()
+int numberofFiles             = 0;    // Initialization()
 
-int *block_proc = NULL;                // Initialization()
+int *block_proc = NULL;               // Initialization()
 int *block_proc_grid = NULL;
-int *block_type = NULL;                // Initialization()
-int *block_idx  = NULL;                // Initialization()
+int *block_type = NULL;               // Initialization()
+int *block_idx  = NULL;               // Initialization()
 int *block_file = NULL;
-int *block_proc_inp  = NULL;           // Initialization()
+int *block_proc_inp = NULL;           // Initialization()
 
 int *block_proc_dump = NULL;
 
-//! Is current processor is file processor:\n
-//! -#  -1: has not been judged.\n
-//! -#  0 : no.\n
-//! -#  1 : yes.\n
-int isFileServer   = -1;
+//! Is current processor is file processor:
+//! -#  -1: has not been judged.
+//! -#  0 : no.
+//! -#  1 : yes.
+int isFileServer = -1;
 
-//! zoneDistributionMethod: zone block distribution method, default 0.\n
-//! -# 0 : each zone is assigned to the one that defined in grid partition procedure.\n
+//! zoneDistributionMethod: zone block distribution method, default 0.
+//! -# 0 : each zone is assigned to the one that defined in grid partition procedure.
 //! -# 1 : random assigned for each zone or by some else ways.
 int zoneDistributionMethod = 0;
 
-vector <int> *localZoneIDToGlobalZoneID = NULL;
+vector<int> *localZoneIDToGlobalZoneID = NULL;
 
 //! Processor tree.
 PHProcessorTree *processorTree = NULL;
@@ -127,7 +127,7 @@ void Initialization()
 {
     myID       = 0;
     server     = 0;
-    nZones_in_proc=0;       //! Bell 20131124 add.
+    nZones_in_proc = 0;
     block_proc = 0;
     block_type = 0;
     block_idx  = 0;
@@ -228,21 +228,21 @@ void InsertGlobalZones(int globalZoneID)
         localZoneIDToGlobalZoneID = new vector <int>;
     }
 
-    localZoneIDToGlobalZoneID -> push_back(globalZoneID);
+    localZoneIDToGlobalZoneID->push_back(globalZoneID);
 }
 
 void BuildProcessorTree()
 {
     int numberOfOriginalProcessor = GetNumberOfProcessor();
     RDouble start = 0.0;
-    RDouble end   = static_cast <RDouble> (numberOfOriginalProcessor);
+    RDouble end = static_cast<RDouble>(numberOfOriginalProcessor);
 
     int dim = 1;
     processorTree = new PHProcessorTree(dim, &start, &end);
 
     for (int iProc = 0; iProc < numberOfOriginalProcessor; ++ iProc)
     {
-        RDouble coord = static_cast <RDouble> (iProc);
+        RDouble coord = static_cast<RDouble>(iProc);
         PHProcessorNode *node = new PHProcessorNode(dim, &coord, iProc);
         processorTree->AddNode(node);
     }
@@ -259,25 +259,25 @@ void BuildProcessorTree()
 
     //! processorTreeForAllProcessor.
     start = 0;
-    end   = numberOfTotalProcessor;
+    end = numberOfTotalProcessor;
     processorTreeForAllProcessor = new PHProcessorTree(dim, &start, &end);
 
     for (int iProc = 0; iProc < numberOfTotalProcessor; ++ iProc)
     {
-        RDouble coord = static_cast <RDouble> (iProc);
+        RDouble coord = static_cast<RDouble>(iProc);
         PHProcessorNode *node = new PHProcessorNode(dim, &coord, iProc);
         processorTreeForAllProcessor->AddNode(node);
     }
 
     //! processorTreeForGridProcessor.
     start = 0;
-    end   = numberOfGridProcessor;
+    end = numberOfGridProcessor;
     processorTreeForGridProcessor = new PHProcessorTree(dim, &start, &end);
 
     for (int iProc = 0; iProc < numberOfGridProcessor; ++ iProc)
     {
-        RDouble coord = static_cast <RDouble> (iProc);
-        int item  = iProc + numberOfOriginalProcessor;
+        RDouble coord = static_cast<RDouble>(iProc);
+        int item = iProc + numberOfOriginalProcessor;
 
         PHProcessorNode *node = new PHProcessorNode(dim, &coord, item);
         processorTreeForGridProcessor->AddNode(node);
@@ -359,7 +359,7 @@ LIB_EXPORT int *GetZoneGridType()
     return block_type;
 }
 
-LIB_EXPORT int  GetZoneGridType(int iZone)
+LIB_EXPORT int GetZoneGridType(int iZone)
 {
     return block_type[iZone];
 }
@@ -409,7 +409,6 @@ LIB_EXPORT int GetLocalZoneIDToGlobalZoneID(int localZoneID)
     return (*localZoneIDToGlobalZoneID)[localZoneID];
 }
 
-// Bell 20131124 add
 int GetNumberOfProcStructUsed()
 {
     return numberOfProcessorStructgridUsed;
@@ -550,7 +549,7 @@ int *GetZoneStartPointContainer()
 
 void DeleteZoneStartPointContainer()
 {
-    delete []zoneStartPointContainer;
+    delete [] zoneStartPointContainer;
     zoneStartPointContainer = NULL;
 }
 
@@ -568,11 +567,11 @@ int *GetZoneStartCenterContainer()
 
 void DeleteZoneStartCenterContainer()
 {
-    delete []zoneStartCenterContainer;
+    delete [] zoneStartCenterContainer;
     zoneStartCenterContainer = NULL;
 }
 
-void GenerateGlobalBinaryTree(int * zoneStartPointContainer, int numberOfZones, int numberOfPoints)
+void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int numberOfZones, int numberOfPoints)
 {
     binaryTree = new DataStruct_BinaryTree(zoneStartPointContainer, numberOfZones, numberOfPoints);
     return;
@@ -732,16 +731,15 @@ void PH_Read(fstream &file, void *data, int size, int proc)
 {
     if (myID == proc)
     {
-        PH_Read(file,data,size);
+        PH_Read(file, data, size);
     }
 }
 
 void PH_Read(fstream &file, void *data, int size)
 {
-    file.read(reinterpret_cast<char*>(data),size);
+    file.read(reinterpret_cast<char*>(data), size);
 }
 
-//! Added by Guo Yongheng 20160824.
 void PH_ReadBcastInteger(fstream &file, void *data, int size, int proc)
 {
     PH_Read_Bcast(file, data, size*sizeof(int), proc);
@@ -801,14 +799,14 @@ void PH_BcastToClinet(void *data, int size, int proc, int key, int tag)
         for (int i = startProcessor; i < numberOfProcessor; ++ i)
         {
             if (i == proc) continue;
-            PHSPACE::PH_Send(data,size,i,tag);
+            PHSPACE::PH_Send(data, size, i, tag);
         }
     }
     else
     {
         if (keyReceive)
         {
-            PHSPACE::PH_Receive(data,size,proc,tag);
+            PHSPACE::PH_Receive(data, size, proc, tag);
         }
     }
 }
@@ -816,12 +814,12 @@ void PH_BcastToClinet(void *data, int size, int proc, int key, int tag)
 void PH_BcastSepMode(void *data, int size, int proc, int tag)
 {
     int startProcessor = 0;
-    int endProcessor   = GetNumberOfProcessor();
+    int endProcessor = GetNumberOfProcessor();
 
     if (CurrentProcessorIsGridProcessor())
     {
         startProcessor = GetNumberOfProcessor();
-        endProcessor   = startProcessor + GetNumberOfGridProcessor();
+        endProcessor = startProcessor + GetNumberOfGridProcessor();
     }
 
     if (myID == proc)
@@ -829,12 +827,12 @@ void PH_BcastSepMode(void *data, int size, int proc, int tag)
         for (int i = startProcessor; i < endProcessor; ++ i)
         {
             if (i == proc) continue;
-            PHSPACE::PH_Send(data,size,i,tag);
+            PHSPACE::PH_Send(data, size, i, tag);
         }
     }
     else
     {
-        PHSPACE::PH_Receive(data,size,proc,tag);
+        PHSPACE::PH_Receive(data, size, proc, tag);
     }
 }
 
@@ -849,12 +847,12 @@ void PH_Bcast(void *data, int size, int proc, int tag)
             {
                 continue;
             }
-            PHSPACE::PH_Send(data,size,i,tag);
+            PHSPACE::PH_Send(data, size, i, tag);
         }
     }
     else
     {
-        PHSPACE::PH_Receive(data,size,proc,tag);
+        PHSPACE::PH_Receive(data, size, proc, tag);
     }
 }
 
@@ -892,7 +890,7 @@ void PH_BcastByServer(DataContainer *cdata, int tag)
     {
         ostringstream oss;
         oss << "\n";
-        oss << "++++++++++++++++++StopProgram Information  +++++++++++++++++++++++++++++\n";
+        oss << "++++++++++++++++++  StopProgram Information  +++++++++++++++++++++++++++\n";
         oss <<  "Error: the server should be processor 0!" << "\n";
         oss << " The stop filename is : " << __FILE__ << "\n";
         oss << " at line " << __LINE__ << "\n";
@@ -951,7 +949,7 @@ void PH_BcastByServer(DataContainer *cdata, int tag)
     }
 }
 
-void PH_BcastByServerSepMode(DataContainer * cdata, int tag)
+void PH_BcastByServerSepMode(DataContainer *cdata, int tag)
 {
     queue <PHProcessorNode *> nodeQueue;
 
@@ -971,7 +969,7 @@ void PH_BcastByServerSepMode(DataContainer * cdata, int tag)
     {
         ostringstream oss;
         oss << "\n";
-        oss << "++++++++++++++++++StopProgram Information  +++++++++++++++++++++++++++++\n";
+        oss << "++++++++++++++++++  StopProgram Information  +++++++++++++++++++++++++++\n";
         oss <<  "Error: the server should be processor 0!" << "\n";
         oss << " The stop filename is : " << __FILE__ << "\n";
         oss << " at line " << __LINE__ << "\n";
@@ -1000,7 +998,7 @@ void PH_BcastByServerSepMode(DataContainer * cdata, int tag)
             {
                 if (myID == sendProcessor)
                 {
-                    send(cdata,recvProcessor, tag);
+                    send(cdata, recvProcessor, tag);
                 }
                 if (myID == recvProcessor)
                 {
@@ -1054,7 +1052,7 @@ void PH_BcastByServerToClinet(DataContainer *cdata, int key, int tag)
     {
         ostringstream oss;
         oss << "\n";
-        oss << "++++++++++++++++++StopProgram Information  +++++++++++++++++++++++++++++\n";
+        oss << "++++++++++++++++++  StopProgram Information  +++++++++++++++++++++++++++\n";
         oss <<  "Error: the server should be processor 0!" << "\n";
         oss << " The stop filename is : " << __FILE__ << "\n";
         oss << " at line " << __LINE__ << "\n";
@@ -1117,9 +1115,9 @@ void PH_BcastNonBlocking(DataContainer *&cdata, int bcastProcessor, int tag)
 {
     using namespace PHMPI;
 
-    vector <DataContainer *> sendDataBuffer;
-    vector <DataContainer *> receivedDataBuffer;
-    vector <PH_Request> requestContainer;
+    vector<DataContainer *> sendDataBuffer;
+    vector<DataContainer *> receivedDataBuffer;
+    vector<PH_Request> requestContainer;
 
     int sendProcessor = bcastProcessor;
     int myID = GetCurrentProcessorID();
@@ -1181,7 +1179,7 @@ void PH_BcastNonBlocking(DataContainer *&cdata, int bcastProcessor, int tag)
     //! Step4: Free the buffers.
     for (std::size_t iDim = 0; iDim < sendDataBuffer.size(); ++ iDim)
     {
-        delete sendDataBuffer[ iDim ];
+        delete sendDataBuffer[iDim];
     }
 
     requestContainer.clear();
@@ -1313,11 +1311,11 @@ void PH_Trade(DataContainer *cdata, int sendProcessor, int recvProcessor, stream
 
     if (myID == sendProcessor)
     {
-        send(cdata, recvProcessor, static_cast< CharVecSizeType > (nlen), tag);
+        send(cdata, recvProcessor, static_cast<CharVecSizeType>(nlen), tag);
     }
     if (myID == recvProcessor)
     {
-        receive(cdata, sendProcessor, static_cast< CharVecSizeType > (nlen), tag);
+        receive(cdata, sendProcessor, static_cast<CharVecSizeType>(nlen), tag);
     }
 }
 
@@ -1355,13 +1353,13 @@ void StreamToActionKey(ActionKey *actkey, ostringstream &oss)
 {
     if (actkey)
     {
-        DataContainer * cdata = actkey->GetData();
+        DataContainer *cdata = actkey->GetData();
         cdata->moveto_begin();
         cdata->write(&oss);
     }
 }
 
-void SuperCharToString(DataContainer *cdata, string &str)
+void DataCharToString(DataContainer *cdata, string &str)
 {
     cdata->to_string(str);
 }
@@ -1376,7 +1374,7 @@ int GetSendRecvTag(ActionKey *actkey, int iZone)
     if (nZones <= 0)
     {
         //! It is easy to make mistakes here.
-		//! nZones is not assigned here.
+        //! nZones is not assigned here.
         PHMPI::FreeBlockData();
         cout << "FATAL ERROR in GetSendRecvTag\n" << endl;
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -1403,9 +1401,8 @@ int GetSendRecvTag(int tagKind, int index, int iZone)
 
     if (nZones <= 0)
     {
-		//! It is easy to make mistakes here.
-		//! nZones is not assigned here.
-
+        //! It is easy to make mistakes here.
+        //! nZones is not assigned here.
         PHMPI::FreeBlockData();
         cout << "FATAL ERROR in GetSendRecvTag\n" << endl;
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -1416,7 +1413,7 @@ int GetSendRecvTag(int tagKind, int index, int iZone)
     return tag;
 }
 
-void PH_AllreduceSepMode(int * sendingBuffer, int * receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op)
+void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op)
 {
     using namespace PHMPI;
 
@@ -1424,7 +1421,7 @@ void PH_AllreduceSepMode(int * sendingBuffer, int * receivingBuffer, int numberO
     int numberOfGridProcessor = GetNumberOfGridProcessor();
 
     //ostringstream oss;
-    //oss << "sendingBuffer = " << sendingBuffer[ 0 ]  << endl;
+    //oss << "sendingBuffer = " << sendingBuffer[ 0 ] << endl;
     //WriteLogFile(oss.str());
 
     if (numberOfGridProcessor == 0)
@@ -1438,22 +1435,22 @@ void PH_AllreduceSepMode(int * sendingBuffer, int * receivingBuffer, int numberO
     int numberOfOriginalProcessor = GetNumberOfProcessor();
 
     int startProcessor = 0;
-    int endProcessor   = numberOfOriginalProcessor;
+    int endProcessor = numberOfOriginalProcessor;
 
     if (CurrentProcessorIsGridProcessor())
     {
         startProcessor = numberOfOriginalProcessor;
-        endProcessor   = numberOfGridProcessor + numberOfOriginalProcessor;
+        endProcessor = numberOfGridProcessor + numberOfOriginalProcessor;
     }
 
     int myID = GetCurrentProcessorID();
 
-    for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+    for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        receivingBuffer[ iElement ] = sendingBuffer[ iElement ];
+        receivingBuffer[iElement] = sendingBuffer[iElement];
     }
 
-    for(int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
+    for (int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
     {
         if (iProcessor == server)
         {
@@ -1469,29 +1466,29 @@ void PH_AllreduceSepMode(int * sendingBuffer, int * receivingBuffer, int numberO
 
         if (myID == server)
         {
-            int * tmpBuffer = new int[ numberOfElements ];
+            int * tmpBuffer = new int[numberOfElements];
 
             PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
 
             if (op == MPI_MAX)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] = MAX(receivingBuffer[ iElement ], tmpBuffer[ iElement ]);
+                    receivingBuffer[iElement] = MAX(receivingBuffer[iElement], tmpBuffer[iElement]);
                 }
             }
             else if (op == MPI_MIN)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] = MIN(receivingBuffer[ iElement ], tmpBuffer[ iElement ]);
+                    receivingBuffer[iElement] = MIN(receivingBuffer[iElement], tmpBuffer[iElement]);
                 }
             }
             else if (op == MPI_SUM)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] += tmpBuffer[ iElement ];
+                    receivingBuffer[iElement] += tmpBuffer[iElement];
                 }
             }
 
@@ -1519,14 +1516,13 @@ void PH_AllreduceSepMode(int * sendingBuffer, int * receivingBuffer, int numberO
     delete cdata;
 
     //ostringstream oss1;
-    //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[ 0 ]  << endl;
+    //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[0] << endl;
     //WriteLogFile(oss1.str());
 
 #endif
-
 }
 
-void PH_AllreduceSepMode(float * sendingBuffer, float * receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op)
+void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op)
 {
     using namespace PHMPI;
 
@@ -1534,7 +1530,7 @@ void PH_AllreduceSepMode(float * sendingBuffer, float * receivingBuffer, int num
     int numberOfGridProcessor = GetNumberOfGridProcessor();
 
     //ostringstream oss;
-    //oss << "sendingBuffer = " << sendingBuffer[ 0 ]  << endl;
+    //oss << "sendingBuffer = " << sendingBuffer[0] << endl;
     //WriteLogFile(oss.str());
 
     if (numberOfGridProcessor == 0)
@@ -1548,22 +1544,22 @@ void PH_AllreduceSepMode(float * sendingBuffer, float * receivingBuffer, int num
     int numberOfOriginalProcessor = GetNumberOfProcessor();
 
     int startProcessor = 0;
-    int endProcessor   = numberOfOriginalProcessor;
+    int endProcessor = numberOfOriginalProcessor;
 
     if (CurrentProcessorIsGridProcessor())
     {
         startProcessor = numberOfOriginalProcessor;
-        endProcessor   = numberOfGridProcessor + numberOfOriginalProcessor;
+        endProcessor = numberOfGridProcessor + numberOfOriginalProcessor;
     }
 
     int myID = GetCurrentProcessorID();
 
-    for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+    for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        receivingBuffer[ iElement ] = sendingBuffer[ iElement ];
+        receivingBuffer[iElement] = sendingBuffer[iElement];
     }
 
-    for(int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
+    for (int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
     {
         if (iProcessor == server)
         {
@@ -1579,29 +1575,29 @@ void PH_AllreduceSepMode(float * sendingBuffer, float * receivingBuffer, int num
 
         if (myID == server)
         {
-            float * tmpBuffer = new float[ numberOfElements ];
+            float * tmpBuffer = new float [numberOfElements];
 
             PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
 
             if (op == MPI_MAX)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] = MAX(receivingBuffer[ iElement ], tmpBuffer[ iElement ]);
+                    receivingBuffer[iElement] = MAX(receivingBuffer[iElement], tmpBuffer[iElement]);
                 }
             }
             else if (op == MPI_MIN)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] = MIN(receivingBuffer[ iElement ], tmpBuffer[ iElement ]);
+                    receivingBuffer[iElement] = MIN(receivingBuffer[iElement], tmpBuffer[iElement]);
                 }
             }
             else if (op == MPI_SUM)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] += tmpBuffer[ iElement ];
+                    receivingBuffer[iElement] += tmpBuffer[iElement];
                 }
             }
 
@@ -1629,14 +1625,13 @@ void PH_AllreduceSepMode(float * sendingBuffer, float * receivingBuffer, int num
     delete cdata;
 
     //ostringstream oss1;
-    //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[ 0 ]  << endl;
+    //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[0] << endl;
     //WriteLogFile(oss1.str());
 
 #endif
-
 }
 
-void PH_AllreduceSepMode(double * sendingBuffer, double * receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op)
+void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op)
 {
     using namespace PHMPI;
 
@@ -1644,7 +1639,7 @@ void PH_AllreduceSepMode(double * sendingBuffer, double * receivingBuffer, int n
     int numberOfGridProcessor = GetNumberOfGridProcessor();
 
     //ostringstream oss;
-    //oss << "sendingBuffer = " << sendingBuffer[ 0 ]  << endl;
+    //oss << "sendingBuffer = " << sendingBuffer[0] << endl;
     //WriteLogFile(oss.str());
 
     if (numberOfGridProcessor == 0)
@@ -1658,22 +1653,22 @@ void PH_AllreduceSepMode(double * sendingBuffer, double * receivingBuffer, int n
     int numberOfOriginalProcessor = GetNumberOfProcessor();
 
     int startProcessor = 0;
-    int endProcessor   = numberOfOriginalProcessor;
+    int endProcessor = numberOfOriginalProcessor;
 
     if (CurrentProcessorIsGridProcessor())
     {
         startProcessor = numberOfOriginalProcessor;
-        endProcessor   = numberOfGridProcessor + numberOfOriginalProcessor;
+        endProcessor = numberOfGridProcessor + numberOfOriginalProcessor;
     }
 
     int myID = GetCurrentProcessorID();
 
-    for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+    for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        receivingBuffer[ iElement ] = sendingBuffer[ iElement ];
+        receivingBuffer[iElement] = sendingBuffer[iElement];
     }
 
-    for(int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
+    for (int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
     {
         if (iProcessor == server)
         {
@@ -1689,29 +1684,29 @@ void PH_AllreduceSepMode(double * sendingBuffer, double * receivingBuffer, int n
 
         if (myID == server)
         {
-            double * tmpBuffer = new double[ numberOfElements ];
+            double * tmpBuffer = new double[numberOfElements];
 
             PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
 
             if (op == MPI_MAX)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] = MAX(receivingBuffer[ iElement ], tmpBuffer[ iElement ]);
+                    receivingBuffer[iElement] = MAX(receivingBuffer[iElement], tmpBuffer[iElement]);
                 }
             }
             else if (op == MPI_MIN)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] = MIN(receivingBuffer[ iElement ], tmpBuffer[ iElement ]);
+                    receivingBuffer[iElement] = MIN(receivingBuffer[iElement], tmpBuffer[iElement]);
                 }
             }
             else if (op == MPI_SUM)
             {
-                for(int iElement = 0; iElement < numberOfElements; ++ iElement)
+                for (int iElement = 0; iElement < numberOfElements; ++ iElement)
                 {
-                    receivingBuffer[ iElement ] += tmpBuffer[ iElement ];
+                    receivingBuffer[iElement] += tmpBuffer[iElement];
                 }
             }
 
@@ -1739,11 +1734,10 @@ void PH_AllreduceSepMode(double * sendingBuffer, double * receivingBuffer, int n
     delete cdata;
 
     //ostringstream oss1;
-    //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[ 0 ]  << endl;
+    //oss1 << "After all reduce, sendingBuffer = " << receivingBuffer[0] << endl;
     //WriteLogFile(oss1.str());
 
 #endif
-
 }
 
 int PH_Reduce(int *sendbuf, int *recvbuf, int count, PH_Op op)
@@ -1791,7 +1785,7 @@ int PH_Reduce(double *sendbuf, double *recvbuf, int count, PH_Op op)
     return errcode;
 }
 
-//! flag:\n
+//! flag:
 //! MAX = 1;
 //! MIN = 2;
 void PH_CompareMaxMin(int &local_data, int flag)
@@ -1818,7 +1812,7 @@ void PH_CompareMaxMin(int &local_data, int flag)
 #endif
 }
 
-//! flag:\n
+//! flag:
 //! MAX = 1;
 //! MIN = 2;
 void PH_CompareMaxMin(RDouble &local_data, int flag)
@@ -1844,11 +1838,12 @@ void PH_CompareMaxMin(RDouble &local_data, int flag)
 
 int PH_BarrierSepMode()
 {
-    int test    = 1;
+    int test = 1;
     int testAll = 1;
 
     PH_AllreduceSepMode(&test, &testAll, 1, MPI_INT, MPI_SUM);
 
     return testAll;
 }
+
 }

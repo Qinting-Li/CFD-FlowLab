@@ -358,7 +358,7 @@ void HOSolverUnstruct::InitFlow()
             //! To dump restart data for continual simulation.
             ActionKey *actkeyReadAverageFlow = new ActionKey();
             FillActionKey(actkeyReadAverageFlow, READ_AVERAGE_FLOW, 0);
-            ReadAverageFlow(actkeyReadAverageFlow);
+            //ReadAverageFlow(actkeyReadAverageFlow);
             delete actkeyReadAverageFlow;
         }
         else
@@ -526,58 +526,6 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
 
     using namespace IDX;
     using namespace PHENGLEI;
-
-    //! Check the pressure inlet bc type exist.
-    RDouble subsonicInletTotalPressure, subsonicInletTotalTemperature, subsonicOutletTotalPressure, subsonicOutletTotalTemperature;
-    RDouble direction_inlet[3], direction_outlet[3];
-    bool isNeedToReadTotalPAndTotalT = false;
-    int  directionMethod = 1;
-    for ( int iface = 0; iface < nBoundFace; ++ iface )
-    {
-        int bctype = bcr[iface]->GetKey();
-        if(bctype == PRESSURE_INLET || bctype == PRESSURE_OUTLET || bctype == PRESSURE_OUTLET_PLATE || bctype == PRESSURE_INLET_PLATE) 
-        {
-            isNeedToReadTotalPAndTotalT = true;
-            break;
-        }
-    }
-
-    if(isNeedToReadTotalPAndTotalT)
-    {
-        GlobalDataBase::GetData("subsonicInletTotalPressure" ,&subsonicInletTotalPressure ,PHDOUBLE,1);
-        GlobalDataBase::GetData("subsonicOutletTotalPressure" ,&subsonicOutletTotalPressure ,PHDOUBLE,1);
-        GlobalDataBase::GetData("subsonicInletTotalTemperature" ,&subsonicInletTotalTemperature ,PHDOUBLE,1);
-        GlobalDataBase::GetData("subsonicOutletTotalTemperature" ,&subsonicOutletTotalTemperature ,PHDOUBLE,1);
-        GlobalDataBase::GetData("direction_inlet", direction_inlet, PHDOUBLE, 3);
-        GlobalDataBase::GetData("direction_outlet", direction_outlet, PHDOUBLE, 3);
-        GlobalDataBase::GetData("directionMethod", &directionMethod, PHINT, 1);
-
-        RDouble height;
-        GlobalDataBase::GetData("height",&height,PHDOUBLE,1);
-        if(height > 0.0)
-        {
-            // Dimensional
-            RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
-            RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
-
-            RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
-            RDouble dynamic_pressure = refDimensionalDensity * velocity * velocity;
-            subsonicInletTotalPressure /= dynamic_pressure;
-            subsonicInletTotalTemperature /= refDimensionalTemperature;
-            subsonicOutletTotalPressure /= dynamic_pressure;
-            subsonicOutletTotalTemperature /= refDimensionalTemperature;
-        }	
-
-        int outnstep = 0;
-        GlobalDataBase::GetData("outnstep",&outnstep,PHINT,1);
-        if(outnstep == 0)
-        {
-            cout << "Total pressure of Inlet    (Non-dimensional) = " << subsonicInletTotalPressure << endl;
-            cout << "Total temperature of Inlet (Non-dimensional) = " << subsonicInletTotalTemperature << endl;
-            cout << "Total pressure of Outlet    (Non-dimensional) = " << subsonicOutletTotalPressure << endl;
-            cout << "Total temperature of Outlet (Non-dimensional) = " << subsonicOutletTotalTemperature << endl;
-        }
-    }
 
     int le, re, bcType, numberGaussPoint, rGausspoint;
     RDouble xNormal, yNormal, zNormal, vgn;
@@ -761,7 +709,6 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
             }
             else
             {
-                //PreconFarfieldBC(prims, primInflow, primt, refGama, gama[le], xfn[iFace], yfn[iFace], zfn[iFace], vgn[iFace], refMachNumber, nl, nchem);
             }
         }
         else if ( bcType == INFLOW )
@@ -816,146 +763,6 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
             }
 
             continue;
-        }
-        else if (bcType == PRESSURE_OUTLET)
-        {
-            for(int iGausspoint = 0; iGausspoint < numberGaussPoint; ++iGausspoint)
-            {
-                xNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][0];
-                yNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][1];
-                zNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][2];
-                vector< vector< RDouble > > & conservationQ = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].q;
-                vgn = 0.0;
-
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    prims[m] = conservationQ[m][iGausspoint];
-                }
-                prims[1] = prims[1] / prims[0];
-                prims[2] = prims[2] / prims[0];
-                prims[3] = prims[3] / prims[0];
-                prims[4] = HO_GAMAM1 * (prims[4] - 0.5 * prims[0] * (pow(prims[1],2) + pow(prims[2],2) + pow(prims[3],2)));
-
-                PressureOutletBC(prims, primt, subsonicOutletTotalPressure, nl, nchem);
-
-                rGausspoint = iGausspoint + numberGaussPoint;
-                conservationQ[0][rGausspoint]  =   primt[0];
-                conservationQ[1][rGausspoint]  =   primt[0] * primt[1];
-                conservationQ[2][rGausspoint]  =   primt[0] * primt[2];
-                conservationQ[3][rGausspoint]  =   primt[0] * primt[3];
-                conservationQ[4][rGausspoint]  =   primt[4]/HO_GAMAM1 + 0.5 * primt[0] * (pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2));
-            }
-
-            continue;
-        }
-        else if (bcType == PRESSURE_INLET)
-        {
-            for(int iGausspoint = 0; iGausspoint < numberGaussPoint; ++iGausspoint)
-            {
-                xNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][0];
-                yNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][1];
-                zNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][2];
-                vector< vector< RDouble > > & conservationQ = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].q;
-                vgn = 0.0;
-
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    prims[m] = conservationQ[m][iGausspoint];
-                }
-                prims[1] = prims[1] / prims[0];
-                prims[2] = prims[2] / prims[0];
-                prims[3] = prims[3] / prims[0];
-                prims[4] = HO_GAMAM1 * (prims[4] - 0.5 * prims[0] * (pow(prims[1],2) + pow(prims[2],2) + pow(prims[3],2)));
-                
-                if (directionMethod == 2)
-                {
-                    // vertical to the face normal.
-                    direction_inlet[0] = - xNormal;
-                    direction_inlet[1] = - yNormal;
-                    direction_inlet[2] = - zNormal;
-                }
-
-                PressureInletBCRiemann(prims, primt, refGama, refMachNumber, xNormal, yNormal, zNormal, subsonicInletTotalPressure, subsonicInletTotalTemperature, direction_inlet, nl, nchem);
-
-                rGausspoint = iGausspoint + numberGaussPoint;
-                conservationQ[0][rGausspoint]  =   primt[0];
-                conservationQ[1][rGausspoint]  =   primt[0] * primt[1];
-                conservationQ[2][rGausspoint]  =   primt[0] * primt[2];
-                conservationQ[3][rGausspoint]  =   primt[0] * primt[3];
-                conservationQ[4][rGausspoint]  =   primt[4]/HO_GAMAM1 + 0.5 * primt[0] * (pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2));
-            }
-
-            continue;
-        }
-        else if (bcType == PRESSURE_OUTLET_PLATE)
-        {
-            for(int iGausspoint = 0; iGausspoint < numberGaussPoint; ++iGausspoint)
-            {
-                xNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][0];
-                yNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][1];
-                zNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][2];
-                vector< vector< RDouble > > & conservationQ = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].q;
-                vgn = 0.0;
-
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    prims[m] = conservationQ[m][iGausspoint];
-                }
-                prims[1] = prims[1] / prims[0];
-                prims[2] = prims[2] / prims[0];
-                prims[3] = prims[3] / prims[0];
-                prims[4] = HO_GAMAM1 * (prims[4] - 0.5 * prims[0] * (pow(prims[1],2) + pow(prims[2],2) + pow(prims[3],2)));
-
-                PressureOutletBC(prims, primt, subsonicOutletTotalPressure, nl, nchem);
-
-                rGausspoint = iGausspoint + numberGaussPoint;
-                conservationQ[0][rGausspoint]  =   primt[0];
-                conservationQ[1][rGausspoint]  =   primt[0] * primt[1];
-                conservationQ[2][rGausspoint]  =   primt[0] * primt[2];
-                conservationQ[3][rGausspoint]  =   primt[0] * primt[3];
-                conservationQ[4][rGausspoint]  =   primt[4]/HO_GAMAM1 + 0.5 * primt[0] * (pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2));
-            }
-
-            continue;
-        }
-        else if (bcType == PRESSURE_INLET_PLATE)
-        {
-            for(int iGausspoint = 0; iGausspoint < numberGaussPoint; ++iGausspoint)
-            {
-                xNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][0];
-                yNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][1];
-                zNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][2];
-                vector< vector< RDouble > > & conservationQ = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].q;
-                vgn = 0.0;
-
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    prims[m] = conservationQ[m][iGausspoint];
-                }
-
-                prims[1] = prims[1] / prims[0];
-                prims[2] = prims[2] / prims[0];
-                prims[3] = prims[3] / prims[0];
-                prims[4] = HO_GAMAM1 * (prims[4] - 0.5 * prims[0] * (pow(prims[1],2) + pow(prims[2],2) + pow(prims[3],2)));
-                
-                if (directionMethod == 2)
-                {
-                    // vertical to the face normal.
-                    direction_inlet[0] = - xNormal;
-                    direction_inlet[1] = - yNormal;
-                    direction_inlet[2] = - zNormal;
-                }
-
-                PressureInletBCPlate(prims, primt, refGama, refMachNumber, subsonicInletTotalPressure, subsonicInletTotalTemperature, direction_inlet, nl, nchem);
-                
-                rGausspoint = iGausspoint + numberGaussPoint;
-                conservationQ[0][rGausspoint]  =   primt[0];
-                conservationQ[1][rGausspoint]  =   primt[0] * primt[1];
-                conservationQ[2][rGausspoint]  =   primt[0] * primt[2];
-                conservationQ[3][rGausspoint]  =   primt[0] * primt[3];
-                conservationQ[4][rGausspoint]  =   primt[4]/HO_GAMAM1 + 0.5 * primt[0] * (pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2));
-            }
-            continue;		
         }
         else
         {
@@ -2837,58 +2644,6 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 
     using namespace IDX;
     using namespace PHENGLEI;
-
-    //! Check the pressure inlet bc type exist.
-    RDouble subsonicInletTotalPressure, subsonicInletTotalTemperature, subsonicOutletTotalPressure, subsonicOutletTotalTemperature;
-    RDouble direction_inlet[3], direction_outlet[3];
-    bool isNeedToReadTotalPAndTotalT = false;
-    int  directionMethod = 1;
-    for ( int iface = 0; iface < nBoundFace; ++ iface )
-    {
-        int bctype = bcr[iface]->GetKey();
-        if(bctype == PRESSURE_INLET || bctype == PRESSURE_OUTLET || bctype == PRESSURE_OUTLET_PLATE || bctype == PRESSURE_INLET_PLATE) 
-        {
-            isNeedToReadTotalPAndTotalT = true;
-            break;
-        }
-    }
-
-    if(isNeedToReadTotalPAndTotalT)
-    {
-        GlobalDataBase::GetData("subsonicInletTotalPressure" ,&subsonicInletTotalPressure ,PHDOUBLE,1);
-        GlobalDataBase::GetData("subsonicOutletTotalPressure" ,&subsonicOutletTotalPressure ,PHDOUBLE,1);
-        GlobalDataBase::GetData("subsonicInletTotalTemperature" ,&subsonicInletTotalTemperature ,PHDOUBLE,1);
-        GlobalDataBase::GetData("subsonicOutletTotalTemperature" ,&subsonicOutletTotalTemperature ,PHDOUBLE,1);
-        GlobalDataBase::GetData("direction_inlet", direction_inlet, PHDOUBLE, 3);
-        GlobalDataBase::GetData("direction_outlet", direction_outlet, PHDOUBLE, 3);
-        GlobalDataBase::GetData("directionMethod", &directionMethod, PHINT, 1);
-
-        RDouble height;
-        GlobalDataBase::GetData("height",&height,PHDOUBLE,1);
-        if(height > 0.0)
-        {
-            // Dimensional
-            RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
-            RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
-
-            RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
-            RDouble dynamic_pressure = refDimensionalDensity * velocity * velocity;
-            subsonicInletTotalPressure /= dynamic_pressure;
-            subsonicInletTotalTemperature /= refDimensionalTemperature;
-            subsonicOutletTotalPressure /= dynamic_pressure;
-            subsonicOutletTotalTemperature /= refDimensionalTemperature;
-        }	
-
-        int outnstep = 0;
-        GlobalDataBase::GetData("outnstep",&outnstep,PHINT,1);
-        if(outnstep == 0)
-        {
-            cout << "Total pressure of Inlet    (Non-dimensional) = " << subsonicInletTotalPressure << endl;
-            cout << "Total temperature of Inlet (Non-dimensional) = " << subsonicInletTotalTemperature << endl;
-            cout << "Total pressure of Outlet    (Non-dimensional) = " << subsonicOutletTotalPressure << endl;
-            cout << "Total temperature of Outlet (Non-dimensional) = " << subsonicOutletTotalTemperature << endl;
-        }
-    }
 
     int le, re, bcType, numberGaussPoint;
     RDouble vgn = 0.0;

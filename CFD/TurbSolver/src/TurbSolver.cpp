@@ -146,15 +146,6 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
         FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
         DumpRestartData(actkeyDumpRestartData);
         delete actkeyDumpRestartData;
-
-        if(IsNeedDESStatistics())
-        {
-            //! To dump AverageFlow data if necessary.
-            ActionKey *actkeyDumpAverageFlow = new ActionKey();
-            FillActionKey(actkeyDumpAverageFlow, DUMP_AVERAGE_FLOW, 0);
-            DumpAverageFlow(actkeyDumpAverageFlow);
-            delete actkeyDumpAverageFlow;
-        }
     }
 
     int intervalStepRes = GlobalDataBase::GetIntParaFromDB("intervalStepRes");
@@ -175,15 +166,6 @@ void TurbSolver::Post()
     FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
     DumpRestartData(actkeyDumpRestartData);
     delete actkeyDumpRestartData;
-
-    if(IsNeedDESStatistics())
-    {
-        //! To dump AverageFlow data if necessary.
-        ActionKey *actkeyDumpAverageFlow = new ActionKey();
-        FillActionKey(actkeyDumpAverageFlow, DUMP_AVERAGE_FLOW, 0);
-        DumpAverageFlow(actkeyDumpAverageFlow);
-        delete actkeyDumpAverageFlow;
-    }
 }
 
 void TurbSolver::RegisterCFDSolverInterfaceField()

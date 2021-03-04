@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -29,9 +29,9 @@ private:
 
 public:
     //! Dump nBolcks grids to file.
-    //! @param[in] gridFileName     Grid file name.
-    //! @param[in] grids            The grids that need to be dumped.
-    //! @param[in] nBlocks          The number of the grid zones.
+    //! @param[in] gridFileName    Grid file name.
+    //! @param[in] grids           The grids that need to be dumped.
+    //! @param[in] nBlocks         The number of the grid zones.
     IO_HDF5Write(const string &gridFileName, Grid **grids, int nBlocks);
     ~IO_HDF5Write();
 
@@ -58,7 +58,7 @@ private:
 
 private:
     //! The grids int current processor
-    Grid ** gridsLocal;
+    Grid **gridsLocal;
     int *nPartOfEachProcessor;
 
     int *block_proc;
@@ -74,8 +74,8 @@ private:
 
 public:
     //! Read grid from file.
-    //! @param[in] gridFileName     Grid file name.
-    //! @param[in] region_in        The class to manage the geometry.
+    //! @param[in] gridFileName    Grid file name.
+    //! @param[in] region_in       The class to manage the geometry.
     IO_HDF5Read(PHVectorString1D &gridNameListIn, Region *region_in);
     ~IO_HDF5Read();
 
@@ -145,7 +145,7 @@ private:
 
     //! Number of global grid files.
     int globalFileNumber;
-    vector <string> localGridNameList;
+    vector<string> localGridNameList;
 
     //! The total number of global zones.
     int nZones;
@@ -162,7 +162,7 @@ private:
     int *blockFileProc;
     int taskType;
 
-    vector< Grid *> grids;
+    vector<Grid *> grids;
     Region *region;
 };
 

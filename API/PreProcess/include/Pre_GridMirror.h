@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -10,8 +10,9 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Pre_GridMirror.h
-//! @brief     It defines grid mirror function for pre-processing  .
+//! @brief     It defines grid mirror function for pre-processing.
 //! @author    Baka.
+
 #pragma once
 #include "Region.h"
 #include "Geometry.h"
@@ -23,72 +24,72 @@ namespace PHSPACE
 class Pre_GridMirror
 {
 public:
-	string gridFileName;
+    string gridFileName;
 
 public:
-	LIB_EXPORT Pre_GridMirror(const string & from_gfile);
-	LIB_EXPORT ~Pre_GridMirror();
+    LIB_EXPORT Pre_GridMirror(const string &from_gfile);
+    LIB_EXPORT ~Pre_GridMirror();
 
 public:
-	LIB_EXPORT void Run();
+    LIB_EXPORT void Run();
 
 private:
-	//! Revert boundary condition information.
-	void RevertBCInfo();
+    //! Revert boundary condition information.
+    void RevertBCInfo();
 
-	void ReadLnkFile(const string & fileName_in);
+    void ReadLnkFile(const string &fileName_in);
 
-	//! Calculate the symmetry face.
-	void CalSymmetryFace();
+    //! Calculate the symmetry face.
+    void CalSymmetryFace();
 
-	//! Calculate the blocks number of the whole mirror grid.
-	void CalBlocksNumberOfMirrorGrid();
+    //! Calculate the blocks number of the whole mirror grid.
+    void CalBlocksNumberOfMirrorGrid();
 
-	//! Mirror the grid.
-	void GridMirror();
+    //! Mirror the grid.
+    void GridMirror();
 
-	//! Mirror the structured grid.
-	void MirrorGridStr(int izone, StructGrid * grid_in);
+    //! Mirror the structured grid.
+    void MirrorGridStr(int izone, StructGrid *grid_in);
 
-	//! Mirror the boundary condition region.
-	void MirrorBCRegion();
+    //! Mirror the boundary condition region.
+    void MirrorBCRegion();
 
-	//! Mirror the unstructured grid.
-	void MirrorGridUnstr(int izone, UnstructGrid * grid_in);
+    //! Mirror the unstructured grid.
+    void MirrorGridUnstr(int izone, UnstructGrid *grid_in);
 
-	//! Mirror the coordinates of unstructured grid.
-	void MirrorCoordinate(int izone, UnstructGrid * grid_in);
+    //! Mirror the coordinates of unstructured grid.
+    void MirrorCoordinate(int izone, UnstructGrid *grid_in);
 
-	//! Mirror the node number of each face of unstructured grid.
-	void MirrorNodeNumberOfEachFace(int izone, UnstructGrid * grid_in);
+    //! Mirror the node number of each face of unstructured grid.
+    void MirrorNodeNumberOfEachFace(int izone, UnstructGrid *grid_in);
 
-	void MirrorFace2Node(int izone, UnstructGrid * grid_in);
+    void MirrorFace2Node(int izone, UnstructGrid *grid_in);
 
-	//! Mirror the cell of each face of unstructured grid.
-	void MirrorCellOfFace(int izone, UnstructGrid * grid_in);
+    //! Mirror the cell of each face of unstructured grid.
+    void MirrorCellOfFace(int izone, UnstructGrid *grid_in);
 
-	void MirrorCell2Node(int izone, UnstructGrid * grid_in);
+    void MirrorCell2Node(int izone, UnstructGrid *grid_in);
 
-	void TradeGridInfo();
-	void DumpStrGrid(string out_gfile);
-	void DumpUnstrGrid(string out_gfile);
+    void TradeGridInfo();
+    void DumpStrGrid(string out_gfile);
+    void DumpUnstrGrid(string out_gfile);
 
 private:
-	int nZones;
-	int mirrorindex;
-	int Dimension;
-	int numberOfOriginalBlocks;
-	int SymmetryFaceVector;
-	int gridtype;
-	int BlockofEachProc;
-	bool LnkFileExist;
+    int nZones;
+    int mirrorindex;
+    int Dimension;
+    int numberOfOriginalBlocks;
+    int SymmetryFaceVector;
+    int gridtype;
+    int BlockofEachProc;
+    bool LnkFileExist;
 
-	vector<Grid *> OrdinaryGrid;
-	//Grid ** OrdinaryGrid;
-	vector < DataContainer * > Gridlist;
-	DataContainer * gridinfo;
-	/*vector<Grid *> MirrorGrids;
-	Grid ** OutputGrid;*/
+    vector<Grid *> OrdinaryGrid;
+    //Grid ** OrdinaryGrid;
+    vector<DataContainer *> Gridlist;
+    DataContainer * gridinfo;
+    /*vector<Grid *> MirrorGrids;
+    Grid ** OutputGrid;*/
 };
 
 const int X_axis = 0;

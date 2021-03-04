@@ -46,5 +46,7 @@ string bcName = "Farfield";
 #	   6 : OUTFLOW               
 #	   52: PRESSURE_INLET		    
 #	   62: PRESSURE_OUTLET		   
+#	   53: MASS_FLOW_INLET		    
+#	   63: MASS_FLOW_OUTLET		   
 #	   61: OUTFLOW_CONFINED      
 #	   7 : POLE                  

@@ -96,7 +96,7 @@ void TaskServerUpdateInterpoint::MainTaskNonBlocking(ActionKey *actkey)
     }
 
 
-    // Step3: Translate the super container.
+    // Step3: Translate the data container.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *zoneNeighborForPoint = zoneConnectivityForPoint->GetZoneNeighborForPoint(iZone);

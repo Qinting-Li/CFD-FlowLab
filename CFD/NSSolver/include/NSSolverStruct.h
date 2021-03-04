@@ -107,8 +107,10 @@ private:
     void SolutionFix(Grid *gridIn, RDouble *prim, int i, int j, int k);
     void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
     
-    void CopyInviscidfluxProxytoGlobalfacefluxOnlyforMixGrid(Grid *gridIn, FieldProxy *fluxProxy, int iSurface);
-    void CopyViscousfluxProxytoGlobalfacefluxOnlyforMixGrid(Grid *gridIn, FieldProxy *fluxProxy, int iSurface);
+
+    void UpdateQlQrOnlyforMixGrid(Grid *grid);
+    void UpdateInviscidfluxOnlyforMixGrid(Grid *grid);
+    void UpdateViscousfluxOnlyforMixGrid(Grid *grid);
     void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn);
 
     void LoadFlux(Grid *gridIn, FieldProxy *fluxProxy, int iSurface);
@@ -147,9 +149,13 @@ private:
     void RegisterCFDSolverInterfaceField();
     void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
+    void RotateVectorFromInterface(Grid *grid, const int &neighborZoneIndex, const int &neqn);
 
-    void CompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
-    void DecompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+    void CompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+    void DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+
+    void CompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+    void DecompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
 
     void CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
     void DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
@@ -172,6 +178,12 @@ private:
 
     void SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq);
     void OutFlowBC3D (Grid *gridIn, BCRegion *BCRegion);
+    
+    //calculate the total area of all BC regions with the same BC name.
+    void calculateBCArea(Grid *gridIn, BCRegion *BCRegion);
+
+    //calculate the mass flux ratio of all mass outlet BC regions with the same BC name.
+    void calculateMassFluxRatio(Grid *gridIn, BCRegion *BCRegion);
 
     void SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion);
     void VisWallADI3D(Grid *gridIn, BCRegion *BCRegion);
@@ -182,6 +194,13 @@ private:
     void PreconFarfieldBC(Grid *gridIn, BCRegion *BCRegion);
     void PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion);
     void PressureOutletBC(Grid *gridIn, BCRegion *BCRegion);
+    
+    // mass flow in boundary condition.
+    void MassFlowInletBC(Grid *gridIn, BCRegion *BCRegion);
+
+    // mass flow out boundary condition.
+    void MassFlowOutletBC(Grid *gridIn, BCRegion *BCRegion);
+
     void CornerPoint(Grid *gridIn);
     
     void FillField(Grid *gridIn, FieldProxy *fieldProxy, RDouble value);
@@ -245,7 +264,6 @@ public:
 public:
     void VisualizationVariables(Grid *gridIn, FieldProxy *workProxy, const string &filename);
 
-    void ComputeInterfaceGrad(int level);
     void UploadInterfaceData  (ActionKey *actkey);
 
     void DownloadInterfaceData(ActionKey *actkey);
@@ -257,18 +275,16 @@ public:
 	GradientCellCenter *GetGradientCellCenterUVWT(Grid *gridIn, FieldProxy *q);
 	GradientCellCenter *GetGradientCellCenterUVWT(Grid *gridIn);
 
-    void CalLimiters(Grid *gridIn, int ig, RDouble *limit, RDouble4D *q, RDouble **dqdx, RDouble **dqdy, RDouble **dqdz);
-
 	//! Prepare post visualization variables, store it in to grid's postVisualization database.
 	LIB_EXPORT void ComputePostVisualVariables(Post_Visual * postVisualization);
-
+    //! Prepare monitored probes variables for post-processing , store it into postProbesVar database.
+    LIB_EXPORT void ComputePostProbesVariables(Post_Probes * postProbesVar);
 	//! Create and init control parameters.
 	LIB_EXPORT void InitControlParameters();
 
  	//! Get controlParamters( a Para_NSSolver type pointer).
 	LIB_EXPORT Param_NSSolverStruct *GetControlParameters() const;
 
-    void ComputeHybridInterface();
 };
 
 }

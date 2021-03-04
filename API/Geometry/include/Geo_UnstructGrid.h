@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Geo_UnstructGrid.h
 //! @brief     It defines the class 'UnstructGrid', which is type of Unstructured geometry grid.
-//!			   The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid
+//!            The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid
 //! @author    Bell, He Xin.
 
 #pragma once
@@ -142,6 +142,9 @@ private:
 	//! Average volume of all mesh.
 	RDouble averageVolume;
 
+    //! Probes nearest cell index.
+    vector <int> probesNearestCellID;
+
 public:
 	LIB_EXPORT UnstructGrid();
 	LIB_EXPORT ~UnstructGrid();
@@ -181,6 +184,9 @@ public:
 	void Setfc2cR(int *fc2cR);
 
 	void SetBlankIndex(int *iblank);
+
+    //! Set the probes nearest cell index.
+    void SetProbesNearestCellID(vector <int> probesNearestCellID);
 
 	//! Returns the boundary condition records.
 	BCRecord **GetBCRecord() const;
@@ -392,6 +398,9 @@ public:
 
 	//! Computes and returns the number of faces on the solid wall.
 	int GetNumberOfWallCell();
+
+    //! Get the probes nearest cell index.
+    vector <int> GetProbesNearestCellID() const;
 
 	int * GetBlankIndex() const;
 	

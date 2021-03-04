@@ -1,5 +1,6 @@
 #include "Parallel.h"
 #include "PHMpi.h"
+
 namespace PHSPACE
 {
 
@@ -26,7 +27,7 @@ int PH_Init(int &argc, char ***argv)
 void PH_Rank(int &rank)
 {
 #ifdef PH_PARALLEL
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 }
 
@@ -47,10 +48,10 @@ void PH_Finalize()
 void PH_Get_processor_name(string &proc_name)
 {
 #ifdef PH_PARALLEL
-	char processor_name[MPI_MAX_PROCESSOR_NAME];
+    char processor_name[MPI_MAX_PROCESSOR_NAME];
     int nlen = 0;
 
-	MPI_Get_processor_name(processor_name, &nlen);
+    MPI_Get_processor_name(processor_name, &nlen);
     proc_name = processor_name;
 #endif
 }
@@ -59,7 +60,7 @@ void PH_Send(void *data, int size, int to, int tag)
 {
 #ifdef PH_PARALLEL
     //! In order to avoid special situation.
-    if ( size <= 0 ) return;
+    if (size <= 0) return;
     MPI_Send(data, size, MPI_CHAR, to, tag, MPI_COMM_WORLD);
 #endif
 }
@@ -68,7 +69,7 @@ void PH_Receive(void *data, int size, int from, int tag)
 {
 #ifdef PH_PARALLEL
     //! In order to avoid special situation.
-    if ( size <= 0 ) return;
+    if (size <= 0) return;
 
     MPI_Status status;
     MPI_Recv(data, size, MPI_CHAR, from, tag, MPI_COMM_WORLD, &status);
@@ -77,18 +78,18 @@ void PH_Receive(void *data, int size, int from, int tag)
 
 int PH_Receive(void *data, int size, int tag)
 {
-	int err_code = 0;
+    int err_code = 0;
 
 #ifdef PH_PARALLEL
     //! In order to avoid special situation.
-    if ( size <= 0 ) return -1;
+    if (size <= 0) return -1;
 
-	MPI_Status status;
-	MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, tag, MPI_COMM_WORLD, &status);
-	err_code = status.MPI_SOURCE;
+    MPI_Status status;
+    MPI_Recv(data, size, MPI_CHAR, MPI_ANY_SOURCE, tag, MPI_COMM_WORLD, &status);
+    err_code = status.MPI_SOURCE;
 #endif
 
-	return err_code;
+    return err_code;
 }
 
 void PH_SendString(string &cs, int proc, int tag)
@@ -125,106 +126,106 @@ void PH_ReceiveString(string &cs, int proc, int tag)
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Function :   int PH_Send(void *data, int size, int to, int tag, PH_Request *request)                                  +
 // Author   :   Xu QingXin,  2013.02.16,   Modified 2013.02.16.                                                          +
-// Purpose  :   Non-blocking standard send function,package Non-blocking standard send process function of MPICH.     +
-// Description :   data, input type parameter,optional type,address of the send buffer.                                  +
-//              size, input type parameter,int type,size of the send buffer in bytes.                                    +
-//              to  , input type parameter,int type,the send target process number.                                      +
-//              tag , input type parameter,int type,information tag.                                                     +
-//              comm, input optional parameter,MPI_Comm type,communication field handle,default is MPI_COMM_WORLD.       +
-//           request, output type parameter,PH_Request type pointer,communication object handle.                         +
+// Purpose  :   Non-blocking standard send function,package Non-blocking standard send process function of MPICH.        +
+// Description: data, input type parameter, optional type, address of the send buffer.                                   +
+//              size, input type parameter, int type,size of the send buffer in bytes.                                   +
+//              to  , input type parameter, int type,the send target process number.                                     +
+//              tag , input type parameter, int type,information tag.                                                    +
+//              comm, input optional parameter, MPI_Comm type, communication field handle, default is MPI_COMM_WORLD.    +
+//              request, output type parameter, PH_Request type pointer, communication object handle.                    +
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 int PH_Send(void *data, int size, int to, int tag, PH_Request *request)
 {
-	int errcode = 0;
- 
-	if ( size <= 0 ) 
-	{
-		errcode = -1;
-	    return errcode;
-	}
+    int errcode = 0;
+
+    if (size <= 0)
+    {
+        errcode = -1;
+        return errcode;
+    }
 
 #ifdef PH_PARALLEL
     errcode = MPI_Isend(data, size, MPI_CHAR, to, tag, MPI_COMM_WORLD, request);
 #endif
-	
-	return errcode;
+
+    return errcode;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Function    :   int PH_Receive(void *data, int size, int from, int tag, PH_Request *request)                               +
-// Author      :   Xu QingXin,  2013.02.07,   Modified 2013.02.07.                                                            +
-// Purpose     :   Non-blocking standard receive function,package Non-blocking standard receive process function of MPICH.    +
-// Description :   data, input type parameter,optional type,address of the receive buffer.                                       +
-//                 size, input type parameter,int type,size of the receive buffer in bytes.                                      +
-//                 from, input type parameter,int type,the receive source process number.                                     +
-//                 tag , input type parameter,int type,information tag.                                                       +
-//              request, output type parameter,PH_Request type pointer,communication object handle.                           +
+// Author      :   Xu QingXin,  2013.02.07, Modified 2013.02.07.                                                              +
+// Purpose     :   Non-blocking standard receive function, package Non-blocking standard receive process function of MPICH.   +
+// Description :   data, input type parameter, optional type, address of the receive buffer.                                  +
+//                 size, input type parameter, int type, size of the receive buffer in bytes.                                 +
+//                 from, input type parameter, int type, the receive source process number.                                   +
+//                 tag , input type parameter, int type,information tag.                                                      +
+//                 request, output type parameter, PH_Request type pointer, communication object handle.                      +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 int PH_Receive(void *data, int size, int from, int tag, PH_Request *request)
 {
-	int errcode = 0;
- 
-	if ( size <= 0 ) 
-	{
-		errcode = -1;
-	    return errcode;
-	}
+    int errcode = 0;
+
+    if (size <= 0)
+    {
+        errcode = -1;
+        return errcode;
+    }
 
 #ifdef PH_PARALLEL
     errcode = MPI_Irecv(data, size, MPI_CHAR, from, tag, MPI_COMM_WORLD, request);
 #endif
-	
-	return errcode;
+    
+    return errcode;
 }
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Function    :   int PH_Wait(PH_Request *request)                                                                                                   +
-// Author      :   Xu QingXin,  2013.02.16, Modified 2013.02.16.                                                                                      +
-// Purpose     :   Non-blocking completed communication operation function,package Non-blocking completed communication process function of MPICH.    +
-// Description :request, input/output type parameter,PH_Request type pointer,communication object handle.                                             +
-//               status, output type parameter,PH_Status type pointer,state object,default is MPI_STATUS_IGNORE.                                      +
-//                count, input type parameter,int type,number of communication objects to be completed.                                               +
-//    array_of_requests, input/output type parameter,PH_Request type one dimension array,store count communication objects handle.                    +
+// Author      :   Xu QingXin, 2013.02.16, Modified 2013.02.16.                                                                                       +
+// Purpose     :   Non-blocking completed communication operation function, package Non-blocking completed communication process function of MPICH.   +
+// Description :request, input/output type parameter, PH_Request type pointer, communication object handle.                                           +
+//               status, output type parameter, PH_Status type pointer, state object,default is MPI_STATUS_IGNORE.                                    +
+//                count, input type parameter, int type, number of communication objects to be completed.                                             +
+//    array_of_requests, input/output type parameter, PH_Request type one dimension array, store count communication objects handle.                  +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 int PH_Wait(PH_Request *request)
 {
-	int errcode = 0;
-	
+    int errcode = 0;
+    
 #ifdef PH_PARALLEL
-    errcode = MPI_Wait( request, MPI_STATUS_IGNORE );
+    errcode = MPI_Wait(request, MPI_STATUS_IGNORE);
 #endif
-	
-	return errcode;
+    
+    return errcode;
 }
 
 int PH_Wait(int count, PH_Request *array_of_requests)
 {
-	int errcode = 0;
+    int errcode = 0;
  
 #ifdef PH_PARALLEL
-    errcode = MPI_Waitall( count, array_of_requests, MPI_STATUSES_IGNORE );
+    errcode = MPI_Waitall(count, array_of_requests, MPI_STATUSES_IGNORE);
 #endif
-	
-	return errcode;
+    
+    return errcode;
 }
 
 //! Global reduction function:
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Function    :   int PH_Reduce( void *sendbuf, void *recvbuf, int count, PH_Op op )                  +
-//                 int PH_Reduce( void *sendbuf, void *recvbuf, int count, PH_Op op, int root )        +
-// Author      :   Xu QingXin,  2013.04.02, Modified 2013.04.02.                                       +
-// Purpose     :   Global reduction function,package Global reduction operation function of MPICH.     +
-// Description :sendbuf, input type parameter,optional type,address of the send buffer.                +
-//              recvbuf, input type parameter,optional type,address of the receive buffer.             +
-//              count  , input type parameter,int type,number of communication objects to be reduced.  +
-//              op     , input type parameter,MPI_Op type,reduction operation handle.                  +
-//              root   , input type parameter,int type,root process number.                            +
+// Function    :   int PH_Reduce(void *sendbuf, void *recvbuf, int count, PH_Op op)                    +
+//                 int PH_Reduce(void *sendbuf, void *recvbuf, int count, PH_Op op, int root)          +
+// Author      :   Xu QingXin, 2013.04.02, Modified 2013.04.02.                                        +
+// Purpose     :   Global reduction function, package Global reduction operation function of MPICH.    +
+// Description : sendbuf, input type parameter, optional type, address of the send buffer.             +
+//               recvbuf, input type parameter, optional type, address of the receive buffer.          +
+//               count  , input type parameter, int type,number of communication objects to be reduced.+
+//               op     , input type parameter, MPI_Op type, reduction operation handle.               +
+//               root   , input type parameter, int type,root process number.                          +
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-int PH_AllReduce( void *sendbuf, void *recvbuf, int count, PH_Op op )
+int PH_AllReduce(void *sendbuf, void *recvbuf, int count, PH_Op op)
 {
     int errcode = 0;
 
 #ifdef PH_PARALLEL
-    errcode = MPI_Allreduce( sendbuf, recvbuf, count, MPI_CHAR, op, MPI_COMM_WORLD );
+    errcode = MPI_Allreduce(sendbuf, recvbuf, count, MPI_CHAR, op, MPI_COMM_WORLD);
 #endif
 
     return errcode;
@@ -243,7 +244,7 @@ int PH_AllReduce(double *sendbuf, double *recvbuf, int count, PH_Op op)
     }
 
 #ifdef PH_PARALLEL
-    errcode = MPI_Allreduce( sendbuf, recvbuf, count, MPI_DOUBLE, op, MPI_COMM_WORLD );
+    errcode = MPI_Allreduce(sendbuf, recvbuf, count, MPI_DOUBLE, op, MPI_COMM_WORLD);
 #endif
 
     return errcode;
@@ -254,7 +255,7 @@ int PH_AllReduce(float *sendbuf, float *recvbuf, int count, PH_Op op)
     int errcode = 0;
 
 #ifdef PH_PARALLEL
-    errcode = MPI_Allreduce( sendbuf, recvbuf, count, MPI_FLOAT, op, MPI_COMM_WORLD );
+    errcode = MPI_Allreduce(sendbuf, recvbuf, count, MPI_FLOAT, op, MPI_COMM_WORLD);
 #endif
 
     return errcode;
@@ -273,7 +274,7 @@ int PH_AllReduce(int *sendbuf, int *recvbuf, int count, PH_Op op)
     }
 
 #ifdef PH_PARALLEL
-    errcode = MPI_Allreduce( sendbuf, recvbuf, count, MPI_INT, op, MPI_COMM_WORLD );
+    errcode = MPI_Allreduce(sendbuf, recvbuf, count, MPI_INT, op, MPI_COMM_WORLD);
 #endif
 
     return errcode;
@@ -292,87 +293,85 @@ int PH_Allgather(int *sendbuf, int sendcount, int *recvbuf, int recvcount)
     }
 
 #ifdef PH_PARALLEL
-    errcode = MPI_Allgather(sendbuf, sendcount, MPI_INT, recvbuf, recvcount, MPI_INT, MPI_COMM_WORLD );
+    errcode = MPI_Allgather(sendbuf, sendcount, MPI_INT, recvbuf, recvcount, MPI_INT, MPI_COMM_WORLD);
 #endif
 
     return errcode;
 }
 
-// int PH_Reduce( void *sendbuf, void *recvbuf, int count, PH_Op op, int root )
+// int PH_Reduce(void *sendbuf, void *recvbuf, int count, PH_Op op, int root)
 // {
-// 	int errcode = 0;
+//      int errcode = 0;
 // 
 // #ifdef PH_PARALLEL
-// 	errcode = MPI_Reduce( sendbuf, recvbuf, count, MPI_CHAR, op, root, MPI_COMM_WORLD );
+//      errcode = MPI_Reduce(sendbuf, recvbuf, count, MPI_CHAR, op, root, MPI_COMM_WORLD);
 // #endif
 // 
-// 	return errcode;
+//      return errcode;
 // }
 
 int PH_Barrier()
 {
-	int errorCode = 0;
+    int errorCode = 0;
 #ifdef PH_PARALLEL
-	errorCode = MPI_Barrier( MPI_COMM_WORLD );
+    errorCode = MPI_Barrier(MPI_COMM_WORLD);
 #endif
-	return errorCode;
+    return errorCode;
 }
 
-int PH_Gatherv(void * sendBuffer, int sendCount, void * receiveBuffer, int * receiveCount, 
-			   int * displs, int root)
+int PH_Gatherv(void *sendBuffer, int sendCount, void *receiveBuffer, int *receiveCount, int *displs, int root)
 {
-	int errcode = 0;
+    int errcode = 0;
 
 #ifdef PH_PARALLEL
-	errcode = MPI_Gatherv( sendBuffer, sendCount, MPI_INT, receiveBuffer, receiveCount, 
-		displs, MPI_INT, root, MPI_COMM_WORLD);
+    errcode = MPI_Gatherv(sendBuffer, sendCount, MPI_INT, receiveBuffer, receiveCount, displs, MPI_INT, root, MPI_COMM_WORLD);
 #endif
 
-	return errcode;
+    return errcode;
 }
 
-void send(SuperChar *superChar, int to, int tag)
+void send(DataChar *dataChar, int to, int tag)
 {
-    int nlen = static_cast<int>(superChar->size());
+    int nlen = static_cast<int>(dataChar->size());
 
     //! It is necessary to judge whether the data length is zero.
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    PH_Send(superChar->begin(), nlen, to, tag);
+    PH_Send(dataChar->begin(), nlen, to, tag);
 }
 
-void send(SuperChar *superChar, int to, vector< PH_Request > & requestContainer, int tag)
+void send(DataChar *dataChar, int to, vector<PH_Request> &requestContainer, int tag)
 {
-    int nlen = static_cast<int>(superChar->size());
+    int nlen = static_cast<int>(dataChar->size());
 
     //! It is necessary to judge whether the data length is zero.
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    requestContainer.push_back( MPI_REQUEST_NULL );
+    requestContainer.push_back(MPI_REQUEST_NULL);
 
-    PH_Send(superChar->begin(), nlen, to, tag, &requestContainer.back());
+    PH_Send(dataChar->begin(), nlen, to, tag, &requestContainer.back());
 }
 
-void receive(SuperChar *superChar, int from, int tag)
+void receive(DataChar *dataChar, int from, int tag)
 {
-    int nlen = static_cast<int>(superChar->size());
+    int nlen = static_cast<int>(dataChar->size());
 
     //! It is necessary to judge whether the data length is zero.
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    PH_Receive(superChar->begin(), nlen, from, tag);
+    PH_Receive(dataChar->begin(), nlen, from, tag);
 }
 
-void receive(SuperChar *superChar, int from, vector< PH_Request > & requestContainer, int tag)
+void receive(DataChar *dataChar, int from, vector<PH_Request> &requestContainer, int tag)
 {
-    int nlen = static_cast<int>(superChar->size());
+    int nlen = static_cast<int>(dataChar->size());
 
     //! It is necessary to judge whether the data length is zero.
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    requestContainer.push_back( MPI_REQUEST_NULL );
+    requestContainer.push_back(MPI_REQUEST_NULL);
 
-    PH_Receive(superChar->begin(), nlen, from, tag, &requestContainer.back());
+    PH_Receive(dataChar->begin(), nlen, from, tag, &requestContainer.back());
 }
 
 void send(DataContainer *dataContainer, int to, int tag)
@@ -382,9 +381,9 @@ void send(DataContainer *dataContainer, int to, int tag)
     PH_Send(&nlen, sizeof(streamsize), to, tag);
 
     //! It is necessary to judge whether the data length is zero.
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    for ( ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i )
+    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
     {
         send(dataContainer->getiter(i), to, tag);
     }
@@ -393,20 +392,20 @@ void send(DataContainer *dataContainer, int to, int tag)
 void send(DataContainer *dataContainer, int to, streamsize nlen, int tag)
 {
     //! It is necessary to judge whether the data length is zero.
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    for ( ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i )
+    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
     {
         send(dataContainer->getiter(i), to, tag);
     }
 }
 
-void send(DataContainer *dataContainer, int to, streamsize nlen, vector< PH_Request > & requestContainer, int tag)
+void send(DataContainer *dataContainer, int to, streamsize nlen, vector<PH_Request> &requestContainer, int tag)
 {
     //! It is necessary to judge whether the data length is zero.
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    for ( ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i )
+    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
     {
         send(dataContainer->getiter(i), to, requestContainer, tag);
     }
@@ -417,11 +416,11 @@ void receive(DataContainer *dataContainer, int from, int tag)
     streamsize nlen = 0;
     PH_Receive(&nlen, sizeof(streamsize), from, tag);
 
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
-    dataContainer->secure_absolute_space(static_cast< CharVecSizeType > (nlen));
+    dataContainer->secure_absolute_space(static_cast< CharVecSizeType >(nlen));
 
-    for ( ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i )
+    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
     {
         receive(dataContainer->getiter(i), from, tag);
     }
@@ -429,25 +428,26 @@ void receive(DataContainer *dataContainer, int from, int tag)
 
 void receive(DataContainer *dataContainer, int from, CharVecSizeType nlen, int tag)
 {
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
     dataContainer->secure_absolute_space(nlen);
 
-    for ( ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i )
+    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
     {
         receive(dataContainer->getiter(i), from, tag);
     }
 }
 
-void receive(DataContainer *dataContainer, int from, CharVecSizeType nlen, vector< PH_Request > & requestContainer, int tag)
+void receive(DataContainer *dataContainer, int from, CharVecSizeType nlen, vector<PH_Request> &requestContainer, int tag)
 {
-    if ( nlen <= 0 ) return;
+    if (nlen <= 0) return;
 
     dataContainer->secure_absolute_space(nlen);
 
-    for ( ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i )
+    for (ContainerSizeType i = 0; i < dataContainer->element_size(); ++ i)
     {
         receive(dataContainer->getiter(i), from, requestContainer, tag);
     }
 }
+
 }

@@ -167,8 +167,11 @@ void ControlParametersPreliminarySelfCheck()
             break;
         case CONVERT_PARTITION:
             break;
-		case HO_SOLVER:
-			break;
+        case HO_SOLVER:
+            break;
+        case INTEGRATIVE_SOLVER:
+            ParametersSelfCheckForCFD();
+            break;
         case POST_PROCESSING:
             break;
         default:

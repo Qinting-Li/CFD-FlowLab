@@ -20,6 +20,7 @@
 #include "CombinGrid.h"
 #include "Pre_GridMirror.h"
 #pragma warning (disable:913)
+
 namespace PHSPACE
 {
 void OversetGridView()
@@ -69,49 +70,24 @@ void MirrorGrid()
 
 void MixedGridProcess()
 {
-    string outFileNameBack = GlobalDataBase::GetStrParaFromDB("out_gfile");
-
-    //! Firstly, convert structured grid.
-    int fromGridType = CGNS_TYPE;
-    int toGridType     = STRUCTGRID;
-    int omitBlankBC  = 1;
-    string structGridInMixture = GlobalDataBase::GetStrParaFromDB("mixgrid_str");
-    string fromStructFileName = structGridInMixture;
-    string outStructFileName  = PHSPACE::ChangeExtensionOfFileName(structGridInMixture, "fts");
+    int fromGridType = MIXGRID_TYPE;
+    int omitBlankBC  = 0;
     GlobalDataBase::UpdateData("from_gtype", &fromGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("gridtype", &toGridType, PHINT, 1);
     GlobalDataBase::UpdateData("omit_no_bound_bc", &omitBlankBC, PHINT, 1);
-    GlobalDataBase::UpdateData("from_gfile", &fromStructFileName, PHSTRING, 1);
-    GlobalDataBase::UpdateData("out_gfile", &outStructFileName, PHSTRING, 1);
 
-    CGNS2StructGrid();
-
-    //! Secondly, convert unstructured grid.
-    toGridType = UNSTRUCTGRID;
+    string structGridInMixture   = GlobalDataBase::GetStrParaFromDB("mixgrid_str");
     string unstructGridInMixture = GlobalDataBase::GetStrParaFromDB("mixgrid_uns");
-    string fromUnstructFileName = unstructGridInMixture;
-    string outUnstructFileName  = PHSPACE::ChangeExtensionOfFileName(unstructGridInMixture, "fts");
-    GlobalDataBase::UpdateData("gridtype", &toGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("from_gfile", &fromUnstructFileName, PHSTRING, 1);
-    GlobalDataBase::UpdateData("out_gfile", &outUnstructFileName, PHSTRING, 1);
 
-    CGNS2UnstructGrid();
+    Region *region = new Region();
 
-    //! Thirdly, merge unstructured and structured grid.
-    fromGridType = MIXGRID_TYPE;
-    toGridType   = MIXGRID;
-    omitBlankBC  = 0;
-    structGridInMixture = PHSPACE::ChangeExtensionOfFileName(structGridInMixture, "fts");
-    unstructGridInMixture = PHSPACE::ChangeExtensionOfFileName(unstructGridInMixture, "fts");
-    string outMergedFileName = outFileNameBack;
-    GlobalDataBase::UpdateData("from_gtype", &fromGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("gridtype", &toGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("omit_no_bound_bc", &omitBlankBC, PHINT, 1);
-    GlobalDataBase::UpdateData("mixgrid_str", &structGridInMixture, PHSTRING, 1);
-    GlobalDataBase::UpdateData("mixgrid_uns", &unstructGridInMixture, PHSTRING, 1);
-    GlobalDataBase::UpdateData("out_gfile", &outMergedFileName, PHSTRING, 1);
+    PHVectorString1D gridfilelist;
+    gridfilelist.push_back(structGridInMixture);
+    gridfilelist.push_back(unstructGridInMixture);
 
-    GeneMixGrid();
+    region->ReadOrdinaryGrid(gridfilelist);
+
+    region->BuildAndDumpMixedGrid();
+    delete region;
 }
 
 void GridgenGridProcess()
@@ -190,10 +166,6 @@ void FantasyGridProcess()
     else if (toGridType == GRIDGEN_TYPE)
     {
         Fantasy2Gridgen();
-    }
-    else if (toGridType == CGNS_TYPE)
-    {
-        PHengLEI2CGNS();
     }
 }
 
@@ -278,25 +250,6 @@ void ReconstructGrid()
 
         gridRefine.Run();
     }
-}
-
-void GeneMixGrid()
-{
-    string structGridInMixture   = GlobalDataBase::GetStrParaFromDB("mixgrid_str");
-    string unstructGridInMixture = GlobalDataBase::GetStrParaFromDB("mixgrid_uns");
-
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
-
-    Region *region = new Region();
-
-    PHVectorString1D gridfilelist;
-    gridfilelist.push_back(structGridInMixture);
-    gridfilelist.push_back(unstructGridInMixture);
-
-    region->ReadOrdinaryGrid(gridfilelist);
-
-    region->BuildAndDumpMixedGrid();
-    delete region;
 }
 
 void CombinationGrid()
@@ -627,13 +580,6 @@ void Gridgen2Fantasy()
 
         GridgenToStr();
     }
-    else if(gridtype == 2)
-    {
-        sys_gridtype = MIXGRID;
-        GlobalDataBase::UpdateData("sys_gridtype", &sys_gridtype, PHINT, 1);
-
-        GridgenToMIX();
-    }
 }
 
 void GridgenToSingleUns()
@@ -733,8 +679,9 @@ void GridgenToStr()
     ReadGridgen(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
 
     int ndim = PHSPACE::GetDim();
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
 
-    if (ndim == TWO_D || isOverlap == 1)
+    if (ndim == TWO_D || isOverlap == 1|| (ndim == THREE_D && periodicType != 0))
     {
         Grid **grids = new Grid *[numberOfBlocks];
 

@@ -1,8 +1,3 @@
-//! @file        HOGeometryDtructure.cpp
-//! @brief       define the highOrderCells and highOrderCellSol class. \n
-//! @author      liMing, Gong Xiaoquan.
-//! @date        2019-10-15
-
 #include "HODefine.h"
 #include "HOGeometryStructure.h"
 #include "HOStandardElement.h"

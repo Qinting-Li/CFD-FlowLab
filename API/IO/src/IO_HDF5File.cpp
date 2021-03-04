@@ -12,7 +12,7 @@ hid_t CreateHDF5File(const string &filename)
     hid_t file, acc_tpl1;
     herr_t status;
 
-    acc_tpl1 = H5Pcreate (H5P_FILE_ACCESS);
+    acc_tpl1 = H5Pcreate(H5P_FILE_ACCESS);
     status = H5Pset_fapl_mpio(acc_tpl1, MPI_COMM_WORLD, MPI_INFO_NULL);
 
     file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl1);
@@ -21,16 +21,16 @@ hid_t CreateHDF5File(const string &filename)
     return file;
 }
 
-void ParallelCreateHDF5File(ActionKey * actionKey)
+void ParallelCreateHDF5File(ActionKey *actionKey)
 {
-    if(actionKey->filename == "")
+    if (actionKey->filename == "")
     {
         actionKey->filepos = 0;
         actionKey->del_file = false;
     }
     else
     {
-        if(PHMPI::IsCurrentProcessorFileServer() == 0)
+        if (PHMPI::IsCurrentProcessorFileServer() == 0)
         {
             return;
         }
@@ -42,9 +42,9 @@ void ParallelCreateHDF5File(ActionKey * actionKey)
     }
 }
 
-void ParallelCloseHDF5File(ActionKey * actionKey)
+void ParallelCloseHDF5File(ActionKey *actionKey)
 {
-    if(PHMPI::IsCurrentProcessorFileServer() == 0)
+    if (PHMPI::IsCurrentProcessorFileServer() == 0)
     {
         return;
     }
@@ -62,7 +62,7 @@ hid_t OpenHDF5File(const string &filename)
 
 void CreateGroup(hid_t loc_id, const string &groupName)
 {
-    hid_t  grpData;
+    hid_t grpData;
 
     grpData = H5Gcreate2(loc_id, groupName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     H5Gclose(grpData);
@@ -70,7 +70,7 @@ void CreateGroup(hid_t loc_id, const string &groupName)
 
 hid_t OpenGroup(hid_t loc_id, const string &groupName)
 {
-    hid_t  grpData;
+    hid_t grpData;
 
     grpData = H5Gopen2(loc_id, groupName.c_str(), H5P_DEFAULT);
     return grpData;
@@ -78,7 +78,7 @@ hid_t OpenGroup(hid_t loc_id, const string &groupName)
 
 hid_t GetGroup(hid_t loc_id, const string &groupName)
 {
-    hid_t  grpData;
+    hid_t grpData;
 
     CreateGroup(loc_id, groupName);
     grpData = OpenGroup(loc_id, groupName);
@@ -133,26 +133,27 @@ void CreateEmptyData(hid_t loc_id, const string &dataName, hsize_t rowNumber, hs
 
 hid_t OpenData(hid_t loc_id, const string &dataName)
 {
-    hid_t  dataLoc;
+    hid_t dataLoc;
 
     dataLoc = H5Dopen2(loc_id, dataName.c_str(), H5P_DEFAULT);
     if (dataLoc < 0)
     {
         ostringstream oss;
-        oss<<"The data is not found :  "<<dataName;
+        oss << "The data is not found :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
+
     return dataLoc;
 }
 
 void WriteData(hid_t loc_id, const void *data, const string &dataName)
 {
-    hid_t  dataset, datatype, dataspace;
+    hid_t dataset, datatype, dataspace;
     herr_t status;
 
     dataset = OpenData(loc_id, dataName);
 
-    datatype  = H5Dget_type(dataset);
+    datatype = H5Dget_type(dataset);
     dataspace = H5Dget_space(dataset);
 
     status = H5Dwrite(dataset, datatype, H5S_ALL, H5S_ALL, H5P_DEFAULT, data);
@@ -164,14 +165,14 @@ void WriteData(hid_t loc_id, const void *data, const string &dataName)
 
 void ReadData(hid_t loc_id, void *data, const string &dataName)
 {
-    hid_t  dataset, datatype, dataspace, memspace;
+    hid_t dataset, datatype, dataspace, memspace;
     herr_t status;
-    int    rank;
+    int rank;
 
     dataset = OpenData(loc_id, dataName);
-    datatype  = H5Dget_type(dataset);
+    datatype = H5Dget_type(dataset);
     dataspace = H5Dget_space(dataset);
-    rank      = H5Sget_simple_extent_ndims(dataspace);
+    rank  = H5Sget_simple_extent_ndims(dataspace);
 
     hsize_t *dataLength = new hsize_t[rank];
     status = H5Sget_simple_extent_dims(dataspace, dataLength, NULL);
@@ -193,8 +194,8 @@ void ReadData(hid_t loc_id, void *data, const string &dataName)
     H5Tclose(datatype);
     H5Dclose(dataset);
 
-    delete []dataLength;
-    delete []dataLocation;
+    delete [] dataLength;
+    delete [] dataLocation;
 }
 
 void CreateAndWriteData(hid_t loc_id, const string &dataName, hsize_t rowNumber, hsize_t rowLength, int type, const void *data)
@@ -205,25 +206,25 @@ void CreateAndWriteData(hid_t loc_id, const string &dataName, hsize_t rowNumber,
 
 RDouble *ReadDoubleOneRow(hid_t loc_id, const string &dataName)
 {
-    hid_t  dataset;
-    hid_t  datatype, dataspace, memspace;
+    hid_t dataset;
+    hid_t datatype, dataspace, memspace;
     herr_t status;
-    int    rank, status_n;
+    int rank, status_n;
     ostringstream oss;
 
     dataset = H5Dopen2(loc_id, dataName.c_str(), H5P_DEFAULT);
     if (dataset < 0)
     {
-        oss<<"The data is not found :  "<<dataName;
+        oss << "The data is not found :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
-    datatype  = H5Dget_type(dataset);
+    datatype = H5Dget_type(dataset);
     dataspace = H5Dget_space(dataset);
-    rank      = H5Sget_simple_extent_ndims(dataspace);
+    rank = H5Sget_simple_extent_ndims(dataspace);
     if (rank != 1)
     {
-        oss<<"The data is not One_D :  "<<dataName;
+        oss << "The data is not One_D :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -233,7 +234,7 @@ RDouble *ReadDoubleOneRow(hid_t loc_id, const string &dataName)
     hsize_t dataLocation[1] = {0};
     status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, dataLocation, NULL, &dataLength, NULL);
 
-    memspace = H5Screate_simple(rank, &dataLength,NULL);
+    memspace = H5Screate_simple(rank, &dataLength, NULL);
     status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, dataLocation, NULL, &dataLength, NULL);
 
     double *Data = new double[dataLength];
@@ -242,35 +243,36 @@ RDouble *ReadDoubleOneRow(hid_t loc_id, const string &dataName)
     H5Sclose(dataspace);
     H5Tclose(datatype);
     H5Dclose(dataset);
+
     RDouble *dataReturn = new RDouble[dataLength];
-    for ( int idata = 0; idata < dataLength; ++ idata)
+    for (int idata = 0; idata < dataLength; ++ idata)
     {
-        dataReturn[idata] = static_cast <RDouble> (Data[idata]);
+        dataReturn[idata] = static_cast<RDouble>(Data[idata]);
     }
     return dataReturn;
 }
 
 int *ReadIntOneRow(hid_t loc_id, const string &dataName)
 {
-    hid_t  dataset;
-    hid_t  datatype, dataspace, memspace;
+    hid_t dataset;
+    hid_t datatype, dataspace, memspace;
     herr_t status;
-    int    rank, status_n;
+    int rank, status_n;
     ostringstream oss;
 
     dataset = H5Dopen2(loc_id, dataName.c_str(), H5P_DEFAULT);
     if (dataset < 0)
     {
-        oss<<"The data is not found :  "<<dataName;
+        oss << "The data is not found :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
-    datatype  = H5Dget_type(dataset);
+    datatype = H5Dget_type(dataset);
     dataspace = H5Dget_space(dataset);
-    rank      = H5Sget_simple_extent_ndims(dataspace);
+    rank = H5Sget_simple_extent_ndims(dataspace);
     if (rank != 1)
     {
-        oss<<"The data is not One_D :  "<<dataName;
+        oss << "The data is not One_D :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -295,25 +297,26 @@ int *ReadIntOneRow(hid_t loc_id, const string &dataName)
 
 int **ReadIntTwoRow(hid_t loc_id, const string &dataName)
 {
-    hid_t  dataset;
-    hid_t  datatype, dataspace, memspace;
+    hid_t dataset;
+    hid_t datatype, dataspace, memspace;
     herr_t status;
-    int    rank, status_n;
+    int rank, status_n;
     ostringstream oss;
 
     dataset = H5Dopen2(loc_id, dataName.c_str(), H5P_DEFAULT);
     if (dataset < 0)
     {
-        oss<<"The data is not found :  "<<dataName;
+        oss << "The data is not found :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
-    datatype  = H5Dget_type(dataset);
+    datatype = H5Dget_type(dataset);
     dataspace = H5Dget_space(dataset);
-    rank      = H5Sget_simple_extent_ndims(dataspace);
+    rank = H5Sget_simple_extent_ndims(dataspace);
+
     if (rank != 2)
     {
-        oss<<"The data is not Two_D :  "<<dataName;
+        oss << "The data is not Two_D :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -326,14 +329,14 @@ int **ReadIntTwoRow(hid_t loc_id, const string &dataName)
 
     status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, dataLocation, NULL, dataLength, NULL);
 
-    memspace = H5Screate_simple(rank, dataLength,NULL);
+    memspace = H5Screate_simple(rank, dataLength, NULL);
     status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, dataLocation, NULL, dataLength, NULL);
 
     int **Data = NewPointer2<int>(static_cast<int>(dataLength[0]), static_cast<int>(dataLength[1]));
     status = H5Dread(dataset, datatype, memspace, dataspace, H5P_DEFAULT, Data[0]);
 
-    delete[]dataLocation;
-    delete[]dataLength;
+    delete [] dataLocation;
+    delete [] dataLength;
 
     H5Sclose(dataspace);
     H5Tclose(datatype);
@@ -344,25 +347,25 @@ int **ReadIntTwoRow(hid_t loc_id, const string &dataName)
 
 char *ReadCharData(hid_t loc_id, const string &dataName)
 {
-    hid_t  dataset;
-    hid_t  datatype, dataspace, memspace;
+    hid_t dataset;
+    hid_t datatype, dataspace, memspace;
     herr_t status;
-    int    rank, status_n;
+    int rank, status_n;
     ostringstream oss;
 
     dataset = H5Dopen2(loc_id, dataName.c_str(), H5P_DEFAULT);
     if (dataset < 0)
     {
-        oss<<"The data is not found :  "<<dataName;
+        oss << "The data is not found :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
-    datatype  = H5Dget_type(dataset);
+    datatype = H5Dget_type(dataset);
     dataspace = H5Dget_space(dataset);
-    rank      = H5Sget_simple_extent_ndims(dataspace);
+    rank = H5Sget_simple_extent_ndims(dataspace);
     if (rank != 1)
     {
-        oss<<"The data is not One_D :  "<<dataName;
+        oss << "The data is not One_D :  " << dataName;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -372,7 +375,7 @@ char *ReadCharData(hid_t loc_id, const string &dataName)
     hsize_t dataLocation[1] = {0};
     status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, dataLocation, NULL, &dataLength, NULL);
 
-    memspace = H5Screate_simple(rank, &dataLength,NULL);
+    memspace = H5Screate_simple(rank, &dataLength, NULL);
     status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, dataLocation, NULL, &dataLength, NULL);
 
     char *Data = new char[dataLength];

@@ -413,7 +413,7 @@ void MaxResidual::ServerCollection()
     PHWrite(cData, z);
     PHWrite(cData, maxResVariableIndex);
 
-    // Send the super-container to server.
+    // Send the data-container to server.
     if (myid != server)
     {
         int tag = myid;

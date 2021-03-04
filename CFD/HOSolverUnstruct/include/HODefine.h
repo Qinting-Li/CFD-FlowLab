@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -18,7 +18,7 @@
 #include "Precision.h"
 #include "Constants.h"
 #include "cgnslib.h" //ElementType_t
-#include "../../../3rdparty/eigen/Eigen/Eigen"
+#include "../../../PHengLEI/3rdparty/eigen/Eigen/Eigen"
 
 using namespace std;
 using namespace PHSPACE;

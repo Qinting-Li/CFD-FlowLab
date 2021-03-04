@@ -4,6 +4,7 @@
 #include "TK_Time.h"
 #include "WallDist.h"
 #include "JetBC.h"
+#include "Geo_Probes.h"
 #include "Task_ServerUpdateInterface.h"
 #include "Post_WriteTecplot.h"
 #include "TK_Warning.h"
@@ -874,6 +875,17 @@ LIB_EXPORT void Region::ClassifyGridSystem()
     PrintToWindow("Grid Type: ", sys_gridtype_name[sys_gridtype], "\n");
 }
 
+LIB_EXPORT void Region::MonitorProbes()
+{
+    using namespace PHMPI;
+    int ifSetProbesToMonitor = 0;
+    GlobalDataBase::GetData("ifSetProbesToMonitor",&ifSetProbesToMonitor, PHINT, 1);
+    if ( !ifSetProbesToMonitor ) return;
+
+    ProbesLocationInfo *globalProbesLocation =new ProbesLocationInfo();
+    globalProbesLocation->Run();
+}
+
 LIB_EXPORT void Region::SetupMultiBlockRelationship()
 {
     //if (GetTaskCode() == DSMC_SOLVER) return; 
@@ -1136,7 +1148,7 @@ void Region::ServerCollectionNeighborInfor()
     }
     PHWrite(cdata, nZonesInThisProc);
 
-    //! Compress all of neighbor information into super-container.
+    //! Compress all of neighbor information into data-container.
     for (int izone = 0; izone < nZones; ++ izone)
     {
         int proc = GetZoneProcessorID(izone);		
@@ -1157,7 +1169,7 @@ void Region::ServerCollectionNeighborInfor()
         }		
     }	
 
-    //! Send the super-container to server.
+    //! Send the data-container to server.
     if (myid != server)
     {		
         int tag = myid;	
@@ -1798,7 +1810,7 @@ void Region::SwapNeighborsSendContentNonblocking()
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     WriteLogFile("        Translating data ...");
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
@@ -1819,7 +1831,7 @@ void Region::SwapNeighborsSendContentNonblocking()
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 receiveData->moveto_begin();
                 int nIFaceOfNeighbor;
                 PHRead(receiveData, nIFaceOfNeighbor);
@@ -2537,19 +2549,28 @@ void Region::ComputeMetricsandJacobinWithBCforStructHighOrder()
     int mission_CommMetrics         = 3;
     int mission_CommJacobian        = 4;
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommXYZghost);
+    string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
+    if(highordersolvername.substr(0, 4) == "WCNS")
+    {
+        CommGridInfoOnlyforStructHighOrder(mission_CommXYZghost);
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommXYZghostofghost);
-    
-    UpdateDiffOrderforStructHighOrder();
+        CommGridInfoOnlyforStructHighOrder(mission_CommXYZghostofghost);
 
-    UpdateMetricsWithBCforStructHighOrder();
+        UpdateDiffOrderforStructHighOrder();
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommMetrics);
+        UpdateMetricsWithBCforStructHighOrder();
 
-    UpdateJacobianWithBCforStructHighOrder();
+        CommGridInfoOnlyforStructHighOrder(mission_CommMetrics);
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommJacobian);
+        UpdateJacobianWithBCforStructHighOrder();
+
+        CommGridInfoOnlyforStructHighOrder(mission_CommJacobian);
+    }
+    else if(highordersolvername.substr(0, 4) == "HDCS")
+    {
+        CommGridInfoOnlyforStructHighOrder(mission_CommXYZghost);
+        //! xcc,ycc,zcc,vol
+    }
 }
 
 void Region::UpdateDiffOrderforStructHighOrder()
@@ -2812,7 +2833,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
         int gridtypeofiZone = PHMPI::GetZoneGridType(iZone);
@@ -2836,7 +2857,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 Grid * grid = GetGrid(neighborZone, 0);
 
                 InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
@@ -2990,6 +3011,10 @@ LIB_EXPORT void Region::InitGeometry()
     ChangeBoundaryCondition();
 
     WriteLogFile("ChangeBoundaryCondition ...");
+
+    MonitorProbes();
+
+    WriteLogFile("Monitoring Probes ...");
 }
 
 //! If need, change the default boundary condition to other type.

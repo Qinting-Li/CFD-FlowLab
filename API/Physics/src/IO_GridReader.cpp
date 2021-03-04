@@ -218,6 +218,29 @@ int IO_GridReader::CheckNumberofFiles()
 	return globalFileNumber;
 }
 
+bool IO_GridReader::CheckGridConvertionMixGrid()
+{
+    int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
+    if(nsimutask != 1)
+    {
+        return false;
+    }
+
+    int gridobj = GlobalDataBase::GetIntParaFromDB("gridobj");
+    if(gridobj != 1)
+    {
+        return false;
+    }
+
+    int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
+    if(gridtype != 2)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 LIB_EXPORT void IO_GridReader::ReadGridsByP2PMode()
 {
 	WriteLogFile( "Start to read grid ... " );
@@ -257,6 +280,8 @@ LIB_EXPORT void IO_GridReader::ReadGridsByP2PMode()
 LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
 {	
 	WriteLogFile("Read in grid(s) by CSMode ... ");
+
+    bool gridconvertionmixgrid = CheckGridConvertionMixGrid();
 
 	int numberOfOriginalProcessor = GetNumberOfProcessor();
 
@@ -312,6 +337,11 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
 	CreateZoneGridType       ( numberOfTotalZones );
 	CreateZoneFileID         ( numberOfTotalZones );
 
+    if (gridconvertionmixgrid)
+    {
+        CreatetZoneProcessorID_INP(numberOfTotalZones);
+    }
+
 	int startZoneIndex = 0;
 
 	for( int iFile = 0; iFile < numberOfGridFiles; ++ iFile )
@@ -338,6 +368,7 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
 		int * block_idx       = new int [ numberOfZones ];
 		int * block_type      = new int [ numberOfZones ];
 		int * block_file      = new int [ numberOfZones ];
+        int * block_proc_tmpformix = new int [ numberOfZones ];
 
 		Read_Bcast( file, block_proc, numberOfZones * sizeof(int) );
 		Read_Bcast( file, block_idx , numberOfZones * sizeof(int) );
@@ -345,6 +376,7 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
 
 		for ( int izone = 0; izone < numberOfZones; ++ izone )
 		{
+            block_proc_tmpformix[ izone ] = block_proc[ izone ];
 			block_proc_dump[ izone ] = block_proc[ izone ];
 			block_file[ izone ]      = serverProcID;
 		}
@@ -380,6 +412,16 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
 		RedistributeZonesIfNeed( startZoneIndex );
 
 		gridGroup->SetGlobalZoneLayout();
+
+        if (gridconvertionmixgrid)
+        {
+            int *global_block_proc_inp = GetZoneProcessorID_INP();
+            for (int izone = 0; izone < numberOfZones; ++ izone)
+            {
+                int multi_izone = startZoneIndex + izone;
+                global_block_proc_inp[multi_izone] = block_proc_tmpformix[izone];
+            }
+        }
 
 		for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
 		{
@@ -1350,7 +1392,7 @@ LIB_EXPORT void IO_GridReader::ReadFaceBCByCSMode()
 
 		Read_Bcast( file, & numberOfZones, sizeof( int ) );	
 
-		for ( int iZone = 0; iZone < numberOfZones + zoneStart; ++ iZone )
+		for ( int iZone = zoneStart; iZone < numberOfZones + zoneStart; ++ iZone )
 		{
 			int send_proc = 0;
 			int recv_proc = 0;
@@ -1624,8 +1666,10 @@ void IO_GridReader::DecompressDataToFaceBC(DataContainer *cdata, int izone)
 	}
 
 	//! Decode the data into face BC information.
-	int zoneStart = this->gridGroup->GetZoneStart();
-	Grid *grid = PHSPACE::GetGrid(izone + zoneStart, 0);
+	//int zoneStart = this->gridGroup->GetZoneStart();
+	//Grid *grid = PHSPACE::GetGrid(izone + zoneStart, 0);
+
+    Grid *grid = PHSPACE::GetGrid(izone, 0);
 	if ( grid->Type() == UNSTRUCTGRID )
 	{
 		UnstructGrid * unstructuredGrid = UnstructGridCast( grid );	

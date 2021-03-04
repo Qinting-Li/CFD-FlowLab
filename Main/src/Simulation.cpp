@@ -7,6 +7,7 @@
 #include "Controller.h"
 #include "TK_Time.h"
 #include "PHIO.h"
+#include "Geo_Probes.h"
 #include "HOSimulation.h"
 
 #ifdef BUILD_LBM
@@ -20,7 +21,9 @@
 #include "Zone.h"
 #include "WallDist.h"
 #include "Post_WriteTecplot.h"
+#include "Post_ProbesWrite.h"
 using namespace std;
+
 namespace PHSPACE
 {
 Simulation::Simulation(int dimension)
@@ -63,6 +66,13 @@ void Simulation::Start()
     case OVERSETGRID_VIEW:
         PHSPACE::OversetGridView();
         break;
+    case HO_SOLVER:
+        {
+            HOUnstruct::HOSimulation * uho = new HOUnstruct::HOSimulation();
+            uho->Run();
+            delete uho;
+            break;
+        }
     case CONVERT_PARTITION:
         //ConvertAndPartition();
         break;
@@ -71,13 +81,9 @@ void Simulation::Start()
         RunLBMSolver();
         break;
 	#endif
-	case HO_SOLVER:
-		{
-			HOUnstruct::HOSimulation * uho = new HOUnstruct::HOSimulation();
-			uho->Run();
-			delete uho;
-			break;
-		}
+    case INTEGRATIVE_SOLVER:
+        RunIntegrativeSolver();
+        break;
     case POST_PROCESSING:
         RunPostProcessing();
         break;
@@ -209,6 +215,92 @@ void Simulation::RunCFD()
 
     //! Do some work after simulation.
 	PostSimulation();
+}
+
+void Simulation::RunIntegrativeSolver()
+{
+    int numberOfProcessor = PHMPI::GetNumberOfProcessor();
+    int currentProcessor  = PHMPI::GetCurrentProcessorID();
+    int serverProcessor   = PHMPI::GetServerProcessorID();
+    int tasktype;
+
+    string fromGridName = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    string outGridName = ChangeExtensionOfFileName(fromGridName, "fts");
+
+    tasktype = PHSPACE::CREATE_GRID;
+    GlobalDataBase::UpdateData("out_gfile", &outGridName, PHSTRING, 1);
+    GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
+
+    int isConvertOver = 0;
+    PHMPI::SetNumberOfProcessor(1);
+
+    if (currentProcessor == serverProcessor)
+    {
+        CreateGrid();
+        isConvertOver = 1;
+    }
+
+    PHMPI::SetNumberOfProcessor(numberOfProcessor);
+    PHMPI::PH_Bcast(&isConvertOver, 1, serverProcessor);
+    WriteLogFile("Convert grid complete !\n");
+    PrintToWindow("Convert grid complete !\n\n");
+
+    //! If need PartitionGrid.
+    if (numberOfProcessor > 1)
+    {
+        WriteLogFile("Begin partition grid !\n");
+        PrintToWindow("Begin partition grid !\n\n");
+        PHMPI::SetNumberOfProcessor(1);
+
+        tasktype = PHSPACE::PARTITION_GRID;
+        int maxproc = numberOfProcessor;
+        int numberOfMultigrid = 1;
+        int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
+        string partition_grid_file = AddSymbolToFileName(outGridName, "__", numberOfProcessor);
+
+        GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
+        GlobalDataBase::UpdateData("maxproc", &maxproc, PHINT, 1);
+        GlobalDataBase::UpdateData("pgridtype", &gridtype, PHINT, 1);
+        GlobalDataBase::UpdateData("numberOfMultigrid", &numberOfMultigrid, PHINT, 1);
+        GlobalDataBase::UpdateData("partition_grid_file", &partition_grid_file, PHSTRING, 1);
+        GlobalDataBase::UpdateData("original_grid_file", &outGridName, PHSTRING, 1);
+
+        int isPartitionOver = 0;
+        if (currentProcessor == serverProcessor)
+        {
+            PartitionGrid();
+            isPartitionOver = 1;
+
+            DeleteGGrids();
+            PHMPI::SetNumberofLocalZones(0);
+        }
+        else
+        {
+            bool fileExist = true;
+            bool fileCheck = true;
+            PH_AllReduce(&fileExist, &fileCheck, 1, MPI_MIN);
+        }
+
+        PHMPI::SetNumberOfProcessor(numberOfProcessor);
+        PHMPI::PH_Bcast(&isPartitionOver, 1, serverProcessor);
+        WriteLogFile("Partition grid complete !\n");
+        PrintToWindow("Partition grid complete !\n\n");
+
+        string walldistfile = ChangeExtensionOfFileName(partition_grid_file, "wdt");
+        GlobalDataBase::UpdateData("gridfile", &partition_grid_file, PHSTRING, 1);
+        GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
+    }
+    else
+    {
+        string walldistfile = ChangeExtensionOfFileName(outGridName, "wdt");
+        GlobalDataBase::UpdateData("gridfile", &outGridName, PHSTRING, 1);
+        GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
+    }
+
+    tasktype = PHSPACE::SOLVE_FIELD;
+    GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
+
+    RunCFD();
 }
 
 void Simulation::RunPostProcessing()
@@ -459,9 +551,24 @@ void Simulation::DefineAndCreateSolvers()
             }
             else if (gridType == STRUCTGRID)
             {
-                //! Add structured turbulent solver.
-                PHSolver *solver = new TurbSolverStr();
-                solverList.push_back(solver);
+                const int FV_METHOD = 0;
+                const int FD_METHOD = 1;
+                
+                int FVorFD = 0;
+                zone->GetData("ifvfd",&FVorFD, PHINT, 1);
+                
+                if (FVorFD == FV_METHOD)
+                {
+                    //! Add structured turbulent solver.
+                    PHSolver *solver = new TurbSolverStr();
+                    solverList.push_back(solver);
+                }
+                else
+                {
+                    //! Add structured FD turbulent solver.
+                    PHSolver *solver = new TurbSolverStrFD();
+                    solverList.push_back(solver);
+                }
             }
         }
 #endif
@@ -517,11 +624,18 @@ void Simulation::PreSolve()
 void Simulation::PostSolve()
 {
     int intervalStepPlot = GlobalDataBase::GetIntParaFromDB("intervalStepPlot");
+    int intervalStepSample = GlobalDataBase::GetIntParaFromDB("intervalStepSample");
     int outIterStep  = GlobalDataBase::GetIntParaFromDB("outnstep");
     if (outIterStep % intervalStepPlot == 0)
     {
         Post_WriteTecplot generateVisualFile;
         generateVisualFile.Run();
+    }
+
+    if (outIterStep % intervalStepSample == 0)
+    {
+        Post_ProbesWrite generateProbesVarFile;
+        generateProbesVarFile.Run();
     }
 }
 
