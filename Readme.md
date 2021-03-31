@@ -1,6 +1,6 @@
 <div align=left><img src="PHengLEI\Documents/PHengLEI-LOGO.png" style="zoom: 15%;"/><br>
 
-# 风雷软件（PHengLEI2012.v7129）
+# 风雷软件（PHengLEI2012.v7407）
 
 ## 1.软件简介
 
@@ -8,8 +8,9 @@
 
 &ensp;&ensp;&ensp;&ensp;风雷软件更多动态和Demo请登录以下网址查看：
 
-- 官网地址：https://www.cardc.cn/nnw/PHengLEI
-- 开源代码下载地址：https://osredmforge.educoder.net
+- 官网地址：http://www.cardc.cn/nnw/Softs/PHengLEI/index.html
+- 代码库地址：https://forge.osredm.com/projects/p68217053/PHengLEI
+- 算例库地址：https://forge.osredm.com/projects/p68217053/PHengLEI-TestCases
 
 ## 2.软件功能
 
