@@ -36,7 +36,10 @@ const int STRPATCHGRID_CONFIG = 11;
 const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
-const int INTEGRATIVE_SOLVER  = 21;
+const int INTEGRATIVE_SOLVER  = 14;
+
+const int SPECDIFFHYB_Solver = 15;
+
 const int POST_PROCESSING     = 99;
 
 const RDouble half            = 0.5;
@@ -174,7 +177,10 @@ const int IKW  = 1;
 const int ITT  = 0;
 const int ITV  = 1;
 const int ITE  = 2;
+
 }
+const int MAX_SPECIES_NUM = 20; //The maximum number of species.
+const int MAX_REACTION_NUM = 50;//The maximum number of reactions.
 }
 
 namespace TEC_SPACE

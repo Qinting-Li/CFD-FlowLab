@@ -84,7 +84,7 @@ public:
 
 private:
     void CheckNumberofFiles(int iGrid);
-    void InitGridFileNameListAndFileProcessor(int iGrid);
+    void InitGridFileNameListAndFileProcessor();
     hid_t OpenH5File(const string &filename);
 
     void ReadVersionInfo(hid_t loc_id);
@@ -145,13 +145,15 @@ private:
 
     //! Number of global grid files.
     int globalFileNumber;
-    vector<string> localGridNameList;
+    vector < vector<string> > localGridNameList;
 
     //! The total number of global zones.
     int nZones;
 
     //! Number of zones in each .fts file.
-    int *nZonesList;
+    VVInt nZonesList;
+
+    uint_t numberOfGridGroups;
 
     int zoneStart;
     int *blockProc;

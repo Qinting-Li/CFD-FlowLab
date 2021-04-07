@@ -432,6 +432,7 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
 
 		Close(file);
 
+        delete []block_proc_tmpformix;
 	}
 
     ClassifyGridSystem();

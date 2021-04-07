@@ -9,7 +9,6 @@
 #include "PHIO.h"
 #include "Geo_Probes.h"
 #include "HOSimulation.h"
-
 #ifdef BUILD_LBM
 #include "cavity.h"
 #endif
@@ -21,7 +20,14 @@
 #include "Zone.h"
 #include "WallDist.h"
 #include "Post_WriteTecplot.h"
+#include "LESSolverStruct.h"
+#include "LESSolverUnstr.h"
+#ifdef USE_SpecDiffHybSolver
+#include "SpecDiffHybSolver.h"
+#endif
+
 #include "Post_ProbesWrite.h"
+#include "PHNSSolverStruct.h"
 using namespace std;
 
 namespace PHSPACE
@@ -66,13 +72,6 @@ void Simulation::Start()
     case OVERSETGRID_VIEW:
         PHSPACE::OversetGridView();
         break;
-    case HO_SOLVER:
-        {
-            HOUnstruct::HOSimulation * uho = new HOUnstruct::HOSimulation();
-            uho->Run();
-            delete uho;
-            break;
-        }
     case CONVERT_PARTITION:
         //ConvertAndPartition();
         break;
@@ -81,12 +80,26 @@ void Simulation::Start()
         RunLBMSolver();
         break;
 	#endif
+    case HO_SOLVER:
+        {
+            HOUnstruct::HOSimulation * uho = new HOUnstruct::HOSimulation();
+            uho->Run();
+            delete uho;
+            break;
+        }
     case INTEGRATIVE_SOLVER:
         RunIntegrativeSolver();
         break;
     case POST_PROCESSING:
         RunPostProcessing();
         break;
+
+    #ifdef USE_SpecDiffHybSolver
+    case SpecDiffHyb_Solver:
+        RunSpecDiffHybSolver();
+        break;
+    #endif
+
     default:
         TK_Exit::UnexpectedVarValue("taskType = ", taskType);
         break;
@@ -222,69 +235,92 @@ void Simulation::RunIntegrativeSolver()
     int numberOfProcessor = PHMPI::GetNumberOfProcessor();
     int currentProcessor  = PHMPI::GetCurrentProcessorID();
     int serverProcessor   = PHMPI::GetServerProcessorID();
-    int tasktype;
+    int tasktype = 0;
 
     string fromGridName = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridName = ChangeExtensionOfFileName(fromGridName, "fts");
-
-    tasktype = PHSPACE::CREATE_GRID;
+    string partition_grid_file = AddSymbolToFileName(outGridName, "__", numberOfProcessor);
     GlobalDataBase::UpdateData("out_gfile", &outGridName, PHSTRING, 1);
-    GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
 
-    int isConvertOver = 0;
-    PHMPI::SetNumberOfProcessor(1);
-
-    if (currentProcessor == serverProcessor)
+    bool partitionFtsExist = false;
+    if (numberOfProcessor > 1)
     {
-        CreateGrid();
-        isConvertOver = 1;
+        if (SerialFileExist(partition_grid_file))
+        {
+            partitionFtsExist = true;
+        }
     }
 
-    PHMPI::SetNumberOfProcessor(numberOfProcessor);
-    PHMPI::PH_Bcast(&isConvertOver, 1, serverProcessor);
-    WriteLogFile("Convert grid complete !\n");
-    PrintToWindow("Convert grid complete !\n\n");
+    //! fts file not exist, need convert grid.
+    if (!SerialFileExist(outGridName))
+    {
+        if (!partitionFtsExist)
+        {
+            WriteLogFile("Begin convert grid !\n");
+            PrintToWindow("Begin convert grid !\n\n");
+
+            tasktype = PHSPACE::CREATE_GRID;
+            GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
+
+            int isConvertOver = 0;
+            PHMPI::SetNumberOfProcessor(1);
+
+            if (currentProcessor == serverProcessor)
+            {
+                CreateGrid();
+                isConvertOver = 1;
+            }
+
+            PHMPI::SetNumberOfProcessor(numberOfProcessor);
+            PHMPI::PH_Bcast(&isConvertOver, 1, serverProcessor);
+            WriteLogFile("Convert grid complete !\n");
+            PrintToWindow("Convert grid complete !\n\n");
+        }
+    }
 
     //! If need PartitionGrid.
     if (numberOfProcessor > 1)
     {
-        WriteLogFile("Begin partition grid !\n");
-        PrintToWindow("Begin partition grid !\n\n");
-        PHMPI::SetNumberOfProcessor(1);
-
-        tasktype = PHSPACE::PARTITION_GRID;
-        int maxproc = numberOfProcessor;
-        int numberOfMultigrid = 1;
-        int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
-        string partition_grid_file = AddSymbolToFileName(outGridName, "__", numberOfProcessor);
-
-        GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
-        GlobalDataBase::UpdateData("maxproc", &maxproc, PHINT, 1);
-        GlobalDataBase::UpdateData("pgridtype", &gridtype, PHINT, 1);
-        GlobalDataBase::UpdateData("numberOfMultigrid", &numberOfMultigrid, PHINT, 1);
-        GlobalDataBase::UpdateData("partition_grid_file", &partition_grid_file, PHSTRING, 1);
-        GlobalDataBase::UpdateData("original_grid_file", &outGridName, PHSTRING, 1);
-
-        int isPartitionOver = 0;
-        if (currentProcessor == serverProcessor)
+        if (!partitionFtsExist)
         {
-            PartitionGrid();
-            isPartitionOver = 1;
+            WriteLogFile("Begin partition grid !\n");
+            PrintToWindow("Begin partition grid !\n\n");
+            PHMPI::SetNumberOfProcessor(1);
 
-            DeleteGGrids();
-            PHMPI::SetNumberofLocalZones(0);
-        }
-        else
-        {
-            bool fileExist = true;
-            bool fileCheck = true;
-            PH_AllReduce(&fileExist, &fileCheck, 1, MPI_MIN);
-        }
+            tasktype = PHSPACE::PARTITION_GRID;
+            GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
 
-        PHMPI::SetNumberOfProcessor(numberOfProcessor);
-        PHMPI::PH_Bcast(&isPartitionOver, 1, serverProcessor);
-        WriteLogFile("Partition grid complete !\n");
-        PrintToWindow("Partition grid complete !\n\n");
+            int numberOfMultigrid = GlobalDataBase::GetIntParaFromDB("nMGLevel");
+            int maxproc = numberOfProcessor;
+            int pgridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
+
+            GlobalDataBase::UpdateData("pgridtype", &pgridtype, PHINT, 1);
+            GlobalDataBase::UpdateData("maxproc", &maxproc, PHINT, 1);
+            GlobalDataBase::UpdateData("numberOfMultigrid", &numberOfMultigrid, PHINT, 1);
+            GlobalDataBase::UpdateData("partition_grid_file", &partition_grid_file, PHSTRING, 1);
+            GlobalDataBase::UpdateData("original_grid_file", &outGridName, PHSTRING, 1);
+
+            int isPartitionOver = 0;
+            if (currentProcessor == serverProcessor)
+            {
+                PartitionGrid();
+                isPartitionOver = 1;
+
+                DeleteGGrids();
+                PHMPI::SetNumberofLocalZones(0);
+            }
+            else
+            {
+                bool fileExist = true;
+                bool fileCheck = true;
+                PH_AllReduce(&fileExist, &fileCheck, 1, MPI_MIN);
+            }
+
+            PHMPI::SetNumberOfProcessor(numberOfProcessor);
+            PHMPI::PH_Bcast(&isPartitionOver, 1, serverProcessor);
+            WriteLogFile("Partition grid complete !\n");
+            PrintToWindow("Partition grid complete !\n\n");
+        }
 
         string walldistfile = ChangeExtensionOfFileName(partition_grid_file, "wdt");
         GlobalDataBase::UpdateData("gridfile", &partition_grid_file, PHSTRING, 1);
@@ -296,6 +332,9 @@ void Simulation::RunIntegrativeSolver()
         GlobalDataBase::UpdateData("gridfile", &outGridName, PHSTRING, 1);
         GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
     }
+
+    WriteLogFile("Begin CFD simulation !\n");
+    PrintToWindow("Begin CFD simulation !\n\n");
 
     tasktype = PHSPACE::SOLVE_FIELD;
     GlobalDataBase::UpdateData("nsimutask", &tasktype, PHINT, 1);
@@ -314,6 +353,17 @@ void Simulation::RunPostProcessing()
 
 }
 
+
+#ifdef USE_SpecDiffHybSolver
+void Simulation::RunSpecDiffHybSolver()
+{
+	SpecDiffHybSolver * solver = new SpecDiffHybSolver();
+
+	solver->Run();
+
+	delete solver;
+}
+#endif
 
 void Simulation::ComputeWallDistance()
 {
@@ -514,19 +564,28 @@ void Simulation::DefineAndCreateSolvers()
                     int FVorFD = 0;
                     zone->GetData("ifvfd",&FVorFD, PHINT, 1);
 
-                    if (FVorFD == FV_METHOD)
+                    int iCodeBranch = 0;
+                    zone->GetData("iCodeBranch",&iCodeBranch, PHINT, 1);
+
+                    if (FVorFD == FV_METHOD)//! Add structured FV NS solver.
                     {
-                        //! Add structured FV NS solver.
-                        PHSolver *solver = new NSSolverStructFV();
-                        solverList.push_back(solver);
+                        if (iCodeBranch == 0)
+                        {
+                            PHSolver *solver = new NSSolverStructFV();
+                            solverList.push_back(solver);
+                        }
+                        else //! A new code branch is active for Navier-Stokes solver.
+                        {
+                            PHSolver *solver = new PHNSSolverStruct();
+                            solverList.push_back(solver);
+                        }
                     }
-                    else
+                    else //! Add structured FD NS solver.
                     {
-                        //! Add structured FD NS solver.
                         PHSolver *solver = new NSSolverStructFD();
                         solverList.push_back(solver);
                     }
-                }			    
+                }
             }
             else
             {
@@ -553,11 +612,12 @@ void Simulation::DefineAndCreateSolvers()
             {
                 const int FV_METHOD = 0;
                 const int FD_METHOD = 1;
-                
+                const int NS_METHOD = 2;
+
                 int FVorFD = 0;
                 zone->GetData("ifvfd",&FVorFD, PHINT, 1);
-                
-                if (FVorFD == FV_METHOD)
+
+                if (FVorFD == FV_METHOD || FVorFD == NS_METHOD)
                 {
                     //! Add structured turbulent solver.
                     PHSolver *solver = new TurbSolverStr();
@@ -571,18 +631,36 @@ void Simulation::DefineAndCreateSolvers()
                 }
             }
         }
+
+        int iLES = 0;
+        zone->GetData("iLES", &iLES, PHINT, 1);
+        if (iLES > 0)
+        {
+            int gridType = geometry->GetGrid()->Type();
+            if ( gridType == UNSTRUCTGRID )
+            {
+                //! Add unstructured LES solver.
+                PHSolver *solver = new LESSolverUnstr();
+                solverList.push_back(solver);
+            }
+            else if ( gridType == STRUCTGRID )
+            {
+                //! Add structured LES solver.
+                PHSolver *solver = new LESSolverStruct();
+                solverList.push_back(solver);
+            }
+        }
 #endif
 
-        //! Finally, push the solvers into the list.
-        for (std::size_t iSolver = 0; iSolver < solverList.size(); ++ iSolver)
-        {
-            PHSolver *solver = solverList[iSolver];
+            //! Finally, push the solvers into the list.
+            for (std::size_t iSolver = 0; iSolver < solverList.size(); ++ iSolver)
+            {
+                PHSolver *solver = solverList[iSolver];
 
-            solver->SetGeometry(geometry);
-            solver->SetIndex(static_cast<int> (iSolver));
-            zone->AddSolver(solver);
-        }
-
+                solver->SetGeometry(geometry);
+                solver->SetIndex(static_cast<int> (iSolver));
+                zone->AddSolver(solver);
+            }
     }// iZone
 }
 
@@ -623,6 +701,9 @@ void Simulation::PreSolve()
 
 void Simulation::PostSolve()
 {
+    using namespace PHMPI;
+
+    //! Dump tecflow file.
     int intervalStepPlot = GlobalDataBase::GetIntParaFromDB("intervalStepPlot");
     int intervalStepSample = GlobalDataBase::GetIntParaFromDB("intervalStepSample");
     int outIterStep  = GlobalDataBase::GetIntParaFromDB("outnstep");

@@ -1,6 +1,7 @@
 #include "Param_NSSolver.h"
 #include "GlobalDataBase.h"
 #include "TK_Log.h"
+#include "Constants.h"
 
 namespace PHSPACE
 {
@@ -33,6 +34,25 @@ LIB_EXPORT void Param_NSSolver::Init()
     nLaminar            = GlobalDataBase::GetIntParaFromDB("nl");
     nChemical           = GlobalDataBase::GetIntParaFromDB("nchem");
     nTemperatureModel   = GlobalDataBase::GetIntParaFromDB("ntmodel");
+    numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+    if (nChemical == 0)
+    {
+        if (nTemperatureModel > 1)
+        {
+            nTemperatureModel = 1;
+            GlobalDataBase::UpdateData("ntmodel", &nTemperatureModel, PHINT, 1);
+        }
+        if (nLaminar > nNSEquation)
+        {
+            nLaminar = nNSEquation;
+            GlobalDataBase::UpdateData("nl", &nLaminar, PHINT, 1);
+        }
+        if (numberOfSpecies > 0)
+        {
+            numberOfSpecies = 0;
+            GlobalDataBase::UpdateData("numberOfSpecies", &numberOfSpecies, PHINT, 1);
+        }
+    }
 
     prandtlLaminar    = GlobalDataBase::GetDoubleParaFromDB("prl");
     prandtlTurbulence = GlobalDataBase::GetDoubleParaFromDB("prt");
@@ -51,13 +71,18 @@ LIB_EXPORT void Param_NSSolver::Init()
 
     if (nChemical > 0)
     {
-        massFractionO2 = GlobalDataBase::GetDoubleParaFromDB("fcw_o2");
-        massFractionN2 = GlobalDataBase::GetDoubleParaFromDB("fcw_n2");
+        indexOfNitrogen = GlobalDataBase::GetIntParaFromDB("nNitrogenIndex");
+        indexOfElectron = GlobalDataBase::GetIntParaFromDB("nElectronIndex");
+        catalyticMassFraction = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("catalyticMassFraction"));
+    }
+    else
+    {
+        indexOfNitrogen = -1;
+        indexOfElectron = -1;
+        catalyticMassFraction = 0;
     }
 
     primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-
-    numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()

@@ -43,14 +43,17 @@ private:
     GradientCellCenter *gradientCellCenterUVWT[5];
     int systemgridtype;
 public:
-
+    int nWallBC; //The number of surface boundary conditions.
+    int nMaxSurfaceCell; //The number of surface cells.
+    int nIonizationFlag;
     NSSolverStruct();
     ~NSSolverStruct();
 private:
     void ReadParameter();
     void AllocateGlobalVar  (Grid *gridIn);
     void DeAllocateGlobalVar(Grid *gridIn);
-    
+    void GetSurfaceCellNumber(Grid *gridIn);
+
     //! Judge if the flow field variables file already exists in NS solver.
     bool JudgeIfRestart();
     bool JudgeIfReadAverage();
@@ -82,7 +85,7 @@ private:
     void PreconSpectrumRadiusInviscid(Grid *gridIn);
     void SpectrumRadiusViscous(Grid *gridIn);
 
-    void Spectrum(Grid *gridIn);
+    void Diagonal(Grid *gridIn);
 
     void Boundary(Grid *grid);
     void CalPressureFactor(Grid *gridIn);
@@ -94,7 +97,8 @@ private:
     //! Compute the chemical source terms.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ChemicalSource(Grid *gridIn);
-
+    //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
+    void ComputeFirstLayerGridHeight(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
     RDouble UnsteadyConvergence(Grid *gridIn);
     
@@ -106,7 +110,6 @@ private:
     
     void SolutionFix(Grid *gridIn, RDouble *prim, int i, int j, int k);
     void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
-    
 
     void UpdateQlQrOnlyforMixGrid(Grid *grid);
     void UpdateInviscidfluxOnlyforMixGrid(Grid *grid);
@@ -123,6 +126,7 @@ private:
 
     void CompVisFluxnew(Grid *gridIn, Gradient *gradientUVWT, FieldProxy *fluxProxy, int iSurface);
     void CompVisFluxnew(Grid *gridIn, FieldProxy *fluxProxy, int iSurface);
+    void CompVisFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSurface);
     void ComputeInviscidFlux(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
     void InviscidFluxWrap(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, FieldProxy *fluxProxy, INVScheme inviscidScheme, int iSurface);
     //! To correct the inviscid fluxes of solid boundaries under the non-equilibrium condition.
@@ -143,6 +147,7 @@ private:
     //! Compute gradient of primitive variables & temperature for viscous flux computation.
     void ComputeGradient(Grid *grid);
     void ComputeGradientCellCenter(Grid *grid);
+    void ComputeGradientCellCenterForLES(Grid *grid);
     void ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *grid);
     void ReconGrad(Grid *gridIn, int iSurface);
 
@@ -246,6 +251,9 @@ private:
     //! Add this function in order to verify the chemical codes and the related algorithm of computing thermal distribution.
     void ExportSurfaceVariables(ActionKey *actkey);
 
+    //! Write the surface information to the file.
+    void WriteSurfaceInfo(ActionKey *actkey);
+
     //! To obtain the derivatives of the designate primary variable whose sequence number in the array is marked with the valued of nIndex.
     void GetDerivatives(int nIndex, int iSurface, int ndim, int nlr, int i, int j, int k, int ni,int nj, int nk, RDouble4D &q,
                         RDouble4D &xvn, RDouble4D &yvn, RDouble4D &zvn, RDouble3D &vol, RDouble &dvdx, RDouble &dvdy, RDouble &dvdz);
@@ -255,11 +263,14 @@ private:
     void VisualizationAverageFlow(ActionKey *actkey);
 
 public:
-	RDouble4D *CompMachNumber(Grid *gridIn);
-	RDouble4D *ComputeMachNumberField(Grid *gridIn);
+    RDouble4D *CompMachNumber(Grid *gridIn);
+    RDouble4D *ComputeMachNumberField(Grid *gridIn);
 
-	void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble3D *&vorticity_x, RDouble3D *&vorticity_y, RDouble3D *&vorticity_z, RDouble3D *&vorticityMagnitude,  RDouble3D *&strain_rate, RDouble3D *&Q_criteria);
-	void ComputeCp(Grid *gridIn, RDouble4D *&cp);
+    void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble3D *&vorticity_x, RDouble3D *&vorticity_y, RDouble3D *&vorticity_z, RDouble3D *&vorticityMagnitude,  RDouble3D *&strain_rate, RDouble3D *&Q_criteria);
+    void ComputeCp(Grid *gridIn, RDouble4D *&cp);
+
+    //! Compute the dimensional variables for density, pressure, temperature and the number density of electron.
+    RDouble4D* ComputeDimensionalVariables(Grid *gridIn);
 
 public:
     void VisualizationVariables(Grid *gridIn, FieldProxy *workProxy, const string &filename);
@@ -287,5 +298,6 @@ public:
 
 };
 
+    bool iterijk(int &i, int &j, int &k, int ist, int ied, int jst, int jed, int kst, int ked);
 }
 

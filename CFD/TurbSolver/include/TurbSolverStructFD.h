@@ -49,7 +49,7 @@ private:
     void FarFieldBC(Grid *gridIn, BCRegion *BCRegion);
     void CornerPoint(Grid *gridIn);
     void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
-    void Spectrum(Grid *gridIn);
+    void Diagonal(Grid *gridIn);
     void SpectrumRadiusOfOneEquation(Grid *gridIn);
     void SpectrumRadiusOfTwoEquation(Grid *gridIn);
     void LUSGSInitializationStructHighOrder(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ);

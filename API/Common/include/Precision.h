@@ -29,6 +29,7 @@ namespace PHSPACE
     const RDouble LARGE = 1.0e40;
     const RDouble SMALL = 1.0e-40;
     const RDouble TINY  = 1.0e-40;
+    const RDouble EPSILON = 1.0e-12;
 #else
     typedef float RDouble;
     typedef float RFloat;

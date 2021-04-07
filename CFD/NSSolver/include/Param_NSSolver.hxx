@@ -108,22 +108,29 @@ inline int Param_NSSolver::GetMgProlongationType() const
     return mgProlongationType;
 }
 
-inline RDouble Param_NSSolver::GetMassFractionO2() const
-{
-    return massFractionO2;
-}
-
-inline RDouble Param_NSSolver::GetMassFractionN2() const
-{
-    return massFractionN2;
-}
-
-inline RDouble * Param_NSSolver::GetPrimitiveVarFarfield() const
+inline RDouble* Param_NSSolver::GetPrimitiveVarFarfield() const
 {
     return primitiveVarFarfield;
+}
+
+inline RDouble* Param_NSSolver::GetFullyCatalyticMassFraction() const
+{
+    return catalyticMassFraction;
 }
 
 inline int Param_NSSolver::GetNumberOfSpecies() const
 {
     return numberOfSpecies;
+}
+
+inline int Param_NSSolver::GetIndexOfNitrogen() const
+{
+    //! The index of Nitrogen in the array of species, it indicates the species with the maximum mass fraction.
+    return indexOfNitrogen;
+}
+
+inline int Param_NSSolver::GetIndexOfElectron() const
+{
+    //! The index of Electron in the array of species.
+    return indexOfElectron;
 }

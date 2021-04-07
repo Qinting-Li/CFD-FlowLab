@@ -52,6 +52,10 @@ if(USE_Windows_X64)
   add_definitions(-DUSE_WINDOWS_X64)
 endif(USE_Windows_X64)
 endif(WIN32)
+if(USE_SpecDiffHybSolver)
+  message(STATUS "USE_SpecDiffHybSolver is turned on!")
+  add_definitions(-DUSE_SpecDiffHybSolver)
+endif()
 #1. output message:
 message(STATUS "") 
 message(STATUS "--- Enter subdirectory <CFD>, Start to call ${CMAKE_CURRENT_LIST_FILE} ---") 
@@ -158,6 +162,7 @@ ${NSSOLVER_H_PATH}/MultiGridOperation.h
 ${NSSOLVER_H_PATH}/Param_NSSolver.h
 ${NSSOLVER_H_PATH}/Param_NSSolverUnstruct.h
 ${NSSOLVER_H_PATH}/Param_NSSolverStruct.h
+${NSSOLVER_H_PATH}/PHNSSolverStruct.h
 )
 source_group(NSSolver\\include FILES ${NSSOLVER_H_LIST}) 
 include_directories(${NSSOLVER_H_PATH})
@@ -172,6 +177,7 @@ ${NSSOLVER_CPP_PATH}/NSSolverUnstruct.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolver.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverUnstruct.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverStruct.cpp
+${NSSOLVER_CPP_PATH}/PHNSSolverStruct.cpp
 )
 source_group(NSSolver\\src FILES ${NSSOLVER_CPP_LIST})
 
@@ -181,10 +187,15 @@ set(TurbSOLVER_H_LIST
 ${TurbSOLVER_H_PATH}/TurbSolver.h
 ${TurbSOLVER_H_PATH}/TurbSolverStruct.h
 ${TurbSOLVER_H_PATH}/TurbSolverUnstr.h
+${TurbSOLVER_H_PATH}/LESSolver.h
+${TurbSOLVER_H_PATH}/LESSolverStruct.h
+${TurbSOLVER_H_PATH}/LESSolverUnstr.h
 ${TurbSOLVER_H_PATH}/TurbSolverStructFD.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolver.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolverStruct.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolverUnstruct.h
+${TurbSOLVER_H_PATH}/Param_LESSolver.h
+${TurbSOLVER_H_PATH}/Param_LESSolverStruct.h
 )
 source_group(TurbSolver\\include FILES ${TurbSOLVER_H_LIST}) 
 include_directories(${TurbSOLVER_H_PATH})
@@ -195,9 +206,14 @@ ${TurbSOLVER_CPP_PATH}/TurbSolver.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverStructFD.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverUnstr.cpp
+${TurbSOLVER_CPP_PATH}/LESSolver.cpp
+${TurbSOLVER_CPP_PATH}/LESSolverStruct.cpp
+${TurbSOLVER_CPP_PATH}/LESSolverUnstr.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolver.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolverUnstruct.cpp
+${TurbSOLVER_CPP_PATH}/Param_LESSolver.cpp
+${TurbSOLVER_CPP_PATH}/Param_LESSolverStruct.cpp
 )
 source_group(TurbSolver\\src FILES ${TurbSOLVER_CPP_LIST})
 
@@ -237,24 +253,74 @@ source_group(HOSolverUnstruct\\src FILES ${HOSOLVERUNSTRUCT_CPP_LIST})
 # Build In-house version:
 
 
+# set directory of SpecDiffHybSolver:
+if(USE_SpecDiffHybSolver)
+set(SpecDiffHybSolver_H_PATH SpecDiffHybSolver/include)
+set(SpecDiffHybSolver_H_LIST
+${SpecDiffHybSolver_H_PATH}/SpecDiffHybSolver.h
+${SpecDiffHybSolver_H_PATH}/SpecDiffHybGrid.h
+${SpecDiffHybSolver_H_PATH}/ExplicitDifferenceBoundary.h
+${SpecDiffHybSolver_H_PATH}/CompactDifferenceFirstDerivative.h
+${SpecDiffHybSolver_H_PATH}/CompactDifferenceSecondDerivative.h
+${SpecDiffHybSolver_H_PATH}/PoissonSolver.h
+${SpecDiffHybSolver_H_PATH}/CorrectWallDivergence.h
+${SpecDiffHybSolver_H_PATH}/Complex.h
+${SpecDiffHybSolver_H_PATH}/RescaleField.h
+${SpecDiffHybSolver_H_PATH}/Statistics.h
+${SpecDiffHybSolver_H_PATH}/p3dfft.h
+${SpecDiffHybSolver_H_PATH}/fftw3.h
+${SpecDiffHybSolver_H_PATH}/SpecDiffHybFieldView.h
+${SpecDiffHybSolver_H_PATH}/LES.h
+)
+source_group(SpecDiffHybSolver\\include FILES ${SpecDiffHybSolver_H_LIST})
+include_directories(${SpecDiffHybSolver_H_PATH})
+
+set(SpecDiffHybSolver_CPP_PATH SpecDiffHybSolver/src)
+set(SpecDiffHybSolver_CPP_LIST
+${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybSolver.cpp
+${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybGrid.cpp
+${SpecDiffHybSolver_CPP_PATH}/ExplicitDifferenceBoundary.cpp
+${SpecDiffHybSolver_CPP_PATH}/CompactDifferenceFirstDerivative.cpp
+${SpecDiffHybSolver_CPP_PATH}/CompactDifferenceSecondDerivative.cpp
+${SpecDiffHybSolver_CPP_PATH}/PoissonSolver.cpp
+${SpecDiffHybSolver_CPP_PATH}/CorrectWallDivergence.cpp
+${SpecDiffHybSolver_CPP_PATH}/RescaleField.cpp
+${SpecDiffHybSolver_CPP_PATH}/Statistics.cpp
+${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybFieldView.cpp
+${SpecDiffHybSolver_CPP_PATH}/LES.cpp
+)
+source_group(SpecDiffHybSolver\\src FILES ${SpecDiffHybSolver_CPP_LIST})
+endif(USE_SpecDiffHybSolver)
 #20.1 set header file list
 set(CFD_HEAD_LIST 
 ${SOLVER_H_LIST}
 ${NSSOLVER_H_LIST}
 ${TurbSOLVER_H_LIST}
+${SpecDiffHybSolver_H_LIST}
 ${HOSOLVERUNSTRUCT_H_LIST}
 )
 
 # add INHOUSE_VERSION_H_LIST
+
+# add SpecDiffHybSolver_H_LIST
+if(USE_SpecDiffHybSolver)
+list(APPEND CFD_HEAD_LIST ${SpecDiffHybSolver_H_LIST})
+endif()
 
 #20.2 set source file list:
 set(CFD_CPP_LIST 
 ${SOLVER_CPP_LIST}
 ${NSSOLVER_CPP_LIST}
 ${TurbSOLVER_CPP_LIST}
+${SpecDiffHybSolver_CPP_LIST}
 ${HOSOLVERUNSTRUCT_CPP_LIST}
 )
 # add INHOUSE_VERSION_CPP_LIST
+
+# add SpecDiffHybSolver_CPP_LIST
+if(USE_SpecDiffHybSolver)
+list(APPEND CFD_CPP_LIST ${SpecDiffHybSolver_CPP_LIST})
+endif()
 
 #21. adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
@@ -331,6 +397,10 @@ endif(USE_TecplotLib)
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST msmpi)
 endif(WIN32)
+
+if(USE_SpecDiffHybSolver)
+  list(APPEND LINK_LIBRARY_LIST p3dfft fftw3 mpifort gfortran)
+endif(USE_SpecDiffHybSolver)
 
 target_link_libraries(${CFD_TARGET_NAME} ${LINK_LIBRARY_LIST})
 

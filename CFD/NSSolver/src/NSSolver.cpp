@@ -173,7 +173,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
     }
 
     int intervalStepRes = parameters->GetIntervalStepRes();
-    if (outnstep == 1 || outnstep % intervalStepRes == 0 && (!isUnsteady || !isSubIterationDump))
+    if ((outnstep == 1 || outnstep % intervalStepRes == 0) && (!isUnsteady || !isSubIterationDump))
     {
         //! To dump residual data.
         ActionKey *actkeyDumpResidual = new ActionKey();
@@ -328,6 +328,9 @@ void NSSolver::InitCoarseGridsFlow()
     ComputeGamaAndTemperature(coarseGrid);
 
     ComputeNodeValue(coarseGrid);
+
+    //! dual time step source.
+    DualTimeSource(grid);
 }
 
 void NSSolver::InitDependentVariables()
@@ -487,6 +490,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     int nTemperatureModel = parameters->GetTemperatureModel();
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
     int nPrecondition = parameters->GetIfLowSpeedPrecon();
+    int nNitrogenIndex = parameters->GetIndexOfNitrogen();
+    int nElectronIndex = parameters->GetIndexOfElectron();
 
     int RoeEntropyFixMethod  = parameters->GetRoeEntropyFixMethod();
     RDouble entrFixCoefLeft  = parameters->GetRoeEntropyFixCoef1();
@@ -505,6 +510,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetEntropyFixCoefficients(entrFixCoefLeft, entrFixCoefRight);
 
     invSchemePara->SetLength(faceProxy->size());
+    invSchemePara->SetIndexOfNitrogen(nNitrogenIndex);
+    invSchemePara->SetIndexOfElectron(nElectronIndex);
 
     //! Pointer parameters.
     invSchemePara->SetLeftAndRightQ(faceProxy->GetQL(), faceProxy->GetQR());

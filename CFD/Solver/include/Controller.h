@@ -87,11 +87,12 @@ public:
     void TimeStep(int iSolver, int level);
 
     //! Compute the inviscous/viscous/chemical spectrum radius, \n
-    //! the results stored in array srad and srv and srs.
+    //! the results stored in array invSpectralRadius and visSpectralRadius and srs.
     void SpectrumRadius(int iSolver, int level);
 
-    //! Compute the spectrum term (which stored in array spec) for time advancement.
-    void Spectrum(int iSolver, int level);
+    //! Compute the diagonal 'matrix' for LU-SGS. Although it is named as 'matrix',
+    //! only scale variable is used since the Jacobian matrix is simplified to be spectrum radius.
+    void Diagonal(int iSolver, int level);
 
     //! Compute and return the global minimum time step.
     //! For parallel computing, all_reduce is used to communicate the global minimum value.

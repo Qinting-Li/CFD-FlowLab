@@ -44,6 +44,7 @@ opt(OCC "Use OpenCasCade Library" OFF)  # Use occ or not.
 opt(DOUBLE_PRECISION "Use double precision or not" ON)
 opt(SMARTARRAY "Use smart array more efficenet than origial array" ON)  # Use smart array or not.
 opt(ARRAY_OPT "Use array optimization for structure solver" OFF)  # Use array optimization or not.
+opt(SpecDiffHybSolver "Use Spectra-Difference Hybrid Solver or not" OFF) #Use Spectra-Difference Hybrid Solver or not.
 opt(NSDEMO "Use Solver Template or not" OFF) # Use Solver Template option
 opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
@@ -73,6 +74,10 @@ endif()
 if(USE_ARRAY_OPT)
   message(STATUS "USE_ARRAY_OPT is turned on!")
   add_definitions(-DUSE_ARRAY_OPT)
+endif()
+if(USE_SpecDiffHybSolver)
+  message(STATUS "USE_SpecDiffHybSolver is turned on!")
+  add_definitions(-DUSE_SpecDiffHybSolver)
 endif()
 
 if(USE_NSDEMO)
@@ -195,6 +200,9 @@ include_directories(${CFD_H_PATH}/Solver/include)
 include_directories(${CFD_H_PATH}/TurbSolver/include)
 include_directories(${CFD_H_PATH}/PostProcess/include)
 include_directories(${CFD_H_PATH}/HOSolverUnstruct/include)
+if(USE_SpecDiffHybSolver)
+include_directories(${CFD_H_PATH}/SpecDiffHybSolver/include)
+endif(USE_SpecDiffHybSolver)
 if(BUILD_CFD)
   message(STATUS "Build CFD!")
   add_subdirectory(../CFD ${EXEC_WORKING_DIR}/CFD)
@@ -251,10 +259,10 @@ if(BUILD_TUTORIAL)
   ADD_SUBDIRECTORY(Tutorial/Data_IndexDataTest        ${EXEC_WORKING_DIR}/Tutorial/Data_IndexDataTest       )
   ADD_SUBDIRECTORY(Tutorial/Data_ParamFieldSuiteTest  ${EXEC_WORKING_DIR}/Tutorial/Data_ParamFieldSuiteTest )
   ADD_SUBDIRECTORY(Tutorial/FluentToPHengLEI_uns      ${EXEC_WORKING_DIR}/Tutorial/FluentToPHengLEI_uns     )
-  #ADD_SUBDIRECTORY(Tutorial/PreGridMirror ${EXEC_WORKING_DIR}/Tutorial)
-  #ADD_SUBDIRECTORY(Tutorial/KDTree                    ${EXEC_WORKING_DIR}/Tutorial/KDTree                  )
+  #ADD_SUBDIRECTORY(Tutorial/PreGridMirror            ${EXEC_WORKING_DIR}/Tutorial                          )
+  #ADD_SUBDIRECTORY(Tutorial/KDTree                   ${EXEC_WORKING_DIR}/Tutorial/KDTree                   )
   ADD_SUBDIRECTORY(Tutorial/WalldistCompute           ${EXEC_WORKING_DIR}/Tutorial/WalldistCompute          )
-  #ADD_SUBDIRECTORY(Tutorial/UT_GridMemberFunction     ${EXEC_WORKING_DIR}/Tutorial/UT_GridMemberFunction    )
+  #ADD_SUBDIRECTORY(Tutorial/UT_GridMemberFunction    ${EXEC_WORKING_DIR}/Tutorial/UT_GridMemberFunction    )
   
   #ADD_SUBDIRECTORY(Tutorial/SolverDemo ${EXEC_WORKING_DIR}/Tutorial)
 endif(BUILD_TUTORIAL)

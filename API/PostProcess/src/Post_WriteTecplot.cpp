@@ -147,12 +147,8 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
         int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         if (nchem)
         {
-            int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-            int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-            int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-            int neqn  = nl + nchem;
-
-            nVisualVariables = nVisualVariables + (neqn - nm);
+            int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+            nVisualVariables = nVisualVariables + numberOfSpecies;
         }
 
         RDouble ** qn = new RDouble *[nVisualVariables];
@@ -222,12 +218,8 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
         int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         if (nchem)
         {
-            int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-            int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-            int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-            int neqn  = nl + nchem;
-
-            nVisualVariables = nVisualVariables + (neqn - nm);
+            int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+            nVisualVariables = nVisualVariables + numberOfSpecies;
         }
 
         RDouble4D ** qn = new RDouble4D *[nVisualVariables];

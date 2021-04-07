@@ -1519,7 +1519,7 @@ void TurbSolverStrFD::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
     ObtainBoundaryValue(gridIn);
 }
 
-void TurbSolverStrFD::Spectrum(Grid *gridIn)
+void TurbSolverStrFD::Diagonal(Grid *gridIn)
 {
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulentEquation = parameters->GetNTurbulentEquation();

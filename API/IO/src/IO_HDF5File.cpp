@@ -249,6 +249,7 @@ RDouble *ReadDoubleOneRow(hid_t loc_id, const string &dataName)
     {
         dataReturn[idata] = static_cast<RDouble>(Data[idata]);
     }
+    delete []Data;
     return dataReturn;
 }
 

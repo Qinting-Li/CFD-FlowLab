@@ -69,6 +69,7 @@ public:
     //! Compute gradient of primitivevariables & temperature for viscous flux computation.
     virtual void ComputeGradient(Grid *grid);
     virtual void ComputeGradientCellCenter(Grid *grid);
+    virtual void ComputeGradientCellCenterForLES(Grid *grid);
     virtual void ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *grid){};
     virtual void ComputelimiterOnlyForMixGrid(Grid *grid){};
     //! Compute blend function F1 & F2.
@@ -104,9 +105,12 @@ public:
     virtual void TimeStep(Grid *grid);
 
     //! Compute the inviscous/viscous/chemical spectrum radius.
-    //! The results stored in array srad and srv and srs.
+    //! The results stored in array invSpectralRadius and visSpectralRadius and srs.
     virtual void SpectrumRadius(Grid *grid){};
-    virtual void Spectrum(Grid *grid) {};
+    
+    //! See the explain in controller.
+    virtual void Diagonal(Grid *grid) {};
+    
     virtual void ComputeMinTimeStep(Grid *grid, RDouble &minDt, RDouble &maxDt);
     virtual void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
 

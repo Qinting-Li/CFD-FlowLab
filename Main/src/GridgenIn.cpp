@@ -78,6 +78,8 @@ void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&
         cout << setw(wordWidth) << nk;
         cout << "\n";
         //cin.get();
+
+        //delete index;
     }
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)

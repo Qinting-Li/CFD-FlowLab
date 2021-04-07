@@ -91,7 +91,7 @@ public:
 	void SpectrumRadiusInviscid(Grid *grid);
 	void PreconInvSpectrumRadius(Grid *gridIn);
 	void SpectrumRadiusViscous(Grid *grid);
-    void Spectrum(Grid *gridIn);
+    void Diagonal(Grid *gridIn);
 	void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
 	void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
     void LocalTimeStep(Grid *grid);

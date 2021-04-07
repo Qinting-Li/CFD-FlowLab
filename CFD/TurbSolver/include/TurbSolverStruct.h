@@ -366,7 +366,7 @@ private:
 
     //! Interface: to get the turbulent spectum.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    void Spectrum(Grid *gridIn);
+    void Diagonal(Grid *gridIn);
 
     //! Implement: to get the turbulent spectum of one equation model, called by function Spectrum.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.

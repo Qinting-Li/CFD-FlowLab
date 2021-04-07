@@ -177,7 +177,9 @@ int isPlotVolumeField = 0;
 //                   -- viscosityLaminar(7), viscosityTurbulent(8),
 //                   -- vorticity_x(9), vorticity_y(10), vorticity_z(11), vorticityMagnitude(12),
 //                   -- strain_rate(13), Q_criteria(14), Cp(15), timeStep(16), volume(17),
-//                   -- modeledTKE(18), modeleddissipationrate(19), SSTF1(20), SSTF2(21).
+//                   -- modeledTKE(18), modeleddissipationrate(19), SSTF1(20), SSTF2(21),
+//                   -- vibration temperature(Tv, 33), electron temperature(Te, 34), vibrational energy(Ev, 35), electric energy(Ee, 36),
+//                   -- number density of electron(Ne, 37), dimensioanl density(rho, 38), dimensioanl pressure(p, 39), dimensioanl temperature(T, 40).
 // Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
 // Variables order must from small to big.
 
@@ -201,6 +203,9 @@ int limitVector = 1;
 #########################################################################
 #                       Non-equilibrium gas                             #
 #########################################################################
+// nGasModel: The type of gas.
+//          0 -- Earth gas.
+//          1 -- Mars gas.
 // nchem: 
 //          0 -- without chemical reaction flow.
 //          1 -- the chemical reaction flow is considered.
@@ -222,11 +227,13 @@ int limitVector = 1;
 //          "Gu" -- indicates the Gupta Model, three-Type Models are embeded in the library, namely, the 5-species-6-reactions, the 7-species-9-reactions, the 11-species-20-reactions.
 //          "Pa" -- indicates the Park  Model, three-Type Models are embeded in the library, namely, the 5-species-17-reactions, the 7-species-22-reactions, the 11-species-48-reactions.
 //          "DK" -- indicates the Dunn-Kang Model, three-Type Models are embeded in the library, namely, the 5-species-11-reactions, the 7-species-15-reactions, the 11-species-26-reactions.
+//          "Mars-Pa8" is for Park model of Mars gas, "Mars-Mc8" for McKenzie model of Mars gas.
 //          For self-definition model, the gasfile is used to indicate the file path of the new gas model.
 // speciesName: Used to list the names of each species, while each species name is separated by the symbol of comma.
 // initMassFraction: Used to list the initial mass fractions of species in accordance with the sequence of names in the parameter speciesName.
 // ifStartFromPerfectGasResults: The chemical reaction simulation is start from perfect gas flowfield or not, 0 is for no and else is for yes.
 
+int nGasModel = 0;
 int nchem    = 0;
 int ntmodel  = 1;
 int nchemsrc = 1;

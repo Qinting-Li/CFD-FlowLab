@@ -590,7 +590,7 @@ void TurbSolverUnstr::ReadRestartH5(ActionKey *actkey)
         int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
         bool isReadAverageFlow = ifStaticsFlowField && (outerIterationStepOfTurbulence >= startStatisticStep);
-        if(isReadAverageFlow)
+        if(isReadAverageFlow && (!ifStartFromSteadyResults))
         {
             ReadData(grploc, qTemporary[0], "qAverageTurb");
             for (int iEquation = 0; iEquation < nTurbulentEquation; ++ iEquation)
@@ -1320,7 +1320,7 @@ void TurbSolverUnstr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Field
             //! dq = { (b - Ux) - Lx } / D.
             //! Note: the 'dq' has actually initialized by the residual at the beginning of this function.
             //! the 'rhs0' is the total Delta Flux of the neighbors.            
-            //! rhs0: Lx        spec: D.
+            //! rhs0: Lx    diagonal: D.
             dq[m][iCell] = (dq[m][iCell] - matrixUx[m] - rhs0[m]) / spectrumTurbulence[m][iCell];
 
             //! Store the lower forward sweep delta-flux, which will be used in the backward sweep.
@@ -1425,7 +1425,7 @@ void TurbSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fiel
             //! Note: the 'dq' has been updated by the forward sweep.
             //! the 'rhs0' is the total Delta Flux of the neighbors.
             //! x = {(b - LX) - Ux} / D.
-            //! rhs0: Ux.               spec: D.
+            //! rhs0: Ux.    diagonal: D.
             dq[m][iCell] = (dq[m][iCell] - matrixLx[m] - rhs0[m]) / spectrumTurbulence[m][iCell];
 
             //! Store the upper backward sweep delta-flux, which will be used in the forward sweep.
@@ -3640,7 +3640,7 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
     delete []fMid;
 }
 
-void TurbSolverUnstr::Spectrum(Grid *grid)
+void TurbSolverUnstr::Diagonal(Grid *grid)
 {
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
 	int nTurbulentEquation = parameters->GetNTurbulentEquation();

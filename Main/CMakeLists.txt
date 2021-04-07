@@ -196,15 +196,12 @@ message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 #23. link a target to given libraries:
 target_link_libraries(${EXECUTABLE_TARGET_NAME} ${LINK_LIBRARY_LIST})
 
-if(USE_TecplotLib)
-  if(WIN32)
-    if(USE_Windows_X64)
-      add_custom_command(TARGET ${EXECUTABLE_TARGET_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/tecio.dll" $<TARGET_FILE_DIR:${EXECUTABLE_TARGET_NAME}>)
-    else(USE_Windows_X64) 
-      add_custom_command(TARGET ${EXECUTABLE_TARGET_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x86/tecio.dll" $<TARGET_FILE_DIR:${EXECUTABLE_TARGET_NAME}>)
-    endif(USE_Windows_X64)
-  endif(WIN32)
-endif(USE_TecplotLib)
+# Some pre-definitions that occ need.
+if(USE_OCC)
+  target_link_libraries(${EXECUTABLE_TARGET_NAME} ${OCC_LIBS})  
+  add_definitions(-DWNT)
+  add_definitions(-DNOTCL)
+endif(USE_OCC)
 	
 # For UGKS
 

@@ -225,7 +225,7 @@ void TurbSolver::UpdateResiduals(Grid *grid)
     SourceFlux(grid);
 
     //! Compute the spectrum radius.
-    //Spectrum(grid);
+    //Diagonal(grid);
 
     //! Compute the inviscid flux.
     InviscidFlux(grid);

@@ -26,6 +26,8 @@ public:
 private:
     void AllocateGlobalVar  (Grid *gridIn);
     void DeAllocateGlobalVar(Grid *gridIn);
+    void GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell);
+    void ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firstLayerHeight);
     
     void Primitive2Conservative(RDouble prim[5], RDouble q[5]);
     void Conservative2Primitive(RDouble q[5], RDouble prim[5]);
@@ -125,7 +127,7 @@ private:
     void SpectrumRadiusViscous(Grid *gridIn);
     void TimeStep(Grid *gridIn);
     void ReduceMaxTimeStep(Grid *gridIn, RDouble globalMinDt);
-    void Spectrum(Grid *gridIn);
+    void Diagonal(Grid *gridIn);
     void SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
     void SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
     void SolveLUSGSbyJacobiIteration(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqtmpProxy, RDouble &sweepNormal);
@@ -139,6 +141,8 @@ private:
     void UpdateInviscidfluxOnlyforMixGrid(Grid *gridIn);
     void UpdateViscousfluxOnlyforMixGrid(Grid *gridIn);
     void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn);
+
+    void GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSurface);
 };
 
 }

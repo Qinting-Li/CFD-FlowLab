@@ -147,7 +147,7 @@ double influenceRadius  = 20;
 int symmetryPlane       = 3;    // 1: plane of x=0; 2: plane of y=0; 3: plane of z=0;
 
 // ----------------- Periodic Parameters --------------------------------
-// Notice:Rotational periodicity only support rotation along the X axis!
+// Notice: Rotational periodicity only support rotation along the X axis!
 // periodicType: Which periodic boundary is used.
 //               0 -- without Periodic Boundary.
 //               1 -- Translational periodicity.
@@ -534,6 +534,9 @@ double lamda[] = 0.5, 1.0;
 // turbfile: The file path to write restart flowfield variables of turbulence , write data for every default(intervalStepFlow) steps.
 // visualfile: The visualization file path of flowfield , write data for every default (intervalStepPlot) steps.
 // wall_aircoefile: The file path to save flowfield variables of wall, write data for every default steps.
+// nDumpSurfaceInfo = 0 the "wall_varfile" write the informations including heat flux.
+// nDumpSurfaceInfo = 1 the "wall_varfile" write the informations without heat flux.
+
 int    numberOfGridGroups = 1;
 string gridfile           = "./grid/rae2822_hybrid2d__4.fts";
 
@@ -552,6 +555,7 @@ string wall_aircoefile    = "results/wall_aircoef.dat";
 string probesflowfile     = "results/sample.dat";
 string surfacefile        = "";
 
+int nDumpSurfaceInfo = 0;
 string wall_varfile       = "";
 
 string componentDefineFile = "bin/component.hypara";
@@ -593,7 +597,9 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 //                   -- viscosityLaminar(7), viscosityTurbulent(8), 
 //                   -- vorticity_x(9), vorticity_y(10), vorticity_z(11), vorticityMagnitude(12),
 //                   -- strain_rate(13), Q_criteria(14), Cp(15), timeStep(16), volume(17),
-//                   -- modeledTKE(18), modeleddissipationrate(19), SSTF1(20), SSTF2(21), vibration temperature(33), electron temperature(34),
+//                   -- modeledTKE(18), modeleddissipationrate(19), SSTF1(20), SSTF2(21), 
+//                   -- vibration temperature(Tv, 33), electron temperature(Te, 34), vibrational energy(Ev, 35), electric energy(Ee, 36),
+//                   -- number density of electron(Ne, 37), dimensioanl density(rho, 38), dimensioanl pressure(p, 39), dimensioanl temperature(T, 40),
 //                   -- gradientUx(41), gradientUy(42), gradientVx(43), gradientVy(44).
 // Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
 // Variables order must from small to big.
@@ -644,17 +650,75 @@ double coef_kvist   = 1.0;
 int monitor_vistmax = 0;
 
 //-----------------------------------------------------------------------
-#                           Other Parameter                             #
+#                           LES Parameter                               #
+//-----------------------------------------------------------------------
+// iLES: Create LESSolver or not.
+//       >= 1 - Create LESSolver;
+//       <  1 - not.
+// amplitudeofDisturb: Amplitude of adding disturb.
+// disturbstep: Unsteady time step or steady iteration of adding random disturb.
+// iterdisturb: Add random disturb in every sub-iter or only first sub-iter.
+//              = 0 - in only first sub-iter;
+//             != 0 - in every sub-iter.
+// ipraddisturb: Add density and pressure disturb or not.
+// ibodyforce: Add body force in source flux of NS equations or not.
+//             = 0 - not;
+//            != 0 - Add body force.
+// bodyforce: Body force in source flux of NS equations or not.
+// utau: friction velocity, using in DNSDisturb.
+// sgsmodel: subgrid scale model.
+//           = "smagorinsky";
+//           = "dsm";
+//           = "wale".
+// deltaFunctionType: = 1 - MAX(deltai, deltaj, deltak);
+//                    = 2 - pow(deltai * deltaj *deltak, 1/3);
+//                    = 3 - Devloped by Scotti.
+// wallDampingFunctionType: = 0 - no wall function;
+//                          = 1 - van Driest;
+//                          = 2 - developed by Dr. Deng Xiaobing;
+//                          = 3 - developed by Piomelli.
+// turbViscousCutType: turbulent viscosity cut type.
+//                     = 0 - mu_total = mut           + mul;
+//                     = 1 - mu_total = max(mut-mul,0)+ mul;
+//                     = 2 - mu_total = max(mut    ,0)+ mul.
+// smagConstant: constant of smagorinsky model.
+// waleConstant: constant of wale model.
+// filterDirection[3]: filter variables in i, j, k direction or not.
+// averageDirection[3]: average variables in i, j, k direction or not.
+// isotropicConstant: constant of isotropic part of SGS stress.
+
+int    iLES               = 0;
+string sgsmodel           = "smagorinsky";
+int    deltaFunctionType  = 2;
+int    wallDampingFunctionType = 1;
+int    turbViscousCutType = 2;
+double smagConstant       = 0.135;
+double isotropicConstant  = 0.0;
+double waleConstant       = 0.6;
+int    filterDirection[]  = [1, 1, 0];
+int    averageDirection[] = [0, 0, 0];
+double testFilterScale    = 2.0;
+int    averageWidth       = 1;
+int    monitorNegativeConstant = 0;
+
+//-----------------------------------------------------------------------
+#          Other Parameters for Hypersonic Non-equilibrium Gas          #
 //-----------------------------------------------------------------------
 // dg_high_order:
 //               0 -- generic order accuracy.
 //               1 -- high order accuracy.
 // iapplication:
-//               0 -- NS.
-//               1 -- MHD.
+//               0 -- gas model is fixed in the codes.
+//               1 -- gas model is imported from library files.
+// iCodeBranch:
+//               0 -- The old code version is used for Navier-Stokes.
+//               1 -- A new code version is active for Navier-Stokes solver.
 // nm: Equation number of the physics, but is out of commision now.
 //               4 -- for 2D.
 //               5 -- for 3D.
+// nGasModel: The type of gas.
+//               0 -- Earth gas.
+//               1 -- Mars gas.
 // nchem:
 //               0 -- without chemical reaction flow.
 //               1 -- the chemical reaction flow is considered.
@@ -676,6 +740,7 @@ int monitor_vistmax = 0;
 //            "Gu" -- indicates the Gupta Model, three-Type Models are embeded in the library, namely, the 5-species-6-reactions, the 7-species-9-reactions, the 11-species-20-reactions.
 //            "Pa" -- indicates the Park  Model, three-Type Models are embeded in the library, namely, the 5-species-17-reactions, the 7-species-22-reactions, the 11-species-48-reactions.
 //            "DK" -- indicates the Dunn-Kang Model, three-Type Models are embeded in the library, namely, the 5-species-11-reactions, the 7-species-15-reactions, the 11-species-26-reactions.
+//            "Mars-Pa8" is for Park model of Mars gas, "Mars-Mc8" for McKenzie model of Mars gas.
 //            For self-definition model, the gasfile is used to indicate the file path of the new gas model.
 // speciesName: Used to list the names of each species, while each species name is separated by the symbol of comma.
 // initMassFraction: Used to list the initial mass fractions of species in accordance with the sequence of names in the parameter speciesName.
@@ -683,6 +748,7 @@ int monitor_vistmax = 0;
 
 int dg_high_order = 0;
 int iapplication  = 0;
+int iCodeBranch = 0;
 int nm            = 5;
 
 // MHD
@@ -696,6 +762,7 @@ double prt        = 0.90;
 double sc_l       = 0.5;
 double sc_t       = 0.5;
 
+int    nGasModel  = 0;
 int    nchem      = 0;
 int    nchemsrc   = 1;
 int    nchemrad   = 1;
@@ -712,6 +779,10 @@ string initMassFraction = "0.0, 0.23, 0.0, 0.0, 0.77";
 
 //string speciesName = "O, O2, NO, N, O+, O2+, NO+, N+, N2+, N2, e-";
 //string initMassFraction = "0.0, 0.23, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.77, 0.0";
+
+//string gasfile = "Mars-Pa8";
+//string speciesName = "O, O2, NO, N, N2, C, CO, CO2";
+//string initMassFraction = "0.0015, 0.0429, 0.0, 0.0, 0.0, 0.0, 0.0777, 0.8779";
 
 int    ifStartFromPerfectGasResults = 0;
 

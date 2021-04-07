@@ -626,7 +626,7 @@ void Controller::ReduceMaxTimeStep(int iSolver, int level)
     }
 }
 
-void Controller::Spectrum(int iSolver, int level)
+void Controller::Diagonal(int iSolver, int level)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -647,7 +647,7 @@ void Controller::Spectrum(int iSolver, int level)
         Grid *grid = GetGrid(zoneID, level);
         CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
 
-        solver->Spectrum(grid);
+        solver->Diagonal(grid);
     }
 }
 
@@ -904,6 +904,7 @@ void Controller::ComputeGradient(int iSolver, int level)
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     if ((viscousType == 0 && STRUCTGRID == systemGridType))
     {
         return;
@@ -923,7 +924,7 @@ void Controller::ComputeGradient(int iSolver, int level)
         if (!zone)
         {
             continue;
-    }
+        }
 
         Grid *grid = GetGrid(zoneID, level);
         CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
@@ -933,7 +934,17 @@ void Controller::ComputeGradient(int iSolver, int level)
         int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
         if (gridtypeoflocalzone == STRUCTGRID)
         {
-            solver->ComputeGradientCellCenter(grid);
+            string sgsmodel;
+            GlobalDataBase::GetData("sgsmodel", &sgsmodel, PHSTRING, 1);
+            if (iLES == 0 || sgsmodel.substr(0, 6) == "dsmOld" || ifvfd == 1)
+            {
+                solver->ComputeGradientCellCenter(grid);
+            }
+            else
+            {
+                solver->ComputeGradientCellCenterForLES(grid);
+            }
+
             if(MIXGRID == systemGridType && ifvfd == 0)
             {
                 solver->ComputeGradientCellCenterOfruvwptOnlyForMixGrid(grid);
@@ -1406,7 +1417,7 @@ void Controller::BLUSGSInitialization(int iSolver, int level, int nSweep, FieldP
 
 void Controller::LUSGS(int iSolver, int level)
 {
-    Spectrum(iSolver, level);
+    Diagonal(iSolver, level);
 
     int nLocalZones = PHMPI::GetNumberofLocalZones();
     int nLUSGSSweeps = GlobalDataBase::GetIntParaFromDB("nLUSGSSweeps");
@@ -3130,7 +3141,7 @@ void Controller::PostSolve(int level)
     int iSolver = this->GetSolverIndex();
     int nPostSolve = GetNPostSolve(iSolver, level);
 
-    //! Face Communication and other post tasks, such as residual computing.
+    //! Face Communication.
     for (int n = 0; n < nPostSolve; ++ n)
     {
         for (int iZone = 0; iZone < nZones; ++ iZone)
@@ -3149,19 +3160,12 @@ void Controller::PostSolve(int level)
     }
 
     SetBoundaryValueOfField(iSolver, level);
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
-        {
-            continue;
-        }
 
-        Grid *grid = GetGrid(iZone,level);
-        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
-
-        solver->DumpResultFile(grid, level);
-    }
+    //! Post tasks, such as residual computing.
+    int zoneIndex = GetLocalZoneIDToGlobalZoneID(0);
+    Grid *grid = GetGrid(zoneIndex, level);
+    CFDSolver *solver = static_cast<CFDSolver *>(GlobalSolvers::GetSolver(zoneIndex, iSolver));
+    solver->DumpResultFile(grid, level);
 
     //! Node communication: part1.
     for (int iZone = 0; iZone < nZones; ++ iZone)

@@ -117,7 +117,7 @@ public:
 	void SMoothTurbulencePoint(Grid *gridIn, RDouble *primitiveVariable, int i);
 	
 	//! Compute spectrumRadius of turbulent equation.
-	void Spectrum(Grid *grid);
+	void Diagonal(Grid *grid);
 	
 	//! Compute inviscid flux of turbulent equation.
     void InviscidFlux(Grid *gridIn);

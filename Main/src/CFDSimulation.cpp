@@ -93,6 +93,7 @@ void ParametersSelfCheckForCFD()
     int *visualVariables = new int [nVisualVariables];
     GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     if (viscousType == 0)
     {
         for (int i = 0; i < nVisualVariables; ++ i)
@@ -105,7 +106,7 @@ void ParametersSelfCheckForCFD()
             }
         }
     }
-    else if (viscousType == 1)
+    else if (viscousType == 1 && iLES == 0)
     {
         for (int i = 0; i < nVisualVariables; ++ i)
         {
@@ -173,6 +174,8 @@ void ControlParametersPreliminarySelfCheck()
             ParametersSelfCheckForCFD();
             break;
         case POST_PROCESSING:
+            break;
+        case SPECDIFFHYB_Solver:
             break;
         default:
             TK_Exit::UnexpectedVarValue("taskType = ", taskType);

@@ -1678,6 +1678,25 @@ CGNSFactory::CGNSFactory(int nBlocks)
 CGNSFactory::~CGNSFactory()
 {
     delete base_elem;
+    delete fantasy_bc;
+
+    for ( int izone = 0; izone < nBlocks; ++ izone )
+    {
+        delete base_conn[izone];
+    }
+    delete []base_conn;
+
+    for ( int izone = 0; izone < nBlocks; ++ izone )
+    {
+        delete rawgrid[izone];
+    }
+    delete []rawgrid;
+
+    //for ( int izone = 0; izone < nBlocks; ++ izone )
+    //{
+    //    delete base_cgns[izone];
+    //}
+    delete []base_cgns;
 }
 
 void CGNSFactory::ConvertGrid2Fantasy()

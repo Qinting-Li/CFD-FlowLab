@@ -3644,6 +3644,19 @@ void UnstructGrid::ReviseNeighborZoneIndex( int zoneStart )
 	{
 		interFace2ZoneID[ iFace ] += zoneStart;
 	}
+
+    InterpointInformation *interpointInformation = this->GetInterpointInfo();
+
+    if(! interpointInformation) return;
+
+    int nIPoint = interpointInformation->GetNumberOfInterpoints();
+
+    int *interPoint2ZoneID = interpointInformation->GetInterPoint2ZoneID();
+
+    for( int iPoint = 0; iPoint < nIPoint; ++ iPoint )
+    {
+        interPoint2ZoneID[iPoint] += zoneStart;
+    }
 }
 
 void UnstructGrid::EncodeOversetGrid(DataContainer *cdata)

@@ -19,6 +19,8 @@ PerfectGas::PerfectGas()
 
 PerfectGas::~PerfectGas()
 {
+    RDouble *prim_inf = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
+    delete []prim_inf;
 }
 
 void PerfectGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q)

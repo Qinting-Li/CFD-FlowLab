@@ -96,18 +96,21 @@ public:
     
     int GetMgProlongationType() const;
 
-    RDouble GetMassFractionO2() const;
+    RDouble* GetPrimitiveVarFarfield() const;
 
-    RDouble GetMassFractionN2() const;
-
-    RDouble * GetPrimitiveVarFarfield() const;
+    RDouble* GetFullyCatalyticMassFraction() const;
 
     int GetNumberOfSpecies() const;
-    
-private:
-	int intervalStepForce;
 
-	RDouble wallTemperature;
+    int GetIndexOfNitrogen() const; //! The index of the species with the maximum mass fraction.
+    //for Earth air, Nitrogen is the species with the maximum mass fraction, so it is used as the variable name.
+
+    int GetIndexOfElectron() const; //! The index of Electron in the array of species.
+
+private:
+    int intervalStepForce;
+
+    RDouble wallTemperature;
 
     //! The number of N-S equations without the species transport equations.
     int nNSEquation;
@@ -160,13 +163,14 @@ private:
     RDouble nonDimensionalSutherlandTemperature;
 
     int mgProlongationType;
-    RDouble massFractionO2;
 
-    RDouble massFractionN2;
-
-    RDouble * primitiveVarFarfield;
+    RDouble *primitiveVarFarfield;
+    RDouble *catalyticMassFraction;
 
     int numberOfSpecies; //! The number of species.
+
+    int indexOfNitrogen; //! The index of Nitrogen in the array of species, it indicates the species with the maximum mass fraction.
+    int indexOfElectron; //! The index of Electron in the array of species.
 };
 
 #include "Param_NSSolver.hxx"

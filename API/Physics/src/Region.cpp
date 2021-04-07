@@ -2953,6 +2953,7 @@ void Region::TestReconstruction()
             grid->SkewnessSummary(actkey);
         }
     }
+    delete actkey;
 }
 
 void Region::ComputeWeight()

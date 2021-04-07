@@ -381,6 +381,13 @@ void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nB
 
     DumpToVTK DumpToVTK(datalist, filename, CharacteristicBoundary);
     DumpToVTK.Run();
+
+    //for ( int izone =  0; izone < nBlocks; ++ izone )
+    //{      
+    //    delete datalist.at(izone);
+    //}
+    //datalist.resize(0);
+
 }
 
 void ComputeCharacteristicBoundary(Grid *grid_in, DataContainer *data)

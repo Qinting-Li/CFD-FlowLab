@@ -130,11 +130,11 @@ void NSSolverUnstruct::AllocateGlobalVar(Grid *gridIn)
 
     RDouble **q   = NewPointer2<RDouble>(nEquation, nTotal);
     RDouble **res = NewPointer2<RDouble>(nEquation, nTotal);
-    RDouble *spec = new RDouble [nTotal];
+    RDouble *diagonal = new RDouble [nTotal];
 
     grid->UpdateDataPtr("q", q);
     grid->UpdateDataPtr("res", res);
-    grid->UpdateDataPtr("spec", spec);
+    grid->UpdateDataPtr("diagonal", diagonal);
     
     int nTotalNode = grid->GetNTotalNode();
     RDouble **qnode = NewPointer2<RDouble>(nEquation, nTotalNode);
@@ -171,26 +171,26 @@ void NSSolverUnstruct::AllocateGlobalVar(Grid *gridIn)
     RDouble *rtem = new RDouble [nTotal];
     grid->UpdateDataPtr("rtem"  , rtem);
 
-    RDouble *srad = new RDouble [nTotalCell];
-    grid->UpdateDataPtr("srad"  , srad);
+    RDouble *invSpectralRadius = new RDouble [nTotalCell];
+    grid->UpdateDataPtr("invSpectralRadius", invSpectralRadius);
 
-    RDouble *srv = new RDouble [nTotalCell];
-    grid->UpdateDataPtr("srv"  , srv);
+    RDouble *visSpectralRadius = new RDouble [nTotalCell];
+    grid->UpdateDataPtr("visSpectralRadius", visSpectralRadius);
 
     int ns = nEquation - nNSEquation;
 
     int nChemicalRadius = parameters->GetNChemicalRadius();
 
-    if ( nChemical == 1 && nChemicalRadius == 1 )
+    if (nChemical == 1 && nChemicalRadius == 1)
     {
         RDouble **srs = NewPointer2<RDouble>(ns,nTotalCell);
-		grid->UpdateDataPtr("srs"  , srs);
-	}
+        grid->UpdateDataPtr("srs"  , srs);
+    }
 
     int isUnsteady = parameters->GetIsUnsteady();
 
-	if (isUnsteady != 0)
-	{
+    if (isUnsteady != 0)
+    {
         RDouble **q_unsteady_n1   = NewPointer2<RDouble>(nEquation, nTotal);
         RDouble **q_unsteady_n2   = NewPointer2<RDouble>(nEquation, nTotal);
         RDouble **res_unsteady_n1 = NewPointer2<RDouble>(nEquation, nTotal);
@@ -254,7 +254,7 @@ void NSSolverUnstruct::AllocateGlobalVar(Grid *gridIn)
     grid->UpdateDataPtr("gradTemperatureFaceZ", gradTemperatureFaceZ);
 
     systemgridtype = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if(MIXGRID == systemgridtype)
+    if (MIXGRID == systemgridtype)
     {
         InitiallimiterOnlyForMixGrid(grid);
 
@@ -265,6 +265,8 @@ void NSSolverUnstruct::AllocateGlobalVar(Grid *gridIn)
             InitialViscousfaceproxyOnlyForMixGrid(grid);
         }
     }
+    //DelPointer2(res);
+    //DelPointer2(q);
 }
 
 void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
@@ -274,7 +276,7 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-	Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct * parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
 
@@ -282,34 +284,34 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
 
     RDouble **q    = reinterpret_cast <RDouble **> (grid->GetDataPtr("q"));
     RDouble **res  = reinterpret_cast <RDouble **> (grid->GetDataPtr("res"));
-    RDouble *spec = reinterpret_cast <RDouble *> (grid->GetDataPtr("spec"));
+    RDouble *diagonal = reinterpret_cast <RDouble *> (grid->GetDataPtr("diagonal"));
 
     DelPointer2(q);
     DelPointer2(res);
-    delete []spec;
+    delete [] diagonal;
 
     if (grid->GetLevel() == 0)
     {
         int *nodeBCType = reinterpret_cast <int *> (grid->GetDataPtr("nodeBCType"));
-        delete []nodeBCType;
+        delete [] nodeBCType;
     }
 
     RDouble *rtem = reinterpret_cast <RDouble *> (grid->GetDataPtr("rtem"));
-    delete []rtem;
-    RDouble *srad = reinterpret_cast <RDouble *> (grid->GetDataPtr("srad"));
-    delete []srad;
-    RDouble *srv  = reinterpret_cast <RDouble *> (grid->GetDataPtr("srv"));
-    delete []srv;
+    delete [] rtem;
+    RDouble *invSpectralRadius = reinterpret_cast <RDouble *> (grid->GetDataPtr("invSpectralRadius"));
+    delete [] invSpectralRadius;
+    RDouble *visSpectralRadius = reinterpret_cast <RDouble *> (grid->GetDataPtr("visSpectralRadius"));
+    delete [] visSpectralRadius;
 
-    if ( nChemical == 1 && nChemicalRadius == 1 )
+    if (nChemical == 1 && nChemicalRadius == 1)
     {
         RDouble **srs = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("srs") );
-		DelPointer2(srs  );
-	}
+        DelPointer2(srs  );
+    }
 
     int isUnsteady = parameters->GetIsUnsteady();
-	if (isUnsteady != 0)
-	{
+    if (isUnsteady != 0)
+    {
         RDouble **q_unsteady_n1   = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q_unsteady_n1"  ) );
         RDouble **q_unsteady_n2   = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q_unsteady_n2"  ) );
         RDouble **res_unsteady_n1 = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("res_unsteady_n1") );
@@ -762,7 +764,7 @@ void NSSolverUnstruct::ReadRestartH5(ActionKey *actkey)
     int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
     int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
     bool isReadAverageFlow = ifStaticsFlowField && (outputStepInterval >= startStatisticStep);
-    if(isReadAverageFlow)
+    if(isReadAverageFlow && (!ifStartFromSteadyResults))
     {
         ReadData(grploc, primitiveVariables[0], "qAverage");
         for (int iEquation = 0; iEquation < nEquation; ++ iEquation)
@@ -3161,15 +3163,15 @@ void NSSolverUnstruct::SpectrumRadiusInviscid(Grid *gridIn)
 
     RDouble **q   = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     RDouble *gama = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
-    RDouble *invSpectrum = reinterpret_cast<RDouble *> (grid->GetDataPtr("srad"));
+    RDouble *invSpectrum = reinterpret_cast<RDouble *> (grid->GetDataPtr("invSpectralRadius"));
 
     RDouble *rho, *u, *v, *w, *p;
 
     rho = q[IDX::IR];
     u   = q[IDX::IU];
-	v   = q[IDX::IV];
-	w   = q[IDX::IW];
-	p   = q[IDX::IP];
+    v   = q[IDX::IV];
+    w   = q[IDX::IW];
+    p   = q[IDX::IP];
 
 	PHSPACE::SetField(invSpectrum, 0.0, nTotalCell);
 
@@ -3228,9 +3230,9 @@ void NSSolverUnstruct::SpectrumRadiusViscous(Grid *gridIn)
 	int nTotalFace = grid->GetNTotalFace();
 	int nBoundFace = grid->GetNBoundFace();
 
-	RDouble **q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
-	RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
-    RDouble *visSpectrum = reinterpret_cast< RDouble *  > (grid->GetDataPtr("srv"));
+	RDouble **q   = reinterpret_cast< RDouble **> (grid->GetDataPtr("q"));
+	RDouble *gama = reinterpret_cast< RDouble * > (grid->GetDataPtr("gama"));
+    RDouble *visSpectrum = reinterpret_cast< RDouble *> (grid->GetDataPtr("visSpectralRadius"));
 
 	RDouble *rho, *u, *v, *w, *p;
 	rho = q[IDX::IR];
@@ -3338,7 +3340,7 @@ void NSSolverUnstruct::PreconInvSpectrumRadius(Grid *gridIn)
 	RDouble **q          = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
 	RDouble *gama        = reinterpret_cast<RDouble  *> (grid->GetDataPtr("gama"));
 	RDouble **t          = reinterpret_cast<RDouble **> (grid->GetDataPtr("t"));
-    RDouble *invSpectrum = reinterpret_cast<RDouble  *> (grid->GetDataPtr("srad"));
+    RDouble *invSpectrum = reinterpret_cast<RDouble  *> (grid->GetDataPtr("invSpectralRadius"));
 
 	RDouble refMachNumber = GetControlParameters()->GetRefMachNumber();
 
@@ -3415,14 +3417,14 @@ void NSSolverUnstruct::LocalTimeStep(Grid *gridIn)
 	RDouble **q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
 	RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
 	RDouble *dt   = reinterpret_cast< RDouble *  > (grid->GetDataPtr("dt"));
-    RDouble *srad = reinterpret_cast<RDouble *> (grid->GetDataPtr("srad"));
-    RDouble *srv  = reinterpret_cast<RDouble *> (grid->GetDataPtr("srv"));
+    RDouble *invSpectralRadius = reinterpret_cast<RDouble *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble *visSpectralRadius = reinterpret_cast<RDouble *> (grid->GetDataPtr("visSpectralRadius"));
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
 	RDouble cfl = ComputeCFL();
 
 	int isInMGIniting = GlobalDataBase::GetIntParaFromDB("isInMGIniting");
-	if(!grid->IsFinestGrid() && !isInMGIniting)
+	if (!grid->IsFinestGrid() && !isInMGIniting)
 	{
 		RDouble mgCFLScale = parameters->GetMgCFLScale();
 		cfl *= mgCFLScale;
@@ -3434,7 +3436,7 @@ void NSSolverUnstruct::LocalTimeStep(Grid *gridIn)
 	//! Inviscid time step.
 	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
 	{
-		dt[iCell] = cfl * volume[iCell] / srad[iCell];
+		dt[iCell] = cfl * volume[iCell] / invSpectralRadius[iCell];
 	}
 
     int isViscous = parameters->IsViscous();
@@ -3445,7 +3447,7 @@ void NSSolverUnstruct::LocalTimeStep(Grid *gridIn)
         RDouble *dtViscous = new RDouble [nTotalCell];
 		for (int iCell = 0; iCell < nTotalCell; ++ iCell)
 		{
-			dtViscous[iCell] = cfl * volume[iCell] / srv[iCell];
+			dtViscous[iCell] = cfl * volume[iCell] / visSpectralRadius[iCell];
 		}
 
 		//! Consider the viscous time step.
@@ -3485,8 +3487,8 @@ void NSSolverUnstruct::GlobalTimeStep(Grid *gridIn)
 void NSSolverUnstruct::LocalGlobalTimeStep(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
-    int      * leftCellofFace = grid->GetLeftCellOfFace();
-    int      * rightCellofFace = grid->GetRightCellOfFace();
+    int * leftCellofFace = grid->GetLeftCellOfFace();
+    int * rightCellofFace = grid->GetRightCellOfFace();
 
     RDouble * xfn  = grid->GetFaceNormalX();
     RDouble * yfn  = grid->GetFaceNormalY();
@@ -3507,7 +3509,7 @@ void NSSolverUnstruct::LocalGlobalTimeStep(Grid *gridIn)
 
     //RDouble refGama = parameters->GetRefGama();
 
-    int le,re;
+    int le, re;
     RDouble um, vm, wm, cm;
 
     RDouble *rho, *u, *v, *w, *p;
@@ -3521,14 +3523,14 @@ void NSSolverUnstruct::LocalGlobalTimeStep(Grid *gridIn)
     p   = q[IP];
 
     //! Set dt to zero.
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         dt[iCell] = 0.0;
     }
 
     BCRecord ** bcr = grid->GetBCRecord();
 
-    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le = leftCellofFace[ iFace ];
 
@@ -3536,11 +3538,11 @@ void NSSolverUnstruct::LocalGlobalTimeStep(Grid *gridIn)
         vm      = v[le];
         wm      = w[le];
         cm      = sqrt( gama[le] * p[le] / rho[le] );
-        dt[le] += ( ABS( xfn[iFace] * um + yfn[iFace] * vm + zfn[iFace] * wm - vgn[iFace] ) + cm ) * area[iFace];
+        dt[le] += (ABS(xfn[iFace] * um + yfn[iFace] * vm + zfn[iFace] * wm - vgn[iFace]) + cm) * area[iFace];
     }
 
     //! For interior faces.
-    for ( int iFace = nBoundFace; iFace < nTotalFace; ++ iFace )
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
         le = leftCellofFace[ iFace ];
         re = rightCellofFace[ iFace ];
@@ -3558,12 +3560,12 @@ void NSSolverUnstruct::LocalGlobalTimeStep(Grid *gridIn)
         dt[re] += ( ABS( xfn[iFace] * um + yfn[iFace] * vm + zfn[iFace] * wm - vgn[iFace] ) + cm ) * area[iFace];
     }
 
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         dt[iCell] = cfl * vol[iCell] / dt[iCell];
     }
 
-	Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct * parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
 
     if (viscousType > 0)
@@ -5915,7 +5917,7 @@ void NSSolverUnstruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
     RDouble **q = reinterpret_cast <RDouble **> (grid->GetDataPtr("q"));
 	RDouble **t = reinterpret_cast <RDouble **> (grid->GetDataPtr("t"));
 	RDouble *gamma = reinterpret_cast <RDouble *> (grid->GetDataPtr("gama"));
-    RDouble *spec = reinterpret_cast <RDouble *> (grid->GetDataPtr("spec"));
+    RDouble *diagonal = reinterpret_cast <RDouble *> (grid->GetDataPtr("diagonal"));
     RDouble **res = reinterpret_cast <RDouble **> (grid->GetDataPtr("res"));
 
 	Param_NSSolverUnstruct *parameters = GetControlParameters();
@@ -5958,7 +5960,7 @@ void NSSolverUnstruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
 
 	using namespace IDX;
 
- 	//SpectrumRadius(grid,spec);
+    //SpectrumRadius(grid, diagonal);
 
     int **cell2face = grid->GetCell2Face();
     int *faceNumberOfEachCell = grid->GetFaceNumberOfEachCell();
@@ -6118,12 +6120,12 @@ void NSSolverUnstruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
             //! dq = { (b - Ux) - Lx } / D.
             //! Note: the 'dq' has actually initialized by the residual at the beginning of this function.
             //! the 'rhs0' is the total Delta Flux of the neighbors.            
-            //! rhs0: Lx        spec: D.
-            dqTry[m] = (dq[m][iCell] - Ux[m] - rhs0[m]) / spec[iCell];
+            //! rhs0: Lx    diagonal: D.
+            dqTry[m] = (dq[m][iCell] - Ux[m] - rhs0[m]) / diagonal[iCell];
 
             //! Store the lower forward sweep delta-flux, which will be used in the backward sweep.
             deltaFlux[m][iCell] += rhs0[m];
-		}
+        }
 
         for (int m = 0; m < nLaminar; ++ m)
         {
@@ -6179,7 +6181,7 @@ void NSSolverUnstruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fie
     RDouble **q = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
 	RDouble **t = reinterpret_cast<RDouble **> (grid->GetDataPtr("t"));
 	RDouble *gamma = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
-    RDouble *spec = reinterpret_cast <RDouble *> (grid->GetDataPtr("spec"));
+    RDouble *diagonal = reinterpret_cast <RDouble *> (grid->GetDataPtr("diagonal"));
     RDouble **res = reinterpret_cast <RDouble **> (grid->GetDataPtr("res"));
 
 	Param_NSSolverUnstruct *parameters = GetControlParameters();
@@ -6368,8 +6370,8 @@ void NSSolverUnstruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fie
             //! Note: the 'dq' has been updated by the forward sweep.
             //! the 'rhs0' is the total Delta Flux of the neighbors.
             //! x = {(b - LX) - Ux} / D.
-            //! rhs0: Ux.               spec: D.
-            dqTry[m] = (dq[m][iCell] - Lx[m] - rhs0[m]) / spec[iCell];
+            //! rhs0: Ux.    diagonal: D.
+            dqTry[m] = (dq[m][iCell] - Lx[m] - rhs0[m]) / diagonal[iCell];
 
             //! Store the upper backward sweep delta-flux, which will be used in the forward sweep.
             deltaFlux[m][iCell] += rhs0[m];
@@ -6426,7 +6428,7 @@ void NSSolverUnstruct::SpectrumRadius(Grid *gridIn)
     }
 }
 
-void NSSolverUnstruct::Spectrum(Grid *gridIn)
+void NSSolverUnstruct::Diagonal(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast( gridIn );
     int nTotalCell = grid->GetNTotalCell();
@@ -6443,10 +6445,10 @@ void NSSolverUnstruct::Spectrum(Grid *gridIn)
 	RDouble *vgn  = grid->GetFaceNormalVelocity();
 	RDouble *vol  = grid->GetCellVolume();
 
-    RDouble *dt   = reinterpret_cast<RDouble *> (grid->GetDataPtr("dt"));
-    RDouble *srad = reinterpret_cast<RDouble *> (grid->GetDataPtr("srad"));
-    RDouble *srv  = reinterpret_cast<RDouble *> (grid->GetDataPtr("srv"));
-    RDouble *spec = reinterpret_cast <RDouble *> (grid->GetDataPtr("spec"));
+    RDouble *dt = reinterpret_cast<RDouble *> (grid->GetDataPtr("dt"));
+    RDouble *invSpectralRadius = reinterpret_cast<RDouble *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble *visSpectralRadius = reinterpret_cast<RDouble *> (grid->GetDataPtr("visSpectralRadius"));
+    RDouble *diagonal = reinterpret_cast <RDouble *> (grid->GetDataPtr("diagonal"));
 
 	using namespace IDX;
 
@@ -6457,7 +6459,7 @@ void NSSolverUnstruct::Spectrum(Grid *gridIn)
 	{
 		for (int iCell = 0; iCell < nTotal; ++ iCell)
 		{
-			spec[iCell] = 1.0 / dt[iCell]; //! notice: the dt[iCell] has divided vol, so the spec[iCell] has multiplied the vol by default.
+			diagonal[iCell] = 1.0 / dt[iCell];    //! notice: the dt[iCell] has divided vol, so the diagonal[iCell] has multiplied the vol by default.
 		}
 	}
 	else
@@ -6470,13 +6472,13 @@ void NSSolverUnstruct::Spectrum(Grid *gridIn)
 
 		for (int iCell = 0; iCell < nTotal; ++ iCell)
 		{
-            spec[iCell] = dualTimeSpectrumC1 * vol[iCell] + (dualTimeSpectrumC2 / dt[iCell]); //! notice: the dt[iCell] has divided vol, as same as above.
+            diagonal[iCell] = dualTimeSpectrumC1 * vol[iCell] + (dualTimeSpectrumC2 / dt[iCell]);    //! notice: the dt[iCell] has divided vol, as same as above.
 		}
 	}
 
 	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        spec[iCell] += srad[iCell];
+        diagonal[iCell] += invSpectralRadius[iCell];
     }
 
     // If the flow is viscous, it need to count the contribution from viscosity.
@@ -6486,7 +6488,7 @@ void NSSolverUnstruct::Spectrum(Grid *gridIn)
     {
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            spec[iCell] += srv[iCell];
+            diagonal[iCell] += visSpectralRadius[iCell];
         }
     }
 
@@ -6507,11 +6509,11 @@ void NSSolverUnstruct::Spectrum(Grid *gridIn)
 			{
                 rad_chem = MAX(nChemicalRadius * srs[ m ][ iCell ], rad_chem);
 			}
-            spec[iCell] += rad_chem; //! Referring to the structure part, the dt[iCell] contained in the spec[iCell] can be improved for more stability here.
+            diagonal[iCell] += rad_chem;    //! Referring to the structure part, the dt[iCell] contained in the diagonal[iCell] can be improved for more stability here.
 
         }
-	}
-    //grid->SetGhostCell(spec, nLaminar);
+    }
+    //grid->SetGhostCell(diagonal, nLaminar);
 }
 
 void NSSolverUnstruct::RestrictDQ(RDouble *dqtry, int nm, RDouble lim_max)
@@ -8454,6 +8456,7 @@ void NSSolverUnstruct::GetGradientField(Grid *gridIn)
         PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureFaceY, "dtdy", nTemperatureModel);
         PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureFaceZ, "dtdz", nTemperatureModel);
     }
+    delete qProxy;
 }
 
 void NSSolverUnstruct::InitiallimiterOnlyForMixGrid(Grid *gridIn)

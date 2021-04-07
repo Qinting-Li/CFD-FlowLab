@@ -20,6 +20,32 @@ int intervalStepRes   = 1;
 int ifLowSpeedPrecon = 0;
 
 #########################################################################
+#                       File In or Out                                  #
+#########################################################################
+// gridtype: Grid type of original grid file.
+//           0 -- Unstructured grid.
+//           1 -- Structured grid.
+// axisup:   Type of Cartisien coordinates system, used in grid conversion.
+//           1 -- Y upward. (default)
+//           2 -- Z upward.
+// from_gtype: Type of grid data type in grid conversion process.
+//            -1 -- MULTI_TYPE.
+//             1 -- PHengLEI, *.fts.
+//             2 -- CGNS, *.cgns.
+//             3 -- Plot3D type of structured grid, *.dat/*.grd.
+//             4 -- Fieldview type of unstructured grid, *.dat/*.inp.
+//             5 -- Fluent, *.cas/*.msh.
+//             6 -- Ustar, mgrid.in.
+//             7 -- Hybrid, include both of unstructured and structured grid, *.fts.
+//             8 -- GMSH, *.msh.
+// from_gfile: path of original grid file.
+
+int    gridtype   = 0;
+int    axisup     = 1;
+int    from_gtype = 5;
+string from_gfile = "./grid/rae2822_hybrid2d.cas";
+
+#########################################################################
 #                       Inflow Parameter                                #
 #########################################################################
 // refMachNumber: Mach number.

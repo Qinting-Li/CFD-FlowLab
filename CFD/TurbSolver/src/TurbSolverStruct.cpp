@@ -556,7 +556,7 @@ void TurbSolverStr::ReadRestartH5(ActionKey *actkey)
         int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
         bool isReadAverageFlow = ifStaticsFlowField && (outIterStepofTurb >= startStatisticStep);
-        if(isReadAverageFlow)
+        if(isReadAverageFlow && (!ifStartFromSteadyResults))
         {
             ReadData(grploc, &qAverageTurb(ist, jst, kst, mst), "qAverageTurb");
 
@@ -2101,7 +2101,7 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     }
 }
 
-void TurbSolverStr::Spectrum(Grid *gridIn)
+void TurbSolverStr::Diagonal(Grid *gridIn)
 {
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulentEquation = parameters->GetNTurbulentEquation();
@@ -3936,7 +3936,7 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
                     //! dq = { (b - Ux) - Lx } / D.
                     //! Note: the 'dq' has actually initialized by the residual at the beginning of this function.
                     //! the 'rhs0' is the total Delta Flux of the neighbors.            
-                    //! rhs0: Lx        spec: D.
+                    //! rhs0: Lx    diagonal: D.
                     dqTurbulent(i, j, k, m) = (dqTurbulent(i, j, k, m) - Ux[m] - rhs0[m]) / spectumTurbulent(i, j, k, m);
 
                     //! Store the lower forward sweep delta-flux, which will be used in the backward sweep.
@@ -4050,7 +4050,7 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, Field
                     //! Note: the 'dq' has been updated by the forward sweep.
                     //! The 'rhs0' is the total Delta Flux of the neighbors.
                     //! x = {(b - LX) - Ux} / D.
-                    //! rhs0: Ux.               spec: D.
+                    //! rhs0: Ux.    diagonal: D.
                     dqTurbulent(i, j, k, m) = (dqTurbulent(i, j, k, m) - Lx[m] - rhs0[m]) / spectumTurbulent(i, j, k, m);
 
                     //! Store the upper backward sweep delta-flux, which will be used in the forward sweep.

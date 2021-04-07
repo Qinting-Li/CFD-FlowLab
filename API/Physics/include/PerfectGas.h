@@ -37,7 +37,7 @@ public:
     ~PerfectGas();
 
 public:
-
+    void GetReferenceParameters(FluidParameter &refParam){refParam = referenceParameterDimensional;};
 public:
     void Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q);
 

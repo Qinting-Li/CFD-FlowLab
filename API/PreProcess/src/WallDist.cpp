@@ -118,6 +118,7 @@ void AllocateWalldist()
             grid->AllocateWalldist(actkey);
         }
     }
+    delete actkey;
 }
 
 #ifdef USE_TecplotLib
@@ -324,6 +325,7 @@ void WriteWallDist()
     }
 
     ParallelCloseHDF5File(actkey);
+    delete actkey;
 }
 
 void DumpWallDistToFile(ActionKey *actkey, int iZone)

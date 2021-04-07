@@ -69,6 +69,8 @@ private:
     int nPrecondition;
     int nTemperatureModel;
     int nEntrFix;
+    int nNitrogenIndex;
+    int nElectronIndex;
 
     RDouble refMachNumber;
 
@@ -91,7 +93,10 @@ public:
     void SetIfPrecondition(const bool nPrecondition) {this->nPrecondition = nPrecondition;}
     void SetNumberOfChemical(const int nChemical) {this->nChemical = nChemical;}
     void SetNumberOfTemperatureModel(const int nTemperatureModel) {this->nTemperatureModel = nTemperatureModel;}
-    void SetNumberOfTotalEquation(const int nEquation) {this->nEquation = nEquation;}	
+    void SetNumberOfTotalEquation(const int nEquation) {this->nEquation = nEquation;}
+    void SetIndexOfNitrogen(const int nIndex) {this->nNitrogenIndex = nIndex;}
+    void SetIndexOfElectron(const int nIndex) {this->nElectronIndex = nIndex;}
+
     void SetEntropyFixMethod(const int nEntrFix) {this->nEntrFix = nEntrFix;}
     void SetEntropyFixCoefficients(const RDouble entrFixCoefLeft, const RDouble entrFixCoefRight)
     {this->entrFixCoefLeft = entrFixCoefLeft; this->entrFixCoefRight = entrFixCoefRight;}
@@ -111,6 +116,9 @@ public:
     int GetNumberOfTotalEquation() {return this->nEquation;}
     int GetNumberOfChemical() {return this->nChemical;}
     int GetNumberOfTemperatureModel() {return this->nTemperatureModel;}
+    int GetIndexOfNitrogen() {return this->nNitrogenIndex;}
+    int GetIndexOfElectron() {return this->nElectronIndex;}
+
     int GetEntropyFixMethod() {return this->nEntrFix;}
     int GetIfPrecondition() {return this->nPrecondition;}
     RDouble GetLeftEntropyFixCoefficient() {return this->entrFixCoefLeft;}

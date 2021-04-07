@@ -34,6 +34,9 @@ NSSolverStruct::NSSolverStruct()
     {
         gradientCellCenterUVWT[i] = 0;
     }
+    nWallBC = 1; //The number of surface boundary conditions.
+    nMaxSurfaceCell = 1; //The number of surface cells.
+    nIonizationFlag = 0; //The flag of chemical reactions.
 }
 
 NSSolverStruct::~NSSolverStruct()
@@ -106,15 +109,16 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
     Range N(0, nUVWTIndex - 1);
     Range T(0, nTemperatureModel - 1);
     Range D(0, nDim    - 1);
+    //Range Direction(1, 3);
 
     RDouble4D *q        = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *residual = new RDouble4D(I, J, K, M, fortranArray);
     RDouble3D *dt       = new RDouble3D(I, J, K,    fortranArray);
     RDouble3D *gama     = new RDouble3D(I, J, K,    fortranArray);
     RDouble4D *t        = new RDouble4D(I, J, K, T, fortranArray);
-    RDouble4D *srv      = new RDouble4D(I, J, K, D, fortranArray);      
-    RDouble4D *srad     = new RDouble4D(I, J, K, D, fortranArray);
-    RDouble4D *spec     = new RDouble4D(I, J, K, M, fortranArray);      //! Sacrificing space to improve efficiency.
+    RDouble4D *visSpectralRadius = new RDouble4D(I, J, K, D, fortranArray);
+    RDouble4D *invSpectralRadius = new RDouble4D(I, J, K, D, fortranArray);
+    RDouble4D *diagonal = new RDouble4D(I, J, K, M, fortranArray);    //! Sacrificing space to improve efficiency.
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
@@ -137,9 +141,9 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
     grid->UpdateDataPtr("dt"  , dt);
     grid->UpdateDataPtr("gama", gama);
     grid->UpdateDataPtr("t"   , t );
-    grid->UpdateDataPtr("srv" , srv);
-    grid->UpdateDataPtr("srad", srad);
-    grid->UpdateDataPtr("spec", spec);
+    grid->UpdateDataPtr("visSpectralRadius", visSpectralRadius);
+    grid->UpdateDataPtr("invSpectralRadius", invSpectralRadius);
+    grid->UpdateDataPtr("diagonal", diagonal);
 
     //! Allocate memories.
     int timeIntegration = parameters->GetTimeIntegration();
@@ -150,11 +154,6 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
     }
     if (nSourceTerm > 0)
     {
-        //! To store the chemical source terms.
-        //RDouble4D *chemicalSource = new RDouble4D(I, J, K, Range(0, nSourceTerm - 1), fortranArray);
-        //*chemicalSource = 0;
-        //grid->UpdateDataPtr("sourceTerm", chemicalSource);
-
         //! To store the Jacobian matrix of source term.
         RDouble4D *sourceJacobian = new RDouble4D(I, J, K, Range(0, nSourceTerm * nSourceTerm - 1), fortranArray);
         //*sourceJacobian = 0;
@@ -272,21 +271,72 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
     }
 
     //! Save the temperature on wall.
+    GetSurfaceCellNumber(gridIn);
+    RDouble2D *firstLayerHeight = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
+    grid->UpdateDataPtr("firstLayerHeight", firstLayerHeight);
+    //Compute the heights of cells on the first grid layer.
+    ComputeFirstLayerGridHeight(gridIn);
+
     RDouble Twall = parameters->GetWallTemperature();
-    if (ABS(Twall) <= 1.0e-12)
+    if (Twall >= 0.0)
     {
-        int nSize = MAX(ni, nj);
-        if (nDim > 2)
-        {
-            nSize = MAX(MAX(ni*nj, ni*nk), nj*nk);
-        }
         RDouble refTemperature = parameters->GetRefDimensionalTemperature();
-        RDouble *temperatureWall = new RDouble[nSize];
-        for (int iWall = 0; iWall < nSize; ++ iWall)
+        RDouble refT = Twall / refTemperature;
+        if (ABS(Twall) <= EPSILON)
         {
-            temperatureWall[iWall] = 300.0 / refTemperature; //! Initialization with the freestream temperature.
+            refT = 1.0; //Radiation equilibrium temperature wall.
         }
-        grid->UpdateDataPtr("Twall", temperatureWall);
+
+        RDouble2D *temperatureWall = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
+        //! Initialization with the freestream temperature.
+        for (int iWall = 0; iWall < nWallBC; ++ iWall)
+        {
+            for (int iCell = 0; iCell < nMaxSurfaceCell; ++ iCell)
+            {
+                (*temperatureWall)(iWall, iCell) = refT;
+            }
+        }
+        grid->UpdateDataPtr("surfaceTemperature", temperatureWall);
+    }
+
+    //Allocate the memories for catalytic wall.
+    if (nChemical > 0 && nSpeciesNumber > 0)
+    {
+        RDouble catalyticCoef = parameters->GetCatalyticCoef();
+        RDouble nIndexOfElectron = parameters->GetIndexOfElectron();
+        if (nIndexOfElectron >= 0)
+        {
+            this->nIonizationFlag = 1;
+        }
+
+        RDouble *fcwMassFraction = parameters->GetFullyCatalyticMassFraction();
+        RDouble initMassFraction[MAX_SPECIES_NUM];
+        for (int s = 0; s < nSpeciesNumber; ++ s)
+        {
+            initMassFraction[s] = fcwMassFraction[s];
+        }
+
+        if (ABS(catalyticCoef) <= EPSILON) //Initialization of the initial mass fraction of species.
+        {
+            RDouble *primitiveVar = parameters->GetPrimitiveVarFarfield();
+            for (int s = 0; s < nSpeciesNumber; ++ s)
+            {
+                initMassFraction[s] = primitiveVar[nNSEquation + s];
+            }
+        }
+
+        RDouble3D *surfaceMassFraction = new RDouble3D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), Range(0, nSpeciesNumber - 1), fortranArray);
+        for (int iWall = 0; iWall < nWallBC; ++ iWall)
+        {
+            for (int iCell = 0; iCell < nMaxSurfaceCell; ++ iCell)
+            {
+                for (int s = 0; s < nSpeciesNumber; ++ s)
+                {
+                    (*surfaceMassFraction)(iWall, iCell, s) = initMassFraction[s];
+                }
+            }
+        }
+        grid->UpdateDataPtr("surfaceMassFraction", surfaceMassFraction);
     }
 
     //! added by myk 202010, for conservation of flux
@@ -323,23 +373,23 @@ void NSSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
 
-    RDouble4D *q         = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q" ));
-    RDouble4D *residual  = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
-    RDouble3D *dt        = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
-    RDouble3D *gama      = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
-    RDouble4D *t         = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t" ));
-    RDouble4D *srv       = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
-    RDouble4D *srad      = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D *spec      = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
+    RDouble4D *q        = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q" ));
+    RDouble4D *residual = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
+    RDouble3D *dt       = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
+    RDouble3D *gama     = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
+    RDouble4D *t        = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t" ));
+    RDouble4D *visSpectralRadius = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
+    RDouble4D *invSpectralRadius = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D *diagonal = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
 
     delete q;
     delete residual;
     delete dt;
     delete gama;
     delete t;
-    delete srv;
-    delete srad;
-    delete spec;
+    delete visSpectralRadius;
+    delete invSpectralRadius;
+    delete diagonal;
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     int timeIntegration = parameters->GetTimeIntegration();
@@ -355,9 +405,6 @@ void NSSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
     int nSourceTerm = nEquation - nNSEquation;     //! Number of source term.
     if (nSourceTerm > 0)
     {
-        //RDouble4D *chemicalSource = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("sourceTerm"));
-        //delete chemicalSource;
-
         RDouble4D *sourceJacobian = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("sourceJacobian"));
         delete sourceJacobian;
 
@@ -466,13 +513,51 @@ void NSSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
 
         RDouble4D *speciesEnthalpy = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("hSpecies"));
         delete speciesEnthalpy;
+
+        RDouble3D *surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
+        delete surfaceMassFraction;
     }
 
+    RDouble2D *firstLayerHeight = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("firstLayerHeight"));
+    delete firstLayerHeight;
     RDouble Twall = parameters->GetWallTemperature();
-    if (ABS(Twall) <= 1.0e-12)
+    if (Twall >= 0.0)
     {
-        RDouble *temperatureWall = reinterpret_cast <RDouble *> (grid->GetDataPtr("Twall"));
-        delete []temperatureWall;
+        RDouble2D *temperatureWall = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
+        delete temperatureWall;
+    }
+
+}
+
+void NSSolverStruct::GetSurfaceCellNumber(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    //! Obtain the number of boundary condition regions.
+    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    nWallBC = 0;
+    nMaxSurfaceCell = 0;
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        BCRegion *BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = BCRegion->GetBCType();
+
+        if (!IsWall(BCType))
+        {
+            continue;
+        }
+        ++ nWallBC; //The number of surface regions.
+
+        //The following are surface boundary codes.
+        int ist, ied, jst, jed, kst, ked;
+        BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+        int ni = ied - ist + 1;
+        int nj = jed - jst + 1;
+        int nk = ked - kst + 1;
+        RDouble nCell = MAX(MAX(ni * nk, nj * nk), ni * nj);
+        nMaxSurfaceCell = MAX(nCell, nMaxSurfaceCell);
     }
 }
 
@@ -728,6 +813,10 @@ void NSSolverStruct::DumpRestartH5(ActionKey *actkey)
             RDouble4D &qAverage = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage"));
             WriteData(grploc, &qAverage(ist, jst, kst, mst), "qAverage");
         }
+        else
+        {
+            WriteData(grploc, &qn1(ist, jst, kst, mst), "qAverage");
+        }
     }
 
     H5Gclose(grploc);
@@ -914,19 +1003,22 @@ void NSSolverStruct::ReadRestartH5(ActionKey *actkey)
     int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
     int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
     bool isReadAverageFlow = ifStaticsFlowField && (outIterStep >= startStatisticStep);
+
     if(isReadAverageFlow)
     {
-        ReadData(grploc, &qAverage(ist, jst, kst, mst), "qAverage");
+        if(ifStartFromSteadyResults)
+        {
+            qAverage = primitiveVariables;
+        }
+        else
+        {
+            ReadData(grploc, &qAverage(ist, jst, kst, mst), "qAverage");
 
-        ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
-        GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+            ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
+        }
     }
-    else
-    {
-        qAverage = primitiveVariables;
 
-        GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
-    }
+    GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
 
     GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
 
@@ -1259,7 +1351,7 @@ void NSSolverStruct::AirForceCoefParts(ActionKey *actkey, int partID, int coordi
                 for (int i = ist; i <= ied; ++ i)
                 {
                     //! i, j, k - is first cell index near SOLID_SURFACE.
-					bcRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+                    bcRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
 
                     //! The surface direction of SOLID_SURFACE.
                     RDouble nx = leftOrRightIndex * xfv(iWall, jWall, kWall, nSurface);
@@ -1531,46 +1623,30 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     int nTemperatureModel = parameters->GetTemperatureModel();
     RDouble Twall = parameters->GetWallTemperature();    //! Temperature on wall.
     RDouble referenceTemperature = parameters->GetRefDimensionalTemperature();
-    RDouble Tw = Twall / referenceTemperature;
-    RDouble *surfaceTemperature;
-    if (ABS(Twall) <= 1.0e-12)
+    RDouble2D *surfaceTemperature;
+    if (Twall >= 0.0)
     {
-        surfaceTemperature = reinterpret_cast <RDouble *> (grid->GetDataPtr("Twall"));
+        surfaceTemperature = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
     }
+    RDouble2D *firstLayerHeight = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("firstLayerHeight"));
 
     int numberOfSpecies = parameters->GetNumberOfSpecies();
     //! Allocate the dynamic memory space to save the primitive variables on wall.
     int nEquation = numberOfSpecies + nNSEquation + nTemperatureModel - 1;
     RDouble *wallVariables = new RDouble[nEquation];
-    RDouble wallTemperature[3] = {Tw, Tw, Tw};
+    RDouble wallTemperature[3] = {0.0, 0.0, 0.0};
     RDouble Qw = 0.0, Qtr = 0.0, Qs = 0.0, Qv = 0.0, Qe = 0.0, Pw;
 
     //! The mass fraction of oxygen and nitrogen under the fully catalytic condition.
-    RDouble *speciesEnthalpy = NULL, *uniformMassFractions = NULL, *densityDiffusivity = NULL;
+    RDouble speciesEnthalpy[MAX_SPECIES_NUM], densityDiffusivity[MAX_SPECIES_NUM];
     string *speciesName;
+    RDouble3D *surfaceMassFraction;
     if (nChemical > 0 && numberOfSpecies > 0)
     {
-        RDouble massFractionO2 = parameters->GetMassFractionO2();
-        RDouble massFractionN2 = parameters->GetMassFractionN2();
-        speciesEnthalpy = new RDouble[numberOfSpecies];
-        //! Allocate the dynamic memory space to save the mass fraction of each species.
-        uniformMassFractions = new RDouble[numberOfSpecies];
-        densityDiffusivity = new RDouble[numberOfSpecies];
         speciesName = gas->GetNameOfSpecies();
-
-        for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
-        {
-            uniformMassFractions[iSpecies] = 0.0;
-        }
-
-        int k = gas->GetSpeciesIndex("O2");
-        if (k >= 0)
-        {
-            uniformMassFractions[k] = massFractionO2;
-        }
-        int nNitrogenIndex = gas->GetNitrogenIndex();
-        uniformMassFractions[nNitrogenIndex] = massFractionN2;
+        surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
     }
+
     //! To obtain the reference values.
     RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
     RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
@@ -1579,7 +1655,6 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     RDouble refViscosity = refDimensionalDensity * refVelocity / refReNumber;
     RDouble refHeatFluxDimension = refDimensionalDensity * refVelocity * refVelocity * refVelocity * 0.001; // The dimensional value of total heat flux (kW/m2).
 
-    int nIndex = 0;
     int dataNumber;
     if (nChemical == 0)
     {
@@ -1599,6 +1674,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     dataStore = 0.0;
     isWall    = 0;
 
+    int indexOfWall = 0, indexOfCell = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         BCRegion * BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
@@ -1617,7 +1693,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
         int nSurface = BCRegion->GetFaceDirection() + 1;
         int leftOrRightIndex = BCRegion->GetFaceLeftOrRightIndex();
 
-        nIndex = 0;
+        indexOfCell = 0;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -1626,50 +1702,52 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                 {
                     //! i, j, k - is first CELL index near SOLID_SURFACE.
                     //! iWall, jWall, kWall - is NODE index on SOLID_SURFACE.
-					int iWall, jWall, kWall;
-					BCRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+                    int iWall, jWall, kWall;
+                    BCRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
 
                     RDouble nx = leftOrRightIndex * xfv(iWall, jWall, kWall, nSurface);
                     RDouble ny = leftOrRightIndex * yfv(iWall, jWall, kWall, nSurface);
                     RDouble nz = leftOrRightIndex * zfv(iWall, jWall, kWall, nSurface);
 
-                    //! Obtain the centroid of the surface.
-                    RDouble xCenterWall, yCenterWall, zCenterWall;
-                    grid->FaceCoor(iWall, jWall, kWall, nSurface, xCenterWall, yCenterWall, zCenterWall);
-                    //! Obtain the centroid of the cell on the positive first layer.
-                    RDouble xCellCenter, yCellCenter, zCellCenter;
-                    grid->CenterCoor(i, j, k, xCellCenter, yCellCenter, zCellCenter);
+                    ////! Obtain the centroid of the surface.
+                    //RDouble xCenterWall, yCenterWall, zCenterWall;
+                    //grid->FaceCoor(iWall, jWall, kWall, nSurface, xCenterWall, yCenterWall, zCenterWall);
+                    ////! Obtain the centroid of the cell on the positive first layer.
+                    //RDouble xCellCenter, yCellCenter, zCellCenter;
+                    //grid->CenterCoor(i, j, k, xCellCenter, yCellCenter, zCellCenter);
 
-                    RDouble normalComponetX = faceNormalComponentX(iWall, jWall, kWall, nSurface);
-                    RDouble normalComponetY = faceNormalComponentY(iWall, jWall, kWall, nSurface);
-                    RDouble normalComponetZ = faceNormalComponentZ(iWall, jWall, kWall, nSurface);
+                    RDouble normalComponetX = leftOrRightIndex * faceNormalComponentX(iWall, jWall, kWall, nSurface);
+                    RDouble normalComponetY = leftOrRightIndex * faceNormalComponentY(iWall, jWall, kWall, nSurface);
+                    RDouble normalComponetZ = leftOrRightIndex * faceNormalComponentZ(iWall, jWall, kWall, nSurface);
                     RDouble surfaceArea = faceArea(iWall, jWall, kWall, nSurface);
 
                     //! The projection of the dy called the distance between the center of the cell and that of the surface on normal vector.
-                    RDouble deltaHeight = fabs((xCellCenter - xCenterWall) * normalComponetX + (yCellCenter - yCenterWall) * normalComponetY + (zCellCenter - zCenterWall) * normalComponetZ);
+                    //RDouble deltaHeight = fabs((xCellCenter - xCenterWall) * normalComponetX + (yCellCenter - yCenterWall) * normalComponetY + (zCellCenter - zCenterWall) * normalComponetZ);
+                    RDouble deltaHeight = (*firstLayerHeight)(indexOfWall, indexOfCell);
 
                     //! The index of  first ghost cell layer near SOLID_SURFACE.
                     int iCellGhostLayer = i + s_lr3d[0];
                     int jCellGhostLayer = j + s_lr3d[1];
                     int kCellGhostLayer = k + s_lr3d[2];
 
-                    RDouble pressureFirstCell  = primitiveVars(i ,j ,k ,IP);
+                    RDouble pressureFirstCell = primitiveVars(i ,j ,k ,IP);
+                    wallVariables[IP] = pressureFirstCell;
 
                     //! To obtain the variables on wall.
-                    for (int s = 0; s < nEquation; ++ s)
+                    if (viscousType > 0)
                     {
-                        wallVariables[s] = primitiveVars(i ,j ,k ,s);
+                        wallVariables[IU] = 0.0;
+                        wallVariables[IV] = 0.0;
+                        wallVariables[IW] = 0.0;
                     }
-
+                    else
+                    {
+                        wallVariables[IU] = primitiveVars(i ,j ,k ,IU);
+                        wallVariables[IV] = primitiveVars(i ,j ,k ,IV);
+                        wallVariables[IW] = primitiveVars(i ,j ,k ,IW);
+                    }
                     //! Set temperature on wall.
-                    if (ABS(Twall) <= 1.0e-12)
-                    {
-                        wallTemperature[ITT] = surfaceTemperature[nIndex];
-                        wallTemperature[ITV] = surfaceTemperature[nIndex];
-                        wallTemperature[ITE] = surfaceTemperature[nIndex];
-                        ++ nIndex;
-                    }
-                    else if (Twall < 0.0)
+                    if (Twall < 0.0) //Adabatic wall.
                     {
                         for (int m = 0; m < nTemperatureModel; ++ m)
                         {
@@ -1685,17 +1763,30 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                             wallTemperature[ITE] = wallTemperature[ITV];
                         }
                     }
+                    else //Isothermal wall or radiation equilibrium temperature wall.
+                    {
+                        wallTemperature[ITT] = (*surfaceTemperature)(indexOfWall, indexOfCell);
+                        wallTemperature[ITV] = wallTemperature[ITT];
+                        wallTemperature[ITE] = wallTemperature[ITT];
+                    }
 
                     //! Compute the density on wall using the state equation.
                     wallVariables[IR] = refGama * refMachNumber * refMachNumber * wallVariables[IP] / wallTemperature[ITT];
-                    if (nChemical == 1)
+                    if (nChemical >= 1)
                     {
                         //! To obtain the mass fraction on wall.
-                        if (ABS(catalyticCoef - 1.0) <= 1.0e-12) // Fully catalytic wall.
+                        if (ABS(catalyticCoef) <= EPSILON) // Fully non-catalytic wall.
                         {
                             for (int s = nNSEquation; s < numberOfSpecies + nNSEquation; ++ s)
                             {
-                                wallVariables[s] = uniformMassFractions[s - nNSEquation];
+                                wallVariables[s] = primitiveVars(i ,j ,k ,s);
+                            }
+                        }
+                        else // Fully catalytic wall or finite catalytic wall.
+                        {
+                            for (int s = nNSEquation; s < numberOfSpecies + nNSEquation; ++ s)
+                            {
+                                wallVariables[s] = (*surfaceMassFraction)(indexOfWall, indexOfCell, s - nNSEquation);
                             }
                         }
 
@@ -1716,7 +1807,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
 
                     //! The pressure on wall.
                     //Rhow = wallVariables[IR] * refDimensionalDensity;
-                    Pw = wallVariables[IP] * refDimensionalDensity * pow(refVelocity, 2);
+                    Pw = wallVariables[IP] * refDimensionalDensity * refVelocity * refVelocity;
 
                     //! Pressure drag.
                     RDouble pressureWall = pressureFirstCell;
@@ -1812,7 +1903,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                             gas->ComputeMixtureGasHeatConductivity(wallVariables, wallTemperature[ITT], wallTemperature[ITV], wallTemperature[ITE], heatConductivity[ITT], heatConductivity[ITV], heatConductivity[ITE]);
 
                             //! Compute the heat flux caused by the gradient of translation-rotation temperature near wall.
-                            Qtr = heatConductivity[0] * (temperature(i, j, k, ITT) - wallTemperature[ITT]) / deltaHeight * oRefReNumber;
+                            Qtr = heatConductivity[ITT] * (temperature(i, j, k, ITT) - wallTemperature[ITT]) / deltaHeight * oRefReNumber;
 
                             //! Compute the heat flux caused by the gradient of species enthalpies near wall.
                             Qs = 0.0;
@@ -1821,7 +1912,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                                 //! Compute the diffusion coefficient.
                                 RDouble diffusionCoefficient = densityDiffusivity[s] * speciesEnthalpy[s];
                                 //! Compute the mass diffusion energy.
-                                Qs += diffusionCoefficient * (primitiveVars(i, j, k, s + 5) - wallVariables[s + 5]) / deltaHeight;
+                                Qs += diffusionCoefficient * (primitiveVars(i, j, k, nNSEquation + s) - wallVariables[nNSEquation + s]) / deltaHeight;
                             }
                             Qs *= oRefReNumber;
 
@@ -1895,7 +1986,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                     dataStore(i, j, k, 4) = Qw;
                     dataStore(i, j, k, 5) = Pw;
 
-                    if (nChemical)
+                    if (nChemical > 0)
                     {
                         dataStore(i, j, k, 6) = Qs;
                         dataStore(i, j, k, 7) = Qv;
@@ -1903,9 +1994,11 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                     }
 
                     isWall(i, j, k) = 1;
+                    ++ indexOfCell; //Next grid cell.
                 }
             }
         }
+        ++ indexOfWall; //Next surface region.
     }
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -2097,12 +2190,6 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
     }
 
     delete []wallVariables;
-    if (nChemical > 0 && numberOfSpecies > 0)
-    {
-        delete []speciesEnthalpy;
-        delete []uniformMassFractions;
-        delete []densityDiffusivity;
-    }
 }
 
 //! To obtain the derivatives of the designate primary variable whose sequence number in the array is marked with the valued of nIndex.
@@ -2151,6 +2238,12 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
     {
         return;
     }
+    int nDumpSurfaceInfo = GlobalDataBase::GetIntParaFromDB("nDumpSurfaceInfo");
+    if (nDumpSurfaceInfo == 1)
+    {
+        WriteSurfaceInfo(actkey);
+        return;
+    }
 
     StructGrid *grid = StructGridCast(GetGrid(level));
     int ni = grid->GetNI();
@@ -2190,7 +2283,6 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
     int nLaminar = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
-
     //! Compute the number of species.
     int nSpecies = nLaminar + nChemical - nNSEquation;
     //! The total number of equation.
@@ -2203,39 +2295,13 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
         return;
     }
 
-    //! The mass fraction of oxygen and nitrogen under the fully catalytic condition.
-    RDouble massFractionO2 = 0.0, massFractionN2 = 0.0;
-    if (nChemical > 0)
-    {
-        massFractionO2 = parameters->GetMassFractionO2();
-        massFractionN2 = parameters->GetMassFractionN2();
-    }
-
-    RDouble *speciesEnthalpy = NULL, *uniformMassFractions = NULL, *densityDiffusivity = NULL;
+    RDouble speciesEnthalpy[MAX_SPECIES_NUM], uniformMassFractions[MAX_SPECIES_NUM], densityDiffusivity[MAX_SPECIES_NUM];
     string *speciesName;
-    if (nSpecies > 0)   //! Allocate the memory.
+    RDouble3D *surfaceMassFraction;
+    if (nChemical > 0 && nSpecies > 0)   //! Allocate the memory.
     {
-        speciesEnthalpy = new RDouble[nSpecies];
-        //! Allocate the dynamic memory space to save the mass fraction of each species.
-        uniformMassFractions = new RDouble[nSpecies];
-        densityDiffusivity = new RDouble[nSpecies];
         speciesName = gas->GetNameOfSpecies();
-
-        for (int iSpecies = 0; iSpecies < nSpecies; ++ iSpecies)
-        {
-            uniformMassFractions[iSpecies] = 0.0;
-        }
-
-        int k = gas->GetSpeciesIndex("O2");
-        if (k >= 0)
-        {
-            uniformMassFractions[k] = massFractionO2;
-        }
-        k = gas->GetSpeciesIndex("N2");
-        if (k >= 0)
-        {
-            uniformMassFractions[k] = massFractionN2;
-        }
+        surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
     }
     //! Allocate the dynamic memory space to save the primitive variables on wall.
     RDouble *wallVariables = new RDouble[nEquation];
@@ -2247,11 +2313,12 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     //! The non-dimensional temperature on wall.
     RDouble temperatureWallNonDimensional = temperatureWall / refDimensionalTemperature;
-    RDouble *surfaceTemperature;
-    if (ABS(temperatureWall) <= 1.0e-12)
+    RDouble2D *surfaceTemperature;
+    if (temperatureWall >= 0.0)
     {
-        surfaceTemperature = reinterpret_cast <RDouble *> (grid->GetDataPtr("Twall"));
+        surfaceTemperature = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
     }
+    RDouble2D *firstLayerHeight = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("firstLayerHeight"));
 
     //! The heating rate on wall. totalHeatViaGradients and totalHeatWall is the total heat rate, the former is computed with gradients,\n
     //! while the latter is computed with the first-order difference. transRotationHeat, vibrationHeat, eletronHeat, and speciesHeat are \n
@@ -2317,7 +2384,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
     //! The universal gas constant.
     RDouble gasConstant = gas->GetUniversalGasConstant();
 
-    int nIndex = 0, nCount = 0;
+    int nIndex = 0, indexOfWall = 0, indexOfCell = 0;
     CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();    //! Obtain the number of boundary condition regions.
 
@@ -2352,7 +2419,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
             <<      " k = " << ked - kst + 1
             << " f = point " << " \n";
 
-        nCount = 0;
+        indexOfCell = 0;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -2362,27 +2429,21 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                     //! i, j, k - is first CELL index near SOLID_SURFACE.
                     //! iWall, jWall, kWall - is NODE index on SOLID_SURFACE.
                     int iWall, jWall, kWall;
-					BCRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+                    BCRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
 
                     //! The index of ghost cell on the negative first layer.
                     int iCellGhostLayer = i + faceDirectionIndex[0];
                     int jCellGhostLayer = j + faceDirectionIndex[1];
                     int kCellGhostLayer = k + faceDirectionIndex[2];
 
-                    //! Obtain the centroid of the surface.
-                    RDouble xCenterWall, yCenterWall, zCenterWall;
-                    grid->FaceCoor(iWall, jWall, kWall, nSurface, xCenterWall, yCenterWall, zCenterWall);
-                    //! Obtain the centroid of the cell on the positive first layer.
-                    RDouble xCellCenter, yCellCenter, zCellCenter;
-                    grid->CenterCoor(i, j, k, xCellCenter, yCellCenter, zCellCenter);
-
                     normalComponetX = faceNormalComponentX(iWall, jWall, kWall, nSurface);
                     normalComponetY = faceNormalComponentY(iWall, jWall, kWall, nSurface);
                     normalComponetZ = faceNormalComponentZ(iWall, jWall, kWall, nSurface);
                     surfaceArea = faceArea(iWall, jWall, kWall, nSurface);
+                    RDouble deltaHeight = (*firstLayerHeight)(indexOfWall, indexOfCell);
 
-                    //! The projection of the dy called the distance between the center of the cell and that of the surface on normal vector.
-                    RDouble deltaHeight = fabs((xCellCenter - xCenterWall) * normalComponetX + (yCellCenter - yCenterWall) * normalComponetY + (zCellCenter - zCenterWall) * normalComponetZ);
+                    RDouble xCenterWall, yCenterWall, zCenterWall;
+                    grid->FaceCoor(iWall, jWall, kWall, nSurface, xCenterWall, yCenterWall, zCenterWall);
 
                     //! To obtain the real value, hf = nxs * qx + nys * qy + nzs * qz, and hf is just the non-dimensional variables.\n
                     //! To obtain the dimensional value of heat rate, hf = (nxs * qx + nys * qy + nzs * qz) * (ref_miu * ref_vel^2/ref_len).
@@ -2401,7 +2462,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                         wallVariables[IU] = 0.0;
                         wallVariables[IV] = 0.0;
                         wallVariables[IW] = 0.0;
-                        viscosityLaminar    = half * (viscousLaminar(i, j, k) + viscousLaminar(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer));
+                        viscosityLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer));
                         viscosityTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer));
                     }
                     else    //! The inviscid flow.
@@ -2416,29 +2477,20 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                     wallVariables[IP] = primitiveVariables(i ,j ,k ,IP);
 
                     //! Obtain the temperatures on wall.
-                    if (ABS(temperatureWall) <= 1.0e-12)
-                    {
-                        for (int m = 0; m < nTemperatureModel; ++ m)
-                        {
-                            wallTemperature[m] = surfaceTemperature[nCount];
-                        }
-                        ++ nCount;
-                    }
-                    else if (temperatureWall < 0.0)
+                    if (temperatureWall < 0.0) //Adabatic wall.
                     {
                         for (int m = 0; m < nTemperatureModel; ++ m)
                         {
                             wallTemperature[m] = temperatures(i, j, k, m);
                         }
                     }
-                    else if (temperatureWall > 0.0)
+                    else //isothermal wall or radiative equilibrium temperature wall.
                     {
                         for (int m = 0; m < nTemperatureModel; ++ m)
                         {
-                            wallTemperature[m] = temperatureWallNonDimensional;
+                            wallTemperature[m] = (*surfaceTemperature)(indexOfWall, indexOfCell);
                         }
                     }
-
                     if (nTemperatureModel == 1)
                     {
                         wallTemperature[ITV] = wallTemperature[ITT];
@@ -2452,26 +2504,42 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                     //! Compute Heat conductivity.
                     RDouble heatConductivity[3] = {0.0, 0.0, 0.0};
                     //! Initialize heat conductivity of translation and rotation.
-                    heatConductivity[0] = specificHeatAtConstantPressure * (viscosityLaminar * oPrandtlLaminar + viscosityTurbulence * oPrandtlTurbulence);
+                    heatConductivity[ITT] = specificHeatAtConstantPressure * (viscosityLaminar * oPrandtlLaminar + viscosityTurbulence * oPrandtlTurbulence);
+                    wallVariables[IR] = refGama * refMachNumber * refMachNumber * wallVariables[IP] / wallTemperature[ITT];
 
                     //! Compute the heat rate of the species diffusion, added by Li Peng on Mar 11,2019.
                     //! Chemical reaction flow.
-                    if (nChemical == 1)
+                    if (nChemical >= 1)
                     {
                         //! The isothermal wall condition and full catalytic condition.
-                        if (temperatureWall >= 0.0 && ABS(catalyticCoef - 1.0) <= 1.0e-12)
-                        {
-                            for(int iLaminar = nNSEquation; iLaminar < nNSEquation + nSpecies; ++ iLaminar)
-                            {
-                                wallVariables[iLaminar] = uniformMassFractions[iLaminar - nNSEquation];
-                            }
-                        }
-                        else
+                        if (ABS(catalyticCoef) <= EPSILON) //Fully non-catalytic wall.
                         {
                             for(int iLaminar = nNSEquation; iLaminar < nNSEquation + nSpecies; ++ iLaminar)
                             {
                                 wallVariables[iLaminar] = primitiveVariables(i, j, k, iLaminar);
                             }
+                        }
+                        else //Fully catalytic wall or finite catalytic wall.
+                        {
+                            for(int iLaminar = nNSEquation; iLaminar < nNSEquation + nSpecies; ++ iLaminar)
+                            {
+                                wallVariables[iLaminar] = (*surfaceMassFraction)(indexOfWall, indexOfCell, iLaminar - nNSEquation);
+                            }
+                        }
+
+                        // Compute density on surface.
+                        RDouble massReciprocal = 0.0;
+                        if (nTemperatureModel > 1)    //! Multi-Temperature model.
+                        {
+                            RDouble ceDivideMe = 0.0;
+                            massReciprocal = gas->ComputeMolecularWeightReciprocalWithoutElectron(wallVariables, ceDivideMe);
+                            wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal + gasConstant * wallTemperature[ITE] * ceDivideMe);
+                        }
+                        else     //! One-Temperature model.
+                        {
+                            //! Obtain molecular weight of the mixture gas.
+                            massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
+                            wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal);
                         }
 
                         //! Compute internal energy of ghost cells.
@@ -2526,25 +2594,6 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
 
                         //! The first method using the difference of the mass fractions in the actual cell and the ghost cell.
                         totalHeatWall += speciesHeat;
-                    }
-
-                    //! Compute the density on wall using the state equation.
-                    wallVariables[IR] = refGama * refMachNumber * refMachNumber * wallVariables[IP] / wallTemperature[ITT];
-                    if (nChemical == 1)
-                    {
-                        RDouble massReciprocal = 0.0;
-                        if (nTemperatureModel > 1)    //! Multi-Temperature model.
-                        {
-                            RDouble ceDivideMe = 0.0;
-                            massReciprocal = gas->ComputeMolecularWeightReciprocalWithoutElectron(wallVariables, ceDivideMe);
-                            wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal + gasConstant * wallTemperature[ITE] * ceDivideMe);
-                        }
-                        else     //! One-Temperature model.
-                        {
-                            //! Obtain molecular weight of the mixture gas.
-                            massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
-                            wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal);
-                        }
                     }
 
                     //! Compute the heat rate caused by the gradient of temperature.
@@ -2627,27 +2676,163 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                     oss << setw(wordwidth) << eletronHeat;
                     oss << setw(wordwidth) << speciesHeat;
 
-                    for (int iSpecies = 0; iSpecies < nSpecies; iSpecies++)
+                    for (int iSpecies = 0; iSpecies < nSpecies; ++ iSpecies)
                     {
                         oss << setw(wordwidth) <<wallVariables[iSpecies + nNSEquation];
                     }
                     oss << "\n";
                     ++ nIndex;
+                    ++ indexOfCell; //Next grid cell.
                 }
             }
         }
+        ++ indexOfWall; //Next surface region.
     }
 
-    if (nSpecies > 0)     //! Deallocate the dynamic memory space.
-    {
-        delete []speciesEnthalpy;
-        delete []uniformMassFractions;
-        delete []densityDiffusivity;
-    }
+    //! Deallocate the dynamic memory space.
     delete []wallVariables;
 
     string str = oss.str();
 
+    DataContainer *chemicalSurfaceData = actkey->GetData();
+    chemicalSurfaceData->moveto_begin();
+    chemicalSurfaceData->write(const_cast <char *> (str.data()), str.size() * sizeof(char));
+}
+
+void NSSolverStruct::WriteSurfaceInfo(ActionKey *actkey)
+{
+    StructGrid *grid = StructGridCast(GetGrid(actkey->level));
+    int nSurfaceCell = grid->GetNumberOfWallCell();
+    if (nSurfaceCell == 0)
+    {
+        DataContainer *cdata = actkey->GetData();
+        return;
+    }
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+    RDouble4D &faceArea = *(grid->GetFaceArea());
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    RDouble temperatureWall = parameters->GetWallTemperature();
+    RDouble2D *surfaceTemperature;
+    if (temperatureWall >= 0.0)
+    {
+        surfaceTemperature = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
+    }
+    RDouble4D &temperatures = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble refTemperature = parameters->GetRefDimensionalTemperature();
+    RDouble refLenth = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
+    RDouble refAera = refLenth * refLenth;
+
+    std::ostringstream oss;
+    using namespace IDX;
+    vector<string> title_tecplot;
+    title_tecplot.push_back("title=\"Surface Information of PHengLEI\"");
+    title_tecplot.push_back("variables=");
+    title_tecplot.push_back("\"x\"");
+    title_tecplot.push_back("\"y\"");
+    title_tecplot.push_back("\"z\"");
+    title_tecplot.push_back("\"T\"");
+    title_tecplot.push_back("\"S\"");
+
+    int nDim = GetDim();
+    int js = 1;
+    int ks = 1;
+    if (nDim == 2)
+    {
+        ks = 0;
+        refAera = refLenth;
+    }
+    if (nDim == 1)
+    {
+        js = 0;
+    }
+
+    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    //! Obtain the number of boundary condition regions.
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int nIndex = 0, indexOfWall = 0, indexOfCell = 0;
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        BCRegion *BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+        int nBCType = BCRegion->GetBCType();
+
+        int ist, ied, jst, jed, kst, ked;
+        BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+        if (!IsWall(nBCType))
+        {
+            nIndex += (ied - ist + 1) * (jed - jst + 1) * (ked - kst + 1);
+            continue;
+        }
+
+        //! Obtain the surface information.
+        int *faceDirectionIndex = BCRegion->GetFaceDirectionIndex();
+        int nSurface = BCRegion->GetFaceDirection() + 1;
+        int leftOrRightIndex = BCRegion->GetFaceLeftOrRightIndex();
+
+        //! Write the title information.
+        for (std::size_t i = 0; i < title_tecplot.size(); ++ i)
+        {
+            oss << title_tecplot[i] << "\n";
+        }
+        oss << "zone  i = " << ied - ist + 1
+            <<      " j = " << jed - jst + 1
+            <<      " k = " << ked - kst + 1
+            << " f = point " << " \n";
+
+        RDouble Tw = 1.0, surfaceAera = SMALL;
+        indexOfCell = 0;
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    //! i, j, k - is first CELL index near SOLID_SURFACE.
+                    //! iWall, jWall, kWall - is NODE index on SOLID_SURFACE.
+                    int iWall, jWall, kWall;
+                    BCRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+
+                    //Obtain the surface aera.
+                    surfaceAera = faceArea(iWall, jWall, kWall, nSurface);
+                    RDouble xCenterWall, yCenterWall, zCenterWall;
+                    grid->FaceCoor(iWall, jWall, kWall, nSurface, xCenterWall, yCenterWall, zCenterWall);
+
+                    //Obtain the temperature on wall.
+                    if (temperatureWall >= 0.0)
+                    {
+                        Tw = (*surfaceTemperature)(indexOfWall, indexOfCell);
+                    }
+                    else
+                    {
+                        Tw = temperatures(i, j, k, ITT);
+                    }
+                    Tw *= refTemperature;
+                    surfaceAera *= refAera;
+
+                    //! Write to file.
+                    int wordwidth = 20;
+                    oss << setiosflags(ios::left);
+                    oss << setiosflags(ios::scientific);
+                    oss << setprecision(10);
+                    oss << setw(wordwidth) << xCenterWall;
+                    oss << setw(wordwidth) << yCenterWall;
+                    oss << setw(wordwidth) << zCenterWall;
+                    oss << setw(wordwidth) << Tw;
+                    oss << setw(wordwidth) << surfaceAera;
+                    oss << "\n";
+
+                    ++ nIndex;
+                    ++ indexOfCell; //Next grid cell.
+                }
+            }
+        }
+        ++ indexOfWall; //Next surface region.
+    }
+
+    string str = oss.str();
     DataContainer *chemicalSurfaceData = actkey->GetData();
     chemicalSurfaceData->moveto_begin();
     chemicalSurfaceData->write(const_cast <char *> (str.data()), str.size() * sizeof(char));
@@ -2762,6 +2947,63 @@ void NSSolverStruct::ComputeCp(Grid *gridIn, RDouble4D *&pressureCoef)
             }
         }
     }
+}
+
+RDouble4D* NSSolverStruct::ComputeDimensionalVariables(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    //Allocate the memories for density, pressure, temperature and the number density of electron.
+    Range M(0, 3);
+    RDouble4D *tmpArray = new RDouble4D(I, J, K, M, fortranArray);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
+
+    RDouble4D &primitiveVars = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &temperatures = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+
+    using namespace IDX;
+    using namespace GAS_SPACE;
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    RDouble refDensity = parameters->GetRefDimensionalDensity();
+    RDouble refTemperature = parameters->GetRefDimensionalTemperature();
+    RDouble refVelocity = parameters->GetRefMachNumber() * parameters->GetRefDimensionalSonicSpeed();
+    RDouble refPressure = refDensity * refVelocity * refVelocity;
+    int nNSEquation = parameters->GetNSEquationNumber();
+    int indexOfElectron = parameters->GetIndexOfElectron();
+
+    RDouble rho = 0.0, Ne = 0.0, Ce = 0.0;
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                //Compute the dimensional density.
+                rho = refDensity * primitiveVars(i, j, k, IR);
+                (*tmpArray)(i, j, k, 0) = rho;
+                //Compute the dimensional pressure.
+                (*tmpArray)(i, j, k, 1) = refPressure * primitiveVars(i, j, k, IP);
+                //Compute the dimensional temperature.
+                (*tmpArray)(i, j, k, 2) = refTemperature * temperatures(i, j, k, ITT);
+                //Compute the number density of electron.
+                if (indexOfElectron >= 0)
+                {
+                    Ce = primitiveVars(i, j, k, nNSEquation + indexOfElectron);
+                }
+                (*tmpArray)(i, j, k, 3) = rho * Ce * 6.0225E+23 / 5.486e-7;
+            }
+        }
+    }
+
+    return tmpArray;
 }
 
 RDouble4D *NSSolverStruct::ComputeMachNumberField(Grid *gridIn)
@@ -4440,6 +4682,7 @@ void NSSolverStruct::Boundary(Grid *gridIn)     //! Set the boundary conditions.
 
     CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int iWallBC = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         BCRegion *BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
@@ -4455,20 +4698,26 @@ void NSSolverStruct::Boundary(Grid *gridIn)     //! Set the boundary conditions.
         }
         else if (IsWall(BCType))
         {
+            if (viscousType > 0)
+            {
+            }
+
             if (viscousType == INVISCID)
             {
                 SymmetryBC3D(grid, BCRegion);
             }
-            else if (ABS(wallTemperature) <= 1.0e-12) //! Add equilibrium temperature wall.
+            else if (wallTemperature < 0.0)
             {
-            }
-            else if (wallTemperature < 0.0) //! Viscous adiabatic wall condition.
-            {
+                if (nChemical > 0)
+                {
+                }
+                else//! Viscous adiabatic wall condition.
+                {
                     VisWallADI3D(grid, BCRegion);
+                }
             }
-            else
+            else//! Viscous iso-thermal wall condition.
             {
-                //! Viscous iso-thermal wall condition.
                 if (nChemical > 0)
                 {
                 }
@@ -4477,6 +4726,7 @@ void NSSolverStruct::Boundary(Grid *gridIn)     //! Set the boundary conditions.
                     VisWallISO3D(grid, BCRegion);
                 }
             }
+            ++ iWallBC;
         }
         else if (BCType == SYMMETRY)
         {
@@ -6115,16 +6365,15 @@ void NSSolverStruct::LocalTimeStep(Grid *gridIn)
 
     //SpectrumRadius(grid);
 
-    RDouble3D &vol  = *grid->GetCellVolume();
-    RDouble3D &dt   = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
-    RDouble4D &srad = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &srv  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
+    RDouble3D &vol = *grid->GetCellVolume();
+    RDouble3D &dt  = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
 
     int nDim = GetDim();
 
     const int FINEGRID   = 0; //! default
     const int COARSEGRID = 1;
-
 
     for (int k = kst; k <= ked; ++ k)     //! Viscous spectrum radius is not considered in computing time step of original code ,modified by liujian 2020-01-09
     {
@@ -6135,7 +6384,7 @@ void NSSolverStruct::LocalTimeStep(Grid *gridIn)
                 RDouble rad = 0.0;
                 for (int iSurface = 0; iSurface < nDim; ++ iSurface)
                 {
-                    rad += srad(i, j, k, iSurface) + srv(i, j, k, iSurface);
+                    rad += invSpectralRadius(i, j, k, iSurface) + visSpectralRadius(i, j, k, iSurface);
                 }
                 dt(i, j, k) = cfl / rad;
             }
@@ -6186,9 +6435,9 @@ void NSSolverStruct::LocalGlobalTimeStep(Grid *gridIn)
     //! Compute the spectrum radius.
     //SpectrumRadius(grid);
 
-    RDouble3D &vol  = *grid->GetCellVolume();
-    RDouble4D &srad = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble3D &dt   = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
+    RDouble3D &vol = *grid->GetCellVolume();
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble3D &dt = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
 
     RDouble rad;
     RDouble dtmin = 1.0e30;
@@ -6207,7 +6456,7 @@ void NSSolverStruct::LocalGlobalTimeStep(Grid *gridIn)
                 rad = 0.0;
                 for (int iSurface = 0; iSurface < nDim; ++ iSurface)
                 {
-                    rad += srad(i, j, k,iSurface);
+                    rad += invSpectralRadius(i, j, k, iSurface);
                 }
                 dt(i, j, k) = cfl / rad;
                 dtmin = MIN(dtmin, static_cast <RDouble> (dt(i, j, k) * vol(i, j, k)));
@@ -6281,11 +6530,11 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
 
     RDouble4D &q    = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &t    = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
-    RDouble4D &srad = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
     RDouble3D &gama = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("rtem"));
 
-    srad = 0.0;
+    invSpectralRadius = 0.0;
 
     int nDim = GetDim();
 
@@ -6311,7 +6560,7 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
 
 #ifdef USE_ARRAY_OPT
     declare_data(gama);    //! Declare *gama_base_data = gama.data_.
-    declare_data(q);declare_data(area);declare_data(srad);
+    declare_data(q);declare_data(area);declare_data(invSpectralRadius);
     declare_data(xfn);declare_data(yfn);declare_data(zfn);
 
     declare_stride_4d(q);    //! Declare stride_0 = q.stride_[1];stride_1 = q.stride_[2];stride_2 = q.stride_[3];stride_3 = q.stride_[4].
@@ -6323,12 +6572,12 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
             int il1, jl1, kl1;
             GetNsurfIndex(iSurface, il1, jl1, kl1);
             //! Solve the length of fourth dimention; declare *area_base_3 = area_base_data + iSurface * stride_3.
-            declare_basex(area,3, data, iSurface);declare_basex(srad,3, data, iSurface-1);
+            declare_basex(area,3, data, iSurface);declare_basex(invSpectralRadius,3, data, iSurface-1);
             declare_basex(xfn, 3, data, iSurface);declare_basex(yfn, 3, data, iSurface);declare_basex(zfn, 3, data, iSurface);
             for (int k = kst; k <= ked; ++ k)
             {
                     //! Solve the length of third dimention; declare *area_base_2 = area_base_3 + k * stride_2.
-                    declare_basex(area,2, 3, k);declare_basex(srad,2, 3, k);declare_basex(gama,2, data,k);
+                    declare_basex(area,2, 3, k);declare_basex(invSpectralRadius,2, 3, k);declare_basex(gama,2, data,k);
                     declare_basex(xfn, 2, 3, k);declare_basex(yfn, 2, 3, k);declare_basex(zfn, 2, 3, k);
 
                     declare_base_suffixx(q, 2, 3, k, IV, IV); //! Solve the length of third dimention; declare *q_IV_base_2 = q_IV_base_3 + k * stride_2.
@@ -6339,7 +6588,7 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
                     for (int j = jst; j <= jed; ++ j)
                     {
                             //! Solve the length of second dimention; declare *area_base_1 = area_base_2 + j * stride_1.
-                            declare_basex(area,1, 2, j);declare_basex(srad,1, 2, j);declare_basex(gama, 1, 2, j);
+                            declare_basex(area,1, 2, j);declare_basex(invSpectralRadius,1, 2, j);declare_basex(gama, 1, 2, j);
                             declare_basex(xfn, 1, 2, j);declare_basex(yfn, 1, 2, j);declare_basex(zfn, 1, 2, j);
                             declare_base_suffixx(q, 1, 2, j, IV, IV);    //! Solve the length of second dimention; declare *q_IV_base_1 = q_IV_base_2 + j * stride_1.
                             declare_base_suffixx(q, 1, 2, j, IR, IR);declare_base_suffixx(q, 1, 2, j, IU, IU);
@@ -6387,24 +6636,24 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
                                         gas->GetSystemCoefficientsOfGama(primitiveVars, Tvibration, Telectron, alpha_tr, gama_1, gama_2, gama_s);
                                         delete []gama_s;
 
-                                        srad(i, j, k, iSurface - 1) = ABS(vn - ub) + sqrt((alpha_tr + 1) * pm / rm) * ns;
-                                        srad(i, j, k, iSurface - 1) = MAX(srad(i, j, k, iSurface - 1), ABS(vn - ub + gama_2 * vn));
+                                        invSpectralRadius(i, j, k, iSurface - 1) = ABS(vn - ub) + sqrt((alpha_tr + 1) * pm / rm) * ns;
+                                        invSpectralRadius(i, j, k, iSurface - 1) = MAX(invSpectralRadius(i, j, k, iSurface - 1), ABS(vn - ub + gama_2 * vn));
                                         continue;
                                     }
 
-                                    declare_base_namex(srad,1)[i] = ABS(vn) + cm * ns;
+                                    declare_base_namex(invSpectralRadius,1)[i] = ABS(vn) + cm * ns;
 
                                     if (RoeEntropyFixMethod == 2)  //! Entropy fix, add by liujian 2019 From JCP ,1995, Lin H-C.
                                     {
                                         RDouble kp = rtem(i, j, k);
-                                        RDouble Spec_rad_temp = declare_base_namex(srad,1)[i];
+                                        RDouble Spec_rad_temp = declare_base_namex(invSpectralRadius,1)[i];
                                         RDouble k1 = 0.25;
                                         RDouble k2 = 5.0;
                                         RDouble eig_lim = Spec_rad_temp * (k1 + k2 * kp);
 
                                         if (Spec_rad_temp < eig_lim)
                                         {
-                                            declare_base_namex(srad,1)[i] = 0.5 * (Spec_rad_temp * Spec_rad_temp + eig_lim * eig_lim) / (eig_lim + 1.E-20);
+                                            declare_base_namex(invSpectralRadius,1)[i] = 0.5 * (Spec_rad_temp * Spec_rad_temp + eig_lim * eig_lim) / (eig_lim + 1.E-20);
                                         }
                                     }
 
@@ -6458,17 +6707,17 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
                         gas->GetElectronPressurePartialDerivatives(primitiveVars, Telectron, gama1, speciesGama);
                         alpha = gas->ComputePressureDerivativeToTotalDensity(primitiveVars);
 
-                        srad(i, j, k, iSurface - 1) = ABS(vn - ub) + sqrt((alpha + 1) * pm / rm) * ns;
-                        srad(i, j, k, iSurface - 1) = MAX(srad(i, j, k, iSurface - 1), ABS(vn - ub + gama1 * vn));
+                        invSpectralRadius(i, j, k, iSurface - 1) = ABS(vn - ub) + sqrt((alpha + 1) * pm / rm) * ns;
+                        invSpectralRadius(i, j, k, iSurface - 1) = MAX(invSpectralRadius(i, j, k, iSurface - 1), ABS(vn - ub + gama1 * vn));
                         continue;
                     }
 
-                    srad(i, j, k, iSurface - 1) = ABS(vn) + cm * ns;
+                    invSpectralRadius(i, j, k, iSurface - 1) = ABS(vn) + cm * ns;
 
                     if (RoeEntropyFixMethod == 2)  //! Entropy fix, add by liujian 2019 From JCP ,1995, Lin H-C
                     {
                         RDouble kp = rtem(i, j, k);
-                        RDouble Spec_rad_temp = srad(i, j, k, iSurface - 1);
+                        RDouble Spec_rad_temp = invSpectralRadius(i, j, k, iSurface - 1);
 
                         RDouble k1 = 0.25;
                         RDouble k2 = 5.0;
@@ -6476,7 +6725,7 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
 
                         if (Spec_rad_temp < eig_lim)
                         {
-                            srad(i, j, k, iSurface - 1) = 0.5 * (Spec_rad_temp * Spec_rad_temp + eig_lim * eig_lim) / (eig_lim + 1.E-20);
+                            invSpectralRadius(i, j, k, iSurface - 1) = 0.5 * (Spec_rad_temp * Spec_rad_temp + eig_lim * eig_lim) / (eig_lim + 1.E-20);
                         }
                     }
 
@@ -6494,8 +6743,8 @@ void NSSolverStruct::SpectrumRadiusInviscid(Grid *gridIn)
         speciesGama = NULL;
     }
 
-    GhostCell3D(srad, ni, nj, nk, nDim);
-    //grid->GhostCell3DExceptInterface(srad, nDim);
+    GhostCell3D(invSpectralRadius, ni, nj, nk, nDim);
+    //grid->GhostCell3DExceptInterface(invSpectralRadius, nDim);
 }
 
 void NSSolverStruct::PreconSpectrumRadiusInviscid(Grid *gridIn)
@@ -6511,19 +6760,19 @@ void NSSolverStruct::PreconSpectrumRadiusInviscid(Grid *gridIn)
     RDouble4D &area = *(grid->GetFaceArea()  );
 
     RDouble4D &q    = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &srad = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
     RDouble3D &gama = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 
     RDouble refMachNumber = GetControlParameters()->GetRefMachNumber();
 
-    srad = 0.0;
+    invSpectralRadius = 0.0;
 
     int nDim = GetDim();
 
     using namespace IDX;
 #ifdef USE_ARRAY_OPT
     declare_data(gama);//!declare *gama_base_data = gama.data_
-    declare_data(q);declare_data(area);declare_data(srad);
+    declare_data(q);declare_data(area);declare_data(invSpectralRadius);
     declare_data(xfn);declare_data(yfn);declare_data(zfn);
 
     declare_stride_4d(q);//!declare stride_0 = q.stride_[1];stride_1 = q.stride_[2];stride_2 = q.stride_[3];stride_3 = q.stride_[4];
@@ -6535,12 +6784,12 @@ void NSSolverStruct::PreconSpectrumRadiusInviscid(Grid *gridIn)
         int il1,jl1,kl1;
         GetNsurfIndex(iSurface, il1, jl1, kl1);
         //!solve the length of fourth dimention; declare *area_base_3 = area_base_data + iSurface * stride_3;
-        declare_basex(area,3, data, iSurface);declare_basex(srad,3, data, iSurface-1);
+        declare_basex(area,3, data, iSurface);declare_basex(invSpectralRadius,3, data, iSurface-1);
         declare_basex(xfn, 3, data, iSurface);declare_basex(yfn, 3, data, iSurface);declare_basex(zfn, 3, data, iSurface);
         for (int k = kst; k <= ked; ++ k)
         {
             //!solve the length of third dimention; declare *area_base_2 = area_base_3 + k * stride_2;
-            declare_basex(area,2, 3, k);declare_basex(srad,2, 3, k);declare_basex(gama,2, data,k);
+            declare_basex(area,2, 3, k);declare_basex(invSpectralRadius,2, 3, k);declare_basex(gama,2, data,k);
             declare_basex(xfn, 2, 3, k);declare_basex(yfn, 2, 3, k);declare_basex(zfn, 2, 3, k);
 
             declare_base_suffixx(q, 2, 3, k, IV, IV);//!solve the length of third dimention; declare *q_IV_base_2 = q_IV_base_3 + k * stride_2;
@@ -6551,7 +6800,7 @@ void NSSolverStruct::PreconSpectrumRadiusInviscid(Grid *gridIn)
             for (int j = jst; j <= jed; ++ j)
             {
                 //!solve the length of second dimention; declare *area_base_1 = area_base_2 + j * stride_1;
-                declare_basex(area,1, 2, j);declare_basex(srad,1, 2, j);declare_basex(gama, 1, 2, j);
+                declare_basex(area,1, 2, j);declare_basex(invSpectralRadius,1, 2, j);declare_basex(gama, 1, 2, j);
                 declare_basex(xfn, 1, 2, j);declare_basex(yfn, 1, 2, j);declare_basex(zfn, 1, 2, j);
                 declare_base_suffixx(q, 1, 2, j, IV, IV);//!solve the length of second dimention; declare *q_IV_base_1 = q_IV_base_2 + j * stride_1;
                 declare_base_suffixx(q, 1, 2, j, IR, IR);declare_base_suffixx(q, 1, 2, j, IU, IU);
@@ -6587,7 +6836,7 @@ void NSSolverStruct::PreconSpectrumRadiusInviscid(Grid *gridIn)
                     RDouble beta = MIN(MAX(v2 / c2,3.0 * mach2),1.0);
                     RDouble vnew  = half * vn * (1 + beta);
                     RDouble cnew  = half * sqrt(((beta - 1) * vn) * ((beta - 1) * vn) + 4 * beta * c2);
-                    declare_base_namex(srad,1)[i] = areaver * (ABS(vnew) + cnew * ns);
+                    declare_base_namex(invSpectralRadius,1)[i] = areaver * (ABS(vnew) + cnew * ns);
                 }
             }
         }
@@ -6632,15 +6881,15 @@ void NSSolverStruct::PreconSpectrumRadiusInviscid(Grid *gridIn)
                     RDouble vnew  = half * vn * (1 + beta);
                     RDouble cnew  = half * sqrt(((beta - 1) * vn) * ((beta - 1) * vn) + 4 * beta * c2);
 
-                    srad(i, j, k, iSurface - 1) = areaver * (ABS(vnew) + cnew * ns);
+                    invSpectralRadius(i, j, k, iSurface - 1) = areaver * (ABS(vnew) + cnew * ns);
                 }
             }
         }
     }
 #endif
 
-    //GhostCell3D(srad, ni, nj, nk, nDim);
-    //grid->GhostCell3DExceptInterface(srad, nDim);
+    //GhostCell3D(invSpectralRadius, ni, nj, nk, nDim);
+    //grid->GhostCell3DExceptInterface(invSpectralRadius, nDim);
 }
 
 void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
@@ -6651,22 +6900,22 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
 
-	RDouble4D &xfv  = *(grid->GetFaceVectorX());
-	RDouble4D &yfv  = *(grid->GetFaceVectorY());
-	RDouble4D &zfv  = *(grid->GetFaceVectorZ());
-    RDouble3D &vol  = *(grid->GetCellVolume());
+    RDouble4D &xfv = *(grid->GetFaceVectorX());
+    RDouble4D &yfv = *(grid->GetFaceVectorY());
+    RDouble4D &zfv = *(grid->GetFaceVectorZ());
+    RDouble3D &vol = *(grid->GetCellVolume());
 
-    RDouble4D &q    = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &t    = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &t = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
 
-    RDouble4D &srv  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
 
     RDouble3D &gama = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 
     RDouble3D &viscousLaminar    = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
     RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
 
-    srv = 0.0;
+    visSpectralRadius = 0.0;
     Param_NSSolverStruct *parameters = GetControlParameters();
     int ifViscous = parameters->GetViscousType();
     if (ifViscous == 0)
@@ -6701,7 +6950,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
     RDouble4D &area = *(grid->GetFaceArea());
     //! "declare_data" is to define a new RDouble pointer to point the head address of "fyarray".
     //! e.g. "declare_data(xfn)" means "RDouble *xfn_base_data = xfn.getData()".
-    declare_data(xfn); declare_data(yfn); declare_data(zfn); declare_data(area); declare_data(q  ); declare_data(srv);
+    declare_data(xfn); declare_data(yfn); declare_data(zfn); declare_data(area); declare_data(q  ); declare_data(visSpectralRadius);
     declare_data(vol); declare_data(gama); declare_data(viscousLaminar); declare_data(viscousTurbulence);
     //! "decalre_stride_4d" is to calculate the integer variables "stride_3", besides "stride_2", "stride_1", and "stride_0".
     //! The four "stride" variables give the moving stride of the pointer variables.
@@ -6718,13 +6967,13 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
             GetNsurfIndex(iSurface, il1, jl1, kl1);
             declare_basex(area,3,data,iSurface);
             declare_basex(xfn,3,data,iSurface);declare_basex(yfn,3,data,iSurface);
-            declare_basex(zfn,3,data,iSurface);declare_basex(srv,3,data,iSurface-1);
+            declare_basex(zfn,3,data,iSurface);declare_basex(visSpectralRadius,3,data,iSurface-1);
             for (int k = kst; k <= ked; ++ k)
             {
                     int kl = k + kl1;
                     declare_basex(area,2,3,k);
                     declare_basex(xfn,2,3,k);declare_basex(yfn,2,3,k);  //! RDouble *xfn_base_2 = xfn_base_3 + (k)*stride_2
-                    declare_basex(zfn,2,3,k);declare_basex(srv,2,3,k);
+                    declare_basex(zfn,2,3,k);declare_basex(visSpectralRadius,2,3,k);
                     //! "declare_base_suffixx"
                     //! e.g. "declare_base_suffixx(xfn,2,3,kl,l,)" means "RDouble *xfnl_base_2 = xfn_base_3 + (kl)*stride_2".
                     declare_base_suffixx(xfn,2,3,kl,l,);declare_base_suffixx(yfn,2,3,kl,l,);
@@ -6734,7 +6983,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
                             int jl = j + jl1;
                             declare_basex(area,1,2,j);
                             declare_basex(xfn,1,2,j);declare_basex(yfn,1,2,j);  //! RDouble *xfn_base_1 = xfn_base_2 + (j)*stride_1
-                            declare_basex(zfn,1,2,j);declare_basex(srv,1,2,j);
+                            declare_basex(zfn,1,2,j);declare_basex(visSpectralRadius,1,2,j);
                             declare_base_suffixx(xfn,1,2,jl,l,l);declare_base_suffixx(yfn,1,2,jl,l,l);    //! RDouble *xfnl_base_1 = xfnl_base_2 + (jl)*stride_1
                             declare_base_suffixx(zfn,1,2,jl,l,l);declare_base_suffixx(area,1,2,jl,l,l);
                             for (int i = ist; i <= ied; ++ i)
@@ -6744,7 +6993,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
                                     RDouble ny = half *(declare_base_namex(yfn,1)[i] * declare_base_namex(area,1)[i] + declare_base_name_suffixx(yfn,1,l)[il] * declare_base_name_suffixx(area,1,l)[il]);
                                     RDouble nz = half *(declare_base_namex(zfn,1)[i] * declare_base_namex(area,1)[i] + declare_base_name_suffixx(zfn,1,l)[il] * declare_base_name_suffixx(area,1,l)[il]);
                                     RDouble ns2 = nx * nx + ny * ny + nz * nz;
-                                    declare_base_namex(srv,1)[i] = ns2;
+                                    declare_base_namex(visSpectralRadius,1)[i] = ns2;
                             }
                     }
             }
@@ -6753,17 +7002,17 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
     {
             declare_basex(q,2,3,k);//declare_basex(q,2,data,k);
             declare_basex(vol,2,data,k);declare_basex(viscousLaminar,2,data,k);
-            declare_basex(viscousTurbulence,2,data,k);declare_basex(srv,2,data,k);
+            declare_basex(viscousTurbulence,2,data,k);declare_basex(visSpectralRadius,2,data,k);
             declare_basex(gama,2,data,k);
             for (int j = jst; j <= jed; ++ j)
             {
                     declare_basex(q,1,2,j);//declare_basex(q,1,2,j);
                     declare_basex(vol,1,2,j);declare_basex(viscousLaminar,1,2,j);
-                    declare_basex(viscousTurbulence,1,2,j);declare_basex(srv,1,2,j);
+                    declare_basex(viscousTurbulence,1,2,j);declare_basex(visSpectralRadius,1,2,j);
                     declare_basex(gama,1,2,j);
                     for (int i = ist; i <= ied; ++ i)
                     {
-                            declare_basex(srv,0,1,i);
+                            declare_basex(visSpectralRadius,0,1,i);
                             //declare_basex(q,3,1,IR);
                             RDouble rm = declare_base_namex(q,1)[i];//declare_base_namex(q,3)[i];
                             RDouble vvol = declare_base_namex(vol,1)[i];
@@ -6831,7 +7080,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
 
                             for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
                             {
-                                    declare_base_namex(srv,0)[srv.offset(3,iSurface-1)] *= coef;
+                                    declare_base_namex(visSpectralRadius,0)[visSpectralRadius.offset(3,iSurface-1)] *= coef;
                             }
                     }
             }
@@ -6858,7 +7107,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
 
                     RDouble ns2 = nx * nx + ny * ny + nz * nz;
 
-                    //srv(i, j, k, iSurface - 1) = ns2;
+                    //visSpectralRadius(i, j, k, iSurface - 1) = ns2;
                     RDouble rm   = q(i, j, k, IR);
                     RDouble vvol = vol(i, j, k);
 
@@ -6923,7 +7172,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
 
                 coef *= csrv * 2.0 / (refReNumber * rm * vvol);
 
-                srv(i, j, k, iSurface - 1) = ns2 * coef;
+                visSpectralRadius(i, j, k, iSurface - 1) = ns2 * coef;
 
                 }
             }
@@ -6931,7 +7180,7 @@ void NSSolverStruct::SpectrumRadiusViscous(Grid *gridIn)
     }
 #endif
     //clz
-    //GhostCell3D(srv,ni,nj,nk);
+    //GhostCell3D(visSpectralRadius,ni,nj,nk);
     delete []primitiveVars;
 }
 
@@ -7255,6 +7504,83 @@ void NSSolverStruct::ChemicalSource(Grid *gridIn)
 {
 }
 
+//Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
+void NSSolverStruct::ComputeFirstLayerGridHeight(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble4D &faceNormalComponentX = *(grid->GetFaceNormalX());
+    RDouble4D &faceNormalComponentY = *(grid->GetFaceNormalY());
+    RDouble4D &faceNormalComponentZ = *(grid->GetFaceNormalZ());
+    RDouble4D &faceArea = *(grid->GetFaceArea());
+    RDouble3D &gridCellVolume = *(grid->GetCellVolume());
+    RDouble2D *firstLayerHeight = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("firstLayerHeight"));
+
+    using namespace IDX;
+
+    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    //! Obtain the number of boundary condition regions.
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int indexOfWall = 0, indexOfCell = 0;
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        BCRegion *BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = BCRegion->GetBCType();
+
+        if (!IsWall(BCType))
+        {
+            continue;
+        }
+        //The following are surface boundary codes.
+        int ist, ied, jst, jed, kst, ked;
+        BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+        indexOfCell = 0;
+        int nSurface = BCRegion->GetFaceDirection() + 1;
+        int leftOrRightIndex = BCRegion->GetFaceLeftOrRightIndex();
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    int iWall, jWall, kWall;
+                    BCRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+
+                    //! Obtain the centroid of the surface.
+                    RDouble xCenterWall, yCenterWall, zCenterWall;
+                    grid->FaceCoor(iWall, jWall, kWall, nSurface, xCenterWall, yCenterWall, zCenterWall);
+                    //! Obtain the centroid of the cell on the positive first layer.
+                    RDouble xCellCenter, yCellCenter, zCellCenter;
+                    grid->CenterCoor(i, j, k, xCellCenter, yCellCenter, zCellCenter);
+
+                    RDouble normalComponetX = leftOrRightIndex * faceNormalComponentX(iWall, jWall, kWall, nSurface);
+                    RDouble normalComponetY = leftOrRightIndex * faceNormalComponentY(iWall, jWall, kWall, nSurface);
+                    RDouble normalComponetZ = leftOrRightIndex * faceNormalComponentZ(iWall, jWall, kWall, nSurface);
+                    RDouble surfaceArea = faceArea(iWall, jWall, kWall, nSurface);
+
+                    #ifdef USE_ALTERNATIVE_CODE
+                    RDouble cellVolume = gridCellVolume(iWall, jWall, kWall); //The volume of first cell.
+                    RDouble deltaHeight = half * cellVolume / surfaceArea;
+                    #else
+                    //! The projection of the dy called the distance between the center of the cell and that of the surface on normal vector.
+                    RDouble deltaHeight = fabs((xCellCenter - xCenterWall) * normalComponetX + (yCellCenter - yCenterWall) * normalComponetY + (zCellCenter - zCenterWall) * normalComponetZ);
+                    #endif
+
+                    (*firstLayerHeight)(indexOfWall, indexOfCell) = deltaHeight;
+                    ++ indexOfCell; //Next grid cell.
+                }
+            }
+        }
+        ++ indexOfWall; //Next surface regions.
+    }
+
+}
+
 void NSSolverStruct::ComputeGamaAndTemperature(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -7382,7 +7708,7 @@ void NSSolverStruct::RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDoub
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
 
-	Range M(0, nEquation - 1);
+    Range M(0, nEquation - 1);
     int mst = M.first();
     int med = M.last();
 
@@ -7472,7 +7798,8 @@ void NSSolverStruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProx
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
     int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
-    int nSpecies = nLaminar + nChemical - nNSEquation;
+    //int nSpecies = nLaminar + nChemical - nNSEquation;
+    int nElectronIndex = parameters->GetIndexOfElectron();
 
     RDouble refGama = parameters->GetRefGama();
 
@@ -7619,7 +7946,7 @@ void NSSolverStruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProx
                 if (nChemical == 1)    //! Modify the value of dq in the index of nl.
                 {
                     dq(i, j, k, nLaminar) = prim[nLaminar] - q(i, j, k, nLaminar);
-                    if (nSpecies > 5)
+                    if (nElectronIndex >= 0)
                     {
                         dq(i, j, k, nLaminar - 1) = prim[nLaminar - 1] - q(i, j, k, nLaminar - 1);
                     }
@@ -7682,33 +8009,57 @@ void NSSolverStruct::ViscousFlux(Grid *gridIn)
 
     int nDim = GetDim();
 
-    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
+
+    string sgsmodel;
+    GlobalDataBase::GetData("sgsmodel",&sgsmodel,PHSTRING,1);
+
+    if (iLES == 0 || sgsmodel.substr(0, 6) == "dsmOld")
     {
-#ifdef USE_PRE_CODE
-        if (nChemical == 0)
+        for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
         {
+#ifdef USE_PRE_CODE
+            if (nChemical == 0)
+            {
+                ReconGradVolWeightedwithCorrection(gridIn, iSurface);
+
+                CompVisFluxnew(grid, fluxProxy, iSurface);
+            }
+            else
+            {
+                ReconGrad(gridIn, iSurface);
+
+                CompVisFlux(grid, fluxProxy, iSurface);
+                //! To correct the viscous flux on wall.
+                CorrectViscousFlux(grid, fluxProxy, iSurface);
+            }
+#else
             ReconGradVolWeightedwithCorrection(gridIn, iSurface);
 
             CompVisFluxnew(grid, fluxProxy, iSurface);
-        }
-        else
-        {
-            ReconGrad(gridIn, iSurface);
 
-            CompVisFlux(grid, fluxProxy, iSurface);
-            //! To correct the viscous flux on wall.
             CorrectViscousFlux(grid, fluxProxy, iSurface);
-        }
-#else
-        ReconGradVolWeightedwithCorrection(gridIn, iSurface);
-
-        CompVisFluxnew(grid, fluxProxy, iSurface);
-
-        CorrectViscousFlux(grid, fluxProxy, iSurface);
 #endif
 
-        //! To compute the fluxes of cells by plusing the fluxes of all the surrounded faces.
-        LoadFlux(grid, fluxProxy, iSurface);
+            //! To compute the fluxes of cells by plusing the fluxes of all the surrounded faces.
+            LoadFlux(grid, fluxProxy, iSurface);
+        }
+    }
+    else
+    {
+        //ReconGradVolWeightedwithCorrectionLES(gridIn);
+
+        for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
+        {
+            ReconGradVolWeightedwithCorrection(gridIn, iSurface);
+
+            CompVisFluxLES(grid, fluxProxy, iSurface);
+
+            CorrectViscousFlux(grid, fluxProxy, iSurface);
+
+            //! To compute the fluxes of cells by plusing the fluxes of all the surrounded faces.
+            LoadFlux(grid, fluxProxy, iSurface);
+        }
     }
 
     delete fluxProxy;
@@ -8068,6 +8419,362 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
         }
     }
 #endif
+}
+
+void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
+{
+	StructGrid *strgrid = StructGridCast(gridIn);
+	int ni = strgrid->GetNI();
+	int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();
+
+	RDouble4D &xfv  = *(strgrid->GetFaceVectorX());
+    RDouble4D &yfv  = *(strgrid->GetFaceVectorY());
+    RDouble4D &zfv  = *(strgrid->GetFaceVectorZ());
+	RDouble3D &vol  = *(strgrid->GetCellVolume());
+
+    int ndim = GetDim();
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int nTemperatureModel = parameters->GetTemperatureModel();
+    int nChemical = parameters->GetChemicalFlag();
+    int nNSNumber = parameters->GetNSEquationNumber();
+    int nSpeciesNumber = parameters->GetNumberOfSpecies();
+
+    RDouble4D &primitiveVaiables   = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("q"));
+    RDouble4D &temperature         = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("t"));
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    gradUVWTCellCenterX = 0.0;
+    gradUVWTCellCenterY = 0.0;
+    gradUVWTCellCenterZ = 0.0;
+
+    RDouble4D *gradSpeciesCellCenterX, *gradSpeciesCellCenterY, *gradSpeciesCellCenterZ;
+    if (nChemical > 0 && nSpeciesNumber > 0)
+    {
+        gradSpeciesCellCenterX = reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dcdx"));
+        gradSpeciesCellCenterY = reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dcdy"));
+        gradSpeciesCellCenterZ = reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dcdz"));
+        *gradSpeciesCellCenterX = 0.0;
+        *gradSpeciesCellCenterY = 0.0;
+        *gradSpeciesCellCenterZ = 0.0;
+    }
+
+#ifdef USE_ARRAY_OPT
+
+	 RDouble phis ;
+     RDouble ddx ;
+	 RDouble ddy ;
+	 RDouble ddz ;
+	for (int nsurf = 1; nsurf <= ndim; ++ nsurf)
+    {
+        int il1,jl1,kl1;
+
+        GetNsurfIndex(nsurf, il1, jl1, kl1);
+
+        int ist = 1;
+        int ied = ni-1+il1;
+        int jst = 1;
+        int jed = nj-1+jl1;
+        int kst = 1;
+        int ked = nk-1+kl1;
+		int nTVar_1=nTotalVariable-1;
+
+        if (ndim == TWO_D) ked = 1;
+
+        int il,jl,kl;
+
+		declare_data(q_4d);
+	    declare_data(xfv);
+	    declare_data(yfv);
+		declare_data(zfv);
+		declare_data(dqdx_4d);
+		declare_data(dqdy_4d);
+		declare_data(dqdz_4d);
+		
+		declare_stride_4d(q_4d);
+
+		declare_basex(xfv,3,data,nsurf); 
+		declare_basex(yfv,3,data,nsurf);
+		declare_basex(zfv,3,data,nsurf);
+
+
+		for (int m = 0; m <= nTVar_1; ++ m)
+		{
+			declare_base_suffixx(q_4d,3,data,m,m,);
+			declare_base_suffixx(dqdx_4d,3,data,m,m,);
+			declare_base_suffixx(dqdy_4d,3,data,m,m,);
+			declare_base_suffixx(dqdz_4d,3,data,m,m,);
+			for (int k = kst; k <= ked; ++ k)
+			{
+			    kl = k - kl1;
+				declare_base_suffixx(q_4d,2,3,kl,m_kl,m);
+				declare_base_suffixx(q_4d,2,3,k,m_k,m);
+				declare_basex(xfv,2,3,k); 
+				declare_basex(yfv,2,3,k);
+				declare_basex(zfv,2,3,k);
+				declare_base_suffixx(dqdx_4d,2,3,kl,m_kl,m);
+				declare_base_suffixx(dqdx_4d,2,3,k,m_k,m);
+				declare_base_suffixx(dqdy_4d,2,3,kl,m_kl,m);
+				declare_base_suffixx(dqdy_4d,2,3,k,m_k,m);
+				declare_base_suffixx(dqdz_4d,2,3,kl,m_kl,m);
+				declare_base_suffixx(dqdz_4d,2,3,k,m_k,m);
+			    for (int j = jst; j <= jed; ++ j)
+			    {
+					jl = j - jl1;
+					declare_base_suffixx(q_4d,1,2,jl,m_kl_jl,m_kl);
+					declare_base_suffixx(q_4d,1,2,j,m_k_j,m_k);
+					declare_basex(xfv,1,2,j); 
+					declare_basex(yfv,1,2,j);
+					declare_basex(zfv,1,2,j);
+					declare_base_suffixx(dqdx_4d,1,2,jl,m_kl_jl,m_kl);
+					declare_base_suffixx(dqdx_4d,1,2,j,m_k_j,m_k);
+					declare_base_suffixx(dqdy_4d,1,2,jl,m_kl_jl,m_kl);
+					declare_base_suffixx(dqdy_4d,1,2,j,m_k_j,m_k);
+					declare_base_suffixx(dqdz_4d,1,2,jl,m_kl_jl,m_kl);
+					declare_base_suffixx(dqdz_4d,1,2,j,m_k_j,m_k);
+
+				    #pragma ivdep
+		            #pragma simd
+			        for (int i = ist; i <= ied; ++ i)
+			        {
+			            il = i - il1;
+
+			            phis = declare_base_name_suffixx(q_4d,1,m_k_j)[i] + declare_base_name_suffixx(q_4d,1,m_kl_jl)[il];
+						
+			            ddx = phis * declare_base_namex(xfv,1)[i];
+			            ddy = phis * declare_base_namex(yfv,1)[i];
+			            ddz = phis * declare_base_namex(zfv,1)[i];
+
+			            declare_base_name_suffixx(dqdx_4d,1,m_k_j)[i] -= ddx;
+			            declare_base_name_suffixx(dqdy_4d,1,m_k_j)[i] -= ddy;
+			            declare_base_name_suffixx(dqdz_4d,1,m_k_j)[i] -= ddz;
+
+			            declare_base_name_suffixx(dqdx_4d,1,m_kl_jl)[il] += ddx;
+			            declare_base_name_suffixx(dqdy_4d,1,m_kl_jl)[il] += ddy;
+			            declare_base_name_suffixx(dqdz_4d,1,m_kl_jl)[il] += ddz;
+			        }
+			    }
+			}
+		}
+    }
+#else
+    for (int nsurf = 1; nsurf <= ndim; ++ nsurf)
+	{
+        int il1, jl1, kl1;
+        GetNsurfIndex(nsurf, il1, jl1, kl1);
+
+        int ist = 1;
+        int ied = ni-1+il1;
+        int jst = 1;
+        int jed = nj-1+jl1;
+        int kst = 1;
+        int ked = nk-1+kl1;
+
+        if (ndim == TWO_D) ked = 1;
+
+        int il,jl,kl;
+
+        //! The gradient of u,v,w.
+        for (int m = 0; m < ndim; ++ m)
+		{
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        il = i - il1;
+                        jl = j - jl1;
+                        kl = k - kl1;
+
+                        RDouble phis = primitiveVaiables(i,j,k,m+1) + primitiveVaiables(il,jl,kl,m+1);
+
+                        RDouble ddx = phis * xfv(i, j, k, nsurf);
+                        RDouble ddy = phis * yfv(i, j, k, nsurf);
+                        RDouble ddz = phis * zfv(i, j, k, nsurf);
+
+                        gradUVWTCellCenterX(i ,j ,k ,m) -= ddx;
+                        gradUVWTCellCenterY(i ,j ,k ,m) -= ddy;
+                        gradUVWTCellCenterZ(i ,j ,k ,m) -= ddz;
+
+                        gradUVWTCellCenterX(il, jl, kl, m) += ddx;
+                        gradUVWTCellCenterY(il, jl, kl, m) += ddy;
+                        gradUVWTCellCenterZ(il, jl, kl, m) += ddz;
+                    }
+                }
+            }
+        }
+
+        //! The gradient of temperature.
+        for (int m = 0; m < nTemperatureModel; ++ m)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        il = i - il1;
+                        jl = j - jl1;
+                        kl = k - kl1;
+
+                        RDouble phis = temperature(i, j, k, m) + temperature(il, jl, kl, m);
+
+                        RDouble ddx = phis * xfv(i, j, k, nsurf);
+                        RDouble ddy = phis * yfv(i, j, k, nsurf);
+                        RDouble ddz = phis * zfv(i, j, k, nsurf);
+
+                        gradUVWTCellCenterX(i, j, k, m + 3) -= ddx;
+                        gradUVWTCellCenterY(i, j, k, m + 3) -= ddy;
+                        gradUVWTCellCenterZ(i, j, k, m + 3) -= ddz;
+
+                        gradUVWTCellCenterX(il, jl, kl, m + 3) += ddx;
+                        gradUVWTCellCenterY(il, jl, kl, m + 3) += ddy;
+                        gradUVWTCellCenterZ(il, jl, kl, m + 3) += ddz;
+                    }
+                }
+            }
+        }
+
+        if (nChemical == 0)
+            continue;
+
+        //! The gradient of mass fraction of species.
+        for (int s = 0; s < nSpeciesNumber; ++ s)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        il = i - il1;
+                        jl = j - jl1;
+                        kl = k - kl1;
+
+                        RDouble phis = primitiveVaiables(i, j, k, nNSNumber + s) + primitiveVaiables(il, jl, kl, nNSNumber + s);
+
+                        RDouble ddx = phis * xfv(i, j, k, nsurf);
+                        RDouble ddy = phis * yfv(i, j, k, nsurf);
+                        RDouble ddz = phis * zfv(i, j, k, nsurf);
+
+                        (*gradSpeciesCellCenterX)(i, j, k, s) -= ddx;
+                        (*gradSpeciesCellCenterY)(i, j, k, s) -= ddy;
+                        (*gradSpeciesCellCenterZ)(i, j, k, s) -= ddz;
+
+                        (*gradSpeciesCellCenterX)(il, jl, kl, s) += ddx;
+                        (*gradSpeciesCellCenterY)(il, jl, kl, s) += ddy;
+                        (*gradSpeciesCellCenterZ)(il, jl, kl, s) += ddz;
+                    }
+                }
+            }
+        }
+
+    }
+#endif
+    int ist = 1;
+    int ied = ni-1;
+    int jst = 1;
+    int jed = nj-1;
+    int kst = 1;
+    int ked = nk-1;
+
+#ifdef USE_ARRAY_OPT
+    
+    RDouble oov;
+
+	int nTVar_1=nTotalVariable-1;
+
+	if (ndim == TWO_D) ked = 1;
+
+	declare_data(vol);
+	declare_data(dqdx_4d);
+	declare_data(dqdy_4d);
+	declare_data(dqdz_4d);
+	
+	declare_stride_4d(dqdx_4d);
+
+	for (int m = 0; m <= nTVar_1; ++ m)
+	{
+		declare_basex(dqdx_4d,3,data,m);
+	    declare_basex(dqdy_4d,3,data,m);
+	    declare_basex(dqdz_4d,3,data,m);
+		for (int k = kst; k <= ked; ++ k)
+		{
+			declare_basex(vol,2,data,k);
+			declare_basex(dqdx_4d,2,3,k);
+			declare_basex(dqdy_4d,2,3,k);
+			declare_basex(dqdz_4d,2,3,k);
+		    for (int j = jst; j <= jed; ++ j)
+		    {
+				declare_basex(vol,1,2,j);
+				declare_basex(dqdx_4d,1,2,j);
+				declare_basex(dqdy_4d,1,2,j);
+				declare_basex(dqdz_4d,1,2,j);
+		
+				#pragma ivdep
+		        #pragma simd
+		        for (int i = ist; i <= ied; ++ i)
+		        {		
+		            oov = half /declare_base_namex(vol,1)[i];
+
+					declare_base_namex(dqdx_4d,1)[i] *= oov;
+					declare_base_namex(dqdy_4d,1)[i] *= oov;
+					declare_base_namex(dqdz_4d,1)[i] *= oov;
+
+		        }
+		    }
+		}
+	}
+#else
+
+    if (ndim == TWO_D) ked = 1;
+
+    int nTotalVariable = nTemperatureModel + 3;
+    for (int m = 0; m < nTotalVariable; ++ m)
+	{
+		for (int k = kst; k <= ked; ++ k)
+		{
+		    for (int j = jst; j <= jed; ++ j)
+		    {
+		        for (int i = ist; i <= ied; ++ i)
+		        {
+		            RDouble oov = half / vol(i,j,k);
+		            gradUVWTCellCenterX(i, j, k, m) *= oov;
+		            gradUVWTCellCenterY(i, j, k, m) *= oov;
+		            gradUVWTCellCenterZ(i, j, k, m) *= oov;
+		        }
+		    }
+		}
+	}
+
+    GhostCell3D(gradUVWTCellCenterX, ni, nj, nk, ndim);
+    GhostCell3D(gradUVWTCellCenterY, ni, nj, nk, ndim);
+    GhostCell3D(gradUVWTCellCenterZ, ni, nj, nk, ndim);
+
+    if (nChemical > 0)
+    {
+        for (int m = 0; m < nSpeciesNumber; ++ m)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        RDouble oov = half / vol(i,j,k);
+                        (*gradSpeciesCellCenterX)(i, j, k, m) *= oov;
+                        (*gradSpeciesCellCenterY)(i, j, k, m) *= oov;
+                        (*gradSpeciesCellCenterZ)(i, j, k, m) *= oov;
+                    }
+                }
+            }
+        }
+    }
+#endif
+
 }
 
 void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridIn)
@@ -8770,6 +9477,128 @@ void NSSolverStruct::ReconGradVolWeightedwithCorrection(Grid *gridIn, int nSurfa
     GetGradientAtFace_CorrectionAtPhysicalBoundary(grid, nSurface);
 }
 
+/*
+void NSSolverStruct::ReconGradVolWeightedwithCorrectionLES(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+    
+    RDouble4D &primitiveVaiables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &temperature       = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+
+    RDouble5D &gradPrimtiveVarFaceXofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
+    RDouble5D &gradPrimtiveVarFaceYofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
+    RDouble5D &gradPrimtiveVarFaceZofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
+    gradPrimtiveVarFaceXofLES = 0.0;
+    gradPrimtiveVarFaceYofLES = 0.0;
+    gradPrimtiveVarFaceZofLES = 0.0;
+
+    RDouble5D &gradTemperatureFaceXofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceXofLES"));
+    RDouble5D &gradTemperatureFaceYofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceYofLES"));
+    RDouble5D &gradTemperatureFaceZofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceZofLES"));
+    gradTemperatureFaceXofLES = 0.0;
+    gradTemperatureFaceYofLES = 0.0;
+    gradTemperatureFaceZofLES = 0.0;
+
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int nChemical = parameters->GetChemicalFlag();
+    int nNSNumber = parameters->GetNSEquationNumber();
+    int nSpeciesNumber = parameters->GetNumberOfSpecies();
+    int nTemperatureModel = parameters->GetTemperatureModel();
+    RDouble4D *gradSpeciesCellCenterX, *gradSpeciesCellCenterY, *gradSpeciesCellCenterZ;
+    if (nChemical > 0 && nSpeciesNumber)
+    {
+        gradSpeciesCellCenterX = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dcdx"));
+        gradSpeciesCellCenterY = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dcdy"));
+        gradSpeciesCellCenterZ = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dcdz"));
+    }
+
+    RDouble4D &xfv  = *(grid->GetFaceVectorX());
+    RDouble4D &yfv  = *(grid->GetFaceVectorY());
+    RDouble4D &zfv  = *(grid->GetFaceVectorZ());
+    RDouble3D &vol  = *(grid->GetCellVolume());
+
+    int nDim = GetDim();
+
+    for (int nSurface = 1; nSurface <= nDim; ++ nSurface)
+    {
+        int il1, jl1, kl1;
+        GetNsurfIndex(nSurface, il1, jl1, kl1);
+
+        Range I(1, ni - 1 + il1);
+        Range J(1, nj - 1 + jl1);
+        Range K(1, nk - 1 + kl1);
+        if (nk == 1)
+        {
+            K.setRange(1, 1);
+        }
+
+        int nIndex = 0;
+        //! Compute gradient of velocity.
+        for (int m = 1; m <= 3; ++ m)
+        {
+            nIndex = m - 1;
+            gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) = vol(I,J,K) * gradUVWTCellCenterX(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * gradUVWTCellCenterX(I-il1,J-jl1,K-kl1,nIndex);
+            gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) = vol(I,J,K) * gradUVWTCellCenterY(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * gradUVWTCellCenterY(I-il1,J-jl1,K-kl1,nIndex);
+            gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) = vol(I,J,K) * gradUVWTCellCenterZ(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * gradUVWTCellCenterZ(I-il1,J-jl1,K-kl1,nIndex);
+
+            gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) = gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) + ( xfv(I,J,K,nSurface)* (primitiveVaiables(I,J,K,m) - primitiveVaiables(I-il1,J-jl1,K-kl1,m)) - 0.5 * xfv(I+il1,J+jl1,K+kl1,nSurface)*(primitiveVaiables(I+il1,J+jl1,K+kl1,m) - primitiveVaiables(I,J,K,m)) - 0.5 * xfv(I-il1,J-jl1,K-kl1,nSurface)*(primitiveVaiables(I-il1,J-jl1,K-kl1,m) - primitiveVaiables(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+            gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) = gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) + ( yfv(I,J,K,nSurface)* (primitiveVaiables(I,J,K,m) - primitiveVaiables(I-il1,J-jl1,K-kl1,m)) - 0.5 * yfv(I+il1,J+jl1,K+kl1,nSurface)*(primitiveVaiables(I+il1,J+jl1,K+kl1,m) - primitiveVaiables(I,J,K,m)) - 0.5 * yfv(I-il1,J-jl1,K-kl1,nSurface)*(primitiveVaiables(I-il1,J-jl1,K-kl1,m) - primitiveVaiables(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+            gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) = gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) + ( zfv(I,J,K,nSurface)* (primitiveVaiables(I,J,K,m) - primitiveVaiables(I-il1,J-jl1,K-kl1,m)) - 0.5 * zfv(I+il1,J+jl1,K+kl1,nSurface)*(primitiveVaiables(I+il1,J+jl1,K+kl1,m) - primitiveVaiables(I,J,K,m)) - 0.5 * zfv(I-il1,J-jl1,K-kl1,nSurface)*(primitiveVaiables(I-il1,J-jl1,K-kl1,m) - primitiveVaiables(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+
+            gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+            gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+            gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+        }
+
+        //! Compute gradient of temperature.
+        for (int m = 0; m < nTemperatureModel; ++ m)
+        {
+            nIndex = m + 3;
+            gradTemperatureFaceXofLES(I,J,K,m,nSurface) = vol(I,J,K) * gradUVWTCellCenterX(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * gradUVWTCellCenterX(I-il1,J-jl1,K-kl1,nIndex);
+            gradTemperatureFaceYofLES(I,J,K,m,nSurface) = vol(I,J,K) * gradUVWTCellCenterY(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * gradUVWTCellCenterY(I-il1,J-jl1,K-kl1,nIndex);
+            gradTemperatureFaceZofLES(I,J,K,m,nSurface) = vol(I,J,K) * gradUVWTCellCenterZ(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * gradUVWTCellCenterZ(I-il1,J-jl1,K-kl1,nIndex);
+
+            gradTemperatureFaceXofLES(I,J,K,m,nSurface) = gradTemperatureFaceXofLES(I,J,K,m,nSurface) + ( xfv(I,J,K,nSurface)* (temperature(I,J,K,m) - temperature(I-il1,J-jl1,K-kl1,m)) - 0.5 * xfv(I+il1,J+jl1,K+kl1,nSurface)*(temperature(I+il1,J+jl1,K+kl1,m) - temperature(I,J,K,m)) - 0.5 * xfv(I-il1,J-jl1,K-kl1,nSurface)*(temperature(I-il1,J-jl1,K-kl1,m) - temperature(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+            gradTemperatureFaceYofLES(I,J,K,m,nSurface) = gradTemperatureFaceYofLES(I,J,K,m,nSurface) + ( yfv(I,J,K,nSurface)* (temperature(I,J,K,m) - temperature(I-il1,J-jl1,K-kl1,m)) - 0.5 * yfv(I+il1,J+jl1,K+kl1,nSurface)*(temperature(I+il1,J+jl1,K+kl1,m) - temperature(I,J,K,m)) - 0.5 * yfv(I-il1,J-jl1,K-kl1,nSurface)*(temperature(I-il1,J-jl1,K-kl1,m) - temperature(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+            gradTemperatureFaceZofLES(I,J,K,m,nSurface) = gradTemperatureFaceZofLES(I,J,K,m,nSurface) + ( zfv(I,J,K,nSurface)* (temperature(I,J,K,m) - temperature(I-il1,J-jl1,K-kl1,m)) - 0.5 * zfv(I+il1,J+jl1,K+kl1,nSurface)*(temperature(I+il1,J+jl1,K+kl1,m) - temperature(I,J,K,m)) - 0.5 * zfv(I-il1,J-jl1,K-kl1,nSurface)*(temperature(I-il1,J-jl1,K-kl1,m) - temperature(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+
+            gradTemperatureFaceXofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+            gradTemperatureFaceYofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+            gradTemperatureFaceZofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+        }
+
+        //! Compute gradient of species.
+        if (nChemical > 0)
+        {
+            for (int m = nNSNumber; m < nNSNumber + nSpeciesNumber; ++ m)
+            {
+                nIndex = m - nNSNumber;
+                gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) = vol(I,J,K) * (*gradSpeciesCellCenterX)(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * (*gradSpeciesCellCenterX)(I-il1,J-jl1,K-kl1,nIndex);
+                gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) = vol(I,J,K) * (*gradSpeciesCellCenterY)(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * (*gradSpeciesCellCenterY)(I-il1,J-jl1,K-kl1,nIndex);
+                gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) = vol(I,J,K) * (*gradSpeciesCellCenterZ)(I,J,K,nIndex) + vol(I-il1,J-jl1,K-kl1) * (*gradSpeciesCellCenterZ)(I-il1,J-jl1,K-kl1,nIndex);
+
+                gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) = gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) + ( xfv(I,J,K,nSurface)* (primitiveVaiables(I,J,K,m) - primitiveVaiables(I-il1,J-jl1,K-kl1,m)) - 0.5 * xfv(I+il1,J+jl1,K+kl1,nSurface)*(primitiveVaiables(I+il1,J+jl1,K+kl1,m) - primitiveVaiables(I,J,K,m)) - 0.5 * xfv(I-il1,J-jl1,K-kl1,nSurface)*(primitiveVaiables(I-il1,J-jl1,K-kl1,m) - primitiveVaiables(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+                gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) = gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) + ( yfv(I,J,K,nSurface)* (primitiveVaiables(I,J,K,m) - primitiveVaiables(I-il1,J-jl1,K-kl1,m)) - 0.5 * yfv(I+il1,J+jl1,K+kl1,nSurface)*(primitiveVaiables(I+il1,J+jl1,K+kl1,m) - primitiveVaiables(I,J,K,m)) - 0.5 * yfv(I-il1,J-jl1,K-kl1,nSurface)*(primitiveVaiables(I-il1,J-jl1,K-kl1,m) - primitiveVaiables(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+                gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) = gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) + ( zfv(I,J,K,nSurface)* (primitiveVaiables(I,J,K,m) - primitiveVaiables(I-il1,J-jl1,K-kl1,m)) - 0.5 * zfv(I+il1,J+jl1,K+kl1,nSurface)*(primitiveVaiables(I+il1,J+jl1,K+kl1,m) - primitiveVaiables(I,J,K,m)) - 0.5 * zfv(I-il1,J-jl1,K-kl1,nSurface)*(primitiveVaiables(I-il1,J-jl1,K-kl1,m) - primitiveVaiables(I-2*il1,J-2*jl1,K-2*kl1,m)) );
+
+                gradPrimtiveVarFaceXofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+                gradPrimtiveVarFaceYofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+                gradPrimtiveVarFaceZofLES(I,J,K,m,nSurface) /= (vol(I,J,K) + vol(I-il1,J-jl1,K-kl1));
+            }
+        }
+    }
+
+    GetGradientAtFace_CorrectionAtPhysicalBoundaryLES(grid);
+}
+*/
+
 void NSSolverStruct::GetGradientAtFace_CorrectionAtPhysicalBoundary(Grid *gridin, int iSurface)
 {
     StructGrid *grid = StructGridCast(gridin);
@@ -9091,6 +9920,334 @@ void NSSolverStruct::GetGradientAtFace_CorrectionAtPhysicalBoundary(Grid *gridin
     }
 }
 
+/*
+void NSSolverStruct::GetGradientAtFace_CorrectionAtPhysicalBoundaryLES(Grid *gridin)
+{
+    StructGrid *grid = StructGridCast(gridin);
+
+    RDouble4D &xfn  = *(grid->GetFaceNormalX());
+    RDouble4D &yfn  = *(grid->GetFaceNormalY());
+    RDouble4D &zfn  = *(grid->GetFaceNormalZ());
+
+    RDouble4D &xfv  = *(grid->GetFaceVectorX());
+    RDouble4D &yfv  = *(grid->GetFaceVectorY());
+    RDouble4D &zfv  = *(grid->GetFaceVectorZ());
+
+    RDouble3D &vol  = *(grid->GetCellVolume());
+    
+    RDouble5D &gradPrimtiveVarFaceXofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
+    RDouble5D &gradPrimtiveVarFaceYofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
+    RDouble5D &gradPrimtiveVarFaceZofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
+
+    RDouble5D &gradTemperatureFaceXofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceXofLES"));
+    RDouble5D &gradTemperatureFaceYofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceYofLES"));
+    RDouble5D &gradTemperatureFaceZofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceZofLES"));
+
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &t = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int nChemical = parameters->GetChemicalFlag();
+    int nNSNumber = parameters->GetNSEquationNumber();
+    int nSpeciesNumber = parameters->GetNumberOfSpecies();
+    int nTemperatureModel = parameters->GetTemperatureModel();
+    RDouble4D *gradSpeciesCellCenterX, *gradSpeciesCellCenterY, *gradSpeciesCellCenterZ;
+    if (nChemical > 0 && nSpeciesNumber)
+    {
+        gradSpeciesCellCenterX = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dcdx"));
+        gradSpeciesCellCenterY = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dcdy"));
+        gradSpeciesCellCenterZ = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dcdz"));
+    }
+
+    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+
+    using namespace PHENGLEI;
+
+    int nDim = GetDim();
+
+    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
+    {
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            BCRegion *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+            int BCType = bcregion->GetBCType();
+            int nsurf_bc = bcregion->GetFaceDirection() + 1;
+
+            if (BCType < 0 || nsurf_bc != iSurface)
+            {
+                continue;
+            }
+
+            else if (IsWall(BCType))
+            {
+                int ist, ied, jst, jed, kst, ked;
+                bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+                int il1, jl1, kl1;
+                GetNsurfIndex(iSurface, il1, jl1, kl1);
+
+                for (int k = kst; k <= ked; ++ k)
+                {
+                    for (int j = jst; j <= jed; ++ j)
+                    {
+                        for (int i = ist; i <= ied; ++ i)
+                        {
+                            int ibc1, jbc1, kbc1;
+                            bcregion->GetBoundaryFaceIndex(i, j, k, ibc1, jbc1, kbc1);
+
+                            RDouble nx = xfv (ibc1, jbc1, kbc1, iSurface);
+                            RDouble ny = yfv (ibc1, jbc1, kbc1, iSurface);
+                            RDouble nz = zfv (ibc1, jbc1, kbc1, iSurface);
+
+                            //! Modify the gradient of velocity.
+                            for (int m = 1; m <= 3; ++ m)
+                            {
+                                RDouble f_kc_et_ct = q(ibc1,jbc1,kbc1,m) - q(ibc1-il1,jbc1-jl1,kbc1-kl1,m);
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,m,iSurface) = nx * f_kc_et_ct / vol(i,j,k);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,m,iSurface) = ny * f_kc_et_ct / vol(i,j,k);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,m,iSurface) = nz * f_kc_et_ct / vol(i,j,k);
+                            }
+
+                            //! Modify the gradient of temperature.
+                            for (int m = 0; m < nTemperatureModel; ++ m)
+                            {
+                                RDouble f_kc_et_ct = t(ibc1,jbc1,kbc1,m) - t(ibc1-il1,jbc1-jl1,kbc1-kl1,m);
+                                gradTemperatureFaceXofLES(ibc1,jbc1,kbc1,m,iSurface) = nx * f_kc_et_ct / vol(i,j,k);
+                                gradTemperatureFaceYofLES(ibc1,jbc1,kbc1,m,iSurface) = ny * f_kc_et_ct / vol(i,j,k);
+                                gradTemperatureFaceZofLES(ibc1,jbc1,kbc1,m,iSurface) = nz * f_kc_et_ct / vol(i,j,k);
+                            }
+
+                            if (nChemical == 0)
+                            {
+                                continue;
+                            }
+                            //! Modify the gradient of species.
+                            for (int m = nNSNumber; m < nNSNumber + nSpeciesNumber; ++ m)
+                            {
+                                RDouble f_kc_et_ct = q(ibc1,jbc1,kbc1,m) - q(ibc1-il1,jbc1-jl1,kbc1-kl1,m);
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,m,iSurface) = nx * f_kc_et_ct / vol(i,j,k);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,m,iSurface) = ny * f_kc_et_ct / vol(i,j,k);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,m,iSurface) = nz * f_kc_et_ct / vol(i,j,k);
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            else if (BCType == SYMMETRY) // symmetry BC
+            {
+                RDouble xfnSign;
+                RDouble yfnSign;
+                RDouble zfnSign;
+
+                int ist, ied, jst, jed, kst, ked;
+                bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+                xfnSign = ABS(xfn(ist,jst,kst,iSurface)) - 0.1;
+                yfnSign = ABS(yfn(ist,jst,kst,iSurface)) - 0.1;
+                zfnSign = ABS(zfn(ist,jst,kst,iSurface)) - 0.1;
+
+                if (xfnSign > 0.0) // for Y-Z symmetry plane
+                {
+                    for (int k = kst; k <= ked; ++ k)
+                    {
+                        for (int j = jst; j <= jed; ++ j)
+                        {
+                            for (int i = ist; i <= ied; ++ i)
+                            {
+                                int ibc1, jbc1, kbc1;
+                                bcregion->GetBoundaryFaceIndex(i, j, k, ibc1, jbc1, kbc1);
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,1,iSurface) = gradUVWTCellCenterX(i,j,k,0);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,1,iSurface) = 0.0;
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,1,iSurface) = 0.0;
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,2,iSurface) = 0.0;
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,2,iSurface) = gradUVWTCellCenterY(i,j,k,1);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,2,iSurface) = gradUVWTCellCenterZ(i,j,k,1);
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,3,iSurface) = 0.0;
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,3,iSurface) = gradUVWTCellCenterY(i,j,k,2);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,3,iSurface) = gradUVWTCellCenterZ(i,j,k,2);
+
+                                //! Modify the gradient of temperature.
+                                for (int it = 0; it < nTemperatureModel; ++ it)
+                                {
+                                    gradTemperatureFaceXofLES(ibc1,jbc1,kbc1,it,iSurface) = 0.0;
+                                    gradTemperatureFaceYofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterY(i,j,k,it + 3);
+                                    gradTemperatureFaceZofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterZ(i,j,k,it + 3);
+                                }
+
+                                if (nChemical == 0)
+                                {
+                                    continue;
+                                }
+                                //! Modify the gradient of species.
+                                for (int s = nNSNumber; s < nNSNumber + nSpeciesNumber; ++ s)
+                                {
+                                    gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,s,iSurface) = 0.0;
+                                    gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterY)(i,j,k,s - nNSNumber);
+                                    gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterZ)(i,j,k,s - nNSNumber);
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+                if (yfnSign > 0.0) // for X-Z symmetry plane
+                {
+                    for (int k = kst; k <= ked; ++ k)
+                    {
+                        for (int j = jst; j <= jed; ++ j)
+                        {
+                            for (int i = ist; i <= ied; ++ i)
+                            {
+                                int ibc1, jbc1, kbc1;
+                                bcregion->GetBoundaryFaceIndex(i, j, k, ibc1, jbc1, kbc1);
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,1,iSurface) = gradUVWTCellCenterX(i,j,k,0);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,1,iSurface) = 0.0;
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,1,iSurface) = gradUVWTCellCenterZ(i,j,k,0);
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,2,iSurface) = 0.0;
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,2,iSurface) = gradUVWTCellCenterY(i,j,k,1);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,2,iSurface) = 0.0;
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,3,iSurface) = gradUVWTCellCenterX(i,j,k,2);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,3,iSurface) = 0.0;
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,3,iSurface) = gradUVWTCellCenterZ(i,j,k,2);
+
+                                //! Modify the gradient of temperature.
+                                for (int it = 0; it < nTemperatureModel; ++ it)
+                                {
+                                    gradTemperatureFaceXofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterX(i,j,k,it + 3);
+                                    gradTemperatureFaceYofLES(ibc1,jbc1,kbc1,it,iSurface) = 0.0;
+                                    gradTemperatureFaceZofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterZ(i,j,k,it + 3);
+                                }
+
+                                if (nChemical == 0)
+                                {
+                                    continue;
+                                }
+                                //! Modify the gradient of species.
+                                for (int s = nNSNumber; s < nNSNumber + nSpeciesNumber; ++ s)
+                                {
+                                    gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterX)(i,j,k,s - nNSNumber);
+                                    gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,s,iSurface) = 0.0;
+                                    gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterZ)(i,j,k,s - nNSNumber);
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+                if (zfnSign > 0.0) // for X-Y symmetry plane
+                {
+                    for (int k = kst; k <= ked; ++ k)
+                    {
+                        for (int j = jst; j <= jed; ++ j)
+                        {
+                            for (int i = ist; i <= ied; ++ i)
+                            {
+                                int ibc1, jbc1, kbc1;
+                                bcregion->GetBoundaryFaceIndex(i, j, k, ibc1, jbc1, kbc1);
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,1,iSurface) = gradUVWTCellCenterX(i,j,k,0);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,1,iSurface) = gradUVWTCellCenterY(i,j,k,0);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,1,iSurface) = 0.0;
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,2,iSurface) = gradUVWTCellCenterX(i,j,k,1);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,2,iSurface) = gradUVWTCellCenterY(i,j,k,1);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,2,iSurface) = 0.0;
+
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,3,iSurface) = 0.0;
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,3,iSurface) = 0.0;
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,3,iSurface) = gradUVWTCellCenterZ(i,j,k,2);
+
+                                //! Modify the gradient of temperature.
+                                for (int it = 0; it < nTemperatureModel; ++ it)
+                                {
+                                    gradTemperatureFaceXofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterX(i,j,k,it + 3);
+                                    gradTemperatureFaceYofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterY(i,j,k,it + 3);
+                                    gradTemperatureFaceZofLES(ibc1,jbc1,kbc1,it,iSurface) = 0.0;
+                                }
+
+                                if (nChemical == 0)
+                                {
+                                    continue;
+                                }
+                                //! Modify the gradient of species.
+                                for (int s = nNSNumber; s < nNSNumber + nSpeciesNumber; ++ s)
+                                {
+                                    gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterX)(i,j,k,s - nNSNumber);
+                                    gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterY)(i,j,k,s - nNSNumber);
+                                    gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,s,iSurface) = 0.0;
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+            else //! Other boundary conditions.
+            {
+                int ist, ied, jst, jed, kst, ked;
+                bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+                for (int k = kst; k <= ked; ++ k)
+                {
+                    for (int j = jst; j <= jed; ++ j)
+                    {
+                        for (int i = ist; i <= ied; ++ i)
+                        {
+                            int ibc1, jbc1, kbc1;
+                            bcregion->GetBoundaryFaceIndex(i, j, k, ibc1, jbc1, kbc1);
+
+                            for (int m = 1; m <= 3; ++ m)
+                            {
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,m,iSurface) = gradUVWTCellCenterX(i,j,k,m - 1);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,m,iSurface) = gradUVWTCellCenterY(i,j,k,m - 1);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,m,iSurface) = gradUVWTCellCenterZ(i,j,k,m - 1);
+                            }
+
+                            //! Modify the gradient of temperature.
+                            for (int it = 0; it < nTemperatureModel; ++ it)
+                            {
+                                gradTemperatureFaceXofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterX(i,j,k,it + 3);
+                                gradTemperatureFaceYofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterY(i,j,k,it + 3);
+                                gradTemperatureFaceZofLES(ibc1,jbc1,kbc1,it,iSurface) = gradUVWTCellCenterZ(i,j,k,it + 3);
+                            }
+
+                            if (nChemical == 0)
+                            {
+                                continue;
+                            }
+                            //! Modify the gradient of species.
+                            for (int s = nNSNumber; s < nNSNumber + nSpeciesNumber; ++ s)
+                            {
+                                gradPrimtiveVarFaceXofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterX)(i,j,k,s - nNSNumber);
+                                gradPrimtiveVarFaceYofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterY)(i,j,k,s - nNSNumber);
+                                gradPrimtiveVarFaceZofLES(ibc1,jbc1,kbc1,s,iSurface) = (*gradSpeciesCellCenterZ)(i,j,k,s - nNSNumber);
+                            }
+
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+}
+*/
+
 void NSSolverStruct::CompVisFlux(Grid *gridIn, FieldProxy *fluxProxy, int nSurface)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -9132,6 +10289,7 @@ void NSSolverStruct::CompVisFlux(Grid *gridIn, FieldProxy *fluxProxy, int nSurfa
     int nTemperatureModel = parameters->GetTemperatureModel();
     int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
     int numberOfSpecies = parameters->GetNumberOfSpecies();
+    int nElectronIndex = parameters->GetIndexOfElectron();
 
     RDouble refGama = parameters->GetRefGama();
 
@@ -9528,7 +10686,7 @@ void NSSolverStruct::CompVisFlux(Grid *gridIn, FieldProxy *fluxProxy, int nSurfa
                 if (nChemical == 1)
                 {
                     flux(il, jl, kl, nLaminar) = 0.0;
-                    if (numberOfSpecies > 5)
+                    if (nElectronIndex >= 0)
                     {
                         flux(il, jl, kl, nLaminar - 1) = 0.0;
                     }
@@ -9590,7 +10748,7 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
     RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &temperatures = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
     RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
-    RDouble *surfaceTemperature = reinterpret_cast <RDouble *> (gridIn->GetDataPtr("Twall"));
+    RDouble2D *surfaceTemperature = reinterpret_cast <RDouble2D *> (gridIn->GetDataPtr("surfaceTemperature"));
     RDouble4D &faceFluxes = fluxProxy->GetField_STR();
     RDouble oRefReNumber = parameters->GetoRefReNumber();
 
@@ -9600,11 +10758,6 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
     int nTemperatureModel = parameters->GetTemperatureModel();
     int nSpecies = nLaminar + nChemical - nNSEquation;
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
-    int nSpace = 0;
-    if (nSpecies > 5)
-    {
-        nSpace = 1;
-    }
 
     int viscousType = parameters->GetViscousType();
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
@@ -9622,26 +10775,10 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
     RDouble *densityDiffusivity = new RDouble[nSpecies];
     RDouble *vibrationEnergy = new RDouble[nSpecies];   //! Save the internal energies of vibration.
     RDouble *electronEnergy = new RDouble[nSpecies];    //! Save the internal energies of electron.
-
-    for (int i = 0; i < nEquation; ++ i)
+    RDouble3D *surfaceMassFraction;
+    if (nChemical > 0 && nSpecies > 0)         //! The fully catalytic condition.
     {
-        wallVariables[i] = 0.0;
-    }
-    if (nChemical > 0 && ABS (catalyticCoef - 1.0) <= 1.0e-12)         //! The fully catalytic condition.
-    {
-        RDouble massFractionO2 = parameters->GetMassFractionO2();
-        RDouble massFractionN2 = parameters->GetMassFractionN2();
-
-        int k = gas->GetSpeciesIndex("O2");
-        if (k >= 0)
-        {
-            wallVariables[nNSEquation + k] = massFractionO2;
-        }
-        k = gas->GetSpeciesIndex("N2");
-        if (k >= 0)
-        {
-            wallVariables[nNSEquation + k] = massFractionN2;
-        }
+        surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
     }
 
     using namespace IDX;
@@ -9651,7 +10788,7 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
     RDouble dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz;
     RDouble divv2p3, txx, tyy, tzz, txy, txz, tyz;
     int nDim = GetDim();
-    int nIndex = 0;
+    int indexOfWall = -1, indexOfCell = 0;
 
     CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
@@ -9665,6 +10802,7 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
         {
             continue;
         }
+        ++ indexOfWall; //Next surface region.
 
         int *faceDirectionIndex = BCRegion->GetFaceDirectionIndex();
         //! 0 stands for i-direction, 1 stands for j-direction, and 2 for k-direction.
@@ -9694,8 +10832,8 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
         jed = jed + jd;
         ist = ist + id;
         ied = ied + id;
-        nIndex = 0;
 
+        indexOfCell = 0;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -9706,9 +10844,6 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
                     int iCell = i -  id;
                     int jCell = j -  jd;
                     int kCell = k -  kd;
-                    //int iCell = i;
-                    //int jCell = j;
-                    //int kCell = k;
 
                     //! The index of ghost cell on the first layer.
                     int iL = iCell + faceDirectionIndex[0];
@@ -9716,64 +10851,40 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
                     int kL = kCell + faceDirectionIndex[2];
 
                     //! Compute variables on wall.
-                    if (viscousType > 0)
-                    {
-                        wallVariables[IU] = 0.0;
-                        wallVariables[IV] = 0.0;
-                        wallVariables[IW] = 0.0;
-                    }
-                    else
-                    {
-                        wallVariables[IU] = primitiveVariables(iCell, jCell, kCell, IU);
-                        wallVariables[IV] = primitiveVariables(iCell, jCell, kCell, IV);
-                        wallVariables[IW] = primitiveVariables(iCell, jCell, kCell, IW);
-                    }
+                    wallVariables[IU] = 0.0;
+                    wallVariables[IV] = 0.0;
+                    wallVariables[IW] = 0.0;
                     wallVariables[IP] = primitiveVariables(iCell, jCell, kCell, IP);
 
                     //! Obtain the mass fractions of species on wall.
-                    if (ABS(catalyticCoef) <= 1.0e-12)
+                    if (ABS(catalyticCoef) <= EPSILON) //Fully non-catalytic wall.
                     {
                         for (int m = nNSEquation; m < nNSEquation + nSpecies; ++ m)
                         {
                             wallVariables[m] = primitiveVariables(iCell, jCell, kCell, m);
                         }
                     }
-                    //! Obtain the local surface temperatures.
-                    if (ABS(wallTemperature) <= 1.0e-12)
+                    else //Fully catalytic wall or finite catalytic wall.
                     {
-                        localSurfaceTemperature[ITT] = surfaceTemperature[nIndex];
-                        localSurfaceTemperature[ITV] = surfaceTemperature[nIndex];
-                        localSurfaceTemperature[ITE] = surfaceTemperature[nIndex];
-                        ++ nIndex;
+                        for (int m = nNSEquation; m < nNSEquation + nSpecies; ++ m)
+                        {
+                            wallVariables[m] = (*surfaceMassFraction)(indexOfWall, indexOfCell, m - nNSEquation);
+                        }
                     }
 
-                    //! The isothermal condition reveals that both vibration temperature and electron temperature \n.
-                    //! equal to translation-rotation temperature. Tve=Tv=Te=Tw.
+                    //! Obtain the local surface temperatures.Tve=Tv=Te=Tw.
+                    localSurfaceTemperature[ITT] = (*surfaceTemperature)(indexOfWall, indexOfCell);
+                    localSurfaceTemperature[ITV] = localSurfaceTemperature[ITT];
+                    localSurfaceTemperature[ITE] = localSurfaceTemperature[ITT];
 
                     //! Modify density on wall.
                     RDouble massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
                     wallVariables[IR] = wallVariables[IP] / (gasConstant * localSurfaceTemperature[ITT] * massReciprocal);
 
-                    //! Obtain the centroid of the surface.
-                    //RDouble faceCenterX, faceCenterY, faceCenterZ;
-                    //grid->FaceCoor(i, j, k, iSurface, faceCenterX, faceCenterY, faceCenterZ);
-                    //! Obtain the centroid of the cell.
-                    //RDouble cellCenterX, cellCenterY, cellCenterZ;
-                    //grid->CenterCoor(i, j, k, cellCenterX, cellCenterY, cellCenterZ);
-                    //cellCenterX = gridCellCenterX(i, j, k);
-                    //cellCenterY = gridCellCenterY(i, j, k);
-                    //cellCenterZ = gridCellCenterZ(i, j, k);
-
                     //! Obtain the normal vector.
                     RDouble normalComponentX = leftOrRightIndex * faceNormalComponentX(i, j, k, iSurface);
                     RDouble normalComponentY = leftOrRightIndex * faceNormalComponentY(i, j, k, iSurface);
                     RDouble normalComponentZ = leftOrRightIndex * faceNormalComponentZ(i, j, k, iSurface);
-
-                    //! The projection of the dy called the distance between the center of the cell and that of the surface on normal vector.
-                    //RDouble deltaX = (cellCenterX(iWallCell,jWallCell,kWallCell) - faceCenterX) * normalComponentX;
-                    //RDouble deltaY = (cellCenterY(iWallCell,jWallCell,kWallCell) - faceCenterY) * normalComponentY;
-                    //RDouble deltaZ = (cellCenterZ(iWallCell,jWallCell,kWallCell) - faceCenterZ) * normalComponentZ;
-                    //RDouble deltaHeight = fabs(deltaX + deltaY + deltaZ);
 
                     RDouble surfaceArea = faceArea(i, j, k, iSurface); // The area of side face.
                     RDouble cellVolume = gridCellVolume(iCell, jCell, kCell); // The volume of first cell.
@@ -9841,12 +10952,12 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
                     dudx = (deltaVelocity / deltaHeight) * normalComponentX;
                     dudy = (deltaVelocity / deltaHeight) * normalComponentY;
                     dudz = (deltaVelocity / deltaHeight) * normalComponentZ;
-                    
+
                     deltaVelocity = leftOrRightIndex * (primitiveVariables(iCell, jCell, kCell, IV) - wallVariables[IV]);
                     dvdx = (deltaVelocity / deltaHeight) * normalComponentX;
                     dvdy = (deltaVelocity / deltaHeight) * normalComponentY;
                     dvdz = (deltaVelocity / deltaHeight) * normalComponentZ;
-                    
+
                     deltaVelocity = leftOrRightIndex * (primitiveVariables(iCell, jCell, kCell, IW) - wallVariables[IW]);
                     dwdx = (deltaVelocity / deltaHeight) * normalComponentX;
                     dwdy = (deltaVelocity / deltaHeight) * normalComponentY;
@@ -9862,12 +10973,12 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
                     tyz = viscosity * (dvdz + dwdy);
 
                     wallFluxes[IR] = 0.0;
-                    wallFluxes[IDX::IRU] = (normalComponentX * txx + normalComponentY * txy + normalComponentZ * txz) * surfaceArea;
-                    wallFluxes[IDX::IRV] = (normalComponentX * txy + normalComponentY * tyy + normalComponentZ * tyz) * surfaceArea;
-                    wallFluxes[IDX::IRW] = (normalComponentX * txz + normalComponentY * tyz + normalComponentZ * tzz) * surfaceArea;
-                    wallFluxes[IDX::IRE] = wallVariables[IU] * wallFluxes[IDX::IRU] + wallVariables[IV] * wallFluxes[IDX::IRV] + wallVariables[IW] * wallFluxes[IDX::IRW] + transportHeatFlux + speciesHeatFlux;
+                    wallFluxes[IRU] = (normalComponentX * txx + normalComponentY * txy + normalComponentZ * txz) * surfaceArea;
+                    wallFluxes[IRV] = (normalComponentX * txy + normalComponentY * tyy + normalComponentZ * tyz) * surfaceArea;
+                    wallFluxes[IRW] = (normalComponentX * txz + normalComponentY * tyz + normalComponentZ * tzz) * surfaceArea;
+                    wallFluxes[IRE] = wallVariables[IU] * wallFluxes[IRU] + wallVariables[IV] * wallFluxes[IRV] + wallVariables[IW] * wallFluxes[IRW] + transportHeatFlux + speciesHeatFlux;
 
-                    for (int m = 0; m < nLaminar - nSpace; ++ m)
+                    for (int m = 0; m < nLaminar - nIonizationFlag; ++ m)
                     {
                         faceFluxes(i, j, k, m) = -oRefReNumber * wallFluxes[m];
                         #ifdef USE_ErrorDataDebug
@@ -9892,9 +11003,11 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
                         }
                         #endif
                     }
+                    ++ indexOfCell; //Next grid cell.
                 }
             }
         }
+        
     }
 
     delete []wallVariables;
@@ -10263,6 +11376,7 @@ void NSSolverStruct::CompVisFluxnew(Grid *gridIn, FieldProxy *fluxProxy, int iSu
     int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
     int numberOfSpecies = parameters->GetNumberOfSpecies();
     RDouble refGama = parameters->GetRefGama();
+    int nElectronIndex = parameters->GetIndexOfElectron();
 
     RDouble oPrandtlLaminar    = parameters->GetoPrandtlLaminar();
     RDouble oPrandtlTurbulence = parameters->GetoPrandtlTurbulence();
@@ -10406,7 +11520,7 @@ void NSSolverStruct::CompVisFluxnew(Grid *gridIn, FieldProxy *fluxProxy, int iSu
                         }
                     }
                     fvis[nLaminar] = 0.0;
-                    if (numberOfSpecies > 5)
+                    if (nElectronIndex >= 0)
                     {
                         fvis[nLaminar - 1] = 0.0;
                     }
@@ -10443,6 +11557,848 @@ void NSSolverStruct::CompVisFluxnew(Grid *gridIn, FieldProxy *fluxProxy, int iSu
             }
         }
     }
+
+    delete []fvis;
+    delete []work;
+    delete []qlr;
+    delete []fslr;
+    delete []dfsdx;
+    delete []dfsdy;
+    delete []dfsdz;
+    delete []vibrationEnergy;
+    delete []electronEnergy;
+}
+
+/*
+void NSSolverStruct::CompVisFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    RDouble5D &gradqx = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
+    RDouble5D &gradqy = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
+    RDouble5D &gradqz = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
+
+    RDouble5D &gradtx = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceXofLES"));
+    RDouble5D &gradty = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceYofLES"));
+    RDouble5D &gradtz = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceZofLES"));
+
+    RDouble4D &flux = fluxProxy->GetField_STR();
+    RDouble4D &xfv = *(grid->GetFaceVectorX());
+    RDouble4D &yfv = *(grid->GetFaceVectorY());
+    RDouble4D &zfv = *(grid->GetFaceVectorZ());
+    RDouble3D &vol = *(grid->GetCellVolume());
+
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &t = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble3D &viscousLaminar    = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
+
+    //RDouble5D &subgridStress = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("subgridStress"));
+    //RDouble5D &subgridHeatFlux = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("subgridHeatFlux"));
+
+    RDouble3D &turbulentPrandtlNumber = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+    RDouble3D &anisotropicConstant = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("anisotropicConstant"));
+    RDouble3D &isotropicConstant = *reinterpret_cast<RDouble3D *> ( grid->GetDataPtr("isotropicConstant") );
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int nNSEquation = parameters->GetNSEquationNumber();
+    int nLaminar = parameters->GetLaminarNumber();
+    int nChemical = parameters->GetChemicalFlag();
+    int nTemperatureModel = parameters->GetTemperatureModel();
+    int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
+    int numberOfSpecies = parameters->GetNumberOfSpecies();
+    RDouble refGama = parameters->GetRefGama();
+    int nElectronIndex = parameters->GetGndexOfElectron();
+
+    RDouble oPrandtlLaminar    = parameters->GetoPrandtlLaminar();
+    //RDouble oPrandtlTurbulence = parameters->GetoPrandtlTurbulence();
+
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble oRefReNumber = parameters->GetoRefReNumber();
+
+    int nolstress = GlobalDataBase::GetIntParaFromDB("nolstress");
+    int nrokplus  = GlobalDataBase::GetIntParaFromDB("nrokplus");
+    RDouble4D *heatConductivity, *massDiffusionCoef, *speciesEnthalpy;
+    if (nChemical > 0)
+    {
+        heatConductivity  = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("lambda"));
+        massDiffusionCoef = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rhoD"));
+        speciesEnthalpy = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("hSpecies"));
+    }
+    RDouble kcp[3], heatFlux = 0.0, dcsdx = 0.0, dcsdy = 0.0, dcsdz = 0.0, hs = 0.0, roDs = 0.0;
+    RDouble Tv = 0.0, Te = 0.0, energy = 0.0;
+    RDouble4D *q_turb, *aniss;
+    if (nrokplus > 0)
+    {
+        q_turb = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_turb"));
+        aniss  = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("aniss"));
+    }
+
+    RDouble specificHeatAtConstantPressure = 1.0 / ((refGama - 1.0) * refMachNumber * refMachNumber);
+    RDouble *qlr   = new RDouble[nEquation];
+    RDouble *fslr  = new RDouble[numberOfSpecies];
+    RDouble *dfsdx = new RDouble[numberOfSpecies];
+    RDouble *dfsdy = new RDouble[numberOfSpecies];
+    RDouble *dfsdz = new RDouble[numberOfSpecies];
+    RDouble *fvis  = new RDouble[nEquation];
+    RDouble *work  = new RDouble[nEquation];
+    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
+    RDouble *electronEnergy = new RDouble[numberOfSpecies];
+
+    int il1, jl1, kl1;
+    GetNsurfIndex(iSurface, il1, jl1, kl1);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
+
+    using namespace IDX;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                int il = i + il1;
+                int jl = j + jl1;
+                int kl = k + kl1;
+
+                //! Note that if we use iSurface,there must be no omission.
+                RDouble nx = xfv(il, jl, kl, iSurface);
+                RDouble ny = yfv(il, jl, kl, iSurface);
+                RDouble nz = zfv(il, jl, kl, iSurface);
+
+                RDouble um  = half * (q(il, jl, kl,IU) + q(i, j, k,IU));
+                RDouble vm  = half * (q(il, jl, kl,IV) + q(i, j, k,IV));
+                RDouble wm  = half * (q(il, jl, kl,IW) + q(i, j, k,IW));
+                RDouble tm  = half * (t(il, jl, kl,ITT) + t(i, j, k, ITT));
+
+                RDouble mul = half * (viscousLaminar(il, jl, kl) + viscousLaminar(i, j, k));
+                //RDouble mut = half * (viscousTurbulence(il, jl, kl) + viscousTurbulence(i, j, k));
+                //mut = 0.0;
+                //RDouble vis = mul + mut;
+
+                RDouble dudx  = gradqx(il, jl, kl, IU, iSurface);
+                RDouble dudy  = gradqy(il, jl, kl, IU, iSurface);
+                RDouble dudz  = gradqz(il, jl, kl, IU, iSurface);
+
+                RDouble dvdx  = gradqx(il, jl, kl, IV, iSurface);
+                RDouble dvdy  = gradqy(il, jl, kl, IV, iSurface);
+                RDouble dvdz  = gradqz(il, jl, kl, IV, iSurface);
+
+                RDouble dwdx  = gradqx(il, jl, kl, IW, iSurface);
+                RDouble dwdy  = gradqy(il, jl, kl, IW, iSurface);
+                RDouble dwdz  = gradqz(il, jl, kl, IW, iSurface);
+
+                RDouble dtdx  = gradtx(il, jl, kl, ITT, iSurface);
+                RDouble dtdy  = gradty(il, jl, kl, ITT, iSurface);
+                RDouble dtdz  = gradtz(il, jl, kl, ITT, iSurface);
+
+                RDouble oPrandtlTurbulence = 2.0 / (turbulentPrandtlNumber(il, jl, kl) + turbulentPrandtlNumber(i, j, k));
+
+                RDouble s11 = dudx;
+                RDouble s22 = dvdy;
+                RDouble s33 = dwdz;
+                RDouble s12 = half * (dudy + dvdx);
+                RDouble s13 = half * (dudz + dwdx);
+                RDouble s23 = half * (dvdz + dwdy);
+
+                RDouble sijsij  = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
+                RDouble ss = sqrt(two * sijsij);
+                RDouble skk = s11 + s22 + s33;
+
+                RDouble cr = 0.5 * (anisotropicConstant(il, jl, kl) + anisotropicConstant(i, j, k));
+                RDouble mut = cr * ss;
+
+                RDouble hfxSGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdx;
+                RDouble hfySGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdy;
+                RDouble hfzSGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdz;
+
+                if (nChemical == 0)
+                {
+                    //kcp[ITT] = (mul * oPrandtlLaminar + mut * oPrandtlTurbulence) * specificHeatAtConstantPressure;
+                    kcp[ITT] = (mul * oPrandtlLaminar) * specificHeatAtConstantPressure;
+                    heatFlux = kcp[ITT] * (nx * dtdx + ny * dtdy + nz * dtdz) - (nx * hfxSGS + ny * hfySGS + nz * hfzSGS);
+                }
+                else
+                {
+                    kcp[ITT] = 0.5 * ((*heatConductivity)(i, j, k, ITT) + (*heatConductivity)(il, jl, kl, ITT));
+                    heatFlux = kcp[ITT] * (nx * dtdx + ny * dtdy + nz * dtdz);
+                    for (int it = 1; it < nTemperatureModel; ++ it)
+                    {
+                        dtdx  = gradtx(il, jl, kl, it);
+                        dtdy  = gradty(il, jl, kl, it);
+                        dtdz  = gradtz(il, jl, kl, it);
+                        kcp[it] = 0.5 * ((*heatConductivity)(i, j, k, it) + (*heatConductivity)(il, jl, kl, it));
+                        fvis[nLaminar + it] = kcp[it] * (nx * dtdx + ny * dtdy + nz * dtdz);
+                        heatFlux += fvis[nLaminar + it];
+                    }
+
+                    //! Obtain the gradient of species.
+                    for (int s = 0; s < numberOfSpecies; ++ s)
+                    {
+                        dcsdx = gradqx(il, jl, kl, nNSEquation + s);
+                        dcsdy = gradqy(il, jl, kl, nNSEquation + s);
+                        dcsdz = gradqz(il, jl, kl, nNSEquation + s);
+                        hs = 0.5 * ((*speciesEnthalpy)(i, j, k, s) + (*speciesEnthalpy)(il, jl, kl, s));
+                        roDs = 0.5 * ((*massDiffusionCoef)(i, j, k, s) + (*massDiffusionCoef)(il, jl, kl, s));
+
+                        fvis[nNSEquation + s] = roDs * (nx * dcsdx + ny * dcsdy + nz * dcsdz);
+                        heatFlux += hs * fvis[nNSEquation + s];
+                    }
+
+                    if (nTemperatureModel == 2)
+                    {
+                        Tv = 0.5 * (t(i, j, k, ITV) + t(il, jl, kl, ITV));
+                        //! Compute the vibration and electron energies.
+                        gas->ComputeVibrationEnergy(Tv, vibrationEnergy);
+                        gas->ComputeElectronEnergy(Tv, electronEnergy);
+                        for (int s = 0; s < numberOfSpecies; ++ s)
+                        {
+                            energy = vibrationEnergy[s] + electronEnergy[s];
+                            fvis[nLaminar + 1] += energy * fvis[nNSEquation + s];
+                        }
+                    }
+                    else if (nTemperatureModel == 3)
+                    {
+                        Tv = 0.5 * (t(i, j, k, ITV) + t(il, jl, kl, ITV));
+                        Te = 0.5 * (t(i, j, k, ITE) + t(il, jl, kl, ITE));
+                        //! Compute the vibration and electron energies.
+                        gas->ComputeVibrationEnergy(Tv, vibrationEnergy);
+                        gas->ComputeElectronEnergy(Te, electronEnergy);
+                        for (int s = 0; s < numberOfSpecies; ++ s)
+                        {
+                            fvis[nLaminar + 1] += vibrationEnergy[s] * fvis[nNSEquation + s];
+                            fvis[nLaminar + 2] += electronEnergy [s] * fvis[nNSEquation + s];
+                        }
+                    }
+                    fvis[nLaminar] = 0.0;
+                    if (nElectronIndex >= 0)
+                    {
+                        fvis[nLaminar - 1] = 0.0;
+                    }
+                }
+
+                RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
+
+                //! viscous stress and subgrid scale stress
+                RDouble txx = mul * (two * dudx - divv2p3);
+                RDouble tyy = mul * (two * dvdy - divv2p3);
+                RDouble tzz = mul * (two * dwdz - divv2p3); 
+                RDouble txy = mul * (dudy + dvdx);
+                RDouble txz = mul * (dudz + dwdx);
+                RDouble tyz = mul * (dvdz + dwdy);
+
+                
+
+                RDouble txxSGS = subgridStress(il, jl, kl, 1, iSurface);
+                RDouble tyySGS = subgridStress(il, jl, kl, 2, iSurface);
+                RDouble tzzSGS = subgridStress(il, jl, kl, 3, iSurface);
+                RDouble txySGS = subgridStress(il, jl, kl, 4, iSurface);
+                RDouble txzSGS = subgridStress(il, jl, kl, 5, iSurface);
+                RDouble tyzSGS = subgridStress(il, jl, kl, 6, iSurface);
+
+                fvis[IR] = 0.0;
+                fvis[IDX::IRU] = nx * (txx - txxSGS) + ny * (txy - txySGS) + nz * (txz - txzSGS);
+                fvis[IDX::IRV] = nx * (txy - txySGS) + ny * (tyy - tyySGS) + nz * (tyz - tyzSGS);
+                fvis[IDX::IRW] = nx * (txz - txzSGS) + ny * (tyz - tyzSGS) + nz * (tzz - tzzSGS);
+                fvis[IDX::IRE] = um * fvis[IRU] + vm * fvis[IRV] + wm * fvis[IRW] + heatFlux;
+
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    flux(il, jl, kl,m) = - oRefReNumber * fvis[m];
+                }
+            }
+        }
+    }
+
+    delete []fvis;
+    delete []work;
+    delete []qlr;
+    delete []fslr;
+    delete []dfsdx;
+    delete []dfsdy;
+    delete []dfsdz;
+    delete []vibrationEnergy;
+    delete []electronEnergy;
+}
+*/
+
+void NSSolverStruct::CompVisFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    RDouble4D &gradqx = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradPrimtiveVarFaceX"));
+    RDouble4D &gradqy = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradPrimtiveVarFaceY"));
+    RDouble4D &gradqz = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradPrimtiveVarFaceZ"));
+
+    RDouble4D &gradtx = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTemperatureFaceX"));
+    RDouble4D &gradty = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTemperatureFaceY"));
+    RDouble4D &gradtz = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTemperatureFaceZ"));
+
+    RDouble4D &flux = fluxProxy->GetField_STR();
+    RDouble4D &xfv = *(grid->GetFaceVectorX());
+    RDouble4D &yfv = *(grid->GetFaceVectorY());
+    RDouble4D &zfv = *(grid->GetFaceVectorZ());
+    RDouble3D &vol = *(grid->GetCellVolume());
+
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &t = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble3D &viscousLaminar    = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
+
+    //RDouble5D &subgridStress = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("subgridStress"));
+    //RDouble5D &subgridHeatFlux = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("subgridHeatFlux"));
+
+    RDouble3D &turbulentPrandtlNumber = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+    RDouble3D &anisotropicConstant = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("anisotropicConstant"));
+    RDouble3D &isotropicConstant = *reinterpret_cast<RDouble3D *> ( grid->GetDataPtr("isotropicConstant") );
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int nNSEquation = parameters->GetNSEquationNumber();
+    int nLaminar = parameters->GetLaminarNumber();
+    int nChemical = parameters->GetChemicalFlag();
+    int nTemperatureModel = parameters->GetTemperatureModel();
+    int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
+    int numberOfSpecies = parameters->GetNumberOfSpecies();
+    RDouble refGama = parameters->GetRefGama();
+    int nElectronIndex = parameters->GetIndexOfElectron();
+
+    RDouble oPrandtlLaminar    = parameters->GetoPrandtlLaminar();
+    //RDouble oPrandtlTurbulence = parameters->GetoPrandtlTurbulence();
+
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble oRefReNumber = parameters->GetoRefReNumber();
+    RDouble refReNumber  = parameters->GetRefReNumber();
+
+    int nolstress = GlobalDataBase::GetIntParaFromDB("nolstress");
+    int nrokplus  = GlobalDataBase::GetIntParaFromDB("nrokplus");
+    RDouble4D *heatConductivity, *massDiffusionCoef, *speciesEnthalpy;
+    if (nChemical > 0)
+    {
+        heatConductivity  = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("lambda"));
+        massDiffusionCoef = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rhoD"));
+        speciesEnthalpy = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("hSpecies"));
+    }
+    RDouble kcp[3], heatFlux = 0.0, dcsdx = 0.0, dcsdy = 0.0, dcsdz = 0.0, hs = 0.0, roDs = 0.0;
+    RDouble Tv = 0.0, Te = 0.0, energy = 0.0;
+    RDouble4D *q_turb, *aniss;
+    if (nrokplus > 0)
+    {
+        q_turb = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_turb"));
+        aniss  = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("aniss"));
+    }
+
+    RDouble specificHeatAtConstantPressure = 1.0 / ((refGama - 1.0) * refMachNumber * refMachNumber);
+    RDouble *qlr   = new RDouble[nEquation];
+    RDouble *fslr  = new RDouble[numberOfSpecies];
+    RDouble *dfsdx = new RDouble[numberOfSpecies];
+    RDouble *dfsdy = new RDouble[numberOfSpecies];
+    RDouble *dfsdz = new RDouble[numberOfSpecies];
+    RDouble *fvis  = new RDouble[nEquation];
+    RDouble *work  = new RDouble[nEquation];
+    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
+    RDouble *electronEnergy = new RDouble[numberOfSpecies];
+
+    int il1, jl1, kl1;
+    GetNsurfIndex(iSurface, il1, jl1, kl1);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
+
+    using namespace IDX;
+
+    string sgsmodel;
+	GlobalDataBase::GetData("sgsmodel",&sgsmodel,PHSTRING,1);
+
+    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
+
+    RDouble viscousTurbulentMaximum = -1.0e30;
+    RDouble viscousTurbulentMinimum = 1.0e30;
+
+    int imax = 1;
+    int jmax = 1;
+    int kmax = 1;
+
+    int imin = 1;
+    int jmin = 1;
+    int kmin = 1;
+
+    if (sgsmodel.substr(0, 4) == "wale")
+    {
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    int il = i + il1;
+                    int jl = j + jl1;
+                    int kl = k + kl1;
+
+                    //! Note that if we use iSurface,there must be no omission.
+                    RDouble nx = xfv(il, jl, kl, iSurface);
+                    RDouble ny = yfv(il, jl, kl, iSurface);
+                    RDouble nz = zfv(il, jl, kl, iSurface);
+
+                    RDouble rhom = half * (q(il, jl, kl, IR) + q(i, j, k, IR));
+                    RDouble um  = half * (q(il, jl, kl, IU) + q(i, j, k, IU));
+                    RDouble vm  = half * (q(il, jl, kl, IV) + q(i, j, k, IV));
+                    RDouble wm  = half * (q(il, jl, kl, IW) + q(i, j, k, IW));
+                    RDouble tm  = half * (t(il, jl, kl, ITT) + t(i, j, k, ITT));
+
+                    RDouble mul = half * (viscousLaminar(il, jl, kl) + viscousLaminar(i, j, k));
+
+                    RDouble dudx  = gradqx(il, jl, kl, IU);
+                    RDouble dudy  = gradqy(il, jl, kl, IU);
+                    RDouble dudz  = gradqz(il, jl, kl, IU);
+
+                    RDouble dvdx  = gradqx(il, jl, kl, IV);
+                    RDouble dvdy  = gradqy(il, jl, kl, IV);
+                    RDouble dvdz  = gradqz(il, jl, kl, IV);
+
+                    RDouble dwdx  = gradqx(il, jl, kl, IW);
+                    RDouble dwdy  = gradqy(il, jl, kl, IW);
+                    RDouble dwdz  = gradqz(il, jl, kl, IW);
+
+                    RDouble dtdx  = gradtx(il, jl, kl, ITT);
+                    RDouble dtdy  = gradty(il, jl, kl, ITT);
+                    RDouble dtdz  = gradtz(il, jl, kl, ITT);
+
+                    RDouble oPrandtlTurbulence = 2.0 / (turbulentPrandtlNumber(il, jl, kl) + turbulentPrandtlNumber(i, j, k));
+
+                    RDouble s11 = dudx;
+                    RDouble s22 = dvdy;
+                    RDouble s33 = dwdz;
+                    RDouble s12 = half * (dudy + dvdx);
+                    RDouble s13 = half * (dudz + dwdx);
+                    RDouble s23 = half * (dvdz + dwdy);
+                    RDouble omega12 = 0.5 * (dudy - dvdx);
+                    RDouble omega13 = 0.5 * (dudz - dwdx);
+                    RDouble omega23 = 0.5 * (dvdz - dwdy);
+
+                    RDouble sij2  = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);                   
+                    RDouble omegaij2 = 2.0 * (omega12 * omega12 + omega13 * omega13 + omega23 * omega23);
+                    RDouble sij2SubOmegaij2 = 1.0/3.0 * (sij2 - omegaij2);
+
+                    RDouble sd11 = s11 * s11 + s12 * s12 + s13 * s13 - omega12 * omega12 - omega13 * omega13 - sij2SubOmegaij2;
+                    RDouble sd22 = s12 * s12 + s22 * s22 + s23 * s23 - omega12 * omega12 - omega23 * omega23 - sij2SubOmegaij2;
+                    RDouble sd33 = s13 * s13 + s23 * s23 + s33 * s33 - omega13 * omega13 - omega23 * omega23 - sij2SubOmegaij2;
+                    RDouble sd12 = s11 * s12 + s12 * s22 + s13 * s23 - omega13 * omega23;
+                    RDouble sd13 = s11 * s13 + s12 * s23 + s13 * s33 + omega12 * omega23;
+                    RDouble sd23 = s12 * s13 + s22 * s23 + s23 * s33 - omega12 * omega13;
+
+                    RDouble sdij2 = sd11 * sd11 + sd22 * sd22 + sd33 * sd33 + 2.0 * (sd12 * sd12 + sd13 * sd13 + sd23 * sd23);
+
+                    RDouble ss = pow(sdij2, 1.5) / (pow(sij2, 2.5) + pow(sdij2, 1.25) + SMALL);
+
+                    RDouble cr = 0.5 * (anisotropicConstant(il, jl, kl) + anisotropicConstant(i, j, k));
+
+                    RDouble mut = cr * ss * rhom * refReNumber;
+
+                    RDouble hfxSGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdx;
+                    RDouble hfySGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdy;
+                    RDouble hfzSGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdz;
+
+                    if (nChemical == 0)
+                    {
+                        kcp[ITT] = (mul * oPrandtlLaminar) * specificHeatAtConstantPressure;
+                        heatFlux = kcp[ITT] * (nx * dtdx + ny * dtdy + nz * dtdz) - (nx * hfxSGS + ny * hfySGS + nz * hfzSGS);
+                    }
+                    else
+                    {
+                        kcp[ITT] = 0.5 * ((*heatConductivity)(i, j, k, ITT) + (*heatConductivity)(il, jl, kl, ITT));
+                        heatFlux = kcp[ITT] * (nx * dtdx + ny * dtdy + nz * dtdz);
+                        for (int it = 1; it < nTemperatureModel; ++ it)
+                        {
+                            dtdx  = gradtx(il, jl, kl, it);
+                            dtdy  = gradty(il, jl, kl, it);
+                            dtdz  = gradtz(il, jl, kl, it);
+                            kcp[it] = 0.5 * ((*heatConductivity)(i, j, k, it) + (*heatConductivity)(il, jl, kl, it));
+                            fvis[nLaminar + it] = kcp[it] * (nx * dtdx + ny * dtdy + nz * dtdz);
+                            heatFlux += fvis[nLaminar + it];
+                        }
+
+                        //! Obtain the gradient of species.
+                        for (int s = 0; s < numberOfSpecies; ++ s)
+                        {
+                            dcsdx = gradqx(il, jl, kl, nNSEquation + s);
+                            dcsdy = gradqy(il, jl, kl, nNSEquation + s);
+                            dcsdz = gradqz(il, jl, kl, nNSEquation + s);
+                            hs = 0.5 * ((*speciesEnthalpy)(i, j, k, s) + (*speciesEnthalpy)(il, jl, kl, s));
+                            roDs = 0.5 * ((*massDiffusionCoef)(i, j, k, s) + (*massDiffusionCoef)(il, jl, kl, s));
+
+                            fvis[nNSEquation + s] = roDs * (nx * dcsdx + ny * dcsdy + nz * dcsdz);
+                            heatFlux += hs * fvis[nNSEquation + s];
+                        }
+
+                        if (nTemperatureModel == 2)
+                        {
+                            Tv = 0.5 * (t(i, j, k, ITV) + t(il, jl, kl, ITV));
+                            //! Compute the vibration and electron energies.
+                            gas->ComputeVibrationEnergy(Tv, vibrationEnergy);
+                            gas->ComputeElectronEnergy(Tv, electronEnergy);
+                            for (int s = 0; s < numberOfSpecies; ++ s)
+                            {
+                                energy = vibrationEnergy[s] + electronEnergy[s];
+                                fvis[nLaminar + 1] += energy * fvis[nNSEquation + s];
+                            }
+                        }
+                        else if (nTemperatureModel == 3)
+                        {
+                            Tv = 0.5 * (t(i, j, k, ITV) + t(il, jl, kl, ITV));
+                            Te = 0.5 * (t(i, j, k, ITE) + t(il, jl, kl, ITE));
+                            //! Compute the vibration and electron energies.
+                            gas->ComputeVibrationEnergy(Tv, vibrationEnergy);
+                            gas->ComputeElectronEnergy(Te, electronEnergy);
+                            for (int s = 0; s < numberOfSpecies; ++ s)
+                            {
+                                fvis[nLaminar + 1] += vibrationEnergy[s] * fvis[nNSEquation + s];
+                                fvis[nLaminar + 2] += electronEnergy [s] * fvis[nNSEquation + s];
+                            }
+                        }
+                        fvis[nLaminar] = 0.0;
+                        if (nElectronIndex >= 0)
+                        {
+                            fvis[nLaminar - 1] = 0.0;
+                        }
+                    }
+
+                    RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
+
+                    //! viscous stress and subgrid scale stress
+                    RDouble txx = mul * (two * dudx - divv2p3);
+                    RDouble tyy = mul * (two * dvdy - divv2p3);
+                    RDouble tzz = mul * (two * dwdz - divv2p3); 
+                    RDouble txy = mul * (dudy + dvdx);
+                    RDouble txz = mul * (dudz + dwdx);
+                    RDouble tyz = mul * (dvdz + dwdy);
+
+                    RDouble ci = 0.5 * (isotropicConstant(il, jl, kl) + isotropicConstant(i, j, k));
+                    RDouble kSGS = 2.0 * rhom * ci * ss * ss * refReNumber;
+
+                    RDouble txxSGS = -mut * (two * dudx - divv2p3) + 1.0/3.0 * kSGS;
+                    RDouble tyySGS = -mut * (two * dvdy - divv2p3) + 1.0/3.0 * kSGS;
+                    RDouble tzzSGS = -mut * (two * dwdz - divv2p3) + 1.0/3.0 * kSGS;
+                    RDouble txySGS = -mut * (dudy + dvdx);
+                    RDouble txzSGS = -mut * (dudz + dwdx);
+                    RDouble tyzSGS = -mut * (dvdz + dwdy);
+
+                    fvis[IR] = 0.0;
+                    fvis[IDX::IRU] = nx * (txx - txxSGS) + ny * (txy - txySGS) + nz * (txz - txzSGS);
+                    fvis[IDX::IRV] = nx * (txy - txySGS) + ny * (tyy - tyySGS) + nz * (tyz - tyzSGS);
+                    fvis[IDX::IRW] = nx * (txz - txzSGS) + ny * (tyz - tyzSGS) + nz * (tzz - tzzSGS);
+                    fvis[IDX::IRE] = um * fvis[IRU] + vm * fvis[IRV] + wm * fvis[IRW] + heatFlux;
+
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        flux(il, jl, kl,m) = - oRefReNumber * fvis[m];
+                    }
+
+                    if (viscousTurbulentMaximum < mut)
+                    {
+                        viscousTurbulentMaximum = mut;
+                        imax = i;
+                        jmax = j;
+                        kmax = k;
+                    }
+
+                    if (viscousTurbulentMinimum > mut)
+                    {
+                        viscousTurbulentMinimum = mut;
+                        imin = i;
+                        jmin = j;
+                        kmin = k;
+                    }
+/*
+                    if (hfxSGSMaximum < hfxSGS)
+                    {
+                        hfxSGSMaximum = hfxSGS;
+                    }
+
+                    if (hfxSGSMinimum > hfxSGS)
+                    {
+                        hfxSGSMinimum = hfxSGS;
+                    }
+
+                    if (hfySGSMaximum < hfySGS)
+                    {
+                        hfySGSMaximum = hfySGS;
+                    }
+
+                    if (hfySGSMinimum > hfySGS)
+                    {
+                        hfySGSMinimum = hfySGS;
+                    }
+
+                    if (hfzSGSMaximum < hfzSGS)
+                    {
+                        hfzSGSMaximum = hfzSGS;
+                    }
+
+                    if (hfzSGSMinimum > hfzSGS)
+                    {
+                        hfzSGSMinimum = hfzSGS;
+                    }
+
+                    if (txxSGSMaximum < txxSGS)
+                    {
+                        txxSGSMaximum = txxSGS;
+                    }
+
+                    if (txxSGSMinimum > txxSGS)
+                    {
+                        txxSGSMinimum = txxSGS;
+                    }
+
+                    if (tyySGSMaximum < tyySGS)
+                    {
+                        tyySGSMaximum = tyySGS;
+                    }
+
+                    if (tyySGSMinimum > tyySGS)
+                    {
+                        tyySGSMinimum = tyySGS;
+                    }
+
+                    if (tzzSGSMaximum < tzzSGS)
+                    {
+                        tzzSGSMaximum = tzzSGS;
+                    }
+
+                    if (tzzSGSMinimum > tzzSGS)
+                    {
+                        tzzSGSMinimum = tzzSGS;
+                    }
+
+                    if (txySGSMaximum < txySGS)
+                    {
+                        txySGSMaximum = txySGS;
+                    }
+
+                    if (txySGSMinimum > txySGS)
+                    {
+                        txySGSMinimum = txySGS;
+                    }
+
+                    if (txzSGSMaximum < txzSGS)
+                    {
+                        txzSGSMaximum = txzSGS;
+                    }
+
+                    if (txzSGSMinimum > txzSGS)
+                    {
+                        txzSGSMinimum = txzSGS;
+                    }
+
+                    if (tyzSGSMaximum < tyzSGS)
+                    {
+                        tyzSGSMaximum = tyzSGS;
+                    }
+
+                    if (tyzSGSMinimum > tyzSGS)
+                    {
+                        tyzSGSMinimum = tyzSGS;
+                    }
+*/
+                }
+            }
+        }
+    }
+    else
+    {
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    int il = i + il1;
+                    int jl = j + jl1;
+                    int kl = k + kl1;
+
+                    //! Note that if we use iSurface,there must be no omission.
+                    RDouble nx = xfv(il, jl, kl, iSurface);
+                    RDouble ny = yfv(il, jl, kl, iSurface);
+                    RDouble nz = zfv(il, jl, kl, iSurface);
+
+                    RDouble rhom = half * (q(il, jl, kl, IR) + q(i, j, k, IR));
+                    RDouble um  = half * (q(il, jl, kl, IU) + q(i, j, k, IU));
+                    RDouble vm  = half * (q(il, jl, kl, IV) + q(i, j, k, IV));
+                    RDouble wm  = half * (q(il, jl, kl, IW) + q(i, j, k, IW));
+                    RDouble tm  = half * (t(il, jl, kl, ITT) + t(i, j, k, ITT));
+
+                    RDouble mul = half * (viscousLaminar(il, jl, kl) + viscousLaminar(i, j, k));
+
+                    RDouble dudx  = gradqx(il, jl, kl, IU);
+                    RDouble dudy  = gradqy(il, jl, kl, IU);
+                    RDouble dudz  = gradqz(il, jl, kl, IU);
+
+                    RDouble dvdx  = gradqx(il, jl, kl, IV);
+                    RDouble dvdy  = gradqy(il, jl, kl, IV);
+                    RDouble dvdz  = gradqz(il, jl, kl, IV);
+
+                    RDouble dwdx  = gradqx(il, jl, kl, IW);
+                    RDouble dwdy  = gradqy(il, jl, kl, IW);
+                    RDouble dwdz  = gradqz(il, jl, kl, IW);
+
+                    RDouble dtdx  = gradtx(il, jl, kl, ITT);
+                    RDouble dtdy  = gradty(il, jl, kl, ITT);
+                    RDouble dtdz  = gradtz(il, jl, kl, ITT);
+
+                    RDouble oPrandtlTurbulence = 2.0 / (turbulentPrandtlNumber(il, jl, kl) + turbulentPrandtlNumber(i, j, k));
+
+                    RDouble s11 = dudx;
+                    RDouble s22 = dvdy;
+                    RDouble s33 = dwdz;
+                    RDouble s12 = half * (dudy + dvdx);
+                    RDouble s13 = half * (dudz + dwdx);
+                    RDouble s23 = half * (dvdz + dwdy);
+
+                    RDouble sijsij  = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
+                    RDouble ss = sqrt(two * sijsij);
+
+                    RDouble cr = 0.5 * (anisotropicConstant(il, jl, kl) + anisotropicConstant(i, j, k));
+                    RDouble mut = cr * ss * rhom * refReNumber;
+
+                    RDouble hfxSGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdx;
+                    RDouble hfySGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdy;
+                    RDouble hfzSGS = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdz;
+
+                    if (nChemical == 0)
+                    {
+                        kcp[ITT] = (mul * oPrandtlLaminar) * specificHeatAtConstantPressure;
+                        heatFlux = kcp[ITT] * (nx * dtdx + ny * dtdy + nz * dtdz) - (nx * hfxSGS + ny * hfySGS + nz * hfzSGS);
+                    }
+                    else
+                    {
+                        kcp[ITT] = 0.5 * ((*heatConductivity)(i, j, k, ITT) + (*heatConductivity)(il, jl, kl, ITT));
+                        heatFlux = kcp[ITT] * (nx * dtdx + ny * dtdy + nz * dtdz);
+                        for (int it = 1; it < nTemperatureModel; ++ it)
+                        {
+                            dtdx  = gradtx(il, jl, kl, it);
+                            dtdy  = gradty(il, jl, kl, it);
+                            dtdz  = gradtz(il, jl, kl, it);
+                            kcp[it] = 0.5 * ((*heatConductivity)(i, j, k, it) + (*heatConductivity)(il, jl, kl, it));
+                            fvis[nLaminar + it] = kcp[it] * (nx * dtdx + ny * dtdy + nz * dtdz);
+                            heatFlux += fvis[nLaminar + it];
+                        }
+
+                        //! Obtain the gradient of species.
+                        for (int s = 0; s < numberOfSpecies; ++ s)
+                        {
+                            dcsdx = gradqx(il, jl, kl, nNSEquation + s);
+                            dcsdy = gradqy(il, jl, kl, nNSEquation + s);
+                            dcsdz = gradqz(il, jl, kl, nNSEquation + s);
+                            hs = 0.5 * ((*speciesEnthalpy)(i, j, k, s) + (*speciesEnthalpy)(il, jl, kl, s));
+                            roDs = 0.5 * ((*massDiffusionCoef)(i, j, k, s) + (*massDiffusionCoef)(il, jl, kl, s));
+
+                            fvis[nNSEquation + s] = roDs * (nx * dcsdx + ny * dcsdy + nz * dcsdz);
+                            heatFlux += hs * fvis[nNSEquation + s];
+                        }
+
+                        if (nTemperatureModel == 2)
+                        {
+                            Tv = 0.5 * (t(i, j, k, ITV) + t(il, jl, kl, ITV));
+                            //! Compute the vibration and electron energies.
+                            gas->ComputeVibrationEnergy(Tv, vibrationEnergy);
+                            gas->ComputeElectronEnergy(Tv, electronEnergy);
+                            for (int s = 0; s < numberOfSpecies; ++ s)
+                            {
+                                energy = vibrationEnergy[s] + electronEnergy[s];
+                                fvis[nLaminar + 1] += energy * fvis[nNSEquation + s];
+                            }
+                        }
+                        else if (nTemperatureModel == 3)
+                        {
+                            Tv = 0.5 * (t(i, j, k, ITV) + t(il, jl, kl, ITV));
+                            Te = 0.5 * (t(i, j, k, ITE) + t(il, jl, kl, ITE));
+                            //! Compute the vibration and electron energies.
+                            gas->ComputeVibrationEnergy(Tv, vibrationEnergy);
+                            gas->ComputeElectronEnergy(Te, electronEnergy);
+                            for (int s = 0; s < numberOfSpecies; ++ s)
+                            {
+                                fvis[nLaminar + 1] += vibrationEnergy[s] * fvis[nNSEquation + s];
+                                fvis[nLaminar + 2] += electronEnergy [s] * fvis[nNSEquation + s];
+                            }
+                        }
+                        fvis[nLaminar] = 0.0;
+                        if (nElectronIndex >= 0)
+                        {
+                            fvis[nLaminar - 1] = 0.0;
+                        }
+                    }
+
+                    RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
+
+                    //! viscous stress and subgrid scale stress
+                    RDouble txx = mul * (two * dudx - divv2p3);
+                    RDouble tyy = mul * (two * dvdy - divv2p3);
+                    RDouble tzz = mul * (two * dwdz - divv2p3); 
+                    RDouble txy = mul * (dudy + dvdx);
+                    RDouble txz = mul * (dudz + dwdx);
+                    RDouble tyz = mul * (dvdz + dwdy);
+
+                    RDouble ci = 0.5 * (isotropicConstant(il, jl, kl) + isotropicConstant(i, j, k));
+                    RDouble kSGS = 2.0 * rhom * ci * ss * ss * refReNumber;
+
+                    RDouble txxSGS = -mut * (two * dudx - divv2p3) + 1.0/3.0 * kSGS;
+                    RDouble tyySGS = -mut * (two * dvdy - divv2p3) + 1.0/3.0 * kSGS;
+                    RDouble tzzSGS = -mut * (two * dwdz - divv2p3) + 1.0/3.0 * kSGS;
+                    RDouble txySGS = -mut * (dudy + dvdx);
+                    RDouble txzSGS = -mut * (dudz + dwdx);
+                    RDouble tyzSGS = -mut * (dvdz + dwdy);
+
+                    fvis[IR] = 0.0;
+                    fvis[IDX::IRU] = nx * (txx - txxSGS) + ny * (txy - txySGS) + nz * (txz - txzSGS);
+                    fvis[IDX::IRV] = nx * (txy - txySGS) + ny * (tyy - tyySGS) + nz * (tyz - tyzSGS);
+                    fvis[IDX::IRW] = nx * (txz - txzSGS) + ny * (tyz - tyzSGS) + nz * (tzz - tzzSGS);
+                    fvis[IDX::IRE] = um * fvis[IRU] + vm * fvis[IRV] + wm * fvis[IRW] + heatFlux;
+
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        flux(il, jl, kl,m) = - oRefReNumber * fvis[m];
+                    }
+
+                    if (viscousTurbulentMaximum < mut)
+                    {
+                        viscousTurbulentMaximum =  mut;
+                        imax = i;
+                        jmax = j;
+                        kmax = k;
+                    }
+
+                    if (viscousTurbulentMinimum > mut)
+                    {
+                        viscousTurbulentMinimum =  mut;
+                        imin = i;
+                        jmin = j;
+                        kmin = k;
+                    }
+
+                }
+            }
+        }
+    }
+
+    RDouble vist_max = viscousTurbulentMaximum;
+    RDouble vist_min = viscousTurbulentMinimum;
+
+    grid->UpdateData("vist_max", &vist_max, PHDOUBLE, 1);
+    grid->UpdateData("vist_min", &vist_min, PHDOUBLE, 1);
+
+#ifdef PH_PARALLEL
+    using namespace PHMPI;
+    int myid = GetCurrentProcessorID();
+    if (myid == server)
+    {
+#endif
+        if (monitorVistmax)
+        {
+            cout << "vistmax = " << viscousTurbulentMaximum << " " << imax << " " << jmax << " " << kmax << "\n";
+            cout << "vistmin = " << viscousTurbulentMinimum << " " << imax << " " << jmax << " " << kmax << "\n";
+        }
+#ifdef PH_PARALLEL
+    }
+#endif
 
     delete []fvis;
     delete []work;
@@ -10872,10 +12828,10 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
 
     int viscousType = parameters->GetViscousType();
     RDouble wallTemperature = parameters->GetWallTemperature();
-    RDouble *surfaceTemperature;
-    if (ABS(wallTemperature) <= 1.0e-12)
+    RDouble2D *surfaceTemperature;
+    if (wallTemperature >= 0.0)
     {
-        surfaceTemperature = reinterpret_cast <RDouble *> (grid->GetDataPtr("Twall"));
+        surfaceTemperature = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
     }
 
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
@@ -10893,24 +12849,10 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
     //int nEquation = GetNumberOfEquations();
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
     RDouble *wallVariables = new RDouble[nEquation];
-    for (int i = 0; i < nEquation; ++ i)
+    RDouble3D *surfaceMassFraction;
+    if (nChemical > 0 && nSpeciesNumber > 0)    //! The fully catalytic wall condition.
     {
-        wallVariables[i] = 0.0;
-    }
-    if (ABS(catalyticCoef - 1.0) <= 1.0e-12)
-    {
-        RDouble massFractionOfO2 = GlobalDataBase::GetDoubleParaFromDB("fcw_o2");
-        RDouble massFractionOfN2 = GlobalDataBase::GetDoubleParaFromDB("fcw_n2");
-        int k = gas->GetSpeciesIndex("O2");
-        if (k >= 0)
-        {
-            wallVariables[nNSEquation + k] = massFractionOfO2;
-        }
-        k = gas->GetSpeciesIndex("N2");
-        if (k >= 0)
-        {
-            wallVariables[nNSEquation + k] = massFractionOfN2;
-        }
+        surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
     }
     RDouble massReciprocal = one;
     RDouble temperatureWall = wallTemperature / refDimensionalTemperature;
@@ -10919,7 +12861,7 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
 
     CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
-    int nIndex = 0;
+    int indexOfWall = -1, indexOfCell = 0;
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
@@ -10930,7 +12872,7 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
         {
             continue;
         }
-
+        ++ indexOfWall; //Next surface region.
         RDouble uWall = 0.0;
         RDouble vWall = 0.0;
         RDouble wWall = 0.0;
@@ -10994,8 +12936,8 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
         di = ABS(faceDirectionIndex[0]);
         dj = ABS(faceDirectionIndex[1]);
         dk = ABS(faceDirectionIndex[2]);
-        nIndex = 0;
 
+        indexOfCell = 0;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -11056,18 +12998,20 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
                         wallVariables[IV] = zero;
                         wallVariables[IW] = zero;
                         wallVariables[IP] = primitveVariables(i - id,j - jd,k - kd, IP);
+                        temperatureWall = (*surfaceTemperature)(indexOfWall, indexOfCell);
 
-                        if (ABS(wallTemperature) <= 1.0e-12)
-                        {
-                            temperatureWall = surfaceTemperature[nIndex];
-                            ++ nIndex;
-                        }
-
-                        if (ABS(catalyticCoef) <= 1.0e-12)
+                        if (ABS(catalyticCoef) <= EPSILON) //Fully non-catalytic wall.
                         {
                             for (int s = nNSEquation; s < nNSEquation + nSpeciesNumber; ++ s)
                             {
                                 wallVariables[s] = primitveVariables(i - id, j - jd, k - kd, s);
+                            }
+                        }
+                        else //Fully catalytic wall or finite catalytic wall.
+                        {
+                            for (int s = nNSEquation; s < nNSEquation + nSpeciesNumber; ++ s)
+                            {
+                                wallVariables[s] = (*surfaceMassFraction)(indexOfWall, indexOfCell, s - nNSEquation);
                             }
                         }
                         massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
@@ -11092,11 +13036,12 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
                             ql(il, jl, kl, m) = wallVariables[m];
                             qr(i, j, k, m) = wallVariables[m];
                         }
-
+                        ++ indexOfCell; //Next grid cell.
                     }
                 }
             }
         }
+        
     }
 
     delete []wallVariables;
@@ -11445,11 +13390,9 @@ void NSSolverStruct::CorrectInviscidFlux(Grid *gridIn, FieldProxy *fluxProxy, in
     {//! Apply the original method, it is no need to modify the flux on wall.
         return;
     }
-
     RDouble wallTemperature = parameters->GetWallTemperature();
-    if (wallTemperature <= 0.0)
-    {
-        //! The adiabatic wall applies the original method.
+    if (wallTemperature < 0.0)
+    {//! The adiabatic wall applies the original method.
         return;
     }
 
@@ -11474,35 +13417,17 @@ void NSSolverStruct::CorrectInviscidFlux(Grid *gridIn, FieldProxy *fluxProxy, in
     RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &faceFluxes = fluxProxy->GetField_STR();
 
-    RDouble catalyticCoef = parameters->GetCatalyticCoef();
     int nNSEquation = parameters->GetNSEquationNumber();
     int nLaminar = parameters->GetLaminarNumber();
     int nTemperatureModel = parameters->GetTemperatureModel();
-    int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
+    int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
     int nSpecies = nLaminar + nChemical - nNSEquation;
 
-    RDouble *speciesMassFractions;
-    if (nChemical > 0)    //! The fully catalytic wall condition.
+    RDouble catalyticCoef = parameters->GetCatalyticCoef();
+    RDouble3D *surfaceMassFraction;
+    if (nChemical > 0 && nSpecies > 0)    //! The fully catalytic wall condition.
     {
-        RDouble massFractionO2 = parameters->GetMassFractionO2();
-        RDouble massFractionN2 = parameters->GetMassFractionN2();
-        speciesMassFractions = new RDouble[nSpecies];
-
-        for (int i = 0; i < nSpecies; ++ i)
-        {
-            speciesMassFractions[i] = 0.0;
-        }
-
-        int k = gas->GetSpeciesIndex("O2");
-        if (k >= 0)
-        {
-            speciesMassFractions[k] = massFractionO2;
-        }
-        k = gas->GetSpeciesIndex("N2");
-        if (k >= 0)
-        {
-            speciesMassFractions[k] = massFractionN2;
-        }
+        surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
     }
     //! Save the variables and inviscid fluxes on wall.
     RDouble *wallVariables = new RDouble[nEquation];
@@ -11517,6 +13442,7 @@ void NSSolverStruct::CorrectInviscidFlux(Grid *gridIn, FieldProxy *fluxProxy, in
 
     CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int indexOfWall = 0, indexOfCell = 0;
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
@@ -11552,6 +13478,7 @@ void NSSolverStruct::CorrectInviscidFlux(Grid *gridIn, FieldProxy *fluxProxy, in
         ist = ist + id;
         ied = ied + id;
 
+        indexOfCell = 0;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -11573,18 +13500,18 @@ void NSSolverStruct::CorrectInviscidFlux(Grid *gridIn, FieldProxy *fluxProxy, in
                     }
                     wallVariables[IP] = primitiveVariables(i, j, k, IP);
 
-                    if (ABS(catalyticCoef - 1.0) <= 1.0e-12)
-                    {
-                        for (int m = nNSEquation; m < nNSEquation + nSpecies; ++ m)
-                        {
-                            wallVariables[m] = speciesMassFractions[m - nNSEquation];
-                        }
-                    }
-                    else
+                    if (ABS(catalyticCoef) <= EPSILON) //Fully non-catalytic wall.
                     {
                         for (int m = nNSEquation; m < nNSEquation + nSpecies; ++ m)
                         {
                             wallVariables[m] = primitiveVariables(i, j, k, m);
+                        }
+                    }
+                    else //Fully catalytic wall or finite catalytic wall.
+                    {
+                        for (int m = nNSEquation; m < nNSEquation + nSpecies; ++ m)
+                        {
+                            wallVariables[m] = (*surfaceMassFraction)(indexOfWall, indexOfCell, m - nNSEquation);
                         }
                     }
 
@@ -11656,13 +13583,11 @@ void NSSolverStruct::CorrectInviscidFlux(Grid *gridIn, FieldProxy *fluxProxy, in
                         }
                         #endif
                     }
+                    ++ indexOfCell; //Next grid cell.
                 }
             }
         }
-    }
-    if (nChemical > 0)
-    {
-        delete []speciesMassFractions;
+        ++ indexOfWall; //Next surface regions.
     }
     delete []wallVariables;
     delete []wallFluxes;
@@ -12098,7 +14023,7 @@ StructIter *NSSolverStruct::CreateInvStructIter(Grid *gridIn, int iSurface)
     return structIter;
 }
 
-void NSSolverStruct::Spectrum(Grid *gridIn)
+void NSSolverStruct::Diagonal(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -12124,9 +14049,9 @@ void NSSolverStruct::Spectrum(Grid *gridIn)
     int nChemicalSource  = parameters->GetNChemicalSource();
     int numberOfSpecies = parameters->GetNumberOfSpecies();
 
-    RDouble4D &spec = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
-    RDouble4D &srad = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &srv  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
+    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
 
     RDouble4D &srs  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srs"));
     RDouble3D &dt   = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
@@ -12165,52 +14090,52 @@ void NSSolverStruct::Spectrum(Grid *gridIn)
         viscousSpectrumC1 = one;
     }
 #ifdef USE_ARRAY_OPT
-    declare_data(dt);declare_data(vol);declare_data(spec);
-    declare_data(srad);declare_data(srv);
-    declare_stride_4d(spec);
+    declare_data(dt);declare_data(vol);declare_data(diagonal);
+    declare_data(invSpectralRadius);declare_data(visSpectralRadius);
+    declare_stride_4d(diagonal);
     for (int k = kst; k <= ked; ++ k)
     {
-            declare_basex(spec,2,data,k);
+            declare_basex(diagonal,2,data,k);
             declare_basex(dt,2,data,k);declare_basex(vol,2,data,k);
             for (int j = jst; j <= jed; ++ j)
             {
-                    declare_basex(spec,1,2,j);
+                    declare_basex(diagonal,1,2,j);
                     declare_basex(dt,1,2,j);declare_basex(vol,1,2,j);
                     for (int i = ist; i <= ied; ++ i)
                     {
                             odt = dualTimeSpectrumC1 * declare_base_namex(vol,1)[i] + dualTimeSpectrumC2 / declare_base_namex(dt,1)[i];
                             for (int m = 0; m < nEquation; ++ m)
                             {
-                                    declare_basex(spec,3,1,m);
-                                    declare_base_namex(spec,3)[i] = odt;
+                                    declare_basex(diagonal,3,1,m);
+                                    declare_base_namex(diagonal,3)[i] = odt;
                             }
                     }
             }
     }
     for (int k = kst; k <= ked; ++ k)
     {
-            declare_basex(spec,2,data,k);
-            declare_basex(srad,2,data,k);declare_basex(srv,2,data,k);
+            declare_basex(diagonal,2,data,k);
+            declare_basex(invSpectralRadius,2,data,k);declare_basex(visSpectralRadius,2,data,k);
             for (int j = jst; j <= jed; ++ j)
             {
-                    declare_basex(spec,1,2,j);
-                    declare_basex(srad,1,2,j);declare_basex(srv,1,2,j);
+                    declare_basex(diagonal,1,2,j);
+                    declare_basex(invSpectralRadius,1,2,j);declare_basex(visSpectralRadius,1,2,j);
                     for (int i = ist; i <= ied; ++ i)
                     {
                             rad_euler = zero;
                             rad_ns    = zero;
                             for (int iSurface = 0; iSurface < nDim; ++ iSurface)
                             {
-                                    declare_basex(srad,3,1,iSurface);declare_basex(srv,3,1,iSurface);
-                                    rad_euler += declare_base_namex(srad,3)[i];
-                                    rad_ns    += declare_base_namex(srv,3)[i];
+                                    declare_basex(invSpectralRadius,3,1,iSurface);declare_basex(visSpectralRadius,3,1,iSurface);
+                                    rad_euler += declare_base_namex(invSpectralRadius,3)[i];
+                                    rad_ns    += declare_base_namex(visSpectralRadius,3)[i];
                             }
                             rad = rad_euler + viscousSpectrumC1 * rad_ns;
                             rad = betw * rad;
                             for (int m = 0; m < nEquation; ++ m)
                             {
-                                    declare_basex(spec,3,1,m);
-                                    declare_base_namex(spec,3)[i] += rad;
+                                    declare_basex(diagonal,3,1,m);
+                                    declare_base_namex(diagonal,3)[i] += rad;
                             }
                     }
             }
@@ -12232,8 +14157,8 @@ void NSSolverStruct::Spectrum(Grid *gridIn)
                                     for (int m = nNSEquation; m < nEquation; ++ m)
                                     {
                                             RDouble dt_chem = MIN(cfl / MAX(srs(i, j, k,m-nNSEquation), 1.0e-30), dt(i, j, k));
-                                            RDouble ct = spec(i, j, k, m) - dualTimeSpectrumC2 / dt(i, j, k) + dualTimeSpectrumC2 / dt_chem;
-                                            spec(i, j, k, m) = ct + rad_chem;
+                                            RDouble ct = diagonal(i, j, k, m) - dualTimeSpectrumC2 / dt(i, j, k) + dualTimeSpectrumC2 / dt_chem;
+                                            diagonal(i, j, k, m) = ct + rad_chem;
                                     }
                             }
                     }
@@ -12250,22 +14175,22 @@ void NSSolverStruct::Spectrum(Grid *gridIn)
 
                 for (int m = 0; m < nEquation; ++ m)
                 {
-                    spec(i, j, k, m) = odt;
+                    diagonal(i, j, k, m) = odt;
                 }
 
                 rad_euler = zero;
                 rad_ns    = zero;
                 for (int iSurface = 0; iSurface < nDim; ++ iSurface)
                 {
-                    rad_euler += srad(i, j, k, iSurface);
-                    rad_ns    +=  srv(i, j, k, iSurface);   //! Modified by clz : 2012-7-19.
+                    rad_euler += invSpectralRadius(i, j, k, iSurface);
+                    rad_ns    +=  visSpectralRadius(i, j, k, iSurface);   //! Modified by clz : 2012-7-19.
                 }
                 rad = rad_euler + viscousSpectrumC1 * rad_ns;
                 rad = betw * rad;
 
                 for (int m = 0; m < nEquation; ++ m)       //! Here is nl, not nEquation.
                 {
-                    spec(i, j, k, m) += rad;
+                    diagonal(i, j, k, m) += rad;
                 }
             }
         }
@@ -12283,11 +14208,11 @@ void NSSolverStruct::Spectrum(Grid *gridIn)
                 {
                     for(int s = 0; s < nSpeciesEquation; ++ s)
                     {
-                        spec(i, j, k, nNSEquation + s) -= srs(i, j, k, s);
+                        diagonal(i, j, k, nNSEquation + s) -= srs(i, j, k, s);
                     }
                     for(int it = 0; it < nTemperatureModel - 1; ++ it)
                     {
-                        spec(i, j, k, nNSEquation + numberOfSpecies + it) -= srs(i, j, k, numberOfSpecies + it);
+                        diagonal(i, j, k, nNSEquation + numberOfSpecies + it) -= srs(i, j, k, numberOfSpecies + it);
                     }
                 }
             }
@@ -12295,8 +14220,8 @@ void NSSolverStruct::Spectrum(Grid *gridIn)
     }
 #endif
     //clz end
-    GhostCell3D(spec, ni, nj, nk, nEquation);
-    //grid->GhostCell3DExceptInterface(spec, nEquation);
+    GhostCell3D(diagonal, ni, nj, nk, nEquation);
+    //grid->GhostCell3DExceptInterface(diagonal, nEquation);
 }
 
 
@@ -12341,13 +14266,11 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     RDouble *temperature = new RDouble[nTemperatureModel];
     RDouble *q_pre = new RDouble[nEquation];
 
-    RDouble4D &srad= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &spec= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
 
-    //clz begin
-    RDouble4D &srv = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
-    //clz end
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
 
     RDouble4D &q   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &t   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
@@ -12359,8 +14282,8 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
     Range MM(0, nEquation - 1);
 
-    declare_data(q);declare_data(dq);declare_data(t);declare_data(srv);
-    declare_data(spec);declare_data(srad);declare_data(gvgn);
+    declare_data(q);declare_data(dq);declare_data(t);declare_data(visSpectralRadius);
+    declare_data(diagonal);declare_data(invSpectralRadius);declare_data(gvgn);
     declare_data(gxfn);declare_data(gyfn);declare_data(gzfn);
     declare_data(gamma);declare_data(garea);declare_stride_4d(dq);
 
@@ -12392,12 +14315,12 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     
     for (int k = kst; k <= ked; ++ k)
     {
-        declare_basex(spec,2,data,k);declare_basex(q,2,data,k);declare_basex(t,2,data,k);
+        declare_basex(diagonal,2,data,k);declare_basex(q,2,data,k);declare_basex(t,2,data,k);
         declare_basex(dq,2,data,k);declare_basex(garea,2,data,k);declare_basex(gvgn,2,data,k);
         declare_basex(gxfn,2,data,k);declare_basex(gyfn,2,data,k);declare_basex(gzfn,2,data,k);
         for (int j = jst; j <= jed; ++ j)
         {
-            declare_basex(spec,1,2,j);declare_basex(q,1,2,j);declare_basex(t,1,2,j);
+            declare_basex(diagonal,1,2,j);declare_basex(q,1,2,j);declare_basex(t,1,2,j);
             declare_basex(dq,1,2,j);declare_basex(garea,1,2,j);declare_basex(gvgn,1,2,j);
             declare_basex(gxfn,1,2,j);declare_basex(gyfn,1,2,j);declare_basex(gzfn,1,2,j);
             for (int i = ist; i <= ied; ++ i)
@@ -12467,9 +14390,9 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     declare_base_suffixx(garea,2,data,kl,l,);declare_base_suffixx(gvgn,2,data,kl,l,);
                     declare_base_suffixx(garea,1,2,jl,l,l);declare_base_suffixx(gvgn,1,2,jl,l,l);
                     declare_base_suffixx(garea,3,1,iSurface,l,l);declare_base_suffixx(gvgn,3,1,iSurface,l,l);
-                    declare_base_suffixx(srad,2,data,kl,l,);declare_base_suffixx(gamma,2,data,kl,l,);declare_base_suffixx(srv,2,data,kl,l,);
-                    declare_base_suffixx(srad,1,2,jl,l,l);declare_base_suffixx(gamma,1,2,jl,l,l);declare_base_suffixx(srv,1,2,jl,l,l);
-                    declare_base_suffixx(srad,3,1,iSurface-1,l,l);declare_base_suffixx(srv,3,1,iSurface-1,l,l);
+                    declare_base_suffixx(invSpectralRadius,2,data,kl,l,);declare_base_suffixx(gamma,2,data,kl,l,);declare_base_suffixx(visSpectralRadius,2,data,kl,l,);
+                    declare_base_suffixx(invSpectralRadius,1,2,jl,l,l);declare_base_suffixx(gamma,1,2,jl,l,l);declare_base_suffixx(visSpectralRadius,1,2,jl,l,l);
+                    declare_base_suffixx(invSpectralRadius,3,1,iSurface-1,l,l);declare_base_suffixx(visSpectralRadius,3,1,iSurface-1,l,l);
                     declare_base_suffixx(gxfn,2,data,kl,l,);declare_base_suffixx(gyfn,2,data,kl,l,);declare_base_suffixx(gzfn,2,data,kl,l,);
                     declare_base_suffixx(gxfn,1,2,jl,l,l);declare_base_suffixx(gyfn,1,2,jl,l,l);declare_base_suffixx(gzfn,1,2,jl,l,l);
                     declare_base_suffixx(gxfn,3,1,iSurface,l,l);declare_base_suffixx(gyfn,3,1,iSurface,l,l);declare_base_suffixx(gzfn,3,1,iSurface,l,l);
@@ -12496,7 +14419,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     RDouble vgn  = half * (vgn1  + vgn2);
                     RDouble area = half * (area1 + area2);
 
-                    RDouble &rad  = declare_base_name_suffixx(srad,3,l)[il];
+                    RDouble &rad  = declare_base_name_suffixx(invSpectralRadius,3,l)[il];
                     RDouble gama = declare_base_name_suffixx(gamma,1,l)[il];
 
                     //! The previous method of computing the (M + R) * dQ.
@@ -12532,7 +14455,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                         //RDouble miul = declare_base_name_suffixx(viscousLaminar,1,l)[il];//viscousLaminar(il, jl, kl);
                         //RDouble miut = declare_base_name_suffixx(viscousTurbulence,1,l)[il];//viscousTurbulence(il, jl, kl);
                         //RDouble vol  = declare_base_name_suffixx(gvol,1,l)[il];//gvol(il, jl, kl);
-                        RDouble rad_vis = declare_base_name_suffixx(srv,3,l)[il];//srv(il, jl, kl,iSurface-1);
+                        RDouble rad_vis = declare_base_name_suffixx(visSpectralRadius,3,l)[il];//visSpectralRadius(il, jl, kl,iSurface-1);
 
                         //! Compute (Mv + Rv) * dQ including real gas conditions£¬Modified by LiPeng on Jan. 14, 2019.
                         //MVXDQ_STD_LP(prim,xfn,yfn,zfn,area,vol,miul,miut,gama,d_q,df,nm,nl,rad_vis,-1);
@@ -12552,9 +14475,9 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
 
                 for(int m = 0; m < nEquation; ++m)
                 {
-                    declare_basex(spec,3,1,m);declare_basex(dq,3,1,m);
-                    //declare_base_namex(dq,3)[i] = (declare_base_namex(dq,3)[i] - rhs0[m]) / declare_base_namex(spec,3)[i];
-                    declare_base_namex(dq,3)[i] = (dq_pre[m] - rhs0[m]) / declare_base_namex(spec,3)[i];
+                    declare_basex(diagonal,3,1,m);declare_basex(dq,3,1,m);
+                    //declare_base_namex(dq,3)[i] = (declare_base_namex(dq,3)[i] - rhs0[m]) / declare_base_namex(diagonal,3)[i];
+                    declare_base_namex(dq,3)[i] = (dq_pre[m] - rhs0[m]) / declare_base_namex(diagonal,3)[i];
                 }
 
                 //fprintf(pfile,"i=%d, j=%d, k=%d\r\n",i, j, k);
@@ -12623,11 +14546,11 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
     RDouble **MG  = NewPointer2 <RDouble> (nEquation, nEquation);
     RDouble *temperature = new RDouble [nTemperatureModel];
 
-    RDouble4D &srad= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &spec= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
+    RDouble4D &invSpectralRadius= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &diagonal= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
 
     //clz begin
-    RDouble4D &srv = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
     //clz end
 
     RDouble4D &q   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
@@ -12640,9 +14563,9 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
     GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
     Range MM(0, nEquation - 1);
 
-    //RDouble4D spec(II,JJ,KK,MM,fortranArray);
-    declare_data(q);declare_data(dq);declare_data(t);declare_data(srv);
-    declare_data(spec);declare_data(srad);declare_data(gvgn);
+    //RDouble4D diagonal(II,JJ,KK,MM,fortranArray);
+    declare_data(q);declare_data(dq);declare_data(t);declare_data(visSpectralRadius);
+    declare_data(diagonal);declare_data(invSpectralRadius);declare_data(gvgn);
     declare_data(gxfn);declare_data(gyfn);declare_data(gzfn);
     declare_data(gamma);declare_data(garea);declare_stride_4d(dq);
 
@@ -12679,11 +14602,11 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
     int il1, jl1, kl1;
     for (int k = ked; k >= kst; -- k)
     {
-        declare_basex(spec,2,data,k);
+        declare_basex(diagonal,2,data,k);
         declare_basex(dq,2,data,k);
         for (int j = jed; j >= jst; -- j)
         {
-            declare_basex(spec,1,2,j);
+            declare_basex(diagonal,1,2,j);
             declare_basex(dq,1,2,j);
             for (int i = ied; i >= ist; -- i)
             {
@@ -12724,15 +14647,15 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     declare_base_suffixx(dq,2,data,kl,l,);declare_base_suffixx(dq,1,2,jl,l,l);
                     declare_base_suffixx(t,2,data,kl,l,);declare_base_suffixx(t,1,2,jl,l,l);
                     declare_base_suffixx(gamma,2,data,kl,l,);declare_base_suffixx(gamma,1,2,jl,l,l);
-                    declare_base_suffixx(srad,2,data,kl,l,);declare_base_suffixx(srad,1,2,jl,l,l);
-                    declare_base_suffixx(garea,2,data,kl,l,);declare_base_suffixx(gvgn,2,data,kl,l,);declare_base_suffixx(srv,2,data,kl,l,);
-                    declare_base_suffixx(garea,1,2,jl,l,l);declare_base_suffixx(gvgn,1,2,jl,l,l);declare_base_suffixx(srv,1,2,jl,l,l);
-                    declare_base_suffixx(garea,3,1,iSurface,l,l);declare_base_suffixx(gvgn,3,1,iSurface,l,l);declare_base_suffixx(srad,3,1,iSurface-1,l,l);
+                    declare_base_suffixx(invSpectralRadius,2,data,kl,l,);declare_base_suffixx(invSpectralRadius,1,2,jl,l,l);
+                    declare_base_suffixx(garea,2,data,kl,l,);declare_base_suffixx(gvgn,2,data,kl,l,);declare_base_suffixx(visSpectralRadius,2,data,kl,l,);
+                    declare_base_suffixx(garea,1,2,jl,l,l);declare_base_suffixx(gvgn,1,2,jl,l,l);declare_base_suffixx(visSpectralRadius,1,2,jl,l,l);
+                    declare_base_suffixx(garea,3,1,iSurface,l,l);declare_base_suffixx(gvgn,3,1,iSurface,l,l);declare_base_suffixx(invSpectralRadius,3,1,iSurface-1,l,l);
                     declare_base_suffixx(garea,2,data,kl+kl1,l1,);declare_base_suffixx(gvgn,2,data,kl+kl1,l1,);
                     declare_base_suffixx(garea,1,2,jl+jl1,l1,l1);declare_base_suffixx(gvgn,1,2,jl+jl1,l1,l1);
                     declare_base_suffixx(garea,3,1,iSurface,l1,l1);declare_base_suffixx(gvgn,3,1,iSurface,l1,l1);
 
-                    declare_base_suffixx(srv,3,1,iSurface-1,l,l);
+                    declare_base_suffixx(visSpectralRadius,3,1,iSurface-1,l,l);
                     declare_base_suffixx(gxfn,2,data,kl,l,);declare_base_suffixx(gyfn,2,data,kl,l,);declare_base_suffixx(gzfn,2,data,kl,l,);
                     declare_base_suffixx(gxfn,1,2,jl,l,l);declare_base_suffixx(gyfn,1,2,jl,l,l);declare_base_suffixx(gzfn,1,2,jl,l,l);
                     declare_base_suffixx(gxfn,3,1,iSurface,l,l);declare_base_suffixx(gyfn,3,1,iSurface,l,l);declare_base_suffixx(gzfn,3,1,iSurface,l,l);
@@ -12777,7 +14700,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     RDouble area = half * (area1 + area2);
                     RDouble vgn  = half * (vgn1  + vgn2);
 
-                    RDouble  &rad  = declare_base_name_suffixx(srad,3,l)[il];
+                    RDouble  &rad  = declare_base_name_suffixx(invSpectralRadius,3,l)[il];
                     RDouble gama = declare_base_name_suffixx(gamma,1,l)[il];
                     //! The previous method of computing the (M - R) * dQ.
                     //MXDQ_STD(prim, xfn, yfn, zfn, area, vgn, gama, d_q, df, nm, nl, rad, -1);
@@ -12812,7 +14735,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                         //RDouble miul = declare_base_name_suffixx(viscousLaminar,1,l)[il];//viscousLaminar(il, jl, kl);
                         //RDouble miut = declare_base_name_suffixx(viscousTurbulence,1,l)[il];//viscousTurbulence(il, jl, kl);
                         //RDouble vol  = declare_base_name_suffixx(gvol,1,l)[il];//gvol(il, jl, kl);
-                        RDouble rad_vis = declare_base_name_suffixx(srv,3,l)[il];//srv(il, jl, kl,iSurface-1);
+                        RDouble rad_vis = declare_base_name_suffixx(visSpectralRadius,3,l)[il];//visSpectralRadius(il, jl, kl,iSurface-1);
 
                         //! Compute (Mv - Rv) * dQ including real gas conditions£¬Modified by LiPeng on Jan. 14, 2019.
                         //MVXDQ_STD_LP(prim,xfn,yfn,zfn,area,vol,miul,miut,gama,d_q,df,nm,nl,rad_vis,1);
@@ -12826,8 +14749,8 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                 }
                 for(int m = 0; m < nEquation; ++m)
                 {
-                    declare_basex(dq,3,1,m);declare_basex(spec,3,1,m);
-                    declare_base_namex(dq,3)[i] -= rhs0[m] /declare_base_namex(spec,3)[i];
+                    declare_basex(dq,3,1,m);declare_basex(diagonal,3,1,m);
+                    declare_base_namex(dq,3)[i] -= rhs0[m] /declare_base_namex(diagonal,3)[i];
                 }
 
                 //fprintf(pfile,"i=%d, j=%d, k=%d\r\n",i, j, k);
@@ -12900,19 +14823,19 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     RDouble *temperature = new RDouble[nTemperatureModel];
     RDouble *q_pre = new RDouble[nEquation];
 
-    RDouble4D &srad= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &spec= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
 
     //clz begin
-    RDouble4D &srv = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
     //clz end
 
-    RDouble4D &q   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &t   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
-    RDouble3D &dt  = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
+    RDouble4D &q  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &t  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble3D &dt = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
 
-    RDouble3D &gamma= *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
+    RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 
     Range II, JJ, KK;
     GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
@@ -13031,8 +14954,8 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                         gykb_j[2]  = half * (gzfn (i ,j ,k ,2) + gzfn (i  ,jm1,k  ,2));
                     }
 
-                    RDouble &ra  = srad (im1,j  ,k  ,0);
-                    RDouble &rb  = srad (i  ,jm1,k  ,1);
+                    RDouble &ra = invSpectralRadius(im1, j  , k, 0);
+                    RDouble &rb = invSpectralRadius(i  , jm1, k, 1);
 
                     RDouble gama1 = gamma(im1,j  ,k);
                     RDouble gama2 = gamma(i  ,jm1,k);
@@ -13076,7 +14999,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     gykb_k[2]  = half * (gzfn (i ,j ,k ,3) + gzfn (i  ,j  ,km1,3));
                     gykb_k[3]  = half * (garea(i ,j ,k ,3) + garea(i  ,j  ,km1,3));
                     gykb_k[4]  = half * (gvgn (i ,j ,k ,3) + gvgn (i  ,j  ,km1,3));
-                    RDouble &rc  = srad (i  ,j  ,km1,2);
+                    RDouble &rc = invSpectralRadius(i, j, km1, 2);
                     RDouble gama3 = gamma(i  ,j  ,km1);
                     RDouble tm_k = t(i  ,j  ,km1,0);
                     if (ifLowSpeedPrecon == 0)
@@ -13102,13 +15025,13 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                 if (viscousType > 0)         //! Implicit treatment of viscosity term,added by clz : 2012-7-19£¬modified by LiPeng on Jan 21, 2019.
                 {
 
-                    RDouble rad_vis_i = srv(im1,j  ,k  ,0);     //! The viscous spectrum radius.
-                    RDouble rad_vis_j = srv(i  ,jm1,k  ,1);     //! The viscous spectrum radius.
-                    //RDouble rad_vis_k = srv(i  ,j  ,km1,2);   //! The viscous spectrum radius.
+                    RDouble rad_vis_i = visSpectralRadius(im1, j  , k  , 0);    //! The viscous spectrum radius.
+                    RDouble rad_vis_j = visSpectralRadius(i  , jm1, k  , 1);    //! The viscous spectrum radius.
+                    //RDouble rad_vis_k = visSpectralRadius(i  , j  , km1, 2);    //! The viscous spectrum radius.
                     RDouble rad_vis_k = 0.0;
                     if (nDim == THREE_D)
                     {
-                        rad_vis_k = srv(i  ,j  ,km1,2);
+                        rad_vis_k = visSpectralRadius(i, j, km1, 2);
                     }
 
                     //! Compute (Mv + Rv) * dQ including real gas conditions£¬Modified by LiPeng on Jan. 14, 2019.
@@ -13131,8 +15054,8 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
 
                 for (int m = 0; m < nl; ++ m)
                 {
-                    dq(i, j, k,m) = (dq(i, j, k,m) - rhs0[m]) / spec(i, j, k,m);
-                    //dq(i, j, k,m) = (dq_pre[m] - rhs0[m]) / spec(i, j, k,m);
+                    dq(i, j, k, m) = (dq(i, j, k, m) - rhs0[m]) / diagonal(i, j, k, m);
+                    //dq(i, j, k, m) = (dq_pre[m] - rhs0[m]) / diagonal(i, j, k, m);
                 }
             }
         }
@@ -13208,18 +15131,16 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
     RDouble **MG  = NewPointer2 <RDouble> (nEquation, nEquation);
     RDouble *temperature = new RDouble [nTemperatureModel];
 
-    RDouble4D &srad= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &spec= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
 
-    //clz begin
-    RDouble4D &srv = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
-    //clz end
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
 
     RDouble4D &q   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &t   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
     RDouble3D &dt  = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
 
-    RDouble3D &gamma= *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
+    RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 
     Range II, JJ, KK;
     GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
@@ -13341,14 +15262,14 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     gykb_j[2]  = half * (gzfn (i ,jp1,k ,2) + gzfn (i  ,jp1p1,k  ,2));
                 }
 
-                RDouble &ra  = srad (ip1,j  ,k  ,0);
-                RDouble &rb  = srad (i  ,jp1,k  ,1);
+                RDouble &ra = invSpectralRadius(ip1, j  , k, 0);
+                RDouble &rb = invSpectralRadius(i  , jp1, k, 1);
 
-                RDouble gama1 = gamma(ip1,j  ,k);
-                RDouble gama2 = gamma(i  ,jp1,k);
+                RDouble gama1 = gamma(ip1, j  , k);
+                RDouble gama2 = gamma(i  , jp1, k);
 
-                RDouble tm_i = t(ip1,j  ,k  ,0);
-                RDouble tm_j = t(i  ,jp1,k  ,0);
+                RDouble tm_i = t(ip1, j  , k, 0);
+                RDouble tm_j = t(i  , jp1, k, 0);
                 if (ifLowSpeedPrecon == 0)
                 {
                     //! The previous method of computing the (M + R) * dQ.
@@ -13385,7 +15306,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     gykb_k[2]  = half * (gzfn (i ,j ,kp1,3) + gzfn (i  ,j  ,kp1p1,3));
                     gykb_k[3]  = half * (garea(i ,j ,kp1,3) + garea(i  ,j  ,kp1p1,3));
                     gykb_k[4]  = half * (gvgn (i ,j ,kp1,3) + gvgn (i  ,j  ,kp1p1,3));
-                    RDouble &rc  = srad (i  ,j  ,kp1,2);
+                    RDouble &rc = invSpectralRadius(i, j, kp1, 2);
                     RDouble gama3 = gamma(i  ,j  ,kp1);
                     RDouble tm_k = t(i  ,j  ,kp1  ,0);
                     if (ifLowSpeedPrecon == 0)
@@ -13410,14 +15331,14 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                 if (viscousType > 0)    //! Implicit treatment of viscosity term,added by clz : 2012-7-19£¬modified by LiPeng on Jan 21, 2019.
                 {
 
-                    RDouble rad_vis_i = srv(ip1,j  ,k  ,0);      //! The viscous spectrum radius.
-                    RDouble rad_vis_j = srv(i  ,jp1,k  ,1);      //! The viscous spectrum radius.
-                    //RDouble rad_vis_k = srv(i  ,j  ,kp1,2);    //! The viscous spectrum radius.
-                    RDouble rad_vis_k = 0.0;                     //! The viscous spectrum radius.
+                    RDouble rad_vis_i = visSpectralRadius(ip1, j  , k  , 0);    //! The viscous spectrum radius.
+                    RDouble rad_vis_j = visSpectralRadius(i  , jp1, k  , 1);    //! The viscous spectrum radius.
+                    //RDouble rad_vis_k = visSpectralRadius(i  , j  , kp1, 2);    //! The viscous spectrum radius.
+                    RDouble rad_vis_k = 0.0;    //! The viscous spectrum radius.
 
                     if (nDim == THREE_D)
                     {
-                        rad_vis_k = srv(i  ,j  ,kp1,2);
+                        rad_vis_k = visSpectralRadius(i, j, kp1, 2);
                     }
 
                     //! Compute (Mv + Rv) * dQ including real gas conditions£¬Modified by LiPeng on Jan. 14, 2019.
@@ -13433,28 +15354,27 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                 //! Solve dqa.
                 for (int m = 0; m < nl; ++ m)
                 {
-                    dq(i, j, k, m) -= rhs0[m] / spec(i, j, k, m);
+                    dq(i, j, k, m) -= rhs0[m] / diagonal(i, j, k, m);
                 }
-
             }
         }
     }
 
-    delete []dq_i;
-    delete []dq_j;
-    delete []dq_k;
+    delete [] dq_i;
+    delete [] dq_j;
+    delete [] dq_k;
 
-    delete []prim_i;
-    delete []prim_j;
-    delete []prim_k;
+    delete [] prim_i;
+    delete [] prim_j;
+    delete [] prim_k;
 
-    delete []q_loc_i;
-    delete []q_loc_j;
-    delete []q_loc_k;
+    delete [] q_loc_i;
+    delete [] q_loc_j;
+    delete [] q_loc_k;
 
-    delete []gykb_i;
-    delete []gykb_j;
-    delete []gykb_k;
+    delete [] gykb_i;
+    delete [] gykb_j;
+    delete [] gykb_k;
 
     DelPointer2(MG_i);
     DelPointer2(MG_j);
@@ -13462,17 +15382,17 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
 
     //fclose(pfile);
 
-    delete []nxyz;
-    delete []d_q;
-    delete []prim;
-    delete []q_loc;
-    delete []rhs0;
+    delete [] nxyz;
+    delete [] d_q;
+    delete [] prim;
+    delete [] q_loc;
+    delete [] rhs0;
 
-    delete []de;
-    delete []df;
-    delete []dg;
+    delete [] de;
+    delete [] df;
+    delete [] dg;
     DelPointer2(MG);
-    delete []temperature;
+    delete [] temperature;
 }
 #else
 //! Without any array optimization.
@@ -13521,14 +15441,14 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     RDouble *qPrecondition = new RDouble[nEquation];
     RDouble *Ux = new RDouble [nEquation];
 
-    RDouble4D &srad= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &spec= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
-    RDouble4D &srv = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
-    RDouble4D &q   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &t   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
-    RDouble3D &dt  = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
-    RDouble3D &gamma= *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
+    RDouble4D &q  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &t  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble3D &dt = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
+    RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
@@ -13630,7 +15550,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     RDouble area = half * (area1 + area2);
                     RDouble vgn  = half * (vgn1  + vgn2);
 
-                    RDouble &rad  = srad(il, jl, kl, iSurface - 1);
+                    RDouble &rad = invSpectralRadius(il, jl, kl, iSurface - 1);
 
                     RDouble gama = gamma(il, jl, kl);
 
@@ -13662,7 +15582,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
 
                     if (isViscous)
                     {
-                        RDouble rad_vis = half * srv(il, jl, kl, iSurface - 1);
+                        RDouble rad_vis = half * visSpectralRadius(il, jl, kl, iSurface - 1);
 
                         for (int m = 0; m < nEquation; ++ m)
                         {
@@ -13689,8 +15609,8 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     //! dq = { (b - Ux) - Lx } / D.
                     //! Note: the 'dq' has actually initialized by the residual at the beginning of this function.
                     //! the 'rhs0' is the total Delta Flux of the neighbors.            
-                    //! rhs0: Lx        spec: D.
-                    dq(i, j, k, m) = (dq(i, j, k, m) - Ux[m] - rhs0[m]) / spec(i, j, k, m);
+                    //! rhs0: Lx    diagonal: D.
+                    dq(i, j, k, m) = (dq(i, j, k, m) - Ux[m] - rhs0[m]) / diagonal(i, j, k, m);
 
                     //! Store the lower forward sweep delta-flux, which will be used in the backward sweep.
                     deltaFlux(i, j, k, m) += rhs0[m];
@@ -13701,23 +15621,23 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
         }
     }
 
-    delete []nxyz;
-    delete []dqNeighbor;
-    delete []prim;
-    delete []qNeighbor;
-    delete []rhs0;
+    delete [] nxyz;
+    delete [] dqNeighbor;
+    delete [] prim;
+    delete [] qNeighbor;
+    delete [] rhs0;
 
-    delete []de;
-    delete []df;
-    delete []dg;
+    delete [] de;
+    delete [] df;
+    delete [] dg;
 
-    delete []qPrecondition;
-    delete []dqCell;
+    delete [] qPrecondition;
+    delete [] dqCell;
     DelPointer2(MG);
-    delete []temperature;
+    delete [] temperature;
 
-    delete []dqOld;
-    delete []Ux;
+    delete [] dqOld;
+    delete [] Ux;
 }
 
 void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
@@ -13764,14 +15684,14 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
     RDouble *dqCell  = new RDouble[nEquation];
     RDouble *Lx = new RDouble [nEquation];
 
-    RDouble4D &srad= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srad"));
-    RDouble4D &spec= *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("spec"));
+    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
-    RDouble4D &srv = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("srv"));
-    RDouble4D &q   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &t   = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
-    RDouble3D &dt  = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
-    RDouble3D &gamma= *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
+    RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
+    RDouble4D &q  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &t  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble3D &dt = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
+    RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 
     Range II, JJ, KK;
     GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
@@ -13872,7 +15792,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     RDouble area = half * (area1 + area2);
                     RDouble vgn  = half * (vgn1  + vgn2);
 
-                    RDouble  &rad  = srad (il, jl, kl, iSurface - 1);
+                    RDouble  &rad  = invSpectralRadius(il, jl, kl, iSurface - 1);
 
                     RDouble gama = gamma(il, jl, kl);
                     RDouble tm = t(il, jl, kl, 0);
@@ -13906,7 +15826,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
 
                     if (isViscous)
                     {
-                        RDouble rad_vis = half * srv(il, jl, kl, iSurface - 1);
+                        RDouble rad_vis = half * visSpectralRadius(il, jl, kl, iSurface - 1);
 
                         for (int m = 0; m < nEquation; ++ m)
                         {
@@ -13933,8 +15853,8 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     //! Note: the 'dq' has been updated by the forward sweep.
                     //! the 'rhs0' is the total Delta Flux of the neighbors.
                     //! x = {(b - LX) - Ux} / D.
-                    //! rhs0: Ux.               spec: D.
-                    dq(i, j, k, m) = (dq(i, j, k, m) - Lx[m] - rhs0[m]) / spec(i, j, k, m);
+                    //! rhs0: Ux.    diagonal: D.
+                    dq(i, j, k, m) = (dq(i, j, k, m) - Lx[m] - rhs0[m]) / diagonal(i, j, k, m);
 
                     //! Store the upper backward sweep delta-flux, which will be used in the forward sweep.
                     deltaFlux(i, j, k, m) += rhs0[m];
@@ -15416,20 +17336,6 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
         postVisualization->UpdateVisualNodeVarPtr(varName, temperatures, IDX::ITT);
     }
 
-    //! Write vibration temperature.
-    if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TEMPERATURE_VIBRATION))
-    {
-        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TEMPERATURE_VIBRATION);
-        postVisualization->UpdateVisualNodeVarPtr(varName, temperatures, IDX::ITV);
-    }
-
-    //! Write electron temperature.
-    if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TEMPERATURE_ELECTRON))
-    {
-        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TEMPERATURE_ELECTRON);
-        postVisualization->UpdateVisualNodeVarPtr(varName, temperatures, IDX::ITE);
-    }
-
     if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MACH);
@@ -15616,20 +17522,80 @@ LIB_EXPORT void NSSolverStruct::ComputePostVisualVariables(Post_Visual *postVisu
     //! Chemical species must be the last!
     //using namespace GAS_SPACE;
     int nNSEquation = parameters->GetNSEquationNumber();
-    int nLaminar = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
-    if(nChemical)
-    {
-        using namespace GAS_SPACE;
-        int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
+    int numberOfSpecies = parameters->GetNumberOfSpecies();
 
-        string *varname = gas->GetNameOfSpecies();
-        for (int m = nNSEquation; m < nLaminar + nChemical; ++ m)
+    //! Write vibration temperature.
+    if (nChemical > 0 && nTemperatureModel > 1)
+    {
+        //To write the vibratial temperature and vibrational energy.
+        if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TEMPERATURE_VIBRATION))
         {
-            string varName = varname[m - nNSEquation];
-            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, m);
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TEMPERATURE_VIBRATION);
+            postVisualization->UpdateVisualNodeVarPtr(varName, temperatures, IDX::ITV);
         }
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_ENERGY_VIBRATION))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_ENERGY_VIBRATION);
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, nNSEquation + numberOfSpecies);
+        }
+
+        //To write the electric temperature and vibrational energy.
+        if (nTemperatureModel == 3)
+        {
+            if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TEMPERATURE_ELECTRON))
+            {
+                string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TEMPERATURE_ELECTRON);
+                postVisualization->UpdateVisualNodeVarPtr(varName, temperatures, IDX::ITE);
+            }
+            if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_ENERGY_ELECTRON))
+            {
+                string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_ENERGY_ELECTRON);
+                postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, nNSEquation + numberOfSpecies + 1);
+            }
+        }
+    }
+    //! To write the mass fractions of species.
+    if(nChemical > 0)
+    {
+        RDouble4D *tmpValue = ComputeDimensionalVariables(grid);
+        if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DIMENSIONAL_DENSITY))
+        {
+            //Write the dimensional value of density.
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_DIMENSIONAL_DENSITY);
+            postVisualization->UpdateVisualNodeVarPtr(varName, *tmpValue, 0);
+        }
+        if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DIMENSIONAL_PRESSURE))
+        {
+            //Write the dimensional value of pressure.
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_DIMENSIONAL_PRESSURE);
+            postVisualization->UpdateVisualNodeVarPtr(varName, *tmpValue, 1);
+        }
+        if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DIMENSIONAL_TEMPERATURE))
+        {
+            //Write the dimensional value of temperature.
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_DIMENSIONAL_TEMPERATURE);
+            postVisualization->UpdateVisualNodeVarPtr(varName, *tmpValue, 2);
+        }
+
+        //Write the mass fractions of species.
+        using namespace GAS_SPACE;
+        string *varname = gas->GetNameOfSpecies();
+        for (int m = 0; m < numberOfSpecies; ++ m)
+        {
+            string varName = varname[m];
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, nNSEquation + m);
+        }
+
+        //To write the number density of electron.
+        if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_ELECTRON_NUMBER))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_ELECTRON_NUMBER);
+            //ComputeCp(grid, electronDensity);
+            postVisualization->UpdateVisualNodeVarPtr(varName, *tmpValue, 3);
+        }
+        delete tmpValue;
     }
 
 }

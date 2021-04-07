@@ -181,6 +181,11 @@ void CFDSolver::ComputeGradientCellCenter(Grid *grid)
 
 }
 
+void CFDSolver::ComputeGradientCellCenterForLES(Grid *grid)
+{
+
+}
+
 void CFDSolver::SourceFlux(Grid *grid)
 {
 
@@ -1738,10 +1743,7 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
                 CreateEmptyData(grpData, "res_unsteady_n1", nEquation, getherLength, PHDOUBLE);
                 CreateEmptyData(grpData, "res_unsteady_n2", nEquation, getherLength, PHDOUBLE);
 
-                if (IsNeedDESStatistics())
-                {
-                    CreateEmptyData(grpData, "qAverage", nEquation, getherLength, PHDOUBLE);
-                }
+                CreateEmptyData(grpData, "qAverage", nEquation, getherLength, PHDOUBLE);
             }
 
         }
@@ -1759,10 +1761,7 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
                 CreateEmptyData(grpData, "res_turb_unsteady_n1", n_turb, getherLength, PHDOUBLE);
                 CreateEmptyData(grpData, "res_turb_unsteady_n2", n_turb, getherLength, PHDOUBLE);
 
-                if (IsNeedDESStatistics())
-                {
-                    CreateEmptyData(grpData, "qAverageTurb", n_turb, getherLength, PHDOUBLE);
-                }
+                CreateEmptyData(grpData, "qAverageTurb", n_turb, getherLength, PHDOUBLE);
             }
         }
 
@@ -1778,10 +1777,7 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
         CreateEmptyData(actkey->filepos, "physicalTime", 1, 1, PHDOUBLE);
     }
 
-    if (IsNeedDESStatistics())
-    {
-        CreateEmptyData(actkey->filepos, "nStatisticalStep", 1, 1, PHINT);
-    }
+    CreateEmptyData(actkey->filepos, "nStatisticalStep", 1, 1, PHINT);
 }
 
 void CFDSolver::InitFlowAsReadingRestart(ActionKey *actkey)

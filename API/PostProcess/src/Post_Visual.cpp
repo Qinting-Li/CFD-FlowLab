@@ -69,8 +69,6 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_MODELED_DISSIPATION,   "modeleddissipationrate"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_SST_F1             ,   "SSTF1"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_SST_F2             ,   "SSTF2"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE_VIBRATION, "Tv"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE_ELECTRON,  "Te"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_UX        ,   "gradientUx"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_UY        ,   "gradientUy"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_VX        ,   "gradientVx"));
@@ -104,25 +102,41 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_N , "N" ));
     visualVariablesMap.insert(pair<int, string>(VISUAL_N2, "N2"));*/
 
+    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+    int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
+    if (nChemical > 0)
+    {
+        if (nTemperatureModel == 2)
+        {
+            visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE_VIBRATION, "Tv"));
+            visualVariablesMap.insert(pair<int, string>(VISUAL_ENERGY_VIBRATION,      "Ev"));
+        }
+        else if (nTemperatureModel == 3)
+        {
+            visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE_VIBRATION, "Tv"));
+            visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE_ELECTRON,  "Te"));
+            visualVariablesMap.insert(pair<int, string>(VISUAL_ENERGY_VIBRATION,      "Ev"));
+            visualVariablesMap.insert(pair<int, string>(VISUAL_ENERGY_ELECTRON,       "Ee"));
+        }
+        visualVariablesMap.insert(pair<int, string>(VISUAL_ELECTRON_NUMBER,       "Ne"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_DIMENSIONAL_DENSITY,  "rho"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_DIMENSIONAL_PRESSURE,   "p"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_DIMENSIONAL_TEMPERATURE,"T"));
+    }
+
     nVisualVariables = nVisualVariables_in;
+    int nCount = 0;
     for (int iVar = 0; iVar < nVisualVariables; ++ iVar)
     {
         int varTemp = visualVariables_in[iVar];
+        if (visualVariablesMap.find(varTemp) == visualVariablesMap.end())
+        {
+            continue;
+        }
         visualVariables.insert(varTemp);
+        ++ nCount;
     }
-
-    /*int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    if (nchem)
-    {
-        using namespace GAS_SPACE;
-
-        int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-        int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-        int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-        int neqn  = nl + nchem;
-
-        nVisualVariables = nVisualVariables + (neqn - nm);
-    }*/
+    nVisualVariables = nCount;
 }
 
 LIB_EXPORT Post_Visual::~Post_Visual()
