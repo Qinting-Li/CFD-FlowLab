@@ -62,7 +62,7 @@ void NSSolverStruct::ReadParameter()
         int zoneID = grid->GetZoneID();
 
         RDouble entropyAcoustic = parameters->GetRoeEntropyFixCoef1();
-        
+
         //! The output of Entropy fix coefficient for ROE scheme.
         if (zoneID == 0)  //! When grid->GetZoneID() = 0 and GetCurrentProcessorID() = 0.
         {
@@ -349,7 +349,7 @@ void NSSolverStruct::AllocateGlobalVar(Grid *gridIn)
         grid->UpdateDataPtr("dqdx_cc_ruvwpt", dqdx_cc_ruvwpt );
         grid->UpdateDataPtr("dqdy_cc_ruvwpt", dqdy_cc_ruvwpt );
         grid->UpdateDataPtr("dqdz_cc_ruvwpt", dqdz_cc_ruvwpt );
-        
+
         RDouble4D * faceInviscidfluxI = new RDouble4D(I, J, K, M, fortranArray);
         RDouble4D * faceInviscidfluxJ = new RDouble4D(I, J, K, M, fortranArray);
         RDouble4D * faceInviscidfluxK = new RDouble4D(I, J, K, M, fortranArray);
@@ -1273,7 +1273,7 @@ void NSSolverStruct::AirForceCoefParts(ActionKey *actkey, int partID, int coordi
         boundaryCondition->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
         boundaryCondition->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
         partBCName = boundaryCondition->GetBCName();
-        
+
         boundaryCondition->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
         boundaryCondition->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
         boundaryCondition->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
@@ -1883,7 +1883,7 @@ void NSSolverStruct::CpDistriCoef(ActionKey *actkey)
                             //! This value is not the real heat rate on wall, it is just the first term on the right side of the energy equation.\n
                             //! To obtain the real value, hf = nxs * qx + nys * qy + nzs * qz, and hf is just the non-dimensional variables.\n
                             //! To obtain the dimensional value of heat rate, hf = (nxs * qx + nys * qy + nzs * qz) * (ref_miu * ref_vel^2/ref_len).
-                            heatFlux += -leftOrRightIndex * (normalComponetX * qx + normalComponetY * qy + normalComponetZ * qz) * oRefReNumber;
+                            heatFlux += - (normalComponetX * qx + normalComponetY * qy + normalComponetZ * qz) * oRefReNumber;
                         }
                         else      //! Non-equilibrium gas.
                         {
@@ -2577,7 +2577,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                         {
                             //! To compute the gradients of species density on wall.
                             RDouble dcdx, dcdy, dcdz;
-                            GetDerivatives(nNSEquation + iSpecies, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, primitiveVariables, 
+                            GetDerivatives(nNSEquation + iSpecies, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, primitiveVariables,
                                            faceAreaNormalComponentX, faceAreaNormalComponentY, faceAreaNormalComponentZ, cellVolume, dcdx, dcdy, dcdz);
                             //! Compute the diffusion coefficient.
                             diffusionCoefficient = densityDiffusivity[iSpecies] * speciesEnthalpy[iSpecies];
@@ -2600,7 +2600,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                     if (viscousType > 0)
                     {
                         //! Obtain the partial derivative of temperature.
-                        GetDerivatives(ITT, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, temperatures, 
+                        GetDerivatives(ITT, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, temperatures,
                                        faceAreaNormalComponentX, faceAreaNormalComponentY, faceAreaNormalComponentZ, cellVolume, dtdx, dtdy, dtdz);
                         dqdx = heatConductivity[0] * dtdx;
                         dqdy = heatConductivity[0] * dtdy;
@@ -2614,7 +2614,7 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
 
                         if (nTemperatureModel == 2)     //! Two-Temperature model.
                         {
-                            GetDerivatives(ITV, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, temperatures, 
+                            GetDerivatives(ITV, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, temperatures,
                                            faceAreaNormalComponentX, faceAreaNormalComponentY, faceAreaNormalComponentZ, cellVolume, dtdx, dtdy, dtdz);
                             dqdx = (heatConductivity[ITV] + heatConductivity[ITE]) * dtdx;
                             dqdy = (heatConductivity[ITV] + heatConductivity[ITE]) * dtdy;
@@ -2626,14 +2626,14 @@ void NSSolverStruct::ExportSurfaceVariables(ActionKey *actkey)
                         }
                         else if (nTemperatureModel == 3)    //! Three-Temperature model.
                         {
-                            GetDerivatives(ITV, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, temperatures, 
+                            GetDerivatives(ITV, nSurface, nDim, leftOrRightIndex, i, j, k, ni, nj, nk, temperatures,
                                            faceAreaNormalComponentX, faceAreaNormalComponentY, faceAreaNormalComponentZ, cellVolume, dtdx, dtdy, dtdz);
                             dqdx = heatConductivity[ITV] * dtdx;
                             dqdy = heatConductivity[ITV] * dtdy;
                             dqdz = heatConductivity[ITV] * dtdz;
                             totalHeatViaGradients += -leftOrRightIndex * (normalComponetX * dqdx + normalComponetY * dqdy + normalComponetZ * dqdz);// Addition of vibration energy.
 
-                            GetDerivatives(ITE, nSurface, nDim, leftOrRightIndex ,i, j, k, ni, nj, nk, temperatures, 
+                            GetDerivatives(ITE, nSurface, nDim, leftOrRightIndex ,i, j, k, ni, nj, nk, temperatures,
                                            faceAreaNormalComponentX, faceAreaNormalComponentY, faceAreaNormalComponentZ, cellVolume, dtdx, dtdy, dtdz);
                             dqdx = heatConductivity[ITE] * dtdx;
                             dqdy = heatConductivity[ITE] * dtdy;
@@ -3238,7 +3238,7 @@ void NSSolverStruct::CorrectFineGrid(Grid *fineGridIn, Grid *coarseGridIn)
     int fineNk = fineGrid->GetNK();
 
     int nDim = fineGrid->GetDim();
-    
+
     Param_NSSolverStruct *parameters = GetControlParameters();
     int mgProlongationType = parameters->GetMgProlongationType();
 
@@ -4769,11 +4769,11 @@ void NSSolverStruct::Boundary(Grid *gridIn)     //! Set the boundary conditions.
             PressureOutletBC(grid, BCRegion);
         }
         else if (BCType == MASS_FLOW_INLET)
-        {          
+        {
             MassFlowInletBC(grid, BCRegion);
         }
         else if (BCType == MASS_FLOW_OUTLET)
-        {            
+        {
             MassFlowOutletBC(grid, BCRegion);
         }
         else if (BCType == EXTERNAL_BC)
@@ -4817,7 +4817,7 @@ void NSSolverStruct::CornerPoint(Grid *gridIn)
 void NSSolverStruct::calculateBCArea(Grid *gridIn, BCRegion *bcRegion)
 {
     Data_Param *bcData = bcRegion->GetBCDataParam();
-    
+
     //BC total area does not change with calculating, so it only calculates once.
     if (bcData->IsExist("BCTotalArea", PHDOUBLE, 1))
     {
@@ -4837,7 +4837,7 @@ void NSSolverStruct::calculateBCArea(Grid *gridIn, BCRegion *bcRegion)
         Grid * iGrid = PHSPACE::GetGrid(iZoneID);
 
         StructGrid *grid = StructGridCast(iGrid);
-        
+
         CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -4865,7 +4865,7 @@ void NSSolverStruct::calculateBCArea(Grid *gridIn, BCRegion *bcRegion)
                         }
                     }
                 }
-            }        
+            }
         }
     }
 
@@ -4894,7 +4894,7 @@ void NSSolverStruct::calculateBCArea(Grid *gridIn, BCRegion *bcRegion)
                 bcData->UpdateData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
             }
         }
-    }   
+    }
 }
 
 void NSSolverStruct::calculateMassFluxRatio(Grid *gridIn, BCRegion *bcRegion)
@@ -4942,7 +4942,7 @@ void NSSolverStruct::calculateMassFluxRatio(Grid *gridIn, BCRegion *bcRegion)
                 RDouble4D &xfn  = *(grid->GetFaceNormalX());
                 RDouble4D &yfn  = *(grid->GetFaceNormalY());
                 RDouble4D &zfn  = *(grid->GetFaceNormalZ());
-                RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));               
+                RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
                 using namespace IDX;
                 for (int k = kst; k <= ked; ++ k)
                 {
@@ -4981,7 +4981,7 @@ void NSSolverStruct::calculateMassFluxRatio(Grid *gridIn, BCRegion *bcRegion)
     RDouble refMachNumber = parameters->GetRefMachNumber();
     RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
     RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
-    
+
     //calculte the dimensional mass flux in this BC name region.
     GLB_MassFlux *= refDimensionalDensity * refDimensionalSonicSpeed * refMachNumber;
     RDouble massFluxRatio = massFlow / (GLB_MassFlux + TINY);
@@ -5225,7 +5225,7 @@ void NSSolverStruct::VisWallISO3D(Grid *gridIn, BCRegion *BCRegion)
     int nk = grid->GetNK();
 
     Param_NSSolverStruct *parameters = GetControlParameters();
-    
+
     RDouble refGama = parameters->GetRefGama();
     RDouble refMachNumber = parameters->GetRefMachNumber();
     Data_Param *bcData = BCRegion->GetBCDataParam();
@@ -5242,19 +5242,19 @@ void NSSolverStruct::VisWallISO3D(Grid *gridIn, BCRegion *BCRegion)
         {
             bcData->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
         }
-    }    
+    }
     else
     {
         bcData->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
     }
-    
+
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
 
     int ist, ied, jst, jed, kst, ked;
     BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    
+
     RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature;  //! non-dimensional temperature.
     RDouble temperaturelimitation = 1.E-6;
 
@@ -5292,7 +5292,7 @@ void NSSolverStruct::VisWallISO3D(Grid *gridIn, BCRegion *BCRegion)
                         tt = temperatureWallNonDimensional;
                     }
                     RDouble rt = refGama * refMachNumber * refMachNumber * pt / tt;
-                   
+
                     q(it,jt,kt,0) = rt;
                     q(it,jt,kt,1) = ut;
                     q(it,jt,kt,2) = vt;
@@ -5731,7 +5731,7 @@ void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion)
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     RDouble refMachNumber = parameters->GetRefMachNumber();
     RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
-    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
     RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
     RDouble dynamic_pressure = refDimensionalDensity * velocity * velocity;
     RDouble refGama = parameters->GetRefGama();
@@ -5795,7 +5795,7 @@ void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion)
                     RDouble totalEnergy = pin/(rin * gama1) + 0.5 * V2in;
                     RDouble totalEnthalpy = (refGama * coefficientOfStateEquation / gama1) * totalTemperature;
                     RDouble c2 = refGama * pin/rin;
-                    
+
                     //calculate the riemann invariants R+.
                     RDouble Riemann = 2.0 * sqrt(c2) / gama1;
                     Riemann += q(is, js, ks, IU) * nxs + q(is, js, ks, IV) * nys + q(is, js, ks, IW) * nzs;
@@ -5846,7 +5846,7 @@ void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion)
 }
 
 void NSSolverStruct::MassFlowInletBC(Grid *gridIn, BCRegion *BCRegion){
-    
+
     calculateBCArea(gridIn, BCRegion);
 
     // get the basic mesh information.
@@ -5864,14 +5864,14 @@ void NSSolverStruct::MassFlowInletBC(Grid *gridIn, BCRegion *BCRegion){
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     int nEquation = GetNumberOfEquations();
 
-    using namespace IDX;  
+    using namespace IDX;
     Data_Param *bcData = BCRegion->GetBCDataParam();
 
     // get the basic variables for mass flow in boundary.
     RDouble totalTemperature, massFlow, BCTotalArea, direction_inlet[3];
     bcData->GetData("massFlow", &massFlow, PHDOUBLE, 1);
     bcData->GetData("totalTemperature", &totalTemperature, PHDOUBLE, 1);
-    bcData->GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);   
+    bcData->GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
     bcData->GetData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
 
     //! Dimensional.
@@ -5879,13 +5879,13 @@ void NSSolverStruct::MassFlowInletBC(Grid *gridIn, BCRegion *BCRegion){
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     RDouble refMachNumber = parameters->GetRefMachNumber();
     RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
-    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
     RDouble refGama = parameters->GetRefGama();
 
     //! Nondimensionalization.
     massFlow /= BCTotalArea;
     totalTemperature /= refDimensionalTemperature;
-    RDouble coefficientOfStateEquation = 1.0/(refGama * refMachNumber * refMachNumber);        
+    RDouble coefficientOfStateEquation = 1.0/(refGama * refMachNumber * refMachNumber);
 
     int ist, ied, jst, jed, kst, ked;
     BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
@@ -5915,18 +5915,18 @@ void NSSolverStruct::MassFlowInletBC(Grid *gridIn, BCRegion *BCRegion){
                 for (int layer = 1; layer <= 1; ++ layer)
                 {
                     BCRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
-                    
+
                     q(it, jt, kt, IR) = q(is, js, ks, IR);
                     RDouble Vnb   = massFlow/ (refDimensionalDensity*refDimensionalSonicSpeed*refMachNumber) / q(is, js, ks, IR);  //注意：此处massFlow为单位面积流量
-                    
+
                     q(it, jt, kt, IU) = Vnb * direction_inlet[0];
                     q(it, jt, kt, IV) = Vnb * direction_inlet[1];
                     q(it, jt, kt, IW) = Vnb * direction_inlet[2];
 
                     //square of the stagnation sound speed.
-                    RDouble c2   = refGama * coefficientOfStateEquation * totalTemperature;       
+                    RDouble c2   = refGama * coefficientOfStateEquation * totalTemperature;
                     //square of the critical sound speed.
-                    RDouble c2_ct = 2.0 * c2 / (refGama+1.0); 
+                    RDouble c2_ct = 2.0 * c2 / (refGama+1.0);
                     RDouble lamd2 = Vnb * Vnb / c2_ct;
                     RDouble tb    = totalTemperature * (1.0 - (refGama - 1.0)/(refGama + 1.0) * lamd2);
                     q(it, jt, kt, IP) = q(is, js, ks, IR) * coefficientOfStateEquation * tb;
@@ -5951,11 +5951,11 @@ void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, BCRegion *bcRegion)
 
     using namespace IDX;
     //! Dimensional.
-    Param_NSSolverStruct *parameters = GetControlParameters();  
+    Param_NSSolverStruct *parameters = GetControlParameters();
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     RDouble refMachNumber = parameters->GetRefMachNumber();
     RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
-    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();			
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
     RDouble refGama = parameters->GetRefGama();
 
     Data_Param *bcData = bcRegion->GetBCDataParam();
@@ -5963,14 +5963,14 @@ void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, BCRegion *bcRegion)
     bcData->GetData("massFluxRatio", &massFluxRatio, PHDOUBLE, 1);
     bcData->GetData("massFlow", &massFlow, PHDOUBLE, 1);
     bcData->GetData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
-    
+
     //! Nondimensionalization.
     RDouble coefficientOfStateEquation = 1.0/(refGama * refMachNumber * refMachNumber);
 
     // fluxDensity : rho * u;
     RDouble fluxDensity = massFlow/(refDimensionalDensity * refDimensionalDensity * refMachNumber)/BCTotalArea;
-    
-    RDouble mfTbCoeff = 0.5 * (refGama - 1.0) / refGama / coefficientOfStateEquation * 
+
+    RDouble mfTbCoeff = 0.5 * (refGama - 1.0) / refGama / coefficientOfStateEquation *
         (1.0 - massFluxRatio * massFluxRatio);
 
     StructGrid *grid = StructGridCast(gridIn);
@@ -6013,10 +6013,10 @@ void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, BCRegion *bcRegion)
 
                 //! calculate the temperature of the inside cell.
                 RDouble staticTemperature = q(is, js, ks, IP) / q(is, js, ks, IR) / coefficientOfStateEquation;
-                
+
                 RDouble tb   = staticTemperature + mfTbCoeff * (q(is, js, ks, IU) * q(is, js, ks, IU) +
                     q(is, js, ks, IV) * q(is, js, ks, IV) + q(is, js, ks, IW) * q(is, js, ks, IW));
-                
+
                 if(tb < TINY) tb = staticTemperature;
                 RDouble pb   = q(is, js, ks, IP) * pow(tb / staticTemperature, refGama / (refGama - 1.0));
                 RDouble rb = pb / tb / coefficientOfStateEquation;
@@ -6024,7 +6024,7 @@ void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, BCRegion *bcRegion)
                 RDouble ub   = q(is, js, ks, IU) * massFluxRatio;
                 RDouble vb   = q(is, js, ks, IV) * massFluxRatio;
                 RDouble wb   = q(is, js, ks, IW) * massFluxRatio;
-                
+
                 //! judge the unusual situation, Vn < 0.
                 RDouble Vn  = ub * nxs + vb * nys + wb * nzs;
                 if(Vn < 0.0)
@@ -6033,10 +6033,10 @@ void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, BCRegion *bcRegion)
                     ub = Vn * xfn[i];
                     vb = Vn * yfn[i];
                     wb = Vn * zfn[i];
-                } 
+                }
 
                 // if the outlet is supersonic flow.
-                RDouble cb = sqrt(refGama * coefficientOfStateEquation * tb);  
+                RDouble cb = sqrt(refGama * coefficientOfStateEquation * tb);
                 if(Vn >= cb)
                 {
                     rb = q(is, js, ks, IR);
@@ -6049,13 +6049,13 @@ void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, BCRegion *bcRegion)
                 //! allocate value to the ghost cell.
                 for (int layer = 1; layer <= 2; ++ layer)
                 {
-                    bcRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);                   
+                    bcRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
                     q(it, jt, kt, IR) = rb;
                     q(it, jt, kt, IU) = ub;
                     q(it, jt, kt, IV) = vb;
                     q(it, jt, kt, IW) = wb;
                     q(it, jt, kt, IP) = pb;
-                }                
+                }
             }
         }
     }
@@ -6151,7 +6151,7 @@ FieldProxy *NSSolverStruct::CreateFieldProxy(Grid *gridIn)
     Range I, J, K;
     GetRange(ni, nj, nk, -2, 1, I, J, K);
     Range M(0, nEquation - 1);
-    
+
     RDouble4D *field = new RDouble4D(I, J, K, M, fortranArray);
 
     FieldProxy *field_proxy = new FieldProxy();
@@ -7299,7 +7299,7 @@ RDouble NSSolverStruct::UnsteadyConvergence(Grid *gridIn)
                 gas->Primitive2Conservative(prim1, refGama, Tv[1], Te[1], qcsv1);
                 gas->Primitive2Conservative(prim2, refGama, Tv[2], Te[2], qcsv2);
 
-                
+
                 for (int m = 0; m < nLaminar; ++ m)
                 {
                     //! Now res has been converted to dq. It means that residual is not right hand side term,but dq.
@@ -8141,10 +8141,10 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
 		declare_data(dqdx_4d);
 		declare_data(dqdy_4d);
 		declare_data(dqdz_4d);
-		
+
 		declare_stride_4d(q_4d);
 
-		declare_basex(xfv,3,data,nsurf); 
+		declare_basex(xfv,3,data,nsurf);
 		declare_basex(yfv,3,data,nsurf);
 		declare_basex(zfv,3,data,nsurf);
 
@@ -8160,7 +8160,7 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
 			    kl = k - kl1;
 				declare_base_suffixx(q_4d,2,3,kl,m_kl,m);
 				declare_base_suffixx(q_4d,2,3,k,m_k,m);
-				declare_basex(xfv,2,3,k); 
+				declare_basex(xfv,2,3,k);
 				declare_basex(yfv,2,3,k);
 				declare_basex(zfv,2,3,k);
 				declare_base_suffixx(dqdx_4d,2,3,kl,m_kl,m);
@@ -8174,7 +8174,7 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
 					jl = j - jl1;
 					declare_base_suffixx(q_4d,1,2,jl,m_kl_jl,m_kl);
 					declare_base_suffixx(q_4d,1,2,j,m_k_j,m_k);
-					declare_basex(xfv,1,2,j); 
+					declare_basex(xfv,1,2,j);
 					declare_basex(yfv,1,2,j);
 					declare_basex(zfv,1,2,j);
 					declare_base_suffixx(dqdx_4d,1,2,jl,m_kl_jl,m_kl);
@@ -8191,7 +8191,7 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
 			            il = i - il1;
 
 			            phis = declare_base_name_suffixx(q_4d,1,m_k_j)[i] + declare_base_name_suffixx(q_4d,1,m_kl_jl)[il];
-						
+
 			            ddx = phis * declare_base_namex(xfv,1)[i];
 			            ddy = phis * declare_base_namex(yfv,1)[i];
 			            ddz = phis * declare_base_namex(zfv,1)[i];
@@ -8331,7 +8331,7 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
     int ked = nk-1;
 
 #ifdef USE_ARRAY_OPT
-    
+
     RDouble oov;
 
 	int nTVar_1=nTotalVariable-1;
@@ -8342,7 +8342,7 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
 	declare_data(dqdx_4d);
 	declare_data(dqdy_4d);
 	declare_data(dqdz_4d);
-	
+
 	declare_stride_4d(dqdx_4d);
 
 	for (int m = 0; m <= nTVar_1; ++ m)
@@ -8362,11 +8362,11 @@ void NSSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
 				declare_basex(dqdx_4d,1,2,j);
 				declare_basex(dqdy_4d,1,2,j);
 				declare_basex(dqdz_4d,1,2,j);
-		
+
 				#pragma ivdep
 		        #pragma simd
 		        for (int i = ist; i <= ied; ++ i)
-		        {		
+		        {
 		            oov = half /declare_base_namex(vol,1)[i];
 
 					declare_base_namex(dqdx_4d,1)[i] *= oov;
@@ -8492,10 +8492,10 @@ void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
 		declare_data(dqdx_4d);
 		declare_data(dqdy_4d);
 		declare_data(dqdz_4d);
-		
+
 		declare_stride_4d(q_4d);
 
-		declare_basex(xfv,3,data,nsurf); 
+		declare_basex(xfv,3,data,nsurf);
 		declare_basex(yfv,3,data,nsurf);
 		declare_basex(zfv,3,data,nsurf);
 
@@ -8511,7 +8511,7 @@ void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
 			    kl = k - kl1;
 				declare_base_suffixx(q_4d,2,3,kl,m_kl,m);
 				declare_base_suffixx(q_4d,2,3,k,m_k,m);
-				declare_basex(xfv,2,3,k); 
+				declare_basex(xfv,2,3,k);
 				declare_basex(yfv,2,3,k);
 				declare_basex(zfv,2,3,k);
 				declare_base_suffixx(dqdx_4d,2,3,kl,m_kl,m);
@@ -8525,7 +8525,7 @@ void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
 					jl = j - jl1;
 					declare_base_suffixx(q_4d,1,2,jl,m_kl_jl,m_kl);
 					declare_base_suffixx(q_4d,1,2,j,m_k_j,m_k);
-					declare_basex(xfv,1,2,j); 
+					declare_basex(xfv,1,2,j);
 					declare_basex(yfv,1,2,j);
 					declare_basex(zfv,1,2,j);
 					declare_base_suffixx(dqdx_4d,1,2,jl,m_kl_jl,m_kl);
@@ -8542,7 +8542,7 @@ void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
 			            il = i - il1;
 
 			            phis = declare_base_name_suffixx(q_4d,1,m_k_j)[i] + declare_base_name_suffixx(q_4d,1,m_kl_jl)[il];
-						
+
 			            ddx = phis * declare_base_namex(xfv,1)[i];
 			            ddy = phis * declare_base_namex(yfv,1)[i];
 			            ddz = phis * declare_base_namex(zfv,1)[i];
@@ -8682,7 +8682,7 @@ void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
     int ked = nk-1;
 
 #ifdef USE_ARRAY_OPT
-    
+
     RDouble oov;
 
 	int nTVar_1=nTotalVariable-1;
@@ -8693,7 +8693,7 @@ void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
 	declare_data(dqdx_4d);
 	declare_data(dqdy_4d);
 	declare_data(dqdz_4d);
-	
+
 	declare_stride_4d(dqdx_4d);
 
 	for (int m = 0; m <= nTVar_1; ++ m)
@@ -8713,11 +8713,11 @@ void NSSolverStruct::ComputeGradientCellCenterForLES(Grid *gridIn)
 				declare_basex(dqdx_4d,1,2,j);
 				declare_basex(dqdy_4d,1,2,j);
 				declare_basex(dqdz_4d,1,2,j);
-		
+
 				#pragma ivdep
 		        #pragma simd
 		        for (int i = ist; i <= ied; ++ i)
-		        {		
+		        {
 		            oov = half /declare_base_namex(vol,1)[i];
 
 					declare_base_namex(dqdx_4d,1)[i] *= oov;
@@ -8824,7 +8824,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
     if(ndim == TWO_D)
     {
         int k = 1;
-        
+
         RDouble q_IL[6], q_IR[6];
         RDouble q_JL[6], q_JR[6];
 
@@ -8860,14 +8860,14 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                 {
                     q_IL[m] = half * ( q(i, j, k, m) + q(i - 1, j, k, m));
                     q_IR[m] = half * ( q(i, j, k, m) + q(i + 1, j, k, m));
-                    
+
                     q_JL[m] = half * ( q(i, j, k, m) + q(i, j - 1, k, m));
                     q_JR[m] = half * ( q(i, j, k, m) + q(i, j + 1, k, m));
                 }
 
                 q_IL[5] = half * ( t(i, j, k, 0) + t(i - 1, j, k, 0));
                 q_IR[5] = half * ( t(i, j, k, 0) + t(i + 1, j, k, 0));
-                
+
                 q_JL[5] = half * ( t(i, j, k, 0) + t(i, j - 1, k, 0));
                 q_JR[5] = half * ( t(i, j, k, 0) + t(i, j + 1, k, 0));
 
@@ -8879,7 +8879,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                 }
             }
         }
-        
+
         for(int bcindex = 0; bcindex <= 1; ++bcindex)
         {
             int i = ibc[bcindex];
@@ -8905,14 +8905,14 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                 {
                     q_IL[m] = half * ( q(i, j, k, m) + q(i - 1, j, k, m));
                     q_IR[m] = half * ( q(i, j, k, m) + q(i + 1, j, k, m));
-                    
+
                     q_JL[m] = half * ( q(i, j, k, m) + q(i, j - 1, k, m));
                     q_JR[m] = half * ( q(i, j, k, m) + q(i, j + 1, k, m));
                 }
 
                 q_IL[5] = half * ( t(i, j, k, 0) + t(i - 1, j, k, 0));
                 q_IR[5] = half * ( t(i, j, k, 0) + t(i + 1, j, k, 0));
-                
+
                 q_JL[5] = half * ( t(i, j, k, 0) + t(i, j - 1, k, 0));
                 q_JR[5] = half * ( t(i, j, k, 0) + t(i, j + 1, k, 0));
 
@@ -8953,15 +8953,15 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     xfv_IL = xfv(i, j, k, 1);
                     yfv_IL = yfv(i, j, k, 1);
                     zfv_IL = zfv(i, j, k, 1);
-                    
+
                     xfv_IR = xfv(i + 1, j, k, 1);
                     yfv_IR = yfv(i + 1, j, k, 1);
                     zfv_IR = zfv(i + 1, j, k, 1);
-                    
+
                     xfv_JL = xfv(i, j, k, 2);
                     yfv_JL = yfv(i, j, k, 2);
                     zfv_JL = zfv(i, j, k, 2);
-                    
+
                     xfv_JR = xfv(i, j + 1, k, 2);
                     yfv_JR = yfv(i, j + 1, k, 2);
                     zfv_JR = zfv(i, j + 1, k, 2);
@@ -8969,7 +8969,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     xfv_KL = xfv(i, j, k, 3);
                     yfv_KL = yfv(i, j, k, 3);
                     zfv_KL = zfv(i, j, k, 3);
-                    
+
                     xfv_KR = xfv(i, j, k + 1, 3);
                     yfv_KR = yfv(i, j, k + 1, 3);
                     zfv_KR = zfv(i, j, k + 1, 3);
@@ -8978,7 +8978,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     {
                         q_IL[m] = half * ( q(i, j, k, m) + q(i - 1, j, k, m));
                         q_IR[m] = half * ( q(i, j, k, m) + q(i + 1, j, k, m));
-                        
+
                         q_JL[m] = half * ( q(i, j, k, m) + q(i, j - 1, k, m));
                         q_JR[m] = half * ( q(i, j, k, m) + q(i, j + 1, k, m));
 
@@ -8988,10 +8988,10 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
 
                     q_IL[5] = half * ( t(i, j, k, 0) + t(i - 1, j, k, 0));
                     q_IR[5] = half * ( t(i, j, k, 0) + t(i + 1, j, k, 0));
-                    
+
                     q_JL[5] = half * ( t(i, j, k, 0) + t(i, j - 1, k, 0));
                     q_JR[5] = half * ( t(i, j, k, 0) + t(i, j + 1, k, 0));
-                    
+
                     q_KL[5] = half * ( t(i, j, k, 0) + t(i, j, k - 1, 0));
                     q_KR[5] = half * ( t(i, j, k, 0) + t(i, j, k + 1, 0));
 
@@ -9015,15 +9015,15 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     xfv_IL = xfv(i, j, k, 1);
                     yfv_IL = yfv(i, j, k, 1);
                     zfv_IL = zfv(i, j, k, 1);
-                    
+
                     xfv_IR = xfv(i + 1, j, k, 1);
                     yfv_IR = yfv(i + 1, j, k, 1);
                     zfv_IR = zfv(i + 1, j, k, 1);
-                    
+
                     xfv_JL = xfv(i, j, k, 2);
                     yfv_JL = yfv(i, j, k, 2);
                     zfv_JL = zfv(i, j, k, 2);
-                    
+
                     xfv_JR = xfv(i, j + 1, k, 2);
                     yfv_JR = yfv(i, j + 1, k, 2);
                     zfv_JR = zfv(i, j + 1, k, 2);
@@ -9031,7 +9031,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     xfv_KL = xfv(i, j, k, 3);
                     yfv_KL = yfv(i, j, k, 3);
                     zfv_KL = zfv(i, j, k, 3);
-                    
+
                     xfv_KR = xfv(i, j, k + 1, 3);
                     yfv_KR = yfv(i, j, k + 1, 3);
                     zfv_KR = zfv(i, j, k + 1, 3);
@@ -9040,7 +9040,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     {
                         q_IL[m] = half * ( q(i, j, k, m) + q(i - 1, j, k, m));
                         q_IR[m] = half * ( q(i, j, k, m) + q(i + 1, j, k, m));
-                        
+
                         q_JL[m] = half * ( q(i, j, k, m) + q(i, j - 1, k, m));
                         q_JR[m] = half * ( q(i, j, k, m) + q(i, j + 1, k, m));
 
@@ -9050,10 +9050,10 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
 
                     q_IL[5] = half * ( t(i, j, k, 0) + t(i - 1, j, k, 0));
                     q_IR[5] = half * ( t(i, j, k, 0) + t(i + 1, j, k, 0));
-                    
+
                     q_JL[5] = half * ( t(i, j, k, 0) + t(i, j - 1, k, 0));
                     q_JR[5] = half * ( t(i, j, k, 0) + t(i, j + 1, k, 0));
-                    
+
                     q_KL[5] = half * ( t(i, j, k, 0) + t(i, j, k - 1, 0));
                     q_KR[5] = half * ( t(i, j, k, 0) + t(i, j, k + 1, 0));
 
@@ -9077,15 +9077,15 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     xfv_IL = xfv(i, j, k, 1);
                     yfv_IL = yfv(i, j, k, 1);
                     zfv_IL = zfv(i, j, k, 1);
-                    
+
                     xfv_IR = xfv(i + 1, j, k, 1);
                     yfv_IR = yfv(i + 1, j, k, 1);
                     zfv_IR = zfv(i + 1, j, k, 1);
-                    
+
                     xfv_JL = xfv(i, j, k, 2);
                     yfv_JL = yfv(i, j, k, 2);
                     zfv_JL = zfv(i, j, k, 2);
-                    
+
                     xfv_JR = xfv(i, j + 1, k, 2);
                     yfv_JR = yfv(i, j + 1, k, 2);
                     zfv_JR = zfv(i, j + 1, k, 2);
@@ -9093,7 +9093,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     xfv_KL = xfv(i, j, k, 3);
                     yfv_KL = yfv(i, j, k, 3);
                     zfv_KL = zfv(i, j, k, 3);
-                    
+
                     xfv_KR = xfv(i, j, k + 1, 3);
                     yfv_KR = yfv(i, j, k + 1, 3);
                     zfv_KR = zfv(i, j, k + 1, 3);
@@ -9102,7 +9102,7 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
                     {
                         q_IL[m] = half * ( q(i, j, k, m) + q(i - 1, j, k, m));
                         q_IR[m] = half * ( q(i, j, k, m) + q(i + 1, j, k, m));
-                        
+
                         q_JL[m] = half * ( q(i, j, k, m) + q(i, j - 1, k, m));
                         q_JR[m] = half * ( q(i, j, k, m) + q(i, j + 1, k, m));
 
@@ -9112,10 +9112,10 @@ void NSSolverStruct::ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *gridI
 
                     q_IL[5] = half * ( t(i, j, k, 0) + t(i - 1, j, k, 0));
                     q_IR[5] = half * ( t(i, j, k, 0) + t(i + 1, j, k, 0));
-                    
+
                     q_JL[5] = half * ( t(i, j, k, 0) + t(i, j - 1, k, 0));
                     q_JR[5] = half * ( t(i, j, k, 0) + t(i, j + 1, k, 0));
-                    
+
                     q_KL[5] = half * ( t(i, j, k, 0) + t(i, j, k - 1, 0));
                     q_KR[5] = half * ( t(i, j, k, 0) + t(i, j, k + 1, 0));
 
@@ -9368,7 +9368,7 @@ void NSSolverStruct::ReconGradVolWeightedwithCorrection(Grid *gridIn, int nSurfa
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
-    
+
     RDouble4D &primitiveVaiables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &temperature       = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
 
@@ -9484,7 +9484,7 @@ void NSSolverStruct::ReconGradVolWeightedwithCorrectionLES(Grid *gridIn)
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
-    
+
     RDouble4D &primitiveVaiables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &temperature       = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
 
@@ -9612,7 +9612,7 @@ void NSSolverStruct::GetGradientAtFace_CorrectionAtPhysicalBoundary(Grid *gridin
     RDouble4D &zfv  = *(grid->GetFaceVectorZ());
 
     RDouble3D &vol  = *(grid->GetCellVolume());
-    
+
     RDouble4D &gradPrimtiveVarFaceX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradPrimtiveVarFaceX"));
     RDouble4D &gradPrimtiveVarFaceY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradPrimtiveVarFaceY"));
     RDouble4D &gradPrimtiveVarFaceZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradPrimtiveVarFaceZ"));
@@ -9934,7 +9934,7 @@ void NSSolverStruct::GetGradientAtFace_CorrectionAtPhysicalBoundaryLES(Grid *gri
     RDouble4D &zfv  = *(grid->GetFaceVectorZ());
 
     RDouble3D &vol  = *(grid->GetCellVolume());
-    
+
     RDouble5D &gradPrimtiveVarFaceXofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
     RDouble5D &gradPrimtiveVarFaceYofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
     RDouble5D &gradPrimtiveVarFaceZofLES = *reinterpret_cast <RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
@@ -10585,7 +10585,7 @@ void NSSolverStruct::CompVisFlux(Grid *gridIn, FieldProxy *fluxProxy, int nSurfa
                 dvdx = gradqx(il, jl, kl, IV);
                 dvdy = gradqy(il, jl, kl, IV);
                 dvdz = gradqz(il, jl, kl, IV);
-                                          
+
                 dwdx = gradqx(il, jl, kl, IW);
                 dwdy = gradqy(il, jl, kl, IW);
                 dwdz = gradqz(il, jl, kl, IW);
@@ -11007,7 +11007,7 @@ void NSSolverStruct::CorrectViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, int
                 }
             }
         }
-        
+
     }
 
     delete []wallVariables;
@@ -11783,12 +11783,12 @@ void NSSolverStruct::CompVisFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSu
                 //! viscous stress and subgrid scale stress
                 RDouble txx = mul * (two * dudx - divv2p3);
                 RDouble tyy = mul * (two * dvdy - divv2p3);
-                RDouble tzz = mul * (two * dwdz - divv2p3); 
+                RDouble tzz = mul * (two * dwdz - divv2p3);
                 RDouble txy = mul * (dudy + dvdx);
                 RDouble txz = mul * (dudz + dwdx);
                 RDouble tyz = mul * (dvdz + dwdy);
 
-                
+
 
                 RDouble txxSGS = subgridStress(il, jl, kl, 1, iSurface);
                 RDouble tyySGS = subgridStress(il, jl, kl, 2, iSurface);
@@ -11975,7 +11975,7 @@ void NSSolverStruct::CompVisFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSu
                     RDouble omega13 = 0.5 * (dudz - dwdx);
                     RDouble omega23 = 0.5 * (dvdz - dwdy);
 
-                    RDouble sij2  = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);                   
+                    RDouble sij2  = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
                     RDouble omegaij2 = 2.0 * (omega12 * omega12 + omega13 * omega13 + omega23 * omega23);
                     RDouble sij2SubOmegaij2 = 1.0/3.0 * (sij2 - omegaij2);
 
@@ -12067,7 +12067,7 @@ void NSSolverStruct::CompVisFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSu
                     //! viscous stress and subgrid scale stress
                     RDouble txx = mul * (two * dudx - divv2p3);
                     RDouble tyy = mul * (two * dvdy - divv2p3);
-                    RDouble tzz = mul * (two * dwdz - divv2p3); 
+                    RDouble tzz = mul * (two * dwdz - divv2p3);
                     RDouble txy = mul * (dudy + dvdx);
                     RDouble txz = mul * (dudz + dwdx);
                     RDouble tyz = mul * (dvdz + dwdy);
@@ -12332,7 +12332,7 @@ void NSSolverStruct::CompVisFluxLES(Grid *gridIn, FieldProxy *fluxProxy, int iSu
                     //! viscous stress and subgrid scale stress
                     RDouble txx = mul * (two * dudx - divv2p3);
                     RDouble tyy = mul * (two * dvdy - divv2p3);
-                    RDouble tzz = mul * (two * dwdz - divv2p3); 
+                    RDouble tzz = mul * (two * dwdz - divv2p3);
                     RDouble txy = mul * (dudy + dvdx);
                     RDouble txz = mul * (dudz + dwdx);
                     RDouble tyz = mul * (dvdz + dwdy);
@@ -12577,7 +12577,7 @@ void NSSolverStruct::LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn)
     int ied = ni - 1;
     int jed = nj - 1;
     int ked = nk - 1;
-    
+
     if(nk == 1)
     {
         ked = 1;
@@ -13041,7 +13041,7 @@ void NSSolverStruct::CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, F
                 }
             }
         }
-        
+
     }
 
     delete []wallVariables;
@@ -13093,11 +13093,11 @@ void NSSolverStruct::CalPressureFactor(Grid *gridIn)
                 RDouble pim = q(im, j , k , IP);
                 RDouble pjm = q(i , jm, k , IP);
                 RDouble pkm = q(i , j , km, IP);
-                                            
+
                 RDouble pip = q(ip, j , k , IP);
                 RDouble pjp = q(i , jp, k , IP);
                 RDouble pkp = q(i , j , kp, IP);
-                                            
+
                 RDouble ppp = q(i , j , k , IP);
 
                 RDouble dpi = ABS((pip - two * ppp + pim) / (pip  + two * ppp + pim));
@@ -14260,7 +14260,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     RDouble *rhs0    = new RDouble[nEquation];
     RDouble *de      = new RDouble[nEquation];
     RDouble *df      = new RDouble[nEquation];
-    RDouble *dg      = new RDouble[nEquation];    
+    RDouble *dg      = new RDouble[nEquation];
     RDouble *dq_pre  = new RDouble[nEquation];
     RDouble **MG     = NewPointer2 <RDouble> (nEquation, nEquation);
     RDouble *temperature = new RDouble[nTemperatureModel];
@@ -14312,7 +14312,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
 
     int nDim = GetDim();
     int il, jl, kl;
-    
+
     for (int k = kst; k <= ked; ++ k)
     {
         declare_basex(diagonal,2,data,k);declare_basex(q,2,data,k);declare_basex(t,2,data,k);
@@ -14817,7 +14817,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     RDouble *rhs0    = new RDouble[nEquation];
     RDouble *de      = new RDouble[nEquation];
     RDouble *df      = new RDouble[nEquation];
-    RDouble *dg      = new RDouble[nEquation];    
+    RDouble *dg      = new RDouble[nEquation];
     RDouble *dq_pre  = new RDouble[nEquation];
     RDouble **MG     = NewPointer2 <RDouble> (nEquation, nEquation);
     RDouble *temperature = new RDouble[nTemperatureModel];
@@ -15433,7 +15433,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
     RDouble *rhs0    = new RDouble[nEquation];
     RDouble *de      = new RDouble[nEquation];
     RDouble *df      = new RDouble[nEquation];
-    RDouble *dg      = new RDouble[nEquation];    
+    RDouble *dg      = new RDouble[nEquation];
     RDouble *dqCell  = new RDouble[nEquation];
     RDouble *dqOld   = new RDouble [nEquation];
     RDouble **MG     = NewPointer2 <RDouble> (nEquation, nEquation);
@@ -15482,7 +15482,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
 
                 for (int m = 0; m < nEquation; ++ m)
                 {
-                    rhs0[m] = 0.0;                   
+                    rhs0[m] = 0.0;
 
                     //! Temporary variable, only because it is convenient for in/out in function.
                     qPrecondition[m] = q(i, j, k, m);
@@ -15495,7 +15495,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     //! Here, the deltaFlux is computed in Upper backward sweep!
                     //! res: b      deltaFlux: Ux, which is computed in backward sweep.
                     //! the dq is not the real dq, now.
-                    //! Although the 'dq' changed can not the right one, it dosen't matter, since 
+                    //! Although the 'dq' changed can not the right one, it dosen't matter, since
                     //! the following only using the lower neighbor cells, whose 'dq' has been updated.
                     //! It is convenient for precondition transform.
                     dq(i, j, k, m) = res(i, j, k, m);
@@ -15531,7 +15531,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                         dqNeighbor[m]= dq(il, jl, kl, m);
                     }
 
-                   
+
                     RDouble &xfn1  = gxfn (i ,j ,k ,iSurface);
                     RDouble &yfn1  = gyfn (i ,j ,k ,iSurface);
                     RDouble &zfn1  = gzfn (i ,j ,k ,iSurface);
@@ -15599,7 +15599,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     PreconMatrixDF(dqCell, MG, nLaminar);
 
                     for (int m = 0; m < nEquation; ++ m)
-                    {                        
+                    {
                         dq(i, j, k, m) = dqCell[m];
                     }
                 }
@@ -15608,7 +15608,7 @@ void NSSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                 {
                     //! dq = { (b - Ux) - Lx } / D.
                     //! Note: the 'dq' has actually initialized by the residual at the beginning of this function.
-                    //! the 'rhs0' is the total Delta Flux of the neighbors.            
+                    //! the 'rhs0' is the total Delta Flux of the neighbors.
                     //! rhs0: Lx    diagonal: D.
                     dq(i, j, k, m) = (dq(i, j, k, m) - Ux[m] - rhs0[m]) / diagonal(i, j, k, m);
 
@@ -15725,14 +15725,14 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     }
                     continue;
                 }
-                
+
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     rhs0[m] = 0.0;
                     dqNeighbor[m]  = dq(i, j, k, m);
 
                     //! Temporary variable, only because it is convenient for in/out in function.
-                    qPrecondition[m] = q(i, j, k, m);  
+                    qPrecondition[m] = q(i, j, k, m);
 
                     //! Back up the old dq, to compute the convergence.
                     //! the 'dq' is dq*, which has been updated in forward.
@@ -15843,7 +15843,7 @@ void NSSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, Fiel
                     PreconMatrixDF(dqCell, MG, nLaminar);
 
                     for (int m = 0; m < nEquation; ++ m)
-                    {                        
+                    {
                         dq(i, j, k, m) = dqCell[m];
                     }
                 }
@@ -16287,7 +16287,7 @@ void NSSolverStruct::CompressGradientandLimitToInterfaceOnlyForMixGrid(DataConta
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
     dataContainer->moveto_begin();
-    
+
     RDouble4D &dqdx_cc = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdx_cc_ruvwpt"));
     RDouble4D &dqdy_cc = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdy_cc_ruvwpt"));
     RDouble4D &dqdz_cc = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdz_cc_ruvwpt"));
@@ -16347,7 +16347,7 @@ void NSSolverStruct::DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataCon
     RDouble4D &gradUVWTCellCenterX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
     RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
     RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
-    
+
     RDouble dqdx_cc_ruvwpt[6];
     RDouble dqdy_cc_ruvwpt[6];
     RDouble dqdz_cc_ruvwpt[6];
@@ -16385,15 +16385,15 @@ void NSSolverStruct::DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataCon
         gradUVWTCellCenterX(it, jt, kt, 0) = dqdx_cc_ruvwpt[1]; //grad of U
         gradUVWTCellCenterY(it, jt, kt, 0) = dqdy_cc_ruvwpt[1]; //grad of U
         gradUVWTCellCenterZ(it, jt, kt, 0) = dqdz_cc_ruvwpt[1]; //grad of U
-        
+
         gradUVWTCellCenterX(it, jt, kt, 1) = dqdx_cc_ruvwpt[2]; //grad of V
         gradUVWTCellCenterY(it, jt, kt, 1) = dqdy_cc_ruvwpt[2]; //grad of V
         gradUVWTCellCenterZ(it, jt, kt, 1) = dqdz_cc_ruvwpt[2]; //grad of V
-        
+
         gradUVWTCellCenterX(it, jt, kt, 2) = dqdx_cc_ruvwpt[3]; //grad of W
         gradUVWTCellCenterY(it, jt, kt, 2) = dqdy_cc_ruvwpt[3]; //grad of W
         gradUVWTCellCenterZ(it, jt, kt, 2) = dqdz_cc_ruvwpt[3]; //grad of W
-        
+
         gradUVWTCellCenterX(it, jt, kt, 3) = dqdx_cc_ruvwpt[5]; //grad of T
         gradUVWTCellCenterY(it, jt, kt, 3) = dqdy_cc_ruvwpt[5]; //grad of T
         gradUVWTCellCenterZ(it, jt, kt, 3) = dqdz_cc_ruvwpt[5]; //grad of T
@@ -16418,27 +16418,27 @@ void NSSolverStruct::CompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataC
     int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
 
     dataContainer->moveto_begin();
-    
+
     RDouble4D &QLI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1"));
     RDouble4D &QLJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2"));
     RDouble4D &QLK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql3"));
     RDouble4D &QRI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1"));
     RDouble4D &QRJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr2"));
     RDouble4D &QRK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr3"));
-    
+
     RDouble qface[5];
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
         int iFace = interfaceIndexContainerForSend[iLocalFace];
-        
+
         int is, js, ks;
         finestGrid->GetSourceIndexIJK(iFace, 1, is, js, ks);
         finestGrid->RemapMultigridIJK(level, is, js, ks);
-        
+
         int id, jd, kd;
         int i_lr, j_lr, k_lr;
         finestGrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
-        
+
         if (i_lr != 0)
         {
             //! I_face
@@ -16537,7 +16537,7 @@ void NSSolverStruct::DecompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dat
     RDouble4D &QRI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1"));
     RDouble4D &QRJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr2"));
     RDouble4D &QRK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr3"));
-    
+
     RDouble qface[5];
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
@@ -16545,12 +16545,12 @@ void NSSolverStruct::DecompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dat
         int it, jt, kt;
         finestGrid->GetTargetIndexIJK(iFace, 1, it, jt, kt);
         finestGrid->RemapMultigridIJK(level, it, jt, kt);
-        
+
         for (int m = 0; m < 5; ++ m)
         {
             PHRead(dataContainer, qface[m]);
         }
-        
+
         int id, jd, kd;
         int i_lr, j_lr, k_lr;
         finestGrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
@@ -16667,15 +16667,15 @@ void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&d
         for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
         {
             int iFace = interfaceIndexContainerForSend[iLocalFace];
-            
+
             int is, js, ks;
             finestGrid->GetSourceIndexIJK(iFace, 1, is, js, ks);
             finestGrid->RemapMultigridIJK(level, is, js, ks);
-            
+
             int id, jd, kd;
             int i_lr, j_lr, k_lr;
             finestGrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
-            
+
             if (i_lr != 0)
             {
                 //! I_face
@@ -16742,7 +16742,7 @@ void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&d
                     flux[4] = - faceInviscidfluxK(is, js, ks + 1, 4);
                 }
             }
-        
+
             for (int m = 0; m < 5; ++ m)
             {
                 PHWrite(dataContainer, flux[m]);
@@ -16765,15 +16765,15 @@ void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&d
         for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
         {
             int iFace = interfaceIndexContainerForSend[iLocalFace];
-            
+
             int is, js, ks;
             finestGrid->GetSourceIndexIJK(iFace, 1, is, js, ks);
             finestGrid->RemapMultigridIJK(level, is, js, ks);
-            
+
             int id, jd, kd;
             int i_lr, j_lr, k_lr;
             finestGrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
-            
+
             if (i_lr != 0)
             {
                 //! I_face
@@ -16883,7 +16883,7 @@ void NSSolverStruct::CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&d
             }
         }
     }
-    
+
 }
 
 void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *gridIn, const int &neighborZoneIndex)
@@ -16927,7 +16927,7 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
         RDouble4D &faceInviscidfluxI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxI"));
         RDouble4D &faceInviscidfluxJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxJ"));
         RDouble4D &faceInviscidfluxK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxK"));
-        
+
         RDouble flux[5];
         for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
         {
@@ -16935,12 +16935,12 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
             int it, jt, kt;
             finestGrid->GetTargetIndexIJK(iFace, 1, it, jt, kt);
             finestGrid->RemapMultigridIJK(level, it, jt, kt);
-            
+
             for (int m = 0; m < 5; ++ m)
             {
                 PHRead(dataContainer, flux[m]);
             }
-            
+
             int id, jd, kd;
             int i_lr, j_lr, k_lr;
             finestGrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
@@ -17022,7 +17022,7 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
         RDouble4D &faceViscousfluxI = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxI"));
         RDouble4D &faceViscousfluxJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxJ"));
         RDouble4D &faceViscousfluxK = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxK"));
-        
+
         RDouble Inviscidflux[5];
         RDouble Viscousflux[5];
         for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
@@ -17031,13 +17031,13 @@ void NSSolverStruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *
             int it, jt, kt;
             finestGrid->GetTargetIndexIJK(iFace, 1, it, jt, kt);
             finestGrid->RemapMultigridIJK(level, it, jt, kt);
-            
+
             for (int m = 0; m < 5; ++ m)
             {
                 PHRead(dataContainer, Inviscidflux[m]);
                 PHRead(dataContainer, Viscousflux[m]);
             }
-            
+
             int id, jd, kd;
             int i_lr, j_lr, k_lr;
             finestGrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
