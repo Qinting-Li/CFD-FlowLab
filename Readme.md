@@ -11,6 +11,7 @@
 - 官网地址：http://www.cardc.cn/nnw/Softs/PHengLEI/index.html
 - 代码库地址：https://forge.osredm.com/projects/p68217053/PHengLEI
 - 算例库地址：https://forge.osredm.com/projects/p68217053/PHengLEI-TestCases
+- 代码参考文档地址：http://116.63.141.248:8088
 
 &ensp;&ensp;&ensp;&ensp;风雷软件用户录制视频教程地址：
 - 视频教程：https://www.bilibili.com/video/BV1eX4y1T7yW?from=search&seid=9482198996609923785
