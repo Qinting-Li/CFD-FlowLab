@@ -41,16 +41,22 @@ public:
     void FillActionKey(ActionKey *actkey, int action, int level);
     void Post();
     void PostSolve(Grid *grid_in, int stage, int level = 0);
-    int  GetNPostSolve();
 
     static void InitParameter();
     static void FreeParameter();
 
     virtual void ComputeViscousCoeff(Grid *grid) {};
 
-    int GetNumberOfEquations();
+    virtual void ObtainViscosity(Grid *grid) {};
+
+    //int GetNumberOfEquations();
 
     LIB_EXPORT Param_LESSolver *GetControlParameters();
+
+private:
+    void RegisterCFDSolverInterfaceField();
+
+    void InitDependentVariables();
     
 };
 

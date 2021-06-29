@@ -13,6 +13,7 @@
 #include "IO_HDF5File.h"
 #include "Geo_UnstructGrid.h"
 
+
 using namespace std;
 
 namespace PHSPACE
@@ -28,6 +29,7 @@ void GenerateWallDist()
 
     int viscousType = 0;
     GlobalDataBase::GetData("viscousType", &viscousType, PHINT, 1);
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
 
     if (GetTaskCode() == CAL_WALL_DIST || (IsReadWallDist() == false))
     {
@@ -37,11 +39,13 @@ void GenerateWallDist()
 
         WriteWallDist();
 
-        //VisalWallDist();
+        //VisualWallDist();
     }
 
-    if (viscousType > 1)
+    if (viscousType > 1 || iLES > 0)
     {
+        GhostWallDistance();
+
         WallDistStatics();
     }
 }
@@ -122,7 +126,7 @@ void AllocateWalldist()
 }
 
 #ifdef USE_TecplotLib
-void VisalWallDist()
+void VisualWallDist()
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -425,6 +429,32 @@ void WallDistStatics()
     ostringstream oss;
     oss << "Min && Max wall distance : " << minWalldist << ", " << maxWalldist << endl;
     PrintToWindow( oss );
+}
+
+void GhostWallDistance()
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int level = 0;
+
+    for (int izone = 0; izone < nLocalZones; ++ izone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+
+        Grid *grid = GetGrid(zoneID, level);
+
+        if (grid->Type() == PHSPACE::STRUCTGRID)
+        {
+            StructGrid * structGrid = StructGridCast(grid);
+            RDouble3D & walldist = *structGrid->GetWallDist();
+            int ni = structGrid->GetNI();
+            int nj = structGrid->GetNJ();
+            int nk = structGrid->GetNK();
+
+            GhostCell3D(walldist, ni, nj, nk);
+        }
+    }
 }
 
 }

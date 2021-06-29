@@ -282,4 +282,172 @@ void LUDCMPBlockDiag(MAT3D< T > *impmat, int len, int N)
     }
 }
 
+template < typename T >
+void BlockLUInverse(T*** sub_matrix_A, T*** sub_matrix_B, T*** sub_matrix_C, int len, int N)
+{
+    for (int iCell = 0; iCell < len - 1; ++iCell)
+    {
+        //A^-1 B
+        //forward elimination
+        for (int k = 0; k < N - 1; ++k)
+        {
+            //scale row k by A[k][k]
+            for (int j = k + 1; j < N; ++j)
+            {
+                sub_matrix_A[iCell][k][j] /= sub_matrix_A[iCell][k][k];
+            }
+            for (int j = 0; j < N; ++j)
+            {
+                sub_matrix_B[iCell][k][j] /= sub_matrix_A[iCell][k][k];
+            }
+
+            //loop over rows
+            for (int i = k + 1; i < N; ++i)
+            {
+                for (int j = k + 1; j < N; ++j)
+                {
+                    sub_matrix_A[iCell][i][j] -= sub_matrix_A[iCell][i][k] * sub_matrix_A[iCell][k][j];
+                }
+                for (int j = 0; j < N; ++j)
+                {
+                    sub_matrix_B[iCell][i][j] -= sub_matrix_A[iCell][i][k] * sub_matrix_B[iCell][k][j];
+                }
+            }
+        } //end of k
+
+        //scale by A[4][4]
+        for (int j = 0; j < N; ++j)
+        {
+            sub_matrix_B[iCell][N - 1][j] /= sub_matrix_A[iCell][N - 1][N - 1];
+        }
+
+        //end forward elimination && start backward substitution
+        //loop over rows
+        for (int k = N - 2; k >= 0; --k)
+        { ///3
+            for (int i = k + 1; i < N; ++i)
+            {
+                for (int j = 0; j < N; ++j)
+                {
+                    sub_matrix_B[iCell][k][j] -= sub_matrix_A[iCell][k][i] * sub_matrix_B[iCell][i][j];
+                }
+            }
+        } //end backward substitution
+
+        // compute A[cell+1] := A[cell+1] - C[cell+1] * B[cell];
+        for (int i = 0; i < N; ++i)
+        {
+            for (int j = 0; j < N; ++j)
+            {
+                for (int k = 0; k < N; ++k)
+                {
+                    sub_matrix_A[iCell + 1][i][j] -= sub_matrix_C[iCell + 1][i][k] * sub_matrix_B[iCell][k][j];
+                }
+            }
+        }
+    } //end of jCell cell
+
+    //forward elimination
+    for (int k = 0; k < N - 1; ++k)
+    {
+        //scale row k by A[k][k]
+        for (int j = k + 1; j < N; ++j)
+        {
+            sub_matrix_A[len - 1][k][j] /= sub_matrix_A[len - 1][k][k];
+        }
+        //loop over rows
+        for (int i = k + 1; i < N; ++i)
+        {
+            for (int j = k + 1; j < N; ++j)
+            {
+                sub_matrix_A[len - 1][i][j] -= sub_matrix_A[len - 1][i][k] * sub_matrix_A[len - 1][k][j];
+            }
+        }
+    } //end of k end forward elimination
+}
+
+//! Solve tri-diagonal block system
+template < typename T >
+void BlockLUSolve(T** DQ, T*** sub_matrix_A, T*** sub_matrix_B, T*** sub_matrix_C, int len, int N)
+{
+    //forward elimination for the tridiagonal block system
+    for (int iCell = 0; iCell < len - 1; ++iCell)
+    {
+        //A^-1 dq
+        //forward elimination
+        for (int k = 0; k < N - 1; ++k) 
+        {
+            //scale row k by A[k][k]
+            DQ[iCell][k] /= sub_matrix_A[iCell][k][k];
+            //loop over rows
+            for (int i = k + 1; i < N; ++i)
+            {
+                DQ[iCell][i] -= sub_matrix_A[iCell][i][k] * DQ[iCell][k];
+            }
+        } //end of k
+
+        //scale by A[4][4]
+        DQ[iCell][N - 1] /= sub_matrix_A[iCell][N - 1][N - 1];
+
+        //end forward elimination && start backward substitution
+        //loop over rows
+        for (int k = N - 2; k >= 0; --k) 
+        { ///3
+            for (int i = k + 1; i < N; ++i) 
+            {
+                DQ[iCell][k] -= sub_matrix_A[iCell][k][i] * DQ[iCell][i];
+            }
+        } //end backward substitution
+
+        // compute dq[cell+1] := dq[cell+1] - C[cell+1] * dq[cell];
+        for (int i = 0; i < N; ++i) 
+        {
+            for (int k = 0; k < N; ++k) 
+            {
+                DQ[iCell + 1][i] -= sub_matrix_C[iCell + 1][i][k] * DQ[iCell][k];
+            }
+        }
+    } //end of jCell cell
+
+    //A^-1 dq at len-1
+    //forward elimination
+    for (int k = 0; k < N - 1; ++k) 
+    {
+        //scale row k by A[k][k]
+        DQ[len - 1][k] /= sub_matrix_A[len - 1][k][k];
+        //loop over rows
+        for (int i = k + 1; i < N; ++i)
+        {
+            DQ[len - 1][i] -= sub_matrix_A[len - 1][i][k] * DQ[len - 1][k];
+        }
+    } //end of k end forward elimination
+
+    //scale by A[4][4]
+    DQ[len - 1][N - 1] /= sub_matrix_A[len - 1][N - 1][N - 1];
+
+    //end forward elimination && start backward substitution
+    //loop over rows
+    for (int k = N - 2; k >= 0; --k) 
+    { ///3
+        for (int i = k + 1; i < N; ++i) 
+        {
+            DQ[len - 1][k] -= sub_matrix_A[len - 1][k][i] * DQ[len - 1][i];
+        }
+    } //end backward substitution
+
+    //backward substitution for the block tri-diagonal system
+    //loop over block rows
+    for (int cell = len - 2; cell >= 0; --cell) 
+    { ///-2
+        //compute dq = dq- B dq[cell+1]
+        for (int i = 0; i < N; ++i) 
+        {
+            for (int k = 0; k < N; ++k) 
+            {
+                DQ[cell][i] -= sub_matrix_B[cell][i][k] * DQ[cell + 1][k];
+            }
+        }
+    } //end of jCell cell
+}
+
 }

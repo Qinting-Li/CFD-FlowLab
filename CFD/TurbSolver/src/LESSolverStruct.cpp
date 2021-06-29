@@ -1,4 +1,5 @@
 #include "PHMpi.h"
+#include "JetBC.h"
 #include "LESSolverStruct.h"
 #include "GradientOperation.h"
 #include "Math_BasisFunction.h"
@@ -6,6 +7,8 @@
 #include "Param_LESSolverStruct.h"
 #include "TK_Exit.h"
 #include "Glb_Dimension.h"
+#include "AleModel.h"
+#include "NSSolverStructFD.h"
 
 using namespace std;
 
@@ -25,7 +28,6 @@ LESSolverStruct::~LESSolverStruct()
 
 void LESSolverStruct::AllocateGlobalVar(Grid *gridIn)
 {
-    //LESSolver::InitParameter();
     Param_LESSolverStruct * parameters = GetControlParameters();
 
     StructGrid *grid = StructGridCast(gridIn);
@@ -43,76 +45,69 @@ void LESSolverStruct::AllocateGlobalVar(Grid *gridIn)
     Range N(1, 6);
     Range M(1, 3);
 
-    RDouble5D *subgridStress = new RDouble5D(IFACE, JFACE, KFACE, Range(1, 6), Direction, fortranArray);
-    *subgridStress = 0.0;
-    grid->UpdateDataPtr("subgridStress", subgridStress);
-
-    RDouble5D *subgridHeatFlux = new RDouble5D(IFACE, JFACE, KFACE, Range(1, 3), Direction, fortranArray);
-    *subgridHeatFlux = 0.0;
-    grid->UpdateDataPtr("subgridHeatFlux", subgridHeatFlux);
-
-    RDouble3D *cellLengthScale = new RDouble3D(I, J, K, fortranArray);
+    RDouble3D *cellLengthScale = new RDouble3D(Range(1, ni-1), Range(1, nj-1), Range(1, nk-1), fortranArray);    //! Length scale of cell.
     *cellLengthScale = 0.0;
-    grid->UpdateDataPtr("cellLengthScale", cellLengthScale);
-    
-    RDouble4D *faceLengthScale = new RDouble4D(IFACE, JFACE, KFACE, Direction ,fortranArray);
-    *faceLengthScale = 0.0;
-    grid->UpdateDataPtr("faceLengthScale", faceLengthScale);
+    grid->UpdateDataPtr("cellLengthScale", cellLengthScale);    //! Length scale of cell.
 
-    //RDouble4D *wallFunction = new RDouble4D(IFACE, JFACE, KFACE, Direction ,fortranArray);
-    RDouble3D *wallFunction = new RDouble3D(I, J, K, fortranArray);
+    RDouble3D *wallFunction = new RDouble3D(I, J, K, fortranArray); //! Wall damping function.
     *wallFunction = 1.0;
-    grid->UpdateDataPtr("wallFunction", wallFunction);
+    grid->UpdateDataPtr("wallFunction", wallFunction);    //! Wall damping function.
 
-    //RDouble4D *subgridScaleEnergy = new RDouble4D(I, J, K, Direction, fortranArray);
-    //*subgridScaleEnergy = 0.0;
-    //grid->UpdateDataPtr("kSGS", subgridScaleEnergy);
-
-    RDouble3D *anisotropicConstant = new RDouble3D(I, J, K, fortranArray);
+    RDouble3D *anisotropicConstant = new RDouble3D(I, J, K, fortranArray);    //! Model coefficients of the anisotropic SGS stresses using in dynamic model.
     *anisotropicConstant = 0.0;
-    grid->UpdateDataPtr("anisotropicConstant", anisotropicConstant);
+    grid->UpdateDataPtr("anisotropicConstant", anisotropicConstant);    //! Model coefficients of the anisotropic SGS stresses using in dynamic model.
 
-    RDouble3D *isotropicConstant = new RDouble3D(I, J, K, fortranArray);
+    RDouble3D *isotropicConstant = new RDouble3D(I, J, K, fortranArray);    //! Model coefficients of the isotropic SGS stresses using in dynamic model.
     *isotropicConstant = 0.0;
-    grid->UpdateDataPtr("isotropicConstant", isotropicConstant);
+    grid->UpdateDataPtr("isotropicConstant", isotropicConstant);    //! Model coefficients of the isotropic SGS stresses using in dynamic model.
 
-    RDouble3D *turbulentPrandtlNumber = new RDouble3D(I, J, K, fortranArray);
+    RDouble3D *turbulentPrandtlNumber = new RDouble3D(I, J, K, fortranArray);    //! Turbulent Prandtl number using in dynamic model.
     *turbulentPrandtlNumber = 0.9;
-    grid->UpdateDataPtr("turbulentPrandtlNumber", turbulentPrandtlNumber);
+    grid->UpdateDataPtr("turbulentPrandtlNumber", turbulentPrandtlNumber);    //! Turbulent Prandtl number using in dynamic model.
 
-    RDouble4D *strainRateTensor = new RDouble4D(I, J, K, Range(0, 6), fortranArray);
+    RDouble4D *strainRateTensor = new RDouble4D(I, J, K, Range(0, 9), fortranArray);    //! Strain Rate Tensor Sij and Omegaij
     *strainRateTensor = 0.0;
-    grid->UpdateDataPtr("strainRateTensor", strainRateTensor);
+    grid->UpdateDataPtr("strainRateTensor", strainRateTensor);    //! Strain Rate Tensor Sij and Omegaij.
 
-    //RDouble3D *strainRateMagnitude = new RDouble3D(I, J, K, fortranArray);
-    //*strainRateMagnitude = 0.0;
-    //grid->UpdateDataPtr("strainRateMagnitude", strainRateMagnitude);
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if (ifvfd == 1)
+    {
+        Range I4(- 3, ni + 3);
+        Range J4(- 3, nj + 3);
+        Range K4(- 3, nk + 3);
+        UVWTproxy = new FieldProxy();    //! Flow field variables u/v/w/t used in calculating gradient of u/v/w/t;
+        UVWTfaceIproxy = new FieldProxy();    //! Flow field variables u/v/w/t defined on I faces.
+        UVWTfaceJproxy = new FieldProxy();    //! Flow field variables u/v/w/t defined on J faces.
+        UVWTfaceKproxy = new FieldProxy();    //! Flow field variables u/v/w/t defined on K faces.
+        UVWTproxy->SetField_STR(new RDouble4D(I4, J4, K4, Range(0, 3), fortranArray), true);
+        UVWTfaceIproxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true); 
+        UVWTfaceJproxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true);
+        UVWTfaceKproxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true);
+    }
 
     int subgridScaleModel = parameters->GetSubgridScaleModel();
     if (subgridScaleModel == 2 || subgridScaleModel == 4)
     {
-        RDouble4D *leonardStress = new RDouble4D(I, J, K, N, fortranArray);
-        RDouble4D *modeledStress = new RDouble4D(I, J, K, N, fortranArray);
-        RDouble4D *leonardTemperatureFlux = new RDouble4D(I, J, K, Range(0, 2), fortranArray);
-        RDouble4D *modeledTemperatureFlux = new RDouble4D(I, J, K, Range(0, 2), fortranArray);
-        RDouble4D *testFilteredQ = new RDouble4D(I, J, K, Range(0, 3), fortranArray);
-        //RDouble3D *testFilteredDensity = new RDouble3D(I, J, K, fortranArray);
-        RDouble3D *testFilteredTemperature = new RDouble3D(I, J, K, fortranArray);
-        RDouble4D *testFilteredStrainRateTensor = new RDouble4D(I, J, K, Range(0, 6), fortranArray);
-        RDouble4D *testFilteredRhoUiUj = new RDouble4D(I, J, K, N, fortranArray);
-        RDouble4D *testFilteredRhoUT = new RDouble4D(I, J, K, M, fortranArray);
+        RDouble4D *leonardStress = new RDouble4D(I, J, K, N, fortranArray);    //! Leonard stresses using in dynamic model.
+        RDouble4D *modeledStress = new RDouble4D(I, J, K, N, fortranArray);    //! Modeled stresses using in dynamic model.
+        RDouble4D *leonardTemperatureFlux = new RDouble4D(I, J, K, Range(0, 2), fortranArray);    //! Leonard heat flux using in dynamic model.
+        RDouble4D *modeledTemperatureFlux = new RDouble4D(I, J, K, Range(0, 2), fortranArray);    //! Modeled heat flux using in dynamic model.
+        RDouble4D *testFilteredQ = new RDouble4D(I, J, K, Range(0, 3), fortranArray);    //! Flow field variables after test filtering.
+        RDouble3D *testFilteredTemperature = new RDouble3D(I, J, K, fortranArray);    //! Temperature after test filtering.
+        RDouble4D *testFilteredStrainRateTensor = new RDouble4D(I, J, K, Range(0, 6), fortranArray);    //! Strain rate tensor after test filtering.
+        RDouble4D *testFilteredRhoUiUj = new RDouble4D(I, J, K, N, fortranArray);    //! rhoUiUj after test filtering.
+        RDouble4D *testFilteredRhoUT = new RDouble4D(I, J, K, M, fortranArray);    //! rhoUT after test filtering.
         RDouble4D *testFilteredAlphaIJ = new RDouble4D(I, J, K, Range(0, 6), fortranArray);
         RDouble4D *betaIJ = new RDouble4D(I, J, K, N, fortranArray);
-        RDouble4D *gradT = new RDouble4D(I, J, K, Range(0, 2), fortranArray);
-        RDouble4D *testFilteredGradT = new RDouble4D(I, J, K, Range(0, 2), fortranArray);
-        RDouble4D *testFilteredRhoStrainRateMagnitudeGradT = new RDouble4D(I, J, K, Range(0, 2), fortranArray);
+        RDouble4D *gradT = new RDouble4D(I, J, K, Range(0, 2), fortranArray);    //! Temperature gradient.
+        RDouble4D *testFilteredGradT = new RDouble4D(I, J, K, Range(0, 2), fortranArray);    //! Temperature gradient after test filtering.
+        RDouble4D *testFilteredRhoStrainRateMagnitudeGradT = new RDouble4D(I, J, K, Range(0, 2), fortranArray);    //! rho|S|gradT after test filtering.
 
         *leonardStress = 0.0;
         *modeledStress= 0.0;
         *leonardTemperatureFlux = 0.0;
         *modeledTemperatureFlux = 0.0;
         *testFilteredQ = 0.0;
-        //*testFilteredDensity = 0.0;
         *testFilteredTemperature = 0.0;
         *testFilteredStrainRateTensor = 0.0;
         *testFilteredRhoUiUj = 0.0;
@@ -123,21 +118,20 @@ void LESSolverStruct::AllocateGlobalVar(Grid *gridIn)
         *testFilteredGradT = 0.0;
         *testFilteredRhoStrainRateMagnitudeGradT = 0.0;
  
-        grid->UpdateDataPtr("leonardStress", leonardStress);
-        grid->UpdateDataPtr("modeledStress", modeledStress);
-        grid->UpdateDataPtr("leonardTemperatureFlux", leonardTemperatureFlux);
-        grid->UpdateDataPtr("modeledTemperatureFlux", modeledTemperatureFlux);
-        grid->UpdateDataPtr("testFilteredQ", testFilteredQ);
-        //grid->UpdateDataPtr("testFilteredDensity", testFilteredDensity);
-        grid->UpdateDataPtr("testFilteredTemperature", testFilteredTemperature);
-        grid->UpdateDataPtr("testFilteredStrainRateTensor", testFilteredStrainRateTensor);
-        grid->UpdateDataPtr("testFilteredRhoUiUj", testFilteredRhoUiUj);
-        grid->UpdateDataPtr("testFilteredRhoUT", testFilteredRhoUT);
+        grid->UpdateDataPtr("leonardStress", leonardStress);    //! Leonard stresses using in dynamic model.
+        grid->UpdateDataPtr("modeledStress", modeledStress);    //! Modeled stresses using in dynamic model.
+        grid->UpdateDataPtr("leonardTemperatureFlux", leonardTemperatureFlux);    //! Leonard heat flux using in dynamic model.
+        grid->UpdateDataPtr("modeledTemperatureFlux", modeledTemperatureFlux);    //! Modeled heat flux using in dynamic model.
+        grid->UpdateDataPtr("testFilteredQ", testFilteredQ);    //! Flow field variables after test filtering.
+        grid->UpdateDataPtr("testFilteredTemperature", testFilteredTemperature);    //! Temperature after test filtering.
+        grid->UpdateDataPtr("testFilteredStrainRateTensor", testFilteredStrainRateTensor);    //! Strain rate tensor after test filtering.
+        grid->UpdateDataPtr("testFilteredRhoUiUj", testFilteredRhoUiUj);    //! rhoUiUj after test filtering.
+        grid->UpdateDataPtr("testFilteredRhoUT", testFilteredRhoUT);    //! rhoUT after test filtering.
         grid->UpdateDataPtr("testFilteredAlphaIJ", testFilteredAlphaIJ);
         grid->UpdateDataPtr("betaIJ", betaIJ);
-        grid->UpdateDataPtr("gradT", gradT);
-        grid->UpdateDataPtr("testFilteredGradT", testFilteredGradT);
-        grid->UpdateDataPtr("testFilteredRhoStrainRateMagnitudeGradT", testFilteredRhoStrainRateMagnitudeGradT);
+        grid->UpdateDataPtr("gradT", gradT);    //! Temperature gradient.
+        grid->UpdateDataPtr("testFilteredGradT", testFilteredGradT);    //! Temperature gradient after test filtering.
+        grid->UpdateDataPtr("testFilteredRhoStrainRateMagnitudeGradT", testFilteredRhoStrainRateMagnitudeGradT);    //! rho|S|gradT after test filtering.
     }
 
     Init(grid);
@@ -148,20 +142,10 @@ void LESSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
     Param_LESSolverStruct * parameters = GetControlParameters();
     StructGrid *grid = StructGridCast(gridIn);
 
-    RDouble5D *subgridStress = reinterpret_cast<RDouble5D *> (grid->GetDataPtr("subgridStress"));
-    RDouble5D *subgridHeatFlux = reinterpret_cast<RDouble5D *> (grid->GetDataPtr("subgridHeatFlux"));
-    delete subgridStress;
-    delete subgridHeatFlux;
-
     RDouble3D *cellLengthScale = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cellLengthScale"));
-    RDouble4D *faceLengthScale = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("faceLengthScale"));
     RDouble3D *wallFunction = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("wallFunction"));
     delete cellLengthScale;
-    delete faceLengthScale;
     delete wallFunction;
-
-    //RDouble4D *subgridScaleEnergy = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("kSGS"));
-    //delete subgridScaleEnergy;
 
     RDouble3D *anisotropicConstant = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("anisotropicConstant"));
     RDouble3D *isotropicConstant = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("isotropicConstant"));
@@ -173,6 +157,15 @@ void LESSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
     delete turbulentPrandtlNumber;
     delete strainRateTensor;
 
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if (ifvfd == 1)
+    {
+        delete UVWTproxy;
+        delete UVWTfaceIproxy;
+        delete UVWTfaceJproxy;
+        delete UVWTfaceKproxy;
+    }
+
     int subgridScaleModel = parameters->GetSubgridScaleModel();
     if (subgridScaleModel == 2 || subgridScaleModel == 4)
     { 
@@ -181,7 +174,6 @@ void LESSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
         RDouble4D *leonardTemperatureFlux = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("leonardTemperatureFlux"));
         RDouble4D *modeledTemperatureFlux = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("modeledTemperatureFlux"));
         RDouble4D *testFilteredQ = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
-        //RDouble3D *testFilteredDensity = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("testFilteredDensity"));
         RDouble3D *testFilteredTemperature = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("testFilteredTemperature"));
         RDouble4D *testFilteredStrainRateTensor = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredStrainRateTensor"));
         RDouble4D *testFilteredRhoUiUj = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoUiUj"));
@@ -197,7 +189,6 @@ void LESSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
         delete leonardTemperatureFlux;
         delete modeledTemperatureFlux;
         delete testFilteredQ;
-        //delete testFilteredDensity;
         delete testFilteredTemperature;
         delete testFilteredStrainRateTensor;
         delete testFilteredRhoUiUj;
@@ -222,22 +213,278 @@ LIB_EXPORT Param_LESSolverStruct * LESSolverStruct::GetControlParameters()
     return static_cast<Param_LESSolverStruct *> (controlParameters);
 }
 
+void LESSolverStruct::InitFlowAsRestart()
+{
+    Param_LESSolverStruct *parameters = GetControlParameters();
+
+    StructGrid *grid = StructGridCast(GetGrid(0));
+
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+    RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+
+    RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                viscousTurbulent(i, j, k) = freeStreamViscosity;
+
+                subgridScaleEnergy(i, j, k) = 0.0;
+
+                turbulentPrandtlNumber(i, j, k) = 0.9;
+            }
+        }
+    }
+}
+
 void LESSolverStruct::Init(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
 
-    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
-    if(ifvfd == 0)
+    ComputeCellLengthScale(grid);
+}
+
+void LESSolverStruct::UploadInterfaceData(ActionKey *actkey)
+{
+    UploadInterfaceValue(actkey);
+}
+
+void LESSolverStruct::UploadInterfaceValue(ActionKey *actkey)
+{
+    int level = actkey->level;
+    StructGrid *grid = reinterpret_cast<StructGrid *> (GetGrid(level));
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+    if (interfaceInfo == 0)
     {
-        ComputeCellLengthScale(grid);
+        return;
+    }
+
+    RDouble3D *viscousTurbulence = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    PHSPACE::UploadInterfaceValue(grid, viscousTurbulence, "vist");
+
+    RDouble3D *subgridScaleEnergy = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+    PHSPACE::UploadInterfaceValue(grid, subgridScaleEnergy, "subgridScaleEnergy");
+
+    RDouble3D *turbulentPrandtlNumber = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+    PHSPACE::UploadInterfaceValue(grid, turbulentPrandtlNumber, "turbulentPrandtlNumber");
+}
+
+void LESSolverStruct::DownloadInterfaceData(ActionKey *actkey)
+{
+    DownloadInterfaceValue(actkey);
+}
+
+void LESSolverStruct::DownloadInterfaceValue(ActionKey *actkey)
+{
+    int level = actkey->level;
+    StructGrid *grid = reinterpret_cast<StructGrid *> (GetGrid(level));
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+    if (interfaceInfo == 0)
+    {
+        return;
+    }
+
+    RDouble3D *viscousTurbulence = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    PHSPACE::DownloadInterfaceValue(grid, viscousTurbulence, "vist");
+
+    RDouble3D *subgridScaleEnergy = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+    PHSPACE::DownloadInterfaceValue(grid, subgridScaleEnergy, "subgridScaleEnergy");
+
+    RDouble3D *turbulentPrandtlNumber = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+    PHSPACE::DownloadInterfaceValue(grid, turbulentPrandtlNumber, "turbulentPrandtlNumber");
+}
+
+void LESSolverStruct::CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    if (0 == nEquation)
+    {
+        RDouble3D &fieldSend = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForSend[iLocalFace];
+                int is, js, ks;
+                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
+                finestGrid->RemapMultigridIJK(level, is, js, ks);
+                PHWrite(dataContainer, fieldSend(is, js, ks));
+            }
+        }
     }
     else
     {
-        ComputeCellLengthScaleforStructHighOrder(grid);
+        RDouble4D &fieldSend = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForSend[iLocalFace];
+                int is, js, ks;
+                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
+                finestGrid->RemapMultigridIJK(level, is, js, ks);
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    PHWrite(dataContainer, fieldSend(is, js, ks, m));
+                }
+            }
+        }
     }
-    //ComputeFaceLengthScale(grid);
 }
 
+void LESSolverStruct::DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    if (0 == nEquation)
+    {
+        RDouble3D &fieldRecv = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int it, jt, kt;
+                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+                finestGrid->RemapMultigridIJK(level, it, jt, kt);
+                PHRead(dataContainer, fieldRecv(it, jt, kt));
+            }
+        }
+    }
+    else
+    {
+        RDouble4D &fieldRecv = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int it, jt, kt;
+                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+                finestGrid->RemapMultigridIJK(level, it, jt, kt);
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    PHRead(dataContainer, fieldRecv(it, jt, kt, m));
+                }
+            }
+        }
+    }
+}
+
+void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+    CompositeBCRegion * composite_bcregion = finestGrid->GetCompositeBCRegion();
+    RDouble4D &rotNSgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueX"));
+    RDouble4D &rotNSgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueY"));
+    RDouble4D &rotNSgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueZ"));
+
+    rotNSgradValueX = 0.0;
+    rotNSgradValueY = 0.0;
+    rotNSgradValueZ = 0.0;
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+    double rotationAngle        = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle*PI/180;
+    if(nEquation > 0)
+    {
+        RDouble4D &fieldRecvNSX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+        RDouble4D &fieldRecvNSY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+        RDouble4D &fieldRecvNSZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int it, jt, kt;
+                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+                finestGrid->RemapMultigridIJK(level, it, jt, kt);
+                int *ibcregions = composite_bcregion->GetIFaceInfo();
+                int ibcregion = ibcregions[iFace];
+                BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                string bcName = bcregion->GetBCName();
+                if ( bcName == "Periodic_up" )
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        rotNSgradValueY(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * cos(2*PI-rotationAngle) - fieldRecvNSZ(it, jt, kt, m) * sin(2*PI-rotationAngle);
+                        rotNSgradValueZ(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * sin(2*PI-rotationAngle) + fieldRecvNSZ(it, jt, kt, m) * cos(2*PI-rotationAngle);
+                    }
+                }
+                else if( bcName == "Periodic_down" )
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        rotNSgradValueY(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * cos(rotationAngle) - fieldRecvNSZ(it, jt, kt, m) * sin(rotationAngle);
+                        rotNSgradValueZ(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * sin(rotationAngle) + fieldRecvNSZ(it, jt, kt, m) * cos(rotationAngle);
+                    }
+                }
+
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    fieldRecvNSY(it, jt, kt, m) = rotNSgradValueY(it, jt, kt, m);
+                    fieldRecvNSZ(it, jt, kt, m) = rotNSgradValueZ(it, jt, kt, m);
+                }
+            }
+        }
+    }
+}
+
+/*
 void LESSolverStruct::ComputeCellLengthScale(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -484,13 +731,14 @@ void LESSolverStruct::ComputeCellLengthScale(Grid *gridIn)
         }
     }
 }
+*/
 
-void LESSolverStruct::ComputeCellLengthScaleforStructHighOrder(Grid *gridIn)
+void LESSolverStruct::ComputeCellLengthScale(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
 
     RDouble3D &cellLengthScale = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("cellLengthScale"));
-
+/*
     RDouble4D &area = *(grid->GetFaceArea());
     RDouble3D &vol  = *(grid->GetCellVolume());
 
@@ -543,243 +791,22 @@ void LESSolverStruct::ComputeCellLengthScaleforStructHighOrder(Grid *gridIn)
     }
 
     GhostCell3D(cellLengthScale, ni, nj, nk);
+*/
+    RDouble3D *largestLocalGridLength = grid->GetLargestLocalGridLength();
 
-    RDouble a = cellLengthScale(-1, 1, 1);
-    /*
-    //! ghost cells, for i = 0 and ni;
-    i = 0;
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
 
-    for (k = kst; k <= ked; ++ k)
+    for (int k = kst; k <= ked; ++ k)
     {
-        for (j = jst; j <= jed; ++ j)
+        for (int j = jst; j <= jed; ++ j)
         {
-            RDouble len3 = 1.0;
-
-            for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
+            for (int i = ist; i <= ied; ++ i)
             {
-                int il1, jl1, kl1;
-                GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-                int il = 0 + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-                int il2 = 0 + il1 * 2;
-                int jl2 = j + jl1 * 2;
-                int kl2 = k + kl1 * 2;
-
-                RDouble areaL = area(0-il1, j-jl1, k-kl1, iSurface);
-                RDouble areaM = area(0    , j    , k    , iSurface);
-                RDouble areaR = area(0+il1, j+jl1, k+kl1, iSurface);
-
-                RDouble volumeL = vol(-1, j, k);
-                RDouble volumeR = vol(0 , j, k);
-
-                RDouble deltaL = 2.0 * volumeL / (areaL + areaM);
-
-                len = len * deltaL;
-            }
-
-            cellLengthScale(i, j, k) = pow(len3, third);
-        }
-    }
-
-    i = ni;
-
-    for (k = kst; k <= ked; ++ k)
-    {
-        for (j = jst; j <= jed; ++ j)
-        {
-            RDouble len3 = 1.0;
-
-            for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
-            {
-                int il1, jl1, kl1;
-                GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                RDouble areaL = area(i, j, k, iSurface);
-                RDouble areaR = area(il, jl, kl, iSurface);
-
-                RDouble volume = vol(i, j, k);
-
-                RDouble delta = 2.0 * volume / (areaL + areaR);
-
-                len3 = len3 * delta;
-            }
-
-            cellLengthScale(i, j, k) = pow(len3, third);
-        }
-    }
-
-    //! ghost cells, for j = 0 and nj;
-    j = 0;
-
-    for (k = kst; k <= ked; ++ k)
-    {
-        for (i = ist; i <= ied; ++ i)
-        {
-            RDouble len3 = 1.0;
-
-            for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
-            {
-                int il1, jl1, kl1;
-                GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                RDouble areaL = area(i, j, k, iSurface);
-                RDouble areaR = area(il, jl, kl, iSurface);
-
-                RDouble volume = vol(i, j, k);
-
-                RDouble delta = 2.0 * volume / (areaL + areaR);
-
-                len3 = len3 * delta;
-            }
-
-            cellLengthScale(i, j, k) = pow(len3, third);
-        }
-    }
-
-    j = nj;
-
-    for (k = kst; k <= ked; ++ k)
-    {
-        for (i = ist; i <= ied; ++ i)
-        {
-            RDouble len3 = 1.0;
-
-            for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
-            {
-                int il1, jl1, kl1;
-                GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                RDouble areaL = area(i, j, k, iSurface);
-                RDouble areaR = area(il, jl, kl, iSurface);
-
-                RDouble volume = vol(i, j, k);
-
-                RDouble delta = 2.0 * volume / (areaL + areaR);
-
-                len3 = len3 * delta;
-            }
-
-            cellLengthScale(i, j, k) = pow(len3, third);
-        }
-    }
-
-    //! ghost cells, for k = 0 and nk;
-    k = 0;
-
-    for (j = jst; j <= jed; ++ j)
-    {
-        for (i = ist; i <= ied; ++ i)
-        {
-            RDouble len3 = 1.0;
-
-            for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
-            {
-                int il1, jl1, kl1;
-                GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                RDouble areaL = area(i, j, k, iSurface);
-                RDouble areaR = area(il, jl, kl, iSurface);
-
-                RDouble volume = vol(i, j, k);
-
-                RDouble delta = 2.0 * volume / (areaL + areaR);
-
-                len3 = len3 * delta;
-            }
-
-            cellLengthScale(i, j, k) = pow(len3, third);
-        }
-    }
-
-    k = nk;
-
-    for (j = jst; j <= jed; ++ j)
-    {
-        for (i = ist; i <= ied; ++ i)
-        {
-            RDouble len3 = 1.0;
-
-            for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
-            {
-                int il1, jl1, kl1;
-                GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                RDouble areaL = area(i, j, k, iSurface);
-                RDouble areaR = area(il, jl, kl, iSurface);
-
-                RDouble volume = vol(i, j, k);
-
-                RDouble delta = 2.0 * volume / (areaL + areaR);
-
-                len3 = len3 * delta;
-            }
-
-            cellLengthScale(i, j, k) = pow(len3, third);
-        }
-    }
-    */
-}
-
-void LESSolverStruct::ComputeFaceLengthScale(Grid *gridIn)
-{
-    StructGrid *grid = StructGridCast(gridIn);
-
-    RDouble4D &faceLengthScale = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("faceLengthScale"));
-    RDouble3D &cellLengthScale = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cellLengthScale"));
-
-    int nDim = GetDim();
-
-    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
-    {
-        int ist, ied, jst, jed, kst, ked;
-        grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
-        int il1, jl1, kl1;
-        GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-        for (int k = kst; k <= ked; ++ k)
-        {
-            for (int j = jst; j <= jed; ++ j)
-            {
-                for (int i = ist; i <= ied; ++ i)
-                {
-                    int il = i + il1;
-                    int jl = j + jl1;
-                    int kl = k + kl1;
-
-                    RDouble cellLengthL = cellLengthScale(i, j, k);
-                    RDouble cellLengthR = cellLengthScale(il, jl, kl);
-
-                    RDouble faceLength = 0.5 * (cellLengthScale(i, j, k) + cellLengthScale(il, jl, kl));
-
-                    faceLengthScale(il, jl, kl, iSurface) = faceLength;
-                }
+                cellLengthScale(i, j, k) = (*largestLocalGridLength)(i, j, k);
             }
         }
     }
-
 }
 
 void LESSolverStruct::ComputeWallFunction(Grid *gridIn)
@@ -790,6 +817,27 @@ void LESSolverStruct::ComputeWallFunction(Grid *gridIn)
     int wallDampingFunctionType = parameters->GetWallDampingFunctionType();
 
     RDouble3D &wallFunction = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("wallFunction"));
+
+    int iterationStep;
+    int nMGLevel = parameters->GetNMGLevel();        
+    if (nMGLevel <= 1)
+    {
+        //! Finest grid.
+        GlobalDataBase::GetData("outnstep", &iterationStep, PHINT, 1);
+    }
+    else
+    {
+        //! Coarse grid.
+        GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
+    }
+
+    int cflNstep    = parameters->GetCFLVaryStep();
+    if(iterationStep < cflNstep)
+    {
+        WallFunctionofVanDriest(grid);
+
+        return;
+    }
 
     if (wallDampingFunctionType == 0)
     {
@@ -813,211 +861,6 @@ void LESSolverStruct::ComputeWallFunction(Grid *gridIn)
     }
 }
 
-/*
-void LESSolverStruct::WallFunctionofVanDriestOld(Grid *gridIn)
-{
-    using namespace IDX;
-
-    StructGrid *grid = StructGridCast(gridIn);
-
-    RDouble3D & wallDistance = * StructGridCast(grid)->GetWallDist();
-
-    RDouble4D & q = * reinterpret_cast<RDouble4D *> ( grid->GetDataPtr("q") );
-
-    RDouble3D & visl = * reinterpret_cast<RDouble3D *> ( grid->GetDataPtr("visl") );
-
-    RDouble5D &gradPrimtiveVarFaceXofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
-    RDouble5D &gradPrimtiveVarFaceYofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
-    RDouble5D &gradPrimtiveVarFaceZofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
-
-    RDouble4D &wallFunction = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("wallFunction"));
-
-    Param_LESSolverStruct * parameters = GetControlParameters();
-    RDouble refReNumber = parameters->GetRefReNumber();
-
-    int nDim = GetDim();
-
-    const double kappa = 0.41;
-    const double Ap = 25.0;
-
-    //! i direction;
-    int iSurface = 1;
-
-    int ist, ied, jst, jed, kst, ked;
-    grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
-    int il1, jl1, kl1;
-    GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                int indexI = static_cast<int>(abs(i-ist-0.5) + ist + 0.5);
-                RDouble wallDistL = wallDistance(indexI, j, k);
-
-                int indexIl = static_cast<int>(ied + 0.5 - abs(il-ied-0.5));
-                RDouble wallDistR = wallDistance(indexIl, jl, kl);
-
-                RDouble wallDist = 0.5 * (wallDistL + wallDistR);
-
-                RDouble mul = 0.5 * (visl(i, j, k) + visl(il, jl, kl));
-
-                RDouble rho = 0.5 * (q(i, j, k, IR) + q(il, jl, kl, IR));
-
-                RDouble dudx = gradPrimtiveVarFaceXofLES(i, j, k, IU, iSurface);
-                RDouble dudy = gradPrimtiveVarFaceYofLES(i, j, k, IU, iSurface);
-                RDouble dudz = gradPrimtiveVarFaceZofLES(i, j, k, IU, iSurface);
-
-                RDouble dvdx = gradPrimtiveVarFaceXofLES(i, j, k, IV, iSurface);
-                RDouble dvdy = gradPrimtiveVarFaceYofLES(i, j, k, IV, iSurface);
-                RDouble dvdz = gradPrimtiveVarFaceZofLES(i, j, k, IV, iSurface);
-
-                RDouble dwdx = gradPrimtiveVarFaceXofLES(i, j, k, IW, iSurface);
-                RDouble dwdy = gradPrimtiveVarFaceYofLES(i, j, k, IW, iSurface);
-                RDouble dwdz = gradPrimtiveVarFaceZofLES(i, j, k, IW, iSurface);
-
-                RDouble s11 = dudx;
-                RDouble s22 = dvdy;
-                RDouble s33 = dwdz;
-                RDouble s12 = half * (dudy + dvdx);
-                RDouble s13 = half * (dudz + dwdx);
-                RDouble s23 = half * (dvdz + dwdy);
-
-                RDouble sijsij = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
-                RDouble ss = sqrt(two * sijsij);
-
-                RDouble yplus = ss * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
-
-                wallFunction(il, jl, kl, iSurface) = 1.0 - exp( -yplus / Ap );
-            }
-        }
-    }
-
-    //! j direction
-    iSurface = 2;
-
-    grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
-    GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                int indexJ = static_cast<int>(abs(j-jst-0.5) + jst + 0.5);
-                RDouble wallDistL = wallDistance(i, indexJ, k);
-
-                int indexJl = static_cast<int>(jed + 0.5 - abs(jl-jed-0.5));
-                RDouble wallDistR = wallDistance(il, indexJl, kl);
-
-                RDouble wallDist = 0.5 * (wallDistL + wallDistR);
-
-                RDouble mul = 0.5 * (visl(i, j, k) + visl(il, jl, kl));
-
-                RDouble rho = 0.5 * (q(i, j, k, IR) + q(il, jl, kl, IR));
-
-                RDouble dudx = gradPrimtiveVarFaceXofLES(i, j, k, IU, iSurface);
-                RDouble dudy = gradPrimtiveVarFaceYofLES(i, j, k, IU, iSurface);
-                RDouble dudz = gradPrimtiveVarFaceZofLES(i, j, k, IU, iSurface);
-
-                RDouble dvdx = gradPrimtiveVarFaceXofLES(i, j, k, IV, iSurface);
-                RDouble dvdy = gradPrimtiveVarFaceYofLES(i, j, k, IV, iSurface);
-                RDouble dvdz = gradPrimtiveVarFaceZofLES(i, j, k, IV, iSurface);
-
-                RDouble dwdx = gradPrimtiveVarFaceXofLES(i, j, k, IW, iSurface);
-                RDouble dwdy = gradPrimtiveVarFaceYofLES(i, j, k, IW, iSurface);
-                RDouble dwdz = gradPrimtiveVarFaceZofLES(i, j, k, IW, iSurface);
-
-                RDouble s11 = dudx;
-                RDouble s22 = dvdy;
-                RDouble s33 = dwdz;
-                RDouble s12 = half * (dudy + dvdx);
-                RDouble s13 = half * (dudz + dwdx);
-                RDouble s23 = half * (dvdz + dwdy);
-
-                RDouble sijsij = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
-                RDouble ss = sqrt(two * sijsij);
-
-                RDouble yplus = ss * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
-
-                wallFunction(il, jl, kl, iSurface) = 1.0 - exp(-yplus / Ap);
-            }
-        }
-    }
-
-    //! k direction
-    iSurface = 3;
-
-    grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
-    GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                int il = i + il1;
-                int jl = j + jl1;
-                int kl = k + kl1;
-
-                int indexK = static_cast<int>(abs(k-kst-0.5) + kst + 0.5);
-                RDouble wallDistL = wallDistance(i, j, indexK);
-
-                int indexKl = static_cast<int>(ked + 0.5 - abs(kl-ked-0.5));
-                RDouble wallDistR = wallDistance(il, jl, indexKl);
-
-                RDouble wallDist = 0.5 * (wallDistL + wallDistR);
-
-                RDouble mul = 0.5 * (visl(i, j, k) + visl(il, jl, kl));
-
-                RDouble rho = 0.5 * (q(i, j, k, IR) + q(il, jl, kl, IR));
-
-                RDouble dudx = gradPrimtiveVarFaceXofLES(i, j, k, IU, iSurface);
-                RDouble dudy = gradPrimtiveVarFaceYofLES(i, j, k, IU, iSurface);
-                RDouble dudz = gradPrimtiveVarFaceZofLES(i, j, k, IU, iSurface);
-
-                RDouble dvdx = gradPrimtiveVarFaceXofLES(i, j, k, IV, iSurface);
-                RDouble dvdy = gradPrimtiveVarFaceYofLES(i, j, k, IV, iSurface);
-                RDouble dvdz = gradPrimtiveVarFaceZofLES(i, j, k, IV, iSurface);
-
-                RDouble dwdx = gradPrimtiveVarFaceXofLES(i, j, k, IW, iSurface);
-                RDouble dwdy = gradPrimtiveVarFaceYofLES(i, j, k, IW, iSurface);
-                RDouble dwdz = gradPrimtiveVarFaceZofLES(i, j, k, IW, iSurface);
-
-                RDouble s11 = dudx;
-                RDouble s22 = dvdy;
-                RDouble s33 = dwdz;
-                RDouble s12 = half * (dudy + dvdx);
-                RDouble s13 = half * (dudz + dwdx);
-                RDouble s23 = half * (dvdz + dwdy);
-
-                RDouble sijsij = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
-                RDouble ss = sqrt(two * sijsij);
-
-                RDouble yplus = ss * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
-
-                wallFunction(il, jl, kl, iSurface) = 1.0 - exp(-yplus / Ap);
-            }
-        }
-    }
-}
-*/
-
 void LESSolverStruct::WallFunctionofVanDriest(Grid *gridIn)
 {
     using namespace IDX;
@@ -1033,7 +876,6 @@ void LESSolverStruct::WallFunctionofVanDriest(Grid *gridIn)
     RDouble3D &wallFunction = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("wallFunction"));
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
-    //RDouble3D &strainRateMagnitude = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("strainRateMagnitude"));
 
     Param_LESSolverStruct * parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
@@ -1046,7 +888,7 @@ void LESSolverStruct::WallFunctionofVanDriest(Grid *gridIn)
     int nk = grid->GetNK();
 
     int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -1060,23 +902,22 @@ void LESSolverStruct::WallFunctionofVanDriest(Grid *gridIn)
 
                 RDouble rho = q(i, j, k, IR);
 
-                RDouble s11 = strainRateTensor(i, j, k, 1);
-                RDouble s22 = strainRateTensor(i, j, k, 2);
-                RDouble s33 = strainRateTensor(i, j, k, 3);
-                RDouble s12 = strainRateTensor(i, j, k, 4);
-                RDouble s13 = strainRateTensor(i, j, k, 5);
-                RDouble s23 = strainRateTensor(i, j, k, 6);
+                RDouble s11 = strainRateTensor(i, j, k, 1); 
+                RDouble s22 = strainRateTensor(i, j, k, 2); 
+                RDouble s33 = strainRateTensor(i, j, k, 3); 
+                RDouble s12 = strainRateTensor(i, j, k, 4);  
+                RDouble s13 = strainRateTensor(i, j, k, 5); 
+                RDouble s23 = strainRateTensor(i, j, k, 6); 
 
-                RDouble ss = strainRateTensor(i, j, k, 0);
+                RDouble strain = strainRateTensor(i, j, k, 0);
 
-                RDouble yplus = ss * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
+                RDouble yplus = strain * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
 
-                wallFunction(i, j, k) = 1.0 - exp(-yplus / Ap);
+                RDouble wf = 1.0 - exp(-yplus / Ap);
+                wallFunction(i, j, k) = wf;
             }
         }
     }
-
-    GhostCell3D(wallFunction, ni, nj, nk);
 }
 
 void LESSolverStruct::WallFunctionofDXB(Grid *gridIn)
@@ -1130,9 +971,9 @@ void LESSolverStruct::WallFunctionofDXB(Grid *gridIn)
                 RDouble s13 = strainRateTensor(i, j, k, 5);
                 RDouble s23 = strainRateTensor(i, j, k, 6);
 
-                RDouble ss = strainRateTensor(i, j, k, 0);
+                RDouble strain = strainRateTensor(i, j, k, 0);
 
-                RDouble yplus = ss * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
+                RDouble yplus = strain * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
 
                 RDouble ffd = tanh((yploge/yplus) * (yploge/yplus) * (yploge/yplus));
                 RDouble vanDriestInner = rgam * MIN((1.0 - exp(-pow(yplus/Ap, 7.0/6.0))), (1.0 - exp(-yplus / Ap)));
@@ -1142,8 +983,6 @@ void LESSolverStruct::WallFunctionofDXB(Grid *gridIn)
             }
         }
     }
-
-    GhostCell3D(wallFunction, ni, nj, nk);
 }
 
 void LESSolverStruct::WallFunctionofPiomelli(Grid *gridIn)
@@ -1195,20 +1034,22 @@ void LESSolverStruct::WallFunctionofPiomelli(Grid *gridIn)
                 RDouble s13 = strainRateTensor(i, j, k, 5);
                 RDouble s23 = strainRateTensor(i, j, k, 6);
 
-                RDouble ss = strainRateTensor(i, j, k, 0);
+                RDouble strain = strainRateTensor(i, j, k, 0);
 
-                RDouble yplus = ss * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
+                RDouble yplus = strain * (kappa * wallDist) * (kappa * wallDist) * rho / mul * refReNumber;
 
                 wallFunction(i, j, k) = sqrt(1.0 - exp(-(yplus/Ap) * (yplus/Ap) * (yplus/Ap)));
             }
         }
     }
-
-    GhostCell3D(wallFunction, ni, nj, nk);
 }
 
 void LESSolverStruct::ComputeViscousCoeff(Grid *gridIn)
 {
+    /*
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 1) return;
+
     StructGrid *grid = StructGridCast(gridIn);
 
     ComputeStrainRateTensor(grid);
@@ -1242,192 +1083,525 @@ void LESSolverStruct::ComputeViscousCoeff(Grid *gridIn)
     {
         TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
     }
+    */
 }
 
-void LESSolverStruct::SmagorinskyOld(Grid *gridIn)
+void LESSolverStruct::GetDependentVariablesforStructHighOrder(Grid *gridIn)
 {
-    using namespace IDX;
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
-    StructGrid *grid = StructGridCast(gridIn);
+    ObtainGradientCellCenterHighOrder(gridIn);
+}
 
-    RDouble4D &faceLengthScale = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("faceLengthScale"));
-    RDouble4D &wallFunction = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("wallFunction"));
+void LESSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
+{
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 1) return;
 
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble3D &visl = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
+    StructGrid *strgrid = StructGridCast(gridIn);
+    int ni = strgrid->GetNI();
+    int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();
 
-    RDouble5D &subgridStress = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("subgridStress"));
-    //RDouble4D &subgridEnergy = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("kSGS"));
-    RDouble5D &subgridHeatFlux = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("subgridHeatFlux"));
+    RDouble4D &xfv = *(strgrid->GetFaceVectorX());
+    RDouble4D &yfv = *(strgrid->GetFaceVectorY());
+    RDouble4D &zfv = *(strgrid->GetFaceVectorZ());
+    RDouble3D &volume      = *(strgrid->GetCellVolume());
 
-    RDouble5D &gradPrimtiveVarFaceXofLES = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
-    RDouble5D &gradPrimtiveVarFaceYofLES = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
-    RDouble5D &gradPrimtiveVarFaceZofLES = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
+    int ndim = GetDim();
+    Param_LESSolverStruct *parameters = GetControlParameters();
+    int nTemperatureModel = 1;
 
-    RDouble5D &gradtx = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceXofLES"));
-    RDouble5D &gradty = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceYofLES"));
-    RDouble5D &gradtz = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceZofLES"));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (strgrid->GetDataPtr("q"));
+    RDouble4D &temperature = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("t"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    RDouble4D &dqdx = *reinterpret_cast<RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &dqdy = *reinterpret_cast<RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &dqdz = *reinterpret_cast<RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterZ"));
 
-    RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
+    dqdx = 0.0;
+    dqdy = 0.0;
+    dqdz = 0.0;
 
-    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
-
-    RDouble refReNumber = parameters->GetRefReNumber();
-
-    RDouble oPrandtlTurbulence = parameters->GetoPrandtlTurbulence();
-
-    RDouble smagConstant = parameters->GetSmagConstant();
-    RDouble isotropicConstant = parameters->GetIsotropicConstant();
-
-    int turbViscousCutType = parameters->GetTurbViscousCutType();
-
-    RDouble refGama = parameters->GetRefGama();
-    RDouble refMachNumber = parameters->GetRefMachNumber();
-    RDouble specificHeatAtConstantPressure = 1.0 / ((refGama - 1.0) * refMachNumber * refMachNumber);
-
-    double vistmax  = 0.0;
-    double vistmin  = 1.0e30;
-    double logsmall = log(SMALL);
-
-    //int ist, ied, jst, jed, kst, ked;
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
-
-    //ComputeSubgridScaleEnergy(grid);
-
-    int imax = 1;
-    int jmax = 1;
-    int kmax = 1;
-
-    int imin = 1;
-    int jmin = 1;
-    int kmin = 1;
-
-    int nDim = GetDim();
-
-    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
+    for (int iSurface = 1; iSurface <= ndim; ++ iSurface)
     {
-        int ist, ied, jst, jed, kst, ked;
-        grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
         int il1, jl1, kl1;
         GetNsurfIndex(iSurface, il1, jl1, kl1);
 
+        int ist = 1;
+        int ied = ni - 1 + il1;
+        int jst = 1;
+        int jed = nj - 1 + jl1;
+        int kst = 1;
+        int ked = nk - 1 + kl1;
+
+        if (ndim == TWO_D)
+        {
+            ked = 1;
+        }
+        int il, jl, kl;
+
+        //! The gradient of u,v,w.
+        for (int m = 0; m < ndim; ++ m)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        il = i - il1;
+                        jl = j - jl1;
+                        kl = k - kl1;
+
+                        RDouble phis = q(i,j,k,m+1) + q(il,jl,kl,m+1);
+
+                        RDouble ddx = phis * xfv(i, j, k, iSurface);
+                        RDouble ddy = phis * yfv(i, j, k, iSurface);
+                        RDouble ddz = phis * zfv(i, j, k, iSurface);
+
+                        dqdx(i ,j ,k ,m) -= ddx;
+                        dqdy(i ,j ,k ,m) -= ddy;
+                        dqdz(i ,j ,k ,m) -= ddz;
+
+                        dqdx(il, jl, kl, m) += ddx;
+                        dqdy(il, jl, kl, m) += ddy;
+                        dqdz(il, jl, kl, m) += ddz;
+                    }
+                }
+            }
+        }
+
+        //! The gradient of temperature.
+        for (int m = 0; m < nTemperatureModel; ++ m)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        il = i - il1;
+                        jl = j - jl1;
+                        kl = k - kl1;
+
+                        RDouble phis = temperature(i, j, k, m) + temperature(il, jl, kl, m);
+
+                        RDouble ddx = phis * xfv(i, j, k, iSurface);
+                        RDouble ddy = phis * yfv(i, j, k, iSurface);
+                        RDouble ddz = phis * zfv(i, j, k, iSurface);
+
+                        dqdx(i, j, k, m + 3) -= ddx;
+                        dqdy(i, j, k, m + 3) -= ddy;
+                        dqdz(i, j, k, m + 3) -= ddz;
+
+                        dqdx(il, jl, kl, m + 3) += ddx;
+                        dqdy(il, jl, kl, m + 3) += ddy;
+                        dqdz(il, jl, kl, m + 3) += ddz;
+                    }
+                }
+            }
+        }
+    }
+
+    int ist = 1;
+    int ied = ni-1;
+    int jst = 1;
+    int jed = nj-1;
+    int kst = 1;
+    int ked = nk-1;
+
+    if (ndim == TWO_D) ked = 1;
+
+    int nTotalVariable = nTemperatureModel + 3;
+    for (int m = 0; m < nTotalVariable; ++ m)
+    {
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    int il = i + il1;
-                    int jl = j + jl1;
-                    int kl = k + kl1;
+                    RDouble oov = half / volume(i, j, k);
+                    dqdx(i, j, k, m) *= oov;
+                    dqdy(i, j, k, m) *= oov;
+                    dqdz(i, j, k, m) *= oov;
+                }
+            }
+        }
+    }
+}
 
-                    RDouble deltaBar = faceLengthScale(il ,jl ,kl, iSurface);
+void LESSolverStruct::ObtainGradientCellCenterHighOrder(Grid *gridIn)
+{
+    StructGrid *strgrid = StructGridCast(gridIn);
 
-                    RDouble dudx = gradPrimtiveVarFaceXofLES(il, jl, kl, IU, iSurface);
-                    RDouble dudy = gradPrimtiveVarFaceYofLES(il, jl, kl, IU, iSurface);
-                    RDouble dudz = gradPrimtiveVarFaceZofLES(il, jl, kl, IU, iSurface);
+    GetUVWTproxy(strgrid);
 
-                    RDouble dvdx = gradPrimtiveVarFaceXofLES(il, jl, kl, IV, iSurface);
-                    RDouble dvdy = gradPrimtiveVarFaceYofLES(il, jl, kl, IV, iSurface);
-                    RDouble dvdz = gradPrimtiveVarFaceZofLES(il, jl, kl, IV, iSurface);
+    int nDim = GetDim();
+    for(int nsurf = 1; nsurf <= nDim; ++nsurf)
+    {
+        GetUVWTfaceproxy(strgrid, nsurf);
+        GetdqdkxietactaCellCenter(strgrid, nsurf);
+    }
 
-                    RDouble dwdx = gradPrimtiveVarFaceXofLES(il, jl, kl, IW, iSurface);
-                    RDouble dwdy = gradPrimtiveVarFaceYofLES(il, jl, kl, IW, iSurface);
-                    RDouble dwdz = gradPrimtiveVarFaceZofLES(il, jl, kl, IW, iSurface);
+	int ni = strgrid->GetNI();
+	int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();
 
-                    RDouble dtdx = gradtx(il, jl, kl, ITT, iSurface);
-                    RDouble dtdy = gradty(il, jl, kl, ITT, iSurface);
-                    RDouble dtdz = gradtz(il, jl, kl, ITT, iSurface);
+	RDouble4D &xfv  = *(strgrid->GetFaceVectorX());
+    RDouble4D &yfv  = *(strgrid->GetFaceVectorY());
+    RDouble4D &zfv  = *(strgrid->GetFaceVectorZ());
+	RDouble3D &vol  = *(strgrid->GetCellVolume());  
 
-                    RDouble s11 = dudx;
-                    RDouble s22 = dvdy;
-                    RDouble s33 = dwdz;
-                    RDouble s12 = half * (dudy + dvdx);
-                    RDouble s13 = half * (dudz + dwdx);
-                    RDouble s23 = half * (dvdz + dwdy);
+    RDouble4D &dqdx = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &dqdy = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &dqdz = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterZ"));  
 
-                    RDouble sijsij = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
-                    RDouble ss = sqrt(two * sijsij);
-                    RDouble skk = s11 + s22 + s33;
+    RDouble4D &dqdkxi = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dqdkxi"));
+    RDouble4D &dqdeta = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dqdeta"));
+    RDouble4D &dqdcta = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dqdcta"));
 
-                    RDouble rho = 0.5 * (q(i, j, k, IR) + q(il, jl, kl, IR));
-                    RDouble mul = 0.5 * (visl(i, j, k) + visl(il, jl, kl));
-                    RDouble dampingFunction = wallFunction(il, jl, kl, iSurface);
+    int ist = 1;
+    int jst = 1;
+    int kst = 1;
+    int ied = ni - 1;
+    int jed = nj - 1;
+    int ked = nk - 1;
+    if (nk == 1)
+    {
+        kst = 1;
+        ked = 1;
+    } 
 
-                    RDouble mut = (smagConstant * deltaBar * dampingFunction) * (smagConstant * deltaBar * dampingFunction) * rho * ss * refReNumber;
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                RDouble kxix = half * (xfv(i, j, k, 1) + xfv(i + 1, j, k, 1)); 
+                RDouble kxiy = half * (yfv(i, j, k, 1) + yfv(i + 1, j, k, 1));
+                RDouble kxiz = half * (zfv(i, j, k, 1) + zfv(i + 1, j, k, 1));
 
-                    if (turbViscousCutType == 1)
-                    {
-                        mut = MAX(mut - mul, 0.0);
-                    }
-                    else if (turbViscousCutType == 2)
-                    {
-                        mut = MAX(mut, 0.0);
-                    }
-                    else if (turbViscousCutType == 3)
-                    {
-                        mut = MAX(mut, -mul);
-                    }
-
-                    mut = MIN(eddyViscosityLimit, mut);
-
-                    RDouble kSGS = 2.0 * isotropicConstant * (deltaBar * dampingFunction) * (deltaBar * dampingFunction) * rho * ss * ss * refReNumber;
-
-                    subgridStress(il, jl, kl, 1, iSurface) = -2.0 * mut * (s11 - 1.0/3.0 * skk) + 1.0/3.0 * kSGS;
-                    subgridStress(il, jl, kl, 2, iSurface) = -2.0 * mut * (s22 - 1.0/3.0 * skk) + 1.0/3.0 * kSGS;
-                    subgridStress(il, jl, kl, 3, iSurface) = -2.0 * mut * (s33 - 1.0/3.0 * skk) + 1.0/3.0 * kSGS;
-                    subgridStress(il, jl, kl, 4, iSurface) = -2.0 * mut * s12;
-                    subgridStress(il, jl, kl, 5, iSurface) = -2.0 * mut * s13;
-                    subgridStress(il, jl, kl, 6, iSurface) = -2.0 * mut * s23;
-
-                    subgridHeatFlux(il, jl, kl, 1, iSurface) = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdx;
-                    subgridHeatFlux(il, jl, kl, 2, iSurface) = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdy;
-                    subgridHeatFlux(il, jl, kl, 3, iSurface) = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdz;
-
-                    if (vistmax < mut)
-                    {
-                        vistmax = mut;
-                        imax = i;
-                        jmax = j;
-                        kmax = k;
-                    }
-
-                    if (vistmin > mut)
-                    {
-                        vistmin = mut;
-                        imin = i;
-                        jmin = j;
-                        kmin = k;
-                    }
-
+                RDouble etax = half * (xfv(i, j, k, 2) + xfv(i, j + 1, k, 2)); 
+                RDouble etay = half * (yfv(i, j, k, 2) + yfv(i, j + 1, k, 2));
+                RDouble etaz = half * (zfv(i, j, k, 2) + zfv(i, j + 1, k, 2));
+                for (int m = 0; m <= 3; ++ m)
+                {
+                    dqdx(i, j, k, m) = kxix * dqdkxi(i, j, k, m) + etax * dqdeta(i, j, k, m);
+                    dqdy(i, j, k, m) = kxiy * dqdkxi(i, j, k, m) + etay * dqdeta(i, j, k, m);
+                    dqdz(i, j, k, m) = kxiz * dqdkxi(i, j, k, m) + etaz * dqdeta(i, j, k, m);
                 }
             }
         }
     }
 
-    double vist_max = vistmax;
-    double vist_min = vistmin;
-
-    grid->UpdateData("vist_max", &vist_max, PHDOUBLE, 1);
-    grid->UpdateData("vist_min", &vist_min, PHDOUBLE, 1);
-
-#ifdef PH_PARALLEL
-    using namespace PHMPI;
-    int myid = GetCurrentProcessorID();
-    if (myid == server)
+    if (nDim == 3)
     {
-#endif
-        if (monitorVistmax)
+        for (int k = kst; k <= ked; ++ k)
         {
-            cout << "vistmax = " << vistmax << " " << imax << " " << jmax << " " << kmax << "\n";
-            cout << "vistmin = " << vistmin << " " << imin << " " << jmin << " " << kmin << "\n";
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    RDouble ctax = half * (xfv(i, j, k, 3) + xfv(i, j, k + 1, 3));
+                    RDouble ctay = half * (yfv(i, j, k, 3) + yfv(i, j, k + 1, 3));
+                    RDouble ctaz = half * (zfv(i, j, k, 3) + zfv(i, j, k + 1, 3));
+                    for (int m = 0; m <= 3; ++ m)
+                    {
+                        dqdx(i, j, k, m) += ctax * dqdcta(i, j, k, m);
+                        dqdy(i, j, k, m) += ctay * dqdcta(i, j, k, m);
+                        dqdz(i, j, k, m) += ctaz * dqdcta(i, j, k, m);
+                    }
+                }
+            }
         }
-#ifdef PH_PARALLEL
     }
-#endif
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                for (int m = 0; m <= 3; ++ m)
+                {
+                    dqdx(i, j, k, m) /= vol(i, j, k);
+                    dqdy(i, j, k, m) /= vol(i, j, k);
+                    dqdz(i, j, k, m) /= vol(i, j, k);
+                }
+            }
+        }
+    }
+
+    GhostCell3D(dqdx, ni, nj, nk, 4);
+    GhostCell3D(dqdy, ni, nj, nk, 4);
+    GhostCell3D(dqdz, ni, nj, nk, 4);
+}
+
+void LESSolverStruct::GetUVWTproxy(Grid *gridIn)
+{
+	StructGrid *strgrid = StructGridCast(gridIn);
+	int ni = strgrid->GetNI();
+	int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();	
+
+    RDouble4D &q = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("q_FD"));
+    RDouble4D &t = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("t_FD"));
+    RDouble4D &UVWT = UVWTproxy->GetField_STR();
+
+    int ist = - 3;
+    int jst = - 3;
+    int kst = - 3;
+    int ied = ni + 3;
+    int jed = nj + 3;
+    int ked = nk + 3;
+    
+    if (nk == 1)
+    {
+        kst = 1;
+        ked = 1;
+    }
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                UVWT(i, j, k, 0) = q(i, j, k, 1);
+                UVWT(i, j, k, 1) = q(i, j, k, 2);
+                UVWT(i, j, k, 2) = q(i, j, k, 3);
+                UVWT(i, j, k, 3) = t(i, j, k, 0);
+            }
+        }
+    }
+}
+
+void LESSolverStruct::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
+{
+	StructGrid *strgrid = StructGridCast(gridIn);
+	int ni = strgrid->GetNI();
+	int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();	
+
+    RDouble4D &UVWT = UVWTproxy->GetField_STR();
+
+    RDouble4D *UVWTface;
+    Int1D *DiffOrder;
+    if (nsurf == 1)
+    {
+        UVWTface = &(UVWTfaceIproxy->GetField_STR());
+        DiffOrder = strgrid->DiscretePrecisionKXI;
+    }
+    else if (nsurf == 2)
+    {
+        UVWTface = &(UVWTfaceJproxy->GetField_STR());
+        DiffOrder = strgrid->DiscretePrecisionETA;
+    }
+    else
+    {
+        UVWTface = &(UVWTfaceKproxy->GetField_STR());
+        DiffOrder = strgrid->DiscretePrecisionCTA;
+    }
+    
+    int il1, jl1, kl1;
+    GetNsurfIndex(nsurf, il1, jl1, kl1);
+
+    int ist = 1 - il1;
+    int jst = 1 - jl1;
+    int kst = 1 - kl1;
+    int ied = ni - 1 + 2*il1;
+    int jed = nj - 1 + 2*jl1;
+    int ked = nk - 1 + 2*kl1;    
+    if (nk == 1)
+    {
+        kst = 1;
+        ked = 1;
+    }
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                int localcellID = i * il1 + j * jl1 + k * kl1;
+                
+                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                {
+                    for (int m = 0; m <= 3; ++m)
+                    {                    
+                        RDouble b = UVWT(i - il1,   j - jl1,   k - kl1,   m);
+                        RDouble c = UVWT(i,         j,         k,         m);
+                        (*UVWTface)(i, j, k, m) = half * (b + c);
+                    }
+                }
+                else
+                {
+                    for (int m = 0; m <= 3; ++m)
+                    {                    
+                        RDouble a = UVWT(i - il1*2, j - jl1*2, k - kl1*2, m);
+                        RDouble b = UVWT(i - il1,   j - jl1,   k - kl1,   m);
+                        RDouble c = UVWT(i,         j,         k,         m);
+                        RDouble d = UVWT(i + il1,   j + jl1,   k + kl1,   m);
+                        (*UVWTface)(i, j, k, m) = (- a + 9.0 * b + 9.0 * c - d) / 16.0;
+                    }
+                    if ((*UVWTface)(i, j, k, 3) < SMALL)
+                    {
+                        (*UVWTface)(i, j, k, 3) = half * (UVWT(i - il1, j - jl1, k - kl1,  3) + UVWT(i, j, k, 3));
+                    }
+                }                
+            }
+        }
+    }   
+}
+
+void LESSolverStruct::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
+{
+    StructGrid *strgrid = StructGridCast(gridIn);
+	int ni = strgrid->GetNI();
+	int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();
+
+    RDouble4D *UVWTface;
+    Int1D *DiffOrder;
+    RDouble4D *dqdkxietacta;
+    if (nsurf == 1)
+    {
+        UVWTface = &(UVWTfaceIproxy->GetField_STR());
+        DiffOrder = strgrid->DiscretePrecisionKXI;
+        dqdkxietacta = &(*reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dqdkxi")));
+    }
+    else if (nsurf == 2)
+    {
+        UVWTface = &(UVWTfaceJproxy->GetField_STR());
+        DiffOrder = strgrid->DiscretePrecisionETA;
+        dqdkxietacta = &(*reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dqdeta")));
+    }
+    else
+    {
+        UVWTface = &(UVWTfaceKproxy->GetField_STR());
+        DiffOrder = strgrid->DiscretePrecisionCTA;
+        dqdkxietacta = &(*reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("dqdcta")));
+    }
+
+    int ist = 1;
+    int jst = 1;
+    int kst = 1;
+    int ied = ni - 1;
+    int jed = nj - 1;
+    int ked = nk - 1;
+    if (nk == 1)
+    {
+        kst = 1;
+        ked = 1;
+    }
+
+    int il1, jl1, kl1;
+    GetNsurfIndex(nsurf, il1, jl1, kl1);
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                int localcellID = i * il1 + j * jl1 + k * kl1;
+                
+                if( (*DiffOrder)(localcellID) == 2 )
+                {
+                    for (int m = 0; m <= 3; ++ m)
+                    {
+                        RDouble q1 = (*UVWTface)(i      , j      , k      , m);
+                        RDouble q2 = (*UVWTface)(i + il1, j + jl1, k + kl1, m);
+
+                        (*dqdkxietacta)(i, j, k, m) = q2 - q1;
+                    }
+                }
+                else
+                {
+                    for (int m = 0; m <= 3; ++ m)
+                    {
+                        RDouble q0 = (*UVWTface)(i - il1    , j - jl1    , k - kl1    , m);
+                        RDouble q1 = (*UVWTface)(i          , j          , k          , m);
+                        RDouble q2 = (*UVWTface)(i + il1    , j + jl1    , k + kl1    , m);
+                        RDouble q3 = (*UVWTface)(i + il1 * 2, j + jl1 * 2, k + kl1 * 2, m);
+
+                        (*dqdkxietacta)(i, j, k, m) = (27.0 * (q2 - q1) - (q3 - q0)) / 24.0;
+                    }
+                }
+            }
+        }
+    }   
+}
+
+void LESSolverStruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
+{
+    //int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    //if(ifvfd ==0) return;
+
+    StructGrid *grid = StructGridCast(gridIn);
+
+    ObtainViscosity(grid);
+
+    ObtainBoundaryValue(grid);
+}
+
+void LESSolverStruct::ObtainViscosity(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    ComputeStrainRateTensor(grid);
+
+    ComputeWallFunction(grid);
+
+    Param_LESSolverStruct * parameters = GetControlParameters();
+    int subgridScaleModel = parameters->GetSubgridScaleModel();
+
+    int iterationStep;
+    int nMGLevel = parameters->GetNMGLevel();        
+    if (nMGLevel <= 1)
+    {
+        //! Finest grid.
+        GlobalDataBase::GetData("outnstep", &iterationStep, PHINT, 1);
+    }
+    else
+    {
+        //! Coarse grid.
+        GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
+    }
+
+    int cflNstep    = parameters->GetCFLVaryStep();
+
+    if(iterationStep < cflNstep)
+    {
+        Smagorinsky(grid);
+
+        return;
+    }
+
+    if (subgridScaleModel == 1)
+    {
+        Smagorinsky(grid);
+    }
+    else if (subgridScaleModel == 2)
+    {
+        DynamicSmagViscosityCompressibleFD(grid);
+    }
+    else if (subgridScaleModel == 3)
+    {
+        WALE(grid);
+    }
+    else if (subgridScaleModel == 6)
+    {
+        Sigma(grid);
+    }
+    else
+    {
+        TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
+    }
 }
 
 void LESSolverStruct::Smagorinsky(Grid *gridIn)
@@ -1439,9 +1613,13 @@ void LESSolverStruct::Smagorinsky(Grid *gridIn)
     RDouble3D &cellLengthScale = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cellLengthScale"));
     RDouble3D &wallFunction = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("wallFunction"));
 
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
     RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
-    RDouble3D &anisotropicConstant = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("anisotropicConstant"));
-    RDouble3D &isotropicConstant = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("isotropicConstant"));
+
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+
+    RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
     Param_LESSolverStruct * parameters = GetControlParameters();
 
@@ -1455,25 +1633,14 @@ void LESSolverStruct::Smagorinsky(Grid *gridIn)
 
     RDouble iConstant = parameters->GetIsotropicConstant();
 
-    double vistmax  = 0.0;
-    double vistmin  = 1.0e30;
-    double logsmall = log(SMALL);
-
-    //int ist, ied, jst, jed, kst, ked;
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
-
-    //ComputeSubgridScaleEnergy(grid);
-    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    RDouble viscousTurbulentMaximum = 0.0;
+    int imax = 1;
+    int jmax = 1;
+    int kmax = 1;
 
     int ist, ied, jst, jed, kst, ked;
-    if(ifvfd == 0)
-    {
-        grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
-    }
-    else
-    {
-        grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
-    }
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
@@ -1484,176 +1651,19 @@ void LESSolverStruct::Smagorinsky(Grid *gridIn)
 
                 RDouble dampingFunction = wallFunction(i, j, k);
 
-                //RDouble mut = (smagConstant * deltaBar * dampingFunction) * (smagConstant * deltaBar * dampingFunction) * rho * ss * refReNumber;
+                RDouble rho = ABS(q(i, j, k, IR)) + SMALL;
 
-                RDouble cr = (smagConstant * deltaBar * dampingFunction) * (smagConstant * deltaBar * dampingFunction);
+                RDouble Strain = strainRateTensor(i, j, k, 0);
 
-                RDouble ci = iConstant * (deltaBar * dampingFunction) * (deltaBar * dampingFunction);
+                RDouble mut = (smagConstant * deltaBar * dampingFunction) * (smagConstant * deltaBar * dampingFunction) * rho * Strain * refReNumber;
+                RDouble kSGS = 2.0 * dampingFunction * dampingFunction * iConstant * rho * Strain * Strain * refReNumber;
 
-                anisotropicConstant(i, j, k) = cr;
+                viscousTurbulent(i, j, k) = MIN(eddyViscosityLimit, mut);
+                subgridScaleEnergy(i, j, k) = kSGS;
 
-                isotropicConstant(i, j, k) = ci;
-            }
-        }
-    }
-    
-    RDouble prandtlTurbulence = parameters->GetPrandtlTurbulence();
-
-    turbulentPrandtlNumber = prandtlTurbulence;
-}
-
-/*
-void LESSolverStruct::SmagorinskyViscosity(Grid *grid_in)
-{
-    using namespace IDX;
-
-    StructGrid *grid = StructGridCast(grid_in);
-
-    RDouble4D &xfn  = *(grid->GetFaceNormalX());
-    RDouble4D &yfn  = *(grid->GetFaceNormalY());
-    RDouble4D &zfn  = *(grid->GetFaceNormalZ());
-    RDouble4D &area = *(grid->GetFaceArea());
-    RDouble3D &vol  = *(grid->GetCellVolume());
-
-    RDouble4D & q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble3D & visl = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
-
-    RDouble5D & subgridStress = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("subgridStress"));
-
-    RDouble4D & gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
-    RDouble4D & gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
-    RDouble4D & gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
-
-    RDouble3D & wallDistance = * StructGridCast(grid)->GetWallDist();
-
-    Param_LESSolverStruct * parameters = GetControlParameters();
-
-    RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
-
-    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
-
-    RDouble refReNumber  = parameters->GetRefReNumber();
-
-    int wallDampingFunctionType = parameters->GetWallDampingFunctionType();
-
-    RDouble yploge = 0.0;
-    if (wallDampingFunctionType == 2)
-    {
-        yploge = parameters->GetYploge();
-    }
-
-    RDouble smagConstant = parameters->GetSmagConstant();
-
-    int deltaFunctionType = parameters->GetDeltaFunctionType();
-
-    RDouble rgam = parameters->GetRgam();
-
-    int turbViscousCutType = parameters->GetTurbViscousCutType();
-
-    double vistmax  = 0.0;
-    double vistmin  = 1.0e30;
-    double logsmall = log(SMALL);
-
-    int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
-
-    int imax = 1;
-    int jmax = 1;
-    int kmax = 1;
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                RDouble areai = 0.5 * (area(i, j, k, 1) + area(i+1, j, k, 1));
-                RDouble areaj = 0.5 * (area(i, j, k, 2) + area(i, j+1, k, 2));
-                RDouble areak = 0.5 * (area(i, j, k, 3) + area(i, j, k+1, 3));
-                RDouble deltai = vol(i, j, k) / areai;
-                RDouble deltaj = vol(i, j, k) / areaj;
-                RDouble deltak = vol(i, j, k) / areak;
-
-                RDouble deltaBar = 0.0;;
-                GetDeltaBar(deltaFunctionType, deltai, deltaj, deltak, deltaBar);
-
-                RDouble dudx = gradUVWTCellCenterX(i, j, k, 0);
-                RDouble dudy = gradUVWTCellCenterY(i, j, k, 0);
-                RDouble dudz = gradUVWTCellCenterZ(i, j, k, 0);
-
-                RDouble dvdx = gradUVWTCellCenterX(i, j, k, 1);
-                RDouble dvdy = gradUVWTCellCenterY(i, j, k, 1);
-                RDouble dvdz = gradUVWTCellCenterZ(i, j, k, 1);
-
-                RDouble dwdx = gradUVWTCellCenterX(i, j, k, 2);
-                RDouble dwdy = gradUVWTCellCenterY(i, j, k, 2);
-                RDouble dwdz = gradUVWTCellCenterZ(i, j, k, 2);
-
-                RDouble s11 = dudx;
-                RDouble s22 = dvdy;
-                RDouble s33 = dwdz;
-                RDouble s12 = half * (dudy + dvdx);
-                RDouble s13 = half * (dudz + dwdx);
-                RDouble s23 = half * (dvdz + dwdy);
-
-                RDouble sij2 = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
-                RDouble ss = sqrt(two * sij2);
-                RDouble rho = q(i, j, k, IR);
-                RDouble mul = visl(i, j, k);
-
-                //! Calculate damping function fVD.
-                RDouble Ap = 25.0;
-                RDouble rKappa = 0.41;
-                RDouble wallDist = wallDistance(i, j, k);
-                RDouble rKappa_walldist = rKappa * wallDist;
-                RDouble rKappa_walldist2 = rKappa_walldist * rKappa_walldist;
-                RDouble yp = ss * (rKappa * wallDist) * (rKappa * wallDist) * rho / mul * refReNumber;
-                RDouble fVD = 1.0;
-                if (wallDampingFunctionType == 0)
+                if (viscousTurbulentMaximum < mut)
                 {
-                    fVD = 1.0;
-                }
-                else if (wallDampingFunctionType == 1)
-                {
-                    fVD = 1.0 - exp(-yp / Ap);
-                }
-                else if (wallDampingFunctionType == 2)
-                {
-                    //! Developed by Deng XiaoBing.
-                    RDouble ffd = tanh((yploge/yp) * (yploge/yp) * (yploge/yp));
-                    RDouble rVDinner = rgam * MIN((1.0 - exp(-pow(yp/Ap, 7.0/6.0))), (1.0 - exp(-yp / Ap)));
-                    RDouble rVDout = 1.0;
-                    fVD = rVDinner * ffd + rVDout * (1.0 - ffd);
-                }
-                else if (wallDampingFunctionType == 3)
-                {
-                    //! Piomelli 1993.
-                    fVD = sqrt(1.0 - exp(-(yp/Ap) * (yp/Ap) * (yp/Ap)));
-                }
-                else
-                {
-                    TK_Exit::UnexpectedVarValue("wallDampingFunctionType", wallDampingFunctionType);
-                }
-
-                //! Calculate mut.
-                RDouble csmag_fVD_delta = smagConstant * fVD * deltaBar;
-                RDouble csmag_fVD_delta2 = csmag_fVD_delta * csmag_fVD_delta;
-                RDouble mut = rho * csmag_fVD_delta2 * ss * refReNumber;
-
-                if (turbViscousCutType == 1)
-                {
-                    mut = MAX(mut - mul, 0.0);
-                }
-                else if (turbViscousCutType == 2)
-                {
-                    mut = MAX(mut, 0.0);
-                }
-
-                mut = MIN(eddyViscosityLimit, mut);
-
-                if (vistmax < vist(i,j,k))
-                {
-                    vistmax = vist(i,j,k);
+                    viscousTurbulentMaximum = mut;
                     imax = i;
                     jmax = j;
                     kmax = k;
@@ -1662,11 +1672,12 @@ void LESSolverStruct::SmagorinskyViscosity(Grid *grid_in)
         }
     }
 
-    double vist_max = vistmax;
-    double vist_min = vistmin;
+    RDouble prandtlTurbulence = parameters->GetPrandtlTurbulence();
 
+    turbulentPrandtlNumber = prandtlTurbulence;
+
+    RDouble vist_max = viscousTurbulentMaximum;
     grid->UpdateData("vist_max", &vist_max, PHDOUBLE, 1);
-    grid->UpdateData("vist_min", &vist_min, PHDOUBLE, 1);
 
 #ifdef PH_PARALLEL
     using namespace PHMPI;
@@ -1676,14 +1687,12 @@ void LESSolverStruct::SmagorinskyViscosity(Grid *grid_in)
 #endif
         if (monitorVistmax)
         {
-            cout << "vistmax = " << vistmax << " " << imax << " " << jmax << " " << kmax << "\n";
+            cout << "vistmax = " << viscousTurbulentMaximum << " " << imax << " " << jmax << " " << kmax << "\n";
         }
 #ifdef PH_PARALLEL
     }
 #endif
-
 }
-*/
 
 void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
 {
@@ -2707,7 +2716,6 @@ void LESSolverStruct::DynamicSmagViscosityCompressibleOld(Grid *gridIn)
     ComputeAnisotropicConstant(grid);
 
     ComputeIsotropicConstant(grid);
-    //ComputeSubgridScaleEnergy(grid);
 
     ComputePrandtlNumber(grid);
 
@@ -2944,7 +2952,7 @@ void LESSolverStruct::DynamicSmagViscosityCompressible(Grid *gridIn)
 
     Param_LESSolverStruct *parameters = GetControlParameters();
 
-    //RDouble refReNumber = parameters->GetRefReNumber();
+    RDouble refReNumber = parameters->GetRefReNumber();
 
     int monitorNegativeConstant = GlobalDataBase::GetIntParaFromDB("monitorNegativeConstant");
 
@@ -2960,7 +2968,6 @@ void LESSolverStruct::DynamicSmagViscosityCompressible(Grid *gridIn)
     ComputeAnisotropicConstant(grid);
 
     ComputeIsotropicConstant(grid);
-    //ComputeSubgridScaleEnergy(grid);
 
     ComputePrandtlNumber(grid);
 
@@ -3031,6 +3038,196 @@ void LESSolverStruct::DynamicSmagViscosityCompressible(Grid *gridIn)
                 isotropicConstant(i, j, k) = ci * dampingFunction * dampingFunction;
 
                 //turbulentPrandtlNumber(i, j, k) = prt;
+            }
+        }
+    }
+
+    grid->UpdateData("nNegativeCr", &nNegativeCr, PHINT, 1);
+    grid->UpdateData("nNegativeCi", &nNegativeCi, PHINT, 1);
+    grid->UpdateData("nNegativePrt", &nNegativePrt, PHINT, 1);
+    grid->UpdateData("nLowerBoundCr", &nLowerBoundCr, PHINT, 1);
+    grid->UpdateData("nUpperBoundCr", &nUpperBoundCr, PHINT, 1);
+
+#ifdef PH_PARALLEL
+    using namespace PHMPI;
+    int myid = GetCurrentProcessorID();
+    if (myid == server)
+    {
+#endif
+        if (monitorNegativeConstant)
+        {
+            RDouble percentNegativeCr = nNegativeCr / static_cast<RDouble> ((ni + 1) * (nj + 1) * (nk + 1));
+            RDouble percentNegativeCi = nNegativeCi / static_cast<RDouble> ((ni + 1) * (nj + 1) * (nk + 1));
+            RDouble percentNegativePrt = nNegativePrt / static_cast<RDouble> ((ni + 1) * (nj + 1) * (nk + 1));
+            RDouble percentLowerBoundCr = nLowerBoundCr / static_cast<RDouble> ((ni + 1) * (nj + 1) * (nk + 1));
+            RDouble percentUpperBoundCr = nUpperBoundCr / static_cast<RDouble> ((ni + 1) * (nj + 1) * (nk + 1));
+
+            cout << "percentNegativeCr = " << percentNegativeCr << "\n";
+            cout << "percentNegativeCi = " << nNegativeCi << "\n";
+            cout << "percentNegativePrt = " << nNegativePrt << "\n";
+            cout << "percentLowerBoundCr = " << percentLowerBoundCr << "\n";
+            cout << "percentUpperBoundCr = " << percentUpperBoundCr << "\n";
+        }
+#ifdef PH_PARALLEL
+    }
+#endif
+}
+
+void LESSolverStruct::DynamicSmagViscosityCompressibleFD(Grid *gridIn)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+
+    RDouble refReNumber = parameters->GetRefReNumber();
+
+    int monitorNegativeConstant = GlobalDataBase::GetIntParaFromDB("monitorNegativeConstant");
+
+    RDouble3D &visl = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
+
+    RDouble3D &wallFunction = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("wallFunction"));
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+
+    RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+    RDouble3D &anisotropicConstant = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("anisotropicConstant"));
+    RDouble3D &isotropicConstant = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("isotropicConstant"));
+
+    ComputeAnisotropicConstant(grid);
+
+    ComputeIsotropicConstant(grid);
+
+    ComputePrandtlNumber(grid);
+
+    double vistmax  = 0.0;
+    double vistmin  = 1.0e30;
+    double logsmall = log(SMALL);
+
+    int nNegativeCr = 0;
+    int nLowerBoundCr = 0;
+    int nUpperBoundCr = 0;
+    int nNegativeCi = 0;
+    int nNegativePrt = 0;
+
+    int turbViscousCutType = parameters->GetTurbViscousCutType();
+
+    RDouble viscousTurbulentMaximum = 0.0;
+    int imax = 1;
+    int jmax = 1;
+    int kmax = 1;
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                RDouble cr = anisotropicConstant(i, j, k);
+                RDouble ci = isotropicConstant(i, j, k);
+                RDouble prt = turbulentPrandtlNumber(i, j, k);
+
+                RDouble dampingFunction = wallFunction(i, j, k);
+                //RDouble dampingFunction = 1.0;
+
+                RDouble rho = ABS(q(i, j, k, IR)) + SMALL;
+
+                RDouble dudx = gradUVWTCellCenterX(i, j, k, 0);
+                RDouble dudy = gradUVWTCellCenterY(i, j, k, 0);
+                RDouble dudz = gradUVWTCellCenterZ(i, j, k, 0);
+
+                RDouble dvdx = gradUVWTCellCenterX(i, j, k, 1);
+                RDouble dvdy = gradUVWTCellCenterY(i, j, k, 1);
+                RDouble dvdz = gradUVWTCellCenterZ(i, j, k, 1);
+
+                RDouble dwdx = gradUVWTCellCenterX(i, j, k, 2);
+                RDouble dwdy = gradUVWTCellCenterY(i, j, k, 2);
+                RDouble dwdz = gradUVWTCellCenterZ(i, j, k, 2);
+
+                RDouble s11 = dudx; 
+                RDouble s22 = dvdy; 
+                RDouble s33 = dwdz;
+                RDouble s12 = half * (dudy + dvdx); 
+                RDouble s13 = half * (dudz + dwdx); 
+                RDouble s23 = half * (dvdz + dwdy);
+
+                RDouble sij2 = two * (s11*s11 + s22*s22 + s33*s33 + two * (s12*s12 + s13*s13 + s23*s23));  //! modulus of S.
+                RDouble Strain = sqrt(sij2);
+
+                RDouble mut = dampingFunction * dampingFunction * cr * rho * Strain * refReNumber;
+                RDouble kSGS = 2.0 * dampingFunction * dampingFunction * ci * rho * Strain * Strain * refReNumber;
+
+                RDouble mul = visl(i, j, k);
+                if (turbViscousCutType == 1)
+                {
+                    mut = MAX(mut - mul, 0.0);
+                    kSGS = 0.0;
+                    prt = 0.9;
+                }
+                else if (turbViscousCutType == 2)
+                {
+                    mut = MAX(mut, 0.0);
+                    kSGS = 0.0;
+                    prt = 0.9;
+                }
+                else if (turbViscousCutType == 3)
+                {
+                    mut = MAX(mut, -mul);
+                    kSGS = 0.0;
+                    prt = 0.9;
+                }
+
+                viscousTurbulent(i, j, k) = mut;
+                subgridScaleEnergy(i, j, k) = kSGS;
+                turbulentPrandtlNumber(i, j, k) = prt;
+
+                if (cr < -0.01)
+                {
+                    //cr = -0.01;
+                    nLowerBoundCr = nLowerBoundCr + 1;
+                }
+
+                if (cr > 0.5)
+                {
+                    //cr = 0.5;
+                    nUpperBoundCr = nUpperBoundCr + 1;
+                }
+
+                if (cr < 0.0)
+                {
+                    nNegativeCr = nNegativeCr + 1;
+                }
+
+                if (ci < 0.0)
+                {
+                    nNegativeCi = nNegativeCi + 1;
+                }
+
+                if (prt < 0.0)
+                {
+                    nNegativePrt = nNegativePrt + 1;
+                }
+
+                if (viscousTurbulentMaximum < mut)
+                {
+                    viscousTurbulentMaximum = mut;
+                    imax = i;
+                    jmax = j;
+                    kmax = k;
+                }
             }
         }
     }
@@ -3455,10 +3652,6 @@ void LESSolverStruct::ComputeTestFilteredQ(Grid *gridIn)
     Range I, J, K;
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-    int ist, ied, jst, jed, kst, ked;
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
-
     Param_LESSolverStruct *parameters = GetControlParameters();
     int *filterDirection = parameters->GetFilterDirection();
 
@@ -3475,6 +3668,26 @@ void LESSolverStruct::ComputeTestFilteredQ(Grid *gridIn)
 
     testFilteredQ(I, J, K, Range(IR, IW)) = q(I, J, K, Range(IR, IW));
 
+    // !get conservative variables for test filtering
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+    for(int m = IU; m <= IW; ++m)
+    {
+        for(int k = kst; k <= ked; ++k)
+        {
+            for(int j = jst; j <= jed; ++j)
+            {
+                for(int i = ist; i <= ied; ++i)
+                {
+                    RDouble rho = q(i, j, k, IR);
+                    RDouble primitiveVariable = q(i, j, k, m);
+                    testFilteredQ(i, j, k, m) = rho * primitiveVariable;
+                }
+            }
+        }
+    }
+
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
     //! filter Q in I direction
     if (filterDirection[0] == 1) 
     {
@@ -3524,6 +3737,23 @@ void LESSolverStruct::ComputeTestFilteredQ(Grid *gridIn)
                     (*filteredVariableZ)(K) = testFilteredQ(i, j, K, n);
                     TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
                     testFilteredQ(i, j, K, n) = (*testFilteredVariableZ)(K);
+                }
+            }
+        }
+    }
+
+    // !recover primitive variables after test filtering
+    for(int m = IU; m <= IW; ++m)
+    {
+        for(int k = kst; k <= ked; ++k)
+        {
+            for(int j = jst; j <= jed; ++j)
+            {
+                for(int i = ist; i <= ied; ++i)
+                {
+                    RDouble rho = testFilteredQ(i, j, k, IR);
+                    RDouble conservativeVariable = testFilteredQ(i, j, k, m);
+                    testFilteredQ(i, j, k, m) = conservativeVariable / rho;
                 }
             }
         }
@@ -3537,7 +3767,7 @@ void LESSolverStruct::ComputeTestFilteredQ(Grid *gridIn)
     delete filteredVariableZ;
 }
 
-void LESSolverStruct::ComputeTestFilteredQfd(Grid *gridIn)
+void LESSolverStruct::ComputeTestFilteredQFD(Grid *gridIn)
 {
     using namespace IDX;
 
@@ -3548,16 +3778,12 @@ void LESSolverStruct::ComputeTestFilteredQfd(Grid *gridIn)
     int nk = grid->GetNK();
 
     Range I, J, K;
-    GetRange(ni, nj, nk, -2, 1, I, J, K);
-
-    int ist, ied, jst, jed, kst, ked;
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+    GetRange(ni, nj, nk, -2, 1, I, J, K);    
 
     Param_LESSolverStruct *parameters = GetControlParameters();
     int *filterDirection = parameters->GetFilterDirection();
 
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_FD"));
 
     RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
 
@@ -3570,8 +3796,26 @@ void LESSolverStruct::ComputeTestFilteredQfd(Grid *gridIn)
 
     testFilteredQ(I, J, K, Range(IR, IW)) = q(I, J, K, Range(IR, IW));
 
-    testFilteredQ(I, J, K, Range(IU, IW)) = q(I, J, K, IR) * q(I, J, K, Range(IU, IW));
+    // !get conservative variables for test filtering
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+    for(int m = IU; m <= IW; ++m)
+    {
+        for(int k = kst; k <= ked; ++k)
+        {
+            for(int j = jst; j <= jed; ++j)
+            {
+                for(int i = ist; i <= ied; ++i)
+                {
+                    RDouble rho = q(i, j, k, IR);
+                    RDouble primitiveVariable = q(i, j, k, m);
+                    testFilteredQ(i, j, k, m) = rho * primitiveVariable;
+                }
+            }
+        }
+    }
 
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
     //! filter Q in I direction
     if (filterDirection[0] == 1) 
     {
@@ -3626,7 +3870,22 @@ void LESSolverStruct::ComputeTestFilteredQfd(Grid *gridIn)
         }
     }
 
-    testFilteredQ(I, J, K, Range(IU, IW)) = testFilteredQ(I, J, K, Range(IU, IW)) / testFilteredQ(I, J, K, IR);
+    // !recover primitive variables after test filtering
+    for(int m = IU; m <= IW; ++m)
+    {
+        for(int k = kst; k <= ked; ++k)
+        {
+            for(int j = jst; j <= jed; ++j)
+            {
+                for(int i = ist; i <= ied; ++i)
+                {
+                    RDouble rho = testFilteredQ(i, j, k, IR);
+                    RDouble conservativeVariable = testFilteredQ(i, j, k, m);
+                    testFilteredQ(i, j, k, m) = conservativeVariable / rho;
+                }
+            }
+        }
+    }
 
     delete testFilteredVariableX;
     delete testFilteredVariableY;
@@ -3744,9 +4003,11 @@ void LESSolverStruct::ComputeTestFilteredTemperature(Grid *gridIn)
     Param_LESSolverStruct *parameters = GetControlParameters();
     int *filterDirection = parameters->GetFilterDirection();
 
-    RDouble4D &temperatures = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble4D &temperatures = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
     RDouble3D &testFilteredTemperature = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("testFilteredTemperature"));
+    RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
 
     RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
     RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
@@ -3754,10 +4015,11 @@ void LESSolverStruct::ComputeTestFilteredTemperature(Grid *gridIn)
     RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
     RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
     RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+  
+    // !get conservative variables for test filtering
+    testFilteredTemperature(I, J, K) = temperatures(I, J, K, ITT) * q(I, J, K, IR);
 
-    testFilteredTemperature(I, J, K) = temperatures(I, J, K, ITT);
-
-    //! filter density in I direction
+    //! filter temperature in I direction
     if (filterDirection[0] == 1)
     {
         for (int k = kst; k <= ked; ++ k)
@@ -3772,7 +4034,7 @@ void LESSolverStruct::ComputeTestFilteredTemperature(Grid *gridIn)
         }
     }
 
-    //! filter density in J direction
+    //! filter temperature in J direction
     if (filterDirection[1] == 1)
     {
         for (int k = kst; k <= ked; ++ k)
@@ -3787,7 +4049,7 @@ void LESSolverStruct::ComputeTestFilteredTemperature(Grid *gridIn)
         }
     }
 
-    //! filter density in K direction
+    //! filter temperature in K direction
     if (filterDirection[2] == 1)
     {
         for (int j = jst; j <= jed; ++ j)
@@ -3802,6 +4064,123 @@ void LESSolverStruct::ComputeTestFilteredTemperature(Grid *gridIn)
         }
     }
 
+    // !recover primitive variables after test filtering
+    for(int k = kst; k <= ked; ++k)
+    {
+        for(int j = jst; j <= jed; ++j)
+        {
+            for(int i = ist; i <= ied; ++i)
+            {
+                RDouble rho = testFilteredQ(i, j, k, IR);
+                RDouble conservativeVariable = testFilteredQ(i, j, k, IR);
+                testFilteredTemperature(i, j, k) = conservativeVariable / rho;
+            }
+        }
+    }
+
+    delete testFilteredVariableX;
+    delete testFilteredVariableY;
+    delete testFilteredVariableZ;
+    delete filteredVariableX;
+    delete filteredVariableY;
+    delete filteredVariableZ;
+}
+
+void LESSolverStruct::ComputeTestFilteredTemperatureFD(Grid *gridIn)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    int ist, ied, jst, jed, kst, ked;
+    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+    int *filterDirection = parameters->GetFilterDirection();
+
+    RDouble4D &temperatures = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("t_FD"));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_FD"));
+
+    RDouble3D &testFilteredTemperature = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("testFilteredTemperature"));
+    RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
+
+    RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *testFilteredVariableZ = new RDouble1D(K, fortranArray);
+    RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+  
+    // !get conservative variables for test filtering
+    testFilteredTemperature(I, J, K) = temperatures(I, J, K, ITT) * q(I, J, K, IR);
+
+    //! filter temperature in I direction
+    if (filterDirection[0] == 1)
+    {
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                (*testFilteredVariableX)(I) = testFilteredTemperature(I, j, k);
+                (*filteredVariableX)(I) = testFilteredTemperature(I, j, k);
+                TestFilter(ist, ied, testFilteredVariableX, filteredVariableX);
+                testFilteredTemperature(I, j, k) = (*testFilteredVariableX)(I);
+            }
+        }
+    }
+
+    //! filter temperature in J direction
+    if (filterDirection[1] == 1)
+    {
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                (*testFilteredVariableY)(J) = testFilteredTemperature(i, J, k);
+                (*filteredVariableY)(J) = testFilteredTemperature(i, J, k);
+                TestFilter(jst, jed, testFilteredVariableY, filteredVariableY);
+                testFilteredTemperature(i, J, k) = (*testFilteredVariableY)(J);
+            }
+        }
+    }
+
+    //! filter temperature in K direction
+    if (filterDirection[2] == 1)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                (*testFilteredVariableZ)(K) = testFilteredTemperature(i, j, K);
+                (*filteredVariableZ)(K) = testFilteredTemperature(i, j, K);
+                TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
+                testFilteredTemperature(i, j, K) = (*testFilteredVariableZ)(K);
+            }
+        }
+    }
+
+    // !recover primitive variables after test filtering
+    for(int k = kst; k <= ked; ++k)
+    {
+        for(int j = jst; j <= jed; ++j)
+        {
+            for(int i = ist; i <= ied; ++i)
+            {
+                RDouble rho = testFilteredQ(i, j, k, IR);
+                RDouble conservativeVariable = testFilteredQ(i, j, k, IR);
+                testFilteredTemperature(i, j, k) = conservativeVariable / rho;
+            }
+        }
+    }
+
     delete testFilteredVariableX;
     delete testFilteredVariableY;
     delete testFilteredVariableZ;
@@ -3812,6 +4191,13 @@ void LESSolverStruct::ComputeTestFilteredTemperature(Grid *gridIn)
 
 void LESSolverStruct::ComputeStrainRateTensor(Grid *gridIn)
 {
+    Param_LESSolverStruct * parameters = GetControlParameters();
+    int subgridScaleModel = parameters->GetSubgridScaleModel();
+    if(subgridScaleModel == 6)
+    {
+        return;
+    }
+
     using namespace IDX;
 
     StructGrid *grid = StructGridCast(gridIn);
@@ -3820,163 +4206,74 @@ void LESSolverStruct::ComputeStrainRateTensor(Grid *gridIn)
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    Range I, J, K;
-    GetRange(ni, nj, nk, -2, 1, I, J, K);
-
     int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
-    //RDouble3D &strainRateMagnitude = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("strainRateMagnitude"));
+    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
-    /*
     RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
     RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
     RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
 
-    strainRateTensor(I, J, K, 1) = gradUVWTCellCenterX(I, J, K, 0);
-    strainRateTensor(I, J, K, 2) = gradUVWTCellCenterY(I, J, K, 1);
-    strainRateTensor(I, J, K, 3) = gradUVWTCellCenterZ(I, J, K, 2);
-    strainRateTensor(I, J, K, 4) = 0.5 * (gradUVWTCellCenterY(I, J, K, 0) + gradUVWTCellCenterX(I, J, K, 1));
-    strainRateTensor(I, J, K, 5) = 0.5 * (gradUVWTCellCenterZ(I, J, K, 0) + gradUVWTCellCenterX(I, J, K, 2));
-    strainRateTensor(I, J, K, 6) = 0.5 * (gradUVWTCellCenterY(I, J, K, 2) + gradUVWTCellCenterZ(I, J, K, 1));
-
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
         {
             for (int i = ist; i <= ied; ++ i)
             {
-                RDouble s11 = strainRateTensor(i, j, k, 1);
-                RDouble s22 = strainRateTensor(i, j, k, 2);
-                RDouble s33 = strainRateTensor(i, j, k, 3);
-                RDouble s12 = strainRateTensor(i, j, k, 4);
-                RDouble s13 = strainRateTensor(i, j, k, 5);
-                RDouble s23 = strainRateTensor(i, j, k, 6);
+                RDouble dudx = gradUVWTCellCenterX(i, j, k, 0);
+                RDouble dudy = gradUVWTCellCenterY(i, j, k, 0);
+                RDouble dudz = gradUVWTCellCenterZ(i, j, k, 0);
+
+                RDouble dvdx = gradUVWTCellCenterX(i, j, k, 1);
+                RDouble dvdy = gradUVWTCellCenterY(i, j, k, 1);
+                RDouble dvdz = gradUVWTCellCenterZ(i, j, k, 1);
+
+                RDouble dwdx = gradUVWTCellCenterX(i, j, k, 2);
+                RDouble dwdy = gradUVWTCellCenterY(i, j, k, 2);
+                RDouble dwdz = gradUVWTCellCenterZ(i, j, k, 2);
+
+                RDouble s11 = dudx; 
+                RDouble s22 = dvdy; 
+                RDouble s33 = dwdz;
+                RDouble s12 = half * (dudy + dvdx); 
+                RDouble s13 = half * (dudz + dwdx); 
+                RDouble s23 = half * (dvdz + dwdy);
 
                 RDouble s = 2.0 * (s11 * s11 + s22 * s22 + s33 * s33 + 2.0 * (s12 * s12 + s13 * s13 + s23 * s23));
-                strainRateMagnitude(i, j, k) = sqrt(s);
-            }
-        }
-    }
-    */
 
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+                RDouble omega12 = 0.5 * (dudy - dvdx);
+                RDouble omega13 = 0.5 * (dudz - dwdx);
+                RDouble omega23 = 0.5 * (dvdz - dwdy);
 
-    RDouble3D gradux(I, J, K, fortranArray);
-    RDouble3D graduy(I, J, K, fortranArray);
-    RDouble3D graduz(I, J, K, fortranArray);
-
-    RDouble3D gradvx(I, J, K, fortranArray);
-    RDouble3D gradvy(I, J, K, fortranArray);
-    RDouble3D gradvz(I, J, K, fortranArray);
-
-    RDouble3D gradwx(I, J, K, fortranArray);
-    RDouble3D gradwy(I, J, K, fortranArray);
-    RDouble3D gradwz(I, J, K, fortranArray);
-
-    GradCenter(grid, q, gradux, graduy, graduz, IU);
-    GradCenter(grid, q, gradvx, gradvy, gradvz, IV);
-    GradCenter(grid, q, gradwx, gradwy, gradwz, IW);
-
-    strainRateTensor(I, J, K, 1) = gradux(I, J, K);
-    strainRateTensor(I, J, K, 2) = gradvy(I, J, K);
-    strainRateTensor(I, J, K, 3) = gradwz(I, J, K);
-    strainRateTensor(I, J, K, 4) = 0.5 * (graduy(I, J, K) + gradvx(I, J, K));
-    strainRateTensor(I, J, K, 5) = 0.5 * (graduz(I, J, K) + gradwx(I, J, K));
-    strainRateTensor(I, J, K, 6) = 0.5 * (gradwy(I, J, K) + gradvz(I, J, K));
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                RDouble s11 = strainRateTensor(i, j, k, 1);
-                RDouble s22 = strainRateTensor(i, j, k, 2);
-                RDouble s33 = strainRateTensor(i, j, k, 3);
-                RDouble s12 = strainRateTensor(i, j, k, 4);
-                RDouble s13 = strainRateTensor(i, j, k, 5);
-                RDouble s23 = strainRateTensor(i, j, k, 6);
-
-                RDouble s = 2.0 * (s11 * s11 + s22 * s22 + s33 * s33 + 2.0 * (s12 * s12 + s13 * s13 + s23 * s23));
                 strainRateTensor(i, j, k, 0) = sqrt(s);
+
+                strainRateTensor(i, j, k, 1) = s11;
+                strainRateTensor(i, j, k, 2) = s22;
+                strainRateTensor(i, j, k, 3) = s33;
+                strainRateTensor(i, j, k, 4) = s12;
+                strainRateTensor(i, j, k, 5) = s13;
+                strainRateTensor(i, j, k, 6) = s23;
+
+                strainRateTensor(i, j, k, 7) = omega12;
+                strainRateTensor(i, j, k, 8) = omega13;
+                strainRateTensor(i, j, k, 9) = omega23;
+
             }
         }
     }
-
-    GhostCell3D(strainRateTensor, ni, nj, nk, 7);
-}
-
-void LESSolverStruct::ComputeStrainRateTensorforStructHighOrder(Grid *gridIn)
-{
-    using namespace IDX;
-
-    StructGrid *grid = StructGridCast(gridIn);
-
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
-
-    Range I, J, K;
-    GetRange(ni, nj, nk, -2, 1, I, J, K);
-
-    int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
-
-    RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
-
-    RDouble3D gradux(I, J, K, fortranArray);
-    RDouble3D graduy(I, J, K, fortranArray);
-    RDouble3D graduz(I, J, K, fortranArray);
-
-    RDouble3D gradvx(I, J, K, fortranArray);
-    RDouble3D gradvy(I, J, K, fortranArray);
-    RDouble3D gradvz(I, J, K, fortranArray);
-
-    RDouble3D gradwx(I, J, K, fortranArray);
-    RDouble3D gradwy(I, J, K, fortranArray);
-    RDouble3D gradwz(I, J, K, fortranArray);
-
-    GradCenter(grid, q, gradux, graduy, graduz, IU);
-    GradCenter(grid, q, gradvx, gradvy, gradvz, IV);
-    GradCenter(grid, q, gradwx, gradwy, gradwz, IW);
-
-    strainRateTensor(I, J, K, 1) = gradux(I, J, K);
-    strainRateTensor(I, J, K, 2) = gradvy(I, J, K);
-    strainRateTensor(I, J, K, 3) = gradwz(I, J, K);
-    strainRateTensor(I, J, K, 4) = 0.5 * (graduy(I, J, K) + gradvx(I, J, K));
-    strainRateTensor(I, J, K, 5) = 0.5 * (graduz(I, J, K) + gradwx(I, J, K));
-    strainRateTensor(I, J, K, 6) = 0.5 * (gradwy(I, J, K) + gradvz(I, J, K));
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                RDouble s11 = strainRateTensor(i, j, k, 1);
-                RDouble s22 = strainRateTensor(i, j, k, 2);
-                RDouble s33 = strainRateTensor(i, j, k, 3);
-                RDouble s12 = strainRateTensor(i, j, k, 4);
-                RDouble s13 = strainRateTensor(i, j, k, 5);
-                RDouble s23 = strainRateTensor(i, j, k, 6);
-
-                RDouble s = 2.0 * (s11 * s11 + s22 * s22 + s33 * s33 + 2.0 * (s12 * s12 + s13 * s13 + s23 * s23));
-                strainRateTensor(i, j, k, 0) = sqrt(s);
-            }
-        }
-    }
-
-    GhostCell3D(strainRateTensor, ni, nj, nk, 7);
 }
 
 void LESSolverStruct::ComputeGradT(Grid *gridIn)
 {
-    using namespace IDX;
-
     StructGrid *grid = StructGridCast(gridIn);
+
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    RDouble4D &gradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradT"));
 
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
@@ -3985,22 +4282,31 @@ void LESSolverStruct::ComputeGradT(Grid *gridIn)
     Range I, J, K;
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-    RDouble4D &temperatures = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("t"));
+    gradT(I, J, K, 0) = gradUVWTCellCenterX(I, J, K, 3);
+    gradT(I, J, K, 1) = gradUVWTCellCenterY(I, J, K, 3);
+    gradT(I, J, K, 2) = gradUVWTCellCenterZ(I, J, K, 3);
+}
+
+void LESSolverStruct::ComputeGradTFD(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
     RDouble4D &gradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradT"));
 
-    RDouble3D gradTx(I, J, K, fortranArray);
-    RDouble3D gradTy(I, J, K, fortranArray);
-    RDouble3D gradTz(I, J, K, fortranArray);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
-    GradCenter(grid, temperatures, gradTx, gradTy, gradTz, ITT);
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-    GhostCell3D(gradTx, ni, nj, nk);
-    GhostCell3D(gradTy, ni, nj, nk);
-    GhostCell3D(gradTz, ni, nj, nk);
-
-    gradT(I, J, K, 0) = gradTx(I, J, K);
-    gradT(I, J, K, 1) = gradTy(I, J, K);
-    gradT(I, J, K, 2) = gradTz(I, J, K);
+    gradT(I, J, K, 0) = gradUVWTCellCenterX(I, J, K, 3);
+    gradT(I, J, K, 1) = gradUVWTCellCenterY(I, J, K, 3);
+    gradT(I, J, K, 2) = gradUVWTCellCenterZ(I, J, K, 3);
 }
 
 void LESSolverStruct::ComputeTestFilteredStrainRateTensor(Grid *gridIn)
@@ -4055,8 +4361,6 @@ void LESSolverStruct::ComputeTestFilteredStrainRateTensor(Grid *gridIn)
         }
     }
 
-    GhostCell3D(testFilteredStrainRateTensor, ni, nj, nk, 7);
-
     //! filter Sij in J direction
     if (filterDirection[1] == 1)
     {
@@ -4075,8 +4379,6 @@ void LESSolverStruct::ComputeTestFilteredStrainRateTensor(Grid *gridIn)
         }
     }
 
-    GhostCell3D(testFilteredStrainRateTensor, ni, nj, nk, 7);
-
     //! filter Sij in K direction
     if (filterDirection[2] == 1)
     {
@@ -4094,8 +4396,6 @@ void LESSolverStruct::ComputeTestFilteredStrainRateTensor(Grid *gridIn)
             }
         }
     }
-
-    GhostCell3D(testFilteredStrainRateTensor, ni, nj, nk, 7);
 
     //! Compute |S|
     for (int k = kst; k <= ked; ++ k)
@@ -4117,14 +4417,91 @@ void LESSolverStruct::ComputeTestFilteredStrainRateTensor(Grid *gridIn)
         }
     }
 
-    GhostCell3D(testFilteredStrainRateTensor, ni, nj, nk, 1);
-
     delete testFilteredVariableX;
     delete testFilteredVariableY;
     delete testFilteredVariableZ;
     delete filteredVariableX;
     delete filteredVariableY;
     delete filteredVariableZ;
+}
+
+void LESSolverStruct::ComputeTestFilteredStrainRateTensorFD(Grid *gridIn)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    Range N(0, 6);
+
+    int ist, ied, jst, jed, kst, ked;
+    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+
+    RDouble4D &testFilteredStrainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredStrainRateTensor"));
+
+    RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
+
+    RDouble3D gradux(I, J, K, fortranArray);
+    RDouble3D graduy(I, J, K, fortranArray);
+    RDouble3D graduz(I, J, K, fortranArray);
+
+    RDouble3D gradvx(I, J, K, fortranArray);
+    RDouble3D gradvy(I, J, K, fortranArray);
+    RDouble3D gradvz(I, J, K, fortranArray);
+
+    RDouble3D gradwx(I, J, K, fortranArray);
+    RDouble3D gradwy(I, J, K, fortranArray);
+    RDouble3D gradwz(I, J, K, fortranArray);
+
+    GradCenter(grid, testFilteredQ, gradux, graduy, graduz, IU);
+    GradCenter(grid, testFilteredQ, gradvx, gradvy, gradvz, IV);
+    GradCenter(grid, testFilteredQ, gradwx, gradwy, gradwz, IW);
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                RDouble dudx = gradux(i, j, k);
+                RDouble dudy = graduy(i, j, k);
+                RDouble dudz = graduz(i, j, k);
+
+                RDouble dvdx = gradvx(i, j, k);
+                RDouble dvdy = gradvy(i, j, k);
+                RDouble dvdz = gradvz(i, j, k);
+
+                RDouble dwdx = gradwx(i, j, k);
+                RDouble dwdy = gradwy(i, j, k);
+                RDouble dwdz = gradwz(i, j, k);
+
+                RDouble s11 = dudx; 
+                RDouble s22 = dvdy; 
+                RDouble s33 = dwdz;
+                RDouble s12 = half * (dudy + dvdx); 
+                RDouble s13 = half * (dudz + dwdx); 
+                RDouble s23 = half * (dvdz + dwdy);
+
+                RDouble sij2 = two * (s11*s11 + s22*s22 + s33*s33 + two * (s12*s12 + s13*s13 + s23*s23));  //! modulus of S.
+                RDouble Strain = sqrt(sij2);
+
+                testFilteredStrainRateTensor(i, j, k, 0) = Strain;
+                testFilteredStrainRateTensor(i, j, k, 1) = s11;
+                testFilteredStrainRateTensor(i, j, k, 2) = s22;
+                testFilteredStrainRateTensor(i, j, k, 3) = s33;
+                testFilteredStrainRateTensor(i, j, k, 4) = s12;
+                testFilteredStrainRateTensor(i, j, k, 5) = s13;
+                testFilteredStrainRateTensor(i, j, k, 6) = s23;
+            }
+        }
+    }
 }
 
 void LESSolverStruct::ComputeTestFilteredRhoUiUj(Grid *gridIn)
@@ -4147,8 +4524,9 @@ void LESSolverStruct::ComputeTestFilteredRhoUiUj(Grid *gridIn)
     Param_LESSolverStruct *parameters = GetControlParameters();    
     int *filterDirection = parameters->GetFilterDirection();
     int subgridScaleModel  = parameters->GetSubgridScaleModel();
-
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    
     RDouble4D &testFilteredRhoUiUj = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoUiUj"));
 
     RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
@@ -4182,16 +4560,6 @@ void LESSolverStruct::ComputeTestFilteredRhoUiUj(Grid *gridIn)
     }
 
     //! filter RhoUiUj in I direction
-    //testFilteredRhoUiUj(ist-1, Range(jst, jed), Range(kst, ked), Range(1, 6)) = testFilteredRhoUiUj(ist, Range(jst, jed), Range(kst, ked), Range(1, 6));
-    //testFilteredRhoUiUj(ied+1, Range(jst, jed), Range(kst, ked), Range(1, 6)) = testFilteredRhoUiUj(ied, Range(jst, jed), Range(kst, ked), Range(1, 6));
-
-    RDouble tFRhoUU = testFilteredRhoUiUj(1, 1, 1, 1);
-    RDouble tFRhoVV = testFilteredRhoUiUj(1, 1, 1, 2);
-    RDouble tFRhoWW = testFilteredRhoUiUj(1, 1, 1, 3);
-    RDouble tFRhoUV = testFilteredRhoUiUj(1, 1, 1, 4);
-    RDouble tFRhoUW = testFilteredRhoUiUj(1, 1, 1, 5);
-    RDouble tFRhoVW = testFilteredRhoUiUj(1, 1, 1, 6);
-
     if (filterDirection[0] == 1)
     {
         for (int n = 1; n <= 6; ++ n)
@@ -4209,17 +4577,7 @@ void LESSolverStruct::ComputeTestFilteredRhoUiUj(Grid *gridIn)
         }
     }
 
-    tFRhoUU = testFilteredRhoUiUj(1, 1, 1, 1);
-    tFRhoVV = testFilteredRhoUiUj(1, 1, 1, 2);
-    tFRhoWW = testFilteredRhoUiUj(1, 1, 1, 3);
-    tFRhoUV = testFilteredRhoUiUj(1, 1, 1, 4);
-    tFRhoUW = testFilteredRhoUiUj(1, 1, 1, 5);
-    tFRhoVW = testFilteredRhoUiUj(1, 1, 1, 6);
-
     //! filter RhoUiUj in J direction
-    //testFilteredRhoUiUj(Range(ist, ied), jst-1, Range(kst, ked), Range(1, 6)) = testFilteredRhoUiUj(Range(ist, ied), jst, Range(kst, ked), Range(1, 6));
-    //testFilteredRhoUiUj(Range(ist, ied), jed+1, Range(kst, ked), Range(1, 6)) = testFilteredRhoUiUj(Range(ist, ied), jed, Range(kst, ked), Range(1, 6));
-
     if (filterDirection[1] == 1)
     {
         for (int n = 1; n <= 6; ++ n)
@@ -4237,17 +4595,124 @@ void LESSolverStruct::ComputeTestFilteredRhoUiUj(Grid *gridIn)
         }
     }
 
-    tFRhoUU = testFilteredRhoUiUj(1, 1, 1, 1);
-    tFRhoVV = testFilteredRhoUiUj(1, 1, 1, 2);
-    tFRhoWW = testFilteredRhoUiUj(1, 1, 1, 3);
-    tFRhoUV = testFilteredRhoUiUj(1, 1, 1, 4);
-    tFRhoUW = testFilteredRhoUiUj(1, 1, 1, 5);
-    tFRhoVW = testFilteredRhoUiUj(1, 1, 1, 6);
+    //! filter RhoUiUj in K direction
+    if (filterDirection[2] == 1)
+    {
+        for (int n = 1; n <= 6; ++ n)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableZ)(K) = testFilteredRhoUiUj(i, j, K, n);
+                    (*filteredVariableZ)(K) = testFilteredRhoUiUj(i, j, K, n);                
+                    TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
+                    testFilteredRhoUiUj(i, j, K, n) = (*testFilteredVariableZ)(K);
+                }
+            }
+        }
+    }
+
+    delete testFilteredVariableX;
+    delete testFilteredVariableY;
+    delete testFilteredVariableZ;
+    delete filteredVariableX;
+    delete filteredVariableY;
+    delete filteredVariableZ;
+}
+
+void LESSolverStruct::ComputeTestFilteredRhoUiUjFD(Grid *gridIn)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    int ist, ied, jst, jed, kst, ked;
+    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+
+    Param_LESSolverStruct *parameters = GetControlParameters();    
+    int *filterDirection = parameters->GetFilterDirection();
+    int subgridScaleModel  = parameters->GetSubgridScaleModel();
+    
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_FD"));
+    
+    RDouble4D &testFilteredRhoUiUj = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoUiUj"));
+
+    RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *testFilteredVariableZ = new RDouble1D(K, fortranArray);
+    RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+
+    if (subgridScaleModel == 2)
+    {
+        testFilteredRhoUiUj(I, J, K, 1) = q(I, J, K, IR) * q(I, J, K, IU) * q(I, J, K, IU);
+        testFilteredRhoUiUj(I, J, K, 2) = q(I, J, K, IR) * q(I, J, K, IV) * q(I, J, K, IV);
+        testFilteredRhoUiUj(I, J, K, 3) = q(I, J, K, IR) * q(I, J, K, IW) * q(I, J, K, IW);
+        testFilteredRhoUiUj(I, J, K, 4) = q(I, J, K, IR) * q(I, J, K, IU) * q(I, J, K, IV);
+        testFilteredRhoUiUj(I, J, K, 5) = q(I, J, K, IR) * q(I, J, K, IU) * q(I, J, K, IW);
+        testFilteredRhoUiUj(I, J, K, 6) = q(I, J, K, IR) * q(I, J, K, IV) * q(I, J, K, IW);
+    }
+    else if (subgridScaleModel == 4)
+    {
+        testFilteredRhoUiUj(I, J, K, 1) = q(I, J, K, IU) * q(I, J, K, IU);
+        testFilteredRhoUiUj(I, J, K, 2) = q(I, J, K, IV) * q(I, J, K, IV);
+        testFilteredRhoUiUj(I, J, K, 3) = q(I, J, K, IW) * q(I, J, K, IW);
+        testFilteredRhoUiUj(I, J, K, 4) = q(I, J, K, IU) * q(I, J, K, IV);
+        testFilteredRhoUiUj(I, J, K, 5) = q(I, J, K, IU) * q(I, J, K, IW);
+        testFilteredRhoUiUj(I, J, K, 6) = q(I, J, K, IV) * q(I, J, K, IW);
+    }
+    else
+    {
+        TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
+    }
+
+    //! filter RhoUiUj in I direction
+    if (filterDirection[0] == 1)
+    {
+        for (int n = 1; n <= 6; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    (*testFilteredVariableX)(I) = testFilteredRhoUiUj(I, j, k, n);
+                    (*filteredVariableX)(I) = testFilteredRhoUiUj(I, j, k, n);
+                    TestFilter(ist, ied, testFilteredVariableX, filteredVariableX);
+                    testFilteredRhoUiUj(I, j, k, n) = (*testFilteredVariableX)(I);
+                }
+            }
+        }
+    }
+
+    //! filter RhoUiUj in J direction
+    if (filterDirection[1] == 1)
+    {
+        for (int n = 1; n <= 6; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableY)(J) = testFilteredRhoUiUj(i, J, k, n);
+                    (*filteredVariableY)(J) = testFilteredRhoUiUj(i, J, k, n);
+                    TestFilter(jst, jed, testFilteredVariableY, filteredVariableY);
+                    testFilteredRhoUiUj(i, J, k, n) = (*testFilteredVariableY)(J);
+                }
+            }
+        }
+    }
 
     //! filter RhoUiUj in K direction
-    //testFilteredRhoUiUj(Range(ist, ied), Range(jst, jed), kst-1, Range(1, 6)) = testFilteredRhoUiUj(Range(ist, ied), Range(jst, jed), kst, Range(1, 6));
-    //testFilteredRhoUiUj(Range(ist, ied), Range(jst, jed), ked+1, Range(1, 6)) = testFilteredRhoUiUj(Range(ist, ied), Range(jst, jed), ked, Range(1, 6));
-
     if (filterDirection[2] == 1)
     {
         for (int n = 1; n <= 6; ++ n)
@@ -4285,14 +4750,22 @@ void LESSolverStruct::ComputeLeonardStress(Grid *gridIn)
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
     int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
 
     RDouble4D &leonardStress = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("leonardStress"));
     RDouble4D &testFilteredRhoUiUj = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoUiUj"));
     //RDouble3D &testFilteredDensity = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("testFilteredDensity"));
     RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
 
-    ComputeTestFilteredQ(grid);
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 0)
+    {
+        ComputeTestFilteredQ(grid);
+    }
+    else
+    {
+        ComputeTestFilteredQFD(grid);
+    }
 
     Param_LESSolverStruct * parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
@@ -4302,7 +4775,14 @@ void LESSolverStruct::ComputeLeonardStress(Grid *gridIn)
         testFilteredQ(I, J, K, 0) = 1.0;
     }
 
-    ComputeTestFilteredRhoUiUj(grid);
+    if(ifvfd == 0)
+    {
+        ComputeTestFilteredRhoUiUj(grid);
+    }
+    else
+    {
+        ComputeTestFilteredRhoUiUjFD(grid);
+    }
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -4342,8 +4822,8 @@ void LESSolverStruct::ComputeModeledStress(Grid *gridIn)
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    Range I, J, K;
-    GetRange(ni, nj, nk, -2, 1, I, J, K);
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
 
     Range N(1, 6);
 
@@ -4351,11 +4831,33 @@ void LESSolverStruct::ComputeModeledStress(Grid *gridIn)
     RDouble4D &testFilteredAlphaIJ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredAlphaIJ"));
     RDouble4D &betaIJ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("betaIJ"));
 
-    ComputeTestFilteredAlphaIJ(grid);
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 0)
+    {
+        ComputeTestFilteredAlphaIJ(grid);
+    }
+    else
+    {
+        ComputeTestFilteredAlphaIJFD(grid);
+    }
 
     ComputeBetaIJ(grid);
 
-    modeledStress(I, J, K, N) = betaIJ(I, J, K, N) - testFilteredAlphaIJ(I, J, K, N); 
+    for(int m = 1; m <= 6; ++m)
+    {
+        for(int k = kst; k <= ked; ++k)
+        {
+            for(int j = jst; j <= jed; ++j)
+            {
+                for(int i = ist; i <= ied; ++i)
+                {
+                    RDouble beta = betaIJ(i, j, k, m);
+                    RDouble alpha = testFilteredAlphaIJ(i, j, k, m); 
+                    modeledStress(i, j, k, m) = beta - alpha; 
+                }
+            }
+        }
+    }
 }
 
 void LESSolverStruct::ComputeTestFilteredAlphaIJ(Grid *gridIn)
@@ -4371,14 +4873,12 @@ void LESSolverStruct::ComputeTestFilteredAlphaIJ(Grid *gridIn)
     Range I, J, K;
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-    int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
-
     Param_LESSolverStruct *parameters = GetControlParameters();
     int *filterDirection = parameters->GetFilterDirection();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
 
     RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
     RDouble4D &testFilteredAlphaIJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("testFilteredAlphaIJ"));
@@ -4389,6 +4889,9 @@ void LESSolverStruct::ComputeTestFilteredAlphaIJ(Grid *gridIn)
     RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
     RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
     RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
 
     if (subgridScaleModel == 2)
     {
@@ -4452,9 +4955,7 @@ void LESSolverStruct::ComputeTestFilteredAlphaIJ(Grid *gridIn)
         TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
     }
 
-    GhostCell3D(testFilteredAlphaIJ, ni, nj, nk, 7);
-
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
 
     //! filter AlphaIJ in I direction
     if (filterDirection[0] == 1)
@@ -4474,8 +4975,6 @@ void LESSolverStruct::ComputeTestFilteredAlphaIJ(Grid *gridIn)
         }
     }
 
-    GhostCell3D(testFilteredAlphaIJ, ni, nj, nk, 7);
-
     //! filter AlphaIJ in J direction
     if (filterDirection[1] == 1)
     {
@@ -4493,8 +4992,6 @@ void LESSolverStruct::ComputeTestFilteredAlphaIJ(Grid *gridIn)
             }
         }
     }
-
-    GhostCell3D(testFilteredAlphaIJ, ni, nj, nk, 7);
 
     //! filter AlphaIJ in K direction
     if (filterDirection[2] == 1)
@@ -4514,7 +5011,134 @@ void LESSolverStruct::ComputeTestFilteredAlphaIJ(Grid *gridIn)
         }
     }
 
-    GhostCell3D(testFilteredAlphaIJ, ni, nj, nk, 7);
+    delete testFilteredVariableX;
+    delete testFilteredVariableY;
+    delete testFilteredVariableZ;
+    delete filteredVariableX;
+    delete filteredVariableY;
+    delete filteredVariableZ;
+}
+
+void LESSolverStruct::ComputeTestFilteredAlphaIJFD(Grid *gridIn)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+    int *filterDirection = parameters->GetFilterDirection();
+    int subgridScaleModel = parameters->GetSubgridScaleModel();
+
+    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_FD"));
+    RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
+
+    RDouble4D &testFilteredAlphaIJ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("testFilteredAlphaIJ"));
+
+    RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *testFilteredVariableZ = new RDouble1D(K, fortranArray);
+    RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+
+    if (subgridScaleModel == 2)
+    {
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    RDouble rho = q(i, j, k, IR);
+                    RDouble s = strainRateTensor(i, j, k, 0);
+                    RDouble s11 = strainRateTensor(i, j, k, 1);
+                    RDouble s22 = strainRateTensor(i, j, k, 2);
+                    RDouble s33 = strainRateTensor(i, j, k, 3);
+                    RDouble s12 = strainRateTensor(i, j, k, 4);
+                    RDouble s13 = strainRateTensor(i, j, k, 5);
+                    RDouble s23 = strainRateTensor(i, j, k, 6);
+
+                    testFilteredAlphaIJ(i, j, k, 1) = -2.0 * rho * s * (s11 - 1.0/3.0 * (s11 + s22 + s33));
+                    testFilteredAlphaIJ(i, j, k, 2) = -2.0 * rho * s * (s22 - 1.0/3.0 * (s11 + s22 + s33));
+                    testFilteredAlphaIJ(i, j, k, 3) = -2.0 * rho * s * (s33 - 1.0/3.0 * (s11 + s22 + s33));
+                    testFilteredAlphaIJ(i, j, k, 4) = -2.0 * rho * s * s12;
+                    testFilteredAlphaIJ(i, j, k, 5) = -2.0 * rho * s * s13;
+                    testFilteredAlphaIJ(i, j, k, 6) = -2.0 * rho * s * s23;
+
+                    testFilteredAlphaIJ(i, j, k, 0) = 2.0 * rho * s * s;
+                }
+            }
+        }
+    }
+    else
+    {
+        TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
+    }
+
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+    //! filter AlphaIJ in I direction
+    if (filterDirection[0] == 1)
+    {
+        for (int n = 0; n <= 6; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    (*testFilteredVariableX)(I) = testFilteredAlphaIJ(I, j, k, n);
+                    (*filteredVariableX)(I) = testFilteredAlphaIJ(I, j, k, n);
+                    TestFilter(ist, ied, testFilteredVariableX, filteredVariableX);
+                    testFilteredAlphaIJ(I, j, k, n) = (*testFilteredVariableX)(I);
+                }
+            }
+        }
+    }
+
+    //! filter AlphaIJ in J direction
+    if (filterDirection[1] == 1)
+    {
+        for (int n = 0; n <= 6; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableY)(J) = testFilteredAlphaIJ(i, J, k, n);
+                    (*filteredVariableY)(J) = testFilteredAlphaIJ(i, J, k, n);
+                    TestFilter(jst, jed, testFilteredVariableY, filteredVariableY);
+                    testFilteredAlphaIJ(i, J, k, n) = (*testFilteredVariableY)(J);
+                }
+            }
+        }
+    }
+
+    //! filter AlphaIJ in K direction
+    if (filterDirection[2] == 1)
+    {
+        for (int n = 0; n <= 6; ++ n)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableZ)(K) = testFilteredAlphaIJ(i, j, K, n);
+                    (*filteredVariableZ)(K) = testFilteredAlphaIJ(i, j, K, n);                
+                    TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
+                    testFilteredAlphaIJ(i, j, K, n) = (*testFilteredVariableZ)(K);
+                }
+            }
+        }
+    }
 
     delete testFilteredVariableX;
     delete testFilteredVariableY;
@@ -4535,10 +5159,6 @@ void LESSolverStruct::ComputeBetaIJ(Grid *gridIn)
     Range I, J, K;
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-    int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
-
     Param_LESSolverStruct *parameters = GetControlParameters();
     int *filterDirection = parameters->GetFilterDirection();
     RDouble testFilterScale = parameters->GetTestFilterScale();
@@ -4549,8 +5169,19 @@ void LESSolverStruct::ComputeBetaIJ(Grid *gridIn)
     RDouble4D &testFilteredStrainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredStrainRateTensor"));
 
     RDouble4D &betaIJ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("betaIJ"));
+    
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 0)
+    {
+        ComputeTestFilteredStrainRateTensor(grid);
+    }
+    else
+    {
+        ComputeTestFilteredStrainRateTensor(grid);
+    }
 
-    ComputeTestFilteredStrainRateTensor(grid);
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
 
     if (subgridScaleModel == 2)
     {
@@ -4905,7 +5536,7 @@ void LESSolverStruct::ComputeAnisotropicConstant(Grid *gridIn)
         }
     }
 
-    GhostCell3D(anisotropicConstant, ni, nj, nk);
+    //GhostCell3D(anisotropicConstant, ni, nj, nk);
 
     delete LijMij;
     delete MijMij;
@@ -4962,9 +5593,6 @@ void LESSolverStruct::ComputeIsotropicConstant(Grid *gridIn)
             }
         }
     }
-
-    //(*numerator)(I, J, K) = leonardStress(I, J, K, 1) + leonardStress(I, J, K, 2) + leonardStress(I, J, K, 3);
-    //(*denominator)(I, J, K) = 2.0 * testFilterScale * testFilterScale * testFilteredQ(I, J, K, 0) * testFilteredStrainRateTensor(I, J, K, 0) * testFilteredStrainRateTensor(I, J, K, 0) - testFilteredAlphaIJ(I, J, K, 0);
 
     (*numeratorAvg)(I, J, K) = (*numerator)(I, J, K);
     (*denominatorAvg)(I, J, K) = (*denominator)(I, J, K);
@@ -5114,8 +5742,6 @@ void LESSolverStruct::ComputeIsotropicConstant(Grid *gridIn)
         }
     }
 
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
-    //isotropicConstant(I, J, K) = (*numeratorAvg)(I, J, K) / (*denominatorAvg)(I, J, K);
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
@@ -5128,8 +5754,6 @@ void LESSolverStruct::ComputeIsotropicConstant(Grid *gridIn)
             }
         }
     }
-
-    GhostCell3D(isotropicConstant, ni, nj, nk);
 
     delete numerator;
     delete denominator;
@@ -5356,10 +5980,6 @@ void LESSolverStruct::ComputePrandtlNumber(Grid *gridIn)
         }
     }
 
-    GhostCell3D(turbulentPrandtlNumber, ni, nj, nk);
-
-    //turbulentPrandtlNumber(I, J, K) = anisotropicConstant(I, J, K) * (*numeratorAvg)(I, J, K) / (*denominatorAvg)(I, J, K);
-
     delete numerator;
     delete denominator;
     delete numeratorAvg;
@@ -5378,7 +5998,7 @@ void LESSolverStruct::ComputeLeonardTemperatureTerm(Grid *gridIn)
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
     int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
 
     RDouble4D &leonardTemperatureFlux = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("leonardTemperatureFlux"));
 
@@ -5387,9 +6007,19 @@ void LESSolverStruct::ComputeLeonardTemperatureTerm(Grid *gridIn)
     RDouble3D &testFilteredTemperature = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("testFilteredTemperature"));
     RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
 
-    ComputeTestFilteredRhoUT(grid);
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 0)
+    {
+        ComputeTestFilteredRhoUT(grid);
 
-    ComputeTestFilteredTemperature(grid);
+        ComputeTestFilteredTemperature(grid);
+    }
+    else
+    {
+        ComputeTestFilteredRhoUTFD(grid);
+
+        ComputeTestFilteredTemperatureFD(grid);
+    }
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -5431,14 +6061,12 @@ void LESSolverStruct::ComputeModeledTemperatureTerm(Grid *gridIn)
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
     int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
 
     Param_LESSolverStruct *parameters = GetControlParameters();
     RDouble testFilterScale = parameters->GetTestFilterScale();
 
     RDouble4D &modeledTemperatureFlux = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("modeledTemperatureFlux"));
-
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
     RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
     RDouble4D &testFilteredRhoStrainRateMagnitudeGradT = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoStrainRateMagnitudeGradT"));
@@ -5447,7 +6075,15 @@ void LESSolverStruct::ComputeModeledTemperatureTerm(Grid *gridIn)
 
     ComputeTestFilteredGradT(grid);
 
-    ComputeTestFilteredRhoStrainRateMagnitudeGradT(grid);
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 0)
+    {
+        ComputeTestFilteredRhoStrainRateMagnitudeGradT(grid);
+    }
+    else
+    {
+        ComputeTestFilteredRhoStrainRateMagnitudeGradTFD(grid);
+    }
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -5494,8 +6130,106 @@ void LESSolverStruct::ComputeTestFilteredRhoUT(Grid *gridIn)
     Param_LESSolverStruct *parameters = GetControlParameters();
     int *filterDirection = parameters->GetFilterDirection();
 
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));;  
     RDouble4D &temperatures = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("t"));
+
+    RDouble4D &testFilteredRhoUT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoUT"));
+
+    testFilteredRhoUT(I, J, K, 1) = q(I, J, K, IR) * q(I, J, K, IU) * temperatures(I, J, K, ITT);
+    testFilteredRhoUT(I, J, K, 2) = q(I, J, K, IR) * q(I, J, K, IV) * temperatures(I, J, K, ITT);
+    testFilteredRhoUT(I, J, K, 3) = q(I, J, K, IR) * q(I, J, K, IW) * temperatures(I, J, K, ITT);
+
+    RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *testFilteredVariableZ = new RDouble1D(K, fortranArray);
+    RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+
+    //! filter rhoUT in I direction
+    if (filterDirection[0] == 1)
+    {
+        for (int n = 1; n <= 3; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    (*testFilteredVariableX)(I) = testFilteredRhoUT(I, j, k, n);
+                    (*filteredVariableX)(I) = testFilteredRhoUT(I, j, k, n);
+                    TestFilter(ist, ied, testFilteredVariableX, filteredVariableX);
+                    testFilteredRhoUT(I, j, k, n) = (*testFilteredVariableX)(I);
+                }
+            }
+        }
+    }
+
+    //! filter rhoUT in J direction
+    if (filterDirection[1] == 1)
+    {
+        for (int n = 1; n <= 3; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableY)(J) = testFilteredRhoUT(i, J, k, n);
+                    (*filteredVariableY)(J) = testFilteredRhoUT(i, J, k, n);
+                    TestFilter(jst, jed, testFilteredVariableY, filteredVariableY);
+                    testFilteredRhoUT(i, J, k, n) = (*testFilteredVariableY)(J);
+                }
+            }
+        }
+    }
+
+    //! filter rhoUT in K direction
+    if (filterDirection[2] == 1)
+    {
+        for (int n = 1; n <= 3; ++ n)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableZ)(K) = testFilteredRhoUT(i, j, K, n);
+                    (*filteredVariableZ)(K) = testFilteredRhoUT(i, j, K, n);                
+                    TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
+                    testFilteredRhoUT(i, j, K, n) = (*testFilteredVariableZ)(K);
+                }
+            }
+        }
+    }
+
+    delete testFilteredVariableX;
+    delete testFilteredVariableY;
+    delete testFilteredVariableZ;
+    delete filteredVariableX;
+    delete filteredVariableY;
+    delete filteredVariableZ;
+}
+
+void LESSolverStruct::ComputeTestFilteredRhoUTFD(Grid *gridIn)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    int ist, ied, jst, jed, kst, ked;
+    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+    int *filterDirection = parameters->GetFilterDirection();
+
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_FD"));;  
+    RDouble4D &temperatures = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("t_FD"));
 
     RDouble4D &testFilteredRhoUT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoUT"));
 
@@ -5599,7 +6333,15 @@ void LESSolverStruct::ComputeTestFilteredGradT(Grid *gridIn)
     //RDouble4D &gradUVWTCellCenterY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
     //RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
 
-    ComputeGradT(grid);
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 0)
+    {
+        ComputeGradT(grid);
+    }
+    else
+    {
+        ComputeGradTFD(grid);
+    }
 
     RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
     RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
@@ -5607,6 +6349,8 @@ void LESSolverStruct::ComputeTestFilteredGradT(Grid *gridIn)
     RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
     RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
     RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+
+    testFilteredGradT(I, J, K, Range(0, 2)) = gradT(I, J, K, Range(0, 2));
 
     //! filter gradT in I direction
     if (filterDirection[0] == 1)
@@ -5626,8 +6370,6 @@ void LESSolverStruct::ComputeTestFilteredGradT(Grid *gridIn)
         }
     }
 
-    GhostCell3D(testFilteredGradT, ni, nj, nk, 3);
-
     //! filter gradT in J direction
     if (filterDirection[1] == 1)
     {
@@ -5646,8 +6388,6 @@ void LESSolverStruct::ComputeTestFilteredGradT(Grid *gridIn)
         }
     }
 
-    GhostCell3D(testFilteredGradT, ni, nj, nk, 3);
-
     //! filter gradT in K direction
     if (filterDirection[2] == 1)
     {
@@ -5665,8 +6405,6 @@ void LESSolverStruct::ComputeTestFilteredGradT(Grid *gridIn)
             }
         }
     }
-
-    GhostCell3D(testFilteredGradT, ni, nj, nk, 3);
 
     delete testFilteredVariableX;
     delete testFilteredVariableY;
@@ -5689,17 +6427,17 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
     Range I, J, K;
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-    int ist, ied, jst, jed, kst, ked;
-    //grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
-
     Param_LESSolverStruct *parameters = GetControlParameters();
     int *filterDirection = parameters->GetFilterDirection();
 
-    RDouble4D &testFilteredRhoStrainRateMagnitudeGradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoStrainRateMagnitudeGradT"));
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+
+    RDouble4D &testFilteredRhoStrainRateMagnitudeGradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoStrainRateMagnitudeGradT"));    
     RDouble4D &strainRateTensor = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
     RDouble4D &gradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradT"));
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -5720,8 +6458,6 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
         }
     }
 
-    GhostCell3D(testFilteredRhoStrainRateMagnitudeGradT, ni, nj, nk, 3);
-
     RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
     RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
     RDouble1D *testFilteredVariableZ = new RDouble1D(K, fortranArray);
@@ -5729,6 +6465,7 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
     RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
     RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
 
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
     //! filter strainRateMagnitudeGradT in I direction
     if (filterDirection[0] == 1)
     {
@@ -5746,8 +6483,6 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
             }
         }
     }
-
-    GhostCell3D(testFilteredRhoStrainRateMagnitudeGradT, ni, nj, nk, 3);
 
     //! filter strainRateMagnitudeGradT in J direction
     if (filterDirection[1] == 1) 
@@ -5767,7 +6502,119 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
         }
     }
 
-    GhostCell3D(testFilteredRhoStrainRateMagnitudeGradT, ni, nj, nk, 3);
+    //! filter strainRateMagnitudeGradT in K direction
+    if (filterDirection[2] == 1)
+    {
+        for (int n = 0; n <= 2; ++ n)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);
+                    (*filteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);                
+                    TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
+                    testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n) = (*testFilteredVariableZ)(K);
+                }
+            }
+        }
+    }
+
+    delete testFilteredVariableX;
+    delete testFilteredVariableY;
+    delete testFilteredVariableZ;
+    delete filteredVariableX;
+    delete filteredVariableY;
+    delete filteredVariableZ;
+}
+
+void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradTFD(Grid *gridIn)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+    int *filterDirection = parameters->GetFilterDirection();
+
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_FD"));
+
+    RDouble4D &testFilteredRhoStrainRateMagnitudeGradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredRhoStrainRateMagnitudeGradT"));    
+    RDouble4D &strainRateTensor = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
+    RDouble4D &gradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradT"));
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                RDouble rho = q(i, j, k, IR);
+                RDouble strainRateMagnitude = strainRateTensor(i, j, k, 0);
+                RDouble dtdx = gradT(i, j, k, 0);
+                RDouble dtdy = gradT(i, j, k, 1);
+                RDouble dtdz = gradT(i, j, k, 2);
+
+                testFilteredRhoStrainRateMagnitudeGradT(i, j, k, 0) = rho * strainRateMagnitude * dtdx;
+                testFilteredRhoStrainRateMagnitudeGradT(i, j, k, 1) = rho * strainRateMagnitude * dtdy;
+                testFilteredRhoStrainRateMagnitudeGradT(i, j, k, 2) = rho * strainRateMagnitude * dtdz;
+            }
+        }
+    }
+
+    RDouble1D *testFilteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *testFilteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *testFilteredVariableZ = new RDouble1D(K, fortranArray);
+    RDouble1D *filteredVariableX = new RDouble1D(I, fortranArray);
+    RDouble1D *filteredVariableY = new RDouble1D(J, fortranArray);
+    RDouble1D *filteredVariableZ = new RDouble1D(K, fortranArray);
+
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 0);
+    //! filter strainRateMagnitudeGradT in I direction
+    if (filterDirection[0] == 1)
+    {
+        for (int n = 0; n <= 2; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    (*testFilteredVariableX)(I) = testFilteredRhoStrainRateMagnitudeGradT(I, j, k, n);
+                    (*filteredVariableX)(I) = testFilteredRhoStrainRateMagnitudeGradT(I, j, k, n);
+                    TestFilter(ist, ied, testFilteredVariableX, filteredVariableX);
+                    testFilteredRhoStrainRateMagnitudeGradT(I, j, k, n) = (*testFilteredVariableX)(I);
+                }
+            }
+        }
+    }
+
+    //! filter strainRateMagnitudeGradT in J direction
+    if (filterDirection[1] == 1) 
+    {
+        for (int n = 0; n <= 2; ++ n)
+        {
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    (*testFilteredVariableY)(J) = testFilteredRhoStrainRateMagnitudeGradT(i, J, k, n);
+                    (*filteredVariableY)(J) = testFilteredRhoStrainRateMagnitudeGradT(i, J, k, n);
+                    TestFilter(jst, jed, testFilteredVariableY, filteredVariableY);
+                    testFilteredRhoStrainRateMagnitudeGradT(i, J, k, n) = (*testFilteredVariableY)(J);
+                }
+            }
+        }
+    }
 
     //! filter strainRateMagnitudeGradT in K direction
     if (filterDirection[2] == 1)
@@ -5787,8 +6634,6 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
         }
     }
 
-    GhostCell3D(testFilteredRhoStrainRateMagnitudeGradT, ni, nj, nk, 3);
-
     delete testFilteredVariableX;
     delete testFilteredVariableY;
     delete testFilteredVariableZ;
@@ -5796,205 +6641,6 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
     delete filteredVariableY;
     delete filteredVariableZ;
 }
-
-/*
-void LESSolverStruct::WALEOld(Grid *gridIn)
-{
-    using namespace IDX;
-
-    StructGrid *grid = StructGridCast(gridIn);
-
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble3D &visl = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
-
-    RDouble5D &subgridStress = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("subgridStress"));
-    //RDouble4D &subgridEnergy = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("kSGS"));
-    RDouble5D &subgridHeatFlux = * reinterpret_cast<RDouble5D *> (grid->GetDataPtr("subgridHeatFlux"));
-
-    RDouble5D &gradPrimtiveVarFaceXofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
-    RDouble5D &gradPrimtiveVarFaceYofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
-    RDouble5D &gradPrimtiveVarFaceZofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
-
-    RDouble5D &gradtx = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceXofLES"));
-    RDouble5D &gradty = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceYofLES"));
-    RDouble5D &gradtz = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradTemperatureFaceZofLES"));
-
-    RDouble4D &faceLengthScale = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("faceLengthScale"));
-    RDouble4D &wallFunction = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("wallFunction"));
-
-    Param_LESSolverStruct *parameters = GetControlParameters();
-
-    RDouble refReNumber = parameters->GetRefReNumber();
-
-    RDouble oPrandtlTurbulence = parameters->GetoPrandtlTurbulence();
-
-    int turbViscousCutType = parameters->GetTurbViscousCutType();
-
-    RDouble waleConstant = parameters->GetWaleConstant();
-
-    RDouble isotropicConstant = parameters->GetIsotropicConstant();
-
-    RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
-
-    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
-
-    RDouble refGama = parameters->GetRefGama();
-    RDouble refMachNumber = parameters->GetRefMachNumber();
-    RDouble specificHeatAtConstantPressure = 1.0 / ((refGama - 1.0) * refMachNumber * refMachNumber);
-
-    double vistmax  = 0.0;
-    double vistmin  = 1.0e30;
-    double logsmall = log(SMALL);
-
-    int imax = 1;
-    int jmax = 1;
-    int kmax = 1;
-
-    int imin = 1;
-    int jmin = 1;
-    int kmin = 1;
-
-    //ComputeSubgridScaleEnergy(grid);
-
-    int nDim = GetDim();
-
-    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
-    {
-        int ist, ied, jst, jed, kst, ked;
-        grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
-        int il1, jl1, kl1;
-        GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-        for (int k = kst; k <= ked; ++ k)
-        {
-            for (int j = jst; j <= jed; ++ j)
-            {
-                for (int i = ist; i <= ied; ++ i)
-                {
-                    int il = i + il1;
-                    int jl = j + jl1;
-                    int kl = k + kl1;
-
-                    RDouble deltaBar = faceLengthScale(il ,jl ,kl, iSurface);
-
-                    RDouble dudx = gradPrimtiveVarFaceXofLES(il, jl, kl, IU, iSurface);
-                    RDouble dudy = gradPrimtiveVarFaceYofLES(il, jl, kl, IU, iSurface);
-                    RDouble dudz = gradPrimtiveVarFaceZofLES(il, jl, kl, IU, iSurface);
-
-                    RDouble dvdx = gradPrimtiveVarFaceXofLES(il, jl, kl, IV, iSurface);
-                    RDouble dvdy = gradPrimtiveVarFaceYofLES(il, jl, kl, IV, iSurface);
-                    RDouble dvdz = gradPrimtiveVarFaceZofLES(il, jl, kl, IV, iSurface);
-
-                    RDouble dwdx = gradPrimtiveVarFaceXofLES(il, jl, kl, IW, iSurface);
-                    RDouble dwdy = gradPrimtiveVarFaceYofLES(il, jl, kl, IW, iSurface);
-                    RDouble dwdz = gradPrimtiveVarFaceZofLES(il, jl, kl, IW, iSurface);
-
-                    RDouble dtdx = gradtx(il, jl, kl, ITT, iSurface);
-                    RDouble dtdy = gradty(il, jl, kl, ITT, iSurface);
-                    RDouble dtdz = gradtz(il, jl, kl, ITT, iSurface);
-
-                    RDouble s11 = dudx;
-                    RDouble s22 = dvdy;
-                    RDouble s33 = dwdz;
-                    RDouble s12 = 0.5 * (dudy + dvdx);
-                    RDouble s13 = 0.5 * (dudz + dwdx);
-                    RDouble s23 = 0.5 * (dvdz + dwdy);
-                    RDouble omega12 = 0.5 * (dudy - dvdx);
-                    RDouble omega13 = 0.5 * (dudz - dwdx);
-                    RDouble omega23 = 0.5 * (dvdz - dwdy);
-
-                    RDouble skk = s11 + s22 + s33;
-                    RDouble sij2 = s11 * s11 + s22 * s22 + s33 * s33 + 2.0 * (s12 * s12 + s13 * s13 + s23 * s23);
-                    RDouble omegaij2 = 2.0 * (omega12 * omega12 + omega13 * omega13 + omega23 * omega23);
-
-                    RDouble ss = 1.0/3.0 * (sij2 - omegaij2);
-                    RDouble sd11 = s11 * s11 + s12 * s12 + s13 * s13 - omega12 * omega12 - omega13 * omega13 - ss;
-                    RDouble sd22 = s12 * s12 + s22 * s22 + s23 * s23 - omega12 * omega12 - omega23 * omega23 - ss;
-                    RDouble sd33 = s13 * s13 + s23 * s23 + s33 * s33 - omega13 * omega13 - omega23 * omega23 - ss;
-                    RDouble sd12 = s11 * s12 + s12 * s22 + s13 * s23 - omega13 * omega23;
-                    RDouble sd13 = s11 * s13 + s12 * s23 + s13 * s33 + omega12 * omega23;
-                    RDouble sd23 = s12 * s13 + s22 * s23 + s23 * s33 - omega12 * omega13;
-
-                    RDouble sdij2 = sd11 * sd11 + sd22 * sd22 + sd33 * sd33 + 2.0 * (sd12 * sd12 + sd13 * sd13 + sd23 * sd23);
-
-                    RDouble rho = 0.5 * (q(i, j, k, IR) + q(il, jl, kl, IR));
-                    RDouble mul = 0.5 * (visl(i, j, k) + visl(il, jl, kl));
-                    RDouble dampingFunction = wallFunction(il, jl, kl, iSurface);
-
-                    ss = (waleConstant * deltaBar * dampingFunction) * (waleConstant * deltaBar * dampingFunction) * refReNumber;
-            
-                    RDouble mut = rho * ss * pow(sdij2, 1.5) / (pow(sij2, 2.5) + pow(sdij2, 1.25));
-
-                    if (turbViscousCutType == 1)
-                    {
-                        mut = MAX(mut - mul , 0.0);
-                    }
-                    else if (turbViscousCutType == 2)
-                    {
-                        mut = MAX(mut, 0.0);
-                    }
-                    else if (turbViscousCutType == 3)
-                    {
-                        mut = MAX(mut, -mul);
-                    }
-
-                    RDouble kSGS = 2.0 * isotropicConstant * (mut / deltaBar / dampingFunction) * (mut / deltaBar / dampingFunction) / rho / refReNumber;
-                 
-                    subgridStress(il, jl, kl, 1, iSurface) = -2.0 * mut * (s11 - 1.0/3.0 * skk) + 1.0/3.0 * kSGS;
-                    subgridStress(il, jl, kl, 2, iSurface) = -2.0 * mut * (s22 - 1.0/3.0 * skk) + 1.0/3.0 * kSGS;
-                    subgridStress(il, jl, kl, 3, iSurface) = -2.0 * mut * (s33 - 1.0/3.0 * skk) + 1.0/3.0 * kSGS;
-                    subgridStress(il, jl, kl, 4, iSurface) = -2.0 * mut * s12;
-                    subgridStress(il, jl, kl, 5, iSurface) = -2.0 * mut * s13;
-                    subgridStress(il, jl, kl, 6, iSurface) = -2.0 * mut * s23;
-
-                    subgridHeatFlux(il, jl, kl, 1, iSurface) = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdx;
-                    subgridHeatFlux(il, jl, kl, 2, iSurface) = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdy;
-                    subgridHeatFlux(il, jl, kl, 3, iSurface) = -mut * specificHeatAtConstantPressure * oPrandtlTurbulence * dtdz;
-
-                    if (vistmax < mut)
-                    {
-                        vistmax = mut;
-                        imax = i;
-                        jmax = j;
-                        kmax = k;
-                    }
-
-                    if (vistmin > mut)
-                    {
-                        vistmin = mut;
-                        imin = i;
-                        jmin = j;
-                        kmin = k;
-                    }
-                }
-            }
-        }
-    }
-
-    double vist_max = vistmax;
-    double vist_min = vistmin;
-
-    grid->UpdateData("vist_max", &vist_max, PHDOUBLE, 1);
-    grid->UpdateData("vist_min", &vist_min, PHDOUBLE, 1);
-
-#ifdef PH_PARALLEL
-    using namespace PHMPI;
-    int myid = GetCurrentProcessorID();
-    if (myid == server)
-    {
-#endif
-        if (monitorVistmax)
-        {
-            cout << "vistmax = " << vistmax << " " << imax << " " << jmax << " " << kmax << "\n";
-            cout << "vistmin = " << vistmin << " " << imin << " " << jmin << " " << kmin << "\n";
-        }
-#ifdef PH_PARALLEL
-    }
-#endif
-
-}
-*/
 
 void LESSolverStruct::WALE(Grid *gridIn)
 {
@@ -6013,9 +6659,15 @@ void LESSolverStruct::WALE(Grid *gridIn)
 
     RDouble iConstant = parameters->GetIsotropicConstant();
 
-    RDouble3D &anisotropicConstant = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("anisotropicConstant"));
-    RDouble3D &isotropicConstant = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("isotropicConstant"));
+    RDouble refReNumber  = parameters->GetRefReNumber();
+
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
     RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+
+    RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
@@ -6033,10 +6685,8 @@ void LESSolverStruct::WALE(Grid *gridIn)
     int jmin = 1;
     int kmin = 1;
 
-    //ComputeSubgridScaleEnergy(grid);
-
     int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 1);
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -6048,13 +6698,40 @@ void LESSolverStruct::WALE(Grid *gridIn)
 
                 RDouble dampingFunction = wallFunction(i, j, k);
 
-                RDouble cw = (waleConstant * deltaBar * dampingFunction) * (waleConstant * deltaBar * dampingFunction);
+                RDouble rho = ABS(q(i, j, k, IR)) + SMALL;
 
-                RDouble ci = iConstant * (deltaBar * dampingFunction) * (deltaBar * dampingFunction);
+                RDouble s11 = strainRateTensor(i, j, k, 1);
+                RDouble s22 = strainRateTensor(i, j, k, 2);
+                RDouble s33 = strainRateTensor(i, j, k, 3);
+                RDouble s12 = strainRateTensor(i, j, k, 4);
+                RDouble s13 = strainRateTensor(i, j, k, 5);
+                RDouble s23 = strainRateTensor(i, j, k, 6);
 
-                anisotropicConstant(i, j, k) = cw;
+                RDouble omega12 = strainRateTensor(i, j, k, 7);
+                RDouble omega13 = strainRateTensor(i, j, k, 8);
+                RDouble omega23 = strainRateTensor(i, j, k, 9);
 
-                isotropicConstant(i, j, k) = ci;
+                RDouble sij2  = s11 * s11 + s22 * s22 + s33 * s33 + 2.0 * (s12 * s12 + s13 * s13 + s23 * s23);                   
+                RDouble omegaij2 = 2.0 * (omega12 * omega12 + omega13 * omega13 + omega23 * omega23);
+                RDouble sij2SubOmegaij2 = 1.0/3.0 * (sij2 - omegaij2);
+
+                RDouble sd11 = s11 * s11 + s12 * s12 + s13 * s13 - omega12 * omega12 - omega13 * omega13 - sij2SubOmegaij2;
+                RDouble sd22 = s12 * s12 + s22 * s22 + s23 * s23 - omega12 * omega12 - omega23 * omega23 - sij2SubOmegaij2;
+                RDouble sd33 = s13 * s13 + s23 * s23 + s33 * s33 - omega13 * omega13 - omega23 * omega23 - sij2SubOmegaij2;
+                RDouble sd12 = s11 * s12 + s12 * s22 + s13 * s23 - omega13 * omega23;
+                RDouble sd13 = s11 * s13 + s12 * s23 + s13 * s33 + omega12 * omega23;
+                RDouble sd23 = s12 * s13 + s22 * s23 + s23 * s33 - omega12 * omega13;
+
+                RDouble sdij2 = sd11 * sd11 + sd22 * sd22 + sd33 * sd33 + 2.0 * (sd12 * sd12 + sd13 * sd13 + sd23 * sd23);
+
+                RDouble ss = pow(sdij2, 1.5) / (pow(sij2, 2.5) + pow(sdij2, 1.25) + SMALL);
+
+                RDouble mut = (waleConstant * deltaBar * dampingFunction) * (waleConstant * deltaBar * dampingFunction) * rho * ss * refReNumber;
+                mut = MIN(eddyViscosityLimit, mut);
+                RDouble kSGS = 2.0 * iConstant /rho * (mut /deltaBar) * (mut /deltaBar);
+
+                viscousTurbulent(i, j, k) = mut;
+                subgridScaleEnergy(i, j, k) = kSGS;
             }
         }
     }
@@ -6064,114 +6741,149 @@ void LESSolverStruct::WALE(Grid *gridIn)
     turbulentPrandtlNumber = prandtlTurbulence;
 }
 
-/*
-void LESSolverStruct::ComputeSubgridScaleEnergy(Grid *gridIn)
+void LESSolverStruct::Sigma(Grid *gridIn)
 {
     using namespace IDX;
 
     StructGrid *grid = StructGridCast(gridIn);
 
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
+    RDouble3D &cellLengthScale = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cellLengthScale"));
+    RDouble3D &wallFunction = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("wallFunction"));
 
-    Range I, J, K;
-    GetRange(ni, nj, nk, -2, 1, I, J, K);
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
-    Range IFACE, JFACE, KFACE;
-    GetRange(ni, nj, nk, 0, 0, IFACE, JFACE, KFACE);
+    int turbViscousCutType = parameters->GetTurbViscousCutType();
 
-    Range Direction(1, 3);
-
-    RDouble4D &faceLengthScale = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("faceLengthScale"));
-    RDouble4D &wallFunction = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("wallFunction"));
-
-    RDouble4D &q = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
-
-    RDouble4D &subgridScaleEnergy = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("kSGS"));
-    RDouble3D &isotropicConstant = * reinterpret_cast<RDouble3D *> (grid->GetDataPtr("isotropicConstant"));
-
-    RDouble5D &gradPrimtiveVarFaceXofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceXofLES"));
-    RDouble5D &gradPrimtiveVarFaceYofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceYofLES"));
-    RDouble5D &gradPrimtiveVarFaceZofLES = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("gradPrimtiveVarFaceZofLES"));
-
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    RDouble sigmaConstant = parameters->GetSigmaConstant();
 
     RDouble refReNumber  = parameters->GetRefReNumber();
 
-    int subgridScaleModel = parameters->GetSubgridScaleModel();
-    if (subgridScaleModel == 1 || subgridScaleModel == 3)
-    {
-        isotropicConstant(I, J, K) = parameters->GetIsotropicConstant();
-    }
-    else if (subgridScaleModel == 2)
-    {
-        ComputeIsotropicConstant(grid);
-        faceLengthScale(IFACE, JFACE, KFACE, Direction) = 1.0;
-    }
-    else
-    {
-        TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
-    }
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
 
-    int nDim = GetDim();
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+    RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
 
-    for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
+    RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D &gradUVWTCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
+
+    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
+
+    int imax = 1;
+    int jmax = 1;
+    int kmax = 1;
+
+    int imin = 1;
+    int jmin = 1;
+    int kmin = 1;
+
+    RDouble viscousTurbulentMaximum = -1.0e30;
+    RDouble viscousTurbulentMinimum = 1.0e30;
+
+    int ist, ied, jst, jed, kst, ked;
+    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    RDouble ** velocityGradTensor = AleModel :: CreateMatrix();
+
+    for (int k = kst; k <= ked; ++ k)
     {
-        int ist, ied, jst, jed, kst, ked;
-        grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
-        int il1, jl1, kl1;
-        GetNsurfIndex(iSurface, il1, jl1, kl1);
-
-        for (int k = kst; k <= ked; ++ k)
+        for (int j = jst; j <= jed; ++ j)
         {
-            for (int j = jst; j <= jed; ++ j)
+            for (int i = ist; i <= ied; ++ i)
             {
-                for (int i = ist; i <= ied; ++ i)
+                velocityGradTensor[0][0] = gradUVWTCellCenterX(i, j, k, 0);
+                velocityGradTensor[0][1] = gradUVWTCellCenterY(i, j, k, 0);
+                velocityGradTensor[0][2] = gradUVWTCellCenterZ(i, j, k, 0);
+
+                velocityGradTensor[1][0] = gradUVWTCellCenterX(i, j, k, 1);
+                velocityGradTensor[1][1] = gradUVWTCellCenterY(i, j, k, 1);
+                velocityGradTensor[1][2] = gradUVWTCellCenterZ(i, j, k, 1);
+
+                velocityGradTensor[2][0] = gradUVWTCellCenterX(i, j, k, 2);
+                velocityGradTensor[2][1] = gradUVWTCellCenterY(i, j, k, 2);
+                velocityGradTensor[2][2] = gradUVWTCellCenterZ(i, j, k, 2);
+
+                RDouble differentialSigma = 0.0;
+                ComputeDifferentialSigma(velocityGradTensor, differentialSigma);
+
+                RDouble deltaBar = cellLengthScale(i, j, k);
+                RDouble rho = ABS(q(i, j, k, IR)) + SMALL;
+                RDouble dampingFunction = wallFunction(i, j, k);
+
+                RDouble mut = rho * (sigmaConstant * deltaBar * dampingFunction) * (sigmaConstant * deltaBar * dampingFunction) * differentialSigma * refReNumber;
+                mut = MIN(eddyViscosityLimit, mut);
+
+                viscousTurbulent(i, j, k) = mut;
+                subgridScaleEnergy(i, j, k) = 0.0;
+
+                if (viscousTurbulentMaximum < mut)
                 {
-                    int il = i + il1;
-                    int jl = j + jl1;
-                    int kl = k + kl1;
+                    viscousTurbulentMaximum = mut;
+                    imax = i;
+                    jmax = j;
+                    kmax = k;
+                }
 
-                    RDouble deltaBar = faceLengthScale(il ,jl ,kl, iSurface);
-
-                    RDouble dudx = gradPrimtiveVarFaceXofLES(il, jl, kl, IU, iSurface);
-                    RDouble dudy = gradPrimtiveVarFaceYofLES(il, jl, kl, IU, iSurface);
-                    RDouble dudz = gradPrimtiveVarFaceZofLES(il, jl, kl, IU, iSurface);
-
-                    RDouble dvdx = gradPrimtiveVarFaceXofLES(il, jl, kl, IV, iSurface);
-                    RDouble dvdy = gradPrimtiveVarFaceYofLES(il, jl, kl, IV, iSurface);
-                    RDouble dvdz = gradPrimtiveVarFaceZofLES(il, jl, kl, IV, iSurface);
-
-                    RDouble dwdx = gradPrimtiveVarFaceXofLES(il, jl, kl, IW, iSurface);
-                    RDouble dwdy = gradPrimtiveVarFaceYofLES(il, jl, kl, IW, iSurface);
-                    RDouble dwdz = gradPrimtiveVarFaceZofLES(il, jl, kl, IW, iSurface);
-
-                    RDouble s11 = dudx;
-                    RDouble s22 = dvdy;
-                    RDouble s33 = dwdz;
-                    RDouble s12 = half * (dudy + dvdx);
-                    RDouble s13 = half * (dudz + dwdx);
-                    RDouble s23 = half * (dvdz + dwdy);
-
-                    RDouble sijsij = s11 * s11 + s22 * s22 + s33 * s33 + two * (s12 * s12 + s13 * s13 + s23 * s23);
-                    RDouble ss = sqrt(two * sijsij);
-
-                    RDouble rho = 0.5 * (q(i, j, k, IR) + q(il, jl, kl, IR));
-
-                    RDouble dampingFunction = wallFunction(il, jl, kl, iSurface);
-
-                    RDouble ci = 0.5 * (isotropicConstant(i, j, k) + isotropicConstant(il, jl, kl));
-
-                    subgridScaleEnergy(il, jl, kl, iSurface) = 2.0 * ci * (deltaBar * dampingFunction) * (deltaBar * dampingFunction) * rho * ss * ss;
+                if (viscousTurbulentMinimum > mut)
+                {
+                    viscousTurbulentMinimum = mut;
+                    imin = i;
+                    jmin = j;
+                    kmin = k;
                 }
             }
         }
-
     }
+
+    RDouble prandtlTurbulence = parameters->GetPrandtlTurbulence();
+
+    turbulentPrandtlNumber = prandtlTurbulence;
+
+    AleModel::DestroyMatrix(velocityGradTensor);
 }
-*/
+
+void LESSolverStruct::ComputeDifferentialSigma(RDouble ** velocityGradTensor, RDouble &differentialSigma)
+{
+    RDouble ** velocityGradTensorTranspose = AleModel :: CreateMatrix();
+    RDouble ** gij = AleModel :: CreateMatrix();
+    RDouble ** gij2 = AleModel :: CreateMatrix();
+
+    AleModel::SetMatrix(velocityGradTensorTranspose, velocityGradTensor);
+
+    AleModel::TransposeMatrix(velocityGradTensorTranspose);
+
+    AleModel::MatrixMultiply(velocityGradTensorTranspose, velocityGradTensor, gij);
+
+    AleModel::MatrixMultiply(gij, gij, gij2);
+
+    RDouble tracegij = gij[0][0] + gij[1][1] + gij[2][2];
+    RDouble tracegij2 = gij2[0][0] + gij2[1][1] + gij2[2][2];
+
+    RDouble detgij = gij[0][0] * (gij[1][1] * gij[2][2] - gij[1][2] * gij[2][1])
+                   - gij[0][1] * (gij[1][0] * gij[2][2] - gij[1][2] * gij[2][0])
+                   + gij[0][2] * (gij[1][0] * gij[2][1] - gij[1][1] * gij[2][0]);
+
+    RDouble t1 = tracegij;
+    RDouble t2 = 0.5 * (tracegij * tracegij - tracegij2);
+    RDouble t3 = detgij;
+
+    RDouble alpha1 = t1 * t1 / 9.0 - t2 / 3.0;
+    RDouble alpha2 = t1 * t1 * t1 / 27.0 - t1 * t2 / 6.0 + t3 / 2.0;
+    RDouble alpha3 = 1.0 /3.0 * acos( MAX( MIN(alpha2 / sqrt(alpha1 * alpha1 * alpha1), 1.0), -1.0 ) );
+
+    RDouble sigma1 = sqrt( MAX(t1 / 3.0 + 2.0 * sqrt(alpha1) * cos(alpha3), 0.0) );
+    RDouble sigma2 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) + alpha3), 0.0) );
+    RDouble sigma3 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0) );
+
+    differentialSigma = sigma3 * (sigma1 - sigma2) * (sigma2 - sigma3) / sigma1 / sigma1;
+
+    AleModel::DestroyMatrix(velocityGradTensorTranspose);
+    AleModel::DestroyMatrix(gij);
+    AleModel::DestroyMatrix(gij2);
+}
 
 void LESSolverStruct::filter( const int & nn
                             , RFloat1D * fu1, RFloat1D * fu2, RFloat1D * fu3
@@ -6279,10 +6991,6 @@ void LESSolverStruct::TestFilter(const int &n0, const int &nn, RDouble *tf, RDou
     }
 }
 
-void LESSolverStruct::Boundary(Grid *grid_in)
-{
-}
-
 void LESSolverStruct::GetDeltaBar(const int deltaFunctionType, const RDouble deltai, const RDouble deltaj, const RDouble deltak, RDouble &deltaBar)
 {
     if (deltaFunctionType == 1)
@@ -6330,6 +7038,454 @@ void LESSolverStruct::GetFilterWidthOfScotti(const RDouble deltai, const RDouble
     }
 
     deltaBar = cosh(sqrt(4.0 / 27.0) * (log(a1) * log(a1) - log(a1) * log(a2) + log(a2) * log(a2)));
+}
+
+void LESSolverStruct::Boundary(Grid *gridIn)
+{
+    int ifvfd = GlobalDataBase::GetIntParaFromDB("ifvfd");
+    if(ifvfd == 1) return;
+
+    using namespace PHENGLEI;
+    StructGrid *grid = StructGridCast(gridIn);
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+
+    CompositeBCRegion *compositeBCRregion = grid->GetCompositeBCRegion();
+    int nBCRegion = compositeBCRregion->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        BCRegion *BCRegion = compositeBCRregion->GetBCRegion(iBCRegion);
+        int BCType = BCRegion->GetBCType();
+
+        if (BCType < 0)
+        {
+            continue;
+        }
+        else if (BCType == EXTRAPOLATION)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (IsWall(BCType))
+        {
+            VisWall(grid, BCRegion);
+        }
+        else if (BCType == SYMMETRY)
+        {
+            SymmetryBC(grid, BCRegion);
+        }
+        else if (BCType == FARFIELD)
+        {
+            FarFieldBC(grid, BCRegion);
+        }
+        else if (BCType == INFLOW)
+        {
+            InFlowBC(grid, BCRegion);
+        }
+        else if (BCType == PRESSURE_INLET)
+        {
+            InFlowBC(grid, BCRegion);
+        }
+        else if (BCType == MASS_FLOW_INLET)
+        {
+            InFlowBC(grid, BCRegion);
+        }
+        else if (BCType == OUTFLOW)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (BCType == PRESSURE_OUTLET)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (BCType == MASS_FLOW_OUTLET)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (BCType == POLE || BCType / 10 == POLE)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (BCType == EXTERNAL_BC)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        //! Deal in symmetry wall method if there is no boundary ID specified.
+        else if (IsJetBC(BCType))
+        {
+            SymmetryBC(grid, BCRegion);
+        }
+        else
+        {
+            ostringstream oss;
+            oss << "Error : Illegal BCtype ID " << BCType << endl;
+            TK_Exit::ExceptionExit(oss);
+        }
+    }
+
+    CornerPoint(grid);
+}
+
+void LESSolverStruct::ObtainBoundaryValue(Grid *gridIn)
+{
+    using namespace PHENGLEI;
+    StructGrid *grid = StructGridCast(gridIn);
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+
+    CompositeBCRegion *compositeBCRregion = grid->GetCompositeBCRegion();
+    int nBCRegion = compositeBCRregion->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        BCRegion *BCRegion = compositeBCRregion->GetBCRegion(iBCRegion);
+        int BCType = BCRegion->GetBCType();
+
+        if (BCType < 0)
+        {
+            continue;
+        }
+        else if (BCType == EXTRAPOLATION)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (IsWall(BCType))
+        {
+            VisWall(grid, BCRegion);
+        }
+        else if (BCType == SYMMETRY)
+        {
+            SymmetryBC(grid, BCRegion);
+        }
+        else if (BCType == FARFIELD)
+        {
+            FarFieldBC(grid, BCRegion);
+        }
+        else if (BCType == INFLOW)
+        {
+            InFlowBC(grid, BCRegion);
+        }
+        else if (BCType == OUTFLOW)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (BCType == POLE || BCType / 10 == POLE)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+
+        else if (BCType == EXTERNAL_BC)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else
+        {
+            ostringstream oss;
+            oss << "Error : Illegal BCtype ID " << BCType << endl;
+            TK_Exit::ExceptionExit(oss);
+        }
+    }
+
+    CornerPoint(grid);
+}
+
+void LESSolverStruct::CornerPoint(Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble3D & viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
+    FillCornerPoint3D(viscousTurbulence, ni, nj, nk);
+}
+
+void LESSolverStruct::VisWall(Grid *gridIn, BCRegion *BCRegion)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble3D &viscousTurbulent   = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+
+    int ist, ied, jst, jed, kst, ked;
+    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+    using namespace IDX;
+
+	int is1, js1, ks1, is2, js2, ks2;
+	int it1, jt1, kt1, it2, jt2, kt2;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+				BCRegion->GetInsideCellIndex(i, j, k, is1, js1, ks1, 1);
+				BCRegion->GetInsideCellIndex(i, j, k, is2, js2, ks2, 2);
+
+                RestrictIndex(is1, js1, ks1, ni-1, nj-1, nk-1);
+                RestrictIndex(is2, js2, ks2, ni-1, nj-1, nk-1);
+
+				BCRegion->GetGhostCellIndex(i, j, k, it1, jt1, kt1, 1);
+				BCRegion->GetGhostCellIndex(i, j, k, it2, jt2, kt2, 2);
+
+                viscousTurbulent(it1, jt1, kt1) = -viscousTurbulent(is1, js1, ks1);
+                viscousTurbulent(it2, jt2, kt2) = -viscousTurbulent(is2, js2, ks2);
+
+                subgridScaleEnergy(it1, jt1, kt1) = -subgridScaleEnergy(is1, js1, ks1);
+                subgridScaleEnergy(it2, jt2, kt2) = -subgridScaleEnergy(is2, js2, ks2);
+            }
+        }
+    }
+}
+
+void LESSolverStruct::FarFieldBC(Grid *gridIn, BCRegion *BCRegion)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble4D &faceNormalX  = *(grid->GetFaceNormalX());
+    RDouble4D &faceNormalY  = *(grid->GetFaceNormalY());
+    RDouble4D &faceNormalZ  = *(grid->GetFaceNormalZ());
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+
+    RDouble4D &qLaminar         = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble3D &gamma            = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("gama"));
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+
+    int nm = GlobalDataBase::GetIntParaFromDB("nm");
+
+    RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
+    RDouble referenceMachNumber = parameters->GetRefMachNumber();
+    RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
+
+    using namespace IDX;
+
+    RDouble *primitiveVariablesInfinity = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf" ));
+    RDouble rFarfield = primitiveVariablesInfinity[IR];
+    RDouble uFarfield = primitiveVariablesInfinity[IU];
+    RDouble vFarfield = primitiveVariablesInfinity[IV];
+    RDouble wFarfield = primitiveVariablesInfinity[IW];
+    RDouble pFarfield = primitiveVariablesInfinity[IP];
+
+    int ist, ied, jst, jed, kst, ked;
+    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+    int iSurface = BCRegion->GetFaceDirection() + 1;
+    int leftOrRightIndex    = BCRegion->GetFaceLeftOrRightIndex();
+
+    RDouble *prims1 = new RDouble [nm];
+
+    int is1, js1, ks1, is2, js2, ks2;
+	int it1, jt1, kt1, it2, jt2, kt2;
+
+    using namespace IDX;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+				int in, jn, kn;
+				BCRegion->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+                RDouble nxs = leftOrRightIndex * faceNormalX(in, jn, kn, iSurface);
+                RDouble nys = leftOrRightIndex * faceNormalY(in, jn, kn, iSurface);
+                RDouble nzs = leftOrRightIndex * faceNormalZ(in, jn, kn, iSurface);
+
+				BCRegion->GetInsideCellIndex(i, j, k, is1, js1, ks1, 1);
+				BCRegion->GetInsideCellIndex(i, j, k, is2, js2, ks2, 2);
+
+                RestrictIndex(is1, js1, ks1, ni-1, nj-1, nk-1);
+                RestrictIndex(is2, js2, ks2, ni-1, nj-1, nk-1);
+
+				BCRegion->GetGhostCellIndex(i, j, k, it1, jt1, kt1, 1);
+				BCRegion->GetGhostCellIndex(i, j, k, it2, jt2, kt2, 2);
+
+                for (int m = 0; m < nm; ++ m)
+                {
+                    prims1[m] = qLaminar(is1, js1, ks1, m);
+                }
+
+                RDouble rin = prims1[IR];
+                RDouble uin = prims1[IU];
+                RDouble vin = prims1[IV];
+                RDouble win = prims1[IW];
+                RDouble pin = prims1[IP];
+
+                RDouble vno = nxs * uFarfield + nys * vFarfield + nzs * wFarfield;
+                RDouble vni = nxs * uin + nys * vin + nzs * win;
+                RDouble vei = sqrt(uin * uin + vin * vin + win * win);
+
+                RDouble gama = gamma(is1, js1, ks1);
+
+                RDouble coo = sqrt(ABS(refGama * pFarfield / rFarfield));
+                RDouble cin = sqrt(ABS(gama  * pin / rin));
+
+                if (vei > cin)
+                {
+                    if (vni >= 0.0)
+                    {
+                        viscousTurbulent(it1, jt1, kt1) = viscousTurbulent(is1, js1, ks1);
+                        viscousTurbulent(it2, jt2, kt2) = viscousTurbulent(is2, js2, ks2);
+
+                        subgridScaleEnergy(it1, jt1, kt1) = subgridScaleEnergy(is1, js1, ks1);
+                        subgridScaleEnergy(it2, jt2, kt2) = subgridScaleEnergy(is2, js2, ks2);                       
+                    }
+                    else
+                    {
+                        viscousTurbulent(it1, jt1, kt1) = freeStreamViscosity;
+                        viscousTurbulent(it2, jt2, kt2) = freeStreamViscosity;
+
+                        subgridScaleEnergy(it1, jt1, kt1) = 0.0;
+                        subgridScaleEnergy(it2, jt2, kt2) = 0.0;
+                    }
+                    continue;
+                }
+
+                RDouble riemp = vni + 2.0 * cin / (gama  - 1.0);
+                RDouble riemm = vno - 2.0 * coo / (refGama - 1.0);
+                RDouble vnb = half * (riemp + riemm);
+                RDouble cb  = fourth * (riemp - riemm) * (gama - 1.0);
+
+                if (vnb  >= 0.0)
+                {
+                    //! Exit.
+                    viscousTurbulent(it1, jt1, kt1) = viscousTurbulent(is1, js1, ks1);
+                    viscousTurbulent(it2, jt2, kt2) = viscousTurbulent(it1, jt1, kt1);
+
+                    subgridScaleEnergy(it1, jt1, kt1) = subgridScaleEnergy(is1, js1, ks1);
+                    subgridScaleEnergy(it2, jt2, kt2) = subgridScaleEnergy(it1, jt1, kt1);
+                }
+                else
+                {
+                    //! Inlet.
+                    viscousTurbulent(it1, jt1, kt1) = freeStreamViscosity;
+                    viscousTurbulent(it2, jt2, kt2) = freeStreamViscosity;
+
+                    subgridScaleEnergy(it1, jt1, kt1) = 0.0;
+                    subgridScaleEnergy(it2, jt2, kt2) = 0.0;
+                }
+            }
+        }
+    }
+    delete []prims1;
+}
+
+void LESSolverStruct::SymmetryBC(Grid *gridIn, BCRegion *BCRegion)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    Param_LESSolverStruct *parameters = GetControlParameters();
+
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+
+    int ist, ied, jst, jed, kst, ked;
+    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+	int is, js, ks, it, jt, kt;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                for (int layer = 1; layer <= 2; ++ layer)
+                {
+					BCRegion->GetInsideCellIndex(i, j, k, is, js, ks, layer);
+                    RestrictIndex(is, js, ks, ni-1, nj-1, nk-1);
+					BCRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
+
+                    viscousTurbulent(it, jt, kt) = viscousTurbulent(is, js, ks);
+                    subgridScaleEnergy(it, jt, kt) = subgridScaleEnergy(is, js, ks);
+                }
+            }
+        }
+    }
+}
+
+void LESSolverStruct::InFlowBC(Grid *grid, BCRegion *BCRegion)
+{
+    Param_LESSolverStruct *parameters = GetControlParameters();
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+    RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
+
+    int ist, ied, jst, jed, kst, ked;
+    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+    int it, jt, kt;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                for (int layer = 1; layer <= 2; ++ layer)
+                {
+					BCRegion->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
+
+                    viscousTurbulent(it, jt, kt) = freeStreamViscosity;
+                    subgridScaleEnergy(it, jt, kt) = 0.0;
+                }
+            }
+        }
+    }
+}
+
+void LESSolverStruct::OutFlowBC(Grid *gridIn, BCRegion *BCRegion)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+
+    int ist, ied, jst, jed, kst, ked;
+    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+	int is1, js1, ks1, is2, js2, ks2;
+	int it1, jt1, kt1, it2, jt2, kt2;
+
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+				BCRegion->GetInsideCellIndex(i, j, k, is1, js1, ks1, 1);
+				BCRegion->GetInsideCellIndex(i, j, k, is2, js2, ks2, 2);
+
+                RestrictIndex(is1, js1, ks1, ni-1, nj-1, nk-1);
+                RestrictIndex(is2, js2, ks2, ni-1, nj-1, nk-1);
+
+				BCRegion->GetGhostCellIndex(i, j, k, it1, jt1, kt1, 1);
+				BCRegion->GetGhostCellIndex(i, j, k, it2, jt2, kt2, 2);
+
+                viscousTurbulent(it1, jt1, kt1) = viscousTurbulent(is1, js1, ks1);
+                viscousTurbulent(it2, jt2, kt2) = viscousTurbulent(it1, jt1, kt1);
+
+                subgridScaleEnergy(it1, jt1, kt1) = subgridScaleEnergy(is1, js1, ks1);
+                subgridScaleEnergy(it2, jt2, kt2) = subgridScaleEnergy(it1, jt1, kt1);
+            }
+        }
+    }
 }
 
 }

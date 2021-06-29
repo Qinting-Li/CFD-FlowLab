@@ -34,9 +34,9 @@ inline int GetNumberOfGhostCellLayers()
     //const int STRUCTGRID   = 1;
     //const int MIXGRID      = 2;
     //
-    ////! Note that sys_gridtype is undefined!, Error may occur here!
+    ////! Note that sys_gridtype is undefined! Error may occur here!
     //int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    //if(systemGridType == UNSTRUCTGRID)
+    //if (systemGridType == UNSTRUCTGRID)
     //{
     //    return 1;
     //}
@@ -49,46 +49,47 @@ inline int GetNumberOfGhostCellLayers()
 class InterfacePatch
 {
 private:
-	//! The index of the current zone.
-	int zoneid;
+    //! The index of the current zone.
+    int zoneid;
 
-	//! The index of the neighbor zone.
-	int zoneIndexOfNeighbor;
+    //! The index of the neighbor zone.
+    int zoneIndexOfNeighbor;
 
-	//! The number of patched-interface in the neighbor zone which linked to current zone.
-	int faceNumberOfPatch;
+    //! The number of patched-interface in the neighbor zone which linked to current zone.
+    int faceNumberOfPatch;
 
     //! Interface number in the CURRENT zone, using in receiving.
-	int * faceIndexForRecv;
+    int *faceIndexForRecv;
     
     //! Interface number in the TARGET zone, using in sending.
-	int * faceIndexForSend;
+    int *faceIndexForSend;
 
 private:
     Data_ParamFieldSuite *dataStorageSend;
-	Data_ParamFieldSuite *dataStorageRecv;
+    Data_ParamFieldSuite *dataStorageRecv;
 
 public:
-	InterfacePatch();
-	InterfacePatch(const InterfacePatch & interPatchchIN);
-    InterfacePatch &operator = (const InterfacePatch  & interPatchchIN);
-	~InterfacePatch();
+    InterfacePatch();
+    InterfacePatch(const InterfacePatch &interPatchchIN);
+    InterfacePatch & operator = (const InterfacePatch  &interPatchchIN);
+    ~InterfacePatch();
+
 public:
-	int *GetFaceIndexForRecv() const;
-	void SetFaceIndexForRecv(int *faceIndexForRecv);
+    int *GetFaceIndexForRecv() const;
+    void SetFaceIndexForRecv(int *faceIndexForRecv);
 
-	int *GetFaceIndexForSend() const;
-	void SetFaceIndexForSend(int *faceIndexForSend);
+    int *GetFaceIndexForSend() const;
+    void SetFaceIndexForSend(int *faceIndexForSend);
 
-	int  GetNumberOfFace() const;
-	void SetNumberOfFace(int faceNumberOfPatch);
+    int  GetNumberOfFace() const;
+    void SetNumberOfFace(int faceNumberOfPatch);
 
-	int  GetZoneIndexOfNeighbor() const;
-	void SetZoneIndexOfNeighbor(int zoneIndexOfNeighbor);
+    int  GetZoneIndexOfNeighbor() const;
+    void SetZoneIndexOfNeighbor(int zoneIndexOfNeighbor);
 
-	int GetZoneID() const;
+    int GetZoneID() const;
 
-	void AllocateData();
+    void AllocateData();
 };
 
 class Grid;
@@ -96,167 +97,169 @@ class Grid;
 class InterfaceInfo
 {
 private:
-	//! Number of interfaces.
-	int   nIFace;
+    //! Number of interfaces.
+    int nIFace;
 
-	//! Number of neighbor zones.
-    int   numberOfNeighbor;
+    //! Number of neighbor zones.
+    int numberOfNeighbor;
 
-	//! Neighbor zone index of the interface in current zone.
-	int * interFace2ZoneID;
+    //! Neighbor zone index of the interface in current zone.
+    int *interFace2ZoneID;
 
-    //! Cell  index to neighbor zone of the interface in current zone.
-	int * interFace2CellID;
+    //! Cell index to neighbor zone of the interface in current zone.
+    int *interFace2CellID;
 
-	//! Interface index in neighbor zone of the interface in current zone.
-	//! Be careful, in grid partition procedure, it stores the neighbor local cell index firstly, \n
-	//! and then, it was covered by neighbor local interface index in interface matching stage.
-	int * interFace2InterFaceID;
+    //! Interface index in neighbor zone of the interface in current zone.
+    //! Be careful, in grid partition procedure, it stores the neighbor local cell index firstly,
+    //! and then, it was covered by neighbor local interface index in interface matching stage.
+    int *interFace2InterFaceID;
 
-	//! Boundary face index in current zone of the interface in current zone.
-	int * interFace2BoundaryFace; 
+    //! Boundary face index in current zone of the interface in current zone.
+    int *interFace2BoundaryFace;
 
-	//! Interface direction.\n
-	//! -#  1 : If left cell of the interface exist.\n
-	//! -# -1 : If right cell of the interface exist.
-	int * interFaceDirection;
+    //! Interface direction.
+    //! -#  1: If left cell of the interface exist.
+    //! -# -1: If right cell of the interface exist.
+    int *interFaceDirection;
 
-	//! Parent grid of the current grid, using in multi-grid method.
-    Grid * parent;
+    //! Parent grid of the current grid, using in multi-grid method.
+    Grid *parent;
 
-	//! Data storage for sending.
-    Data_ParamFieldSuite * dsend;
+    //! Data storage for sending.
+    Data_ParamFieldSuite *dsend;
 
-	//! Data storage for receiving.
-	Data_ParamFieldSuite * drecv;
+    //! Data storage for receiving.
+    Data_ParamFieldSuite *drecv;
 
     vector <InterfacePatch *> interFacePatch;
-public:
-	InterfaceInfo();
-	InterfaceInfo(const InterfaceInfo& infoIn);
-	InterfaceInfo(int nIFace, Grid * parent = 0);
-	~InterfaceInfo();
 
 public:
-	int * GetInterFace2ZoneID() const;
-    int * GetInterFace2CellID() const;    
-	int * GetInterFace2InterFaceID() const;
-	int * GetInterFace2BoundaryFace() const;
-	int * GetInterFaceDirection() const;
+    InterfaceInfo();
+    InterfaceInfo(const InterfaceInfo &infoIn);
+    InterfaceInfo(int nIFace, Grid *parent = 0);
+    ~InterfaceInfo();
 
-	//! Get the neighbor zone index of ineighbor, ineighbor among in [0, numberOfNeighbor).
-	int  GetZoneIndexOfNeighbor(int ineighbor) const;
+public:
+    int * GetInterFace2ZoneID() const;
+    int * GetInterFace2CellID() const;
+    int * GetInterFace2InterFaceID() const;
+    int * GetInterFace2BoundaryFace() const;
+    int * GetInterFaceDirection() const;
 
-	int *GetFaceIndexForRecv(int ineighbor) const;
-	int *GetFaceIndexForSend(int ineighbor) const;
+    //! Get the neighbor zone index of ineighbor, ineighbor among in [0, numberOfNeighbor).
+    int GetZoneIndexOfNeighbor(int ineighbor) const;
 
-	Data_ParamFieldSuite * GetSendDataStorage(int istore) const;
-	Data_ParamFieldSuite * GetRecvDataStorage(int istore) const;
+    int * GetFaceIndexForRecv(int ineighbor) const;
+    int * GetFaceIndexForSend(int ineighbor) const;
+
+    Data_ParamFieldSuite * GetSendDataStorage(int istore) const;
+    Data_ParamFieldSuite * GetRecvDataStorage(int istore) const;
 
     void SetNIFace(int nIFace);
-    int  GetNIFace() const;
+    int GetNIFace() const;
 
-	void SetNumberOfNeighbor(int numberOfNeighbor);
-	int  GetNumberOfNeighbor() const;
+    void SetNumberOfNeighbor(int numberOfNeighbor);
+    int GetNumberOfNeighbor() const;
 
-	int FindIthNeighbor(int zone);
+    int FindIthNeighbor(int zone);
 
-	int * ComputeFaceIndexForSend(int ineighbor);
+    int * ComputeFaceIndexForSend(int ineighbor);
 
-	void FillFaceIndexForSend(int zone, int *faceIndexForSend_in);
+    void FillFaceIndexForSend(int zone, int *faceIndexForSend_in);
 
     vector <InterfacePatch *> GetInterfacePatch() const;
-	InterfacePatch *GetInterfacePatch(int ineighbor) const;
+    InterfacePatch * GetInterfacePatch(int ineighbor) const;
 
-	void FindNeighbors();
+    void FindNeighbors();
 
-	void InitNeighbors();
-	void InitNeighbors(int ineighbor);
+    void InitNeighbors();
+    void InitNeighbors(int ineighbor);
 
-	void AllocateNeighborInfo();
-	void AllocateSendRecv(int ineighbor);
+    void AllocateNeighborInfo();
+    void AllocateSendRecv(int ineighbor);
 
-	int  GetNIFaceOfNeighbor(int ineighbor) const;
+    int GetNIFaceOfNeighbor(int ineighbor) const;
 
-	void ComputeFaceIndexForRecv(int ineighbor);
+    void ComputeFaceIndexForRecv(int ineighbor);
 
-	int  ComputeNIFaceOfNeighbor(int ineighbor);
+    int ComputeNIFaceOfNeighbor(int ineighbor);
 
-	int  ComputeNumberOfNeighbor(int *zoneflag);
+    int ComputeNumberOfNeighbor(int *zoneflag);
 
-	//! Resize the data according to the new number of inter faces.
-	void ReSize( int numberOfNewInterfaces );
+    //! Resize the data according to the new number of inter faces.
+    void ReSize(int numberOfNewInterfaces);
 
-	void SetIsNeighborInterfaceFound(bool * data);
-	bool * GetIsNeighborInterfaceFound();
+    void SetIsNeighborInterfaceFound(bool *data);
+    bool * GetIsNeighborInterfaceFound();
+
 private:
-	//! Is the neighbor interface has been found.
-	//! this is used during partition only.
-	bool * isNeighborInterfaceFound;
+    //! Is the neighbor interface has been found.
+    //! this is used during partition only.
+    bool *isNeighborInterfaceFound;
 };
-
 
 //! Interface variable fields
 //! Store the interface variable for multi-zone grid, using for Parallel communication.
 class InterfaceFields
 {
 private:
-	//! List of interface field variable names.
-	vector< string > variableNames;
+    //! List of interface field variable names.
+    vector< string > variableNames;
 
-	//! List of interface field variable types.
-	vector< int	> variableTypes;
+    //! List of interface field variable types.
+    vector< int > variableTypes;
 
-	//! List of interface field variable dimensions.
-	//! eg. 1D/2D array, dimension is equal to '1' or '2'.
-	vector< int >	 variableDimensions;
+    //! List of interface field variable dimensions.
+    //! eg. 1D/2D array, dimension is equal to '1' or '2'.
+    vector< int > variableDimensions;
 
-	//! Interface information.
-	InterfaceInfo  * interfaceInfo;
+    //! Interface information.
+    InterfaceInfo *interfaceInfo;
 
-	//! Solver ID.
-	vector< int > solverIndex;
-
-public:
-	InterfaceFields( InterfaceInfo * dataIn );
-	~InterfaceFields();
+    //! Solver ID.
+    vector< int > solverIndex;
 
 public:
-	uint_t	Size();
+    InterfaceFields(InterfaceInfo *dataIn);
+    ~InterfaceFields();
 
-	int GetDim(const int iData);
+public:
+    uint_t Size();
 
-	string & GetName(const int iData);
+    int GetDim(const int iData);
 
-	int GetSolverIndex(const int iData);
+    string & GetName(const int iData);
 
-	void RegisterField( const string & name, const int type, const int dimesion, const int solverID );
+    int GetSolverIndex(const int iData);
 
-	void FreeInterfaceVar();	
+    void RegisterField(const string &name, const int type, const int dimesion, const int solverID);
 
-	template< typename T >
-	T ** GetSendVariable( const string & name, const int iGhost );
+    void FreeInterfaceVar();
 
-	template< typename T >
-	T ** GetRecvVariable( const string & name, const int iGhost );
+    template< typename T >
+    T ** GetSendVariable(const string &name, const int iGhost);
+
+    template< typename T >
+    T ** GetRecvVariable(const string &name, const int iGhost);
 
 private:
-	void AllocateInterfaceVar( const string & name, const int type, const int dimesion, Data_ParamFieldSuite * datastore );
-	void FreeInterfaceVar( Data_ParamFieldSuite * datastore );
+    void AllocateInterfaceVar(const string &name, const int type, const int dimesion, Data_ParamFieldSuite *datastore);
+    void FreeInterfaceVar(Data_ParamFieldSuite *datastore);
 };
-
 
 class InterfaceDataProxy
 {
 private:
-    vector< RDouble ** > vdata;
+    vector<RDouble **> vdata;
     vector<int> vdim;
+
 public:
     InterfaceDataProxy();
     ~InterfaceDataProxy();
     vector<string> dataName;
+
 public:
-    vector< RDouble ** > & GetVectorData();
+    vector<RDouble **> & GetVectorData();
     vector<int> & GetVectorDimension();
     vector<string> & GetVectorName();
 };

@@ -1,49 +1,51 @@
 inline void Geo_NodeTopo_Struct::SetNI(int ni)
 {
-	this->ni = ni;
+    this->ni = ni;
 }
 
 inline void Geo_NodeTopo_Struct::SetNJ(int nj)
 {
-	this->nj = nj;
+    this->nj = nj;
 }
 
 inline void Geo_NodeTopo_Struct::SetNK(int nk)
 {
-	this->nk = nk;
+    this->nk = nk;
 }
 
-inline int  Geo_NodeTopo_Struct::GetNI() const
+inline int Geo_NodeTopo_Struct::GetNI() const
 {
-	return ni;
+    return ni;
 }
 
-inline int  Geo_NodeTopo_Struct::GetNJ() const
+inline int Geo_NodeTopo_Struct::GetNJ() const
 {
-	return nj;
+    return nj;
 }
 
-inline int  Geo_NodeTopo_Struct::GetNK() const
+inline int Geo_NodeTopo_Struct::GetNK() const
 {
-	return nk;
+    return nk;
 }
 
 inline RDouble3D * Geo_NodeTopo_Struct::GetStructX() const
 {
-	return structx;
+    return structx;
 }
+
 inline RDouble3D * Geo_NodeTopo_Struct::GetStructY() const
 {
-	return structy;
+    return structy;
 }
+
 inline RDouble3D * Geo_NodeTopo_Struct::GetStructZ() const
 {
-	return structz;
+    return structz;
 }
 
 inline void Geo_NodeTopo_Struct::DeallocateAll()
 {
-	if( structx ){ delete structx; structx = 0; }
-	if( structy ){ delete structy; structy = 0; }
-	if( structz ){ delete structz; structz = 0; }
+    if (structx) { delete structx; structx = 0; }
+    if (structy) { delete structy; structy = 0; }
+    if (structz) { delete structz; structz = 0; }
 }

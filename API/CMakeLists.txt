@@ -91,6 +91,10 @@ else(WIN32)
   set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 endif(WIN32)
 
+
+set(MESH_H_PATH   ${PROJECT_SOURCE_DIR}/../Mesh/include)
+include_directories(${MESH_H_PATH})
+
 # specify directory in which the linker will look for libraries for myself libraries:
 message(STATUS "The 3rdparty path is: ${THIRDPARTY_LIB_DIR}.") 
 link_directories("${THIRDPARTY_LIB_DIR}")
@@ -143,6 +147,7 @@ ${DataStruct_H_PATH}/TypeDefine.h
 ${DataStruct_H_PATH}/PHOpt.h
 ${DataStruct_H_PATH}/HyList.h
 ${DataStruct_H_PATH}/DataContainer.h
+${DataStruct_H_PATH}/PHHeapSort.h
 )
 source_group(DataStruct\\include FILES ${DataStruct_H_LIST}) 
 include_directories(${DataStruct_H_PATH})
@@ -280,6 +285,7 @@ ${Geometry_H_PATH}/Geo_DynamicGridMetrics_Unstruct.h
 ${Geometry_H_PATH}/Geo_FaceMetrics_Struct.h
 ${Geometry_H_PATH}/Geo_FaceMetrics_Unstruct.h
 ${Geometry_H_PATH}/Geo_FaceTopo_Unstruct.h
+${Geometry_H_PATH}/Geo_LineTopo_Unstruct.h
 ${Geometry_H_PATH}/Geo_GridIndex.h
 ${Geometry_H_PATH}/Geo_LSQWeight_Unstruct.h
 ${Geometry_H_PATH}/Geo_MultiGridInfo_Struct.h
@@ -301,7 +307,7 @@ ${Geometry_H_PATH}/GRHash.h
 ${Geometry_H_PATH}/SubsonicBC.h
 ${Geometry_H_PATH}/OverLappingGrid.h
 ${Geometry_H_PATH}/JetBC.h
-${Geometry_H_PATH}/Geo_Probes.h
+${Geometry_H_PATH}/Geo_Sample.h
 ${Geometry_H_PATH}/GeomProxy.h
 ${Geometry_H_PATH}/FieldProxy.h
 ${Geometry_H_PATH}/GeneralFieldProxy.h
@@ -326,6 +332,7 @@ ${Geometry_CPP_PATH}/Geo_DynamicGridMetrics_Unstruct.cpp
 ${Geometry_CPP_PATH}/Geo_FaceMetrics_Struct.cpp
 ${Geometry_CPP_PATH}/Geo_FaceMetrics_Unstruct.cpp
 ${Geometry_CPP_PATH}/Geo_FaceTopo_Unstruct.cpp
+${Geometry_CPP_PATH}/Geo_LineTopo_Unstruct.cpp
 ${Geometry_CPP_PATH}/Geo_GridIndex.cpp
 ${Geometry_CPP_PATH}/Geo_LSQWeight_Unstruct.cpp
 ${Geometry_CPP_PATH}/Geo_MultiGridInfo_Struct.cpp
@@ -347,7 +354,7 @@ ${Geometry_CPP_PATH}/GRHash.cpp
 ${Geometry_CPP_PATH}/SubsonicBC.cpp
 ${Geometry_CPP_PATH}/OverLappingGrid.cpp
 ${Geometry_CPP_PATH}/JetBC.cpp
-${Geometry_CPP_PATH}/Geo_Probes.cpp
+${Geometry_CPP_PATH}/Geo_Sample.cpp
 ${Geometry_CPP_PATH}/GeomProxy.cpp
 ${Geometry_CPP_PATH}/FieldProxy.cpp
 ${Geometry_CPP_PATH}/GeneralFieldProxy.cpp
@@ -410,6 +417,8 @@ ${Physics_CPP_PATH}/Gradient.cpp
 ${Physics_CPP_PATH}/Gas.cpp
 )
 source_group(Physics\\src FILES ${Physics_CPP_LIST})
+
+
 
 # set directory of PreProcess:
 set(PreProcess_H_PATH PreProcess/include)

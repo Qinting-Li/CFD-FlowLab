@@ -984,7 +984,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
 	StreamToActionKey(actkey, oss);
 }
 
-void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D * lineData1, RDouble2D * lineData2)
+void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D *lineData1, RDouble2D *lineData2)
 {
     int nst = NP.first();
     int ned = NP.last();
@@ -3410,7 +3410,7 @@ void StructGrid::ComputeJacobianforStructHighOrder3D()
 void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3])
 {
     int is, js, ks;
-    fgrid->GetSourceIndexIJK(iface,layer, is, js, ks);
+    fgrid->GetSourceIndexIJK(iface, layer, is, js, ks);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
@@ -3446,7 +3446,7 @@ void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int if
 
         d[0] = 0;
         d[1] = 0;
-        d[2] = 1;        
+        d[2] = 1;
     }
     else if (j_lr != 0)
     {
@@ -3487,7 +3487,7 @@ void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int if
         d[2] = 0;
     }
 
-    for (int m = 0; m <= 2; ++m)
+    for (int m = 0; m <= 2; ++ m)
     {
         ab[m] = 2 * a[m] - b[m];
         ad[m] = 2 * a[m] - d[m];
@@ -3504,7 +3504,7 @@ void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int if
     basepoint[1] = js + jd;
     basepoint[2] = ks + kd;
 
-    for (int m = 0; m <= 2; ++m)
+    for (int m = 0; m <= 2; ++ m)
     {
         IJKofNodes[ 0][m] = basepoint[m] + a[m];
         IJKofNodes[ 1][m] = basepoint[m] + b[m];
@@ -3525,7 +3525,7 @@ void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int if
 void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3])
 {
     int it, jt, kt;
-    fgrid->GetTargetIndexIJK(iface,layer, it, jt, kt);
+    fgrid->GetTargetIndexIJK(iface, layer, it, jt, kt);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
@@ -3561,7 +3561,7 @@ void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int if
 
         d[0] = 0;
         d[1] = 0;
-        d[2] = 1;        
+        d[2] = 1;
     }
     else if (j_lr != 0)
     {
@@ -3602,7 +3602,7 @@ void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int if
         d[2] = 0;
     }
 
-    for (int m = 0; m <= 2; ++m)
+    for (int m = 0; m <= 2; ++ m)
     {
         ab[m] = 2 * a[m] - b[m];
         ad[m] = 2 * a[m] - d[m];
@@ -3619,7 +3619,7 @@ void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int if
     basepoint[1] = jt + jd;
     basepoint[2] = kt + kd;
 
-    for (int m = 0; m <= 2; ++m)
+    for (int m = 0; m <= 2; ++ m)
     {
         IJKofNodes[ 0][m] = basepoint[m] + a[m];
         IJKofNodes[ 1][m] = basepoint[m] + b[m];
@@ -3659,7 +3659,7 @@ int StructGrid::GetRelationshipBetweenTwoPairsofNodes(RDouble NodesofABCD[4][3],
     RDouble length2ofDc = 0.0;
     RDouble length2ofDd = 0.0;
 
-    for (int m = 0; m <= 2; ++m)
+    for (int m = 0; m <= 2; ++ m)
     {
         length2ofAa += (NodesofABCD[0][m] - Nodesofabcd[0][m]) * (NodesofABCD[0][m] - Nodesofabcd[0][m]);
         length2ofAb += (NodesofABCD[0][m] - Nodesofabcd[1][m]) * (NodesofABCD[0][m] - Nodesofabcd[1][m]);
@@ -3739,8 +3739,6 @@ int StructGrid::GetRelationshipBetweenTwoPairsofNodes(RDouble NodesofABCD[4][3],
     return mapcase;
 }
 
-
-
 void StructGrid::UploadGridInfoOnlyforStructHighOrder(DataContainer *&dataContainer, const int &neighborZoneIndex, int mission)
 {
     //int mission_Comm( XYZghost                                 ) = 1;
@@ -3753,6 +3751,7 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder(DataContainer *&dataContai
     //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) = 8;
     //int mission_Comm( vist, gradqturb                          ) = 9;
     //int mission_Comm( vist, gradqturb, blending                ) = 10;
+    //int mission_Comm( vist                                     ) = 11 (for LES);
     
     if(mission == 1)
     {
@@ -3794,6 +3793,10 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder(DataContainer *&dataContai
     {
         UploadGridInfoOnlyforStructHighOrder_mission10(dataContainer, neighborZoneIndex);
     }
+    else if(mission == 11)
+    {
+        UploadGridInfoOnlyforStructHighOrder_mission11(dataContainer, neighborZoneIndex);
+    }
 }
 
 void StructGrid::DownloadGridInfoOnlyforStructHighOrder(DataContainer *&dataContainer, const int &neighborZoneIndex, int mission)
@@ -3808,6 +3811,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder(DataContainer *&dataCont
     //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) = 8;
     //int mission_Comm( vist, gradqturb                          ) = 9;
     //int mission_Comm( vist, gradqturb, blending                ) = 10;
+    //int mission_Comm( vist                                     ) = 11 (for LES);
     
     if(mission == 1)
     {
@@ -3848,6 +3852,10 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder(DataContainer *&dataCont
     else if(mission == 10)
     {
         DownloadGridInfoOnlyforStructHighOrder_mission10(dataContainer, neighborZoneIndex);
+    }
+    else if(mission == 11)
+    {
+        DownloadGridInfoOnlyforStructHighOrder_mission11(dataContainer, neighborZoneIndex);
     }
 }
 
@@ -4426,6 +4434,42 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission10(DataContainer *&
 
         PHWrite(dataContainer, gradTurbulentCellCenterZ(is1, js1, ks1,IKE));
         PHWrite(dataContainer, gradTurbulentCellCenterZ(is1, js1, ks1,IKW));
+    }
+}
+
+void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission11(DataContainer *&dataContainer, const int &neighborZoneIndex)
+{
+    using namespace IDX;
+
+    StructGrid *grid = StructGridCast(this->GetFinestGrid());
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    RDouble3D &vist  = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
+    RDouble3D &subgridScaleEnergy  = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("subgridScaleEnergy"));
+    RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+
+    for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+    {
+        int iFace = interfaceIndexContainerForSend[iLocalFace];
+        
+        int is1, js1, ks1; //! layer = 1
+
+        finestGrid->GetSourceIndexIJK(iFace, 1, is1, js1, ks1);
+
+        finestGrid->RemapMultigridIJK(0, is1, js1, ks1);
+
+        PHWrite(dataContainer, vist(is1, js1, ks1));
+
+        PHWrite(dataContainer, subgridScaleEnergy(is1, js1, ks1));
+
+        PHWrite(dataContainer, turbulentPrandtlNumber(is1, js1, ks1));
     }
 }
 
@@ -5405,7 +5449,42 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission10(DataContainer 
     }
 }
 
+void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission11(DataContainer *&dataContainer, const int &neighborZoneIndex)
+{
+    using namespace IDX;
 
+    StructGrid *grid = StructGridCast(this->GetFinestGrid());
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
 
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
+
+    RDouble3D &subgridScaleEnergy = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("subgridScaleEnergy"));
+
+    RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
+
+    for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+    {
+        int iFace = interfaceIndexContainerForReceive[iLocalFace];
+        
+        int it1, jt1, kt1; //! layer = 1;
+
+        finestGrid->GetTargetIndexIJK(iFace, 1, it1, jt1, kt1);
+
+        finestGrid->RemapMultigridIJK(0, it1, jt1, kt1);
+
+        PHRead(dataContainer, vist(it1, jt1, kt1));
+
+        PHRead(dataContainer, subgridScaleEnergy(it1, jt1, kt1));
+
+        PHRead(dataContainer, turbulentPrandtlNumber(it1, jt1, kt1));
+    }
+}
 
 }

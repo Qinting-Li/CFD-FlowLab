@@ -332,10 +332,10 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
 
 bool Post_WriteTecplot::WantVisualField(Grid *grid)
 {
-    int isPlotVolumeField = 0;
-    GlobalDataBase::GetData("isPlotVolumeField", &isPlotVolumeField, PHINT, 1);
+    int plotFieldType = 0;
+    GlobalDataBase::GetData("plotFieldType", &plotFieldType, PHINT, 1);
 
-    if (isPlotVolumeField == TEC_SPACE::BlockVisual)
+    if (plotFieldType == TEC_SPACE::BlockVisual)
     {
         int dimension = GetDim();
 
@@ -355,7 +355,7 @@ bool Post_WriteTecplot::WantVisualField(Grid *grid)
             if ((pmin[2] > upperPlotFieldBox[2]) || (pmax[2] < lowerPlotFieldBox[2])) return false;
         }
     }
-    return grid->GetDim() == TWO_D || (grid->GetDim() == THREE_D && isPlotVolumeField != TEC_SPACE::BoundaryVisual);
+    return grid->GetDim() == TWO_D || (grid->GetDim() == THREE_D && plotFieldType != TEC_SPACE::BoundaryVisual);
 }
 
 void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot)
@@ -1382,6 +1382,7 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
         }
     }
 
+    int numberOfBlankNode = 0;
     for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         if (keyNodes[iNode] == 1)
@@ -1391,6 +1392,7 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
         }
     }
 
+    int numberOfBlankFace = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         if (keyFaces[iFace] == 1)

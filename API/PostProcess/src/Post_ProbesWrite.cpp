@@ -26,42 +26,51 @@ LIB_EXPORT Post_ProbesWrite::~Post_ProbesWrite()
 
 }
 
-LIB_EXPORT void Post_ProbesWrite::Run(bool dumpAllLevel)
+//LIB_EXPORT void Post_ProbesWrite::Run(bool dumpAllLevel)
+//{
+//    bool run_now = true;
+//
+//    int nMGLevel = 1;
+//    if (dumpAllLevel)
+//    {
+//        GlobalDataBase::GetData("nMGLevel", &nMGLevel, PHINT, 1);
+//    }
+//
+//    for (int iLevel = 0; iLevel < nMGLevel; ++ iLevel)
+//    {
+//        string probesflowfile = "sample.dat";
+//        GlobalDataBase::GetData("probesflowfile", &probesflowfile, PHSTRING, 1);
+//
+//        string fname, fext;
+//        GetNameExt(probesflowfile, fname, fext, ".");
+//
+//        ActionKey *actkey = new ActionKey();
+//        actkey->level    = iLevel;
+//        actkey->filename = AddDigitToFileName(fname, fext, ".", actkey->level);
+//        actkey->openmode = ios_base::out|ios_base::app;
+//
+//        ServerProbesWrite(actkey);
+//        PostProbesWrite(actkey);
+//        delete actkey;
+//        this->Clear();
+//    }
+//}
+
+LIB_EXPORT void Post_ProbesWrite::Run()
 {
     bool run_now = true;
 
-    int nMGLevel = 1;
-    if (dumpAllLevel)
-    {
-        GlobalDataBase::GetData("nMGLevel", &nMGLevel, PHINT, 1);
-    }
+    string probesflowfile = "sample.dat";
+    GlobalDataBase::GetData("probesflowfile", &probesflowfile, PHSTRING, 1);
+    ActionKey *actkey = new ActionKey();
+    actkey->level    = 0;
+    actkey->filename = probesflowfile;
+    actkey->openmode = ios_base::out|ios_base::app;
 
-    for (int iLevel = 0; iLevel < nMGLevel; ++ iLevel)
-    {
-        string probesflowfile = "sample.dat";
-        GlobalDataBase::GetData("probesflowfile", &probesflowfile, PHSTRING, 1);
-
-        string fname, fext;
-        GetNameExt(probesflowfile, fname, fext, ".");
-
-        ActionKey *actkey = new ActionKey();
-        actkey->level    = iLevel;
-        actkey->filename = AddDigitToFileName(fname, fext, ".", actkey->level);
-        actkey->openmode = ios_base::out|ios_base::app;
-
-        int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-
-        if (isUnsteady != 0)
-        {
-            int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-            actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, '_', outnstep);
-        }
-
-        ServerProbesWrite(actkey);
-        PostProbesWrite(actkey);
-        delete actkey;
-        this->Clear();
-    }
+    ServerProbesWrite(actkey);
+    PostProbesWrite(actkey);
+    delete actkey;
+    this->Clear();
 }
 
 void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
@@ -83,7 +92,6 @@ void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
         myid = GetCurrentProcessorID();
         int tag = GetSendRecvTag(actkey, izone);
 
-
         if (myid == send_proc)
         {
             Grid *grid = GetGrid(izone, actkey->level);
@@ -91,7 +99,7 @@ void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
             int probeVariables[100];
 
             GlobalDataBase::GetData("probeVariables", probeVariables, PHINT, nProbeVariables);
-            Post_Probes * postProbesVar = new Post_Probes(nProbeVariables, probeVariables, grid);
+            Post_Probes *postProbesVar = new Post_Probes(nProbeVariables, probeVariables, grid);
             int Nsolver = GlobalSolvers::GetNumberOfSolvers(izone);
             for (int isolver = 0; isolver < Nsolver; ++ isolver)
             {
@@ -107,7 +115,7 @@ void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
         if (myid == recv_proc)
         {
             datalist.push_back(cdata);
-            DataContainer * cdata1 = new DataContainer();
+            DataContainer *cdata1 = new DataContainer();
             actkey->SetData(cdata1);
         }
     }
@@ -119,23 +127,25 @@ void Post_ProbesWrite::StoreProbesVarariables(ActionKey *actkey, Post_Probes *po
 
     int nProbeVariables = postProbesVar->GetNumberofProbeVariables();
 
-    RDouble ** q_probes = new RDouble *[nProbeVariables];
-    postProbesVar->GetAllProbeVarPtr(q_probes);
+    RDouble **q_probes = new RDouble *[nProbeVariables];
+    postProbesVar->GetAllProbesVarPtr(q_probes);
 
     if (actkey->filename != "")
     {
-        int zoneProbesNumber = grid_in->GetZoneProbesNumber();
-        PHWrite(actkey->GetData(), &zoneProbesNumber, 1);
-
+        int ZoneProbesNumber = grid_in->GetZoneProbesNumber();
+        PHWrite(actkey->GetData(), &ZoneProbesNumber, 1);
+        vector<int> probesLineID = grid_in->GetProbesLineID();
+        vector<int> probesSurfaceID = grid_in->GetProbesSurfaceID();
         vector<vector<RDouble> > probesCoordinates = grid_in->GetProbesCoordinates();
         int nDim;
 
-        for (int iProbe = 0; iProbe < zoneProbesNumber; ++ iProbe)
+        for (int iProbe = 0; iProbe < ZoneProbesNumber; ++ iProbe)
         {
             nDim = static_cast<int>(probesCoordinates[iProbe].size());
 
             PHWrite(actkey->GetData(), &nDim, 1);
-
+            PHWrite(actkey->GetData(), probesLineID[iProbe]);
+            PHWrite(actkey->GetData(), probesSurfaceID[iProbe]);
             for (int iDim = 0; iDim < nDim; ++ iDim)
             {
                 PHWrite(actkey->GetData(), probesCoordinates[iProbe][iDim]);

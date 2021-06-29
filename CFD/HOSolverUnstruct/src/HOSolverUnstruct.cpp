@@ -256,7 +256,7 @@ void HOSolverUnstruct::AllocateGlobalVariables()
     while (grid)
     {
         AllocateGlobalVar(grid);
-        grid = grid->Next();
+        grid = grid->GetCoarseGrid();
     }
 }
 
@@ -1128,14 +1128,14 @@ void HOSolverUnstruct::InitCoarseGridsFlow()
 
     Grid *fgrid = GetGrid(0);
 
-    Grid * cgrid = fgrid->Next();
+    Grid * cgrid = fgrid->GetCoarseGrid();
     while ( cgrid )
     {
         RestrictAllQ(fgrid, cgrid);
         Boundary(cgrid);
 
         fgrid = cgrid;
-        cgrid = cgrid->Next();
+        cgrid = cgrid->GetCoarseGrid();
     }
 }
 
@@ -2989,7 +2989,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 //		 || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STRAIN_RATE)
 //		 || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_Q_CRITERIA))
 //	{
-//		TK_Exit::ExceptionExit("Error: can not visualization vorticity when isPlotVolumeField = 0!");
+//		TK_Exit::ExceptionExit("Error: can not visualization vorticity when plotFieldType = 0!");
 //	}
 //
 //

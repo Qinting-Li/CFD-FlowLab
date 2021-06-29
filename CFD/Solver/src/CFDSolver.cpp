@@ -40,7 +40,9 @@ CFDSolver::~CFDSolver()
 void CFDSolver::InitMemory()
 {
     InitControlParameters();
+
     ReadParameter();
+
     AllocateGlobalVariables();
 }
 
@@ -64,7 +66,7 @@ void CFDSolver::InitFlow()
     if (!readFlowFile)
     {
         //int outerInterStep = 0;
-        //GlobalDataBase::UpdateData("outnstep",&outerInterStep, PHINT, 1);
+        //GlobalDataBase::UpdateData("outnstep", &outerInterStep, PHINT, 1);
 
         nstart = 0;
         GlobalDataBase::UpdateData("nstart", &nstart, PHINT, 1);
@@ -81,7 +83,7 @@ void CFDSolver::InitFlow()
     }
 
     RDouble globalMinTimeStep = -LARGE;
-    GlobalDataBase::UpdateData("globalMinTimeStep",&globalMinTimeStep, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("globalMinTimeStep", &globalMinTimeStep, PHDOUBLE, 1);
 
     //! Compute gama, temperature, viscosity, and set boundary condition once.
     InitDependentVariables();
@@ -206,7 +208,7 @@ void CFDSolver::ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt)
 
 }
 
-void CFDSolver::PostSolve(Grid *grid, int stage, int level) 
+void CFDSolver::PostSolve(Grid *grid, int stage, int level)
 {
 
 }
@@ -308,7 +310,7 @@ void CFDSolver::AllocateGlobalVariables()
     while (grid)
     {
         AllocateGlobalVar(grid);
-        grid = grid->Next();
+        grid = grid->GetCoarseGrid();
     }
 
     RegisterCFDSolverInterfaceField();
@@ -330,7 +332,7 @@ void CFDSolver::DeAllocateGlobalVariables()
     {
         DeAllocateGlobalVar(grid);
         DeAllocateOversetInterfaceVar(grid);
-        grid = grid->Next();
+        grid = grid->GetCoarseGrid();
     }
 }
 
@@ -376,9 +378,9 @@ void CFDSolver::RegisterInterfaceField( const string &name, const int type, cons
         if (grid->GetInterfaceInfo())
         {
             grid->RegisterInterfaceField(name, type, dimesion, solverID);
-        }		
+        }
 
-        grid = grid->Next();
+        grid = grid->GetCoarseGrid();
     }
 }
 
@@ -392,7 +394,7 @@ void CFDSolver::RegisterInterpointField(const string & name, const int type, con
         {
             grid->RegisterInterpointField(name, type, dimesion, solverID);
         }
-        grid = grid->Next();
+        grid = grid->GetCoarseGrid();
     }
 }
 
@@ -402,7 +404,7 @@ LIB_EXPORT void CFDSolver::RegisterOversetField( const string &name, const int t
     while (grid)
     {
         grid->RegisterOversetField(name, type, dimesion);
-        grid = grid->Next();
+        grid = grid->GetCoarseGrid();
     }
 }
 
@@ -842,6 +844,11 @@ void CFDSolver::LHSMatrixs(Grid *grid)
 
 }
 
+void CFDSolver::LineLUSGSMatrixs(Grid* grid)
+{
+
+}
+
 FieldProxy *CFDSolver::GetResidualProxy(Grid *grid) 
 {
     return 0; 
@@ -1022,6 +1029,22 @@ void CFDSolver::SolveBLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy 
 {
 
 }
+
+void CFDSolver::LineLUSGS(Grid* grid, int level)
+{
+
+}
+
+void CFDSolver::SolveLineLUSGSForward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal)
+{
+
+}
+
+void CFDSolver::SolveLineLUSGSBackward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal)
+{
+
+}
+
 
 //! Put correction on the coarse grid.
 void CFDSolver::PutCorrection(Grid *grid, FieldProxy *qProxy)
@@ -1458,7 +1481,7 @@ void CFDSolver::PutCorrection(Grid *grid, FieldProxy *fieldProxy, FieldProxy *ol
 
 void CFDSolver::ComputeDualTimeCoefficient(int methodOfDualTime, RDouble *dualTimeCoefficient)
 {
-    RDouble theta, xi, phi;
+    RDouble theta = 0.0, xi = 0.0, phi = 0.0;
     const int EULEREXPLICIT           = 0; //! One order.
     const int BACKWARDEULER           = 1; //! One order, A-stable.
     const int ONESTEPTRAPEZOIDAL      = 2; //! Two order, A-stable, also called Crank-Nicolson.
@@ -1990,7 +2013,7 @@ void CFDSolver::DumpSurfaceInfo(ActionKey *actkey)
     }
 
     using namespace PHMPI;
-    string wall_varfile  = "surface_tec.dat";
+    string wall_varfile = "surface_tec.dat";
     GlobalDataBase::GetData("wall_varfile", &wall_varfile, PHSTRING, 1);
 
     if (wall_varfile == "")
@@ -2739,7 +2762,7 @@ void CFDSolver::UpdateOversetData()
                 int oversetNeighborZoneIndex = oversetTopologyManager->GetNeighborOversetZoneIndex(iZone, iNeighbor);
                 //PH_Interface( actkey, iZone, oversetNeighborZoneIndex );
                 //! izone is the current zone,jzone is the target zone.
-                int sendProcessID = GetZoneProcessorIDSepMode(oversetNeighborZoneIndex);
+                int sendProcessID = GetZoneProcessorIDSepMode(iZone);
                 int recvProcessID = GetZoneProcessorIDSepMode(oversetNeighborZoneIndex);
 
                 int tag = GetSendRecvTag(actkey, iZone);

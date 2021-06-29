@@ -21,7 +21,7 @@ LIB_EXPORT void Param_CFDSolver::Init()
     resSaveFile               = GlobalDataBase::GetStrParaFromDB("resSaveFile");
     viscousName               = GlobalDataBase::GetStrParaFromDB("viscousName");
 
-    isPlotVolumeField         = GlobalDataBase::GetIntParaFromDB("isPlotVolumeField");
+    plotFieldType             = GlobalDataBase::GetIntParaFromDB("plotFieldType");
 
     viscousType               = GlobalDataBase::GetIntParaFromDB("viscousType");
     isUnsteady                = GlobalDataBase::GetIntParaFromDB("iunsteady");
@@ -56,13 +56,14 @@ LIB_EXPORT void Param_CFDSolver::Init()
 
     refDimensionalPressure    = GlobalDataBase::GetDoubleParaFromDB("refDimensionalPressure");
     refDimensionalDensity     = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
+    refDimensionalVelocity    = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
     refDimensionalSonicSpeed  = GlobalDataBase::GetDoubleParaFromDB("refDimensionalSonicSpeed");
     refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
 
     GlobalDataBase::GetData("lowerPlotFieldBox", &lowerPlotFieldBox, PHDOUBLE, 3);
     GlobalDataBase::GetData("upperPlotFieldBox", &upperPlotFieldBox, PHDOUBLE, 3);
 
-    isOverLapping = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    isOverLapping = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 }
 
 }

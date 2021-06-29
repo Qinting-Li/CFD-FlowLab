@@ -5,7 +5,6 @@
 #include "Gas.h"
 using namespace std;
 
-
 namespace PHSPACE
 {
 using namespace GAS_SPACE;
@@ -1811,4 +1810,3 @@ InviscidSchemeParameter::~InviscidSchemeParameter()
 
 
 }
-

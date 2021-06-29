@@ -118,7 +118,36 @@ void ParametersSelfCheckForCFD()
             }
         }
     }
-    delete []visualVariables;
+    else if (viscousType == 3)
+    {
+        for (int i = 0; i < nVisualVariables; ++ i)
+        {
+            if (visualVariables[i] == 35 || visualVariables[i] == 36)
+            {
+                ostringstream oss;
+                oss << "The array \"visualVariables\" is error. The solver cannot export the transition data with SA model." << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
+        }
+    }
+    else if (viscousType == 4)
+    {
+        int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
+        for (int i = 0; i < nVisualVariables; ++ i)
+        {
+            if (transitionType /= 2)
+            {
+                if (visualVariables[i] == 35 || visualVariables[i] == 36)
+                {
+                    ostringstream oss;
+                    oss << "The array \"visualVariables\" is error. The solver cannot export the transition data without transition type." << endl;
+                    TK_Exit::ExceptionExit(oss);
+                }
+            }
+        }
+    }
+
+    delete [] visualVariables;
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (isUnsteady)
@@ -143,6 +172,19 @@ void ParametersSelfCheckForCFD()
             GlobalDataBase::UpdateData("max_sub_iter", &maxSubIter, PHINT, 1);
         }
     }
+#ifdef USE_OVERSET
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    if( codeOfOversetGrid == 1 )
+    {
+        int dimension = GlobalDataBase::GetIntParaFromDB("ndim");
+        if ( dimension < 3 )
+        {
+            ostringstream oss;
+            oss << "The variable \"ndim\" must be equal to three with overset grid open ." << endl;
+            TK_Exit::ExceptionExit(oss);
+        }
+    }
+#endif
 }
 
 void ControlParametersPreliminarySelfCheck()
@@ -172,6 +214,8 @@ void ControlParametersPreliminarySelfCheck()
             break;
         case INTEGRATIVE_SOLVER:
             ParametersSelfCheckForCFD();
+            break;
+        case SPLIT_OVERSET_GRID:
             break;
         case POST_PROCESSING:
             break;

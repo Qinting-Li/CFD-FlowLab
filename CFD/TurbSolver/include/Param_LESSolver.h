@@ -56,6 +56,8 @@ public:
 
     RDouble GetWaleConstant() const;
 
+    RDouble GetSigmaConstant() const;
+
     int * GetFilterDirection() const;
 
     int * GetAverageDirection() const;
@@ -65,6 +67,10 @@ public:
     RDouble GetoPrandtlTurbulence() const;
 
     RDouble GetPrandtlTurbulence() const;
+
+    RDouble GetFreeStreamViscosity() const;
+
+    string GetGradientName() const;
 
 private:
 
@@ -94,6 +100,8 @@ private:
 
     RDouble waleConstant;
 
+    RDouble sigmaConstant;
+
     int * filterDirection;
 
     int * averageDirection;
@@ -103,6 +111,10 @@ private:
     RDouble oPrandtlTurbulence;
 
     RDouble prandtlTurbulence;
+
+    RDouble freeStreamViscosity;
+
+    string gradientName;
 };
 
 #include "Param_LESSolver.hxx"

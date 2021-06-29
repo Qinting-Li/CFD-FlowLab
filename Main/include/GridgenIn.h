@@ -45,4 +45,6 @@ void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Gri
 //! @param[in ]: BCFile denotes the source file in which the grid boundary condition information stored.
 void ReadGridgenBC(Grid **& structGrids, int &numberOfBlocks, const string &BCFile);
 
+void ReadPartitionFileForOverset(int &inputNumberOfBlocks, const string &PartitionFile);
+
 }

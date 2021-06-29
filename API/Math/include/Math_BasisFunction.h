@@ -137,6 +137,17 @@ inline T1 SIGN(const T1 &a, const T2 &b)
     return static_cast <T1>(s * ABS(a));
 }
 
+template < typename T >
+inline T SUMMARY(vector < T > &a, int n)
+{
+    T sum = 0.0;
+    for (int i = 0; i < n; ++ i)
+    {
+        sum += a[i];
+    }
+    return sum;
+}
+
 //! Coordinate rotate with X axis:
 //! x' = x.
 //! y' = y*cos(degree) + z*sin(degree).

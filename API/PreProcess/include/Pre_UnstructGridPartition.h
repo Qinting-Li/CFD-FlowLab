@@ -90,7 +90,7 @@ public:
     //! Dump out the partition grid to file of .fts format.
     LIB_EXPORT void DumpPartitionGrids(const string &out_grid_file);
 
-    //! Returns the partition grids.
+    //! Return the partition grids.
     Grid ** GetPartitionGrids();
 
     //! Set parallel partition method:

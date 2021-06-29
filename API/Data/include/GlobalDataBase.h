@@ -38,10 +38,10 @@ class GlobalDataBase
 private:
     //! Zonal control parameters.
     //! Data_Param is usually used to store the parameters from *.hypara file, such as refReNumber, viscousName, limitVariables, et. al.
-    static Data_Param * globalParam;
+    static Data_Param *globalParam;
 
     //! zonal data pointers.
-    static Data_Field * globalField;
+    static Data_Field *globalField;
 public:
     //! Add or update a data(with name, type, size) to global database.
     //! If there was a data with same name, replace the old with the new.

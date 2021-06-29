@@ -39,53 +39,48 @@ public:
 	LIB_EXPORT ~Geo_FaceMetrics_Unstruct();
 
 public:
-	//! Assigns the given pointer to the X Face center data.
+	//! Assign the given pointer to the X Face center data.
 	void SetFaceCenterX(RDouble * xfc);
 
-	//! Assigns the given pointer to the Y Face center data.
+	//! Assign the given pointer to the Y Face center data.
 	void SetFaceCenterY(RDouble * yfc);
 
-	//! Assigns the given pointer to the Z Face center data.
+	//! Assign the given pointer to the Z Face center data.
 	void SetFaceCenterZ(RDouble * zfc);
 
-	//! Assigns the given pointer to the X Face UNIT normal data.
+	//! Assign the given pointer to the X Face UNIT normal data.
 	void SetFaceNormalX(RDouble * xfn);
 
-	//! Assigns the given pointer to the Y Face UNIT normal data.
+	//! Assign the given pointer to the Y Face UNIT normal data.
 	void SetFaceNormalY(RDouble * yfn);
 
-	//! Assigns the given pointer to the Z Face UNIT normal data.
+	//! Assign the given pointer to the Z Face UNIT normal data.
 	void SetFaceNormalZ(RDouble * zfn);
 
-	//! Assigns the given pointer to the Face area.
+	//! Assign the given pointer to the Face area.
 	void SetFaceArea(RDouble * area);
 
-	//! Returns the X pointer of face center.
+	//! Return the X pointer of face center.
 	RDouble * GetFaceCenterX() const;
 
-	//! Returns the Y pointer of face center.
+	//! Return the Y pointer of face center.
 	RDouble * GetFaceCenterY() const;
 
-	//! Returns the Z pointer of face center.
+	//! Return the Z pointer of face center.
 	RDouble * GetFaceCenterZ() const;
 
-	//! Returns the X pointer of face UNIT normal.
+	//! Return the X pointer of face UNIT normal.
 	RDouble * GetFaceNormalX() const;
 
-	//! Returns the Y pointer of face UNIT normal.
+	//! Return the Y pointer of face UNIT normal.
 	RDouble * GetFaceNormalY() const;
 
-	//! Returns the Z pointer of face UNIT normal.
+	//! Return the Z pointer of face UNIT normal.
 	RDouble * GetFaceNormalZ() const;
 
-	//! Returns the face area.
+	//! Return the face area.
 	RDouble * GetFaceArea()    const;
 };
 
 #include "Geo_FaceMetrics_Unstruct.hxx"
-
-
-
-
-
 }

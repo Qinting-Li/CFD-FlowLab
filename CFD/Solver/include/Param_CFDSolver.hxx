@@ -13,9 +13,9 @@ inline RDouble Param_CFDSolver::GetoRefReNumber() const
     return oRefReNumber;
 }
 
-inline int Param_CFDSolver::GetIsPlotVolumeField() const
+inline int Param_CFDSolver::GetPlotFieldType() const
 {
-	return isPlotVolumeField;
+	return plotFieldType;
 }
 
 inline const RDouble * Param_CFDSolver::GetLowerPlotFieldBox() const
@@ -127,6 +127,11 @@ inline RDouble Param_CFDSolver::GetRefDimensionalPressure() const
 inline RDouble Param_CFDSolver::GetRefDimensionalDensity() const
 {
     return refDimensionalDensity;
+}
+
+inline RDouble Param_CFDSolver::GetRefDimensionalVelocity() const
+{
+    return refDimensionalVelocity;
 }
 
 inline RDouble Param_CFDSolver::GetRefDimensionalSonicSpeed() const

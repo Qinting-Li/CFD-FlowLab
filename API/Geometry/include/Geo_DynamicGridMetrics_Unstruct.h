@@ -39,34 +39,34 @@ public:
 	LIB_EXPORT ~Geo_DynamicGridMetrics_Unstruct();
 
 public:
-	//! Assigns the given pointer to the X node velocity.
+	//! Assign the given pointer to the X node velocity.
 	void SetNodeVelocityX(RDouble * xtn);
 
-	//! Assigns the given pointer to the Y node velocity.
+	//! Assign the given pointer to the Y node velocity.
 	void SetNodeVelocityY(RDouble * ytn);
 
-	//! Assigns the given pointer to the Z node velocity.	
+	//! Assign the given pointer to the Z node velocity.	
 	void SetNodeVelocityZ(RDouble * ztn);
 	
-	//! Assigns the given pointer to the face normal velocity.
+	//! Assign the given pointer to the face normal velocity.
 	void SetFaceNormalVelocity(RDouble * vgn);
 
-	//! Assigns the given pointer to the Cell volume of the last time step.
+	//! Assign the given pointer to the Cell volume of the last time step.
 	void SetCellVolumeOld(RDouble * voln);
 
-	//! Returns the X node velocity pointer.
+	//! Return the X node velocity pointer.
 	RDouble * GetNodeVelocityX() const;
 
-	//! Returns the Y node velocity pointer.
+	//! Return the Y node velocity pointer.
 	RDouble * GetNodeVelocityY() const;
 
-	//! Returns the Z node velocity pointer.
+	//! Return the Z node velocity pointer.
 	RDouble * GetNodeVelocityZ() const;
 
-	//! Returns the face normal velocity pointer.
+	//! Return the face normal velocity pointer.
 	RDouble * GetFaceNormalVelocity() const;
 
-	//! Returns the cell volume of the last time step.
+	//! Return the cell volume of the last time step.
 	RDouble * GetCellVolumeOld() const;
 };
 

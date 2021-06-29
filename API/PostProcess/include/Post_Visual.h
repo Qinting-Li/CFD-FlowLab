@@ -71,6 +71,8 @@ public:
     //! @param[in] name    Source data's name.
     void * GetVisualNodeVarPtr(const string &name);
 
+    LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, Int3D & oversetcellCenterdata);
+
     //! Get all visualization varialbes' pointer (RDouble * for unstruct grid).
     LIB_EXPORT void GetAllVisualNodeVarPtr(RDouble **qn);
 
@@ -163,7 +165,9 @@ const int VISUAL_GRADIENT_UY           = 42;
 const int VISUAL_GRADIENT_VX           = 43;
 const int VISUAL_GRADIENT_VY           = 44;
 const int VISUAL_WALL_DIST             = 50;
-//const int VISUAL_O                     = 14;
+const int VISUAL_TRANSITION_GAMA       = 51;
+const int VISUAL_TRANSITION_RETHETA    = 52;
+const int VISUAL_IBLANK                = 81;
 //const int VISUAL_O2                    = 15;
 //const int VISUAL_NO                    = 16;
 //const int VISUAL_N                     = 17;

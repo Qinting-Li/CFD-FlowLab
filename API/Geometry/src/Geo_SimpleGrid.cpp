@@ -13,8 +13,8 @@ SimpleGrid::SimpleGrid()
     y = 0;
     z = 0;
 
-    pmin = new RDouble[3];
-    pmax = new RDouble[3];
+    pmin = new RDouble [3];
+    pmax = new RDouble [3];
 
     pmin[0] = 0.0;
     pmin[1] = 0.0;
@@ -24,10 +24,12 @@ SimpleGrid::SimpleGrid()
     pmax[1] = 1.0;
     pmax[2] = 1.0;
 
-	this->has_cal_minmax = false;
+    this->has_cal_minmax = false;
 
-	this->minEdgeLength = -1.0;
-    nTotalNode          = 0;
+    this->minEdgeLength = -1.0;
+    this->maxEdgeLength = -1.0;
+
+    nTotalNode = 0;
 }
 
 SimpleGrid::~SimpleGrid()
@@ -37,15 +39,16 @@ SimpleGrid::~SimpleGrid()
 
 SimpleGrid::SimpleGrid(const SimpleGrid &rhs)
 {
-    Copy( rhs );
-	this->minEdgeLength = -1.0;
+    Copy(rhs);
+    this->minEdgeLength = -1.0;
+    this->maxEdgeLength = -1.0;
 }
 
 void SimpleGrid::FreeMemory()
 {
-	delete [] x;
-	delete [] y;
-	delete [] z;
+    delete [] x;
+    delete [] y;
+    delete [] z;
 
     delete [] pmin;
     delete [] pmax;
@@ -54,13 +57,14 @@ void SimpleGrid::FreeMemory()
 void SimpleGrid::Copy(const SimpleGrid &rhs)
 {
     nTotalNode = rhs.GetNTotalNode();
-    if ( nTotalNode <= 0 )
-    {
-		PHMPI::FreeBlockData();
-		cout << " FATAL Error for nTotalNode <= 0 in SimpleGrid Copy!\n" << endl;
-		MPI_Abort(MPI_COMM_WORLD, -1);
 
+    if (nTotalNode <= 0)
+    {
+        PHMPI::FreeBlockData();
+        cout << " FATAL Error for nTotalNode <= 0 in SimpleGrid Copy!\n" << endl;
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
+
     x = new RDouble [nTotalNode];
     y = new RDouble [nTotalNode];
     z = new RDouble [nTotalNode];
@@ -69,8 +73,8 @@ void SimpleGrid::Copy(const SimpleGrid &rhs)
     std::copy(rhs.y, rhs.y+nTotalNode, y);
     std::copy(rhs.z, rhs.z+nTotalNode, z);
 
-    pmin = new RDouble[3];
-    pmax = new RDouble[3];
+    pmin = new RDouble [3];
+    pmax = new RDouble [3];
 
     std::copy(rhs.pmin, rhs.pmin+3, pmin);
     std::copy(rhs.pmax, rhs.pmax+3, pmax);
@@ -78,7 +82,7 @@ void SimpleGrid::Copy(const SimpleGrid &rhs)
 
 SimpleGrid & SimpleGrid::operator = (const SimpleGrid &rhs)
 {
-    if ( this == &rhs ) return *this;
+    if (this == &rhs) return *this;
 
     FreeMemory();
 
@@ -88,26 +92,26 @@ SimpleGrid & SimpleGrid::operator = (const SimpleGrid &rhs)
 }
 
 RDouble * SimpleGrid::GetMinBox()
-{ 
-	if ( !has_cal_minmax )
-	{
-		ComputeMinMaxBox();
-	}
-	return pmin;
+{
+    if (!has_cal_minmax)
+    {
+        ComputeMinMaxBox();
+    }
+    return pmin;
 };
 
 RDouble * SimpleGrid::GetMaxBox()
-{ 
-	if ( !has_cal_minmax )
-	{
-		ComputeMinMaxBox();
-	}
-	return pmax;
+{
+    if (!has_cal_minmax)
+    {
+        ComputeMinMaxBox();
+    }
+    return pmax;
 };
 
 LIB_EXPORT void SimpleGrid::ComputeMinMaxBox()
 {
-	this->has_cal_minmax = true;
+    this->has_cal_minmax = true;
 
     int nTotalNode = this->GetNTotalNode();
 
@@ -115,25 +119,23 @@ LIB_EXPORT void SimpleGrid::ComputeMinMaxBox()
     RDouble *y = this->GetY();
     RDouble *z = this->GetZ();
 
-    RDouble xmin,ymin,zmin,xmax,ymax,zmax;
+    RDouble xmin, ymin, zmin, xmax, ymax, zmax;
     xmin = ymin = zmin =   LARGE;
     xmax = ymax = zmax = - LARGE;
 
-    for ( int inode = 0; inode < nTotalNode; ++ inode )
+    for (int inode = 0; inode < nTotalNode; ++ inode)
     {
-        xmin = MIN( xmin, x[inode] );
-        ymin = MIN( ymin, y[inode] );
-        zmin = MIN( zmin, z[inode] );
+        xmin = MIN(xmin, x[inode]);
+        ymin = MIN(ymin, y[inode]);
+        zmin = MIN(zmin, z[inode]);
 
-        xmax = MAX( xmax, x[inode] );
-        ymax = MAX( ymax, y[inode] );
-        zmax = MAX( zmax, z[inode] );
+        xmax = MAX(xmax, x[inode]);
+        ymax = MAX(ymax, y[inode]);
+        zmax = MAX(zmax, z[inode]);
     }
 
-    int wordwidth = 16;
-
-    RDouble * pmin = this->GetMinBox();
-    RDouble * pmax = this->GetMaxBox();
+    RDouble *pmin = this->GetMinBox();
+    RDouble *pmax = this->GetMaxBox();
 
     pmin[0] = xmin;
     pmin[1] = ymin;
@@ -146,7 +148,12 @@ LIB_EXPORT void SimpleGrid::ComputeMinMaxBox()
 
 LIB_EXPORT RDouble SimpleGrid::CalMinEdgeLength()
 {
-	return 0;
+    return 0.0;
+}
+
+LIB_EXPORT RDouble SimpleGrid::CalMaxEdgeLength()
+{
+    return 0.0;
 }
 
 }

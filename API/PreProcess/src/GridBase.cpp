@@ -1405,7 +1405,7 @@ void CGNSBase::ComputeElemFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
 	cgsize_t *elem = 0;
 	int count = 0;
 
-	CElemFace *face_list     = base_elem->GetElementFase();
+	CElemFace *face_list     = base_elem->GetElementFace();
     cgsize_t* base_elem_elem_pt = base_elem->GetElementPoint();
 	for ( int iSection = 0; iSection < nSections; ++ iSection )
     {
@@ -1624,7 +1624,7 @@ void CGNSBase::ProcessBCVertex(Base_Grid_Conn *gconn, BaseElement *base_elem,
 	vector<CGNS_BCFace *> * bcFace = gconn->GetBCFace();
 	vector<int> * face_location = gconn->GetFaceLocation();
 
-	CElemFace *face_list = base_elem->GetElementFase();
+	CElemFace *face_list = base_elem->GetElementFace();
 
     for ( cgsize_t iface = 0; iface < static_cast<cgsize_t>(nTotalFace); ++ iface )
     {

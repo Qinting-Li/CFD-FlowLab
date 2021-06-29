@@ -64,6 +64,7 @@ private:
     int *block_proc;
     int *block_idx;
     int *block_type;
+    int *block_group;
 };
 
 class IO_HDF5Read
@@ -156,12 +157,14 @@ private:
     uint_t numberOfGridGroups;
 
     int zoneStart;
+    int presentGridGroup;
     int *blockProc;
     int *blockType;
     int *blockIdx ;
     int *blockProcDump;
     int *blockProcGrid;
     int *blockFileProc;
+	int *blockGroup;
     int taskType;
 
     vector<Grid *> grids;

@@ -8,7 +8,7 @@ namespace PHSPACE
 
 //! Guo Yongheng 20160825.
 //! Shield the content of function ConstructOverlappingInfo.
-void ConstructOverlappingInfo(Grid **grids, int nBlocks, int iovrlap)
+void ConstructOverlappingInfo(Grid **grids, int nBlocks, int codeOfOversetGrid)
 {
 	return;
 }

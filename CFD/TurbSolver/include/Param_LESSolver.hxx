@@ -63,6 +63,11 @@ inline RDouble Param_LESSolver::GetWaleConstant() const
     return waleConstant;
 }
 
+inline RDouble Param_LESSolver::GetSigmaConstant() const
+{
+    return sigmaConstant;
+}
+
 inline int * Param_LESSolver::GetFilterDirection() const
 {
     return filterDirection;
@@ -86,4 +91,14 @@ inline RDouble Param_LESSolver::GetoPrandtlTurbulence() const
 inline RDouble Param_LESSolver::GetPrandtlTurbulence() const
 {
     return prandtlTurbulence;
+}
+
+inline RDouble Param_LESSolver::GetFreeStreamViscosity() const
+{
+    return freeStreamViscosity;
+}
+
+inline string Param_LESSolver::GetGradientName() const
+{
+    return gradientName;
 }

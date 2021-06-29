@@ -35,31 +35,9 @@ const int USTAR_TYPE     = 6;
 const int MIXGRID_TYPE   = 7;
 const int GMSH_TYPE      = 8;
 
-namespace GRID_DATABASE
-{
-    const int LAMINAR_FLAT_PLATE_SUBSONIC     = 1;
-    const int LAMINAR_FLAT_PLATE_SUPERSONIC   = 2;
-    const int TURBULENT_FLAT_PLATE_SUBSONIC   = 3;
-    const int TURBULENT_FLAT_PLATE_SUPERSONIC = 4;
-}
-
 typedef void (*CREATE_SINGLE_GRID)(Grid *comm_grid);
 
-typedef void (*MESH2D_GENE)(IntDBase &int_para, RDoubleDBase &real_para, RDouble2D *&xx, RDouble2D *&yy);
-typedef void (*GENE_SIMPLE_GRID)(StructGrid *grid, MESH2D_GENE mesh2dgen);
-
-void GeneGridgen(Grid **&strgrids, int &nBlocks, GENE_SIMPLE_GRID gene_simle_grid, MESH2D_GENE mesh2dgen);
-
-void GetPlateRect(IntDBase &int_para, RDoubleDBase &real_para, RDouble2D *&xx, RDouble2D *&yy);
-void GetPlateRect2Part(IntDBase &int_para, RDoubleDBase &real_para, RDouble2D *&xx, RDouble2D *&yy);
-void SetGridXYZ (StructGrid *grid, int ni, int nj, int nk, RDouble2D &x2d, RDouble2D &y2d);
 void SetBcRegion(StructGrid *grid, VInt &imin, VInt &imax, VInt &jmin, VInt &jmax, VInt &kmin, VInt &kmax, VInt &bctype);
-
-void GeneTurbulentFlatPlateGrid   (StructGrid *grid, MESH2D_GENE mesh2dgen);
-void GeneSupTurbulentFlatPlateGrid(StructGrid *grid, MESH2D_GENE mesh2dgen);
-void GeneSupFlatPlateGrid         (StructGrid *grid, MESH2D_GENE mesh2dgen);
-void GeneFlatPlateGrid            (StructGrid *grid, MESH2D_GENE mesh2dgen);
-void GetExpCoef(RDouble target_ratio, int dim, RDouble &coef);
 
 using namespace PHSPACE;
 

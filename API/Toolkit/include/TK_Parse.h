@@ -89,6 +89,46 @@ inline std::string to_string(T t, std::ios_base & (*f)(std::ios_base&))
     return oss.str();
 }
 
+template < typename T1, typename T2 >
+string AggregateGeneralString(const T1 &v1, const T2 &v2)
+{
+    ostringstream oss;
+    oss << v1 << v2;
+    return oss.str();
+}
+
+template < typename T1, typename T2, typename T3 >
+string AggregateGeneralString(const T1 &v1, const T2 &v2, const T3 &v3)
+{
+    ostringstream oss;
+    oss << v1 << v2 << v3;
+    return oss.str();
+}
+
+template < typename T1, typename T2, typename T3, typename T4 >
+string AggregateGeneralString(const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4)
+{
+    ostringstream oss;
+    oss << v1 << v2 << v3 << v4;
+    return oss.str();
+}
+
+template < typename T1, typename T2, typename T3, typename T4, typename T5 >
+string AggregateGeneralString(const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5)
+{
+    ostringstream oss;
+    oss << v1 << v2 << v3 << v4 << v5;
+    return oss.str();
+}
+
+template < typename T1, typename T2, typename T3, typename T4, typename T5, typename T6 >
+string AggregateGeneralString(const T1 &v1, const T2 &v2, const T3 &v3, const T4 &v4, const T5 &v5, const T6 &v6)
+{
+    ostringstream oss;
+    oss << v1 << v2 << v3 << v4 << v5 << v6;
+    return oss.str();
+}
+
 void ToLowerCase(string &word);
 void ToUpperCase(string &word);
 void TrimBlanks(string &source);

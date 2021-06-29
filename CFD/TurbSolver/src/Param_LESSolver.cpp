@@ -50,14 +50,16 @@ LIB_EXPORT void Param_LESSolver::Init()
 
     turbViscousCutType = GlobalDataBase::GetIntParaFromDB("turbViscousCutType");
 
+    smagConstant = GlobalDataBase::GetDoubleParaFromDB("smagConstant");
+
+    isotropicConstant = GlobalDataBase::GetDoubleParaFromDB("isotropicConstant");
+
     string sgsmodel;
     GlobalDataBase::GetData("sgsmodel", &sgsmodel, PHSTRING, 1);
 
     if (sgsmodel.substr(0, 11) == "smagorinsky")
     {
         subgridScaleModel = 1;
-        smagConstant = GlobalDataBase::GetDoubleParaFromDB("smagConstant");
-        isotropicConstant = GlobalDataBase::GetDoubleParaFromDB("isotropicConstant");
     }
     else if (sgsmodel.substr(0, 6) == "dsmCom")
     {
@@ -119,6 +121,12 @@ LIB_EXPORT void Param_LESSolver::Init()
 
         testFilterScale = GlobalDataBase::GetDoubleParaFromDB("testFilterScale");
     }
+    else if (sgsmodel.substr(0, 5) == "sigma")
+    {
+        subgridScaleModel = 6;
+        sigmaConstant = GlobalDataBase::GetDoubleParaFromDB("sigmaConstant");
+        isotropicConstant = GlobalDataBase::GetDoubleParaFromDB("isotropicConstant");
+    }
     else
     {
         TK_Exit::UnexpectedVarValue("sgsmodel", sgsmodel);
@@ -133,6 +141,8 @@ LIB_EXPORT void Param_LESSolver::Init()
     prandtlTurbulence = GlobalDataBase::GetDoubleParaFromDB("prt");
 
     oPrandtlTurbulence = GlobalDataBase::GetDoubleParaFromDB("oprt");
+
+    freeStreamViscosity = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
 }
 
 }

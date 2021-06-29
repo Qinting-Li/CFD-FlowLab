@@ -23,7 +23,6 @@ using namespace std;
 namespace PHSPACE
 {
 
-
 const int UNSTRUCTGRID = 0;
 const int STRUCTGRID   = 1;
 const int MIXGRID      = 2;

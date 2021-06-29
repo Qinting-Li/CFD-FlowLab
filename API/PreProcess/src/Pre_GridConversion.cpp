@@ -341,9 +341,12 @@ void ConstructGlobalInterfaceLink(Grid **grids, int nBlocks)
             grids[nb]->ChangeBCType(PHENGLEI::NO_BOUNDARY_CONDITION, PHENGLEI::INTERFACE);
 
             //! Consider the periodic boundary as the interface.
-            grids[nb]->ChangeBCType(PHENGLEI::PERIODIC, PHENGLEI::INTERFACE);
-		}
-	}
+            if (PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != 0)
+            {
+                grids[nb]->ChangeBCType(PHENGLEI::PERIODIC, PHENGLEI::INTERFACE);
+            }
+        }
+    }
 
     //! Build the initial link information.
     for (int nb = 0; nb < nBlocks; ++ nb)
@@ -358,20 +361,43 @@ void ConstructGlobalInterfaceLink(Grid **grids, int nBlocks)
     }
 }
 
+LIB_EXPORT void DumpAdditionalData(const string &gridFileName, Grid **grids, int nBlocks)
+{
+    DumpFaceBC(gridFileName, grids, nBlocks);
+}
+
+LIB_EXPORT void DumpFaceBC(const string &gridFileName, Grid **grids, int nBlocks)
+{    
+    string faceBCFileName = ChangeExtensionOfFileName(gridFileName, "bc");
+    faceBCFileName = AddSymbolToFileName(faceBCFileName, '_', PHMPI::GetCurrentProcessorID());
+    fstream file;
+    OpenFile( file, faceBCFileName, ios_base::out|ios_base::binary );
+
+    PHWrite(file, nBlocks);
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
+    {
+        Grid *grid = grids[iZone];
+
+        grid->WriteFaceBC(file);
+    }
+
+    CloseFile( file );
+}
+
 void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nBlocks)
 {
     string filename = ChangeExtensionOfFileName( gridFileName, "bcmesh" );
     filename = AddSymbolToFileName(filename, "_", 0);
     vector < DataContainer * > datalist;
     datalist.resize(0);
-    
 
     for ( int izone =  0; izone < nBlocks; ++ izone )
     {
         DataContainer *data = new DataContainer();
         data->moveto_begin();
-        
+
         Grid *grid = grids[izone];
+        grid->AllocateOversetGrid();
         ComputeCharacteristicBoundary(grid, data);
 
         datalist.push_back(data);
@@ -387,7 +413,6 @@ void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nB
     //    delete datalist.at(izone);
     //}
     //datalist.resize(0);
-
 }
 
 void ComputeCharacteristicBoundary(Grid *grid_in, DataContainer *data)

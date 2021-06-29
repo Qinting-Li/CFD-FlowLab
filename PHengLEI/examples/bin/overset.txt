@@ -1,0 +1,17 @@
+int taskSelector       = 0;
+
+int codeOfLargeScale   = 0;
+int numberOfMultigrid  = 1;
+int numberOfProcessors = 4;
+
+string originalGridFile     = "./grid/30p30n_str_3D.grd";
+string originalBoundaryFile = "./grid/30p30n_str_3D.inp";
+
+int numberOfGridGroups = 2;
+int zoneSpan[numberOfGridGroups] = 27,3;
+
+int solidBcSize = 2;
+int solidColorList[solidBcSize] = 2,4;
+
+int outerBcSize = 1;
+int outerColorList[outerBcSize] = 8;

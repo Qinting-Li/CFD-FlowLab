@@ -5,6 +5,7 @@
 #include "GlobalDataBase.h"
 #include "Constants.h"
 #include "TK_Log.h"
+#include "Gas.h"
 
 using namespace std;
 
@@ -363,7 +364,7 @@ LIB_EXPORT void BroadCastInfo()
     int server = GetServerProcessorID();
     int myid = GetCurrentProcessorID();
 
-    DataContainer * cdata = new DataContainer();
+    DataContainer *cdata = new DataContainer();
 
     if (myid == server)
     {
@@ -391,7 +392,7 @@ LIB_EXPORT void CompleteParamInfo()
         string walldistfile = ChangeExtensionOfFileName(origialGridFile, "wdt");
         GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
     }
-    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION)
+    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION || nsimutask == SPLIT_OVERSET_GRID)
     {
         string from_gfile = GlobalDataBase::GetStrParaFromDB("from_gfile");
         string bnd_file = ChangeExtensionOfFileName(from_gfile, "inp");
@@ -474,6 +475,12 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     RDouble TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
     RDouble TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
 
+    using namespace GAS_SPACE;
+    FluidParameter refParam;
+    gas->GetReferenceParameters(refParam);
+    RDouble refVelocity = refParam.GetVelocity();
+    RDouble refVicosity = refParam.GetViscosity();
+
     PrintToWindow("Inflow Conditions", "\n");
     PrintToWindow("  Gama                     :    ", refGama      ,           "\n");
     PrintToWindow("  Mach Number              :    ", refMachNumber,           "\n");
@@ -488,10 +495,10 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
             RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
             PrintToWindow("  Fly Height               :    ", height, "km", "\n");
         }
-        PrintToWindow("  Reynolds Number         :    ", refReNumber,               " 1/m",   "\n");
-        PrintToWindow("  Dimensional Pressure    :    ", refDimensionalPressure,    " Pa",    "\n");
-        PrintToWindow("  Dimensional Density     :    ", refDimensionalDensity,     " kg/m3", "\n");
-        PrintToWindow("  Dimensional Temperature :    ", refDimensionalTemperature, " K",     "\n");
+        PrintToWindow("  Reynolds Number          :    ", refReNumber,               " 1/m",   "\n");
+        PrintToWindow("  Dimensional Pressure     :    ", refDimensionalPressure,    " Pa",    "\n");
+        PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m3", "\n");
+        PrintToWindow("  Dimensional Temperature  :    ", refDimensionalTemperature, " K",     "\n");
 
         if (wallTemperature < 0.0)
         {
@@ -501,6 +508,8 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
         {
             PrintToWindow("  Wall Temperature         :    ", wallTemperature, "K", "\n");
         }
+        PrintToWindow("  Dimensional Velocity     :    ", refVelocity,               " m/s",      "\n");
+        PrintToWindow("  Dimensional Viscosity    :    ", refVicosity,               " kg/(m*s)", "\n");
     }
 
     PrintToWindow("Geometry Informations"           ,                                     "\n");

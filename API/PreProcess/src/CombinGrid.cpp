@@ -859,8 +859,8 @@ void CombinGrid::DumpCombinationGrid()
     string out_gfile;
     GlobalDataBase::GetData("out_gfile",&out_gfile,PHSTRING,1);
 
-    int iovrlap = 0;
-    GlobalDataBase::GetData("iovrlap",&iovrlap,PHINT,1);
+    int codeOfOversetGrid = 0;
+    GlobalDataBase::GetData("codeOfOversetGrid",&codeOfOversetGrid,PHINT,1);
 
     using namespace PHMPI;
 
@@ -872,7 +872,7 @@ void CombinGrid::DumpCombinationGrid()
         grid_array[izone] = grid_all;
     }
 
-    ConstructOverlappingInfo(grid_array,nZones,iovrlap);
+    ConstructOverlappingInfo(grid_array,nZones,codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grid_array,nZones);
     DumpGrid(out_gfile, grid_array, nZones);
 

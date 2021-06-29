@@ -112,7 +112,7 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
 {
     if (type == PHSTRING)
     {
-        string * data = new string [size];
+        string *data = new string [size];
         for (int i = 0; i < size; ++ i)
         {
             ReadString(cdata, data[i]);
@@ -122,7 +122,7 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
     }
     else if (type == PHINT)
     {
-        int * data = new int [size];
+        int *data = new int [size];
         for (int i = 0; i < size; ++ i)
         {
             cdata->read(&data[i], sizeof(int));
@@ -132,7 +132,7 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
     }
     else if (type == PHFLOAT)
     {
-        RFloat * data = new RFloat [size];
+        RFloat *data = new RFloat [size];
         for (int i = 0; i < size; ++ i)
         {
             cdata->read(&data[i], sizeof(RFloat));
@@ -142,7 +142,7 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
     }
     else if (type == PHDOUBLE)
     {
-        RDouble * data = new RDouble [size];
+        RDouble *data = new RDouble [size];
         for (int i = 0; i < size; ++ i)
         {
             cdata->read(&data[i], sizeof(RDouble));

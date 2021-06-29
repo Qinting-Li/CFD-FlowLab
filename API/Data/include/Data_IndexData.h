@@ -38,7 +38,7 @@ public:
     //! Destructor, do nothing.
     ~Data_IndexData();
 
-    //! Returns data's name.
+    //! Return data's name.
     string GetName() const;
 
     //! Return pointer to the data.

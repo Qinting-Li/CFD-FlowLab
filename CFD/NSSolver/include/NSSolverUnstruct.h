@@ -95,11 +95,16 @@ public:
 	void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
 	void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
     void LocalTimeStep(Grid *grid);
+
+    //! calculate time step by another methods different with PHengLEI code.
+    void LocalTimeStep_Prince(Grid *grid);
+    
     void GlobalTimeStep(Grid *grid);
     void LocalGlobalTimeStep(Grid *grid);
     void RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef);
     void LoadFlux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
 
+    void ZeroResidualOfSpecialCells(Grid *gridIn);
 
     void UpdateQlQrOnlyforMixGrid(Grid *grid);
     void UpdateInviscidfluxOnlyforMixGrid(Grid *grid);

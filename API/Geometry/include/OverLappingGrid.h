@@ -26,6 +26,6 @@ class UnstructGrid;
 class Geo_OversetGrid;
 void DumpFlags(Geo_OversetGrid **oversetGrids, int nBlocks, const string &filename);
 void DumpOversetGrid(Geo_OversetGrid **oversetGrids, int nBlocks, const string &filename);
-void ConstructOverlappingInfo(Grid **grids, int nBlocks, int iovrlap);
+void ConstructOverlappingInfo(Grid **grids, int nBlocks, int codeOfOversetGrid);
 
 }

@@ -22,51 +22,51 @@ namespace PHSPACE
 class Geo_OversetGridTopo_Struct
 {
 private:
-	int numberOfCores;
-	int zoneStartPointLabel;
-	int * iLinkPointLabel, * jLinkPointLabel, * kLinkPointLabel;
-	int * cellTypeContainer;
-	int zoneStartCenterLabel;
-	int * hingedPointContainer;
-	RDouble * xCoreContainer, * yCoreContainer, * zCoreContainer;
+    int numberOfCores;
+    int zoneStartPointLabel;
+    int *iLinkPointLabel, *jLinkPointLabel, *kLinkPointLabel;
+    int *cellTypeContainer;
+    int zoneStartCenterLabel;
+    int *hingedPointContainer;
+    RDouble *xCoreContainer, *yCoreContainer, *zCoreContainer;
 
 public:
-	Geo_OversetGridTopo_Struct();
-	~Geo_OversetGridTopo_Struct();
+    Geo_OversetGridTopo_Struct();
+    ~Geo_OversetGridTopo_Struct();
 public:
-	
 
-	int GetNumberOfCores() const;
+    int GetNumberOfCores() const;
 
-	int GetZoneStartPointLabel() const;
+    int GetZoneStartPointLabel() const;
 
-	int * GetILinkPointLabel() const;
+    int * GetILinkPointLabel() const;
 
-	int * GetJLinkPointLabel() const;
+    int * GetJLinkPointLabel() const;
 
-	int * GetKLinkPointLabel() const;
+    int * GetKLinkPointLabel() const;
 
-	int * GetCellTypeContainer() const;
+    int * GetCellTypeContainer() const;
 
-	int * GetHingedPointContainer() const;
+    int * GetHingedPointContainer() const;
 
-	RDouble * GetXCoreContainer() const;
+    RDouble * GetXCoreContainer() const;
 
-	RDouble * GetYCoreContainer() const;
+    RDouble * GetYCoreContainer() const;
 
-	RDouble * GetZCoreContainer() const;
+    RDouble * GetZCoreContainer() const;
 
-	void SetNumberOfCores(int numberOfCores);
+    void SetNumberOfCores(int numberOfCores);
 
-	void SetZoneStartPointLabel(int zoneStartPointLabel);
+    void SetZoneStartPointLabel(int zoneStartPointLabel);
 
-	void SetZoneStartCenterLabel(int zoneStartCenterLabel);
+    void SetZoneStartCenterLabel(int zoneStartCenterLabel);
 
-	void CreateLinkPointStructure(int nTotalNode);
+    void CreateLinkPointStructure(int nTotalNode);
 
-	void CreateCellContainer(int nTotalCell);
+    void CreateCellContainer(int nTotalCell);
 
-	void CreateCoreParameterContainer(int numberOfCores);
+    void CreateCoreParameterContainer(int numberOfCores);
 };
+
 #include "Geo_OversetGridTopo_Struct.hxx"
 }

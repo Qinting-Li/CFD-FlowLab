@@ -83,6 +83,11 @@ void MatchInterface(Grid *grid, LinkStruct *link);
 //!
 void ConstructGlobalInterfaceLink(Grid **grids,int nBlocks);
 
+//!
+LIB_EXPORT void DumpAdditionalData(const string &gridFileName, Grid **grids, int nBlocks);
+//!
+LIB_EXPORT void DumpFaceBC(const string &gridFileName, Grid **grids, int nBlocks);
+
 //! Dump Characteristic Boundary to file.
 void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nBlocks);
 

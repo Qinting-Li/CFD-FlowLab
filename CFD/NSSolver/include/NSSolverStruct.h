@@ -191,8 +191,8 @@ private:
     void calculateMassFluxRatio(Grid *gridIn, BCRegion *BCRegion);
 
     void SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion);
-    void VisWallADI3D(Grid *gridIn, BCRegion *BCRegion);
-    void VisWallISO3D(Grid *gridIn, BCRegion *BCRegion);
+    void ViscousAdiabaticWall(Grid *gridIn, BCRegion *BCRegion);
+    void ViscousIsotropicWall(Grid *gridIn, BCRegion *BCRegion);
 
     void InFlowBC3D  (Grid *gridIn, BCRegion *BCRegion);
     void FarFieldRiemannInvariants(Grid *gridIn, BCRegion *BCRegion);
@@ -205,6 +205,9 @@ private:
 
     // mass flow out boundary condition.
     void MassFlowOutletBC(Grid *gridIn, BCRegion *BCRegion);
+
+    void NozzleInletFlow(Grid *gridIn, BCRegion *BCRegion);
+    void NozzleOutFlow(Grid *gridIn, BCRegion *BCRegion);
 
     void CornerPoint(Grid *gridIn);
     

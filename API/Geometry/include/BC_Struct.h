@@ -46,7 +46,7 @@ private:
     string bcName;
 
     //! The bcData store some variables used in this boundary region.
-    Data_Param * bcData;
+    Data_Param *bcData;
 
 private:
     //! s_nd: Dimensional Number in the current  zone. s - source, nd - the Number of Dimension.
@@ -157,7 +157,7 @@ public:
     int * GetStartPoint();
 
     //! Return the m-th dimensional start index in the current zone.
-    int  GetStartPoint(int m);
+    int GetStartPoint(int m);
 
     //! Return the three dimensional end index in the current zone.
     int * GetEndPoint(void);
@@ -385,7 +385,7 @@ void GhostCell3D(PHArray<T, 3> &w, int ni, int nj, int nk)
             w(ni+1, j, k) = w(ni, j, k);
         }
 
-        for (int i = - 1; i <= ni + 1; ++ i)
+        for (int i = -1; i <= ni + 1; ++ i)
         {
             w(i, -1  , k) = w(i, 0 , k);
             w(i, nj+1, k) = w(i, nj, k);

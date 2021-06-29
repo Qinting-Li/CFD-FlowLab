@@ -66,7 +66,7 @@ public:
     //! Here it is a pure virtual function, it will be re-defined in NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.
     virtual void GlobalTimeStep(Grid *grid_in) = 0;
 
-    virtual void LocalGlobalTimeStep(Grid *grid_in) = 0;    
+    virtual void LocalGlobalTimeStep(Grid *grid_in) = 0;
     
     //! Compute the residual of the Right-Hand-Side of the equations.
     //! The residual is the flux actually, including inviscid flux, viscous flux,
@@ -76,7 +76,7 @@ public:
 
     //! =======Some special post-process: END==============
 
-    //! Returns the Residual file name for dumping.
+    //! Return the Residual file name for dumping.
     virtual const string GetResidualFileName();
 
     //! Do some post-process work after simulation over.
@@ -143,7 +143,7 @@ private:
 
     //! Initialize some dependent variables, such as gama, viscous coefficients, temperature,
     //! before each iteration.
-    void InitDependentVariables();    
+    void InitDependentVariables();
 };
 
 void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FaceProxy *face_proxy, Param_NSSolver *parameters);

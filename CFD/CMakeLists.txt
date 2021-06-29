@@ -162,7 +162,6 @@ ${NSSOLVER_H_PATH}/MultiGridOperation.h
 ${NSSOLVER_H_PATH}/Param_NSSolver.h
 ${NSSOLVER_H_PATH}/Param_NSSolverUnstruct.h
 ${NSSOLVER_H_PATH}/Param_NSSolverStruct.h
-${NSSOLVER_H_PATH}/PHNSSolverStruct.h
 )
 source_group(NSSolver\\include FILES ${NSSOLVER_H_LIST}) 
 include_directories(${NSSOLVER_H_PATH})
@@ -177,7 +176,6 @@ ${NSSOLVER_CPP_PATH}/NSSolverUnstruct.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolver.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverUnstruct.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverStruct.cpp
-${NSSOLVER_CPP_PATH}/PHNSSolverStruct.cpp
 )
 source_group(NSSolver\\src FILES ${NSSOLVER_CPP_LIST})
 
@@ -196,6 +194,7 @@ ${TurbSOLVER_H_PATH}/Param_TurbSolverStruct.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolverUnstruct.h
 ${TurbSOLVER_H_PATH}/Param_LESSolver.h
 ${TurbSOLVER_H_PATH}/Param_LESSolverStruct.h
+${TurbSOLVER_H_PATH}/Param_LESSolverUnstruct.h
 )
 source_group(TurbSolver\\include FILES ${TurbSOLVER_H_LIST}) 
 include_directories(${TurbSOLVER_H_PATH})
@@ -214,6 +213,7 @@ ${TurbSOLVER_CPP_PATH}/Param_TurbSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolverUnstruct.cpp
 ${TurbSOLVER_CPP_PATH}/Param_LESSolver.cpp
 ${TurbSOLVER_CPP_PATH}/Param_LESSolverStruct.cpp
+${TurbSOLVER_CPP_PATH}/Param_LESSolverUnstruct.cpp
 )
 source_group(TurbSolver\\src FILES ${TurbSOLVER_CPP_LIST})
 
@@ -389,6 +389,10 @@ endif()
 # link API library:
 set(API_TARGET_NAME "PHAPI")
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5)
+
+if(USE_OVERSET)
+  list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME}  nebula)
+endif(USE_OVERSET)
 
 if(USE_TecplotLib)
   list(APPEND LINK_LIBRARY_LIST tecio)

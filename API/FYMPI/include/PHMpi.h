@@ -67,6 +67,12 @@ void SetNumberOfProcessor(int nproc);
 
 void SetNumberOfGridProcessor(int nproc);
 
+//! Set parallel Strategy:
+//! -# 0 : each zone is assigned to the one that defined in grid partition procedure.
+//! -# 1 : random assigned for each zone or by some else ways.
+void SetParallelStrategy(int parallelStrategy);
+int  GetParallelStrategy();
+
 //! Set the number of local zones on the current processor.
 //! The sum of local zones of each processor is equal to the number of global zones.
 LIB_EXPORT void SetNumberofLocalZones(int nblock);
@@ -78,6 +84,8 @@ void SetNumberofFiles(int fileNumber);
 LIB_EXPORT void SetZoneProcessorID(int izone, int id);
 
 void SetZoneProcessID_INP(int *data);
+
+void SetZoneGroupID(int *data);
 
 void SetIsFileServer(int isServer);
 
@@ -152,6 +160,8 @@ LIB_EXPORT int * GetZoneProcessorID_INP();
 //! This function is special used in HYBRID solver.
 LIB_EXPORT int * GetZoneProcessorIDDump();
 
+LIB_EXPORT int * GetZoneGroupID();
+
 //! Return zone block distribution method.
 //! -# 0 : each zone is assigned to the one that defined in grid partition procedure.
 //! -# 1 : random assigned for each zone or by some else ways.
@@ -175,6 +185,8 @@ void CreateZoneFileID(int nZones);
 
 //! Special functions for HYBRID solver.
 void CreateZoneProcessorIDDump(int nZones);
+
+void CreateZoneGroupID(int nZones);
 
 void FreeBlockData();
 
@@ -640,6 +652,15 @@ void ZeroField(T *field, uint_t numberOfElements)
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
         field[iElement] = T(0);
+    }
+}
+
+template < typename T >
+void ZeroField(T **field2D, uint_t numberOfEquations, uint_t numberOfElements)
+{
+    for (uint_t iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
+    {
+        ZeroField(field2D[iEquation], numberOfElements);
     }
 }
 

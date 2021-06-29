@@ -8,9 +8,9 @@ inline bool Post_Probes::IsNeedMonitoring(int variableType)
     return probeVariables.find(variableType) != probeVariables.end();
 }
 
-inline string Post_Probes::GetProbeVariableName(int variableNumber) const
+inline string Post_Probes::GetProbesVariableName(int variableNumber) const
 {
-    map<int, string>::const_iterator it = probeVariablesMap.find(variableNumber);
+    map<int, string>::const_iterator it = probesVariablesMap.find(variableNumber);
     return it->second;
 }
 

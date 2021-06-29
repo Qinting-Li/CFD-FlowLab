@@ -35,8 +35,8 @@ private:
     void InFlowBC3D(Grid *gridIn, BCRegion *BCRegion);
     void OutFlowBC3D(Grid *gridIn, BCRegion *BCRegion);
     void SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion);
-    void VisWallADI3D(Grid *gridIn, BCRegion *BCRegion);
-    void VisWallISO3D(Grid *gridIn, BCRegion *BCRegion);
+    void ViscousAdiabaticWall(Grid *gridIn, BCRegion *BCRegion);
+    void ViscousIsotropicWall(Grid *gridIn, BCRegion *BCRegion);
     void FarFieldRiemannInvariants(Grid *gridIn, BCRegion *BCRegion);
     void CornerPoint(Grid *gridIn);
     

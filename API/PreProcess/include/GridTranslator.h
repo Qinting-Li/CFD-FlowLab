@@ -29,7 +29,7 @@ private:
     void ColorateStructFaceGroup();
     void CollectInterfaceInformation();
     void OutputMultiZoneComputationalGrids();
-void OutputGrid();
+    void OutputGrid();
     void CheckGrid();
 };
 

@@ -110,7 +110,7 @@ private:
     cgsize_t *elementpoint;
 public:
     cgsize_t *GetElementPoint() const { return elementpoint; }
-    CElemFace *GetElementFase() const { return elementface; }
+    CElemFace *GetElementFace() const { return elementface; }
 private:
     void InitElementFace();
     void InitElementPoint();

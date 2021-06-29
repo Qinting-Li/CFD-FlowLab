@@ -60,7 +60,7 @@ public:
     InviscidSchemeParameter();
     ~InviscidSchemeParameter();
 
-private:	
+private:
     int nLen;
     int nm;
     int nLaminar;

@@ -21,10 +21,18 @@ LESSolver::~LESSolver()
     FreeParameter();
 }
 
-int LESSolver::GetNumberOfEquations()
+void LESSolver::InitDependentVariables()
 {
-    int nTurbulence = GlobalDataBase::GetIntParaFromDB("n_turb");
-    return nTurbulence;
+    Grid *fineGrid = GetGrid(0);
+    //! Don't be used for STRUCTGRID because of turb viscosity being stored.
+    if (fineGrid->Type() != STRUCTGRID)
+    {
+        ComputeGradient(fineGrid);
+
+        ObtainViscosity(fineGrid);
+    }
+
+    ComputeQTurbNodeValue(fineGrid);
 }
 
 void LESSolver::FreeParameter()
@@ -84,19 +92,25 @@ void LESSolver::FillActionKey(ActionKey *actkey, int action, int level)
     actkey->level    = level;
 }
 
-int LESSolver::GetNPostSolve()
-{
-    return 3;
-}
-
 void LESSolver::PostSolve(Grid *grid_in, int stage, int level)
 {
-    return;
+    CommunicationInterfaceData();
 }
 
 void LESSolver::Post()
 {
     return;
+}
+
+void LESSolver::RegisterCFDSolverInterfaceField()
+{
+    Param_LESSolver *parameters = GetControlParameters();
+
+    CFDSolver::RegisterInterfaceField("vist", PHDOUBLE, 1);
+
+    CFDSolver::RegisterInterfaceField("subgridScaleEnergy", PHDOUBLE, 1);
+
+    CFDSolver::RegisterInterfaceField("turbulentPrandtlNumber", PHDOUBLE, 1);
 }
 
 LIB_EXPORT Param_LESSolver *LESSolver::GetControlParameters()

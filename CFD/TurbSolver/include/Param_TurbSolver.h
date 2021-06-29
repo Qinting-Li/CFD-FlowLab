@@ -34,6 +34,8 @@ public:
 
     int GetDESType() const;
 
+    int GetTransitionType() const;
+
     int GetSAProductType() const;
 
     int GetSSTProductType() const;
@@ -86,6 +88,7 @@ private:
 
     int DESType;
 
+    int transitionType;
     int SAProductType;
 
     int SSTProductType;

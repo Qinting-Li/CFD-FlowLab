@@ -40,40 +40,40 @@ public:
 	LIB_EXPORT ~Geo_CellMetrics_Unstruct();
 
 public:
-	//! Assigns the given pointer to the X Cell center data.
+	//! Assign the given pointer to the X Cell center data.
 	void SetCellCenterX(RDouble * xcc);
 
-	//! Assigns the given pointer to the Y Cell center data.
+	//! Assign the given pointer to the Y Cell center data.
 	void SetCellCenterY(RDouble * ycc);
 
-	//! Assigns the given pointer to the Z Cell center data.
+	//! Assign the given pointer to the Z Cell center data.
 	void SetCellCenterZ(RDouble * zcc);
 
-	//! Assigns the given pointer to the Cell volume data.
+	//! Assign the given pointer to the Cell volume data.
 	void SetCellVolume(RDouble * vol);
 
-	//! Assigns the largest local grid spacing.
+	//! Assign the largest local grid spacing.
 	void SetLargestLocalGridLength(RDouble * length);
 
-	//! Assigns the sub-grid length, used for DES simulation ONLY.
+	//! Assign the sub-grid length, used for DES simulation ONLY.
 	void SetSubgridLength(RDouble * length);
 
-	//! Returns the X pointer of cell center.
+	//! Return the X pointer of cell center.
 	RDouble * GetCellCenterX() const;
 
-	//! Returns the X pointer of cell center.
+	//! Return the X pointer of cell center.
 	RDouble * GetCellCenterY() const;
 
-	//! Returns the X pointer of cell center.
+	//! Return the X pointer of cell center.
 	RDouble * GetCellCenterZ() const;
 
-	//! Returns the cell volume pointer.
+	//! Return the cell volume pointer.
 	RDouble * GetCellVolume()  const;
 
-	//! Returns the largest local grid spacing.
+	//! Return the largest local grid spacing.
 	RDouble * GetLargestLocalGridLength();
 
-	//! Returns the sub-grid length, used for DES simulation ONLY.
+	//! Return the sub-grid length, used for DES simulation ONLY.
 	RDouble * GetSubgridLength();
 };
 

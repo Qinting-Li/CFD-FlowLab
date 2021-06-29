@@ -1249,22 +1249,22 @@ void AleModel::GetOuterdt(AleParameter *param)
 void AleModel::UnsteadyPreSolve()
 {
     //! Pre-work for unsteady.
-    int innstep  = 0;
-    GlobalDataBase::UpdateData("innstep",&innstep, PHINT, 1);
+    int innstep = 0;
+    GlobalDataBase::UpdateData("innstep", &innstep, PHINT, 1);
 
     RDouble physicalTime = 0;
-    GlobalDataBase::GetData("physicalTime",&physicalTime, PHDOUBLE, 1);
+    GlobalDataBase::GetData("physicalTime", &physicalTime, PHDOUBLE, 1);
 
     RDouble physicalTimeStep = 0;
-    GlobalDataBase::GetData("physicalTimeStep",&physicalTimeStep, PHDOUBLE, 1);
+    GlobalDataBase::GetData("physicalTimeStep", &physicalTimeStep, PHDOUBLE, 1);
 
     physicalTime += physicalTimeStep;
-    GlobalDataBase::UpdateData("physicalTime",&physicalTime, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
 
     //! Pre-work for ALE.
     int iale = GlobalDataBase::GetIntParaFromDB("iale");
 
-    if ( iale == 0 ) return;
+    if (iale == 0) return;
 
     GetOuterdt(param);
     DynamicGrid();

@@ -74,4 +74,16 @@ ActionKey::~ActionKey()
     delete tecdata;
 }
 
+ActionKey *currentActionKey = 0;
+
+void SetCurrentActionKey(ActionKey *currentActionKeyIn)
+{
+    currentActionKey = currentActionKeyIn;
+}
+
+ActionKey * GetCurrentActionKey()
+{
+    return currentActionKey;
+}
+
 }

@@ -98,6 +98,8 @@ int *block_proc_inp = NULL;           // Initialization()
 
 int *block_proc_dump = NULL;
 
+int *block_group = NULL;
+
 //! Is current processor is file processor:
 //! -#  -1: has not been judged.
 //! -#  0 : no.
@@ -181,6 +183,16 @@ LIB_EXPORT void SetNumberofGlobalZones(int nblock)
     nZones = nblock;
 }
 
+int GetParallelStrategy()
+{
+    return PHSPACE::GlobalDataBase::GetIntParaFromDB("parallelStrategy");
+}
+
+void SetParallelStrategy(int parallelStrategy)
+{
+    PHSPACE::GlobalDataBase::UpdateData("parallelStrategy", &parallelStrategy, PHINT, 1);
+}
+
 void SetNumberOfProcessor(int nproc)
 {
     numberOfProcessor = nproc;
@@ -209,6 +221,11 @@ LIB_EXPORT void SetZoneProcessorID(int iZone, int id)
 void SetZoneProcessID_INP(int *data)
 {
     block_proc_inp = data;
+}
+
+void SetZoneGroupID(int *data)
+{
+    block_group = data;
 }
 
 void SetIsFileServer(int isServer)
@@ -389,6 +406,11 @@ LIB_EXPORT int *GetZoneProcessorIDDump()
     return block_proc_dump;
 }
 
+LIB_EXPORT int *GetZoneGroupID()
+{
+    return block_group;
+}
+
 LIB_EXPORT int GetZoneDistributionMethod()
 {
     return zoneDistributionMethod;
@@ -482,6 +504,16 @@ void CreateZoneProcessorIDDump(int nZones)
         //cout << "Warning: CreateZoneProcessorIDDumphas been created, it would be deleted here !\n";
     }
     block_proc_dump = new int [nZones];
+}
+
+void CreateZoneGroupID(int nZones)
+{
+    if (block_group)
+    {
+        delete [] block_group;
+        //cout << "Warning: CreateZoneGroupID has been created, it would be deleted here !\n";
+    }
+    block_group = new int [nZones];
 }
 
 void FreeBlockData()

@@ -110,6 +110,8 @@ public:
     //! If the grid wanted to be read, call the 'ReadGrid' function above, Please!
     LIB_EXPORT void ReadOversetGrid();
 
+    LIB_EXPORT void ReviseInterZoneIndexForOverSetGrids(int iZone);
+
     //! Build structured/unstructured grid if HYBRID Solver is used.
     LIB_EXPORT void BuildAndDumpMixedGrid();
 
@@ -118,7 +120,7 @@ public:
     //! Set up Multi-Block relationship, that is the MPI communication relationship.\n
     LIB_EXPORT void SetupMultiBlockRelationship();
 
-    //! Agglomerate coarse grids and set up multi-grid relationship, if multi-grid method is used.\n
+    //! Agglomerate coarse grids and set up multi-grid relationship, if multi-grid method is used.
     LIB_EXPORT void MultiGridSetup();
 
     //! Initialize the grid,include:\n
@@ -143,8 +145,8 @@ public:
     //! Fix the grid type according to the lay out information read from file.
     LIB_EXPORT void ClassifyGridSystem();
 
-    //! Monitor the probes according to location. 
-    LIB_EXPORT void MonitorProbes();
+    //! Monitor the data according to location. 
+    LIB_EXPORT void DataMonitor();
 
     void ReSetBoundaryConditionByGlobalBC();
 

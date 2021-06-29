@@ -15,6 +15,7 @@
 
 #pragma once
 #include "GridType.h"
+#include "Geo_Grid.h"
 #include "Geo_UnstructGrid.h"
 #include "Geo_StructGrid.h"
 
@@ -24,7 +25,7 @@ namespace PHSPACE
 {
 
 class Grid;
-class ProbesLocationInfo;
+class SampleLocationInfo;
 //! @brief Post_Probes class is used to manage post variables data of probes.
 class Post_Probes
 {
@@ -39,25 +40,55 @@ public:
     //! Return the ASCII type file title header.
     LIB_EXPORT void GetASCIIFileHeader(vector<string> &title_tecplot);
 
+    //! Return the probes ASCII type file title header.
+    LIB_EXPORT void GetProbesASCIIFileHeader(vector<string> &title_tecplot);
+
+    //! Return the lines or surfaces ASCII type file title header.
+    LIB_EXPORT void GetLinesOrSurfacesASCIIFileHeader(vector<string> &title_tecplot);
+
     //! Return number of probe variables.
     int GetNumberofProbeVariables();
 
     //! Return if the variableType should be Monitored.
     bool IsNeedMonitoring(int variableType);
 
-    //! Compute variables data of probe through variables on nearest cell center.
+    //! Compute variables data of probe through variables on probes cell center.
     //! Unstructured grid data type.
     //! @param[in] name              Variable data's name.
-    //! @param[in] cellCenterData    Pointer the nearest cell center data.
-    LIB_EXPORT void UpdateProbeVarPtr(const string &name, RDouble *NearestCellCenterData);
+    //! @param[in] cellCenterData    Pointer the cell center data.
+    LIB_EXPORT void UpdateProbesVarPtr(const string &name, RDouble *cellCenterData);
 
-    //! Compute variables data of probe through variables on nearest cell center.
+    //! Compute variables data of probe by using the value of probes cell as probe real value.
+    LIB_EXPORT void UpdateProbesVarPtrM1(const string &name, RDouble *cellCenterData);
+
+    //! Interpolation from probes and neighboring cell to probe.
+    LIB_EXPORT void UpdateProbesVarPtrM2(const string &name, RDouble *cellCenterData);
+
+    //! Interpolation from probes cell nodes to probe.
+    LIB_EXPORT void UpdateProbesVarPtrM3(const string &name, RDouble *cellCenterData);
+
+    //! Compute the necessary variables for interpolation.
+    LIB_EXPORT void NecessaryVarForInterpolation(UnstructGrid *grid, int iprobe, int index, vector<RDouble> &numerator, vector<int> &interpolationIndexs, bool flag);
+
+    //! Compute variables data of probe through variables on probes cell center.
     //! Structured grid data type.
     //! @param[in] name              Variable data's name.
     //! @param[in] cellCenterData    Pointer the nearest cell center data.
     //! @param[in] index             The array index from RDouble4D array,
     //!                              i.e we only need the cellCenterData[...][...][...][index].
-    LIB_EXPORT void UpdateProbeVarPtr(const string &name, RDouble4D &NearestCellCenterData, int index);
+    LIB_EXPORT void UpdateProbesVarPtr(const string &name, RDouble4D &cellCenterData, int index);
+
+    //! Compute variables data of probe by using the value of probes cell as probe real value.
+    LIB_EXPORT void UpdateProbesVarPtrM1(const string &name, RDouble4D &cellCenterData, int index);
+
+    //! Interpolation from probes and neighboring cell to probe.
+    LIB_EXPORT void UpdateProbesVarPtrM2(const string &name, RDouble4D &cellCenterData, int index);
+
+    //! Interpolation from probes cell nodes to probe.
+    LIB_EXPORT void UpdateProbesVarPtrM3(const string &name, RDouble4D &cellCenterData, int index);
+
+    //! Compute the necessary variables for interpolation.
+    LIB_EXPORT void NecessaryVarForInterpolation(StructGrid *grid, int iprobe, int i, int j, int k, vector<RDouble> &numerator, vector<vector<int> > &interpolationIndexs, bool flag);
 
     //! Obtain probe variable data's pointer(address) from database by name.
     //! If the dataSet doesn't has a same name data, returns null.
@@ -65,21 +96,21 @@ public:
     void * GetProbeVarPtr(const string &name);
 
     //! Get all probe variables' pointer.
-    LIB_EXPORT void GetAllProbeVarPtr(RDouble **q_probes);
+    LIB_EXPORT void GetAllProbesVarPtr(RDouble **q_probes);
 
     //! Get probe variables' name through variable's index.
     //! @param[in] variableNumber    variable's index.
-    string GetProbeVariableName(int variableNumber) const;
+    string GetProbesVariableName(int variableNumber) const;
 
     //! Get set of variables.
     const set<int> & GetProbeVariables() const;
 
-    map<int, string> probeVariablesMap;
+    map<int, string> probesVariablesMap;
 
     Grid * GetGrid() const;
 
 private:
-    //! Geometry information
+    //! Geometry information.
     Grid *grid;
 
     //! Grid type;
@@ -92,10 +123,12 @@ private:
     set<int> probeVariables;
 
     //! Store probe variables.
-    Data_Field * probeVariablesPtr;
+    Data_Field *probeVariablesPtr;
+
 private:
     //! Free all allocated memory by probe variables' pointer.
     void FreeAllProbeVarPtr();
+
     //! Free probe variables memory.
     //! @param[in] name    variables' name.
     void DeleteProbeVarPtr(const string &name);
@@ -124,30 +157,41 @@ public:
     void Run();
 
     //! Set the variables.
-    void SetVariables(string Variables_in) { this->Variables = Variables_in; }
+    void SetVariables(string Variables_in) { this->variables = Variables_in; }
 
     //! Get the variables.
-    string GetVariables() { return Variables; }
+    string GetVariables() { return variables; }
 
     //! Set number of variables in file.
-    void SetnVariablesToDump(int nVariable_in) { this->nVariable = nVariable_in; }
+    void SetnVariablesToDump(int nVariables_in) { this->nVariables = nVariables_in; }
 
     //! Return number of variables in file.
-    int GetnVariablesToDump() { return nVariable; }
+    int GetnVariablesToDump() { return nVariables; }
 
     //! Get the file name.
     string GetFilename() { return fileName; }
 
 private:
-    //! Init the probe variables need to dump.
-    void InitProbeVariables();
+    //! Init the probes variables need to dump.
+    void InitProbesVariables();
 
-    //! Write the probe variables data into file.
     void WriteProbeFlowFile();
 
+    //! Write the variables data into file.
+    void WriteFlowFile();
+
+    //! Write the probes variables data into file.
+    void WriteProbesFlowFile();
+
+    //! Write the probes of lines variables data into file.
+    void WriteLinesFlowFile();
+
+    //! Write the probes of surfaces variables data into file.
+    void WriteSurfacesFlowFile();
+
 private:
-    int nVariable;
-    string Variables;
+    int nVariables;
+    string variables;
 };
 
 }

@@ -26,6 +26,15 @@ void ReadGridgen(Grid **& structGrids, int &numberOfBlocks, const string &gridge
         ReadGridgenCoor(gridgenFile, numberOfBlocks, structGrids);
     }
     ReadGridgenBC(structGrids, numberOfBlocks, BCFile);
+
+#ifdef USE_OVERSET
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    if (codeOfOversetGrid == 1)
+    {
+    string partitionFile = "./grid/partition.ppsh";
+    ReadPartitionFileForOverset(numberOfBlocks, partitionFile);
+    }
+#endif
 }
 
 void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
@@ -359,6 +368,78 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
     {
         delete []blockProcessorINP;
         SetZoneProcessID_INP(0);
+    }
+
+    file.close();
+    file.clear();
+}
+
+void ReadPartitionFileForOverset(int &inputNumberOfBlocks, const string &PartitionFile)
+{
+    fstream file;
+    file.open(PartitionFile.c_str(), ios_base::in);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(PartitionFile);
+    }
+
+    string line, word;
+    string separator = " =\t\r\n#$,;";
+
+    string str1;
+    ReadNewLine(file, line);
+    line = FindNextWord(line, str1, separator);
+
+    ReadNewLine(file, line);
+    line = FindNextWord(line, word, separator);
+    int numberOfBlocks;
+    from_string <int> (numberOfBlocks, word, std::dec);
+    cout << "number_of_blocks = " << numberOfBlocks << "\n";
+
+    if (numberOfBlocks != inputNumberOfBlocks)
+    {
+        TK_Exit::ExceptionExit(" the numberOfBlocks of partition files does not agree with in mesh file\n");
+    }
+
+    ReadNewLine(file, line);    //! Read the third line.
+
+    bool blockProcessFlag = true;
+
+    using namespace PHMPI;
+
+    CreatetZoneProcessorID_INP(numberOfBlocks);
+    CreateZoneGroupID(numberOfBlocks);
+    int *blockProcessorINP = GetZoneProcessorID_INP();
+    int *blockGroupID = GetZoneGroupID();
+
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        int zone, rank, group;
+        ReadNewLine(file, line);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (zone, word, std::dec);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (rank, word, std::dec);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (group, word, std::dec);
+
+        cout << "zone, rank, group = " << zone << " " << rank << " " << group << "\n";
+
+        if (iZone != zone)
+        {
+            cout << "partition.ppsh NO." << iZone + 1 << "block data error!\n";
+        }
+
+        blockProcessorINP[iZone] = rank;
+        blockGroupID[iZone] = group;
+    }
+
+    if (!blockProcessFlag)
+    {
+        delete [] blockProcessorINP;
+        delete [] blockGroupID;
+        SetZoneProcessID_INP(0);
+        SetZoneGroupID(0);
     }
 
     file.close();

@@ -159,10 +159,10 @@ void GetJetBCData();
 //! Return false elsewise.
 //void CheckifJetBCFileExist();
 
-//! To check if the input BCType is jet type and if this jet is open./n
+//! To check if the input BCType is jet type and if this jet is open.
 //! true - Is jet and open.
 //! false - Is not jet or jet is closed.
-bool ifIsJetBC(const int BCType);
+bool IsJetBC(const int BCType);
 
 //! Function to do jet boundary condition.
 //! TO DO:Turbulence is not considered here now!

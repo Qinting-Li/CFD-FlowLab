@@ -11,7 +11,6 @@
 #include "TECIO.h"
 #endif
 
-
 using namespace std;
 namespace PHSPACE
 {
@@ -69,11 +68,16 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_MODELED_DISSIPATION,   "modeleddissipationrate"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_SST_F1             ,   "SSTF1"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_SST_F2             ,   "SSTF2"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_GAMA    ,   "transition_gama"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_RETHETA ,   "transition_Retheta"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE_VIBRATION, "Tv"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE_ELECTRON,  "Te"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_UX        ,   "gradientUx"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_UY        ,   "gradientUy"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_VX        ,   "gradientVx"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_VY        ,   "gradientVy"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_DIST          ,   "walldist"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_IBLANK             ,   "iblank"));
 
     int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
     if (nsimutask == UGKS_SOLVER)
@@ -290,6 +294,97 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble3
 
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
     CompNodeVar(grid_str, *qn, 0, cellCenterData);
+    visualVariablesPtr->UpdateDataPtr(name, qn);
+}
+
+LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, Int3D & oversetcellCenterdata)
+{
+    if (!grid)
+    {
+        TK_Exit::ExceptionExit("Post_Visual::UpdateVisualNodeVarPtr needs Geometry infomation.");
+    }
+
+    StructGrid * grid_str = StructGridCast(grid);
+
+    int ni = grid_str->GetNI();
+    int nj = grid_str->GetNJ();
+    int nk = grid_str->GetNK();
+
+    Range I(1, ni);
+    Range J(1, nj);
+    Range K(1, nk);
+    if (nk == 1) K.setRange(1, 1);
+    Range M(0,0);
+
+    RDouble4D * qn =  new RDouble4D(I, J, K, M, fortranArray);
+    RDouble4D & ql = *qn;
+    int ist, ied, jst, jed, kst, ked;
+    grid_str->GetNodeIterationIndex(ist, ied, jst, jed, kst, ked);
+    int il = 0;
+
+    for ( int k = kst; k < ked; ++ k )
+    {
+        for ( int j = jst; j < jed; ++ j )
+        {
+            for ( int i = ist; i < ied; ++ i )
+            {	
+                if(oversetcellCenterdata(i,j,k) == 2)
+                {
+                    ql(i,j,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j+1,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j+1,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j+1,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j+1,k+1,0) = oversetcellCenterdata(i,j,k);
+                }
+            }
+        }
+    }
+
+    for ( int k = kst; k < ked; ++ k )
+    {
+        for ( int j = jst; j < jed; ++ j )
+        {
+            for ( int i = ist; i < ied; ++ i )
+            {	
+                if(oversetcellCenterdata(i,j,k) == 0)
+                {
+                    ql(i,j,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j+1,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j+1,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j+1,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j+1,k+1,0) = oversetcellCenterdata(i,j,k);
+                }
+            }
+        }
+    }
+
+    for ( int k = kst; k < ked; ++ k )
+    {
+        for ( int j = jst; j < jed; ++ j )
+        {
+            for ( int i = ist; i < ied; ++ i )
+            {	
+                if(oversetcellCenterdata(i,j,k) == 1)
+                {
+                    ql(i,j,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j+1,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j+1,k,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i,j+1,k+1,0) = oversetcellCenterdata(i,j,k);
+                    ql(i+1,j+1,k+1,0) = oversetcellCenterdata(i,j,k);
+                }
+            }
+        }
+    }
+
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 

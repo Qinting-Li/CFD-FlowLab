@@ -47,7 +47,6 @@ string parafilename = "./bin/cfd_para_transonic.hypara";
 //string parafilename = "./bin/post_processing.hypara";
 
 // ---------------- Advanced Parameters, DO NOT care it ----------------
-int iovrlap               = 0;
 int numberOfGridProcessor = 0;
 // ATP read
 //@string parafilename1 = ""

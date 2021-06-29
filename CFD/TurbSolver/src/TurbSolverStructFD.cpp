@@ -400,7 +400,7 @@ void TurbSolverStrFD::ObtainBoundaryValue(Grid *gridIn)
             OutFlowBC(grid, BCRegion);
         }
         //! Deal in symmetry wall method if there is no boundary ID specified.
-        else if (ifIsJetBC(BCType))
+        else if (IsJetBC(BCType))
         {
             SymmetryBC(grid, BCRegion);
         }
@@ -1642,7 +1642,7 @@ void TurbSolverStrFD::SpectrumRadiusOfOneEquation(Grid *gridIn)
     if (isUnsteady)
     {
         RDouble dualTimeCoefficient[7];
-        const int methodOfDualTime = 3;
+        const int methodOfDualTime = GlobalDataBase::GetIntParaFromDB("methodOfDualTime");
         ComputeDualTimeCoefficient(methodOfDualTime, dualTimeCoefficient);
         dualTimeSpectrumC1 = - dualTimeCoefficient[3];
         dualTimeSpectrumC2 =   dualTimeCoefficient[6];
@@ -1799,7 +1799,7 @@ void TurbSolverStrFD::SpectrumRadiusOfTwoEquation(Grid *gridIn)
     if (isUnsteady)
     {
         RDouble dualTimeCoefficient[7];
-        const int methodOfDualTime = 3;
+        const int methodOfDualTime = GlobalDataBase::GetIntParaFromDB("methodOfDualTime");
         ComputeDualTimeCoefficient(methodOfDualTime, dualTimeCoefficient);
         dualTimeSpectrumC1 = - dualTimeCoefficient[3];
         dualTimeSpectrumC2 =   dualTimeCoefficient[6];

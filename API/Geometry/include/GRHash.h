@@ -48,14 +48,6 @@ using namespace PHSPACE;
 
 namespace GRIDER_SPACE
 {
-#define ASSERT(x) \
-	if(!(x))  \
-	{\
-	cout<<"ERROR: Assert " << #x << endl; \
-	cout<<"On line " << __LINE__ << endl; \
-	cout<<"On file " << __FILE__ << endl; \
-	abort();                              \
-}
 
 #define HASH_MAXI_LOAD 0.8
 #define HASH_INIT_SIZE 128

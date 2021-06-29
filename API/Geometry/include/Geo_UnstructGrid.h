@@ -25,6 +25,7 @@
 #include "Geo_DynamicGridMetrics_Unstruct.h"
 #include "Geo_LSQWeight_Unstruct.h"
 #include "BC_Unstruct.h"
+#include "Geo_LineTopo_Unstruct.h"
 
 namespace PHSPACE
 {
@@ -74,6 +75,8 @@ private:
 	//! 2: nodes list of each face.
 	Geo_FaceTopo_Unstruct * faceTopology;
 
+    Geo_LineTopo_Unstruct * lineTopology;
+
 	//! Unstructured cell topology information:\n
 	//! Defines the cell-face, cell-node connected relationship of unstructured grid.\n
 	//! 1: faces of each cell.\n
@@ -116,6 +119,8 @@ private:
 	//! Wall distance: the nearest distance of a cell to the wall.
 	RDouble  * walldist;
 
+    RDouble* normalDistanceC2C;
+
 	//! the label for first layer cell of the wall boundary.
 	int * wallCellLabel;
 
@@ -142,8 +147,8 @@ private:
 	//! Average volume of all mesh.
 	RDouble averageVolume;
 
-    //! Probes nearest cell index.
-    vector <int> probesNearestCellID;
+    //! Probes cell index.
+    vector <int> probesCellID;
 
 public:
 	LIB_EXPORT UnstructGrid();
@@ -177,6 +182,21 @@ public:
 	//! Set the Connection of cell index to coarse cell index.
 	void SetCell2CoarseGridCell(int *cell2coarsegridcell);
 
+    //! set the number of lines.
+    void SetLI_nLine(int nLine);
+
+    //! set the number of cells in all lines.
+    void SetLI_nCellsInLine(int* nCellsInLines);
+
+    //! set the cell No. of all lines.
+    void SetLI_CellOfLine(int** CellOfLine);
+
+    //! set the face No. of all lines.
+    void SetLI_FaceOfLine(int** FaceOfLine);
+
+    //! set the line No. of all cells.
+    void SetLI_LineOfCell(int* LineOfCell);
+
 	//! Set the order of the right cell on the neighbor cell list.
 	void Setfc2cL(int *fc2cL);
 
@@ -185,11 +205,13 @@ public:
 
 	void SetBlankIndex(int *iblank);
 
-    //! Set the probes nearest cell index.
-    void SetProbesNearestCellID(vector <int> probesNearestCellID);
+    //! Set the probes cell index.
+    void SetProbesCellID(vector <int> probesCellID);
 
-	//! Returns the boundary condition records.
+	//! Return the boundary condition records.
 	BCRecord **GetBCRecord() const;
+
+    RDouble * GetNormalDistanceOfC2C() const;
 
 	//! Get the boundary Region condition.
 	BCRegionUnstruct ** GetBCRegionUnstruct();
@@ -209,61 +231,61 @@ public:
 	//! Get the face to node, node index of each face.
 	int	* GetFace2Node() const;
 
-	//! Returns the X pointer of face center.
+	//! Return the X pointer of face center.
 	RDouble * GetFaceCenterX() const;
 
-	//! Returns the Y pointer of face center.
+	//! Return the Y pointer of face center.
 	RDouble * GetFaceCenterY() const;
 
-	//! Returns the Z pointer of face center.
+	//! Return the Z pointer of face center.
 	RDouble * GetFaceCenterZ() const;
 
-	//! Returns the X pointer of face UNIT normal.
+	//! Return the X pointer of face UNIT normal.
 	RDouble * GetFaceNormalX() const;
 
-	//! Returns the Y pointer of face UNIT normal.
+	//! Return the Y pointer of face UNIT normal.
 	RDouble * GetFaceNormalY() const;
 
-	//! Returns the Z pointer of face UNIT normal.
+	//! Return the Z pointer of face UNIT normal.
 	RDouble * GetFaceNormalZ() const;
 
-	//! Returns the face area.
+	//! Return the face area.
 	RDouble * GetFaceArea()    const;
 
-	//! Returns the X pointer of cell center.
+	//! Return the X pointer of cell center.
 	RDouble * GetCellCenterX() const;
 
-	//! Returns the X pointer of cell center.
+	//! Return the X pointer of cell center.
 	RDouble * GetCellCenterY() const;
 
-	//! Returns the X pointer of cell center.
+	//! Return the X pointer of cell center.
 	RDouble * GetCellCenterZ() const;
 
-	//! Returns the cell volume pointer.
+	//! Return the cell volume pointer.
 	RDouble * GetCellVolume()  const;
 
-	//! Returns the X node velocity pointer.
+	//! Return the X node velocity pointer.
 	RDouble * GetNodeVelocityX() const;
 
-	//! Returns the Y node velocity pointer.
+	//! Return the Y node velocity pointer.
 	RDouble * GetNodeVelocityY() const;
 
-	//! Returns the Z node velocity pointer.
+	//! Return the Z node velocity pointer.
 	RDouble * GetNodeVelocityZ() const;
 
-	//! Returns the face normal velocity pointer.
+	//! Return the face normal velocity pointer.
 	RDouble * GetFaceNormalVelocity() const;
 
-	//! Returns the Cell volume of the last time step.
+	//! Return the Cell volume of the last time step.
 	RDouble * GetCellVolumeOld()  const;
 
-	//! Returns the Connection of cell index to coarse cell index.
+	//! Return the Connection of cell index to coarse cell index.
 	int * GetCell2CoarseGridCell() const;
 
-	//! Returns the order of the right cell on the neighbor cell list.
+	//! Return the order of the right cell on the neighbor cell list.
 	int	* Getfc2cL() const;
 
-	//! Returns the order of the left  cell on the neighbor cell list.
+	//! Return the order of the left  cell on the neighbor cell list.
 	int	* Getfc2cR() const;
 
 	LIB_EXPORT void InitGrid(GridID *index, int level, int dim, int type);
@@ -279,6 +301,8 @@ public:
 
 	LIB_EXPORT Geo_CellTopo_Unstruct * GetCellTopology() { return cellTopology; };
 
+    LIB_EXPORT Geo_LineTopo_Unstruct * GetLineTopology() { return lineTopology; };
+
     LIB_EXPORT bool ExistCell2Node();
 
 	//! Get the cell to node: node index of each cell.
@@ -291,6 +315,21 @@ public:
 
     //! Get each face's starting subscript in the face2node array.
 	LIB_EXPORT int * GetFace2NodeSubscript();
+
+    //! get the number of lines.
+    int GetLI_nLine() const;
+
+    //! get the number of cells in all lines.
+    int* GetLI_nCellsInLine() const;
+
+    //! get the cell No. of all lines.
+    int** GetLI_CellOfLine() const;
+
+    //! get the face No. of all lines.
+    int** GetLI_FaceOfLine() const;
+
+    //! get the line No. of all cells.
+    int* GetLI_LineOfCell() const;
 
 	//! Get the cell to node: node index of each cell.
 	LIB_EXPORT bool IsCell2NodeExist();
@@ -315,6 +354,9 @@ public:
 
 	//! Compute the minimum distance of the grid edges.
 	LIB_EXPORT RDouble CalMinEdgeLength();
+
+    //! Compute the maximum distance of the grid edges.
+    LIB_EXPORT RDouble CalMaxEdgeLength();
 
 	//! Reset the left&&right cell index to -1 on BC faces.
 	LIB_EXPORT void ReSpecifyBC();
@@ -389,7 +431,7 @@ public:
 	//! Return the wall distance: the nearest distance of a cell to the wall.
 	RDouble * GetWallDist() const;
 
-	//! Returns the wall cell label for the first layer of wall boundary. 
+	//! Return the wall cell label for the first layer of wall boundary. 
 	int * GetWallCellLabel();
 
 	void InitWallDist();
@@ -399,8 +441,8 @@ public:
 	//! Computes and returns the number of faces on the solid wall.
 	int GetNumberOfWallCell();
 
-    //! Get the probes nearest cell index.
-    vector <int> GetProbesNearestCellID() const;
+    //! Get the probes cell index.
+    vector <int> GetProbesCellID() const;
 
 	int * GetBlankIndex() const;
 	
@@ -494,6 +536,8 @@ public:
     void GetMinMaxDS(RDouble &dismin, RDouble &dismax);
     void GetBoundaryMinMax(RDouble *pmin, RDouble *pmax);
 
+    // calculate the normal distance between two neighbor cells.
+    LIB_EXPORT void CalNormalDistanceOfC2C();
     void ReadGrid (fstream &file);
 	void ReadGrid (VirtualFile *vfile);
     LIB_EXPORT void WriteGrid(fstream &file);	
@@ -692,4 +736,7 @@ void GetFaceToNodeList( UnstructGrid * grid, int boundaryConditionType, PHVector
 void ExtractSubGridFromGrid( UnstructGrid * grid, UnstructGrid * grid_Slice, int * isThisCellNeedExtract);
 
 void DumpSliceGrid(UnstructGrid * unstructGrid, int sliceAxis, RDouble slicePosition, string fileName);
+
+RDouble AspectRatio(RDouble dist, RDouble area, int nodeNumOfPerFace);
 }
+

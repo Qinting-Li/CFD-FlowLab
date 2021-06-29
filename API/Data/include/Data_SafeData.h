@@ -48,16 +48,16 @@ public:
     //! Print Data to window.
     void ShowData();
 
-    //! Returns data's name.
+    //! Return data's name.
     string GetName() const;
 
-    //! Returns data's type.
+    //! Return data's type.
     int GetType() const;
 
-    //! Returns data's size.
+    //! Return data's size.
     int GetSize() const;
 
-    //! Returns pointer to the data.
+    //! Return pointer to the data.
     void * GetData() const;
 
     //! Override operator < used by set<Data_SafeData>, sort by name.

@@ -120,12 +120,22 @@ public:
     //! Implicit LU-SGS time integration method.
     virtual void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
     virtual void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    
+   
     //! Implicit Block LU-SGS time integration method.
     virtual void SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);    
     virtual void SolveBLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
+    //! Implicit Line LU-SGS time integration method.
+    virtual void SolveLineLUSGSForward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
+    virtual void SolveLineLUSGSBackward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
+
+    //! Line implicit LU-SGS time integration method.
+    virtual void LineLUSGS(Grid* grid, int level);
+
     virtual void LHSMatrixs(Grid *grid);
+
+    //! calculate the three Matrixs of all lines.
+    virtual void LineLUSGSMatrixs(Grid *grid);
 
     //! Compute the node value in the flow.
     //! @param[in] grid         the mesh in the computing.    

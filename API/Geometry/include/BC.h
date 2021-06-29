@@ -38,6 +38,10 @@ namespace PHENGLEI
     const int PRESSURE_INLET        = 52;
     const int PRESSURE_OUTLET       = 62;
 
+    //! pressure in and out for nozzle boundary.
+    const int NOZZLE_INFLOW         = 53;
+    const int NOZZLE_OUTFLOW        = 63;
+
     //! mass flow in and out boundary 53, 63.
     const int MASS_FLOW_INLET       = 53;
     const int MASS_FLOW_OUTLET      = 63;
@@ -219,6 +223,8 @@ public:
     static void ReadGlobalBoundaryCondition();
 
     static void SetGlobalDataBaseByGlobalBC();
+
+    static void SetDefaultSolidBoundaryCondition();
 
     static void ChangeBCTypeByGlobalBC();
 

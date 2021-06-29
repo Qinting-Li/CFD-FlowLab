@@ -90,8 +90,11 @@ public:
     ~ActionKey();
     DataContainer * GetData() const { return data; };
     DataContainer * GetTecData() const { return tecdata; };
-    void SetData(DataContainer * dataIn) { this->data = dataIn; }
-    void SetTecData(DataContainer * dataIn) { this->tecdata = dataIn; }
+    fstream * GetFile() const { return file; }
+    string GetFileName() const { return filename; }
+    int GetAction() { return action; }
+    void SetData(DataContainer *dataIn) { this->data = dataIn; }
+    void SetTecData(DataContainer *dataIn) { this->tecdata = dataIn; }
     bool IsNeedOpenFile() const { return this->filename != ""; }
 };
 
@@ -111,5 +114,8 @@ public:
     int  level;
     bool run_now;
 };
+
+void SetCurrentActionKey(ActionKey *ActionKeyIn);
+ActionKey *GetCurrentActionKey();
 
 }

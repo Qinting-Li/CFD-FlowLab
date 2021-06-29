@@ -58,11 +58,11 @@ public:
     //! Steady simulation by implementing multi-grid cycle.
     //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right
     //! reason why this class is named as 'Controller'.
-    //! The standard simulation order is: \n
+    //! The standard simulation order is:
     //! Zero residual --> go into Multi-Grid cycle, if single level grid used, go to Relaxation directly.
     LIB_EXPORT void SolveSteadyField();
 
-    //! Unsteady simulation using Dual Time Step method.\n
+    //! Unsteady simulation using Dual Time Step method.
     //! In which, the steady simulation process is used as the virtual dual time step (or sub-iteration),
     //! and the steady relaxation sub-iterations are nested inside the real physical time step.
     LIB_EXPORT void SolveUnsteadyField();
@@ -207,6 +207,18 @@ private:
     
     //! Backward sweep in BLUSGS methods.
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+
+    //! Line implicit Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
+    void LineLUSGS(int iSolver, int level);
+
+    void LineLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
+
+    //! Forward sweep in line BLUSGS methods.
+    void ForwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqProxy, FieldProxy** LUplusDQ, RDouble& sweepNormal, int& iSweep);
+
+    //! Backward sweep in line LUSGS methods.
+    void BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqProxy, FieldProxy** LUplusDQ, RDouble& sweepNormal);
+
 
     //! To execute the forward sweep of the block LU-SGS method.
     //! @param[in ]: iSolver is the serial number of the current solver.

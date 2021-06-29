@@ -166,9 +166,9 @@ public:
     //! @param[in ]: actkey contains the control information for parallel communication.
     void DownloadInterfaceValue(ActionKey *actkey);
 
-    ////! Implement: to compress turbulenct dq data from grid to date dataContainer.
-    //void CompressDQ(DataContainer*& dataContainer, FieldProxy* fieldProxy, Grid* grid, const int& zoneIndex, const int& neighborZoneIndex, const int& neqn);
-    //void DecompressDQ(DataContainer*& dataContainer, FieldProxy* fieldProxy, Grid* grid, const int& zoneIndex, const int& neighborZoneIndex, const int& neqn);
+    //! Implement: to compress turbulent dq data from grid to date dataContainer.
+    void CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
+    void DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
 
     //! Todo: overset information communication hasn't carried out yet.
     //! @param[in ]: actkey contains the control information for parallel communication.

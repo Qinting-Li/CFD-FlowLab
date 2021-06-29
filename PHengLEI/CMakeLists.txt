@@ -49,12 +49,13 @@ opt(NSDEMO "Use Solver Template or not" OFF) # Use Solver Template option
 opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
-opt_build(MESH "Build Mesh module or not" OFF) #Build Mesh or not.
+opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
 opt_build(TUTORIAL "Build Tutorial or not" OFF) #Build API tutorials or not.
 opt(TecplotLib "Use tecplot lib to dump binary flow file" OFF) #Use tecplotlib or not.
 opt_build(LBM "Build LBM module or not" OFF) #Build LBM or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
+opt(OVERSET "Use structure overset or not" OFF) #Build str-overset or not
 
 if(USE_OCC)
   message(STATUS "USE_OCC is turned on!")
@@ -112,6 +113,11 @@ if(WIN32)
   add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()
 
+if(USE_OVERSET)
+  message(STATUS "USE_OVERSET is turned on!")
+  add_definitions(-DUSE_OVERSET)
+endif(USE_OVERSET)
+
 # Add subdirectory or link library PHAPI.
 set(API_TARGET_NAME "PHAPI")
 
@@ -123,6 +129,8 @@ set(GMSH_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/Gmsh/include)
 include_directories("${GMSH_H_PATH}")
 set(PARMETIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/parmetis/include)
 include_directories("${PARMETIS_H_PATH}")
+set(Overset_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/overset/include)
+include_directories("${Overset_H_PATH}")
 if(USE_TecplotLib)
   set(TECIO_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
   include_directories("${TECIO_H_PATH}")
@@ -154,6 +162,30 @@ else(BUILD_API)
   link_directories("${LIB_API_EXPORT_PATH}")  
 endif(BUILD_API)
 
+# Add subdirectory or link library PHMesh.
+set(MESH_TARGET_NAME "PHMesh")
+if(WIN32)
+if(USE_Windows_X64)
+  set(LIB_MESH_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../Mesh/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
+else(USE_Windows_X64)
+  set(LIB_MESH_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../Mesh/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
+endif(USE_Windows_X64)
+else(WIN32)
+  set(LIB_MESH_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../Mesh/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+endif(WIN32)
+
+set(MESH_H_PATH ${PROJECT_SOURCE_DIR}/../Mesh/include)
+include_directories(${MESH_H_PATH})
+if(BUILD_MESH)
+  message(STATUS "Build MESH!")
+  add_subdirectory(../Mesh ${EXEC_WORKING_DIR}/Mesh)
+if(WIN32)
+  set_target_properties(${Mesh_TARGET_NAME} PROPERTIES COMPILE_FLAGS "/MP")
+endif(WIN32)
+else(BUILD_MESH)
+  message(STATUS "Link MESH!") 
+  link_directories("${LIB_MESH_EXPORT_PATH}")  
+endif(BUILD_MESH)
 
 if(BUILD_LBM) 
   # Add subdirectory or link library PHLBM.

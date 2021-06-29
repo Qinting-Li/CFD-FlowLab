@@ -57,8 +57,8 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 	string partition_grid_file = "metis.fts";
     GlobalDataBase::GetData("partition_grid_file",&partition_grid_file,PHSTRING,1);
 
-	int iovrlap = 0;
-    GlobalDataBase::GetData("iovrlap",&iovrlap,PHINT,1);
+	int codeOfOversetGrid = 0;
+    GlobalDataBase::GetData("codeOfOversetGrid",&codeOfOversetGrid,PHINT,1);
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
 
 	int numberOfProcessors = this->GetNumberOfProcessors();
@@ -94,7 +94,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 	OutputPartitionedGrid();
 	
 	int ndim = PHSPACE::GetDim();
-	if ( ndim == TWO_D || iovrlap == 1|| (ndim == THREE_D && periodicType != 0))
+	if ( ndim == TWO_D || codeOfOversetGrid == 10 || (ndim == THREE_D && periodicType != 0))
 	{
 		Grid ** grids    = new Grid * [numberOfBasicBlocks];
 		for ( int izone = 0; izone < numberOfBasicBlocks; ++ izone )
@@ -107,7 +107,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 		    grid->ProcessBCInfo();
 		}
 
-		MultigridManager * multigridManager = new MultigridManager(parititionGrids, iovrlap, numberOfBasicBlocks);
+		MultigridManager * multigridManager = new MultigridManager(parititionGrids, codeOfOversetGrid, numberOfBasicBlocks);
 		multigridManager->Run();
 		delete multigridManager;
 

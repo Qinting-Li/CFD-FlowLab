@@ -1,5 +1,5 @@
 #include "Geo_NodeTopo_Struct.h"
-#include"GlobalDataBase.h"
+#include "GlobalDataBase.h"
 #include "TypeDefine.h"
 
 namespace PHSPACE
@@ -7,62 +7,64 @@ namespace PHSPACE
 
 Geo_NodeTopo_Struct::Geo_NodeTopo_Struct()
 {
-	ni = 0;
-	nj = 0;
-	nk = 0;
-	structx = 0;
-	structy = 0;
-	structz = 0;
+    ni = 0;
+    nj = 0;
+    nk = 0;
+    structx = 0;
+    structy = 0;
+    structz = 0;
 }
 
 Geo_NodeTopo_Struct::~Geo_NodeTopo_Struct()
 {
-	DeallocateAll();
+    DeallocateAll();
 }
+
 void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
 {
-	int nsimutask = -1;	
-	nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
-	if(nsimutask == 0)
-	{
-        int ifvfd = PHSPACE::GlobalDataBase::GetIntParaFromDB( "ifvfd" );
-        if(ifvfd == 1)
+    int nsimutask = -1;	
+    nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
+    if (nsimutask == 0)
+    {
+        int ifvfd = PHSPACE::GlobalDataBase::GetIntParaFromDB("ifvfd");
+        if (ifvfd == 1)
         {
             //! struct hight order, xyz ghost more layers.
-            SetArrayLayoutStructHighOrder(x,y,z);
+            SetArrayLayoutStructHighOrder(x, y, z);
             return;
         }
-		int compressible = 1;
-		compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-		if (compressible == 0)
-		{
-			Range I(1,ni);
-			Range J(1,nj);
-			Range K(1,nk);
-			DeallocateAll();
-			RDouble3D * strx = new RDouble3D(x,I,J,K,neverDeleteData,fortranArray);
-			RDouble3D * stry = new RDouble3D(y,I,J,K,neverDeleteData,fortranArray);
-			RDouble3D * strz = new RDouble3D(z,I,J,K,neverDeleteData,fortranArray);
 
-			Range II(0,ni+1);
-			Range JJ(0,nj+1);
-			Range KK(0,nk+1);
-			if ( nk == 1 ) KK.setRange(1,1);
-			structx = new RDouble3D(II,JJ,KK,fortranArray);
-			structy = new RDouble3D(II,JJ,KK,fortranArray);
-			structz = new RDouble3D(II,JJ,KK,fortranArray);
+        int compressible = 1;
+        compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+        if (compressible == 0)
+        {
+            Range I(1, ni);
+            Range J(1, nj);
+            Range K(1, nk);
+            DeallocateAll();
+            RDouble3D *strx = new RDouble3D(x, I, J, K, neverDeleteData, fortranArray);
+            RDouble3D *stry = new RDouble3D(y, I, J, K, neverDeleteData, fortranArray);
+            RDouble3D *strz = new RDouble3D(z, I, J, K, neverDeleteData, fortranArray);
 
-			(*structx)(I,J,K) = (*strx)(I,J,K);
-			(*structy)(I,J,K) = (*stry)(I,J,K);
-			(*structz)(I,J,K) = (*strz)(I,J,K);
-			return;
-		}
+            Range II(0, ni+1);
+            Range JJ(0, nj+1);
+            Range KK(0, nk+1);
+            if (nk == 1) KK.setRange(1, 1);
+            structx = new RDouble3D(II, JJ, KK, fortranArray);
+            structy = new RDouble3D(II, JJ, KK, fortranArray);
+            structz = new RDouble3D(II, JJ, KK, fortranArray);
+
+            (*structx)(I, J, K) = (*strx)(I, J, K);
+            (*structy)(I, J, K) = (*stry)(I, J, K);
+            (*structz)(I, J, K) = (*strz)(I, J, K);
+            return;
+        }
 
         bool Rwithghost = true;
         
         int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
         //int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-        int iovrlap     = PHSPACE::GlobalDataBase::GetIntParaFromDB("iovrlap");
+        int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
         //int nMGLevel = PHSPACE::GlobalDataBase::GetIntParaFromDB("nMGLevel");
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -70,74 +72,74 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
 
         if (tscheme != 4) Rwithghost = false;
         //if (systemGridType != 1) Rwithghost = false;
-        if (iovrlap != 0) Rwithghost = false;
+        if (codeOfOversetGrid != 0) Rwithghost = false;
         //if (nMGLevel != 1) Rwithghost = false;
         if (compressible != 1) Rwithghost = false;
         if (isUnsteady != 0) Rwithghost = false;
         if (nChemical != 0) Rwithghost = false;
         if (ifLowSpeedPrecon != 0) Rwithghost = false;
 
-        if(Rwithghost)
+        if (Rwithghost)
         {
-            Range I(1,ni);
-            Range J(1,nj);
-            Range K(1,nk);
+            Range I(1, ni);
+            Range J(1, nj);
+            Range K(1, nk);
             DeallocateAll();
-            RDouble3D * strx = new RDouble3D(x,I,J,K,neverDeleteData,fortranArray);
-            RDouble3D * stry = new RDouble3D(y,I,J,K,neverDeleteData,fortranArray);
-            RDouble3D * strz = new RDouble3D(z,I,J,K,neverDeleteData,fortranArray);
+            RDouble3D *strx = new RDouble3D(x, I, J, K, neverDeleteData, fortranArray);
+            RDouble3D *stry = new RDouble3D(y, I, J, K, neverDeleteData, fortranArray);
+            RDouble3D *strz = new RDouble3D(z, I, J, K, neverDeleteData, fortranArray);
             
-            Range II(0,ni+1);
-            Range JJ(0,nj+1);
-            Range KK(0,nk+1);
-            if ( nk == 1 ) KK.setRange(1,1);
-            structx = new RDouble3D(II,JJ,KK,fortranArray);
-            structy = new RDouble3D(II,JJ,KK,fortranArray);
-            structz = new RDouble3D(II,JJ,KK,fortranArray); 
+            Range II(0, ni+1);
+            Range JJ(0, nj+1);
+            Range KK(0, nk+1);
+            if (nk == 1) KK.setRange(1, 1);
+            structx = new RDouble3D(II, JJ, KK, fortranArray);
+            structy = new RDouble3D(II, JJ, KK, fortranArray);
+            structz = new RDouble3D(II, JJ, KK, fortranArray);
             
-            (*structx)(I,J,K) = (*strx)(I,J,K);
-            (*structy)(I,J,K) = (*stry)(I,J,K);
-            (*structz)(I,J,K) = (*strz)(I,J,K);
-            
-            for(int k = 1; k <= nk; ++k)
+            (*structx)(I, J, K) = (*strx)(I, J, K);
+            (*structy)(I, J, K) = (*stry)(I, J, K);
+            (*structz)(I, J, K) = (*strz)(I, J, K);
+
+            for (int k = 1; k <= nk; ++ k)
             {
-                for(int j = 1; j <= nj; ++j)
+                for (int j = 1; j <= nj; ++ j)
                 {
-                    (*structx)(0,j,k) = 2.0 * (*structx)(1,j,k) - (*structx)(2,j,k);
-                    (*structy)(0,j,k) = 2.0 * (*structy)(1,j,k) - (*structy)(2,j,k);
-                    (*structz)(0,j,k) = 2.0 * (*structz)(1,j,k) - (*structz)(2,j,k);
+                    (*structx)(0, j, k) = 2.0 * (*structx)(1, j, k) - (*structx)(2, j, k);
+                    (*structy)(0, j, k) = 2.0 * (*structy)(1, j, k) - (*structy)(2, j, k);
+                    (*structz)(0, j, k) = 2.0 * (*structz)(1, j, k) - (*structz)(2, j, k);
                     
-                    (*structx)(ni+1,j,k) = 2.0 * (*structx)(ni,j,k) - (*structx)(ni-1,j,k); 
-                    (*structy)(ni+1,j,k) = 2.0 * (*structy)(ni,j,k) - (*structy)(ni-1,j,k);
-                    (*structz)(ni+1,j,k) = 2.0 * (*structz)(ni,j,k) - (*structz)(ni-1,j,k);
+                    (*structx)(ni+1, j, k) = 2.0 * (*structx)(ni, j, k) - (*structx)(ni-1, j, k);
+                    (*structy)(ni+1, j, k) = 2.0 * (*structy)(ni, j, k) - (*structy)(ni-1, j, k);
+                    (*structz)(ni+1, j, k) = 2.0 * (*structz)(ni, j, k) - (*structz)(ni-1, j, k);
                 }
             }
-            for(int k = 1; k <= nk; ++k)
+            for (int k = 1; k <= nk; ++ k)
             {
-                for(int i = 1; i <= ni; ++i)
+                for (int i = 1; i <= ni; ++ i)
                 {
-                    (*structx)(i,0,k) = 2.0 * (*structx)(i,1,k) - (*structx)(i,2,k);
-                    (*structy)(i,0,k) = 2.0 * (*structy)(i,1,k) - (*structy)(i,2,k);
-                    (*structz)(i,0,k) = 2.0 * (*structz)(i,1,k) - (*structz)(i,2,k);
+                    (*structx)(i, 0, k) = 2.0 * (*structx)(i, 1, k) - (*structx)(i, 2, k);
+                    (*structy)(i, 0, k) = 2.0 * (*structy)(i, 1, k) - (*structy)(i, 2, k);
+                    (*structz)(i, 0, k) = 2.0 * (*structz)(i, 1, k) - (*structz)(i, 2, k);
                     
-                    (*structx)(i,nj+1,k) = 2.0 * (*structx)(i,nj,k) - (*structx)(i,nj-1,k);
-                    (*structy)(i,nj+1,k) = 2.0 * (*structy)(i,nj,k) - (*structy)(i,nj-1,k);
-                    (*structz)(i,nj+1,k) = 2.0 * (*structz)(i,nj,k) - (*structz)(i,nj-1,k);
+                    (*structx)(i, nj+1, k) = 2.0 * (*structx)(i, nj, k) - (*structx)(i, nj-1, k);
+                    (*structy)(i, nj+1, k) = 2.0 * (*structy)(i, nj, k) - (*structy)(i, nj-1, k);
+                    (*structz)(i, nj+1, k) = 2.0 * (*structz)(i, nj, k) - (*structz)(i, nj-1, k);
                 }
             }
-            if( nk!=1 )
+            if (nk != 1)
             {
-                for(int j = 1; j <= nj; ++j)
+                for (int j = 1; j <= nj; ++ j)
                 {
-                    for(int i = 1; i <= ni; ++i)
+                    for (int i = 1; i <= ni; ++ i)
                     {
-                        (*structx)(i,j,0) = 2.0 * (*structx)(i,j,1) - (*structx)(i,j,2);
-                        (*structy)(i,j,0) = 2.0 * (*structy)(i,j,1) - (*structy)(i,j,2);
-                        (*structz)(i,j,0) = 2.0 * (*structz)(i,j,1) - (*structz)(i,j,2);
+                        (*structx)(i, j, 0) = 2.0 * (*structx)(i, j, 1) - (*structx)(i, j, 2);
+                        (*structy)(i, j, 0) = 2.0 * (*structy)(i, j, 1) - (*structy)(i, j, 2);
+                        (*structz)(i, j, 0) = 2.0 * (*structz)(i, j, 1) - (*structz)(i, j, 2);
                         
-                        (*structx)(i,j,nk+1) = 2.0 * (*structx)(i,j,nk) - (*structx)(i,j,nk-1);
-                        (*structy)(i,j,nk+1) = 2.0 * (*structy)(i,j,nk) - (*structy)(i,j,nk-1);
-                        (*structz)(i,j,nk+1) = 2.0 * (*structz)(i,j,nk) - (*structz)(i,j,nk-1); 
+                        (*structx)(i, j, nk+1) = 2.0 * (*structx)(i, j, nk) - (*structx)(i, j, nk-1);
+                        (*structy)(i, j, nk+1) = 2.0 * (*structy)(i, j, nk) - (*structy)(i, j, nk-1);
+                        (*structz)(i, j, nk+1) = 2.0 * (*structz)(i, j, nk) - (*structz)(i, j, nk-1);
                     }
                 }
             }
@@ -146,42 +148,42 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
             delete strz;
             return;
         }
-	}
+    }
 
-	Range I(1,ni);
-	Range J(1,nj);
-	Range K(1,nk);
-	DeallocateAll();
-	structx = new RDouble3D(x,I,J,K,neverDeleteData,fortranArray);
-	structy = new RDouble3D(y,I,J,K,neverDeleteData,fortranArray);
-	structz = new RDouble3D(z,I,J,K,neverDeleteData,fortranArray);
+    Range I(1, ni);
+    Range J(1, nj);
+    Range K(1, nk);
+    DeallocateAll();
+    structx = new RDouble3D(x, I, J, K, neverDeleteData, fortranArray);
+    structy = new RDouble3D(y, I, J, K, neverDeleteData, fortranArray);
+    structz = new RDouble3D(z, I, J, K, neverDeleteData, fortranArray);
 }
 
 void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, RDouble *z)
 {
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
-    if(highordersolvername.substr(0, 4) == "WCNS")
+    if (highordersolvername.substr(0, 4) == "WCNS")
     {
-        Range I(1,ni);
-        Range J(1,nj);
-        Range K(1,nk);
+        Range I(1, ni);
+        Range J(1, nj);
+        Range K(1, nk);
         DeallocateAll();
         
-        RDouble3D * strx = new RDouble3D(x,I,J,K,neverDeleteData,fortranArray);
-        RDouble3D * stry = new RDouble3D(y,I,J,K,neverDeleteData,fortranArray);
-        RDouble3D * strz = new RDouble3D(z,I,J,K,neverDeleteData,fortranArray);
+        RDouble3D *strx = new RDouble3D(x, I, J, K, neverDeleteData, fortranArray);
+        RDouble3D *stry = new RDouble3D(y, I, J, K, neverDeleteData, fortranArray);
+        RDouble3D *strz = new RDouble3D(z, I, J, K, neverDeleteData, fortranArray);
         
-        Range II(0,ni+1);
-        Range JJ(0,nj+1);
-        Range KK(0,nk+1);
-        if (nk == 1) KK.setRange(1,1);
-        structx = new RDouble3D(II,JJ,KK,fortranArray);
-        structy = new RDouble3D(II,JJ,KK,fortranArray);
-        structz = new RDouble3D(II,JJ,KK,fortranArray); 
+        Range II(0, ni+1);
+        Range JJ(0, nj+1);
+        Range KK(0, nk+1);
+        if (nk == 1) KK.setRange(1, 1);
+        structx = new RDouble3D(II, JJ, KK, fortranArray);
+        structy = new RDouble3D(II, JJ, KK, fortranArray);
+        structz = new RDouble3D(II, JJ, KK, fortranArray);
         
-        (*structx)(I,J,K) = (*strx)(I,J,K);
-        (*structy)(I,J,K) = (*stry)(I,J,K);
-        (*structz)(I,J,K) = (*strz)(I,J,K);
+        (*structx)(I, J, K) = (*strx)(I, J, K);
+        (*structy)(I, J, K) = (*stry)(I, J, K);
+        (*structz)(I, J, K) = (*strz)(I, J, K);
         
         delete strx;
         delete stry;
@@ -271,6 +273,7 @@ void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, 
             (*structy)(i, j, nk + 1) = 2.0 * (*structy)(i, j, nk) - (*structy)(i, j, nk - 1);
             (*structz)(i, j, nk + 1) = 2.0 * (*structz)(i, j, nk) - (*structz)(i, j, nk - 1);
         }
+
         for (int k = 1; k <= nk; ++ k)
         {
             int i = 0;
@@ -312,6 +315,7 @@ void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, 
             (*structy)(i, j, nk + 1) = 2.0 * (*structy)(i, j, nk) - (*structy)(i, j, nk - 1);
             (*structz)(i, j, nk + 1) = 2.0 * (*structz)(i, j, nk) - (*structz)(i, j, nk - 1);
         }
+
         for (int k = 1; k <= nk; ++ k)
         {
             int j = 0;
@@ -353,6 +357,7 @@ void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, 
             (*structy)(i, nj + 1, k) = 2.0 * (*structy)(i, nj, k) - (*structy)(i, nj - 1, k);
             (*structz)(i, nj + 1, k) = 2.0 * (*structz)(i, nj, k) - (*structz)(i, nj - 1, k);
         }
+
         for (int j = 1; j <= nj; ++ j)
         {
             int k = 0;
@@ -374,28 +379,28 @@ void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, 
             (*structz)(ni + 1, j, k) = 2.0 * (*structz)(ni, j, k) - (*structz)(ni - 1, j, k);
         }
     }
-    else if(highordersolvername.substr(0, 4) == "HDCS")
+    else if (highordersolvername.substr(0, 4) == "HDCS")
     {
-        Range I(1,ni);
-        Range J(1,nj);
-        Range K(1,nk);
+        Range I(1, ni);
+        Range J(1, nj);
+        Range K(1, nk);
         DeallocateAll();
         
-        RDouble3D * strx = new RDouble3D(x,I,J,K,neverDeleteData,fortranArray);
-        RDouble3D * stry = new RDouble3D(y,I,J,K,neverDeleteData,fortranArray);
-        RDouble3D * strz = new RDouble3D(z,I,J,K,neverDeleteData,fortranArray);
+        RDouble3D *strx = new RDouble3D(x, I, J, K, neverDeleteData, fortranArray);
+        RDouble3D *stry = new RDouble3D(y, I, J, K, neverDeleteData, fortranArray);
+        RDouble3D *strz = new RDouble3D(z, I, J, K, neverDeleteData, fortranArray);
         
-        Range II(-1,ni+2);
-        Range JJ(-1,nj+2);
-        Range KK(-1,nk+2);
-        if (nk == 1) KK.setRange(1,1);
-        structx = new RDouble3D(II,JJ,KK,fortranArray);
-        structy = new RDouble3D(II,JJ,KK,fortranArray);
-        structz = new RDouble3D(II,JJ,KK,fortranArray); 
+        Range II(-1, ni+2);
+        Range JJ(-1, nj+2);
+        Range KK(-1, nk+2);
+        if (nk == 1) KK.setRange(1, 1);
+        structx = new RDouble3D(II, JJ, KK, fortranArray);
+        structy = new RDouble3D(II, JJ, KK, fortranArray);
+        structz = new RDouble3D(II, JJ, KK, fortranArray);
         
-        (*structx)(I,J,K) = (*strx)(I,J,K);
-        (*structy)(I,J,K) = (*stry)(I,J,K);
-        (*structz)(I,J,K) = (*strz)(I,J,K);
+        (*structx)(I, J, K) = (*strx)(I, J, K);
+        (*structy)(I, J, K) = (*stry)(I, J, K);
+        (*structz)(I, J, K) = (*strz)(I, J, K);
         
         delete strx;
         delete stry;
@@ -422,7 +427,7 @@ void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, 
                 (*structz)(ni + 2, j, k) = 2.0 * (*structz)(ni + 1, j, k) - (*structz)(ni, j, k);
             }
         }
-        
+
         for (int k = 1; k <= nk; ++ k)
         {
             for (int i = -1; i <= ni+2; ++ i)
@@ -461,7 +466,7 @@ void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, 
                 (*structx)(i, j, -1) = 2.0 * (*structx)(i, j, 0) - (*structx)(i, j, 1);
                 (*structy)(i, j, -1) = 2.0 * (*structy)(i, j, 0) - (*structy)(i, j, 1);
                 (*structz)(i, j, -1) = 2.0 * (*structz)(i, j, 0) - (*structz)(i, j, 1);
-                
+
                 (*structx)(i, j, nk + 1) = 2.0 * (*structx)(i, j, nk) - (*structx)(i, j, nk - 1);
                 (*structy)(i, j, nk + 1) = 2.0 * (*structy)(i, j, nk) - (*structy)(i, j, nk - 1);
                 (*structz)(i, j, nk + 1) = 2.0 * (*structz)(i, j, nk) - (*structz)(i, j, nk - 1);
@@ -473,7 +478,5 @@ void Geo_NodeTopo_Struct::SetArrayLayoutStructHighOrder(RDouble *x, RDouble *y, 
         }
     }
 }
-
-
 
 }

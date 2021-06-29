@@ -31,7 +31,8 @@ public:
     LIB_EXPORT ~Post_ProbesWrite();
 
 public:
-    LIB_EXPORT void Run(bool dumpAllLevel = false);
+    //LIB_EXPORT void Run(bool dumpAllLevel = false);
+    LIB_EXPORT void Run();
 
 private:
     vector<DataContainer *> datalist;
@@ -42,7 +43,7 @@ private:
     void ServerProbesWrite(ActionKey *actkey);
 
     //! Store the probes variables.
-    void StoreProbesVarariables(ActionKey *actkey, Post_Probes * postProbesVar);
+    void StoreProbesVarariables(ActionKey *actkey, Post_Probes *postProbesVar);
 
     //! Monitored probes post-processing.
     void PostProbesWrite(ActionKey *actkey);

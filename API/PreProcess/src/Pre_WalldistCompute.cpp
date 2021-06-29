@@ -50,7 +50,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
     
     InitWallDistance();
 
-    int sys_gridtype = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    int systemGridType = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     int dimension = PHSPACE::GetDim();
     if (dimension == TWO_D)
     {
@@ -82,7 +82,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
         {
             BuildWallStructTree();
         }
-        else if (walldistComputeMethod == KDTREE_METHOD && sys_gridtype == STRUCTGRID)
+        else if (walldistComputeMethod == KDTREE_METHOD && systemGridType == STRUCTGRID)
         {
             BuildWallStructKDTree();
         }
@@ -311,16 +311,17 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
     RDouble * zcc = grid->GetCellCenterZ();
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     int *wallCellLabel = grid->GetWallCellLabel();
 
     cout.unsetf(ios::scientific);
     cout.setf(ios::fixed);
     cout.precision(0);
 
-    int interval = MAX(nTotalCell / 10, 1);
+    int interval = GetProgressInterval(nTotalCell, 10);
     for (int icell = 0; icell < nTotalCell; ++ icell)
     {
-        if (viscousType <=1 && wallCellLabel[icell] != 1) continue;
+        if (viscousType <=1 && wallCellLabel[icell] != 1 && iLES == 0) continue;
 
         if (myid == 0 && icell > 0 && icell % interval == 0)
         {
@@ -412,6 +413,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
     RDouble * zcc = grid->GetCellCenterZ();
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     int *wallCellLabel = grid->GetWallCellLabel();
 
     cout.unsetf(ios::scientific);
@@ -420,15 +422,18 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
 
     RDouble cellCenter[3], faceCenter[3], faceNormal[3];
 
-    int interval = GetProgressInterval(nTotal, 20);
-    for (int icell = 0; icell < nTotal; ++ icell)
+    //int interval = GetProgressInterval(nTotal, 10);
+    int interval = GetProgressInterval(nTotalCell, 10);
+    for (int icell = 0; icell < nTotalCell; ++ icell)
     {
-        if (viscousType <= 1 && wallCellLabel[icell] != 1) continue;
+        if (viscousType <= 1 && wallCellLabel[icell] != 1 && iLES == 0) continue;
 
         if (icell > 0 && icell % interval == 0)
         {
-            ProgressMonitorToWindows(icell, nTotal, "wall distance");
-            ProgressMonitorToLogFile(icell, nTotal, "wall distance");
+            //ProgressMonitorToWindows(icell, nTotal, "wall distance");
+            //ProgressMonitorToLogFile(icell, nTotal, "wall distance");
+            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
+            ProgressMonitorToLogFile(icell, nTotalCell, "wall distance");
 
             if (rotateAxis >= 3 || timeSpan.GetTimeSpan() > 3600.0)
             {
@@ -511,6 +516,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
     RDouble * zcc = grid->GetCellCenterZ();
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     int * wallCellLabel = grid->GetWallCellLabel();
 
     cout.unsetf(ios::scientific);
@@ -542,10 +548,10 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
     PrintToWindow("    Min & Max wall faces in box: ", nBoxLimitedMin, nBoxLimitedMax, "\n");
 
     TimeSpan partTime;
-    int interval = GetProgressInterval(nTotalCell, 20);
+    int interval = GetProgressInterval(nTotalCell, 10);
     for (int icell = 0; icell < nTotalCell; ++ icell)
     {
-        if (viscousType <= 1 && wallCellLabel[icell] != 1) continue;
+        if (viscousType <= 1 && wallCellLabel[icell] != 1 && iLES == 0) continue;
 
         if (icell > 0 && icell % interval == 0)
         {
@@ -731,6 +737,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
     RDouble3D &zcc = *grid->GetCellCenterZ();
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
 
     cout.unsetf(ios::scientific);
     cout.setf(ios::fixed);
@@ -761,7 +768,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
     PrintToWindow("    Min & Max wall faces in box: ", nBoxLimitedMin, nBoxLimitedMax, "\n");
 
     TimeSpan partTime;
-    int interval = GetProgressInterval(nTotalCell, 20);
+    int interval = GetProgressInterval(nTotalCell, 10);
     int count = 0;
 
     int ist, ied, jst, jed, kst, ked;
@@ -774,7 +781,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
             for (int i = ist; i <= ied; ++i)
             {
                 ++count;
-                if (viscousType <= 1)
+                if (viscousType <= 1 && iLES == 0)
                 {
                     continue;
                 }
@@ -970,7 +977,7 @@ void Pre_WalldistCompute::ComputeNodeWallDist3DByProjectingFast(int nTotalNode, 
 
     PrintToWindow("    Min & Max wall faces in box: ", nBoxLimitedMin, nBoxLimitedMax, "\n");
 
-    int interval = GetProgressInterval(nTotalNode, 100);
+    int interval = GetProgressInterval(nTotalNode, 10);
 
     for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
@@ -1140,6 +1147,10 @@ void Pre_WalldistCompute::ComputeNodeWallDist3DByProjectingFast(int nTotalNode, 
 void Pre_WalldistCompute::ComputeWallDistance(StructGrid *grid)
 {
     RDouble3D & walldist = *grid->GetWallDist();
+    RDouble3D &xcc = *grid->GetCellCenterX();
+    RDouble3D &ycc = *grid->GetCellCenterY();
+    RDouble3D &zcc = *grid->GetCellCenterZ();
+    Int3D &wallCellLabel = *grid->GetWallCellLabel();
 
     RDouble cellCenter[3], faceCenter[3], faceNormal[3];
 
@@ -1176,7 +1187,10 @@ void Pre_WalldistCompute::ComputeWallDistance(StructGrid *grid)
                     continue;
                 }
 
-                grid->CenterCoor(i, j, k, cellCenter[0], cellCenter[1], cellCenter[2]);
+                //grid->CenterCoor(i, j, k, cellCenter[0], cellCenter[1], cellCenter[2]);
+                cellCenter[0] = xcc(i, j, k);
+                cellCenter[1] = ycc(i, j, k);
+                cellCenter[2] = zcc(i, j, k);
 
                 for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
                 {
@@ -1197,6 +1211,8 @@ void Pre_WalldistCompute::ComputeWallDistance(StructGrid *grid)
                     int * nPointPerFace = cwalldist->GetnPointPerFace();
                     int * wallFace2Node = cwalldist->GetWallFace2Node();
                     int nodeCount = 0;
+                    vector <int> face2node;
+
                     for (int iFace = 0; iFace < nWallFaces; ++ iFace)
                     {
                         faceCenter[0] = xfc[iFace];
@@ -1206,8 +1222,7 @@ void Pre_WalldistCompute::ComputeWallDistance(StructGrid *grid)
                         faceNormal[0] = -xfn[iFace];
                         faceNormal[1] = -yfn[iFace];
                         faceNormal[2] = -zfn[iFace];
-                        
-                        vector<int> face2node;
+
                         face2node.resize(nPointPerFace[iFace]);
                         for (int iNode = 0; iNode < nPointPerFace[iFace]; ++ iNode)
                         {
@@ -2825,11 +2840,12 @@ bool Pre_WalldistCompute::IsWalldistComputOver(UnstructGrid *grid)
     int nBoundFace = grid->GetNBoundFace();
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     int *wallCellLabel = grid->GetWallCellLabel();
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <=1 && wallCellLabel[iCell] != 1) continue;
+        if (viscousType <=1 && wallCellLabel[iCell] != 1 && iLES == 0) continue;
 
         if (walldist[iCell] >= LARGE * 0.9)
         {
@@ -2907,6 +2923,7 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
     RDouble * zcc = grid->GetCellCenterZ();
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
     int * wallCellLabel = grid->GetWallCellLabel();
 
     cout.unsetf(ios::scientific);
@@ -2915,10 +2932,10 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
 
     RDouble cellCenter[3], faceCenter[3], faceNormal[3];
 
-    int interval = GetProgressInterval(nTotalCell, 20);
+    int interval = GetProgressInterval(nTotalCell, 10);
     for (int icell = 0; icell < nTotalCell; ++ icell)
     {
-        if (viscousType <=1 && wallCellLabel[icell] != 1) continue;
+        if (viscousType <=1 && wallCellLabel[icell] != 1 && iLES == 0) continue;
 
         if (walldist[icell] < LARGE * 0.9)
         {
@@ -3887,8 +3904,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByDirectMethod(UnstructGrid *grid)
     if (numberOfWallStructureInPresentBlock == 0)
     {
         RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+        RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-        SetField(nodeWalldistDistance, dist, numberOfNodes);
+        SetField(nodeWalldistDistance, dist / gridScaleFactor, numberOfNodes);
 
         return;
     }
@@ -3931,8 +3949,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceForSphere(UnstructGrid *grid)
     if (numberOfWallStructureInPresentBlock == 0)
     {
         RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+        RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-        SetField(nodeWalldistDistance, dist, numberOfNodes);
+        SetField(nodeWalldistDistance, dist / gridScaleFactor, numberOfNodes);
 
         return;
     }
@@ -4038,15 +4057,16 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethodForBlock(int iBlock)
             if (nTWallFace == 0)
             {
                 RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+                RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-                SetField(nodeWalldist, dist, nTotalNode);
+                SetField(nodeWalldist, dist / gridScaleFactor, nTotalNode);
 
                 continue;
             }
             
-            RDouble * x = grid->GetX();
-            RDouble * y = grid->GetY();
-            RDouble * z = grid->GetZ();
+            RDouble *x = grid->GetX();
+            RDouble *y = grid->GetY();
+            RDouble *z = grid->GetZ();
 
             ComputeNodeWallDist3DByProjectingFast(nTotalNode, x, y, z, &nodeWalldist[0]);
         }
@@ -4114,8 +4134,9 @@ void Pre_WalldistCompute::ComputeWallDistForNodesListByDirectMethod(int blockInd
     if (numberOfWallStructureInPresentBlock == 0)
     {
         RDouble distByfile = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+        RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-        SetField(dist, distByfile, nTotalNode);
+        SetField(dist, distByfile / gridScaleFactor, nTotalNode);
     }
 }
 
@@ -4140,7 +4161,8 @@ void Pre_WalldistCompute::ComputeWallDistForNodesListForSphere(int blockIndex, i
     if (numberOfWallStructureInPresentBlock == 0)
     {
         RDouble distByfile = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
-        SetField(dist, distByfile, nTotalNode);
+        RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+        SetField(dist, distByfile / gridScaleFactor, nTotalNode);
         return;
     }
 
@@ -4205,8 +4227,9 @@ void Pre_WalldistCompute::ComputeWallDistForNodesListByADT(int blockIndex, int n
         if (nTWallFace == 0)
         {
             RDouble distByFile = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+            RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-            SetField(dist, distByFile, nTotalNode);
+            SetField(dist, distByFile / gridScaleFactor, nTotalNode);
 
             break;
         }

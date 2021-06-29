@@ -62,24 +62,25 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
     RDouble4D *residualTurbulent  = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *spectumTurbulent = new RDouble4D(I, J, K, M, fortranArray);
 
-    grid->UpdateDataPtr("q_turb"   , qTurbulent);
-    grid->UpdateDataPtr("res_turb" , residualTurbulent );
-    grid->UpdateDataPtr("spec_turb", spectumTurbulent);
+    grid->UpdateDataPtr("q_turb"   , qTurbulent);    //! Unknown variable of turbulent model.
+    grid->UpdateDataPtr("res_turb" , residualTurbulent);    //! Residual or right-hand side.
+    grid->UpdateDataPtr("spec_turb", spectumTurbulent);    //! Spectral radius of turbulent model.
 
     RDouble4D *gradTurbulentX = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
     RDouble4D *gradTurbulentY = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
     RDouble4D *gradTurbulentZ = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
-    grid->UpdateDataPtr("gradTurbulentX", gradTurbulentX);
-    grid->UpdateDataPtr("gradTurbulentY", gradTurbulentY);
-    grid->UpdateDataPtr("gradTurbulentZ", gradTurbulentZ);
+    grid->UpdateDataPtr("gradTurbulentX", gradTurbulentX);    //! Gradient of unknown variable at face, for x direction. in x-face.
+    grid->UpdateDataPtr("gradTurbulentY", gradTurbulentY);    //! Gradient of unknown variable at face, for y direction. in y-face.
+    grid->UpdateDataPtr("gradTurbulentZ", gradTurbulentZ);    //! Gradient of unknown variable at face, for z direction. in z-face.
 
     RDouble4D *gradTurbulentCellCenterX = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *gradTurbulentCellCenterY = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *gradTurbulentCellCenterZ = new RDouble4D(I, J, K, M, fortranArray);
-    grid->UpdateDataPtr("gradTurbulentCellCenterX", gradTurbulentCellCenterX);
-    grid->UpdateDataPtr("gradTurbulentCellCenterY", gradTurbulentCellCenterY);
-    grid->UpdateDataPtr("gradTurbulentCellCenterZ", gradTurbulentCellCenterZ);
+    grid->UpdateDataPtr("gradTurbulentCellCenterX", gradTurbulentCellCenterX);    //! Gradient of unknown variable at cell-center in x-direction.
+    grid->UpdateDataPtr("gradTurbulentCellCenterY", gradTurbulentCellCenterY);    //! Gradient of unknown variable at cell-center in y-direction.
+    grid->UpdateDataPtr("gradTurbulentCellCenterZ", gradTurbulentCellCenterZ);    //! Gradient of unknown variable at cell-center in z-direction.
 
+    //! Temporary variable for periodic boundary condition.
     RDouble4D *rotTurbgradValueX = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *rotTurbgradValueY = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *rotTurbgradValueZ = new RDouble4D(I, J, K, M, fortranArray);
@@ -117,11 +118,11 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
     if (nTurbulentEquation == 2)
     {
         RDouble3D *cross = new RDouble3D(I, J, K, fortranArray);
-        grid->UpdateDataPtr("cross", cross);
-        RDouble3D *blend = new RDouble3D(I, J, K, fortranArray);  //SST_F1
-        grid->UpdateDataPtr("blend", blend);
-        RDouble3D *SST_F2 = new RDouble3D(I, J, K, fortranArray); //SST_F2
-        grid->UpdateDataPtr("SST_F2", SST_F2);
+        grid->UpdateDataPtr("cross", cross);    //! For the crossing term in two equation turbulence model.
+        RDouble3D *blend = new RDouble3D(I, J, K, fortranArray);
+        grid->UpdateDataPtr("blend", blend);    //! For blending function F1
+        RDouble3D *SST_F2 = new RDouble3D(I, J, K, fortranArray);
+        grid->UpdateDataPtr("SST_F2", SST_F2);    //! For blending function F2
     }
 
     int numberOfDimensions = GetDim();
@@ -3863,6 +3864,10 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+    int *iblank = grid->GetBlankIndex_tmp();
 
     int nDim = GetDim();
 
@@ -3876,6 +3881,22 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
         {
             for (int i = ist; i <= ied; ++ i)
             {
+#ifdef USE_OVERSET
+                int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+                if (codeOfOversetGrid == 1)
+                {
+                    int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
+                    if (iblank[cellLabel] != 2)
+                    {
+                        for (int m = 0; m < nTurbulentEquation; ++ m)
+                        {
+                            dqTurbulent(i, j, k, m) = 0.0;
+                        }
+                        continue;
+                    }
+                }
+#endif
+
                 for (int m = mst; m <= med; ++ m)
                 {
                     rhs0[m] = 0.0;
@@ -3983,6 +4004,10 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, Field
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+    int *iblank = grid->GetBlankIndex_tmp();
 
     Range M(0, nTurbulentEquation - 1);
 
@@ -3998,6 +4023,21 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, Field
         {
             for (int i = ied; i >= ist; -- i)
             {
+#ifdef USE_OVERSET
+                int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+                if (codeOfOversetGrid == 1)
+                {
+                    int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
+                    if (iblank[cellLabel] != 2)
+                    {
+                        for (int m = 0; m < nTurbulentEquation; ++ m)
+                        {
+                            dqTurbulent(i, j, k, m) = 0.0;
+                        }
+                        continue;
+                    }
+                }
+#endif
                 for (int m = mst; m <= med; ++ m)
                 {
                     rhs0[m] = 0.0;
@@ -4314,9 +4354,14 @@ void TurbSolverStr::Boundary(Grid *gridIn)
 
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int wallFunctionType = parameters->GetWallFunctionType();
+    int codeOfOversetGrid = 0;
 
     CompositeBCRegion *compositeBCRregion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRregion->GetnBCRegion();
+
+#ifdef USE_OVERSET
+    codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+#endif
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
@@ -4387,15 +4432,22 @@ void TurbSolverStr::Boundary(Grid *gridIn)
             OutFlowBC(grid, BCRegion);
         }
         //! Deal in symmetry wall method if there is no boundary ID specified.
-        else if (ifIsJetBC(BCType))
+        else if (IsJetBC(BCType))
         {
             SymmetryBC(grid, BCRegion);
         }
         else
         {
-            ostringstream oss;
-            oss << "Error : Illegal BCtype ID " << BCType << endl;
-            TK_Exit::ExceptionExit(oss);
+            if (codeOfOversetGrid != 0)
+            {
+                VisWall(grid, BCRegion);
+            }
+            else
+            {
+                ostringstream oss;
+                oss << "Error : Illegal BCtype ID " << BCType << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
         }
     }
     CornerPoint(grid);
@@ -4413,6 +4465,9 @@ void TurbSolverStr::CornerPoint(Grid *gridIn)
 
     RDouble4D &qTurbulent = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
     FillCornerPoint3D(qTurbulent, ni, nj, nk, nTurbulentEquation);
+
+    RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
+    FillCornerPoint3D(viscousTurbulence, ni, nj, nk);
 }
 
 void TurbSolverStr::InFlowBC(Grid *grid, BCRegion *BCRegion)
@@ -5330,79 +5385,79 @@ void TurbSolverStr::DownloadInterfaceValue(ActionKey *actkey)
     //}
 }
 
-//void TurbSolverStr::CompressDQ(DataContainer*& dataContainer, FieldProxy* fieldProxy, Grid* gridIn, const int& zoneIndex, const int& neighborZoneIndex, const int& nEquation)
-//{
-//    StructGrid* grid = StructGridCast(gridIn);
-//    int level = grid->GetLevel();
-//    InterfaceInfo* interfaceInformation = grid->GetInterfaceInfo();
-//    if (!interfaceInformation)
-//    {
-//        return;
-//    }
-//
-//    StructGrid* finestGrid = StructGridCast(grid->GetFinestGrid());
-//    InterfaceInfo* finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-//
-//    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-//    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-//    int* interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
-//
-//    dataContainer->moveto_begin();
-//
-//    RDouble4D& fieldSend = fieldProxy->GetField_STR();
-//
-//    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-//    {
-//        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-//        {
-//            int iFace = interfaceIndexContainerForSend[iLocalFace];
-//            int is, js, ks;
-//            finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
-//            finestGrid->RemapMultigridIJK(level, is, js, ks);
-//            for (int m = 0; m < nEquation; ++m)
-//            {
-//                PHWrite(dataContainer, fieldSend(is, js, ks, m));
-//            }
-//        }
-//    }
-//}
-//
-//void TurbSolverStr::DecompressDQ(DataContainer*& dataContainer, FieldProxy* fieldProxy, Grid* gridIn, const int& zoneIndex, const int& neighborZoneIndex, const int& nEquation)
-//{
-//    StructGrid* grid = StructGridCast(gridIn);
-//    int level = grid->GetLevel();
-//    InterfaceInfo* interfaceInformation = grid->GetInterfaceInfo();
-//    if (!interfaceInformation)
-//    {
-//        return;
-//    }
-//
-//    StructGrid* finestGrid = StructGridCast(grid->GetFinestGrid());
-//    InterfaceInfo* finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-//
-//    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-//    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-//    int* interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
-//
-//    dataContainer->moveto_begin();
-//
-//    RDouble4D& fieldRecv = fieldProxy->GetField_STR();
-//
-//    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-//    {
-//        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-//        {
-//            int iFace = interfaceIndexContainerForReceive[iLocalFace];
-//            int it, jt, kt;
-//            finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
-//            finestGrid->RemapMultigridIJK(level, it, jt, kt);
-//            for (int m = 0; m < nEquation; ++m)
-//            {
-//                PHRead(dataContainer, fieldRecv(it, jt, kt, m));
-//            }
-//        }
-//    }
-//}
+void TurbSolverStr::CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *gridIn, const int &zoneIndex, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    RDouble4D &fieldSend = fieldProxy->GetField_STR();
+
+    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    {
+        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+        {
+            int iFace = interfaceIndexContainerForSend[iLocalFace];
+            int is, js, ks;
+            finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
+            finestGrid->RemapMultigridIJK(level, is, js, ks);
+            for (int m = 0; m < nEquation; ++ m)
+            {
+                PHWrite(dataContainer, fieldSend(is, js, ks, m));
+            }
+        }
+    }
+}
+
+void TurbSolverStr::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *gridIn, const int &zoneIndex, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    RDouble4D &fieldRecv = fieldProxy->GetField_STR();
+
+    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    {
+        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+        {
+            int iFace = interfaceIndexContainerForReceive[iLocalFace];
+            int it, jt, kt;
+            finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+            finestGrid->RemapMultigridIJK(level, it, jt, kt);
+            for (int m = 0; m < nEquation; ++ m)
+            {
+                PHRead(dataContainer, fieldRecv(it, jt, kt, m));
+            }
+        }
+    }
+}
 
 void TurbSolverStr::ComputeLengthScaleofOneEquationModel(Grid *gridIn)
 {

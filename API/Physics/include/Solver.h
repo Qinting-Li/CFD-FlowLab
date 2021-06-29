@@ -60,16 +60,16 @@ public:
     virtual ~PHSolver(){};
 
 public:
-    //! Assigns the solver index, the default index is '0' if without given.
+    //! Assign the solver index, the default index is '0' if without given.
     void SetIndex(int index = 0);
 
-    //! Assigns the geometry(grid) to the solver.
+    //! Assign the geometry(grid) to the solver.
     void SetGeometry(PHGeometry *geometry);
 
-    //! Returns the solver index, 
+    //! Return the solver index, 
     int  GetIndex() const;
 
-    //! Returns the geometry(grid).
+    //! Return the geometry(grid).
     PHGeometry *GetGeometry();
     
     void SetKey(int key);

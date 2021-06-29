@@ -226,13 +226,13 @@ RDouble NSSolver::ComputeCFL()
 
     Param_NSSolver *parameters = GetControlParameters();
     bool isUnsteady = parameters->GetIsUnsteady();
-    if(isUnsteady)
-    {
+    //if(isUnsteady)
+    //{
         //! Unsteady.
-        GlobalDataBase::GetData("innstep", &iterationStep, PHINT, 1);
-    }
-    else
-    {
+    //    GlobalDataBase::GetData("innstep", &iterationStep, PHINT, 1);
+    //}
+    //else
+    //{
         //! Steady.
         int nMGLevel = parameters->GetNMGLevel();        
         if (nMGLevel <= 1)
@@ -245,7 +245,7 @@ RDouble NSSolver::ComputeCFL()
             //! Coarse grid.
             GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
         }
-    }
+    //}
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
@@ -277,7 +277,7 @@ void NSSolver::SourceFlux(Grid *grid)
 bool NSSolver::WantVisualField(Grid *grid)
 {
     Param_NSSolver *parameters = GetControlParameters();
-    int visualField = parameters->GetIsPlotVolumeField();
+    int visualField = parameters->GetPlotFieldType();
 
     if (visualField == TEC_SPACE::BlockVisual)
     {
@@ -337,7 +337,7 @@ void NSSolver::InitDependentVariables()
 {
     Grid *fineGrid = GetGrid();
 
-    //! TODO: To optimization this process in future
+    //! TODO: To optimization this process in future.
     //! These variables are need for boundary condition.
     ComputeGamaAndTemperature(fineGrid);
 
@@ -373,7 +373,7 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     int nTemperatureModel = parameters->GetTemperatureModel();
     CFDSolver::RegisterInterfaceField("t", PHDOUBLE, nTemperatureModel);
     
-	int viscousType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     if (viscousType > 0)
     {
         //CFDSolver::RegisterInterfaceField("visl", PHDOUBLE, 1);
@@ -426,8 +426,11 @@ void NSSolver::RegisterCFDSolverInterpointField()
 
 void NSSolver::RegisterCFDSolverOversetField()
 {
+    Param_NSSolver *parameters = GetControlParameters();
     int nEquation = GetNumberOfEquations();
     CFDSolver::RegisterOversetField("q", PHDOUBLE, nEquation);
+    int nTemperatureModel = parameters->GetTemperatureModel();
+    CFDSolver::RegisterOversetField("t", PHDOUBLE, nTemperatureModel);
 }
 
 void NSSolver::AllocateOversetInterfaceVar(int nIOversetFace, Data_ParamFieldSuite *dataStore)
@@ -528,4 +531,3 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
 }
 
 }
-

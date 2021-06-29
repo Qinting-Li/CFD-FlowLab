@@ -10,7 +10,6 @@
 #include "MixGrid.h"
 #include "Solver.h"
 
-
 using namespace std;
 
 #pragma warning (disable:913)
