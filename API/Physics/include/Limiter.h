@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,6 +12,7 @@
 //! @file      Limiter.h
 //! @brief     Spatial inviscid flux limiter.
 //! @author    Bell.
+
 #pragma once
 #include "Geo_UnstructGrid.h"
 using namespace std;
@@ -142,7 +143,7 @@ public:
 	//! Initialzie the Two-dimensional limiter pointer(limit)'s data
 	LIB_EXPORT void InitLimitData();
 
-private:
+public:
 	void CreateLimiter(int nsize, int neqn = 1);
 
 	void BarthLimiter  (RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);

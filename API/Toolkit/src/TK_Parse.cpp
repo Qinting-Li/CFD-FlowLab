@@ -10,52 +10,52 @@ namespace PHSPACE
 {
 LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
 {
-    string line,keyword,name,word;
+    string line, keyword, name, word;
     //string * value;
-    vector < string > values;
+    vector <string> values;
     //string separator  = " =\t\r\n#$,;\"";
     //! \t is the tab key.
-    string separator  = " =\r\n\t#$,;\"";
-    string sep1       = "\r\n";
+    string separator = " =\r\n\t#$,;\"";
+    string sep1 = "\r\n";
     string::size_type npos = string::npos;
 
     string errMsg = "error in parameter file";
 
-    map < string, int > keywordmap;
+    map <string, int> keywordmap;
 
-    keywordmap.insert(pair<string,int>("int"   ,PHINT    ));
-    keywordmap.insert(pair<string,int>("float" ,PHFLOAT  ));
-    keywordmap.insert(pair<string,int>("double",PHDOUBLE ));
-    keywordmap.insert(pair<string,int>("string",PHSTRING ));
+    keywordmap.insert(pair<string, int>("int"   , PHINT));
+    keywordmap.insert(pair<string, int>("float" , PHFLOAT));
+    keywordmap.insert(pair<string, int>("double", PHDOUBLE));
+    keywordmap.insert(pair<string, int>("string", PHSTRING));
 
-    while ( !file.eof() )
+    while (!file.eof())
     {
-        getline(file,line);
-        if ( line == "" ) continue;
-        FindNextWord(line,word,sep1);
+        getline(file, line);
+        if (line == "") continue;
+        FindNextWord(line, word, sep1);
 
-        if(word == "{") continue; // Get into sub-domain.
-        if(word == "}") break;	  // Get out of sub-domain.
+        if (word == "{") continue;  // Get into sub-domain.
+        if (word == "}") break;     // Get out of sub-domain.
 
-        if ( word.substr(0,1) == "#" || word.substr(0,2) == "//") continue;
+        if (word.substr(0, 1) == "#" || word.substr(0, 2) == "//") continue;
 
-        line = FindNextWord(line,keyword,separator);
+        line = FindNextWord(line, keyword, separator);
 
-        if ( keyword == "" ) continue;
+        if (keyword == "") continue;
 
-        line = FindNextWord(line,name   ,separator);
+        line = FindNextWord(line, name, separator);
 
         int count = 0;
-        if ( name.find_first_of("[") != npos ) ++ count;
-        if ( name.find_first_of("]") != npos ) ++ count;
+        if (name.find_first_of("[") != npos) ++ count;
+        if (name.find_first_of("]") != npos) ++ count;
         int arraysize = 1;
-        if ( count == 2 )
+        if (count == 2)
         {
             //! Array mode.
             string line1 = name;
             //string sep  = " =\t\r\n#$,;\"[]";
-            string sep  = " =\r\n\t#$,;\"[]";
-            line1 = FindNextWord(line1,name ,sep);
+            string sep = " =\r\n\t#$,;\"[]";
+            line1 = FindNextWord(line1, name, sep);
 
             string value;
             line = FindNextWord(line, value, sep);
@@ -67,7 +67,7 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
 
             arraysize = static_cast<int>(values.size());
         }
-        else if ( count == 0 )
+        else if (count == 0)
         {
             string value;
             if (name == "speciesName" || name == "initMassFraction")
@@ -76,7 +76,7 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
             }
             else
             {
-                line = FindNextWord(line, value ,separator);
+                line = FindNextWord(line, value, separator);
             }
             values.push_back(value);
         }
@@ -88,44 +88,44 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
         }
 
         int type, size = arraysize;
-        type = keywordmap[ keyword ];
-        if ( type == PHSTRING )
+        type = keywordmap[keyword];
+        if (type == PHSTRING)
         {
-            string * data = new string [ size ];
-            for ( int i = 0 ; i < size; ++ i )
+            string * data = new string [size];
+            for (int i = 0; i < size; ++ i)
             {
                 data[i] = values[i];
             }
             database->UpdateData(name, data, type, size);
             delete [] data;
         }
-        else if ( type == PHINT )
+        else if (type == PHINT)
         {
-            int * data = new int [ size ];
-            for ( int i = 0 ; i < size; ++ i )
+            int * data = new int [size];
+            for (int i = 0; i < size; ++ i)
             {
-                from_string< int >(data[i],values[i],std::dec);
+                from_string<int>(data[i], values[i], std::dec);
             }
 
             database->UpdateData(name, data, type, size);
             delete [] data;
         }
-        else if ( type == PHFLOAT )
+        else if (type == PHFLOAT)
         {
-            RFloat * data = new RFloat [ size ];
-            for ( int i = 0 ; i < size; ++ i )
+            RFloat * data = new RFloat [size];
+            for (int i = 0; i < size; ++ i)
             {
-                from_string< RFloat >(data[i],values[i],std::dec);
+                from_string<RFloat>(data[i], values[i], std::dec);
             }
             database->UpdateData(name, data, type, size);
             delete [] data;
         }
-        else if ( type == PHDOUBLE )
+        else if (type == PHDOUBLE)
         {
-            RDouble * data = new RDouble [ size ];
-            for ( int i = 0 ; i < size; ++ i )
+            RDouble * data = new RDouble [size];
+            for (int i = 0; i < size; ++ i)
             {
-                from_string< RDouble >(data[i],values[i],std::dec);
+                from_string<RDouble>(data[i], values[i], std::dec);
             }
             database->UpdateData(name, data, type, size);
             delete [] data;
@@ -135,36 +135,36 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
     }
 }
 
-void ToLowerCase(string & word)
+void ToLowerCase(string &word)
 {
     transform(word.begin(), word.end(), word.begin(), GSStringToLowerCase());
 }
 
-void ToUpperCase(string & word)
+void ToUpperCase(string &word)
 {
     transform(word.begin(), word.end(), word.begin(), GSStringToUpperCase());
 }
 
 void TrimBlanks(string &source)
 {
-    string::size_type firstindex,nextindex,npos = string::npos;
+    string::size_type firstindex, nextindex, npos = string::npos;
     firstindex = source.find_first_not_of(" ");
-    nextindex  = source.find_last_not_of(" " );
+    nextindex  = source.find_last_not_of(" ");
 
-    source = source.substr(firstindex,nextindex-firstindex+1);
+    source = source.substr(firstindex, nextindex - firstindex + 1);
 }
 
-void SkipLines(fstream &file,int nline)
+void SkipLines(fstream &file, int nline)
 {
     string line;
     for (int i = 0; i < nline; ++ i)
     {
-        getline(file,line);
+        getline(file, line);
         if (file.eof()) return;
     }
 }
 
-bool IsEmptyLine(const string & line)
+bool IsEmptyLine(const string &line)
 {
     if (line == "")
     {
@@ -179,17 +179,17 @@ bool IsEmptyLine(const string & line)
     }
 }
 
-void ReadNextNonEmptyLine(fstream & file, string & line)
+void ReadNextNonEmptyLine(fstream &file, string &line)
 {
     bool isSpaceLine = true;
 
     do
     {
-        PHSPACE::ReadNextLine( file, line );
+        PHSPACE::ReadNextLine(file, line);
 
         for (string::iterator iter = line.begin(); iter != line.end(); ++ iter)
         {
-            if (! isspace( * iter ))
+            if (! isspace(* iter))
             {
                 isSpaceLine = false;
                 break;
@@ -197,45 +197,45 @@ void ReadNextNonEmptyLine(fstream & file, string & line)
         }
         if (file.eof()) break;
     }
-    while ( isSpaceLine );
+    while (isSpaceLine);
 
     return;
 }
 
-string FindNextWord(const string & source, string & word, const string & separator)
+string FindNextWord(const string &source, string &word, const string &separator)
 {
-    int firstIndex, nextIndex, notFindIndex = - 1;
+    int firstIndex, nextIndex, notFindIndex = -1;
     string emptyString = "";
-    firstIndex = static_cast<int>(source.find_first_not_of( separator, 0 ));
+    firstIndex = static_cast<int>(source.find_first_not_of(separator, 0));
 
     if (firstIndex == notFindIndex)
     {
         word = emptyString;
         return emptyString;
     }
-    nextIndex = static_cast<int>(source.find_first_of( separator, firstIndex ));
+    nextIndex = static_cast<int>(source.find_first_of(separator, firstIndex));
     if (nextIndex == notFindIndex)
     {
-        word = source.substr( firstIndex );
+        word = source.substr(firstIndex);
         return emptyString;
     }
     else
     {
-        word = source.substr( firstIndex, nextIndex - firstIndex );
-        return source.substr( nextIndex );
+        word = source.substr(firstIndex, nextIndex - firstIndex);
+        return source.substr(nextIndex);
     }
 }
 
-bool IsArrayParameter(const string & lineOfName)
+bool IsArrayParameter(const string &lineOfName)
 {
-    const int npos = - 1;
+    const int npos = -1;
 
-    if (lineOfName.find_first_of( "[" ) == string::npos)
+    if (lineOfName.find_first_of("[") == string::npos)
     {
         return false;
     }
 
-    if (lineOfName.find_first_of( "]" ) == string::npos)
+    if (lineOfName.find_first_of("]") == string::npos)
     {
         return false;
     }
@@ -243,31 +243,32 @@ bool IsArrayParameter(const string & lineOfName)
     return true;
 }
 
-bool IsCommentLine(const string & line)
+bool IsCommentLine(const string &line)
 {
     const string notReadableSeparator = " \r\n\t";
     string word;
     PHSPACE::FindNextWord(line, word, notReadableSeparator);
-    return (word.substr( 0, 1 ) == "#" || word.substr( 0, 2 ) == "//");
+    return (word.substr(0, 1) == "#" || word.substr(0, 2) == "//");
 }
 
-void ReadNextLine(fstream & file, string & line)
+void ReadNextLine(fstream &file, string &line)
 {
     std::getline(file, line);
 }
 
-string FindNextWord(string &source,string &word,const string &separator)
+string FindNextWord(string &source, string &word, const string &separator)
 {
-    string::size_type firstindex,nextindex,npos = string::npos;
+    string::size_type firstindex, nextindex, npos = string::npos;
     string nullstring = "";
-    firstindex = source.find_first_not_of(separator,0);
+    firstindex = source.find_first_not_of(separator, 0);
 
     if (firstindex == npos)
     {
         word = nullstring;
         return nullstring;
     }
-    nextindex = source.find_first_of(separator,firstindex);
+
+    nextindex = source.find_first_of(separator, firstindex);
     if (nextindex == npos)
     {
         word = source.substr(firstindex);
@@ -275,34 +276,34 @@ string FindNextWord(string &source,string &word,const string &separator)
     }
     else
     {
-        word = source.substr(firstindex,nextindex-firstindex);
+        word = source.substr(firstindex, nextindex - firstindex);
         return source.substr(nextindex);
     }
     return nullstring;
 }
 
-string FindNextWord(string & source, const string & separator)
+string FindNextWord(string &source, const string &separator)
 {
-    int firstIndex, nextIndex, notFindIndex = - 1;
+    int firstIndex, nextIndex, notFindIndex = -1;
     string emptyString = "";
-    firstIndex = static_cast<int>(source.find_first_not_of( separator, 0 ));
+    firstIndex = static_cast<int>(source.find_first_not_of(separator, 0));
 
     if (firstIndex == notFindIndex)
     {
         return emptyString;
     }
 
-    nextIndex = static_cast<int>(source.find_first_of( separator, firstIndex ));
+    nextIndex = static_cast<int>(source.find_first_of(separator, firstIndex));
     if (nextIndex == notFindIndex)
     {
-        string word = source.substr( firstIndex );
+        string word = source.substr(firstIndex);
         source = emptyString;
         return word;
     }
     else
     {
-        string word = source.substr( firstIndex, nextIndex - firstIndex );
-        source = source.substr( nextIndex );
+        string word = source.substr(firstIndex, nextIndex - firstIndex);
+        source = source.substr(nextIndex);
         return word;
     }
 }
@@ -311,11 +312,11 @@ void GetNameExt(const string &fullname, string &fname, string &fext, const strin
 {
     basic_string <char>::size_type index;
 
-    if(fullname.empty()) return;
+    if (fullname.empty()) return;
 
     index = fullname.find_last_of(sep);
-    fname = fullname.substr(0,index);
-    fext  = fullname.substr(index+1,fullname.length()-index-1);
+    fname = fullname.substr(0, index);
+    fext  = fullname.substr(index+1, fullname.length() - index - 1);
 }
 
 void ReadNewLine(fstream &file, string &line)
@@ -326,9 +327,9 @@ void ReadNewLine(fstream &file, string &line)
     {
         getline(file, line);
 
-        for(string::iterator iter = line.begin(); iter != line.end(); ++ iter)
+        for (string::iterator iter = line.begin(); iter != line.end(); ++ iter)
         {
-            if(!isspace(*iter))
+            if (!isspace(*iter))
             {
                 IsSpaceLine = false;
                 break;
@@ -336,7 +337,7 @@ void ReadNewLine(fstream &file, string &line)
         }
         if (file.eof()) break;
     }
-    while(IsSpaceLine);
+    while (IsSpaceLine);
 
     return;
 }

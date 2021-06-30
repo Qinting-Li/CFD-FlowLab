@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -53,20 +53,18 @@ typedef vector < RDouble * > VDoubleP;
 typedef vector < int      > VInt;
 typedef vector < VInt     > VVInt;
 
-typedef map<string,int    > IntDBase;
-typedef map<string,RDouble > RDoubleDBase;
-typedef map<string,RFloat > RFloatDBase;
-typedef map<string,RFloat > FloatDBase;
-typedef map<string,RDouble > DoubleDBase;
-typedef map<string,void * > PointerDBase;
+typedef map<string, int    > IntDBase;
+typedef map<string, RDouble> RDoubleDBase;
+typedef map<string, RFloat > RFloatDBase;
+typedef map<string, void * > PointerDBase;
 
 typedef streamsize PHLongLong;
 
 typedef vector<int>	   PHInt1D;
-typedef vector<PHInt1D>  PHInt2D;
+typedef vector<PHInt1D> PHInt2D;
 typedef vector<RDouble> PHDouble1D;
-typedef vector<PHDouble1D>  PHDouble2D;
-typedef vector<PHDouble2D>  PHDouble3D;
+typedef vector<PHDouble1D> PHDouble2D;
+typedef vector<PHDouble2D> PHDouble3D;
 typedef vector<string> PHString1D;
 
 typedef DataStruct_AdtNode<int, RDouble> PHProcessorNode;

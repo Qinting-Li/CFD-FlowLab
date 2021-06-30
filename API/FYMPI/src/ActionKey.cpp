@@ -3,10 +3,10 @@ using namespace std;
 
 namespace PHSPACE
 {
-const char * ActionName[NofValidAction] = 
+const char * ActionName[NofValidAction] =
 {
-	"READ_RESTART",
-	"BUILD_WALL_STRUCT",
+    "READ_RESTART",
+    "BUILD_WALL_STRUCT",
     "CALC_WALL_DIST",
     "FILL_WALL_STRUCT",
     "READ_WALL_DIST",
@@ -18,9 +18,9 @@ const char * ActionName[NofValidAction] =
     "UPDATE_INTERPOINT_DATA",
     "UPLOAD_INTERPOINT_DATA",
     "DOWNLOAD_INTERPOINT_DATA",
-	"UPDATE_OVERSET_DATA",
-	"UPLOAD_OVERSET_DATA",
-	"DOWNLOAD_OVERSET_DATA",
+    "UPDATE_OVERSET_DATA",
+    "UPLOAD_OVERSET_DATA",
+    "DOWNLOAD_OVERSET_DATA",
     "DUMP_COMPONENT_AIR_FORCE_COEF",
     "DUMP_AIR_FORCE_COEF",
     "DUMP_CP_DISTRI",
@@ -29,7 +29,7 @@ const char * ActionName[NofValidAction] =
     "ALLOCATEINTERFACE",
     "COMPUTEMETRICS",
     "COMMCELLCENTERDATA",
-	"COMMCELLIBLANK",
+    "COMMCELLIBLANK",
     "ALLOCATE_WALL_DIST",
     "TEST_RECONSTRUCTION",
     "TEST_INTERFACE",
@@ -38,39 +38,52 @@ const char * ActionName[NofValidAction] =
     "INIT_FIRST",
     "INIT_SECOND",
     "INIT_FINAL",
-	"DUMP_AVERAGE_FLOW",
-	"READ_AVERAGE_FLOW",
-	"VISUALIZATION_AVERAGE_FLOW",
-	"DUMP_SURFACE_INFO" //added by Li Peng
+    "DUMP_AVERAGE_FLOW",
+    "READ_AVERAGE_FLOW",
+    "VISUALIZATION_AVERAGE_FLOW",
+    "DUMP_SURFACE_INFO",
+    "DUMP_PROBES_FLOW"
 };
 
 ActionKey::ActionKey()
 {
-    data	= new DataContainer();
-	tecdata	= new DataContainer();
+    data    = new DataContainer();
+    tecdata = new DataContainer();
 
-	action    = 0;
+    action    = 0;
     subact    = 0;
-	solver    = 0;
+    solver    = 0;
     solverID  = 0;
     level     = 0;
     ipos      = 0;
     kind      = 0;
-	filepos   = 0;
-	format    = 0;
+    filepos   = 0;
+    format    = 0;
     file      = 0;
     del_file  = false;
-	VTKvisual = false;
-	openmode  = ios_base::out;
-	filename  = "";
-	tecfilename = "";
-	taskname  = "";
+    VTKvisual = false;
+    openmode  = ios_base::out;
+    filename  = "";
+    tecfilename = "";
+    taskname  = "";
 }
 
 ActionKey::~ActionKey()
 {
     delete data;
     delete tecdata;
+}
+
+ActionKey *currentActionKey = 0;
+
+void SetCurrentActionKey(ActionKey *currentActionKeyIn)
+{
+    currentActionKey = currentActionKeyIn;
+}
+
+ActionKey * GetCurrentActionKey()
+{
+    return currentActionKey;
 }
 
 }

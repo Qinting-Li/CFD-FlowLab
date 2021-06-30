@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,6 +12,7 @@
 //! @file      Pre_GridRefine.h
 //! @brief     Refining grid.
 //! @author    He Xianyao.
+
 #pragma once
 #include "Region.h"
 #include "Geometry.h"
@@ -23,24 +24,24 @@ namespace PHSPACE
 class Pre_GridRefine
 {
 public:
-	string gridFileName;
+    string gridFileName;
 
 public:
-	LIB_EXPORT Pre_GridRefine(const string & from_gfile);
-	LIB_EXPORT ~Pre_GridRefine();
+    LIB_EXPORT Pre_GridRefine(const string &from_gfile);
+    LIB_EXPORT ~Pre_GridRefine();
 
 public:
-	LIB_EXPORT void Run();
+    LIB_EXPORT void Run();
 
 private:
-	void RefineGrid();
-	void RefineGridStr(int izone, StructGrid * grid_in);
-	void RefineBCRegion();
+    void RefineGrid();
+    void RefineGridStr(int izone, StructGrid *grid_in);
+    void RefineBCRegion();
 
 private:
-	int numberOfBlocks;
-	vector<Grid *> OrdinaryGrid;
-	Grid ** NewGrids;
+    int numberOfBlocks;
+    vector<Grid *> OrdinaryGrid;
+    Grid ** NewGrids;
 };
 
 }

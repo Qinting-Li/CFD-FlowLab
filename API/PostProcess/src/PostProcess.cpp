@@ -28,15 +28,14 @@ void PostProcess::Run()
     InitGlobalValues();
     ReadBCFile();
     CompAirForceCoef();
-
 }
 
 void PostProcess::ReadGridFile()
 {
-    cout<<endl;
-    cout<<"Begin to read grid finish ..."<<endl<<endl;
+    cout << endl;
+    cout << "Begin to read grid finish ..." << endl << endl;
     region->ReadGrid();
-    cout<<endl<<"Read grid finish ..."<<endl;
+    cout << endl << "Read grid finish ..." << endl;
 
     Grid *grid = GetGrid(0);
     gridtype = grid->Type();
@@ -79,10 +78,10 @@ void PostProcess::InitGlobalValues()
 
     int nm    = GlobalDataBase::GetIntParaFromDB("nm");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    int neqn = nm + nchem;
+    int neqn  = nm + nchem;
 
     RDouble *prim_inf = new RDouble[neqn];
-    GlobalDataBase::UpdateDataPtr("prim_inf",prim_inf);
+    GlobalDataBase::UpdateDataPtr("prim_inf", prim_inf);
 
     RDouble attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
     RDouble angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
@@ -106,8 +105,6 @@ void PostProcess::InitGlobalValues()
     prim_inf[IV] = 1.0 * sin(attack) * cos(sideslip);
     prim_inf[IW] = 1.0 *               sin(sideslip);
     prim_inf[IP] = reference_pressure;
-
-
 }
 
 void PostProcess::ComputeCoefficientOfStateEquation()
@@ -132,36 +129,29 @@ void PostProcess::ComputeReferenceTsuth()
 
 void PostProcess::ComputeReferenceLengthDimensional()
 {
-	RDouble reynoldsReferenceLengthDimensional = 1.0;
+    RDouble reynoldsReferenceLengthDimensional = 1.0;
 
-	RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-	reynoldsReferenceLengthDimensional = gridScaleFactor;
+    reynoldsReferenceLengthDimensional = gridScaleFactor;
 
-	GlobalDataBase::UpdateData("reynoldsReferenceLengthDimensional", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("reynoldsReferenceLengthDimensional", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
 }
 
 void PostProcess::CompAirForceCoef()
 {
-
-    if ( gridtype == STRUCTGRID )
+    if (gridtype == STRUCTGRID)
     {
         ForceProcessStruct *forceprocess = new ForceProcessStruct(this->data);
         forceprocess->Run();
-    
+
         delete forceprocess;
     }
     else
     {
-
-
-
-
     }
 
     DumpAirForceCoef();
-
-
 }
 
 void PostProcess::DumpAirForceCoef()
@@ -182,23 +172,23 @@ void PostProcess::DumpAirForceCoef()
 
     const int ALL = 0;
 
-    RDouble *cfx            = data->GetCfx();
-    RDouble *cfy            = data->GetCfy();
-    RDouble *cfz            = data->GetCfz();
-    RDouble *cpx            = data->GetCpx();
-    RDouble *cpy            = data->GetCpy();
-    RDouble *cpz            = data->GetCpz();
-    RDouble *cmx            = data->GetCmx();
-    RDouble *cmy            = data->GetCmy();
-    RDouble *cmz            = data->GetCmz();
-    RDouble *cl_tot         = data->GetClTot();
-    RDouble *cd_tot         = data->GetCdTot();
-    RDouble *cd_pr          = data->GetCdPr();
-    RDouble *cd_sf          = data->GetCdSf();
-    RDouble *cd_cl2pa       = data->GetCdCl2Pa();
-    RDouble *xcp            = data->GetXcp();
-    RDouble *side           = data->GetSide();
-    RDouble *hingeMoment    = data->GetHingeMoment();
+    RDouble *cfx         = data->GetCfx();
+    RDouble *cfy         = data->GetCfy();
+    RDouble *cfz         = data->GetCfz();
+    RDouble *cpx         = data->GetCpx();
+    RDouble *cpy         = data->GetCpy();
+    RDouble *cpz         = data->GetCpz();
+    RDouble *cmx         = data->GetCmx();
+    RDouble *cmy         = data->GetCmy();
+    RDouble *cmz         = data->GetCmz();
+    RDouble *cl_tot      = data->GetClTot();
+    RDouble *cd_tot      = data->GetCdTot();
+    RDouble *cd_pr       = data->GetCdPr();
+    RDouble *cd_sf       = data->GetCdSf();
+    RDouble *cd_cl2pa    = data->GetCdCl2Pa();
+    RDouble *xcp         = data->GetXcp();
+    RDouble *side        = data->GetSide();
+    RDouble *hingeMoment = data->GetHingeMoment();
 
     oss << outnstep << "	";
     oss << cl_tot[ALL] << "	";

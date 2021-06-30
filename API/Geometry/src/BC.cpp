@@ -9,6 +9,7 @@
 #include "Geo_DynamicGridMetrics_Unstruct.h"
 #include "Geo_LSQWeight_Unstruct.h"
 #include "PHIO.h"
+#include "IO_FileName.h"
 #include "Constants.h"
 #include "TK_Exit.h"
 #include "TK_Parse.h"
@@ -22,6 +23,7 @@
 #include "Geo_OversetGridTopo_Struct.h"
 #include "BC_Unstruct.h"
 using namespace std;
+
 namespace PHSPACE
 {
 vector<BoundaryCondition *> * GlobalBoundaryCondition::globalBCList = 0;
@@ -49,6 +51,7 @@ void GlobalBoundaryCondition::ReadGlobalBoundaryCondition()
     if(!FileExist(bcFile))
     {
         //! To compatible the old version.
+        //SetDefaultSolidBoundaryCondition();
         return;
     }
 
@@ -57,6 +60,130 @@ void GlobalBoundaryCondition::ReadGlobalBoundaryCondition()
     ParseBCFromFile(file);
 
     CloseFile(file);
+}
+
+void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
+{
+    if (globalBCList != 0) return;
+    globalBCList = new vector<BoundaryCondition *>;
+
+    int nBoundaryConditons = 1;
+    BoundaryCondition *boundaryCondtion = new BoundaryCondition();
+    string globalBCName = "SOLID_SURFACE";
+
+    using namespace PHMPI;
+
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    int myid = PHMPI::GetCurrentProcessorID();
+    string bcName;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int send_proc = GetZoneProcessorID(iZone);
+        int recv_proc = GetZoneFileID(iZone);
+
+        int procID = PHMPI::GetZoneProcessorID(iZone);
+
+        if (myid == procID)
+        {
+            Grid *gridofThisProcessor = GetGrid(iZone, 0);
+
+            int gridtype = gridofThisProcessor->Type();
+
+            if (gridtype == PHSPACE::STRUCTGRID)
+            {
+                StructGrid *grid = StructGridCast(gridofThisProcessor);
+
+                CompositeBCRegion *composite_bcregion = grid->GetCompositeBCRegion();
+                int nBCRegion = composite_bcregion->GetnBCRegion();
+                for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+                {
+                    BCRegion *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    bcName = bcregion->GetBCName();
+                    int bcType = bcregion->GetBCType();
+
+                    if (bcType == PHENGLEI::SOLID_SURFACE)
+                    {
+                        bcregion->SetBCName(globalBCName);
+                        boundaryCondtion->SetBCName(globalBCName);
+                        boundaryCondtion->SetBCType(bcType);
+                    }
+                }
+            }
+            else
+            {
+                UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
+
+                BCRecord **bcr = grid->GetBCRecord();
+
+                int numberOfBCFaces = grid->GetNBoundFace();
+                for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
+                {
+                    string bcName = bcr[iFace]->GetBCName();
+                    int bcType = bcr[iFace]->GetKey();
+
+                    if (bcType == PHENGLEI::SOLID_SURFACE)
+                    {
+                        bcr[iFace]->SetBCName(globalBCName);
+                        boundaryCondtion->SetBCName(globalBCName);
+                        boundaryCondtion->SetBCType(bcType);
+                    }
+                }
+            }
+        }
+    }
+
+    Data_Param *bcParamDataBase = new Data_Param();
+    boundaryCondtion->SetBCParamDataBase(bcParamDataBase);
+
+    int taskType = GetTaskCode();
+
+    if (taskType == SOLVE_FIELD || taskType == POST_PROCESSING)
+    {
+        RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
+
+        //! For solid wall BC, set the default reference geometry scale.
+        RDouble partForceRefenenceArea, partForceRefenenceLength, partForceRefenenceLength_B;
+        RDouble partForceRefenenceX, partForceRefenenceY, partForceRefenenceZ;
+
+        //! This judgement is not enough, and needs to be improved. In fact, judgements of the five reference variables should all exist.
+
+        partForceRefenenceArea = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceArea");
+        partForceRefenenceLength = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceLength");
+        partForceRefenenceLength_B = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceLengthSpanWise");
+        partForceRefenenceX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
+        partForceRefenenceY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
+        partForceRefenenceZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
+
+        if (GetDim() == THREE_D)
+        {
+            partForceRefenenceArea /= reynoldsReferenceLengthDimensional * reynoldsReferenceLengthDimensional;
+        }
+        else if (GetDim() == TWO_D)
+        {
+            partForceRefenenceArea /= reynoldsReferenceLengthDimensional;
+        }
+        partForceRefenenceLength /= reynoldsReferenceLengthDimensional;
+        partForceRefenenceLength_B /= reynoldsReferenceLengthDimensional;
+        partForceRefenenceX /= reynoldsReferenceLengthDimensional;
+        partForceRefenenceY /= reynoldsReferenceLengthDimensional;
+        partForceRefenenceZ /= reynoldsReferenceLengthDimensional;
+
+        bcParamDataBase->UpdateData("forceRefenenceArea", &partForceRefenenceArea, PHDOUBLE, 1);
+        bcParamDataBase->UpdateData("forceRefenenceLength", &partForceRefenenceLength, PHDOUBLE, 1);
+        bcParamDataBase->UpdateData("forceRefenenceLengthSpanWise", &partForceRefenenceLength_B, PHDOUBLE, 1);
+        bcParamDataBase->UpdateData("TorqueRefX", &partForceRefenenceX, PHDOUBLE, 1);
+        bcParamDataBase->UpdateData("TorqueRefY", &partForceRefenenceY, PHDOUBLE, 1);
+        bcParamDataBase->UpdateData("TorqueRefZ", &partForceRefenenceZ, PHDOUBLE, 1);
+
+        int dumpHingeMoment = 0;
+        RDouble localCoordAxis0[3] = { 0, 0, 0 };
+        RDouble localCoordAxis1[3] = { 0, 0, 0 };
+
+        bcParamDataBase->UpdateData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
+        bcParamDataBase->UpdateData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
+        bcParamDataBase->UpdateData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
+    }
+    globalBCList->push_back(boundaryCondtion);
 }
 
 void GlobalBoundaryCondition::SetGlobalDataBaseByGlobalBC()
@@ -361,7 +488,7 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream & file)
                     partForceRefenenceY        /= reynoldsReferenceLengthDimensional;
                     partForceRefenenceZ        /= reynoldsReferenceLengthDimensional;
 
-                    bcParamDataBase->UpdateData("forceRefenenceArea",   &partForceRefenenceArea, PHDOUBLE, 1);
+                    bcParamDataBase->UpdateData("forceRefenenceArea", &partForceRefenenceArea, PHDOUBLE, 1);
                     bcParamDataBase->UpdateData("forceRefenenceLength", &partForceRefenenceLength, PHDOUBLE, 1);
                     bcParamDataBase->UpdateData("forceRefenenceLengthSpanWise", &partForceRefenenceLength_B, PHDOUBLE, 1);
 					bcParamDataBase->UpdateData("TorqueRefX", &partForceRefenenceX, PHDOUBLE, 1);
@@ -388,11 +515,11 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream & file)
                         localCoordAxis0[idx] /= reynoldsReferenceLengthDimensional;
                         localCoordAxis1[idx] /= reynoldsReferenceLengthDimensional;
                     }
-                    bcParamDataBase->UpdateData("dumpHingeMoment",   &dumpHingeMoment, PHINT, 1);
-                    bcParamDataBase->UpdateData("localCoordAxis0",   localCoordAxis0, PHDOUBLE, 3);
-                    bcParamDataBase->UpdateData("localCoordAxis1",   localCoordAxis1, PHDOUBLE, 3);
+                    bcParamDataBase->UpdateData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
+                    bcParamDataBase->UpdateData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
+                    bcParamDataBase->UpdateData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
                 }
-                else if(taskType == CREATE_GRID)
+                else if(taskType == CREATE_GRID || taskType == SPLIT_OVERSET_GRID)
                 {
                     int gridobj = GlobalDataBase::GetIntParaFromDB("gridobj");
                     const int GRID_ADAPTATION = 2;
@@ -499,6 +626,9 @@ map<int,string> CreatFantasybctype()
     Fantasybctype[1001]	= "PRESSURE_INLET_PLATE";
     Fantasybctype[1002]	= "PRESSURE_OUTLET_PLATE";
     Fantasybctype[1000]	= "OVERSET";
+
+    Fantasybctype[53]	= "MASS_FLOW_INLET";
+    Fantasybctype[63]	= "MASS_FLOW_OUTLET";
 
     //const int EXTERNAL_BC           =   9;
     ////Added by Guo Yongheng 20160815: external overlap cells label

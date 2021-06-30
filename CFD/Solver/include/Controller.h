@@ -58,11 +58,11 @@ public:
     //! Steady simulation by implementing multi-grid cycle.
     //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right
     //! reason why this class is named as 'Controller'.
-    //! The standard simulation order is: \n
+    //! The standard simulation order is:
     //! Zero residual --> go into Multi-Grid cycle, if single level grid used, go to Relaxation directly.
     LIB_EXPORT void SolveSteadyField();
 
-    //! Unsteady simulation using Dual Time Step method.\n
+    //! Unsteady simulation using Dual Time Step method.
     //! In which, the steady simulation process is used as the virtual dual time step (or sub-iteration),
     //! and the steady relaxation sub-iterations are nested inside the real physical time step.
     LIB_EXPORT void SolveUnsteadyField();
@@ -87,11 +87,12 @@ public:
     void TimeStep(int iSolver, int level);
 
     //! Compute the inviscous/viscous/chemical spectrum radius, \n
-    //! the results stored in array srad and srv and srs.
+    //! the results stored in array invSpectralRadius and visSpectralRadius and srs.
     void SpectrumRadius(int iSolver, int level);
 
-    //! Compute the spectrum term (which stored in array spec) for time advancement.
-    void Spectrum(int iSolver, int level);
+    //! Compute the diagonal 'matrix' for LU-SGS. Although it is named as 'matrix',
+    //! only scale variable is used since the Jacobian matrix is simplified to be spectrum radius.
+    void Diagonal(int iSolver, int level);
 
     //! Compute and return the global minimum time step.
     //! For parallel computing, all_reduce is used to communicate the global minimum value.
@@ -108,6 +109,8 @@ public:
 
     //! Compute inviscid and viscous flux and source terms.
     void UpdateResiduals(int iSolver, int level);
+
+    void UpdateResidualsOnlyforMixGrid(int iSolver, int level);
 
     //! Compute pressure factor for entropy fix (Method 2).
     void PressureFactor(int iSolver, int level);
@@ -184,7 +187,8 @@ private:
     void CommunicateGenericArray(int iSolver, int level);
     void CommunicateGradientArray(int iSolver, int level);
     void CommunicateSpecificArray(int iSolver, int level, string arrayName, int nEquation);
-    void CommunicateGradientOnlyForMixGrid();
+    void CommunicateGradientandLimitOnlyForMixGrid();
+    void CommunicateQlQrOnlyforMixGrid();
     void CommunicateFacefluxOnlyforMixGrid();
 
     void LHS(int iSolver, int level, FieldProxy **resProxy, const RDouble &coef);
@@ -203,6 +207,18 @@ private:
     
     //! Backward sweep in BLUSGS methods.
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+
+    //! Line implicit Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
+    void LineLUSGS(int iSolver, int level);
+
+    void LineLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
+
+    //! Forward sweep in line BLUSGS methods.
+    void ForwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqProxy, FieldProxy** LUplusDQ, RDouble& sweepNormal, int& iSweep);
+
+    //! Backward sweep in line LUSGS methods.
+    void BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqProxy, FieldProxy** LUplusDQ, RDouble& sweepNormal);
+
 
     //! To execute the forward sweep of the block LU-SGS method.
     //! @param[in ]: iSolver is the serial number of the current solver.

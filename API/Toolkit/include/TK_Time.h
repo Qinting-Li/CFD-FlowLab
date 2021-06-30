@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -36,7 +36,7 @@ enum TimeTypeIndex
 //! Get Wall Time from first call.
 LIB_EXPORT double GetWallTime();
 
-//! PURPOSE  : Get Wall Time when dumping residuals.
+//! Get Wall Time when dumping residuals.
 LIB_EXPORT double GetWallTimeForResidual();
 
 //! Get CPU Time from first call.
@@ -46,13 +46,13 @@ LIB_EXPORT int GetCPUTime(double *ptr_time);
 LIB_EXPORT int WriStatTime();
 
 //! Collect CPU time, system time, wall time from last_time, and write to log file.
-//! @param[in]  title       testing tag.
-//! @param[in]  last_time
+//! @param[in] title    testing tag.
+//! @param[in] last_time
 LIB_EXPORT int WriStatTime(const char *title, double *last_time);
 
 //! Write starting CPU time, system time, wall time to pri_time.
-//! @param[in] pri_time  must be a vector of three element.
-LIB_EXPORT void StartTime( double *ptr_time );
+//! @param[in] pri_time    must be a vector of three element.
+LIB_EXPORT void StartTime(double *ptr_time);
 }
 
 #ifdef WIN32
@@ -74,16 +74,16 @@ public:
 
     //! Print the elapsed time to screen.
     //! @param[in] title    testing tag.
-    //! -# default is null("")
+    //! -# default is null("").
     void ShowTimeSpan(const string &title = "");
 
     //! Write the elapsed time to log file.
     //! @param[in] title    testing tag.
-    //! -# default is null("")
+    //! -# default is null("").
     void ShowTimeSpanToLogfile(const string &title = "");
 
 private:
-    double last_time,now_time;
+    double last_time, now_time;
 
 private:
     double GetWallTime();
@@ -108,16 +108,16 @@ public:
 
     //! Print the elapsed time to screen.
     //! @param[in] title    testing tag.
-    //! -# default is null("")
+    //! -# default is null("").
     void ShowTimeSpan(const string &title = "");
 
     //! Write the elapsed time to log file.
     //! @param[in] title    testing tag.
-    //! -# default is null("")
+    //! -# default is null("").
     void ShowTimeSpanToLogfile(const string &title = "");
 
 private:
-    struct timeval last_time,now_time;
+    struct timeval last_time, now_time;
     //! tv_sec : second.
     //! tv_usec: microsecond.
 };

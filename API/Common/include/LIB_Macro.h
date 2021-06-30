@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -14,10 +14,10 @@
 //!            This file is intended to be the first file #included to any
 //!            PHengLEI source. It defines platform-specific pre-processor 
 //!            macros necessary for correct compilation of PHengLEI code
-//!			   It's used to define the DLL/Static library.
+//!            It's used to define the DLL/Static library.
 //! @author    Bell modified it from OCC.
 
-#pragma  once
+#pragma once
 #include <iostream>
 using namespace std;
 

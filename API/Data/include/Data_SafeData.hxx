@@ -3,22 +3,22 @@ namespace PHSPACE
 
 inline string Data_SafeData::GetName() const
 {
-	return name;
+    return name;
 }
 
 inline int Data_SafeData::GetType() const
 {
-	return type;
+    return type;
 }
 
 inline int Data_SafeData::GetSize() const
 {
-	return size;
+    return size;
 }
 
 inline void * Data_SafeData::GetData() const
 {
-	return data;
+    return data;
 }
 
 }

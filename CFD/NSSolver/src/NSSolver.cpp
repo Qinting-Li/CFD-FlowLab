@@ -120,14 +120,6 @@ void NSSolver::Post()
         TecOutAverageFlow(actkeyTecOutAverageFlow);
         delete actkeyTecOutAverageFlow;
     }
-
-    if (IsNeedDESStatistics())
-    {
-        ActionKey *actkeyDumpAverageFlow = new ActionKey();
-        FillActionKey(actkeyDumpAverageFlow, DUMP_AVERAGE_FLOW, 0);
-        DumpAverageFlow(actkeyDumpAverageFlow);
-        delete actkeyDumpAverageFlow;
-    }
 }
 
 void NSSolver::PostSolve(Grid *grid, int stage, int level)
@@ -157,13 +149,6 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
         {
             Turbulent_Flat_Plate_Output_NASA(grid);
         }
-        //FlatPlateOutput(grid);
-        //SupersonicFlatPlateOutput(grid);
-        //Turbulent_Flat_Plate_Output(grid);            
-        //SupersonicTurbulentPlateOutput(grid);
-        //RAE_2822_Output(grid);
-        //DumpSingleAirfoilCp(grid);
-        //M6Wing_Output(grid);
     }
 
     if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
@@ -173,15 +158,6 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
         FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
         DumpRestartData(actkeyDumpRestartData);
         delete actkeyDumpRestartData;
-
-        if (IsNeedDESStatistics())
-        {
-            //! To dump Average Flow if necessary. 
-            ActionKey *actkeyDumpAverageFlow = new ActionKey();
-            FillActionKey(actkeyDumpAverageFlow, DUMP_AVERAGE_FLOW, level);
-            DumpAverageFlow(actkeyDumpAverageFlow);
-            delete actkeyDumpAverageFlow;
-        }
     }
 
     if (outnstep % intervalStepPlot == 0 && isSubIterationDump)
@@ -197,7 +173,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
     }
 
     int intervalStepRes = parameters->GetIntervalStepRes();
-    if (outnstep == 1 || outnstep % intervalStepRes == 0 && (!isUnsteady || !isSubIterationDump))
+    if ((outnstep == 1 || outnstep % intervalStepRes == 0) && (!isUnsteady || !isSubIterationDump))
     {
         //! To dump residual data.
         ActionKey *actkeyDumpResidual = new ActionKey();
@@ -250,13 +226,13 @@ RDouble NSSolver::ComputeCFL()
 
     Param_NSSolver *parameters = GetControlParameters();
     bool isUnsteady = parameters->GetIsUnsteady();
-    if(isUnsteady)
-    {
+    //if(isUnsteady)
+    //{
         //! Unsteady.
-        GlobalDataBase::GetData("innstep", &iterationStep, PHINT, 1);
-    }
-    else
-    {
+    //    GlobalDataBase::GetData("innstep", &iterationStep, PHINT, 1);
+    //}
+    //else
+    //{
         //! Steady.
         int nMGLevel = parameters->GetNMGLevel();        
         if (nMGLevel <= 1)
@@ -269,7 +245,7 @@ RDouble NSSolver::ComputeCFL()
             //! Coarse grid.
             GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
         }
-    }
+    //}
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
@@ -301,7 +277,7 @@ void NSSolver::SourceFlux(Grid *grid)
 bool NSSolver::WantVisualField(Grid *grid)
 {
     Param_NSSolver *parameters = GetControlParameters();
-    int visualField = parameters->GetIsPlotVolumeField();
+    int visualField = parameters->GetPlotFieldType();
 
     if (visualField == TEC_SPACE::BlockVisual)
     {
@@ -352,13 +328,16 @@ void NSSolver::InitCoarseGridsFlow()
     ComputeGamaAndTemperature(coarseGrid);
 
     ComputeNodeValue(coarseGrid);
+
+    //! dual time step source.
+    DualTimeSource(grid);
 }
 
 void NSSolver::InitDependentVariables()
 {
     Grid *fineGrid = GetGrid();
 
-    //! TODO: To optimization this process in future
+    //! TODO: To optimization this process in future.
     //! These variables are need for boundary condition.
     ComputeGamaAndTemperature(fineGrid);
 
@@ -394,7 +373,7 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     int nTemperatureModel = parameters->GetTemperatureModel();
     CFDSolver::RegisterInterfaceField("t", PHDOUBLE, nTemperatureModel);
     
-	int viscousType = parameters->GetViscousType();
+    int viscousType = parameters->GetViscousType();
     if (viscousType > 0)
     {
         //CFDSolver::RegisterInterfaceField("visl", PHDOUBLE, 1);
@@ -447,8 +426,11 @@ void NSSolver::RegisterCFDSolverInterpointField()
 
 void NSSolver::RegisterCFDSolverOversetField()
 {
+    Param_NSSolver *parameters = GetControlParameters();
     int nEquation = GetNumberOfEquations();
     CFDSolver::RegisterOversetField("q", PHDOUBLE, nEquation);
+    int nTemperatureModel = parameters->GetTemperatureModel();
+    CFDSolver::RegisterOversetField("t", PHDOUBLE, nTemperatureModel);
 }
 
 void NSSolver::AllocateOversetInterfaceVar(int nIOversetFace, Data_ParamFieldSuite *dataStore)
@@ -511,6 +493,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     int nTemperatureModel = parameters->GetTemperatureModel();
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
     int nPrecondition = parameters->GetIfLowSpeedPrecon();
+    int nNitrogenIndex = parameters->GetIndexOfNitrogen();
+    int nElectronIndex = parameters->GetIndexOfElectron();
 
     int RoeEntropyFixMethod  = parameters->GetRoeEntropyFixMethod();
     RDouble entrFixCoefLeft  = parameters->GetRoeEntropyFixCoef1();
@@ -529,6 +513,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetEntropyFixCoefficients(entrFixCoefLeft, entrFixCoefRight);
 
     invSchemePara->SetLength(faceProxy->size());
+    invSchemePara->SetIndexOfNitrogen(nNitrogenIndex);
+    invSchemePara->SetIndexOfElectron(nElectronIndex);
 
     //! Pointer parameters.
     invSchemePara->SetLeftAndRightQ(faceProxy->GetQL(), faceProxy->GetQR());
@@ -545,4 +531,3 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
 }
 
 }
-

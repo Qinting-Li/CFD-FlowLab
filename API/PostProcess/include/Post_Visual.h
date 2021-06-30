@@ -12,6 +12,7 @@
 //! @file      Post_Visual.h
 //! @brief     Post_Visual defines the post visualization variables.
 //! @author    Bell.
+
 #pragma once
 #include "GridType.h"
 #include "Geo_UnstructGrid.h"
@@ -27,12 +28,9 @@ class Grid;
 class Post_Visual
 {
 public:
-
-    //! @param[in]  nVisualVariables_in       Number of visual variables,\n
-    //!                                       parsed from parameter file usually.
-    //! @param[in]  visualVariables_in        Type of visual variables, . \n
-    //!                                       parsed from parameter file usually.
-    LIB_EXPORT Post_Visual(int nVisualVariables_in, int * visualVariables_in, Grid *grid_in = NULL);
+    //! @param[in] nVisualVariables_in    Number of visual variables, parsed from parameter file usually.
+    //! @param[in] visualVariables_in     Type of visual variables, parsed from parameter file usually.
+    LIB_EXPORT Post_Visual(int nVisualVariables_in, int *visualVariables_in, Grid *grid_in = NULL, int flowType_in = 0);
 
     LIB_EXPORT ~Post_Visual();
 
@@ -51,48 +49,51 @@ public:
 
     //! Compute variables on node through variables on cell center and or update to database.
     //! Unstructured grid data type.
-    //! @param[in]  name                Source data's name.\n
-    //! @param[in]  cellCenterData      Pointer the Source cell center data.
+    //! @param[in] name              Source data's name.
+    //! @param[in] cellCenterData    Pointer the Source cell center data.
     LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, RDouble *cellCenterData);
 
     //! Compute variables on node through variables on cell center and or update to database.
     //! Structured grid data type.
-    //! @param[in]  name                Source data's name.\n
-    //! @param[in]  cellCenterData      Pointer the Source cell center data.
-    //! @param[in]  index               The array index from RDouble4D array, \n
-    //!                                 i.e we only need the cellCenterData[...][...][...][index].
+    //! @param[in] name              Source data's name.
+    //! @param[in] cellCenterData    Pointer the Source cell center data.
+    //! @param[in] index             The array index from RDouble4D array,
+    //!                              i.e we only need the cellCenterData[...][...][...][index].
     LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, RDouble4D &cellCenterData, int index);
 
     //! Compute variables on node through variables on cell center and or update to database.
     //! Structured grid data type.
-    //! @param[in]  name          Source data's name.\n
-    //! @param[in]  cellCenterData        Pointer the Source cell center data.
+    //! @param[in] name              Source data's name.
+    //! @param[in] cellCenterData    Pointer the Source cell center data.
     LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, RDouble3D &cellCenterData);
-    //! Obtain data's pointer(address) from database by name
+    //! Obtain data's pointer(address) from database by name.
     //! If the dataSet doesn't has a same name data, returns null.
-    //! @param[in]  name          Source data's name.
+    //! @param[in] name    Source data's name.
     void * GetVisualNodeVarPtr(const string &name);
 
+    LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, Int3D & oversetcellCenterdata);
+
     //! Get all visualization varialbes' pointer (RDouble * for unstruct grid).
-    LIB_EXPORT void GetAllVisualNodeVarPtr(RDouble ** qn);
+    LIB_EXPORT void GetAllVisualNodeVarPtr(RDouble **qn);
 
     //! Get all visualization varialbes' pointer (RDouble4D * for struct grid).
-    LIB_EXPORT void GetAllVisualNodeVarPtr(RDouble4D ** qn);
+    LIB_EXPORT void GetAllVisualNodeVarPtr(RDouble4D **qn);
 
     //! Get variables' name through variable's tag index.
-    //! @param[in]  variableNumber  variable's index.
+    //! @param[in] variableNumber    variable's index.
     string GetVariableName(int variableNumber) const;
 
-    //! Get set of variables
+    //! Get set of variables.
     const set<int> & GetVisualVariables() const;
 
     Grid * GetGrid() const;
-private:
+    int GetFlowType() { return this->flowType; }
 
-    //! Geometry information
+private:
+    //! Geometry information.
     Grid *grid;
 
-    //! Grid type;
+    //! Grid type.
     int gridType;
 
     //! Number of visual variables.
@@ -104,172 +105,184 @@ private:
     //! Variable names, displayed in Tecplot.
     map<int, string> visualVariablesMap;
 
-    //! Store visual variables:
+    //! Store visual variables.
     Data_Field * visualVariablesPtr;
 
+    int flowType;
+
 private:
-    //! Free all allocated memory by visual node variables' pointer
+    //! Free all allocated memory by visual node variables' pointer.
     void FreeAllVisualNodeVarPtr();
 
     //! Free visual variables memory.
-    //! @param[in]  name    variables' name.
+    //! @param[in] name    variables' name.
     void DeleteVisualNodeVarPtr(const string &name);
 };
 
-const int VISUAL_DENSITY                 = 0;
-const int VISUAL_U                       = 1;
-const int VISUAL_V                       = 2;
-const int VISUAL_W                       = 3;
-const int VISUAL_PRESSURE                = 4;
-const int VISUAL_TEMPERATURE             = 5;
-const int VISUAL_MACH                    = 6;
-const int VISUAL_VISCOSITY_LAMINAR       = 7;
-const int VISUAL_VISCOSITY_TURBULENT     = 8;
-const int VISUAL_VORTICITY_X             = 9;
-const int VISUAL_VORTICITY_Y             = 10;
-const int VISUAL_VORTICITY_Z             = 11;
-const int VISUAL_VORTICITY_MAGNITUDE     = 12;
-const int VISUAL_STRAIN_RATE             = 13;
-const int VISUAL_Q_CRITERIA              = 14;
-const int VISUAL_CP                      = 15;
-const int VISUAL_TIME_STEP               = 16;
-const int VISUAL_VOLUME                  = 17;
-const int VISUAL_MODELED_TKE             = 18;
-const int VISUAL_MODELED_DISSIPATION     = 19;
-const int VISUAL_SST_F1                  = 20;
-const int VISUAL_SST_F2                  = 21;
-const int VISUAL_INCOMP_U                = 22;
-const int VISUAL_INCOMP_V                = 23;
-const int VISUAL_INCOMP_W                = 24;
-const int VISUAL_INCOMP_P                = 25;
-const int VISUAL_INCOMP_CP               = 26;
-const int VISUAL_INCOMP_T                = 27;
-const int VISUAL_INCOMP_DEN              = 28;
-const int VISUAL_INCOMP_VIS              = 29;
-const int VISUAL_KN                      = 30;
-const int VISUAL_INCOMP_TE               = 31;
-const int VISUAL_INCOMP_ED               = 32;
-const int VISUAL_TEMPERATURE_VIBRATION   = 33;
-const int VISUAL_TEMPERATURE_ELECTRON    = 34;
-const int VISUAL_GRADIENT_UX              = 41;
-const int VISUAL_GRADIENT_UY              = 42;
-const int VISUAL_GRADIENT_VX              = 43;
-const int VISUAL_GRADIENT_VY              = 44;
-const int VISUAL_WALL_DIST                = 50;
-//const int VISUAL_O                         = 14;
-//const int VISUAL_O2                        = 15;
-//const int VISUAL_NO                        = 16;
-//const int VISUAL_N                         = 17;
-//const int VISUAL_N2                        = 18;
+const int VISUAL_DENSITY               = 0;
+const int VISUAL_U                     = 1;
+const int VISUAL_V                     = 2;
+const int VISUAL_W                     = 3;
+const int VISUAL_PRESSURE              = 4;
+const int VISUAL_TEMPERATURE           = 5;
+const int VISUAL_MACH                  = 6;
+const int VISUAL_VISCOSITY_LAMINAR     = 7;
+const int VISUAL_VISCOSITY_TURBULENT   = 8;
+const int VISUAL_VORTICITY_X           = 9;
+const int VISUAL_VORTICITY_Y           = 10;
+const int VISUAL_VORTICITY_Z           = 11;
+const int VISUAL_VORTICITY_MAGNITUDE   = 12;
+const int VISUAL_STRAIN_RATE           = 13;
+const int VISUAL_Q_CRITERIA            = 14;
+const int VISUAL_CP                    = 15;
+const int VISUAL_TIME_STEP             = 16;
+const int VISUAL_VOLUME                = 17;
+const int VISUAL_MODELED_TKE           = 18;
+const int VISUAL_MODELED_DISSIPATION   = 19;
+const int VISUAL_SST_F1                = 20;
+const int VISUAL_SST_F2                = 21;
+const int VISUAL_INCOMP_U              = 22;
+const int VISUAL_INCOMP_V              = 23;
+const int VISUAL_INCOMP_W              = 24;
+const int VISUAL_INCOMP_P              = 25;
+const int VISUAL_INCOMP_CP             = 26;
+const int VISUAL_INCOMP_T              = 27;
+const int VISUAL_INCOMP_DEN            = 28;
+const int VISUAL_INCOMP_VIS            = 29;
+const int VISUAL_KN                    = 30;
+const int VISUAL_INCOMP_TE             = 31;
+const int VISUAL_INCOMP_ED             = 32;
+const int VISUAL_TEMPERATURE_VIBRATION = 33;
+const int VISUAL_TEMPERATURE_ELECTRON  = 34;
+const int VISUAL_ENERGY_VIBRATION      = 35;
+const int VISUAL_ENERGY_ELECTRON       = 36;
+const int VISUAL_ELECTRON_NUMBER       = 37;
+const int VISUAL_DIMENSIONAL_DENSITY   = 38;
+const int VISUAL_DIMENSIONAL_PRESSURE  = 39;
+const int VISUAL_DIMENSIONAL_TEMPERATURE = 40;
+const int VISUAL_GRADIENT_UX           = 41;
+const int VISUAL_GRADIENT_UY           = 42;
+const int VISUAL_GRADIENT_VX           = 43;
+const int VISUAL_GRADIENT_VY           = 44;
+const int VISUAL_WALL_DIST             = 50;
+const int VISUAL_TRANSITION_GAMA       = 51;
+const int VISUAL_TRANSITION_RETHETA    = 52;
+const int VISUAL_IBLANK                = 81;
+//const int VISUAL_O2                    = 15;
+//const int VISUAL_NO                    = 16;
+//const int VISUAL_N                     = 17;
+//const int VISUAL_N2                    = 18;
+
+const int AverageFlow = 1;
 
 #include "Post_Visual.hxx"
 
 class DumpToVTK
 {
 private:
-	vector < DataContainer * > vtkdatalist;
-	string						vtkfilename;
+    vector<DataContainer *> vtkdatalist;
+    string vtkfilename;
 
-	//! Visual flow type: 0 -- main flow;  1 -- average flow.
-	int visualFlowType;
-
-public:
-	DumpToVTK(vector < DataContainer * > datalist_in, string filename_in, bool CharacteristicBoundary_in, int visualFlowType = 0);
-	~DumpToVTK();
+    //! Visual flow type: 0 -- main flow;  1 -- average flow.
+    int visualFlowType;
 
 public:
-	void Run();
+    DumpToVTK(vector<DataContainer *> datalist_in, string filename_in, bool CharacteristicBoundary_in, int visualFlowType = 0);
+    ~DumpToVTK();
+
+public:
+    void Run();
 
 private:
-	void InitVariables();
+    void InitVariables();
 
-	//! Set number of variables in tecplot.
-	void SetNvarplot(int nvarplot_in) { this->nvarplot = nvarplot_in; }
+    //! Set number of variables in tecplot.
+    void SetNvarplot(int nvarplot_in) { this->nvarplot = nvarplot_in; }
 
-	//! Return number of variables in tecplot.
-	int GetNvarplot() { return nvarplot; }
+    //! Return number of variables in tecplot.
+    int GetNvarplot() { return nvarplot; }
 
-	//! Get the file name in VTK format.
-	string GetFilename() {return vtkfilename; }
+    //! Get the file name in VTK format.
+    string GetFilename() { return vtkfilename; }
 
-	void WriteVTKFilm();
+    void WriteVTKFilm();
 
 private:
-	int nvarplot;
-	bool CharacteristicBoundary;
+    int nvarplot;
+    bool CharacteristicBoundary;
 };
 
 #ifdef USE_TecplotLib
 class DumpToTecio
 {
 private:
-	//ActionKey *actkey;
-	vector < DataContainer * > datalist;
-	string						filename;
-	
-	//! Visual flow type: 0 -- main flow;  1 -- average flow.
-	int visualFlowType;
+    //ActionKey *actkey;
+    vector<DataContainer *> datalist;
+    string filename;
+
+    //! Visual flow type: 0 -- main flow;  1 -- average flow.
+    int visualFlowType;
 
 public:
-	DumpToTecio(vector < DataContainer * > datalist_in, string filename_in, int visualFlowType = 0);
-	~DumpToTecio();
+    DumpToTecio(vector<DataContainer *> datalist_in, string filename_in, int visualFlowType = 0);
+    ~DumpToTecio();
 
 public:
-	void Run();
+    void Run();
 
 private:
-	void WriteGridFilm_old();
-	void WriteGridFilm();
-	void WriteSliceFilm();
-	void InitVariables();
+    void WriteGridFilm_old();
+    void WriteGridFilm();
+    void WriteSliceFilm();
+    void InitVariables();
 
-	//! Set the variables.
-	void SetVariables(string Variables_in) { this->Variables = Variables_in; }
+    //! Set the variables.
+    void SetVariables(string Variables_in) { this->Variables = Variables_in; }
 
-	//! Get the variables.
-	string GetVariables() { return Variables; }
+    //! Get the variables.
+    string GetVariables() { return Variables; }
 
-	//! Set number of variables in tecplot.
-	void SetNvarplot(int nvarplot_in) { this->nvarplot = nvarplot_in; }
+    //! Set number of variables in tecplot.
+    void SetNvarplot(int nvarplot_in) { this->nvarplot = nvarplot_in; }
 
-	//! Return number of variables in tecplot.
-	int GetNvarplot() { return nvarplot; }
+    //! Return number of variables in tecplot.
+    int GetNvarplot() { return nvarplot; }
 
-	//! Get the file name.
-	string GetFilename() {return filename; }
+    //! Get the file name.
+    string GetFilename() { return filename; }
 private:
-	string Variables;
-	int nvarplot;
+    string Variables;
+    int nvarplot;
 };
 #endif
 
 class DumpToTecplotASCII
 {
 private:
-	vector < DataContainer * > dataList;
-	string						fileName;
+    vector<DataContainer *> dataList;
+    string fileName;
 
 public:
-	DumpToTecplotASCII(vector < DataContainer * > datalist_in, string filename_in);
-	~DumpToTecplotASCII();
+    DumpToTecplotASCII(vector<DataContainer *> datalist_in, string filename_in);
+    ~DumpToTecplotASCII();
 
 public:
-	void Run();
+    void Run();
 
     //! Set the variables.
-	void SetVariables(string Variables_in) {this->Variables = Variables_in;}
+    void SetVariables(string Variables_in) { this->Variables = Variables_in; }
 
     //! Get the variables.
-	string GetVariables() {return Variables;}
+    string GetVariables() { return Variables; }
 
-	//! Set number of variables in tecplot.
-	void SetNvarplot(int nVariable_in) {this->nVariable = nVariable_in;}
+    //! Set number of variables in tecplot.
+    void SetNvarplot(int nVariable_in) { this->nVariable = nVariable_in; }
 
     //! Return number of variables in tecplot.
-	int GetNvarplot() {return nVariable;}
+    int GetNvarplot() { return nVariable; }
 
     //! Get the file name.
-	string GetFilename() {return fileName;}
+    string GetFilename() { return fileName; }
 
 private:
     void InitVariables();
@@ -279,23 +292,23 @@ private:
     void DumpFlowByFaceTopo(fstream &flowFile, DataContainer *data, string zoneTitle);
 
 private:
-	int nVariable;
+    int nVariable;
     string Variables;
 };
 
 class PHCutPlane
 {
 public:
-	char ** title;
-	int nTitle;
-	int neqn;
-	int nTotalNode, nTotalFace;
-	RDouble ** data;
+    char ** title;
+    int nTitle;
+    int neqn;
+    int nTotalNode, nTotalFace;
+    RDouble ** data;
     RDouble *x, *y, *z;
     int *faceIndex[4];
 public:
-	PHCutPlane();
-	~PHCutPlane();
+    PHCutPlane();
+    ~PHCutPlane();
     void SortData(RDouble *value);
 public:
 };
@@ -303,16 +316,16 @@ public:
 template < typename T >
 void ReorderList(T *x, vector<int> &index_list)
 {
-    T *tmp = new T[ index_list.size() ];
+    T *tmp = new T [index_list.size()];
 
-    for ( std::size_t i = 0; i < index_list.size(); ++ i )
+    for (std::size_t i = 0; i < index_list.size(); ++ i)
     {
         tmp[i] = x[i];
     }
 
-    for ( std::size_t i = 0; i < index_list.size(); ++ i )
+    for (std::size_t i = 0; i < index_list.size(); ++ i)
     {
-        x[i] = tmp[ index_list[i] ];
+        x[i] = tmp[index_list[i]];
     }
 
     delete [] tmp;
@@ -321,6 +334,6 @@ void ReorderList(T *x, vector<int> &index_list)
 void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHCutPlane *cutpl, int ndir);
 void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble cut, PHCutPlane *cutpl, int ndir);
 
-void write_string(fstream & file, string &cs);
-void read_string(fstream & file, string &cs);
+void write_string(fstream &file, string &cs);
+void read_string(fstream &file, string &cs);
 }

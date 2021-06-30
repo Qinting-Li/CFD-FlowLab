@@ -62,23 +62,31 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
     RDouble4D *residualTurbulent  = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *spectumTurbulent = new RDouble4D(I, J, K, M, fortranArray);
 
-    grid->UpdateDataPtr("q_turb"   , qTurbulent);
-    grid->UpdateDataPtr("res_turb" , residualTurbulent );
-    grid->UpdateDataPtr("spec_turb", spectumTurbulent);
+    grid->UpdateDataPtr("q_turb"   , qTurbulent);    //! Unknown variable of turbulent model.
+    grid->UpdateDataPtr("res_turb" , residualTurbulent);    //! Residual or right-hand side.
+    grid->UpdateDataPtr("spec_turb", spectumTurbulent);    //! Spectral radius of turbulent model.
 
     RDouble4D *gradTurbulentX = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
     RDouble4D *gradTurbulentY = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
     RDouble4D *gradTurbulentZ = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
-    grid->UpdateDataPtr("gradTurbulentX", gradTurbulentX);
-    grid->UpdateDataPtr("gradTurbulentY", gradTurbulentY);
-    grid->UpdateDataPtr("gradTurbulentZ", gradTurbulentZ);
+    grid->UpdateDataPtr("gradTurbulentX", gradTurbulentX);    //! Gradient of unknown variable at face, for x direction. in x-face.
+    grid->UpdateDataPtr("gradTurbulentY", gradTurbulentY);    //! Gradient of unknown variable at face, for y direction. in y-face.
+    grid->UpdateDataPtr("gradTurbulentZ", gradTurbulentZ);    //! Gradient of unknown variable at face, for z direction. in z-face.
 
     RDouble4D *gradTurbulentCellCenterX = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *gradTurbulentCellCenterY = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *gradTurbulentCellCenterZ = new RDouble4D(I, J, K, M, fortranArray);
-    grid->UpdateDataPtr("gradTurbulentCellCenterX", gradTurbulentCellCenterX);
-    grid->UpdateDataPtr("gradTurbulentCellCenterY", gradTurbulentCellCenterY);
-    grid->UpdateDataPtr("gradTurbulentCellCenterZ", gradTurbulentCellCenterZ);
+    grid->UpdateDataPtr("gradTurbulentCellCenterX", gradTurbulentCellCenterX);    //! Gradient of unknown variable at cell-center in x-direction.
+    grid->UpdateDataPtr("gradTurbulentCellCenterY", gradTurbulentCellCenterY);    //! Gradient of unknown variable at cell-center in y-direction.
+    grid->UpdateDataPtr("gradTurbulentCellCenterZ", gradTurbulentCellCenterZ);    //! Gradient of unknown variable at cell-center in z-direction.
+
+    //! Temporary variable for periodic boundary condition.
+    RDouble4D *rotTurbgradValueX = new RDouble4D(I, J, K, M, fortranArray);
+    RDouble4D *rotTurbgradValueY = new RDouble4D(I, J, K, M, fortranArray);
+    RDouble4D *rotTurbgradValueZ = new RDouble4D(I, J, K, M, fortranArray);
+    grid->UpdateDataPtr("rotTurbgradValueX", rotTurbgradValueX);
+    grid->UpdateDataPtr("rotTurbgradValueY", rotTurbgradValueY);
+    grid->UpdateDataPtr("rotTurbgradValueZ", rotTurbgradValueZ);
 
     int isUnsteady = parameters->GetIsUnsteady();
     if (isUnsteady)
@@ -110,11 +118,11 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
     if (nTurbulentEquation == 2)
     {
         RDouble3D *cross = new RDouble3D(I, J, K, fortranArray);
-        grid->UpdateDataPtr("cross", cross);
-        RDouble3D *blend = new RDouble3D(I, J, K, fortranArray);  //SST_F1
-        grid->UpdateDataPtr("blend", blend);
-        RDouble3D *SST_F2 = new RDouble3D(I, J, K, fortranArray); //SST_F2
-        grid->UpdateDataPtr("SST_F2", SST_F2);
+        grid->UpdateDataPtr("cross", cross);    //! For the crossing term in two equation turbulence model.
+        RDouble3D *blend = new RDouble3D(I, J, K, fortranArray);
+        grid->UpdateDataPtr("blend", blend);    //! For blending function F1
+        RDouble3D *SST_F2 = new RDouble3D(I, J, K, fortranArray);
+        grid->UpdateDataPtr("SST_F2", SST_F2);    //! For blending function F2
     }
 
     int numberOfDimensions = GetDim();
@@ -163,6 +171,13 @@ void TurbSolverStr::DeAllocateGlobalVar(Grid *gridIn)
     delete gradTurbulentCellCenterX;
     delete gradTurbulentCellCenterY;
     delete gradTurbulentCellCenterZ;
+
+    RDouble4D *rotTurbgradValueX = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueX"));
+    RDouble4D *rotTurbgradValueY = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueY"));
+    RDouble4D *rotTurbgradValueZ = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueZ"));
+    delete rotTurbgradValueX;
+    delete rotTurbgradValueY;
+    delete rotTurbgradValueZ;
 
     int isUnsteady = parameters->GetIsUnsteady();
     if (isUnsteady)
@@ -385,6 +400,13 @@ void TurbSolverStr::DumpRestartH5(ActionKey *actkey)
     {
         WriteData(actkey->filepos, &version, "Version");
         WriteData(actkey->filepos, &outIterStep, "outnstep");
+
+        if (IsNeedDESStatistics())
+        {
+            int nStatisticalStep = 0;
+            GlobalDataBase::GetData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+            WriteData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
+        }
     }
 
     Grid *grid = GetGrid(actkey->level);
@@ -404,9 +426,7 @@ void TurbSolverStr::DumpRestartH5(ActionKey *actkey)
     int med = M.last();
 
     RDouble4D &qTurbulent = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
-
     RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
-
 
     hid_t grploc;
     string grpName;
@@ -438,6 +458,12 @@ void TurbSolverStr::DumpRestartH5(ActionKey *actkey)
 
         RDouble4D &residualTurbUnsteadyn2 = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb_unsteady_n2"));
         WriteData(grploc, &residualTurbUnsteadyn2(ist, jst, kst, mst), "res_turb_unsteady_n2");
+
+        if (IsNeedDESStatistics())
+        {
+            RDouble4D &qAverageTurb = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage_turb"));
+            WriteData(grploc, &qAverageTurb(ist, jst, kst, mst), "qAverageTurb");
+        }
     }
 
     H5Gclose(grploc);
@@ -497,6 +523,7 @@ void TurbSolverStr::ReadRestartH5(ActionKey *actkey)
         RDouble4D &residualTurbulent      = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb"));
         RDouble4D &residualTurbUnsteadyn1 = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb_unsteady_n1"));
         RDouble4D &residualTurbUnsteadyn2 = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb_unsteady_n2"));
+        RDouble4D &qAverageTurb = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage_turb"));
 
         int ifStartFromSteadyResults = parameters->GetIfStartFromSteadyResults();
 
@@ -524,6 +551,23 @@ void TurbSolverStr::ReadRestartH5(ActionKey *actkey)
             ReadData(grploc, &residualTurbulent(ist, jst, kst, mst), "res_turb");
             ReadData(grploc, &residualTurbUnsteadyn1(ist, jst, kst, mst), "res_turb_unsteady_n1");
             ReadData(grploc, &residualTurbUnsteadyn2(ist, jst, kst, mst), "res_turb_unsteady_n2");
+        }
+
+        int nStatisticalStep = 0;
+        int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
+        int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
+        bool isReadAverageFlow = ifStaticsFlowField && (outIterStepofTurb >= startStatisticStep);
+        if(isReadAverageFlow && (!ifStartFromSteadyResults))
+        {
+            ReadData(grploc, &qAverageTurb(ist, jst, kst, mst), "qAverageTurb");
+
+            ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
+            GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+        }
+        else
+        {
+            qAverageTurb = qTurbulent;
+            GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
         }
     }
 
@@ -1141,9 +1185,7 @@ void TurbSolverStr::UpdateUnsteadyFlow(Grid *gridIn)
     RDouble4D &residualTurbUnsteadyn2        = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb_unsteady_n2" ));
     RDouble4D &residualTurbUnsteadyTemporary = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb_unsteady_tmp"));
 
-    int numberOfLaminar  = GlobalDataBase::GetIntParaFromDB("nl");
-    int numberOfChemical = GlobalDataBase::GetIntParaFromDB("nchem");
-    int numberOfEquations  = numberOfLaminar + numberOfChemical;
+    int nTurbulentEquation = parameters->GetNTurbulentEquation();
 
     qTurbUnsteadyn2 = qTurbUnsteadyn1;
     qTurbUnsteadyn1 = qTurbulent  ;
@@ -1178,7 +1220,7 @@ void TurbSolverStr::UpdateUnsteadyFlow(Grid *gridIn)
                 {
                     for (int i = ist; i <= ied; ++ i)
                     {
-                        for (int m = 0; m < numberOfEquations; ++ m)
+                        for (int m = 0; m < nTurbulentEquation; ++ m)
                         {
                             qAverageTurb(i, j, k, m) = coeff1 * qAverageTurb(i, j, k, m) + coeff2 * qTurbulent(i, j, k, m);
                         }
@@ -2060,7 +2102,7 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     }
 }
 
-void TurbSolverStr::Spectrum(Grid *gridIn)
+void TurbSolverStr::Diagonal(Grid *gridIn)
 {
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulentEquation = parameters->GetNTurbulentEquation();
@@ -3212,6 +3254,78 @@ void TurbSolverStr::DecompressArrayFromInterface(DataContainer *&dataContainer, 
     }
 }
 
+void TurbSolverStr::RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+    CompositeBCRegion * composite_bcregion = finestGrid->GetCompositeBCRegion();
+    RDouble4D &rotTurbgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueX"));
+    RDouble4D &rotTurbgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueY"));
+    RDouble4D &rotTurbgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueZ"));
+
+    rotTurbgradValueX = 0.0;
+    rotTurbgradValueY = 0.0;
+    rotTurbgradValueZ = 0.0;
+
+    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    double rotationAngle        = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
+    rotationAngle = rotationAngle*PI/180;
+    if(nEquation > 0)
+    {
+        RDouble4D &fieldRecvTurbX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTurbulentCellCenterX"));
+        RDouble4D &fieldRecvTurbY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTurbulentCellCenterY"));
+        RDouble4D &fieldRecvTurbZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTurbulentCellCenterZ"));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int it, jt, kt;
+                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+                finestGrid->RemapMultigridIJK(level, it, jt, kt);
+                int *ibcregions = composite_bcregion->GetIFaceInfo();
+                int ibcregion = ibcregions[iFace];
+                BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                string bcName = bcregion->GetBCName();
+                if ( bcName == "Periodic_up" )
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        rotTurbgradValueY(it, jt, kt, m) = fieldRecvTurbY(it, jt, kt, m) * cos(2*PI-rotationAngle) - fieldRecvTurbZ(it, jt, kt, m) * sin(2*PI-rotationAngle);
+                        rotTurbgradValueZ(it, jt, kt, m) = fieldRecvTurbY(it, jt, kt, m) * sin(2*PI-rotationAngle) + fieldRecvTurbZ(it, jt, kt, m) * cos(2*PI-rotationAngle);
+                    }							
+                }
+                else if( bcName == "Periodic_down" )
+                {
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        rotTurbgradValueY(it, jt, kt, m) = fieldRecvTurbY(it, jt, kt, m) * cos(rotationAngle) - fieldRecvTurbZ(it, jt, kt, m) * sin(rotationAngle);
+                        rotTurbgradValueZ(it, jt, kt, m) = fieldRecvTurbY(it, jt, kt, m) * sin(rotationAngle) + fieldRecvTurbZ(it, jt, kt, m) * cos(rotationAngle);
+                    }
+                }
+
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    fieldRecvTurbY(it, jt, kt, m) = rotTurbgradValueY(it, jt, kt, m);
+                    fieldRecvTurbZ(it, jt, kt, m) = rotTurbgradValueZ(it, jt, kt, m);
+                }
+            }
+        }
+    }
+}
+
 void TurbSolverStr::ReconGradVolWeightedwithCorrection(Grid *gridIn, int iSurface)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -3750,6 +3864,10 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+    int *iblank = grid->GetBlankIndex_tmp();
 
     int nDim = GetDim();
 
@@ -3763,6 +3881,22 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
         {
             for (int i = ist; i <= ied; ++ i)
             {
+#ifdef USE_OVERSET
+                int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+                if (codeOfOversetGrid == 1)
+                {
+                    int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
+                    if (iblank[cellLabel] != 2)
+                    {
+                        for (int m = 0; m < nTurbulentEquation; ++ m)
+                        {
+                            dqTurbulent(i, j, k, m) = 0.0;
+                        }
+                        continue;
+                    }
+                }
+#endif
+
                 for (int m = mst; m <= med; ++ m)
                 {
                     rhs0[m] = 0.0;
@@ -3823,7 +3957,7 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
                     //! dq = { (b - Ux) - Lx } / D.
                     //! Note: the 'dq' has actually initialized by the residual at the beginning of this function.
                     //! the 'rhs0' is the total Delta Flux of the neighbors.            
-                    //! rhs0: Lx        spec: D.
+                    //! rhs0: Lx    diagonal: D.
                     dqTurbulent(i, j, k, m) = (dqTurbulent(i, j, k, m) - Ux[m] - rhs0[m]) / spectumTurbulent(i, j, k, m);
 
                     //! Store the lower forward sweep delta-flux, which will be used in the backward sweep.
@@ -3870,6 +4004,10 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, Field
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+    int *iblank = grid->GetBlankIndex_tmp();
 
     Range M(0, nTurbulentEquation - 1);
 
@@ -3885,6 +4023,21 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, Field
         {
             for (int i = ied; i >= ist; -- i)
             {
+#ifdef USE_OVERSET
+                int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+                if (codeOfOversetGrid == 1)
+                {
+                    int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
+                    if (iblank[cellLabel] != 2)
+                    {
+                        for (int m = 0; m < nTurbulentEquation; ++ m)
+                        {
+                            dqTurbulent(i, j, k, m) = 0.0;
+                        }
+                        continue;
+                    }
+                }
+#endif
                 for (int m = mst; m <= med; ++ m)
                 {
                     rhs0[m] = 0.0;
@@ -3937,7 +4090,7 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, Field
                     //! Note: the 'dq' has been updated by the forward sweep.
                     //! The 'rhs0' is the total Delta Flux of the neighbors.
                     //! x = {(b - LX) - Ux} / D.
-                    //! rhs0: Ux.               spec: D.
+                    //! rhs0: Ux.    diagonal: D.
                     dqTurbulent(i, j, k, m) = (dqTurbulent(i, j, k, m) - Lx[m] - rhs0[m]) / spectumTurbulent(i, j, k, m);
 
                     //! Store the upper backward sweep delta-flux, which will be used in the forward sweep.
@@ -4201,9 +4354,14 @@ void TurbSolverStr::Boundary(Grid *gridIn)
 
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int wallFunctionType = parameters->GetWallFunctionType();
+    int codeOfOversetGrid = 0;
 
     CompositeBCRegion *compositeBCRregion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRregion->GetnBCRegion();
+
+#ifdef USE_OVERSET
+    codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+#endif
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
@@ -4245,7 +4403,23 @@ void TurbSolverStr::Boundary(Grid *gridIn)
         {
             InFlowBC(grid, BCRegion);
         }
+        else if (BCType == PRESSURE_INLET)
+        {
+            InFlowBC(grid, BCRegion);
+        }
+        else if (BCType == MASS_FLOW_INLET)
+        {
+            InFlowBC(grid, BCRegion);
+        }
         else if (BCType == OUTFLOW)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (BCType == PRESSURE_OUTLET)
+        {
+            OutFlowBC(grid, BCRegion);
+        }
+        else if (BCType == MASS_FLOW_OUTLET)
         {
             OutFlowBC(grid, BCRegion);
         }
@@ -4253,21 +4427,27 @@ void TurbSolverStr::Boundary(Grid *gridIn)
         {
             OutFlowBC(grid, BCRegion);
         }
-
         else if (BCType == EXTERNAL_BC)
         {
             OutFlowBC(grid, BCRegion);
         }
         //! Deal in symmetry wall method if there is no boundary ID specified.
-        else if (ifIsJetBC(BCType))
+        else if (IsJetBC(BCType))
         {
             SymmetryBC(grid, BCRegion);
         }
         else
         {
-            ostringstream oss;
-            oss << "Error : Illegal BCtype ID " << BCType << endl;
-            TK_Exit::ExceptionExit(oss);
+            if (codeOfOversetGrid != 0)
+            {
+                VisWall(grid, BCRegion);
+            }
+            else
+            {
+                ostringstream oss;
+                oss << "Error : Illegal BCtype ID " << BCType << endl;
+                TK_Exit::ExceptionExit(oss);
+            }
         }
     }
     CornerPoint(grid);
@@ -4285,6 +4465,9 @@ void TurbSolverStr::CornerPoint(Grid *gridIn)
 
     RDouble4D &qTurbulent = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
     FillCornerPoint3D(qTurbulent, ni, nj, nk, nTurbulentEquation);
+
+    RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
+    FillCornerPoint3D(viscousTurbulence, ni, nj, nk);
 }
 
 void TurbSolverStr::InFlowBC(Grid *grid, BCRegion *BCRegion)
@@ -5202,60 +5385,76 @@ void TurbSolverStr::DownloadInterfaceValue(ActionKey *actkey)
     //}
 }
 
-void TurbSolverStr::CalLimiters(Grid *gridIn, int ig, RDouble *limit, RDouble4D *qTurbulent, RDouble **dqdx, RDouble **dqdy, RDouble **dqdz)
+void TurbSolverStr::CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *gridIn, const int &zoneIndex, const int &neighborZoneIndex, const int &nEquation)
 {
-    StructGrid *grid = reinterpret_cast<StructGrid *>(gridIn);
-    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
-    if (interfaceInfo == 0)
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
     {
         return;
     }
 
-    Param_TurbSolverStruct *parameters = GetControlParameters();
-    int nTurbulentEquation = parameters->GetNTurbulentEquation();
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
 
-    int limiterUnstruct = GlobalDataBase::GetIntParaFromDB("uns_limiter");
-    if (limiterUnstruct >= ILMT_STRUCT)
+    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    RDouble4D &fieldSend = fieldProxy->GetField_STR();
+
+    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
     {
-        return;
-    }
-
-    int nIFace = interfaceInfo->GetNIFace();
-
-    for (int iface = 0; iface < nIFace; ++ iface)
-    {
-        limit[iface] = one;
-    }
-
-    if (limiterUnstruct == ILMT_FIRST)
-    {
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
         {
-            limit[iface] = zero;
+            int iFace = interfaceIndexContainerForSend[iLocalFace];
+            int is, js, ks;
+            finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
+            finestGrid->RemapMultigridIJK(level, is, js, ks);
+            for (int m = 0; m < nEquation; ++ m)
+            {
+                PHWrite(dataContainer, fieldSend(is, js, ks, m));
+            }
         }
     }
+}
 
-    if (limiterUnstruct == ILMT_NOLIM )
+void TurbSolverStr::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *gridIn, const int &zoneIndex, const int &neighborZoneIndex, const int &nEquation)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+    int level = grid->GetLevel();
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (!interfaceInformation)
     {
         return;
     }
-    if (limiterUnstruct == ILMT_FIRST )
-    {
-        return;
-    }
 
-    if (limiterUnstruct == ILMT_BARTH)
+    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    RDouble4D &fieldRecv = fieldProxy->GetField_STR();
+
+    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
     {
-        for (int m = 0; m < nTurbulentEquation; ++ m)
+        for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
         {
-            BarthLimiterINF(grid, ig, limit, qTurbulent, dqdx[m], dqdy[m], dqdz[m], m);
-        }
-    }
-    else if (limiterUnstruct == ILMT_VENCAT)
-    {
-        for (int m = 0; m < nTurbulentEquation; ++ m)
-        {
-            VencatLimiterINF(grid, ig, limit, qTurbulent, dqdx[m], dqdy[m], dqdz[m], m);
+            int iFace = interfaceIndexContainerForReceive[iLocalFace];
+            int it, jt, kt;
+            finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+            finestGrid->RemapMultigridIJK(level, it, jt, kt);
+            for (int m = 0; m < nEquation; ++ m)
+            {
+                PHRead(dataContainer, fieldRecv(it, jt, kt, m));
+            }
         }
     }
 }

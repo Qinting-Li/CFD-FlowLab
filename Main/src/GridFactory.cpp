@@ -20,6 +20,7 @@
 #include "CombinGrid.h"
 #include "Pre_GridMirror.h"
 #pragma warning (disable:913)
+
 namespace PHSPACE
 {
 void OversetGridView()
@@ -37,9 +38,6 @@ void CreateGrid()
 
     switch (gridObject)
     {
-    case PHSPACE::GRID_CREATION:
-        GeneGridFromDataBase();
-        break;
     case PHSPACE::GRID_CONVERSION:
         ConvertGrid();
         break;
@@ -69,56 +67,31 @@ void MirrorGrid()
 
 void MixedGridProcess()
 {
-    string outFileNameBack = GlobalDataBase::GetStrParaFromDB("out_gfile");
-
-    //! Firstly, convert structured grid.
-    int fromGridType = CGNS_TYPE;
-    int toGridType     = STRUCTGRID;
-    int omitBlankBC  = 1;
-    string structGridInMixture = GlobalDataBase::GetStrParaFromDB("mixgrid_str");
-    string fromStructFileName = structGridInMixture;
-    string outStructFileName  = PHSPACE::ChangeExtensionOfFileName(structGridInMixture, "fts");
+    int fromGridType = MIXGRID_TYPE;
+    int omitBlankBC  = 0;
     GlobalDataBase::UpdateData("from_gtype", &fromGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("gridtype", &toGridType, PHINT, 1);
     GlobalDataBase::UpdateData("omit_no_bound_bc", &omitBlankBC, PHINT, 1);
-    GlobalDataBase::UpdateData("from_gfile", &fromStructFileName, PHSTRING, 1);
-    GlobalDataBase::UpdateData("out_gfile", &outStructFileName, PHSTRING, 1);
 
-    CGNS2StructGrid();
-
-    //! Secondly, convert unstructured grid.
-    toGridType = UNSTRUCTGRID;
+    string structGridInMixture   = GlobalDataBase::GetStrParaFromDB("mixgrid_str");
     string unstructGridInMixture = GlobalDataBase::GetStrParaFromDB("mixgrid_uns");
-    string fromUnstructFileName = unstructGridInMixture;
-    string outUnstructFileName  = PHSPACE::ChangeExtensionOfFileName(unstructGridInMixture, "fts");
-    GlobalDataBase::UpdateData("gridtype", &toGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("from_gfile", &fromUnstructFileName, PHSTRING, 1);
-    GlobalDataBase::UpdateData("out_gfile", &outUnstructFileName, PHSTRING, 1);
 
-    CGNS2UnstructGrid();
+    Region *region = new Region();
 
-    //! Thirdly, merge unstructured and structured grid.
-    fromGridType = MIXGRID_TYPE;
-    toGridType   = MIXGRID;
-    omitBlankBC  = 0;
-    structGridInMixture = PHSPACE::ChangeExtensionOfFileName(structGridInMixture, "fts");
-    unstructGridInMixture = PHSPACE::ChangeExtensionOfFileName(unstructGridInMixture, "fts");
-    string outMergedFileName = outFileNameBack;
-    GlobalDataBase::UpdateData("from_gtype", &fromGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("gridtype", &toGridType, PHINT, 1);
-    GlobalDataBase::UpdateData("omit_no_bound_bc", &omitBlankBC, PHINT, 1);
-    GlobalDataBase::UpdateData("mixgrid_str", &structGridInMixture, PHSTRING, 1);
-    GlobalDataBase::UpdateData("mixgrid_uns", &unstructGridInMixture, PHSTRING, 1);
-    GlobalDataBase::UpdateData("out_gfile", &outMergedFileName, PHSTRING, 1);
+    PHVectorString1D gridfilelist;
+    gridfilelist.push_back(structGridInMixture);
+    gridfilelist.push_back(unstructGridInMixture);
 
-    GeneMixGrid();
+    region->ReadOrdinaryGrid(gridfilelist);
+
+    region->BuildAndDumpMixedGrid();
+    delete region;
 }
 
 void GridgenGridProcess()
 {
     int toGridType = GlobalDataBase::GetIntParaFromDB("to_gtype");
 
-    if(toGridType == FANTASY_TYPE)
+    if (toGridType == FANTASY_TYPE)
     {
         Gridgen2Fantasy();
     }
@@ -126,9 +99,9 @@ void GridgenGridProcess()
 
 void CGNSGridProcess()
 {
-    int gridtype   = GlobalDataBase::GetIntParaFromDB("gridtype");
+    int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
 
-    if(gridtype == STRUCTGRID)
+    if (gridtype == STRUCTGRID)
     {
         CGNS2StructGrid();
     }
@@ -157,7 +130,6 @@ void FieldViewGridProcess()
         FieldView2Fantasy();
     }
 }
-
 
 void FluentGridProcess()
 {
@@ -191,19 +163,14 @@ void FantasyGridProcess()
     {
         Fantasy2Gridgen();
     }
-    else if (toGridType == CGNS_TYPE)
-    {
-        PHengLEI2CGNS();
-    }
 }
 
 void ConvertGrid()
 {
     int fromGridType = GlobalDataBase::GetIntParaFromDB("from_gtype");
-    int toGridType   = GlobalDataBase::GetIntParaFromDB("to_gtype");
     int gridType     = GlobalDataBase::GetIntParaFromDB("gridtype");
 
-    if  (gridType == MIXGRID)
+    if (gridType == MIXGRID)
     {
         MixedGridProcess();
     }
@@ -214,20 +181,20 @@ void ConvertGrid()
         case FANTASY_TYPE:
             FantasyGridProcess();
             break;
-        case GRIDGEN_TYPE:
-            GridgenGridProcess();
-            break;
         case CGNS_TYPE:
             CGNSGridProcess();
             break;
-        case USTAR_TYPE:
-            UstarGridProcess();
+        case GRIDGEN_TYPE:
+            GridgenGridProcess();
             break;
         case FIELDVIEW_TYPE:
             FieldViewGridProcess();
             break;
         case FLUENT_TYPE:
             FluentGridProcess();
+            break;
+        case USTAR_TYPE:
+            UstarGridProcess();
             break;
         case GMSH_TYPE:
             GmeshGridProcess();
@@ -236,30 +203,6 @@ void ConvertGrid()
             TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
             break;
         }
-    }
-}
-
-void GeneGridFromDataBase()
-{
-    string outGridFile    = GlobalDataBase::GetStrParaFromDB("out_gfile");
-    int gridType          = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int gridDatabaseIndex = GlobalDataBase::GetIntParaFromDB("grid_database_index");
-
-    if (gridDatabaseIndex == GRID_DATABASE::LAMINAR_FLAT_PLATE_SUBSONIC)
-    {
-        GenDataBaseGrid(outGridFile, GeneFlatPlateGrid, GetPlateRect2Part, gridType);
-    }
-    else if (gridDatabaseIndex == GRID_DATABASE::LAMINAR_FLAT_PLATE_SUPERSONIC)
-    {
-        GenDataBaseGrid(outGridFile, GeneSupFlatPlateGrid, GetPlateRect, gridType);
-    }
-    else if (gridDatabaseIndex == GRID_DATABASE::TURBULENT_FLAT_PLATE_SUBSONIC)
-    {
-        GenDataBaseGrid(outGridFile, GeneTurbulentFlatPlateGrid, GetPlateRect2Part, gridType);
-    }
-    else if (gridDatabaseIndex == GRID_DATABASE::TURBULENT_FLAT_PLATE_SUPERSONIC)
-    {
-        GenDataBaseGrid(outGridFile, GeneSupTurbulentFlatPlateGrid, GetPlateRect2Part, gridType);
     }
 }
 
@@ -278,25 +221,6 @@ void ReconstructGrid()
 
         gridRefine.Run();
     }
-}
-
-void GeneMixGrid()
-{
-    string structGridInMixture   = GlobalDataBase::GetStrParaFromDB("mixgrid_str");
-    string unstructGridInMixture = GlobalDataBase::GetStrParaFromDB("mixgrid_uns");
-
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
-
-    Region *region = new Region();
-
-    PHVectorString1D gridfilelist;
-    gridfilelist.push_back(structGridInMixture);
-    gridfilelist.push_back(unstructGridInMixture);
-
-    region->ReadOrdinaryGrid(gridfilelist);
-
-    region->BuildAndDumpMixedGrid();
-    delete region;
 }
 
 void CombinationGrid()
@@ -399,20 +323,20 @@ void Ustar2PHengLEI()
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
 
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
     int numberOfBlocks = 1;
-    Grid **grids = new Grid *[numberOfBlocks];
+    Grid **grids = new Grid * [numberOfBlocks];
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
         GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
         grids[iZone] = grid;
-        ReadUstarGrid(fromGridFile,UnstructGridCast(grid));
+        ReadUstarGrid(fromGridFile, UnstructGridCast(grid));
         grid->ComputeMinMaxBox();
     }
 
-    ConstructOverlappingInfo(grids,numberOfBlocks, isOverlap);
+    ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
     DumpGrid(outGridFile, grids, numberOfBlocks);
 
@@ -420,7 +344,7 @@ void Ustar2PHengLEI()
     {
         delete grids[iZone];
     }
-    delete []grids;
+    delete [] grids;
 }
 
 void CGNS2UnstructGrid()
@@ -428,9 +352,9 @@ void CGNS2UnstructGrid()
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
 
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
-    // Read in CGNS grid and convert it's format.
+    //! Read CGNS grid and convert it's format.
     Pre_CGNSToPHengLEI_Unstruct cgnsGridConversion(fromGridFile);
 
     cgnsGridConversion.Run();
@@ -438,13 +362,13 @@ void CGNS2UnstructGrid()
     int numberOfBlocks = cgnsGridConversion.GetNumberofBlocks();
     Grid **grids = cgnsGridConversion.GetGrids();
 
-    // Construct block connection and dump out to file.
-    ConstructOverlappingInfo(grids, numberOfBlocks, isOverlap);
+    //! Construct block connection and dump out to file.
+    ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
 
     if (numberOfBlocks > 1)
     {
-        cout<<"\n";
+        cout << "\n";
         cout << "Blocks > 1, Start to Combine Grids" << endl;
         CombinGrid *combinedGrid = new CombinGrid(0, grids, numberOfBlocks);
 
@@ -514,7 +438,7 @@ void GMSH2PHengLEI()
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
 
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
     int numberOfBlocks;
     CGNSFactory *factoryCGNS;
@@ -522,7 +446,7 @@ void GMSH2PHengLEI()
 
     factoryCGNS->ConvertGrid2Fantasy();
 
-    Grid **grids = new Grid *[numberOfBlocks];
+    Grid **grids = new Grid * [numberOfBlocks];
 
     int nDim = GetDim();
 
@@ -536,7 +460,7 @@ void GMSH2PHengLEI()
 
     delete factoryCGNS;
 
-    ConstructOverlappingInfo(grids, numberOfBlocks, isOverlap);
+    ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
     DumpGrid(outGridFile, grids, numberOfBlocks);
 
@@ -544,7 +468,7 @@ void GMSH2PHengLEI()
     {
         delete grids[iZone];
     }
-    delete []grids;
+    delete [] grids;
 }
 
 void GridgenToMIX()
@@ -553,7 +477,7 @@ void GridgenToMIX()
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
     string boundaryFile = GlobalDataBase::GetStrParaFromDB("bnd_file");
 
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
     int numberOfBlocks;
     Grid **structgrids;
@@ -582,7 +506,7 @@ void GridgenToMIX()
         }
     }
 
-    ConstructOverlappingInfo(grids, numberOfBlocks, isOverlap);
+    ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
     DumpGrid(outGridFile, grids, numberOfBlocks);
 
@@ -603,7 +527,6 @@ void Gridgen2Fantasy()
 {
     int gridtype   = GlobalDataBase::GetIntParaFromDB("gridtype");
     int multiblock = GlobalDataBase::GetIntParaFromDB("multiblock");
-    int iovrlap    = GlobalDataBase::GetIntParaFromDB("iovrlap");
 
     int sys_gridtype;
     if (gridtype == 0)
@@ -620,19 +543,12 @@ void Gridgen2Fantasy()
             GridgenToSingleUns();
         }
     }
-    else if(gridtype == 1)
+    else if (gridtype == 1)
     {
         sys_gridtype = STRUCTGRID;
         GlobalDataBase::UpdateData("sys_gridtype", &sys_gridtype, PHINT, 1);
 
         GridgenToStr();
-    }
-    else if(gridtype == 2)
-    {
-        sys_gridtype = MIXGRID;
-        GlobalDataBase::UpdateData("sys_gridtype", &sys_gridtype, PHINT, 1);
-
-        GridgenToMIX();
     }
 }
 
@@ -642,7 +558,7 @@ void GridgenToSingleUns()
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
     string boundaryFile = GlobalDataBase::GetStrParaFromDB("bnd_file");
 
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
     int nBlocks;
     Grid **structgrids;
@@ -661,7 +577,7 @@ void GridgenToSingleUns()
 
     StrGridToUnsGrid(structgrids, nBlocks, UnstructGridCast(grid));
 
-    ConstructOverlappingInfo(grids, numberOfBlocks, isOverlap);
+    ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grids,numberOfBlocks);
     DumpGrid(outGridFile, grids, numberOfBlocks);
 
@@ -684,7 +600,7 @@ void GridgenToMBlockUns()
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
     string boundaryFile = GlobalDataBase::GetStrParaFromDB("bnd_file");
 
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
     int numberOfBlocks;
 
@@ -703,7 +619,7 @@ void GridgenToMBlockUns()
         StrGridToUnsGrid(StructGridCast(structgrids[iZone]), UnstructGridCast(grid));
     }
 
-    ConstructOverlappingInfo(grids, numberOfBlocks, isOverlap);
+    ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
     DumpGrid(outGridFile, grids, numberOfBlocks);
 
@@ -726,17 +642,18 @@ void GridgenToStr()
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
     string boundaryFile = GlobalDataBase::GetStrParaFromDB("bnd_file");
 
-    int isOverlap = GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
     int numberOfBlocks;
     Grid **structgrids;
     ReadGridgen(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
 
     int ndim = PHSPACE::GetDim();
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
 
-    if (ndim == TWO_D || isOverlap == 1)
+    if (ndim == TWO_D || codeOfOversetGrid == 10 || (ndim == THREE_D && periodicType != 0))
     {
-        Grid **grids = new Grid *[numberOfBlocks];
+        Grid **grids = new Grid * [numberOfBlocks];
 
         for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
         {
@@ -748,13 +665,13 @@ void GridgenToStr()
             grid->ProcessBCInfo();
         }
 
-        ConstructOverlappingInfo(grids, numberOfBlocks, isOverlap); 
+        ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
 
-        MultigridManager *multigridManager = new MultigridManager(structgrids, isOverlap, numberOfBlocks);
+        MultigridManager *multigridManager = new MultigridManager(structgrids, codeOfOversetGrid, numberOfBlocks);
         multigridManager->Run();
         delete multigridManager;
 
-        ConstructGlobalInterfaceLink(grids,numberOfBlocks);
+        ConstructGlobalInterfaceLink(grids, numberOfBlocks);
 
         DumpGrid(outGridFile, grids, numberOfBlocks);
         WriteLnkFile(outGridFile, structgrids, numberOfBlocks);
@@ -773,7 +690,7 @@ void GridgenToStr()
         {
             delete grids[iZone];
         }
-        delete []grids;
+        delete [] grids;
     }
     else
     {
@@ -790,51 +707,6 @@ void GridgenToStr()
 
         delete gridTranslator;
     }
-}
-
-void GenDataBaseGrid(const string &gridFile, GENE_SIMPLE_GRID generateSimpleGrid, MESH2D_GENE mesh2dgen, int gridType)
-{
-    int nBlocks;
-    Grid **structgrids;
-    GeneGridgen(structgrids, nBlocks, generateSimpleGrid, mesh2dgen);
-
-    int numberOfBlocks = 1;
-
-    Grid **grids = new Grid *[numberOfBlocks];
-
-    int nDim = GetDim();
-
-    int nb = 0;
-    GridID *index = new GridID(nb);
-    if (gridType == UNSTRUCTGRID)
-    {
-        Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-        grids[nb] = grid;
-        StrGridToUnsGrid(structgrids, nBlocks, UnstructGridCast(grid));
-    }
-    else
-    {
-        Grid *grid = CreateGridGeneral(STRUCTGRID, index, 0, GetDim());
-        grids[nb] = grid;
-        StructGridCast(grid)->CopyGrid(StructGridCast(structgrids[nb]));
-        grid->ProcessBCInfo();
-    }
-
-    ConstructGlobalInterfaceLink(grids, numberOfBlocks);
-
-    DumpGrid(gridFile, grids, numberOfBlocks);
-
-    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
-    {
-        delete grids[iZone];
-    }
-    delete []grids;
-
-    for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
-    {
-        delete structgrids[iBlock];
-    }
-    delete []structgrids;
 }
 
 }

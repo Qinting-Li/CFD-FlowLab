@@ -1,39 +1,39 @@
-inline void	SimpleGrid::SetX(RDouble * x) 
-{ 
-	this->x = x; 
-}
-
-inline void	SimpleGrid::SetY(RDouble * y) 
+inline void	SimpleGrid::SetX(RDouble *x)
 {
-	this->y = y; 
+    this->x = x;
 }
 
-inline void	SimpleGrid::SetZ(RDouble * z) 
-{ 
-	this->z = z; 
-}
-
-inline RDouble * SimpleGrid::GetX() const 
-{ 
-	return x;
-}
-
-inline RDouble * SimpleGrid::GetY() const 
+inline void	SimpleGrid::SetY(RDouble *y)
 {
-	return y; 
+    this->y = y;
 }
 
-inline RDouble * SimpleGrid::GetZ() const 
+inline void	SimpleGrid::SetZ(RDouble *z)
 {
-	return z;
+    this->z = z;
 }
 
-inline void SimpleGrid::SetNTotalNode(int nTotalNode) 
-{ 
-	this->nTotalNode = nTotalNode;
-}
-
-inline int  SimpleGrid::GetNTotalNode() const 
+inline RDouble * SimpleGrid::GetX() const
 {
-	return nTotalNode;
+    return x;
+}
+
+inline RDouble * SimpleGrid::GetY() const
+{
+    return y;
+}
+
+inline RDouble * SimpleGrid::GetZ() const
+{
+    return z;
+}
+
+inline void SimpleGrid::SetNTotalNode(int nTotalNode)
+{
+    this->nTotalNode = nTotalNode;
+}
+
+inline int SimpleGrid::GetNTotalNode() const
+{
+    return nTotalNode;
 }

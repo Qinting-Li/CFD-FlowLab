@@ -117,7 +117,7 @@ public:
 	void SMoothTurbulencePoint(Grid *gridIn, RDouble *primitiveVariable, int i);
 	
 	//! Compute spectrumRadius of turbulent equation.
-	void Spectrum(Grid *grid);
+	void Diagonal(Grid *grid);
 	
 	//! Compute inviscid flux of turbulent equation.
     void InviscidFlux(Grid *gridIn);
@@ -281,11 +281,15 @@ public:
 	//! Get control paramters.
 	LIB_EXPORT Param_TurbSolverUnstruct *GetControlParameters();
 	
-	//! Write data needed communication at interface to supercontainer.
+	//! Write data needed communication at interface to datacontainer.
     void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     
-	//! Read data from supercontainer after communication.
+	//! Read data from datacontainer after communication.
 	void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
+
+    ////! Implement: to compress turbulenct dq data from grid to date dataContainer.
+    //void CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
+    //void DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
 
 private:
 
@@ -329,9 +333,6 @@ private:
 	
 	//! Set the length scale of DES.
 	void SetDESLength(RDouble *length) { this->DESLength = length; }
-	
-	//! Write the averaged variables of statistical flow field.
-	void DumpStatisticalFlow(ActionKey *actkey);
 	
 	//! Read the averaged variables of statistical flow field.
 	void ReadStatisticalFlow(ActionKey *actkey);

@@ -333,6 +333,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
     using namespace GAS_SPACE;
     // The number of species.
     int nSpecies = nLaminar - nNSEquation + 1;
+    int nElectronIndex = GlobalDataBase::GetIntParaFromDB("nElectronIndex");
     RDouble alpha = 0.0, beta = 0.0, gama = 0.0, *speciesBeta;
     speciesBeta = new RDouble[nSpecies];
 
@@ -446,7 +447,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
     }
 
     flux[nLaminar] = 0.0;
-    if (nSpecies > 5)
+    if (nElectronIndex >= 0)
     {
         flux[nLaminar - 1] = 0.0;
     }
@@ -811,4 +812,3 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble nxs, RDouble nys, RDoub
 }
 
 }
-

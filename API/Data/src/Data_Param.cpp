@@ -14,7 +14,7 @@ LIB_EXPORT Data_Param::Data_Param(const Data_Param &rhs)
 {
     dataSet = new set < Data_SafeData >;
     set < Data_SafeData >::iterator iter;
-    for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++ iter)
+    for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++iter)
     {
         dataSet->insert(*iter);
     }
@@ -27,7 +27,7 @@ LIB_EXPORT Data_Param::~Data_Param()
 
 LIB_EXPORT void Data_Param::UpdateData(const string &name, void *data, int type, int size)
 {
-    Data_SafeData datas = Data_SafeData(name,data,type,size);
+    Data_SafeData datas = Data_SafeData(name, data, type, size);
     //datas.ShowData();
 
     set < Data_SafeData >::iterator iter;
@@ -46,15 +46,15 @@ LIB_EXPORT void Data_Param::UpdateData(const string &name, void *data, int type,
 LIB_EXPORT void Data_Param::GetData(const string &name, void *data, int type, int size)
 {
     set < Data_SafeData >::iterator iter;
-    Data_SafeData datas = Data_SafeData(name,data,type,size);
+    Data_SafeData datas = Data_SafeData(name, data, type, size);
     iter = dataSet->find(datas);
     if (iter != dataSet->end())
     {
-        CopyDataValue(data,iter->GetData(),iter->GetType(),iter->GetSize());
+        CopyDataValue(data, iter->GetData(), iter->GetType(), iter->GetSize());
     }
     else
     {
-        cout <<"This data does not exist: "<<name.c_str() << endl;
+        cout << "This data does not exist: " << name.c_str() << endl;
         exit(0);     //! It is temporary!!!
     }
 }
@@ -63,7 +63,7 @@ LIB_EXPORT int Data_Param::CheckDataExist(const string &name)
 {
     int data;
     set < Data_SafeData >::iterator iter;
-    Data_SafeData datas = Data_SafeData(name,&data,1,1);
+    Data_SafeData datas = Data_SafeData(name, &data, 1, 1);
     iter = dataSet->find(datas);
     if (iter != dataSet->end())
     {
@@ -86,7 +86,7 @@ LIB_EXPORT int Data_Param::GetSizeOfData(const string &name)
     }
     else
     {
-        cout <<"This data does not exist: "<<name.c_str() << endl;
+        cout << "This data does not exist: " << name.c_str() << endl;
         exit(0);     //! It is temporary!!!
         return 0;
     }
@@ -95,7 +95,7 @@ LIB_EXPORT int Data_Param::GetSizeOfData(const string &name)
 LIB_EXPORT bool Data_Param::IsExist(const string &name, int type, int size)
 {
     set < Data_SafeData >::iterator iter;
-    Data_SafeData datas = Data_SafeData(name,0,type,size);
+    Data_SafeData datas = Data_SafeData(name, 0, type, size);
     iter = dataSet->find(datas);
     if (iter != dataSet->end())
     {
@@ -107,21 +107,21 @@ LIB_EXPORT bool Data_Param::IsExist(const string &name, int type, int size)
     }
 }
 
-LIB_EXPORT set < Data_SafeData > * Data_Param::GetBaseP() const 
+LIB_EXPORT set < Data_SafeData > * Data_Param::GetBaseP() const
 { 
     return dataSet; 
 };
 
 LIB_EXPORT Data_Param & Data_Param::operator = (const Data_Param &rhs)
 {
-    //! Only do assignment if RHS is a different object from this.
+    //! Only do assignment if rhs is a different object from this.
     if (this != &rhs)
     {
-        //! Deallocate, allocate new space, copy values...
+        //! Deallocate, allocate new space, copy values.
         delete dataSet;
         dataSet = new set < Data_SafeData >;
         set < Data_SafeData >::iterator iter;
-        for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++ iter)
+        for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++iter)
         {
             dataSet->insert(*iter);
         }
@@ -130,7 +130,7 @@ LIB_EXPORT Data_Param & Data_Param::operator = (const Data_Param &rhs)
     return *this;
 }
 
-void Data_Param::CopyDataValue(void * dataout,void *data,int type,int size)
+void Data_Param::CopyDataValue(void *dataout, void *data, int type, int size)
 {
     if (data == 0) return;
     Data_Util::copy_data_exist(dataout, data, type, size);

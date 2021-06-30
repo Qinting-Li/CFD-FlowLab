@@ -21,12 +21,6 @@ int intervalStepRes   = 10;
 // attackd: Angle of attack.
 // angleSlide: Angle of sideslip.
 // wallTemperature: Temprature of the solid wall, minus value is for adiabatic boundary condition.
-// dump_Q: Dump out thermal flux Q of solid wall.
-//         0 -- no dump out.
-//         1 -- dump out wall Q only.
-//         2 -- dump out wall Q & the typical position Q of ball.
-//         3 -- dump out wall Q & the typical position Q of cone.
-//         4 -- dump out wall Q & the typical position Q of double sphere.
 // inflowParaType: The type of inflow parameters.
 //                 0 -- the nondimensional conditions.
 //                 1 -- the flight conditions.
@@ -51,7 +45,6 @@ double attackd       = 0.00;
 double angleSlide    = 0.00;
 
 double wallTemperature = -1.0;
-int    dump_Q = 0;
 
 int inflowParaType = 0;
 double refReNumber = 1.0e5;
@@ -163,10 +156,10 @@ double ktmax = 1.0e10;
 // IMPORTANT WARNING: The file index should be ignored,
 //                     e.g. if the partitioned grid is rae2822_hybrid2d__4_0.fts,
 //                     Please use 'rae2822_hybrid2d__4.fts' here!
-// isPlotVolumeField: If dump out the whole field results to tecplot or not, 0 / 1.
+// plotFieldType: If dump out the whole field results to tecplot or not, 0 / 1.
 
 string gridfile = "./grid/rae2822_hybrid2d__4.fts";
-int isPlotVolumeField = 0;
+int plotFieldType = 0;
 
 // ----------------- Advanced Parameters, DO NOT care it ----------------
 // nVisualVariables: Number of variables want to be dumped for tecplot visualization.

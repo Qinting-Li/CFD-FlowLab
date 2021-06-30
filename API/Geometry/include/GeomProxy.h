@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -35,19 +35,19 @@ public:
 public:
     void Create(int nsize);
 
-	//! Returns the X of face normal.
+	//! Return the X of face normal.
     iterator GetFaceNormalX();
 
-	//! Returns the Y of face normal.
+	//! Return the Y of face normal.
     iterator GetFaceNormalY();
 
-	//! Returns the Z of face normal.
+	//! Return the Z of face normal.
     iterator GetFaceNormalZ();
 
-	//! Returns the face area.
+	//! Return the face area.
     iterator GetFaceArea();
 
-	//! Returns the face velocity.
+	//! Return the face velocity.
     iterator GetFaceVelocity(); 
 };
 

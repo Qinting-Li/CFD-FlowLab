@@ -26,6 +26,15 @@ void ReadGridgen(Grid **& structGrids, int &numberOfBlocks, const string &gridge
         ReadGridgenCoor(gridgenFile, numberOfBlocks, structGrids);
     }
     ReadGridgenBC(structGrids, numberOfBlocks, BCFile);
+
+#ifdef USE_OVERSET
+    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    if (codeOfOversetGrid == 1)
+    {
+    string partitionFile = "./grid/partition.ppsh";
+    ReadPartitionFileForOverset(numberOfBlocks, partitionFile);
+    }
+#endif
 }
 
 void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
@@ -78,6 +87,8 @@ void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&
         cout << setw(wordWidth) << nk;
         cout << "\n";
         //cin.get();
+
+        //delete index;
     }
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
@@ -350,97 +361,6 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
                     BCRegions->ComputeRelativeParameters();
                 }
             }
-            //BCType=99£¬periodic boundary condition. The processing is the same with the interface BC£¬only the relationship is needed
-            //only for the case that the corresponding faces are in the same block, and the left face is the same with the right one
-            if (BCType == 99)  ///The BC type (the seventh column)should be set as 99 
-            {
-                int BCTypeModified; //the modified BC type -1
-                int iminTarget, imaxTarget, jminTarget, jmaxTarget, kminTarget, kmaxTarget;  //target face information
-                
-                //BCRegion->SetBCType(PHENGLEI::INTERFACE);
-                BCTypeModified = -1; //if the bc is periodic£¬processing it as interface
-                BCRegions->SetBCType(BCTypeModified);
-                                                
-                if (imin == imax)  //i direction		
-                {	//jmin£¬jmax£¬kmin£¬kmax in the target face is the same with the source face
-                    
-                    jmin = - jmin;
-                    jmax = - jmax;
-                    BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
-
-                    jminTarget = jmin;
-                    jmaxTarget = jmax;
-                    kminTarget = kmin;
-                    kmaxTarget = kmax;
-
-                    if (imin == 1)  
-                    {
-                        iminTarget = ni;
-                        imaxTarget = ni;  
-                    }
-                    else      
-                    {
-                        iminTarget = 1;
-                        imaxTarget = 1;  
-                    }
-                }
-                if (jmin == jmax)  //j direction	
-                {	//imin£¬imax£¬kmin£¬kmax in the target face is the same with the source face
-
-                    imin = - imin;
-                    imax = - imax;
-                    BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
-
-                    iminTarget = imin;
-                    imaxTarget = imax;
-                    kminTarget = kmin;
-                    kmaxTarget = kmax;
-                    
-                    if (jmin == 1)  
-                    {
-                        jminTarget = nj;
-                        jmaxTarget = nj;  
-                    }
-                    else      
-                    {
-                        jminTarget = 1;
-                        jmaxTarget = 1;
-                    }
-                }
-                if (kmin == kmax)  //k direction
-                {
-                    //imin£¬imax£¬jmin£¬jmax in the target face is the same with the source face
-                    imin = - imin;
-                    imax = - imax;
-                    BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
-
-                    iminTarget = imin;
-                    imaxTarget = imax;
-                    jminTarget = jmin;
-                    jmaxTarget = jmax;
-                    
-                    if (kmin == 1)  
-                    {
-                        kminTarget = nk;
-                        kmaxTarget = nk;  
-                    }
-                    else      
-                    {
-                        kminTarget = 1;
-                        kmaxTarget = 1;  
-                    }
-                }
-
-                int nbTarget = iZone;  //targer block id is the same with the source one
-
-                BCRegions->SetTargetIJKRegion(iminTarget, imaxTarget, jminTarget, jmaxTarget, kminTarget, kmaxTarget);
-                BCRegions->SetTargetRegionBlock(nbTarget);
-                
-                if (nDim == THREE_D)
-                {
-                    BCRegions->ComputeRelativeParameters();
-                }
-            }
         }
     }
 
@@ -448,6 +368,78 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
     {
         delete []blockProcessorINP;
         SetZoneProcessID_INP(0);
+    }
+
+    file.close();
+    file.clear();
+}
+
+void ReadPartitionFileForOverset(int &inputNumberOfBlocks, const string &PartitionFile)
+{
+    fstream file;
+    file.open(PartitionFile.c_str(), ios_base::in);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(PartitionFile);
+    }
+
+    string line, word;
+    string separator = " =\t\r\n#$,;";
+
+    string str1;
+    ReadNewLine(file, line);
+    line = FindNextWord(line, str1, separator);
+
+    ReadNewLine(file, line);
+    line = FindNextWord(line, word, separator);
+    int numberOfBlocks;
+    from_string <int> (numberOfBlocks, word, std::dec);
+    cout << "number_of_blocks = " << numberOfBlocks << "\n";
+
+    if (numberOfBlocks != inputNumberOfBlocks)
+    {
+        TK_Exit::ExceptionExit(" the numberOfBlocks of partition files does not agree with in mesh file\n");
+    }
+
+    ReadNewLine(file, line);    //! Read the third line.
+
+    bool blockProcessFlag = true;
+
+    using namespace PHMPI;
+
+    CreatetZoneProcessorID_INP(numberOfBlocks);
+    CreateZoneGroupID(numberOfBlocks);
+    int *blockProcessorINP = GetZoneProcessorID_INP();
+    int *blockGroupID = GetZoneGroupID();
+
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        int zone, rank, group;
+        ReadNewLine(file, line);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (zone, word, std::dec);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (rank, word, std::dec);
+        line = FindNextWord(line, word, separator);
+        from_string <int> (group, word, std::dec);
+
+        cout << "zone, rank, group = " << zone << " " << rank << " " << group << "\n";
+
+        if (iZone != zone)
+        {
+            cout << "partition.ppsh NO." << iZone + 1 << "block data error!\n";
+        }
+
+        blockProcessorINP[iZone] = rank;
+        blockGroupID[iZone] = group;
+    }
+
+    if (!blockProcessFlag)
+    {
+        delete [] blockProcessorINP;
+        delete [] blockGroupID;
+        SetZoneProcessID_INP(0);
+        SetZoneGroupID(0);
     }
 
     file.close();

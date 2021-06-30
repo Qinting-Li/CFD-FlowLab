@@ -1,11 +1,11 @@
 inline Grid ** Pre_GridConversion::GetGrids()
 {
-	return this->grids;
+    return this->grids;
 }
 
 inline int Pre_GridConversion::GetNumberofBlocks()
 {
-	return this->nBlocks;
+    return this->nBlocks;
 }
 
 inline void Pre_GridConversion::SetNumberofBlocks(int dataIn)

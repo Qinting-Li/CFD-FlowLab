@@ -859,8 +859,8 @@ void CombinGrid::DumpCombinationGrid()
     string out_gfile;
     GlobalDataBase::GetData("out_gfile",&out_gfile,PHSTRING,1);
 
-    int iovrlap = 0;
-    GlobalDataBase::GetData("iovrlap",&iovrlap,PHINT,1);
+    int codeOfOversetGrid = 0;
+    GlobalDataBase::GetData("codeOfOversetGrid",&codeOfOversetGrid,PHINT,1);
 
     using namespace PHMPI;
 
@@ -872,7 +872,7 @@ void CombinGrid::DumpCombinationGrid()
         grid_array[izone] = grid_all;
     }
 
-    ConstructOverlappingInfo(grid_array,nZones,iovrlap);
+    ConstructOverlappingInfo(grid_array,nZones,codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grid_array,nZones);
     DumpGrid(out_gfile, grid_array, nZones);
 
@@ -1123,7 +1123,7 @@ void CombinGrid::SwapInterfaceData()
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     WriteLogFile("        Translating data ...");
     for (int iZone = 0; iZone < numberOfGlobalZones; ++ iZone)
     {
@@ -1145,7 +1145,7 @@ void CombinGrid::SwapInterfaceData()
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
                 int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(neighborZone);
 
-                //! Decompress the interface data from supercontainer.
+                //! Decompress the interface data from datacontainer.
                 DecompressInterfaceData(neighborZone, receiveData, iZone);
 
                 ++ count;

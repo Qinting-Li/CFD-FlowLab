@@ -11,9 +11,9 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Geo_Interpoint.h
 //! @brief     Interpoint information for multi-zone grid.
-//! @author    Wan Yun Bo.
-//! @email   wanyb11@163.com
-//! @date  2019-11-30
+//! @author    Wan Yunbo.
+//! @email     wanyb11@163.com
+//! @date      2019-11-30
 
 #pragma once
 #include <vector>

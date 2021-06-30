@@ -50,7 +50,7 @@ public:
     RDouble GetoRefReNumber() const;
 
 	//! Get if need plot volume field.
-	int GetIsPlotVolumeField() const;
+	int GetPlotFieldType() const;
 
 	//! Get lower range of plotting field.
 	const RDouble * GetLowerPlotFieldBox() const;
@@ -110,6 +110,9 @@ public:
     //! Get reference dimensional density.
     RDouble GetRefDimensionalDensity() const;
 
+    //! Get reference dimensional velocity.
+    RDouble GetRefDimensionalVelocity() const;
+
     //! Get reference dimensional sonic speed.
     RDouble GetRefDimensionalSonicSpeed() const;
 
@@ -133,7 +136,7 @@ private:
 	RDouble refReNumber;
     RDouble oRefReNumber;
 
-	int isPlotVolumeField;
+	int plotFieldType;
 
 	RDouble lowerPlotFieldBox[3];
 	RDouble upperPlotFieldBox[3];
@@ -159,6 +162,7 @@ private:
     RDouble refDimensionalDensity;      
     RDouble refDimensionalSonicSpeed;  
     RDouble refDimensionalTemperature;
+    RDouble refDimensionalVelocity;
 
     int ifStartFromSteadyResults;
     int ifStaticsFlowField;

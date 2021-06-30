@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -36,7 +36,11 @@ const int STRPATCHGRID_CONFIG = 11;
 const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
-const int SEQUENTIAL          = 21;
+const int INTEGRATIVE_SOLVER  = 14;
+
+const int SPECDIFFHYB_Solver  = 15;
+const int SPLIT_OVERSET_GRID  = 22;
+
 const int POST_PROCESSING     = 99;
 
 const RDouble half            = 0.5;
@@ -121,28 +125,41 @@ const int ALGEBRAIC              = 2;
 const int ONE_EQU                = 3;
 const int TWO_EQU                = 4;
 
+const int IREGAMA                = 2;
 const int BALDWIN_LOMAX          = 10;
 const int SPALART_ALLMARAS       = 11;
 const int KW_SST                 = 12;
 
 const int MULTI_STAGE            = 1;
-const int LU_SGS   	             = 4;
-const int Block_LU_SGS   	     = 5;
+const int LU_SGS                 = 4;
+const int Block_LU_SGS           = 5;
+const int Line_LU_SGS            = 7;
 
 const int OneRefineOneDeform     = 1;
 const int DeformAfterAllRefine   = 2;
 
-const int X_DIR     = 1;
-const int Y_DIR     = 2;
-const int Z_DIR     = 3;
+const int X_DIR    = 1;
+const int Y_DIR    = 2;
+const int Z_DIR    = 3;
 
-const int PHINT     = 1;
-const int PHFLOAT   = 2;
-const int PHDOUBLE  = 3;
-const int PHSTRING  = 4;
-const int PHBOOL    = 5;
+const int PHINT    = 1;
+const int PHFLOAT  = 2;
+const int PHDOUBLE = 3;
+const int PHSTRING = 4;
+const int PHBOOL   = 5;
 
-const RDouble SAME_POINT_TOL = static_cast <RDouble> (1.0e-12);
+const RDouble SAME_POINT_TOL = static_cast<RDouble> (1.0e-12);
+
+const int PROBESMONITOR   = 0;
+const int LINESMONITOR    = 1;
+const int SURFACESMONITOR = 2;
+
+const int NEARESTCELLDATA = 0;
+const int REALCELLDATA    = 1;
+
+const int CELLVALUE    = 0;
+const int CELLSTOPROBE = 1;
+const int NODESTOPROBE = 2;
 
 namespace IDX
 {
@@ -171,28 +188,40 @@ const int ISA  = 0;
 const int IKE  = 0;
 const int IKW  = 1;
 
+const int IGAMA = 2;
+const int IRECT = 3;
+
 const int ITT  = 0;
 const int ITV  = 1;
 const int ITE  = 2;
+
 }
+const int MAX_SPECIES_NUM = 20;     //! The maximum number of species.
+const int MAX_REACTION_NUM = 50;    //! The maximum number of reactions.
+
+#define BOLTZMANN_CONSTANT 1.380649E-23      //! The Boltzmann constant, Unit: J/K.
+#define AVOGADRO_CONSTANT  6.0225E+23        //! The Avogadro constant, Unit: mol-1.
+#define VACUUM_PERMITTIVITY  8.854187817E-12 //! The permittivity of vacuum,Unit: C/(V*m).
+#define STANDARD_PRESSURE  101325.0          //! The standard atmosphere pressure,Unit: Pa.
+#define ELECTRIC_QUANTITY  1.602176634E-19   //! The electric quantity, Unit: C
 }
 
 namespace TEC_SPACE
 {
-const int ORDERED		  = 0;
-const int FELINESEG		  = 1;
-const int FETRIANGLE	  = 2;
+const int ORDERED         = 0;
+const int FELINESEG       = 1;
+const int FETRIANGLE      = 2;
 const int FEQUADRILATERAL = 3;
-const int FETETRAHEDRON	  = 4;
-const int FEBRICK		  = 5;
-const int FEPOLYGON		  = 6;
-const int FEPOLYHEDRON	  = 7;
+const int FETETRAHEDRON   = 4;
+const int FEBRICK         = 5;
+const int FEPOLYGON       = 6;
+const int FEPOLYHEDRON    = 7;
 
-const int WriteBoundary	  = 0;
-const int WriteBlock	  = 1;
-const int Writecomplete	  = 2;
+const int WriteBoundary   = 0;
+const int WriteBlock      = 1;
+const int Writecomplete   = 2;
 
 const int BoundaryVisual  = 0;
-const int FieldVisual	  = 1;
-const int BlockVisual	  = 2;
+const int FieldVisual     = 1;
+const int BlockVisual     = 2;
 }

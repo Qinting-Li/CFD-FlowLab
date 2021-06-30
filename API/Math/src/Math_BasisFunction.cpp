@@ -1,119 +1,120 @@
 #include "Math_BasisFunction.h"
 #include "TypeDefine.h"
+
 namespace PHSPACE
 {
 
 int GetProgressInterval(int nTotal, int nInterval)
 {
-	nInterval = MIN(nInterval, nTotal);
-	int interval = MAX((int) ((nTotal * 1.0) / (nInterval * 1.0)), 1);
-	return interval;
+    nInterval = MIN(nInterval, nTotal);
+    int interval = MAX((int)((nTotal * 1.0) / (nInterval * 1.0)), 1);
+    return interval;
 }
 
-void UnitFaceNormal2D(RDouble * startPoint,RDouble * endPoint,RDouble * unitNormal)
+void UnitFaceNormal2D(RDouble *startPoint,RDouble *endPoint,RDouble *unitNormal)
 {
-    RDouble dx,dy,ds,ods;
+    RDouble dx, dy, ds, ods;
 
     dx = endPoint[0] - startPoint[0];
     dy = endPoint[1] - startPoint[1];
-    ds = sqrt( dx * dx + dy * dy );
+    ds = sqrt(dx * dx + dy * dy);
     const RDouble one = 1.0;
-    ods = one / ( ds + TINY );
+    ods = one / (ds + TINY);
 
-    unitNormal[0]  =   dy * ods;
-    unitNormal[1]  = - dx * ods;
-    unitNormal[2]  =   ds;
-}
-           
-void Area2D(RDouble * r1,RDouble * r2,RDouble * r3,RDouble * r4,RDouble & area)
-{
-	RDouble v1[3],v2[3],p1[3],p2[3];
-
-    for ( int i = 0; i < 3; ++ i )
-	{
-		v1[i] = r2[i] - r1[i];
-		v2[i] = r3[i] - r2[i];
-	}
-
-    CrossProduct(v1,v2,p1);
-
-    for ( int i = 0; i < 3; ++ i )
-	{
-		v1[i] = r4[i] - r3[i];
-		v2[i] = r1[i] - r4[i];
-	}
-
-	CrossProduct(v1,v2,p2);
-
-    const RDouble half = 0.5;
-    area = half * ( p1[2] + p2[2] );
+    unitNormal[0] =   dy * ods;
+    unitNormal[1] = - dx * ods;
+    unitNormal[2] =   ds;
 }
 
-void FaceNormal3D(RDouble * r1, RDouble * r2, RDouble * r3, RDouble * r4, RDouble * faceNormal)
+void Area2D(RDouble *r1, RDouble *r2, RDouble *r3, RDouble *r4, RDouble &area)
 {
-    //! The following code is used to compute the face normal.
-    RDouble v1[3],v2[3],p1[3],p2[3];
-    for ( int i = 0; i < 3; ++ i )
+    RDouble v1[3], v2[3], p1[3], p2[3];
+
+    for (int i = 0; i < 3; ++ i)
     {
         v1[i] = r2[i] - r1[i];
         v2[i] = r3[i] - r2[i];
     }
 
-    CrossProduct(v1,v2,p1);
+    CrossProduct(v1, v2, p1);
 
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
         v1[i] = r4[i] - r3[i];
         v2[i] = r1[i] - r4[i];
     }
 
-    CrossProduct(v1,v2,p2);
+    CrossProduct(v1, v2, p2);
 
     const RDouble half = 0.5;
-    for ( int i = 0; i < 3; ++ i )
+    area = half * (p1[2] + p2[2]);
+}
+
+void FaceNormal3D(RDouble *r1, RDouble *r2, RDouble *r3, RDouble *r4, RDouble *faceNormal)
+{
+    //! The following code is used to compute the face normal.
+    RDouble v1[3], v2[3], p1[3], p2[3];
+    for (int i = 0; i < 3; ++ i)
     {
-        faceNormal[i] = half * ( p1[i] + p2[i] );
+        v1[i] = r2[i] - r1[i];
+        v2[i] = r3[i] - r2[i];
+    }
+
+    CrossProduct(v1, v2, p1);
+
+    for (int i = 0; i < 3; ++ i)
+    {
+        v1[i] = r4[i] - r3[i];
+        v2[i] = r1[i] - r4[i];
+    }
+
+    CrossProduct(v1, v2, p2);
+
+    const RDouble half = 0.5;
+    for (int i = 0; i < 3; ++ i)
+    {
+        faceNormal[i] = half * (p1[i] + p2[i]);
     }
 }
 
-void NormalizeVector(RDouble * vecIn, RDouble * vecOut, int nDim)
+void NormalizeVector(RDouble *vecIn, RDouble *vecOut, int nDim)
 {
-	RDouble s = 0.0;
-	for ( int i = 0; i < nDim; ++ i )
-	{
-		s += vecIn[i] * vecIn[i];
-	}
-	vecOut[nDim] = sqrt(s);
+    RDouble s = 0.0;
+    for (int i = 0; i < nDim; ++ i)
+    {
+        s += vecIn[i] * vecIn[i];
+    }
+    vecOut[nDim] = sqrt(s);
 
     const RDouble one = 1.0;
-	RDouble os = one / ( vecOut[nDim] + SMALL );
+    RDouble os = one / (vecOut[nDim] + SMALL);
 
-	for ( int i = 0; i < nDim; ++ i )
-	{
-		vecOut[i] = vecIn[i] * os;
-	}
+    for (int i = 0; i < nDim; ++ i)
+    {
+        vecOut[i] = vecIn[i] * os;
+    }
 }
 
-void CrossProduct(RDouble * vec1, RDouble * vec2, RDouble * crossVec)
+void CrossProduct(RDouble *vec1, RDouble *vec2, RDouble *crossVec)
 {
-    //! The following code is used to compute cross product. 
-	crossVec[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
-	crossVec[1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
-	crossVec[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
+    //! The following code is used to compute cross product.
+    crossVec[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
+    crossVec[1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
+    crossVec[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
 }
 
-void Vol_Tetrahedron(RDouble * r1, RDouble * r2, RDouble * r3, RDouble * r4, RDouble &vol)
+void Vol_Tetrahedron(RDouble *r1, RDouble *r2, RDouble *r3, RDouble *r4, RDouble &vol)
 {
-	//! The tetrahedron is six-times as much as the normal volume.
-    RDouble a[3],b[3],c[3];
-	for ( int i = 0; i < 3; ++ i )
-	{
-		a[i] = r2[i] - r1[i];
-		b[i] = r3[i] - r1[i];
-		c[i] = r4[i] - r1[i];
-	}
-    vol =  a[0]*b[1]*c[2] + a[1]*b[2]*c[0] + a[2]*b[0]*c[1]
-         - c[0]*b[1]*a[2] - c[1]*b[2]*a[0] - c[2]*b[0]*a[1];
+    //! The tetrahedron is six-times as much as the normal volume.
+    RDouble a[3], b[3], c[3];
+    for (int i = 0; i < 3; ++ i)
+    {
+        a[i] = r2[i] - r1[i];
+        b[i] = r3[i] - r1[i];
+        c[i] = r4[i] - r1[i];
+    }
+    vol = a[0] * b[1] * c[2] + a[1] * b[2] * c[0] + a[2] * b[0] * c[1]
+        - c[0] * b[1] * a[2] - c[1] * b[2] * a[0] - c[2] * b[0] * a[1];
 }
 
 double ComputDist(double x1, double y1, double z1, double x2, double y2, double z2)
@@ -123,11 +124,11 @@ double ComputDist(double x1, double y1, double z1, double x2, double y2, double 
     dy = y2 - y1;
     dz = z2 - z1;
 
-    return sqrt( dx * dx + dy * dy + dz * dz );
+    return sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-double Determinant(double A1, double A2, double A3, 
-                   double B1, double B2, double B3, 
+double Determinant(double A1, double A2, double A3,
+                   double B1, double B2, double B3,
                    double C1, double C2, double C3)
 {
     double det;
@@ -139,9 +140,9 @@ double Determinant(double A1, double A2, double A3,
 
 void RestrictIndex(int &i, int &j, int &k, const int &maxi, const int &maxj, const int &maxk)
 {
-    i = MIN( MAX(1,i), MAX(1,maxi) );
-    j = MIN( MAX(1,j), MAX(1,maxj) );
-    k = MIN( MAX(1,k), MAX(1,maxk) );
+    i = MIN(MAX(1, i), MAX(1, maxi));
+    j = MIN(MAX(1, j), MAX(1, maxj));
+    k = MIN(MAX(1, k), MAX(1, maxk));
 }
 
 void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEquation, RDouble *deltaQ)
@@ -150,8 +151,8 @@ void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEqu
     Range II(0, nEquation - 1);
     RDouble2D *aMatrix = new RDouble2D(II, II, fortranArray);
     //! Transformation.
-    RDouble2D &dMatrix = *reinterpret_cast<RDouble2D *> (diagonalMatrix);
-    RDouble2D &A = *reinterpret_cast<RDouble2D *> (aMatrix);
+    RDouble2D &dMatrix = *reinterpret_cast<RDouble2D *>(diagonalMatrix);
+    RDouble2D &A = *reinterpret_cast<RDouble2D *>(aMatrix);
     //! Initialize the matrix of A.
     for (int m = 0; m < nEquation; ++ m)
     {
@@ -172,7 +173,7 @@ void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEqu
     {
         //! Select the main element which is the maximum absolution value.
         RDouble maxElement = fabs(A(k, k));
-        int p = k;     //! To record the row number of the main element.
+        int p = k;    //! To record the row number of the main element.
         for (int i = k + 1; i < nEquation; ++ i)
         {
             if (fabs(A(i, k)) > maxElement)
@@ -182,7 +183,7 @@ void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEqu
             }
         }
 
-        if (p != k)     //! Swap the elements between two rows.
+        if (p != k)    //! Swap the elements between two rows.
         {
             RDouble temp = 0.0;
             for (int j = k; j < nEquation; ++ j)
@@ -211,11 +212,10 @@ void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEqu
             //A(i, k) = 0.0;
             for (int j = k + 1; j < nEquation; ++ j)
             {
-                A(i, j) += -mik * A(k, j);
+                A(i, j) += - mik * A(k, j);
             }
-            B[i] += -mik * B[k];
+            B[i] += - mik * B[k];
         }
-
     }
 
     //! The step of back substitution.
@@ -250,6 +250,4 @@ void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEqu
     delete []B;
 }
 
-
 }
-

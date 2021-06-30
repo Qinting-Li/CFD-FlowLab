@@ -43,7 +43,7 @@ void Pre_CGNSToPlot3D_Struct::Run()
 	
         //WriteToBcname();
 
-        //WriteToBcinformation();
+        WriteToBcinformation();
 	}
 }
 
@@ -226,7 +226,7 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
         if (CellDim == 3)
         {
 			//! CGNS Grid with 2 interfaces.
-			if (n1to1 == 2)
+			if (n1to1 <= 2)
 			{
 			    base_cgns->SetN1to1(n1to1); 
 			}

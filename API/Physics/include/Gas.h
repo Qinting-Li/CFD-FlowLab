@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -78,7 +78,7 @@ class Gas
 {
 public:
     Gas(){};
-    ~Gas(){};
+    virtual ~Gas(){};
 public:
 
 public:
@@ -90,11 +90,12 @@ public:
     virtual void SetElectronIndex(int ne) {}
     virtual RDouble GetElectronMolecularWeight() const {return 0;}
     virtual void SetElectronMolecularWeight(RDouble me) {}
-    virtual RDouble GetDimensionalElectronMolecularWeight() const {return 0;}
-    virtual int GetNSEquationNumber() const{return 0;}; 
-    virtual int GetLaminarNumber() const{return 0;};
-    virtual int GetTemperatureModel() const {return 0;};
+    virtual RDouble GetDimensionalElectronMolecularWeight() const {return 0.0;}
+    virtual int GetNSEquationNumber() const{return 5;}; 
+    virtual int GetLaminarNumber() const{return 5;};
+    virtual int GetTemperatureModel() const {return 1;};
     virtual int GetChemicalType() const {return 0;};
+    virtual void GetReferenceParameters(FluidParameter &refParam){};
 
     public:
     virtual RDouble GetTemperatureMin(){return 0;};
@@ -504,11 +505,6 @@ public:
     virtual void ComputeCoefficientInMVXDQ(RDouble *prim, RDouble K, RDouble rD, RDouble *theta_s, RDouble *phi_s, RDouble *Ds){};
 
 public:
-    //! Compute the mass fraction of the Oxygen and Nitrogen which is used for the fully catalytic wall.
-    //! @param[in ]: fs is array of mass fractions of the components in the multi-species.
-    //! @param[out]: co2 stores the mass fraction of Oxygen.
-    //! @param[out]: cn2 stores the mass fraction of Nitrogen.
-    virtual void GetOxygenAndNitrogenMassFraction(RDouble *fs, RDouble &co2, RDouble &cn2){};
 
     //! To find the chemical element in the species, if found, return the coefficient of the element.
     //! @param[in ]: species_name denotes the name of the species.

@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -62,12 +62,17 @@ private:
     //main work flow of CFD simulation process
     void RunCFD();
 
+    void RunIntegrativeSolver();
+
 
     //! compute wall distance for turbulence flow while there was no wdt files
     void ComputeWallDistance();
 
     void IsNeedConvert();
     void UpdateAllZonesPara();
+
+    //! run pre processing for struct-overset grid 
+    void RunOverlapPreProcessing();
 
     //! run post processing without flow field simulation
     void RunPostProcessing();
@@ -84,7 +89,8 @@ private:
     void SolveSteady();
 
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
-};
 
+    void AssembleInterpolationOversetField();
+};
 }
 

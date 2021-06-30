@@ -54,7 +54,7 @@ void IO_FlowReader::Init()
         n_turb = 2;
     }
 
-    GlobalDataBase::UpdateData("n_turb",&n_turb, PHINT, 1);
+    GlobalDataBase::UpdateData("n_turb", &n_turb, PHINT, 1);
 
 
     int nLocalZones = GetNumberofLocalZones();
@@ -74,7 +74,6 @@ void IO_FlowReader::Init()
             InitMemoryUnStr(grid);
         }
     }
-
 }
 
 void IO_FlowReader::InitMemoryStr(Grid *grid_in)
@@ -96,7 +95,7 @@ void IO_FlowReader::InitMemoryStr(Grid *grid_in)
     int neqn  = nm + nchem;
 
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-    int nDim    = GetDim();
+    int nDim = GetDim();
 
     Range M(0, neqn - 1);
 
@@ -105,7 +104,6 @@ void IO_FlowReader::InitMemoryStr(Grid *grid_in)
 
     RFloat4D *q_turb = new RFloat4D(I, J, K, M, fortranArray);
     grid->UpdateDataPtr("q_turb", q_turb);
-
 }
 
 void IO_FlowReader::InitMemoryUnStr(Grid *grid_in)
@@ -116,10 +114,10 @@ void IO_FlowReader::InitMemoryUnStr(Grid *grid_in)
     int nTotal = nTotalCell + nBoundFace;
 
     int nm = 5;
-    GlobalDataBase::GetData("nm",&nm,PHINT,1);
+    GlobalDataBase::GetData("nm", &nm, PHINT, 1);
 
     int nchem = 0;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
 
     int neqn = nm + nchem;
 
@@ -128,9 +126,7 @@ void IO_FlowReader::InitMemoryUnStr(Grid *grid_in)
 
     grid->UpdateDataPtr("q", q);
     grid->UpdateDataPtr("q_turb", q_turb);
-
 }
-
 
 void IO_FlowReader::Run()
 {
@@ -177,7 +173,6 @@ void IO_FlowReader::ReadFlowFile()
             {
                 ReadFlowFileUnStr(grid, flowData);
             }
-
         }
 
         delete flowData;
@@ -192,12 +187,12 @@ void IO_FlowReader::ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData)
 
     int nm    = GlobalDataBase::GetIntParaFromDB("nm");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    int neqn = nm + nchem;
+    int neqn  = nm + nchem;
 
     flowData->moveto_begin();
     int outnstep = 0;
-    flowData->read(&outnstep,sizeof(int));
-    GlobalDataBase::UpdateData("outnstep",&outnstep,PHINT,1);
+    flowData->read(&outnstep, sizeof(int));
+    GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
 
     int nBoundFace = grid->GetNBoundFace();
     int nTotalCell = grid->GetNTotalCell();
@@ -205,7 +200,7 @@ void IO_FlowReader::ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData)
 
     int nIFace = grid->GetNIFace();
 
-    RFloat **q = reinterpret_cast< RFloat ** > (grid->GetDataPtr("q"));
+    RFloat **q = reinterpret_cast<RFloat **>(grid->GetDataPtr("q"));
 
     for (int m = 0; m < neqn; ++ m)
     {
@@ -215,7 +210,7 @@ void IO_FlowReader::ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData)
 
 void IO_FlowReader::ReadFlowFileStr(Grid *grid_in, DataContainer *flowData)
 {
-    StructGrid * grid = StructGridCast( grid_in );
+    StructGrid *grid = StructGridCast(grid_in);
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
@@ -234,17 +229,17 @@ void IO_FlowReader::ReadFlowFileStr(Grid *grid_in, DataContainer *flowData)
     flowData->read(&outnstep, sizeof(int));
     GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
 
-    RFloat4D & q = * reinterpret_cast< RFloat4D * > ( grid->GetDataPtr( "q" ) );
+    RFloat4D &q = *reinterpret_cast<RFloat4D *>(grid->GetDataPtr("q"));
 
-    for ( int m = mst; m <= med; ++ m )
+    for (int m = mst; m <= med; ++ m)
     {
-        for ( int k = kst; k <= ked; ++ k )
+        for (int k = kst; k <= ked; ++ k)
         {
-            for ( int j = jst; j <= jed; ++ j )
+            for (int j = jst; j <= jed; ++ j)
             {
-                for ( int i = ist; i <= ied; ++ i )
+                for (int i = ist; i <= ied; ++ i)
                 {
-                    flowData->read( &q( i, j, k, m ), sizeof( RFloat ) );
+                    flowData->read(&q(i, j, k, m), sizeof(RFloat));
                 }
             }
         }
@@ -273,7 +268,7 @@ void IO_FlowReader::ReadTurbFile()
         DataContainer *flowData = new DataContainer();
         if (myid == send_proc)
         {
-            ReadFile( file, flowData);
+            ReadFile(file, flowData);
         }
 
         PH_Trade(flowData, send_proc, recv_proc);
@@ -291,16 +286,13 @@ void IO_FlowReader::ReadTurbFile()
             {
                 ReadTurbFileUnStr(grid, flowData);
             }
-
         }
 
         delete flowData;
     }
 
     ParallelCloseFile(file);
-
 }
-
 
 void IO_FlowReader::ReadTurbFileStr(Grid *grid_in, DataContainer *flowData)
 {
@@ -311,7 +303,7 @@ void IO_FlowReader::ReadTurbFileStr(Grid *grid_in, DataContainer *flowData)
 
     int n_turb = GlobalDataBase::GetIntParaFromDB("n_turb");
 
-    RFloat4D &q = *reinterpret_cast< RFloat4D * > (grid->GetDataPtr("q_turb"));
+    RFloat4D &q = *reinterpret_cast<RFloat4D *>(grid->GetDataPtr("q_turb"));
 
     Range M(0, n_turb - 1);
     int mst = M.first();
@@ -319,7 +311,7 @@ void IO_FlowReader::ReadTurbFileStr(Grid *grid_in, DataContainer *flowData)
 
     flowData->moveto_begin();
     int outnstepofTurb = 0;
-    flowData->read( &outnstepofTurb, sizeof( int ) );
+    flowData->read(&outnstepofTurb, sizeof(int));
 
     int outnstepofNS = GlobalDataBase::GetIntParaFromDB("outnstep");
 
@@ -331,7 +323,7 @@ void IO_FlowReader::ReadTurbFileStr(Grid *grid_in, DataContainer *flowData)
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    flowData->read(&q( i, j, k, m ), sizeof( RFloat ));
+                    flowData->read(&q(i, j, k, m), sizeof(RFloat));
                 }
             }
         }
@@ -348,19 +340,19 @@ void IO_FlowReader::ReadTurbFileUnStr(Grid *grid_in, DataContainer *flowData)
 
     int n_turb = GlobalDataBase::GetIntParaFromDB("n_turb");
 
-    RFloat **q = reinterpret_cast< RFloat ** > (grid->GetDataPtr("q_turb"));
+    RFloat **q = reinterpret_cast<RFloat **>(grid->GetDataPtr("q_turb"));
 
     flowData->moveto_begin();
     int outnstepofTurb = 0;
-    flowData->read( &outnstepofTurb, sizeof( int ) );
+    flowData->read(&outnstepofTurb, sizeof(int));
 
-    int outnstepofNS = GlobalDataBase::GetIntParaFromDB( "outnstep" );
+    int outnstepofNS = GlobalDataBase::GetIntParaFromDB("outnstep");
 
     for (int m = 0; m < n_turb; ++ m)
     {
         for (int icell = 0; icell < nTotal; ++ icell)
         {
-            flowData->read(&q[ m ][ icell ], sizeof( RFloat ));
+            flowData->read(&q[m][icell], sizeof(RFloat));
         }
     }
 }

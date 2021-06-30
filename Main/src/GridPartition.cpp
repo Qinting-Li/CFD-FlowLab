@@ -27,10 +27,6 @@ void PartitionGrid()
     {
         PartitionStructGrid();
     }
-    else
-    {
-        RefineStructGrid();
-    }
 }
 
 void PartitionStructGrid()
@@ -64,18 +60,18 @@ void PartitionUnstructGrid()
     int numberOfProcessor = PHMPI::GetNumberOfProcessor();
     if (numberOfProcessor == 1)
     {
-        // Serial partition.
-        // Step1: Read in the original grid.
+        //! Serial partition.
+        //! Step1: Read the original grid.
         region->ReadGrid();
 
         int nZones = PHMPI::GetNumberofGlobalZones();
         PrintToWindow("Number of original && final partitions: ", nZones, nProcessor, "\n");
-        if(nZones > 1)
+        if (nZones > 1)
         {
-            TK_Exit::ExceptionExit("Error: could not partition Multi Zones serially, using parallel please !");
+            TK_Exit::ExceptionExit("Error: could not partition Multi Zones serially, using parallel please!");
         }
 
-        // Step2: partition grid serially.
+        //! Step2: partition grid serially.
         Grid *grid = GetGrid(0, 0);
 
         Pre_UnstructGridPartition unstructGridParition(UnstructGridCast(grid), nProcessor, partMethod, originalGridFile);
@@ -89,39 +85,38 @@ void PartitionUnstructGrid()
     else
     {
         int parallelPartitionMethod = METIS_METHOD;
-        GlobalDataBase::GetData("parallelPartitionMethod", &parallelPartitionMethod, PHINT,1);
+        GlobalDataBase::GetData("parallelPartitionMethod", &parallelPartitionMethod, PHINT, 1);
 
-        // Parallel partition.
-        // Step1: Read in the original grid.
+        //! Parallel partition.
+        //! Step1: Read the original grid.
         region->ReadGrid();
 
         int nZones = PHMPI::GetNumberofGlobalZones();
         PrintToWindow("Number of original && final partitions: ", nZones, nProcessor, "\n");
-        if(nZones != numberOfProcessor)
+        if (nZones != numberOfProcessor)
         {
-            TK_Exit::ExceptionExit("Error: nZones must be equal to nProcessor for parallel partition !");
+            TK_Exit::ExceptionExit("Error: nZones must be equal to nProcessor for parallel partition!");
         }
 
         region->SetupMultiBlockRelationship();
 
-        // Find out the grid in this processor.
-        // Warning: only ONE grid in each processor in case of parallel partition.
+        //! Find out the grid in this processor.
+        //! Warning: only ONE grid in each processor in case of parallel partition.
         Grid *gridOfThisProcessor = 0;
         int myID = PHMPI::GetCurrentProcessorID();
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             int procID = PHMPI::GetZoneProcessorID(iZone);
 
-            if(myID == procID)
+            if (myID == procID)
             {
                 gridOfThisProcessor = GetGrid(iZone, 0);
                 break;
             }
         }
 
-        // Step2: partition grid parallel.
-        Pre_UnstructGridPartition parallelUnstructGridParition(UnstructGridCast(gridOfThisProcessor), nProcessor, 
-                                                               partMethod, originalGridFile, parallelPartitionMethod);
+        //! Step2: partition grid parallel.
+        Pre_UnstructGridPartition parallelUnstructGridParition(UnstructGridCast(gridOfThisProcessor), nProcessor, partMethod, originalGridFile, parallelPartitionMethod);
 
         parallelUnstructGridParition.PartitionGridParallel(partitionGridFile);
 
@@ -130,19 +125,19 @@ void PartitionUnstructGrid()
         parititionGrids = parallelUnstructGridParition.GetPartitionGrids();
     }
 
-    // Free the partition grids.
+    //! Free the partition grids.
     for (int iProc = 0; iProc < nProcessor; ++ iProc)
     {
         delete parititionGrids[iProc];
     }
-    delete []parititionGrids;
+    delete [] parititionGrids;
 
     delete region;
 }
 
 void RefineStructGrid()
 {
-    string coordinateFile   = GlobalDataBase::GetStrParaFromDB("coor_file");
+    string coordinateFile = GlobalDataBase::GetStrParaFromDB("coor_file");
     string layoutFile = GlobalDataBase::GetStrParaFromDB("layout_file");
 
     PHSPACE::RefineStructGrid(coordinateFile, layoutFile);
@@ -166,7 +161,7 @@ void ReadGridgenBC(const string &BCFile, DataContainer *cData)
 void ReadGridgenBC(fstream &file, DataContainer *cDdata)
 {
     string line, word;
-    string separator  = " =\t\r\n#$,;";
+    string separator = " =\t\r\n#$,;";
 
     CharVecSizeType sizeOfIntType = sizeof(int);
 

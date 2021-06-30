@@ -223,34 +223,34 @@ void GetGridsBoundingBox(Grid **grids, int nBlocks, RDouble *pmin, RDouble *pmax
     pmax[1] = - LARGE;
     pmax[2] = - LARGE;
 
-	for ( int nb = 0; nb < nBlocks; ++ nb )
-	{
-		RDouble *local_pmin = grids[nb]->GetMinBox();
-		RDouble *local_pmax = grids[nb]->GetMaxBox();
+    for (int nb = 0; nb < nBlocks; ++ nb)
+    {
+        RDouble *local_pmin = grids[nb]->GetMinBox();
+        RDouble *local_pmax = grids[nb]->GetMaxBox();
 
-        pmin[0] = MIN( pmin[0], local_pmin[0] );
-        pmin[1] = MIN( pmin[1], local_pmin[1] );
-        pmin[2] = MIN( pmin[2], local_pmin[2] );
+        pmin[0] = MIN(pmin[0], local_pmin[0]);
+        pmin[1] = MIN(pmin[1], local_pmin[1]);
+        pmin[2] = MIN(pmin[2], local_pmin[2]);
 
-        pmax[0] = MAX( pmax[0], local_pmax[0] );
-        pmax[1] = MAX( pmax[1], local_pmax[1] );
-        pmax[2] = MAX( pmax[2], local_pmax[2] );
-	}
+        pmax[0] = MAX(pmax[0], local_pmax[0]);
+        pmax[1] = MAX(pmax[1], local_pmax[1]);
+        pmax[2] = MAX(pmax[2], local_pmax[2]);
+    }
 }
 
-void GetGridsMinMaxDS(Grid **grids,int nBlocks, RDouble &mindis, RDouble &maxdis)
+void GetGridsMinMaxDS(Grid **grids, int nBlocks, RDouble &mindis, RDouble &maxdis)
 {
     mindis =   LARGE;
     maxdis = - LARGE;
 
-	for ( int nb = 0; nb < nBlocks; ++ nb )
-	{
+    for (int nb = 0; nb < nBlocks; ++ nb)
+    {
         RDouble dismin, dismax;
-		grids[nb]->GetMinMaxDS(dismin,dismax);
+        grids[nb]->GetMinMaxDS(dismin, dismax);
 
-        mindis = MIN( mindis, dismin );
-        maxdis = MAX( maxdis, dismax );
-	}
+        mindis = MIN(mindis, dismin);
+        maxdis = MAX(maxdis, dismax);
+    }
 }
 
 void MatchInterface(Grid *grid, LinkStruct *link)
@@ -311,48 +311,77 @@ void MatchInterface(Grid *grid, LinkStruct *link)
 	}
 }
 
-void ConstructGlobalInterfaceLink(Grid **grids,int nBlocks)
+void ConstructGlobalInterfaceLink(Grid **grids, int nBlocks)
 {
-	RDouble mindis, maxdis, pmin[3], pmax[3];
+    RDouble mindis, maxdis, pmin[3], pmax[3];
 
-	GetGridsBoundingBox(grids, nBlocks, pmin, pmax);
+    GetGridsBoundingBox(grids, nBlocks, pmin, pmax);
     GetGridsMinMaxDS(grids, nBlocks, mindis, maxdis);
 
     cout << "  Min && Max edge length: " << mindis << ", " << maxdis << "\n";
 
-    typedef DataStruct_AdtTree<int,RDouble> AdtTree;
+    typedef DataStruct_AdtTree<int, RDouble> AdtTree;
 
-	if ( GetDim() == TWO_D )
-	{
-		pmin[2] -= mindis;
-		pmax[2] += maxdis;
-	}
+    if (GetDim() == TWO_D)
+    {
+        pmin[2] -= mindis;
+        pmax[2] += maxdis;
+    }
 
     LinkStruct link(pmin, pmax, mindis / 2.0, nBlocks);
 
-	int omit_no_bound_bc  = 1;
-    GlobalDataBase::GetData("omit_no_bound_bc",&omit_no_bound_bc,PHINT,1);
+    int omit_no_bound_bc = 1;
+    GlobalDataBase::GetData("omit_no_bound_bc", &omit_no_bound_bc, PHINT, 1);
 
-	if ( !omit_no_bound_bc )
-	{
-		//! Covert NO_BOUNDARY_CONDITION to INTERFACE.
-		for ( int nb = 0; nb < nBlocks; ++ nb )
-		{
-			grids[nb]->ChangeBCType(PHENGLEI::NO_BOUNDARY_CONDITION,PHENGLEI::INTERFACE);
-		}
-	}
+    if (!omit_no_bound_bc)
+    {
+        //! Covert NO_BOUNDARY_CONDITION to INTERFACE.
+        for (int nb = 0; nb < nBlocks; ++ nb)
+        {
+            grids[nb]->ChangeBCType(PHENGLEI::NO_BOUNDARY_CONDITION, PHENGLEI::INTERFACE);
 
-	//! Build the initial link information.
-	for ( int nb = 0; nb < nBlocks; ++ nb )
-	{
-		grids[nb]->BuildGridLink(&link);
-	}
+            //! Consider the periodic boundary as the interface.
+            if (PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != 0)
+            {
+                grids[nb]->ChangeBCType(PHENGLEI::PERIODIC, PHENGLEI::INTERFACE);
+            }
+        }
+    }
 
-	//! Further process.
-	for ( int nb = 0; nb < nBlocks; ++ nb )
-	{
+    //! Build the initial link information.
+    for (int nb = 0; nb < nBlocks; ++ nb)
+    {
+        grids[nb]->BuildGridLink(&link);
+    }
+
+    //! Further process.
+    for (int nb = 0; nb < nBlocks; ++ nb)
+    {
         MatchInterface(grids[nb], &link);
-	}
+    }
+}
+
+LIB_EXPORT void DumpAdditionalData(const string &gridFileName, Grid **grids, int nBlocks)
+{
+    DumpFaceBC(gridFileName, grids, nBlocks);
+}
+
+LIB_EXPORT void DumpFaceBC(const string &gridFileName, Grid **grids, int nBlocks)
+{    
+    string faceBCFileName = ChangeExtensionOfFileName(gridFileName, "bc");
+    faceBCFileName = AddSymbolToFileName(faceBCFileName, '_', PHMPI::GetCurrentProcessorID());
+    fstream file;
+    OpenFile( file, faceBCFileName, ios_base::out|ios_base::binary );
+
+    PHWrite(file, nBlocks);
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
+    {
+        Grid *grid = grids[iZone];
+
+        grid->WriteFaceBC(file);
+    }
+
+    CloseFile( file );
 }
 
 void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nBlocks)
@@ -361,14 +390,14 @@ void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nB
     filename = AddSymbolToFileName(filename, "_", 0);
     vector < DataContainer * > datalist;
     datalist.resize(0);
-    
 
     for ( int izone =  0; izone < nBlocks; ++ izone )
     {
         DataContainer *data = new DataContainer();
         data->moveto_begin();
-        
+
         Grid *grid = grids[izone];
+        grid->AllocateOversetGrid();
         ComputeCharacteristicBoundary(grid, data);
 
         datalist.push_back(data);
@@ -378,6 +407,12 @@ void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nB
 
     DumpToVTK DumpToVTK(datalist, filename, CharacteristicBoundary);
     DumpToVTK.Run();
+
+    //for ( int izone =  0; izone < nBlocks; ++ izone )
+    //{      
+    //    delete datalist.at(izone);
+    //}
+    //datalist.resize(0);
 }
 
 void ComputeCharacteristicBoundary(Grid *grid_in, DataContainer *data)

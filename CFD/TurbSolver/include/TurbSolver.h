@@ -54,7 +54,7 @@ public:
     virtual void SourceFluxOneEquation(Grid *gridIn,bool chantstyle){};
     virtual void SourceFluxTwoEquation(Grid *gridIn){};
     virtual void FreeGradientProxy(Grid *gridIn){};
-    virtual void Spectrum(Grid *gridIn){};
+    virtual void Diagonal(Grid *gridIn){};
 
     virtual void InitSpectrum(Grid *gridIn){};
     void ComputeViscousCoeff(Grid *gridIn){};

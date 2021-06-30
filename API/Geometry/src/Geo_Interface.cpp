@@ -5,62 +5,65 @@
 #include "GridType.h"
 #include "Geo_SimpleGrid.h"
 #include "Constants.h"
+
 namespace PHSPACE
 {
 InterfacePatch::InterfacePatch()
 {
-	faceIndexForRecv = 0;
-	faceIndexForSend = 0;
-	dataStorageSend = new Data_ParamFieldSuite();
-	dataStorageRecv = new Data_ParamFieldSuite();
     zoneid = 0;
     zoneIndexOfNeighbor = 0;
     faceNumberOfPatch = 0;
+    faceIndexForRecv = 0;
+    faceIndexForSend = 0;
+
+    dataStorageSend = new Data_ParamFieldSuite();
+    dataStorageRecv = new Data_ParamFieldSuite();
 }
 
-InterfacePatch::InterfacePatch(const InterfacePatch & interPatchchIN)
+InterfacePatch::InterfacePatch(const InterfacePatch &interPatchchIN)
 {
-	zoneid = interPatchchIN.GetZoneID();
-	zoneIndexOfNeighbor = interPatchchIN.GetZoneIndexOfNeighbor();
-	faceNumberOfPatch = interPatchchIN.GetNumberOfFace();
+    zoneid = interPatchchIN.GetZoneID();
+    zoneIndexOfNeighbor = interPatchchIN.GetZoneIndexOfNeighbor();
+    faceNumberOfPatch = interPatchchIN.GetNumberOfFace();
 
-	if(interPatchchIN.GetFaceIndexForRecv())
-	{
-		faceIndexForRecv = new int [ faceNumberOfPatch ];
-		PHSPACE::CopyField(faceIndexForRecv, interPatchchIN.GetFaceIndexForRecv(), faceNumberOfPatch);
-	}
+    if (interPatchchIN.GetFaceIndexForRecv())
+    {
+        faceIndexForRecv = new int [faceNumberOfPatch];
+        PHSPACE::CopyField(faceIndexForRecv, interPatchchIN.GetFaceIndexForRecv(), faceNumberOfPatch);
+    }
 
-	if(interPatchchIN.GetFaceIndexForSend())
-	{
-		faceIndexForSend = new int [ faceNumberOfPatch ];
-		PHSPACE::CopyField(faceIndexForSend, interPatchchIN.GetFaceIndexForSend(), faceNumberOfPatch);
-	}
+    if (interPatchchIN.GetFaceIndexForSend())
+    {
+        faceIndexForSend = new int [faceNumberOfPatch];
+        PHSPACE::CopyField(faceIndexForSend, interPatchchIN.GetFaceIndexForSend(), faceNumberOfPatch);
+    }
 
-	dataStorageSend = new Data_ParamFieldSuite();
-	dataStorageRecv = new Data_ParamFieldSuite();
+    dataStorageSend = new Data_ParamFieldSuite();
+    dataStorageRecv = new Data_ParamFieldSuite();
 }
 
-InterfacePatch &InterfacePatch::operator = (const InterfacePatch  & interPatchchIN)
+InterfacePatch & InterfacePatch::operator = (const InterfacePatch &interPatchchIN)
 {
-    if ( this == &interPatchchIN )
+    if (this == &interPatchchIN)
     {
         return *this;
     }
+
     this->zoneid = interPatchchIN.GetZoneID();
     this->zoneIndexOfNeighbor = interPatchchIN.GetZoneIndexOfNeighbor();
     this->faceNumberOfPatch = interPatchchIN.GetNumberOfFace();
 
-    if(interPatchchIN.GetFaceIndexForRecv())
+    if (interPatchchIN.GetFaceIndexForRecv())
     {
         if (faceIndexForRecv) delete [] faceIndexForRecv;
-        faceIndexForRecv = new int [ faceNumberOfPatch ];
+        faceIndexForRecv = new int [faceNumberOfPatch];
         PHSPACE::CopyField(faceIndexForRecv, interPatchchIN.GetFaceIndexForRecv(), faceNumberOfPatch);
     }
 
-    if(interPatchchIN.GetFaceIndexForSend())
+    if (interPatchchIN.GetFaceIndexForSend())
     {
         if (faceIndexForSend) delete [] faceIndexForSend;
-        this->faceIndexForSend = new int [ faceNumberOfPatch ];
+        this->faceIndexForSend = new int [faceNumberOfPatch];
         PHSPACE::CopyField(faceIndexForSend, interPatchchIN.GetFaceIndexForSend(), faceNumberOfPatch);
     }
 
@@ -71,117 +74,120 @@ InterfacePatch &InterfacePatch::operator = (const InterfacePatch  & interPatchch
     dataStorageSend = interPatchchIN.dataStorageSend;
     dataStorageRecv = interPatchchIN.dataStorageRecv;
 
-	return *this;
+    return *this;
 }
 
 InterfacePatch::~InterfacePatch()
 {
-	delete dataStorageSend;
-	delete dataStorageRecv;
-	if (faceIndexForRecv) delete [] faceIndexForRecv;
-	if (faceIndexForSend) delete [] faceIndexForSend;
+    delete dataStorageSend;
+    delete dataStorageRecv;
+    if (faceIndexForRecv) delete [] faceIndexForRecv;
+    if (faceIndexForSend) delete [] faceIndexForSend;
 }
 
 void InterfacePatch::AllocateData()
 {
-	int faceNumberOfPatch = this->GetNumberOfFace();
+    int faceNumberOfPatch = this->GetNumberOfFace();
 
-    int * recvface = new int [ faceNumberOfPatch ];
-    int * sendface = new int [ faceNumberOfPatch ];
+    int *recvface = new int [faceNumberOfPatch];
+    int *sendface = new int [faceNumberOfPatch];
 
-	this->SetFaceIndexForRecv(recvface);
-	this->SetFaceIndexForSend(sendface);
+    this->SetFaceIndexForRecv(recvface);
+    this->SetFaceIndexForSend(sendface);
 }
 
 InterfaceInfo::InterfaceInfo()
 {
-	interFace2ZoneID       = 0;
-	interFace2CellID       = 0;
-	interFace2InterFaceID  = 0;
-	interFace2BoundaryFace = 0;
-	interFaceDirection     = 0;
+    nIFace                 = 0;
+    numberOfNeighbor       = 0;
+    interFace2ZoneID       = 0;
+    interFace2CellID       = 0;
+    interFace2InterFaceID  = 0;
+    interFace2BoundaryFace = 0;
+    interFaceDirection     = 0;
+    parent                 = NULL;
 
-    dsend = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
-    drecv = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
+    dsend = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
+    drecv = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
 
     interFacePatch.resize(0);
 
-	isNeighborInterfaceFound = 0;
-    nIFace                   = 0;
-    numberOfNeighbor         = 0;
-    parent                   = NULL;
+    isNeighborInterfaceFound = 0;
 }
 
-InterfaceInfo::InterfaceInfo(const InterfaceInfo& inforIn)
+InterfaceInfo::InterfaceInfo(const InterfaceInfo &inforIn)
 {
-	nIFace = inforIn.GetNIFace();
-	numberOfNeighbor = inforIn.GetNumberOfNeighbor();
-	if(inforIn.GetInterFace2ZoneID())
-	{
-		interFace2ZoneID = new int [nIFace];
-		PHSPACE::CopyField(interFace2ZoneID, inforIn.GetInterFace2ZoneID(), nIFace);
-	}
+    nIFace = inforIn.GetNIFace();
+    numberOfNeighbor = inforIn.GetNumberOfNeighbor();
 
-    if(inforIn.GetInterFace2CellID())
+    if (inforIn.GetInterFace2ZoneID())
+    {
+        interFace2ZoneID = new int [nIFace];
+        PHSPACE::CopyField(interFace2ZoneID, inforIn.GetInterFace2ZoneID(), nIFace);
+    }
+
+    if (inforIn.GetInterFace2CellID())
     {
         interFace2CellID = new int [nIFace];
         PHSPACE::CopyField(interFace2CellID, inforIn.GetInterFace2CellID(), nIFace);
     }
 
-	if(inforIn.GetInterFace2InterFaceID())
-	{
-		interFace2InterFaceID = new int [nIFace];
-		PHSPACE::CopyField(interFace2InterFaceID, inforIn.GetInterFace2InterFaceID(), nIFace);
-	}
+    if (inforIn.GetInterFace2InterFaceID())
+    {
+        interFace2InterFaceID = new int [nIFace];
+        PHSPACE::CopyField(interFace2InterFaceID, inforIn.GetInterFace2InterFaceID(), nIFace);
+    }
 
-	if(inforIn.GetInterFace2BoundaryFace())
-	{
-		interFace2BoundaryFace = new int [nIFace];
-		PHSPACE::CopyField(interFace2BoundaryFace, inforIn.GetInterFace2BoundaryFace(), nIFace);
-	}
+    if (inforIn.GetInterFace2BoundaryFace())
+    {
+        interFace2BoundaryFace = new int [nIFace];
+        PHSPACE::CopyField(interFace2BoundaryFace, inforIn.GetInterFace2BoundaryFace(), nIFace);
+    }
 
-	if(inforIn.GetInterFaceDirection())
-	{
-		interFaceDirection = new int [nIFace];
-		PHSPACE::CopyField(interFaceDirection, inforIn.GetInterFaceDirection(), nIFace);
-	}
+    if (inforIn.GetInterFaceDirection())
+    {
+        interFaceDirection = new int [nIFace];
+        PHSPACE::CopyField(interFaceDirection, inforIn.GetInterFaceDirection(), nIFace);
+    }
 
-    if(inforIn.GetInterfacePatch().size() != 0)
-	{
-		int numberOfNeighbor = this->GetNumberOfNeighbor();
+    if (inforIn.GetInterfacePatch().size() != 0)
+    {
+        int numberOfNeighbor = this->GetNumberOfNeighbor();
         interFacePatch.resize(0);
-        for ( int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor )
+        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
         {
-            InterfacePatch *interFacePatchNew = new InterfacePatch(*inforIn.GetInterfacePatch(iNeighbor));
+            InterfacePatch *interFacePatchNew = new InterfacePatch(* inforIn.GetInterfacePatch(iNeighbor));
             interFacePatch.push_back(interFacePatchNew);
-		}
-	}
+        }
+    }
 
-	dsend = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
-	drecv = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
+    dsend = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
+    drecv = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
 
-	parent = 0;
+    parent = 0;
 
-	isNeighborInterfaceFound = 0;
+    isNeighborInterfaceFound = 0;
 }
 
-InterfaceInfo::InterfaceInfo(int nIFace, Grid * parent)
+InterfaceInfo::InterfaceInfo(int nIFace, Grid *parent)
 {
-	this->nIFace = nIFace;
-	interFace2ZoneID       = new int [nIFace];
-    interFace2CellID       = new int [nIFace];
-	interFace2InterFaceID  = new int [nIFace];
-	interFace2BoundaryFace = new int [nIFace];
-	interFaceDirection     = new int [nIFace];
+    this->nIFace = nIFace;
+    numberOfNeighbor = 0;
 
-    dsend        = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
-    drecv        = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
+    interFace2ZoneID       = new int [nIFace];
+    interFace2CellID       = new int [nIFace];
+    interFace2InterFaceID  = new int [nIFace];
+    interFace2BoundaryFace = new int [nIFace];
+    interFaceDirection     = new int [nIFace];
+
     this->parent = parent;
 
-	interFacePatch.resize(0);
+    dsend = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
+    drecv = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
 
-	isNeighborInterfaceFound = 0;
-    numberOfNeighbor = 0;
+    interFacePatch.resize(0);
+
+    isNeighborInterfaceFound = 0;
 }
 
 InterfaceInfo::~InterfaceInfo()
@@ -195,7 +201,7 @@ InterfaceInfo::~InterfaceInfo()
     if (dsend != NULL) delete [] dsend;
     if (drecv != NULL) delete [] drecv;
 
-    for (vector<InterfacePatch *>::iterator iter= interFacePatch.begin(); iter != interFacePatch.end(); ++ iter)
+    for (vector<InterfacePatch *>::iterator iter = interFacePatch.begin(); iter != interFacePatch.end(); ++ iter)
     {
         if (NULL != *iter)
         {
@@ -210,340 +216,335 @@ InterfaceInfo::~InterfaceInfo()
 
 void InterfaceInfo::AllocateNeighborInfo()
 {
-	int numberOfNeighbor = this->GetNumberOfNeighbor();
-	interFacePatch.resize(0);
-	for ( int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor )
-	{
+    int numberOfNeighbor = this->GetNumberOfNeighbor();
+    interFacePatch.resize(0);
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+    {
         InterfacePatch *interFacePatchNew = new InterfacePatch();
         interFacePatch.push_back(interFacePatchNew);
-	}
+    }
 }
 
 int InterfaceInfo::ComputeNumberOfNeighbor(int *zoneflag)
 {
     using namespace PHMPI;
-	int nZones = GetNumberofGlobalZones();
+    int nZones = GetNumberofGlobalZones();
 
-	int *interFace2ZoneID  = this->GetInterFace2ZoneID();
-	int nIFace = this->GetNIFace();
+    int *interFace2ZoneID = this->GetInterFace2ZoneID();
+    int nIFace = this->GetNIFace();
 
-    //! Set zoneflag to zero,assuming that the current zone has no neighbor.
-    for ( int izone = 0; izone < nZones; ++ izone )
+    //! Set zoneflag to zero, assuming that the current zone has no neighbor.
+    for (int izone = 0; izone < nZones; ++ izone)
     {
         zoneflag[izone] = 0;
     }
 
     //! Find out all the neighbors of current zone,and set their zoneflag to one.
-    for ( int iface = 0; iface < nIFace; ++ iface )
+    for (int iface = 0; iface < nIFace; ++ iface)
     {
-        zoneflag[ interFace2ZoneID[iface] ] = 1;
+        zoneflag[interFace2ZoneID[iface]] = 1;
     }
 
     //! Compute the number of neighbor zones of the current zone,including itself.
     int numberOfNeighbor = 0;
-    for ( int izone = 0; izone < nZones; ++ izone )
+    for (int izone = 0; izone < nZones; ++ izone)
     {
         numberOfNeighbor += zoneflag[izone];
     }
 
-	return numberOfNeighbor;
+    return numberOfNeighbor;
 }
 
 void InterfaceInfo::FindNeighbors()
 {
     using namespace PHMPI;
-	int nZones = GetNumberofGlobalZones();
+    int nZones = GetNumberofGlobalZones();
 
-    int *zoneflag = new int[nZones];
+    int *zoneflag = new int [nZones];
 
-	int numberOfNeighbor = ComputeNumberOfNeighbor(zoneflag);
+    int numberOfNeighbor = ComputeNumberOfNeighbor(zoneflag);
 
     this->SetNumberOfNeighbor(numberOfNeighbor);
-	this->AllocateNeighborInfo();
+    this->AllocateNeighborInfo();
 
     int ineighbor = 0;
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         if (zoneflag[iZone])
         {
-			InterfacePatch *interFacePatchNew = this->GetInterfacePatch(ineighbor ++);
-			interFacePatchNew->SetZoneIndexOfNeighbor(iZone);
+            InterfacePatch *interFacePatchNew = this->GetInterfacePatch(ineighbor ++);
+            interFacePatchNew->SetZoneIndexOfNeighbor(iZone);
         }
     }
 
-	delete []zoneflag;
+    delete [] zoneflag;
 }
 
 void InterfaceInfo::ComputeFaceIndexForRecv(int ineighbor)
 {
-    int nIFace    = this->GetNIFace();
+    int nIFace = this->GetNIFace();
 
-	int * interFace2ZoneID = this->GetInterFace2ZoneID();
+    int *interFace2ZoneID = this->GetInterFace2ZoneID();
     int zone_id = this->GetZoneIndexOfNeighbor(ineighbor);
 
-	InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
-	int *faceIndexForRecv = interFacePatch->GetFaceIndexForRecv();
-	int count = 0;
-	for ( int iface = 0; iface < nIFace; ++ iface )
-	{
-		if ( interFace2ZoneID[iface] == zone_id )
-		{
-            //! It means that faceIndexForRecv is count locally  based on the interfaces of current zone.
-			faceIndexForRecv[count] = iface;
-			++ count;
-		}
-	}
-
+    InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
+    int *faceIndexForRecv = interFacePatch->GetFaceIndexForRecv();
+    int count = 0;
+    for (int iface = 0; iface < nIFace; ++ iface)
+    {
+        if (interFace2ZoneID[iface] == zone_id)
+        {
+            //! It means that faceIndexForRecv is count locally based on the interfaces of current zone.
+            faceIndexForRecv[count] = iface;
+            ++ count;
+        }
+    }
 }
 
 int InterfaceInfo::ComputeNIFaceOfNeighbor(int ineighbor)
 {
-    int nIFace  = this->GetNIFace();
-	int * interFace2ZoneID = this->GetInterFace2ZoneID();
-	int zone_id = this->GetZoneIndexOfNeighbor(ineighbor);
-	int nIFaceOfNeighbor = 0;
+    int nIFace = this->GetNIFace();
+    int *interFace2ZoneID = this->GetInterFace2ZoneID();
+    int zone_id = this->GetZoneIndexOfNeighbor(ineighbor);
+    int nIFaceOfNeighbor = 0;
 
-	for ( int iface = 0; iface < nIFace; ++ iface )
-	{
-		if ( interFace2ZoneID[iface] == zone_id )
-		{
-			++ nIFaceOfNeighbor;
-		}
-	}
+    for (int iface = 0; iface < nIFace; ++ iface)
+    {
+        if (interFace2ZoneID[iface] == zone_id)
+        {
+            ++ nIFaceOfNeighbor;
+        }
+    }
 
-	return nIFaceOfNeighbor;
+    return nIFaceOfNeighbor;
 }
 
 void InterfaceInfo::AllocateSendRecv(int ineighbor)
 {
-	int nIFaceOfNeighbor = this->ComputeNIFaceOfNeighbor(ineighbor);
+    int nIFaceOfNeighbor = this->ComputeNIFaceOfNeighbor(ineighbor);
 
-	InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
-	interFacePatch->SetNumberOfFace(nIFaceOfNeighbor);
-	interFacePatch->AllocateData();
+    InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
+    interFacePatch->SetNumberOfFace(nIFaceOfNeighbor);
+    interFacePatch->AllocateData();
 }
 
 void InterfaceInfo::InitNeighbors(int ineighbor)
 {
-	this->AllocateSendRecv(ineighbor);
-	this->ComputeFaceIndexForRecv(ineighbor);
+    this->AllocateSendRecv(ineighbor);
+    this->ComputeFaceIndexForRecv(ineighbor);
 }
 
 void InterfaceInfo::InitNeighbors()
 {
-	FindNeighbors();
+    FindNeighbors();
 
-	int numberOfNeighbor = this->GetNumberOfNeighbor();
-	for ( int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor )
-	{
-		InitNeighbors(ineighbor);
-	}
+    int numberOfNeighbor = this->GetNumberOfNeighbor();
+    for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
+    {
+        InitNeighbors(ineighbor);
+    }
 }
 
 int InterfaceInfo::FindIthNeighbor(int zone)
 {
-	int idx = - 1;
-	for ( int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor )
-	{
-        if ( zone == this->GetZoneIndexOfNeighbor(ineighbor) )
-		{
-			idx = ineighbor;
-			break;
-		}
-	}
-	return idx;
+    int idx = -1;
+    for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
+    {
+        if (zone == this->GetZoneIndexOfNeighbor(ineighbor))
+        {
+            idx = ineighbor;
+            break;
+        }
+    }
+    return idx;
 }
 
 int * InterfaceInfo::ComputeFaceIndexForSend(int ineighbor)
 {
-	int * faceIndexForSend = new int [ this->GetNIFaceOfNeighbor(ineighbor) ];
-	int * interFace2InterFaceID   = this->GetInterFace2InterFaceID();
-	int zone_id = this->GetZoneIndexOfNeighbor(ineighbor);
+    int *faceIndexForSend = new int [this->GetNIFaceOfNeighbor(ineighbor)];
+    int *interFace2InterFaceID = this->GetInterFace2InterFaceID();
+    int zone_id = this->GetZoneIndexOfNeighbor(ineighbor);
 
     int count = 0;
-	for ( int iface = 0; iface < nIFace; ++ iface )
-	{
-		if ( interFace2ZoneID[iface] == zone_id )
-		{
-			faceIndexForSend[ count ] = interFace2InterFaceID[iface];
-			++ count;
-		}
-	}
-	return faceIndexForSend;
+    for (int iface = 0; iface < nIFace; ++ iface)
+    {
+        if (interFace2ZoneID[iface] == zone_id)
+        {
+            faceIndexForSend[count] = interFace2InterFaceID[iface];
+            ++ count;
+        }
+    }
+    return faceIndexForSend;
 }
 
 void InterfaceInfo::FillFaceIndexForSend(int zone, int *faceIndexForSend_in)
 {
-	int ineighbor = this->FindIthNeighbor(zone);
-	InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
-	int *faceIndexForSend = interFacePatch->GetFaceIndexForSend();
-	int faceNumberOfPatch = interFacePatch->GetNumberOfFace();
-	for ( int iface = 0; iface < faceNumberOfPatch; ++ iface )
-	{
-		//! Here we can make out that faceIndexForSend is corresponds to the neighbor zone.
-		//! That is to say,it comes according to the corresponding sequence of corresponding neighbor zone.
-		faceIndexForSend[iface] = faceIndexForSend_in[iface];
-	}
+    int ineighbor = this->FindIthNeighbor(zone);
+    InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
+    int *faceIndexForSend = interFacePatch->GetFaceIndexForSend();
+    int faceNumberOfPatch = interFacePatch->GetNumberOfFace();
+    for (int iface = 0; iface < faceNumberOfPatch; ++ iface)
+    {
+        //! Here we can make out that faceIndexForSend is corresponds to the neighbor zone.
+        //! That is to say, it comes according to the corresponding sequence of corresponding neighbor zone.
+        faceIndexForSend[iface] = faceIndexForSend_in[iface];
+    }
 }
 
-void InterfaceInfo::ReSize( int numberOfNewInterfaces )
+void InterfaceInfo::ReSize(int numberOfNewInterfaces)
 {
-	if ( this->nIFace == numberOfNewInterfaces ) return;
+    if (this->nIFace == numberOfNewInterfaces) return;
 
-	delete [] interFace2ZoneID;
+    delete [] interFace2ZoneID;
     delete [] interFace2CellID;
-	delete [] interFace2InterFaceID;
-	delete [] interFace2BoundaryFace;
-	delete [] interFaceDirection;
+    delete [] interFace2InterFaceID;
+    delete [] interFace2BoundaryFace;
+    delete [] interFaceDirection;
 
-	this->nIFace = numberOfNewInterfaces;
+    this->nIFace = numberOfNewInterfaces;
 
-	interFace2ZoneID        = new int [ nIFace ];
-    interFace2CellID        = new int [ nIFace ];
-	interFace2InterFaceID   = new int [ nIFace ];
-	interFace2BoundaryFace  = new int [ nIFace ];
-	interFaceDirection      = new int [ nIFace ];
+    interFace2ZoneID       = new int [nIFace];
+    interFace2CellID       = new int [nIFace];
+    interFace2InterFaceID  = new int [nIFace];
+    interFace2BoundaryFace = new int [nIFace];
+    interFaceDirection     = new int [nIFace];
 }
 
-InterfaceFields::InterfaceFields( InterfaceInfo * dataIn )
+InterfaceFields::InterfaceFields(InterfaceInfo *dataIn)
 {
-	this->interfaceInfo = dataIn;
+    this->interfaceInfo = dataIn;
 }
 
 InterfaceFields::~InterfaceFields()
 {
-	//! The send && receive data are allocated by InterfaceFields,
-	//! so, they should be free by InterfaceFields.
-	FreeInterfaceVar();
+    //! The send && receive data are allocated by InterfaceFields,
+    //! so, they should be free by InterfaceFields.
+    FreeInterfaceVar();
 }
 
-void InterfaceFields::RegisterField( const string & name, const int type, const int dimesion, const int solverID )
+void InterfaceFields::RegisterField(const string &name, const int type, const int dimesion, const int solverID)
 {
-	variableNames.push_back( name );
-	variableTypes.push_back( type );
-	variableDimensions.push_back( dimesion );
-	solverIndex.push_back(solverID);
+    variableNames.push_back(name);
+    variableTypes.push_back(type);
+    variableDimensions.push_back(dimesion);
+    solverIndex.push_back(solverID);
 
-	for ( int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost )
-	{
-		AllocateInterfaceVar( name, type, dimesion, interfaceInfo->GetSendDataStorage(iGhost) );
-		AllocateInterfaceVar( name, type, dimesion, interfaceInfo->GetRecvDataStorage(iGhost) );
-	}
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
+    {
+        AllocateInterfaceVar(name, type, dimesion, interfaceInfo->GetSendDataStorage(iGhost));
+        AllocateInterfaceVar(name, type, dimesion, interfaceInfo->GetRecvDataStorage(iGhost));
+    }
 }
 
-void InterfaceFields::AllocateInterfaceVar( const string & name, const int type, const int dimesion, Data_ParamFieldSuite * datastore )
+void InterfaceFields::AllocateInterfaceVar(const string &name, const int type, const int dimesion, Data_ParamFieldSuite *datastore)
 {
-	int nIFace = interfaceInfo->GetNIFace();
+    int nIFace = interfaceInfo->GetNIFace();
 
-	switch ( type )
-	{
-	case PHINT:
-		{
-			int ** qInt = NewPointer2< int >( dimesion, nIFace );
-			for(int iDim = 0; iDim < dimesion; ++ iDim)
-			{
-				for (int jDim = 0; jDim < nIFace; ++ jDim)
-				{
-					qInt[iDim][jDim] = 0;
-				}
-			}
-			datastore->UpdateDataPtr( name, qInt );
-			break;
-		}
-	case PHFLOAT:
-		{
-			RFloat ** qFloat = NewPointer2< RFloat >( dimesion, nIFace );
-			for(int iDim = 0; iDim < dimesion; ++ iDim)
-			{
-				for (int jDim = 0; jDim < nIFace; ++ jDim)
-				{
-					qFloat[iDim][jDim] = 0.0;
-				}
-			}
-			datastore->UpdateDataPtr( name, qFloat );
-			break;
-		}
-	case PHDOUBLE:
-		{
-			RDouble ** qDouble = NewPointer2< RDouble >( dimesion, nIFace );
-			for(int iDim = 0; iDim < dimesion; ++ iDim)
-			{
-				for (int jDim = 0; jDim < nIFace; ++ jDim)
-				{
-					qDouble[iDim][jDim] = 0.0;
-				}
-			}
-			datastore->UpdateDataPtr( name, qDouble );
-			break;
-		}
-	case PHBOOL:
-		{
-			bool ** qBool = NewPointer2< bool >( dimesion, nIFace );
-			for(int iDim = 0; iDim < dimesion; ++ iDim)
-			{
-				for (int jDim = 0; jDim < nIFace; ++ jDim)
-				{
-					qBool[iDim][jDim] = 0;
-				}
-			}
-			datastore->UpdateDataPtr( name, qBool );
-			break;
-		}
-	default:
-		{
-			TK_Exit::UnexpectedVarValue("type", type);
-			break;
-		}
-	}
+    switch (type)
+    {
+        case PHINT:
+        {
+            int **qInt = NewPointer2< int >(dimesion, nIFace);
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
+            {
+                for (int jDim = 0; jDim < nIFace; ++ jDim)
+                {
+                    qInt[iDim][jDim] = 0;
+                }
+            }
+            datastore->UpdateDataPtr(name, qInt);
+            break;
+        }
+        case PHFLOAT:
+        {
+            RFloat **qFloat = NewPointer2< RFloat >(dimesion, nIFace);
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
+            {
+                for (int jDim = 0; jDim < nIFace; ++ jDim)
+                {
+                    qFloat[iDim][jDim] = 0.0;
+                }
+            }
+            datastore->UpdateDataPtr(name, qFloat);
+            break;
+        }
+        case PHDOUBLE:
+        {
+            RDouble **qDouble = NewPointer2< RDouble >(dimesion, nIFace);
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
+            {
+                for (int jDim = 0; jDim < nIFace; ++ jDim)
+                {
+                    qDouble[iDim][jDim] = 0.0;
+                }
+            }
+            datastore->UpdateDataPtr(name, qDouble);
+            break;
+        }
+        case PHBOOL:
+        {
+            bool **qBool = NewPointer2< bool >(dimesion, nIFace);
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
+            {
+                for (int jDim = 0; jDim < nIFace; ++ jDim)
+                {
+                    qBool[iDim][jDim] = 0;
+                }
+            }
+            datastore->UpdateDataPtr(name, qBool);
+            break;
+        }
+        default:
+        {
+            TK_Exit::UnexpectedVarValue("type", type);
+            break;
+        }
+    }
 }
 
 void InterfaceFields::FreeInterfaceVar()
 {
-	for ( int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost )
-	{
-		FreeInterfaceVar( interfaceInfo->GetSendDataStorage(iGhost) );
-		FreeInterfaceVar( interfaceInfo->GetRecvDataStorage(iGhost) );
-	}
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
+    {
+        FreeInterfaceVar(interfaceInfo->GetSendDataStorage(iGhost));
+        FreeInterfaceVar(interfaceInfo->GetRecvDataStorage(iGhost));
+    }
 }
 
-void InterfaceFields::FreeInterfaceVar( Data_ParamFieldSuite * datastore )
+void InterfaceFields::FreeInterfaceVar(Data_ParamFieldSuite *datastore)
 {
-	for ( int iVar = 0; iVar < Size(); ++ iVar )
-	{
-		string varName = variableNames[ iVar ];
-		void **q   = reinterpret_cast< void ** > ( datastore->GetDataPtr( varName ) );
-		DelPointer2( q );
-	}
+    for (int iVar = 0; iVar < Size(); ++ iVar)
+    {
+        string varName = variableNames[iVar];
+        void **q = reinterpret_cast<void **> (datastore->GetDataPtr(varName));
+        DelPointer2(q);
+    }
 }
 
 template< typename T >
-T ** InterfaceFields::GetSendVariable( const string & name, const int iGhost )
+T ** InterfaceFields::GetSendVariable(const string &name, const int iGhost)
 {
-	 return reinterpret_cast< T ** > ( interfaceInfo->GetSendDataStorage( iGhost )->GetDataPtr(name) );
+     return reinterpret_cast< T ** > (interfaceInfo->GetSendDataStorage(iGhost)->GetDataPtr(name));
 }
 
 template< typename T >
-T ** InterfaceFields::GetRecvVariable( const string & name, const int iGhost )
+T ** InterfaceFields::GetRecvVariable(const string &name, const int iGhost)
 {
-	return reinterpret_cast< T ** > ( interfaceInfo->GetRecvDataStorage( iGhost )->GetDataPtr(name) );
+    return reinterpret_cast< T ** > (interfaceInfo->GetRecvDataStorage(iGhost)->GetDataPtr(name));
 }
-
 
 InterfaceDataProxy::InterfaceDataProxy()
 {
-    ;
 }
 
 InterfaceDataProxy::~InterfaceDataProxy()
 {
 }
 
-
 vector< RDouble ** > & InterfaceDataProxy::GetVectorData()
 {
     return vdata;
 }
-
 
 vector<int> & InterfaceDataProxy::GetVectorDimension()
 {

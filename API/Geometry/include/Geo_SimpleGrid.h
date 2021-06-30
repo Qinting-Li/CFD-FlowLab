@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -11,8 +11,9 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Geo_SimpleGrid.h
 //! @brief     It is the base class of geometry grid.
-//!			   The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid
+//!            The inheriting order is: SimpleGrid -> Grid -> StructuredGrid/UnstructuredGrid.
 //! @author    He Xin, Bell.
+
 #pragma once
 #include "LIB_Macro.h"
 #include "TypeDefine.h"
@@ -20,22 +21,27 @@
 namespace PHSPACE
 {
 //! @brief It defines the class 'SimpleGrid', which is the base class of geometry grid.
-//!        The inheriting order is: SimpleGrid->Grid->StructuredGrid/UnstructuredGrid.
+//!        The inheriting order is: SimpleGrid -> Grid -> StructuredGrid/UnstructuredGrid.
 class SimpleGrid
 {
 protected:
-	//! Number of total nodes.
+    //! Number of total nodes.
     int nTotalNode;
 
-	//! Coordinates.
+    //! Coordinates.
     RDouble *x, *y, *z;
 
-	//! Min-max box of the nodes coordinates.
-	RDouble *pmin, *pmax;
-	RDouble minEdgeLength;
+    //! Min-max box of the nodes coordinates.
+    RDouble *pmin, *pmax;
 
-	//! If the min-max box has been calculated.
-	bool has_cal_minmax;	
+    //! The minimum edge length.
+    RDouble minEdgeLength;
+
+    //! The maximum edge length.
+    RDouble maxEdgeLength;
+
+    //! If the min-max box has been calculated.
+    bool has_cal_minmax;
 
 public:
     SimpleGrid();
@@ -46,44 +52,50 @@ public:
     SimpleGrid & operator = (const SimpleGrid &rhs);
 
 public:
-	//! Assigns the given pointer to the X coordinate pointer of this point.
-    void	SetX(RDouble * x);
+    //! Assign the given pointer to the X coordinate pointer of this point.
+    void SetX(RDouble *x);
 
-	//! Assigns the given pointer to the Y coordinate pointer of this point.
-    void	SetY(RDouble * y);
+    //! Assign the given pointer to the Y coordinate pointer of this point.
+    void SetY(RDouble *y);
 
-	//! Assigns the given pointer to the Z coordinate pointer of this point.
-    void	SetZ(RDouble * z);
+    //! Assign the given pointer to the Z coordinate pointer of this point.
+    void SetZ(RDouble *z);
 
-	//! Returns its X coordinate pointer.
+    //! Return its X coordinate pointer.
     RDouble * GetX() const;
 
-	//! Returns its Y coordinate pointer.
+    //! Return its Y coordinate pointer.
     RDouble * GetY() const;
 
-	//! Returns its Z coordinate pointer.
+    //! Return its Z coordinate pointer.
     RDouble * GetZ() const;
 
-	//! Assigns the given value to the number of the nodes.
+    //! Assign the given value to the number of the nodes.
     void SetNTotalNode(int nTotalNode);
 
-	//! Returns the number of the nodes.
-    int  GetNTotalNode() const;
+    //! Return the number of the nodes.
+    int GetNTotalNode() const;
 
-	//! Returns the minimum box of the grid zone.
+    //! Return the minimum box of the grid zone.
     RDouble * GetMinBox();
-	
-	//! Returns the maximum box of the grid zone.
+    
+    //! Return the maximum box of the grid zone.
     RDouble * GetMaxBox();
 
-	//! Compute the minimum and maximum box of the grid zone.
+    //! Compute the minimum and maximum box of the grid zone.
     LIB_EXPORT void ComputeMinMaxBox();
 
-	//! Compute the minimum distance of the grid edges.
-	LIB_EXPORT virtual RDouble CalMinEdgeLength();
+    //! Compute the minimum distance of the grid edges.
+    LIB_EXPORT virtual RDouble CalMinEdgeLength();
+
+    //! Compute the maximum distance of the grid edges.
+    LIB_EXPORT virtual RDouble CalMaxEdgeLength();
 
 private:
+    //! Free memory.
     void FreeMemory();
+
+    //! Copy object.
     void Copy(const SimpleGrid &rhs);
 };
 

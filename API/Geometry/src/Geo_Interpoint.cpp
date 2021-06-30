@@ -5,6 +5,7 @@
 #include "Geo_SimpleGrid.h"
 #include "Geo_Interface.h"
 #include "Constants.h"
+
 namespace PHSPACE
 {
 InterpointPatch::InterpointPatch()

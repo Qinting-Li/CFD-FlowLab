@@ -1,5 +1,5 @@
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+#          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 #          P   P  H   H  E      NN   N  G      L      E       I          +
 #          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 #          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -16,7 +16,7 @@ cmake_minimum_required(VERSION 2.8)
 
 #1. output message:
 message(STATUS "") 
-message(STATUS "--- Enter subdirectory <Main>, Start to call ${CMAKE_CURRENT_LIST_FILE} ---") 
+message(STATUS "--- Enter subdirectory <Main>, Start to call ${CMAKE_CURRENT_LIST_FILE} ---")
 message(STATUS "This current binary directory is ${CMAKE_CURRENT_BINARY_DIR}.")
 message(STATUS "This current source directory is ${CMAKE_CURRENT_SOURCE_DIR}.")
 
@@ -175,17 +175,7 @@ endif(WIN32)
 # Important: the top library should be list firstly!!!
 # For example, the Mesh is previous API.
 
-set(DataStruct_TARGET_NAME "PHDataStruct")
-set(Data_TARGET_NAME "PHData")
-set(Math_TARGET_NAME "PHMath")
-set(PHMPI_TARGET_NAME "PHMPI")
-set(Toolkit_TARGET_NAME "PHToolkit")
-set(IO_TARGET_NAME "PHIO")
-set(Geometry_TARGET_NAME "PHGeometry")
-set(Physics_TARGET_NAME "PHPhysics")
-set(PreProcess_TARGET_NAME "PHPreProcess")
-set(PostProcess_TARGET_NAME "PHPostProcess")
-set(Common_TARGET_NAME "PHCommon")
+set(API_TARGET_NAME "PHAPI")
 set(MESH_TARGET_NAME "PHMesh")
 set(CFD_TARGET_NAME "PHCFD")
 
@@ -193,18 +183,20 @@ if(BUILD_LBM)
   set(LBM_TARGET_NAME "PHLBM")
 endif(BUILD_LBM)
 
+message(STATUS "Linking ${MESH_TARGET_NAME} ...")
+list(APPEND LINK_LIBRARY_LIST ${MESH_TARGET_NAME})
+  
 
 message(STATUS "Linking ${CFD_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${CFD_TARGET_NAME})
 
-list(APPEND LINK_LIBRARY_LIST ${Physics_TARGET_NAME} ${PreProcess_TARGET_NAME} ${PostProcess_TARGET_NAME} ${Common_TARGET_NAME} ${Geometry_TARGET_NAME} ${IO_TARGET_NAME} ${Toolkit_TARGET_NAME} ${PHMPI_TARGET_NAME} ${DataStruct_TARGET_NAME} ${Data_TARGET_NAME} ${Math_TARGET_NAME})
+list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME})
 
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 
 #23. link a target to given libraries:
 target_link_libraries(${EXECUTABLE_TARGET_NAME} ${LINK_LIBRARY_LIST})
-
 
 # Some pre-definitions that occ need.
 if(USE_OCC)

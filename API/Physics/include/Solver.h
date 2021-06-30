@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,6 +12,7 @@
 //! @file      Solver.h
 //! @brief     Define the base solver class of all other solvers.
 //! @author    Bell, He Xin, Xu Qingxin.
+
 #pragma once
 #include <sstream>
 #include <vector>
@@ -30,6 +31,7 @@ class ActionKey;
 class ActionTag;
 class PHSolver;
 class Post_Visual;
+class Post_Probes;
 class PHGeometry;
 class Data_ParamFieldSuite;
 class InterfaceDataProxy;
@@ -58,16 +60,16 @@ public:
     virtual ~PHSolver(){};
 
 public:
-    //! Assigns the solver index, the default index is '0' if without given.
+    //! Assign the solver index, the default index is '0' if without given.
     void SetIndex(int index = 0);
 
-    //! Assigns the geometry(grid) to the solver.
+    //! Assign the geometry(grid) to the solver.
     void SetGeometry(PHGeometry *geometry);
 
-    //! Returns the solver index, 
+    //! Return the solver index, 
     int  GetIndex() const;
 
-    //! Returns the geometry(grid).
+    //! Return the geometry(grid).
     PHGeometry *GetGeometry();
     
     void SetKey(int key);
@@ -109,6 +111,7 @@ public:
 	virtual streamsize TranslateActionLength(ActionKey *actkey){ return 0; };    
     virtual void PrepareInterfaceData(Grid *grid, Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy){};
 	virtual void ComputePostVisualVariables(Post_Visual * postVisualization) = 0;
+    virtual void ComputePostProbesVariables(Post_Probes * postProbesVar){};
 };
 #include "Solver.hxx"
 

@@ -1,147 +1,136 @@
-inline Grid *Grid::Next() 
-{
-	return cGrid; 
-}
-
-inline Grid * Grid::Prev() 
-{ 
-	return fGrid;
-}
-
 inline bool Grid::IsFinestGrid()
 {
-	if(this->Prev() == 0)
-		return true;
-	else
-		return false;
+    if (this->GetFineGrid() == 0)
+        return true;
+    else
+        return false;
 }
 
-inline  bool Grid::IsCoarsestGrid()
+inline bool Grid::IsCoarsestGrid()
 {
-	if(Next() == 0)
-		return true;
-	else
-		return false;
+    if (GetCoarseGrid() == 0)
+        return true;
+    else
+        return false;
 }
 
-inline SimpleGrid * Grid::GetOldGrid() 
-{ 
-	return oldgrid; 
+inline SimpleGrid * Grid::GetOldGrid()
+{
+    return oldgrid; 
 }
 
-inline void Grid::SetNTotalFace(int nTotalFace) 
-{ 
-	this->nTotalFace = nTotalFace;
+inline void Grid::SetNTotalFace(int nTotalFace)
+{
+    this->nTotalFace = nTotalFace;
 }
 
 inline void Grid::SetNIFace(int nIFace)
 {
-	this->nIFace = nIFace;
+    this->nIFace = nIFace;
 }
 
-inline void Grid::SetNTotalCell(int nTotalCell) 
-{ 
-	this->nTotalCell = nTotalCell;
-}
-
-inline void Grid::SetNBoundFace(int nBoundFace) 
-{ 
-	this->nBoundFace = nBoundFace;
-}
-
-inline int Grid::GetNTotalFace() const 
+inline void Grid::SetNTotalCell(int nTotalCell)
 {
-	return nTotalFace; 
+    this->nTotalCell = nTotalCell;
 }
 
-inline int Grid::GetNTotalCell() const 
-{ 
-	return nTotalCell;
+inline void Grid::SetNBoundFace(int nBoundFace)
+{
+    this->nBoundFace = nBoundFace;
 }
 
-inline int Grid::GetNBoundFace() const 
+inline int Grid::GetNTotalFace() const
+{
+    return nTotalFace; 
+}
+
+inline int Grid::GetNTotalCell() const
+{
+    return nTotalCell;
+}
+
+inline int Grid::GetNBoundFace() const
 { 
-	return nBoundFace;
+    return nBoundFace;
 }
 
 inline int Grid::GetNIFace() const
-{ 
-	if ( iinfo )
-	{
-		return iinfo->GetNIFace();
-	}
-	return 0;
+{
+    if (iinfo)
+    {
+        return iinfo->GetNIFace();
+    }
+    return 0;
 }
 
 inline void Grid::SetDim(int dim) 
-{ 
-	this->dimension = dim;
+{
+    this->dimension = dim;
 }
 
 inline int Grid::GetDim() const
-{ 
-	return dimension;
-}
-
-inline int Grid::Type() const 
 {
-	return type;
+    return dimension;
 }
 
-inline GridID * Grid::GetGridID() const 
-{ 
-	return index;
+inline int Grid::Type() const
+{
+    return type;
+}
+
+inline GridID * Grid::GetGridID() const
+{
+    return index;
 }
 
 inline void Grid::SetZoneID(int index)
 {
-	this->index->SetIndex(index);
+    this->index->SetIndex(index);
 }
 
 inline void Grid::SetZoneLocalID(int index)
 {
-	this->index->SetLocalIndex(index);
+    this->index->SetLocalIndex(index);
 }
 
 inline int Grid::GetZoneID() const
 {
-	return index->GetIndex();
+    return index->GetIndex();
 }
 
 inline int Grid::GetZoneLocalID() const
 {
-	return index->GetLocalIndex();
+    return index->GetLocalIndex();
 }
 
-inline void Grid::SetInterfaceInfo(InterfaceInfo * iinfo) 
+inline void Grid::SetInterfaceInfo(InterfaceInfo *iinfo)
 {
-	if(!iinfo) return;
+    if (!iinfo) return;
 
-	delete this->iinfo;
-	this->iinfo = iinfo;
+    delete this->iinfo;
+    this->iinfo = iinfo;
 
-	delete interfaceFields;
-	interfaceFields = new InterfaceFields( iinfo );
+    delete interfaceFields;
+    interfaceFields = new InterfaceFields(iinfo);
 }
 
-inline void Grid::SetInterpointInfo(InterpointInformation *interpointInformation) 
+inline void Grid::SetInterpointInfo(InterpointInformation *interpointInformation)
 {
-    if (! interpointInformation)
+    if (!interpointInformation)
     {
         return;
     }
+
     delete this->interpointInformation;
     this->interpointInformation = interpointInformation;
     
     delete interpointFields;
-    
     interpointFields = new InterpointFields(interpointInformation);
 }
 
-
 inline InterfaceInfo * Grid::GetInterfaceInfo() const
-{ 
-	return iinfo;
+{
+    return iinfo;
 }
 
 inline InterpointInformation *Grid::GetInterpointInfo() const
@@ -151,110 +140,150 @@ inline InterpointInformation *Grid::GetInterpointInfo() const
 
 inline InterfaceFields *Grid::GetInterfaceFields() 
 {
-	return interfaceFields;
+    return interfaceFields;
 }
 
-inline InterpointFields * Grid::GetInterpointFields() 
+inline InterpointFields * Grid::GetInterpointFields()
 {
     return interpointFields;
 }
 
-inline void Grid::SetOversetInfoProxy(OversetInfoProxy * oversetInfoProxy)
+inline void Grid::SetOversetInfoProxy(OversetInfoProxy *oversetInfoProxy)
+{
+    this->oversetInfoProxy = oversetInfoProxy;
+}
+
+inline void Grid::SetOversetInformationProxy(OversetInformationProxy *oversetInformationProxyIn)
+{
+    this->oversetInformationProxy = oversetInformationProxyIn;
+}
+
+inline OversetInformationProxy * Grid::GetOversetInformationProxy() const
+{
+    return oversetInformationProxy;
+}
+
+inline OversetInfoProxy * Grid::GetOversetInfoProxy() const
+{
+    return oversetInfoProxy; 
+}
+
+inline int Grid::GetLevel() const
+{
+    return level;
+}
+
+inline void Grid::SetLevel(int level)
 { 
-	this->oversetInfoProxy = oversetInfoProxy;
+    this->level = level;
 }
 
-inline void Grid::SetOversetInformationProxy( OversetInformationProxy * oversetInformationProxyIn )
+inline Grid * Grid::GetCoarseGrid() const
 {
-	this->oversetInformationProxy = oversetInformationProxyIn;
+    return cGrid;
 }
 
-inline OversetInformationProxy * Grid::GetOversetInformationProxy() const 
-{ 
-	return oversetInformationProxy;
-}
-
-inline OversetInfoProxy * Grid::GetOversetInfoProxy() const 
-{ 
-	return oversetInfoProxy; 
-}
-
-inline int Grid::GetLevel() const 
+inline Grid * Grid::GetFineGrid() const
 {
-	return level;
+    return fGrid;
 }
 
-inline void Grid::SetLevel(int level) 
-{ 
-	this->level = level;
-}
-
-inline Grid * Grid::GetCoarseGrid() const 
+inline void Grid::SetCoarseGrid(Grid *cGrid)
 {
-	return cGrid;
+    this->cGrid = cGrid;
 }
 
-inline Grid * Grid::GetFineGrid() const 
+inline void Grid::SetFineGrid(Grid *fGrid)
 {
-	return fGrid;
-}
-
-inline void Grid::SetCoarseGrid(Grid * cGrid) 
-{
-	this->cGrid = cGrid;
-}
-
-inline void Grid::SetFineGrid(Grid * fGrid) 
-{
-	this->fGrid = fGrid;
+    this->fGrid = fGrid;
 }
 
 inline void Grid::CopyPara(Data_Param *gPara)
-{ 
-	this->gPara = gPara;
+{
+    this->gPara = gPara;
 }
 
 inline void Grid::CopyField(Data_Field *gField)
-{ 
-	this->gField = gField;
+{
+    this->gField = gField;
 }
 
 inline set < Data_IndexData > * Grid::GetDataSet()
 {
-	return gField->GetDataSet();
+    return gField->GetDataSet();
 }
 
-inline void Grid::UpdateDataPtr(const string &name,void *data)
+inline void Grid::UpdateDataPtr(const string &name, void *data)
 {
-	gField->UpdateDataPtr(name,data);
+    gField->UpdateDataPtr(name, data);
 };
 
 inline void * Grid::GetDataPtr(const string &name) const
 {
-	return gField->GetDataPtr(name);
+    return gField->GetDataPtr(name);
 };
 
 inline void Grid::DeleteDataPtr(const string &name) const
 {
-	return gField->DeleteDataPtr(name);
+    return gField->DeleteDataPtr(name);
 };
 
-inline void Grid::UpdateData(const string &name,void *data, int type, int size)
+inline void Grid::UpdateData(const string &name, void *data, int type, int size)
 {
-	gPara->UpdateData(name,data,type,size);
+    gPara->UpdateData(name, data, type, size);
 }
 
-inline void Grid::GetData(const string &name,void *data, int type, int size)
+inline void Grid::GetData(const string &name, void *data, int type, int size)
 {
-	gPara->GetData(name,data,type,size);
+    gPara->GetData(name, data, type, size);
 }
 
 inline int Grid::GetIBlock()
 {
-	return iBlock;
+    return iBlock;
 }
 
-inline void Grid::SetIBlock( int iBlockIn )
+inline void Grid::SetIBlock(int iBlockIn)
 {
-	this->iBlock = iBlockIn;
+    this->iBlock = iBlockIn;
+}
+
+inline int Grid::GetZoneProbesNumber() const
+{
+    return zoneProbesNumber;
+}
+
+inline void Grid::SetZoneProbesNumber(int zoneProbesNumberIn)
+{
+    this->zoneProbesNumber = zoneProbesNumberIn;
+}
+
+inline vector<int> Grid::GetProbesLineID() const
+{
+    return probesLineID;
+}
+
+inline void Grid::SetProbesLineID(vector<int> &probesLineIDIn)
+{
+    this->probesLineID = probesLineIDIn;
+}
+
+inline vector<int> Grid::GetProbesSurfaceID() const
+{
+    return probesSurfaceID;
+}
+
+inline void Grid::SetProbesSurfaceID(vector<int> &probesSurfaceIDIn)
+{
+    this->probesSurfaceID = probesSurfaceIDIn;
+}
+
+inline vector<vector<RDouble> > Grid::GetProbesCoordinates() const
+{
+    return probesCoordinates;
+}
+
+inline void Grid::SetProbesCoordinates(vector<vector<RDouble> > &probesCoordinatesIn)
+{
+    this->probesCoordinates = probesCoordinatesIn;
 }

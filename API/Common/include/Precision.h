@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -29,9 +29,10 @@ namespace PHSPACE
     const RDouble LARGE = 1.0e40;
     const RDouble SMALL = 1.0e-40;
     const RDouble TINY  = 1.0e-40;
+    const RDouble EPSILON = 1.0e-12;
 #else
-    typedef float  RDouble ;
-    typedef float  RFloat ;
+    typedef float RDouble;
+    typedef float RFloat;
 
     const RDouble LARGE = 1.0e40f;
     const RDouble SMALL = 1.0e-40f;
@@ -42,13 +43,13 @@ typedef size_t uint_t;
 typedef unsigned long long uint_long;
 
 #ifdef WIN32
-	#ifdef _WIN64
-		typedef long long int_t;
-	#else
-		typedef int int_t;
-	#endif
+    #ifdef _WIN64
+        typedef long long int_t;
+    #else
+        typedef int int_t;
+    #endif
 #else
-	typedef long long int_t;
+    typedef long long int_t;
 #endif
 
 }

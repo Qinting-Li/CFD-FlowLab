@@ -437,6 +437,7 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentFace(GridFormat_Fluent *fluent_fac
 			++ i;
 		} while ( i <= last_index );
 	}
+    //delete face_patch;
 }
 
 void Pre_FluentToPHengLEI_Unstruct::ReadFluentCell(int first_index, int last_index, fstream &file)

@@ -659,7 +659,7 @@ void GetJetBCData()
     globalJetBC.Nondimensional();
 }
 
-bool ifIsJetBC(const int BCType)
+bool IsJetBC(const int BCType)
 {
     if (globalJetBC.GetBCIDRangLower() <= BCType && globalJetBC.GetBCIDRangUpper() >= BCType)
     {

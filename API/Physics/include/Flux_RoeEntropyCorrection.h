@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -12,6 +12,7 @@
 //! @file      Flux_RoeEntropyCorrection.h
 //! @brief     This file defines the entropy correction (fix) method in Roe inviscid flux method.
 //! @author    Bell, Liu Jian.
+
 #pragma once
 #include "LIB_Macro.h"
 #include "Math_BasisFunction.h"

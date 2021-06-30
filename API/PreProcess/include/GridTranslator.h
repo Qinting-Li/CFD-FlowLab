@@ -9,28 +9,28 @@ namespace PHSPACE
 class GridTranslator
 {
 private:
-	int numberOfZones;
-	int codeOfOversetGrid;
-	vector< StructGrid * > * gridGroup;
-	vector< StructFace * > * structFaceGroup;
+    int numberOfZones;
+    int codeOfOversetGrid;
+    vector<StructGrid *> * gridGroup;
+    vector<StructFace *> * structFaceGroup;
 public:
-	 GridTranslator();
-	 GridTranslator(Grid **& strgrids, int &nBlocks);
-	~GridTranslator();
+     GridTranslator();
+     GridTranslator(Grid **&strgrids, int &nBlocks);
+    ~GridTranslator();
 public:
-	void Run();
+    void Run();
 private:
-	void ReadGridgenFiles();
-	void ReadGridgenCoordinateFile();
-	void ReadGridgenBoundaryFile();
-	void ProcessBoundaryCondition();
-	void ProcessOversetGrid();
-	void GenerateStructFaceGroup();
-	void ColorateStructFaceGroup();
-	void CollectInterfaceInformation();
-	void OutputMultiZoneComputationalGrids();
-void OutputGrid();
-	void CheckGrid();
+    void ReadGridgenFiles();
+    void ReadGridgenCoordinateFile();
+    void ReadGridgenBoundaryFile();
+    void ProcessBoundaryCondition();
+    void ProcessOversetGrid();
+    void GenerateStructFaceGroup();
+    void ColorateStructFaceGroup();
+    void CollectInterfaceInformation();
+    void OutputMultiZoneComputationalGrids();
+    void OutputGrid();
+    void CheckGrid();
 };
 
 }

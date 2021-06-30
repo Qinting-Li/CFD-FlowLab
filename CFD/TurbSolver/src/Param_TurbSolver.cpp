@@ -27,6 +27,8 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     DESType = GlobalDataBase::GetIntParaFromDB("DESType");
 
+    transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
+
     SAProductType = GlobalDataBase::GetIntParaFromDB("SAProductType");
 
     SSTProductType = GlobalDataBase::GetIntParaFromDB("SSTProductType");

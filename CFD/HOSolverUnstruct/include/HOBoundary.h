@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -9,15 +9,11 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file	HOBoundary.h
-//! @brief	basis function, such as monomial, orthogonalized etc.\n
-//!
-//!
-//! @author		gongxq, liming, Wan yunbo, Xu gang.
-//! @email       
-//! @date		2019-11-09
-//! @version	A001
-//! @copyright
+//! @file      HOBoundary.h
+//! @brief     basis function, such as monomial, orthogonalized etc.
+//! @author    gongxq, liming, Wan yunbo, Xu gang.
+//! @date      2019-11-09
+//! @version   A001
 
 #pragma once
 
@@ -33,9 +29,4 @@ namespace HOUnstruct
     void FarFieldRiemannInvariants(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gama0, RDouble gama, RDouble nxs, RDouble nys, RDouble nzs, RDouble vgn, int nl, int nchem);
     void InflowBC(RDouble *prims, RDouble *primt, int nl, int nchem);
     void OutflowBC(RDouble *prims, RDouble *primt, int nl, int nchem);
-    void PressureOutletBC(RDouble *prims, RDouble *primt, RDouble pres, int nl, int nchem);
-    void PressureOutletBC(RDouble *prims, RDouble *primt, int nl, int nchem);
-    void PressureInletBCRiemann(RDouble *prims, RDouble *primt, RDouble gama,  RDouble mach_inf,
-        RDouble nx, RDouble ny, RDouble nz, RDouble totalP, RDouble totalT, RDouble* angle, int nl, int nchem);
-    void PressureInletBCPlate (RDouble *prims, RDouble *primt, RDouble gama, RDouble mach_inf, RDouble totalP, RDouble totalT, RDouble* angle, int nl, int nchem);
 }

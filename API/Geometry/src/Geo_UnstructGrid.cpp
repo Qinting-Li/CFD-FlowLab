@@ -24,17 +24,17 @@
 #include "FieldProxy.h"
 #include "Geo_UnstructGrid.h"
 #include "TK_Log.h"
+#include "PHHeapSort.h"
 
 using namespace std;
 
 #pragma warning (disable:913)
 namespace PHSPACE
 {
-
 struct linkbase
 {
-	int ic;
-	struct linkbase *next;
+    int ic;
+    struct linkbase *next;
 };
 
 Connectivity::Connectivity()
@@ -62,6 +62,9 @@ LIB_EXPORT UnstructGrid::UnstructGrid()
     bcRegionUnstruct = NULL;
 	cell2coarsegridcell  = 0;
 	averageVolume = -1.0;
+    probesCellID.resize(0);
+    normalDistanceC2C = NULL;
+    lineTopology = NULL;
 }
 
 LIB_EXPORT UnstructGrid::~UnstructGrid()
@@ -111,6 +114,17 @@ LIB_EXPORT UnstructGrid::~UnstructGrid()
             delete bcRegionUnstruct[iBCRegionUnstruct];
         }
         delete [] bcRegionUnstruct;
+    }
+
+    probesCellID.clear();
+
+    if (normalDistanceC2C != NULL)
+    {
+        delete[] normalDistanceC2C;
+    }
+    if (lineTopology != NULL)
+    {
+        delete lineTopology;
     }
 }
 
@@ -662,7 +676,7 @@ BCRegionUnstruct** UnstructGrid::GetBCRegionUnstruct()
 			string bcName = bcRecord[iFace]->GetBCName();
 			bcNameSet.insert(bcName);			
 		}
-		nBCRegionUnstruct = bcNameSet.size();
+		nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
 		bcRegionUnstruct = new BCRegionUnstruct* [nBCRegionUnstruct];
 		set<string>::iterator iter;
 		int count = 0;
@@ -750,6 +764,42 @@ LIB_EXPORT RDouble UnstructGrid::CalMinEdgeLength()
 	}
 
 	return minEdgeLength;
+}
+
+//! Compute the maximum distance of the grid edges.
+LIB_EXPORT RDouble UnstructGrid::CalMaxEdgeLength()
+{
+    if (this->maxEdgeLength > 0.0)
+    {
+        return this->maxEdgeLength;
+    }
+
+    maxEdgeLength = PHSPACE::SMALL;
+
+    int *node_number_of_each_face = this->GetNodeNumberOfEachFace();
+    int *face2node = this->GetFace2Node();
+
+    int nodePosition = 0;
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    {
+        int nNode = node_number_of_each_face[iFace];
+        for (int iNode = 0; iNode < nNode; ++ iNode)
+        {
+            int node1 = face2node[nodePosition + iNode];
+            int node2 = face2node[nodePosition + (iNode + 1) % nNode];
+
+            RDouble dx = x[ node2 ] - x[ node1 ];
+            RDouble dy = y[ node2 ] - y[ node1 ];
+            RDouble dz = z[ node2 ] - z[ node1 ];
+            RDouble ds = DISTANCE(dx, dy, dz);
+
+            maxEdgeLength = MAX(maxEdgeLength, ds);
+        }
+
+        nodePosition += nNode;
+    }
+
+    return maxEdgeLength;
 }
 
 LIB_EXPORT void UnstructGrid::ReSpecifyBC()
@@ -3641,6 +3691,19 @@ void UnstructGrid::ReviseNeighborZoneIndex( int zoneStart )
 	{
 		interFace2ZoneID[ iFace ] += zoneStart;
 	}
+
+    InterpointInformation *interpointInformation = this->GetInterpointInfo();
+
+    if(! interpointInformation) return;
+
+    int nIPoint = interpointInformation->GetNumberOfInterpoints();
+
+    int *interPoint2ZoneID = interpointInformation->GetInterPoint2ZoneID();
+
+    for( int iPoint = 0; iPoint < nIPoint; ++ iPoint )
+    {
+        interPoint2ZoneID[iPoint] += zoneStart;
+    }
 }
 
 void UnstructGrid::EncodeOversetGrid(DataContainer *cdata)
@@ -3890,6 +3953,37 @@ LIB_EXPORT void UnstructGrid::AllocateOversetGrid()
     }
 }
 
+LIB_EXPORT void UnstructGrid::CalNormalDistanceOfC2C() 
+{
+    if (normalDistanceC2C != NULL)
+    {
+        cout << "norm_dist_c2c has been existed." << endl;
+        return;
+    }
+
+    int le, re;
+    int * leftCellOfFace = this->GetLeftCellOfFace();
+    int * rightCellOfFace = this->GetRightCellOfFace();
+    RDouble * xfn = this->GetFaceNormalX();
+    RDouble * yfn = this->GetFaceNormalY();
+    RDouble * zfn = this->GetFaceNormalZ();
+    RDouble * xcc = this->GetCellCenterX();
+    RDouble * ycc = this->GetCellCenterY();
+    RDouble * zcc = this->GetCellCenterZ();
+    RDouble * xfc = this->GetFaceCenterX();
+    RDouble * yfc = this->GetFaceCenterY();
+    RDouble * zfc = this->GetFaceCenterZ();
+
+    normalDistanceC2C = NewPointer<RDouble>(nTotalFace);
+    for (int iFace = 0; iFace < nTotalFace; iFace++) 
+    {
+        le = leftCellOfFace[iFace];
+        re = rightCellOfFace[iFace];
+
+        normalDistanceC2C[iFace] = ABS(xfn[iFace] * (xcc[re] - xcc[le])
+            + yfn[iFace] * (ycc[re] - ycc[le]) + zfn[iFace] * (zcc[re] - zcc[le]));
+    }
+}
 void UnstructGrid::ReadGrid(fstream &file)
 {
 	VirtualFile *vfile = new VirtualFile(&file);
@@ -4055,9 +4149,9 @@ void UnstructGrid::ReadGrid(VirtualFile *vfile)
 		//
 		//if ( IsWall( true, bctype, 0 ) )
 		//{
-		//	bcr[iFace]->UpdateData("u",&u,PHDOUBLE,1);
-		//	bcr[iFace]->UpdateData("v",&v,PHDOUBLE,1);
-		//	bcr[iFace]->UpdateData("w",&w,PHDOUBLE,1);
+		//	bcr[iFace]->UpdateData("u", &u, PHDOUBLE, 1);
+		//	bcr[iFace]->UpdateData("v", &v, PHDOUBLE, 1);
+		//	bcr[iFace]->UpdateData("w", &w, PHDOUBLE, 1);
 		//}
     }
     this->SetBCRecord(bcr);
@@ -7081,7 +7175,7 @@ void CompNodeVar(UnstructGrid *grid, RDouble *qNode, RDouble *q)
             }
         }
         nodePosition += nodeNumberOfEachFace[iFace];
-    }
+    }    
 
     delete []weight;
 }
@@ -7146,7 +7240,8 @@ void CompNodeVar_new( UnstructGrid *grid, RDouble *q_n, RDouble *q )
 		}
 	}
 
-    for( inode = 0; inode < nTotalNode; ++ inode ) {
+    for( inode = 0; inode < nTotalNode; ++ inode ) 
+    {
 		q_n[ inode ] /= n_count[ inode ]+TINY;
     }
 
@@ -7986,33 +8081,34 @@ void UnstructGrid::GridSurfaceVelocity(RDouble *xt, RDouble *yt, RDouble *zt)
 
 void UnstructGrid::ReSetBoundaryConditionByGlobalBC()
 {
-	vector<BoundaryCondition *> * globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
+    vector<BoundaryCondition *> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
 
-	map<string, BoundaryCondition *> globalBCMap;
-	
-	vector<BoundaryCondition *>::iterator iter;
-	for (iter = globalBCList->begin(); iter != globalBCList->end(); ++ iter )
-	{
-		BoundaryCondition * bc = * iter;
-		pair<string, BoundaryCondition *> bcPair(bc->GetBCName(), bc);
-		globalBCMap.insert(bcPair);
-	}
+    map<string, BoundaryCondition *> globalBCMap;
+    
+    vector<BoundaryCondition *>::iterator iter;
+    for (iter = globalBCList->begin(); iter != globalBCList->end(); ++ iter)
+    {
+        BoundaryCondition *bc = *iter;
+        pair<string, BoundaryCondition *> bcPair(bc->GetBCName(), bc);
+        globalBCMap.insert(bcPair);
+    }
 
-	int nBoundFace = this->GetNBoundFace();
-	BCRecord **bcr = this->GetBCRecord();
-	for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
-	{
-		int bctype = bcr[iFace]->GetKey();
-		const string & bcName = bcr[iFace]->GetBCName();
-		BoundaryCondition * bc = 0;
-		map<string, BoundaryCondition *>::iterator iter = globalBCMap.find(bcName);
-		if(iter != globalBCMap.end())
-		{
-			bc = iter->second;			
-		}
-		
-		bcr[iFace]->SetBoundaryCondition(bc);
-	}
+    int nBoundFace = this->GetNBoundFace();
+    BCRecord **bcr = this->GetBCRecord();
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int bctype = bcr[iFace]->GetKey();
+        const string &bcName = bcr[iFace]->GetBCName();
+        BoundaryCondition *bc = 0;
+        map<string, BoundaryCondition *>::iterator iter = globalBCMap.find(bcName);
+
+        if (iter != globalBCMap.end())
+        {
+            bc = iter->second;
+        }
+
+        bcr[iFace]->SetBoundaryCondition(bc);
+    }
 }
 
 void GetFace2NodeList(UnstructGrid *grid, int bcType, vector<int> &linkmap, vector < vector < int > > &face2nodelist)
@@ -8147,6 +8243,7 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     linkmap.resize(0);
 
     int * leftCellIndexContainer = grid->GetLeftCellOfFace();
+    int * keyActiveOfCells       = grid->GetBlankIndex();
     int nodepos = 0;
     for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
     {
@@ -8161,6 +8258,12 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
 			nodepos += node_number_of_each_face[iFace];
             continue;
 		}
+
+        if (keyActiveOfCells[leftCellIndexContainer[iFace]] != 1)
+        {
+            nodepos += node_number_of_each_face[iFace];
+            continue;
+        }
 
 		/*if ( bctype == PHENGLEI::SYMMETRY )
         {
@@ -10082,5 +10185,41 @@ LIB_EXPORT RDouble UnstructGrid::GetAverageVolume()
 	return averageVolume;
 }
 
+RDouble AspectRatio(RDouble dist, RDouble area, int nodeNumOfPerFace)
+{
+    const RDouble SQRT3 = 1.732050807568877;
+
+    RDouble length = 1.0;
+
+    if (GetDim() == TWO_D)
+    {
+        if (nodeNumOfPerFace == 2)
+        {  //quadrilateral
+            length = area;
+        }
+        else
+        {
+            cout << endl << "Need new code in function aspect ratio!" << endl;
+        }
+    }
+    else
+    {
+        if (nodeNumOfPerFace == 3)
+        {  //triangle
+            length = sqrt(area * four / SQRT3);
+        }
+        else if (nodeNumOfPerFace == 4)
+        {  //quadrilateral
+            length = sqrt(area);
+        }
+        else
+        {
+            cout << endl << "Need new code in function aspect ratio!" << endl;
+        }
+    }
+
+    return length / (dist + TINY);
 }
+}
+
 

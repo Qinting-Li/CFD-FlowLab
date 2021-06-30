@@ -19,6 +19,8 @@ PerfectGas::PerfectGas()
 
 PerfectGas::~PerfectGas()
 {
+    RDouble *prim_inf = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
+    delete []prim_inf;
 }
 
 void PerfectGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q)
@@ -179,15 +181,13 @@ void PerfectGas::InitGlobalParameterOfNSEquation()
 
 void PerfectGas::InitNumberOfSpecies()
 {
-
     int numberOfSpecies = 0;
     GlobalDataBase::UpdateData( "numberOfSpecies", &numberOfSpecies, PHINT, 1 );
 
-    int nm    = GlobalDataBase::GetIntParaFromDB( "nm"    );
+    int nm    = GlobalDataBase::GetIntParaFromDB("nm");
     int nl = nm;
-    GlobalDataBase::UpdateData( "nl", &nl, PHINT, 1 );
+    GlobalDataBase::UpdateData("nl", &nl, PHINT, 1);
 }
-
 
 void PerfectGas::ComputeProperReynoldsNumberForGrid()
 {
@@ -203,15 +203,14 @@ void PerfectGas::ComputeProperReynoldsNumberForGrid()
 }
 
 void PerfectGas::InitCommonParameter()
-{  
+{
     RDouble reynoldsReferenceLengthDimensional = 1.0;
-	    
-	RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
-			
-	reynoldsReferenceLengthDimensional = gridScaleFactor;
-		
-	GlobalDataBase::UpdateData("reynoldsReferenceLengthDimensional", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
 
+    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+
+    reynoldsReferenceLengthDimensional = gridScaleFactor;
+
+    GlobalDataBase::UpdateData("reynoldsReferenceLengthDimensional", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
 }
 
 void PerfectGas::InitOtherParameter()
@@ -219,11 +218,17 @@ void PerfectGas::InitOtherParameter()
     int nolstress, nrokplus;
     nolstress = -1;
     nrokplus  = -1;
-    GlobalDataBase::UpdateData( "nolstress", &nolstress, PHINT, 1 );
-    GlobalDataBase::UpdateData( "nrokplus" , &nrokplus , PHINT, 1 );
+    GlobalDataBase::UpdateData("nolstress", &nolstress, PHINT, 1);
+    GlobalDataBase::UpdateData("nrokplus" , &nrokplus , PHINT, 1);
 
     int outnstep = 0;
-    GlobalDataBase::UpdateData( "outnstep", &outnstep, PHINT, 1 );
+    GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
+
+    int innstep = 0;
+    GlobalDataBase::UpdateData("innstep", &innstep, PHINT, 1);
+
+    RDouble physicalTime = 0.0;
+    GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
 }
 
 void PerfectGas::InitReferenceParameter()
@@ -287,9 +292,9 @@ void PerfectGas::InitReferenceParameter()
     RDouble prt = GlobalDataBase::GetDoubleParaFromDB("prt");
 
     RDouble oprl = 1.0 / prl;
-    GlobalDataBase::UpdateData("oprl", &oprl, PHDOUBLE, 1 );
+    GlobalDataBase::UpdateData("oprl", &oprl, PHDOUBLE, 1);
     RDouble oprt = 1.0 / prt;
-    GlobalDataBase::UpdateData("oprt", &oprt, PHDOUBLE, 1 );
+    GlobalDataBase::UpdateData("oprt", &oprt, PHDOUBLE, 1);
 }
 
 void PerfectGas::SetAirInformationByDataBase()
@@ -634,8 +639,8 @@ void PerfectGas::ComputeReferencePrimitive()
     RDouble attack   = attackd * PI / 180.0;
     RDouble sideslip = angleSlide * PI / 180.0;
 
-    GlobalDataBase::UpdateData("attack"  ,&attack  ,PHDOUBLE,1);
-    GlobalDataBase::UpdateData("sideslip",&sideslip,PHDOUBLE,1);
+    GlobalDataBase::UpdateData("attack", &attack, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("sideslip", &sideslip, PHDOUBLE, 1);
 
     using namespace IDX;
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
@@ -746,8 +751,9 @@ void PerfectGas::ComputeReferenceVelocity()
     RDouble refMachNumber = referenceParameterDimensional.GetMachNumber();
     RDouble refDimensionalSonicSpeed = referenceParameterDimensional.GetSoundVelocity();
 
-    RDouble reference_velocity_dimensional = refDimensionalSonicSpeed * refMachNumber;
-    referenceParameterDimensional.SetVelocity(reference_velocity_dimensional);
+    RDouble refDimensionalVelocity = refDimensionalSonicSpeed * refMachNumber;
+    referenceParameterDimensional.SetVelocity(refDimensionalVelocity);
+    GlobalDataBase::UpdateData("refDimensionalVelocity", &refDimensionalVelocity, PHDOUBLE, 1);
 }
 
 void PerfectGas::ComputeReferenceSoundVelocity()
@@ -788,8 +794,7 @@ void PerfectGas::ComputeReferenceMolecularInformation()
 {
     //!unit: kg/mol.
     RDouble reference_average_molecular_weight_dimensional = 28.9644 * 1.0e-3;
-    referenceParameterDimensional.SetAverageMolecularWeight( reference_average_molecular_weight_dimensional );
-
+    referenceParameterDimensional.SetAverageMolecularWeight(reference_average_molecular_weight_dimensional);
 }
 
 void PerfectGas::ComputeReferenceGeneralGasConstant()
@@ -844,7 +849,7 @@ void PerfectGas::ComputeOtherProperParameterForGrid()
 
         RDouble physicalTimeStep_dimensional = physicalTimeStep * unit;
 
-        PrintToWindow( "  Physical Time Step       :    ", physicalTimeStep_dimensional , "s", "\n" );
+        PrintToWindow("  Physical Time Step       :    ", physicalTimeStep_dimensional , "s", "\n");
     }
 }
 

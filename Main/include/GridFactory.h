@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -18,7 +18,6 @@
 
 namespace PHSPACE
 {
-const int GRID_CREATION   = 0;
 const int GRID_CONVERSION = 1;
 const int GRID_ADAPTATION = 2;
 const int GRID_MERGING    = 3;
@@ -27,12 +26,10 @@ const int GRID_REPAIR     = 5;
 const int GRID_MIRROR     = 6;
 const int GRID_FLAPPING   = 7;
 
-void CreateGrid     ();
-void ConvertGrid    ();
-void GeneGridFromDataBase();
+void CreateGrid();
+void ConvertGrid();
 void ReconstructGrid();
 void CombinationGrid();
-void GeneMixGrid    ();
 void OversetGridView();
 void RepairGrid();
 void MirrorGrid();
@@ -49,6 +46,4 @@ void Gridgen2Fantasy();
 void GridgenToSingleUns();
 void GridgenToMBlockUns();
 void GridgenToStr();
-
-void GenDataBaseGrid(const string &gridfile, GENE_SIMPLE_GRID gene_simle_grid, MESH2D_GENE mesh2dgen, int gridtype);
 }

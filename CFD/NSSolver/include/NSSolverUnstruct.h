@@ -31,6 +31,9 @@ private:
 	Gradient * gradientNSField;
 	Gradient * gradientTemperature;
     int systemgridtype;
+    Limiter *limiterOnlyForMixGrid;
+    FaceProxy *InviscidfaceProxyOnlyForMixGrid;
+    FaceProxy *ViscousfaceProxyOnlyForMixGrid;
 public:
 	NSSolverUnstruct();
     ~NSSolverUnstruct();
@@ -88,16 +91,25 @@ public:
 	void SpectrumRadiusInviscid(Grid *grid);
 	void PreconInvSpectrumRadius(Grid *gridIn);
 	void SpectrumRadiusViscous(Grid *grid);
-    void Spectrum(Grid *gridIn);
+    void Diagonal(Grid *gridIn);
 	void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
 	void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
     void LocalTimeStep(Grid *grid);
+
+    //! calculate time step by another methods different with PHengLEI code.
+    void LocalTimeStep_Prince(Grid *grid);
+    
     void GlobalTimeStep(Grid *grid);
     void LocalGlobalTimeStep(Grid *grid);
     void RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef);
     void LoadFlux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
-    void StoreBCfaceInviscidfluxOnlyforMixGrid(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
-    void StoreBCfaceViscousfluxOnlyforMixGrid(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+
+    void ZeroResidualOfSpecialCells(Grid *gridIn);
+
+    void UpdateQlQrOnlyforMixGrid(Grid *grid);
+    void UpdateInviscidfluxOnlyforMixGrid(Grid *grid);
+    void UpdateViscousfluxOnlyforMixGrid(Grid *grid);
+    void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn);
     void RestrictAllQ(Grid *fgrid, Grid *cgrid);
     void ComputeViscousCoeff(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
@@ -113,6 +125,10 @@ public:
 	RDouble * ComputeCpAverage(Grid *gridIn);
 
     void ComputeGradient(Grid *grid);
+    void ComputelimiterOnlyForMixGrid(Grid *grid);
+    void InitiallimiterOnlyForMixGrid(Grid *grid);
+    void InitialInviscidfaceproxyOnlyForMixGrid(Grid *grid);
+    void InitialViscousfaceproxyOnlyForMixGrid(Grid *grid);
 
 	void FillField(Grid *gridIn, FieldProxy *field_proxy, RDouble value);
 	void FillField(Grid *gridIn, FieldProxy *fieldTarget, FieldProxy *fieldSource);
@@ -204,9 +220,10 @@ public:
 
     void GetGradientField(Grid *gridIn);
 
-	//! Prepare post visualization variables, store it in to  postVisualization database.
+	//! Prepare post visualization variables, store it in to postVisualization database.
 	LIB_EXPORT void ComputePostVisualVariables(Post_Visual * postVisualization);
-
+    //! Prepare monitored probes variables for post-processing , store it into postProbesVar database.
+    LIB_EXPORT void ComputePostProbesVariables(Post_Probes * postProbesVar);
 	//! Create and init ControlParameters
 	LIB_EXPORT void InitControlParameters();
 
@@ -216,8 +233,11 @@ public:
     void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
 
-    void CompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
-    void DecompressGradientToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+    void CompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+    void DecompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+
+    void CompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
+    void DecompressQlQrToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
 
     void CompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
     void DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
@@ -268,19 +288,23 @@ public:
     //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
     void PressureInletBCRiemannRegion(Grid *gridIn, BCRegionUnstruct *bcRegionUnstruct); 
     
-    //! PressureInletBCPlate boundary condition for one Region of a bounday.
-    //! @param[in] gridIn              an unstruct grid pointer.
-    //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
-    void PressureInletBCPlateRegion(Grid *gridIn, BCRegionUnstruct *bcRegionUnstruct); 
+    //calculate the total area of all BC regions with the same BC name.
+    void calculateBCArea(Grid *gridIn, BCRegionUnstruct *bcRegionUnstruct); 
+
+    //calculate the mass flux ratio of all mass outlet BC regions with the same BC name.
+    void calculateMassFluxRatio(Grid *gridIn, BCRegionUnstruct *bcRegionUnstruct); 
+
+    // mass flow in boundary condition.
+    void MassFlowInletBCRegion(Grid *gridIn, BCRegionUnstruct *bcRegionUnstruct); 
     
+    // mass flow out boundary condition.
+    void MassFlowOutletBCRegion(Grid *gridIn, BCRegionUnstruct *bcRegionUnstruct);
 private:
 	void InviscidFluxWrap(Grid *gridIn, FaceProxy *faceProxy, INVScheme inv_scheme, int localStart, int localEnd);
 	void RegisterCFDSolverInterfaceField();
     //! Register the interpoint field in the NS unstructured solver.
     void RegisterCFDSolverInterpointField();
 	void RegisterCFDSolverOversetField();
-	void DumpStatisticalFlow(ActionKey *actkey);
-	void ReadStatisticalFlow(ActionKey *actkey);
 	RDouble P0Wall(RDouble p1, RDouble gama, RDouble mach);
 	RDouble R0Wall(RDouble r1, RDouble gama, RDouble mach);
 	Limiter * CreateLimiter(Grid *gridIn);

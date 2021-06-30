@@ -1,37 +1,14 @@
-int    codeOfOversetGrid         = 1;      // 0: 无重叠   1: 重叠;
-int    codeOfOversetSlipGrid     = 0;      // 0: 无滑移   1: 滑移;
-int    readOversetFileOrNot      = 0;      // 0: 适时装配 1: 读ovs文件
+int    codeOfOversetGrid        = 1;
 
-int    symetryOrNot              = 0;      //是否只进行半场计算
-int    readInAuxiliaryInnerGrid  = 1;      //是否需要辅助网格（inner）
-int    readInAuxiliaryOuterGrid  = 1;      //是否需要辅助网格（outer）
+int    numberOfGridGroups       = 2;
+string gridfile                 = "./grid/Wing__6.fts"; 
+string gridfile1                = "./grid/Missile__2.fts";
 
-int    readInSklFileOrNot        = 0;      //读入skl文件有助于点属性的准确通讯，但是比较耗时
+int    symetryOrNot             = 0;
+int    readInAuxiliaryInnerGrid = 1;
 
-string auxiliaryInnerGrid0       = "./grid/inner0.fts";
-string auxiliaryInnerGrid1       = "./grid/inner1.fts";
-string auxiliaryInnerGrid2       = "./grid/inner2.fts";
+string auxiliaryInnerGrid0      = "./grid/WingIn.fts";
+string auxiliaryInnerGrid1      = "./grid/MissileIn.fts";
 
-string auxiliaryOuterGrid0       = "./grid/outer0.fts";
-string auxiliaryOuterGrid1       = "./grid/outer1.fts";
-string auxiliaryOuterGrid2       = "./grid/outer2.fts";
-
-string oversetGridFileName       = "./grid/overlap.ovs";
-
-double walldistMainZone           = 1.0
-double toleranceForOversetSearch  = 1e-5;
-double toleranceForOversetBox     = 1e-5;
-int    twoOrderInterpolationOrNot = 0;             //1-采用二阶插值（多一排插值点）；0-一阶插值
-int    keyEnlargeOfActiveNodes    = 0;             //活跃区域扩展次数
-int    outTecplotOverset          = 0;
-
-string gridfile1          = "./grid/mesh1.fts";
-string gridfile2          = "./grid/mesh2.fts";
-
-int axisup                   = 1;
-
-//kinetic
-int     numberOfMovingBodies = 2;
-
-int     morphing_0           =  0;     //0-不变形；1-二维fish
-int     morphing_1           =  0;     //0-不变形；1-二维fish
+int   twoOrderInterpolationOrNot = 0;
+int   keyEnlargeOfActiveNodes    = 0; 

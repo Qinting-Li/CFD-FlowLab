@@ -5,7 +5,6 @@
 #include "Gas.h"
 using namespace std;
 
-
 namespace PHSPACE
 {
 using namespace GAS_SPACE;
@@ -653,8 +652,9 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     int nm = invSchemePara->Getnm();
     int EntropyFixMethod = invSchemePara->GetEntropyFixMethod();
     int nChemical = invSchemePara->GetNumberOfChemical();
-    //! Compute the number of species.
-    int nSpecies = nLaminar + nChemical - nm;
+
+    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
+    int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble entrFixCoefLeft  = invSchemePara->GetLeftEntropyFixCoefficient();
     RDouble entrFixCoefRight = invSchemePara->GetRightEntropyFixCoefficient();
@@ -859,7 +859,7 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
         if (nChemical == 1)
         {
             flux[nLaminar][iLen] = 0.0;
-            if (nSpecies > 5)
+            if (nElectronIndex >= 0)
             {
                 flux[nLaminar - 1][iLen] = 0.0;
             }
@@ -883,7 +883,8 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
     int nm = invSchemePara->Getnm();
     int nChemical = invSchemePara->GetNumberOfChemical();
     int nPrecondition = invSchemePara->GetIfPrecondition();
-    int nSpecies = nLaminar + nChemical - nm;
+    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
+    int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble **ql = invSchemePara->GetLeftQ();
     RDouble **qr = invSchemePara->GetRightQ();
@@ -1101,7 +1102,7 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
         if (nChemical == 1)
         {
             flux[nLaminar][iLen] = 0.0;
-            if (nSpecies > 5)
+            if (nElectronIndex >= 0)
             {
                 flux[nLaminar - 1][iLen] = 0.0;
             }
@@ -1135,7 +1136,8 @@ void Ausmdv_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     RDouble **flux = invSchemePara->GetFlux();
     //! Compute the number of species.
     int nChemical = invSchemePara->GetNumberOfChemical();
-    int nSpecies = nLaminar + nChemical - nm;
+    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
+    int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     using namespace IDX;
 
@@ -1377,7 +1379,7 @@ void Ausmdv_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
         if (nChemical > 0)
         {
             flux[nLaminar][iLen] = 0.0;
-            if (nSpecies > 5)
+            if (nElectronIndex >= 0)
             {
                 flux[nLaminar - 1][iLen] = 0.0;
             }
@@ -1398,7 +1400,8 @@ void Ausmpw_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     int nm = invSchemePara->Getnm();
     //! Compute the number of species.
     int nChemical = invSchemePara->GetNumberOfChemical();
-    int nSpecies = nLaminar + nChemical - nm;
+    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
+    int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble **ql = invSchemePara->GetLeftQ();
     RDouble **qr = invSchemePara->GetRightQ();
@@ -1546,7 +1549,7 @@ void Ausmpw_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
         if (nChemical > 0)
         {
             flux[nLaminar][iLen] = 0.0;
-            if (nSpecies > 5)
+            if (nElectronIndex >= 0)
             {
                 flux[nLaminar - 1][iLen] = 0.0;
             }
@@ -1565,7 +1568,8 @@ void Hlle_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
     int nm = invSchemePara->Getnm();
     //! Compute the number of species.
     int nChemical = invSchemePara->GetNumberOfChemical();
-    int nSpecies = nLaminar + nChemical - nm;
+    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
+    int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble **ql = invSchemePara->GetLeftQ();
     RDouble **qr = invSchemePara->GetRightQ();
@@ -1704,7 +1708,7 @@ void Hlle_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
         if (nChemical == 1)
         {
             flux[nLaminar][iLen] = 0.0;
-            if (nSpecies > 5)
+            if (nElectronIndex >= 0)
             {
                 flux[nLaminar - 1][iLen] = 0.0;
             }
@@ -1806,4 +1810,3 @@ InviscidSchemeParameter::~InviscidSchemeParameter()
 
 
 }
-

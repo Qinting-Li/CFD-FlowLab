@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -44,5 +44,7 @@ void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Gri
 //! @param[in ]: numberOfBlocks denotes the number of total grid blocks.
 //! @param[in ]: BCFile denotes the source file in which the grid boundary condition information stored.
 void ReadGridgenBC(Grid **& structGrids, int &numberOfBlocks, const string &BCFile);
+
+void ReadPartitionFileForOverset(int &inputNumberOfBlocks, const string &PartitionFile);
 
 }

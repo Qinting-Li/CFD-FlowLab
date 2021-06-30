@@ -8,6 +8,11 @@ inline int Param_TurbSolver::GetDESType() const
     return DESType;
 }
 
+inline int Param_TurbSolver::GetTransitionType() const
+{
+    return transitionType;
+}
+
 inline int Param_TurbSolver::GetSAProductType() const
 {
     return SAProductType;

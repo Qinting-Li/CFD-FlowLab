@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -113,6 +113,7 @@ public:
 private:
 	void ReadNumberOfTotalZonesAndInitialGlobalValue();
 	int  CheckNumberofFiles();
+    bool CheckGridConvertionMixGrid();
 	void ReadGrid(const string & gridFileName, int startZoneIndex);
 	void ReadGridGroup(const string & gridFileName, int startZoneIndex);
 	void ReadNumberOfZones(fstream & file, int & nZones);
@@ -125,7 +126,7 @@ private:
 	void GetSendRecvProcID(int izone, int &send_proc, int &recv_proc);
 	void GetSendRecvProcID(int localZoneID, int &send_proc, int &recv_proc, int &recv_proc_grid);
 	void Read_Bcast(fstream &file, void *data, int size);
-	void Read(fstream &file, void *data, int size);	
+	void Read(fstream &file, void *data, int size);
 	void Bcast(void *data, int size, int proc, int tag);
 	void ReadCompressedData(fstream &file, DataContainer *cdata, int send_proc, int recv_proc, int tag = 0);
 	void Open(fstream &file, const string &filename, const ios_base::openmode &openmode);

@@ -1,5 +1,6 @@
 #include "GRHash.h"
 #include "Geo_Face.h"
+
 namespace GRIDER_SPACE
 {
 CAulong gethashkey(const Point3D& p)

@@ -240,7 +240,7 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int intervalStepRes = GlobalDataBase::GetIntParaFromDB("intervalStepRes");
 
-    if (numberOfResidualVariables == 1 || numberOfResidualVariables == 2)
+    if (numberOfResidualVariables == 1 || numberOfResidualVariables == 2 || numberOfResidualVariables == 4)
     {
         return;
     }
@@ -413,7 +413,7 @@ void MaxResidual::ServerCollection()
     PHWrite(cData, z);
     PHWrite(cData, maxResVariableIndex);
 
-    // Send the super-container to server.
+    // Send the data-container to server.
     if (myid != server)
     {
         int tag = myid;
@@ -569,9 +569,9 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
             RDouble res2 = dResm * dResm;
             residualNormal[iEquation] += res2;
 #ifdef WIN32
-            if (_isnan(residualNormal[iEquation]) || _isnanf(residualNormal[iEquation]))
+            if (_isnan(residualNormal[iEquation]))
 #else               
-            if (isnan(float(residualNormal[iEquation])) || isinf(float(residualNormal[iEquation])))
+            if (residualNormal[iEquation] != residualNormal[iEquation] || ABS(residualNormal[iEquation]) > 1.0e20)
 #endif              
             {
                 int izone = grid->GetZoneID();
@@ -630,6 +630,10 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+	int * iblank = grid->GetBlankIndex_tmp();
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
     Range M(0, nEquation - 1);
     int mst = M.first();
@@ -640,7 +644,6 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
     RDouble maxResLocal = maximumResidual;
     RDouble maxResCoorXLocal, maxResCoorYLocal, maxResCoorZLocal;
     int maxResIndexMLocal;
-
     bool maxResChange = false;
 
     for (int k = kst; k <= ked; ++ k)
@@ -649,15 +652,26 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
         {
             for (int i = ist; i <= ied; ++ i)
             {
+#ifdef USE_OVERSET
+                int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+                if (codeOfOversetGrid == 1)
+                {
+                    int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
+                    if (iblank[cellLabel] != 2)
+                    {
+                        continue;
+                    }
+                }
+#endif
                 for (int m = mst; m <= med; ++ m)
                 {
                     RDouble dResm = residual(i, j, k, m);
                     RDouble res2 = dResm * dResm;
                     residualNormal[m] += res2;
 #ifdef WIN32
-                    if(_isnan(residualNormal[m]) || _isnanf(residualNormal[m]))
+                    if(_isnan(residualNormal[m]))
 #else               
-                    if(isnan(float(residualNormal[m])) || isinf(float(residualNormal[m])))
+                    if(residualNormal[m] != residualNormal[m] || ABS(residualNormal[m]) > 1.0e20)
 #endif              
                     {
                         int izone = grid->GetZoneID();

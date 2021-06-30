@@ -5,6 +5,7 @@
 #include "GlobalDataBase.h"
 #include "Constants.h"
 #include "TK_Log.h"
+#include "Gas.h"
 
 using namespace std;
 
@@ -13,159 +14,158 @@ namespace PHSPACE
 
 LIB_EXPORT void ParallelOpenFile(fstream &file, const string &fileName, const ios_base::openmode &openMode)
 {
-	if(PHMPI::IsCurrentProcessorFileServer() == 0)
+    if (PHMPI::IsCurrentProcessorFileServer() == 0)
     {
         return;
     }
 
-	PHSPACE::OpenFile(file, fileName, openMode);
+    PHSPACE::OpenFile(file, fileName, openMode);
 }
 
-LIB_EXPORT void OpenSerialFile( fstream &file, const string &filename, const ios_base::openmode &openmode )
+LIB_EXPORT void OpenSerialFile(fstream &file, const string &filename, const ios_base::openmode &openmode)
 {
-	int fileID = PHMPI::GetFileIndexofCurrentProcessor();
-	string actualFileName = AddSymbolToFileName(filename, "_", fileID);
-	OpenFile(file, actualFileName, openmode);
+    int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+    string actualFileName = AddSymbolToFileName(filename, "_", fileID);
+    OpenFile(file, actualFileName, openmode);
 }
 
 LIB_EXPORT void ParallelOpenFile(ActionKey *actkey)
 {
-	if(!actkey->IsNeedOpenFile())
-	{
-		fstream * file   = 0;
-		actkey->file     = file;
-		actkey->del_file = false;
-	}
-	else
-	{
-		if(PHMPI::IsCurrentProcessorFileServer() == 0)
+    if (!actkey->IsNeedOpenFile())
+    {
+        fstream *file = 0;
+        actkey->file = file;
+        actkey->del_file = false;
+    }
+    else
+    {
+        if (PHMPI::IsCurrentProcessorFileServer() == 0)
         {
             return;
         }
 
-		fstream *file = new fstream();
-		//! Open file by default.
-		ParallelOpenFile(*file, actkey->filename, actkey->openmode);
-		actkey->file     = file;
-		actkey->del_file = true;
-	}
+        fstream *file = new fstream();
+        //! Open file by default.
+        ParallelOpenFile(*file, actkey->filename, actkey->openmode);
+        actkey->file = file;
+        actkey->del_file = true;
+    }
 }
 
-LIB_EXPORT void ParallelOpenFile2(ActionKey * actionKey)
+LIB_EXPORT void ParallelOpenFile2(ActionKey *actionKey)
 {
-	//! Open file by default.
-	if(actionKey->filename == "")
-	{
-		fstream * file = 0;
-		actionKey->file		= file;
-		actionKey->del_file = false;
-	}
-	else
-	{
-		if(PHMPI::IsCurrentProcessorFileServer() == 0)
+    //! Open file by default.
+    if (actionKey->filename == "")
+    {
+        fstream *file = 0;
+        actionKey->file = file;
+        actionKey->del_file = false;
+    }
+    else
+    {
+        if (PHMPI::IsCurrentProcessorFileServer() == 0)
         {
             return;
         }
 
-		fstream * file = new fstream();
-		int fileID = PHMPI::GetFileIndexofCurrentProcessor();
-		string finalFileName = PHSPACE::AddSymbolToFileName(actionKey->filename, '_', fileID);
-		PHSPACE::ParallelOpenFile(*file, finalFileName, actionKey->openmode);
-		actionKey->file		= file;
-		actionKey->del_file = true;		
-	}   
+        fstream *file = new fstream();
+        int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+        string finalFileName = PHSPACE::AddSymbolToFileName(actionKey->filename, '_', fileID);
+        PHSPACE::ParallelOpenFile(*file, finalFileName, actionKey->openmode);
+        actionKey->file = file;
+        actionKey->del_file = true;
+    }
 }
 
 LIB_EXPORT void OpenFile(fstream &file, const string &fileName, const ios_base::openmode &openMode)
 {
-	file.open(fileName.c_str(), openMode);
-	if(!file)
-	{
-		ostringstream oss;
-		oss << "Could not open " << fileName << endl;
+    file.open(fileName.c_str(), openMode);
+    if (!file)
+    {
+        ostringstream oss;
+        oss << "Could not open " << fileName << endl;
 
-		PHMPI::FreeBlockData();
-		cout << oss.str() << endl;
-		MPI_Abort(MPI_COMM_WORLD, -1);
-	}
+        PHMPI::FreeBlockData();
+        cout << oss.str() << endl;
+        MPI_Abort(MPI_COMM_WORLD, -1);
+    }
 }
 
 LIB_EXPORT void ParallelCloseFile(fstream &file)
 {
-	if(PHMPI::IsCurrentProcessorFileServer() == 0)
+    if (PHMPI::IsCurrentProcessorFileServer() == 0)
     {
         return;
     }
 
-	PHSPACE::CloseFile(file);
+    PHSPACE::CloseFile(file);
 }
 
 LIB_EXPORT void ParallelCloseFile(ActionKey *actionKey)
-{	
-	if(PHMPI::IsCurrentProcessorFileServer() == 0)
+{
+    if (PHMPI::IsCurrentProcessorFileServer() == 0)
     {
         return;
     }
-	CloseFile(actionKey);
+    CloseFile(actionKey);
 }
 
 LIB_EXPORT void CloseFile(fstream &file)
 {
-	file.close();
-	file.clear();
+    file.close();
+    file.clear();
 }
 
 LIB_EXPORT void CloseFile(ifstream &file)
 {
-	file.close();
-	file.clear();
+    file.close();
+    file.clear();
 }
 
 LIB_EXPORT void CloseFile(ofstream &file)
 {
-	file.close();
-	file.clear();
+    file.close();
+    file.clear();
 }
 
 LIB_EXPORT void CloseFile(ActionKey *actkey)
 {
-	if(!actkey->file)
+    if (!actkey->file)
     {  
         return;
     }
-	CloseFile(* actkey->file);
+    CloseFile(* actkey->file);
 
-	if(actkey->del_file)
-	{
-		delete actkey->file;
-		actkey->del_file = false;
-	}
+    if (actkey->del_file)
+    {
+        delete actkey->file;
+        actkey->del_file = false;
+    }
 }
 
 LIB_EXPORT void ReadFile(fstream &file, DataContainer *cdata)
 {
-	//! The real meaning of the function with DataContainer is to read the file contents into cdata.
-	//! For cdata, this is the process of writing.
-
-	cdata->readfile(file);
+    //! The real meaning of the function with DataContainer is to read the file contents into cdata.
+    //! For cdata, this is the process of writing.
+    cdata->readfile(file);
 }
 
 LIB_EXPORT void ReadFile(ActionKey *actkey)
 {
-	fstream &file = *(actkey->file);
+    fstream &file = *(actkey->file);
     ReadFile(file, actkey->GetData());
 }
 
 LIB_EXPORT void WriteFile(fstream &file, DataContainer *cdata)
 {
-	cdata->writefile(file);
+    cdata->writefile(file);
 }
 
 LIB_EXPORT void WriteFile(ActionKey *actkey)
 {
-	fstream *file = actkey->file;
+    fstream *file = actkey->file;
 
-	if(!file) return;
+    if (!file) return;
 
     WriteFile(*file, actkey->GetData());
 }
@@ -183,28 +183,29 @@ LIB_EXPORT void WriteASCIIFile(fstream &file, std::ostringstream &oss)
 LIB_EXPORT void WriteASCIIFile(fstream &file, DataContainer *cdata)
 {
     string str;
-    SuperCharToString(cdata, str);
+    DataCharToString(cdata, str);
 
     WriteASCIIFile(file, str);
 }
 
 LIB_EXPORT void WriteASCIIFile(ActionKey *actkey)
 {
-	if(!actkey->file)
+    if (!actkey->file)
     {
         return;
     }
-	fstream &file = *(actkey->file);
-	WriteASCIIFile(file, actkey->GetData());
+
+    fstream &file = *(actkey->file);
+    WriteASCIIFile(file, actkey->GetData());
 }
 
 LIB_EXPORT void WriteBinaryFile(ActionKey *actkey)
 {
-	/*DumpToTecio dumptotecio(actkey);
-	dumptotecio.Run();
-	if( !actkey->file ) return;
-	fstream &file = *(actkey->file);
-	WriteASCIIFile(file, actkey->GetData());*/
+    /*DumpToTecio dumptotecio(actkey);
+    dumptotecio.Run();
+    if( !actkey->file ) return;
+    fstream &file = *(actkey->file);
+    WriteASCIIFile(file, actkey->GetData());*/
 }
 
 LIB_EXPORT void WriteSentinelFile(ActionKey *actkey)
@@ -212,7 +213,7 @@ LIB_EXPORT void WriteSentinelFile(ActionKey *actkey)
     fstream sentinelfile;
     string sentinelfilename = "results/sentinel";
     sentinelfile.open(sentinelfilename.c_str(),ios::in);
-    if(!sentinelfile)
+    if (!sentinelfile)
     {
         fstream sentinelfile;
         sentinelfile.open(sentinelfilename.c_str(), ios_base::out|ios_base::trunc);
@@ -229,13 +230,13 @@ LIB_EXPORT void WriteSentinelFile(ActionKey *actkey)
 LIB_EXPORT void WriteScreen(DataContainer *cdata)
 {
     string str;
-	SuperCharToString(cdata, str);
+    DataCharToString(cdata, str);
     cout << str;
 }
 
 LIB_EXPORT void WriteScreen(ActionKey *actkey)
 {
-	WriteScreen(actkey->GetData());
+    WriteScreen(actkey->GetData());
 }
 
 LIB_EXPORT bool IfFileEmpty(fstream &file)
@@ -243,7 +244,7 @@ LIB_EXPORT bool IfFileEmpty(fstream &file)
     file.seekp(0, ios::end);
     streamoff i = file.tellp();
 
-    if(i)
+    if (i)
     {
         return false;
     }
@@ -252,32 +253,32 @@ LIB_EXPORT bool IfFileEmpty(fstream &file)
 
 LIB_EXPORT bool FileExist(const string &fileName)
 {
-	fstream file;
-	file.open(fileName.c_str(), ios::in);
-	if(file)
-	{
-		CloseFile(file);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+    fstream file;
+    file.open(fileName.c_str(), ios::in);
+    if (file)
+    {
+        CloseFile(file);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-LIB_EXPORT bool SerialFileExist( const string &fileName )
+LIB_EXPORT bool SerialFileExist(const string &fileName)
 {
-	string acutalFileName = AddSymbolToFileName(fileName, "_", 0);
-	return FileExist(acutalFileName);
+    string acutalFileName = AddSymbolToFileName(fileName, "_", 0);
+    return FileExist(acutalFileName);
 }
 
 LIB_EXPORT void ReadAbstractData(fstream &file, DataContainer *cdata, int send_proc, int recv_proc, int tag)
 {
     using namespace PHMPI;
 
-	int myid = GetCurrentProcessorID();
+    int myid = GetCurrentProcessorID();
 
-    if(myid == send_proc)
+    if (myid == send_proc)
     {
         ReadFile(file, cdata);
     }
@@ -339,7 +340,7 @@ LIB_EXPORT void ReadParamInfo()
 LIB_EXPORT void ReadParamInfo(const string &filename)
 {
     fstream file;
-    file.open(filename.c_str(),ios_base::in );
+    file.open(filename.c_str(), ios_base::in);
 
     if (!file)
     {
@@ -361,9 +362,9 @@ LIB_EXPORT void BroadCastInfo()
     PrintToWindow("Control parameters broad casting by server ...\n");
 
     int server = GetServerProcessorID();
-    int myid   = GetCurrentProcessorID();
+    int myid = GetCurrentProcessorID();
 
-    DataContainer * cdata = new DataContainer();
+    DataContainer *cdata = new DataContainer();
 
     if (myid == server)
     {
@@ -391,15 +392,25 @@ LIB_EXPORT void CompleteParamInfo()
         string walldistfile = ChangeExtensionOfFileName(origialGridFile, "wdt");
         GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
     }
-    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION)
+    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION || nsimutask == SPLIT_OVERSET_GRID)
     {
+        string from_gfile = GlobalDataBase::GetStrParaFromDB("from_gfile");
+        string bnd_file = ChangeExtensionOfFileName(from_gfile, "inp");
+        GlobalDataBase::UpdateData("bnd_file", &bnd_file, PHSTRING, 1);
+    }
+    else if (nsimutask == INTEGRATIVE_SOLVER)
+    {
+        string origialGridFile = GlobalDataBase::GetStrParaFromDB("gridfile");
+        string walldistfile = ChangeExtensionOfFileName(origialGridFile, "wdt");
+        GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
+
         string from_gfile = GlobalDataBase::GetStrParaFromDB("from_gfile");
         string bnd_file = ChangeExtensionOfFileName(from_gfile, "inp");
         GlobalDataBase::UpdateData("bnd_file", &bnd_file, PHSTRING, 1);
     }
     else
     {
-        //do nothing
+        //! do nothing.
     }
 
     //! Some other default parameters.
@@ -438,17 +449,17 @@ LIB_EXPORT void CompleteParamInfo()
     GlobalDataBase::UpdateData("globalMinTimeStep", &globalMinTimeStep, PHDOUBLE, 1);
 }
 
-LIB_EXPORT void PrintInflowConditionToWindow( void )
+LIB_EXPORT void PrintInflowConditionToWindow(void)
 {
-    int inflowParaType = GlobalDataBase::GetIntParaFromDB( "inflowParaType" );
+    int inflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
 
     const int NONDIMENSIONCONDITION = 0;
     const int FLIGHTCONDITION       = 1;
     const int EXPERIMENTCONDITION   = 2;
     const int SUBSONICBCCONDITION   = 3;
 
-	RDouble refGama                   = GlobalDataBase::GetDoubleParaFromDB("refGama");
-	RDouble refMachNumber             = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+    RDouble refGama                   = GlobalDataBase::GetDoubleParaFromDB("refGama");
+    RDouble refMachNumber             = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
     RDouble refReNumber               = GlobalDataBase::GetDoubleParaFromDB("refReNumber");
     RDouble attackd                   = GlobalDataBase::GetDoubleParaFromDB("attackd");
     RDouble angleSlide                = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
@@ -464,24 +475,31 @@ LIB_EXPORT void PrintInflowConditionToWindow( void )
     RDouble TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
     RDouble TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
 
-	PrintToWindow("Inflow Conditions", "\n");
+    using namespace GAS_SPACE;
+    FluidParameter refParam;
+    gas->GetReferenceParameters(refParam);
+    RDouble refVelocity = refParam.GetVelocity();
+    RDouble refVicosity = refParam.GetViscosity();
+
+    PrintToWindow("Inflow Conditions", "\n");
     PrintToWindow("  Gama                     :    ", refGama      ,           "\n");
-	PrintToWindow("  Mach Number              :    ", refMachNumber,           "\n");
-	PrintToWindow("  Attack Angle             :    ", attackd      , "degree", "\n");
-	PrintToWindow("  Sideslip Angle           :    ", angleSlide   , "degree", "\n");
+    PrintToWindow("  Mach Number              :    ", refMachNumber,           "\n");
+    PrintToWindow("  Attack Angle             :    ", attackd      , "degree", "\n");
+    PrintToWindow("  Sideslip Angle           :    ", angleSlide   , "degree", "\n");
  
-    int viscousType = GlobalDataBase::GetIntParaFromDB( "viscousType" );
-    if ( viscousType )
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    if (viscousType)
     {
-        if ( inflowParaType == FLIGHTCONDITION )
+        if (inflowParaType == FLIGHTCONDITION)
         {
-            RDouble height = GlobalDataBase::GetDoubleParaFromDB( "height" );
-            PrintToWindow( "  Fly Height               :    ", height, "km", "\n" );
+            RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
+            PrintToWindow("  Fly Height               :    ", height, "km", "\n");
         }
-        PrintToWindow("  Reynolds Number         :    ", refReNumber,               " 1/m",   "\n");
-        PrintToWindow("  Dimensional Pressure    :    ", refDimensionalPressure,    " Pa",    "\n");
-        PrintToWindow("  Dimensional Density     :    ", refDimensionalDensity,     " kg/m3", "\n");
-        PrintToWindow("  Dimensional Temperature :    ", refDimensionalTemperature, " K",     "\n");
+        PrintToWindow("  Reynolds Number          :    ", refReNumber,               " 1/m",   "\n");
+        PrintToWindow("  Dimensional Pressure     :    ", refDimensionalPressure,    " Pa",    "\n");
+        PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m3", "\n");
+        PrintToWindow("  Dimensional Temperature  :    ", refDimensionalTemperature, " K",     "\n");
+
         if (wallTemperature < 0.0)
         {
             PrintToWindow("  Wall Temperature         :    ", "Adiabatic Wall", "\n");
@@ -490,6 +508,8 @@ LIB_EXPORT void PrintInflowConditionToWindow( void )
         {
             PrintToWindow("  Wall Temperature         :    ", wallTemperature, "K", "\n");
         }
+        PrintToWindow("  Dimensional Velocity     :    ", refVelocity,               " m/s",      "\n");
+        PrintToWindow("  Dimensional Viscosity    :    ", refVicosity,               " kg/(m*s)", "\n");
     }
 
     PrintToWindow("Geometry Informations"           ,                                     "\n");

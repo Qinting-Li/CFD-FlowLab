@@ -131,7 +131,7 @@ double venkatCoeff      = 50.0;
 // CFLEnd: The CFL number, [0.1, 100].
 //         The bigger the value, the convergence faster but lower robustness.
 // nLUSGSSweeps: Number of Sub-iteration of LU-SGS.
-//               0 -- is recommended for structured solver.
+//               1 -- is recommended for structured solver.
 //             1-3 -- is recommended for unstructured solver.
 
 int iunsteady = 0;
@@ -161,10 +161,10 @@ int flowInitStep = 100;
 // IMPORTANT WARNING: The file index should be ignored,
 //                     e.g. if the partitioned grid is rae2822_hybrid2d__4_0.fts,
 //                     Please use 'rae2822_hybrid2d__4.fts' here!
-// isPlotVolumeField: If dump out the whole field results to tecplot or not, 0 / 1.
+// plotFieldType: If dump out the whole field results to tecplot or not, 0 / 1.
 
 string gridfile = "./grid/rae2822_hybrid2d__4.fts";
-int isPlotVolumeField = 0;
+int plotFieldType = 0;
 
 // ----------------- Advanced Parameters, DO NOT care it ----------------
 // nVisualVariables: Number of variables want to be dumped for tecplot visualization.

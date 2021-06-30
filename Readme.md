@@ -1,6 +1,5 @@
 <div align=left><img src="PHengLEI\Documents/PHengLEI-LOGO.png" style="zoom: 15%;"/><br>
 
-
 # 风雷软件（PHengLEI_2171）
 
 备注：当前为master分支，更多新功能请切换到ActiveBranch分支。
@@ -17,7 +16,6 @@
 - 代码参考文档地址：http://116.63.141.248:8088
 
 &ensp;&ensp;&ensp;&ensp;风雷软件用户录制视频教程地址：
-
 - 视频教程：https://www.bilibili.com/video/BV1eX4y1T7yW?from=search&seid=9482198996609923785
 
 ## 2.软件功能

@@ -58,6 +58,16 @@ LIB_EXPORT void Flux_RoeEntropyCorrection(RDouble &eigv1, RDouble &eigv2, RDoubl
         eigv2 = MAX(tmp1, eigv2);
         eigv3 = MAX(tmp1, eigv3);
     }
+    else if (RoeEntropyCorrectionMethod == 5)
+    {
+        //! Otero, AIAA 2014-2094.
+        RDouble maxEigvalue = MAX(eigv2, eigv3);
+        RDouble delta = maxEigvalue * acousticEigenLimit;
+
+        eigv1 += delta;
+        eigv2 += delta;
+        eigv3 += delta;
+    }
     else
     {
         TK_Exit::ExceptionExit("Error, no entropy correction method is adopt in Roe scheme! \n");

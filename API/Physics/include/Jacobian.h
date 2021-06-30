@@ -9,9 +9,8 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      NSSolver.h
-//! @brief     The base NS solver, which will derive both structured and unstructured NS solver,
-//!            these two solvers are actually used instead of this NSSolver.
+//! @file      Jacobian.h
+//! @brief     Explain this file briefly.
 //! @author    He Xin, Bell, He Kun, He Xianyao, Liu Jian, Xu Qingxin, etc.
 
 #pragma once

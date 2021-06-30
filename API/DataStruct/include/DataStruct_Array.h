@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -198,59 +198,59 @@ public:
 
 public:
     //! operator() functions:
-    //! Returns constant reference to array[i0].
+    //! Return constant reference to array[i0].
     const T& operator()(int i0) const;
 
-    //! Returns reference to array[i0].
+    //! Return reference to array[i0].
     T&  operator()(int i0);
 
-    //! Returns constant reference to array[i0][i1].
+    //! Return constant reference to array[i0][i1].
     const T&  operator()(int i0, int i1) const;
 
-    //! Returns reference to array[i0][i1].
+    //! Return reference to array[i0][i1].
     T&  operator()(int i0, int i1);
 
-    //! Returns constant reference to array[i0][i1][i2].
+    //! Return constant reference to array[i0][i1][i2].
     const T&  operator()(int i0, int i1, int i2) const;
 
-    //! Returns reference to array[i0][i1][i2].
+    //! Return reference to array[i0][i1][i2].
     T&  operator()(int i0, int i1, int i2);
 
-    //! Returns constant reference to array[i0][i1][i2][i3].
+    //! Return constant reference to array[i0][i1][i2][i3].
     const T&  operator()(int i0, int i1, int i2, int i3) const;
 
-    //! Returns reference to array[i0][i1][i2][i3].
+    //! Return reference to array[i0][i1][i2][i3].
     T&  operator()(int i0, int i1, int i2, int i3);
 
-    //! Returns constant reference to array[i0][i1][i2][i3][i4].
+    //! Return constant reference to array[i0][i1][i2][i3][i4].
     const T&  operator()(int i0, int i1, int i2, int i3, int i4) const;
 
-    //! Returns reference to array[i0][i1][i2][i3][i4].
+    //! Return reference to array[i0][i1][i2][i3][i4].
     T&  operator()(int i0, int i1, int i2, int i3, int i4);
     
     //! UGKS.
-    //! Returns constant reference to array[i0][i1][i2][i3][i4][i5].
+    //! Return constant reference to array[i0][i1][i2][i3][i4][i5].
     const T&  operator()(int i0, int i1, int i2, int i3, int i4, int i5) const;
 
     //! UGKS.
-    //! Returns reference to array[i0][i1][i2][i3][i4][i5]
+    //! Return reference to array[i0][i1][i2][i3][i4][i5]
     T&  operator()(int i0, int i1, int i2, int i3, int i4,int i5);
 
-    //! Returns constant reference to underlying data storage at index i, 
+    //! Return constant reference to underlying data storage at index i, 
     //! ie. data_[i].
     const T& operator[](int i) const;
 
-    //! Returns reference to underlying data storage at index i, 
+    //! Return reference to underlying data storage at index i, 
     //! ie. data_[i].
     T& operator[](int i);
 
-    //! Returns const reference to underlying data stored by an index array.
+    //! Return const reference to underlying data stored by an index array.
     //! e.g index = (10, 20), calculate offset = stride_[0]*10+stride_[1]*20
     //! then returns data_[offset].
     template<int N_rank2>
     const T& operator()(const SimpleArray<int,N_rank2>& index) const;
 
-    //! Returns reference to underlying data stored by an index array.
+    //! Return reference to underlying data stored by an index array.
     //! e.g index = (10, 20), calculate offset = stride_[0]*10+stride_[1]*20
     //! then returns data_[offset].
     template<int N_rank2>
@@ -326,33 +326,33 @@ public:
 
     //! Member functions.
 
-    //! Returns index relative to data_, ie. data_[index].
+    //! Return index relative to data_, ie. data_[index].
     //! index =  i0 * stride_[0] + i1 * stride_[1] + i2 * stride_[2] + i3 * stride_[3].
     int getindex(int i0, int i1, int i2, int i3) const;
 
-    //! Returns the rank dimension's lower bound, ie. range's first index, equals base_[rank].
+    //! Return the rank dimension's lower bound, ie. range's first index, equals base_[rank].
     int lbound(int rank) const;
 
-    //! Returns the rank dimension's upper bound, ie. range's last index, equals base_[rank]+length_[rank]-1.
+    //! Return the rank dimension's upper bound, ie. range's last index, equals base_[rank]+length_[rank]-1.
     int ubound(int rank) const;
 
-    //! Returns the array storing lbound, ie. base_.
+    //! Return the array storing lbound, ie. base_.
     SimpleArray<int,N> lbound() const;
 
-    //! Returns the rank dimension's length, ig length_[rank]
+    //! Return the rank dimension's length, ig length_[rank]
     int length(int rank) const;
 
-    //! Returns the array storing length_.
+    //! Return the array storing length_.
     const SimpleArray<int, N>& length() const;
 
-    //! Returns the array storing base_.
+    //! Return the array storing base_.
     //! base_ is each dimension's lower bound.
     const SimpleArray<int, N> & base() const;
 
     //! Return the rank dimension's base, ie. base_[rank].
     int base(int rank) const;
 
-    //! Returns the rank dimension's stride, ie. stride_[rank].
+    //! Return the rank dimension's stride, ie. stride_[rank].
     int stride(int rank) const;
 
     //! Total number of elements in this array.
@@ -377,7 +377,7 @@ public:
     //! eg. if outerRank =3 and innerRank =2 , returns true if stride[3] == stride[2]*length[2], otherwise, returns false
     bool canCollapse(int outerRank, int innerRank) const;
 
-    //! Returns the PHFastArrayIterator of this array.
+    //! Return the PHFastArrayIterator of this array.
     //! It's not intended for end-user use.
     T_iterator beginFast() const;
 
@@ -385,7 +385,7 @@ public:
     //! It's not intended for end-user use.
     int ordering(int storageRankIndex) const;
 
-    //! Returns storage_.ordering().
+    //! Return storage_.ordering().
     //! It's not intended for end-user use.
     const SimpleArray<int, N> & ordering() const;
 
@@ -402,7 +402,7 @@ public:
     bool isRankStoredAscending(int rank) const;
     //! The underlying data storage(data_) always refers to the point index at (0,0,...,0) which may
     //! not be in the array if the base is not zero in each rank.
-    //! Returns the pointer to data.
+    //! Return the pointer to data.
     T* getData() const {
         return data_;
     }
@@ -475,7 +475,7 @@ protected:
     public:
     //! The underlying data storage(data_) always refers to the point index at (0,0,...,0) which may
     //! not be in the array if the base is not zero in each rank.
-    //! Returns the pointer to data.
+    //! Return the pointer to data.
     T* getData() const {
         return data_;
     }

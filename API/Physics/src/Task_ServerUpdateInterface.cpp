@@ -80,7 +80,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    // Step3: Translate the super container.
+    // Step3: Translate the data container.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);

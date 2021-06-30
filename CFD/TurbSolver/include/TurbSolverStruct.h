@@ -147,6 +147,8 @@ public:
     //! @param[in ]: neighborZoneIndex denotes the grid index of source zone.
     //! @param[in ]: nEquation denotes the number of received variable.
     void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);
+    
+    void RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);//zhangyong
 
     //! Interface: to put the boundary data to DataContainer for parallel communication.
     //! @param[in ]: actkey contains the control information for parallel communication.
@@ -164,7 +166,9 @@ public:
     //! @param[in ]: actkey contains the control information for parallel communication.
     void DownloadInterfaceValue(ActionKey *actkey);
 
-    void CalLimiters(Grid *gridIn, int ig, RDouble *limit, RDouble4D *q, RDouble **dqdx, RDouble **dqdy, RDouble **dqdz);
+    //! Implement: to compress turbulent dq data from grid to date dataContainer.
+    void CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
+    void DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
 
     //! Todo: overset information communication hasn't carried out yet.
     //! @param[in ]: actkey contains the control information for parallel communication.
@@ -362,7 +366,7 @@ private:
 
     //! Interface: to get the turbulent spectum.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    void Spectrum(Grid *gridIn);
+    void Diagonal(Grid *gridIn);
 
     //! Implement: to get the turbulent spectum of one equation model, called by function Spectrum.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.

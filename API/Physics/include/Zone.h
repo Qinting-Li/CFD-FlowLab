@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -34,71 +34,69 @@ class Region;
 class Zone
 {
 private:
-	//! Zone Index
-    int  index;
+    //! Zone Index
+    int index;
 
-	//! Computational grid.
-	PHGeometry *geom;
+    //! Computational grid.
+    PHGeometry *geom;
 
-	//! Solvers list, load on the current zone.
+    //! Solvers list, load on the current zone.
     vector < PHSolver * > *solvers;
 
-	//! Control parameters, usually read from file.
-    Data_Param   *zPara;	 
+    //! Control parameters, usually read from file.
+    Data_Param *zPara;
 
-	//! zonal data pointers
-    Data_Field  *zField;
+    //! Zonal data pointers.
+    Data_Field *zField;
 
 public:
     Zone(int index);
     ~Zone();
 private:
-	static int nsolver;
+    static int nsolver;
 
 public:
-	int  GetIndex( void ) { return index; }
-	static int GetNumberOfSolvers() { return nsolver; };
-	static void SetNSolver(int n) { nsolver = n; };
-	static void Init();
+    int GetIndex(void) { return index; }
+    static int GetNumberOfSolvers() { return nsolver; }
+    static void SetNSolver(int n) { nsolver = n; }
+    static void Init();
     void ComputeWeight();
     void CoarseGrids();
     void ShowCoarseGrids();
 
-	PHGeometry * GetGeometry() { return geom; }	// Bell 20131124 add
-	void SetGeometry( PHGeometry * In ) { this->geom = In; }
+    PHGeometry * GetGeometry() { return geom; }
+    void SetGeometry(PHGeometry *In) { this->geom = In; }
 
     void AddSolver(PHSolver *solver);
     void AddGridAndCopyZonePara(Grid *grid);
 
-	void AddGridToGlobal(int izone);
+    void AddGridToGlobal(int izone);
     void UpdateAllData();
-    void UpdateData(const string &name,void *data, int type, int size)
+    void UpdateData(const string &name, void *data, int type, int size)
     {
-        zPara->UpdateData(name,data,type,size);
+        zPara->UpdateData(name, data, type, size);
     }
-    void GetData(const string &name,void *data, int type, int size)
+
+    void GetData(const string &name, void *data, int type, int size)
     {
-        zPara->GetData(name,data,type,size);
+        zPara->GetData(name, data, type, size);
     }
-    void UpdateDataPtr(const string &name,void *data)
+
+    void UpdateDataPtr(const string &name, void *data)
     {
-	    zField->UpdateDataPtr(name,data);
-    };
-    void *GetDataPtr(const string &name) const
+        zField->UpdateDataPtr(name, data);
+    }
+
+    void * GetDataPtr(const string &name) const
     {
-	    return zField->GetDataPtr(name);
-    };
+        return zField->GetDataPtr(name);
+    }
 
     void SetInterface(Grid *base_grid, Grid *cgrid);
 
 private:
-	
+
 };
-
-
-
-
-
 
 void InitGlobalValuesGrid();
 void InitGlobalValuesSolver();

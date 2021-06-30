@@ -4,10 +4,12 @@
 #include "TK_Time.h"
 #include "WallDist.h"
 #include "JetBC.h"
+#include "Geo_Sample.h"
 #include "Task_ServerUpdateInterface.h"
 #include "Post_WriteTecplot.h"
 #include "TK_Warning.h"
 #include "OversetInformation.h"
+#include "UnstructuredOversetConfig.h"
 #include "Pre_HDF5File.h"
 #include "Glb_Dimension.h"
 #include "Task.h"
@@ -215,7 +217,7 @@ LIB_EXPORT void Region::WriteFaceBoundaryName(Grid **grids, int nZones, const st
             StructGrid *strGrid = StructGridCast(grid);
             CompositeBCRegion *compositeBCRegion = strGrid->GetCompositeBCRegion();
             int  nBCRegion = compositeBCRegion->GetnBCRegion();
-	
+
             for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
             {
                 BCRegion * bcRegion = compositeBCRegion->GetBCRegion(iBCRegion);
@@ -501,11 +503,11 @@ void Region::ReadGridTopologyData(const string & fileName)
 
     delete []linkMap;
     delete []characterPointContainer;
-	delete []cellCenterXContainer;
+    delete []cellCenterXContainer;
     delete []cellCenterYContainer;
     delete []cellCenterZContainer;
 
-	linkMap = NULL;
+    linkMap = NULL;
     characterPointContainer = NULL;
     cellCenterXContainer = NULL;
     cellCenterYContainer = NULL;
@@ -824,6 +826,39 @@ void Region::InterpretDataToGrid(DataContainer *cdata, int izone)
     grid->Decode(cdata, 0);
 }
 
+LIB_EXPORT void Region::ReviseInterZoneIndexForOverSetGrids(int iZone)
+{
+    using namespace PHMPI;
+
+    int sendProcessorIndex = 0;
+    int receiveProcessorIndex = 0;
+
+    GetSendRecvProc(iZone, sendProcessorIndex, receiveProcessorIndex);
+
+    int currentProcessorIndex = GetCurrentProcessorID();
+
+    if (currentProcessorIndex != receiveProcessorIndex) return;
+
+    //! 将读入的data解码为网格数据
+    Grid *grid = PHSPACE::GetGrid(iZone, 0);
+
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+
+    if (!interfaceInfo)
+    {
+        return;
+    }
+
+    int nmberOfInterfaces = interfaceInfo->GetNIFace();
+
+    int *NeighborZoneIndexContainer = interfaceInfo->GetInterFace2ZoneID();
+
+    for (int iInterface = 0; iInterface < nmberOfInterfaces; ++ iInterface)
+    {
+        NeighborZoneIndexContainer[iInterface] += zoneStart;
+    }
+}
+
 void Region::RecoverGridFromFile(fstream &file, int izone)
 {
     using namespace PHMPI;
@@ -849,6 +884,7 @@ LIB_EXPORT void Region::ReadSingleGrid(fstream &file, int iZone)
 {
     CreateZoneAndGrid(iZone);
     RecoverGridFromFile(file, iZone);
+    ReviseInterZoneIndexForOverSetGrids(iZone);
 }
 
 LIB_EXPORT void Region::ClassifyGridSystem()
@@ -864,7 +900,7 @@ LIB_EXPORT void Region::ClassifyGridSystem()
     }
 
     int sys_gridtype = GetSystemGridType(grid_type);
-    GlobalDataBase::UpdateData("sys_gridtype",&sys_gridtype,PHINT,1);
+    GlobalDataBase::UpdateData("sys_gridtype", &sys_gridtype, PHINT, 1);
 
     vector<string> sys_gridtype_name;
     sys_gridtype_name.push_back("UNSTRUCTGRID");
@@ -874,17 +910,27 @@ LIB_EXPORT void Region::ClassifyGridSystem()
     PrintToWindow("Grid Type: ", sys_gridtype_name[sys_gridtype], "\n");
 }
 
+LIB_EXPORT void Region::DataMonitor()
+{
+    using namespace PHMPI;
+    int ifSetDataMonitor = 0;
+    GlobalDataBase::GetData("ifSetDataMonitor", &ifSetDataMonitor, PHINT, 1);
+    if (!ifSetDataMonitor) return;
+
+    SampleLocationInfo *globalSampleLocation = new SampleLocationInfo();
+    globalSampleLocation->Run();
+}
+
 LIB_EXPORT void Region::SetupMultiBlockRelationship()
 {
-    //if (GetTaskCode() == DSMC_SOLVER) return; 
+    //if (GetTaskCode() == DSMC_SOLVER) return;
 
     MultiBlocksInterface();
 
-
     MultiBlocksInterpoint();
 
-	//! Changed by Guo Yongheng 20160825.
-	//MultiBlocksOverInterface();
+    //! Changed by Guo Yongheng 20160825.
+    //MultiBlocksOverInterface();
 }
 
 void Region::MultiBlocksInterface()
@@ -1136,7 +1182,7 @@ void Region::ServerCollectionNeighborInfor()
     }
     PHWrite(cdata, nZonesInThisProc);
 
-    //! Compress all of neighbor information into super-container.
+    //! Compress all of neighbor information into data-container.
     for (int izone = 0; izone < nZones; ++ izone)
     {
         int proc = GetZoneProcessorID(izone);		
@@ -1157,7 +1203,7 @@ void Region::ServerCollectionNeighborInfor()
         }		
     }	
 
-    //! Send the super-container to server.
+    //! Send the data-container to server.
     if (myid != server)
     {		
         int tag = myid;	
@@ -1326,8 +1372,9 @@ void Region::BroadCastZoneNeighborInformation()
     }*/
 
     //! New code by Zhangjian.
-    int iovrlap = PHSPACE::GlobalDataBase::GetIntParaFromDB("iovrlap");
-    if (iovrlap)
+    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+	int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    if (codeOfOversetGrid == 1 && sysGridType != STRUCTGRID)
     {
         BroadCastZoneNeighborInformationCollectBcast();
     }
@@ -1342,8 +1389,9 @@ void Region::BroadCastZoneNeighborInformation()
 
 void Region::BroadCastZoneNeighborForPointInformation()
 {
-    int iovrlap = PHSPACE::GlobalDataBase::GetIntParaFromDB("iovrlap");
-    if (iovrlap)
+    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+	if (codeOfOversetGrid == 1 && sysGridType != STRUCTGRID)
     {        
     }
     else
@@ -1668,6 +1716,12 @@ void Region::SwapNeighborsSendContentNonblocking()
     WriteLogFile("        Compressing data ...");
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
+        Zone *zone = GetZone(iZone);
+        if (!zone)
+        {
+            continue;
+        }
+
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);		
 
         ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -1798,7 +1852,7 @@ void Region::SwapNeighborsSendContentNonblocking()
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     WriteLogFile("        Translating data ...");
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
@@ -1819,7 +1873,7 @@ void Region::SwapNeighborsSendContentNonblocking()
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 receiveData->moveto_begin();
                 int nIFaceOfNeighbor;
                 PHRead(receiveData, nIFaceOfNeighbor);
@@ -2099,30 +2153,32 @@ void Region::ComputeMetrics(int level)
     using namespace PHMPI;
 
     int nZones = GetNumberofGlobalZones();
+    int nLocalZones = GetNumberofLocalZones();
     ActionKey *actkey = new ActionKey();
     actkey->action = COMPUTEMETRICS;
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int send_proc = GetZoneProcessorIDSepMode(izone);
+        //int send_proc = GetZoneProcessorIDSepMode(izone);
+        int send_proc = GetZoneProcessorIDSepMode(iZone);
         int recv_proc = GetServerSepMode();
 
-        int tag  = GetSendRecvTag(GRID_BASED, 0, izone);
-        int proc = GetZoneProcessorID(izone);
+        int tag  = GetSendRecvTag(GRID_BASED, 0, iZone);
+        //int proc = GetZoneProcessorID(izone);
         int myid = PHMPI::GetCurrentProcessorID();
         if (myid == send_proc)
         {
             //! If the ProcessorID of i-th zone equal to the running ProcessorID, compute grid metrics.
-            Grid *grid = GetGrid(izone, level);
+            Grid *grid = GetGrid(iZone, level);
             grid->ComputeMetrics(actkey);
         }
 
-        // collect all info out by ComputeMetrics function to cdata.
+        //! Collect all info out by ComputeMetrics function to cdata.
         PH_Trade(actkey, send_proc, recv_proc, tag);
 
         if (myid == recv_proc)
         {
-            //! If ProcessorID ProcessorID is serve ProcessorID, output the info in cdata.
+            //! If ProcessorID is serve ProcessorID, output the info in cdata.
             WriteScreen(actkey);
         }
     }
@@ -2133,16 +2189,17 @@ void Region::GlobalGridStatic(int level)
 {
     //! Check if need to compute the global grid size.
     int sys_gridtype;
-    GlobalDataBase::GetData("sys_gridtype",&sys_gridtype,PHINT,1);
+    GlobalDataBase::GetData("sys_gridtype", &sys_gridtype, PHINT, 1);
+
     if (sys_gridtype == STRUCTGRID) 
     {
         ComputeGlobalCellSize(level);
     }
-    else if(sys_gridtype == UNSTRUCTGRID)
+    else if (sys_gridtype == UNSTRUCTGRID)
     {
         ComputeGlobalGridSize(level);
     }
-    else if(sys_gridtype == MIXGRID)
+    else if (sys_gridtype == MIXGRID)
     {
         ComputeGlobalGridCellSize(level);
     }
@@ -2153,8 +2210,8 @@ void Region::ComputeGlobalCellSize(int level)
     int minNTCell = 10000000;
     int maxNTCell = 0;
     RDouble TotalNodes = 0.0;
-	RDouble TotalFaces = 0.0;
-	RDouble TotalCells = 0.0;
+    RDouble TotalFaces = 0.0;
+    RDouble TotalCells = 0.0;
 
     int nZones = PHMPI::GetNumberofGlobalZones();
     for (int izone = 0; izone < nZones; ++ izone)
@@ -2167,30 +2224,30 @@ void Region::ComputeGlobalCellSize(int level)
         StructGrid *grid = StructGridCast(GetGrid(izone, level));
 
         TotalNodes += grid->GetNTotalNode();
-		TotalFaces += grid->GetNTotalFace();
-		TotalCells += grid->GetNTotalCell();
+        TotalFaces += grid->GetNTotalFace();
+        TotalCells += grid->GetNTotalCell();
     
         minNTCell = MIN(minNTCell, TotalCells);
         maxNTCell = MAX(maxNTCell, TotalCells);
     }
     
-	RDouble GloableTotalNodes = TotalNodes * 1.0;
+    RDouble GloableTotalNodes = TotalNodes * 1.0;
     RDouble GloableTotalFaces = TotalFaces * 1.0;
-	RDouble GloableTotalCells = TotalCells * 1.0;
+    RDouble GloableTotalCells = TotalCells * 1.0;
 
     if (PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_AllReduce(&TotalNodes, &GloableTotalNodes, 1, PH_SUM);
-		PH_AllReduce(&TotalFaces, &GloableTotalFaces, 1, PH_SUM);
-		PH_AllReduce(&TotalCells, &GloableTotalCells, 1, PH_SUM);
+        PH_AllReduce(&TotalFaces, &GloableTotalFaces, 1, PH_SUM);
+        PH_AllReduce(&TotalCells, &GloableTotalCells, 1, PH_SUM);
     }
 
-	GlobalDataBase::UpdateData("GloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
-	
-	PrintToWindow("The Gloable Information of StructGrid ", "\n");
-	PrintToWindow("  GloableTotalNodes: ", GloableTotalNodes, "\n");
-	PrintToWindow("  GloableTotalFaces: ", GloableTotalFaces, "\n");
-	PrintToWindow("  GloableTotalCells: ", GloableTotalCells, "\n");
+    GlobalDataBase::UpdateData("GloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
+
+    PrintToWindow("The Gloable Information of StructGrid ", "\n");
+    PrintToWindow("  GloableTotalNodes: ", GloableTotalNodes, "\n");
+    PrintToWindow("  GloableTotalFaces: ", GloableTotalFaces, "\n");
+    PrintToWindow("  GloableTotalCells: ", GloableTotalCells, "\n");
 
     RDouble minNTCellCompare = minNTCell * 1.0;
     RDouble maxNTCellCompare = maxNTCell * 1.0;
@@ -2205,9 +2262,9 @@ void Region::ComputeGlobalCellSize(int level)
 
 void Region::ComputeGlobalGridSize(int level)
 {
-	RDouble TotalNodes = 0.0;
-	RDouble TotalFaces = 0.0;
-	RDouble TotalCells = 0.0;
+    RDouble TotalNodes = 0.0;
+    RDouble TotalFaces = 0.0;
+    RDouble TotalCells = 0.0;
     RDouble TotalVolume = 0.0;
     RDouble averageVolume = 0.0;
 
@@ -2228,11 +2285,11 @@ void Region::ComputeGlobalGridSize(int level)
             RDouble * vol = grid->GetCellVolume();
 
             int nTotalNode = grid->GetNTotalNode();
-			int nTotalFace = grid->GetNTotalFace();
-			int nTotalCell = grid->GetNTotalCell();
+            int nTotalFace = grid->GetNTotalFace();
+            int nTotalCell = grid->GetNTotalCell();
             TotalNodes += nTotalNode * 1.0;
-			TotalFaces += nTotalFace * 1.0;
-			TotalCells += nTotalCell * 1.0;
+            TotalFaces += nTotalFace * 1.0;
+            TotalCells += nTotalCell * 1.0;
 
             for (int iCell = 0; iCell < nTotalCell; ++ iCell)
             {
@@ -2241,28 +2298,28 @@ void Region::ComputeGlobalGridSize(int level)
         }
 
         RDouble GloableTotalNodes = TotalNodes * 1.0;
-		RDouble GloableTotalFaces = TotalFaces * 1.0;
-		RDouble GloableTotalCells = TotalCells * 1.0;
+        RDouble GloableTotalFaces = TotalFaces * 1.0;
+        RDouble GloableTotalCells = TotalCells * 1.0;
         RDouble GloableTotalVolume = TotalVolume;
 
         if (PHMPI::GetNumberOfProcessor() > 1)
         {
             PH_AllReduce(&TotalNodes, &GloableTotalNodes, 1, PH_SUM);
-			PH_AllReduce(&TotalFaces, &GloableTotalFaces, 1, PH_SUM);
-			PH_AllReduce(&TotalCells, &GloableTotalCells, 1, PH_SUM);
+            PH_AllReduce(&TotalFaces, &GloableTotalFaces, 1, PH_SUM);
+            PH_AllReduce(&TotalCells, &GloableTotalCells, 1, PH_SUM);
             PH_AllReduce(&TotalVolume, &GloableTotalVolume, 1, PH_SUM);
         }
 
-		GlobalDataBase::UpdateData("GloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("GloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
         GlobalDataBase::UpdateData("UnstrGloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
         GlobalDataBase::UpdateData("UnstrGloableTotalVolume", &GloableTotalVolume, PHDOUBLE, 1);
 
-		PrintToWindow("The Gloable Information of UnstructGrid ", "\n");
-		PrintToWindow("  GloableTotalNodes: ", GloableTotalNodes, "\n");
-		PrintToWindow("  GloableTotalFaces: ", GloableTotalFaces, "\n");
-		PrintToWindow("  GloableTotalCells: ", GloableTotalCells, "\n");
-        
-		averageVolume = GloableTotalVolume / GloableTotalCells;
+        PrintToWindow("The Gloable Information of UnstructGrid ", "\n");
+        PrintToWindow("  GloableTotalNodes: ", GloableTotalNodes, "\n");
+        PrintToWindow("  GloableTotalFaces: ", GloableTotalFaces, "\n");
+        PrintToWindow("  GloableTotalCells: ", GloableTotalCells, "\n");
+
+        averageVolume = GloableTotalVolume / GloableTotalCells;
         for (int izone = 0; izone < nZones; ++ izone)
         {
             if (STRUCTGRID == PHMPI::GetZoneGridType(izone))
@@ -2389,15 +2446,12 @@ void Region::ComputeGlobalGridCellSize(int level)
         {
             continue;
         }
-        Zone * zone = GetZone(izone);
+        Zone *zone = GetZone(izone);
         if (!zone) continue;
-        UnstructGrid * grid = UnstructGridCast(GetGrid(izone, level));
+        UnstructGrid *grid = UnstructGridCast(GetGrid(izone, level));
         grid->SetAverageVolume(averageVolume_unstr);
     }
 }
-
-
-
 
 void Region::InitMovingGrids(int level)
 {
@@ -2419,7 +2473,7 @@ void Region::InitMovingGrids(int level)
 
     for (int izone = 0; izone < nZones; ++ izone)
     {
-        Zone * zone = GetZone(izone);
+        Zone *zone = GetZone(izone);
         if (!zone) continue;
 
         Grid *grid = GetGrid(izone, level);
@@ -2450,7 +2504,7 @@ LIB_EXPORT void Region::SwapGeommetry()
 
     TestReconstruction();
 
-    WriteLogFile("SwapGeommetry sucessfully...");
+    WriteLogFile("Swap geommetry sucessfully ...");
 }
 
 void Region::CommCellCenterData()
@@ -2483,7 +2537,7 @@ void Region::CommCellCenterData()
 void Region::ComputeMetrics_BC()
 {
     int ifvfd = PHSPACE::GlobalDataBase::GetIntParaFromDB("ifvfd");
-    if(ifvfd == 1)
+    if (ifvfd == 1)
     {
         ComputeMetricsandJacobinWithBCforStructHighOrder();
         return;
@@ -2493,7 +2547,7 @@ void Region::ComputeMetrics_BC()
     
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    int iovrlap     = PHSPACE::GlobalDataBase::GetIntParaFromDB("iovrlap");
+    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int nMGLevel = PHSPACE::GlobalDataBase::GetIntParaFromDB("nMGLevel");
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
@@ -2503,7 +2557,7 @@ void Region::ComputeMetrics_BC()
 
     if (tscheme != LU_SGS) Rwithghost = false;
     if (systemGridType != 1) Rwithghost = false; 
-    if (iovrlap != 0) Rwithghost = false;
+    if (codeOfOversetGrid != 0) Rwithghost = false;
     if (nMGLevel != 1) Rwithghost = false;
     if (compressible != 1) Rwithghost = false;
     if (isUnsteady != 0) Rwithghost = false;
@@ -2518,11 +2572,11 @@ void Region::ComputeMetrics_BC()
     int nZones = GetNumberofGlobalZones();
     for (int izone = 0; izone < nZones; ++ izone)
     {
-        int send_proc = GetZoneProcessorIDSepMode(izone); 
+        int send_proc = GetZoneProcessorIDSepMode(izone);
         int myid = PHMPI::GetCurrentProcessorID();
         if (myid == send_proc)
         {
-            StructGrid * grid = StructGridCast(GetGrid(izone, 0));
+            StructGrid *grid = StructGridCast(GetGrid(izone, 0));
             grid->ComputeMetrics_BC();
         }
     }
@@ -2537,19 +2591,28 @@ void Region::ComputeMetricsandJacobinWithBCforStructHighOrder()
     int mission_CommMetrics         = 3;
     int mission_CommJacobian        = 4;
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommXYZghost);
+    string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
+    if(highordersolvername.substr(0, 4) == "WCNS")
+    {
+        CommGridInfoOnlyforStructHighOrder(mission_CommXYZghost);
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommXYZghostofghost);
-    
-    UpdateDiffOrderforStructHighOrder();
+        CommGridInfoOnlyforStructHighOrder(mission_CommXYZghostofghost);
 
-    UpdateMetricsWithBCforStructHighOrder();
+        UpdateDiffOrderforStructHighOrder();
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommMetrics);
+        UpdateMetricsWithBCforStructHighOrder();
 
-    UpdateJacobianWithBCforStructHighOrder();
+        CommGridInfoOnlyforStructHighOrder(mission_CommMetrics);
 
-    CommGridInfoOnlyforStructHighOrder(mission_CommJacobian);
+        UpdateJacobianWithBCforStructHighOrder();
+
+        CommGridInfoOnlyforStructHighOrder(mission_CommJacobian);
+    }
+    else if(highordersolvername.substr(0, 4) == "HDCS")
+    {
+        CommGridInfoOnlyforStructHighOrder(mission_CommXYZghost);
+        //! xcc,ycc,zcc,vol
+    }
 }
 
 void Region::UpdateDiffOrderforStructHighOrder()
@@ -2812,7 +2875,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    //! Step3: Translate the super container.
+    //! Step3: Translate the data container.
     for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
     {
         int gridtypeofiZone = PHMPI::GetZoneGridType(iZone);
@@ -2836,7 +2899,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
-                //! Decompress the interface data from super-container.
+                //! Decompress the interface data from data-container.
                 Grid * grid = GetGrid(neighborZone, 0);
 
                 InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
@@ -2883,14 +2946,6 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
     requestContainer.clear();
 }
 
-
-
-
-
-
-
-
-
 void Region::CommCellIBlank()
 {
     ActionKey *actkeyCommCellIBlank = new ActionKey();
@@ -2932,6 +2987,7 @@ void Region::TestReconstruction()
             grid->SkewnessSummary(actkey);
         }
     }
+    delete actkey;
 }
 
 void Region::ComputeWeight()
@@ -2940,7 +2996,7 @@ void Region::ComputeWeight()
     int nZones = GetNumberofGlobalZones();
     for (int izone = 0; izone < nZones; ++ izone)
     {
-        Zone *zone = GetZone(izone); 
+        Zone *zone = GetZone(izone);
         if (!zone) continue;
         //! TODO: return while structure grid.
         zone->ComputeWeight();
@@ -2982,14 +3038,14 @@ LIB_EXPORT void Region::InitGeometry()
 
     GlobalGridStatic();
 
-    //GenerateWallDist();
-
-    WriteLogFile("GenerateWallDist ...");
-
     //! Map the OLD bcType to a NEW bcType.
     ChangeBoundaryCondition();
 
-    WriteLogFile("ChangeBoundaryCondition ...");
+    WriteLogFile("Change boundary condition ...");
+
+    DataMonitor();
+
+    WriteLogFile("Monitoring probes ...");
 }
 
 //! If need, change the default boundary condition to other type.
@@ -3193,7 +3249,7 @@ void Region::GridValidityCheck()
         //int read_wall_dist = GlobalDataBase::GetIntParaFromDB("read_wall_dist");
         
         //if(read_wall_dist)
-        if(IsReadWallDist() == true)
+        if (IsReadWallDist() == true)
         {
             //! For general CFD computing, only server processor need know the box.
             PH_Reduce(minBox, globalMinBox, 3, MPI_MIN);

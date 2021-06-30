@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -10,9 +10,9 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      DataStruct_AdtNode.h
-//! @brief     DataStruct_AdtNode defines a "Node" data structure used by ADT Tree
-//!			   The "node" has its coordinates(x, y, z), level in the tree, and pointer to its "son" node.
-//!			   Data is stored in node's item.
+//! @brief     DataStruct_AdtNode defines a "Node" data structure used by ADT Tree.
+//!            The "node" has its coordinates(x, y, z), level in the tree, and pointer to its "son" node.
+//!            Data is stored in node's item.
 //! @author    Bell, He Xin, reference from Dr. Wang.
 
 #pragma once

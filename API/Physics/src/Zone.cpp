@@ -10,7 +10,6 @@
 #include "MixGrid.h"
 #include "Solver.h"
 
-
 using namespace std;
 
 #pragma warning (disable:913)
@@ -244,10 +243,9 @@ void InitGlobalValuesGrid()
 void InitGlobalValuesSolver()
 {
     int iapplication = GlobalDataBase::GetIntParaFromDB("iapplication");
-
+    int chemical = GlobalDataBase::GetIntParaFromDB("nchem");
     if (iapplication == 0)
     {
-        int chemical = GlobalDataBase::GetIntParaFromDB("nchem");
         using namespace GAS_SPACE;
         if (chemical == 0)
         {
@@ -256,6 +254,10 @@ void InitGlobalValuesSolver()
         {
         }
         gas->InitGlobalParameterOfNSEquation();
+    }
+    else if (iapplication == 1)
+    {
+
     }
 }
 
@@ -269,10 +271,10 @@ void CleanGlobalValuesSolver()
         delete gas;
         gas = 0;
     }
+    else if (iapplication == 1)
+    {
+    }
 }
 
 
-
-
 }
-

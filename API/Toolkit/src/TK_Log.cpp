@@ -1,105 +1,103 @@
 #include "TK_Log.h"
 #include "TK_Exit.h"
 #include <cmath>
-//! Bell 20130527 add.
 #ifdef WIN32
-#include <direct.h>			
+#include <direct.h>
 #else
 #include <sys/stat.h>
 #endif
-//*/
 
 using namespace std;
 
 namespace PHSPACE
 {
 
-void OpenLogFile( int file_id, fstream &file )
+void OpenLogFile(int file_id, fstream &file)
 {
-	PHMakeDir("results");		//! Bell 20130527 add.
+    PHMakeDir("results");
 
-	static int if_rewrite = 0;
+    static int if_rewrite = 0;
 
-	std::ostringstream oss;
-	oss << "results/log" << file_id << ".log";		
+    std::ostringstream oss;
+    oss << "results/log" << file_id << ".log";
 
-	if( if_rewrite == 0 )
-	{
-		file.open( oss.str().c_str(), ios_base::out|ios_base::trunc );
-	}
-	else
-	{
-		file.open( oss.str().c_str(), ios_base::out|ios_base::app );
-	}
+    if (if_rewrite == 0)
+    {
+        file.open(oss.str().c_str(), ios_base::out|ios_base::trunc);
+    }
+    else
+    {
+        file.open(oss.str().c_str(), ios_base::out|ios_base::app);
+    }
 
-	if_rewrite = 1;
+    if_rewrite = 1;
 
-	if ( !file )
-	{
-		TK_Exit::FileOpenErrorExit(oss.str());
-	}
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(oss.str());
+    }
 }
 
-void CloseLogFile( fstream &file )
+void CloseLogFile(fstream &file)
 {
-	file.close();
-	file.clear();
+    file.close();
+    file.clear();
 }
 
-void WriteLogFile( const string &data)
+void WriteLogFile(const string &data)
 {
-	using namespace PHMPI;
+    using namespace PHMPI;
 #ifndef LOG_DEBUG
     //! Only server write log.
     if(GetCurrentProcessorID() == server)
 #endif
-	{
-		fstream file;
-		OpenLogFile( GetCurrentProcessorID(), file );
-		file << data << "\n";
-		CloseLogFile( file );
-	}
+    {
+        fstream file;
+        OpenLogFile(GetCurrentProcessorID(), file);
+        file << data << "\n";
+        CloseLogFile(file);
+    }
 }
 
 void WriteLogFile(const ostringstream &oss, bool writeEachProcessor)
 {
-	WriteLogFile(oss.str());
+    WriteLogFile(oss.str());
 }
 
-void OpenWarningLogFile( int file_id, fstream &file )
+void OpenWarningLogFile(int file_id, fstream &file)
 {
-	PHMakeDir("results");
-	static int if_rewrite = 0;
+    PHMakeDir("results");
+    static int if_rewrite = 0;
 
-	std::ostringstream oss;
-	oss << "results/warning" << file_id << ".log";		
+    std::ostringstream oss;
+    oss << "results/warning" << file_id << ".log";
 
-	if( if_rewrite == 0 )
-	{
-		file.open( oss.str().c_str(), ios_base::out|ios_base::trunc );
-	}
-	else
-	{
-		file.open( oss.str().c_str(), ios_base::out|ios_base::app );
-	}
+    if (if_rewrite == 0)
+    {
+        file.open(oss.str().c_str(), ios_base::out|ios_base::trunc);
+    }
+    else
+    {
+        file.open(oss.str().c_str(), ios_base::out|ios_base::app);
+    }
 
-	if_rewrite = 1;
+    if_rewrite = 1;
 
-	if ( !file )
-	{
-		TK_Exit::FileOpenErrorExit(oss.str());
-	}
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(oss.str());
+    }
 }
 
 void WriteWarningLogFile(const string &warningInfo)
 {
-	if(PHMPI::GetCurrentProcessorID() == PHMPI::server)
-	{
-		fstream file;
-		OpenWarningLogFile(PHMPI::GetCurrentProcessorID(), file);
-		file << warningInfo <<"\n";
-		CloseLogFile( file );
-	}
+    if (PHMPI::GetCurrentProcessorID() == PHMPI::server)
+    {
+        fstream file;
+        OpenWarningLogFile(PHMPI::GetCurrentProcessorID(), file);
+        file << warningInfo << "\n";
+        CloseLogFile(file);
+    }
 }
 
 void PrintToWindow(const string &information)
@@ -109,50 +107,48 @@ void PrintToWindow(const string &information)
     cout << information;
 }
 
-void PrintToWindow( const ostringstream &information )
+void PrintToWindow(const ostringstream &information)
 {
-	PrintToWindow(information.str());
+    PrintToWindow(information.str());
 }
 
-//! Bell 20130527 add.
 void PHMakeDir(const string &dir_name)
 {
-	using namespace PHMPI;
-	//if( GetCurrentProcessorID() == server )
-	{
-		int flag;
+    using namespace PHMPI;
+    //if (GetCurrentProcessorID() == server)
+    {
+        int flag;
 
-		#ifdef WIN32
-			flag = _mkdir(dir_name.c_str());
-		#else
-			flag = mkdir(dir_name.c_str(), S_IRWXU);
-		#endif
-			if ( flag == 0 )
-			{
-				cout << dir_name<< " directory has been created successfully !\n";
-			}
-	}
-}
-//*/
-
-void ProgressMonitorToLogFile(const int & iNow, const int & nTotal, const string & monitorName)
-{
-	ostringstream oss;
-	oss.unsetf( ios::scientific );
-	oss.setf( ios::fixed );
-	oss.precision(0);	
-	oss << "     " << floor(( iNow * 1.0 ) / nTotal * 100 + 0.5) << "% " << monitorName << " completed ...";
-	WriteLogFile(oss);
+        #ifdef WIN32
+            flag = _mkdir(dir_name.c_str());
+        #else
+            flag = mkdir(dir_name.c_str(), S_IRWXU);
+        #endif
+            if (flag == 0)
+            {
+                cout << dir_name<< " directory has been created successfully !\n";
+            }
+    }
 }
 
-void ProgressMonitorToWindows(const int & iNow, const int & nTotal, const string & monitorName)
+void ProgressMonitorToLogFile(const int &iNow, const int &nTotal, const string &monitorName)
 {
-	ostringstream oss;
-	oss.unsetf( ios::scientific );
-	oss.setf( ios::fixed );
-	oss.precision(0);	
-	oss << "     " << floor(( iNow * 1.0 ) / nTotal * 100 + 0.5) << "% " << monitorName << " completed ..." << endl;
-	PrintToWindow(oss);
+    ostringstream oss;
+    oss.unsetf(ios::scientific);
+    oss.setf(ios::fixed);
+    oss.precision(0);
+    oss << "     " << floor((iNow * 1.0) / nTotal * 100 + 0.5) << "% " << monitorName << " completed ...";
+    WriteLogFile(oss);
+}
+
+void ProgressMonitorToWindows(const int &iNow, const int &nTotal, const string &monitorName)
+{
+    ostringstream oss;
+    oss.unsetf(ios::scientific);
+    oss.setf(ios::fixed);
+    oss.precision(0);
+    oss << "     " << floor((iNow * 1.0) / nTotal * 100 + 0.5) << "% " << monitorName << " completed ..." << endl;
+    PrintToWindow(oss);
 }
 
 }

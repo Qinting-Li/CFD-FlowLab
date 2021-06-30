@@ -1,12 +1,3 @@
-//! @file   HOShapeFunction.cpp
-//! @brief	hape function of all element types supported (such as tri trip2, quad etc.).\n
-//!
-//! @author		liming, gxq.
-//! @email       
-//! @date		2019-10-15
-//! @version	A001
-//! @copyright
-
 #include "HODefine.h"
 #include "HOShapeFunction.h"
 

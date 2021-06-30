@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -13,6 +13,7 @@
 //! @brief     This file is part of PHengLEI Technology software library.
 //!            It defines the class 'Geo_GridIndex', which is the index information used in Grid.
 //! @author    He Xin, Bell.
+
 #pragma once
 #include "Data_ParamFieldSuite.h"
 #include "Geo_SimpleGrid.h"

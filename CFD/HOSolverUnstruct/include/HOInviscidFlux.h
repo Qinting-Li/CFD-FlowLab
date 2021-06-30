@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -9,15 +9,11 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file	HOInviscidFlux.h
-//! @brief	basis function, such as monomial, orthogonalized etc.\n
-//!
-//!
-//! @author		gongxq, liming, Wan yunbo, Xu gang.
-//! @email       
-//! @date		2019-11-15
-//! @version	A001
-//! @copyright
+//! @file      HOInviscidFlux.h
+//! @brief     basis function, such as monomial, orthogonalized etc.
+//! @author    gongxq, liming, Wan yunbo, Xu gang.
+//! @date      2019-11-15
+//! @version   A001
 
 #pragma once
 

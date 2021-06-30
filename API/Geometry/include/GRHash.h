@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -48,14 +48,6 @@ using namespace PHSPACE;
 
 namespace GRIDER_SPACE
 {
-#define ASSERT(x) \
-	if(!(x))  \
-	{\
-	cout<<"ERROR: Assert " << #x << endl; \
-	cout<<"On line " << __LINE__ << endl; \
-	cout<<"On file " << __FILE__ << endl; \
-	abort();                              \
-}
 
 #define HASH_MAXI_LOAD 0.8
 #define HASH_INIT_SIZE 128

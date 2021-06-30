@@ -1,5 +1,5 @@
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+#          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 #          P   P  H   H  E      NN   N  G      L      E       I          +
 #          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 #          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -13,8 +13,6 @@
 #! @brief     It defines the project.
 #! @author    Bell, Xu Qingxin, He Kun, He Xin.
 cmake_minimum_required(VERSION 2.6)
-
-include(PHMacro.cmake)
 
 #set working directory:
 set(EXEC_WORKING_DIR PHengLEIv3d0)
@@ -31,7 +29,7 @@ message(STATUS "This current binary directory is ${CMAKE_CURRENT_BINARY_DIR}.")
 message(STATUS "This current source directory is ${CMAKE_CURRENT_SOURCE_DIR}.")
 
 # Define some pre-definition.
-include(PHMacro.cmake)
+include(${PROJECT_SOURCE_DIR}/../PHengLEI/PHMacro.cmake)
 if(USE_OCC)
   message(STATUS "USE_OCC is turned on!")
   add_definitions(-DUSE_OCC)
@@ -54,80 +52,40 @@ if(USE_Windows_X64)
   add_definitions(-DUSE_WINDOWS_X64)
 endif(USE_Windows_X64)
 endif(WIN32)
+if(USE_SpecDiffHybSolver)
+  message(STATUS "USE_SpecDiffHybSolver is turned on!")
+  add_definitions(-DUSE_SpecDiffHybSolver)
+endif()
 #1. output message:
 message(STATUS "") 
 message(STATUS "--- Enter subdirectory <CFD>, Start to call ${CMAKE_CURRENT_LIST_FILE} ---") 
 message(STATUS "This current binary directory is ${CMAKE_CURRENT_BINARY_DIR}.")
 message(STATUS "This current source directory is ${CMAKE_CURRENT_SOURCE_DIR}.")
 
+if(WIN32)
+if(USE_Windows_X64)
+	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
+  set(CMAKE_EXE_LINKER_FLAGS "/machine:x64")
+else(USE_Windows_X64)
+	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
+endif(USE_Windows_X64)
+else(WIN32)
+	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+endif(WIN32)
+link_directories("${LIB_API_EXPORT_PATH}")
+
 set(CFD_TARGET_NAME "PHCFD")
 set(LIBRARY_OUTPUT_PATH)
-set(LIB_DataStruct_EXPORT_PATH)
-set(LIB_Data_EXPORT_PATH)
-set(LIB_Math_EXPORT_PATH)
-set(LIB_PHMPI_EXPORT_PATH)
-set(LIB_Toolkit_EXPORT_PATH)
-set(LIB_IO_EXPORT_PATH)
-set(LIB_Geometry_EXPORT_PATH)
-set(LIB_Physics_EXPORT_PATH)
-set(LIB_PreProcess_EXPORT_PATH)
-set(LIB_PostProcess_EXPORT_PATH)
-set(LIB_Common_EXPORT_PATH)
 if(WIN32)
-
 if(USE_Windows_X64)
- set(LIB_DataStruct_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/DataStruct/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_Data_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Data/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_Math_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Math/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_PHMPI_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/FYMPI/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_Toolkit_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Toolkit/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_IO_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/IO/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_Geometry_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Geometry/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_Physics_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Physics/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_PreProcess_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/PreProcess/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_PostProcess_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/PostProcess/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
- set(LIB_Common_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Common/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
  set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../CFD/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
  set(CMAKE_EXE_LINKER_FLAGS "/machine:x64")
 else(USE_Windows_X64)
-  set(LIB_DataStruct_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/DataStruct/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-  set(LIB_Data_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Data/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-  set(LIB_Math_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Math/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-  set(LIB_PHMPI_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/FYMPI/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-  set(LIB_Toolkit_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Toolkit/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-  set(LIB_IO_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/IO/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-  set(LIB_Geometry_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Geometry/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-  set(LIB_Physics_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Physics/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
- set(LIB_PreProcess_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/PreProcess/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
- set(LIB_PostProcess_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/PostProcess/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
- set(LIB_Common_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Common/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
   set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../CFD/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
 endif(USE_Windows_X64)
 else(WIN32)
-  set(LIB_DataStruct_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/DataStruct/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_Data_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Data/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_Math_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Math/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_PHMPI_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/FYMPI/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_Toolkit_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Toolkit/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_IO_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/IO/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_Geometry_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Geometry/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_Physics_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Physics/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_PreProcess_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/PreProcess/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_PostProcess_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/PostProcess/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-  set(LIB_Common_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/Common/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
   set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../CFD/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 endif(WIN32)
-link_directories("${LIB_DataStruct_EXPORT_PATH}")
-link_directories("${LIB_Data_EXPORT_PATH}")
-link_directories("${LIB_Math_EXPORT_PATH}")
-link_directories("${LIB_PHMPI_EXPORT_PATH}")
-link_directories("${LIB_Toolkit_EXPORT_PATH}")
-link_directories("${LIB_IO_EXPORT_PATH}")
-link_directories("${LIB_Geometry_EXPORT_PATH}")
-link_directories("${LIB_Physics_EXPORT_PATH}")
-link_directories("${LIB_PreProcess_EXPORT_PATH}")
-link_directories("${LIB_PostProcess_EXPORT_PATH}")
-link_directories("${LIB_Common_EXPORT_PATH}")
 message(STATUS "CFD library path is: ${LIBRARY_OUTPUT_PATH}.")
 
 #set options
@@ -157,32 +115,16 @@ endif(WIN32)
 message(STATUS "The 3rdparty path is: ${THIRDPARTY_LIB_DIR}.") 
 link_directories("${THIRDPARTY_LIB_DIR}")
 
-set(DataStruct_H_PATH   ${PROJECT_SOURCE_DIR}/../API/DataStruct/include)
-set(Data_H_PATH   ${PROJECT_SOURCE_DIR}/../API/Data/include)
-set(Math_H_PATH   ${PROJECT_SOURCE_DIR}/../API/Math/include)
-set(PHMPI_H_PATH   ${PROJECT_SOURCE_DIR}/../API/FYMPI/include)
-set(Toolkit_H_PATH   ${PROJECT_SOURCE_DIR}/../API/Toolkit/include)
-set(IO_H_PATH   ${PROJECT_SOURCE_DIR}/../API/IO/include)
-set(Geometry_H_PATH   ${PROJECT_SOURCE_DIR}/../API/Geometry/include)
-set(Physics_H_PATH   ${PROJECT_SOURCE_DIR}/../API/Physics/include)
-set(PreProcess_H_PATH   ${PROJECT_SOURCE_DIR}/../API/PreProcess/include)
-set(PostProcess_H_PATH   ${PROJECT_SOURCE_DIR}/../API/PostProcess/include)
-set(Common_H_PATH   ${PROJECT_SOURCE_DIR}/../API/Common/include)
-include_directories("${DataStruct_H_PATH}")
-include_directories("${Data_H_PATH}")
-include_directories("${Math_H_PATH}")
-include_directories("${PHMPI_H_PATH}")
-include_directories("${Toolkit_H_PATH}")
-include_directories("${IO_H_PATH}")
-include_directories("${Geometry_H_PATH}")
-include_directories("${Physics_H_PATH}")
-include_directories("${PreProcess_H_PATH}")
-include_directories("${PostProcess_H_PATH}")
-include_directories("${Common_H_PATH}")
+includeHeadFiles()
+
 set(HDF5_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
+
+if(USE_TecplotLib)
 set(TECIO_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
 include_directories("${TECIO_H_PATH}")
+endif(USE_TecplotLib)
+
 set(MEITIS_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
@@ -216,7 +158,6 @@ ${NSSOLVER_H_PATH}/NSSolverStruct.h
 ${NSSOLVER_H_PATH}/NSSolverStructFD.h
 ${NSSOLVER_H_PATH}/NSSolverStructFV.h
 ${NSSOLVER_H_PATH}/NSSolverUnstruct.h
-${NSSOLVER_H_PATH}/Boundary.h
 ${NSSOLVER_H_PATH}/MultiGridOperation.h
 ${NSSOLVER_H_PATH}/Param_NSSolver.h
 ${NSSOLVER_H_PATH}/Param_NSSolverUnstruct.h
@@ -232,7 +173,6 @@ ${NSSOLVER_CPP_PATH}/NSSolverStruct.cpp
 ${NSSOLVER_CPP_PATH}/NSSolverStructFD.cpp
 ${NSSOLVER_CPP_PATH}/NSSolverStructFV.cpp
 ${NSSOLVER_CPP_PATH}/NSSolverUnstruct.cpp
-${NSSOLVER_CPP_PATH}/Boundary.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolver.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverUnstruct.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverStruct.cpp
@@ -245,9 +185,16 @@ set(TurbSOLVER_H_LIST
 ${TurbSOLVER_H_PATH}/TurbSolver.h
 ${TurbSOLVER_H_PATH}/TurbSolverStruct.h
 ${TurbSOLVER_H_PATH}/TurbSolverUnstr.h
+${TurbSOLVER_H_PATH}/LESSolver.h
+${TurbSOLVER_H_PATH}/LESSolverStruct.h
+${TurbSOLVER_H_PATH}/LESSolverUnstr.h
+${TurbSOLVER_H_PATH}/TurbSolverStructFD.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolver.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolverStruct.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolverUnstruct.h
+${TurbSOLVER_H_PATH}/Param_LESSolver.h
+${TurbSOLVER_H_PATH}/Param_LESSolverStruct.h
+${TurbSOLVER_H_PATH}/Param_LESSolverUnstruct.h
 )
 source_group(TurbSolver\\include FILES ${TurbSOLVER_H_LIST}) 
 include_directories(${TurbSOLVER_H_PATH})
@@ -256,10 +203,17 @@ set(TurbSOLVER_CPP_PATH      TurbSolver/src)
 set(TurbSOLVER_CPP_LIST
 ${TurbSOLVER_CPP_PATH}/TurbSolver.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverStruct.cpp
+${TurbSOLVER_CPP_PATH}/TurbSolverStructFD.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverUnstr.cpp
+${TurbSOLVER_CPP_PATH}/LESSolver.cpp
+${TurbSOLVER_CPP_PATH}/LESSolverStruct.cpp
+${TurbSOLVER_CPP_PATH}/LESSolverUnstr.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolver.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolverUnstruct.cpp
+${TurbSOLVER_CPP_PATH}/Param_LESSolver.cpp
+${TurbSOLVER_CPP_PATH}/Param_LESSolverStruct.cpp
+${TurbSOLVER_CPP_PATH}/Param_LESSolverUnstruct.cpp
 )
 source_group(TurbSolver\\src FILES ${TurbSOLVER_CPP_LIST})
 
@@ -296,23 +250,77 @@ ${HOSOLVERUNSTRUCT_CPP_PATH}/HOStandardElement.cpp
 )
 source_group(HOSolverUnstruct\\src FILES ${HOSOLVERUNSTRUCT_CPP_LIST})
 
+# Build In-house version:
 
 
+# set directory of SpecDiffHybSolver:
+if(USE_SpecDiffHybSolver)
+set(SpecDiffHybSolver_H_PATH SpecDiffHybSolver/include)
+set(SpecDiffHybSolver_H_LIST
+${SpecDiffHybSolver_H_PATH}/SpecDiffHybSolver.h
+${SpecDiffHybSolver_H_PATH}/SpecDiffHybGrid.h
+${SpecDiffHybSolver_H_PATH}/ExplicitDifferenceBoundary.h
+${SpecDiffHybSolver_H_PATH}/CompactDifferenceFirstDerivative.h
+${SpecDiffHybSolver_H_PATH}/CompactDifferenceSecondDerivative.h
+${SpecDiffHybSolver_H_PATH}/PoissonSolver.h
+${SpecDiffHybSolver_H_PATH}/CorrectWallDivergence.h
+${SpecDiffHybSolver_H_PATH}/Complex.h
+${SpecDiffHybSolver_H_PATH}/RescaleField.h
+${SpecDiffHybSolver_H_PATH}/Statistics.h
+${SpecDiffHybSolver_H_PATH}/p3dfft.h
+${SpecDiffHybSolver_H_PATH}/fftw3.h
+${SpecDiffHybSolver_H_PATH}/SpecDiffHybFieldView.h
+${SpecDiffHybSolver_H_PATH}/LES.h
+)
+source_group(SpecDiffHybSolver\\include FILES ${SpecDiffHybSolver_H_LIST})
+include_directories(${SpecDiffHybSolver_H_PATH})
+
+set(SpecDiffHybSolver_CPP_PATH SpecDiffHybSolver/src)
+set(SpecDiffHybSolver_CPP_LIST
+${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybSolver.cpp
+${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybGrid.cpp
+${SpecDiffHybSolver_CPP_PATH}/ExplicitDifferenceBoundary.cpp
+${SpecDiffHybSolver_CPP_PATH}/CompactDifferenceFirstDerivative.cpp
+${SpecDiffHybSolver_CPP_PATH}/CompactDifferenceSecondDerivative.cpp
+${SpecDiffHybSolver_CPP_PATH}/PoissonSolver.cpp
+${SpecDiffHybSolver_CPP_PATH}/CorrectWallDivergence.cpp
+${SpecDiffHybSolver_CPP_PATH}/RescaleField.cpp
+${SpecDiffHybSolver_CPP_PATH}/Statistics.cpp
+${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybFieldView.cpp
+${SpecDiffHybSolver_CPP_PATH}/LES.cpp
+)
+source_group(SpecDiffHybSolver\\src FILES ${SpecDiffHybSolver_CPP_LIST})
+endif(USE_SpecDiffHybSolver)
 #20.1 set header file list
 set(CFD_HEAD_LIST 
 ${SOLVER_H_LIST}
 ${NSSOLVER_H_LIST}
 ${TurbSOLVER_H_LIST}
+${SpecDiffHybSolver_H_LIST}
 ${HOSOLVERUNSTRUCT_H_LIST}
 )
+
+# add INHOUSE_VERSION_H_LIST
+
+# add SpecDiffHybSolver_H_LIST
+if(USE_SpecDiffHybSolver)
+list(APPEND CFD_HEAD_LIST ${SpecDiffHybSolver_H_LIST})
+endif()
 
 #20.2 set source file list:
 set(CFD_CPP_LIST 
 ${SOLVER_CPP_LIST}
 ${NSSOLVER_CPP_LIST}
 ${TurbSOLVER_CPP_LIST}
+${SpecDiffHybSolver_CPP_LIST}
 ${HOSOLVERUNSTRUCT_CPP_LIST}
 )
+# add INHOUSE_VERSION_CPP_LIST
+
+# add SpecDiffHybSolver_CPP_LIST
+if(USE_SpecDiffHybSolver)
+list(APPEND CFD_CPP_LIST ${SpecDiffHybSolver_CPP_LIST})
+endif()
 
 #21. adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
@@ -378,24 +386,25 @@ elseif ("${BUILD_LIBRARY_TYPE}" STREQUAL "Static")
   add_library(${CFD_TARGET_NAME} STATIC ${CFD_CPP_LIST} ${CFD_HEAD_LIST}) 
 endif() 
 
-
 # link API library:
-set(DataStruct_TARGET_NAME "PHDataStruct")
-set(Data_TARGET_NAME "PHData")
-set(Math_TARGET_NAME "PHMath")
-set(PHMPI_TARGET_NAME "PHMPI")
-set(Toolkit_TARGET_NAME "PHToolkit")
-set(IO_TARGET_NAME "PHIO")
-set(Geometry_TARGET_NAME "PHGeometry")
-set(Physics_TARGET_NAME "PHPhysics")
-set(PreProcess_TARGET_NAME "PHPreProcess")
-set(PostProcess_TARGET_NAME "PHPostProcess")
-set(Common_TARGET_NAME "PHCommon")
-list(APPEND LINK_LIBRARY_LIST ${Physics_TARGET_NAME} ${PreProcess_TARGET_NAME} ${PostProcess_TARGET_NAME} ${Common_TARGET_NAME} ${Geometry_TARGET_NAME} ${IO_TARGET_NAME} ${Toolkit_TARGET_NAME} ${PHMPI_TARGET_NAME} ${DataStruct_TARGET_NAME} ${Data_TARGET_NAME} ${Math_TARGET_NAME} metis parmetis cgns hdf5)
+set(API_TARGET_NAME "PHAPI")
+list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5)
+
+if(USE_OVERSET)
+  list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME}  nebula)
+endif(USE_OVERSET)
+
+if(USE_TecplotLib)
+  list(APPEND LINK_LIBRARY_LIST tecio)
+endif(USE_TecplotLib)
 
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST msmpi)
 endif(WIN32)
+
+if(USE_SpecDiffHybSolver)
+  list(APPEND LINK_LIBRARY_LIST p3dfft fftw3 mpifort gfortran)
+endif(USE_SpecDiffHybSolver)
 
 target_link_libraries(${CFD_TARGET_NAME} ${LINK_LIBRARY_LIST})
 

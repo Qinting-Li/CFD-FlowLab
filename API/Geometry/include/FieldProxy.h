@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -21,20 +21,21 @@ namespace PHSPACE
 class FieldProxy
 {
 private:
-    RDouble  ***field_uho;
-	RDouble   **field_uns;
-	RDouble4D * field_str;
-	bool del_field;
+    RDouble ***field_uho;
+    RDouble  **field_uns;
+    RDouble4D *field_str;
+    bool del_field;
 public:
-	FieldProxy();
-	~FieldProxy();
+    FieldProxy();
+    ~FieldProxy();
 public:
     RDouble *** GetField_UHO();
-	RDouble **  GetField_UNS();
-	RDouble4D & GetField_STR();
+    RDouble  ** GetField_UNS();
+    RDouble4D & GetField_STR();
 
-    void SetField_UHO(RDouble *** field_uho, bool del_field = false);
-	void SetField_UNS(RDouble  ** field_uns, bool del_field = false);
-	void SetField_STR(RDouble4D * field_str, bool del_field = false);
+    void SetField_UHO(RDouble ***field_uho, bool del_field = false);
+    void SetField_UNS(RDouble  **field_uns, bool del_field = false);
+    void SetField_STR(RDouble4D *field_str, bool del_field = false);
 };
+
 }

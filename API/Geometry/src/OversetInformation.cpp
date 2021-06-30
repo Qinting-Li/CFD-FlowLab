@@ -502,8 +502,8 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 	oversetTopologyForReceive.resize( numberOfZones );
     oversetTopology          .resize( numberOfZones );
 
-	DataContainer * superContainerLocal  = new DataContainer();
-	DataContainer * superContainerGlobal = new DataContainer();
+	DataContainer * dataContainerLocal  = new DataContainer();
+	DataContainer * dataContainerGlobal = new DataContainer();
 
 	int nZonesInThisProc = 0;
 
@@ -518,7 +518,7 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 		}
 	}
 
-	PHSPACE::PHWrite( superContainerLocal, nZonesInThisProc );
+	PHSPACE::PHWrite( dataContainerLocal, nZonesInThisProc );
 
 	//! For each process,get the interCell information of all zones and write into dataContainer.
 	for( int iZone = 0; iZone < numberOfZones; ++ iZone )
@@ -535,13 +535,13 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 
 			int numberOfNeigibors = static_cast<int>(neighborZoneIndexArray.size());
 
-			PHSPACE::PHWrite( superContainerLocal, iZone             );
+			PHSPACE::PHWrite( dataContainerLocal, iZone             );
 
-			PHSPACE::PHWrite( superContainerLocal, numberOfNeigibors );
+			PHSPACE::PHWrite( dataContainerLocal, numberOfNeigibors );
 
 			if( numberOfNeigibors != 0 )
 			{
-				PHSPACE::PHWrite( superContainerLocal, & neighborZoneIndexArray[ 0 ], numberOfNeigibors );
+				PHSPACE::PHWrite( dataContainerLocal, & neighborZoneIndexArray[ 0 ], numberOfNeigibors );
 			}
 		}
 	}
@@ -551,14 +551,14 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 
 	if( currentProcessor != serverProcessor )
 	{
-		send(superContainerLocal, serverProcessor, currentProcessor );
+		send(dataContainerLocal, serverProcessor, currentProcessor );
 	}
 
 	if( currentProcessor == serverProcessor )
 	{
-		superContainerLocal->moveto_begin();
+		dataContainerLocal->moveto_begin();
 
-		superContainerGlobal->write( superContainerLocal );
+		dataContainerGlobal->write( dataContainerLocal );
 		
 		for ( int iProcessor = 0; iProcessor < numberOfprocessors; ++ iProcessor )
 		{
@@ -567,46 +567,46 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 				continue;
 			}
 
-			DataContainer * superContainerRevc = new DataContainer();
+			DataContainer * dataContainerRevc = new DataContainer();
 			
-			receive(superContainerRevc, iProcessor, iProcessor );
+			receive(dataContainerRevc, iProcessor, iProcessor );
 
-			superContainerRevc->moveto_begin();
+			dataContainerRevc->moveto_begin();
 
-			superContainerGlobal->write( superContainerRevc );
+			dataContainerGlobal->write( dataContainerRevc );
 
-			delete superContainerRevc;
+			delete dataContainerRevc;
 		}
 	}
 
-	delete superContainerLocal;
+	delete dataContainerLocal;
 
-	PHMPI::PH_BcastByServerSepMode( superContainerGlobal );
-	superContainerGlobal->moveto_begin();
+	PHMPI::PH_BcastByServerSepMode( dataContainerGlobal );
+	dataContainerGlobal->moveto_begin();
 
 	for ( int iProcessor = 0; iProcessor < numberOfprocessors; ++ iProcessor )
 	{
-		PHSPACE::PHRead( superContainerGlobal, nZonesInThisProc );
+		PHSPACE::PHRead( dataContainerGlobal, nZonesInThisProc );
 		
 		for( int iZone = 0; iZone < nZonesInThisProc; ++ iZone )
 		{
 			int zoneIndex;
 			int numberOfNeigibors;
 
-			PHSPACE::PHRead( superContainerGlobal, zoneIndex         );
-			PHSPACE::PHRead( superContainerGlobal, numberOfNeigibors );
+			PHSPACE::PHRead( dataContainerGlobal, zoneIndex         );
+			PHSPACE::PHRead( dataContainerGlobal, numberOfNeigibors );
 			
 			if( numberOfNeigibors != 0 )
 			{
 				PHVectorInt1D neighborList;
 				neighborList.resize( numberOfNeigibors );
-				PHSPACE::PHRead( superContainerGlobal, & neighborList[ 0 ], numberOfNeigibors );
+				PHSPACE::PHRead( dataContainerGlobal, & neighborList[ 0 ], numberOfNeigibors );
 				oversetTopology[ zoneIndex ] = neighborList;
 			}
 		}
 	}
 
-	delete superContainerGlobal;
+	delete dataContainerGlobal;
 }
 
 OversetCell::OversetCell()

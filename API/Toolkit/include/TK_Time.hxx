@@ -1,17 +1,18 @@
 #ifdef WIN32
-inline double TimeSpan::GetWallTime() 
-{  
-    return static_cast<double> (clock()); 
+inline double TimeSpan::GetWallTime()
+{
+    return static_cast<double>(clock());
 }
 
-inline double TimeSpan::GetSecondTime(const double & time_elapsed) 
+inline double TimeSpan::GetSecondTime(const double &time_elapsed)
 { 
-    return time_elapsed / CLOCKS_PER_SEC; 
+    return time_elapsed / CLOCKS_PER_SEC;
 }
 
 inline void TimeSpan::ResetTime()
-{ 
-    last_time = GetWallTime(); now_time = last_time; 
+{
+    last_time = GetWallTime();
+    now_time = last_time;
 }
 
 inline double TimeSpan::GetTimeSpan()
@@ -38,7 +39,7 @@ inline void TimeSpan::ShowTimeSpanToLogfile(const string &title)
     now_time = GetWallTime();
     double time_elapsed = now_time - last_time;
     last_time = now_time;
-    
+
     //oss << title << " time elapsed : " << GetSecondTime(time_elapsed) << " seconds" << "\n";
     oss << setiosflags(ios::fixed) << setprecision(3) << setw(6) << GetSecondTime(time_elapsed) << "  seconds: " << title;
     WriteLogFile(oss.str());
@@ -53,7 +54,7 @@ inline double TimeSpan::GetTimeSpan()
 {
     gettimeofday(&now_time, NULL);
     double time_elapsed = (now_time.tv_sec - last_time.tv_sec) + (now_time.tv_usec - last_time.tv_usec) * 1.0e-6;
-    double timespan = ( (now_time.tv_sec - last_time.tv_sec) + (now_time.tv_usec - last_time.tv_usec) * 1.0e-6 );
+    double timespan = ((now_time.tv_sec - last_time.tv_sec) + (now_time.tv_usec - last_time.tv_usec) * 1.0e-6);
     last_time = now_time;
     return timespan;
 }

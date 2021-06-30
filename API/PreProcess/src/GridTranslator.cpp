@@ -14,7 +14,7 @@ namespace PHSPACE
 
 GridTranslator::GridTranslator()
 {
-    GlobalDataBase::GetData("iovrlap",&codeOfOversetGrid,PHINT,1);
+    GlobalDataBase::GetData("codeOfOversetGrid",&codeOfOversetGrid,PHINT,1);
 
     gridGroup = new vector< StructGrid * >();
 
@@ -25,7 +25,7 @@ GridTranslator::GridTranslator(Grid **& strgrids, int &nBlocks)
 {
     numberOfZones = nBlocks;
 
-    GlobalDataBase::GetData("iovrlap",&codeOfOversetGrid,PHINT,1);
+    GlobalDataBase::GetData("codeOfOversetGrid",&codeOfOversetGrid,PHINT,1);
 
     gridGroup = new vector< StructGrid * >();
     gridGroup->resize( nBlocks, NULL );
@@ -174,7 +174,7 @@ void GridTranslator::OutputGrid()
     {
         GlobalDataBase::GetData("partition_grid_file",&out_gfile,PHSTRING,1);
     }
-    else if(tasktype == PHSPACE::CREATE_GRID)
+    else if(tasktype == PHSPACE::CREATE_GRID || tasktype == SPLIT_OVERSET_GRID)
     {
         GlobalDataBase::GetData("out_gfile",&out_gfile,PHSTRING,1);
     }
@@ -198,7 +198,7 @@ void GridTranslator::OutputMultiZoneComputationalGrids()
         GlobalDataBase::GetData("partition_grid_file",&partition_grid_file,PHSTRING,1);
         OpenSerialFile(file, partition_grid_file,ios_base::out|ios_base::binary|ios_base::trunc);
     }
-    else if(tasktype == PHSPACE::CREATE_GRID)
+    else if(tasktype == PHSPACE::CREATE_GRID || tasktype == SPLIT_OVERSET_GRID)
     {
         string out_gfile = "grid.fts";
         GlobalDataBase::GetData("out_gfile",&out_gfile,PHSTRING,1);
@@ -247,7 +247,7 @@ void GridTranslator::OutputMultiZoneComputationalGrids()
 void GridTranslator::CheckGrid()
 {
     for ( int izone = 0; izone < numberOfZones; ++ izone )
-    {	
+    {
         StructGrid *grid = StructGridCast(( * gridGroup )[izone]);
         InterfaceInfo *iinfo = grid->GetInterfaceInfo();
 

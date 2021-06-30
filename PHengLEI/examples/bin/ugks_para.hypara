@@ -86,7 +86,7 @@ double TorqueRefZ      = 0.0;
 #                              Filename Parameter                       #
 #########################################################################
 // gridfile:              GridFolder
-// isPlotVolumeField:          If dump out the field results to visulization
+// plotFieldType:          If dump out the field results to visulization
 // nVisualVariables:  number of variables want to be dumped for tecplot visualization.
 // visualVariables :  variable types dumped, listed as following:
 //                      -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6)
@@ -107,7 +107,7 @@ string restartNSFile             =   "results/flow.dat";
 string visualfile           =   "results/tecflow.plt";
 int    nVisualVariables     =   5;
 int    visualVariables[]   =   [0, 1, 2, 3, 4, 6, 11];
-int    isPlotVolumeField         =   0;
+int    plotFieldType         =   0;
 
 int    visualSlice		  = 0;
 int    sliceAxis		  = 1;

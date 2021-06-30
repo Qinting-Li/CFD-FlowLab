@@ -19,7 +19,7 @@ LIB_EXPORT Pre_GridMirror::Pre_GridMirror(const string & from_gfile)
 	gridtype			= 0;
 	BlockofEachProc		= 0;
 	GlobalDataBase::GetData("ndim",&Dimension,PHINT,1);
-	GlobalDataBase::GetData("SymmetryFaceVector",&SymmetryFaceVector,PHINT,1);
+	GlobalDataBase::GetData("SymmetryFaceVector", &SymmetryFaceVector, PHINT, 1);
 
 	gridinfo = new DataContainer();
 
@@ -566,8 +566,8 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
 			StructGridCast(grid)->ComputeMinMaxBox();
 			StructGridCast(Mirror)->ComputeMinMaxBox();
 
-            delete index;
-            delete index_mirror;
+            /*delete index;
+            delete index_mirror;*/
 		}
 
 		for ( int izone = 0; izone < nblock; ++ izone )
@@ -612,8 +612,8 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
 				PHRead(cdata, s_st_mir, 3);
 				PHRead(cdata, s_ed_mir, 3);
 
-                delete bcregion;
-                delete MirrorBCRegion;
+                /*delete bcregion;
+                delete MirrorBCRegion;*/
 			}
 		}
 		delete cdata;
@@ -1061,7 +1061,7 @@ void Pre_GridMirror::MirrorCoordinate(int izone, UnstructGrid * grid_in)
 	PHWrite(gridinfo, z_ordinary, nTotalNode);
 
 
-	if ( SymmetryFaceVector == X_axis )
+	if (SymmetryFaceVector == X_axis)
 	{
 		for ( int inode = 0; inode < nTotalNode; inode ++ )
 		{
@@ -1070,7 +1070,7 @@ void Pre_GridMirror::MirrorCoordinate(int izone, UnstructGrid * grid_in)
 			z_mir[inode] = z_ordinary[inode];
 		}
 	}
-	else if ( SymmetryFaceVector == Y_axis )
+	else if (SymmetryFaceVector == Y_axis)
 	{
 		for ( int inode = 0; inode < nTotalNode; inode ++ )
 		{
@@ -1148,7 +1148,7 @@ void Pre_GridMirror::MirrorGridStr(int izone, StructGrid * grid_in)
 	PHWrite(gridinfo, z, nTotalNode);
 
 
-	if ( SymmetryFaceVector == X_axis )
+	if (SymmetryFaceVector == X_axis)
 	{
 		for ( int inode = 0; inode < nTotalNode; inode ++ )
 		{
@@ -1157,7 +1157,7 @@ void Pre_GridMirror::MirrorGridStr(int izone, StructGrid * grid_in)
 			MirrorZ[inode] = z[inode];
 		}
 	}
-	else if ( SymmetryFaceVector == Y_axis )
+	else if (SymmetryFaceVector == Y_axis)
 	{
 		for ( int inode = 0; inode < nTotalNode; inode ++ )
 		{

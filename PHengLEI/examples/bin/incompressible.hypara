@@ -30,8 +30,8 @@ int    iunsteady        = 1;
 //					   			 Please use 'rae2822_hybrid2d__4.fts' here!
 string gridfile           = "./grid/fl-shousuo.fts";
 
-// isPlotVolumeField:          If dump out the field results to visulization
-int    isPlotVolumeField       = 1;
+// plotFieldType:          If dump out the field results to visulization
+int    plotFieldType       = 1;
 
 // nVisualVariables:  number of variables want to be dumped for tecplot visualization.
 // visualVariables :  variable types dumped, listed as following:

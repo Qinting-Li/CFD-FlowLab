@@ -1,5 +1,5 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +  
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
 //          P      H   H  E      N  N N  G   G  L      E       I          +
@@ -20,23 +20,24 @@
 #include "ActionKey.h"
 
 using namespace std;
+
 namespace PHSPACE
 {
 //! Create a HDF5 file.
-//! @param[in] filename		file name.
+//! @param[in] filename    file name.
 hid_t CreateHDF5File(const string &filename);
 
 //! Open a HDF5 file.
-//! @param[in] filename	
+//! @param[in] filename    file name.
 hid_t OpenHDF5File(const string &filename);
 
 //! If myid equals fileserver, create a HDF5 file according to actkey.
-//! @param[in] actkey		an action key.
-void ParallelCreateHDF5File(ActionKey * actionKey);
+//! @param[in] actkey    an action key.
+void ParallelCreateHDF5File(ActionKey *actionKey);
 
 //! If myid equals fileserver, close a HDF5 file according to actkey.
-//! @param[in] actkey		an action key.
-void ParallelCloseHDF5File(ActionKey * actionKey);
+//! @param[in] actkey    an action key.
+void ParallelCloseHDF5File(ActionKey *actionKey);
 
 //!
 void CreateGroup(hid_t loc_id, const string &groupName);
@@ -68,8 +69,8 @@ char *ReadCharData(hid_t loc_id, const string &dataName);
 
 #define MPI_BANNER(mesg)\
     {printf("--------------------------------\n");\
-    printf("Proc %d: ", PHMPI::GetCurrentProcessorID()); \
-    printf("*** %s\n", mesg);\
-    printf("--------------------------------\n");}
+     printf("Proc %d: ", PHMPI::GetCurrentProcessorID());\
+     printf("*** %s\n", mesg);\
+     printf("--------------------------------\n");}
 
 }

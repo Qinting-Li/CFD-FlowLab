@@ -1,12 +1,14 @@
 namespace PHSPACE
 {
+
 inline string Data_IndexData::GetName() const
 {
-	return name;
+    return name;
 }
 
 inline void * Data_IndexData::GetData() const
 {
-	return data;
+    return data;
 }
+
 }
