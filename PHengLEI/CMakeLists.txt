@@ -57,6 +57,25 @@ opt_build(LBM "Build LBM module or not" OFF) #Build LBM or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
 opt(OVERSET "Use structure overset or not" OFF) #Build str-overset or not
 
+#Reorder the index of cells for low matrix bandwidth
+#Reorder the index of faces for small cell index gap in cuda warp
+set(REORDER ON)
+if (REORDER)
+	add_definitions(-DREORDER)
+	set(CELLREORDER ON)
+	if (CELLREORDER) 
+		add_definitions(-DCELLRKM)
+	endif()
+	set(FACEREORDER ON)
+	if (FACEREORDER) 
+		add_definitions(-DFACEREORDER)
+		add_definitions(-DBSFCELLFACEORG)
+		#add_definitions(-DBSFCELLFACELEFT)
+		#add_definitions(-DBSFCELLFACERIGHT)
+		#add_definitions(-DDEEPCELLFACE)
+		endif()
+endif()
+
 if(USE_OCC)
   message(STATUS "USE_OCC is turned on!")
   add_definitions(-DUSE_OCC)
