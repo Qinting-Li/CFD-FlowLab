@@ -1,6 +1,6 @@
 <div align=left><img src="PHengLEI\Documents/PHengLEI-LOGO.png" style="zoom: 15%;"/><br>
 
-# 风雷软件（PHengLEI_2171）
+# 风雷软件（PHengLEI 2171.v7934）
 
 ## 1.软件简介
 
