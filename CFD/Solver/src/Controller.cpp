@@ -1460,7 +1460,10 @@ void Controller::LUSGS(int iSolver, int level)
 
         if (systemGridType == MIXGRID || ifvfd == 1)
         {
-            CommunicationDQ(iSolver, level, dqProxy);
+            if (iSolver == NS_SOLVER)
+            {
+                CommunicationDQ(iSolver, level, dqProxy);
+            }
 
             ForwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal);
 
