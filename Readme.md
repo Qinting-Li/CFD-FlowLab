@@ -10,10 +10,11 @@
 
 &ensp;&ensp;&ensp;&ensp;风雷软件更多动态和Demo请登录以下网址查看：
 
-- 官网地址：http://www.cardc.cn/nnw/Softs/PHengLEI/index.html
+- 官网地址: http://www.cardc.cn/nnw/software/phenglei
 - 代码库地址：https://forge.osredm.com/projects/p68217053/PHengLEI
 - 算例库地址：https://forge.osredm.com/projects/p68217053/PHengLEI-TestCases
 - 代码参考文档地址：http://116.63.141.248:8088
+- 论坛（常见问题、算例展示、技术分享）地址：https://osredm.com/forums/theme/38
 
 &ensp;&ensp;&ensp;&ensp;风雷软件用户录制视频教程地址：
 - 视频教程：https://www.bilibili.com/video/BV1eX4y1T7yW?from=search&seid=9482198996609923785
