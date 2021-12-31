@@ -1,5 +1,5 @@
 /*----------------------------------------------*\
-	 This is High-Order Unstructure Solvers platform of NNW for DG and DG/FV using C++
+     This is High-Order Unstructure Solvers platform of NNW for DG and DG/FV using C++
      The HOGaussJacobiQuadrature.h is used to declare Gauss Jacobi Quadrature equation
 \*----------------------------------------------*/
 //! @file      HOGaussJacobiQuadrature.h
@@ -23,7 +23,7 @@ class CGaussJacobiQuadrature;
 class CGaussJacobiQuadrature
 {
 public:
-	CGaussJacobiQuadrature() {}
+    CGaussJacobiQuadrature() {}
     ~CGaussJacobiQuadrature() {}
 
     /*!

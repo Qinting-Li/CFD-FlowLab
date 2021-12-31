@@ -42,14 +42,12 @@ private:
     void Conversion();
 
 private:
-    CGNSFactory * factory_cgns;
+    CGNSFactory *factory_cgns;
 };
 
 namespace FIELDVIEW_SPACE
 {
 
 }
-
-#include "Pre_CGNSToPHengLEI_Unstruct.hxx"
 
 }

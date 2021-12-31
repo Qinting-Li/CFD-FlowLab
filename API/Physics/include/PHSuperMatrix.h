@@ -13,285 +13,282 @@ template < typename T >
 class PHMatrix
 {
 protected:
-	int _nrow, _ncolumn, _nsize;
-	PHVector1D< T > _data;
+    int _nrow, _ncolumn, _nsize;
+    PHVector1D< T > _data;
 public:
-	PHMatrix( int nrow, int ncolumn = 1 )
-	{
-		_nrow    = nrow;
-		_ncolumn = ncolumn;
-		_nsize   = _nrow * _ncolumn;
-		_data    = PHVector1D< T >(_nsize );
-	}
+    PHMatrix( int nrow, int ncolumn = 1 )
+    {
+        _nrow    = nrow;
+        _ncolumn = ncolumn;
+        _nsize   = _nrow * _ncolumn;
+        _data    = PHVector1D< T >(_nsize );
+    }
 
-	~PHMatrix()
-	{
-		//		cout << endl << "destruct";
-	}
+    ~PHMatrix()
+    {
+    }
     int rows   () const { return _nrow; }
     int columns() const { return _ncolumn; }
     int sizes  () const { return _nsize; };
     PHVector1D< T > datas() { return _data; }
 
-	const T & operator() ( int row, int column = 1 ) const 
-	{
-		if ( ( row < 0 || row > _nrow ) || ( column < 0 || column > _ncolumn ) )
-		{
-			cout << endl << "Error : overflow in type PHMatrix ! ";
+    const T & operator() ( int row, int column = 1 ) const 
+    {
+        if ( ( row < 0 || row > _nrow ) || ( column < 0 || column > _ncolumn ) )
+        {
+            cout << endl << "Error : overflow in type PHMatrix ! ";
             TK_Exit::ExceptionExit("");
-		}
-		return  _data[( row - 1 ) * _ncolumn + ( column - 1 )] ;
-	}
+        }
+        return  _data[( row - 1 ) * _ncolumn + ( column - 1 )] ;
+    }
 
-	T & operator()( int row, int column = 1 )
-	{
-		if ( ( row < 0 || row > _nrow ) || ( column < 0 || column > _ncolumn ) )
-		{
+    T & operator()( int row, int column = 1 )
+    {
+        if ( ( row < 0 || row > _nrow ) || ( column < 0 || column > _ncolumn ) )
+        {
             TK_Exit::ExceptionExit( "Error : overflow in type PHMatrix ! " );
-		}
-		return  _data[( row - 1 ) * _ncolumn + ( column - 1 )] ;
-	}
+        }
+        return  _data[( row - 1 ) * _ncolumn + ( column - 1 )] ;
+    }
 
 };
 
 template < typename T >
 PHMatrix< T > operator * ( const PHMatrix<T> & matrixA, const PHMatrix<T> & matrixB )
 {
-	int nrow = matrixA.rows();
-	int ncol = matrixB.columns();
+    int nrow = matrixA.rows();
+    int ncol = matrixB.columns();
 
-	if ( matrixA.columns() != matrixB.rows() )
-	{
+    if ( matrixA.columns() != matrixB.rows() )
+    {
         TK_Exit::ExceptionExit( "Error : Index not matched in PHMatrix<T> operator * ! " );
-	}
+    }
 
-	PHMatrix< T > result( nrow, ncol );
+    PHMatrix< T > result( nrow, ncol );
 
-	for ( int col = 1; col <= ncol; ++ col )
-	{
-		for ( int row = 1; row <= nrow; ++ row )
-		{
-			T sum = static_cast< T >( 0 );
-			for ( int i = 1; i <= matrixA.columns(); ++ i )
-			{
-				sum += matrixA( row, i ) * matrixB( i, col );
-			}
-			result( row, col ) = sum;
-		}
-	}
-	return result;
+    for ( int col = 1; col <= ncol; ++ col )
+    {
+        for ( int row = 1; row <= nrow; ++ row )
+        {
+            T sum = static_cast< T >( 0 );
+            for ( int i = 1; i <= matrixA.columns(); ++ i )
+            {
+                sum += matrixA( row, i ) * matrixB( i, col );
+            }
+            result( row, col ) = sum;
+        }
+    }
+    return result;
 }
 
 template < typename T >
 PHMatrix< T > MATMUL( PHMatrix<T> & matrixA, PHMatrix<T> & matrixB )
 {
-	int nrow = matrixA.rows();
-	int ncol = matrixB.columns();
+    int nrow = matrixA.rows();
+    int ncol = matrixB.columns();
 
-	if ( matrixA.columns() != matrixB.rows() )
-	{
+    if ( matrixA.columns() != matrixB.rows() )
+    {
         TK_Exit::ExceptionExit( "Error : Index not matched in function MATMUL ! " );
-	}
+    }
 
-	PHMatrix<T> result( nrow, ncol );
+    PHMatrix<T> result( nrow, ncol );
 
-	for ( int row = 1; row <= nrow; ++ row )
-	{
-		for ( int col = 1; col <= ncol; ++ col )
-		{
-			T sum = static_cast< T >( 0 );
-			for ( int i = 1; i <= matrixA.columns(); ++ i )
-			{
-				sum += matrixA( row, i ) * matrixB( i, col );
-			}
-			result( row, col ) = sum;
-		}
-	}
-	return result;
+    for ( int row = 1; row <= nrow; ++ row )
+    {
+        for ( int col = 1; col <= ncol; ++ col )
+        {
+            T sum = static_cast< T >( 0 );
+            for ( int i = 1; i <= matrixA.columns(); ++ i )
+            {
+                sum += matrixA( row, i ) * matrixB( i, col );
+            }
+            result( row, col ) = sum;
+        }
+    }
+    return result;
 }
 
 template < typename T >
 PHMatrix<T> TransposeMatrix( PHMatrix<T> & matrixA )
 {
-	int nrow = matrixA.rows();
-	int ncol = matrixA.columns();
+    int nrow = matrixA.rows();
+    int ncol = matrixA.columns();
 
-	if ( nrow != ncol )
-	{
+    if ( nrow != ncol )
+    {
         TK_Exit::ExceptionExit( "Error : Index not matched in function TransposeMatrix ! " );
-	}
+    }
 
-	PHMatrix<T> matrixB( nrow, ncol );
+    PHMatrix<T> matrixB( nrow, ncol );
 
-	for ( int row = 1; row <= nrow; ++ row )
-	{
-		for ( int col = 1; col <= ncol; ++ col )
-		{
-			matrixB( row, col ) = matrixA( col, row );
-		}
-	}
-	return matrixB;
+    for ( int row = 1; row <= nrow; ++ row )
+    {
+        for ( int col = 1; col <= ncol; ++ col )
+        {
+            matrixB( row, col ) = matrixA( col, row );
+        }
+    }
+    return matrixB;
 }
 
 template < typename T >
 PHMatrix<T>  Matrix3X3Inverse( PHMatrix<T> & matrix )
 {
-	PHMatrix<T> inverse( 3, 3 );
+    PHMatrix<T> inverse( 3, 3 );
 
-	if ( matrix.rows() != 3 || matrix.columns() != 3 )
-	{
+    if ( matrix.rows() != 3 || matrix.columns() != 3 )
+    {
         TK_Exit::ExceptionExit( "Error : Index must be 3 in function Matrix3X3Inverse ! " );
-	}
+    }
 
-	T detA = matrix( 1, 1 ) * matrix( 2, 2 ) * matrix( 3, 3 )
-	       + matrix( 1, 2 ) * matrix( 2, 3 ) * matrix( 3, 1 )
-	       + matrix( 2, 1 ) * matrix( 3, 2 ) * matrix( 1, 3 )
-	       - matrix( 1, 1 ) * matrix( 2, 3 ) * matrix( 3, 2 )
-	       - matrix( 2, 2 ) * matrix( 1, 3 ) * matrix( 3, 1 )
-	       - matrix( 3, 3 ) * matrix( 2, 1 ) * matrix( 1, 2 );
+    T detA = matrix( 1, 1 ) * matrix( 2, 2 ) * matrix( 3, 3 )
+           + matrix( 1, 2 ) * matrix( 2, 3 ) * matrix( 3, 1 )
+           + matrix( 2, 1 ) * matrix( 3, 2 ) * matrix( 1, 3 )
+           - matrix( 1, 1 ) * matrix( 2, 3 ) * matrix( 3, 2 )
+           - matrix( 2, 2 ) * matrix( 1, 3 ) * matrix( 3, 1 )
+           - matrix( 3, 3 ) * matrix( 2, 1 ) * matrix( 1, 2 );
 
-	if ( detA == 0.0 )
-	{
+    if ( detA == 0.0 )
+    {
         TK_Exit::ExceptionExit( "Error : 矩阵行列式为零，奇异矩阵！" );
-	}
-	else
-	{
-		inverse( 1, 1 ) = matrix( 2, 2 ) * matrix( 3, 3 ) - matrix( 2, 3 ) * matrix( 3, 2 );
-		inverse( 1, 2 ) = matrix( 1, 3 ) * matrix( 3, 2 ) - matrix( 1, 2 ) * matrix( 3, 3 );
-		inverse( 1, 3 ) = matrix( 1, 2 ) * matrix( 2, 3 ) - matrix( 2, 2 ) * matrix( 1, 3 );
+    }
+    else
+    {
+        inverse( 1, 1 ) = matrix( 2, 2 ) * matrix( 3, 3 ) - matrix( 2, 3 ) * matrix( 3, 2 );
+        inverse( 1, 2 ) = matrix( 1, 3 ) * matrix( 3, 2 ) - matrix( 1, 2 ) * matrix( 3, 3 );
+        inverse( 1, 3 ) = matrix( 1, 2 ) * matrix( 2, 3 ) - matrix( 2, 2 ) * matrix( 1, 3 );
 
-		inverse( 2, 1 ) = matrix( 2, 3 ) * matrix( 3, 1 ) - matrix( 2, 1 ) * matrix( 3, 3 );
-		inverse( 2, 2 ) = matrix( 1, 1 ) * matrix( 3, 3 ) - matrix( 1, 3 ) * matrix( 3, 1 );
-		inverse( 2, 3 ) = matrix( 2, 1 ) * matrix( 1, 3 ) - matrix( 1, 1 ) * matrix( 2, 3 );
+        inverse( 2, 1 ) = matrix( 2, 3 ) * matrix( 3, 1 ) - matrix( 2, 1 ) * matrix( 3, 3 );
+        inverse( 2, 2 ) = matrix( 1, 1 ) * matrix( 3, 3 ) - matrix( 1, 3 ) * matrix( 3, 1 );
+        inverse( 2, 3 ) = matrix( 2, 1 ) * matrix( 1, 3 ) - matrix( 1, 1 ) * matrix( 2, 3 );
 
-		inverse( 3, 1 ) = matrix( 2, 1 ) * matrix( 3, 2 ) - matrix( 3, 1 ) * matrix( 2, 2 );
-		inverse( 3, 2 ) = matrix( 1, 2 ) * matrix( 3, 1 ) - matrix( 1, 1 ) * matrix( 3, 2 );
-		inverse( 3, 3 ) = matrix( 1, 1 ) * matrix( 2, 2 ) - matrix( 1, 2 ) * matrix( 2, 1 );
+        inverse( 3, 1 ) = matrix( 2, 1 ) * matrix( 3, 2 ) - matrix( 3, 1 ) * matrix( 2, 2 );
+        inverse( 3, 2 ) = matrix( 1, 2 ) * matrix( 3, 1 ) - matrix( 1, 1 ) * matrix( 3, 2 );
+        inverse( 3, 3 ) = matrix( 1, 1 ) * matrix( 2, 2 ) - matrix( 1, 2 ) * matrix( 2, 1 );
 
-		for ( int i = 1; i <= 3; ++ i )
-		{
-			for ( int j = 1; j <= 3; ++ j )
-			{
-				inverse( i, j ) /=  detA;
-			}
-		}
-	}
+        for ( int i = 1; i <= 3; ++ i )
+        {
+            for ( int j = 1; j <= 3; ++ j )
+            {
+                inverse( i, j ) /=  detA;
+            }
+        }
+    }
 
-	return inverse;
+    return inverse;
 
 }
 
 template < typename T >
 PHMatrix<T> BaseMatrixOfRotate( const T & angle, string const & axisLabel )
 {
-	PHMatrix<T> matrix( 3, 3 );
+    PHMatrix<T> matrix( 3, 3 );
 
-	T cosine = cos( angle );
-	T sine   = sin( angle );
-	T one    = static_cast< T >( 1 );
-	T zero   = static_cast< T >( 0 );
+    T cosine = cos( angle );
+    T sine   = sin( angle );
+    T one    = static_cast< T >( 1 );
+    T zero   = static_cast< T >( 0 );
 
-	if ( axisLabel == "x" || axisLabel == "X" )
-	{
-		matrix( 1, 1 ) = one;
-		matrix( 1, 2 ) = zero;
-		matrix( 1, 3 ) = zero;
+    if ( axisLabel == "x" || axisLabel == "X" )
+    {
+        matrix( 1, 1 ) = one;
+        matrix( 1, 2 ) = zero;
+        matrix( 1, 3 ) = zero;
 
-		matrix( 2, 1 ) = zero;
-		matrix( 2, 2 ) = cosine;
-		matrix( 2, 3 ) = sine;
+        matrix( 2, 1 ) = zero;
+        matrix( 2, 2 ) = cosine;
+        matrix( 2, 3 ) = sine;
 
-		matrix( 3, 1 ) = zero;
-		matrix( 3, 2 ) =-sine;
-		matrix( 3, 3 ) = cosine;
-	} 
-	else if ( axisLabel == "y" || axisLabel == "Y" )
-	{
-		matrix( 1, 1 ) = cosine;
-		matrix( 1, 2 ) = zero;
-		matrix( 1, 3 ) =-sine;
+        matrix( 3, 1 ) = zero;
+        matrix( 3, 2 ) =-sine;
+        matrix( 3, 3 ) = cosine;
+    } 
+    else if ( axisLabel == "y" || axisLabel == "Y" )
+    {
+        matrix( 1, 1 ) = cosine;
+        matrix( 1, 2 ) = zero;
+        matrix( 1, 3 ) =-sine;
 
-		matrix( 2, 1 ) = zero;
-		matrix( 2, 2 ) = one;
-		matrix( 2, 3 ) = zero;
+        matrix( 2, 1 ) = zero;
+        matrix( 2, 2 ) = one;
+        matrix( 2, 3 ) = zero;
 
-		matrix( 3, 1 ) = sine;
-		matrix( 3, 2 ) = zero;
-		matrix( 3, 3 ) = cosine;
-	}
-	else if ( axisLabel == "z" || axisLabel == "Z" )
-	{
-		matrix( 1, 1 ) = cosine;
-		matrix( 1, 2 ) = sine;
-		matrix( 1, 3 ) = zero;
+        matrix( 3, 1 ) = sine;
+        matrix( 3, 2 ) = zero;
+        matrix( 3, 3 ) = cosine;
+    }
+    else if ( axisLabel == "z" || axisLabel == "Z" )
+    {
+        matrix( 1, 1 ) = cosine;
+        matrix( 1, 2 ) = sine;
+        matrix( 1, 3 ) = zero;
 
-		matrix( 2, 1 ) =-sine;
-		matrix( 2, 2 ) = cosine;
-		matrix( 2, 3 ) = zero;
+        matrix( 2, 1 ) =-sine;
+        matrix( 2, 2 ) = cosine;
+        matrix( 2, 3 ) = zero;
 
-		matrix( 3, 1 ) = zero;
-		matrix( 3, 2 ) = zero;
-		matrix( 3, 3 ) = one;
-	}
-	else
-	{
+        matrix( 3, 1 ) = zero;
+        matrix( 3, 2 ) = zero;
+        matrix( 3, 3 ) = one;
+    }
+    else
+    {
         TK_Exit::ExceptionExit( "Error : 坐标轴设置错误 in BaseMatrixOfRotate ！" );
-	}
+    }
 
-	return matrix;
+    return matrix;
 }
 
 template < typename T >
 PHMatrix<T> AngleRateTransformMatrixBodyToGlobal( PHMatrix<T> & eulerangle, string const & rotateorder )
 {
-	PHMatrix<T> matrix( 3, 3 );
+    PHMatrix<T> matrix( 3, 3 );
 
-	T pitchangle  = eulerangle( 1 );
-	T yawingangle = eulerangle( 2 );
-	T rollangle   = eulerangle( 3 );
+    T pitchangle  = eulerangle( 1 );
+    T rollangle   = eulerangle( 3 );
 
-	T one    = static_cast< T >( 1 );
-	T zero   = static_cast< T >( 0 );
+    T one    = static_cast< T >( 1 );
+    T zero   = static_cast< T >( 0 );
 
-	if ( rotateorder == "y-z-x" || rotateorder == "Y-Z-X" || rotateorder == "2-3-1" )
-	{
-		T cosineofpitchangle = cos( pitchangle );
-		if ( PHSPACE::ABS( cosineofpitchangle ) < SMALL )
-		{
+    if ( rotateorder == "y-z-x" || rotateorder == "Y-Z-X" || rotateorder == "2-3-1" )
+    {
+        T cosineofpitchangle = cos( pitchangle );
+        if ( PHSPACE::ABS( cosineofpitchangle ) < SMALL )
+        {
             TK_Exit::ExceptionExit( "Error : Euler角之俯仰角达到90度，奇异！" );
-		}
-		else
-		{
-			T sineofpitchangle  = sin( pitchangle );
-			T cosineofrollangle = cos( rollangle );
-			T sineofrollangle   = sin( rollangle );
+        }
+        else
+        {
+            T sineofpitchangle  = sin( pitchangle );
+            T cosineofrollangle = cos( rollangle );
+            T sineofrollangle   = sin( rollangle );
 
-			matrix( 1, 1 ) = zero;
-			matrix( 1, 2 ) = sineofrollangle;
-			matrix( 1, 3 ) = cosineofrollangle;
+            matrix( 1, 1 ) = zero;
+            matrix( 1, 2 ) = sineofrollangle;
+            matrix( 1, 3 ) = cosineofrollangle;
 
-			matrix( 2, 1 ) = zero;
-			matrix( 2, 2 ) = cosineofrollangle / cosineofpitchangle;
-			matrix( 2, 3 ) =-sineofrollangle / cosineofpitchangle;
+            matrix( 2, 1 ) = zero;
+            matrix( 2, 2 ) = cosineofrollangle / cosineofpitchangle;
+            matrix( 2, 3 ) =-sineofrollangle / cosineofpitchangle;
 
-			matrix( 3, 1 ) = one;
-			matrix( 3, 2 ) =-cosineofrollangle * sineofpitchangle / cosineofpitchangle;
-			matrix( 3, 3 ) = sineofrollangle * sineofpitchangle / cosineofpitchangle;
-		}
-	} 
-	else
-	{
+            matrix( 3, 1 ) = one;
+            matrix( 3, 2 ) =-cosineofrollangle * sineofpitchangle / cosineofpitchangle;
+            matrix( 3, 3 ) = sineofrollangle * sineofpitchangle / cosineofpitchangle;
+        }
+    } 
+    else
+    {
         TK_Exit::ExceptionExit( "Error : 未定义Euler角变换顺序 ！" );
-	}
+    }
 
-	return matrix;
+    return matrix;
 }
 
 template < typename T >
 PHMatrix<T> CrossProductVector( PHMatrix<T> a, PHMatrix<T> b )
-//  本子程序用于计算叉积, 向量积, 交叉乘积( cross product )
 {
-	PHMatrix<T> cp( a.rows() );
+    PHMatrix<T> cp( a.rows() );
     cp( 1 ) = a( 2 ) * b( 3 ) - a( 3 ) * b( 2 );
     cp( 2 ) = a( 3 ) * b( 1 ) - a( 1 ) * b( 3 );
     cp( 3 ) = a( 1 ) * b( 2 ) - a( 2 ) * b( 1 );

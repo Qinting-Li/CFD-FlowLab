@@ -13,7 +13,7 @@ using namespace std;
 namespace PHSPACE
 {
 
-CombinGrid::CombinGrid(Region * region, Grid ** grid_in, int nZones_in)
+CombinGrid::CombinGrid(Region *region, Grid **grid_in, int nZones_in)
 {
     this->region = region;
     this->grid_in = grid_in;
@@ -54,7 +54,6 @@ CombinGrid::~CombinGrid()
     DelPointer2(node2all);
     DelPointer2(face2all);
     DelPointer2(cell2all);
-    /*DelPointer2(isBCFaceMerged);*/
 }
 
 void CombinGrid::CheckifIndependentZoneExist()
@@ -67,7 +66,7 @@ void CombinGrid::CheckifIndependentZoneExist()
     {
         int gridIndex = grid_in[iZone]->GetZoneID();
         zoneIDinCurrentProc.insert(gridIndex);
-        zoneIndexMap.insert(pair<int,int>(gridIndex ,localIndex));
+        zoneIndexMap.insert(pair<int, int>(gridIndex ,localIndex));
         localIndex ++;
     }
 
@@ -77,11 +76,11 @@ void CombinGrid::CheckifIndependentZoneExist()
         {
             int processorID = PHMPI::GetZoneProcessorID(iZone);
 
-            if(processorID == myid)
+            if (processorID == myid)
             {
                 bool isNeighborinThisProc = false;
 
-                ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+                ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
                 std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
                 
                 for (std::size_t iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
@@ -91,8 +90,8 @@ void CombinGrid::CheckifIndependentZoneExist()
                     set<int>::iterator iter;
                     for (iter = zoneIDinCurrentProc.begin(); iter != zoneIDinCurrentProc.end(); ++ iter)
                     {
-                        int zoneID = * iter;
-                        if(neighborZone == zoneID)
+                        int zoneID = *iter;
+                        if (neighborZone == zoneID)
                         {
                             isNeighborinThisProc = true;
                             break;
@@ -100,7 +99,7 @@ void CombinGrid::CheckifIndependentZoneExist()
                     }
                 }
 
-                if(!isNeighborinThisProc)
+                if (!isNeighborinThisProc)
                 {
                     TK_Exit::ExceptionExit("Error: An single zone that couldn't merged to any others has been found!");
                 }
@@ -123,7 +122,7 @@ Grid * CombinGrid::CreateCombinationGrid()
     //! If there is no common face between two blocks, a lot logic relationships need to be reconsidered.
     //! For example,MergeCell2All is the zone number of new grid.
     MergeCell2All();
-    MergeNode2All();	
+    MergeNode2All();
     MergeFace2All();
     MergeInterface2All();
 
@@ -142,7 +141,7 @@ Grid * CombinGrid::CreateCombinationGrid()
     WriteLogFile(oss);
 
     int myid = PHMPI::GetCurrentProcessorID();
-    Grid * grid_all = CreateGridGeneral(UNSTRUCTGRID, new GridID(myid), 0, GetDim());
+    Grid *grid_all = CreateGridGeneral(UNSTRUCTGRID, new GridID(myid), 0, GetDim());
 
     grid_all->SetNTotalNode(nTotalNode);
     grid_all->SetNTotalFace(nTotalFace);
@@ -160,10 +159,10 @@ void CombinGrid::Init()
         nTotalCellEachZone[iZone] = grid_in[iZone]->GetNTotalCell();
         nIFaces[iZone] = grid_in[iZone]->GetNIFace();
 
-        nTotalCell+= nTotalCellEachZone[iZone];
-        nTotalFace+= nTotalFaceEachZone[iZone];
-        nIFace+= nIFaces[iZone];
-        nTotalNode+= nTotalNodeEachZone[iZone];
+        nTotalCell += nTotalCellEachZone[iZone];
+        nTotalFace += nTotalFaceEachZone[iZone];
+        nIFace     += nIFaces[iZone];
+        nTotalNode += nTotalNodeEachZone[iZone];
     }
 
     InitLocal2All();
@@ -179,7 +178,7 @@ void CombinGrid::InitLocal2All()
 
 void CombinGrid::RunCombinGrid()
 {
-    grid_all = UnstructGridCast(CreateCombinationGrid());	
+    grid_all = UnstructGridCast(CreateCombinationGrid());
 
     ResetCoordinate();
     ResetNodeNumberOfEachFace();
@@ -206,14 +205,14 @@ void CombinGrid::MergeInterface2All()
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        UnstructGrid * gridLocal = UnstructGridCast(grid_in[iZone]);
-        BCRecord ** bcrLocal = gridLocal->GetBCRecord();
+        UnstructGrid *gridLocal = UnstructGridCast(grid_in[iZone]);
+        CompositeUnstructBC **bcrLocal = gridLocal->GetBCRecord();
         int nBFaceLocal = gridLocal->GetNBoundFace();
-        int * face2all = GetFace2All(iZone);
+        int *face2all = GetFace2All(iZone);
         
         int nMergedInterfaces = 0;
         for (int iFace = 0; iFace < nBFaceLocal; ++ iFace)
-        {		
+        {
             int globalFaceID = face2all[iFace];
 
             if (bcrLocal[iFace]->GetKey() == PHENGLEI::INTERFACE)
@@ -229,7 +228,7 @@ void CombinGrid::MergeInterface2All()
         }
 
         WriteLogFile("number of merged interfaces: ", nMergedInterfaces);
-        if(nZones > 1 && nMergedInterfaces == 0)
+        if (nZones > 1 && nMergedInterfaces == 0)
         {
             TK_Exit::ExceptionExit("The sub-zone is independent of other zones, consider more!");
         }
@@ -265,23 +264,23 @@ void CombinGrid::MergeFace2All()
     int globalFace_count = 0;
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        UnstructGrid * unstr_current = UnstructGridCast(grid_in[iZone]);
+        UnstructGrid *unstr_current = UnstructGridCast(grid_in[iZone]);
 
-        int nBFace_current						= unstr_current->GetNBoundFace();
-        int * node_number_of_each_face_current	= unstr_current->GetNodeNumberOfEachFace();
-        int * face2node_current					= unstr_current->GetFace2Node();
-        int * left_cell_of_face_current			= unstr_current->GetLeftCellOfFace();
-        int * right_cell_of_face_current		= unstr_current->GetRightCellOfFace();
-        BCRecord ** bcr_current					= unstr_current->GetBCRecord();
-        InterfaceInfo * iinfo_current			= unstr_current->GetInterfaceInfo();
-        int * interFace2ZoneID_current			= iinfo_current->GetInterFace2ZoneID();
-        int * interFace2InterFaceID_current		= iinfo_current->GetInterFace2InterFaceID();
+        int nBFace_current                    = unstr_current->GetNBoundFace();
+        int *node_number_of_each_face_current = unstr_current->GetNodeNumberOfEachFace();
+        int *face2node_current                = unstr_current->GetFace2Node();
+        int *left_cell_of_face_current        = unstr_current->GetLeftCellOfFace();
+        int *right_cell_of_face_current       = unstr_current->GetRightCellOfFace();
+        CompositeUnstructBC **bcr_current     = unstr_current->GetBCRecord();
+        InterfaceInfo *iinfo_current          = unstr_current->GetInterfaceInfo();
+        int *interFace2ZoneID_current         = iinfo_current->GetInterFace2ZoneID();
+        int *interFace2InterFaceID_current    = iinfo_current->GetInterFace2InterFaceID();
 
-        int * node2all = GetNode2All(iZone);
-        int * face2all = GetFace2All(iZone);
-        int * cell2all = GetCell2All(iZone);
+        int *node2all = GetNode2All(iZone);
+        int *face2all = GetFace2All(iZone);
+        int *cell2all = GetCell2All(iZone);
 
-        int interface_current	= 0;
+        int interface_current = 0;
         int node_sum = 0;
         for (int iface = 0; iface < nTotalFaceEachZone[iZone]; ++ iface)
         {
@@ -297,8 +296,8 @@ void CombinGrid::MergeFace2All()
                     set<int>::iterator iter;
                     for (iter = zoneIDinCurrentProc.begin(); iter != zoneIDinCurrentProc.end(); ++ iter)
                     {
-                        int zoneID = * iter;
-                        if(GridID_Neighbor == zoneID)
+                        int zoneID = *iter;
+                        if (GridID_Neighbor == zoneID)
                         {
                             isNeighborinThisProc = true;
                             break;
@@ -308,18 +307,18 @@ void CombinGrid::MergeFace2All()
                     int localIndexNeighbor = zoneIndexMap[GridID_Neighbor];
                     if ((isNeighborinThisProc) && (localIndexNeighbor < iZone))
                     {
-                        int interface_Neighbor	= interFace2InterFaceID_current[ interface_current ];
-                        UnstructGrid * unstr_Neighbor			= UnstructGridCast(grid_in[localIndexNeighbor]);
-                        InterfaceInfo * iinfo_Neighbor			= unstr_Neighbor->GetInterfaceInfo();
-                        int * interFace2BoundaryFace_Neighbor	= iinfo_Neighbor->GetInterFace2BoundaryFace();
+                        int interface_Neighbor = interFace2InterFaceID_current[interface_current];
+                        UnstructGrid *unstr_Neighbor = UnstructGridCast(grid_in[localIndexNeighbor]);
+                        InterfaceInfo *iinfo_Neighbor = unstr_Neighbor->GetInterfaceInfo();
+                        int *interFace2BoundaryFace_Neighbor = iinfo_Neighbor->GetInterFace2BoundaryFace();
 
-                        int bcFace_Neighbor = interFace2BoundaryFace_Neighbor[ interface_Neighbor ];
-                        int * face2all_Neighbor = GetFace2All(localIndexNeighbor);
-                        face2all[iface] = face2all_Neighbor[ bcFace_Neighbor ];
+                        int bcFace_Neighbor = interFace2BoundaryFace_Neighbor[interface_Neighbor];
+                        int *face2all_Neighbor = GetFace2All(localIndexNeighbor);
+                        face2all[iface] = face2all_Neighbor[bcFace_Neighbor];
 
-                        right_cell_of_all_face[ face2all_Neighbor[ bcFace_Neighbor ] ] = cell2all[ left_cell_of_face_current[ iface ] ];
+                        right_cell_of_all_face[face2all_Neighbor[bcFace_Neighbor]] = cell2all[left_cell_of_face_current[iface]];
 
-                        isFaceMerged[ face2all_Neighbor[ bcFace_Neighbor ] ] = true;
+                        isFaceMerged[face2all_Neighbor[bcFace_Neighbor]] = true;
                         node_sum += node_number_of_iface;
 
                         ++ interface_current;
@@ -336,7 +335,7 @@ void CombinGrid::MergeFace2All()
 
             for (int iNode = 0; iNode < node_number_of_iface; ++ iNode)
             {
-                int nodeindex = face2node_current[node_sum+iNode];
+                int nodeindex = face2node_current[node_sum + iNode];
                 allface2node.push_back(node2all[nodeindex]);
             }
             node_sum += node_number_of_iface;
@@ -347,7 +346,7 @@ void CombinGrid::MergeFace2All()
             }
             else
             {
-                left_cell_of_all_face[globalFace_count] = cell2all[ left_cell_of_face_current[iface] ];
+                left_cell_of_all_face[globalFace_count] = cell2all[left_cell_of_face_current[iface]];
             }
             
 
@@ -357,7 +356,7 @@ void CombinGrid::MergeFace2All()
             }
             else
             {
-                right_cell_of_all_face[globalFace_count] = cell2all[ right_cell_of_face_current[iface] ];
+                right_cell_of_all_face[globalFace_count] = cell2all[right_cell_of_face_current[iface]];
             }
             
             ++ globalFace_count;
@@ -377,7 +376,7 @@ void CombinGrid::MergeCell2All()
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int * cell2all = GetCell2All(iZone);
+        int *cell2all = GetCell2All(iZone);
 
         for (int i = 0; i < nTotalCellEachZone[iZone]; ++ i)
         {
@@ -392,7 +391,7 @@ void CombinGrid::MergeCell2All()
     PH_Reduce(&nTotalCell, &minNTCell, 1, MPI_MIN);
     PH_Reduce(&nTotalCell, &maxNTCell, 1, MPI_MAX);
 
-    if(PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
+    if (PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
     {
         ostringstream oss;
         oss << "Min && Max number of cell after merged : " << minNTCell << ", " << maxNTCell << endl;
@@ -422,14 +421,14 @@ void CombinGrid::MergeNode2All()
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int * node2all = GetNode2All(iZone);
+        int *node2all = GetNode2All(iZone);
 
-        UnstructGrid * unstr = UnstructGridCast(grid_in[iZone]);
+        UnstructGrid *unstr = UnstructGridCast(grid_in[iZone]);
         RDouble *x2 = grid_in[iZone]->GetX();
         RDouble *y2 = grid_in[iZone]->GetY();
         RDouble *z2 = grid_in[iZone]->GetZ();
-        int * node_number_of_each_face = unstr->GetNodeNumberOfEachFace();
-        int * face2node = unstr->GetFace2Node();
+        int *node_number_of_each_face = unstr->GetNodeNumberOfEachFace();
+        int *face2node = unstr->GetFace2Node();
         minDistance = MIN(minDistance, grid_in[iZone]->CalMinEdgeLength());
         RDouble distanceTolerance = minDistance / 10;
 
@@ -459,9 +458,9 @@ void CombinGrid::MergeNode2All()
 
                 for (int jbcNode = 0; jbcNode < bc_node_number; jbcNode ++)
                 {
-                    Disx = fabs(x2[iNode] - Globalx [bc_node_all[jbcNode]]);
-                    Disy = fabs(y2[iNode] - Globaly [bc_node_all[jbcNode]]);
-                    Disz = fabs(z2[iNode] - Globalz [bc_node_all[jbcNode]]);
+                    Disx = fabs(x2[iNode] - Globalx[bc_node_all[jbcNode]]);
+                    Disy = fabs(y2[iNode] - Globaly[bc_node_all[jbcNode]]);
+                    Disz = fabs(z2[iNode] - Globalz[bc_node_all[jbcNode]]);
 
                     if (Disx < distanceTolerance && Disy < distanceTolerance && Disz < distanceTolerance)
                     {
@@ -503,11 +502,11 @@ void CombinGrid::MergeBCType()
     int nBFace_all = 0;
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        UnstructGrid * unstr = UnstructGridCast(grid_in[iZone]);
+        UnstructGrid *unstr = UnstructGridCast(grid_in[iZone]);
         int nBoundFace = unstr->GetNBoundFace();
-        int * face2all = GetFace2All(iZone);
+        int *face2all = GetFace2All(iZone);
 
-        BCRecord **bcr = unstr->GetBCRecord();
+        CompositeUnstructBC **bcr = unstr->GetBCRecord();
 
         for (int iface = 0; iface < nBoundFace; ++ iface)
         {
@@ -520,23 +519,21 @@ void CombinGrid::MergeBCType()
                     continue;
                 }
             }
-
             ++ nBFace_all;
         }
     }
 
     grid_all->SetNBoundFace(nBFace_all);
-    
 
-    BCRecord **bcr_all = new BCRecord * [ nTFace_all ];
+    CompositeUnstructBC **bcr_all = new CompositeUnstructBC * [nTFace_all];
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        UnstructGrid * unstr = UnstructGridCast(grid_in[iZone]);
+        UnstructGrid *unstr = UnstructGridCast(grid_in[iZone]);
         int nBoundFace = unstr->GetNBoundFace();
-        int * face2all = GetFace2All(iZone);
+        int *face2all = GetFace2All(iZone);
 
-        BCRecord **bcr = unstr->GetBCRecord();
+        CompositeUnstructBC **bcr = unstr->GetBCRecord();
 
         for (int iface = 0; iface < nBoundFace; ++ iface)
         {
@@ -550,9 +547,9 @@ void CombinGrid::MergeBCType()
                 }
             }
 
-            bcr_all[globalFaceID] = new BCRecord();
-            bcr_all[globalFaceID]->SetKey( bcr[iface]->GetKey());
-            bcr_all[globalFaceID]->SetBCName( bcr[iface]->GetBCName());
+            bcr_all[globalFaceID] = new CompositeUnstructBC();
+            bcr_all[globalFaceID]->SetKey(bcr[iface]->GetKey());
+            bcr_all[globalFaceID]->SetBCName(bcr[iface]->GetBCName());
         }
     }
 
@@ -620,7 +617,7 @@ void CombinGrid::MergeBCType()
         }
     }
 
-    BCRecord **bcr_all2 = new BCRecord * [ nBFace_all ];
+    CompositeUnstructBC **bcr_all2 = new CompositeUnstructBC * [nBFace_all];
     grid_all->SetBCRecord(bcr_all2);
 
     WriteLogFile("nTFace_all = ", nTFace_all);
@@ -637,9 +634,8 @@ void CombinGrid::MergeBCType()
     {
         bcr_all2[iface] = bcr_all[iface];
 
-        if(bcr_all[iface]->GetKey() == PHENGLEI::INTERFACE)
+        if (bcr_all[iface]->GetKey() == PHENGLEI::INTERFACE)
         {
-
             interface2BoundaryFaceafterReorder[interfaceID] = iface;
             face2InterfaceafterReorder[iface] = interfaceID ++;
         }
@@ -648,8 +644,8 @@ void CombinGrid::MergeBCType()
 
     nIFace = interfaceID;
     WriteLogFile("nIFace_all = ", nIFace);
-    InterfaceInfo * iinfo = new InterfaceInfo(nIFace);
-    grid_all->SetInterfaceInfo(iinfo);	
+    InterfaceInfo *iinfo = new InterfaceInfo(nIFace);
+    grid_all->SetInterfaceInfo(iinfo);
 }
 
 bool CombinGrid::IsBcNode(int *p, int node_in)
@@ -702,9 +698,9 @@ void CombinGrid::ResetCoordinate()
 
     int nTNode_all = grid_all->GetNTotalNode();
 
-    RDouble *x_all = new RDouble[ nTNode_all ];
-    RDouble *y_all = new RDouble[ nTNode_all ];
-    RDouble *z_all = new RDouble[ nTNode_all ];
+    RDouble *x_all = new RDouble[nTNode_all];
+    RDouble *y_all = new RDouble[nTNode_all];
+    RDouble *z_all = new RDouble[nTNode_all];
 
     vector<RDouble> Globalx = GetGlobalx();
     vector<RDouble> Globaly = GetGlobaly();
@@ -731,13 +727,13 @@ void CombinGrid::ResetNodeNumberOfEachFace()
 
     int nTFace_all = grid_all->GetNTotalFace();
 
-    int * node_number_of_each_face = new int[ nTFace_all ];
+    int *node_number_of_each_face = new int[nTFace_all];
 
     grid_all->SetNodeNumberOfEachFace(node_number_of_each_face);
 
     int *node_number_of_all_face = GetNodeNumberOfAllFace();
 
-    for (int inode = 0; inode < nTFace_all; ++inode)
+    for (int inode = 0; inode < nTFace_all; ++ inode)
     {
         node_number_of_each_face[inode] = node_number_of_all_face[inode];
     }
@@ -751,7 +747,7 @@ void CombinGrid::ResetFace2Node()
     vector<int> allface2node = GetAllFace2Node();
     uint_t nsum = allface2node.size();
 
-    int * face2node = new int [ nsum ];
+    int *face2node = new int [nsum];
     grid_all->SetFace2Node(face2node);
     
     for (int i = 0; i < nsum; ++ i)
@@ -761,7 +757,7 @@ void CombinGrid::ResetFace2Node()
 }
 
 void CombinGrid::ResetLeftRightCell()
-{	
+{
     WriteLogFile("Reset Left Right Cell ...");
     PrintToWindow("Reset Left Right Cell ...\n");
 
@@ -769,8 +765,8 @@ void CombinGrid::ResetLeftRightCell()
     int *left_cell_of_all_face  = GetLeftCellOfAllFace();
     int *right_cell_of_all_face = GetRightCellOfAllFace();
 
-    int * left_cell_of_face  = new int[ nTFace_all ];
-    int * right_cell_of_face = new int[ nTFace_all ];
+    int *left_cell_of_face  = new int[nTFace_all];
+    int *right_cell_of_face = new int[nTFace_all];
     grid_all->SetLeftCellOfFace (left_cell_of_face);
     grid_all->SetRightCellOfFace(right_cell_of_face);
 
@@ -783,7 +779,7 @@ void CombinGrid::ResetLeftRightCell()
 
 void CombinGrid::MergeCell2Node()
 {
-    if(UnstructGridCast(grid_in[0])->IsCell2NodeExist() == false)
+    if (UnstructGridCast(grid_in[0])->IsCell2NodeExist() == false)
     {
         //! Judge if need merge cell2node.
         return;
@@ -803,10 +799,10 @@ void CombinGrid::MergeCell2Node()
 
     for (int izone = 0; izone < nZones; ++ izone)
     {
-        int * gnode_number_of_each_cell = UnstructGridCast(grid_in[izone])->GetNodeNumberOfEachCell();
-        int * gcell2node = UnstructGridCast(grid_in[izone])->GetCell2Node();
+        int *gnode_number_of_each_cell = UnstructGridCast(grid_in[izone])->GetNodeNumberOfEachCell();
+        int *gcell2node = UnstructGridCast(grid_in[izone])->GetCell2Node();
 
-        int * gnode2all = GetNode2All(izone);
+        int *gnode2all = GetNode2All(izone);
 
         int count = 0;
         for (int icell = 0; icell < nTotalCellEachZone[izone]; ++ icell)
@@ -828,14 +824,14 @@ void CombinGrid::MergeCell2Node()
         }
     }
 
-    int * node_number_of_each_cell = new int [nTotalCell];
-    int * cell2node = new int [cell2node_size];
+    int *node_number_of_each_cell = new int [nTotalCell];
+    int *cell2node = new int [cell2node_size];
 
     int count = 0;
     for (cgsize_t icell = 0; icell < nTotalCell; ++ icell)
     {
         node_number_of_each_cell[icell] = node_number_of_each_cell_all[icell];
-        for  (int inode =0; inode < node_number_of_each_cell[icell]; ++ inode)
+        for (int inode =0; inode < node_number_of_each_cell[icell]; ++ inode)
         {
             cell2node[count] = static_cast<int>(cell2node_all[icell][inode]);
             ++ count;
@@ -847,7 +843,7 @@ void CombinGrid::MergeCell2Node()
 
 Grid ** CombinGrid::GetGridAll() const
 {
-    Grid ** grid_array = new Grid * [1];
+    Grid **grid_array = new Grid * [1];
 
     grid_array[0] = grid_all;
 
@@ -857,50 +853,49 @@ Grid ** CombinGrid::GetGridAll() const
 void CombinGrid::DumpCombinationGrid()
 {
     string out_gfile;
-    GlobalDataBase::GetData("out_gfile",&out_gfile,PHSTRING,1);
+    GlobalDataBase::GetData("out_gfile", &out_gfile, PHSTRING, 1);
 
     int codeOfOversetGrid = 0;
-    GlobalDataBase::GetData("codeOfOversetGrid",&codeOfOversetGrid,PHINT,1);
+    GlobalDataBase::GetData("codeOfOversetGrid", &codeOfOversetGrid, PHINT, 1);
 
     using namespace PHMPI;
 
     int nZones = 1;
 
-    Grid ** grid_array = new Grid * [nZones];
+    Grid **grid_array = new Grid * [nZones];
     for (int izone = 0; izone < nZones; ++ izone)
     {
         grid_array[izone] = grid_all;
     }
 
-    ConstructOverlappingInfo(grid_array,nZones,codeOfOversetGrid);
-    ConstructGlobalInterfaceLink(grid_array,nZones);
+    ConstructGlobalInterfaceLink(grid_array, nZones);
     DumpGrid(out_gfile, grid_array, nZones);
 
     delete [] grid_array;
 }
 
-void CombinGrid::CompressInterfaceData(int zoneID, DataContainer * sendBuffer, int neighborZone)
+void CombinGrid::CompressInterfaceData(int zoneID, DataContainer *sendBuffer, int neighborZone)
 {
     int localZoneID = region->GetProcessGlobalZoneIndexToLocalZoneIndex(zoneID);
     Grid *grid = grid_in[localZoneID];
-    InterfaceInfo * iinfo = grid->GetInterfaceInfo();
-    if(!iinfo) return;
+    InterfaceInfo *iinfo = grid->GetInterfaceInfo();
+    if (!iinfo) return;
 
     int myid = PHMPI::GetCurrentProcessorID();
     int iNeighborZone                            = iinfo->FindIthNeighbor(neighborZone);
     int interfaceNumberBetweenTwoNeighboringZone = iinfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int * interfaceIndexContainerForSend         = iinfo->GetFaceIndexForSend(iNeighborZone);
-    int * localInterfaceToBoundaryFaceIndexesMapping = iinfo->GetInterFace2BoundaryFace();
+    int *interfaceIndexContainerForSend          = iinfo->GetFaceIndexForSend(iNeighborZone);
+    int *localInterfaceToBoundaryFaceIndexesMapping = iinfo->GetInterFace2BoundaryFace();
     sendBuffer->moveto_begin();
     
-// 	WriteLogFile("currentZone = ", zoneID);
-// 	WriteLogFile("neighborZone = ", neighborZone);
+//  WriteLogFile("currentZone = ", zoneID);
+//  WriteLogFile("neighborZone = ", neighborZone);
 
-    int * face2all = GetFace2All(localZoneID);
+    int *face2all = GetFace2All(localZoneID);
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
-        int interFaceID = interfaceIndexContainerForSend[ iLocalFace ];
-        int boundaryFaceID = localInterfaceToBoundaryFaceIndexesMapping[ interFaceID ];
+        int interFaceID = interfaceIndexContainerForSend[iLocalFace];
+        int boundaryFaceID  = localInterfaceToBoundaryFaceIndexesMapping[interFaceID];
         int oldGlobalFaceID = face2all[boundaryFaceID];
         int newGlobalFaceID = face2NewFaceafterReorder[oldGlobalFaceID];
 
@@ -911,45 +906,34 @@ void CombinGrid::CompressInterfaceData(int zoneID, DataContainer * sendBuffer, i
         //! interFace2InterFaceID.
         int newInterfaceID = face2InterfaceafterReorder[newGlobalFaceID];
         PHWrite(sendBuffer, newInterfaceID);
-
-        /*ostringstream oss;
-        oss << "iLocalFace = " << iLocalFace << ", boundaryFaceID = " << boundaryFaceID
-            << ", oldGlobalFaceID = " << oldGlobalFaceID << ", newGlobalFaceID = " << newGlobalFaceID
-            << ", newZoneID = " << newZoneID << ", newInterfaceID = " << newInterfaceID
-            << ", newBoundaryFaceID = " << newGlobalFaceID << endl;
-        WriteLogFile(oss);*/
     }
-    
 }
 
-void CombinGrid::DecompressInterfaceData(int zoneID, DataContainer * recieveBuffer, int neighborZone)
+void CombinGrid::DecompressInterfaceData(int zoneID, DataContainer *recieveBuffer, int neighborZone)
 {
     int localZoneID = region->GetProcessGlobalZoneIndexToLocalZoneIndex(zoneID);
     Grid *grid = grid_in[localZoneID];
-    InterfaceInfo * iinfo = grid->GetInterfaceInfo();
-    if(!iinfo) return;
+    InterfaceInfo *iinfo = grid->GetInterfaceInfo();
+    if (!iinfo) return;
 
     //! Interface information of local sub-zones.
     int iNeighborZone                            = iinfo->FindIthNeighbor(neighborZone);
     int interfaceNumberBetweenTwoNeighboringZone = iinfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int * interfaceIndexContainerForReceive      = iinfo->GetFaceIndexForRecv(iNeighborZone);
-    int * localInterfaceToBoundaryFaceIndexesMapping = iinfo->GetInterFace2BoundaryFace();
+    int *interfaceIndexContainerForReceive       = iinfo->GetFaceIndexForRecv(iNeighborZone);
+    int *localInterfaceToBoundaryFaceIndexesMapping = iinfo->GetInterFace2BoundaryFace();
 
     //! Interface information of global merged zone.
-    InterfaceInfo * globalInterfaceInfor = grid_all->GetInterfaceInfo();
+    InterfaceInfo *globalInterfaceInfor = grid_all->GetInterfaceInfo();
     int *interFace2ZoneID       = globalInterfaceInfor->GetInterFace2ZoneID();
     int *interFace2InterFaceID  = globalInterfaceInfor->GetInterFace2InterFaceID();
     int *interFace2BoundaryFace = globalInterfaceInfor->GetInterFace2BoundaryFace();
 
-// 	WriteLogFile("currentZone = ", zoneID);
-// 	WriteLogFile("neighborZone = ", neighborZone);
-
     recieveBuffer->moveto_begin();
-    int * face2all = GetFace2All(localZoneID);
+    int *face2all = GetFace2All(localZoneID);
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
-        int interFaceID = interfaceIndexContainerForReceive[ iLocalFace ];
-        int boundaryFaceID = localInterfaceToBoundaryFaceIndexesMapping[ interFaceID ];
+        int interFaceID = interfaceIndexContainerForReceive[iLocalFace];
+        int boundaryFaceID = localInterfaceToBoundaryFaceIndexesMapping[interFaceID];
         int oldGlobalFaceID = face2all[boundaryFaceID];
         int newGlobalFaceID = face2NewFaceafterReorder[oldGlobalFaceID];
         int newInterfaceID  = face2InterfaceafterReorder[newGlobalFaceID];
@@ -962,27 +946,19 @@ void CombinGrid::DecompressInterfaceData(int zoneID, DataContainer * recieveBuff
         int newNeighborInterfaceID;
         PHRead(recieveBuffer, newNeighborInterfaceID);
 
-        if(newInterfaceID >= 0)
+        if (newInterfaceID >= 0)
         {
             //! This interface has not been merged, so it also be interface in merged grid.
             interFace2ZoneID[newInterfaceID]       = newNeighborZoneID;
             interFace2InterFaceID[newInterfaceID]  = newNeighborInterfaceID;
             interFace2BoundaryFace[newInterfaceID] = newGlobalFaceID;
-
-            /*
-            ostringstream oss;
-            oss << "iLocalFace = " << iLocalFace << ", boundaryFaceID = " << boundaryFaceID
-                << ", oldGlobalFaceID = " << oldGlobalFaceID << ", newGlobalFaceID = " << newGlobalFaceID
-                << ", newNeighborZoneID = " << newNeighborZoneID << ", newInterfaceID = " << newInterfaceID
-                << ", newNeighborInterfaceID = " << newNeighborInterfaceID << endl;
-            WriteLogFile(oss);//*/
         }
     }
 }
 
 void CombinGrid::SwapInterfaceData()
 {
-    if(PHMPI::GetNumberOfProcessor() == 1) return;
+    if (PHMPI::GetNumberOfProcessor() == 1) return;
 
     PrintToWindow("Swapping interface data ...\n");
 
@@ -998,11 +974,11 @@ void CombinGrid::SwapInterfaceData()
     WriteLogFile("        Compressing data ...");
     for (int iZone = 0; iZone < numberOfGlobalZones; ++ iZone)
     {
-        int sendProcessor    = PHMPI::GetZoneProcessorID(iZone);		
+        int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
-        ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
-        if(currentProcessor == sendProcessor)
+        if (currentProcessor == sendProcessor)
         {
             sendDataBuffer[iZone].resize(numberOfNeighbor);
         }
@@ -1013,21 +989,19 @@ void CombinGrid::SwapInterfaceData()
 
             int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
 
-            if(currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
             {
                 continue;
             }
 
             //! Allocate and compress the buffers for sending.
-            DataContainer * sendBuffer = 0;
-            if(currentProcessor == sendProcessor)
+            DataContainer *sendBuffer = 0;
+            if (currentProcessor == sendProcessor)
             {
                 sendBuffer = new DataContainer;
-                sendDataBuffer[ iZone ][iNeighbor] = sendBuffer;
+                sendDataBuffer[iZone][iNeighbor] = sendBuffer;
 
                 //! Compress the send information into the actkey.
-                int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
-                
                 CompressInterfaceData(iZone, sendBuffer, neighborZone);
             }
         }
@@ -1037,7 +1011,7 @@ void CombinGrid::SwapInterfaceData()
     WriteLogFile("        Communication ...");
     for (int iZone = 0; iZone < numberOfGlobalZones; ++ iZone)
     {
-        ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
 
         //! Communicating.
@@ -1045,25 +1019,25 @@ void CombinGrid::SwapInterfaceData()
         {
             int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
 
-            int sendProcessor    = PHMPI::GetZoneProcessorID(iZone);		
+            int sendProcessor    = PHMPI::GetZoneProcessorID(iZone);
             int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
 
-            if(currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
             {
                 continue;
             }
 
             //! Allocate the buffers for sending and receiving.
-            DataContainer * receivedBuffer = 0;
-            DataContainer * sendBuffer = 0;
-            if(currentProcessor == receiveProcessor)
+            DataContainer *receivedBuffer = 0;
+            DataContainer *sendBuffer = 0;
+            if (currentProcessor == receiveProcessor)
             {
                 receivedBuffer = new DataContainer;
                 receivedDataBuffer[ iZone ].push_back(receivedBuffer);
             }
-            if(currentProcessor == sendProcessor)
+            if (currentProcessor == sendProcessor)
             {
-                sendBuffer = sendDataBuffer[iZone][iNeighbor];				
+                sendBuffer = sendDataBuffer[iZone][iNeighbor];
             }
 
             int tag = iZone;
@@ -1085,13 +1059,13 @@ void CombinGrid::SwapInterfaceData()
             {
                 //! Get the neighbor order: which order that 'iZone' on neighbors of neighborZone.
                 int neighborOrer = -1;
-                ZoneNeighbor * globalNeighborZonesTemp = zoneConnectivity->GetZoneNeighbor(neighborZone);
+                ZoneNeighbor *globalNeighborZonesTemp = zoneConnectivity->GetZoneNeighbor(neighborZone);
                 int numberOfNeighborTemp = globalNeighborZonesTemp->GetNumberOfNeighbor();
 
                 for (int iNeighbor = 0; iNeighbor < numberOfNeighborTemp; ++ iNeighbor)
                 {
                     int neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(iNeighbor);
-                    if(neighborZoneTemp == iZone)
+                    if (neighborZoneTemp == iZone)
                     {
                         neighborOrer = iNeighbor;
                         break;
@@ -1118,7 +1092,7 @@ void CombinGrid::SwapInterfaceData()
     }
 
     //! Step2: MPI waiting for Non-blocking communications.
-    if(PHMPI::GetNumberOfProcessor() > 1)
+    if (PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
@@ -1127,7 +1101,7 @@ void CombinGrid::SwapInterfaceData()
     WriteLogFile("        Translating data ...");
     for (int iZone = 0; iZone < numberOfGlobalZones; ++ iZone)
     {
-        ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
 
         int count = 0;
@@ -1139,11 +1113,10 @@ void CombinGrid::SwapInterfaceData()
 
             if (currentProcessor == receiveProcessor)
             {
-                DataContainer * receiveData = receivedDataBuffer[ iZone ][ count ];
+                DataContainer *receiveData = receivedDataBuffer[iZone][count];
 
                 //! Because get into here when currentProcessor==receiveProcessor,
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
-                int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(neighborZone);
 
                 //! Decompress the interface data from datacontainer.
                 DecompressInterfaceData(neighborZone, receiveData, iZone);
@@ -1157,9 +1130,9 @@ void CombinGrid::SwapInterfaceData()
     //! Step4: Free the buffers.
     for (std::size_t iDim = 0; iDim < receivedDataBuffer.size(); ++ iDim)
     {
-        for (std::size_t jDim = 0; jDim < receivedDataBuffer[ iDim ].size(); ++ jDim)
+        for (std::size_t jDim = 0; jDim < receivedDataBuffer[iDim].size(); ++ jDim)
         {
-            delete receivedDataBuffer[ iDim ][ jDim ];
+            delete receivedDataBuffer[iDim][jDim];
         }
     }
     receivedDataBuffer.clear();
@@ -1167,7 +1140,7 @@ void CombinGrid::SwapInterfaceData()
     {
         for (std::size_t jDim = 0; jDim < sendDataBuffer[ iDim ].size(); ++ jDim)
         {
-            delete sendDataBuffer[ iDim ][ jDim ];
+            delete sendDataBuffer[iDim][jDim];
         }
     }
     sendDataBuffer.clear();
@@ -1201,10 +1174,10 @@ void CombinGrid::DumpMergedGridP2P(const string &gridFileName, Grid **grids, int
     CreateZoneGridID(nZones);
     CreateZoneGridType(nZones);
 
-    int * block_proc     = GetZoneProcessorID();
-    int * block_idx      = GetZoneGridID();
-    int * block_type     = GetZoneGridType();
-    int * block_proc_inp = GetZoneProcessorID_INP();
+    int *block_proc     = GetZoneProcessorID();
+    int *block_idx      = GetZoneGridID();
+    int *block_type     = GetZoneGridType();
+    int *block_proc_inp = GetZoneProcessorID_INP();
 
     int myid = GetCurrentProcessorID();
     for (int izone = 0; izone < nZones; ++ izone)
@@ -1220,36 +1193,33 @@ void CombinGrid::DumpMergedGridP2P(const string &gridFileName, Grid **grids, int
         {
             SetZoneProcessorID(izone, block_proc_inp[izone]);
         }
-    }  
+    }
 
-    //int m_block_proc = 0;
-    //GlobalDataBase::GetData("m_block_proc",&m_block_proc,PHINT,1);
     int m_block_proc = PHMPI::GetZoneDistributionMethod();
 
     for (int izone = 0; izone < nBlocks; ++ izone)
     {
         fstream file;
-        string processorGridFileName   = AddSymbolToFileName(gridFileName, '_', PHMPI::GetCurrentProcessorID());
+        string processorGridFileName = AddSymbolToFileName(gridFileName, '_', PHMPI::GetCurrentProcessorID());
         PHSPACE::OpenFile(file, processorGridFileName, ios_base::out|ios_base::binary|ios_base::trunc);
 
-        //file.write(reinterpret_cast<char*>(&nBlocks),sizeof(int));
         int nBlocksLocal = 1;
-        file.write(reinterpret_cast<char*>(&nBlocksLocal),sizeof(int));
+        file.write(reinterpret_cast<char*>(&nBlocksLocal), sizeof(int));
         int blockIndex = block_idx[izone];
-        int blockType = block_type[izone];
-        int blockProc = block_proc[izone];		
-        if(m_block_proc == DETERMIN_BY_PARTITION && IsConvertGridToMixGrid())
+        int blockType  = block_type[izone];
+        int blockProc  = block_proc[izone];
+        if (m_block_proc == DETERMIN_BY_PARTITION && IsConvertGridToMixGrid())
         {
-            int * block_proc_dump     = GetZoneProcessorIDDump();
+            int *block_proc_dump = GetZoneProcessorIDDump();
             int blockProcDump = block_proc_dump[izone];
-            file.write(reinterpret_cast<char*>(&blockProcDump),nBlocksLocal*sizeof(int));
+            file.write(reinterpret_cast<char*>(&blockProcDump), nBlocksLocal * sizeof(int));
         }
         else
-        {	
-            file.write(reinterpret_cast<char*>(&blockProc),nBlocksLocal*sizeof(int)); 
-        }			
-        file.write(reinterpret_cast<char*>(&blockIndex),nBlocksLocal*sizeof(int));
-        file.write(reinterpret_cast<char*>(&blockType),nBlocksLocal*sizeof(int));
+        {
+            file.write(reinterpret_cast<char*>(&blockProc), nBlocksLocal * sizeof(int)); 
+        }
+        file.write(reinterpret_cast<char*>(&blockIndex), nBlocksLocal * sizeof(int));
+        file.write(reinterpret_cast<char*>(&blockType), nBlocksLocal * sizeof(int));
 
         grids[izone]->WriteGrid(file);
 

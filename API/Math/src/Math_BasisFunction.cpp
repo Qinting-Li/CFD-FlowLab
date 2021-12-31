@@ -11,7 +11,7 @@ int GetProgressInterval(int nTotal, int nInterval)
     return interval;
 }
 
-void UnitFaceNormal2D(RDouble *startPoint,RDouble *endPoint,RDouble *unitNormal)
+void UnitFaceNormal2D(RDouble *startPoint, RDouble *endPoint, RDouble *unitNormal)
 {
     RDouble dx, dy, ds, ods;
 
@@ -145,20 +145,19 @@ void RestrictIndex(int &i, int &j, int &k, const int &maxi, const int &maxj, con
     k = MIN(MAX(1, k), MAX(1, maxk));
 }
 
-void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEquation, RDouble *deltaQ)
+void SolveLinearEquation(RDouble2D *dMatrix, RDouble *rhsMatrix, int nEquation, RDouble *deltaQ)
 {
     //! Allocate new matrix or vector in order to avoid changing the values of the original variables.
     Range II(0, nEquation - 1);
     RDouble2D *aMatrix = new RDouble2D(II, II, fortranArray);
     //! Transformation.
-    RDouble2D &dMatrix = *reinterpret_cast<RDouble2D *>(diagonalMatrix);
     RDouble2D &A = *reinterpret_cast<RDouble2D *>(aMatrix);
     //! Initialize the matrix of A.
     for (int m = 0; m < nEquation; ++ m)
     {
         for (int n = 0; n < nEquation; ++ n)
         {
-            A(m, n) = dMatrix(m, n);
+            A(m, n) = (*dMatrix)(m, n);
         }
     }
 
@@ -209,7 +208,6 @@ void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEqu
             {
                 mik = A(i, k) / (A(k, k) + 1.0E-20);
             }
-            //A(i, k) = 0.0;
             for (int j = k + 1; j < nEquation; ++ j)
             {
                 A(i, j) += - mik * A(k, j);
@@ -247,7 +245,7 @@ void SolveLinearEquation(RDouble2D *diagonalMatrix, RDouble *rhsMatrix, int nEqu
 
     //! Deallocate the memories.
     delete aMatrix;
-    delete []B;
+    delete [] B;    B = nullptr;
 }
 
 }

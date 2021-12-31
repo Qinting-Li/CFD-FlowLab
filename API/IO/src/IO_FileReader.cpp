@@ -28,12 +28,12 @@ void IO_FileReader::OpenFile(const string &fileName, const ios_base::openmode &f
 {
     this->fileName     = fileName;
     this->fileOpenMode = fileOpenMode;
-    PHSPACE::OpenFile(* file, fileName, fileOpenMode);
+    PHSPACE::OpenFile(*file, fileName, fileOpenMode);
 }
 
 void IO_FileReader::CloseFile()
 {
-    PHSPACE::CloseFile(* file);
+    PHSPACE::CloseFile(*file);
 }
 
 void IO_FileReader::MarkCurrentFilePosition()
@@ -46,7 +46,7 @@ void IO_FileReader::MoveToPreviousFilePosition()
     file->seekp(filePosition);
 }
 
-void IO_FileReader::SetDefaultFile(std::fstream * defaultFileIn)
+void IO_FileReader::SetDefaultFile(std::fstream *defaultFileIn)
 {
     if (setfileFlag == 0)
     {
@@ -58,11 +58,11 @@ void IO_FileReader::SetDefaultFile(std::fstream * defaultFileIn)
 
 bool IO_FileReader::ReadNextMeaningfulLine()
 {
-    while (! this->ReachTheEndOfFile())
+    while (!this->ReachTheEndOfFile())
     {
-        PHSPACE::ReadNextLine(* file, * line);
+        PHSPACE::ReadNextLine(*file, *line);
 
-        if (PHSPACE::IsEmptyLine(* line) || PHSPACE::IsCommentLine(* line))
+        if (PHSPACE::IsEmptyLine(*line) || PHSPACE::IsCommentLine(*line))
         {
             continue;
         }
@@ -73,7 +73,7 @@ bool IO_FileReader::ReadNextMeaningfulLine()
 
 bool IO_FileReader::ReachTheEndOfFile()
 {
-    if ((* file).eof())
+    if ((*file).eof())
     {
         return true;
     }
@@ -87,7 +87,7 @@ bool IO_FileReader::IsArrayParameter()
 
 void IO_FileReader::SkipLines(int numberOfLinesToSkip)
 {
-    PHSPACE::SkipLines(* file, numberOfLinesToSkip);
+    PHSPACE::SkipLines(*file, numberOfLinesToSkip);
 }
 
 void IO_FileReader::ReadNextNonEmptyLine()
@@ -97,7 +97,7 @@ void IO_FileReader::ReadNextNonEmptyLine()
 
 void IO_FileReader::DumpLineContentToScreen()
 {
-    cout << * line << "\n";
+    cout << *line << "\n";
 }
 
 std::string IO_FileReader::ReadNextWord()
@@ -120,19 +120,19 @@ string IO_FileReader::ReadNextWordToLowerCase()
     return word;
 }
 
-string IO_FileReader::ReadNextWordToLowerCase(const std::string & separator)
+string IO_FileReader::ReadNextWordToLowerCase(const std::string &separator)
 {
     string word = PHSPACE::FindNextWord(* this->line, separator);
     PHSPACE::ToLowerCase(word);
     return word;
 }
 
-void IO_FileReader::SkipReadSymbol(const string & stringSymbol)
+void IO_FileReader::SkipReadSymbol(const string &stringSymbol)
 {
-    while (! this->ReachTheEndOfFile())
+    while (!this->ReachTheEndOfFile())
     {
         bool resultFlag = this->ReadNextMeaningfulLine();
-        if (! resultFlag) break;
+        if (!resultFlag) break;
 
         string word = this->ReadNextWord();
 
@@ -148,10 +148,10 @@ void IO_FileReader::SkipReadWholeBlock()
     int countOfLeftBrackets  = 0;
     int countOfRightBrackets = 0;
 
-    while (! this->ReachTheEndOfFile())
+    while (!this->ReachTheEndOfFile())
     {
         bool resultFlag = this->ReadNextMeaningfulLine();
-        if (! resultFlag) break;
+        if (!resultFlag) break;
 
         string word = this->ReadNextWord();
 

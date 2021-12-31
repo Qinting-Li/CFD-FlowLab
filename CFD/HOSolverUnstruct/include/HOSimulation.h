@@ -31,7 +31,7 @@ private:
     PHSPACE::Region * region;
     PHSPACE::TimeSpan * simu_ts;
 
-	int isUnsteady;
+    int isUnsteady;
 
 public:
     HOSimulation(int dimension=3);

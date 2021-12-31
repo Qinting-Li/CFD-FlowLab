@@ -20,60 +20,55 @@
 namespace PHSPACE
 {
 //! @brief Geo_DynamicGridMetrics_Unstruct class defines dynamic mesh metrics of unstructured grid.\n
-//! 1: face velocity.\n
-//! 2: node velocity.
+//! 1: face normal velocity.\n
+//! 2: face velocity.
 class Geo_DynamicGridMetrics_Unstruct
 {
 private:
-	//! Cell volume of the last time step.
-	RDouble * voln;
+    //! Cell volume of the last time step.
+    RDouble * voln;
 
-	//! Face normal velocity.
-	RDouble * vgn;
+    //! Face normal velocity.
+    RDouble * vgn;
 
-	//! Node velocity.
-	RDouble * xtn, * ytn, * ztn;
-
-public:
-	LIB_EXPORT Geo_DynamicGridMetrics_Unstruct();
-	LIB_EXPORT ~Geo_DynamicGridMetrics_Unstruct();
+    //! face velocity.
+    RDouble * xfv, * yfv, * zfv;
 
 public:
-	//! Assign the given pointer to the X node velocity.
-	void SetNodeVelocityX(RDouble * xtn);
+    LIB_EXPORT Geo_DynamicGridMetrics_Unstruct();
+    LIB_EXPORT ~Geo_DynamicGridMetrics_Unstruct();
 
-	//! Assign the given pointer to the Y node velocity.
-	void SetNodeVelocityY(RDouble * ytn);
+public:
+    //! Assign the given pointer to the X face velocity.
+    void SetFaceVelocityX(RDouble * xfv);
 
-	//! Assign the given pointer to the Z node velocity.	
-	void SetNodeVelocityZ(RDouble * ztn);
-	
-	//! Assign the given pointer to the face normal velocity.
-	void SetFaceNormalVelocity(RDouble * vgn);
+    //! Assign the given pointer to the Y face velocity.
+    void SetFaceVelocityY(RDouble * yfv);
 
-	//! Assign the given pointer to the Cell volume of the last time step.
-	void SetCellVolumeOld(RDouble * voln);
+    //! Assign the given pointer to the Z face velocity.
+    void SetFaceVelocityZ(RDouble * zfv);
+    
+    //! Assign the given pointer to the face normal velocity.
+    void SetFaceNormalVelocity(RDouble * vgn);
 
-	//! Return the X node velocity pointer.
-	RDouble * GetNodeVelocityX() const;
+    //! Assign the given pointer to the Cell volume of the last time step.
+    void SetCellVolumeOld(RDouble * voln);
 
-	//! Return the Y node velocity pointer.
-	RDouble * GetNodeVelocityY() const;
+    //! Return the X face velocity pointer.
+    RDouble * GetFaceVelocityX() const;
 
-	//! Return the Z node velocity pointer.
-	RDouble * GetNodeVelocityZ() const;
+    //! Return the Y face velocity pointer.
+    RDouble * GetFaceVelocityY() const;
 
-	//! Return the face normal velocity pointer.
-	RDouble * GetFaceNormalVelocity() const;
+    //! Return the Z face velocity pointer.
+    RDouble * GetFaceVelocityZ() const;
 
-	//! Return the cell volume of the last time step.
-	RDouble * GetCellVolumeOld() const;
+    //! Return the face normal velocity pointer.
+    RDouble * GetFaceNormalVelocity() const;
+
+    //! Return the cell volume of the last time step.
+    RDouble * GetCellVolumeOld() const;
 };
 
 #include "Geo_DynamicGridMetrics_Unstruct.hxx"
-
-
-
-
-
 }

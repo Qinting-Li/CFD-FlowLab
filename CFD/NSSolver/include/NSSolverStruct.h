@@ -21,7 +21,7 @@ using namespace std;
 namespace PHSPACE
 {
 class GeomProxy;
-class BCRegion;
+class StructBC;
 class Param_NSSolverStruct;
 class GradientCellCenter;
 class Gradient;
@@ -53,6 +53,10 @@ private:
     void AllocateGlobalVar  (Grid *gridIn);
     void DeAllocateGlobalVar(Grid *gridIn);
     void GetSurfaceCellNumber(Grid *gridIn);
+    void InitializeSurfaceParameters(Grid *gridIn);
+    void InitializeSurfaceParametersFromFile(Grid *gridIn);
+    void ChangeSurfaceTemperature(Grid *gridIn);
+    void ChangeSurfaceMassFractions(Grid *gridIn);
 
     //! Judge if the flow field variables file already exists in NS solver.
     bool JudgeIfRestart();
@@ -70,7 +74,6 @@ private:
     void WallValueFix(Grid *gridIn, FieldProxy *qnProxy, FieldProxy *qProxy);
     
     void CompNodeVar(Grid *gridIn, RDouble4D &qn, int m, RDouble4D &q, int n);
-    void CompNodeVarForVelocity(Grid *gridIn, RDouble4D &qn, int m, RDouble4D &q, int n);
     void CompNodeVar(Grid *gridIn, RDouble4D &qn, int m, RDouble3D &q);
     
     void LoadQ(Grid *grid, FieldProxy *qProxy);
@@ -85,10 +88,12 @@ private:
     void PreconSpectrumRadiusInviscid(Grid *gridIn);
     void SpectrumRadiusViscous(Grid *gridIn);
 
-    void Diagonal(Grid *gridIn);
+    void Diagonal(Grid *gridIn);    //! Source linear.
 
+    //! Set the boundary conditions.
     void Boundary(Grid *grid);
     void CalPressureFactor(Grid *gridIn);
+    void GetHeatTransferCoeff(Grid *gridIn);
     void InviscidFlux(Grid *gridIn);
     void ZeroResidualOfSpecialCells(Grid *gridIn);    //! Added By Guo Yongheng 20160825.
     void ViscousFlux(Grid *gridIn);
@@ -96,7 +101,7 @@ private:
 
     //! Compute the chemical source terms.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    void ChemicalSource(Grid *gridIn);
+    void ChemicalSource(Grid *gridIn);    //! Source.
     //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
     void ComputeFirstLayerGridHeight(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
@@ -105,11 +110,11 @@ private:
     void ComputeViscousCoeff(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
 
-    void ComputeGamaAndTemperature(Grid *gridIn);
+    void ComputeGamaAndTemperature(Grid *gridIn);                 //Gama ¡¢Temperature
     void RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef);
     
     void SolutionFix(Grid *gridIn, RDouble *prim, int i, int j, int k);
-    void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
+    void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);    //! Primitive vs Conservative.
 
     void UpdateQlQrOnlyforMixGrid(Grid *grid);
     void UpdateInviscidfluxOnlyforMixGrid(Grid *grid);
@@ -152,6 +157,7 @@ private:
     void ReconGrad(Grid *gridIn, int iSurface);
 
     void RegisterCFDSolverInterfaceField();
+    void RegisterCFDSolverOversetField();
     void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     void RotateVectorFromInterface(Grid *grid, const int &neighborZoneIndex, const int &neqn);
@@ -182,32 +188,33 @@ private:
 
 
     void SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq);
-    void OutFlowBC3D (Grid *gridIn, BCRegion *BCRegion);
-    
+
     //calculate the total area of all BC regions with the same BC name.
-    void calculateBCArea(Grid *gridIn, BCRegion *BCRegion);
+    void calculateBCArea(Grid *gridIn, StructBC *structBC);
 
     //calculate the mass flux ratio of all mass outlet BC regions with the same BC name.
-    void calculateMassFluxRatio(Grid *gridIn, BCRegion *BCRegion);
+    void calculateMassFluxRatio(Grid *gridIn, StructBC *structBC);
 
-    void SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion);
-    void ViscousAdiabaticWall(Grid *gridIn, BCRegion *BCRegion);
-    void ViscousIsotropicWall(Grid *gridIn, BCRegion *BCRegion);
-
-    void InFlowBC3D  (Grid *gridIn, BCRegion *BCRegion);
-    void FarFieldRiemannInvariants(Grid *gridIn, BCRegion *BCRegion);
-    void PreconFarfieldBC(Grid *gridIn, BCRegion *BCRegion);
-    void PressureInletBCRiemann(Grid *gridIn, BCRegion *BCRegion);
-    void PressureOutletBC(Grid *gridIn, BCRegion *BCRegion);
+    void ViscousAdiabaticWall(Grid *gridIn, StructBC *structBC);
+    void ViscousIsotropicWall(Grid *gridIn, StructBC *structBC, int iWallBC);
+    void SymmetryBC3D(Grid *gridIn, StructBC *structBC);
+    void SingularAxisBC3D(Grid *gridIn, StructBC *structBC);
+    void SingularAxisFullPlaneBC3D(Grid *gridIn, StructBC *structBC);
+    void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC);
+    void PreconFarfieldBC(Grid *gridIn, StructBC *structBC);
+    void InFlowBC3D(Grid *gridIn, StructBC *structBC);
+    void OutFlowBC3D(Grid *gridIn, StructBC *structBC);
+    void PressureInletBCRiemann(Grid *gridIn, StructBC *structBC);
+    void PressureOutletBC(Grid *gridIn, StructBC *structBC);
     
-    // mass flow in boundary condition.
-    void MassFlowInletBC(Grid *gridIn, BCRegion *BCRegion);
+    //! Mass flow in boundary condition.
+    void MassFlowInletBC(Grid *gridIn, StructBC *structBC);
 
-    // mass flow out boundary condition.
-    void MassFlowOutletBC(Grid *gridIn, BCRegion *BCRegion);
+    //! Mass flow out boundary condition.
+    void MassFlowOutletBC(Grid *gridIn, StructBC *structBC);
 
-    void NozzleInletFlow(Grid *gridIn, BCRegion *BCRegion);
-    void NozzleOutFlow(Grid *gridIn, BCRegion *BCRegion);
+    void NozzleInletFlow(Grid *gridIn, StructBC *structBC);
+    void NozzleOutFlow(Grid *gridIn, StructBC *structBC);
 
     void CornerPoint(Grid *gridIn);
     
@@ -225,10 +232,10 @@ private:
     void InitResidual(Grid *gridIn, FieldProxy *rightHandSideProxy);
     void RecoverResidual(Grid *gridIn, FieldProxy *rightHandSideProxy);
     
-    FaceProxy    *CreateFaceProxy   (Grid *gridIn);
-    GeomProxy    *CreateGeomProxy   (Grid *gridIn);
+    FaceProxy * CreateFaceProxy(Grid *gridIn);
+    GeomProxy * CreateGeomProxy(Grid *gridIn);
     
-    StructIter *CreateInvStructIter(Grid *gridIn, int iSurface);
+    StructIter * CreateInvStructIter(Grid *gridIn, int iSurface);
     
     bool GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, StructIter *structIter, FieldProxy *qlProxy, FieldProxy *qrProxy, int nlen);
     bool LoadFaceFlux(Grid *gridIn, FaceProxy *faceProxy, StructIter *structIter, FieldProxy *fluxProxy, int nlen);
@@ -246,6 +253,7 @@ private:
 
 private:
     void AirForceCoefParts(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
+    void AirForceCoefComponents(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
     
     //! Write the variables of Cp, Cf, Qw, y+ etc. on surface to the file.
     void CpDistriCoef(ActionKey *actkey);
@@ -273,6 +281,8 @@ public:
     void ComputeCp(Grid *gridIn, RDouble4D *&cp);
 
     //! Compute the dimensional variables for density, pressure, temperature and the number density of electron.
+    RDouble4D* ComputeDimensionalElectron(Grid *gridIn);
+
     RDouble4D* ComputeDimensionalVariables(Grid *gridIn);
 
 public:
@@ -282,23 +292,24 @@ public:
 
     void DownloadInterfaceData(ActionKey *actkey);
 
-	void UploadOversetData  (ActionKey *actkey);
+    void UploadOversetData  (ActionKey *actkey);
 
-	void DownloadOversetData(ActionKey *actkey);
+    void DownloadOversetData(ActionKey *actkey);
 
-	GradientCellCenter *GetGradientCellCenterUVWT(Grid *gridIn, FieldProxy *q);
-	GradientCellCenter *GetGradientCellCenterUVWT(Grid *gridIn);
+    GradientCellCenter *GetGradientCellCenterUVWT(Grid *gridIn, FieldProxy *q);
+    GradientCellCenter *GetGradientCellCenterUVWT(Grid *gridIn);
 
-	//! Prepare post visualization variables, store it in to grid's postVisualization database.
-	LIB_EXPORT void ComputePostVisualVariables(Post_Visual * postVisualization);
+    //! Prepare post visualization variables, store it in to grid's postVisualization database.
+    LIB_EXPORT void ComputePostVisualVariables(Post_Visual * postVisualization);
     //! Prepare monitored probes variables for post-processing , store it into postProbesVar database.
     LIB_EXPORT void ComputePostProbesVariables(Post_Probes * postProbesVar);
-	//! Create and init control parameters.
-	LIB_EXPORT void InitControlParameters();
+    //! Create and init control parameters.
+    LIB_EXPORT void InitControlParameters();
 
- 	//! Get controlParamters( a Para_NSSolver type pointer).
-	LIB_EXPORT Param_NSSolverStruct *GetControlParameters() const;
+    //! Get controlParamters( a Para_NSSolver type pointer).
+    LIB_EXPORT Param_NSSolverStruct *GetControlParameters() const;
 
+    void Monitor(Grid *gridIn);
 };
 
     bool iterijk(int &i, int &j, int &k, int ist, int ied, int jst, int jed, int kst, int ked);

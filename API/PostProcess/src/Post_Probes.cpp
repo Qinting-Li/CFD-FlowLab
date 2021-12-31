@@ -69,10 +69,19 @@ LIB_EXPORT void Post_Probes::GetASCIIFileHeader(vector<string> &title_tecplot)
 
 LIB_EXPORT void Post_Probes::GetProbesASCIIFileHeader(vector<string> &title_tecplot)
 {
+    int samplefileMode = GlobalDataBase::GetIntParaFromDB("samplefileMode");
     ostringstream oss;
     oss << "title = \"Probes Flow Fields Data of PHengLEI\"" << endl;
     oss << "Variables =" << endl;
     oss << "\"iter\"" << endl;
+
+    if (samplefileMode != 0)
+    {
+        oss << "\"x\"" << endl;
+        oss << "\"y\"" << endl;
+        oss << "\"z\"" << endl;
+    }
+
     set<int>::iterator varIter;
     for (varIter = probeVariables.begin(); varIter != probeVariables.end(); ++ varIter)
     {
@@ -108,63 +117,6 @@ LIB_EXPORT void Post_Probes::GetLinesOrSurfacesASCIIFileHeader(vector<string> &t
     return;
 }
 
-//LIB_EXPORT void Post_Probes::UpdateProbesVarPtr(const string &name, RDouble *CellCenterData)
-//{
-//    if (!grid)
-//    {
-//        TK_Exit::ExceptionExit("Post_Probe::UpdateProbesVarPtr needs Geometry infomation.");
-//    }
-//    UnstructGrid * unstructGrid = UnstructGridCast(grid);
-//    int ZoneProbesNumber = unstructGrid->GetZoneProbesNumber();
-//    if (ZoneProbesNumber == 0) return;
-//
-//    vector<vector<RDouble> > ProbesCoordinates = unstructGrid->GetProbesCoordinates();
-//    vector<int> ProbesCellID = unstructGrid->GetProbesCellID();
-//
-//    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-//    SetField(q_probes, 0.0, ZoneProbesNumber);
-//
-//    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
-//    {
-//        int probeCell = ProbesCellID[izoneProbe];
-//        q_probes[izoneProbe] = CellCenterData[probeCell];
-//    }
-//    probeVariablesPtr->UpdateDataPtr(name, q_probes);
-//
-//}
-
-//LIB_EXPORT void Post_Probes::UpdateProbesVarPtr(const string &name, RDouble4D &CellCenterData, int index)
-//{
-//    if (!grid)
-//    {
-//        TK_Exit::ExceptionExit("Post_Probe::UpdateProbesVarPtr needs Geometry infomation.");
-//    }
-//
-//    StructGrid * structGrid = StructGridCast(grid);
-//
-//    int ZoneProbesNumber = structGrid->GetZoneProbesNumber();
-//    if (ZoneProbesNumber == 0) return;
-//
-//    vector<vector<RDouble> > ProbesCoordinates = structGrid->GetProbesCoordinates();
-//    vector<int> ProbesCellNI = structGrid->GetProbesCellNI();
-//    vector<int> ProbesCellNJ = structGrid->GetProbesCellNJ();
-//    vector<int> ProbesCellNK = structGrid->GetProbesCellNK();
-//
-//    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-//    SetField(q_probes, 0.0, ZoneProbesNumber);
-//
-//    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
-//    {
-//        int probeNI = ProbesCellNI[izoneProbe];
-//        int probeNJ = ProbesCellNJ[izoneProbe];
-//        int probeNK = ProbesCellNK[izoneProbe];
-//        q_probes[izoneProbe] = CellCenterData(probeNI, probeNJ, probeNK, index);
-//    }
-//
-//    probeVariablesPtr->UpdateDataPtr(name, q_probes);
-//
-//}
-
 LIB_EXPORT void Post_Probes::UpdateProbesVarPtr(const string &name, RDouble *cellCenterData)
 {
     if (!grid)
@@ -195,19 +147,18 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtr(const string &name, RDouble *cel
 LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM1(const string &name, RDouble *cellCenterData)
 {
     UnstructGrid *unstructGrid = UnstructGridCast(grid);
-    int ZoneProbesNumber = unstructGrid->GetZoneProbesNumber();
-    if (ZoneProbesNumber == 0) return;
+    int probesLocalNumber = unstructGrid->GetZoneProbesNumber();
+    if (probesLocalNumber == 0) return;
 
-    vector<vector<RDouble> > ProbesCoordinates = unstructGrid->GetProbesCoordinates();
-    vector<int> ProbesCellID = unstructGrid->GetProbesCellID();
+    vector<int> probesCellID = unstructGrid->GetZoneProbesCellID();
 
-    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-    SetField(q_probes, 0.0, ZoneProbesNumber);
+    RDouble *q_probes = new RDouble [probesLocalNumber];
+    SetField(q_probes, 0.0, probesLocalNumber);
 
-    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
+    for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
     {
-        int probeCell = ProbesCellID[izoneProbe];
-        q_probes[izoneProbe] = cellCenterData[probeCell];
+        int probeCell = probesCellID[iProbe];
+        q_probes[iProbe] = cellCenterData[probeCell];
     }
     probeVariablesPtr->UpdateDataPtr(name, q_probes);
 }
@@ -215,29 +166,44 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM1(const string &name, RDouble *c
 LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *cellCenterData)
 {
     UnstructGrid *unstructGrid = UnstructGridCast(grid);
-    int ZoneProbesNumber = unstructGrid->GetZoneProbesNumber();
-    if (ZoneProbesNumber == 0) return;
+    int nBoundFace = unstructGrid->GetNBoundFace();
+    int nTotalCell = unstructGrid->GetNTotalCell();
+    int **cell2face = unstructGrid->GetCell2Face();
+    int *faceNumberOfEachCell = unstructGrid->GetFaceNumberOfEachCell();
+
+    int probesLocalNumber = unstructGrid->GetZoneProbesNumber();
+    if (probesLocalNumber == 0) return;
 
     vector<int> *cell2Cell = unstructGrid->GetCell2Cell();
+    vector<int> probesCellID = unstructGrid->GetZoneProbesCellID();
 
-    vector<int> ProbesCellID = unstructGrid->GetProbesCellID();
+    RDouble *q_probes = new RDouble [probesLocalNumber];
+    SetField(q_probes, 0.0, probesLocalNumber);
 
-    vector<int> interpolationCellsID;
-    vector<RDouble> numerator;
-
-    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-    SetField(q_probes, 0.0, ZoneProbesNumber);
-
-    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
+    for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
     {
-        int probeCell = ProbesCellID[izoneProbe];
-        NecessaryVarForInterpolation(unstructGrid, izoneProbe, probeCell, numerator, interpolationCellsID, true);
+        vector<int> interpolationCellsID;
+        vector<RDouble> numerator;
+
+        int probeCell = probesCellID[iProbe];
+        NecessaryVarForInterpolation(unstructGrid, iProbe, probeCell, numerator,interpolationCellsID, true);
 
         int nNeighbor = cell2Cell[probeCell].size();
         for (int iNeighbor = 0; iNeighbor < nNeighbor; ++ iNeighbor)
         {
             int neighborCell = cell2Cell[probeCell][iNeighbor];
-            NecessaryVarForInterpolation(unstructGrid, izoneProbe, neighborCell, numerator, interpolationCellsID, true);
+            NecessaryVarForInterpolation(unstructGrid, iProbe, neighborCell, numerator,interpolationCellsID, true);
+        }
+
+        for (int iface = 0; iface < faceNumberOfEachCell[probeCell]; ++ iface)
+        {
+            int faceID = cell2face[probeCell][iface];
+
+            if (faceID < nBoundFace)
+            {
+                int neighborGhostCell = faceID + nTotalCell;
+                NecessaryVarForInterpolation(unstructGrid, iProbe, neighborGhostCell, numerator,interpolationCellsID, true);
+            }
         }
 
         int nCells = interpolationCellsID.size();
@@ -247,7 +213,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
         {
             RDouble weightCoef = numerator[icell] / denominator;
             int cellID = interpolationCellsID[icell];
-            q_probes[izoneProbe] += cellCenterData[cellID] * weightCoef;
+            q_probes[iProbe] += cellCenterData[cellID] * weightCoef;
         }
     }
     probeVariablesPtr->UpdateDataPtr(name, q_probes);
@@ -256,40 +222,32 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
 LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble *cellCenterData)
 {
     UnstructGrid *unstructGrid = UnstructGridCast(grid);
-    int ZoneProbesNumber = unstructGrid->GetZoneProbesNumber();
-    if (ZoneProbesNumber == 0) return;
+    int probesLocalNumber = unstructGrid->GetZoneProbesNumber();
+    if (probesLocalNumber == 0) return;
 
     int nTotalNode = unstructGrid->GetNTotalNode();
     int **cell2Node = unstructGrid->GetCell2NodeArray();
     int *nodeNumberOfEachCell = unstructGrid->GetNodeNumberOfEachCell();
 
     RDouble *qn = new RDouble [nTotalNode];
-    if (name == "u" || name == "v" || name == "w")
+    CompNodeVar(unstructGrid, qn, cellCenterData);
+
+    vector<int> probesCellID = unstructGrid->GetZoneProbesCellID();
+
+    RDouble *q_probes = new RDouble [probesLocalNumber];
+    SetField(q_probes, 0.0, probesLocalNumber);
+
+    for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
     {
-        CompNodeVarForVelocity(unstructGrid, qn, cellCenterData);
-    }
-    else
-    {
-        CompNodeVar(unstructGrid, qn, cellCenterData);
-    }
+        vector<int> interpolationNodesID;
+        vector<RDouble> numerator;
 
-    vector<int> ProbesCellID = unstructGrid->GetProbesCellID();
-
-    vector<int> interpolationNodesID;
-    vector<RDouble> numerator;
-
-    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-    SetField(q_probes, 0.0, ZoneProbesNumber);
-
-    int nodePosition = 0;
-    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
-    {
-        int probeCell = ProbesCellID[izoneProbe];
+        int probeCell = probesCellID[iProbe];
 
         for (int iNode = 0; iNode < nodeNumberOfEachCell[probeCell]; ++ iNode)
         {
             int node = cell2Node[probeCell][iNode];
-            NecessaryVarForInterpolation(unstructGrid, izoneProbe, node, numerator, interpolationNodesID, false);
+            NecessaryVarForInterpolation(unstructGrid, iProbe, node, numerator, interpolationNodesID, false);
         }
 
         int nNodes = interpolationNodesID.size();
@@ -299,7 +257,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble *c
         {
             RDouble weightCoef = numerator[inode] / denominator;
             int nodeID = interpolationNodesID[inode];
-            q_probes[izoneProbe] += qn[nodeID] * weightCoef;
+            q_probes[iProbe] += qn[nodeID] * weightCoef;
         }
     }
 
@@ -339,23 +297,22 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM1(const string &name, RDouble4D 
 {
     StructGrid *structGrid = StructGridCast(grid);
 
-    int ZoneProbesNumber = structGrid->GetZoneProbesNumber();
-    if (ZoneProbesNumber == 0) return;
+    int probesLocalNumber = structGrid->GetZoneProbesNumber();
+    if (probesLocalNumber == 0) return;
 
-    vector<vector<RDouble> > ProbesCoordinates = structGrid->GetProbesCoordinates();
-    vector<int> ProbesCellNI = structGrid->GetProbesCellNI();
-    vector<int> ProbesCellNJ = structGrid->GetProbesCellNJ();
-    vector<int> ProbesCellNK = structGrid->GetProbesCellNK();
+    vector<int> probesCellNI = structGrid->GetZoneProbesCellNI();
+    vector<int> probesCellNJ = structGrid->GetZoneProbesCellNJ();
+    vector<int> probesCellNK = structGrid->GetZoneProbesCellNK();
 
-    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-    SetField(q_probes, 0.0, ZoneProbesNumber);
+    RDouble *q_probes = new RDouble [probesLocalNumber];
+    SetField(q_probes, 0.0, probesLocalNumber);
 
-    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
+    for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
     {
-        int probeNI = ProbesCellNI[izoneProbe];
-        int probeNJ = ProbesCellNJ[izoneProbe];
-        int probeNK = ProbesCellNK[izoneProbe];
-        q_probes[izoneProbe] = cellCenterData(probeNI, probeNJ, probeNK, index);
+        int probeNI = probesCellNI[iProbe];
+        int probeNJ = probesCellNJ[iProbe];
+        int probeNK = probesCellNK[iProbe];
+        q_probes[iProbe] = cellCenterData(probeNI, probeNJ, probeNK, index);
     }
 
     probeVariablesPtr->UpdateDataPtr(name, q_probes);
@@ -365,28 +322,28 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble4D 
 {
     StructGrid *structGrid = StructGridCast(grid);
 
-    int ZoneProbesNumber = structGrid->GetZoneProbesNumber();
-    if (ZoneProbesNumber == 0) return;
+    int probesLocalNumber = structGrid->GetZoneProbesNumber();
+    if (probesLocalNumber == 0) return;
 
-    vector<int> ProbesCellNI = structGrid->GetProbesCellNI();
-    vector<int> ProbesCellNJ = structGrid->GetProbesCellNJ();
-    vector<int> ProbesCellNK = structGrid->GetProbesCellNK();
+    vector<int> probesCellNI = structGrid->GetZoneProbesCellNI();
+    vector<int> probesCellNJ = structGrid->GetZoneProbesCellNJ();
+    vector<int> probesCellNK = structGrid->GetZoneProbesCellNK();
 
-    vector<vector<int> > interpolationCellsID;
-    vector<RDouble> numerator;
-
-    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-    SetField(q_probes, 0.0, ZoneProbesNumber);
+    RDouble *q_probes = new RDouble [probesLocalNumber];
+    SetField(q_probes, 0.0, probesLocalNumber);
 
     int nDim = GetDim();
 
-    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
+    for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
     {
-        int probeNI = ProbesCellNI[izoneProbe];
-        int probeNJ = ProbesCellNJ[izoneProbe];
-        int probeNK = ProbesCellNK[izoneProbe];
+        vector<vector<int> > interpolationCellsID;
+        vector<RDouble> numerator;
 
-        NecessaryVarForInterpolation(structGrid, izoneProbe, probeNI, probeNJ, probeNK, numerator, interpolationCellsID, true);
+        int probeNI = probesCellNI[iProbe];
+        int probeNJ = probesCellNJ[iProbe];
+        int probeNK = probesCellNK[iProbe];
+
+        NecessaryVarForInterpolation(structGrid, iProbe, probeNI, probeNJ, probeNK, numerator, interpolationCellsID, true);
 
         for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
         {
@@ -401,8 +358,8 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble4D 
             int jr = probeNJ + j1;
             int kr = probeNK + k1;
 
-            NecessaryVarForInterpolation(structGrid, izoneProbe, il, jl, kl, numerator, interpolationCellsID, true);
-            NecessaryVarForInterpolation(structGrid, izoneProbe, ir, jr, kr, numerator, interpolationCellsID, true);
+            NecessaryVarForInterpolation(structGrid, iProbe, il, jl, kl, numerator, interpolationCellsID, true);
+            NecessaryVarForInterpolation(structGrid, iProbe, ir, jr, kr, numerator, interpolationCellsID, true);
         }
 
         int nCells = interpolationCellsID.size();
@@ -414,7 +371,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble4D 
             int cellID_i = interpolationCellsID[icell][0];
             int cellID_j = interpolationCellsID[icell][1];
             int cellID_k = interpolationCellsID[icell][2];
-            q_probes[izoneProbe] += cellCenterData(cellID_i, cellID_j, cellID_k, index) * weightCoef;
+            q_probes[iProbe] += cellCenterData(cellID_i, cellID_j, cellID_k, index) * weightCoef;
         }
     }
 
@@ -425,8 +382,8 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
 {
     StructGrid *structGrid = StructGridCast(grid);
 
-    int ZoneProbesNumber = structGrid->GetZoneProbesNumber();
-    if (ZoneProbesNumber == 0) return;
+    int probesLocalNumber = structGrid->GetZoneProbesNumber();
+    if (probesLocalNumber == 0) return;
 
     int ni = structGrid->GetNI();
     int nj = structGrid->GetNJ();
@@ -441,27 +398,26 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
     CompNodeVar(structGrid, *qn, 0, cellCenterData, index);
 
-    vector<int> ProbesCellNI = structGrid->GetProbesCellNI();
-    vector<int> ProbesCellNJ = structGrid->GetProbesCellNJ();
-    vector<int> ProbesCellNK = structGrid->GetProbesCellNK();
+    vector<int> probesCellNI = structGrid->GetZoneProbesCellNI();
+    vector<int> probesCellNJ = structGrid->GetZoneProbesCellNJ();
+    vector<int> probesCellNK = structGrid->GetZoneProbesCellNK();
 
-    vector<vector<int> > interpolationNodesID;
-    vector<RDouble> numerator;
+    RDouble *q_probes = new RDouble [probesLocalNumber];
+    SetField(q_probes, 0.0, probesLocalNumber);
 
-    RDouble *q_probes = new RDouble [ZoneProbesNumber];
-    SetField(q_probes, 0.0, ZoneProbesNumber);
-
-    int nDim = GetDim();
     int i1 = 1;
     int j1 = 1;
     int k1 = 1;
     if (nk == 1) k1 = 0;
 
-    for (int izoneProbe = 0; izoneProbe < ZoneProbesNumber; ++ izoneProbe)
+    for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
     {
-        int probeNI = ProbesCellNI[izoneProbe];
-        int probeNJ = ProbesCellNJ[izoneProbe];
-        int probeNK = ProbesCellNK[izoneProbe];
+        vector<vector<int> > interpolationNodesID;
+        vector<RDouble> numerator;
+
+        int probeNI = probesCellNI[iProbe];
+        int probeNJ = probesCellNJ[iProbe];
+        int probeNK = probesCellNK[iProbe];
 
         for (int k = probeNK; k <= probeNK + k1; ++ k)
         {
@@ -469,7 +425,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
             {
                 for (int i = probeNI; i <= probeNI + i1; ++ i)
                 {
-                    NecessaryVarForInterpolation(structGrid, izoneProbe, i, j, k, numerator, interpolationNodesID, false);
+                    NecessaryVarForInterpolation(structGrid, iProbe, i, j, k, numerator, interpolationNodesID, false);
                 }
             }
         }
@@ -483,7 +439,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
             int nodeID_i = interpolationNodesID[inode][0];
             int nodeID_j = interpolationNodesID[inode][1];
             int nodeID_k = interpolationNodesID[inode][2];
-            q_probes[izoneProbe] += (*qn)(nodeID_i, nodeID_j, nodeID_k, 0) * weightCoef;
+            q_probes[iProbe] += (*qn)(nodeID_i, nodeID_j, nodeID_k, 0) * weightCoef;
         }
     }
 
@@ -493,7 +449,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
 
 LIB_EXPORT void Post_Probes::NecessaryVarForInterpolation(UnstructGrid *grid, int iprobe, int index, vector<RDouble> &numerator, vector<int> &interpolationIndexs, bool flag)
 {
-    vector<vector<RDouble> > ProbesCoordinates = grid->GetProbesCoordinates();
+    vector<vector<RDouble> > probesCoordinates = grid->GetZoneProbesCoordinates();
     RDouble *xcc = grid->GetCellCenterX();
     RDouble *ycc = grid->GetCellCenterY();
     RDouble *zcc = grid->GetCellCenterZ();
@@ -510,11 +466,11 @@ LIB_EXPORT void Post_Probes::NecessaryVarForInterpolation(UnstructGrid *grid, in
 
     if (flag)
     {
-        distance = DISTANCE(xcc[index] - ProbesCoordinates[iprobe][0], ycc[index] - ProbesCoordinates[iprobe][1], zcc[index] - ProbesCoordinates[iprobe][2]) + TINY;
+        distance = DISTANCE(xcc[index] - probesCoordinates[iprobe][0], ycc[index] - probesCoordinates[iprobe][1], zcc[index] - probesCoordinates[iprobe][2]) + TINY;
     }
     else
     {
-        distance = DISTANCE(xn[index] - ProbesCoordinates[iprobe][0], yn[index] - ProbesCoordinates[iprobe][1], zn[index] - ProbesCoordinates[iprobe][2]) + TINY;
+        distance = DISTANCE(xn[index] - probesCoordinates[iprobe][0], yn[index] - probesCoordinates[iprobe][1], zn[index] - probesCoordinates[iprobe][2]) + TINY;
     }
 
     odistance = pow(1.0 / distance, r);
@@ -524,7 +480,7 @@ LIB_EXPORT void Post_Probes::NecessaryVarForInterpolation(UnstructGrid *grid, in
 
 LIB_EXPORT void Post_Probes::NecessaryVarForInterpolation(StructGrid *grid, int iprobe, int i, int j, int k, vector<RDouble> &numerator, vector<vector<int> > &interpolationIndexs, bool flag)
 {
-    vector<vector<RDouble> > ProbesCoordinates = grid->GetProbesCoordinates();
+    vector<vector<RDouble> > probesCoordinates = grid->GetZoneProbesCoordinates();
     RDouble3D &xcc = *(grid->GetCellCenterX());
     RDouble3D &ycc = *(grid->GetCellCenterY());
     RDouble3D &zcc = *(grid->GetCellCenterZ());
@@ -542,11 +498,11 @@ LIB_EXPORT void Post_Probes::NecessaryVarForInterpolation(StructGrid *grid, int 
 
     if (flag)
     {
-        distance = DISTANCE(xcc(i, j, k) - ProbesCoordinates[iprobe][0], ycc(i, j, k) - ProbesCoordinates[iprobe][1], zcc(i, j, k) - ProbesCoordinates[iprobe][2]) + TINY;
+        distance = DISTANCE(xcc(i, j, k) - probesCoordinates[iprobe][0], ycc(i, j, k) - probesCoordinates[iprobe][1], zcc(i, j, k) - probesCoordinates[iprobe][2]) + TINY;
     }
     else
     {
-        distance = DISTANCE(xn(i, j, k) - ProbesCoordinates[iprobe][0], yn(i, j, k) - ProbesCoordinates[iprobe][1], zn(i, j, k) - ProbesCoordinates[iprobe][2]) + TINY;
+        distance = DISTANCE(xn(i, j, k) - probesCoordinates[iprobe][0], yn(i, j, k) - probesCoordinates[iprobe][1], zn(i, j, k) - probesCoordinates[iprobe][2]) + TINY;
     }
 
     odistance = pow(1.0 / distance, r);
@@ -580,7 +536,6 @@ void Post_Probes::FreeAllProbeVarPtr()
         if (q_probes)
         {
             delete [] q_probes;
-            //DeleteProbeVarPtr(varName);
         }
     }
 }
@@ -631,18 +586,41 @@ void DumpToFileASCII::Run()
 void DumpToFileASCII::WriteFlowFile()
 {
     int dataMonitorType = GlobalDataBase::GetIntParaFromDB("dataMonitorType");
+    int samplefileMode = GlobalDataBase::GetIntParaFromDB("samplefileMode");
+    int outerStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
 
     if (dataMonitorType == PROBESMONITOR)
     {
-        WriteProbesFlowFile();
+        if (samplefileMode != 0)
+        {
+            WriteProbesFlowFile(outerStep);
+        }
+        else
+        {
+            WriteProbesFlowFile();
+        }
     }
     else if (dataMonitorType == LINESMONITOR)
     {
-        WriteLinesFlowFile();
+        if (samplefileMode != 0)
+        {
+            WriteLinesFlowFile(outerStep);
+        }
+        else
+        {
+            WriteLinesFlowFile();
+        }
     }
     else if (dataMonitorType == SURFACESMONITOR)
     {
-        WriteSurfacesFlowFile();
+        if (samplefileMode != 0)
+        {
+            WriteSurfacesFlowFile(outerStep);
+        }
+        else
+        {
+            WriteSurfacesFlowFile();
+        }
     }
     else
     {
@@ -658,20 +636,21 @@ void DumpToFileASCII::WriteProbesFlowFile()
     {
         DataContainer *cdata = dataList[izone];
 
-        int ZoneProbesNumber;
-        PHRead(cdata, &ZoneProbesNumber, 1);
+        int probesLocalNumber;
+        PHRead(cdata, &probesLocalNumber, 1);
 
-        if (ZoneProbesNumber == 0) continue;
+        if (probesLocalNumber == 0) continue;
 
-        vector<vector<RDouble> > ProbesCoordinates;
-        vector<int> ProbesLineID, ProbesSurfaceID;
-        ProbesCoordinates.resize(ZoneProbesNumber);
-        ProbesLineID.resize(ZoneProbesNumber);
-        ProbesSurfaceID.resize(ZoneProbesNumber);
+        vector<vector<RDouble> > probesCoordinates;
+        vector<int> probesGlobalID, probesLineID, probesSurfaceID;
+        probesCoordinates.resize(probesLocalNumber);
+        probesGlobalID.resize(probesLocalNumber);
+        probesLineID.resize(probesLocalNumber);
+        probesSurfaceID.resize(probesLocalNumber);
         int nDim;
-        RDouble **qProbes = NewPointer2<RDouble> (nVariables, ZoneProbesNumber);
+        RDouble **qProbes = NewPointer2<RDouble> (nVariables, probesLocalNumber);
 
-        for (int iProbe = 0; iProbe < ZoneProbesNumber; ++ iProbe)
+        for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
         {
             if (GetFilename() == "")
             {
@@ -681,14 +660,15 @@ void DumpToFileASCII::WriteProbesFlowFile()
             string finalFileName = GetFilename();
 
             PHRead(cdata, &nDim, 1);
-            PHRead(cdata, &ProbesLineID[iProbe], 1);
-            PHRead(cdata, &ProbesSurfaceID[iProbe], 1);
-            ProbesCoordinates[iProbe].resize(nDim);
+            PHRead(cdata, &probesGlobalID[iProbe], 1);
+            PHRead(cdata, &probesLineID[iProbe], 1);
+            PHRead(cdata, &probesSurfaceID[iProbe], 1);
+            probesCoordinates[iProbe].resize(nDim);
 
             for (int iDim = 0; iDim < nDim; ++ iDim)
             {
-                PHRead(cdata, &ProbesCoordinates[iProbe][iDim], 1);
-                finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', ProbesCoordinates[iProbe][iDim]);
+                PHRead(cdata, &probesCoordinates[iProbe][iDim], 1);
+                finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', probesCoordinates[iProbe][iDim]);
             }
 
             if (PHMPI::IsParallelRun())
@@ -729,176 +709,617 @@ void DumpToFileASCII::WriteProbesFlowFile()
             CloseFile(probesFlowFile);
         }
 
-        DelPointer2( qProbes );
+        DelPointer2(qProbes);
     }
 }
 
 void DumpToFileASCII::WriteLinesFlowFile()
 {
-    uint_t nzones = dataList.size();
+    int nLines = GlobalDataBase::GetIntParaFromDB("nLines");
+    int *nProbesOfLine = reinterpret_cast< int * > (GlobalDataBase::GetDataPtr("nProbesOfLine"));
+    vector<vector<RDouble> > *probesReorderCoordinates = new vector<vector<RDouble> > [nLines];
+    vector<vector<RDouble> > *qGlobalProbes = new vector<vector<RDouble> > [nLines];
 
+    for (int iLine = 0; iLine < nLines; ++ iLine)
+    {
+        int nProbes = nProbesOfLine[iLine];
+        probesReorderCoordinates[iLine].resize(nProbes);
+        qGlobalProbes[iLine].resize(nProbes);
+    }
+
+    uint_t nzones = dataList.size();
     for (int izone = 0; izone < nzones; ++ izone)
     {
         DataContainer *cdata = dataList[izone];
 
-        int ZoneProbesNumber;
-        PHRead(cdata, &ZoneProbesNumber, 1);
+        int probesLocalNumber;
+        PHRead(cdata, &probesLocalNumber, 1);
 
-        if (ZoneProbesNumber == 0) continue;
+        if (probesLocalNumber == 0) continue;
 
-        vector<vector<RDouble> > ProbesCoordinates;
-        vector<int> ProbesLineID, ProbesSurfaceID;
-        ProbesCoordinates.resize(ZoneProbesNumber);
-        ProbesLineID.resize(ZoneProbesNumber);
-        ProbesSurfaceID.resize(ZoneProbesNumber);
+        vector<vector<RDouble> > probesCoordinates;
+        vector<int> probesGlobalID, probesLineID, probesSurfaceID;
+        probesCoordinates.resize(probesLocalNumber);
+        probesGlobalID.resize(probesLocalNumber);
+        probesLineID.resize(probesLocalNumber);
+        probesSurfaceID.resize(probesLocalNumber);
         int nDim;
-        RDouble **qProbes = NewPointer2<RDouble> (nVariables, ZoneProbesNumber);
+        RDouble **qProbes = NewPointer2<RDouble> (nVariables, probesLocalNumber);
 
-        for (int iProbe = 0; iProbe < ZoneProbesNumber; ++ iProbe)
+        for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
         {
-            if (GetFilename() == "")
-            {
-                return;
-            }
-            ostringstream ossFileName;
-            string finalFileName = GetFilename();
-
             PHRead(cdata, &nDim, 1);
-            PHRead(cdata, &ProbesLineID[iProbe], 1);
-            PHRead(cdata, &ProbesSurfaceID[iProbe], 1);
+            PHRead(cdata, &probesGlobalID[iProbe], 1);
+            PHRead(cdata, &probesLineID[iProbe], 1);
+            PHRead(cdata, &probesSurfaceID[iProbe], 1);
+            probesCoordinates[iProbe].resize(nDim);
 
-            finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, "_", "line", ProbesLineID[iProbe]);
+            int iProbeLineID = probesLineID[iProbe];
+            int iProbeGlobalID = probesGlobalID[iProbe];
+            probesReorderCoordinates[iProbeLineID][iProbeGlobalID].resize(nDim);
+            qGlobalProbes[iProbeLineID][iProbeGlobalID].resize(nVariables);
 
-            if (PHMPI::IsParallelRun())
-            {
-                int fileID = PHMPI::GetFileIndexofCurrentProcessor();
-                finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', fileID);
-            }
-
-            ossFileName << finalFileName;
-
-            string linesFlowFileName = ossFileName.str();
-            fstream linesFlowFile;
-            OpenFile(linesFlowFile, linesFlowFileName, ios_base::out|ios_base::app);
-            linesFlowFile << setiosflags(ios::left);
-            linesFlowFile << setiosflags(ios::scientific);
-            linesFlowFile << setprecision(10);
-
-            if (IfFileEmpty(linesFlowFile))
-            {
-                linesFlowFile << variables << endl;
-            }
-
-            int wordWidth = 8;
-
-            int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
-            linesFlowFile << setw(wordWidth) << outIterStep << "	";
-
-            ProbesCoordinates[iProbe].resize(nDim);
             for (int iDim = 0; iDim < nDim; ++ iDim)
             {
-                PHRead(cdata, &ProbesCoordinates[iProbe][iDim], 1);
-                linesFlowFile << setw(wordWidth) << ProbesCoordinates[iProbe][iDim] << "	";
+                PHRead(cdata, &probesCoordinates[iProbe][iDim], 1);
+                probesReorderCoordinates[iProbeLineID][iProbeGlobalID][iDim] = probesCoordinates[iProbe][iDim];
             }
 
             for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
             {
                 PHRead(cdata, qProbes[iVariable][iProbe]);
-                linesFlowFile << setw(wordWidth) << qProbes[iVariable][iProbe] << "	";
+                qGlobalProbes[iProbeLineID][iProbeGlobalID][iVariable] = qProbes[iVariable][iProbe];
             }
-
-            RDouble step_time = PHSPACE::TIME_SPACE::GetWallTime();
-            linesFlowFile << setw(wordWidth) << step_time << endl;
-
-            CloseFile(linesFlowFile);
         }
 
         DelPointer2(qProbes);
     }
+
+    for (int iLine = 0; iLine < nLines; ++ iLine)
+    {
+        int nProbes = nProbesOfLine[iLine];
+
+        if (GetFilename() == "")
+        {
+            return;
+        }
+
+        ostringstream ossFileName;
+        string finalFileName = GetFilename();
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, "_", "line", iLine);
+
+        if (PHMPI::IsParallelRun())
+        {
+            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+            finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', fileID);
+        }
+
+        ossFileName << finalFileName;
+
+        string linesFlowFileName = ossFileName.str();
+        fstream linesFlowFile;
+        OpenFile(linesFlowFile, linesFlowFileName, ios_base::out|ios_base::app);
+        linesFlowFile << setiosflags(ios::left);
+        linesFlowFile << setiosflags(ios::scientific);
+        linesFlowFile << setprecision(10);
+
+        if (IfFileEmpty(linesFlowFile))
+        {
+            linesFlowFile << variables << endl;
+        }
+
+        int wordWidth = 8;
+
+        for (int iProbe = 0; iProbe < nProbes; ++ iProbe)
+        {
+            int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+            linesFlowFile << setw(wordWidth) << outIterStep << "	";
+
+            for (int iDim = 0; iDim < probesReorderCoordinates[iLine][iProbe].size(); ++ iDim)
+            {
+                linesFlowFile << setw(wordWidth) << probesReorderCoordinates[iLine][iProbe][iDim] << "	";
+            }
+
+            for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+            {
+                linesFlowFile << setw(wordWidth) << qGlobalProbes[iLine][iProbe][iVariable] << "	";
+            }
+
+            RDouble step_time = PHSPACE::TIME_SPACE::GetWallTime(); 
+            linesFlowFile << setw(wordWidth) << step_time << endl;
+        }
+
+        CloseFile(linesFlowFile);
+    }
+
+    delete [] probesReorderCoordinates;
+    delete [] qGlobalProbes;
+    probesReorderCoordinates = NULL;
+    qGlobalProbes = NULL;
 }
 
 void DumpToFileASCII::WriteSurfacesFlowFile()
 {
-    uint_t nzones = dataList.size();
+    int nSurfaces= GlobalDataBase::GetIntParaFromDB("nSurface");
+    int *nProbesOfSurface = reinterpret_cast< int * > (GlobalDataBase::GetDataPtr("nProbesOfSurface"));
 
+    vector<vector<RDouble> > *probesReorderCoordinates = new vector<vector<RDouble> > [nSurfaces];
+    vector<vector<RDouble> > *qGlobalProbes = new vector<vector<RDouble> > [nSurfaces];
+
+    for (int iSurface = 0; iSurface < nSurfaces; ++ iSurface)
+    {
+        int nProbes = nProbesOfSurface[iSurface];
+        probesReorderCoordinates[iSurface].resize(nProbes);
+        qGlobalProbes[iSurface].resize(nProbes);
+    }
+
+    uint_t nzones = dataList.size();
     for (int izone = 0; izone < nzones; ++ izone)
     {
         DataContainer *cdata = dataList[izone];
 
-        int ZoneProbesNumber;
-        PHRead(cdata, &ZoneProbesNumber, 1);
+        int probesLocalNumber;
+        PHRead(cdata, &probesLocalNumber, 1);
 
-        if (ZoneProbesNumber == 0) continue;
+        if (probesLocalNumber == 0) continue;
 
-        vector<vector<RDouble> > ProbesCoordinates;
-        vector<int> ProbesLineID, ProbesSurfaceID;
-        ProbesCoordinates.resize(ZoneProbesNumber);
-        ProbesLineID.resize(ZoneProbesNumber);
-        ProbesSurfaceID.resize(ZoneProbesNumber);
+        vector<vector<RDouble> > probesCoordinates;
+        vector<int> probesGlobalID, probesLineID, probesSurfaceID;
+        probesCoordinates.resize(probesLocalNumber);
+        probesGlobalID.resize(probesLocalNumber);
+        probesLineID.resize(probesLocalNumber);
+        probesSurfaceID.resize(probesLocalNumber);
         int nDim;
-        RDouble **qProbes = NewPointer2<RDouble> (nVariables, ZoneProbesNumber);
+        RDouble **qProbes = NewPointer2<RDouble> (nVariables, probesLocalNumber);
 
-        for (int iProbe = 0; iProbe < ZoneProbesNumber; ++ iProbe)
+        for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
         {
-            if (GetFilename() == "")
-            {
-                return;
-            }
-            ostringstream ossFileName;
-            string finalFileName = GetFilename();
-
             PHRead(cdata, &nDim, 1);
-            PHRead(cdata, &ProbesLineID[iProbe], 1);
-            PHRead(cdata, &ProbesSurfaceID[iProbe], 1);
+            PHRead(cdata, &probesGlobalID[iProbe], 1);
+            PHRead(cdata, &probesLineID[iProbe], 1);
+            PHRead(cdata, &probesSurfaceID[iProbe], 1);
+            probesCoordinates[iProbe].resize(nDim);
 
-            finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, "_", "surface", ProbesSurfaceID[iProbe]);
+            int iProbeSurfaceID = probesSurfaceID[iProbe];
+            int iProbeGlobalID = probesGlobalID[iProbe];
+            probesReorderCoordinates[iProbeSurfaceID][iProbeGlobalID].resize(nDim);
+            qGlobalProbes[iProbeSurfaceID][iProbeGlobalID].resize(nVariables);
 
-            if (PHMPI::IsParallelRun())
-            {
-                int fileID = PHMPI::GetFileIndexofCurrentProcessor();
-                finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', fileID);
-            }
-
-            ossFileName << finalFileName;
-
-            string linesFlowFileName = ossFileName.str();
-            fstream linesFlowFile;
-            OpenFile(linesFlowFile, linesFlowFileName, ios_base::out|ios_base::app);
-            linesFlowFile << setiosflags(ios::left);
-            linesFlowFile << setiosflags(ios::scientific);
-            linesFlowFile << setprecision(10);
-
-            if (IfFileEmpty(linesFlowFile))
-            {
-                linesFlowFile << variables << endl;
-            }
-
-            int wordWidth = 8;
-
-            int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
-            linesFlowFile << setw(wordWidth) << outIterStep << "	";
-
-            ProbesCoordinates[iProbe].resize(nDim);
             for (int iDim = 0; iDim < nDim; ++ iDim)
             {
-                PHRead(cdata, &ProbesCoordinates[iProbe][iDim], 1);
-                linesFlowFile << setw(wordWidth) << ProbesCoordinates[iProbe][iDim] << "	";
+                PHRead(cdata, &probesCoordinates[iProbe][iDim], 1);
+                probesReorderCoordinates[iProbeSurfaceID][iProbeGlobalID][iDim] = probesCoordinates[iProbe][iDim];
             }
 
             for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
             {
                 PHRead(cdata, qProbes[iVariable][iProbe]);
-                linesFlowFile << setw(wordWidth) << qProbes[iVariable][iProbe] << "	";
+                qGlobalProbes[iProbeSurfaceID][iProbeGlobalID][iVariable] = qProbes[iVariable][iProbe];
             }
-
-            RDouble step_time = PHSPACE::TIME_SPACE::GetWallTime();
-            linesFlowFile << setw(wordWidth) << step_time << endl;
-
-            CloseFile(linesFlowFile);
         }
 
-        DelPointer2( qProbes );
+        DelPointer2(qProbes);
     }
+
+    for (int iSurface = 0; iSurface < nSurfaces; ++ iSurface)
+    {
+        int nProbes = nProbesOfSurface[iSurface];
+
+        if (GetFilename() == "")
+        {
+            return;
+        }
+
+        ostringstream ossFileName;
+        string finalFileName = GetFilename();
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, "_", "surface", iSurface);
+
+        if (PHMPI::IsParallelRun())
+        {
+            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+            finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', fileID);
+        }
+
+        ossFileName << finalFileName;
+
+        string surfacesFlowFileName = ossFileName.str();
+        fstream surfacesFlowFile;
+        OpenFile(surfacesFlowFile, surfacesFlowFileName, ios_base::out|ios_base::app);
+        surfacesFlowFile << setiosflags(ios::left);
+        surfacesFlowFile << setiosflags(ios::scientific);
+        surfacesFlowFile << setprecision(10);
+
+        if (IfFileEmpty(surfacesFlowFile))
+        {
+            surfacesFlowFile << variables << endl;
+        }
+
+        int wordWidth = 8;
+
+        for (int iProbe = 0; iProbe < nProbes; ++ iProbe)
+        {
+            int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+            surfacesFlowFile << setw(wordWidth) << outIterStep << "	";
+
+            for (int iDim = 0; iDim < probesReorderCoordinates[iSurface][iProbe].size(); ++ iDim)
+            {
+                surfacesFlowFile << setw(wordWidth) << probesReorderCoordinates[iSurface][iProbe][iDim] << "	";
+            }
+
+            for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+            {
+                surfacesFlowFile << setw(wordWidth) << qGlobalProbes[iSurface][iProbe][iVariable] << "	";
+            }
+
+            RDouble step_time = PHSPACE::TIME_SPACE::GetWallTime(); 
+            surfacesFlowFile << setw(wordWidth) << step_time << endl;
+        }
+
+        CloseFile(surfacesFlowFile);
+    }
+
+    delete [] probesReorderCoordinates;
+    delete [] qGlobalProbes;
+    probesReorderCoordinates = NULL;
+    qGlobalProbes = NULL;
+}
+
+void DumpToFileASCII::WriteProbesFlowFile(int outerStep)
+{
+    int nTotalProbes = GlobalDataBase::GetIntParaFromDB("nTotalProbes");
+    vector<vector<RDouble> > probesReorderCoordinates;
+    probesReorderCoordinates.resize(nTotalProbes);
+    vector<vector<RDouble> > qGlobalProbes;
+    qGlobalProbes.resize(nTotalProbes);
+
+    uint_t nzones = dataList.size();
+    for (int izone = 0; izone < nzones; ++ izone)
+    {
+        DataContainer *cdata = dataList[izone];
+
+        int probesLocalNumber;
+        PHRead(cdata, &probesLocalNumber, 1);
+
+        if (probesLocalNumber == 0) continue;
+
+        vector<vector<RDouble> > probesCoordinates;
+        vector<int> probesGlobalID, probesLineID, probesSurfaceID;
+        probesCoordinates.resize(probesLocalNumber);
+        probesGlobalID.resize(probesLocalNumber);
+        probesLineID.resize(probesLocalNumber);
+        probesSurfaceID.resize(probesLocalNumber);
+        int nDim;
+        RDouble **qProbes = NewPointer2<RDouble> (nVariables, probesLocalNumber);
+
+        for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
+        {
+            PHRead(cdata, &nDim, 1);
+            PHRead(cdata, &probesGlobalID[iProbe], 1);
+            PHRead(cdata, &probesLineID[iProbe], 1);
+            PHRead(cdata, &probesSurfaceID[iProbe], 1);
+            probesCoordinates[iProbe].resize(nDim);
+
+            int iProbeGlobalID =probesGlobalID[iProbe];
+            probesReorderCoordinates[iProbeGlobalID].resize(nDim);
+            qGlobalProbes[iProbeGlobalID].resize(nVariables);
+
+            for (int iDim = 0; iDim < nDim; ++ iDim)
+            {
+                PHRead(cdata, &probesCoordinates[iProbe][iDim], 1);
+                probesReorderCoordinates[iProbeGlobalID][iDim] = probesCoordinates[iProbe][iDim];
+            }
+
+            for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+            {
+                PHRead(cdata, qProbes[iVariable][iProbe]);
+                qGlobalProbes[iProbeGlobalID][iVariable] = qProbes[iVariable][iProbe];
+            }
+        }
+
+        DelPointer2(qProbes);
+    }
+
+    for (int iProbe = 0; iProbe < nTotalProbes; ++ iProbe)
+    {
+        if (GetFilename() == "")
+        {
+            return;
+        }
+        ostringstream ossFileName;
+        string finalFileName = GetFilename();
+
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, "_", "probes");
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', outerStep);
+        if (PHMPI::IsParallelRun())
+        {
+            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+            finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', fileID);
+        }
+
+        ossFileName << finalFileName;
+
+        string probesFlowFileName = ossFileName.str();
+        fstream probesFlowFile;
+        OpenFile(probesFlowFile, probesFlowFileName, ios_base::out|ios_base::app);
+        probesFlowFile << setiosflags(ios::left);
+        probesFlowFile << setiosflags(ios::scientific);
+        probesFlowFile << setprecision(10);
+
+        if (IfFileEmpty(probesFlowFile))
+        {
+            probesFlowFile << variables << endl;
+        }
+
+        int wordWidth = 8;
+
+        probesFlowFile << setw(wordWidth) << outerStep << "	";
+
+        for (int iDim = 0; iDim < probesReorderCoordinates[iProbe].size(); ++ iDim)
+        {
+            probesFlowFile << setw(wordWidth) << probesReorderCoordinates[iProbe][iDim] << "	";
+        }
+
+        for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+        {
+            probesFlowFile << setw(wordWidth) << qGlobalProbes[iProbe][iVariable] << "	";
+        }
+
+        RDouble step_time = PHSPACE::TIME_SPACE::GetWallTime();
+        probesFlowFile << setw(wordWidth) << step_time << endl;
+
+        CloseFile(probesFlowFile);
+    }
+}
+
+void DumpToFileASCII::WriteLinesFlowFile(int outerStep)
+{
+    int nLines = GlobalDataBase::GetIntParaFromDB("nLines");
+    int *nProbesOfLine = reinterpret_cast< int * > (GlobalDataBase::GetDataPtr("nProbesOfLine"));
+    vector<vector<RDouble> > *probesReorderCoordinates = new vector<vector<RDouble> > [nLines];
+    vector<vector<RDouble> > *qGlobalProbes = new vector<vector<RDouble> > [nLines];
+
+    for (int iLine = 0; iLine < nLines; ++ iLine)
+    {
+        int nProbes = nProbesOfLine[iLine];
+        probesReorderCoordinates[iLine].resize(nProbes);
+        qGlobalProbes[iLine].resize(nProbes);
+    }
+
+    uint_t nzones = dataList.size();
+    for (int izone = 0; izone < nzones; ++ izone)
+    {
+        DataContainer *cdata = dataList[izone];
+
+        int probesLocalNumber;
+        PHRead(cdata, &probesLocalNumber, 1);
+
+        if (probesLocalNumber == 0) continue;
+
+        vector<vector<RDouble> > probesCoordinates;
+        vector<int> probesGlobalID, probesLineID, probesSurfaceID;
+        probesCoordinates.resize(probesLocalNumber);
+        probesGlobalID.resize(probesLocalNumber);
+        probesLineID.resize(probesLocalNumber);
+        probesSurfaceID.resize(probesLocalNumber);
+        int nDim;
+        RDouble **qProbes = NewPointer2<RDouble> (nVariables, probesLocalNumber);
+
+        for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
+        {
+            PHRead(cdata, &nDim, 1);
+            PHRead(cdata, &probesGlobalID[iProbe], 1);
+            PHRead(cdata, &probesLineID[iProbe], 1);
+            PHRead(cdata, &probesSurfaceID[iProbe], 1);
+            probesCoordinates[iProbe].resize(nDim);
+
+            int iProbeLineID = probesLineID[iProbe];
+            int iProbeGlobalID = probesGlobalID[iProbe];
+            probesReorderCoordinates[iProbeLineID][iProbeGlobalID].resize(nDim);
+            qGlobalProbes[iProbeLineID][iProbeGlobalID].resize(nVariables);
+
+            for (int iDim = 0; iDim < nDim; ++ iDim)
+            {
+                PHRead(cdata, &probesCoordinates[iProbe][iDim], 1);
+                probesReorderCoordinates[iProbeLineID][iProbeGlobalID][iDim] = probesCoordinates[iProbe][iDim];
+            }
+
+            for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+            {
+                PHRead(cdata, qProbes[iVariable][iProbe]);
+                qGlobalProbes[iProbeLineID][iProbeGlobalID][iVariable] = qProbes[iVariable][iProbe];
+            }
+        }
+
+        DelPointer2(qProbes);
+    }
+
+    for (int iLine = 0; iLine < nLines; ++ iLine)
+    {
+        int nProbes = nProbesOfLine[iLine];
+
+        if (GetFilename() == "")
+        {
+            return;
+        }
+
+        ostringstream ossFileName;
+        string finalFileName = GetFilename();
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, "_", "line", iLine);
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', outerStep);
+
+        if (PHMPI::IsParallelRun())
+        {
+            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+            finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', fileID);
+        }
+
+        ossFileName << finalFileName;
+
+        string linesFlowFileName = ossFileName.str();
+        fstream linesFlowFile;
+        OpenFile(linesFlowFile, linesFlowFileName, ios_base::out|ios_base::app);
+        linesFlowFile << setiosflags(ios::left);
+        linesFlowFile << setiosflags(ios::scientific);
+        linesFlowFile << setprecision(10);
+
+        if (IfFileEmpty(linesFlowFile))
+        {
+            linesFlowFile << variables << endl;
+        }
+
+        int wordWidth = 8;
+
+        for (int iProbe = 0; iProbe < nProbes; ++ iProbe)
+        {
+            linesFlowFile << setw(wordWidth) << outerStep << "	";
+
+            for (int iDim = 0; iDim < probesReorderCoordinates[iLine][iProbe].size(); ++ iDim)
+            {
+                linesFlowFile << setw(wordWidth) << probesReorderCoordinates[iLine][iProbe][iDim] << "	";
+            }
+
+            for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+            {
+                linesFlowFile << setw(wordWidth) << qGlobalProbes[iLine][iProbe][iVariable] << "	";
+            }
+
+            RDouble step_time = PHSPACE::TIME_SPACE::GetWallTime(); 
+            linesFlowFile << setw(wordWidth) << step_time << endl;
+        }
+
+        CloseFile(linesFlowFile);
+    }
+
+    delete [] probesReorderCoordinates;
+    delete [] qGlobalProbes;
+    probesReorderCoordinates = NULL;
+    qGlobalProbes = NULL;
+}
+
+void DumpToFileASCII::WriteSurfacesFlowFile(int outerStep)
+{
+    int nSurfaces= GlobalDataBase::GetIntParaFromDB("nSurface");
+    int *nProbesOfSurface = reinterpret_cast< int * > (GlobalDataBase::GetDataPtr("nProbesOfSurface"));
+
+    vector<vector<RDouble> > *probesReorderCoordinates = new vector<vector<RDouble> > [nSurfaces];
+    vector<vector<RDouble> > *qGlobalProbes = new vector<vector<RDouble> > [nSurfaces];
+
+    for (int iSurface = 0; iSurface < nSurfaces; ++ iSurface)
+    {
+        int nProbes = nProbesOfSurface[iSurface];
+        probesReorderCoordinates[iSurface].resize(nProbes);
+        qGlobalProbes[iSurface].resize(nProbes);
+    }
+
+    uint_t nzones = dataList.size();
+    for (int izone = 0; izone < nzones; ++ izone)
+    {
+        DataContainer *cdata = dataList[izone];
+
+        int probesLocalNumber;
+        PHRead(cdata, &probesLocalNumber, 1);
+
+        if (probesLocalNumber == 0) continue;
+
+        vector<vector<RDouble> > probesCoordinates;
+        vector<int> probesGlobalID, probesLineID, probesSurfaceID;
+        probesCoordinates.resize(probesLocalNumber);
+        probesGlobalID.resize(probesLocalNumber);
+        probesLineID.resize(probesLocalNumber);
+        probesSurfaceID.resize(probesLocalNumber);
+        int nDim;
+        RDouble **qProbes = NewPointer2<RDouble> (nVariables, probesLocalNumber);
+
+        for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
+        {
+            PHRead(cdata, &nDim, 1);
+            PHRead(cdata, &probesGlobalID[iProbe], 1);
+            PHRead(cdata, &probesLineID[iProbe], 1);
+            PHRead(cdata, &probesSurfaceID[iProbe], 1);
+            probesCoordinates[iProbe].resize(nDim);
+
+            int iProbeSurfaceID = probesSurfaceID[iProbe];
+            int iProbeGlobalID = probesGlobalID[iProbe];
+            probesReorderCoordinates[iProbeSurfaceID][iProbeGlobalID].resize(nDim);
+            qGlobalProbes[iProbeSurfaceID][iProbeGlobalID].resize(nVariables);
+
+            for (int iDim = 0; iDim < nDim; ++ iDim)
+            {
+                PHRead(cdata, &probesCoordinates[iProbe][iDim], 1);
+                probesReorderCoordinates[iProbeSurfaceID][iProbeGlobalID][iDim] = probesCoordinates[iProbe][iDim];
+            }
+
+            for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+            {
+                PHRead(cdata, qProbes[iVariable][iProbe]);
+                qGlobalProbes[iProbeSurfaceID][iProbeGlobalID][iVariable] = qProbes[iVariable][iProbe];
+            }
+        }
+
+        DelPointer2(qProbes);
+    }
+
+    for (int iSurface = 0; iSurface < nSurfaces; ++ iSurface)
+    {
+        int nProbes = nProbesOfSurface[iSurface];
+
+        if (GetFilename() == "")
+        {
+            return;
+        }
+
+        ostringstream ossFileName;
+        string finalFileName = GetFilename();
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, "_", "surface", iSurface);
+        finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', outerStep);
+
+        if (PHMPI::IsParallelRun())
+        {
+            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+            finalFileName = PHSPACE::AddSymbolToFileName(finalFileName, '_', fileID);
+        }
+
+        ossFileName << finalFileName;
+
+        string surfacesFlowFileName = ossFileName.str();
+        fstream surfacesFlowFile;
+        OpenFile(surfacesFlowFile, surfacesFlowFileName, ios_base::out|ios_base::app);
+        surfacesFlowFile << setiosflags(ios::left);
+        surfacesFlowFile << setiosflags(ios::scientific);
+        surfacesFlowFile << setprecision(10);
+
+        if (IfFileEmpty(surfacesFlowFile))
+        {
+            surfacesFlowFile << variables << endl;
+        }
+
+        int wordWidth = 8;
+
+        for (int iProbe = 0; iProbe < nProbes; ++ iProbe)
+        {
+            surfacesFlowFile << setw(wordWidth) << outerStep << "	";
+
+            for (int iDim = 0; iDim < probesReorderCoordinates[iSurface][iProbe].size(); ++ iDim)
+            {
+                surfacesFlowFile << setw(wordWidth) << probesReorderCoordinates[iSurface][iProbe][iDim] << "	";
+            }
+
+            for (int iVariable = 0; iVariable < nVariables; ++ iVariable)
+            {
+                surfacesFlowFile << setw(wordWidth) << qGlobalProbes[iSurface][iProbe][iVariable] << "	";
+            }
+
+            RDouble step_time = PHSPACE::TIME_SPACE::GetWallTime(); 
+            surfacesFlowFile << setw(wordWidth) << step_time << endl;
+        }
+
+        CloseFile(surfacesFlowFile);
+    }
+
+    delete [] probesReorderCoordinates;
+    delete [] qGlobalProbes;
+    probesReorderCoordinates = NULL;
+    qGlobalProbes = NULL;
 }
 
 }

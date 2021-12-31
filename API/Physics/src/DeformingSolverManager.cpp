@@ -17,63 +17,63 @@ namespace PHSPACE
 
 DeformingParameter::DeformingParameter()
 {
-	numberOfParameters = 0;
-	//parameters = 0; 
+    numberOfParameters = 0;
+    //parameters = 0; 
 }
 
 DeformingParameter::~DeformingParameter()
 {
-	//delete [] parameters;
+    //delete [] parameters;
 }
 
 DeformingParameter & DeformingParameter::operator = ( const DeformingParameter & rhs )
 {
     if ( this == & rhs ) return * this;
 
-	numberOfParameters = rhs.numberOfParameters;
-	parameters = rhs.parameters;
+    numberOfParameters = rhs.numberOfParameters;
+    parameters = rhs.parameters;
 
     return * this;
 }
 
 bool DeformingParameter::operator == ( const DeformingParameter & rhs )
 {
-	if ( this == & rhs ) return true;
+    if ( this == & rhs ) return true;
 
-	if ( numberOfParameters != rhs.numberOfParameters )
-	{
-		return false;
-	}
+    if ( numberOfParameters != rhs.numberOfParameters )
+    {
+        return false;
+    }
 
-	const RDouble eps = 1.0e-7;
-	for ( int iParameter = 0; iParameter < numberOfParameters; ++ iParameter )
-	{
-		if ( PHSPACE::ABS( parameters[ iParameter ] - rhs.parameters[ iParameter ] ) > eps )
-		{
-			return false;
-		}
-	}
-	return true;
+    const RDouble eps = 1.0e-7;
+    for ( int iParameter = 0; iParameter < numberOfParameters; ++ iParameter )
+    {
+        if ( PHSPACE::ABS( parameters[ iParameter ] - rhs.parameters[ iParameter ] ) > eps )
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 void DeformingParameter::SetParameters(PHVectorRDouble1D& parameterVector )
 {
-	//delete [] parameters;
+    //delete [] parameters;
 
-	numberOfParameters = parameterVector.size();
-	parameters.resize( numberOfParameters );
+    numberOfParameters = parameterVector.size();
+    parameters.resize( numberOfParameters );
 
-	for ( int iParameter = 0; iParameter < numberOfParameters; ++ iParameter )
-	{
-		parameters[ iParameter ] = parameterVector[ iParameter ];
-	}
+    for ( int iParameter = 0; iParameter < numberOfParameters; ++ iParameter )
+    {
+        parameters[ iParameter ] = parameterVector[ iParameter ];
+    }
 }
 
 DeformingParameter * GetDeformingParameter( int bodyIndex )
 {
-	DeformingParameter * tmp = new DeformingParameter;
+    DeformingParameter * tmp = new DeformingParameter;
 
-	return tmp;
+    return tmp;
 }
 
 DeformingSolverManager::DeformingSolverManager()

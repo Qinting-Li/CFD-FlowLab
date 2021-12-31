@@ -87,7 +87,7 @@ private:
     vector<Grid *> OrdinaryGrid;
     //Grid ** OrdinaryGrid;
     vector<DataContainer *> Gridlist;
-    DataContainer * gridinfo;
+    DataContainer *gridinfo;
     /*vector<Grid *> MirrorGrids;
     Grid ** OutputGrid;*/
 };

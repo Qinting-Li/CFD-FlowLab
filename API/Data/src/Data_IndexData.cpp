@@ -17,7 +17,7 @@ Data_IndexData::~Data_IndexData()
 {
 }
 
-bool Data_IndexData::operator < (const Data_IndexData & rhs) const
+bool Data_IndexData::operator < (const Data_IndexData &rhs) const
 {
     return name < rhs.name;
 }

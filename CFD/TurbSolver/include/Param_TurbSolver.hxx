@@ -1,6 +1,6 @@
 inline RDouble Param_TurbSolver::GetTurbCFLScale() const
 {
-	return turbCFLScale;
+    return turbCFLScale;
 }
 
 inline int Param_TurbSolver::GetDESType() const
@@ -23,9 +23,9 @@ inline int Param_TurbSolver::GetSSTProductType() const
     return SSTProductType;
 }
 
-inline int Param_TurbSolver::GetNTurbulentEquation() const
+inline int Param_TurbSolver::GetNTurbulenceEquation() const
 {
-    return nTurbulentEquation;
+    return nTurbulenceEquation;
 }
 
 inline RDouble Param_TurbSolver::GetEddyViscosityLimit() const
@@ -111,6 +111,51 @@ inline RDouble Param_TurbSolver::GetKW_sigmaK1() const
 inline RDouble Param_TurbSolver::GetKW_sigmaK2() const
 {
     return KW_sigmaK2;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_ca1() const
+{
+    return transition_ca1;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_ca2() const
+{
+    return transition_ca2;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_ce1() const
+{
+    return transition_ce1;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_ce2() const
+{
+    return transition_ce2;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_dct() const
+{
+    return transition_dct;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_df() const
+{
+    return transition_df;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_cct() const
+{
+    return transition_cct;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_s1() const
+{
+    return transition_s1;
+}
+
+inline RDouble Param_TurbSolver::GetTransition_ccf() const
+{
+    return transition_ccf;
 }
 
 inline RDouble Param_TurbSolver::GetFreeStreamViscosity() const

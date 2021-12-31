@@ -34,28 +34,29 @@ void IO_FlowReader::Init()
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
 
-    if (viscousType > 1)
+    if (viscousType > LAMINAR)
     {
         IfReadTurb = true;
     }
 
-    int n_turb = 0;
+    int numberOfEquations = 0;
 
-    if (viscousType == 2)
+    if (viscousType == ALGEBRAIC)
     {
-        n_turb = 0;
+        numberOfEquations = 0;
     }
-    else if (viscousType == 3)
+    else if (viscousType == ONE_EQU)
     {
-        n_turb = 1;
+        numberOfEquations = 1;
     }
-    else if (viscousType == 4)
+    else if (viscousType == TWO_EQU)
     {
-        n_turb = 2;
+        numberOfEquations = 2;
+        int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
+        numberOfEquations += transitionType;
     }
 
-    GlobalDataBase::UpdateData("n_turb", &n_turb, PHINT, 1);
-
+    GlobalDataBase::UpdateData("n_turb", &numberOfEquations, PHINT, 1);
 
     int nLocalZones = GetNumberofLocalZones();
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
@@ -93,9 +94,6 @@ void IO_FlowReader::InitMemoryStr(Grid *grid_in)
     int nm    = GlobalDataBase::GetIntParaFromDB("nm");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
     int neqn  = nm + nchem;
-
-    int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-    int nDim = GetDim();
 
     Range M(0, neqn - 1);
 
@@ -149,7 +147,6 @@ void IO_FlowReader::ReadFlowFile()
         int recv_proc = GetZoneProcessorID(izone);
 
         int myid = GetCurrentProcessorID();
-        int tag = izone;
 
         DataContainer *flowData = new DataContainer();
         
@@ -197,8 +194,6 @@ void IO_FlowReader::ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData)
     int nBoundFace = grid->GetNBoundFace();
     int nTotalCell = grid->GetNTotalCell();
     int nTotal = nTotalCell + nBoundFace;
-
-    int nIFace = grid->GetNIFace();
 
     RFloat **q = reinterpret_cast<RFloat **>(grid->GetDataPtr("q"));
 
@@ -263,7 +258,6 @@ void IO_FlowReader::ReadTurbFile()
         int recv_proc = GetZoneProcessorID(izone);
 
         int myid = GetCurrentProcessorID();
-        int tag = izone;
 
         DataContainer *flowData = new DataContainer();
         if (myid == send_proc)
@@ -313,8 +307,6 @@ void IO_FlowReader::ReadTurbFileStr(Grid *grid_in, DataContainer *flowData)
     int outnstepofTurb = 0;
     flowData->read(&outnstepofTurb, sizeof(int));
 
-    int outnstepofNS = GlobalDataBase::GetIntParaFromDB("outnstep");
-
     for (int m = mst; m <= med; ++ m)
     {
         for (int k = kst; k <= ked; ++ k)
@@ -345,8 +337,6 @@ void IO_FlowReader::ReadTurbFileUnStr(Grid *grid_in, DataContainer *flowData)
     flowData->moveto_begin();
     int outnstepofTurb = 0;
     flowData->read(&outnstepofTurb, sizeof(int));
-
-    int outnstepofNS = GlobalDataBase::GetIntParaFromDB("outnstep");
 
     for (int m = 0; m < n_turb; ++ m)
     {

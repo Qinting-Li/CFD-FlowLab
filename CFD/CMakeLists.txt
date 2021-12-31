@@ -42,20 +42,17 @@ if(USE_SMARTARRAY)
   message(STATUS "USE_SMARTARRAY is turned on!")
   add_definitions(-DUSE_SMARTARRAY)
 endif()
-if(USE_ARRAY_OPT)
-  message(STATUS "USE_ARRAY_OPT is turned on!")
-  add_definitions(-DUSE_ARRAY_OPT)
-endif()
 if(WIN32)
 if(USE_Windows_X64)
   message(STATUS "USE_Windows_X64 is turned on!")
   add_definitions(-DUSE_WINDOWS_X64)
 endif(USE_Windows_X64)
 endif(WIN32)
-if(USE_SpecDiffHybSolver)
-  message(STATUS "USE_SpecDiffHybSolver is turned on!")
+if(BUILD_SpecDiffHybSolver)
+  message(STATUS "BUILD_SpecDiffHybSolver is turned on!")
   add_definitions(-DUSE_SpecDiffHybSolver)
 endif()
+
 #1. output message:
 message(STATUS "") 
 message(STATUS "--- Enter subdirectory <CFD>, Start to call ${CMAKE_CURRENT_LIST_FILE} ---") 
@@ -64,13 +61,13 @@ message(STATUS "This current source directory is ${CMAKE_CURRENT_SOURCE_DIR}.")
 
 if(WIN32)
 if(USE_Windows_X64)
-	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
+  set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
   set(CMAKE_EXE_LINKER_FLAGS "/machine:x64")
 else(USE_Windows_X64)
-	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
+  set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
 endif(USE_Windows_X64)
 else(WIN32)
-	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+  set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 endif(WIN32)
 link_directories("${LIB_API_EXPORT_PATH}")
 
@@ -119,11 +116,6 @@ includeHeadFiles()
 
 set(HDF5_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
-
-if(USE_TecplotLib)
-set(TECIO_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
-include_directories("${TECIO_H_PATH}")
-endif(USE_TecplotLib)
 
 set(MEITIS_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
@@ -185,6 +177,7 @@ set(TurbSOLVER_H_LIST
 ${TurbSOLVER_H_PATH}/TurbSolver.h
 ${TurbSOLVER_H_PATH}/TurbSolverStruct.h
 ${TurbSOLVER_H_PATH}/TurbSolverUnstr.h
+${TurbSOLVER_H_PATH}/Transition.h
 ${TurbSOLVER_H_PATH}/LESSolver.h
 ${TurbSOLVER_H_PATH}/LESSolverStruct.h
 ${TurbSOLVER_H_PATH}/LESSolverUnstr.h
@@ -205,6 +198,7 @@ ${TurbSOLVER_CPP_PATH}/TurbSolver.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverStructFD.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverUnstr.cpp
+${TurbSOLVER_CPP_PATH}/Transition.cpp
 ${TurbSOLVER_CPP_PATH}/LESSolver.cpp
 ${TurbSOLVER_CPP_PATH}/LESSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/LESSolverUnstr.cpp
@@ -250,14 +244,14 @@ ${HOSOLVERUNSTRUCT_CPP_PATH}/HOStandardElement.cpp
 )
 source_group(HOSolverUnstruct\\src FILES ${HOSOLVERUNSTRUCT_CPP_LIST})
 
-# Build In-house version:
 
 
 # set directory of SpecDiffHybSolver:
-if(USE_SpecDiffHybSolver)
+if(BUILD_SpecDiffHybSolver)
 set(SpecDiffHybSolver_H_PATH SpecDiffHybSolver/include)
 set(SpecDiffHybSolver_H_LIST
 ${SpecDiffHybSolver_H_PATH}/SpecDiffHybSolver.h
+${SpecDiffHybSolver_H_PATH}/SpecGrid.h
 ${SpecDiffHybSolver_H_PATH}/SpecDiffHybGrid.h
 ${SpecDiffHybSolver_H_PATH}/ExplicitDifferenceBoundary.h
 ${SpecDiffHybSolver_H_PATH}/CompactDifferenceFirstDerivative.h
@@ -271,6 +265,10 @@ ${SpecDiffHybSolver_H_PATH}/p3dfft.h
 ${SpecDiffHybSolver_H_PATH}/fftw3.h
 ${SpecDiffHybSolver_H_PATH}/SpecDiffHybFieldView.h
 ${SpecDiffHybSolver_H_PATH}/LES.h
+${SpecDiffHybSolver_H_PATH}/SpecSolver.h
+${SpecDiffHybSolver_H_PATH}/Spectrum.h
+${SpecDiffHybSolver_H_PATH}/Param_SpecSolver.h
+${SpecDiffHybSolver_H_PATH}/Param_SpecDiffHybSolver.h
 )
 source_group(SpecDiffHybSolver\\include FILES ${SpecDiffHybSolver_H_LIST})
 include_directories(${SpecDiffHybSolver_H_PATH})
@@ -278,6 +276,7 @@ include_directories(${SpecDiffHybSolver_H_PATH})
 set(SpecDiffHybSolver_CPP_PATH SpecDiffHybSolver/src)
 set(SpecDiffHybSolver_CPP_LIST
 ${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybSolver.cpp
+${SpecDiffHybSolver_CPP_PATH}/SpecGrid.cpp
 ${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybGrid.cpp
 ${SpecDiffHybSolver_CPP_PATH}/ExplicitDifferenceBoundary.cpp
 ${SpecDiffHybSolver_CPP_PATH}/CompactDifferenceFirstDerivative.cpp
@@ -288,9 +287,32 @@ ${SpecDiffHybSolver_CPP_PATH}/RescaleField.cpp
 ${SpecDiffHybSolver_CPP_PATH}/Statistics.cpp
 ${SpecDiffHybSolver_CPP_PATH}/SpecDiffHybFieldView.cpp
 ${SpecDiffHybSolver_CPP_PATH}/LES.cpp
+${SpecDiffHybSolver_CPP_PATH}/SpecSolver.cpp
+${SpecDiffHybSolver_CPP_PATH}/Spectrum.cpp
+${SpecDiffHybSolver_CPP_PATH}/Param_SpecSolver.cpp
+${SpecDiffHybSolver_CPP_PATH}/Param_SpecDiffHybSolver.cpp
 )
 source_group(SpecDiffHybSolver\\src FILES ${SpecDiffHybSolver_CPP_LIST})
-endif(USE_SpecDiffHybSolver)
+endif(BUILD_SpecDiffHybSolver)
+
+# set directory of DemoSolver:
+if(BUILD_DEMOSOLVER)
+set(DEMOSOLVER_H_PATH DemoSolver/include)
+set(DEMOSOLVER_H_LIST
+${DEMOSOLVER_H_PATH}/DemoSolver.h
+${DEMOSOLVER_H_PATH}/Param_DemoSolver.h
+)
+source_group(DemoSolver\\include FILES ${DEMOSOLVER_H_LIST})
+include_directories(${DEMOSOLVER_H_PATH})
+
+set(DEMOSOLVER_CPP_PATH DemoSolver/src)
+set(DEMOSOLVER_CPP_LIST
+${DEMOSOLVER_CPP_PATH}/DemoSolver.cpp
+${DEMOSOLVER_CPP_PATH}/Param_DemoSolver.cpp
+)
+source_group(DemoSolver\\src FILES ${DEMOSOLVER_CPP_LIST})
+endif(BUILD_DEMOSOLVER)
+
 #20.1 set header file list
 set(CFD_HEAD_LIST 
 ${SOLVER_H_LIST}
@@ -298,13 +320,24 @@ ${NSSOLVER_H_LIST}
 ${TurbSOLVER_H_LIST}
 ${SpecDiffHybSolver_H_LIST}
 ${HOSOLVERUNSTRUCT_H_LIST}
+${DEMOSOLVER_H_LIST}
 )
 
 # add INHOUSE_VERSION_H_LIST
 
 # add SpecDiffHybSolver_H_LIST
-if(USE_SpecDiffHybSolver)
+if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_HEAD_LIST ${SpecDiffHybSolver_H_LIST})
+endif()
+
+# add IncompressibleSolver_H_LIST
+if(BUILD_IncompressibleSolver)
+list(APPEND CFD_HEAD_LIST ${IncompressibleSolver_H_LIST} )
+endif(BUILD_IncompressibleSolver)
+
+# add DEMOSOLVER_H_LIST
+if(BUILD_DEMOSOLVER)
+list(APPEND CFD_HEAD_LIST ${DEMOSOLVER_H_LIST})
 endif()
 
 #20.2 set source file list:
@@ -314,14 +347,25 @@ ${NSSOLVER_CPP_LIST}
 ${TurbSOLVER_CPP_LIST}
 ${SpecDiffHybSolver_CPP_LIST}
 ${HOSOLVERUNSTRUCT_CPP_LIST}
+${DEMOSOLVER_CPP_LIST}
+
 )
 # add INHOUSE_VERSION_CPP_LIST
 
 # add SpecDiffHybSolver_CPP_LIST
-if(USE_SpecDiffHybSolver)
+if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_CPP_LIST ${SpecDiffHybSolver_CPP_LIST})
 endif()
 
+# add IncompressibleSolver_CPP_LIST
+if(BUILD_IncompressibleSolver)
+list(APPEND CFD_CPP_LIST ${IncompressibleSolver_CPP_LIST} )
+endif(BUILD_IncompressibleSolver)
+
+# add DEMOSOLVER_CPP_LIST
+if(BUILD_DEMOSOLVER)
+list(APPEND CFD_CPP_LIST ${DEMOSOLVER_CPP_LIST})
+endif()
 #21. adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
 
@@ -348,23 +392,23 @@ if(USE_OCC)
   
   # Check if all the library exist -- it's need to be checked. 
   foreach(OCC ${OCC_LIBS_REQUIRED})     
-	  list(APPEND OCC_LIBS ${OCC})
+      list(APPEND OCC_LIBS ${OCC})
       unset(OCC CACHE)
   endforeach(OCC)
   
   if(WIN32)           
-    MESSAGE(STATUS "Using Win32 OpenCasCade.")	
+    MESSAGE(STATUS "Using Win32 OpenCasCade.")
     MESSAGE(STATUS "${OCC_LIB_PATH}/lib")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")	
+    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")
     link_directories("${OCC_LIB_PATH}/lib")
     link_directories("${OCC_LIB_PATH}/bin") 
-	include_directories("${OCC_LIB_PATH}/inc")
+    include_directories("${OCC_LIB_PATH}/inc")
   else(WIN32)
     MESSAGE(STATUS "Using NON-Win32 OpenCasCade.")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")	
-    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")	         
-    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib") 
-    include_directories("${OCC_LIB_PATH}/inc")        
+    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")
+    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")
+    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib")
+    include_directories("${OCC_LIB_PATH}/inc")
   endif(WIN32)
 endif()
 
@@ -390,27 +434,50 @@ endif()
 set(API_TARGET_NAME "PHAPI")
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5)
 
-if(USE_OVERSET)
-  list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME}  nebula)
-endif(USE_OVERSET)
-
-if(USE_TecplotLib)
-  list(APPEND LINK_LIBRARY_LIST tecio)
-endif(USE_TecplotLib)
 
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST msmpi)
 endif(WIN32)
 
-if(USE_SpecDiffHybSolver)
+if(BUILD_SpecDiffHybSolver)
   list(APPEND LINK_LIBRARY_LIST p3dfft fftw3 mpifort gfortran)
-endif(USE_SpecDiffHybSolver)
+endif(BUILD_SpecDiffHybSolver)
 
 target_link_libraries(${CFD_TARGET_NAME} ${LINK_LIBRARY_LIST})
 
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
-# For UGKS
+
+# For OpenMP
+find_package ( OpenMP )
+if ( OpenMP_FOUND )
+
+if(WIN32)
+target_include_directories ( ${CFD_TARGET_NAME}
+    PRIVATE
+        ${OpenMP_CXX_INCLUDE_DIRS}
+)
+
+target_compile_options ( ${CFD_TARGET_NAME}
+    PRIVATE
+        ${OpenMP_CXX_FLAGS}
+)
+
+target_compile_features ( ${CFD_TARGET_NAME}
+    PUBLIC 
+        cxx_std_14
+)
+
+target_link_libraries ( ${CFD_TARGET_NAME}
+    PRIVATE 
+        ${OpenMP_CXX_LIBRARIES}
+)
+else(WIN32) 
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif(WIN32)
+endif (OpenMP_FOUND)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")

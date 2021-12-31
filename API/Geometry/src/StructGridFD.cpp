@@ -2,8 +2,8 @@
 #include "Geo_UnstructGrid.h"
 #include "Constants.h"
 #include "Geo_MultiGridInfo_Struct.h"
-#include "BC.h"
-#include "BC_Struct.h"
+#include "Geo_SimpleBC.h"
+#include "Geo_StructBC.h"
 #include "Geo_Interface.h"
 #include "Geo_Interpoint.h"
 #include "Geo_NodeTopo_Struct.h"
@@ -46,149 +46,145 @@ void StructGrid::ComputeMetricsStructHighOrder2D(ActionKey *actkey)
         ComputeMetricsStructHighOrder2D_HDCS(actkey);
         return;
     }
-	int ni = this->GetNI();
-	int nj = this->GetNJ();
-	int nk = this->GetNK();
+    int ni = this->GetNI();
+    int nj = this->GetNJ();
+    int nk = this->GetNK();
 
-	int ist =  1;
-	int ied = ni;
-	int jst =  1;
-	int jed = nj;
-	int kst =  1;
-	int ked = nk;
+    int ist =  1;
+    int ied = ni;
+    int jst =  1;
+    int jed = nj;
 
-	int ni2 = 2 * ni - 1;
-	int nj2 = 2 * nj - 1;
-	int nk2 = 2 * nk - 1;
+    int ni2 = 2 * ni - 1;
+    int nj2 = 2 * nj - 1;
+    int nk2 = 2 * nk - 1;
 
-	int i2st =   1;
-	int i2ed = ni2;
-	int j2st =   1;
-	int j2ed = nj2;
-	int k2st =   1;
-	int k2ed = nk2;
+    int i2st =   1;
+    int i2ed = ni2;
+    int j2st =   1;
+    int j2ed = nj2;
 
-	RDouble3D &x2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-	RDouble3D &y2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-	RDouble3D &z2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-	
-	RDouble3D &xx = *this->GetStructX();
+    RDouble3D &x2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble3D &y2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble3D &z2 = *new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    
+    RDouble3D &xx = *this->GetStructX();
     RDouble3D &yy = *this->GetStructY();
     RDouble3D &zz = *this->GetStructZ();
 
-	//! grid refined block by block
+    //! grid refined block by block
 
-	int i, j, k, i2, j2, k2;
-	
-	k  = 1;
-	k2 = 1;
+    int i, j, k, i2, j2, k2;
+    
+    k  = 1;
+    k2 = 1;
 
-	//! grid refined : copy primitive grid
+    //! grid refined : copy primitive grid
 
-	for (j = jst; j <= jed; ++ j)
-	{
-		j2 = 2 * j - 1;
-		for (i = ist; i <= ied; ++ i)
-		{
-			i2 = 2 * i - 1;
-			x2(i2, j2, k2) = xx(i, j, k);
-			y2(i2, j2, k2) = yy(i, j, k);
-			z2(i2, j2, k2) = zz(i, j, k);
-		}
-	}
+    for (j = jst; j <= jed; ++ j)
+    {
+        j2 = 2 * j - 1;
+        for (i = ist; i <= ied; ++ i)
+        {
+            i2 = 2 * i - 1;
+            x2(i2, j2, k2) = xx(i, j, k);
+            y2(i2, j2, k2) = yy(i, j, k);
+            z2(i2, j2, k2) = zz(i, j, k);
+        }
+    }
 
-	//! grid refined : I direction
+    //! grid refined : I direction
 
-	for (j = jst; j <= jed; ++ j)
-	{
-		j2 = 2 * j - 1;
-		for (i = ist; i <= ied - 1; ++ i)
-		{
-			i2 = 2 * i;
-			x2(i2, j2, k2) = half * (x2(i2 - 1, j2, k2) + x2(i2 + 1, j2, k2));
-			y2(i2, j2, k2) = half * (y2(i2 - 1, j2, k2) + y2(i2 + 1, j2, k2));
-			z2(i2, j2, k2) = half * (z2(i2 - 1, j2, k2) + z2(i2 + 1, j2, k2));
-		}
-	}
+    for (j = jst; j <= jed; ++ j)
+    {
+        j2 = 2 * j - 1;
+        for (i = ist; i <= ied - 1; ++ i)
+        {
+            i2 = 2 * i;
+            x2(i2, j2, k2) = half * (x2(i2 - 1, j2, k2) + x2(i2 + 1, j2, k2));
+            y2(i2, j2, k2) = half * (y2(i2 - 1, j2, k2) + y2(i2 + 1, j2, k2));
+            z2(i2, j2, k2) = half * (z2(i2 - 1, j2, k2) + z2(i2 + 1, j2, k2));
+        }
+    }
 
-	//! grid refined : J direction
+    //! grid refined : J direction
 
-	for (j = jst; j <= jed - 1; ++ j)
-	{
-		j2 = 2 * j;
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			x2(i2, j2, k2) = half * (x2(i2, j2 - 1, k2) + x2(i2, j2 + 1, k2));
-			y2(i2, j2, k2) = half * (y2(i2, j2 - 1, k2) + y2(i2, j2 + 1, k2));
-			z2(i2, j2, k2) = half * (z2(i2, j2 - 1, k2) + z2(i2, j2 + 1, k2));
-		}
-	}
+    for (j = jst; j <= jed - 1; ++ j)
+    {
+        j2 = 2 * j;
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            x2(i2, j2, k2) = half * (x2(i2, j2 - 1, k2) + x2(i2, j2 + 1, k2));
+            y2(i2, j2, k2) = half * (y2(i2, j2 - 1, k2) + y2(i2, j2 + 1, k2));
+            z2(i2, j2, k2) = half * (z2(i2, j2 - 1, k2) + z2(i2, j2 + 1, k2));
+        }
+    }
 
-	//! calculate mesh transform metrics
+    //! calculate mesh transform metrics
 
-	RDouble2D * lineData1,* lineData2;
+    RDouble2D * lineData1,* lineData2;
 
-	//! calculate mesh transform metrics : first grid delta
+    //! calculate mesh transform metrics : first grid delta
 
-	RDouble4D &gridDeltaFirst = * new RDouble4D(Range(1, 4), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble4D &gridDeltaFirst = * new RDouble4D(Range(1, 4), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
 
-	//! calculate mesh transform metrics : first grid delta (I direction)
+    //! calculate mesh transform metrics : first grid delta (I direction)
 
-	lineData1 = new RDouble2D(Range(1, 2), Range(1, ni2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 2), Range(1, ni2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 2), Range(1, ni2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 2), Range(1, ni2), fortranArray);
 
-	for (j2 = j2st; j2 <= j2ed; ++ j2)
-	{
-			
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			(*lineData1)(1, i2) = x2(i2, j2, k2);
-			(*lineData1)(2, i2) = y2(i2, j2, k2);
-		}
-			
-		GridDelta(Range(1, 2), Range(1, ni2), lineData1, lineData2);
+    for (j2 = j2st; j2 <= j2ed; ++ j2)
+    {
+            
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            (*lineData1)(1, i2) = x2(i2, j2, k2);
+            (*lineData1)(2, i2) = y2(i2, j2, k2);
+        }
+            
+        GridDelta(Range(1, 2), Range(1, ni2), lineData1, lineData2);
 
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			gridDeltaFirst(1, i2, j2, k2) = (*lineData2)(1, i2);
-			gridDeltaFirst(2, i2, j2, k2) = (*lineData2)(2, i2);
-		}
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            gridDeltaFirst(1, i2, j2, k2) = (*lineData2)(1, i2);
+            gridDeltaFirst(2, i2, j2, k2) = (*lineData2)(2, i2);
+        }
 
-	}
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform metrics : first grid delta (J direction)
+    //! calculate mesh transform metrics : first grid delta (J direction)
 
-	lineData1 = new RDouble2D(Range(1, 2), Range(1, nj2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 2), Range(1, nj2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 2), Range(1, nj2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 2), Range(1, nj2), fortranArray);
 
-	for (i2 = i2st; i2 <= i2ed; ++ i2)
-	{
-			
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			(*lineData1)(1, j2) = x2(i2, j2, k2);
-			(*lineData1)(2, j2) = y2(i2, j2, k2);
-		}
-			
-		GridDelta(Range(1, 2), Range(1, nj2), lineData1, lineData2);
+    for (i2 = i2st; i2 <= i2ed; ++ i2)
+    {
+            
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            (*lineData1)(1, j2) = x2(i2, j2, k2);
+            (*lineData1)(2, j2) = y2(i2, j2, k2);
+        }
+            
+        GridDelta(Range(1, 2), Range(1, nj2), lineData1, lineData2);
 
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			gridDeltaFirst(3, i2, j2, k2) = (*lineData2)(1, j2);
-			gridDeltaFirst(4, i2, j2, k2) = (*lineData2)(2, j2);
-		}
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            gridDeltaFirst(3, i2, j2, k2) = (*lineData2)(1, j2);
+            gridDeltaFirst(4, i2, j2, k2) = (*lineData2)(2, j2);
+        }
 
-	}
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform metrics by grid delta
+    //! calculate mesh transform metrics by grid delta
 
-	RDouble4D &xfn  = *(this->GetFaceNormalX());
+    RDouble4D &xfn  = *(this->GetFaceNormalX());
     RDouble4D &yfn  = *(this->GetFaceNormalY());
     RDouble4D &zfn  = *(this->GetFaceNormalZ());
     RDouble4D &area = *(this->GetFaceArea());
@@ -204,146 +200,146 @@ void StructGrid::ComputeMetricsStructHighOrder2D(ActionKey *actkey)
     yfv = 0.0;
     zfv = 0.0;
 
-	RDouble vkc[2],vet[2],vkcn[3],vetn[3];
+    RDouble vkc[2],vet[2],vkcn[3],vetn[3];
 
-	//! calculate mesh transform metrics by grid delta (I direction)
+    //! calculate mesh transform metrics by grid delta (I direction)
 
-	for (j = 1; j <= nj - 1; ++ j)
-	{
-		j2 = 2 * j;
+    for (j = 1; j <= nj - 1; ++ j)
+    {
+        j2 = 2 * j;
 
-		for (i = 1; i <= ni; ++ i)
-		{
+        for (i = 1; i <= ni; ++ i)
+        {
 
-			i2 = 2 * i - 1;
+            i2 = 2 * i - 1;
 
-			vkc[0] =   gridDeltaFirst(4, i2, j2, k2);
-			vkc[1] = - gridDeltaFirst(3, i2, j2, k2);
+            vkc[0] =   gridDeltaFirst(4, i2, j2, k2);
+            vkc[1] = - gridDeltaFirst(3, i2, j2, k2);
 
             xfv(i, j, k, IDX::IKES) = vkc[0];
-			yfv(i, j, k, IDX::IKES) = vkc[1];
-			zfv(i, j, k, IDX::IKES) = zero  ;
+            yfv(i, j, k, IDX::IKES) = vkc[1];
+            zfv(i, j, k, IDX::IKES) = zero  ;
             
-			NormalizeVector(vkc,vkcn, 2);
+            NormalizeVector(vkc,vkcn, 2);
 
-			area(i, j, k, IDX::IKES) = vkcn[2];
-			xfn (i, j, k, IDX::IKES) = vkcn[0];
-			yfn (i, j, k, IDX::IKES) = vkcn[1];
-			zfn (i, j, k, IDX::IKES) = zero   ;
+            area(i, j, k, IDX::IKES) = vkcn[2];
+            xfn (i, j, k, IDX::IKES) = vkcn[0];
+            yfn (i, j, k, IDX::IKES) = vkcn[1];
+            zfn (i, j, k, IDX::IKES) = zero   ;
 
-		}
-	}
+        }
+    }
 
-	//! calculate mesh transform metrics by grid delta (J direction)
+    //! calculate mesh transform metrics by grid delta (J direction)
 
-	for (i = 1; i <= ni - 1; ++ i)
-	{
-		i2 = 2 * i;
+    for (i = 1; i <= ni - 1; ++ i)
+    {
+        i2 = 2 * i;
 
-		for (j = 1; j <= nj; ++ j)
-		{
+        for (j = 1; j <= nj; ++ j)
+        {
 
-			j2 = 2 * j - 1;
+            j2 = 2 * j - 1;
 
-			vet[0] = - gridDeltaFirst(2, i2, j2, k2);
-			vet[1] =   gridDeltaFirst(1, i2, j2, k2);
+            vet[0] = - gridDeltaFirst(2, i2, j2, k2);
+            vet[1] =   gridDeltaFirst(1, i2, j2, k2);
 
-			xfv(i, j, k, IDX::IETA) = vet[0];
-			yfv(i, j, k, IDX::IETA) = vet[1];
-			zfv(i, j, k, IDX::IETA) = zero  ;
+            xfv(i, j, k, IDX::IETA) = vet[0];
+            yfv(i, j, k, IDX::IETA) = vet[1];
+            zfv(i, j, k, IDX::IETA) = zero  ;
 
-			NormalizeVector(vet,vetn, 2);
+            NormalizeVector(vet,vetn, 2);
 
-			area(i, j, k, IDX::IETA) = vetn[2];
-			xfn (i, j, k, IDX::IETA) = vetn[0];
-			yfn (i, j, k, IDX::IETA) = vetn[1];
-			zfn (i, j, k, IDX::IETA) = zero   ;
+            area(i, j, k, IDX::IETA) = vetn[2];
+            xfn (i, j, k, IDX::IETA) = vetn[0];
+            yfn (i, j, k, IDX::IETA) = vetn[1];
+            zfn (i, j, k, IDX::IETA) = zero   ;
 
-		}
-	}
+        }
+    }
 
-	//! calculate mesh transform Jacobian : second grid delta
+    //! calculate mesh transform Jacobian : second grid delta
 
-	RDouble4D &gridDeltaSecond = * new RDouble4D(Range(1, 2),Range(1, ni2),Range(1, nj2),Range(1, nk2), fortranArray);
+    RDouble4D &gridDeltaSecond = * new RDouble4D(Range(1, 2),Range(1, ni2),Range(1, nj2),Range(1, nk2), fortranArray);
 
-	//! calculate mesh transform Jacobian : second grid delta (I direction)
+    //! calculate mesh transform Jacobian : second grid delta (I direction)
 
-	lineData1 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
 
-	for (j2 = j2st; j2 <= j2ed; ++ j2)
-	{
-			
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			(*lineData1)(1, i2) =   x2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2)
-				                 - y2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2);
-		}
-			
-		GridDelta(Range(1, 1), Range(1, ni2), lineData1, lineData2);
+    for (j2 = j2st; j2 <= j2ed; ++ j2)
+    {
+            
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            (*lineData1)(1, i2) =   x2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2)
+                                 - y2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2);
+        }
+            
+        GridDelta(Range(1, 1), Range(1, ni2), lineData1, lineData2);
 
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			gridDeltaSecond(1, i2, j2, k2) = (*lineData2)(1, i2);
-		}
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            gridDeltaSecond(1, i2, j2, k2) = (*lineData2)(1, i2);
+        }
 
-	}
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform Jacobian : second grid delta (J direction)
+    //! calculate mesh transform Jacobian : second grid delta (J direction)
 
-	lineData1 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
 
-	for (i2 = i2st; i2 <= i2ed; ++ i2)
-	{
-			
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			(*lineData1)(1, j2) = - x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2)
-					             + y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2);
-		}
-			
-		GridDelta(Range(1, 1), Range(1, nj2), lineData1, lineData2);
+    for (i2 = i2st; i2 <= i2ed; ++ i2)
+    {
+            
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            (*lineData1)(1, j2) = - x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2)
+                                 + y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2);
+        }
+            
+        GridDelta(Range(1, 1), Range(1, nj2), lineData1, lineData2);
 
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			gridDeltaSecond(2, i2, j2, k2) = (*lineData2)(1, j2);
-		}
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            gridDeltaSecond(2, i2, j2, k2) = (*lineData2)(1, j2);
+        }
 
-	}
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	delete &x2;
-	delete &y2;
-	delete &z2;
+    delete &x2;
+    delete &y2;
+    delete &z2;
 
-	delete &gridDeltaFirst;
+    delete &gridDeltaFirst;
 
-	//! calculate mesh transform Jacobian by second grid delta
+    //! calculate mesh transform Jacobian by second grid delta
 
     RDouble3D &vol  = *(this->GetCellVolume());
-	int ZoneID = this->GetZoneID();
+    int ZoneID = this->GetZoneID();
     int imin, jmin, kmin, imax, jmax, kmax;
     RDouble vv,volmin,volmax;
 
     volmin =   LARGE;
-	volmax = - LARGE;
+    volmax = - LARGE;
 
     std::ostringstream oss;
 
-	for (j = 1; j <= nj - 1; ++ j)
-	{
-		j2 = 2 * j;
-		for (i = 1; i <= ni - 1; ++ i)
-		{
-			i2 = 2 * i;
-			vv = half * (gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(2, i2, j2, k2));
-			vol(i, j, k) = vv;
+    for (j = 1; j <= nj - 1; ++ j)
+    {
+        j2 = 2 * j;
+        for (i = 1; i <= ni - 1; ++ i)
+        {
+            i2 = 2 * i;
+            vv = half * (gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(2, i2, j2, k2));
+            vol(i, j, k) = vv;
 
             if (vv <= zero)
             {
@@ -366,14 +362,14 @@ void StructGrid::ComputeMetricsStructHighOrder2D(ActionKey *actkey)
                 kmax = k;
             }
 
-		}
-	}
+        }
+    }
 
-	delete &gridDeltaSecond;
+    delete &gridDeltaSecond;
     GhostCell3D(vol, ni, nj, 1);
     GhostMetrics2D();
     ComputeCellCenter();
-	StreamToActionKey(actkey, oss);
+    StreamToActionKey(actkey, oss);
 }
 
 void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
@@ -384,329 +380,329 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
         ComputeMetricsStructHighOrder3D_HDCS(actkey);
         return;
     }
-	int ni = this->GetNI();
-	int nj = this->GetNJ();
-	int nk = this->GetNK();
+    int ni = this->GetNI();
+    int nj = this->GetNJ();
+    int nk = this->GetNK();
 
-	int ist =  1;
-	int ied = ni;
-	int jst =  1;
-	int jed = nj;
-	int kst =  1;
-	int ked = nk;
+    int ist =  1;
+    int ied = ni;
+    int jst =  1;
+    int jed = nj;
+    int kst =  1;
+    int ked = nk;
 
-	int ni2 = 2 * ni - 1;
-	int nj2 = 2 * nj - 1;
-	int nk2 = 2 * nk - 1;
+    int ni2 = 2 * ni - 1;
+    int nj2 = 2 * nj - 1;
+    int nk2 = 2 * nk - 1;
 
-	int i2st =   1;
-	int i2ed = ni2;
-	int j2st =   1;
-	int j2ed = nj2;
-	int k2st =   1;
-	int k2ed = nk2;
-	
-	RDouble3D &x2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-	RDouble3D &y2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-	RDouble3D &z2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-	
-	RDouble3D &xx = * this->GetStructX();
+    int i2st =   1;
+    int i2ed = ni2;
+    int j2st =   1;
+    int j2ed = nj2;
+    int k2st =   1;
+    int k2ed = nk2;
+    
+    RDouble3D &x2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble3D &y2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble3D &z2 = * new RDouble3D(Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    
+    RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
-	//! grid refined block by block
+    //! grid refined block by block
 
-	int i, j, k, i2, j2, k2;
+    int i, j, k, i2, j2, k2;
 
-	//! grid refined : copy primitive grid
+    //! grid refined : copy primitive grid
 
-	for (k = kst; k <= ked; ++ k)
-	{
-		k2 = 2 * k - 1;
-		for (j = jst; j <= jed; ++ j)
-		{
-			j2 = 2 * j - 1;
-			for (i = ist; i <= ied; ++ i)
-			{
-				i2 = 2 * i - 1;
-				x2(i2, j2, k2) = xx(i, j, k);
-				y2(i2, j2, k2) = yy(i, j, k);
-				z2(i2, j2, k2) = zz(i, j, k);
-			}
-		}
-	}
+    for (k = kst; k <= ked; ++ k)
+    {
+        k2 = 2 * k - 1;
+        for (j = jst; j <= jed; ++ j)
+        {
+            j2 = 2 * j - 1;
+            for (i = ist; i <= ied; ++ i)
+            {
+                i2 = 2 * i - 1;
+                x2(i2, j2, k2) = xx(i, j, k);
+                y2(i2, j2, k2) = yy(i, j, k);
+                z2(i2, j2, k2) = zz(i, j, k);
+            }
+        }
+    }
 
-	//! grid refined : I direction
+    //! grid refined : I direction
 
-	for (k = kst; k <= ked; ++ k)
-	{
-		k2 = 2 * k - 1;
-		for (j = jst; j <= jed; ++ j)
-		{
-			j2 = 2 * j - 1;
-			for (i = ist; i <= ied - 1; ++ i)
-			{
-				i2 = 2 * i;
-				x2(i2, j2, k2) = half * (x2(i2 - 1, j2, k2) + x2(i2 + 1, j2, k2));
-				y2(i2, j2, k2) = half * (y2(i2 - 1, j2, k2) + y2(i2 + 1, j2, k2));
-				z2(i2, j2, k2) = half * (z2(i2 - 1, j2, k2) + z2(i2 + 1, j2, k2));
-			}
-		}
-	}
+    for (k = kst; k <= ked; ++ k)
+    {
+        k2 = 2 * k - 1;
+        for (j = jst; j <= jed; ++ j)
+        {
+            j2 = 2 * j - 1;
+            for (i = ist; i <= ied - 1; ++ i)
+            {
+                i2 = 2 * i;
+                x2(i2, j2, k2) = half * (x2(i2 - 1, j2, k2) + x2(i2 + 1, j2, k2));
+                y2(i2, j2, k2) = half * (y2(i2 - 1, j2, k2) + y2(i2 + 1, j2, k2));
+                z2(i2, j2, k2) = half * (z2(i2 - 1, j2, k2) + z2(i2 + 1, j2, k2));
+            }
+        }
+    }
 
-	//! grid refined : J direction
+    //! grid refined : J direction
 
-	for (k = kst; k <= ked; ++ k)
-	{
-		k2 = 2 * k - 1;
-		for (j = jst; j <= jed - 1; ++ j)
-		{
-			j2 = 2 * j;
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				x2(i2, j2, k2) = half * (x2(i2, j2 - 1, k2) + x2(i2, j2 + 1, k2));
-				y2(i2, j2, k2) = half * (y2(i2, j2 - 1, k2) + y2(i2, j2 + 1, k2));
-				z2(i2, j2, k2) = half * (z2(i2, j2 - 1, k2) + z2(i2, j2 + 1, k2));
-			}
-		}
-	}
+    for (k = kst; k <= ked; ++ k)
+    {
+        k2 = 2 * k - 1;
+        for (j = jst; j <= jed - 1; ++ j)
+        {
+            j2 = 2 * j;
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                x2(i2, j2, k2) = half * (x2(i2, j2 - 1, k2) + x2(i2, j2 + 1, k2));
+                y2(i2, j2, k2) = half * (y2(i2, j2 - 1, k2) + y2(i2, j2 + 1, k2));
+                z2(i2, j2, k2) = half * (z2(i2, j2 - 1, k2) + z2(i2, j2 + 1, k2));
+            }
+        }
+    }
 
-	//! grid refined : K direction
+    //! grid refined : K direction
 
-	for (k = kst; k <= ked - 1; ++ k)
-	{
-		k2 = 2 * k;
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				x2(i2, j2, k2) = half * (x2(i2, j2, k2-1) + x2(i2, j2, k2+1));
-				y2(i2, j2, k2) = half * (y2(i2, j2, k2-1) + y2(i2, j2, k2+1));
-				z2(i2, j2, k2) = half * (z2(i2, j2, k2-1) + z2(i2, j2, k2+1));
-			}
-		}
-	}
+    for (k = kst; k <= ked - 1; ++ k)
+    {
+        k2 = 2 * k;
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                x2(i2, j2, k2) = half * (x2(i2, j2, k2-1) + x2(i2, j2, k2+1));
+                y2(i2, j2, k2) = half * (y2(i2, j2, k2-1) + y2(i2, j2, k2+1));
+                z2(i2, j2, k2) = half * (z2(i2, j2, k2-1) + z2(i2, j2, k2+1));
+            }
+        }
+    }
 
-	//! calculate mesh transform metrics
+    //! calculate mesh transform metrics
 
-	RDouble2D * lineData1,* lineData2;
+    RDouble2D * lineData1,* lineData2;
 
-	//! calculate mesh transform metrics : first grid delta
+    //! calculate mesh transform metrics : first grid delta
 
-	RDouble4D &gridDeltaFirst = * new RDouble4D(Range(1, 9), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble4D &gridDeltaFirst = * new RDouble4D(Range(1, 9), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
 
-	//! calculate mesh transform metrics : first grid delta (I direction)
+    //! calculate mesh transform metrics : first grid delta (I direction)
 
-	lineData1 = new RDouble2D(Range(1, 3), Range(1, ni2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 3), Range(1, ni2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 3), Range(1, ni2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 3), Range(1, ni2), fortranArray);
 
-	for (k2 = k2st; k2 <= k2ed; ++ k2)
-	{
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				(*lineData1)(1, i2) = x2(i2, j2, k2);
-				(*lineData1)(2, i2) = y2(i2, j2, k2);
-				(*lineData1)(3, i2) = z2(i2, j2, k2);
-			}
-			
-			GridDelta(Range(1, 3), Range(1, ni2), lineData1, lineData2);
+    for (k2 = k2st; k2 <= k2ed; ++ k2)
+    {
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                (*lineData1)(1, i2) = x2(i2, j2, k2);
+                (*lineData1)(2, i2) = y2(i2, j2, k2);
+                (*lineData1)(3, i2) = z2(i2, j2, k2);
+            }
+            
+            GridDelta(Range(1, 3), Range(1, ni2), lineData1, lineData2);
 
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				gridDeltaFirst(1, i2, j2, k2) = (*lineData2)(1, i2);
-				gridDeltaFirst(2, i2, j2, k2) = (*lineData2)(2, i2);
-				gridDeltaFirst(3, i2, j2, k2) = (*lineData2)(3, i2);
-			}
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                gridDeltaFirst(1, i2, j2, k2) = (*lineData2)(1, i2);
+                gridDeltaFirst(2, i2, j2, k2) = (*lineData2)(2, i2);
+                gridDeltaFirst(3, i2, j2, k2) = (*lineData2)(3, i2);
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform metrics : first grid delta (J direction)
+    //! calculate mesh transform metrics : first grid delta (J direction)
 
-	lineData1 = new RDouble2D(Range(1, 3), Range(1, nj2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 3), Range(1, nj2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 3), Range(1, nj2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 3), Range(1, nj2), fortranArray);
 
-	for (k2 = k2st; k2 <= k2ed; ++ k2)
-	{
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			
-			for (j2 = j2st; j2 <= j2ed; ++ j2)
-			{
-				(*lineData1)(1, j2) = x2(i2, j2, k2);
-				(*lineData1)(2, j2) = y2(i2, j2, k2);
-				(*lineData1)(3, j2) = z2(i2, j2, k2);
-			}
-			
-			GridDelta(Range(1, 3), Range(1, nj2), lineData1, lineData2);
+    for (k2 = k2st; k2 <= k2ed; ++ k2)
+    {
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            
+            for (j2 = j2st; j2 <= j2ed; ++ j2)
+            {
+                (*lineData1)(1, j2) = x2(i2, j2, k2);
+                (*lineData1)(2, j2) = y2(i2, j2, k2);
+                (*lineData1)(3, j2) = z2(i2, j2, k2);
+            }
+            
+            GridDelta(Range(1, 3), Range(1, nj2), lineData1, lineData2);
 
-			for (j2 = j2st; j2 <= j2ed; ++ j2)
-			{
-				gridDeltaFirst(4, i2, j2, k2) = (*lineData2)(1, j2);
-				gridDeltaFirst(5, i2, j2, k2) = (*lineData2)(2, j2);
-				gridDeltaFirst(6, i2, j2, k2) = (*lineData2)(3, j2);
-			}
+            for (j2 = j2st; j2 <= j2ed; ++ j2)
+            {
+                gridDeltaFirst(4, i2, j2, k2) = (*lineData2)(1, j2);
+                gridDeltaFirst(5, i2, j2, k2) = (*lineData2)(2, j2);
+                gridDeltaFirst(6, i2, j2, k2) = (*lineData2)(3, j2);
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform metrics : first grid delta (K direction)
+    //! calculate mesh transform metrics : first grid delta (K direction)
 
-	lineData1 = new RDouble2D(Range(1, 3), Range(1, nk2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 3), Range(1, nk2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 3), Range(1, nk2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 3), Range(1, nk2), fortranArray);
 
-	for (j2 = j2st; j2 <= j2ed; ++ j2)
-	{
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			
-			for (k2 = k2st; k2 <= k2ed; ++ k2)
-			{
-				(*lineData1)(1, k2) = x2(i2, j2, k2);
-				(*lineData1)(2, k2) = y2(i2, j2, k2);
-				(*lineData1)(3, k2) = z2(i2, j2, k2);
-			}
-			
-			GridDelta(Range(1, 3), Range(1, nk2), lineData1, lineData2);
+    for (j2 = j2st; j2 <= j2ed; ++ j2)
+    {
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            
+            for (k2 = k2st; k2 <= k2ed; ++ k2)
+            {
+                (*lineData1)(1, k2) = x2(i2, j2, k2);
+                (*lineData1)(2, k2) = y2(i2, j2, k2);
+                (*lineData1)(3, k2) = z2(i2, j2, k2);
+            }
+            
+            GridDelta(Range(1, 3), Range(1, nk2), lineData1, lineData2);
 
-			for (k2 = k2st; k2 <= k2ed; ++ k2)
-			{
-				gridDeltaFirst(7, i2, j2, k2) = (*lineData2)(1, k2);
-				gridDeltaFirst(8, i2, j2, k2) = (*lineData2)(2, k2);
-				gridDeltaFirst(9, i2, j2, k2) = (*lineData2)(3, k2);
-			}
+            for (k2 = k2st; k2 <= k2ed; ++ k2)
+            {
+                gridDeltaFirst(7, i2, j2, k2) = (*lineData2)(1, k2);
+                gridDeltaFirst(8, i2, j2, k2) = (*lineData2)(2, k2);
+                gridDeltaFirst(9, i2, j2, k2) = (*lineData2)(3, k2);
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform metrics : second grid delta
+    //! calculate mesh transform metrics : second grid delta
 
-	RDouble4D &gridDeltaSecond = * new RDouble4D(Range(1, 18), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
-	
-	//! calculate mesh transform metrics : second grid delta (I direction)
+    RDouble4D &gridDeltaSecond = * new RDouble4D(Range(1, 18), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    
+    //! calculate mesh transform metrics : second grid delta (I direction)
 
-	lineData1 = new RDouble2D(Range(1, 6), Range(1, ni2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 6), Range(1, ni2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 6), Range(1, ni2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 6), Range(1, ni2), fortranArray);
 
-	for (k2 = k2st; k2 <= k2ed; ++ k2)
-	{
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				(*lineData1)(1, i2) = half * (z2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2));
-				(*lineData1)(2, i2) = half * (x2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2));
-				(*lineData1)(3, i2) = half * (y2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2));
-				(*lineData1)(4, i2) = half * (y2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2));
-				(*lineData1)(5, i2) = half * (z2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2));
-				(*lineData1)(6, i2) = half * (x2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2));
-			}
-			
-			GridDelta(Range(1, 6), Range(1, ni2), lineData1, lineData2);
+    for (k2 = k2st; k2 <= k2ed; ++ k2)
+    {
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                (*lineData1)(1, i2) = half * (z2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2));
+                (*lineData1)(2, i2) = half * (x2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2));
+                (*lineData1)(3, i2) = half * (y2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2));
+                (*lineData1)(4, i2) = half * (y2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2));
+                (*lineData1)(5, i2) = half * (z2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2));
+                (*lineData1)(6, i2) = half * (x2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2));
+            }
+            
+            GridDelta(Range(1, 6), Range(1, ni2), lineData1, lineData2);
 
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				for (int n = 1; n <= 6; ++ n)
-				{
-					gridDeltaSecond(n, i2, j2, k2) = (*lineData2)(n, i2);
-				}
-			}
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                for (int n = 1; n <= 6; ++ n)
+                {
+                    gridDeltaSecond(n, i2, j2, k2) = (*lineData2)(n, i2);
+                }
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform metrics : second grid delta (J direction)
+    //! calculate mesh transform metrics : second grid delta (J direction)
 
-	lineData1 = new RDouble2D(Range(1, 6), Range(1, nj2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 6), Range(1, nj2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 6), Range(1, nj2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 6), Range(1, nj2), fortranArray);
 
-	for (k2 = k2st; k2 <= k2ed; ++ k2)
-	{
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			
-			for (j2 = j2st; j2 <= j2ed; ++ j2)
-			{
-				(*lineData1)(1, j2) = half * (y2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2));
-				(*lineData1)(2, j2) = half * (z2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2));
-				(*lineData1)(3, j2) = half * (x2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2));
-				(*lineData1)(4, j2) = half * (z2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2));
-				(*lineData1)(5, j2) = half * (x2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2));
-				(*lineData1)(6, j2) = half * (y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2));
-			}
-			
-			GridDelta(Range(1, 6), Range(1, nj2), lineData1, lineData2);
+    for (k2 = k2st; k2 <= k2ed; ++ k2)
+    {
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            
+            for (j2 = j2st; j2 <= j2ed; ++ j2)
+            {
+                (*lineData1)(1, j2) = half * (y2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2));
+                (*lineData1)(2, j2) = half * (z2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(9, i2, j2, k2));
+                (*lineData1)(3, j2) = half * (x2(i2, j2, k2) * gridDeltaFirst(8, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(7, i2, j2, k2));
+                (*lineData1)(4, j2) = half * (z2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2));
+                (*lineData1)(5, j2) = half * (x2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2));
+                (*lineData1)(6, j2) = half * (y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2));
+            }
+            
+            GridDelta(Range(1, 6), Range(1, nj2), lineData1, lineData2);
 
-			for (j2 = j2st; j2 <= j2ed; ++ j2)
-			{
-				for (int n = 1; n <= 6; ++ n)
-				{
-					gridDeltaSecond(n + 6, i2, j2, k2) = (*lineData2)(n, j2);
-				}
-			}
+            for (j2 = j2st; j2 <= j2ed; ++ j2)
+            {
+                for (int n = 1; n <= 6; ++ n)
+                {
+                    gridDeltaSecond(n + 6, i2, j2, k2) = (*lineData2)(n, j2);
+                }
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform metrics : second grid delta (K direction)
+    //! calculate mesh transform metrics : second grid delta (K direction)
 
-	lineData1 = new RDouble2D(Range(1, 6), Range(1, nk2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 6), Range(1, nk2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 6), Range(1, nk2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 6), Range(1, nk2), fortranArray);
 
-	for (j2 = j2st; j2 <= j2ed; ++ j2)
-	{
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			for (k2 = k2st; k2 <= k2ed; ++ k2)
-			{
-				(*lineData1)(1, k2) = half * (z2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2));
-				(*lineData1)(2, k2) = half * (x2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2));
-				(*lineData1)(3, k2) = half * (y2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2));
-				(*lineData1)(4, k2) = half * (y2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2));
-				(*lineData1)(5, k2) = half * (z2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2));
-				(*lineData1)(6, k2) = half * (x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2));
-			}
-			
-			GridDelta(Range(1, 6), Range(1, nk2), lineData1, lineData2);
+    for (j2 = j2st; j2 <= j2ed; ++ j2)
+    {
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            for (k2 = k2st; k2 <= k2ed; ++ k2)
+            {
+                (*lineData1)(1, k2) = half * (z2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2));
+                (*lineData1)(2, k2) = half * (x2(i2, j2, k2) * gridDeltaFirst(6, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2));
+                (*lineData1)(3, k2) = half * (y2(i2, j2, k2) * gridDeltaFirst(4, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(5, i2, j2, k2));
+                (*lineData1)(4, k2) = half * (y2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2) - z2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2));
+                (*lineData1)(5, k2) = half * (z2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2) - x2(i2, j2, k2) * gridDeltaFirst(3, i2, j2, k2));
+                (*lineData1)(6, k2) = half * (x2(i2, j2, k2) * gridDeltaFirst(2, i2, j2, k2) - y2(i2, j2, k2) * gridDeltaFirst(1, i2, j2, k2));
+            }
+            
+            GridDelta(Range(1, 6), Range(1, nk2), lineData1, lineData2);
 
-			for (k2 = k2st; k2 <= k2ed; ++ k2)
-			{
-				for (int n = 1; n <= 6; ++ n)
-				{
-					gridDeltaSecond(n + 12, i2, j2, k2) = (*lineData2)(n, k2);
-				}
-			}
+            for (k2 = k2st; k2 <= k2ed; ++ k2)
+            {
+                for (int n = 1; n <= 6; ++ n)
+                {
+                    gridDeltaSecond(n + 12, i2, j2, k2) = (*lineData2)(n, k2);
+                }
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	delete &gridDeltaFirst;
+    delete &gridDeltaFirst;
 
-	//! calculate mesh transform metrics by second grid delta
+    //! calculate mesh transform metrics by second grid delta
 
-	RDouble4D &xfn  = *(this->GetFaceNormalX());
+    RDouble4D &xfn  = *(this->GetFaceNormalX());
     RDouble4D &yfn  = *(this->GetFaceNormalY());
     RDouble4D &zfn  = *(this->GetFaceNormalZ());
     RDouble4D &area = *(this->GetFaceArea());
@@ -722,233 +718,233 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     yfv = 0.0;
     zfv = 0.0;
 
-	RDouble vkc[3],vet[3],vct[3],vkcn[4],vetn[4],vctn[4];
+    RDouble vkc[3],vet[3],vct[3],vkcn[4],vetn[4],vctn[4];
 
-	//! calculate mesh transform metrics by second grid delta (I direction)
+    //! calculate mesh transform metrics by second grid delta (I direction)
 
-	for (k = 1; k <= nk - 1; ++ k)
-	{
-		k2 = 2 * k;
+    for (k = 1; k <= nk - 1; ++ k)
+    {
+        k2 = 2 * k;
 
-		for (j = 1; j <= nj - 1; ++ j)
-		{
-			j2 = 2 * j;
+        for (j = 1; j <= nj - 1; ++ j)
+        {
+            j2 = 2 * j;
 
-			for (i = 1; i <= ni; ++ i)
-			{
+            for (i = 1; i <= ni; ++ i)
+            {
 
-				i2 = 2 * i - 1;
+                i2 = 2 * i - 1;
 
-				vkc[0] = gridDeltaSecond(7, i2, j2, k2) + gridDeltaSecond(13, i2, j2, k2);
-				vkc[1] = gridDeltaSecond(8, i2, j2, k2) + gridDeltaSecond(14, i2, j2, k2);
-				vkc[2] = gridDeltaSecond(9, i2, j2, k2) + gridDeltaSecond(15, i2, j2, k2);
+                vkc[0] = gridDeltaSecond(7, i2, j2, k2) + gridDeltaSecond(13, i2, j2, k2);
+                vkc[1] = gridDeltaSecond(8, i2, j2, k2) + gridDeltaSecond(14, i2, j2, k2);
+                vkc[2] = gridDeltaSecond(9, i2, j2, k2) + gridDeltaSecond(15, i2, j2, k2);
 
-				xfv(i, j, k, IDX::IKES) = vkc[0];
-				yfv(i, j, k, IDX::IKES) = vkc[1];
-				zfv(i, j, k, IDX::IKES) = vkc[2];
+                xfv(i, j, k, IDX::IKES) = vkc[0];
+                yfv(i, j, k, IDX::IKES) = vkc[1];
+                zfv(i, j, k, IDX::IKES) = vkc[2];
 
-				NormalizeVector(vkc,vkcn, 3);
+                NormalizeVector(vkc,vkcn, 3);
 
-				area(i, j, k, IDX::IKES) = vkcn[3];
-				xfn (i, j, k, IDX::IKES) = vkcn[0];
-				yfn (i, j, k, IDX::IKES) = vkcn[1];
-				zfn (i, j, k, IDX::IKES) = vkcn[2];
+                area(i, j, k, IDX::IKES) = vkcn[3];
+                xfn (i, j, k, IDX::IKES) = vkcn[0];
+                yfn (i, j, k, IDX::IKES) = vkcn[1];
+                zfn (i, j, k, IDX::IKES) = vkcn[2];
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	//! calculate mesh transform metrics by second grid delta (J direction)
+    //! calculate mesh transform metrics by second grid delta (J direction)
 
-	for (k = 1; k <= nk - 1; ++ k)
-	{
-		k2 = 2 * k;
+    for (k = 1; k <= nk - 1; ++ k)
+    {
+        k2 = 2 * k;
 
-		for (i = 1; i <= ni - 1; ++ i)
-		{
-			i2 = 2 * i;
+        for (i = 1; i <= ni - 1; ++ i)
+        {
+            i2 = 2 * i;
 
-			for (j = 1; j <= nj; ++ j)
-			{
+            for (j = 1; j <= nj; ++ j)
+            {
 
-				j2 = 2 * j - 1;
+                j2 = 2 * j - 1;
 
-				vet[0] = gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(16, i2, j2, k2);
-				vet[1] = gridDeltaSecond(2, i2, j2, k2) + gridDeltaSecond(17, i2, j2, k2);
-				vet[2] = gridDeltaSecond(3, i2, j2, k2) + gridDeltaSecond(18, i2, j2, k2);
+                vet[0] = gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(16, i2, j2, k2);
+                vet[1] = gridDeltaSecond(2, i2, j2, k2) + gridDeltaSecond(17, i2, j2, k2);
+                vet[2] = gridDeltaSecond(3, i2, j2, k2) + gridDeltaSecond(18, i2, j2, k2);
 
-				xfv(i, j, k, IDX::IETA) = vet[0];
-				yfv(i, j, k, IDX::IETA) = vet[1];
-				zfv(i, j, k, IDX::IETA) = vet[2];
+                xfv(i, j, k, IDX::IETA) = vet[0];
+                yfv(i, j, k, IDX::IETA) = vet[1];
+                zfv(i, j, k, IDX::IETA) = vet[2];
 
-				NormalizeVector(vet,vetn, 3);
+                NormalizeVector(vet,vetn, 3);
 
-				area(i, j, k, IDX::IETA) = vetn[3];
-				xfn (i, j, k, IDX::IETA) = vetn[0];
-				yfn (i, j, k, IDX::IETA) = vetn[1];
-				zfn (i, j, k, IDX::IETA) = vetn[2];
+                area(i, j, k, IDX::IETA) = vetn[3];
+                xfn (i, j, k, IDX::IETA) = vetn[0];
+                yfn (i, j, k, IDX::IETA) = vetn[1];
+                zfn (i, j, k, IDX::IETA) = vetn[2];
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	//! calculate mesh transform metrics by second grid delta (K direction)
+    //! calculate mesh transform metrics by second grid delta (K direction)
 
-	for (j = 1; j <= nj - 1; ++ j)
-	{
-		j2 = 2 * j;
+    for (j = 1; j <= nj - 1; ++ j)
+    {
+        j2 = 2 * j;
 
-		for (i = 1; i <= ni - 1; ++ i)
-		{
-			i2 = 2 * i;
+        for (i = 1; i <= ni - 1; ++ i)
+        {
+            i2 = 2 * i;
 
-			for (k = 1; k <= nk; ++ k)
-			{
+            for (k = 1; k <= nk; ++ k)
+            {
 
-				k2 = 2 * k - 1;
+                k2 = 2 * k - 1;
 
-				vct[0] = gridDeltaSecond(4, i2, j2, k2) + gridDeltaSecond(10, i2, j2, k2);
-				vct[1] = gridDeltaSecond(5, i2, j2, k2) + gridDeltaSecond(11, i2, j2, k2);
-				vct[2] = gridDeltaSecond(6, i2, j2, k2) + gridDeltaSecond(12, i2, j2, k2);
+                vct[0] = gridDeltaSecond(4, i2, j2, k2) + gridDeltaSecond(10, i2, j2, k2);
+                vct[1] = gridDeltaSecond(5, i2, j2, k2) + gridDeltaSecond(11, i2, j2, k2);
+                vct[2] = gridDeltaSecond(6, i2, j2, k2) + gridDeltaSecond(12, i2, j2, k2);
 
-				xfv(i, j, k, IDX::IZTA) = vct[0];
-				yfv(i, j, k, IDX::IZTA) = vct[1];
-				zfv(i, j, k, IDX::IZTA) = vct[2];
+                xfv(i, j, k, IDX::IZTA) = vct[0];
+                yfv(i, j, k, IDX::IZTA) = vct[1];
+                zfv(i, j, k, IDX::IZTA) = vct[2];
 
-				NormalizeVector(vct,vctn, 3);
+                NormalizeVector(vct,vctn, 3);
 
-				area(i, j, k, IDX::IZTA) = vctn[3];
-				xfn (i, j, k, IDX::IZTA) = vctn[0];
-				yfn (i, j, k, IDX::IZTA) = vctn[1];
-				zfn (i, j, k, IDX::IZTA) = vctn[2];
+                area(i, j, k, IDX::IZTA) = vctn[3];
+                xfn (i, j, k, IDX::IZTA) = vctn[0];
+                yfn (i, j, k, IDX::IZTA) = vctn[1];
+                zfn (i, j, k, IDX::IZTA) = vctn[2];
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	//! calculate mesh transform Jacobian : third grid delta
+    //! calculate mesh transform Jacobian : third grid delta
 
-	RDouble4D &gridDeltaThird = * new RDouble4D(Range(1, 3), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
+    RDouble4D &gridDeltaThird = * new RDouble4D(Range(1, 3), Range(1, ni2), Range(1, nj2), Range(1, nk2), fortranArray);
 
-	//! calculate mesh transform Jacobian : third grid delta (I direction)
+    //! calculate mesh transform Jacobian : third grid delta (I direction)
 
-	lineData1 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 1), Range(1, ni2), fortranArray);
 
-	for (k2 = k2st; k2 <= k2ed; ++ k2)
-	{
-		for (j2 = j2st; j2 <= j2ed; ++ j2)
-		{
-			
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				(*lineData1)(1, i2) =   x2(i2, j2, k2) * (gridDeltaSecond(7, i2, j2, k2) + gridDeltaSecond(13, i2, j2, k2))
-					                 + y2(i2, j2, k2) * (gridDeltaSecond(8, i2, j2, k2) + gridDeltaSecond(14, i2, j2, k2))
-							         + z2(i2, j2, k2) * (gridDeltaSecond(9, i2, j2, k2) + gridDeltaSecond(15, i2, j2, k2));
-			}
-			
-			GridDelta(Range(1, 1), Range(1, ni2), lineData1, lineData2);
+    for (k2 = k2st; k2 <= k2ed; ++ k2)
+    {
+        for (j2 = j2st; j2 <= j2ed; ++ j2)
+        {
+            
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                (*lineData1)(1, i2) =   x2(i2, j2, k2) * (gridDeltaSecond(7, i2, j2, k2) + gridDeltaSecond(13, i2, j2, k2))
+                                     + y2(i2, j2, k2) * (gridDeltaSecond(8, i2, j2, k2) + gridDeltaSecond(14, i2, j2, k2))
+                                     + z2(i2, j2, k2) * (gridDeltaSecond(9, i2, j2, k2) + gridDeltaSecond(15, i2, j2, k2));
+            }
+            
+            GridDelta(Range(1, 1), Range(1, ni2), lineData1, lineData2);
 
-			for (i2 = i2st; i2 <= i2ed; ++ i2)
-			{
-				gridDeltaThird(1, i2, j2, k2) = (*lineData2)(1, i2);
-			}
+            for (i2 = i2st; i2 <= i2ed; ++ i2)
+            {
+                gridDeltaThird(1, i2, j2, k2) = (*lineData2)(1, i2);
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform Jacobian : third grid delta (J direction)
+    //! calculate mesh transform Jacobian : third grid delta (J direction)
 
-	lineData1 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 1), Range(1, nj2), fortranArray);
 
-	for (k2 = k2st; k2 <= k2ed; ++ k2)
-	{
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			
-			for (j2 = j2st; j2 <= j2ed; ++ j2)
-			{
-				(*lineData1)(1, j2) =   x2(i2, j2, k2) * (gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(16, i2, j2, k2))
-					                 + y2(i2, j2, k2) * (gridDeltaSecond(2, i2, j2, k2) + gridDeltaSecond(17, i2, j2, k2))
-							         + z2(i2, j2, k2) * (gridDeltaSecond(3, i2, j2, k2) + gridDeltaSecond(18, i2, j2, k2));
-			}
-			
-			GridDelta(Range(1, 1), Range(1, nj2), lineData1, lineData2);
+    for (k2 = k2st; k2 <= k2ed; ++ k2)
+    {
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            
+            for (j2 = j2st; j2 <= j2ed; ++ j2)
+            {
+                (*lineData1)(1, j2) =   x2(i2, j2, k2) * (gridDeltaSecond(1, i2, j2, k2) + gridDeltaSecond(16, i2, j2, k2))
+                                     + y2(i2, j2, k2) * (gridDeltaSecond(2, i2, j2, k2) + gridDeltaSecond(17, i2, j2, k2))
+                                     + z2(i2, j2, k2) * (gridDeltaSecond(3, i2, j2, k2) + gridDeltaSecond(18, i2, j2, k2));
+            }
+            
+            GridDelta(Range(1, 1), Range(1, nj2), lineData1, lineData2);
 
-			for (j2 = j2st; j2 <= j2ed; ++ j2)
-			{
-				gridDeltaThird(2, i2, j2, k2) = (*lineData2)(1, j2);
-			}
+            for (j2 = j2st; j2 <= j2ed; ++ j2)
+            {
+                gridDeltaThird(2, i2, j2, k2) = (*lineData2)(1, j2);
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
+    delete lineData1;
+    delete lineData2;
 
-	//! calculate mesh transform Jacobian : third grid delta (K direction)
+    //! calculate mesh transform Jacobian : third grid delta (K direction)
 
-	lineData1 = new RDouble2D(Range(1, 1), Range(1, nk2), fortranArray);
-	lineData2 = new RDouble2D(Range(1, 1), Range(1, nk2), fortranArray);
+    lineData1 = new RDouble2D(Range(1, 1), Range(1, nk2), fortranArray);
+    lineData2 = new RDouble2D(Range(1, 1), Range(1, nk2), fortranArray);
 
-	for (j2 = j2st; j2 <= j2ed; ++ j2)
-	{
-		for (i2 = i2st; i2 <= i2ed; ++ i2)
-		{
-			
-			for (k2 = k2st; k2 <= k2ed; ++ k2)
-			{
-				(*lineData1)(1, k2) =   x2(i2, j2, k2) * (gridDeltaSecond(4, i2, j2, k2) + gridDeltaSecond(10, i2, j2, k2))
-					                 + y2(i2, j2, k2) * (gridDeltaSecond(5, i2, j2, k2) + gridDeltaSecond(11, i2, j2, k2))
-							         + z2(i2, j2, k2) * (gridDeltaSecond(6, i2, j2, k2) + gridDeltaSecond(12, i2, j2, k2));
-			}
-			
-			GridDelta(Range(1, 1), Range(1, nk2), lineData1, lineData2);
+    for (j2 = j2st; j2 <= j2ed; ++ j2)
+    {
+        for (i2 = i2st; i2 <= i2ed; ++ i2)
+        {
+            
+            for (k2 = k2st; k2 <= k2ed; ++ k2)
+            {
+                (*lineData1)(1, k2) =   x2(i2, j2, k2) * (gridDeltaSecond(4, i2, j2, k2) + gridDeltaSecond(10, i2, j2, k2))
+                                     + y2(i2, j2, k2) * (gridDeltaSecond(5, i2, j2, k2) + gridDeltaSecond(11, i2, j2, k2))
+                                     + z2(i2, j2, k2) * (gridDeltaSecond(6, i2, j2, k2) + gridDeltaSecond(12, i2, j2, k2));
+            }
+            
+            GridDelta(Range(1, 1), Range(1, nk2), lineData1, lineData2);
 
-			for (k2 = k2st; k2 <= k2ed; ++ k2)
-			{
-				gridDeltaThird(3, i2, j2, k2) = (*lineData2)(1, k2);
-			}
+            for (k2 = k2st; k2 <= k2ed; ++ k2)
+            {
+                gridDeltaThird(3, i2, j2, k2) = (*lineData2)(1, k2);
+            }
 
-		}
-	}
+        }
+    }
 
-	delete lineData1;
-	delete lineData2;
-	
-	delete &x2;
-	delete &y2;
-	delete &z2;
+    delete lineData1;
+    delete lineData2;
+    
+    delete &x2;
+    delete &y2;
+    delete &z2;
 
-	delete &gridDeltaSecond;
+    delete &gridDeltaSecond;
 
-	//! calculate mesh transform Jacobian by third grid delta
+    //! calculate mesh transform Jacobian by third grid delta
 
-	RDouble3D &vol = * this->GetCellVolume();
-	int ZoneID = this->GetZoneID();
+    RDouble3D &vol = * this->GetCellVolume();
+    int ZoneID = this->GetZoneID();
     int imin, jmin, kmin, imax, jmax, kmax;
     RDouble vv,volmin,volmax;
 
     volmin =   LARGE;
-	volmax = - LARGE;
+    volmax = - LARGE;
 
     std::ostringstream oss;
 
-	for (k = 1; k <= nk - 1; ++ k)
-	{
-		k2 = 2 * k;
-		for (j = 1; j <= nj - 1; ++ j)
-		{
-			j2 = 2 * j;
-			for (i = 1; i <= ni - 1; ++ i)
-			{
-				i2 = 2 * i;
-				vv = third * (gridDeltaThird(1, i2, j2, k2) + gridDeltaThird(2, i2, j2, k2) + gridDeltaThird(3, i2, j2, k2));
-				vol(i, j, k) = vv;
+    for (k = 1; k <= nk - 1; ++ k)
+    {
+        k2 = 2 * k;
+        for (j = 1; j <= nj - 1; ++ j)
+        {
+            j2 = 2 * j;
+            for (i = 1; i <= ni - 1; ++ i)
+            {
+                i2 = 2 * i;
+                vv = third * (gridDeltaThird(1, i2, j2, k2) + gridDeltaThird(2, i2, j2, k2) + gridDeltaThird(3, i2, j2, k2));
+                vol(i, j, k) = vv;
 
                 if (vv <= zero)
                 {
@@ -972,16 +968,16 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
                     kmax = k;
                 }
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	delete &gridDeltaThird;
+    delete &gridDeltaThird;
 
     GhostCell3D(vol, ni, nj, nk);
-	GhostMetrics3D();
+    GhostMetrics3D();
     ComputeCellCenter();
-	StreamToActionKey(actkey, oss);
+    StreamToActionKey(actkey, oss);
 }
 
 void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D *lineData1, RDouble2D *lineData2)
@@ -990,59 +986,59 @@ void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D *lineData
     int ned = NP.last();
     int ist = NI.first();
     int ied = NI.last();
-	
-	int i, n;
-	
-	i = ist;
-	for (n = nst; n <= ned; ++ n)
-	{
-		(*lineData2)(n, i) = - 3.0 * (*lineData1)(n, i) + 4.0 * (*lineData1)(n, i + 1) - (*lineData1)(n, i + 2);
-	}
+    
+    int i, n;
+    
+    i = ist;
+    for (n = nst; n <= ned; ++ n)
+    {
+        (*lineData2)(n, i) = - 3.0 * (*lineData1)(n, i) + 4.0 * (*lineData1)(n, i + 1) - (*lineData1)(n, i + 2);
+    }
 
-	i = ist + 1;
-	for (n = nst; n <= ned; ++ n)
-	{
-		(*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
-	}
+    i = ist + 1;
+    for (n = nst; n <= ned; ++ n)
+    {
+        (*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
+    }
 
-	i = ist + 2;
-	for (n = nst; n <= ned; ++ n)
-	{
-		(*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
-	}
+    i = ist + 2;
+    for (n = nst; n <= ned; ++ n)
+    {
+        (*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
+    }
 
-	for (i = ist + 3; i <= ied - 3; ++ i)
-	{
-		for (n = nst; n <= ned; ++ n)
-		{
-			
-			//! 2nd order
-			//(*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
-			
-			//! 4th order
-			(*lineData2)(n, i) =   9.0 * ((*lineData1)(n, i + 1) - (*lineData1)(n, i - 1)) /  8.0
-				               -         ((*lineData1)(n, i + 3) - (*lineData1)(n, i - 3)) / 24.0;
-		
-		}
-	}
+    for (i = ist + 3; i <= ied - 3; ++ i)
+    {
+        for (n = nst; n <= ned; ++ n)
+        {
+            
+            //! 2nd order
+            //(*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
+            
+            //! 4th order
+            (*lineData2)(n, i) =   9.0 * ((*lineData1)(n, i + 1) - (*lineData1)(n, i - 1)) /  8.0
+                               -         ((*lineData1)(n, i + 3) - (*lineData1)(n, i - 3)) / 24.0;
+        
+        }
+    }
 
-	i = ied - 2;
-	for (n = nst; n <= ned; ++ n)
-	{
-		(*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
-	}
+    i = ied - 2;
+    for (n = nst; n <= ned; ++ n)
+    {
+        (*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
+    }
 
-	i = ied - 1;
-	for (n = nst; n <= ned; ++ n)
-	{
-		(*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
-	}
+    i = ied - 1;
+    for (n = nst; n <= ned; ++ n)
+    {
+        (*lineData2)(n, i) = (*lineData1)(n, i + 1) - (*lineData1)(n, i - 1);
+    }
 
-	i = ied;
-	for (n = nst; n <= ned; ++ n)
-	{
-		(*lineData2)(n, i) = 3.0 * (*lineData1)(n, i) - 4.0 * (*lineData1)(n, i - 1) + (*lineData1)(n, i - 2);
-	}
+    i = ied;
+    for (n = nst; n <= ned; ++ n)
+    {
+        (*lineData2)(n, i) = 3.0 * (*lineData1)(n, i) - 4.0 * (*lineData1)(n, i - 1) + (*lineData1)(n, i - 2);
+    }
 
 }
 
@@ -1058,7 +1054,6 @@ void StructGrid::ComputeMetricsStructHighOrder2D_HDCS(ActionKey *actkey)
 
     RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
-    RDouble3D &zz = * this->GetStructZ();
 
     zfn = 0.0;
     zfv = 0.0;
@@ -1144,7 +1139,7 @@ void StructGrid::ComputeMetricsStructHighOrder2D_HDCS(ActionKey *actkey)
             yfn(i, j, k, 2) =   xkxi / (ds + TINY);
         }
     }
-    //!=========================================================================================
+    //!=
     RDouble3D &vol = *this->GetCellVolume();
 
     RDouble3D &xfaceI = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(1, 1), fortranArray);
@@ -1389,7 +1384,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
             }
         }
     }
-    //!===================================================================================================================
+    //!=
     for (int k = 1; k <= nk - 1; ++ k)
     {
         for (int j = 1; j <= nj - 1; ++ j)
@@ -1608,7 +1603,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
             }
         }
     }
-    //!==========================================================================================================================
+    //!=
     RDouble4D &Cellxfv = *new RDouble4D(Range(-1, ni + 1), Range(-1, nj + 1), Range(-1, nk + 1), Range(1, 3), fortranArray);
     RDouble4D &Cellyfv = *new RDouble4D(Range(-1, ni + 1), Range(-1, nj + 1), Range(-1, nk + 1), Range(1, 3), fortranArray);
     RDouble4D &Cellzfv = *new RDouble4D(Range(-1, ni + 1), Range(-1, nj + 1), Range(-1, nk + 1), Range(1, 3), fortranArray);
@@ -1823,7 +1818,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
     delete &xcta;
     delete &ycta;
     delete &zcta;
-    //!==========================================================================================================
+    //!=
     RDouble3D &vol = *this->GetCellVolume();
 
     RDouble3D &xfaceI = *new RDouble3D(Range(-1, ni + 2), Range(1, nj - 1), Range(1, nk - 1), fortranArray);
@@ -1988,15 +1983,14 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
     delete &yfaceK;
     delete &zfaceK;
 
-    //!========================================================================================
+    //!=
     ComputeCellCenter();
 }
 
 void StructGrid::GhostMetricsStructHighOrder2D(ActionKey *actkey)
 {
-	int ni = this->GetNI();
-	int nj = this->GetNJ();
-	int nk = this->GetNK();	
+    int ni = this->GetNI();
+    int nj = this->GetNJ();
 
     RDouble3D &vol  = *(this->GetCellVolume());
     RDouble3D &xcc = *(this->GetCellCenterX());
@@ -2051,9 +2045,9 @@ void StructGrid::GhostMetricsStructHighOrder2D(ActionKey *actkey)
 
 void StructGrid::GhostMetricsStructHighOrder3D(ActionKey *actkey)
 {
-	int ni = this->GetNI();
-	int nj = this->GetNJ();
-	int nk = this->GetNK();	
+    int ni = this->GetNI();
+    int nj = this->GetNJ();
+    int nk = this->GetNK();
 
     RDouble3D &vol  = *(this->GetCellVolume());
     RDouble3D &xcc = *(this->GetCellCenterX());
@@ -2162,11 +2156,11 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
-    CompositeBCRegion *compositeBCRegion = this->GetCompositeBCRegion();
+    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        BCRegion *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (BCType < 0)
@@ -2325,7 +2319,6 @@ void StructGrid::CorrectDiffOrderNearUnstructBlockforStructHighOrder(const int &
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    int level = grid->GetLevel();
     InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
     if (!interfaceInformation)
     {
@@ -2420,7 +2413,7 @@ void StructGrid::ComputeMetricsWithBCforStructHighOrder()
 
 void StructGrid::ComputeMetricsWithBCforStructHighOrder2D()
 {
-	RDouble4D &xfn  = *(this->GetFaceNormalX());
+    RDouble4D &xfn  = *(this->GetFaceNormalX());
     RDouble4D &yfn  = *(this->GetFaceNormalY());
     RDouble4D &zfn  = *(this->GetFaceNormalZ());
     RDouble4D &area = *(this->GetFaceArea());
@@ -2428,12 +2421,11 @@ void StructGrid::ComputeMetricsWithBCforStructHighOrder2D()
     RDouble4D &yfv  = *(this->GetFaceVectorY());
     RDouble4D &zfv  = *(this->GetFaceVectorZ());
 
-	RDouble3D &xx = * this->GetStructX();
+    RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
-    RDouble3D &zz = * this->GetStructZ();
 
     zfn = 0.0;
-	zfv = 0.0;
+    zfv = 0.0;
 
     int ni = this->GetNI();
     int nj = this->GetNJ();
@@ -2516,8 +2508,7 @@ void StructGrid::ComputeMetricsWithBCforStructHighOrder2D()
             yfn(i, j, k, 2) =   xkxi / (ds + TINY);
         }        
     }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //! BC metrics
     //! interior BC would be replaced in the next function CommPartofMetrics_FD.
     GhostMetrics2D();
@@ -2533,7 +2524,7 @@ void StructGrid::ComputeMetricsWithBCforStructHighOrder3D()
     RDouble4D &yfv  = *(this->GetFaceVectorY());
     RDouble4D &zfv  = *(this->GetFaceVectorZ());
 
-	RDouble3D &xx = * this->GetStructX();
+    RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
@@ -3085,8 +3076,7 @@ void StructGrid::ComputeMetricsWithBCforStructHighOrder3D()
     delete &xcta;
     delete &ycta;
     delete &zcta;
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //! BC metrics
     //! interior BC would be replaced in the next function CommPartofMetrics_FD.
     GhostMetrics3D();
@@ -3108,11 +3098,9 @@ void StructGrid::ComputeJacobianforStructHighOrder2D()
 {
     RDouble4D &xfv  = *(this->GetFaceVectorX());
     RDouble4D &yfv  = *(this->GetFaceVectorY());
-    RDouble4D &zfv  = *(this->GetFaceVectorZ());
 
-	RDouble3D &xx = * this->GetStructX();
+    RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
-    RDouble3D &zz = * this->GetStructZ();
 
     RDouble3D &vol = *this->GetCellVolume();    
 
@@ -3126,7 +3114,7 @@ void StructGrid::ComputeJacobianforStructHighOrder2D()
     RDouble3D &xfaceJ = *new RDouble3D(Range(1, ni - 1), Range(0, nj + 1), Range(1, 1), fortranArray);
     RDouble3D &yfaceJ = *new RDouble3D(Range(1, ni - 1), Range(0, nj + 1), Range(1, 1), fortranArray);
 
-	for (int j = 1; j <= nj - 1; ++ j)
+    for (int j = 1; j <= nj - 1; ++ j)
     {
         for (int i = 0; i <= ni + 1; ++ i)
         {
@@ -3154,8 +3142,6 @@ void StructGrid::ComputeJacobianforStructHighOrder2D()
             yfaceJ(i, j, k) = half * (y1 + y2);
         }
     }
-
-    int ZoneID = this->GetZoneID();
 
     for (int i = 1; i <= ni - 1; ++ i)
     {
@@ -3220,7 +3206,7 @@ void StructGrid::ComputeJacobianforStructHighOrder3D()
     RDouble4D &yfv  = *(this->GetFaceVectorY());
     RDouble4D &zfv  = *(this->GetFaceVectorZ());
 
-	RDouble3D &xx = * this->GetStructX();
+    RDouble3D &xx = * this->GetStructX();
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
@@ -3325,8 +3311,6 @@ void StructGrid::ComputeJacobianforStructHighOrder3D()
             }
         }
     }
-
-    int ZoneID = this->GetZoneID();
 
     for (int k = 1; k <= nk - 1; ++ k)
     {
@@ -3896,7 +3880,6 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission1(DataContainer *&d
             PHWrite(dataContainer, vol(is, js, ks));
         }
 
-        /////////////////////////////////////////////////////////////////////////
         int IJKofNodes1stLayer[4][3];
         int IJKofNodes2ndLayer[4][3];
 
@@ -4370,9 +4353,9 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission9(DataContainer *&d
     dataContainer->moveto_begin();
 
     RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
-    RDouble4D &gradTurbulentCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterX"));
-    RDouble4D &gradTurbulentCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterY"));
-    RDouble4D &gradTurbulentCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterZ"));
+    RDouble4D &gradTurbulenceCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterX"));
+    RDouble4D &gradTurbulenceCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterY"));
+    RDouble4D &gradTurbulenceCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterZ"));
 
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
@@ -4386,9 +4369,9 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission9(DataContainer *&d
 
         PHWrite(dataContainer, vist(is1, js1, ks1));
 
-        PHWrite(dataContainer, gradTurbulentCellCenterX(is1, js1, ks1,ISA));
-        PHWrite(dataContainer, gradTurbulentCellCenterY(is1, js1, ks1,ISA));
-        PHWrite(dataContainer, gradTurbulentCellCenterZ(is1, js1, ks1,ISA));
+        PHWrite(dataContainer, gradTurbulenceCellCenterX(is1, js1, ks1,ISA));
+        PHWrite(dataContainer, gradTurbulenceCellCenterY(is1, js1, ks1,ISA));
+        PHWrite(dataContainer, gradTurbulenceCellCenterZ(is1, js1, ks1,ISA));
     }
 }
 
@@ -4408,9 +4391,9 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission10(DataContainer *&
 
     RDouble3D &blend = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("blend"));
     RDouble3D &vist  = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
-    RDouble4D &gradTurbulentCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterX"));
-    RDouble4D &gradTurbulentCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterY"));
-    RDouble4D &gradTurbulentCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterZ"));
+    RDouble4D &gradTurbulenceCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterX"));
+    RDouble4D &gradTurbulenceCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterY"));
+    RDouble4D &gradTurbulenceCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterZ"));
 
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
@@ -4426,14 +4409,14 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission10(DataContainer *&
 
         PHWrite(dataContainer, vist(is1, js1, ks1));
 
-        PHWrite(dataContainer, gradTurbulentCellCenterX(is1, js1, ks1,IKE));
-        PHWrite(dataContainer, gradTurbulentCellCenterX(is1, js1, ks1,IKW));
+        PHWrite(dataContainer, gradTurbulenceCellCenterX(is1, js1, ks1,IKE));
+        PHWrite(dataContainer, gradTurbulenceCellCenterX(is1, js1, ks1,IKW));
 
-        PHWrite(dataContainer, gradTurbulentCellCenterY(is1, js1, ks1,IKE));
-        PHWrite(dataContainer, gradTurbulentCellCenterY(is1, js1, ks1,IKW));
+        PHWrite(dataContainer, gradTurbulenceCellCenterY(is1, js1, ks1,IKE));
+        PHWrite(dataContainer, gradTurbulenceCellCenterY(is1, js1, ks1,IKW));
 
-        PHWrite(dataContainer, gradTurbulentCellCenterZ(is1, js1, ks1,IKE));
-        PHWrite(dataContainer, gradTurbulentCellCenterZ(is1, js1, ks1,IKW));
+        PHWrite(dataContainer, gradTurbulenceCellCenterZ(is1, js1, ks1,IKE));
+        PHWrite(dataContainer, gradTurbulenceCellCenterZ(is1, js1, ks1,IKW));
     }
 }
 
@@ -4509,7 +4492,7 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission1(DataContainer *
             PHRead(dataContainer, zcc(it, jt, kt));
             PHRead(dataContainer, vol(it, jt, kt));
         }
-        ////////////////////////////////////////////////////////////////////////////////////
+
         RDouble Data1stLayer[4][3];
         RDouble Data2ndLayer[4][3];
         for (int nodeID = 0; nodeID < 4; ++nodeID)
@@ -5382,9 +5365,9 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission9(DataContainer *
     dataContainer->moveto_begin();
 
     RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
-    RDouble4D &gradTurbulentCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterX"));
-    RDouble4D &gradTurbulentCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterY"));
-    RDouble4D &gradTurbulentCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterZ"));
+    RDouble4D &gradTurbulenceCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterX"));
+    RDouble4D &gradTurbulenceCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterY"));
+    RDouble4D &gradTurbulenceCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterZ"));
 
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
@@ -5398,9 +5381,9 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission9(DataContainer *
 
         PHRead(dataContainer, vist(it1, jt1, kt1));
 
-        PHRead(dataContainer, gradTurbulentCellCenterX(it1, jt1, kt1,ISA));
-        PHRead(dataContainer, gradTurbulentCellCenterY(it1, jt1, kt1,ISA));
-        PHRead(dataContainer, gradTurbulentCellCenterZ(it1, jt1, kt1,ISA));
+        PHRead(dataContainer, gradTurbulenceCellCenterX(it1, jt1, kt1,ISA));
+        PHRead(dataContainer, gradTurbulenceCellCenterY(it1, jt1, kt1,ISA));
+        PHRead(dataContainer, gradTurbulenceCellCenterZ(it1, jt1, kt1,ISA));
     }
 }
 
@@ -5420,9 +5403,9 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission10(DataContainer 
 
     RDouble3D &blend = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("blend"));
     RDouble3D &vist = *reinterpret_cast<RDouble3D *> (this->GetDataPtr("vist"));
-    RDouble4D &gradTurbulentCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterX"));
-    RDouble4D &gradTurbulentCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterY"));
-    RDouble4D &gradTurbulentCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulentCellCenterZ"));
+    RDouble4D &gradTurbulenceCellCenterX = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterX"));
+    RDouble4D &gradTurbulenceCellCenterY = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterY"));
+    RDouble4D &gradTurbulenceCellCenterZ = *reinterpret_cast<RDouble4D *> (this->GetDataPtr("gradTurbulenceCellCenterZ"));
 
     for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
     {
@@ -5438,14 +5421,14 @@ void StructGrid::DownloadGridInfoOnlyforStructHighOrder_mission10(DataContainer 
 
         PHRead(dataContainer, vist(it1, jt1, kt1));
 
-        PHRead(dataContainer, gradTurbulentCellCenterX(it1, jt1, kt1,IKE));
-        PHRead(dataContainer, gradTurbulentCellCenterX(it1, jt1, kt1,IKW));
+        PHRead(dataContainer, gradTurbulenceCellCenterX(it1, jt1, kt1,IKE));
+        PHRead(dataContainer, gradTurbulenceCellCenterX(it1, jt1, kt1,IKW));
 
-        PHRead(dataContainer, gradTurbulentCellCenterY(it1, jt1, kt1,IKE));
-        PHRead(dataContainer, gradTurbulentCellCenterY(it1, jt1, kt1,IKW));
+        PHRead(dataContainer, gradTurbulenceCellCenterY(it1, jt1, kt1,IKE));
+        PHRead(dataContainer, gradTurbulenceCellCenterY(it1, jt1, kt1,IKW));
 
-        PHRead(dataContainer, gradTurbulentCellCenterZ(it1, jt1, kt1,IKE));
-        PHRead(dataContainer, gradTurbulentCellCenterZ(it1, jt1, kt1,IKW));
+        PHRead(dataContainer, gradTurbulenceCellCenterZ(it1, jt1, kt1,IKE));
+        PHRead(dataContainer, gradTurbulenceCellCenterZ(it1, jt1, kt1,IKW));
     }
 }
 

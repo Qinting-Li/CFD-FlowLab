@@ -36,7 +36,6 @@ void TaskServerUpdateInterpoint::MainTaskBlocking(ActionKey *actkey)
     //}
 }
 
-//*
 void TaskServerUpdateInterpoint::MainTaskNonBlocking(ActionKey *actkey)
 {
     using namespace PHMPI;
@@ -205,8 +204,6 @@ CharVecSizeType TaskServerUpdateInterpoint::InterpointGetLength(ActionKey *actke
 
     int sendProcessor = GetZoneProcessorIDSepMode(iZone);
     int receiveProcessor = GetZoneProcessorIDSepMode(jZone);
-
-    int tag = GetSendRecvTag(actkey, iZone);
 
     int myID = GetCurrentProcessorID();    
     if (myID == sendProcessor)

@@ -32,6 +32,9 @@ void PartitionUnstructGrid();
 void RefineStructGrid();
 void PartitionStructGrid();
 
+void MultiGridPartition();
+void GetPartitionPara(PHVectorString1D &gridFileNameList, PHVectorString1D &outFileNameList, PHVectorInt1D &gridTypeList, PHVectorInt1D &maxProcList);
+
 void RefineStructGrid(const string &coordinateFile, const string &layoutFile);
 
 void ReadGridgenBC(const string &BCFile, DataContainer *cData);

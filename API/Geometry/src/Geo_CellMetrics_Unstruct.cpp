@@ -4,24 +4,24 @@ namespace PHSPACE
 {
 LIB_EXPORT Geo_CellMetrics_Unstruct::Geo_CellMetrics_Unstruct()
 {
-	xcc = 0;
-	ycc = 0;
-	zcc = 0;
-	vol = 0;
+    xcc = nullptr;
+    ycc = nullptr;
+    zcc = nullptr;
+    vol = nullptr;
 
-	largestLocalGridLength		= 0;
-	subgridLength				= 0;
+    largestLocalGridLength = nullptr;
+    subgridLength = nullptr;
 }
 
 LIB_EXPORT Geo_CellMetrics_Unstruct::~Geo_CellMetrics_Unstruct()
 {
-	delete [] xcc; xcc = 0;
-	delete [] ycc; ycc = 0;
-	delete [] zcc; zcc = 0;
-	delete [] vol; vol = 0;
+    delete [] xcc; xcc = nullptr;
+    delete [] ycc; ycc = nullptr;
+    delete [] zcc; zcc = nullptr;
+    delete [] vol; vol = nullptr;
 
-	delete [] largestLocalGridLength; largestLocalGridLength = 0;
-	delete [] subgridLength; subgridLength = 0;
+    delete [] largestLocalGridLength; largestLocalGridLength = nullptr;
+    delete [] subgridLength; subgridLength = nullptr;
 }
 
 }

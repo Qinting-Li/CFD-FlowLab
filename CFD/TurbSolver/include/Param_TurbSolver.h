@@ -22,13 +22,13 @@ namespace PHSPACE
 class Param_TurbSolver : public Param_CFDSolver
 {
 public:
-	LIB_EXPORT Param_TurbSolver();
+    LIB_EXPORT Param_TurbSolver();
 
-	LIB_EXPORT ~Param_TurbSolver();
+    LIB_EXPORT ~Param_TurbSolver();
 
 public:
 
-	LIB_EXPORT void Init();
+    LIB_EXPORT void Init();
 
     RDouble GetTurbCFLScale() const;
 
@@ -40,7 +40,7 @@ public:
 
     int GetSSTProductType() const;
 
-    int GetNTurbulentEquation() const;
+    int GetNTurbulenceEquation() const;
 
     RDouble GetEddyViscosityLimit() const;
 
@@ -76,6 +76,24 @@ public:
 
     RDouble GetKW_sigmaK2() const;
 
+    RDouble GetTransition_ca1() const;
+
+    RDouble GetTransition_ca2() const;
+
+    RDouble GetTransition_ce1() const;
+
+    RDouble GetTransition_ce2() const;
+
+    RDouble GetTransition_dct() const;
+
+    RDouble GetTransition_df() const;
+
+    RDouble GetTransition_cct() const;
+
+    RDouble GetTransition_s1() const;
+
+    RDouble GetTransition_ccf() const;
+
     RDouble GetFreeStreamViscosity() const;
 
     RDouble * GetFreeStreamTurbVar() const;
@@ -93,7 +111,7 @@ private:
 
     int SSTProductType;
 
-    int nTurbulentEquation;
+    int nTurbulenceEquation;
 
     RDouble eddyViscosityLimit;
 
@@ -128,6 +146,18 @@ private:
     RDouble KW_sigmaK1;
 
     RDouble KW_sigmaK2;
+
+    RDouble transition_ca1;
+    RDouble transition_ce1;
+    RDouble transition_ca2;
+    RDouble transition_ce2;
+    RDouble transition_dct;
+    RDouble transition_df;
+    RDouble transition_cct;
+    RDouble transition_s1;
+    RDouble transition_ccf;
+
+    RDouble turbulenceIntensity;
 
     RDouble freeStreamViscosity;
 

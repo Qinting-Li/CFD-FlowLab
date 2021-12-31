@@ -115,6 +115,9 @@ public:
     //! Compute pressure factor for entropy fix (Method 2).
     void PressureFactor(int iSolver, int level);
 
+    //! Compute pressure factor for entropy fix (Method 2).
+    void ComputeHeatTransferCoeff(int iSolver, int level);
+
     //! Compute the gama and temperature of flowfield on the level-th multigrid.
     void ComputeGamaAndTField(int iSolver, int level);
 

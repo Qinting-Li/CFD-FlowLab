@@ -6,6 +6,7 @@
 #include "Pre_StrGridPartition.h"
 #include "GridType.h"
 #include "TK_Log.h"
+#include "IO_FileName.h"
 
 using namespace std;
 
@@ -14,11 +15,17 @@ namespace PHSPACE
 {
 void PartitionGrid()
 {
-    int partitionedGridType = GlobalDataBase::GetIntParaFromDB("pgridtype");
-
     int axisup = 1;
     GlobalDataBase::UpdateData("axisup", &axisup, PHINT, 1);
 
+    int numberOfGridFile = GlobalDataBase::GetIntParaFromDB("numberOfGridFile");
+    if (numberOfGridFile > 1)
+    {
+        MultiGridPartition();
+        return;
+    }
+
+    int partitionedGridType = GlobalDataBase::GetIntParaFromDB("pgridtype");
     if (partitionedGridType == UNSTRUCTGRID)
     {
         PartitionUnstructGrid();
@@ -26,6 +33,70 @@ void PartitionGrid()
     else if (partitionedGridType == STRUCTGRID)
     {
         PartitionStructGrid();
+    }
+}
+
+void MultiGridPartition()
+{
+    PHVectorString1D gridFileNameList;
+    PHVectorString1D outFileNameList;
+    PHVectorInt1D gridTypeList;
+    PHVectorInt1D maxProcList;
+
+    GetPartitionPara(gridFileNameList, outFileNameList, gridTypeList, maxProcList);
+    int axisup = 1;
+    GlobalDataBase::UpdateData("axisup", &axisup, PHINT, 1);
+
+    int numberOfGridFile = GlobalDataBase::GetIntParaFromDB("numberOfGridFile");
+    for (int iGridFile = 0; iGridFile < numberOfGridFile; ++ iGridFile)
+    {
+        int pgridtype = gridTypeList[iGridFile];
+        int maxproc = maxProcList[iGridFile];
+        string original_grid_file  = gridFileNameList[iGridFile];
+        string partition_grid_file = outFileNameList[iGridFile];
+
+        GlobalDataBase::UpdateData("pgridtype", &pgridtype, PHINT, 1);
+        GlobalDataBase::UpdateData("maxproc", &maxproc, PHINT, 1);
+        GlobalDataBase::UpdateData("original_grid_file", &original_grid_file, PHSTRING, 1);
+        GlobalDataBase::UpdateData("partition_grid_file", &partition_grid_file, PHSTRING, 1);
+
+        if (pgridtype == UNSTRUCTGRID)
+        {
+            PartitionUnstructGrid();
+        }
+        else if (pgridtype == STRUCTGRID)
+        {
+            PartitionStructGrid();
+        }
+
+        DeleteGGrids();
+        PHMPI::SetNumberofLocalZones(0);
+    }
+}
+
+void GetPartitionPara(PHVectorString1D &gridFileNameList, PHVectorString1D &outFileNameList, PHVectorInt1D &gridTypeList, PHVectorInt1D &maxProcList)
+{
+    gridFileNameList.push_back(PHSPACE::GlobalDataBase::GetStrParaFromDB("original_grid_file"));
+    gridTypeList.push_back(PHSPACE::GlobalDataBase::GetIntParaFromDB("pgridtype"));
+    maxProcList.push_back(PHSPACE::GlobalDataBase::GetIntParaFromDB("maxproc"));
+    outFileNameList.push_back(AddSymbolToFileName(gridFileNameList[0], "__", maxProcList[0]));
+
+    int numberOfGridFile = GlobalDataBase::GetIntParaFromDB("numberOfGridFile");
+    for (int iGridFile = 1; iGridFile < numberOfGridFile; ++ iGridFile)
+    {
+        ostringstream ossFileName;
+        ossFileName << "original_grid_file" << iGridFile;
+        gridFileNameList.push_back(PHSPACE::GlobalDataBase::GetStrParaFromDB(ossFileName.str()));
+
+        ostringstream ossGridType;
+        ossGridType << "pgridtype" << iGridFile;
+        gridTypeList.push_back(PHSPACE::GlobalDataBase::GetIntParaFromDB(ossGridType.str()));
+
+        ostringstream ossMaxProc;
+        ossMaxProc << "maxproc" << iGridFile;
+        maxProcList.push_back(PHSPACE::GlobalDataBase::GetIntParaFromDB(ossMaxProc.str()));
+
+        outFileNameList.push_back(AddSymbolToFileName(gridFileNameList[iGridFile], "__", maxProcList[iGridFile]));
     }
 }
 
@@ -544,16 +615,16 @@ void BlockBCPatchRefine::RefineBC()
 void BlockBCPatchRefine::SetContent(const int &BCType, const int &imin, const int &imax, 
                                       const int &jmin, const int &jmax, const int &kmin, const int &kmax)
 {
-    this->nb     = nb;
+    this->nb    = nb;
 
-    this->st[0]  = imin;
-    this->ed[0]  = imax;
+    this->st[0] = imin;
+    this->ed[0] = imax;
 
-    this->st[1]  = jmin;
-    this->ed[1]  = jmax;
+    this->st[1] = jmin;
+    this->ed[1] = jmax;
 
-    this->st[2]  = kmin;
-    this->ed[2]  = kmax;
+    this->st[2] = kmin;
+    this->ed[2] = kmax;
 }
 
 void GridRefine::Init(DataContainer *cDdata)

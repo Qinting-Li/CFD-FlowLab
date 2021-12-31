@@ -21,15 +21,15 @@ namespace PHSPACE
 class GeneralFieldProxy
 {
 private:
-	RDouble **field;
-	bool del_field;
-	int ndim;
-	int nsize;
+    RDouble **field;
+    bool del_field;
+    int ndim;
+    int nsize;
 public:
-	GeneralFieldProxy();
-	~GeneralFieldProxy();
+    GeneralFieldProxy();
+    ~GeneralFieldProxy();
 public:
-	void Create(int ndim, int nsize);
-	RDouble ** GetField();
+    void Create(int ndim, int nsize);
+    RDouble ** GetField();
 };
 }

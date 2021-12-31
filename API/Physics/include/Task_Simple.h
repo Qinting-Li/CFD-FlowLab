@@ -27,8 +27,8 @@ public:
     ~Task_Simple() {};
 
 private:
-	void PreTask(ActionKey *actkey);
-	void PostTask(ActionKey *actkey);
-	void MainTask(ActionKey *actkey);
+    void PreTask(ActionKey *actkey);
+    void PostTask(ActionKey *actkey);
+    void MainTask(ActionKey *actkey);
 };
 }

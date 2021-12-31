@@ -2,7 +2,7 @@
 #include "IO_FileName.h"
 #include "TK_Parse.h"
 #include "GridFactory.h"
-#include "AleModel.h"
+#include "AleManager.h"
 #include "GridPartition.h"
 #include "Controller.h"
 #include "TK_Time.h"
@@ -10,11 +10,6 @@
 #include "Geo_Sample.h"
 #include "UnstructuredOversetConfig.h"
 #include "HOSimulation.h"
-
-#ifdef BUILD_LBM
-#include "cavity.h"
-#endif
-
 #include "OversetInformation.h"
 #include "SolversList.h"
 #include "PostProcess.h"
@@ -24,19 +19,16 @@
 #include "Post_WriteTecplot.h"
 #include "LESSolverStruct.h"
 #include "LESSolverUnstr.h"
-#ifdef USE_OVERSET
-#include "Lobachevsky.h"
-#endif
-#include "PHMpi.h"
 #ifdef USE_SpecDiffHybSolver
 #include "SpecDiffHybSolver.h"
+#include "SpecSolver.h"
 #endif
-
+#include "Post_Identify.h"
 #include "Post_ProbesWrite.h"
+#ifdef USE_DEMOSOLVER
+#include "DemoSolver.h"
+#endif
 using namespace std;
-
-static int nTNodes = 0;
-static int nOverCell = 0;
 
 namespace PHSPACE
 {
@@ -87,31 +79,24 @@ void Simulation::Start()
         //ConvertAndPartition();
         break;
     case HO_SOLVER:
-    {
-        HOUnstruct::HOSimulation *uho = new HOUnstruct::HOSimulation();
-        uho->Run();
-        delete uho;
-        break;
-    }
-    #ifdef BUILD_LBM
-    case LBM_SOLVER:
-        RunLBMSolver();
-        break;
-    #endif
+        {
+            HOUnstruct::HOSimulation * uho = new HOUnstruct::HOSimulation();
+            uho->Run();
+            delete uho;
+            break;
+        }
     case INTEGRATIVE_SOLVER:
         RunIntegrativeSolver();
         break;
-	#ifdef USE_OVERSET
-    case SPLIT_OVERSET_GRID:
-        RunOverlapPreProcessing();
-        break;
-    #endif
     case POST_PROCESSING:
         RunPostProcessing();
         break;
     #ifdef USE_SpecDiffHybSolver
-    case SpecDiffHyb_Solver:
+    case SPECDIFFHYB_SOLVER:
         RunSpecDiffHybSolver();
+        break;
+    case SPEC_SOLVER:
+        RunSpecSolver();
         break;
     #endif
     default:
@@ -138,8 +123,6 @@ void Simulation::IsNeedConvert()
     set< pair<string, int> >::iterator iter;
     for (iter = gridTypeMap.begin(); iter != gridTypeMap.end(); ++ iter)
     {
-        //if ((*iter).first != fext) continue;
-        //if (strcmp(fext, (*iter).first)
         if (fileSuffix.compare((*iter).first) != 0)
         {
             continue;
@@ -185,9 +168,6 @@ void Simulation::IsNeedConvert()
         int iadapt = 0;
         GlobalDataBase::UpdateData("iadapt", &iadapt, PHINT, 1);
 
-        int codeOfOversetGrid = 0;
-        GlobalDataBase::UpdateData("codeOfOversetGrid", &codeOfOversetGrid, PHINT, 1);
-
         CompleteParamInfo();
 
         PHSPACE::CreateGrid();
@@ -201,7 +181,7 @@ void Simulation::IsNeedConvert()
 
 void Simulation::RunCFD()
 {
-    double last_time[3];
+    RDouble last_time[3] = {0.0};
     TIME_SPACE::StartTime(last_time);
 
     ReadGeometry();
@@ -212,7 +192,6 @@ void Simulation::RunCFD()
 
     SwapGeommetry();
 
-    //TODO: To develop in the future.
     InitOversetGrid();
 
     if (PHMPI::CurrentProcessorIsGridProcessor())
@@ -328,7 +307,7 @@ void Simulation::RunIntegrativeSolver()
             }
 
             PHMPI::SetNumberOfProcessor(numberOfProcessor);
-            PHMPI::PH_Bcast(&isPartitionOver, 1, serverProcessor);
+            PHMPI::PH_Bcast(&isPartitionOver, 1 * sizeof(int), serverProcessor);
             WriteLogFile("Partition grid complete !\n");
             PrintToWindow("Partition grid complete !\n\n");
         }
@@ -352,14 +331,7 @@ void Simulation::RunIntegrativeSolver()
 
     RunCFD();
 }
-#ifdef USE_OVERSET
-void Simulation::RunOverlapPreProcessing()
-{
-    OGSM_SplitOversetGrid();
-    
-    PHSPACE::CreateGrid();
-}
-#endif
+
 void Simulation::RunPostProcessing()
 {
     PostProcess *postProcess = new PostProcess(this->region);
@@ -368,24 +340,40 @@ void Simulation::RunPostProcessing()
     delete postProcess;
 
     postProcess = NULL;
-
 }
 
 
 #ifdef USE_SpecDiffHybSolver
 void Simulation::RunSpecDiffHybSolver()
 {
-	SpecDiffHybSolver * solver = new SpecDiffHybSolver();
+    double last_time[3];
+    TIME_SPACE::StartTime(last_time);
 
-	solver->Run();
+    SpecDiffHybSolver * solver = new SpecDiffHybSolver();
 
-	delete solver;
+    solver->Run();
+
+    delete solver;
+
+    WriteLogFile("SpecDiffHybSolver Finished!\n");
+}
+
+void Simulation::RunSpecSolver()
+{
+    double last_time[3];
+    TIME_SPACE::StartTime(last_time);
+
+    SpecSolver * solver = new SpecSolver();
+
+    solver->Run();
+
+    delete solver;
 }
 #endif
 
 void Simulation::ComputeWallDistance()
 {
-    double last_time[3];
+    RDouble last_time[3] = {0.0};
     TIME_SPACE::StartTime(last_time);
 
     ReadGeometry();
@@ -411,27 +399,9 @@ void Simulation::InitOversetGrid()
     //! Read overset information files or config.
 
     int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-	int sys_gridtype;
-	GlobalDataBase::GetData("sys_gridtype", &sys_gridtype, PHINT, 1);
 
-    if (!codeOfOversetGrid || sys_gridtype == STRUCTGRID)
+    if (!codeOfOversetGrid)
     {
-        return;
-    }
-
-    //! Structured overset mesh need to be revised!
-    if (sys_gridtype == STRUCTGRID)    //! Overset system configuration?
-    {
-        region->ReadOversetGrid();
-
-        PHSPACE::GenerateStructGridTable();
-
-        PHSPACE::CreateOversetStructGrid();
-
-        OversetStructGrid *oversetStructGrid = PHSPACE::GetOversetStructGrid();
-
-        oversetStructGrid->RunGeometricAnalysis();
-
         return;
     }
 
@@ -471,31 +441,15 @@ void Simulation::InitOversetGrid()
 
 void Simulation::OversetGridConfig()
 {
-    int sysGridType;
-    GlobalDataBase::GetData("sys_gridtype",&sysGridType,PHINT,1);
+    OversetConfigFactoryMulti *oversetConfigFactory = new OversetConfigFactoryMulti();
 
-    if (sysGridType == STRUCTGRID)      //! Overset system configuration????
-    {
-        PHSPACE::GenerateStructGridTable();
+    oversetConfigFactory->Initialize();
 
-        PHSPACE::CreateOversetStructGrid();
+    oversetConfigFactory->OversetConfigMulti();
 
-        OversetStructGrid *oversetStructGrid = PHSPACE::GetOversetStructGrid();
+    oversetConfigFactory->OutPutOversetInformation();
 
-        oversetStructGrid->RunGeometricAnalysis();
-    }
-    else if (sysGridType == UNSTRUCTGRID)
-    {
-        OversetConfigFactoryMulti *oversetConfigFactory = new OversetConfigFactoryMulti();
-
-        oversetConfigFactory->Initialize();
-
-        oversetConfigFactory->OversetConfigMulti();
-
-        oversetConfigFactory->OutPutOversetInformation();
-
-        delete oversetConfigFactory;
-    }
+    delete oversetConfigFactory;
 }
 
 void Simulation::ReadGeometry()
@@ -521,6 +475,8 @@ void Simulation::InitializeSolvers()
 {
     WriteLogFile("Creating and initialization solvers start \n");
 
+    CreateAleManager();
+
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
@@ -536,8 +492,7 @@ void Simulation::InitializeSolvers()
 
 void Simulation::DefineAndCreateSolvers()
 {
-    Region *this_region = this->region;
-    Zone::Init();
+    InitGlobalValuesOfAllZones();
 
     Region *region = this->region;
 
@@ -552,11 +507,12 @@ void Simulation::DefineAndCreateSolvers()
         }
 
         vector<PHSolver *> solverList;
-#ifdef USE_NSDEMO
-        solver = new NSSolverDemo();
+        PHGeometry *geometry = zone->GetGeometry();
+
+#ifdef USE_DEMOSOLVER
+        PHSolver *solver = new DemoSolver();
         solverList.push_back(solver);
 #else  
-        PHGeometry *geometry = zone->GetGeometry();
 
         //! For each zone, define the solver names on it.
         //! If you are solver developer, define your solve name here,
@@ -583,11 +539,8 @@ void Simulation::DefineAndCreateSolvers()
                 }
                 else if (gridType == STRUCTGRID)
                 {
-                    const int FV_METHOD = 0;
-                    const int FD_METHOD = 1;
-
                     int FVorFD = 0;
-                    zone->GetData("ifvfd", &FVorFD, PHINT, 1);
+                    zone->GetData("isFVMOrFDM", &FVorFD, PHINT, 1);
 
                     int iCodeBranch = 0;
                     zone->GetData("iCodeBranch", &iCodeBranch, PHINT, 1);
@@ -622,42 +575,47 @@ void Simulation::DefineAndCreateSolvers()
         //! Second: turbulent equations solver.
         int viscousType = ONE_EQU;
         zone->GetData("viscousType", &viscousType, PHINT, 1);
-        if (viscousType > 1)
+        if (viscousType > LAMINAR)
         {
-            int gridType = geometry->GetGrid()->Type();
-            if (gridType == UNSTRUCTGRID)
+            int compressible = 1;
+            zone->GetData("compressible", &compressible, PHINT, 1);
+            if (compressible)
             {
-                //! Add unstructured turbulent solver.
-                PHSolver *solver = new TurbSolverUnstr();
-                solverList.push_back(solver);
-            }
-            else if (gridType == STRUCTGRID)
-            {
-                const int FV_METHOD = 0;
-                const int FD_METHOD = 1;
-                const int NS_METHOD = 2;
-
-                int FVorFD = 0;
-                zone->GetData("ifvfd", &FVorFD, PHINT, 1);
-
-                if (FVorFD == FV_METHOD || FVorFD == NS_METHOD)
+                int gridType = geometry->GetGrid()->Type();
+                if (gridType == UNSTRUCTGRID)
                 {
-                    //! Add structured turbulent solver.
-                    PHSolver *solver = new TurbSolverStr();
+                    //! Add unstructured turbulent solver.
+                    PHSolver *solver = new TurbSolverUnstr();
                     solverList.push_back(solver);
                 }
-                else
+                else if (gridType == STRUCTGRID)
                 {
-                    //! Add structured FD turbulent solver.
-                    PHSolver *solver = new TurbSolverStrFD();
-                    solverList.push_back(solver);
+                    const int FV_METHOD = 0;
+                    const int FD_METHOD = 1;
+                    const int NS_METHOD = 2;
+
+                    int FVorFD = 0;
+                    zone->GetData("isFVMOrFDM", &FVorFD, PHINT, 1);
+
+                    if (FVorFD == FV_METHOD || FVorFD == NS_METHOD)
+                    {
+                        //! Add structured turbulent solver.
+                        PHSolver *solver = new TurbSolverStr();
+                        solverList.push_back(solver);
+                    }
+                    else
+                    {
+                        //! Add structured FD turbulent solver.
+                        PHSolver *solver = new TurbSolverStrFD();
+                        solverList.push_back(solver);
+                    }
                 }
             }
         }
 
         int iLES = 0;
         zone->GetData("iLES", &iLES, PHINT, 1);
-        if (iLES > 0)
+        if (iLES == LES_SOLVER)
         {
             int gridType = geometry->GetGrid()->Type();
             if (gridType == UNSTRUCTGRID)
@@ -689,12 +647,6 @@ void Simulation::DefineAndCreateSolvers()
 
 void Simulation::PreSolve()
 {
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if (isUnsteady != 0)
-    {
-        AleModel::UnsteadyPreSolve();
-    }
-
     int isInIniting = GlobalDataBase::GetIntParaFromDB("isInIniting");
     if (isInIniting == 1)
     {
@@ -719,31 +671,6 @@ void Simulation::PreSolve()
             }
         }
     }
-
-    //! Assemble and interpolate struct overset grid.
-#ifdef USE_OVERSET
-    int nZones = PHMPI::GetNumberofGlobalZones();
-    int *processorList = PHMPI::GetZoneProcessorID();
-    int *groupList = PHMPI::GetZoneGroupID();
-    int maxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
-    int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "outnstep" );
-    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    
-    if (codeOfOversetGrid == 1)
-    {
-        if(isUnsteady == 1 || nTNodes == 0)
-        {
-            OGSM_CreateOversetWorld(processorList, groupList, nZones);
-        }
-
-        AssembleInterpolationOversetField();
-
-        if(isUnsteady == 1 || outnstep == maxSimuStep)
-       {
-           OGSM_DeleteOversetWorld();
-        }
-    }
-#endif
 }
 
 void Simulation::PostSolve()
@@ -760,13 +687,20 @@ void Simulation::PostSolve()
         generateVisualFile.Run();
     }
 
-    int ifSetDataMonitor = GlobalDataBase::GetIntParaFromDB("ifSetDataMonitor");
-    if (!ifSetDataMonitor) return;
-
-    if (outIterStep % intervalStepSample == 0)
+    if (!GlobalDataBase::IsExist("ifSetDataMonitor", PHINT, 1))
     {
-        Post_ProbesWrite generateProbesVarFile;
-        generateProbesVarFile.Run();
+        return;
+    }
+    else
+    {
+        int ifSetDataMonitor = GlobalDataBase::GetIntParaFromDB("ifSetDataMonitor");
+        if (!ifSetDataMonitor) return;
+
+        if (outIterStep % intervalStepSample == 0)
+        {
+            Post_ProbesWrite generateProbesVarFile;
+            generateProbesVarFile.Run();
+        }
     }
 }
 
@@ -795,19 +729,12 @@ void Simulation::SolveOneOuterStep()
 
 void Simulation::SolveSimulation()
 {
-
     WriteLogFile("Start iterating ...");
     bool continueSolve = true;
 
     int maxSimuStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
-    int codeOfOversetGrid    = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-
-    if (codeOfOversetGrid != 0 && sysGridType == STRUCTGRID)
-    {
-        //GetOversetStructGrid()->FillSolverContainer();
-        //GetOversetStructGrid()->InitField();
-    }
 
     //! Wait for all processors here!
     if (codeOfOversetGrid == 0 || sysGridType == STRUCTGRID)
@@ -825,7 +752,6 @@ void Simulation::SolveSimulation()
 
     while (continueSolve)
     {
-        //TODO: To modify the function name.
         UpdateOuterIterationStep(outIterStep);
 
         SolveOneOuterStep();
@@ -839,17 +765,17 @@ void Simulation::SolveSimulation()
 
 void Simulation::PostSimulation()
 {
-	this->region->PostSimulation();
+    this->region->PostSimulation();
 
     int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
 
-    if (codeOfOversetGrid != 0 && sysGridType == STRUCTGRID)
+    int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    int IsAleSimulation = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (IsUnsteady != 0  && IsAleSimulation !=0)
     {
-        //PHSPACE::DeleteOversetStructGrid();
-
-        //PHSPACE::DeleteStructGridTable();
+        FreeAleManager();
     }
 
     return;
@@ -883,9 +809,9 @@ void Simulation::UpdateOuterIterationStep(int &outIterStep)
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
         if (outIterStep >= startStatisticStep)
         {
-            int numberOfstatisticsDESInterval = GlobalDataBase::GetIntParaFromDB("nStatisticalStep");
-            ++ numberOfstatisticsDESInterval;
-            GlobalDataBase::UpdateData("nStatisticalStep", &numberOfstatisticsDESInterval, PHINT, 1);
+            int nStatisticalStep = GlobalDataBase::GetIntParaFromDB("nStatisticalStep");
+            ++ nStatisticalStep;
+            GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
         }
     }
 }
@@ -912,8 +838,6 @@ void Simulation::MultiGridInitFlow()
     int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
     if (outIterStep > 0)
     {
-        //int newnstep = outnstep;
-        //GlobalDataBase::UpdateData("newnstep", &newnstep, PHINT, 1);
         return; //! Read from flow file.
     }
 
@@ -927,7 +851,6 @@ void Simulation::MultiGridInitFlow()
 
     for (int iLevel = nMGLevel - 1; iLevel > 0; -- iLevel)
     {
-        //TODO: to modify the levelStep for alterative using.
         int levelStep = 0;
         int totalLevelStep = flowInitStep * iLevel;
 
@@ -982,7 +905,7 @@ void Simulation::SolveSteady()
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
         //! isolver = 1 or 2, is supposed as turbulence computing.
-        if ((iSolver != 0) && (outerIterStep % turbInterval != 0))
+        if ((iSolver == TURB_SOLVER) && (outerIterStep % turbInterval != 0))
         {
             return;
         }
@@ -1015,6 +938,8 @@ void Simulation::SolveUnsteady()
         innerIterStep += 1;
         GlobalDataBase::UpdateData("innstep", &innerIterStep, PHINT, 1);
 
+        SolveSingleInnerIterationStepForAleSolvers();
+
         RDouble subIterationNormOneSolver = zero;
         RDouble maxSubIterationNormAllSolvers = -LARGE;
 
@@ -1038,6 +963,8 @@ void Simulation::SolveUnsteady()
         //! Sub-iteration continue or not judgement.
         isSubIterationConvergence = IsSubIterationConvergence(innerIterStep, minSubItertation, maxSubItertation, toltalSubItertation, maxSubIterationNormAllSolvers);
     }
+
+    PostprocessAfterInnerIterationStepForAleSolvers();
 
     //! Here is already (innstep == max_sub_iter || isSubIterationConvergence).
     isSubIterationDump = true;
@@ -1080,84 +1007,5 @@ bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &
 
     return isSubIterationConvergence;
 }
-
-void Simulation::AssembleInterpolationOversetField()
-{
-    using namespace PHMPI;
-
-    int viscousType = GlobalDataBase::GetIntParaFromDB( "viscousType" );
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    int nGlobalZone = GetNumberofGlobalZones();
-#ifdef USE_OVERSET
-    //! Import Geometry infortation.
-    if(isUnsteady == 1 || nTNodes == 0)
-    {
-        GeoOverset(nTNodes, nOverCell, nGlobalZone);
-    }
-
-    
-    //! Different viscous model correspond to different interpolation.
-    if( viscousType == INVISCID)
-    {
-        InterpolationOversetField("q", 4, nTNodes, nOverCell, nGlobalZone, 5);
-    }
-    
-    if( viscousType == LAMINAR)
-    {
-        InterpolationOversetField("q", 4, nTNodes, nOverCell, nGlobalZone, 5);
-        InterpolationOversetField("t", 4, nTNodes, nOverCell, nGlobalZone, 1);
-
-        InterpolationOversetField("gama", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("visl", 3, nTNodes, nOverCell, nGlobalZone, 1);
-
-        InterpolationOversetField("gradUVWTCellCenterX", 4, nTNodes, nOverCell, nGlobalZone, 4);
-        InterpolationOversetField("gradUVWTCellCenterY", 4, nTNodes, nOverCell, nGlobalZone, 4);
-        InterpolationOversetField("gradUVWTCellCenterZ", 4, nTNodes, nOverCell, nGlobalZone, 4);
-    }
-    
-    if( viscousType == ONE_EQU)
-    {
-        InterpolationOversetField("q", 4, nTNodes, nOverCell, nGlobalZone, 5);
-        InterpolationOversetField("t", 4, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("q_turb", 4, nTNodes, nOverCell, nGlobalZone, 1);
-        
-        InterpolationOversetField("gama", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("visl", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("rtem", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("vist", 3, nTNodes, nOverCell, nGlobalZone, 1);
-
-        InterpolationOversetField("gradUVWTCellCenterX", 4, nTNodes, nOverCell, nGlobalZone, 4);
-        InterpolationOversetField("gradUVWTCellCenterY", 4, nTNodes, nOverCell, nGlobalZone, 4);
-        InterpolationOversetField("gradUVWTCellCenterZ", 4, nTNodes, nOverCell, nGlobalZone, 4);
-
-        InterpolationOversetField("gradTurbulentCellCenterX", 4, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("gradTurbulentCellCenterY", 4, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("gradTurbulentCellCenterZ", 4, nTNodes, nOverCell, nGlobalZone, 1);
-    }
-    
-    if( viscousType == TWO_EQU)
-    {
-        InterpolationOversetField("q", 4, nTNodes, nOverCell, nGlobalZone, 5);
-        InterpolationOversetField("t", 4, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("q_turb", 4, nTNodes, nOverCell, nGlobalZone, 2);
-
-    
-        InterpolationOversetField("gradUVWTCellCenterX", 4, nTNodes, nOverCell, nGlobalZone, 4);
-        InterpolationOversetField("gradUVWTCellCenterY", 4, nTNodes, nOverCell, nGlobalZone, 4);
-        InterpolationOversetField("gradUVWTCellCenterZ", 4, nTNodes, nOverCell, nGlobalZone, 4);
-        
-        InterpolationOversetField("gama", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("visl", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("rtem", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("vist", 3, nTNodes, nOverCell, nGlobalZone, 1);
-        InterpolationOversetField("blend", 3, nTNodes, nOverCell, nGlobalZone, 1);
-
-        InterpolationOversetField("gradTurbulentCellCenterX", 4, nTNodes, nOverCell, nGlobalZone, 2);
-        InterpolationOversetField("gradTurbulentCellCenterY", 4, nTNodes, nOverCell, nGlobalZone, 2);
-        InterpolationOversetField("gradTurbulentCellCenterZ", 4, nTNodes, nOverCell, nGlobalZone, 2);
-    }
-#endif
-}
-
 }
 

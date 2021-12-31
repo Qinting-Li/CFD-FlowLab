@@ -6,135 +6,137 @@ namespace PHSPACE
 class MeshNodesSpring
 {
 public:
-	MeshNodesSpring(){};
-	~MeshNodesSpring(){};
+    MeshNodesSpring(){};
+    ~MeshNodesSpring(){};
 
 public:
-	int numberOfNodes;
+    int numberOfNodes;
 
 public:
-	void Initialize(){};
-	void Run(){};
+    void Initialize(){};
+    void Run(){};
 };
 
 class MeshNodesMapping
 {
 public:
-	MeshNodesMapping (){};
-	~MeshNodesMapping(){};
+    MeshNodesMapping (){};
+    ~MeshNodesMapping(){};
 
 public:
-	int numberOfNodes;
+    int numberOfNodes;
 
 public:
-	void Initialize(){};
-	void Run(){};
+    void Initialize(){};
+    void Run(){};
 };
 
 class MeshNodesRBF
 {
 public:
-	MeshNodesRBF(){};
-	~MeshNodesRBF(){};
+    MeshNodesRBF(){};
+    ~MeshNodesRBF(){};
 
 public:
-	int numberOfNodes;
+    int numberOfNodes;
 
 public:
-	void Initialize(){};
-	void Run(){};
+    void Initialize(){};
+    void Run(){};
 };
 
 class SixDofParameter;
 class DeformingParameter;
 class Grid;
 
-//最简单的运动网格类，实现的功能：变形+刚性运动。
-
+// the father class of the moving mesh. the features includes the deforming and rigid motion.
 class SimpleMovingMesh
 {
 public:
-	SimpleMovingMesh();
-	~SimpleMovingMesh();
+    SimpleMovingMesh();
+    ~SimpleMovingMesh();
 
 public:
-	int meshDoformingMethod;      //网格变形方法. 0-不变形；1-rbf；2-弹簧；3-mapping……
+    int meshDoformingMethod;      //! 0 - not doformed; 1 - rbf; 2 - spring; 3 - mapping……
 
 public:
-    Grid* grid;
+    Grid *grid;
 
-	int numberOfNodes;
-	vector< RDouble > xInit;      //体坐标系内的初始坐标
-	vector< RDouble > yInit;      //体坐标系内的初始坐标
-	vector< RDouble > zInit;      //体坐标系内的初始坐标
+    int numberOfNodes;
+    // the init coordinate of the body axis.
+    vector< RDouble > xInit;
+    vector< RDouble > yInit;
+    vector< RDouble > zInit;
 
-	vector< RDouble > xPresent;   //当前在体坐标系内的坐标
-	vector< RDouble > yPresent;   //当前在体坐标系内的坐标
-	vector< RDouble > zPresent;   //当前在体坐标系内的坐标
+    // the current coordinate of the body axis.
+    vector< RDouble > xPresent;
+    vector< RDouble > yPresent;
+    vector< RDouble > zPresent;
 
 public:
-	void SetInitCoordinate( Grid* grid      );
-	void CalInitCoordinate( SixDofParameter    * sixDof    );
+    void SetInitCoordinate( Grid* grid      );
+    void CalInitCoordinate( SixDofParameter    * sixDof    );
 
-	void Deforming        ( DeformingParameter * deforming );
-	void RigidMoving      ( SixDofParameter    * sixDof    );
-	void UpdateGrid       ();
+    void Deforming        ( DeformingParameter * deforming );
+    void RigidMoving      ( SixDofParameter    * sixDof    );
+    void UpdateGrid       ();
 };
 
-//几个常见的“复杂”一点的运动网格
-//从体坐标系，通过六自由度信息转换到计算坐标
-//对于舵面控制问题：
-//1-先在体轴系内完成旋转（舵偏）（将舵偏近似看成一种“变形”，）
-//2-通过在弹体上的装配信息（装配六自由度）完成坐标转换
-//3-通过弹体的六自由度信息转换到计算坐标
+
+//! several common complex motion meshes.
+//! transform to the calculating axis system from the body axis by the six DOF information.
+//! for the rudder surface control.
+//1 - first rotate in the body axis system.(rudder deviation)
+//2 - implement the coordinate transform by the assembly information of the projectile.
+//3 - transform to the calculating axis system by the six DOF information of the projectile.
 
 class OriginalMovingMesh
 {
 public:
-	OriginalMovingMesh();
-	~OriginalMovingMesh();
+    OriginalMovingMesh();
+    ~OriginalMovingMesh();
 
 public:
-	int bodyIndex;
-	int fartherIndex;                        //“父”
-	SixDofParameter    * location;         //“父”中的装配位置
+    int bodyIndex;
+    int fartherIndex;
+    SixDofParameter    *location;         //! the assmbly positin in farther index.
 
-	SixDofParameter    * presentSixdof;    //当前的刚体六自由的参数
+    SixDofParameter    *presentSixdof;    //! the current six DOF parameters of the rigid body.
 
-	DeformingParameter * presentDeforming; //当前的变形参数
+    DeformingParameter *presentDeforming; //! the current Deforming parameters.
 
     Grid* grid;
-	SimpleMovingMesh   * movingMesh;
+    SimpleMovingMesh   *movingMesh;
 
 public:
-	void Initialize(Grid* grid, int bodyIndex );
-	void Restart();
-	void PreProcess();
-	void PreProcessRigidMoving();
-	void PreProcessDeforming();
-	void Run();
+    void Initialize(Grid* grid, int bodyIndex );
+    void Restart();
+    void PreProcess();
+    void PreProcessRigidMoving();
+    void PreProcessDeforming();
+    void Run();
 };
 
 class MovingMeshManager
 {
 public:
-	MovingMeshManager();
-	~MovingMeshManager();
+    MovingMeshManager();
+    ~MovingMeshManager();
 
 public:
-	int numberOfBodys;
-	int numberOfZones;
+    int numberOfBodys;
+    int numberOfZones;
 
-	OriginalMovingMesh ** originalMovingMeshes;
+    OriginalMovingMesh ** originalMovingMeshes;
 
-	vector < OriginalMovingMesh * > innerMovingMesh;
-	vector < OriginalMovingMesh * > outerMovingMesh;
+    vector < OriginalMovingMesh * > innerMovingMesh;
+    vector < OriginalMovingMesh * > outerMovingMesh;
 
 public:
-	void Initialize();
-	void Restart();
-	void Run();
-	void Post();
+    void Initialize();
+    void Restart();
+    void Run();
+    void Post();
 };
 
 }

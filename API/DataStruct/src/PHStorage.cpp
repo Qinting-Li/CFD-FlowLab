@@ -2,5 +2,5 @@
 
 namespace PHSPACE
 {
-fortranTag fortranArray;
+    fortranTag fortranArray;
 }

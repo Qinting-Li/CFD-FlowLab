@@ -1,11 +1,11 @@
 inline int Param_NSSolver::GetIntervalStepForce() const
 {
-	return intervalStepForce;
+    return intervalStepForce;
 }
 
 inline RDouble Param_NSSolver::GetWallTemperature() const
 {
-	return wallTemperature;
+    return wallTemperature;
 }
 
 inline int Param_NSSolver::GetChemicalFlag() const
@@ -134,3 +134,55 @@ inline int Param_NSSolver::GetIndexOfElectron() const
     //! The index of Electron in the array of species.
     return indexOfElectron;
 }
+
+
+inline int Param_NSSolver::GetnDensityModify() const
+{
+    return nDensityModify;
+}
+
+inline int Param_NSSolver::GetnDebug() const
+{
+    return nDebug;
+}
+
+inline int Param_NSSolver::GetmTT() const
+{
+    return mTT;
+}
+
+inline int Param_NSSolver::GetmTV() const
+{
+    return mTV;
+}
+
+inline int Param_NSSolver::GetmTE() const
+{
+    return mTE;
+}
+
+inline int Param_NSSolver::GetnEnergyRecycle() const
+{
+    return nEnergyRecycle;
+}
+
+inline int Param_NSSolver::GetnViscosityFluxSublevelModified() const
+{
+    return nViscosityFluxSublevelModified;
+}
+
+inline int Param_NSSolver::GetFlagOfEquilibriumGas() const
+{
+    return nEquilibriumGas;
+}
+
+inline int Param_NSSolver::GetThermoEnergyModelFlag() const
+{
+    return nTEnergyModel;
+}
+
+inline int Param_NSSolver::GetnTurblenceForChemical() const
+{
+    return nTurblenceForChemical;
+}
+

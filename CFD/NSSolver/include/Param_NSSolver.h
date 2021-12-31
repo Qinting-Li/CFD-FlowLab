@@ -22,19 +22,19 @@ namespace PHSPACE
 class Param_NSSolver : public Param_CFDSolver
 {
 public:
-	LIB_EXPORT Param_NSSolver();
+    LIB_EXPORT Param_NSSolver();
 
-	LIB_EXPORT ~Param_NSSolver();
+    LIB_EXPORT ~Param_NSSolver();
 
 public:
-	//! Init all parameters.
-	LIB_EXPORT void Init();
+    //! Init all parameters.
+    LIB_EXPORT void Init();
 
-	//! Get interval steps of dumping force.
-	int GetIntervalStepForce() const;
+    //! Get interval steps of dumping force.
+    int GetIntervalStepForce() const;
 
-	//! Get wall temperature.
-	RDouble GetWallTemperature() const; 
+    //! Get wall temperature.
+    RDouble GetWallTemperature() const; 
 
     //! Get the flag of the gas model.
     int GetChemicalFlag() const;
@@ -49,10 +49,10 @@ public:
     int GetTemperatureModel() const;
 
     //! Get if carry out precondition or not.
-	int GetIfLowSpeedPrecon() const;
+    int GetIfLowSpeedPrecon() const;
 
-	//! Get attacked of angle.
-	RDouble GetAoA() const;
+    //! Get attacked of angle.
+    RDouble GetAoA() const;
 
     //! Get the Entropy fix (correction) method.
     int GetRoeEntropyFixMethod() const;
@@ -60,14 +60,14 @@ public:
     //! Get the Entropy coefficient scale, default is 1.0.
     RDouble GetRoeEntropyScale() const;
 
-	//! Get the entropy fix coefficient 1 of Roe method.
-	RDouble GetRoeEntropyFixCoef1() const; 
-	
-	//! Get the entropy fix coefficient 2 of Roe method.
-	RDouble GetRoeEntropyFixCoef2() const; 
+    //! Get the entropy fix coefficient 1 of Roe method.
+    RDouble GetRoeEntropyFixCoef1() const; 
+    
+    //! Get the entropy fix coefficient 2 of Roe method.
+    RDouble GetRoeEntropyFixCoef2() const; 
 
     //! Get angle of slide.
-	RDouble GetAngleOfSlide () const;
+    RDouble GetAngleOfSlide () const;
 
     //! Set the entropy fix coefficients by the inflow mach number.
     void SetEntropyFixCoefficients();
@@ -107,6 +107,26 @@ public:
 
     int GetIndexOfElectron() const; //! The index of Electron in the array of species.
 
+    int GetFlagOfEquilibriumGas() const;
+
+    int GetnDensityModify() const;
+
+    int GetThermoEnergyModelFlag() const;
+
+    int GetnDebug() const;
+
+    int GetmTT() const;
+
+    int GetmTV() const;
+
+    int GetmTE() const;
+
+    int GetnEnergyRecycle() const;
+
+    int GetnTurblenceForChemical() const;
+
+    int GetnViscosityFluxSublevelModified() const;
+
 private:
     int intervalStepForce;
 
@@ -122,7 +142,7 @@ private:
     int nTemperatureModel;
 
     //! For incompressible flow (mach < 0.3), using precondition method or not.
-	int ifLowSpeedPrecon;
+    int ifLowSpeedPrecon;
 
     //! Angle of attacked.
     double AoA;
@@ -141,10 +161,10 @@ private:
     RDouble roeEntropyScale;
 
     //! Entropy fix for Acoustic eigenvalue.
-	RDouble RoeEntropyFixCoef1;
+    RDouble RoeEntropyFixCoef1;
 
     //! Entropy fix for convective eigenvalue.
-	RDouble RoeEntropyFixCoef2;
+    RDouble RoeEntropyFixCoef2;
 
     RDouble prandtlLaminar;
 
@@ -171,6 +191,24 @@ private:
 
     int indexOfNitrogen; //! The index of Nitrogen in the array of species, it indicates the species with the maximum mass fraction.
     int indexOfElectron; //! The index of Electron in the array of species.
+
+    int nEquilibriumGas; //! The flag of equilibrium gas, 0 is for perfect gas, while > 0 is for equilibrium gas.
+    //! Attention: this variable is valid when the condition nChemical=0 is satisfied, meanwhile its value denotes the number of gas components.
+
+    int nDensityModify;
+
+    int nDebug;
+
+    //nTEnergyModel=0 indicates the energy terms are computed using the conventional method.
+    //nTEnergyModel=1 indicates the energy terms are computed using the curve-fitting method.
+    int nTEnergyModel;
+
+    int mTT, mTV, mTE;
+    int nEnergyRecycle;
+
+    int nTurblenceForChemical;
+
+    int nViscosityFluxSublevelModified;
 };
 
 #include "Param_NSSolver.hxx"

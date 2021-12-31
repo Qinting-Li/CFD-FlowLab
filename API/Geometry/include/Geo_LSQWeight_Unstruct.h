@@ -23,65 +23,65 @@ class Geo_LSQWeight_Unstruct
 {
 private:
 
-	RDouble * iwt;
+    RDouble * iwt;
 
-	RDouble * ixx, * iyy, * izz;
+    RDouble * ixx, * iyy, * izz;
 
-	RDouble * ixy,* ixz,* iyz;
+    RDouble * ixy,* ixz,* iyz;
 
-	char * fMark;
+    char * fMark;
 public:
-	LIB_EXPORT Geo_LSQWeight_Unstruct();
-	LIB_EXPORT ~Geo_LSQWeight_Unstruct();
+    LIB_EXPORT Geo_LSQWeight_Unstruct();
+    LIB_EXPORT ~Geo_LSQWeight_Unstruct();
 
 public:
-	//! Return the least square weights IWT.
-	RDouble * GetLeastSquareIWT() const;
+    //! Return the least square weights IWT.
+    RDouble * GetLeastSquareIWT() const;
 
-	//! Return the least square weights IXX.
-	RDouble * GetLeastSquareIXX() const;
+    //! Return the least square weights IXX.
+    RDouble * GetLeastSquareIXX() const;
 
-	//! Return the least square weights IYY.
-	RDouble * GetLeastSquareIYY() const;
+    //! Return the least square weights IYY.
+    RDouble * GetLeastSquareIYY() const;
 
-	//! Return the least square weights IZZ.
-	RDouble * GetLeastSquareIZZ() const;
+    //! Return the least square weights IZZ.
+    RDouble * GetLeastSquareIZZ() const;
 
-	//! Return the least square weights IXY.
-	RDouble * GetLeastSquareIXY() const;
+    //! Return the least square weights IXY.
+    RDouble * GetLeastSquareIXY() const;
 
-	//! Return the least square weights IXZ.
-	RDouble * GetLeastSquareIXZ() const;
+    //! Return the least square weights IXZ.
+    RDouble * GetLeastSquareIXZ() const;
 
-	//! Return the least square weights IYZ.
-	RDouble * GetLeastSquareIYZ() const;
+    //! Return the least square weights IYZ.
+    RDouble * GetLeastSquareIYZ() const;
 
-	//! Set the least square weights IWT.
-	void SetLeastSquareIWT(RDouble *iwt);
+    //! Set the least square weights IWT.
+    void SetLeastSquareIWT(RDouble *iwt);
 
-	//! Set the least square weights IXX.
-	void SetLeastSquareIXX(RDouble *ixx);
+    //! Set the least square weights IXX.
+    void SetLeastSquareIXX(RDouble *ixx);
 
-	//! Set the least square weights IYY.
-	void SetLeastSquareIYY(RDouble *iyy);
+    //! Set the least square weights IYY.
+    void SetLeastSquareIYY(RDouble *iyy);
 
-	//! Set the least square weights IZZ.
-	void SetLeastSquareIZZ(RDouble *izz);
+    //! Set the least square weights IZZ.
+    void SetLeastSquareIZZ(RDouble *izz);
 
-	//! Set the least square weights IXY.
-	void SetLeastSquareIXY(RDouble *ixy);
+    //! Set the least square weights IXY.
+    void SetLeastSquareIXY(RDouble *ixy);
 
-	//! Set the least square weights IXZ.
-	void SetLeastSquareIXZ(RDouble *ixz);
+    //! Set the least square weights IXZ.
+    void SetLeastSquareIXZ(RDouble *ixz);
 
-	//! Set the least square weights IYZ.
-	void SetLeastSquareIYZ(RDouble *iyz);
+    //! Set the least square weights IYZ.
+    void SetLeastSquareIYZ(RDouble *iyz);
 
-	//! Get the face mark.
-	char * GetFaceMark() const;
+    //! Get the face mark.
+    char * GetFaceMark() const;
 
-	//! Set the face mark.
-	void   SetFaceMark(char *fMark);
+    //! Set the face mark.
+    void   SetFaceMark(char *fMark);
 };
 
 #include "Geo_LSQWeight_Unstruct.hxx"

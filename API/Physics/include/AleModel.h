@@ -32,27 +32,27 @@ class Grid;
 class AleParameter
 {
 public:
-	int isUnsteady, iale;
+    int isUnsteady, codeOfAleModel;
     int order;
-	//! Linear Multi Step Methods flag.
-	int lmsmflag; 
-	//! Outer iteration step.
-	int outnstep;
+    //! Linear Multi Step Methods flag.
+    int lmsmflag; 
+    //! Outer iteration step.
+    int outnstep;
 
-	RDouble theta;
-	RDouble phi;
-	RDouble xi;
-	RDouble *outerdt;
-	RDouble dtau;
+    RDouble theta;
+    RDouble phi;
+    RDouble xi;
+    RDouble *outerdt;
+    RDouble dtau;
     RDouble dtsave;
-	RDouble simutime;
-	RDouble timemax;
+    RDouble simutime;
+    RDouble timemax;
 public:
-	int & GetLMSMFlag() { return lmsmflag; };
-	void SetLMSMFlag();
-	void Init();
-	AleParameter();
-	~AleParameter();
+    int & GetLMSMFlag() { return lmsmflag; };
+    void SetLMSMFlag();
+    void Init();
+    AleParameter();
+    ~AleParameter();
 };
 
 class AleModel
@@ -71,61 +71,61 @@ public:
     
     int maxale;
     static RDouble * euler_angle;    //! Rotation euler angle.
-	static RDouble **trans_ref;      //! Reference point, velocity, accelerations.
-	static RDouble **xyz_ref;        //! Reference point n, n-1, n-2.
-	static RDouble **rotate_ref;     //! Reference point, velocity, accelerations.
-	static RDouble **angle_ref;    
-	static RDouble **matrix;         //! Matrix.
+    static RDouble **trans_ref;      //! Reference point, velocity, accelerations.
+    static RDouble **xyz_ref;        //! Reference point n, n-1, n-2.
+    static RDouble **rotate_ref;     //! Reference point, velocity, accelerations.
+    static RDouble **angle_ref;    
+    static RDouble **matrix;         //! Matrix.
     int * ialepar;
-	static AleParameter *param;
+    static AleParameter *param;
 public:
-	static void Init();             //! Initialization.
-	static void Allocate();         //! Allocate memory.
-	static void Free();
+    static void Init();             //! Initialization.
+    static void Allocate();         //! Allocate memory.
+    static void Free();
 
-	static RDouble ** CreateMatrix();
-	static void DestroyMatrix(RDouble **matrix);
+    static RDouble ** CreateMatrix();
+    static void DestroyMatrix(RDouble **matrix);
 
-	static RDouble * CreateVector();
-	static void DestroyVector(RDouble *v);
+    static RDouble * CreateVector();
+    static void DestroyVector(RDouble *v);
 
-	static void CrossMultiply(RDouble *omega, RDouble *dr, RDouble *vel);
+    static void CrossMultiply(RDouble *omega, RDouble *dr, RDouble *vel);
 
-	static void SetMatrix(RDouble ** matrix_x, RDouble ** matrix_y);
-	static void TransposeMatrix(RDouble ** matrix);
-	static void ComputeRelativeRotateMatrix();
-	static void ComputeRelativeRotateMatrix(RDouble ** matrix_now, RDouble ** matrix_old);
+    static void SetMatrix(RDouble ** matrix_x, RDouble ** matrix_y);
+    static void TransposeMatrix(RDouble ** matrix);
+    static void ComputeRelativeRotateMatrix();
+    static void ComputeRelativeRotateMatrix(RDouble ** matrix_now, RDouble ** matrix_old);
 
-	static void MatrixMultiply(RDouble **x, RDouble **y, RDouble **z);
-	static void MatrixRotate  (RDouble *angle, RDouble **matrix);
-	static void MatrixRotateX (RDouble  angle, RDouble **matrix);
-	static void MatrixRotateY (RDouble  angle, RDouble **matrix);
-	static void MatrixRotateZ (RDouble  angle, RDouble **matrix);
+    static void MatrixMultiply(RDouble **x, RDouble **y, RDouble **z);
+    static void MatrixRotate  (RDouble *angle, RDouble **matrix);
+    static void MatrixRotateX (RDouble  angle, RDouble **matrix);
+    static void MatrixRotateY (RDouble  angle, RDouble **matrix);
+    static void MatrixRotateZ (RDouble  angle, RDouble **matrix);
 
-	static void GetGridFileName(string &filename);
+    static void GetGridFileName(string &filename);
 
-	static void EulerAngle();
-	static void DynamicGrid();
-	static void GenerateDynamicGrid();
-	static void BackUpOldGrid();
-	static void ReadDynamicGrid();
-	static void ReadDynamicGrid(fstream &file);
-	static void ReadGridCoordinate(fstream &file, int izone);
-	static void ComputeGridVelocity();
-	static void UpdateGridInfo();
-	static void RotateTranslation();
-	static void RotateTranslation(Grid *grid);
-	static void GridVerticeVelocity       (Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
-	static void GridVerticeVelocityRigid  (Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
-	static void GridVerticeVelocityGeneral(Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
-	static void GridSurfaceVelocity       (Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
-	static void CheckMovement();
-	static void Deform();
-	static void MoveGrid();
-	static void LinearMultiStepMethodsCoeffcient(AleParameter *param);
-	static void GetOuterdt(AleParameter *param);
-	static void UnsteadyPreSolve();
-	static void GetOuterSrc();
+    static void EulerAngle();
+    static void DynamicGrid();
+    static void GenerateDynamicGrid();
+    static void BackUpOldGrid();
+    static void ReadDynamicGrid();
+    static void ReadDynamicGrid(fstream &file);
+    static void ReadGridCoordinate(fstream &file, int izone);
+    static void ComputeGridVelocity();
+    static void UpdateGridInfo();
+    static void RotateTranslation();
+    static void RotateTranslation(Grid *grid);
+    static void GridVerticeVelocity       (Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
+    static void GridVerticeVelocityRigid  (Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
+    static void GridVerticeVelocityGeneral(Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
+    static void GridSurfaceVelocity       (Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt);
+    static void CheckMovement();
+    static void Deform();
+    static void MoveGrid();
+    static void LinearMultiStepMethodsCoeffcient(AleParameter *param);
+    static void GetOuterdt(AleParameter *param);
+    static void UnsteadyPreSolve();
+    static void GetOuterSrc();
 };
 
 void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord0, RDouble **angle, RDouble **coord,RDouble *outerdt, RDouble &time, 

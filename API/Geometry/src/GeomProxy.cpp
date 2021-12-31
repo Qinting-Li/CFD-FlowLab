@@ -5,11 +5,11 @@ namespace PHSPACE
 {
     GeomProxy::GeomProxy()
     {
-        xfn  = 0;
-        yfn  = 0;
-        zfn  = 0;
-        vgn  = 0;
-        area = 0;
+        xfn  = nullptr;
+        yfn  = nullptr;
+        zfn  = nullptr;
+        vgn  = nullptr;
+        area = nullptr;
     }
 
     GeomProxy::~GeomProxy()

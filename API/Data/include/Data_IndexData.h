@@ -27,7 +27,7 @@ class Data_IndexData
 {
 private:
     string name;
-    void  *data;
+    void *data;
 public:
     //! Default constructor.
     Data_IndexData();
@@ -45,7 +45,7 @@ public:
     void * GetData() const;
 
     //! Override operator < used by set<Data_IndexData>, sort by name.
-    bool operator < (const Data_IndexData & rhs) const;
+    bool operator < (const Data_IndexData &rhs) const;
 };
 
 }

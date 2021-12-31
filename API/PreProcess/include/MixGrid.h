@@ -58,8 +58,6 @@ void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid);
 
 void WriteLnkFile(const string &gridFileName, Grid **grids_in, int nBlocks);
 void CheckMeshMultigrid(Grid **grids_in, int nBlocks);
-void WriteToBcname(const string &gridFileName, Grid **grids_in, int nBlocks);
-void WriteBcDirFile(const string &gridFileName, Grid **grids_in, int nBlocks);
 void WriteBcFileFromFTS(const string &gridFileName, Grid **grids_in, int nBlocks);
 
 void GetUnsIndex(StructGrid *grid, DataStruct_AdtTree<int, RDouble> *adtTree, int &count, RDouble tol, Int3D &unsindex, RDouble *xuns, RDouble *yuns, RDouble *zuns);

@@ -70,9 +70,9 @@ private:
     //! Whether this node is boundary node.
     bool IsBcNode(int *p, int node_in);
 
-    int *GetNode2All(int izone) { return node2all[izone]; }
-    int *GetFace2All(int izone) { return face2all[izone]; }
-    int *GetCell2All(int izone) { return cell2all[izone]; }
+    int * GetNode2All(int izone) { return node2all[izone]; }
+    int * GetFace2All(int izone) { return face2all[izone]; }
+    int * GetCell2All(int izone) { return cell2all[izone]; }
     //bool *GetIsBCFaceMerged(int izone) { return isBCFaceMerged[izone]; }
 
     int GetNTotalCell() const { return nTotalCell; }
@@ -84,19 +84,19 @@ private:
     vector<RDouble> GetGlobaly() { return Globaly; }
     vector<RDouble> GetGlobalz() { return Globalz; }
 
-    int *GetNodeNumberOfAllFace() { return node_number_of_all_face; };
-    vector<int> GetAllFace2Node() { return allface2node; };
-    int *GetLeftCellOfAllFace() { return left_cell_of_all_face; };
-    int *GetRightCellOfAllFace() { return right_cell_of_all_face; };
+    int * GetNodeNumberOfAllFace() { return node_number_of_all_face; }
+    vector<int> GetAllFace2Node() { return allface2node; }
+    int * GetLeftCellOfAllFace() { return left_cell_of_all_face; }
+    int * GetRightCellOfAllFace() { return right_cell_of_all_face; }
 
 private:
-    Region * region;
+    Region *region;
 
     //! Original multi-block grids.
-    Grid ** grid_in;
+    Grid **grid_in;
 
     //! Combined single block grid.
-    UnstructGrid * grid_all;
+    UnstructGrid *grid_all;
 
     //! The number of total zones.
     int nZones;

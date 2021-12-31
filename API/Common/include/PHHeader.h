@@ -31,7 +31,7 @@ namespace PHSPACE
 #define PHDEBUG
 #ifdef PHDEBUG
 #define ASSERT(x) \
-    if(!(x))  \
+    if (!(x))  \
 {\
     cout << "ERROR: Assert " << #x << endl; \
     cout << "On line " << __LINE__ << endl; \
@@ -95,7 +95,7 @@ inline void SetField(vector< T > &field, const T &inputValue, int numberOfElemen
 }
 
 template < typename T >
-inline void SetField(T * field, const T &inputValue, int numberOfElements)
+inline void SetField(T *field, const T &inputValue, int numberOfElements)
 {
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {

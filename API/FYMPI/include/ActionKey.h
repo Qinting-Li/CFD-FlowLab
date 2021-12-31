@@ -59,7 +59,8 @@ typedef enum
     READ_AVERAGE_FLOW,
     VISUALIZATION_AVERAGE_FLOW,
     DUMP_SURFACE_INFO,
-    DUMP_PROBES_FLOW
+    DUMP_PROBES_FLOW,
+    VISUALIZATION_AVERAGE_ReynoldsStress
 }ActionEnum;
 const int NofValidAction = 41;
 extern const char * ActionName[NofValidAction];
@@ -82,14 +83,14 @@ public:
     ios_base::openmode openmode;
     string filename;
     string tecfilename;
-    DataContainer * data;
-    DataContainer * tecdata;
+    DataContainer *data;
+    DataContainer *tecdata;
     string taskname;
 public:
     ActionKey();
     ~ActionKey();
-    DataContainer * GetData() const { return data; };
-    DataContainer * GetTecData() const { return tecdata; };
+    DataContainer * GetData() const { return data; }
+    DataContainer * GetTecData() const { return tecdata; }
     fstream * GetFile() const { return file; }
     string GetFileName() const { return filename; }
     int GetAction() { return action; }
@@ -116,6 +117,6 @@ public:
 };
 
 void SetCurrentActionKey(ActionKey *ActionKeyIn);
-ActionKey *GetCurrentActionKey();
+ActionKey * GetCurrentActionKey();
 
 }

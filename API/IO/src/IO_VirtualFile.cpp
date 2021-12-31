@@ -3,7 +3,7 @@
 namespace PHSPACE
 {
 
-void VirtualFile::read(void * data, streamsize size)
+void VirtualFile::read(void *data, streamsize size)
 {
     if (key == 0)
     {
@@ -15,7 +15,7 @@ void VirtualFile::read(void * data, streamsize size)
     }
 }
 
-void VirtualFile::write(void * data, streamsize size)
+void VirtualFile::write(void *data, streamsize size)
 {
     if (key == 0)
     {

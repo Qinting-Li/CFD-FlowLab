@@ -28,10 +28,10 @@ public:
 public:
     //! Type definitions.
     typedef T              value_type;
-    typedef T*             iterator;
-    typedef const T*       const_iterator;
-    typedef T&             reference;
-    typedef const T&       const_reference;
+    typedef T             *iterator;
+    typedef const T       *const_iterator;
+    typedef T             &reference;
+    typedef const T       &const_reference;
     typedef std::size_t    size_type;
     typedef std::ptrdiff_t difference_type;
 
@@ -99,75 +99,77 @@ public:
     enum { static_size = N };
 
     //! Swap (note: linear complexity).
-    void swap (SimpleArray<T,N>& y)
+    void swap (SimpleArray<T, N> &y)
     {
-        std::swap_ranges(begin(),end(),y.begin());
+        std::swap_ranges(begin(), end(), y.begin());
     }
 
     //! Direct access to data (read-only).
-    const T* data() const { return elems; }
+    const T * data() const { return elems; }
 
     //! Use array as C array (direct read/write access to data).
-    T* c_array() { return elems; }
+    T * c_array() { return elems; }
 
     //! Assignment with type conversion.
     template <typename T2>
-    SimpleArray<T,N>& operator = (const SimpleArray<T2,N>& rhs) {
-        std::copy(rhs.begin(),rhs.end(), begin());
+    SimpleArray<T, N> & operator = (const SimpleArray<T2, N> &rhs)
+    {
+        std::copy(rhs.begin(), rhs.end(), begin());
         return *this;
     }
 
-    SimpleArray<T,N>& operator = (const T & value) {
-        std::fill_n(begin(),size(),value);
+    SimpleArray<T, N> & operator = (const T &value)
+    {
+        std::fill_n(begin(), size(), value);
         return *this;
     }
-    SimpleArray<T,N>& operator += (const T & value)
+    SimpleArray<T, N> &operator += (const T &value)
     {
-        for ( int i = 0; i < N; ++ i )
+        for (int i = 0; i < N; ++ i)
         {
             elems[i] += value;
         }
         return *this;
     }
 
-    SimpleArray<T,N>& operator += (const SimpleArray<T, N>& x)
+    SimpleArray<T, N> &operator += (const SimpleArray<T, N> &x)
     {
-        const T * tmp = x.data();
-        for ( int i = 0; i < N; ++ i )
+        const T *tmp = x.data();
+        for (int i = 0; i < N; ++ i)
         {
             elems[i] += tmp[i];
         }
         return *this;
     }
 
-    SimpleArray<T,N>& operator -= (const T & value)
+    SimpleArray<T, N> &operator -= (const T &value)
     {
-        for ( int i = 0; i < N; ++ i )
+        for (int i = 0; i < N; ++ i)
         {
             elems[i] -= value;
         }
         return *this;
     }
 
-    SimpleArray<T,N>& operator -= (const SimpleArray<T, N>& x)
+    SimpleArray<T, N> &operator -= (const SimpleArray<T, N> &x)
     {
-        const T * tmp = x.data();
-        for ( int i = 0; i < N; ++ i )
+        const T *tmp = x.data();
+        for (int i = 0; i < N; ++ i)
         {
             elems[i] -= tmp[i];
         }
         return *this;
     }
     //! Assign one value to all elements.
-    void assign (const T& value)
+    void assign (const T &value)
     {
-        std::fill_n(begin(),size(),value);
+        std::fill_n(begin(), size(), value);
     }
 
     //! Check range (may be private because it is static).
     static void rangecheck (size_type i)
     {
-        if ( i >= size() )
+        if (i >= size())
         {
             throw std::range_error("SimpleArray<>: index out of range");
         }
@@ -176,56 +178,56 @@ public:
 
 //! Comparisons.
 template < typename T, int N >
-bool operator == (const SimpleArray<T,N>& x, const SimpleArray<T,N>& y)
+bool operator == (const SimpleArray<T, N> &x, const SimpleArray<T, N> &y)
 {
     return std::equal(x.begin(), x.end(), y.begin());
 }
 template < typename T, int N >
-bool operator < (const SimpleArray<T,N>& x, const SimpleArray<T,N>& y)
+bool operator < (const SimpleArray<T, N> &x, const SimpleArray<T, N> &y)
 {
-    return std::lexicographical_compare(x.begin(),x.end(),y.begin(),y.end());
+    return std::lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
 }
 
 template < typename T, int N >
-bool operator != (const SimpleArray<T,N>& x, const SimpleArray<T,N>& y)
+bool operator != (const SimpleArray<T, N> &x, const SimpleArray<T, N> &y)
 {
-    return ! ( x == y );
+    return ! (x == y);
 }
 
 template < typename T, int N >
-bool operator > (const SimpleArray<T,N>& x, const SimpleArray<T,N>& y)
+bool operator > (const SimpleArray<T, N> &x, const SimpleArray<T, N> &y)
 {
     return y < x;
 }
 
 template < typename T, int N >
-bool operator <= (const SimpleArray<T,N>& x, const SimpleArray<T,N>& y)
+bool operator <= (const SimpleArray<T, N> &x, const SimpleArray<T, N> &y)
 {
-    return ! ( y < x );
+    return ! (y < x);
 }
 
 template < typename T, int N >
-bool operator >= (const SimpleArray<T,N>& x, const SimpleArray<T,N>& y)
+bool operator >= (const SimpleArray<T, N> &x, const SimpleArray<T, N> &y)
 {
-    return ! ( x < y );
+    return ! (x < y);
 }
 
 //! Global swap().
-template <typename T, int N >
-inline void swap (SimpleArray<T,N>& x, SimpleArray<T,N>& y)
+template < typename T, int N >
+inline void swap (SimpleArray<T, N> &x, SimpleArray<T, N> &y)
 {
     x.swap(y);
 }
 
 template < typename T, int N >
-inline T dot (const SimpleArray<T,N>& x, const SimpleArray<T,N>& y)
+inline T dot (const SimpleArray<T, N> &x, const SimpleArray<T, N> &y)
 {
-	T sum = 0;
-    for ( int i = 0; i < N; ++ i )
-	{
-		sum += x[i] * y[i];
-	}
-	return sum;
+    T sum = 0;
+    for (int i = 0; i < N; ++ i)
+    {
+        sum += x[i] * y[i];
+    }
+    return sum;
 }
 
 }

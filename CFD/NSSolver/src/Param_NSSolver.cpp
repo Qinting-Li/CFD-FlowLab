@@ -8,7 +8,7 @@ namespace PHSPACE
 
 LIB_EXPORT Param_NSSolver::Param_NSSolver()
 {
-	
+    
 }
 
 LIB_EXPORT Param_NSSolver::~Param_NSSolver()
@@ -34,7 +34,18 @@ LIB_EXPORT void Param_NSSolver::Init()
     nLaminar            = GlobalDataBase::GetIntParaFromDB("nl");
     nChemical           = GlobalDataBase::GetIntParaFromDB("nchem");
     nTemperatureModel   = GlobalDataBase::GetIntParaFromDB("ntmodel");
-    numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+    numberOfSpecies     = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+
+    nDensityModify      = GlobalDataBase::GetIntParaFromDB("nDensityModify");
+    nDebug              = GlobalDataBase::GetIntParaFromDB("nDebug");
+    nTEnergyModel       = GlobalDataBase::GetIntParaFromDB("nTEnergyModel");
+
+    nEnergyRecycle      = GlobalDataBase::GetIntParaFromDB("nEnergyRecycle") * nChemical;
+
+    nTurblenceForChemical = GlobalDataBase::GetIntParaFromDB("nTurblenceForChemical");
+
+    nViscosityFluxSublevelModified = GlobalDataBase::GetIntParaFromDB("nViscosityFluxSublevelModified");
+
     if (nChemical == 0)
     {
         if (nTemperatureModel > 1)
@@ -81,8 +92,26 @@ LIB_EXPORT void Param_NSSolver::Init()
         indexOfElectron = -1;
         catalyticMassFraction = 0;
     }
+    nEquilibriumGas = GlobalDataBase::GetIntParaFromDB("nEquilibriumGas");
 
     primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+
+    mTT = 0;
+    if(nTemperatureModel == 3)
+    {
+        mTV = 1;
+        mTE = 2;
+    }
+    else if(nTemperatureModel ==2)
+    {
+        mTV = 1;
+        mTE = 1;
+    }
+    else
+    {
+        mTV = 0;
+        mTE = 0;
+    }
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()

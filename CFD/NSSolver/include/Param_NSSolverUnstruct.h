@@ -22,17 +22,17 @@ namespace PHSPACE
 class Param_NSSolverUnstruct : public Param_NSSolver
 {
 public:
-	LIB_EXPORT Param_NSSolverUnstruct();
+    LIB_EXPORT Param_NSSolverUnstruct();
 
-	LIB_EXPORT ~Param_NSSolverUnstruct();
+    LIB_EXPORT ~Param_NSSolverUnstruct();
 
 public:
 
-	//! Init all parameters.
-	LIB_EXPORT void Init();
+    //! Init all parameters.
+    LIB_EXPORT void Init();
 
-	//! Get Spatial discretization scheme of Unstructured grid solver.
-	string GetSpaceSecheme () const;
+    //! Get Spatial discretization scheme of Unstructured grid solver.
+    string GetSpaceSecheme () const;
 
     string GetGradientName() const;
 
@@ -55,7 +55,7 @@ public:
     void SetLimiterType(int type){this->limiterType = type;}
      
 private:
-	string uns_scheme_name;
+    string uns_scheme_name;
 
     string gradientName;
 

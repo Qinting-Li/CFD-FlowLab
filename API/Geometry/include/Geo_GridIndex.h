@@ -33,99 +33,99 @@ class Geo_OversetGrid;
 class IndexSlice
 {
 private:
-	int tag;
-	int nlen;
-	vector<int> index;
+    int tag;
+    int nlen;
+    vector<int> index;
 public:
-	int  GetTag() { return tag; };
-	void SetTag(int tag) { this->tag = tag; };
+    int  GetTag() { return tag; };
+    void SetTag(int tag) { this->tag = tag; };
 
-	int   GetLength() { return nlen; };
-	void  SetLength(int nlen) { this->nlen = nlen; };
+    int   GetLength() { return nlen; };
+    void  SetLength(int nlen) { this->nlen = nlen; };
 
-	uint_t size() { return index.size(); }
+    uint_t size() { return index.size(); }
 
-	int * GetIndexPointer() { return &index[0]; }
+    int * GetIndexPointer() { return &index[0]; }
 
-	vector<int> & GetIndex() { return index; };
-	void  SetIndex(vector<int> &index) { this->index = index; };
+    vector<int> & GetIndex() { return index; };
+    void  SetIndex(vector<int> &index) { this->index = index; };
 };
 
 class IndexProxy
 {
 private:
-	vector < IndexSlice * > indexArray;
-	vector < IndexSlice * > indexMapArray;
-	vector < int > zoneIndexArray;
-	int init;
+    vector < IndexSlice * > indexArray;
+    vector < IndexSlice * > indexMapArray;
+    vector < int > zoneIndexArray;
+    int init;
 private:
-	void InitZoneIndexArray()
-	{
-		if ( init ) return;
-		for ( std::size_t i = 0; i < indexArray.size(); ++ i )
-		{
-			zoneIndexArray.push_back( indexArray[i]->GetTag() );
-		}
-		init = 1;
-	}
+    void InitZoneIndexArray()
+    {
+        if (init) return;
+        for (std::size_t i = 0; i < indexArray.size(); ++ i)
+        {
+            zoneIndexArray.push_back(indexArray[i]->GetTag());
+        }
+        init = 1;
+    }
 public:
-	IndexProxy()
-	{
-		init = 0;
-	}
+    IndexProxy()
+    {
+        init = 0;
+    }
 
-	~IndexProxy()
-	{
-		;
-	}
+    ~IndexProxy()
+    {
+        ;
+    }
 public:
-	IndexSlice * GetIndexSlice(int m) { return indexArray[m]; }
-	void  AddIndexSlice(IndexSlice * indexSlice) { indexArray.push_back(indexSlice); }
-	int   GetLength(int m) { return indexArray[m]->GetLength(); }
-	int * GetIndexPointer(int m) { return indexArray[m]->GetIndexPointer(); };
-	int * GetIndexMapPointer(int m) { return indexMapArray[m]->GetIndexPointer(); };
+    IndexSlice * GetIndexSlice(int m) { return indexArray[m]; }
+    void  AddIndexSlice(IndexSlice * indexSlice) { indexArray.push_back(indexSlice); }
+    int   GetLength(int m) { return indexArray[m]->GetLength(); }
+    int * GetIndexPointer(int m) { return indexArray[m]->GetIndexPointer(); };
+    int * GetIndexMapPointer(int m) { return indexMapArray[m]->GetIndexPointer(); };
 
-	void SetIndexMap(int m, int start)
-	{
-		int * indexMap = GetIndexMapPointer(m);
-		int length = GetLength(m);
-		for ( int i = 0; i < length; ++ i )
-		{
-			indexMap[i] = start + i;
-		}
-	}
+    void SetIndexMap(int m, int start)
+    {
+        int * indexMap = GetIndexMapPointer(m);
+        int length = GetLength(m);
+        for (int i = 0; i < length; ++ i)
+        {
+            indexMap[i] = start + i;
+        }
+    }
 
-	uint_t size() const { return indexArray.size(); }
+    uint_t size() const { return indexArray.size(); }
 
-	vector < int > & GetZoneIndexArray()
-	{
-		InitZoneIndexArray();
-		return zoneIndexArray; 
-	}
+    vector < int > & GetZoneIndexArray()
+    {
+        InitZoneIndexArray();
+        return zoneIndexArray; 
+    }
 };
 
 class OversetInfo
 {
 private:
-	int zoneid, zoneIndexOfNeighbor;
-	int numberOfCellForTransfer;
+    int zoneid, zoneIndexOfNeighbor;
+    int numberOfCellForTransfer;
     int * cellIndexForTransfer;
 private:
     Data_ParamFieldSuite *dataStorageForTransfer;
 public:
-	OversetInfo();
-	~OversetInfo();
+    OversetInfo();
+    ~OversetInfo();
 public:
-	int *GetCellIndexForTransfer() const { return cellIndexForTransfer; };
-	void SetCellIndexForTransfer(int *cellIndexForTransfer) { this->cellIndexForTransfer = cellIndexForTransfer; };
+    int *GetCellIndexForTransfer() const { return cellIndexForTransfer; };
+    void SetCellIndexForTransfer(int *cellIndexForTransfer) { this->cellIndexForTransfer = cellIndexForTransfer; };
 
-	int  GetNumberOfCellForTransfer() const { return numberOfCellForTransfer; }
-	void SetNumberOfCellForTransfer(int numberOfCellForTransfer) { this->numberOfCellForTransfer = numberOfCellForTransfer; }
+    int  GetNumberOfCellForTransfer() const { return numberOfCellForTransfer; }
+    void SetNumberOfCellForTransfer(int numberOfCellForTransfer) { this->numberOfCellForTransfer = numberOfCellForTransfer; }
 
-	int  GetZoneIndexOfNeighbor() const { return zoneIndexOfNeighbor; };
-	void SetZoneIndexOfNeighbor(int zoneIndexOfNeighbor) { this->zoneIndexOfNeighbor = zoneIndexOfNeighbor; };
+    int  GetZoneIndexOfNeighbor() const { return zoneIndexOfNeighbor; };
+    void SetZoneIndexOfNeighbor(int zoneIndexOfNeighbor) { this->zoneIndexOfNeighbor = zoneIndexOfNeighbor; };
 public:
-	void AllocateData();
+    void AllocateData();
 public:
     void Encode(DataContainer *cdata);
     void Decode(DataContainer *cdata);
@@ -134,40 +134,40 @@ public:
 class CompositeOversetInfo
 {
 private:
-	int numberOfZone;
-	int numberOfCell;
-	int * cellIndex;
-	vector < OversetInfo * > oversetInfoArray;
+    int numberOfZone;
+    int numberOfCell;
+    int * cellIndex;
+    vector < OversetInfo * > oversetInfoArray;
     Data_ParamFieldSuite *dataStorage;
 public:
-	CompositeOversetInfo();
-	~CompositeOversetInfo();
+    CompositeOversetInfo();
+    ~CompositeOversetInfo();
 public:
-	int  GetNumberOfZone() const { return numberOfZone; }
-	void SetNumberOfZone(int numberOfZone) { this->numberOfZone = numberOfZone; }
+    int  GetNumberOfZone() const { return numberOfZone; }
+    void SetNumberOfZone(int numberOfZone) { this->numberOfZone = numberOfZone; }
 
-	int  GetNumberOfCell() const { return numberOfCell; }
-	void SetNumberOfCell(int numberOfCell) { this->numberOfCell = numberOfCell; }
+    int  GetNumberOfCell() const { return numberOfCell; }
+    void SetNumberOfCell(int numberOfCell) { this->numberOfCell = numberOfCell; }
 
-	OversetInfo *GetOversetInfo(int ineighbor) { return oversetInfoArray[ineighbor]; }
+    OversetInfo *GetOversetInfo(int ineighbor) { return oversetInfoArray[ineighbor]; }
 
-	int GetNumberOfCell(int ineighbor)
-	{ 
-		OversetInfo *oversetInfo = GetOversetInfo(ineighbor);
-		return oversetInfo->GetNumberOfCellForTransfer();
-	};
+    int GetNumberOfCell(int ineighbor)
+    { 
+        OversetInfo *oversetInfo = GetOversetInfo(ineighbor);
+        return oversetInfo->GetNumberOfCellForTransfer();
+    };
 
-	int *GetCellIndex(int ineighbor)
-	{
-		OversetInfo *oversetInfo = GetOversetInfo(ineighbor);
-		return oversetInfo->GetCellIndexForTransfer();
-	};
+    int *GetCellIndex(int ineighbor)
+    {
+        OversetInfo *oversetInfo = GetOversetInfo(ineighbor);
+        return oversetInfo->GetCellIndexForTransfer();
+    };
 
-	int FindIthNeighbor(int zone) { return -1; };
+    int FindIthNeighbor(int zone) { return -1; };
 
-	Data_ParamFieldSuite * GetDataStorage() const { return dataStorage; };
+    Data_ParamFieldSuite * GetDataStorage() const { return dataStorage; };
 
-	void AddOversetInfo(OversetInfo *oversetInfo) { oversetInfoArray.push_back(oversetInfo); };
+    void AddOversetInfo(OversetInfo *oversetInfo) { oversetInfoArray.push_back(oversetInfo); };
 public:
     void Encode(DataContainer *cdata);
     void Decode(DataContainer *cdata);
@@ -176,98 +176,98 @@ public:
 class OversetInfoProxy
 {
 private:
-	CompositeOversetInfo *sendInfo;
-	CompositeOversetInfo *recvInfo;
-	Grid *grid;
+    CompositeOversetInfo *sendInfo;
+    CompositeOversetInfo *recvInfo;
+    Grid *grid;
 private:
-	int zoneIndex;
+    int zoneIndex;
 
-	IndexProxy * sendIndexProxy;
-	IndexProxy * recvIndexProxy;
+    IndexProxy * sendIndexProxy;
+    IndexProxy * recvIndexProxy;
 
-	IndexProxy * temporaryIndexProxy;
+    IndexProxy * temporaryIndexProxy;
 
-	vector<int> cellIndexRef1, cellIndexRef2, zoneIndexRef2;
+    vector<int> cellIndexRef1, cellIndexRef2, zoneIndexRef2;
 
-	int numberOfCellForRecv, numberOfCellForSend;
+    int numberOfCellForRecv, numberOfCellForSend;
 public:
-	vector<int> & GetCellIndexRef1() { return cellIndexRef1; }
-	vector<int> & GetCellIndexRef2() { return cellIndexRef2; }
-	vector<int> & GetZoneIndexRef2() { return zoneIndexRef2; }
+    vector<int> & GetCellIndexRef1() { return cellIndexRef1; }
+    vector<int> & GetCellIndexRef2() { return cellIndexRef2; }
+    vector<int> & GetZoneIndexRef2() { return zoneIndexRef2; }
 
-	void Process();
-	void GetNeighborZoneIndexSet(set<int> &neighborZoneIndexSet);
+    void Process();
+    void GetNeighborZoneIndexSet(set<int> &neighborZoneIndexSet);
 public:
-	IndexProxy * GetSendIndexProxy() { return sendIndexProxy; };
-	IndexProxy * GetRecvIndexProxy() { return recvIndexProxy; };
+    IndexProxy * GetSendIndexProxy() { return sendIndexProxy; };
+    IndexProxy * GetRecvIndexProxy() { return recvIndexProxy; };
 
-	IndexProxy * GetTemporaryIndexProxy() { return temporaryIndexProxy; };
+    IndexProxy * GetTemporaryIndexProxy() { return temporaryIndexProxy; };
 public:
-	vector<int> & GetNeighborZoneIndexArray() { return sendIndexProxy->GetZoneIndexArray(); }; // for send
+    vector<int> & GetNeighborZoneIndexArray() { return sendIndexProxy->GetZoneIndexArray(); }; // for send
 public:
-	OversetInfoProxy();
-	~OversetInfoProxy();
+    OversetInfoProxy();
+    ~OversetInfoProxy();
 public:
-	uint_t GetNumberOfNeighborForSend() { return sendIndexProxy->size(); };
-	uint_t GetNumberOfNeighborForRecv() { return recvIndexProxy->size(); };
+    uint_t GetNumberOfNeighborForSend() { return sendIndexProxy->size(); };
+    uint_t GetNumberOfNeighborForRecv() { return recvIndexProxy->size(); };
 
-	int GetNumberOfCellForRecv() { return numberOfCellForRecv; };
-	int GetNumberOfCellForSend() { return numberOfCellForSend; };
+    int GetNumberOfCellForRecv() { return numberOfCellForRecv; };
+    int GetNumberOfCellForSend() { return numberOfCellForSend; };
 
-	void SetNumberOfCellForRecv(int numberOfCellForRecv) { this->numberOfCellForRecv = numberOfCellForRecv; }
-	void SetNumberOfCellForSend(int numberOfCellForSend) { this->numberOfCellForSend = numberOfCellForSend; }
+    void SetNumberOfCellForRecv(int numberOfCellForRecv) { this->numberOfCellForRecv = numberOfCellForRecv; }
+    void SetNumberOfCellForSend(int numberOfCellForSend) { this->numberOfCellForSend = numberOfCellForSend; }
 
-	int GetNumberOfCellForRecv(int iNeighbor) { return recvIndexProxy->GetLength(iNeighbor); };
-	int GetNumberOfCellForSend(int iNeighbor) { return sendIndexProxy->GetLength(iNeighbor); };
+    int GetNumberOfCellForRecv(int iNeighbor) { return recvIndexProxy->GetLength(iNeighbor); };
+    int GetNumberOfCellForSend(int iNeighbor) { return sendIndexProxy->GetLength(iNeighbor); };
 
-	int * GetCellIndexForRecv(int iNeighbor) { return recvIndexProxy->GetIndexPointer(iNeighbor); };
-	int * GetCellIndexForSend(int iNeighbor) { return sendIndexProxy->GetIndexPointer(iNeighbor); };
+    int * GetCellIndexForRecv(int iNeighbor) { return recvIndexProxy->GetIndexPointer(iNeighbor); };
+    int * GetCellIndexForSend(int iNeighbor) { return sendIndexProxy->GetIndexPointer(iNeighbor); };
 
-	int * GetCellIndexMapForRecv(int iNeighbor) { return recvIndexProxy->GetIndexMapPointer(iNeighbor); };
-	int * GetCellIndexMapForSend(int iNeighbor) { return sendIndexProxy->GetIndexMapPointer(iNeighbor); };
+    int * GetCellIndexMapForRecv(int iNeighbor) { return recvIndexProxy->GetIndexMapPointer(iNeighbor); };
+    int * GetCellIndexMapForSend(int iNeighbor) { return sendIndexProxy->GetIndexMapPointer(iNeighbor); };
 
-	Data_ParamFieldSuite * GetRecvDataStorage() const { return recvInfo->GetDataStorage(); };
-	Data_ParamFieldSuite * GetSendDataStorage() const { return sendInfo->GetDataStorage(); };
+    Data_ParamFieldSuite * GetRecvDataStorage() const { return recvInfo->GetDataStorage(); };
+    Data_ParamFieldSuite * GetSendDataStorage() const { return sendInfo->GetDataStorage(); };
 
-	void PostProcessRecv();
-	void PostProcessSend();
+    void PostProcessRecv();
+    void PostProcessSend();
 
-	int FindIthNeighbor(vector<int> &zoneIndexArray, int zone)
-	{
-		for ( std::size_t i = 0; i < zoneIndexArray.size(); ++ i )
-		{
-			if ( zoneIndexArray[i] == zone )
-			{
-				return int(i);
-			}
-		}
-		return -1; 
-	};
+    int FindIthNeighbor(vector<int> &zoneIndexArray, int zone)
+    {
+        for (std::size_t i = 0; i < zoneIndexArray.size(); ++ i)
+        {
+            if (zoneIndexArray[i] == zone)
+            {
+                return int(i);
+            }
+        }
+        return -1; 
+    };
 
     int FindIthNeighborOfRecv(int zone)
-	{
-		vector<int> & zoneIndexArray = recvIndexProxy->GetZoneIndexArray();
-		return FindIthNeighbor(zoneIndexArray, zone);
-	};
+    {
+        vector<int> & zoneIndexArray = recvIndexProxy->GetZoneIndexArray();
+        return FindIthNeighbor(zoneIndexArray, zone);
+    };
 
     int FindIthNeighborOfSend(int zone)
-	{
-		vector<int> & zoneIndexArray = sendIndexProxy->GetZoneIndexArray();
-		return FindIthNeighbor(zoneIndexArray, zone);
+    {
+        vector<int> & zoneIndexArray = sendIndexProxy->GetZoneIndexArray();
+        return FindIthNeighbor(zoneIndexArray, zone);
 
-	};
+    };
 public:
-	void SetGrid(Grid *grid) { this->grid = grid; }
-	Grid * GetGrid() { return grid; }
-	void PrepareSendingInformation(Geo_OversetGrid **oversetGrids);
-	void PostProcess(Geo_OversetGrid **oversetGrids);
-	void InitReceivingInformation(vector<int> &cellIndexRef1, vector<int> &zoneIndexRef2, vector<int> &cellIndexRef2);
-	CompositeOversetInfo * GetRecvInfo() const { return recvInfo; };
-	CompositeOversetInfo * GetSendInfo() const { return sendInfo; };
+    void SetGrid(Grid *grid) { this->grid = grid; }
+    Grid * GetGrid() { return grid; }
+    void PrepareSendingInformation(Geo_OversetGrid **oversetGrids);
+    void PostProcess(Geo_OversetGrid **oversetGrids);
+    void InitReceivingInformation(vector<int> &cellIndexRef1, vector<int> &zoneIndexRef2, vector<int> &cellIndexRef2);
+    CompositeOversetInfo * GetRecvInfo() const { return recvInfo; };
+    CompositeOversetInfo * GetSendInfo() const { return sendInfo; };
 
-	int  GetNIFaceOfNeighbor(int ineighbor) const;
+    int  GetNIFaceOfNeighbor(int ineighbor) const;
 
-	void AllocateNeighborInfo();
+    void AllocateNeighborInfo();
 public:
     void Encode(DataContainer *cdata);
     void Decode(DataContainer *cdata);
@@ -276,57 +276,57 @@ public:
 class ZoneNeighbor
 {
 public:
-	ZoneNeighbor()
-	{
-	};
-	~ZoneNeighbor()
-	{
-	};
+    ZoneNeighbor()
+    {
+    };
+    ~ZoneNeighbor()
+    {
+    };
 public:
-	void SetNumberOfNeighbor(int neighbor) { data.resize(neighbor); };
-	int  GetNumberOfNeighbor() const { return static_cast<int>(data.size()); };
-	void AddZoneIndexOfNeighbor(int value) { data.push_back(value); };
-	int *GetZoneIndexOfNeighbor() { return &data[0]; };
-	int  GetZoneIndexOfNeighbor(const uint_t &ineighbor) const { return data[ineighbor]; };
-	bool hasNeighborZone(int zoneIndex)
-	{
-		return find(data.begin(), data.end(), zoneIndex) == data.end() ? false : true;
-	}
+    void SetNumberOfNeighbor(int neighbor) { data.resize(neighbor); };
+    int  GetNumberOfNeighbor() const { return static_cast<int>(data.size()); };
+    void AddZoneIndexOfNeighbor(int value) { data.push_back(value); };
+    int *GetZoneIndexOfNeighbor() { return &data[0]; };
+    int  GetZoneIndexOfNeighbor(const uint_t &ineighbor) const { return data[ineighbor]; };
+    bool hasNeighborZone(int zoneIndex)
+    {
+        return find(data.begin(), data.end(), zoneIndex) == data.end() ? false : true;
+    }
 private:
-	vector<int> data;
+    vector<int> data;
 };
 
 class ZoneConnectivity
 {
 public:
-	ZoneConnectivity()
-	{ 
-		numberOfZones = 0;
-		zoneNeighbor  = 0;
-	};
-	~ZoneConnectivity()
-	{
-		for ( int izone = 0; izone < numberOfZones; ++ izone )
-		{
-			delete zoneNeighbor[izone];
-		}
-		delete [] zoneNeighbor;
-	}
-	int  GetNumberOfZones() const { return numberOfZones; };
-	void SetNumberOfZones(int numberOfZones) { this->numberOfZones = numberOfZones; };
-	void CreateAllZones(int numberOfZones)
-	{
-		SetNumberOfZones(numberOfZones);
-		zoneNeighbor = new ZoneNeighbor *[numberOfZones];
-		for ( int izone = 0; izone < numberOfZones; ++ izone )
-		{
-			zoneNeighbor[izone] = new ZoneNeighbor();
-		} 
-	}
-	ZoneNeighbor *GetZoneNeighbor(int izone) const { return zoneNeighbor[izone]; }
+    ZoneConnectivity()
+    { 
+        numberOfZones = 0;
+        zoneNeighbor  = 0;
+    };
+    ~ZoneConnectivity()
+    {
+        for (int izone = 0; izone < numberOfZones; ++ izone)
+        {
+            delete zoneNeighbor[izone];
+        }
+        delete [] zoneNeighbor;
+    }
+    int  GetNumberOfZones() const { return numberOfZones; };
+    void SetNumberOfZones(int numberOfZones) { this->numberOfZones = numberOfZones; };
+    void CreateAllZones(int numberOfZones)
+    {
+        SetNumberOfZones(numberOfZones);
+        zoneNeighbor = new ZoneNeighbor *[numberOfZones];
+        for (int izone = 0; izone < numberOfZones; ++ izone)
+        {
+            zoneNeighbor[izone] = new ZoneNeighbor();
+        } 
+    }
+    ZoneNeighbor *GetZoneNeighbor(int izone) const { return zoneNeighbor[izone]; }
 private:
-	int numberOfZones;
-	ZoneNeighbor **zoneNeighbor;
+    int numberOfZones;
+    ZoneNeighbor **zoneNeighbor;
 };
 
 //! @brief the zone connectivity for point.\n

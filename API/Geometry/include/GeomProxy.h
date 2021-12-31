@@ -35,19 +35,19 @@ public:
 public:
     void Create(int nsize);
 
-	//! Return the X of face normal.
+    //! Return the X of face normal.
     iterator GetFaceNormalX();
 
-	//! Return the Y of face normal.
+    //! Return the Y of face normal.
     iterator GetFaceNormalY();
 
-	//! Return the Z of face normal.
+    //! Return the Z of face normal.
     iterator GetFaceNormalZ();
 
-	//! Return the face area.
+    //! Return the face area.
     iterator GetFaceArea();
 
-	//! Return the face velocity.
+    //! Return the face velocity.
     iterator GetFaceVelocity(); 
 };
 

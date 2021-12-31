@@ -135,7 +135,7 @@ inline RDouble SMOOTH(const RDouble &x, const RDouble &y)
 {
     const RDouble eps = 1.0e-6;
     RDouble Smooth= (2. * x * y + eps) / (x * x + y * y + eps);    //0.5 * (SIGN(1.0, x) + SIGN(1.0, y)) *
-    return  Smooth;
+    return Smooth;
 }
 
 //! SMOOTHTURB.

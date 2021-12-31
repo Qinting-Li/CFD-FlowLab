@@ -129,7 +129,6 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
 {
     //找出所有不同的单元类型
     set<int> elem_type_set;
-    uint_t container_size = type_container.size();
     for ( std::size_t i = 0; i < type_container.size(); ++ i )
     { 
         int etype = type_container[i];
@@ -476,7 +475,7 @@ void Gmesh::Read(fstream &file, CGNSFactory *factory_cgns)
 void Gmesh::ReadMeshFormat(fstream &file)
 {
     string line,word;
-    string separator  = " =\t\r\n#$,;";
+    string separator = " =\t\r\n#$,;";
     do
     {
         getline(file,line);
@@ -504,7 +503,7 @@ void Gmesh::ReadMeshFormat(fstream &file)
 void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
 {
     string line,word;
-    string separator  = " =\t\r\n#$,;";
+    string separator = " =\t\r\n#$,;";
     do
     {
         getline(file,line);
@@ -653,7 +652,7 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
 void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
 {
     string line,word;
-    string separator  = " =\t\r\n#$,;";
+    string separator = " =\t\r\n#$,;";
     do
     {
         getline(file,line);
@@ -670,7 +669,6 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
     line = FindNextWord(line,word,separator);
     from_string< int >(elements,word,std::dec);
 
-    int i = 0;
     cout << " 读取网格坐标 \n";
 
     int elem_index,gmsh_elem_type;
@@ -682,8 +680,8 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
     vector<int> elem_index_container;
     vector<int> elem_bctype_container;
 
-    int *node_gmsh = new int [NofValidElementTypesGmsh];
-    int *node_cgns = new int [NofValidElementTypesGmsh];
+    int *node_gmsh = new int [NofValidElementTypesGmsh]();
+    int *node_cgns = new int [NofValidElementTypesGmsh]();
 
     GmeshElem *gmshelem = new GmeshElem();
 
@@ -731,7 +729,9 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
 
     gmshelem->TreatElements(factory_cgns, elem_type_container, elem_number_container, elem_index_container, elem_bctype_container, cgns_nvertex);
 
-    delete gmshelem;
+    delete gmshelem;    gmshelem = NULL;
+    delete [] node_gmsh;    node_gmsh = NULL;
+    delete [] node_cgns;    node_cgns = NULL;
 }
 
 }

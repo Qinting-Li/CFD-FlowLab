@@ -31,8 +31,8 @@ protected:
     int nBlocks;
 
     //! The final converted computational grids.
-    Grid ** grids;
-    
+    Grid **grids;
+
 public:
     //! @param[in] Grid file name of original grid that need to be converted.
     LIB_EXPORT Pre_GridConversion(const string &gridFileName);
@@ -61,7 +61,7 @@ private:
     virtual void Conversion() = 0;
 
 protected:
-    void WriteFaceBC(const string &out_grid_file, Grid ** grids_in);
+    void WriteFaceBC(const string &out_grid_file, Grid **grids_in);
     void WriteFaceBoundaryName(const string &out_grid_file, Grid **grids_in);
     void WriteCellToNode(const string &targetGridFileName, Grid **grids_in);
 };
@@ -70,7 +70,6 @@ protected:
 LIB_EXPORT void DumpGrid(const string &gridFileName, Grid **grids, int nBlocks);
 
 LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlocks);
-
 //!
 void GetGridsBoundingBox(Grid **grids, int nBlocks, RDouble *pmin, RDouble *pmax);
 
@@ -90,6 +89,11 @@ LIB_EXPORT void DumpFaceBC(const string &gridFileName, Grid **grids, int nBlocks
 
 //! Dump Characteristic Boundary to file.
 void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nBlocks);
+void WriteBoundaryInfo(Grid **grids_in, int nBlocks);
+void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet);
+
+void WriteBCNameInfo(const string &gridFileName, Grid **grids_in, int nBlocks);
+void DumpBCNameInfo(const set< pair<int, string> > &bcNamePairSet, const string &gridFileName);
 
 void ComputeCharacteristicBoundary(Grid *grid_in, DataContainer *data);
 void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data);

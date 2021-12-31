@@ -11,8 +11,6 @@ void FieldView2Fantasy()
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
 
-    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-
     //! Read field view grid and convert it's format.
     Pre_FieldViewToPHengLEI_Unstruct fieldViewGridConversion(fromGridFile);
 
@@ -22,7 +20,6 @@ void FieldView2Fantasy()
     Grid **grids = fieldViewGridConversion.GetGrids();
 
     //! Construct block connection and dump out to file.
-    ConstructOverlappingInfo(grids, numberOfBlocks, codeOfOversetGrid);
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
     DumpGrid(outGridFile, grids, numberOfBlocks);
 

@@ -28,7 +28,7 @@ class Data_Param
 private:
     //! A set that contains Data_SafeData type data.
     //! Data_SafeData has data and its' name, type and size.
-    set < Data_SafeData > * dataSet;
+    set < Data_SafeData > *dataSet;
 
 public:
     //! Constructor.

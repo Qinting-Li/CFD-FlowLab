@@ -1,5 +1,5 @@
 #include "GridView.h"
-#include "BC.h"
+#include "Geo_SimpleBC.h"
 #include "PHMpi.h"
 #include "TK_Parse.h"
 #include "Constants.h"
@@ -297,7 +297,7 @@ void BoundaryCluster::OutputHoleSurfaceDimension(ofstream &outFile)
             outFile.write((char*)&nj, sizeof(int));
         }
         else
-        {			
+        {
             outFile.write((char*)&nj, sizeof(int));
             outFile.write((char*)&nk, sizeof(int));
             outFile.write((char*)&ni, sizeof(int));
@@ -308,7 +308,7 @@ void BoundaryCluster::OutputHoleSurfaceDimension(ofstream &outFile)
 }
 
 void BoundaryCluster::RecordSolidFaceInformation()
-{	
+{
     simpleFaceGuard = simpleFaceHead;
     int counter = 0;
 
@@ -355,7 +355,7 @@ void BoundaryCluster::SetSlaveBlockList()
             simpleFaceGuard = simpleFaceGuard->GetNextPointer();
             if (sign == -1)
             {
-                int slaveBlockLabel = simpleFaceGuard->GetKeyParameter();				
+                int slaveBlockLabel = simpleFaceGuard->GetKeyParameter();
                 slaveBlockList[id] = slaveBlockLabel;
                 id += 1;
             }
@@ -687,14 +687,14 @@ void BlockGroupManager::InputOriginalGrid()
 void BlockGroupManager::InputOriginalBoundary()
 {
     string line, word;
-    string separator  = " =\t\r\n#$,;";
+    string separator = " =\t\r\n#$,;";
 
     int iSolver, processLabel, iDimension, jDimension, kDimension;
     processLabel = 0;
 
     string temp, originalBoundaryFileName;
     fstream file;
-    GlobalDataBase::GetData("originalBoundaryFileName",&originalBoundaryFileName,PHSTRING,1);
+    GlobalDataBase::GetData("originalBoundaryFileName", &originalBoundaryFileName, PHSTRING, 1);
     file.open(originalBoundaryFileName.c_str(), ios_base::in);
     file>>iSolver;
     file>>globalBlockNumber;
@@ -928,7 +928,7 @@ void BlockGroupManager::SeparateGrid()
 {
     string gridGroupFileName;
 
-    GlobalDataBase::GetData("gridGroupFileName",&gridGroupFileName,PHSTRING,1);
+    GlobalDataBase::GetData("gridGroupFileName", &gridGroupFileName, PHSTRING, 1);
 
     ofstream myFile(gridGroupFileName.c_str());
     
@@ -948,7 +948,7 @@ void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
 {
     ostringstream oss;
     string gridGroupHeadName;
-    GlobalDataBase::GetData("gridGroupHeadName",&gridGroupHeadName,PHSTRING,1);
+    GlobalDataBase::GetData("gridGroupHeadName", &gridGroupHeadName, PHSTRING, 1);
     oss << gridGroupHeadName << iGroup << ".grd";
     string file = oss.str();
     ofstream outFile(file.c_str(), ios_base::binary);
@@ -962,8 +962,8 @@ void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
     int iCounter = 0;
     for (int iBlock = blockStart[iGroup]; iBlock <= blockEnd[iGroup]; ++ iBlock)
     {
-        int oldBlockLabel      = InverseMapping[iBlock];
-        BoundaryCluster & bc = boundaryCluster[oldBlockLabel];
+        int oldBlockLabel = InverseMapping[iBlock];
+        BoundaryCluster &bc = boundaryCluster[oldBlockLabel];
         bcIndexTable[iCounter] = bc.ExtractPhysicalBoundaryIndex();
 
         iCounter += 1;
@@ -983,7 +983,7 @@ void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
 
         for (std::size_t n = 0; n < bcIndexTable[m].size(); ++ n)
         {
-            si = bcIndexTable[m][n][1] - bcIndexTable[m][n][0] + 1;			
+            si = bcIndexTable[m][n][1] - bcIndexTable[m][n][0] + 1;
             sj = bcIndexTable[m][n][3] - bcIndexTable[m][n][2] + 1;
             sk = bcIndexTable[m][n][5] - bcIndexTable[m][n][4] + 1;
             if (sk == 1)
@@ -1054,7 +1054,7 @@ void BlockGroupManager::OutputNewSurfaceGrid()
     {
         ostringstream oss;
         string gridGroupHeadName;
-        GlobalDataBase::GetData("gridGroupHeadName",&gridGroupHeadName,PHSTRING,1);
+        GlobalDataBase::GetData("gridGroupHeadName", &gridGroupHeadName, PHSTRING, 1);
         oss << gridGroupHeadName << iGroup << ".grd";
         string file = oss.str();
         ifstream infile(file.c_str(), ios_base::binary);
@@ -1200,7 +1200,6 @@ void BlockGroupManager::OutputNewBoundary()
         outFile << "block" << iBlock+1 << endl;
         int overallFaceNumber = boundaryCluster[oldBlockLabel].GetOverallFaceNumber();
         outFile << setw(8) << overallFaceNumber << endl;
-        const int *slaveBlockList = boundaryCluster[oldBlockLabel].GetSlaveBlockList();
         int externalSign = 0;
         simpleFaceGuard = boundaryCluster[oldBlockLabel].GetSimpleFaceHead();
 
@@ -1238,16 +1237,15 @@ void BlockGroupManager::OutputNewBoundary()
 void BlockGroupManager::OutputStandardBoundary()
 {
     using namespace PHMPI;
-    int nproc = PHMPI::GetNumberOfProcessor();
 
-    GlobalDataBase::GetData("originalExternalLabel",&originalExternalLabel,PHINT,1);
+    GlobalDataBase::GetData("originalExternalLabel", &originalExternalLabel, PHINT, 1);
 
     int iDimension, jDimension, kDimension, lastPara;
     int iSolver = 1;
     PHSimpleFace *simpleFaceGuard = 0;
 
     string standardBoundaryFileName;
-    GlobalDataBase::GetData("standardBoundaryFileName", &standardBoundaryFileName, PHSTRING,1);	
+    GlobalDataBase::GetData("standardBoundaryFileName", &standardBoundaryFileName, PHSTRING,1);
     ofstream outFile(standardBoundaryFileName.c_str());
     outFile << iSolver << endl;
     outFile << globalBlockNumber << endl;
@@ -1272,7 +1270,6 @@ void BlockGroupManager::OutputStandardBoundary()
         outFile << "block" << iBlock+1 << endl;
         int internalFaceNumber = boundaryCluster[oldBlockLabel].GetOverallFaceNumber();
         outFile << setw(8) << internalFaceNumber << endl;
-        const int *slaveBlockList = boundaryCluster[oldBlockLabel].GetSlaveBlockList();
         int externalSign = 0;
         simpleFaceGuard = boundaryCluster[oldBlockLabel].GetSimpleFaceHead();
 
@@ -1316,7 +1313,7 @@ void BlockGroupManager::OutputStandardBoundary()
 void BlockGroupManager::OutputZoneInverseMapping()
 {
     string inverseMappingFileName;
-    GlobalDataBase::GetData("inverseMappingFileName", &inverseMappingFileName, PHSTRING,1);	
+    GlobalDataBase::GetData("inverseMappingFileName", &inverseMappingFileName, PHSTRING,1);
     ofstream outFile(inverseMappingFileName.c_str(), ios::binary);
     for (int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
@@ -1333,7 +1330,7 @@ void BlockGroupManager::OutputHoleGroup(int iGroup)
 {
     ostringstream oss;
     string holeGroupHeadName;
-    GlobalDataBase::GetData("holeGroupHeadName",&holeGroupHeadName,PHSTRING,1);
+    GlobalDataBase::GetData("holeGroupHeadName", &holeGroupHeadName, PHSTRING, 1);
     oss << holeGroupHeadName << iGroup << ".grd";
     string name = oss.str();
     ofstream outFile(name.c_str(), ios_base::binary);

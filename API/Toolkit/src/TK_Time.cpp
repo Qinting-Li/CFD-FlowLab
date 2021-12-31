@@ -152,13 +152,12 @@ LIB_EXPORT int WriStatTime()
 
     string cs;
     ostringstream oss;
-    ostream::fmtflags currentfmt = oss.flags();
 
     oss.setf(ios::fixed);
     oss.precision(3);
 
     oss << "\n    ----- Time statistics -----\n"
-        << "          Wall time = " << wall_time << "\n"     // Don't modify, ATP related.
+        << "          Wall time = " << wall_time << "\n"    //! Don't modify, ATP related.
         << "    ----- End time statistics -----\n";
     cs = oss.str();
 
@@ -238,7 +237,7 @@ LIB_EXPORT int WriStatTime()
             time_array[CPUTimeIndex]  = cpu_time;
             time_array[WallTimeIndex] = wall_time;
 
-            PH_Send(time_array, 3*sizeof(double), root_proc, tag);
+            PH_Send(time_array, 3 * sizeof(double), root_proc, tag);
         }
 
         delete [] time_array;
@@ -289,7 +288,6 @@ LIB_EXPORT int WriStatTime(const char *title, double *last_time)
 
     string cs;
     ostringstream oss;
-    ostream::fmtflags currentfmt = oss.flags();
 
     oss.setf(ios::fixed);
     oss.precision(3);
@@ -305,7 +303,7 @@ LIB_EXPORT int WriStatTime(const char *title, double *last_time)
 
 LIB_EXPORT void StartTime(double *last_time)
 {
-    double *ptr_time  = new double[2];
+    double *ptr_time = new double[2];
 
     TIME_SPACE::GetCPUTime(ptr_time);
 

@@ -5,6 +5,7 @@
 #include "PHIO.h"
 #include "TK_Exit.h"
 #include "TK_Time.h"
+#include "Glb_Dimension.h"
 using namespace std;
 
 namespace PHSPACE
@@ -216,7 +217,6 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     resAverage = sqrt(resAverage / GloableTotalCells);
     oss << resAverage << "    ";
 
-    int processorOfMaxResidual = maxResidual->GetProcessorOfMaxResidual();
     RDouble maximumResidual = maxResidual->GetMaxRes();
     RDouble maxResCoorX = maxResidual->GetMaxResCoorX();
     RDouble maxResCoorY = maxResidual->GetMaxResCoorY();
@@ -376,8 +376,6 @@ void MaxResidual::Init()
 
 void MaxResidual::InitMamory()
 {
-    int numberOfProcessor = PHMPI::GetNumberOfProcessor();
-
     x = 0.0;
     y = 0.0;
     z = 0.0;
@@ -401,41 +399,41 @@ void MaxResidual::ServerCollection()
 {
     int server = PHMPI::GetServerProcessorID();
     int myid   = PHMPI::GetCurrentProcessorID();
-    int numberOfProcessor = PHMPI::GetNumberOfProcessor();
 
-    DataContainer *cData = new DataContainer();
-    cData->moveto_begin();
-
-    PHWrite(cData, myid);
-    PHWrite(cData, maximumResidual);
-    PHWrite(cData, x);
-    PHWrite(cData, y);
-    PHWrite(cData, z);
-    PHWrite(cData, maxResVariableIndex);
-
-    // Send the data-container to server.
-    if (myid != server)
+    typedef struct
     {
-        int tag = myid;
-        send(cData, server, tag);
-        delete cData;
-    }
-    else
+        RDouble val;
+        int rank;
+    }maxResidualAndRank;
+    
+    maxResidualAndRank obj1, obj2;
+    obj1.val = maximumResidual;
+    obj1.rank = myid;
+    MPI_Allreduce(&obj1, &obj2, 1, MPI_DOUBLE_INT, MPI_MAXLOC, MPI_COMM_WORLD);
+    if (server != obj2.rank)
     {
-        for (int iProcessor = 0; iProcessor < numberOfProcessor; ++ iProcessor)
+        int tag = obj2.rank;
+        if (myid == obj2.rank)
         {
-            int tag = iProcessor;
+            DataContainer *cData = new DataContainer();
+            cData->moveto_begin();
 
-            if (server != iProcessor)
-            {
-                if (cData != NULL)
-                {
-                    delete cData;
-                }
-                cData = new DataContainer();
-                receive(cData, iProcessor, tag);
-            }
-            
+            PHWrite(cData, myid);
+            PHWrite(cData, maximumResidual);
+            PHWrite(cData, x);
+            PHWrite(cData, y);
+            PHWrite(cData, z);
+            PHWrite(cData, maxResVariableIndex);
+
+            send(cData, server, tag);
+            delete cData;
+        }
+        if (myid == server)
+        {
+            DataContainer *cData = new DataContainer();
+            cData->moveto_begin();
+            receive(cData, obj2.rank, tag);
+
             cData->moveto_begin();
             int processorOfmaxResRecv = 0;
             RDouble maxResRecv, xRecv, yRecv, zRecv;
@@ -443,25 +441,22 @@ void MaxResidual::ServerCollection()
 
             PHRead(cData, processorOfmaxResRecv);
             PHRead(cData, maxResRecv);
-
             PHRead(cData, xRecv);
             PHRead(cData, yRecv);
             PHRead(cData, zRecv);
             PHRead(cData, maxResVariableIndexRecv);
 
+            processorOfMaxResidual = processorOfmaxResRecv;
+            maximumResidual = maxResRecv;
+            x = xRecv;
+            y = yRecv;
+            z = zRecv;
+            maxResVariableIndex = maxResVariableIndexRecv;
+
             delete cData;
-            cData = NULL;
-            if (maxResRecv > maximumResidual)
-            {
-                processorOfMaxResidual = processorOfmaxResRecv;
-                maximumResidual = maxResRecv;
-                x = xRecv;
-                y = yRecv;
-                z = zRecv;
-                maxResVariableIndex = maxResVariableIndexRecv;
-            }
         }
     }
+    PH_Barrier();
 }
 
 int MaxResidual::GetProcessorOfMaxResidual()
@@ -536,7 +531,6 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
     RDouble *xcc = grid->GetCellCenterX();
     RDouble *ycc = grid->GetCellCenterY();
     RDouble *zcc = grid->GetCellCenterZ();
-    RDouble *volume = grid->GetCellVolume();
 
     vector <RDouble> residualNormal(nEquation);
 
@@ -551,6 +545,13 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
     RDouble maxResLocal = maximumResidual;
     RDouble maxResCoorXLocal, maxResCoorYLocal, maxResCoorZLocal;
     int maxResIndexMLocal;
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble gridScaleUnit = reynoldsReferenceLengthDimensional;
+
+    if (GetDim() == THREE_D)
+    {
+        gridScaleUnit *= reynoldsReferenceLengthDimensional;
+    }
 
     bool maxResChange = false;
 
@@ -565,7 +566,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
 
         for (int iEquation = 0; iEquation < nEquation; ++ iEquation)
         {
-            RDouble dResm = residual[iEquation][iCell];
+            RDouble dResm = residual[iEquation][iCell] * gridScaleUnit;
             RDouble res2 = dResm * dResm;
             residualNormal[iEquation] += res2;
 #ifdef WIN32
@@ -626,14 +627,16 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
     RDouble3D &xcc = *grid->GetCellCenterX();
     RDouble3D &ycc = *grid->GetCellCenterY();
     RDouble3D &zcc = *grid->GetCellCenterZ();
-    RDouble3D &volume = *grid->GetCellVolume();
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble gridScaleUnit = reynoldsReferenceLengthDimensional;
+
+    if (GetDim() == THREE_D)
+    {
+        gridScaleUnit *= reynoldsReferenceLengthDimensional;
+    }
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
-	int * iblank = grid->GetBlankIndex_tmp();
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
 
     Range M(0, nEquation - 1);
     int mst = M.first();
@@ -652,20 +655,9 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
         {
             for (int i = ist; i <= ied; ++ i)
             {
-#ifdef USE_OVERSET
-                int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-                if (codeOfOversetGrid == 1)
-                {
-                    int cellLabel = (ni - 1) * (nj - 1) * (k - 1) + (ni - 1) * (j - 1) + (i - 1);
-                    if (iblank[cellLabel] != 2)
-                    {
-                        continue;
-                    }
-                }
-#endif
                 for (int m = mst; m <= med; ++ m)
                 {
-                    RDouble dResm = residual(i, j, k, m);
+                    RDouble dResm = residual(i, j, k, m) * gridScaleUnit;
                     RDouble res2 = dResm * dResm;
                     residualNormal[m] += res2;
 #ifdef WIN32

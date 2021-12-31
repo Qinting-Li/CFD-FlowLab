@@ -6,6 +6,7 @@
 #include "Constants.h"
 #include "TK_Log.h"
 #include "Gas.h"
+#include "Geo_SimpleBC.h"
 
 using namespace std;
 
@@ -186,6 +187,14 @@ LIB_EXPORT void WriteASCIIFile(fstream &file, DataContainer *cdata)
     DataCharToString(cdata, str);
 
     WriteASCIIFile(file, str);
+}
+
+LIB_EXPORT void WriteASCIIFile(ActionKey *actionKey, std::ostringstream &oss)
+{
+    PHSPACE::ParallelOpenFile(actionKey);
+    fstream &file = *(actionKey->GetFile());
+    PHSPACE::WriteASCIIFile(file, oss);
+    PHSPACE::ParallelCloseFile(file);
 }
 
 LIB_EXPORT void WriteASCIIFile(ActionKey *actkey)
@@ -371,7 +380,7 @@ LIB_EXPORT void BroadCastInfo()
         PHSPACE::GlobalDataBase::CompressData(cdata);
     }
 
-    PH_Bcast(cdata, server);
+    PH_BcastByServer(cdata);
 
     if (myid != server)
     {
@@ -392,7 +401,7 @@ LIB_EXPORT void CompleteParamInfo()
         string walldistfile = ChangeExtensionOfFileName(origialGridFile, "wdt");
         GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
     }
-    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION || nsimutask == SPLIT_OVERSET_GRID)
+    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION)
     {
         string from_gfile = GlobalDataBase::GetStrParaFromDB("from_gfile");
         string bnd_file = ChangeExtensionOfFileName(from_gfile, "inp");
@@ -414,24 +423,26 @@ LIB_EXPORT void CompleteParamInfo()
     }
 
     //! Some other default parameters.
-    int nTurbulentEquation = 0;
+    int nTurbulenceEquation = 0;
 
     int ViscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
 
     if (ViscousType == 2)
     {
-        nTurbulentEquation = 0;
+        nTurbulenceEquation = 0;
     }
     else if (ViscousType == 3)
     {
-        nTurbulentEquation = 1;
+        nTurbulenceEquation = 1;
     }
     else if (ViscousType == 4)
     {
-        nTurbulentEquation = 2;
+        nTurbulenceEquation = 2;
+        int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
+        nTurbulenceEquation += transitionType;
     }
 
-    GlobalDataBase::UpdateData("n_turb", &nTurbulentEquation, PHINT, 1);
+    GlobalDataBase::UpdateData("n_turb", &nTurbulenceEquation, PHINT, 1);
 
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
@@ -453,11 +464,6 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
 {
     int inflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
 
-    const int NONDIMENSIONCONDITION = 0;
-    const int FLIGHTCONDITION       = 1;
-    const int EXPERIMENTCONDITION   = 2;
-    const int SUBSONICBCCONDITION   = 3;
-
     RDouble refGama                   = GlobalDataBase::GetDoubleParaFromDB("refGama");
     RDouble refMachNumber             = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
     RDouble refReNumber               = GlobalDataBase::GetDoubleParaFromDB("refReNumber");
@@ -468,9 +474,11 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
     RDouble wallTemperature           = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
 
+    ModifyWindowTemperature(wallTemperature);
+
     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
-    RDouble forceRefenenceArea                 = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceArea");
-    RDouble forceRefenenceLength               = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceLength");
+    RDouble forceReferenceArea                 = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
+    RDouble forceReferenceLength               = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
     RDouble TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
     RDouble TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
     RDouble TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
@@ -480,6 +488,7 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     gas->GetReferenceParameters(refParam);
     RDouble refVelocity = refParam.GetVelocity();
     RDouble refVicosity = refParam.GetViscosity();
+    RDouble refSoundSpeed = refParam.GetSoundVelocity();
 
     PrintToWindow("Inflow Conditions", "\n");
     PrintToWindow("  Gama                     :    ", refGama      ,           "\n");
@@ -500,25 +509,64 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
         PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m3", "\n");
         PrintToWindow("  Dimensional Temperature  :    ", refDimensionalTemperature, " K",     "\n");
 
-        if (wallTemperature < 0.0)
+        int metabolicWallTemperature = -1;
+        GlobalDataBase::GetData("metabolicWallTemperature", &metabolicWallTemperature, PHINT, 1);
+
+        if (metabolicWallTemperature == 0)
         {
-            PrintToWindow("  Wall Temperature         :    ", "Adiabatic Wall", "\n");
+            if (wallTemperature < 0.0)
+            {
+                PrintToWindow("  Wall Temperature         :    ", "Adiabatic Wall", "\n");
+            }
+            else
+            {
+                PrintToWindow("  Wall Temperature         :    ", wallTemperature, "K", "\n");
+            }
         }
-        else
-        {
-            PrintToWindow("  Wall Temperature         :    ", wallTemperature, "K", "\n");
-        }
+        PrintToWindow("  Dimensional Sound Speed  :    ", refSoundSpeed,               " m/s",    "\n");
         PrintToWindow("  Dimensional Velocity     :    ", refVelocity,               " m/s",      "\n");
         PrintToWindow("  Dimensional Viscosity    :    ", refVicosity,               " kg/(m*s)", "\n");
     }
 
     PrintToWindow("Geometry Informations"           ,                                     "\n");
     PrintToWindow("  Scale Factor             :    ", reynoldsReferenceLengthDimensional, "\n");
-    PrintToWindow("  Force Reference Area     :    ", forceRefenenceArea                , "\n");
-    PrintToWindow("  Force Reference Length   :    ", forceRefenenceLength              , "\n");
+    PrintToWindow("  Force Reference Area     :    ", forceReferenceArea                , "\n");
+    PrintToWindow("  Force Reference Length   :    ", forceReferenceLength              , "\n");
     PrintToWindow("  Force Reference x        :    ", TorqueRefX                        , "\n");
     PrintToWindow("  Force Reference y        :    ", TorqueRefY                        , "\n");
     PrintToWindow("  Force Reference z        :    ", TorqueRefZ                        , "\n");
 }
 
+LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature)
+{
+    if(wallTemperature >= 0.0 )
+    {
+        return;
+    }
+    GlobalBoundaryCondition::ReadGlobalBoundaryCondition();
+    vector<SimpleBC *> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
+    for (int iBC = 0; iBC < globalBCList->size(); ++ iBC)
+    {
+        SimpleBC *bcParamDataBase = (*globalBCList)[iBC];
+        int bcType = bcParamDataBase->GetBCType();
+        Data_Param *bcParamDB = bcParamDataBase->GetBCParamDataBase();
+        if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::ABLATION_SURFACE)
+        {
+            continue;
+        }
+        else if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
+        {
+            if (!bcParamDB->IsExist("wallTemperature", PHDOUBLE, 1))
+            {
+                GlobalDataBase::GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+                bcParamDB->UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+            }
+            else
+            {
+                bcParamDB->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+                GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+            }
+        }
+    }
+}
 }

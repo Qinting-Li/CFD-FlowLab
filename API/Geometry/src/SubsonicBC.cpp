@@ -1,7 +1,7 @@
 #include "SubsonicBC.h"
 #include "GridType.h"
-#include "BC_Struct.h"
-#include "BC_Unstruct.h"
+#include "Geo_StructBC.h"
+#include "Geo_UnstructBC.h"
 #include "Constants.h"
 #include "Geo_StructGrid.h"
 #include "Geo_MultiGridInfo_Struct.h"
@@ -54,12 +54,12 @@ void SubnicBCInfo::CheckSpecificBCExist(int specificBCID)
             {
                 StructGrid *grid = StructGridCast(gridIn);
 
-                CompositeBCRegion * composite_bcregion = grid->GetCompositeBCRegion();
+                CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
                 int nBCRegion = composite_bcregion->GetnBCRegion();
 
                 for ( int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion )
                 {
-                    BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
                     if ( bcregion->GetBCType() == specificBCID )
                     {
                         hasBCp = 1;
@@ -70,7 +70,7 @@ void SubnicBCInfo::CheckSpecificBCExist(int specificBCID)
             else if( sys_gridtype == PHSPACE::UNSTRUCTGRID )
             {
                 UnstructGrid *grid = UnstructGridCast( gridIn );
-                BCRecord ** bcr = grid->GetBCRecord();
+                CompositeUnstructBC ** bcr = grid->GetBCRecord();
                 for ( int iFace = 0; iFace < grid->GetNBoundFace(); ++ iFace )
                 {
                     int type = bcr[ iFace ]->GetKey();
@@ -81,9 +81,9 @@ void SubnicBCInfo::CheckSpecificBCExist(int specificBCID)
                         break;
                     }
                 }
-            }	
+            }
         }
-    }	
+    }
     
 #ifdef PH_PARALLEL
     MPI_Reduce( &hasBCp, &hasBC, 1, MPI_INT, MPI_MAX, server, MPI_COMM_WORLD );
@@ -159,9 +159,6 @@ void SubnicBCInfo::ReSetReferenceData()
 
     RDouble moo    = 1.0;
     RDouble mo2    = moo * moo;
-    RDouble gmamo2 = refGama * mo2;
-    RDouble coo    = 1.0;
-    RDouble poo    = 1.0 / gmamo2 ;
 
     RDouble pref   = p0Average * pow((1.0 + (refGama - 1.0) / 2.0 * mo2), (- refGama / (refGama -1.0)));
     RDouble tref   = t0Average / (1.0 + (refGama - 1.0) / 2.0 * mo2);
@@ -197,9 +194,8 @@ void SubnicBCInfo::ReadBCData()
     }
 
     int nZones,NO,bcID,bcType;
-    RDouble p0,t0,massRate;
-    //vector<RDouble> fd(3);
-    RDouble *fd = new RDouble [3];
+    RDouble p0 = 0, t0 = 0, massRate = 0;
+    RDouble *fd = new RDouble [3]();
 
     file >> nZones;
 
@@ -221,7 +217,7 @@ void SubnicBCInfo::ReadBCData()
 
         BCs.push_back(BC);
     }
-
+    delete [] fd;    fd = NULL;
     file.close();
     file.clear();
 }
@@ -233,10 +229,7 @@ void SubnicBCInfo::BcastBCData()
 #endif
     int nZones = 0, bcID = -999, bcType = -999;
     RDouble p0,t0,massRate;
-    //vector<RDouble> fd(3);
-    //RDouble * fd;
-    RDouble *fd = new RDouble [3];
-
+    RDouble *fd[3] ={0};
     nZones = GetZoneNumberOfSameBCType();
 
     using namespace PHMPI;
@@ -261,7 +254,7 @@ void SubnicBCInfo::BcastBCData()
             p0       = BCs[i].GetTotalPressure();
             t0       = BCs[i].GetTotalTemperature();
             massRate = BCs[i].GetMassRate();
-            fd       = BCs[i].GetFlowDirection();
+            *fd       = BCs[i].GetFlowDirection();
         }
         MPI_Bcast(&bcID    ,1,MPI_INT   ,server,MPI_COMM_WORLD);
         MPI_Bcast(&bcType  ,1,MPI_INT   ,server,MPI_COMM_WORLD);
@@ -277,13 +270,13 @@ void SubnicBCInfo::BcastBCData()
             BCs[i].SetTotalPressure(p0);
             BCs[i].SetTotalTemperature(t0);
             BCs[i].SetMassRate(massRate);
-            BCs[i].SetFlowDirection(fd);
+            BCs[i].SetFlowDirection(*fd);
         }
         cout << BCs[i].GetBCID() << "  " << GetCurrentProcessorID() << endl;
     }
+    
 }
 
-// added by clz, 2013.11
 void GetSubsonicBCData()
 {
     int nsubsonicInlet  = 1;
@@ -320,7 +313,7 @@ void GetSubsonicBCData()
     }
 }
 
-bool SetSubsonicBC(Grid *gridIn, BCRegion *bcr, int bctype)
+bool SetSubsonicBC(Grid *gridIn, StructBC *bcr, int bctype)
 {
     bool hasSubsonicBC = 1;
 
@@ -359,7 +352,7 @@ bool SetSubsonicBC(Grid *gridIn, BCRegion *bcr, int bctype)
     return hasSubsonicBC;
 }
 
-bool SetSubsonicBC(UnstructGrid * gridIn, BCRecord ** bcr, int bctype, RDouble * primSource, RDouble * primTarget,
+bool SetSubsonicBC(UnstructGrid * gridIn, CompositeUnstructBC ** bcr, int bctype, RDouble * primSource, RDouble * primTarget,
                    RDouble nxs, RDouble nys, RDouble nzs, RDouble t)
 {
     bool hasSubsonicBC = 1;
@@ -438,7 +431,7 @@ bool SetSubsonicBCTurb( int bctype, RDouble **q_turb, RDouble * turboo, int n_tu
     return hasSubsonicBC;
 }
 
-void OutFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & outLet)
+void OutFlowBC3D(Grid *gridIn, StructBC *bcr, SubnicBC & outLet)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -446,10 +439,10 @@ void OutFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & outLet)
     int nk = grid->GetNK();
 
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
 
     int nchem = 0;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
 
     int neqn = nl + nchem;
 
@@ -468,13 +461,13 @@ void OutFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & outLet)
         {
             for ( int i = ist; i <= ied; ++ i )
             {
-				bcr->GetInsideCellIndex(i, j, k, is, js, ks, 1);
+                bcr->GetInsideCellIndex(i, j, k, is, js, ks, 1);
 
                 RestrictIndex(is, js, ks, ni-1, nj-1, nk-1);
 
                 for (int layer = 1; layer <= 2; ++ layer)
                 {
-					bcr->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
+                    bcr->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
 
                     for ( int m = 0; m < neqn; ++ m )
                     {
@@ -488,12 +481,10 @@ void OutFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & outLet)
     }
 }
 
-void OutFlowBC3D(UnstructGrid * gridIn, BCRecord ** bcr, SubnicBC & outLet, 
+void OutFlowBC3D(UnstructGrid * gridIn, CompositeUnstructBC ** bcr, SubnicBC & outLet, 
                  RDouble * primSource, RDouble * primTarget, 
                  RDouble nxs, RDouble nys, RDouble nzs, RDouble t)
 {
-    UnstructGrid * grid = gridIn;
-
     int nl    = GlobalDataBase::GetIntParaFromDB("nl");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
     int neqn = nl + nchem;
@@ -516,7 +507,7 @@ void OutFlowBC3DTurb( int bctype, RDouble **q_turb, RDouble * turboo, int n_turb
     }
 }
 
-void InFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & inLet)
+void InFlowBC3D(Grid *gridIn, StructBC *bcr, SubnicBC & inLet)
 {
     StructGrid *grid = StructGridCast(gridIn);
 
@@ -537,7 +528,6 @@ void InFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & inLet)
     RDouble nxs, nys, nzs;
 
     RDouble p0, t0;
-    //vector<RDouble> fd(3);
     RDouble * fd;
 
     p0 = inLet.GetTotalPressure();
@@ -563,7 +553,7 @@ void InFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & inLet)
         {
             for ( int i = ist; i <= ied; ++ i )
             {
-				bcr->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+                bcr->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
 
                 nxs = -lr * xfn(in, jn, kn, nsurf);
                 nys = -lr * yfn(in, jn, kn, nsurf);
@@ -603,7 +593,7 @@ void InFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & inLet)
 
                 for (int layer = 1; layer <= 2; ++ layer)
                 {
-					bcr->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
+                    bcr->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
 
                     q(it,jt,kt,IR) = rb;
                     q(it,jt,kt,IU) = ub;
@@ -616,17 +606,10 @@ void InFlowBC3D(Grid *gridIn, BCRegion *bcr, SubnicBC & inLet)
     }
 }
 
-void InFlowBC3D(UnstructGrid * gridIn, BCRecord ** bcr, SubnicBC & inLet, RDouble * primSource, RDouble * primTarget,
-				RDouble nxs, RDouble nys, RDouble nzs, RDouble t)
+void InFlowBC3D(UnstructGrid * gridIn, CompositeUnstructBC ** bcr, SubnicBC & inLet, RDouble * primSource, RDouble * primTarget,
+                RDouble nxs, RDouble nys, RDouble nzs, RDouble t)
 {
-    UnstructGrid * grid = gridIn;
-
-    int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    int neqn = nl + nchem;
-
-    RDouble p0,t0;
-    //vector< RDouble > fd(3);
+    RDouble p0 = 0.0,t0 = 0.0;
     RDouble * fd;
 
     p0 = inLet.GetTotalPressure();
@@ -634,7 +617,6 @@ void InFlowBC3D(UnstructGrid * gridIn, BCRecord ** bcr, SubnicBC & inLet, RDoubl
     fd = inLet.GetFlowDirection();
 
     RDouble refGama = 1.4;
-    RDouble mach = 1.0;
     RDouble gama1, moo, gmogm1;
     GlobalDataBase::GetData("refGama", &refGama, PHDOUBLE, 1);
     GlobalDataBase::GetData("refMachNumber", &moo, PHDOUBLE, 1);

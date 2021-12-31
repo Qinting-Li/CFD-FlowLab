@@ -25,12 +25,13 @@ namespace PHSPACE
 class ProbeData
 {
 private:
-    vector <RDouble> coordinates;
-    int lineID;
-    int surfaceID;
-    bool isValid;
+    vector <RDouble> probeCoordinates;
+    int probeGlobalID;
+    int probeLineID;
+    int probeSurfaceID;
+    bool isProbeValid;
     RDouble probeToCellDistance;
-    int probeCellZoneType;
+    int probeCellType;
     int probeCellZoneID;
     int probeCellID;
     int probeCellNI;
@@ -43,18 +44,20 @@ public:
 
 public:
     //! To set coordinates by in-parameter.
-    void SetCoordinates(const vector <RDouble> &coordinates);
+    void SetProbeCoordinates(const vector <RDouble> &probeCoordinates);
+    //! To set global index of the probe.
+    void SetProbeGlobalID(const int &probeGlobalID);
     //! To set line index of the probe.
-    void SetLineID(const int &lineID);
+    void SetProbeLineID(const int &probeLineID);
     //! To set surface index of the probe.
-    void SetSurfaceID(const int &surfaceID);
+    void SetProbeSurfaceID(const int &probeSurfaceID);
     //! To set validity of the probe.
-    void SetProbeValidity(const bool &isValid);
+    void SetProbeValidity(const bool &isProbeValid);
 
     //! To set distance from the probe to its cell.
     void SetProbeToCellDistance(const RDouble &probeToCellDistance);
-    //! To set zone grid type of the probe cell.
-    void SetProbeCellZoneType(const int &probeCellZoneType);
+    //! To set grid type of the probe cell.
+    void SetProbeCellType(const int &probeCellType);
     //! To set zone index of the probe cell.
     void SetProbeCellZoneID(const int &probeCellZoneID);
     //! To set index of the probe cell(unstructured grid).
@@ -68,22 +71,24 @@ public:
     void SetProbeCellNK(const int &probeCellNK);
 
     //! To get coordinates of the probe.
-    vector <RDouble> GetCoordinates();
+    vector <RDouble> GetProbeCoordinates();
     //! To get validity of the probe.
     bool GetProbeValidity();
 
     //! To get distance from the probe to its cell.
     RDouble GetProbeToCellDistance();
-    //! To get zone grid type of the probe cell.
-    int GetProbeCellZoneType();
+    //! To get grid type of the probe cell.
+    int GetProbeCellType();
     //! To get zone index of the probe cell.
     int GetProbeCellZoneID();
     //! To get index of the probe cell(unstructured grid).
     int GetProbeCellID();
+    //! To Get global index of the probe.
+    int GetProbeGlobalID();
     //! To Get line index of the probe.
-    int GetLineID();
+    int GetProbeLineID();
     //! To Get surface index of the probe.
-    int GetSurfaceID();
+    int GetProbeSurfaceID();
     //! To get the probe cell dimension of i direction (structured grid).
     int GetProbeCellNI();
     //! To get the probe cell node dimension of j direction (structured grid).
@@ -106,9 +111,9 @@ public:
     void SearchRealCell(UnstructGrid * grid, bool &flag);
 
     //! To dump the probe cell information of the each probe for structured grid.
-    void WriteStructProbeCellInfo(fstream &file,int &iprobe);
+    void WriteStructProbeCellInfo(fstream &file);
     //! To dump the probe cell information of the each probe for unstructured grid.
-    void WriteUnstructProbeCellInfo(fstream &file,int &iprobe);
+    void WriteUnstructProbeCellInfo(fstream &file);
 
     //! Compress each ProbeData probe cell information to DataContainer for structured grid.
     void CompressStructProbeCellInfo(DataContainer *cdata);
@@ -129,10 +134,12 @@ private:
     string defineFileName;
     int numberToMonitor;
     bool defineFileExist;
-    int nTotalProbes;
-    vector <int> nProbes;
-    vector <int> ProbesType;
-    vector <ProbeData *> SampleLocation;
+    int numberOfTotalProbes;
+    vector <int> numberOfProbes;
+    vector <int> surfaceProbes_ni;
+    vector <int> surfaceProbes_nj;
+    vector <int> typeOfTotalProbes;
+    vector <ProbeData *> sampleLocationInfo;
 
 public:
     SampleLocationInfo();
@@ -145,11 +152,16 @@ public:
     //! To set the number of lines or surfaces.
     void SetNumberToMonitor(const int &numberToMonitor);
     //! To set the total number of probes.
-    void SetTotalProbesNumber(const int &nTotalProbes);
+    void SetTotalProbesNumber(const int &numberOfTotalProbes);
     //! To set the probes number of each line or surface.
-    void SetProbesNumber(const vector <int> &nProbes);
+    void SetProbesNumber(const vector <int> &numberOfProbes);
+    //! To set the probe dimension of I direction of each surface.
+    void SetSurfaceProbesNI(const vector <int> &surfaceProbes_ni);
+    //! To set the probe dimension of J direction of each surface..
+    void SetSurfaceProbesNJ(const vector <int> &surfaceProbes_nj);
+    //!To set the grid type of all probes.
+    void SetTotalProbesType(const vector <int> &typeOfTotalProbes);
 
-    void SetProbesType(const vector <int> &ProbesType);
     //! Check if the defined file exist(xxx_XYZ.dat).
     void CheckIfDefineFileExist();
     //! To get the number of lines or surfaces.
@@ -157,14 +169,18 @@ public:
 
     //! To get the file name of data monitor parameter.
     string GetDefineFileName();
-    //!To set the total number of probes.
+    //!To get the total number of probes.
     int GetTotalProbesNumber();
-    //!To set the probes number of each line or surface.
+    //!To get the probes number of each line or surface.
     vector <int> GetProbesNumber();
-    //!To set the grid type of the probes in current zone.
-    vector <int> GetProbesType();
+    //! To get the probe dimension of I direction of each surface.
+    vector <int> GetSurfaceProbesNI();
+    //! To get the probe dimension of J direction of each surface..
+    vector <int> GetSurfaceProbesNJ();
+    //!To get the grid type of all probes.
+    vector <int> GetTotalProbesType();
 
-    //! To get all of the sample location.
+    //! To get the location information of all probes.
     vector<ProbeData *> GetSampleLocationInfo();
     //! If the defined file exist or not(xxx_XYZ.dat).
     bool IfDefineFileExist();
@@ -186,6 +202,8 @@ private:
     void UpdateNearestCellsData();
     //! Add or update all the probes' real cell information to ProbData.
     void UpdateRealCellsData();
+    //! Add or update some global parameters about probes information.
+    void UpdateProbesGlobalPara();
     //! Communicate with each processor,then determine probes' cell of all zones with minimum distance.
     void ServerCollectionProbesData();
     //! Broadcast all probes data to all processor.

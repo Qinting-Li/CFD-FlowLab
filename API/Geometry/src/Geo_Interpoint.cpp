@@ -10,8 +10,8 @@ namespace PHSPACE
 {
 InterpointPatch::InterpointPatch()
 {
-    pointIndexForReceive = 0;
-    pointIndexForSend = 0;
+    pointIndexForReceive = nullptr;
+    pointIndexForSend = nullptr;
     dataStorageSend = new Data_ParamFieldSuite();
     dataStorageReceive = new Data_ParamFieldSuite();
     zoneID = 0;
@@ -70,19 +70,19 @@ InterpointInformation::InterpointInformation()
 {
     numberOfInterpoints = 0;
     numberOfNeighbor = 0;
-    cellNumberOfInterPoint = 0;
-    totalZonesOfInterPoint = 0;
-    labelOfInterPoint = 0;
-    parent = 0;
-    interPoint2ZoneID = 0;
-    interPoint2InterPointID = 0;
-    interPoint2GlobalPoint = 0;
+    cellNumberOfInterPoint = nullptr;
+    totalZonesOfInterPoint = nullptr;
+    labelOfInterPoint = nullptr;
+    parent = nullptr;
+    interPoint2ZoneID = nullptr;
+    interPoint2InterPointID = nullptr;
+    interPoint2GlobalPoint = nullptr;
 
     dataForSend = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
     dataForReceive = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
 
-    interPointPatch = 0;
-    isNeighborInterpointFound = 0;
+    interPointPatch = nullptr;
+    isNeighborInterpointFound = nullptr;
 }
 
 InterpointInformation::InterpointInformation(const InterpointInformation &interpointInformationIn)
@@ -356,8 +356,8 @@ void InterpointInformation::FillPointIndexForSend(int zone, int *pointIndexForSe
     int pointNumberOfPatch = interPointPatch->GetNumberOfPoint();
     for (int iPoint = 0; iPoint < pointNumberOfPatch; ++ iPoint)
     {
-		//! Here we can make out that pointIndexForSend is corresponds to the neighbor zone.
-		//! That is to say,it comes according to the corresponding sequence of corresponding neighbor zone.
+        //! Here we can make out that pointIndexForSend is corresponds to the neighbor zone.
+        //! That is to say,it comes according to the corresponding sequence of corresponding neighbor zone.
         pointIndexForSend[iPoint] = pointIndexForSendIn[iPoint];
     }
 }

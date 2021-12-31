@@ -23,21 +23,21 @@ template<typename X, typename Y>
 class PHUpdate : public PHUpdaterBase
 {
 public:
-    static inline void update(X& x, Y y)
+    static inline void update(X &x, Y y)
     {
-		x = (X)y; 
-	}
+        x = (X)y; 
+    }
 };
 
-#define PH_DEFINE_UPDATER(name,op)                          \
+#define PH_DEFINE_UPDATER(name, op)                         \
 template<typename X, typename Y>                            \
 class name : public PHUpdaterBase                           \
 {                                                           \
 public:                                                     \
-    static inline void update(X& x, Y y)                    \
+    static inline void update(X &x, Y y)                    \
     {                                                       \
-		x op y;                                             \
-	}                                                       \
+        x op y;                                             \
+    }                                                       \
 }
 
 PH_DEFINE_UPDATER(fy_plus_update    , +=);
@@ -45,25 +45,25 @@ PH_DEFINE_UPDATER(fy_minus_update   , -=);
 PH_DEFINE_UPDATER(fy_multiply_update, *=);
 PH_DEFINE_UPDATER(fy_divide_update  , /=);
 
-#define PH_DECLARE_ARRAY_UNARY(name,functor)                              \
+#define PH_DECLARE_ARRAY_UNARY(name, functor)                             \
                                                                           \
 template <typename T1>                                                    \
 inline                                                                    \
-typename PHUnaryExprResult<functor,T1>::T_result                          \
-name(const PHETBase<T1>& d1)                                              \
+typename PHUnaryExprResult<functor, T1>::T_result                         \
+name(const PHETBase<T1> &d1)                                              \
 {                                                                         \
-    typedef typename PHUnaryExprResult<functor,T1>::T_result result;      \
+    typedef typename PHUnaryExprResult<functor, T1>::T_result result;     \
     return result(PHExprWrap<T1>::getExpr(d1.unwrap()));                  \
 }
 
 #define PH_DECLARE_ARRAY_BINARY(name, applic)                             \
                                                                           \
-template <typename T1,typename T2>                                        \
+template <typename T1, typename T2>                                       \
 inline                                                                    \
-typename PHBinaryExprResult<applic,T1,T2>::T_result                       \
-name(const PHETBase<T1>& d1,const PHETBase<T2>& d2)                       \
+typename PHBinaryExprResult<applic, T1, T2>::T_result                     \
+name(const PHETBase<T1> &d1,const PHETBase<T2> &d2)                       \
 {                                                                         \
-    typedef typename PHBinaryExprResult<applic,T1,T2>::T_result result;   \
+    typedef typename PHBinaryExprResult<applic, T1, T2>::T_result result; \
     return result(PHExprWrap<T1>::getExpr(d1.unwrap()),                   \
                   PHExprWrap<T2>::getExpr(d2.unwrap()));                  \
 }
@@ -71,30 +71,30 @@ name(const PHETBase<T1>& d1,const PHETBase<T2>& d2)                       \
 #define PH_DECLARE_ARRAY_BINARY_SCALAR(name, applic, scalar_type)                 \
 template<typename T>                                                              \
 inline                                                                            \
-typename PHBinaryExprResult<applic,scalar_type,T>::T_result                       \
-name(const scalar_type d1, const PHETBase<T>& d2)                                 \
+typename PHBinaryExprResult<applic, scalar_type,T>::T_result                      \
+name(const scalar_type d1, const PHETBase<T> &d2)                                 \
 {                                                                                 \
-    typedef typename PHBinaryExprResult<applic,scalar_type,T>::T_result result;   \
+    typedef typename PHBinaryExprResult<applic, scalar_type, T>::T_result result; \
     return result(PHExprWrap<scalar_type >::getExpr(d1),                          \
                   PHExprWrap<T>::getExpr(d2.unwrap()));                           \
 }                                                                                 \
                                                                                   \
 template<typename T>                                                              \
 inline                                                                            \
-typename PHBinaryExprResult<applic,T,scalar_type >::T_result                      \
-name(const PHETBase<T>& d1, const scalar_type d2)                                 \
+typename PHBinaryExprResult<applic, T, scalar_type >::T_result                    \
+name(const PHETBase<T> &d1, const scalar_type d2)                                 \
 {                                                                                 \
-    typedef typename PHBinaryExprResult<applic,T,scalar_type >::T_result result;  \
+    typedef typename PHBinaryExprResult<applic, T, scalar_type >::T_result result;\
     return result(PHExprWrap<T>::getExpr(d1.unwrap()),                            \
                   PHExprWrap<scalar_type >::getExpr(d2));                         \
 }
 
 #define PH_DECLARE_ARRAY_SCALAR_OPERATIONS(scalar_type)                           \
-	                                                                              \
-PH_DECLARE_ARRAY_BINARY_SCALAR(operator +,  Add     , scalar_type)                \
-PH_DECLARE_ARRAY_BINARY_SCALAR(operator -,  Subtract, scalar_type)                \
-PH_DECLARE_ARRAY_BINARY_SCALAR(operator *,  Multiply, scalar_type)                \
-PH_DECLARE_ARRAY_BINARY_SCALAR(operator /,  Divide  , scalar_type)                 
+                                                                                  \
+PH_DECLARE_ARRAY_BINARY_SCALAR(operator +, Add     , scalar_type)                 \
+PH_DECLARE_ARRAY_BINARY_SCALAR(operator -, Subtract, scalar_type)                 \
+PH_DECLARE_ARRAY_BINARY_SCALAR(operator *, Multiply, scalar_type)                 \
+PH_DECLARE_ARRAY_BINARY_SCALAR(operator /, Divide  , scalar_type)
 
 PH_DECLARE_ARRAY_SCALAR_OPERATIONS(char)
 PH_DECLARE_ARRAY_SCALAR_OPERATIONS(unsigned char)
@@ -108,10 +108,10 @@ PH_DECLARE_ARRAY_SCALAR_OPERATIONS(float)
 PH_DECLARE_ARRAY_SCALAR_OPERATIONS(double)
 PH_DECLARE_ARRAY_SCALAR_OPERATIONS(long double)
 
-PH_DECLARE_ARRAY_BINARY(operator+,  Add     )
-PH_DECLARE_ARRAY_BINARY(operator-,  Subtract)
-PH_DECLARE_ARRAY_BINARY(operator*,  Multiply)
-PH_DECLARE_ARRAY_BINARY(operator/,  Divide  )
+PH_DECLARE_ARRAY_BINARY(operator+, Add)
+PH_DECLARE_ARRAY_BINARY(operator-, Subtract)
+PH_DECLARE_ARRAY_BINARY(operator*, Multiply)
+PH_DECLARE_ARRAY_BINARY(operator/, Divide)
 // unary operators
 PH_DECLARE_ARRAY_UNARY(operator+, UnaryPlus)
 PH_DECLARE_ARRAY_UNARY(operator-, UnaryMinus)

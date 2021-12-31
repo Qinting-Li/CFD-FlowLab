@@ -72,7 +72,7 @@ public:
     //! The residual is the flux actually, including inviscid flux, viscous flux,
     //! source flux, etc. These fluxes are defined in NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.
     //! This function is an very important main function of the NS solver.
-    void UpdateResiduals(Grid *grid);      
+    void UpdateResiduals(Grid *grid);
 
     //! =======Some special post-process: END==============
 
@@ -135,7 +135,7 @@ protected:
     virtual void RegisterCFDSolverInterpointField();
 
     //! Dump out typical standard case: turbulent flat plate.
-    virtual void Turbulent_Flat_Plate_Output_NASA(Grid *gridIn) {};
+    virtual void Turbulence_Flat_Plate_Output_NASA(Grid *gridIn) {};
 
 private:
     //! Initialize the flow on the coarse grid if using multigrid.

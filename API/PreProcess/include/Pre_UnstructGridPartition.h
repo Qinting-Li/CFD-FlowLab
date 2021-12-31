@@ -43,10 +43,10 @@ class Pre_UnstructGridPartition
     static const int IN_THIS_ZONE     = -1;
 private:
     //! The original source grid that want to be decomposed.
-    UnstructGrid * gridSource;
+    UnstructGrid *gridSource;
 
     //! The partition grids, which is divided from original grid.
-    Grid ** grids;
+    Grid **grids;
 
     //! The number of new partition wanted.
     //! For serial partition, it is equal to the max processor.
@@ -204,22 +204,22 @@ private:
 
 private:
     //! The node/face/cell index mapping from new partition to old zone.
-    int * node2all, * face2all, * cell2all;
+    int *node2all, *face2all, *cell2all;
 
     //! pointNumber2zoneID: the sequence of grid points that can be repeated, corresponding to zoneID.
     //! point2ZoneID: According to the sequence of grid points pointNumber2zoneID, the corresponding number of zoneID.
     //! pointPosition2zoneID: Position of point number in pointNumber2zoneID, pointNumber2zoneID is repeatable.
-    int * pointNumber2zoneID, * point2ZoneID, * pointPosition2zoneID;
+    int *pointNumber2zoneID, *point2ZoneID, *pointPosition2zoneID;
 
     //! cellNumberForNodeValue is the number of cells used to compute the value of each node.
-    int * cellNumberForNodeValue;
+    int *cellNumberForNodeValue;
 
     //! The part(processor) index that each cell belongs to.
-    idx_t * part;
+    idx_t *part;
 
     //! The local cell/node/face index in the new partition.
     //! In other words, the index mapping from old zone to new partition.
-    int * cell_mark, * node_mark, * face_mark;
+    int *cell_mark, *node_mark, *face_mark;
 
     //! Interface re-construct method.
     //! -# 1   : Construct by local search in the original grid.
@@ -228,7 +228,7 @@ private:
 
     //! Vertex distribution.
     //! For grid partition, each cell is a vertex in the partition graph.
-    idx_t * vtxdist;
+    idx_t *vtxdist;
 
     //! The processor list that plan to be partition.
     //! For serial partition, the list up through 0 to maxProcessor (but not included).
@@ -238,10 +238,10 @@ private:
     //! The following several pointers are temporary used.
     //! Local interface index of the faces that belong to the original BC interfaces.
     //! Local BC face index of the faces that belong to the original BC interfaces.
-    int * interfaceIndexInBC_send;
-    int * interfaceIndexInBC_recv, * partIndexInNewPartion_recv;
-    int * part2GlobalZoneIndex, * part2LocalZoneIndex;
-    int * nIFaceInOrgBC;
+    int *interfaceIndexInBC_send;
+    int *interfaceIndexInBC_recv, *partIndexInNewPartion_recv;
+    int *part2GlobalZoneIndex, *part2LocalZoneIndex;
+    int *nIFaceInOrgBC;
 
     //! Does need partition cell to node.
     bool partitionCellToNode;

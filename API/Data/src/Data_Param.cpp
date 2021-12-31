@@ -14,7 +14,7 @@ LIB_EXPORT Data_Param::Data_Param(const Data_Param &rhs)
 {
     dataSet = new set < Data_SafeData >;
     set < Data_SafeData >::iterator iter;
-    for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++iter)
+    for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++ iter)
     {
         dataSet->insert(*iter);
     }
@@ -23,6 +23,7 @@ LIB_EXPORT Data_Param::Data_Param(const Data_Param &rhs)
 LIB_EXPORT Data_Param::~Data_Param()
 {
     delete dataSet;
+    dataSet = NULL;
 }
 
 LIB_EXPORT void Data_Param::UpdateData(const string &name, void *data, int type, int size)
@@ -55,7 +56,7 @@ LIB_EXPORT void Data_Param::GetData(const string &name, void *data, int type, in
     else
     {
         cout << "This data does not exist: " << name.c_str() << endl;
-        exit(0);     //! It is temporary!!!
+        exit(0);    //! It is temporary!!!
     }
 }
 
@@ -87,8 +88,7 @@ LIB_EXPORT int Data_Param::GetSizeOfData(const string &name)
     else
     {
         cout << "This data does not exist: " << name.c_str() << endl;
-        exit(0);     //! It is temporary!!!
-        return 0;
+        exit(0);    //! It is temporary!!!
     }
 }
 
@@ -108,8 +108,8 @@ LIB_EXPORT bool Data_Param::IsExist(const string &name, int type, int size)
 }
 
 LIB_EXPORT set < Data_SafeData > * Data_Param::GetBaseP() const
-{ 
-    return dataSet; 
+{
+    return dataSet;
 };
 
 LIB_EXPORT Data_Param & Data_Param::operator = (const Data_Param &rhs)
@@ -121,7 +121,7 @@ LIB_EXPORT Data_Param & Data_Param::operator = (const Data_Param &rhs)
         delete dataSet;
         dataSet = new set < Data_SafeData >;
         set < Data_SafeData >::iterator iter;
-        for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++iter)
+        for (iter = rhs.dataSet->begin(); iter != rhs.dataSet->end(); ++ iter)
         {
             dataSet->insert(*iter);
         }

@@ -17,46 +17,88 @@
 #include "TypeDefine.h"
 #include "Complex.h"
 #include "SpecDiffHybGrid.h"
+//#include "SpecGrid.h"
 #include "CompactDifferenceFirstDerivative.h"
+//#include "Param_SpecSolver.h"
+
 using namespace std;
 
 namespace PHSPACE
 {
+class LESHIT
+{
+public:
+    LESHIT();
+    ~LESHIT();
 
-	class LES 
-	{
+public:
+    Complex4D *complexDiffTau;
 
-	public:
-		LES();
-		~LES();
+protected:
+    RDouble1D *gkx, *gky, *gkz;
+    Complex4D *complexVarFilter, *testFilterGradUij, *complexTauij;
+    RDouble4D *realVarFilter, *realTauij;
 
-    public:
-        Complex4D *complexDiffTau;
-    
-    private:
-        RDouble1D *delta;
-        RDouble1D *wallDistance, *wallDistancePlus;
-        RDouble1D *vanDriestFunc;
-        RDouble1D *dynamicCoef;
-        RDouble1D *gkx, *gky;
-        Complex4D *complexVarFilter, *testFilterGradUij, *complexTauij;
-        RDouble4D *realVarFilter, *realTauij;        
-        
-    public:
-        void InitLESData(SpecDiffHybGrid *);
-        void Smagorinsky(SpecDiffHybGrid *, RDouble1D *, RDouble4D *);
-        void DynamicSmagorinsky(SpecDiffHybGrid *, CompactDifferenceFirstDerivative *, RDouble1D *, RDouble3D *, RDouble4D *, Complex3D *, Complex3D *, Complex3D *);
+private:
+    RDouble delta,dynamicCoef;
 
-	private:
-        void AllocLESData(SpecDiffHybGrid *);
-        void GetWallDistance(SpecDiffHybGrid *);
-        void GetDelta(SpecDiffHybGrid *);
-        void SetTestFilter(SpecDiffHybGrid *);  
-        void SetFilterType(const double, double, double &);
-        void FilterXYInSpectralSpace(PHComplex *, const int, SpecDiffHybGrid *);
-        void GetDiffTau(SpecDiffHybGrid *, CompactDifferenceFirstDerivative *);
+public:
+    void InitLESData(SpecGrid *GridData);
 
-	};
+protected:
+    void ComputeFilterFunction(const RDouble, RDouble, RDouble &);
+
+private:
+    void AllocLESData(SpecGrid *GridData);
+
+    void GetDelta(SpecGrid *GridData);
+
+    void SetTestFilter(SpecGrid *GridData);  
+};
+
+class LES : public LESHIT
+{
+public:
+    LES();
+    ~LES();
+
+private:
+    RDouble1D *delta;
+    RDouble1D *wallDistance, *wallDistancePlus;
+    RDouble1D *vanDriestFunc;
+    RDouble1D *dynamicCoef;
+
+public:
+    void InitLESData(SpecDiffHybGrid *GridData);
+
+    void Smagorinsky(SpecDiffHybGrid *, RDouble1D *, RDouble4D *);
+
+    void DynamicSmagorinsky(SpecDiffHybGrid *, CompactDifferenceFirstDerivative *, RDouble1D *, RDouble3D *, RDouble4D *, Complex3D *, Complex3D *, Complex3D *);
+
+    void Sigma(SpecDiffHybGrid *, RDouble1D *, RDouble4D *);
+
+    //LIB_EXPORT Param_SpecSolver * GetControlParameters() const;
+
+    //LIB_EXPORT void InitControlParameters();
+
+private:
+    void AllocLESData(SpecDiffHybGrid *);
+
+    void GetWallDistance(SpecDiffHybGrid *);
+
+    void GetDelta(SpecDiffHybGrid *);
+
+    void SetTestFilter(SpecDiffHybGrid *);  
+
+    void FilterXYInSpectralSpace(PHComplex *, const int, SpecDiffHybGrid *);
+
+    void GetDiffTau(SpecDiffHybGrid *, CompactDifferenceFirstDerivative *);
+
+    void ComputeDifferentialSigma(RDouble ** velocityGradTensor, RDouble &differentialSigma);
+
+    //void ComputeFilterFunction(const RDouble, RDouble, RDouble &);
+
+};
 
 }
 

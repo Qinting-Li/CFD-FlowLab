@@ -39,31 +39,31 @@ private:
     std::vector< HighOrderGrid > highOrderGrids;
 
 public:
-	HOSolverUnstruct();
+    HOSolverUnstruct();
     ~HOSolverUnstruct();
-	
+    
 public:
-	//! These are cfd solver interface:
+    //! These are cfd solver interface:
 
     //! Create and init ControlParameters
-	LIB_EXPORT void InitControlParameters();
+    LIB_EXPORT void InitControlParameters();
 
-	//! Update some specific parameters, not in control parameter files.
-	void ReadParameter();
+    //! Update some specific parameters, not in control parameter files.
+    void ReadParameter();
 
-	//! Allocate varibales and update to grid:
-	void AllocateGlobalVar(Grid * gridIn);
+    //! Allocate varibales and update to grid:
+    void AllocateGlobalVar(Grid * gridIn);
     void DeAllocateGlobalVar(Grid *gridIn);
 
-	//! Register variables that need to MPI communication.
-	void RegisterCFDSolverInterfaceField();
+    //! Register variables that need to MPI communication.
+    void RegisterCFDSolverInterfaceField();
 
-	//! Initialize flow field.
-	//! For NS Solver as example, Will call some other virtual funcions:
-	//! 1. InitFlowAsRestart
-	//! 2. InitFlowAsReadingRestart
-	//! 3. InitDependentVariables
-	//void InitFlow();
+    //! Initialize flow field.
+    //! For NS Solver as example, Will call some other virtual funcions:
+    //! 1. InitFlowAsRestart
+    //! 2. InitFlowAsReadingRestart
+    //! 3. InitDependentVariables
+    //void InitFlow();
     bool JudgeIfRestart();
     bool JudgeIfReadAverage();
     void InitFlowAsRestart();
@@ -94,17 +94,17 @@ public:
     void VisSpectrumRadius(Grid *grid, RDouble * visSpectrum);
 
 
-	//! Register action for communicate interface data.
-	//! Usually, using ActionReflect function.
-	//void CommunicationInterfaceData();
+    //! Register action for communicate interface data.
+    //! Usually, using ActionReflect function.
+    //void CommunicationInterfaceData();
     void UploadInterfaceData(ActionKey *actkey);
     void DownloadInterfaceData(ActionKey *actkey);
 
     virtual void ActionReflect(ActionTag *acttag);
 
-	//! Set resiudals to zero
-	//! "res" is a pointer store in grid.
-	void ZeroResiduals(Grid *gridIn);
+    //! Set resiudals to zero
+    //! "res" is a pointer store in grid.
+    void ZeroResiduals(Grid *gridIn);
     FieldProxy * GetResidualProxy(Grid *gridIn);
 
     virtual FieldProxy * CreateFieldProxy(Grid *gridIn);
@@ -113,22 +113,22 @@ public:
     void LoadQ(Grid *gridIn, FieldProxy *q_proxy);
     void Lhs(Grid *gridIn, FieldProxy *dqProxy, double coef);
 
-	//! Compute local time step "dt".
-	//! "dt" is a pointer stored in grid.
-	void TimeStep(Grid *gridIn);
+    //! Compute local time step "dt".
+    //! "dt" is a pointer stored in grid.
+    void TimeStep(Grid *gridIn);
     void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
     virtual void ReduceMaxTimeStep(Grid *gridIn, RDouble globalMinDt);
 
-	//! Integrate one time step
-	//! Including ComputeResidual and time integration(e.g. ForwardLUSGS).
-	//void ForwardStep(Grid *grid, FieldProxy *rhs_proxy);
+    //! Integrate one time step
+    //! Including ComputeResidual and time integration(e.g. ForwardLUSGS).
+    //void ForwardStep(Grid *grid, FieldProxy *rhs_proxy);
 
-	//! Compute residuals.
-	//! For NS Solver as example, will call some other virutal functions:
-	//! LoadResidual, UpdateResidual
-	//! UpdateResidual includes Boundary, RightHandSide
-	//! RightHandSide includes InviscidFlux, ViscousFlux, SourceFlux
-	//void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
+    //! Compute residuals.
+    //! For NS Solver as example, will call some other virutal functions:
+    //! LoadResidual, UpdateResidual
+    //! UpdateResidual includes Boundary, RightHandSide
+    //! RightHandSide includes InviscidFlux, ViscousFlux, SourceFlux
+    //void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
 
     virtual void LoadResiduals(Grid *gridIn, FieldProxy *rhs_proxy);
     virtual void UpdateResiduals(Grid *gridIn);
@@ -151,8 +151,8 @@ public:
     //! Inviscid flux of cell
     void InviscidFluxForCell(Grid *grid_in);
 
-	//! Time integration using lusgs scheme.
-	void ForwardLUSGS(Grid *gridIn);
+    //! Time integration using lusgs scheme.
+    void ForwardLUSGS(Grid *gridIn);
 
     //! sweeps == 1.
     virtual void FillField(Grid *gridIn, FieldProxy *field1_proxy, FieldProxy *field2_proxy);
@@ -166,10 +166,10 @@ public:
 
     virtual void RecoverResidual(Grid *gridIn, FieldProxy *rhs_proxy);
 
-	//! After one time step inner integration, do some post solve work
-	//! e.g CommunicationInterfaceData, dump restart file, dump aerodynamic coefficient et, al.
+    //! After one time step inner integration, do some post solve work
+    //! e.g CommunicationInterfaceData, dump restart file, dump aerodynamic coefficient et, al.
     virtual int GetNPostSolve();
-	void PostSolve(Grid *gridIn, int stage, int level);
+    void PostSolve(Grid *gridIn, int stage, int level);
     int GetSchemeID(const string &scheme_name);
 
     virtual void GetResidual(ActionKey *actkey);
@@ -179,7 +179,7 @@ public:
     LIB_EXPORT void ComputePostVisualVariables(Post_Visual * postVisualization);
 
 public:
-	//! These are HOSolverUnstruct defined interface.
+    //! These are HOSolverUnstruct defined interface.
 
 };
 

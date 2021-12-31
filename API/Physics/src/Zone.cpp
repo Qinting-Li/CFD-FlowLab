@@ -2,7 +2,7 @@
 #include "PHMpi.h"
 #include "PHIO.h"
 #include "Zone.h"
-#include "BC_Unstruct.h"
+#include "Geo_UnstructBC.h"
 #include "Geometry.h"
 #include "PerfectGas.h"
 #include "Pointer.h"
@@ -43,13 +43,6 @@ Zone::~Zone()
     CleanGlobalValuesSolver();
 }
 
-void Zone::Init()
-{
-    InitGlobalValuesSolver();
-
-    InitGlobalValuesGrid();
-}
-
 void Zone::AddGridAndCopyZonePara(Grid *grid)
 {
     grid->CopyPara(zPara);
@@ -69,6 +62,11 @@ void Zone::AddSolver(PHSolver *solver)
 void Zone::AddGridToGlobal(int izone)
 {
     PHSPACE::AddGridToGlobal(izone, geom->GetVectorGrid());
+}
+
+void Zone::AddGrid(Grid *grid)
+{
+    geom->AddGrid(grid);
 }
 
 void Zone::ComputeWeight()
@@ -128,22 +126,8 @@ void Zone::SetInterface(Grid *base_grid, Grid *cgrid)
 
 void Zone::ShowCoarseGrids()
 {
-    //string visualfile("results/coarsegrid.grd");
     for (std::size_t g = 1; g < geom->GetNumberOfMultiGrid(); ++ g)
     {
-//      std::ostringstream oss;
-// 		oss << "./results/coarsegrid" << this->GetZoneID() << ".plt";
-// 		
-// 		if(GetDim() == TWO_D)
-// 		{
-// 			VisualizationMesh2D(coarseGrid, oss.str().c_str());
-// 		}
-// 		else
-// 		{
-// 			//! Warning: the bc mesh of coarse grid is same to the fine grid.
-// 			//! Only visualize the eigen faces.
-// 			VisualizationEigenMeshofCoarseGrid3D(coarseGrid, oss.str().c_str());
-// 		}
     }
 }
 
@@ -158,13 +142,18 @@ void Zone::UpdateAllData()
     }
 }
 
+void InitGlobalValuesOfAllZones()
+{
+    InitGlobalValuesSolver();
+}
+
 void InitGlobalValuesGrid()
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
+    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
     int maxale = GlobalDataBase::GetIntParaFromDB("maxale");
 
-    if ((isUnsteady == 0) || (iale == 0))
+    if ((isUnsteady == 0) || (codeOfAleModel == 0))
     {
         return;
     }
@@ -237,7 +226,6 @@ void InitGlobalValuesGrid()
         angle[m][1] = angle0[m][0];
         angle[m][2] = angle0[m][0];
     }
-    AleModel::Init();
 }
 
 void InitGlobalValuesSolver()
@@ -250,7 +238,8 @@ void InitGlobalValuesSolver()
         if (chemical == 0)
         {
             gas = new PerfectGas();
-        }else
+        }
+        else
         {
         }
         gas->InitGlobalParameterOfNSEquation();
@@ -264,6 +253,7 @@ void InitGlobalValuesSolver()
 void CleanGlobalValuesSolver()
 {
     int iapplication = GlobalDataBase::GetIntParaFromDB("iapplication");
+    int chemical = GlobalDataBase::GetIntParaFromDB("nchem");
 
     if (iapplication == 0)
     {
@@ -275,6 +265,5 @@ void CleanGlobalValuesSolver()
     {
     }
 }
-
 
 }

@@ -16,16 +16,11 @@ HighOrderStandardElementBase::HighOrderStandardElementBase( unsigned short iVTK_
     /*--- Copy the function arguments that must be stored in the member variables. ---*/
     VTK_Type = iVTK_Type;
 
-    if( VTK_Type == 20 )
-    {
-        int i = 0;
-    }
-
     integrationOrder  = iIntegrationOrder;
     
     /*--- Determine the integration points. This depends on the element type. ---*/
     switch( VTK_Type )
-	{
+    {
       case HOUnstruct::TRIANGLE:
           IntegrationPointsTriangle();
           break;
@@ -44,7 +39,7 @@ HighOrderStandardElementBase::HighOrderStandardElementBase( unsigned short iVTK_
       case HOUnstruct::HEXAHEDRON:
           IntegrationPointsHexahedron();
           break;
-	  default:
+      default:
           cout<<"Wrong grid Type..../HighOrderStandardElementBase"<<endl;
           break;
     }
@@ -52,7 +47,7 @@ HighOrderStandardElementBase::HighOrderStandardElementBase( unsigned short iVTK_
 
 void HighOrderStandardElementBase::IntegrationPointsQuadrilateral(void)
 {
-	/*--- The 2D quadrature rule is a tensor product of the 1D Gauss-Legendre quadrature rule. 
+    /*--- The 2D quadrature rule is a tensor product of the 1D Gauss-Legendre quadrature rule. 
         First determine the number of integration points in 1D, which is stored in M, and determine them. ---*/
   unsigned short M = integrationOrder/2 + 1;
 
@@ -69,7 +64,7 @@ void HighOrderStandardElementBase::IntegrationPointsQuadrilateral(void)
   for(unsigned short j=0; j<M; ++j)
   {
     for(unsigned short i=0; i<M; ++i, ++ii)
-	{
+    {
       xiIntegration[ii] = GLPoints[i];
       etIntegration[ii] = GLPoints[j];
       wtIntegration[ii] = GLWeights[i]*GLWeights[j];
@@ -107,8 +102,8 @@ void HighOrderStandardElementBase::IntegrationPointsPrism(void)
   unsigned int ii = 0;
   for(unsigned short k=0; k<M; ++k)
   {
-	  for(unsigned short j=0; j<nIntTriangle; ++j, ++ii)
-	  {
+      for(unsigned short j=0; j<nIntTriangle; ++j, ++ii)
+      {
       xiIntegration[ii] = rTriangle[j];
       etIntegration[ii] = sTriangle[j];
       ztIntegration[ii] = GLPoints[k];
@@ -150,35 +145,35 @@ void HighOrderStandardElementBase::IntegrationPointsHexahedron(void)
 
 void HighOrderStandardElementBase::IntegrationPointsTriangle(void)
 {
-	/*--- Set the number of integration points, depending on the order of
-	polynomials that must be integrated exactly. ---*/
-	switch( integrationOrder )
-	{
-	case  0:
-	case  1: nIntegrationPoint =   1; break;
-	case  2: nIntegrationPoint =   3; break;
-	case  3:
-	case  4: nIntegrationPoint =   6; break;
-	case  5: nIntegrationPoint =   7; break;
-	case  6: nIntegrationPoint =  12; break;
-	case  7: nIntegrationPoint =  15; break;
-	case  8: nIntegrationPoint =  16; break;
-	case  9: nIntegrationPoint =  19; break;
-	case 10: nIntegrationPoint =  25; break;
-	case 11: nIntegrationPoint =  28; break;
-	case 12: nIntegrationPoint =  36; break;
-	case 13: nIntegrationPoint =  40; break;
-	case 14: nIntegrationPoint =  46; break;
-	case 15: nIntegrationPoint =  54; break;
-	case 16: nIntegrationPoint =  58; break;
-	case 17: nIntegrationPoint =  66; break;
-	case 18: nIntegrationPoint =  73; break;
-	case 19: nIntegrationPoint =  82; break;
-	case 20: nIntegrationPoint =  85; break;
-	default:
-		//notation MPI
-		cout << "Error : HighOrderStandardElementBase has wrong integrationOrder " << endl;
-	}
+    /*--- Set the number of integration points, depending on the order of
+    polynomials that must be integrated exactly. ---*/
+    switch( integrationOrder )
+    {
+    case  0:
+    case  1: nIntegrationPoint =   1; break;
+    case  2: nIntegrationPoint =   3; break;
+    case  3:
+    case  4: nIntegrationPoint =   6; break;
+    case  5: nIntegrationPoint =   7; break;
+    case  6: nIntegrationPoint =  12; break;
+    case  7: nIntegrationPoint =  15; break;
+    case  8: nIntegrationPoint =  16; break;
+    case  9: nIntegrationPoint =  19; break;
+    case 10: nIntegrationPoint =  25; break;
+    case 11: nIntegrationPoint =  28; break;
+    case 12: nIntegrationPoint =  36; break;
+    case 13: nIntegrationPoint =  40; break;
+    case 14: nIntegrationPoint =  46; break;
+    case 15: nIntegrationPoint =  54; break;
+    case 16: nIntegrationPoint =  58; break;
+    case 17: nIntegrationPoint =  66; break;
+    case 18: nIntegrationPoint =  73; break;
+    case 19: nIntegrationPoint =  82; break;
+    case 20: nIntegrationPoint =  85; break;
+    default:
+        //notation MPI
+        cout << "Error : HighOrderStandardElementBase has wrong integrationOrder " << endl;
+    }
 
   /*--- Allocate the memory for the integration points and their weights. ---*/
   xiIntegration.resize(nIntegrationPoint);
@@ -951,9 +946,9 @@ void HighOrderStandardElementBase::IntegrationPointsTriangle(void)
 
   for( int i = 0; i < nIntegrationPoint; ++i )
   {
-		r[i] = 0.5 * ( r[i] + 1.0 );
-		s[i] = 0.5 * ( s[i] + 1.0 );
-		w[i] = 0.5 * ( w[i]       );
+        r[i] = 0.5 * ( r[i] + 1.0 );
+        s[i] = 0.5 * ( s[i] + 1.0 );
+        w[i] = 0.5 * ( w[i]       );
   }
 }
 
@@ -1311,10 +1306,10 @@ void HighOrderStandardElementBase::IntegrationPointsTetrahedron(void)
 
   for( int i = 0; i < nIntegrationPoint; ++i )
   {
-	  r[i] = 0.5 * ( r[i] + 1.0 );
-	  s[i] = 0.5 * ( s[i] + 1.0 );
-	  t[i] = 0.5 * ( t[i] + 1.0 );
-	  w[i] = 0.75* ( w[i]       );
+      r[i] = 0.5 * ( r[i] + 1.0 );
+      s[i] = 0.5 * ( s[i] + 1.0 );
+      t[i] = 0.5 * ( t[i] + 1.0 );
+      w[i] = 0.75* ( w[i]       );
   }
 }
 
@@ -1374,7 +1369,7 @@ void HighOrderStandardElementBase::IntegrationPointsPyramid(void)
 
   for(unsigned short i=0; i<M; ++i)
   {
-	  GJWeights[i] *= 3;
+      GJWeights[i] *= 3;
   }
 
   /*--- Allocate the memory for the integration points and weights
@@ -1411,28 +1406,28 @@ void HighOrderStandardElementBase::IntegrationPointsPyramid(void)
 /*----------------------------------------------------------------------------------  */
 void HighOrderStandardElementBase::GaussLegendrePoints1D( vector<RDouble> & GLPoints, vector<RDouble> & GLWeights )
 {
-	/*--- Set the number of integration points, depending on the order of
-	polynomials that must be integrated exactly. ---*/
-	//switch( integrationOrder )
-	//{
-	//case  0:
-	//case  1: nIntegrationPoint =   1; break;
-	//case  2: 
-	//case  3: nIntegrationPoint =   2; break;
-	//case  4: 
-	//case  5: nIntegrationPoint =   3; break;
-	//case  6: 
-	//case  7: nIntegrationPoint =   4; break;
-	//case  8: 
-	//case  9: nIntegrationPoint =   5; break;
-	//case 10: 
-	//case 11: nIntegrationPoint =   6; break;
-	//case 12: 
-	//case 13: nIntegrationPoint =   7; break;
-	//default:
-	//	//notation MPI
-	//	cout << "Error : HighOrderStandardElementBase has wrong integrationOrder " << endl;
-	//}
+    /*--- Set the number of integration points, depending on the order of
+    polynomials that must be integrated exactly. ---*/
+    //switch( integrationOrder )
+    //{
+    //case  0:
+    //case  1: nIntegrationPoint =   1; break;
+    //case  2: 
+    //case  3: nIntegrationPoint =   2; break;
+    //case  4: 
+    //case  5: nIntegrationPoint =   3; break;
+    //case  6: 
+    //case  7: nIntegrationPoint =   4; break;
+    //case  8: 
+    //case  9: nIntegrationPoint =   5; break;
+    //case 10: 
+    //case 11: nIntegrationPoint =   6; break;
+    //case 12: 
+    //case 13: nIntegrationPoint =   7; break;
+    //default:
+    //	//notation MPI
+    //	cout << "Error : HighOrderStandardElementBase has wrong integrationOrder " << endl;
+    //}
 
   /*--- Set the pointers to the data arrays of the variables just allocated, such
         that the names are shorter. This is useful for the code below. ---*/
@@ -1447,14 +1442,14 @@ void HighOrderStandardElementBase::GaussLegendrePoints1D( vector<RDouble> & GLPo
   {
     case  0:
     case  1:
-	{
+    {
       r[0] =  0.500000000000000; w[0] = 1.000000000000000;
 
       break;
     }
     case  2:
-	case  3:
-	{
+    case  3:
+    {
       r[0] =  0.211324865405187; w[0] = 0.500000000000000;
       r[1] =  0.788675134594812; w[1] = 0.500000000000000;
 
@@ -1462,7 +1457,7 @@ void HighOrderStandardElementBase::GaussLegendrePoints1D( vector<RDouble> & GLPo
     }
     case  4:
     case  5:
-	{
+    {
       r[0] =  0.112701665379258; w[0] = 0.277777777777778;
       r[1] =  0.500000000000000; w[1] = 0.444444444444444;
       r[2] =  0.887298334620741; w[2] = 0.277777777777778;
@@ -1479,24 +1474,24 @@ void HighOrderStandardElementBase::GaussLegendrePoints1D( vector<RDouble> & GLPo
 
         break;
     }
-	default:
-	{
-		/* The class used to determine the integration points. Allocate the memory for the help vectors. */
-		vector<RDouble> GLPointsPas(GLPoints.size());
-		vector<RDouble> GLWeightsPas(GLWeights.size());
+    default:
+    {
+        /* The class used to determine the integration points. Allocate the memory for the help vectors. */
+        vector<RDouble> GLPointsPas(GLPoints.size());
+        vector<RDouble> GLWeightsPas(GLWeights.size());
 
-		/* Gauss Legendre quadrature is a special case of Gauss Jacobi integration.
-		Determine the integration points for this case. */
-		CGaussJacobiQuadrature GaussJacobi;
-		GaussJacobi.GetQuadraturePoints(0.0, 0.0, 0.0, 1.0, GLPointsPas, GLWeightsPas);
+        /* Gauss Legendre quadrature is a special case of Gauss Jacobi integration.
+        Determine the integration points for this case. */
+        CGaussJacobiQuadrature GaussJacobi;
+        GaussJacobi.GetQuadraturePoints(0.0, 0.0, 0.0, 1.0, GLPointsPas, GLWeightsPas);
 
-		/* Copy the data back into GLPoints and GLWeights. */
-		for(unsigned long i=0; i<GLPoints.size(); ++i)
-		{
-			GLPoints[i]  = GLPointsPas[i];
-			GLWeights[i] = GLWeightsPas[i];
-		}
-	}
+        /* Copy the data back into GLPoints and GLWeights. */
+        for(unsigned long i=0; i<GLPoints.size(); ++i)
+        {
+            GLPoints[i]  = GLPointsPas[i];
+            GLWeights[i] = GLWeightsPas[i];
+        }
+    }
   }
 }
 
@@ -1516,79 +1511,74 @@ void HighOrderStandardElementBase::Copy(const HighOrderStandardElementBase &othe
 typedef Eigen::Matrix<RDouble, Eigen::Dynamic, Eigen::Dynamic> HighOrderMatrix;
 
 void Orthogonalize( int degreeOfFreedom, const HighOrderMatrix & taylorBasisMassMatrix, 
-				   HighOrderMatrix & orthogonalizationMatrix )
+                   HighOrderMatrix & orthogonalizationMatrix )
 {
-	orthogonalizationMatrix( 0, 0 ) = 1.0 / sqrt( taylorBasisMassMatrix( 0, 0 ) );
-	HighOrderMatrix upperMatrix( degreeOfFreedom, degreeOfFreedom );
-	upperMatrix.setConstant(0.0);
+    orthogonalizationMatrix( 0, 0 ) = 1.0 / sqrt( taylorBasisMassMatrix( 0, 0 ) );
+    HighOrderMatrix upperMatrix( degreeOfFreedom, degreeOfFreedom );
+    upperMatrix.setConstant(0.0);
 
-	for ( int n = 1; n < degreeOfFreedom; ++ n )
-	{
-		RDouble rhs[ 10 ];
+    for ( int n = 1; n < degreeOfFreedom; ++ n )
+    {
+        RDouble rhs[ 10 ];
 
-		for ( int i = 0; i < n; ++ i )
-		{
-			rhs[ i ] = 0.0;
-			for ( int j = 0; j <= i; ++ j ) // rhs[ i ] = - fai_i * b_n;
-			{
-				rhs[ i ] -= orthogonalizationMatrix( i, j ) * taylorBasisMassMatrix( n, j );
-			}
-			// upperMatrix( i, n - 1 ) = fai_i * b_n - 1;// upperMatrix( i, n - 1 ) = 0.0;
-			for ( int k = 0; k <= i; ++ k )
-			{
-				upperMatrix( i, n - 1 ) += orthogonalizationMatrix( i, k ) * taylorBasisMassMatrix( n - 1, k );
-			}
-		}
-
-		RDouble thisRow[ 10 ];
-		for ( int i = n-1; i >= 0; -- i )
-		{
-			thisRow[ i ] = rhs[ i ];
-			for ( int j = i + 1; j < n; ++ j )
-				thisRow[ i ] -= upperMatrix( i, j ) * thisRow[ j ];
-
-			thisRow[ i ] /= upperMatrix( i, i );
-		}
-
-		thisRow[ n ] = 1.0;
-		RDouble normal = 0.0;
-		for ( int i = 0; i <= n; ++ i )
-		{
-			for ( int j = 0; j < i; ++ j )
-			{
-				normal += thisRow[ i ] * thisRow[ j ] * taylorBasisMassMatrix( i, j );
-			}
-			for ( int j = i; j <= n; ++ j )
-			{
-				normal += thisRow[ i ] * thisRow[ j ] * taylorBasisMassMatrix( j, i );
-			}
-		}
-
-        if( normal < 0 )
+        for ( int i = 0; i < n; ++ i )
         {
-            int i = 0;
+            rhs[ i ] = 0.0;
+            for ( int j = 0; j <= i; ++ j ) // rhs[ i ] = - fai_i * b_n;
+            {
+                rhs[ i ] -= orthogonalizationMatrix( i, j ) * taylorBasisMassMatrix( n, j );
+            }
+            // upperMatrix( i, n - 1 ) = fai_i * b_n - 1;// upperMatrix( i, n - 1 ) = 0.0;
+            for ( int k = 0; k <= i; ++ k )
+            {
+                upperMatrix( i, n - 1 ) += orthogonalizationMatrix( i, k ) * taylorBasisMassMatrix( n - 1, k );
+            }
         }
 
-		RDouble temp = 1.0 / sqrt( normal );
-		for ( int i = 0; i <= n; ++ i )
+        RDouble thisRow[ 10 ];
+        for ( int i = n-1; i >= 0; -- i )
+        {
+            thisRow[ i ] = rhs[ i ];
+            for ( int j = i + 1; j < n; ++ j )
+                thisRow[ i ] -= upperMatrix( i, j ) * thisRow[ j ];
+
+            thisRow[ i ] /= upperMatrix( i, i );
+        }
+
+        thisRow[ n ] = 1.0;
+        RDouble normal = 0.0;
+        for ( int i = 0; i <= n; ++ i )
+        {
+            for ( int j = 0; j < i; ++ j )
+            {
+                normal += thisRow[ i ] * thisRow[ j ] * taylorBasisMassMatrix( i, j );
+            }
+            for ( int j = i; j <= n; ++ j )
+            {
+                normal += thisRow[ i ] * thisRow[ j ] * taylorBasisMassMatrix( j, i );
+            }
+        }
+
+        RDouble temp = 1.0 / sqrt( normal );
+        for ( int i = 0; i <= n; ++ i )
             orthogonalizationMatrix( n, i ) = thisRow[ i ] * temp;
     }
 }
 
 void HighOrderStandardElementBase::ComputeOrthogoMatrix()
 {
-	int degreeOfFreedom;
-	switch( VTK_Type )
-	{
-	case HOUnstruct::QUADRILATERAL: degreeOfFreedom = 6;    break;
-	case HOUnstruct::HEXAHEDRON:    degreeOfFreedom = 10;   break;
-	default: break;
-	}
+    int degreeOfFreedom;
+    switch( VTK_Type )
+    {
+    case HOUnstruct::QUADRILATERAL: degreeOfFreedom = 6;    break;
+    case HOUnstruct::HEXAHEDRON:    degreeOfFreedom = 10;   break;
+    default: break;
+    }
 
-	//HighOrderMatrix taylorBasisMassMatrix( degreeOfFreedom, degreeOfFreedom );
-	//HighOrderMatrix orthogonalizationMatrix( degreeOfFreedom, degreeOfFreedom, 0.0 );
+    //HighOrderMatrix taylorBasisMassMatrix( degreeOfFreedom, degreeOfFreedom );
+    //HighOrderMatrix orthogonalizationMatrix( degreeOfFreedom, degreeOfFreedom, 0.0 );
 
-	//Orthogonalize( degreeOfFreedom, taylorBasisMassMatrix, orthogonalizationMatrix );
+    //Orthogonalize( degreeOfFreedom, taylorBasisMassMatrix, orthogonalizationMatrix );
 }
 
 }
@@ -1604,109 +1594,109 @@ namespace HOUnstruct
 
 void TestOrthogoMatrix()
 {
-	HighOrderStandardElementBase elem( TRIANGLE, 6 );
+    HighOrderStandardElementBase elem( TRIANGLE, 6 );
 
-	int degreeOfFreedom = 10;
+    int degreeOfFreedom = 10;
 
-	HighOrderMatrix taylorBasisMassMatrix( degreeOfFreedom, degreeOfFreedom );
-	taylorBasisMassMatrix.setConstant(0.0);
+    HighOrderMatrix taylorBasisMassMatrix( degreeOfFreedom, degreeOfFreedom );
+    taylorBasisMassMatrix.setConstant(0.0);
 
-	//const RDouble refCoord[3] =	{ 0.1, 0.2, 0.3 };
+    //const RDouble refCoord[3] =	{ 0.1, 0.2, 0.3 };
 
-	const RDouble * xi = elem.GetXiIntegrationCoor();
-	const RDouble * et = elem.GetEtIntegrationCoor();
-	const RDouble * wt = elem.GetWtIntegration();
+    const RDouble * xi = elem.GetXiIntegrationCoor();
+    const RDouble * et = elem.GetEtIntegrationCoor();
+    const RDouble * wt = elem.GetWtIntegration();
 
-	std::cout << "taylorBasisMassMatrix:" << std::endl;
-	for( int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint )
-	{
-		RDouble refCoord[2];
-		refCoord[0] = xi[iIntegratPoint];
-		refCoord[1] = et[iIntegratPoint];
+    std::cout << "taylorBasisMassMatrix:" << std::endl;
+    for( int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint )
+    {
+        RDouble refCoord[2];
+        refCoord[0] = xi[iIntegratPoint];
+        refCoord[1] = et[iIntegratPoint];
 
-		RDouble basis[10];
+        RDouble basis[10];
 
-		for( int idof = 0; idof < degreeOfFreedom; ++idof )
-		{
-			basis[idof] = MonomialBasis2d( refCoord, idof );
-		}
-		
-		for( int idof = 0; idof < degreeOfFreedom; ++idof )
-		{
-			//for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
-			for( int jdof = 0; jdof <= idof; ++jdof )
-			{
-				taylorBasisMassMatrix( idof, jdof ) += basis[idof] * basis[jdof] * wt[iIntegratPoint];
-			}
-		}
-	}
-	
-	for( int idof = 0; idof < degreeOfFreedom; ++idof )
-	{
-		//for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
-		for( int jdof = idof+1; jdof < degreeOfFreedom; ++jdof )
-		{
-			taylorBasisMassMatrix( idof, jdof ) = taylorBasisMassMatrix( jdof, idof );
-		}
-	}
+        for( int idof = 0; idof < degreeOfFreedom; ++idof )
+        {
+            basis[idof] = MonomialBasis2d( refCoord, idof );
+        }
+        
+        for( int idof = 0; idof < degreeOfFreedom; ++idof )
+        {
+            //for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
+            for( int jdof = 0; jdof <= idof; ++jdof )
+            {
+                taylorBasisMassMatrix( idof, jdof ) += basis[idof] * basis[jdof] * wt[iIntegratPoint];
+            }
+        }
+    }
+    
+    for( int idof = 0; idof < degreeOfFreedom; ++idof )
+    {
+        //for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
+        for( int jdof = idof+1; jdof < degreeOfFreedom; ++jdof )
+        {
+            taylorBasisMassMatrix( idof, jdof ) = taylorBasisMassMatrix( jdof, idof );
+        }
+    }
 
-	std::cout << taylorBasisMassMatrix << std::endl;
+    std::cout << taylorBasisMassMatrix << std::endl;
 
-	HighOrderMatrix orthogonalizationMatrix( degreeOfFreedom, degreeOfFreedom );
-	orthogonalizationMatrix.setConstant(0.0);
+    HighOrderMatrix orthogonalizationMatrix( degreeOfFreedom, degreeOfFreedom );
+    orthogonalizationMatrix.setConstant(0.0);
 
-	Orthogonalize( degreeOfFreedom, taylorBasisMassMatrix, orthogonalizationMatrix );
+    Orthogonalize( degreeOfFreedom, taylorBasisMassMatrix, orthogonalizationMatrix );
 
-	std::cout << "orthogonalizationMatrix:" << std::endl;
-	std::cout << orthogonalizationMatrix << std::endl;
+    std::cout << "orthogonalizationMatrix:" << std::endl;
+    std::cout << orthogonalizationMatrix << std::endl;
 
-	std::cout << "after orthogonalized BasisMassMatrix:" << std::endl;
-	taylorBasisMassMatrix.setConstant(0.0);
-	for( int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint )
-	{
-		RDouble refCoord[3];
-		refCoord[0] = xi[iIntegratPoint];
-		refCoord[1] = et[iIntegratPoint];
+    std::cout << "after orthogonalized BasisMassMatrix:" << std::endl;
+    taylorBasisMassMatrix.setConstant(0.0);
+    for( int iIntegratPoint = 0; iIntegratPoint < elem.GetNumberOfIntegrationPoint(); ++iIntegratPoint )
+    {
+        RDouble refCoord[3];
+        refCoord[0] = xi[iIntegratPoint];
+        refCoord[1] = et[iIntegratPoint];
 
-		RDouble originalBasis[10];
+        RDouble originalBasis[10];
 
-		for( int idof = 0; idof < degreeOfFreedom; ++idof )
-		{
-			originalBasis[idof] = MonomialBasis2d( refCoord, idof );
-		}
+        for( int idof = 0; idof < degreeOfFreedom; ++idof )
+        {
+            originalBasis[idof] = MonomialBasis2d( refCoord, idof );
+        }
 
-		RDouble basis[10];
-		for( int idof = 0; idof < degreeOfFreedom; ++idof )
-		{
-			basis[idof] = 0.0;
+        RDouble basis[10];
+        for( int idof = 0; idof < degreeOfFreedom; ++idof )
+        {
+            basis[idof] = 0.0;
 
-			for( int jdof = 0; jdof <= idof; ++jdof )
-			{
-				basis[idof] += orthogonalizationMatrix( idof, jdof ) * originalBasis[jdof];
-			}
-		}
+            for( int jdof = 0; jdof <= idof; ++jdof )
+            {
+                basis[idof] += orthogonalizationMatrix( idof, jdof ) * originalBasis[jdof];
+            }
+        }
 
-		for( int idof = 0; idof < degreeOfFreedom; ++idof )
-		{
-			//for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
-			for( int jdof = 0; jdof <= idof; ++jdof )
-			{
-				taylorBasisMassMatrix( idof, jdof ) += basis[idof] * basis[jdof] * wt[iIntegratPoint];
-			}
-		}
-	}
+        for( int idof = 0; idof < degreeOfFreedom; ++idof )
+        {
+            //for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
+            for( int jdof = 0; jdof <= idof; ++jdof )
+            {
+                taylorBasisMassMatrix( idof, jdof ) += basis[idof] * basis[jdof] * wt[iIntegratPoint];
+            }
+        }
+    }
 
-	for( int idof = 0; idof < degreeOfFreedom; ++idof )
-	{
-		//for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
-		for( int jdof = idof+1; jdof < degreeOfFreedom; ++jdof )
-		{
-			taylorBasisMassMatrix( idof, jdof ) = taylorBasisMassMatrix( jdof, idof );
-		}
-	}
+    for( int idof = 0; idof < degreeOfFreedom; ++idof )
+    {
+        //for( int jdof = 0; jdof < degreeOfFreedom; ++jdof )
+        for( int jdof = idof+1; jdof < degreeOfFreedom; ++jdof )
+        {
+            taylorBasisMassMatrix( idof, jdof ) = taylorBasisMassMatrix( jdof, idof );
+        }
+    }
 
-	std::cout << taylorBasisMassMatrix << std::endl;
-	std::cout << std::endl;
+    std::cout << taylorBasisMassMatrix << std::endl;
+    std::cout << std::endl;
 }
 
 //! @ the function of HighOrderStandardCell definition
@@ -1866,8 +1856,8 @@ void HighOrderStandardCell::DataStandardTetrahedron(void)
         break;
     }
 
-    delete[] ret;
-    delete[] dShapeFun;
+    delete [] ret;    ret = nullptr;
+    delete [] dShapeFun;    dShapeFun = nullptr;
 }
 
 //! @brief Function, which creates all the data for a Pyramid element.
@@ -1875,10 +1865,10 @@ void HighOrderStandardCell::DataStandardPyramid(void)
 {
 /*--- Determine the shape functions and its derivatives in the integration points. ---*/
     const RDouble refCoordOfPyraNodes[5][3] = 
-	{
-		{ 0.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 }, { 1.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 }, // 4 corner points @ lower surface
-		{ 0.0, 0.0, 1.0 } // 1 corner points @ upper surface
-	};
+    {
+        { 0.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 }, { 1.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 }, // 4 corner points @ lower surface
+        { 0.0, 0.0, 1.0 } // 1 corner points @ upper surface
+    };
 
     if( nNodes == 5)
     {
@@ -1949,14 +1939,14 @@ void HighOrderStandardCell::DataStandardPyramid(void)
         break;
     case 2:  //! @quadratic element
         //  shapeFunctionAtIntegration
-        cout<<"Need add code for pyramid quadratic element"<<endl;
-        break;	
+        cout << "Need add code for pyramid quadratic element" << endl;
+        break;
     default:
         break;
     }
 
-    delete[] ret;
-    delete[] dShapeFun;
+    delete [] ret;    ret = nullptr;
+    delete [] dShapeFun;    dShapeFun = nullptr;
 }
 
 //! @brief Function, which creates all the data for a Prim element.
@@ -2055,8 +2045,8 @@ void HighOrderStandardCell::DataStandardPrism(void)
         break;
     }
 
-    delete[] ret;
-    delete[] dShapeFun;
+    delete [] ret;    ret = nullptr;
+    delete [] dShapeFun;    dShapeFun = nullptr;
 }
 
 //! @brief Function, which creates all the data for a Hexahedron element.
@@ -2157,17 +2147,9 @@ void HighOrderStandardCell::DataStandardHexahedron(void) {
         break;
     }
 
-    delete[] ret;
-    delete[] dShapeFun;
+    delete [] ret;    ret = nullptr;
+    delete [] dShapeFun;    dShapeFun = nullptr;
 }
-
-//! @ the function of HighOrderStandardCell definition
-/*
-HighOrderStandardCell::HighOrderStandardCell(unsigned short VTK_Type, unsigned short integrationOrder):HighOrderStandardElementBase()
-{
-
-}
-*/
 
 bool HighOrderStandardFace::SameStandardElement(unsigned short val_VTK_Type, unsigned short val_nPoly, unsigned short valIntegrationOrder) 
 {
@@ -2224,14 +2206,14 @@ void HighOrderStandardFace::DataStandardTriangle(void)
 {
 /*--- Determine the shape functions and its derivatives in the integration points. ---*/
     const RDouble refCoordOfTriNodes2[6][2] =
-	{
-		{ 0.0, 0.0 }, // 3 corner points
-		{ 1.0, 0.0 },
-		{ 0.0, 1.0 },
-		{ 0.5, 0.0 }, // 3 edge mid-points
-		{ 0.5, 0.5 },
-		{ 0.0, 0.5 }
-	};
+    {
+        { 0.0, 0.0 }, // 3 corner points
+        { 1.0, 0.0 },
+        { 0.0, 1.0 },
+        { 0.5, 0.0 }, // 3 edge mid-points
+        { 0.5, 0.5 },
+        { 0.0, 0.5 }
+    };
 
     if( nNodes == 3)
     {
@@ -2297,8 +2279,8 @@ void HighOrderStandardFace::DataStandardTriangle(void)
     default:
         break;
     }
-    delete[] ret;
-    delete[] dShapeFun;
+    delete [] ret;    ret = nullptr;
+    delete [] dShapeFun;    dShapeFun = nullptr;
 }
 
 //! @brief Function, which creates all the data for a Quadrilateral element.
@@ -2381,16 +2363,10 @@ void HighOrderStandardFace::DataStandardQuadrilateral(void)
     default:
         break;
     }
-    delete[] ret;
-    delete[] dShapeFun;
+    delete [] ret;    ret = nullptr;
+    delete [] dShapeFun;    dShapeFun = nullptr;
 
 }
 
-/*
-RDouble * HighOrderStandardCell::GetShapeFunctionsIntegration( int iGaussPoint )
-{
-    return shapeFunctionAtIntegration[iGaussPoint].data();
-}
-*/
 }
 

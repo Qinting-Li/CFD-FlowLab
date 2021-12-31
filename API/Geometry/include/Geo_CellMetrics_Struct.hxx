@@ -57,6 +57,11 @@ inline RDouble3D * Geo_CellMetrics_Struct::GetLargestLocalGridLength()
     return largestLocalGridLength;
 }
 
+inline RDouble3D * Geo_CellMetrics_Struct::GetSmallestLocalGridLength()
+{
+    return smallestLocalGridLength;
+}
+
 inline RDouble3D * Geo_CellMetrics_Struct::GetSubgridLength()
 {
     return subgridLength;
@@ -69,6 +74,15 @@ inline void Geo_CellMetrics_Struct::SetLargestLocalGridLength(RDouble3D *length)
         delete this->largestLocalGridLength;
     }
     this->largestLocalGridLength = length;
+}
+
+inline void Geo_CellMetrics_Struct::SetSmallestLocalGridLength(RDouble3D *length)
+{
+    if (this->smallestLocalGridLength && this->smallestLocalGridLength != length)
+    {
+        delete this->smallestLocalGridLength;
+    }
+    this->smallestLocalGridLength = length;
 }
 
 inline void Geo_CellMetrics_Struct::SetSubgridLength(RDouble3D *length)

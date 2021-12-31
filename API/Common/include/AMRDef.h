@@ -75,7 +75,7 @@ protected:
 public:
     PHVector1D < T > & operator [] (const size_t &index) { return data2D[index]; }
     const PHVector1D < T > & operator [] (const size_t &index) const { return data2D[index]; }
-    void resize(size_t nSize) { data2D.resize(nSize); };
+    void resize(size_t nSize) { data2D.resize(nSize); }
 };
 
 }

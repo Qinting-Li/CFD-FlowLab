@@ -16,8 +16,8 @@ LIB_EXPORT Param_NSSolverUnstruct::~Param_NSSolverUnstruct()
 
 LIB_EXPORT void Param_NSSolverUnstruct::Init()
 {
-	Param_NSSolver::Init();
-	uns_scheme_name = GlobalDataBase::GetStrParaFromDB("uns_scheme_name");
+    Param_NSSolver::Init();
+    uns_scheme_name = GlobalDataBase::GetStrParaFromDB("uns_scheme_name");
 
     gradientName = GlobalDataBase::GetStrParaFromDB("gradientName");
 

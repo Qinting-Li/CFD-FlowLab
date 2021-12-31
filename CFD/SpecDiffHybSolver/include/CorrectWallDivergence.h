@@ -20,34 +20,36 @@
 #include "CompactDifferenceFirstDerivative.h"
 #include "CompactDifferenceSecondDerivative.h"
 #include "PoissonSolver.h"
+#include "SpecDiffHybSolver.h"
+#include "Param_SpecDiffHybSolver.h"
+
 using namespace std;
 
 namespace PHSPACE
 {
 
-	class CorrectWallDivergence 
-	{
+class CorrectWallDivergence
+{
+public:
+    CorrectWallDivergence();
+    ~CorrectWallDivergence();
 
-	public:
-		CorrectWallDivergence();
-		~CorrectWallDivergence();
+public:
+    void InitCorrectWallDivergenceData( SpecDiffHybGrid *, CompactDifferenceFirstDerivative *, CompactDifferenceSecondDerivative *, PoissonSolver *, RDouble1D * );
 
-	public:
-		void InitCorrectWallDivergenceData( SpecDiffHybGrid *, CompactDifferenceFirstDerivative *, CompactDifferenceSecondDerivative *, PoissonSolver *, RDouble1D * );
-        void rotProjection();
+    void rotProjection();
 
-	private:   
+private:   
 
-    public:
-        Complex3D *complexDeltaU1, *complexDeltaV1, *complexDeltaW1, *complexDeltaP1;
-        Complex3D *complexDeltaU2, *complexDeltaV2, *complexDeltaW2, *complexDeltaP2;
-        Complex2D *complexDivDeltaU1LowerBound, *complexDivDeltaU1UpperBound, *complexDivDeltaU2LowerBound, *complexDivDeltaU2UpperBound;
+public:
+    Complex3D *complexDeltaU1, *complexDeltaV1, *complexDeltaW1, *complexDeltaP1;
+    Complex3D *complexDeltaU2, *complexDeltaV2, *complexDeltaW2, *complexDeltaP2;
+    Complex2D *complexDivDeltaU1LowerBound, *complexDivDeltaU1UpperBound, *complexDivDeltaU2LowerBound, *complexDivDeltaU2UpperBound;
 
-	private:
-		void SetCorrectWallDivergenceData( SpecDiffHybGrid *, CompactDifferenceFirstDerivative *, CompactDifferenceSecondDerivative *, PoissonSolver *, RDouble1D * );
-		void AllocCorrectWallDivergenceData( SpecDiffHybGrid * );
-
-	};
+private:
+    void SetCorrectWallDivergenceData( SpecDiffHybGrid *, CompactDifferenceFirstDerivative *, CompactDifferenceSecondDerivative *, PoissonSolver *, RDouble1D * );
+    void AllocCorrectWallDivergenceData( SpecDiffHybGrid * );
+};
 
 }
 

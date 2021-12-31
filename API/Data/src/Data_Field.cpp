@@ -47,6 +47,22 @@ LIB_EXPORT void Data_Field::DeleteDataPtr(const string &name)
     }
 }
 
+LIB_EXPORT int Data_Field::CheckDataExist(const string &name)
+{
+    int data;
+    set < Data_IndexData >::iterator iter;
+    Data_IndexData datas = Data_IndexData(name, &data);
+    iter = dataSet->find(datas);
+    if (iter != dataSet->end())
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 LIB_EXPORT set < Data_IndexData > * Data_Field::GetDataSet() const
 { 
     return dataSet;

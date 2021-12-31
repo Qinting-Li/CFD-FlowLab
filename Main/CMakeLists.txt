@@ -37,10 +37,6 @@ if(USE_SMARTARRAY)
   message(STATUS "USE_SMARTARRAY is turned on!")
   add_definitions(-DUSE_SMARTARRAY)
 endif()
-if(USE_ARRAY_OPT)
-  message(STATUS "USE_ARRAY_OPT is turned on!")
-  add_definitions(-DUSE_ARRAY_OPT)
-endif()
 if(WIN32)
 if(USE_Windows_X64)
   message(STATUS "USE_Windows_X64 is turned on!")
@@ -142,23 +138,23 @@ if(USE_OCC)
   
   # Check if all the library exist -- it's need to be checked. 
   foreach(OCC ${OCC_LIBS_REQUIRED})     
-	  list(APPEND OCC_LIBS ${OCC})
+      list(APPEND OCC_LIBS ${OCC})
       unset(OCC CACHE)
   endforeach(OCC)
   
   if(WIN32)           
-    MESSAGE(STATUS "Using Win32 OpenCasCade.")	
+    MESSAGE(STATUS "Using Win32 OpenCasCade.")
     MESSAGE(STATUS "${OCC_LIB_PATH}/lib")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")	
+    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")
     link_directories("${OCC_LIB_PATH}/lib")
     link_directories("${OCC_LIB_PATH}/bin") 
-	  include_directories("${OCC_LIB_PATH}/inc")
+    include_directories("${OCC_LIB_PATH}/inc")
   else(WIN32)
     MESSAGE(STATUS "Using NON-Win32 OpenCasCade.")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")	
-    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")	         
-    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib") 
-    include_directories("${OCC_LIB_PATH}/inc")        
+    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")
+    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")
+    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib")
+    include_directories("${OCC_LIB_PATH}/inc")
   endif(WIN32)
 endif(USE_OCC)
 
@@ -179,14 +175,9 @@ set(API_TARGET_NAME "PHAPI")
 set(MESH_TARGET_NAME "PHMesh")
 set(CFD_TARGET_NAME "PHCFD")
 
-if(BUILD_LBM)
-  set(LBM_TARGET_NAME "PHLBM")
-endif(BUILD_LBM)
-
 message(STATUS "Linking ${MESH_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${MESH_TARGET_NAME})
   
-
 message(STATUS "Linking ${CFD_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${CFD_TARGET_NAME})
 
@@ -204,7 +195,38 @@ if(USE_OCC)
   add_definitions(-DWNT)
   add_definitions(-DNOTCL)
 endif(USE_OCC)
-	
+
+# For OpenMP
+find_package ( OpenMP )
+if ( OpenMP_FOUND )
+
+if(WIN32)
+target_include_directories ( ${API_TARGET_NAME}
+    PRIVATE
+        ${OpenMP_CXX_INCLUDE_DIRS}
+)
+
+target_compile_options (${API_TARGET_NAME}
+    PRIVATE
+        ${OpenMP_CXX_FLAGS}
+)
+
+target_compile_features ( ${API_TARGET_NAME}
+    PUBLIC 
+        cxx_std_14
+)
+
+target_link_libraries ( ${API_TARGET_NAME}
+    PRIVATE 
+        ${OpenMP_CXX_LIBRARIES}
+)
+else(WIN32) 
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif(WIN32)
+endif (OpenMP_FOUND)
+
 # For UGKS
 
 #24. exit:

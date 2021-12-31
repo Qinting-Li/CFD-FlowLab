@@ -100,7 +100,7 @@ void PH_SendString(string &cs, int proc, int tag)
 
     char *data = new char[nlen+1];
 
-    cs.copy(data,nlen);
+    cs.copy(data, nlen);
     data[nlen] = '\0';
 
     PH_Send(data, nlen+1, proc, tag);

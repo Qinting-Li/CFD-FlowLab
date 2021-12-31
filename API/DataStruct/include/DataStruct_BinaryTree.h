@@ -19,34 +19,33 @@ namespace PHSPACE
 {
 struct DataStuct_BinaryNode
 {
-	int inf, sup, zoneLabel;
-	DataStuct_BinaryNode * leftChild, * rightChild;
+    int inf, sup, zoneLabel;
+    DataStuct_BinaryNode *leftChild, *rightChild;
 };
 
 class DataStruct_BinaryTree
 {
 private:
-	vector<int> startPointLabel;
-	int numberOfZones, numberOfPoints;
-	DataStuct_BinaryNode * root;
+    vector<int> startPointLabel;
+    int numberOfZones, numberOfPoints;
+    DataStuct_BinaryNode *root;
 
 public:
-	//!
-	DataStruct_BinaryTree( int * startPointLabel, int numberOfZones, int numberOfPoints );
+    //!
+    DataStruct_BinaryTree(int *startPointLabel, int numberOfZones, int numberOfPoints);
 
-	//!
-	~DataStruct_BinaryTree();
+    //!
+    ~DataStruct_BinaryTree();
 
-public:	
-	//!
-	int ComputeZoneLabel( int globalPointIndex );
+public:
+    //!
+    int ComputeZoneLabel(int globalPointIndex);
 
 private:
-	int ComputeZoneLabel( DataStuct_BinaryNode * binaryNode, int globalPointIndex );
-	void CopyOriginalVector( int * startPointLabel, int numberOfZones );
-	DataStuct_BinaryNode * Create( DataStuct_BinaryNode * binaryNode, int leftLabel, int rightLabel );
-	void Release( DataStuct_BinaryNode * binaryNode );	
-
+    int ComputeZoneLabel(DataStuct_BinaryNode *binaryNode, int globalPointIndex);
+    void CopyOriginalVector(int *startPointLabel, int numberOfZones);
+    DataStuct_BinaryNode * Create(DataStuct_BinaryNode *binaryNode, int leftLabel, int rightLabel);
+    void Release(DataStuct_BinaryNode *binaryNode);
 };
 
 }

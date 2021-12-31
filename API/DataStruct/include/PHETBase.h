@@ -24,13 +24,13 @@ template<typename T>
 class PHETBase
 { 
 public:
-	PHETBase() {}
+    PHETBase() {}
 
-	PHETBase(const PHETBase<T>&){}
+    PHETBase(const PHETBase<T> &){}
     
-    T& unwrap() { return static_cast<T&>(*this); }
+    T & unwrap() { return static_cast<T &>(*this); }
     
-    const T& unwrap() const { return static_cast<const T&>(*this); }
+    const T & unwrap() const { return static_cast<const T &>(*this); }
 };
 }
 

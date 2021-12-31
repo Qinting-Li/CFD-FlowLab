@@ -14,7 +14,7 @@
 //! @author    Guo Yongheng.
 
 #pragma once
-#include "BC_Struct.h"
+#include "Geo_StructBC.h"
 
 using namespace std;
 namespace PHSPACE
@@ -43,13 +43,13 @@ private:
     vector<vector<int> > unitMatrix;
 
     //! Pointer of attached struct grid.
-    Pre_Block_Struct * simpleBlock;
+    Pre_Block_Struct *simpleBlock;
 
     //! Pointer of correlative patch face.
-    Pre_Patch_Struct * next;
+    Pre_Patch_Struct *next;
 
     //! Children of current boundary face.
-    vector<Pre_BcFace_Struct *> * child;
+    vector<Pre_BcFace_Struct *> *child;
 public:
     LIB_EXPORT  Pre_BcFace_Struct();
     LIB_EXPORT ~Pre_BcFace_Struct();
@@ -68,7 +68,7 @@ public:
 
     //! Output current boundary face information to file.
     LIB_EXPORT void OutputBoundaryInformation(fstream &file, int geometricDimension);
-    LIB_EXPORT void OutputBoundaryInformation(BCRegion *bcregion, int geometricDimension);
+    LIB_EXPORT void OutputBoundaryInformation(StructBC *bcregion, int geometricDimension);
 
     //! Extract leaves of Bc faces which can not be split any more.
     LIB_EXPORT vector<Pre_BcFace_Struct *> GetLeaves();
@@ -76,7 +76,7 @@ public:
     void SetRegion(vector<int> &nodeStart, vector<int> &nodeEnd);
     void SetDirection(int bcDirection) { this->bcDirection =bcDirection; }
     void SetAxisLabel(vector<int> &axisLabel);
-    void SetSimpleBlock(Pre_Block_Struct * simpleBlock);
+    void SetSimpleBlock(Pre_Block_Struct *simpleBlock);
     void SetNext(Pre_Patch_Struct *next);
     void SetChild(vector<Pre_BcFace_Struct *> *child);
     void SetBoundaryType(int boundaryType);
@@ -114,7 +114,7 @@ private:
     vector<vector<int> > frameOfAxes;
 
     //! Pointer of target struct block;
-    Pre_Block_Struct * simpleBlock;
+    Pre_Block_Struct *simpleBlock;
 public:
     LIB_EXPORT  Pre_Patch_Struct();
     LIB_EXPORT ~Pre_Patch_Struct();
@@ -152,10 +152,10 @@ private:
     int processorIndex;
 
     //! Parent pointer of current zone.
-    Pre_Block_Struct * parent;
+    Pre_Block_Struct *parent;
 
     //! Child pointer of current zone.
-    vector<Pre_Block_Struct *> * child;
+    vector<Pre_Block_Struct *> *child;
 
     //! Bc face pointer group of current zone.
     vector<Pre_BcFace_Struct *> boundaryFaceList;
@@ -213,7 +213,7 @@ public:
 
     int GetZoneIndex();
     int GetOriginalZoneIndex();
-    Pre_BcFace_Struct *GetBoundaryFace(int i);
+    Pre_BcFace_Struct * GetBoundaryFace(int i);
     vector<Pre_BcFace_Struct *> GetBoundaryFaceList() { return this->boundaryFaceList; }
 
     void SetOriginalIndex(vector<int> &od);

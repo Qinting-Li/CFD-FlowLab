@@ -40,8 +40,6 @@ const int P2P_MODE = 1;
 const int DETERMIN_BY_PARTITION = 0;
 const int REDISTRIBUTION        = 1;
 
-void InitFantasyMPIForSepMode();
-
 namespace PHMPI
 {
 extern int csmode;
@@ -84,8 +82,6 @@ void SetNumberofFiles(int fileNumber);
 LIB_EXPORT void SetZoneProcessorID(int izone, int id);
 
 void SetZoneProcessID_INP(int *data);
-
-void SetZoneGroupID(int *data);
 
 void SetIsFileServer(int isServer);
 
@@ -257,6 +253,8 @@ void PH_Bcast(DataContainer *cdata, int proc, int tag = 0);
 
 void PH_BcastByServer(DataContainer *cdata, int tag = 0);
 
+void PH_GatherByServer(DataContainer *cdata, int tag = 0);
+
 void PH_BcastByServerSepMode(DataContainer *cdata, int tag = 0);
 
 void PH_BcastByServerToClinet(DataContainer *cdata, int key, int tag = 0);
@@ -357,7 +355,7 @@ void FillGobalData(T *localData, int *localSize, T **&globalData)
         int procID = iProc;
 
         int nData = localSize[iProc];
-        T * tempData = new T [nData];
+        T *tempData = new T [nData];
 
         if (myid == procID)
         {
@@ -383,7 +381,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
 
     //! Step1: collection from each other processors by server.
     int totalDataSize = 0;
-    int * stride = new int [nTProcessor];
+    int *stride = new int [nTProcessor];
     stride[0] = 0;
     for (int iProc = 0; iProc < nTProcessor; ++ iProc)
     {
@@ -404,7 +402,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
         for (int iProc = 0; iProc < nTProcessor; ++ iProc)
         {
             int nData = localSize[iProc];
-            T * tempData = new T [nData];
+            T *tempData = new T [nData];
 
             for (int jData = 0; jData < nData; ++ jData)
             {
@@ -418,14 +416,14 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
     delete [] globalDataTemp;
 
     //! Step2: broad casting to each other processors by server.
-    DataContainer * cdata = new DataContainer();
+    DataContainer *cdata = new DataContainer();
 
     if (myid == server)
     {
         cdata->moveto_begin();
         for (int iProc = 0; iProc < nTProcessor; ++ iProc)
         {
-            T * temp = globalData[iProc];
+            T *temp = globalData[iProc];
             PHWrite(cdata, temp, localSize[iProc]);
         }
     }
@@ -447,7 +445,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
 
 //! Broad cast a data with size of nData to every other processor.
 template < typename T >
-void PH_BcastNonBlocking(T * data, int nData, int bcastProcessor, int tag)
+void PH_BcastNonBlocking(T *data, int nData, int bcastProcessor, int tag)
 {
     using namespace PHMPI;
 
@@ -472,7 +470,7 @@ void PH_BcastNonBlocking(T * data, int nData, int bcastProcessor, int tag)
             int receiveProcessor = iProc;
 
             //! Allocate the buffers for sending and receiving.
-            T * sendBuffer = new T [nData];
+            T *sendBuffer = new T [nData];
             sendDataBuffer.push_back(sendBuffer);
 
             for (int iData = 0; iData < nData; ++ iData)
@@ -487,7 +485,7 @@ void PH_BcastNonBlocking(T * data, int nData, int bcastProcessor, int tag)
     }
     else
     {
-        T * receivedBuffer = new T[nData];
+        T *receivedBuffer = new T[nData];
         receivedDataBuffer.push_back(receivedBuffer);
 
         //! Receive the data from server.
@@ -504,7 +502,7 @@ void PH_BcastNonBlocking(T * data, int nData, int bcastProcessor, int tag)
     //! Step3: Translating.
     if (myid != bcastProcessor)
     {
-        T * receivedBuffer = receivedDataBuffer[0];
+        T *receivedBuffer = receivedDataBuffer[0];
         for (int iData = 0; iData < nData; ++ iData)
         {
             data[iData] = receivedBuffer[iData];
@@ -589,7 +587,7 @@ void PHRead(DataContainer *dataContainer, PHVector2D <T> &field2D, int numberOfE
 {
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        PHVector1D <T> &field = field2D[ iElement ];
+        PHVector1D <T> &field = field2D[iElement];
 
         int numberOfSubElements = 0;
         PHRead(dataContainer, numberOfSubElements);

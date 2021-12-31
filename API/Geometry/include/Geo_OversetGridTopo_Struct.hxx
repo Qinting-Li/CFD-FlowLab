@@ -25,7 +25,7 @@ inline int * Geo_OversetGridTopo_Struct::GetKLinkPointLabel() const
 
 inline int * Geo_OversetGridTopo_Struct::GetCellTypeContainer() const
 {
-    return cellTypeContainer;
+    return iBlank;
 }
 
 inline void Geo_OversetGridTopo_Struct::SetNumberOfCores(int numberOfCores)

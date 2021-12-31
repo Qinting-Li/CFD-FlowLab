@@ -38,6 +38,9 @@ private:
     //! Used for DES simulation ONLY: largest local grid length, distance of neighbor cell centers.
     RDouble3D *largestLocalGridLength;
 
+    //! Used for DES simulation ONLY: smallest local grid length, distance of neighbor cell centers.
+    RDouble3D *smallestLocalGridLength;
+
     //! Used for DES simulation ONLY: sub-grid length.
     RDouble3D *subgridLength;
 
@@ -73,11 +76,17 @@ public:
     //! Return the largest local grid spacing.
     RDouble3D * GetLargestLocalGridLength();
 
+    //! Return the smallest local grid spacing.
+    RDouble3D * GetSmallestLocalGridLength();
+
     //! Return the sub-grid length, used for DES simulation ONLY.
     RDouble3D * GetSubgridLength();
 
     //! Assign the largest local grid spacing.
     void SetLargestLocalGridLength(RDouble3D *length);
+
+    //! Assign the smallest local grid spacing.
+    void SetSmallestLocalGridLength(RDouble3D *length);
 
     //! Assign the sub-grid length, used for DES simulation ONLY.
     void SetSubgridLength(RDouble3D *length);

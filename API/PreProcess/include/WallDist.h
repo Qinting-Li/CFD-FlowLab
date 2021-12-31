@@ -35,11 +35,6 @@ void WriteWallDist();
 //! Dump out the wall distance to file.
 void DumpWallDistToFile(ActionKey *actkey, int iZone);
 
-#ifdef USE_TecplotLib
-//! Visualization of wall distance.
-void VisualWallDist();
-#endif
-
 //!
 void WallDistStatics();
 

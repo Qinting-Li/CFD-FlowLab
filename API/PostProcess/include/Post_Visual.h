@@ -52,6 +52,7 @@ public:
     //! @param[in] name              Source data's name.
     //! @param[in] cellCenterData    Pointer the Source cell center data.
     LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, RDouble *cellCenterData);
+    LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, int *cellCenterData);
 
     //! Compute variables on node through variables on cell center and or update to database.
     //! Structured grid data type.
@@ -66,12 +67,16 @@ public:
     //! @param[in] name              Source data's name.
     //! @param[in] cellCenterData    Pointer the Source cell center data.
     LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, RDouble3D &cellCenterData);
+
+    //! Compute overset information on node through variables on cell center and or update to database.
+    //! Structured grid data type.
+    //! @param[in] name              Source data's name.
+    //! @param[in] cellCenterData    Pointer the Source cell center data.
+    LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, Int3D &oversetcellCenterdata);
     //! Obtain data's pointer(address) from database by name.
     //! If the dataSet doesn't has a same name data, returns null.
     //! @param[in] name    Source data's name.
     void * GetVisualNodeVarPtr(const string &name);
-
-    LIB_EXPORT void UpdateVisualNodeVarPtr(const string &name, Int3D & oversetcellCenterdata);
 
     //! Get all visualization varialbes' pointer (RDouble * for unstruct grid).
     LIB_EXPORT void GetAllVisualNodeVarPtr(RDouble **qn);
@@ -106,7 +111,7 @@ private:
     map<int, string> visualVariablesMap;
 
     //! Store visual variables.
-    Data_Field * visualVariablesPtr;
+    Data_Field *visualVariablesPtr;
 
     int flowType;
 
@@ -164,16 +169,88 @@ const int VISUAL_GRADIENT_UX           = 41;
 const int VISUAL_GRADIENT_UY           = 42;
 const int VISUAL_GRADIENT_VX           = 43;
 const int VISUAL_GRADIENT_VY           = 44;
+const int VISUAL_TRANSITION_GAMAEFF    = 48;
+const int VISUAL_TRANSITION_RESCF      = 49;
 const int VISUAL_WALL_DIST             = 50;
-const int VISUAL_TRANSITION_GAMA       = 51;
-const int VISUAL_TRANSITION_RETHETA    = 52;
+const int VISUAL_INTERMITTENCY         = 51;
+const int VISUAL_MOMENTUMTHICKREYNOLDS = 52;
+const int VISUAL_DIMENSIONAL_U         = 53;
+const int VISUAL_DIMENSIONAL_V         = 54;
+const int VISUAL_DIMENSIONAL_W         = 55;
+const int VISUAL_GAMA                  = 56;
+
 const int VISUAL_IBLANK                = 81;
 //const int VISUAL_O2                    = 15;
 //const int VISUAL_NO                    = 16;
 //const int VISUAL_N                     = 17;
 //const int VISUAL_N2                    = 18;
+const int VISUAL_TAU_XX = 90;
+const int VISUAL_TAU_YY = 91;
+const int VISUAL_TAU_ZZ = 92;
+const int VISUAL_TAU_XY = 93;
+const int VISUAL_TAU_XZ = 94;
+const int VISUAL_TAU_YZ = 95;
+
+//Visual Wall Variables.
+const int VISUAL_SPECIES_START = 30;
+const int VISUAL_WALL_CP       = 0;
+const int VISUAL_WALL_CF       = 1;
+const int VISUAL_WALL_YPLUS    = 2;
+const int VISUAL_WALL_QNONDIM  = 3;
+const int VISUAL_WALL_QDIM     = 4;
+const int VISUAL_WALL_PW       = 5;
+const int VISUAL_WALL_TW       = 6;
+const int VISUAL_WALL_RHOW     = 7;
+const int VISUAL_WALL_QT       = 8;
+const int VISUAL_WALL_QS       = 9;
+const int VISUAL_WALL_QV       = 10;
+const int VISUAL_WALL_QE       = 11;
+const int VISUAL_WALL_NS       = 12;
+const int VISUAL_WALL_VX       = 13;
+const int VISUAL_WALL_VY       = 14;
+const int VISUAL_WALL_VZ       = 15;
+const int VISUAL_SLIP_TS       = 16;
+const int VISUAL_SLIP_TV       = 17;
+const int VISUAL_SLIP_TE       = 18;
+const int VISUAL_WALL_VS       = 19;
+const int VISUAL_WALL_ST       = 20;
+const int VISUAL_WALL_CH       = 21;
+const int VISUAL_SLIP_DTS      = 22;
+//! The code number must be less than VISUAL_SPECIES_START.
+
+class Post_VisualWall
+{
+public:
+    LIB_EXPORT Post_VisualWall();
+
+    LIB_EXPORT Post_VisualWall(int nVisualNumber, int *visualVariablesType);
+
+    LIB_EXPORT ~Post_VisualWall();
+
+public:
+    int GetVisualVariablesNumber() const { return nVisualVariables; }
+
+    //! Get variables' name through variable's tag index.
+    //! @param[in] variableNumber    variable's index.
+    string GetVariableName(int variableNumber) const;
+
+    int* GetVisualVariablesType() const { return visualVariables; }
+
+    int GetVisualVariablesType(int nIndex) const { return visualVariables[nIndex]; }
+
+private:
+    //! Number of visual variables.
+    int nVisualVariables;
+
+    //! Type of visual variables, each number represents ONE variable.
+    int *visualVariables;
+
+    //! Variable names, displayed in Tecplot.
+    map<int, string> visualVariablesMap;
+};
 
 const int AverageFlow = 1;
+const int AverageReynoldsStress = 2;
 
 #include "Post_Visual.hxx"
 
@@ -212,49 +289,6 @@ private:
     bool CharacteristicBoundary;
 };
 
-#ifdef USE_TecplotLib
-class DumpToTecio
-{
-private:
-    //ActionKey *actkey;
-    vector<DataContainer *> datalist;
-    string filename;
-
-    //! Visual flow type: 0 -- main flow;  1 -- average flow.
-    int visualFlowType;
-
-public:
-    DumpToTecio(vector<DataContainer *> datalist_in, string filename_in, int visualFlowType = 0);
-    ~DumpToTecio();
-
-public:
-    void Run();
-
-private:
-    void WriteGridFilm_old();
-    void WriteGridFilm();
-    void WriteSliceFilm();
-    void InitVariables();
-
-    //! Set the variables.
-    void SetVariables(string Variables_in) { this->Variables = Variables_in; }
-
-    //! Get the variables.
-    string GetVariables() { return Variables; }
-
-    //! Set number of variables in tecplot.
-    void SetNvarplot(int nvarplot_in) { this->nvarplot = nvarplot_in; }
-
-    //! Return number of variables in tecplot.
-    int GetNvarplot() { return nvarplot; }
-
-    //! Get the file name.
-    string GetFilename() { return filename; }
-private:
-    string Variables;
-    int nvarplot;
-};
-#endif
 
 class DumpToTecplotASCII
 {
@@ -262,8 +296,11 @@ private:
     vector<DataContainer *> dataList;
     string fileName;
 
+    //! Visual flow type: 0 -- main flow;  1 -- average flow.
+    int visualFlowType;
+
 public:
-    DumpToTecplotASCII(vector<DataContainer *> datalist_in, string filename_in);
+    DumpToTecplotASCII(vector<DataContainer *> datalist_in, string filename_in, int visualFlowType = 0);
     ~DumpToTecplotASCII();
 
 public:
@@ -299,11 +336,11 @@ private:
 class PHCutPlane
 {
 public:
-    char ** title;
+    char **title;
     int nTitle;
     int neqn;
     int nTotalNode, nTotalFace;
-    RDouble ** data;
+    RDouble **data;
     RDouble *x, *y, *z;
     int *faceIndex[4];
 public:

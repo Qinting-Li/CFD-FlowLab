@@ -18,7 +18,7 @@
 #pragma once
 #include "Pointer.h"
 #include "TK_Exit.h"
-#include "BC_Struct.h"
+#include "Geo_StructBC.h"
 #include "MultigridFactory.h"
 #include "MixGrid.h"
 #include "IO_GridReader.h"
@@ -52,13 +52,14 @@ public:
 
     //! If the iZone-th zone belong to current processor.\n
     //! @return
-    //!	-# <em>false</em>:  the zone with globalZoneIndex dose not belong to current processor.\n
-    //!	-# <em>true</em>:   the zone with globalZoneIndex belongs to current processor.
+    //! -# <em>false</em>:  the zone with globalZoneIndex dose not belong to current processor.\n
+    //! -# <em>true</em>:   the zone with globalZoneIndex belongs to current processor.
     bool ZoneBelongToCurrentProcessor( int globalZoneIndex );
 
     //! Return the global zone index of 'localZoneIndex'.
     int  GetProcessLocalZoneIndexToGlobalZoneIndex( int localZoneIndex );
 
+    void SetIBlock(int iBlock) { this->iBlock = iBlock; }
     //! Read grid from file.
     LIB_EXPORT void ReadGrid();
 
@@ -110,6 +111,8 @@ public:
     //! If the grid wanted to be read, call the 'ReadGrid' function above, Please!
     LIB_EXPORT void ReadOversetGrid();
 
+    LIB_EXPORT void SetOversetGrid();
+
     LIB_EXPORT void ReviseInterZoneIndexForOverSetGrids(int iZone);
 
     //! Build structured/unstructured grid if HYBRID Solver is used.
@@ -129,6 +132,8 @@ public:
     //!   3: Initialize moving grid.
     LIB_EXPORT void InitGrids();
 
+    void DumpWallFaceCenter();
+
     //! Update all of parameters in the running data base of each zones according to the global_para.
     LIB_EXPORT void UpdateAllZonesPara();
 
@@ -147,6 +152,8 @@ public:
 
     //! Monitor the data according to location. 
     LIB_EXPORT void DataMonitor();
+
+    void InitVariableWallTemperature();
 
     void ReSetBoundaryConditionByGlobalBC();
 
@@ -226,7 +233,7 @@ private:
     //! Compute global min&&max cell number in all zones.
     void ComputeGlobalCellSize(int level = 0);
     //! Compute global total number of cells and total volume for vencat limiter of type 2 && 3.
-    void ComputeGlobalGridSize(int level = 0);	
+    void ComputeGlobalGridSize(int level = 0);
     //! MixGrid
     void ComputeGlobalGridCellSize(int level = 0);
 
@@ -253,6 +260,7 @@ private:
     void ReadOversetGrid(const string &gridfile);
     void ReadSingleOversetGrid(fstream &file, int izone);
     void AllocateOversetGrid();
+    void AddUnStructInfoToStructGrid();
 
     void CreateZonesFromGridReader( IO_GridReader * gridReader );
     void CreateZonesFromGridGroups( IO_GridReader * gridReader );
@@ -263,14 +271,16 @@ private:
     //! Check grid validity.
     void GridValidityCheck();
 
-private:	
+private:
     int numberOfProcessorStructgridUsed;
     int numberOfZoneInLocalProcess;
     int nGrids;
+    int iBlock;
     int numberOfTotalZones;
     int zoneStart;
 };
 
+void ResetAllZonesOversetGrid();
 #include "Region.hxx"
 
 }

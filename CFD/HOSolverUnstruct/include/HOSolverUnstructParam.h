@@ -25,48 +25,48 @@ class HOSolverUnstruct;
 class HOSolverUnstructParam : public Param_CFDSolver
 {
 public:
-	LIB_EXPORT HOSolverUnstructParam();
+    LIB_EXPORT HOSolverUnstructParam();
 
-	LIB_EXPORT ~HOSolverUnstructParam();
+    LIB_EXPORT ~HOSolverUnstructParam();
 
     friend class HOSolverUnstruct;
 
 public:
-	//! Init all parameters
-	LIB_EXPORT void Init();
+    //! Init all parameters
+    LIB_EXPORT void Init();
 
-	//! Get restart flow file name
-	const string & GetRestartNSFile() const;
+    //! Get restart flow file name
+    const string & GetRestartNSFile() const;
 
-	//! Get res file name
-	const string & GetResSaveFile() const;
+    //! Get res file name
+    const string & GetResSaveFile() const;
 
-	//! Get flow field name
-	const string & GetFlowFieldTecFile() const;
+    //! Get flow field name
+    const string & GetFlowFieldTecFile() const;
 
-	//! Get interval steps of dumping force
-	int GetIntervalStepForce() const;
+    //! Get interval steps of dumping force
+    int GetIntervalStepForce() const;
 
-	//! Get wall temperature
-	RDouble GetWallTemperature() const;
+    //! Get wall temperature
+    RDouble GetWallTemperature() const;
 
-	//! Get number of temperature model
-	int GetNTemperatureModel () const;
+    //! Get number of temperature model
+    int GetNTemperatureModel () const;
 
     //! Get if carry out precondition or not
-	int GetIfLowSpeedPrecon() const;
+    int GetIfLowSpeedPrecon() const;
 
-	//! Get attacked of angle
-	double GetAoA() const;
+    //! Get attacked of angle
+    double GetAoA() const;
 
-	//! Get the entropy fix coefficient 1 of Roe method
-	RDouble GetRoeEntropyFixCoef1() const;
-	
-	//! Get the entropy fix coefficient 2 of Roe method
-	RDouble GetRoeEntropyFixCoef2() const;
+    //! Get the entropy fix coefficient 1 of Roe method
+    RDouble GetRoeEntropyFixCoef1() const;
+    
+    //! Get the entropy fix coefficient 2 of Roe method
+    RDouble GetRoeEntropyFixCoef2() const;
 
     //! Get angle of slide
-	RDouble GetAngleOfSlide () const;
+    RDouble GetAngleOfSlide () const;
     
     //! Get inviscos flux type
     string GetSpaceSecheme () const;
@@ -77,16 +77,16 @@ public:
     RDouble GetR() const;
 
 private:
-	string restartNSFile;
-	string resSaveFile;
-	string flowFieldTecFile;
-	int intervalStepForce;
-	RDouble wallTemperature;
-	int nTemperatureModel;
-	int ifLowSpeedPrecon;
-	RDouble RoeEntropyFixCoef1;
-	double AoA;
-	RDouble RoeEntropyFixCoef2;
+    string restartNSFile;
+    string resSaveFile;
+    string flowFieldTecFile;
+    int intervalStepForce;
+    RDouble wallTemperature;
+    int nTemperatureModel;
+    int ifLowSpeedPrecon;
+    RDouble RoeEntropyFixCoef1;
+    double AoA;
+    RDouble RoeEntropyFixCoef2;
     RDouble angleSlide;
 
     int dgSolOrder, fvSolOrder;
@@ -99,12 +99,12 @@ private:
 
 inline string HOSolverUnstructParam::GetSpaceSecheme() const
 {
-	return uns_scheme_name;
+    return uns_scheme_name;
 }
 
 inline int HOSolverUnstructParam::GetPMultiGrid() const
 {
-	return pMultiGrid;
+    return pMultiGrid;
 }
 
 #include "HOSolverUnstructParam.hxx"

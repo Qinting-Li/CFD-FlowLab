@@ -23,83 +23,83 @@ namespace PHSPACE
 class Param_CFDSolver
 {
 public:
-	LIB_EXPORT Param_CFDSolver();
+    LIB_EXPORT Param_CFDSolver();
 
-	LIB_EXPORT virtual ~Param_CFDSolver();
+    LIB_EXPORT virtual ~Param_CFDSolver();
 
 public:
-	//! Get restart flow file name.
-	virtual const string & GetRestartNSFile() const { return restartNSFile; };
+    //! Get restart flow file name.
+    virtual const string & GetRestartNSFile() const { return restartNSFile; }
 
-	//! Get res file name.
-	virtual const string & GetResSaveFile() const { return resSaveFile; };
+    //! Get res file name.
+    virtual const string & GetResSaveFile() const { return resSaveFile; }
 
-	//! Get flow field name.
-	virtual const string & GetFlowFieldTecFile() const { return flowFieldTecFile; };
+    //! Get flow field name.
+    virtual const string & GetFlowFieldTecFile() const { return flowFieldTecFile; };
 
-	//! Init all parameters.
-	LIB_EXPORT virtual void Init();
+    //! Init all parameters.
+    LIB_EXPORT virtual void Init();
 
-	//! Get reference mach number.
-	RDouble GetRefMachNumber() const;
+    //! Get reference mach number.
+    RDouble GetRefMachNumber() const;
 
-	//! Get reference reynolds number.
-	RDouble GetRefReNumber() const;
+    //! Get reference reynolds number.
+    RDouble GetRefReNumber() const;
 
-	//! Get the count backwards of reference reynolds number.
+    //! Get the count backwards of reference reynolds number.
     RDouble GetoRefReNumber() const;
 
-	//! Get if need plot volume field.
-	int GetPlotFieldType() const;
+    //! Get if need plot volume field.
+    int GetPlotFieldType() const;
 
-	//! Get lower range of plotting field.
-	const RDouble * GetLowerPlotFieldBox() const;
+    //! Get lower range of plotting field.
+    const RDouble * GetLowerPlotFieldBox() const;
 
-	//! Get upper range of plotting field.
-	const RDouble * GetUpperPlotFieldBox() const;
+    //! Get upper range of plotting field.
+    const RDouble * GetUpperPlotFieldBox() const;
 
-	//! Get viscous model type.
-	int GetViscousType() const;
+    //! Get viscous model type.
+    int GetViscousType() const;
 
-	//! Get viscous model name
-	const string & GetViscousName() const;
+    //! Get viscous model name
+    const string & GetViscousName() const;
 
     //! Return the flow is viscous or not.
     bool IsViscous() const;
 
-	//! Get if unsteady of steady.
-	int GetIsUnsteady() const;
+    //! Get if unsteady of steady.
+    int GetIsUnsteady() const;
 
-	//! Get interval steps of dumping residuals.
-	int GetIntervalStepRes() const;
+    //! Get interval steps of dumping residuals.
+    int GetIntervalStepRes() const;
 
-	//! Get interval steps of dumping flow field.
-	int GetIntervalStepPlot() const;
+    //! Get interval steps of dumping flow field.
+    int GetIntervalStepPlot() const;
 
-	//! Get CFL when computing start.
-	RDouble GetCFLStart() const;
+    //! Get CFL when computing start.
+    RDouble GetCFLStart() const;
 
-	//! Get final CFL.
-	RDouble GetCFDEnd() const;
+    //! Get final CFL.
+    RDouble GetCFDEnd() const;
 
-	//! The number of step when cfl increase from CFLStart to CFLEnd.
-	int GetCFLVaryStep() const;
+    //! The number of step when cfl increase from CFLStart to CFLEnd.
+    int GetCFLVaryStep() const;
 
-	//! Get number of MultiGrid level.
-	int GetNMGLevel() const;
+    //! Get number of MultiGrid level.
+    int GetNMGLevel() const;
 
-	//! Get LUSGS sweeps.
-	int GetNLUSGSSweeps() const;
+    //! Get LUSGS sweeps.
+    int GetNLUSGSSweeps() const;
 
-	//! Get tolerance of LUSGS scheme.
-	RDouble GetLUSGSTolerance() const;
-	int GetIntervalStepFlow() const;
+    //! Get tolerance of LUSGS scheme.
+    RDouble GetLUSGSTolerance() const;
+    int GetIntervalStepFlow() const;
 
-	int GetIfLocalTimeStep() const;
+    int GetIfLocalTimeStep() const;
 
-	RDouble GetTorqueRefX() const;
-	RDouble GetTorqueRefY() const;
-	RDouble GetTorqueRefZ() const;
+    RDouble GetTorqueRefX() const;
+    RDouble GetTorqueRefY() const;
+    RDouble GetTorqueRefZ() const;
 
     //! Get reference gama value.
     RDouble GetRefGama() const;
@@ -120,42 +120,48 @@ public:
     RDouble GetRefDimensionalTemperature() const;
 
     //! Get flag of starting from steady result.
-	int GetIfStartFromSteadyResults() const;
+    int GetIfStartFromSteadyResults() const;
 
     //! Get flag of statics flow field.
-	int GetIfStaticsFlowField() const;
+    int GetIfStaticsFlowField() const;
+
+    //! Get flag of statics reynolds stress.
+    int GetIfStaticsReynoldsStress() const;
+
+    //! Get method of computing statistical reynolds stress.
+    int GetStatisticMethod() const;
 
     int GetIsOverLapping() const;
 
 private:
-	string restartNSFile;
-	string resSaveFile;
-	string flowFieldTecFile;
+    string restartNSFile;
+    string resSaveFile;
+    string flowFieldTecFile;
 
-	RDouble refMachNumber;
-	RDouble refReNumber;
+    RDouble refMachNumber;
+    RDouble refReNumber;
     RDouble oRefReNumber;
 
-	int plotFieldType;
+    int plotFieldType;
 
-	RDouble lowerPlotFieldBox[3];
-	RDouble upperPlotFieldBox[3];
+    RDouble lowerPlotFieldBox[3];
+    RDouble upperPlotFieldBox[3];
 
-	int viscousType;
-	string viscousName;
+    int viscousType;
+    string viscousName;
 
-	int isUnsteady;
-	int intervalStepRes;
-	int intervalStepPlot;
+    int isUnsteady;
+    int intervalStepRes;
+    int intervalStepPlot;
 
-	RDouble CFLStart;
-	RDouble CFLEnd;
-	int CFLVaryStep;
+    RDouble CFLStart;
+    RDouble CFLEnd;
+    int CFLVaryStep;
 
-	int nMGLevel;
+    int nMGLevel;
 
-	int nLUSGSSweeps;
-	RDouble LUSGSTolerance; 
+    int nLUSGSSweeps;
+    RDouble LUSGSTolerance; 
 
     RDouble refGama;
     RDouble refDimensionalPressure;
@@ -166,12 +172,14 @@ private:
 
     int ifStartFromSteadyResults;
     int ifStaticsFlowField;
-	int intervalStepFlow;
-	int ifLocalTimeStep;
+    int ifStaticsReynoldsStress;
+    int statisticMethod;
+    int intervalStepFlow;
+    int ifLocalTimeStep;
 
-	RDouble TorqueRefX;
-	RDouble TorqueRefY;
-	RDouble TorqueRefZ;
+    RDouble TorqueRefX;
+    RDouble TorqueRefY;
+    RDouble TorqueRefZ;
 
     int isOverLapping;
 

@@ -1,6 +1,7 @@
 #include "Geo_NodeTopo_Struct.h"
 #include "GlobalDataBase.h"
 #include "TypeDefine.h"
+#include "Constants.h"
 
 namespace PHSPACE
 {
@@ -10,9 +11,9 @@ Geo_NodeTopo_Struct::Geo_NodeTopo_Struct()
     ni = 0;
     nj = 0;
     nk = 0;
-    structx = 0;
-    structy = 0;
-    structz = 0;
+    structx = nullptr;
+    structy = nullptr;
+    structz = nullptr;
 }
 
 Geo_NodeTopo_Struct::~Geo_NodeTopo_Struct()
@@ -22,12 +23,12 @@ Geo_NodeTopo_Struct::~Geo_NodeTopo_Struct()
 
 void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
 {
-    int nsimutask = -1;	
+    int nsimutask = -1;
     nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
     if (nsimutask == 0)
     {
-        int ifvfd = PHSPACE::GlobalDataBase::GetIntParaFromDB("ifvfd");
-        if (ifvfd == 1)
+        int isFVMOrFDM = PHSPACE::GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
+        if (isFVMOrFDM == FD_METHOD)
         {
             //! struct hight order, xyz ghost more layers.
             SetArrayLayoutStructHighOrder(x, y, z);
@@ -69,6 +70,7 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
         int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+        int wallFunctionType = GlobalDataBase::GetIntParaFromDB("wallFunctionType");
 
         if (tscheme != 4) Rwithghost = false;
         //if (systemGridType != 1) Rwithghost = false;
@@ -78,6 +80,7 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
         if (isUnsteady != 0) Rwithghost = false;
         if (nChemical != 0) Rwithghost = false;
         if (ifLowSpeedPrecon != 0) Rwithghost = false;
+        if (wallFunctionType != 0) Rwithghost = false;
 
         if (Rwithghost)
         {
@@ -143,9 +146,9 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
                     }
                 }
             }
-            delete strx;
-            delete stry;
-            delete strz;
+            delete strx;    strx = NULL;
+            delete stry;    stry = NULL;
+            delete strz;    strz = NULL;
             return;
         }
     }
