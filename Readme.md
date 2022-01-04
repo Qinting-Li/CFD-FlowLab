@@ -2,8 +2,6 @@
 
 # 风雷软件（PHengLEI2112.v9198）
 
-备注：当前为master分支，更多新功能请切换到ActiveBranch分支。
-
 ## 1.软件简介
 
 &ensp;&ensp;&ensp;&ensp;风雷软件（PHengLEI，Platform for Hybrid ENGineering simulation of flows）是中国空气动力研究与发展中心（CARDC）研发的面向流体工程的混合CFD平台。平台以面向对象的设计理念，采用C++语言编程。2020年12月，风雷软件正式面向全国开源，与其他开源CFD软件相比，风雷软件具有扩展能力强、开发难度低、计算效率高等特点。（更多介绍请阅读PHengLEI/Documents文件夹下的**《风雷软件应用与开发指南》**）
