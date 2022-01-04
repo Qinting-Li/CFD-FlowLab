@@ -27,6 +27,18 @@ typedef enum
     TURB_SOLVER
 }solverEnum;
 
+class PHNsTag
+{
+public:
+    static int GetID() { return NS_SOLVER; }
+};
+
+class PHTurbulentTag
+{
+public:
+    static int GetID() { return TURB_SOLVER; }
+};
+
 class ActionKey;
 class ActionTag;
 class PHSolver;
@@ -73,18 +85,18 @@ public:
     PHGeometry *GetGeometry();
     
     void SetKey(int key);
-    int  GetKey() const;	
-	
-    //! Initialize the data,  
+    int  GetKey() const;
+    
+    //! Initialize the data, 
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitMemory() = 0;
 
     //! Initialize the flow, here it is a pure virtual function, 
     //! here it is a pure virtual function, it should be re-defined in the real solver.
-	virtual void InitFlow() = 0;
+    virtual void InitFlow() = 0;
 
-	//! Interface data communications.    
-	virtual void CommunicationInterfaceData() {};
+    //! Interface data communications.    
+    virtual void CommunicationInterfaceData() {};
 
     //! Interpoint data communications.
     virtual void CommunicationInterpointData() {};
@@ -105,12 +117,12 @@ public:
     virtual void Post() = 0;
 
     //! The following function is old version of task, should be removed latter.
-	virtual void ActionReflect(ActionTag *acttag){};
+    virtual void ActionReflect(ActionTag *acttag){};
     virtual void Action(ActionKey *actkey){};
     virtual void TranslateAction(ActionKey *actkey){};
-	virtual streamsize TranslateActionLength(ActionKey *actkey){ return 0; };    
+    virtual streamsize TranslateActionLength(ActionKey *actkey){ return 0; };
     virtual void PrepareInterfaceData(Grid *grid, Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy){};
-	virtual void ComputePostVisualVariables(Post_Visual * postVisualization) = 0;
+    virtual void ComputePostVisualVariables(Post_Visual * postVisualization) = 0;
     virtual void ComputePostProbesVariables(Post_Probes * postProbesVar){};
 };
 #include "Solver.hxx"

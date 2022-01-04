@@ -1,14 +1,14 @@
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//                                                                             +
-//       Hybrid Platform for Engineering and Research of Flows (HyperFlow)     +
-//                        面向流体工程与研究的混合CFD平台                      +
-//                        （C）Zhang Laiping and He Xin                        +
-//                    State Key Laboratory of Aerodynamics                     +
-//                    Computational Aerodynamics Institute                     +
-//            China Aerodynamics Research and Development Center               +
-//                                 Since 2007                                  +
-//                                                                             +
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #pragma once
 #include "Precision.h"
 #include "TypeDefine.h"
@@ -27,7 +27,7 @@ class VirtualFile;
 class GridManager
 {
 public:
-    GridManager( UnstructGrid * unstructGrid );
+    GridManager(UnstructGrid *unstructGrid);
     ~GridManager();
 protected:
     UnstructGrid * unstructGrid;
@@ -78,52 +78,52 @@ public:
     int * GetLocalToGlobalNodeIndexMapping() { return localToGlobalNodeIndexMapping; };
     RDouble * GetGlobalCoordinateNew() { return globalCoordinateNew; }
 
-    void UpdateGridCoordinateByReadingFile                      ( int targetZone );
-    void ComputeLocalToGlobalNodeIndexMappingDirectly           ( int targetZone );
-    void ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile( int targetZone );
+    void UpdateGridCoordinateByReadingFile                      (int targetZone);
+    void ComputeLocalToGlobalNodeIndexMappingDirectly           (int targetZone);
+    void ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile(int targetZone);
 public:
-    int *GetBlankIndex() { return blankIndex; };
+    int * GetBlankIndex() { return blankIndex; }
 
-    RDouble *GetCellCenterX() { return cellCenterX; };
-    RDouble *GetCellCenterY() { return cellCenterY; };
-    RDouble *GetCellCenterZ() { return cellCenterZ; };
+    RDouble * GetCellCenterX() { return cellCenterX; }
+    RDouble * GetCellCenterY() { return cellCenterY; }
+    RDouble * GetCellCenterZ() { return cellCenterZ; }
 
-    RDouble *GetFaceNormalX() { return faceNormalX;    };
-    RDouble *GetFaceNormalY() { return faceNormalY;    };
-    RDouble *GetFaceNormalZ() { return faceNormalZ;    };
+    RDouble * GetFaceNormalX() { return faceNormalX; }
+    RDouble * GetFaceNormalY() { return faceNormalY; }
+    RDouble * GetFaceNormalZ() { return faceNormalZ; }
 
-    RDouble *GetOldFaceNormalX() { return oldFaceNormalX; };
-    RDouble *GetOldFaceNormalY() { return oldFaceNormalY; };
-    RDouble *GetOldFaceNormalZ() { return oldFaceNormalZ; };
+    RDouble * GetOldFaceNormalX() { return oldFaceNormalX; }
+    RDouble * GetOldFaceNormalY() { return oldFaceNormalY; }
+    RDouble * GetOldFaceNormalZ() { return oldFaceNormalZ; }
 
-    RDouble *GetFaceCenterX() { return faceCenterX;    };
-    RDouble *GetFaceCenterY() { return faceCenterY;    };
-    RDouble *GetFaceCenterZ() { return faceCenterZ;    };
+    RDouble * GetFaceCenterX() { return faceCenterX; }
+    RDouble * GetFaceCenterY() { return faceCenterY; }
+    RDouble * GetFaceCenterZ() { return faceCenterZ; }
 
-    RDouble *GetOldFaceCenterX() { return oldFaceCenterX; };
-    RDouble *GetOldFaceCenterY() { return oldFaceCenterY; };
-    RDouble *GetOldFaceCenterZ() { return oldFaceCenterZ; };
+    RDouble * GetOldFaceCenterX() { return oldFaceCenterX; }
+    RDouble * GetOldFaceCenterY() { return oldFaceCenterY; }
+    RDouble * GetOldFaceCenterZ() { return oldFaceCenterZ; }
 
-    RDouble *GetFaceArea() { return faceArea;       };
-    RDouble *GetOldFaceArea() { return oldFaceArea;    };
+    RDouble * GetFaceArea() { return faceArea; }
+    RDouble * GetOldFaceArea() { return oldFaceArea; }
 
-    RDouble *GetOldCellVolume() { return cellVolumeN1;   };
-    RDouble *GetCellVolume( int iStep = 0 );
+    RDouble * GetOldCellVolume() { return cellVolumeN1; }
+    RDouble * GetCellVolume(int iStep = 0);
 public:
-    RDouble *GetFaceVelocityX() { return faceVelocityX;          };
-    RDouble *GetFaceVelocityY() { return faceVelocityY;          };
-    RDouble *GetFaceVelocityZ() { return faceVelocityZ;          };
-    RDouble *GetFaceNormalVelocity() { return faceNormalVelocity;     };
+    RDouble * GetFaceVelocityX() { return faceVelocityX; }
+    RDouble * GetFaceVelocityY() { return faceVelocityY; }
+    RDouble * GetFaceVelocityZ() { return faceVelocityZ; }
+    RDouble * GetFaceNormalVelocity() { return faceNormalVelocity; }
 
-    RDouble *GetOldFaceVelocityX() { return oldFaceVelocityX;       };
-    RDouble *GetOldFaceVelocityY() { return oldFaceVelocityY;       };
-    RDouble *GetOldFaceVelocityZ() { return oldFaceVelocityZ;       };
-    RDouble *GetOldFaceNormalVelocity() { return oldFaceNormalVelocity;  };
+    RDouble * GetOldFaceVelocityX() { return oldFaceVelocityX; }
+    RDouble * GetOldFaceVelocityY() { return oldFaceVelocityY; }
+    RDouble * GetOldFaceVelocityZ() { return oldFaceVelocityZ; }
+    RDouble * GetOldFaceNormalVelocity() { return oldFaceNormalVelocity; }
 
-    RDouble *GetNewFaceVelocityX() { return newFaceVelocityX;       };
-    RDouble *GetNewFaceVelocityY() { return newFaceVelocityY;       };
-    RDouble *GetNewFaceVelocityZ() { return newFaceVelocityZ;       };
-    RDouble *GetNewFaceNormalVelocity() { return newFaceNormalVelocity;  };
+    RDouble * GetNewFaceVelocityX() { return newFaceVelocityX; }
+    RDouble * GetNewFaceVelocityY() { return newFaceVelocityY; }
+    RDouble * GetNewFaceVelocityZ() { return newFaceVelocityZ; }
+    RDouble * GetNewFaceNormalVelocity() { return newFaceNormalVelocity; }
 public:
     void ComputeMassCharacterOfObject();
     void AllocateMetrics   ();
@@ -152,7 +152,7 @@ protected:
     void ComputeCellCenterVol3DNew();
 
 public:
-    void SkipReadLayoutFile( fstream & file, int targetZone );
+    void SkipReadLayoutFile(fstream &file, int targetZone);
     void ReadNewCoordinate();
     void UpdateGridNode();
 public:
@@ -163,11 +163,11 @@ public:
     void ReadMovingGrid();
 
     void UpdateOldCellVolume();
-    void ConvergenceNorm( FieldProxy * q1Proxy, FieldProxy * q0Proxy, int numberOfEquations, RFloat & norm );
+    void ConvergenceNorm(FieldProxy *q1Proxy, FieldProxy *q0Proxy, int numberOfEquations, RFloat &norm);
 };
 
-RDouble ComputeVolume4P( RDouble x1, RDouble y1, RDouble z1, RDouble x2, RDouble y2, RDouble z2, RDouble x3, RDouble y3, RDouble z3, RDouble x4, RDouble y4, RDouble z4 );
+RDouble ComputeVolume4P(RDouble x1, RDouble y1, RDouble z1, RDouble x2, RDouble y2, RDouble z2, RDouble x3, RDouble y3, RDouble z3, RDouble x4, RDouble y4, RDouble z4);
 
-bool IsNotAllocated(void* pointer);
+bool IsNotAllocated(void *pointer);
 
 }

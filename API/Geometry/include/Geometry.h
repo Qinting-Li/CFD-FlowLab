@@ -26,15 +26,15 @@ namespace PHSPACE
 class PHGeometry
 {
 private:
-	vector < Grid * > *grids;
+    vector < Grid * > *grids;
 public:
-	PHGeometry(vector < Grid * > *grids);
-	~PHGeometry();
+    PHGeometry(vector < Grid * > *grids);
+    ~PHGeometry();
 public:
-	Grid * GetGrid(int level = 0);
-	int GetNumberOfMultiGrid() const { return static_cast<int>(grids->size()); };
-	void AddGrid(Grid *grid);
-	vector < Grid * > *GetVectorGrid();
+    Grid * GetGrid(int level = 0);
+    int GetNumberOfMultiGrid() const { return static_cast<int>(grids->size()); };
+    void AddGrid(Grid *grid);
+    vector < Grid * > *GetVectorGrid();
 };
 
 }

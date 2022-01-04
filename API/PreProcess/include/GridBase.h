@@ -30,7 +30,7 @@ namespace PHSPACE
 class CGNSRawCoor
 {
 public:
-    void *GetCoor(int icoor) { return coor[icoor]; };
+    void * GetCoor(int icoor) { return coor[icoor]; }
 private:
     cgsize_t nTotalNode;
     DataType_t *type;
@@ -57,12 +57,12 @@ private:
 public:
     cgsize_t GetNTotalNode() const { return nTotalNode; }
     void SetNTotalNode(cgsize_t nTotalNode) { this->nTotalNode = nTotalNode; }
-    RDouble *GetX() const { return x; }
-    RDouble *GetY() const { return y; }
-    RDouble *GetZ() const { return z; }
-    void SetX(RDouble *x) { this->x = x; };
-    void SetY(RDouble *y) { this->y = y; };
-    void SetZ(RDouble *z) { this->z = z; };
+    RDouble * GetX() const { return x; }
+    RDouble * GetY() const { return y; }
+    RDouble * GetZ() const { return z; }
+    void SetX(RDouble *x) { this->x = x; }
+    void SetY(RDouble *y) { this->y = y; }
+    void SetZ(RDouble *z) { this->z = z; }
 };
 
 class MultiIndex
@@ -92,8 +92,8 @@ private:
     int *facept_num;
     int **face_id;
 public:
-    int **GetFaceID() const { return face_id; }
-    int *GetFacePointNumber() const { return facept_num; }
+    int ** GetFaceID() const { return face_id; }
+    int * GetFacePointNumber() const { return facept_num; }
     int GetFaceNumber() const { return face_num; }
 public:
     void Init(int elem_type);
@@ -109,8 +109,8 @@ private:
     CElemFace *elementface;
     cgsize_t *elementpoint;
 public:
-    cgsize_t *GetElementPoint() const { return elementpoint; }
-    CElemFace *GetElementFace() const { return elementface; }
+    cgsize_t * GetElementPoint() const { return elementpoint; }
+    CElemFace * GetElementFace() const { return elementface; }
 private:
     void InitElementFace();
     void InitElementPoint();
@@ -168,31 +168,31 @@ public:
     cgsize_t ** GetBoundaryElementConnectionList() const { return bc_conn_list; }
     void SetBoundaryElementConnectionList(cgsize_t **bc_conn_list) { this->bc_conn_list = bc_conn_list; }
 
-    int * GetBCType() const { return bc_type; };
-    void SetBCType(int *bc_type) { this->bc_type = bc_type; };
+    int * GetBCType() const { return bc_type; }
+    void SetBCType(int *bc_type) { this->bc_type = bc_type; }
 
-    int * GetBoundaryGridLocation() const { return bc_grid_location; };
-    void SetBoundaryGridLocation(int *bc_grid_location) { this->bc_grid_location = bc_grid_location; };
+    int * GetBoundaryGridLocation() const { return bc_grid_location; }
+    void SetBoundaryGridLocation(int *bc_grid_location) { this->bc_grid_location = bc_grid_location; }
 
-    int * GetBoundaryElementType() const { return bc_elem_set_type; };
-    void SetBoundaryElementType(int *bc_elem_set_type) { this->bc_elem_set_type = bc_elem_set_type; };
+    int * GetBoundaryElementType() const { return bc_elem_set_type; }
+    void SetBoundaryElementType(int *bc_elem_set_type) { this->bc_elem_set_type = bc_elem_set_type; }
 
-    int * GetNumberOfBCElements() const { return nBCElem; };
-    void SetNumberOfBCElements(int *nBCElem) { this->nBCElem = nBCElem; };
+    int * GetNumberOfBCElements() const { return nBCElem; }
+    void SetNumberOfBCElements(int *nBCElem) { this->nBCElem = nBCElem; }
 
-    cgsize_t ** GetElementConnectionList() const { return conn_list; };
-    cgsize_t ** GetMixedConnectionIndex() const { return mixed_conn_index; };
-    int GetNumberOfSections() const { return nSections; };
-    void SetNumberOfSections(int nSections) { this->nSections = nSections; };
+    cgsize_t ** GetElementConnectionList() const { return conn_list; }
+    cgsize_t ** GetMixedConnectionIndex() const { return mixed_conn_index; }
+    int GetNumberOfSections() const { return nSections; }
+    void SetNumberOfSections(int nSections) { this->nSections = nSections; }
 
-    int GetNumberOfBCRegions() const { return nBCRegions; };
-    void SetNumberOfBCRegions(int nBCRegions) { this->nBCRegions = nBCRegions; };
+    int GetNumberOfBCRegions() const { return nBCRegions; }
+    void SetNumberOfBCRegions(int nBCRegions) { this->nBCRegions = nBCRegions; }
 
-    cgsize_t * GetIndexOfStart() const { return istart; };
-    cgsize_t * GetIndexOfEnd() const { return iend; };
-    cgsize_t * GetElementDataSize() const { return ElementDataSize; };
+    cgsize_t * GetIndexOfStart() const { return istart; }
+    cgsize_t * GetIndexOfEnd() const { return iend; }
+    cgsize_t * GetElementDataSize() const { return ElementDataSize; }
 
-    int * GetElementType() const { return elem_type; };
+    int * GetElementType() const { return elem_type; }
 public:
     void CreateElement(int nSections);
     void CreateBC(int nBCRegions);
@@ -296,7 +296,7 @@ public:
 
 private:
     cgsize_t nTotalNode, nTotalCell, nBoundFace, nTotalFace;
-    set<MultiIndex> * faceset;
+    set<MultiIndex> *faceset;
     vector<int> *face_location;
     vector<CGNS_BCFace *> *bcFace;
     vector<cgsize_t> *left_cell_of_face, *right_cell_of_face;
@@ -319,12 +319,12 @@ public:
     CGNSFactory(int nBlocks);
     ~CGNSFactory();
 public:
-    Base_Grid_Conn **GetBaseGridConnection() const { return base_conn; }
-    Base_Grid_Conn *GetBaseGridConnection(int izone) const { return base_conn[izone]; }
-    BaseElement *GetBaseElement() const { return base_elem; }
-    BaseBCType *GetBaseBCType() const { return fantasy_bc; }
-    RawGrid  *GetRawGrid(int izone) { return rawgrid[izone]; }
-    CGNSBase *GetCGNSBase(int izone = 0) { return base_cgns[izone]; }
+    Base_Grid_Conn ** GetBaseGridConnection() const { return base_conn; }
+    Base_Grid_Conn * GetBaseGridConnection(int izone) const { return base_conn[izone]; }
+    BaseElement * GetBaseElement() const { return base_elem; }
+    BaseBCType * GetBaseBCType() const { return fantasy_bc; }
+    RawGrid  * GetRawGrid(int izone) { return rawgrid[izone]; }
+    CGNSBase * GetCGNSBase(int izone = 0) { return base_cgns[izone]; }
     int GetNumberofBlocks() const { return nBlocks; }
     void ConvertGrid2Fantasy();
     void DumpSelfDefinePartInformation();

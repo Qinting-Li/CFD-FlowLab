@@ -2,7 +2,7 @@
 #include "HOGeometryStructure.h"
 #include "HOStandardElement.h"
 #include <vector>
-#include "BC_Unstruct.h"
+#include "Geo_UnstructBC.h"
 #include "HOSolverUnstructParam.h"
 
 using namespace std;
@@ -228,9 +228,9 @@ void HighOrderCellSol::ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatri
 {
     //dxBasisFuncCellIntegration;
     RDouble oneDLenScal = 1.0/lenScaleOfCell;
-    RDouble dxdBasis[35];  //number=10:P2,number=20:P3
-    RDouble dydBasis[35];
-    RDouble dzdBasis[35];
+    RDouble dxdBasis[35] = {0};  //number=10:P2,number=20:P3
+    RDouble dydBasis[35] = {0};
+    RDouble dzdBasis[35] = {0};
 
     if(nPolySol == 0)
     {
@@ -512,10 +512,8 @@ void HighOrderFaceSol::ComputeMetricNormalsFace( int iGaussPoint, int iFaceVTKTy
 void HighOrderGrid::CopyGeometryInfoToHighOrderCell( UnstructGrid * grid )
 {
     int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
-    int nTotalNode = grid->GetNTotalNode();
 
     highOrderCells.resize(nTotal);
 
@@ -595,8 +593,8 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell( UnstructGrid * grid )
 
     //ghost cell value , we should attention parallel BC
     int       * left_cell_of_face   = grid->GetLeftCellOfFace();
-	int       * right_cell_of_face  = grid->GetRightCellOfFace();
-    BCRecord  ** bcr   = grid->GetBCRecord();
+    int       * right_cell_of_face  = grid->GetRightCellOfFace();
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
     int le, re, bcType;
     
     for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
@@ -634,8 +632,6 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell( UnstructGrid * grid )
 void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid * grid)
 {
     int nTotalFace = grid->GetNTotalFace();
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotalNode = grid->GetNTotalNode();
 
     highOrderFaces.resize(nTotalFace);
     int * pNodeNumberOfFaces = grid->GetNodeNumberOfEachFace();
@@ -728,7 +724,6 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
 {     
     UnstructGrid *grid = UnstructGridCast(grid_in);
     int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
@@ -739,9 +734,6 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
     RDouble * Ycc = grid->GetCellCenterY();
     RDouble * Zcc = grid->GetCellCenterZ();
     RDouble * vol = grid->GetCellVolume();
-
-    int * pNodeNumberOfCell = grid->GetNodeNumberOfEachCell();
-    int * pNodesOfCells = grid->GetCell2Node();
 
     int pMultiGridOrder = 0;                            //! @p_multigrid order
     unsigned long positionOfDof = 0;                    //! @the dof position of curret cell,using for
@@ -767,10 +759,6 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
 
     for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
     {
-        if( iCell==5866)
-        {
-            int i = 0;
-        }
 
         highOrderCellsSol[pMultiGridLevel][iCell].ID = iCell;
         highOrderCellsSol[pMultiGridLevel][iCell].nPolySol = dgSolOrder - pMultiGridLevel; //polynomial order
@@ -822,7 +810,6 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
         RDouble * gradXiShapeFunction;
         RDouble * gradEtShapeFunction;
         RDouble * gradZtShapeFunction;
-        RDouble Jacob = 0.0, wight = 0.0;
         for( int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
         {
             gradXiShapeFunction = standardCellElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
@@ -831,7 +818,7 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
             highOrderCellsSol[pMultiGridLevel][iCell].ComputeJacobianDeterminant( iGaussPoint, iCellVTKType, standardCellElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ,
                 gradXiShapeFunction, gradEtShapeFunction, gradZtShapeFunction );
         }
-        const RDouble *weightCoeff;
+        const RDouble *weightCoeff = 0;
         
         if ( pMultiGridLevel == 0 )
         {
@@ -858,11 +845,6 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
             highOrderCells[iCell].centerCoord[2] = Zcc[iCell];
 
             highOrderCells[iCell].lenScale = pow(abs(highOrderCells[iCell].volume), 1.0/3.0);
-        }
-
-        if( vol[iCell] < 0 )
-        {
-            int i = 0;
         }
 
         //2:compute original basis function
@@ -956,7 +938,6 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
     }
 
     //HighOrderCellµÄtype
-    int standardElementType = 0;
     for ( int iCell = 0; iCell < nTotal; ++ iCell )
     {
         //! Determine the standardElementType, pMultiGrid
@@ -987,14 +968,14 @@ void HighOrderGrid::InitHighOrderCellSol( UnstructGrid *grid_in, int dgSolOrder,
         }
     }
 
-    if( viscousType == 1 )
+    if( viscousType == LAMINAR )
     {
         for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
         {
             highOrderCellsSol[pMultiGridLevel][iCell].visl.resize(highOrderCellsSol[pMultiGridLevel][iCell].integNumberOfGaussPoint);
         }
     }
-    else if( viscousType > 1 )
+    else if( viscousType > LAMINAR )
     {
         for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
         {
@@ -1020,25 +1001,20 @@ void HighOrderGrid::InitHighOrderFaceSol( UnstructGrid * grid, int dgSolOrder, i
     const RDouble *Xcc = grid->GetCellCenterX();
     const RDouble *Ycc = grid->GetCellCenterY();
     const RDouble *Zcc = grid->GetCellCenterZ();
-    const RDouble *area = grid->GetFaceArea();
-    const RDouble *xfn = grid->GetFaceNormalX();
-    const RDouble *yfn = grid->GetFaceNormalY();
-    const RDouble *zfn = grid->GetFaceNormalZ();
-    BCRecord  **bcr = grid->GetBCRecord();
+
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
 
     int * leftCellOfFace = grid->GetLeftCellOfFace();
     int * rightCellOfFace = grid->GetRightCellOfFace();
 
-    int pMultiGridOrder = 0;                            //! @p_multigrid order
     unsigned long positionOfDof = 0;                    //! @the dof position of curret cell,using for 
-    unsigned short int elementNumberOfOrth = 0;         //! @the number of orth matirx
     unsigned short int integNumberOfGauss = 0; 
     unsigned short int accuracyOfIntigration = 0;       //! @the face integation accuracy
     unsigned short int iFaceVTKType = 0;
     unsigned short int iStandElemIndex = 0;             //! @the type of face
     unsigned short int nFaceNodes = 0;
     unsigned short int leftCell = 0, rightCell = 0;
-    unsigned short int dofOfLeftCell = 0, dofOfRightCell = 0, dofOfFace = 0;
+    unsigned short int dofOfLeftCell = 0, dofOfRightCell = 0;
     unsigned short int nPloyOfLeftCell = 0, nPloyOfRightCell = 0;
     RDouble lenScaleOfLeftCell = 0.0, lenScaleOfRightCell = 0.0;
     RDouble *leftOrthMatrix, *rightOrthMatrix; 
@@ -1132,8 +1108,6 @@ void HighOrderGrid::InitHighOrderFaceSol( UnstructGrid * grid, int dgSolOrder, i
             RDouble * gradXiShapeFunction;
             RDouble * gradEtShapeFunction;
 
-            RDouble Jacob = 0.0, wight = 0.0;
-
             for ( int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint )
             {
                 gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration( iGaussPoint );
@@ -1214,7 +1188,6 @@ void HighOrderGrid::InitHighOrderFaceSol( UnstructGrid * grid, int dgSolOrder, i
             RDouble * gradXiShapeFunction;
             RDouble * gradEtShapeFunction;
 
-            RDouble Jacob = 0.0, wight = 0.0;
             for ( int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint )
             {
                 gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
@@ -1302,7 +1275,6 @@ void HighOrderGrid::InitHighOrderFaceSol( UnstructGrid * grid, int dgSolOrder, i
         RDouble *gradXiShapeFunction;
         RDouble *gradEtShapeFunction;
 
-        RDouble Jacob = 0.0,wight = 0.0;
         for ( int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint )
         { 
             gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
@@ -1319,7 +1291,6 @@ void HighOrderGrid::InitHighOrderFaceSol( UnstructGrid * grid, int dgSolOrder, i
     totalFaceGaussPoint[pMultiGrid] = pTotalGaussPoint;
 
     //HighOrderFaceµÄstandardFaceElements type
-    int standardElementType = 0;
     for ( int iFace = 0; iFace < nTotalFace; ++ iFace )
     {
         //! Determine the standardElementType, pMultiGrid
@@ -1365,14 +1336,14 @@ void HighOrderGrid::InitHighOrderFaceSol( UnstructGrid * grid, int dgSolOrder, i
         }
     }
 
-    if( viscousType == 1 )
+    if( viscousType == LAMINAR )
     {
         for ( int iFace = 0; iFace < nTotalFace; ++ iFace )
         {
             highOrderFacesSol[pMultiGrid][iFace].visl.resize(2 * highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint);
         }
     }
-    else if( viscousType > 1 )
+    else if( viscousType > LAMINAR )
     {
         for ( int iFace = 0; iFace < nTotalFace; ++ iFace )
         {
@@ -1385,9 +1356,6 @@ void HighOrderGrid::InitHighOrderFaceSol( UnstructGrid * grid, int dgSolOrder, i
 void HighOrderGrid::InitDofOfCell( UnstructGrid * grid, vector < RDouble > & conserValue, int neqn )
 {
     int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotal = nTotalCell + nBoundFace;
     const RDouble *weightCoeff;
     RDouble dofQTmp[35], weigthMultJac = 0.0; //35------>P4
     RDouble volumTmp = 0.0;
@@ -1396,10 +1364,6 @@ void HighOrderGrid::InitDofOfCell( UnstructGrid * grid, vector < RDouble > & con
     {
         for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
         {
-            if( iCell == 316 )
-            {
-                int i = 0;
-            }
 
             for ( int iDof = 0; iDof < highOrderCellsSol[0][iCell].nDOFsSol; ++ iDof )
             {
@@ -1453,7 +1417,6 @@ void HighOrderGrid::InitDofOfCell( UnstructGrid * grid, vector < RDouble > & con
 void HighOrderGrid::InitDofOfCellUnsteady( UnstructGrid * grid, vector < RDouble > & conserValue, int neqn )
 {
     int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
@@ -1528,7 +1491,6 @@ void HighOrderGrid::GetNumberOfDOFs( int nCells, int * dofsOfCells )
 void HighOrderGrid::GetQDOFs( const UnstructGrid * grid, int neqn, RDouble *** q )
 {
     int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 

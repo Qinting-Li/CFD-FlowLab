@@ -8,7 +8,7 @@ using namespace std;
 
 namespace PHSPACE
 {
-    KDHyperRect *CreatHyperRect(int dim, const RDouble *min, const RDouble *max)
+    KDHyperRect * CreatHyperRect(int dim, const RDouble *min, const RDouble *max)
     {
         size_t size = dim * sizeof(RDouble);
         KDHyperRect *rect = new KDHyperRect(dim);
@@ -18,12 +18,12 @@ namespace PHSPACE
         }
 
         rect->dim = dim;
-        if (!(rect->min = new RDouble[size]))
+        if (!(rect->min = new RDouble[dim]))
         {
             delete rect;
             return NULL;
         }
-        if (!(rect->max = new RDouble[size]))
+        if (!(rect->max = new RDouble[dim]))
         {
             delete rect->min;
             delete rect;
@@ -38,7 +38,7 @@ namespace PHSPACE
 
     void KDHyperRect::Extend(const RDouble *pos)
     {
-        for (int i=0; i<dim; ++i)
+        for (int i = 0; i < dim; ++ i)
         {
             if (pos[i] < min[i])
             {
@@ -55,7 +55,7 @@ namespace PHSPACE
     RDouble KDHyperRect::distSQ(const RDouble *pos)
     {
         RDouble result = 0.0;
-        for (int i=0; i<dim; ++i)
+        for (int i = 0; i < dim; ++ i)
         {
             if (pos[i] < min[i])
             {
@@ -70,7 +70,7 @@ namespace PHSPACE
         return result;
     }
 
-    KDTree *CreatKDTree(int k)
+    KDTree * CreatKDTree(int k)
     {
         KDTree *kdTree = new KDTree(k);
         if (!kdTree)
@@ -101,7 +101,7 @@ namespace PHSPACE
         }
     }
 
-    void KDTree::ClearRec(KDNode *node, void(*destr)(void*))
+    void KDTree::ClearRec(KDNode *node, void(*destr)(void *))
     {
         if (!node)
         {
@@ -118,8 +118,7 @@ namespace PHSPACE
         delete node;
     }
 
-
-    void KDTree::DestructorKDData( void(*destr)(void*))
+    void KDTree::DestructorKDData(void(*destr)(void *))
     {
         this->destr = destr;
     }
@@ -141,7 +140,7 @@ namespace PHSPACE
                 return -1;
             }
 
-            memcpy(node->pos, pos, dim*sizeof(node->pos));
+            memcpy(node->pos, pos, dim * sizeof(node->pos));
             node->data = data;
             node->dir = dir;
             node->left = NULL;
@@ -200,7 +199,7 @@ namespace PHSPACE
         return 0;
     }
 
-    KDHyperRect *DuplicateHyperRect(const KDHyperRect *rect)
+    KDHyperRect * DuplicateHyperRect(const KDHyperRect *rect)
     {
         return CreatHyperRect(rect->dim, rect->min, rect->max);
     };
@@ -214,13 +213,13 @@ namespace PHSPACE
 
         RDouble distSQ = 0.0;
         int addedRes = 0;
-        for (int i=0; i<dim; i++)
+        for (int i = 0; i < dim; i ++)
         {
             distSQ += SQ(node->pos[i] - pos[i]);
         }
         if (distSQ <= SQ(range))
         {
-            if(ListInsert(list, node, ordered?distSQ:-1.0) == -1)
+            if (ListInsert(list, node, ordered ? distSQ: -1.0) == -1)
             {
                 return -1;
             }
@@ -295,7 +294,7 @@ namespace PHSPACE
         }
 
         distSQ = 0.0;
-        for (int i=0; i<rect->dim; ++i)
+        for (int i = 0; i < rect->dim; ++ i)
         {
             distSQ += SQ(node->pos[i] - pos[i]);
         }
@@ -315,10 +314,9 @@ namespace PHSPACE
             }
             *fatherHyperRectCoord = dummy;
         }
-
     }
 
-    KDRes *KDNearest(KDTree *kdTree, const RDouble *pos)
+    KDRes * KDNearest(KDTree *kdTree, const RDouble *pos)
     {
         KDHyperRect *rect;
         KDNode *result;
@@ -406,7 +404,7 @@ namespace PHSPACE
 
     }
 
-    KDRes *NearestRange(KDTree *kdTree, const RDouble *pos, RDouble range)
+    KDRes * NearestRange(KDTree *kdTree, const RDouble *pos, RDouble range)
     {
         KDRes *rset = new KDRes;
         if (!rset)

@@ -35,7 +35,18 @@ inline void CFDSolver::SetPostVisualization(Post_Visual *postVisualization)
 	this->postVisualization = postVisualization;
 }
 
-inline Post_Visual * CFDSolver::GetPostVisualization()
+inline Post_Visual* CFDSolver::GetPostVisualization()
 {
 	return this->postVisualization;
 }
+
+inline void CFDSolver::SetPostVisualizationWall(Post_VisualWall *postVisualization_in)
+{
+    this->postVisualWall = postVisualization_in;
+}
+
+inline Post_VisualWall* CFDSolver::GetPostVisualizationWall()
+{
+    return this->postVisualWall;
+}
+

@@ -11,8 +11,8 @@ class GridTranslator
 private:
     int numberOfZones;
     int codeOfOversetGrid;
-    vector<StructGrid *> * gridGroup;
-    vector<StructFace *> * structFaceGroup;
+    vector<StructGrid *> *gridGroup;
+    vector<StructFace *> *structFaceGroup;
 public:
      GridTranslator();
      GridTranslator(Grid **&strgrids, int &nBlocks);
@@ -24,7 +24,6 @@ private:
     void ReadGridgenCoordinateFile();
     void ReadGridgenBoundaryFile();
     void ProcessBoundaryCondition();
-    void ProcessOversetGrid();
     void GenerateStructFaceGroup();
     void ColorateStructFaceGroup();
     void CollectInterfaceInformation();

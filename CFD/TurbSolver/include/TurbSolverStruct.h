@@ -18,7 +18,7 @@
 
 namespace PHSPACE
 {
-class BCRegion;
+class StructBC;
 class Param_TurbSolverStruct;
 
 class TurbSolverStr : public TurbSolver
@@ -26,6 +26,7 @@ class TurbSolverStr : public TurbSolver
 private:
     //! Length scale of XXDES, such as DES/DDES/IDDES.
     RDouble3D *DESLength;
+    RDouble3D *SSTLength;
 
 public:
     TurbSolverStr();
@@ -156,7 +157,7 @@ public:
 
     //! implement: to put the boundary data to DataContainer for parallel communication, called by function UploadInterfaceData.
     //! @param[in ]: actkey contains the control information for parallel communication.
-    void UploadInterfaceValue(ActionKey *actkey);
+    void UploadInterfaceValue(ActionKey *actkey){};
 
     //! Interface: to get the boundary data from DataContainer for parallel communication.
     //! @param[in ]: actkey contains the control information for parallel communication.
@@ -164,7 +165,7 @@ public:
 
     //! implement: to get the boundary data from DataContainer for parallel communication, called by function DownloadInterfaceData.
     //! @param[in ]: actkey contains the control information for parallel communication.
-    void DownloadInterfaceValue(ActionKey *actkey);
+    void DownloadInterfaceValue(ActionKey *actkey){};
 
     //! Implement: to compress turbulent dq data from grid to date dataContainer.
     void CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
@@ -172,9 +173,9 @@ public:
 
     //! Todo: overset information communication hasn't carried out yet.
     //! @param[in ]: actkey contains the control information for parallel communication.
-    void UploadOversetData( ActionKey *actkey ){ };
+    void UploadOversetData(ActionKey *actkey);
 
-    void DownloadOversetData( ActionKey *actkey ){ };
+    void DownloadOversetData(ActionKey *actkey);
 
     //! To set all of the value of the turbulent field proxy equal to the input value
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
@@ -278,41 +279,41 @@ private:
 
     //! To set the inflow boundary condition by setting the flow field value equal to the far field value.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: BCRegion denotes the current boundary condition region which need to be set.
-    void InFlowBC  (Grid *gridIn, BCRegion *BCRegion);
+    //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
+    void InFlowBC  (Grid *gridIn, StructBC *structBC);
 
     //! To set the outflow boundary condition by 2nd order interpolation.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: BCRegion denotes the current boundary condition region which need to be set.
-    void OutFlowBC (Grid *gridIn, BCRegion *BCRegion);
+    //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
+    void OutFlowBC (Grid *gridIn, StructBC *structBC);
 
     //! To set the symmetry boundary condition by 1st order interpolation.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: BCRegion denotes the current boundary condition region which need to be set.
-    void SymmetryBC(Grid *gridIn, BCRegion *BCRegion);
+    //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
+    void SymmetryBC(Grid *gridIn, StructBC *structBC);
 
     //! To set the viscid wall boundary condition by setting the turbulent variables equal to zero or other specific value.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: BCRegion denotes the current boundary condition region which need to be set.
-    void VisWall(Grid *gridIn, BCRegion *BCRegion);
+    //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
+    void VisWall(Grid *gridIn, StructBC *structBC);
 
-    void VisWallWithWallFunctionStandard(Grid* gridIn, BCRegion* BCRegion);
-    void VisWallWithWallFunctionPAB3D(Grid* gridIn, BCRegion* BCRegion);
+    void VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *structBC);
+    void VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *structBC);
 
     //! To set the farfield boundary condition according to riemann method.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: BCRegion denotes the current boundary condition region which need to be set.
-    void FarFieldBC(Grid *gridIn, BCRegion *BCRegion);
+    //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
+    void FarFieldBC(Grid *gridIn, StructBC *structBC);
 
     //! To implement the standard wall function while y+ isn't meet the need.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: BCRegion denotes the current boundary condition region which need to be set.
-    void WallFunctionStandard(Grid *gridIn, BCRegion *BCRegion, int is, int js, int ks, int it, int jt, int kt, int i, int j, int k);
+    //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
+    void WallFunctionStandard(Grid *gridIn, StructBC *structBC, int is, int js, int ks, int it, int jt, int kt, int i, int j, int k);
 
     //! To implement the Pab3D wall function while y+ isn't meet the need.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: BCRegion denotes the current boundary condition region which need to be set.
-    void WallFunctionPab3D(Grid *gridIn, BCRegion *BCRegion, int is, int js, int ks, int it, int jt, int kt, int i, int j, int k);
+    //! @param[in ]: structBC denotes the current boundary condition region which need to be set.
+    void WallFunctionPab3D(Grid *gridIn, StructBC *structBC, int is, int js, int ks, int it, int jt, int kt, int i, int j, int k);
 
     //! To obtain the turbulent residual according to the right hand side.
     //! @param[in out ]: gridIn denotes the current computational regions of the grids, in which turbulent residual are stored.
@@ -356,12 +357,11 @@ private:
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void DualTimeSource(Grid *gridIn);
 
-    //! To update the unsteady turbulent flow field variables such as qTurbulent, residual, volume.
+    //! To update the unsteady turbulent flow field variables such as qTurbulence, residual, volume.
     //! q(n+1) = q(n); q(n) = q(n-1)..
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void UpdateUnsteadyFlow(Grid *gridIn);
 
-    //! TODO
     RDouble UnsteadyConvergence(Grid *gridIn);
 
     //! Interface: to get the turbulent spectum.
@@ -422,30 +422,59 @@ private:
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ComputeLengthScaleofOneEquationModel(Grid *gridIn);
 
+    //! Interface: To get the length scale for SST-based DES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeLengthScaleofTwoEquationModel(Grid *gridIn);
+
     //! Implement: To get the length scale for standard DES simulation.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ComputeDESLength(Grid *gridIn);
+
+    //! Implement: To get the length scale for SST DES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeDESLengthSST(Grid *gridIn);
 
     //! Implement: To get the length scale for standard DDES simulation.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ComputeDDESLength(Grid *gridIn);
 
+    //! Implement: To get the length scale for SST DDES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeDDESLengthSST(Grid *gridIn);
+
     //! Implement: To get the length scale for standard IDDES simulation.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ComputeIDDESLength(Grid *gridIn);
+
+    //! Implement: To get the length scale for SST IDDES simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeIDDESLengthSST(Grid *gridIn);
+
+    //! Implement: To get the length scale for SST simulation.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    void ComputeSSTLength(Grid *gridIn);
 
     //! To get the length scale for one equation model turbulent simulation.
     //! With DES: DES length scale.
     //! Without DES: wall diatance.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     //! @return: the lenth scale for turbulent simulation.
-    RDouble3D *GetLengthScale(Grid *gridIn);
+    RDouble3D * GetLengthScale(Grid *gridIn);
 
-    RDouble3D *GetDESLength() { return this->DESLength;}
-    void SetDESLength(RDouble3D *length) {this->DESLength = length;}
+    //! To get the length scale for SST model turbulent simulation.
+    //! With DES: DES length scale.
+    //! Without DES: sqrt(ke) / (beta * kw).
+    //! @return: the lenth scale for SST turbulent simulation.
+    RDouble3D * GetLengthScaleSST();
+
+    RDouble3D * GetDESLength() { return this->DESLength; }
+    RDouble3D * GetSSTLength() { return this->SSTLength; }
+    void SetDESLength(RDouble3D *length) { this->DESLength = length; }
+    void SetSSTLength(RDouble3D *length) { this->SSTLength = length; }
 };
 
 void ComputeLESLengthofSA(Grid *gridIn, RDouble3D *LESLength, RDouble3D *lowReynoldsNumberCorrection, int DESType);
+void ComputeLESLengthofSST(Grid *gridIn, RDouble3D *LESLength, int DESType);
 void ComputeLowReynoldsNumberCorrection(Grid *gridIn, RDouble3D *lowReynoldsNumberCorrection);
 
 }

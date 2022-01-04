@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <stddef.h>     // ptrdiff_t
+#include <stddef.h>    // ptrdiff_t
 
 namespace PHSPACE
 {
@@ -67,7 +67,7 @@ protected:
         references_ = 0;
     }
 
-    MemoryBlock(size_t length, T_type* data)
+    MemoryBlock(size_t length, T_type *data)
     {
         length_ = length;
         data_   = data;
@@ -77,7 +77,7 @@ protected:
 
     virtual ~MemoryBlock()
     {
-        if (dataBlockAddress_) 
+        if (dataBlockAddress_)
         {
             deallocate();
         }
@@ -88,27 +88,27 @@ protected:
         ++ references_;
     }
 
-    T_type * data() 
+    T_type * data()
     { 
-        return data_; 
+        return data_;
     }
 
     const T_type * data() const
     { 
-        return data_; 
+        return data_;
     }
 
-    T_type*& dataBlockAddress() 
+    T_type *& dataBlockAddress()
     { 
-        return dataBlockAddress_; 
+        return dataBlockAddress_;
     }
 
-    size_t        length()    const
+    size_t length() const
     { 
-        return length_; 
+        return length_;
     }
 
-    int           removeReference()
+    int removeReference()
     {
         int refcount = -- references_;
         return refcount;
@@ -124,27 +124,27 @@ protected:
     inline void allocate(size_t length);
     void deallocate();
 
-private:   //! Disabled member functions.
-    MemoryBlock(const MemoryBlock<T_type>&)
+private:    //! Disabled member functions.
+    MemoryBlock(const MemoryBlock<T_type> &)
     { }
 
-    void operator=(const MemoryBlock<T_type>&)
+    void operator=(const MemoryBlock<T_type> &)
     { }
 
-private:   //! Data members.
-    T_type *              data_;
-    T_type *              dataBlockAddress_;
+private:    //! Data members.
+    T_type *data_;
+    T_type *dataBlockAddress_;
 
     volatile int references_;
-    size_t  length_;
+    size_t length_;
 };
 
 template<typename P_type>
 class UnownedMemoryBlock : public MemoryBlock<P_type>
 {
 public:
-    UnownedMemoryBlock(size_t length, P_type* data)
-        : MemoryBlock<P_type>(length,data)
+    UnownedMemoryBlock(size_t length, P_type *data)
+        : MemoryBlock<P_type>(length, data)
     {
         //! This ensures that MemoryBlock destructor will not 
         //! attempt to delete data.
@@ -164,7 +164,7 @@ public:
     { 
         //! This ensures that the delete operator will not be invoked
         //! on an instance of NullMemoryBlock in removeReference().
-        MemoryBlock<P_type>::addReference();        
+        MemoryBlock<P_type>::addReference();
     }
 
     virtual ~NullMemoryBlock()  
@@ -177,10 +177,10 @@ class MemoryBlockReference
 public:
     typedef P_type T_type;
 protected:
-    T_type *  data_;
+    T_type *data_;
 
 private:
-    MemoryBlock<T_type>* block_;
+    MemoryBlock<T_type> *block_;
     static NullMemoryBlock<T_type> nullBlock_;
 public:
     MemoryBlockReference()
@@ -190,14 +190,14 @@ public:
         data_ = 0;
     }
 
-    MemoryBlockReference(MemoryBlockReference<T_type>& ref, size_t offset=0)
+    MemoryBlockReference(MemoryBlockReference<T_type> &ref, size_t offset = 0)
     {
         block_ = ref.block_;
         block_->addReference();
         data_ = ref.data_ + offset;
     }
 
-    MemoryBlockReference(size_t length, T_type* data, 
+    MemoryBlockReference(size_t length, T_type *data, 
         preexistingMemoryPolicy deletionPolicy)
     {
         //! Create a memory block using already allocated memory. 
@@ -207,12 +207,11 @@ public:
         //! this is treated as neverDeleteData; the leaf class (e.g. Array)
         //! must duplicate the data.
 
-        if (    (deletionPolicy == neverDeleteData ) 
-                || (deletionPolicy == duplicateData   )  )
+        if ((deletionPolicy == neverDeleteData) || (deletionPolicy == duplicateData))
         {
             block_ = new UnownedMemoryBlock<T_type>(length, data);
         }
-        else if ( deletionPolicy == deleteDataWhenDone )
+        else if (deletionPolicy == deleteDataWhenDone)
         {
             block_ = new MemoryBlock<T_type>(length, data);
         }
@@ -231,7 +230,7 @@ public:
     void blockRemoveReference()
     {
         int refcount = block_->removeReference();
-        if ( ( refcount == 0 ) && ( block_ != &nullBlock_ ) )
+        if ((refcount == 0) && (block_ != &nullBlock_))
         {
             delete block_;
         }
@@ -256,7 +255,7 @@ protected:
         data_ = 0;
     }
 
-    void changeBlock(MemoryBlockReference<T_type>& ref, size_t offset=0)
+    void changeBlock(MemoryBlockReference<T_type> &ref, size_t offset = 0)
     {
         blockRemoveReference();
         block_ = ref.block_;
@@ -272,7 +271,7 @@ protected:
         data_ = block_->data();
     }
 
-    void newBlock(size_t length, T_type* data, 
+    void newBlock(size_t length, T_type *data, 
         preexistingMemoryPolicy deletionPolicy)
     {
         //! Create a memory block using already allocated memory.
@@ -283,12 +282,11 @@ protected:
         //! must duplicate the data.
         blockRemoveReference();
 
-        if (    (deletionPolicy == neverDeleteData ) 
-                || (deletionPolicy == duplicateData   )  )
+        if ((deletionPolicy == neverDeleteData) || (deletionPolicy == duplicateData))
         {
             block_ = new UnownedMemoryBlock<T_type>(length, data);
         }
-        else if ( deletionPolicy == deleteDataWhenDone )
+        else if (deletionPolicy == deleteDataWhenDone)
         {
             block_ = new MemoryBlock<T_type>(length, data);
         }
@@ -297,9 +295,8 @@ protected:
         data_ = data;
     }
 
-
 private:
-    void operator=(const MemoryBlockReference<T_type>&)
+    void operator = (const MemoryBlockReference<T_type> &)
     { }
 };
 

@@ -1,6 +1,6 @@
 #include "NSSolverStructFD.h"
 #include "Glb_Dimension.h"
-#include "BC_Struct.h"
+#include "Geo_StructBC.h"
 #include "Param_NSSolverStruct.h"
 #include "TK_Exit.h"
 #include "FieldProxy.h"
@@ -57,7 +57,7 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
     grid->UpdateDataPtr("q"   , q);    //! Scalar flow field variable(rho/u/v/w/p).
     grid->UpdateDataPtr("q_FD", q_FD);    //! Scalar flow field variable(rho/u/v/w/p), only used for FD, 4 ghost layers.
     grid->UpdateDataPtr("res" , residual);    //! Residual or right-hand side.
-    grid->UpdateDataPtr("dt"  , dt);    //! Temperature different.
+    grid->UpdateDataPtr("dt"  , dt);    //! Time step.
     grid->UpdateDataPtr("gama", gama);    //! Ratio of specific heat coefficients at constant pressure and volume.
     grid->UpdateDataPtr("t"   , t);    //! Static temperature.
     grid->UpdateDataPtr("t_FD", t_FD);    //! Temperature field, only used for FD, 4 ghost layers.
@@ -103,10 +103,24 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         grid->UpdateDataPtr("res_unsteady_n1", res_unsteady_n1);
         grid->UpdateDataPtr("res_unsteady_n2", res_unsteady_n2);
         grid->UpdateDataPtr("res_unsteady_tmp", res_unsteady_tmp);
+
+        //! Statistical variables for unsteady simulation.
+        RDouble4D *qAverage = new RDouble4D(I, J, K, M, fortranArray);
+        *qAverage = 0.0;
+        grid->UpdateDataPtr("qAverage", qAverage);
+
+        //! Statistical Reynolds stress for unsteady simulation.
+        RDouble4D *tauAverage = new RDouble4D(I, J, K, Range(0, 5), fortranArray);
+        *tauAverage = 0.0;
+        grid->UpdateDataPtr("tauAverage", tauAverage);
+
+        RDouble4D *q2Average = new RDouble4D(I, J, K, Range(0, 5), fortranArray);
+        *q2Average = 0.0;
+        grid->UpdateDataPtr("q2Average", q2Average);
     }
     
     int viscousType = parameters->GetViscousType();
-    if (viscousType > 0)
+    if (viscousType > INVISCID)
     {
         RDouble3D *viscousLaminar = new RDouble3D(I, J, K, fortranArray);
         RDouble3D *viscousTurbulence = new RDouble3D(I, J, K, fortranArray);
@@ -123,7 +137,7 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
     }
 
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
-    if (iLES > 0)
+    if (iLES == LES_SOLVER)
     {
         RDouble3D *subgridScaleEnergy = new RDouble3D(I, J, K, fortranArray);
         grid->UpdateDataPtr("subgridScaleEnergy", subgridScaleEnergy);
@@ -182,24 +196,29 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         grid->UpdateDataPtr("dqdx_cc_ruvwpt", dqdx_cc_ruvwpt );    //! dqdx(q represents r/u/v/w/p/t) at cell center.
         grid->UpdateDataPtr("dqdy_cc_ruvwpt", dqdy_cc_ruvwpt );    //! dqdy(q represents r/u/v/w/p/t) at cell center.
         grid->UpdateDataPtr("dqdz_cc_ruvwpt", dqdz_cc_ruvwpt );    //! dqdz(q represents r/u/v/w/p/t) at cell center.
-    }    
-    int nWallBC, nMaxSurfaceCell;
+    }
+
     GetSurfaceCellNumber(gridIn, nWallBC, nMaxSurfaceCell);
-    RDouble2D *firstLayerHeight = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
+    RDouble2D *firstLayerHeight = NULL;
+    if (nWallBC > 0)
+    {
+        firstLayerHeight = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
+    }
     grid->UpdateDataPtr("firstLayerHeight", firstLayerHeight);
     ComputeFirstLayerGridHeight(gridIn, firstLayerHeight);
 
     RDouble Twall = parameters->GetWallTemperature();
-    if (Twall >= 0.0)
+    if (nWallBC > 0)
     {
         RDouble refTemperature = parameters->GetRefDimensionalTemperature();
         RDouble refT = Twall / refTemperature;
-        if (ABS(Twall) <= EPSILON)
+        if (Twall <= EPSILON)
         {
             refT = 1.0; //Radiation equilibrium temperature wall.
         }
 
         RDouble2D *temperatureWall = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
+
         //! Initialization with the freestream temperature.
         for (int iWall = 0; iWall < nWallBC; ++ iWall)
         {
@@ -219,13 +238,6 @@ void NSSolverStructFD::DeAllocateGlobalVar(Grid *gridIn)
     
     delete q_FD;
     delete t_FD;
-
-    //int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
-    //if(iLES > 0)
-    //{
-    //    RDouble3D *subgridScaleEnergy = reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("subgridScaleEnergy"));
-    //    delete subgridScaleEnergy;
-    //}
 }
 
 void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell)
@@ -233,14 +245,14 @@ void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell
     StructGrid *grid = StructGridCast(gridIn);
 
     //! Obtain the number of boundary condition regions.
-    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     nWall = 0;
     nCell = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        BCRegion *BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
-        int BCType = BCRegion->GetBCType();
+        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType))
         {
@@ -250,12 +262,12 @@ void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell
 
         //The following are surface boundary codes.
         int ist, ied, jst, jed, kst, ked;
-        BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+        structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
         int ni = ied - ist + 1;
         int nj = jed - jst + 1;
         int nk = ked - kst + 1;
-        RDouble nCurCell = MAX(MAX(ni * nk, nj * nk), ni * nj);
+        int nCurCell = MAX(MAX(ni * nk, nj * nk), ni * nj);
         nCell = MAX(nCurCell, nCell);
     }
 }
@@ -263,27 +275,22 @@ void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell
 void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firstLayerHeight)
 {
     StructGrid *grid = StructGridCast(gridIn);
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
 
     RDouble4D &faceNormalComponentX = *(grid->GetFaceNormalX());
     RDouble4D &faceNormalComponentY = *(grid->GetFaceNormalY());
     RDouble4D &faceNormalComponentZ = *(grid->GetFaceNormalZ());
-    RDouble4D &faceArea = *(grid->GetFaceArea());
-    RDouble3D &gridCellVolume = *(grid->GetCellVolume());
 
     using namespace IDX;
 
-    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
     //! Obtain the number of boundary condition regions.
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     int indexOfWall = 0, indexOfCell = 0;
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        BCRegion *BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
-        int BCType = BCRegion->GetBCType();
+        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType))
         {
@@ -291,11 +298,11 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
         }
         //The following are surface boundary codes.
         int ist, ied, jst, jed, kst, ked;
-        BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+        structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
         indexOfCell = 0;
-        int nSurface = BCRegion->GetFaceDirection() + 1;
-        int leftOrRightIndex = BCRegion->GetFaceLeftOrRightIndex();
+        int nSurface = structBC->GetFaceDirection() + 1;
+        int leftOrRightIndex = structBC->GetFaceLeftOrRightIndex();
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -303,7 +310,7 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
                 for (int i = ist; i <= ied; ++ i)
                 {
                     int iWall, jWall, kWall;
-                    BCRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+                    structBC->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
 
                     //! Obtain the centroid of the surface.
                     RDouble xCenterWall, yCenterWall, zCenterWall;
@@ -315,7 +322,6 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
                     RDouble normalComponetX = leftOrRightIndex * faceNormalComponentX(iWall, jWall, kWall, nSurface);
                     RDouble normalComponetY = leftOrRightIndex * faceNormalComponentY(iWall, jWall, kWall, nSurface);
                     RDouble normalComponetZ = leftOrRightIndex * faceNormalComponentZ(iWall, jWall, kWall, nSurface);
-                    RDouble surfaceArea = faceArea(iWall, jWall, kWall, nSurface);
 
                     #ifdef USE_ALTERNATIVE_CODE
                     RDouble cellVolume = gridCellVolume(iWall, jWall, kWall); //The volume of first cell.
@@ -332,7 +338,6 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
         }
         ++ indexOfWall; //Next surface regions.
     }
-
 }
 
 
@@ -634,15 +639,15 @@ void NSSolverStructFD::ObtainGradientCellCenter(Grid *gridIn)
         GetdqdkxietactaCellCenter(gridIn, nsurf);
     }
 
-	StructGrid *strgrid = StructGridCast(gridIn);
-	int ni = strgrid->GetNI();
-	int nj = strgrid->GetNJ();
+    StructGrid *strgrid = StructGridCast(gridIn);
+    int ni = strgrid->GetNI();
+    int nj = strgrid->GetNJ();
     int nk = strgrid->GetNK();
 
-	RDouble4D &xfv  = *(strgrid->GetFaceVectorX());
+    RDouble4D &xfv  = *(strgrid->GetFaceVectorX());
     RDouble4D &yfv  = *(strgrid->GetFaceVectorY());
     RDouble4D &zfv  = *(strgrid->GetFaceVectorZ());
-	RDouble3D &vol  = *(strgrid->GetCellVolume());  
+    RDouble3D &vol  = *(strgrid->GetCellVolume());  
 
     RDouble4D &dqdx = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterX"));
     RDouble4D &dqdy = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("gradUVWTCellCenterY"));
@@ -823,6 +828,10 @@ void NSSolverStructFD::CalPressureFactor(Grid *gridIn)
     //! Already solved in Controller::GetDependentVariablesforStructHighOrder().
 }
 
+void NSSolverStructFD::GetHeatTransferCoeff(Grid *gridIn)
+{
+}
+
 void NSSolverStructFD::ComputeViscousCoeff(Grid *gridIn)
 {
     //! Already solved in Controller::GetDependentVariablesforStructHighOrder().
@@ -848,12 +857,12 @@ void NSSolverStructFD::ObtainBoundaryValue(Grid *gridIn)
 
     using namespace PHENGLEI;
 
-    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        BCRegion *BCRegion = compositeBCRegion->GetBCRegion(iBCRegion);
-        int BCType = BCRegion->GetBCType();
+        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
 
         if (BCType < 0)
         {
@@ -863,36 +872,36 @@ void NSSolverStructFD::ObtainBoundaryValue(Grid *gridIn)
         {
             if (viscousType == INVISCID)
             {
-                SymmetryBC3D(grid, BCRegion);
+                SymmetryBC3D(grid, structBC);
             }
             else if (wallTemperature <= 0.0)
             {
-                ViscousAdiabaticWall(grid, BCRegion);
+                ViscousAdiabaticWall(grid, structBC);
             }
             else
             {
-                ViscousIsotropicWall(grid, BCRegion);
+                ViscousIsotropicWall(grid, structBC);
             }
         }
         else if (BCType == SYMMETRY)
         {
-            SymmetryBC3D(grid, BCRegion);
+            SymmetryBC3D(grid, structBC);
         }
         else if (BCType == FARFIELD)
         {
-            FarFieldRiemannInvariants(grid, BCRegion);            
+            FarFieldRiemannInvariants(grid, structBC);
         }
         else if (BCType == INFLOW)
         {
-            InFlowBC3D(grid, BCRegion);
+            InFlowBC3D(grid, structBC);
         }
         else if (BCType == OUTFLOW)
         {
-            OutFlowBC3D(grid, BCRegion);
+            OutFlowBC3D(grid, structBC);
         }
         else if (BCType == POLE || BCType/10 == POLE)
         {
-            OutFlowBC3D(grid, BCRegion);
+            OutFlowBC3D(grid, structBC);
         }
         else
         {
@@ -905,7 +914,7 @@ void NSSolverStructFD::ObtainBoundaryValue(Grid *gridIn)
     CornerPoint(grid);
 }
 
-void NSSolverStructFD::InFlowBC3D(Grid *gridIn, BCRegion *BCRegion)
+void NSSolverStructFD::InFlowBC3D(Grid *gridIn, StructBC *structBC)
 {
     StructGrid *grid = StructGridCast(gridIn);
 
@@ -915,9 +924,9 @@ void NSSolverStructFD::InFlowBC3D(Grid *gridIn, BCRegion *BCRegion)
     RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
 
     int ist, ied, jst, jed, kst, ked;
-    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+    structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-    int *s_lr3d = BCRegion->GetFaceDirectionIndex();
+    int *s_lr3d = structBC->GetFaceDirectionIndex();
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
@@ -939,19 +948,15 @@ void NSSolverStructFD::InFlowBC3D(Grid *gridIn, BCRegion *BCRegion)
     }
 }
 
-void NSSolverStructFD::OutFlowBC3D(Grid *gridIn, BCRegion *BCRegion)
+void NSSolverStructFD::OutFlowBC3D(Grid *gridIn, StructBC *structBC)
 {
     StructGrid *grid = StructGridCast(gridIn);
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
-    
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
 
     int ist, ied, jst, jed, kst, ked;
-    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+    structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-    int *s_lr3d = BCRegion->GetFaceDirectionIndex();    
+    int *s_lr3d = structBC->GetFaceDirectionIndex();    
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
@@ -973,7 +978,7 @@ void NSSolverStructFD::OutFlowBC3D(Grid *gridIn, BCRegion *BCRegion)
     }
 }
 
-void NSSolverStructFD::SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion)
+void NSSolverStructFD::SymmetryBC3D(Grid *gridIn, StructBC *structBC)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -987,10 +992,10 @@ void NSSolverStructFD::SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion)
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
 
     int ist, ied, jst, jed, kst, ked;
-    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+    structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-    int *s_lr3d = BCRegion->GetFaceDirectionIndex();
-    int iSurface = BCRegion->GetFaceDirection() + 1;
+    int *s_lr3d = structBC->GetFaceDirectionIndex();
+    int iSurface = structBC->GetFaceDirection() + 1;
 
     int id,jd,kd;
     GetBCFaceIDX(s_lr3d, id, jd, kd);
@@ -1040,7 +1045,7 @@ void NSSolverStructFD::SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion)
     }
 }
 
-void NSSolverStructFD::ViscousAdiabaticWall(Grid *gridIn, BCRegion *BCRegion)
+void NSSolverStructFD::ViscousAdiabaticWall(Grid *gridIn, StructBC *structBC)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -1050,9 +1055,9 @@ void NSSolverStructFD::ViscousAdiabaticWall(Grid *gridIn, BCRegion *BCRegion)
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
 
     int ist, ied, jst, jed, kst, ked;
-    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+    structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-    int *s_lr3d = BCRegion->GetFaceDirectionIndex();
+    int *s_lr3d = structBC->GetFaceDirectionIndex();
 
     using namespace IDX;
 
@@ -1091,7 +1096,7 @@ void NSSolverStructFD::ViscousAdiabaticWall(Grid *gridIn, BCRegion *BCRegion)
     }
 }
 
-void NSSolverStructFD::ViscousIsotropicWall(Grid *gridIn, BCRegion *BCRegion)
+void NSSolverStructFD::ViscousIsotropicWall(Grid *gridIn, StructBC *structBC)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -1106,9 +1111,9 @@ void NSSolverStructFD::ViscousIsotropicWall(Grid *gridIn, BCRegion *BCRegion)
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
 
     int ist, ied, jst, jed, kst, ked;
-    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+    structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-    int *s_lr3d = BCRegion->GetFaceDirectionIndex();
+    int *s_lr3d = structBC->GetFaceDirectionIndex();
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
     
@@ -1166,15 +1171,12 @@ void NSSolverStructFD::ViscousIsotropicWall(Grid *gridIn, BCRegion *BCRegion)
     }
 }
 
-void NSSolverStructFD::FarFieldRiemannInvariants(Grid *gridIn, BCRegion *BCRegion)
+void NSSolverStructFD::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC)
 {
     StructGrid *grid = StructGridCast(gridIn);
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
 
     int ist, ied, jst, jed, kst, ked;
-    BCRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);    
+    structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
     Param_NSSolverStruct *parameters = GetControlParameters();
 
@@ -1187,9 +1189,9 @@ void NSSolverStructFD::FarFieldRiemannInvariants(Grid *gridIn, BCRegion *BCRegio
     RDouble4D &yfn = * (grid->GetFaceNormalY());
     RDouble4D &zfn = * (grid->GetFaceNormalZ());
 
-    int iSurface    = BCRegion->GetFaceDirection() + 1;
-    int lr       = BCRegion->GetFaceLeftOrRightIndex();
-    int *s_lr3d = BCRegion->GetFaceDirectionIndex();
+    int iSurface = structBC->GetFaceDirection() + 1;
+    int lr       = structBC->GetFaceLeftOrRightIndex();
+    int *s_lr3d  = structBC->GetFaceDirectionIndex();
 
     int id, jd, kd;
     GetBCFaceIDX(s_lr3d, id, jd, kd);
@@ -1421,6 +1423,9 @@ void NSSolverStructFD::InitFlowAsRestart()
     residualn1 = 0.0;
     residualn2 = 0.0;
 
+    int nStatisticalStep = 0;
+    GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+
     //! Store the historical sum of InviscidFlux, ViscousFlux, et al., \n
     //! exclusive of DualTimeSourceFlux, used in UpdateUnsteadyFlow for the Rn in the dualtime method.
     RDouble4D &resTmp = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_tmp"));
@@ -1431,38 +1436,38 @@ void NSSolverStructFD::InitFlowAsRestart()
 void NSSolverStructFD::InitLocalMemory(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
-	int ni = grid->GetNI();
-	int nj = grid->GetNJ();
-	int nk = grid->GetNK();
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
     solvername        = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
     EPSILON           = GlobalDataBase::GetDoubleParaFromDB("str_highorder_interpolation_epsilon");
-	fluxname          = GlobalDataBase::GetStrParaFromDB("str_highorder_flux_name");
+    fluxname          = GlobalDataBase::GetStrParaFromDB("str_highorder_flux_name");
     gradient_method   = GlobalDataBase::GetStrParaFromDB("structhighordergradient");
-	
-	Range I(-1, ni + 1);
-	Range J(-1, nj + 1);
-	Range K(-1, nk + 1);
-	if (nk == 1) K.setRange(1, 1);
+    
+    Range I(-1, ni + 1);
+    Range J(-1, nj + 1);
+    Range K(-1, nk + 1);
+    if (nk == 1) K.setRange(1, 1);
 
     UVWTfaceIproxy = new FieldProxy();
     UVWTfaceJproxy = new FieldProxy();
     UVWTfaceKproxy = new FieldProxy();
-	UVWTfaceIproxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true); 
+    UVWTfaceIproxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true); 
     UVWTfaceJproxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true);
     UVWTfaceKproxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true);
 
-	dqdxFaceProxy = new FieldProxy();
+    dqdxFaceProxy = new FieldProxy();
     dqdyFaceProxy = new FieldProxy();
     dqdzFaceProxy = new FieldProxy();
-	dqdxFaceProxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true); 
+    dqdxFaceProxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true); 
     dqdyFaceProxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true);
-    dqdzFaceProxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true);	
+    dqdzFaceProxy->SetField_STR(new RDouble4D(I, J, K, Range(0, 3), fortranArray), true);
 
     Range I4(- 3, ni + 3);
-	Range J4(- 3, nj + 3);
-	Range K4(- 3, nk + 3);
-	if (nk == 1) K4.setRange(1, 1);
+    Range J4(- 3, nj + 3);
+    Range K4(- 3, nk + 3);
+    if (nk == 1) K4.setRange(1, 1);
     
     UVWTproxy = new FieldProxy();
     UVWTproxy->SetField_STR(new RDouble4D(I4, J4, K4, Range(0, 3), fortranArray), true);
@@ -1482,8 +1487,8 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
-	int nj = grid->GetNJ();
-	int nk = grid->GetNK();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
     string InterpolationType = GlobalDataBase::GetStrParaFromDB("str_highorder_interpolation_type");
 
@@ -1504,7 +1509,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
             int jst = 1 - jl1;
             int kst = 1 - kl1;
             int ied = ni - 1 + 2*il1;
-            int jed = nj - 1 + 2*jl1;	
+            int jed = nj - 1 + 2*jl1;
             int ked = nk - 1 + 2*kl1;
             if (nk == 1)
             {
@@ -1536,12 +1541,12 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
                         RDouble L  = LengthPlate_L[1] / Lengthbase;
                         RDouble R  = LengthPlate_L[2] / Lengthbase;
                         RDouble RR = LengthPlate_L[3] / Lengthbase;
-                        
+
                         RDouble weight[3];
                         weight[0] = (1.0 + 2.0 * RR) / (4.0 * (1.0 + L + LL) * (1.0 + L + LL + RR));
                         weight[2] = (1.0 + 2.0 * L) * (1.0 + 2.0 * L + 2.0 * LL) / (4.0 * (1.0 + L + RR) * (1.0 + L + LL + RR));
                         weight[1] = 1.0 - weight[0] - weight[2];
-                        
+
                         RDouble InterCoef0[3];
                         InterCoef0[0] = (1.0 + 2.0 * L) / (4.0 * LL * (L + LL));
                         InterCoef0[1] = - (1.0 + 2.0 * L + 2.0 * LL) / (4.0 * L * LL);
@@ -1803,8 +1808,8 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
             int ist = 1 - il1;
             int jst = 1 - jl1;
             int kst = 1 - kl1;
-            int ied = ni - 1 + 2*il1;	
-            int jed = nj - 1 + 2*jl1;	
+            int ied = ni - 1 + 2*il1;
+            int jed = nj - 1 + 2*jl1;
             int ked = nk - 1 + 2*kl1;
             
             if (nk == 1)
@@ -1832,7 +1837,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
 
 void NSSolverStructFD::InviscidFlux(Grid *gridIn)
 {
-	StructGrid * grid = StructGridCast(gridIn);
+    StructGrid * grid = StructGridCast(gridIn);
         
     total_negative = 0;
 
@@ -1841,8 +1846,8 @@ void NSSolverStructFD::InviscidFlux(Grid *gridIn)
     FieldProxy * fluxProxy = new FieldProxy();
 
     int nDim = GetDim();
-	for (int nsurf = 1; nsurf <= nDim; ++ nsurf)
-	{
+    for (int nsurf = 1; nsurf <= nDim; ++ nsurf)
+    {
         if (nsurf == 1)
         {
             qlProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1")));
@@ -1862,11 +1867,11 @@ void NSSolverStructFD::InviscidFlux(Grid *gridIn)
             fluxProxy->SetField_STR(reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxK")));
         }
 
-		GetFaceVariable_WCNS(grid, qlProxy, qrProxy, nsurf);
+        GetFaceVariable_WCNS(grid, qlProxy, qrProxy, nsurf);
         GetFaceVariableCorrectionAtPhysicalBoundary(grid, qlProxy, qrProxy, nsurf);
-		GetFaceInviscidFlux(grid, qlProxy, qrProxy, fluxProxy, nsurf);
-		FluxDifference(grid, fluxProxy, nsurf);
-	}
+        GetFaceInviscidFlux(grid, qlProxy, qrProxy, fluxProxy, nsurf);
+        FluxDifference(grid, fluxProxy, nsurf);
+    }
 
     /*if (total_negative > 0)
     {
@@ -1881,9 +1886,9 @@ void NSSolverStructFD::InviscidFlux(Grid *gridIn)
 void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int nsurf)
 {
     StructGrid * grid = StructGridCast(gridIn);
-	RDouble4D & q = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("q_FD"));
-	RDouble4D & ql = qlProxy->GetField_STR();
-	RDouble4D & qr = qrProxy->GetField_STR();
+    RDouble4D & q = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("q_FD"));
+    RDouble4D & ql = qlProxy->GetField_STR();
+    RDouble4D & qr = qrProxy->GetField_STR();
 
     Int1D *DiffOrder;
     if(nsurf == 1)
@@ -1899,9 +1904,9 @@ void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, F
         DiffOrder = grid->DiscretePrecisionCTA;
     }
 
-	int ni = grid->GetNI();
-	int nj = grid->GetNJ();
-	int nk = grid->GetNK();    	
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
     int il1, jl1, kl1;
     GetNsurfIndex(nsurf, il1, jl1, kl1);
@@ -1909,10 +1914,10 @@ void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, F
     int ist = 1 - il1;
     int jst = 1 - jl1;
     int kst = 1 - kl1;
-	int ied = ni - 1 + 2*il1;	
-	int jed = nj - 1 + 2*jl1;	
-	int ked = nk - 1 + 2*kl1;
-	if (nk == 1)
+    int ied = ni - 1 + 2*il1;
+    int jed = nj - 1 + 2*jl1;
+    int ked = nk - 1 + 2*kl1;
+    if (nk == 1)
     {
         kst = 1;
         ked = 1;
@@ -1980,7 +1985,7 @@ void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, F
 
 void NSSolverStructFD::GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int nsurf)
 {
-	StructGrid *grid = StructGridCast(gridIn);
+    StructGrid *grid = StructGridCast(gridIn);
 
     RDouble4D & q = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("q_FD"));
     RDouble4D & ql = qlProxy->GetField_STR();
@@ -1998,11 +2003,11 @@ void NSSolverStructFD::GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn,
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature;
     
-    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        BCRegion *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (!IsWall(BCType) || nsurf_bc != nsurf)
@@ -2130,17 +2135,17 @@ void NSSolverStructFD::InterpolationRUVWP5th(RDouble Coef[30], RDouble PrimPlate
 }
 
 void NSSolverStructFD::InterpolationRUVWP3rd(RDouble Prim[5][5], RDouble Primhalf[5])
-{	
-	RDouble Qk[5];
+{
+    RDouble Qk[5];
 
-	for (int m = 0; m <= 4; ++ m)
-	{
-		for (int j = 0; j <= 4; ++ j)
-		{
-			Qk[j] = Prim[j][m];
-		}
-		Primhalf[m] = BasicInterpolation3rd(Qk, m);
-	}		
+    for (int m = 0; m <= 4; ++ m)
+    {
+        for (int j = 0; j <= 4; ++ j)
+        {
+            Qk[j] = Prim[j][m];
+        }
+        Primhalf[m] = BasicInterpolation3rd(Qk, m);
+    }
 
     if (Primhalf[0] < SMALL || Primhalf[4] < SMALL)
     {
@@ -2155,27 +2160,27 @@ void NSSolverStructFD::InterpolationRUVWP3rd(RDouble Prim[5][5], RDouble Primhal
 
 RDouble NSSolverStructFD::BasicWeightedInterpolation5th(RDouble Coef[30], RDouble QmPlate[5])
 {
-	RDouble g0 = Coef[12] * QmPlate[0] + Coef[13] * QmPlate[1] + Coef[14] * QmPlate[2];
-	RDouble g1 = Coef[15] * QmPlate[1] + Coef[16] * QmPlate[2] + Coef[17] * QmPlate[3];
-	RDouble g2 = Coef[18] * QmPlate[2] + Coef[19] * QmPlate[3] + Coef[20] * QmPlate[4];
+    RDouble g0 = Coef[12] * QmPlate[0] + Coef[13] * QmPlate[1] + Coef[14] * QmPlate[2];
+    RDouble g1 = Coef[15] * QmPlate[1] + Coef[16] * QmPlate[2] + Coef[17] * QmPlate[3];
+    RDouble g2 = Coef[18] * QmPlate[2] + Coef[19] * QmPlate[3] + Coef[20] * QmPlate[4];
 
-	RDouble s0 = Coef[21] * QmPlate[0] + Coef[22] * QmPlate[1] + Coef[23] * QmPlate[2];
-	RDouble s1 = Coef[24] * QmPlate[1] + Coef[25] * QmPlate[2] + Coef[26] * QmPlate[3];
-	RDouble s2 = Coef[27] * QmPlate[2] + Coef[28] * QmPlate[3] + Coef[29] * QmPlate[4];
+    RDouble s0 = Coef[21] * QmPlate[0] + Coef[22] * QmPlate[1] + Coef[23] * QmPlate[2];
+    RDouble s1 = Coef[24] * QmPlate[1] + Coef[25] * QmPlate[2] + Coef[26] * QmPlate[3];
+    RDouble s2 = Coef[27] * QmPlate[2] + Coef[28] * QmPlate[3] + Coef[29] * QmPlate[4];
 
-	RDouble IS0 = s0 * s0 + g0 * g0 ;
-	RDouble IS1 = s1 * s1 + g1 * g1 ;
-	RDouble IS2 = s2 * s2 + g2 * g2 ;	
+    RDouble IS0 = s0 * s0 + g0 * g0;
+    RDouble IS1 = s1 * s1 + g1 * g1;
+    RDouble IS2 = s2 * s2 + g2 * g2;
     
-	RDouble alfa0 = Coef[0] / (IS0 * IS0 + EPSILON) ;
-	RDouble alfa1 = Coef[1] / (IS1 * IS1 + EPSILON) ;
-	RDouble alfa2 = Coef[2] / (IS2 * IS2 + EPSILON) ;
-	
-	RDouble Qhalf0 = Coef[3] * QmPlate[0] + Coef[ 4] * QmPlate[1] + Coef[ 5] * QmPlate[2] ;
-	RDouble Qhalf1 = Coef[6] * QmPlate[1] + Coef[ 7] * QmPlate[2] + Coef[ 8] * QmPlate[3] ;
-	RDouble Qhalf2 = Coef[9] * QmPlate[2] + Coef[10] * QmPlate[3] + Coef[11] * QmPlate[4] ;
+    RDouble alfa0 = Coef[0] / (IS0 * IS0 + EPSILON) ;
+    RDouble alfa1 = Coef[1] / (IS1 * IS1 + EPSILON) ;
+    RDouble alfa2 = Coef[2] / (IS2 * IS2 + EPSILON) ;
+    
+    RDouble Qhalf0 = Coef[3] * QmPlate[0] + Coef[ 4] * QmPlate[1] + Coef[ 5] * QmPlate[2] ;
+    RDouble Qhalf1 = Coef[6] * QmPlate[1] + Coef[ 7] * QmPlate[2] + Coef[ 8] * QmPlate[3] ;
+    RDouble Qhalf2 = Coef[9] * QmPlate[2] + Coef[10] * QmPlate[3] + Coef[11] * QmPlate[4] ;
 
-	RDouble Qhalf = (alfa0 * Qhalf0 + alfa1 * Qhalf1 + alfa2 * Qhalf2) / (alfa0 + alfa1 + alfa2);
+    RDouble Qhalf = (alfa0 * Qhalf0 + alfa1 * Qhalf1 + alfa2 * Qhalf2) / (alfa0 + alfa1 + alfa2);
 
     return Qhalf;
 }
@@ -2199,9 +2204,9 @@ RDouble NSSolverStructFD::BasicInterpolation3rd(RDouble Qp[5], int m)
 RDouble NSSolverStructFD::Limiter_ThirdSmooth(const RDouble &x, const RDouble &y)
 {
    const RDouble eps2 = 1.0e-6;
-	RDouble Smooth1 = x * ( y * y + 2.0 * eps2 ) +  y * ( 2.0 * x * x + eps2 );
-	RDouble Smooth2 = 2.0 * x * x - x * y + 2.0 * y * y + 3.0 * eps2;
-	RDouble Smooth = Smooth1 / Smooth2;
+    RDouble Smooth1 = x * ( y * y + 2.0 * eps2 ) +  y * ( 2.0 * x * x + eps2 );
+    RDouble Smooth2 = 2.0 * x * x - x * y + 2.0 * y * y + 3.0 * eps2;
+    RDouble Smooth = Smooth1 / Smooth2;
     return  Smooth;
 }
 
@@ -2822,35 +2827,35 @@ void NSSolverStructFD::GetFaceInviscidFlux(Grid *gridIn, FieldProxy *qlProxy, Fi
     else
     {
         FluxSteger(gridIn, qlProxy, qrProxy, fluxProxy, nsurf);
-    }	
+    }
 }
 
 void NSSolverStructFD::FluxSteger(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, FieldProxy *fluxProxy, int nsurf)
 {
     StructGrid *grid = StructGridCast(gridIn);
-	int ni = grid->GetNI();
-	int nj = grid->GetNJ();
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-	RDouble4D &ql = qlProxy->GetField_STR();
-	RDouble4D &qr = qrProxy->GetField_STR();
-	RDouble4D &Flux_Steger = fluxProxy->GetField_STR();
+    RDouble4D &ql = qlProxy->GetField_STR();
+    RDouble4D &qr = qrProxy->GetField_STR();
+    RDouble4D &Flux_Steger = fluxProxy->GetField_STR();
 
-	RDouble4D &xfn  = *(grid->GetFaceNormalX());
+    RDouble4D &xfn  = *(grid->GetFaceNormalX());
     RDouble4D &yfn  = *(grid->GetFaceNormalY());
     RDouble4D &zfn  = *(grid->GetFaceNormalZ());
     RDouble4D &area = *(grid->GetFaceArea());
 
-	const RDouble gama = 1.4;
-	const RDouble epsilon_steger = 0.12 * 0.12;
+    const RDouble gama = 1.4;
+    const RDouble epsilon_steger = 0.12 * 0.12;
 
-	using namespace IDX;
+    using namespace IDX;
     
-    int il1, jl1, kl1;
+    int il1 = 0, jl1 = 0, kl1 = 0;
     GetNsurfIndex(nsurf, il1, jl1, kl1);
 
-    int ist, jst, kst;
-    int ied, jed, ked;
+    int ist = 0, jst = 0, kst = 0;
+    int ied = 0, jed = 0, ked = 0;
 
     if(solvername.substr(0, 4) == "WCNS")
     {
@@ -2882,124 +2887,124 @@ void NSSolverStructFD::FluxSteger(Grid *gridIn, FieldProxy *qlProxy, FieldProxy 
     }
     
 
-	RDouble fl[5];
-	RDouble fr[5];
-	RDouble priml[5];
-	RDouble primr[5];
+    RDouble fl[5] = {0};
+    RDouble fr[5] = {0};
+    RDouble priml[5] = {0};
+    RDouble primr[5] = {0};
 
-	for (int k = kst; k <= ked; ++ k)
-	{
-		for (int j = jst; j <= jed; ++ j)
-		{
-			for (int i = ist; i <= ied; ++ i)
-			{
-				for (int m = 0; m < 5; ++ m)
-	            {
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                for (int m = 0; m < 5; ++ m)
+                {
                     priml[m] = ql(i - il1, j - jl1, k - kl1, m);
                     primr[m] = qr(i,       j,       k,       m);
-	            }
+                }
 
-				RDouble ds = area(i, j, k, nsurf);
-				RDouble nx = xfn (i, j, k, nsurf);
-				RDouble ny = yfn (i, j, k, nsurf);
-				RDouble nz = zfn (i, j, k, nsurf);
+                RDouble ds = area(i, j, k, nsurf);
+                RDouble nx = xfn (i, j, k, nsurf);
+                RDouble ny = yfn (i, j, k, nsurf);
+                RDouble nz = zfn (i, j, k, nsurf);
 
-	            RDouble rl = priml[IR];
-	            RDouble ul = priml[IU];
-	            RDouble vl = priml[IV];
-	            RDouble wl = priml[IW];
-	            RDouble pl = priml[IP];
+                RDouble rl = priml[IR];
+                RDouble ul = priml[IU];
+                RDouble vl = priml[IV];
+                RDouble wl = priml[IW];
+                RDouble pl = priml[IP];
                 RDouble hint_l = (gama / (gama - one)) * (pl / rl);
                 RDouble hl = hint_l + half * (ul * ul + vl * vl + wl * wl);
                 RDouble el = hl - pl / (rl + SMALL);
                 RDouble vnl = nx * ul + ny * vl + nz * wl;
                 RDouble cl  = sqrt(ABS(gama * pl / rl));
                 RDouble eigl1 = vnl      ;
-	            RDouble eigl2 = vnl + cl ;
-	            RDouble eigl3 = vnl - cl ;
-	            
-	            RDouble rr = primr[IR];
-	            RDouble ur = primr[IU];
-	            RDouble vr = primr[IV];
-	            RDouble wr = primr[IW];
-	            RDouble pr = primr[IP];
+                RDouble eigl2 = vnl + cl ;
+                RDouble eigl3 = vnl - cl ;
+                
+                RDouble rr = primr[IR];
+                RDouble ur = primr[IU];
+                RDouble vr = primr[IV];
+                RDouble wr = primr[IW];
+                RDouble pr = primr[IP];
                 RDouble hint_r = (gama / (gama - one)) * (pr / rr);
                 RDouble hr = hint_r + half * (ur * ur + vr * vr + wr * wr);
                 RDouble er = hr - pr / (rr + SMALL);
                 RDouble vnr = nx * ur + ny * vr + nz * wr;
                 RDouble cr  = sqrt(ABS(gama * pr / rr)); 
                 RDouble eigr1 = vnr      ;
-	            RDouble eigr2 = vnr + cr ;
-	            RDouble eigr3 = vnr - cr ;
+                RDouble eigr2 = vnr + cr ;
+                RDouble eigr3 = vnr - cr ;
                 
                 eigl1 = half * (eigl1 +  sqrt (eigl1 * eigl1 + epsilon_steger));
-		        eigl2 = half * (eigl2 +  sqrt (eigl2 * eigl2 + epsilon_steger));
-		        eigl3 = half * (eigl3 +  sqrt (eigl3 * eigl3 + epsilon_steger)); 
+                eigl2 = half * (eigl2 +  sqrt (eigl2 * eigl2 + epsilon_steger));
+                eigl3 = half * (eigl3 +  sqrt (eigl3 * eigl3 + epsilon_steger)); 
                 
                 eigr1 = half * (eigr1 -  sqrt (eigr1 * eigr1 + epsilon_steger));
-		        eigr2 = half * (eigr2 -  sqrt (eigr2 * eigr2 + epsilon_steger));
-		        eigr3 = half * (eigr3 -  sqrt (eigr3 * eigr3 + epsilon_steger));
-	            
-	            RDouble xil1 = half * (eigl1 + eigl1 - eigl2 - eigl3) / gama;
-	            RDouble xil2 = half * (eigl2 - eigl3) * cl / gama;
-	            RDouble eig_xil = eigl1 - xil1;
+                eigr2 = half * (eigr2 -  sqrt (eigr2 * eigr2 + epsilon_steger));
+                eigr3 = half * (eigr3 -  sqrt (eigr3 * eigr3 + epsilon_steger));
+                
+                RDouble xil1 = half * (eigl1 + eigl1 - eigl2 - eigl3) / gama;
+                RDouble xil2 = half * (eigl2 - eigl3) * cl / gama;
+                RDouble eig_xil = eigl1 - xil1;
 
-	            RDouble xir1 = half * (eigr1 + eigr1 - eigr2 - eigr3) / gama;
-	            RDouble xir2 = half * (eigr2 - eigr3) * cr / gama;
+                RDouble xir1 = half * (eigr1 + eigr1 - eigr2 - eigr3) / gama;
+                RDouble xir2 = half * (eigr2 - eigr3) * cr / gama;
                 RDouble eig_xir = eigr1 - xir1;
-	            
-	            fl[IR ] = rl * (eig_xil);
-	            fl[IRU] = rl * (eig_xil * ul + xil2 * nx);
-	            fl[IRV] = rl * (eig_xil * vl + xil2 * ny);
-	            fl[IRW] = rl * (eig_xil * wl + xil2 * nz);
-	            fl[IRE] = rl * (eigl1   * el - xil1 * hl + xil2 * vnl);  
+                
+                fl[IR ] = rl * (eig_xil);
+                fl[IRU] = rl * (eig_xil * ul + xil2 * nx);
+                fl[IRV] = rl * (eig_xil * vl + xil2 * ny);
+                fl[IRW] = rl * (eig_xil * wl + xil2 * nz);
+                fl[IRE] = rl * (eigl1   * el - xil1 * hl + xil2 * vnl);  
                 
                 fr[IR ] = rr * (eig_xir);
-	            fr[IRU] = rr * (eig_xir * ur + xir2 * nx);
-	            fr[IRV] = rr * (eig_xir * vr + xir2 * ny);
-	            fr[IRW] = rr * (eig_xir * wr + xir2 * nz);
-	            fr[IRE] = rr * (eigr1   * er - xir1 * hr + xir2 * vnr);
-	            
-	            for (int m = 0; m < 5; ++ m)
-	            {
-	            	Flux_Steger(i, j, k, m) = (fl[m] + fr[m]) * ds;
-	            }
-			}
-		}
-	}
+                fr[IRU] = rr * (eig_xir * ur + xir2 * nx);
+                fr[IRV] = rr * (eig_xir * vr + xir2 * ny);
+                fr[IRW] = rr * (eig_xir * wr + xir2 * nz);
+                fr[IRE] = rr * (eigr1   * er - xir1 * hr + xir2 * vnr);
+                
+                for (int m = 0; m < 5; ++ m)
+                {
+                    Flux_Steger(i, j, k, m) = (fl[m] + fr[m]) * ds;
+                }
+            }
+        }
+    }
 }
 
 void NSSolverStructFD::FluxRoe(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, FieldProxy *fluxProxy, int nsurf)
 {
     StructGrid *grid = StructGridCast(gridIn);
-	int ni = grid->GetNI();
-	int nj = grid->GetNJ();
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
     int nk = grid->GetNK();
-	int nl = 5;
+    int nl = 5;
 
-	RDouble4D &ql = qlProxy->GetField_STR();
-	RDouble4D &qr = qrProxy->GetField_STR();
-	RDouble4D &Flux_Roe = fluxProxy->GetField_STR();
+    RDouble4D &ql = qlProxy->GetField_STR();
+    RDouble4D &qr = qrProxy->GetField_STR();
+    RDouble4D &Flux_Roe = fluxProxy->GetField_STR();
 
-	RDouble4D &xfn  = *(grid->GetFaceNormalX());
+    RDouble4D &xfn  = *(grid->GetFaceNormalX());
     RDouble4D &yfn  = *(grid->GetFaceNormalY());
     RDouble4D &zfn  = *(grid->GetFaceNormalZ());
     RDouble4D &area = *(grid->GetFaceArea());
-	RDouble KX, KY, KZ, KA;
+    RDouble KX = 0, KY = 0, KZ = 0, KA = 0;
 
-	const RDouble gama = 1.4;
-	const RDouble K1 = 0.25;
-	const RDouble K2 =  5.0;
-	const RDouble K3 = 15.0;
-	RDouble3D &rtem = * reinterpret_cast< RDouble3D * > (grid->GetDataPtr("rtem"));
+    const RDouble gama = 1.4;
+    const RDouble K1 = 0.25;
+    const RDouble K2 =  5.0;
+    const RDouble K3 = 15.0;
+    RDouble3D &rtem = * reinterpret_cast< RDouble3D * > (grid->GetDataPtr("rtem"));
 
-	using namespace IDX;
+    using namespace IDX;
     
-    int il1, jl1, kl1;
+    int il1 = 0, jl1 = 0, kl1 = 0;
     GetNsurfIndex(nsurf, il1, jl1, kl1);
 
-    int ist, jst, kst;
-    int ied, jed, ked;
+    int ist = 0, jst = 0, kst = 0;
+    int ied = 0, jed = 0, ked = 0;
 
     if(solvername.substr(0, 4) == "WCNS")
     {
@@ -3030,152 +3035,152 @@ void NSSolverStructFD::FluxRoe(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qr
         }
     }
 
-	RDouble *flux  = new RDouble[nl];
-	RDouble *priml = new RDouble[nl];
-	RDouble *primr = new RDouble[nl];
-	
-	RDouble RRL,UUL,VVL,WWL,PPL,HHL,KPL;
-	RDouble RRR,UUR,VVR,WWR,PPR,HHR,KPR;
-	RDouble RAT,RCF,RF,UF,VF,WF,HF;
-	RDouble VN,RVN,DVN;
-	RDouble U2,A2,AF;
-	RDouble DR,DU,DV,DW,DP;
-	RDouble LA1,LA3,LA5;
-	RDouble DLP,DLR;
-	RDouble MF,CP,LAM,ESP1,ESP3,ESP5;
-	for (int k = kst; k <= ked; ++ k)
-	{
-		for (int j = jst; j <= jed; ++ j)
-		{
-			for (int i = ist; i <= ied; ++ i)
-			{
-				for (int m = 0; m < nl; ++ m)
-	            {
+    RDouble *flux  = new RDouble[nl]();
+    RDouble *priml = new RDouble[nl]();
+    RDouble *primr = new RDouble[nl]();
+    
+    RDouble RRL = 0,UUL = 0,VVL = 0,WWL = 0,PPL = 0,HHL = 0,KPL = 0;
+    RDouble RRR = 0,UUR = 0,VVR = 0,WWR = 0,PPR = 0,HHR = 0,KPR = 0;
+    RDouble RAT = 0,RCF = 0,RF = 0,UF = 0,VF = 0,WF = 0,HF = 0;
+    RDouble VN = 0,RVN = 0,DVN = 0;
+    RDouble U2 = 0,A2 = 0,AF = 0;
+    RDouble DR = 0,DU = 0,DV = 0,DW = 0,DP = 0;
+    RDouble LA1 = 0,LA3 = 0,LA5 = 0;
+    RDouble DLP = 0,DLR = 0;
+    RDouble MF = 0,CP = 0,LAM = 0,ESP1 = 0,ESP3 = 0,ESP5 = 0;
+    for (int k = kst; k <= ked; ++ k)
+    {
+        for (int j = jst; j <= jed; ++ j)
+        {
+            for (int i = ist; i <= ied; ++ i)
+            {
+                for (int m = 0; m < nl; ++ m)
+                {
                     priml[m] = ql(i - il1, j - jl1, k - kl1, m);
                     primr[m] = qr(i,       j,       k,       m);
-	            }
+                }
 
-				KA = area(i, j, k, nsurf);
-				KX = xfn (i, j, k, nsurf);
-				KY = yfn (i, j, k, nsurf);
-				KZ = zfn (i, j, k, nsurf);
+                KA = area(i, j, k, nsurf);
+                KX = xfn (i, j, k, nsurf);
+                KY = yfn (i, j, k, nsurf);
+                KZ = zfn (i, j, k, nsurf);
 
-				KPL = rtem(i - il1, j - jl1, k - kl1);
-				KPR = rtem(i, j, k);
+                KPL = rtem(i - il1, j - jl1, k - kl1);
+                KPR = rtem(i, j, k);
 
-	            RRL = priml[IR];
-	            UUL = priml[IU];
-	            VVL = priml[IV];
-	            WWL = priml[IW];
-	            PPL = priml[IP];
-	            
-	            RRR = primr[IR];
-	            UUR = primr[IU];
-	            VVR = primr[IV];
-	            WWR = primr[IW];
-	            PPR = primr[IP];	
+                RRL = priml[IR];
+                UUL = priml[IU];
+                VVL = priml[IV];
+                WWL = priml[IW];
+                PPL = priml[IP];
+                
+                RRR = primr[IR];
+                UUR = primr[IU];
+                VVR = primr[IV];
+                WWR = primr[IW];
+                PPR = primr[IP];
 
-	            RAT = sqrt(RRR / RRL);
-				RCF = one / (one + RAT);
-				
-				RF = sqrt(RRL * RRR);
-				UF = (UUL + UUR * RAT) * RCF;
-				VF = (VVL + VVR * RAT) * RCF;
-				WF = (WWL + WWR * RAT) * RCF;
-				
-				HHL = (gama / (gama - one)) * PPL / (RRL + SMALL) + half * (UUL * UUL + VVL * VVL + WWL * WWL);
-				HHR = (gama / (gama - one)) * PPR / (RRR + SMALL) + half * (UUR * UUR + VVR * VVR + WWR * WWR);
-				HF = (HHL + HHR * RAT) * RCF;
-				
-				//! Left full flux.
-	            VN  = KX * UUL + KY * VVL + KZ * WWL;
-				RVN = VN * RRL;
+                RAT = sqrt(RRR / RRL);
+                RCF = one / (one + RAT);
+                
+                RF = sqrt(RRL * RRR);
+                UF = (UUL + UUR * RAT) * RCF;
+                VF = (VVL + VVR * RAT) * RCF;
+                WF = (WWL + WWR * RAT) * RCF;
+                
+                HHL = (gama / (gama - one)) * PPL / (RRL + SMALL) + half * (UUL * UUL + VVL * VVL + WWL * WWL);
+                HHR = (gama / (gama - one)) * PPR / (RRR + SMALL) + half * (UUR * UUR + VVR * VVR + WWR * WWR);
+                HF = (HHL + HHR * RAT) * RCF;
+                
+                //! Left full flux.
+                VN  = KX * UUL + KY * VVL + KZ * WWL;
+                RVN = VN * RRL;
 
-	            flux[IR ] = RVN                 ;
-	            flux[IRU] = RVN * UUL + KX * PPL;
-	            flux[IRV] = RVN * VVL + KY * PPL;
-	            flux[IRW] = RVN * WWL + KZ * PPL;
-	            flux[IRE] = RVN * HHL;
-	            
-	            //! Right full flux.
-				VN  = KX * UUR + KY * VVR + KZ * WWR;
-				RVN = VN * RRR;
-				
-				flux[IR ] += RVN                 ;
-				flux[IRU] += RVN * UUR + KX * PPR;
-				flux[IRV] += RVN * VVR + KY * PPR;
-				flux[IRW] += RVN * WWR + KZ * PPR;
-				flux[IRE] += RVN * HHR;
+                flux[IR ] = RVN                 ;
+                flux[IRU] = RVN * UUL + KX * PPL;
+                flux[IRV] = RVN * VVL + KY * PPL;
+                flux[IRW] = RVN * WWL + KZ * PPL;
+                flux[IRE] = RVN * HHL;
+                
+                //! Right full flux.
+                VN  = KX * UUR + KY * VVR + KZ * WWR;
+                RVN = VN * RRR;
+                
+                flux[IR ] += RVN                 ;
+                flux[IRU] += RVN * UUR + KX * PPR;
+                flux[IRV] += RVN * VVR + KY * PPR;
+                flux[IRW] += RVN * WWR + KZ * PPR;
+                flux[IRE] += RVN * HHR;
 
-				//! Delta flux.
-				U2 = half * (UF * UF + VF * VF + WF * WF);
-				A2 = (gama - one) * (HF - U2);
-				AF = sqrt(A2);
-				
-				DR = RRR - RRL;
-				DU = UUR - UUL;
-				DV = VVR - VVL;
-				DW = WWR - WWL;
-				DP = PPR - PPL;
-				
-				VN  = KX * UF + KY * VF + KZ * WF;
-				DVN = KX * DU + KY * DV + KZ * DW;
-				
-				LA1 = abs(VN - AF);
-				LA3 = abs(VN);
-				LA5 = abs(VN + AF);
-				
-				//! Delta flux: entropy fix.
-				MF   = sqrt (UF * UF + VF * VF + WF * WF) / (AF + SMALL);
-				CP   = half * (KPL + KPR) / MAX(one,MF);
-				LAM  = MAX(LA1, LA5);
-				ESP1 = (K1 + K2 * CP) * LAM;
-				ESP3 =        K3 * CP   * LAM;
-				ESP5 =  ESP1;
-				
-				if (LA1 < ESP1)
-				{
-					LA1 = half * (LA1 * LA1 + ESP1 * ESP1) / (ESP1 + SMALL);
-				}
-				if (LA3 < ESP3)
-				{
-					LA3 = half * (LA3 * LA3 + ESP3 * ESP3) / (ESP3 + SMALL);
-				}
-				if (LA5 < ESP5)
-				{
-					LA5 = half * (LA5 * LA5 + ESP5 * ESP5) / (ESP5 + SMALL);
-				}
-				
-				//! Delta flux: LA1 & LA5.
-				LA1 *= half * (DP - RF * AF * DVN) / (A2  + SMALL);
-				LA5 *= half * (DP + RF * AF * DVN) / (A2  + SMALL);
-				
-				flux[IR ] -= LA1                    + LA5                   ;
-				flux[IRU] -= LA1 * (UF - KX * AF) + LA5 * (UF + KX * AF);
-				flux[IRV] -= LA1 * (VF - KY * AF) + LA5 * (VF + KY * AF);
-				flux[IRW] -= LA1 * (WF - KZ * AF) + LA5 * (WF + KZ * AF);
-				flux[IRE] -= LA1 * (HF - VN * AF) + LA5 * (HF + VN * AF);
-				
-				//! Delta flux: LA3.
-				DLP = LA3 * (DR - DP / (A2  + SMALL));
-				DLR = LA3 * RF;
-				
-				flux[IR ] -= DLP;
-				flux[IRU] -= DLP * UF + DLR * (- KX * DVN + DU);
-				flux[IRV] -= DLP * VF + DLR * (- KY * DVN + DV);
-				flux[IRW] -= DLP * WF + DLR * (- KZ * DVN + DW);
-				flux[IRE] -= DLP * U2 + DLR * (- VN * DVN + UF * DU + VF * DV + WF * DW);
-					            
-	            for (int m = 0; m < nl; ++ m)
-	            {
-	            	Flux_Roe(i, j, k, m) = flux[m] * half * KA;
-	            }
-			}
-		}
-	}
-	delete [] flux;
-	delete [] priml;
-	delete [] primr;
+                //! Delta flux.
+                U2 = half * (UF * UF + VF * VF + WF * WF);
+                A2 = (gama - one) * (HF - U2);
+                AF = sqrt(A2);
+                
+                DR = RRR - RRL;
+                DU = UUR - UUL;
+                DV = VVR - VVL;
+                DW = WWR - WWL;
+                DP = PPR - PPL;
+                
+                VN  = KX * UF + KY * VF + KZ * WF;
+                DVN = KX * DU + KY * DV + KZ * DW;
+                
+                LA1 = abs(VN - AF);
+                LA3 = abs(VN);
+                LA5 = abs(VN + AF);
+                
+                //! Delta flux: entropy fix.
+                MF   = sqrt (UF * UF + VF * VF + WF * WF) / (AF + SMALL);
+                CP   = half * (KPL + KPR) / MAX(one,MF);
+                LAM  = MAX(LA1, LA5);
+                ESP1 = (K1 + K2 * CP) * LAM;
+                ESP3 =        K3 * CP   * LAM;
+                ESP5 =  ESP1;
+                
+                if (LA1 < ESP1)
+                {
+                    LA1 = half * (LA1 * LA1 + ESP1 * ESP1) / (ESP1 + SMALL);
+                }
+                if (LA3 < ESP3)
+                {
+                    LA3 = half * (LA3 * LA3 + ESP3 * ESP3) / (ESP3 + SMALL);
+                }
+                if (LA5 < ESP5)
+                {
+                    LA5 = half * (LA5 * LA5 + ESP5 * ESP5) / (ESP5 + SMALL);
+                }
+                
+                //! Delta flux: LA1 & LA5.
+                LA1 *= half * (DP - RF * AF * DVN) / (A2  + SMALL);
+                LA5 *= half * (DP + RF * AF * DVN) / (A2  + SMALL);
+                
+                flux[IR ] -= LA1                    + LA5                   ;
+                flux[IRU] -= LA1 * (UF - KX * AF) + LA5 * (UF + KX * AF);
+                flux[IRV] -= LA1 * (VF - KY * AF) + LA5 * (VF + KY * AF);
+                flux[IRW] -= LA1 * (WF - KZ * AF) + LA5 * (WF + KZ * AF);
+                flux[IRE] -= LA1 * (HF - VN * AF) + LA5 * (HF + VN * AF);
+                
+                //! Delta flux: LA3.
+                DLP = LA3 * (DR - DP / (A2  + SMALL));
+                DLR = LA3 * RF;
+                
+                flux[IR ] -= DLP;
+                flux[IRU] -= DLP * UF + DLR * (- KX * DVN + DU);
+                flux[IRV] -= DLP * VF + DLR * (- KY * DVN + DV);
+                flux[IRW] -= DLP * WF + DLR * (- KZ * DVN + DW);
+                flux[IRE] -= DLP * U2 + DLR * (- VN * DVN + UF * DU + VF * DV + WF * DW);
+                                
+                for (int m = 0; m < nl; ++ m)
+                {
+                    Flux_Roe(i, j, k, m) = flux[m] * half * KA;
+                }
+            }
+        }
+    }
+    delete [] flux;    flux = NULL;
+    delete [] priml;    priml = NULL;
+    delete [] primr;    primr = NULL;
 }
 
 void NSSolverStructFD::FluxDifference(Grid *gridIn, FieldProxy *fluxProxy, int nsurf)
@@ -3197,17 +3202,17 @@ void NSSolverStructFD::FluxDifference(Grid *gridIn, FieldProxy *fluxProxy, int n
 void NSSolverStructFD::FluxDifference_WCNS(Grid *gridIn, FieldProxy *fluxProxy, int nsurf)
 {
     StructGrid *grid = StructGridCast(gridIn);
-	int ni = grid->GetNI();
-	int nj = grid->GetNJ();
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-	RDouble4D &flux = fluxProxy->GetField_STR();
-    RDouble4D &res  = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("res"));	
+    RDouble4D &flux = fluxProxy->GetField_STR();
+    RDouble4D &res  = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("res"));
     
     int il1, jl1, kl1;
     GetNsurfIndex(nsurf, il1, jl1, kl1);
 
-	int mst = 0;
+    int mst = 0;
     int med = 4;
 
     int ist = 1;
@@ -3258,10 +3263,10 @@ void NSSolverStructFD::FluxDifference_WCNS(Grid *gridIn, FieldProxy *fluxProxy, 
                     {
                         res(i, j, k, m) -= (f2 - f1) * 9.0 / 8.0 - (f3 - f0) / 24.0;
                     }                    
-			    }
+                }
             }
-		}
-	}    
+        }
+    }    
 }
 
 void NSSolverStructFD::FluxDifference_HDCS(Grid *gridIn, FieldProxy *fluxProxy, int nsurf)
@@ -3274,9 +3279,6 @@ void NSSolverStructFD::FluxDifference_HDCS(Grid *gridIn, FieldProxy *fluxProxy, 
     RDouble4D &faceflux = fluxProxy->GetField_STR();
     RDouble4D &Cellflux = CellfluxProxy->GetField_STR();
     RDouble4D &res  = * reinterpret_cast< RDouble4D * > (grid->GetDataPtr("res"));
-
-    const RDouble alfa_forth =   4.0 / 3.0;
-    const RDouble    a_forth = - 1.0 / 6.0;
 
     const RDouble alfa_sixth =  64.0 / 45.0;
     const RDouble    a_sixth = - 2.0 / 9.0;
@@ -3439,7 +3441,7 @@ void NSSolverStructFD::GetCellViscousFlux(Grid *gridIn, int iSurface)
         ked = 1;
     }
 
-    RDouble fvis[5];
+    RDouble fvis[5] = {0};
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
@@ -3453,7 +3455,6 @@ void NSSolverStructFD::GetCellViscousFlux(Grid *gridIn, int iSurface)
                 RDouble um  = UVWT(i, j, k, 0);
                 RDouble vm  = UVWT(i, j, k, 1);
                 RDouble wm  = UVWT(i, j, k, 2);
-                RDouble tm  = UVWT(i, j, k, 3);
 
                 RDouble mul = visl(i, j, k);
                 RDouble mut = vist(i, j, k);
@@ -3507,10 +3508,10 @@ void NSSolverStructFD::GetCellViscousFlux(Grid *gridIn, int iSurface)
 
 void NSSolverStructFD::GetUVWTproxy(Grid *gridIn)
 {
-	StructGrid *strgrid = StructGridCast(gridIn);
-	int ni = strgrid->GetNI();
-	int nj = strgrid->GetNJ();
-    int nk = strgrid->GetNK();	
+    StructGrid *strgrid = StructGridCast(gridIn);
+    int ni = strgrid->GetNI();
+    int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("q_FD"));
     RDouble4D &t = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("t_FD"));
@@ -3551,10 +3552,10 @@ void NSSolverStructFD::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
         GetUVWTfaceproxy_HDCS(gridIn, nsurf);
         return;
     }
-	StructGrid *strgrid = StructGridCast(gridIn);
-	int ni = strgrid->GetNI();
-	int nj = strgrid->GetNJ();
-    int nk = strgrid->GetNK();	
+    StructGrid *strgrid = StructGridCast(gridIn);
+    int ni = strgrid->GetNI();
+    int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();
 
     RDouble4D &UVWT = UVWTproxy->GetField_STR();
 
@@ -3630,10 +3631,10 @@ void NSSolverStructFD::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
 
 void NSSolverStructFD::GetUVWTfaceproxy_HDCS(Grid *gridIn, int nsurf)
 {
-	StructGrid *strgrid = StructGridCast(gridIn);
-	int ni = strgrid->GetNI();
-	int nj = strgrid->GetNJ();
-    int nk = strgrid->GetNK();	
+    StructGrid *strgrid = StructGridCast(gridIn);
+    int ni = strgrid->GetNI();
+    int nj = strgrid->GetNJ();
+    int nk = strgrid->GetNK();
 
     RDouble4D &UVWT = UVWTproxy->GetField_STR();
 
@@ -3699,8 +3700,8 @@ void NSSolverStructFD::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
         return;
     }
     StructGrid *strgrid = StructGridCast(gridIn);
-	int ni = strgrid->GetNI();
-	int nj = strgrid->GetNJ();
+    int ni = strgrid->GetNI();
+    int nj = strgrid->GetNJ();
     int nk = strgrid->GetNK();
 
     RDouble4D *UVWTface;
@@ -3778,8 +3779,8 @@ void NSSolverStructFD::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
 void NSSolverStructFD::GetdqdkxietactaCellCenter_HDCS(Grid *gridIn, int nsurf)
 {
     StructGrid *strgrid = StructGridCast(gridIn);
-	int ni = strgrid->GetNI();
-	int nj = strgrid->GetNJ();
+    int ni = strgrid->GetNI();
+    int nj = strgrid->GetNJ();
     int nk = strgrid->GetNK();
 
     const RDouble alfa_sixth =  64.0 / 45.0;
@@ -3851,7 +3852,7 @@ void NSSolverStructFD::ViscousFlux(Grid *gridIn)
     Param_NSSolverStruct *parameters = GetControlParameters();
 
     int viscousType = parameters->GetViscousType();
-    if (viscousType <= 0)
+    if (viscousType <= INVISCID)
     {
         return;
     }
@@ -3878,7 +3879,7 @@ void NSSolverStructFD::ViscousFlux(Grid *gridIn)
         GetGradientAtFace(gridIn, iSurface);
         GetGradientAtFaceCorrectionAtPhysicalBoundary(gridIn, iSurface);
 
-        if (iLES == 0)
+        if (iLES != LES_SOLVER)
         {
             GetFaceViscousFlux(gridIn, fluxProxy, iSurface);
         }
@@ -4148,7 +4149,7 @@ void NSSolverStructFD::GetGradientAtFacechainrule(Grid *gridIn, int nSurface)
     RDouble4D &xfv  = *(grid->GetFaceVectorX());
     RDouble4D &yfv  = *(grid->GetFaceVectorY());
     RDouble4D &zfv  = *(grid->GetFaceVectorZ());
-	RDouble3D &vol  = *(grid->GetCellVolume());
+    RDouble3D &vol  = *(grid->GetCellVolume());
 
     RDouble4D *dqdxnomaindirection;
     RDouble4D *dqdynomaindirection;
@@ -4297,10 +4298,6 @@ void NSSolverStructFD::GetGradientAtFaceCorrectionAtPhysicalBoundary(Grid *gridi
     RDouble4D &zfv  = *(grid->GetFaceVectorZ());
     RDouble3D &vol  = *(grid->GetCellVolume());
 
-    RDouble3D &xcc = *(grid->GetCellCenterX());
-    RDouble3D &ycc = *(grid->GetCellCenterY());
-    RDouble3D &zcc = *(grid->GetCellCenterZ());
-
     RDouble4D &dqdx = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
     RDouble4D &dqdy = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
     RDouble4D &dqdz = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
@@ -4311,11 +4308,11 @@ void NSSolverStructFD::GetGradientAtFaceCorrectionAtPhysicalBoundary(Grid *gridi
     RDouble4D &dqdyface = dqdyFaceProxy->GetField_STR();
     RDouble4D &dqdzface = dqdzFaceProxy->GetField_STR();
     
-    CompositeBCRegion *compositeBCRegion = grid->GetCompositeBCRegion();
+    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        BCRegion *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (BCType < 0 || nsurf_bc != iSurface)
@@ -4398,7 +4395,7 @@ void NSSolverStructFD::GetFaceViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, i
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
     
-    RDouble4D * UVWTface;
+    RDouble4D * UVWTface = 0;
     if (iSurface == 1)
     {
         UVWTface = &(UVWTfaceIproxy->GetField_STR());
@@ -4421,7 +4418,6 @@ void NSSolverStructFD::GetFaceViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, i
     RDouble4D &xfv  = *(grid->GetFaceVectorX());
     RDouble4D &yfv  = *(grid->GetFaceVectorY());
     RDouble4D &zfv  = *(grid->GetFaceVectorZ());
-    RDouble3D &vol  = *(grid->GetCellVolume());
     
     RDouble3D &vist = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist")); 
 
@@ -4434,11 +4430,11 @@ void NSSolverStructFD::GetFaceViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, i
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble specificHeatAtConstantPressure = 1.0 / ((1.4 - 1.0) * refMachNumber * refMachNumber);
 
-    int il1, jl1, kl1;
+    int il1 = 0, jl1 = 0, kl1 = 0;
     GetNsurfIndex(iSurface, il1, jl1, kl1);
 
-    int ist, jst, kst;
-    int ied, jed, ked;
+    int ist = 0, jst = 0, kst = 0;
+    int ied = 0, jed = 0, ked = 0;
 
     if(solvername.substr(0, 4) == "WCNS")
     {
@@ -4469,7 +4465,7 @@ void NSSolverStructFD::GetFaceViscousFlux(Grid *gridIn, FieldProxy *fluxProxy, i
         }
     }
 
-    RDouble fvis[5];
+    RDouble fvis[5] = {0};
     for (int k = kst; k <= ked; ++ k)
     {
         for (int j = jst; j <= jed; ++ j)
@@ -4542,7 +4538,7 @@ void NSSolverStructFD::GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
     
-    RDouble4D * UVWTface;
+    RDouble4D * UVWTface = 0;
     if (iSurface == 1)
     {
         UVWTface = &(UVWTfaceIproxy->GetField_STR());
@@ -4556,8 +4552,6 @@ void NSSolverStructFD::GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy
         UVWTface = &(UVWTfaceKproxy->GetField_STR());
     }
 
-    RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-
     RDouble4D &gradqx = dqdxFaceProxy->GetField_STR();
     RDouble4D &gradqy = dqdyFaceProxy->GetField_STR();
     RDouble4D &gradqz = dqdzFaceProxy->GetField_STR();
@@ -4567,7 +4561,6 @@ void NSSolverStructFD::GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy
     RDouble4D &xfv = *(grid->GetFaceVectorX());
     RDouble4D &yfv = *(grid->GetFaceVectorY());
     RDouble4D &zfv = *(grid->GetFaceVectorZ());
-    RDouble3D &vol = *(grid->GetCellVolume());
     
     RDouble3D &vist = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist")); 
     RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
@@ -4576,17 +4569,16 @@ void NSSolverStructFD::GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy
     Param_NSSolverStruct *parameters = GetControlParameters();
     RDouble nonDimensionalSutherlandTemperature = parameters->GetNonDimensionalSutherlandTemperature();
     RDouble oPrandtlLaminar    = parameters->GetoPrandtlLaminar();
-    //RDouble oPrandtlTurbulence = parameters->GetoPrandtlTurbulence();
 
     RDouble refMachNumber = parameters->GetRefMachNumber();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble specificHeatAtConstantPressure = 1.0 / ((1.4 - 1.0) * refMachNumber * refMachNumber);
 
-    int il1, jl1, kl1;
+    int il1 = 0, jl1 = 0, kl1 = 0;
     GetNsurfIndex(iSurface, il1, jl1, kl1);
 
-    int ist, jst, kst;
-    int ied, jed, ked;
+    int ist = 0, jst = 0, kst = 0;
+    int ied = 0, jed = 0, ked = 0;
 
     if(solvername.substr(0, 4) == "WCNS")
     {
@@ -4617,84 +4609,73 @@ void NSSolverStructFD::GetFaceViscousFluxLES(Grid *gridIn, FieldProxy *fluxProxy
         }
     }
 
-    string sgsmodel;
-	GlobalDataBase::GetData("sgsmodel",&sgsmodel,PHSTRING,1);
+    string sgsmodel = " ";
+    GlobalDataBase::GetData("sgsmodel", &sgsmodel, PHSTRING, 1);
 
-    RDouble fvis[5];
+    RDouble fvis[5] = {0};
 
-    if (sgsmodel.substr(0, 4) == "wale")
+    for (int k = kst; k <= ked; ++ k)
     {
-    }
-    else
-    {
-        for (int k = kst; k <= ked; ++ k)
+        for (int j = jst; j <= jed; ++ j)
         {
-            for (int j = jst; j <= jed; ++ j)
+            for (int i = ist; i <= ied; ++ i)
             {
-                for (int i = ist; i <= ied; ++ i)
+                RDouble nx = xfv(i, j, k, iSurface);
+                RDouble ny = yfv(i, j, k, iSurface);
+                RDouble nz = zfv(i, j, k, iSurface);
+
+                RDouble um  = (*UVWTface)(i, j, k, 0);
+                RDouble vm  = (*UVWTface)(i, j, k, 1);
+                RDouble wm  = (*UVWTface)(i, j, k, 2);
+                RDouble tm  = (*UVWTface)(i, j, k, 3);
+
+                RDouble mul = tm * sqrt(tm) * (1.0 + nonDimensionalSutherlandTemperature) / (tm + nonDimensionalSutherlandTemperature);
+                RDouble mut = half * (vist(i-il1, j-jl1, k-kl1) + vist(i, j, k));
+                RDouble vis = mul + mut;
+
+                RDouble dudx  = gradqx(i, j, k, 0);
+                RDouble dudy  = gradqy(i, j, k, 0);
+                RDouble dudz  = gradqz(i, j, k, 0);
+
+                RDouble dvdx  = gradqx(i, j, k, 1);
+                RDouble dvdy  = gradqy(i, j, k, 1);
+                RDouble dvdz  = gradqz(i, j, k, 1);
+
+                RDouble dwdx  = gradqx(i, j, k, 2);
+                RDouble dwdy  = gradqy(i, j, k, 2);
+                RDouble dwdz  = gradqz(i, j, k, 2);
+
+                RDouble dtdx  = gradqx(i, j, k, 3);
+                RDouble dtdy  = gradqy(i, j, k, 3);
+                RDouble dtdz  = gradqz(i, j, k, 3);                
+
+                RDouble oPrandtlTurbulence = 2.0 / (turbulentPrandtlNumber(i-il1, j-jl1, k-kl1) + turbulentPrandtlNumber(i, j, k));
+                RDouble kcp = (mul * oPrandtlLaminar + mut * oPrandtlTurbulence) * specificHeatAtConstantPressure;
+
+                RDouble qx = kcp * dtdx;
+                RDouble qy = kcp * dtdy;
+                RDouble qz = kcp * dtdz;
+
+                RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
+
+                RDouble kSGS = half * (subgridScaleEnergy(i-il1, j-jl1, k-kl1) + subgridScaleEnergy(i, j, k));
+
+                RDouble txx = vis * (two * dudx - divv2p3) - 1.0/3.0 * kSGS;
+                RDouble tyy = vis * (two * dvdy - divv2p3) - 1.0/3.0 * kSGS;
+                RDouble tzz = vis * (two * dwdz - divv2p3) - 1.0/3.0 * kSGS;
+                RDouble txy = vis * (dudy + dvdx);
+                RDouble txz = vis * (dudz + dwdx);
+                RDouble tyz = vis * (dvdz + dwdy);
+
+                fvis[0] = 0.0;
+                fvis[1] = nx * txx + ny * txy + nz * txz;
+                fvis[2] = nx * txy + ny * tyy + nz * tyz;
+                fvis[3] = nx * txz + ny * tyz + nz * tzz;
+                fvis[4] = um * fvis[1] + vm * fvis[2] + wm * fvis[3] + (nx * qx + ny * qy + nz * qz);
+
+                for (int m = 0; m < 5; ++ m)
                 {
-                    RDouble nx = xfv(i, j, k, iSurface);
-                    RDouble ny = yfv(i, j, k, iSurface);
-                    RDouble nz = zfv(i, j, k, iSurface);
-
-                    RDouble um  = (*UVWTface)(i, j, k, 0);
-                    RDouble vm  = (*UVWTface)(i, j, k, 1);
-                    RDouble wm  = (*UVWTface)(i, j, k, 2);
-                    RDouble tm  = (*UVWTface)(i, j, k, 3);
-
-                    RDouble mul = tm * sqrt(tm) * (1.0 + nonDimensionalSutherlandTemperature) / (tm + nonDimensionalSutherlandTemperature);
-                    RDouble mut = half * (vist(i-il1, j-jl1, k-kl1) + vist(i, j, k));
-                    RDouble vis = mul + mut;
-
-                    RDouble mut0 = vist(i-il1, j-jl1, k-kl1);
-                    RDouble mut1 = vist(i, j, k);
-
-                    RDouble rhom = half * (q(i-il1, j-jl1, k-kl1, 0) + q(i, j, k, 0));
-
-                    RDouble dudx  = gradqx(i, j, k, 0);
-                    RDouble dudy  = gradqy(i, j, k, 0);
-                    RDouble dudz  = gradqz(i, j, k, 0);
-
-                    RDouble dvdx  = gradqx(i, j, k, 1);
-                    RDouble dvdy  = gradqy(i, j, k, 1);
-                    RDouble dvdz  = gradqz(i, j, k, 1);
-
-                    RDouble dwdx  = gradqx(i, j, k, 2);
-                    RDouble dwdy  = gradqy(i, j, k, 2);
-                    RDouble dwdz  = gradqz(i, j, k, 2);
-
-                    RDouble dtdx  = gradqx(i, j, k, 3);
-                    RDouble dtdy  = gradqy(i, j, k, 3);
-                    RDouble dtdz  = gradqz(i, j, k, 3);                
-
-                    RDouble oPrandtlTurbulence = 2.0 / (turbulentPrandtlNumber(i-il1, j-jl1, k-kl1) + turbulentPrandtlNumber(i, j, k));
-                    RDouble kcp = (mul * oPrandtlLaminar + mut * oPrandtlTurbulence) * specificHeatAtConstantPressure;
-
-                    RDouble qx = kcp * dtdx;
-                    RDouble qy = kcp * dtdy;
-                    RDouble qz = kcp * dtdz;
-
-                    RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
-
-                    RDouble kSGS = half * (subgridScaleEnergy(i-il1, j-jl1, k-kl1) + subgridScaleEnergy(i, j, k));
-
-                    RDouble txx = vis * (two * dudx - divv2p3) - 1.0/3.0 * kSGS;;
-                    RDouble tyy = vis * (two * dvdy - divv2p3) - 1.0/3.0 * kSGS;;
-                    RDouble tzz = vis * (two * dwdz - divv2p3) - 1.0/3.0 * kSGS;;
-                    RDouble txy = vis * (dudy + dvdx);
-                    RDouble txz = vis * (dudz + dwdx);
-                    RDouble tyz = vis * (dvdz + dwdy);
-
-                    fvis[0] = 0.0;
-                    fvis[1] = nx * txx + ny * txy + nz * txz;
-                    fvis[2] = nx * txy + ny * tyy + nz * tyz;
-                    fvis[3] = nx * txz + ny * tyz + nz * tzz;
-                    fvis[4] = um * fvis[1] + vm * fvis[2] + wm * fvis[3] + (nx * qx + ny * qy + nz * qz);
-
-                    for (int m = 0; m < 5; ++ m)
-                    {
-                        flux(i, j, k,m) = - fvis[m] / refReNumber;
-                    }
+                    flux(i, j, k,m) = - fvis[m] / refReNumber;
                 }
             }
         }
@@ -4797,7 +4778,7 @@ void NSSolverStructFD::SpectrumRadiusViscous(Grid *gridIn)
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
-    if (viscousType == 0)
+    if (viscousType == INVISCID)
     {
         return;
     }
@@ -4818,13 +4799,12 @@ void NSSolverStructFD::SpectrumRadiusViscous(Grid *gridIn)
         ked = 1;
     }
 
-	RDouble4D &xfv  = *(grid->GetFaceVectorX());
-	RDouble4D &yfv  = *(grid->GetFaceVectorY());
-	RDouble4D &zfv  = *(grid->GetFaceVectorZ());
+    RDouble4D &xfv  = *(grid->GetFaceVectorX());
+    RDouble4D &yfv  = *(grid->GetFaceVectorY());
+    RDouble4D &zfv  = *(grid->GetFaceVectorZ());
     RDouble3D &vol  = *(grid->GetCellVolume());
 
     RDouble4D &q    = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
-    RDouble4D &t    = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t_FD"));
     RDouble3D &viscousLaminar    = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
     RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
 
@@ -5540,8 +5520,6 @@ void NSSolverStructFD::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPr
         cout << "Warning: negative pressure or density appears in " << nNegativeCell << " cells ... " << endl;
     }
 
-    //!=======================================================================================
-
     ObtainBoundaryValue(grid);
     ObtainGamaAndTemperature(grid);
 
@@ -5612,7 +5590,6 @@ void NSSolverStructFD::SolutionFix(FieldProxy *qProxy, RDouble prim[5], int i, i
 
 void NSSolverStructFD::GetMXDQ(RDouble *prim, RDouble KX, RDouble KY, RDouble KZ, RDouble *dq, RDouble *f, RDouble radius, int ipn)
 {
-    //! KX, KY, KZ zi dai mian ji
     const RDouble gama = 1.4;
     const RDouble gama1 = gama - 1;
 
@@ -5724,7 +5701,7 @@ void NSSolverStructFD::UpdateViscousfluxOnlyforMixGrid(Grid *gridIn)
     Param_NSSolverStruct *parameters = GetControlParameters();
 
     int viscousType = parameters->GetViscousType();
-    if (viscousType <= 0)
+    if (viscousType <= INVISCID)
     {
         return;
     }
@@ -5783,7 +5760,7 @@ void NSSolverStructFD::LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn)
     Param_NSSolverStruct *parameters = GetControlParameters();
 
     int viscousType = parameters->GetViscousType();
-    if (viscousType <= 0)
+    if (viscousType <= INVISCID)
     {
         delete fluxProxy;
         return;

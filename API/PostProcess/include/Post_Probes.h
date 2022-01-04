@@ -182,12 +182,16 @@ private:
 
     //! Write the probes variables data into file.
     void WriteProbesFlowFile();
-
+    //! Write the probes variables data into file.
+    void WriteProbesFlowFile(int outerStep);
     //! Write the probes of lines variables data into file.
     void WriteLinesFlowFile();
-
+    //! Write the probes of lines variables data into file.
+    void WriteLinesFlowFile(int outerStep);
     //! Write the probes of surfaces variables data into file.
     void WriteSurfacesFlowFile();
+    //! Write the probes of surfaces variables data into file.
+    void WriteSurfacesFlowFile(int outerStep);
 
 private:
     int nVariables;

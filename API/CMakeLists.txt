@@ -39,10 +39,6 @@ if(USE_SMARTARRAY)
   message(STATUS "USE_SMARTARRAY is turned on!")
   add_definitions(-DUSE_SMARTARRAY)
 endif()
-if(USE_ARRAY_OPT)
-  message(STATUS "USE_ARRAY_OPT is turned on!")
-  add_definitions(-DUSE_ARRAY_OPT)
-endif()
 
 #1. output message:
 message(STATUS "") 
@@ -102,11 +98,6 @@ link_directories("${THIRDPARTY_LIB_DIR}")
 set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
 
-if(USE_TecplotLib)
-set(TECIO_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
-include_directories("${TECIO_H_PATH}")
-endif(USE_TecplotLib)
-
 set(PARMETIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/parmetis/include)
 include_directories("${PARMETIS_H_PATH}")
 
@@ -142,9 +133,9 @@ ${DataStruct_H_PATH}/PHSimpleArray.h
 ${DataStruct_H_PATH}/PHStorage.h
 ${DataStruct_H_PATH}/PHSlice.h
 ${DataStruct_H_PATH}/Pointer.h
+${DataStruct_H_PATH}/PHVector3.h
 ${DataStruct_H_PATH}/PHMatrix.h
 ${DataStruct_H_PATH}/TypeDefine.h
-${DataStruct_H_PATH}/PHOpt.h
 ${DataStruct_H_PATH}/HyList.h
 ${DataStruct_H_PATH}/DataContainer.h
 ${DataStruct_H_PATH}/PHHeapSort.h
@@ -157,7 +148,6 @@ set(DataStruct_CPP_LIST
 ${DataStruct_CPP_PATH}/PHStorage.cpp
 ${DataStruct_CPP_PATH}/DataStruct_BinaryTree.cpp
 ${DataStruct_CPP_PATH}/DataStruct_KDTree.cpp
-${DataStruct_CPP_PATH}/PHOpt.cpp
 ${DataStruct_CPP_PATH}/DataContainer.cpp
 )
 source_group(DataStruct\\src FILES ${DataStruct_CPP_LIST})
@@ -270,6 +260,7 @@ source_group(IO\\src FILES ${IO_CPP_LIST})
 set(Geometry_H_PATH Geometry/include)
 set(Geometry_H_LIST
 ${Geometry_H_PATH}/Geo_Grid.h
+${Geometry_H_PATH}/Geo_GridManager.h
 ${Geometry_H_PATH}/GridType.h
 ${Geometry_H_PATH}/Geo_Interface.h
 ${Geometry_H_PATH}/Geo_Interpoint.h
@@ -292,9 +283,9 @@ ${Geometry_H_PATH}/Geo_MultiGridInfo_Struct.h
 ${Geometry_H_PATH}/Geo_NodeTopo_Struct.h
 ${Geometry_H_PATH}/Geo_NodeTopo_Unstruct.h
 ${Geometry_H_PATH}/Geo_OversetGridTopo_Struct.h
-${Geometry_H_PATH}/BC.h
-${Geometry_H_PATH}/BC_Struct.h
-${Geometry_H_PATH}/BC_Unstruct.h
+${Geometry_H_PATH}/Geo_SimpleBC.h
+${Geometry_H_PATH}/Geo_StructBC.h
+${Geometry_H_PATH}/Geo_UnstructBC.h
 ${Geometry_H_PATH}/Geo_OversetGrid.h
 ${Geometry_H_PATH}/OversetGridFactory.h
 ${Geometry_H_PATH}/OversetInformation.h
@@ -306,7 +297,8 @@ ${Geometry_H_PATH}/Geo_Face.h
 ${Geometry_H_PATH}/GRHash.h
 ${Geometry_H_PATH}/SubsonicBC.h
 ${Geometry_H_PATH}/OverLappingGrid.h
-${Geometry_H_PATH}/JetBC.h
+${Geometry_H_PATH}/GeometryUnit.h
+${Geometry_H_PATH}/Geo_Element.h
 ${Geometry_H_PATH}/Geo_Sample.h
 ${Geometry_H_PATH}/GeomProxy.h
 ${Geometry_H_PATH}/FieldProxy.h
@@ -319,6 +311,7 @@ include_directories(${Geometry_H_PATH})
 set(Geometry_CPP_PATH Geometry/src)
 set(Geometry_CPP_LIST
 ${Geometry_CPP_PATH}/Geo_Grid.cpp
+${Geometry_CPP_PATH}/Geo_GridManager.cpp
 ${Geometry_CPP_PATH}/GridType.cpp
 ${Geometry_CPP_PATH}/Geo_SimpleGrid.cpp
 ${Geometry_CPP_PATH}/Geo_StructGrid.cpp
@@ -339,9 +332,9 @@ ${Geometry_CPP_PATH}/Geo_MultiGridInfo_Struct.cpp
 ${Geometry_CPP_PATH}/Geo_NodeTopo_Struct.cpp
 ${Geometry_CPP_PATH}/Geo_NodeTopo_Unstruct.cpp
 ${Geometry_CPP_PATH}/Geo_OversetGridTopo_Struct.cpp
-${Geometry_CPP_PATH}/BC.cpp
-${Geometry_CPP_PATH}/BC_Struct.cpp
-${Geometry_CPP_PATH}/BC_Unstruct.cpp
+${Geometry_CPP_PATH}/Geo_SimpleBC.cpp
+${Geometry_CPP_PATH}/Geo_StructBC.cpp
+${Geometry_CPP_PATH}/Geo_UnstructBC.cpp
 ${Geometry_CPP_PATH}/Geo_OversetGrid.cpp
 ${Geometry_CPP_PATH}/OversetGridFactory.cpp
 ${Geometry_CPP_PATH}/OversetInformation.cpp
@@ -353,7 +346,8 @@ ${Geometry_CPP_PATH}/MultigridFactory.cpp
 ${Geometry_CPP_PATH}/GRHash.cpp
 ${Geometry_CPP_PATH}/SubsonicBC.cpp
 ${Geometry_CPP_PATH}/OverLappingGrid.cpp
-${Geometry_CPP_PATH}/JetBC.cpp
+${Geometry_CPP_PATH}/GeometryUnit.cpp
+${Geometry_CPP_PATH}/Geo_Element.cpp
 ${Geometry_CPP_PATH}/Geo_Sample.cpp
 ${Geometry_CPP_PATH}/GeomProxy.cpp
 ${Geometry_CPP_PATH}/FieldProxy.cpp
@@ -366,6 +360,12 @@ source_group(Geometry\\src FILES ${Geometry_CPP_LIST})
 set(Physics_H_PATH Physics/include)
 set(Physics_H_LIST
 ${Physics_H_PATH}/AleModel.h
+${Physics_H_PATH}/AleManager.h
+${Physics_H_PATH}/MovingMesh.h
+${Physics_H_PATH}/DeformingSolverManager.h
+${Physics_H_PATH}/SixDofManager.h
+${Physics_H_PATH}/PHSuperMatrix.h
+${Physics_H_PATH}/SixDOF.h
 ${Physics_H_PATH}/Force.h
 ${Physics_H_PATH}/Zone.h
 ${Physics_H_PATH}/Residual.h
@@ -396,6 +396,11 @@ set(Physics_CPP_LIST
 ${Physics_CPP_PATH}/Zone.cpp
 ${Physics_CPP_PATH}/Force.cpp
 ${Physics_CPP_PATH}/AleModel.cpp
+${Physics_CPP_PATH}/AleManager.cpp
+${Physics_CPP_PATH}/MovingMesh.cpp
+${Physics_CPP_PATH}/DeformingSolverManager.cpp
+${Physics_CPP_PATH}/SixDofManager.cpp
+${Physics_CPP_PATH}/SixDOF.cpp
 ${Physics_CPP_PATH}/Residual.cpp
 ${Physics_CPP_PATH}/GradientOperation.cpp
 ${Physics_CPP_PATH}/AerodynamicsBasicRelations.cpp
@@ -418,8 +423,6 @@ ${Physics_CPP_PATH}/Gas.cpp
 )
 source_group(Physics\\src FILES ${Physics_CPP_LIST})
 
-
-
 # set directory of PreProcess:
 set(PreProcess_H_PATH PreProcess/include)
 set(PreProcess_H_LIST
@@ -430,12 +433,15 @@ ${PreProcess_H_PATH}/Pre_GridConversion.h
 ${PreProcess_H_PATH}/Pre_FieldViewToPHengLEI_Unstruct.h
 ${PreProcess_H_PATH}/Pre_CGNSToPHengLEI_Unstruct.h
 ${PreProcess_H_PATH}/Pre_CGNSToPlot3D_Struct.h
+${PreProcess_H_PATH}/Pre_CGNSToPHengLEI_Struct.h
+${PreProcess_H_PATH}/Pre_Plot3DToPHengLEI_Struct.h
 ${PreProcess_H_PATH}/Pre_FluentToPHengLEI_Unstruct.h
 ${PreProcess_H_PATH}/Pre_HDF5File.h
 ${PreProcess_H_PATH}/WallDist.h
 ${PreProcess_H_PATH}/Pre_GridMirror.h
 ${PreProcess_H_PATH}/Pre_GridRefine.h
 ${PreProcess_H_PATH}/Pre_StrGridPartition.h
+${PreProcess_H_PATH}/Pre_StructToUnstruct.h
 ${PreProcess_H_PATH}/GridTranslator.h
 ${PreProcess_H_PATH}/CombinGrid.h
 ${PreProcess_H_PATH}/GridBase.h
@@ -453,12 +459,15 @@ ${PreProcess_CPP_PATH}/Pre_GridConversion.cpp
 ${PreProcess_CPP_PATH}/Pre_FieldViewToPHengLEI_Unstruct.cpp
 ${PreProcess_CPP_PATH}/Pre_CGNSToPHengLEI_Unstruct.cpp
 ${PreProcess_CPP_PATH}/Pre_CGNSToPlot3D_Struct.cpp
+${PreProcess_CPP_PATH}/Pre_CGNSToPHengLEI_Struct.cpp
+${PreProcess_CPP_PATH}/Pre_Plot3DToPHengLEI_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_FluentToPHengLEI_Unstruct.cpp
 ${PreProcess_CPP_PATH}/Pre_HDF5File.cpp
 ${PreProcess_CPP_PATH}/WallDist.cpp
 ${PreProcess_CPP_PATH}/Pre_GridMirror.cpp
 ${PreProcess_CPP_PATH}/Pre_GridRefine.cpp
 ${PreProcess_CPP_PATH}/Pre_StrGridPartition.cpp
+${PreProcess_CPP_PATH}/Pre_StructToUnstruct.cpp
 ${PreProcess_CPP_PATH}/GridTranslator.cpp
 ${PreProcess_CPP_PATH}/CombinGrid.cpp
 ${PreProcess_CPP_PATH}/GridBase.cpp
@@ -545,6 +554,7 @@ ${PostProcess_CPP_LIST}
 ${Common_CPP_LIST}
 )
 
+
 #21. adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
 
@@ -571,23 +581,23 @@ if(USE_OCC)
   
   # Check if all the library exist -- it's need to be checked. 
   foreach(OCC ${OCC_LIBS_REQUIRED})     
-	  list(APPEND OCC_LIBS ${OCC})
+      list(APPEND OCC_LIBS ${OCC})
       unset(OCC CACHE)
   endforeach(OCC)
   
   if(WIN32)           
-    MESSAGE(STATUS "Using Win32 OpenCasCade.")	
+    MESSAGE(STATUS "Using Win32 OpenCasCade.")
     MESSAGE(STATUS "${OCC_LIB_PATH}/lib")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")	
+    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")
     link_directories("${OCC_LIB_PATH}/lib")
     link_directories("${OCC_LIB_PATH}/bin") 
-	include_directories("${OCC_LIB_PATH}/inc")
+    include_directories("${OCC_LIB_PATH}/inc")
   else(WIN32)
     MESSAGE(STATUS "Using NON-Win32 OpenCasCade.")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")	
-    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")	         
-    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib") 
-    include_directories("${OCC_LIB_PATH}/inc")        
+    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")
+    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")
+    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib")
+    include_directories("${OCC_LIB_PATH}/inc")
   endif(WIN32)
 endif()
 
@@ -613,10 +623,6 @@ endif()
 
 list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5)
 
-if(USE_TecplotLib)
-  list(APPEND LINK_LIBRARY_LIST tecio)
-endif(USE_TecplotLib)
-
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST msmpi)
 endif(WIN32)
@@ -624,6 +630,37 @@ endif(WIN32)
 target_link_libraries(${API_TARGET_NAME} ${LINK_LIBRARY_LIST})
 
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
+
+# For OpenMP
+find_package ( OpenMP )
+if ( OpenMP_FOUND )
+
+if(WIN32)
+target_include_directories ( ${API_TARGET_NAME}
+  PRIVATE
+    ${OpenMP_CXX_INCLUDE_DIRS}
+)
+
+target_compile_options (${API_TARGET_NAME}
+  PRIVATE
+    ${OpenMP_CXX_FLAGS}
+)
+
+target_compile_features ( ${API_TARGET_NAME}
+  PUBLIC 
+    cxx_std_14
+)
+
+target_link_libraries ( ${API_TARGET_NAME}
+  PRIVATE 
+    ${OpenMP_CXX_LIBRARIES}
+)
+else(WIN32)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif(WIN32)
+endif (OpenMP_FOUND)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")

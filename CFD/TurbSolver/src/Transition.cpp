@@ -13,19 +13,20 @@ namespace PHSPACE
     RDouble ReynoldsNumberBasedOnDissipation(RDouble density, RDouble distanceToWall, RDouble viscosity,
         RDouble dissipationRate, RDouble reynoldsNumberInflow)
     {
-        return density * distanceToWall * distanceToWall * dissipationRate * reynoldsNumberInflow * reynoldsNumberInflow / viscosity;
+        return density * distanceToWall * distanceToWall * dissipationRate * reynoldsNumberInflow * reynoldsNumberInflow/ viscosity;
     };
+
     RDouble ReynoldsNumberBasedOnScf(RDouble heightCrossFlow, RDouble velocity, RDouble density,
-        RDouble viscosityLaminar, RDouble viscosityTurbulent, RDouble reynoldsNumberInflow)
+        RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble reynoldsNumberInflow)
     {
         RDouble heightCF = 4.0e-6;
         RDouble thetat = 1.0;
-        RDouble deltHeight  = heightCrossFlow * (1.0 + MIN((viscosityTurbulent / viscosityLaminar), 0.4));
+        RDouble deltHeight  = heightCrossFlow * (1.0 + MIN((viscosityTurbulence / viscosityLaminar), 0.4));
         RDouble dHPos = MAX(0.1066 - deltHeight, 0.0);
         RDouble dHNeg = MAX((deltHeight - 0.1066), 0.0);
         RDouble fDHPos = dHPos * (6200.0 + 50000.0 * dHPos);
         RDouble fDHNeg = 75.0 * tanh(dHNeg * 80.0);
-        
+
         int maxIter = 30;
         for (int iter = 0; iter < maxIter; ++iter)
         {
@@ -45,10 +46,10 @@ namespace PHSPACE
         return thetat;
     }
 
-    RDouble TimeScaleInSourceTerm(RDouble density, RDouble velocity, RDouble viscosityLaminar, RDouble viscosityTurbulent, RDouble reynoldsNumberInflow)
+    RDouble TimeScaleInSourceTerm(RDouble density, RDouble velocity, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble reynoldsNumberInflow)
     {
         RDouble timeScale = 500.0 * viscosityLaminar / (density * velocity * velocity * reynoldsNumberInflow);
-        //timeScale = MIN(timeScale, density*gridLength/(viscosityLaminar + viscosityTurbulent));
+        //timeScale = MIN(timeScale, density*gridLength/(viscosityLaminar + viscosityTurbulence));
         return timeScale;
     };
 
@@ -58,12 +59,9 @@ namespace PHSPACE
         return onsetReynoldsOnMomentumThickness * viscosity / (density * velocity * reynoldsNumberInflow);
     };
 
-    RDouble FlengthGivenByLangtry(RDouble localTransitiononsetReynoldsOnMomentumThickness)
+    RDouble FlengthGivenByLangtry(RDouble Rectabar)
     {
-        RDouble Rectabar, Flength;
-
-        Rectabar = localTransitiononsetReynoldsOnMomentumThickness;
-
+        RDouble Flength;
         if (Rectabar < 400.0)
         {
             Flength = 39.8189 - Rectabar * (1.1927e-2 + 1.32567e-4 * Rectabar);
@@ -83,27 +81,32 @@ namespace PHSPACE
         return Flength;
     };
 
-    RDouble FlengthGivenByZYF(RDouble localTransitiononsetReynoldsOnMomentumThickness)
+    RDouble FlengthCaliBrated(RDouble Rectabar)
     {
-        RDouble Rectabar, Flength;
-
-        Rectabar = localTransitiononsetReynoldsOnMomentumThickness;
-
-        if (Rectabar < 400.0)
+        RDouble Flength;
+        if (Rectabar < 103.0)
         {
-            Flength = 29.965 - Rectabar * (2.8270e-2 + Rectabar * (1.3515e-4  - 1.6569e-7 * Rectabar));
+            Flength = 30.0 - Rectabar * (0.02104 + 2.592e-006 * Rectabar * Rectabar);
         }
-        else if (Rectabar >= 400.0 && Rectabar < 680.0)
+        else if (Rectabar < 179.0)
         {
-            Flength = 53.457 - Rectabar * (1.8973e-1 - Rectabar * (2.2139e-4 - 8.4144e-8 * Rectabar));
+            Flength = 20.95 + Rectabar * (0.2425 - Rectabar * (0.002558  - 5.687e-006 * Rectabar));
         }
-        else if (Rectabar >= 68.0 && Rectabar < 760.0)
+        else if (Rectabar < 360.0)
         {
-            Flength = 87.593 - Rectabar * (3.4033e-1 - Rectabar * (4.4286e-4 - 1.9271e-7 * Rectabar));
+            Flength = 58.11 - Rectabar * (0.3803 - Rectabar * (0.0009207 - 7.916e-007 * Rectabar));
         }
-        else if (Rectabar >= 76.0 && Rectabar < 1200.)
+        else if (Rectabar < 692.0)
         {
-            Flength = 2.0909e-1 - 9.0909e-5 * Rectabar;
+            Flength = 24.01 - Rectabar * (0.09608 - Rectabar * (0.0001312 - 6.059e-008 * Rectabar));
+        }
+        else if (Rectabar < 944.0)
+        {
+            Flength = 6.399 - Rectabar * (0.01975 - Rectabar * (2.094e-005 - 7.456e-009 * Rectabar));
+        }
+        else if (Rectabar < 1200.0)
+        {
+            Flength = -0.06442 + Rectabar * (0.0007924 - Rectabar * (8.193e-007 - 2.276e-010 * Rectabar));
         }
         else
         {
@@ -149,28 +152,27 @@ namespace PHSPACE
         }
     };
 
-    RDouble TransitionOnsetMomentumThicknessReynoldsZYF(RDouble Rectabar)
+    RDouble TransitionOnsetMomentumThicknessReynoldsCaliBrated(RDouble Rectabar)
     {
-        if (Rectabar > 1200.0)
+        if (Rectabar > 1480.0)
         {
-            return 104.545 + 0.5795 * Rectabar;
+            return -49.0267 + 0.47914 * Rectabar;
         }
         else
         {
-            return 0.6192 + Rectabar * (0.9937 - Rectabar * (7.0067e-4 - Rectabar * (5.8629e-7 - 1.9157e-10 * Rectabar)));
+            return 51.41 + Rectabar * (0.6426  +Rectabar * (3.01e-4 + Rectabar*(3.025e-10 * Rectabar - 7.567e-7)));
         }
     };
 
     RDouble SeparationCorrectionOfIntermittency(RDouble gmori, RDouble Rev, RDouble Rectac, RDouble RT, RDouble Fctat, RDouble s1, RDouble refMaNumber)
     {
-        RDouble xsep = 1.30;
+        RDouble xsep = 1.3;
         if (refMaNumber <= 4.0)
         {
             xsep += 0.04375 * (4.0 - refMaNumber) * (4.0 - refMaNumber);
         }
         RDouble Freattach = exp(-pow(RT / 20.0, 4.0));
-        RDouble temp = MAX(0.0, (Rev / (3.235 * Rectac)) - 1.0);
-        RDouble gmsep = Fctat * MIN(xsep, s1 * Freattach * temp);
+        RDouble gmsep = Fctat * MIN(xsep, s1 * Freattach * MAX(0.0, Rev / (3.235 * Rectac) - 1.0));
 
         return MAX(gmori, gmsep);
     }
@@ -195,12 +197,12 @@ namespace PHSPACE
 
     RDouble CorrectionOfDestructionInKEquation(RDouble gmeff, RDouble Dk)
     {
-        return Dk * MIN(1.0, MAX(0.01, gmeff));
+        return Dk * MIN(1.0, MAX(0.1, gmeff));
     }
 
     RDouble CorrectionOfProductionInKEquation(RDouble gmeff, RDouble Pk)
     {
-        return MIN(1.0,gmeff) * Pk;
+        return gmeff * Pk;
     }
 
     RDouble EmpiricalCorrelationOfFlamdacta(RDouble Tu, RDouble lamdacta)

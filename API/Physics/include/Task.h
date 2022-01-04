@@ -29,65 +29,64 @@ void NOAction (ActionKey *actkey);
 class LIB_EXPORT Task
 {
 private:
-	ActionKeyFUN main_action, pre_action, post_action;
-	ActionKey *actkey;
+    ActionKeyFUN main_action, pre_action, post_action;
+    ActionKey *actkey;
 
 public:
-	static vector<Task *> *ootasklist;
-// 	static const int SOLVE_FIELD     ;
-// 	static const int CREATE_GRID     ;
-// 	static const int CAL_WALL_DIST   ;
-// 	static const int PARTITION_GRID  ;
-// 	static const int REPOSITORY      ;
-// 	static const int OVERSETGRID_VIEW;
-// 	static const int OVERSET_CONFIG;	
+    static vector<Task *> *ootasklist;
+//  static const int SOLVE_FIELD     ;
+//  static const int CREATE_GRID     ;
+//  static const int CAL_WALL_DIST   ;
+//  static const int PARTITION_GRID  ;
+//  static const int REPOSITORY      ;
+//  static const int OVERSETGRID_VIEW;
+//  static const int OVERSET_CONFIG;
 
 public:
     Task();
-	~Task();
+    virtual~Task();
 
 public:
-	//! Return the main_action
-	//! @return	main_action
-	ActionKeyFUN GetMainAction();
+    //! Return the main_action
+    //! @return main_action
+    ActionKeyFUN GetMainAction();
 
-	//! Return the pre_action
-	//! @return pre_action
-	ActionKeyFUN GetPreAction ();
+    //! Return the pre_action
+    //! @return pre_action
+    ActionKeyFUN GetPreAction ();
 
-	//! Return the post_action
-	//! @return post_action
-	ActionKeyFUN GetPostAction();
+    //! Return the post_action
+    //! @return post_action
+    ActionKeyFUN GetPostAction();
 
-	//! Set main_action with action
-	//! @param[in] action	An input action
-	void SetMainAction(ActionKeyFUN action);
+    //! Set main_action with action
+    //! @param[in] action    An input action
+    void SetMainAction(ActionKeyFUN action);
 
-	//! Set pre_action with action
-	//! @param[in] action	An input action
-	void SetPreAction (ActionKeyFUN action);
+    //! Set pre_action with action
+    //! @param[in] action    An input action
+    void SetPreAction (ActionKeyFUN action);
 
-	//! Set post_action with action
-	//! @param[in] action	An input action
-	void SetPostAction(ActionKeyFUN action);
+    //! Set post_action with action
+    //! @param[in] action    An input action
+    void SetPostAction(ActionKeyFUN action);
 
-	//! Return the actkey
-	//! @return actkey
-	ActionKey * GetActionKey();
+    //! Return the actkey
+    //! @return actkey
+    ActionKey * GetActionKey();
 
-	//! Set this->actkey with actkey
-	//! @param[in] action	An input actkey
-	void SetActionKey(ActionKey *actkey);
+    //! Set this->actkey with actkey
+    //! @param[in] action    An input actkey
+    void SetActionKey(ActionKey *actkey);
 
-	//! Run all the task(PreTask, MainTask, PostTask)
-	void RunTask();
+    //! Run all the task(PreTask, MainTask, PostTask)
+    void RunTask();
 
 private:
-	virtual void PreTask(ActionKey *actkey) = 0;
-	virtual void PostTask(ActionKey *actkey) = 0;
-	virtual void MainTask(ActionKey *actkey) = 0;
+    virtual void PreTask(ActionKey *actkey) = 0;
+    virtual void PostTask(ActionKey *actkey) = 0;
+    virtual void MainTask(ActionKey *actkey) = 0;
 };
-
 
 void RunSimuTask(Task *task, bool run_now);
 

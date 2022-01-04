@@ -34,11 +34,17 @@ string parafilename = "./bin/cfd_para_transonic.hypara";
 //int    nsimutask    = 3;
 //string parafilename = "./bin/partition.hypara";
 
+//int    nsimutask    = 1;
+//string parafilename = "./bin/grid_deform_para.hypara";
+
 //int    nsimutask    = 4;
 //string parafilename = "./bin/repository.hypara";
 
 //int    nsimutask    = 5;
 //string parafilename = "./bin/overset_grid_view.hypara";
+
+//int    nsimutask    = 13;
+//string parafilename = "./bin/lbm_para.hypara";
 
 //int    nsimutask    = 14;
 //string parafilename = "./bin/integrative_solver.hypara";

@@ -21,18 +21,7 @@ void RunOversetGridConfig()
 
     region->InitGridForOversetConfig();
 
-    int sys_gridtype;
-
-    GlobalDataBase::GetData("sys_gridtype", &sys_gridtype, PHINT, 1);
-
-    if (sys_gridtype == STRUCTGRID)
-    {
-        //! Need to be complished.
-    }
-    else if (sys_gridtype == UNSTRUCTGRID)
-    {
-        RunUnstructuredOversetGridConfig();
-    }
+    RunUnstructuredOversetGridConfig();
 
     delete region;
 }
@@ -126,7 +115,7 @@ void OversetConfigFactoryMulti::Initialize()
 
     if (GetReadInSklFileOrNot() == 1)
     {
-        ReadInSklFiles();    //! Read in partition information file (used for communication node information).
+        ReadInSklFiles();             //! Read in partition information file (used for communication node information).
         GetGlobalInterfaceNodes();    //! Interface boundary points on unpartitioned grids.
     }
 
@@ -144,8 +133,6 @@ void OversetConfigFactoryMulti::Initialize()
 void OversetConfigFactoryMulti::InitializeGlobalValue()
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-
-    int serverProcessor = PHMPI::GetServerSepMode();
 
     numberOfBlocks = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
@@ -168,13 +155,14 @@ void OversetConfigFactoryMulti::InitializeGlobalValue()
         if (currentProcessor == processorIndex)
         {
             OversetConfig *oversetGrid = new OversetConfig;
-            UnstructGrid *grid = PHSPACE::UnstructGridCast(GetGrid(iZone, 0));
+            Grid *grid = GetGrid(iZone, 0);
+            UnstructGrid *gridUnstr = PHSPACE::UnstructGridCast(grid);
             int iBlock = grid->GetIBlock();
 
-            oversetGrid->Initialize(this, grid, numberOfZones, iZone, iBlock, globalZoneNodes, globalInterCells);
+            oversetGrid->Initialize(this, gridUnstr, numberOfZones, iZone, iBlock, globalZoneNodes, globalInterCells);
             oversetConfigMultiZone[iZone] = oversetGrid;
 
-            grid->SetOversetConfig(oversetGrid);
+            gridUnstr->SetOversetConfig(oversetGrid);
         }
         else
         {
@@ -287,10 +275,10 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
     gridIn->SetNBoundFace(nBoundFace);
 
     int *BcType = ReadIntOneRow(grpData, "BcType");
-    BCRecord **bcr = new BCRecord * [nBoundFace];
+    CompositeUnstructBC **bcr = new CompositeUnstructBC * [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        bcr[iFace] = new BCRecord();
+        bcr[iFace] = new CompositeUnstructBC();
         bcr[iFace]->SetKey(BcType[iFace]);
     }
     gridIn->SetBCRecord(bcr);
@@ -455,15 +443,7 @@ void OversetConfigFactoryMulti::ReadInInnerGrid()
 
         PHMPI::PH_BcastByServerSepMode(dataContainer, tag);
 
-        //UnstructGrid *grid = new UnstructGrid();
-
-        //grid->InitGrid(new GridID(0, 0), 0, GetDim(), UNSTRUCTGRID);
-
-        //innerGrid[iBlock] = grid;
-
         innerGrid[iBlock]->Decode(dataContainer, 0);
-
-        //innerGrid[iBlock]->SetIBlock(iBlock);
 
         delete dataContainer;
     }
@@ -642,7 +622,7 @@ void OversetConfigFactoryMulti::ReadInSklFiles()
             int numberOfLocalFaces;
             int numberOfLocalCells;
 
-            int *listForRead;
+            int *listForRead = nullptr;
 
             int receiveProcessor = PHMPI::GetZoneProcessorIDSepMode(zoneIndex);
             if (currentProcessor == serverProcessor)
@@ -708,7 +688,6 @@ void OversetConfigFactoryMulti::GetGlobalInterfaceNodes()
 void OversetConfigFactoryMulti::GetGlobalInterfaceNodes(int iBlock)
 {
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    int serverProcessorIndex = PHMPI::GetServerSepMode();
 
     //! step1: Distinguish globalInterNodes.
     vector< int > keyNodesGlobal;
@@ -760,19 +739,11 @@ void OversetConfigFactoryMulti::GetGlobalInterfaceNodes(int iBlock)
 
 void OversetConfigFactoryMulti::OversetConfigMulti()
 {
-    //WriteLogFile("\n*************  Overset assembling: OversetConfigMulti start  *************\n");
-
     SetInitialValue();    //! Set initial value.
-
-    //testTime->ShowTimeSpanToLogfile("Overset assembling: SetInitialValue");
 
     NodesOperator();
 
     CellsOperator();
-
-    //OutPutTecplot();
-
-    //WriteLogFile("\n*************  Overset assembling: OversetConfigMulti end  *************\n");
 }
 
 void OversetConfigFactoryMulti::SpecifyCellsInBodyByAuxiliaryInnerGrid()
@@ -885,8 +856,6 @@ void OversetConfigFactoryMulti::SetNegativeForInnerAndInitialInterNodes()
 
 void OversetConfigFactoryMulti::NodesOperator()
 {
-    //ReComputeWallDistance();
-
     if (GetReadInAuxiliaryOuterGrid() == 0)
     {
         CalMinDistByGlobalNodes();
@@ -978,7 +947,6 @@ void OversetConfigFactoryMulti::CalMinDistByAuxiliaryOuterGrid()
     }
 
     //! step3. Calculate the minimum wall distance in the auxiliary grid.
-    int serverProcessorIndex = PHMPI::GetServerSepMode();
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
@@ -1277,13 +1245,12 @@ void OversetConfigFactoryMulti::ReadGlobalNodes()
 void OversetConfigFactoryMulti::CreatGlobalNodes()
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int serverProcessor = PHMPI::GetServerSepMode();
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        int numberOfNodes;
+        int numberOfNodes = 0;
         int numberOfSearchNodes = 0;
-        int blockIndex;
+        int blockIndex = 0;
 
         ZoneNodes *zoneNodes = globalZoneNodes[iZone];
         OversetConfig *oversetConfig = oversetConfigMultiZone[iZone];
@@ -1458,9 +1425,8 @@ void OversetConfigFactoryMulti::SpecifyTheDonorCellAndMinDistanceOfGlobalNodes()
     //! Query in all localZone.
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        int tag = 0;
-        int numberOfSearchNodes;
-        RDouble timeForSearch;
+        int numberOfSearchNodes = 0;
+        RDouble timeForSearch = 0.0;
 
         int processorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
         if (currentProcessorIndex == processorIndex)
@@ -1534,24 +1500,18 @@ void OversetConfigFactoryMulti::SpecifySpecicalCellsInteractWithWallBoundary()
 
 void OversetConfigFactoryMulti::FillTheActiveRegion()
 {
-    int numberOfNewNodesPresentCycle;
-    int sum;
-    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    int server = PHMPI::GetServerSepMode();
+    int numberOfNewNodesPresentCycle = 0;
+    int sum = 0;
 
     SetNodeCharacterOnPhysicalBoundary();
 
-    do {
+    do 
+    {
         numberOfNewNodesPresentCycle = CharacterNodeToValidNodeByCell();
 
         //! mpi_reduce.
         PH_AllreduceSepMode(&numberOfNewNodesPresentCycle, &sum, 1, MPI_INT, MPI_SUM);
         numberOfNewNodesPresentCycle = sum;
-
-        if (currentProcessorIndex == server)
-        {
-            cout << "numberOfNewNodesPresentCycle = " << numberOfNewNodesPresentCycle << endl;
-        }
 
     } while (numberOfNewNodesPresentCycle != 0);
 }
@@ -1997,8 +1957,6 @@ void OversetConfigFactoryMulti::CreatGlobalInterCellsServerBcast()
     {
         for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
-            int processorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
-
             int blockIndex = globalInterCells[iZone]->GetBlockIndex();
             int numberOfInterCells = globalInterCells[iZone]->GetNumberOfInterCells();
 
@@ -2069,8 +2027,6 @@ void OversetConfigFactoryMulti::FindDonorZoneAndDonorCell()
 
 void OversetConfigFactoryMulti::SelectDonorZoneAndDonorCell()
 {
-    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-
     int numberOfTotalInterCells;
 
     vector< int >     numberOfInterCellsEachZone;
@@ -2261,7 +2217,7 @@ void OversetConfigFactoryMulti::CreatGlobalInterCells_Old()
         PHSPACE::PHRead(dataContainer, blockIndex);
         PHSPACE::PHRead(dataContainer, numberOfInterCells);
 
-        InterCells* interCells = new InterCells;
+        InterCells *interCells = new InterCells;
         globalInterCells[iZone] = interCells;
         interCells->Initialize(iZone, blockIndex, numberOfInterCells);
 
@@ -2309,10 +2265,7 @@ void OversetConfigFactoryMulti::FindInterCells()
 {
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
 
-    int serverProcessorIndex = PHMPI::GetServerSepMode();
     //! Interpolation cells are determined.
-
-    int numberOfInterCells = 0;
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
@@ -2367,7 +2320,6 @@ bool OversetConfigFactoryMulti::CheckDonorZoneAndDonorCellServer()
             int numberOfInterCells = interCells->GetNumberOfInterCells();
 
             vector< int > &key = interCells->GetKey();
-            vector< int > &donorZone = interCells->GetDonorZoneIndex();
             vector< int > &donorCell = interCells->GetDonorCellIndex();
             vector< RDouble > &xc = interCells->GetX();
             vector< RDouble > &yc = interCells->GetY();
@@ -2707,7 +2659,7 @@ void OversetConfigFactoryMulti::OutPutOversetInformation()
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     int serverProcessor = PHMPI::GetServerSepMode();
 
-    string oversetGridFileName = GlobalDataBase::GetStrParaFromDB("overset_gridfile");
+    string oversetGridFileName = GlobalDataBase::GetStrParaFromDB("oversetGridFileName");
     fstream file;
     if (currentProcessor == serverProcessor)
     {
@@ -2986,7 +2938,6 @@ void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterface()
 void OversetConfigFactoryMulti::OutInterCellInformation()
 {
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    int serverProcessorIndex = PHMPI::GetServerSepMode();
 
     string fileName = AddSymbolToFileName("interCells.dat", currentProcessorIndex);
     fstream file;
@@ -3146,14 +3097,6 @@ void OversetAuxilaryGrid::CalGradientOfWallDistanceGGNode()
     RDouble *faceNormalXContainer = grid->GetFaceNormalX();
     RDouble *faceNormalYContainer = grid->GetFaceNormalY();
     RDouble *faceNormalZContainer = grid->GetFaceNormalZ();
-
-    RDouble *faceCenterXContainer = grid->GetFaceCenterX();
-    RDouble *faceCenterYContainer = grid->GetFaceCenterY();
-    RDouble *faceCenterZContainer = grid->GetFaceCenterZ();
-
-    RDouble *cellCenterXContainer = grid->GetCellCenterX();
-    RDouble *cellCenterYContainer = grid->GetCellCenterY();
-    RDouble *cellCenterZContainer = grid->GetCellCenterZ();
 
     RDouble *faceAreaContainer = grid->GetFaceArea();
     RDouble *cellVolumeContainer = grid->GetCellVolume();
@@ -3322,7 +3265,7 @@ void OversetAuxilaryGrid::CalCellWallDistance()
 
     walldistCompute->ComputeWallDistForNodesList(blockIndex, numberOfCells, x, y, z, &cellWallDistance[0]);
 
-    BCRecord **boundaryConditionRecord = grid->GetBCRecord();
+    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
 
     int *leftCellIndexContainer = grid->GetLeftCellOfFace();
     int *rightCellIndexContainer = grid->GetRightCellOfFace();
@@ -3584,7 +3527,6 @@ void OversetConfig::BuildADTStructure()
 //! Calculate the minimum box according to the cell.
 void OversetConfig::CalculateMinBox()
 {
-    int numberOfNodes = grid->GetNTotalNode();
     int numberOfCells = grid->GetNTotalCell();
 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
@@ -3640,7 +3582,7 @@ void OversetConfig::SearchBoundary()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    BCRecord **boundaryConditionRecord = grid->GetBCRecord();
+    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
@@ -4063,8 +4005,6 @@ void OversetConfig::SpecifyInitialInterNodesByDistance()
 
     vector< RDouble > &nodeWalldistDistance = grid->GetNodeWallDist();
 
-    ZoneNodes *zoneNodes = globalZoneNodes[zoneIndex];
-
     SetField(initialInterNodeOrNot, false, numberOfNodes);
 
     for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
@@ -4160,8 +4100,6 @@ void OversetConfig::SpecifyCellsInBody(vector< MRADTSearch* > &adtSearchArray)
 //! This method isn't applicable in the presence of background grid.
 void OversetConfig::SpecifySpecicalCellsInteractWithWallBoundary()
 {
-    int numberOfNodes = grid->GetNTotalNode();
-
     int numberOfCells = grid->GetNTotalCell();
 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
@@ -4258,11 +4196,9 @@ void OversetConfig::SetNegativeForInnerAndInitialInterNodes()
 
 void OversetConfig::SetNodeCharacterOnPhysicalBoundary()
 {
-    int *keyActiveOfCells = this->GetKeyActiveOfCells();
     vector< int > &keyActiveOfNodes = this->GetKeyActiveOfNodes();
 
     int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
 
     SetField(keyActiveOfNodes, 0, numberOfNodes);
 
@@ -4470,7 +4406,6 @@ int OversetConfig::FindInterCells()
 
 void OversetConfig::CalInterCellInformation(vector< int > &index, vector< RDouble > &x, vector< RDouble > &y, vector< RDouble > &z)
 {
-    int numberOfCells = grid->GetNTotalCell();
 
     RDouble *cellCenterXContainer = grid->GetCellCenterX();
     RDouble *cellCenterYContainer = grid->GetCellCenterY();
@@ -4497,8 +4432,6 @@ int OversetConfig::FindDonorZoneAndDonorCellOfInterCell(int &donorCell, RDouble 
     //! If contribution cell is interpolation, return -1.
 
     donorCell = -1;
-
-    int donorCell1 = -1;
     int donorCell2 = -1;
 
     aDTSearch->SearchInAdt(xc, yc, zc, donorCell2);
@@ -4690,11 +4623,9 @@ void OversetConfig::CharacterNodeToCell()
 //! Property of the point on interface is judged by the property of the virtual cell on interface.
 void OversetConfig::CharacterInterfaceToNode()
 {
-    int numberOfNodes = grid->GetNTotalNode();
-    int numberOfFaces = grid->GetNTotalFace();
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    BCRecord **boundaryConditionRecord = grid->GetBCRecord();
+    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int *faceNodeIndex = grid->GetFace2Node();
@@ -4740,11 +4671,13 @@ void OversetConfig::CharacterCellToNode()
 {
     int *keyActiveOfCells = this->GetKeyActiveOfCells();
 
-    int numberOfNodes = grid->GetNTotalNode();
     int numberOfCells = grid->GetNTotalCell();
+    int numberOfNodes = grid->GetNTotalNode();
 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
     int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
+
+    SetField(keyActiveOfNodes, 0, numberOfNodes);
 
     for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
@@ -4763,7 +4696,6 @@ void OversetConfig::CharacterCellToNode()
 //! Property of the point on interface is judged by the property of the virtual cell on interface.
 int OversetConfig::CharacterNodeToValidNodeByCell()
 {
-    int numberOfNodes = grid->GetNTotalNode();
     int numberOfCells = grid->GetNTotalCell();
 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
@@ -4777,8 +4709,6 @@ int OversetConfig::CharacterNodeToValidNodeByCell()
 
     for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
-        int key = 0;
-
         int cellNodeNumber = cellNodeNumberContainer[iCell];
 
         for (int iNode = 0; iNode < cellNodeNumber; ++ iNode)
@@ -4912,8 +4842,6 @@ void OversetConfig::ShowBoundaryCells()
     int **cellFaceIndexContainer = grid->GetCell2Face();
 
     int *cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
-
-    int *keyActiveOfCells = this->GetKeyActiveOfCells();
 
     for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
@@ -5426,14 +5354,10 @@ void OversetConfig::OutKeyBuffer()
 void OversetConfig::OutKeyActive()
 {
     int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
-
     string fileName = AddSymbolToFileName("keyActive.dat", zoneIndex);
     fstream file;
 
     PHSPACE::OpenFile(file, fileName, ios_base::out);
-
-    int *keyActiveOfCells = this->GetKeyActiveOfCells();
 
     file << "keyActiveOfNodes" << endl;
     for (int iNode = 0; iNode < numberOfNodes; ++ iNode)

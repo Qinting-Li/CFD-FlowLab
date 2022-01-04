@@ -28,21 +28,6 @@ inline void StructGrid::SetMultigridStepK(int kstp)
     multigridInfo->SetMultigridStepK(kstp);
 }
 
-inline void StructGrid::SetBlankIndex(Int3D *iblank)
-{
-    this->iblank = iblank;
-}
-
-inline void StructGrid::SetBlankIndex_tmp(int * iblank) 
-{ 
-	this->iblank_tmp = iblank; 
-}
-
-inline int * StructGrid::GetBlankIndex_tmp()
-{
-    return iblank_tmp;
-}
-
 inline RDouble3D * StructGrid::GetWallDist() const
 {
     return walldist;
@@ -173,83 +158,83 @@ inline int StructGrid::GetNK() const
     return nodeTopology->GetNK();
 }
 
-inline void StructGrid::SetProbesCellNI(vector <int> probesCellNI)
+inline void StructGrid::SetZoneProbesCellNI(vector <int> zoneProbesCellNI)
 {
-    this->probesCellNI = probesCellNI;
+    this->zoneProbesCellNI = zoneProbesCellNI;
 }
 
-inline void StructGrid::SetProbesCellNJ(vector <int> probesCellNJ)
+inline void StructGrid::SetZoneProbesCellNJ(vector <int> zoneProbesCellNJ)
 {
-    this->probesCellNJ = probesCellNJ;
+    this->zoneProbesCellNJ = zoneProbesCellNJ;
 }
 
-inline void StructGrid::SetProbesCellNK(vector <int> probesCellNK)
+inline void StructGrid::SetZoneProbesCellNK(vector <int> zoneProbesCellNK)
 {
-    this->probesCellNK = probesCellNK;
+    this->zoneProbesCellNK = zoneProbesCellNK;
 }
 
-inline vector <int> StructGrid::GetProbesCellNI() const
+inline vector <int> StructGrid::GetZoneProbesCellNI() const
 {
-    return probesCellNI;
+    return zoneProbesCellNI;
 }
 
-inline vector <int> StructGrid::GetProbesCellNJ() const
+inline vector <int> StructGrid::GetZoneProbesCellNJ() const
 {
-    return probesCellNJ;
+    return zoneProbesCellNJ;
 }
 
-inline vector <int> StructGrid::GetProbesCellNK() const
+inline vector <int> StructGrid::GetZoneProbesCellNK() const
 {
-    return probesCellNK;
+    return zoneProbesCellNK;
 }
 
-inline void StructGrid::GetCellIterationIndex(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked, int layer)
-{
-    int ni = nodeTopology->GetNI();
-    int nj = nodeTopology->GetNJ();
-    int nk = nodeTopology->GetNK();
-
-    ist = 1 - layer;
-    ied = ni - 1 + layer;
-    jst = 1 - layer;
-    jed = nj - 1 + layer;
-
-    if (nk == 1)
-    {
-        kst = 1;
-        ked = 1;
-    }
-    else
-    {
-        kst = 1 - layer;
-        ked = nk -1 + layer;
-    }
-}
-
-inline void StructGrid::GetNodeIterationIndex(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked)
+inline void StructGrid::GetCellIterationIndex(int &iCellStart, int &iCellEnd, int &jCellStart, int &jCellEnd, int &kCellStart, int &kCellEnd, int layer)
 {
     int ni = nodeTopology->GetNI();
     int nj = nodeTopology->GetNJ();
     int nk = nodeTopology->GetNK();
 
-    ist = 1;
-    ied = ni;
-    jst = 1;
-    jed = nj;
+    iCellStart = 1 - layer;
+    iCellEnd = ni - 1 + layer;
+    jCellStart = 1 - layer;
+    jCellEnd = nj - 1 + layer;
 
     if (nk == 1)
     {
-        kst = 1;
-        ked = 1;
+        kCellStart = 1;
+        kCellEnd = 1;
     }
     else
     {
-        kst = 1;
-        ked = nk;
+        kCellStart = 1 - layer;
+        kCellEnd = nk -1 + layer;
     }
 }
 
-inline void StructGrid::GetFaceIterationIndex(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked, int iSurface)
+inline void StructGrid::GetNodeIterationIndex(int &iNodeStart, int &iNodeEnd, int &jNodeStart, int &jNodeEnd, int &kNodeStart, int &kNodeEnd)
+{
+    int ni = nodeTopology->GetNI();
+    int nj = nodeTopology->GetNJ();
+    int nk = nodeTopology->GetNK();
+
+    iNodeStart = 1;
+    iNodeEnd = ni;
+    jNodeStart = 1;
+    jNodeEnd = nj;
+
+    if (nk == 1)
+    {
+        kNodeStart = 1;
+        kNodeEnd = 1;
+    }
+    else
+    {
+        kNodeStart = 1;
+        kNodeEnd = nk;
+    }
+}
+
+inline void StructGrid::GetFaceIterationIndex(int &iFaceStart, int &iFaceEnd, int &jFaceStart, int &jFaceEnd, int &kFaceStart, int &kFaceEnd, int iSurface)
 {
     int ni = nodeTopology->GetNI();
     int nj = nodeTopology->GetNJ();
@@ -257,48 +242,48 @@ inline void StructGrid::GetFaceIterationIndex(int &ist, int &ied, int &jst, int 
 
     if (iSurface == 1)
     {
-        ist = 0;
-        ied = ni-1;
-        jst = 1;
-        jed = nj-1;
+        iFaceStart = 0;
+        iFaceEnd = ni-1;
+        jFaceStart = 1;
+        jFaceEnd = nj-1;
 
         if (nk == 1)
         {
-            kst = 1;
-            ked = 1;
+            kFaceStart = 1;
+            kFaceEnd = 1;
         }
         else
         {
-            kst = 1;
-            ked = nk-1;
+            kFaceStart = 1;
+            kFaceEnd = nk-1;
         }
     }
     else if (iSurface == 2)
     {
-        ist = 1;
-        ied = ni-1;
-        jst = 0;
-        jed = nj-1;
+        iFaceStart = 1;
+        iFaceEnd = ni-1;
+        jFaceStart = 0;
+        jFaceEnd = nj-1;
 
         if (nk == 1)
         {
-            kst = 1;
-            ked = 1;
+            kFaceStart = 1;
+            kFaceEnd = 1;
         }
         else
         {
-            kst = 1;
-            ked = nk-1;
+            kFaceStart = 1;
+            kFaceEnd = nk-1;
         }
     }
     else
     {
-        ist = 1;
-        ied = ni-1;
-        jst = 1;
-        jed = nj-1;
-        kst = 0;
-        ked = nk-1;
+        iFaceStart = 1;
+        iFaceEnd = ni-1;
+        jFaceStart = 1;
+        jFaceEnd = nj-1;
+        kFaceStart = 0;
+        kFaceEnd = nk-1;
     }
 }
 
@@ -339,34 +324,29 @@ inline RDouble3D * StructGrid::GetStructZ() const
     return nodeTopology->GetStructZ();
 }
 
-inline CompositeBCRegion * StructGrid::GetCompositeBCRegion() const
+inline CompositeStructBC * StructGrid::GetCompositeBCRegion() const
 {
     return composite_bcregion;
 }
 
-inline RDouble4D & StructGrid::GetFaceVelocityX() const
+inline RDouble4D * StructGrid::GetFaceVelocityX() const
 {
-    return * dynamicGridMetrics->GetFaceVelocityX();
+    return dynamicGridMetrics->GetFaceVelocityX();
 }
 
-inline RDouble4D & StructGrid::GetFaceVelocityY() const
+inline RDouble4D * StructGrid::GetFaceVelocityY() const
 {
-    return * dynamicGridMetrics->GetFaceVelocityY();
+    return dynamicGridMetrics->GetFaceVelocityY();
 }
 
-inline RDouble4D & StructGrid::GetFaceVelocityZ() const
+inline RDouble4D * StructGrid::GetFaceVelocityZ() const
 {
-    return * dynamicGridMetrics->GetFaceVelocityZ();
+    return dynamicGridMetrics->GetFaceVelocityZ();
 }
 
 inline int StructGrid::GetZoneStartPointLabel() const
 {
     return oversetGridTopology->GetZoneStartPointLabel();
-}
-
-inline int * StructGrid::GetCellTypeContainer() const
-{
-    return oversetGridTopology->GetCellTypeContainer();
 }
 
 inline void StructGrid::SetZoneStartPointLabel(int zoneStartPointLabel)

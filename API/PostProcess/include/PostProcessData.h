@@ -67,24 +67,24 @@ public:
 
     int GetNWallPart();
     int GetNPart();
-    int *GetPartBCID();
-    RDouble *GetCfx();
-    RDouble *GetCfy();
-    RDouble *GetCfz();
-    RDouble *GetCpx();
-    RDouble *GetCpy();
-    RDouble *GetCpz();
-    RDouble *GetCmx();
-    RDouble *GetCmy();
-    RDouble *GetCmz();
-    RDouble *GetClTot();
-    RDouble *GetCdTot();
-    RDouble *GetCdPr();
-    RDouble *GetCdSf();
-    RDouble *GetCdCl2Pa();
-    RDouble *GetXcp();
-    RDouble *GetSide();
-    RDouble *GetHingeMoment();
+    int * GetPartBCID();
+    RDouble * GetCfx();
+    RDouble * GetCfy();
+    RDouble * GetCfz();
+    RDouble * GetCpx();
+    RDouble * GetCpy();
+    RDouble * GetCpz();
+    RDouble * GetCmx();
+    RDouble * GetCmy();
+    RDouble * GetCmz();
+    RDouble * GetClTot();
+    RDouble * GetCdTot();
+    RDouble * GetCdPr();
+    RDouble * GetCdSf();
+    RDouble * GetCdCl2Pa();
+    RDouble * GetXcp();
+    RDouble * GetSide();
+    RDouble * GetHingeMoment();
 
 };
 

@@ -3,14 +3,14 @@
 #include "PHHeader.h"
 #include "Region.h"
 #include "Zone.h"
-#include "AleModel.h"
+//#include "AleModel.h"
 #include "Glb_Dimension.h"
 #include "Constants.h"
 #include "TK_Log.h"
 #include "Controller.h"
 #include "TK_Exit.h"
 #include "TK_Time.h"
-#include "BC.h"
+#include "Geo_SimpleBC.h"
 //#include "UnstructuredOversetConfig.h"
 #include "OversetInformation.h"
 #include "Post_WriteTecplot.h"
@@ -37,16 +37,16 @@ HOSimulation::HOSimulation(int dimension)
 
     SetDim(dimension);
 
-	region = new PHSPACE::Region();
+    region = new PHSPACE::Region();
 
-	isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
 }
 
 HOSimulation::~HOSimulation()
 {
     using namespace PHMPI;
 
-	delete region;
+    delete region;
 
     TK_Exit::ExitPHengLEI();
 }
@@ -58,38 +58,38 @@ void HOSimulation::InitializeProtoTable()
 
 void HOSimulation::Run()
 {
-	ReadGeometry();
+    ReadGeometry();
 
-	UpdateAllZonesPara();
+    UpdateAllZonesPara();
 
     InitGeometry();
-	
-	SwapGeommetry();
+    
+    SwapGeommetry();
 
-	InitOversetGrid();
+    InitOversetGrid();
 
-	if( PHMPI::CurrentProcessorIsGridProcessor() )
-	{
-		return;
-	}
+    if( PHMPI::CurrentProcessorIsGridProcessor() )
+    {
+        return;
+    }
 
-	InitializeProtoTable();
-	 
-	//! Define solver names for all zones and create the newly defined solvers.
-	//! IMPORTANT for solver developers:
-	//! Define your solver name which is same with the solver class name here! 
+    InitializeProtoTable();
+     
+    //! Define solver names for all zones and create the newly defined solvers.
+    //! IMPORTANT for solver developers:
+    //! Define your solver name which is same with the solver class name here! 
     DefineAndCreateSolvers();
 
     //! Initialize each solver on each zone.
-	InitializeSolvers();
+    InitializeSolvers();
 
-	InitGlobalBoundaryCondition();
+    InitGlobalBoundaryCondition();
 
-	MultiGridInitFlow();
-	
-	SolveSimu();
+    MultiGridInitFlow();
+    
+    SolveSimu();
 
-	PostSimu();
+    PostSimu();
 }
 
 void HOSimulation::SolveSimu()
@@ -112,11 +112,11 @@ void HOSimulation::SolveSimu()
 void HOSimulation::UpdateOuterIterationStep(int &outnstep)
 {
     outnstep = outnstep + 1;
-    GlobalDataBase::UpdateData("outnstep",&outnstep,PHINT,1);
+    GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
 
     int newnstep = GlobalDataBase::GetIntParaFromDB("newnstep");
     newnstep ++;
-    GlobalDataBase::UpdateData("newnstep",&newnstep,PHINT,1);
+    GlobalDataBase::UpdateData("newnstep", &newnstep, PHINT, 1);
 
     //int isUnsteady = 0;
     //GlobalDataBase::GetData("iunsteady", &isUnsteady, PHINT, 1);
@@ -176,57 +176,58 @@ void HOSimulation::PostSimu()
 
 void HOSimulation::ComputeWallDistance()
 {
-	ReadGeometry();
+    ReadGeometry();
 
-	UpdateAllZonesPara();
+    UpdateAllZonesPara();
 
-	InitGeometry();
+    InitGeometry();
 }
 
 void HOSimulation::SwapGeommetry()
 {
-	this->region->SwapGeommetry();
+    this->region->SwapGeommetry();
 }
 
 void HOSimulation::InitGeometry()
 {
-	this->region->InitGeometry();
+    this->region->InitGeometry();
 }
 
 void HOSimulation::ReadGeometry()
 {
-	PHSPACE::TimeSpan testTime;
+    PHSPACE::TimeSpan testTime;
     ReadGrid();
-	testTime.ShowTimeSpanToLogfile("Grid Reading");
+    testTime.ShowTimeSpanToLogfile("Grid Reading");
 }
 
 void HOSimulation::InitializeSolvers()
 {
-	WriteLogFile( "Creating and initialization solvers start\n" );
+    WriteLogFile( "Creating and initialization solvers start\n" );
 
-	int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
-	for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
-	{
-		Controller * controller = new Controller(iSolver, this->region);
+    int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
+    for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
+    {
+        Controller * controller = new Controller(iSolver, this->region);
 
-		controller->Initialize(iSolver);
+        controller->Initialize(iSolver);
 
-		delete controller;
-	}
+        delete controller;
+    }
 
-	WriteLogFile( "Creating and initialization solvers over\n" );
+    WriteLogFile( "Creating and initialization solvers over\n" );
 }
 
 void HOSimulation::DefineAndCreateSolvers()
 {
+    InitGlobalValuesOfAllZones();
+
     int nZones = PHMPI::GetNumberofGlobalZones();
-    PHSPACE::Zone::Init();
     for ( int iZone = 0; iZone < nZones; ++ iZone )
     {
-		PHSPACE::Zone * zone = this->region->GetZone(iZone);
+        PHSPACE::Zone * zone = this->region->GetZone(iZone);
         if (!zone) continue;
 
-		//! For each zone, define the solver names on it.
+        //! For each zone, define the solver names on it.
         //! If you are solver developer, define your solve name here,
         //! according your solver logic.
 
@@ -244,9 +245,9 @@ void HOSimulation::DefineAndCreateSolvers()
         solverList.push_back(solver);
 
         int viscousType = LAMINAR;
-		zone->GetData("viscousType",&viscousType, PHINT, 1);
+        zone->GetData("viscousType",&viscousType, PHINT, 1);
 
-        if ( viscousType > 1 )
+        if ( viscousType > LAMINAR )
         {
             PHSolver *solver = new TurbSolverUnstr();
             solverList.push_back(solver);
@@ -265,125 +266,120 @@ void HOSimulation::DefineAndCreateSolvers()
 
 void HOSimulation::PreSolve()
 {
-	//FYAleModel::UnsteadyPreSolve();
+    //FYAleModel::UnsteadyPreSolve();
 }
 
 void HOSimulation::ReadGrid()
 {
-	region->ReadGrid();
+    region->ReadGrid();
 }
 
 void HOSimulation::UpdateAllZonesPara()
 {
-	this->region->UpdateAllZonesPara();
+    this->region->UpdateAllZonesPara();
 }
 
 void HOSimulation::InitGlobalBoundaryCondition()
 {
-	this->region->ReSetBoundaryConditionByGlobalBC();
+    this->region->ReSetBoundaryConditionByGlobalBC();
 }
 
 void HOSimulation::MultiGridInitFlow()
 {
-	WriteLogFile("Multi-Grid Init Flow ...");
+    WriteLogFile("Multi-Grid Init Flow ...");
 
-	int nMGLevel = GlobalDataBase::GetIntParaFromDB("nMGLevel");
-	if (nMGLevel <= 1) return;
+    int nMGLevel = GlobalDataBase::GetIntParaFromDB("nMGLevel");
+    if (nMGLevel <= 1) return;
 
-	int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "outnstep" );
-	if(outnstep > 0)
-	{
-// 		int newnstep = outnstep;
-// 		GlobalDataBase::UpdateData("newnstep",&newnstep, PHINT, 1);
-		return; //! Read from flow file.
-	}
+    int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "outnstep" );
+    if(outnstep > 0)
+    {
+//      int newnstep = outnstep;
+//      GlobalDataBase::UpdateData("newnstep",&newnstep, PHINT, 1);
+        return; //! Read from flow file.
+    }
 
-	int mgInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "mgInitStep" );
-	if(mgInitStep <= 0) return;
+    int mgInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "mgInitStep" );
+    if(mgInitStep <= 0) return;
 
-	int mgvist = GlobalDataBase::GetIntParaFromDB("mgvist");
-	int nSolver = 1;		//! Consider NS solver only.
-	if(mgvist) 
-	{
-		nSolver = PHSPACE::Zone::GetNumberOfSolvers();		//! Consider TurbSolver.
-	}
+    int mgvist = GlobalDataBase::GetIntParaFromDB("mgvist");
+    int nSolver = 1;    //! Consider NS solver only.
+    if (mgvist) 
+    {
+        nSolver = PHSPACE::Zone::GetNumberOfSolvers();    //! Consider TurbSolver.
+    }
 
-	int isInMGIniting = 1;
-	GlobalDataBase::UpdateData("isInMGIniting", &isInMGIniting, PHINT, 1);
+    int isInMGIniting = 1;
+    GlobalDataBase::UpdateData("isInMGIniting", &isInMGIniting, PHINT, 1);
 
-	for (int level = nMGLevel - 1; level > 0; -- level)
-	{
-		int levelStep = 0;
-		int totalLevelStep = mgInitStep * level;
+    for (int level = nMGLevel - 1; level > 0; -- level)
+    {
+        int levelStep = 0;
+        int totalLevelStep = mgInitStep * level;
 
-		ostringstream oss;
-		oss << "Start init flow on level " << level << ", " << totalLevelStep << " iterations ...";
-		WriteLogFile(oss.str()); oss << endl;
-		PrintToWindow(oss.str());
+        ostringstream oss;
+        oss << "Start init flow on level " << level << ", " << totalLevelStep << " iterations ...";
+        WriteLogFile(oss.str()); oss << endl;
+        PrintToWindow(oss.str());
 
-		while ( levelStep < totalLevelStep )
-		{
-			++ levelStep;
+        while ( levelStep < totalLevelStep )
+        {
+            ++ levelStep;
 
-			UpdateOuterIterationStep(outnstep);
+            UpdateOuterIterationStep(outnstep);
 
-			//using namespace PHMPI;
-			for ( int isolver = 0; isolver < nSolver; ++ isolver )
-			{
-				Controller * controller = new Controller(isolver, this->region);
-				controller->MultiGridInitFlow(level);
-				controller->PostSolve(level);
-				delete controller;
-			}
-		}
+            //using namespace PHMPI;
+            for ( int isolver = 0; isolver < nSolver; ++ isolver )
+            {
+                Controller * controller = new Controller(isolver, this->region);
+                controller->MultiGridInitFlow(level);
+                controller->PostSolve(level);
+                delete controller;
+            }
+        }
 
-		//! Interpolate from coarse grid to fine grid.
-		for ( int isolver = 0; isolver < nSolver; ++ isolver )
-		{
-			Controller * controller = new Controller(isolver, this->region);
-			controller->InterpolatFineGrid(isolver, level - 1);
-			delete controller;
-		}
-	}
+        //! Interpolate from coarse grid to fine grid.
+        for ( int isolver = 0; isolver < nSolver; ++ isolver )
+        {
+            Controller * controller = new Controller(isolver, this->region);
+            controller->InterpolatFineGrid(isolver, level - 1);
+            delete controller;
+        }
+    }
 
-	isInMGIniting = 0;
-	GlobalDataBase::UpdateData("isInMGIniting", &isInMGIniting, PHINT, 1);
+    isInMGIniting = 0;
+    GlobalDataBase::UpdateData("isInMGIniting", &isInMGIniting, PHINT, 1);
 
-	int newnstep = 0;
-	GlobalDataBase::UpdateData("newnstep",&newnstep, PHINT, 1);
+    int newnstep = 0;
+    GlobalDataBase::UpdateData("newnstep",&newnstep, PHINT, 1);
 
-	PrintToWindow("End init flow by coarse grid ...\n");
-	WriteLogFile("End init flow by coarse grid ...");
+    PrintToWindow("End init flow by coarse grid ...\n");
+    WriteLogFile("End init flow by coarse grid ...");
 }
 
 void HOSimulation::SolveSteady()
 {
-	int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
+    int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
     // Get iteration number
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
-	int mgvist = GlobalDataBase::GetIntParaFromDB("mgvist");
 
-	for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
-	{
-		// isolver=1 or 2, is supposed as turbulence computing
-		if ( ( iSolver != 0 ) && (outnstep % turbInterval != 0) )
-		{
-			return;
-		}
-     //   if( isolver == 0)
-     //   {
-     //       SolveSteadyField();
-     //       return;
-     //   }
-		Controller *controller = new Controller(iSolver, this->region);
+    for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
+    {
+        // isolver=1 or 2, is supposed as turbulence computing
+        if ( ( iSolver != NS_SOLVER ) && (outnstep % turbInterval != 0) )
+        {
+            return;
+        }
 
-		controller->SolveSteadyField();
+        Controller *controller = new Controller(iSolver, this->region);
 
-		controller->PostSolve();
+        controller->SolveSteadyField();
 
-		delete controller;
-	}
+        controller->PostSolve();
+
+        delete controller;
+    }
 }
 
 void HOSimulation::SolveSteadyField()

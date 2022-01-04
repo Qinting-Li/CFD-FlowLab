@@ -26,60 +26,60 @@ namespace PHSPACE
 class Geo_FaceMetrics_Unstruct
 {
 private:
-	//! Face center data.
-	RDouble * xfc, * yfc, * zfc;
+    //! Face center data.
+    RDouble * xfc, * yfc, * zfc;
 
-	//! Face UNIT normal data.
-	RDouble * xfn, * yfn, * zfn; 
+    //! Face UNIT normal data.
+    RDouble * xfn, * yfn, * zfn; 
 
-	//! Face area.
-	RDouble * area;
+    //! Face area.
+    RDouble * area;
 public:
-	LIB_EXPORT Geo_FaceMetrics_Unstruct();
-	LIB_EXPORT ~Geo_FaceMetrics_Unstruct();
+    LIB_EXPORT Geo_FaceMetrics_Unstruct();
+    LIB_EXPORT ~Geo_FaceMetrics_Unstruct();
 
 public:
-	//! Assign the given pointer to the X Face center data.
-	void SetFaceCenterX(RDouble * xfc);
+    //! Assign the given pointer to the X Face center data.
+    void SetFaceCenterX(RDouble * xfc);
 
-	//! Assign the given pointer to the Y Face center data.
-	void SetFaceCenterY(RDouble * yfc);
+    //! Assign the given pointer to the Y Face center data.
+    void SetFaceCenterY(RDouble * yfc);
 
-	//! Assign the given pointer to the Z Face center data.
-	void SetFaceCenterZ(RDouble * zfc);
+    //! Assign the given pointer to the Z Face center data.
+    void SetFaceCenterZ(RDouble * zfc);
 
-	//! Assign the given pointer to the X Face UNIT normal data.
-	void SetFaceNormalX(RDouble * xfn);
+    //! Assign the given pointer to the X Face UNIT normal data.
+    void SetFaceNormalX(RDouble * xfn);
 
-	//! Assign the given pointer to the Y Face UNIT normal data.
-	void SetFaceNormalY(RDouble * yfn);
+    //! Assign the given pointer to the Y Face UNIT normal data.
+    void SetFaceNormalY(RDouble * yfn);
 
-	//! Assign the given pointer to the Z Face UNIT normal data.
-	void SetFaceNormalZ(RDouble * zfn);
+    //! Assign the given pointer to the Z Face UNIT normal data.
+    void SetFaceNormalZ(RDouble * zfn);
 
-	//! Assign the given pointer to the Face area.
-	void SetFaceArea(RDouble * area);
+    //! Assign the given pointer to the Face area.
+    void SetFaceArea(RDouble * area);
 
-	//! Return the X pointer of face center.
-	RDouble * GetFaceCenterX() const;
+    //! Return the X pointer of face center.
+    RDouble * GetFaceCenterX() const;
 
-	//! Return the Y pointer of face center.
-	RDouble * GetFaceCenterY() const;
+    //! Return the Y pointer of face center.
+    RDouble * GetFaceCenterY() const;
 
-	//! Return the Z pointer of face center.
-	RDouble * GetFaceCenterZ() const;
+    //! Return the Z pointer of face center.
+    RDouble * GetFaceCenterZ() const;
 
-	//! Return the X pointer of face UNIT normal.
-	RDouble * GetFaceNormalX() const;
+    //! Return the X pointer of face UNIT normal.
+    RDouble * GetFaceNormalX() const;
 
-	//! Return the Y pointer of face UNIT normal.
-	RDouble * GetFaceNormalY() const;
+    //! Return the Y pointer of face UNIT normal.
+    RDouble * GetFaceNormalY() const;
 
-	//! Return the Z pointer of face UNIT normal.
-	RDouble * GetFaceNormalZ() const;
+    //! Return the Z pointer of face UNIT normal.
+    RDouble * GetFaceNormalZ() const;
 
-	//! Return the face area.
-	RDouble * GetFaceArea()    const;
+    //! Return the face area.
+    RDouble * GetFaceArea()    const;
 };
 
 #include "Geo_FaceMetrics_Unstruct.hxx"

@@ -11,7 +11,11 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      NSSolverStructFD.h
 //! @brief     NS solver for struct grid with finite difference method.
-//! @author    MIN Yaobing, MA Yankai.
+//! @author    Min Yaobing, Ma Yankai.
+
+//! CHEN J Q, MA Y K, MIN Y B, et al. Design and development of homogeneous hybrid 
+//! solvers on National Numerical Windtunnel(NNW) PHengLEI[J]. Acta Aerodynamica Sinica,
+//! 2020, 38(6): 1103-1110.
 
 #pragma once
 #include "NSSolverStruct.h"
@@ -32,12 +36,12 @@ private:
     void Primitive2Conservative(RDouble prim[5], RDouble q[5]);
     void Conservative2Primitive(RDouble q[5], RDouble prim[5]);
     
-    void InFlowBC3D(Grid *gridIn, BCRegion *BCRegion);
-    void OutFlowBC3D(Grid *gridIn, BCRegion *BCRegion);
-    void SymmetryBC3D(Grid *gridIn, BCRegion *BCRegion);
-    void ViscousAdiabaticWall(Grid *gridIn, BCRegion *BCRegion);
-    void ViscousIsotropicWall(Grid *gridIn, BCRegion *BCRegion);
-    void FarFieldRiemannInvariants(Grid *gridIn, BCRegion *BCRegion);
+    void InFlowBC3D(Grid *gridIn, StructBC *structBC);
+    void OutFlowBC3D(Grid *gridIn, StructBC *structBC);
+    void SymmetryBC3D(Grid *gridIn, StructBC *structBC);
+    void ViscousAdiabaticWall(Grid *gridIn, StructBC *structBC);
+    void ViscousIsotropicWall(Grid *gridIn, StructBC *structBC);
+    void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC);
     void CornerPoint(Grid *gridIn);
     
     void GetIndependentVariablesforStructHighOrder(Grid *gridIn);
@@ -51,6 +55,7 @@ private:
     void Boundary(Grid *gridIn);
     void ComputeGamaAndTemperature(Grid *gridIn);
     void CalPressureFactor(Grid *gridIn);
+    void GetHeatTransferCoeff(Grid *gridIn);
     void ComputeViscousCoeff(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
     

@@ -59,18 +59,19 @@ void WriteData(hid_t loc_id, const void *data, const string &dataName);
 void ReadData(hid_t loc_id, void *data, const string &dataName);
 
 //!
-RDouble *ReadDoubleOneRow(hid_t loc_id, const string &dataName);
+RDouble * ReadDoubleOneRow(hid_t loc_id, const string &dataName);
 
-int *ReadIntOneRow(hid_t loc_id, const string &dataName);
+int  * ReadIntOneRow(hid_t loc_id, const string &dataName);
 
-int **ReadIntTwoRow(hid_t loc_id, const string &dataName);
+int ** ReadIntTwoRow(hid_t loc_id, const string &dataName);
 
-char *ReadCharData(hid_t loc_id, const string &dataName);
+char * ReadCharData(hid_t loc_id, const string &dataName);
 
-#define MPI_BANNER(mesg)\
-    {printf("--------------------------------\n");\
-     printf("Proc %d: ", PHMPI::GetCurrentProcessorID());\
-     printf("*** %s\n", mesg);\
-     printf("--------------------------------\n");}
+bool CheckDataExist(hid_t loc_id, const string &dataName);
 
+int  GetObjNumber(hid_t loc_id);
+
+void GetObjNameList(hid_t loc_id, string *objNameList);
+
+void GetObjTypeList(hid_t loc_id, H5G_obj_t *objTypeList);
 }

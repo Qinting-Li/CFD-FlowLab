@@ -18,40 +18,55 @@
 #include "ExplicitDifferenceBoundary.h"
 #include "CompactDifferenceSecondDerivative.h"
 #include "Complex.h"
+//#include "SpecDiffHybSolver.h"
+#include "Param_SpecDiffHybSolver.h"
+
 using namespace std;
 
 namespace PHSPACE
 {
 
-	class PoissonSolver 
-	{
-	public:
-		PoissonSolver();
-		~PoissonSolver();
+class PoissonSolver
+{
+public:
+    PoissonSolver();
+    ~PoissonSolver();
 
-    public:
-        RDouble4D *coefMatrixVelocityDirichlet, *coefMatrixPressureNeumann, *boundaryMatrixPressureNeumann;
+public:
+    RDouble4D *coefMatrixVelocityDirichlet, *coefMatrixPressureNeumann, *boundaryMatrixPressureNeumann;
 
-    public:
-        void InitPoissonSolverData(SpecDiffHybGrid *, ExplicitDifferenceBoundary *, CompactDifferenceSecondDerivative*, RDouble1D *, RDouble1D *);
-        void PoissonSolverNeumannBC( const int, RDouble *, PHComplex *, int *, int *, const int, const PHComplex, const PHComplex, PHComplex *, RDouble *, RDouble * );
-        static void PoissonSolverDirichletBC( const int , RDouble *, RDouble *, PHComplex *, const RDouble, int *, int *, const PHComplex, const PHComplex, RDouble *, PHComplex * );
-        static void PoissonSolverVelocity( const int, RDouble *, PHComplex *, int *, int *, const PHComplex, const PHComplex, RDouble *, RDouble *, PHComplex * );
-        static void LUDecomposeNeumannBC( int, RDouble *, int, RDouble * );
-        static void LUDecompose( const int, RDouble * );
-        static void LUSolve( const int, RDouble *, RDouble * );
-        static void LUSolve( const int, RDouble *, PHComplex * );
-        static void LUSolveNeumannBC( const int, RDouble *, const int, RDouble *, PHComplex * );
-		void GetCoefMatrixVelocityDirichlet( SpecDiffHybGrid *, ExplicitDifferenceBoundary *, CompactDifferenceSecondDerivative *, RDouble1D *, RDouble1D *);
+public:
+    void InitPoissonSolverData(SpecDiffHybGrid *, ExplicitDifferenceBoundary *, CompactDifferenceSecondDerivative*, RDouble1D *, RDouble1D *);
+    
+    void PoissonSolverNeumannBC( const int, RDouble *, PHComplex *, int *, int *, const int, const PHComplex, const PHComplex, PHComplex *, RDouble *, RDouble * );
+    
+    static void PoissonSolverDirichletBC( const int , RDouble *, RDouble *, PHComplex *, const RDouble, int *, int *, const PHComplex, const PHComplex, RDouble *, PHComplex * );
+    
+    static void PoissonSolverVelocity( const int, RDouble *, PHComplex *, int *, int *, const PHComplex, const PHComplex, RDouble *, RDouble *, PHComplex * );
 
-	private:
-        void AllocPoissonSolverData(SpecDiffHybGrid *, ExplicitDifferenceBoundary *);
-		void GetCoefMatrixPressureNeumann( SpecDiffHybGrid *, ExplicitDifferenceBoundary *, CompactDifferenceSecondDerivative *);
-		void DecomCoefMatrixPressureNeumannBC( const int, RDouble *, RDouble *, const double, int *, int *, const int, RDouble *, RDouble *, RDouble *, RDouble * );
-		void DecomCoefMatrixVelocityDirichletBC( const int, RDouble *, RDouble *, const double, int *, int *, const double, RDouble *, RDouble * );
+    static void PoissonSolverVelocity(PHComplex &uLocal, const RDouble timeStep, const RDouble k2, const RDouble phi);
+    
+    static void LUDecomposeNeumannBC( int, RDouble *, int, RDouble * );
+    
+    static void LUDecompose( const int, RDouble * );
+    
+    static void LUSolve( const int, RDouble *, RDouble * );
+    
+    static void LUSolve( const int, RDouble *, PHComplex * );
+    
+    static void LUSolveNeumannBC( const int, RDouble *, const int, RDouble *, PHComplex * );
+    
+    void GetCoefMatrixVelocityDirichlet( SpecDiffHybGrid *, ExplicitDifferenceBoundary *, CompactDifferenceSecondDerivative *, RDouble1D *, RDouble1D *);
 
-	};
-
+private:
+    void AllocPoissonSolverData(SpecDiffHybGrid *, ExplicitDifferenceBoundary *);
+    
+    void GetCoefMatrixPressureNeumann( SpecDiffHybGrid *, ExplicitDifferenceBoundary *, CompactDifferenceSecondDerivative *);
+    
+    void DecomCoefMatrixPressureNeumannBC( const int, RDouble *, RDouble *, const double, int *, int *, const int, RDouble *, RDouble *, RDouble *, RDouble * );
+    
+    void DecomCoefMatrixVelocityDirichletBC( const int, RDouble *, RDouble *, const double, int *, int *, const double, RDouble *, RDouble * );
+};
 
 }
 

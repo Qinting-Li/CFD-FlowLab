@@ -15,43 +15,72 @@
 
 #pragma once
 #include "TypeDefine.h"
+#include "SpecGrid.h"
 #include "SpecDiffHybGrid.h"
+//#include "Param_SpecSolver.h"
+
 using namespace std;
 
 namespace PHSPACE
 {
+class RescaleFieldHIT
+{
+public:
+    RescaleFieldHIT();
+    ~RescaleFieldHIT();
 
-	class RescaleField 
-	{
+public:
+    void InitRescaleData();
 
-	public:
-		RescaleField();
-		~RescaleField();
+private:
+    void AllocRescaleData();
 
-	public:
+private:
+    RDouble uFluctuation, vFluctuation, wFluctuation;
+    RDouble1D *rescaleStatistic, *rescaleStatisticLocal;
+};
 
-	private: 
-        double uavgDivideByUtau;
-        RDouble1D *uAverage, *uFluctuation, *vFluctuation, *wFluctuation;
-        RDouble1D *uAverageOfReference, *uFluctuationOfReference, *vFluctuationOfReference, *wFluctuationOfReference;
-        RDouble2D *rescaleStatistic, *rescaleStatisticLocal;
+class RescaleField
+{
+public:
+    RescaleField();
+    ~RescaleField();
 
-    public:
-        void InitRescaleData( SpecDiffHybGrid * );
-        void GetUVWMagnitude(SpecDiffHybGrid *, Complex3D *, Complex3D *, Complex3D *);
-        void RescaleUAverage(SpecDiffHybGrid *, Complex3D *);
-        void RescaleFluctuation(SpecDiffHybGrid *, Complex3D *, Complex3D *, Complex3D *);
-        void FixUAverage(SpecDiffHybGrid *, Complex3D *);
+private: 
+    RDouble uavgDivideByUtau;
+    RDouble1D *uAverage;
+    RDouble1D *uAverageOfReference, *uFluctuationOfReference, *vFluctuationOfReference, *wFluctuationOfReference;
+    RDouble1D *uFluctuation, *vFluctuation, *wFluctuation;
+    RDouble2D *rescaleStatistic, *rescaleStatisticLocal;
 
-	private:
-        void AllocRescaleData(SpecDiffHybGrid *);
-		void GetUavg();
-        void GetUVWMagnitudeOfReference(SpecDiffHybGrid *);
-        void InputUVWMagnitudeOfReference( SpecDiffHybGrid * );
-        void GetUVWLocal(SpecDiffHybGrid *, Complex3D *, Complex3D *, Complex3D *);
-        void Interpolation( RDouble *, RDouble *, int, RDouble *, RDouble *, int );
+public:
+    void InitRescaleData(SpecDiffHybGrid *GridData);
 
-	};
+    void GetUVWMagnitude(SpecDiffHybGrid *, Complex3D *, Complex3D *, Complex3D *);
+    
+    void RescaleUAverage(SpecDiffHybGrid *, Complex3D *);
+    
+    void RescaleFluctuation(SpecDiffHybGrid *, Complex3D *, Complex3D *, Complex3D *);
+    
+    void FixUAverage(SpecDiffHybGrid *, Complex3D *);
+
+    //LIB_EXPORT Param_SpecSolver * GetControlParameters() const;
+
+    //LIB_EXPORT void InitControlParameters();
+
+private:
+    void AllocRescaleData(SpecDiffHybGrid *GridData);
+
+    void SetUavg();
+
+    void GetUVWMagnitudeOfReference(SpecDiffHybGrid *);
+
+    void InputUVWMagnitudeOfReference( SpecDiffHybGrid * );
+
+    void GetUVWLocal(SpecDiffHybGrid *, Complex3D *, Complex3D *, Complex3D *);
+
+    void Interpolation( RDouble *, RDouble *, int, RDouble *, RDouble *, int );
+};
 
 }
 

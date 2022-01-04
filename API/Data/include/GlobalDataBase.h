@@ -26,6 +26,7 @@
 #include "Data_Param.h"
 #include "Data_Field.h"
 #include "Precision.h"
+#include <vector>
 
 using namespace std;
 
@@ -100,6 +101,14 @@ public:
 
     //! Get one double type data from database by name.
     static RDouble GetDoubleParaFromDB(const string &name);
+
+    //! Return if the data named by 'name' exist or not.
+    static bool IsExist(const string &name, int type, int size);
+
+    //! Get double type vector from database by name.
+    static RDouble * GetRDoubleArrayFromDB(const string &name, int numberOfElements);
+
+    static void GetRDoubleVectorFromDB(vector< RDouble > &parameter, const string &nameOfRFloatArray, int numberOfElements);
 
 private:
     //! Constructor is private, so instantiation of this class is forbidden.

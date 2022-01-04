@@ -25,7 +25,7 @@ private:
     int numberOfCores;
     int zoneStartPointLabel;
     int *iLinkPointLabel, *jLinkPointLabel, *kLinkPointLabel;
-    int *cellTypeContainer;
+    int *iBlank;
     int zoneStartCenterLabel;
     int *hingedPointContainer;
     RDouble *xCoreContainer, *yCoreContainer, *zCoreContainer;
@@ -56,6 +56,8 @@ public:
     RDouble * GetZCoreContainer() const;
 
     void SetNumberOfCores(int numberOfCores);
+
+    void SetCellContainer(int *iBlank){this -> iBlank = iBlank;};
 
     void SetZoneStartPointLabel(int zoneStartPointLabel);
 

@@ -4,30 +4,30 @@ namespace PHSPACE
 {
 LIB_EXPORT Geo_LSQWeight_Unstruct::Geo_LSQWeight_Unstruct()
 {
-	iwt = 0;
+    iwt = nullptr;
 
-	ixx = 0;
-	iyy = 0;
-	izz = 0;
-	ixy = 0;
-	ixz = 0;
-	iyz = 0;
+    ixx = nullptr;
+    iyy = nullptr;
+    izz = nullptr;
+    ixy = nullptr;
+    ixz = nullptr;
+    iyz = nullptr;
 
-	fMark = 0;
+    fMark = nullptr;
 }
 
 LIB_EXPORT Geo_LSQWeight_Unstruct::~Geo_LSQWeight_Unstruct()
 {
-	delete [] iwt;
+    delete [] iwt;
 
-	delete [] ixx;
-	delete [] iyy;
-	delete [] izz;
-	delete [] ixy;
-	delete [] ixz;
-	delete [] iyz;
+    delete [] ixx;
+    delete [] iyy;
+    delete [] izz;
+    delete [] ixy;
+    delete [] ixz;
+    delete [] iyz;
 
-	delete [] fMark;
+    delete [] fMark;
 }
 
 }

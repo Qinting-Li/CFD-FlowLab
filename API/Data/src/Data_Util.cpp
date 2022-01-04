@@ -34,7 +34,7 @@ void Data_Util::copy_data_sub(void *&target, void *source, int type, int size)
     else
     {
         cout << "No such type\n" << endl;
-        abort();     //! It is temporary!!!
+        abort();    //! It is temporary!!!
     }
 }
 
@@ -63,7 +63,7 @@ void Data_Util::copy_data_exist(void *target, void *source, int type, int size)
     else
     {
         cout << "No such type\n" << endl;
-        abort();     //! It is temporary!!!
+        abort();    //! It is temporary!!!
     }
 }
 

@@ -5,8 +5,8 @@
 #include "HyList.h"
 #include "TK_Exit.h"
 #include "Glb_Dimension.h"
-#include "BC_Unstruct.h"
-#include "BC_Struct.h"
+#include "Geo_UnstructBC.h"
+#include "Geo_StructBC.h"
 #include "Post_Visual.h"
 #include "Pointer.h"
 #include "Solver.h"
@@ -51,6 +51,11 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         if (flowType == AverageFlow)
         {
             actkey->tecfilename = AddDigitToFileName(fname, fext, "_Average.", iLevel);
+        }
+
+        if (flowType == AverageReynoldsStress)
+        {
+            actkey->tecfilename = AddDigitToFileName(fname, fext, "_ReynoldsStress.", iLevel);
         }
 
         string sentinelfilename = "results/sentinel";
@@ -105,7 +110,7 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
             int nVisualVariables = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
             int visualVariables[100];
             GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
-            Post_Visual * postVisualization = new Post_Visual(nVisualVariables, visualVariables, grid, flowType);
+            Post_Visual *postVisualization = new Post_Visual(nVisualVariables, visualVariables, grid, flowType);
 
             int Nsolver = GlobalSolvers::GetNumberOfSolvers(izone);
             for (int isolver = 0; isolver < Nsolver; ++ isolver)
@@ -123,11 +128,11 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
         if (myid == recv_proc)
         {
             vtkdatalist.push_back(cdata);
-            DataContainer * cdata0 = new DataContainer();
+            DataContainer *cdata0 = new DataContainer();
             actkey->SetData(cdata0);
 
             datalist.push_back(tecdata);
-            DataContainer * cdata1 = new DataContainer();
+            DataContainer *cdata1 = new DataContainer();
             actkey->SetTecData(cdata1);
         }
     }
@@ -151,7 +156,7 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
             nVisualVariables = nVisualVariables + numberOfSpecies;
         }
 
-        RDouble ** qn = new RDouble *[nVisualVariables];
+        RDouble **qn = new RDouble *[nVisualVariables];
         postVisualization->GetAllVisualNodeVarPtr(qn);
 
         if (actkey->VTKvisual == true)
@@ -210,7 +215,7 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
     }
     else if (grid_in->Type() == STRUCTGRID)
     {
-        StructGrid * grid = StructGridCast(grid_in);
+        StructGrid *grid = StructGridCast(grid_in);
 
         int nvarplot = postVisualization->GetNumberofVisualVariables();
 
@@ -222,7 +227,7 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
             nVisualVariables = nVisualVariables + numberOfSpecies;
         }
 
-        RDouble4D ** qn = new RDouble4D *[nVisualVariables];
+        RDouble4D **qn = new RDouble4D *[nVisualVariables];
         postVisualization->GetAllVisualNodeVarPtr(qn);
 
         if (actkey->VTKvisual == true)
@@ -296,21 +301,18 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
         if (visualfileType == 0)
         {
-            #ifdef USE_TecplotLib
-                DumpToTecio dumptotecio(datalist, actkey->tecfilename, this->flowType);
-                dumptotecio.Run();
-            #else
-                ostringstream WarningInfo;
-                WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
-                PrintToWindow(WarningInfo);
 
-                DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename);
-                dumpToTecplotASCII.Run();
-            #endif
+            ostringstream WarningInfo;
+            WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
+            PrintToWindow(WarningInfo);
+
+            DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
+            dumpToTecplotASCII.Run();
+
         }
         else if (visualfileType == 1)
         {
-            DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename);
+            DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
             dumpToTecplotASCII.Run();
         }
         else
@@ -339,8 +341,8 @@ bool Post_WriteTecplot::WantVisualField(Grid *grid)
     {
         int dimension = GetDim();
 
-        RDouble * pmin = grid->GetMinBox();
-        RDouble * pmax = grid->GetMaxBox();
+        RDouble *pmin = grid->GetMinBox();
+        RDouble *pmax = grid->GetMaxBox();
 
         RDouble lowerPlotFieldBox[3], upperPlotFieldBox[3];
         GlobalDataBase::GetData("lowerPlotFieldBox", &lowerPlotFieldBox, PHDOUBLE, 3);
@@ -360,24 +362,22 @@ bool Post_WriteTecplot::WantVisualField(Grid *grid)
 
 void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot)
 {
-    UnstructGrid * grid = UnstructGridCast(grid_in);
-    DataContainer * cdata = actkey->GetData();
+    UnstructGrid *grid = UnstructGridCast(grid_in);
+    DataContainer *cdata = actkey->GetData();
 
     int nTotalNode = grid->GetNTotalNode();
     int nBoundFace = grid->GetNBoundFace();
 
-    int * node_number_of_each_face = grid->GetNodeNumberOfEachFace();
-    int * left_cell_of_face = grid->GetLeftCellOfFace();
-    int * right_cell_of_face = grid->GetRightCellOfFace();
-    int * face2node = grid->GetFace2Node();
+    int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
+    int *face2node = grid->GetFace2Node();
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
-    RDouble * xfc = grid->GetFaceCenterX();
-    RDouble * yfc = grid->GetFaceCenterY();
-    RDouble * zfc = grid->GetFaceCenterZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
 
     RDouble **qFaceCenter = NewPointer2<RDouble>(nvarplot, nBoundFace);
 
@@ -386,7 +386,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     vector<int> linkmap;
 
     set<pair<int, string> > bcnameMap;
-    BCRecord **bcr = grid->GetBCRecord();
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
     int nodeCount = 0;
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
@@ -435,9 +435,9 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
         PHWrite(cdata, &NumPts, 1);
         PHWrite(cdata, &NumElements, 1);
         
-        RDouble * xBoundary = new RDouble [NumPts];
-        RDouble * yBoundary = new RDouble [NumPts];
-        RDouble * zBoundary = new RDouble [NumPts];
+        RDouble *xBoundary = new RDouble [NumPts];
+        RDouble *yBoundary = new RDouble [NumPts];
+        RDouble *zBoundary = new RDouble [NumPts];
 
         for (int iNode = 0; iNode < NumPts; ++ iNode)
         {
@@ -469,7 +469,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
 
         for (int m = 0; m < nvarplot; ++ m)
         {
-            RDouble * qBoundary = new RDouble [NumPts];
+            RDouble *qBoundary = new RDouble [NumPts];
             
             for (int iNode = 0; iNode < NumPts; ++ iNode)
             {
@@ -490,7 +490,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
             delete [] qBoundary;
         }
 
-        int * cell2node = new int [NumElements * 4];
+        int *cell2node = new int [NumElements * 4];
         int ncount = 0;
         for (int iCell = 0; iCell < NumElements; ++ iCell)
         {
@@ -518,24 +518,22 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
 
 void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot)
 {
-    UnstructGrid * grid = UnstructGridCast(grid_in);
-    DataContainer * cdata = actkey->GetTecData();
+    UnstructGrid *grid = UnstructGridCast(grid_in);
+    DataContainer *cdata = actkey->GetTecData();
 
     int nTotalNode = grid->GetNTotalNode();
     int nBoundFace = grid->GetNBoundFace();
 
-    int * node_number_of_each_face = grid->GetNodeNumberOfEachFace();
-    int * left_cell_of_face = grid->GetLeftCellOfFace();
-    int * right_cell_of_face = grid->GetRightCellOfFace();
-    int * face2node = grid->GetFace2Node();
+    int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
+    int *face2node = grid->GetFace2Node();
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
-    RDouble * xfc = grid->GetFaceCenterX();
-    RDouble * yfc = grid->GetFaceCenterY();
-    RDouble * zfc = grid->GetFaceCenterZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
 
     RDouble **qFaceCenter = NewPointer2<RDouble>(nvarplot, nBoundFace);
 
@@ -545,7 +543,7 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
     set<pair<int, string> > bcnameMap;
 
-    BCRecord **bcr = grid->GetBCRecord();
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
     int nodeCount = 0;
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
@@ -605,8 +603,8 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
         PHWrite(cdata, &NumFaces, 1);
 
         int TotalNumFaceNodes_Rect = NumElements * 4;
-        int * cell2node = new int [TotalNumFaceNodes_Rect];
-        int * node_number_of_each_cell = new int [NumElements];
+        int *cell2node = new int [TotalNumFaceNodes_Rect];
+        int *node_number_of_each_cell = new int [NumElements];
 
         int count = 0;
         for (std::size_t i = 0; i < face2nodelist.size(); ++ i)
@@ -632,9 +630,9 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
         PHWrite(cdata, &NumPts, 1);
 
-        RDouble * xx = new RDouble [NumPts];
-        RDouble * yy = new RDouble [NumPts];
-        RDouble * zz = new RDouble [NumPts];
+        RDouble *xx = new RDouble [NumPts];
+        RDouble *yy = new RDouble [NumPts];
+        RDouble *zz = new RDouble [NumPts];
 
         for (std::size_t iNode = 0; iNode < linkmap.size(); ++ iNode)
         {
@@ -662,7 +660,7 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
         for (int m = 0; m < nvarplot; ++ m)
         {
-            RDouble * qBoundary = new RDouble [NumPts];
+            RDouble *qBoundary = new RDouble [NumPts];
 
             for (int iNode = 0; iNode < NumPts; ++ iNode)
             {
@@ -697,27 +695,23 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
 void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nvarplot)
 {
-    StructGrid * grid = StructGridCast(grid_in);
-    DataContainer * cdata = actkey->GetTecData();
+    StructGrid *grid = StructGridCast(grid_in);
+    DataContainer *cdata = actkey->GetTecData();
     
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
-    
-    int s_st[3], s_ed[3];
+    int s_st[3] = {0}, s_ed[3] = {0};
 
-    RDouble3D & xx = * grid->GetStructX();
-    RDouble3D & yy = * grid->GetStructY();
-    RDouble3D & zz = * grid->GetStructZ();
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
 
-    CompositeBCRegion * composite_bcregion = grid->GetCompositeBCRegion();
+    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
     int TecioMission;
 
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
 
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
@@ -730,7 +724,7 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
         string bcName = bcregion->GetBCName();
         cdata->write_string(bcName);
 
-        int * s_lr3d = bcregion->GetFaceDirectionIndex();
+        int *s_lr3d = bcregion->GetFaceDirectionIndex();
         int nDim = GetDim();
         
         for (int m = 0; m < nDim; ++ m)
@@ -772,8 +766,6 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
         Int3D newindex(I, J, K, fortranArray);
 
-        int nsurf = bcregion->GetFaceDirection() + 1;
-
         int count = 0;
         for (int k = kst; k <= ked; ++ k)
         {
@@ -798,9 +790,9 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
         int nTotalNode = count;
         PHWrite(cdata, &nTotalNode, 1);
 
-        RDouble * x = new RDouble [nTotalNode];
-        RDouble * y = new RDouble [nTotalNode];
-        RDouble * z = new RDouble [nTotalNode];
+        RDouble *x = new RDouble [nTotalNode];
+        RDouble *y = new RDouble [nTotalNode];
+        RDouble *z = new RDouble [nTotalNode];
 
         count = 0;
         for (int k = kst; k <= ked; ++ k)
@@ -850,29 +842,23 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
 void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nvarplot)
 {
-    StructGrid * grid = StructGridCast(grid_in);
-    DataContainer * cdata = actkey->GetData();
+    StructGrid *grid = StructGridCast(grid_in);
+    DataContainer *cdata = actkey->GetData();
 
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
+    int s_st[3] = {0}, s_ed[3] = {0};
     int nk = grid->GetNK();
 
-    int s_st[3], s_ed[3];
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
     
-    RDouble3D & xx = * grid->GetStructX();
-    RDouble3D & yy = * grid->GetStructY();
-    RDouble3D & zz = * grid->GetStructZ();
-
-    int zoneid = grid->GetZoneID();
-    int myid = PHMPI::GetCurrentProcessorID();
-    
-    CompositeBCRegion * composite_bcregion = grid->GetCompositeBCRegion();
+    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
     int TecioMission;
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        BCRegion * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
 
@@ -884,7 +870,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
         string bcName = bcregion->GetBCName();
         cdata->write_string(bcName);
 
-        int * s_lr3d = bcregion->GetFaceDirectionIndex();
+        int *s_lr3d = bcregion->GetFaceDirectionIndex();
         int nDim = GetDim();
         
         for (int m = 0; m < nDim; ++ m)
@@ -953,11 +939,11 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
         PHWrite(cdata, &nTotalNode, 1);
         PHWrite(cdata, &nTotalCell, 1);
 
-        RDouble * xBoundary = new RDouble [nTotalNode];
-        RDouble * yBoundary = new RDouble [nTotalNode];
-        RDouble * zBoundary = new RDouble [nTotalNode];
+        RDouble *xBoundary = new RDouble [nTotalNode];
+        RDouble *yBoundary = new RDouble [nTotalNode];
+        RDouble *zBoundary = new RDouble [nTotalNode];
 
-        RDouble ** qBoundary = new RDouble *[nvarplot];
+        RDouble **qBoundary = new RDouble *[nvarplot];
         for (int m = 0; m < nvarplot; ++ m)
         {
             qBoundary[m] = new RDouble [nTotalNode];
@@ -1009,7 +995,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
 
         if (nk == 1) kl1 = 0;
 
-        int * cell2node = new int [nTotalCell * 4];
+        int *cell2node = new int [nTotalCell * 4];
         int ncount = 0;
         for (int k = kst; k <= ked - kl1; ++ k)
         {
@@ -1061,7 +1047,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
 void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot)
 {
     int TecioMission = TEC_SPACE::WriteBlock;
-    DataContainer * cdata = actkey->GetData();
+    DataContainer *cdata = actkey->GetData();
     PHWrite(cdata, &TecioMission, 1);
 
     UnstructGrid *grid = UnstructGridCast(grid_in);
@@ -1071,14 +1057,13 @@ void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actke
     int nBoundFace = grid->GetNBoundFace();
     int nTotalFace = grid->GetNTotalFace();
 
-    int * node_number_of_each_face = grid->GetNodeNumberOfEachFace();
-    int * face2node = grid->GetFace2Node();
-    int * left_cell_of_face = grid->GetLeftCellOfFace();
-    int * right_cell_of_face = grid->GetRightCellOfFace();
+    int *face2node = grid->GetFace2Node();
+    int *left_cell_of_face = grid->GetLeftCellOfFace();
+    int *right_cell_of_face = grid->GetRightCellOfFace();
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
     //! Find out cellToFace.
     HyList<int> * cell2face = new HyList <int> [nTotalCell];
@@ -1100,7 +1085,7 @@ void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actke
     }
 
     //! Find out cellToNode.
-    HyList<int> * cell2node = new HyList <int> [nTotalCell];
+    HyList<int> *cell2node = new HyList <int> [nTotalCell];
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         cell2node[iCell].SetAverNnode(4);
@@ -1142,7 +1127,7 @@ void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actke
                 }
                 else if (node2 == targetNode)
                 {
-                    if(node1 != checkNode)
+                    if (node1 != checkNode)
                     {
                         cell2node[iCell].insert(node1);
                         targetNode = node1;
@@ -1170,7 +1155,7 @@ void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actke
         PHWrite(cdata, qq, nTotalNode);
     }
 
-    int * cell2node_vtk = new int [nTotalCell * 4];
+    int *cell2node_vtk = new int [nTotalCell * 4];
     int ncount = 0;
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
@@ -1217,25 +1202,23 @@ void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDo
 
 void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nvarplot)
 {
-    DataContainer * cdata = actkey->GetData();
+    DataContainer *cdata = actkey->GetData();
 
-    StructGrid * grid = StructGridCast(grid_in);
+    StructGrid *grid = StructGridCast(grid_in);
 
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    RDouble3D & xx = * grid->GetStructX();
-    RDouble3D & yy = * grid->GetStructY();
-    RDouble3D & zz = * grid->GetStructZ();
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
 
     int nl = 5;
     GlobalDataBase::GetData("nl", &nl, PHINT, 1);
 
     int nchem = 0;
     GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
-
-    int neqn = nl + nchem;
 
     RDouble refGama = 1.4;
     GlobalDataBase::GetData("refGama", &refGama, PHDOUBLE, 1);
@@ -1251,11 +1234,11 @@ void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDo
         PHWrite(cdata, &nTotalNode, 1);
         PHWrite(cdata, &nTotalCell, 1);
 
-        RDouble * xBoundary = new RDouble [nTotalNode];
-        RDouble * yBoundary = new RDouble [nTotalNode];
-        RDouble * zBoundary = new RDouble [nTotalNode];
+        RDouble *xBoundary = new RDouble [nTotalNode];
+        RDouble *yBoundary = new RDouble [nTotalNode];
+        RDouble *zBoundary = new RDouble [nTotalNode];
 
-        RDouble ** qBoundary = new RDouble *[nvarplot];
+        RDouble **qBoundary = new RDouble *[nvarplot];
         for (int m = 0; m < nvarplot; ++ m)
         {
             qBoundary[m] = new RDouble [nTotalNode];
@@ -1301,7 +1284,7 @@ void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDo
 
         delete [] qBoundary;
 
-        int * cell2node = new int [nTotalCell * 4];
+        int *cell2node = new int [nTotalCell * 4];
         int ncount = 0;
         for (int j = 1; j <= nj - 1; ++ j)
         {
@@ -1321,9 +1304,9 @@ void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDo
 
 void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot)
 {
-    DataContainer * cdata = actkey->GetTecData();
+    DataContainer *cdata = actkey->GetTecData();
 
-    UnstructGrid * grid = UnstructGridCast(grid_in);
+    UnstructGrid *grid = UnstructGridCast(grid_in);
 
     //int * cellIBlank = grid->GetBlankIndex();
     int numberOfNodes = grid->GetNTotalNode();
@@ -1349,21 +1332,21 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
     SetField(nodeList, -1, numberOfNodes);
     SetField(cellList, -1, numberOfCells);
 
-    int * keyActiveOfCells         = grid->GetBlankIndex();
+    int *keyActiveOfCells         = grid->GetBlankIndex();
 
-    int ** cellNodeIndexContainer  = grid->GetCell2NodeArray();
-    int *  cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
+    int **cellNodeIndexContainer  = grid->GetCell2NodeArray();
+    int * cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
 
-    int ** cellFaceIndexContainer  = grid->GetCell2Face();
-    int *  cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
+    int **cellFaceIndexContainer  = grid->GetCell2Face();
+    int * cellFaceNumberContainer = grid->GetFaceNumberOfEachCell();
 
-    int * faceNodeNumberContainer  = grid->GetNodeNumberOfEachFace();
-    int * faceNodeIndexContainer   = grid->GetFace2Node();
+    int *faceNodeNumberContainer  = grid->GetNodeNumberOfEachFace();
+    int *faceNodeIndexContainer   = grid->GetFace2Node();
 
-    int * leftCellIndexContainer   = grid->GetLeftCellOfFace();
-    int * rightCellIndexContainer  = grid->GetRightCellOfFace();
+    int *leftCellIndexContainer   = grid->GetLeftCellOfFace();
+    int *rightCellIndexContainer  = grid->GetRightCellOfFace();
 
-    for(int iCell = 0; iCell < numberOfCells; ++ iCell)
+    for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
         if (keyActiveOfCells[iCell] == 1)
         {
@@ -1382,7 +1365,6 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
         }
     }
 
-    int numberOfBlankNode = 0;
     for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         if (keyNodes[iNode] == 1)
@@ -1392,7 +1374,6 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
         }
     }
 
-    int numberOfBlankFace = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         if (keyFaces[iFace] == 1)
@@ -1419,13 +1400,12 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
     PHWrite(cdata, numberOfNodesInZone);
     PHWrite(cdata, numberOfCellsInZone);
     PHWrite(cdata, numberOfFacesInZone);
-
     PHWrite(cdata, totalNumFaceNodes);
 
     int count = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        if (keyFaces[ iFace ] != 1) continue;
+        if (keyFaces[iFace] != 1) continue;
 
         int faceNodeNumber = faceNodeNumberContainer[iFace];
         PHWrite(cdata, faceNodeNumber);
@@ -1433,9 +1413,9 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
 
     PHWrite(cdata, numberOfNodesInZone);
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
     for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
@@ -1457,7 +1437,7 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
 
     for (int iVarible = 0; iVarible < nvarplot; ++ iVarible)
     {
-        RDouble * qq = qn[iVarible];
+        RDouble *qq = qn[iVarible];
         for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
         {
             if (keyNodes[iNode] != 1) continue;
@@ -1517,9 +1497,9 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
 
 void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nl)
 {
-    DataContainer * cdata = actkey->GetTecData();
+    DataContainer *cdata = actkey->GetTecData();
 
-    StructGrid * grid = StructGridCast(grid_in);
+    StructGrid *grid = StructGridCast(grid_in);
 
     int TecioMission = TEC_SPACE::WriteBlock;
     PHWrite(cdata, &TecioMission, 1);
@@ -1535,13 +1515,13 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
     int nTotalNode = grid->GetNTotalNode();
     PHWrite(cdata, &nTotalNode, 1);
 
-    RDouble * x = new RDouble [nTotalNode];
-    RDouble * y = new RDouble [nTotalNode];
-    RDouble * z = new RDouble [nTotalNode];
+    RDouble *x = new RDouble [nTotalNode];
+    RDouble *y = new RDouble [nTotalNode];
+    RDouble *z = new RDouble [nTotalNode];
 
-    RDouble3D & xx = * grid->GetStructX();
-    RDouble3D & yy = * grid->GetStructY();
-    RDouble3D & zz = * grid->GetStructZ();
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
 
     int count = 0;
     for (int k = 1; k <= nk; ++ k)
@@ -1590,17 +1570,17 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
 
 void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot)
 {
-    UnstructGrid * grid = UnstructGridCast(grid_in);
-    DataContainer * cdata = actkey->GetTecData();
+    UnstructGrid *grid = UnstructGridCast(grid_in);
+    DataContainer *cdata = actkey->GetTecData();
 
     int nBoundFace = grid->GetNBoundFace();
 
-    int * node_number_of_each_face = grid->GetNodeNumberOfEachFace();
-    int * face2node = grid->GetFace2Node();
+    int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
+    int *face2node = grid->GetFace2Node();
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
     vector<RDouble> xx;
     vector<RDouble> yy;
@@ -1614,7 +1594,7 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
     RDouble slice;
     GlobalDataBase::GetData("slice", &slice, PHDOUBLE, 1);
 
-    RDouble * xyz = 0;
+    RDouble *xyz = 0;
     if (slice_dir == X_DIR)
     {
         xyz = x;
@@ -1629,7 +1609,7 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
     }
 
     int ncount = 0;
-    BCRecord **bcr = grid->GetBCRecord();
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
         int bctype = bcr[iface]->GetKey();

@@ -88,7 +88,7 @@ class UnstructGrid;
 
 enum OversetPointType
 { 
-	ExteriorPoint = 0
+    ExteriorPoint = 0
 };
 
 class Geo_OversetGrid
@@ -105,16 +105,16 @@ public:
     Geo_OversetGrid(Grid *grid_in, int rank, int nBlocks);
     ~Geo_OversetGrid();
 public:
-	bool IsExteriorPoint(int flagOfPoint);
+    bool IsExteriorPoint(int flagOfPoint);
 
-	int GetZoneID() const { return GetGrid()->GetZoneID(); };
+    int GetZoneID() const { return GetGrid()->GetZoneID(); };
 
-	OversetInfoProxy * GetOversetInfoProxy() { return oversetInfoProxy; }
+    OversetInfoProxy * GetOversetInfoProxy() { return oversetInfoProxy; }
 
     Grid * GetGrid() const { return grid; };
-    void	SetX(RDouble * xb) { this->xb = xb; }
-    void	SetY(RDouble * yb) { this->yb = yb; }
-    void	SetZ(RDouble * zb) { this->zb = zb; }
+    void SetX(RDouble * xb) { this->xb = xb; }
+    void SetY(RDouble * yb) { this->yb = yb; }
+    void SetZ(RDouble * zb) { this->zb = zb; }
     RDouble * GetX() const { return xb; }
     RDouble * GetY() const { return yb; }
     RDouble * GetZ() const { return zb; }
@@ -125,16 +125,16 @@ public:
     void SetRank(int rank) { this->rank = rank; };
     int  GetRank() const { return rank; }
     int  GetNBlocks() const { return nBlocks; }
-	void InitReceivingInformation(vector<int> &cellIndexRef1, vector<int> &zoneIndexRef2, vector<int> &cellIndexRef2);
-	void PrepareSendingInformation(Geo_OversetGrid **oversetGrids);
+    void InitReceivingInformation(vector<int> &cellIndexRef1, vector<int> &zoneIndexRef2, vector<int> &cellIndexRef2);
+    void PrepareSendingInformation(Geo_OversetGrid **oversetGrids);
     void DumpOversetGrid(fstream &file);
 public:
-	virtual void InitialFlagOfGridPoints(int numberOfOversetGrid) {};
-	virtual void MarkNonBoundaryPoints(int numberOfBoundaryPoints, RDouble *xBoundary, RDouble *yBoundary, RDouble *zBoundary) {};
-	virtual bool FindGridOfEachPointCanBeInterpolatedFrom(Geo_OversetGrid **oversetGrids) { return true; };
-	virtual void MarkAllPointsOnLowerGridNeededByHigherGrid(Geo_OversetGrid **oversetGrids) {};
-	virtual void MarkAllPointsOnHigherGridNeededByLowerGrid(Geo_OversetGrid **oversetGrids) {};
-	virtual void NormalizeAllValidPoints(Geo_OversetGrid **oversetGrids) {};
+    virtual void InitialFlagOfGridPoints(int numberOfOversetGrid) {};
+    virtual void MarkNonBoundaryPoints(int numberOfBoundaryPoints, RDouble *xBoundary, RDouble *yBoundary, RDouble *zBoundary) {};
+    virtual bool FindGridOfEachPointCanBeInterpolatedFrom(Geo_OversetGrid **oversetGrids) { return true; };
+    virtual void MarkAllPointsOnLowerGridNeededByHigherGrid(Geo_OversetGrid **oversetGrids) {};
+    virtual void MarkAllPointsOnHigherGridNeededByLowerGrid(Geo_OversetGrid **oversetGrids) {};
+    virtual void NormalizeAllValidPoints(Geo_OversetGrid **oversetGrids) {};
 public:
     virtual void PrepareReceivingInformation(Geo_OversetGrid **oversetGrids) {};
     virtual void MarkNegativeSignOfIndexFlag(int index){};

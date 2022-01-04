@@ -31,19 +31,19 @@ private:
     DataContainer *cdata;
 
 public:
-    VirtualFile(fstream * file) { this->file = file; key = 0; }
-    VirtualFile(DataContainer * cdata) { this->cdata = cdata; key = 1; }
+    VirtualFile(fstream *file) { this->file = file; key = 0; }
+    VirtualFile(DataContainer *cdata) { this->cdata = cdata; key = 1; }
 
 public:
     //! Read data from file or datacontainer.
     //! @param[in] data    data address.
     //! @param[in] size    data size.
-    void read(void * data, streamsize size);
+    void read(void *data, streamsize size);
 
     //! Write data to file or datacontainer.
     //! @param[in] data    data address.
     //! @param[in] size    data size.
-    void write(void * data, streamsize size);
+    void write(void *data, streamsize size);
 
     //! Begin to read.
     void BeginReadWork();

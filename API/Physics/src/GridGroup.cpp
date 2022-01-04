@@ -35,7 +35,6 @@ GridGroup::~GridGroup()
 void GridGroup::InitZoneLayoutInformation(const string &filename)
 {
     fstream file;
-    //ParallelOpenFile(file, filename, ios_base::in|ios_base::binary);
     OpenSerialFile(file, filename, ios_base::in|ios_base::binary);
 
     InitZoneLayout(file);
@@ -125,14 +124,12 @@ void GridGroup::InitZoneLayout(fstream &file)
     PH_Read_Bcast(file,block_proc,nzones*sizeof(int),file_proc);
     PH_Read_Bcast(file,block_proc_grid,nzones*sizeof(int),file_proc);
 
-    //! Bell 20131124 add.
     //! block_proc_dump is deleted in ~GridGroup() function.
-    block_proc_dump = new int [nzones];	
+    block_proc_dump = new int [nzones];
     for (int izone = 0; izone < nzones; ++ izone)
     {
         block_proc_dump[izone] = block_proc[izone];
     }
-    //*/
 
     block_idx  = new int [ nzones ];
     block_type = new int [ nzones ];
@@ -143,8 +140,6 @@ void GridGroup::InitZoneLayout(fstream &file)
     //! Read the grid type of each block,it can be unstructured and structured.
     PH_Read_Bcast(file,block_type,nzones*sizeof(int),file_proc);
 
-    //int m_block_proc = 0;
-    //GlobalDataBase::GetData("m_block_proc",&m_block_proc,PHINT,1);
     int m_block_proc = PHMPI::GetZoneDistributionMethod();
 
     int number_of_processor = GetNumberOfProcessor();
@@ -156,7 +151,6 @@ void GridGroup::InitZoneLayout(fstream &file)
             for (int izone = 0; izone < nzones; ++ izone)
             {
                 block_proc[izone] = (zoneStart + izone) % number_of_processor;
-            //cout << " izone = " << izone << " multi izone = " << zoneStart + izone << " block_proc[izone] = " << block_proc[izone] << "\n";
             }
         }
         else
@@ -177,7 +171,6 @@ void GridGroup::InitZoneLayout(fstream &file)
     {
         if (number_of_processor == 1)
         {
-            //! Bell 20131124 add.
             if (IsConvertGridToMixGrid())
             {
                 //! For structured + unstructured = mix grid,move the specified process of  unstructured grid partition backward.
@@ -191,7 +184,7 @@ void GridGroup::InitZoneLayout(fstream &file)
                             maxproc = block_proc[izone];
                         }
                     }
-                    maxproc += 1;		
+                    maxproc += 1;
                     SetNumberOfProcStructUsed(maxproc);
                 }
                 else
@@ -201,8 +194,7 @@ void GridGroup::InitZoneLayout(fstream &file)
                         block_proc_dump[izone] += GetNumberOfProcStructUsed();
                     }
                 }
-            }			
-            //*/
+            }
             for (int izone = 0; izone < nzones; ++ izone)
             {
                 block_proc[izone] = 0;

@@ -6,9 +6,9 @@
 namespace PHSPACE
 {
 
-void Turb_MxDQ(RDouble *mat,RDouble *dq,int numberOfTurbulentEquation, RDouble *df)
+void Turb_MxDQ(RDouble *mat,RDouble *dq,int numberOfTurbulenceEquation, RDouble *df)
 {
-    for (int m = 0; m < numberOfTurbulentEquation; ++ m)
+    for (int m = 0; m < numberOfTurbulenceEquation; ++ m)
     {
         df[m] = mat[m] * dq[m];
     }
@@ -39,8 +39,8 @@ string TurbSolver::CastName(const string &name)
 int TurbSolver::GetNumberOfEquations()
 {
     Param_TurbSolver *parameters = GetControlParameters();
-    int nTurbulentEquation = parameters->GetNTurbulentEquation();
-    return nTurbulentEquation;
+    int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
+    return nTurbulenceEquation;
 }
 
 void TurbSolver::InitDependentVariables()
@@ -171,15 +171,15 @@ void TurbSolver::Post()
 void TurbSolver::RegisterCFDSolverInterfaceField()
 {
     Param_TurbSolver *parameters = GetControlParameters();
-    int nTurbulentEquation = parameters->GetNTurbulentEquation();
+    int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
     
-    CFDSolver::RegisterInterfaceField("turb::q", PHDOUBLE, nTurbulentEquation);
+    CFDSolver::RegisterInterfaceField("turb::q", PHDOUBLE, nTurbulenceEquation);
 
-    CFDSolver::RegisterInterfaceField("turb::dq", PHDOUBLE, nTurbulentEquation);
+    CFDSolver::RegisterInterfaceField("turb::dq", PHDOUBLE, nTurbulenceEquation);
 
-    CFDSolver::RegisterInterfaceField("turb::dqdx", PHDOUBLE, nTurbulentEquation);
-    CFDSolver::RegisterInterfaceField("turb::dqdy", PHDOUBLE, nTurbulentEquation);
-    CFDSolver::RegisterInterfaceField("turb::dqdz", PHDOUBLE, nTurbulentEquation);
+    CFDSolver::RegisterInterfaceField("turb::dqdx", PHDOUBLE, nTurbulenceEquation);
+    CFDSolver::RegisterInterfaceField("turb::dqdy", PHDOUBLE, nTurbulenceEquation);
+    CFDSolver::RegisterInterfaceField("turb::dqdz", PHDOUBLE, nTurbulenceEquation);
 
     CFDSolver::RegisterInterfaceField("vist", PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("blend", PHDOUBLE, 1);
@@ -188,25 +188,39 @@ void TurbSolver::RegisterCFDSolverInterfaceField()
 void TurbSolver::RegisterCFDSolverInterpointField()
 {
     Param_TurbSolver *parameters = GetControlParameters();
-    int nTurbulentEquation = parameters->GetNTurbulentEquation();
+    int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
-    CFDSolver::RegisterInterpointField("qTurbNode", PHDOUBLE, nTurbulentEquation);
+    CFDSolver::RegisterInterpointField("qTurbNode", PHDOUBLE, nTurbulenceEquation);
 }
 
 void TurbSolver::RegisterCFDSolverOversetField()
 {
     Param_TurbSolver *parameters = GetControlParameters();
-    int nTurbulentEquation = parameters->GetNTurbulentEquation();
+    int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
-	CFDSolver::RegisterOversetField( "turb::q", PHDOUBLE, nTurbulentEquation );
+    CFDSolver::RegisterOversetField( "turb::q", PHDOUBLE, nTurbulenceEquation );
 
-	CFDSolver::RegisterOversetField( "turb::dqdx", PHDOUBLE, nTurbulentEquation );
-	CFDSolver::RegisterOversetField( "turb::dqdy", PHDOUBLE, nTurbulentEquation );
-	CFDSolver::RegisterOversetField( "turb::dqdz", PHDOUBLE, nTurbulentEquation );
+    CFDSolver::RegisterOversetField( "turb::dqdx", PHDOUBLE, nTurbulenceEquation );
+    CFDSolver::RegisterOversetField( "turb::dqdy", PHDOUBLE, nTurbulenceEquation );
+    CFDSolver::RegisterOversetField( "turb::dqdz", PHDOUBLE, nTurbulenceEquation );
  
-	CFDSolver::RegisterOversetField( "turb::limit", PHDOUBLE, 1 );
+    CFDSolver::RegisterOversetField( "turb::limit", PHDOUBLE, 1 );
 
-	CFDSolver::RegisterOversetField( "turb::dq", PHDOUBLE, nTurbulentEquation );
+    CFDSolver::RegisterOversetField( "turb::dq", PHDOUBLE, nTurbulenceEquation );
+}
+
+void TurbSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy)
+{
+    Param_TurbSolver *parameters = GetControlParameters();
+    int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
+
+    RDouble **qTurbulence = reinterpret_cast<RDouble **> (datastore->GetDataPtr("turb::q"));
+
+    vector<RDouble **> &vectorData = interfaceDataProxy->GetVectorData();
+    vector<int>   &vectorDimension = interfaceDataProxy->GetVectorDimension();
+
+    vectorDimension.push_back(nTurbulenceEquation);
+    vectorData.push_back(qTurbulence);
 }
 
 //! Drive functions to calculate residuals for different orders and dimensions.
@@ -245,15 +259,15 @@ void TurbSolver::UpdateResiduals(Grid *grid)
 void TurbSolver::SourceFlux(Grid *grid)
 {
     Param_TurbSolver *parameters = GetControlParameters();
-    int nTurbulentEquation = parameters->GetNTurbulentEquation();
-    if (nTurbulentEquation == 1)
+    int viscousType = parameters->GetViscousType();
+    if (viscousType == ONE_EQU)
     {
         //! One equation turbulence model.
         SourceFluxOneEquation(grid);
     }
-    else if (nTurbulentEquation == 2)
+    else if (viscousType == TWO_EQU)
     {
-		//! Two equation turbulence model.
+        //! Two equation turbulence model.
         SourceFluxTwoEquation(grid);
     }
 }
@@ -275,7 +289,7 @@ void TurbSolver::CompareOutStepOfFlowfieldFile(int outnstepofNS, int outnstepofT
         PrintToWindow(oss.str());
         WriteLogFile (oss.str());
 
-		GlobalDataBase::UpdateData( "outnstep", &outnstepofTurb, PHINT, 1 );
+        GlobalDataBase::UpdateData( "outnstep", &outnstepofTurb, PHINT, 1 );
     }
     else
     {

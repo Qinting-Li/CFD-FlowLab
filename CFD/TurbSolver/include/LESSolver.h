@@ -41,6 +41,7 @@ public:
     void FillActionKey(ActionKey *actkey, int action, int level);
     void Post();
     void PostSolve(Grid *grid_in, int stage, int level = 0);
+    void DumpResultFile(Grid *grid, int level = 0);
 
     static void InitParameter();
     static void FreeParameter();
@@ -51,7 +52,13 @@ public:
 
     //int GetNumberOfEquations();
 
-    LIB_EXPORT Param_LESSolver *GetControlParameters();
+    //! Get the file name for Restart info dumping.
+    virtual const string GetRestartFileName();
+
+    //! Compare the outnstep in the flowfield file between the NS and LES.
+    void CompareOutStepOfFlowfieldFile(int outnstepofNS, int outnstepofTurb) const;
+
+    LIB_EXPORT Param_LESSolver * GetControlParameters();
 
 private:
     void RegisterCFDSolverInterfaceField();

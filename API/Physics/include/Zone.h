@@ -59,7 +59,6 @@ public:
     int GetIndex(void) { return index; }
     static int GetNumberOfSolvers() { return nsolver; }
     static void SetNSolver(int n) { nsolver = n; }
-    static void Init();
     void ComputeWeight();
     void CoarseGrids();
     void ShowCoarseGrids();
@@ -70,6 +69,7 @@ public:
     void AddSolver(PHSolver *solver);
     void AddGridAndCopyZonePara(Grid *grid);
 
+    void AddGrid(Grid *grid);
     void AddGridToGlobal(int izone);
     void UpdateAllData();
     void UpdateData(const string &name, void *data, int type, int size)
@@ -97,6 +97,8 @@ public:
 private:
 
 };
+
+void InitGlobalValuesOfAllZones();
 
 void InitGlobalValuesGrid();
 void InitGlobalValuesSolver();

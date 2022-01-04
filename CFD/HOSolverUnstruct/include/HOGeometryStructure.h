@@ -3,7 +3,7 @@
 //! @author    Li Ming, Gong Xiaoquan, Zhang Jian, Wan yunbo, Xu gang.
 
 /*----------------------------------------------*\
-	 This is High-Order Unstructure Solvers platform for DG and DG/FV using C++
+     This is High-Order Unstructure Solvers platform for DG and DG/FV using C++
      The HOGeometryStructure.h is used to declare Volum_element, Face_element, point_element
 \*----------------------------------------------*/
 //! HOGeometryStructure.h

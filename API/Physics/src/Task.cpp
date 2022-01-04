@@ -20,26 +20,26 @@ vector<Task *> * Task::ootasklist = new vector<Task *>;
 
 Task::Task()
 {
-	this->main_action = NOAction;
-	this->pre_action  = NOAction;
-	this->post_action = NOAction;
-	this->actkey      = 0;
+    this->main_action = NOAction;
+    this->pre_action  = NOAction;
+    this->post_action = NOAction;
+    this->actkey      = 0;
 }
 
 Task::~Task()
 {
-	delete this->actkey;
+    delete this->actkey;
 }
 
 void Task::RunTask()
 {
-	ActionKey *actkey = this->GetActionKey();
+    ActionKey *actkey = this->GetActionKey();
 
-	this->PreTask(actkey);
+    this->PreTask(actkey);
 
-	this->MainTask(actkey);
+    this->MainTask(actkey);
 
-	this->PostTask(actkey);
+    this->PostTask(actkey);
 }
 
 void NOAction (ActionKey *actkey)
@@ -49,79 +49,67 @@ void NOAction (ActionKey *actkey)
 
 void AddTasktoSimu(Task *task)
 {
-	Task::ootasklist->push_back( task );
+    Task::ootasklist->push_back( task );
 }
 
 void RunSimuTask(Task *task, bool run_now)
 {
-	if ( run_now )
-	{
-		task->RunTask();
-	}
-	else
-	{
-		AddTasktoSimu(task);
-	}
+    if ( run_now )
+    {
+        task->RunTask();
+    }
+    else
+    {
+        AddTasktoSimu(task);
+    }
 }
 
 vector<RDouble> store_value;
 
 RDouble MaxStoreValue()
 {
-	RDouble value = store_value[0];
+    RDouble value = store_value[0];
 
-	for ( size_t i = 0; i < store_value.size(); ++ i )
-	{
-		value = MAX(store_value[i],value);
-	}
-	return value;
+    for ( size_t i = 0; i < store_value.size(); ++ i )
+    {
+        value = MAX(store_value[i],value);
+    }
+    return value;
 }
 
 void GlobalSolve()
 {
-	uint_t taskNumber = Task::ootasklist->size();
+    uint_t taskNumber = Task::ootasklist->size();
 
-	int myid = PHMPI::GetCurrentProcessorID();
+    for ( int iTask = 0; iTask < taskNumber; ++ iTask )
+    {
+        Task *task = (*Task::ootasklist)[iTask];
 
-	for ( int iTask = 0; iTask < taskNumber; ++ iTask )
-	{
-		Task *task = (*Task::ootasklist)[iTask];
+        task->RunTask();
 
- 		//cout << " iTask = " << iTask 
- 		//	<< ", Task Size  = " << taskNumber 
- 		//	<< ", Task Index = " << task->GetActionKey()->action 
- 		//	<< ", Task Name  = " << ActionName[task->GetActionKey()->action-1] << endl;	
-// 
-// 		if( myid == 0 && task->GetActionKey()->action == UPDATE_INTERFACE_DATA )
-// 		{
-// 			int a = 1;
-// 		}
+        delete task;
+    }
 
-		task->RunTask();
-
-		delete task;
-	}
-
-	ClearTaskList();
+    ClearTaskList();
 }
 
 void ClearTaskList()
 {
-	Task::ootasklist->resize(0);
+    Task::ootasklist->resize(0);
 }
 
 void GeneralAction(ActionKey *actkey, int izone)
 {
-	if (actkey->kind == SOLVER_BASED)
-	{
-		PHSolver *solver = GlobalSolvers::GetSolver(izone, actkey->solverID);
-		solver->Action(actkey);
-	}
-	else
-	{
-		Grid *grid = GetGrid(izone, actkey->level);
-		grid->Action(actkey);
-	}
+    if (actkey->kind == SOLVER_BASED)
+    {
+        PHSolver *solver = GlobalSolvers::GetSolver(izone, actkey->solverID);
+        solver->Action(actkey);
+    }
+    else
+    {
+        Grid *grid = GetGrid(izone, actkey->level);
+        grid->Action(actkey);
+    }
 }
 
 
@@ -134,17 +122,17 @@ void PH_Interface(ActionKey *actkey, int izone, int jzone)
     int recv_proc = GetZoneProcessorIDSepMode(jzone);
 
     int tag = GetSendRecvTag(actkey, izone);
-	int myid = GetCurrentProcessorID();
+    int myid = GetCurrentProcessorID();
 
     if ( myid == send_proc )
     {
         //! If this process is a send process.
         actkey->ipos = jzone;
-		GeneralAction(actkey, izone);
+        GeneralAction(actkey, izone);
     }
 
-	
-	PH_Trade(actkey, send_proc, recv_proc, tag);   
+    
+    PH_Trade(actkey, send_proc, recv_proc, tag);   
 
     if ( myid == recv_proc )
     {
@@ -169,7 +157,7 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
 
     //! Compress the send information into the actkey.
     if (currentProcessor == sendProcessor)
-    {	
+    {
         DataContainer *originalData = actkey->GetData();
 
         DataContainer *compressData = sendBuffer;
@@ -207,99 +195,98 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
 
 void GeneralTranslateAction(ActionKey *actkey, int izone)
 {
-	if ( actkey->kind == SOLVER_BASED )
-	{
-		GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateAction(actkey);
-	}
-	else
-	{
-		GetGrid(izone, actkey->level)->TranslateAction(actkey);
-	}
+    if ( actkey->kind == SOLVER_BASED )
+    {
+        GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateAction(actkey);
+    }
+    else
+    {
+        GetGrid(izone, actkey->level)->TranslateAction(actkey);
+    }
 }
 
 streamsize GeneralTranslateActionLength(ActionKey *actkey, int izone)
 {
-	if ( actkey->kind == SOLVER_BASED )
-	{
-		return GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateActionLength(actkey);
-	}
-	else
-	{
-		return GetGrid(izone, actkey->level)->TranslateActionLength(actkey);
-	}
+    if ( actkey->kind == SOLVER_BASED )
+    {
+        return GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateActionLength(actkey);
+    }
+    else
+    {
+        return GetGrid(izone, actkey->level)->TranslateActionLength(actkey);
+    }
 }
 
 
 CharVecSizeType PH_Interface_GetLength(ActionKey *actkey, int izone, int jzone)
 {
-	using namespace PHMPI;
-	CharVecSizeType nlen = 0;
+    using namespace PHMPI;
+    CharVecSizeType nlen = 0;
 
-	int send_proc = GetZoneProcessorIDSepMode(izone);
-	int recv_proc = GetZoneProcessorIDSepMode(jzone);
+    int send_proc = GetZoneProcessorIDSepMode(izone);
+    int recv_proc = GetZoneProcessorIDSepMode(jzone);
 
-	int tag = GetSendRecvTag(actkey, izone);
-	int myid = GetCurrentProcessorID();	
+    int myid = GetCurrentProcessorID();
 
-	if ( myid == send_proc )
-	{
-		DataContainer *cdata = actkey->GetData();
-		nlen = cdata->size();
-	}
-	if ( myid == recv_proc )
-	{
-		actkey->ipos = izone;
-		nlen = static_cast< CharVecSizeType >( GeneralTranslateActionLength(actkey, jzone) );
-	}
-	return nlen;
+    if ( myid == send_proc )
+    {
+        DataContainer *cdata = actkey->GetData();
+        nlen = cdata->size();
+    }
+    if ( myid == recv_proc )
+    {
+        actkey->ipos = izone;
+        nlen = static_cast< CharVecSizeType >( GeneralTranslateActionLength(actkey, jzone) );
+    }
+    return nlen;
 }
 
 
 void PH_ReadPattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int izone)
 {
-	using namespace PHMPI;
+    using namespace PHMPI;
 
-	int myid = GetCurrentProcessorID();
-	int tag = GetSendRecvTag(actkey, izone);
+    int myid = GetCurrentProcessorID();
+    int tag = GetSendRecvTag(actkey, izone);
 
-	if ( myid == send_proc )
-	{
-		//! If this process is a send process.
-		main_action(actkey);
-	}
+    if ( myid == send_proc )
+    {
+        //! If this process is a send process.
+        main_action(actkey);
+    }
 
-	PH_Trade(actkey, send_proc, recv_proc, tag);
+    PH_Trade(actkey, send_proc, recv_proc, tag);
 
-	if ( myid == recv_proc )
-	{
-		//! If this process is a receive process,there are two situations:
-		//! One is that this process is a receive process and also a send process.
-		//! The other is that this process is a receive process not a send process.
-		//! In both situation,the target zone data needs to be translate.
-		GeneralAction(actkey, izone);
-	}
+    if ( myid == recv_proc )
+    {
+        //! If this process is a receive process,there are two situations:
+        //! One is that this process is a receive process and also a send process.
+        //! The other is that this process is a receive process not a send process.
+        //! In both situation,the target zone data needs to be translate.
+        GeneralAction(actkey, izone);
+    }
 }
 
 void PH_WritePattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int izone)
 {
-	using namespace PHMPI;
+    using namespace PHMPI;
 
-	int myid = GetCurrentProcessorID();
-	int tag = GetSendRecvTag(actkey, izone);
+    int myid = GetCurrentProcessorID();
+    int tag = GetSendRecvTag(actkey, izone);
 
-	if ( myid == send_proc )
-	{
-		//! If the process zone i belongs to is the current process.
-		GeneralAction(actkey, izone);
-	}
+    if ( myid == send_proc )
+    {
+        //! If the process zone i belongs to is the current process.
+        GeneralAction(actkey, izone);
+    }
 
-	PH_Trade(actkey, send_proc, recv_proc, tag);
+    PH_Trade(actkey, send_proc, recv_proc, tag);
 
-	if ( myid == recv_proc )
-	{
-		//! If this process is server process.
-		main_action(actkey);
-	}
+    if ( myid == recv_proc )
+    {
+        //! If this process is server process.
+        main_action(actkey);
+    }
 }
 
 }

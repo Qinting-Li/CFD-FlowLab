@@ -49,15 +49,15 @@ public:
     void MoveToPreviousFilePosition();
 
 public:
-    void SetDefaultFile(std::fstream * defaultFileIn);
-    void SetDefaultSeparator(const std::string &separatorIn) { * this->separator = separatorIn; };
+    void SetDefaultFile(std::fstream *defaultFileIn);
+    void SetDefaultSeparator(const std::string &separatorIn) { * this->separator = separatorIn; }
 
     std::string  * GetDefaultLine() { return line; }
     std::fstream * GetDefaultFile() { return file; }
     std::string  * GetDefaultSeparator() { return separator; }
 public:
     //!
-    void SetLineContent(const std::string &lineContent) { * this->line = lineContent; };
+    void SetLineContent(const std::string &lineContent) { * this->line = lineContent; }
 
     //!
     void ShiftLineContent(int numberOfChars) { * this->line = (* this->line).substr(numberOfChars); }
@@ -99,7 +99,7 @@ public:
     template < typename T >
     friend inline IO_FileReader & operator >> (IO_FileReader &ioStruct, T &value)
     {
-        fstream & file = * ioStruct.GetDefaultFile();
+        fstream &file = * ioStruct.GetDefaultFile();
         file >> value;
         return ioStruct;
     }
@@ -107,7 +107,7 @@ public:
     template < typename T >
     T ReadNextDigit(ios_base & (* f)(ios_base &) = & std::dec)
     {
-        std::string word = PHSPACE::FindNextWord(* line, * separator);
+        std::string word = PHSPACE::FindNextWord(*line, *separator);
         T value = PHSPACE::StringToDigit< T >(word, f);
         return value;
     }

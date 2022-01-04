@@ -31,14 +31,23 @@ private:
     FluidParameter referenceParameterDimensional;
 private:
     RDouble coefficientOfStateEquation; //universal gas constant, R
-
+    int nGasModel; //The gas model, 0 is the earth atmosphere, 1 the Mars atmosphere, 2 the Argon, 3 the Nitrogen.
+    RDouble molecularDiameter;
 public:
     PerfectGas();
     ~PerfectGas();
 
 public:
     void GetReferenceParameters(FluidParameter &refParam){refParam = referenceParameterDimensional;};
+    RDouble GetMolecularDiameter() {return this->molecularDiameter;};
+    int GetGasModelType() {return this->nGasModel;};
 public:
+    //The primitive variables are transfered to the conservative variables.
+    //! @param[in ]: q prim indicates the primitive variables.
+    //! @param[in ]: gama denotes the specific heat ratio, which is valid in the perfect gas.
+    //! @param[in ]: Tv denotes the vibrational temperature(The non-dimensional value).
+    //! @param[in ]: Te denotes the electron temperature(The non-dimensional value).
+    //! @param[out]: indicates the conservative variables.
     void Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q);
 
     //! To obtain the total energy E = e + 1/2*V2.
@@ -48,9 +57,16 @@ public:
     //! @param[OUT]: totalEnergy denotes the total internal energy of the mixed gas.
     void ComputeInternalEnergy(RDouble *primitiveVariables, RDouble gama, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &totalEnergy);
 
-    void Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble temperature);
+    //The conservative variables are transfered to the primitive variables.
+    //! @param[in ]: q indicates the conservative variables.
+    //! @param[in ]: gama denotes the specific heat ratio, which is valid in the perfect gas.
+    //! @param[out]: prim indicates the primitive variables.
+    //! @param[in/out]: temperature denotes the array of temperatures in the current time-advancing step and next time-advancing step.
+    //As input parameter, temperature indicates the temperature of the current time-advancing step. Meanwhile,
+    //it denotes the temperature of the next time-advancing step as output parameter.
+    void Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature);
 
-    void GetSpecificHeatRatio(RDouble *prim, RDouble &gama);
+    virtual void GetSpecificHeatRatio(RDouble *prim, RDouble &gama);
 
     //! Compute the static enthalpy with the primitive variables.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
@@ -112,7 +128,7 @@ public:
     void SetAirInformationByExpData();
 
     void GetAirInfo(const RDouble &height, RDouble &temperature, RDouble &pressure, RDouble &density, RDouble &soundspeed);
-    
+
     void ComputeReferenceParameter();
 
     void ComputeDensityWithReynoldsNumber();
@@ -150,6 +166,8 @@ public:
     RDouble GetCoefficientOfStateEquation() { return coefficientOfStateEquation; };
 
     RDouble GetUniversalGasConstant();
+
+    RDouble ComputeReferenceTotalEnthalpy();
 
 };
 

@@ -32,10 +32,6 @@ if(USE_SMARTARRAY)
   message(STATUS "USE_SMARTARRAY is turned on!")
   add_definitions(-DUSE_SMARTARRAY)
 endif()
-if(USE_ARRAY_OPT)
-  message(STATUS "USE_ARRAY_OPT is turned on!")
-  add_definitions(-DUSE_ARRAY_OPT)
-endif()
 if(WIN32)
 if(USE_Windows_X64)
   message(STATUS "USE_Windows_X64 is turned on!")
@@ -47,16 +43,15 @@ endif(WIN32)
 set(MESH_TARGET_NAME "PHMesh")
 set(LIBRARY_OUTPUT_PATH)
 
-
 if(WIN32)
 if(USE_Windows_X64)
-	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
+  set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
   set(CMAKE_EXE_LINKER_FLAGS "/machine:x64")
 else(USE_Windows_X64)
-	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
+  set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
 endif(USE_Windows_X64)
 else(WIN32)
-	set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+  set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 endif(WIN32)
 link_directories("${LIB_API_EXPORT_PATH}")
 
@@ -104,11 +99,6 @@ includeHeadFiles()
 set(HDF5_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
 
-if(USE_TecplotLib)
-set(TECIO_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
-include_directories("${TECIO_H_PATH}")
-endif(USE_TecplotLib)
-
 set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
@@ -129,6 +119,15 @@ ${OVERSET_H_PATH}/UnstructuredGridQuickSearch.h
 source_group(include FILES ${OVERSET_H_LIST}) 
 include_directories(${OVERSET_H_PATH})
 
+    set(PMG_H_PATH  include)
+    set(PMG_H_LIST
+        ${PMG_H_PATH}/DynamicGrid.h
+        ${PMG_H_PATH}/GridDeformation.h
+        ${PMG_H_PATH}/GridDeformationRBF.h
+        ${PMG_H_PATH}/GridDeformationSPRING.h
+    )
+    source_group(include FILES ${PMG_H_LIST}) 
+    include_directories(${PMG_H_PATH})
 
 # set directory <src>:
 set(OVERSET_CPP_PATH  src)
@@ -139,19 +138,29 @@ ${OVERSET_CPP_PATH}/UnstructuredGridQuickSearch.cpp
 source_group(src FILES ${OVERSET_CPP_LIST}) 
 include_directories(${OVERSET_CPP_PATH})
 
-
+    set(PMG_CPP_PATH  src)
+    set(PMG_CPP_LIST
+        ${PMG_CPP_PATH}/DynamicGrid.cpp
+        ${PMG_CPP_PATH}/GridDeformation.cpp
+        ${PMG_CPP_PATH}/GridDeformationRBF.cpp
+        ${PMG_CPP_PATH}/GridDeformationSPRING.cpp
+    )
+    source_group(src FILES ${PMG_CPP_LIST}) 
+    include_directories(${PMG_CPP_PATH})
 
 # set header file list:
 set(HEAD_LIST
 ${EIGEN_H_PATH}
 ${OVERSET_H_LIST}
 )
+list(APPEND HEAD_LIST ${PMG_H_LIST})
 # add INHOUSE_VERSION_H_LIST
 
 # set source file list:
 set(CPP_LIST 
 ${OVERSET_CPP_LIST}
 )
+list(APPEND CPP_LIST ${PMG_CPP_LIST})
 # add INHOUSE_VERSION_CPP_LIST
 
 # adds flags to the compiler command line for sources in the current directory and below:
@@ -179,24 +188,24 @@ if(USE_OCC)
   message(STATUS "Path to OpenCasCade library: " ${OCC_LIB_PATH})
   
   # Check if all the library exist -- it's need to be checked. 
-  foreach(OCC ${OCC_LIBS_REQUIRED})     
-	  list(APPEND OCC_LIBS ${OCC})
+  foreach(OCC ${OCC_LIBS_REQUIRED})
+      list(APPEND OCC_LIBS ${OCC})
       unset(OCC CACHE)
   endforeach(OCC)
   
   if(WIN32)           
-    MESSAGE(STATUS "Using Win32 OpenCasCade.")	
+    MESSAGE(STATUS "Using Win32 OpenCasCade.")
     MESSAGE(STATUS "${OCC_LIB_PATH}/lib")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")	
+    MESSAGE(STATUS "${OCC_LIB_PATH}/bin")
     link_directories("${OCC_LIB_PATH}/lib")
     link_directories("${OCC_LIB_PATH}/bin") 
-	include_directories("${OCC_LIB_PATH}/inc")
+    include_directories("${OCC_LIB_PATH}/inc")
   else(WIN32)
     MESSAGE(STATUS "Using NON-Win32 OpenCasCade.")
-    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")	
-    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")	         
-    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib") 
-    include_directories("${OCC_LIB_PATH}/inc")        
+    MESSAGE(STATUS "${OCC_LIB_PATH}/lin64/gcc/lib")
+    MESSAGE(STATUS "${OCC_LIB_PATH}/inc")
+    link_directories("${OCC_LIB_PATH}/lin64/gcc/lib")
+    include_directories("${OCC_LIB_PATH}/inc")
   endif(WIN32)
 endif()
 
@@ -215,6 +224,37 @@ endif()
 set(API_TARGET_NAME "PHAPI")
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME})
 target_link_libraries(${MESH_TARGET_NAME} ${LINK_LIBRARY_LIST})
+
+# For OpenMP
+find_package ( OpenMP )
+if ( OpenMP_FOUND )
+
+if(WIN32)
+target_include_directories ( ${MESH_TARGET_NAME}
+  PRIVATE
+    ${OpenMP_CXX_INCLUDE_DIRS}
+)
+
+target_compile_options ( ${MESH_TARGET_NAME}
+  PRIVATE
+    ${OpenMP_CXX_FLAGS}
+)
+
+target_compile_features ( ${MESH_TARGET_NAME}
+  PUBLIC
+    cxx_std_14
+)
+
+target_link_libraries ( ${MESH_TARGET_NAME}
+  PRIVATE
+    ${OpenMP_CXX_LIBRARIES}
+)
+else(WIN32)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif(WIN32)
+endif (OpenMP_FOUND)
 
 # exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")

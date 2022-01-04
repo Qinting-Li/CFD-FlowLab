@@ -32,49 +32,49 @@ public:
     static const int numIndexPlaceholders = 0;
     static const int rank = 0;
 
-    PHArrayExprConstant(const PHArrayExprConstant<T_numtype>& a)
+    PHArrayExprConstant(const PHArrayExprConstant<T_numtype> &a)
         : value_(a.value_)
     { }
 
     PHArrayExprConstant(T_numtype value)
-        : value_( value )
+        : value_(value)
     { 
     }
 public:
     template<int N_rank>
-    T_numtype operator()(const SimpleArray<int,N_rank>&)
+    T_numtype operator()(const SimpleArray<int, N_rank> &)
     { 
-		return value_; 
-	}
+        return value_; 
+    }
 
     T_numtype operator * ()
     { 
-		return value_; 
-	}
+        return value_; 
+    }
 
     void loadStride(int rank) {}
 
     bool isUnitStride(int) const
     { 
-		return true;
-	}
+        return true;
+    }
 
     bool canCollapse(int outerLoopRank, int innerLoopRank) const 
     {
-		return true; 
-	}
+        return true; 
+    }
 
     T_numtype fastRead(int i)
     {
-		return value_; 
-	}
+        return value_; 
+    }
 
     void push(int position) {}
     void pop(int position) {}
     void advance() {};
-	void advance(int n) {};
+    void advance(int n) {};
 protected:
-    PHArrayExprConstant() { }
+    PHArrayExprConstant() {}
 
     T_numtype value_;
 };
@@ -90,34 +90,34 @@ public:
     typedef T_expr T_ctorArg1;
     typedef int    T_ctorArg2;    // dummy
 
-    PHArrayExprUnaryOp(const PHArrayExprUnaryOp<T_expr, T_op>& a)
+    PHArrayExprUnaryOp(const PHArrayExprUnaryOp<T_expr, T_op> &a)
         : iter_(a.iter_)
     { }
 
-    PHArrayExprUnaryOp(const T_expr& a)
+    PHArrayExprUnaryOp(const T_expr &a)
         : iter_(a)
     { }
 
     int lbound(int rank)
     { 
-		return iter_.lbound(rank);
-	}
+        return iter_.lbound(rank);
+    }
 
     int ubound(int rank)
     { 
-		return iter_.ubound(rank);
-	}
+        return iter_.ubound(rank);
+    }
 
-    T_numtype operator*()
+    T_numtype operator *()
     {
-		return T_op::apply(*iter_); 
-	}
+        return T_op::apply(*iter_);
+    }
 
     template<int N_rank>
-    T_numtype operator()(const SimpleArray<int,N_rank>& i)
+    T_numtype operator()(const SimpleArray<int, N_rank> &i)
     { 
-		return T_op::apply(iter1_(i));
-	}
+        return T_op::apply(iter1_(i));
+    }
 
     void push(int position)
     {
@@ -146,8 +146,8 @@ public:
 
     bool isUnitStride(int rank) const
     { 
-		return iter_.isUnitStride(rank);
-	}
+        return iter_.isUnitStride(rank);
+    }
 
     void advanceUnitStride()
     {
@@ -159,28 +159,28 @@ public:
         return iter_.canCollapse(outerLoopRank, innerLoopRank); 
     }
 
-    T_numtype operator[](int i)
+    T_numtype operator [](int i)
     {
-		return T_op::apply(iter_[i]); 
-	}
+        return T_op::apply(iter_[i]); 
+    }
 
     T_numtype fastRead(int i)
     { 
-		return T_op::apply(iter_.fastRead(i)); 
-	}
+        return T_op::apply(iter_.fastRead(i));
+    }
 
     int suggestStride(int rank) const
     {
-		return iter_.suggestStride(rank); 
-	}
+        return iter_.suggestStride(rank);
+    }
 
     bool isStride(int rank, int stride) const
     { 
-		return iter_.isStride(rank,stride); 
-	}
+        return iter_.isStride(rank,stride);
+    }
 
 protected:
-    PHArrayExprUnaryOp() { }
+    PHArrayExprUnaryOp() {}
 
     T_expr iter_;
 };
@@ -191,11 +191,11 @@ class PHArrayExprBinaryOp
 public:
     typedef P_expr1 T_expr1;
     typedef P_expr2 T_expr2;
-	typedef P_op T_op;
+    typedef P_op T_op;
 
-	typedef typename T_op::T_numtype T_numtype;
+    typedef typename T_op::T_numtype T_numtype;
 
-    PHArrayExprBinaryOp(const PHArrayExprBinaryOp<T_expr1, T_expr2, T_op>& a)
+    PHArrayExprBinaryOp(const PHArrayExprBinaryOp<T_expr1, T_expr2, T_op> &a)
         : iter1_(a.iter1_), iter2_(a.iter2_)
     { }
 
@@ -205,15 +205,15 @@ public:
     { }
 public:
     template<int N_rank>
-    T_numtype operator()(const SimpleArray<int,N_rank>& i)
+    T_numtype operator()(const SimpleArray<int, N_rank> &i)
     { 
-		return T_op::apply(iter1_(i), iter2_(i));
-	}
+        return T_op::apply(iter1_(i), iter2_(i));
+    }
 
     T_numtype operator * ()
     { 
-		return T_op::apply(*iter1_, *iter2_);
-	}
+        return T_op::apply(*iter1_, *iter2_);
+    }
 
     void loadStride(int rank)
     { 
@@ -223,24 +223,24 @@ public:
 
     bool isUnitStride(int rank) const
     { 
-		return iter1_.isUnitStride(rank) && iter2_.isUnitStride(rank); 
-	}
+        return iter1_.isUnitStride(rank) && iter2_.isUnitStride(rank);
+    }
 
     void push(int position)
     { 
-        iter1_.push(position); 
+        iter1_.push(position);
         iter2_.push(position);
     }
 
     void pop(int position)
     { 
-        iter1_.pop(position); 
+        iter1_.pop(position);
         iter2_.pop(position);
     }
 
     void advance()
     { 
-        iter1_.advance(); 
+        iter1_.advance();
         iter2_.advance();
     }
 
@@ -258,8 +258,8 @@ public:
 
     T_numtype fastRead(int i)
     { 
-		return T_op::apply(iter1_.fastRead(i), iter2_.fastRead(i));
-	}
+        return T_op::apply(iter1_.fastRead(i), iter2_.fastRead(i));
+    }
 
 protected:
     PHArrayExprBinaryOp() { }
@@ -277,7 +277,7 @@ public:
     typedef T_expr T_ctorArg1;
     typedef int    T_ctorArg2;    // dummy
 public:
-    PHArrayExpr(const PHArrayExpr<T_expr>& a)
+    PHArrayExpr(const PHArrayExpr<T_expr> &a)
         : PHETBase< PHArrayExpr<T_expr> >(a), iter_(a.iter_)
     { }
 
@@ -287,31 +287,31 @@ public:
     { }
 
     template<typename T>
-    PHArrayExpr(const T& a)
+    PHArrayExpr(const T &a)
         : iter_(a)
     { }
 public:
 
     T_numtype operator * ()
     {
-		return *iter_; 
-	}
+        return *iter_; 
+    }
 
     template<int N_rank>
-    T_numtype operator()(const SimpleArray<int, N_rank>& i)
+    T_numtype operator()(const SimpleArray<int, N_rank> &i)
     {
-		return iter_(i);
-	}
+        return iter_(i);
+    }
 
     void loadStride(int rank)
     { 
-		iter_.loadStride(rank);
-	}
+        iter_.loadStride(rank);
+    }
 
     bool isUnitStride(int rank) const
     { 
-		return iter_.isUnitStride(rank);
-	}
+        return iter_.isUnitStride(rank);
+    }
 
     bool canCollapse(int outerLoopRank, int innerLoopRank) const
     { 
@@ -320,28 +320,28 @@ public:
 
     T_numtype fastRead(int i)
     { 
-		return iter_.fastRead(i);
-	}
+        return iter_.fastRead(i);
+    }
 
     void advance()
     {
-		iter_.advance();
-	}
+        iter_.advance();
+    }
 
     void advance(int n)
     { 
-		iter_.advance(n);
-	}
+        iter_.advance(n);
+    }
 
     void push(int position)
     { 
-		iter_.push(position);
-	}
+        iter_.push(position);
+    }
 
     void pop(int position)
     {
-		iter_.pop(position); 
-	}
+        iter_.pop(position); 
+    }
 
 protected:
     PHArrayExpr() { }

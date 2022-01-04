@@ -5,8 +5,8 @@
 #include "HyList.h"
 #include "TK_Exit.h"
 #include "Glb_Dimension.h"
-#include "BC_Unstruct.h"
-#include "BC_Struct.h"
+#include "Geo_UnstructBC.h"
+#include "Geo_StructBC.h"
 #include "Post_Probes.h"
 #include "Pointer.h"
 #include "Solver.h"
@@ -26,45 +26,13 @@ LIB_EXPORT Post_ProbesWrite::~Post_ProbesWrite()
 
 }
 
-//LIB_EXPORT void Post_ProbesWrite::Run(bool dumpAllLevel)
-//{
-//    bool run_now = true;
-//
-//    int nMGLevel = 1;
-//    if (dumpAllLevel)
-//    {
-//        GlobalDataBase::GetData("nMGLevel", &nMGLevel, PHINT, 1);
-//    }
-//
-//    for (int iLevel = 0; iLevel < nMGLevel; ++ iLevel)
-//    {
-//        string probesflowfile = "sample.dat";
-//        GlobalDataBase::GetData("probesflowfile", &probesflowfile, PHSTRING, 1);
-//
-//        string fname, fext;
-//        GetNameExt(probesflowfile, fname, fext, ".");
-//
-//        ActionKey *actkey = new ActionKey();
-//        actkey->level    = iLevel;
-//        actkey->filename = AddDigitToFileName(fname, fext, ".", actkey->level);
-//        actkey->openmode = ios_base::out|ios_base::app;
-//
-//        ServerProbesWrite(actkey);
-//        PostProbesWrite(actkey);
-//        delete actkey;
-//        this->Clear();
-//    }
-//}
-
 LIB_EXPORT void Post_ProbesWrite::Run()
 {
-    bool run_now = true;
-
-    string probesflowfile = "sample.dat";
-    GlobalDataBase::GetData("probesflowfile", &probesflowfile, PHSTRING, 1);
+    string samplefile = "sample.dat";
+    GlobalDataBase::GetData("samplefile", &samplefile, PHSTRING, 1);
     ActionKey *actkey = new ActionKey();
     actkey->level    = 0;
-    actkey->filename = probesflowfile;
+    actkey->filename = samplefile;
     actkey->openmode = ios_base::out|ios_base::app;
 
     ServerProbesWrite(actkey);
@@ -76,7 +44,7 @@ LIB_EXPORT void Post_ProbesWrite::Run()
 void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
 {
     using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int recv_proc;
     int myid;
@@ -96,7 +64,7 @@ void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
         {
             Grid *grid = GetGrid(izone, actkey->level);
             int nProbeVariables = GlobalDataBase::GetIntParaFromDB("nProbeVariables");
-            int probeVariables[100];
+            int probeVariables[100] = {0};
 
             GlobalDataBase::GetData("probeVariables", probeVariables, PHINT, nProbeVariables);
             Post_Probes *postProbesVar = new Post_Probes(nProbeVariables, probeVariables, grid);
@@ -132,18 +100,20 @@ void Post_ProbesWrite::StoreProbesVarariables(ActionKey *actkey, Post_Probes *po
 
     if (actkey->filename != "")
     {
-        int ZoneProbesNumber = grid_in->GetZoneProbesNumber();
-        PHWrite(actkey->GetData(), &ZoneProbesNumber, 1);
-        vector<int> probesLineID = grid_in->GetProbesLineID();
-        vector<int> probesSurfaceID = grid_in->GetProbesSurfaceID();
-        vector<vector<RDouble> > probesCoordinates = grid_in->GetProbesCoordinates();
+        int probesLocalNumber = grid_in->GetZoneProbesNumber();
+        PHWrite(actkey->GetData(), &probesLocalNumber, 1);
+        vector<int> probesGlobalID = grid_in->GetZoneProbesGlobalID();
+        vector<int> probesLineID = grid_in->GetZoneProbesLineID();
+        vector<int> probesSurfaceID = grid_in->GetZoneProbesSurfaceID();
+        vector<vector<RDouble> > probesCoordinates = grid_in->GetZoneProbesCoordinates();
         int nDim;
 
-        for (int iProbe = 0; iProbe < ZoneProbesNumber; ++ iProbe)
+        for (int iProbe = 0; iProbe < probesLocalNumber; ++ iProbe)
         {
             nDim = static_cast<int>(probesCoordinates[iProbe].size());
 
             PHWrite(actkey->GetData(), &nDim, 1);
+            PHWrite(actkey->GetData(), probesGlobalID[iProbe]);
             PHWrite(actkey->GetData(), probesLineID[iProbe]);
             PHWrite(actkey->GetData(), probesSurfaceID[iProbe]);
             for (int iDim = 0; iDim < nDim; ++ iDim)
@@ -155,16 +125,12 @@ void Post_ProbesWrite::StoreProbesVarariables(ActionKey *actkey, Post_Probes *po
                 PHWrite(actkey->GetData(), q_probes[iVariable][iProbe]);
             }
         }
-        delete [] q_probes;
     }
+    delete [] q_probes;    q_probes = NULL;
 }
 
 void Post_ProbesWrite::PostProbesWrite(ActionKey *actkey)
 {
-    using namespace PHMPI;
-
-    int myid = GetCurrentProcessorID();
-
     if (datalist.size() > 0)
     {
         DumpToFileASCII dumpToFileASCII(datalist, actkey->filename);

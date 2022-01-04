@@ -32,7 +32,7 @@ public:
     RDouble *pos;
 
     //! The split Axis.
-    int  dir;
+    int dir;
 
     //! The left tree.
     KDNode *left;
@@ -40,7 +40,7 @@ public:
     //! The right tree.
     KDNode *right;
 
-    void  *data;
+    void *data;
 
 public:
     //! Constructor, default dimension is three.
@@ -103,18 +103,18 @@ public:
         delete right;
     };
 
-    //! Add an Adt node under the current node .
+    //! Add an Adt node under the current node.
 
     //! Count all the descendant nodes, including self.
     int GetNodeNum()
     {
         int count = 0;
         count += 1;
-        if ( this->left )
+        if (this->left)
         {
             count += left->GetNodeNum();
         }
-        if ( this->right )
+        if (this->right)
         {
             count += right->GetNodeNum();
         }
@@ -122,7 +122,7 @@ public:
     };
 
     //! Get the date stored in item.
-    RDouble *GetData() const
+    RDouble * GetData() const
     {
         return pos;
     };

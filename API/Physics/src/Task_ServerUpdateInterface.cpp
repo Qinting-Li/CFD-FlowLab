@@ -38,6 +38,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
     // Each processor runs along the same order, which is from 0 to nZones.
     // Each simulation zone is looped over to judge if the communication is necessary.
     // Step 1: Compressing data into actkey and Communication.
+
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -97,7 +98,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
 
                 actkey->SetData(receivedDataBuffer[iZone][count]);
                 actkey->ipos = iZone;
-                GeneralTranslateAction(actkey,neighborZoneIndex);
+                GeneralTranslateAction(actkey, neighborZoneIndex);
 
                 actkey->SetData(originalData);
                 ++ count;
@@ -120,7 +121,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
     {
         for (std::size_t jDim = 0; jDim < sendDataBuffer[iDim].size(); ++ jDim)
         {
-            delete sendDataBuffer[iDim][jDim];			
+            delete sendDataBuffer[iDim][jDim];
         }
         sendDataBuffer[iDim].clear();
     }

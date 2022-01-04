@@ -59,10 +59,10 @@ private:
 
 private:
     vector< OversetAuxilaryGrid * > outerAuxilaryGrid;
-    vector< UnstructGrid * >  innerGrid;
+    vector< UnstructGrid * > innerGrid;
 
 private:    //! This part of data is used to complete the attribute communication of the points on the interface.
-    vector< int >           numberOfGlobalNodes;    //! Number of calculate points in the whole grid.
+    vector< int > numberOfGlobalNodes;    //! Number of calculate points in the whole grid.
     vector< vector< int > > keyActiveOfGlobalInterNodes;    //! Property of points on the interface.
 
 private:    //! Smallest box of each Block is used to improve the query efficiency.
@@ -166,7 +166,7 @@ private:    //! Output file.
     void OutGlobalNodes();
 
 public:
-    int GetNumberOfBlocks(){ return numberOfBlocks; }
+    int GetNumberOfBlocks() { return numberOfBlocks; }
 
     vector< OversetAuxilaryGrid * > & GetOuterAuxilaryGrid() { return outerAuxilaryGrid; }
 
@@ -190,7 +190,7 @@ public:
     vector < RDouble > wallDistanceGradientX;
     vector < RDouble > wallDistanceGradientY;
     vector < RDouble > wallDistanceGradientZ;
-    MRADTSearch  *adtSearch;
+    MRADTSearch *adtSearch;
     Pre_WalldistCompute *walldistCompute;
 
 public:
@@ -350,7 +350,7 @@ public:    //! Boundary condition.
     vector< int > localToGlobalNodesIndex;         //! From local interNode to global Node.
 
 public:    //! Initialize.
-    void Initialize(OversetConfigFactoryMulti *oversetConfigFactoryMulti, UnstructGrid *gridIn, int nZone, int iZone, int iBlock, ZoneNodes  **globalZoneNodesIn, InterCells **globalInterCellsIn);
+    void Initialize(OversetConfigFactoryMulti *oversetConfigFactoryMulti, UnstructGrid *gridIn, int nZone, int iZone, int iBlock, ZoneNodes **globalZoneNodesIn, InterCells **globalInterCellsIn);
     void Allocate();
     void SetInitialValue();
     void BuildADTStructure();
@@ -392,7 +392,7 @@ public:    //! Core operations: points.
 public:    //! Core operations: cells.
     void FindActiveCells();
     int  FindInterCells();
-    void CalInterCellInformation(vector< int > &index,  vector< RDouble > &x,  vector< RDouble > &y,  vector< RDouble > &z);
+    void CalInterCellInformation(vector< int > &index, vector< RDouble > &x, vector< RDouble > &y, vector< RDouble > &z);
     void FindInterCellsForTowOrderScheme();
     void FindDonorZoneAndDonorCell();
     int  FindDonorZoneAndDonorCellOfInterCell(int &donorCell, RDouble xc, RDouble yc, RDouble zc);

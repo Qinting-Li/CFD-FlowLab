@@ -34,6 +34,15 @@
 //! researchers. PHengLEI is developed from HyperFLOW v1.0, which is mostly developed by Eric.
 //!    Thanks for all!
 
+//! Declaration: If the user uses the "PHengLEI" software for academic research or engineering application,
+//! the software based on the National Numerical Windtunnel should be marked in the prominent position of 
+//! the paper results, and references related to the "PHengLEI" software (e.g. [1] and [2]) should be cited.
+//! 
+//! [1] Zhao Z, et al. Design of general CFD software PHengLEI[J]. Computer Engineering & Science, 2020, 42(2): 
+//!     210-219.
+//! [2] Zhao Z, et al. PHengLEI: A Large Scale Parallel CFD Framework for Arbitrary Grids[J]. Chinese Journal 
+//!     of Computers, 2018, 42(11): 2368-2383.
+
 #include "CFDSimulation.h"
 #include "TK_Time.h"
 using namespace std;

@@ -34,8 +34,8 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
         if (line == "") continue;
         FindNextWord(line, word, sep1);
 
-        if (word == "{") continue;  // Get into sub-domain.
-        if (word == "}") break;     // Get out of sub-domain.
+        if (word == "{") continue;    //! Get into sub-domain.
+        if (word == "}") break;       //! Get out of sub-domain.
 
         if (word.substr(0, 1) == "#" || word.substr(0, 2) == "//") continue;
 
@@ -91,7 +91,7 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
         type = keywordmap[keyword];
         if (type == PHSTRING)
         {
-            string * data = new string [size];
+            string *data = new string [size];
             for (int i = 0; i < size; ++ i)
             {
                 data[i] = values[i];
@@ -101,7 +101,7 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
         }
         else if (type == PHINT)
         {
-            int * data = new int [size];
+            int *data = new int [size];
             for (int i = 0; i < size; ++ i)
             {
                 from_string<int>(data[i], values[i], std::dec);
@@ -112,7 +112,7 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
         }
         else if (type == PHFLOAT)
         {
-            RFloat * data = new RFloat [size];
+            RFloat *data = new RFloat [size];
             for (int i = 0; i < size; ++ i)
             {
                 from_string<RFloat>(data[i], values[i], std::dec);
@@ -122,7 +122,7 @@ LIB_EXPORT void TK_Parse::ReadBasicData(fstream &file, Data_Param *database)
         }
         else if (type == PHDOUBLE)
         {
-            RDouble * data = new RDouble [size];
+            RDouble *data = new RDouble [size];
             for (int i = 0; i < size; ++ i)
             {
                 from_string<RDouble>(data[i], values[i], std::dec);

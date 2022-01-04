@@ -2,7 +2,7 @@
 #include "IO_FileName.h"
 #include "Constants.h"
 #include "GridType.h"
-#include "BC_Struct.h"
+#include "Geo_StructBC.h"
 #include "Geo_Interface.h"
 #include "Geo_Interpoint.h"
 #include "LinkStruct.h"
@@ -18,7 +18,10 @@ namespace PHSPACE
 Grid::Grid()
 {
     zoneProbesNumber = 0;
-    probesCoordinates.resize(0);
+    zoneProbesGlobalID.resize(0);
+    zoneProbesLineID.resize(0);
+    zoneProbesSurfaceID.resize(0);
+    zoneProbesCoordinates.resize(0);
 }
 
 LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)
@@ -28,50 +31,54 @@ LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)
     this->level = level;
     this->index = index;
 
-    cGrid = 0;
-    fGrid = 0;
+    cGrid = nullptr;
+    fGrid = nullptr;
 
-    iinfo = 0;
-    interpointInformation = 0;
-    interfaceFields = 0;
-    interpointFields = 0;
-    oversetInfoProxy = 0;
-    oversetInformationProxy = 0;
+    iinfo = nullptr;
+    interpointInformation = nullptr;
+    interfaceFields = nullptr;
+    interpointFields = nullptr;
+    oversetInfoProxy = nullptr;
+    oversetInformationProxy = nullptr;
 
     own_database = 0;
     gField = new Data_Field();
-    gPara = 0;
+    gPara = nullptr;
 
-    oldgrid = 0;
+    oldGrid = NULL;
+    fileIndexCurrentGridBelong = 0;
 }
 
 Grid::~Grid()
 {
-    delete index;
-    delete oversetInfoProxy;
-    delete gField;
+    delete index;    index = NULL;
+    delete oversetInfoProxy;    oversetInfoProxy = NULL;
+    delete gField;    gField = NULL;
 
     if (own_database)
     {
-        delete gPara;
+        delete gPara;    gPara = NULL;
     }
 
-    delete oldgrid;
+    delete oldGrid;    oldGrid = NULL;
 
     //if (IsFinestGrid())
     //{
     //    FreeInterfaceField();
     //}
 
-    delete interfaceFields;
-    delete interpointFields;
+    if (!interfaceFields){delete interfaceFields;    interfaceFields = NULL;};
+    delete interpointFields;    interpointFields = NULL;
 
-    delete oversetInformationProxy;
+    delete oversetInformationProxy;    oversetInformationProxy = NULL;
 
-    delete iinfo;
-    delete interpointInformation;
+    if (!iinfo){delete iinfo;    iinfo = NULL;};
+    delete interpointInformation;    interpointInformation = NULL;
 
-    probesCoordinates.clear();
+    zoneProbesGlobalID.clear();
+    zoneProbesLineID.clear();
+    zoneProbesSurfaceID.clear();
+    zoneProbesCoordinates.clear();
 }
 
 LIB_EXPORT Grid * Grid::GetFinestGrid()
@@ -88,8 +95,32 @@ LIB_EXPORT Grid * Grid::GetFinestGrid()
 
 LIB_EXPORT void Grid::BackUpOldGrid()
 {
-    if (!oldgrid) oldgrid = new SimpleGrid();
-    *oldgrid = *this;
+    if (!oldGrid) oldGrid = new SimpleGrid();
+    *oldGrid = *this;
+}
+
+void Grid::GridVerticeVelocity(RDouble *xt, RDouble *yt, RDouble *zt)
+{
+    RDouble *x = this->GetX();
+    RDouble *y = this->GetY();
+    RDouble *z = this->GetZ();
+
+    SimpleGrid *oldGrid = this->GetOldGrid();
+
+    RDouble *oldX = oldGrid->GetX();
+    RDouble *oldY = oldGrid->GetY();
+    RDouble *oldZ = oldGrid->GetZ();
+
+    int numberOfNodes = this->GetNTotalNode();
+
+    RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
+    {
+        xt[iNode] = (x[iNode] - oldX[iNode]) / physicalTimeStep;
+        yt[iNode] = (y[iNode] - oldY[iNode]) / physicalTimeStep;
+        zt[iNode] = (z[iNode] - oldZ[iNode]) / physicalTimeStep;
+    }
 }
 
 LIB_EXPORT void Grid::RotTransVel(RDouble *xyzref, RDouble *dangle, RDouble *tcoord, RDouble **angle0, RDouble **coord0)
@@ -203,9 +234,6 @@ LIB_EXPORT void Grid::TurnZAxis2YAxis()
     //! Turn the Y axis to be up, if the original Z axis is up.
     int nTotalNode = this->GetNTotalNode();
 
-    int sizeint = sizeof(int);
-    int sizeRealGeom = sizeof(RDouble);
-
     RDouble *x, *y, *z;
     x = this->GetX();
     y = this->GetY();
@@ -283,14 +311,15 @@ void Grid::FreeInterfaceField()
 
 LIB_EXPORT void Grid::InitMovingGrids()
 {
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
-    if (iale != 0)
+    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (codeOfAleModel != 0)
     {
-        ostringstream oss;
-        oss << "Warning: in Grid::InitMovingGrids, nstart parameter has been deleted from cfd_para" << " !!!" << endl;
-        cout << oss.str();
+        //ostringstream oss;
+        //oss << "Warning: in Grid::InitMovingGrids, nstart parameter has been deleted from cfd_para" << " !!!" << endl;
+        //cout << oss.str();
 
-        int nstart = GlobalDataBase::GetIntParaFromDB("nstart");
+        //int nstart = GlobalDataBase::GetIntParaFromDB("nstart");
+        int nstart = 0;
 
         if (nstart == 0 || nstart == 3)
         {
@@ -342,7 +371,6 @@ void CheckGrid(Grid **grids, int nBlocks)
 
         int *interFace2ZoneID       = iinfo->GetInterFace2ZoneID();
         int *interFace2InterFaceID  = iinfo->GetInterFace2InterFaceID();
-        int *interFace2BoundaryFace = iinfo->GetInterFace2BoundaryFace();
 
         int target_zone, itface;
         int is, js, ks, nsurf, s_lr, it, jt, kt, t_lr;
@@ -405,7 +433,7 @@ void CheckGrid(Grid **grids, int nBlocks)
 bool IsConvertGridToMixGrid()
 {
     bool flag = false;
-    if ( GetTaskCode() == CREATE_GRID || GetTaskCode() == SPLIT_OVERSET_GRID )
+    if ( GetTaskCode() == CREATE_GRID)
     {
         int gridobj = 0;
         GlobalDataBase::GetData("gridobj", &gridobj, PHINT, 1);
@@ -422,89 +450,6 @@ bool IsConvertGridToMixGrid()
         }
     }
     return flag;
-}
-
-LIB_EXPORT void DumpFaceBoundaryName(const set< pair<int, string> > &bcNamePairSet, string targetGridFileName)
-{
-    fstream file;
-    string BCNameFileName = ChangeExtensionOfFileName(targetGridFileName, "bcname");
-    PHSPACE::OpenSerialFile(file, BCNameFileName, ios_base::out);
-    file << "# Boundary Face Information of Grid " << targetGridFileName << endl;
-    file << "# nBoundaryConditons : number of global boundary conditions." << endl;
-    file << "# bcName             : Boundary Condition Name." << endl;
-    file << "# bcType(in PHengLEI): Boundary Condition Type." << endl;
-    file << endl;
-    file << "int nBoundaryConditons = " << bcNamePairSet.size() << ";" << endl;
-    set< pair<int, string> >::iterator iter;
-    for (iter = bcNamePairSet.begin(); iter != bcNamePairSet.end(); ++ iter)
-    {
-        int bcType    = (*iter).first;
-        string bcName = (*iter).second;
-        file << "string bcName = \"" << bcName << "\";" << endl;
-        file << "{" << endl;
-        file << "  int bcType = " << bcType << ";" << endl;
-        file << "}" << endl;
-    }
-    PHSPACE::CloseFile(file);
-
-    string boundaryconditionfile = "./bin/boundary_condition.hypara";
-    file.open(boundaryconditionfile.c_str(), ios_base::out);
-
-    if (!file)
-    {
-        TK_Exit::FileOpenErrorExit(boundaryconditionfile);
-    }
-
-    //file << "# Boundary Face Information of Grid " << gridFileName << endl;
-    file << "# nBoundaryConditons : number of global boundary conditions." << endl;
-    file << "# bcName             : Boundary Condition Name." << endl;
-    file << "# bcType(in PHengLEI): Boundary Condition Type." << endl;
-    file << endl;
-
-    file << "# Account of how to set boundaryconditon." << endl;
-    file << "# string bcName = \"Farfield\";          " << endl;
-    file << "# {                                      " << endl;
-    file << "#   int bcType = 4;                      " << endl;
-    file << "#   int inflowParaType = 1;              " << endl;
-    file << "#   double attackd = 0;                  " << endl;
-    file << "#   double refReNumber = 6.5e6;          " << endl;
-    file << "#   double refMachNumber = 3.5;          " << endl;
-    file << "#   double angleSlide = 0;               " << endl;
-    file << "# }                                      " << endl;
-    file << endl;
-
-    file << "int nBoundaryConditons = " << bcNamePairSet.size() << ";" << endl;
-
-    for (iter = bcNamePairSet.begin(); iter != bcNamePairSet.end(); ++ iter)
-    {
-        int bcType    = (*iter).first;
-        string bcName = (*iter).second;
-        if (bcName == "Connection") continue;
-
-        file << "string bcName = \"" << bcName << "\";" << endl;
-        file << "{" << endl;
-        file << "  int bcType = " << bcType << ";" << endl;
-        file << "}" << endl;
-    }
-    file << endl;
-
-    file << "# 'bcType' is defined as following:" << endl;
-    file << "#    99: PERIODIC                  " << endl;
-    file << "#    -2: WAKE                      " << endl;
-    file << "#    -1: INTERFACE                 " << endl;
-    file << "#    0 : NO_BOUNDARY_CONDITION     " << endl;
-    file << "#    1 : EXTRAPOLATION             " << endl;
-    file << "#    2 : SOLID_SURFACE             " << endl;
-    file << "#    3 : SYMMETRY                  " << endl;
-    file << "#    4 : FARFIELD                  " << endl;
-    file << "#    5 : INFLOW                    " << endl;
-    file << "#    6 : OUTFLOW                   " << endl;
-    file << "#    52: PRESSURE_INLET            " << endl;
-    file << "#    62: PRESSURE_OUTLET           " << endl;
-    file << "#    61: OUTFLOW_CONFINED          " << endl;
-    file << "#    7 : POLE                      " << endl;
-
-    PHSPACE::CloseFile(file);
 }
 
 LIB_EXPORT void Create_Link_Info(VInt &pindex, int izone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link)
@@ -597,10 +542,6 @@ LIB_EXPORT int GetCoorIndex(DataStruct_AdtTree<int, RDouble> *adt_tree, RDouble 
 
     if (node_list.size() == 0)
     {
-        if (count == 20918)
-        {
-            int kkk = 1;
-        }
         node = new AdtNode(3, coor, count);
         adt_tree->AddNode(node);
         index = count;
@@ -613,7 +554,6 @@ LIB_EXPORT int GetCoorIndex(DataStruct_AdtTree<int, RDouble> *adt_tree, RDouble 
         {
             ostringstream oss;
             oss << " impossible node_list.size() = " << node_list.size() << "\n";
-            int kkk = 1;
             TK_Exit::ExceptionExit(oss.str());
         }
         node  = node_list[0];

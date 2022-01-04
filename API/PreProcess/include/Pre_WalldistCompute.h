@@ -75,7 +75,7 @@ public:
     //! Compute the wall distance of nodes for overlap config.
     LIB_EXPORT void ComputeNodeDistance();
 
-    LIB_EXPORT void ComputeWallDistForNodesList(int blockIndex, int nTotalNode, RDouble *x,  RDouble *y, RDouble *z,  RDouble *dist);
+    LIB_EXPORT void ComputeWallDistForNodesList(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
 
     vector<WallStructure *> * GetWallstructureList();
 private:
@@ -115,6 +115,7 @@ private:
     void ComputeWallDist3DByProjectingFast(UnstructGrid *grid);
     void ComputeWallDist3DByProjectingFast(StructGrid *grid);
     void ComputeNodeWallDist3DByProjectingFast(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist);
+    void ComputeNodeWallDist3DByKDTreeMethod(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist);
     void CompressWallStructure(DataContainer *&cdata, Grid *grid);
     void CompressWallStructure(DataContainer *&cdata, StructGrid *grid);
     void CompressWallStructure(DataContainer *&cdata, UnstructGrid *grid);
@@ -126,7 +127,8 @@ private:
 
     void BuildWallStructTree();
     void BuildWallStructKDTree();
-
+    void BuildWallStructKDTreeNode();
+    
     RDouble ComputeDistanceOfANodeToSegment(const RDouble xcc, const RDouble ycc, const RDouble zcc,
                                             const RDouble xStart, const RDouble yStart, const RDouble zStart,
                                             const RDouble xMid, const RDouble yMid, const RDouble zMid,
@@ -140,18 +142,20 @@ private:
 
     void ComputeNodeDistanceByDirectMethod();
     void ComputeNodeDistanceByADTMethod();
-
+    void ComputeNodeDistanceByKDTreeMethod();
     void ComputeNodeDistanceByDirectMethod(UnstructGrid *grid);
     void ComputeNodeDistanceForSphere(UnstructGrid *grid);
     void ComputeNodeDistanceByADTMethodForBlock(int iBlock);
-    void ComputeWallDistForNodesListByADT(int blockIndex, int nTotalNode, RDouble *x,  RDouble *y, RDouble *z,  RDouble *dist);
-    void ComputeWallDistForNodesListByDirectMethod(int blockIndex, int nTotalNode, RDouble *x,  RDouble *y, RDouble *z,  RDouble *dist);
-    void ComputeWallDistForNodesListForSphere(int blockIndex, int nTotalNode, RDouble *x,  RDouble *y, RDouble *z,  RDouble *dist);
+    void ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock);    
+    void ComputeWallDistForNodesListByADT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
+    void ComputeWallDistForNodesListByKDT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
+    void ComputeWallDistForNodesListByDirectMethod(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
+    void ComputeWallDistForNodesListForSphere(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
 
     int  JudgeInitialRotateAxis();
 private:
     //! The data structure to store the wall faces and nodes, and the face-nodes connection.
-    vector<WallStructure *> * wallstructureList;
+    vector<WallStructure *> *wallstructureList;
 
     //! The current processor index.
     int myid;
@@ -163,10 +167,13 @@ private:
     RDouble wallMin[6], wallMax[6];
 
     //! ADT Tree of wall structures.
-    WallFaceTree * wallFaceTree;
+    WallFaceTree *wallFaceTree;
 
     //! K-Dimendion Tree of wall structures.
-    WallStructKDTree * wallFaceKDTree;
+    WallStructKDTree *wallFaceKDTree;
+
+    //! K-Dimendion Tree of wall structures.
+    WallStructKDTree *wallNodeKDTree;
 
     //! Tolerance of wall.
     RDouble wallTolerance;
@@ -209,15 +216,15 @@ private:
     value_type xfn, yfn, zfn;
 
     //! Number of the points per faces on the solid wall.
-    int * nPointPerFace;
+    int *nPointPerFace;
 
     //! The points list of faces on the solid wall.
-    int * wallFace2Node;
+    int *wallFace2Node;
 
     //! Node position of each face.
     //! wallFace2Node[nodePosition[iFace]]: start point ID.
     //! wallFace2Node[nodePosition[iFace + 1]]: end point ID.
-    int * nodePosition;
+    int *nodePosition;
 
     //! Boundary box.
     RDouble box[6];

@@ -57,6 +57,7 @@ private:
 
     void ReadBoundaryData();
     void ReadLnkFile(const string &fileName_in);
+    void ReadLnkInfor(const string &fileName_in);
     void InitParititionGrids();
     void ProcessBCInfo();
     void WriteGridCoordinate(StructGrid *grid, Pre_Block_Struct *simpleBlock, vector<int> &nst, vector<int> &ned);
@@ -94,13 +95,13 @@ private:
 private:
     RDouble delta, idealTime, epsilon;
     vector<RDouble> reserves;
-    DataContainer * boundaryContainer;
+    DataContainer *boundaryContainer;
     vector<Pre_Block_Struct *> referencedBlockContainer;
     set<Pre_Block_Struct *> unallottedBlockGroup, generalBlockGroup;
     vector<vector<Pre_Block_Struct *> > specialBlockTable;
 
-    Grid ** OrdinaryGrid;
-    Grid ** parititionGrids;
+    Grid **OrdinaryGrid;
+    Grid **parititionGrids;
 
     bool LnkFileExist;
     bool partitionWallDist;

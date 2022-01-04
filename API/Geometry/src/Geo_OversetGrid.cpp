@@ -31,17 +31,17 @@ Geo_OversetGrid::~Geo_OversetGrid()
 
 bool Geo_OversetGrid::IsExteriorPoint(int flagOfPoint)
 {
-	return flagOfPoint == ExteriorPoint;
+    return flagOfPoint == ExteriorPoint;
 }
 
 void Geo_OversetGrid::InitReceivingInformation(vector<int> &cellIndexRef1, vector<int> &zoneIndexRef2, vector<int> &cellIndexRef2)
 {
-	oversetInfoProxy->InitReceivingInformation(cellIndexRef1, zoneIndexRef2, cellIndexRef2);
+    oversetInfoProxy->InitReceivingInformation(cellIndexRef1, zoneIndexRef2, cellIndexRef2);
 }
 
 void Geo_OversetGrid::PrepareSendingInformation(Geo_OversetGrid **oversetGrids)
 {
-	oversetInfoProxy->PrepareSendingInformation(oversetGrids);
+    oversetInfoProxy->PrepareSendingInformation(oversetGrids);
 }
 
 void Geo_OversetGrid::PreProcess()
@@ -52,7 +52,7 @@ void Geo_OversetGrid::PreProcess()
 
 void Geo_OversetGrid::PostProcess(Geo_OversetGrid **oversetGrids)
 {
-	oversetInfoProxy->PostProcess(oversetGrids);
+    oversetInfoProxy->PostProcess(oversetGrids);
 }
 
 void Geo_OversetGrid::DumpOversetGrid(fstream &file)
@@ -88,7 +88,6 @@ bool p_On_RHSide(RDouble &x, RDouble &y, RDouble &z, RDouble *p1, RDouble *p2)
     //RDouble sy = dz1 * dx2 - dz2 * dx1;
     RDouble sz = dx1 * dy2 - dx2 * dy1;
 
-    const RDouble eps = 1.0e-10;
     if ( sz <= 0.0 ) return false;
     return true;
 }
@@ -141,12 +140,12 @@ void DumpField(UnstructGrid *grid, fstream &file, RDouble *field, const string &
 
 void Visualization(UnstructGrid *grid, RDouble *field, const string &filename, const string &fieldname)
 {
-	fstream file;
-	file.open(filename.c_str(),ios_base::out|ios_base::trunc);
-	if ( !file )
-	{
-		TK_Exit::FileOpenErrorExit(filename);
-	}
+    fstream file;
+    file.open(filename.c_str(),ios_base::out|ios_base::trunc);
+    if ( !file )
+    {
+        TK_Exit::FileOpenErrorExit(filename);
+    }
     DumpField(grid, file, field, fieldname);
     file.close();
     file.clear();

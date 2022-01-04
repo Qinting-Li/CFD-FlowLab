@@ -67,7 +67,7 @@ void PostProcess::ReadBCFile()
 {
     GlobalBoundaryCondition::ReadGlobalBoundaryCondition();
 
-    GlobalBoundaryCondition::SetGlobalDataBaseByGlobalBC();
+    GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase();
 }
 
 void PostProcess::InitGlobalValues()
@@ -161,7 +161,6 @@ void PostProcess::DumpAirForceCoef()
     string header = "# iter		CL		Cd		Side		Cd_p		Cd_f\
     Cd-CL2par	Xcp		cfx		cfy		cfz		Cmx		Cmy		Cmz";
 
-    int wordwidth = 16;
     oss << setiosflags(ios::left);
     oss << setiosflags(ios::scientific);
     oss << setprecision(4);
@@ -172,23 +171,19 @@ void PostProcess::DumpAirForceCoef()
 
     const int ALL = 0;
 
-    RDouble *cfx         = data->GetCfx();
-    RDouble *cfy         = data->GetCfy();
-    RDouble *cfz         = data->GetCfz();
-    RDouble *cpx         = data->GetCpx();
-    RDouble *cpy         = data->GetCpy();
-    RDouble *cpz         = data->GetCpz();
-    RDouble *cmx         = data->GetCmx();
-    RDouble *cmy         = data->GetCmy();
-    RDouble *cmz         = data->GetCmz();
-    RDouble *cl_tot      = data->GetClTot();
-    RDouble *cd_tot      = data->GetCdTot();
-    RDouble *cd_pr       = data->GetCdPr();
-    RDouble *cd_sf       = data->GetCdSf();
-    RDouble *cd_cl2pa    = data->GetCdCl2Pa();
-    RDouble *xcp         = data->GetXcp();
-    RDouble *side        = data->GetSide();
-    RDouble *hingeMoment = data->GetHingeMoment();
+    RDouble *cfx      = data->GetCfx();
+    RDouble *cfy      = data->GetCfy();
+    RDouble *cfz      = data->GetCfz();
+    RDouble *cmx      = data->GetCmx();
+    RDouble *cmy      = data->GetCmy();
+    RDouble *cmz      = data->GetCmz();
+    RDouble *cl_tot   = data->GetClTot();
+    RDouble *cd_tot   = data->GetCdTot();
+    RDouble *cd_pr    = data->GetCdPr();
+    RDouble *cd_sf    = data->GetCdSf();
+    RDouble *cd_cl2pa = data->GetCdCl2Pa();
+    RDouble *xcp      = data->GetXcp();
+    RDouble *side     = data->GetSide();
 
     oss << outnstep << "	";
     oss << cl_tot[ALL] << "	";

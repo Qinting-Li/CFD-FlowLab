@@ -22,7 +22,6 @@ void MXDQ_STD(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area
     RDouble wm = prim[IDX::IW];
     RDouble pm = prim[IDX::IP];
 
-    RDouble v2 = um * um + vm * vm + wm * wm;
     RDouble c2 = ABS(gama * pm / rm);
     RDouble cm = sqrt(c2);
 
@@ -38,7 +37,7 @@ void MXDQ_STD(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area
     lmd2 = ctgm + cmgm;
     lmd3 = ctgm - cmgm;
 
-    RDouble ipnrad = ipn * radius / area;
+    RDouble ipnrad = ipn * radius / MAX(SMALL, area);
 
     lmd1 = half * (lmd1 + ipnrad);
     lmd2 = half * (lmd2 + ipnrad);
@@ -96,7 +95,6 @@ void MXDQ_STD(RDouble *prim, RDouble *gykb, RDouble *dq, RDouble *f, RDouble gam
     RDouble wm  = prim[IW];
     RDouble pm  = prim[IP];
 
-    RDouble v2 = um * um + vm * vm + wm * wm;
     RDouble c2 = ABS(gama * pm / rm);
     RDouble cm = sqrt(c2);
 
@@ -112,21 +110,19 @@ void MXDQ_STD(RDouble *prim, RDouble *gykb, RDouble *dq, RDouble *f, RDouble gam
     lmd2 = ctgm + cmgm;
     lmd3 = ctgm - cmgm;
 
-    RDouble ipnrad = ipn * radius / gykb[3];
+    RDouble ipnrad = ipn * radius / MAX(SMALL, gykb[3]);
     //RDouble ipnrad = ipn * radius;  // org
 
     lmd1 = half * (lmd1 + ipnrad);
     lmd2 = half * (lmd2 + ipnrad);
     lmd3 = half * (lmd3 + ipnrad);
 
-    x1 = (lmd1 + lmd1 - lmd2 - lmd3) / (c2 + c2);	//this term is actually equal to 0.0 
-    x2 = (lmd2 - lmd3) / (cm + cm);					//this term is actually equal to 0.5
+    x1 = (lmd1 + lmd1 - lmd2 - lmd3) / (c2 + c2);    //this term is actually equal to 0.0 
+    x2 = (lmd2 - lmd3) / (cm + cm);                  //this term is actually equal to 0.5
 
     RDouble dc,dh,c2dc;
     //! dc=-b1, b1 is referred to the formula (A.7) in appendix A of the PHengLEI Theory manual.
     //! the previous form
-    //  dc   = cits * dq[IR] - nxs * dq[IRU] - nys * dq[IRV] - nzs * dq[IRW];
-    //! modified by LiPeng on Feb 21, 2019.
     dc   = (cits + gykb[4]) * dq[IR] - gykb[0] * dq[IRU] - gykb[1] * dq[IRV] - gykb[2] * dq[IRW];
     c2dc = c2 * dc;
 
@@ -142,9 +138,8 @@ void MXDQ_STD(RDouble *prim, RDouble *gykb, RDouble *dq, RDouble *f, RDouble gam
     f[IRU] = lmd1 * dq[IRU] - um * dhx1_dcx2 + gykb[0]  * c2dcx1_dhx2;
     f[IRV] = lmd1 * dq[IRV] - vm * dhx1_dcx2 + gykb[1]  * c2dcx1_dhx2;
     f[IRW] = lmd1 * dq[IRW] - wm * dhx1_dcx2 + gykb[2]  * c2dcx1_dhx2;
+    
     //! the previous form is not suitable for dynamic mesh.
-    //! f[IRE] = lmd1 * dq[IRE] - hm * dhx1_dcx2 + cits * c2dcx1_dhx2;
-    //! modified by LiPeng on Feb 21, 2019.
     f[IRE] = lmd1 * dq[IRE] - hm * dhx1_dcx2 + (cits + gykb[4]) * c2dcx1_dhx2;
     for (int iLaminar = nm; iLaminar < nLaminar; ++ iLaminar)
     {
@@ -327,13 +322,12 @@ void PreconMatrixRes(RDouble **dq, RDouble **GG, int nm, int iCell)
 }
 
 void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
-                  RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign)
+                  RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign, int nElectronIndex)
 {
     using namespace IDX;
     using namespace GAS_SPACE;
     // The number of species.
     int nSpecies = nLaminar - nNSEquation + 1;
-    int nElectronIndex = GlobalDataBase::GetIntParaFromDB("nElectronIndex");
     RDouble alpha = 0.0, beta = 0.0, gama = 0.0, *speciesBeta;
     speciesBeta = new RDouble[nSpecies];
 
@@ -389,9 +383,9 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
         electronPressure = gas->GetElectronPressure(primitiveVars, electronTemperature);
         RDouble *speciesGama = new RDouble[nSpecies];
 
-        // Compute partial derivatives of pressure an electron pressure to conservative variables.
+        // Compute partial derivatives of pressure and electron pressure to conservative variables.
         gas->GetMultiTemperatureModelPartialDerivatives(primitiveVars, transRotationTemperature, electronTemperature,
-                                                                   alpha, beta, gama, speciesBeta, speciesGama);
+                                                        alpha, beta, gama, speciesBeta, speciesGama);
 
         if (nTemperatureModel == 2)
         {
@@ -401,7 +395,7 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
         }
         else if (nTemperatureModel == 3)
         {
-            b2 += gama * deltaQ[nLaminar + 2];
+            b2 += gama * deltaQ[nLaminar + 1];
             b3 += gama * deltaQ[nLaminar + 2];
             dh += deltaQ[nLaminar + 1] + deltaQ[nLaminar + 2];
         }
@@ -461,6 +455,135 @@ void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDou
     delete []speciesBeta;
 }
 
+void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
+                  RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign, int nElectronIndex,
+                  RDouble *speciesCvs, RDouble *speciesEtrs, RDouble totalH,  RDouble totalCv, RDouble totalCvtr, RDouble totalCvv, RDouble totalCve)
+{
+    using namespace IDX;
+    using namespace GAS_SPACE;
+    // The number of species.
+    int nSpecies = nLaminar - nNSEquation + 1;
+  //  int nElectronIndex = GlobalDataBase::GetIntParaFromDB("nElectronIndex");
+    RDouble alpha = 0.0, beta = 0.0, gama = 0.0, *speciesBeta;
+
+    int mTT = gas->GetmTT();
+    int mTV = gas->GetmTV();
+    int mTE = gas->GetmTE();
+    Thermo_Energy  *Thermo_Energy_temparay = gas->GetThermo_Energy_temparay();
+    speciesBeta = Thermo_Energy_temparay->Rms;  //be careful. by dms
+
+    RDouble uVelocity = primitiveVars[IU];
+    RDouble vVelocity = primitiveVars[IV];
+    RDouble wVelocity = primitiveVars[IW];
+    RDouble squareVelocity, absoluteVelocity, relativeVelocity;
+
+    // The absolute velocity.
+    absoluteVelocity = nx * uVelocity + ny * vVelocity + nz * wVelocity;
+    // The relative velocity.
+    relativeVelocity = absoluteVelocity - moveVelocity;
+    // Compute squared velocity.
+    squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
+
+    // Obtain the temperatures.
+    RDouble transRotationTemperature = temperature[mTT];
+    RDouble electronTemperature = temperature[mTE];
+
+    // Compute the total enthalpy.
+    RDouble totalEnthalpy = totalH + 0.5 * squareVelocity;
+
+    // Compute the coefficient b1 and b2 (see formula A.5 in PHengLEI Theory manual).
+    RDouble b1 = nx * deltaQ[IRU] + ny * deltaQ[IRV] + nz * deltaQ[IRW] - absoluteVelocity * deltaQ[IR];
+    RDouble dh = uVelocity * deltaQ[IRU] + vVelocity * deltaQ[IRV] + wVelocity * deltaQ[IRW] - deltaQ[IRE];
+    RDouble b2 = 0.0, b3 = 0.0, electronPressure = 0.0;
+
+    if (nTemperatureModel == 1)
+    {
+        // Compute the coefficients in the chemical reaction.
+        //gas->ComputeCoefficientInMXDQ(primitiveVars, alpha, beta, speciesBeta);
+        gas->ComputeCoefficientInMXDQR(primitiveVars, transRotationTemperature, squareVelocity, speciesCvs, totalCv, alpha, beta, speciesBeta);
+
+        b2 = beta * deltaQ[IR] - alpha * dh;
+        for (int s = 0; s < nSpecies - 1; ++ s)
+        {
+            b2 += speciesBeta[s] * deltaQ[nNSEquation + s];
+        }
+    }
+    else // Multi-temperature model.
+    {
+        // Compute the pressure of electron.
+        electronPressure = gas->GetElectronPressure(primitiveVars, electronTemperature);
+        RDouble *speciesGama = Thermo_Energy_temparay->Ees;  //be careful. by dms
+
+
+        gas->GetMultiTemperatureModelPartialDerivativesR(primitiveVars, transRotationTemperature, electronTemperature,alpha, beta, gama, speciesBeta, speciesGama,
+                                                        squareVelocity, speciesEtrs, totalCvtr, totalCvv, totalCve);
+
+        if (nTemperatureModel == 2)
+        {
+            dh += deltaQ[nLaminar + 1];
+            b2 += gama * deltaQ[nLaminar + 1];
+            b3 += gama * deltaQ[nLaminar + 1];
+        }
+        else if (nTemperatureModel == 3)
+        {
+            b2 += gama * deltaQ[nLaminar + 1];
+            b3 += gama * deltaQ[nLaminar + 2];
+            dh += deltaQ[nLaminar + 1] + deltaQ[nLaminar + 2];
+        }
+        b2 += beta * deltaQ[IR] - alpha * dh;
+
+        for (int iSpices = 0; iSpices < nSpecies - 1; ++ iSpices)
+        {
+            b2 += speciesBeta[iSpices] * deltaQ[nNSEquation + iSpices];
+            b3 += speciesGama[iSpices] * deltaQ[nNSEquation + iSpices];
+        }
+    }
+
+    // Comoute the fluxes called M*dQ.
+    flux[IR ] = relativeVelocity * deltaQ[IR ] + b1;
+    flux[IRU] = relativeVelocity * deltaQ[IRU] + b1 * uVelocity     + b2 * nx;
+    flux[IRV] = relativeVelocity * deltaQ[IRV] + b1 * vVelocity     + b2 * ny;
+    flux[IRW] = relativeVelocity * deltaQ[IRW] + b1 * wVelocity     + b2 * nz;
+    flux[IRE] = relativeVelocity * deltaQ[IRE] + b1 * totalEnthalpy + b2 * absoluteVelocity;
+    for (int m = nNSEquation; m < nLaminar; ++ m)
+    {
+        flux[m] = relativeVelocity * deltaQ[m] + b1 * primitiveVars[m];
+    }
+
+    // Modify the fluxes of multi-temperature model.
+    if (nTemperatureModel == 2) 
+    {
+        flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * (primitiveVars[nLaminar + 1] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
+    }
+    else if (nTemperatureModel == 3)
+    {
+        flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * primitiveVars[nLaminar + 1];
+        flux[nLaminar + 2] = relativeVelocity * deltaQ[nLaminar + 2] + b1 * (primitiveVars[nLaminar + 2] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
+    }
+
+    // To add rM * dQ that is the product of the invscid spectrum radius rM and increment dQ.
+    RDouble spectrumRadiusTerm = iSign * radius / faceArea;
+    for (int m = 0; m < nLaminar; ++ m)
+    {
+        flux[m] += spectrumRadiusTerm * deltaQ[m];
+        flux[m] *= 0.5 * faceArea;
+    }
+
+    flux[nLaminar] = 0.0;
+    if (nElectronIndex >= 0)
+    {
+        flux[nLaminar - 1] = 0.0;
+    }
+
+    // Modify the fluxes of vibration and electron energy terms.
+    for (int m = 0; m < nTemperatureModel - 1; ++ m)
+    {
+        flux[nLaminar + 1 + m] += spectrumRadiusTerm * deltaQ[nLaminar + 1 + m];
+        flux[nLaminar + 1 + m] *= 0.5 * faceArea;
+    }
+}
+
+
 //! The fuction added by LiPeng computes the formula (Mv +- Rv) * dQ, Mv and Rv denote the Jacobian matrix and spectrum radius of viscous flux,respectively,\n
 //! dQ is the increment of conservative vector.
 void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area, RDouble vol, RDouble visl, RDouble vist, RDouble gama, 
@@ -473,7 +596,6 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
     RDouble um = prim[IU];//!the velocity u in x-direction
     RDouble vm = prim[IV];//!the velocity v in y-direction
     RDouble wm = prim[IW];//!the velocity w in z-direction
-    RDouble pm = prim[IP];//!the pressure
     RDouble UU = um * um + vm * vm + wm * wm;
     RDouble Un = um * nxs + vm * nys + wm * nzs;
     RDouble Uq = um * dq[1] + vm * dq[2] + wm * dq[3];
@@ -499,9 +621,9 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
     RDouble kn = 0.0;//!the kinetic energy of turbulence
     Psi += -2.0*bb * UU + phi * 0.5 * UU - bb * kn;
 
-    RDouble *Ds = new RDouble[ns];
-    RDouble *Phi_s = new RDouble[ns];
-    RDouble *theta_s = new RDouble[ns];
+    RDouble *Ds = new RDouble[ns]();
+    RDouble *Phi_s = new RDouble[ns]();
+    RDouble *theta_s = new RDouble[ns]();
     RDouble fsum = 0.0;
 
     if (nChemical == 1) //!the relevant terms of chemical reaction
@@ -509,7 +631,7 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
         RDouble K = visl/prl + vist/prt;
         RDouble rD = visl/scl + vist/sct;
 
-        RDouble *hs = new RDouble[ns];
+        RDouble *hs = new RDouble[ns]();
         gas->GetEverySpeciesEnthalpy(Tm, Tm, Tm, hs);//!Obtain the enthalpy of each species.
 
         //!Compute the coefficient theta_s, Phi_s and Ds.
@@ -523,11 +645,10 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
             Psi += phi * prim[nm + i] * theta_s[i];
             Psi += -prim[nm + i] * Phi_s[i]/rm;
         }
-        delete []hs;
+        delete []hs;    hs= NULL;
     }
 
     //!To compute M*dQ
-    //!f[IR ] = 0.0 * dq[IR ] + b1 * 0.0 - dq[0] * 0.0;
     f[IR ] = 0.0; //!Simplification
     f[IRU] = bb  * dq[IRU] + b1 * nxs - dq[0] * bb * um;
     f[IRV] = bb  * dq[IRV] + b1 * nys - dq[0] * bb * vm;
@@ -552,9 +673,9 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
     }
 
     //!Remove the dynamic memory space.
-    delete []Ds;
-    delete []Phi_s;
-    delete []theta_s;
+    delete []Ds;    Ds = NULL;
+    delete []Phi_s;    Ds = NULL;
+    delete []theta_s;    theta_s = NULL;
 }
 
 void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RDouble gama, RDouble *df, int nm)
@@ -562,7 +683,7 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RD
     using namespace IDX;
 
     RDouble gamm1 = gama - 1.0;
-    RDouble nxs, nys, nzs, vgn, ns;
+    RDouble nxs = 0.0, nys = 0.0, nzs = 0.0, vgn = 0.0, ns = 0.0;
     RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
 
     nxs = nxyz[0];
@@ -590,10 +711,8 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RD
     //! Normal velocity and Eigenvalues.
     vn = nxs * um + nys * vm + nzs * wm - vgn;
     v2 = um * um + vm * vm + wm * wm;
-    //eig= ABS( vn ) + sqrt( gama * pm / rm );
 
     RDouble c2  = cm * cm;
-    //RDouble beta = MAX( MIN( v2 / c2,1.0 ),3.0 * mach2 );
     RDouble beta = MIN( MAX( v2 / c2,3.0 * mach2 ),1.0 );
     RDouble vnew  = half * vn * ( 1 + beta );
     RDouble cnew  = half * sqrt( ( ( beta - 1 ) * vn ) * ( ( beta - 1 ) * vn ) + 4 * beta * c2 );
@@ -662,7 +781,6 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *gykb,  RDouble **MG, R
     vm = q[IV];
     wm = q[IW];
     pm = q[IP];
-    //tm = gama * mach2 * pm / rm;
     cm = sqrt(gama * pm / rm);
 
     mx = rm * um;

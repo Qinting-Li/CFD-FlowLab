@@ -1,5 +1,5 @@
 #include "LESSolverUnstr.h"
-#include "BC_Unstruct.h"
+#include "Geo_UnstructBC.h"
 #include "IO_FileName.h"
 #include "MultiGridOperation.h"
 #include "PHMatrix.h"
@@ -30,8 +30,6 @@ LESSolverUnstr::~LESSolverUnstr()
 
 void LESSolverUnstr::AllocateGlobalVar(Grid *gridIn)
 {
-    Param_LESSolverUnstruct *parameters = GetControlParameters();
-
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfTotalCell    = grid->GetNTotalCell();
     int numberOfBoundaryFace = grid->GetNBoundFace();
@@ -51,7 +49,7 @@ void LESSolverUnstr::AllocateGlobalVar(Grid *gridIn)
 
 void LESSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
 {
-	UnstructGrid *grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
 
     RDouble **strainRateTensor = reinterpret_cast<RDouble **> (grid->GetDataPtr("strainRateTensor"));
     DelPointer2(strainRateTensor);
@@ -67,10 +65,7 @@ void LESSolverUnstr::InitFlowAsRestart()
 {
     UnstructGrid *grid = UnstructGridCast(GetGrid(0));
 
-	int numberOfTotalCell    = grid->GetNTotalCell();
-	int numberOfBoundaryFace = grid->GetNBoundFace();
-	int numberOfTotal        = numberOfTotalCell + numberOfBoundaryFace;
-
+    int numberOfTotalCell    = grid->GetNTotalCell();
     Param_LESSolverUnstruct *parameters = GetControlParameters();
     RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
 
@@ -111,39 +106,39 @@ void LESSolverUnstr::ComputeCellLengthScale(Grid *gridIn)
 void LESSolverUnstr::Boundary(Grid *gridIn)
 {
     /*
-	UnstructGrid *grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *wallDistance = grid->GetWallDist();
+    RDouble *wallDistance = grid->GetWallDist();
 
     RDouble  *nxs  = grid->GetFaceNormalX();
     RDouble  *nys  = grid->GetFaceNormalY();
     RDouble  *nzs  = grid->GetFaceNormalZ();
 
-    BCRecord **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
     int numberOfBoundaryFace = grid->GetNBoundFace();
 
     Param_LESSolverUnstruct *parameters = GetControlParameters();
-	RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
-	RDouble *gamma = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
+    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
+    RDouble *gamma = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
     RDouble *viscousLaminar = reinterpret_cast<RDouble  *> (grid->GetDataPtr("visl"));
     RDouble *viscousTurbulence = reinterpret_cast<RDouble  *> (grid->GetDataPtr("vist"));
 
-	RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
+    RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
 
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble refGama = parameters->GetRefGama();
 
-	using namespace IDX;
+    using namespace IDX;
     using namespace PHENGLEI;
 
-	RDouble *primitiveVariableInflow = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-	RDouble roo = primitiveVariableInflow[IR];
-	RDouble uoo = primitiveVariableInflow[IU];
-	RDouble voo = primitiveVariableInflow[IV];
-	RDouble woo = primitiveVariableInflow[IW];
-	RDouble poo = primitiveVariableInflow[IP];
+    RDouble *primitiveVariableInflow = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble roo = primitiveVariableInflow[IR];
+    RDouble uoo = primitiveVariableInflow[IU];
+    RDouble voo = primitiveVariableInflow[IV];
+    RDouble woo = primitiveVariableInflow[IW];
+    RDouble poo = primitiveVariableInflow[IP];
 
     RDouble gamm1 = refGama - 1.0;
 
@@ -157,8 +152,8 @@ void LESSolverUnstr::Boundary(Grid *gridIn)
 
         if (bcType < 0)
         {
-			//! This statement is very important, and related to the way this part is written.
-			continue;
+            //! This statement is very important, and related to the way this part is written.
+            continue;
         }
         else if (bcType == EXTRAPOLATION)
         {
@@ -174,9 +169,9 @@ void LESSolverUnstr::Boundary(Grid *gridIn)
         }
         else if (bcType == FARFIELD)
         {
-			RDouble rin,uin,vin,win,pin;
-			RDouble vno,vni,vei,coo,cin;
-			RDouble riemp,riemm,cb,vnb;
+            RDouble rin,uin,vin,win,pin;
+            RDouble vno,vni,vei,coo,cin;
+            RDouble riemp,riemm,cb,vnb;
 
             rin = q[IR][le];
             uin = q[IU][le];
@@ -188,7 +183,7 @@ void LESSolverUnstr::Boundary(Grid *gridIn)
             vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win;
             vei = sqrt(uin * uin + vin * vin + win * win);
 
-			RDouble gama = gamma[le];
+            RDouble gama = gamma[le];
 
             coo = sqrt(ABS(refGama * poo / roo));
             cin = sqrt(ABS(gama  * pin / rin));
@@ -198,12 +193,12 @@ void LESSolverUnstr::Boundary(Grid *gridIn)
             {
                 if (vni >= 0.0)
                 {
-					//! exit
+                    //! exit
                     viscousTurbulence[re] = viscousTurbulence[le];
                 }
                 else
                 {
-					//! inlet
+                    //! inlet
                     viscousTurbulence[re] = freeStreamViscosity;
                 }
                 continue;
@@ -217,14 +212,14 @@ void LESSolverUnstr::Boundary(Grid *gridIn)
 
             if (vnb >= 0.0)
             {
-				//! exit
+                //! exit
                 viscousTurbulence[re] = viscousTurbulence[le];
             }
             else
             {
-				//! inlet
+                //! inlet
                 viscousTurbulence[re] = freeStreamViscosity;
-			}
+            }
 
         }
         else if (bcType == INFLOW)
@@ -261,44 +256,37 @@ void LESSolverUnstr::Boundary(Grid *gridIn)
 
 void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
 {
-	UnstructGrid *grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
 
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *wallDistance = grid->GetWallDist();
 
     RDouble  *nxs  = grid->GetFaceNormalX();
     RDouble  *nys  = grid->GetFaceNormalY();
     RDouble  *nzs  = grid->GetFaceNormalZ();
 
-    BCRecord **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
     int numberOfBoundaryFace = grid->GetNBoundFace();
 
     Param_LESSolverUnstruct *parameters = GetControlParameters();
-	RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
-	RDouble *gamma = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
-    RDouble *viscousLaminar = reinterpret_cast<RDouble  *> (grid->GetDataPtr("visl"));
+    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
+    RDouble *gamma = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
     RDouble *viscousTurbulence = reinterpret_cast<RDouble  *> (grid->GetDataPtr("vist"));
     RDouble *subgridScaleEnergy = reinterpret_cast<RDouble  *> (grid->GetDataPtr("subgridScaleEnergy"));
 
-	RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
+    RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
 
-    RDouble refReNumber = parameters->GetRefReNumber();
     RDouble refGama = parameters->GetRefGama();
 
-	using namespace IDX;
+    using namespace IDX;
     using namespace PHENGLEI;
 
-	RDouble *primitiveVariableInflow = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-	RDouble roo = primitiveVariableInflow[IR];
-	RDouble uoo = primitiveVariableInflow[IU];
-	RDouble voo = primitiveVariableInflow[IV];
-	RDouble woo = primitiveVariableInflow[IW];
-	RDouble poo = primitiveVariableInflow[IP];
-
-    RDouble gamm1 = refGama - 1.0;
-
-    int count = 0;
+    RDouble *primitiveVariableInflow = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble roo = primitiveVariableInflow[IR];
+    RDouble uoo = primitiveVariableInflow[IU];
+    RDouble voo = primitiveVariableInflow[IV];
+    RDouble woo = primitiveVariableInflow[IW];
+    RDouble poo = primitiveVariableInflow[IP];
 
     for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
     {
@@ -308,8 +296,8 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
 
         if (bcType < 0)
         {
-			//! This statement is very important, and related to the way this part is written.
-			continue;
+            //! This statement is very important, and related to the way this part is written.
+            continue;
         }
         else if (bcType == EXTRAPOLATION)
         {
@@ -328,9 +316,9 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
         }
         else if (bcType == FARFIELD)
         {
-			RDouble rin,uin,vin,win,pin;
-			RDouble vno,vni,vei,coo,cin;
-			RDouble riemp,riemm,cb,vnb;
+            RDouble rin,uin,vin,win,pin;
+            RDouble vno,vni,vei,coo,cin;
+            RDouble riemp,riemm,cb,vnb;
 
             rin = q[IR][le];
             uin = q[IU][le];
@@ -342,7 +330,7 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
             vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win;
             vei = sqrt(uin * uin + vin * vin + win * win);
 
-			RDouble gama = gamma[le];
+            RDouble gama = gamma[le];
 
             coo = sqrt(ABS(refGama * poo / roo));
             cin = sqrt(ABS(gama  * pin / rin));
@@ -352,13 +340,13 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
             {
                 if (vni >= 0.0)
                 {
-					//! exit
+                    //! exit
                     viscousTurbulence[re] = viscousTurbulence[le];
                     subgridScaleEnergy[re] = subgridScaleEnergy[le];
                 }
                 else
                 {
-					//! inlet
+                    //! inlet
                     viscousTurbulence[re] = freeStreamViscosity;
                     subgridScaleEnergy[re] = 0.0;
                 }
@@ -373,16 +361,16 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
 
             if (vnb >= 0.0)
             {
-				//! exit
+                //! exit
                 viscousTurbulence[re] = viscousTurbulence[le];
                 subgridScaleEnergy[re] = subgridScaleEnergy[le];
             }
             else
             {
-				//! inlet
+                //! inlet
                 viscousTurbulence[re] = freeStreamViscosity;
                 subgridScaleEnergy[re] = 0.0;
-			}
+            }
 
         }
         else if (bcType == INFLOW)
@@ -439,13 +427,12 @@ void LESSolverUnstr::ComputeGradient(Grid *gridIn)
 
 void LESSolverUnstr::GetGradientField(Grid *gridIn)
 { 
-    Param_LESSolverUnstruct *parameters = GetControlParameters();
     UnstructGrid *gridUnstruct = UnstructGridCast(gridIn);
     int nEquation = GetNumberOfEquations();
 
-    RDouble **gradPrimtiveVarFaceX  = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarFaceX"));
-    RDouble **gradPrimtiveVarFaceY  = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarFaceY"));
-    RDouble **gradPrimtiveVarFaceZ  = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarFaceZ"));
+    RDouble **gradPrimtiveVarX = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarX"));
+    RDouble **gradPrimtiveVarY = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarY"));
+    RDouble **gradPrimtiveVarZ = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarZ"));
     FieldProxy *qProxy = GetFieldProxy(gridIn, "q");
     RDouble **q     = qProxy->GetField_UNS();
     RDouble **qnode = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("qnode"));
@@ -456,32 +443,32 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
 
         if (gradientName == "ggnode" || gradientName == "ggnodelaplacian")
         {
-            gridUnstruct->CompGradientGGNode_NEW(q[m], qnode[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
-            //gridUnstruct->CompGradientGGNode(q[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
+            gridUnstruct->CompGradientGGNode_NEW(q[m], qnode[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
+            //gridUnstruct->CompGradientGGNode(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else if (gradientName == "ggcell")
         {
-            gridUnstruct->CompGradientGGCell(q[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
+            gridUnstruct->CompGradientGGCell(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else if (gradientName == "lsq")
         {
-            gridUnstruct->CompGradientLSQ(q[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
+            gridUnstruct->CompGradientLSQ(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }    
         else if (gradientName == "ggnode_weight")
         {
-            gridUnstruct->CompGradientGGNodeWeight(q[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
+            gridUnstruct->CompGradientGGNodeWeight(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else if (gradientName == "gg_m2")
         {
-            gridUnstruct->CompGradientGGModified2(q[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
+            gridUnstruct->CompGradientGGModified2(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else if (gradientName == "ggcellnew")
         {
-            gridUnstruct->CompGradientGGCellNew(q[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
+            gridUnstruct->CompGradientGGCellNew(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else if (gradientName == "ggcellw")
         {
-            gridUnstruct->CompGradientGGCellW(q[m], gradPrimtiveVarFaceX[m], gradPrimtiveVarFaceY[m], gradPrimtiveVarFaceZ[m]);
+            gridUnstruct->CompGradientGGCellW(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else
         {
@@ -489,15 +476,15 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
         }
     }
 
-    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradPrimtiveVarFaceX, "dqdx", nEquation);
-    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradPrimtiveVarFaceY, "dqdy", nEquation);
-    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradPrimtiveVarFaceZ, "dqdz", nEquation);
+    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradPrimtiveVarX, "dqdx", nEquation);
+    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradPrimtiveVarY, "dqdy", nEquation);
+    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradPrimtiveVarZ, "dqdz", nEquation);
 
     int nTemperatureModel = 1;
 
-    RDouble **gradTemperatureFaceX  = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradTemperatureFaceX"));
-    RDouble **gradTemperatureFaceY  = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradTemperatureFaceY"));
-    RDouble **gradTemperatureFaceZ  = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradTemperatureFaceZ"));
+    RDouble **gradTemperatureX = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradTemperatureX"));
+    RDouble **gradTemperatureY = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradTemperatureY"));
+    RDouble **gradTemperatureZ = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradTemperatureZ"));
     RDouble **t     = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("t"));
     RDouble **tnode = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("tnode"));
 
@@ -507,32 +494,32 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
 
         if (gradientName == "ggnode" || gradientName == "ggnodelaplacian")
         {
-            gridUnstruct->CompGradientGGNode_NEW(t[m], tnode[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
-            //gridUnstruct->CompGradientGGNode(t[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
+            gridUnstruct->CompGradientGGNode_NEW(t[m], tnode[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
+            //gridUnstruct->CompGradientGGNode(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else if (gradientName == "ggcell")
         {
-            gridUnstruct->CompGradientGGCell(t[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
+            gridUnstruct->CompGradientGGCell(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else if (gradientName == "lsq")
         {
-            gridUnstruct->CompGradientLSQ(t[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
+            gridUnstruct->CompGradientLSQ(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }    
         else if (gradientName == "ggnode_weight")
         {
-            gridUnstruct->CompGradientGGNodeWeight(t[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
+            gridUnstruct->CompGradientGGNodeWeight(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else if (gradientName == "gg_m2")
         {
-            gridUnstruct->CompGradientGGModified2(t[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
+            gridUnstruct->CompGradientGGModified2(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else if (gradientName == "ggcellnew")
         {
-            gridUnstruct->CompGradientGGCellNew(t[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
+            gridUnstruct->CompGradientGGCellNew(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else if (gradientName == "ggcellw")
         {
-            gridUnstruct->CompGradientGGCellW(t[m], gradTemperatureFaceX[m], gradTemperatureFaceY[m], gradTemperatureFaceZ[m]);
+            gridUnstruct->CompGradientGGCellW(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else
         {
@@ -540,9 +527,9 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
         }
     }
 
-    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureFaceX, "dtdx", nTemperatureModel);
-    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureFaceY, "dtdy", nTemperatureModel);
-    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureFaceZ, "dtdz", nTemperatureModel);
+    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureX, "dtdx", nTemperatureModel);
+    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureY, "dtdy", nTemperatureModel);
+    PHSPACE::CommunicateInterfaceValue(gridUnstruct, gradTemperatureZ, "dtdz", nTemperatureModel);
 
     delete qProxy;
 }
@@ -631,8 +618,6 @@ void LESSolverUnstr::Smagorinsky(Grid *gridIn)
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
-    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
-
     RDouble refReNumber  = parameters->GetRefReNumber();
 
     RDouble smagConstant = parameters->GetSmagConstant();
@@ -640,10 +625,6 @@ void LESSolverUnstr::Smagorinsky(Grid *gridIn)
     RDouble iConstant = parameters->GetIsotropicConstant();
 
     int numberOfTotalCell = grid->GetNTotalCell();
-
-    double vistmax  = 0.0;
-    double vistmin  = 1.0e30;
-    double logsmall = log(SMALL);
 
     for (int iCell = 0; iCell < numberOfTotalCell; ++ iCell)
     {
@@ -682,8 +663,6 @@ void LESSolverUnstr::WALE(Grid *gridIn)
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
-    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
-
     RDouble refReNumber  = parameters->GetRefReNumber();
 
     RDouble waleConstant = parameters->GetWaleConstant();
@@ -694,9 +673,8 @@ void LESSolverUnstr::WALE(Grid *gridIn)
 
     RDouble viscousTurbulenceMax = 0.0;
     RDouble viscousTurbulenceMin = 1.0e30;
-	RDouble logSmall = log(SMALL);
 
-	int iMax = 0;
+    int iMax = 0;
     int iMin = 0;
 
     for (int iCell = 0; iCell < numberOfTotalCell; ++ iCell)
@@ -735,7 +713,7 @@ void LESSolverUnstr::WALE(Grid *gridIn)
 
         RDouble mut = (waleConstant * deltaBar * dampingFunction) * (waleConstant * deltaBar * dampingFunction) * rho * ss * refReNumber;
         mut = MIN(eddyViscosityLimit, mut);
-        RDouble kSGS = 2.0 * iConstant /rho * (mut /deltaBar) * (mut /deltaBar);
+        RDouble kSGS = 2.0 * iConstant /rho * (mut /deltaBar) * (mut /deltaBar) / refReNumber;  //!divide by one refReNumber here, and divide by another refReNumber in the Viscousflux.
 
         viscousTurbulence[iCell] = mut;
         subgridScaleEnergy[iCell] = kSGS;
@@ -745,7 +723,7 @@ void LESSolverUnstr::WALE(Grid *gridIn)
             viscousTurbulenceMax = viscousTurbulence[iCell];
             iMax = iCell;
         }
-        if (viscousTurbulenceMin > viscousTurbulence[iCell])	
+        if (viscousTurbulenceMin > viscousTurbulence[iCell])
         {
             viscousTurbulenceMin = viscousTurbulence[iCell];
             iMin = iCell;
@@ -767,27 +745,25 @@ void LESSolverUnstr::Sigma(Grid *gridIn)
     RDouble *viscousTurbulence = reinterpret_cast<RDouble * > (grid->GetDataPtr("vist"));
     RDouble *subgridScaleEnergy = reinterpret_cast<RDouble * > (grid->GetDataPtr("subgridScaleEnergy"));
 
-    RDouble **gradientPrimtiveVariableFaceX = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceX"));
-    RDouble **gradientPrimtiveVariableFaceY = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceY"));
-    RDouble **gradientPrimtiveVariableFaceZ = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceZ"));
+    RDouble **gradientPrimtiveVariableX = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarX"));
+    RDouble **gradientPrimtiveVariableY = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarY"));
+    RDouble **gradientPrimtiveVariableZ = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarZ"));
 
-    RDouble *dudx = gradientPrimtiveVariableFaceX[1];
-    RDouble *dudy = gradientPrimtiveVariableFaceY[1];
-    RDouble *dudz = gradientPrimtiveVariableFaceZ[1];
+    RDouble *dudx = gradientPrimtiveVariableX[1];
+    RDouble *dudy = gradientPrimtiveVariableY[1];
+    RDouble *dudz = gradientPrimtiveVariableZ[1];
 
-    RDouble *dvdx = gradientPrimtiveVariableFaceX[2];
-    RDouble *dvdy = gradientPrimtiveVariableFaceY[2];
-    RDouble *dvdz = gradientPrimtiveVariableFaceZ[2];
+    RDouble *dvdx = gradientPrimtiveVariableX[2];
+    RDouble *dvdy = gradientPrimtiveVariableY[2];
+    RDouble *dvdz = gradientPrimtiveVariableZ[2];
 
-    RDouble *dwdx = gradientPrimtiveVariableFaceX[3];
-    RDouble *dwdy = gradientPrimtiveVariableFaceY[3];
-    RDouble *dwdz = gradientPrimtiveVariableFaceZ[3];
+    RDouble *dwdx = gradientPrimtiveVariableX[3];
+    RDouble *dwdy = gradientPrimtiveVariableY[3];
+    RDouble *dwdz = gradientPrimtiveVariableZ[3];
 
     Param_LESSolverUnstruct * parameters = GetControlParameters();
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
-
-    int monitorVistmax = GlobalDataBase::GetIntParaFromDB("monitor_vistmax");
 
     RDouble refReNumber  = parameters->GetRefReNumber();
 
@@ -797,9 +773,8 @@ void LESSolverUnstr::Sigma(Grid *gridIn)
 
     RDouble viscousTurbulenceMax = 0.0;
     RDouble viscousTurbulenceMin = 1.0e30;
-	RDouble logSmall = log(SMALL);
 
-	int iMax = 0;
+    int iMax = 0;
     int iMin = 0;
 
     RDouble ** velocityGradTensor = AleModel :: CreateMatrix();
@@ -838,7 +813,7 @@ void LESSolverUnstr::Sigma(Grid *gridIn)
             viscousTurbulenceMax = viscousTurbulence[iCell];
             iMax = iCell;
         }
-        if (viscousTurbulenceMin > viscousTurbulence[iCell])	
+        if (viscousTurbulenceMin > viscousTurbulence[iCell])
         {
             viscousTurbulenceMin = viscousTurbulence[iCell];
             iMin = iCell;
@@ -880,6 +855,7 @@ void LESSolverUnstr::ComputeDifferentialSigma(RDouble ** velocityGradTensor, RDo
     RDouble sigma3 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0) );
 
     differentialSigma = sigma3 * (sigma1 - sigma2) * (sigma2 - sigma3) / sigma1 / sigma1;
+    differentialSigma = MAX(differentialSigma, 0.0);
 
     AleModel::DestroyMatrix(velocityGradTensorTranspose);
     AleModel::DestroyMatrix(gij);
@@ -899,25 +875,23 @@ void LESSolverUnstr::ComputeStrainRateTensor(Grid *gridIn)
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble **q = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
-
     RDouble **strainRateTensor = reinterpret_cast<RDouble **> (grid->GetDataPtr("strainRateTensor"));
 
-    RDouble **gradientPrimtiveVariableFaceX = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceX"));
-    RDouble **gradientPrimtiveVariableFaceY = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceY"));
-    RDouble **gradientPrimtiveVariableFaceZ = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceZ"));
+    RDouble **gradientPrimtiveVariableX = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarX"));
+    RDouble **gradientPrimtiveVariableY = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarY"));
+    RDouble **gradientPrimtiveVariableZ = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarZ"));
 
-    RDouble *dudx = gradientPrimtiveVariableFaceX[1];
-    RDouble *dudy = gradientPrimtiveVariableFaceY[1];
-    RDouble *dudz = gradientPrimtiveVariableFaceZ[1];
+    RDouble *dudx = gradientPrimtiveVariableX[1];
+    RDouble *dudy = gradientPrimtiveVariableY[1];
+    RDouble *dudz = gradientPrimtiveVariableZ[1];
 
-    RDouble *dvdx = gradientPrimtiveVariableFaceX[2];
-    RDouble *dvdy = gradientPrimtiveVariableFaceY[2];
-    RDouble *dvdz = gradientPrimtiveVariableFaceZ[2];
+    RDouble *dvdx = gradientPrimtiveVariableX[2];
+    RDouble *dvdy = gradientPrimtiveVariableY[2];
+    RDouble *dvdz = gradientPrimtiveVariableZ[2];
 
-    RDouble *dwdx = gradientPrimtiveVariableFaceX[3];
-    RDouble *dwdy = gradientPrimtiveVariableFaceY[3];
-    RDouble *dwdz = gradientPrimtiveVariableFaceZ[3];
+    RDouble *dwdx = gradientPrimtiveVariableX[3];
+    RDouble *dwdy = gradientPrimtiveVariableY[3];
+    RDouble *dwdz = gradientPrimtiveVariableZ[3];
 
     int numberOfTotalCell = grid->GetNTotalCell();
     int numberOfBoundaryFace = grid->GetNBoundFace();
@@ -925,8 +899,6 @@ void LESSolverUnstr::ComputeStrainRateTensor(Grid *gridIn)
 
     for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
     {
-        RDouble rho = ABS(q[IR][iCell]) + SMALL;
-
         RDouble s11 = dudx[iCell];
         RDouble s22 = dvdy[iCell];
         RDouble s33 = dwdz[iCell];
@@ -1031,11 +1003,11 @@ void LESSolverUnstr::UploadInterfaceData(ActionKey *actkey)
 
 void LESSolverUnstr::UploadInterfaceValue(ActionKey *actkey)
 {
-	int level = actkey->level;
+    int level = actkey->level;
     UnstructGrid *grid = reinterpret_cast<UnstructGrid *>(GetGrid(level));
 
-	InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-	if (interfaceInformation == 0) return;
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (interfaceInformation == 0) return;
 
     RDouble* viscousTurbulence = reinterpret_cast<RDouble*> (grid->GetDataPtr("vist"));
     PHSPACE::UploadInterfaceValue(grid, viscousTurbulence, "vist");
@@ -1046,15 +1018,15 @@ void LESSolverUnstr::UploadInterfaceValue(ActionKey *actkey)
 
 void LESSolverUnstr::DownloadInterfaceData(ActionKey *actkey)
 {
-	DownloadInterfaceValue(actkey);
+    DownloadInterfaceValue(actkey);
 }
 
 void LESSolverUnstr::DownloadInterfaceValue(ActionKey *actkey)
 {
-	int level = actkey->level;
+    int level = actkey->level;
     UnstructGrid *grid = reinterpret_cast<UnstructGrid *>(GetGrid(level));
-	InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-	if (interfaceInformation == 0) return;
+    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
+    if (interfaceInformation == 0) return;
 
     RDouble *viscousTurbulence = reinterpret_cast<RDouble *> (grid->GetDataPtr("vist"));
     PHSPACE::DownloadInterfaceValue(grid, viscousTurbulence, "vist");
@@ -1072,20 +1044,20 @@ LIB_EXPORT void LESSolverUnstr::InitControlParameters()
 
 LIB_EXPORT Param_LESSolverUnstruct * LESSolverUnstr::GetControlParameters()
 {
-	return static_cast<Param_LESSolverUnstruct *>(controlParameters);
+    return static_cast<Param_LESSolverUnstruct *>(controlParameters);
 }
 
 FieldProxy * LESSolverUnstr::GetFieldProxy(Grid *gridIn, const string &field_name)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-	RDouble ** field = reinterpret_cast< RDouble ** > ( grid->GetDataPtr(field_name) );
+    RDouble ** field = reinterpret_cast< RDouble ** > ( grid->GetDataPtr(field_name) );
 
-	FieldProxy * field_proxy = new FieldProxy();
+    FieldProxy * field_proxy = new FieldProxy();
 
-	field_proxy->SetField_UNS(field);
+    field_proxy->SetField_UNS(field);
 
-	return field_proxy;
+    return field_proxy;
 }
 
 }

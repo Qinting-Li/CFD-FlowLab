@@ -6,7 +6,8 @@
 #include "MovingMesh.h"
 #include "Geo_Grid.h"
 #include "Geo_UnstructGrid.h"
-//#include "OversetConfigMulti.h"
+#include "Geo_StructGrid.h"
+#include "GridType.h"
 #include "Region.h"
 #include "IO_FileName.h"
 #include "IO_FileReader.h"
@@ -51,8 +52,7 @@ void SimpleMovingMesh::SetInitCoordinate(Grid* gridIn )
         zPresent[ iNode ] = zInit[ iNode ] = z[ iNode ];
     }
 }
-
-//根据sixdof，从inertialCoordinate转换到bodyCoordinate
+//! according to six DOF，transform to the body coordinate system for the inertial coordinate.
 void SimpleMovingMesh::CalInitCoordinate( SixDofParameter * sixDof )
 {
     vector< RDouble > coordinateBody;
@@ -88,7 +88,7 @@ void SimpleMovingMesh::CalInitCoordinate( SixDofParameter * sixDof )
 
 void SimpleMovingMesh::Deforming( DeformingParameter * deforming )
 {
-    //暂时不考虑网格变形的问题
+    //! do not consider the mesh deformation in temporary.
     for( int iNode = 0; iNode < numberOfNodes; ++ iNode )
     {
         xPresent[ iNode ] = xInit[ iNode ];
@@ -97,7 +97,7 @@ void SimpleMovingMesh::Deforming( DeformingParameter * deforming )
     }
 }
 
-//根据sixdof，从bodyCoordinate转换到presentCoordinate
+//! according to six DOF，transform to the current coordinate system for the body coordinate.
 void SimpleMovingMesh::RigidMoving( SixDofParameter * sixDof )
 {
     vector< RDouble > coordinateBody;
@@ -129,7 +129,7 @@ void SimpleMovingMesh::RigidMoving( SixDofParameter * sixDof )
         xPresent[ iNode ] = coordinateInertial[ 0 ];
         yPresent[ iNode ] = coordinateInertial[ 1 ];
         zPresent[ iNode ] = coordinateInertial[ 2 ];
-    }	
+    }
 }
 
 void SimpleMovingMesh::UpdateGrid()
@@ -145,6 +145,26 @@ void SimpleMovingMesh::UpdateGrid()
         x[ iNode ] = xPresent[ iNode ];
         y[ iNode ] = yPresent[ iNode ];
         z[ iNode ] = zPresent[ iNode ];
+    }
+
+    //! Change the coord of unstructure grid which adhere to the structure grid.
+    if (grid->Type() == PHSPACE::STRUCTGRID)
+    {
+        Grid *gridUnstr = StructGridCast(grid)->GetUnstrGrid();
+        if (gridUnstr != NULL)
+        {
+            RDouble* xx = gridUnstr->GetX();
+            RDouble* yy = gridUnstr->GetY();
+            RDouble* zz = gridUnstr->GetZ();
+            int nTotalNode = gridUnstr->GetNTotalNode();
+
+            for( int iNode = 0; iNode < nTotalNode; ++ iNode )
+            {
+                xx[ iNode ] = xPresent[ iNode ];
+                yy[ iNode ] = yPresent[ iNode ];
+                zz[ iNode ] = zPresent[ iNode ];
+            }
+        }
     }
 }
 
@@ -194,7 +214,7 @@ void OriginalMovingMesh::PreProcessRigidMoving()
 
     movingMesh->SetInitCoordinate( grid );
 
-    //如果该网格块作为一个部件装配在一个物体上
+    //! if the mesh block is assembled to an object as a part.
     if( fartherIndex != -1 )
     {
         SixDofParameter * sixdofFarther = PHSPACE::GetSixDofParameter( fartherIndex );
@@ -211,16 +231,19 @@ void OriginalMovingMesh::PreProcessDeforming()
 
 }
 
-//动网格的预处理。得到体轴系内的坐标点；Mapping方法求面积坐标；rbf方法求矩阵
+//! the pre-treament of the moving meshes. get the coordinate of the body-axis.
+//! get the area and the coordinate by mapping method.
+//! get the matrix by rbf method.
+
 void OriginalMovingMesh::PreProcess()
 {
     int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
     if (bodyIndex >= numberOfMovingBodies) return;
 
-    PreProcessRigidMoving();  //刚体运动，体坐标系内的坐标点
+    PreProcessRigidMoving();  //! the motion of the rigid body, the coordinate of the body axis.
 
     PreProcessDeforming();
-}	
+}
 
 void OriginalMovingMesh::Restart()
 {
@@ -324,24 +347,20 @@ void MovingMeshManager::Initialize()
         }
     }
 
-    //区别哪一块网格属于哪一个物体，暂时根据读入的网格文件个数来判断。
-    //进一步可以通过网格的体属性来判断，待完成。
+    //!judge the object that the mesh belonging to by the numbers of mesh files in temporary.
     for( int iZone = 0; iZone < numberOfZones; ++ iZone )
     {
         int processorIndex = PHMPI::GetZoneProcessorID( iZone );
         if ( currentProcessorIndex == processorIndex )
         {
             Grid * grid =  GetGrid( iZone , 0);
-
-            //就是这个地方，需要进一步完善交互策略！
             int bodyIndex = grid->GetIBlock();
 
             originalMovingMeshes[ iZone ]->Initialize( grid, bodyIndex );
         }
     }
 
-    //如果是变形网格，就需要在这里进行一些整体上的处理，例如建立背景网格，建立物面点的RBF矩阵等
-    //然后
+    //! if the deforming meshes, it needs some treatment, such as build the backgroung mehsh and the RBF matrix of the wall points, et. al.
     for( int iZone = 0; iZone < numberOfZones; ++ iZone )
     {
         int processorIndex = PHMPI::GetZoneProcessorID( iZone );
@@ -350,45 +369,6 @@ void MovingMeshManager::Initialize()
             originalMovingMeshes[ iZone ]->PreProcess();
         }
     }
-
-    ////辅助网格的初始化: innerGrid
-    //if( GetOversetConfigFactoryMulti() != 0 && GetReadInAuxiliaryInnerGrid() == 1 )
-    //{	
-    //	vector< UnstructGrid * > & innerGrids = GetOversetConfigFactoryMulti()->GetInnerGrid();
-
-    //	for( int iBody = 0; iBody < numberOfBodys; ++ iBody )
-    //	{
-    //		if( innerGrids[ iBody ] != 0 )
-    //		{
-    //			UnstructGrid * innerGrid = innerGrids[ iBody ]; 
-
-    //			OriginalMovingMesh * movingMesh = new OriginalMovingMesh();
-
-    //			movingMesh->Initialize( innerGrid, iBody );
-    //			movingMesh->PreProcess();
-
-    //			innerMovingMesh.push_back( movingMesh );
-    //		}
-    //	}
-    //}
-
-    ////辅助网格的初始化: outerGrid
-    //if( GetOversetConfigFactoryMulti() != 0 && GetReadInAuxiliaryOuterGrid() == 1 )
-    //{
-    //	vector< FYOversetAuxilaryGrid * > & outerAuxilaryGrids = GetOversetConfigFactoryMulti()->GetOuterAuxilaryGrid();
-
-    //	for( int iBody = 0; iBody < numberOfBodys; ++ iBody )
-    //	{
-    //		UnstructGrid * outerGrid = outerAuxilaryGrids[ iBody ]->GetGrid();
-
-    //		OriginalMovingMesh * movingMesh = new OriginalMovingMesh();
-
-    //		movingMesh->Initialize( outerGrid, iBody );
-    //		movingMesh->PreProcess();
-
-    //		outerMovingMesh.push_back( movingMesh );
-    //	}
-    //}
 }
 
 void MovingMeshManager::Restart()
@@ -403,7 +383,7 @@ void MovingMeshManager::Restart()
         }
     }
 
-    //辅助网格的初始化
+    //! the init of the assist meshes.
     for( int iInnerMesh = 0; iInnerMesh < innerMovingMesh.size(); ++ iInnerMesh )
     {
         innerMovingMesh[ iInnerMesh ]->Restart();

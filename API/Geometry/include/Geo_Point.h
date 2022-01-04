@@ -23,45 +23,45 @@ template < typename T >
 class Geo_Point
 {
 public:
-	typedef Geo_Point<T> point_type;
+    typedef Geo_Point<T> point_type;
 private:
-	T x,y,z;
-	int id;
-	RDouble tolerance;
+    T x,y,z;
+    int id;
+    RDouble tolerance;
 public:
-	Geo_Point();
-	Geo_Point(const T &x, const T &y, const T &z, int id = 0);
-	Geo_Point(const point_type & rhs);
-	Geo_Point & operator = (const point_type & rhs);
-	~Geo_Point();
+    Geo_Point();
+    Geo_Point(const T &x, const T &y, const T &z, int id = 0);
+    Geo_Point(const point_type & rhs);
+    Geo_Point & operator = (const point_type & rhs);
+    ~Geo_Point();
 public:
-	T X() const { return x; }
-	T Y() const { return y; }
-	T Z() const { return z; }
-	int ID() const { return id; }
+    T X() const { return x; }
+    T Y() const { return y; }
+    T Z() const { return z; }
+    int ID() const { return id; }
 
-	void    SetTolerance( RDouble dataIn ) { this->tolerance = dataIn; } 
+    void SetTolerance(RDouble dataIn) { this->tolerance = dataIn; }
 
-	void SetX(const T &x){ this->x  = x;  }
-	void SetY(const T &y){ this->y  = y;  }
-	void SetZ(const T &z){ this->z  = z;  }
-	void SetID(int id)   { this->id = id; }
+    void SetX(const T &x){ this->x  = x;  }
+    void SetY(const T &y){ this->y  = y;  }
+    void SetZ(const T &z){ this->z  = z;  }
+    void SetID(int id)   { this->id = id; }
 
-	int hash_key() const;
+    int hash_key() const;
 public:
-	bool operator < (const point_type &rhs) const;
-	friend bool operator == (const Geo_Point &pt1, const Geo_Point &pt2)
-	{
-		RDouble epsilon = 1.0e-13;
+    bool operator < (const point_type &rhs) const;
+    friend bool operator == (const Geo_Point &pt1, const Geo_Point &pt2)
+    {
+        RDouble epsilon = 1.0e-13;
 
-		if(&pt1 == &pt2)	return true;
+        if (&pt1 == &pt2) return true;
 
-		RDouble dx = ABS(pt1.X() - pt2.X());
-		RDouble dy = ABS(pt1.Y() - pt2.Y());
-		RDouble dz = ABS(pt1.Z() - pt2.Z());
+        RDouble dx = ABS(pt1.X() - pt2.X());
+        RDouble dy = ABS(pt1.Y() - pt2.Y());
+        RDouble dz = ABS(pt1.Z() - pt2.Z());
 
-		return (dx <= epsilon && dy <= epsilon && dz <= epsilon);
-	}
+        return (dx <= epsilon && dy <= epsilon && dz <= epsilon);
+    }
 };
 
 typedef Geo_Point< RDouble > Point3D;

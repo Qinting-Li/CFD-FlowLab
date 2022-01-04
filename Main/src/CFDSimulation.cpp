@@ -24,8 +24,6 @@ void RunPHengLEI()
 
     ControlParametersPreliminarySelfCheck();
 
-    InitFantasyMPIForSepMode(); //! This function is useless and will be abandoned later.
-
     //! Start CFD simulations.
     int dimension = GlobalDataBase::GetIntParaFromDB("ndim");
     Simulation *simulation = new Simulation(dimension);
@@ -76,9 +74,11 @@ void ParametersSelfCheckForCFD()
     int isInIniting = 1;
     GlobalDataBase::UpdateData("isInIniting", &isInIniting, PHINT, 1);
 
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+
     int flowInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("flowInitStep");
     int maxSimuStep  = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
-    if (flowInitStep > maxSimuStep)
+    if (flowInitStep > maxSimuStep || isUnsteady != 0)
     {
         //! If the maximum simulation step is small than the initialization step,
         //! do not init then.
@@ -94,7 +94,7 @@ void ParametersSelfCheckForCFD()
     GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
-    if (viscousType == 0)
+    if (viscousType == INVISCID)
     {
         for (int i = 0; i < nVisualVariables; ++ i)
         {
@@ -106,7 +106,7 @@ void ParametersSelfCheckForCFD()
             }
         }
     }
-    else if (viscousType == 1 && iLES == 0)
+    else if (viscousType == LAMINAR && iLES != LES_SOLVER)
     {
         for (int i = 0; i < nVisualVariables; ++ i)
         {
@@ -118,7 +118,7 @@ void ParametersSelfCheckForCFD()
             }
         }
     }
-    else if (viscousType == 3)
+    else if (viscousType == ONE_EQU)
     {
         for (int i = 0; i < nVisualVariables; ++ i)
         {
@@ -130,7 +130,7 @@ void ParametersSelfCheckForCFD()
             }
         }
     }
-    else if (viscousType == 4)
+    else if (viscousType == TWO_EQU)
     {
         int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
         for (int i = 0; i < nVisualVariables; ++ i)
@@ -149,7 +149,6 @@ void ParametersSelfCheckForCFD()
 
     delete [] visualVariables;
 
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (isUnsteady)
     {
         int minSubIter = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
@@ -172,19 +171,21 @@ void ParametersSelfCheckForCFD()
             GlobalDataBase::UpdateData("max_sub_iter", &maxSubIter, PHINT, 1);
         }
     }
-#ifdef USE_OVERSET
-    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    if( codeOfOversetGrid == 1 )
+
+    //! If use Block-LUSGS, ROE scheme must be selected.
+    int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
+    if (tscheme == Block_LU_SGS)
     {
-        int dimension = GlobalDataBase::GetIntParaFromDB("ndim");
-        if ( dimension < 3 )
+        string uns_scheme_name = GlobalDataBase::GetStrParaFromDB("uns_scheme_name");
+        if (uns_scheme_name.substr(0, 3) != "roe")
         {
             ostringstream oss;
-            oss << "The variable \"ndim\" must be equal to three with overset grid open ." << endl;
+            oss << "Error: if BLU is used, ROE scheme must be selected!" << endl;
+            PrintToWindow(oss.str());
+            WriteLogFile (oss.str());
             TK_Exit::ExceptionExit(oss);
         }
     }
-#endif
 }
 
 void ControlParametersPreliminarySelfCheck()
@@ -215,11 +216,11 @@ void ControlParametersPreliminarySelfCheck()
         case INTEGRATIVE_SOLVER:
             ParametersSelfCheckForCFD();
             break;
-        case SPLIT_OVERSET_GRID:
-            break;
         case POST_PROCESSING:
             break;
-        case SPECDIFFHYB_Solver:
+        case SPECDIFFHYB_SOLVER:
+            break;
+        case SPEC_SOLVER:
             break;
         default:
             TK_Exit::UnexpectedVarValue("taskType = ", taskType);

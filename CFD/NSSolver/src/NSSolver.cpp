@@ -4,6 +4,7 @@
 #include "PHMpi.h"
 #include "Param_NSSolver.h"
 #include "Math_BasisFunction.h"
+#include "PHIO.h"
 #include "Gas.h"
 
 using namespace std;
@@ -69,7 +70,6 @@ void NSSolver::UpdateResiduals(Grid *grid)
 
     SourceFlux(grid);
 
-    //! TODO: Use only in overlap grid.
     ZeroResidualOfSpecialCells(grid);
 
     FreeGradientProxy(grid);    //! It is null for structured grid.
@@ -86,7 +86,6 @@ const string NSSolver::GetResidualFileName()
 void NSSolver::Post()
 {
     using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
 
     //! To dump restart data for continual simulation.
     ActionKey *actkeyDumpRestartData = new ActionKey();
@@ -112,13 +111,22 @@ void NSSolver::Post()
     DumpCpDistri(actkeyDumpWallAircoef);
     delete actkeyDumpWallAircoef;
 
-    if (IsNeedDESStatistics())
+    if (IsNeedStatistics())
     {
         //! To output Average data by tecplot format.
         ActionKey *actkeyTecOutAverageFlow = new ActionKey();
         FillActionKey(actkeyTecOutAverageFlow, VISUALIZATION_AVERAGE_FLOW, 0);
         TecOutAverageFlow(actkeyTecOutAverageFlow);
         delete actkeyTecOutAverageFlow;
+    }
+
+    if (IsNeedReynoldsStressStatistics())
+    {
+        //! To output Average Reynolds stress by tecplot format.
+        ActionKey *actkeyTecOutAverageReynoldsStress = new ActionKey();
+        FillActionKey(actkeyTecOutAverageReynoldsStress, VISUALIZATION_AVERAGE_ReynoldsStress, 0);
+        TecOutAverageReynoldsStress(actkeyTecOutAverageReynoldsStress);
+        delete actkeyTecOutAverageReynoldsStress;
     }
 }
 
@@ -144,10 +152,11 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
 
     if ( outnstep % intervalStepFlow == 0 && isSubIterationDump )
     {
-        int dumpStandardModel = 0;//GlobalDataBase::GetIntParaFromDB("dumpStandardModel");
+        int dumpStandardModel = 0;
+        GlobalDataBase::GetIntParaFromDB("dumpStandardModel");
         if(dumpStandardModel == 1)
         {
-            Turbulent_Flat_Plate_Output_NASA(grid);
+            Turbulence_Flat_Plate_Output_NASA(grid);
         }
     }
 
@@ -162,13 +171,22 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
 
     if (outnstep % intervalStepPlot == 0 && isSubIterationDump)
     {
-        if (IsNeedDESStatistics())
+        if (IsNeedStatistics())
         {
             //! To output Average data by tecplot format.
             ActionKey *actkeyTecOutAverageFlow = new ActionKey();
             FillActionKey(actkeyTecOutAverageFlow, VISUALIZATION_AVERAGE_FLOW, level);
             TecOutAverageFlow(actkeyTecOutAverageFlow);
             delete actkeyTecOutAverageFlow;
+        }
+
+        if (IsNeedReynoldsStressStatistics())
+        {
+            //! To output Average Reynolds stress by tecplot format.
+            ActionKey *actkeyTecOutAverageReynoldsStress = new ActionKey();
+            FillActionKey(actkeyTecOutAverageReynoldsStress, VISUALIZATION_AVERAGE_ReynoldsStress, level);
+            TecOutAverageReynoldsStress(actkeyTecOutAverageReynoldsStress);
+            delete actkeyTecOutAverageReynoldsStress;
         }
     }
 
@@ -225,27 +243,18 @@ RDouble NSSolver::ComputeCFL()
     int iterationStep;
 
     Param_NSSolver *parameters = GetControlParameters();
-    bool isUnsteady = parameters->GetIsUnsteady();
-    //if(isUnsteady)
-    //{
-        //! Unsteady.
-    //    GlobalDataBase::GetData("innstep", &iterationStep, PHINT, 1);
-    //}
-    //else
-    //{
-        //! Steady.
-        int nMGLevel = parameters->GetNMGLevel();        
-        if (nMGLevel <= 1)
-        {
-            //! Finest grid.
-            GlobalDataBase::GetData("outnstep", &iterationStep, PHINT, 1);
-        }
-        else
-        {
-            //! Coarse grid.
-            GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
-        }
-    //}
+    //! Steady.
+    int nMGLevel = parameters->GetNMGLevel();        
+    if (nMGLevel <= 1)
+    {
+        //! Finest grid.
+        GlobalDataBase::GetData("outnstep", &iterationStep, PHINT, 1);
+    }
+    else
+    {
+        //! Coarse grid.
+        GlobalDataBase::GetData("newnstep", &iterationStep, PHINT, 1);
+    }
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
@@ -337,7 +346,6 @@ void NSSolver::InitDependentVariables()
 {
     Grid *fineGrid = GetGrid();
 
-    //! TODO: To optimization this process in future.
     //! These variables are need for boundary condition.
     ComputeGamaAndTemperature(fineGrid);
 
@@ -351,7 +359,7 @@ void NSSolver::InitDependentVariables()
     if (isViscous)
     {
         int nChemical = parameters->GetChemicalFlag();
-        if (0 == nChemical)
+        if (nChemical == 0)
         {
             ComputeViscousCoefficientWithoutChemical(fineGrid);
         }
@@ -360,7 +368,6 @@ void NSSolver::InitDependentVariables()
         }
     }
 
-    //! TODO: Unstructured grid only.
     ComputeNodeValue(fineGrid);
 }
 
@@ -374,12 +381,19 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     CFDSolver::RegisterInterfaceField("t", PHDOUBLE, nTemperatureModel);
     
     int viscousType = parameters->GetViscousType();
-    if (viscousType > 0)
+    int numberOfSpecies = parameters->GetNumberOfSpecies();
+    int *visualVariablesType = postVisualWall->GetVisualVariablesType();
+    int nWallVariables = postVisualWall->GetVisualVariablesNumber();
+    int dataNumber = nWallVariables;
+    for (int m = 0; m < nWallVariables; ++ m)
     {
-        //CFDSolver::RegisterInterfaceField("visl", PHDOUBLE, 1);
+        if (visualVariablesType[m] == VISUAL_WALL_NS)
+        {
+            dataNumber += numberOfSpecies - 1;
+        }
     }
-
-    //CFDSolver::RegisterInterfaceField("dt", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("wallCell", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("wallAircoefData", PHDOUBLE, dataNumber);
 }
 
 void NSSolver::RegisterCFDSolverInterfaceFieldUnstruct()

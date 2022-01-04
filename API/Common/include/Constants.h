@@ -21,6 +21,9 @@ namespace PHSPACE
 const int SOLVER_BASED        = 0;
 const int GRID_BASED          = 1;
 
+const int FV_METHOD           = 0;
+const int FD_METHOD           = 1;
+
 const int SOLVE_FIELD         = 0;
 const int CREATE_GRID         = 1;
 const int CAL_WALL_DIST       = 2;
@@ -32,14 +35,16 @@ const int CONVERT_PARTITION   = 7;
 const int DSMC_SOLVER         = 8;
 const int HELICOPTER          = 9;
 const int UGKS_SOLVER         = 10;
-const int STRPATCHGRID_CONFIG = 11;
 const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
 const int INTEGRATIVE_SOLVER  = 14;
 
-const int SPECDIFFHYB_Solver  = 15;
-const int SPLIT_OVERSET_GRID  = 22;
+const int SPECDIFFHYB_SOLVER  = 51;
+const int SPEC_SOLVER         = 52;
+const int LES_SOLVER          = 1;
+
+const int DERIVATIVE_IDENITFY = 98;
 
 const int POST_PROCESSING     = 99;
 
@@ -80,6 +85,15 @@ const int SEGCTION_LENGTH     = 10240;
 const int NS_EQUATION         = 1;
 const int TURBULENCE          = 2;
 
+const int NONDIMENSIONCONDITION = 0;
+const int FLIGHTCONDITION       = 1;
+const int EXPERIMENTCONDITION   = 2;
+const int SUBSONICBCCONDITION   = 3;
+const int TEMPERATURE_DENSITY   = 4;
+const int TEMPERATURE_PRESSURE  = 5;
+const int MACH_TEMP_PRE         = 6;
+const int PRIMITIVE_VARIABLES   = 9;
+
 const int VIS_STD             = 0;
 const int VIS_AVER            = 1;
 const int VIS_TEST            = 2;
@@ -100,6 +114,7 @@ const int ISCHEME_AUSM_W         = 10;
 const int ISCHEME_AUSMPW         = 11;
 const int ISCHEME_Rotate         = 12;
 const int ISCHEME_ROE_MODIFIED   = 13;
+const int ISCHEME_AUSMPW_PLUS    = 14;
 
 const int FIRST_ORDER            = 1;
 const int SECOND_ORDER           = 2;
@@ -161,6 +176,10 @@ const int CELLVALUE    = 0;
 const int CELLSTOPROBE = 1;
 const int NODESTOPROBE = 2;
 
+const int NON_GHOST       = 0;    //! These are interior cells.
+const int ONE_GHOST_LAYER = 1;    //! Their have one-layer ghost cells.
+const int TWO_GHOST_LAYER = 2;    //! Their have two-layer ghost cells.
+
 namespace IDX
 {
 const int IR   = 0;
@@ -195,16 +214,83 @@ const int ITT  = 0;
 const int ITV  = 1;
 const int ITE  = 2;
 
+// these variables are for SIMPLE algorithm.
+const int S_IU = 0;
+const int S_IV = 1;
+const int S_IW = 2;
+const int S_IP = 3;
+const int S_IR = 4;
+const int S_ITEMP = 5;
+const int S_ITURBK = 6;
+const int S_IOMEGA = 7;
+
+const int S_IEPSILON  = 8;
+const int S_IEDDYVISC = 0;
+
+
+const int MOMX_EQ = 0;
+const int MOMY_EQ = 1;
+const int MOMZ_EQ = 2;
+const int CONT_EQ = 3;
+const int ENER_EQ = 4;
+const int ZNUT_EQ = 5;
+const int TURBK_EQ = 6;
+const int EPSILON_EQ = 7;
+const int OMEGA_EQ = 8;
 }
 const int MAX_SPECIES_NUM = 20;     //! The maximum number of species.
 const int MAX_REACTION_NUM = 50;    //! The maximum number of reactions.
 
-#define BOLTZMANN_CONSTANT 1.380649E-23      //! The Boltzmann constant, Unit: J/K.
-#define AVOGADRO_CONSTANT  6.0225E+23        //! The Avogadro constant, Unit: mol-1.
-#define VACUUM_PERMITTIVITY  8.854187817E-12 //! The permittivity of vacuum,Unit: C/(V*m).
-#define STANDARD_PRESSURE  101325.0          //! The standard atmosphere pressure,Unit: Pa.
-#define ELECTRIC_QUANTITY  1.602176634E-19   //! The electric quantity, Unit: C
+namespace ABLATION
+{
+const RDouble FormationHeat = 13.083E+07;
 }
+
+#define BOLTZMANN_CONSTANT  1.380649E-23      //! The Boltzmann constant, Unit: J/K.
+#define AVOGADRO_CONSTANT   6.0225E+23        //! The Avogadro constant, Unit: mol-1.
+#define VACUUM_PERMITTIVITY 8.854187817E-12   //! The permittivity of vacuum,Unit: C/(V*m).
+#define STANDARD_PRESSURE   101325.0          //! The standard atmosphere pressure,Unit: Pa.
+#define ELECTRIC_QUANTITY   1.602176634E-19   //! The electric quantity, Unit: C.
+#define GeneralGasConstant  8.31434           //! The general gas constant, J/(kg * K).
+}
+
+//---------------------------
+// Pressure-based enum
+//----------------------------
+typedef enum  
+{
+    Projection = 1,
+    SIMPLE     = 2,
+    SIMPLEC    = 3,
+    PISO       = 4
+}InCom_method;
+
+typedef enum
+{
+    None                  = 0,
+    MinimumCorrection     = 1,
+    OrthogonalCorrection  = 2,
+    OverrelaxedCorrection = 3
+} InCom_nonOrthMethod;
+
+typedef enum
+{
+    iDefScheme            = 0,
+    iCentralScalar        = 1,
+    iCentralScalarReconst = 5,
+    iCentralMatrix        = 2,
+    iUpwindAUSMPlus       = 3,
+    iUpwindRoe            = 4
+}SpaceScheme;
+
+typedef enum
+{
+    iEuler      = 0,
+    iNSLam      = 1,
+    iSAWallF    = 2,
+    iKEStandard = 3,
+    iSSTWallF   = 4
+}Model;
 
 namespace TEC_SPACE
 {
@@ -225,3 +311,4 @@ const int BoundaryVisual  = 0;
 const int FieldVisual     = 1;
 const int BlockVisual     = 2;
 }
+

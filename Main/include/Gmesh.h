@@ -26,7 +26,7 @@ namespace PHSPACE
 
 typedef enum
 {
-    PH_MSH_LIN_2    = MSH_LIN_2,
+    PH_MSH_LIN_2 = MSH_LIN_2,
     PH_MSH_TRI_3   ,
     PH_MSH_QUA_4   ,
     PH_MSH_TET_4   ,

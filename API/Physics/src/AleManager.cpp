@@ -10,6 +10,7 @@
 #include "DeformingSolverManager.h"
 #include "MovingMesh.h"
 #include "Zone.h"
+#include "GridType.h"
 #include "Region.h"
 #include "OversetInformation.h"
 #include "GlobalDataBase.h"
@@ -66,55 +67,51 @@ void SolveSingleInnerIterationStepForAleSolvers()
         return;
     }
 
-    //准定常问题不需要求解Ale
+    //! it does not need to solve Ale for quasi steady questions.
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
     if (aleStartStrategy == -1)
     {
         return;
     }
 
-    //内迭代第一步备份旧网格（n时刻）信息
+    //! backup the old meshes information (n time) first in the inner iterations.
     int innStep = GlobalDataBase::GetIntParaFromDB("innstep");
     if (innStep == 1)
     {
         BackupAllZonesOldGrid();
     }
-
-    //如果是内迭代第一步，或者是隐式（紧耦合）方法，需要更新网格几何信息
+    //! if it is the first step of the inner step or implicit methods, update the mesh information.
     if (innStep == 1 || IsImplicitAleMethod() )
     {
         aleManager->Run();
 
         //SetCurrentGridLevelIndex( 0 );
-        //更新各个zone的网格几何信息
         //DoMysteriousGridTask( "COMPUTE_METRICS" );
         aleManager->ComputeMetrics();
         //ComputeMetrics();
-        //通讯交界面左右信息。切记！
         aleManager->CommCellCenterData();
         //CommunicateCellCenterData();
 
-        //计算faceNormalVelocityContainer等。对于准定常问题（本版本程序，非定常问题一定），不计算运动速度。
+        //! computing the faceNormalVelocityContainer. we do not compute the movement velocity for quasi steady questions.
         int methodOfDualTime = GlobalDataBase::GetIntParaFromDB("methodOfDualTime");
         if(methodOfDualTime != 0)
         {
             aleManager->ComputeGridFaceVelocity();
         }
 
-        //如果是重叠网格，则执行挖洞操作
+        //! if it is the overset mesh, should dig the hole.
         int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
         int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
         if (codeOfOversetGrid == 1 && outIterStep != 1)
         {
-            //TODO: overset config
-            //需要在装配之前将重叠区域的变量存储空间删除
+            //! clear up the store memory before assembling.
             DeAllocateOversetStorage();
 
             ResetAllZonesOversetGrid();
 
             InitializeOversetInterfaceTopology();
 
-            //由于重叠网格信息改变，重叠区域的变量存储空间需要重新申请
+            //! the memory of the variables need to re open, when the overset mesh changes.
             ReAllocateOversetStorage();
         }
         
@@ -167,13 +164,10 @@ void AleManager::Initialize()
     {
         aleManager->Run();
 
-        //SetCurrentGridLevelIndex( 0 );
-        //DoMysteriousGridTask( "COMPUTE_METRICS" );
         aleManager->ComputeMetrics();
 
         aleManager->CommCellCenterData();
 
-        //ExecuteMessageTask( "DEALLOCATEOVERSETSTORAGE" );
         int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
         if (codeOfOversetGrid == 1)
         {
@@ -197,13 +191,20 @@ void AleManager::ComputeMetrics()
         int recv_proc = GetServerSepMode();
 
         int tag = GetSendRecvTag(GRID_BASED, 0, izone);
-        int proc = GetZoneProcessorID(izone);
         int myid = PHMPI::GetCurrentProcessorID();
         if (myid == send_proc)
         {
             //! If the ProcessorID of i-th zone equal to the running ProcessorID, compute grid metrics.
             Grid* grid = GetGrid(izone, 0);
             grid->ComputeMetrics(actkey);
+            if (grid->Type() == PHSPACE::STRUCTGRID)
+            {
+                UnstructGrid *gridUnstr = UnstructGridCast(grid);
+                if (gridUnstr)
+                {
+                    gridUnstr->ComputeMetrics(actkey);
+                }
+            }
         }
 
         // collect all info out by ComputeMetrics function to cdata.
@@ -215,7 +216,7 @@ void AleManager::ComputeMetrics()
             WriteScreen(actkey);
         }
     }
-    delete actkey;
+    delete actkey;    actkey = NULL;
 }
 
 void AleManager::CommCellCenterData()
@@ -229,19 +230,15 @@ void AleManager::CommCellCenterData()
         actkey->kind = GRID_BASED;
         actkey->level = level;
 
-        //Task_ServerUpdateInterface *task = new Task_ServerUpdateInterface();
         if (IsNeedNonBlockingCommunication(actkey))
         {
-            //task->MainTaskNonBlocking(actkey);
             MainTaskNonBlocking(actkey);
         }
         else
         {
-            //task->MainTaskBlocking(actkey);
             MainTaskBlocking(actkey);
         }
 
-        //delete task;
         delete actkey;
     }
 }
@@ -262,8 +259,6 @@ void AleManager::ComputeGridFaceVelocity()
 
 void AleManager::Allocate()
 {
-    //需要首先求一下气动力，用于sixdofSolver的初始化
-    //PHSPACE::ExecuteMessageTask( "INITIALIZE_ALLZONE_AERODYNAMICFORCES" );
     InitializeAerodynamicForce();
 
     aleForceManager         = new AleForceManager       ;
@@ -271,14 +266,9 @@ void AleManager::Allocate()
     sixDofSolverManager     = new SixDofSolverManager   ;
     movingMeshManager       = new MovingMeshManager     ;
 
-    //初始化参考时间
-    InitializeDimensionalReferenceTime();
+    RDouble aleSimulationTime = 0.0;
+    GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
-    //初始化有量纲时间
-    RDouble dimensionalAleSimulationTime = 0.0;
-    GlobalDataBase::UpdateData("dimensionalAleSimulationTime", &dimensionalAleSimulationTime, PHDOUBLE, 1);
-
-    //初始化无量纲时间 & 初始化内/外迭代步数
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
     if(aleStartStrategy == 0 )
     {
@@ -292,7 +282,6 @@ void AleManager::Allocate()
         GlobalDataBase::UpdateData("innstep", &innstep, PHINT, 1);
     }
 
-    //一般初始化
     aleForceManager     ->Initialize();
     deformingManager    ->Initialize();
     sixDofSolverManager ->Initialize();
@@ -304,7 +293,6 @@ void AleManager::Restart()
     fstream aleFile;
     string aleFileName = "./results/aleRestartFile.dat";
 
-    int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
     ifstream infile(aleFileName.c_str(), ios::in);
     if (!infile)
     {
@@ -318,18 +306,17 @@ void AleManager::Restart()
     currentAleFile = & aleFile;
     SetIsReadAleFile( true );
 
-    RDouble dimensionalAleSimulationTime = 0.0;
-    PHRead( aleFile, dimensionalAleSimulationTime);
-    GlobalDataBase::UpdateData("dimensionalAleSimulationTime", &dimensionalAleSimulationTime, PHDOUBLE, 1);
-    //SetDimensionalAleSimulationTime( aleTime );
+    RDouble aleSimulationTime = 0.0;
+    PHRead( aleFile, aleSimulationTime);
+    GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
-    //如果是重启，动网格需要从0时刻转换到n时刻
+    //! the mesh  need to transform to n time from 0 time, when restart the computing.
     aleForceManager       ->Restart();
     deformingManager      ->Restart();
     sixDofSolverManager   ->Restart();
     movingMeshManager     ->Run();
 
-    //网格运动了，需要重新求几何信息
+    //! the mesh moves, it needs to recompute the mesh information.
     aleManager->ComputeMetrics();
 
     aleManager->CommCellCenterData();
@@ -337,29 +324,19 @@ void AleManager::Restart()
     PHSPACE::CloseFile( aleFile );
 }
 
-void AleManager::InitializeDimensionalReferenceTime()
-{
-    RDouble referenceLength    = GlobalDataBase::GetDoubleParaFromDB("referenceLength");
-    RDouble referenceVelocity  = GlobalDataBase::GetDoubleParaFromDB("referenceVelocity");
-
-    RDouble dimensionalReferenceTime = referenceLength / referenceVelocity;
-
-    GlobalDataBase::UpdateData("dimensionalReferenceTime", &dimensionalReferenceTime, PHDOUBLE, 1);
-}
-
 void AleManager::UpdateAleForce()
 {
-    //气动力还是放在迭代后进行更新，以防止重启的时候得到错误的能耗
+    //! update the aerodynamic force after the iterations to prevent get the wrong energy consumption when restarting.
     aleForceManager->Run();
 }
 
 void AleManager::Run()
 {
-    RDouble dimensionalAleSimulationTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalAleSimulationTime");
-    RDouble dimensionalAleTimeStep = GetDimensionalAleTimeStep();
+    RDouble aleSimulationTime = GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble aleTimeStep = GetAleTimeStep();
 
-    dimensionalAleSimulationTime += dimensionalAleTimeStep;
-    GlobalDataBase::UpdateData("dimensionalAleSimulationTime", &dimensionalAleSimulationTime, PHDOUBLE, 1);
+    aleSimulationTime += aleTimeStep;
+    GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
     deformingManager    ->Run();
     sixDofSolverManager ->Run();
@@ -401,7 +378,7 @@ void AleManager::DumpRestart()
         ios_base::openmode openMode = ios_base::out | ios_base::binary;
         PHSPACE::OpenFile( aleFile, aleFileName, openMode );
 
-        RDouble aleTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalAleSimulationTime");
+        RDouble aleTime = GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
         PHWrite( aleFile, aleTime );
 
@@ -412,7 +389,6 @@ void AleManager::DumpRestart()
         PHSPACE::CloseFile(aleFile);
     }
 }
-
 
 void BackupAllZonesOldGrid()
 {
@@ -440,6 +416,7 @@ void ComputeMetrics()
         if (!grid) continue;
         grid->ComputeMetrics(actkey);
     }
+    delete actkey;    actkey = NULL;
 }
 
 
@@ -453,7 +430,6 @@ void DeAllocateOversetStorage()
         for (int iZone = 0; iZone < numberOfZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
-            //CFDSolver* solver = GetCFDSolver(iZone, iSolver);
             if (!grid) continue;
             if (iSolver == NS_SOLVER)
             {
@@ -484,7 +460,6 @@ void ReAllocateOversetStorage()
         for (int iZone = 0; iZone < numberOfZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
-            //CFDSolver* solver = GetCFDSolver(iZone, iSolver);
             if (!grid) continue;
             if (iSolver == NS_SOLVER)
             {
@@ -590,7 +565,7 @@ int InterfaceFieldNameProperty< T >::GetNumberOfDimensions(const string& fieldNa
 template< typename T >
 void GreatAllocateOversetInterfaceVariables(Grid* gridIn)
 {
-    OversetInformationProxy* oversetInformationProxy = gridIn->GetOversetInformationProxy();
+    OversetInformationProxy* oversetInformationProxy = UnstructGridCast(gridIn)->GetOversetInformationProxy();
     if (!oversetInformationProxy) return;
 
     OversetDonorCellManager* oversetDonorCellManager = oversetInformationProxy->GetOversetDonorCellManager();
@@ -603,7 +578,7 @@ void GreatAllocateOversetInterfaceVariables(Grid* gridIn)
 template< typename T >
 void GreatDeAllocateOversetInterfaceVariables(Grid* gridIn)
 {
-    OversetInformationProxy* oversetInformationProxy = gridIn->GetOversetInformationProxy();
+    OversetInformationProxy* oversetInformationProxy = UnstructGridCast(gridIn)->GetOversetInformationProxy();
     if (!oversetInformationProxy) return;
 
     OversetDonorCellManager* oversetDonorCellManager = oversetInformationProxy->GetOversetDonorCellManager();
@@ -673,7 +648,6 @@ int* GetIntegerArrayFromDataBase(const string& nameOfIntegerArray, int numberOfE
     GlobalDataBase::GetData(nameOfIntegerArray, integerArray, PHINT, numberOfElements);
 
     return integerArray;
-
 }
 
 void GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, const string& parameterName, int numberOfElements)
@@ -683,22 +657,15 @@ void GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, c
     PHSPACE::GlobalDataBase::GetRDoubleVectorFromDB(parameter, oss.str(), numberOfElements);
 }
 
-RDouble GetDimensionalAleTimeStep()
+RDouble GetAleTimeStep()
 {
-    //RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
 
-    //RDouble refDimensionalSonicSpeed = GlobalDataBase::GetDoubleParaFromDB("refDimensionalSonicSpeed");
-    //RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
-    //RDouble refVelocityDimensional = refMachNumber * refDimensionalSonicSpeed;
-    //RDouble referenceVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
-    RDouble referenceLength = GlobalDataBase::GetDoubleParaFromDB("referenceLength");
-
-    RDouble refVelocityDimensional = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
-    RDouble unit = referenceLength / refVelocityDimensional;
     RDouble physicalTimeStep = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
-    RDouble dimensionalAleTimeStep = physicalTimeStep * unit;
-    //RDouble dimensionalAleTimeStep = physicalTimeStep;
-    return dimensionalAleTimeStep;
+
+    RDouble aleTimeStep = physicalTimeStep * reynoldsReferenceLengthDimensional;
+
+    return aleTimeStep;
 }
 
 }

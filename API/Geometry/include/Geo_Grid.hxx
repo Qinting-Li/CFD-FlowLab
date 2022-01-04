@@ -16,7 +16,12 @@ inline bool Grid::IsCoarsestGrid()
 
 inline SimpleGrid * Grid::GetOldGrid()
 {
-    return oldgrid; 
+    return oldGrid; 
+}
+
+inline void Grid::SetOldGrid(SimpleGrid *oldGrid)
+{
+    this->oldGrid = oldGrid;
 }
 
 inline void Grid::SetNTotalFace(int nTotalFace)
@@ -258,32 +263,52 @@ inline void Grid::SetZoneProbesNumber(int zoneProbesNumberIn)
     this->zoneProbesNumber = zoneProbesNumberIn;
 }
 
-inline vector<int> Grid::GetProbesLineID() const
+inline vector<int> Grid::GetZoneProbesGlobalID() const
 {
-    return probesLineID;
+    return zoneProbesGlobalID;
 }
 
-inline void Grid::SetProbesLineID(vector<int> &probesLineIDIn)
+inline void Grid::SetZoneProbesGlobalID(vector<int> &zoneProbesGlobalIDIn)
 {
-    this->probesLineID = probesLineIDIn;
+    this->zoneProbesGlobalID = zoneProbesGlobalIDIn;
 }
 
-inline vector<int> Grid::GetProbesSurfaceID() const
+inline vector<int> Grid::GetZoneProbesLineID() const
 {
-    return probesSurfaceID;
+    return zoneProbesLineID;
 }
 
-inline void Grid::SetProbesSurfaceID(vector<int> &probesSurfaceIDIn)
+inline void Grid::SetZoneProbesLineID(vector<int> &zoneProbesLineIDIn)
 {
-    this->probesSurfaceID = probesSurfaceIDIn;
+    this->zoneProbesLineID = zoneProbesLineIDIn;
 }
 
-inline vector<vector<RDouble> > Grid::GetProbesCoordinates() const
+inline vector<int> Grid::GetZoneProbesSurfaceID() const
 {
-    return probesCoordinates;
+    return zoneProbesSurfaceID;
 }
 
-inline void Grid::SetProbesCoordinates(vector<vector<RDouble> > &probesCoordinatesIn)
+inline void Grid::SetZoneProbesSurfaceID(vector<int> &zoneProbesSurfaceIDIn)
 {
-    this->probesCoordinates = probesCoordinatesIn;
+    this->zoneProbesSurfaceID = zoneProbesSurfaceIDIn;
+}
+
+inline vector<vector<RDouble> > Grid::GetZoneProbesCoordinates() const
+{
+    return zoneProbesCoordinates;
+}
+
+inline void Grid::SetZoneProbesCoordinates(vector<vector<RDouble> > &zoneProbesCoordinatesIn)
+{
+    this->zoneProbesCoordinates = zoneProbesCoordinatesIn;
+}
+
+inline void Grid::SetFileIndex(int fileIndex)
+{
+    this->fileIndexCurrentGridBelong = fileIndex;
+}
+
+inline int Grid::GetFileIndex()
+{
+    return this->fileIndexCurrentGridBelong;
 }

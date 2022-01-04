@@ -37,7 +37,7 @@ int intervalStepRes   = 10;
 //                    1 inch             = 0.0254m.
 //                    1 foot = 12 inches = 0.3048m.
 //                    1 yard = 3  feet   = 0.9144m.
-// forceRefenenceLength, forceRefenenceLengthSpanWise, forceRefenenceArea: Reference length, SpanWise length and area, independent of grid unit.
+// forceReferenceLength, forceReferenceLengthSpanWise, forceReferenceArea: Reference length, SpanWise length and area, independent of grid unit.
 // TorqueRefX, TorqueRefY, TorqueRefZ: Reference point, independent of grid unit.
 
 double refMachNumber = 5.00;
@@ -59,9 +59,9 @@ double refDimensionalTemperature = 288.15;
 
 double gridScaleFactor = 1.0;
 
-double forceRefenenceLengthSpanWise = 1.0;    // unit of meter.
-double forceRefenenceLength = 1.0;            // unit of meter.
-double forceRefenenceArea = 1.0;              // unit of meter^2.
+double forceReferenceLengthSpanWise = 1.0;    // unit of meter.
+double forceReferenceLength = 1.0;            // unit of meter.
+double forceReferenceArea = 1.0;              // unit of meter^2.
 double TorqueRefX = 0.0;                      // unit of meter. 
 double TorqueRefY = 0.0;                      // unit of meter.
 double TorqueRefZ = 0.0;                      // unit of meter.
@@ -107,7 +107,7 @@ double roeEntropyScale  = 1.0;
 #*******************************************************************
 // inviscidSchemeName: Spatial discretisation scheme of struct grid.
 //                     Using this when solve structered grid or hybrid.
-//                     -- "vanleer", "steger", "ausmpw".
+//                     -- "vanleer", "steger", "ausmpw", "ausmpw+".
 // str_limiter_name: Limiter of struct grid.
 //                   -- "minmod", "3rd_minmod_smooth".
 

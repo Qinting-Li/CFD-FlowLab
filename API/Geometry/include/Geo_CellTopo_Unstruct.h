@@ -26,73 +26,73 @@ namespace PHSPACE
 class Geo_CellTopo_Unstruct
 {
 private:
-	//! Number of faces per cell.
-	int * face_number_of_each_cell;
+    //! Number of faces per cell.
+    int * face_number_of_each_cell;
 
-	//! Cell to face: face index of each cell.
-	int ** cell2face;
+    //! Cell to face: face index of each cell.
+    int ** cell2face;
 
-	//! Number of cells per cell.
-	int * node_number_of_each_cell;
+    //! Number of cells per cell.
+    int * node_number_of_each_cell;
 
-	//! Cell to node: node index of each cell.
-	int * cell2node; 
+    //! Cell to node: node index of each cell.
+    int * cell2node; 
 
-	//! Cell to node: node index of each cell.
-	int ** cell2nodeArray; 
+    //! Cell to node: node index of each cell.
+    int ** cell2nodeArray; 
 
-	//! Number of neighbor cells per cell;
-	int * number_of_neighbor_cell;                  
+    //! Number of neighbor cells per cell;
+    int * number_of_neighbor_cell;                  
 
-	//! Cell to cell: neighbor cell index of each cell.
-	vector<int> * cell2cell;
-
-public:
-	LIB_EXPORT Geo_CellTopo_Unstruct();
-	LIB_EXPORT ~Geo_CellTopo_Unstruct();
+    //! Cell to cell: neighbor cell index of each cell.
+    vector<int> * cell2cell;
 
 public:
-	//! Set the number of faces per cell.
-	void SetFaceNumberOfEachCell(int * face_number_of_each_cell);
+    LIB_EXPORT Geo_CellTopo_Unstruct();
+    LIB_EXPORT ~Geo_CellTopo_Unstruct();
 
-	//! Set the cell to face.
-	void SetCell2Face(int ** cell2faceIn);
+public:
+    //! Set the number of faces per cell.
+    void SetFaceNumberOfEachCell(int * face_number_of_each_cell);
 
-	//! Set the number of cells per cell.
-	void SetNodeNumberOfEachCell(int * node_number_of_each_cell);
+    //! Set the cell to face.
+    void SetCell2Face(int ** cell2faceIn);
 
-	//! Set the cell to node.
-	void SetCell2Node(int * cell2node);
+    //! Set the number of cells per cell.
+    void SetNodeNumberOfEachCell(int * node_number_of_each_cell);
 
-	//! Set the cell to node.
-	void SetCell2NodeArray(int ** cell2nodeArrayIn);
+    //! Set the cell to node.
+    void SetCell2Node(int * cell2node);
 
-	//! Set number of neighbor cells per cell.
-	void SetNumberOfNeighborCell(int * number_of_neighbor_cell);
+    //! Set the cell to node.
+    void SetCell2NodeArray(int ** cell2nodeArrayIn);
 
-	//! Set the cell to cell: neighbor cell index of each cell.
-	void SetCell2Cell(vector<int> * cell2cell);
+    //! Set number of neighbor cells per cell.
+    void SetNumberOfNeighborCell(int * number_of_neighbor_cell);
 
-	//! Get the number of faces per cell.
-	int * GetFaceNumberOfEachCell();
+    //! Set the cell to cell: neighbor cell index of each cell.
+    void SetCell2Cell(vector<int> * cell2cell);
 
-	//! Get the cell to face: face index of each cell.
-	int ** GetCell2Face();	
+    //! Get the number of faces per cell.
+    int * GetFaceNumberOfEachCell();
 
-	//! Get number of nodes per cell.
-	int * GetNodeNumberOfEachCell();
+    //! Get the cell to face: face index of each cell.
+    int ** GetCell2Face();
 
-	//! Get the cell to node: node index of each cell.
-	int * GetCell2Node();
+    //! Get number of nodes per cell.
+    int * GetNodeNumberOfEachCell();
 
-	//! Get the cell to node: node index of each cell.
-	int ** GetCell2NodeArray();
+    //! Get the cell to node: node index of each cell.
+    int * GetCell2Node();
 
-	//! Get number of neighbor cells per cell.
-	int * GetNumberOfNeighborCell();
+    //! Get the cell to node: node index of each cell.
+    int ** GetCell2NodeArray();
 
-	//! Get the cell to cell: neighbor cell index of each cell.
-	vector<int> * GetCell2Cell();
+    //! Get number of neighbor cells per cell.
+    int * GetNumberOfNeighborCell();
+
+    //! Get the cell to cell: neighbor cell index of each cell.
+    vector<int> * GetCell2Cell();
 };
 
 #include "Geo_CellTopo_Unstruct.hxx"

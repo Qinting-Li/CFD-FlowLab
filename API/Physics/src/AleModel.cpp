@@ -369,12 +369,8 @@ AleParameter::~AleParameter()
 
 void AleParameter::SetLMSMFlag()
 {
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
-
     string outtimesc;
-    GlobalDataBase::GetData("outtimesc",&outtimesc,PHSTRING,1);
+    GlobalDataBase::GetData("outtimesc", &outtimesc, PHSTRING, 1);
 
     if ( outtimesc.substr(0,6) == "impeul" )
     {
@@ -408,14 +404,9 @@ void AleParameter::SetLMSMFlag()
 
 void AleParameter::Init()
 {
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
-
     //! At this time,we can not get the value of outnstep ,temporarily set to 0.
 
     int outnstep = 0;
-    //GetData("outnstep",&outnstep,PHINT,1);
-
     RDouble dtau = GlobalDataBase::GetDoubleParaFromDB("dtau");
     RDouble timemax = GlobalDataBase::GetDoubleParaFromDB("timemax");
     RDouble dtsave = GlobalDataBase::GetDoubleParaFromDB("dtsave");
@@ -673,9 +664,9 @@ void AleModel::DynamicGrid()
 
 void AleModel::GenerateDynamicGrid()
 {
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
+    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if ( iale == 1 )
+    if (codeOfAleModel == 1)
     {
         //! Rigid body movement.
         CheckMovement();
@@ -794,9 +785,9 @@ void AleModel::GridSurfaceVelocity(Grid *grid, RDouble *xt, RDouble *yt, RDouble
 
 void AleModel::GridVerticeVelocity(Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt)
 {
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
+    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if ( iale == 1 )
+    if (codeOfAleModel == 1)
     {
         //! Rigid body movement.
         GridVerticeVelocityRigid(grid, xt, yt, zt);
@@ -814,16 +805,16 @@ void AleModel::GridVerticeVelocityGeneral(Grid *grid, RDouble *xt, RDouble *yt, 
     RDouble *y = grid->GetY();
     RDouble *z = grid->GetZ();
 
-    SimpleGrid * oldgrid = grid->GetOldGrid();
+    SimpleGrid * oldGrid = grid->GetOldGrid();
 
-    RDouble *xold = oldgrid->GetX();
-    RDouble *yold = oldgrid->GetY();
-    RDouble *zold = oldgrid->GetZ();
+    RDouble *xold = oldGrid->GetX();
+    RDouble *yold = oldGrid->GetY();
+    RDouble *zold = oldGrid->GetZ();
 
     int nTotalNode = grid->GetNTotalNode();
 
     RDouble dtau;
-    GlobalDataBase::GetData("dtau",&dtau,PHDOUBLE,1);
+    GlobalDataBase::GetData("dtau", &dtau, PHDOUBLE, 1);
 
     for ( int inode = 0; inode < nTotalNode; ++ inode )
     {
@@ -847,10 +838,6 @@ void AleModel::GridVerticeVelocityRigid(Grid *grid, RDouble *xt, RDouble *yt, RD
     //! jh = cos phi * j - sin phi * k
     //! Omega(p,q,r) in the frame (i,j,k) angle0(1,.) = (psi,theta,phi)
     //! psi is not set since it is not needed.
-
-    RDouble xref_new = xyz_ref[0][0];
-    RDouble yref_new = xyz_ref[0][1];
-    RDouble zref_new = xyz_ref[0][2];
 
     RDouble xref_old = xyz_ref[1][0];
     RDouble yref_old = xyz_ref[1][1];
@@ -976,14 +963,9 @@ void AleModel::Deform()
 
 void AleModel::Init()
 {
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
-
     param->Init();
 
     //! Return judgment isn't necessary here.
-    //if ( ( isUnsteady == 0 ) || ( iale == 0 ) ) return;
-
     for ( int i = 0; i < 3; ++ i )
     {
         for ( int j = 0; j < 3; ++ j )
@@ -1015,27 +997,27 @@ void AleModel::MoveGrid()
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
 
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
+    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
     int ialetype = 0;
-    GlobalDataBase::GetData("ialetype",&ialetype,PHINT,1);
+    GlobalDataBase::GetData("ialetype", &ialetype, PHINT, 1);
 
-    if ( ( isUnsteady == 0 ) || ( iale == 0 ) ) return;
+    if ((isUnsteady == 0) || (codeOfAleModel == 0)) return;
 
-    if ( ialetype == 2 )
+    if (ialetype == 2)
     {
         int ipdfm = 0;
         //ipdfm  = ialepar(3);
-        if ( ipdfm == 5 )
+        if (ipdfm == 5)
         {
             //simu_compute_force;
         }
     }
-    
-    //! iale      = 0: no ALE method.
-    //!             1: ALE method for non-moving grids (relative frame).
-    //!             2: ALE method for moving grids (absolute frame).
-    //!             3: ALE method for deforming grids.
+
+    //! codeOfAleModel = 0: no ALE method;
+    //!                  1: ALE method for non-moving grids (relative frame);
+    //!                  2: ALE method for moving grids (absolute frame);
+    //!                  3: ALE method for deforming grids.
     
     //! coord     = current position of the reference point at time n, n-1, n-2.
     //! angle     = current Euler's angles at time n, n-1, n-2.
@@ -1057,13 +1039,13 @@ void AleModel::MoveGrid()
 
 
     int lmsmflag = 1;
-    GlobalDataBase::GetData("lmsmflag",&lmsmflag,PHINT,1);
+    GlobalDataBase::GetData("lmsmflag", &lmsmflag, PHINT, 1);
 
     int outnstep = 1;
-    GlobalDataBase::GetData("outnstep",&outnstep,PHINT,1);
+    GlobalDataBase::GetData("outnstep", &outnstep, PHINT, 1);
 
     RDouble simutime;
-    GlobalDataBase::GetData("simutime",&simutime,PHDOUBLE,1);
+    GlobalDataBase::GetData("simutime", &simutime, PHDOUBLE, 1);
 
     int    * ialepar = reinterpret_cast< int    *  > ( GlobalDataBase::GetDataPtr("ialepar") );
     RDouble * ralepar = reinterpret_cast< RDouble *  > ( GlobalDataBase::GetDataPtr("ralepar") );
@@ -1099,52 +1081,6 @@ void AleModel::MoveGrid()
         dangle[m] = angle[m][0] - angle[m][1];
         tcoord[m] = coord[m][0] - coord[m][1];
     }
-
-
-    RDouble * xyzref = reinterpret_cast< RDouble * > ( GlobalDataBase::GetDataPtr("xyzref") );
-
- //   int nZones = zones->size();
- //   for ( int izone = 0; izone < nZones; ++ izone )
- //   {
-    //	Grid *grid = GetGrid(izone, 0);
- //       if ( !grid ) continue;
-    //	int nTotalNode = grid->GetNTotalNode();
-    //	RDouble *xt = new RDouble[nTotalNode];
-    //	RDouble *yt = new RDouble[nTotalNode];
-    //	RDouble *zt = new RDouble[nTotalNode];
-    //	if ( iale >= 3 )
-    //	{
-    //		//! This is the case of DEFORMING grids.
-    //		//! Two cases may be considered :
-    //		//! - velocities are known then coordinates are updated.
-    //		//! - coordinates are known then velocities are updated.
-    //		//! This is the first procedure.
-    //		deform();
-    //	}
-    //	else
-    //	{
-    //		//! This is the case of MOVING grids.
-    //		//! Compute the new set of coordinates with Euler's angles
-    //		//! and the position of the reference point.
-    //		//! Jump in the case of NON-MOVING grids.
-    //        
-    //		if ( iale == 2 )
-    //		{
-    //			//! Darracq: discrete mesh velocity.
-    //			grid->RotTransVel(xyzref, dangle, tcoord, angle0, coord0);
-    //		}
-
-    //		//! Then compute the grid velocity at cell's vertices.
-    //		grid->ComputeGDVel(xt, yt, zt, angle0, coord0);
-    //	}
-
- //       grid->UpdateVolold();
- //       grid->ComputeMetrics();
-
-    //	delete [] xt;
-    //	delete [] yt;
-    //	delete [] zt;
-    //}
 
     delete [] dangle;
     delete [] tcoord;
@@ -1262,11 +1198,10 @@ void AleModel::UnsteadyPreSolve()
     GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
 
     //! Pre-work for ALE.
-    int iale = GlobalDataBase::GetIntParaFromDB("iale");
+    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if (iale == 0) return;
+    if (codeOfAleModel == 0) return;
 
-    GetOuterdt(param);
     DynamicGrid();
 }
 

@@ -104,8 +104,8 @@ public:
                             + PHArraySectionInfo<T10>::isPick
                             + PHArraySectionInfo<T11>::isPick;
 
-    typedef PHArray<T,numValidTypes> T_array;
-    typedef PHArray<T,rank> T_slice;
+    typedef PHArray<T, numValidTypes> T_array;
+    typedef PHArray<T, rank> T_slice;
 };
 
 }

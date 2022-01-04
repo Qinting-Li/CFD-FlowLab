@@ -5,6 +5,7 @@
 #include "Gas.h"
 using namespace std;
 
+
 namespace PHSPACE
 {
 using namespace GAS_SPACE;
@@ -16,14 +17,14 @@ int GetSchemeID(const string &scheme_name)
     {
         scheme_id = ISCHEME_ROE;
     }
+    else if (scheme_name.substr(0,7) == "ausmpw+")
+    {
+        scheme_id = ISCHEME_AUSMPW_PLUS;
+    }
     else if (scheme_name.substr(0,6) == "ausmpw")
     {
         scheme_id = ISCHEME_AUSMPW;
     }
-    else if (scheme_name.substr(0,5) == "ausm+")
-    {    
-        scheme_id = ISCHEME_AUSMP;
-    }		
     else if (scheme_name.substr(0,6) == "ausm+w")
     {
         scheme_id = ISCHEME_AUSM_W;
@@ -31,6 +32,10 @@ int GetSchemeID(const string &scheme_name)
     else if (scheme_name.substr(0,7) == "ausm+up")
     {
         scheme_id = ISCHEME_AUSMPUP;
+    }
+    else if (scheme_name.substr(0,5) == "ausm+")
+    {    
+        scheme_id = ISCHEME_AUSMP;
     }
     else if (scheme_name.substr(0,6) == "ausmdv")
     {
@@ -79,6 +84,9 @@ INVScheme GetINVScheme(int scheme_id)
         break;
     case ISCHEME_AUSMPW:
         inv_scheme = Ausmpw_Scheme;
+        break;
+    case ISCHEME_AUSMPW_PLUS:
+        inv_scheme = AusmpwPlus_Scheme;
         break;
     case ISCHEME_VANLEER:
         inv_scheme = Vanleer_Scheme;
@@ -130,14 +138,14 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     using namespace IDX;
     using namespace GAS_SPACE;
 
-    RDouble *prim       = new RDouble[nEquation];
-    RDouble *qConserveL = new RDouble[nEquation];
-    RDouble *qConserveR = new RDouble[nEquation];
-    RDouble *dq         = new RDouble[nEquation];
+    RDouble *prim       = new RDouble[nEquation]();
+    RDouble *qConserveL = new RDouble[nEquation]();
+    RDouble *qConserveR = new RDouble[nEquation]();
+    RDouble *dq         = new RDouble[nEquation]();
 
-    RDouble *primL = new RDouble[nEquation];
-    RDouble *primR = new RDouble[nEquation];
-    RDouble temperaturesL[3], temperaturesR[3];
+    RDouble *primL = new RDouble[nEquation]();
+    RDouble *primR = new RDouble[nEquation]();
+    RDouble temperaturesL[3] = {0}, temperaturesR[3] = {0};
 
     for (int iFace = 0; iFace < nLength; ++ iFace)
     {
@@ -211,7 +219,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         //! The following loop is useless.
         for (int iLaminar = nm; iLaminar < nLaminar; ++ iLaminar)
         {
-            flux[iLaminar][iFace] = half * (primL[iLaminar] * rvnL + primR[iLaminar] * rvnR);		
+            flux[iLaminar][iFace] = half * (primL[iLaminar] * rvnL + primR[iLaminar] * rvnR);
         }
 
         for (int it = 1; it < nTemperatureModel; ++ it)
@@ -236,7 +244,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         RDouble gamm1 = gama - one;
 
         RDouble vSquareRoeAverage = uRoeAverage * uRoeAverage + vRoeAverage * vRoeAverage + wRoeAverage * wRoeAverage;
-        RDouble hRoeAverage =  gama / gamm1 * pRoeAverage / rRoeAverage + half * vSquareRoeAverage;
+        RDouble hRoeAverage = gama / gamm1 * pRoeAverage / rRoeAverage + half * vSquareRoeAverage;
 
         RDouble vn = xsn * uRoeAverage + ysn * vRoeAverage + zsn * wRoeAverage - vb;
         RDouble theta = vn + vb;
@@ -247,8 +255,8 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         //! Sound speed: gama * pRoeAverage / rRoeAverage.
         RDouble cm = sqrt(ABS(c2));
 
-        RDouble Ur2, cnew2, cnew, vnew, beta, alpha;
-        RDouble eigv1, eigv2, eigv3;
+        RDouble Ur2 = 0, cnew2 = 0, cnew = 0, vnew = 0, beta = 0, alpha = 0;
+        RDouble eigv1 = 0, eigv2 = 0, eigv3 = 0;
         eigv1 = ABS(vn);
         if (nPrecondition == 0)
         {
@@ -295,7 +303,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         //! Warning: This function calling may affect the efficient!
         Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
 
-        RDouble xi1, xi2, xi3, xi4;
+        RDouble xi1 = 0.0, xi2 = 0.0, xi3 = 0.0, xi4 = 0.0;
         if (nPrecondition == 0) 
         {
             xi1 = (two * eigv1 - eigv2 - eigv3) / (two * c2);
@@ -312,7 +320,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
 
         RDouble dc = theta * dq[IR] - xsn * dq[IRU] - ysn * dq[IRV] - zsn * dq[IRW];
 
-        RDouble c2dc;
+        RDouble c2dc = 0;
         if (nPrecondition == 0)
         {
             c2dc = c2 * dc;
@@ -367,12 +375,12 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
 
     }
 
-    delete []prim;
-    delete []primL;
-    delete []primR;
-    delete []qConserveL;
-    delete []qConserveR;
-    delete []dq;
+    delete []prim;    prim = NULL;
+    delete []primL;    primL = NULL;
+    delete []primR;    primR = NULL;
+    delete []qConserveL;    qConserveL = NULL;
+    delete []qConserveR;    qConserveR = NULL;
+    delete []dq;    dq = NULL;
 }
 
 void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inviscidSchemePara)
@@ -403,7 +411,7 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
 
     RDouble *lrtL = faceProxy->GetPressureCoefficientL();
     RDouble *lrtR = faceProxy->GetPressureCoefficientR();
-	RDouble **tl = inviscidSchemePara->GetLeftTemperature();
+    RDouble **tl = inviscidSchemePara->GetLeftTemperature();
     RDouble **tr = inviscidSchemePara->GetRightTemperature();
     RDouble mach2 = refMachNumber * refMachNumber;
 
@@ -414,7 +422,7 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
 
     RDouble *primL = new RDouble[nEquation];
     RDouble *primR = new RDouble[nEquation];
-	RDouble temperaturesL[3], temperaturesR[3];
+    RDouble temperaturesL[3], temperaturesR[3];
 
     for (int iFace = 0; iFace < nLength; ++ iFace)
     {
@@ -512,17 +520,14 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
         RDouble uRoeAverage = (uL + uR * ratio) * roeAverageCoef;
         RDouble vRoeAverage = (vL + vR * ratio) * roeAverageCoef;
         RDouble wRoeAverage = (wL + wR * ratio) * roeAverageCoef;
-        RDouble pRoeAverage = (pL + pR * ratio) * roeAverageCoef;
         RDouble HRoeAverage = (HL + HR * ratio) * roeAverageCoef;
 
         RDouble gama = (gmL + gmR * ratio) * roeAverageCoef;
         RDouble gamm1 = gama - one;
 
         RDouble vSquareRoeAverage = uRoeAverage * uRoeAverage + vRoeAverage * vRoeAverage + wRoeAverage * wRoeAverage;
-        RDouble hRoeAverage =  gama / gamm1 * pRoeAverage / rRoeAverage + half * vSquareRoeAverage;
 
         RDouble vn = xsn * uRoeAverage + ysn * vRoeAverage + zsn * wRoeAverage - vb;
-        RDouble theta = vn + vb;
 
         //! c2: square of sound speed.             
         RDouble c2 = gamm1 * (HRoeAverage - half * vSquareRoeAverage);
@@ -548,10 +553,6 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
             eigv3 = ABS(vnew - cnew);
         }
 
-        //! E: total energy per unit mass.
-        RDouble EL = (one / (gmL - one)) * (pL / rL) + half * vSquareL;
-        RDouble ER = (one / (gmR - one)) * (pR / rR) + half * vSquareR;
-
         //! The jump between left and right primitive variables.
         dq[IR] = rR - rL;
         dq[IU] = uR - uL;
@@ -563,16 +564,6 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
         if (nChemical != 0)
         {
             TK_Exit::UnexpectedVarValue("Do not consider chemical = ", 1);
-            /*
-            RDouble TtrL, TvL, TeL, TtrR, TvR, TeR;
-            if (nTemperatureModel > 1)
-            {
-                GetTemperature(primL, TtrL, TvL, TeL);
-                GetTemperature(primR, TtrR, TvR, TeR);
-            }
-            Primitive2Conservative(primL, gmL, TvL, TeL, qConserveL);
-            Primitive2Conservative(primR, gmR, TvR, TeR, qConserveR);
-            //*/
         }
 
         //! Entropy correction, to limit the magnitude of the three eigenvalue.
@@ -653,7 +644,6 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     int EntropyFixMethod = invSchemePara->GetEntropyFixMethod();
     int nChemical = invSchemePara->GetNumberOfChemical();
 
-    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble entrFixCoefLeft  = invSchemePara->GetLeftEntropyFixCoefficient();
@@ -738,8 +728,6 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
 
         RDouble vnl = xsn * ul + ysn * vl + zsn * wl - vb;
         RDouble vnr = xsn * ur + ysn * vr + zsn * wr - vb;
-        RDouble rvnl = rl * vnl;
-        RDouble rvnr = rr * vnr;
 
         RDouble c2l = gmL * pl / rl;
         RDouble cl  = sqrt(ABS(c2l));
@@ -795,13 +783,13 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
             //absEigvr2 = MAX(tmp1, absEigvr2);
             //absEigvr3 = MAX(tmp1, absEigvr3);
 
-			absEigvl1 = sqrt(absEigvl1*absEigvl1 + 1.E-4);
+            absEigvl1 = sqrt(absEigvl1*absEigvl1 + 1.E-4);
             absEigvl2 = sqrt(absEigvl2*absEigvl2 + 1.E-4);
             absEigvl3 = sqrt(absEigvl3*absEigvl3 + 1.E-4);
 
-			absEigvr1 = sqrt(absEigvr1*absEigvr1 + 1.E-4);
-			absEigvr2 = sqrt(absEigvr2*absEigvr2 + 1.E-4);
-			absEigvr3 = sqrt(absEigvr3*absEigvr3 + 1.E-4);
+            absEigvr1 = sqrt(absEigvr1*absEigvr1 + 1.E-4);
+            absEigvr2 = sqrt(absEigvr2*absEigvr2 + 1.E-4);
+            absEigvr3 = sqrt(absEigvr3*absEigvr3 + 1.E-4);
         }
         eigvl1 = half * (eigvl1 + absEigvl1);
         eigvl2 = half * (eigvl2 + absEigvl2);
@@ -883,7 +871,6 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
     int nm = invSchemePara->Getnm();
     int nChemical = invSchemePara->GetNumberOfChemical();
     int nPrecondition = invSchemePara->GetIfPrecondition();
-    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble **ql = invSchemePara->GetLeftQ();
@@ -903,8 +890,8 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
     using namespace IDX;
     using namespace GAS_SPACE;
 
-    RDouble *fl    = new RDouble[nLaminar];
-    RDouble *fr    = new RDouble[nLaminar];
+    RDouble *fl    = new RDouble[nEquation];
+    RDouble *fr    = new RDouble[nEquation];
     RDouble *priml = new RDouble[nEquation];
     RDouble *primr = new RDouble[nEquation];
     RDouble temperaturesL[3], temperaturesR[3];
@@ -1136,7 +1123,6 @@ void Ausmdv_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     RDouble **flux = invSchemePara->GetFlux();
     //! Compute the number of species.
     int nChemical = invSchemePara->GetNumberOfChemical();
-    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     using namespace IDX;
@@ -1299,9 +1285,6 @@ void Ausmdv_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
             mmr = - alphar * tmp + (one - alphar) * mm1;
             pmr = tmp * (two + mr);
         }
-
-        RDouble p12_d =  ppl * pl + pmr * pr;
-
         RDouble rvnl_d = cm * rl * mpl;
         RDouble rvnr_d = cm * rr * mmr;
 
@@ -1400,7 +1383,6 @@ void Ausmpw_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     int nm = invSchemePara->Getnm();
     //! Compute the number of species.
     int nChemical = invSchemePara->GetNumberOfChemical();
-    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble **ql = invSchemePara->GetLeftQ();
@@ -1441,8 +1423,6 @@ void Ausmpw_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
         RDouble &vr = primr[IV];
         RDouble &wr = primr[IW];
         RDouble &pr = primr[IP];
-
-        RDouble gama = half * (gamal[iLen] + gamar[iLen]);
 
         RDouble v2l = ul * ul + vl * vl + wl * wl;
         RDouble v2r = ur * ur + vr * vr + wr * wr;
@@ -1559,7 +1539,7 @@ void Ausmpw_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     delete []primr;
 }
 
-void Hlle_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
+void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
 {
     int nTemperatureModel = invSchemePara->GetNumberOfTemperatureModel();
     int nEquation = invSchemePara->GetNumberOfTotalEquation();
@@ -1568,7 +1548,6 @@ void Hlle_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
     int nm = invSchemePara->Getnm();
     //! Compute the number of species.
     int nChemical = invSchemePara->GetNumberOfChemical();
-    int nNitrogenIndex = invSchemePara->GetIndexOfNitrogen();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble **ql = invSchemePara->GetLeftQ();
@@ -1586,10 +1565,183 @@ void Hlle_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
     using namespace IDX;
     using namespace GAS_SPACE;
 
-    RDouble *qcsvl = new RDouble[nLaminar];
-    RDouble *qcsvr = new RDouble[nLaminar];
-    RDouble *fl    = new RDouble[nLaminar];
-    RDouble *fr    = new RDouble[nLaminar];
+    RDouble *priml = new RDouble[nEquation];
+    RDouble *primr = new RDouble[nEquation];
+    RDouble temperaturesL[3], temperaturesR[3];
+
+    for (int iLen = 0; iLen < nLen; ++ iLen)
+    {
+        for (int iEqn = 0; iEqn < nEquation; ++ iEqn)
+        {
+            priml[iEqn] = ql[iEqn][iLen];
+            primr[iEqn] = qr[iEqn][iLen];
+        }
+
+        RDouble &rl = priml[IR];
+        RDouble &ul = priml[IU];
+        RDouble &vl = priml[IV];
+        RDouble &wl = priml[IW];
+        RDouble &pl = priml[IP];
+
+        RDouble &rr = primr[IR];
+        RDouble &ur = primr[IU];
+        RDouble &vr = primr[IV];
+        RDouble &wr = primr[IW];
+        RDouble &pr = primr[IP];
+
+        RDouble v2l = ul * ul + vl * vl + wl * wl;
+        RDouble v2r = ur * ur + vr * vr + wr * wr;
+
+        RDouble hint_l, hint_r;
+        for (int i = 0; i < 3; ++ i)
+        {
+            temperaturesL[i] = tl[i][iLen];
+            temperaturesR[i] = tr[i][iLen];
+        }
+        gas->ComputeEnthalpyByPrimitive(priml, gamal[iLen], hint_l, temperaturesL);
+        gas->ComputeEnthalpyByPrimitive(primr, gamar[iLen], hint_r, temperaturesR);
+
+        RDouble peL = 0.0, peR = 0.0;
+        if (nChemical > 0 && nTemperatureModel > 1)
+        {
+            peL = gas->GetElectronPressure(priml, temperaturesL[ITE]);
+            peR = gas->GetElectronPressure(primr, temperaturesR[ITE]);
+        }
+
+        RDouble hl  = hint_l + half * v2l;
+        RDouble hr  = hint_r + half * v2r;
+
+        RDouble vnl  = xfn[iLen] * ul + yfn[iLen] * vl + zfn[iLen] * wl - vgn[iLen];
+        RDouble vnr  = xfn[iLen] * ur + yfn[iLen] * vr + zfn[iLen] * wr - vgn[iLen];
+
+        RDouble gama2l = (gamal[iLen] - 1.0)/(gamal[iLen] + 1.0);
+        RDouble gama2r = (gamar[iLen] - 1.0)/(gamar[iLen] + 1.0);
+        RDouble cl2  = half * ABS((gama2l + gama2r) * (hl + hr));
+
+        RDouble cm;
+        if (vnl + vnr > 0.0)
+        {
+            cm = cl2 / max(abs(vnl), sqrt(cl2));
+        }
+        else
+        {
+            cm = cl2 / max(abs(vnr), sqrt(cl2));
+        }
+
+        RDouble ocm = 1.0 / cm;
+
+        RDouble ml  =  vnl * ocm;
+        RDouble mr  =  vnr * ocm;
+
+        RDouble fm4ml = FMmpn(ml, zero,  one);
+        RDouble fm4mr = FMmpn(mr, zero, -one);
+
+        RDouble fp5ml = FMppn(ml, zero,  one);
+        RDouble fp5mr = FMppn(mr, zero, -one);
+
+        RDouble m12  = fm4ml + fm4mr;
+        RDouble p12  = fp5ml * pl + fp5mr * pr;
+        RDouble pe12 = fp5ml * peL + fp5mr * peR;
+
+        RDouble minplr = MIN(pl / (pr + SMALL), pr / (pl + SMALL));
+        RDouble fw     = one - minplr * minplr * minplr;
+
+        RDouble op12 = one / (p12 + SMALL);
+
+        RDouble fl = zero;
+        RDouble fr = zero;
+
+        if (p12 > 0.0)
+        {
+            if (ABS(ml) <= one)
+            {
+                fl = pl * op12 - one;
+            }
+
+            if (ABS(mr) <= one)
+            {
+                fr = pr * op12 - one;
+            }
+        }
+
+        RDouble mpl, mmr;
+        if (m12 >= zero)
+        {
+            RDouble one_fr = one + fr;
+            mpl = fm4ml + fm4mr * ((one - fw) * one_fr - fl);
+            mmr = fm4mr * fw * one_fr;
+        }
+        else
+        {
+            RDouble one_fl = one + fl;
+            mpl = fm4ml * fw * one_fl;
+            mmr = fm4mr + fm4ml * ((one - fw) * one_fl - fr);
+        }
+
+        flux[IR ][iLen] = cm * (mpl*rl    + mmr*rr  );
+        flux[IRU][iLen] = cm * (mpl*rl*ul + mmr*rr*ur) + p12 * xfn[iLen];
+        flux[IRV][iLen] = cm * (mpl*rl*vl + mmr*rr*vr) + p12 * yfn[iLen];
+        flux[IRW][iLen] = cm * (mpl*rl*wl + mmr*rr*wr) + p12 * zfn[iLen];
+        flux[IRE][iLen] = cm * (mpl*rl*hl + mmr*rr*hr) + p12 * vgn[iLen];
+
+        for (int iLaminar = nm; iLaminar < nLaminar; ++ iLaminar)
+        {
+            flux[iLaminar][iLen] = cm * (mpl*rl*priml[iLaminar] + mmr*rr*primr[iLaminar]);
+        }
+
+        //! Compute vibration-electron energy term.
+        for (int it = 1; it < nTemperatureModel; ++ it)
+        {
+            flux[nLaminar + it][iLen] = cm * (mpl*rl*priml[nLaminar + it] + mmr*rr*primr[nLaminar + it]);
+        }
+        if (nChemical == 1)
+        {
+            flux[nLaminar + nTemperatureModel - 1][iLen] += cm * (mpl*peL + mmr*peR) + pe12 * vgn[iLen];
+        }
+
+        if (nChemical > 0)
+        {
+            flux[nLaminar][iLen] = 0.0;
+            if (nElectronIndex >= 0)
+            {
+                flux[nLaminar - 1][iLen] = 0.0;
+            }
+        }
+    }
+    delete []priml;
+    delete []primr;
+}
+
+void Hlle_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
+{
+    int nTemperatureModel = invSchemePara->GetNumberOfTemperatureModel();
+    int nEquation = invSchemePara->GetNumberOfTotalEquation();
+    int nLaminar = invSchemePara->GetNumberOfLaminar();
+    int nLen = invSchemePara->GetLength();
+    int nm = invSchemePara->Getnm();
+    //! Compute the number of species.
+    int nChemical = invSchemePara->GetNumberOfChemical();
+    int nElectronIndex = invSchemePara->GetIndexOfElectron();
+
+    RDouble **ql = invSchemePara->GetLeftQ();
+    RDouble **qr = invSchemePara->GetRightQ();
+    RDouble *gamal = invSchemePara->GetLeftGama();
+    RDouble *gamar = invSchemePara->GetRightGama();
+    RDouble *xfn   = invSchemePara->GetFaceNormalX();
+    RDouble *yfn   = invSchemePara->GetFaceNormalY();
+    RDouble *zfn   = invSchemePara->GetFaceNormalZ();
+    RDouble *vgn   = invSchemePara->GetFaceVelocity();
+    RDouble **flux = invSchemePara->GetFlux();
+    RDouble **tl = invSchemePara->GetLeftTemperature();
+    RDouble **tr = invSchemePara->GetRightTemperature();
+
+    using namespace IDX;
+    using namespace GAS_SPACE;
+
+    RDouble *qcsvl = new RDouble[nEquation];
+    RDouble *qcsvr = new RDouble[nEquation];
+    RDouble *fl    = new RDouble[nEquation];
+    RDouble *fr    = new RDouble[nEquation];
 
     RDouble *priml = new RDouble[nEquation];
     RDouble *primr = new RDouble[nEquation];
@@ -1640,7 +1792,6 @@ void Hlle_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
         RDouble pm = (pl + pr * ratio) * coef;
         
         RDouble gama  = (gamal[iLen] + gamar[iLen] * ratio) * coef;
-        RDouble gamm1 = gama - one;
 
         RDouble vnl  = xfn[iLen] * ul + yfn[iLen] * vl + zfn[iLen] * wl - vgn[iLen];
         RDouble vnr  = xfn[iLen] * ur + yfn[iLen] * vr + zfn[iLen] * wr - vgn[iLen];
@@ -1731,6 +1882,26 @@ RDouble FMSplit1(const RDouble &mach, const RDouble &ipn)
 RDouble FMSplit2(const RDouble &mach, const RDouble &ipn)
 {
     return ipn * fourth * SQR(mach + ipn);
+}
+
+RDouble FMmpn(const RDouble &mach, const RDouble &beta, const RDouble &ipn)
+{
+    if (ABS(mach) >= one)
+    {
+        return FMSplit1(mach,ipn);
+    }
+    return FMSplit2(mach,ipn);
+}
+
+RDouble FMppn(const RDouble &mach, const RDouble &beta, const RDouble &ipn)
+{
+    RDouble macha = ABS(mach);
+    if (macha >= one)
+    {
+        return  FMSplit1(mach,ipn) / mach ;
+    }
+
+    return FMSplit2(mach,ipn) * ((two * ipn - mach));
 }
 
 RDouble FMSplit4(const RDouble &mach, const RDouble &beta, const RDouble &ipn)

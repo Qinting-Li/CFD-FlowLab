@@ -46,7 +46,7 @@ private:
     void ReadFluentCell(int first_index, int last_index, fstream &file);
 
 private:
-    GridFormat_Fluent * fluent_factory;
+    GridFormat_Fluent *fluent_factory;
 };
 
 class FluentFacePatch
@@ -64,14 +64,14 @@ public:
     void SetFaceType(int face_type) { this->face_type = face_type; }
     int  GetBCType() const { return bc_type; }
     void SetBCType(int bc_type) { this->bc_type = bc_type; }
-    int  GetNTotalFace() const { return nTotalFace; };
+    int  GetNTotalFace() const { return nTotalFace; }
     void SetNTotalFace(int nTotalFace) { this->nTotalFace = nTotalFace; }
-    void SetPatchName(const string &patchNameIn) { this->patchName = patchNameIn; };
+    void SetPatchName(const string &patchNameIn) { this->patchName = patchNameIn; }
     string GetPatchName() const { return this->patchName; }
 public:
-    vector<vector<int> > &GetFace2Node() { return face2node; };
-    vector<int> &GetLeftCellOfFace()  { return left_cell_of_face; }
-    vector<int> &GetRightCellOfFace() { return right_cell_of_face; }
+    vector<vector<int> > & GetFace2Node() { return face2node; }
+    vector<int> & GetLeftCellOfFace()  { return left_cell_of_face; }
+    vector<int> & GetRightCellOfFace() { return right_cell_of_face; }
 };
 
 class GridFormat_Fluent
@@ -80,24 +80,24 @@ public:
     GridFormat_Fluent();
     ~GridFormat_Fluent();
 private:
-    RawGrid * rawgrid;
+    RawGrid *rawgrid;
     int dimension;
     int nTotalNode, nTotalCell, nTotalFace, nBoundFace;
     int nPatchs;
     vector<FluentFacePatch *> face_patchs;
     map<int, int> bcmap;
 public:
-    RawGrid *GetRawGrid() const { return rawgrid; }
+    RawGrid * GetRawGrid() const { return rawgrid; }
     int  GetNTotalNode() const { return nTotalNode; }
     void SetNTotalNode(int nTotalNode) { this->nTotalNode = nTotalNode; }
     int  GetNTotalCell() const { return nTotalCell; }
     void SetNTotalCell(int nTotalCell) { this->nTotalCell = nTotalCell; }
     int  GetNTotalFace() const { return nTotalFace; }
     void SetNTotalFace(int nTotalFace) { this->nTotalFace = nTotalFace; }
-    int  GetNBoundFace() { return nBoundFace; };
-    int  GetDimension() const { return dimension; };
-    void SetDimension(int dimension) { this->dimension = dimension; };
-    vector<FluentFacePatch *> &GetFluentFacePatchS() { return face_patchs; }
+    int  GetNBoundFace() { return nBoundFace; }
+    int  GetDimension() const { return dimension; }
+    void SetDimension(int dimension) { this->dimension = dimension; }
+    vector<FluentFacePatch *> & GetFluentFacePatchS() { return face_patchs; }
 public:
     void Process();
     void ReorderFacePatchs();

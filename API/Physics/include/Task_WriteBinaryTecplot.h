@@ -26,16 +26,16 @@ namespace PHSPACE
 class Task_WriteBinaryTecplot : public Task
 {
 public:
-	LIB_EXPORT Task_WriteBinaryTecplot(int flowType = 0);
-	LIB_EXPORT ~Task_WriteBinaryTecplot();
-	LIB_EXPORT void ServerWrite(ActionKey *actkey);
-	void PreTask(ActionKey *actkey);
-	void MainTask(ActionKey *actkey);
-	void PostTask(ActionKey *actkey);
+    LIB_EXPORT Task_WriteBinaryTecplot(int flowType = 0);
+    LIB_EXPORT ~Task_WriteBinaryTecplot();
+    LIB_EXPORT void ServerWrite(ActionKey *actkey);
+    void PreTask(ActionKey *actkey);
+    void MainTask(ActionKey *actkey);
+    void PostTask(ActionKey *actkey);
 
 private:
-	vector < DataContainer * > datalist;
-	int flowType;
+    vector < DataContainer * > datalist;
+    int flowType;
 };
 
 

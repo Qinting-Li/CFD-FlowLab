@@ -9,9 +9,9 @@ namespace PHSPACE
 
 SimpleGrid::SimpleGrid()
 {
-    x = 0;
-    y = 0;
-    z = 0;
+    x = nullptr;
+    y = nullptr;
+    z = nullptr;
 
     pmin = new RDouble [3];
     pmax = new RDouble [3];
@@ -46,12 +46,12 @@ SimpleGrid::SimpleGrid(const SimpleGrid &rhs)
 
 void SimpleGrid::FreeMemory()
 {
-    delete [] x;
-    delete [] y;
-    delete [] z;
+    if (x != NULL) { delete [] x; x=NULL; }
+    if (y != NULL) { delete [] y; y=NULL; }
+    if (z != NULL) { delete [] z; z=NULL; }
 
-    delete [] pmin;
-    delete [] pmax;
+    if (pmin != NULL) { delete [] pmin; pmin=NULL; }
+    if (pmax != NULL) { delete [] pmax; pmax=NULL; }
 }
 
 void SimpleGrid::Copy(const SimpleGrid &rhs)

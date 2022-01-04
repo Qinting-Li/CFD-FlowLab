@@ -20,32 +20,32 @@ class AleManager
 {
 public:
     AleManager();
-	~AleManager();
+    ~AleManager();
 
 private:
-	AleForceManager     *aleForceManager;
+    AleForceManager     *aleForceManager;
     SixDofSolverManager* sixDofSolverManager;
     DeformingSolverManager* deformingManager;
     MovingMeshManager   *movingMeshManager;
 
 public:
-	void Initialize();
-	void Allocate();
-	void Restart();
-	void Run();
-	void UpdateAleForce();
-	void Post();
-	void Dump();
-	void DumpRestart();
+    void Initialize();
+    void Allocate();
+    void Restart();
+    void Run();
+    void UpdateAleForce();
+    void Post();
+    void Dump();
+    void DumpRestart();
 
 protected:
-	void InitializeDimensionalReferenceTime();
+    void InitializeDimensionalReferenceTime();
     fstream* currentAleFile;
 
 public:
-	fstream & GetCurrentAleFile() { return * currentAleFile; };	
-	AleForceManager        * GetAleForceManager()        { return aleForceManager;        };
-	SixDofSolverManager    * GetSixDofSolverManager()    { return sixDofSolverManager;    };
+    fstream & GetCurrentAleFile() { return * currentAleFile; };
+    AleForceManager        * GetAleForceManager()        { return aleForceManager;        };
+    SixDofSolverManager    * GetSixDofSolverManager()    { return sixDofSolverManager;    };
     DeformingSolverManager* GetDeformingSolverManager()  { return deformingManager; };
     void ComputeMetrics();
     void CommCellCenterData();
@@ -75,7 +75,7 @@ string   GetStringParameterFromDataBase(int bodyIndex, const string& parameterNa
 int*     GetIntegerArrayFromDataBase(const string& nameOfIntegerArray, int numberOfElements);
 void     GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, const string& parameterName, int numberOfElements);
 
-RDouble   GetDimensionalAleTimeStep();
+RDouble   GetAleTimeStep();
 
 bool     IsImplicitAleMethod();
 bool     IsExplicitAleMethod();
@@ -86,7 +86,7 @@ class SuperFieldNameProperty;
 class AllocateParameter
 {
 public:
-    AllocateParameter() {};
+    AllocateParameter(): numberOfEquations(0),dimensions(0),numberOfBoundaryFaces(0),allocateBoundaryFaces(true){};
     ~AllocateParameter() {};
 protected:
     int numberOfEquations;

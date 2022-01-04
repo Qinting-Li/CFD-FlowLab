@@ -38,6 +38,16 @@ LIB_EXPORT void Param_CFDSolver::Init()
 
     ifStartFromSteadyResults  = GlobalDataBase::GetIntParaFromDB("ifStartFromSteadyResults");
     ifStaticsFlowField        = GlobalDataBase::GetIntParaFromDB("ifStaticsFlowField");
+    ifStaticsReynoldsStress = 0;
+    if (GlobalDataBase::IsExist("ifStaticsReynoldsStress", PHINT, 1))
+    {
+        ifStaticsReynoldsStress = GlobalDataBase::GetIntParaFromDB("ifStaticsReynoldsStress");
+    }
+    statisticMethod = 0;
+    if (GlobalDataBase::IsExist("statisticMethod", PHINT, 1))
+    {
+        statisticMethod = GlobalDataBase::GetIntParaFromDB("statisticMethod");
+    }
 
     CFLStart                  = GlobalDataBase::GetDoubleParaFromDB("CFLStart");
     CFLEnd                    = GlobalDataBase::GetDoubleParaFromDB("CFLEnd");
