@@ -1,7 +1,7 @@
 #include "Limiter.h"
 #include "Glb_Dimension.h"
-#include "BC_Struct.h"
-#include "BC_Unstruct.h"
+#include "Geo_StructBC.h"
+#include "Geo_UnstructBC.h"
 #include "TK_Exit.h"
 #include "Math_Limiter.h"
 using namespace std;
@@ -31,153 +31,153 @@ LIB_EXPORT Limiter::Limiter(UnstructGrid * gridin, RDouble ** q, int nVariable, 
 
 LIB_EXPORT Limiter::~Limiter()
 {
-	delete limit;
+    delete limit;    limit = nullptr;
 }
 
 void Limiter::CreateLimiter(int nsize, int neqn)
 {
-	limit->CreateData(nsize, neqn);
+    limit->CreateData(nsize, neqn);
 }
 
 LIB_EXPORT Limiter::iterator Limiter::GetLimiter(int m)
 {
-	return limit->GetData(m);
+    return limit->GetData(m);
 }
 
 LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
 {
-	if (limiterTypeID >= ILMT_STRUCT || limiterTypeID == ILMT_NOLIM || limiterTypeID == ILMT_FIRST)
-	{
-		return;
-	}
+    if (limiterTypeID >= ILMT_STRUCT || limiterTypeID == ILMT_NOLIM || limiterTypeID == ILMT_FIRST)
+    {
+        return;
+    }
 
     UnstructGrid *gridUnstruct = UnstructGridCast(gridIn);
 
-    RDouble **dqdx = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarFaceX"));
-    RDouble **dqdy = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarFaceY"));
-    RDouble **dqdz = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarFaceZ"));
-	using namespace IDX;
+    RDouble **dqdx = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarX"));
+    RDouble **dqdy = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarY"));
+    RDouble **dqdz = reinterpret_cast <RDouble **> (gridUnstruct->GetDataPtr("gradPrimtiveVarZ"));
+    using namespace IDX;
 
-	const int SCALAR_LIMITER    = 0;
-	const int VECTOR_LIMITER    = 1;
+    const int SCALAR_LIMITER    = 0;
+    const int VECTOR_LIMITER    = 1;
 
-	const int LIMIT_BY_RHO_P    = 0;
-	const int LIMIT_BY_EACH_VAR = 1;
+    const int LIMIT_BY_RHO_P    = 0;
+    const int LIMIT_BY_EACH_VAR = 1;
 
-	RDouble **limit2D = 0;
-	if (limitVecctor == SCALAR_LIMITER)
-	{
-		limit2D = new RDouble *[1];
-	}
-	else if (limitVecctor == VECTOR_LIMITER)
-	{
-		limit2D = new RDouble *[nLimiterVariables];
-	}
-	RDouble *limit = 0;
-	if (limiterTypeID == ILMT_BARTH)
-	{
-		if(limitVecctor == SCALAR_LIMITER)
-		{
-			//! Each variables has the same limiter value.
-			limit = this->GetLimiter(0);
-			if (limitModel == LIMIT_BY_RHO_P)
-			{
-				BarthLimiter(limit, q[IR], dqdx[IR], dqdy[IR], dqdz[IR]);
-				BarthLimiter(limit, q[IP], dqdx[IP], dqdy[IP], dqdz[IP]);
-			}
-			else if (limitModel == LIMIT_BY_EACH_VAR)
-			{
-				for (int iVariable = 0; iVariable < nLimiterVariables; ++ iVariable)
-				{
-					BarthLimiter(limit, q[iVariable], dqdx[iVariable], dqdy[iVariable], dqdz[iVariable]);
-				}
-			}
-		}
-		else if(limitVecctor == VECTOR_LIMITER)
-		{
-			//! Limiter value of each variable is computed by itself.
-			for (int iVariable = 0; iVariable < nLimiterVariables; ++ iVariable)
-			{
-				limit = this->GetLimiter(iVariable);
-				BarthLimiter(limit, q[iVariable], dqdx[iVariable], dqdy[iVariable], dqdz[iVariable]);
-			}
-		}
-	}
-	else if (limiterTypeID == ILMT_VENCAT)
-	{
-		if (limitVecctor == SCALAR_LIMITER)
-		{
-			//! The limiter values of each variable are same.
-			limit = this->GetLimiter(0);
-			if (limitModel == LIMIT_BY_RHO_P)
-			{
-				VencatLimiter(limit, q[IR], dqdx[IR], dqdy[IR], dqdz[IR], IR);
-				VencatLimiter(limit, q[IP], dqdx[IP], dqdy[IP], dqdz[IP], IP);
-			}
-			else if (limitModel == LIMIT_BY_EACH_VAR)
-			{
-				for (int m = 0; m < nLimiterVariables; ++ m)
-				{
-					VencatLimiter(limit, q[m], dqdx[m], dqdy[m], dqdz[m], m);
-				}
-			}
-		} 
-		else if(limitVecctor == VECTOR_LIMITER)
-		{
-			//! The limiter values of each variable are different.
-			for (int m = 0; m < nLimiterVariables; ++ m)
-			{
-				limit = this->GetLimiter(m);
-				VencatLimiter(limit, q[m], dqdx[m], dqdy[m], dqdz[m], m);
-			}
-		}        
-	}
-	else
-	{
-		TK_Exit::ExceptionExit("Error: this unstructured limiter is not exist !\n", true);
-	}
+    RDouble **limit2D = 0;
+    if (limitVecctor == SCALAR_LIMITER)
+    {
+        limit2D = new RDouble *[1];
+    }
+    else if (limitVecctor == VECTOR_LIMITER)
+    {
+        limit2D = new RDouble *[nLimiterVariables];
+    }
+    RDouble *limit = 0;
+    if (limiterTypeID == ILMT_BARTH)
+    {
+        if(limitVecctor == SCALAR_LIMITER)
+        {
+            //! Each variables has the same limiter value.
+            limit = this->GetLimiter(0);
+            if (limitModel == LIMIT_BY_RHO_P)
+            {
+                BarthLimiter(limit, q[IR], dqdx[IR], dqdy[IR], dqdz[IR]);
+                BarthLimiter(limit, q[IP], dqdx[IP], dqdy[IP], dqdz[IP]);
+            }
+            else if (limitModel == LIMIT_BY_EACH_VAR)
+            {
+                for (int iVariable = 0; iVariable < nLimiterVariables; ++ iVariable)
+                {
+                    BarthLimiter(limit, q[iVariable], dqdx[iVariable], dqdy[iVariable], dqdz[iVariable]);
+                }
+            }
+        }
+        else if(limitVecctor == VECTOR_LIMITER)
+        {
+            //! Limiter value of each variable is computed by itself.
+            for (int iVariable = 0; iVariable < nLimiterVariables; ++ iVariable)
+            {
+                limit = this->GetLimiter(iVariable);
+                BarthLimiter(limit, q[iVariable], dqdx[iVariable], dqdy[iVariable], dqdz[iVariable]);
+            }
+        }
+    }
+    else if (limiterTypeID == ILMT_VENCAT)
+    {
+        if (limitVecctor == SCALAR_LIMITER)
+        {
+            //! The limiter values of each variable are same.
+            limit = this->GetLimiter(0);
+            if (limitModel == LIMIT_BY_RHO_P)
+            {
+                VencatLimiter(limit, q[IR], dqdx[IR], dqdy[IR], dqdz[IR], IR);
+                VencatLimiter(limit, q[IP], dqdx[IP], dqdy[IP], dqdz[IP], IP);
+            }
+            else if (limitModel == LIMIT_BY_EACH_VAR)
+            {
+                for (int m = 0; m < nLimiterVariables; ++ m)
+                {
+                    VencatLimiter(limit, q[m], dqdx[m], dqdy[m], dqdz[m], m);
+                }
+            }
+        } 
+        else if(limitVecctor == VECTOR_LIMITER)
+        {
+            //! The limiter values of each variable are different.
+            for (int m = 0; m < nLimiterVariables; ++ m)
+            {
+                limit = this->GetLimiter(m);
+                VencatLimiter(limit, q[m], dqdx[m], dqdy[m], dqdz[m], m);
+            }
+        }        
+    }
+    else
+    {
+        TK_Exit::ExceptionExit("Error: this unstructured limiter is not exist !\n", true);
+    }
 
-	//! Set limiter at boundary.
-	if (limitVecctor == SCALAR_LIMITER)
-	{
-		limit = this->GetLimiter(0);
+    //! Set limiter at boundary.
+    if (limitVecctor == SCALAR_LIMITER)
+    {
+        limit = this->GetLimiter(0);
         limit2D[0] = limit;
-		SetLimitBoundary(gridUnstruct, limit);
-	}
-	else if( limitVecctor == VECTOR_LIMITER )
-	{
-		for ( int m = 0; m < nLimiterVariables; ++ m )
-		{
-			limit = this->GetLimiter(m);
-			limit2D[m] = limit;
-			SetLimitBoundary(gridUnstruct, limit);
-		}
-	}
+        SetLimitBoundary(gridUnstruct, limit);
+    }
+    else if( limitVecctor == VECTOR_LIMITER )
+    {
+        for ( int m = 0; m < nLimiterVariables; ++ m )
+        {
+            limit = this->GetLimiter(m);
+            limit2D[m] = limit;
+            SetLimitBoundary(gridUnstruct, limit);
+        }
+    }
 
-	//! Warning: when limitVecctor == VECTOR_LIMITER, the following limit2D should be
-	//! point to different limiter vector!!! This word need to be more consideration.
-	//RDouble *limit2D[1];
-	//limit2D[0] = limit;
+    //! Warning: when limitVecctor == VECTOR_LIMITER, the following limit2D should be
+    //! point to different limiter vector!!! This word need to be more consideration.
+    //RDouble *limit2D[1];
+    //limit2D[0] = limit;
 
-	if (limitVecctor == SCALAR_LIMITER)
-	{
-		PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, 1);
-	}
-	else if( limitVecctor == VECTOR_LIMITER )
-	{
-		PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, nLimiterVariables);
-	}
-	delete [] limit2D;
+    if (limitVecctor == SCALAR_LIMITER)
+    {
+        PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, 1);
+    }
+    else if( limitVecctor == VECTOR_LIMITER )
+    {
+        PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, nLimiterVariables);
+    }
+    delete [] limit2D;    limit2D = nullptr;
 }
 
 LIB_EXPORT void Limiter::InitLimitData()
 {
-	limit->SetData(one);
+    limit->SetData(one);
 
-	if (limiterTypeID == ILMT_FIRST)
-	{
-		limit->SetData(zero);
-	}
+    if (limiterTypeID == ILMT_FIRST)
+    {
+        limit->SetData(zero);
+    }
 }
 
 void Limiter::BarthLimiter(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
@@ -209,7 +209,6 @@ void Limiter::BarthLimiter(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *d
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int le     = leftCellOfFace [iFace];
-        int re     = rightCellOfFace[iFace];
 
         RDouble dx     = xfc[iFace] - xcc[le];
         RDouble dy     = yfc[iFace] - ycc[le];
@@ -282,8 +281,8 @@ void Limiter::BarthLimiter(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *d
         }
     }
 
-    delete []dmin;
-    delete []dmax;
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
 }
 
 /************************************************************************/
@@ -291,36 +290,36 @@ void Limiter::BarthLimiter(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *d
 /************************************************************************/
 void Limiter::VencatLimiter(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int iVariable)
 {
-	switch (vencatLimiterType)
-	{
-	case 0:
-		VencatLimiter0(limit, q, dqdx, dqdy, dqdz);
-		break;
-	case 1:
-		VencatLimiter1(limit, q, dqdx, dqdy, dqdz);
-		break;
-	case 2:
-		VencatLimiter2(limit, q, dqdx, dqdy, dqdz, iVariable);
-		break;
-	case 3:
-		VencatLimiter3(limit, q, dqdx, dqdy, dqdz, iVariable);
-		break;
-	case 4:
-		VencatLimiter4(limit, q, dqdx, dqdy, dqdz);
-		break;
-	case 5:
-		VencatLimiter5(limit, q, dqdx, dqdy, dqdz);
-		break;
-	case 6:
-		VencatLimiter6(limit, q, dqdx, dqdy, dqdz);
-		break;
-	case 7:
-		VencatLimiter7(limit, q, dqdx, dqdy, dqdz, iVariable);
-		break;
-	default:
-		TK_Exit::UnexpectedVarValue("vencat limiter type", vencatLimiterType);
-		break;
-	}
+    switch (vencatLimiterType)
+    {
+    case 0:
+        VencatLimiter0(limit, q, dqdx, dqdy, dqdz);
+        break;
+    case 1:
+        VencatLimiter1(limit, q, dqdx, dqdy, dqdz);
+        break;
+    case 2:
+        VencatLimiter2(limit, q, dqdx, dqdy, dqdz, iVariable);
+        break;
+    case 3:
+        VencatLimiter3(limit, q, dqdx, dqdy, dqdz, iVariable);
+        break;
+    case 4:
+        VencatLimiter4(limit, q, dqdx, dqdy, dqdz);
+        break;
+    case 5:
+        VencatLimiter5(limit, q, dqdx, dqdy, dqdz);
+        break;
+    case 6:
+        VencatLimiter6(limit, q, dqdx, dqdy, dqdz);
+        break;
+    case 7:
+        VencatLimiter7(limit, q, dqdx, dqdy, dqdz, iVariable);
+        break;
+    default:
+        TK_Exit::UnexpectedVarValue("vencat limiter type", vencatLimiterType);
+        break;
+    }
 }
 /************************************************************************
 Dr. Wang improved vencat limiter, independent of grid unit.
@@ -332,125 +331,10 @@ But, the dmin and dmax should be the whole grid rather than one partition grid.
 ************************************************************************/
 void Limiter::VencatLimiter0(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
 {
-	int nTotalFace = grid->GetNTotalFace();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotalCell = grid->GetNTotalCell();
-	int nTotal     = nTotalCell + nBoundFace;
-	int *leftCellOfFace = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *xfc   = grid->GetFaceCenterX();
-	RDouble *yfc   = grid->GetFaceCenterY();
-	RDouble *zfc   = grid->GetFaceCenterZ();
-	RDouble *xcc   = grid->GetCellCenterX();
-	RDouble *ycc   = grid->GetCellCenterY();
-	RDouble *zcc   = grid->GetCellCenterZ();
-	RDouble *xfn   = grid->GetFaceNormalX();
-	RDouble *yfn   = grid->GetFaceNormalY();
-	RDouble *zfn   = grid->GetFaceNormalZ();
-
-	RDouble dx, dy, dz;
-	RDouble dqFace, tmp;
-
-	RDouble *dmin = new RDouble[nTotal];
-	RDouble *dmax = new RDouble[nTotal];
-
-	//! Find the the differences for q.
-	MinMaxDiff(dmin, dmax, q);
-
-	//! Find the maximum and minimum of dq in the field to set epsilons.
-	RDouble dqMin = dmin[0], dqMax = dmax[0];
-
-	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-	{
-		dqMin = MIN(dqMin, dmin[iCell]);
-		dqMax = MAX(dqMax, dmax[iCell]);
-	}
-
-	//! Bell 20131123 mod.
-	//! Bell 20130307 add.
-	grid->CompareMaxMinValue(dqMax, 1);
-	grid->CompareMaxMinValue(dqMin, 2);
-	//*/	
-
-	RDouble venkatCoeff = 1.0e-5;
-	GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
-
-	RDouble eps;
-	eps = venkatCoeff * (dqMax - dqMin);
-	eps = eps * eps + SMALL;
-
-	int le, re;
-
-	for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
-
-		dx      = xfc[iFace] - xcc[le];
-		dy      = yfc[iFace] - ycc[le];
-		dz      = zfc[iFace] - zcc[le];
-		dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-	}
-
-	for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
-
-		dx     = xfc[iFace] - xcc[le];
-		dy     = yfc[iFace] - ycc[le];
-		dz     = zfc[iFace] - zcc[le];
-		dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-
-		dx     = xfc[iFace] - xcc[re];
-		dy     = yfc[iFace] - ycc[re];
-		dz     = zfc[iFace] - zcc[re];
-		dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
-
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-	}
-
-	delete []dmin;
-	delete []dmax;
-}
-
-void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
-{
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
     int nTotalCell = grid->GetNTotalCell();
-	int nTotal = nTotalCell + nBoundFace;
+    int nTotal     = nTotalCell + nBoundFace;
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
     RDouble *xfc   = grid->GetFaceCenterX();
@@ -459,9 +343,115 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     RDouble *xcc   = grid->GetCellCenterX();
     RDouble *ycc   = grid->GetCellCenterY();
     RDouble *zcc   = grid->GetCellCenterZ();
-    RDouble *xfn   = grid->GetFaceNormalX();
-    RDouble *yfn   = grid->GetFaceNormalY();
-    RDouble *zfn   = grid->GetFaceNormalZ();
+
+    RDouble dx, dy, dz;
+    RDouble dqFace, tmp;
+
+    RDouble *dmin = new RDouble[nTotal];
+    RDouble *dmax = new RDouble[nTotal];
+
+    //! Find the the differences for q.
+    MinMaxDiff(dmin, dmax, q);
+
+    //! Find the maximum and minimum of dq in the field to set epsilons.
+    RDouble dqMin = dmin[0], dqMax = dmax[0];
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        dqMin = MIN(dqMin, dmin[iCell]);
+        dqMax = MAX(dqMax, dmax[iCell]);
+    }
+
+    grid->CompareMaxMinValue(dqMax, 1);
+    grid->CompareMaxMinValue(dqMin, 2);
+
+    RDouble venkatCoeff = 1.0e-5;
+    GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
+
+    RDouble eps;
+    eps = venkatCoeff * (dqMax - dqMin);
+    eps = eps * eps + SMALL;
+
+    int le, re;
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
+
+        dx      = xfc[iFace] - xcc[le];
+        dy      = yfc[iFace] - ycc[le];
+        dz      = zfc[iFace] - zcc[le];
+        dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+    }
+
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
+
+        dx     = xfc[iFace] - xcc[le];
+        dy     = yfc[iFace] - ycc[le];
+        dz     = zfc[iFace] - zcc[le];
+        dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+
+        dx     = xfc[iFace] - xcc[re];
+        dy     = yfc[iFace] - ycc[re];
+        dz     = zfc[iFace] - zcc[re];
+        dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
+
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+    }
+
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
+}
+
+void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
+{
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal = nTotalCell + nBoundFace;
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *xfc   = grid->GetFaceCenterX();
+    RDouble *yfc   = grid->GetFaceCenterY();
+    RDouble *zfc   = grid->GetFaceCenterZ();
+    RDouble *xcc   = grid->GetCellCenterX();
+    RDouble *ycc   = grid->GetCellCenterY();
+    RDouble *zcc   = grid->GetCellCenterZ();
 
     RDouble dx, dy, dz, ds;
     RDouble dqFace, tmp;
@@ -486,7 +476,7 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
 
     RDouble eps, eps_ref;
     eps_ref = venkatCoeff * (dqMax - dqMin);
-	eps = eps_ref + SMALL;
+    eps = eps_ref + SMALL;
     //eps = eps * eps + SMALL;
 
     int le, re;
@@ -496,7 +486,7 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         le = leftCellOfFace [iFace];
         re = rightCellOfFace[iFace];
 
-		dx = xcc[re] - xcc[le];
+        dx = xcc[re] - xcc[le];
         dy = ycc[re] - ycc[le];
         dz = zcc[re] - zcc[le];
         
@@ -507,7 +497,7 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         dx      = xfc[iFace] - xcc[le];
         dy      = yfc[iFace] - ycc[le];
         dz      = zfc[iFace] - zcc[le];
-		dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
 
         if (dqFace > SMALL)
         {
@@ -526,7 +516,7 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         le = leftCellOfFace [iFace];
         re = rightCellOfFace[iFace];
 
-		dx = xcc[re] - xcc[le];
+        dx = xcc[re] - xcc[le];
         dy = ycc[re] - ycc[le];
         dz = zcc[re] - zcc[le];
         
@@ -567,8 +557,8 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete []dmin;
-    delete []dmax;
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
 }
 
 //! This limiter type was proposed by CXH.
@@ -576,112 +566,112 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
 //! But it need to be V&V in more numerical experiments.
 void Limiter::VencatLimiter2(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int iVariable)
 {
-	int nTotalFace = grid->GetNTotalFace();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotalCell = grid->GetNTotalCell();
-	int nTotal = nTotalCell + nBoundFace;      
-	int *leftCellOfFace = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *xfc   = grid->GetFaceCenterX();
-	RDouble *yfc   = grid->GetFaceCenterY();
-	RDouble *zfc   = grid->GetFaceCenterZ();
-	RDouble *xcc   = grid->GetCellCenterX();
-	RDouble *ycc   = grid->GetCellCenterY();
-	RDouble *zcc   = grid->GetCellCenterZ();
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal = nTotalCell + nBoundFace;      
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *xfc   = grid->GetFaceCenterX();
+    RDouble *yfc   = grid->GetFaceCenterY();
+    RDouble *zfc   = grid->GetFaceCenterZ();
+    RDouble *xcc   = grid->GetCellCenterX();
+    RDouble *ycc   = grid->GetCellCenterY();
+    RDouble *zcc   = grid->GetCellCenterZ();
 
-	RDouble dx, dy, dz;
-	RDouble dqFace, tmp;
+    RDouble dx, dy, dz;
+    RDouble dqFace, tmp;
 
-	RDouble *dmin = new RDouble[nTotal];
-	RDouble *dmax = new RDouble[nTotal];
+    RDouble *dmin = new RDouble[nTotal];
+    RDouble *dmax = new RDouble[nTotal];
 
-	//! Find the the differences for q.
-	MinMaxDiff(dmin, dmax, q);
+    //! Find the the differences for q.
+    MinMaxDiff(dmin, dmax, q);
 
-	RDouble venkatCoeff = GlobalDataBase::GetDoubleParaFromDB("venkatCoeff");
-	RDouble GloableTotalCells = GlobalDataBase::GetDoubleParaFromDB("UnstrGloableTotalCells");
+    RDouble venkatCoeff = GlobalDataBase::GetDoubleParaFromDB("venkatCoeff");
+    RDouble GloableTotalCells = GlobalDataBase::GetDoubleParaFromDB("UnstrGloableTotalCells");
 
-	//! The following 'eps' is the eps^2 actually in the mathematic formation.
-	//! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
-	int dimension = GetDim();
-	RDouble n = 3.0;
-	RDouble eps;	
-	eps = pow((venkatCoeff * pow((1.0 / GloableTotalCells), (1.0 / dimension))), n);
-	if(iVariable == IDX::IP)
-	{
-		RDouble * primInflow = reinterpret_cast< RDouble * >( GlobalDataBase::GetDataPtr("prim_inf") );
-		eps *= primInflow[IDX::IP] * primInflow[IDX::IP];
-	}
+    //! The following 'eps' is the eps^2 actually in the mathematic formation.
+    //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
+    int dimension = GetDim();
+    RDouble n = 3.0;
+    RDouble eps;
+    eps = pow((venkatCoeff * pow((1.0 / GloableTotalCells), (1.0 / dimension))), n);
+    if(iVariable == IDX::IP)
+    {
+        RDouble * primInflow = reinterpret_cast< RDouble * >( GlobalDataBase::GetDataPtr("prim_inf") );
+        eps *= primInflow[IDX::IP] * primInflow[IDX::IP];
+    }
 
-	int le, re;
+    int le, re;
 
-	//! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
-	for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-	{
-		//! Get the left and right cell index of iFace.
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    //! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        //! Get the left and right cell index of iFace.
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		//! Compute the vector from face center to left cell center.
-		dx = xfc[iFace] - xcc[le];
-		dy = yfc[iFace] - ycc[le];
-		dz = zfc[iFace] - zcc[le];
+        //! Compute the vector from face center to left cell center.
+        dx = xfc[iFace] - xcc[le];
+        dy = yfc[iFace] - ycc[le];
+        dz = zfc[iFace] - zcc[le];
 
-		//! Compute the dq from left cell center to face center.
-		dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-		if (dqFace > SMALL)
-		{
-			//! According to the vencat limiter of Theory manual.
-			tmp       = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			//! According to the vencat limiter of Theory manual.
-			tmp       = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-	}
+        //! Compute the dq from left cell center to face center.
+        dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        if (dqFace > SMALL)
+        {
+            //! According to the vencat limiter of Theory manual.
+            tmp       = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            //! According to the vencat limiter of Theory manual.
+            tmp       = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+    }
 
-	//! The following loop is to calculate the limiter coefficient of each interior cell.
-	for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    //! The following loop is to calculate the limiter coefficient of each interior cell.
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		dx     = xfc[iFace] - xcc[le];
-		dy     = yfc[iFace] - ycc[le];
-		dz     = zfc[iFace] - zcc[le];
-		dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-		if (dqFace > SMALL)
-		{
-			tmp      = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp      = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
+        dx     = xfc[iFace] - xcc[le];
+        dy     = yfc[iFace] - ycc[le];
+        dz     = zfc[iFace] - zcc[le];
+        dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        if (dqFace > SMALL)
+        {
+            tmp      = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp      = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
 
-		dx     = xfc[iFace] - xcc[re];
-		dy     = yfc[iFace] - ycc[re];
-		dz     = zfc[iFace] - zcc[re];
-		dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-	}
+        dx     = xfc[iFace] - xcc[re];
+        dy     = yfc[iFace] - ycc[re];
+        dz     = zfc[iFace] - zcc[re];
+        dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+    }
 
-	delete []dmin;
-	delete []dmax;
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
 }
 
 //! This limiter type was modified by NeverMore.
@@ -689,120 +679,120 @@ void Limiter::VencatLimiter2(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
 //! other than distance between cell center and face center, that was used in VencatLimiter4.
 void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int iVariable)
 {
-	int nTotalFace = grid->GetNTotalFace();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotalCell = grid->GetNTotalCell();
-	int nTotal = nTotalCell + nBoundFace;
-	int *leftCellOfFace  = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *xfc    = grid->GetFaceCenterX();
-	RDouble *yfc    = grid->GetFaceCenterY();
-	RDouble *zfc    = grid->GetFaceCenterZ();
-	RDouble *xcc    = grid->GetCellCenterX();
-	RDouble *ycc    = grid->GetCellCenterY();
-	RDouble *zcc    = grid->GetCellCenterZ();
-	RDouble *volume = grid->GetCellVolume();
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal = nTotalCell + nBoundFace;
+    int *leftCellOfFace  = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *xfc    = grid->GetFaceCenterX();
+    RDouble *yfc    = grid->GetFaceCenterY();
+    RDouble *zfc    = grid->GetFaceCenterZ();
+    RDouble *xcc    = grid->GetCellCenterX();
+    RDouble *ycc    = grid->GetCellCenterY();
+    RDouble *zcc    = grid->GetCellCenterZ();
+    RDouble *volume = grid->GetCellVolume();
 
-	RDouble dx, dy, dz;
-	RDouble dqFace, tmp;
-	int le, re;
+    RDouble dx, dy, dz;
+    RDouble dqFace, tmp;
+    int le, re;
 
-	RDouble *dmin = new RDouble[nTotal];
-	RDouble *dmax = new RDouble[nTotal];
+    RDouble *dmin = new RDouble[nTotal];
+    RDouble *dmax = new RDouble[nTotal];
 
-	//! Find the the differences for q.
-	MinMaxDiff(dmin, dmax, q);
+    //! Find the the differences for q.
+    MinMaxDiff(dmin, dmax, q);
 
-	RDouble GloableTotalVolume;
-	GlobalDataBase::GetData("UnstrGloableTotalVolume", &GloableTotalVolume, PHDOUBLE, 1);
+    RDouble GloableTotalVolume;
+    GlobalDataBase::GetData("UnstrGloableTotalVolume", &GloableTotalVolume, PHDOUBLE, 1);
 
-	//! The following 'eps' is the eps^2 actually in the mathematic formation.
-	//! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
-	RDouble venkatCoeff = 1.0e-5;
-	GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
-	RDouble *primInflow = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
-		
-	RDouble n = 3.0;
-	int dimension = GetDim();
-	RDouble dim1 = 1.0 / (dimension * 1.0);	
+    //! The following 'eps' is the eps^2 actually in the mathematic formation.
+    //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
+    RDouble venkatCoeff = 1.0e-5;
+    GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
+    RDouble *primInflow = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
+        
+    RDouble n = 3.0;
+    int dimension = GetDim();
+    RDouble dim1 = 1.0 / (dimension * 1.0);
 
-	//! Calculate eps for each cell.
-	RDouble squareOfReferenceVariable = primInflow[IDX::IP] * primInflow[IDX::IP];
-	RDouble *eps = new RDouble [nTotalCell];
-	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-	{
-		eps[iCell] = pow(venkatCoeff * pow(volume[iCell] / GloableTotalVolume, dim1), n);
-		if(iVariable == IDX::IP)
-		{
-			eps[iCell]  *= squareOfReferenceVariable;
-		}
-	}
+    //! Calculate eps for each cell.
+    RDouble squareOfReferenceVariable = primInflow[IDX::IP] * primInflow[IDX::IP];
+    RDouble *eps = new RDouble [nTotalCell];
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        eps[iCell] = pow(venkatCoeff * pow(volume[iCell] / GloableTotalVolume, dim1), n);
+        if(iVariable == IDX::IP)
+        {
+            eps[iCell]  *= squareOfReferenceVariable;
+        }
+    }
 
-	//! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
-	for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    //! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		dx      = xfc[iFace] - xcc[le];
-		dy      = yfc[iFace] - ycc[le];
-		dz      = zfc[iFace] - zcc[le];
+        dx      = xfc[iFace] - xcc[le];
+        dy      = yfc[iFace] - ycc[le];
+        dz      = zfc[iFace] - zcc[le];
 
-		dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps[le]);
-			limit[le] = MIN(limit[le], tmp);
+        dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps[le]);
+            limit[le] = MIN(limit[le], tmp);
 
-		}
-		else if (dqFace < - SMALL)
-		{ 
-			tmp       = VenFun(dmin[le], dqFace, eps[le]);
-			limit[le] = MIN(limit[le], tmp);
-		}
-	}
+        }
+        else if (dqFace < - SMALL)
+        { 
+            tmp       = VenFun(dmin[le], dqFace, eps[le]);
+            limit[le] = MIN(limit[le], tmp);
+        }
+    }
 
-	//! The following loop is to calculate the limiter coefficient of each interior cell.
-	for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    //! The following loop is to calculate the limiter coefficient of each interior cell.
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		dx     = xfc[iFace] - xcc[le];
-		dy     = yfc[iFace] - ycc[le];
-		dz     = zfc[iFace] - zcc[le];
-		dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps[le]);
-			limit[le] = MIN(limit[le], tmp);
+        dx     = xfc[iFace] - xcc[le];
+        dy     = yfc[iFace] - ycc[le];
+        dz     = zfc[iFace] - zcc[le];
+        dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps[le]);
+            limit[le] = MIN(limit[le], tmp);
 
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, eps[le]);
-			limit[le] = MIN(limit[le], tmp);
-		}
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, eps[le]);
+            limit[le] = MIN(limit[le], tmp);
+        }
 
-		dx     = xfc[iFace] - xcc[re];
-		dy     = yfc[iFace] - ycc[re];
-		dz     = zfc[iFace] - zcc[re];
-		dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[re], dqFace, eps[re]);
-			limit[re] = MIN(limit[re], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[re], dqFace, eps[re]);
-			limit[re] = MIN(limit[re], tmp);
-		}
-	}
+        dx     = xfc[iFace] - xcc[re];
+        dy     = yfc[iFace] - ycc[re];
+        dz     = zfc[iFace] - zcc[re];
+        dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[re], dqFace, eps[re]);
+            limit[re] = MIN(limit[re], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[re], dqFace, eps[re]);
+            limit[re] = MIN(limit[re], tmp);
+        }
+    }
 
-	delete []dmin;
-	delete []dmax;
-	delete []eps;
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
+    delete [] eps;     eps = nullptr;
 }
 
 /************************************************************************/
@@ -811,129 +801,126 @@ void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
 /************************************************************************/
 void Limiter::VencatLimiter4(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
 {
-	int nTotalFace = grid->GetNTotalFace();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotalCell = grid->GetNTotalCell();
-	int nTotal = nTotalCell + nBoundFace;
-	int *leftCellOfFace  = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *xfc   = grid->GetFaceCenterX();
-	RDouble *yfc   = grid->GetFaceCenterY();
-	RDouble *zfc   = grid->GetFaceCenterZ();
-	RDouble *xcc   = grid->GetCellCenterX();
-	RDouble *ycc   = grid->GetCellCenterY();
-	RDouble *zcc   = grid->GetCellCenterZ();
-	RDouble *xfn   = grid->GetFaceNormalX();
-	RDouble *yfn   = grid->GetFaceNormalY();
-	RDouble *zfn   = grid->GetFaceNormalZ();
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal = nTotalCell + nBoundFace;
+    int *leftCellOfFace  = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *xfc   = grid->GetFaceCenterX();
+    RDouble *yfc   = grid->GetFaceCenterY();
+    RDouble *zfc   = grid->GetFaceCenterZ();
+    RDouble *xcc   = grid->GetCellCenterX();
+    RDouble *ycc   = grid->GetCellCenterY();
+    RDouble *zcc   = grid->GetCellCenterZ();
 
-	RDouble dx, dy, dz, ds;
-	RDouble dqFace, tmp;
+    RDouble dx, dy, dz, ds;
+    RDouble dqFace, tmp;
 
-	RDouble *dmin = new RDouble[nTotal];
-	RDouble *dmax = new RDouble[nTotal];
+    RDouble *dmin = new RDouble[nTotal];
+    RDouble *dmax = new RDouble[nTotal];
 
-	//! Find the the differences for q.
-	MinMaxDiff(dmin, dmax, q);
+    //! Find the the differences for q.
+    MinMaxDiff(dmin, dmax, q);
 
-	//! Find the maximum and minimum of dq in the field to set epsilons.
-	RDouble dqMin = dmin[0], dqMax = dmax[0];
+    //! Find the maximum and minimum of dq in the field to set epsilons.
+    RDouble dqMin = dmin[0], dqMax = dmax[0];
 
-	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-	{
-		dqMin = MIN(dqMin, dmin[iCell]);
-		dqMax = MAX(dqMax, dmax[iCell]);
-	}
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        dqMin = MIN(dqMin, dmin[iCell]);
+        dqMax = MAX(dqMax, dmax[iCell]);
+    }
 
-	//! Bell 20131123 mod.
-	//! Bell 20130307 add.
-	grid->CompareMaxMinValue(dqMax, 1);
-	grid->CompareMaxMinValue(dqMin, 2);	
-	//*/
+    //! Bell 20131123 mod.
+    //! Bell 20130307 add.
+    grid->CompareMaxMinValue(dqMax, 1);
+    grid->CompareMaxMinValue(dqMin, 2);
+    //*/
 
-	RDouble venkatCoeff = 1.0e-5;
-	GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
+    RDouble venkatCoeff = 1.0e-5;
+    GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
 
-	RDouble eps;
+    RDouble eps;
 
-	int le, re;
+    int le, re;
 
-	for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		dx = xcc[re] - xcc[le];
-		dy = ycc[re] - ycc[le];
-		dz = zcc[re] - zcc[le];
+        dx = xcc[re] - xcc[le];
+        dy = ycc[re] - ycc[le];
+        dz = zcc[re] - zcc[le];
 
-		ds  = sqrt(dx * dx + dy * dy + dz * dz);
-		eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds;
+        ds  = sqrt(dx * dx + dy * dy + dz * dz);
+        eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds;
 
-		dx      = xfc[iFace] - xcc[le];
-		dy      = yfc[iFace] - ycc[le];
-		dz      = zfc[iFace] - zcc[le];
-		dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        dx      = xfc[iFace] - xcc[le];
+        dy      = yfc[iFace] - ycc[le];
+        dz      = zfc[iFace] - zcc[le];
+        dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
 
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-	}
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+    }
 
-	for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		dx = xcc[re] - xcc[le];
-		dy = ycc[re] - ycc[le];
-		dz = zcc[re] - zcc[le];
+        dx = xcc[re] - xcc[le];
+        dy = ycc[re] - ycc[le];
+        dz = zcc[re] - zcc[le];
 
-		ds  = sqrt(dx * dx + dy * dy + dz * dz);
-		eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds;
+        ds  = sqrt(dx * dx + dy * dy + dz * dz);
+        eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds;
 
-		dx     = xfc[iFace] - xcc[le];
-		dy     = yfc[iFace] - ycc[le];
-		dz     = zfc[iFace] - zcc[le];
-		dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        dx     = xfc[iFace] - xcc[le];
+        dy     = yfc[iFace] - ycc[le];
+        dz     = zfc[iFace] - zcc[le];
+        dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
 
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
 
-		dx     = xfc[iFace] - xcc[re];
-		dy     = yfc[iFace] - ycc[re];
-		dz     = zfc[iFace] - zcc[re];
-		dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
+        dx     = xfc[iFace] - xcc[re];
+        dy     = yfc[iFace] - ycc[re];
+        dz     = zfc[iFace] - zcc[re];
+        dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
 
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-	}
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+    }
 
-	delete []dmin;
-	delete []dmax;
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
 }
 
 /************************************************************************/
@@ -942,372 +929,324 @@ void Limiter::VencatLimiter4(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
 /************************************************************************/
 void Limiter::VencatLimiter5(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
 {
-	int nTotalFace = grid->GetNTotalFace();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotalCell = grid->GetNTotalCell();
-	int nTotal = nTotalCell + nBoundFace;
-	int *leftCellOfFace  = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *xfc    = grid->GetFaceCenterX();
-	RDouble *yfc    = grid->GetFaceCenterY();
-	RDouble *zfc    = grid->GetFaceCenterZ();
-	RDouble *xcc    = grid->GetCellCenterX();
-	RDouble *ycc    = grid->GetCellCenterY();
-	RDouble *zcc    = grid->GetCellCenterZ();
-	RDouble *xfn    = grid->GetFaceNormalX();
-	RDouble *yfn    = grid->GetFaceNormalY();
-	RDouble *zfn    = grid->GetFaceNormalZ();
-	RDouble *volume = grid->GetCellVolume();
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal = nTotalCell + nBoundFace;
+    int *leftCellOfFace  = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *xfc    = grid->GetFaceCenterX();
+    RDouble *yfc    = grid->GetFaceCenterY();
+    RDouble *zfc    = grid->GetFaceCenterZ();
+    RDouble *xcc    = grid->GetCellCenterX();
+    RDouble *ycc    = grid->GetCellCenterY();
+    RDouble *zcc    = grid->GetCellCenterZ();
+    RDouble *volume = grid->GetCellVolume();
 
-	RDouble dx, dy, dz;
-	RDouble dqFace, tmp;
+    RDouble dx, dy, dz;
+    RDouble dqFace, tmp;
 
-	RDouble *dmin = new RDouble[nTotal];
-	RDouble *dmax = new RDouble[nTotal];
+    RDouble *dmin = new RDouble[nTotal];
+    RDouble *dmax = new RDouble[nTotal];
 
-	//! Find the the differences for q.
-	MinMaxDiff(dmin, dmax, q);
+    //! Find the the differences for q.
+    MinMaxDiff(dmin, dmax, q);
 
-	RDouble venkatCoeff = 1.0e-5;
-	GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
+    RDouble venkatCoeff = 1.0e-5;
+    GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
 
-	RDouble eps;
+    RDouble eps;
 
-	int le, re;
+    int le, re;
 
-	for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
 
-		eps = venkatCoeff * venkatCoeff * venkatCoeff * volume[le];
+        eps = venkatCoeff * venkatCoeff * venkatCoeff * volume[le];
 
-		dx      = xfc[iFace] - xcc[le];
-		dy      = yfc[iFace] - ycc[le];
-		dz      = zfc[iFace] - zcc[le];
-		dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        dx      = xfc[iFace] - xcc[le];
+        dy      = yfc[iFace] - ycc[le];
+        dz      = zfc[iFace] - zcc[le];
+        dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
 
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-	}
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+    }
 
-	for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		eps = venkatCoeff * venkatCoeff * venkatCoeff * volume[le];
-		dx     = xfc[iFace] - xcc[le];
-		dy     = yfc[iFace] - ycc[le];
-		dz     = zfc[iFace] - zcc[le];
-		dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        eps = venkatCoeff * venkatCoeff * venkatCoeff * volume[le];
+        dx     = xfc[iFace] - xcc[le];
+        dy     = yfc[iFace] - ycc[le];
+        dz     = zfc[iFace] - zcc[le];
+        dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
 
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, eps);
-			limit[le] = MIN(limit[le], tmp);
-		}
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, eps);
+            limit[le] = MIN(limit[le], tmp);
+        }
 
-		eps = venkatCoeff * venkatCoeff * venkatCoeff * volume[re];
-		dx     = xfc[iFace] - xcc[re];
-		dy     = yfc[iFace] - ycc[re];
-		dz     = zfc[iFace] - zcc[re];
-		dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
+        eps = venkatCoeff * venkatCoeff * venkatCoeff * volume[re];
+        dx     = xfc[iFace] - xcc[re];
+        dy     = yfc[iFace] - ycc[re];
+        dz     = zfc[iFace] - zcc[re];
+        dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
 
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[re], dqFace, eps);
-			limit[re] = MIN(limit[re], tmp);
-		}
-	}
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[re], dqFace, eps);
+            limit[re] = MIN(limit[re], tmp);
+        }
+    }
 
-	delete []dmin;
-	delete []dmax;
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
 }
 
 //! Multidimensional limiting Process.
 void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
 {
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotalCell = grid->GetNTotalCell();
-	int nTotal = nTotalCell + nBoundFace;
-	int iNode,j;
-	int nTotalNode = grid->GetNTotalNode();
-	int *nCPN = grid->GetCellNumberOfEachNode();
-	int *npc  = grid->GetNodeNumberOfEachCell();
-	int *n2c  = grid->GetNode2Cell();
-	int *c2n  = grid->GetCell2Node();
-	RDouble *xn = grid->GetX();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal = nTotalCell + nBoundFace;
+    int iNode,j;
+    int nTotalNode = grid->GetNTotalNode();
+    int *nCPN = grid->GetCellNumberOfEachNode();
+    int *npc  = grid->GetNodeNumberOfEachCell();
+    int *n2c  = grid->GetNode2Cell();
+    int *c2n  = grid->GetCell2Node();
+    RDouble *xn = grid->GetX();
     RDouble *yn = grid->GetY();
     RDouble *zn = grid->GetZ();
 
-	int *leftCellOfFace  = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *xfc    = grid->GetFaceCenterX();
-	RDouble *yfc    = grid->GetFaceCenterY();
-	RDouble *zfc    = grid->GetFaceCenterZ();
-	RDouble *xcc    = grid->GetCellCenterX();
-	RDouble *ycc    = grid->GetCellCenterY();
-	RDouble *zcc    = grid->GetCellCenterZ();
-	RDouble *xfn    = grid->GetFaceNormalX();
-	RDouble *yfn    = grid->GetFaceNormalY();
-	RDouble *zfn    = grid->GetFaceNormalZ();
-	RDouble *volume = grid->GetCellVolume();
+    RDouble *xcc    = grid->GetCellCenterX();
+    RDouble *ycc    = grid->GetCellCenterY();
+    RDouble *zcc    = grid->GetCellCenterZ();
+    RDouble *volume = grid->GetCellVolume();
 
-	RDouble GloableTotalVolume = 0.0;
-	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-	{
-		GloableTotalVolume += volume[iCell];  
-	}
-	RDouble **qAll = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
-	using namespace IDX;
+    RDouble GloableTotalVolume = 0.0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        GloableTotalVolume += volume[iCell];  
+    }
+    RDouble **qAll = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
+    using namespace IDX;
 
-	RDouble dx, dy, dz, ds;
-	RDouble dqNode, tmp;
-	RDouble dqmax, dqmin;
+    RDouble dx, dy, dz, ds;
+    RDouble dqNode, tmp;
+    RDouble dqmax, dqmin;
 
-	RDouble venkatCoeff = 1.0e-5;
-	GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
+    RDouble venkatCoeff = 1.0e-5;
+    GlobalDataBase::GetData("venkatCoeff", &venkatCoeff, PHDOUBLE, 1);
 
-	RDouble eps;
+    RDouble eps;
 
-	RDouble *qmax = new RDouble[nTotalNode];
-	RDouble *qmin = new RDouble[nTotalNode];
+    RDouble *qmax = new RDouble[nTotalNode];
+    RDouble *qmin = new RDouble[nTotalNode];
 
-	int count = 0;
-	for(iNode = 0; iNode < nTotalNode; ++ iNode)
-	{
-		qmax[iNode] = -1;
-		qmin[iNode] = 100000;
-		for( j = 0; j < nCPN[ iNode ]; ++ j)
-		{
-			qmax[iNode] = max(qmax[iNode], q[n2c[count]]);
-			qmin[iNode] = min(qmin[iNode], q[n2c[count]]);
-			count ++;
-		}
+    int count = 0;
+    for(iNode = 0; iNode < nTotalNode; ++ iNode)
+    {
+        qmax[iNode] = -1;
+        qmin[iNode] = 100000;
+        for( j = 0; j < nCPN[ iNode ]; ++ j)
+        {
+            qmax[iNode] = max(qmax[iNode], q[n2c[count]]);
+            qmin[iNode] = min(qmin[iNode], q[n2c[count]]);
+            count ++;
+        }
 
-	}
+    }
 
-	count = 0;
-	int nodeno;
-	for (int iCell = 0; iCell < nTotal; ++ iCell)
-	{
-		for (int j = 0; j < npc[iCell]; ++ j)
-		{
-			nodeno = c2n[count ++];
-			dqmax  = qmax[nodeno] - q[iCell];
-			dqmin  = qmin[nodeno] - q[iCell];
-			dx     =  xn[nodeno] - xcc[iCell];
-			dy     =  yn[nodeno] - ycc[iCell];
-			dz     =  zn[nodeno] - zcc[iCell];
-			ds     =  sqrt(dx * dx + dy * dy + dz * dz);
-			dqNode = dqdx[iCell] * dx + dqdy[iCell] * dy + dqdz[iCell] * dz;
+    count = 0;
+    int nodeno;
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
+    {
+        for (int j = 0; j < npc[iCell]; ++ j)
+        {
+            nodeno = c2n[count ++];
+            dqmax  = qmax[nodeno] - q[iCell];
+            dqmin  = qmin[nodeno] - q[iCell];
+            dx     =  xn[nodeno] - xcc[iCell];
+            dy     =  yn[nodeno] - ycc[iCell];
+            dz     =  zn[nodeno] - zcc[iCell];
+            ds     =  sqrt(dx * dx + dy * dy + dz * dz);
+            dqNode = dqdx[iCell] * dx + dqdy[iCell] * dy + dqdz[iCell] * dz;
 
-			eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds * qAll[IP][iCell] * qAll[IP][iCell] / GloableTotalVolume;
-			if (dqNode > SMALL)
-			{
-				tmp          = VenFun(dqmax, dqNode, eps);
-				limit[iCell] = MIN(limit[iCell], tmp);
-			}
-			else if (dqNode < - SMALL)
-			{
-				tmp          = VenFun(dqmin, dqNode, eps);
-				limit[iCell] = MIN(limit[iCell], tmp);
-			}
-		}
-	}
+            eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds * qAll[IP][iCell] * qAll[IP][iCell] / GloableTotalVolume;
+            if (dqNode > SMALL)
+            {
+                tmp          = VenFun(dqmax, dqNode, eps);
+                limit[iCell] = MIN(limit[iCell], tmp);
+            }
+            else if (dqNode < - SMALL)
+            {
+                tmp          = VenFun(dqmin, dqNode, eps);
+                limit[iCell] = MIN(limit[iCell], tmp);
+            }
+        }
+    }
 
-	delete []qmax;
-	delete []qmin;
+    delete [] qmax;    qmax = nullptr;
+    delete [] qmin;    qmin = nullptr;
 }
 
 void Limiter::VencatLimiter7(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int iVariable)
 {
-	int nTotalFace = grid->GetNTotalFace();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotalCell = grid->GetNTotalCell();
-	int nTotal     = nTotalCell + nBoundFace;      
-	int *leftCellOfFace = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	RDouble *xfc   = grid->GetFaceCenterX();
-	RDouble *yfc   = grid->GetFaceCenterY();
-	RDouble *zfc   = grid->GetFaceCenterZ();
-	RDouble *xcc   = grid->GetCellCenterX();
-	RDouble *ycc   = grid->GetCellCenterY();
-	RDouble *zcc   = grid->GetCellCenterZ();
-	RDouble *volume   = grid->GetCellVolume();
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal     = nTotalCell + nBoundFace;      
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *xfc   = grid->GetFaceCenterX();
+    RDouble *yfc   = grid->GetFaceCenterY();
+    RDouble *zfc   = grid->GetFaceCenterZ();
+    RDouble *xcc   = grid->GetCellCenterX();
+    RDouble *ycc   = grid->GetCellCenterY();
+    RDouble *zcc   = grid->GetCellCenterZ();
+    RDouble *volume   = grid->GetCellVolume();
 
-	int le, re;
-	RDouble dx, dy, dz;
-	RDouble dqFace, tmp;
+    int le, re;
+    RDouble dx, dy, dz;
+    RDouble dqFace, tmp;
 
-	RDouble *dmin = new RDouble[nTotal];
-	RDouble *dmax = new RDouble[nTotal];
-	//! Find the the differences for q.
-	MinMaxDiff(dmin, dmax, q);
+    RDouble *dmin = new RDouble[nTotal];
+    RDouble *dmax = new RDouble[nTotal];
+    //! Find the the differences for q.
+    MinMaxDiff(dmin, dmax, q);
 
-	RDouble venkatCoeff = GlobalDataBase::GetDoubleParaFromDB("venkatCoeff");
-	RDouble averageVolume = grid->GetAverageVolume();
+    RDouble venkatCoeff = GlobalDataBase::GetDoubleParaFromDB("venkatCoeff");
+    RDouble averageVolume = grid->GetAverageVolume();
 
-	//! The following 'eps' is the eps^2 actually in the mathematic formation.
-	//! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
-	int dimension = GetDim();
-	RDouble n = 3.0;
-	RDouble *epsCell = new RDouble[nTotalCell];
-	RDouble eps_tmp = venkatCoeff * venkatCoeff * venkatCoeff;
-	eps_tmp *= 1.0/pow(pow(averageVolume, 1.0/dimension), n);
+    //! The following 'eps' is the eps^2 actually in the mathematic formation.
+    //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
+    int dimension = GetDim();
+    RDouble n = 3.0;
+    RDouble *epsCell = new RDouble[nTotalCell];
+    RDouble eps_tmp = venkatCoeff * venkatCoeff * venkatCoeff;
+    eps_tmp *= 1.0/pow(pow(averageVolume, 1.0/dimension), n);
 
     for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
         epsCell[iCell]  = eps_tmp * q[iCell] * q[iCell];
         epsCell[iCell] *= pow(pow( volume[iCell], 1.0/dimension ), n);
     }
+    //! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        //! Get the left and right cell index of iFace.
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-//     if(iVariable == IDX::IR)
-//     {
-//         //! Rho.
-//         RDouble *rho = this->q[IDX::IR];
-//         for (int iCell = 0; iCell < nTotalCell; ++iCell)
-//         {
-//             epsCell[iCell]  = eps_tmp * rho[iCell] * rho[iCell];
-//             epsCell[iCell] *= pow(pow( volume[iCell], 1.0/dimension ), n);
-//         }
-//     }
-//     else if(iVariable == IDX::IP)
-//     {
-//         //! Pressure.
-//         RDouble *p = this->q[IDX::IP];
-//         for (int iCell = 0; iCell < nTotalCell; ++iCell)
-//         {
-//             epsCell[iCell]  = eps_tmp * p[iCell] * p[iCell];
-//             epsCell[iCell] *= pow(pow( volume[iCell], 1.0/dimension ), n);
-//         }
-//     }
-//     else
-//     {
-//         //! Velocity
-//         RDouble *gama = reinterpret_cast< RDouble *  > (grid->GetDataPtr("gama"));
-//         RDouble *p   = this->q[IDX::IP];
-//         RDouble *rho = this->q[IDX::IR];
-//         for (int iCell = 0; iCell < nTotalCell; ++iCell)
-//         {
-//             RDouble localSoundSpeed2 = gama[iCell] * p[iCell] / rho[iCell];
-//             epsCell[iCell]  = eps_tmp * localSoundSpeed2;
-//             epsCell[iCell] *= pow(pow( volume[iCell], 1.0/dimension ), n);
-//         }
-//     }
+        //! Compute the vector from face to left cell center.
+        dx = xfc[iFace] - xcc[le];
+        dy = yfc[iFace] - ycc[le];
+        dz = zfc[iFace] - zcc[le];
 
+        //! Compute the dq from left cell center to face center.
+        dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        if (dqFace > SMALL)
+        {
+            //! According to the vencat limiter of Theory manual.
+            tmp       = VenFun(dmax[le], dqFace, epsCell[le]);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            //! According to the vencat limiter of Theory manual.
+            tmp       = VenFun(dmin[le], dqFace, epsCell[le]);
+            limit[le] = MIN(limit[le], tmp);
+        }
+    }
 
-	//! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
-	for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-	{
-		//! Get the left and right cell index of iFace.
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
+    //! The following loop is to calculate the limiter coefficient of each interior cell.
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
 
-		//! Compute the vector from face to left cell center.
-		dx = xfc[iFace] - xcc[le];
-		dy = yfc[iFace] - ycc[le];
-		dz = zfc[iFace] - zcc[le];
+        dx     = xfc[iFace] - xcc[le];
+        dy     = yfc[iFace] - ycc[le];
+        dz     = zfc[iFace] - zcc[le];
+        dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[le], dqFace, epsCell[le]);
+            limit[le] = MIN(limit[le], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[le], dqFace, epsCell[le]);
+            limit[le] = MIN(limit[le], tmp);
+        }
 
-		//! Compute the dq from left cell center to face center.
-		dqFace  = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-		if (dqFace > SMALL)
-		{
-			//! According to the vencat limiter of Theory manual.
-			tmp       = VenFun(dmax[le], dqFace, epsCell[le]);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			//! According to the vencat limiter of Theory manual.
-			tmp       = VenFun(dmin[le], dqFace, epsCell[le]);
-			limit[le] = MIN(limit[le], tmp);
-		}
-	}
+        dx     = xfc[iFace] - xcc[re];
+        dy     = yfc[iFace] - ycc[re];
+        dz     = zfc[iFace] - zcc[re];
+        dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
+        if (dqFace > SMALL)
+        {
+            tmp       = VenFun(dmax[re], dqFace, epsCell[re]);
+            limit[re] = MIN(limit[re], tmp);
+        }
+        else if (dqFace < - SMALL)
+        {
+            tmp       = VenFun(dmin[re], dqFace, epsCell[re]);
+            limit[re] = MIN(limit[re], tmp);
+        }
+    }
 
-	//! The following loop is to calculate the limiter coefficient of each interior cell.
-	for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-	{
-		le = leftCellOfFace [iFace];
-		re = rightCellOfFace[iFace];
-
-		dx     = xfc[iFace] - xcc[le];
-		dy     = yfc[iFace] - ycc[le];
-		dz     = zfc[iFace] - zcc[le];
-		dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[le], dqFace, epsCell[le]);
-			limit[le] = MIN(limit[le], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[le], dqFace, epsCell[le]);
-			limit[le] = MIN(limit[le], tmp);
-		}
-
-		dx     = xfc[iFace] - xcc[re];
-		dy     = yfc[iFace] - ycc[re];
-		dz     = zfc[iFace] - zcc[re];
-		dqFace = dqdx[re] * dx + dqdy[re] * dy + dqdz[re] * dz;
-		if (dqFace > SMALL)
-		{
-			tmp       = VenFun(dmax[re], dqFace, epsCell[re]);
-			limit[re] = MIN(limit[re], tmp);
-		}
-		else if (dqFace < - SMALL)
-		{
-			tmp       = VenFun(dmin[re], dqFace, epsCell[re]);
-			limit[re] = MIN(limit[re], tmp);
-		}
-	}
-
-	delete []dmin;
-	delete []dmax;
-	delete []epsCell;
+    delete [] dmin;    dmin = nullptr;
+    delete [] dmax;    dmax = nullptr;
+    delete [] epsCell;    epsCell = nullptr;
 }
 void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
 {
-	int nTotalCell = grid->GetNTotalCell();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotal = nTotalCell + nBoundFace;
-	int nTotalFace = grid->GetNTotalFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalFace = grid->GetNTotalFace();
 
-	int *leftCellOfFace = grid->GetLeftCellOfFace();
-	int *rightCellOfFace = grid->GetRightCellOfFace();
-	BCRecord **bcr = grid->GetBCRecord();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
 
-	//! Find the maximum and minimum in the neighbor of each cell.
-	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-	{
-		dmin[iCell] = q[iCell];
-		dmax[iCell] = q[iCell];
-	}
+    //! Find the maximum and minimum in the neighbor of each cell.
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        dmin[iCell] = q[iCell];
+        dmax[iCell] = q[iCell];
+    }
 
-	for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-	{
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
         int le       = leftCellOfFace[iFace];
         int re       = rightCellOfFace[iFace];
 
-		int bctype   = bcr[iFace]->GetKey();
+        int bctype   = bcr[iFace]->GetKey();
         if (!IsInterface(bctype))
         {
             continue;
@@ -1317,34 +1256,34 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
         dmax[le] = MAX(dmax[le], q[re]);
     }
 
-	for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
-	{
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
         int le       = leftCellOfFace [iFace];
         int re       = rightCellOfFace[iFace];
         dmin[le] = MIN(dmin[le], q[re]);
         dmax[le] = MAX(dmax[le], q[re]);
 
-		dmin[re] = MIN(dmin[re], q[le]);
-		dmax[re] = MAX(dmax[re], q[le]);
-	}
+        dmin[re] = MIN(dmin[re], q[le]);
+        dmax[re] = MAX(dmax[re], q[le]);
+    }
 
-	//! Get the maximum and the minimum difference.
-	for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-	{
-		dmin[iCell] -= q[iCell];
-		dmax[iCell] -= q[iCell];
-	}
+    //! Get the maximum and the minimum difference.
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        dmin[iCell] -= q[iCell];
+        dmax[iCell] -= q[iCell];
+    }
 }
 
 void Init_Limiters(Grid *grid_in, RDouble *limit)
 {
     UnstructGrid *grid = UnstructGridCast(grid_in);
-	int nTotalCell = grid->GetNTotalCell();
-	int nBoundFace = grid->GetNBoundFace();
-	int nTotal = nTotalCell + nBoundFace;
+    int nTotalCell = grid->GetNTotalCell();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotal = nTotalCell + nBoundFace;
 
     int uns_limiter;
-    GlobalDataBase::GetData("uns_limiter",&uns_limiter,PHINT,1);
+    GlobalDataBase::GetData("uns_limiter", &uns_limiter, PHINT, 1);
 
     for ( int icell = 0; icell < nTotal; ++ icell )
     {

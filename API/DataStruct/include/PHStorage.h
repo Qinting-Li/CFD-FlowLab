@@ -37,7 +37,7 @@ public:
 
     GeneralArrayStorage()
     {
-        for ( int i = 0; i < N; ++ i )
+        for (int i = 0; i < N; ++ i)
         {
             ordering_[i] = N - 1 - i;
         }
@@ -45,8 +45,8 @@ public:
         base_ = 0;
     }
 
-    GeneralArrayStorage( const GeneralArrayStorage<N>& rhs )
-                        : ordering_(rhs.ordering_), ascendingFlag_(rhs.ascendingFlag_),base_(rhs.base_)
+    GeneralArrayStorage(const GeneralArrayStorage<N> &rhs)
+                        : ordering_(rhs.ordering_), ascendingFlag_(rhs.ascendingFlag_), base_(rhs.base_)
     {
     }
 
@@ -60,7 +60,7 @@ public:
     ~GeneralArrayStorage()
     { }
 
-    GeneralArrayStorage<N>& operator = (const GeneralArrayStorage<N>& rhs)
+    GeneralArrayStorage<N> & operator = (const GeneralArrayStorage<N> &rhs)
     {
         ordering_      = rhs.ordering();
         ascendingFlag_ = rhs.ascendingFlag();
@@ -68,10 +68,10 @@ public:
         return *this;
     }
 
-    SimpleArray<int, N>& ordering()
+    SimpleArray<int, N> & ordering()
     { return ordering_; }
 
-    const SimpleArray<int, N>& ordering() const
+    const SimpleArray<int, N> & ordering() const
     { return ordering_; }
 
     int ordering(int i) const
@@ -83,7 +83,7 @@ public:
     bool allRanksStoredAscending() const
     {
         bool result = true;
-        for ( int i = 0; i < N; ++ i )
+        for (int i = 0; i < N; ++ i)
         {
             result &= ascendingFlag_[i];
         }
@@ -95,12 +95,12 @@ public:
         return ascendingFlag_[i];
     }
 
-    SimpleArray<bool, N>& ascendingFlag()
+    SimpleArray<bool, N> & ascendingFlag()
     {
         return ascendingFlag_;
     }
 
-    const SimpleArray<bool, N>& ascendingFlag() const
+    const SimpleArray<bool, N> & ascendingFlag() const
     {
         return ascendingFlag_;
     }
@@ -110,12 +110,12 @@ public:
         ascendingFlag_[i] = ascendingFlag;
     }
 
-    SimpleArray<int, N>& base()
+    SimpleArray<int, N> & base()
     {
         return base_;
     }
 
-    const SimpleArray<int, N>& base() const
+    const SimpleArray<int, N> & base() const
     {
         return base_;
     }
@@ -130,7 +130,7 @@ public:
         base_[i] = base;
     }
 
-    void setBase(const SimpleArray<int, N>& base)
+    void setBase(const SimpleArray<int, N> &base)
     {
         base_ = base;
     }
@@ -180,7 +180,7 @@ public:
     FortranArray()
         : GeneralArrayStorage<N>(noInitializeFlag())
     {
-        for ( int i = 0; i < N; ++ i )
+        for (int i = 0; i < N; ++ i)
         {
             ordering_[i] = i;
         }
@@ -188,7 +188,6 @@ public:
         base_ = 1;
     }
 };
-
 
 //! This tag class can be used to provide a nicer notation for
 //! constructing Fortran-style arrays: instead of
@@ -237,7 +236,6 @@ public:
 //! the blitz library (libblitz.a on Unix machines).
 
 extern fortranTag fortranArray;
-
 
 /*
     * Class ColumnMajorArray specializes GeneralArrayStorage to provide column

@@ -72,7 +72,7 @@ private:
     int del(int x, int y);
 
 private:
-    CGNS_Str_Data * Str_CGNS_Data;
+    CGNS_Str_Data *Str_CGNS_Data;
 
     string cel_file;
     string bnd_file;
@@ -200,5 +200,4 @@ public:
     char_33 * GetDonorname() { return donorname; }
 };
 
-#include "Pre_CGNSToPlot3D_Struct.hxx"
 }

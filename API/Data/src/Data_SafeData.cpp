@@ -50,7 +50,7 @@ void Data_SafeData::ShowData()
     }
     else if (type == PHSPACE::PHINT)
     {
-        int * mydata = reinterpret_cast<int *> (data);
+        int *mydata = reinterpret_cast<int *> (data);
         for (int i = 0; i < size; ++ i)
         {
             cout << "var[" << i << "] = " << mydata[i] << "\n";
@@ -59,7 +59,7 @@ void Data_SafeData::ShowData()
     }
     else if (type == PHSPACE::PHFLOAT)
     {
-        RFloat * mydata = reinterpret_cast<RFloat *> (data);
+        RFloat *mydata = reinterpret_cast<RFloat *> (data);
         for (int i = 0; i < size; ++ i)
         {
             cout << "var[" << i << "] = " << mydata[i] << "\n";
@@ -68,7 +68,7 @@ void Data_SafeData::ShowData()
     }
     else if (type == PHSPACE::PHDOUBLE)
     {
-        RDouble * mydata = reinterpret_cast<RDouble *> (data);
+        RDouble *mydata = reinterpret_cast<RDouble *> (data);
         for (int i = 0; i < size; ++ i)
         {
             cout << "var[" << i << "] = " << mydata[i] << "\n";
@@ -130,7 +130,7 @@ void Data_SafeData::DeleteData()
     else
     {
         cout << "No such type\n" << endl;
-        abort();        //! It is temporary!!!
+        abort();    //! It is temporary!!!
     }
     this->data = 0;
 }

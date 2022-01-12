@@ -27,53 +27,53 @@ using namespace std;
 
 namespace PHSPACE
 {
-typedef PHArray<int   ,1> Int1D;
-typedef PHArray<int   ,2> Int2D;
-typedef PHArray<int   ,3> Int3D;
-typedef PHArray<int   ,4> Int4D;
-typedef PHArray<int   ,5> Int5D;
-typedef PHArray<int   ,6> Int6D;
+    typedef PHArray<int, 1> Int1D;
+    typedef PHArray<int, 2> Int2D;
+    typedef PHArray<int, 3> Int3D;
+    typedef PHArray<int, 4> Int4D;
+    typedef PHArray<int, 5> Int5D;
+    typedef PHArray<int, 6> Int6D;
 
-typedef PHArray<RFloat ,1> RFloat1D;
-typedef PHArray<RFloat ,2> RFloat2D;
-typedef PHArray<RFloat ,3> RFloat3D;
-typedef PHArray<RFloat ,4> RFloat4D;
-typedef PHArray<RFloat ,5> RFloat5D;
-typedef PHArray<RFloat ,6> RFloat6D;
+    typedef PHArray<RFloat, 1> RFloat1D;
+    typedef PHArray<RFloat, 2> RFloat2D;
+    typedef PHArray<RFloat, 3> RFloat3D;
+    typedef PHArray<RFloat, 4> RFloat4D;
+    typedef PHArray<RFloat, 5> RFloat5D;
+    typedef PHArray<RFloat, 6> RFloat6D;
 
-typedef PHArray<RDouble ,1> RDouble1D;
-typedef PHArray<RDouble ,2> RDouble2D;
-typedef PHArray<RDouble ,3> RDouble3D;
-typedef PHArray<RDouble ,4> RDouble4D;
-typedef PHArray<RDouble ,5> RDouble5D;
-typedef PHArray<RDouble ,6> RDouble6D;
+    typedef PHArray<RDouble, 1> RDouble1D;
+    typedef PHArray<RDouble, 2> RDouble2D;
+    typedef PHArray<RDouble, 3> RDouble3D;
+    typedef PHArray<RDouble, 4> RDouble4D;
+    typedef PHArray<RDouble, 5> RDouble5D;
+    typedef PHArray<RDouble, 6> RDouble6D;
 
-typedef vector < RDouble * > VDoubleP;
+    typedef vector < RDouble * > VDoubleP;
 
-typedef vector < int      > VInt;
-typedef vector < VInt     > VVInt;
+    typedef vector < int  > VInt;
+    typedef vector < VInt > VVInt;
 
-typedef map<string, int    > IntDBase;
-typedef map<string, RDouble> RDoubleDBase;
-typedef map<string, RFloat > RFloatDBase;
-typedef map<string, void * > PointerDBase;
+    typedef map<string, int    > IntDBase;
+    typedef map<string, RDouble> RDoubleDBase;
+    typedef map<string, RFloat > RFloatDBase;
+    typedef map<string, void * > PointerDBase;
 
-typedef streamsize PHLongLong;
+    typedef streamsize PHLongLong;
 
-typedef vector<int>	   PHInt1D;
-typedef vector<PHInt1D> PHInt2D;
-typedef vector<RDouble> PHDouble1D;
-typedef vector<PHDouble1D> PHDouble2D;
-typedef vector<PHDouble2D> PHDouble3D;
-typedef vector<string> PHString1D;
+    typedef vector<int> PHInt1D;
+    typedef vector<PHInt1D> PHInt2D;
+    typedef vector<RDouble> PHDouble1D;
+    typedef vector<PHDouble1D> PHDouble2D;
+    typedef vector<PHDouble2D> PHDouble3D;
+    typedef vector<string> PHString1D;
 
-typedef DataStruct_AdtNode<int, RDouble> PHProcessorNode;
-typedef DataStruct_AdtTree<int, RDouble> PHProcessorTree;
+    typedef DataStruct_AdtNode<int, RDouble> PHProcessorNode;
+    typedef DataStruct_AdtTree<int, RDouble> PHProcessorTree;
 
-typedef PHVector1D < int     > PHVectorInt1D;
-typedef PHVector1D < string  > PHVectorString1D;
-typedef PHVector1D < RDouble > PHVectorRDouble1D;
-typedef PHVector2D < int     > PHVectorInt2D;
+    typedef PHVector1D<int    > PHVectorInt1D;
+    typedef PHVector1D<string > PHVectorString1D;
+    typedef PHVector1D<RDouble> PHVectorRDouble1D;
+    typedef PHVector2D<int    > PHVectorInt2D;
 
 }
 

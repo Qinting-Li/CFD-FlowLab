@@ -41,7 +41,7 @@ public:
         this->dim = dim;
         min = new RDouble[dim];
         max = new RDouble[dim];
-        for ( int i = 0; i < dim; ++ i )
+        for (int i = 0; i < dim; ++ i)
         { 
             min[i] = 0.0;
             max[i] = 1.0;
@@ -50,11 +50,11 @@ public:
 
     void Free()
     {
-        if (!this->min)
+        if (this->min)
         {
             delete [] this->min;
         }
-        if (!this->max)
+        if (this->max)
         {
             delete [] this->max;
         }
@@ -68,7 +68,13 @@ public:
 class DataStruct_ResNode
 {
 public:
-    typedef DataStruct_KDNode     KDNode;
+    typedef DataStruct_KDNode KDNode;
+    DataStruct_ResNode()
+    {
+        item = NULL;
+        distSQ = 0.0;
+        next = NULL;
+    }
 public:
     KDNode *item;
     RDouble distSQ;
@@ -87,37 +93,37 @@ public:
     int dim;
     KDNode *root;
     KDHyperRect *rect;
-    void (*destr)(void*);
+    void (*destr)(void *);
 
 public:
     //! Construct an K-Dimension tree.
-    //! @param[in] ndim	the dimension of element's coordinate in node, default is 3.
+    //! @param[in] ndim the dimension of element's coordinate in node, default is 3.
     //! The element's numerical range is default with 0 to 1.
     DataStruct_KDTree()
     {
-        dim   = 0;
-        root  = NULL;
-        rect  = NULL;
+        dim  = 0;
+        root = NULL;
+        rect = NULL;
     };
 
     DataStruct_KDTree(int dim)
     {
         this->dim = dim;
-        root  = new KDNode(dim);
-        rect  = new KDHyperRect(dim);
+        root = NULL;
+        rect = new KDHyperRect(dim);
     };
 
     void Free();
 
     void Clear();
 
-    void ClearRec(KDNode *node, void(*destr)(void*));
+    void ClearRec(KDNode *node, void(*destr)(void *));
 
-    void DestructorKDData(void(*destr)(void*));
+    void DestructorKDData(void(*destr)(void *));
 
     void ExtendHyperRect(int dim, const RDouble *pos);
 
-    KDResNode *KDNearest(DataStruct_KDTree *kdtree, const RDouble *pos);
+    KDResNode * KDNearest(DataStruct_KDTree *kdtree, const RDouble *pos);
 };
 
 typedef DataStruct_KDTree KDTree;
@@ -128,6 +134,21 @@ public:
     KDTree *kdTree;
     KDResNode *rlist, *riter;
     int size;
+    DataStruct_KDRes()
+    {
+        size   = 0;
+        kdTree = NULL;
+        rlist  = NULL;
+        riter  = NULL;
+    };
+    ~DataStruct_KDRes()
+    {
+        if (kdTree) delete kdTree;
+        if (rlist)  delete rlist;
+        if (riter)  delete riter;
+    }
+
+
 public:
     int Size()
     {
@@ -150,20 +171,20 @@ public:
         return riter != NULL;
     };
 
-    void *Item(RDouble *pos)
+    void * Item(RDouble *pos)
     {
         if (riter)
         {
             if (pos)
             {
-                memcpy(pos, riter->item->pos, kdTree->dim * sizeof * pos);
+                memcpy(pos, riter->item->pos, kdTree->dim * sizeof(RDouble));
             }
             return riter->item->data;
         }
         return NULL;
     };
 
-    RDouble *Position()
+    RDouble * Position()
     {
         if (riter)
         {
@@ -175,24 +196,24 @@ public:
         return NULL;
     };
 
-    void *itemData()
+    void * itemData()
     {
         return Item(0);
     };
 };
 typedef DataStruct_KDRes KDRes;
 
-KDTree *CreatKDTree(int k);
+KDTree * CreatKDTree(int k);
 
-void ClearRec(KDNode *node, void(*destr)(void*));
+void ClearRec(KDNode *node, void(*destr)(void *));
 
-KDRes *NearestRange(KDTree *kdTree, const RDouble *pos, RDouble range);
+KDRes * NearestRange(KDTree *kdTree, const RDouble *pos, RDouble range);
 
-KDRes *KDNearest(KDTree *kdTree, const RDouble *pos);
+KDRes * KDNearest(KDTree *kdTree, const RDouble *pos);
 
 void KDNearestI(KDNode *node, const RDouble *pos, const RDouble **result, RDouble *resultDistSQ, KDHyperRect *rect);
 
-KDHyperRect *DuplicateHyperRect(const KDHyperRect *rect);
+KDHyperRect * DuplicateHyperRect(const KDHyperRect *rect);
 
 int KDInsert(KDTree *kdTree, const RDouble *pos, void *data);
 
@@ -204,7 +225,7 @@ int FindNearest(KDNode *node, const RDouble *pos, RDouble range, KDResNode *list
 
 int InsertRec(KDNode **nptr, const RDouble *pos, void *data, int dir, int dim);
 
-KDHyperRect *CreatHyperRect(int dim, const RDouble *min, const RDouble *max);
+KDHyperRect * CreatHyperRect(int dim, const RDouble *min, const RDouble *max);
 
 void clearResults(KDRes *rset);
 

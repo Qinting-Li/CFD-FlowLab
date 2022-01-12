@@ -13,8 +13,8 @@ InterfacePatch::InterfacePatch()
     zoneid = 0;
     zoneIndexOfNeighbor = 0;
     faceNumberOfPatch = 0;
-    faceIndexForRecv = 0;
-    faceIndexForSend = 0;
+    faceIndexForRecv = nullptr;
+    faceIndexForSend = nullptr;
 
     dataStorageSend = new Data_ParamFieldSuite();
     dataStorageRecv = new Data_ParamFieldSuite();
@@ -100,11 +100,11 @@ InterfaceInfo::InterfaceInfo()
 {
     nIFace                 = 0;
     numberOfNeighbor       = 0;
-    interFace2ZoneID       = 0;
-    interFace2CellID       = 0;
-    interFace2InterFaceID  = 0;
-    interFace2BoundaryFace = 0;
-    interFaceDirection     = 0;
+    interFace2ZoneID       = nullptr;
+    interFace2CellID       = nullptr;
+    interFace2InterFaceID  = nullptr;
+    interFace2BoundaryFace = nullptr;
+    interFaceDirection     = nullptr;
     parent                 = NULL;
 
     dsend = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
@@ -419,6 +419,7 @@ InterfaceFields::~InterfaceFields()
 {
     //! The send && receive data are allocated by InterfaceFields,
     //! so, they should be free by InterfaceFields.
+    if (this->Size() == 0) return;
     FreeInterfaceVar();
 }
 
@@ -506,9 +507,10 @@ void InterfaceFields::FreeInterfaceVar()
 {
     for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        FreeInterfaceVar(interfaceInfo->GetSendDataStorage(iGhost));
-        FreeInterfaceVar(interfaceInfo->GetRecvDataStorage(iGhost));
+        if (interfaceInfo->GetSendDataStorage(iGhost) != 0) FreeInterfaceVar(interfaceInfo->GetSendDataStorage(iGhost));
+        if (interfaceInfo->GetRecvDataStorage(iGhost) != 0) FreeInterfaceVar(interfaceInfo->GetRecvDataStorage(iGhost));
     }
+    interfaceInfo = NULL;
 }
 
 void InterfaceFields::FreeInterfaceVar(Data_ParamFieldSuite *datastore)
@@ -519,6 +521,7 @@ void InterfaceFields::FreeInterfaceVar(Data_ParamFieldSuite *datastore)
         void **q = reinterpret_cast<void **> (datastore->GetDataPtr(varName));
         DelPointer2(q);
     }
+    datastore = NULL;
 }
 
 template< typename T >

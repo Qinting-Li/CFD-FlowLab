@@ -16,6 +16,7 @@
 
 #pragma once
 #include "Geo_Grid.h"
+#include "Geo_UnstructGrid.h"
 #include "Geo_OversetGridTopo_Struct.h"
 #include "Geo_NodeTopo_Struct.h"
 #include "Geo_FaceMetrics_Struct.h"
@@ -23,17 +24,18 @@
 #include "Geo_MultiGridInfo_Struct.h"
 #include "Geo_DynamicGridMetrics_Struct.h"
 #include "IO_VirtualFile.h"
-#include "BC_Struct.h"
+#include "Geo_StructBC.h"
 
 namespace PHSPACE
 {
 class HoleGrid;
 class BackgroundTree ;
 class OversetCellCollector ;
+class UnstructGrid;
 
 class VirtualFile;
-class CompositeBCRegion;
-class BCRegion;
+class CompositeStructBC;
+class StructBC;
 
 class StructGrid : public Grid
 {
@@ -62,24 +64,22 @@ private:
     //! Geo_DynamicGridMetrics_Struct class defines the dynamic grid metrics of the structured grid.
     //! 1: Cell volume of the last time step (voln).
     //! 2: Face normal velocity (vgn).
-    //! 3: Node velocity (xtn, ytn, ztn).
+    //! 3: Face velocity (xfv, yfv, zfv).
     Geo_DynamicGridMetrics_Struct *dynamicGridMetrics;
 
     //! Distance to wall
     RDouble3D *walldist;
 
+    //! overset iblank
+    Int3D *iBlank3D;
+
     //! If the cell is the firse cell near wall.
     Int3D *wallCellLabel;
-
-    Int3D *iblank;
-
-    //! Used for overset interpolation.
-    int * iblank_tmp;
 
     //! Boundary information.
     //! 1: Number of boundary face (nBoundFace).
     //! 2: Number of interface face (nIFace).
-    CompositeBCRegion *composite_bcregion;
+    CompositeStructBC *composite_bcregion;
 
     //! Topology information of the overset grid.
     Geo_OversetGridTopo_Struct *oversetGridTopology;
@@ -88,10 +88,11 @@ private:
     PHDouble2D localFrame;
 
     //! Probes nearest node dimension of i,j,k directions.
-    vector <int> probesCellNI;
-    vector <int> probesCellNJ;
-    vector <int> probesCellNK;
+    vector <int> zoneProbesCellNI;
+    vector <int> zoneProbesCellNJ;
+    vector <int> zoneProbesCellNK;
 
+    UnstructGrid *gridUnstr;
 public:
     LIB_EXPORT StructGrid();
     LIB_EXPORT ~StructGrid();
@@ -108,6 +109,15 @@ public:
 
     void InitWallDist();
 
+    void InitIBlank3D();
+
+    Int3D *GetIBlank3D();
+
+    void CopyIBlank3D(int *iBlank);
+    void SetIBlank(int *iBlank);
+
+    UnstructGrid *GetUnstrGrid(){return this->gridUnstr;};
+    void SetUnstrGrid(UnstructGrid *gridIn){this->gridUnstr = gridIn;};
     //! 
     void DecodeWallDist(DataContainer *cdata);
 
@@ -196,31 +206,31 @@ public:
     int GetNK() const;
 
     //! Set the probes cell dimension of I direction (ni).
-    void SetProbesCellNI(vector <int> probesCellNI);
+    void SetZoneProbesCellNI(vector <int> zoneProbesCellNI);
 
     //! Set the probes cell dimension of J direction (nj).
-    void SetProbesCellNJ(vector <int> probesCellNJ);
+    void SetZoneProbesCellNJ(vector <int> zoneProbesCellNJ);
 
     //! Set the probes cell dimension of K direction (nk).
-    void SetProbesCellNK(vector <int> probesCellNK);
+    void SetZoneProbesCellNK(vector <int> zoneProbesCellNK);
 
     //! Return the probes cell dimension of I direction (ni).
-    vector <int> GetProbesCellNI() const;
+    vector <int> GetZoneProbesCellNI() const;
 
     //! Return the probes cell dimension of J direction (nj).
-    vector <int> GetProbesCellNJ() const;
+    vector <int> GetZoneProbesCellNJ() const;
 
     //! Return the probes cell dimension of K direction (nk).
-    vector <int> GetProbesCellNK() const;
+    vector <int> GetZoneProbesCellNK() const;
 
-    //! Return the cell iteration index, for example: if layer = 0, then ist = 1, ied = ni-1.
-    void GetCellIterationIndex(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked, int layer = 0);
+    //! Return the cell iteration index, for example: if layer = 0, then iCellStart = 1, iCellEnd = ni-1.
+    void GetCellIterationIndex(int &iCellStart, int &iCellEnd, int &jCellStart, int &jCellEnd, int &kCellStart, int &kCellEnd, int layer = 0);
 
-    //! Return the node iteration index, for example: ist = 1, ied = ni. 
-    void GetNodeIterationIndex(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked);
+    //! Return the node iteration index, for example: iNodeStart = 1, iNodeEnd = ni.
+    void GetNodeIterationIndex(int &iNodeStart, int &iNodeEnd, int &jNodeStart, int &jNodeEnd, int &kNodeStart, int &kNodeEnd);
 
-    //! Return the face iteration index, for example: if nSurface = 1, then ist = 0, ied = ni-1.
-    void GetFaceIterationIndex(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked, int iSurface);
+    //! Return the face iteration index, for example: if nSurface = 1, then iFaceStart = 0, iFaceEnd = ni-1.
+    void GetFaceIterationIndex(int &iFaceStart, int &iFaceEnd, int &jFaceStart, int &jFaceEnd, int &kFaceStart, int &kFaceEnd, int iSurface);
 
     //! Assign the node dimension of I, J, K direction to si, sj ,sk.
     void GetND(int &si, int &sj, int &sk) const;
@@ -247,7 +257,7 @@ public:
     LIB_EXPORT void CopyGrid(StructGrid *grid);
 
     //! Copy boundary information from another grid.
-    LIB_EXPORT void CopyCompositeBCRegion(CompositeBCRegion *composite_bcregion);
+    LIB_EXPORT void CopyCompositeBCRegion(CompositeStructBC *composite_bcregion);
 
     //! Copy coordinates(X, Y, Z) information from another grid.
     LIB_EXPORT void CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble *yy, RDouble *zz);
@@ -268,7 +278,7 @@ public:
     LIB_EXPORT void CreateCompositeBCRegion(int nBCRegion);
 
     //! Return composite boundary condition region pointer (composite_bcregion).
-    CompositeBCRegion * GetCompositeBCRegion() const;
+    CompositeStructBC * GetCompositeBCRegion() const;
 
     //! Set boundary face information.
     LIB_EXPORT void SetBCFaceInfo();
@@ -364,6 +374,7 @@ public:
 
     //! Process boundary condition information.
     LIB_EXPORT void ProcessBCInfo();
+    LIB_EXPORT void SetLnkInfo();
 
     //! Read grid information from file.
     LIB_EXPORT void ReadGrid(fstream &file);
@@ -395,12 +406,18 @@ public:
     //! Compute total number of Wall Type cell.
     LIB_EXPORT int GetNumberOfWallCell();
 
+    //! To obtain the information of wall boundary conditions.
+    //! param[out]: wallBCNum indicates the number of the wall boundary conditions;
+    //! param[out]: maxCellNum denotes the maximum number of the cells in the wall boundary conditions.
+    LIB_EXPORT void GetWallBCInfo(int &wallBCNum, int &maxCellNum);
+
     //! Dump to tecplot.
     LIB_EXPORT void ToTecplot();
 
     //! Get surface velocity.
     LIB_EXPORT void GridSurfaceVelocity(RDouble *xt, RDouble *yt, RDouble *zt);
     
+    LIB_EXPORT void ComputeGridFaceVelocity();
     //! Change BC type.
     LIB_EXPORT void ChangeBCType(int from_bctype, int to_bctype);
 
@@ -412,6 +429,9 @@ public:
 
     //! Get the largest local grid length, distance of neighbor cell centers.
     LIB_EXPORT RDouble3D * GetLargestLocalGridLength();
+
+    //! Get the smallest local grid length, distance of neighbor cell centers.
+    LIB_EXPORT RDouble3D * GetSmallestLocalGridLength();
 
     //! Get the sub-grid length, used for DES simulation ONLY.
     LIB_EXPORT RDouble3D * GetSubgridLength();
@@ -427,22 +447,19 @@ public:
 
     LIB_EXPORT RDouble SkewnessSummary(ActionKey *actkey = 0) { return 1.0; }
     
-    void SetBlankIndex(Int3D *iblank);
-    void SetBlankIndex_tmp(int * iblank);
-    int * GetBlankIndex_tmp();
     void GetLocalIndex(int gp, int &ip, int &jp, int &kp) const;
     void GetLocalCenter(int gp, int &ip, int &jp, int &kp) const;
     LIB_EXPORT void EncodeOversetGrid(DataContainer *cdata);
     LIB_EXPORT void DecodeOversetGrid(DataContainer *cdata);
     LIB_EXPORT void AllocateOversetGrid();
-    //LIB_EXPORT void InitLinkPointLabel();
+    LIB_EXPORT void CopyOversetFromUnstructGrid();
+    LIB_EXPORT int * GetCellTypeContainer();
     LIB_EXPORT void CreateLinkPointStructure();
     LIB_EXPORT void SetLinkPointLabel(int *iLabel, int iDirection);
     //LIB_EXPORT void DeleteLinkPointStructure();
     LIB_EXPORT void SetZoneStartPointLabel(int zoneStartPointLabel);
     //LIB_EXPORT void DeleteCellContainer();
     int GetZoneStartPointLabel() const;
-    int * GetCellTypeContainer() const;
     int * GetILinkPointLabel() const;
     int * GetJLinkPointLabel() const;
     int * GetKLinkPointLabel() const;
@@ -477,6 +494,17 @@ public:
     void GhostCell3DExceptInterface(RDouble3D &TargetArray3D);
     void GhostCell3DExceptInterface(RDouble4D &TargetArray4D, const int &nVariables);
 
+    void InitVariableWallTemperature();
+
+    RDouble4D * GetFaceVelocityX() const;
+    RDouble4D * GetFaceVelocityY() const;
+    RDouble4D * GetFaceVelocityZ() const;
+
+    void GetBcNamePair(set< pair<int, string> > &bcNamePairSet);
+    void DumpWallFaceCenter(ActionKey *actkey);
+    void GetCellIBlank(ActionKey *actkey);
+    void TranslateCellIBlank(ActionKey *actkey);
+
 private:
     void ReadXYZ(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
     void ReadXYZASCII(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
@@ -504,9 +532,6 @@ private:
     void WriteGrid(VirtualFile *vfile);
     void EncodeGrid(DataContainer *cdata);
     void DecodeGrid(DataContainer *cdata);
-    RDouble4D & GetFaceVelocityX() const;
-    RDouble4D & GetFaceVelocityY() const;
-    RDouble4D & GetFaceVelocityZ() const;
     void DumpWalldist(ActionKey *actkey);
     void ReadWalldist(RDouble *wallDistIn);
     void GetCellCenter(ActionKey *actkey);
@@ -533,6 +558,7 @@ private:
     void GaussElimination(vector< vector< RDouble > > &a, vector< RDouble > &b, int n, vector< RDouble > &x, int &flag);
 
     void ComputeLargestLocalGridLength();
+    void ComputeSmallestLocalGridLength();
     void ComputeSubgridLength();
 };
 
@@ -556,6 +582,8 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble3D *f, const string &name);
 
 void UploadOversetValue(StructGrid *grid, RDouble4D *field, const string &name, int neqn);
 void DownloadOversetValue(StructGrid *grid, RDouble4D *field, const string &name, int neqn);
+void UploadOversetValue(StructGrid *grid, RDouble3D *field, const string &name);
+void DownloadOversetValue(StructGrid *grid, RDouble3D *field, const string &name);
 
 void MinMaxDiffINF(StructGrid *grid, int ig, RDouble *dmin, RDouble *dmax, RDouble4D *q, int m);
 void BarthLimiterINF (StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int m);
@@ -579,7 +607,4 @@ void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, 
 //! Used by Post_Visual class.
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n);
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble3D &q);
-//! Used by Struct Overset Grid assemble interpolation.
-void GeoOverset(int &nTNodes,int &nOverCell, int nGlobalZone);
-void InterpolationOversetField(const string & name,  const int dimension, int nTNodes,int nOverCell, int nGlobalZone, int nEquation);
 }

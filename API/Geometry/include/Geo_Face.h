@@ -20,40 +20,40 @@ namespace PHSPACE
 class Geo_Face
 {
 public:
-	//! Left cell id.
-	int le;
+    //! Left cell id.
+    int le;
 
-	//! Right cell id.
-	int re;
+    //! Right cell id.
+    int re;
 
-	//! Face id.
-	int faceID;
+    //! Face id.
+    int faceID;
 
-	//! Maximum face id in global, it would be a estimated appropriate value.
-	int maxFaceID;
+    //! Maximum face id in global, it would be a estimated appropriate value.
+    int maxFaceID;
 
 public:
-	Geo_Face();
-	Geo_Face(const int & le, const int & re, const int & id, int maxFaceID = 102400);
-	Geo_Face(const Geo_Face & rhs);
-	Geo_Face & operator = (const Geo_Face & rhs);
-	~Geo_Face();
+    Geo_Face();
+    Geo_Face(const int & le, const int & re, const int & id, int maxFaceID = 102400);
+    Geo_Face(const Geo_Face & rhs);
+    Geo_Face & operator = (const Geo_Face & rhs);
+    ~Geo_Face();
 
-public:	
-	//! Get face id.
-	int GetID() const { return faceID; }
-	void SetID(const int & id) { this->faceID = id; }
+public:
+    //! Get face id.
+    int GetID() const { return faceID; }
+    void SetID(const int & id) { this->faceID = id; }
 
-	int hash_key() const;
+    int hash_key() const;
 
-	bool operator < (const Geo_Face &rhs) const;
-	friend bool operator == (const Geo_Face & face1, const Geo_Face & face2)
-	{		
-		if(&face1 == &face2)	return true;
+    bool operator < (const Geo_Face &rhs) const;
+    friend bool operator == (const Geo_Face & face1, const Geo_Face & face2)
+    {
+        if (&face1 == &face2) return true;
 
-		return (face1.le == face2.le && face1.re == face2.re);
-		//return (face1.le == face2.le && face1.re == face2.re && face1.faceID == face2.faceID);
-	}
+        return (face1.le == face2.le && face1.re == face2.re);
+        //return (face1.le == face2.le && face1.re == face2.re && face1.faceID == face2.faceID);
+    }
 };
 
 }

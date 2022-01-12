@@ -13,12 +13,12 @@ RDouble Post_ForceMoment::DistPoint2Line(RDouble *point, RDouble *linePoint1, RD
     dx = point[0] - linePoint1[0];
     dy = point[1] - linePoint1[1];
     dz = point[2] - linePoint1[2];
-    di =  q*dz - dy*r;
-    dj = -p*dz + dx*r;
-    dk =  p*dy - dx*q;
-    d = di*di + dj*dj +dk*dk;
+    di =  q * dz - dy * r;
+    dj = -p * dz + dx * r;
+    dk =  p * dy - dx * q;
+    d = di * di + dj * dj +dk * dk;
     d = sqrt(d);
-    distN2L = d / (sqrt(p*p + q*q + r*r) + TINY);
+    distN2L = d / (sqrt(p * p + q * q + r * r) + TINY);
     return distN2L;
 }
 

@@ -41,7 +41,7 @@ private:
 private:
     int numberOfBlocks;
     vector<Grid *> OrdinaryGrid;
-    Grid ** NewGrids;
+    Grid **NewGrids;
 };
 
 }

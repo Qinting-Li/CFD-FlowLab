@@ -24,7 +24,7 @@ namespace PHSPACE
 class ForceProcessStruct
 {
 public:
-    Force globalAerodynamicForce;
+    AerodynamicForce globalAerodynamicForce;
 
 public:
     ForceProcessStruct(PostProcessData *Data);

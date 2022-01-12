@@ -84,7 +84,7 @@ void GlobalDataBase::WriteVoid(DataContainer *cdata, void *data, int type, int s
     }
     else if (type == PHINT)
     {
-        int * mydata = reinterpret_cast<int *> (data);
+        int *mydata = reinterpret_cast<int *> (data);
         for (int i = 0; i < size; ++ i)
         {
             cdata->write(&mydata[i], sizeof(int));
@@ -92,7 +92,7 @@ void GlobalDataBase::WriteVoid(DataContainer *cdata, void *data, int type, int s
     }
     else if (type == PHFLOAT)
     {
-        RFloat * mydata = reinterpret_cast<RFloat *> (data);
+        RFloat *mydata = reinterpret_cast<RFloat *> (data);
         for (int i = 0; i < size; ++ i)
         {
             cdata->write(&mydata[i], sizeof(RFloat));
@@ -100,7 +100,7 @@ void GlobalDataBase::WriteVoid(DataContainer *cdata, void *data, int type, int s
     }
     else if (type == PHDOUBLE)
     {
-        RDouble * mydata = reinterpret_cast<RDouble *> (data);
+        RDouble *mydata = reinterpret_cast<RDouble *> (data);
         for (int i = 0; i < size; ++ i)
         {
             cdata->write(&mydata[i], sizeof(RDouble));
@@ -154,14 +154,14 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
 
 void GlobalDataBase::CompressData(DataContainer *&cdata)
 {
-    set < Data_SafeData > * basep = GetBaseP();
+    set < Data_SafeData > *basep = GetBaseP();
     set < Data_SafeData >::iterator it;
 
     uint_t ndata = basep->size();
 
     cdata->write(&ndata, sizeof(uint_t));
 
-    for (it = basep->begin(); it != basep->end(); ++it)
+    for (it = basep->begin(); it != basep->end(); ++ it)
     {
         int type = it->GetType();
         int size = it->GetSize();
@@ -181,7 +181,7 @@ void GlobalDataBase::DecompressData(DataContainer *cdata)
     uint_t ndata = 0;
     cdata->read(&ndata, sizeof(uint_t));
 
-    for (uint_t i = 0; i < ndata; ++i)
+    for (uint_t i = 0; i < ndata; ++ i)
     {
         string name;
         int type;
@@ -213,6 +213,24 @@ RDouble GlobalDataBase::GetDoubleParaFromDB(const string &name)
     RDouble data;
     GetData(name, &data, PHDOUBLE, 1);
     return data;
+}
+
+bool GlobalDataBase::IsExist(const string &name, int type, int size)
+{
+    return globalParam->IsExist(name, type, size);
+}
+
+RDouble * GlobalDataBase::GetRDoubleArrayFromDB(const string &name, int numberOfElements)
+{
+    RDouble *rRDoubleArray = new RDouble[numberOfElements];
+    GetData(name, rRDoubleArray, PHDOUBLE, numberOfElements);
+    return rRDoubleArray;
+}
+
+void GlobalDataBase::GetRDoubleVectorFromDB(vector< RDouble > &parameter, const string &nameOfRFloatArray, int numberOfElements)
+{
+    parameter.resize(numberOfElements);
+    GetData(nameOfRFloatArray, &parameter[0], PHDOUBLE, numberOfElements);
 }
 
 LIB_EXPORT int GetTaskCode()

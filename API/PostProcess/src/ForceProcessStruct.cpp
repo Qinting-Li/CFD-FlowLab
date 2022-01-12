@@ -1,5 +1,5 @@
 #include "ForceProcessStruct.h"
-#include "BC_Struct.h"
+#include "Geo_StructBC.h"
 #include "Glb_Dimension.h"
 #include "GradientOperation.h"
 #include "Post_ForceMoment.h"
@@ -49,11 +49,6 @@ void ForceProcessStruct::InitValueField()
         {
             K.setRange(1, 1);
         }
-
-        int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-        int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-        int neqn  = nm + nchem;
-
         int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
 
         Range T(0, nTemperatureModel - 1);
@@ -76,11 +71,15 @@ void ForceProcessStruct::InitForce()
     attack   = attackd * PI / 180.0;
     sideslip = angleSlide * PI / 180.0;
 
-    RDouble forceRefenenceArea   = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceArea");
-    RDouble forceRefenenceLength = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceLength");
-    RDouble forceRefenenceLengthSpanWise = GlobalDataBase::GetDoubleParaFromDB("forceRefenenceLengthSpanWise");
+    RDouble forceReferenceArea   = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
+    RDouble forceReferenceLength = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
+    RDouble forceReferenceLengthSpanWise = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLengthSpanWise");
+    RDouble TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
+    RDouble TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
+    RDouble TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
 
-    globalAerodynamicForce.Init(attack, sideslip, forceRefenenceArea, forceRefenenceLength, forceRefenenceLengthSpanWise);
+    globalAerodynamicForce.Initialize(attack, sideslip, forceReferenceArea, forceReferenceLength, forceReferenceLengthSpanWise);
+    globalAerodynamicForce.SetTorqueRef(TorqueRefX, TorqueRefY, TorqueRefZ);
 }
 
 void ForceProcessStruct::CollectionForce()
@@ -90,15 +89,14 @@ void ForceProcessStruct::CollectionForce()
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int zone_proc = GetZoneProcessorID(iZone);
-        int myid      = GetCurrentProcessorID();
+        int myid = GetCurrentProcessorID();
 
         if (myid == zone_proc)
         {
             AirForceCoef(iZone);
         }
     }
-
-    globalAerodynamicForce.CollectionForce(this->CollectData);
+    globalAerodynamicForce.CollectOfAllProcessors();
 }
 
 void ForceProcessStruct::AirForceCoef(int iZone)
@@ -119,13 +117,8 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
 {
     StructGrid *grid = StructGridCast(GetGrid(iZone));
 
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
-
-    RDouble4D & q    = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("q"));
-    RDouble3D & visl = * reinterpret_cast<RDouble3D *>(grid->GetDataPtr("visl"));
-    RDouble3D & vist = * reinterpret_cast<RDouble3D *>(grid->GetDataPtr("vist"));
+    RDouble4D &q    = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("q"));
+    RDouble3D &visl = * reinterpret_cast<RDouble3D *>(grid->GetDataPtr("visl"));
 
     RDouble refReNumber = GlobalDataBase::GetDoubleParaFromDB("refReNumber");
     RDouble oreynolds = 1.0 / refReNumber;
@@ -133,7 +126,7 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
 
     const int ALL_PART = -1;
-    BoundaryCondition *boundaryCondition = 0;
+    SimpleBC *boundaryCondition = 0;
     string partBCName = "";
     RDouble TorqueRefX, TorqueRefY, TorqueRefZ;
 
@@ -166,14 +159,14 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     RDouble *prim_inf = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
     RDouble poo = prim_inf[IP];
 
-    RDouble4D & xfn  = * (grid->GetFaceNormalX());
-    RDouble4D & yfn  = * (grid->GetFaceNormalY());
-    RDouble4D & zfn  = * (grid->GetFaceNormalZ());
-    RDouble4D & xfv  = * (grid->GetFaceVectorX());
-    RDouble4D & yfv  = * (grid->GetFaceVectorY());
-    RDouble4D & zfv  = * (grid->GetFaceVectorZ());
-    RDouble4D & area = * (grid->GetFaceArea());
-    RDouble3D & vol  = * (grid->GetCellVolume());
+    RDouble4D &xfn  = * (grid->GetFaceNormalX());
+    RDouble4D &yfn  = * (grid->GetFaceNormalY());
+    RDouble4D &zfn  = * (grid->GetFaceNormalZ());
+    RDouble4D &xfv  = * (grid->GetFaceVectorX());
+    RDouble4D &yfv  = * (grid->GetFaceVectorY());
+    RDouble4D &zfv  = * (grid->GetFaceVectorZ());
+    RDouble4D &area = * (grid->GetFaceArea());
+    RDouble3D &vol  = * (grid->GetCellVolume());
 
     RDouble cfx, cfy, cfz, cpx, cpy, cpz, cmx, cmy, cmz;
     cfx = 0.0;
@@ -187,21 +180,16 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     cmz = 0.0;
 
     int ndim = GetDim();
-
-    //RDouble **gradPrimtiveVarFaceX = reinterpret_cast<RDouble **>( grid->GetDataPtr("gradPrimtiveVarFaceX"));
-    //RDouble **gradPrimtiveVarFaceY = reinterpret_cast<RDouble **>( grid->GetDataPtr("gradPrimtiveVarFaceY"));
-    //RDouble **gradPrimtiveVarFaceZ = reinterpret_cast<RDouble **>( grid->GetDataPtr("gradPrimtiveVarFaceZ"));
-
     using namespace IDX;
 
     int ix = 0;
 
-    CompositeBCRegion *composite_bcregion = grid->GetCompositeBCRegion();
+    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
     
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        BCRegion *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
         
         int ist, ied, jst, jed, kst, ked;
@@ -210,10 +198,9 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
         bool isNeedComputeAirForce = (bctype == PHENGLEI::SOLID_SURFACE);
         if (isNeedComputeAirForce && partID != ALL_PART)
         {
-            const string & bcName = bcregion->GetBCName();
+            const string &bcName = bcregion->GetBCName();
             isNeedComputeAirForce = isNeedComputeAirForce && (bcName == partBCName);
         }
-
 
         if (!isNeedComputeAirForce)
         {
@@ -231,7 +218,6 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
 
         int in, jn, kn, i1, j1, k1, il, jl, kl;
         RDouble pw, p1, p2, cp;
-        //RDouble store, fact;
         RDouble dfx, dfy, dfz, dpx, dpy, dpz, dmx, dmy, dmz, fvsx, fvsy, fvsz;
         RDouble nxs, nys, nzs, ns, nx, ny, nz;
         RDouble dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz;
@@ -273,9 +259,6 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                     p1 = q(i, j, k, IP);
 
                     //! pressure drag.
-                    //store = two3rd * p1 - half * p2;
-                    //fact  = half * MAX(SIGN(one, store), zero);
-                    //pw    = p1 + fact * (p1 - p2);
                     pw = p1;
                     cp = two * (pw - poo);
 
@@ -287,56 +270,42 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
                     dfy = dpy;
                     dfz = dpz;
 
-                    if (viscousType > 0)
+                    if (viscousType > INVISCID)
                     {
                         Geometry3D *geometry3D = new Geometry3D;
 
-                            if (nsurf == 1)
-                            {
-                                //Get ith-facevector on the wall surface;
-                                Get_GEO_I(i, j, k, in, in, ndim, geometry3D, xfv, yfv, zfv, vol);
-                                //! Get derivative to the wall in i-direction of u, v, w.
-                                DXDYDZ_I(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
-                                DXDYDZ_I(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
-                                DXDYDZ_I(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
-                                vsl = half * (visl(i, j, k) + visl(i+lr, j, k));
-                            }
-                            else if (nsurf == 2)
-                            {
-                                //! Get jth-facevector on the wall surface.
-                                Get_GEO_J(i, j, k, jn, jn, ndim, geometry3D, xfv, yfv, zfv, vol);
-                                //! Get derivative to the wall in j-direction of u, v, w.
-                                DXDYDZ_J(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
-                                DXDYDZ_J(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
-                                DXDYDZ_J(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
-                                vsl = half * (visl(i, j, k) + visl(i, j+lr, k));
-                            }
-                            else
-                            {
-                                //! Get kth-facevector on the wall surface.
-                                Get_GEO_K(i, j, k, kn, kn, ndim, geometry3D, xfv, yfv, zfv, vol);
-                                //! Get derivative to the wall in k-direction of u, v, w.
-                                DXDYDZ_K(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
-                                DXDYDZ_K(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
-                                DXDYDZ_K(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
-                                vsl = half * (visl(i, j, k) + visl(i, j, k+lr));
-                            }
+                        if (nsurf == 1)
+                        {
+                            //Get ith-facevector on the wall surface;
+                            Get_GEO_I(i, j, k, in, in, ndim, geometry3D, xfv, yfv, zfv, vol);
+                            //! Get derivative to the wall in i-direction of u, v, w.
+                            DXDYDZ_I(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
+                            DXDYDZ_I(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
+                            DXDYDZ_I(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
+                            vsl = half * (visl(i, j, k) + visl(i+lr, j, k));
+                        }
+                        else if (nsurf == 2)
+                        {
+                            //! Get jth-facevector on the wall surface.
+                            Get_GEO_J(i, j, k, jn, jn, ndim, geometry3D, xfv, yfv, zfv, vol);
+                            //! Get derivative to the wall in j-direction of u, v, w.
+                            DXDYDZ_J(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
+                            DXDYDZ_J(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
+                            DXDYDZ_J(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
+                            vsl = half * (visl(i, j, k) + visl(i, j+lr, k));
+                        }
+                        else
+                        {
+                            //! Get kth-facevector on the wall surface.
+                            Get_GEO_K(i, j, k, kn, kn, ndim, geometry3D, xfv, yfv, zfv, vol);
+                            //! Get derivative to the wall in k-direction of u, v, w.
+                            DXDYDZ_K(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
+                            DXDYDZ_K(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
+                            DXDYDZ_K(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
+                            vsl = half * (visl(i, j, k) + visl(i, j, k+lr));
+                        }
 
-                        //dudx = gradPrimtiveVarFaceX[IU][ix];
-                        //dudy = gradPrimtiveVarFaceY[IU][ix];
-                        //dudz = gradPrimtiveVarFaceZ[IU][ix];
-
-                        //dvdx = gradPrimtiveVarFaceX[IV][ix];
-                        //dvdy = gradPrimtiveVarFaceY[IV][ix];
-                        //dvdz = gradPrimtiveVarFaceZ[IV][ix];
-
-                        //dwdx = gradPrimtiveVarFaceX[IW][ix];
-                        //dwdy = gradPrimtiveVarFaceY[IW][ix];
-                        //dwdz = gradPrimtiveVarFaceZ[IW][ix];
-
-                        //! 因为壁面湍流粘性系数为0，不需要考虑.
                         vsl = half * (visl(il, jl, kl) + visl(i, j, k));
-                        //vst = half * (vist(il, jl, kl) + vist(i, j, k));
                         vst = 0.0;
                         vis = vsl + vst;
 
@@ -409,8 +378,8 @@ void ForceProcessStruct::CompForce()
 {
     DataContainer *data = new DataContainer();
 
-    globalAerodynamicForce.CompForce();
-    globalAerodynamicForce.DumpData(data);
+    globalAerodynamicForce.ComputeCoefficient();
+    globalAerodynamicForce.ComputeCoefficient();
 
     DecodeData(data);
 
@@ -520,8 +489,6 @@ void ForceProcessStruct::ComputeGamaAndTemperature(Grid *grid_in)
     int nchem = 0;
     GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
 
-    int neqn = nm + nchem;
-
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
 
@@ -538,7 +505,6 @@ void ForceProcessStruct::ComputeGamaAndTemperature(Grid *grid_in)
             {
                 RDouble &rm = q(i, j, k, IR);
                 RDouble &pm = q(i, j, k, IP);
-                //gama(i, j, k) = refGama;
                 t(i, j, k, ITT)  = pm / (coefficientOfStateEquation * rm * omav);
             }
         }

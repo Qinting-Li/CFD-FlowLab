@@ -74,7 +74,7 @@ using namespace std;
 //! with an incompatible extern "C" definition of memchr
 //! October 18, 2000  <rboehne@ricardo-us.com>.
 #if __SUNPRO_CC_COMPAT == 5
-#define	_MEMORY_H
+#define _MEMORY_H
 #endif
 
 # endif  /* WNT */

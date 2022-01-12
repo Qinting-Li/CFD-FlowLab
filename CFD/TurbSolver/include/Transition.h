@@ -17,15 +17,15 @@ namespace PHSPACE
         RDouble dissipationRate, RDouble reynoldsNumberInflow);
 
     RDouble ReynoldsNumberBasedOnScf(RDouble heightCrossFlow, RDouble velocity, RDouble density, 
-        RDouble viscosityLaminar, RDouble viscosityTurbulent, RDouble reynoldsNumberInflow);
+        RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble reynoldsNumberInflow);
 
-    RDouble TimeScaleInSourceTerm(RDouble density, RDouble velocity, RDouble viscosityLaminar, RDouble viscosityTurbulent, RDouble reynoldsNumberInflow);
+    RDouble TimeScaleInSourceTerm(RDouble density, RDouble velocity, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble reynoldsNumberInflow);
 
     RDouble MomentumThickness(RDouble density, RDouble velocity, RDouble viscosity, RDouble onsetReynoldsOnMomentumThickness,
         RDouble reynoldsNumberInflow);
 
     RDouble FlengthGivenByLangtry(RDouble localTransitiononsetReynoldsOnMomentumThickness);
-    RDouble FlengthGivenByZYF(RDouble localTransitiononsetReynoldsOnMomentumThickness);
+    RDouble FlengthCaliBrated(RDouble localTransitiononsetReynoldsOnMomentumThickness);
 
     RDouble HighReynoldsCorrectionOfFlength(RDouble ReynoldsNumberBasedOnDissipation, RDouble Flengthori);
 
@@ -33,7 +33,7 @@ namespace PHSPACE
 
     RDouble TransitionOnsetFunction(RDouble Rev, RDouble Rectac, RDouble RT);
     RDouble TransitionOnsetMomentumThicknessReynolds(RDouble Rectabar);
-    RDouble TransitionOnsetMomentumThicknessReynoldsZYF(RDouble Rectabar);
+    RDouble TransitionOnsetMomentumThicknessReynoldsCaliBrated(RDouble Rectabar);
     RDouble SeparationCorrectionOfIntermittency(RDouble gmori, RDouble Rev, RDouble Rectac, RDouble RT, RDouble Fctat, RDouble s1, RDouble refMaNumber);
     RDouble TurbulenceIntensity(RDouble velocity, RDouble kineticEnergy);
     RDouble ControlFunctionFturb(RDouble RT);

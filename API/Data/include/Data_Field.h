@@ -53,6 +53,8 @@ public:
     //! @param[in]  name    Item's name needs to be deleted.
     LIB_EXPORT void DeleteDataPtr(const string &name);
 
+    LIB_EXPORT int CheckDataExist(const string &name);
+
     //! Obtain the underlying dataSet that stores all data.
     LIB_EXPORT set < Data_IndexData > * GetDataSet() const;
 };

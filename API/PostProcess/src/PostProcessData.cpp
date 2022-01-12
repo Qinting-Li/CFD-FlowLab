@@ -238,92 +238,92 @@ int PostProcessData::GetNPart()
     return this->numberofTotalPart;
 }
 
-int *PostProcessData::GetPartBCID()
+int * PostProcessData::GetPartBCID()
 {
     return this->partBCID;
 };
 
-RDouble *PostProcessData::GetCfx()
+RDouble * PostProcessData::GetCfx()
 {
     return this->cfx; 
 };
 
-RDouble *PostProcessData::GetCfy() 
+RDouble * PostProcessData::GetCfy() 
 {
     return this->cfy; 
 };
 
-RDouble *PostProcessData::GetCfz() 
+RDouble * PostProcessData::GetCfz() 
 {
     return this->cfz; 
 };
 
-RDouble *PostProcessData::GetCpx() 
+RDouble * PostProcessData::GetCpx() 
 {
     return this->cpx; 
 };
 
-RDouble *PostProcessData::GetCpy() 
+RDouble * PostProcessData::GetCpy() 
 {
     return this->cpy; 
 };
 
-RDouble *PostProcessData::GetCpz() 
+RDouble * PostProcessData::GetCpz() 
 {
     return this->cpz; 
 };
 
-RDouble *PostProcessData::GetCmx() 
+RDouble * PostProcessData::GetCmx() 
 {
     return this->cmx; 
 };
 
-RDouble *PostProcessData::GetCmy() 
+RDouble * PostProcessData::GetCmy() 
 {
     return this->cmy; 
 };
 
-RDouble *PostProcessData::GetCmz() 
+RDouble * PostProcessData::GetCmz() 
 {
     return this->cmz; 
 };
 
-RDouble *PostProcessData::GetClTot() 
+RDouble * PostProcessData::GetClTot() 
 {
     return this->clTot; 
 };
 
-RDouble *PostProcessData::GetCdTot() 
+RDouble * PostProcessData::GetCdTot() 
 {
     return this->cdTot; 
 };
 
-RDouble *PostProcessData::GetCdPr() 
+RDouble * PostProcessData::GetCdPr() 
 {
     return this->cd_pr; 
 };
 
-RDouble *PostProcessData::GetCdSf() 
+RDouble * PostProcessData::GetCdSf() 
 {
     return this->cd_sf; 
 };
 
-RDouble *PostProcessData::GetCdCl2Pa() 
+RDouble * PostProcessData::GetCdCl2Pa() 
 {
     return this->cd_cl2pa; 
 };
 
-RDouble *PostProcessData::GetXcp() 
+RDouble * PostProcessData::GetXcp() 
 {
     return this->xcp; 
 };
 
-RDouble *PostProcessData::GetSide() 
+RDouble * PostProcessData::GetSide() 
 {
     return this->side; 
 };
 
-RDouble *PostProcessData::GetHingeMoment() 
+RDouble * PostProcessData::GetHingeMoment() 
 {
     return this->hingeMoment; 
 };

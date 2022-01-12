@@ -88,12 +88,11 @@ hid_t GetGroup(hid_t loc_id, const string &groupName)
 
 void CreateEmptyData(hid_t loc_id, const string &dataName, hsize_t rowNumber, hsize_t rowLength, int type)
 {
-    hid_t dataspace, dataset, datatype;
-    //herr_t status;
+    hid_t dataspace = 0, dataset = 0, datatype = 0;
     int rank = 0;
 
     //! Dataset dimensions at the creation time.
-    hsize_t dims[2];
+    hsize_t dims[2] = {0};
 
     if (rowNumber == 1)
     {
@@ -204,7 +203,7 @@ void CreateAndWriteData(hid_t loc_id, const string &dataName, hsize_t rowNumber,
     WriteData(loc_id, data, dataName);
 }
 
-RDouble *ReadDoubleOneRow(hid_t loc_id, const string &dataName)
+RDouble * ReadDoubleOneRow(hid_t loc_id, const string &dataName)
 {
     hid_t dataset;
     hid_t datatype, dataspace, memspace;
@@ -249,7 +248,7 @@ RDouble *ReadDoubleOneRow(hid_t loc_id, const string &dataName)
     {
         dataReturn[idata] = static_cast<RDouble>(Data[idata]);
     }
-    delete []Data;
+    delete [] Data;    Data = nullptr;
     return dataReturn;
 }
 
@@ -286,7 +285,7 @@ int *ReadIntOneRow(hid_t loc_id, const string &dataName)
     memspace = H5Screate_simple(rank, &dataLength,NULL);
     status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, dataLocation, NULL, &dataLength, NULL);
 
-    int *Data = new int[dataLength];
+    int *Data = new int [dataLength];
     status = H5Dread(dataset, datatype, memspace, dataspace, H5P_DEFAULT, Data);
 
     H5Sclose(dataspace);
@@ -296,7 +295,7 @@ int *ReadIntOneRow(hid_t loc_id, const string &dataName)
     return Data;
 }
 
-int **ReadIntTwoRow(hid_t loc_id, const string &dataName)
+int ** ReadIntTwoRow(hid_t loc_id, const string &dataName)
 {
     hid_t dataset;
     hid_t datatype, dataspace, memspace;
@@ -387,6 +386,57 @@ char *ReadCharData(hid_t loc_id, const string &dataName)
     H5Dclose(dataset);
 
     return Data;
+}
+
+int GetObjNumber(hid_t loc_id)
+{
+    H5G_info_t grp_info;
+    herr_t error = H5Gget_info(loc_id, &grp_info);
+
+    return grp_info.nlinks;
+}
+
+void GetObjNameList(hid_t loc_id, string *objNameList)
+{
+    int objNumber = GetObjNumber(loc_id);
+    for (int iObj = 0; iObj < objNumber; ++ iObj)
+    {
+        char dataname[100];
+        int nameSize = 100;
+        H5Gget_objname_by_idx(loc_id, iObj, &dataname[0], nameSize);
+
+        objNameList[iObj] = dataname;
+    }
+}
+
+void GetObjTypeList(hid_t loc_id, H5G_obj_t *objTypeList)
+{
+    int objNumber = GetObjNumber(loc_id);
+    for (int iObj = 0; iObj < objNumber; ++ iObj)
+    {
+        objTypeList[iObj] = H5Gget_objtype_by_idx(loc_id, iObj);
+    }
+}
+
+bool CheckDataExist(hid_t loc_id, const string &dataName_in)
+{
+    bool dataExist = false;
+
+    int objNumber = GetObjNumber(loc_id);
+    string *objNameList = new string[objNumber];
+    GetObjNameList(loc_id, objNameList);
+
+    for (int iObj = 0; iObj < objNumber; ++ iObj)
+    {
+        if (objNameList[iObj] == dataName_in)
+        {
+            dataExist = true;
+            break;
+        }
+    }
+
+    delete [] objNameList;
+    return dataExist;
 }
 
 }

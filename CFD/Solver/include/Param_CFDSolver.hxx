@@ -1,11 +1,11 @@
 inline RDouble Param_CFDSolver::GetRefMachNumber() const
 {
-	return refMachNumber;
+    return refMachNumber;
 }
 
 inline RDouble Param_CFDSolver::GetRefReNumber() const
 {
-	return refReNumber;
+    return refReNumber;
 }
 
 inline RDouble Param_CFDSolver::GetoRefReNumber() const
@@ -15,27 +15,27 @@ inline RDouble Param_CFDSolver::GetoRefReNumber() const
 
 inline int Param_CFDSolver::GetPlotFieldType() const
 {
-	return plotFieldType;
+    return plotFieldType;
 }
 
 inline const RDouble * Param_CFDSolver::GetLowerPlotFieldBox() const
 {
-	return lowerPlotFieldBox;
+    return lowerPlotFieldBox;
 }
 
 inline const RDouble * Param_CFDSolver::GetUpperPlotFieldBox() const
 {
-	return upperPlotFieldBox;
+    return upperPlotFieldBox;
 }
 
 inline int Param_CFDSolver::GetViscousType() const
 {
-	return viscousType;
+    return viscousType;
 }
 
 inline const std::string & Param_CFDSolver::GetViscousName() const
 {
-	return viscousName;
+    return viscousName;
 }
 
 inline bool Param_CFDSolver::IsViscous() const
@@ -45,72 +45,72 @@ inline bool Param_CFDSolver::IsViscous() const
 
 inline int Param_CFDSolver::GetIsUnsteady() const
 {
-	return isUnsteady;
+    return isUnsteady;
 }
 
 inline int Param_CFDSolver::GetIntervalStepRes() const
 {
-	return intervalStepRes;
+    return intervalStepRes;
 }
 
 inline int Param_CFDSolver::GetIntervalStepPlot() const
 {
-	return intervalStepPlot;
+    return intervalStepPlot;
 }
 
 inline RDouble Param_CFDSolver::GetCFLStart() const
 {
-	return CFLStart;
+    return CFLStart;
 }
 
 inline RDouble Param_CFDSolver::GetCFDEnd() const
 {
-	return CFLEnd;
+    return CFLEnd;
 }
 
 inline int Param_CFDSolver::GetCFLVaryStep() const
 {
-	return CFLVaryStep;
+    return CFLVaryStep;
 }
 
 inline int Param_CFDSolver::GetNMGLevel() const
 {
-	return nMGLevel;
+    return nMGLevel;
 }
 
 inline int Param_CFDSolver::GetNLUSGSSweeps() const
 {
-	return nLUSGSSweeps;
+    return nLUSGSSweeps;
 }
 
 inline RDouble Param_CFDSolver::GetLUSGSTolerance() const
 {
-	return LUSGSTolerance;
+    return LUSGSTolerance;
 }
 
 inline int Param_CFDSolver::GetIntervalStepFlow() const
 {
-	return intervalStepFlow;
+    return intervalStepFlow;
 }
 
 inline int Param_CFDSolver::GetIfLocalTimeStep() const
 {
-	return ifLocalTimeStep;
+    return ifLocalTimeStep;
 }
 
 inline RDouble Param_CFDSolver::GetTorqueRefX() const
 {
-	return TorqueRefX;
+    return TorqueRefX;
 }
 
 inline RDouble Param_CFDSolver::GetTorqueRefY() const
 {
-	return TorqueRefY;
+    return TorqueRefY;
 }
 
 inline RDouble Param_CFDSolver::GetTorqueRefZ() const
 {
-	return TorqueRefZ;
+    return TorqueRefZ;
 }
 
 //! Get reference gama vlaue
@@ -152,6 +152,16 @@ inline int Param_CFDSolver::GetIfStartFromSteadyResults() const
 inline int Param_CFDSolver::GetIfStaticsFlowField() const
 {
     return ifStaticsFlowField;
+}
+
+inline int Param_CFDSolver::GetIfStaticsReynoldsStress() const
+{
+    return ifStaticsReynoldsStress;
+}
+
+inline int Param_CFDSolver::GetStatisticMethod() const
+{
+    return statisticMethod;
 }
 
 inline int Param_CFDSolver::GetIsOverLapping() const

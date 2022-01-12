@@ -28,7 +28,7 @@ struct Data_Util
     template < typename T >
     static void copy_void(void *&target, void *source, int size)
     {
-        target = new T[ size ];
+        target = new T[size];
         for (int i = 0; i < size; ++ i)
         {
             reinterpret_cast <T *> (target)[i] = reinterpret_cast <T *> (source)[i];

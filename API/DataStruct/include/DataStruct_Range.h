@@ -21,118 +21,118 @@
 using namespace std;
 namespace PHSPACE
 {
-	//! @brief Range: arbitrary range of array which is encapsulated using C++.
-	//!			   Fortran custom is considered also. The start and end indices can be arbitrary.
-	class Range
-	{
-	private:
-		//! The start index of the range.
-		int first_;
+    //! @brief Range: arbitrary range of array which is encapsulated using C++.
+    //! Fortran custom is considered also. The start and end indices can be arbitrary.
+    class Range
+    {
+    private:
+        //! The start index of the range.
+        int first_;
 
-		//! The end index of the range.
-		int last_;
+        //! The end index of the range.
+        int last_;
 
-		//! Stride.
-		int stride_;
+        //! Stride.
+        int stride_;
 
-	public:
-		//! This declaration not yet supported by all compilers.
-		// const int fromStart = INT_MIN;
-		// const int toEnd = INT_MIN;
+    public:
+        //! This declaration not yet supported by all compilers.
+        // const int fromStart = INT_MIN;
+        // const int toEnd = INT_MIN;
 
-		typedef int T_numtype;
+        typedef int T_numtype;
 
-		enum { fromStart = INT_MIN, toEnd = INT_MIN };
+        enum { fromStart = INT_MIN, toEnd = INT_MIN };
 
-		Range()
-		{
-			first_  = fromStart;
-			last_   = toEnd;
-			stride_ = 1;
-		}
+        Range()
+        {
+            first_  = fromStart;
+            last_   = toEnd;
+            stride_ = 1;
+        }
 
-		//! Range(Range r): allow default copy constructor to be used.
+        //! Range(Range r): allow default copy constructor to be used.
 
-		Range(const Range& rightRange)
-		{
-			first_  = rightRange.first_;
-			last_   = rightRange.last_;
-			stride_ = rightRange.stride_;
-		}
+        Range(const Range &rightRange)
+        {
+            first_  = rightRange.first_;
+            last_   = rightRange.last_;
+            stride_ = rightRange.stride_;
+        }
 
-		explicit Range(int slicePosition)
-		{
-			first_  = slicePosition;
-			last_   = slicePosition;
-			stride_ = 1;
-		}
+        explicit Range(int slicePosition)
+        {
+            first_  = slicePosition;
+            last_   = slicePosition;
+            stride_ = 1;
+        }
 
-		Range(int first, int last, int stride = 1)
-			: first_(first), last_(last), stride_(stride)
-		{ 
-		}
+        Range(int first, int last, int stride = 1)
+            : first_(first), last_(last), stride_(stride)
+        { 
+        }
 
-		//! Return the start index.
-		int first(int lowRange = 0) const;
+        //! Return the start index.
+        int first(int lowRange = 0) const;
 
-		//! Return the end index.
-		int last(int highRange = 0) const;
+        //! Return the end index.
+        int last(int highRange = 0) const;
 
-		//! Return the range length.
-		unsigned length( int = 0 ) const;
+        //! Return the range length.
+        unsigned length(int = 0) const;
 
-		//! Return the stride.
-		int stride() const;
+        //! Return the stride.
+        int stride() const;
 
-		//! Return if the range is ascending ordered.
-		bool isAscendingContiguous() const;
+        //! Return if the range is ascending ordered.
+        bool isAscendingContiguous() const;
 
-		//! Reset the range, start with first, end with last, and stride.
-		void setRange(int first, int last, int stride=1);
+        //! Reset the range, start with first, end with last, and stride.
+        void setRange(int first, int last, int stride = 1);
 
-		//! If the stride is one or not.
-		bool isUnitStride() const;
+        //! If the stride is one or not.
+        bool isUnitStride() const;
 
-		bool hasFastAccess() const;
+        bool hasFastAccess() const;
 
-		T_numtype fastAccess(unsigned i) const;
+        T_numtype fastAccess(unsigned i) const;
 
-		unsigned suggestLength() const;
+        unsigned suggestLength() const;
 
-		static Range all() 
-		{ 
-			return Range(fromStart,toEnd,1);
-		}
+        static Range all() 
+        { 
+            return Range(fromStart, toEnd, 1);
+        }
 
-		//! Operators.
-		Range operator - (int shift) const
-		{ 
-			return Range(first_ - shift, last_ - shift, stride_); 
-		}
+        //! Operators.
+        Range operator - (int shift) const
+        { 
+            return Range(first_ - shift, last_ - shift, stride_);
+        }
 
-		Range operator + (int shift) const
-		{ 
-			return Range(first_ + shift, last_ + shift, stride_); 
-		}
+        Range operator + (int shift) const
+        { 
+            return Range(first_ + shift, last_ + shift, stride_);
+        }
 
-		int operator [] (unsigned i) const
-		{
-			return first_ + i * stride_;
-		}
+        int operator [] (unsigned i) const
+        {
+            return first_ + i * stride_;
+        }
 
-		int operator () (unsigned i) const
-		{
-			return first_ + i * stride_;
-		}
+        int operator () (unsigned i) const
+        {
+            return first_ + i * stride_;
+        }
 
-		friend inline ostream& operator << (ostream& os, const Range& range)
-		{
-			os << "Range(" << range.first() << "," << range.last() << ","
-				<< range.stride() << ")";
+        friend inline ostream & operator << (ostream &os, const Range &range)
+        {
+            os << "Range(" << range.first() << "," << range.last() << ","
+               << range.stride() << ")";
 
-			return os;
-		}
-	};
+            return os;
+        }
+    };
 
 #include "DataStruct_Range.hxx"
 

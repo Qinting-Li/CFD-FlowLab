@@ -43,7 +43,7 @@ LIB_EXPORT void Data_ParamFieldSuite::GetData(const string &name, void *data, in
 
 LIB_EXPORT void Data_ParamFieldSuite::UpdateDataPtr(const string &name, void *data)
 {
-    field->UpdateDataPtr(name,data);
+    field->UpdateDataPtr(name, data);
 };
 
 LIB_EXPORT void * Data_ParamFieldSuite::GetDataPtr(const string &name) const

@@ -22,15 +22,15 @@ class GreenGeo3D
 {
 public:
     RDouble nxip,nyip,nzip,nxim,nyim,nzim;
-	RDouble nxjp,nyjp,nzjp,nxjm,nyjm,nzjm;
-	RDouble nxkp,nykp,nzkp,nxkm,nykm,nzkm;
-	RDouble ovol;
+    RDouble nxjp,nyjp,nzjp,nxjm,nyjm,nzjm;
+    RDouble nxkp,nykp,nzkp,nxkm,nykm,nzkm;
+    RDouble ovol;
 };
 class Geometry3D
 {
 public:
-	RDouble kx,ky,kz,ex,ey,ez,cx,cy,cz;
-	RDouble vjacob;
+    RDouble kx,ky,kz,ex,ey,ez,cx,cy,cz;
+    RDouble vjacob;
 };
 
 void CorrectGradient(RDouble fl, RDouble fr, RDouble &dfdx, RDouble &dfdy, RDouble dx, RDouble dy, RDouble ods);

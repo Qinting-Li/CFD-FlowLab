@@ -16,17 +16,17 @@ LIB_EXPORT HOSolverUnstructParam::~HOSolverUnstructParam()
 
 LIB_EXPORT void HOSolverUnstructParam::Init()
 {
-	Param_CFDSolver::Init();
+    Param_CFDSolver::Init();
 
-	restartNSFile = GlobalDataBase::GetStrParaFromDB("restartNSFile");
-	resSaveFile = GlobalDataBase::GetStrParaFromDB("resSaveFile");
-	intervalStepForce = GlobalDataBase::GetIntParaFromDB("intervalStepForce");
-	wallTemperature = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
-	nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-	ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
-	AoA  = GlobalDataBase::GetDoubleParaFromDB("attackd");
-	GlobalDataBase::GetData("alf_l",&RoeEntropyFixCoef1,PHDOUBLE,1);
-	GlobalDataBase::GetData("alf_n",&RoeEntropyFixCoef2,PHDOUBLE,1);
+    restartNSFile = GlobalDataBase::GetStrParaFromDB("restartNSFile");
+    resSaveFile = GlobalDataBase::GetStrParaFromDB("resSaveFile");
+    intervalStepForce = GlobalDataBase::GetIntParaFromDB("intervalStepForce");
+    wallTemperature = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
+    nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
+    ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+    AoA  = GlobalDataBase::GetDoubleParaFromDB("attackd");
+    GlobalDataBase::GetData("alf_l", &RoeEntropyFixCoef1, PHDOUBLE, 1);
+    GlobalDataBase::GetData("alf_n", &RoeEntropyFixCoef2, PHDOUBLE, 1);
     angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
 
     dgSolOrder = GlobalDataBase::GetIntParaFromDB( "dg_sol_order" );

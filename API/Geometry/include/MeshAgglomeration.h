@@ -24,34 +24,34 @@ namespace PHSPACE
 class Mesh_Agglomeration
 {
 public:
-	//! @param[in] fineGridIn     The pre-fine grid, which is need to be coarsen.\n
-	//! @param[in] fineGridLevel  The level of the fineGrid.   
-	LIB_EXPORT Mesh_Agglomeration(UnstructGrid * fineGridIn, int fineGridLevelIn);
+    //! @param[in] fineGridIn     The pre-fine grid, which is need to be coarsen.\n
+    //! @param[in] fineGridLevel  The level of the fineGrid.   
+    LIB_EXPORT Mesh_Agglomeration(UnstructGrid * fineGridIn, int fineGridLevelIn);
 
-	LIB_EXPORT ~Mesh_Agglomeration();
+    LIB_EXPORT ~Mesh_Agglomeration();
 
-	//! Coarse the fine grid, this function is recommended,
-	//! since the coarse grid quality is guaranteed.
-	LIB_EXPORT void CoarsenGridOnce();
+    //! Coarse the fine grid, this function is recommended,
+    //! since the coarse grid quality is guaranteed.
+    LIB_EXPORT void CoarsenGridOnce();
 
-	//! Coarse the fine grid, fast but not robust, this function is NOT recommended.
-	LIB_EXPORT void CoarsenGridOnceWithoutSkewnessLimit();
+    //! Coarse the fine grid, fast but not robust, this function is NOT recommended.
+    LIB_EXPORT void CoarsenGridOnceWithoutSkewnessLimit();
 
-	//! Return the agglomerated coarse grid.
-	LIB_EXPORT UnstructGrid * GetCoarseGrid() { return this->coarseGrid; };
-
-private:
-	//! The pre-fine grid, which is need to be coarsen.
-	UnstructGrid * fineGrid;
-
-	//! The coarse grid, which is agglomerated from fineGrid.
-	UnstructGrid * coarseGrid;
-
-	//! The level of the fineGrid.
-	int fineGridLevel;
+    //! Return the agglomerated coarse grid.
+    LIB_EXPORT UnstructGrid * GetCoarseGrid() { return this->coarseGrid; };
 
 private:
-	void AspectRatioModifyBySkewness(RDouble *ratio, RDouble * xcc, RDouble * ycc, RDouble * zcc, const RDouble & limitAngle);
+    //! The pre-fine grid, which is need to be coarsen.
+    UnstructGrid * fineGrid;
+
+    //! The coarse grid, which is agglomerated from fineGrid.
+    UnstructGrid * coarseGrid;
+
+    //! The level of the fineGrid.
+    int fineGridLevel;
+
+private:
+    void AspectRatioModifyBySkewness(RDouble *ratio, RDouble * xcc, RDouble * ycc, RDouble * zcc, const RDouble & limitAngle);
 };
 
 }

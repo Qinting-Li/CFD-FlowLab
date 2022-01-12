@@ -16,96 +16,172 @@
 #pragma once
 
 #include "TypeDefine.h"
+#include "LIB_Macro.h"
 #include "Complex.h"
+#include "ActionKey.h"
+#include "SpecSolver.h"
+
 using namespace std;
 
 namespace PHSPACE
 {
-	class SpecDiffHybSolver 
-	{
-	public:
-		SpecDiffHybSolver();
-		~SpecDiffHybSolver();
+class Param_SpecDiffHybSolver;
 
-	private:
-        int istep;
-		RDouble1D *nonlinearTermCoef, *pressureGradientTermCoef;
-        Complex4D *convectiveTerm, *complexLaplacianVelocityTerm;
-        Complex5D *complexPressureGradientTerm;
+class SpecDiffHybSolver : public SpecSolver
+{
+public:
+    SpecDiffHybSolver();
+    ~SpecDiffHybSolver();
 
-		Complex4D *complexViscousTerm, *complexNonlinearTerm, *complexVelocityGradient, *complexVelocitySquare;
-        RDouble4D *realVelocityGradient, *realVelocitySquare;
+private:
 
-        RDouble1D *realnut, *realnut_00;
-        RDouble3D *realnut3d;
-		Complex3D *complexU, *complexV, *complexW, *complexP, *complexDivergenceU;
-		      
-        string nonlinearTermFile, nonlinearTermBackupFile;
-        string pressureGradientTermFile, pressureGradientTermBackupFile;
-        string laplacianVelocityTermFile, laplacianVelocityTermBackupFile;
-        string timeInformationRestartFile;
-        string velocityRestartFile, velocityBackupFile;
-        string pressureRestartFile, pressureBackupFile;
-        string velocityNameFile, fieldNameFile;
-        string screenOutFile;
+    RDouble1D *realnut, *realnut_00;
 
-        bool IsConvectiveTermFailed, IsPressureGradientFailed, IsLaplacianVelocityFailed, IsInitialization;
+    string screenOutFile;
 
-	public:
-		void Run();
-//		void GetFirstDerivative(RDouble1D *dvar);
+public:
+    void Run();
 
-	private:
-		void Init();
-		void InitTimeDependentData();
-		void InitTimeDependentFileName();
-		void AllocTimeDependentData();
-        void InitGlobal();
-        void InputOldTimeData();
-        void ReadConvectiveTerm();
-        void ReadTimeDependentInformation();
-		void GetRHS();
-		void Solve();
-        void RescaleVelocityField(const int);
-		void GetVelocityGradient();
-		void GetNonlinearTerm();
-		void GetViscousTerm();
-        void InitFieldData();
-		void AllocFieldData();
-        void GetInitField();
-        void InitFieldFileName();
-        void WriteVelocityName();
-        void InitProfile();
-        void InitFromOldField();
-        void OutputFieldRestartFile(const int);
-        void GetAssumedSpectrum( const double, const double, double & );
-        void GetAssumedSpectrumNearWall( const double, const double, double & );
-        void ReadinVelocityRestartFile();
-        void ReadinPressureRestartFile();
-        void WriteVelocityRestartFile(const string);
-        void WritePressureRestartFile(const string);
-        void SetInitTimeDataCoef();
-		void SetTimeDataCoef();
-        void VanishingDIVproj();
-        void OutputFieldName();
-        void GetStatistics();
-        void OutputResidual(const int);
-        void OutputRestartData(const int);
-        void OutputOldTimeData(const int);
-        void WriteConvectiveTerm(const string);
-        void WriteTimeDependentInformation();
-        void mode00fix();
+    void CreateH5VelocityRestartFile(ActionKey *actkey);
 
-	private:
-		class SpecDiffHybGrid * GridData;
-		class ExplicitDifferenceBoundary * DiffBoundaryData;
-		class CompactDifferenceFirstDerivative * CompactDifferenceFirstDerivativeData;
-		class CompactDifferenceSecondDerivative * CompactDifferenceSecondDerivativeData;
-		class PoissonSolver * PoissonSolverData;
-		class CorrectWallDivergence * CorrectWallDivergenceData;
-        class RescaleField * RescaleFieldData;
-        class Statistics *StatisticsData;
-        class LES *LESData;
-	};
+    void DumpVelocityRestartH5(ActionKey *actkey);
+
+    void ReadVelocityRestartH5(ActionKey *actkey);
+
+    LIB_EXPORT Param_SpecDiffHybSolver * GetControlParameters() const;
+
+    LIB_EXPORT void InitControlParameters();
+
+private:
+    void Init();
+
+    void InitGridData();
+
+    void InitTimeDependentData();
+
+    void InitBoundaryData();
+
+    void InitCompactDifferenceFirstDerivativeData();
+
+    void InitCompactDifferenceSecondDerivativeData();
+
+    void AllocTimeDependentData();
+
+    void InitGlobal();
+
+    void InitRescaleData();
+
+    void InitPoissonSolverData();
+
+    void InitCorrectWallDivergenceData();
+
+    void ReadConvectiveTerm();
+
+    void ReadTimeDependentInformation();
+
+    void InitStatisticsData();
+
+    void InitLESData();
+
+    void GetRHS();
+
+    void Solve();
+
+    void RescaleVelocityField(const int);
+
+    void GetVelocityGradient();
+
+    void GetNonlinearTerm();
+
+    void GetViscousTerm();
+
+    void AllocFieldData();
+
+    void GetInitField();
+
+    void InitProfile();
+
+    void InitFromOldField();
+
+    void OutputFieldRestartFile();
+
+    void GetAssumedSpectrum( const double, const double, double & );
+
+    void GetAssumedSpectrumNearWall( const double, const double, double & );
+
+    void ReadinVelocityRestartFile();
+
+    void ReadinPressureRestartFile();
+
+    void WriteVelocityRestartFile(const string);
+
+    void WriteVelocityRestartFile_HDF5(const string);
+
+    void ReadVelocityRestartFile_HDF5(const string);
+
+    void WritePressureRestartFile(const string);
+
+    void VanishingDIVproj();
+
+    void GetStatistics();
+
+    void PrepareFormatedResidual(string &formatRes);
+
+    void DumpRes(ActionKey *actkey);
+
+    void OutputRestartData();
+
+    void OutputStatisticVisual();
+
+    void OutputOldTimeData();
+
+    void WriteConvectiveTerm(const string);
+
+    void WriteTimeDependentInformation();
+
+    void mode00fix();
+
+    SpecDiffHybGrid *GetGrid();
+
+    void SetGrid(SpecDiffHybGrid *GridData);
+
+    RescaleField * GetRescaleFieldData();
+
+    void SetRescaleFieldData(RescaleField *RescaleFieldData);
+
+    LES * GetLESData();
+
+    void SetLESData(LES *LESData);
+
+    Statistics *GetStatisticData();
+
+    void SetStatisticData(Statistics *StatisticData);
+
+    void DeAllocateGlobalVariables();
+
+private:
+    class SpecDiffHybGrid * GridData;
+
+    class ExplicitDifferenceBoundary * DiffBoundaryData;
+
+    class CompactDifferenceFirstDerivative * CompactDifferenceFirstDerivativeData;
+
+    class CompactDifferenceSecondDerivative * CompactDifferenceSecondDerivativeData;
+
+    class PoissonSolver * PoissonSolverData;
+
+    class CorrectWallDivergence * CorrectWallDivergenceData;
+
+    class RescaleField * RescaleFieldData;
+
+    class Statistics *StatisticData;
+
+    class LES *LESData;
+
+protected:
+    Param_SpecDiffHybSolver *controlParameters;
+};
+
+#include "SpecDiffHybSolver.hxx"
 
 }

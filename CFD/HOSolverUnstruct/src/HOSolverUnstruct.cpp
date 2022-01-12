@@ -3,8 +3,6 @@ using namespace std;
 #include "HODefine.h"
 
 #include "ActionKey.h"
-//#include "FYUtil.h"
-//#include "BC.h"
 #include "Math_BasisFunction.h"
 #include "MultiGridOperation.h"
 #include "Pointer.h"
@@ -19,7 +17,7 @@ using namespace std;
 #include "HOShapeFunction.h"
 #include "HOStandardElement.h"
 #include "HOGaussJacobiQuadrature.h"
-#include "BC_Unstruct.h"
+#include "Geo_UnstructBC.h"
 #include "HOBoundary.h"
 #include "HOInviscidFlux.h"
 
@@ -51,17 +49,10 @@ HOSolverUnstruct::~HOSolverUnstruct()
 
 LIB_EXPORT void HOSolverUnstruct::InitControlParameters()
 {
-    //FreeControlParameters();
-    //controlParameters = new Param_NSSolverUnstruct();
-    //controlParameters->Init();
-
     if( HODebug ) cout << "InitControlParameters: init. params, check params" << endl;
-    if( HODebug ) cout << "根据精度设置自由度" << endl;
 
     controlParameters = new HOSolverUnstructParam();
     controlParameters->Init();
-
-    //if( HODebug ) cin.get();
 }
 
 void HOSolverUnstruct::ReadParameter()
@@ -71,14 +62,11 @@ void HOSolverUnstruct::ReadParameter()
     string uns_scheme_name = parameters->GetSpaceSecheme();
 
     int uns_scheme = GetSchemeID(uns_scheme_name);
-    GlobalDataBase::UpdateData("uns_scheme",&uns_scheme,PHINT,1);
+    GlobalDataBase::UpdateData("uns_scheme", &uns_scheme, PHINT, 1);
 }
 
 void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
 {
-    if( HODebug ) cout << "AllocateGlobalVar: 用于内存管理模块生成，处理几何信息，高斯点信息，基函数及导数，质量矩阵，网格变换jacob矩阵，建立p多重等" << endl;
-    if( HODebug )  cout << "用于申请守恒变量自由度， p多重相关算子变量，重构矩阵，隐式迭代矩阵等，并行传值。" << endl;
-
     CFDSolver::AllocateGlobalVar(gridIn);
     
     UnstructGrid *grid = UnstructGridCast(gridIn);
@@ -94,12 +82,12 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
     int nTotalNode = grid->GetNTotalNode();
 
     //int nm = 5;
-    //! GlobalDataBase::GetData("nm",&nm,PHINT,1);
+    //! GlobalDataBase::GetData("nm", &nm, PHINT, 1);
 
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
     int nchem = 0;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int neqn = nl + nchem;
 
     if( hLevel == 0 ) highOrderGrids.resize( parameters->GetNMGLevel() );
@@ -117,17 +105,17 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
     //std::vector< HighOrderNode > & highOrderNodes = highOrderGrids[hLevel].highOrderNodes;
     highOrderGrid.CopyGeometryInfoToHighOrderNode( grid );
 
-	HighOrderGrid::CellSolType & highOrderCellsSol = highOrderGrid.highOrderCellsSol;
-	HighOrderGrid::FaceSolType & highOrderFacesSol = highOrderGrid.highOrderFacesSol;
+    HighOrderGrid::CellSolType & highOrderCellsSol = highOrderGrid.highOrderCellsSol;
+    HighOrderGrid::FaceSolType & highOrderFacesSol = highOrderGrid.highOrderFacesSol;
 
-	int pNLevels   = parameters->pMultiGrid;
-	int dgSolOrder = parameters->dgSolOrder;
-	const int isUnsteady  = parameters->GetIsUnsteady();
-	const int viscousType = parameters->GetViscousType();
+    int pNLevels   = parameters->pMultiGrid;
+    int dgSolOrder = parameters->dgSolOrder;
+    const int isUnsteady  = parameters->GetIsUnsteady();
+    const int viscousType = parameters->GetViscousType();
 
-	if ( hLevel == 0 )
-	{
-		if ( pNLevels <= 0 )
+    if ( hLevel == 0 )
+    {
+        if ( pNLevels <= 0 )
         {
             pNLevels = 1;
         }
@@ -140,25 +128,25 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
         //totalFaceGaussPoint
         highOrderGrids[hLevel].totalFaceGaussPoint.resize( pNLevels );
         highOrderCellsSol.resize( pNLevels );
-		highOrderFacesSol.resize( pNLevels );
+        highOrderFacesSol.resize( pNLevels );
 
-		for( int img = 0; img < pNLevels; ++ img )
-		{
-			highOrderGrid.InitHighOrderCellSol( grid, dgSolOrder, img, isUnsteady, viscousType );
-			highOrderGrid.InitHighOrderFaceSol( grid, dgSolOrder, img, isUnsteady, viscousType );
-		}
-	}
+        for( int img = 0; img < pNLevels; ++ img )
+        {
+            highOrderGrid.InitHighOrderCellSol( grid, dgSolOrder, img, isUnsteady, viscousType );
+            highOrderGrid.InitHighOrderFaceSol( grid, dgSolOrder, img, isUnsteady, viscousType );
+        }
+    }
     else
-	{
+    {
         //totalFaceGaussPoint
-		highOrderGrids[hLevel].totalFaceGaussPoint.resize(1);
+        highOrderGrids[hLevel].totalFaceGaussPoint.resize(1);
         highOrderCellsSol.resize(1);
-		highOrderFacesSol.resize(1);
-		highOrderGrid.InitHighOrderCellSol( grid, 0, 0, isUnsteady, viscousType );
-		highOrderGrid.InitHighOrderFaceSol( grid, 0, 0, isUnsteady, viscousType );
-	}    
+        highOrderFacesSol.resize(1);
+        highOrderGrid.InitHighOrderCellSol( grid, 0, 0, isUnsteady, viscousType );
+        highOrderGrid.InitHighOrderFaceSol( grid, 0, 0, isUnsteady, viscousType );
+    }    
 
-	//	int ntmodel = parameters->GetNTemperatureModel();
+    //	int ntmodel = parameters->GetNTemperatureModel();
     //	int ntmodel = parameters->GetNTemperatureModel();
     //
     //    RDouble **t = NewPointer2<RDouble>(ntmodel, nTotal);
@@ -178,7 +166,7 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
 
     delete [] dofsOfCells;
     
-    grid->UpdateDataPtr("q"  , q  );	
+    grid->UpdateDataPtr("q"  , q  );
     grid->UpdateDataPtr("res", res);
 
     if (grid->GetLevel() == 0)
@@ -203,44 +191,6 @@ void HOSolverUnstruct::DeAllocateGlobalVar( Grid * gridIn )
 void HOSolverUnstruct::RegisterCFDSolverInterfaceField()
 {
     if( HODebug ) cout << "RegisterCFDSolverInterfaceField" << endl;
- //   //NSSolver::RegisterCFDSolverInterfaceField();
- //   Param_NSSolver * parameters = GetControlParameters();
-    //int nl = 5;
-    //GlobalDataBase::GetData("nl",&nl,PHINT,1);
-
-    //int nchem = 0;
-    //GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
-
-    //int neqn = nl + nchem;
-    //CFDSolver::RegisterInterfaceField( "q", PHDOUBLE, neqn );
-
-    //int ntmodel = parameters->GetNTemperatureModel();
-    //CFDSolver::RegisterInterfaceField( "t", PHDOUBLE, ntmodel );
-
- //   //
- //   Param_NSSolverUnstruct * parameters = GetControlParameters();
-    //int nl = 5;
-    //GlobalDataBase::GetData("nl",&nl,PHINT,1);
-
-    //int nchem = 0;
-    //GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
-
-    //int neqn = nl + nchem;
-
-    //CFDSolver::RegisterInterfaceField( "dqdx", PHDOUBLE, neqn );
-    //CFDSolver::RegisterInterfaceField( "dqdy", PHDOUBLE, neqn );
-    //CFDSolver::RegisterInterfaceField( "dqdz", PHDOUBLE, neqn );
-
-    //CFDSolver::RegisterInterfaceField( "limit", PHDOUBLE, neqn );
-
-    //int ntmodel = parameters->GetNTemperatureModel();
-    //CFDSolver::RegisterInterfaceField( "dtdx", PHDOUBLE, ntmodel );
-    //CFDSolver::RegisterInterfaceField( "dtdy", PHDOUBLE, ntmodel );
-    //CFDSolver::RegisterInterfaceField( "dtdz", PHDOUBLE, ntmodel );
-
-    //CFDSolver::RegisterInterfaceField( "Qcell", PHDOUBLE, 1 );
-
-    //CFDSolver::RegisterInterfaceField( "dq", PHDOUBLE, neqn );
 }
 
 void HOSolverUnstruct::InitMemory()
@@ -327,7 +277,7 @@ void HOSolverUnstruct::InitFlow()
     if (!readFlowFile)
     {
         int outnstep = 0;
-        GlobalDataBase::UpdateData("outnstep",&outnstep, PHINT, 1);		
+        GlobalDataBase::UpdateData("outnstep",&outnstep, PHINT, 1);
 
         nstart = 0;
         GlobalDataBase::UpdateData("nstart", &nstart, PHINT, 1);
@@ -350,7 +300,7 @@ void HOSolverUnstruct::InitFlow()
     if (isUnsteady != 0)
     {
         int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
-        int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");	
+        int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
         bool isReadAverageFlow = ifStaticsFlowField && (outnstep >= startStatisticStep);
         if ( isReadAverageFlow && readFlowFile && JudgeIfReadAverage())
@@ -374,7 +324,6 @@ void HOSolverUnstruct::InitFlow()
 
 void HOSolverUnstruct::InitFlowAsRestart()
 {
-    if( HODebug ) cout << "InitFlowAsRestart: 初场，守恒变量的自由度0赋值, dqdx dtdx limit Qcell? dq =0; for send for recv" << endl;
     UnstructGrid * grid = UnstructGridCast(GetGrid(0));
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
 
@@ -385,14 +334,11 @@ void HOSolverUnstruct::InitFlowAsRestart()
     GlobalDataBase::UpdateData("physicalTime",&physicalTime, PHFLOAT, 1);
 
     int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotal = nTotalCell + nBoundFace;
 
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
     int nchem = 0;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int neqn = nl + nchem;
 
     RDouble *prim_inf = reinterpret_cast<RDouble *> ( GlobalDataBase::GetDataPtr("prim_inf"  ) );
@@ -441,14 +387,12 @@ void HOSolverUnstruct::InitFlowAsRestart()
 
 void HOSolverUnstruct::InitDependentVariables()
 {
-    if( HODebug ) cout << "InitDependentVariables: 调用CompGamaAndTField, Boundary初始化多重网格的gama,T,设置虚拟单元q,vis_l" << endl;
-
     Grid *fgrid = GetGrid(0);
     Boundary(fgrid);
     
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
-    int viscousType = parameters->GetViscousType();	
-    if ( viscousType > 0 )
+    int viscousType = parameters->GetViscousType();
+    if ( viscousType > INVISCID )
     {
         CompViscousCoef(fgrid);
         InitViscousCoefTurb(fgrid);
@@ -457,18 +401,15 @@ void HOSolverUnstruct::InitDependentVariables()
 
 void HOSolverUnstruct::Boundary(Grid *gridIn)
 {
-    if( HODebug ) cout << "Boundary: 设置虚拟单元q，高阶需要根据边界条件类型 实现特殊的边界处理子程序" << endl;
+    if( HODebug ) cout << "Boundary: set the ghost cell q，DG needs to implement the special BC accroding to the BC type." << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int       *left_cell_of_face   = grid->GetLeftCellOfFace();
     int       *right_cell_of_face  = grid->GetRightCellOfFace();
-    RDouble   *xfn    = grid->GetFaceNormalX();
-    RDouble   *yfn    = grid->GetFaceNormalY();
-    RDouble   *zfn    = grid->GetFaceNormalZ();
-    BCRecord  **bcr   = grid->GetBCRecord();
+
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
 
     int       nBoundFace = grid->GetNBoundFace();
-    int       nTotalCell = grid->GetNTotalCell();
     
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int hLevel = grid->GetLevel(); 
@@ -485,13 +426,13 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
     }
 
     int nm = 5;
-    GlobalDataBase::GetData("nm",&nm,PHINT,1);
+    GlobalDataBase::GetData("nm", &nm, PHINT, 1);
 
     int nl;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
 
     int nchem;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int nEquation = nl + nchem;
 
     double refGama = parameters->GetRefGama();
@@ -518,8 +459,8 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
     if ( massFlow )
     {
         //ComputeMassFlow(grid);
-        GlobalDataBase::GetData("massIn" ,&massIn ,PHDOUBLE,1);
-        GlobalDataBase::GetData("massOut",&massOut,PHDOUBLE,1);
+        GlobalDataBase::GetData("massIn", &massIn, PHDOUBLE, 1);
+        GlobalDataBase::GetData("massOut", &massOut, PHDOUBLE, 1);
         massAlpha = massIn / massOut;
         cout << " massAlpha = " << massAlpha << "\n";
     }
@@ -668,7 +609,7 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
                     conservationQ[2][rGausspoint]  =   primt[0] * primt[2];
                     conservationQ[3][rGausspoint]  =   primt[0] * primt[3];
                     conservationQ[4][rGausspoint]  =   primt[4]/HO_GAMAM1 + 0.5 * primt[0] * (pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2));
-                }				
+                }
             }
             
             continue;
@@ -775,8 +716,6 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
 
 void HOSolverUnstruct::CompViscousCoef(Grid *gridIn)
 {
-    if( HODebug ) cout << "CompViscousCoef: 设置所有单元（包括虚拟单元）的vis_l" << endl;
-
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int      nTotalCell = grid->GetNTotalCell();
     int      nTotalFace = grid->GetNTotalFace();
@@ -792,10 +731,10 @@ void HOSolverUnstruct::CompViscousCoef(Grid *gridIn)
     }
 
     RDouble tsuth;
-    GlobalDataBase::GetData("tsuth",&tsuth,PHDOUBLE,1);
+    GlobalDataBase::GetData("tsuth", &tsuth, PHDOUBLE, 1);
 
     RDouble visl_min;
-    GlobalDataBase::GetData("visl_min",&visl_min,PHDOUBLE,1);
+    GlobalDataBase::GetData("visl_min", &visl_min, PHDOUBLE, 1);
 
     RDouble R = parameters->GetR();
 
@@ -843,13 +782,10 @@ void HOSolverUnstruct::CompViscousCoef(Grid *gridIn)
 
 void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
 {
-    if( HODebug ) cout << "ComputeGaussPointQ: 计算单元和边界面所有高斯积分点的变量值" << endl;
-
     UnstructGrid * grid = UnstructGridCast( gridIn );
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
-    int nTotal = nTotalCell + nBoundFace;
     int * left_cell_of_face  = grid->GetLeftCellOfFace();
     int * right_cell_of_face = grid->GetRightCellOfFace();
 
@@ -863,15 +799,15 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
     }
 
     RDouble tsuth;
-    GlobalDataBase::GetData("tsuth",&tsuth,PHDOUBLE,1);
+    GlobalDataBase::GetData("tsuth", &tsuth, PHDOUBLE, 1);
 
     RDouble visl_min;
-    GlobalDataBase::GetData("visl_min",&visl_min,PHDOUBLE,1);
+    GlobalDataBase::GetData("visl_min", &visl_min, PHDOUBLE, 1);
 
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
     int nchem;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int nEquation = nl + nchem;
 
     int numberGaussPoint = 0, rGaussPoint = 0, ndof = 0;
@@ -907,7 +843,6 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
         HighOrderFaceSol & uHOFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         //compute gauss point temperature of face
         numberGaussPoint = uHOFaceSol.integNumberOfGaussPoint;
-       // cout<<numberGaussPoint<<endl;
         leftCell = left_cell_of_face[iFace];
         HighOrderCellSol & uHOLeftCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][leftCell];
 
@@ -959,12 +894,8 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
 
 void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
 {
-    if( HODebug ) cout << "ComputeQAverage: 计算单元的变量平均值" << endl;
-
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int      nTotalCell = grid->GetNTotalCell();
-    int      nBoundFace = grid->GetNBoundFace();
-    int      nTotal = nTotalCell + nBoundFace;
 
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int hLevel = grid->GetLevel(); 
@@ -976,19 +907,18 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
     }
 
     RDouble tsuth;
-    GlobalDataBase::GetData("tsuth",&tsuth,PHDOUBLE,1);
+    GlobalDataBase::GetData("tsuth", &tsuth, PHDOUBLE, 1);
 
     RDouble visl_min;
-    GlobalDataBase::GetData("visl_min",&visl_min,PHDOUBLE,1);
+    GlobalDataBase::GetData("visl_min", &visl_min, PHDOUBLE, 1);
 
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
 
     int nchem;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int nEquation = nl + nchem;
     int numberGaussPoint = 0; 
-    int leftCell = 0, rightCell = 0;
 
     const RDouble *weightCoeff;
     for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
@@ -1060,8 +990,6 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
 
 void HOSolverUnstruct::InitViscousCoefTurb(Grid *gridIn)
 {
-    if( HODebug ) cout << "InitViscousCoefTurb: 初始化所有单元（包括虚拟单元）的vis_t" << endl;
-
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int      nTotalCell = grid->GetNTotalCell();
     int      nTotalFace = grid->GetNTotalFace();
@@ -1100,31 +1028,16 @@ void HOSolverUnstruct::InitViscousCoefTurb(Grid *gridIn)
 
 void HOSolverUnstruct::CompGamaAndTField(Grid *gridIn)
 {
-    if( HODebug ) cout << "CompGamaAndTField: 根据化学反应模型 计算 Gama T" << endl;
-
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-
-    int nTotalCell = grid->GetNTotalCell();
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotal = nTotalCell + nBoundFace;
-
-    HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
-    RDouble *gama = reinterpret_cast< RDouble *  > ( grid->GetDataPtr("gama") );
-
-    double refGama = parameters->GetRefGama();
-
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
 
     int nchem = 0;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
-
-    int neqn = nl + nchem;	
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
 }
 
 void HOSolverUnstruct::InitCoarseGridsFlow()
 {
-    if( HODebug ) cout << "InitCoarseGridsFlow: Restrict from fine to coarse grid for all q 设置虚拟单元q" << endl;
+    if( HODebug ) cout << "InitCoarseGridsFlow: Restrict from fine to coarse grid for all q set ghost cell q" << endl;
 
     Grid *fgrid = GetGrid(0);
 
@@ -1143,395 +1056,18 @@ void HOSolverUnstruct::InitCoarseGridsFlow()
 void HOSolverUnstruct::RestrictAllQ(Grid *fgrid, Grid *cgrid)
 {
     if( HODebug ) cout << "RestrictAllQ: Restrict from fine to coarse grid for all q" << endl;
-
-/*   int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
-
-    int nchem;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
-
-    int neqn = nl + nchem;
-
-    RDouble **fq = reinterpret_cast< RDouble ** > ( fgrid->GetDataPtr("q") );
-    RDouble **cq = reinterpret_cast< RDouble ** > ( cgrid->GetDataPtr("q") );
-
-    for ( int m = 0; m < neqn; ++ m )
-    {
-        RestrictQ(fgrid, fq[m], cgrid, cq[m]);
-    }
-
-    RDouble *fgama = reinterpret_cast< RDouble * > ( fgrid->GetDataPtr("gama") );
-    RDouble *cgama = reinterpret_cast< RDouble * > ( cgrid->GetDataPtr("gama") );
-
-    RestrictQ(fgrid, fgama, cgrid, cgama);
-
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
-    int viscousType = parameters->GetViscousType();
-    if ( viscousType > 0 )
-    {
-        RDouble * fvisl = reinterpret_cast< RDouble * > ( fgrid->GetDataPtr("visl") );
-        RDouble * cvisl = reinterpret_cast< RDouble * > ( cgrid->GetDataPtr("visl") );
-        RestrictQ(fgrid, fvisl, cgrid, cvisl);
-
-        if ( viscousType > 1 )
-        {
-            RDouble * fvist = reinterpret_cast< RDouble * > ( fgrid->GetDataPtr("vist") );
-            RDouble * cvist = reinterpret_cast< RDouble * > ( cgrid->GetDataPtr("vist") );
-            RestrictQ(fgrid, fvist, cgrid, cvist);
-        }
-    }
-
-    int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady)
-    {
-        RDouble **fqn1 = reinterpret_cast< RDouble ** > ( fgrid->GetDataPtr("q_unsteady_n1") );
-        RDouble **fqn2 = reinterpret_cast< RDouble ** > ( fgrid->GetDataPtr("q_unsteady_n2") );
-        RDouble **cqn1 = reinterpret_cast< RDouble ** > ( cgrid->GetDataPtr("q_unsteady_n1") );
-        RDouble **cqn2 = reinterpret_cast< RDouble ** > ( cgrid->GetDataPtr("q_unsteady_n2") );
-
-        RDouble **fres   = reinterpret_cast< RDouble ** > ( fgrid->GetDataPtr("res"            ) );
-        RDouble **fresn1 = reinterpret_cast< RDouble ** > ( fgrid->GetDataPtr("res_unsteady_n1") );
-        RDouble **fresn2 = reinterpret_cast< RDouble ** > ( fgrid->GetDataPtr("res_unsteady_n2") );
-        RDouble **cres   = reinterpret_cast< RDouble ** > ( cgrid->GetDataPtr("res"            ) );
-        RDouble **cresn1 = reinterpret_cast< RDouble ** > ( cgrid->GetDataPtr("res_unsteady_n1") );
-        RDouble **cresn2 = reinterpret_cast< RDouble ** > ( cgrid->GetDataPtr("res_unsteady_n2") );
-
-        for ( int m = 0; m < neqn; ++ m )
-        {
-            RestrictQ(fgrid, fqn1[m], cgrid, cqn1[m]);
-            RestrictQ(fgrid, fqn2[m], cgrid, cqn2[m]);
-
-            RestrictQ(fgrid, fres[m],   cgrid, cres[m]);
-            RestrictQ(fgrid, fresn1[m], cgrid, cresn1[m]);
-            RestrictQ(fgrid, fresn2[m], cgrid, cresn2[m]);
-        }
-    }*/
 }
 
 void HOSolverUnstruct::ActionReflect(ActionTag *acttag)
 {
-    if( HODebug ) cout << "ActionReflect: 根据代码设置 操作动作，包括 上传，下载，更新等" << endl;
- 
-    //	task->SetActionKey(actkey);
-    //	RunSimuTask(task, run_now);
- //   }
- //   else if ( action == UPLOAD_INTERFACE_DATA )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_Simple();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
- //   else if ( action == UPDATE_INTERFACE_DATA )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
-    //		FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_ServerUpdateInterface();
- //           task->SetActionKey(actkey);
- //           RunSimuTask(task, run_now);
-    //	}
- //   }
-    //else if ( action == DOWNLOAD_INTERFACE_DATA )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_Simple();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
-    //else if ( action == DOWNLOAD_OVERSET_DATA )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_Simple();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
- //   else if ( action == UPLOAD_OVERSET_DATA )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_Simple();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
- //   else if ( action == UPDATE_OVERSET_DATA )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_ServerUpdateOversetInterface();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
- //   else if ( action == DOWNLOAD_OVERSET_DATA )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_Simple();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
- //   else if ( action == COMPUTE_INTERFACE_GRAD )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_Simple();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
- //   else if ( action == UPLOAD_INTERFACE_GRAD )
- //   {
-    //	for ( int g = 0; g < GetNumberOfMultiGrid(); ++ g )
-    //	{
-    //		ActionKey * actkey = new ActionKey();
- //           FillActionKey(actkey, action, level);
-
-    //		actkey->level = g;
-
-    //		Task *task = new Task_Simple();
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
- //   }
-    //else if ( action == DUMP_AVERAGE_FLOW )
-    //{
-    //	ActionKey * actkey = new ActionKey();
-    //	FillActionKey(actkey, action, level);
-
-    //	string restartNSFile = parameters->GetRestartNSFile();
-    //	string averageFlowFile = AddSymbolToFileName(restartNSFile, "_", "Average");
-
-    //	actkey->filename = averageFlowFile;
-    //	ios_base::openmode openmode = ios_base::out|ios_base::binary|ios_base::trunc;
-    //	actkey->openmode = openmode;
-
-    //	Task *task = new Task_Write();
-    //	task->SetMainAction(WriteFile);
-    //	task->SetActionKey(actkey);
-    //	RunSimuTask(task, run_now);
-    //}
-    //else if ( action == READ_AVERAGE_FLOW )
-    //{
-    //	ActionKey * actkey = new ActionKey();
-    //	FillActionKey(actkey, action, level);
-
-    //	string restartNSFile = parameters->GetRestartNSFile();
-    //	string averageFlowFile = AddSymbolToFileName(restartNSFile, "_", "Average");
-
-    //	actkey->filename = averageFlowFile;
-    //	ios_base::openmode openmode = ios_base::in|ios_base::binary;
-    //	actkey->openmode = ( openmode );
-
-    //	Task *task = new Task_Read();
-    //	task->SetMainAction(ReadFile);
-    //	task->SetActionKey(actkey);
-    //	RunSimuTask(task, run_now);
-    //}
- //   else if ( action == DUMP_SURFACE_INFO )
- //   {
-    //	ActionKey * actkey = new ActionKey();
- //       FillActionKey(actkey, action, level);
-
- //       string wall_varfile   = "surface_tec.dat";
- //       GlobalDataBase::GetData("wall_varfile",&wall_varfile,FYSTRING,1);
- //       actkey->filename = ( wall_varfile );
-    //	ios_base::openmode openmode = ios_base::out|ios_base::trunc;
-    //	actkey->openmode = ( openmode );
-
-    //	Task *task = new Task_Client2Server();
-    //	task->SetMainAction(WriteASCIIFile);
-    //	task->SetPreAction(ParallelOpenFile);
-    //	task->SetPostAction(ParallelCloseFile);
-    //	task->SetActionKey(actkey);
-    //	RunSimuTask(task, run_now);
- //   }
-    //else if ( action == VISUALIZATION_AVERAGE_FLOW )
-    //{
-    //	string flowFieldTecFile = "tecflow.dat";
-    //	flowFieldTecFile = parameters->GetFlowFieldTecFile();
-    //	string averageVisualfile = AddSymbolToFileName(flowFieldTecFile, "_", "Average");
-
-    //	if ( level == -1 )
-    //	{
-    //		//! Visualization all level.
-    //		string fname,fext;
-    //		GetNameExt(averageVisualfile,fname,fext,".");
-    //		for ( int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++ iLevel )
-    //		{
-    //			ActionKey * actkey = new ActionKey();
-    //			FillActionKey(actkey, action, level);
-    //			actkey->level    = iLevel;
-    //			actkey->filename = AddDigitToFileName(fname,fext,".",iLevel);
-    //			actkey->tecfilename = AddDigitToFileName(fname,fext,".",iLevel);
-    //			actkey->openmode = ios_base::out|ios_base::trunc;
-    //			string sentinelfilename = "results/sentinel";
-    //			fstream sentinelfile;
-    //			sentinelfile.open(sentinelfilename.c_str(),ios::in);
-
-    //			int iunsteady = parameters->GetIsUnsteady();
-    //			actkey->VTKvisual = false;
-    //			if (!sentinelfile && !averageVisualfile.empty())
-    //			{
-    //				actkey->filename = averageVisualfile+".bak";
-    //				actkey->VTKvisual = true;
-    //			}
-
-    //			if( iunsteady != 0 )
-    //			{
-    //				int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "outnstep" );
-    //				actkey->tecfilename = PHSPACE::AddSymbolToFileName( actkey->tecfilename, '_', outnstep );
-    //			}
-    //			
-    //			Task *task = new Task_WriteBinaryTecplot(1);
-    //			//task->SetMainAction(WriteBinaryFile);
-    //			task->SetPostAction(WriteSentinelFile);
-    //			task->SetActionKey(actkey);
-    //			RunSimuTask(task, run_now);
-    //		}
-    //	}
-    //	else
-    //	{
-    //		//! Visualization the finest level.
-    //		string flowFieldTecFile = "tecflow.dat";
-    //		flowFieldTecFile = parameters->GetFlowFieldTecFile();
-    //		string averageVisualfile = AddSymbolToFileName(flowFieldTecFile, "_", "Average");
-
-    //		string fname,fext;
-    //		GetNameExt(averageVisualfile,fname,fext,".");
-
-    //		ActionKey * actkey = new ActionKey();
-    //		FillActionKey(actkey, action, level);
-    //		actkey->level    = level;
-    //		actkey->filename = AddDigitToFileName(fname,fext,".",level);
-    //		actkey->tecfilename = AddDigitToFileName(fname,fext,".",level);
-    //		actkey->openmode = ios_base::out|ios_base::trunc;
-    //		string sentinelfilename = "results/sentinel";
-    //		fstream sentinelfile;
-    //		sentinelfile.open(sentinelfilename.c_str(),ios::in);
-
-    //		int iunsteady = parameters->GetIsUnsteady();
-    //		actkey->VTKvisual = false;
-    //		if (!sentinelfile && !averageVisualfile.empty())
-    //		{
-    //			actkey->filename = averageVisualfile+".bak";
-    //			actkey->VTKvisual = true;
-    //		}
-
-    //		if( iunsteady != 0 )
-    //		{
-    //			int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "outnstep" );
-    //			actkey->tecfilename = PHSPACE::AddSymbolToFileName( actkey->tecfilename, '_', outnstep );
-    //		}
-    //		
-    //		Task *task = new Task_WriteBinaryTecplot(1);
-    //		//task->SetMainAction(WriteBinaryFile);
-    //		task->SetPostAction(WriteSentinelFile);
-    //		task->SetActionKey(actkey);
-    //		RunSimuTask(task, run_now);
-    //	}
-    //}
 }
 
 void HOSolverUnstruct::UploadInterfaceData(ActionKey *actkey)
 {
-    if( HODebug ) cout << "UploadInterfaceData: 上传交接面的q t，需要更改全局 UploadInterfaceValue" << endl;
-
- //   int level = actkey->level;
- //   UnstructGrid * grid = reinterpret_cast< UnstructGrid * >( GetGrid(level) );
-    //InterfaceInfo * iinfo = grid->GetInterfaceInfo();
-    //if ( iinfo == 0 ) return;
-
-    //Param_NSSolverUnstruct * parameters = GetControlParameters();
-    //int nl = 5;
-    //GlobalDataBase::GetData("nl",&nl,PHINT,1);
-
-    //int nchem = 0;
-    //GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
-
- //   int neqn = nl + nchem;
-
-    //RDouble **q = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q"  ) );
- //   PHSPACE::UploadInterfaceValue(grid, q, "q",  neqn);
-
-    //int ntmodel = parameters->GetNTemperatureModel();
-
-    //RDouble **t = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("t"  ) );
- //   PHSPACE::UploadInterfaceValue(grid, t, "t",  ntmodel);
 }
 
 void HOSolverUnstruct::DownloadInterfaceData(ActionKey *actkey)
 {
-    if( HODebug ) cout << "DownloadInterfaceData: 下载交接面的q t，需要更改全局 DownloadInterfaceValue" << endl;
-
- //   int level = actkey->level;
- //   UnstructGrid * grid = reinterpret_cast< UnstructGrid * >( GetGrid(level) );
-    //InterfaceInfo * iinfo = grid->GetInterfaceInfo();
-    //if ( iinfo == 0 ) return;
-
-    //Param_NSSolverUnstruct * parameters = GetControlParameters();
-    //int nl = 5;
-    //GlobalDataBase::GetData("nl",&nl,PHINT,1);
-
-    //int nchem = 0;
-    //GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
-
- //   int neqn = nl + nchem;
-
-    //RDouble **q = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q"  ) );
- //   PHSPACE::DownloadInterfaceValue(grid, q, "q", neqn);
-
-    //int ntmodel = parameters->GetNTemperatureModel();
-
-    //RDouble **t = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("t"  ) );
- //   PHSPACE::DownloadInterfaceValue(grid, t, "t",  ntmodel);
 }
 
 void HOSolverUnstruct::ZeroResiduals( Grid * gridIn )
@@ -1540,11 +1076,9 @@ void HOSolverUnstruct::ZeroResiduals( Grid * gridIn )
     
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotal = nTotalCell + nBoundFace;
 
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
 
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int hLevel = grid->GetLevel(); 
@@ -1581,10 +1115,6 @@ FieldProxy * HOSolverUnstruct::GetResidualProxy(Grid *gridIn)
     if( HODebug ) cout << "GetResidualProxy: return proxy of \"res\"" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
-    int hLevel = grid->GetLevel();
-    int nTotalCell = grid->GetNTotalCell();
-    //int nBoundFace = grid->GetNBoundFace();
-    //int nTotal = nTotalCell + nBoundFace;
 
     RDouble ***res = reinterpret_cast< RDouble *** > ( grid->GetDataPtr("res") );
 
@@ -1597,13 +1127,9 @@ FieldProxy * HOSolverUnstruct::GetResidualProxy(Grid *gridIn)
 
 FieldProxy * HOSolverUnstruct::CreateFieldProxy(Grid *gridIn)
 {
-    if( HODebug ) cout << "CreateFieldProxy:  申请内存，返回其代理" << endl;
-    
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
     int nTotalCell = grid->GetNTotalCell();
-    //int nBoundFace = grid->GetNBoundFace();
-    //int nTotal = nTotalCell + nBoundFace;
 
     int nl    = GlobalDataBase::GetIntParaFromDB("nl");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -1734,10 +1260,7 @@ void HOSolverUnstruct::StoreRhsByResidual(Grid *gridIn, FieldProxy *rhsProxy)
 
 void HOSolverUnstruct::TimeStep( Grid *gridIn )
 {
-    if( HODebug ) cout << "TimeStep:  调用LocalTimeStep、GlobalTimeStep计算局部时间步长;" << endl;
-
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
-    int hLevel = gridIn->GetLevel(); 
     int pLevel     = parameters->pMultiGrid;
     if(pLevel == 1)
     {
@@ -1764,9 +1287,6 @@ void HOSolverUnstruct::TimeStep( Grid *gridIn )
         LocalGlobalTimeStep( gridIn );
     }
 
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-    int nTotalCell = grid->GetNTotalCell();
-    RDouble *dt = reinterpret_cast< RDouble *  > (grid->GetDataPtr("dt"));
 }
 
 void HOSolverUnstruct::ComputeMinTimeStep(Grid *gridIn, RDouble &minDt, RDouble &maxDt)
@@ -1868,79 +1388,17 @@ void HOSolverUnstruct::InviscidFlux( Grid * gridIn )
 
 void HOSolverUnstruct::ViscousFlux( Grid * gridIn )
 {
-    /*UnstructGrid *grid = UnstructGridCast(gridIn);
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
-    int nTotal = nTotalCell + nBoundFace;
-
-    if ( !boolCalViscousFlux(grid) ) return;
-
-    Gradient *gradient_ns_field = GetGradientNSField(gridIn);
-    Gradient *gradient_temperature = GetGradientTemperature(gridIn);
-    CompViscousCoef(grid);
-
-    FaceProxy   *face_proxy = CreateFaceProxy(grid);
-    face_proxy->SetNSFaceValue( CreateNSFaceValue(grid) );
-
-    int nst,ned;
-    nst = 0;
-    do
-    {
-        ned = nst + SEG_LEN;
-        if ( ned > nTotalFace ) ned = nTotalFace;
-
-        CompFaceWeight (grid, face_proxy, nst, ned);
-        GetVisFaceValue(grid, face_proxy, gradient_ns_field, nst, ned);
-        CompVisflux    (grid, face_proxy, gradient_ns_field, gradient_temperature, nst, ned);
-        LoadFlux       (grid, face_proxy, nst, ned);
-        nst = ned;
-    } while ( nst < nTotalFace );
-
-    delete face_proxy;*/
 }
 
 void HOSolverUnstruct::SourceFlux( Grid * gridIn )
 {
-    /*UnstructGrid *grid = UnstructGridCast(gridIn);
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
-    int nTotal = nTotalCell + nBoundFace;
-
-    if ( !boolCalViscousFlux(grid) ) return;
-
-    Gradient *gradient_ns_field = GetGradientNSField(gridIn);
-    Gradient *gradient_temperature = GetGradientTemperature(gridIn);
-    CompViscousCoef(grid);
-
-    FaceProxy   *face_proxy = CreateFaceProxy(grid);
-    face_proxy->SetNSFaceValue( CreateNSFaceValue(grid) );
-
-    int nst,ned;
-    nst = 0;
-    do
-    {
-        ned = nst + SEG_LEN;
-        if ( ned > nTotalFace ) ned = nTotalFace;
-
-        CompFaceWeight (grid, face_proxy, nst, ned);
-        GetVisFaceValue(grid, face_proxy, gradient_ns_field, nst, ned);
-        CompVisflux    (grid, face_proxy, gradient_ns_field, gradient_temperature, nst, ned);
-        LoadFlux       (grid, face_proxy, nst, ned);
-        nst = ned;
-    } while ( nst < nTotalFace );
-
-    delete face_proxy;*/
 }
 
 void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
-    int      nTotalCell = grid->GetNTotalCell();
     int      nTotalFace = grid->GetNTotalFace();
     int      nBoundFace = grid->GetNBoundFace();
-    int      nTotal = nTotalCell + nBoundFace;
     int      *leftCellOfFace    = grid->GetLeftCellOfFace();
     int      *rigtCellOfFace    = grid->GetRightCellOfFace();
 
@@ -1982,7 +1440,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
     }
 
     int numberGaussPoint = 0, rGaussPoint = 0, nLeftDof = 0, nRigtDof = 0, curGaussPoint = 0, offsetGaussPoint = 0;
-    int leftCell = 0, rigtCell = 0, iNodes = 0, iVTKType = 0, faceVTKType = 0;
+    int leftCell = 0, rigtCell = 0, faceVTKType = 0;
     
     int uns_scheme = GlobalDataBase::GetIntParaFromDB("uns_scheme");
 
@@ -2049,7 +1507,6 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
         break;
     }
 
-    RDouble * area = grid->GetFaceArea();
     RDouble fluxTmp = 0.0;
     for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
     {
@@ -2170,8 +1627,6 @@ void HOSolverUnstruct::InviscidFluxForCell(Grid *grid_in)
     RDouble ***res = reinterpret_cast< RDouble *** > (grid->GetDataPtr("res"));
 
     RDouble *fluxTotal = new RDouble [nEquation];
-    int maxDof= 100; // a arbitrarily number of dof related to accuracy!!!
-                              // the number need to be modified of different accuracy!!!
 
     int numberGaussPoint, cellVTKType, ndof;
     RDouble flux[5][3], gradFia[3], ro, u, v, w, p, e, rou, rov, row, fluxTmp;
@@ -2208,7 +1663,6 @@ void HOSolverUnstruct::InviscidFluxForCell(Grid *grid_in)
                 w   = row/ro;
                 p   = HO_GAMAM1 * (e - 0.5*(rou*rou + rov*rov + row*row)/ro);
 
-                //求出体积分点的对流通量三个方向的值
                 flux[0][0] = rou;
                 flux[0][1] = rov;
                 flux[0][2] = row;
@@ -2225,7 +1679,6 @@ void HOSolverUnstruct::InviscidFluxForCell(Grid *grid_in)
                 flux[3][1] = row*rov/ro;
                 flux[3][2] = row*row/ro + p;
 
-                //ht_l  = et_l + ql[4];
                 flux[4][0] = (e + p)*u;
                 flux[4][1] = (e + p)*v;
                 flux[4][2] = (e + p)*w;
@@ -2346,8 +1799,6 @@ void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *field1Proxy, FieldPro
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
     int nTotalCell = grid->GetNTotalCell();
-    //int nBoundFace = grid->GetNBoundFace();
-    //int nTotal = nTotalCell + nBoundFace;
 
     RDouble ***field1 = field1Proxy->GetField_UHO();
     RDouble ***field2 = field2Proxy->GetField_UHO();
@@ -2382,8 +1833,6 @@ void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *fieldProxy, RDouble v
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
     int nTotalCell = grid->GetNTotalCell();
-    //int nBoundFace = grid->GetNBoundFace();
-    //int nTotal = nTotalCell + nBoundFace;
 
     RDouble ***field = fieldProxy->GetField_UHO();
 
@@ -2417,8 +1866,6 @@ void HOSolverUnstruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPr
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
     int nTotalCell = grid->GetNTotalCell();
-    //int nBoundFace = grid->GetNBoundFace();
-    //int nTotal = nTotalCell + nBoundFace;
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int pLevel = parameters->pMultiGrid;
     if(pLevel == 1)
@@ -2428,14 +1875,12 @@ void HOSolverUnstruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPr
 
     RDouble ***q = reinterpret_cast< RDouble *** > ( grid->GetDataPtr("q") );
 
-    RDouble *** qnew  = qProxy->GetField_UHO();
     RDouble *** dq = dqProxy->GetField_UHO();
 
     int nl    = GlobalDataBase::GetIntParaFromDB("nl");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
     int nEquation  = nl + nchem;
 
-    HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
          HighOrderCellSol & uHOCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell];
@@ -2476,7 +1921,6 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
     int ntmodel = GlobalDataBase::GetIntParaFromDB("ntmodel");
     int neqn = nl + nchem + ntmodel - 1;
 
-    //PHSPACE::ComputeResidualonGrid(grid, actkey, res, neqn);
     int nTotalCell = grid->GetNTotalCell();
 
     double *xcc = grid->GetCellCenterX();
@@ -2502,7 +1946,7 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
     int * cellIBlank = grid->GetBlankIndex();
 
     for ( int icell = 0; icell < nTotalCell; ++ icell )
-    {			
+    {
         if( cellIBlank[ icell ] != 1 ) continue;
 
         for ( int m = 0; m < neqn; ++ m )
@@ -2534,11 +1978,6 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
         maxResidual->setMaxResVariableIndex(maxResIndexMLocal);
     }
 
-    // 	for ( int m = 0; m < neqn; ++ m )
-    // 	{
-    // 		norm[m] = sqrt( norm[m] / nTotalCell );
-    // 	}
-
     DataContainer *cdata = actkey->GetData();
     PHWrite(cdata, neqn);
     PHWrite(cdata, residualNormal, neqn);
@@ -2549,27 +1988,21 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     UnstructGrid * grid = UnstructGridCast(postVisualization->GetGrid());
 
     int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
     int nl = 5;
-    GlobalDataBase::GetData("nl",&nl,PHINT,1);
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
     int nchem = 0;
-    GlobalDataBase::GetData("nchem",&nchem,PHINT,1);
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int neqn = nl + nchem;
 
-    ///RDouble **q = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q") );
-
     int hLevel = grid->GetLevel();
-
-    //RDouble *** q = reinterpret_cast< RDouble *** > (grid->GetDataPtr("q"));
 
     ComputeQAverage( grid );
 
     RDouble ** qToOut = NewPointer2<RDouble>( neqn, nTotal );
     
-    int ndof = 0;
     for ( int ieqn = 0; ieqn < neqn; ++ ieqn )
     {
         for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
@@ -2594,12 +2027,12 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         qToOut[4][iCell] = ComputePressure( conserValue );
     }
 
-    int       *left_cell_of_face   = grid->GetLeftCellOfFace();
-    int       *right_cell_of_face  = grid->GetRightCellOfFace();
-    RDouble   *xfn    = grid->GetFaceNormalX();
-    RDouble   *yfn    = grid->GetFaceNormalY();
-    RDouble   *zfn    = grid->GetFaceNormalZ();
-    BCRecord  **bcr   = grid->GetBCRecord();
+    int *left_cell_of_face  = grid->GetLeftCellOfFace();
+    int *right_cell_of_face = grid->GetRightCellOfFace();
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
+    CompositeUnstructBC **bcr = grid->GetBCRecord();
 
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int pLevel = parameters->pMultiGrid;
@@ -2614,8 +2047,6 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         cout<<"the multigrid para is wrong for unstructure high order in HOSolverUnstruct::Boundary(Grid *gridIn)"<<endl;
     }
 
-    double refGama = parameters->GetRefGama();
-
     RDouble refMachNumber = parameters->GetRefMachNumber();
     RDouble wallTemperature = parameters->GetWallTemperature();
 
@@ -2627,7 +2058,6 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     prims = new RDouble[nl+nchem];
     primt = new RDouble[nl+nchem];
 
-    RDouble *primInflow = reinterpret_cast< RDouble * >( GlobalDataBase::GetDataPtr("prim_inf") );
     bool massFlow = false;
     RDouble massAlpha = 1.0;
     double massIn  = 1.0;
@@ -2636,8 +2066,8 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     if ( massFlow )
     {
         //ComputeMassFlow(grid);
-        GlobalDataBase::GetData("massIn" ,&massIn ,PHDOUBLE,1);
-        GlobalDataBase::GetData("massOut",&massOut,PHDOUBLE,1);
+        GlobalDataBase::GetData("massIn", &massIn, PHDOUBLE, 1);
+        GlobalDataBase::GetData("massOut", &massOut, PHDOUBLE, 1);
         massAlpha = massIn / massOut;
         cout << " massAlpha = " << massAlpha << "\n";
     }
@@ -2648,7 +2078,6 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     int le, re, bcType, numberGaussPoint;
     RDouble vgn = 0.0;
     RDouble xtn = 0.0, ytn = 0.0, ztn = 0.0;
-    //vector< vector< RDouble > > conservationQ;
 
     int isViscous = parameters->IsViscous();
 
@@ -2815,223 +2244,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         postVisualization->UpdateVisualNodeVarPtr(varName, qToOut[IDX::IP]);
     }
 
-    //if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TEMPERATURE))
-    //{
-    //	string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TEMPERATURE);
-    //	postVisualization->UpdateVisualNodeVarPtr(varName, qToOut[IDX::ITT]);
-    //}    
-
-    //if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
-    //{
-    //	string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MACH);
-    //	RDouble * mach  = CompMachNumber(grid);
-    //	postVisualization->UpdateVisualNodeVarPtr(varName, mach);
-    //	delete [] mach;
-    //}
-    //if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TIME_STEP))
-    //{
-    //	string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TIME_STEP);
-    //	RDouble * dt  = reinterpret_cast< RDouble * > ( grid->GetDataPtr("dt"  ) );
-    //	postVisualization->UpdateVisualNodeVarPtr(varName, dt);
-    //}
-    //if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VOLUME))
-    //{
-    //	string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VOLUME);
-    //	RDouble *vol  = grid->GetCellVolume();
-    //	postVisualization->UpdateVisualNodeVarPtr(varName, vol);
-    //}
-
     DelPointer2( qToOut );
-
-//	// bell 20130319 add
-//	Param_NSSolverUnstruct * parameters = GetControlParameters();
-//	int viscousType = parameters->GetViscousType();
-//	string viscousName = parameters->GetViscousName();
-//
-//	if ( viscousType == 1 )
-//	{
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VISCOSITY_LAMINAR))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VISCOSITY_LAMINAR);
-//			RDouble *visl = reinterpret_cast< RDouble * > ( grid->GetDataPtr("visl") );
-//			postVisualization->UpdateVisualNodeVarPtr(varName, visl);
-//		}
-//	}
-//	else if ( viscousType > 1 )
-//	{
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VISCOSITY_LAMINAR))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VISCOSITY_LAMINAR);
-//			RDouble *visl = reinterpret_cast< RDouble * > ( grid->GetDataPtr("visl") );
-//			postVisualization->UpdateVisualNodeVarPtr(varName, visl);
-//		}
-//
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VISCOSITY_TURBULENT))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VISCOSITY_TURBULENT);
-//			RDouble *vist = reinterpret_cast< RDouble * > ( grid->GetDataPtr("vist") );
-//			postVisualization->UpdateVisualNodeVarPtr(varName, vist);
-//		}
-//
-//		if (viscousName.substr(0,6) == "2eq-kw")
-//		{
-//			RDouble ** q_turb    = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q_turb"  ) );
-//			if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MODELED_TKE))
-//			{
-//				string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MODELED_TKE);
-//				postVisualization->UpdateVisualNodeVarPtr(varName, q_turb[IDX::IKE]);
-//			}
-//			if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MODELED_DISSIPATION))
-//			{
-//				string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MODELED_DISSIPATION);
-//				postVisualization->UpdateVisualNodeVarPtr(varName, q_turb[IDX::IKW]);
-//			}
-//			if (viscousName.substr(0,17) == "2eq-kw-menter-sst")  // for blending function F1 and F2
-//			{
-//				if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SST_F1))
-//				{
-//					RDouble * blend = reinterpret_cast< RDouble * > ( grid->GetDataPtr("blend"  ) );   // for blengding function F1
-//					string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SST_F1);
-//					postVisualization->UpdateVisualNodeVarPtr(varName, blend);
-//				}
-//				if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_SST_F2))
-//				{
-//					RDouble * SST_F2 = reinterpret_cast< RDouble * > ( grid->GetDataPtr("SST_F2"  ) );   // for blengding function F2
-//					string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_SST_F2);
-//					postVisualization->UpdateVisualNodeVarPtr(varName, SST_F2);
-//				}
-//			}
-//		}
-//	}
-//	//*/
-//	
-//	if(WantVisualField(grid))
-//	{
-//		RDouble * vorticity_x, * vorticity_y, * vorticity_z, * vorticityMagnitude, * strain_rate, * Q_criteria;
-//
-//		int nTotalCell = grid->GetNTotalCell();
-//		int nBoundFace = grid->GetNBoundFace();
-//		int nTotal = nTotalCell + nBoundFace;
-//
-//		vorticity_x = new RDouble [nTotal];
-//		vorticity_y = new RDouble [nTotal];
-//		vorticity_z = new RDouble [nTotal];
-//		vorticityMagnitude = new RDouble [nTotal];
-//		strain_rate = new RDouble [nTotal];
-//		Q_criteria = new RDouble [nTotal];
-//		ComputeVorticitybyQCriteria(grid, vorticity_x, vorticity_y, vorticity_z, vorticityMagnitude, strain_rate, Q_criteria);
-//
-//		// Vorticity, by Q value.
-//		/*if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VORTICITY);
-//			RDouble * vorticity = ComputeVorticitybyQCriteria(grid);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, vorticity);
-//			delete [] vorticity;
-//		}*/
-//
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_X))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VORTICITY_X);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, vorticity_x);
-//		}
-//
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_Y))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VORTICITY_Y);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, vorticity_y);
-//		}
-//
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_Z))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VORTICITY_Z);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, vorticity_z);
-//		}
-//
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_MAGNITUDE))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VORTICITY_MAGNITUDE);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, vorticityMagnitude);
-//		}
-//
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STRAIN_RATE))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STRAIN_RATE);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, strain_rate);
-//		}
-//
-//		if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_Q_CRITERIA))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_Q_CRITERIA);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, Q_criteria);
-//		}
-//
-//		delete []vorticity_x;
-//		delete []vorticity_y;
-//		delete []vorticity_z;
-//		delete []vorticityMagnitude;
-//		delete []strain_rate;
-//		delete []Q_criteria;
-//
-//		/*if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_MAGNITUDE))
-//		{
-//			string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_VORTICITY_MAGNITUDE);
-//			RDouble * vorticityMagnitude = ComputeVorticityMagnitude(grid);
-//			postVisualization->UpdateVisualNodeVarPtr(varName, vorticityMagnitude);
-//			delete [] vorticityMagnitude;
-//		}*/
-//
-//	}
-//	else if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_X) 
-//		 || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_Y)
-//		 || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_Z)
-//		 || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_MAGNITUDE)
-//		 || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STRAIN_RATE)
-//		 || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_Q_CRITERIA))
-//	{
-//		TK_Exit::ExceptionExit("Error: can not visualization vorticity when plotFieldType = 0!");
-//	}
-//
-//
-///*
-//	if(WantVisualField(grid) && postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY) || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_VORTICITY_MAGNITUDE))
-//	{
-//		FreeGradientMemory();
-//	}
-//*/
-//	if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_CP))
-//	{
-//		string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_CP);
-//		RDouble * cp = ComputeCp(grid);
-//		postVisualization->UpdateVisualNodeVarPtr(varName, cp);
-//		delete [] cp;
-//	}
-//
-//	//! Chemical species must be the last!
-//	int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-//	if(nchem)
-//	{
-//		using namespace CHEMICAL_SPACE;
-//
-//		int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-//		int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-//		int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-//		int nEquation = nl + nchem;
-//
-//		string * varname = GetNameOfSpecies();
-//		for ( int m = nm; m < nEquation; ++ m )
-//		{
-//			string varName = varname[m-nm];
-//			postVisualization->UpdateVisualNodeVarPtr(varName, q[m]);
-//
-//			//CompNodeVar(grid, *qn, varCount++, q, m);
-//		}
-//	}
-//	/*using namespace CHEMICAL_SPACE;
-//	for ( int m = nm; m < nEquation; ++ m )
-//	{
-//		CompNodeVar(grid, qn[varCount ++], q[m]);
-//	}*/
 }
 
 void HOSolverUnstruct::PostSolve( Grid *gridIn, int stage, int level )
@@ -3039,35 +2252,13 @@ void HOSolverUnstruct::PostSolve( Grid *gridIn, int stage, int level )
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
     int nTotalCell = grid->GetNTotalCell();
-    //int nBoundFace = grid->GetNBoundFace();
-    //int nTotal = nTotalCell + nBoundFace;
-
-    RDouble ***q = reinterpret_cast< RDouble *** > ( grid->GetDataPtr("q") );
-
-    int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    int nEquation  = nl + nchem;
 
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     int * dofsOfCells = new int[nTotalCell];
     highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
 
-    //for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-    //{
-    //    for (int m = 0; m < nEquation; ++ m)
-    //    {
-    //        for (int iDof = 0; iDof < dofsOfCells[iCell]; ++ iDof)
-    //        {
-    //            q[iCell][m][iDof] += dq[iCell][m][iDof];
-    //        }
-    //    }
-    //}
-
     delete [] dofsOfCells;
-
-    //cout << "PostSolve ";
-   // cout << q[0][0][0] << endl;
 
     if (stage == 0)
     {
@@ -3100,27 +2291,10 @@ void HOSolverUnstruct::PostSolve( Grid *gridIn, int stage, int level )
         FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
         DumpRestartData(actkeyDumpRestartData);
         delete actkeyDumpRestartData;
-
-        //if (IsNeedDESStatistics())
-        //{
-        //    //! To dump Average Flow if necessary. 
-        //    ActionKey *actkeyDumpAverageFlow = new ActionKey();
-        //    FillActionKey(actkeyDumpAverageFlow, DUMP_AVERAGE_FLOW, level);
-        //    DumpAverageFlow(actkeyDumpAverageFlow);
-        //    delete actkeyDumpAverageFlow;
-        //}
     }
 
     if (outnstep % intervalStepPlot == 0 && isSubIterationDump)
     {
-        //if (IsNeedDESStatistics())
-        //{
-        //    //! To output Average data by tecplot format.
-        //    ActionKey *actkeyTecOutAverageFlow = new ActionKey();
-        //    FillActionKey(actkeyTecOutAverageFlow, VISUALIZATION_AVERAGE_FLOW, level);
-        //    TecOutAverageFlow(actkeyTecOutAverageFlow);
-        //    delete actkeyTecOutAverageFlow;
-        //}
     }
 
     int intervalStepRes = parameters->GetIntervalStepRes();
@@ -3169,14 +2343,14 @@ int HOSolverUnstruct::GetSchemeID(const string &scheme_name)
     {
         scheme_id = ISCHEME_ROE;
     }
+    else if (scheme_name.substr(0,7) == "ausmpw+")
+    {
+        scheme_id = ISCHEME_AUSMPW_PLUS;
+    }
     else if (scheme_name.substr(0,6) == "ausmpw")
     {
         scheme_id = ISCHEME_AUSMPW;
     }
-    else if (scheme_name.substr(0,5) == "ausm+")
-    {    
-        scheme_id = ISCHEME_AUSMP;
-    }		
     else if (scheme_name.substr(0,6) == "ausm+w")
     {
         scheme_id = ISCHEME_AUSM_W;
@@ -3184,6 +2358,10 @@ int HOSolverUnstruct::GetSchemeID(const string &scheme_name)
     else if (scheme_name.substr(0,7) == "ausm+up")
     {
         scheme_id = ISCHEME_AUSMPUP;
+    }
+    else if (scheme_name.substr(0,5) == "ausm+")
+    {    
+        scheme_id = ISCHEME_AUSMP;
     }
     else if (scheme_name.substr(0,6) == "ausmdv")
     {
@@ -3214,7 +2392,6 @@ int HOSolverUnstruct::GetSchemeID(const string &scheme_name)
     {
         TK_Exit::ExceptionExit("Error: this inv-scheme is not exist !\n", true);
     }
-    //*/
     
     return scheme_id;
 }
@@ -3238,13 +2415,6 @@ void HOSolverUnstruct::LocalTimeStep(Grid *gridIn)
 
     double cfl = ComputeCFL(grid->GetLevel());
 
-  //  int isInMGIniting = GlobalDataBase::GetIntParaFromDB("isInMGIniting");
-  //  if(!grid->IsFinestGrid() && !isInMGIniting)
-  //  {
-  //      RDouble mgCFLScale = GlobalDataBase::GetDoubleParaFromDB("mgCFLScale");
-  //      cfl *= mgCFLScale;
-  //  }
-
     // Set dt to zero
     PHSPACE::SetField(dt, 0.0, nTotalCell);
 
@@ -3261,8 +2431,6 @@ void HOSolverUnstruct::LocalTimeStep(Grid *gridIn)
         nPolySol  = 2 * nPolySol + 1;
         dt[iCell] = cfl * volume[iCell] / invSpectrumRadius[iCell]/nPolySol;
         dtMin = min( dtMin, dt[iCell] );
-
-        //dt[iCell] = 0.00001;
     }
 
     for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
@@ -3302,205 +2470,17 @@ void HOSolverUnstruct::LocalTimeStep(Grid *gridIn)
 
 void HOSolverUnstruct::GlobalTimeStep(Grid *gridIn)
 {
-    /*
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-
-    RDouble * vol = grid->GetCellVolume();
-    RDouble * dt  = reinterpret_cast< RDouble * > ( grid->GetDataPtr("dt"  ) );
-
-    int nTotalCell = grid->GetNTotalCell();
-    int nBoundFace = grid->GetNBoundFace();
-
-    double dtau;
-    GlobalDataBase::GetData("dtau",&dtau,PHDOUBLE,1);
-
-    // Set dt to zero
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    dt[iCell] = dtau / vol[iCell];
-    }
-
-    grid->SetGhostCell(dt);
-    double dtmin = dtau;
-    GlobalDataBase::UpdateData("dtmin",&dtmin,PHDOUBLE,1);
-    */
 }
 
 void HOSolverUnstruct::LocalGlobalTimeStep(Grid *gridIn)
 {
-    /*
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-    int      * leftCellofFace = grid->GetLeftCellOfFace();
-    int      * rightCellofFace = grid->GetRightCellOfFace();
-
-    RDouble * xfn  = grid->GetFaceNormalX();
-    RDouble * yfn  = grid->GetFaceNormalY();
-    RDouble * zfn  = grid->GetFaceNormalZ();
-    RDouble * area = grid->GetFaceArea();
-    RDouble * vgn  = grid->GetFaceNormalVelocity();
-    RDouble * vol  = grid->GetCellVolume();
-
-    int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
-    int nBoundFace = grid->GetNBoundFace();
-
-    RDouble **q   = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q") );
-    RDouble *gama = reinterpret_cast< RDouble *  > ( grid->GetDataPtr("gama") );
-    RDouble *dt   = reinterpret_cast< RDouble *  > ( grid->GetDataPtr("dt") );
-
-    double cfl = ComputeCFL(grid->GetLevel());
-
-    //double refGama = parameters->GetRefGama();
-
-    int le,re;
-    double um, vm, wm, cm;
-
-    RDouble *rho, *u, *v, *w, *p;
-
-    using namespace IDX;
-
-    rho = q[IR];
-    u   = q[IU];
-    v   = q[IV];
-    w   = q[IW];
-    p   = q[IP];
-
-    // Set dt to zero
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    dt[iCell] = 0.0;
-    }
-
-    BCRecord ** bcr = grid->GetBCRecord();
-
-    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
-    {
-    le = leftCellofFace[ iFace ];
-
-    um      = u[le];
-    vm      = v[le];
-    wm      = w[le];
-    cm      = sqrt( gama[le] * p[le] / rho[le] );
-    dt[le] += ( ABS( xfn[iFace] * um + yfn[iFace] * vm + zfn[iFace] * wm - vgn[iFace] ) + cm ) * area[iFace];
-    }
-
-    // For interior faces
-    for ( int iFace = nBoundFace; iFace < nTotalFace; ++ iFace )
-    {
-    le = leftCellofFace[ iFace ];
-    re = rightCellofFace[ iFace ];
-
-    um      = u[le];
-    vm      = v[le];
-    wm      = w[le];
-    cm      = sqrt( gama[le] * p[le] / rho[le] );
-    dt[le] += ( ABS( xfn[iFace] * um + yfn[iFace] * vm + zfn[iFace] * wm - vgn[iFace] ) + cm ) * area[iFace];
-
-    um      = u[re];
-    vm      = v[re];
-    wm      = w[re];
-    cm      = sqrt( gama[re] * p[re] / rho[re] );
-    dt[re] += ( ABS( xfn[iFace] * um + yfn[iFace] * vm + zfn[iFace] * wm - vgn[iFace] ) + cm ) * area[iFace];
-    }
-
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    dt[iCell] = cfl * vol[iCell] / dt[iCell];
-    }
-
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
-    int viscousType = parameters->GetViscousType();
-
-    if (viscousType > 0)
-    {
-    //cout << " viscousType > 0 \n";
-    RDouble * dtv;
-    dtv = new RDouble [ nTotalCell ];
-
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    dtv[iCell] = 0.0;
-    }
-
-    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
-    {
-    le = leftCellofFace[ iFace ];
-    re = rightCellofFace[ iFace ];
-
-    dtv[le] += area[iFace] * area[iFace];
-    }
-
-    // For interior faces
-    for ( int iFace = nBoundFace; iFace < nTotalFace; ++ iFace )
-    {
-    le = leftCellofFace[ iFace ];
-    re = rightCellofFace[ iFace ];
-
-    dtv[le] += area[iFace] * area[iFace];
-    dtv[re] += area[iFace] * area[iFace];
-    }
-
-    RDouble * visl = reinterpret_cast< RDouble * > ( grid->GetDataPtr("visl") );
-    RDouble * vist = reinterpret_cast< RDouble * > ( grid->GetDataPtr("vist") );
-
-    double refReNumber = 1.0e5;
-    refReNumber = parameters->GetRefReNumber();
-    double oreynolds = 1.0 / refReNumber;
-    double prl = 0.72;
-    GlobalDataBase::GetData("prl",&prl,PHDOUBLE,1);
-    double prt = 0.90;
-    GlobalDataBase::GetData("prt",&prt,PHDOUBLE,1);
-
-    double coef1,coef2,coef,vis_l,vis_t;
-    double csrv = 1.0, csrvist = 1.0;
-
-    const double foth = 4.0 / 3.0;
-
-    double oprl = 1.0 / prl;
-    double oprt = 1.0 / prt;
-
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    vis_l = visl[iCell];
-    vis_t = csrvist * vist[iCell];
-    coef1 = foth * ( vis_l + vis_t );
-    coef2 = gama[iCell] * ( vis_l * oprl + vis_t * oprt );
-    coef  = MAX( coef1, coef2 );
-    dtv[iCell] = cfl * rho[iCell] * refReNumber * vol[iCell] * vol[iCell] / ( coef * dtv[iCell] );
-    }
-
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    dt[iCell] = dt[iCell] * dtv[iCell] / ( dt[iCell] + dtv[iCell] );
-    }
-
-    delete [] dtv; 
-    }
-
-    double dtmin = LARGE;
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    dtmin = MIN( dtmin, static_cast<double>( dt[iCell] ) );
-    }
-
-    GlobalDataBase::UpdateData("dtmin",&dtmin,PHDOUBLE,1);
-
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
-    {
-    dt[iCell] = dtmin / vol[iCell];
-    }
-
-    grid->SetGhostCell(dt);
-    */
 }
 
 RDouble HOSolverUnstruct::ComputeCFL(int level)
 {
-    int iterationStep;
+    int iterationStep = 0;
 
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
-    int hLevel = level;
-    int pLevel     = parameters->pMultiGrid;
 
     bool isUnsteady = parameters->GetIsUnsteady();
     if(isUnsteady)
@@ -3512,7 +2492,6 @@ RDouble HOSolverUnstruct::ComputeCFL(int level)
     {
         int nMGLevel = parameters->GetNMGLevel();
         //! Steady
-        //if(level == 0)
         if (nMGLevel <= 1)
         {
             //! Finest grid.
@@ -3639,7 +2618,6 @@ void HOSolverUnstruct::VisSpectrumRadius(Grid *gridIn, RDouble *visSpectrum)
 
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();
-    int nBoundFace = grid->GetNBoundFace();
 
     RDouble *xfn    = grid->GetFaceNormalX();
     RDouble *yfn    = grid->GetFaceNormalY();
@@ -3675,7 +2653,7 @@ void HOSolverUnstruct::VisSpectrumRadius(Grid *gridIn, RDouble *visSpectrum)
     RDouble faceArea, faceAera2, viscousSpectrumRadius;
     RDouble dx, dy, dz, ds;
     
-    int visSpetrumMethod = 2;	
+    int visSpetrumMethod = 2;
     if(visSpetrumMethod == 1)
     {
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
@@ -3689,7 +2667,7 @@ void HOSolverUnstruct::VisSpectrumRadius(Grid *gridIn, RDouble *visSpectrum)
             visLaminar = half * (uHOLeftCellSol.vislAverage + uHORigtCellSol.vislAverage);
             visTurb    = half * (uHOLeftCellSol.vistAverage + uHORigtCellSol.vistAverage);
             density    = half * (uHOLeftCellSol.qAverage[0] + uHORigtCellSol.qAverage[0]);
-            viscosity  = visLaminar + visTurb;	
+            viscosity  = visLaminar + visTurb;
 
             specificHeatRatio = HO_GAMA;
             coefOfSpectrum1 = fourthThird * (visLaminar + visTurb);
@@ -3705,7 +2683,7 @@ void HOSolverUnstruct::VisSpectrumRadius(Grid *gridIn, RDouble *visSpectrum)
             if(rigtCell < nTotalCell)
             {
                 visSpectrum[rigtCell] += viscousSpectrumRadius / volume[rigtCell];
-            }			
+            }
         }
     }
     else if(visSpetrumMethod == 2)
@@ -3736,7 +2714,7 @@ void HOSolverUnstruct::VisSpectrumRadius(Grid *gridIn, RDouble *visSpectrum)
             if(rigtCell < nTotalCell)
             {
                 visSpectrum[rigtCell] += viscousSpectrumRadius;
-            }		
+            }
         }
     }
 }

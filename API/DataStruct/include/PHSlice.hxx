@@ -1,30 +1,14 @@
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//                                                                             +
-//       Hybrid Platform for Engineering and Research of Flows (HyperFlow)     +
-//                        面向流体工程与研究的混合CFD平台                      +
-//                        （C）Zhang Laiping and He Xin                        +
-//                    State Key Laboratory of Aerodynamics                     +
-//                    Computational Aerodynamics Institute                     +
-//            China Aerodynamics Research and Development Center               +
-//                                 Since 2007                                  +
-//                                                                             +
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// 文件头部说明：                                                              +
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// FILE:       XXX.cpp (XXX.h)                                                 +
-// AUTHOR(S):  He Xin                                                          +
-// PURPOSE:    simulation object                                               +
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// 函数头部说明：                                                              +
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// Function:   例如：Simulation::Simulation()                                  +
-// AUTHOR(S):  He Xin                                                          +
-// PURPOSE:    具体说明本模块的功能                                            +
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #pragma once
 
 namespace PHSPACE
@@ -36,7 +20,7 @@ namespace PHSPACE
 // Range parameters.
 
 template < typename T, int N > template < int N2 >
-void PHArray<T, N>::slice(int& setRank, Range r, PHArray<T,N2>& array_in, SimpleArray<int,N2>& rankMap, int sourceRank)
+void PHArray<T, N>::slice(int &setRank, Range r, PHArray<T, N2> &array_in, SimpleArray<int, N2> &rankMap, int sourceRank)
 {
     // NEEDS WORK: ordering will change completely when some ranks
     // are deleted.
@@ -56,14 +40,14 @@ void PHArray<T, N>::slice(int& setRank, Range r, PHArray<T,N2>& array_in, Simple
 // int parameters, which reduce the dimensionality by one.
 
 template < typename T, int N > template  <int N2 >
-void PHArray<T, N>::slice(int& setRank, int i, PHArray<T,N2>& array_in, SimpleArray<int,N2>& rankMap, int sourceRank)
+void PHArray<T, N>::slice(int &setRank, int i, PHArray<T, N2> &array_in, SimpleArray<int, N2> &rankMap, int sourceRank)
 {
     rankMap[sourceRank] = -1;
     data_ += i * array_in.stride(sourceRank);
 }
 
 template < typename T, int N > template<int N2>
-void PHArray<T, N>::slice(int& setRank, PHnilArraySection nil, PHArray<T,N2>& array_in, SimpleArray<int,N2>& rankMap, int sourceRank)
+void PHArray<T, N>::slice(int &setRank, PHnilArraySection nil, PHArray<T, N2> &array_in, SimpleArray<int, N2> &rankMap, int sourceRank)
 { }
 
 // This member template is used to implement operator() with any
@@ -73,14 +57,14 @@ void PHArray<T, N>::slice(int& setRank, PHnilArraySection nil, PHArray<T,N2>& ar
 template < typename T, int N > template < int N2, typename R0,
     typename R1, typename R2, typename R3, typename R4, typename R5, typename R6, typename R7,
     typename R8, typename R9, typename R10 >
-void PHArray<T, N>::constructSlice(PHArray<T, N2>& array_in,
+void PHArray<T, N>::constructSlice(PHArray<T, N2> &array_in,
     R0 r0, R1 r1, R2 r2, R3 r3, R4 r4, R5 r5, R6 r6, R7 r7, R8 r8, R9 r9, R10 r10)
 {
     MemoryBlockReference<T>::changeBlock(array_in);
 
     int setRank = 0;
 
-	SimpleArray<int,N2> rankMap;
+    SimpleArray<int, N2> rankMap;
 
     slice(setRank, r0 , array_in, rankMap, 0 );
     slice(setRank, r1 , array_in, rankMap, 1 );
@@ -97,12 +81,12 @@ void PHArray<T, N>::constructSlice(PHArray<T, N2>& array_in,
     // Redo the ordering_ array to account for dimensions which
     // have been sliced away.
     int j = 0;
-    for ( int i = 0; i < N2; ++ i )
+    for (int i = 0; i < N2; ++ i)
     {
-        if ( rankMap[array_in.ordering(i)] != -1 )
-		{
+        if (rankMap[array_in.ordering(i)] != -1)
+        {
             storage_.setOrdering(j ++, rankMap[array_in.ordering(i)]);
-		}
+        }
     }
 
     calculateZeroOffset();
@@ -118,7 +102,7 @@ void PHArray<T, N>::constructSlice(PHArray<T, N2>& array_in,
 template<typename T, int N>
 void PHArray<T, N>::slice(int rank, Range r)
 {
-	int first  = r.first(lbound(rank));
+    int first  = r.first(lbound(rank));
     int last   = r.last (ubound(rank));
     int stride = r.stride();
 
@@ -132,15 +116,15 @@ void PHArray<T, N>::slice(int rank, Range r)
     // TV 20000312: added second term here, for testsuite/Josef-Wagenhuber
     int offset = (first - base(rank) * stride) * stride_[rank];
 
-    data_       += offset;
-    zeroOffset_ += offset;
+    data_         += offset;
+    zeroOffset_   += offset;
     stride_[rank] *= stride;
 
     // JCC: adjust ascending flag if slicing with backwards Range
-    if ( stride < 0 )
-	{
+    if (stride < 0)
+    {
         storage_.setAscendingFlag(rank, !isRankStoredAscending(rank));
-	}
+    }
 }
 
 }

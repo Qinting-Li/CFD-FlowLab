@@ -7,21 +7,21 @@ vector< vector< PHSolver *> *> * GlobalSolvers::globalSolversList = new vector< 
 
 PHSolver *GlobalSolvers::GetSolver(int zoneID, int solverID)
 {
-	return (*(*globalSolversList)[zoneID])[solverID];
+    return (*(*globalSolversList)[zoneID])[solverID];
 }
 
 int GlobalSolvers::GetNumberOfSolvers(int iZone)
 {
-	return static_cast<int>((*globalSolversList)[iZone]->size());
+    return static_cast<int>((*globalSolversList)[iZone]->size());
 }
 
 void GlobalSolvers::AddSolverToGlobal(int iZone, vector < PHSolver * > *solversList)
 {
-	if ( globalSolversList->size() == 0 )
-	{
+    if ( globalSolversList->size() == 0 )
+    {
         int nZones = PHMPI::GetNumberofGlobalZones();
-		globalSolversList->resize(nZones, 0);
-	}
+        globalSolversList->resize(nZones, 0);
+    }
     (*globalSolversList)[iZone] = solversList;
 }
 

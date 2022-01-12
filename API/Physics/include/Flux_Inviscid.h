@@ -38,6 +38,8 @@ void Ausmdv_Scheme (FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
 
 void Ausmpw_Scheme (FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara);
 
+void AusmpwPlus_Scheme (FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara);
+
 void Hlle_Scheme   (FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara);
 
 void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara);
@@ -46,6 +48,8 @@ RDouble FMSplit1(const RDouble &mach, const RDouble &ipn);
 RDouble FMSplit2(const RDouble &mach, const RDouble &ipn);
 RDouble FMSplit4(const RDouble &mach, const RDouble &beta, const RDouble &ipn);
 RDouble FPSplit5(const RDouble &mach, const RDouble &alpha, const RDouble &ipn);
+RDouble FMmpn(const RDouble &mach, const RDouble &beta, const RDouble &ipn);
+RDouble FMppn(const RDouble &mach, const RDouble &beta, const RDouble &ipn);
 
 void RoeAveragedVariables(RDouble rhoLeft, RDouble uLeft, RDouble vLeft, RDouble wLeft, RDouble pLeft, RDouble gamaLeft, 
                           RDouble rhoRight, RDouble uRight, RDouble vRight, RDouble wRight, RDouble pRight, RDouble gamaRight,
@@ -84,7 +88,7 @@ private:
     RDouble **flux;
     RDouble *xfn; RDouble *yfn; RDouble *zfn;
     RDouble *area;
-    RDouble *vgn ;	
+    RDouble *vgn;
 
 public:
     void SetLength(const int nLen) {this->nLen = nLen;}

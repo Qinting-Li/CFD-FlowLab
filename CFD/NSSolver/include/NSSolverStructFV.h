@@ -22,7 +22,7 @@ namespace PHSPACE
 class NSSolverStructFV : public NSSolverStruct
 {
 public:
-	NSSolverStructFV();
+    NSSolverStructFV();
     ~NSSolverStructFV();
 };
 

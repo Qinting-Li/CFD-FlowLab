@@ -4,7 +4,6 @@
 #include "Math_BasisFunction.h"
 
 using PHSPACE::RDouble;
-//using namespace PHSPACE;
 namespace HOUnstruct
 {
 void SymmetryBoundary( int iGausspoint, int numberGaussPoint, RDouble xNormal, RDouble yNormal, RDouble zNormal, vector < vector < RDouble > > & conservationQ )
@@ -58,7 +57,7 @@ void SymmetryBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble nys, RDoubl
 
 //! 3D.
 //! Viscous adiabatic wall.
-void ViscousAdiabaticWallBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble nys, RDouble nzs, RDouble xtn, RDouble ytn, RDouble ztn, RDouble refMachNumber, int nl, int nchem)
+void ViscousAdiabaticWallBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble nys, RDouble nzs, RDouble xfv, RDouble yfv, RDouble zfv, RDouble refMachNumber, int nl, int nchem)
 {
     using namespace IDX;
     int neqn = nl + nchem;
@@ -67,12 +66,12 @@ void ViscousAdiabaticWallBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble
         primt[m] = prims[m];
     }
 
-    primt[IU] = - prims[IU] + two * xtn;
-    primt[IV] = - prims[IV] + two * ytn;
-    primt[IW] = - prims[IW] + two * ztn;
+    primt[IU] = - prims[IU] + two * xfv;
+    primt[IV] = - prims[IV] + two * yfv;
+    primt[IW] = - prims[IW] + two * zfv;
 }
 
-void ViscousIsotropicWallBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble nys, RDouble nzs, RDouble xtn, RDouble ytn, RDouble ztn, RDouble refMachNumber, RDouble tw, int nl, int nchem)
+void ViscousIsotropicWallBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble nys, RDouble nzs, RDouble xfv, RDouble yfv, RDouble zfv, RDouble refMachNumber, RDouble tw, int nl, int nchem)
 {
     using namespace IDX;
     int neqn = nl + nchem;
@@ -81,9 +80,9 @@ void ViscousIsotropicWallBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble
         primt[m] = prims[m];
     }
 
-    primt[IU] = - prims[IU] + two * xtn;
-    primt[IV] = - prims[IV] + two * ytn;
-    primt[IW] = - prims[IW] + two * ztn;
+    primt[IU] = - prims[IU] + two * xfv;
+    primt[IV] = - prims[IV] + two * yfv;
+    primt[IW] = - prims[IW] + two * zfv;
 
     RDouble omav = one;
     RDouble coefficientOfStateEquation = 1.0 / ( HO_GAMA * refMachNumber * refMachNumber );
@@ -114,14 +113,14 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
     RDouble riemm,riemp;
     RDouble rb,ub,vb,wb,pb,vnb,cb;
 
-    //!内点
+    //!inner cells
     rin = prims[IR];
     uin = prims[IU];
     vin = prims[IV];
     win = prims[IW];
     pin = prims[IP];
 
-    //!远场
+    //!far field
     roo = primInflow[IR];
     uoo = primInflow[IU];
     voo = primInflow[IV];
@@ -142,7 +141,7 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
 
     vei = sqrt(uin * uin + vin * vin + win * win);
 
-    //超声速
+    //supersonic flows.
     if (vei > cin)
     {
         if (vni >= 0.0)
@@ -162,7 +161,7 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
         return;
     }
 
-    //若程序执行到这里，表明一定是亚声速
+    //! if can reach here, it must be the subsonic flow.
     riemp = vni + 2.0 * cin / gamm1;
     riemm = vno - 2.0 * coo / gamm1;
     vnb =  half * ( riemp + riemm );
@@ -174,10 +173,6 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
         vtx  = uin - nxs * vni;
         vty  = vin - nys * vni;
         vtz  = win - nzs * vni;
-
-        /*       riemp = ABS( vni ) + 2.0 * cin / gamm1;
-        riemm = ABS( vno ) - 2.0 * coo / gamm1;*/
-
     }
     else
     {
@@ -204,12 +199,12 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
 
 void FarFieldRiemannInvariants(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gama0, RDouble gama, RDouble nxs, RDouble nys, RDouble nzs, RDouble vgn, int nl, int nchem)
 {
-	using namespace IDX;
+    using namespace IDX;
     int neqn = nl + nchem;
 
-	RDouble rin, uin, vin, win, pin, vnin, cinner, vein;
-	RDouble roo, uoo, voo, woo, poo, vnoo, coo;
-	RDouble rb , ub , vb , wb , pb , vnb , cb;
+    RDouble rin, uin, vin, win, pin, vnin, cinner, vein;
+    RDouble roo, uoo, voo, woo, poo, vnoo, coo;
+    RDouble rb , ub , vb , wb , pb , vnb , cb;
 
     //! inner point variables.
     rin = prims[ IR ];
@@ -287,11 +282,11 @@ void FarFieldRiemannInvariants(RDouble *prims, RDouble *primInflow, RDouble *pri
             vnref = vnoo;
         }
 
-		rb  = pow( ( cb * cb / ( sb * gama ) ), 1.0 / gama1 );
+        rb  = pow( ( cb * cb / ( sb * gama ) ), 1.0 / gama1 );
         ub  = uref + nxs * ( vnb - vnref );
         vb  = vref + nys * ( vnb - vnref );
         wb  = wref + nzs * ( vnb - vnref );
-		pb  = cb * cb * rb / gama0; //! The same to "pb = sb * pow( rb, gama0 );"
+        pb  = cb * cb * rb / gama0; //! The same to "pb = sb * pow( rb, gama0 );"
 
         primt[IR] = rb;
         primt[IU] = ub;

@@ -20,7 +20,7 @@ template < typename T, int N >
 T product(SimpleArray<T, N> &length)
 {
     T result = static_cast<T>(1);
-    for ( int i = 0; i < N; ++ i )
+    for (int i = 0; i < N; ++ i)
     {
         result *= length[i];
     }
@@ -31,7 +31,7 @@ template < typename T, int N >
 T product(const SimpleArray<T, N> &length)
 {
     T result = static_cast<T>(1);
-    for ( int i = 0; i < N; ++ i )
+    for (int i = 0; i < N; ++ i)
     {
         result *= length[i];
     }

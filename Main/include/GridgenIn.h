@@ -37,7 +37,9 @@ void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&
 //! @param[in ]: structGrids denotes the current computational regions of the structure grids.
 //! @param[in ]: numberOfBlocks denotes the number of total grid blocks.
 //! @param[in ]: coordinateFile denotes the source file in which the grid coordinate stored.
-void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
+int  CheckGridgenCoorASCIIFileType(const string &coordinateFile);
+void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
+void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
 
 //! To read the grid boundary information from ".inp" format file.
 //! @param[in ]: structGrids denotes the current computational regions of the structure grids.
@@ -45,6 +47,5 @@ void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Gri
 //! @param[in ]: BCFile denotes the source file in which the grid boundary condition information stored.
 void ReadGridgenBC(Grid **& structGrids, int &numberOfBlocks, const string &BCFile);
 
-void ReadPartitionFileForOverset(int &inputNumberOfBlocks, const string &PartitionFile);
-
+int CheckGridgenFileIfASCII(const string &coordinateFile);
 }

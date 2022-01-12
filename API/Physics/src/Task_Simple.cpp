@@ -11,20 +11,20 @@ void Task_Simple::PostTask(ActionKey *actkey){}
 
 void Task_Simple::MainTask(ActionKey *actkey)
 {
-	using namespace PHMPI;
-	int nZones = GetNumberofGlobalZones();
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
 
-	int myid = GetCurrentProcessorID();
+    int myid = GetCurrentProcessorID();
 
-	for ( int izone = 0; izone < nZones; ++ izone )
-	{
-		int proc = GetZoneProcessorIDSepMode(izone);
+    for ( int izone = 0; izone < nZones; ++ izone )
+    {
+        int proc = GetZoneProcessorIDSepMode(izone);
 
-		if ( myid == proc )
-		{
-			GeneralAction(actkey, izone);
-		}
-	}
+        if ( myid == proc )
+        {
+            GeneralAction(actkey, izone);
+        }
+    }
 }
 
 }

@@ -83,6 +83,9 @@ private:
     void RegisterCFDSolverOversetField();
     void InitCoarseGridsFlow ();
 
+    //! Prepare overset interface data for communication.
+    void PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy);
+
     void InitDependentVariables();
 };
 

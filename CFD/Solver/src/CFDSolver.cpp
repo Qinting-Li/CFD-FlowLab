@@ -14,10 +14,7 @@
 #include "PHIO.h"
 #include "TK_Exit.h"
 #include "TK_Log.h"
-
-#ifdef USE_TecplotLib
-#include "TECXXX.h"
-#endif
+#include "Gas.h"
 
 using namespace std;
 
@@ -30,11 +27,21 @@ CFDSolver::CFDSolver()
     postVisualization = 0;
     dqProxy           = 0;
     controlParameters = 0;
+    postVisualWall = 0;
 }
 
 CFDSolver::~CFDSolver()
 {
-    delete postVisualization;
+    if (postVisualization != NULL)
+    {
+        delete postVisualization;
+        postVisualization = 0;
+    }
+    if (postVisualWall != NULL)
+    {
+        delete postVisualWall;
+        postVisualWall = 0;
+    }
 }
 
 void CFDSolver::InitMemory()
@@ -48,9 +55,7 @@ void CFDSolver::InitMemory()
 
 void CFDSolver::InitFlow()
 {
-    int nstart;
-
-    Param_CFDSolver *parameters = GetControlParameters();
+    int nstart = 0;
 
     //! This method would be wrong when turbulent computational from laminar flow field.
     //! But this situation breaks the law, so it is not considered.
@@ -342,10 +347,20 @@ void CFDSolver::AllocateGlobalVar(Grid *grid)
     if (postVisualization == 0)
     {
         int nVisualVariables = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
-        int visualVariables[100];
+        int visualVariables[100] = {0};
         GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
         postVisualization = new Post_Visual(nVisualVariables, visualVariables);
         SetPostVisualization(postVisualization);
+    }
+
+    if (postVisualWall == 0)
+    {
+        int nVisualWallVariables = GlobalDataBase::GetIntParaFromDB("nVisualWallVariables");
+        int visualWallVariables[30] = {0};
+        GlobalDataBase::GetData("visualWallVariables", visualWallVariables, PHINT, nVisualWallVariables);
+
+        Post_VisualWall *postVis = new Post_VisualWall(nVisualWallVariables, visualWallVariables);
+        this->SetPostVisualizationWall(postVis);
     }
 }
 
@@ -403,12 +418,12 @@ LIB_EXPORT void CFDSolver::RegisterOversetField( const string &name, const int t
     Grid *grid = GetGrid(0);
     while (grid)
     {
-        grid->RegisterOversetField(name, type, dimesion);
+        UnstructGridCast(grid)->RegisterOversetField(name, type, dimesion);
         grid = grid->GetCoarseGrid();
     }
 }
 
-void CFDSolver::AllocateOversetInterfaceVar (Grid *grid)
+void CFDSolver::AllocateOversetInterfaceVar(Grid *grid)
 {
     OversetInfoProxy *oversetInfoProxy = grid->GetOversetInfoProxy();
     if (oversetInfoProxy)
@@ -584,7 +599,7 @@ void CFDSolver::GetOversetData( ActionKey *actkey )
     int level = actkey->level;
     Grid *grid = GetGrid(level);
 
-    OversetInformationProxy *oversetInformationProxy = grid->GetOversetInformationProxy();
+    OversetInformationProxy *oversetInformationProxy = UnstructGridCast(grid)->GetOversetInformationProxy();
 
     InterfaceDataProxy *interfaceDataProxy = new InterfaceDataProxy();
 
@@ -604,7 +619,7 @@ void CFDSolver::TranslateOversetData(ActionKey *actkey)
     int level = actkey->level;
     Grid *grid = GetGrid(level);
 
-    OversetInformationProxy *oversetInformationProxy = grid->GetOversetInformationProxy();
+    OversetInformationProxy *oversetInformationProxy = UnstructGridCast(grid)->GetOversetInformationProxy();
 
     InterfaceDataProxy *interfaceDataProxy = new InterfaceDataProxy();
 
@@ -673,7 +688,7 @@ void CFDSolver::PrepareInterpointData(Grid *grid, Data_ParamFieldSuite *datastor
         return;
     }
     vector<RDouble **> &vectorData = interpointDataProxy->GetVectorData();
-    vector<int>         &vectorDimension = interpointDataProxy->GetVectorDimension();
+    vector<int>        &vectorDimension = interpointDataProxy->GetVectorDimension();
 
     for (int iData = 0; iData < interpointFields->Size(); ++ iData)
     {
@@ -717,7 +732,7 @@ void CFDSolver::CommunicationInterfaceData()
 
     //! Firstly the overset information should be exchanged.
     //! The structured overset grid should be taken into consideration further!!!
-    if (isOverLapping && systemGridType != STRUCTGRID)
+    if (isOverLapping)
     {
         UploadOversetData();
         UpdateOversetData();
@@ -742,7 +757,7 @@ void UpdateInterfaceData()
 {
     using namespace PHMPI;
 
-    for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++iLevel)
+    for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++ iLevel)
     {
         ActionKey *actkey = new ActionKey();
         actkey->action = UPDATE_INTERFACE_DATA;
@@ -893,9 +908,9 @@ void CFDSolver::SolveOnGridUnsteady(Grid *grid)
 
     int neqn = GetNumberOfEquations(); 
 
-    FieldProxy *qnProxy = CreateFieldProxy(grid);     //! It represents the value of q at time step n. 
-    FieldProxy *q1Proxy = CreateFieldProxy(grid);     //! It represents the q value of p-th iteration at time step n+1. 
-    FieldProxy *q2Proxy = GetFieldProxy(grid, CastName("q"));   //! It represents the q value of p+1-th iteration at time step n+1.
+    FieldProxy *qnProxy = CreateFieldProxy(grid);    //! It represents the value of q at time step n. 
+    FieldProxy *q1Proxy = CreateFieldProxy(grid);    //! It represents the q value of p-th iteration at time step n+1. 
+    FieldProxy *q2Proxy = GetFieldProxy(grid, CastName("q"));    //! It represents the q value of p+1-th iteration at time step n+1.
     //! Notice: q_2 changes with iteration,it represents q(n+1)(p+1).
 
     LoadQ(grid, qnProxy);
@@ -917,7 +932,7 @@ void CFDSolver::SolveOnGridUnsteady(Grid *grid)
         {
             grid->CVGNorm(qnProxy, q2Proxy, neqn, norm0);
             grid->CVGNorm(q1Proxy, q2Proxy, neqn, norm1);
-            cvg = norm1 / ( norm0 + SMALL );
+            cvg = norm1 / (norm0 + SMALL);
         }
         
         cout << "iner_iter = " << iner_iter << " cvg = " << cvg << "\n";
@@ -1003,11 +1018,11 @@ void CFDSolver::RungeKutta(Grid *grid, FieldProxy *rhsProxy)
         UpdateFlowField(grid, qProxy, resRK);
     }
 
-    delete []lamda;
-    delete qProxy;
-    delete q0ProxyTemp;
-    delete resProxy;
-    delete resRK;
+    delete [] lamda;    lamda = nullptr;
+    delete qProxy;    qProxy = nullptr;
+    delete q0ProxyTemp;    q0ProxyTemp = nullptr;
+    delete resProxy;    resProxy = nullptr;
+    delete resRK;    resRK = nullptr;
 }
 
 void CFDSolver::SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
@@ -1118,7 +1133,7 @@ streamsize CFDSolver::TranslateActionLength(ActionKey *actkey)
     }
 }
 
-bool CFDSolver::IsNeedDESStatistics()
+bool CFDSolver::IsNeedStatistics()
 {
     Param_CFDSolver *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
@@ -1126,6 +1141,27 @@ bool CFDSolver::IsNeedDESStatistics()
     {
         int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
         if (ifStaticsFlowField > 0)
+        {
+            int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+            int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
+
+            if(outnstep >= startStatisticStep)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool CFDSolver::IsNeedReynoldsStressStatistics()
+{
+    Param_CFDSolver *parameters = GetControlParameters();
+    int isUnsteady = parameters->GetIsUnsteady();
+    if (isUnsteady != 0)
+    {
+        int ifStaticsReynoldsStress = parameters->GetIfStaticsReynoldsStress();
+        if (ifStaticsReynoldsStress > 0)
         {
             int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
             int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
@@ -1162,8 +1198,6 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
     int nIFaceOfNeighbor = iterfaceInfo->GetNIFaceOfNeighbor(ineighbor);
     int *faceIndexForSend = iterfaceInfo->GetFaceIndexForSend(ineighbor);
 
-    int n = nIFaceOfNeighbor * dim_sum * GetNumberOfGhostCellLayers();
-
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
     for (std::size_t iDim = 0; iDim < vectorDimension.size(); ++ iDim)
@@ -1188,8 +1222,8 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
                 qtmp[icount ++] = q[m][iface];
             }
         }
-        cdata->write(qtmp, nlen * sizeof(RDouble));	
-        delete []qtmp;
+        cdata->write(qtmp, nlen * sizeof(RDouble));
+        delete [] qtmp;    qtmp = nullptr;
     }
 }
 
@@ -1213,8 +1247,6 @@ void CFDSolver::GetInterpointData(InterpointInformation *interpointInformation, 
 
     int numberOfInterpointsForNeighbor = interpointInformation->GetNumberOfInterpointsForNeighbor(iNeighbor);
     int *pointIndexForSend = interpointInformation->GetPointIndexForSend(iNeighbor);
-
-    int n = numberOfInterpointsForNeighbor * sumDimension * GetNumberOfGhostCellLayers();
 
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
@@ -1298,8 +1330,8 @@ void CFDSolver::TranslateInterpointData(InterpointInformation *interpointInforma
     vector<RDouble **> &vectorData = interpointDataProxy->GetVectorData();
     vector<int> &vectorDimension = interpointDataProxy->GetVectorDimension();
 
-	//! According to the design,actkey->ipos stores zone i,the current zone is the j-th neighbor of zone i.
-	//! Here we need to find out that which neighbor of the current zone is zone i,and the number is ineighbor.
+    //! According to the design,actkey->ipos stores zone i,the current zone is the j-th neighbor of zone i.
+    //! Here we need to find out that which neighbor of the current zone is zone i,and the number is ineighbor.
 
     int iNeighbor = interpointInformation->FindIthNeighbor(actkey->ipos);
     int numberOfInterpointsForNeighbor = interpointInformation->GetNumberOfInterpointsForNeighbor(iNeighbor);
@@ -1423,8 +1455,8 @@ void CFDSolver::TranslateOversetInterfaceData(OversetInformationProxy *oversetIn
     vector < RDouble **> &vectorData = interfaceDataProxy->GetVectorData();
     vector <int> &vectorDimension = interfaceDataProxy->GetVectorDimension();
 
-	//! According to the design,actkey->ipos stores zone i,the current zone is the j-th neighbor of zone i.
-	//! Here we need to find out that which neighbor of the current zone is zone i,and the number is ineighbor.
+    //! According to the design,actkey->ipos stores zone i,the current zone is the j-th neighbor of zone i.
+    //! Here we need to find out that which neighbor of the current zone is zone i,and the number is ineighbor.
 
     OversetDataProxy *oversetDataProxy = oversetInformationProxy->GetOversetDataProxyForReceive();
     int iNeighbor = oversetDataProxy->FindNeighborIndex(actkey->ipos);
@@ -1716,11 +1748,12 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
         CreateGroup(actkey->filepos, grpName);
 
         int length = 0;
+        int nWallBC = 0, nCurMaxCellNum = 0;
         int sendProcessID = GetZoneProcessorID(iZone);
         if (currentProcessorID == sendProcessID)
         {
-            int gridtypeoflocalzone = GetZoneGridType(iZone);
-            if (gridtypeoflocalzone ==STRUCTGRID)
+            int gridTypeofLocalZone = GetZoneGridType(iZone);
+            if (gridTypeofLocalZone == STRUCTGRID)
             {
                 StructGrid *grid = StructGridCast(PHSPACE::GetGrid(iZone, actkey->level));
                 int ni = grid->GetNI();
@@ -1735,6 +1768,8 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
                 {
                     length = (ni + 3) * (nj + 3);
                 }
+                //! Count the cells on wall.
+                grid->GetWallBCInfo(nWallBC, nCurMaxCellNum);
             }
             else
             {
@@ -1750,6 +1785,10 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
         int getherLength;
         MPI_Allreduce(&length, &getherLength, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
+        int nTotalWallCell, nCurTotalWallCell;
+        nCurTotalWallCell = nWallBC * nCurMaxCellNum;
+        MPI_Allreduce(&nCurTotalWallCell, &nTotalWallCell, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
         hid_t  grpData;
         grpData = OpenGroup(actkey->filepos, grpName);
 
@@ -1757,6 +1796,32 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
         {
             int nEquation = GetNumberOfEquations();
             CreateEmptyData(grpData, "q", nEquation, getherLength, PHDOUBLE);
+
+            int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+            int nSlipBCModel = GlobalDataBase::GetIntParaFromDB("nSlipBCModel");
+            //Create the memories of temperatures.
+            if (nChemical > 0)
+            {
+                int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
+                CreateEmptyData(grpData, "t", nTemperatureModel, getherLength, PHDOUBLE);
+            }
+
+            if (nTotalWallCell > 0)    //! The current grid includes the wall boundary conditions.
+            {
+                int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+                //RDouble wallTemperature = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
+                CreateEmptyData(grpData, "surfaceTemperature", 1, nTotalWallCell, PHDOUBLE);
+
+                if (nChemical > 0 && numberOfSpecies > 0)
+                {
+                    CreateEmptyData(grpData, "surfaceMassFraction", numberOfSpecies, nTotalWallCell, PHDOUBLE);
+                }
+
+                if (nSlipBCModel > 0)
+                {
+                    CreateEmptyData(grpData, "surfaceSlipVariables", numberOfSpecies + 6, nTotalWallCell, PHDOUBLE);
+                }
+            }
 
             if (isUnsteady == 1)
             {
@@ -1767,8 +1832,11 @@ void CFDSolver::CreateH5RestartFile(ActionKey *actkey)
                 CreateEmptyData(grpData, "res_unsteady_n2", nEquation, getherLength, PHDOUBLE);
 
                 CreateEmptyData(grpData, "qAverage", nEquation, getherLength, PHDOUBLE);
+                CreateEmptyData(grpData, "tauAverage", 6, getherLength, PHDOUBLE);
+                CreateEmptyData(grpData, "q2Average", 6, getherLength, PHDOUBLE);
             }
-
+            CreateEmptyData(grpData, "surfaceTemperatureFlag", 1, 1, PHDOUBLE);
+            CreateEmptyData(grpData, "catalyticCoefFlag", 1, 1, PHDOUBLE);
         }
         else if (actkey->solver == TURBULENCE)
         {
@@ -1976,15 +2044,13 @@ void CFDSolver::DumpCpDistri(ActionKey *actkey)
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
         if (visualfileType == 0)
         {
-            #ifdef USE_TecplotLib
-                WriteWallAircoef(actkey, datalist);
-            #else
-                ostringstream WarningInfo;
-                WarningInfo << "Warning : visualfileType = 0 is not right, dump wall aircoef data into ASCII file! \n";
-                PrintToWindow(WarningInfo);
 
-                WriteWallAircoefASCII(actkey, datalist);
-            #endif
+            ostringstream WarningInfo;
+            WarningInfo << "Warning : visualfileType = 0 is not right, dump wall aircoef data into ASCII file! \n";
+            PrintToWindow(WarningInfo);
+
+            WriteWallAircoefASCII(actkey, datalist);
+
         }
         else if (visualfileType == 1)
         {
@@ -2067,29 +2133,39 @@ void CFDSolver::DumpSurfaceInfo(ActionKey *actkey)
 
 void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *> datalist)
 {
-    int systemgridtype = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+    int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
 
     ostringstream ossTitle;
     ossTitle << "title=\"Wall Aircoef Data of PHengLEI\"" << endl;
     ossTitle << "variables=\"x\", \"y\", \"z\"";
 
-    int dataNumber;
-
-    dataNumber = 6;
-    ossTitle << ", "<< "\"cp\"";
-    ossTitle << ", "<< "\"cf\"";
-    ossTitle << ", "<< "\"yplus\"";
-    ossTitle << ", "<< "\"Q_NonDim\"";
-    ossTitle << ", "<< "\"Q_Dim(kW/m2)\"";
-    ossTitle << ", "<< "\"pw(Pa)\"";
-
-    if(systemgridtype == STRUCTGRID && nChemical == 1)
+    int nVariableNumber = postVisualWall->GetVisualVariablesNumber();
+    int dataNumber = nVariableNumber;
+    string varName;
+    int varType;
+    for (int iVar = 0; iVar < nVariableNumber; ++ iVar)
     {
-        dataNumber = 9;
-        ossTitle << ", "<< "\"Qs(kW/m2)\"";
-        ossTitle << ", "<< "\"Qv(kW/m2)\"";
-        ossTitle << ", "<< "\"Qe(kW/m2)\"";
+        varType = postVisualWall->GetVisualVariablesType(iVar);
+        if (varType == VISUAL_WALL_NS)
+        {
+            dataNumber += numberOfSpecies - 1;
+        }
+        else
+        {
+            varName = postVisualWall->GetVariableName(varType);
+            ossTitle << ", \""<< varName.c_str()<<"\"";
+        }
+    }
+
+    //Export the mass fractions of species.
+    if (nVariableNumber != dataNumber)
+    {
+        using namespace GAS_SPACE;
+        string *speciesName = gas->GetNameOfSpecies();
+        for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
+        {
+            ossTitle << ", \""<< speciesName[iSpecies].c_str()<<"\"";
+        }
     }
 
     string flowFileName = actkey->filename;
@@ -2103,7 +2179,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
     uint_t nzones = datalist.size();
     for (int izone = 0; izone < nzones; ++ izone)
     {
-        int gridtypeoflocalzone = PHMPI::GetZoneGridType(izone);
+        int gridTypeofLocalZone = PHMPI::GetZoneGridType(izone);
 
         DataContainer *cdata = datalist[izone];
         cdata->moveto_begin();
@@ -2157,7 +2233,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
             ossZoneTitle << "\"Zone"<< GridID << "\"";
             wallAircoefFile << "zone T = " << ossZoneTitle.str() << "\n";
 
-            if (gridtypeoflocalzone == STRUCTGRID)
+            if (gridTypeofLocalZone == STRUCTGRID)
             {
                 wallAircoefFile << "I = " << IMxOrNumPts << "\n";
                 wallAircoefFile << "J = " << JMxOrNumElements << "\n";
@@ -2267,216 +2343,6 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
 
     CloseFile(wallAircoefFile);
 }
-
-#ifdef USE_TecplotLib
-void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> datalist)
-{
-    ostringstream oss;
-    oss << "x y z";
-
-    int systemgridtype = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
-
-    int dataNumber;
-    dataNumber = 6;
-    oss << " "<< "cp";
-    oss << " "<< "cf";
-    oss << " "<< "yplus";
-    oss << " "<< "Q_NonDim";
-    oss << " "<< "Q_Dim(kW/m2)";
-    oss << " "<< "pw(Pa)";
-
-    if(systemgridtype == STRUCTGRID && nChemical == 1)
-    {
-        dataNumber = 9;
-        oss << " "<< "Qs(kW/m2)";
-        oss << " "<< "Qv(kW/m2)";
-        oss << " "<< "Qe(kW/m2)";
-    }
-
-    string Variable = oss.str();
-    const char *Variables = Variable.c_str();
-
-    const char *pltname = actkey->filename.c_str();
-
-    INTEGER4 Debug = 0;
-    INTEGER4 VIsDouble = 1;
-    INTEGER4 FileType = 0;
-    INTEGER4 I;
-
-    I = TECINI112((char*)"PHengLEI Grid Videotex",
-                  (char*)Variables,
-                  (char*)pltname,
-                  (char*)".",
-                  &FileType,
-                  &Debug,
-                  &VIsDouble);
-
-    bool FileIsFull = false;
-    uint_t nzones = datalist.size();
-    for (int izone = 0; izone < nzones; ++ izone)
-    {
-        int gridtypeoflocalzone = PHMPI::GetZoneGridType(izone);
-
-        DataContainer *cdata = datalist[izone];
-        cdata->moveto_begin();
-
-        INTEGER4 IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;
-        INTEGER4 ZoneType;
-
-        if (gridtypeoflocalzone == STRUCTGRID)
-        {
-            ZoneType = TEC_SPACE::ORDERED;
-        }
-        else
-        {
-            ZoneType = TEC_SPACE::FEQUADRILATERAL;
-        }
-
-        int GridID;
-        PHRead(cdata, &GridID, 1);
-
-        int TecioMission;
-        PHRead(cdata, &TecioMission, 1);
-
-        while (true)
-        {
-            if (TecioMission == 0) break;
-
-            PHRead(cdata, &IMxOrNumPts, 1);
-            PHRead(cdata, &JMxOrNumElements, 1);
-            PHRead(cdata, &KMxOrNumFaces, 1);
-
-            int coor_count = 0;
-            PHRead(cdata, coor_count);
-
-            RDouble *x = new RDouble[coor_count];
-            RDouble *y = new RDouble[coor_count];
-            RDouble *z = new RDouble[coor_count];
-            PHRead(cdata, x, coor_count);
-            PHRead(cdata, y, coor_count);
-            PHRead(cdata, z, coor_count);
-
-            INTEGER4 *ValueLocation = new INTEGER4[dataNumber + 3];
-            ValueLocation[0] = 1;
-            ValueLocation[1] = 1;
-            ValueLocation[2] = 1;
-
-            vector < int > data_count;
-            data_count.resize(0);
-            vector < RDouble *> vector_data;
-            vector_data.resize(0);
-            for (int idata = 0; idata < dataNumber; ++ idata)
-            {
-                int idata_count = 0;
-                PHRead(cdata, idata_count);
-                data_count.push_back(idata_count);
-
-                int iValueLocation = 0;
-                PHRead(cdata, iValueLocation);
-                ValueLocation[3 + idata] = iValueLocation;
-
-                RDouble *qq = new RDouble [idata_count];
-                PHRead(cdata, qq, idata_count);
-
-                vector_data.push_back(qq);
-            }
-
-            INTEGER4 ICellMax                   = 0;
-            INTEGER4 JCellMax                   = 0;
-            INTEGER4 KCellMax                   = 0;
-            double   SolutionTime               = 360.0;
-            INTEGER4 StrandID                   = 0;
-            INTEGER4 ParentZone                 = 0;
-            INTEGER4 IsBlock                    = 1;
-            INTEGER4 NumFaceConnections         = 0;
-            INTEGER4 FaceNeighborMode           = 0;
-
-            INTEGER4 TotalNumFaceNodes_Rect		= 0;
-
-            if (gridtypeoflocalzone == UNSTRUCTGRID)
-            {
-                PHRead(cdata, &TotalNumFaceNodes_Rect, 1);
-            }
-
-            INTEGER4 NumConnBndryFaces_Rect		= 0;
-            INTEGER4 TotalNumBndryConns_Rect	= 0;
-            INTEGER4 SharConn					= 0;
-
-            ostringstream oss1;
-            oss1 << "Zone "<< GridID;
-            string Zonetitle = oss1.str();
-            const char * ZoneTitle = Zonetitle.c_str();
-
-            I = TECZNE112((char*)ZoneTitle,
-                          &ZoneType,
-                          &IMxOrNumPts,
-                          &JMxOrNumElements,
-                          &KMxOrNumFaces,
-                          &ICellMax,
-                          &JCellMax,
-                          &KCellMax,
-                          &SolutionTime,
-                          &StrandID,
-                          &ParentZone,
-                          &IsBlock,
-                          &NumFaceConnections,
-                          &FaceNeighborMode,
-                          &TotalNumFaceNodes_Rect,
-                          &NumConnBndryFaces_Rect,
-                          &TotalNumBndryConns_Rect,
-                          NULL,
-                          ValueLocation,
-                          NULL,
-                          &SharConn);
-
-            INTEGER4 IsDouble = 1;
-            I = TECDAT112(&coor_count, x, &IsDouble);
-            I = TECDAT112(&coor_count, y, &IsDouble);
-            I = TECDAT112(&coor_count, z, &IsDouble);
-
-            for (int idata = 0; idata < dataNumber; ++ idata)
-            {
-                I = TECDAT112(&data_count[idata], vector_data[idata], &IsDouble);
-
-                delete []vector_data[idata];
-            }
-
-
-            if (gridtypeoflocalzone == UNSTRUCTGRID)
-            {
-                int *face2node = new INTEGER4[TotalNumFaceNodes_Rect];
-                PHRead( cdata, face2node, TotalNumFaceNodes_Rect);
-
-                I = TECNOD112(face2node);
-
-                delete []face2node;
-            }
-
-            if (FileIsFull == false)
-            {
-                FileIsFull = true;
-            }
-
-            delete []x;
-            delete []y;
-            delete []z;
-
-            PHRead(cdata, &TecioMission, 1);
-            delete []ValueLocation;
-        }
-    }
-
-    I = TECEND112();
-    
-    if (FileIsFull == false)
-    {
-        remove(pltname);
-    }
-
-    return;
-}
-#endif
 
 void CFDSolver::UploadInterfaceData()
 {
@@ -2686,7 +2552,6 @@ void CFDSolver::CommunicationInterpointWeight()
     }
 
     using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
 
     for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++ iLevel)
     {
@@ -2837,6 +2702,22 @@ void CFDSolver::TecOutAverageFlow(ActionKey *actkey)
     averageFlowVisualFile->Run();
 
     delete averageFlowVisualFile;
+}
+
+void CFDSolver::TecOutAverageReynoldsStress(ActionKey *actkey)
+{
+    int zoneIDofThisSolver = GetZoneLocalID();
+    if (zoneIDofThisSolver != 0)
+    {
+        //! Very Important: only the first zone on a processor need to implement the task.
+        //! other wise, the tasks would be implemented several times.
+        return;
+    }
+
+    Post_WriteTecplot *ReynoldsStressVisualFile = new Post_WriteTecplot(AverageReynoldsStress);
+    ReynoldsStressVisualFile->Run();
+
+    delete ReynoldsStressVisualFile;
 
 }
 

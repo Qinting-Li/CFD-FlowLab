@@ -21,23 +21,23 @@ template < typename T >
 class DataStruct_Sort
 {
 public:
-	//! Value used to compare.
+    //! Value used to compare.
     T value;
 
-	//! Index.
+    //! Index.
     int index;
 
 public:
-	//! Constructor.
+    //! Constructor.
     DataStruct_Sort();
 
-	//! Constructor with value and index.
+    //! Constructor with value and index.
     DataStruct_Sort(T &value, int index);
 
-	//! Overload operator < used to sort.
-    bool operator < ( const DataStruct_Sort &rhs ) const;
+    //! Overload operator < used to sort.
+    bool operator < (const DataStruct_Sort &rhs) const;
 
-    bool operator > ( const DataStruct_Sort &rhs ) const;
+    bool operator > (const DataStruct_Sort &rhs) const;
 };
 
 #include "DataStruct_Sort.hxx"

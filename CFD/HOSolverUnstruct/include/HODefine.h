@@ -94,57 +94,57 @@ namespace HOUnstruct
  */
 enum Order
 {
-	CONSTANT     =  0,
-	FIRST        =  1,
-	SECOND       =  2,
-	THIRD        =  3,
-	FOURTH       =  4,
-	FIFTH        =  5,
-	SIXTH        =  6,
-	SEVENTH      =  7,
-	EIGHTH       =  8,
-	NINTH        =  9,
-	TENTH        = 10,
+    CONSTANT     =  0,
+    FIRST        =  1,
+    SECOND       =  2,
+    THIRD        =  3,
+    FOURTH       =  4,
+    FIFTH        =  5,
+    SIXTH        =  6,
+    SEVENTH      =  7,
+    EIGHTH       =  8,
+    NINTH        =  9,
+    TENTH        = 10,
 
-	ELEVENTH     = 11,
-	TWELFTH      = 12,
-	THIRTEENTH   = 13,
-	FOURTEENTH   = 14,
-	FIFTEENTH    = 15,
-	SIXTEENTH    = 16,
-	SEVENTEENTH  = 17,
-	EIGHTTEENTH  = 18,
-	NINTEENTH    = 19, // deprecated
-	NINETEENTH   = 19,
-	TWENTIETH    = 20,
+    ELEVENTH     = 11,
+    TWELFTH      = 12,
+    THIRTEENTH   = 13,
+    FOURTEENTH   = 14,
+    FIFTEENTH    = 15,
+    SIXTEENTH    = 16,
+    SEVENTEENTH  = 17,
+    EIGHTTEENTH  = 18,
+    NINTEENTH    = 19, // deprecated
+    NINETEENTH   = 19,
+    TWENTIETH    = 20,
 
-	TWENTYFIRST   = 21,
-	TWENTYSECOND  = 22,
-	TWENTYTHIRD   = 23,
-	TWENTYFOURTH  = 24,
-	TWENTYFIFTH   = 25,
-	TWENTYSIXTH   = 26,
-	TWENTYSEVENTH = 27,
-	TWENTYEIGHTH  = 28,
-	TWENTYNINTH   = 29,
-	THIRTIETH     = 30,
+    TWENTYFIRST   = 21,
+    TWENTYSECOND  = 22,
+    TWENTYTHIRD   = 23,
+    TWENTYFOURTH  = 24,
+    TWENTYFIFTH   = 25,
+    TWENTYSIXTH   = 26,
+    TWENTYSEVENTH = 27,
+    TWENTYEIGHTH  = 28,
+    TWENTYNINTH   = 29,
+    THIRTIETH     = 30,
 
-	THIRTYFIRST   = 31,
-	THIRTYSECOND  = 32,
-	THIRTYTHIRD   = 33,
-	THIRTYFOURTH  = 34,
-	THIRTYFIFTH   = 35,
-	THIRTYSIXTH   = 36,
-	THIRTYSEVENTH = 37,
-	THIRTYEIGHTH  = 38,
-	THIRTYNINTH   = 39,
-	FORTIETH      = 40,
+    THIRTYFIRST   = 31,
+    THIRTYSECOND  = 32,
+    THIRTYTHIRD   = 33,
+    THIRTYFOURTH  = 34,
+    THIRTYFIFTH   = 35,
+    THIRTYSIXTH   = 36,
+    THIRTYSEVENTH = 37,
+    THIRTYEIGHTH  = 38,
+    THIRTYNINTH   = 39,
+    FORTIETH      = 40,
 
-	FORTYFIRST   = 41,
-	FORTYSECOND  = 42,
-	FORTYTHIRD   = 43,
+    FORTYFIRST   = 41,
+    FORTYSECOND  = 42,
+    FORTYTHIRD   = 43,
 
-	INVALID_ORDER
+    INVALID_ORDER
 };
 
 enum 
@@ -162,13 +162,13 @@ enum
 // vanilla C0
 enum FEFamily
 {
-	LAGRANGE     = 0,
+    LAGRANGE     = 0,
     HIERARCHIC   = 1,
 
-	// discontinuous, in local coordinates
-	MONOMIAL      = 2,
-	L2_HIERARCHIC = 6,
-	L2_LAGRANGE   = 7,
+    // discontinuous, in local coordinates
+    MONOMIAL      = 2,
+    L2_HIERARCHIC = 6,
+    L2_LAGRANGE   = 7,
 
     // higher-order
     BERNSTEIN    = 3,
@@ -221,12 +221,12 @@ enum FEFieldType {TYPE_SCALAR = 0,
  */
 enum GEO_TYPE
 {
-    TRIANGLE = 5, 		/*!< \brief VTK nomenclature for defining a triangle element. */
-    QUADRILATERAL = 8,		/*!< \brief VTK nomenclature for defining a quadrilateral element. */
-    TETRAHEDRON = 11,     	/*!< \brief VTK nomenclature for defining a tetrahedron element. */
-    HEXAHEDRON = 14,      	/*!< \brief VTK nomenclature for defining a hexahedron element. */
-    PRISM = 17,     		/*!< \brief VTK nomenclature for defining a prism element. */
-    PYRAMID = 20  		/*!< \brief VTK nomenclature for defining a pyramid element. */
+    TRIANGLE = 5,       /*!< \brief VTK nomenclature for defining a triangle element. */
+    QUADRILATERAL = 8,      /*!< \brief VTK nomenclature for defining a quadrilateral element. */
+    TETRAHEDRON = 11,       /*!< \brief VTK nomenclature for defining a tetrahedron element. */
+    HEXAHEDRON = 14,        /*!< \brief VTK nomenclature for defining a hexahedron element. */
+    PRISM = 17,             /*!< \brief VTK nomenclature for defining a prism element. */
+    PYRAMID = 20        /*!< \brief VTK nomenclature for defining a pyramid element. */
 };
 
 //enum GEO_TYPE {

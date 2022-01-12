@@ -56,23 +56,22 @@ private:
     //! Initialize each solver on each zone.
     void InitializeSolvers();
 
-    //! preprocess of patch grid
-    void RunStrPatchGridConfig();
-
     //main work flow of CFD simulation process
     void RunCFD();
 
     void RunIntegrativeSolver();
 
 
+    #ifdef USE_SpecDiffHybSolver
+    void RunSpecDiffHybSolver();
+    void RunSpecSolver();
+    #endif
+
     //! compute wall distance for turbulence flow while there was no wdt files
     void ComputeWallDistance();
 
     void IsNeedConvert();
     void UpdateAllZonesPara();
-
-    //! run pre processing for struct-overset grid 
-    void RunOverlapPreProcessing();
 
     //! run post processing without flow field simulation
     void RunPostProcessing();
@@ -89,8 +88,6 @@ private:
     void SolveSteady();
 
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
-
-    void AssembleInterpolationOversetField();
 };
 }
 

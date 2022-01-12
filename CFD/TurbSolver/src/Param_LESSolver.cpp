@@ -36,11 +36,11 @@ LIB_EXPORT void Param_LESSolver::Init()
 {
     Param_CFDSolver::Init();
 
-    testFilterCoef = new RDouble [3];
+    testFilterCoef = new RDouble [3]();
 
-    filterDirection = new int [3];
+    filterDirection = new int [3]();
 
-    averageDirection = new int [3];
+    averageDirection = new int [3]();
 
     eddyViscosityLimit = GlobalDataBase::GetDoubleParaFromDB("eddyViscosityLimit");
 

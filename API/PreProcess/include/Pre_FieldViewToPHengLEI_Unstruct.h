@@ -89,7 +89,7 @@ private:
     void Conversion();
 
 private:
-    CGNSFactory * factory_cgns;
+    CGNSFactory *factory_cgns;
 };
 
 namespace FIELDVIEW_SPACE
@@ -104,7 +104,5 @@ namespace FIELDVIEW_SPACE
     const int TRIA = 5;    //! Surface triangle.
     const int QUAD = 6;    //! Surface quadrilateral.
 }
-
-#include "Pre_FieldViewToPHengLEI_Unstruct.hxx"
 
 }

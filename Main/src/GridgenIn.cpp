@@ -1,6 +1,6 @@
 #include <string>
 #include "GridgenIn.h"
-#include "BC_Struct.h"
+#include "Geo_StructBC.h"
 #include "TK_Parse.h"
 #include "Glb_Dimension.h"
 #include "Math_BasisFunction.h"
@@ -17,24 +17,27 @@ void ReadGridgen(Grid **& structGrids, int &numberOfBlocks, const string &gridge
     //fileformat : Grid file format.
     //             1 --- ASCII
     //             0 --- BINARY
+    fileFormat = CheckGridgenFileIfASCII(gridgenFile);
+    GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
+
     if (fileFormat == 1)
     {
-        ReadGridgenCoorASCII(gridgenFile, numberOfBlocks, structGrids);
+        int isPlot3D = 1;
+        isPlot3D = CheckGridgenCoorASCIIFileType(gridgenFile);
+        if (isPlot3D)
+        {
+            ReadGridgenCoorASCIIPlot3D(gridgenFile, numberOfBlocks, structGrids);
+        }
+        else
+        {
+            ReadGridgenCoorASCIIGridgen(gridgenFile, numberOfBlocks, structGrids);
+        }
     }
     else if(fileFormat == 0)
     {
         ReadGridgenCoor(gridgenFile, numberOfBlocks, structGrids);
     }
     ReadGridgenBC(structGrids, numberOfBlocks, BCFile);
-
-#ifdef USE_OVERSET
-    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    if (codeOfOversetGrid == 1)
-    {
-    string partitionFile = "./grid/partition.ppsh";
-    ReadPartitionFileForOverset(numberOfBlocks, partitionFile);
-    }
-#endif
 }
 
 void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
@@ -100,10 +103,124 @@ void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&
     file.clear();
 }
 
-void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
     file.open(coordinateFile.c_str(),ios_base::in);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(coordinateFile);
+    }
+    file >> numberOfBlocks;
+
+    structGrids = new Grid *[numberOfBlocks];
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        int ni,nj,nk;
+        file >> ni;
+        file >> nj;
+        file >> nk;
+
+        GridID *index = new GridID(iZone);
+        StructGrid *grid = StructGridCast(CreateGridGeneral(STRUCTGRID, index, 0, GetDim()));
+        structGrids[iZone] = grid;
+        grid->SetNI(ni);
+        grid->SetNJ(nj);
+        grid->SetNK(nk);
+
+        grid->SetBasicDimension();
+
+        int nTotalNode = grid->GetNTotalNode();
+        RDouble *x = new RDouble[nTotalNode];
+        RDouble *y = new RDouble[nTotalNode];
+        RDouble *z = new RDouble[nTotalNode];
+        grid->SetX(x);
+        grid->SetY(y);
+        grid->SetZ(z);
+        grid->SetArrayLayout();
+
+        int wordWidth = 8;
+
+        cout << setiosflags(ios::right);
+        cout << " iZone = " << setw(wordWidth) << iZone;
+        cout << " numberOfBlocks = " << setw(wordWidth) << numberOfBlocks;
+        cout << " ni, nj, nk = ";
+        cout << setw(wordWidth) << ni;
+        cout << setw(wordWidth) << nj;
+        cout << setw(wordWidth) << nk;
+        cout << "\n";
+
+        grid->ReadXYZ(file);
+    }
+
+    file.close();
+    file.clear();
+}
+
+int CheckGridgenFileIfASCII(const string &coordinateFile)
+{
+    fstream file;
+    file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(coordinateFile);
+    }
+
+    CharVecSizeType sizeOfIntType = sizeof(int);
+
+    int numberOfBlocks = 0;
+    file.read(reinterpret_cast <char *> (&numberOfBlocks), sizeOfIntType);
+
+    file.close();
+    file.clear();
+
+    if(numberOfBlocks <= static_cast <int> (1e8) )
+    {
+        return 0;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+int  CheckGridgenCoorASCIIFileType(const string &coordinateFile)
+{
+    fstream file;
+    file.open(coordinateFile.c_str(),ios_base::in);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(coordinateFile);
+    }
+
+    int numberOfBlocks = 0;
+    file >> numberOfBlocks;
+
+    int isPlot3D = 1;
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        int ni, nj, nk;
+        file >> ni;
+        file >> nj;
+        file >> nk;
+
+        if (ni < 0 || nj < 0 || nk < 0)
+        {
+            isPlot3D = 0;
+            break;
+        }
+    }
+
+    file.close();
+    file.clear();
+
+    return isPlot3D;
+}
+
+void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+{
+    fstream file;
+    file.open(coordinateFile.c_str(), ios_base::in);
     if (!file)
     {
         TK_Exit::FileOpenErrorExit(coordinateFile);
@@ -167,7 +284,7 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
     }
 
     string line,word;
-    string separator  = " =\t\r\n#$,;";
+    string separator = " =\t\r\n#$,;";
 
     ReadNewLine(file, line);
     line = FindNextWord(line, word, separator);
@@ -207,16 +324,6 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
     boundaryName[71] = "POLE1";
     boundaryName[72] = "POLE2";
     boundaryName[73] = "POLE3";
-    boundaryName[81] = "PATCH_FACE1";
-    boundaryName[82] = "PATCH_FACE2";
-    boundaryName[83] = "PATCH_FACE3";
-    boundaryName[84] = "PATCH_FACE4";
-    boundaryName[85] = "PATCH_FACE5";
-    boundaryName[86] = "PATCH_FACE6";
-    boundaryName[87] = "PATCH_FACE7";
-    boundaryName[88] = "PATCH_FACE8";
-    boundaryName[89] = "PATCH_FACE9";
-    boundaryName[90] = "PATCH_FACE10";
     boundaryName[99] = "PERIODIC";
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
@@ -264,7 +371,7 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
         from_string <int> (numberOfBCRegion, word, std::dec);
 
         grid->CreateCompositeBCRegion(numberOfBCRegion);
-        CompositeBCRegion * compositeBCRegion = grid->GetCompositeBCRegion();
+        CompositeStructBC * compositeBCRegion = grid->GetCompositeBCRegion();
         for (int iBCRegion = 0; iBCRegion < numberOfBCRegion; ++ iBCRegion)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;
@@ -295,7 +402,7 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
             line = FindNextWord(line, word, separator);
             from_string <int> (BCType, word, std::dec);
 
-            BCRegion *BCRegions = new BCRegion(iZone, iBCRegion);
+            StructBC *BCRegions = new StructBC(iZone, iBCRegion);
             compositeBCRegion->SetBCRegion(iBCRegion, BCRegions);
             BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
             BCRegions->SetBCType(BCType);
@@ -439,7 +546,6 @@ void ReadPartitionFileForOverset(int &inputNumberOfBlocks, const string &Partiti
         delete [] blockProcessorINP;
         delete [] blockGroupID;
         SetZoneProcessID_INP(0);
-        SetZoneGroupID(0);
     }
 
     file.close();

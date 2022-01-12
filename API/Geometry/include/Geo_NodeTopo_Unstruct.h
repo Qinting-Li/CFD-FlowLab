@@ -24,37 +24,37 @@ namespace PHSPACE
 class Geo_NodeTopo_Unstruct
 {
 private:
-	//! Number of connected cells per node.
-	int * cell_number_of_each_node;          
+    //! Number of connected cells per node.
+    int * cell_number_of_each_node;          
 
-	//! Node to cell: connected cells index of per node.
-	int * node2cell;
+    //! Node to cell: connected cells index of per node.
+    int * node2cell;
 
     //! 2D Node to cell: connected cells index of per node.
     int **node2CellArray;
 
 public:
-	LIB_EXPORT Geo_NodeTopo_Unstruct();
-	LIB_EXPORT ~Geo_NodeTopo_Unstruct();
+    LIB_EXPORT Geo_NodeTopo_Unstruct();
+    LIB_EXPORT ~Geo_NodeTopo_Unstruct();
 
 public:
-	//! Set the number of connected cells per node.
-	void SetCellNumberOfEachNode(int * nCPN);
+    //! Set the number of connected cells per node.
+    void SetCellNumberOfEachNode(int * nCPN);
 
-	//! Set node to cell: connected cells index of per node.
-	void SetNode2Cell(int * n2c);
+    //! Set node to cell: connected cells index of per node.
+    void SetNode2Cell(int * n2c);
 
-	//! Get the number of connected cells per node.
-	int * GetCellNumberOfEachNode() const;
+    //! Get the number of connected cells per node.
+    int * GetCellNumberOfEachNode() const;
 
-	//! Get node to cell: connected cells index of per node.
-	int * GetNode2Cell() const;
+    //! Get node to cell: connected cells index of per node.
+    int * GetNode2Cell() const;
 
     //! Set 2-D node to cell: connected cells index of per node.
-	void SetNode2CellArray(int ** node2Cell);
+    void SetNode2CellArray(int ** node2Cell);
 
     //! Get 2-D node to cell: connected cells index of per node.
-	int ** GetNode2CellArray() const;
+    int ** GetNode2CellArray() const;
 };
 
 #include "Geo_NodeTopo_Unstruct.hxx"

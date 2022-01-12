@@ -52,7 +52,6 @@ MRADTSearch::MRADTSearch(UnstructGrid *gridIn, OversetConfig *oversetConfigIn)
     
     int numberOfAllCells = grid->GetNTotalCell();
 
-    vector< int > &keySearchOfNodes = oversetConfig->GetKeySearchOfNodes();
     vector< int > &keySearchOfCells = oversetConfig->GetKeySearchOfCells();
 
     numberOfSearchCells = 0;
@@ -223,7 +222,7 @@ void MRADTSearch::QuickSort(int iStart, int iEnd, RDouble *adtSortData, int half
 void MRADTSearch::SwapData(int iFirst, int iSecond, RDouble *adtSortData)
 {
     RDouble tempAdtSortData;
-    int     tempReorderCellIndex;
+    int tempReorderCellIndex;
 
     tempAdtSortData      = adtSortData         [iFirst];
     tempReorderCellIndex = reorderCellIndexList[iFirst];
@@ -239,7 +238,6 @@ void MRADTSearch::ComputeGlobalAndCellBox2D()
 {
     RDouble *nodeCoordinateX = grid->GetX();
     RDouble *nodeCoordinateY = grid->GetY();
-    RDouble *nodeCoordinateZ = grid->GetZ();
 
     int **cellNodeIndexContainer  = grid->GetCell2NodeArray();
     int * cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
@@ -261,10 +259,10 @@ void MRADTSearch::ComputeGlobalAndCellBox2D()
         for (int iNodeInCell = 0; iNodeInCell < cellNodeNumberContainer[cellIndex]; ++ iNodeInCell)
         {
             int nodeIndex = cellNodeIndexContainer[cellIndex][iNodeInCell];
-            cellBox[iCell][0] = min(cellBox[iCell][0], nodeCoordinateX[nodeIndex]); //! 本单元最小x.
-            cellBox[iCell][1] = min(cellBox[iCell][1], nodeCoordinateY[nodeIndex]); //! 本单元最小y.
-            cellBox[iCell][2] = max(cellBox[iCell][2], nodeCoordinateX[nodeIndex]); //! 本单元最大x.
-            cellBox[iCell][3] = max(cellBox[iCell][3], nodeCoordinateY[nodeIndex]); //! 本单元最大y.
+            cellBox[iCell][0] = min(cellBox[iCell][0], nodeCoordinateX[nodeIndex]);    //! 本单元最小x.
+            cellBox[iCell][1] = min(cellBox[iCell][1], nodeCoordinateY[nodeIndex]);    //! 本单元最小y.
+            cellBox[iCell][2] = max(cellBox[iCell][2], nodeCoordinateX[nodeIndex]);    //! 本单元最大x.
+            cellBox[iCell][3] = max(cellBox[iCell][3], nodeCoordinateY[nodeIndex]);    //! 本单元最大y.
         }
 
         //! Keep out residuals.
@@ -288,7 +286,6 @@ void MRADTSearch::ComputeGlobalBox2D()
         return;
     }
 
-    int numberOfNodes = grid->GetNTotalNode();
     int numberOfCells = grid->GetNTotalCell();
 
     int **cellNodeIndexContainer  = grid->GetCell2NodeArray();
@@ -358,12 +355,12 @@ void MRADTSearch::ComputeGlobalAndCellBox3D()
         for (int iNodeInCell = 0; iNodeInCell < cellNodeNumberContainer[cellIndex]; ++ iNodeInCell)
         {
             int nodeIndex = cellNodeIndexContainer[cellIndex][iNodeInCell];
-            cellBox[iCell][0] = min(cellBox[iCell][0], nodeCoordinateX[nodeIndex]); //! 本单元最小x.
-            cellBox[iCell][1] = min(cellBox[iCell][1], nodeCoordinateY[nodeIndex]); //! 本单元最小y.
-            cellBox[iCell][2] = min(cellBox[iCell][2], nodeCoordinateZ[nodeIndex]); //! 本单元最小z.
-            cellBox[iCell][3] = max(cellBox[iCell][3], nodeCoordinateX[nodeIndex]); //! 本单元最大x.
-            cellBox[iCell][4] = max(cellBox[iCell][4], nodeCoordinateY[nodeIndex]); //! 本单元最大y.
-            cellBox[iCell][5] = max(cellBox[iCell][5], nodeCoordinateZ[nodeIndex]); //! 本单元最大z.
+            cellBox[iCell][0] = min(cellBox[iCell][0], nodeCoordinateX[nodeIndex]);    //! 本单元最小x.
+            cellBox[iCell][1] = min(cellBox[iCell][1], nodeCoordinateY[nodeIndex]);    //! 本单元最小y.
+            cellBox[iCell][2] = min(cellBox[iCell][2], nodeCoordinateZ[nodeIndex]);    //! 本单元最小z.
+            cellBox[iCell][3] = max(cellBox[iCell][3], nodeCoordinateX[nodeIndex]);    //! 本单元最大x.
+            cellBox[iCell][4] = max(cellBox[iCell][4], nodeCoordinateY[nodeIndex]);    //! 本单元最大y.
+            cellBox[iCell][5] = max(cellBox[iCell][5], nodeCoordinateZ[nodeIndex]);    //! 本单元最大z.
         }
 
         //! Keep out residuals.
@@ -391,7 +388,6 @@ void MRADTSearch::ComputeGlobalBox3D()
         return;
     }
 
-    int numberOfNodes = grid->GetNTotalNode();
     int numberOfCells = grid->GetNTotalCell();
 
     RDouble *x = grid->GetX();
@@ -613,7 +609,7 @@ void MRADTSearch::InCellCheck(int rootCellIndexNow, RDouble *coor, int &donorInd
     }
 }
 
-int MRADTSearch::In4PointsCell(RDouble x1, RDouble y1, RDouble z1, RDouble x2, RDouble y2, RDouble z2,RDouble x3, RDouble y3, RDouble z3, RDouble x4, RDouble y4, RDouble z4, RDouble xt, RDouble yt, RDouble zt, RDouble eps)
+int MRADTSearch::In4PointsCell(RDouble x1, RDouble y1, RDouble z1, RDouble x2, RDouble y2, RDouble z2, RDouble x3, RDouble y3, RDouble z3, RDouble x4, RDouble y4, RDouble z4, RDouble xt, RDouble yt, RDouble zt, RDouble eps)
 {
     RDouble vol  = ABS(this->ComputeVolume4P(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4));
     
@@ -703,10 +699,6 @@ void MRADTSearch::SearchPoint3D(int iLay, int rootCellIndexNow, RDouble *coor, i
     }
 
     iDirection = iLay % numberOfBoxDirection;
-
-    RDouble x = coor[0];
-    RDouble y = coor[1];
-    RDouble z = coor[2];
 
     //RDouble dist = DISTANCE((x - 5.07062376), (y + 0.619199344), (z - 3.29163274));
 

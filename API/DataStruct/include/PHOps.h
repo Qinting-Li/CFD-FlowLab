@@ -19,7 +19,7 @@ namespace PHSPACE
 template<typename T>
 struct autopromote_trait
 {
-	typedef T T_numtype;
+    typedef T T_numtype;
 };
 
 template<typename T1, typename T2, bool promote2T1>
@@ -29,7 +29,7 @@ struct promote2
 };
 
 template<typename T1, typename T2>
-struct promote2<T1,T2,false>
+struct promote2<T1, T2, false>
 {
     typedef T2 T_promote;
 };
@@ -72,23 +72,22 @@ struct promote_trait
     //! We know T1 but not T2: false.
     //! We know T2 but not T1: true.
     //! Otherwise, if T1 is bigger than T2: true.
-	//! static const bool.
-	//defaultPromotion = knowT1butNotT2 ? false : (knowT2butNotT1 ? true : T1IsLarger);
-	
+    //! static const bool.
+    //defaultPromotion = knowT1butNotT2 ? false : (knowT2butNotT1 ? true : T1IsLarger);
+    
     //! If we have both ranks, then use them.
     //! If we have only one rank, then use the unknown type.
     //! If we have neither rank, then promote to the larger type.
     static const bool promoteToT1 = knowBothRanks ? T1IsBetter : (knowT1butNotT2 ? false : (knowT2butNotT1 ? true : T1IsLarger));
 
-    typedef typename promote2<T1,T2,promoteToT1>::T_promote T_promote;
+    typedef typename promote2<T1, T2, promoteToT1>::T_promote T_promote;
 };
 
 
 //#define PH_PROMOTE(A,B) A
-#define PH_PROMOTE(A,B) typename promote_trait<A,B>::T_promote
+#define PH_PROMOTE(A, B) typename promote_trait<A, B>::T_promote
 
-
-#define PH_DEFINE_UNARY_OP(name,op)                            \
+#define PH_DEFINE_UNARY_OP(name, op)                           \
 template<typename T_numtype1>                                  \
 struct name                                                    \
 {                                                              \
@@ -97,12 +96,12 @@ struct name                                                    \
     static inline T_numtype                                    \
     apply(T_numtype1 a)                                        \
     {                                                          \
-		return op a;                                           \
-	}                                                          \
-							                                   \
+        return op a;                                           \
+    }                                                          \
+                                                               \
 };
 
-#define PH_DEFINE_BINARY_OPERATION(name,op)                       \
+#define PH_DEFINE_BINARY_OPERATION(name, op)                      \
 template<typename T_numtype1, typename T_numtype2>                \
 struct name                                                       \
 {                                                                 \
@@ -111,12 +110,12 @@ struct name                                                       \
     static inline T_numtype                                       \
     apply(T_numtype1 a, T_numtype2 b)                             \
     {                                                             \
-		return a op b;                                            \
-	}                                                             \
-							                                      \
+        return a op b;                                            \
+    }                                                             \
+                                                                  \
 };
 
-#define PH_DEFINE_BINARY_FUNCTION(name,functor)                   \
+#define PH_DEFINE_BINARY_FUNCTION(name, functor)                  \
 template<typename T_numtype1, typename T_numtype2>                \
 struct name                                                       \
 {                                                                 \
@@ -125,13 +124,13 @@ struct name                                                       \
     static inline T_numtype                                       \
     apply(T_numtype1 a, T_numtype2 b)                             \
     {                                                             \
-		return functor(a, b);                                     \
-	}                                                             \
-							                                      \
+        return functor(a, b);                                     \
+    }                                                             \
+                                                                  \
 };
 
-PH_DEFINE_UNARY_OP(UnaryPlus ,+)
-PH_DEFINE_UNARY_OP(UnaryMinus,-)
+PH_DEFINE_UNARY_OP(UnaryPlus , +)
+PH_DEFINE_UNARY_OP(UnaryMinus, -)
 
 PH_DEFINE_BINARY_OPERATION(Add     , +)
 PH_DEFINE_BINARY_OPERATION(Subtract, -)

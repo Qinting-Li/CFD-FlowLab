@@ -1,4 +1,5 @@
 #include "Param_TurbSolver.h"
+#include "Transition.h"
 #include "GlobalDataBase.h"
 #include "Constants.h"
 
@@ -21,7 +22,7 @@ LIB_EXPORT Param_TurbSolver::~Param_TurbSolver()
 
 LIB_EXPORT void Param_TurbSolver::Init()
 {
-	Param_CFDSolver::Init();
+    Param_CFDSolver::Init();
 
     turbCFLScale = GlobalDataBase::GetDoubleParaFromDB("turbCFLScale");
 
@@ -33,7 +34,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     SSTProductType = GlobalDataBase::GetIntParaFromDB("SSTProductType");
 
-    nTurbulentEquation = GlobalDataBase::GetIntParaFromDB("n_turb");
+    nTurbulenceEquation = GlobalDataBase::GetIntParaFromDB("n_turb");
 
     eddyViscosityLimit = GlobalDataBase::GetDoubleParaFromDB("eddyViscosityLimit");
 
@@ -47,20 +48,19 @@ LIB_EXPORT void Param_TurbSolver::Init()
     RDouble * prim_inf = reinterpret_cast< RDouble * > ( GlobalDataBase::GetDataPtr("prim_inf"  ) );
     RDouble reference_density_farfield = prim_inf[IR];
 
-    RDouble cmu = 1.0;
     RDouble refReNumber = 1.0e5;
     GlobalDataBase::GetData("refReNumber", &refReNumber, PHDOUBLE, 1);
    
     RDouble muoo = 1.0e-1;
-    GlobalDataBase::GetData("muoo",&muoo,PHDOUBLE,1);
+    GlobalDataBase::GetData("muoo", &muoo, PHDOUBLE, 1);
     RDouble kwoo = 1.0e-8;
-    GlobalDataBase::GetData("kwoo",&kwoo,PHDOUBLE,1);
+    GlobalDataBase::GetData("kwoo", &kwoo, PHDOUBLE, 1);
 
     int viscousType = 1;
     GlobalDataBase::GetData("viscousType", &viscousType, PHINT, 1);
 
     int neasm = -1;
-    GlobalDataBase::GetData("neasm",&neasm, PHINT, 1);
+    GlobalDataBase::GetData("neasm", &neasm, PHINT, 1);
 
     string viscousName;
     GlobalDataBase::GetData("viscousName", &viscousName, PHSTRING, 1);
@@ -77,7 +77,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     int nolstress, nrokplus;
 
-    if ( viscousType >= 4 && neasm > 0 )
+    if ( viscousType >= TWO_EQU && neasm > 0 )
     {
         nolstress = 1;
         nrokplus  = 1;
@@ -174,6 +174,19 @@ LIB_EXPORT void Param_TurbSolver::Init()
             KW_sigmaW2  = 0.856;
             SST_alphaw2 = 0.44;
             SST_beta2   = 0.0828;
+            
+            if (transitionType == IREGAMA)
+            {
+                transition_ce1 = 1.0;
+                transition_ca1 = 2.0;
+                transition_ce2 = 50.0;
+                transition_ca2 = 0.06;
+                transition_dct = 2.0;
+                transition_df  = 1.0;
+                transition_cct = 0.03;
+                transition_s1  = 2.0;
+                transition_ccf = 0.6;
+            }
         }
         else if (viscousName.substr(0,17) == "2eq-kw-menter-bsl")
         {
@@ -227,27 +240,44 @@ LIB_EXPORT void Param_TurbSolver::Init()
         }
     }
 
-    GlobalDataBase::UpdateData("turb_fbeta" ,&turb_fbeta ,PHDOUBLE,1);
-    GlobalDataBase::UpdateData("turb_fbetas",&turb_fbetas,PHDOUBLE,1);
+    GlobalDataBase::UpdateData("turb_fbeta", &turb_fbeta, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("turb_fbetas", &turb_fbetas, PHDOUBLE, 1);
 
-    freeStreamTurbVar = new RDouble [nTurbulentEquation];
+    freeStreamTurbVar = new RDouble [nTurbulenceEquation];
 
     //! This code should be check for structured grid.
-    if ( nTurbulentEquation == 1 )
+    if (viscousType == ONE_EQU)
     {
-        freeStreamTurbVar[0] = 3.0 / ( reference_density_farfield * turb_cmu + SMALL );
+        RDouble muoo = GlobalDataBase::GetDoubleParaFromDB("muoo");
+        freeStreamTurbVar[0] = muoo / (reference_density_farfield * turb_cmu + SMALL);
     }
-    else if ( nTurbulentEquation == 2 )
+    else if (viscousType == TWO_EQU)
     {
-        RDouble kwoo = 5.0 / refReNumber;
-        RDouble keoo;
+        RDouble kwoo = GlobalDataBase::GetDoubleParaFromDB("kwoo") / refReNumber;
         RDouble mutoo = 0.01;
+        RDouble keoo = mutoo * kwoo / (turb_cmu * reference_density_farfield);
+        freeStreamTurbVar[IKE] = keoo;
+        freeStreamTurbVar[IKW] = kwoo;
 
-        //keoo = mutoo * kwoo / (turb_cmu * refReNumber * reference_density_farfield);
-        keoo = mutoo * kwoo / (turb_cmu * reference_density_farfield);
+        if (transitionType == IREGAMA)
+        {
+            RDouble TUoo = 0.18;
+            RDouble Fcta = 1.0;
+            freeStreamTurbVar[IGAMA] = 1.0;
 
-        freeStreamTurbVar[0] = keoo;
-        freeStreamTurbVar[1] = kwoo;
+            mutoo = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
+            turbulenceIntensity = GlobalDataBase::GetDoubleParaFromDB("turbIntensity");
+            if (turbulenceIntensity >= SMALL)
+            {
+                keoo = 1.5 * (0.01 * turbulenceIntensity) * (0.01 * turbulenceIntensity);
+                kwoo = keoo * (turb_cmu * reference_density_farfield) / mutoo;
+                freeStreamTurbVar[IKE] = keoo;
+                freeStreamTurbVar[IKW] = kwoo;
+            }
+
+            TUoo = TurbulenceIntensity(1.0, keoo);
+            freeStreamTurbVar[IRECT] = EmpiricalCorrelationOfRectat(TUoo, Fcta);
+        }
     }
 
     kindOfTurbSource = GlobalDataBase::GetIntParaFromDB("kindOfTurbSource");

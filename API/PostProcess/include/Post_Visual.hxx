@@ -33,3 +33,9 @@ inline Grid * Post_Visual::GetGrid() const
 {
     return grid;
 }
+
+inline string Post_VisualWall::GetVariableName(int variableNumber) const
+{
+    map<int, string>::const_iterator it = visualVariablesMap.find(variableNumber);
+    return it->second;
+}

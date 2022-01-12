@@ -22,13 +22,13 @@ namespace PHSPACE
 class Param_TurbSolverUnstruct : public Param_TurbSolver
 {
 public:
-	LIB_EXPORT Param_TurbSolverUnstruct();
+    LIB_EXPORT Param_TurbSolverUnstruct();
 
-	LIB_EXPORT ~Param_TurbSolverUnstruct();
+    LIB_EXPORT ~Param_TurbSolverUnstruct();
 
 public:
 
-	LIB_EXPORT void Init();
+    LIB_EXPORT void Init();
 
 private:
 

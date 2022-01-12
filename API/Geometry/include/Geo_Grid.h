@@ -108,22 +108,28 @@ protected:
 
     //! The grid at the last time.
     //! It is used in unsteady dynamic grid method.
-    SimpleGrid *oldgrid;
+    SimpleGrid *oldGrid;
 
     //! which block the grid belongs to.
     int iBlock;
 
-    //! The probes number.
+    //! The probes' number of the current grid.
     int zoneProbesNumber;
 
-    //! The line index of probes.
-    vector<int> probesLineID;
+    //! The probes' global index of the current grid.
+    vector<int> zoneProbesGlobalID;
 
-    //! The surface index of probes.
-    vector<int> probesSurfaceID;
+    //! The probes' line index of the current grid.
+    vector<int> zoneProbesLineID;
 
-    //! The probes coordinates.
-    vector<vector<RDouble> > probesCoordinates;
+    //! The probes' surface index of the current grid.
+    vector<int> zoneProbesSurfaceID;
+
+    //! The probes' coordinates of the current grid.
+    vector<vector<RDouble> > zoneProbesCoordinates;
+
+    //! The grid file index current grid belong, only used in multi-file grid convert.
+    int fileIndexCurrentGridBelong;
 
 private:
     //! 
@@ -150,6 +156,9 @@ public:
 
     //! Assign the pointer to the interface topology information of interface faces.
     void SetInterfaceInfo(InterfaceInfo *iinfo);
+
+    //! Assign the pointer to the interface topology information of interface faces.
+    void SetInterfaceFields(InterfaceFields *interfaceFields){this->interfaceFields = interfaceFields;};
 
     //! Assign the pointer to the interpoint topology information of interface points.
     //! @param[in] interpointInformation    an object of class InterpointInformation.
@@ -181,14 +190,15 @@ public:
     //! Assign the probes number of each zone grid.
     void SetZoneProbesNumber(int zoneProbesNumberIn);
 
-    //! Assign the probes coordinates of each zone grid.
-    void SetProbesLineID(vector<int> &probesLineIDIn);
+    //! Assign the probes global index of each zone grid.
+    void SetZoneProbesGlobalID(vector<int> &zoneProbesGlobalIDIn);
+    //! Assign the probes line index of each zone grid.
+    void SetZoneProbesLineID(vector<int> &zoneProbesLineIDIn);
+    //! Assign the probes surface index of each zone grid.
+    void SetZoneProbesSurfaceID(vector<int> &zoneProbesSurfaceIDIn);
 
     //! Assign the probes coordinates of each zone grid.
-    void SetProbesSurfaceID(vector<int> &probesSurfaceIDIn);
-
-    //! Assign the probes coordinates of each zone grid.
-    void SetProbesCoordinates(vector<vector<RDouble> > &probesCoordinatesIn);
+    void SetZoneProbesCoordinates(vector<vector<RDouble> > &zoneProbesCoordinatesIn);
 
     //! Return the grid dimension.
     int GetDim() const;
@@ -261,24 +271,21 @@ public:
     //! Return the overset information for unstructured overset cell interpolation.
     OversetInformationProxy * GetOversetInformationProxy() const;
 
-    //! Return the grid at the last time step.
-    //! It is used in unsteady dynamic grid method.
-    SimpleGrid * GetOldGrid();
-
     //! Return iBlock.
     int GetIBlock();
 
     //! Return the probes number of each zone grid.
     int GetZoneProbesNumber() const;
 
-    //! Return the probes coordinates of each zone grid.
-    vector<int> GetProbesLineID() const;
+    //! Return the probes global index of each zone grid.
+    vector<int> GetZoneProbesGlobalID() const;
+    //! Return the probes line index of each zone grid.
+    vector<int> GetZoneProbesLineID() const;
+    //! Return the probes surface index of each zone grid.
+    vector<int> GetZoneProbesSurfaceID() const;
 
     //! Return the probes coordinates of each zone grid.
-    vector<int> GetProbesSurfaceID() const;
-
-    //! Return the probes coordinates of each zone grid.
-    vector<vector<RDouble> > GetProbesCoordinates() const;
+    vector<vector<RDouble> > GetZoneProbesCoordinates() const;
 
     //! Is this grid is the finest grid, in multi-grid method.
     bool IsFinestGrid();
@@ -291,7 +298,13 @@ public:
     
     //! Back up the grid at the last time step.
     //! It is used in unsteady dynamic grid method.
-    LIB_EXPORT void BackUpOldGrid();
+    LIB_EXPORT virtual void BackUpOldGrid();
+
+    //! Return the grid at the last time step.
+    //! It is used in unsteady dynamic grid method.
+    SimpleGrid * GetOldGrid();
+
+    void SetOldGrid(SimpleGrid *oldGrid);
 
     //! Register an interface field (variable) into buffer which is loaded on grid, used in parallel communication.
     //! The interface field variable buffer is set to be ZERO.
@@ -401,6 +414,7 @@ public:
     //! Initialize the BC information of structured grid,
     //! such as left and right cell of the BC faces.
     LIB_EXPORT virtual void ProcessBCInfo() = 0;
+    LIB_EXPORT virtual void SetLnkInfo() = 0;
 
     //! Change the BC type, if necessary.
     LIB_EXPORT virtual void ChangeBCType(int from_bctype, int to_bctype) = 0;
@@ -418,6 +432,10 @@ public:
     
     //! Compute the grid velocity.
     LIB_EXPORT virtual void GridSurfaceVelocity(RDouble *xt, RDouble *yt, RDouble *zt) = 0;
+
+    LIB_EXPORT void GridVerticeVelocity(RDouble *xt, RDouble *yt, RDouble *zt);
+
+    LIB_EXPORT virtual void ComputeGridFaceVelocity() = 0;
 
     //! Compute the minimum distance of the grid edges.
     LIB_EXPORT virtual RDouble CalMinEdgeLength() = 0;
@@ -442,6 +460,8 @@ public:
 
     //! 
     virtual void DumpWalldist(ActionKey *actkey) = 0;
+
+    virtual void DumpWallFaceCenter(ActionKey *actkey) = 0;
 
     //! Update a data pointer into the Running-Data-Base.
     //! @param[in] name    Name of the data pointer, type of string.
@@ -478,6 +498,9 @@ public:
     //! Delete a data with name of 'name' from Running-Data-Base.
     void DeleteDataPtr(const string &name) const;
 
+    void SetFileIndex(int fileIndex);
+    int  GetFileIndex();
+
     set < Data_IndexData > * GetDataSet();
 
     //! Action mechanism, these action is not allowed to be calling by library.
@@ -485,8 +508,10 @@ public:
     virtual void TranslateAction(ActionKey *actkey) = 0;
     virtual streamsize TranslateActionLength(ActionKey *actkey) = 0;
     virtual void ReSetBoundaryConditionByGlobalBC() {};
+    virtual void InitVariableWallTemperature() {};
     //! Allocate memory for walldist.
     virtual void AllocateWalldist(ActionKey* actkey) = 0;
+    virtual void GetBcNamePair(set< pair<int, string> > &bcNamePairSet) = 0;
 
 protected:
     virtual void AllocateMetrics(ActionKey *actkey) = 0;
@@ -498,8 +523,6 @@ protected:
 
 void CheckGrid(Grid **grids, int nBlocks);
 
-//!
-LIB_EXPORT void DumpFaceBoundaryName(const set< pair<int, string> > & bcNamePairSet, string targetGridFileName);
 //!
 LIB_EXPORT void Create_Link_Info(VInt &pindex, int izone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link);
 //!

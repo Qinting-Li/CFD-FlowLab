@@ -5,7 +5,7 @@
 #include "Geo_CellMetrics_Unstruct.h"
 #include "Geo_DynamicGridMetrics_Unstruct.h"
 #include "Geo_LSQWeight_Unstruct.h"
-#include "BC_Unstruct.h"
+#include "Geo_UnstructBC.h"
 #include "Pointer.h"
 #include "GeomProxy.h"
 #include "GeneralFieldProxy.h"
@@ -45,23 +45,23 @@ FaceProxy::FaceProxy()
 
 FaceProxy::~FaceProxy()
 {
-    if ( next ) delete next;
+    if (next) delete next;
 
-    DelPointer2(ql  );
-    DelPointer2(qr  );
+    DelPointer2(ql);
+    DelPointer2(qr);
     DelPointer2(flux);
 
     DelPointer2(tl);
     DelPointer2(tr);
 
-    delete [] gamal;
-    delete [] gamar;
+    delete [] gamal;    gamal = nullptr;
+    delete [] gamar;    gamar = nullptr;
 
-    delete [] deltl;
-    delete [] deltr;
+    delete [] deltl;    deltl = nullptr;
+    delete [] deltr;    deltr = nullptr;
 
-    delete [] lrtl;
-    delete [] lrtr;
+    delete [] lrtl;    lrtl = nullptr;
+    delete [] lrtr;    lrtr = nullptr;
 
     delete ns_facevar;
     delete turb_facevar;
@@ -152,7 +152,7 @@ NSFaceValue * FaceProxy::GetNSFaceValue()
 
 void FaceProxy::SetNSFaceValue(NSFaceValue *facevar)
 {
-    if ( ns_facevar ) delete ns_facevar;
+    if (ns_facevar) delete ns_facevar;
     ns_facevar = facevar;
 }
 
@@ -163,7 +163,7 @@ TurbFaceValue * FaceProxy::GetTurbFaceValue()
 
 void FaceProxy::SetTurbFaceValue(TurbFaceValue *facevar)
 {
-    if ( turb_facevar ) delete turb_facevar;
+    if (turb_facevar) delete turb_facevar;
     turb_facevar = facevar;
 }
 
@@ -174,7 +174,7 @@ GeomProxy * FaceProxy::GetGeomProxy()
 
 void FaceProxy::SetGeomProxy(GeomProxy *geom_proxy)
 {
-    if ( this->geom_proxy ) delete this->geom_proxy;
+    if (this->geom_proxy) delete this->geom_proxy;
     this->geom_proxy = geom_proxy;
 }
 
@@ -182,15 +182,15 @@ NSFaceValue::NSFaceValue(int neqn, int ns, int nlen)
 {
     rho_ds = new GeneralFieldProxy();
     hint_s = new GeneralFieldProxy();
-    if ( !(ns == 0 || nlen == 0) )
+    if (!(ns == 0 || nlen == 0))
     {
         rho_ds->Create(ns,nlen);
         hint_s->Create(ns,nlen);
     }
 
-    kcp  = new RDouble[nlen];
-    mul  = new RDouble[nlen];
-    mut  = new RDouble[nlen];
+    kcp = new RDouble[nlen];
+    mul = new RDouble[nlen];
+    mut = new RDouble[nlen];
 
     prim = new GeneralFieldProxy();
     prim->Create(neqn,nlen);
@@ -206,15 +206,15 @@ NSFaceValue::~NSFaceValue()
     delete prim;
     delete t;
 
-    delete [] kcp;
-    delete [] mul;
-    delete [] mut;
+    delete [] kcp;    kcp = nullptr;
+    delete [] mul;    mul = nullptr;
+    delete [] mut;    mut = nullptr;
 }
 
 TurbFaceValue::TurbFaceValue(int neqn, int nlen)
 {
-    mul   = new RDouble[nlen];
-    mut   = new RDouble[nlen];
+    mul = new RDouble[nlen];
+    mut = new RDouble[nlen];
 
     mlt  = NewPointer2<RDouble>(neqn, nlen);
     prim = NewPointer2<RDouble>(neqn, nlen);
@@ -222,33 +222,31 @@ TurbFaceValue::TurbFaceValue(int neqn, int nlen)
 
 TurbFaceValue::~TurbFaceValue()
 {
-    delete [] mul;
-    delete [] mut;
+    delete [] mul;    mul = nullptr;
+    delete [] mut;    mut = nullptr;
 
-    DelPointer2(mlt );
+    DelPointer2(mlt);
     DelPointer2(prim);
 }
 
 void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst, int ned)
 {
     UnstructGrid *grid = UnstructGridCast(grid_in);
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotalCell = grid->GetNTotalCell();
 
-    int       *left_cell_of_face = grid->GetLeftCellOfFace();
-    int       *right_cell_of_face = grid->GetRightCellOfFace();
-    RDouble   *xfc  = grid->GetFaceCenterX();
-    RDouble   *yfc  = grid->GetFaceCenterY();
-    RDouble   *zfc  = grid->GetFaceCenterZ();
-    RDouble   *xcc  = grid->GetCellCenterX();
-    RDouble   *ycc  = grid->GetCellCenterY();
-    RDouble   *zcc  = grid->GetCellCenterZ();
+    int     *left_cell_of_face = grid->GetLeftCellOfFace();
+    int     *right_cell_of_face = grid->GetRightCellOfFace();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
 
     RDouble **ql = face_proxy->GetQL();
     RDouble **qr = face_proxy->GetQR();
 
     int uns_limiter;
-    GlobalDataBase::GetData("uns_limiter",&uns_limiter,PHINT,1);
+    GlobalDataBase::GetData("uns_limiter", &uns_limiter, PHINT, 1);
 
     RDouble *qltry = new RDouble[neqn];
     RDouble *qrtry = new RDouble[neqn];
@@ -283,9 +281,9 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
         LIMIT_FUN = VANALBADA;
     }
 
-    RDouble **dqdx = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceX"));
-    RDouble **dqdy = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceY"));
-    RDouble **dqdz = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarFaceZ"));
+    RDouble **dqdx = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarX"));
+    RDouble **dqdy = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarY"));
+    RDouble **dqdz = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarZ"));
 
     int le,re,j;
     for ( int iface = nst; iface < ned; ++ iface )
@@ -349,8 +347,8 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
         }
     }
 
-    delete [] qltry;
-    delete [] qrtry;
+    delete [] qltry;    qltry = nullptr;
+    delete [] qrtry;    qrtry = nullptr;
 }
 
 }

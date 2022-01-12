@@ -153,7 +153,7 @@ inline int Pre_Block_Struct::GetNumberOfCells()
     return (nodeDimension[0] - 1) * (nodeDimension[1] - 1) * max((nodeDimension[2] - 1), 1);
 }
 
-inline void Pre_Block_Struct::AddBoundaryFace(Pre_BcFace_Struct * boundaryFace)
+inline void Pre_Block_Struct::AddBoundaryFace(Pre_BcFace_Struct *boundaryFace)
 {
     boundaryFaceList.push_back(boundaryFace);
 }
@@ -249,15 +249,15 @@ inline void Pre_Block_Struct::SetNK(int nk)
 
 inline RDouble * Pre_Block_Struct::GetX()
 {
-    return & x[0];
+    return &x[0];
 }
 
 inline RDouble * Pre_Block_Struct::GetY()
 {
-    return & y[0];
+    return &y[0];
 }
 
 inline RDouble * Pre_Block_Struct::GetZ()
 {
-    return & z[0];
+    return &z[0];
 }

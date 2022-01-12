@@ -1,10 +1,10 @@
 inline void Geo_DynamicGridMetrics_Struct::DeallocateAll()
 {
-    if (voln) { delete voln; voln = 0; }
-    if (xtn)  { delete xtn;  xtn  = 0; }
-    if (ytn)  { delete ytn;  ytn  = 0; }
-    if (ztn)  { delete ztn;  ztn  = 0; }
-    if (vgn)  { delete vgn;  vgn  = 0; }
+    if (voln != NULL) { delete voln; voln = NULL; }
+    if (xfv  != NULL) { delete xfv;  xfv  = NULL; }
+    if (yfv  != NULL) { delete yfv;  yfv  = NULL; }
+    if (zfv  != NULL) { delete zfv;  zfv  = NULL; }
+    if (vgn  != NULL) { delete vgn;  vgn  = NULL; }
 }
 
 inline RDouble3D * Geo_DynamicGridMetrics_Struct::GetCellVolumeOld() const
@@ -19,44 +19,44 @@ inline RDouble4D * Geo_DynamicGridMetrics_Struct::GetFaceNormalVelocity() const
 
 inline RDouble4D * Geo_DynamicGridMetrics_Struct::GetFaceVelocityX() const
 {
-    return xtn;
+    return xfv;
 }
 
 inline RDouble4D * Geo_DynamicGridMetrics_Struct::GetFaceVelocityY() const
 {
-    return ytn;
+    return yfv;
 }
 
 inline RDouble4D * Geo_DynamicGridMetrics_Struct::GetFaceVelocityZ() const
 {
-    return ztn;
+    return zfv;
 }
 
-inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityX(RDouble4D *xtn)
+inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityX(RDouble4D *xfv)
 {
-    if (this->xtn && this->xtn != xtn)
+    if (this->xfv && this->xfv != xfv)
     {
-        delete this->xtn;
+        delete this->xfv;
     }
-    this->xtn = xtn;
+    this->xfv = xfv;
 }
 
-inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityY(RDouble4D *ytn)
+inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityY(RDouble4D *yfv)
 {
-    if (this->ytn && this->ytn != ytn)
+    if (this->yfv && this->yfv != yfv)
     {
-        delete this->ytn;
+        delete this->yfv;
     }
-    this->ytn = ytn;
+    this->yfv = yfv;
 }
 
-inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityZ(RDouble4D *ztn)
+inline void Geo_DynamicGridMetrics_Struct::SetFaceVelocityZ(RDouble4D *zfv)
 {
-    if (this->ztn && this->ztn != ztn)
+    if (this->zfv && this->zfv != zfv)
     {
-        delete this->ztn;
+        delete this->zfv;
     }
-    this->ztn = ztn;
+    this->zfv = zfv;
 }
 
 inline void Geo_DynamicGridMetrics_Struct::SetCellVolumeOld(RDouble3D *voln)

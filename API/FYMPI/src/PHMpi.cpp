@@ -2,6 +2,7 @@
     #include "mpi.h"
 #endif
 
+#include <stack>
 #include "PHMpi.h"
 #include "Constants.h"
 #include "Math_BasisFunction.h"
@@ -12,49 +13,6 @@ using namespace std;
 #pragma warning (disable:913)
 namespace PHSPACE
 {
-
-void InitFantasyMPIForSepMode()
-{
-#ifdef PH_PARALLEL
-    int numberOfProcessor;
-
-    PH_Size(numberOfProcessor);
-
-    int numberOfGridProcessor = 0;
-
-    if (numberOfProcessor > 1)
-    {
-        numberOfGridProcessor = GlobalDataBase::GetIntParaFromDB("numberOfGridProcessor");
-    }
-
-    PHMPI::SetNumberOfGridProcessor(numberOfGridProcessor);
-
-    if (numberOfProcessor <= numberOfGridProcessor)
-    {
-        ostringstream oss;
-        oss << "Error: numberOfTotalProcessor = " << numberOfProcessor << "Error: numberOfGridProcessor = " << numberOfGridProcessor << endl;
-
-        PHMPI::FreeBlockData();
-        cout << oss.str() << endl;
-        MPI_Abort(MPI_COMM_WORLD, -1);
-    }
-
-    int number_of_processor = numberOfProcessor - numberOfGridProcessor;
-
-    PHMPI::SetNumberOfProcessor(number_of_processor);
-
-    int gridServerId = -1;
-
-    if (numberOfGridProcessor > 0)
-    {
-        gridServerId = number_of_processor;
-    }
-
-    PHMPI::SetGridServerProcessorID(gridServerId);
-
-    PHMPI::BuildProcessorTree();
-#endif
-}
 
 namespace PHMPI
 {
@@ -149,7 +107,7 @@ void Initialization()
     int numberOfProcessor;
     PH_Size(numberOfProcessor);
     SetNumberOfProcessor(numberOfProcessor);
-
+    PHMPI::BuildProcessorTree();
     string proc_name;
     PH_Get_processor_name(proc_name);
 
@@ -221,11 +179,6 @@ LIB_EXPORT void SetZoneProcessorID(int iZone, int id)
 void SetZoneProcessID_INP(int *data)
 {
     block_proc_inp = data;
-}
-
-void SetZoneGroupID(int *data)
-{
-    block_group = data;
 }
 
 void SetIsFileServer(int isServer)
@@ -326,7 +279,7 @@ LIB_EXPORT int GetNumberofGlobalZones()
     return nZones;
 }
 
-int *GetNZonesInProcessor()
+int * GetNZonesInProcessor()
 {
     return nZones_in_proc;
 }
@@ -351,7 +304,7 @@ LIB_EXPORT int GetNumberofFiles()
     return numberofFiles;
 }
 
-LIB_EXPORT int *GetZoneProcessorID()
+LIB_EXPORT int * GetZoneProcessorID()
 {
     return block_proc;
 }
@@ -361,7 +314,7 @@ LIB_EXPORT int GetZoneProcessorID(int iZone)
     return block_proc[iZone];
 }
 
-LIB_EXPORT int *GetZoneProcessorIDForGrid()
+LIB_EXPORT int * GetZoneProcessorIDForGrid()
 {
     return block_proc_grid;
 }
@@ -371,7 +324,7 @@ LIB_EXPORT int GetZoneProcessorIDForGrid(int iZone)
     return block_proc_grid[iZone];
 }
 
-LIB_EXPORT int *GetZoneGridType()
+LIB_EXPORT int * GetZoneGridType()
 {
     return block_type;
 }
@@ -381,12 +334,12 @@ LIB_EXPORT int GetZoneGridType(int iZone)
     return block_type[iZone];
 }
 
-LIB_EXPORT int *GetZoneGridID()
+LIB_EXPORT int * GetZoneGridID()
 {
     return block_idx;
 }
 
-LIB_EXPORT int *GetZoneFileID()
+LIB_EXPORT int * GetZoneFileID()
 {
     return block_file;
 }
@@ -396,17 +349,17 @@ LIB_EXPORT int GetZoneFileID(int iZone)
     return block_file[iZone];
 }
 
-LIB_EXPORT int *GetZoneProcessorID_INP()
+LIB_EXPORT int * GetZoneProcessorID_INP()
 {
     return block_proc_inp;
 }
 
-LIB_EXPORT int *GetZoneProcessorIDDump()
+LIB_EXPORT int * GetZoneProcessorIDDump()
 {
     return block_proc_dump;
 }
 
-LIB_EXPORT int *GetZoneGroupID()
+LIB_EXPORT int * GetZoneGroupID()
 {
     return block_group;
 }
@@ -592,7 +545,7 @@ void CreateZoneStartCenterContainer(int numberOfZones)
     zoneStartCenterContainer = new int [numberOfZones];
 }
 
-int *GetZoneStartCenterContainer()
+int * GetZoneStartCenterContainer()
 {
     return zoneStartCenterContainer;
 }
@@ -618,7 +571,7 @@ void DeleteGlobalBinaryTree()
 {
     if (binaryTree)
     {
-        delete binaryTree;
+        delete binaryTree;    binaryTree = NULL; 
     }
     return;
 }
@@ -685,7 +638,7 @@ int GetServerSepMode()
     }
 }
 
-LIB_EXPORT int *GetZoneProcessorIDSepMode()
+LIB_EXPORT int * GetZoneProcessorIDSepMode()
 {
     if (CurrentProcessorIsGridProcessor())
     {
@@ -774,12 +727,12 @@ void PH_Read(fstream &file, void *data, int size)
 
 void PH_ReadBcastInteger(fstream &file, void *data, int size, int proc)
 {
-    PH_Read_Bcast(file, data, size*sizeof(int), proc);
+    PH_Read_Bcast(file, data, size * sizeof(int), proc);
 }
 
 void PH_ReadBcastDouble(fstream &file, void *data, int size, int proc)
 {
-    PH_Read_Bcast(file, data, size*sizeof(double), proc);
+    PH_Read_Bcast(file, data, size * sizeof(double), proc);
 }
 
 void PH_Read_Bcast(fstream &file, void *data, int size, int proc)
@@ -981,6 +934,85 @@ void PH_BcastByServer(DataContainer *cdata, int tag)
     }
 }
 
+void PH_GatherByServer(DataContainer *cdata, int tag)
+{
+    stack <PHProcessorNode *> nodeStack;
+    PHProcessorNode *start = processorTree->GetRoot();
+    PHProcessorNode *cur = start, *pre = NULL;
+    if (!start)
+    {
+        return;
+    }
+
+    if (start->GetData() != GetServerProcessorID())
+    {
+        ostringstream oss;
+        oss << "\n";
+        oss << "++++++++++++++++++  StopProgram Information  +++++++++++++++++++++++++++\n";
+        oss <<  "Error: the server should be processor 0!" << "\n";
+        oss << " The stop filename is : " << __FILE__ << "\n";
+        oss << " at line " << __LINE__ << "\n";
+        oss << " Compiled On line " << __DATE__ << " at " << __TIME__ << "\n";
+        oss << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+
+        PHMPI::FreeBlockData();
+        cout << oss.str() << endl;
+        MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+
+    nodeStack.push(start);
+
+    while (!nodeStack.empty())
+    {
+        cur = nodeStack.top();
+
+        int recvProcessor = cur->GetData();
+
+        if ((cur->left == NULL && cur->right == NULL) || ((pre == cur->left || pre == cur->right) && pre != NULL))
+        {
+            nodeStack.pop();
+            pre = cur;
+        } 
+        else
+        {
+            if (cur->right)
+            {
+                nodeStack.push(cur->right);
+                int sendProcessor = cur->right->GetData();
+
+                if (sendProcessor != recvProcessor)
+                {
+                    if (myID == sendProcessor)
+                    {
+                        send(cdata, recvProcessor, tag);
+                    }
+                    if (myID == recvProcessor)
+                    {
+                        receive(cdata, sendProcessor, tag);
+                    }
+                }
+            }
+            if (cur->left)
+            {
+                nodeStack.push(cur->left);
+                int sendProcessor = cur->right->GetData();
+
+                if (sendProcessor != recvProcessor)
+                {
+                    if (myID == sendProcessor)
+                    {
+                        send(cdata, recvProcessor, tag);
+                    }
+                    if (myID == recvProcessor)
+                    {
+                        receive(cdata, sendProcessor, tag);
+                    }
+                }
+            }
+        }
+    }
+}
+
 void PH_BcastByServerSepMode(DataContainer *cdata, int tag)
 {
     queue <PHProcessorNode *> nodeQueue;
@@ -1175,7 +1207,7 @@ void PH_BcastNonBlocking(DataContainer *&cdata, int bcastProcessor, int tag)
                 continue;
             }
 
-            int receiveProcessor  = iProc;
+            int receiveProcessor = iProc;
 
             //! Allocate the buffers for sending and receiving.
             DataContainer *sendBuffer = new DataContainer (cdata);
@@ -1234,7 +1266,7 @@ void PH_BcastNlenData(int &nlen, char *&data, int proc, int tag)
 //! proc process obtains data and sends them to all processes, other processes receive data and then deal with them.
 void PH_BcastComposite(DATA_COMPRESS dt_c, DATA_DECOMPRESS dt_d, int proc, int tag)
 {
-    DataContainer * cdata = new DataContainer();
+    DataContainer *cdata = new DataContainer();
 
     if (myID == proc)
     {
@@ -1370,7 +1402,7 @@ bool IsNeedNonBlockingCommunication(const ActionKey *actkey)
 {
     using namespace PHMPI;
 
-    if (actkey->action == UPDATE_INTERFACE_DATA || actkey->action == COMMCELLIBLANK)
+    if (actkey->action == UPDATE_INTERFACE_DATA)
     {
         return true;
     }
@@ -1498,7 +1530,7 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
 
         if (myID == server)
         {
-            int * tmpBuffer = new int[numberOfElements];
+            int *tmpBuffer = new int[numberOfElements];
 
             PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
 
@@ -1530,7 +1562,7 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
 
     //! Bcast the final results to each processors.
 
-    DataContainer * cdata;
+    DataContainer *cdata;
 
     cdata = new DataContainer;
 
@@ -1607,7 +1639,7 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
 
         if (myID == server)
         {
-            float * tmpBuffer = new float [numberOfElements];
+            float *tmpBuffer = new float [numberOfElements];
 
             PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
 
@@ -1639,7 +1671,7 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
 
     //! Bcast the final results to each processors.
 
-    DataContainer * cdata;
+    DataContainer *cdata;
 
     cdata = new DataContainer;
 
@@ -1716,7 +1748,7 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
 
         if (myID == server)
         {
-            double * tmpBuffer = new double[numberOfElements];
+            double *tmpBuffer = new double[numberOfElements];
 
             PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
 
@@ -1748,7 +1780,7 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
 
     //! Bcast the final results to each processors.
 
-    DataContainer * cdata;
+    DataContainer *cdata;
 
     cdata = new DataContainer;
 
@@ -1831,7 +1863,7 @@ void PH_CompareMaxMin(int &local_data, int flag)
     }
 
 #ifdef PH_PARALLEL
-    int gloable_data;
+    int gloable_data = 0;
     if (flag == MAX)
     {
         MPI_Allreduce(&local_data, &gloable_data, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
@@ -1856,13 +1888,13 @@ void PH_CompareMaxMin(RDouble &local_data, int flag)
     RDouble gloable_data = 0.0;
     if (flag == MAX)
     {
-        //MPI_Allreduce(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        PH_AllreduceSepMode(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MAX);
+        MPI_Allreduce(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        //PH_AllreduceSepMode(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MAX);
     }
     else if (flag == MIN)
     {
-        //MPI_Allreduce(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        PH_AllreduceSepMode(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MIN);
+        MPI_Allreduce(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        //PH_AllreduceSepMode(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MIN);
     }
     local_data = gloable_data;
 #endif

@@ -16,64 +16,154 @@
 #pragma once
 #include "TypeDefine.h"
 #include "SpecDiffHybGrid.h"
+//#include "SpecDiffHybSolver.h"
+#include "Param_SpecDiffHybSolver.h"
+#include "LIB_Macro.h"
+#include "ActionKey.h"
 
 using namespace std;
 
 namespace PHSPACE
 {
-	class Statistics 
-	{
+class StatisticsHIT
+{
+public:
+    StatisticsHIT();
+    ~StatisticsHIT();
 
-	public:
-		Statistics();
-		~Statistics();
+public:
+    void InitStatisticsData(SpecGrid *GridData);
 
-	public:
-        int inutavg, iz_half, naddnum;
-        double tauWAverage;
-        RDouble2D *statisticsAll, *statisticsAllLocal;
-        RDouble2D *epsXYZ, *epsXYZLocal;
-        RDouble3D *energyOfUUKx, *energyOfUUKy, *energyOfUUKxAll, *energyOfUUKyAll, *energyOfUUKxLocal, *energyOfUUKyLocal;
+    void GetStatisticsLocal(SpecGrid *GridData, Complex3D *complexU, Complex3D *complexV, Complex3D *complexW);
 
-        // !<U>, <V>, <W>
-        RDouble1D *uAverage, *vAverage, *wAverage;
-        RDouble1D *uAverageTime, *vAverageTime, *wAverageTime;
+    void OutputStatisticRestart(SpecGrid *GridData);
 
-        // !<uu>, <vv>, <ww>, <uv>, <uw>, <vw>
-        RDouble1D *uSquare, *vSquare, *wSquare, *uMultiplyV, *uMultiplyW, *vMultiplyW;
-        RDouble1D *uSquareTime, *vSquareTime, *wSquareTime, *uMultiplyVTime, *uMultiplyWTime, *vMultiplyWTime;
+    void OutputStatisticVisual(SpecGrid *GridData);
 
-        // !dissipation rate
-        RDouble1D *epsilon, *epsilonTime;
-        RDouble2D *epsilonXYZ;
-        // !turbulent viscosity
-        RDouble1D *nutAverage;
+protected:
+    virtual void InitStatisticsFileName();
 
-        bool IsInitStatScratch;
-    private: 
-        string zGridPlot3dFile, zHalfGridPlot3dFile, statisticsNameFile, statisticsInformationFile, statisticsRestartFile, statisticsRestartTimeFile;
-        int istats;       
+    virtual bool IfStatisticExist();
 
-    public:
-        void InitStatisticsData(SpecDiffHybGrid *);
-        void GetStatisticsLocal(SpecDiffHybGrid *, Complex3D *, Complex3D *, Complex3D *, Complex4D *);
-        void OutputStatistics(SpecDiffHybGrid *);
+    virtual void ReadStatisticsInformation();
 
-    private:
-        void InitStatisticsFileName();
-        void OutputPlot3dGrid(SpecDiffHybGrid *);
-        void AllocStatisticsdata(SpecDiffHybGrid *);
-        void InitStatisticsDataValue(SpecDiffHybGrid *);
-        void InputStatistics(SpecDiffHybGrid *);
-        void WriteStatisticsName();
-        void ReadStatisticsInformation();
-        void ReadStatisticsRestart(SpecDiffHybGrid *);
-        void ReadStatisticsSelected(SpecDiffHybGrid *);
-        void WriteStatisticsInformation();
-        void WriteStatisticsRestart(SpecDiffHybGrid *);
-        void WriteStatisticsSelected(SpecDiffHybGrid *);
-	};
+    virtual void WriteStatisticsName();
+
+    virtual void WriteStatisticInformation();
+
+    const string GetStatisticVisualFileName();
+
+    void FillActionKey(ActionKey *actkey, int action, const int level);
+
+private:
+    void AllocStatisticsdata(SpecGrid *GridData);
+
+    void InitStatisticsDataValue(SpecGrid *GridData);
+
+    void InputStatistics(SpecGrid *GridData);
+
+    void ReadStatisticRestart(SpecGrid *GridData);
+
+    void WriteStatisticRestart(SpecGrid *GridData);
+
+    void WriteStatisticVisual(SpecGrid *GridData);
+
+    void PrepareFormatedStatistic(SpecGrid *GridData, string &formatStatistic);
+
+    void WriteSpectraVisual(SpecGrid *GridData);
+
+    void WriteSpectraKxVisual(SpecGrid *GridData);
+
+    void WriteSpectraKyVisual(SpecGrid *GridData);
+
+    void WriteSpectraKzVisual(SpecGrid *GridData);
+
+    void PrepareFormatedSpectraKx(SpecGrid *GridData, string &formatSpectra);
+
+    void PrepareFormatedSpectraKy(SpecGrid *GridData, string &formatSpectra);
+
+    void PrepareFormatedSpectraKz(SpecGrid *GridData, string &formatSpectra);
+
+protected:
+    string zGridPlot3dFile, zHalfGridPlot3dFile, statisticsNameFile, statisticsInformationFile, statisticsRestartFile, statisticsRestartTimeFile;
+
+    int istats;
+
+    bool ifInitStatistic;
+
+public:
+    int iz_half;
+
+    RDouble1D *statisticAll, *statisticLocal, *statistic;
+
+    RDouble2D *energyOfUUKx, *energyOfUUKy, *energyOfUUKz, *energyOfUUKxAll, *energyOfUUKyAll, *energyOfUUKzAll, *energyOfUUKxLocal, *energyOfUUKyLocal, *energyOfUUKzLocal;
+
+    RDouble nutAverage;
+};
+
+class Statistics : public StatisticsHIT
+{
+public:
+    Statistics();
+    ~Statistics();
+
+public:
+    //int iz_half;//, naddnum;
+    RDouble2D *statisticAll, *statisticLocal, *statistic;
+    RDouble3D *energyOfUUKx, *energyOfUUKy, *energyOfUUKxAll, *energyOfUUKyAll, *energyOfUUKxLocal, *energyOfUUKyLocal;
+
+    RDouble1D *nutAverage;
+
+private: 
+
+    RDouble tauWAverage;
+
+public:
+    void InitStatisticsData(SpecDiffHybGrid *GridData);
+
+    void GetStatisticsLocal(SpecDiffHybGrid *GridData, Complex3D *, Complex3D *, Complex3D *, Complex4D *);
+
+    void OutputStatisticRestart(SpecDiffHybGrid *GridData);
+
+    void OutputStatisticVisual(SpecDiffHybGrid *GridData);
+
+    RDouble GetTauWAverage();
+
+    void SetTauWAverage(const RDouble &tauWAverageIn);
+
+    bool GetIfInitStatistic();
+
+    void SetIfInitStatistic(const bool &ifInitStatisticIn);
+
+private:
+
+    void OutputPlot3dGrid(SpecDiffHybGrid *GridData);
+
+    void AllocStatisticsdata(SpecDiffHybGrid *GridData);
+
+    void InitStatisticsDataValue(SpecDiffHybGrid *GridData);
+
+    void InputStatistics(SpecDiffHybGrid *GridData);
+
+    void ReadStatisticRestart(SpecDiffHybGrid *GridData);
+
+    void ReadStatisticsSelected(SpecDiffHybGrid *GridData);
+
+    void WriteStatisticRestart(SpecDiffHybGrid *GridData);
+
+    void WriteStatisticVisual(SpecDiffHybGrid *GridData);
+
+    void PrepareFormatedStatistic(SpecDiffHybGrid *GridData, string &formatStatistic);
+
+    void WriteSpectraVisual(SpecDiffHybGrid *GridData);
+
+    void WriteSpectraKxVisual(SpecDiffHybGrid *GridData);
+
+    void WriteSpectraKyVisual(SpecDiffHybGrid *GridData);
+
+    void PrepareFormatedSpectraKx(SpecDiffHybGrid *GridData, string &formatSpectra);
+
+    void PrepareFormatedSpectraKy(SpecDiffHybGrid *GridData, string &formatSpectra);
+};
+
 }
-
-
-

@@ -14,7 +14,7 @@ void GetFileNameofThisProcessor(string &filename)
 
     string fname, fext;
     GetNameExt(filename, fname, fext, ".");
-	int myID = PHMPI::GetCurrentProcessorID();
+    int myID = PHMPI::GetCurrentProcessorID();
     filename = AddDigitToFileName(fname, fext, ".", myID);
 }
 
@@ -58,7 +58,7 @@ string ChangeExtensionOfFileName(const string &fileName, const string &newExtens
     return oss.str();
 }
 
-int ExtractNumberOfPartFromFileName(const string & source)
+int ExtractNumberOfPartFromFileName(const string &source)
 {
     int prePosition = -1;
     for (int iChar = 1; iChar < static_cast<int>(source.size()); ++ iChar)

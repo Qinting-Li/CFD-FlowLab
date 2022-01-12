@@ -30,310 +30,310 @@ namespace PHSPACE
 {
 //! Operator() functions:
 template<typename T, int N>
-const T&  PHArray<T, N>::operator()(int i0) const
+const T & PHArray<T, N>::operator()(int i0) const
+{
+    //assertInRange(i0);
+#ifdef USE_SMARTARRAY
+    return datap1[i0];
+#else
+    return data_[i0 * stride_[0]];
+#endif
+}
+
+template<typename T, int N>
+T & PHArray<T, N>::operator()(int i0)
+{
+    //assertInRange(i0);
+#ifdef USE_SMARTARRAY
+    return datap1[i0];
+#else
+    return data_[i0 * stride_[0]];
+#endif
+}
+
+template<typename T, int N>
+const T & PHArray<T, N>::operator()(int i0, int i1) const
 { 
-	//assertInRange(i0);
+    //assertInRange(i0, i1);
 #ifdef USE_SMARTARRAY
-	return datap1[i0];
+    return datap2[i1][i0];
 #else
-	return data_[i0 * stride_[0]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]];
 #endif
 }
 
 template<typename T, int N>
-T&  PHArray<T, N>::operator()(int i0) 
+T & PHArray<T, N>::operator()(int i0, int i1)
 {
-	//assertInRange(i0);
+    //assertInRange(i0, i1);
 #ifdef USE_SMARTARRAY
-	return datap1[i0];
+    return datap2[i1][i0];
 #else
-	return data_[i0 * stride_[0]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]];
 #endif
 }
 
 template<typename T, int N>
-const T&  PHArray<T, N>::operator()(int i0, int i1) const
-{ 
-	//assertInRange(i0, i1);
-#ifdef USE_SMARTARRAY
-	return datap2[i1][i0];
-#else
-	return data_[i0 * stride_[0] + i1 * stride_[1]];
-#endif
-}
-
-template<typename T, int N>
-T&  PHArray<T, N>::operator()(int i0, int i1)
+const T & PHArray<T, N>::operator()(int i0, int i1, int i2) const
 {
-	//assertInRange(i0, i1);
+    //assertInRange(i0, i1, i2);
 #ifdef USE_SMARTARRAY
-	return datap2[i1][i0];
+    return datap3[i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2]];
 #endif
 }
 
 template<typename T, int N>
-const T&  PHArray<T, N>::operator()(int i0, int i1, int i2) const
+T & PHArray<T, N>::operator()(int i0, int i1, int i2)
 {
-	//assertInRange(i0, i1, i2);
+    //assertInRange(i0, i1, i2);
 #ifdef USE_SMARTARRAY
-	return datap3[i2][i1][i0];
+    return datap3[i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2]];
 #endif
 }
 
 template<typename T, int N>
-T&  PHArray<T, N>::operator()(int i0, int i1, int i2) 
+const T & PHArray<T, N>::operator()(int i0, int i1, int i2, int i3) const
 {
-	//assertInRange(i0, i1, i2);
+    //assertInRange(i0, i1, i2);
 #ifdef USE_SMARTARRAY
-	return datap3[i2][i1][i0];
+    return datap4[i3][i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2] + i3 * stride_[3]];
 #endif
 }
 
 template<typename T, int N>
-const T&  PHArray<T, N>::operator()(int i0, int i1, int i2, int i3) const
+T & PHArray<T, N>::operator()(int i0, int i1, int i2, int i3)
 {
-	//assertInRange(i0, i1, i2);
+    //assertInRange(i0, i1, i2);
 #ifdef USE_SMARTARRAY
-	return datap4[i3][i2][i1][i0];
+    return datap4[i3][i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2] + i3 * stride_[3]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2] + i3 * stride_[3]];
 #endif
 }
 
 template<typename T, int N>
-T&  PHArray<T, N>::operator()(int i0, int i1, int i2, int i3) 
-{
-	//assertInRange(i0, i1, i2);
-#ifdef USE_SMARTARRAY
-	return datap4[i3][i2][i1][i0];
-#else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2] + i3 * stride_[3]];
-#endif
-}
-
-template<typename T, int N>
-const T&  PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4) const
+const T & PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4) const
 {
 #ifdef USE_SMARTARRAY
-	return datap5[i4][i3][i2][i1][i0];
+    return datap5[i4][i3][i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]];
 #endif
 }
 
 template<typename T, int N>
-T&  PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4) 
+T & PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4)
 {
 #ifdef USE_SMARTARRAY
-	return datap5[i4][i3][i2][i1][i0];
+    return datap5[i4][i3][i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]];
 #endif
 }
 
 //!ugks
 template<typename T, int N>
-const T&  PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4, int i5) const
+const T & PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4, int i5) const
 {
 #ifdef USE_SMARTARRAY
-	return datap6[i5][i4][i3][i2][i1][i0];
+    return datap6[i5][i4][i3][i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4] + i5 * stride_[5]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4] + i5 * stride_[5]];
 #endif
 }
 //!ugks
 template<typename T, int N>
-T&  PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4, int i5) 
+T & PHArray<T, N>::operator()(int i0, int i1, int i2, int i3, int i4, int i5) 
 {
 #ifdef USE_SMARTARRAY
-	return datap6[i5][i4][i3][i2][i1][i0];
+    return datap6[i5][i4][i3][i2][i1][i0];
 #else
-	return data_[i0 * stride_[0] + i1 * stride_[1]
-	+ i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]+i5 * stride_[5]];
+    return data_[i0 * stride_[0] + i1 * stride_[1]
+    + i2 * stride_[2] + i3 * stride_[3] + i4 * stride_[4]+i5 * stride_[5]];
 #endif
 }
 
 template<typename T, int N>
-const T& PHArray<T, N>::operator[](int i) const
+const T & PHArray<T, N>::operator[](int i) const
 {
-	return data_[i];
+    return data_[i];
 }
 
 template<typename T, int N>
-T& PHArray<T, N>::operator[](int i)
+T & PHArray<T, N>::operator[](int i)
 {
-	return data_[i];
-}
-
-template<typename T, int N>
-template<int N_rank2>
-const T& PHArray<T, N>::operator()(const SimpleArray<int,N_rank2>& index) const
-{
-	return data_[dot(index, stride_)];
+    return data_[i];
 }
 
 template<typename T, int N>
 template<int N_rank2>
-T& PHArray<T, N>::operator()(const SimpleArray<int,N_rank2>& index) 
+const T & PHArray<T, N>::operator()(const SimpleArray<int, N_rank2> &index) const
 {
-	return data_[dot(index, stride_)];
+    return data_[dot(index, stride_)];
+}
+
+template<typename T, int N>
+template<int N_rank2>
+T & PHArray<T, N>::operator()(const SimpleArray<int, N_rank2> &index)
+{
+    return data_[dot(index, stride_)];
 }
 
 template<typename T, int N>
 PHArray<T, N> PHArray<T, N>::operator()(Range r0) const
 {
-	return PHArray<T, N>(noConst(), r0);
+    return PHArray<T, N>(noConst(), r0);
 }
 
 template<typename T, int N>
 PHArray<T, N> PHArray<T, N>::operator()(Range r0, Range r1) const
 {
-	return PHArray<T, N>(noConst(), r0, r1);
+    return PHArray<T, N>(noConst(), r0, r1);
 }
 
 template<typename T, int N>
 PHArray<T, N> PHArray<T, N>::operator()(Range r0, Range r1, Range r2) const
 {
-	return T_array(noConst(), r0, r1, r2);
+    return T_array(noConst(), r0, r1, r2);
 }
 
 template<typename T, int N>
 PHArray<T, N> PHArray<T, N>::operator()(Range r0, Range r1, Range r2, Range r3) const
 {
-	return PHArray<T, N>(noConst(), r0, r1, r2, r3);
+    return PHArray<T, N>(noConst(), r0, r1, r2, r3);
 }
 
 template<typename T, int N>
 PHArray<T, N> PHArray<T, N>::operator()(Range r0, Range r1, Range r2, Range r3, Range r4) const
 {
-	return PHArray<T, N>(noConst(), r0, r1, r2, r3, r4);
+    return PHArray<T, N>(noConst(), r0, r1, r2, r3, r4);
 }
 
 template<typename T, int N>
 PHArray<T, N> PHArray<T, N>::operator()(Range r0, Range r1, Range r2, Range r3, Range r4, Range r5) const        
 {
-	return PHArray<T, N>(noConst(), r0, r1, r2, r3, r4, r5);
+    return PHArray<T, N>(noConst(), r0, r1, r2, r3, r4, r5);
 }
 
 template<typename T, int N>
 PHArray<T, N> PHArray<T, N>::operator()(Range r0, Range r1, Range r2, Range r3, Range r4, Range r5, Range r6) const
 {
-	return PHArray<T, N>(noConst(), r0, r1, r2, r3, r4, r5, r6);
+    return PHArray<T, N>(noConst(), r0, r1, r2, r3, r4, r5, r6);
 }
 
 template<typename T, int N>
-template < typename T1, typename T2 >
-typename PHSliceInfo<T,T1,T2>::T_slice
-	PHArray<T, N>::operator()(T1 r1, T2 r2) const
+template<typename T1, typename T2>
+typename PHSliceInfo<T, T1, T2>::T_slice
+    PHArray<T, N>::operator()(T1 r1, T2 r2) const
 {
-	typedef typename PHSliceInfo<T,T1,T2>::T_slice slice;
-	return slice(noConst(), r1, r2, PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection(), PHnilArraySection());
+    typedef typename PHSliceInfo<T, T1, T2>::T_slice slice;
+    return slice(noConst(), r1, r2, PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection(), PHnilArraySection());
 }
 
 template<typename T, int N>
-template < typename T1, typename T2, typename T3 >
-typename PHSliceInfo<T,T1,T2,T3>::T_slice 
-	PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3) const
+template<typename T1, typename T2, typename T3>
+typename PHSliceInfo<T, T1, T2, T3>::T_slice 
+    PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3) const
 {
-	typedef typename PHSliceInfo<T,T1,T2,T3>::T_slice slice;
-	return slice(noConst(), r1, r2, r3, PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection());
+    typedef typename PHSliceInfo<T, T1, T2, T3>::T_slice slice;
+    return slice(noConst(), r1, r2, r3, PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection());
 }
 
 template<typename T, int N>
-template < typename T1, typename T2, typename T3, typename T4 >
-typename PHSliceInfo<T,T1,T2,T3,T4>::T_slice
-	PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3, T4 r4) const
+template<typename T1, typename T2, typename T3, typename T4>
+typename PHSliceInfo<T, T1, T2, T3, T4>::T_slice
+    PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3, T4 r4) const
 {
-	typedef typename PHSliceInfo<T,T1,T2,T3,T4>::T_slice slice;
-	return slice(noConst(), r1, r2, r3, r4, PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection());
+    typedef typename PHSliceInfo<T, T1, T2, T3, T4>::T_slice slice;
+    return slice(noConst(), r1, r2, r3, r4, PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection());
 }
 
 template<typename T, int N>
-template < typename T1, typename T2, typename T3, typename T4, typename T5 >
-typename PHSliceInfo<T,T1,T2,T3,T4,T5>::T_slice
-	PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5) const
+template<typename T1, typename T2, typename T3, typename T4, typename T5>
+typename PHSliceInfo<T, T1, T2, T3, T4, T5>::T_slice
+    PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5) const
 {
-	typedef typename PHSliceInfo<T,T1,T2,T3,T4,T5>::T_slice slice;
-	return slice(noConst(), r1, r2, r3, r4, r5, PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection());
+    typedef typename PHSliceInfo<T, T1, T2, T3, T4, T5>::T_slice slice;
+    return slice(noConst(), r1, r2, r3, r4, r5, PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection());
 }
 
 template<typename T, int N>
-template < typename T1, typename T2, typename T3, typename T4, typename T5, typename T6 >
-typename PHSliceInfo<T,T1,T2,T3,T4,T5,T6>::T_slice
-	PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6) const
+template<typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+typename PHSliceInfo<T, T1, T2, T3, T4, T5, T6>::T_slice
+    PHArray<T, N>::operator()(T1 r1, T2 r2, T3 r3, T4 r4, T5 r5, T6 r6) const
 {
-	typedef typename PHSliceInfo<T,T1,T2,T3,T4,T5,T6>::T_slice slice;
-	return slice(noConst(), r1, r2, r3, r4, r5, r6, PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
-		PHnilArraySection(), PHnilArraySection());
+    typedef typename PHSliceInfo<T, T1, T2, T3, T4, T5, T6>::T_slice slice;
+    return slice(noConst(), r1, r2, r3, r4, r5, r6, PHnilArraySection(), PHnilArraySection(), PHnilArraySection(),
+                 PHnilArraySection(), PHnilArraySection());
 }
-#define PH_ARRAY_UPDATE(op,name)                                     \
+#define PH_ARRAY_UPDATE(op, name)                                    \
 template < typename P_numtype, int N_rank >                          \
 template < typename T >                                              \
-inline PHArray<P_numtype,N_rank>&                                    \
-PHArray<P_numtype,N_rank>::operator op(const T& expr)                \
+inline PHArray<P_numtype, N_rank>&                                   \
+PHArray<P_numtype, N_rank>::operator op(const T &expr)               \
 {                                                                    \
     evaluate(typename PHExprWrap<T>::T_expr(expr),                   \
       name<T_numtype, typename PHExprWrap<T>::T_expr::T_numtype>()); \
     return *this;                                                    \
 }
 
-PH_ARRAY_UPDATE(+=, fy_plus_update    )
-PH_ARRAY_UPDATE(-=, fy_minus_update   )
+PH_ARRAY_UPDATE(+=, fy_plus_update)
+PH_ARRAY_UPDATE(-=, fy_minus_update)
 PH_ARRAY_UPDATE(*=, fy_multiply_update)
-PH_ARRAY_UPDATE(/=, fy_divide_update  )
+PH_ARRAY_UPDATE(/=, fy_divide_update)
 
 template < typename T_numtype, int N_rank > template < typename T_expr, typename T_update >
 PHArray<T_numtype, N_rank>&
 PHArray<T_numtype, N_rank>::evaluateWithIndexTraversal1(T_expr expr, T_update)
 {
-    SimpleArray<int,N_rank> index;
+    SimpleArray<int, N_rank> index;
 
-    if ( stride(firstRank) == 1 )
+    if (stride(firstRank) == 1)
     {
-		int first = lbound(firstRank);
+        int first = lbound(firstRank);
         int last  = ubound(firstRank);
 
-        T_numtype * iter = data_ + first;
+        T_numtype *iter = data_ + first;
 
-        for ( index[0] = first; index[0] <= last; ++ index[0] )
+        for (index[0] = first; index[0] <= last; ++ index[0])
         {
-            T_update::update(*iter++, expr(index));
-			int kk=1;
-			int i = *iter;
-			//T_update::update(*iter++,3);
-			//PHUpdate<int,int>::update(kk,2);
-			int kkk = 1;
+            T_update::update(*iter ++, expr(index));
+            int kk = 1;
+            int i = *iter;
+            //T_update::update(*iter++,3);
+            //PHUpdate<int,int>::update(kk,2);
+            int kkk = 1;
         }
     }
     else
-	{
+    {
         PHFastArrayIterator<T_numtype, N_rank> iter(*this);
         iter.loadStride(0);
-		int first = lbound(firstRank);
+        int first = lbound(firstRank);
         int last  = ubound(firstRank);
 
-        for ( index[0] = first; index[0] <= last; ++ index[0] )
+        for (index[0] = first; index[0] <= last; ++ index[0])
         {
             T_update::update(*const_cast<T_numtype*>(iter.data()), expr(index));
             iter.advance();
@@ -346,7 +346,6 @@ PHArray<T_numtype, N_rank>::evaluateWithIndexTraversal1(T_expr expr, T_update)
 template < typename T_numtype, int N_rank > template < typename T_expr, typename T_update >
 PHArray<T_numtype, N_rank>&
 PHArray<T_numtype, N_rank>::evaluateWithIndexTraversalN(T_expr expr, T_update)
-    
 {
     // Do a stack-type traversal for the destination array and use
     // index traversal for the source expression
@@ -354,55 +353,55 @@ PHArray<T_numtype, N_rank>::evaluateWithIndexTraversalN(T_expr expr, T_update)
     const int maxRank = ordering(0);
 
     PHFastArrayIterator<T_numtype, N_rank> iter(*this);
-    for ( int i = 1; i < N_rank; ++ i )
-	{
+    for (int i = 1; i < N_rank; ++ i)
+    {
         iter.push(ordering(i));
-	}
+    }
 
     iter.loadStride(maxRank);
 
-    SimpleArray<int,N_rank> index, last;
+    SimpleArray<int, N_rank> index, last;
 
     index = storage_.base();
 
-    for ( int i = 0; i < N_rank; ++ i )
-	{
-		last[i] = storage_.base(i) + length_[i];
-	}
+    for (int i = 0; i < N_rank; ++ i)
+    {
+        last[i] = storage_.base(i) + length_[i];
+    }
 
     // int lastLength = length(maxRank);
 
-    while ( true )
-	{
-		int a = base(maxRank);
-		int b = last[maxRank];
-        for ( index[maxRank] = base(maxRank); index[maxRank] < last[maxRank]; ++ index[maxRank] )
+    while (true)
+    {
+        int a = base(maxRank);
+        int b = last[maxRank];
+        for (index[maxRank] = base(maxRank); index[maxRank] < last[maxRank]; ++ index[maxRank])
         {
             T_update::update(*const_cast<T_numtype*>(iter.data()), expr(index));
             iter.advance();
         }
 
         int j = 1;
-        for ( ; j < N_rank; ++ j )
+        for (; j < N_rank; ++ j)
         {
             iter.pop(ordering(j));
             iter.loadStride(ordering(j));
             iter.advance();
 
             index[ordering(j-1)] = base(ordering(j-1));
-            ++index[ordering(j)];
+            ++ index[ordering(j)];
             if (index[ordering(j)] != last[ordering(j)])
-			{
+            {
                 break;
-			}
+            }
         }
 
-        if ( j == N_rank )
-		{
+        if (j == N_rank)
+        {
             break;
-		}
+        }
 
-        for ( ; j > 0; -- j )
+        for (; j > 0; -- j)
         {
             iter.push(ordering(j));
         }
@@ -421,14 +420,9 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversal1(T_expr expr, T_update)
     iter.loadStride(firstRank);
     expr.loadStride(firstRank);
 
-    bool useUnitStride = iter.isUnitStride(firstRank) && expr.isUnitStride(firstRank);
+    const T_numtype *last = iter.data() + length(firstRank) * stride(firstRank);
 
-    int  commonStride = 1;
-    bool useCommonStride = false;
-
-    const T_numtype * last = iter.data() + length(firstRank) * stride(firstRank);
-
-    while ( iter.data() != last )
+    while (iter.data() != last)
     {
         T_update::update(*const_cast<T_numtype*>(iter.data()), *expr);
         iter.advance();
@@ -439,7 +433,7 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversal1(T_expr expr, T_update)
 }
 
 template < typename T_numtype, int N_rank > template < typename T_expr, typename T_update >
-PHArray <T_numtype, N_rank>&
+PHArray<T_numtype, N_rank>&
 PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
 {
     /*
@@ -488,7 +482,7 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
     // to the first element of the array onto the stack N times.
 
     int i;
-    for ( i = 1; i < N_rank; ++ i )
+    for (i = 1; i < N_rank; ++ i)
     {
         iter.push(i);
         expr.push(i);
@@ -512,11 +506,11 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
      */
 #ifdef BZ_ARRAY_EXPR_USE_COMMON_STRIDE
     int commonStride = expr.suggestStride(maxRank);
-    if ( iter.suggestStride(maxRank) > commonStride )
-	{
+    if (iter.suggestStride(maxRank) > commonStride)
+    {
         commonStride = iter.suggestStride(maxRank);
-	}
-    bool useCommonStride = iter.isStride(maxRank,commonStride) && expr.isStride(maxRank,commonStride);
+    }
+    bool useCommonStride = iter.isStride(maxRank, commonStride) && expr.isStride(maxRank, commonStride);
 #else
     int commonStride = 1;
     bool useCommonStride = false;
@@ -526,13 +520,13 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
      * The "last" array contains a pointer to the last element
      * encountered in each "loop".
      */
-    const T_numtype* last[N_rank];
+    const T_numtype *last[N_rank];
 
     // Set up the initial state of the "last" array
-    for ( i = 1; i < N_rank; ++ i )
-	{
+    for (i = 1; i < N_rank; ++ i)
+    {
         last[i] = iter.data() + length(ordering(i)) * stride(ordering(i));
-	}
+    }
 
     int lastLength = length(maxRank);
     int firstNoncollapsedLoop = 1;
@@ -549,7 +543,7 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
      */
 
     // Collapse loops when possible
-    for ( i = 1; i < N_rank; ++ i )
+    for (i = 1; i < N_rank; ++ i)
     {
         // Figure out which pair of loops we are considering combining.
         int outerLoopRank = ordering(i);
@@ -561,15 +555,15 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
          * one loop.
          */
 
-        if ( canCollapse(outerLoopRank,innerLoopRank) && expr.canCollapse(outerLoopRank,innerLoopRank))
+        if (canCollapse(outerLoopRank, innerLoopRank) && expr.canCollapse(outerLoopRank, innerLoopRank))
         {
             lastLength *= length(outerLoopRank);
             firstNoncollapsedLoop = i+1;
         }
         else
-		{
+        {
             break;
-		}
+        }
     }
 
     /*
@@ -580,8 +574,8 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
      * and push them onto the stack.
      */
 
-    while ( true )
-	{
+    while (true)
+    {
 
         /*
          * This bit of code handles the innermost loop.  It would look
@@ -589,7 +583,7 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
          * optimizations; these clutter up the code with multiple versions.
          */
 
-        if ( (useUnitStride) || (useCommonStride) )
+        if ((useUnitStride) || (useCommonStride))
         {
             /*
              * The check for BZ_USE_FAST_READ_ARRAY_EXPR can probably
@@ -609,45 +603,45 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
              * is ugly, so why bother.
              */
 
-            T_numtype* data = const_cast<T_numtype*>(iter.data());
+            T_numtype *data = const_cast<T_numtype*>(iter.data());
 
             /*
              * BZ_NEEDS_WORK-- need to implement optional unrolling.
              */
-            if ( commonStride == 1 )
+            if (commonStride == 1)
             {
-                for ( int i = 0; i < ubound; ++ i )
-				{
+                for (int i = 0; i < ubound; ++ i)
+                {
                     T_update::update(*data++, expr.fastRead(i));
-				}
+                }
             }
             else 
-			{
-                for ( int i = 0; i != ubound; i += commonStride )
-				{
+            {
+                for (int i = 0; i != ubound; i += commonStride)
+                {
                     T_update::update(data[i], expr.fastRead(i));
-				}
+                }
             }
             /*
              * Tidy up for the fact that we haven't actually been
              * incrementing the iterators in the innermost loop, by
              * faking it afterward.
              */
-            iter.advance(lastLength * commonStride);
-            expr.advance(lastLength * commonStride);
+            iter.advance(lastLength *commonStride);
+            expr.advance(lastLength *commonStride);
 
         }
         else
-		{
+        {
             /*
              * We don't have a unit stride or common stride in the innermost
              * loop.  This is going to hurt performance.  Luckily 95% of
              * the time, we hit the cases above.
              */
-            T_numtype * end = const_cast<T_numtype*>(iter.data()) + lastLength * stride(maxRank);
+            T_numtype *end = const_cast<T_numtype*>(iter.data()) + lastLength * stride(maxRank);
                 
 
-            while ( iter.data() != end )
+            while (iter.data() != end)
             {
                 T_update::update(*const_cast<T_numtype*>(iter.data()), *expr);
                 iter.advance();
@@ -655,13 +649,12 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
             }
         }
 
-
         /*
          * We just finished the innermost loop.  Now we pop our way down
          * the stack, until we hit a loop that hasn't completed yet.
          */ 
         int j = firstNoncollapsedLoop;
-        for ( ; j < N_rank; ++ j )
+        for (; j < N_rank; ++ j)
         {
             // Get the next loop
             int r = ordering(j);
@@ -679,20 +672,20 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
             expr.advance();
 
             // If we aren't at the end of this loop, then stop popping.
-            if ( iter.data() != last[j] )
-			{
+            if (iter.data() != last[j])
+            {
                 break;
-			}
+            }
         }
 
         // Are we completely done?
-        if ( j == N_rank )
-		{
+        if (j == N_rank)
+        {
             break;
-		}
+        }
 
         // No, so push all the inner loops back onto the stack.
-        for ( ; j >= firstNoncollapsedLoop; --j )
+        for (; j >= firstNoncollapsedLoop; --j)
         {
             int r2 = ordering(j-1);
             iter.push(j);
@@ -708,7 +701,6 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
     return *this;
 }
 
-
 template < typename T_numtype, int N_rank > template < typename T_expr, typename T_update >
 PHArray<T_numtype, N_rank>& 
 PHArray<T_numtype, N_rank>::evaluate(T_expr expr, T_update)
@@ -721,50 +713,50 @@ PHArray<T_numtype, N_rank>::evaluate(T_expr expr, T_update)
      * went into an infinite loop.
      */
 
-    if ( numElements() == 0 )
-	{
+    if (numElements() == 0)
+    {
         return *this;
-	}
+    }
 
-    if ( N_rank == 1 )
-	{
+    if (N_rank == 1)
+    {
         return evaluateWithStackTraversal1(expr, T_update());
-	}
+    }
     else
-	{
-		return evaluateWithStackTraversalN(expr, T_update());
-	}
+    {
+        return evaluateWithStackTraversalN(expr, T_update());
+    }
 }
 
 template < typename T, int N >
-PHArray<T, N>& PHArray<T, N>::operator=(T x)
+PHArray<T, N> & PHArray<T, N>::operator=(T x)
 {
-	return initialize(x);
+    return initialize(x);
 }
 
 template < typename T, int N > template < typename T_expr >
 PHArray<T, N>& 
 PHArray<T, N>::operator = (const PHETBase<T_expr> &expr)
 {
-	evaluate(expr.unwrap(), PHUpdate<T_numtype, typename T_expr::T_numtype>());
+    evaluate(expr.unwrap(), PHUpdate<T_numtype, typename T_expr::T_numtype>());
 
     return *this;
 }
 
 template < typename T, int N >
 PHArray<T, N>&
-PHArray<T, N>::operator = (const PHArray<T, N>& x)
+PHArray<T, N>::operator = (const PHArray<T, N> &x)
 {
-    (*this) = PHArrayExpr< PHFastArrayIterator<T, N> >( x.beginFast() );
+    (*this) = PHArrayExpr< PHFastArrayIterator<T, N> >(x.beginFast());
     return *this;
 }
 
 template < typename T, int N >
 PHArray<T, N>& 
-PHArray<T,N>::initialize(T x)
+PHArray<T, N>::initialize(T x)
 {
-	(*this) = PHArrayExpr< PHArrayExprConstant<T > >(x);
-	return *this;
+    (*this) = PHArrayExpr< PHArrayExprConstant<T > >(x);
+    return *this;
 }
 
 }

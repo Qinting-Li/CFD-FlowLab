@@ -40,6 +40,21 @@ public:
     //! Get catalyticCoef.
     RDouble GetCatalyticCoef() const;
 
+    //! Get ChemicalSpectrumRadiusCoef.
+    RDouble GetChemicalSpectrumRadiusCoef() const;
+
+    //! Get ChemicalSpectrumRadiusCoef.
+    RDouble GetViscousSpectrumRadiusCoef() const;
+
+    //! Get GetInviscidSpectrumRadiusCoef.
+    RDouble GetInviscidSpectrumRadiusCoef() const;
+
+    //! Get chemicalRelaxCorf.
+    RDouble GetChemicalRelaxCorf() const;
+
+    //! Get staticPressureRelaxCorf.
+    RDouble GetStaticPressureRelaxCorf() const;
+
     //! Get inviscidSchemeName.
     string GetInviscidSchemeName() const;
 
@@ -48,6 +63,16 @@ private:
     RDouble MUSCLCoefXb;
 
     RDouble catalyticCoef;
+
+    RDouble chemicalSpectrumRadiusCoef;
+
+    RDouble viscousSpectrumRadiusCoef;
+
+    RDouble inviscidSpectrumRadiusCoef;
+
+    RDouble chemicalRelaxCorf;
+
+    RDouble staticPressureRelaxCorf;
 
     string inviscidSchemeName;
 };

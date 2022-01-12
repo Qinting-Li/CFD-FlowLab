@@ -19,12 +19,12 @@
 //             8 -- GMSH, *.msh.
 int gridtype   = 0;
 int axisup     = 1;
-int from_gtype = 2;
+int from_gtype = 5;
 
 #########################################################################
 #                           File path                                   #
 #########################################################################
 // from_gfile: path of original data file for unstructure grid convert from.
 // out_gfile:  path of target file for grid convert to, *.fts type of file usually.
-string from_gfile = "./grid/rae2822_hybrid2d.cgns";
+string from_gfile = "./grid/rae2822_hybrid2d.cas";
 string out_gfile  = "./grid/rae2822_hybrid2d.fts";

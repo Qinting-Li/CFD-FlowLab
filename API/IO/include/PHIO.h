@@ -109,6 +109,11 @@ LIB_EXPORT void WriteASCIIFile(fstream &file, DataContainer *cdata);
 
 //! Output according to actkey.
 //! @param[in] actkey    an action key.
+//! @param[in] oss       a string stream.
+LIB_EXPORT void WriteASCIIFile(ActionKey *actionKey, std::ostringstream &oss);
+
+//! Output according to actkey.
+//! @param[in] actkey    an action key.
 LIB_EXPORT void WriteASCIIFile(ActionKey *actkey);
 
 //! Useless.
@@ -169,6 +174,8 @@ LIB_EXPORT void BroadCastInfo();
 LIB_EXPORT void CompleteParamInfo();
 
 LIB_EXPORT void PrintInflowConditionToWindow(void);
+
+LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature);
 
 #include "PHIO.hxx"
 }

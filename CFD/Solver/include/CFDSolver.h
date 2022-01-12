@@ -60,11 +60,17 @@ public:
 
     Post_Visual *GetPostVisualization();
 
+    void SetPostVisualizationWall(Post_VisualWall *postVisualization_in);
+
+    Post_VisualWall *GetPostVisualizationWall();
+
     //! Get control parameters
     LIB_EXPORT Param_CFDSolver *GetControlParameters() const;
 
     //! Compute pressure factor for entrop fix (Method 2 in Structure solver).
     virtual void CalPressureFactor(Grid *grid) {};
+
+    virtual void GetHeatTransferCoeff(Grid *grid) {};
 
     //! Compute gradient of primitivevariables & temperature for viscous flux computation.
     virtual void ComputeGradient(Grid *grid);
@@ -267,6 +273,7 @@ public:
     virtual void DumpRestartData(ActionKey *actkey);
     void CreateH5RestartFile(ActionKey *actkey);
 
+    virtual void InitMemory();
     //! Initialize the flow by two ways:\n
     //! 1. InitFlowAsRestart\n
     //! 2. InitFlowAsReadingRestart.
@@ -284,13 +291,13 @@ public:
     //! To output Average Flow for visualization by tecplot format.
     virtual void TecOutAverageFlow(ActionKey *actkey);
 
+    //! To output Average Reynolds stress for visualization by tecplot format.
+    virtual void TecOutAverageReynoldsStress(ActionKey *actkey);
+
     virtual void DumpAirForceCoef(ActionKey *actkey);
     virtual void DumpCpDistri(ActionKey *actkey);
     virtual void DumpSurfaceInfo(ActionKey *actkey);
     void WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *> datalist);
-    #ifdef USE_TecplotLib
-        void WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> datalist);
-    #endif
 
     //! Export the required variables on surface to file, such as the temperature, mass fraction etc.
     virtual void ExportSurfaceVariables(ActionKey *actkey) {}; //added by Li Peng
@@ -352,8 +359,6 @@ protected:
 
     virtual bool JudgeIfReadAverage();
     virtual bool JudgeIfRestart();
-
-    virtual void InitMemory();
 
     virtual void InitCoarseGridsFlow();
 
@@ -451,7 +456,9 @@ protected:
     //! Register the interpoint field in the CFD solver.
     virtual void RegisterCFDSolverInterpointField();
 
-    bool IsNeedDESStatistics();
+    bool IsNeedStatistics();
+
+    bool IsNeedReynoldsStressStatistics();
 
     void ComputeDualTimeCoefficient(int methodOfDualTime, RDouble *dualTimeCoefficient);
 
@@ -489,8 +496,12 @@ private:
     //! @param[in] interpointInformation         interpoint information for store the interpoint.
     //! @param[in] actkey         the actkey store the information of the interpoint.
     //! @param[in] interpointDataProxy         a proxy to store the interpoint value.
-    void TranslateInterpointData(InterpointInformation *interpointInformation, ActionKey *actkey, InterpointDataProxy * interpointDataProxy);protected:
+    void TranslateInterpointData(InterpointInformation *interpointInformation, ActionKey *actkey, InterpointDataProxy * interpointDataProxy);
+
+protected:
     Post_Visual *postVisualization;
+
+    Post_VisualWall *postVisualWall;
 
     FieldProxy **dqProxy;
 

@@ -49,7 +49,7 @@ void WriteLogFile(const string &data)
     using namespace PHMPI;
 #ifndef LOG_DEBUG
     //! Only server write log.
-    if(GetCurrentProcessorID() == server)
+    if (GetCurrentProcessorID() == server)
 #endif
     {
         fstream file;
@@ -61,7 +61,17 @@ void WriteLogFile(const string &data)
 
 void WriteLogFile(const ostringstream &oss, bool writeEachProcessor)
 {
-    WriteLogFile(oss.str());
+    if (writeEachProcessor == true)
+    {
+        fstream file;
+        OpenLogFile(PHMPI::GetCurrentProcessorID(), file);
+        file << oss.str() << "\n";
+        CloseLogFile(file);
+    }
+    else
+    {
+        WriteLogFile(oss.str());
+    }
 }
 
 void OpenWarningLogFile(int file_id, fstream &file)

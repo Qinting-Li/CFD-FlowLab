@@ -22,13 +22,13 @@
 #include "NSSolverUnstruct.h"         //! Unstructured NS solver, Finite Volume Method.
 
 #include "TurbSolver.h"               //! Base turbulent solver.
-#include "TurbSolverStruct.h"           //! Structured turbulent solver.
+#include "TurbSolverStruct.h"         //! Structured turbulent solver.
 #include "TurbSolverUnstr.h"          //! Unstructured turbulent solver.
-#include "TurbSolverStructFD.h"           //! Structured FD turbulent solver.
+#include "TurbSolverStructFD.h"       //! Structured FD turbulent solver.
 
 
-#ifdef USE_NSDEMO
-#include "NSSolverDemo.h"
+#ifdef USE_DEMOSOLVER
+#include "DemoSolver.h"
 #endif
 //! Include the solvers end.
 

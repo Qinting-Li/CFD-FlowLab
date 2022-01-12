@@ -21,7 +21,7 @@ namespace PHSPACE
 //! @brief Geo_DynamicGridMetrics_Struct class defines the dynamic grid metrics of the structured grid.
 //! 1: Cell volume of the last time step.
 //! 2: Face normal velocity.
-//! 3: Node velocity.
+//! 3: Face velocity.
 class Geo_DynamicGridMetrics_Struct
 {
 private:
@@ -31,8 +31,8 @@ private:
     //! Face normal velocity.
     RDouble4D *vgn;
 
-    //! Node velocity.
-    RDouble4D *xtn, *ytn, *ztn;
+    //! Face velocity.
+    RDouble4D *xfv, *yfv, *zfv;
     
 public:
     Geo_DynamicGridMetrics_Struct();
@@ -45,13 +45,13 @@ public:
     //! Return the Face normal velocity (vgn).
     RDouble4D * GetFaceNormalVelocity() const;
 
-    //! Return the x component of face velocity (xtn).
+    //! Return the x component of face velocity (xfv).
     RDouble4D * GetFaceVelocityX() const;
 
-    //! Return the y component of face velocity (ytn).
+    //! Return the y component of face velocity (yfv).
     RDouble4D * GetFaceVelocityY() const;
 
-    //! Return the z component of face velocity (ztn).
+    //! Return the z component of face velocity (zfv).
     RDouble4D * GetFaceVelocityZ() const;
 
     //! Assign the cell volume of the last time step (voln).
@@ -60,14 +60,14 @@ public:
     //! Assign the Face normal velocity (vgn).
     void SetFaceNormalVelocity(RDouble4D *vgn);
 
-    //! Assign the x component of face velocity (xtn).
-    void SetFaceVelocityX(RDouble4D *xtn);
+    //! Assign the x component of face velocity (xfv).
+    void SetFaceVelocityX(RDouble4D *xfv);
 
-    //! Assign the y component of face velocity (ytn).
-    void SetFaceVelocityY(RDouble4D *ytn);
+    //! Assign the y component of face velocity (yfv).
+    void SetFaceVelocityY(RDouble4D *yfv);
 
-    //! Assign the z component of face velocity (ztn).
-    void SetFaceVelocityZ(RDouble4D *ztn);
+    //! Assign the z component of face velocity (zfv).
+    void SetFaceVelocityZ(RDouble4D *zfv);
 
 private:
     void DeallocateAll();

@@ -62,8 +62,8 @@ public:
 
     void ADTSort(int iLay, int iStart, int iEnd, RDouble *adtSortData);
 
-    void QuickSort(int iStart, int iEnd   , RDouble *adtSortData, int half);
-    void SwapData (int iFirst, int iSecond, RDouble *adtSortData );
+    void QuickSort(int iStart, int iEnd,    RDouble *adtSortData, int half);
+    void SwapData (int iFirst, int iSecond, RDouble *adtSortData);
 
     void SearchInAdt(RDouble x, RDouble y, RDouble z, int &donorIndex);
     void SearchPoint2D(int iLay, int rootCellIndexNow, RDouble *coor, int &donorIndex);

@@ -20,7 +20,7 @@
 namespace PHSPACE
 {
 class Grid;
-class BCRegion;
+class StructBC;
 class Param_LESSolverStruct;
 
 class LESSolverStruct : public LESSolver
@@ -37,6 +37,19 @@ public:
 
     //! Get control paramters.
     LIB_EXPORT Param_LESSolverStruct * GetControlParameters();
+
+    //! Judge if the flow field variables file already exists in LES solver.
+    bool JudgeIfRestart();
+    bool JudgeIfReadAverage();
+
+    //! To write the flow data to restart file by HDF5 "fts" form for continue to simulation.
+    //! @param[in ]: actkey contains the control information.
+    void DumpRestartH5(ActionKey *actkey);
+
+    //! To read the flow data from restart file by HDF5 "fts" form  for continue to simulation.
+    //! @param[in ]: actkey contains the control information.
+    void ReadRestartH5(ActionKey *actkey);
+
 private:
     void AllocateGlobalVar(Grid *gridIn);
     void DeAllocateGlobalVar(Grid *gridIn);
@@ -61,7 +74,9 @@ private:
     void ObtainGradientCellCenterHighOrder(Grid *gridIn);
     void GetUVWTproxy(Grid *gridIn);
     void GetUVWTfaceproxy(Grid *gridIn, int nsurf);
+    void GetUVWTfaceproxy_HDCS(Grid *gridIn, int nsurf);
     void GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf);
+    void GetdqdkxietactaCellCenter_HDCS(Grid *gridIn, int nsurf);
 
     void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
 
@@ -78,11 +93,11 @@ private:
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void Boundary(Grid *gridIn);
     void ObtainBoundaryValue(Grid *gridIn);
-    void VisWall(Grid *gridIn, BCRegion *BCRegion);
-    void FarFieldBC(Grid *gridIn, BCRegion *BCRegion);
-    void SymmetryBC(Grid *gridIn, BCRegion *BCRegion);
-    void InFlowBC(Grid *gridIn, BCRegion *BCRegion);
-    void OutFlowBC(Grid *gridIn, BCRegion *BCRegion);
+    void VisWall(Grid *gridIn, StructBC *structBC);
+    void FarFieldBC(Grid *gridIn, StructBC *structBC);
+    void SymmetryBC(Grid *gridIn, StructBC *structBC);
+    void InFlowBC(Grid *gridIn, StructBC *structBC);
+    void OutFlowBC(Grid *gridIn, StructBC *structBC);
 
     void Smagorinsky(Grid *gridIn);
 
@@ -133,7 +148,7 @@ private:
 
     void WALE(Grid *grid);
     //! F. Nicoud and F. Ducros, 1999, Subgrid-Scale Stress Modelling Based on the Square of the Velocity Gradient Tensor.
-    //! Christian Wollblad et.al., 2006, Large Eddy Simulation of Transonic Flow with Shock Wave/Turbulent Boundary Layer Interaction.
+    //! Christian Wollblad et.al., 2006, Large Eddy Simulation of Transonic Flow with Shock Wave/Turbulence Boundary Layer Interaction.
 
     void Sigma(Grid *gridIn);
 

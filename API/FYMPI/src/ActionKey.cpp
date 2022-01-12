@@ -70,8 +70,8 @@ ActionKey::ActionKey()
 
 ActionKey::~ActionKey()
 {
-    delete data;
-    delete tecdata;
+    delete data;    data = NULL;
+    delete tecdata;    tecdata = NULL;
 }
 
 ActionKey *currentActionKey = 0;

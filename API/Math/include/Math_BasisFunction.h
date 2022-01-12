@@ -89,7 +89,7 @@ inline T SQR(const T &a, const T &b, const T &c)
     return a * a + b * b + c * c;
 }
 
-inline RDouble SQR(RDouble * point1, RDouble * point2)
+inline RDouble SQR(RDouble *point1, RDouble *point2)
 {
     return  (point1[0] - point2[0]) * (point1[0] - point2[0]) +
             (point1[1] - point2[1]) * (point1[1] - point2[1]) +
@@ -103,7 +103,7 @@ inline T DISTANCE(const T &a, const T &b, const T &c)
     return sqrt(SQR(a, b, c));
 }
 
-inline RDouble DISTANCE(RDouble * point1, RDouble * point2)
+inline RDouble DISTANCE(RDouble *point1, RDouble *point2)
 {
     return sqrt((point1[0] - point2[0]) * (point1[0] - point2[0]) +
                 (point1[1] - point2[1]) * (point1[1] - point2[1]) +
@@ -184,11 +184,36 @@ void RotateAxisZ(const T *orginalR, T *newR, const RDouble &degree)
     newR[2] = orginalR[2];
 }
 
+template < typename T1, typename T2, typename T3 >
+void MatrixMultiply(T1 **a, T2 *b, T3 *c, int m, int n)
+{
+    for (int i = 0; i < m; ++ i)
+    {
+        c[i] = 0;
+        for (int j = 0; j < n; ++ j)
+        {
+            c[i] += a[i][j] * b[j];
+        }
+    }
+}
+
+template < typename T1, typename T2, typename T3 >
+void MatrixMultiply(T1 **a, vector< T2 > &b, vector< T3 > &c, int m, int n)
+{
+    MatrixMultiply(a, &b[0], &c[0], m, n);
+}
+
 //! Compute the cross product of two vectors.
 //! @param[in]  vec1        The 1st vector, 3D array.
 //! @param[in]  vec2        The 2nd vector, 3D array.
 //! @param[out] crossVec    The cross product, 3D array.
 void CrossProduct(RDouble *vec1, RDouble *vec2, RDouble *crossVec);
+
+template < typename T1, typename T2, typename T3 >
+void CrossProduct(vector< T1 > &a, vector< T2 > &b, vector< T3 > &crossProduct)
+{
+    CrossProduct(&a[0], &b[0], &crossProduct[0]);
+}
 
 //! Compute the unit face (a line with two end-points) normal of 2D case.
 //! @param[in] startPoint     Start point, 2D array.

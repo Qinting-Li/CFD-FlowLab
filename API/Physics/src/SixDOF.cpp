@@ -16,182 +16,181 @@ PHRigidBodyMovement RigidBodyMovement;
 
 PHRigidBodyMovement::PHRigidBodyMovement()
 {
-	massCenterOfAircraft    = new PHSuperMatrix( 3 );
-	inertiaTensorOfAircraft = new PHSuperMatrix( 3, 3 );   //  飞行器转动惯量
-	reverseOfInertiaTensor  = new PHSuperMatrix( 3, 3 );   //  转动惯量逆矩阵
+    massCenterOfAircraft    = new PHSuperMatrix( 3 );
+    inertiaTensorOfAircraft = new PHSuperMatrix( 3, 3 );   //  moment of inertia of aircraft
+    reverseOfInertiaTensor  = new PHSuperMatrix( 3, 3 );   //  the inverse matrix of moment of inertia
 
-	// 与流场解算器进行交换的数据；
-	// 输入：力和力矩系数
-	aerodynamicForce  = new PHSuperMatrix( 3 );  //  气动力
-	aerodynamicMoment = new PHSuperMatrix( 3 );  //  气动力矩
-	otherForceSum     = new PHSuperMatrix( 3 );  //  其他外力合力（重力、推力）
-	otherMomentSum    = new PHSuperMatrix( 3 );  //  其他外力合力矩
+    // the data changed with the flow solvers.
+    // input：force and moment coefficient.
+    aerodynamicForce  = new PHSuperMatrix( 3 );  //! aerodynamic force.
+    aerodynamicMoment = new PHSuperMatrix( 3 );  //! aerodynamic moment.
+    otherForceSum     = new PHSuperMatrix( 3 );
+    otherMomentSum    = new PHSuperMatrix( 3 );
 
-	//坐标变换数据；
-	eulerAngle             = new PHSuperMatrix( 3 );     //  欧拉角
-	eulerAngleRate         = new PHSuperMatrix( 3, 3 );   //  n-2, n-1, n时刻欧拉角速度
-	eulerAngleAcceleration = new PHSuperMatrix( 3 );     //  欧拉角加速度
+    eulerAngle             = new PHSuperMatrix( 3 );
+    eulerAngleRate         = new PHSuperMatrix( 3, 3 );
+    eulerAngleAcceleration = new PHSuperMatrix( 3 );
 
-	transformMatrixCurrent = new PHSuperMatrix( 3, 3 );   //  当前步计算系 -> 体轴系的坐标变换矩阵
-	transformMatrixLastTime    = new PHSuperMatrix( 3, 3 );   //  前一步计算系 -> 体轴系的坐标变换矩阵
+    transformMatrixCurrent = new PHSuperMatrix( 3, 3 );
+    transformMatrixLastTime    = new PHSuperMatrix( 3, 3 );
 
-	momentOfInertia        = new PHSuperMatrix( 3, 3 );  //  n-2, n-1, n时刻体轴系下的角动量
-	bodyAngleRate          = new PHSuperMatrix( 3 );    //  体轴系（计算坐标系）角速度
-	bodyAngleAcceleration  = new PHSuperMatrix( 3 );    //  体轴系（计算坐标系）角加速度
+    momentOfInertia        = new PHSuperMatrix( 3, 3 );
+    bodyAngleRate          = new PHSuperMatrix( 3 );
+    bodyAngleAcceleration  = new PHSuperMatrix( 3 );
 }
 
 PHRigidBodyMovement::~PHRigidBodyMovement()
 {
-	delete massCenterOfAircraft;
-	delete inertiaTensorOfAircraft;
-	delete reverseOfInertiaTensor;
+    delete massCenterOfAircraft;
+    delete inertiaTensorOfAircraft;
+    delete reverseOfInertiaTensor;
 
-	delete aerodynamicForce;
-	delete aerodynamicMoment;
-	delete otherForceSum;
-	delete otherMomentSum;
-	delete eulerAngle;
-	delete eulerAngleRate;
-	delete eulerAngleAcceleration;
+    delete aerodynamicForce;
+    delete aerodynamicMoment;
+    delete otherForceSum;
+    delete otherMomentSum;
+    delete eulerAngle;
+    delete eulerAngleRate;
+    delete eulerAngleAcceleration;
 
-	delete transformMatrixCurrent;
-	delete transformMatrixLastTime;
-	delete momentOfInertia;
-	delete bodyAngleRate;
-	delete bodyAngleAcceleration;
+    delete transformMatrixCurrent;
+    delete transformMatrixLastTime;
+    delete momentOfInertia;
+    delete bodyAngleRate;
+    delete bodyAngleAcceleration;
 }
 
 void PHRigidBodyMovement::UpdateCoordinate( Grid * gridIn )
 {
-	StructGrid * grid = static_cast<StructGrid* >( gridIn );
+    StructGrid * grid = static_cast<StructGrid* >( gridIn );
 
-	int ni = grid->GetNI();
-	int nj = grid->GetNJ();
-	int nk = grid->GetNK();
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
     RDouble3D& x = *grid->GetStructX();
     RDouble3D& y = *grid->GetStructY();
     RDouble3D& z = *grid->GetStructZ();
 
-	PHSuperMatrix xyzc = * massCenterOfAircraft;
-	PHSuperMatrix dxyz( 3 );
-	PHSuperMatrix xyz( 3 );
+    PHSuperMatrix xyzc = * massCenterOfAircraft;
+    PHSuperMatrix dxyz( 3 );
+    PHSuperMatrix xyz( 3 );
 
-	PHSuperMatrix & transformMatrixCurrent  = * this->transformMatrixCurrent;
-	PHSuperMatrix & transformMatrixLastTime = * this->transformMatrixLastTime;
+    PHSuperMatrix & transformMatrixCurrent  = * this->transformMatrixCurrent;
+    PHSuperMatrix & transformMatrixLastTime = * this->transformMatrixLastTime;
 
-	PHSuperMatrix matrix = PHSPACE::TransposeMatrix( transformMatrixCurrent ) * transformMatrixLastTime;
+    PHSuperMatrix matrix = PHSPACE::TransposeMatrix( transformMatrixCurrent ) * transformMatrixLastTime;
 
-	for ( int k = 1; k <= nk; ++ k )
-	{
-		for ( int j = 1; j <= nj; ++ j )
-		{
-			for ( int i = 1; i <= ni; ++ i )
-			{
-				dxyz( 1 ) = x( i, j, k ) - xyzc( 1 );
-				dxyz( 2 ) = y( i, j, k ) - xyzc( 2 );
-				dxyz( 3 ) = z( i, j, k ) - xyzc( 3 );
+    for ( int k = 1; k <= nk; ++ k )
+    {
+        for ( int j = 1; j <= nj; ++ j )
+        {
+            for ( int i = 1; i <= ni; ++ i )
+            {
+                dxyz( 1 ) = x( i, j, k ) - xyzc( 1 );
+                dxyz( 2 ) = y( i, j, k ) - xyzc( 2 );
+                dxyz( 3 ) = z( i, j, k ) - xyzc( 3 );
 
-				xyz = matrix * dxyz;
+                xyz = matrix * dxyz;
 
-				x( i, j, k ) = xyz( 1 ) + xyzc( 1 );
-				y( i, j, k ) = xyz( 2 ) + xyzc( 2 );
-				z( i, j, k ) = xyz( 3 ) + xyzc( 3 );
-			}
-		}
-	}
+                x( i, j, k ) = xyz( 1 ) + xyzc( 1 );
+                y( i, j, k ) = xyz( 2 ) + xyzc( 2 );
+                z( i, j, k ) = xyz( 3 ) + xyzc( 3 );
+            }
+        }
+    }
 
-	return;
+    return;
 }
 
 void PHRigidBodyMovement::UpdateGridVelocity( Grid * gridIn )
 {
     StructGrid* grid = static_cast<StructGrid* >( gridIn );
 
-	PHSuperMatrix velocityCellface( 3 );
+    PHSuperMatrix velocityCellface( 3 );
 
     RDouble4D& faceNormalX = *(grid->GetFaceNormalX());
     RDouble4D& faceNormalY = *(grid->GetFaceNormalY());
     RDouble4D& faceNormalZ = *(grid->GetFaceNormalZ());
     RDouble4D& faceNormalVelocity = *(grid->GetFaceNormalVelocity());
 
-	int ni = grid->GetNI();
-	int nj = grid->GetNJ();
-	int nk = grid->GetNK();
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
-	RDouble xt, yt, zt, kt;
-	int nd;
+    RDouble xt, yt, zt, kt;
+    int nd;
 
-	nd = 1;
-	for ( int k = 1; k < nk; ++ k )
-	{
-		for ( int j = 1; j < nj; ++ j )
-		{
-			for ( int i = 1; i <= ni; ++ i )
-			{
-				velocityCellface = CalculateGridCellFaceVelocity(grid, i, j, k, nd );
+    nd = 1;
+    for ( int k = 1; k < nk; ++ k )
+    {
+        for ( int j = 1; j < nj; ++ j )
+        {
+            for ( int i = 1; i <= ni; ++ i )
+            {
+                velocityCellface = CalculateGridCellFaceVelocity(grid, i, j, k, nd );
 
-				xt = velocityCellface( 1 );
-				yt = velocityCellface( 2 );
-				zt = velocityCellface( 3 );
+                xt = velocityCellface( 1 );
+                yt = velocityCellface( 2 );
+                zt = velocityCellface( 3 );
 
-				kt = - ( xt * faceNormalX( i, j, k, nd ) + 
-					     yt * faceNormalY( i, j, k, nd ) + 
-						 zt * faceNormalZ( i, j, k, nd ) );
-					
+                kt = - ( xt * faceNormalX( i, j, k, nd ) + 
+                         yt * faceNormalY( i, j, k, nd ) + 
+                         zt * faceNormalZ( i, j, k, nd ) );
+                    
                 faceNormalVelocity(i, j, k, nd) = kt;
-			}
-		}
-	}
+            }
+        }
+    }
 
-	nd = 2;
-	for ( int k = 1; k < nk; ++ k )
-	{
-		for ( int i = 1; i < ni; ++ i )
-		{
-			for ( int j = 1; j <= nj; ++ j )
-			{
-				velocityCellface = CalculateGridCellFaceVelocity(grid, i, j, k, nd );
+    nd = 2;
+    for ( int k = 1; k < nk; ++ k )
+    {
+        for ( int i = 1; i < ni; ++ i )
+        {
+            for ( int j = 1; j <= nj; ++ j )
+            {
+                velocityCellface = CalculateGridCellFaceVelocity(grid, i, j, k, nd );
 
-				xt = velocityCellface( 1 );
-				yt = velocityCellface( 2 );
-				zt = velocityCellface( 3 );
+                xt = velocityCellface( 1 );
+                yt = velocityCellface( 2 );
+                zt = velocityCellface( 3 );
 
-				kt = - ( xt * faceNormalX( i, j, k, nd ) + 
-					     yt * faceNormalY( i, j, k, nd ) + 
-						 zt * faceNormalZ( i, j, k, nd ) );
-					
-				faceNormalVelocity(i, j, k, nd) = kt;
-			}
-		}
-	}
+                kt = - ( xt * faceNormalX( i, j, k, nd ) + 
+                         yt * faceNormalY( i, j, k, nd ) + 
+                         zt * faceNormalZ( i, j, k, nd ) );
+                    
+                faceNormalVelocity(i, j, k, nd) = kt;
+            }
+        }
+    }
 
-	nd = 3;
-	for ( int j = 1; j < nj; ++ j )
-	{
-		for ( int i = 1; i < ni; ++ i )
-		{
-			for ( int k = 1; k <= nk; ++ k )
-			{
-				velocityCellface = CalculateGridCellFaceVelocity(grid, i, j, k, nd );
+    nd = 3;
+    for ( int j = 1; j < nj; ++ j )
+    {
+        for ( int i = 1; i < ni; ++ i )
+        {
+            for ( int k = 1; k <= nk; ++ k )
+            {
+                velocityCellface = CalculateGridCellFaceVelocity(grid, i, j, k, nd );
 
-				xt = velocityCellface( 1 );
-				yt = velocityCellface( 2 );
-				zt = velocityCellface( 3 );
+                xt = velocityCellface( 1 );
+                yt = velocityCellface( 2 );
+                zt = velocityCellface( 3 );
 
-				kt = - ( xt * faceNormalX( i, j, k, nd ) +
-					     yt * faceNormalY( i, j, k, nd ) + 
-						 zt * faceNormalZ( i, j, k, nd ) );
-					
-				faceNormalVelocity(i, j, k, nd) = kt;
-			}
-		}
-	}
+                kt = - ( xt * faceNormalX( i, j, k, nd ) +
+                         yt * faceNormalY( i, j, k, nd ) + 
+                         zt * faceNormalZ( i, j, k, nd ) );
+                    
+                faceNormalVelocity(i, j, k, nd) = kt;
+            }
+        }
+    }
 }
 
 void PHRigidBodyMovement::InitializeAircraftProperty()
 {
-	// 初始化；
+    //! init.
     InitializeAerodynamicForce();
 
     RDouble massCenter[3];
@@ -206,8 +205,8 @@ void PHRigidBodyMovement::InitializeAircraftProperty()
 
     PHSuperMatrix& inertiaTensorOfAircraft = *this->inertiaTensorOfAircraft;
     inertiaTensorOfAircraft(1, 1) = massMatrix[0];
-	inertiaTensorOfAircraft(2, 2) = massMatrix[1];
-	inertiaTensorOfAircraft(3, 3) = massMatrix[2];
+    inertiaTensorOfAircraft(2, 2) = massMatrix[1];
+    inertiaTensorOfAircraft(3, 3) = massMatrix[2];
 
     //Ixy = Iyx
     inertiaTensorOfAircraft(1, 2) = massMatrix[3];
@@ -221,7 +220,7 @@ void PHRigidBodyMovement::InitializeAircraftProperty()
     inertiaTensorOfAircraft(2, 3) = massMatrix[5];
     inertiaTensorOfAircraft(3, 2) = massMatrix[5];
 
-	massOfAircraft = GlobalDataBase::GetDoubleParaFromDB("mass");
+    massOfAircraft = GlobalDataBase::GetDoubleParaFromDB("mass");
 
     RDouble attitudeAngle[3];
     GlobalDataBase::GetData("attitudeAngle", &attitudeAngle, PHDOUBLE, 3);
@@ -230,274 +229,274 @@ void PHRigidBodyMovement::InitializeAircraftProperty()
     massCenterOfAircraft(3) = attitudeAngle[2];
 
     RDouble referenceAreaOfAerodynamicForce    = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
-    RDouble referenceLengthOfAerodynamicMoment = GlobalDataBase::GetDoubleParaFromDB("referenceLength");
+    RDouble referenceLengthOfAerodynamicMoment = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
 
     RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
 
-	densityRef = refDimensionalDensity;
-	areaRef    = referenceAreaOfAerodynamicForce;
-	lengthRef  = referenceLengthOfAerodynamicMoment;
+    densityRef = refDimensionalDensity;
+    areaRef    = referenceAreaOfAerodynamicForce;
+    lengthRef  = referenceLengthOfAerodynamicMoment;
 }
 
 void PHRigidBodyMovement::InitializeEulerAngleInformation()
 {
-	// 初始化欧拉角信息；
-	PHSuperMatrix & eulerAngle             = * this->eulerAngle;
-	PHSuperMatrix & eulerAngleRate         = * this->eulerAngleRate;
-	PHSuperMatrix & eulerAngleAcceleration = * this->eulerAngleAcceleration;
+    //! init the Euler angle information.
+    PHSuperMatrix & eulerAngle             = * this->eulerAngle;
+    PHSuperMatrix & eulerAngleRate         = * this->eulerAngleRate;
+    PHSuperMatrix & eulerAngleAcceleration = * this->eulerAngleAcceleration;
 
-	for ( int i = 1; i <= 3 ; ++ i )
-	{
-		eulerAngle( i ) = 0.0; 
-		for ( int j = 1; j <= 3; ++ j )
-		{
-			eulerAngleRate( i, j ) = 0.0;
-		}
-		eulerAngleAcceleration( i ) = 0.0;      
-	}
+    for ( int i = 1; i <= 3 ; ++ i )
+    {
+        eulerAngle( i ) = 0.0; 
+        for ( int j = 1; j <= 3; ++ j )
+        {
+            eulerAngleRate( i, j ) = 0.0;
+        }
+        eulerAngleAcceleration( i ) = 0.0;      
+    }
 }
 
 void PHRigidBodyMovement::CalculationOfMatrix()
 {
-	PHSuperMatrix & eulerAngle = * this->eulerAngle;
+    PHSuperMatrix & eulerAngle = * this->eulerAngle;
 
-	RDouble pitchAngle = eulerAngle( 1 );
-	RDouble yawAngle   = eulerAngle( 2 );
-	RDouble rollAngle  = eulerAngle( 3 );
+    RDouble pitchAngle = eulerAngle( 1 );
+    RDouble yawAngle   = eulerAngle( 2 );
+    RDouble rollAngle  = eulerAngle( 3 );
 
-	PHSuperMatrix & transformMatrixCurrent = * this->transformMatrixCurrent;
-	PHSuperMatrix & transformMatrixLastTime    = * this->transformMatrixLastTime;
+    PHSuperMatrix & transformMatrixCurrent = * this->transformMatrixCurrent;
+    PHSuperMatrix & transformMatrixLastTime    = * this->transformMatrixLastTime;
 
-	transformMatrixCurrent = 
-		BaseMatrixOfRotate( rollAngle ,"x" ) * 
-		BaseMatrixOfRotate( pitchAngle,"z" ) * 
-		BaseMatrixOfRotate( yawAngle  ,"y" );
+    transformMatrixCurrent = 
+        BaseMatrixOfRotate( rollAngle ,"x" ) * 
+        BaseMatrixOfRotate( pitchAngle,"z" ) * 
+        BaseMatrixOfRotate( yawAngle  ,"y" );
 
-	transformMatrixLastTime = transformMatrixCurrent;
+    transformMatrixLastTime = transformMatrixCurrent;
 
-	AngleRateTransformMatrixBodyToGlobal( eulerAngle,"y-z-x" );
+    AngleRateTransformMatrixBodyToGlobal( eulerAngle,"y-z-x" );
 
 }
 
 void PHRigidBodyMovement::NondimensionalOf6DOF()
 {
-	// 6DOF方程无量纲化；
-	RDouble MassRef, InertiaRef;
+    //! non-dimensional six DOF equations.
+    RDouble MassRef, InertiaRef;
 
-	MassRef    = 0.5 * densityRef * areaRef * lengthRef;
-	InertiaRef = MassRef;
+    MassRef    = 0.5 * densityRef * areaRef * lengthRef;
+    InertiaRef = MassRef;
 
-	massOfAircraft /= MassRef;
+    massOfAircraft /= MassRef;
 
-	PHSuperMatrix & inertiaTensorOfAircraft = * this->inertiaTensorOfAircraft;
+    PHSuperMatrix & inertiaTensorOfAircraft = * this->inertiaTensorOfAircraft;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		for ( int j = 1; j <= 3; ++ j )
-		{
-			inertiaTensorOfAircraft( i, j ) /= InertiaRef;
-		}
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        for ( int j = 1; j <= 3; ++ j )
+        {
+            inertiaTensorOfAircraft( i, j ) /= InertiaRef;
+        }
+    }
 
-	PHSuperMatrix & reverseOfInertiaTensor = * this->reverseOfInertiaTensor;
-	reverseOfInertiaTensor = Matrix3X3Inverse( inertiaTensorOfAircraft );
+    PHSuperMatrix & reverseOfInertiaTensor = * this->reverseOfInertiaTensor;
+    reverseOfInertiaTensor = Matrix3X3Inverse( inertiaTensorOfAircraft );
 }
 
 void PHRigidBodyMovement::GetReferenceValue()
 {
-	// 获取无量纲参考量；
+    //! Get non-dimensional reference values.
     RDouble referenceAreaOfAerodynamicForce = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
     RDouble referenceLengthOfAerodynamicMoment = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
 
     RDouble referenceDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
 
-	densityRef = referenceDimensionalDensity;
-	areaRef    = referenceAreaOfAerodynamicForce;
-	lengthRef  = referenceLengthOfAerodynamicMoment;
+    densityRef = referenceDimensionalDensity;
+    areaRef    = referenceAreaOfAerodynamicForce;
+    lengthRef  = referenceLengthOfAerodynamicMoment;
 }
 
 void PHRigidBodyMovement::AerodynamicsInCFDSolver()
 {
-	int bodyIndex = 0;
-	AerodynamicForce * aerodynamicForce = PHSPACE::GetCurrentAerodynamicForce( bodyIndex );
+    int bodyIndex = 0;
+    AerodynamicForce * aerodynamicForce = PHSPACE::GetCurrentAerodynamicForce( bodyIndex );
 
-	// 获取CFD解算器的气动力系数；
-	PHSuperMatrix & aerodynamicForceCoefficient = * this->aerodynamicForce;
-	aerodynamicForceCoefficient( 1 ) = aerodynamicForce->GetForceCoefficientX();
-	aerodynamicForceCoefficient( 2 ) = aerodynamicForce->GetForceCoefficientY();
-	aerodynamicForceCoefficient( 3 ) = aerodynamicForce->GetForceCoefficientZ();
+    //! Get aerodynamic coefficients.
+    PHSuperMatrix & aerodynamicForceCoefficient = * this->aerodynamicForce;
+    aerodynamicForceCoefficient( 1 ) = aerodynamicForce->GetForceCoefficientX();
+    aerodynamicForceCoefficient( 2 ) = aerodynamicForce->GetForceCoefficientY();
+    aerodynamicForceCoefficient( 3 ) = aerodynamicForce->GetForceCoefficientZ();
 
-	PHSuperMatrix & aerodynamicMomentCoefficient = * this->aerodynamicMoment;
+    PHSuperMatrix & aerodynamicMomentCoefficient = * this->aerodynamicMoment;
 
-	aerodynamicMomentCoefficient( 1 ) = aerodynamicForce->GetMomentCoefficientX();
-	aerodynamicMomentCoefficient( 2 ) = aerodynamicForce->GetMomentCoefficientY();
-	aerodynamicMomentCoefficient( 3 ) = aerodynamicForce->GetMomentCoefficientZ();
+    aerodynamicMomentCoefficient( 1 ) = aerodynamicForce->GetMomentCoefficientX();
+    aerodynamicMomentCoefficient( 2 ) = aerodynamicForce->GetMomentCoefficientY();
+    aerodynamicMomentCoefficient( 3 ) = aerodynamicForce->GetMomentCoefficientZ();
 }
 
 void PHRigidBodyMovement::UpdateDynamicInfo6DOF()
 {
-	// 更新6自由度动态信息，包括欧拉角求解和坐标更新；
-	UpdateOfInertia();
-	CalculateAngleRateOfBody();
-	CalculateEulerAngleRate();
-	CalculateEulerAngle();
-	CalculateEulerAngleAcceleration();
-	CalculateAngleOfAttackAndSlide();
-	CalculationOfMatrix();
+    //! update the six DOF dynamic information, include Euler angle solution and coordinates.
+    UpdateOfInertia();
+    CalculateAngleRateOfBody();
+    CalculateEulerAngleRate();
+    CalculateEulerAngle();
+    CalculateEulerAngleAcceleration();
+    CalculateAngleOfAttackAndSlide();
+    CalculationOfMatrix();
 }
 
 void PHRigidBodyMovement::InitializeInertia()          
 {
-	PHSuperMatrix newMomentOfInertia( 3 );
+    PHSuperMatrix newMomentOfInertia( 3 );
 
-	PHSuperMatrix & inertiaTensorOfAircraft = * this->inertiaTensorOfAircraft;
-	PHSuperMatrix & momentOfInertia = * this->momentOfInertia;
-	PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
+    PHSuperMatrix & inertiaTensorOfAircraft = * this->inertiaTensorOfAircraft;
+    PHSuperMatrix & momentOfInertia = * this->momentOfInertia;
+    PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
 
-	newMomentOfInertia = inertiaTensorOfAircraft * bodyAngleRate;
+    newMomentOfInertia = inertiaTensorOfAircraft * bodyAngleRate;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		momentOfInertia( i, 1 ) = newMomentOfInertia( i );
-		momentOfInertia( i, 2 ) = momentOfInertia( i, 1 );
-		momentOfInertia( i, 3 ) = momentOfInertia( i, 2 );
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        momentOfInertia( i, 1 ) = newMomentOfInertia( i );
+        momentOfInertia( i, 2 ) = momentOfInertia( i, 1 );
+        momentOfInertia( i, 3 ) = momentOfInertia( i, 2 );
+    }
 }
 
 void PHRigidBodyMovement::UpdateOfInertia()          
 {
-	// 更新角动量信息；
-	RDouble c1, c2, c3;
+    //! update the angular momentum information.
+    RDouble c1, c2, c3;
 
-	c1 =  1.5 / currentMarchTimeStep;
-	c2 = -2.0 / currentMarchTimeStep;
-	c3 =  0.5 / currentMarchTimeStep;
+    c1 =  1.5 / currentMarchTimeStep;
+    c2 = -2.0 / currentMarchTimeStep;
+    c3 =  0.5 / currentMarchTimeStep;
 
-	PHSuperMatrix currentInertia( 3 );
-	PHSuperMatrix newMomentOfInertia( 3 );
+    PHSuperMatrix currentInertia( 3 );
+    PHSuperMatrix newMomentOfInertia( 3 );
 
-	PHSuperMatrix & momentOfInertia = * this->momentOfInertia;
-	PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
+    PHSuperMatrix & momentOfInertia = * this->momentOfInertia;
+    PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		currentInertia( i ) = momentOfInertia( i, 1 );
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        currentInertia( i ) = momentOfInertia( i, 1 );
+    }
 
-	PHSuperMatrix crossResult = CrossProductVector( bodyAngleRate, currentInertia );
+    PHSuperMatrix crossResult = CrossProductVector( bodyAngleRate, currentInertia );
 
-	PHSuperMatrix & aerodynamicMoment = * this->aerodynamicMoment;
-	PHSuperMatrix & otherMomentSum    = * this->otherMomentSum;
+    PHSuperMatrix & aerodynamicMoment = * this->aerodynamicMoment;
+    PHSuperMatrix & otherMomentSum    = * this->otherMomentSum;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		newMomentOfInertia( i ) = (  aerodynamicMoment( i ) + otherMomentSum( i ) 
-				                    - crossResult( i )
-									- c2 * currentInertia( i ) - c3 * momentOfInertia( 2, 1 )
-									) / c1;
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        newMomentOfInertia( i ) = (  aerodynamicMoment( i ) + otherMomentSum( i ) 
+                                    - crossResult( i )
+                                    - c2 * currentInertia( i ) - c3 * momentOfInertia( 2, 1 )
+                                    ) / c1;
+    }
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		momentOfInertia( i, 3 ) = momentOfInertia( i, 2 );
-		momentOfInertia( i, 2 ) = momentOfInertia( i, 1 );
-		momentOfInertia( i, 1 ) = newMomentOfInertia( i );
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        momentOfInertia( i, 3 ) = momentOfInertia( i, 2 );
+        momentOfInertia( i, 2 ) = momentOfInertia( i, 1 );
+        momentOfInertia( i, 1 ) = newMomentOfInertia( i );
+    }
 }
 
 void PHRigidBodyMovement::CalculateAngleRateOfBody()          
 {
-	// 计算弹体坐标系下的角速度；
+    //! calculate the angular velocity of the projectile coordinate system.
 
-	PHMatrix< RDouble > currentInertia( 3 );
+    PHMatrix< RDouble > currentInertia( 3 );
 
-	PHSuperMatrix & momentOfInertia = * this->momentOfInertia;
+    PHSuperMatrix & momentOfInertia = * this->momentOfInertia;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		currentInertia( i ) = momentOfInertia( i, 1 );
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        currentInertia( i ) = momentOfInertia( i, 1 );
+    }
 
-	PHSuperMatrix & inertiaTensorOfAircraft = * this->inertiaTensorOfAircraft;
-	PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
+    PHSuperMatrix & inertiaTensorOfAircraft = * this->inertiaTensorOfAircraft;
+    PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
 
-	bodyAngleRate = Matrix3X3Inverse( inertiaTensorOfAircraft ) * currentInertia;
+    bodyAngleRate = Matrix3X3Inverse( inertiaTensorOfAircraft ) * currentInertia;
 
 }
 
 void PHRigidBodyMovement::CalculateEulerAngleRate()          
 {
-	// 计算坐标系下的角速度；
+    //! calculate the angular velocity of the coordinate system.
 
-	PHSuperMatrix newAnglerate( 3 );
+    PHSuperMatrix newAnglerate( 3 );
 
-	PHSuperMatrix & transformMatrixCurrent = * this->transformMatrixCurrent;
-	PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
+    PHSuperMatrix & transformMatrixCurrent = * this->transformMatrixCurrent;
+    PHSuperMatrix & bodyAngleRate   = * this->bodyAngleRate;
 
-	newAnglerate = PHSPACE::TransposeMatrix( transformMatrixCurrent ) * bodyAngleRate;
+    newAnglerate = PHSPACE::TransposeMatrix( transformMatrixCurrent ) * bodyAngleRate;
 
-	PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
+    PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		eulerAngleRate( i, 3 ) = eulerAngleRate( i, 2 );
-		eulerAngleRate( i, 2 ) = eulerAngleRate( i, 1 );
-		eulerAngleRate( i, 1 ) = newAnglerate( i );
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        eulerAngleRate( i, 3 ) = eulerAngleRate( i, 2 );
+        eulerAngleRate( i, 2 ) = eulerAngleRate( i, 1 );
+        eulerAngleRate( i, 1 ) = newAnglerate( i );
+    }
 }
 
 void PHRigidBodyMovement::CalculateEulerAngle()
 {
-	// 计算Euler角；
+    //! Calculate the euler angle.
 
-	PHSuperMatrix & eulerAngle = * this->eulerAngle;
-	PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
+    PHSuperMatrix & eulerAngle = * this->eulerAngle;
+    PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		eulerAngle( i ) += 0.5 * ( eulerAngleRate( i, 1 ) + eulerAngleRate( i, 2 ) ) * currentMarchTimeStep;
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        eulerAngle( i ) += 0.5 * ( eulerAngleRate( i, 1 ) + eulerAngleRate( i, 2 ) ) * currentMarchTimeStep;
+    }
 }
 
 void PHRigidBodyMovement::CalculateEulerAngleAcceleration()          
 {
-	// 计算计算坐标系下的角加速度；
-	RDouble c1, c2, c3;
+    //! Calculate the euler angle acceleration of the computing axis systems.
+    RDouble c1, c2, c3;
 
-	c1 =  1.5 / currentMarchTimeStep;
-	c2 = -2.0 / currentMarchTimeStep;
-	c3 =  0.5 / currentMarchTimeStep;
+    c1 =  1.5 / currentMarchTimeStep;
+    c2 = -2.0 / currentMarchTimeStep;
+    c3 =  0.5 / currentMarchTimeStep;
 
-	PHSuperMatrix & eulerAngleRate         = * this->eulerAngleRate;
-	PHSuperMatrix & eulerAngleAcceleration = * this->eulerAngleAcceleration;
+    PHSuperMatrix & eulerAngleRate         = * this->eulerAngleRate;
+    PHSuperMatrix & eulerAngleAcceleration = * this->eulerAngleAcceleration;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		eulerAngleAcceleration( i ) = c1 * eulerAngleRate( i, 1 ) + 
-				                      c2 * eulerAngleRate( i, 2 ) + 
-									  c3 * eulerAngleRate( i, 3 ) ;
-	}
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        eulerAngleAcceleration( i ) = c1 * eulerAngleRate( i, 1 ) + 
+                                      c2 * eulerAngleRate( i, 2 ) + 
+                                      c3 * eulerAngleRate( i, 3 ) ;
+    }
 }
 
 void PHRigidBodyMovement::CalculateAngleOfAttackAndSlide()          
 {
-	// 计算弹体坐标系下的瞬时攻角和侧滑角；
-	PHSuperMatrix velocityOfInflow( 3 );
-	PHSuperMatrix velocityInBody( 3 );
+    //! Calculate the initiative angle of attack and angle of slid in projectile axis system.
+    PHSuperMatrix velocityOfInflow( 3 );
+    PHSuperMatrix velocityInBody( 3 );
 
-	velocityOfInflow( 1 ) = cos( initiativeAngleOfAttack ) * cos( initiativeAngleOfSlide );
-	velocityOfInflow( 2 ) = cos( initiativeAngleOfAttack ) * sin( initiativeAngleOfSlide );
-	velocityOfInflow( 3 ) = sin( initiativeAngleOfAttack ) ;
-	PHSuperMatrix & velocityOfInflow1 = velocityOfInflow;
+    velocityOfInflow( 1 ) = cos( initiativeAngleOfAttack ) * cos( initiativeAngleOfSlide );
+    velocityOfInflow( 2 ) = cos( initiativeAngleOfAttack ) * sin( initiativeAngleOfSlide );
+    velocityOfInflow( 3 ) = sin( initiativeAngleOfAttack ) ;
+    PHSuperMatrix & velocityOfInflow1 = velocityOfInflow;
 
-	RDouble ARC2DEG = 180.0 / acos( - 1.0 );
+    RDouble ARC2DEG = 180.0 / acos( - 1.0 );
 
-	temporaryAngleOfAttack = ARC2DEG * atan( velocityOfInflow( 2 ) / PHSPACE::MAX( velocityOfInflow( 1 ), 1.0e-20 ) );
-	temporaryAngleOfSlide  = ARC2DEG * asin( velocityOfInflow( 3 ) );
+    temporaryAngleOfAttack = ARC2DEG * atan( velocityOfInflow( 2 ) / PHSPACE::MAX( velocityOfInflow( 1 ), 1.0e-20 ) );
+    temporaryAngleOfSlide  = ARC2DEG * asin( velocityOfInflow( 3 ) );
 
-	PHSuperMatrix & transformMatrixCurrent = * this->transformMatrixCurrent;
+    PHSuperMatrix & transformMatrixCurrent = * this->transformMatrixCurrent;
 
-	velocityInBody = transformMatrixCurrent * velocityOfInflow1;
+    velocityInBody = transformMatrixCurrent * velocityOfInflow1;
 }
 
 void PHRigidBodyMovement::UpdateSingleZoneGridInformation( Grid * gridIn )
@@ -506,149 +505,145 @@ void PHRigidBodyMovement::UpdateSingleZoneGridInformation( Grid * gridIn )
     {
         return;
     }
-	// 更新网格信息，包括网格坐标、网格导数等；
-	this->UpdateCoordinate( gridIn );
-	this->UpdateCellArea( gridIn );
-	this->UpdateGridVelocity( gridIn );
+
+    //! update the mesh information, include the mesh coordinate and derivatives.
+    this->UpdateCoordinate( gridIn );
+    this->UpdateCellArea( gridIn );
+    this->UpdateGridVelocity( gridIn );
 }
 
 void PHRigidBodyMovement::UpdateCellArea(Grid* gridIn)
 {
-	// 更新网格网格导数；
-
+    //! update the mesh derivatives.
     StructGrid* grid = static_cast<StructGrid*>(gridIn);
     int ni = grid->GetNI();
-	int nj = grid->GetNJ();
-	int nk = grid->GetNK();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
     RDouble4D& faceNormalX = *(grid->GetFaceNormalX());
     RDouble4D& faceNormalY = *(grid->GetFaceNormalY());
     RDouble4D& faceNormalZ = *(grid->GetFaceNormalZ());
 
-	PHSuperMatrix kxyz( 3 );
+    PHSuperMatrix kxyz( 3 );
 
-	PHSuperMatrix & transformMatrixCurrent = *( this->transformMatrixCurrent );
-	PHSuperMatrix & transformMatrixLastTime    = *( this->transformMatrixLastTime    );
+    PHSuperMatrix & transformMatrixCurrent = *( this->transformMatrixCurrent );
+    PHSuperMatrix & transformMatrixLastTime    = *( this->transformMatrixLastTime    );
 
-	PHMatrix< RDouble > matrix = PHSPACE::TransposeMatrix( transformMatrixCurrent ) * transformMatrixLastTime;
+    PHMatrix< RDouble > matrix = PHSPACE::TransposeMatrix( transformMatrixCurrent ) * transformMatrixLastTime;
 
-	for ( int nd = 1; nd <= 3; ++ nd )
-	{
-		for ( int k = 1; k <= nk; ++ k )
-		{
-			for ( int j = 1; j <= nj; ++ j )
-			{
-				for ( int i = 1; i <= ni; ++ i )
-				{
-					kxyz( 1 ) = faceNormalX(i, j, k, nd);
-					kxyz( 2 ) = faceNormalY(i, j, k, nd);
-					kxyz( 3 ) = faceNormalZ(i, j, k, nd);
+    for ( int nd = 1; nd <= 3; ++ nd )
+    {
+        for ( int k = 1; k <= nk; ++ k )
+        {
+            for ( int j = 1; j <= nj; ++ j )
+            {
+                for ( int i = 1; i <= ni; ++ i )
+                {
+                    kxyz( 1 ) = faceNormalX(i, j, k, nd);
+                    kxyz( 2 ) = faceNormalY(i, j, k, nd);
+                    kxyz( 3 ) = faceNormalZ(i, j, k, nd);
 
-					kxyz = matrix * kxyz;
+                    kxyz = matrix * kxyz;
 
-					faceNormalX(i, j, k, nd) = kxyz( 1 );
-					faceNormalY(i, j, k, nd) = kxyz( 2 );
-					faceNormalZ(i, j, k, nd) = kxyz( 3 );
-				}
-			}
-		}
-	}
-	return;
+                    faceNormalX(i, j, k, nd) = kxyz( 1 );
+                    faceNormalY(i, j, k, nd) = kxyz( 2 );
+                    faceNormalZ(i, j, k, nd) = kxyz( 3 );
+                }
+            }
+        }
+    }
+    return;
 }
 
 PHMatrix< RDouble > PHRigidBodyMovement::CalculateGridCellFaceVelocity(Grid* gridIn, int i, int j, int k, int nd )
 {
     StructGrid* grid = static_cast<StructGrid*>(gridIn);
-    // 计算网格单元面中心速度；
-	PHSuperMatrix xyzc = GetCellFaceCoordinate(grid, i, j, k, nd );
-	PHSuperMatrix currentAngelRate( 3 );
+    //! Calculate grid cell face velocity.
+    PHSuperMatrix xyzc = GetCellFaceCoordinate(grid, i, j, k, nd );
+    PHSuperMatrix currentAngelRate( 3 );
 
-	PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
+    PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
 
-	for ( int i = 1; i <= 3; ++ i )
-	{
-		xyzc( i ) = ( xyzc( i ) - ( * massCenterOfAircraft )( i ) ) / lengthRef;
-		currentAngelRate( i ) = eulerAngleRate( i, 1 );
-	}
-	return CrossProductVector( currentAngelRate, xyzc );
+    for ( int i = 1; i <= 3; ++ i )
+    {
+        xyzc( i ) = ( xyzc( i ) - ( * massCenterOfAircraft )( i ) ) / lengthRef;
+        currentAngelRate( i ) = eulerAngleRate( i, 1 );
+    }
+    return CrossProductVector( currentAngelRate, xyzc );
 }
 
 PHMatrix< RDouble > PHRigidBodyMovement::GetCellFaceCoordinate(Grid* gridIn, int i, int j, int k, int nd )
 {
     StructGrid* grid = static_cast<StructGrid*>(gridIn);
     RDouble3D & structuredX  = *( grid->GetStructX() );
-	RDouble3D & structuredY  = *( grid->GetStructY() );
+    RDouble3D & structuredY  = *( grid->GetStructY() );
     RDouble3D & structuredZ  = *( grid->GetStructZ() );
 
-	PHMatrix< RDouble > xyzc( 3 );
+    PHMatrix< RDouble > xyzc( 3 );
 
-	if ( nd == 1 ) 
-	{
-		xyzc( 1 ) = (   structuredX( i  , j    , k ) + structuredX( i  , j    , k + 1 )   
-				      + structuredX( i  , j + 1, k ) + structuredX( i  , j + 1, k + 1 )  ) * 0.25 ;
-		xyzc( 2 ) = (   structuredY( i  , j    , k ) + structuredY( i  , j    , k + 1 )   
-				      + structuredY( i  , j + 1, k ) + structuredY( i  , j + 1, k + 1 )  ) * 0.25 ;
-		xyzc( 3 ) = (   structuredZ( i  , j    , k ) + structuredZ( i  , j    , k + 1 )   
-				      + structuredZ( i  , j + 1, k ) + structuredZ( i  , j + 1, k + 1 )  ) * 0.25 ;
-		RDouble x1 = structuredX( i  , j    , k     );
-		RDouble x2 = structuredX( i  , j    , k + 1 );
-		RDouble x3 = structuredX( i  , j + 1, k     );
-		RDouble x4 = structuredX( i  , j + 1, k + 1 );
-	}
-	else if ( nd == 2 ) 
-	{
-		xyzc( 1 ) = (   structuredX( i    , j  , k ) + structuredX( i    , j  , k + 1 )   
-				  	  + structuredX( i + 1, j  , k ) + structuredX( i + 1, j  , k + 1 )  ) * 0.25 ;
-		xyzc( 2 ) = (   structuredY( i    , j  , k ) + structuredY( i    , j  , k + 1 )   
-				  	  + structuredY( i + 1, j  , k ) + structuredY( i + 1, j  , k + 1 )  ) * 0.25 ;
-		xyzc( 3 ) = (   structuredZ( i    , j  , k ) + structuredZ( i    , j  , k + 1 )   
-				      + structuredZ( i + 1, j  , k ) + structuredZ( i + 1, j  , k + 1 )  ) * 0.25 ;
-	}
-	else
-	{
-		xyzc( 1 ) = (   structuredX( i    , j  , k ) + structuredX( i    , j + 1, k  )   
-				      + structuredX( i + 1, j  , k ) + structuredX( i + 1, j + 1, k  )  ) * 0.25 ;
-		xyzc( 2 ) = (   structuredY( i    , j  , k ) + structuredY( i    , j + 1, k  )   
-				  	  + structuredY( i + 1, j  , k ) + structuredY( i + 1, j + 1, k  )  ) * 0.25 ;
-		xyzc( 3 ) = (   structuredZ( i    , j  , k ) + structuredZ( i    , j + 1, k  )   
-				      + structuredZ( i + 1, j  , k ) + structuredZ( i + 1, j + 1, k  )  ) * 0.25 ;
-	}
-	return xyzc;
+    if ( nd == 1 ) 
+    {
+        xyzc( 1 ) = (   structuredX( i  , j    , k ) + structuredX( i  , j    , k + 1 )   
+                      + structuredX( i  , j + 1, k ) + structuredX( i  , j + 1, k + 1 )  ) * 0.25 ;
+        xyzc( 2 ) = (   structuredY( i  , j    , k ) + structuredY( i  , j    , k + 1 )   
+                      + structuredY( i  , j + 1, k ) + structuredY( i  , j + 1, k + 1 )  ) * 0.25 ;
+        xyzc( 3 ) = (   structuredZ( i  , j    , k ) + structuredZ( i  , j    , k + 1 )   
+                      + structuredZ( i  , j + 1, k ) + structuredZ( i  , j + 1, k + 1 )  ) * 0.25 ;
+    }
+    else if ( nd == 2 ) 
+    {
+        xyzc( 1 ) = (   structuredX( i    , j  , k ) + structuredX( i    , j  , k + 1 )   
+                      + structuredX( i + 1, j  , k ) + structuredX( i + 1, j  , k + 1 )  ) * 0.25 ;
+        xyzc( 2 ) = (   structuredY( i    , j  , k ) + structuredY( i    , j  , k + 1 )   
+                      + structuredY( i + 1, j  , k ) + structuredY( i + 1, j  , k + 1 )  ) * 0.25 ;
+        xyzc( 3 ) = (   structuredZ( i    , j  , k ) + structuredZ( i    , j  , k + 1 )   
+                      + structuredZ( i + 1, j  , k ) + structuredZ( i + 1, j  , k + 1 )  ) * 0.25 ;
+    }
+    else
+    {
+        xyzc( 1 ) = (   structuredX( i    , j  , k ) + structuredX( i    , j + 1, k  )   
+                      + structuredX( i + 1, j  , k ) + structuredX( i + 1, j + 1, k  )  ) * 0.25 ;
+        xyzc( 2 ) = (   structuredY( i    , j  , k ) + structuredY( i    , j + 1, k  )   
+                      + structuredY( i + 1, j  , k ) + structuredY( i + 1, j + 1, k  )  ) * 0.25 ;
+        xyzc( 3 ) = (   structuredZ( i    , j  , k ) + structuredZ( i    , j + 1, k  )   
+                      + structuredZ( i + 1, j  , k ) + structuredZ( i + 1, j + 1, k  )  ) * 0.25 ;
+    }
+    return xyzc;
 }
 
 void PHRigidBodyMovement::InitializeSixDof()
 {
-	this->InitializeAircraftProperty();
-	this->NondimensionalOf6DOF();
-	this->InitializeEulerAngleInformation();
-	this->CalculationOfMatrix();
+    this->InitializeAircraftProperty();
+    this->NondimensionalOf6DOF();
+    this->InitializeEulerAngleInformation();
+    this->CalculationOfMatrix();
 }
 
 void PHRigidBodyMovement::MainCallOf6DOF()
 {
-	// 6自由度模块主调函数；
+    //! six DOF module main functions.
     RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
 
-	currentMarchTimeStep = physicalTimeStep;
+    currentMarchTimeStep = physicalTimeStep;
 
-	this->AerodynamicsInCFDSolver();
+    this->AerodynamicsInCFDSolver();
 
-	this->UpdateDynamicInfo6DOF();
+    this->UpdateDynamicInfo6DOF();
 
-	int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int numberOfZones = PHMPI::GetNumberofGlobalZones();
 
-	int gridLevelIndex = 0;
-	for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
-	{
-		Grid * grid = PHSPACE::GetGrid( iZone, gridLevelIndex );
-		if ( ! grid ) continue;
-		this->UpdateSingleZoneGridInformation( grid );
-	}
+    int gridLevelIndex = 0;
+    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    {
+        Grid * grid = PHSPACE::GetGrid( iZone, gridLevelIndex );
+        if ( ! grid ) continue;
+        this->UpdateSingleZoneGridInformation( grid );
+    }
 }
 
 void InitializeSixDof()
 {
-	RigidBodyMovement.InitializeSixDof();
+    RigidBodyMovement.InitializeSixDof();
 }
 
 void MainCallOf6DOF()

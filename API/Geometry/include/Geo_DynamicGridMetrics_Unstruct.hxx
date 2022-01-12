@@ -1,49 +1,48 @@
-inline void Geo_DynamicGridMetrics_Unstruct::SetNodeVelocityX(RDouble * xtn)
+inline void Geo_DynamicGridMetrics_Unstruct::SetFaceVelocityX(RDouble *xfv)
 {
-	this->xtn = xtn;
+    this->xfv = xfv;
 }
 
-inline void Geo_DynamicGridMetrics_Unstruct::SetNodeVelocityY(RDouble * ytn)
+inline void Geo_DynamicGridMetrics_Unstruct::SetFaceVelocityY(RDouble *yfv)
 {
-	this->ytn = ytn;
+    this->yfv = yfv;
 }
 
-inline void Geo_DynamicGridMetrics_Unstruct::SetNodeVelocityZ(RDouble * ztn)
+inline void Geo_DynamicGridMetrics_Unstruct::SetFaceVelocityZ(RDouble *zfv)
 {
-	this->ztn = ztn;
+    this->zfv = zfv;
+}
+inline void Geo_DynamicGridMetrics_Unstruct::SetFaceNormalVelocity(RDouble *vgn)
+{
+    this->vgn = vgn;
 }
 
-inline void Geo_DynamicGridMetrics_Unstruct::SetFaceNormalVelocity(RDouble * vgn)
+inline void Geo_DynamicGridMetrics_Unstruct::SetCellVolumeOld(RDouble *voln)
 {
-	this->vgn = vgn;
+    this->voln = voln;
 }
 
-inline void Geo_DynamicGridMetrics_Unstruct::SetCellVolumeOld(RDouble * voln)
-{
-	this->voln = voln;
-}
-
-inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetNodeVelocityX() const 
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityX() const 
 { 
-	return xtn; 
+    return xfv; 
 }
 
-inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetNodeVelocityY() const 
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityY() const 
 {
-	return ytn; 
+    return yfv; 
 }
 
-inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetNodeVelocityZ() const 
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityZ() const 
 {
-	return ztn;  
+    return zfv;  
 }
 
 inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceNormalVelocity() const 
 {
-	return vgn; 
+    return vgn; 
 }
 
 inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetCellVolumeOld() const
 {
-	return voln;
+    return voln;
 }

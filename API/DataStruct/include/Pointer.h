@@ -20,19 +20,29 @@ using namespace std;
 namespace PHSPACE
 {
 template < typename T >
-T* NewPointer(int nlen)
+T * HeaderPointer(vector< T > &field)
 {
-    T * variable = new T [nlen];
-	
+    if (field.size() != 0)
+    {
+        return &field[0];
+    }
+    return 0;
+}
+
+template < typename T >
+T * NewPointer(int nlen)
+{
+    T *variable = new T [nlen];
+    
     return variable;
 }
 
 template < typename T >
-T** NewPointer2(int nm, int nlen)
+T ** NewPointer2(int nm, int nlen)
 {
-    T ** vv = new T * [ nm ];
-	vv[0] = new T[ nm * nlen ];
-    for ( int m = 1; m < nm; ++ m )
+    T **vv = new T * [nm];
+    vv[0] = new T[nm * nlen];
+    for (int m = 1; m < nm; ++ m)
     {
         vv[m] = &vv[m-1][nlen];
     }
@@ -40,82 +50,81 @@ T** NewPointer2(int nm, int nlen)
 }
 
 template < typename T >
-T** NewPointer2(int nm, int *nlen)
+T ** NewPointer2(int nm, int *nlen)
 {
     int count = 0;
 
-    for ( int m = 0; m < nm; ++ m )
+    for (int m = 0; m < nm; ++ m)
     {
         count += nlen[m];
     }
 
-    T ** vv = new T * [ nm ];
-	vv[0] = new T[ count ];
-    for ( int m = 1; m < nm; ++ m )
+    T **vv = new T * [nm];
+    vv[0] = new T [count];
+    for (int m = 1; m < nm; ++ m)
     {
-        vv[m] = &vv[m-1][ nlen[m-1] ];
+        vv[m] = &vv[m-1][nlen[m-1]];
     }
     return vv;
 }
 
-
 template < typename T >
-T*** NewPointer3(int ni, int nj, int nk)
+T *** NewPointer3(int ni, int nj, int nk)
 {
-	T *** v3 = new T ** [ ni ];
-	v3[0]    = new T *  [ ni * nj ];
-	v3[0][0] = new T    [ ni * nj * nk ];
+    T *** v3 = new T ** [ni];
+    v3[0]    = new T *  [ni * nj];
+    v3[0][0] = new T    [ni * nj * nk];
 
-	for ( int i = 1; i < ni; ++ i )
-	{
-		v3[i] = &v3[i-1][nj];
-	}
+    for (int i = 1; i < ni; ++ i)
+    {
+        v3[i] = &v3[i-1][nj];
+    }
 
-	for ( int j = 1; j < nj; ++ j )
-	{
-		v3[0][j] = &v3[0][j-1][nk];
-	}
+    for (int j = 1; j < nj; ++ j)
+    {
+        v3[0][j] = &v3[0][j-1][nk];
+    }
 
-	for ( int i = 1; i < ni; ++ i )
-	{
-		v3[i][0] = &v3[i-1][nj-1][nk];
-		for ( int j = 1; j < nj; ++ j )
-		{
-			v3[i][j] = &v3[i][j-1][nk];
-		}
-	}
+    for (int i = 1; i < ni; ++ i)
+    {
+        v3[i][0] = &v3[i-1][nj-1][nk];
+        for (int j = 1; j < nj; ++ j)
+        {
+            v3[i][j] = &v3[i][j-1][nk];
+        }
+    }
 
-	return v3;
+    return v3;
 }
 
 template < typename T >
-T *** NewPointer3(int nCell, int nEqn, const int * nlen)
+T *** NewPointer3(int nCell, int nEqn, const int *nlen)
 {
     int count = 0;
 
-    for ( int m = 0; m < nCell; ++ m )
+    for (int m = 0; m < nCell; ++ m)
     {
         count += nEqn * nlen[m];
     }
 
-    T *** v3 = new T ** [ nCell ];
-    v3[0]    = new T *  [ nCell * nEqn ];
-    v3[0][0] = new T    [ count ];
+    T *** v3 = new T ** [nCell];
+    v3[0]    = new T *  [nCell * nEqn];
+    v3[0][0] = new T    [count];
 
-    for ( int i = 1; i < nCell; ++ i )
+    for (int i = 1; i < nCell; ++ i)
     {
         v3[i] = &v3[i-1][nEqn];
     }
 
-    for ( int j = 1; j < nEqn; ++ j )
+    for (int j = 1; j < nEqn; ++ j)
     {
         v3[0][j] = &v3[0][j-1][nlen[0]];
     }
 
-    for ( int i = 1; i < nCell; ++ i )
+    for (int i = 1; i < nCell; ++ i)
     {
         v3[i][0] = &v3[i-1][nEqn-1][nlen[i-1]];
-        for ( int j = 1; j < nEqn; ++ j )
+        for (int j = 1; j < nEqn; ++ j)
         {
             v3[i][j] = &v3[i][j-1][nlen[i]];
         }
@@ -125,52 +134,52 @@ T *** NewPointer3(int nCell, int nEqn, const int * nlen)
 }
 
 template < typename T >
-T** NewFastPointer(vector < T * > &vec)
+T ** NewFastPointer(vector < T * > &vec)
 {
-	T ** vv = new T * [ vec.size() ];
-	for ( int m = 0; m < vec.size(); ++ m )
-	{
-		vv[m] = vec[m];
-	}
-	return vv;
+    T **vv = new T * [vec.size()];
+    for (int m = 0; m < vec.size(); ++ m)
+    {
+        vv[m] = vec[m];
+    }
+    return vv;
 }
 
 template < typename T >
-void DelPointer(T *& v)
+void DelPointer(T *&v)
 {
-	if ( !v ) return;
-	delete [] v;
-    v = 0;
-}
-
-template < typename T >
-void DelPointer2(T ** v)
-{
-    if ( !v ) return;
-    delete [] v[0];
+    if (!v) return;
     delete [] v;
+    v = nullptr;
+}
+
+template < typename T >
+void DelPointer2(T **v)
+{
+    if (!v) return;
+    delete [] v[0];    v[0] = nullptr;
+    delete [] v;       v = nullptr;
 }
 
 
 template < typename T >
-void DelPointer3(T *** v3)
+void DelPointer3(T ***v3)
 {
-	delete [] v3[0][0];
-	delete [] v3[0];
-	delete [] v3;
+    delete [] v3[0][0];    v3[0][0] = nullptr;
+    delete [] v3[0];       v3[0] = nullptr;
+    delete [] v3;          v3 = nullptr;
 }
 
 
 template < typename T >
-void DelFastPointer( T ** v )
+void DelFastPointer(T **v)
 {
-	delete [] v;
+    delete [] v;    v = nullptr;
 }
 
 template < typename T >
-void FreePointer(T *& pointer)
+void FreePointer(T *&pointer)
 {
-	if ( !pointer ) return;
-	delete pointer; pointer = 0;
+    if (!pointer) return;
+    delete pointer;    pointer = nullptr;
 }
 }

@@ -45,6 +45,7 @@ private:
     void WriteTotalInfo(hid_t loc_id);
     void WriteGridCoordinates(hid_t loc_id, Grid *gridIn);
     void WriteInterfaceInfo(hid_t loc_id, Grid *gridIn);
+    void WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID);
 
     void WriteStructGrid(hid_t loc_id, Grid *gridIn);
     void WriteBCRegion(hid_t loc_id, Grid *gridIn);
@@ -64,7 +65,7 @@ private:
     int *block_proc;
     int *block_idx;
     int *block_type;
-    int *block_group;
+    int *file_index;
 };
 
 class IO_HDF5Read
@@ -102,6 +103,8 @@ private:
 
     void ReadStructGrid(hid_t loc_id, int iZone);
     void ReadBCRegion(hid_t loc_id, Grid *gridIn);
+    void ReadLnkInfo(hid_t loc_id, Grid *gridIn);
+    void ReadLnk(hid_t loc_id, int iZone);
     void ReadStrBCName(hid_t loc_id, Grid *gridIn);
 
     void ReadUnstructGrid(hid_t loc_id, int iZone);
@@ -120,17 +123,18 @@ private:
     void AddGrid(Grid *grid);
     void CreateZones();
     void ReadWallDist();
+    void SetMixGridInfo();
 
     void SetBlockProcDump(int *blockProcDumpIn) { this->blockProcDump = blockProcDumpIn; }
     void SetBlockProcGrid(int *blockProcGridIn) { this->blockProcGrid = blockProcGridIn; }
     void SetBlockProc(int *blockProcIn) { this->blockProc = blockProcIn; }
     void SetBlockType(int *blockTypeIn) { this->blockType = blockTypeIn; }
     void SetBlockIndex(int *blockIdxIn) { this->blockIdx = blockIdxIn; }
-    int *GetBlockProcDump() { return this->blockProcDump; }
-    int *GetBlockProc()     { return this->blockProc; }
-    int *GetBlockProcGrid() { return this->blockProcGrid; }
-    int *GetBlockType()     { return this->blockType; }
-    int *GetBlockIndex()    { return this->blockIdx; }
+    int * GetBlockProcDump() { return this->blockProcDump; }
+    int * GetBlockProc()     { return this->blockProc; }
+    int * GetBlockProcGrid() { return this->blockProcGrid; }
+    int * GetBlockType()     { return this->blockType; }
+    int * GetBlockIndex()    { return this->blockIdx; }
 
 private:
     //! The file index which the current processor charged.
@@ -164,14 +168,13 @@ private:
     int *blockProcDump;
     int *blockProcGrid;
     int *blockFileProc;
-	int *blockGroup;
     int taskType;
 
     vector<Grid *> grids;
     Region *region;
 };
 
-LIB_EXPORT void DumpHDF5Grid(const string &gridFileName, Grid **grids, int nBlocks);
 LIB_EXPORT bool ReadHDF5File(Region *region_in, PHVectorString1D &gridGroupNameList);
+LIB_EXPORT void DumpHDF5Grid(const string &gridFileName, Grid **grids, int nBlocks);
 
 }

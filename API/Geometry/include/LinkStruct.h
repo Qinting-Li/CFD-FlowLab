@@ -28,39 +28,39 @@ public:
     typedef DataStruct_AdtTree<int,RDouble> AdtTree;
 private:
     //! coor_tree is created to find the point column of interfaces.
-	AdtTree coor_tree;
+    AdtTree coor_tree;
     //! facelist is mainly used as a search list of global face.
-	set < DataStruct_Sort< VInt > > facelist;
+    set < DataStruct_Sort< VInt > > facelist;
     //! In general, each interface consists of two faces of different blocks.
     //! This requires the block index number of each face and the faces index number in current block.
     //! That is what zoneid and faceid do, and consistent with the order of global faces.
     VVInt zoneid;
     VVInt faceid;
     VVInt facemap;
-	RDouble tol;
-	vector< RDouble > x, y, z;
-	set< Geo_Point< RDouble >  > point_set;
+    RDouble tol;
+    vector< RDouble > x, y, z;
+    set< Geo_Point< RDouble >  > point_set;
 public:
-	AdtTree &GetCoordinateTree() { return coor_tree; }
-	set < DataStruct_Sort< VInt > > &GetFaceList() { return facelist; }
-	VVInt &GetZoneID() { return zoneid; };
-	VVInt &GetFaceID() { return faceid; };
-	VVInt &GetFaceMap() { return facemap; };
-	RDouble GetTolerance() const { return tol; }
-	vector< RDouble > &GetX() { return x; };
-	vector< RDouble > &GetY() { return y; };
-	vector< RDouble > &GetZ() { return z; };
-	set< Geo_Point< RDouble >  > &GetPointSet() { return point_set; }
+    AdtTree &GetCoordinateTree() { return coor_tree; }
+    set < DataStruct_Sort< VInt > > &GetFaceList() { return facelist; }
+    VVInt &GetZoneID() { return zoneid; };
+    VVInt &GetFaceID() { return faceid; };
+    VVInt &GetFaceMap() { return facemap; };
+    RDouble GetTolerance() const { return tol; }
+    vector< RDouble > &GetX() { return x; };
+    vector< RDouble > &GetY() { return y; };
+    vector< RDouble > &GetZ() { return z; };
+    set< Geo_Point< RDouble >  > &GetPointSet() { return point_set; }
 public:
-	LinkStruct(RDouble *pmin, RDouble *pmax, RDouble tol, int nblocks) : coor_tree(3, pmin, pmax)
-	{
+    LinkStruct(RDouble *pmin, RDouble *pmax, RDouble tol, int nblocks) : coor_tree(3, pmin, pmax)
+    {
         this->tol = tol;
         facemap.resize(nblocks);
-	};
+    };
 
-	~LinkStruct()
-	{
-	};
+    ~LinkStruct()
+    {
+    };
 };
 
 }

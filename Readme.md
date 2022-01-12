@@ -1,17 +1,20 @@
 <div align=left><img src="PHengLEI\Documents/PHengLEI-LOGO.png" style="zoom: 15%;"/><br>
 
-# 风雷软件（PHengLEI_2171）
+# 风雷软件（PHengLEI2112.v9198）
+
+备注：当前为master分支，更多新功能请切换到ActiveBranch分支。
 
 ## 1.软件简介
 
-&ensp;&ensp;&ensp;&ensp;风雷软件（PHengLEI，Platform for Hybrid ENGineering simulation of flows）是中国空气动力研究与发展中心（CARDC）研发的面向流体工程的混合CFD平台。平台以面向对象的设计理念，采用**C++**语言编程。2020年12月，风雷软件正式面向全国开源，与其他开源CFD软件相比，风雷软件具有扩展能力强、开发难度低、计算效率高等特点。（更多介绍请阅读PHengLEI/Documents文件夹下的**《风雷软件应用与开发指南》**）
+&ensp;&ensp;&ensp;&ensp;风雷软件（PHengLEI，Platform for Hybrid ENGineering simulation of flows）是中国空气动力研究与发展中心（CARDC）研发的面向流体工程的混合CFD平台。平台以面向对象的设计理念，采用C++语言编程。2020年12月，风雷软件正式面向全国开源，与其他开源CFD软件相比，风雷软件具有扩展能力强、开发难度低、计算效率高等特点。（更多介绍请阅读PHengLEI/Documents文件夹下的**《风雷软件应用与开发指南》**）
 
 &ensp;&ensp;&ensp;&ensp;风雷软件更多动态和Demo请登录以下网址查看：
 
-- 官网地址：http://www.cardc.cn/nnw/Softs/PHengLEI/index.html
+- 官网地址: http://www.cardc.cn/nnw/software/phenglei
 - 代码库地址：https://forge.osredm.com/projects/p68217053/PHengLEI
 - 算例库地址：https://forge.osredm.com/projects/p68217053/PHengLEI-TestCases
 - 代码参考文档地址：http://116.63.141.248:8088
+- 论坛（常见问题、算例展示、技术分享）地址：https://osredm.com/forums/theme/38
 
 &ensp;&ensp;&ensp;&ensp;风雷软件用户录制视频教程地址：
 - 视频教程：https://www.bilibili.com/video/BV1eX4y1T7yW?from=search&seid=9482198996609923785
@@ -68,3 +71,7 @@
 ## 7.鸣谢
 
 &ensp;&ensp;&ensp;&ensp;感谢所有参与风雷软件开发与推广的工作人员，也感谢所有支持风雷软件发展并提出宝贵意见和建议的广大用户。
+
+## 8.联系我们
+
+&ensp;&ensp;&ensp;&ensp;电子邮箱：phenglei@126.com。
