@@ -51,6 +51,8 @@ opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
 opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
+opt(REORDER "Build unstructured grid reorder or not" ON)
+
 
 set(GPROF OFF)
  if (GPROF)
@@ -63,8 +65,7 @@ set(GPROF OFF)
 
 #Reorder the index of cells for low matrix bandwidth
 #Reorder the index of faces for small cell index gap in cuda warp
-set(REORDER ON)
-if (REORDER)
+if (USE_REORDER)
 	add_definitions(-DREORDER)
 	set(CELLREORDER ON)
 	if (CELLREORDER) 
