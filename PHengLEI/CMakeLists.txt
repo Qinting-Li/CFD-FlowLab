@@ -51,8 +51,6 @@ opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
 opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
-opt(REORDER "Build unstructured grid reorder or not" ON)
-
 
 set(GPROF OFF)
  if (GPROF)
@@ -61,25 +59,6 @@ set(GPROF OFF)
    set(CMAKE_EXE_LINKER_FLAGS "$ENV{CMAKE_EXE_LINKER_FLAGS} -pg")
    set(CMAKE_SHARED_LINKER_FLAGS "$ENV{CMAKE_SHARED_LINKER_FLAGS} -pg")
  endif()
-
-
-#Reorder the index of cells for low matrix bandwidth
-#Reorder the index of faces for small cell index gap in cuda warp
-if (USE_REORDER)
-	add_definitions(-DREORDER)
-	set(CELLREORDER ON)
-	if (CELLREORDER) 
-		add_definitions(-DCELLRKM)
-	endif()
-	set(FACEREORDER ON)
-	if (FACEREORDER) 
-		add_definitions(-DFACEREORDER)
-		add_definitions(-DBSFCELLFACEORG)
-		#add_definitions(-DBSFCELLFACELEFT)
-		#add_definitions(-DBSFCELLFACERIGHT)
-		#add_definitions(-DDEEPCELLFACE)
-		endif()
-endif()
 
 if(USE_OCC)
   message(STATUS "USE_OCC is turned on!")
