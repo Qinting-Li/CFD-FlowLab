@@ -60,7 +60,6 @@ set(GPROF OFF)
    set(CMAKE_SHARED_LINKER_FLAGS "$ENV{CMAKE_SHARED_LINKER_FLAGS} -pg")
  endif()
 
-
 if(USE_OCC)
   message(STATUS "USE_OCC is turned on!")
   add_definitions(-DUSE_OCC)

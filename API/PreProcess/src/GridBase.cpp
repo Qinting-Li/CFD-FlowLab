@@ -6,6 +6,8 @@
 #include "Geo_UnstructBC.h"
 #include "Constants.h"
 #include "TK_Log.h"
+#include "Pre_Reorder.h"
+
 
 using namespace std;
 
@@ -1300,6 +1302,25 @@ void CGNSBase::ComputeGridConn(Base_Grid_Conn *gconn, BaseElement *base_elem)
     ComputeBCFace(gconn, base_elem);
     ComputeCellToNode(gconn, base_elem);
     PostProcess(gconn);
+	
+	int gridReorder = PHSPACE::GlobalDataBase::GetIntParaFromDB("gridReorder");
+	
+	if (gridReorder == 1)
+	{
+		using namespace Reorder;
+		//compute bandwidth
+		printf("Before ReOrder...\n");
+		CallBandwidthEvaluate(gconn);
+		CallMetricLeftRightCellOfFace(gconn);
+        //! CELLREORDER
+		CallReorderCellLabel(gconn);
+		//! FACEREORDER
+		CallReorderFaceLabel(gconn);
+		//! metrics for left_cell_of_face and right_cell_of_face
+		printf("After ReOrder...\n");
+		CallBandwidthEvaluate(gconn);
+		CallMetricLeftRightCellOfFace(gconn);
+	}
 }
 
 void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)

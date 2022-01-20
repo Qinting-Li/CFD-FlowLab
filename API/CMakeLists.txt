@@ -446,6 +446,7 @@ ${PreProcess_H_PATH}/GridTranslator.h
 ${PreProcess_H_PATH}/CombinGrid.h
 ${PreProcess_H_PATH}/GridBase.h
 ${PreProcess_H_PATH}/MixGrid.h
+${PreProcess_H_PATH}/Pre_Reorder.h
 )
 source_group(PreProcess\\include FILES ${PreProcess_H_LIST}) 
 include_directories(${PreProcess_H_PATH})
@@ -472,6 +473,7 @@ ${PreProcess_CPP_PATH}/GridTranslator.cpp
 ${PreProcess_CPP_PATH}/CombinGrid.cpp
 ${PreProcess_CPP_PATH}/GridBase.cpp
 ${PreProcess_CPP_PATH}/MixGrid.cpp
+${PreProcess_CPP_PATH}/Pre_Reorder.cpp
 )
 source_group(PreProcess\\src FILES ${PreProcess_CPP_LIST})
 

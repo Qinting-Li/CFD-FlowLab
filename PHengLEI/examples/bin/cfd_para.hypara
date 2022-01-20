@@ -32,11 +32,22 @@
 //             0 -- X axis.
 //             1 -- Y axis.
 //             2 -- Z axis.
+// gridReorder: Reorder cell and face of grid or not, only for 3D unstructured grid conversion,
+//              which is CGNS type.
+//             0 -- Not.
+//             1 -- Yes.
+// faceReorderMethod: the reorder method face of unstructured grid.
+//             0 -- BSFCELLFACEORG.
+//             1 -- BSFCELLFACELEFT. 
+//             2 -- BSFCELLFACERIGHT.
 int gridtype            = 0;
 int gridobj             = 1;
 int multiblock          = 0;
 int iadapt              = 0;
 int SymmetryFaceVector  = 1;
+
+int gridReorder         = 0;
+int faceReorderMethod   = 0;
 
 // axisup: Type of Cartisien coordinates system, used in grid conversion.
 //         1 -- Y upward. (default)
