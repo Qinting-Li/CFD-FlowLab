@@ -1,4 +1,4 @@
-#include "CombinGrid.h"
+#include "Pre_GridCombine.h"
 #include "Math_BasisFunction.h"
 #include "Glb_Dimension.h"
 #include "IO_FileName.h"
@@ -644,8 +644,8 @@ void CombinGrid::MergeBCType()
 
     nIFace = interfaceID;
     WriteLogFile("nIFace_all = ", nIFace);
-    InterfaceInfo *iinfo = new InterfaceInfo(nIFace);
-    grid_all->SetInterfaceInfo(iinfo);
+    InterfaceInfo *interfaceInfo = new InterfaceInfo(nIFace);
+    grid_all->SetInterfaceInfo(interfaceInfo);
 }
 
 bool CombinGrid::IsBcNode(int *p, int node_in)
@@ -855,8 +855,8 @@ void CombinGrid::DumpCombinationGrid()
     string out_gfile;
     GlobalDataBase::GetData("out_gfile", &out_gfile, PHSTRING, 1);
 
-    int codeOfOversetGrid = 0;
-    GlobalDataBase::GetData("codeOfOversetGrid", &codeOfOversetGrid, PHINT, 1);
+    int isOverset = 0;
+    GlobalDataBase::GetData("codeOfOversetGrid", &isOverset, PHINT, 1);
 
     using namespace PHMPI;
 
@@ -878,14 +878,14 @@ void CombinGrid::CompressInterfaceData(int zoneID, DataContainer *sendBuffer, in
 {
     int localZoneID = region->GetProcessGlobalZoneIndexToLocalZoneIndex(zoneID);
     Grid *grid = grid_in[localZoneID];
-    InterfaceInfo *iinfo = grid->GetInterfaceInfo();
-    if (!iinfo) return;
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+    if (!interfaceInfo) return;
 
     int myid = PHMPI::GetCurrentProcessorID();
-    int iNeighborZone                            = iinfo->FindIthNeighbor(neighborZone);
-    int interfaceNumberBetweenTwoNeighboringZone = iinfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForSend          = iinfo->GetFaceIndexForSend(iNeighborZone);
-    int *localInterfaceToBoundaryFaceIndexesMapping = iinfo->GetInterFace2BoundaryFace();
+    int iNeighborZone                            = interfaceInfo->FindIthNeighbor(neighborZone);
+    int interfaceNumberBetweenTwoNeighboringZone = interfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForSend          = interfaceInfo->GetFaceIndexForSend(iNeighborZone);
+    int *localInterfaceToBoundaryFaceIndexesMapping = interfaceInfo->GetInterFace2BoundaryFace();
     sendBuffer->moveto_begin();
     
 //  WriteLogFile("currentZone = ", zoneID);
@@ -913,14 +913,14 @@ void CombinGrid::DecompressInterfaceData(int zoneID, DataContainer *recieveBuffe
 {
     int localZoneID = region->GetProcessGlobalZoneIndexToLocalZoneIndex(zoneID);
     Grid *grid = grid_in[localZoneID];
-    InterfaceInfo *iinfo = grid->GetInterfaceInfo();
-    if (!iinfo) return;
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+    if (!interfaceInfo) return;
 
     //! Interface information of local sub-zones.
-    int iNeighborZone                            = iinfo->FindIthNeighbor(neighborZone);
-    int interfaceNumberBetweenTwoNeighboringZone = iinfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForReceive       = iinfo->GetFaceIndexForRecv(iNeighborZone);
-    int *localInterfaceToBoundaryFaceIndexesMapping = iinfo->GetInterFace2BoundaryFace();
+    int iNeighborZone                            = interfaceInfo->FindIthNeighbor(neighborZone);
+    int interfaceNumberBetweenTwoNeighboringZone = interfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive       = interfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+    int *localInterfaceToBoundaryFaceIndexesMapping = interfaceInfo->GetInterFace2BoundaryFace();
 
     //! Interface information of global merged zone.
     InterfaceInfo *globalInterfaceInfor = grid_all->GetInterfaceInfo();

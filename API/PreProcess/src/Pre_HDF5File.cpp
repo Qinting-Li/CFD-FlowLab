@@ -161,7 +161,7 @@ void IO_HDF5Write::CreateTotalInfo()
         // For OpenMP case, reset the processor ID of sub-zone to the source grid's.
         int zoneID = gridSource->GetGridID()->GetIndex();
         int processorID = PHMPI::GetZoneProcessorID(zoneID);
-        for ( int izone = 0; izone < nBlocks; ++ izone )
+        for (int izone = 0; izone < nBlocks; ++ izone)
         {
             block_proc[izone] = processorID;     
         }
@@ -944,21 +944,24 @@ void IO_HDF5Read::ReadNumberOfZonesOld(hid_t loc_id)
 void IO_HDF5Read::SetMixGridInfo()
 {
     int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
-    if (nsimutask != 1)
+    if (!(nsimutask == CREATE_GRID || nsimutask == GRIDCHECK_SOLVER))
     {
         return;
     }
 
-    int gridobj = GlobalDataBase::GetIntParaFromDB("gridobj");
-    if (gridobj != 1)
+    if (nsimutask == CREATE_GRID)
     {
-        return;
-    }
+        int gridObj = GlobalDataBase::GetIntParaFromDB("gridobj");
+        if (gridObj != PHSPACE::GRID_CONVERSION && gridObj != PHSPACE::GRID_STRTOUNS)
+        {
+            return;
+        }
 
-    int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
-    if (gridtype != PHSPACE::MIXGRID)
-    {
-        return;
+        int gridType = GlobalDataBase::GetIntParaFromDB("gridtype");
+        if (gridType != PHSPACE::MIXGRID && gridObj != PHSPACE::GRID_STRTOUNS)
+        {
+            return;
+        }
     }
 
     CreatetZoneProcessorID_INP(nZones);
@@ -1510,10 +1513,10 @@ void IO_HDF5Read::ReadUnstructGrid(hid_t loc_id, int iZone)
     grid->SetNTotalFace(iDimensions[1]);
     grid->SetNTotalCell(iDimensions[2]);
 
-    PrintToWindow("  Grid Dimension  : ", grid->GetDim(), "\n" );
-    PrintToWindow("  Number of Points: ", iDimensions[0], "\n" );
-    PrintToWindow("  Number of Faces : ", iDimensions[1], "\n" );
-    PrintToWindow("  Number of Cells : ", iDimensions[2], "\n" );
+    PrintToWindow("  Grid Dimension  : ", grid->GetDim(), "\n");
+    PrintToWindow("  Number of Points: ", iDimensions[0], "\n");
+    PrintToWindow("  Number of Faces : ", iDimensions[1], "\n");
+    PrintToWindow("  Number of Cells : ", iDimensions[2], "\n");
 
     ReadGridCoordinates(grpData, grid);
     ReadFaceTopology(grpData, grid);
@@ -1974,6 +1977,9 @@ LIB_EXPORT bool ReadHDF5File(Region *region_in, PHVectorString1D &gridGroupNameL
 
     IO_HDF5Read readGrid(gridGroupNameList, region_in);
     HDF5FileRead = readGrid.Run();
+
+    int isOldGrid = 0;
+    GlobalDataBase::UpdateData("isOldGrid", &isOldGrid, PHINT, 1);
 
     return HDF5FileRead;
 }

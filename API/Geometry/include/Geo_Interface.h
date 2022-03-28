@@ -234,6 +234,8 @@ public:
 
     void RegisterField(const string &name, const int type, const int dimesion, const int solverID);
 
+    void RemoveAllField();
+
     void FreeInterfaceVar();
 
     template< typename T >
@@ -245,6 +247,7 @@ public:
 private:
     void AllocateInterfaceVar(const string &name, const int type, const int dimesion, Data_ParamFieldSuite *datastore);
     void FreeInterfaceVar(Data_ParamFieldSuite *datastore);
+    void RemoveInterfaceVar(const string &name);
 };
 
 class InterfaceDataProxy

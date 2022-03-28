@@ -59,36 +59,36 @@ public:
 public:
     void PaintSelf();
     void PaintNeighbor();
-    void SetStructFaceGroup( vector< StructFace * > * structFaceGroup ) { this->structFaceGroup = structFaceGroup; }
-    void CollectInterfaceInformation( InterfaceInfo * interfaceInformation );
+    void SetStructFaceGroup(vector< StructFace * > * structFaceGroup) { this->structFaceGroup = structFaceGroup; }
+    void CollectInterfaceInformation(InterfaceInfo * interfaceInformation);
     int  ComputeNumberOfInterfaces();
 private:
     void Init();
-    void GenerateSubspace( vector< PHSurface * > * micro );
+    void GenerateSubspace(vector< PHSurface * > * micro);
 
-    PHSurface & GetNeighborZoneIndexContainer( int m ) { return * ( * neighborZoneIndexContainer )[m]; }
-    PHSurface & GetNeighborZoneLocalInterfaceIndexContainer( int m ) { return * ( * neighborZoneLocalInterfaceIndexContainer )[m]; }
-    PHSurface & GetLocalInterfaceIndexContainer( int m ) { return * ( * localInterfaceIndexContainer )[m]; }
-    PHSurface & GetLocalBoundaryFaceIndexContainer( int m ) { return * ( * localBoundaryFaceIndexContainer )[m]; }
+    PHSurface & GetNeighborZoneIndexContainer(int m) { return * (* neighborZoneIndexContainer)[m]; }
+    PHSurface & GetNeighborZoneLocalInterfaceIndexContainer(int m) { return * (* neighborZoneLocalInterfaceIndexContainer)[m]; }
+    PHSurface & GetLocalInterfaceIndexContainer(int m) { return * (* localInterfaceIndexContainer)[m]; }
+    PHSurface & GetLocalBoundaryFaceIndexContainer(int m) { return * (* localBoundaryFaceIndexContainer)[m]; }
 
-    int * GetNeighborZoneIndex( int m ) { return ( * neighborZoneIndexContainer )[m]->GetData(); }
-    int * GetNeighborZoneLocalInterfaceIndex( int m ) { return ( * neighborZoneLocalInterfaceIndexContainer )[m]->GetData(); }
-    int * GetLocalInterfaceIndex( int m ) { return ( * localInterfaceIndexContainer )[m]->GetData(); }
-    int * GetLocalBoundaryFaceIndex( int m ) { return ( * localBoundaryFaceIndexContainer )[m]->GetData(); }
+    int * GetNeighborZoneIndex(int m) { return (* neighborZoneIndexContainer)[m]->GetData(); }
+    int * GetNeighborZoneLocalInterfaceIndex(int m) { return (* neighborZoneLocalInterfaceIndexContainer)[m]->GetData(); }
+    int * GetLocalInterfaceIndex(int m) { return (* localInterfaceIndexContainer)[m]->GetData(); }
+    int * GetLocalBoundaryFaceIndex(int m) { return (* localBoundaryFaceIndexContainer)[m]->GetData(); }
 
-    StructFace * GetStructFaceGroup( int m ) { return ( * structFaceGroup )[m]; }
+    StructFace * GetStructFaceGroup(int m) { return (* structFaceGroup)[m]; }
 };
 
 class MultigridManager
 {
 public:
-    MultigridManager(Grid ** OrdinaryGrid, int codeOfOversetGrid, int globalBlockNumber);
+    MultigridManager(Grid ** OrdinaryGrid, int isOverset, int globalBlockNumber);
     ~MultigridManager();
 public:
     void Run();
 protected:
     Grid ** OrdinaryGrid;
-    int codeOfOversetGrid;
+    int isOverset;
 public:
     void GenerateGlobalNodeLinkStructure();
     void GenerateGlobalCellLinkStructure();
@@ -98,7 +98,7 @@ public:
     void FaceExtend();
     void PrismLineExtend();
     void CornerExtend();
-    void GetCrossPoint( int mPatch, int nPatch, RDouble x, RDouble y, RDouble z, RDouble & xx, RDouble & yy, RDouble & zz, int & nFlap, int & nPointBy, int & nBlock, int & iPoint, int & jPoint, int & kPoint );
+    void GetCrossPoint(int mPatch, int nPatch, RDouble x, RDouble y, RDouble z, RDouble & xx, RDouble & yy, RDouble & zz, int & nFlap, int & nPointBy, int & nBlock, int & iPoint, int & jPoint, int & kPoint);
     void GenerateGlobalBlockSpace();
     void GenerateGlobalPointSpace();
     void GenerateGlobalCenterSpace();
@@ -151,8 +151,8 @@ protected:
     vector< HoleGrid* > holeGridList;
 };
 
-void Standardize( vector< int > & st, vector< int > & ed, int side );
+void Standardize(vector< int > & st, vector< int > & ed, int side);
 string GetHoleBasicFileName();
-void GaussElimination( PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, int & flag );
+void GaussElimination(PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, int & flag);
 }
 

@@ -26,6 +26,17 @@
 #include "TurbSolverUnstr.h"          //! Unstructured turbulent solver.
 #include "TurbSolverStructFD.h"       //! Structured FD turbulent solver.
 
+#ifdef USE_IncompressibleSolver
+#include "INCompSolver.h"             //! Base incompressible solver.
+#include "INCompSolverStruct.h"       //! Structured incompressible solver, only basic capability of 2D.
+#include "INCompSolverUnstruct.h"     //! Unstructured incompressible solver, in developing however.
+#endif
+
+#ifdef USE_INHOUSE_VERSION
+#include "UGKSSimulation.h"           //! UGKS solver, only basic capability of 2D.
+#include "HelicopterSolver.h"
+#include "DSMCSolver.h"
+#endif
 
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"
@@ -36,4 +47,3 @@ namespace PHSPACE
 {
 
 }
-

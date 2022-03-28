@@ -177,7 +177,7 @@ void TurbSolverStrFD::GetFaceVariable(Grid *gridIn, FieldProxy *qlProxy, FieldPr
 RDouble TurbSolverStrFD::Limiter_ThirdSmooth(const RDouble &x, const RDouble &y)
 {
    const RDouble eps2 = 1.0e-6;
-    RDouble Smooth1 = x * ( y * y + 2.0 * eps2 ) +  y * ( 2.0 * x * x + eps2 );
+    RDouble Smooth1 = x * (y * y + 2.0 * eps2) +  y * (2.0 * x * x + eps2);
     RDouble Smooth2 = 2.0 * x * x - x * y + 2.0 * y * y + 3.0 * eps2;
     RDouble Smooth = Smooth1 / Smooth2;
     return  Smooth;
@@ -360,15 +360,15 @@ void TurbSolverStrFD::ObtainBoundaryValue(Grid *gridIn)
         }
         else if (IsWall(BCType))
         {
-            if (wallFunctionType ==0)
+            if (wallFunctionType == WALLFUNCTION::NONE)
             {
                 VisWall(grid, structBC);
             }
-            else if(wallFunctionType == 1)
+            else if(wallFunctionType == WALLFUNCTION::STANDARD)
             { 
                 VisWallWithWallFunctionStandard(grid, structBC);
             }
-            else if (wallFunctionType == 2)
+            else if (wallFunctionType == WALLFUNCTION::PAB3D)
             {
                 VisWallWithWallFunctionPAB3D(grid, structBC);
             }
@@ -687,8 +687,8 @@ void TurbSolverStrFD::ObtainCrossing(Grid *gridIn)
     RDouble4D &faceNormalComponentX = *(grid->GetFaceNormalX());
     RDouble4D &faceNormalComponentY = *(grid->GetFaceNormalY());
     RDouble4D &faceNormalComponentZ = *(grid->GetFaceNormalZ());
-    RDouble4D &area   = *(grid->GetFaceArea()   );
-    RDouble3D &volume = *(grid->GetCellVolume() );
+    RDouble4D &area   = *(grid->GetFaceArea()  );
+    RDouble3D &volume = *(grid->GetCellVolume());
 
     GreenGeo3D greenGeo3D;
 
@@ -731,8 +731,8 @@ void TurbSolverStrFD::ObtainBlending(Grid *gridIn)
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    RDouble4D &qLaminar       = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
-    RDouble4D &qTurbulence    = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb" ));
+    RDouble4D &qLaminar       = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D &qTurbulence    = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
     RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
 
     RDouble3D &cross = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cross"));
@@ -1298,7 +1298,7 @@ void TurbSolverStrFD::FarFieldBC(Grid *gridIn, StructBC *structBC)
 
     using namespace IDX;
 
-    RDouble *primitiveVariablesInfinity = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf" ));
+    RDouble *primitiveVariablesInfinity = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
     RDouble rFarfield = primitiveVariablesInfinity[IR];
     RDouble uFarfield = primitiveVariablesInfinity[IU];
     RDouble vFarfield = primitiveVariablesInfinity[IV];
@@ -1426,7 +1426,7 @@ void TurbSolverStrFD::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPro
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
-    RDouble4D &qpmv = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+    RDouble4D &qpmv = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
@@ -1577,7 +1577,7 @@ void TurbSolverStrFD::SpectrumRadiusOfOneEquation(Grid *gridIn)
 
                     RDouble rl = qLaminar(i, j, k, IR);
                     RDouble nul = qTurbulence(i, j, k, ISA);
-                    RDouble nueff_l = ABS(viscousLaminar(i , j , k ) / rl + nul);
+                    RDouble nueff_l = ABS(viscousLaminar(i , j , k) / rl + nul);
 
                     RDouble cellVolume  = volume(i, j, k);
                     RDouble oVolume = one / cellVolume;

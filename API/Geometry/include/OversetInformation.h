@@ -41,20 +41,20 @@ public:
     OversetInterplateCellManager * GetOversetInterplateCellManager() { return oversetInterplateCellManager; }
     OversetDonorCellManager      * GetOversetDonorCellManager     () { return oversetDonorCellManager     ; }
 
-    void AddOversetInterplateCell( OversetInterplateCell * oversetInterplateCell );
-    void AddOversetDonorCell     ( OversetDonorCell      * oversetDonorCell      );
+    void AddOversetInterplateCell(OversetInterplateCell * oversetInterplateCell);
+    void AddOversetDonorCell     (OversetDonorCell      * oversetDonorCell     );
 public:
     void PostProcessReceivingOversetInformation();
     void PostProcessSendingOversetInformation  ();
 
-    void EncodeOversetInformation( DataContainer * dataContainer );
-    void DecodeOversetInformation( DataContainer * dataContainer );
+    void EncodeOversetInformation(DataContainer * dataContainer);
+    void DecodeOversetInformation(DataContainer * dataContainer);
 protected:
-    void EncodeOversetInterplateCellInformation( DataContainer * dataContainer );
-    void EncodeOversetDonorCellInformation     ( DataContainer * dataContainer );
+    void EncodeOversetInterplateCellInformation(DataContainer * dataContainer);
+    void EncodeOversetDonorCellInformation     (DataContainer * dataContainer);
 
-    void DecodeOversetInterplateCellInformation( DataContainer * dataContainer );
-    void DecodeOversetDonorCellInformation     ( DataContainer * dataContainer );
+    void DecodeOversetInterplateCellInformation(DataContainer * dataContainer);
+    void DecodeOversetDonorCellInformation     (DataContainer * dataContainer);
 };
 
 class OversetDataProxy
@@ -66,23 +66,23 @@ protected:
     int sendReceiveFlag; //! 0: send ; 1: receive;
     OversetSwapManager * oversetSwapManager;
 public:
-    void  Initialize( OversetSwapManager * oversetSwapManager, int sendReceiveFlag );
+    void  Initialize(OversetSwapManager * oversetSwapManager, int sendReceiveFlag);
     int   GetNumberOfNeighbors      ();
     int   GetNumberOfCells          ();
-    int   GetNumberOfCells          ( int neighborIndex );
-    int * GetCellIndexContainer     ( int neighborIndex );
-    int * GetCellStorageIndexMapping( int neighborIndex );
+    int   GetNumberOfCells          (int neighborIndex);
+    int * GetCellIndexContainer     (int neighborIndex);
+    int * GetCellStorageIndexMapping(int neighborIndex);
 
-    RDouble * GetInterCellCenterX( int neighborIndex );
-    RDouble * GetInterCellCenterY( int neighborIndex );
-    RDouble * GetInterCellCenterZ( int neighborIndex );
+    RDouble * GetInterCellCenterX(int neighborIndex);
+    RDouble * GetInterCellCenterY(int neighborIndex);
+    RDouble * GetInterCellCenterZ(int neighborIndex);
 
     Data_ParamFieldSuite * GetDataStorage();
 public:
-    int FindNeighborIndex( int zoneIndex );
+    int FindNeighborIndex(int zoneIndex);
     PHVectorInt1D GetNeighborZoneIndexArray();
 protected:
-    int FindNeighborIndex( PHVectorInt1D & neighborZoneIndexArray, int neighborZoneIndexForSearching );
+    int FindNeighborIndex(PHVectorInt1D & neighborZoneIndexArray, int neighborZoneIndexForSearching);
 };
 
 class OversetInformationProxy
@@ -103,13 +103,13 @@ public:
     int  GetZoneIndex();
     OversetSwapManager      * GetOversetSwapManager  () { return oversetSwapManager;   };
     PHVector1D < OversetCell * > * GetOversetCellContainer() { return oversetCellContainer; };
-    void SetOversetCellContainer( PHVector1D < OversetCell * > * oversetCellContainer ) { this->oversetCellContainer = oversetCellContainer; };
+    void SetOversetCellContainer(PHVector1D < OversetCell * > * oversetCellContainer) { this->oversetCellContainer = oversetCellContainer; };
 
     PHVectorInt1D GetNeighborZoneIndexArray          ();
 public:
-    void GenerateNeighborZoneIndexSet ( set   < int > & neighborZoneIndexSet             );
-    void GetNeighborZoneIndexContainer( PHVectorInt1D & neighborZoneIndexContainer       );
-    void FreeOversetCellContainer     ( PHVector1D < OversetCell * > * oversetCellContainer );
+    void GenerateNeighborZoneIndexSet (set   < int > & neighborZoneIndexSet            );
+    void GetNeighborZoneIndexContainer(PHVectorInt1D & neighborZoneIndexContainer      );
+    void FreeOversetCellContainer     (PHVector1D < OversetCell * > * oversetCellContainer);
 public:
     OversetDonorCellManager      *  GetOversetDonorCellManager     () { return oversetSwapManager->GetOversetDonorCellManager();      }
     OversetInterplateCellManager *  GetOversetInterplateCellManager() { return oversetSwapManager->GetOversetInterplateCellManager(); }
@@ -121,27 +121,27 @@ public:
     void PostProcessSendingOversetInformation  ();
 public:
 
-    void     SetGrid( Grid *grid ) { this->grid = grid; }
+    void     SetGrid(Grid *grid) { this->grid = grid; }
     Grid * GetGrid() { return grid; }
 
     void PostProcessOversetInformation ();
-    void InitializeReceivingInformation( PHVector1D < OversetCell * > * oversetCellContainer );
+    void InitializeReceivingInformation(PHVector1D < OversetCell * > * oversetCellContainer);
 
 public:
-    void GetCellIndexContainer      ( int donorZoneIndexIn, PHVectorInt1D     & cellIndexContainer    );
-    void GetDonorCellIndexContainer ( int donorZoneIndexIn, PHVectorInt1D     & donorCellIndexContainer,
+    void GetCellIndexContainer      (int donorZoneIndexIn, PHVectorInt1D     & cellIndexContainer   );
+    void GetDonorCellIndexContainer (int donorZoneIndexIn, PHVectorInt1D     & donorCellIndexContainer,
                                                             PHVectorRDouble1D & interCellCenterX,
                                                             PHVectorRDouble1D & interCellCenterY,
-                                                            PHVectorRDouble1D & interCellCenterZ );
+                                                            PHVectorRDouble1D & interCellCenterZ);
 public:
-    void EncodeOversetInformation( DataContainer * dataContainer );
-    void DecodeOversetInformation( DataContainer * dataContainer );
+    void EncodeOversetInformation(DataContainer * dataContainer);
+    void DecodeOversetInformation(DataContainer * dataContainer);
 };
 
 class ActionKey;
 class OversetInformationProxy;
 
-OversetInformationProxy * GetOversetInformationProxy( int iZone, int gridLevelIndex = 0 );
+OversetInformationProxy * GetOversetInformationProxy(int iZone, int gridLevelIndex = 0);
 
 class OversetTopologyManager
 {
@@ -157,8 +157,8 @@ public:
     PHVectorInt2D & GetOversetTopologyForSend   ();
     PHVectorInt2D & GetOversetTopologyForReceive();
 
-    uint_t GetNumberOfOversetNeighbors( int zoneIndex );
-    int GetNeighborOversetZoneIndex( int zoneIndex, int ithOversetNeighbor );
+    uint_t GetNumberOfOversetNeighbors(int zoneIndex);
+    int GetNeighborOversetZoneIndex(int zoneIndex, int ithOversetNeighbor);
 public:
     void InitializeOversetInterfaceTopology();
     void InitializeOversetInterfaceTopologyServerCollectAndBcast();
@@ -178,10 +178,10 @@ protected:
     int donorZoneIndex;
     int donorCellIndex;
 public:
-    void SetZoneIndex     ( int zoneIndex      ) { this->zoneIndex      = zoneIndex     ; }
-    void SetCellIndex     ( int cellIndex      ) { this->cellIndex      = cellIndex     ; }
-    void SetDonorZoneIndex( int donorZoneIndex ) { this->donorZoneIndex = donorZoneIndex; }
-    void SetDonorCellIndex( int donorCellIndex ) { this->donorCellIndex = donorCellIndex; }
+    void SetZoneIndex     (int zoneIndex     ) { this->zoneIndex      = zoneIndex     ; }
+    void SetCellIndex     (int cellIndex     ) { this->cellIndex      = cellIndex     ; }
+    void SetDonorZoneIndex(int donorZoneIndex) { this->donorZoneIndex = donorZoneIndex; }
+    void SetDonorCellIndex(int donorCellIndex) { this->donorCellIndex = donorCellIndex; }
 
     int GetZoneIndex() { return zoneIndex; }
     int GetCellIndex() { return cellIndex; }
@@ -203,8 +203,8 @@ protected:
 public:
     Data_ParamFieldSuite * GetDataStorage() { return dataStorage; };
 
-    void SetZoneIndex     ( int zoneIndex      ) { this->zoneIndex      = zoneIndex     ; }
-    void SetDonorZoneIndex( int donorZoneIndex ) { this->donorZoneIndex = donorZoneIndex; }
+    void SetZoneIndex     (int zoneIndex     ) { this->zoneIndex      = zoneIndex     ; }
+    void SetDonorZoneIndex(int donorZoneIndex) { this->donorZoneIndex = donorZoneIndex; }
 
     int GetZoneIndex     () { return zoneIndex;      }
     int GetDonorZoneIndex() { return donorZoneIndex; }
@@ -216,8 +216,8 @@ public:
 
     PHVectorInt1D & GetStorageIndexContainer() { return storageIndexContainer; }
 public:
-    void EncodeOversetInterplateCellInformation( DataContainer * dataContainer );
-    void DecodeOversetInterplateCellInformation( DataContainer * dataContainer );
+    void EncodeOversetInterplateCellInformation(DataContainer * dataContainer);
+    void DecodeOversetInterplateCellInformation(DataContainer * dataContainer);
 };
 
 class OversetDonorCell
@@ -237,10 +237,10 @@ protected:
 public:
     Data_ParamFieldSuite * GetDataStorage() { return dataStorage; };
 
-    void SetZoneIndex          ( int zoneIndex ) { this->zoneIndex = zoneIndex     ; }
+    void SetZoneIndex          (int zoneIndex) { this->zoneIndex = zoneIndex     ; }
     int  GetZoneIndex          () { return zoneIndex;           }
 
-    void SetInterplateZoneIndex( int interplateZoneIndex ) { this->interplateZoneIndex = interplateZoneIndex; }
+    void SetInterplateZoneIndex(int interplateZoneIndex) { this->interplateZoneIndex = interplateZoneIndex; }
     int  GetInterplateZoneIndex() { return interplateZoneIndex; }
 
     PHVectorInt1D     & GetDonorCellIndexContainer() { return donorCellIndexContainer; }
@@ -248,17 +248,17 @@ public:
     PHVectorRDouble1D & GetInterCellCenterY()        { return interCellCenterY; }
     PHVectorRDouble1D & GetInterCellCenterZ()        { return interCellCenterZ; }
 
-    void SetDonorCellIndexContainer( PHVectorInt1D     & donorCellIndexContainerIn ) { this->donorCellIndexContainer = donorCellIndexContainerIn; }
-    void SetInterCellCenterX       ( PHVectorRDouble1D & interCellCenterXIn        ) { this->interCellCenterX        = interCellCenterXIn; }
-    void SetInterCellCenterY       ( PHVectorRDouble1D & interCellCenterYIn        ) { this->interCellCenterY        = interCellCenterYIn; }
-    void SetInterCellCenterZ       ( PHVectorRDouble1D & interCellCenterZIn        ) { this->interCellCenterZ        = interCellCenterZIn; }
+    void SetDonorCellIndexContainer(PHVectorInt1D     & donorCellIndexContainerIn) { this->donorCellIndexContainer = donorCellIndexContainerIn; }
+    void SetInterCellCenterX       (PHVectorRDouble1D & interCellCenterXIn       ) { this->interCellCenterX        = interCellCenterXIn; }
+    void SetInterCellCenterY       (PHVectorRDouble1D & interCellCenterYIn       ) { this->interCellCenterY        = interCellCenterYIn; }
+    void SetInterCellCenterZ       (PHVectorRDouble1D & interCellCenterZIn       ) { this->interCellCenterZ        = interCellCenterZIn; }
 
     int GetNumberOfOversetDonorCells() { return static_cast<int>(donorCellIndexContainer.size()); }
 
     PHVectorInt1D & GetStorageIndexContainer() { return storageIndexContainer; }
 public:
-    void EncodeOversetDonorCellInformation( DataContainer * dataContainer );
-    void DecodeOversetDonorCellInformation( DataContainer * dataContainer );
+    void EncodeOversetDonorCellInformation(DataContainer * dataContainer);
+    void DecodeOversetDonorCellInformation(DataContainer * dataContainer);
 };
 
 class OversetInterplateCellManager
@@ -276,22 +276,22 @@ public:
     int GetNumberOfNeighbors() { return static_cast<int>(oversetInterplateCellContainer.size()); }
 
     int  GetTotalNumberOfOversetInterplateCells() { return totalNumberOfOversetInterplateCells; }
-    void SetTotalNumberOfOversetInterplateCells( int totalNumberOfOversetInterplateCells ) { this->totalNumberOfOversetInterplateCells = totalNumberOfOversetInterplateCells; }
+    void SetTotalNumberOfOversetInterplateCells(int totalNumberOfOversetInterplateCells) { this->totalNumberOfOversetInterplateCells = totalNumberOfOversetInterplateCells; }
 
-    int GetNumberOfOversetInterplateCells( int iNeighbor );
+    int GetNumberOfOversetInterplateCells(int iNeighbor);
 
-    int * GetOversetInterplateCell     ( int iNeighbor );
-    int * GetInterplateCellStorageIndex( int iNeighbor );
+    int * GetOversetInterplateCell     (int iNeighbor);
+    int * GetInterplateCellStorageIndex(int iNeighbor);
 
     Data_ParamFieldSuite * GetDataStorage() { return dataStorage; };
 
     PHVectorInt1D GetNeighborDonorZoneIndexArray();
 public:
     void PostProcessReceivingOversetInformation();
-    void EncodeOversetInterplateCellInformation( DataContainer * dataContainer );
-    void DecodeOversetInterplateCellInformation( DataContainer * dataContainer );
+    void EncodeOversetInterplateCellInformation(DataContainer * dataContainer);
+    void DecodeOversetInterplateCellInformation(DataContainer * dataContainer);
 public:
-    void AddOversetInterplateCell( OversetInterplateCell * oversetInterplateCell );
+    void AddOversetInterplateCell(OversetInterplateCell * oversetInterplateCell);
 };
 
 class OversetDonorCellManager
@@ -309,29 +309,29 @@ public:
     int GetNumberOfNeighbors() { return static_cast<int>(oversetDonorCellContainer.size()); }
 
     int  GetTotalNumberOfOversetDonorCells() { return totalNumberOfOversetDonorCells; }
-    void SetTotalNumberOfOversetDonorCells( int totalNumberOfOversetDonorCells ) { this->totalNumberOfOversetDonorCells = totalNumberOfOversetDonorCells; }
+    void SetTotalNumberOfOversetDonorCells(int totalNumberOfOversetDonorCells) { this->totalNumberOfOversetDonorCells = totalNumberOfOversetDonorCells; }
 
-    int GetNumberOfOversetDonorCells( int iNeighbor );
+    int GetNumberOfOversetDonorCells(int iNeighbor);
 
-    int * GetOversetDonorCell     ( int iNeighbor );
-    int * GetDonorCellStorageIndex( int iNeighbor );
+    int * GetOversetDonorCell     (int iNeighbor);
+    int * GetDonorCellStorageIndex(int iNeighbor);
 
-    RDouble * GetInterCellCenterX( int iNeighbor );
-    RDouble * GetInterCellCenterY( int iNeighbor );
-    RDouble * GetInterCellCenterZ( int iNeighbor );
+    RDouble * GetInterCellCenterX(int iNeighbor);
+    RDouble * GetInterCellCenterY(int iNeighbor);
+    RDouble * GetInterCellCenterZ(int iNeighbor);
 
     Data_ParamFieldSuite * GetDataStorage() { return dataStorage; };
 
     PHVectorInt1D GetNeighborInterplateZoneIndexArray();
 public:
     void PostProcessSendingOversetInformation();
-    void EncodeOversetDonorCellInformation( DataContainer * dataContainer );
-    void DecodeOversetDonorCellInformation( DataContainer * dataContainer );
+    void EncodeOversetDonorCellInformation(DataContainer * dataContainer);
+    void DecodeOversetDonorCellInformation(DataContainer * dataContainer);
 public:
-    void AddOversetDonorCell     ( OversetDonorCell      * oversetDonorCell );
+    void AddOversetDonorCell     (OversetDonorCell      * oversetDonorCell);
 };
 
-uint_t GetNumberOfOversetNeighbors( int zoneIndex );
-int GetNeighborOversetZoneIndex( int zoneIndex, int iNeighbor );
+uint_t GetNumberOfOversetNeighbors(int zoneIndex);
+int GetNeighborOversetZoneIndex(int zoneIndex, int iNeighbor);
 
 }

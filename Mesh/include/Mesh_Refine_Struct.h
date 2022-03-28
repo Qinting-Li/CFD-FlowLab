@@ -9,39 +9,41 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      Pre_GridRefine.h
-//! @brief     Refining grid.
-//! @author    He Xianyao.
+//! @file      Mesh_Refine_Struct.h
+//! @brief     Structured grid refine.
+//! @author    Baka, He Xianyao.
 
 #pragma once
 #include "Region.h"
 #include "Geometry.h"
+#include "Mesh_Refine.h"
 
 using namespace std;
 
 namespace PHSPACE
 {
-class Pre_GridRefine
+
+class Mesh_Refine_Struct : public Mesh_Refine
 {
 public:
-    string gridFileName;
-
-public:
-    LIB_EXPORT Pre_GridRefine(const string &from_gfile);
-    LIB_EXPORT ~Pre_GridRefine();
-
-public:
-    LIB_EXPORT void Run();
+    LIB_EXPORT Mesh_Refine_Struct(const string &from_gfile);
+    LIB_EXPORT ~Mesh_Refine_Struct();
 
 private:
+    //! Initialize: allocate memory.
+    void AllocateMemory();
+
+    //! Grid refine.
     void RefineGrid();
-    void RefineGridStr(int izone, StructGrid *grid_in);
-    void RefineBCRegion();
+    void RefineGrid(int iZone, StructGrid *grid_in);
+
+    //! Generate refined grid, and then dump grid.
+    void GenerateAndDumpComputationalGrid();
+    void GenerateBCRegion();
 
 private:
-    int numberOfBlocks;
     vector<Grid *> OrdinaryGrid;
-    Grid **NewGrids;
+
 };
 
 }

@@ -17,7 +17,7 @@ using namespace std;
 
 namespace PHSPACE
 {
-PHSurface::PHSurface( Range I, Range J, Range K )
+PHSurface::PHSurface(Range I, Range J, Range K)
 {
     ist = I.first();
     jst = J.first();
@@ -37,9 +37,9 @@ PHSurface::~PHSurface()
     data = NULL;
 }
 
-int & PHSurface::operator()( int i, int j, int k )
+int & PHSurface::operator()(int i, int j, int k)
 {
-    return data[ni * nj * ( k - kst ) + ni * ( j - jst ) + ( i - ist )];
+    return data[ni * nj * (k - kst) + ni * (j - jst) + (i - ist)];
 }
 
 int * PHSurface::GetData()
@@ -52,16 +52,16 @@ int PHSurface::GetNumberOfFaces()
     return np;
 }
 
-StructFace::StructFace( StructGrid * structGrid )
+StructFace::StructFace(StructGrid * structGrid)
 {
     this->structGrid                         = structGrid;
 
-    neighborZoneIndexContainer               = new vector< PHSurface * >( 6, NULL );
-    neighborZoneLocalInterfaceIndexContainer = new vector< PHSurface * >( 6, NULL );
-    localInterfaceIndexContainer             = new vector< PHSurface * >( 6, NULL );
-    localBoundaryFaceIndexContainer          = new vector< PHSurface * >( 6, NULL );
+    neighborZoneIndexContainer               = new vector< PHSurface * >(6, NULL);
+    neighborZoneLocalInterfaceIndexContainer = new vector< PHSurface * >(6, NULL);
+    localInterfaceIndexContainer             = new vector< PHSurface * >(6, NULL);
+    localBoundaryFaceIndexContainer          = new vector< PHSurface * >(6, NULL);
 
-    numberOfFaceElements.resize( 6 );
+    numberOfFaceElements.resize(6);
 
     Init();
 
@@ -70,12 +70,12 @@ StructFace::StructFace( StructGrid * structGrid )
 
 StructFace::~StructFace()
 {
-    for ( int m = 0; m < 6; ++ m )
+    for (int m = 0; m < 6; ++ m)
     {
-        delete ( * neighborZoneIndexContainer )[m];
-        delete ( * neighborZoneLocalInterfaceIndexContainer )[m];
-        delete ( * localInterfaceIndexContainer )[m];
-        delete ( * localBoundaryFaceIndexContainer )[m];
+        delete (* neighborZoneIndexContainer)[m];
+        delete (* neighborZoneLocalInterfaceIndexContainer)[m];
+        delete (* localInterfaceIndexContainer)[m];
+        delete (* localBoundaryFaceIndexContainer)[m];
     }
     delete neighborZoneIndexContainer;               neighborZoneIndexContainer               = NULL;
     delete neighborZoneLocalInterfaceIndexContainer; neighborZoneLocalInterfaceIndexContainer = NULL;
@@ -90,36 +90,36 @@ void StructFace::PaintSelf()
     
     int iBoundaryFace = 0, iInterface = 0;
     int nBCRegion = compositeBCRegion->GetnBCRegion();
-    for ( int ibc = 0; ibc < nBCRegion; ++ ibc )
+    for (int ibc = 0; ibc < nBCRegion; ++ ibc)
     {
-        StructBC * bcRegion = compositeBCRegion->GetBCRegion( ibc );
+        StructBC * bcRegion = compositeBCRegion->GetBCRegion(ibc);
         
         int fds = bcRegion->GetFaceDirection();
         int fns = bcRegion->GetFaceLeftOrRightIndex();
 
-        int delta = ( fns + 1 ) / 2;
+        int delta = (fns + 1) / 2;
         int mfds = fds * 2 + delta;
 
-        PHSurface & localBoundaryFace = this->GetLocalBoundaryFaceIndexContainer( mfds );
-        PHSurface & localInterface    = this->GetLocalInterfaceIndexContainer( mfds );
-        vector< int > sst( 3 ), sed( 3 );
-        for ( int m = 0; m < 3; ++ m )
+        PHSurface & localBoundaryFace = this->GetLocalBoundaryFaceIndexContainer(mfds);
+        PHSurface & localInterface    = this->GetLocalInterfaceIndexContainer(mfds);
+        vector< int > sst(3), sed(3);
+        for (int m = 0; m < 3; ++ m)
         {
-            sst[m] = bcRegion->GetStartPoint( m );
-            sed[m] = bcRegion->GetEndPoint( m );
+            sst[m] = bcRegion->GetStartPoint(m);
+            sed[m] = bcRegion->GetEndPoint(m);
         }
 
         sst[fds] += delta;
         sed[fds] += delta;
 
-        for ( int k = sst[2]; k <= sed[2]; ++ k )
+        for (int k = sst[2]; k <= sed[2]; ++ k)
         {
-            for ( int j = sst[1]; j <= sed[1]; ++ j )
+            for (int j = sst[1]; j <= sed[1]; ++ j)
             {
-                for ( int i = sst[0]; i <= sed[0]; ++ i )
+                for (int i = sst[0]; i <= sed[0]; ++ i)
                 {
-                    localBoundaryFace( i, j, k ) = iBoundaryFace;
-                    localInterface( i, j, k ) = GHOST_INDEX;
+                    localBoundaryFace(i, j, k) = iBoundaryFace;
+                    localInterface(i, j, k) = GHOST_INDEX;
                     iBoundaryFace += 1;
                 }
             }
@@ -127,19 +127,19 @@ void StructFace::PaintSelf()
 
         int bc_type = bcRegion->GetBCType();
 
-        if ( ! IsInterface( bc_type ) ) continue;
+        if (! IsInterface(bc_type)) continue;
 
         int targetZoneIndex = bcRegion->GetTargetRegionBlock();
-        PHSurface & neighborZone = this->GetNeighborZoneIndexContainer( mfds );
+        PHSurface & neighborZone = this->GetNeighborZoneIndexContainer(mfds);
 
-        for ( int k = sst[2]; k <= sed[2]; ++ k )
+        for (int k = sst[2]; k <= sed[2]; ++ k)
         {
-            for ( int j = sst[1]; j <= sed[1]; ++ j )
+            for (int j = sst[1]; j <= sed[1]; ++ j)
             {
-                for ( int i = sst[0]; i <= sed[0]; ++ i )
+                for (int i = sst[0]; i <= sed[0]; ++ i)
                 {
-                    localInterface( i, j, k ) = iInterface;
-                    neighborZone( i, j, k ) = targetZoneIndex;
+                    localInterface(i, j, k) = iInterface;
+                    neighborZone(i, j, k) = targetZoneIndex;
                     iInterface += 1;
                 }
             }
@@ -151,14 +151,14 @@ void StructFace::PaintSelf()
 
 void StructFace::PaintNeighbor()
 {
-    vector< int > ti( 3 ), di( 3 );
+    vector< int > ti(3), di(3);
     CompositeStructBC * compositeBCRegion = structGrid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
-    for ( int ibc = 0; ibc < nBCRegion; ++ ibc )
+    for (int ibc = 0; ibc < nBCRegion; ++ ibc)
     {
-        StructBC * bcRegion = compositeBCRegion->GetBCRegion( ibc );
+        StructBC * bcRegion = compositeBCRegion->GetBCRegion(ibc);
         int bc_type = bcRegion->GetBCType();
-        if ( ! IsInterface( bc_type ) ) continue;
+        if (! IsInterface(bc_type)) continue;
 
         int * st_map = bcRegion->GetStam();
         int * rate   = bcRegion->GetRate();
@@ -166,14 +166,14 @@ void StructFace::PaintNeighbor()
         int fds = bcRegion->GetFaceDirection();
         int fns = bcRegion->GetFaceLeftOrRightIndex();
 
-        int ds = ( fns + 1 ) / 2;
+        int ds = (fns + 1) / 2;
         int ms = fds * 2 + ds;
 
-        vector< int > sst( 3 ), sed( 3 );
-        for ( int m = 0; m < 3; ++ m )
+        vector< int > sst(3), sed(3);
+        for (int m = 0; m < 3; ++ m)
         {
-            sst[m] = bcRegion->GetStartPoint( m );
-            sed[m] = bcRegion->GetEndPoint( m );
+            sst[m] = bcRegion->GetStartPoint(m);
+            sed[m] = bcRegion->GetEndPoint(m);
         }
 
         sst[fds] += ds;
@@ -182,39 +182,39 @@ void StructFace::PaintNeighbor()
         int fdt = bcRegion->GetFaceDirectionOfTargetBlock();
         int fnt = bcRegion->GetFaceLeftOrRightIndexOfTargetBlock();
 
-        int dt = ( fnt + 1 ) / 2;
+        int dt = (fnt + 1) / 2;
         int mt = fdt * 2 + dt;
 
-        vector< int > tst( 3 ), ted( 3 );
-        for ( int m = 0; m < 3; ++ m )
+        vector< int > tst(3), ted(3);
+        for (int m = 0; m < 3; ++ m)
         {
-            tst[m] = bcRegion->GetTargetStart( m );
-            ted[m] = bcRegion->GetTargetEnd( m );
+            tst[m] = bcRegion->GetTargetStart(m);
+            ted[m] = bcRegion->GetTargetEnd(m);
         }
 
         tst[fdt] += dt;
         ted[fdt] += dt;
 
         int targetZoneIndex = bcRegion->GetTargetRegionBlock();
-        StructFace * neighbor = GetStructFaceGroup( targetZoneIndex );
-        PHSurface & lid = neighbor->GetLocalInterfaceIndexContainer( mt );
-        PHSurface & nid = this->GetNeighborZoneLocalInterfaceIndexContainer( ms );
+        StructFace * neighbor = GetStructFaceGroup(targetZoneIndex);
+        PHSurface & lid = neighbor->GetLocalInterfaceIndexContainer(mt);
+        PHSurface & nid = this->GetNeighborZoneLocalInterfaceIndexContainer(ms);
         
-        for ( int k = sst[2]; k <= sed[2]; ++ k )
+        for (int k = sst[2]; k <= sed[2]; ++ k)
         {
             di[2] = k - sst[2];
-            for ( int j = sst[1]; j <= sed[1]; ++ j )
+            for (int j = sst[1]; j <= sed[1]; ++ j)
             {
                 di[1] = j - sst[1];
-                for ( int i = sst[0]; i <= sed[0]; ++ i )
+                for (int i = sst[0]; i <= sed[0]; ++ i)
                 {
                     di[0] = i - sst[0];
-                    for ( int m = 0; m < 3; ++ m )
+                    for (int m = 0; m < 3; ++ m)
                     {
                         int n = st_map[m];
-                        ti[n] = ( tst[n] + ted[n] + rate[m] * ( tst[n] - ted[n] ) ) / 2 + rate[m] * di[m];
+                        ti[n] = (tst[n] + ted[n] + rate[m] * (tst[n] - ted[n])) / 2 + rate[m] * di[m];
                     }
-                    nid( i, j, k ) = lid( ti[0], ti[1], ti[2] );
+                    nid(i, j, k) = lid(ti[0], ti[1], ti[2]);
                 }
             }
         }
@@ -228,17 +228,17 @@ int StructFace::ComputeNumberOfInterfaces()
     const int GHOST_INDEX = -1;
 
     int numberOfInterfaces = 0;
-    for ( int m = 0; m < 6; ++ m )
+    for (int m = 0; m < 6; ++ m)
     {
-        PHSurface & localInterface = GetLocalInterfaceIndexContainer( m );
+        PHSurface & localInterface = GetLocalInterfaceIndexContainer(m);
 
         int * data = localInterface.GetData();
 
         int numberOfElements = localInterface.GetNumberOfFaces();
  
-        for ( int iElement = 0; iElement < numberOfElements; ++ iElement )
+        for (int iElement = 0; iElement < numberOfElements; ++ iElement)
         {
-            if ( data[iElement] == GHOST_INDEX ) continue;
+            if (data[iElement] == GHOST_INDEX) continue;
 
             numberOfInterfaces += 1;
         }
@@ -247,7 +247,7 @@ int StructFace::ComputeNumberOfInterfaces()
     return numberOfInterfaces;
 }
 
-void StructFace::CollectInterfaceInformation( InterfaceInfo * interfaceInformation )
+void StructFace::CollectInterfaceInformation(InterfaceInfo * interfaceInformation)
 {
     if (!interfaceInformation) return;
 
@@ -257,17 +257,17 @@ void StructFace::CollectInterfaceInformation( InterfaceInfo * interfaceInformati
     int * neighborZoneLocalInterfaceIndexContainer   = interfaceInformation->GetInterFace2InterFaceID();
     int * localInterfaceToBoundaryFaceIndexesMapping = interfaceInformation->GetInterFace2BoundaryFace();
 
-    for ( int m = 0; m < 6; ++ m )
+    for (int m = 0; m < 6; ++ m)
     {
-        int * sa = this->GetNeighborZoneIndex( m );
-        int * sb = this->GetNeighborZoneLocalInterfaceIndex( m );
-        int * sc = this->GetLocalInterfaceIndex( m );
-        int * sd = this->GetLocalBoundaryFaceIndex( m );
+        int * sa = this->GetNeighborZoneIndex(m);
+        int * sb = this->GetNeighborZoneLocalInterfaceIndex(m);
+        int * sc = this->GetLocalInterfaceIndex(m);
+        int * sd = this->GetLocalBoundaryFaceIndex(m);
 
         int numberOfElements = numberOfFaceElements[m];
-        for ( int iElement = 0; iElement < numberOfElements; ++ iElement )
+        for (int iElement = 0; iElement < numberOfElements; ++ iElement)
         {
-            if ( sc[iElement] == GHOST_INDEX ) continue;
+            if (sc[iElement] == GHOST_INDEX) continue;
             
             int jZone           = sa[iElement];
             int jLocalInterface = sb[iElement];
@@ -289,42 +289,42 @@ void StructFace::Init()
     this->nj = structGrid->GetNJ();
     this->nk = structGrid->GetNK();
 
-    numberOfFaceElements[0] = ( nj - 1 ) * ( nk - 1 ); numberOfFaceElements[1] = ( nj - 1 ) * ( nk - 1 );
-    numberOfFaceElements[2] = ( ni - 1 ) * ( nk - 1 ); numberOfFaceElements[3] = ( ni - 1 ) * ( nk - 1 );
-    numberOfFaceElements[4] = ( ni - 1 ) * ( nj - 1 ); numberOfFaceElements[5] = ( ni - 1 ) * ( nj - 1 );
+    numberOfFaceElements[0] = (nj - 1) * (nk - 1); numberOfFaceElements[1] = (nj - 1) * (nk - 1);
+    numberOfFaceElements[2] = (ni - 1) * (nk - 1); numberOfFaceElements[3] = (ni - 1) * (nk - 1);
+    numberOfFaceElements[4] = (ni - 1) * (nj - 1); numberOfFaceElements[5] = (ni - 1) * (nj - 1);
 
-    IST.setRange( 1, 1 ); ISE.setRange( 1, ni - 1 ); IED.setRange( ni, ni );
-    JST.setRange( 1, 1 ); JSE.setRange( 1, nj - 1 ); JED.setRange( nj, nj );
-    KST.setRange( 1, 1 ); KSE.setRange( 1, nk - 1 ); KED.setRange( nk, nk );
+    IST.setRange(1, 1); ISE.setRange(1, ni - 1); IED.setRange(ni, ni);
+    JST.setRange(1, 1); JSE.setRange(1, nj - 1); JED.setRange(nj, nj);
+    KST.setRange(1, 1); KSE.setRange(1, nk - 1); KED.setRange(nk, nk);
 
-    GenerateSubspace( neighborZoneIndexContainer );
-    GenerateSubspace( neighborZoneLocalInterfaceIndexContainer );
-    GenerateSubspace( localInterfaceIndexContainer );
-    GenerateSubspace( localBoundaryFaceIndexContainer );
+    GenerateSubspace(neighborZoneIndexContainer);
+    GenerateSubspace(neighborZoneLocalInterfaceIndexContainer);
+    GenerateSubspace(localInterfaceIndexContainer);
+    GenerateSubspace(localBoundaryFaceIndexContainer);
 
     return;
 }
 
-void StructFace::GenerateSubspace( vector< PHSurface * > * micro )
+void StructFace::GenerateSubspace(vector< PHSurface * > * micro)
 {
     vector< PHSurface * > & smile = * micro;
 
-    smile[0] = new PHSurface( IST, JSE, KSE );
-    smile[1] = new PHSurface( IED, JSE, KSE );
+    smile[0] = new PHSurface(IST, JSE, KSE);
+    smile[1] = new PHSurface(IED, JSE, KSE);
 
-    smile[2] = new PHSurface( ISE, JST, KSE );
-    smile[3] = new PHSurface( ISE, JED, KSE );
+    smile[2] = new PHSurface(ISE, JST, KSE);
+    smile[3] = new PHSurface(ISE, JED, KSE);
 
-    smile[4] = new PHSurface( ISE, JSE, KST );
-    smile[5] = new PHSurface( ISE, JSE, KED );
+    smile[4] = new PHSurface(ISE, JSE, KST);
+    smile[5] = new PHSurface(ISE, JSE, KED);
 
     return;
 }
 
-MultigridManager::MultigridManager(Grid ** OrdinaryGrid, int codeOfOversetGrid, int globalBlockNumber)
+MultigridManager::MultigridManager(Grid ** OrdinaryGrid, int isOverset, int globalBlockNumber)
 {
     this->OrdinaryGrid      = OrdinaryGrid;
-    this->codeOfOversetGrid = codeOfOversetGrid;
+    this->isOverset         = isOverset;
     this->globalBlockNumber = globalBlockNumber;
 }
 
@@ -335,7 +335,7 @@ MultigridManager::~MultigridManager()
 
 void MultigridManager::Run()
 {
-    if( codeOfOversetGrid == 0 ) return;
+    if(!isOverset) return;
 
     GenerateLinkStructure();
 
@@ -346,10 +346,10 @@ void MultigridManager::Run()
 
 void MultigridManager::GenerateGlobalBlockSpace()
 {
-    startCenterLabel.resize( globalBlockNumber );
-    iCenterDimension.resize( globalBlockNumber );
-    jCenterDimension.resize( globalBlockNumber );
-    kCenterDimension.resize( globalBlockNumber );
+    startCenterLabel.resize(globalBlockNumber);
+    iCenterDimension.resize(globalBlockNumber);
+    jCenterDimension.resize(globalBlockNumber);
+    kCenterDimension.resize(globalBlockNumber);
 }
 
 void MultigridManager::GenerateGlobalCellLinkStructure()
@@ -371,20 +371,20 @@ void MultigridManager::ComputeCellCenter()
     const RDouble SMALL = -1.e9, EIGHTH = 0.125;
     int np0, np1, np2, np3, np4, np5, np6, np7;
 
-    for( int iCenter = 0; iCenter < globalCenterNumber; ++ iCenter )
+    for(int iCenter = 0; iCenter < globalCenterNumber; ++ iCenter)
     {
         cellCenterX[ iCenter ] = SMALL;
         cellCenterY[ iCenter ] = SMALL;
         cellCenterZ[ iCenter ] = SMALL;
     }
 
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
-        for( int k = 1; k < kDimension[ iBlock ]; ++ k )
+        for(int k = 1; k < kDimension[ iBlock ]; ++ k)
         {
-            for( int j = 1; j < jDimension[ iBlock ]; ++ j )
+            for(int j = 1; j < jDimension[ iBlock ]; ++ j)
             {
-                for( int i = 1; i < iDimension[ iBlock ]; ++ i )
+                for(int i = 1; i < iDimension[ iBlock ]; ++ i)
                 {
                     np0 = startPointLabel[ iBlock ]+jDimension[ iBlock ]*iDimension[ iBlock ]*k+iDimension[ iBlock ]*j+i;
                     np1 = startPointLabel[ iBlock ]+jDimension[ iBlock ]*iDimension[ iBlock ]*k+iDimension[ iBlock ]*j+(i-1);
@@ -396,9 +396,9 @@ void MultigridManager::ComputeCellCenter()
                     np7 = startPointLabel[ iBlock ]+jDimension[ iBlock ]*iDimension[ iBlock ]*(k-1)+iDimension[ iBlock ]*(j-1)+(i-1);
                     
                     int iCenter = startCenterLabel[ iBlock ]+iCenterDimension[ iBlock ]*jCenterDimension[ iBlock ]*k+iCenterDimension[ iBlock ]*j+i;
-                    cellCenterX[ iCenter ] = EIGHTH*( coordinateX[ np0 ]+coordinateX[ np1 ]+coordinateX[ np2 ]+coordinateX[ np3 ]+coordinateX[ np4 ]+coordinateX[ np5 ]+coordinateX[ np6 ]+coordinateX[ np7 ] );
-                    cellCenterY[ iCenter ] = EIGHTH*( coordinateY[ np0 ]+coordinateY[ np1 ]+coordinateY[ np2 ]+coordinateY[ np3 ]+coordinateY[ np4 ]+coordinateY[ np5 ]+coordinateY[ np6 ]+coordinateY[ np7 ] );
-                    cellCenterZ[ iCenter ] = EIGHTH*( coordinateZ[ np0 ]+coordinateZ[ np1 ]+coordinateZ[ np2 ]+coordinateZ[ np3 ]+coordinateZ[ np4 ]+coordinateZ[ np5 ]+coordinateZ[ np6 ]+coordinateZ[ np7 ] );
+                    cellCenterX[ iCenter ] = EIGHTH*(coordinateX[ np0 ]+coordinateX[ np1 ]+coordinateX[ np2 ]+coordinateX[ np3 ]+coordinateX[ np4 ]+coordinateX[ np5 ]+coordinateX[ np6 ]+coordinateX[ np7 ]);
+                    cellCenterY[ iCenter ] = EIGHTH*(coordinateY[ np0 ]+coordinateY[ np1 ]+coordinateY[ np2 ]+coordinateY[ np3 ]+coordinateY[ np4 ]+coordinateY[ np5 ]+coordinateY[ np6 ]+coordinateY[ np7 ]);
+                    cellCenterZ[ iCenter ] = EIGHTH*(coordinateZ[ np0 ]+coordinateZ[ np1 ]+coordinateZ[ np2 ]+coordinateZ[ np3 ]+coordinateZ[ np4 ]+coordinateZ[ np5 ]+coordinateZ[ np6 ]+coordinateZ[ np7 ]);
                 
                     characterPoint[ iCenter ] = np0;
                 }
@@ -412,17 +412,17 @@ void MultigridManager::FaceExtend()
     int iBlock, i, j, k, ic, jc, kc, nPointExtend, nPointCorner;
     int nPointPatch, nBlockPatch, iPatch, jPatch, kPatch, nPointTarget;
 
-    for( iBlock = 0; iBlock < globalBlockNumber; ++ iBlock )
+    for(iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
-        for( k = 1; k < kDimension[ iBlock ]; ++ k )
+        for(k = 1; k < kDimension[ iBlock ]; ++ k)
         {
-            for( j = 1; j < jDimension[ iBlock ]; ++ j )
+            for(j = 1; j < jDimension[ iBlock ]; ++ j)
             {
                 i = 1;
                 ic = 0;
                 nPointExtend = startCenterLabel[ iBlock ]+iCenterDimension[ iBlock ]*jCenterDimension[ iBlock ]*k+iCenterDimension[ iBlock ]*j+ic;
                 nPointCorner = startPointLabel[ iBlock ]+iDimension[ iBlock ]*jDimension[ iBlock ]*k+iDimension[ iBlock ]*j+i;
-                if( patchIPoint[ nPointCorner ] >= 0 )
+                if(patchIPoint[ nPointCorner ] >= 0)
                 {
                     nPointPatch = patchIPoint[ nPointCorner ];
                     nBlockPatch = blockLocation[ nPointPatch ];
@@ -446,7 +446,7 @@ void MultigridManager::FaceExtend()
                 
                 nPointExtend = startCenterLabel[ iBlock ]+iCenterDimension[ iBlock ]*jCenterDimension[ iBlock ]*k+iCenterDimension[ iBlock ]*j+ic;
                 nPointCorner = startPointLabel[ iBlock ]+iDimension[ iBlock ]*jDimension[ iBlock ]*k+iDimension[ iBlock ]*j+i;
-                if( patchIPoint[ nPointCorner ] >= 0 )
+                if(patchIPoint[ nPointCorner ] >= 0)
                 {
                     nPointPatch = patchIPoint[ nPointCorner ];
                     nBlockPatch = blockLocation[ nPointPatch ];
@@ -467,9 +467,9 @@ void MultigridManager::FaceExtend()
             }
         }
 
-        for( i = 1; i < iDimension[ iBlock ]; ++ i )
+        for(i = 1; i < iDimension[ iBlock ]; ++ i)
         {
-            for( k = 1; k < kDimension[ iBlock ]; ++ k )
+            for(k = 1; k < kDimension[ iBlock ]; ++ k)
             {
                 j = 1;
                 jc = 0;
@@ -477,7 +477,7 @@ void MultigridManager::FaceExtend()
                 nPointExtend = startCenterLabel[ iBlock ]+iCenterDimension[ iBlock ]*jCenterDimension[ iBlock ]*k+iCenterDimension[ iBlock ]*jc+i;
                 nPointCorner = startPointLabel[ iBlock ]+iDimension[ iBlock ]*jDimension[ iBlock ]*k+iDimension[ iBlock ]*j+i;
 
-                if( patchJPoint[ nPointCorner ] >= 0 )
+                if(patchJPoint[ nPointCorner ] >= 0)
                 {
                     nPointPatch = patchJPoint[ nPointCorner ];
                     nBlockPatch = blockLocation[ nPointPatch ];
@@ -502,7 +502,7 @@ void MultigridManager::FaceExtend()
                 nPointExtend = startCenterLabel[ iBlock ]+iCenterDimension[ iBlock ]*jCenterDimension[ iBlock ]*k+iCenterDimension[ iBlock ]*jc+i;
                 nPointCorner = startPointLabel[ iBlock ]+iDimension[ iBlock ]*jDimension[ iBlock ]*k+iDimension[ iBlock ]*j+i;
 
-                if( patchJPoint[ nPointCorner ] >= 0 )
+                if(patchJPoint[ nPointCorner ] >= 0)
                 {
                     nPointPatch = patchJPoint[ nPointCorner ];
                     nBlockPatch = blockLocation[ nPointPatch ];
@@ -523,9 +523,9 @@ void MultigridManager::FaceExtend()
             }
         }
 
-        for( j = 1; j < jDimension[ iBlock ]; ++ j )
+        for(j = 1; j < jDimension[ iBlock ]; ++ j)
         {
-            for( i = 1; i < iDimension[ iBlock ]; ++ i )
+            for(i = 1; i < iDimension[ iBlock ]; ++ i)
             {
                 k = 1;
                 kc = 0;
@@ -533,7 +533,7 @@ void MultigridManager::FaceExtend()
                 nPointExtend = startCenterLabel[ iBlock ]+iCenterDimension[ iBlock ]*jCenterDimension[ iBlock ]*kc+iCenterDimension[ iBlock ]*j+i;
                 nPointCorner = startPointLabel[ iBlock ]+iDimension[ iBlock ]*jDimension[ iBlock ]*k+iDimension[ iBlock ]*j+i;
 
-                if( patchKPoint[ nPointCorner ] >= 0 )
+                if(patchKPoint[ nPointCorner ] >= 0)
                 {
                     nPointPatch = patchKPoint[ nPointCorner ];
                     nBlockPatch = blockLocation[ nPointPatch ];
@@ -558,7 +558,7 @@ void MultigridManager::FaceExtend()
                 nPointExtend = startCenterLabel[ iBlock ]+iCenterDimension[ iBlock ]*jCenterDimension[ iBlock ]*kc+iCenterDimension[ iBlock ]*j+i;
                 nPointCorner = startPointLabel[ iBlock ]+iDimension[ iBlock ]*jDimension[ iBlock ]*k+iDimension[ iBlock ]*j+i;
 
-                if( patchKPoint[ nPointCorner ] >= 0 )
+                if(patchKPoint[ nPointCorner ] >= 0)
                 {
                     nPointPatch = patchKPoint[ nPointCorner ];
                     nBlockPatch = blockLocation[ nPointPatch ];
@@ -588,10 +588,10 @@ void MultigridManager::PrismLineExtend()
     int nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint, nPointG;
     int iCounter = 0;
 
-    for( iBlock = 0; iBlock < globalBlockNumber; ++ iBlock )
+    for(iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
         //! 1.
-        for( k = 1; k < kDimension[ iBlock ]; ++ k )
+        for(k = 1; k < kDimension[ iBlock ]; ++ k)
         {
             j = 1;
             i = 1;
@@ -605,11 +605,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -629,7 +629,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 2.
-        for( k = 1; k < kDimension[ iBlock ]; ++ k )
+        for(k = 1; k < kDimension[ iBlock ]; ++ k)
         {
             i = 1;
             j = jDimension[ iBlock ]-1;
@@ -643,11 +643,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -667,7 +667,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 3.
-        for( k = 1; k < kDimension[ iBlock ]; ++ k )
+        for(k = 1; k < kDimension[ iBlock ]; ++ k)
         {
             i = iDimension[ iBlock ]-1;
             j = 1;
@@ -681,11 +681,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -705,7 +705,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 4.
-        for( k = 1; k < kDimension[ iBlock ]; ++ k )
+        for(k = 1; k < kDimension[ iBlock ]; ++ k)
         {
             i = iDimension[ iBlock ]-1;
             j = jDimension[ iBlock ]-1;
@@ -719,11 +719,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchJPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchJPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -743,7 +743,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 5.
-        for( j = 1; j < jDimension[ iBlock ]; ++ j )
+        for(j = 1; j < jDimension[ iBlock ]; ++ j)
         {
             i = 1;
             k = 1;
@@ -757,11 +757,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -781,7 +781,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 6.
-        for( j = 1; j < jDimension[ iBlock ]; ++ j )
+        for(j = 1; j < jDimension[ iBlock ]; ++ j)
         {
             i = 1;
             k = kDimension[ iBlock ]-1;
@@ -795,11 +795,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -819,7 +819,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 7.
-        for( j = 1; j < jDimension[ iBlock ]; ++ j )
+        for(j = 1; j < jDimension[ iBlock ]; ++ j)
         {
             k = 1;
             i = iDimension[ iBlock ]-1;
@@ -833,11 +833,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -856,7 +856,7 @@ void MultigridManager::PrismLineExtend()
             }
         }
         //! 8.
-        for( j = 1; j < jDimension[ iBlock ]; ++ j )
+        for(j = 1; j < jDimension[ iBlock ]; ++ j)
         {
             k = kDimension[ iBlock ]-1;
             i = iDimension[ iBlock ]-1;
@@ -870,11 +870,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchIPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchIPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -894,7 +894,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 9.
-        for( i = 1; i < iDimension[ iBlock ]; ++ i )
+        for(i = 1; i < iDimension[ iBlock ]; ++ i)
         {
             k = kDimension[ iBlock ]-1;
             j = jDimension[ iBlock ]-1;
@@ -908,11 +908,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -932,7 +932,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 10.
-        for( i = 1; i < iDimension[ iBlock ]; ++ i )
+        for(i = 1; i < iDimension[ iBlock ]; ++ i)
         {
             k = 1;
             j = jDimension[ iBlock ]-1;
@@ -946,11 +946,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -970,7 +970,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 11.
-        for( i = 1; i < iDimension[ iBlock ]; ++ i )
+        for(i = 1; i < iDimension[ iBlock ]; ++ i)
         {
             j = 1;
             k = kDimension[ iBlock ]-1;
@@ -984,11 +984,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -1008,7 +1008,7 @@ void MultigridManager::PrismLineExtend()
         }
 
         //! 12.
-        for( i = 1; i < iDimension[ iBlock ]; ++ i )
+        for(i = 1; i < iDimension[ iBlock ]; ++ i)
         {
             j = 1;
             k = 1;
@@ -1022,11 +1022,11 @@ void MultigridManager::PrismLineExtend()
             cellCenterY[ nPointExtend ] = cellCenterY[ nPointCorner ];
             cellCenterZ[ nPointExtend ] = cellCenterZ[ nPointCorner ];
             characterPoint[ nPointExtend ] = characterPoint[ nPointCorner ];
-            if( patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0 )
+            if(patchJPoint[ nPointer ] >= 0 && patchKPoint[ nPointer ] >= 0)
             {
                 nFlap = 0;
-                GetCrossPoint( patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint );
-                if( nFlap == 1 )
+                GetCrossPoint(patchJPoint[ nPointer ], patchKPoint[ nPointer ], cellCenterX[ nPointCorner ], cellCenterY[ nPointCorner ], cellCenterZ[ nPointCorner ], xx, yy, zz, nFlap, nPointBy, nBlock, iPoint, jPoint, kPoint);
+                if(nFlap == 1)
                 {
                     cellCenterX[ nPointExtend ] = xx;
                     cellCenterY[ nPointExtend ] = yy;
@@ -1047,7 +1047,7 @@ void MultigridManager::PrismLineExtend()
     }
 }
 
-void MultigridManager::GetCrossPoint( int mPatch, int nPatch, RDouble x, RDouble y, RDouble z, RDouble & xx, RDouble & yy, RDouble & zz, int & nFlap, int & nPointBy, int & nBlock, int & iPoint, int & jPoint, int & kPoint )
+void MultigridManager::GetCrossPoint(int mPatch, int nPatch, RDouble x, RDouble y, RDouble z, RDouble & xx, RDouble & yy, RDouble & zz, int & nFlap, int & nPointBy, int & nBlock, int & iPoint, int & jPoint, int & kPoint)
 {
     const RDouble EPS = 1.e-4;
     int iBym[ 6 ], jBym[ 6 ], kBym[ 6 ], nPointBym[ 6 ], iByn[ 6 ], jByn[ 6 ], kByn[ 6 ], nPointByn[ 6 ];
@@ -1079,7 +1079,7 @@ void MultigridManager::GetCrossPoint( int mPatch, int nPatch, RDouble x, RDouble
     jByn[ 3 ] = jPoint+1;jByn[ 4 ] = jPoint;jByn[ 5 ] = jPoint;
     kByn[ 3 ] = kPoint;kByn[ 4 ] = kPoint-1;kByn[ 5 ] = kPoint+1;
 
-    for( int i = 0; i < 6; ++ i)
+    for(int i = 0; i < 6; ++ i)
     {
         nPointBym[ i ] = startCenterLabel[ mBlock ]+iCenterDimension[ mBlock ]*jCenterDimension[ mBlock ]*kBym[ i ]+iCenterDimension[ mBlock ]*jBym[ i ]+iBym[ i ];
         xBym[ i ] = cellCenterX[ nPointBym[ i ] ];
@@ -1092,20 +1092,20 @@ void MultigridManager::GetCrossPoint( int mPatch, int nPatch, RDouble x, RDouble
         zByn[ i ] = cellCenterZ[ nPointByn[ i ] ];
     }
 
-    for( int m = 0; m < 6; ++ m )
+    for(int m = 0; m < 6; ++ m)
     {
-        for( int n = 0; n < 6; ++ n )
+        for(int n = 0; n < 6; ++ n)
         {
-            dx = abs( xBym[ m ]-xByn[ n ] );
-            dy = abs( yBym[ m ]-yByn[ n ] );
-            dz = abs( zBym[ m ]-zByn[ n ] );
-            if( dx < EPS && dy < EPS && dz < EPS )
+            dx = abs(xBym[ m ]-xByn[ n ]);
+            dy = abs(yBym[ m ]-yByn[ n ]);
+            dz = abs(zBym[ m ]-zByn[ n ]);
+            if(dx < EPS && dy < EPS && dz < EPS)
             {
                 p = x-xByn[ n ];
                 q = y-yByn[ n ];
                 r = z-zByn[ n ];
-                distance = sqrt( p*p+q*q+r*r );
-                if( distance > EPS )
+                distance = sqrt(p*p+q*q+r*r);
+                if(distance > EPS)
                 {
                     xx = xByn[ n ];
                     yy = yByn[ n ];
@@ -1125,7 +1125,7 @@ void MultigridManager::GetCrossPoint( int mPatch, int nPatch, RDouble x, RDouble
 void MultigridManager::CornerExtend()
 {
     int iBlock, i, j, k, mPoint, nPoint;
-    for( iBlock = 0; iBlock < globalBlockNumber; ++ iBlock )
+    for(iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
         //! p1.
         i = 0;
@@ -1219,25 +1219,25 @@ void MultigridManager::CornerExtend()
 
 void MultigridManager::GenerateGlobalPointSpace()
 {
-    coordinateX.resize( globalPointNumber );
-    coordinateY.resize( globalPointNumber );
-    coordinateZ.resize( globalPointNumber );
+    coordinateX.resize(globalPointNumber);
+    coordinateY.resize(globalPointNumber);
+    coordinateZ.resize(globalPointNumber);
 }
 
 void MultigridManager::GenerateGlobalCenterSpace()
 {
-    characterPoint.resize( globalCenterNumber );
-    cellCenterX.resize( globalCenterNumber );
-    cellCenterY.resize( globalCenterNumber );
-    cellCenterZ.resize( globalCenterNumber );
+    characterPoint.resize(globalCenterNumber);
+    cellCenterX.resize(globalCenterNumber);
+    cellCenterY.resize(globalCenterNumber);
+    cellCenterZ.resize(globalCenterNumber);
 }
 
 void MultigridManager::GenerateLocalPointSpace()
 {
-    blockLocation.resize( globalPointNumber );
-    iLocation.resize( globalPointNumber );
-    jLocation.resize( globalPointNumber );
-    kLocation.resize( globalPointNumber );
+    blockLocation.resize(globalPointNumber);
+    iLocation.resize(globalPointNumber);
+    jLocation.resize(globalPointNumber);
+    kLocation.resize(globalPointNumber);
 }
 
 void MultigridManager::ReadGridCoordinate()
@@ -1245,7 +1245,7 @@ void MultigridManager::ReadGridCoordinate()
     GenerateGlobalBlockSpace();
 
     int pCounter = 0;
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
         startPointLabel[iBlock] = pCounter;
         pCounter += OrdinaryGrid[iBlock]->GetNTotalNode();
@@ -1254,7 +1254,7 @@ void MultigridManager::ReadGridCoordinate()
     GenerateGlobalPointSpace();
 
     int iCounter = 0;
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
         startCenterLabel[ iBlock ] = iCounter;
         iCenterDimension[ iBlock ] = iDimension[ iBlock ]+1;
@@ -1265,14 +1265,14 @@ void MultigridManager::ReadGridCoordinate()
     globalCenterNumber = iCounter;
     GenerateGlobalCenterSpace();
 
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
         RDouble *x = OrdinaryGrid[iBlock]->GetX();
         RDouble *y = OrdinaryGrid[iBlock]->GetY();
         RDouble *z = OrdinaryGrid[iBlock]->GetZ();
 
         int localPointNumber = OrdinaryGrid[iBlock]->GetNTotalNode();
-        for( int pCounter = 0; pCounter < localPointNumber; ++ pCounter )
+        for(int pCounter = 0; pCounter < localPointNumber; ++ pCounter)
         {
             int globalPointLabel = startPointLabel[iBlock] + pCounter;
             coordinateX[globalPointLabel] = x[pCounter];
@@ -1285,13 +1285,13 @@ void MultigridManager::ReadGridCoordinate()
     GenerateLocalPointSpace();
 
     int globalPointLabel = 0;
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
-        for( int k = 0; k < kDimension[iBlock]; ++k )
+        for(int k = 0; k < kDimension[iBlock]; ++k)
         {
-            for( int j = 0; j < jDimension[iBlock]; ++j )
+            for(int j = 0; j < jDimension[iBlock]; ++j)
             {
-                for( int i = 0; i < iDimension[iBlock]; ++i )
+                for(int i = 0; i < iDimension[iBlock]; ++i)
                 {
                     blockLocation[globalPointLabel] = iBlock;
                     iLocation[globalPointLabel] = i;
@@ -1318,7 +1318,7 @@ void MultigridManager::ReadBoundaryCondition()
     maxLocalFaceNumber = 0;
     specialBlockLabel = -1;
 
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
         StructGrid * grid = StructGridCast(OrdinaryGrid[iBlock]);
 
@@ -1332,12 +1332,12 @@ void MultigridManager::ReadBoundaryCondition()
         jDimension[iBlock] = grid->GetNJ();
         kDimension[iBlock] = grid->GetNK();
         
-        for( int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion )
+        for(int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion)
         {
             StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
 
             boundaryLabel = structBC->GetBCType();
-            if( boundaryLabel < 0 )
+            if(boundaryLabel < 0)
             {
                 patchCounter += 1;
             }
@@ -1348,7 +1348,7 @@ void MultigridManager::ReadBoundaryCondition()
         }
 
         ComparePatchInner = max(patchCounter, innerCounter);
-        if( ComparePatchInner > maxLocalFaceNumber )
+        if(ComparePatchInner > maxLocalFaceNumber)
         {
             maxLocalFaceNumber = ComparePatchInner;
             specialBlockLabel = iBlock;
@@ -1362,7 +1362,7 @@ void MultigridManager::ReadBoundaryCondition()
 
     GenerateLocalFaceSpace();
     
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
         StructGrid * grid = StructGridCast(OrdinaryGrid[iBlock]);
 
@@ -1371,7 +1371,7 @@ void MultigridManager::ReadBoundaryCondition()
         int patchLabel = 0, innerLabel = 0;
         int imin, imax, jmin, jmax, kmin, kmax, boundaryLabel, targetLabel;
 
-        for( int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion )
+        for(int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion)
         {
             StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
 
@@ -1387,7 +1387,7 @@ void MultigridManager::ReadBoundaryCondition()
             kmax = s_ed[2];
 
             boundaryLabel = structBC->GetBCType();
-            if( boundaryLabel < 0 )
+            if(boundaryLabel < 0)
             {
                 iminMaster[iBlock][patchLabel] = imin;
                 imaxMaster[iBlock][patchLabel] = imax;
@@ -1422,12 +1422,12 @@ void MultigridManager::ReadBoundaryCondition()
             }
             else
             {
-                iminInner[iBlock][innerLabel] = min( imin, imax );
-                imaxInner[iBlock][innerLabel] = max( imin, imax );
-                jminInner[iBlock][innerLabel] = min( jmin, jmax );
-                jmaxInner[iBlock][innerLabel] = max( jmin, jmax );
-                kminInner[iBlock][innerLabel] = min( kmin, kmax );
-                kmaxInner[iBlock][innerLabel] = max( kmin, kmax );
+                iminInner[iBlock][innerLabel] = min(imin, imax);
+                imaxInner[iBlock][innerLabel] = max(imin, imax);
+                jminInner[iBlock][innerLabel] = min(jmin, jmax);
+                jmaxInner[iBlock][innerLabel] = max(jmin, jmax);
+                kminInner[iBlock][innerLabel] = min(kmin, kmax);
+                kmaxInner[iBlock][innerLabel] = max(kmin, kmax);
                 faceType[iBlock][innerLabel] = boundaryLabel;
                 innerLabel += 1;
             }
@@ -1441,68 +1441,68 @@ void MultigridManager::ReadBoundaryCondition()
 
 void MultigridManager::GenerateGlobalFaceSpace()
 {
-    startPointLabel.resize( globalBlockNumber );
-    iDimension.resize( globalBlockNumber );
-    jDimension.resize( globalBlockNumber );
-    kDimension.resize( globalBlockNumber );
-    overallFaceNumber.resize( globalBlockNumber );
-    externalFaceNumber.resize( globalBlockNumber );
-    internalFaceNumber.resize( globalBlockNumber );
-    processLabel.resize( globalBlockNumber );
+    startPointLabel.resize(globalBlockNumber);
+    iDimension.resize(globalBlockNumber);
+    jDimension.resize(globalBlockNumber);
+    kDimension.resize(globalBlockNumber);
+    overallFaceNumber.resize(globalBlockNumber);
+    externalFaceNumber.resize(globalBlockNumber);
+    internalFaceNumber.resize(globalBlockNumber);
+    processLabel.resize(globalBlockNumber);
 }
 
 void MultigridManager::InitialNodeLinksData()
 {
     int iCounter = 0;
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
         startPointLabel[iBlock] = iCounter;
         iCounter += iDimension[iBlock]*jDimension[iBlock]*kDimension[iBlock];
     }
     globalPointNumber = iCounter;
 
-    for( int iPoint = 0; iPoint < globalPointNumber; ++iPoint )
+    for(int iPoint = 0; iPoint < globalPointNumber; ++iPoint)
     {
-        patchIPoint.push_back( -1 );
-        patchJPoint.push_back( -1 );
-        patchKPoint.push_back( -1 );
+        patchIPoint.push_back(-1);
+        patchJPoint.push_back(-1);
+        patchKPoint.push_back(-1);
     }     //! Different from the initialization of PMB3D.
 }
 
 void MultigridManager::GenerateLocalFaceSpace()
 {
-    InitializeLocalFaceSpace( iminMaster, 0 );
-    InitializeLocalFaceSpace( imaxMaster, 0 );
-    InitializeLocalFaceSpace( jminMaster, 0 );
-    InitializeLocalFaceSpace( jmaxMaster, 0 );
-    InitializeLocalFaceSpace( kminMaster, 0 );
-    InitializeLocalFaceSpace( kmaxMaster, 0 );
+    InitializeLocalFaceSpace(iminMaster, 0);
+    InitializeLocalFaceSpace(imaxMaster, 0);
+    InitializeLocalFaceSpace(jminMaster, 0);
+    InitializeLocalFaceSpace(jmaxMaster, 0);
+    InitializeLocalFaceSpace(kminMaster, 0);
+    InitializeLocalFaceSpace(kmaxMaster, 0);
 
-    InitializeLocalFaceSpace( iminSlave, 0 );
-    InitializeLocalFaceSpace( imaxSlave, 0 );
-    InitializeLocalFaceSpace( jminSlave, 0 );
-    InitializeLocalFaceSpace( jmaxSlave, 0 );
-    InitializeLocalFaceSpace( kminSlave, 0 );
-    InitializeLocalFaceSpace( kmaxSlave, 0 );
+    InitializeLocalFaceSpace(iminSlave, 0);
+    InitializeLocalFaceSpace(imaxSlave, 0);
+    InitializeLocalFaceSpace(jminSlave, 0);
+    InitializeLocalFaceSpace(jmaxSlave, 0);
+    InitializeLocalFaceSpace(kminSlave, 0);
+    InitializeLocalFaceSpace(kmaxSlave, 0);
 
-    InitializeLocalFaceSpace( iminInner, 0 );
-    InitializeLocalFaceSpace( imaxInner, 0 );
-    InitializeLocalFaceSpace( jminInner, 0 );
-    InitializeLocalFaceSpace( jmaxInner, 0 );
-    InitializeLocalFaceSpace( kminInner, 0 );
-    InitializeLocalFaceSpace( kmaxInner, 0 );
+    InitializeLocalFaceSpace(iminInner, 0);
+    InitializeLocalFaceSpace(imaxInner, 0);
+    InitializeLocalFaceSpace(jminInner, 0);
+    InitializeLocalFaceSpace(jmaxInner, 0);
+    InitializeLocalFaceSpace(kminInner, 0);
+    InitializeLocalFaceSpace(kmaxInner, 0);
 
-    InitializeLocalFaceSpace( faceType, -1000 );
-    InitializeLocalFaceSpace( tarPatch, -1000 );
+    InitializeLocalFaceSpace(faceType, -1000);
+    InitializeLocalFaceSpace(tarPatch, -1000);
 }
 
-void MultigridManager::InitializeLocalFaceSpace( PHInt2D & myInt2D, int value )
+void MultigridManager::InitializeLocalFaceSpace(PHInt2D & myInt2D, int value)
 {
-    myInt2D.resize( globalBlockNumber );
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    myInt2D.resize(globalBlockNumber);
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
-        myInt2D[iBlock].resize( maxLocalFaceNumber );
-        for( int iFace = 0; iFace < maxLocalFaceNumber; ++iFace )
+        myInt2D[iBlock].resize(maxLocalFaceNumber);
+        for(int iFace = 0; iFace < maxLocalFaceNumber; ++iFace)
         {
             myInt2D[iBlock][iFace] = value;
         }
@@ -1511,14 +1511,14 @@ void MultigridManager::InitializeLocalFaceSpace( PHInt2D & myInt2D, int value )
 
 void MultigridManager::SetNewPatchModel()
 {
-    vector< int > sourceToLocalAspectMapping( 3 ), localToTargetAspectMapping( 3 ), sourceToTargetAspectMapping( 3 );
-    vector< int > relativeRate( 3 ), colorSource( 3 ), colorTarget( 3 ), sst( 3 ), sed( 3 ), tst( 3 ), ted( 3 ), maps( 3 );
+    vector< int > sourceToLocalAspectMapping(3), localToTargetAspectMapping(3), sourceToTargetAspectMapping(3);
+    vector< int > relativeRate(3), colorSource(3), colorTarget(3), sst(3), sed(3), tst(3), ted(3), maps(3);
     int sside = 0, tside = 0;
     const int NEGATIVE_UNIT = -1, POSITIVE_UNIT = 1;
 
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
-        for( int iPatch = 0; iPatch < externalFaceNumber[iBlock]; ++iPatch )
+        for(int iPatch = 0; iPatch < externalFaceNumber[iBlock]; ++iPatch)
         {
             sst[0] = iminMaster[iBlock][iPatch];
             sed[0] = imaxMaster[iBlock][iPatch];
@@ -1535,13 +1535,13 @@ void MultigridManager::SetNewPatchModel()
             ted[2] = kmaxSlave[iBlock][iPatch];
 
             //! Local analysis of the source grid block.
-            for ( int m = 0; m < 3; ++ m )
+            for (int m = 0; m < 3; ++ m)
             {
-                if ( sst[m] == sed[m] )
+                if (sst[m] == sed[m])
                 {
                     sourceToLocalAspectMapping[m] = 0; //! The m-th axis is the relative main axis of the source grid block.
 
-                    if ( sst[m] == 1 )
+                    if (sst[m] == 1)
                     {
                         sside = 2 * m;
                         colorSource[m] = POSITIVE_UNIT; //! The patching face is the start point of the source grid block relative main axis. 
@@ -1552,11 +1552,11 @@ void MultigridManager::SetNewPatchModel()
                         colorSource[m] = NEGATIVE_UNIT; //! The patching face is the end point of the source grid block relative main axis. 
                     }
                 }
-                else if ( sst[m] < 0 )
+                else if (sst[m] < 0)
                 {
                     sourceToLocalAspectMapping[m] = 1; //! The m-th axis is the relative negative axis of the source grid block.
 
-                    if ( sst[m] < sed[m] )
+                    if (sst[m] < sed[m])
                     {
                         colorSource[m] = NEGATIVE_UNIT; //! The index on the the relative negative axis of the source grid block is from small to large.
                     }
@@ -1569,7 +1569,7 @@ void MultigridManager::SetNewPatchModel()
                 {
                     sourceToLocalAspectMapping[m] = 2; //! The m-th axis is the relative positive axis of the source grid block.
 
-                    if ( sst[m] > sed[m] )
+                    if (sst[m] > sed[m])
                     {
                         colorSource[m] = NEGATIVE_UNIT; //! The index on the the relative positive axis of the source grid block is from large to small.
                     }
@@ -1580,11 +1580,11 @@ void MultigridManager::SetNewPatchModel()
                 }
 
                 //! Local analysis of the target grid block.
-                if ( tst[m] == ted[m] )
+                if (tst[m] == ted[m])
                 {
                     localToTargetAspectMapping[0] = m; //! The m-th axis is the relative main axis of the target grid block.
 
-                    if ( tst[m] == 1 )
+                    if (tst[m] == 1)
                     {
                         tside = 2 * m;
                         colorTarget[m] = NEGATIVE_UNIT; //! The patching face is the start point of the target grid block relative main axis.
@@ -1595,11 +1595,11 @@ void MultigridManager::SetNewPatchModel()
                         colorTarget[m] = POSITIVE_UNIT; //! The patching face is the end point of the target grid block relative main axis.
                     }
                 }
-                else if ( tst[m] < 0 )
+                else if (tst[m] < 0)
                 {
                     localToTargetAspectMapping[1] = m; //! The m-th axis is the relative negative axis of the target grid block.
 
-                    if ( tst[m] < ted[m] )
+                    if (tst[m] < ted[m])
                     {
                         colorTarget[m] = NEGATIVE_UNIT; //! The index on the the relative negative axis of the target grid block is from small to large.
                     }
@@ -1612,7 +1612,7 @@ void MultigridManager::SetNewPatchModel()
                 {
                     localToTargetAspectMapping[2] = m; //! The m-th axis is the relative positive axis of the target grid block.
 
-                    if ( tst[m] > ted[m] )
+                    if (tst[m] > ted[m])
                     {
                         colorTarget[m] = NEGATIVE_UNIT; //! The index on the the relative positive axis of the target grid block is from large to small.
                     }
@@ -1624,7 +1624,7 @@ void MultigridManager::SetNewPatchModel()
             }
 
             //! The analysis from source to target.
-            for ( int m = 0; m < 3; ++ m )
+            for (int m = 0; m < 3; ++ m)
             {
                 int i = sourceToLocalAspectMapping[m];
                 int j = localToTargetAspectMapping[i];
@@ -1635,7 +1635,7 @@ void MultigridManager::SetNewPatchModel()
                 //! Negative axis analysis takes (s increase-t increase) and (s decrease-t decrease)as true, (s increase-t decrease) and (s decrease-t increase) as false.
                 //! Positive axis analysis takes (s increase-t increase) and (s decrease-t decrease)as true, (s increase-t decrease) and (s decrease-t increase) as false.
                 //! It can be concluded that taking colorSource equals colorTarget as true, colorSource unequals colorTarget as false.
-                if ( colorSource[m] == colorTarget[j] )
+                if (colorSource[m] == colorTarget[j])
                 {
                     relativeRate[m] = POSITIVE_UNIT;
                 }
@@ -1645,26 +1645,26 @@ void MultigridManager::SetNewPatchModel()
                 }
             }
 
-            PHSPACE::Standardize( sst, sed, sside );
-            PHSPACE::Standardize( tst, ted, tside );
+            PHSPACE::Standardize(sst, sed, sside);
+            PHSPACE::Standardize(tst, ted, tside);
 
             int nbpat = tarPatch[iBlock][iPatch];
             int mk = sourceToTargetAspectMapping[2];
             int mj = sourceToTargetAspectMapping[1];
             int mi = sourceToTargetAspectMapping[0];
 
-            for ( int k = sst[2]; k <= sed[2]; ++ k )
+            for (int k = sst[2]; k <= sed[2]; ++ k)
             {
                 int ks = k + 1;
-                maps[mk] = ( 1 + relativeRate[2] ) / 2 * tst[mk] + ( 1 - relativeRate[2] ) / 2 * ted[mk] + relativeRate[2] * ( k - sst[2] );
-                for ( int j = sst[1]; j <= sed[1]; ++ j )
+                maps[mk] = (1 + relativeRate[2]) / 2 * tst[mk] + (1 - relativeRate[2]) / 2 * ted[mk] + relativeRate[2] * (k - sst[2]);
+                for (int j = sst[1]; j <= sed[1]; ++ j)
                 {
                     int js = j + 1; 
-                    maps[mj] = ( 1 + relativeRate[1] ) / 2 * tst[mj] + ( 1 - relativeRate[1] ) / 2 * ted[mj] + relativeRate[1] * ( j - sst[1] );
-                    for ( int i = sst[0]; i <= sed[0]; ++ i )
+                    maps[mj] = (1 + relativeRate[1]) / 2 * tst[mj] + (1 - relativeRate[1]) / 2 * ted[mj] + relativeRate[1] * (j - sst[1]);
+                    for (int i = sst[0]; i <= sed[0]; ++ i)
                     {
                         int is = i + 1;
-                        maps[mi] = ( 1 + relativeRate[0] ) / 2 * tst[mi] + ( 1 - relativeRate[0] ) / 2 * ted[mi] + relativeRate[0] * ( i - sst[0] );
+                        maps[mi] = (1 + relativeRate[0]) / 2 * tst[mi] + (1 - relativeRate[0]) / 2 * ted[mi] + relativeRate[0] * (i - sst[0]);
 
                         int kt = maps[2] + 1;
                         int jt = maps[1] + 1;
@@ -1674,11 +1674,11 @@ void MultigridManager::SetNewPatchModel()
                         int pt = startPointLabel[nbpat]  + iDimension[nbpat]  * jDimension[nbpat]  * kt + iDimension[nbpat]  * jt + it;
 
                         int id = sside / 2;
-                        if ( id == 0 )
+                        if (id == 0)
                         {
                             patchIPoint[ps] = pt;
                         }
-                        else if ( id == 1 )
+                        else if (id == 1)
                         {
                             patchJPoint[ps] = pt;
                         }
@@ -1695,7 +1695,7 @@ void MultigridManager::SetNewPatchModel()
     return;
 }
 
-void MultigridManager::GetOtherBlockDirections( int id1, int & id2, int & id3 )
+void MultigridManager::GetOtherBlockDirections(int id1, int & id2, int & id3)
 {
     if(id1 == 1)
     {
@@ -1718,14 +1718,14 @@ void MultigridManager::GetOtherBlockDirections( int id1, int & id2, int & id3 )
 
 void MultigridManager::ComputeContravariantComponent()
 {
-    PHDouble2D amer( 3 ), aa;
-    PHDouble1D xx( 3 ), bb( 3 );
-    for( int i = 0; i < 3; ++i )
+    PHDouble2D amer(3), aa;
+    PHDouble1D xx(3), bb(3);
+    for(int i = 0; i < 3; ++i)
     {
-        amer[i].resize( 3 );
+        amer[i].resize(3);
     }
 
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
         int iHarf = iDimension[iBlock]/2;
         int jHarf = jDimension[iBlock]/2;
@@ -1748,11 +1748,11 @@ void MultigridManager::ComputeContravariantComponent()
         amer[2][1] = coordinateZ[jDirectLabel]-coordinateZ[originalLabel];
         amer[2][2] = coordinateZ[kDirectLabel]-coordinateZ[originalLabel];
 
-        for( int k = 0; k < kCenterDimension[iBlock]; ++k )
+        for(int k = 0; k < kCenterDimension[iBlock]; ++k)
         {
-            for( int j = 0; j < jCenterDimension[iBlock]; ++j )
+            for(int j = 0; j < jCenterDimension[iBlock]; ++j)
             {
-                for( int i = 0; i < iCenterDimension[iBlock]; ++i )
+                for(int i = 0; i < iCenterDimension[iBlock]; ++i)
                 {
                     int core = startCenterLabel[iBlock]+iCenterDimension[iBlock]*jCenterDimension[iBlock]*k+iCenterDimension[iBlock]*j+i;
                     bb[0] = cellCenterX[core]-coordinateX[originalLabel];
@@ -1760,8 +1760,8 @@ void MultigridManager::ComputeContravariantComponent()
                     bb[2] = cellCenterZ[core]-coordinateZ[originalLabel];
                     aa = amer;
                     int flag;
-                    GaussElimination( aa, bb, 3, xx, flag );
-                    if( flag == 0 )
+                    GaussElimination(aa, bb, 3, xx, flag);
+                    if(flag == 0)
                     {
                         TK_Exit::ExceptionExit("Linear correlation !\n");
                     }
@@ -1780,56 +1780,56 @@ void MultigridManager::ComputeContravariantComponent()
 void MultigridManager::OutputLinkData()
 {
     string linkFileName = GetLinkFileName();
-    ofstream outfile( linkFileName.c_str(), ios_base::binary );
-    outfile.write( (char*)&globalBlockNumber, sizeof(int) );
+    ofstream outfile(linkFileName.c_str(), ios_base::binary);
+    outfile.write((char*)&globalBlockNumber, sizeof(int));
 
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
-        outfile.write( (char*)&startPointLabel[iBlock], sizeof(int) );
+        outfile.write((char*)&startPointLabel[iBlock], sizeof(int));
     }
 
-    outfile.write( (char*)&globalPointNumber, sizeof(int) );
+    outfile.write((char*)&globalPointNumber, sizeof(int));
     
-    for( int ip = 0; ip < globalPointNumber; ++ip )
+    for(int ip = 0; ip < globalPointNumber; ++ip)
     {
-        outfile.write( (char*)&patchIPoint[ip], sizeof(int) );
+        outfile.write((char*)&patchIPoint[ip], sizeof(int));
     }
 
-    for( int ip = 0; ip < globalPointNumber; ++ip )
+    for(int ip = 0; ip < globalPointNumber; ++ip)
     {
-        outfile.write( (char*)&patchJPoint[ip], sizeof(int) );
+        outfile.write((char*)&patchJPoint[ip], sizeof(int));
     }
 
-    for( int ip = 0; ip < globalPointNumber; ++ip )
+    for(int ip = 0; ip < globalPointNumber; ++ip)
     {
-        outfile.write( (char*)&patchKPoint[ip], sizeof(int) );
+        outfile.write((char*)&patchKPoint[ip], sizeof(int));
     }
 
-    for( int iBlock = 0; iBlock < globalBlockNumber; ++iBlock )
+    for(int iBlock = 0; iBlock < globalBlockNumber; ++iBlock)
     {
-        outfile.write( (char*)&startCenterLabel[iBlock], sizeof(int) );
+        outfile.write((char*)&startCenterLabel[iBlock], sizeof(int));
     }
 
-    outfile.write( (char*)&globalCenterNumber, sizeof(int) );
+    outfile.write((char*)&globalCenterNumber, sizeof(int));
 
-    for( int iCenter = 0; iCenter < globalCenterNumber; ++iCenter )
+    for(int iCenter = 0; iCenter < globalCenterNumber; ++iCenter)
     {
-        outfile.write( (char*)&characterPoint[iCenter], sizeof(int) );
+        outfile.write((char*)&characterPoint[iCenter], sizeof(int));
     }
 
-    for( int iCenter = 0; iCenter < globalCenterNumber; ++iCenter )
+    for(int iCenter = 0; iCenter < globalCenterNumber; ++iCenter)
     {
-        outfile.write( (char*)&cellCenterX[iCenter], sizeof(RDouble) );
+        outfile.write((char*)&cellCenterX[iCenter], sizeof(RDouble));
     }
 
-    for( int iCenter = 0; iCenter < globalCenterNumber; ++iCenter )
+    for(int iCenter = 0; iCenter < globalCenterNumber; ++iCenter)
     {
-        outfile.write( (char*)&cellCenterY[iCenter], sizeof(RDouble) );
+        outfile.write((char*)&cellCenterY[iCenter], sizeof(RDouble));
     }
 
-    for( int iCenter = 0; iCenter < globalCenterNumber; ++iCenter )
+    for(int iCenter = 0; iCenter < globalCenterNumber; ++iCenter)
     {
-        outfile.write( (char*)&cellCenterZ[iCenter], sizeof(RDouble) );
+        outfile.write((char*)&cellCenterZ[iCenter], sizeof(RDouble));
     }
 
     outfile.close();
@@ -1861,7 +1861,7 @@ void MultigridManager::GenerateHoleStructure()
 {
     int codeOfDigHoles;
     GlobalDataBase::GetData("codeOfDigHoles", &codeOfDigHoles, PHINT,1);
-    if( codeOfDigHoles == 0 ) return;
+    if(codeOfDigHoles == 0) return;
 
     ReadZoneInverseMapping();
 
@@ -1876,7 +1876,7 @@ void MultigridManager::GenerateHoleStructure()
 
 void MultigridManager::GenerateHoleGridStructure()
 {
-    if ( ! GlobalDataBase::GetIntParaFromDB( "codeOfDigHoles" ) ) return;
+    if (! GlobalDataBase::GetIntParaFromDB("codeOfDigHoles")) return;
 
     ReadZoneInverseMapping();
 
@@ -1891,12 +1891,12 @@ void MultigridManager::GenerateHoleGridStructure()
 
 void MultigridManager::OutputNewHoleGrid()
 {
-    string holeFullFileName = GlobalDataBase::GetStrParaFromDB( "holeFullFileName" );
-    fstream file( holeFullFileName.c_str(), ios_base::out|ios_base::binary );
+    string holeFullFileName = GlobalDataBase::GetStrParaFromDB("holeFullFileName");
+    fstream file(holeFullFileName.c_str(), ios_base::out|ios_base::binary);
 
     file.write((char*)&numberOfHoles, sizeof(int));
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         HoleGrid* holeGrid = holeGridList[iHole];
         int zone_st = holeGrid->GetZoneStart();
@@ -1923,34 +1923,34 @@ void MultigridManager::ReadOriginalHoleFile()
 {
     string holeGridFileName;
     string holeBasicFileName = PHSPACE::GetHoleBasicFileName();
-    fstream basicFile( holeBasicFileName.c_str(), ios_base::in );
+    fstream basicFile(holeBasicFileName.c_str(), ios_base::in);
     basicFile>>numberOfHoles;
 
-    holeZoneStart.resize( numberOfHoles );
-    holeZoneEnd.resize( numberOfHoles );
-    holeZoneAttached.resize( numberOfHoles );
-    numberOfHoleSurfaces.resize( numberOfHoles );
-    nsi.resize( numberOfHoles );
-    nsj.resize( numberOfHoles );
-    spst.resize( numberOfHoles );
-    numberOfHolePoints.resize( numberOfHoles );
-    xsurf.resize( numberOfHoles );
-    ysurf.resize( numberOfHoles );
-    zsurf.resize( numberOfHoles );
+    holeZoneStart.resize(numberOfHoles);
+    holeZoneEnd.resize(numberOfHoles);
+    holeZoneAttached.resize(numberOfHoles);
+    numberOfHoleSurfaces.resize(numberOfHoles);
+    nsi.resize(numberOfHoles);
+    nsj.resize(numberOfHoles);
+    spst.resize(numberOfHoles);
+    numberOfHolePoints.resize(numberOfHoles);
+    xsurf.resize(numberOfHoles);
+    ysurf.resize(numberOfHoles);
+    zsurf.resize(numberOfHoles);
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         basicFile>>holeGridFileName;
         basicFile>>holeZoneStart[iHole]>>holeZoneEnd[iHole]>>holeZoneAttached[iHole];
 
-        fstream holeFile( holeGridFileName.c_str(), ios_base::in|ios_base::binary );
+        fstream holeFile(holeGridFileName.c_str(), ios_base::in|ios_base::binary);
         holeFile.read((char*)&numberOfHoleSurfaces[iHole], sizeof(int));
-        nsi[iHole].resize( numberOfHoleSurfaces[iHole] );
-        nsj[iHole].resize( numberOfHoleSurfaces[iHole] );
-        spst[iHole].resize( numberOfHoleSurfaces[iHole] );
+        nsi[iHole].resize(numberOfHoleSurfaces[iHole]);
+        nsj[iHole].resize(numberOfHoleSurfaces[iHole]);
+        spst[iHole].resize(numberOfHoleSurfaces[iHole]);
         
         int kSurfaceDimension, pCounter = 0;
-        for( int iSurf = 0; iSurf < numberOfHoleSurfaces[iHole]; ++iSurf )
+        for(int iSurf = 0; iSurf < numberOfHoleSurfaces[iHole]; ++iSurf)
         {
             holeFile.read((char*)&nsi[iHole][iSurf], sizeof(int));
             holeFile.read((char*)&nsj[iHole][iSurf], sizeof(int));
@@ -1960,25 +1960,25 @@ void MultigridManager::ReadOriginalHoleFile()
         }
 
         numberOfHolePoints[iHole] = pCounter;
-        xsurf[iHole].resize( numberOfHolePoints[iHole] );
-        ysurf[iHole].resize( numberOfHolePoints[iHole] );
-        zsurf[iHole].resize( numberOfHolePoints[iHole] );
+        xsurf[iHole].resize(numberOfHolePoints[iHole]);
+        ysurf[iHole].resize(numberOfHolePoints[iHole]);
+        zsurf[iHole].resize(numberOfHolePoints[iHole]);
 
-        for( int iSurf = 0; iSurf < numberOfHoleSurfaces[iHole]; ++iSurf )
+        for(int iSurf = 0; iSurf < numberOfHoleSurfaces[iHole]; ++iSurf)
         {
             int surfNodeNumber = nsi[iHole][iSurf]*nsj[iHole][iSurf];
             int startNode = spst[iHole][iSurf];
-            for( int ip = 0; ip < surfNodeNumber; ++ip )
+            for(int ip = 0; ip < surfNodeNumber; ++ip)
             {
                 holeFile.read((char*)&xsurf[iHole][startNode+ip], sizeof(RDouble));
             }
 
-            for( int ip = 0; ip < surfNodeNumber; ++ip )
+            for(int ip = 0; ip < surfNodeNumber; ++ip)
             {
                 holeFile.read((char*)&ysurf[iHole][startNode+ip], sizeof(RDouble));
             }
 
-            for( int ip = 0; ip < surfNodeNumber; ++ip )
+            for(int ip = 0; ip < surfNodeNumber; ++ip)
             {
                 holeFile.read((char*)&zsurf[iHole][startNode+ip], sizeof(RDouble));
             }
@@ -1993,9 +1993,9 @@ void MultigridManager::ReadOriginalHoleFile()
 void MultigridManager::ReadZoneInverseMapping()
 {
     int numberOfZones = globalBlockNumber;
-    zoneInverseIndex.resize( numberOfZones );
-    string zoneInverseFileName = GlobalDataBase::GetStrParaFromDB( "zoneInverseFileName" );
-    fstream file( zoneInverseFileName.c_str(), ios_base::in|ios_base::binary );
+    zoneInverseIndex.resize(numberOfZones);
+    string zoneInverseFileName = GlobalDataBase::GetStrParaFromDB("zoneInverseFileName");
+    fstream file(zoneInverseFileName.c_str(), ios_base::in|ios_base::binary);
     file.read((char*)&zoneInverseIndex[0], numberOfZones * sizeof(int));
     file.close();
     file.clear();
@@ -2004,29 +2004,29 @@ void MultigridManager::ReadZoneInverseMapping()
 
 void MultigridManager::ComputeLocalCoordinate()
 {
-    PHDouble1D bb( 3 ), xx( 3 );
-    PHDouble2D amer( 3 ), aa;
-    for( int i = 0; i < 3; ++i )
+    PHDouble1D bb(3), xx(3);
+    PHDouble2D amer(3), aa;
+    for(int i = 0; i < 3; ++i)
     {
-        amer[i].resize( 3 );
+        amer[i].resize(3);
     }
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         int iZone = zoneInverseIndex[holeZoneAttached[iHole]];
         Grid * gridIn = OrdinaryGrid[iZone];
-        StructGrid * grid = PHSPACE::StructGridCast( gridIn );
+        StructGrid * grid = PHSPACE::StructGridCast(gridIn);
         PHDouble2D & localFrame = grid->GetLocalFrame();
 
-        for( int i = 0; i < 3; ++i )
+        for(int i = 0; i < 3; ++i)
         {
-            for( int j = 0; j < 3; ++j )
+            for(int j = 0; j < 3; ++j)
             {
                 amer[i][j] = localFrame[i][j+1];
             }
         }
 
-        for( int ip = 0; ip < numberOfHolePoints[iHole]; ++ip )
+        for(int ip = 0; ip < numberOfHolePoints[iHole]; ++ip)
         {
             bb[0] = xsurf[iHole][ip]-localFrame[0][0];
             bb[1] = ysurf[iHole][ip]-localFrame[1][0];
@@ -2034,8 +2034,8 @@ void MultigridManager::ComputeLocalCoordinate()
 
             aa = amer;
             int flag;
-            GaussElimination( aa, bb, 3, xx, flag );
-            if( flag == 0 )
+            GaussElimination(aa, bb, 3, xx, flag);
+            if(flag == 0)
             {
                 TK_Exit::ExceptionExit("Linear correlation !\n");
             }
@@ -2052,62 +2052,62 @@ void MultigridManager::OutputNewHoleFile()
 {
     string holeFullFileName;
     GlobalDataBase::GetData("holeFullFileName", &holeFullFileName, PHSTRING, 1);
-    fstream file( holeFullFileName.c_str(), ios_base::out|ios_base::binary );
+    fstream file(holeFullFileName.c_str(), ios_base::out|ios_base::binary);
     file.write((char*)&numberOfHoles, sizeof(int));
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         file.write((char*)&holeZoneStart[iHole], sizeof(int));
     }
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         file.write((char*)&holeZoneEnd[iHole], sizeof(int));
     }
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         file.write((char*)&holeZoneAttached[iHole], sizeof(int));
     }
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         file.write((char*)&numberOfHoleSurfaces[iHole], sizeof(int));
     }
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
         file.write((char*)&numberOfHolePoints[iHole], sizeof(int));
     }
 
-    for( int iHole = 0; iHole < numberOfHoles; ++iHole )
+    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
     {
-        for( int is = 0; is < numberOfHoleSurfaces[iHole]; ++is )
+        for(int is = 0; is < numberOfHoleSurfaces[iHole]; ++is)
         {
             file.write((char*)&nsi[iHole][is], sizeof(int));
         }
 
-        for( int is = 0; is < numberOfHoleSurfaces[iHole]; ++is )
+        for(int is = 0; is < numberOfHoleSurfaces[iHole]; ++is)
         {
             file.write((char*)&nsj[iHole][is], sizeof(int));
         }
 
-        for( int is = 0; is < numberOfHoleSurfaces[iHole]; ++is )
+        for(int is = 0; is < numberOfHoleSurfaces[iHole]; ++is)
         {
             file.write((char*)&spst[iHole][is], sizeof(int));
         }
 
-        for( int ip = 0; ip < numberOfHolePoints[iHole]; ++ip )
+        for(int ip = 0; ip < numberOfHolePoints[iHole]; ++ip)
         {
             file.write((char*)&xsurf[iHole][ip], sizeof(RDouble));
         }
 
-        for( int ip = 0; ip < numberOfHolePoints[iHole]; ++ip )
+        for(int ip = 0; ip < numberOfHolePoints[iHole]; ++ip)
         {
             file.write((char*)&ysurf[iHole][ip], sizeof(RDouble));
         }
 
-        for( int ip = 0; ip < numberOfHolePoints[iHole]; ++ip )
+        for(int ip = 0; ip < numberOfHolePoints[iHole]; ++ip)
         {
             file.write((char*)&zsurf[iHole][ip], sizeof(RDouble));
         }
@@ -2116,14 +2116,14 @@ void MultigridManager::OutputNewHoleFile()
     return;
 }
 
-void Standardize( vector< int > & st, vector< int > & ed, int side )
+void Standardize(vector< int > & st, vector< int > & ed, int side)
 {
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
-        st[i] = abs( st[i] ) - 1;
-        ed[i] = abs( ed[i] ) - 1;
+        st[i] = abs(st[i]) - 1;
+        ed[i] = abs(ed[i]) - 1;
 
-        if ( st[i] > ed[i] )
+        if (st[i] > ed[i])
         {
             int se = st[i];
             st[i]  = ed[i];
@@ -2135,7 +2135,7 @@ void Standardize( vector< int > & st, vector< int > & ed, int side )
     int id = side / 2;
     int ic = side % 2;
 
-    if ( ic == 0 )
+    if (ic == 0)
     {
         ed[id] += 1;
     }
@@ -2154,22 +2154,22 @@ string GetHoleBasicFileName()
     return holeBasicFileName;
 }
 
-void GaussElimination( PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, int & flag )
+void GaussElimination(PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, int & flag)
 {
     int is = 0;
     flag = 1;
-    PHInt1D js( n );
+    PHInt1D js(n);
 
-    for( int k = 0; k < n-1; ++k )
+    for(int k = 0; k < n-1; ++k)
     {
         RDouble d = 0.0;
-        for( int i = k; i < n; ++i )
+        for(int i = k; i < n; ++i)
         {
-            for( int j = k; j < n; ++j )
+            for(int j = k; j < n; ++j)
             {
                 if (abs(a[i][j]) > d)
                 {
-                    d = abs( a[i][j] );
+                    d = abs(a[i][j]);
                     js[k] = j;
                     is = i;
                 }
@@ -2182,9 +2182,9 @@ void GaussElimination( PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, in
         }
         else
         {
-            if( js[k] != k )
+            if(js[k] != k)
             {
-                for( int i = 0; i < n; ++i )
+                for(int i = 0; i < n; ++i)
                 {
                     RDouble t = a[i][k];
                     a[i][k] = a[i][js[k]];
@@ -2192,9 +2192,9 @@ void GaussElimination( PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, in
                 }
             }
 
-            if( is != k )
+            if(is != k)
             {
-                for( int j = k; j < n; ++j )
+                for(int j = k; j < n; ++j)
                 {
                     RDouble t = a[k][j];
                     a[k][j] = a[is][j];
@@ -2207,22 +2207,22 @@ void GaussElimination( PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, in
             }
         }
 
-        if( flag == 0 )
+        if(flag == 0)
         {
             return;
         }
 
         RDouble sfn = 1.0/a[k][k];
-        for( int j = k+1; j < n; ++j )
+        for(int j = k+1; j < n; ++j)
         {
             a[k][j] *= sfn;
         }
 
         b[k] *= sfn;
 
-        for( int i = k+1; i < n; ++i )
+        for(int i = k+1; i < n; ++i)
         {
-            for( int j = k+1; j < n; ++j )
+            for(int j = k+1; j < n; ++j)
             {
                 a[i][j] -= a[i][k]*a[k][j];
             }
@@ -2230,17 +2230,17 @@ void GaussElimination( PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, in
         }
     }
 
-    if( abs(a[n-1][n-1]) < SMALL)
+    if(abs(a[n-1][n-1]) < SMALL)
     {
         flag = 0;
         return;
     }
 
     x[n-1] = b[n-1]/a[n-1][n-1];
-    for( int i = n-2; i >= 0; --i )
+    for(int i = n-2; i >= 0; --i)
     {
         RDouble t = 0;
-        for( int j = i+1; j < n; ++j )
+        for(int j = i+1; j < n; ++j)
         {
             t += a[i][j]*x[j];
         }
@@ -2248,9 +2248,9 @@ void GaussElimination( PHDouble2D & a, PHDouble1D & b, int n, PHDouble1D & x, in
     }
 
     js[n-1] = n-1;
-    for( int k = n-1; k >= 0; --k )
+    for(int k = n-1; k >= 0; --k)
     {
-        if( js[k] != k )
+        if(js[k] != k)
         {
             RDouble t = x[k];
             x[k] = x[js[k]];

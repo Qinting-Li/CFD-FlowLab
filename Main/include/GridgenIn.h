@@ -20,32 +20,32 @@ namespace PHSPACE
 {
 class Grid;
 
-//! To read the grid such as coordinate and boundary condition information from plot3d format file.
+//! To read the grid such as coordinate and boundary condition information from plot3d/gridgen format file.
 //! @param[in ]: structGrids denotes the current computational regions of the structure grids.
 //! @param[in ]: numberOfBlocks denotes the number of total grid blocks.
 //! @param[in ]: gridgenFile denotes the source file in which the grid stored.
 //! @param[in ]: BCFile denotes the source file in which the boundary information stored.
-void ReadGridgen(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile);
+void ReadPlot3dGrid(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile);
+void ReadGridgenGrid(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile);
 
-//! To read the grid coordinate from plot3d binary format file.
+//! To read the grid coordinate from plot3d binary/ASCII format file.
 //! @param[in ]: structGrids denotes the current computational regions of the structure grids.
 //! @param[in ]: numberOfBlocks denotes the number of total grid blocks.
 //! @param[in ]: coordinateFile denotes the source file in which the grid coordinate stored.
-void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
+void ReadPlot3DCoorBinary(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
+void ReadPlot3DCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
 
-//! To read the grid coordinate from plot3d ASCII format file.
+//! To read the grid coordinate from gridgen ASCII format file.
 //! @param[in ]: structGrids denotes the current computational regions of the structure grids.
 //! @param[in ]: numberOfBlocks denotes the number of total grid blocks.
 //! @param[in ]: coordinateFile denotes the source file in which the grid coordinate stored.
-int  CheckGridgenCoorASCIIFileType(const string &coordinateFile);
-void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
-void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
+void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids);
 
 //! To read the grid boundary information from ".inp" format file.
 //! @param[in ]: structGrids denotes the current computational regions of the structure grids.
 //! @param[in ]: numberOfBlocks denotes the number of total grid blocks.
 //! @param[in ]: BCFile denotes the source file in which the grid boundary condition information stored.
-void ReadGridgenBC(Grid **& structGrids, int &numberOfBlocks, const string &BCFile);
+void ReadBoundaryFile(Grid **& structGrids, int &numberOfBlocks, const string &BCFile);
 
-int CheckGridgenFileIfASCII(const string &coordinateFile);
+int CheckCoorFileIfASCII(const string &coordinateFile);
 }

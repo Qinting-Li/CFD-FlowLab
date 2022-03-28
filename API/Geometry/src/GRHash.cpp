@@ -25,7 +25,7 @@ bool equal_hash(const Point3D& p1, const Point3D& p2)
 }
 bool equal_hash(const Point3D* p1, const Point3D* p2)
 {
-    return ( *p1==*p2 );
+    return (*p1==*p2);
 }
 bool equal_hash(const Geo_Face& face1, const Geo_Face& face2)
 {

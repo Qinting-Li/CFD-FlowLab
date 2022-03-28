@@ -37,15 +37,15 @@ using namespace std;
 # if defined(_WIN32) && !defined(HAVE_NO_DLL)
 
 #  ifndef LIB_EXPORT
-#   define LIB_EXPORT __declspec( dllexport )
+#   define LIB_EXPORT __declspec(dllexport)
 //! For global variables :
-#   define LIB_EXPORTEXTERN __declspec( dllexport ) extern
-#   define LIB_EXPORTEXTERNC extern "C" __declspec( dllexport )
+#   define LIB_EXPORTEXTERN __declspec(dllexport) extern
+#   define LIB_EXPORTEXTERNC extern "C" __declspec(dllexport)
 #  endif  /* LIB_EXPORT */
 
 #  ifndef LIB_IMPORT
-#   define LIB_IMPORT __declspec( dllimport ) extern
-#   define LIB_IMPORTC extern "C" __declspec( dllimport )
+#   define LIB_IMPORT __declspec(dllimport) extern
+#   define LIB_IMPORTC extern "C" __declspec(dllimport)
 #  endif  /* LIB_IMPORT */
 
 # else  /* WNT */

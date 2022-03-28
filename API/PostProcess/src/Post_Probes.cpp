@@ -7,7 +7,11 @@
 #include "Glb_Dimension.h"
 #include "TK_Log.h"
 #include "TK_Time.h"
+#ifdef USE_HYFLOW_CODE
+#include "RealGas.h"
+#else
 #include "Gas.h"
+#endif
 
 using namespace std;
 namespace PHSPACE

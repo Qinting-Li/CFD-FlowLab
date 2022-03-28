@@ -396,5 +396,15 @@ inline Vector3D * UnstructGrid::GetFaceNormalVector() const
 {
     return faceNormalVector;
 }
+
+inline void UnstructGrid::SetCellCenterVector(Vector3D * cellC) 
+{
+    cellCenterVector = cellC;
+}
+
+inline void UnstructGrid::SetFaceNormalVector(Vector3D * faceN) 
+{
+    faceNormalVector = faceN;
+}
 #endif
 

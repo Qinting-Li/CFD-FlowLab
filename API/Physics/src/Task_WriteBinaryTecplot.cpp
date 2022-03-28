@@ -13,16 +13,21 @@ void Task_WriteBinaryTecplot::PostTask(ActionKey *actkey)
     using namespace PHMPI;
     int myid = GetCurrentProcessorID();
 
-    if ( actkey->VTKvisual == true && myid == server )
+    if (actkey->VTKvisual == true && myid == server)
     {
         ActionKeyFUN post_action = this->GetPostAction();
         post_action(actkey);
     }
 
-    if ( datalist.size() > 0 )
+    if (datalist.size() > 0)
     {
         ActionKeyFUN post_action = this->GetPostAction();
         post_action(actkey);
+
+        #ifdef USE_TecplotLib
+        DumpToTecio dumptotecio(datalist, actkey->tecfilename, this->flowType);
+        dumptotecio.Run();
+        #endif
     }
 }
 
@@ -49,19 +54,19 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
     int recv_proc;
     int myid;
 
-    if ( actkey->VTKvisual == true )
+    if (actkey->VTKvisual == true)
     {
-        if ( ! PHMPI::IsParallelRun() )
+        if (! PHMPI::IsParallelRun())
         {
             ParallelOpenFile(actkey);
         }
         else
         {
-            ParallelOpenFile2( actkey );
+            ParallelOpenFile2(actkey);
         }
     }
 
-    for ( int izone =  0; izone < nZones; ++ izone )
+    for (int izone =  0; izone < nZones; ++ izone)
     {
         DataContainer *cdata = actkey->GetData();
         cdata->moveto_begin();
@@ -75,7 +80,7 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
         myid = GetCurrentProcessorID();
         int tag = GetSendRecvTag(actkey, izone);
 
-        if ( myid == send_proc )
+        if (myid == send_proc)
         {
             GeneralAction(actkey, izone);
         }
@@ -84,7 +89,7 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
 
         if(myid == recv_proc)
         {
-            if ( actkey->VTKvisual == true )
+            if (actkey->VTKvisual == true)
             {
                 WriteASCIIFile(actkey);
             }

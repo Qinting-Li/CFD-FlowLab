@@ -1,4 +1,4 @@
-#include "GridDeformationSPRING.h"
+#include "Mesh_DeformationSPRING.h"
 #include "PHIO.h"
 #include "IO_FileName.h"
 #include "GeometryUnit.h"
@@ -8,17 +8,17 @@
 namespace PHSPACE
 {
 
-GridDeformationSPRING::GridDeformationSPRING(int nZonesIn, Grid **stationalGridIn) : 
-    GridDeformation(nZonesIn, stationalGridIn)
+Mesh_DeformationSPRING::Mesh_DeformationSPRING(int nZonesIn, Grid **stationalGridIn) : 
+    Mesh_Deformation(nZonesIn, stationalGridIn)
 {
 
 }
 
-GridDeformationSPRING::~GridDeformationSPRING()
+Mesh_DeformationSPRING::~Mesh_DeformationSPRING()
 {
 
 }
-void GridDeformationSPRING::SurfaceGridMove(int iStep)
+void Mesh_DeformationSPRING::SurfaceGridMove(int iStep)
 {
     RDouble flapAngle = deformParameter->GetFlapAngle();
     int nDeformStep = deformParameter->GetNDeformStep();
@@ -137,7 +137,7 @@ void GridDeformationSPRING::SurfaceGridMove(int iStep)
     }
 }
 
-void GridDeformationSPRING::TransformGrid()
+void Mesh_DeformationSPRING::TransformGrid()
 {
     deformedGrid = new DynamicGrid *[nZones];
 
@@ -152,7 +152,7 @@ void GridDeformationSPRING::TransformGrid()
     SetSymmetryToZero();
 }
 
-void GridDeformationSPRING::Deforming()
+void Mesh_DeformationSPRING::Deforming()
 {
     string visualFileName = GlobalDataBase::GetStrParaFromDB("visualFileName");
     PostVisual(visualFileName, 0);
@@ -220,7 +220,7 @@ void GridDeformationSPRING::Deforming()
                         normx = normx + fabs(dx - dxn);
                         normy = normy + fabs(dy - dyn);
                         normz = normz + fabs(dz - dzn);
-                        norm  = norm  + sqrt(( dx - dxn ) * ( dx - dxn)
+                        norm  = norm  + sqrt((dx - dxn) * (dx - dxn)
                               + (dy - dyn) * (dy - dyn)
                               + (dz - dzn) * (dz - dzn));
 
@@ -257,7 +257,7 @@ void GridDeformationSPRING::Deforming()
     WriteLogFile("  End Deforming ... ", "\n");
 }
 
-void GridDeformationSPRING::MatchControlPoints()
+void Mesh_DeformationSPRING::MatchControlPoints()
 {
     RDouble rotatePostion = this->deformParameter->GetRotatePostionZ();
 
@@ -303,7 +303,7 @@ void GridDeformationSPRING::MatchControlPoints()
     }
 }
 
-void GridDeformationSPRING::PostTreat()
+void Mesh_DeformationSPRING::PostTreat()
 {
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {

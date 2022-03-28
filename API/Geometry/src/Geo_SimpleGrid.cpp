@@ -9,9 +9,9 @@ namespace PHSPACE
 
 SimpleGrid::SimpleGrid()
 {
-    x = nullptr;
-    y = nullptr;
-    z = nullptr;
+    x = NULL;
+    y = NULL;
+    z = NULL;
 
     pmin = new RDouble [3];
     pmax = new RDouble [3];

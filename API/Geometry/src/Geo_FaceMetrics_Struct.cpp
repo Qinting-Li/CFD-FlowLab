@@ -6,16 +6,16 @@ namespace PHSPACE
 
     Geo_FaceMetrics_Struct::Geo_FaceMetrics_Struct()
     {
-        xfn = nullptr;
-        yfn = nullptr;
-        zfn = nullptr;
-        area = nullptr;
-        xFaceVector = nullptr;
-        yFaceVector = nullptr;
-        zFaceVector = nullptr;
+        xfn = NULL;
+        yfn = NULL;
+        zfn = NULL;
+        area = NULL;
+        xFaceVector = NULL;
+        yFaceVector = NULL;
+        zFaceVector = NULL;
 
-        xyzFaceVector_FD = nullptr;
-        xyzFaceNormal_FD = nullptr;
+        xyzFaceVector_FD = NULL;
+        xyzFaceNormal_FD = NULL;
     }
 
     Geo_FaceMetrics_Struct::~Geo_FaceMetrics_Struct()

@@ -123,12 +123,28 @@ public:
 
     int GetnEnergyRecycle() const;
 
+    int GetTransitionType() const;
+
     int GetnTurblenceForChemical() const;
 
     int GetnViscosityFluxSublevelModified() const;
 
+    RDouble  GetDensityMin() const;
+
+    RDouble  GetdensityMinFactor() const;
+
+    int GetSelfAdaptionSolveFlag() const;
+
+    int GetnGradPrimtiveMethod() const;
+
+    int GetnInviscidFluxModify() const;    
+
+    int GetnQlLimitMethod() const;
+
 private:
     int intervalStepForce;
+
+    int transitionType;
 
     RDouble wallTemperature;
 
@@ -209,6 +225,19 @@ private:
     int nTurblenceForChemical;
 
     int nViscosityFluxSublevelModified;
+
+    RDouble densityMin;
+
+    RDouble densityMinFactor;
+
+    int nGradPrimtiveMethod;
+
+    int isSelfAdaptionSolve;
+
+    int nInviscidFluxModify;
+
+    int nQlLimitMethod;
+
 };
 
 #include "Param_NSSolver.hxx"

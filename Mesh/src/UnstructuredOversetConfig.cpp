@@ -6,6 +6,8 @@
 #include "PHIO.h"
 #include "IO_HDF5File.h"
 #include "Region.h"
+#include "Task.h"
+#include "Task_ServerUpdateInterface.h"
 using namespace std;
 
 namespace PHSPACE
@@ -23,7 +25,7 @@ void RunOversetGridConfig()
 
     RunUnstructuredOversetGridConfig();
 
-    delete region;
+    //delete region;
 }
 
 void RunUnstructuredOversetGridConfig()
@@ -622,7 +624,7 @@ void OversetConfigFactoryMulti::ReadInSklFiles()
             int numberOfLocalFaces;
             int numberOfLocalCells;
 
-            int *listForRead = nullptr;
+            int *listForRead = NULL;
 
             int receiveProcessor = PHMPI::GetZoneProcessorIDSepMode(zoneIndex);
             if (currentProcessor == serverProcessor)
@@ -2911,6 +2913,26 @@ void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterfaceBySKL(int key
     }
 }
 
+void OversetConfigFactoryMulti::CommunicateCellIBlank()
+{
+    using namespace PHMPI;
+    ActionKey *actkey = new ActionKey();
+    actkey->action = COMMCELLIBLANK;
+    actkey->kind = GRID_BASED;
+    actkey->level = 0;
+
+    if (IsNeedNonBlockingCommunication(actkey))
+    {
+        MainTaskNonBlocking(actkey);
+    }
+    else
+    {
+        MainTaskBlocking(actkey);
+    }
+
+    delete actkey;
+}
+
 //! Through the communication of virtual cell information in interface, realize the indirect communication of point attributes.
 void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterface()
 {
@@ -2922,7 +2944,7 @@ void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterface()
     int currentProcessor = PHMPI::GetCurrentProcessorID();
 
     //! step1: Communication cell properties.
-    region->CommCellIBlank();
+    CommunicateCellIBlank();
 
     //! step2: Judge the property of points through Interface.
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)

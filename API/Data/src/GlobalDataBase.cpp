@@ -29,6 +29,11 @@ void GlobalDataBase::UpdateDataPtr(const string &name, void *data)
     globalField->UpdateDataPtr(name, data);
 };
 
+void GlobalDataBase::DeleteDataPtr(const string &name)
+{
+    globalField->DeleteDataPtr(name);
+};
+
 void * GlobalDataBase::GetDataPtr(const string &name)
 {
     return globalField->GetDataPtr(name);

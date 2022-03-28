@@ -39,6 +39,10 @@ if(USE_SMARTARRAY)
   message(STATUS "USE_SMARTARRAY is turned on!")
   add_definitions(-DUSE_SMARTARRAY)
 endif()
+if(USE_INHOUSE_VERSION)
+  message(STATUS "USE_INHOUSE_VERSION is turned on!")
+  add_definitions(-DUSE_INHOUSE_VERSION)
+endif(USE_INHOUSE_VERSION)
 
 #1. output message:
 message(STATUS "") 
@@ -97,6 +101,11 @@ link_directories("${THIRDPARTY_LIB_DIR}")
 
 set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
+
+if(USE_TecplotLib)
+set(TECIO_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
+include_directories("${TECIO_H_PATH}")
+endif(USE_TecplotLib)
 
 set(PARMETIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/parmetis/include)
 include_directories("${PARMETIS_H_PATH}")
@@ -298,6 +307,7 @@ ${Geometry_H_PATH}/GRHash.h
 ${Geometry_H_PATH}/SubsonicBC.h
 ${Geometry_H_PATH}/OverLappingGrid.h
 ${Geometry_H_PATH}/GeometryUnit.h
+${Geometry_H_PATH}/Geo_PointFactory.h
 ${Geometry_H_PATH}/Geo_Element.h
 ${Geometry_H_PATH}/Geo_Sample.h
 ${Geometry_H_PATH}/GeomProxy.h
@@ -347,6 +357,7 @@ ${Geometry_CPP_PATH}/GRHash.cpp
 ${Geometry_CPP_PATH}/SubsonicBC.cpp
 ${Geometry_CPP_PATH}/OverLappingGrid.cpp
 ${Geometry_CPP_PATH}/GeometryUnit.cpp
+${Geometry_CPP_PATH}/Geo_PointFactory.cpp
 ${Geometry_CPP_PATH}/Geo_Element.cpp
 ${Geometry_CPP_PATH}/Geo_Sample.cpp
 ${Geometry_CPP_PATH}/GeomProxy.cpp
@@ -374,8 +385,13 @@ ${Physics_H_PATH}/AerodynamicsBasicRelations.h
 ${Physics_H_PATH}/Limiter.h
 ${Physics_H_PATH}/Task.h
 ${Physics_H_PATH}/Task_Simple.h
+${Physics_H_PATH}/Task_Write.h
+${Physics_H_PATH}/Task_Read.h
+${Physics_H_PATH}/Task_Client2Server.h
+${Physics_H_PATH}/Task_ServerCollection.h
 ${Physics_H_PATH}/Task_ServerUpdateInterface.h
 ${Physics_H_PATH}/Task_ServerUpdateInterpoint.h
+${Physics_H_PATH}/Task_ServerUpdateOversetInterface.h
 ${Physics_H_PATH}/Task_WriteBinaryTecplot.h
 ${Physics_H_PATH}/Region.h
 ${Physics_H_PATH}/IO_GridReader.h
@@ -387,6 +403,8 @@ ${Physics_H_PATH}/Flux_Inviscid.h
 ${Physics_H_PATH}/Flux_RoeEntropyCorrection.h
 ${Physics_H_PATH}/Jacobian.h
 ${Physics_H_PATH}/Gradient.h
+${Physics_H_PATH}/BLUSGS.h
+${Physics_H_PATH}/LineLUSGS.h
 )
 source_group(Physics\\include FILES ${Physics_H_LIST}) 
 include_directories(${Physics_H_PATH})
@@ -407,8 +425,13 @@ ${Physics_CPP_PATH}/AerodynamicsBasicRelations.cpp
 ${Physics_CPP_PATH}/Limiter.cpp
 ${Physics_CPP_PATH}/Task.cpp
 ${Physics_CPP_PATH}/Task_Simple.cpp
+${Physics_CPP_PATH}/Task_Write.cpp
+${Physics_CPP_PATH}/Task_Read.cpp
+${Physics_CPP_PATH}/Task_Client2Server.cpp
+${Physics_CPP_PATH}/Task_ServerCollection.cpp
 ${Physics_CPP_PATH}/Task_ServerUpdateInterface.cpp
 ${Physics_CPP_PATH}/Task_ServerUpdateInterpoint.cpp
+${Physics_CPP_PATH}/Task_ServerUpdateOversetInterface.cpp
 ${Physics_CPP_PATH}/Task_WriteBinaryTecplot.cpp
 ${Physics_CPP_PATH}/Region.cpp
 ${Physics_CPP_PATH}/IO_GridReader.cpp
@@ -420,6 +443,8 @@ ${Physics_CPP_PATH}/Flux_RoeEntropyCorrection.cpp
 ${Physics_CPP_PATH}/Jacobian.cpp
 ${Physics_CPP_PATH}/Gradient.cpp
 ${Physics_CPP_PATH}/Gas.cpp
+${Physics_CPP_PATH}/BLUSGS.cpp
+${Physics_CPP_PATH}/LineLUSGS.cpp
 )
 source_group(Physics\\src FILES ${Physics_CPP_LIST})
 
@@ -437,14 +462,12 @@ ${PreProcess_H_PATH}/Pre_CGNSToPHengLEI_Struct.h
 ${PreProcess_H_PATH}/Pre_Plot3DToPHengLEI_Struct.h
 ${PreProcess_H_PATH}/Pre_FluentToPHengLEI_Unstruct.h
 ${PreProcess_H_PATH}/Pre_HDF5File.h
-${PreProcess_H_PATH}/WallDist.h
 ${PreProcess_H_PATH}/Pre_GridMirror.h
-${PreProcess_H_PATH}/Pre_GridRefine.h
-${PreProcess_H_PATH}/Pre_StrGridPartition.h
+${PreProcess_H_PATH}/Pre_StructGridPartition.h
 ${PreProcess_H_PATH}/Pre_StructToUnstruct.h
-${PreProcess_H_PATH}/GridTranslator.h
-${PreProcess_H_PATH}/CombinGrid.h
-${PreProcess_H_PATH}/GridBase.h
+${PreProcess_H_PATH}/Pre_GridTranslator.h
+${PreProcess_H_PATH}/Pre_GridCombine.h
+${PreProcess_H_PATH}/Pre_GridBase.h
 ${PreProcess_H_PATH}/MixGrid.h
 ${PreProcess_H_PATH}/Pre_Reorder.h
 )
@@ -464,14 +487,12 @@ ${PreProcess_CPP_PATH}/Pre_CGNSToPHengLEI_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_Plot3DToPHengLEI_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_FluentToPHengLEI_Unstruct.cpp
 ${PreProcess_CPP_PATH}/Pre_HDF5File.cpp
-${PreProcess_CPP_PATH}/WallDist.cpp
 ${PreProcess_CPP_PATH}/Pre_GridMirror.cpp
-${PreProcess_CPP_PATH}/Pre_GridRefine.cpp
-${PreProcess_CPP_PATH}/Pre_StrGridPartition.cpp
+${PreProcess_CPP_PATH}/Pre_StructGridPartition.cpp
 ${PreProcess_CPP_PATH}/Pre_StructToUnstruct.cpp
-${PreProcess_CPP_PATH}/GridTranslator.cpp
-${PreProcess_CPP_PATH}/CombinGrid.cpp
-${PreProcess_CPP_PATH}/GridBase.cpp
+${PreProcess_CPP_PATH}/Pre_GridTranslator.cpp
+${PreProcess_CPP_PATH}/Pre_GridCombine.cpp
+${PreProcess_CPP_PATH}/Pre_GridBase.cpp
 ${PreProcess_CPP_PATH}/MixGrid.cpp
 ${PreProcess_CPP_PATH}/Pre_Reorder.cpp
 )
@@ -556,6 +577,49 @@ ${PostProcess_CPP_LIST}
 ${Common_CPP_LIST}
 )
 
+if(BUILD_HyFLOW)
+# set directory of HyFLOW.
+set(HyFLOW_H_PATH ${PROJECT_SOURCE_DIR}/../HyFLOW/include)
+set(HyFLOW_H_LIST
+${HyFLOW_H_PATH}/ChemicalModel.h
+${HyFLOW_H_PATH}/PHChemicalModel.h
+${HyFLOW_H_PATH}/RealGas.h
+${HyFLOW_H_PATH}/EquilibriumGas.h
+)
+source_group(HyFLOW\\include FILES ${HyFLOW_H_LIST}) 
+include_directories(${HyFLOW_H_PATH})
+
+set(HyFLOW_CPP_PATH ${PROJECT_SOURCE_DIR}/../HyFLOW/src)
+set(HyFLOW_CPP_LIST
+${HyFLOW_CPP_PATH}/ChemicalModel.cpp
+${HyFLOW_CPP_PATH}/PHChemicalModel.cpp
+${HyFLOW_CPP_PATH}/RealGas.cpp
+${HyFLOW_CPP_PATH}/EquilibriumGas.cpp
+)
+source_group(HyFLOW\\src FILES ${HyFLOW_CPP_LIST})
+list(APPEND API_HEAD_LIST ${HyFLOW_H_LIST})
+list(APPEND API_CPP_LIST ${HyFLOW_CPP_LIST})
+endif(BUILD_HyFLOW)
+
+
+if(USE_INHOUSE_VERSION)
+# set directory of PostProcess motive derivative identidy:
+set(PostIdentidy_H_PATH PostProcess/include)
+set(PostIdentidy_H_LIST
+
+${PostIdentidy_H_PATH}/Post_Identify.h
+)
+source_group(PostProcess\\include FILES ${PostIdentidy_H_LIST}) 
+include_directories(${PostIdentidy_H_PATH})
+
+set(PostIdentidy_CPP_PATH PostProcess/src)
+set(PostIdentidy_CPP_LIST
+${PostIdentidy_CPP_PATH}/Post_Identify.cpp
+)
+source_group(PostProcess\\src FILES ${PostIdentidy_CPP_LIST})
+list(APPEND API_HEAD_LIST ${PostIdentidy_H_LIST})
+list(APPEND API_CPP_LIST ${PostIdentidy_CPP_LIST})
+endif(USE_INHOUSE_VERSION)
 
 #21. adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
@@ -625,6 +689,10 @@ endif()
 
 list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5)
 
+if(USE_TecplotLib)
+  list(APPEND LINK_LIBRARY_LIST tecio)
+endif(USE_TecplotLib)
+
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST msmpi)
 endif(WIN32)
@@ -634,11 +702,11 @@ target_link_libraries(${API_TARGET_NAME} ${LINK_LIBRARY_LIST})
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 # For OpenMP
-find_package ( OpenMP )
-if ( OpenMP_FOUND )
+find_package (OpenMP)
+if (OpenMP_FOUND)
 
 if(WIN32)
-target_include_directories ( ${API_TARGET_NAME}
+target_include_directories (${API_TARGET_NAME}
   PRIVATE
     ${OpenMP_CXX_INCLUDE_DIRS}
 )
@@ -648,12 +716,12 @@ target_compile_options (${API_TARGET_NAME}
     ${OpenMP_CXX_FLAGS}
 )
 
-target_compile_features ( ${API_TARGET_NAME}
+target_compile_features (${API_TARGET_NAME}
   PUBLIC 
     cxx_std_14
 )
 
-target_link_libraries ( ${API_TARGET_NAME}
+target_link_libraries (${API_TARGET_NAME}
   PRIVATE 
     ${OpenMP_CXX_LIBRARIES}
 )
@@ -666,4 +734,3 @@ endif (OpenMP_FOUND)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
-

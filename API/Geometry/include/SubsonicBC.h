@@ -102,14 +102,14 @@ namespace PHSPACE
         }
         /*void SetFlowDirection(vector<RDouble> fd)
         {
-            for ( int i = 0; i < 3; ++i )
+            for (int i = 0; i < 3; ++i)
             {
                 flowDirection[i] = fd[i];
             }
         }*/
-        void SetFlowDirection( RDouble * fd )
+        void SetFlowDirection(RDouble * fd)
         {
-            for ( int i = 0; i < 3; ++i )
+            for (int i = 0; i < 3; ++i)
             {
                 flowDirection[i] = fd[i];
             }
@@ -138,10 +138,10 @@ namespace PHSPACE
     public:
         void CalBCIDRange()
         {
-            for ( int i = 0; i < nbc; ++ i )
+            for (int i = 0; i < nbc; ++ i)
             {
-                bcIDMax = MAX( bcIDMax, BCs[i].GetBCID() );
-                bcIDMin = MIN( bcIDMin, BCs[i].GetBCID() );
+                bcIDMax = MAX(bcIDMax, BCs[i].GetBCID());
+                bcIDMin = MIN(bcIDMin, BCs[i].GetBCID());
             }
         }
         void SetSimilarBCExistLabel()
@@ -184,8 +184,8 @@ namespace PHSPACE
     bool SetSubsonicBC(UnstructGrid * grid_in, CompositeUnstructBC ** bcr, int bctype, 
                              RDouble * primSource, RDouble * primTarget,
                              RDouble nxs, RDouble nys, RDouble nzs,
-                             RDouble t );
-    bool SetSubsonicBCTurb( int bctype, RDouble **q_turb, RDouble * turboo, int n_turb, int le, int re );
+                             RDouble t);
+    bool SetSubsonicBCTurb(int bctype, RDouble **q_turb, RDouble * turboo, int n_turb, int le, int re);
 
     void InFlowBC3D(Grid *grid_in, StructBC *bcr, SubnicBC & outLet);
     void OutFlowBC3D(Grid *grid_in, StructBC *bcr, SubnicBC & outLet);
@@ -196,6 +196,6 @@ namespace PHSPACE
     void OutFlowBC3D(UnstructGrid * grid_in, CompositeUnstructBC ** bcr, SubnicBC & outLet, 
                           RDouble * primSource, RDouble * primTarget, 
                           RDouble nxs, RDouble nys, RDouble nzs, RDouble t);
-    void InFlowBC3DTurb( int bctype, RDouble **q_turb, RDouble * turboo, int n_turb, int le, int re );
-    void OutFlowBC3DTurb( int bctype, RDouble **q_turb, RDouble * turboo, int n_turb, int le, int re );
+    void InFlowBC3DTurb(int bctype, RDouble **q_turb, RDouble * turboo, int n_turb, int le, int re);
+    void OutFlowBC3DTurb(int bctype, RDouble **q_turb, RDouble * turboo, int n_turb, int le, int re);
 }

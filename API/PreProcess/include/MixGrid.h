@@ -15,7 +15,7 @@
 
 #pragma once
 #include "Geo_Grid.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "Geo_StructGrid.h"
 #include "Geo_UnstructGrid.h"
 
@@ -28,12 +28,13 @@ class UnstructGrid;
 const int MULTI_TYPE     = -1;
 const int FANTASY_TYPE   = 1;
 const int CGNS_TYPE      = 2;
-const int GRIDGEN_TYPE   = 3;
+const int PLOT3D_TYPE    = 3;
 const int FIELDVIEW_TYPE = 4;
 const int FLUENT_TYPE    = 5;
 const int USTAR_TYPE     = 6;
 const int MIXGRID_TYPE   = 7;
 const int GMSH_TYPE      = 8;
+const int GRIDGEN_TYPE   = 9;
 
 typedef void (*CREATE_SINGLE_GRID)(Grid *comm_grid);
 

@@ -128,7 +128,7 @@ private:
     void BuildWallStructTree();
     void BuildWallStructKDTree();
     void BuildWallStructKDTreeNode();
-    
+
     RDouble ComputeDistanceOfANodeToSegment(const RDouble xcc, const RDouble ycc, const RDouble zcc,
                                             const RDouble xStart, const RDouble yStart, const RDouble zStart,
                                             const RDouble xMid, const RDouble yMid, const RDouble zMid,
@@ -146,7 +146,7 @@ private:
     void ComputeNodeDistanceByDirectMethod(UnstructGrid *grid);
     void ComputeNodeDistanceForSphere(UnstructGrid *grid);
     void ComputeNodeDistanceByADTMethodForBlock(int iBlock);
-    void ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock);    
+    void ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock);
     void ComputeWallDistForNodesListByADT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByKDT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByDirectMethod(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
@@ -277,6 +277,34 @@ private:
     //! Vector type of face to node data structure.
     vector<vector<int> > face2node;
 };
+
+//! Process of generate wall distance.
+void GenerateWallDist();
+
+//! Compute wall distance.
+void ComputeWallDist();
+
+//!
+void AllocateWalldist();
+
+//! Write wall distance.
+void WriteWallDist();
+
+//! Dump out the wall distance to file.
+void DumpWallDistToFile(ActionKey *actkey, int iZone);
+
+#ifdef USE_TecplotLib
+//! Visualization of wall distance.
+void VisualWallDist();
+#endif
+
+//!
+void WallDistStatics();
+
+//! If read wall distance file or not.
+bool IsReadWallDist();
+
+void GhostWallDistance();
 
 #include "Pre_WalldistCompute.hxx"
 

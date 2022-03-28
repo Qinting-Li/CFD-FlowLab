@@ -9,16 +9,20 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      GridDeformationRBF.h
+//! @file      Mesh_DeformationRBF.h
 //! @brief     Grid deformation by RBF method.
 //! @author    Bell, Baka.
 
-//! Zhao Zhong, Duan Xupeng, Chang Xinghua, etc. Numerical simulation of unsteady 
-//! flows on bird-like flapping wing[J]. Transactions of Nanjing University of 
-//! Aeronautics & Astronautics, 2013, 30(sup):93-100.
+//! REFERENCES
+//! [1] Zhao Z, et al. Numerical simulation of unsteady flows on bird-like flapping
+//!     wing[J]. Transactions of Nanjing University of Aeronautics & Astronautics, 
+//!     2013, 30(sup):93-100.
+//! [2] Zhao Z et al. An efficient large-scale mesh deformation method based on 
+//!     MPI/OpenMP hybrid parallel radial basis function interpolation[J]. 
+//!     Chin J Aeronaut, 2020, 33(5): 1392-1404.
 
 #pragma once
-#include "GridDeformation.h"
+#include "Mesh_Deformation.h"
 
 namespace PHSPACE
 {
@@ -27,8 +31,8 @@ typedef PHVector1D< Point3D > PointArray;
 typedef DataStruct_AdtTree<int, RDouble>  CPTree;
 typedef DataStruct_AdtNode<int, RDouble>  CPNode;
 
-//! @brief GridDeformationRBF class achieve unstructured grid deform by RBF method.
-class GridDeformationRBF : public GridDeformation
+//! @brief Mesh_DeformationRBF class achieve unstructured grid deform by RBF method.
+class Mesh_DeformationRBF : public Mesh_Deformation
 {
 private:
     //! Number of control point.
@@ -62,8 +66,8 @@ private:
 public:
     //! @param[in] nZonesIn         Number of grid.
     //! @param[in] stationalGridIn  Original grid.
-    GridDeformationRBF(int nZonesIn, Grid **stationalGridIn);
-    ~GridDeformationRBF();
+    Mesh_DeformationRBF(int nZonesIn, Grid **stationalGridIn);
+    ~Mesh_DeformationRBF();
 
     void SetNumberOfReferenceCP(int numberOfReferenceCPIn);
     void SetInfluencePara(int influenceParaIn);

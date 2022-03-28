@@ -69,6 +69,8 @@ public:
     //! @param[in]  data    Pointer the Source data.
     static void UpdateDataPtr(const string &name, void *data);
 
+    static void DeleteDataPtr(const string &name);
+
     //! Obtain data's pointer(address) from global database by name.
     //! If the dataSet doesn't has a same name data, returns null.
     //! @param[in]  name    Source data's name.
