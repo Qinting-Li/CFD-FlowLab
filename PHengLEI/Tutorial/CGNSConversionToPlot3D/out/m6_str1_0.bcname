@@ -1,0 +1,18 @@
+# Boundary Face Information of Grid ./out/m6_str1.cgns
+# nBoundaryConditons : number of global boundary conditions.
+# bcName             : Boundary Condition Name.
+# bcType(in PHengLEI): Boundary Condition Type.
+
+int nBoundaryConditons = 3;
+string bcName = "wall";
+{
+  int bcType = 2;
+}
+string bcName = "symmetry";
+{
+  int bcType = 3;
+}
+string bcName = "farfield";
+{
+  int bcType = 4;
+}
