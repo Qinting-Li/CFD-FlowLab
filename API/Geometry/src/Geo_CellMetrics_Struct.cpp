@@ -5,29 +5,29 @@ namespace PHSPACE
 {
 Geo_CellMetrics_Struct::Geo_CellMetrics_Struct()
 {
-    xcc = nullptr;
-    ycc = nullptr;
-    zcc = nullptr;
-    vol = nullptr;
+    xcc = NULL;
+    ycc = NULL;
+    zcc = NULL;
+    vol = NULL;
 
-    xlen = nullptr;
-    ylen = nullptr;
-    zlen = nullptr;
+    xlen = NULL;
+    ylen = NULL;
+    zlen = NULL;
 
-    jacobian = nullptr;
+    jacobian = NULL;
 
-    largestLocalGridLength = nullptr;
-    smallestLocalGridLength = nullptr;
-    subgridLength = nullptr;
+    largestLocalGridLength = NULL;
+    smallestLocalGridLength = NULL;
+    subgridLength = NULL;
 }
 
 Geo_CellMetrics_Struct::~Geo_CellMetrics_Struct()
 {
     DeallocateAll();
 
-    delete largestLocalGridLength; largestLocalGridLength = nullptr;
-    delete smallestLocalGridLength; smallestLocalGridLength = nullptr;
-    delete subgridLength; subgridLength = nullptr;
+    delete largestLocalGridLength; largestLocalGridLength = NULL;
+    delete smallestLocalGridLength; smallestLocalGridLength = NULL;
+    delete subgridLength; subgridLength = NULL;
 }
 
 void Geo_CellMetrics_Struct::AllocateMetrics(Range &I, Range &J, Range &K)

@@ -9,7 +9,7 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      GridBase.h
+//! @file      Pre_GridBase.h
 //! @brief     Explain this file briefly.
 //! @author    He Xin.
 
@@ -334,6 +334,6 @@ private:
     void ReLableSelfDefineBC();
 };
 
-void CGNS2UnsGrid (CGNSFactory *factory_cgns, int izone, UnstructGrid *grid);
+void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid);
 
 }

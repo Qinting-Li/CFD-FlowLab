@@ -10,7 +10,7 @@ class GridTranslator
 {
 private:
     int numberOfZones;
-    int codeOfOversetGrid;
+    int isOverset;
     vector<StructGrid *> *gridGroup;
     vector<StructFace *> *structFaceGroup;
 public:

@@ -26,6 +26,14 @@ LIB_EXPORT void Param_NSSolverStruct::Init()
     chemicalRelaxCorf          = GlobalDataBase::GetDoubleParaFromDB("chemicalRelaxCorf");
     staticPressureRelaxCorf    = GlobalDataBase::GetDoubleParaFromDB("staticPressureRelaxCorf");
     inviscidSchemeName         = GlobalDataBase::GetStrParaFromDB("inviscidSchemeName");
+
+    if(GetChemicalFlag()==0)
+    {
+        chemicalSpectrumRadiusCoef = 1.0;
+        viscousSpectrumRadiusCoef  = 1.0;
+        inviscidSpectrumRadiusCoef = 1.0;
+        staticPressureRelaxCorf    = 1.0;
+    }
 }
 
 }

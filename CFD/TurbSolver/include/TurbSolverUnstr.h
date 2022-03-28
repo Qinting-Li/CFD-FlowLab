@@ -119,11 +119,11 @@ public:
     void SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
     
     //! Set the values at ghost cells.
-    void SetGhostDQLUSGS(Grid *gridIn, RDouble **dq );    // Bell 20130401 add
+    void SetGhostDQLUSGS(Grid *gridIn, RDouble **dq);    // Bell 20130401 add
     
-    void SetWallBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq );
+    void SetWallBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq);
 
-    void SetFarfieldBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq );
+    void SetFarfieldBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq);
     
     //! Smooth variables of turbulent equation.
     void SMoothTurbulence(Grid *gridIn);
@@ -265,10 +265,10 @@ public:
     void DownloadInterpointWeight(ActionKey *actkey);
 
     //! Upload overset data at interface for variables in turbulence model. 
-    void UploadOversetData( ActionKey *actkey );
+    void UploadOversetData(ActionKey *actkey);
 
     //! Download overset data at interface for variables in turbulence model.
-    void DownloadOversetData( ActionKey *actkey );
+    void DownloadOversetData(ActionKey *actkey);
 
     //! Compute inviscid flux of turbulence model equation.
     void ComputeInviscidFlux(Grid *gridIn, FaceProxy *faceProxy, int nst, int ned);

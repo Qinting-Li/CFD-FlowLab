@@ -31,19 +31,19 @@ LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)
     this->level = level;
     this->index = index;
 
-    cGrid = nullptr;
-    fGrid = nullptr;
+    cGrid = NULL;
+    fGrid = NULL;
 
-    iinfo = nullptr;
-    interpointInformation = nullptr;
-    interfaceFields = nullptr;
-    interpointFields = nullptr;
-    oversetInfoProxy = nullptr;
-    oversetInformationProxy = nullptr;
+    interfaceInfo = NULL;
+    interpointInformation = NULL;
+    interfaceFields = NULL;
+    interpointFields = NULL;
+    oversetInfoProxy = NULL;
+    oversetInformationProxy = NULL;
 
     own_database = 0;
     gField = new Data_Field();
-    gPara = nullptr;
+    gPara = NULL;
 
     oldGrid = NULL;
     fileIndexCurrentGridBelong = 0;
@@ -72,7 +72,7 @@ Grid::~Grid()
 
     delete oversetInformationProxy;    oversetInformationProxy = NULL;
 
-    if (!iinfo){delete iinfo;    iinfo = NULL;};
+    if (!interfaceInfo){delete interfaceInfo;    interfaceInfo = NULL;};
     delete interpointInformation;    interpointInformation = NULL;
 
     zoneProbesGlobalID.clear();
@@ -287,6 +287,14 @@ LIB_EXPORT void Grid::RegisterInterfaceField(const string &name, const int type,
     interfaceFields->RegisterField(name, type, dimesion, solverID);
 }
 
+LIB_EXPORT void Grid::ReleaseInterfaceField()
+{
+    if (interfaceFields)
+    {
+        interfaceFields->RemoveAllField();
+    }
+}
+
 LIB_EXPORT void Grid::RegisterInterpointField(const string &name, const int type, const int dimesion, const int solverID)
 {
     if (!interpointFields)
@@ -311,8 +319,8 @@ void Grid::FreeInterfaceField()
 
 LIB_EXPORT void Grid::InitMovingGrids()
 {
-    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if (codeOfAleModel != 0)
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (isAle)
     {
         //ostringstream oss;
         //oss << "Warning: in Grid::InitMovingGrids, nstart parameter has been deleted from cfd_para" << " !!!" << endl;
@@ -359,18 +367,18 @@ void CheckGrid(Grid **grids, int nBlocks)
     for (int izone = 0; izone < nBlocks; ++ izone)
     {
         StructGrid *grid = StructGridCast(grids[izone]);
-        InterfaceInfo *iinfo = grid->GetInterfaceInfo();
+        InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
 
         int nIFace = 0;
-        if (iinfo)
+        if (interfaceInfo)
         {
-            nIFace = iinfo->GetNIFace();
+            nIFace = interfaceInfo->GetNIFace();
         }
 
         if (nIFace == 0) continue;
 
-        int *interFace2ZoneID       = iinfo->GetInterFace2ZoneID();
-        int *interFace2InterFaceID  = iinfo->GetInterFace2InterFaceID();
+        int *interFace2ZoneID       = interfaceInfo->GetInterFace2ZoneID();
+        int *interFace2InterFaceID  = interfaceInfo->GetInterFace2InterFaceID();
 
         int target_zone, itface;
         int is, js, ks, nsurf, s_lr, it, jt, kt, t_lr;
@@ -433,7 +441,7 @@ void CheckGrid(Grid **grids, int nBlocks)
 bool IsConvertGridToMixGrid()
 {
     bool flag = false;
-    if ( GetTaskCode() == CREATE_GRID)
+    if (GetTaskCode() == CREATE_GRID)
     {
         int gridobj = 0;
         GlobalDataBase::GetData("gridobj", &gridobj, PHINT, 1);

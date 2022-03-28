@@ -54,10 +54,10 @@ public:
     //! @return
     //! -# <em>false</em>:  the zone with globalZoneIndex dose not belong to current processor.\n
     //! -# <em>true</em>:   the zone with globalZoneIndex belongs to current processor.
-    bool ZoneBelongToCurrentProcessor( int globalZoneIndex );
+    bool ZoneBelongToCurrentProcessor(int globalZoneIndex);
 
     //! Return the global zone index of 'localZoneIndex'.
-    int  GetProcessLocalZoneIndexToGlobalZoneIndex( int localZoneIndex );
+    int  GetProcessLocalZoneIndexToGlobalZoneIndex(int localZoneIndex);
 
     void SetIBlock(int iBlock) { this->iBlock = iBlock; }
     //! Read grid from file.
@@ -66,7 +66,7 @@ public:
     LIB_EXPORT void InitGridForOversetConfig();
 
     //! Return the local zone index of 'globalZoneIndex'.
-    LIB_EXPORT int  GetProcessGlobalZoneIndexToLocalZoneIndex( int globalZoneIndex );
+    LIB_EXPORT int  GetProcessGlobalZoneIndexToLocalZoneIndex(int globalZoneIndex);
     
     //! Initialize the geometry (grid actually), the initialization tasks include:\n
     //!   1: Set up Multi-Block relationship, that is the MPI communication relationship.\n
@@ -96,16 +96,16 @@ public:
 
     //! Read ordinary grid from file. this function is not allowed to call. 
     //! If the grid wanted to be read, call the 'ReadGrid' function above, Please!
-    LIB_EXPORT void ReadOrdinaryGridP2PMode( PHVectorString1D & gridGroupNameList );
+    LIB_EXPORT void ReadOrdinaryGridP2PMode(PHVectorString1D & gridGroupNameList);
     //! Read ordinary grid from file. this function is not allowed to call. 
-    LIB_EXPORT void ReadOrdinaryGridCSMode( PHVectorString1D & gridGroupNameList );
+    LIB_EXPORT void ReadOrdinaryGridCSMode(PHVectorString1D & gridGroupNameList);
     //! Read ordinary grid from file. this function is not allowed to call. 
     //! If the grid wanted to be read, call the 'ReadGrid' function above, Please!
-    LIB_EXPORT void ReadOrdinaryGrid( string fileName, int fileMode );
+    LIB_EXPORT void ReadOrdinaryGrid(string fileName, int fileMode);
 
     //! Read ordinary grid from file. this function is not allowed to call. 
-    LIB_EXPORT void ReadOrdinaryGrid( string fileName);
-    LIB_EXPORT void ReadOrdinaryGrid( PHVectorString1D & gridGroupNameList );
+    LIB_EXPORT void ReadOrdinaryGrid(string fileName);
+    LIB_EXPORT void ReadOrdinaryGrid(PHVectorString1D & gridGroupNameList);
 
     //! Read overset / overlapping grid. this function is not allowed to call. 
     //! If the grid wanted to be read, call the 'ReadGrid' function above, Please!
@@ -157,7 +157,7 @@ public:
 
     void ReSetBoundaryConditionByGlobalBC();
 
-    void CommCellIBlank();
+    void CommunicateCellIBlank();
 
     void AddZone(Zone *zone);
 
@@ -218,7 +218,7 @@ private:
     void ServerBcastNeighborInfor();
     void CleanNeighborInfor();
 
-    void GetProcessorZones( int iZone, ZoneNeighbor * zoneNeighbor, vector< int > * neighborProcessors, vector< set< int > > * processorZones);
+    void GetProcessorZones(int iZone, ZoneNeighbor * zoneNeighbor, vector< int > * neighborProcessors, vector< set< int > > * processorZones);
 
     void CheckMeshMultigridByFTS();
     void CoarseGrids();
@@ -237,7 +237,7 @@ private:
     //! MixGrid
     void ComputeGlobalGridCellSize(int level = 0);
 
-    void CommCellCenterData();
+    void CommunicateCellCenterData();
     void ComputeMetrics_BC();
     void ComputeMetricsandJacobinWithBCforStructHighOrder();
     void UpdateDiffOrderforStructHighOrder();
@@ -252,7 +252,7 @@ private:
     int *GetCell2All(int izone);
 
     void ReadStructuredOversetGrid();
-    void ReadGridTopologyData( const string & fileName );
+    void ReadGridTopologyData(const string & fileName);
     void DeleteLabelContainer();
 
     void ReadUnstructuredOversetGrid();
@@ -262,8 +262,8 @@ private:
     void AllocateOversetGrid();
     void AddUnStructInfoToStructGrid();
 
-    void CreateZonesFromGridReader( IO_GridReader * gridReader );
-    void CreateZonesFromGridGroups( IO_GridReader * gridReader );
+    void CreateZonesFromGridReader(IO_GridReader * gridReader);
+    void CreateZonesFromGridGroups(IO_GridReader * gridReader);
     void ExcangeProcessorIDForGridProcessor();
     void CreateZoneAndGrid(int izone);
     void RecoverGridFromFile(fstream &file, int izone);

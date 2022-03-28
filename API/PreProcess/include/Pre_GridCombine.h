@@ -9,7 +9,7 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      CombineGrid.h
+//! @file      Pre_GridCombine.h
 //! @brief     Explain this file briefly.
 //! @author    
 

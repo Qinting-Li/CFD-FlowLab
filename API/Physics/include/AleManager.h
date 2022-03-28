@@ -48,7 +48,7 @@ public:
     SixDofSolverManager    * GetSixDofSolverManager()    { return sixDofSolverManager;    };
     DeformingSolverManager* GetDeformingSolverManager()  { return deformingManager; };
     void ComputeMetrics();
-    void CommCellCenterData();
+    void CommunicateCellCenterData();
     void GridVerticeVelocityGeneral(Grid* grid, RDouble* xt, RDouble* yt, RDouble* zt);
     void ComputeGridFaceVelocity();
 };
@@ -65,7 +65,7 @@ void BackupAllZonesOldGrid();
 
 //ALE备份文件
 bool IsReadAleFile();
-void SetIsReadAleFile( bool isReadAleFileIn );
+void SetIsReadAleFile(bool isReadAleFileIn);
 fstream & GetCurrentAleFile();
 
 int      GetIntegerParameterFromDataBase(int bodyIndex, const string& parameterName);
@@ -157,6 +157,6 @@ void GreatDeAllocateOversetInterfaceVariables(Grid* gridIn);
 
 void DeAllocateOversetStorage();
 
-void ReAllocateOversetStorage();
+void AllocateOversetStorage();
 
 }

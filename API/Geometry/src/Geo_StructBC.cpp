@@ -39,12 +39,12 @@ StructBC::~StructBC()
 
 void StructBC::ComputeRelativeParameters()
 {
-    vector< int > slam( 3 ), ltam( 3 ), cs( 3 ), ct( 3 );
+    vector< int > slam(3), ltam(3), cs(3), ct(3);
 
     for (int m = 0; m < 3; ++ m)
     {
         if ((GetFaceDirection() == -1 && s_st[m] == s_ed[m]) || GetFaceDirection() == m)
-        //if ( s_st[m] == s_ed[m] )
+        //if (s_st[m] == s_ed[m])
         {
             slam[m] = 0; 
 
@@ -85,7 +85,7 @@ void StructBC::ComputeRelativeParameters()
         }
 
         if ((GetFaceDirectionOfTargetBlock() == -1 && t_st[m] == t_ed[m]) || GetFaceDirectionOfTargetBlock() == m)
-        //if ( t_st[m] == t_ed[m] )
+        //if (t_st[m] == t_ed[m])
         {
             ltam[0] = m;
 
@@ -514,10 +514,10 @@ void CompositeStructBC::DeleteIndex()
     delete [] face_of_bcregion;
 
     //! The reason for setting zero is that DeleteIndex may be called many times.
-    id_i = nullptr;
-    id_j = nullptr;
-    id_k = nullptr;
-    face_of_bcregion = nullptr;
+    id_i = NULL;
+    id_j = NULL;
+    id_k = NULL;
+    face_of_bcregion = NULL;
 }
 
 void CompositeStructBC::DecodeIJK(int index, int &i, int &j, int &k)

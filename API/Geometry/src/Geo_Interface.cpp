@@ -13,8 +13,8 @@ InterfacePatch::InterfacePatch()
     zoneid = 0;
     zoneIndexOfNeighbor = 0;
     faceNumberOfPatch = 0;
-    faceIndexForRecv = nullptr;
-    faceIndexForSend = nullptr;
+    faceIndexForRecv = NULL;
+    faceIndexForSend = NULL;
 
     dataStorageSend = new Data_ParamFieldSuite();
     dataStorageRecv = new Data_ParamFieldSuite();
@@ -100,11 +100,11 @@ InterfaceInfo::InterfaceInfo()
 {
     nIFace                 = 0;
     numberOfNeighbor       = 0;
-    interFace2ZoneID       = nullptr;
-    interFace2CellID       = nullptr;
-    interFace2InterFaceID  = nullptr;
-    interFace2BoundaryFace = nullptr;
-    interFaceDirection     = nullptr;
+    interFace2ZoneID       = NULL;
+    interFace2CellID       = NULL;
+    interFace2InterFaceID  = NULL;
+    interFace2BoundaryFace = NULL;
+    interFaceDirection     = NULL;
     parent                 = NULL;
 
     dsend = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
@@ -503,6 +503,19 @@ void InterfaceFields::AllocateInterfaceVar(const string &name, const int type, c
     }
 }
 
+void InterfaceFields::RemoveAllField()
+{
+    for (int iVar = 0; iVar < Size(); ++ iVar)
+    {
+        string varName = variableNames[iVar];
+        RemoveInterfaceVar(varName);
+    }
+    variableNames.clear();
+    variableTypes.clear();
+    variableDimensions.clear();
+    solverIndex.clear();
+}
+
 void InterfaceFields::FreeInterfaceVar()
 {
     for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
@@ -519,9 +532,42 @@ void InterfaceFields::FreeInterfaceVar(Data_ParamFieldSuite *datastore)
     {
         string varName = variableNames[iVar];
         void **q = reinterpret_cast<void **> (datastore->GetDataPtr(varName));
-        DelPointer2(q);
+        if (q != NULL)
+        {
+            DelPointer2(q);
+            datastore->DeleteDataPtr(varName);
+        }
     }
     datastore = NULL;
+}
+
+void InterfaceFields::RemoveInterfaceVar(const string &name)
+{
+    Data_ParamFieldSuite *datastore;
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
+    {
+        if (interfaceInfo->GetSendDataStorage(iGhost) != 0)
+        {
+            datastore = interfaceInfo->GetSendDataStorage(iGhost);
+            void **q = reinterpret_cast<void **> (datastore->GetDataPtr(name));
+            if (q != NULL)
+            {
+                DelPointer2(q);
+                datastore->DeleteDataPtr(name);
+            }
+        }
+
+        if (interfaceInfo->GetRecvDataStorage(iGhost) != 0)
+        {
+            datastore = interfaceInfo->GetRecvDataStorage(iGhost);
+            void **q = reinterpret_cast<void **> (datastore->GetDataPtr(name));
+            if (q != NULL)
+            {
+                DelPointer2(q);
+                datastore->DeleteDataPtr(name);
+            }
+        }
+    }
 }
 
 template< typename T >

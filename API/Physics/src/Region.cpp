@@ -2,7 +2,7 @@
 #include "IO_FileName.h"
 #include "TK_Parse.h"
 #include "TK_Time.h"
-#include "WallDist.h"
+#include "Pre_WalldistCompute.h"
 #include "Geo_Sample.h"
 #include "Task_ServerUpdateInterface.h"
 #include "Post_WriteTecplot.h"
@@ -21,6 +21,9 @@
 #include "PHIO.h"
 #include <omp.h>
 
+#ifdef USE_INHOUSE_VERSION
+#include "omp.h"
+#endif
 
 namespace PHSPACE
 {
@@ -65,11 +68,14 @@ LIB_EXPORT void Region::ReadGrid()
     {
         PrintToWindow("Grid type is old fts type !\n");
         ReadOrdinaryGrid(gridGroupNameList);
+
+        int isOldGrid = 1;
+        GlobalDataBase::UpdateData("isOldGrid", &isOldGrid, PHINT, 1);
     }
 
-    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int systemGridType = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (codeOfOversetGrid != 0)
+    if (isOverset)
     {
         AddUnStructInfoToStructGrid();
     }
@@ -94,8 +100,8 @@ LIB_EXPORT void Region::InitGridForOversetConfig()
 
 void ResetAllZonesOversetGrid()
 {
-    int codeOfOversetGrid = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    if (codeOfOversetGrid == 0)
+    int isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    if (!isOverset)
     {
         return;
     }
@@ -676,7 +682,7 @@ void Region::AddUnStructInfoToStructGrid()
 
     Pre_StructToUnstruct *StructToUnstruct = new Pre_StructToUnstruct(gridArray, numberOfZones);
     StructToUnstruct->Run();
-    Grid **unstructGridArray = StructToUnstruct->GetUnsGrids();
+    Grid **unstructGridArray = StructToUnstruct->GetUnstructGrids();
     for (int iZone = 0; iZone < numberOfZones; iZone ++)
     {
         Grid *grid = gridArray[iZone];
@@ -1105,10 +1111,10 @@ void Region::InitZoneNeighborsInformation()
         Zone *zone = GetZone(izone);
         if (!zone) continue;
 
-        InterfaceInfo *iinfo = GetInterfaceInfo(izone, 0);
+        InterfaceInfo *interfaceInfo = GetInterfaceInfo(izone, 0);
 
-        if (iinfo == 0) continue;
-        iinfo->InitNeighbors();
+        if (!interfaceInfo) continue;
+        interfaceInfo->InitNeighbors();
     }
 
     for (int izone = 0; izone < nZones; ++ izone)
@@ -1116,17 +1122,17 @@ void Region::InitZoneNeighborsInformation()
         Zone *zone = GetZone(izone);
         if (!zone) continue;
 
-        InterfaceInfo *iinfo = GetInterfaceInfo(izone, 0);
-        if (iinfo == 0) continue;
+        InterfaceInfo *interfaceInfo = GetInterfaceInfo(izone, 0);
+        if (!interfaceInfo) continue;
 
-        int numberOfNeighbor = iinfo->GetNumberOfNeighbor();
+        int numberOfNeighbor = interfaceInfo->GetNumberOfNeighbor();
 
         ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(izone);
 
         for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
         {
             //! zoneNeighbor stores the neighbor zones of izone,zone numbers in ascending order.
-            zoneNeighbor->AddZoneIndexOfNeighbor(iinfo->GetZoneIndexOfNeighbor(ineighbor));
+            zoneNeighbor->AddZoneIndexOfNeighbor(interfaceInfo->GetZoneIndexOfNeighbor(ineighbor));
         }
     }
 }
@@ -1453,9 +1459,9 @@ void Region::BroadCastZoneNeighborInformation()
         }
     }
 
-    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (codeOfOversetGrid == 1 && sysGridType != STRUCTGRID)
+    if (isOverset && sysGridType != STRUCTGRID)
     {
         BroadCastZoneNeighborInformationCollectBcast();
     }
@@ -1467,9 +1473,9 @@ void Region::BroadCastZoneNeighborInformation()
 
 void Region::BroadCastZoneNeighborForPointInformation()
 {
-    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (codeOfOversetGrid == 1 && sysGridType != STRUCTGRID)
+    if (isOverset && sysGridType != STRUCTGRID)
     {
     }
     else
@@ -1517,7 +1523,7 @@ void Region::BroadCastZoneNeighborInformationToNeighborZones()
 
     int sizeOfInt = sizeof(int);
     int tag = 0;
-    for (int zoneIndex = 0; zoneIndex < numberOfZones; ++ zoneIndex )
+    for (int zoneIndex = 0; zoneIndex < numberOfZones; ++ zoneIndex)
     {
         if (!GetZone(zoneIndex)) continue;
         
@@ -1610,7 +1616,7 @@ void Region::SwapZoneConnectivityBetweenNeighborZones()
 
     int sizeOfInt = sizeof(int);
     int tag = 0;
-    for (int zoneIndex = 0; zoneIndex < numberOfZones;  zoneIndex ++ )
+    for (int zoneIndex = 0; zoneIndex < numberOfZones;  zoneIndex ++)
     {
         //! "This" refers to zoneIndex, "current" refers to information on current processor.
         ZoneNeighbor *zoneNeighborOfThisZone = zoneConnectivity->GetZoneNeighbor(zoneIndex);
@@ -1689,7 +1695,7 @@ void Region::SwapZoneConnectivityForPointBetweenNeighborZones()
 
     int sizeOfInt = sizeof(int);
     int tag = 0;
-    for (int zoneIndex = 0; zoneIndex < numberOfZones;  zoneIndex ++ )
+    for (int zoneIndex = 0; zoneIndex < numberOfZones;  zoneIndex ++)
     {
         //! "This" refers to zoneIndex, "current" refers to information on current processor.
         ZoneNeighbor *zoneNeighborOfThisZone = zoneConnectivityForPoint->GetZoneNeighborForPoint(zoneIndex);
@@ -1830,9 +1836,9 @@ void Region::SwapNeighborsSendContentNonblocking()
                 //! Compress the send information into the actkey.
                 //int localZoneIndex = this->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
                 //compressData(zoneGridSolver, sendBuffer, neighborZone);
-                InterfaceInfo *iinfo = GetInterfaceInfo(iZone, 0);
-                int nIFaceOfNeighbor = iinfo->GetNIFaceOfNeighbor(iNeighbor);
-                int *faceIndexForSend = iinfo->ComputeFaceIndexForSend(iNeighbor);
+                InterfaceInfo *interfaceInfo = GetInterfaceInfo(iZone, 0);
+                int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(iNeighbor);
+                int *faceIndexForSend = interfaceInfo->ComputeFaceIndexForSend(iNeighbor);
                 sendBuffer->moveto_begin();
                 PHWrite(sendBuffer, nIFaceOfNeighbor);
                 PHWrite(sendBuffer, faceIndexForSend, nIFaceOfNeighbor);
@@ -2014,9 +2020,9 @@ void Region::SwapNeighborsSendContent()
 
             if (myid == send_proc)
             {
-                InterfaceInfo *iinfo = GetInterfaceInfo(izone, level);
-                nIFaceOfNeighbor = iinfo->GetNIFaceOfNeighbor(ineighbor);
-                faceIndexForSend = iinfo->ComputeFaceIndexForSend(ineighbor);
+                InterfaceInfo *interfaceInfo = GetInterfaceInfo(izone, level);
+                nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
+                faceIndexForSend = interfaceInfo->ComputeFaceIndexForSend(ineighbor);
             }
 
             PH_Trade(&nIFaceOfNeighbor, sizeof(int), send_proc, recv_proc, izone + level * nZones);
@@ -2607,7 +2613,7 @@ void Region::InitMovingGrids(int level)
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
 
-    if (isUnsteady == 0)
+    if (!isUnsteady)
     {
         return;
     }
@@ -2641,7 +2647,7 @@ LIB_EXPORT void Region::UpdateAllZonesPara()
 
 LIB_EXPORT void Region::SwapGeommetry()
 {
-    CommCellCenterData();
+    CommunicateCellCenterData();
 
     ComputeMetrics_BC();
 
@@ -2652,7 +2658,7 @@ LIB_EXPORT void Region::SwapGeommetry()
     WriteLogFile("Swap geommetry sucessfully ...");
 }
 
-void Region::CommCellCenterData()
+void Region::CommunicateCellCenterData()
 {
     using namespace PHMPI;
     for (int level = 0; level < nGrids; ++ level)
@@ -2661,6 +2667,33 @@ void Region::CommCellCenterData()
         actkey->action = COMMCELLCENTERDATA;
         actkey->kind = GRID_BASED;
         actkey->level = level;
+
+        //Task_ServerUpdateInterface *task = new Task_ServerUpdateInterface();
+        if (IsNeedNonBlockingCommunication(actkey))
+        {
+            //task->MainTaskNonBlocking(actkey);
+            MainTaskNonBlocking(actkey);
+        }
+        else
+        {
+            //task->MainTaskBlocking(actkey);
+            MainTaskBlocking(actkey);
+        }
+
+        //delete task;
+        delete actkey;
+    }
+}
+
+void Region::CommunicateCellIBlank()
+{
+    using namespace PHMPI;
+    //for (int level = 0; level < nGrids; ++ level)
+    {
+        ActionKey *actkey = new ActionKey();
+        actkey->action = COMMCELLIBLANK;
+        actkey->kind = GRID_BASED;
+        actkey->level = 0;
 
         //Task_ServerUpdateInterface *task = new Task_ServerUpdateInterface();
         if (IsNeedNonBlockingCommunication(actkey))
@@ -2692,7 +2725,7 @@ void Region::ComputeMetrics_BC()
     
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int nMGLevel = PHSPACE::GlobalDataBase::GetIntParaFromDB("nMGLevel");
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
@@ -2702,13 +2735,13 @@ void Region::ComputeMetrics_BC()
 
     if (tscheme != LU_SGS) Rwithghost = false;
     if (systemGridType != 1) Rwithghost = false; 
-    if (codeOfOversetGrid != 0) Rwithghost = false;
+    if (isOverset) Rwithghost = false;
     if (nMGLevel != 1) Rwithghost = false;
     if (compressible != 1) Rwithghost = false;
-    if (isUnsteady != 0) Rwithghost = false;
+    if (isUnsteady) Rwithghost = false;
     if (nChemical != 0) Rwithghost = false;
     if (ifLowSpeedPrecon != 0) Rwithghost = false;
-    if (wallFunctionType != 0) Rwithghost = false;
+    if (wallFunctionType != WALLFUNCTION::NONE) Rwithghost = false;
 
     if (Rwithghost == false) return;
 
@@ -3077,24 +3110,6 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
     }
     sendDataBuffer.clear();
     requestContainer.clear();
-}
-
-void Region::CommCellIBlank()
-{
-    ActionKey *actkeyCommCellIBlank = new ActionKey();
-    actkeyCommCellIBlank->action = COMMCELLIBLANK;
-    actkeyCommCellIBlank->kind   = GRID_BASED;
-    actkeyCommCellIBlank->level  = 0;
-
-    if (IsNeedNonBlockingCommunication(actkeyCommCellIBlank))
-    {
-        MainTaskNonBlocking(actkeyCommCellIBlank);
-    }
-    else
-    {
-        MainTaskBlocking(actkeyCommCellIBlank);
-    }
-    delete actkeyCommCellIBlank;
 }
 
 void Region::TestReconstruction()

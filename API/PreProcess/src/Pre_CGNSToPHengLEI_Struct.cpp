@@ -2,7 +2,7 @@
 #include "Pre_CGNSToPlot3D_Struct.h"
 #include "TK_Exit.h"
 #include "Pointer.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "Geo_StructGrid.h"
 #include "Glb_Dimension.h"
 #include "TK_Log.h"
@@ -267,7 +267,7 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
                     dx = abs(x[kMin][jMin][iMin] - x[kMax][jMin][iMin]) * gridScaleFactor;
                     dy = abs(y[kMin][jMin][iMin] - y[kMax][jMin][iMin]) * gridScaleFactor;
                     dz = abs(z[kMin][jMin][iMin] - z[kMax][jMin][iMin]) * gridScaleFactor;
-                    if ((dx+dy+dz ) < SMALL && pnts[boco][2] != pnts[boco][5]) 
+                    if ((dx+dy+dz) < SMALL && pnts[boco][2] != pnts[boco][5]) 
                     {
                         lab1[boco] = 73;
                     }

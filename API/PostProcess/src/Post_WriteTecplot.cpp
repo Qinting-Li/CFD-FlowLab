@@ -69,7 +69,7 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         }
 
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-        if (isUnsteady != 0)
+        if (isUnsteady)
         {
             int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
             actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', outnstep);
@@ -301,14 +301,17 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
         if (visualfileType == 0)
         {
+            #ifdef USE_TecplotLib
+                DumpToTecio dumptotecio(datalist, actkey->tecfilename, this->flowType);
+                dumptotecio.Run();
+            #else
+                ostringstream WarningInfo;
+                WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
+                PrintToWindow(WarningInfo);
 
-            ostringstream WarningInfo;
-            WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
-            PrintToWindow(WarningInfo);
-
-            DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
-            dumpToTecplotASCII.Run();
-
+                DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
+                dumpToTecplotASCII.Run();
+            #endif
         }
         else if (visualfileType == 1)
         {
@@ -1011,15 +1014,15 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
 
                     if (nsurf == 1)
                     {
-                        p1 = newindex(i, j , k ) + 1;
-                        p2 = newindex(i, jl, k ) + 1;
+                        p1 = newindex(i, j , k) + 1;
+                        p2 = newindex(i, jl, k) + 1;
                         p3 = newindex(i, jl, kl) + 1;
                         p4 = newindex(i, j , kl) + 1;
                     }
                     else if (nsurf == 2)
                     {
-                        p1 = newindex(i , j, k ) + 1;
-                        p2 = newindex(il, j, k ) + 1;
+                        p1 = newindex(i , j, k) + 1;
+                        p2 = newindex(il, j, k) + 1;
                         p3 = newindex(il, j, kl) + 1;
                         p4 = newindex(i , j, kl) + 1;
                     }
@@ -1292,8 +1295,8 @@ void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDo
             {
                 cell2node[ncount++] = i     + (j - 1) * ni;
                 cell2node[ncount++] = i + 1 + (j - 1) * ni;
-                cell2node[ncount++] = i + 1 + (j    ) * ni;
-                cell2node[ncount++] = i     + (j    ) * ni;
+                cell2node[ncount++] = i + 1 + (j   ) * ni;
+                cell2node[ncount++] = i     + (j   ) * ni;
             }
         }
 

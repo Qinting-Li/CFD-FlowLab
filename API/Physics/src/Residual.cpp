@@ -545,7 +545,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
     RDouble maxResLocal = maximumResidual;
     RDouble maxResCoorXLocal, maxResCoorYLocal, maxResCoorZLocal;
     int maxResIndexMLocal;
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     RDouble gridScaleUnit = reynoldsReferenceLengthDimensional;
 
     if (GetDim() == THREE_D)
@@ -627,8 +627,14 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
     RDouble3D &xcc = *grid->GetCellCenterX();
     RDouble3D &ycc = *grid->GetCellCenterY();
     RDouble3D &zcc = *grid->GetCellCenterZ();
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     RDouble gridScaleUnit = reynoldsReferenceLengthDimensional;
+
+    int nDebug = 0;
+    if (GlobalDataBase::IsExist("nDebug", PHINT, 1))
+    {
+        nDebug = GlobalDataBase::GetIntParaFromDB("nDebug");
+    }
 
     if (GetDim() == THREE_D)
     {
@@ -648,6 +654,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
     RDouble maxResCoorXLocal, maxResCoorYLocal, maxResCoorZLocal;
     int maxResIndexMLocal;
     bool maxResChange = false;
+    int iMax = 0, jMax = 0, kMax = 0, mMax = 0;
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -673,9 +680,13 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                         PrintToWindow("i = ", i, "\n");
                         PrintToWindow("j = ", j, "\n");
                         PrintToWindow("k = ", k, "\n");
+                        PrintToWindow("xc = ", xcc(i, j, k), "\n");
+                        PrintToWindow("yc = ", ycc(i, j, k), "\n");
+                        PrintToWindow("zc = ", zcc(i, j, k), "\n");
                         WriteLogFile("residual residualNormal ",m, residualNormal[m], true);
-                        WriteLogFile("izone i = ",izone, i, true);
-                        WriteLogFile("j k= ",j, k, true);
+                        WriteLogFile("izone = ",izone, true);
+                        WriteLogFile("i j k = ", i ,j, k, true);
+                        WriteLogFile("xc yc zc = ", xcc(i, j, k) ,ycc(i, j, k), zcc(i, j, k), true);
                         TK_Exit::ExceptionExit("Error: residual divergence!", true);
                     }
 
@@ -684,6 +695,11 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                         maxResChange = true;
 
                         maxResLocal = res2;
+
+                        iMax = i;
+                        jMax = j;
+                        kMax = k;
+                        mMax = m;
 
                         maxResCoorXLocal = xcc(i, j, k);
                         maxResCoorYLocal = ycc(i, j, k);
@@ -695,6 +711,18 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
             }
         }
     }
+
+    if(nDebug==1 && maxResChange == true)
+    {
+        int izone = grid->GetZoneID();
+        PrintToWindow("\n","Maxres_izone = ", izone, "\n");
+        PrintToWindow("Maxres_i = ", iMax, "\n");
+        PrintToWindow("Maxres_j = ", jMax, "\n");
+        PrintToWindow("Maxres_k = ", kMax, "\n");
+        PrintToWindow("Maxres_m = ", mMax, "\n");
+        PrintToWindow("Maxres = ", maxResLocal,"\n","\n");
+    }
+    
 
     if (maxResChange)
     {

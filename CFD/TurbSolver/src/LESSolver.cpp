@@ -158,7 +158,7 @@ void LESSolver::CompareOutStepOfFlowfieldFile(int outnstepofNS, int outnstepofTu
         PrintToWindow(oss.str());
         WriteLogFile (oss.str());
 
-		GlobalDataBase::UpdateData( "outnstep", &outnstepofTurb, PHINT, 1 );
+		GlobalDataBase::UpdateData("outnstep", &outnstepofTurb, PHINT, 1);
     }
     else
     {

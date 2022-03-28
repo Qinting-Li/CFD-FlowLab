@@ -23,8 +23,11 @@
 #include "Geo_OversetGridTopo_Struct.h"
 #include "Geo_UnstructBC.h"
 #include "Constants.h"
+#ifdef USE_HYFLOW_CODE
+#include "RealGas.h"
+#else
 #include "Gas.h"
-
+#endif
 using namespace std;
 
 namespace PHSPACE
@@ -103,6 +106,27 @@ void GlobalBoundaryCondition::ReadGlobalBoundaryCondition()
 
 void GlobalBoundaryCondition::ReadLBMPara()
 {
+#ifdef USE_LBM_CODE
+    fstream file;
+    string bcFile;
+    int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
+    if (nsimutask == 13)
+    {
+        bcFile = "./bin/lbm_para.hypara";
+    }
+    if (!FileExist(bcFile))
+    {
+        //! To compatible the old version.
+        return;
+    }
+
+    OpenFile(file, bcFile, ios::in);
+
+    ParseBCFromFile(file);
+
+    CloseFile(file);
+
+#endif
 }
 
 void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
@@ -1792,8 +1816,8 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
 
     map < string, int > keywordmap;
 
-    keywordmap.insert(pair<string, int>("int"   , PHINT   ));
-    keywordmap.insert(pair<string, int>("float" , PHFLOAT ));
+    keywordmap.insert(pair<string, int>("int"   , PHINT  ));
+    keywordmap.insert(pair<string, int>("float" , PHFLOAT));
     keywordmap.insert(pair<string, int>("double", PHDOUBLE));
     keywordmap.insert(pair<string, int>("string", PHSTRING));
 
@@ -2005,9 +2029,9 @@ int GlobalBoundaryCondition::GetNumberofSolidWallPart()
     return nSolidWallPart;
 }
 
-bool IsInterface( const int& boundaryConditionType )
+bool IsInterface(const int& boundaryConditionType)
 {
-    if ( boundaryConditionType == PHENGLEI::INTERFACE || boundaryConditionType < 0 )
+    if (boundaryConditionType == PHENGLEI::INTERFACE || boundaryConditionType < 0)
     {
         return true;
     }

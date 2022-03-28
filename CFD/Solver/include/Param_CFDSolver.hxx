@@ -166,6 +166,8 @@ inline int Param_CFDSolver::GetStatisticMethod() const
 
 inline int Param_CFDSolver::GetIsOverLapping() const
 {
-    return isOverLapping;
+    return isOverset;
 }
+
+
 

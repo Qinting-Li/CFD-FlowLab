@@ -1,6 +1,6 @@
-#include "GridDeformation.h"
-#include "GridDeformationSPRING.h"
-#include "GridDeformationRBF.h"
+#include "Mesh_Deformation.h"
+#include "Mesh_DeformationSPRING.h"
+#include "Mesh_DeformationRBF.h"
 #include "PHIO.h"
 #include "IO_FileName.h"
 #include "GeometryUnit.h"
@@ -9,7 +9,7 @@
 namespace PHSPACE
 {
 
-GridDeformation::GridDeformation(int nZonesIn, Grid **stationalGridIn)
+Mesh_Deformation::Mesh_Deformation(int nZonesIn, Grid **stationalGridIn)
 {
     this->nZones = nZonesIn;
     this->stationalGrid = stationalGridIn;
@@ -18,7 +18,7 @@ GridDeformation::GridDeformation(int nZonesIn, Grid **stationalGridIn)
     this->deformParameter = 0;
 }
 
-GridDeformation::~GridDeformation()
+Mesh_Deformation::~Mesh_Deformation()
 {
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
@@ -27,19 +27,19 @@ GridDeformation::~GridDeformation()
     delete [] deformedGrid;
 }
 
-void GridDeformation::SetDeformParameter(DeformParameter *deformParameterIn)
+void Mesh_Deformation::SetDeformParameter(DeformParameter *deformParameterIn)
 {
     this->deformParameter = deformParameterIn;
 }
 
-void GridDeformation::Run()
+void Mesh_Deformation::Run()
 {
     TransformGrid();
     MatchControlPoints();
     Deforming();
 }
 
-void GridDeformation::SetNodeAttribute(DynamicGrid *grid)
+void Mesh_Deformation::SetNodeAttribute(DynamicGrid *grid)
 {
     int nTotalFace = grid->GetNTotalFace();
     int nTotalNode = grid->GetNTotalNode();
@@ -68,7 +68,7 @@ void GridDeformation::SetNodeAttribute(DynamicGrid *grid)
     }
 }
 
-void GridDeformation::SetSymmetryToZero()
+void Mesh_Deformation::SetSymmetryToZero()
 {
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
@@ -77,7 +77,7 @@ void GridDeformation::SetSymmetryToZero()
     }
 }
 
-void GridDeformation::PostVisual(string visualFileName, int iStep)
+void Mesh_Deformation::PostVisual(string visualFileName, int iStep)
 {
     string fileName = AddSymbolToFileName(visualFileName, "_", iStep);
     fstream visualFile;
@@ -459,18 +459,18 @@ void DeformGrid()
     deformParameter->SetSlicePosition(slicePosition);
 
     //! Grid deformation.
-    GridDeformation *gridDeformation = 0;
+    Mesh_Deformation *gridDeformation = 0;
     int deformationMethod = GlobalDataBase::GetIntParaFromDB("deformationMethod");
     if (deformationMethod == SPRING)
     {
-        gridDeformation = new GridDeformationSPRING(nZones, stationalGrid);
+        gridDeformation = new Mesh_DeformationSPRING(nZones, stationalGrid);
     }
     else
     {
         int numberOfReferenceCP = GlobalDataBase::GetIntParaFromDB("numberOfReferenceCP");
         RDouble influencePara = GlobalDataBase::GetDoubleParaFromDB("influencePara");
 
-        gridDeformation = new GridDeformationRBF(nZones, stationalGrid);
+        gridDeformation = new Mesh_DeformationRBF(nZones, stationalGrid);
         gridDeformation->SetNumberOfReferenceCP(numberOfReferenceCP);
         gridDeformation->SetInfluencePara(influencePara);
     }

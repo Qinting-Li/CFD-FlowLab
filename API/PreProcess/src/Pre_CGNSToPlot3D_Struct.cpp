@@ -4,7 +4,7 @@
 #include "Pointer.h"
 #include "TK_Parse.h"
 #include "GridType.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "TK_Exit.h"
 #include "Math_BasisFunction.h"
 #include "Constants.h"
@@ -29,8 +29,12 @@ Pre_CGNSToPlot3D_Struct::~Pre_CGNSToPlot3D_Struct()
 void Pre_CGNSToPlot3D_Struct::Run()
 {
     ReadCGNSGrid();
-    int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
 
+    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+    if (abs(gridScaleFactor - 1.0) > SMALL)
+    {
+        ResetGridScaleAndTranslate();
+    }
     if (m_mode == 0) // Output .grd, .inp file with the same name.
     {
         WriteToGrd();
@@ -43,7 +47,8 @@ void Pre_CGNSToPlot3D_Struct::Run()
 
         WriteToInp();
 
-        if (dumpOldGrid != 0)
+        int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
+        if (dumpOldGrid)
         {
             WriteToBcinformation();
         }
@@ -318,7 +323,7 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
                     dx = abs(x[kMin][jMin][iMin] - x[kMax][jMin][iMin]) * gridScaleFactor;
                     dy = abs(y[kMin][jMin][iMin] - y[kMax][jMin][iMin]) * gridScaleFactor;
                     dz = abs(z[kMin][jMin][iMin] - z[kMax][jMin][iMin]) * gridScaleFactor;
-                    if ((dx+dy+dz ) < SMALL && pnts[boco][2] != pnts[boco][5]) 
+                    if ((dx+dy+dz) < SMALL && pnts[boco][2] != pnts[boco][5]) 
                     {
                         lab1[boco] = 73;
                     }
@@ -481,6 +486,68 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
     delete [] familynames;    familynames = NULL;
     delete [] fambctype;    fambctype = NULL;
     cg_close(fileid);
+}
+
+void Pre_CGNSToPlot3D_Struct::ResetGridScaleAndTranslate()
+{
+    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+    RDouble *gridTranslationVector = new RDouble[3]();
+    if (GlobalDataBase::IsExist("gridTranslationVector", PHDOUBLE, 3))
+    {
+        GlobalDataBase::GetData("gridTranslationVector", gridTranslationVector, PHDOUBLE, 3);
+    }
+
+    for (int izone = 1; izone <= nzones; ++ izone)
+    {
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(izone-1);
+
+        int nCoords =base_cgns->GetNCoords();
+
+        int idim = base_cgns->GetIdim();
+        int jdim = base_cgns->GetJdim();
+        int kdim = base_cgns->GetKdim();
+
+        RDouble ***x = base_cgns->GetX();
+        RDouble ***y = base_cgns->GetY();
+        RDouble ***z = base_cgns->GetZ();
+
+        for (int k = 0; k < kdim; ++ k)
+        {
+            for (int j = 0; j < jdim; ++ j)
+            {
+                for (int i = 0; i < idim; ++ i)
+                {
+                    x[k][j][i] *= gridScaleFactor;
+                    x[k][j][i] += gridTranslationVector[0];
+                }
+            }
+        }
+
+        for (int k = 0; k < kdim; ++ k)
+        {
+            for (int j = 0; j < jdim; ++ j)
+            {
+                for (int i = 0; i < idim; ++ i)
+                {
+                    y[k][j][i] *= gridScaleFactor;
+                    y[k][j][i] += gridTranslationVector[1];
+                }
+            }
+        }
+
+        for (int k = 0; k < kdim; ++ k)
+        {
+            for (int j = 0; j < jdim; ++ j)
+            {
+                for (int i = 0; i < idim; ++ i)
+                {
+                    if (nCoords == 2) z[k][j][i] = 0.0;
+                    z[k][j][i] *= gridScaleFactor;
+                    if (nCoords == 3) z[k][j][i] += gridTranslationVector[2];
+                }
+            }
+        }
+    }
 }
 
 void Pre_CGNSToPlot3D_Struct::WriteToGrd()
@@ -730,7 +797,7 @@ void Pre_CGNSToPlot3D_Struct::WriteToBcinformation()
         delete [] bcNameChar;
     }
 
-    PHSPACE::CloseFile( file );
+    PHSPACE::CloseFile(file);
 }
 
 void Pre_CGNSToPlot3D_Struct::writetoCGNS(fstream &bcfile, cgsize_t *pnts, int lab, string bcName, int nCoords)

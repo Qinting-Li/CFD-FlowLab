@@ -145,7 +145,7 @@ void Pre_StructToUnstruct::CopyInterface()
     }
 }
 
-Grid **Pre_StructToUnstruct::GetUnsGrids()
+Grid **Pre_StructToUnstruct::GetUnstructGrids()
 {
     return this->structToUnstruct;
 }
@@ -397,17 +397,17 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                                 jNodeIndex1 = jWall;
                                 kNodeIndex1 = kWall;
 
-                                iNodeIndex2 = iWall + 1;
+                                iNodeIndex2 = iWall;
                                 jNodeIndex2 = jWall;
-                                kNodeIndex2 = kWall;
+                                kNodeIndex2 = kWall + 1;
 
                                 iNodeIndex3 = iWall + 1;
                                 jNodeIndex3 = jWall;
                                 kNodeIndex3 = kWall + 1;
 
-                                iNodeIndex4 = iWall;
+                                iNodeIndex4 = iWall + 1;
                                 jNodeIndex4 = jWall;
-                                kNodeIndex4 = kWall + 1;
+                                kNodeIndex4 = kWall;
                             }
                             else
                             {
@@ -434,10 +434,21 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex3 = GetNodeIndex(strGrid, iNodeIndex3, jNodeIndex3, kNodeIndex3);
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
-                            face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
-                            face2Node[nodeCount++] = nodeIndex4;
+                            if (leftOrRightIndex == 1)
+                            {
+                                face2Node[nodeCount++] = nodeIndex1;
+                                face2Node[nodeCount++] = nodeIndex2;
+                                face2Node[nodeCount++] = nodeIndex3;
+                                face2Node[nodeCount++] = nodeIndex4;
+                            }
+                            else
+                            {
+                                face2Node[nodeCount++] = nodeIndex1;
+                                face2Node[nodeCount++] = nodeIndex4;
+                                face2Node[nodeCount++] = nodeIndex3;
+                                face2Node[nodeCount++] = nodeIndex2;
+                            }
+
                         }
                         faceIndex ++;
                     }
@@ -539,9 +550,9 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
                             face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
                             face2Node[nodeCount++] = nodeIndex4;
+                            face2Node[nodeCount++] = nodeIndex3;
+                            face2Node[nodeCount++] = nodeIndex2;
 
                             int leftCellIndex  = GetCellIndex(strGrid, iCell    , jCell, kCell);
                             int rightCellIndex = GetCellIndex(strGrid, iCell + 1, jCell, kCell);
@@ -576,9 +587,9 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
                             face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
                             face2Node[nodeCount++] = nodeIndex4;
+                            face2Node[nodeCount++] = nodeIndex3;
+                            face2Node[nodeCount++] = nodeIndex2;
 
                             int leftCellIndex  = GetCellIndex(strGrid, iCell, jCell    , kCell);
                             int rightCellIndex = GetCellIndex(strGrid, iCell, jCell + 1, kCell);
@@ -595,16 +606,16 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             jNodeIndex1 = jCell;
                             kNodeIndex1 = kCell + 1;
 
-                            iNodeIndex2 = iCell + 1;
-                            jNodeIndex2 = jCell;
+                            iNodeIndex2 = iCell;
+                            jNodeIndex2 = jCell + 1;
                             kNodeIndex2 = kCell + 1;
 
                             iNodeIndex3 = iCell + 1;
                             jNodeIndex3 = jCell + 1;
                             kNodeIndex3 = kCell + 1;
 
-                            iNodeIndex4 = iCell;
-                            jNodeIndex4 = jCell + 1;
+                            iNodeIndex4 = iCell + 1;
+                            jNodeIndex4 = jCell;
                             kNodeIndex4 = kCell + 1;
 
                             nodeIndex1 = GetNodeIndex(strGrid, iNodeIndex1, jNodeIndex1, kNodeIndex1);
@@ -613,9 +624,9 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
                             face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
                             face2Node[nodeCount++] = nodeIndex4;
+                            face2Node[nodeCount++] = nodeIndex3;
+                            face2Node[nodeCount++] = nodeIndex2;
 
                             int leftCellIndex  = GetCellIndex(strGrid, iCell, jCell, kCell);
                             int rightCellIndex = GetCellIndex(strGrid, iCell, jCell, kCell + 1);

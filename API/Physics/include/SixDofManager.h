@@ -22,15 +22,15 @@ protected:
     RDouble momentOfInertiaTensorXX, momentOfInertiaTensorYY, momentOfInertiaTensorZZ, momentOfInertiaTensorXY, momentOfInertiaTensorXZ, momentOfInertiaTensorYZ;
 public:
     MassCharacter() { mass = momentOfInertiaTensorXX = momentOfInertiaTensorYY = momentOfInertiaTensorZZ = momentOfInertiaTensorXY = momentOfInertiaTensorXZ = momentOfInertiaTensorYZ = 0.0; };
-    MassCharacter( RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ );
+    MassCharacter(RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ);
 
     ~MassCharacter() {};
     
-    void SetMassCharacter( RDouble mass, vector< RDouble > & massMatrix );
-    void SetMassCharacter( RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ );
-    void GetMassCharacter( RDouble & mass, RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ, RDouble & momentOfInertiaTensorXY, RDouble & momentOfInertiaTensorXZ, RDouble & momentOfInertiaTensorYZ );
-    void GetMomentInertia( RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ, RDouble & momentOfInertiaTensorXY,RDouble & momentOfInertiaTensorXZ,RDouble & momentOfInertiaTensorYZ );
-    void GetMomentInertia( vector< RDouble > & momentOfInertia );
+    void SetMassCharacter(RDouble mass, vector< RDouble > & massMatrix);
+    void SetMassCharacter(RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ);
+    void GetMassCharacter(RDouble & mass, RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ, RDouble & momentOfInertiaTensorXY, RDouble & momentOfInertiaTensorXZ, RDouble & momentOfInertiaTensorYZ);
+    void GetMomentInertia(RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ, RDouble & momentOfInertiaTensorXY,RDouble & momentOfInertiaTensorXZ,RDouble & momentOfInertiaTensorYZ);
+    void GetMomentInertia(vector< RDouble > & momentOfInertia);
 
     RDouble GetMass(){ return mass; };
     RDouble GetMomentOfInertiaTensorXX() { return momentOfInertiaTensorXX; };
@@ -56,42 +56,42 @@ public:
     SixDofParameter();
     ~SixDofParameter() {};
 
-    void SetMassCenterX( RDouble massCenterX ){ this->massCenterX = massCenterX; };
-    void SetMassCenterY( RDouble massCenterY ){ this->massCenterY = massCenterY; };
-    void SetMassCenterZ( RDouble massCenterZ ){ this->massCenterZ = massCenterZ; };
-    void SetMassCenter ( RDouble massCenterX, RDouble massCenterY, RDouble massCenterZ )
+    void SetMassCenterX(RDouble massCenterX){ this->massCenterX = massCenterX; };
+    void SetMassCenterY(RDouble massCenterY){ this->massCenterY = massCenterY; };
+    void SetMassCenterZ(RDouble massCenterZ){ this->massCenterZ = massCenterZ; };
+    void SetMassCenter (RDouble massCenterX, RDouble massCenterY, RDouble massCenterZ)
     {
         this->massCenterX = massCenterX; 
         this->massCenterY = massCenterY; 
         this->massCenterZ = massCenterZ; 
     };
 
-    void SetMassCenterVelocityX( RDouble massCenterVelocityX ){ this->massCenterVelocityX = massCenterVelocityX; };
-    void SetMassCenterVelocityY( RDouble massCenterVelocityY ){ this->massCenterVelocityY = massCenterVelocityY; };
-    void SetMassCenterVelocityZ( RDouble massCenterVelocityZ ){ this->massCenterVelocityZ = massCenterVelocityZ; };
-    void SetMassCenterVelocity ( RDouble massCenterVelocityX, RDouble massCenterVelocityY, RDouble massCenterVelocityZ )
+    void SetMassCenterVelocityX(RDouble massCenterVelocityX){ this->massCenterVelocityX = massCenterVelocityX; };
+    void SetMassCenterVelocityY(RDouble massCenterVelocityY){ this->massCenterVelocityY = massCenterVelocityY; };
+    void SetMassCenterVelocityZ(RDouble massCenterVelocityZ){ this->massCenterVelocityZ = massCenterVelocityZ; };
+    void SetMassCenterVelocity (RDouble massCenterVelocityX, RDouble massCenterVelocityY, RDouble massCenterVelocityZ)
     {
         this->massCenterVelocityX = massCenterVelocityX;
         this->massCenterVelocityY = massCenterVelocityY;
         this->massCenterVelocityZ = massCenterVelocityZ;
     };
 
-    void SetEulerAngleAlpha( RDouble eulerAngleAlpha ) { this->eulerAngleAlpha = eulerAngleAlpha; };
-    void SetEulerAngleBeta ( RDouble eulerAngleBeta )  { this->eulerAngleBeta  = eulerAngleBeta; };
-    void SetEulerAngleGama ( RDouble eulerAngleGama )  { this->eulerAngleGama  = eulerAngleGama; };
+    void SetEulerAngleAlpha(RDouble eulerAngleAlpha) { this->eulerAngleAlpha = eulerAngleAlpha; };
+    void SetEulerAngleBeta (RDouble eulerAngleBeta)  { this->eulerAngleBeta  = eulerAngleBeta; };
+    void SetEulerAngleGama (RDouble eulerAngleGama)  { this->eulerAngleGama  = eulerAngleGama; };
 
-    void SetEulerAngle     ( RDouble eulerAngleGama, RDouble eulerAngleBeta, RDouble eulerAngleAlpha ) 
+    void SetEulerAngle     (RDouble eulerAngleGama, RDouble eulerAngleBeta, RDouble eulerAngleAlpha) 
     {
         this->eulerAngleGama  = eulerAngleGama;
         this->eulerAngleBeta  = eulerAngleBeta;
         this->eulerAngleAlpha = eulerAngleAlpha;
     };
 
-    void SetAngularVelocityX( RDouble angularVelocityX ) { this->angularVelocityX = angularVelocityX; };
-    void SetAngularVelocityY( RDouble angularVelocityY ) { this->angularVelocityY = angularVelocityY; };
-    void SetAngularVelocityZ( RDouble angularVelocityZ ) { this->angularVelocityZ = angularVelocityZ; };
+    void SetAngularVelocityX(RDouble angularVelocityX) { this->angularVelocityX = angularVelocityX; };
+    void SetAngularVelocityY(RDouble angularVelocityY) { this->angularVelocityY = angularVelocityY; };
+    void SetAngularVelocityZ(RDouble angularVelocityZ) { this->angularVelocityZ = angularVelocityZ; };
 
-    void SetAngularVelocity( RDouble angularVelocityX, RDouble angularVelocityY, RDouble angularVelocityZ )
+    void SetAngularVelocity(RDouble angularVelocityX, RDouble angularVelocityY, RDouble angularVelocityZ)
     { 
         this->angularVelocityX = angularVelocityX;
         this->angularVelocityY = angularVelocityY;
@@ -101,7 +101,7 @@ public:
     RDouble GetMassCenterX() { return massCenterX; };
     RDouble GetMassCenterY() { return massCenterY; };
     RDouble GetMassCenterZ() { return massCenterZ; };
-    void    GetMassCenter( RDouble & massCenterX, RDouble & massCenterY, RDouble & massCenterZ )
+    void    GetMassCenter(RDouble & massCenterX, RDouble & massCenterY, RDouble & massCenterZ)
     {
         massCenterX = this->massCenterX;
         massCenterY = this->massCenterY;
@@ -111,14 +111,14 @@ public:
     RDouble GetNondimensionalMassCenterX();
     RDouble GetNondimensionalMassCenterY();
     RDouble GetNondimensionalMassCenterZ();
-    void    GetNondimensionalMassCenterVector( vector< RDouble > & nondimensionalMassCenterVector );
-    void    GetNondimensionalMassCenter( RDouble & dimensionlessMassCenterX, RDouble & dimensionlessMassCenterY, RDouble & dimensionlessMassCenterZ );
+    void    GetNondimensionalMassCenterVector(vector< RDouble > & nondimensionalMassCenterVector);
+    void    GetNondimensionalMassCenter(RDouble & dimensionlessMassCenterX, RDouble & dimensionlessMassCenterY, RDouble & dimensionlessMassCenterZ);
 
     RDouble GetMassCenterVelocityX() { return massCenterVelocityX; };
     RDouble GetMassCenterVelocityY() { return massCenterVelocityY; };
     RDouble GetMassCenterVelocityZ() { return massCenterVelocityZ; };
 
-    void    GetMassCenterVelocity( RDouble & massCenterVelocityX, RDouble & massCenterVelocityY, RDouble & massCenterVelocityZ )
+    void    GetMassCenterVelocity(RDouble & massCenterVelocityX, RDouble & massCenterVelocityY, RDouble & massCenterVelocityZ)
     {
         massCenterVelocityX = this->massCenterVelocityX;
         massCenterVelocityY = this->massCenterVelocityY;
@@ -129,39 +129,39 @@ public:
     RDouble GetEulerAngleBeta()  { return eulerAngleBeta ; };
     RDouble GetEulerAngleGama()  { return eulerAngleGama ; };
 
-    void    GetEulerAngle( RDouble & eulerAngleGama, RDouble & eulerAngleBeta, RDouble & eulerAngleAlpha ) 
+    void    GetEulerAngle(RDouble & eulerAngleGama, RDouble & eulerAngleBeta, RDouble & eulerAngleAlpha) 
     { 
         eulerAngleGama  = this->eulerAngleGama; 
         eulerAngleBeta  = this->eulerAngleBeta; 
         eulerAngleAlpha = this->eulerAngleAlpha;
     };
 
-    void  GetEulerAngleContainer( vector< RDouble > & eulerAngleContainer )
+    void  GetEulerAngleContainer(vector< RDouble > & eulerAngleContainer)
     {
-        return this->GetEulerAngle( eulerAngleContainer[ 0 ], eulerAngleContainer[ 1 ], eulerAngleContainer[ 2 ] );
+        return this->GetEulerAngle(eulerAngleContainer[ 0 ], eulerAngleContainer[ 1 ], eulerAngleContainer[ 2 ]);
     };
 
     RDouble GetAngularVelocityX() { return angularVelocityX; };
     RDouble GetAngularVelocityY() { return angularVelocityY; };
     RDouble GetAngularVelocityZ() { return angularVelocityZ; };
-    void    GetAngularVelocity( RDouble & angularVelocityX, RDouble & angularVelocityY, RDouble & angularVelocityZ )
+    void    GetAngularVelocity(RDouble & angularVelocityX, RDouble & angularVelocityY, RDouble & angularVelocityZ)
     {
         angularVelocityX = this->angularVelocityX;
         angularVelocityY = this->angularVelocityY;
         angularVelocityZ = this->angularVelocityZ;
     };
 
-    void  GetAngularVelocityContainer( vector< RDouble > & angularVelocityContainer )
+    void  GetAngularVelocityContainer(vector< RDouble > & angularVelocityContainer)
     {
-        return this->GetAngularVelocity( angularVelocityContainer[ 0 ], angularVelocityContainer[ 1 ], angularVelocityContainer[ 2 ] );
+        return this->GetAngularVelocity(angularVelocityContainer[ 0 ], angularVelocityContainer[ 1 ], angularVelocityContainer[ 2 ]);
     }
 public:
-    void GetGeneralVariableContainer( vector< RDouble > & generalVariableContainer );
-    void SetGeneralVariableContainer( RDouble * generalVariableContainer );
-    void SetGeneralVariableContainer( vector< RDouble > & massCenter, vector< RDouble >& attitudeAngle, 
+    void GetGeneralVariableContainer(vector< RDouble > & generalVariableContainer);
+    void SetGeneralVariableContainer(RDouble * generalVariableContainer);
+    void SetGeneralVariableContainer(vector< RDouble > & massCenter, vector< RDouble >& attitudeAngle, 
         vector< RDouble > &massCenterVelocity, vector< RDouble > &angularVelocity);
-    void UpdateEulerAngle           ( RDouble * eulerAngleVariationContainer );
-    void UpdateAngularVelocity      ( RDouble * angularVelocityVariationContainer );
+    void UpdateEulerAngle           (RDouble * eulerAngleVariationContainer);
+    void UpdateAngularVelocity      (RDouble * angularVelocityVariationContainer);
 };
 
 class SixDofSolver;
@@ -181,24 +181,24 @@ public:
     void Run();
     void Post();
     void Dump();
-    void DumpRestart( fstream & file );
+    void DumpRestart(fstream & file);
 
 protected:
     void AllocateSixDofSolverContainer();
 
 public:
-    MassCharacter   * GetMassCharacter    ( int bodyIndex );
-    SixDofParameter * GetSixDofParameterN1( int bodyIndex );
-    SixDofParameter * GetSixDofParameterN ( int bodyIndex );
-    SixDofParameter * GetSixDofParameter  ( int bodyIndex );
+    MassCharacter   * GetMassCharacter    (int bodyIndex);
+    SixDofParameter * GetSixDofParameterN1(int bodyIndex);
+    SixDofParameter * GetSixDofParameterN (int bodyIndex);
+    SixDofParameter * GetSixDofParameter  (int bodyIndex);
 
-    SixDofSolver * GetSixDofSolver( int bodyIndex ) { return sixDofSolverContainer[ bodyIndex ]; }
+    SixDofSolver * GetSixDofSolver(int bodyIndex) { return sixDofSolverContainer[ bodyIndex ]; }
 };
 
 class SixDofSolver
 {
 public:
-    SixDofSolver( SixDofSolverManager * sixDofSolverManager );
+    SixDofSolver(SixDofSolverManager * sixDofSolverManager);
     virtual ~SixDofSolver();
 
 protected:
@@ -215,7 +215,7 @@ protected:
     RDouble DegToRad, RadToDeg;
 
 public:
-    virtual void Initialize( int bodyIndexIn );
+    virtual void Initialize(int bodyIndexIn);
     void Restart();
     void Run();
     void Post();
@@ -232,16 +232,16 @@ protected:
 
     void DeallocateAllVariables();
 public:
-    virtual void InitializeSixDofByFiles( fstream & file );
-    virtual void DumpRestartSixDofSolver( fstream & file );
+    virtual void InitializeSixDofByFiles(fstream & file);
+    virtual void DumpRestartSixDofSolver(fstream & file);
 
 public:
-    SixDofParameter * GetSixDofParameter( int iTimeLayer ) { return sixDofParameterContainer[ iTimeLayer ]; };
-    vector< RDouble > & GetForceVector    ( int iTimeLayer ) { return sixDofForceContainer    [ iTimeLayer ]; }
+    SixDofParameter * GetSixDofParameter(int iTimeLayer) { return sixDofParameterContainer[ iTimeLayer ]; };
+    vector< RDouble > & GetForceVector    (int iTimeLayer) { return sixDofForceContainer    [ iTimeLayer ]; }
     MassCharacter   * GetMassCharacter() { return massCharacter; };
 
     int  GetNumberOfTimeLayers() { return numberOfTimeLayers; }
-    void SetNumberOfTimeLayers( int numberOfTimeLayers ) { this->numberOfTimeLayers = numberOfTimeLayers; }
+    void SetNumberOfTimeLayers(int numberOfTimeLayers) { this->numberOfTimeLayers = numberOfTimeLayers; }
 
 protected:
     void MovingByFile                                    ();
@@ -254,7 +254,7 @@ protected:
     void Pitching               ();
     void Yawing                 ();
     void Rolling                ();
-    
+    void XDirectionOnly         ();
     void ModifyForceAndSixDofInformationForPitchingOnly          ();
     void ModifyForceAndSixDofInformationForRollingOnly           ();
     void ModifyForceAndSixDofInformationForPitchingAndRollingOnly();
@@ -263,52 +263,52 @@ protected:
     void Rotation_Rudder_Test1      ();
 
 protected:
-    void GetSixDofFlux( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux );
+    void GetSixDofFlux(SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux);
     
-    void ComputeRightHandSideOfRigidBodyTranslationalMotionEquation  ( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux );
-    void ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux );
-    void ComputeRightHandSideOfRigidBodyRotationalMotionEquation     ( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux );
-    void ComputeRightHandSideOfRigidBodyRotationalDynamicsEquation   ( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux );
+    void ComputeRightHandSideOfRigidBodyTranslationalMotionEquation  (SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux);
+    void ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation(SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux);
+    void ComputeRightHandSideOfRigidBodyRotationalMotionEquation     (SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux);
+    void ComputeRightHandSideOfRigidBodyRotationalDynamicsEquation   (SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux);
 
     void ComputeSixDofForceTimeSequenceContainer();
-    void GetDimensionalTotalForceAndMomentOfBody( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer );
-    void GetMassCenterAndEulerAngleContainer( vector< RDouble > & massCenterContainer, vector< RDouble > & eulerAngleContainer, int iTimeLayer );
-    void GetMomentAboutMassCenterInInertialFrame( vector< RDouble > & massCenterContainer, vector< RDouble > & totalForceVector, vector< RDouble > & momentVector, vector< RDouble > & momentAboutMassCenterInInertialFrame );
-    void GetDimensionalAdditionalForceAndMomentOfBody( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer );
-    void GetDimensionalAdditionalForceAndMomentOfBodyWingStore( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer );
-    void GetDimensionalAdditionalForceAndMomentOfBody611C7( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer );
-    void GetDimensionalAdditionalForceAndMomentOfBodyByParameter(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer );
-    void ComputeCurrentSixDofVariables( vector< vector< RDouble > > & qContainer, vector< vector< RDouble > > & fluxContainer, int numberOfEquations );
-    void ComputeCurrentSixDofVariables( RDouble * q, RDouble * qN, RDouble * qN1, RDouble * fluxM, RDouble * fluxN, RDouble * fluxN1, int numberOfEquations );
-    void GetDimensionalAerodynamicForceAndMoment( vector< RDouble > & dimensionalAerodynamicForce, vector< RDouble > & dimensionalAerodynamicMoment, int bodyIndex, int iTimeLayer );
+    void GetDimensionalTotalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
+    void GetMassCenterAndEulerAngleContainer(vector< RDouble > & massCenterContainer, vector< RDouble > & eulerAngleContainer, int iTimeLayer);
+    void GetMomentAboutMassCenterInInertialFrame(vector< RDouble > & massCenterContainer, vector< RDouble > & totalForceVector, vector< RDouble > & momentVector, vector< RDouble > & momentAboutMassCenterInInertialFrame);
+    void GetDimensionalAdditionalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
+    void GetDimensionalAdditionalForceAndMomentOfBodyWingStore(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
+    void GetDimensionalAdditionalForceAndMomentOfBody611C7(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
+    void GetDimensionalAdditionalForceAndMomentOfBodyByParameter(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
+    void ComputeCurrentSixDofVariables(vector< vector< RDouble > > & qContainer, vector< vector< RDouble > > & fluxContainer, int numberOfEquations);
+    void ComputeCurrentSixDofVariables(RDouble * q, RDouble * qN, RDouble * qN1, RDouble * fluxM, RDouble * fluxN, RDouble * fluxN1, int numberOfEquations);
+    void GetDimensionalAerodynamicForceAndMoment(vector< RDouble > & dimensionalAerodynamicForce, vector< RDouble > & dimensionalAerodynamicMoment, int bodyIndex, int iTimeLayer);
 public:
-    void GetDimensionalAerodynamicForceAndMomentOfBody   ( vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer );
-    void GetDimensionalAerodynamicForceAndMomentBodyFrame( vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer );
-    void GetDimensionalAerodynamicForceAndMomentInerFrame( vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer );
+    void GetDimensionalAerodynamicForceAndMomentOfBody   (vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer);
+    void GetDimensionalAerodynamicForceAndMomentBodyFrame(vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer);
+    void GetDimensionalAerodynamicForceAndMomentInerFrame(vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer);
 
 public:
     void DumpSixDofSolverInformation();
 
 protected:
     void DumpSixDofParameterInformation();
-    void DumpSixDofParameterInformation( fstream & file );
+    void DumpSixDofParameterInformation(fstream & file);
 
     void DumpAleForceInformation();
-    void DumpAleForceInformationBodyFrame( fstream & file );
-    void DumpAleForceInformationInerFrame( fstream & file );
+    void DumpAleForceInformationBodyFrame(fstream & file);
+    void DumpAleForceInformationInerFrame(fstream & file);
 };
 
-SixDofParameter * GetSixDofParameter       ( int bodyIndex );
+SixDofParameter * GetSixDofParameter       (int bodyIndex);
 
-void GetSixDofCoefficients( RDouble & a, RDouble & b, RDouble & c, RDouble & d, RDouble & e, RFloat & relaxParameter );
+void GetSixDofCoefficients(RDouble & a, RDouble & b, RDouble & c, RDouble & d, RDouble & e, RFloat & relaxParameter);
 
-void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem( vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & massCenter, vector< RDouble > & vectorInBodyFrame );
-void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem( vector< RDouble > & vectorInBodyFrame,     vector< RDouble > & angleVector, vector< RDouble > & massCenter, vector< RDouble > & vectorInInertialFrame );
-void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem( vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & vectorInBodyFrame );
-void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem( vector< RDouble > & vectorInBodyFrame,     vector< RDouble > & angleVector, vector< RDouble > & vectorInInertialFrame );
+void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & massCenter, vector< RDouble > & vectorInBodyFrame);
+void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem(vector< RDouble > & vectorInBodyFrame,     vector< RDouble > & angleVector, vector< RDouble > & massCenter, vector< RDouble > & vectorInInertialFrame);
+void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & vectorInBodyFrame);
+void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem(vector< RDouble > & vectorInBodyFrame,     vector< RDouble > & angleVector, vector< RDouble > & vectorInInertialFrame);
 
-void RotateAboutAxisX( vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut );
-void RotateAboutAxisY( vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut );
-void RotateAboutAxisZ( vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut );
+void RotateAboutAxisX(vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut);
+void RotateAboutAxisY(vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut);
+void RotateAboutAxisZ(vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut);
 
 }

@@ -11,7 +11,7 @@ void CorrectGradient(RDouble fl, RDouble fr, RDouble &dfdx, RDouble &dfdy, RDoub
 {
     RDouble fold, fnew, df;
     fold = dfdx * dx + dfdy * dy;
-    fnew = ( fr - fl ) * ods;
+    fnew = (fr - fl) * ods;
     df   = fnew - fold;
 
     dfdx += df * dx;
@@ -22,7 +22,7 @@ void CorrectGradient(RDouble fl, RDouble fr, RDouble &dfdx, RDouble &dfdy, RDoub
 {
     RDouble fold, fnew, df;
     fold = dfdx * dx + dfdy * dy + dfdz * dz;
-    fnew = ( fr - fl ) * ods;
+    fnew = (fr - fl) * ods;
     df   = fnew - fold;
 
     dfdx += df * dx;
@@ -54,7 +54,7 @@ void Get_SPM(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenGeo
     greenGeo3D->nyjm = yfn(i ,j ,k ,2) * area(i ,j ,k ,2);
     greenGeo3D->nzjm = zfn(i ,j ,k ,2) * area(i ,j ,k ,2);
 
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
         greenGeo3D->nxkp = xfn(i ,j ,kp,3) * area(i ,j ,kp,3);
         greenGeo3D->nykp = yfn(i ,j ,kp,3) * area(i ,j ,kp,3);
@@ -99,7 +99,7 @@ void Get_SPM(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenGeo
     greenGeo3D->nyjm = yfv(i ,j ,k ,2);
     greenGeo3D->nzjm = zfv(i ,j ,k ,2);
 
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
         greenGeo3D->nxkp = xfv(i ,j ,kp,3);
         greenGeo3D->nykp = yfv(i ,j ,kp,3);
@@ -136,7 +136,7 @@ void Get_SPM_PARA(int ndim,GreenGeo3D *greenGeo3D,RDouble xfn_1,RDouble yfn_1,RD
         greenGeo3D->nxjm = xfn_2 * area_2;
         greenGeo3D->nyjm = yfn_2 * area_2;
         greenGeo3D->nzjm = zfn_2 * area_2;
-        if ( ndim == THREE_D )
+        if (ndim == THREE_D)
         {
                 greenGeo3D->nxkp = xfn_ip3 * area_ip3;
                 greenGeo3D->nykp = yfn_ip3 * area_ip3;
@@ -174,28 +174,28 @@ void Get_SPM_I(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenG
     kp = k + ks;
     km = k;
 
-    greenGeo3D->nxip = half * ( xfn(i ,j ,k,1) * area(i ,j ,k,1) + xfn(ip,j ,k,1) * area(ip,j ,k,1) );
-    greenGeo3D->nyip = half * ( yfn(i ,j ,k,1) * area(i ,j ,k,1) + yfn(ip,j ,k,1) * area(ip,j ,k,1) );
-    greenGeo3D->nzip = half * ( zfn(i ,j ,k,1) * area(i ,j ,k,1) + zfn(ip,j ,k,1) * area(ip,j ,k,1) );
-    greenGeo3D->nxim = half * ( xfn(i ,j ,k,1) * area(i ,j ,k,1) + xfn(im,j ,k,1) * area(im,j ,k,1) );
-    greenGeo3D->nyim = half * ( yfn(i ,j ,k,1) * area(i ,j ,k,1) + yfn(im,j ,k,1) * area(im,j ,k,1) );
-    greenGeo3D->nzim = half * ( zfn(i ,j ,k,1) * area(i ,j ,k,1) + zfn(im,j ,k,1) * area(im,j ,k,1) );
+    greenGeo3D->nxip = half * (xfn(i ,j ,k,1) * area(i ,j ,k,1) + xfn(ip,j ,k,1) * area(ip,j ,k,1));
+    greenGeo3D->nyip = half * (yfn(i ,j ,k,1) * area(i ,j ,k,1) + yfn(ip,j ,k,1) * area(ip,j ,k,1));
+    greenGeo3D->nzip = half * (zfn(i ,j ,k,1) * area(i ,j ,k,1) + zfn(ip,j ,k,1) * area(ip,j ,k,1));
+    greenGeo3D->nxim = half * (xfn(i ,j ,k,1) * area(i ,j ,k,1) + xfn(im,j ,k,1) * area(im,j ,k,1));
+    greenGeo3D->nyim = half * (yfn(i ,j ,k,1) * area(i ,j ,k,1) + yfn(im,j ,k,1) * area(im,j ,k,1));
+    greenGeo3D->nzim = half * (zfn(i ,j ,k,1) * area(i ,j ,k,1) + zfn(im,j ,k,1) * area(im,j ,k,1));
                                                                                     
-    greenGeo3D->nxjp = half * ( xfn(i ,jp,k,2) * area(i ,jp,k,2) + xfn(im,jp,k,2) * area(im,jp,k,2) );
-    greenGeo3D->nyjp = half * ( yfn(i ,jp,k,2) * area(i ,jp,k,2) + yfn(im,jp,k,2) * area(im,jp,k,2) );
-    greenGeo3D->nzjp = half * ( zfn(i ,jp,k,2) * area(i ,jp,k,2) + zfn(im,jp,k,2) * area(im,jp,k,2) );
-    greenGeo3D->nxjm = half * ( xfn(i ,jm,k,2) * area(i ,jm,k,2) + xfn(im,jm,k,2) * area(im,jm,k,2) );
-    greenGeo3D->nyjm = half * ( yfn(i ,jm,k,2) * area(i ,jm,k,2) + yfn(im,jm,k,2) * area(im,jm,k,2) );
-    greenGeo3D->nzjm = half * ( zfn(i ,jm,k,2) * area(i ,jm,k,2) + zfn(im,jm,k,2) * area(im,jm,k,2) );
+    greenGeo3D->nxjp = half * (xfn(i ,jp,k,2) * area(i ,jp,k,2) + xfn(im,jp,k,2) * area(im,jp,k,2));
+    greenGeo3D->nyjp = half * (yfn(i ,jp,k,2) * area(i ,jp,k,2) + yfn(im,jp,k,2) * area(im,jp,k,2));
+    greenGeo3D->nzjp = half * (zfn(i ,jp,k,2) * area(i ,jp,k,2) + zfn(im,jp,k,2) * area(im,jp,k,2));
+    greenGeo3D->nxjm = half * (xfn(i ,jm,k,2) * area(i ,jm,k,2) + xfn(im,jm,k,2) * area(im,jm,k,2));
+    greenGeo3D->nyjm = half * (yfn(i ,jm,k,2) * area(i ,jm,k,2) + yfn(im,jm,k,2) * area(im,jm,k,2));
+    greenGeo3D->nzjm = half * (zfn(i ,jm,k,2) * area(i ,jm,k,2) + zfn(im,jm,k,2) * area(im,jm,k,2));
 
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
-        greenGeo3D->nxkp = half * ( xfn(i ,j,kp,3) * area(i ,j,kp,3) + xfn(im,j,kp,3) * area(im,j,kp,3) );
-        greenGeo3D->nykp = half * ( yfn(i ,j,kp,3) * area(i ,j,kp,3) + yfn(im,j,kp,3) * area(im,j,kp,3) );
-        greenGeo3D->nzkp = half * ( zfn(i ,j,kp,3) * area(i ,j,kp,3) + zfn(im,j,kp,3) * area(im,j,kp,3) );
-        greenGeo3D->nxkm = half * ( xfn(i ,j,km,3) * area(i ,j,km,3) + xfn(im,j,km,3) * area(im,j,km,3) );
-        greenGeo3D->nykm = half * ( yfn(i ,j,km,3) * area(i ,j,km,3) + yfn(im,j,km,3) * area(im,j,km,3) );
-        greenGeo3D->nzkm = half * ( zfn(i ,j,km,3) * area(i ,j,km,3) + zfn(im,j,km,3) * area(im,j,km,3) );
+        greenGeo3D->nxkp = half * (xfn(i ,j,kp,3) * area(i ,j,kp,3) + xfn(im,j,kp,3) * area(im,j,kp,3));
+        greenGeo3D->nykp = half * (yfn(i ,j,kp,3) * area(i ,j,kp,3) + yfn(im,j,kp,3) * area(im,j,kp,3));
+        greenGeo3D->nzkp = half * (zfn(i ,j,kp,3) * area(i ,j,kp,3) + zfn(im,j,kp,3) * area(im,j,kp,3));
+        greenGeo3D->nxkm = half * (xfn(i ,j,km,3) * area(i ,j,km,3) + xfn(im,j,km,3) * area(im,j,km,3));
+        greenGeo3D->nykm = half * (yfn(i ,j,km,3) * area(i ,j,km,3) + yfn(im,j,km,3) * area(im,j,km,3));
+        greenGeo3D->nzkm = half * (zfn(i ,j,km,3) * area(i ,j,km,3) + zfn(im,j,km,3) * area(im,j,km,3));
     }
     else
     {
@@ -207,7 +207,7 @@ void Get_SPM_I(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenG
         greenGeo3D->nzkm = 0.0;
     }
 
-    greenGeo3D->ovol = two / ( vol(i,j,k) + vol(im,j,k) );
+    greenGeo3D->ovol = two / (vol(i,j,k) + vol(im,j,k));
 }
 
 void Get_SPM_J(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenGeo3D, RDouble4D &xfn, RDouble4D &yfn, RDouble4D &zfn, RDouble4D &area, RDouble3D &vol)
@@ -228,28 +228,28 @@ void Get_SPM_J(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenG
     kp = k + ks;
     km = k;
 
-    greenGeo3D->nxip = half * ( xfn(ip,j ,k,1) * area(ip,j ,k,1) + xfn(ip,jm,k,1) * area(ip,jm,k,1) );
-    greenGeo3D->nyip = half * ( yfn(ip,j ,k,1) * area(ip,j ,k,1) + yfn(ip,jm,k,1) * area(ip,jm,k,1) );
-    greenGeo3D->nzip = half * ( zfn(ip,j ,k,1) * area(ip,j ,k,1) + zfn(ip,jm,k,1) * area(ip,jm,k,1) );
-    greenGeo3D->nxim = half * ( xfn(im,j ,k,1) * area(im,j ,k,1) + xfn(im,jm,k,1) * area(im,jm,k,1) );
-    greenGeo3D->nyim = half * ( yfn(im,j ,k,1) * area(im,j ,k,1) + yfn(im,jm,k,1) * area(im,jm,k,1) );
-    greenGeo3D->nzim = half * ( zfn(im,j ,k,1) * area(im,j ,k,1) + zfn(im,jm,k,1) * area(im,jm,k,1) );
+    greenGeo3D->nxip = half * (xfn(ip,j ,k,1) * area(ip,j ,k,1) + xfn(ip,jm,k,1) * area(ip,jm,k,1));
+    greenGeo3D->nyip = half * (yfn(ip,j ,k,1) * area(ip,j ,k,1) + yfn(ip,jm,k,1) * area(ip,jm,k,1));
+    greenGeo3D->nzip = half * (zfn(ip,j ,k,1) * area(ip,j ,k,1) + zfn(ip,jm,k,1) * area(ip,jm,k,1));
+    greenGeo3D->nxim = half * (xfn(im,j ,k,1) * area(im,j ,k,1) + xfn(im,jm,k,1) * area(im,jm,k,1));
+    greenGeo3D->nyim = half * (yfn(im,j ,k,1) * area(im,j ,k,1) + yfn(im,jm,k,1) * area(im,jm,k,1));
+    greenGeo3D->nzim = half * (zfn(im,j ,k,1) * area(im,j ,k,1) + zfn(im,jm,k,1) * area(im,jm,k,1));
                                                                                         
-    greenGeo3D->nxjp = half * ( xfn(i ,j ,k,2) * area(i ,j ,k,2) + xfn(i ,jp,k,2) * area(i ,jp,k,2) );
-    greenGeo3D->nyjp = half * ( yfn(i ,j ,k,2) * area(i ,j ,k,2) + yfn(i ,jp,k,2) * area(i ,jp,k,2) );
-    greenGeo3D->nzjp = half * ( zfn(i ,j ,k,2) * area(i ,j ,k,2) + zfn(i ,jp,k,2) * area(i ,jp,k,2) );
-    greenGeo3D->nxjm = half * ( xfn(i ,j ,k,2) * area(i ,j ,k,2) + xfn(i ,jm,k,2) * area(i ,jm,k,2) );
-    greenGeo3D->nyjm = half * ( yfn(i ,j ,k,2) * area(i ,j ,k,2) + yfn(i ,jm,k,2) * area(i ,jm,k,2) );
-    greenGeo3D->nzjm = half * ( zfn(i ,j ,k,2) * area(i ,j ,k,2) + zfn(i ,jm,k,2) * area(i ,jm,k,2) );
+    greenGeo3D->nxjp = half * (xfn(i ,j ,k,2) * area(i ,j ,k,2) + xfn(i ,jp,k,2) * area(i ,jp,k,2));
+    greenGeo3D->nyjp = half * (yfn(i ,j ,k,2) * area(i ,j ,k,2) + yfn(i ,jp,k,2) * area(i ,jp,k,2));
+    greenGeo3D->nzjp = half * (zfn(i ,j ,k,2) * area(i ,j ,k,2) + zfn(i ,jp,k,2) * area(i ,jp,k,2));
+    greenGeo3D->nxjm = half * (xfn(i ,j ,k,2) * area(i ,j ,k,2) + xfn(i ,jm,k,2) * area(i ,jm,k,2));
+    greenGeo3D->nyjm = half * (yfn(i ,j ,k,2) * area(i ,j ,k,2) + yfn(i ,jm,k,2) * area(i ,jm,k,2));
+    greenGeo3D->nzjm = half * (zfn(i ,j ,k,2) * area(i ,j ,k,2) + zfn(i ,jm,k,2) * area(i ,jm,k,2));
 
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
-        greenGeo3D->nxkp = half * ( xfn(i,j ,kp,3) * area(i,j ,kp,3) + xfn(i,jm,kp,3) * area(i,jm,kp,3) );
-        greenGeo3D->nykp = half * ( yfn(i,j ,kp,3) * area(i,j ,kp,3) + yfn(i,jm,kp,3) * area(i,jm,kp,3) );
-        greenGeo3D->nzkp = half * ( zfn(i,j ,kp,3) * area(i,j ,kp,3) + zfn(i,jm,kp,3) * area(i,jm,kp,3) );
-        greenGeo3D->nxkm = half * ( xfn(i,j ,km,3) * area(i,j ,km,3) + xfn(i,jm,km,3) * area(i,jm,km,3) );
-        greenGeo3D->nykm = half * ( yfn(i,j ,km,3) * area(i,j ,km,3) + yfn(i,jm,km,3) * area(i,jm,km,3) );
-        greenGeo3D->nzkm = half * ( zfn(i,j ,km,3) * area(i,j ,km,3) + zfn(i,jm,km,3) * area(i,jm,km,3) );
+        greenGeo3D->nxkp = half * (xfn(i,j ,kp,3) * area(i,j ,kp,3) + xfn(i,jm,kp,3) * area(i,jm,kp,3));
+        greenGeo3D->nykp = half * (yfn(i,j ,kp,3) * area(i,j ,kp,3) + yfn(i,jm,kp,3) * area(i,jm,kp,3));
+        greenGeo3D->nzkp = half * (zfn(i,j ,kp,3) * area(i,j ,kp,3) + zfn(i,jm,kp,3) * area(i,jm,kp,3));
+        greenGeo3D->nxkm = half * (xfn(i,j ,km,3) * area(i,j ,km,3) + xfn(i,jm,km,3) * area(i,jm,km,3));
+        greenGeo3D->nykm = half * (yfn(i,j ,km,3) * area(i,j ,km,3) + yfn(i,jm,km,3) * area(i,jm,km,3));
+        greenGeo3D->nzkm = half * (zfn(i,j ,km,3) * area(i,j ,km,3) + zfn(i,jm,km,3) * area(i,jm,km,3));
     }
     else
     {
@@ -261,7 +261,7 @@ void Get_SPM_J(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenG
         greenGeo3D->nzkm = 0.0;
     }
 
-    greenGeo3D->ovol = two / ( vol(i,j,k) + vol(i,jm,k) );
+    greenGeo3D->ovol = two / (vol(i,j,k) + vol(i,jm,k));
 }
 
 void Get_SPM_K(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenGeo3D, RDouble4D &xfn, RDouble4D &yfn, RDouble4D &zfn, RDouble4D &area, RDouble3D &vol)
@@ -282,28 +282,28 @@ void Get_SPM_K(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenG
     kp = k + ks;
     km = k - ks;
 
-    greenGeo3D->nxip = half * ( xfn(ip,j,k ,1) * area(ip,j,k ,1) + xfn(ip,j,km,1) * area(ip,j,km,1) );
-    greenGeo3D->nyip = half * ( yfn(ip,j,k ,1) * area(ip,j,k ,1) + yfn(ip,j,km,1) * area(ip,j,km,1) );
-    greenGeo3D->nzip = half * ( zfn(ip,j,k ,1) * area(ip,j,k ,1) + zfn(ip,j,km,1) * area(ip,j,km,1) );
-    greenGeo3D->nxim = half * ( xfn(im,j,k ,1) * area(im,j,k ,1) + xfn(im,j,km,1) * area(im,j,km,1) );
-    greenGeo3D->nyim = half * ( yfn(im,j,k ,1) * area(im,j,k ,1) + yfn(im,j,km,1) * area(im,j,km,1) );
-    greenGeo3D->nzim = half * ( zfn(im,j,k ,1) * area(im,j,k ,1) + zfn(im,j,km,1) * area(im,j,km,1) );
+    greenGeo3D->nxip = half * (xfn(ip,j,k ,1) * area(ip,j,k ,1) + xfn(ip,j,km,1) * area(ip,j,km,1));
+    greenGeo3D->nyip = half * (yfn(ip,j,k ,1) * area(ip,j,k ,1) + yfn(ip,j,km,1) * area(ip,j,km,1));
+    greenGeo3D->nzip = half * (zfn(ip,j,k ,1) * area(ip,j,k ,1) + zfn(ip,j,km,1) * area(ip,j,km,1));
+    greenGeo3D->nxim = half * (xfn(im,j,k ,1) * area(im,j,k ,1) + xfn(im,j,km,1) * area(im,j,km,1));
+    greenGeo3D->nyim = half * (yfn(im,j,k ,1) * area(im,j,k ,1) + yfn(im,j,km,1) * area(im,j,km,1));
+    greenGeo3D->nzim = half * (zfn(im,j,k ,1) * area(im,j,k ,1) + zfn(im,j,km,1) * area(im,j,km,1));
                                                                                         
-    greenGeo3D->nxjp = half * ( xfn(i,jp,k ,2) * area(i,jp,k ,2) + xfn(i,jp,km,2) * area(i,jp,km,2) );
-    greenGeo3D->nyjp = half * ( yfn(i,jp,k ,2) * area(i,jp,k ,2) + yfn(i,jp,km,2) * area(i,jp,km,2) );
-    greenGeo3D->nzjp = half * ( zfn(i,jp,k ,2) * area(i,jp,k ,2) + zfn(i,jp,km,2) * area(i,jp,km,2) );
-    greenGeo3D->nxjm = half * ( xfn(i,jm,k ,2) * area(i,jm,k ,2) + xfn(i,jm,km,2) * area(i,jm,km,2) );
-    greenGeo3D->nyjm = half * ( yfn(i,jm,k ,2) * area(i,jm,k ,2) + yfn(i,jm,km,2) * area(i,jm,km,2) );
-    greenGeo3D->nzjm = half * ( zfn(i,jm,k ,2) * area(i,jm,k ,2) + zfn(i,jm,km,2) * area(i,jm,km,2) );
+    greenGeo3D->nxjp = half * (xfn(i,jp,k ,2) * area(i,jp,k ,2) + xfn(i,jp,km,2) * area(i,jp,km,2));
+    greenGeo3D->nyjp = half * (yfn(i,jp,k ,2) * area(i,jp,k ,2) + yfn(i,jp,km,2) * area(i,jp,km,2));
+    greenGeo3D->nzjp = half * (zfn(i,jp,k ,2) * area(i,jp,k ,2) + zfn(i,jp,km,2) * area(i,jp,km,2));
+    greenGeo3D->nxjm = half * (xfn(i,jm,k ,2) * area(i,jm,k ,2) + xfn(i,jm,km,2) * area(i,jm,km,2));
+    greenGeo3D->nyjm = half * (yfn(i,jm,k ,2) * area(i,jm,k ,2) + yfn(i,jm,km,2) * area(i,jm,km,2));
+    greenGeo3D->nzjm = half * (zfn(i,jm,k ,2) * area(i,jm,k ,2) + zfn(i,jm,km,2) * area(i,jm,km,2));
                                                                                         
-    greenGeo3D->nxkp = half * ( xfn(i,j ,k ,3) * area(i,j ,k ,3) + xfn(i,j ,kp,3) * area(i,j ,kp,3) );
-    greenGeo3D->nykp = half * ( yfn(i,j ,k ,3) * area(i,j ,k ,3) + yfn(i,j ,kp,3) * area(i,j ,kp,3) );
-    greenGeo3D->nzkp = half * ( zfn(i,j ,k ,3) * area(i,j ,k ,3) + zfn(i,j ,kp,3) * area(i,j ,kp,3) );
-    greenGeo3D->nxkm = half * ( xfn(i,j ,k ,3) * area(i,j ,k ,3) + xfn(i,j ,km,3) * area(i,j ,km,3) );
-    greenGeo3D->nykm = half * ( yfn(i,j ,k ,3) * area(i,j ,k ,3) + yfn(i,j ,km,3) * area(i,j ,km,3) );
-    greenGeo3D->nzkm = half * ( zfn(i,j ,k ,3) * area(i,j ,k ,3) + zfn(i,j ,km,3) * area(i,j ,km,3) );
+    greenGeo3D->nxkp = half * (xfn(i,j ,k ,3) * area(i,j ,k ,3) + xfn(i,j ,kp,3) * area(i,j ,kp,3));
+    greenGeo3D->nykp = half * (yfn(i,j ,k ,3) * area(i,j ,k ,3) + yfn(i,j ,kp,3) * area(i,j ,kp,3));
+    greenGeo3D->nzkp = half * (zfn(i,j ,k ,3) * area(i,j ,k ,3) + zfn(i,j ,kp,3) * area(i,j ,kp,3));
+    greenGeo3D->nxkm = half * (xfn(i,j ,k ,3) * area(i,j ,k ,3) + xfn(i,j ,km,3) * area(i,j ,km,3));
+    greenGeo3D->nykm = half * (yfn(i,j ,k ,3) * area(i,j ,k ,3) + yfn(i,j ,km,3) * area(i,j ,km,3));
+    greenGeo3D->nzkm = half * (zfn(i,j ,k ,3) * area(i,j ,k ,3) + zfn(i,j ,km,3) * area(i,j ,km,3));
 
-    greenGeo3D->ovol = two / ( vol(i,j,k) + vol(i,j,km) );
+    greenGeo3D->ovol = two / (vol(i,j,k) + vol(i,j,km));
 }
 
 void DXDYDZ(RDouble3D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,RDouble &dfdx, RDouble &dfdy, RDouble &dfdz)
@@ -325,16 +325,16 @@ void DXDYDZ(RDouble3D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,RDouble
     kp = k + ks;
     km = k - ks;
 
-    fip = half * ( f(i,j,k) + f(ip,j,k) );
-    fim = half * ( f(i,j,k) + f(im,j,k) );
-    fjp = half * ( f(i,j,k) + f(i,jp,k) );
-    fjm = half * ( f(i,j,k) + f(i,jm,k) );
-    fkp = half * ( f(i,j,k) + f(i,j,kp) );
-    fkm = half * ( f(i,j,k) + f(i,j,km) );
+    fip = half * (f(i,j,k) + f(ip,j,k));
+    fim = half * (f(i,j,k) + f(im,j,k));
+    fjp = half * (f(i,j,k) + f(i,jp,k));
+    fjm = half * (f(i,j,k) + f(i,jm,k));
+    fkp = half * (f(i,j,k) + f(i,j,kp));
+    fkm = half * (f(i,j,k) + f(i,j,km));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 void DXDYDZ(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int npos,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz)
@@ -356,16 +356,16 @@ void DXDYDZ(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int npo
     kp = k + ks;
     km = k - ks;
 
-    fip = half * ( f(i,j,k,npos) + f(ip,j,k,npos) );
-    fim = half * ( f(i,j,k,npos) + f(im,j,k,npos) );
-    fjp = half * ( f(i,j,k,npos) + f(i,jp,k,npos) );
-    fjm = half * ( f(i,j,k,npos) + f(i,jm,k,npos) );
-    fkp = half * ( f(i,j,k,npos) + f(i,j,kp,npos) );
-    fkm = half * ( f(i,j,k,npos) + f(i,j,km,npos) );
+    fip = half * (f(i,j,k,npos) + f(ip,j,k,npos));
+    fim = half * (f(i,j,k,npos) + f(im,j,k,npos));
+    fjp = half * (f(i,j,k,npos) + f(i,jp,k,npos));
+    fjm = half * (f(i,j,k,npos) + f(i,jm,k,npos));
+    fkp = half * (f(i,j,k,npos) + f(i,j,kp,npos));
+    fkm = half * (f(i,j,k,npos) + f(i,j,km,npos));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 void DXDYDZ_I(RDouble3D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz)
@@ -389,14 +389,14 @@ void DXDYDZ_I(RDouble3D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,RDoub
 
     fip = f(ip,j,k);
     fim = f(im,j,k);
-    fjp = fourth * ( fip + fim + f(ip,jp,k) + f(im,jp,k) );
-    fjm = fourth * ( fip + fim + f(ip,jm,k) + f(im,jm,k) );
-    fkp = fourth * ( fip + fim + f(ip,j,kp) + f(im,j,kp) );
-    fkm = fourth * ( fip + fim + f(ip,j,km) + f(im,j,km) );
+    fjp = fourth * (fip + fim + f(ip,jp,k) + f(im,jp,k));
+    fjm = fourth * (fip + fim + f(ip,jm,k) + f(im,jm,k));
+    fkp = fourth * (fip + fim + f(ip,j,kp) + f(im,j,kp));
+    fkm = fourth * (fip + fim + f(ip,j,km) + f(im,j,km));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 
@@ -421,14 +421,14 @@ void DXDYDZ_J(RDouble3D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,RDoub
 
     fjp = f(i,jp,k);
     fjm = f(i,jm,k);
-    fkp = fourth * ( fjp + fjm + f(i,jp,kp) + f(i,jm,kp) );
-    fkm = fourth * ( fjp + fjm + f(i,jp,km) + f(i,jm,km) );
-    fip = fourth * ( fjp + fjm + f(ip,jp,k) + f(ip,jm,k) );
-    fim = fourth * ( fjp + fjm + f(im,jp,k) + f(im,jm,k) );
+    fkp = fourth * (fjp + fjm + f(i,jp,kp) + f(i,jm,kp));
+    fkm = fourth * (fjp + fjm + f(i,jp,km) + f(i,jm,km));
+    fip = fourth * (fjp + fjm + f(ip,jp,k) + f(ip,jm,k));
+    fim = fourth * (fjp + fjm + f(im,jp,k) + f(im,jm,k));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 void DXDYDZ_K(RDouble3D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz)
@@ -452,14 +452,14 @@ void DXDYDZ_K(RDouble3D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,RDoub
 
     fkp = f(i,j,kp);
     fkm = f(i,j,km);
-    fip = fourth * ( fkp + fkm + f(ip,j,kp) + f(ip,j,km) );
-    fim = fourth * ( fkp + fkm + f(im,j,kp) + f(im,j,km) );
-    fjp = fourth * ( fkp + fkm + f(i,jp,kp) + f(i,jp,km) );
-    fjm = fourth * ( fkp + fkm + f(i,jm,kp) + f(i,jm,km) );
+    fip = fourth * (fkp + fkm + f(ip,j,kp) + f(ip,j,km));
+    fim = fourth * (fkp + fkm + f(im,j,kp) + f(im,j,km));
+    fjp = fourth * (fkp + fkm + f(i,jp,kp) + f(i,jp,km));
+    fjm = fourth * (fkp + fkm + f(i,jm,kp) + f(i,jm,km));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 void DXDYDZ_I(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int npos,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz)
@@ -483,14 +483,14 @@ void DXDYDZ_I(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int n
 
     fip = f(ip,j,k,npos);
     fim = f(im,j,k,npos);
-    fjp = fourth * ( fip + fim + f(ip,jp,k,npos) + f(im,jp,k,npos) );
-    fjm = fourth * ( fip + fim + f(ip,jm,k,npos) + f(im,jm,k,npos) );
-    fkp = fourth * ( fip + fim + f(ip,j,kp,npos) + f(im,j,kp,npos) );
-    fkm = fourth * ( fip + fim + f(ip,j,km,npos) + f(im,j,km,npos) );
+    fjp = fourth * (fip + fim + f(ip,jp,k,npos) + f(im,jp,k,npos));
+    fjm = fourth * (fip + fim + f(ip,jm,k,npos) + f(im,jm,k,npos));
+    fkp = fourth * (fip + fim + f(ip,j,kp,npos) + f(im,j,kp,npos));
+    fkm = fourth * (fip + fim + f(ip,j,km,npos) + f(im,j,km,npos));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 void DXDYDZ_J(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int npos,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz)
@@ -514,14 +514,14 @@ void DXDYDZ_J(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int n
 
     fjp = f(i,jp,k,npos);
     fjm = f(i,jm,k,npos);
-    fkp = fourth * ( fjp + fjm + f(i,jp,kp,npos) + f(i,jm,kp,npos) );
-    fkm = fourth * ( fjp + fjm + f(i,jp,km,npos) + f(i,jm,km,npos) );
-    fip = fourth * ( fjp + fjm + f(ip,jp,k,npos) + f(ip,jm,k,npos) );
-    fim = fourth * ( fjp + fjm + f(im,jp,k,npos) + f(im,jm,k,npos) );
+    fkp = fourth * (fjp + fjm + f(i,jp,kp,npos) + f(i,jm,kp,npos));
+    fkm = fourth * (fjp + fjm + f(i,jp,km,npos) + f(i,jm,km,npos));
+    fip = fourth * (fjp + fjm + f(ip,jp,k,npos) + f(ip,jm,k,npos));
+    fim = fourth * (fjp + fjm + f(im,jp,k,npos) + f(im,jm,k,npos));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 void DXDYDZ_K(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int npos,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz)
@@ -545,14 +545,14 @@ void DXDYDZ_K(RDouble4D & f,GreenGeo3D * g,int i,int j,int k,int js,int ks,int n
 
     fkp = f(i,j,kp,npos);
     fkm = f(i,j,km,npos);
-    fip = fourth * ( fkp + fkm + f(ip,j,kp,npos) + f(ip,j,km,npos) );
-    fim = fourth * ( fkp + fkm + f(im,j,kp,npos) + f(im,j,km,npos) );
-    fjp = fourth * ( fkp + fkm + f(i,jp,kp,npos) + f(i,jp,km,npos) );
-    fjm = fourth * ( fkp + fkm + f(i,jm,kp,npos) + f(i,jm,km,npos) );
+    fip = fourth * (fkp + fkm + f(ip,j,kp,npos) + f(ip,j,km,npos));
+    fim = fourth * (fkp + fkm + f(im,j,kp,npos) + f(im,j,km,npos));
+    fjp = fourth * (fkp + fkm + f(i,jp,kp,npos) + f(i,jp,km,npos));
+    fjm = fourth * (fkp + fkm + f(i,jm,kp,npos) + f(i,jm,km,npos));
 
-    dfdx = g->ovol * ( fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm );
-    dfdy = g->ovol * ( fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm );
-    dfdz = g->ovol * ( fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm );
+    dfdx = g->ovol * (fip * g->nxip - fim * g->nxim + fjp * g->nxjp - fjm * g->nxjm + fkp * g->nxkp - fkm * g->nxkm);
+    dfdy = g->ovol * (fip * g->nyip - fim * g->nyim + fjp * g->nyjp - fjm * g->nyjm + fkp * g->nykp - fkm * g->nykm);
+    dfdz = g->ovol * (fip * g->nzip - fim * g->nzim + fjp * g->nzjp - fjm * g->nzjm + fkp * g->nzkp - fkm * g->nzkm);
 }
 
 void GradCenter(Grid *grid_in, RDouble4D &q, RDouble3D &dqdx, RDouble3D &dqdy, RDouble3D &dqdz, int m)
@@ -562,10 +562,10 @@ void GradCenter(Grid *grid_in, RDouble4D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    RDouble4D &xfv  = *( grid->GetFaceVectorX() );
-    RDouble4D &yfv  = *( grid->GetFaceVectorY() );
-    RDouble4D &zfv  = *( grid->GetFaceVectorZ() );
-    RDouble3D &vol  = *( grid->GetCellVolume()  );
+    RDouble4D &xfv  = *(grid->GetFaceVectorX());
+    RDouble4D &yfv  = *(grid->GetFaceVectorY());
+    RDouble4D &zfv  = *(grid->GetFaceVectorZ());
+    RDouble3D &vol  = *(grid->GetCellVolume() );
 
     int ndim = GetDim();
 
@@ -573,7 +573,7 @@ void GradCenter(Grid *grid_in, RDouble4D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
     dqdy = 0.0;
     dqdz = 0.0;
 
-    for ( int nsurf = 1; nsurf <= ndim; ++ nsurf )
+    for (int nsurf = 1; nsurf <= ndim; ++ nsurf)
     {
         int il1,jl1,kl1;
         GetNsurfIndex(nsurf, il1, jl1, kl1);
@@ -585,14 +585,14 @@ void GradCenter(Grid *grid_in, RDouble4D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
         int kst = 1;
         int ked = nk-1+kl1;
 
-        if ( ndim == TWO_D ) ked = 1;
+        if (ndim == TWO_D) ked = 1;
 
         int il,jl,kl;
-        for ( int k = kst; k <= ked; ++ k )
+        for (int k = kst; k <= ked; ++ k)
         {
-            for ( int j = jst; j <= jed; ++ j )
+            for (int j = jst; j <= jed; ++ j)
             {
-                for ( int i = ist; i <= ied; ++ i )
+                for (int i = ist; i <= ied; ++ i)
                 {
                     il = i - il1;
                     jl = j - jl1;
@@ -604,9 +604,9 @@ void GradCenter(Grid *grid_in, RDouble4D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
                     RDouble ddy = phis * yfv(i,j,k,nsurf);
                     RDouble ddz = phis * zfv(i,j,k,nsurf);
 
-                    dqdx(i ,j ,k ) -= ddx;
-                    dqdy(i ,j ,k ) -= ddy;
-                    dqdz(i ,j ,k ) -= ddz;
+                    dqdx(i ,j ,k) -= ddx;
+                    dqdy(i ,j ,k) -= ddy;
+                    dqdz(i ,j ,k) -= ddz;
 
                     dqdx(il,jl,kl) += ddx;
                     dqdy(il,jl,kl) += ddy;
@@ -623,13 +623,13 @@ void GradCenter(Grid *grid_in, RDouble4D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
     int kst = 1;
     int ked = nk-1;
 
-    if ( ndim == TWO_D ) ked = 1;
+    if (ndim == TWO_D) ked = 1;
 
-    for ( int k = kst; k <= ked; ++ k )
+    for (int k = kst; k <= ked; ++ k)
     {
-        for ( int j = jst; j <= jed; ++ j )
+        for (int j = jst; j <= jed; ++ j)
         {
-            for ( int i = ist; i <= ied; ++ i )
+            for (int i = ist; i <= ied; ++ i)
             {
                 RDouble oov = half / vol(i,j,k);
                 dqdx(i,j,k) *= oov;
@@ -647,10 +647,10 @@ void GradCenter(Grid *grid_in, RDouble3D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    RDouble4D &xfv  = *( grid->GetFaceVectorX() );
-    RDouble4D &yfv  = *( grid->GetFaceVectorY() );
-    RDouble4D &zfv  = *( grid->GetFaceVectorZ() );
-    RDouble3D &vol  = *( grid->GetCellVolume()  );
+    RDouble4D &xfv  = *(grid->GetFaceVectorX());
+    RDouble4D &yfv  = *(grid->GetFaceVectorY());
+    RDouble4D &zfv  = *(grid->GetFaceVectorZ());
+    RDouble3D &vol  = *(grid->GetCellVolume() );
 
     int ndim = GetDim();
 
@@ -658,7 +658,7 @@ void GradCenter(Grid *grid_in, RDouble3D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
     dqdy = 0.0;
     dqdz = 0.0;
 
-    for ( int nsurf = 1; nsurf <= ndim; ++ nsurf )
+    for (int nsurf = 1; nsurf <= ndim; ++ nsurf)
     {
         int il1,jl1,kl1;
         GetNsurfIndex(nsurf, il1, jl1, kl1);
@@ -670,14 +670,14 @@ void GradCenter(Grid *grid_in, RDouble3D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
         int kst = 1;
         int ked = nk-1+kl1;
 
-        if ( ndim == TWO_D ) ked = 1;
+        if (ndim == TWO_D) ked = 1;
 
         int il,jl,kl;
-        for ( int k = kst; k <= ked; ++ k )
+        for (int k = kst; k <= ked; ++ k)
         {
-            for ( int j = jst; j <= jed; ++ j )
+            for (int j = jst; j <= jed; ++ j)
             {
-                for ( int i = ist; i <= ied; ++ i )
+                for (int i = ist; i <= ied; ++ i)
                 {
                     il = i - il1;
                     jl = j - jl1;
@@ -689,9 +689,9 @@ void GradCenter(Grid *grid_in, RDouble3D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
                     RDouble ddy = phis * yfv(i,j,k,nsurf);
                     RDouble ddz = phis * zfv(i,j,k,nsurf);
 
-                    dqdx(i ,j ,k ) -= ddx;
-                    dqdy(i ,j ,k ) -= ddy;
-                    dqdz(i ,j ,k ) -= ddz;
+                    dqdx(i ,j ,k) -= ddx;
+                    dqdy(i ,j ,k) -= ddy;
+                    dqdz(i ,j ,k) -= ddz;
 
                     dqdx(il,jl,kl) += ddx;
                     dqdy(il,jl,kl) += ddy;
@@ -708,13 +708,13 @@ void GradCenter(Grid *grid_in, RDouble3D &q, RDouble3D &dqdx, RDouble3D &dqdy, R
     int kst = 1;
     int ked = nk-1;
 
-    if ( ndim == TWO_D ) ked = 1;
+    if (ndim == TWO_D) ked = 1;
 
-    for ( int k = kst; k <= ked; ++ k )
+    for (int k = kst; k <= ked; ++ k)
     {
-        for ( int j = jst; j <= jed; ++ j )
+        for (int j = jst; j <= jed; ++ j)
         {
-            for ( int i = ist; i <= ied; ++ i )
+            for (int i = ist; i <= ied; ++ i)
             {
                 RDouble oov = half / vol(i,j,k);
                 dqdx(i,j,k) *= oov;
@@ -732,15 +732,15 @@ void Get_GEO_I(int i, int j, int k, int im, int ip, int ndim, Geometry3D *geomet
     geometry3D->ky = yfv(i,j,k,1);
     geometry3D->kz = zfv(i,j,k,1);
                                                          
-    geometry3D->ex = fourth * ( xfv(im,j,k,2) + xfv(im,j+1,k,2) + xfv(ip,j,k,2) + xfv(ip,j+1,k,2) );
-    geometry3D->ey = fourth * ( yfv(im,j,k,2) + yfv(im,j+1,k,2) + yfv(ip,j,k,2) + yfv(ip,j+1,k,2) );
-    geometry3D->ez = fourth * ( zfv(im,j,k,2) + zfv(im,j+1,k,2) + zfv(ip,j,k,2) + zfv(ip,j+1,k,2) );
+    geometry3D->ex = fourth * (xfv(im,j,k,2) + xfv(im,j+1,k,2) + xfv(ip,j,k,2) + xfv(ip,j+1,k,2));
+    geometry3D->ey = fourth * (yfv(im,j,k,2) + yfv(im,j+1,k,2) + yfv(ip,j,k,2) + yfv(ip,j+1,k,2));
+    geometry3D->ez = fourth * (zfv(im,j,k,2) + zfv(im,j+1,k,2) + zfv(ip,j,k,2) + zfv(ip,j+1,k,2));
 
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
-        geometry3D->cx = fourth * ( xfv(im,j,k,3) + xfv(im,j,k+1,3) + xfv(ip,j,k,3) + xfv(ip,j,k+1,3) );
-        geometry3D->cy = fourth * ( yfv(im,j,k,3) + yfv(im,j,k+1,3) + yfv(ip,j,k,3) + yfv(ip,j,k+1,3) );
-        geometry3D->cz = fourth * ( zfv(im,j,k,3) + zfv(im,j,k+1,3) + zfv(ip,j,k,3) + zfv(ip,j,k+1,3) );
+        geometry3D->cx = fourth * (xfv(im,j,k,3) + xfv(im,j,k+1,3) + xfv(ip,j,k,3) + xfv(ip,j,k+1,3));
+        geometry3D->cy = fourth * (yfv(im,j,k,3) + yfv(im,j,k+1,3) + yfv(ip,j,k,3) + yfv(ip,j,k+1,3));
+        geometry3D->cz = fourth * (zfv(im,j,k,3) + zfv(im,j,k+1,3) + zfv(ip,j,k,3) + zfv(ip,j,k+1,3));
     }
     else
     {
@@ -749,25 +749,25 @@ void Get_GEO_I(int i, int j, int k, int im, int ip, int ndim, Geometry3D *geomet
         geometry3D->cz = 0.0;
     }
 
-    geometry3D->vjacob = two / ( vol(im,j,k) + vol(ip,j,k) );
+    geometry3D->vjacob = two / (vol(im,j,k) + vol(ip,j,k));
 }
 
 void Get_GEO_J(int i, int j, int k, int jm, int jp, int ndim, Geometry3D *geometry3D, RDouble4D &xfv, RDouble4D &yfv, RDouble4D &zfv, RDouble3D &vol)
 {
 
-    geometry3D->kx = fourth * ( xfv(i,jm,k,1) + xfv(i+1,jm,k,1) + xfv(i,jp,k,1) + xfv(i+1,jp,k,1) );
-    geometry3D->ky = fourth * ( yfv(i,jm,k,1) + yfv(i+1,jm,k,1) + yfv(i,jp,k,1) + yfv(i+1,jp,k,1) );
-    geometry3D->kz = fourth * ( zfv(i,jm,k,1) + zfv(i+1,jm,k,1) + zfv(i,jp,k,1) + zfv(i+1,jp,k,1) );
+    geometry3D->kx = fourth * (xfv(i,jm,k,1) + xfv(i+1,jm,k,1) + xfv(i,jp,k,1) + xfv(i+1,jp,k,1));
+    geometry3D->ky = fourth * (yfv(i,jm,k,1) + yfv(i+1,jm,k,1) + yfv(i,jp,k,1) + yfv(i+1,jp,k,1));
+    geometry3D->kz = fourth * (zfv(i,jm,k,1) + zfv(i+1,jm,k,1) + zfv(i,jp,k,1) + zfv(i+1,jp,k,1));
 
     geometry3D->ex = xfv(i,j,k,2);
     geometry3D->ey = yfv(i,j,k,2);
     geometry3D->ez = zfv(i,j,k,2);                                                         
 
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
-        geometry3D->cx = fourth * ( xfv(i,jm,k,3) + xfv(i,jm,k+1,3) + xfv(i,jp,k,3) + xfv(i,jp,k+1,3) );
-        geometry3D->cy = fourth * ( yfv(i,jm,k,3) + yfv(i,jm,k+1,3) + yfv(i,jp,k,3) + yfv(i,jp,k+1,3) );
-        geometry3D->cz = fourth * ( zfv(i,jm,k,3) + zfv(i,jm,k+1,3) + zfv(i,jp,k,3) + zfv(i,jp,k+1,3) );
+        geometry3D->cx = fourth * (xfv(i,jm,k,3) + xfv(i,jm,k+1,3) + xfv(i,jp,k,3) + xfv(i,jp,k+1,3));
+        geometry3D->cy = fourth * (yfv(i,jm,k,3) + yfv(i,jm,k+1,3) + yfv(i,jp,k,3) + yfv(i,jp,k+1,3));
+        geometry3D->cz = fourth * (zfv(i,jm,k,3) + zfv(i,jm,k+1,3) + zfv(i,jp,k,3) + zfv(i,jp,k+1,3));
     }
     else
     {
@@ -776,25 +776,25 @@ void Get_GEO_J(int i, int j, int k, int jm, int jp, int ndim, Geometry3D *geomet
         geometry3D->cz = 0.0;
     }
 
-    geometry3D->vjacob = two / ( vol(i,jm,k) + vol(i,jp,k) );
+    geometry3D->vjacob = two / (vol(i,jm,k) + vol(i,jp,k));
 }
 
 void Get_GEO_K(int i, int j, int k, int km, int kp, int ndim, Geometry3D *geometry3D, RDouble4D &xfv, RDouble4D &yfv, RDouble4D &zfv, RDouble3D &vol)
 {
 
-    geometry3D->kx = fourth * ( xfv(i,j,km,1) + xfv(i+1,j,km,1) + xfv(i,j,kp,1) + xfv(i+1,j,kp,1) );
-    geometry3D->ky = fourth * ( yfv(i,j,km,1) + yfv(i+1,j,km,1) + yfv(i,j,kp,1) + yfv(i+1,j,kp,1) );
-    geometry3D->kz = fourth * ( zfv(i,j,km,1) + zfv(i+1,j,km,1) + zfv(i,j,kp,1) + zfv(i+1,j,kp,1) );
+    geometry3D->kx = fourth * (xfv(i,j,km,1) + xfv(i+1,j,km,1) + xfv(i,j,kp,1) + xfv(i+1,j,kp,1));
+    geometry3D->ky = fourth * (yfv(i,j,km,1) + yfv(i+1,j,km,1) + yfv(i,j,kp,1) + yfv(i+1,j,kp,1));
+    geometry3D->kz = fourth * (zfv(i,j,km,1) + zfv(i+1,j,km,1) + zfv(i,j,kp,1) + zfv(i+1,j,kp,1));
 
-    geometry3D->ex = fourth * ( xfv(i,j,km,2) + xfv(i,j+1,km,2) + xfv(i,j,kp,2) + xfv(i,j+1,kp,2) );
-    geometry3D->ey = fourth * ( yfv(i,j,km,2) + yfv(i,j+1,km,2) + yfv(i,j,kp,2) + yfv(i,j+1,kp,2) );
-    geometry3D->ez = fourth * ( zfv(i,j,km,2) + zfv(i,j+1,km,2) + zfv(i,j,kp,2) + zfv(i,j+1,kp,2) );
+    geometry3D->ex = fourth * (xfv(i,j,km,2) + xfv(i,j+1,km,2) + xfv(i,j,kp,2) + xfv(i,j+1,kp,2));
+    geometry3D->ey = fourth * (yfv(i,j,km,2) + yfv(i,j+1,km,2) + yfv(i,j,kp,2) + yfv(i,j+1,kp,2));
+    geometry3D->ez = fourth * (zfv(i,j,km,2) + zfv(i,j+1,km,2) + zfv(i,j,kp,2) + zfv(i,j+1,kp,2));
 
     geometry3D->cx = xfv(i,j,k,3);
     geometry3D->cy = yfv(i,j,k,3);
     geometry3D->cz = zfv(i,j,k,3);
                                                          
-    geometry3D->vjacob = two / ( vol(i,j,km) + vol(i,j,kp) );
+    geometry3D->vjacob = two / (vol(i,j,km) + vol(i,j,kp));
 }
 
 void DXDYDZ_I(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz,int lr)
@@ -807,12 +807,12 @@ void DXDYDZ_I(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
     im = min(i,i+lr);
     jp = j + 1;
     jm = j - 1;
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
         kp = k + 1;
         km = k - 1;
     }
-    else if( ndim == TWO_D )
+    else if(ndim == TWO_D)
     {
         kp = k;
         km = k;
@@ -822,12 +822,12 @@ void DXDYDZ_I(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
     fet = 0.0;
     fct = 0.0;
 
-    dfdx = g->vjacob * ( fkc * g->kx + fet * g->ex + fct * g->cx );
-    dfdy = g->vjacob * ( fkc * g->ky + fet * g->ey + fct * g->cy );
+    dfdx = g->vjacob * (fkc * g->kx + fet * g->ex + fct * g->cx);
+    dfdy = g->vjacob * (fkc * g->ky + fet * g->ey + fct * g->cy);
     dfdz = 0.0;
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
-        dfdz = g->vjacob * ( fkc * g->kz + fet * g->ez + fct * g->cz );
+        dfdz = g->vjacob * (fkc * g->kz + fet * g->ez + fct * g->cz);
     }
 }
 
@@ -842,12 +842,12 @@ void DXDYDZ_J(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
     //(eapecially when the wall is at the right side of one zone).
     jp = max(j,j+lr);
     jm = min(j,j+lr);
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
         kp = k + 1;
         km = k - 1;
     }
-    else if( ndim == TWO_D )
+    else if(ndim == TWO_D)
     {
         kp = k;
         km = k;
@@ -857,12 +857,12 @@ void DXDYDZ_J(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
     fet = f(i,jp,k,npos) - f(i,jm,k,npos);
     fct = 0.0;
 
-    dfdx = g->vjacob * ( fkc * g->kx + fet * g->ex + fct * g->cx );
-    dfdy = g->vjacob * ( fkc * g->ky + fet * g->ey + fct * g->cy );
+    dfdx = g->vjacob * (fkc * g->kx + fet * g->ex + fct * g->cx);
+    dfdy = g->vjacob * (fkc * g->ky + fet * g->ey + fct * g->cy);
     dfdz = 0.0;
-    if ( ndim == THREE_D )
+    if (ndim == THREE_D)
     {
-        dfdz = g->vjacob * ( fkc * g->kz + fet * g->ez + fct * g->cz );
+        dfdz = g->vjacob * (fkc * g->kz + fet * g->ez + fct * g->cz);
     }
 }
 
@@ -885,9 +885,9 @@ void DXDYDZ_K(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
     fet = 0.0;
     fct = f(i,j,kp,npos) - f(i,j,km,npos);
 
-    dfdx = g->vjacob * ( fkc * g->kx + fet * g->ex + fct * g->cx );
-    dfdy = g->vjacob * ( fkc * g->ky + fet * g->ey + fct * g->cy );
-    dfdz = g->vjacob * ( fkc * g->kz + fet * g->ez + fct * g->cz );
+    dfdx = g->vjacob * (fkc * g->kx + fet * g->ex + fct * g->cx);
+    dfdy = g->vjacob * (fkc * g->ky + fet * g->ey + fct * g->cy);
+    dfdz = g->vjacob * (fkc * g->kz + fet * g->ez + fct * g->cz);
 }
 
 }

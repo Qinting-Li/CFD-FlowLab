@@ -1,6 +1,6 @@
 #include "Pre_FieldViewToPHengLEI_Unstruct.h"
 #include "Math_BasisFunction.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "Geo_UnstructBC.h"
 #include "PHIO.h"
 #include "Glb_Dimension.h"
@@ -319,31 +319,31 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCTypeTable(int nBCType, int 
     map <string, int> fieldview_bcmap;
     if (nversion == FIELDVIEW_3_0)
     {
-        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE            ));
+        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE           ));
         fieldview_bcmap.insert(pair<string, int>("no boundary condition", GRIDGEN_SPACE::NO_BOUNDARY_CONDITION));
-        fieldview_bcmap.insert(pair<string, int>("solid surface"        , GRIDGEN_SPACE::SOLID_SURFACE        ));
-        fieldview_bcmap.insert(pair<string, int>("symmetry"             , GRIDGEN_SPACE::SYMMETRY             ));
-        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD             ));
-        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW               ));
-        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW              ));
-        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                 ));
-        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3            ));
+        fieldview_bcmap.insert(pair<string, int>("solid surface"        , GRIDGEN_SPACE::SOLID_SURFACE       ));
+        fieldview_bcmap.insert(pair<string, int>("symmetry"             , GRIDGEN_SPACE::SYMMETRY            ));
+        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD            ));
+        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW              ));
+        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW             ));
+        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                ));
+        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3           ));
     }
     else if (nversion == FIELDVIEW_2_4)
     {
-        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE            ));
+        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE           ));
         fieldview_bcmap.insert(pair<string, int>("no boundary condition", GRIDGEN_SPACE::NO_BOUNDARY_CONDITION));
-        fieldview_bcmap.insert(pair<string, int>("wall"                 , GRIDGEN_SPACE::SOLID_SURFACE        ));
-        fieldview_bcmap.insert(pair<string, int>("symmetry plane"       , GRIDGEN_SPACE::SYMMETRY             ));
-        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD             ));
-        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW               ));
-        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW              ));
-        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                 ));
-        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3            ));
+        fieldview_bcmap.insert(pair<string, int>("wall"                 , GRIDGEN_SPACE::SOLID_SURFACE       ));
+        fieldview_bcmap.insert(pair<string, int>("symmetry plane"       , GRIDGEN_SPACE::SYMMETRY            ));
+        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD            ));
+        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW              ));
+        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW             ));
+        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                ));
+        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3           ));
     }
 
     int maxNumberOFBC = static_cast<int>(fieldview_bcmap.size());
@@ -376,15 +376,15 @@ void Pre_FieldViewToPHengLEI_Unstruct::Gridgen2CGNSBCTypeTable(int nBCType, int 
     typedef pair <int, int> Int_Pair;
     map<int, int>::const_iterator iter;
 
-    bcmap.insert(Int_Pair(PHENGLEI::NO_BOUNDARY_CONDITION , BCTypeNull       ));
+    bcmap.insert(Int_Pair(PHENGLEI::NO_BOUNDARY_CONDITION , BCTypeNull      ));
     bcmap.insert(Int_Pair(PHENGLEI::INTERFACE             , BCTypeUserDefined));
-    bcmap.insert(Int_Pair(PHENGLEI::EXTRAPOLATION         , BCExtrapolate    ));
-    bcmap.insert(Int_Pair(PHENGLEI::SOLID_SURFACE         , BCWall           ));
-    bcmap.insert(Int_Pair(PHENGLEI::SYMMETRY              , BCSymmetryPlane  ));
-    bcmap.insert(Int_Pair(PHENGLEI::INFLOW                , BCInflow         ));
-    bcmap.insert(Int_Pair(PHENGLEI::OUTFLOW               , BCOutflow        ));
-    bcmap.insert(Int_Pair(PHENGLEI::POLE                  , BCDegenerateLine ));
-    bcmap.insert(Int_Pair(PHENGLEI::FARFIELD              , BCFarfield       ));
+    bcmap.insert(Int_Pair(PHENGLEI::EXTRAPOLATION         , BCExtrapolate   ));
+    bcmap.insert(Int_Pair(PHENGLEI::SOLID_SURFACE         , BCWall          ));
+    bcmap.insert(Int_Pair(PHENGLEI::SYMMETRY              , BCSymmetryPlane ));
+    bcmap.insert(Int_Pair(PHENGLEI::INFLOW                , BCInflow        ));
+    bcmap.insert(Int_Pair(PHENGLEI::OUTFLOW               , BCOutflow       ));
+    bcmap.insert(Int_Pair(PHENGLEI::POLE                  , BCDegenerateLine));
+    bcmap.insert(Int_Pair(PHENGLEI::FARFIELD              , BCFarfield      ));
     bcmap.insert(Int_Pair(PHENGLEI::GENERIC_1             , BCTypeUserDefined));
     bcmap.insert(Int_Pair(PHENGLEI::GENERIC_2             , BCTypeUserDefined));
     bcmap.insert(Int_Pair(PHENGLEI::GENERIC_3             , BCTypeUserDefined));
@@ -588,8 +588,8 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     }
 
     nBC_Sections = 0;
-    if (nTri   ) nBC_Sections ++;
-    if (nQuad  ) nBC_Sections ++;
+    if (nTri  ) nBC_Sections ++;
+    if (nQuad ) nBC_Sections ++;
     if (nOthers) nBC_Sections ++;
 
     int *elem_pt = new int[NofValidElementTypes];
@@ -944,7 +944,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_c
     }
 
     //! It seems to be something wrong in this place, and needs to be checked. Eric£º201101030.
-    //for ( int m = 0; m < nElem_Sections; ++ m )
+    //for (int m = 0; m < nElem_Sections; ++ m)
     for (int m = 0; m < nBC_Sections; ++ m)
     {
         base_cgns_conn_list[nElem_Sections+m] = bc_elem_conn_list[m];
@@ -1042,7 +1042,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::Conversion()
     if (nDim != THREE_D)
     {
         cout << "Error: Only 3D mesh is supported by FiledView !" << endl;
-        exit( 0 );
+        exit(0);
     }
 
     for (int izone = 0; izone < nBlocks; ++ izone)

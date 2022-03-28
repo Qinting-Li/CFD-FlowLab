@@ -22,22 +22,22 @@
 namespace HOUnstruct
 {
 
-void ShapeFunctionOfTri( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
-void ShapeFunctionOfTriGrad( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
+void ShapeFunctionOfTri(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfTriGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 
-void ShapeFunctionOfQuad( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
-void ShapeFunctionOfQuadGrad( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
+void ShapeFunctionOfQuad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfQuadGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 
-void ShapeFunctionOfTetr( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
-void ShapeFunctionOfTetrGrad( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
+void ShapeFunctionOfTetr(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfTetrGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 
-void ShapeFunctionOfHex( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
-void ShapeFunctionOfHexGrad( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
+void ShapeFunctionOfHex(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfHexGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 
-void ShapeFunctionOfPrism( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
-void ShapeFunctionOfPrismGrad( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
+void ShapeFunctionOfPrism(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfPrismGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 
-void ShapeFunctionOfPyra( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
-void ShapeFunctionOfPyraGrad( const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret );
+void ShapeFunctionOfPyra(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfPyraGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 
 }

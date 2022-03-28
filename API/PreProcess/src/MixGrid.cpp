@@ -1,4 +1,4 @@
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "MixGrid.h"
 #include "TK_Parse.h"
 #include "IO_FileName.h"
@@ -1158,8 +1158,8 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
 
     grid->SetBCRecord(bcr);
 
-    InterfaceInfo *iinfo = 0;
-    grid->SetInterfaceInfo(iinfo);
+    InterfaceInfo *interfaceInfo = 0;
+    grid->SetInterfaceInfo(interfaceInfo);
 
     grid->SpecifyBC();
 
@@ -1340,8 +1340,8 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
 
     grid->SetBCRecord(bcr);
 
-    InterfaceInfo *iinfo = 0;
-    grid->SetInterfaceInfo(iinfo);
+    InterfaceInfo *interfaceInfo = 0;
+    grid->SetInterfaceInfo(interfaceInfo);
 
     grid->SpecifyBC();
 
@@ -1446,15 +1446,15 @@ void SetUnstructBC
                 {
                     if (i == 1)
                     {
-                        conn_list[start_pos + 0] = unsindex(i, j  , k  ) + 1;
+                        conn_list[start_pos + 0] = unsindex(i, j  , k ) + 1;
                         conn_list[start_pos + 1] = unsindex(i, j  , k+1) + 1;
                         conn_list[start_pos + 2] = unsindex(i, j+1, k+1) + 1;
-                        conn_list[start_pos + 3] = unsindex(i, j+1, k  ) + 1;
+                        conn_list[start_pos + 3] = unsindex(i, j+1, k ) + 1;
                     }
                     else
                     {
-                        conn_list[start_pos + 0] = unsindex(i, j  , k  ) + 1;
-                        conn_list[start_pos + 1] = unsindex(i, j+1, k  ) + 1;
+                        conn_list[start_pos + 0] = unsindex(i, j  , k ) + 1;
+                        conn_list[start_pos + 1] = unsindex(i, j+1, k ) + 1;
                         conn_list[start_pos + 2] = unsindex(i, j+1, k+1) + 1;
                         conn_list[start_pos + 3] = unsindex(i, j  , k+1) + 1;
                     }
@@ -1494,17 +1494,17 @@ void SetUnstructBC
                 {
                     if (j == 1)
                     {
-                        conn_list[start_pos + 0] = unsindex(i  , j, k  ) + 1;
-                        conn_list[start_pos + 1] = unsindex(i+1, j, k  ) + 1;
+                        conn_list[start_pos + 0] = unsindex(i  , j, k ) + 1;
+                        conn_list[start_pos + 1] = unsindex(i+1, j, k ) + 1;
                         conn_list[start_pos + 2] = unsindex(i+1, j, k+1) + 1;
                         conn_list[start_pos + 3] = unsindex(i  , j, k+1) + 1;
                     }
                     else
                     {
-                        conn_list[start_pos + 0] = unsindex(i  , j, k  ) + 1;
+                        conn_list[start_pos + 0] = unsindex(i  , j, k ) + 1;
                         conn_list[start_pos + 1] = unsindex(i  , j, k+1) + 1;
                         conn_list[start_pos + 2] = unsindex(i+1, j, k+1) + 1;
-                        conn_list[start_pos + 3] = unsindex(i+1, j, k  ) + 1;
+                        conn_list[start_pos + 3] = unsindex(i+1, j, k ) + 1;
                     }
                     start_pos += numpt;
                 }

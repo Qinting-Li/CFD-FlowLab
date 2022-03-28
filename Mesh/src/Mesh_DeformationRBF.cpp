@@ -1,5 +1,5 @@
-#include "GridDeformationRBF.h"
-#include "GridDeformationSPRING.h"
+#include "Mesh_DeformationRBF.h"
+#include "Mesh_DeformationSPRING.h"
 #include "PHIO.h"
 #include "IO_FileName.h"
 #include "GeometryUnit.h"
@@ -13,8 +13,8 @@ namespace PHSPACE
 {
 typedef Matrix< RDouble, Dynamic, Dynamic > RBFMatrix;
 
-GridDeformationRBF::GridDeformationRBF(int nZonesIn, Grid **stationalGridIn) : 
-    GridDeformation(nZonesIn, stationalGridIn)
+Mesh_DeformationRBF::Mesh_DeformationRBF(int nZonesIn, Grid **stationalGridIn) : 
+    Mesh_Deformation(nZonesIn, stationalGridIn)
 {
     nControlPoints = 0;
     controlPointVectors.resize(0);
@@ -29,22 +29,22 @@ GridDeformationRBF::GridDeformationRBF(int nZonesIn, Grid **stationalGridIn) :
     numberOfReferenceCP = 0;
 }
 
-GridDeformationRBF::~GridDeformationRBF()
+Mesh_DeformationRBF::~Mesh_DeformationRBF()
 {
     delete controlPointTree;
 }
 
-void GridDeformationRBF::SetNumberOfReferenceCP(int numberOfReferenceCPIn)
+void Mesh_DeformationRBF::SetNumberOfReferenceCP(int numberOfReferenceCPIn)
 {
     this->numberOfReferenceCP = numberOfReferenceCPIn;
 }
 
-void GridDeformationRBF::SetInfluencePara(int influenceParaIn)
+void Mesh_DeformationRBF::SetInfluencePara(int influenceParaIn)
 {
     this->influencePara = influenceParaIn;
 }
 
-void GridDeformationRBF::TransformGrid()
+void Mesh_DeformationRBF::TransformGrid()
 {
     deformedGrid = new DynamicGrid *[nZones];
 
@@ -58,7 +58,7 @@ void GridDeformationRBF::TransformGrid()
     SetSymmetryToZero();
 }
 
-void GridDeformationRBF::SurfaceGridMove(int iStep)
+void Mesh_DeformationRBF::SurfaceGridMove(int iStep)
 {
     RDouble flapAngle = deformParameter->GetFlapAngle();
     int nDeformStep = deformParameter->GetNDeformStep();
@@ -196,7 +196,7 @@ void GridDeformationRBF::SurfaceGridMove(int iStep)
     }
 }
 
-void GridDeformationRBF::Deforming()
+void Mesh_DeformationRBF::Deforming()
 {
     string visualFileName = GlobalDataBase::GetStrParaFromDB("visualFileName");
     PostVisual(visualFileName, 0);
@@ -256,7 +256,7 @@ void GridDeformationRBF::Deforming()
     WriteLogFile("  End Deforming ... ", "\n");
 }
 
-void GridDeformationRBF::BuildControlPointTree()
+void Mesh_DeformationRBF::BuildControlPointTree()
 {
     // Compute the boundary.
     RDouble wallBound[6];
@@ -340,7 +340,7 @@ void GridDeformationRBF::BuildControlPointTree()
     }
 }
 
-void GridDeformationRBF::FindOutReferenceCP(DYNode point, PHVectorInt1D &referenceCP)
+void Mesh_DeformationRBF::FindOutReferenceCP(DYNode point, PHVectorInt1D &referenceCP)
 {
     RDouble xCoor = point.x;
     RDouble yCoor = point.y;
@@ -518,7 +518,7 @@ void GridDeformationRBF::FindOutReferenceCP(DYNode point, PHVectorInt1D &referen
     }
 }
 
-void GridDeformationRBF::MatchControlPoints()
+void Mesh_DeformationRBF::MatchControlPoints()
 {
     RDouble rotatePostionZ = this->deformParameter->GetRotatePostionZ();
 
@@ -540,7 +540,7 @@ void GridDeformationRBF::MatchControlPoints()
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
             int bctype = faceArray[iFace].bcType;
-            if (bctype != PHENGLEI::SOLID_SURFACE )
+            if (bctype != PHENGLEI::SOLID_SURFACE)
             {
                 continue;
             }
@@ -596,7 +596,7 @@ void GridDeformationRBF::MatchControlPoints()
     controlPointVectors.resize(nControlPoints);
 }
 
-void GridDeformationRBF::PostTreat()
+void Mesh_DeformationRBF::PostTreat()
 {
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
@@ -634,7 +634,7 @@ void GridDeformationRBF::PostTreat()
     SetSymmetryToZero();
 }
 
-void GridDeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, PHVectorInt1D &referenceCP)
+void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, PHVectorInt1D &referenceCP)
 {
     DYNode *nodeArray = grid->GetNodeArray();
     int numberOfRealCP = referenceCP.size();

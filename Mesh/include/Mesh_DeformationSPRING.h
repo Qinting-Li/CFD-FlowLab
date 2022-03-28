@@ -9,28 +9,29 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      GridDeformationSPRING.h
+//! @file      Mesh_DeformationSPRING.h
 //! @brief     Grid deformation by SPRING method.
 //! @author    Bell, Baka.
 
-//! Zhao Zhong, Duan Xupeng, Chang Xinghua, etc. Numerical simulation of unsteady 
-//! flows on bird-like flapping wing[J]. Transactions of Nanjing University of 
-//! Aeronautics & Astronautics, 2013, 30(sup):93-100.
+//! REFERENCES
+//! [1] Zhao Z, et al. Numerical simulation of unsteady flows on bird-like flapping 
+//!     wing[J]. Transactions of Nanjing University of Aeronautics & Astronautics, 
+//!     2013, 30(sup):93-100.
 
 #pragma once
-#include "GridDeformation.h"
+#include "Mesh_Deformation.h"
 
 namespace PHSPACE
 {
 
-//! @brief GridDeformationSPRING class achieve unstructured grid deform by SPRING method.
-class GridDeformationSPRING : public GridDeformation
+//! @brief Mesh_DeformationSPRING class achieve unstructured grid deform by SPRING method.
+class Mesh_DeformationSPRING : public Mesh_Deformation
 {
 public:
     //! @param[in] nZonesIn         Number of grid.
     //! @param[in] stationalGridIn  Original grid.
-    GridDeformationSPRING(int nZonesIn, Grid **stationalGridIn);
-    ~GridDeformationSPRING();
+    Mesh_DeformationSPRING(int nZonesIn, Grid **stationalGridIn);
+    ~Mesh_DeformationSPRING();
 
 private:
     void Deforming();

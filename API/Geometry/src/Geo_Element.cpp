@@ -18,83 +18,83 @@ BasicElement::~BasicElement()
 int BasicElement::GetElementNodeNumber(int elem_type)
 {
     int node_number = 0;
-    if ( elem_type == NODE )
+    if (elem_type == NODE)
     {
         node_number = 1;
     }
-    else if ( elem_type == BAR_2 )
+    else if (elem_type == BAR_2)
     {
         node_number = 2;
     }
-    else if ( elem_type == BAR_3 )
+    else if (elem_type == BAR_3)
     {
         node_number = 3;
     }
-    else if ( elem_type == TRI_3 )
+    else if (elem_type == TRI_3)
     {
         node_number = 3;
     }
-    else if ( elem_type == TRI_6 )
+    else if (elem_type == TRI_6)
     {
         node_number = 6;
     }
-    else if ( elem_type == QUAD_4 )
+    else if (elem_type == QUAD_4)
     {
         node_number = 4;
     }
-    else if ( elem_type == QUAD_6 )
+    else if (elem_type == QUAD_6)
     {
         node_number = 6;
     }
-    else if ( elem_type == QUAD_8 )
+    else if (elem_type == QUAD_8)
     {
         node_number = 8;
     }
-    else if ( elem_type == QUAD_9 )
+    else if (elem_type == QUAD_9)
     {
         node_number = 9;
     }
-    else if ( elem_type == TETRA_4 )
+    else if (elem_type == TETRA_4)
     {
         node_number = 4;
     }
-    else if ( elem_type == TETRA_10 )
+    else if (elem_type == TETRA_10)
     {
         node_number = 10;
     }
-    else if ( elem_type == PYRA_5 )
+    else if (elem_type == PYRA_5)
     {
         node_number = 5;
     }
-    else if ( elem_type == PYRA_14 )
+    else if (elem_type == PYRA_14)
     {
         node_number = 14;
     }
-    else if ( elem_type == PENTA_6 )
+    else if (elem_type == PENTA_6)
     {
         node_number = 6;
     }
-    else if ( elem_type == PENTA_12 )
+    else if (elem_type == PENTA_12)
     {
         node_number = 12;
     }
-    else if ( elem_type == PENTA_15 )
+    else if (elem_type == PENTA_15)
     {
         node_number = 15;
     }
-    else if ( elem_type == PENTA_18 )
+    else if (elem_type == PENTA_18)
     {
         node_number = 18;
     }
-    else if ( elem_type == HEXA_8 )
+    else if (elem_type == HEXA_8)
     {
         node_number = 8;
     }
-    else if ( elem_type == HEXA_20 )
+    else if (elem_type == HEXA_20)
     {
         node_number = 20;
     }
-    else if ( elem_type == HEXA_27 )
+    else if (elem_type == HEXA_27)
     {
         node_number = 27;
     }
@@ -109,7 +109,7 @@ void BasicElement::Init(int elem_type)
     int node_max = GetElementNodeNumber(elem_type);
     mp_struct.resize(node_max);
 
-    if ( elem_type == NODE )
+    if (elem_type == NODE)
     {
         //Face 1
         // 1
@@ -117,7 +117,7 @@ void BasicElement::Init(int elem_type)
         face_list.resize(1);
         face_list[0].push_back(1-1);
     }
-    else if ( elem_type == BAR_2 )
+    else if (elem_type == BAR_2)
     {
         //Face 1
         // 1 2
@@ -126,7 +126,7 @@ void BasicElement::Init(int elem_type)
         face_list[0].push_back(1-1);
         face_list[0].push_back(2-1);
     }
-    else if ( elem_type == BAR_3 )
+    else if (elem_type == BAR_3)
     {
         //Face 2
         // 1 3
@@ -165,7 +165,7 @@ void BasicElement::Init(int elem_type)
         child_element_index[1].push_back(3-1);
         child_element_index[1].push_back(2-1);
     }
-    else if ( elem_type == TRI_3 )
+    else if (elem_type == TRI_3)
     {
         //! TRI_3
         //! 1.........2.........3
@@ -189,7 +189,7 @@ void BasicElement::Init(int elem_type)
         face_list[2].push_back(3-1);
         face_list[2].push_back(1-1);
     }
-    else if ( elem_type == TRI_6 )
+    else if (elem_type == TRI_6)
     {
         //! TRI_6
         //! 1....4....2 ...5....3....6....1
@@ -319,7 +319,7 @@ void BasicElement::Init(int elem_type)
         child_element_index[3].push_back(5-1);
         child_element_index[3].push_back(3-1);
     }
-    else if ( elem_type == QUAD_4 )
+    else if (elem_type == QUAD_4)
     {
         //! QUAD_4
         //! 1....2....3 ...4....1
@@ -348,76 +348,76 @@ void BasicElement::Init(int elem_type)
         face_list[3].push_back(4-1);
         face_list[3].push_back(1-1);
     }
-    else if ( elem_type == QUAD_6 )
+    else if (elem_type == QUAD_6)
     {
         //! QUAD_6
         //! Composite Face 4
-        composite_face_element_type.resize( 2 );
-        composite_face_list.resize( 2 );
+        composite_face_element_type.resize(2);
+        composite_face_list.resize(2);
 
         composite_face_element_type[ 0 ] = BAR_3;
-        composite_face_list[ 0 ].push_back( 1 - 1 );
-        composite_face_list[ 0 ].push_back( 2 - 1 );
-        composite_face_list[ 0 ].push_back( 5 - 1 );
+        composite_face_list[ 0 ].push_back(1 - 1);
+        composite_face_list[ 0 ].push_back(2 - 1);
+        composite_face_list[ 0 ].push_back(5 - 1);
 
         composite_face_element_type[ 1 ] = BAR_3;
-        composite_face_list[ 1 ].push_back( 3 - 1 );
-        composite_face_list[ 1 ].push_back( 4 - 1 );
-        composite_face_list[ 1 ].push_back( 6 - 1 );
+        composite_face_list[ 1 ].push_back(3 - 1);
+        composite_face_list[ 1 ].push_back(4 - 1);
+        composite_face_list[ 1 ].push_back(6 - 1);
 
         //! Face
-        face_element_type.resize( 6 );
-        face_list.resize( 6 );
+        face_element_type.resize(6);
+        face_list.resize(6);
 
         face_element_type[ 0 ] = BAR_2;
-        face_list[ 0 ].push_back( 1 - 1 );
-        face_list[ 0 ].push_back( 5 - 1 );
+        face_list[ 0 ].push_back(1 - 1);
+        face_list[ 0 ].push_back(5 - 1);
 
         face_element_type[ 1 ] = BAR_2;
-        face_list[ 1 ].push_back( 5 - 1 );
-        face_list[ 1 ].push_back( 2 - 1 );
+        face_list[ 1 ].push_back(5 - 1);
+        face_list[ 1 ].push_back(2 - 1);
 
         face_element_type[ 2 ] = BAR_2;
-        face_list[ 2 ].push_back( 2 - 1 );
-        face_list[ 2 ].push_back( 3 - 1 );
+        face_list[ 2 ].push_back(2 - 1);
+        face_list[ 2 ].push_back(3 - 1);
 
         face_element_type[ 3 ] = BAR_2;
-        face_list[ 3 ].push_back( 3 - 1 );
-        face_list[ 3 ].push_back( 6 - 1 );
+        face_list[ 3 ].push_back(3 - 1);
+        face_list[ 3 ].push_back(6 - 1);
 
         face_element_type[ 4 ] = BAR_2;
-        face_list[ 4 ].push_back( 6 - 1 );
-        face_list[ 4 ].push_back( 4 - 1 );
+        face_list[ 4 ].push_back(6 - 1);
+        face_list[ 4 ].push_back(4 - 1);
 
         face_element_type[ 5 ] = BAR_2;
-        face_list[ 5 ].push_back( 4 - 1 );
-        face_list[ 5 ].push_back( 1 - 1 );
+        face_list[ 5 ].push_back(4 - 1);
+        face_list[ 5 ].push_back(1 - 1);
 
 
         //! QUAD_6
-        mp_struct[ 4 ].push_back( 0 );
-        mp_struct[ 4 ].push_back( 1 );
+        mp_struct[ 4 ].push_back(0);
+        mp_struct[ 4 ].push_back(1);
 
-        mp_struct[ 5 ].push_back( 2 );
-        mp_struct[ 5 ].push_back( 3 );
+        mp_struct[ 5 ].push_back(2);
+        mp_struct[ 5 ].push_back(3);
 
         //! subcell
-        child_element_type.resize( 2 );
-        child_element_index.resize( 2 );
+        child_element_type.resize(2);
+        child_element_index.resize(2);
 
         child_element_type[ 0 ] = QUAD_4;
-        child_element_index[ 0 ].push_back( 1 - 1 );
-        child_element_index[ 0 ].push_back( 5 - 1 );
-        child_element_index[ 0 ].push_back( 6 - 1 );
-        child_element_index[ 0 ].push_back( 4 - 1 );
+        child_element_index[ 0 ].push_back(1 - 1);
+        child_element_index[ 0 ].push_back(5 - 1);
+        child_element_index[ 0 ].push_back(6 - 1);
+        child_element_index[ 0 ].push_back(4 - 1);
 
         child_element_type[ 1 ] = QUAD_4;
-        child_element_index[ 1 ].push_back( 5 - 1 );
-        child_element_index[ 1 ].push_back( 2 - 1 );
-        child_element_index[ 1 ].push_back( 3 - 1 );
-        child_element_index[ 1 ].push_back( 6 - 1 );
+        child_element_index[ 1 ].push_back(5 - 1);
+        child_element_index[ 1 ].push_back(2 - 1);
+        child_element_index[ 1 ].push_back(3 - 1);
+        child_element_index[ 1 ].push_back(6 - 1);
     }
-    else if ( elem_type == QUAD_8 )
+    else if (elem_type == QUAD_8)
     {
         //! QUAD_8
         //! 1..5.2..6..3..7..4..8..1
@@ -514,7 +514,7 @@ void BasicElement::Init(int elem_type)
         mp_struct[7].push_back(3);
         mp_struct[7].push_back(0);
     }
-    else if ( elem_type == QUAD_9 )
+    else if (elem_type == QUAD_9)
     {
         //! QUAD_9
         //! 1..5.2..6..3..7..4..8..1
@@ -649,7 +649,7 @@ void BasicElement::Init(int elem_type)
         child_element_index[3].push_back(7-1);
         child_element_index[3].push_back(4-1);
     }
-    else if ( elem_type == TETRA_4 )
+    else if (elem_type == TETRA_4)
     {
         //! TETRA_4
         //! 1..2...3...4
@@ -683,7 +683,7 @@ void BasicElement::Init(int elem_type)
         face_list[3].push_back(1-1);
         face_list[3].push_back(4-1);
     }
-    else if ( elem_type == TETRA_10 )
+    else if (elem_type == TETRA_10)
     {
         //! TETRA_10
         //! 1..7..3..6..2..5..1
@@ -923,49 +923,49 @@ void BasicElement::Init(int elem_type)
         child_element_index[7].push_back(9-1);
 
         //! Case2: A second quad-dividing method.
-        child_element_index_case2.resize( 8 );
+        child_element_index_case2.resize(8);
 
-        child_element_index_case2[ 0 ].push_back( 8 - 1 );    //! Store the corresponding composite elements index number according to the local index numbering sequence of child elements!!! 
-        child_element_index_case2[ 0 ].push_back( 5 - 1 );
-        child_element_index_case2[ 0 ].push_back( 1 - 1 );
-        child_element_index_case2[ 0 ].push_back( 7 - 1 );////////////
+        child_element_index_case2[ 0 ].push_back(8 - 1);    //! Store the corresponding composite elements index number according to the local index numbering sequence of child elements!!! 
+        child_element_index_case2[ 0 ].push_back(5 - 1);
+        child_element_index_case2[ 0 ].push_back(1 - 1);
+        child_element_index_case2[ 0 ].push_back(7 - 1);////////////
 
-        child_element_index_case2[ 1 ].push_back( 9 - 1 );
-        child_element_index_case2[ 1 ].push_back( 8 - 1 );
-        child_element_index_case2[ 1 ].push_back( 10 - 1 );
-        child_element_index_case2[ 1 ].push_back( 5 - 1 );
+        child_element_index_case2[ 1 ].push_back(9 - 1);
+        child_element_index_case2[ 1 ].push_back(8 - 1);
+        child_element_index_case2[ 1 ].push_back(10 - 1);
+        child_element_index_case2[ 1 ].push_back(5 - 1);
 
-        child_element_index_case2[ 2 ].push_back( 10 - 1 );
-        child_element_index_case2[ 2 ].push_back( 5 - 1 );
-        child_element_index_case2[ 2 ].push_back( 8 - 1 );
-        child_element_index_case2[ 2 ].push_back( 7 - 1 );
+        child_element_index_case2[ 2 ].push_back(10 - 1);
+        child_element_index_case2[ 2 ].push_back(5 - 1);
+        child_element_index_case2[ 2 ].push_back(8 - 1);
+        child_element_index_case2[ 2 ].push_back(7 - 1);
 
-        child_element_index_case2[ 3 ].push_back( 10 - 1 );
-        child_element_index_case2[ 3 ].push_back( 3 - 1 );
-        child_element_index_case2[ 3 ].push_back( 6 - 1 );
-        child_element_index_case2[ 3 ].push_back( 7 - 1 );////////////
+        child_element_index_case2[ 3 ].push_back(10 - 1);
+        child_element_index_case2[ 3 ].push_back(3 - 1);
+        child_element_index_case2[ 3 ].push_back(6 - 1);
+        child_element_index_case2[ 3 ].push_back(7 - 1);////////////
 
-        child_element_index_case2[ 4 ].push_back( 2 - 1 );
-        child_element_index_case2[ 4 ].push_back( 6 - 1 );
-        child_element_index_case2[ 4 ].push_back( 5 - 1 );
-        child_element_index_case2[ 4 ].push_back( 9 - 1 );////////////
+        child_element_index_case2[ 4 ].push_back(2 - 1);
+        child_element_index_case2[ 4 ].push_back(6 - 1);
+        child_element_index_case2[ 4 ].push_back(5 - 1);
+        child_element_index_case2[ 4 ].push_back(9 - 1);////////////
 
-        child_element_index_case2[ 5 ].push_back( 9 - 1 );
-        child_element_index_case2[ 5 ].push_back( 6 - 1 );
-        child_element_index_case2[ 5 ].push_back( 5 - 1 );
-        child_element_index_case2[ 5 ].push_back( 10 - 1 );
+        child_element_index_case2[ 5 ].push_back(9 - 1);
+        child_element_index_case2[ 5 ].push_back(6 - 1);
+        child_element_index_case2[ 5 ].push_back(5 - 1);
+        child_element_index_case2[ 5 ].push_back(10 - 1);
 
-        child_element_index_case2[ 6 ].push_back( 4 - 1 );
-        child_element_index_case2[ 6 ].push_back( 8 - 1 );
-        child_element_index_case2[ 6 ].push_back( 10 - 1 );
-        child_element_index_case2[ 6 ].push_back( 9 - 1 );////////////
+        child_element_index_case2[ 6 ].push_back(4 - 1);
+        child_element_index_case2[ 6 ].push_back(8 - 1);
+        child_element_index_case2[ 6 ].push_back(10 - 1);
+        child_element_index_case2[ 6 ].push_back(9 - 1);////////////
 
-        child_element_index_case2[ 7 ].push_back( 10 - 1 );
-        child_element_index_case2[ 7 ].push_back( 5 - 1 );
-        child_element_index_case2[ 7 ].push_back( 7 - 1 );
-        child_element_index_case2[ 7 ].push_back( 6 - 1 );
+        child_element_index_case2[ 7 ].push_back(10 - 1);
+        child_element_index_case2[ 7 ].push_back(5 - 1);
+        child_element_index_case2[ 7 ].push_back(7 - 1);
+        child_element_index_case2[ 7 ].push_back(6 - 1);
     }
-    else if ( elem_type == PYRA_5 )
+    else if (elem_type == PYRA_5)
     {
         //! PYRA_5
         //! 1..2..3..4..5
@@ -1007,7 +1007,7 @@ void BasicElement::Init(int elem_type)
         face_list[4].push_back(5-1);
 
     }
-    else if ( elem_type == PYRA_14 )
+    else if (elem_type == PYRA_14)
     {
         //! PYRA_14
         //! Face 20
@@ -1033,12 +1033,12 @@ void BasicElement::Init(int elem_type)
         composite_face_list[0].push_back(14-1);
 
         composite_face_element_type[1] = TRI_6;
-        composite_face_list[ 1 ].push_back( 1 - 1 );
-        composite_face_list[ 1 ].push_back( 2 - 1 );
-        composite_face_list[ 1 ].push_back( 5 - 1 );
-        composite_face_list[ 1 ].push_back( 6 - 1 );
-        composite_face_list[ 1 ].push_back( 11 - 1 );
-        composite_face_list[ 1 ].push_back( 10 - 1 );
+        composite_face_list[ 1 ].push_back(1 - 1);
+        composite_face_list[ 1 ].push_back(2 - 1);
+        composite_face_list[ 1 ].push_back(5 - 1);
+        composite_face_list[ 1 ].push_back(6 - 1);
+        composite_face_list[ 1 ].push_back(11 - 1);
+        composite_face_list[ 1 ].push_back(10 - 1);
 
         composite_face_element_type[2] = TRI_6;
         composite_face_list[2].push_back(2-1);
@@ -1329,7 +1329,7 @@ void BasicElement::Init(int elem_type)
         child_element_index[9].push_back(12-1);
         child_element_index[9].push_back(14-1);
     }
-    else if ( elem_type == PENTA_6 )
+    else if (elem_type == PENTA_6)
     {
         //! PENTA_6
 
@@ -1373,7 +1373,7 @@ void BasicElement::Init(int elem_type)
         face_list[4].push_back(4-1);
         face_list[4].push_back(6-1);
     }
-    else if ( elem_type == PHSPACE::PENTA_12 )
+    else if (elem_type == PHSPACE::PENTA_12)
     {
         //! PENTA_12
 
@@ -1385,48 +1385,48 @@ void BasicElement::Init(int elem_type)
         //! TRI_6  : 1  3  2  9  8  7
         //! TRI_6  : 4  5  6  10 11 12
 
-        composite_face_element_type.resize( 5 );
-        composite_face_list.resize( 5 );
+        composite_face_element_type.resize(5);
+        composite_face_list.resize(5);
 
         composite_face_element_type[ 0 ] = QUAD_6;
-        composite_face_list[ 0 ].push_back( 1 - 1 );
-        composite_face_list[ 0 ].push_back( 2 - 1 );
-        composite_face_list[ 0 ].push_back( 5 - 1 );
-        composite_face_list[ 0 ].push_back( 4 - 1 );
-        composite_face_list[ 0 ].push_back( 7 - 1 );
-        composite_face_list[ 0 ].push_back( 10 - 1 );
+        composite_face_list[ 0 ].push_back(1 - 1);
+        composite_face_list[ 0 ].push_back(2 - 1);
+        composite_face_list[ 0 ].push_back(5 - 1);
+        composite_face_list[ 0 ].push_back(4 - 1);
+        composite_face_list[ 0 ].push_back(7 - 1);
+        composite_face_list[ 0 ].push_back(10 - 1);
 
         composite_face_element_type[ 1 ] = QUAD_6;
-        composite_face_list[ 1 ].push_back( 2 - 1 );
-        composite_face_list[ 1 ].push_back( 3 - 1 );
-        composite_face_list[ 1 ].push_back( 6 - 1 );
-        composite_face_list[ 1 ].push_back( 5 - 1 );
-        composite_face_list[ 1 ].push_back( 8 - 1 );
-        composite_face_list[ 1 ].push_back( 11 - 1 );
+        composite_face_list[ 1 ].push_back(2 - 1);
+        composite_face_list[ 1 ].push_back(3 - 1);
+        composite_face_list[ 1 ].push_back(6 - 1);
+        composite_face_list[ 1 ].push_back(5 - 1);
+        composite_face_list[ 1 ].push_back(8 - 1);
+        composite_face_list[ 1 ].push_back(11 - 1);
 
         composite_face_element_type[ 2 ] = QUAD_6;
-        composite_face_list[ 2 ].push_back( 3 - 1 );
-        composite_face_list[ 2 ].push_back( 1 - 1 );
-        composite_face_list[ 2 ].push_back( 4 - 1 );
-        composite_face_list[ 2 ].push_back( 6 - 1 );
-        composite_face_list[ 2 ].push_back( 9 - 1 );
-        composite_face_list[ 2 ].push_back( 12 - 1 );
+        composite_face_list[ 2 ].push_back(3 - 1);
+        composite_face_list[ 2 ].push_back(1 - 1);
+        composite_face_list[ 2 ].push_back(4 - 1);
+        composite_face_list[ 2 ].push_back(6 - 1);
+        composite_face_list[ 2 ].push_back(9 - 1);
+        composite_face_list[ 2 ].push_back(12 - 1);
 
         composite_face_element_type[ 3 ] = TRI_6;
-        composite_face_list[ 3 ].push_back( 1 - 1 );
-        composite_face_list[ 3 ].push_back( 3 - 1 );
-        composite_face_list[ 3 ].push_back( 2 - 1 );
-        composite_face_list[ 3 ].push_back( 9 - 1 );
-        composite_face_list[ 3 ].push_back( 8 - 1 );//
-        composite_face_list[ 3 ].push_back( 7 - 1 );
+        composite_face_list[ 3 ].push_back(1 - 1);
+        composite_face_list[ 3 ].push_back(3 - 1);
+        composite_face_list[ 3 ].push_back(2 - 1);
+        composite_face_list[ 3 ].push_back(9 - 1);
+        composite_face_list[ 3 ].push_back(8 - 1);//
+        composite_face_list[ 3 ].push_back(7 - 1);
 
         composite_face_element_type[ 4 ] = TRI_6;
-        composite_face_list[ 4 ].push_back( 4 - 1 );
-        composite_face_list[ 4 ].push_back( 5 - 1 );
-        composite_face_list[ 4 ].push_back( 6 - 1 );
-        composite_face_list[ 4 ].push_back( 10 - 1 );
-        composite_face_list[ 4 ].push_back( 11 - 1 );
-        composite_face_list[ 4 ].push_back( 12 - 1 );
+        composite_face_list[ 4 ].push_back(4 - 1);
+        composite_face_list[ 4 ].push_back(5 - 1);
+        composite_face_list[ 4 ].push_back(6 - 1);
+        composite_face_list[ 4 ].push_back(10 - 1);
+        composite_face_list[ 4 ].push_back(11 - 1);
+        composite_face_list[ 4 ].push_back(12 - 1);
 
         //! Face 20
 
@@ -1437,28 +1437,28 @@ void BasicElement::Init(int elem_type)
         //! 7  8  2
         //! 9  3  8
 
-        face_element_type.resize( 14 );
-        face_list.resize( 14 );
+        face_element_type.resize(14);
+        face_list.resize(14);
 
         face_element_type[ 0 ] = TRI_3;
-        face_list[ 0 ].push_back( 1 - 1 );
-        face_list[ 0 ].push_back( 9 - 1 );
-        face_list[ 0 ].push_back( 7 - 1 );
+        face_list[ 0 ].push_back(1 - 1);
+        face_list[ 0 ].push_back(9 - 1);
+        face_list[ 0 ].push_back(7 - 1);
 
         face_element_type[ 1 ] = TRI_3;
-        face_list[ 1 ].push_back( 9 - 1 );
-        face_list[ 1 ].push_back( 8 - 1 );
-        face_list[ 1 ].push_back( 7 - 1 );
+        face_list[ 1 ].push_back(9 - 1);
+        face_list[ 1 ].push_back(8 - 1);
+        face_list[ 1 ].push_back(7 - 1);
 
         face_element_type[ 2 ] = TRI_3;
-        face_list[ 2 ].push_back( 7 - 1 );
-        face_list[ 2 ].push_back( 8 - 1 );
-        face_list[ 2 ].push_back( 2 - 1 );
+        face_list[ 2 ].push_back(7 - 1);
+        face_list[ 2 ].push_back(8 - 1);
+        face_list[ 2 ].push_back(2 - 1);
 
         face_element_type[ 3 ] = TRI_3;
-        face_list[ 3 ].push_back( 9 - 1 );
-        face_list[ 3 ].push_back( 3 - 1 );
-        face_list[ 3 ].push_back( 8 - 1 );
+        face_list[ 3 ].push_back(9 - 1);
+        face_list[ 3 ].push_back(3 - 1);
+        face_list[ 3 ].push_back(8 - 1);
 
         //! 4  13  5  14  6  15  4
         //! Face 4
@@ -1468,24 +1468,24 @@ void BasicElement::Init(int elem_type)
         //! 15 14 6
 
         face_element_type[ 4 ] = TRI_3;
-        face_list[ 4 ].push_back( 4 - 1 );
-        face_list[ 4 ].push_back( 10 - 1 );
-        face_list[ 4 ].push_back( 12 - 1 );
+        face_list[ 4 ].push_back(4 - 1);
+        face_list[ 4 ].push_back(10 - 1);
+        face_list[ 4 ].push_back(12 - 1);
 
         face_element_type[ 5 ] = TRI_3;
-        face_list[ 5 ].push_back( 10 - 1 );
-        face_list[ 5 ].push_back( 11 - 1 );
-        face_list[ 5 ].push_back( 12 - 1 );
+        face_list[ 5 ].push_back(10 - 1);
+        face_list[ 5 ].push_back(11 - 1);
+        face_list[ 5 ].push_back(12 - 1);
 
         face_element_type[ 6 ] = TRI_3;
-        face_list[ 6 ].push_back( 10 - 1 );//
-        face_list[ 6 ].push_back( 5 - 1 );
-        face_list[ 6 ].push_back( 11 - 1 );
+        face_list[ 6 ].push_back(10 - 1);//
+        face_list[ 6 ].push_back(5 - 1);
+        face_list[ 6 ].push_back(11 - 1);
 
         face_element_type[ 7 ] = TRI_3;
-        face_list[ 7 ].push_back( 12 - 1 );
-        face_list[ 7 ].push_back( 11 - 1 );
-        face_list[ 7 ].push_back( 6 - 1 );
+        face_list[ 7 ].push_back(12 - 1);
+        face_list[ 7 ].push_back(11 - 1);
+        face_list[ 7 ].push_back(6 - 1);
 
         //! 1  7  2  11  5  13  4  10  1  middle16
         //! Face 4
@@ -1494,16 +1494,16 @@ void BasicElement::Init(int elem_type)
         //! 10 16 13 4
         //! 16 11 5  13
         face_element_type[ 8 ] = QUAD_4;
-        face_list[ 8 ].push_back( 1 - 1 );
-        face_list[ 8 ].push_back( 7 - 1 );
-        face_list[ 8 ].push_back( 10 - 1 );
-        face_list[ 8 ].push_back( 4 - 1 );
+        face_list[ 8 ].push_back(1 - 1);
+        face_list[ 8 ].push_back(7 - 1);
+        face_list[ 8 ].push_back(10 - 1);
+        face_list[ 8 ].push_back(4 - 1);
 
         face_element_type[ 9 ] = QUAD_4;
-        face_list[ 9 ].push_back( 7 - 1 );
-        face_list[ 9 ].push_back( 2 - 1 );
-        face_list[ 9 ].push_back( 5 - 1 );
-        face_list[ 9 ].push_back( 10 - 1 );
+        face_list[ 9 ].push_back(7 - 1);
+        face_list[ 9 ].push_back(2 - 1);
+        face_list[ 9 ].push_back(5 - 1);
+        face_list[ 9 ].push_back(10 - 1);
 
         //! 2  8  3  12  6  14  5  11  2  middle17
         //! Face 4
@@ -1513,16 +1513,16 @@ void BasicElement::Init(int elem_type)
         //! 17 12 6  14
 
         face_element_type[ 10 ] = QUAD_4;
-        face_list[ 10 ].push_back( 2 - 1 );
-        face_list[ 10 ].push_back( 8 - 1 );
-        face_list[ 10 ].push_back( 11 - 1 );
-        face_list[ 10 ].push_back( 5 - 1 );
+        face_list[ 10 ].push_back(2 - 1);
+        face_list[ 10 ].push_back(8 - 1);
+        face_list[ 10 ].push_back(11 - 1);
+        face_list[ 10 ].push_back(5 - 1);
 
         face_element_type[ 11 ] = QUAD_4;
-        face_list[ 11 ].push_back( 8 - 1 );
-        face_list[ 11 ].push_back( 3 - 1 );
-        face_list[ 11 ].push_back( 6 - 1 );
-        face_list[ 11 ].push_back( 11 - 1 );
+        face_list[ 11 ].push_back(8 - 1);
+        face_list[ 11 ].push_back(3 - 1);
+        face_list[ 11 ].push_back(6 - 1);
+        face_list[ 11 ].push_back(11 - 1);
 
         //! 1  10  4  15  6  12  3  9  1  middle18
         //! Face 4
@@ -1532,78 +1532,78 @@ void BasicElement::Init(int elem_type)
         //! 18 15 6  12
 
         face_element_type[ 12 ] = QUAD_4;
-        face_list[ 12 ].push_back( 3 - 1 );
-        face_list[ 12 ].push_back( 9 - 1 );
-        face_list[ 12 ].push_back( 12 - 1 );
-        face_list[ 12 ].push_back( 6 - 1 );
+        face_list[ 12 ].push_back(3 - 1);
+        face_list[ 12 ].push_back(9 - 1);
+        face_list[ 12 ].push_back(12 - 1);
+        face_list[ 12 ].push_back(6 - 1);
 
         face_element_type[ 13 ] = QUAD_4;
-        face_list[ 13 ].push_back( 9 - 1 );
-        face_list[ 13 ].push_back( 1 - 1 );
-        face_list[ 13 ].push_back( 4 - 1 );
-        face_list[ 13 ].push_back( 12 - 1 );
+        face_list[ 13 ].push_back(9 - 1);
+        face_list[ 13 ].push_back(1 - 1);
+        face_list[ 13 ].push_back(4 - 1);
+        face_list[ 13 ].push_back(12 - 1);
         //******************************
 
         //! PENTA_12
 
-        mp_struct[ 6 ].push_back( 0 );
-        mp_struct[ 6 ].push_back( 1 );
+        mp_struct[ 6 ].push_back(0);
+        mp_struct[ 6 ].push_back(1);
 
-        mp_struct[ 7 ].push_back( 1 );
-        mp_struct[ 7 ].push_back( 2 );
+        mp_struct[ 7 ].push_back(1);
+        mp_struct[ 7 ].push_back(2);
 
-        mp_struct[ 8 ].push_back( 2 );
-        mp_struct[ 8 ].push_back( 0 );//
+        mp_struct[ 8 ].push_back(2);
+        mp_struct[ 8 ].push_back(0);//
 
-        mp_struct[ 9 ].push_back( 3 );
-        mp_struct[ 9 ].push_back( 4 );
+        mp_struct[ 9 ].push_back(3);
+        mp_struct[ 9 ].push_back(4);
 
-        mp_struct[ 10 ].push_back( 4 );
-        mp_struct[ 10 ].push_back( 5 );
+        mp_struct[ 10 ].push_back(4);
+        mp_struct[ 10 ].push_back(5);
 
-        mp_struct[ 11 ].push_back( 5 );
-        mp_struct[ 11 ].push_back( 3 );
+        mp_struct[ 11 ].push_back(5);
+        mp_struct[ 11 ].push_back(3);
 
 
         //! subcell
 
-        child_element_type.resize( 4 );
-        child_element_index.resize( 4 );
+        child_element_type.resize(4);
+        child_element_index.resize(4);
 
         child_element_type[ 0 ] = PENTA_6;
-        child_element_index[ 0 ].push_back( 1 - 1 );
-        child_element_index[ 0 ].push_back( 7 - 1 );
-        child_element_index[ 0 ].push_back( 9 - 1 );
-        child_element_index[ 0 ].push_back( 4 - 1 );
-        child_element_index[ 0 ].push_back( 10 - 1 );
-        child_element_index[ 0 ].push_back( 12 - 1 );
+        child_element_index[ 0 ].push_back(1 - 1);
+        child_element_index[ 0 ].push_back(7 - 1);
+        child_element_index[ 0 ].push_back(9 - 1);
+        child_element_index[ 0 ].push_back(4 - 1);
+        child_element_index[ 0 ].push_back(10 - 1);
+        child_element_index[ 0 ].push_back(12 - 1);
 
         child_element_type[ 1 ] = PENTA_6;
-        child_element_index[ 1 ].push_back( 7 - 1 );
-        child_element_index[ 1 ].push_back( 8 - 1 );
-        child_element_index[ 1 ].push_back( 9 - 1 );
-        child_element_index[ 1 ].push_back( 10 - 1 );
-        child_element_index[ 1 ].push_back( 11 - 1 );
-        child_element_index[ 1 ].push_back( 12 - 1 );
+        child_element_index[ 1 ].push_back(7 - 1);
+        child_element_index[ 1 ].push_back(8 - 1);
+        child_element_index[ 1 ].push_back(9 - 1);
+        child_element_index[ 1 ].push_back(10 - 1);
+        child_element_index[ 1 ].push_back(11 - 1);
+        child_element_index[ 1 ].push_back(12 - 1);
 
         child_element_type[ 2 ] = PENTA_6;
-        child_element_index[ 2 ].push_back( 7 - 1 );
-        child_element_index[ 2 ].push_back( 2 - 1 );
-        child_element_index[ 2 ].push_back( 8 - 1 );
-        child_element_index[ 2 ].push_back( 10 - 1 );
-        child_element_index[ 2 ].push_back( 5 - 1 );
-        child_element_index[ 2 ].push_back( 11 - 1 );
+        child_element_index[ 2 ].push_back(7 - 1);
+        child_element_index[ 2 ].push_back(2 - 1);
+        child_element_index[ 2 ].push_back(8 - 1);
+        child_element_index[ 2 ].push_back(10 - 1);
+        child_element_index[ 2 ].push_back(5 - 1);
+        child_element_index[ 2 ].push_back(11 - 1);
 
 
         child_element_type[ 3 ] = PENTA_6;
-        child_element_index[ 3 ].push_back( 9 - 1 );
-        child_element_index[ 3 ].push_back( 8 - 1 );
-        child_element_index[ 3 ].push_back( 3 - 1 );
-        child_element_index[ 3 ].push_back( 12 - 1 );
-        child_element_index[ 3 ].push_back( 11 - 1 );
-        child_element_index[ 3 ].push_back( 6 - 1 );
+        child_element_index[ 3 ].push_back(9 - 1);
+        child_element_index[ 3 ].push_back(8 - 1);
+        child_element_index[ 3 ].push_back(3 - 1);
+        child_element_index[ 3 ].push_back(12 - 1);
+        child_element_index[ 3 ].push_back(11 - 1);
+        child_element_index[ 3 ].push_back(6 - 1);
     }
-    else if ( elem_type == PENTA_15 )
+    else if (elem_type == PENTA_15)
     {
         //! PENTA_15
         //! 1.........7..........2
@@ -1645,7 +1645,7 @@ void BasicElement::Init(int elem_type)
         mp_struct[14].push_back(5);
         mp_struct[14].push_back(3);
     }
-    else if ( elem_type == PENTA_18 )
+    else if (elem_type == PENTA_18)
     {
         //! PENTA_18
 
@@ -1904,20 +1904,20 @@ void BasicElement::Init(int elem_type)
         mp_struct[14].push_back(5);
         mp_struct[14].push_back(3);
 
-        mp_struct[ 15 ].push_back( 0 );//
-        mp_struct[ 15 ].push_back( 1 );//
-        mp_struct[ 15 ].push_back( 4 );//
-        mp_struct[ 15 ].push_back( 3 );//
+        mp_struct[ 15 ].push_back(0);//
+        mp_struct[ 15 ].push_back(1);//
+        mp_struct[ 15 ].push_back(4);//
+        mp_struct[ 15 ].push_back(3);//
 
-        mp_struct[ 16 ].push_back( 1 );//
-        mp_struct[ 16 ].push_back( 2 );//
-        mp_struct[ 16 ].push_back( 5 );//
-        mp_struct[ 16 ].push_back( 4 );//
+        mp_struct[ 16 ].push_back(1);//
+        mp_struct[ 16 ].push_back(2);//
+        mp_struct[ 16 ].push_back(5);//
+        mp_struct[ 16 ].push_back(4);//
 
-        mp_struct[ 17 ].push_back( 2 );//
-        mp_struct[ 17 ].push_back( 0 );//
-        mp_struct[ 17 ].push_back( 3 );//
-        mp_struct[ 17 ].push_back( 5 );//
+        mp_struct[ 17 ].push_back(2);//
+        mp_struct[ 17 ].push_back(0);//
+        mp_struct[ 17 ].push_back(3);//
+        mp_struct[ 17 ].push_back(5);//
 
         //! subcell
         //! PENTA_6  : 1  7  9  10 16 18
@@ -1997,7 +1997,7 @@ void BasicElement::Init(int elem_type)
         child_element_index[7].push_back(14-1);
         child_element_index[7].push_back(6-1);
     }
-    else if ( elem_type == HEXA_8 )
+    else if (elem_type == HEXA_8)
     {
         //! HEXA_8
 
@@ -2049,7 +2049,7 @@ void BasicElement::Init(int elem_type)
         face_list[5].push_back(6-1);
         face_list[5].push_back(5-1);
     }
-    else if ( elem_type == HEXA_20 )
+    else if (elem_type == HEXA_20)
     {
         //! HEXA_20
         //! 1.........9. ........2
@@ -2103,7 +2103,7 @@ void BasicElement::Init(int elem_type)
         mp_struct[19].push_back(7);
         mp_struct[19].push_back(4);
     }
-    else if ( elem_type == HEXA_27 )
+    else if (elem_type == HEXA_27)
     {
         //! HEXA_27
 
@@ -2580,83 +2580,83 @@ void BasicElement::Init(int elem_type)
 bool BasicElement::ISBasicElement(int elem_type)
 {
     bool results = false;
-    if ( elem_type == NODE )
+    if (elem_type == NODE)
     {
     }
-    else if ( elem_type == BAR_2 )
+    else if (elem_type == BAR_2)
     {
         results = true;
     }
-    else if ( elem_type == BAR_3 )
+    else if (elem_type == BAR_3)
     {
     }
-    else if ( elem_type == TRI_3 )
+    else if (elem_type == TRI_3)
     {
         if (GetDim() == TWO_D)
         {
             results = true;
         }
     }
-    else if ( elem_type == TRI_6 )
+    else if (elem_type == TRI_6)
     {
     }
-    else if ( elem_type == QUAD_4 )
+    else if (elem_type == QUAD_4)
     {
         if (GetDim() == TWO_D)
         {
             results = true;
         }
     }
-    else if ( elem_type == QUAD_8 )
+    else if (elem_type == QUAD_8)
     {
     }
-    else if ( elem_type == QUAD_9 )
+    else if (elem_type == QUAD_9)
     {
     }
-    else if ( elem_type == TETRA_4 )
-    {
-        results = true;
-    }
-    else if ( elem_type == TETRA_10 )
-    {
-    }
-    else if ( elem_type == PYRA_5 )
+    else if (elem_type == TETRA_4)
     {
         results = true;
     }
-    else if ( elem_type == PYRA_14 )
+    else if (elem_type == TETRA_10)
     {
     }
-    else if ( elem_type == PENTA_6 )
-    {
-        results = true;
-    }
-    else if ( elem_type == PENTA_15 )
-    {
-    }
-    else if ( elem_type == PENTA_18 )
-    {
-    }
-    else if ( elem_type == HEXA_8 )
+    else if (elem_type == PYRA_5)
     {
         results = true;
     }
-    else if ( elem_type == HEXA_20 )
+    else if (elem_type == PYRA_14)
     {
     }
-    else if ( elem_type == HEXA_27 )
+    else if (elem_type == PENTA_6)
+    {
+        results = true;
+    }
+    else if (elem_type == PENTA_15)
+    {
+    }
+    else if (elem_type == PENTA_18)
+    {
+    }
+    else if (elem_type == HEXA_8)
+    {
+        results = true;
+    }
+    else if (elem_type == HEXA_20)
+    {
+    }
+    else if (elem_type == HEXA_27)
     {
     }
     return results;
 }
 
-bool BasicElement::IsFaceElementType( int elementType )
+bool BasicElement::IsFaceElementType(int elementType)
 {
     bool results = false;
 
-    if ( elementType == BAR_2 )
+    if (elementType == BAR_2)
     {
-        if ( GetDim() == TWO_D )
+        if (GetDim() == TWO_D)
         {
             results = true;
         }
@@ -2665,9 +2665,9 @@ bool BasicElement::IsFaceElementType( int elementType )
             results = false;
         }
     }
-    else if ( elementType == TRI_3 )
+    else if (elementType == TRI_3)
     {
-        if ( GetDim() == TWO_D )
+        if (GetDim() == TWO_D)
         {
             results = false;
         }
@@ -2676,9 +2676,9 @@ bool BasicElement::IsFaceElementType( int elementType )
             results = true;
         }
     }
-    else if ( elementType == QUAD_4 )
+    else if (elementType == QUAD_4)
     {
-        if ( GetDim() == TWO_D )
+        if (GetDim() == TWO_D)
         {
             results = false;
         }
@@ -2691,13 +2691,13 @@ bool BasicElement::IsFaceElementType( int elementType )
 }
 
 
-bool BasicElement::IsFaceElementTypeAtLeast( int elementType )
+bool BasicElement::IsFaceElementTypeAtLeast(int elementType)
 {
-    bool results = ISBasicElement( elementType );
+    bool results = ISBasicElement(elementType);
 
-    if ( elementType == BAR_2 )
+    if (elementType == BAR_2)
     {
-        if ( GetDim() == TWO_D )
+        if (GetDim() == TWO_D)
         {
             results = true;
         }
@@ -2710,36 +2710,36 @@ bool BasicElement::IsFaceElementTypeAtLeast( int elementType )
 }
 
 
-bool BasicElement::IsBasicVolumeElementType( int elementType )
+bool BasicElement::IsBasicVolumeElementType(int elementType)
 {
     bool results = false;
-    if ( elementType == TRI_3 )
+    if (elementType == TRI_3)
     {
-        if ( GetDim() == TWO_D )
+        if (GetDim() == TWO_D)
         {
             results = true;
         }
     }
-    else if ( elementType == QUAD_4 )
+    else if (elementType == QUAD_4)
     {
-        if ( GetDim() == TWO_D )
+        if (GetDim() == TWO_D)
         {
             results = true;
         }
     }
-    else if ( elementType == TETRA_4 )
+    else if (elementType == TETRA_4)
     {
         results = true;
     }
-    else if ( elementType == PYRA_5 )
+    else if (elementType == PYRA_5)
     {
         results = true;
     }
-    else if ( elementType == PENTA_6 )
+    else if (elementType == PENTA_6)
     {
         results = true;
     }
-    else if ( elementType == HEXA_8 )
+    else if (elementType == HEXA_8)
     {
         results = true;
     }
@@ -2749,24 +2749,24 @@ bool BasicElement::IsBasicVolumeElementType( int elementType )
 int BasicElement::GetRefineElemType(int elem_type, const bool & anisotropicAdapt)
 {
     int next_elem_type = -1;
-    if ( elem_type == NODE )
+    if (elem_type == NODE)
     {
     }
-    else if ( elem_type == BAR_2 )
+    else if (elem_type == BAR_2)
     {
         next_elem_type = BAR_3;
     }
-    else if ( elem_type == BAR_3 )
+    else if (elem_type == BAR_3)
     {
     }
-    else if ( elem_type == TRI_3 )
+    else if (elem_type == TRI_3)
     {
         next_elem_type = TRI_6;
     }
-    else if ( elem_type == TRI_6 )
+    else if (elem_type == TRI_6)
     {
     }
-    else if ( elem_type == QUAD_4 )
+    else if (elem_type == QUAD_4)
     {
         if (anisotropicAdapt)
         {
@@ -2777,27 +2777,27 @@ int BasicElement::GetRefineElemType(int elem_type, const bool & anisotropicAdapt
             next_elem_type = QUAD_9;
         }
     }
-    else if ( elem_type == QUAD_8 )
+    else if (elem_type == QUAD_8)
     {
     }
-    else if ( elem_type == QUAD_9 )
+    else if (elem_type == QUAD_9)
     {
     }
-    else if ( elem_type == TETRA_4 )
+    else if (elem_type == TETRA_4)
     {
         next_elem_type = TETRA_10;
     }
-    else if ( elem_type == TETRA_10 )
+    else if (elem_type == TETRA_10)
     {
     }
-    else if ( elem_type == PYRA_5 )
+    else if (elem_type == PYRA_5)
     {
         next_elem_type = PYRA_14;
     }
-    else if ( elem_type == PYRA_14 )
+    else if (elem_type == PYRA_14)
     {
     }
-    else if ( elem_type == PENTA_6 )
+    else if (elem_type == PENTA_6)
     {
         if (anisotropicAdapt)
         {
@@ -2808,20 +2808,20 @@ int BasicElement::GetRefineElemType(int elem_type, const bool & anisotropicAdapt
             next_elem_type = PENTA_18;
         }
     }
-    else if ( elem_type == PENTA_15 )
+    else if (elem_type == PENTA_15)
     {
     }
-    else if ( elem_type == PENTA_18 )
+    else if (elem_type == PENTA_18)
     {
     }
-    else if ( elem_type == HEXA_8 )
+    else if (elem_type == HEXA_8)
     {
         next_elem_type = HEXA_27;
     }
-    else if ( elem_type == HEXA_20 )
+    else if (elem_type == HEXA_20)
     {
     }
-    else if ( elem_type == HEXA_27 )
+    else if (elem_type == HEXA_27)
     {
     }
     return next_elem_type;
@@ -2830,72 +2830,72 @@ int BasicElement::GetRefineElemType(int elem_type, const bool & anisotropicAdapt
 int BasicElement::GetSimpleElemType(int elem_type)
 {
     int prev_elem_type = -1;
-    if ( elem_type == NODE )
+    if (elem_type == NODE)
     {
     }
-    else if ( elem_type == BAR_2 )
+    else if (elem_type == BAR_2)
     {
     }
-    else if ( elem_type == BAR_3 )
+    else if (elem_type == BAR_3)
     {
         prev_elem_type = BAR_2;
     }
-    else if ( elem_type == TRI_3 )
+    else if (elem_type == TRI_3)
     {
     }
-    else if ( elem_type == TRI_6 )
+    else if (elem_type == TRI_6)
     {
         prev_elem_type = TRI_3;
     }
-    else if ( elem_type == QUAD_4 )
+    else if (elem_type == QUAD_4)
     {
     }
-    else if ( elem_type == QUAD_6)
-    {
-        prev_elem_type = QUAD_4;
-    }
-    else if ( elem_type == QUAD_8 )
-    {
-    }
-    else if ( elem_type == QUAD_9 )
+    else if (elem_type == QUAD_6)
     {
         prev_elem_type = QUAD_4;
     }
-    else if ( elem_type == TETRA_4 )
+    else if (elem_type == QUAD_8)
     {
     }
-    else if ( elem_type == TETRA_10 )
+    else if (elem_type == QUAD_9)
+    {
+        prev_elem_type = QUAD_4;
+    }
+    else if (elem_type == TETRA_4)
+    {
+    }
+    else if (elem_type == TETRA_10)
     {
         prev_elem_type = TETRA_4;
     }
-    else if ( elem_type == PYRA_5 )
+    else if (elem_type == PYRA_5)
     {
     }
-    else if ( elem_type == PYRA_14 )
+    else if (elem_type == PYRA_14)
     {
         prev_elem_type = PYRA_5;
     }
-    else if ( elem_type == PENTA_6 )
+    else if (elem_type == PENTA_6)
     {
     }
-    else if ( elem_type == PENTA_12 )
-    {
-        prev_elem_type = PENTA_6;
-    }
-    else if ( elem_type == PENTA_15 )
-    {
-    }
-    else if ( elem_type == PENTA_18 )
+    else if (elem_type == PENTA_12)
     {
         prev_elem_type = PENTA_6;
     }
-    else if ( elem_type == HEXA_8 )
+    else if (elem_type == PENTA_15)
     {
     }
-    else if ( elem_type == HEXA_20 )
+    else if (elem_type == PENTA_18)
+    {
+        prev_elem_type = PENTA_6;
+    }
+    else if (elem_type == HEXA_8)
     {
     }
-    else if ( elem_type == HEXA_27 )
+    else if (elem_type == HEXA_20)
+    {
+    }
+    else if (elem_type == HEXA_27)
     {
         prev_elem_type = HEXA_8;
     }
@@ -2907,7 +2907,7 @@ ElementProxy::ElementProxy()
 {
     basic_element_number = GetNumberOfBasicElement();
     basic_element = new BasicElement * [ basic_element_number ];
-    for ( int i = 0; i < basic_element_number; ++ i )
+    for (int i = 0; i < basic_element_number; ++ i)
     {
         basic_element[i] = new BasicElement();
         basic_element[i]->Init(i);
@@ -2916,7 +2916,7 @@ ElementProxy::ElementProxy()
 
 ElementProxy::~ElementProxy()
 {
-    for ( int i = 0; i < basic_element_number; ++ i )
+    for (int i = 0; i < basic_element_number; ++ i)
     {
         delete basic_element[i];
     }
@@ -2938,55 +2938,55 @@ ElementInitializingClass::~ElementInitializingClass()
 
 ElementInitializingClass element_initializing;
 
-int  GetRefineElemType( int elementType, const bool & anisotropicAdapt )
+int  GetRefineElemType(int elementType, const bool & anisotropicAdapt)
 { 
-    return GetBasicElement( elementType )->GetRefineElemType( elementType, anisotropicAdapt );
+    return GetBasicElement(elementType)->GetRefineElemType(elementType, anisotropicAdapt);
 }
 
-int  GetSimpleElementType( int elementType )
+int  GetSimpleElementType(int elementType)
 { 
-    return GetBasicElement( elementType )->GetSimpleElemType( elementType );
+    return GetBasicElement(elementType)->GetSimpleElemType(elementType);
 }
 
-bool ISBasicElement( int elementType )
+bool ISBasicElement(int elementType)
 { 
-    return GetBasicElement( elementType )->ISBasicElement( elementType ); 
+    return GetBasicElement(elementType)->ISBasicElement(elementType); 
 }
 
-bool IsFaceElementType( int elementType )
+bool IsFaceElementType(int elementType)
 {
-    return GetBasicElement( elementType )->IsFaceElementType( elementType ); 
+    return GetBasicElement(elementType)->IsFaceElementType(elementType); 
 }
 
-bool IsFaceElementTypeAtLeast( int elementType )
+bool IsFaceElementTypeAtLeast(int elementType)
 {
-    return GetBasicElement( elementType )->IsFaceElementTypeAtLeast( elementType ); 
+    return GetBasicElement(elementType)->IsFaceElementTypeAtLeast(elementType); 
 }
 
-BasicElement * GetBasicElement( int elementType )
+BasicElement * GetBasicElement(int elementType)
 { 
-    return elementProxy->GetBasicElement( elementType );
+    return elementProxy->GetBasicElement(elementType);
 }
 
-uint_t GetChildElementNumbers( int elementType )
+uint_t GetChildElementNumbers(int elementType)
 { 
-    return elementProxy->GetBasicElement( elementType )->GetChildElementNumber();
+    return elementProxy->GetBasicElement(elementType)->GetChildElementNumber();
 }
 
-bool IsBasicVolumeElementType( int elementType )
+bool IsBasicVolumeElementType(int elementType)
 {
     BasicElement * element = GetBasicElement(elementType);
-    return element->ISBasicElement( elementType );
+    return element->ISBasicElement(elementType);
 }
 
-uint_t GetChildElementNumber( int elementType )
+uint_t GetChildElementNumber(int elementType)
 { 
-    return elementProxy->GetBasicElement( elementType )->GetChildElementNumber();
+    return elementProxy->GetBasicElement(elementType)->GetChildElementNumber();
 }
 
-int GetElementNodeNumbers( int elementType ) 
+int GetElementNodeNumbers(int elementType) 
 { 
-    return elementProxy->GetBasicElement( elementType )->GetElementNodeNumber( elementType );
+    return elementProxy->GetBasicElement(elementType)->GetElementNodeNumber(elementType);
 }
 
 vector<int> & GetRelatedPointListForMiddlePointComputation(int elem_type, int i)
@@ -2994,14 +2994,14 @@ vector<int> & GetRelatedPointListForMiddlePointComputation(int elem_type, int i)
     return elementProxy->GetBasicElement(elem_type)->GetMPlist(i);
 }
 
-bool IsBoundaryFace( const int & rightCellIndex )
+bool IsBoundaryFace(const int & rightCellIndex)
 {
-    return ( rightCellIndex < 0 );
+    return (rightCellIndex < 0);
 }
 
-bool IsElementNotExist( const int & rightCellIndex )
+bool IsElementNotExist(const int & rightCellIndex)
 {
-    return ( rightCellIndex < 0 );
+    return (rightCellIndex < 0);
 }
 //! Copy end.
 

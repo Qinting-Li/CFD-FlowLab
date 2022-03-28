@@ -53,7 +53,7 @@ void TurbSolverUnstr::AllocateGlobalVar(Grid *gridIn)
     RDouble **residualTurbulence = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotal);
     RDouble **spectrumTurbulence = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotal);
 
-    grid->UpdateDataPtr("q_turb"   , qTurbulence       );    //! Unknown variable of turbulent model.
+    grid->UpdateDataPtr("q_turb"   , qTurbulence      );    //! Unknown variable of turbulent model.
     grid->UpdateDataPtr("res_turb" , residualTurbulence);    //! Residual or right-hand side.
     grid->UpdateDataPtr("spec_turb", spectrumTurbulence);    //! Spectral radius of turbulent model.
 
@@ -85,8 +85,7 @@ void TurbSolverUnstr::AllocateGlobalVar(Grid *gridIn)
     }
 
     int isUnsteady = parameters->GetIsUnsteady();
-
-    if (isUnsteady != 0)
+    if (isUnsteady)
     {
         RDouble **qTurbulenceUnsteadyN1 = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotal);
         RDouble **qTurbulenceUnsteadyN2 = NewPointer2<RDouble>(nTurbulenceEquation, numberOfTotal);
@@ -159,11 +158,11 @@ void TurbSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble **qTurbulence        = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"   ));
-    RDouble **residualTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb" ));
+    RDouble **qTurbulence        = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"  ));
+    RDouble **residualTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb"));
     RDouble **spectrumTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("spec_turb"));
 
-    DelPointer2(qTurbulence       );
+    DelPointer2(qTurbulence      );
     DelPointer2(residualTurbulence);
     DelPointer2(spectrumTurbulence);
 
@@ -177,7 +176,7 @@ void TurbSolverUnstr::DeAllocateGlobalVar(Grid *gridIn)
 
     int isUnsteady = parameters->GetIsUnsteady();
 
-    if (isUnsteady != 0)
+    if (isUnsteady)
     {
         RDouble **qTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n1"));
         RDouble **qTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n2"));
@@ -305,7 +304,7 @@ void TurbSolverUnstr::DumpRestart(ActionKey *actkey)
     }
 
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0) return;
+    if (!isUnsteady) return;
 
     RDouble **qTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n1"));
     RDouble **qTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n2"));
@@ -394,7 +393,7 @@ void TurbSolverUnstr::DumpRestartH5(ActionKey *actkey)
     WriteData(grploc, &numberOfTotalCell, "nTotalCell");
 
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0)
+    if (!isUnsteady)
     {
         H5Gclose(grploc);
         DelPointer2(qTemporary);
@@ -770,7 +769,7 @@ void TurbSolverUnstr::InitFlowAsRestart()
     }
 
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0) return;
+    if (!isUnsteady) return;
 
     RDouble **qTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n1"));
     RDouble **qTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n2"));
@@ -792,8 +791,8 @@ void TurbSolverUnstr::InitFlowAsRestart()
     }
 
     RDouble **residualTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb"));
-    RDouble **residualTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n1" ));
-    RDouble **residualTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n2" ));
+    RDouble **residualTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n1"));
+    RDouble **residualTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n2"));
     RDouble **residualTurbulenceUnsteadyTemporary = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_tmp"));
 
     for (int m = 0; m < nTurbulenceEquation; ++ m)
@@ -1235,7 +1234,7 @@ void TurbSolverUnstr::RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDou
 
     RDouble **dqTurbulence = dqProxy->GetField_UNS();
 
-    RDouble *dt = reinterpret_cast<RDouble *> (grid->GetDataPtr("dt" ));
+    RDouble *dt = reinterpret_cast<RDouble *> (grid->GetDataPtr("dt"));
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
@@ -1610,7 +1609,7 @@ RDouble TurbSolverUnstr::UnsteadyConvergence(Grid *gridIn)
 {
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0) return zero;
+    if (!isUnsteady) return zero;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfTotalCell    = grid->GetNTotalCell();
@@ -1685,7 +1684,7 @@ void TurbSolverUnstr::UpdateUnsteadyFlow(Grid *gridIn)
 {
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0) return;
+    if (!isUnsteady) return;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfTotalCell    = grid->GetNTotalCell();
@@ -1696,8 +1695,8 @@ void TurbSolverUnstr::UpdateUnsteadyFlow(Grid *gridIn)
     RDouble **qTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n1"));
     RDouble **qTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n2"));
 
-    RDouble **residualTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n1" ));
-    RDouble **residualTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n2" ));
+    RDouble **residualTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n1"));
+    RDouble **residualTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n2"));
     RDouble **residualTurbulenceUnsteadyTemporary = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_tmp"));
 
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
@@ -1771,7 +1770,7 @@ void TurbSolverUnstr::DualTimeSource(Grid *gridIn)
 {
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0) return;
+    if (!isUnsteady) return;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfTotalCell    = grid->GetNTotalCell();
@@ -2153,7 +2152,7 @@ void TurbSolverUnstr::ResetWallScalar(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
-    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb" ));
+    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
 
     Param_TurbSolverUnstruct *parameters = GetControlParameters();
     int viscoueType = parameters->GetViscousType();
@@ -2314,7 +2313,7 @@ void TurbSolverUnstr::SourceFluxOneEquationOriginal(Grid *gridIn)
         rs     = nueSA * oKap2 * oDistance2 * oRefReNumber;
         nuetRs = nueSA * rs;
 
-        //! sBar = fv2 * nueSA / ( k2 * distance2).
+        //! sBar = fv2 * nueSA / (k2 * distance2).
         sBar    = rs * fv2;
 
         if (sBar >= - saC2 * omega)
@@ -2497,10 +2496,10 @@ void TurbSolverUnstr::SourceFluxOneEquationOriginalCFL3D(Grid *gridIn)
         fv2      = one - xsi / (one + xsi * fv1);
 
         //! Important, this term must be non-dimensional with Reynolds.
-        //! Here, absorb oRefReNumber into rs(term0): nueSA / ( k2 * distance2).
+        //! Here, absorb oRefReNumber into rs(term0): nueSA / (k2 * distance2).
         RDouble term0 = nueSA * oKap2 * oDistance2 * oRefReNumber;        
 
-        //!sBar = fv2 * nueSA / ( k2 * distance2).
+        //!sBar = fv2 * nueSA / (k2 * distance2).
         sBar    = term0 * fv2;
 
         if (sBar >= - saC2 * omega)
@@ -2533,7 +2532,7 @@ void TurbSolverUnstr::SourceFluxOneEquationOriginalCFL3D(Grid *gridIn)
         //! CFL3D user's manual v5.0, and, open source code.
         //! Here, consider omega only, since the sBar has been moved into 
         //! the wallDest term because they all have the Reynolds.
-        RDouble term1_CFL3D = cb1 * ( one - ft2) * omega;
+        RDouble term1_CFL3D = cb1 * (one - ft2) * omega;
         RDouble term2_CFL3D = cb1 * ((one - ft2) * fv2 + ft2) * oKap2 - cw1 * fw;
 
         production  = term1_CFL3D * nueSA;     
@@ -2572,10 +2571,10 @@ void TurbSolverUnstr::SourceFluxTwoEquation(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble **primitiveVariables = reinterpret_cast<RDouble **> (grid->GetDataPtr("q" ));
+    RDouble **primitiveVariables = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     RDouble *viscousLaminar = reinterpret_cast<RDouble * > (grid->GetDataPtr("visl"));
     RDouble *viscousTurbulence = reinterpret_cast<RDouble * > (grid->GetDataPtr("vist"));
-    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb" ));
+    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
     RDouble **spectrumTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("spec_turb"));
     RDouble **residualTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb"));
 
@@ -2748,10 +2747,11 @@ void TurbSolverUnstr::SourceFluxTwoEquation(Grid *gridIn)
 
                     RDouble RT     = ViscosityRatio(density, mul, ke, kw, refReNumber);
                     RDouble Rev    = ReynoldsNumberBasedOnStrainRate(density, wallDist, mul, strainRate, refReNumber);
-                    RDouble Rectac = TransitionOnsetMomentumThicknessReynoldsCaliBrated(Rectabar);
+                    RDouble Rectac = TransitionOnsetMomentumThicknessReynoldsUnstrCaliBrated(Rectabar);
 
                     RDouble Rw     = ReynoldsNumberBasedOnDissipation(density, wallDist, mul, kw, refReNumber);
-                    RDouble Flength = HighReynoldsCorrectionOfFlength(Rw, FlengthCaliBrated(Rectabar));
+                    RDouble Flength = HighReynoldsCorrectionOfFlength(Rw, FlengthUnstrCaliBrated(Rectabar));
+
                     RDouble Fonset  = TransitionOnsetFunction(Rev, Rectac, RT);
                     RDouble Fturb   = ControlFunctionFturb(RT);
 
@@ -2762,8 +2762,8 @@ void TurbSolverUnstr::SourceFluxTwoEquation(Grid *gridIn)
 
                     RDouble specGamap = MIN(0.0, 1.5 * production2OfGama + 0.5 * production1OfGama) / (density * intermittency);
 
-                    RDouble destruction2OfGama = -transition_ca2 * Fturb * density * vorticity * intermittency;
-                    RDouble destruction1OfGama = -transition_ce2 * intermittency * destruction2OfGama;
+                    RDouble destruction2OfGama = transition_ca2 * Fturb * density * vorticity * intermittency;
+                    RDouble destruction1OfGama = transition_ce2 * intermittency * destruction2OfGama;
 
                     RDouble destructionOfGama = destruction1OfGama + destruction2OfGama;
                     RDouble specGamad = MAX(0.0, 2.0 * destruction1OfGama + destruction2OfGama) / (density * intermittency);
@@ -2788,6 +2788,7 @@ void TurbSolverUnstr::SourceFluxTwoEquation(Grid *gridIn)
                         lamdacta0 = lamdacta;
                         lamdacta = PressureGradientFunction(density, momentumThickness, mul, dUds, refReNumber);
                         lamdacta = lamdacta * compressibleFix;
+                        lamdacta = MAX(-0.1, MIN(0.1, lamdacta));
                         RDouble Flamdacta = EmpiricalCorrelationOfFlamdacta(TU, lamdacta);
                         Rectat = EmpiricalCorrelationOfRectat(TU, Flamdacta);
                         momentumThickness = MomentumThickness(density, absU, mul, Rectat, refReNumber);
@@ -2806,7 +2807,6 @@ void TurbSolverUnstr::SourceFluxTwoEquation(Grid *gridIn)
                     RDouble destRe = coecommon * density * Rectabar;
 
                     RDouble prodRecf = transition_cct * density * transition_ccf * MIN(Rescf - Rectabar, 0.0) * Fctatcf / tscl;
-
                     RDouble specRe = destRe / (density * Rectabar);
 
                     residualTurbulence[IRECT][iCell] += (prodRe + prodRecf - destRe) * volume;
@@ -2907,7 +2907,7 @@ void TurbSolverUnstr::Crossing(Grid *gridIn)
 
     RDouble *cross = reinterpret_cast<RDouble  *> (grid->GetDataPtr("cross"));
 
-    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb" ));
+    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
     grid->CompGradient(qTurbulence[0], dkedx, dkedy, dkedz);
     grid->CompGradient(qTurbulence[1], dkwdx, dkwdy, dkwdz);
 
@@ -2929,9 +2929,9 @@ void TurbSolverUnstr::Blending(Grid *gridIn)
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfTotalCell    = grid->GetNTotalCell();
 
-    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q" ));
+    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     RDouble *viscousLaminar   = reinterpret_cast<RDouble * > (grid->GetDataPtr("visl"));
-    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb" ));
+    RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
     RDouble *cross = reinterpret_cast<RDouble  *> (grid->GetDataPtr("cross"));
     RDouble *blend = reinterpret_cast<RDouble  *> (grid->GetDataPtr("blend"));
 
@@ -3971,7 +3971,7 @@ void TurbSolverUnstr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
             spectrumTurbulence[m][le] += area[iFace] * half * absVn;
             spectrumTurbulence[m][re] += area[iFace] * half * absVn;
 
-            matrixTurbulenceRight[m][iFace]  = area[iFace] * half * (  vnR - absVn);
+            matrixTurbulenceRight[m][iFace]  = area[iFace] * half * ( vnR - absVn);
             matrixTurbulenceLeft[m][iFace]   = area[iFace] * half * (- vnL - absVn);
         }
     }
@@ -4880,7 +4880,7 @@ void TurbSolverUnstr::InitCGrid(Grid *fineGridIn, Grid *coarseGridIn)
 
     if (!coarseGrid->GetWallDist())
     {
-        coarseGrid->AllocateWalldist(0);
+        coarseGrid->AllocateWalldist();
     }
     RDouble *walldistanceOfCoarseGrid = coarseGrid->GetWallDist();
 
@@ -4992,7 +4992,7 @@ void TurbSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
                 int iPoint;
                 int globalPoint;
                 int valueWeight;
-                for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal )
+                for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal)
                 {
                     iPoint = pointIndexForSend[ipointLocal];
                     globalPoint = interPoint2GlobalPoint[iPoint];
@@ -5269,7 +5269,7 @@ void TurbSolverUnstr::ComputeDDESLength(Grid *gridIn)
     RDouble *lowReynoldsNumberCorrection = new RDouble [numberOfTotalCell];
     ComputeLESLengthofSA(gridIn, lengthOfLES, lowReynoldsNumberCorrection, DESType);
 
-    RDouble **q     = reinterpret_cast<RDouble **> (grid->GetDataPtr("q" ));
+    RDouble **q     = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     RDouble *viscousLaminar  = reinterpret_cast<RDouble * > (grid->GetDataPtr("visl"));
     RDouble *viscousTurbulence = reinterpret_cast<RDouble * > (grid->GetDataPtr("vist"));
 
@@ -5342,7 +5342,7 @@ void TurbSolverUnstr::ComputeIDDESLength(Grid *gridIn)
     int DESType = parameters->GetDESType();
     ComputeLESLengthofSA(gridIn, lengthOfLES, lowReynoldsNumberCorrection, DESType);
 
-    RDouble **q     = reinterpret_cast<RDouble **> (grid->GetDataPtr("q" ));
+    RDouble **q     = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     RDouble *viscousLaminar  = reinterpret_cast<RDouble * > (grid->GetDataPtr("visl"));
     RDouble *viscousTurbulence = reinterpret_cast<RDouble * > (grid->GetDataPtr("vist"));
 
@@ -5380,7 +5380,7 @@ void TurbSolverUnstr::ComputeIDDESLength(Grid *gridIn)
         RDouble largestLocalGridSpacing = largestLocalGridLength[iCell];
 
         RDouble alf  = 0.25 - wallDistance / largestLocalGridSpacing;
-        RDouble fb   = MIN( 2.0 * exp(- 9.0 * alf * alf),  1.0 );
+        RDouble fb   = MIN(2.0 * exp(- 9.0 * alf * alf),  1.0);
 
         RDouble sumOfGradient2 = SQR(dudx[iCell], dudy[iCell], dudz[iCell]) + 
                                 SQR(dvdx[iCell], dvdy[iCell], dvdz[iCell]) + 
@@ -5389,7 +5389,7 @@ void TurbSolverUnstr::ComputeIDDESLength(Grid *gridIn)
         RDouble nuet = oRefReNumber * turbulentViscosity / density;
         RDouble rdt  = nuet / (kap2 * wallDistance2 * MAX(sqrt(sumOfGradient2), 1.0e-10));
 
-        RDouble fdt  = 1.0 - tanh( POWER3(8.0 * rdt) );
+        RDouble fdt  = 1.0 - tanh(POWER3(8.0 * rdt));
         RDouble fdb  = MAX((1.0 - fdt), fb);
 
         RDouble ct   = 1.63;
@@ -5397,8 +5397,8 @@ void TurbSolverUnstr::ComputeIDDESLength(Grid *gridIn)
         RDouble nuel = oRefReNumber * laminarViscosity / density;
         RDouble rdl  = nuel / (kap2 * wallDistance2 * MAX(sqrt(sumOfGradient2), 1.0e-10));
 
-        RDouble fl   = tanh( pow(cL * cL * rdl, 10.0) );
-        RDouble ft   = tanh( POWER3(ct * ct * rdt) );
+        RDouble fl   = tanh(pow(cL * cL * rdl, 10.0));
+        RDouble ft   = tanh(POWER3(ct * ct * rdt));
 
         RDouble fe2  = 1.0 - MAX(ft, fl);
 
@@ -5507,7 +5507,7 @@ void ComputeLowReynoldsNumberCorrection(Grid *gridIn, RDouble *lowReynoldsNumber
     int numberOfTotalCell = grid->GetNTotalCell();
 
     //! Compute low Reynolds number correction.
-    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q" ));
+    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     RDouble **qTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb"));
     RDouble *viscousLaminar   = reinterpret_cast<RDouble * > (grid->GetDataPtr("visl"));
 
@@ -5543,7 +5543,7 @@ void ComputeLowReynoldsNumberCorrection(Grid *gridIn, RDouble *lowReynoldsNumber
         RDouble numerator   =  1.0  -  (cb1 / (cw1 * kap2 * turbulentFwStar)) * (turbulentFt2 + (1.0 - turbulentFt2) * turbulentFv2);
         RDouble denominator =  turbulentFv1 * MAX(1.0e-10, (1.0 - turbulentFt2));
 
-        lowReynoldsNumberCorrection[iCell] = sqrt( MIN(1.0e2, numerator/denominator) );
+        lowReynoldsNumberCorrection[iCell] = sqrt(MIN(1.0e2, numerator/denominator));
     }
 }
 

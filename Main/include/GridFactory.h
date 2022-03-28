@@ -20,26 +20,20 @@ namespace PHSPACE
 {
 class Pre_GridConversion;
 
-const int GRID_CONVERSION = 1;
-const int GRID_ADAPTATION = 2;
-const int GRID_MERGING    = 3;
-const int GRID_DEFORMATION= 4;
-const int GRID_REPAIR     = 5;
-const int GRID_MIRROR     = 6;
-
 void CreateGrid();
 void ConvertGrid();
 void MultiGridConvert();
 Pre_GridConversion *GetConvertType(const string &gridFileName, int gridType, int fromGridType);
 
-void ReconstructGrid();
+void RefineGrid();
 void CombinationGrid();
 void OversetGridView();
 void RepairGrid();
 void MirrorGrid();
+void StructToUnstructGrid();
 void CGNS2UnstructGrid();
 void CGNS2StructGrid();
-void Fantasy2Gridgen();
+void Fantasy2Plot3D();
 void FantasyOld2New();
 void Ustar2PHengLEI();
 void PHengLEI2CGNS();
@@ -50,5 +44,6 @@ void GridgenToMIX();
 void Gridgen2Fantasy();
 void GridgenToSingleUns();
 void GridgenToMBlockUns();
-void GridgenToStr();
+void Plot3DToPHengLEI();
+void GridgenToPHengLEI();
 }

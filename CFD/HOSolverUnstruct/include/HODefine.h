@@ -241,7 +241,7 @@ enum GEO_TYPE
 //};
 
 template < typename T >
-T ComputePressure( T * conserv )
+T ComputePressure(T * conserv)
 {
     return HO_GAMAM1 * (conserv[4] - 0.5 * (pow(conserv[1],2) + pow(conserv[2],2) + pow(conserv[3],2))/conserv[0]);
 }

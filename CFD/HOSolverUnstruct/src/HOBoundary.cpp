@@ -6,7 +6,7 @@
 using PHSPACE::RDouble;
 namespace HOUnstruct
 {
-void SymmetryBoundary( int iGausspoint, int numberGaussPoint, RDouble xNormal, RDouble yNormal, RDouble zNormal, vector < vector < RDouble > > & conservationQ )
+void SymmetryBoundary(int iGausspoint, int numberGaussPoint, RDouble xNormal, RDouble yNormal, RDouble zNormal, vector < vector < RDouble > > & conservationQ)
 {
     RDouble rhom,um, vm, wm, pm, rhoem, vn;
     RDouble rhoR,uR, vR, wR;
@@ -85,7 +85,7 @@ void ViscousIsotropicWallBC(RDouble *prims, RDouble *primt, RDouble nxs, RDouble
     primt[IW] = - prims[IW] + two * zfv;
 
     RDouble omav = one;
-    RDouble coefficientOfStateEquation = 1.0 / ( HO_GAMA * refMachNumber * refMachNumber );
+    RDouble coefficientOfStateEquation = 1.0 / (HO_GAMA * refMachNumber * refMachNumber);
 
     RDouble tm = (1.0 / coefficientOfStateEquation) * prims[IP] / prims[IR];
 
@@ -164,8 +164,8 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
     //! if can reach here, it must be the subsonic flow.
     riemp = vni + 2.0 * cin / gamm1;
     riemm = vno - 2.0 * coo / gamm1;
-    vnb =  half * ( riemp + riemm );
-    cb  =  0.25 * ( riemp - riemm ) * gamm1;
+    vnb =  half * (riemp + riemm);
+    cb  =  0.25 * (riemp - riemm) * gamm1;
     if (vnb >= 0.0)
     {
         // exit
@@ -181,7 +181,7 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
         vtx  = uoo - nxs * vno;
         vty  = voo - nys * vno;
         vtz  = woo - nzs * vno;
-        //cb  =   0.25 * ( riemp - riemm ) * gamm1;
+        //cb  =   0.25 * (riemp - riemm) * gamm1;
     }
 
     rb  = pow((cb * cb / (entr * gama)), static_cast<RDouble>(one) / gamm1);
@@ -223,18 +223,18 @@ void FarFieldRiemannInvariants(RDouble *prims, RDouble *primInflow, RDouble *pri
     vnin = nxs * uin + nys * vin + nzs * win - vgn;
     vnoo = nxs * uoo + nys * voo + nzs * woo - vgn;
 
-    cinner = sqrt( ABS( gama  * pin / rin ) );
-    coo    = sqrt( ABS( gama0 * poo / roo ) );
+    cinner = sqrt(ABS(gama  * pin / rin));
+    coo    = sqrt(ABS(gama0 * poo / roo));
 
-    vein   = sqrt( uin * uin + vin * vin + win * win );
+    vein   = sqrt(uin * uin + vin * vin + win * win);
 
-    if ( vein > cinner )
+    if (vein > cinner)
     {
         //! supersonic.
-        if ( vnin >= 0.0 )
+        if (vnin >= 0.0)
         {
             //! supersonic outlet.
-            for ( int m = 0; m < neqn; ++ m )
+            for (int m = 0; m < neqn; ++ m)
             {
                 primt[ m ] = prims[ m ];
             }
@@ -242,7 +242,7 @@ void FarFieldRiemannInvariants(RDouble *prims, RDouble *primInflow, RDouble *pri
         else
         {
             //! supersonic inlet.
-            for ( int m = 0; m < neqn; ++ m )
+            for (int m = 0; m < neqn; ++ m)
             {
                 primt[ m ] = primInflow[ m ];
             }
@@ -257,16 +257,16 @@ void FarFieldRiemannInvariants(RDouble *prims, RDouble *primInflow, RDouble *pri
         riemp = vnin + 2.0 * cinner / gama1;
         riemm = vnoo - 2.0 * coo    / gama1;
 
-        vnb   = half   * ( riemp + riemm );
-        cb    = fourth * ( riemp - riemm ) * gama1;
+        vnb   = half   * (riemp + riemm);
+        cb    = fourth * (riemp - riemm) * gama1;
 
         double sb;                      //! entropy at the boundary.
         double uref, vref, wref, vnref; //! Outlet refers to inner point, and inlet refers to infinite.
         
-        if ( vnb > 0.0 )
+        if (vnb > 0.0)
         {
             //! subsonic outlet.
-            sb    = pin / pow( rin, gama );
+            sb    = pin / pow(rin, gama);
             uref  = uin;
             vref  = vin;
             wref  = win;
@@ -275,18 +275,18 @@ void FarFieldRiemannInvariants(RDouble *prims, RDouble *primInflow, RDouble *pri
         else
         {
             //! subsonic inlet.
-            sb    = poo / pow( roo, gama0 );
+            sb    = poo / pow(roo, gama0);
             uref  = uoo;
             vref  = voo;
             wref  = woo;
             vnref = vnoo;
         }
 
-        rb  = pow( ( cb * cb / ( sb * gama ) ), 1.0 / gama1 );
-        ub  = uref + nxs * ( vnb - vnref );
-        vb  = vref + nys * ( vnb - vnref );
-        wb  = wref + nzs * ( vnb - vnref );
-        pb  = cb * cb * rb / gama0; //! The same to "pb = sb * pow( rb, gama0 );"
+        rb  = pow((cb * cb / (sb * gama)), 1.0 / gama1);
+        ub  = uref + nxs * (vnb - vnref);
+        vb  = vref + nys * (vnb - vnref);
+        wb  = wref + nzs * (vnb - vnref);
+        pb  = cb * cb * rb / gama0; //! The same to "pb = sb * pow(rb, gama0);"
 
         primt[IR] = rb;
         primt[IU] = ub;
