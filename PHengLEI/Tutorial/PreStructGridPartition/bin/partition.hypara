@@ -1,0 +1,39 @@
+// pgridtype: The grid type. 
+//               0 -- unstruct grid 
+//               1 -- struct grid 
+//               2 -- refine structured grid.
+// maxproc:   The number of partition zones that want to be divided into.
+int pgridtype    = 1; 
+int maxproc = 4
+int    iovrlap              = 0;
+#########################################################################
+#                           File path                                   #
+string original_grid_file      = "./in/m6.fts";
+string partition_grid_file     = "./out/m6__4.fts";
+string original_grid_info_file = "./out/m6__4.skl";
+
+
+// ------------------ Sompe advanced parameters ------------------------
+// axisup: Type of Cartisien coordinates system, used in grid conversion.
+//         1 -- Y upward. (default)
+//         2 -- Z upward.
+// omit_no_bound_bc: What's boundary condition for the type of "no_boundary_condition".
+//         0 -- Interface. (default)
+//         1 -- Physical boundary condition, used in Hybrid solver.
+// npartmethod: Method of interface reconstruction, default 1.
+// parallelPartMethod: Method of parallel partition, this is set only when execute parallel partition.It would be skipped when serial partition.
+//         1 -- Using ParMetis for homogeneous MPI. 
+//         2 -- Using Metis for homogeneous MPI.
+//         3 -- using METIS partition for homogeneous OpenMP.
+int axisup        =  1;
+int m_block_proc  =  0;
+int omit_no_bound_bc  =  0; 
+int npartmethod   =  1;
+int parallelPartitionMethod  =  2;
+int numberOfMultigrid  =  1;
+
+int dumpOldGrid = 0;
+int traceMark    = 0;
+int    numberOfGridGroups = 1;
+int    iapplication  = 0;
+int    nchem      = 0;

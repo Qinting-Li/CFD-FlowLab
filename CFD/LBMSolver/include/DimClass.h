@@ -1,0 +1,26 @@
+﻿///////////////////////////////////////////////////////////////
+// author : Chen, Songze. email: jacksongze@hust.edu.cn
+///////////////////////////////////////////////////////////////
+// participant 1 : He, Jiaming. email: 
+///////////////////////////////////////////////////////////////
+// tester 1 : 
+///////////////////////////////////////////////////////////////
+
+// DimClass.h
+#pragma once
+
+#ifndef DIMCLASS_H
+#define DIMCLASS_H
+
+namespace nnwlbm {
+  template<const size_t dim>
+  class Dim { 
+  public: 
+    constexpr static inline const size_t GetDim() {return dim;} 
+  };
+};
+
+#endif
+
+// end of DimClass.h
+
