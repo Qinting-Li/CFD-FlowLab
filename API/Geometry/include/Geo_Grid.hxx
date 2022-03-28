@@ -61,9 +61,9 @@ inline int Grid::GetNBoundFace() const
 
 inline int Grid::GetNIFace() const
 {
-    if (iinfo)
+    if (interfaceInfo)
     {
-        return iinfo->GetNIFace();
+        return interfaceInfo->GetNIFace();
     }
     return 0;
 }
@@ -108,15 +108,15 @@ inline int Grid::GetZoneLocalID() const
     return index->GetLocalIndex();
 }
 
-inline void Grid::SetInterfaceInfo(InterfaceInfo *iinfo)
+inline void Grid::SetInterfaceInfo(InterfaceInfo *interfaceInfo)
 {
-    if (!iinfo) return;
+    if (!interfaceInfo) return;
 
-    delete this->iinfo;
-    this->iinfo = iinfo;
+    delete this->interfaceInfo;
+    this->interfaceInfo = interfaceInfo;
 
     delete interfaceFields;
-    interfaceFields = new InterfaceFields(iinfo);
+    interfaceFields = new InterfaceFields(interfaceInfo);
 }
 
 inline void Grid::SetInterpointInfo(InterpointInformation *interpointInformation)
@@ -135,7 +135,7 @@ inline void Grid::SetInterpointInfo(InterpointInformation *interpointInformation
 
 inline InterfaceInfo * Grid::GetInterfaceInfo() const
 {
-    return iinfo;
+    return interfaceInfo;
 }
 
 inline InterpointInformation *Grid::GetInterpointInfo() const

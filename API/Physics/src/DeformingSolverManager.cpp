@@ -26,9 +26,9 @@ DeformingParameter::~DeformingParameter()
     //delete [] parameters;
 }
 
-DeformingParameter & DeformingParameter::operator = ( const DeformingParameter & rhs )
+DeformingParameter & DeformingParameter::operator = (const DeformingParameter & rhs)
 {
-    if ( this == & rhs ) return * this;
+    if (this == & rhs) return * this;
 
     numberOfParameters = rhs.numberOfParameters;
     parameters = rhs.parameters;
@@ -36,19 +36,19 @@ DeformingParameter & DeformingParameter::operator = ( const DeformingParameter &
     return * this;
 }
 
-bool DeformingParameter::operator == ( const DeformingParameter & rhs )
+bool DeformingParameter::operator == (const DeformingParameter & rhs)
 {
-    if ( this == & rhs ) return true;
+    if (this == & rhs) return true;
 
-    if ( numberOfParameters != rhs.numberOfParameters )
+    if (numberOfParameters != rhs.numberOfParameters)
     {
         return false;
     }
 
     const RDouble eps = 1.0e-7;
-    for ( int iParameter = 0; iParameter < numberOfParameters; ++ iParameter )
+    for (int iParameter = 0; iParameter < numberOfParameters; ++ iParameter)
     {
-        if ( PHSPACE::ABS( parameters[ iParameter ] - rhs.parameters[ iParameter ] ) > eps )
+        if (PHSPACE::ABS(parameters[ iParameter ] - rhs.parameters[ iParameter ]) > eps)
         {
             return false;
         }
@@ -56,20 +56,20 @@ bool DeformingParameter::operator == ( const DeformingParameter & rhs )
     return true;
 }
 
-void DeformingParameter::SetParameters(PHVectorRDouble1D& parameterVector )
+void DeformingParameter::SetParameters(PHVectorRDouble1D& parameterVector)
 {
     //delete [] parameters;
 
     numberOfParameters = parameterVector.size();
-    parameters.resize( numberOfParameters );
+    parameters.resize(numberOfParameters);
 
-    for ( int iParameter = 0; iParameter < numberOfParameters; ++ iParameter )
+    for (int iParameter = 0; iParameter < numberOfParameters; ++ iParameter)
     {
         parameters[ iParameter ] = parameterVector[ iParameter ];
     }
 }
 
-DeformingParameter * GetDeformingParameter( int bodyIndex )
+DeformingParameter * GetDeformingParameter(int bodyIndex)
 {
     DeformingParameter * tmp = new DeformingParameter;
 
@@ -96,7 +96,7 @@ void DeformingSolverManager::Restart()
 
 }
 
-void DeformingSolverManager::DumpRestart( fstream & file )
+void DeformingSolverManager::DumpRestart(fstream & file)
 {
 
 }

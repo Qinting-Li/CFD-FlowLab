@@ -286,7 +286,7 @@ void GhostCell2D(PHArray<T, 2> &w, int ni, int nj)
 
     for (int i = 0; i <= ni; ++ i)
     {
-        w(i, 0 ) = w(i, 1   );
+        w(i, 0) = w(i, 1  );
         w(i, nj) = w(i, nj-1);
     }
 
@@ -299,7 +299,7 @@ void GhostCell2D(PHArray<T, 2> &w, int ni, int nj)
 
     for (int i = - 1; i <= ni + 1; ++ i)
     {
-        w(i, -1  ) = w(i, 0 );
+        w(i, -1 ) = w(i, 0);
         w(i, nj+1) = w(i, nj);
     }
 }
@@ -379,10 +379,10 @@ void GhostCell3D(PHArray<T, 3> &w, int ni, int nj, int nk)
     {
         for (int i = -1; i <= ni + 1; ++ i)
         {
-            w(i, j, 0 ) = w(i, j, 1);
+            w(i, j, 0) = w(i, j, 1);
             w(i, j, -1) = w(i, j, 1);
 
-            w(i, j, nk  ) = w(i, j, nk-1);
+            w(i, j, nk ) = w(i, j, nk-1);
             w(i, j, nk+1) = w(i, j, nk-1);
         }
     }
@@ -497,16 +497,16 @@ void FillCornerPoint3D(PHArray<T, 3> &w, int ni, int nj, int nk)
     {
         for (int k = 1; k <= nk - 1; ++ k)
         {
-            w( 0,  0, k) = w(0 ,    1, k) + w(   1,  0, k) - w(   1,    1, k);
-            w( 0, nj, k) = w(0 , nj-1, k) + w(   1, nj, k) - w(   1, nj-1, k);
+            w(0,  0, k) = w(0 ,    1, k) + w(  1,  0, k) - w(  1,    1, k);
+            w(0, nj, k) = w(0 , nj-1, k) + w(  1, nj, k) - w(  1, nj-1, k);
             w(ni,  0, k) = w(ni,    1, k) + w(ni-1,  0, k) - w(ni-1,    1, k);
             w(ni, nj, k) = w(ni, nj-1, k) + w(ni-1, nj, k) - w(ni-1, nj-1, k);
         }
 
         for (int j = 1; j <= nj - 1; ++ j)
         {
-            w( 0, j,  0) = w( 0, j,    1) + w(   1, j,  0) - w(   1, j,    1);
-            w( 0, j, nk) = w( 0, j, nk-1) + w(   1, j, nk) - w(   1, j, nk-1);
+            w(0, j,  0) = w(0, j,    1) + w(  1, j,  0) - w(  1, j,    1);
+            w(0, j, nk) = w(0, j, nk-1) + w(  1, j, nk) - w(  1, j, nk-1);
             w(ni, j,  0) = w(ni, j,    1) + w(ni-1, j,  0) - w(ni-1, j,    1);
             w(ni, j, nk) = w(ni, j, nk-1) + w(ni-1, j, nk) - w(ni-1, j, nk-1);
         }
@@ -520,10 +520,10 @@ void FillCornerPoint3D(PHArray<T, 3> &w, int ni, int nj, int nk)
         }
 
         //! Fill the 8 corner points.
-        w( 0,  0,  0) = third * (w(   1,  0,  0) + w( 0,    1,  0) + w( 0,  0,    1));
-        w( 0, nj,  0) = third * (w(   1, nj,  0) + w( 0, nj-1,  0) + w( 0, nj,    1));
-        w( 0,  0, nk) = third * (w(   1,  0, nk) + w( 0,    1, nk) + w( 0,  0, nk-1));
-        w( 0, nj, nk) = third * (w(   1, nj, nk) + w( 0, nj-1, nk) + w( 0, nj, nk-1));
+        w(0,  0,  0) = third * (w(  1,  0,  0) + w(0,    1,  0) + w(0,  0,    1));
+        w(0, nj,  0) = third * (w(  1, nj,  0) + w(0, nj-1,  0) + w(0, nj,    1));
+        w(0,  0, nk) = third * (w(  1,  0, nk) + w(0,    1, nk) + w(0,  0, nk-1));
+        w(0, nj, nk) = third * (w(  1, nj, nk) + w(0, nj-1, nk) + w(0, nj, nk-1));
         w(ni,  0,  0) = third * (w(ni-1,  0,  0) + w(ni,    1,  0) + w(ni,  0,    1));
         w(ni, nj,  0) = third * (w(ni-1, nj,  0) + w(ni, nj-1,  0) + w(ni, nj,    1));
         w(ni,  0, nk) = third * (w(ni-1,  0, nk) + w(ni,    1, nk) + w(ni,  0, nk-1));
@@ -532,8 +532,8 @@ void FillCornerPoint3D(PHArray<T, 3> &w, int ni, int nj, int nk)
     else
     {
         int k = 1;
-        w( 0,  0, k) = w(0 ,    1, k) + w(   1,  0, k) - w(   1,    1, k);
-        w( 0, nj, k) = w(0 , nj-1, k) + w(   1, nj, k) - w(   1, nj-1, k);
+        w(0,  0, k) = w(0 ,    1, k) + w(  1,  0, k) - w(  1,    1, k);
+        w(0, nj, k) = w(0 , nj-1, k) + w(  1, nj, k) - w(  1, nj-1, k);
         w(ni,  0, k) = w(ni,    1, k) + w(ni-1,  0, k) - w(ni-1,    1, k);
         w(ni, nj, k) = w(ni, nj-1, k) + w(ni-1, nj, k) - w(ni-1, nj-1, k);
     }
@@ -570,16 +570,16 @@ void FillCornerPoint3D(PHArray<T, 4 > &w, int ni, int nj, int nk, int nl)
         {
             for (int k = 1; k <= nk - 1; ++ k)
             {
-                w( 0,  0, k, m) = w(0 ,    1, k, m) + w(   1,  0, k, m) - w(   1,    1, k, m);
-                w( 0, nj, k, m) = w(0 , nj-1, k, m) + w(   1, nj, k, m) - w(   1, nj-1, k, m);
+                w(0,  0, k, m) = w(0 ,    1, k, m) + w(  1,  0, k, m) - w(  1,    1, k, m);
+                w(0, nj, k, m) = w(0 , nj-1, k, m) + w(  1, nj, k, m) - w(  1, nj-1, k, m);
                 w(ni,  0, k, m) = w(ni,    1, k, m) + w(ni-1,  0, k, m) - w(ni-1,    1, k, m);
                 w(ni, nj, k, m) = w(ni, nj-1, k, m) + w(ni-1, nj, k, m) - w(ni-1, nj-1, k, m);
             }
 
             for (int j = 1; j <= nj - 1; ++ j)
             {
-                w( 0, j,  0, m) = w( 0, j,    1, m) + w(   1, j,  0, m) - w(   1, j,    1, m);
-                w( 0, j, nk, m) = w( 0, j, nk-1, m) + w(   1, j, nk, m) - w(   1, j, nk-1, m);
+                w(0, j,  0, m) = w(0, j,    1, m) + w(  1, j,  0, m) - w(  1, j,    1, m);
+                w(0, j, nk, m) = w(0, j, nk-1, m) + w(  1, j, nk, m) - w(  1, j, nk-1, m);
                 w(ni, j,  0, m) = w(ni, j,    1, m) + w(ni-1, j,  0, m) - w(ni-1, j,    1, m);
                 w(ni, j, nk, m) = w(ni, j, nk-1, m) + w(ni-1, j, nk, m) - w(ni-1, j, nk-1, m);
             }
@@ -596,10 +596,10 @@ void FillCornerPoint3D(PHArray<T, 4 > &w, int ni, int nj, int nk, int nl)
         //! Fill the 8 corner points.
         for (int m = 0; m < nl; ++ m)
         {
-            w( 0,  0,  0, m) = third * (w(   1,  0,  0, m) + w( 0,    1,  0, m) + w( 0,  0,    1, m));
-            w( 0, nj,  0, m) = third * (w(   1, nj,  0, m) + w( 0, nj-1,  0, m) + w( 0, nj,    1, m));
-            w( 0,  0, nk, m) = third * (w(   1,  0, nk, m) + w( 0,    1, nk, m) + w( 0,  0, nk-1, m));
-            w( 0, nj, nk, m) = third * (w(   1, nj, nk, m) + w( 0, nj-1, nk, m) + w( 0, nj, nk-1, m));
+            w(0,  0,  0, m) = third * (w(  1,  0,  0, m) + w(0,    1,  0, m) + w(0,  0,    1, m));
+            w(0, nj,  0, m) = third * (w(  1, nj,  0, m) + w(0, nj-1,  0, m) + w(0, nj,    1, m));
+            w(0,  0, nk, m) = third * (w(  1,  0, nk, m) + w(0,    1, nk, m) + w(0,  0, nk-1, m));
+            w(0, nj, nk, m) = third * (w(  1, nj, nk, m) + w(0, nj-1, nk, m) + w(0, nj, nk-1, m));
             w(ni,  0,  0, m) = third * (w(ni-1,  0,  0, m) + w(ni,    1,  0, m) + w(ni,  0,    1, m));
             w(ni, nj,  0, m) = third * (w(ni-1, nj,  0, m) + w(ni, nj-1,  0, m) + w(ni, nj,    1, m));
             w(ni,  0, nk, m) = third * (w(ni-1,  0, nk, m) + w(ni,    1, nk, m) + w(ni,  0, nk-1, m));
@@ -611,8 +611,8 @@ void FillCornerPoint3D(PHArray<T, 4 > &w, int ni, int nj, int nk, int nl)
         int k = 1;
         for (int m = 0; m < nl; ++ m)
         {
-            w( 0,  0, k, m) = w(0 ,    1, k, m) + w(   1,  0, k, m) - w(   1,    1, k, m);
-            w( 0, nj, k, m) = w(0 , nj-1, k, m) + w(   1, nj, k, m) - w(   1, nj-1, k, m);
+            w(0,  0, k, m) = w(0 ,    1, k, m) + w(  1,  0, k, m) - w(  1,    1, k, m);
+            w(0, nj, k, m) = w(0 , nj-1, k, m) + w(  1, nj, k, m) - w(  1, nj-1, k, m);
             w(ni,  0, k, m) = w(ni,    1, k, m) + w(ni-1,  0, k, m) - w(ni-1,    1, k, m);
             w(ni, nj, k, m) = w(ni, nj-1, k, m) + w(ni-1, nj, k, m) - w(ni-1, nj-1, k, m);
         }

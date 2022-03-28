@@ -33,7 +33,7 @@ private:
     void Conversion();
 
 private:
-    int  CheckGridgenFileIfASCII();
+    int  CheckPlot3DFileIfASCII();
     int  CheckGridgenCoorASCIIFileType();
     void ReadGridgenCoorASCIIPlot3D();
     void ReadGridgenCoorASCIIGridgen();

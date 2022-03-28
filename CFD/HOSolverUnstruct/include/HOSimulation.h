@@ -78,7 +78,7 @@ private:
     void SolveSteady();
     void SolveSteadyField();
 
-    bool IsSubIterationConvergence( const int & innstep, const int & min_sub_iter, const int & max_sub_iter, const RDouble & tol_sub_iter, const RDouble & averageQuotientMaxInSolvers );
+    bool IsSubIterationConvergence(const int & innstep, const int & min_sub_iter, const int & max_sub_iter, const RDouble & tol_sub_iter, const RDouble & averageQuotientMaxInSolvers);
 };
 
 }

@@ -153,6 +153,29 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     ComputeNodeBCType();
 }
 
+void Controller::CleanUp(int iSolver)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int level = 0;
+    //! First: Initialize memory.
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        PHSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->ReleaseMemory();
+    }
+}
+
 void Controller::ComputeNodeBCType()
 {
     int sysGridType = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
@@ -238,7 +261,7 @@ void Controller::CommunicationNodeBCType()
                 int iPoint;
                 int globalPoint;
                 int BCType;
-                for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal )
+                for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal)
                 {
                     iPoint = pointIndexForSend[ipointLocal];
                     globalPoint = interPoint2GlobalPoint[iPoint];
@@ -871,7 +894,7 @@ void Controller::LoadResiduals(int iSolver, int level)
         CFDSolver *solver = GetCFDSolver(zoneID,iSolver);
 
         solver->LoadResiduals(grid, rhsProxy[zoneID]);
-    }    
+    }
 }
 
 void Controller::PressureFactor(int iSolver, int level)
@@ -905,44 +928,6 @@ void Controller::PressureFactor(int iSolver, int level)
     }
 
     CommunicateSpecificArray(iSolver, level, "rtem", 0);
-}
-
-
-void Controller::ComputeHeatTransferCoeff(int iSolver, int level)
-{
-    if (NS_SOLVER != iSolver)
-    {
-        return;
-    }
-
-    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (viscousType == INVISCID || systemGridType != STRUCTGRID)
-    {
-        return;
-    }
-
-    using namespace PHMPI;
-    int nLocalZones = GetNumberofLocalZones();
-
-#ifdef USE_OMP
-#pragma omp parallel for
-#endif
-    for (int iZone = 0; iZone < nLocalZones; ++iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(zoneID, level);
-        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->GetHeatTransferCoeff(grid);
-    }
 }
 
 void Controller::ComputeGradient(int iSolver, int level)
@@ -982,7 +967,7 @@ void Controller::ComputeGradient(int iSolver, int level)
             GlobalDataBase::GetData("sgsmodel", &sgsmodel, PHSTRING, 1);
             solver->ComputeGradientCellCenter(grid);
 
-            if(MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
+            if (MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
             {
                 solver->ComputeGradientCellCenterOfruvwptOnlyForMixGrid(grid);
             }
@@ -990,7 +975,7 @@ void Controller::ComputeGradient(int iSolver, int level)
          else if(gridTypeofLocalZone == UNSTRUCTGRID)
          {
             solver->ComputeGradient(grid);
-            if(MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
+            if (MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
             {
                 solver->ComputelimiterOnlyForMixGrid(grid);
             }
@@ -1120,12 +1105,12 @@ void Controller::SetBoundaryValueOfField(int iSolver, int level)
 
 void Controller::PreSolveforStructHighOrder(int iSolver, int level)
 {
-    //int mission_Comm( q_FD                                     ) =  5;
-    //int mission_Comm( rtem                                     ) =  6;
-    //int mission_Comm( rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) =  7;
-    //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) =  8;
-    //int mission_Comm( vist, gradqturb                          ) =  9;
-    //int mission_Comm( vist, gradqturb, blending                ) = 10;
+    //int mission_Comm(q_FD                                    ) =  5;
+    //int mission_Comm(rtem                                    ) =  6;
+    //int mission_Comm(rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) =  7;
+    //int mission_Comm(rtem, gradUVWTCellCenterXYZ             ) =  8;
+    //int mission_Comm(vist, gradqturb                         ) =  9;
+    //int mission_Comm(vist, gradqturb, blending               ) = 10;
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
@@ -2701,7 +2686,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
     int iLES = PHSPACE::GlobalDataBase::GetIntParaFromDB("iLES");
 
-    //! gradient has been communicated in another place for isFVMOrFDM == 1.
+    //! gradient has been communicated in another place for isFVMOrFDM == FDM.
     if (systemGridType == STRUCTGRID && isFVMOrFDM == FV_METHOD)
     {
         int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
@@ -2727,7 +2712,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 CommunicateSpecificArray(iSolver, level, "dcdy", nSpeciesNumber);
                 CommunicateSpecificArray(iSolver, level, "dcdz", nSpeciesNumber);
             }
-            if( periodicType == 2 )
+            if(periodicType == 2)
             {
                 for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
                 {
@@ -2752,13 +2737,13 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 }
             }
         }
-        else if (iSolver == TURB_SOLVER && iLES != LES_SOLVER)
+        else if (iSolver == TURB_SOLVER && iLES == NOLES_SOLVER)
         {
             int nEquation = solver->GetNumberOfEquations();
             CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterX", nEquation);
             CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterY", nEquation);
             CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterZ", nEquation);
-            if( periodicType == 2 )
+            if(periodicType == 2)
             {
                 for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
                 {
@@ -2793,7 +2778,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(0, level, "gradUVWTCellCenterY", nTotalVariable);
             CommunicateSpecificArray(0, level, "gradUVWTCellCenterZ", nTotalVariable);
 
-            if( periodicType == 2 )
+            if(periodicType == 2)
             {
                 for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
                 {
@@ -2819,7 +2804,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             }
         }
     }
-    else if(systemGridType == MIXGRID && isFVMOrFDM == FV_METHOD)
+    else if (systemGridType == MIXGRID && isFVMOrFDM == FV_METHOD)
     {
         if (iSolver == NS_SOLVER)
         {
@@ -3415,6 +3400,12 @@ void Controller::PostSolve(int level)
     Grid *grid = GetGrid(zoneIndex, level);
     CFDSolver *solver = static_cast<CFDSolver *>(GlobalSolvers::GetSolver(zoneIndex, iSolver));
     solver->DumpResultFile(grid, level);
+
+    int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
+    if (iCodeBranch > 0)
+    {
+        solver->CheckResult(grid, level);
+    }
 
     //! Node communication: part1.
     for (int iZone = 0; iZone < nZones; ++ iZone)

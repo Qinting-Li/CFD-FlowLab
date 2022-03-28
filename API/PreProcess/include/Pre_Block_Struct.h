@@ -39,7 +39,7 @@ private:
     //! Boundary Direction.
     int bcDirection;
 
-    //! Unit matrix which is used to discribe axis mapping between source block to target one.
+    //! Unit matrix which is used to describe axis mapping between source block to target one.
     vector<vector<int> > unitMatrix;
 
     //! Pointer of attached struct grid.

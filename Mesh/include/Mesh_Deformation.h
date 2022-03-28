@@ -9,13 +9,14 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      GridDeformation.h
+//! @file      Mesh_Deformation.h
 //! @brief     Grid deformation.
 //! @author    Bell, Baka.
 
-//! Zhao Zhong, Ma Rong, He Lei, Chang Xinghua, Zhang Laiping. An efficient large-scale 
-//! mesh deformation method based on MPI/OpenMP hybrid parallel radial basis function 
-//! interpolation[J]. Chinese Journal of Aeronautics, DOI: 10.1016/j.cja.2019.12.025.
+//! REFERENCES
+//! [1] Zhao Z, et al. An efficient large-scale mesh deformation method based on 
+//!     MPI/OpenMP hybrid parallel radial basis function interpolation[J]. 
+//!     Chinese Journal of Aeronautics, DOI: 10.1016/j.cja.2019.12.025.
 
 #pragma once
 #include "DynamicGrid.h"
@@ -63,14 +64,14 @@ public:
     RDouble GetSlicePosition();
 };
 
-//! @brief GridDeformation achieve unstructured grid deform.
-class GridDeformation
+//! @brief Mesh_Deformation achieve unstructured grid deform.
+class Mesh_Deformation
 {
 public:
     //! @param[in] nZonesIn         Number of grid.
     //! @param[in] stationalGridIn  Original grid.
-    GridDeformation(int nZonesIn, Grid **stationalGridIn);
-    ~GridDeformation();
+    Mesh_Deformation(int nZonesIn, Grid **stationalGridIn);
+    ~Mesh_Deformation();
 
 public:
     void Run();

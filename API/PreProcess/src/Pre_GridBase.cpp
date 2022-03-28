@@ -1,4 +1,4 @@
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "Math_BasisFunction.h"
 #include "IO_FileName.h"
 #include "HyList.h"
@@ -67,7 +67,7 @@ void CGNSRawCoor::SetAllData(RDouble *x, RDouble *y, RDouble *z)
         xMin = MIN(xMin, x[iNode]);
         yMin = MIN(yMin, y[iNode]);
         zMin = MIN(zMin, z[iNode]);
-                         
+
         xMax = MAX(xMax, x[iNode]);
         yMax = MAX(yMax, y[iNode]);
         zMax = MAX(zMax, z[iNode]);
@@ -765,27 +765,27 @@ void BaseBCType::Init()
 {
     using namespace PHSPACE;
 
-    bctypemap.insert(pair<int, int>(BCTypeUserDefined, PHENGLEI::OVERSET              ));
-    bctypemap.insert(pair<int, int>(BCSymmetryPlane  , PHENGLEI::SYMMETRY             ));
-    bctypemap.insert(pair<int, int>(BCInflow         , PHENGLEI::INFLOW               ));
-    bctypemap.insert(pair<int, int>(BCOutflow        , PHENGLEI::OUTFLOW              ));
-    bctypemap.insert(pair<int, int>(BCTunnelOutflow  , PHENGLEI::OUTFLOW              ));
-    bctypemap.insert(pair<int, int>(BCWall           , PHENGLEI::SOLID_SURFACE        ));
-    bctypemap.insert(pair<int, int>(BCWallInviscid   , PHENGLEI::SOLID_SURFACE        ));
-    bctypemap.insert(pair<int, int>(BCWallViscous    , PHENGLEI::SOLID_SURFACE        ));
-    bctypemap.insert(pair<int, int>(BCDegenerateLine , PHENGLEI::POLE                 ));
+    bctypemap.insert(pair<int, int>(BCTypeUserDefined, PHENGLEI::OVERSET             ));
+    bctypemap.insert(pair<int, int>(BCSymmetryPlane  , PHENGLEI::SYMMETRY            ));
+    bctypemap.insert(pair<int, int>(BCInflow         , PHENGLEI::INFLOW              ));
+    bctypemap.insert(pair<int, int>(BCOutflow        , PHENGLEI::OUTFLOW             ));
+    bctypemap.insert(pair<int, int>(BCTunnelOutflow  , PHENGLEI::OUTFLOW             ));
+    bctypemap.insert(pair<int, int>(BCWall           , PHENGLEI::SOLID_SURFACE       ));
+    bctypemap.insert(pair<int, int>(BCWallInviscid   , PHENGLEI::SOLID_SURFACE       ));
+    bctypemap.insert(pair<int, int>(BCWallViscous    , PHENGLEI::SOLID_SURFACE       ));
+    bctypemap.insert(pair<int, int>(BCDegenerateLine , PHENGLEI::POLE                ));
     bctypemap.insert(pair<int, int>(BCTypeNull       , PHENGLEI::NO_BOUNDARY_CONDITION));
-    bctypemap.insert(pair<int, int>(BCFarfield       , PHENGLEI::FARFIELD             ));
-    bctypemap.insert(pair<int, int>(BCGeneral        , PHENGLEI::GENERIC_1            ));
+    bctypemap.insert(pair<int, int>(BCFarfield       , PHENGLEI::FARFIELD            ));
+    bctypemap.insert(pair<int, int>(BCGeneral        , PHENGLEI::GENERIC_1           ));
 
     fts2cgns.insert(pair<int, int>(PHENGLEI::OVERSET              , BCTypeUserDefined));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::SYMMETRY             , BCSymmetryPlane  ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::INFLOW               , BCInflow         ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::OUTFLOW              , BCOutflow        ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::SOLID_SURFACE        , BCWall           ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::POLE                 , BCDegenerateLine ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::NO_BOUNDARY_CONDITION, BCTypeNull       ));
-    fts2cgns.insert(pair<int, int>(PHENGLEI::FARFIELD             , BCFarfield       ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::SYMMETRY             , BCSymmetryPlane ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::INFLOW               , BCInflow        ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::OUTFLOW              , BCOutflow       ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::SOLID_SURFACE        , BCWall          ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::POLE                 , BCDegenerateLine));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::NO_BOUNDARY_CONDITION, BCTypeNull      ));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::FARFIELD             , BCFarfield      ));
 
     int maxNumberOfBody = 20;
     for (int iBody = 0; iBody < maxNumberOfBody; iBody ++)
@@ -1569,7 +1569,7 @@ void CGNSBase::MarkBCInterface(Base_Grid_Conn *gconn)
 
     uint_t nTotalFace = right_cell_of_face.size();
     int nBoundFace = 0;
-    for (cgsize_t iface = 0; iface <static_cast<cgsize_t>( nTotalFace); ++ iface)
+    for (cgsize_t iface = 0; iface <static_cast<cgsize_t>(nTotalFace); ++ iface)
     {
         if (right_cell_of_face[iface] == -1)
         {
@@ -1737,7 +1737,7 @@ CGNSFactory::~CGNSFactory()
     }
     delete [] rawgrid;
 
-    //for ( int izone = 0; izone < nBlocks; ++ izone )
+    //for (int izone = 0; izone < nBlocks; ++ izone)
     //{
     //    delete base_cgns[izone];
     //}
@@ -1937,7 +1937,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
         cout << "  The " << iBC + 1 << " PHengLEI BC Name is: ";
         cout << Fantasybctype[fantasyBCList[iBC]] << "\n";
     }
-    //     for ( set<int>::iterator iter = s2.begin(); iter != s2.end(); ++ iter )
+    //     for (set<int>::iterator iter = s2.begin(); iter != s2.end(); ++ iter)
     //     {
     //         cout << *iter << " ";
     //     }

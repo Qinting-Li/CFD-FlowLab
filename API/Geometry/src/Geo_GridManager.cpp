@@ -26,7 +26,7 @@
 namespace PHSPACE
 {
 
-GridManager::GridManager(UnstructGrid* unstructGridIn )
+GridManager::GridManager(UnstructGrid* unstructGridIn)
 {
     oldFaceNormalX = NULL;
     oldFaceNormalY = NULL;
@@ -85,18 +85,18 @@ GridManager::~GridManager()
 }
 
 
-RDouble *GridManager::GetCellVolume( int iStep )
+RDouble *GridManager::GetCellVolume(int iStep)
 {
     //! set this here in temporary.
-    if ( iStep == 0 )
+    if (iStep == 0)
     {
         return cellVolume;
     }
-    else if ( iStep == 1 )
+    else if (iStep == 1)
     {
         return cellVolumeN1;
     }
-    else if ( iStep == 2 )
+    else if (iStep == 2)
     {
         return cellVolumeN2;
     }
@@ -1080,9 +1080,9 @@ void GridManager::ComputeCellCenterVol3DNew()
         cellVolume[rightCellIndex] = cellVolume[leftCellIndex];
     }
 
-    delete [] txc;    txc  = nullptr;
-    delete [] tyc;    tyc  = nullptr;
-    delete [] tzc;    tzc  = nullptr;
+    delete [] txc;    txc  = NULL;
+    delete [] tyc;    tyc  = NULL;
+    delete [] tzc;    tzc  = NULL;
 
     ActionKey* actionKey = PHSPACE::GetCurrentActionKey();
     PHSPACE::StreamToActionKey(actionKey, oss);
@@ -1091,10 +1091,10 @@ void GridManager::ComputeCellCenterVol3DNew()
 void GridManager::BackUpOldGrid()
 {
     SimpleGrid * oldGrid = this->unstructGrid->GetOldGrid();
-    if ( ! oldGrid )
+    if (! oldGrid)
     {
         oldGrid = new SimpleGrid();
-        this->unstructGrid->SetOldGrid( oldGrid );
+        this->unstructGrid->SetOldGrid(oldGrid);
     }
     * oldGrid = * this->unstructGrid;
 
@@ -1110,18 +1110,18 @@ void GridManager::BackUpOldGrid()
     if (IsNotAllocated(cellVolumeN1)) cellVolumeN1 = new RDouble[numberOfTotalCells]();
     if (IsNotAllocated(cellVolumeN2)) cellVolumeN2 = new RDouble [numberOfTotalCells]();
 
-    PHSPACE::SetField( oldFaceCenterX, unstructGrid->GetFaceCenterX(), numberOfFaces );
-    PHSPACE::SetField( oldFaceCenterY, unstructGrid->GetFaceCenterY(), numberOfFaces );
-    PHSPACE::SetField( oldFaceCenterZ, unstructGrid->GetFaceCenterZ(), numberOfFaces );
-    PHSPACE::SetField( oldFaceArea, unstructGrid->GetFaceArea(), numberOfFaces );
+    PHSPACE::SetField(oldFaceCenterX, unstructGrid->GetFaceCenterX(), numberOfFaces);
+    PHSPACE::SetField(oldFaceCenterY, unstructGrid->GetFaceCenterY(), numberOfFaces);
+    PHSPACE::SetField(oldFaceCenterZ, unstructGrid->GetFaceCenterZ(), numberOfFaces);
+    PHSPACE::SetField(oldFaceArea, unstructGrid->GetFaceArea(), numberOfFaces);
 
-    PHSPACE::SetField( cellVolumeN2, cellVolumeN1, numberOfTotalCells );
-    PHSPACE::SetField( cellVolumeN1, unstructGrid->GetCellVolume(), numberOfTotalCells );
+    PHSPACE::SetField(cellVolumeN2, cellVolumeN1, numberOfTotalCells);
+    PHSPACE::SetField(cellVolumeN1, unstructGrid->GetCellVolume(), numberOfTotalCells);
 
-    PHSPACE::SetField( oldFaceNormalVelocity, newFaceNormalVelocity, numberOfFaces );
-    PHSPACE::SetField( oldFaceVelocityX, newFaceVelocityX, numberOfFaces );
-    PHSPACE::SetField( oldFaceVelocityY, newFaceVelocityY, numberOfFaces );
-    PHSPACE::SetField( oldFaceVelocityZ, newFaceVelocityZ, numberOfFaces );
+    PHSPACE::SetField(oldFaceNormalVelocity, newFaceNormalVelocity, numberOfFaces);
+    PHSPACE::SetField(oldFaceVelocityX, newFaceVelocityX, numberOfFaces);
+    PHSPACE::SetField(oldFaceVelocityY, newFaceVelocityY, numberOfFaces);
+    PHSPACE::SetField(oldFaceVelocityZ, newFaceVelocityZ, numberOfFaces);
 }
 
 void GridManager::ComputeMassCharacterOfObject()
@@ -1135,17 +1135,17 @@ void GridManager::ComputeMassCharacterOfObject()
     RDouble totalVolume = 0.0;
     RDouble* cellMass = new RDouble [numberOfCells];
     
-    for ( int iCell = 0; iCell < numberOfCells; ++ iCell )
+    for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
         totalVolume += cellVolume[ iCell ];
     }
 
-    ofstream Volume ( "totalVolume.dat", ios_base::out|ios_base::app );
+    ofstream Volume ("totalVolume.dat", ios_base::out|ios_base::app);
     Volume << totalVolume << "\n";
     Volume.close();
     Volume.clear();
 
-    for ( int iCell = 0; iCell < numberOfCells; ++ iCell )
+    for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
         cellMass[ iCell ] = totalMass / totalVolume * cellVolume[ iCell ];
     }
@@ -1155,7 +1155,7 @@ void GridManager::ComputeMassCharacterOfObject()
     RDouble massCenterY = 0.0;
     RDouble massCenterZ = 0.0;
 
-    for ( int iCell = 0; iCell < numberOfCells; ++ iCell )
+    for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
         //! minus the origin position later！
         RDouble x = cellCenterX[ iCell ] - 0.0;
@@ -1171,7 +1171,7 @@ void GridManager::ComputeMassCharacterOfObject()
     massCenterY /= totalMass;
     massCenterZ /= totalMass;
 
-    ofstream massCenter ( "massCenter.dat", ios_base::out|ios_base::app );
+    ofstream massCenter ("massCenter.dat", ios_base::out|ios_base::app);
     massCenter << massCenterX << '\t' << massCenterY << '\t' << massCenterZ << "\n";
     massCenter.close();
     massCenter.clear();
@@ -1184,22 +1184,22 @@ void GridManager::ComputeMassCharacterOfObject()
     RDouble iYZ = 0.0;
     RDouble iZX = 0.0;
 
-    for ( int iCell = 0; iCell < numberOfCells; ++ iCell )
+    for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
         //! minus the mass cell center position later！
         RDouble x = cellCenterX[ iCell ] - 2.4880824;
         RDouble y = cellCenterY[ iCell ] - 0.0;
         RDouble z = cellCenterZ[ iCell ] - 0.0;
         
-        iXX += cellMass[ iCell ] * ( PHSPACE::SQR( y ) + PHSPACE::SQR( z ) );
-        iYY += cellMass[ iCell ] * ( PHSPACE::SQR( z ) + PHSPACE::SQR( x ) );
-        iZZ += cellMass[ iCell ] * ( PHSPACE::SQR( x ) + PHSPACE::SQR( y ) );
-        iXY += cellMass[ iCell ] * ( x * y );
-        iYZ += cellMass[ iCell ] * ( y * z );
-        iZX += cellMass[ iCell ] * ( z * x );
+        iXX += cellMass[ iCell ] * (PHSPACE::SQR(y) + PHSPACE::SQR(z));
+        iYY += cellMass[ iCell ] * (PHSPACE::SQR(z) + PHSPACE::SQR(x));
+        iZZ += cellMass[ iCell ] * (PHSPACE::SQR(x) + PHSPACE::SQR(y));
+        iXY += cellMass[ iCell ] * (x * y);
+        iYZ += cellMass[ iCell ] * (y * z);
+        iZX += cellMass[ iCell ] * (z * x);
     }
 
-    ofstream massCharacter ( "massCharacter.dat", ios_base::out|ios_base::app );
+    ofstream massCharacter ("massCharacter.dat", ios_base::out|ios_base::app);
     massCharacter << iXX << '\t' << iYY << '\t' << iZZ << '\t' << iXY << '\t' << iYZ<< '\t' << iZX << "\n";
     massCharacter.close();
     massCharacter.clear();
@@ -1209,7 +1209,7 @@ void GridManager::ComputeMassCharacterOfObject()
 void GridManager::DumpCellCenterFile()
 {
     fstream cellCenterFile;
-    cellCenterFile.open( "./grid/cellCenterFile.ccf", ios::out );
+    cellCenterFile.open("./grid/cellCenterFile.ccf", ios::out);
 
     int numberOfBoundaryFaces = unstructGrid->GetNBoundFace();
     int numberOfCells = unstructGrid->GetNTotalCell();
@@ -1220,7 +1220,7 @@ void GridManager::DumpCellCenterFile()
 
     cellCenterFile << numberOfTotalCells << endl;
 
-    for ( int iCell = 0; iCell < numberOfTotalCells; ++ iCell )
+    for (int iCell = 0; iCell < numberOfTotalCells; ++ iCell)
     {
         cellCenterFile << cellCenterX[ iCell ] << " "
                        << cellCenterY[ iCell ] << " "
@@ -1235,21 +1235,21 @@ void GridManager::DumpCellCenterFile()
 void GridManager::ComputeGridFaceVelocity()
 {
     int strategyFaceNormalVelocity = GlobalDataBase::GetIntParaFromDB("strategyForFaceNormalVelocity");
-    if (strategyFaceNormalVelocity == 0 )
+    if (strategyFaceNormalVelocity == 0)
     {
         this->ComputeGridFaceVelocitySatisfyingGCL();
     }
-    else if (strategyFaceNormalVelocity == 1 )
+    else if (strategyFaceNormalVelocity == 1)
     {
         this->ComputeGridFaceVelocityDirectly();
     }
-    else if (strategyFaceNormalVelocity == 2 )
+    else if (strategyFaceNormalVelocity == 2)
     {
         this->ComputeGridFaceVelocityDirectly();
     }
     else
     {
-        //StopProgram( "无此strategyForFaceNormalVelocity！" );
+        //StopProgram("无此strategyForFaceNormalVelocity！");
     }
 }
 
@@ -1285,7 +1285,7 @@ void GridManager::ComputeGridFaceVelocityDirectly()
 
     RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
 
-    for ( int iFace = 0; iFace < numberOfFaces; ++ iFace )
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         RDouble newFcX = newFaceCenterX[ iFace ];
         RDouble newFcY = newFaceCenterY[ iFace ];
@@ -1294,9 +1294,9 @@ void GridManager::ComputeGridFaceVelocityDirectly()
         RDouble oldFcY = oldFaceCenterY[ iFace ];
         RDouble oldFcZ = oldFaceCenterZ[ iFace ];
     
-        newFaceVelocityX[ iFace ] = ( newFcX - oldFcX ) / physicalTimeStep;
-        newFaceVelocityY[ iFace ] = ( newFcY - oldFcY ) / physicalTimeStep;
-        newFaceVelocityZ[ iFace ] = ( newFcZ - oldFcZ ) / physicalTimeStep;
+        newFaceVelocityX[ iFace ] = (newFcX - oldFcX) / physicalTimeStep;
+        newFaceVelocityY[ iFace ] = (newFcY - oldFcY) / physicalTimeStep;
+        newFaceVelocityZ[ iFace ] = (newFcZ - oldFcZ) / physicalTimeStep;
 
         newFaceNormalVelocity[ iFace ] = newFaceVelocityX[ iFace ] * newFaceNormalX[ iFace ]
                                                 + newFaceVelocityY[ iFace ] * newFaceNormalY[ iFace ]
@@ -1307,13 +1307,13 @@ void GridManager::ComputeGridFaceVelocityDirectly()
     RFloat b = 0.0;
 
     int strategyFaceNormalVelocity = GlobalDataBase::GetIntParaFromDB("strategyForFaceNormalVelocity");
-    if (strategyFaceNormalVelocity == 2 )
+    if (strategyFaceNormalVelocity == 2)
     {
         a = 1.5;
         b = 0.5;
     }
 
-    for ( int iFace = 0; iFace < numberOfFaces; ++ iFace )
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         //! faceVelocity is combined by the one order face velocities of the two times.
         faceVelocityX[ iFace ] = a * newFaceVelocityX[ iFace ] - b * oldFaceVelocityX[ iFace ];
@@ -1330,7 +1330,7 @@ void GridManager::ComputeGridFaceVelocitySatisfyingGCL()
 {
     int geometricDimension = GlobalDataBase::GetIntParaFromDB("ndim");
 
-    if ( geometricDimension == TWO_D )
+    if (geometricDimension == TWO_D)
     {
         this->ComputeGridFaceVelocity2DSatisfyingGCL();
     }
@@ -1385,7 +1385,7 @@ void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
 
     RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
 
-    for ( int iFace = 0; iFace < numberOfFaces; ++ iFace )
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         RDouble darea  = 0.0;
 
@@ -1424,12 +1424,12 @@ void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
         RDouble dZ2 = oldZ2 - newZ1;
         //! the four points must in the same plane, so the area can be computed by the cross product of the diagonal.
         //! and it is right for arbitrary quadrilateral！
-        darea = half * ( dY1 * dZ2 - dZ1 * dY2 + dZ1 * dX2 - dX1 * dZ2 + dX1 * dY2 - dY1 * dX2 );
+        darea = half * (dY1 * dZ2 - dZ1 * dY2 + dZ1 * dX2 - dX1 * dZ2 + dX1 * dY2 - dY1 * dX2);
     
-        newFaceNormalVelocity[ iFace ] = darea / physicalTimeStep / ( faceArea[iFace] + TINY );
-        newFaceVelocityX[ iFace ] = ( newFcX - oldFcX ) / physicalTimeStep;
-        newFaceVelocityY[ iFace ] = ( newFcY - oldFcY ) / physicalTimeStep;
-        newFaceVelocityZ[ iFace ] = ( newFcZ - oldFcZ ) / physicalTimeStep;
+        newFaceNormalVelocity[ iFace ] = darea / physicalTimeStep / (faceArea[iFace] + TINY);
+        newFaceVelocityX[ iFace ] = (newFcX - oldFcX) / physicalTimeStep;
+        newFaceVelocityY[ iFace ] = (newFcY - oldFcY) / physicalTimeStep;
+        newFaceVelocityZ[ iFace ] = (newFcZ - oldFcZ) / physicalTimeStep;
     }
 
     RDouble a = 1.0;
@@ -1437,14 +1437,14 @@ void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
 
     int linearTwoStepMethods = PHSPACE::GlobalDataBase::GetIntParaFromDB("linearTwoStepMethods");
 
-    if      ( linearTwoStepMethods == 1 )
+    if      (linearTwoStepMethods == 1)
     {
         //linearTwoStepMethods == 1
         //Backward Euler                          : Order 1
         a = 1.0;
         b = 0.0;
     }
-    else if ( linearTwoStepMethods == 3 )
+    else if (linearTwoStepMethods == 3)
     {
         //linearTwoStepMethods == 3
         //Backward differentiation                : Order 2
@@ -1452,10 +1452,10 @@ void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
         b = 0.5;
     }
 
-    for ( int iFace = 0; iFace < numberOfFaces; ++ iFace )
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         //! faceVelocity is combined by the one order face velocities of the two times(old and new).
-        faceNormalVelocity[ iFace ] = a * newFaceNormalVelocity[ iFace ] - b * oldFaceNormalVelocity[ iFace ] * ( oldFaceArea[ iFace ] / faceArea[ iFace ] );
+        faceNormalVelocity[ iFace ] = a * newFaceNormalVelocity[ iFace ] - b * oldFaceNormalVelocity[ iFace ] * (oldFaceArea[ iFace ] / faceArea[ iFace ]);
         faceVelocityX     [ iFace ] = a * newFaceVelocityX     [ iFace ] - b * oldFaceVelocityX     [ iFace ];
         faceVelocityY     [ iFace ] = a * newFaceVelocityY     [ iFace ] - b * oldFaceVelocityY     [ iFace ];
         faceVelocityZ     [ iFace ] = a * newFaceVelocityZ     [ iFace ] - b * oldFaceVelocityZ     [ iFace ];
@@ -1508,7 +1508,7 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
 
     int nodePosition = 0;
 
-    for ( int iFace = 0; iFace < numberOfFaces; ++ iFace )
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         RDouble dvol  = 0.0;
         int p0  = faceNodeIndex[ nodePosition ];
@@ -1521,10 +1521,10 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
         RDouble oldFcY = oldFaceCenterY[ iFace ];
         RDouble oldFcZ = oldFaceCenterZ[ iFace ];
 
-        for ( int iNodeInFace = 0; iNodeInFace < nodeNumberEachFace; ++ iNodeInFace )
+        for (int iNodeInFace = 0; iNodeInFace < nodeNumberEachFace; ++ iNodeInFace)
         {
             int p1, p2;
-            if ( iNodeInFace == nodeNumberEachFace - 1 )
+            if (iNodeInFace == nodeNumberEachFace - 1)
             {
                 p1 = faceNodeIndex[ nodePosition ++ ];
                 p2 = p0;
@@ -1550,34 +1550,34 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
             RDouble newX2 = x[ p2 ];
             RDouble newY2 = y[ p2 ];
             RDouble newZ2 = z[ p2 ];
-            RDouble xm    = 0.25 * ( oldX1 + oldX2 + newX1 + newX2 );
-            RDouble ym    = 0.25 * ( oldY1 + oldY2 + newY1 + newY2 );
-            RDouble zm    = 0.25 * ( oldZ1 + oldZ2 + newZ1 + newZ2 );
+            RDouble xm    = 0.25 * (oldX1 + oldX2 + newX1 + newX2);
+            RDouble ym    = 0.25 * (oldY1 + oldY2 + newY1 + newY2);
+            RDouble zm    = 0.25 * (oldZ1 + oldZ2 + newZ1 + newZ2);
 
-            dvol += ComputeVolume4P( newFcX, newFcY, newFcZ, xm, ym, zm, oldX1, oldY1, oldZ1, oldX2, oldY2, oldZ2 )
-                  + ComputeVolume4P( newFcX, newFcY, newFcZ, xm, ym, zm, newX1, newY1, newZ1, oldX1, oldY1, oldZ1 )
-                  + ComputeVolume4P( newFcX, newFcY, newFcZ, xm, ym, zm, newX2, newY2, newZ2, newX1, newY1, newZ1 )
-                  + ComputeVolume4P( newFcX, newFcY, newFcZ, xm, ym, zm, oldX2, oldY2, oldZ2, newX2, newY2, newZ2 )
-                  + ComputeVolume4P( oldFcX, oldFcY, oldFcZ, newFcX, newFcY, newFcZ, oldX1, oldY1, oldZ1, oldX2, oldY2, oldZ2 );
+            dvol += ComputeVolume4P(newFcX, newFcY, newFcZ, xm, ym, zm, oldX1, oldY1, oldZ1, oldX2, oldY2, oldZ2)
+                  + ComputeVolume4P(newFcX, newFcY, newFcZ, xm, ym, zm, newX1, newY1, newZ1, oldX1, oldY1, oldZ1)
+                  + ComputeVolume4P(newFcX, newFcY, newFcZ, xm, ym, zm, newX2, newY2, newZ2, newX1, newY1, newZ1)
+                  + ComputeVolume4P(newFcX, newFcY, newFcZ, xm, ym, zm, oldX2, oldY2, oldZ2, newX2, newY2, newZ2)
+                  + ComputeVolume4P(oldFcX, oldFcY, oldFcZ, newFcX, newFcY, newFcZ, oldX1, oldY1, oldZ1, oldX2, oldY2, oldZ2);
         }
-        newFaceNormalVelocity[ iFace ] = dvol / physicalTimeStep / ( faceArea[iFace] + TINY );
-        newFaceVelocityX[ iFace ] = ( newFcX - oldFcX ) / physicalTimeStep;
-        newFaceVelocityY[ iFace ] = ( newFcY - oldFcY ) / physicalTimeStep;
-        newFaceVelocityZ[ iFace ] = ( newFcZ - oldFcZ ) / physicalTimeStep;
+        newFaceNormalVelocity[ iFace ] = dvol / physicalTimeStep / (faceArea[iFace] + TINY);
+        newFaceVelocityX[ iFace ] = (newFcX - oldFcX) / physicalTimeStep;
+        newFaceVelocityY[ iFace ] = (newFcY - oldFcY) / physicalTimeStep;
+        newFaceVelocityZ[ iFace ] = (newFcZ - oldFcZ) / physicalTimeStep;
     }
 
     RDouble a = 1.0;
     RDouble b = 0.0;
 
     int linearTwoStepMethods = PHSPACE::GlobalDataBase::GetIntParaFromDB("linearTwoStepMethods");
-    if ( linearTwoStepMethods == 1 )
+    if (linearTwoStepMethods == 1)
     {
         //linearTwoStepMethods == 1
         //Backward Euler                          : Order 1
         a = 1.0;
         b = 0.0;
     }
-    else if ( linearTwoStepMethods == 3 )
+    else if (linearTwoStepMethods == 3)
     {
         //linearTwoStepMethods == 3
         //Backward differentiation                : Order 2
@@ -1585,17 +1585,17 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
         b = 0.5;
     }
 
-    for ( int iFace = 0; iFace < numberOfFaces; ++ iFace )
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         //! faceVelocity is combined by the one order face velocities of the two times(old and new).
-        faceNormalVelocity[ iFace ] = a * newFaceNormalVelocity[ iFace ] - b * oldFaceNormalVelocity[ iFace ] * ( oldFaceArea[ iFace ] / faceArea[ iFace ] );
+        faceNormalVelocity[ iFace ] = a * newFaceNormalVelocity[ iFace ] - b * oldFaceNormalVelocity[ iFace ] * (oldFaceArea[ iFace ] / faceArea[ iFace ]);
         faceVelocityX     [ iFace ] = a * newFaceVelocityX     [ iFace ] - b * oldFaceVelocityX     [ iFace ];
         faceVelocityY     [ iFace ] = a * newFaceVelocityY     [ iFace ] - b * oldFaceVelocityY     [ iFace ];
         faceVelocityZ     [ iFace ] = a * newFaceVelocityZ     [ iFace ] - b * oldFaceVelocityZ     [ iFace ];
     }
 }
 
-void GridManager::ComputeLocalToGlobalNodeIndexMappingDirectly( int targetZone )
+void GridManager::ComputeLocalToGlobalNodeIndexMappingDirectly(int targetZone)
 {
     int numberOfNodes = unstructGrid->GetNTotalNode();
 
@@ -1603,70 +1603,70 @@ void GridManager::ComputeLocalToGlobalNodeIndexMappingDirectly( int targetZone )
 
     localToGlobalNodeIndexMapping = new int[numberOfNodes]();
 
-    for ( int iNode = 0; iNode < numberOfNodes; ++ iNode )
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         localToGlobalNodeIndexMapping[ iNode ] = iNode;
     }
 }
 
-void GridManager::SkipReadLayoutFile( fstream & file, int targetZone )
+void GridManager::SkipReadLayoutFile(fstream & file, int targetZone)
 {
-    PHSPACE::PHSkipRead< int >( file, 3 );
+    PHSPACE::PHSkipRead< int >(file, 3);
 
-    for ( int iZone = 0; iZone < targetZone; ++ iZone )
+    for (int iZone = 0; iZone < targetZone; ++ iZone)
     {
         int numberOfNodes;
         int numberOfFaces;
         int numberOfCells;
 
-        PHSPACE::PHRead( file, numberOfNodes ); 
-        PHSPACE::PHRead( file, numberOfFaces );
-        PHSPACE::PHRead( file, numberOfCells );
+        PHSPACE::PHRead(file, numberOfNodes); 
+        PHSPACE::PHRead(file, numberOfFaces);
+        PHSPACE::PHRead(file, numberOfCells);
 
-        PHSPACE::PHSkipRead< int >( file, numberOfNodes );
-        PHSPACE::PHSkipRead< int >( file, numberOfFaces );
-        PHSPACE::PHSkipRead< int >( file, numberOfCells );
+        PHSPACE::PHSkipRead< int >(file, numberOfNodes);
+        PHSPACE::PHSkipRead< int >(file, numberOfFaces);
+        PHSPACE::PHSkipRead< int >(file, numberOfCells);
     }
 }
 
-void GridManager::ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile( int targetZone )
+void GridManager::ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile(int targetZone)
 {
     fstream infile;
     string originalGridLayoutFileName = GlobalDataBase::GetStrParaFromDB("originalGridLayoutFileName");
 
-    PHSPACE::OpenFile( infile, originalGridLayoutFileName, ios_base::in|ios_base::binary );
+    PHSPACE::OpenFile(infile, originalGridLayoutFileName, ios_base::in|ios_base::binary);
 
     int numberOfNodes = unstructGrid->GetNTotalNode();
     int numberOfCells = unstructGrid->GetNTotalCell();
     int numberOfFaces = unstructGrid->GetNTotalFace();
 
-    SkipReadLayoutFile( infile, targetZone );
+    SkipReadLayoutFile(infile, targetZone);
 
     int numberOfNodesRead;
     int numberOfFacesRead;
     int numberOfCellsRead;
 
-    PHSPACE::PHRead( infile, numberOfNodesRead );
-    PHSPACE::PHRead( infile, numberOfFacesRead );
-    PHSPACE::PHRead( infile, numberOfCellsRead );
+    PHSPACE::PHRead(infile, numberOfNodesRead);
+    PHSPACE::PHRead(infile, numberOfFacesRead);
+    PHSPACE::PHRead(infile, numberOfCellsRead);
 
-    if ( ( numberOfNodesRead != numberOfNodes ) ||
-         ( numberOfFacesRead != numberOfFaces ) ||
-         ( numberOfCellsRead != numberOfCells ) )
+    if ((numberOfNodesRead != numberOfNodes) ||
+         (numberOfFacesRead != numberOfFaces) ||
+         (numberOfCellsRead != numberOfCells))
     {
-        TK_Exit::ExceptionExit( "The number of nodes/faces/cells is not patch! \n" );
+        TK_Exit::ExceptionExit("The number of nodes/faces/cells is not patch! \n");
     }
 
     int *localToGlobalNodeIndexMapping = this->GetLocalToGlobalNodeIndexMapping();
     if (IsNotAllocated(localToGlobalNodeIndexMapping)) localToGlobalNodeIndexMapping = new int [numberOfNodes]();
 
-    PHSPACE::PHRead( infile, localToGlobalNodeIndexMapping, numberOfNodes );
+    PHSPACE::PHRead(infile, localToGlobalNodeIndexMapping, numberOfNodes);
 
-    if ( localToGlobalNodeIndexMapping != NULL )
+    if (localToGlobalNodeIndexMapping != NULL)
     {
         delete [] localToGlobalNodeIndexMapping;    localToGlobalNodeIndexMapping = NULL;
     }
-    PHSPACE::CloseFile( infile );
+    PHSPACE::CloseFile(infile);
 
 }
 
@@ -1676,25 +1676,25 @@ void GridManager::ReadNewCoordinate()
     int numberOfDymamicGridStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfDymamicGridStep");
 
     int iStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-    if ( iStep > numberOfDymamicGridStep )
+    if (iStep > numberOfDymamicGridStep)
     {
-        iStep = ( iStep - 1 ) % ( numberOfDymamicGridStep ) + 1;
+        iStep = (iStep - 1) % (numberOfDymamicGridStep) + 1;
     }
 
     string existentMovingGridFileFolder = PHSPACE::GlobalDataBase::GetStrParaFromDB("existentMovingGridFileFolder");
-    string newNodeFileName = PHSPACE::AggregateGeneralString(existentMovingGridFileFolder, "step", iStep, "/mmgrid.in" );
+    string newNodeFileName = PHSPACE::AggregateGeneralString(existentMovingGridFileFolder, "step", iStep, "/mmgrid.in");
     fstream infile;
-    PHSPACE::OpenFile( infile, newNodeFileName, ios_base::in|ios_base::binary );
+    PHSPACE::OpenFile(infile, newNodeFileName, ios_base::in|ios_base::binary);
 
     int numberOfGlobalNodes;
-    PHSPACE::PHRead( infile, numberOfGlobalNodes );
+    PHSPACE::PHRead(infile, numberOfGlobalNodes);
 
     int count = 3 * numberOfGlobalNodes;
 
     globalCoordinateNew = new RDouble[count];
-    PHSPACE::PHRead( infile, globalCoordinateNew, count );
+    PHSPACE::PHRead(infile, globalCoordinateNew, count);
 
-    PHSPACE::CloseFile( infile );
+    PHSPACE::CloseFile(infile);
 }
 
 void GridManager::UpdateGridNode()
@@ -1715,7 +1715,7 @@ void GridManager::UpdateGridNode()
     RDouble maxDx = 0;
     RDouble maxDY = 0;
     RDouble maxDZ = 0;
-    for ( int iNode = 0; iNode < numberOfNodes; ++ iNode )
+    for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         int globalNodeIndex = localToGlobalNodeIndexMapping[ iNode ];
 
@@ -1723,26 +1723,26 @@ void GridManager::UpdateGridNode()
         newY[ iNode ] = globalCoordinateNew[ globalNodeIndex * 3 + 1 ];
         newZ[ iNode ] = globalCoordinateNew[ globalNodeIndex * 3 + 2 ];
 
-        maxDx = PHSPACE::MAX( maxDx, PHSPACE::ABS( newX[ iNode ] - oldX[ iNode ] ) );
-        maxDY = PHSPACE::MAX( maxDY, PHSPACE::ABS( newY[ iNode ] - oldY[ iNode ] ) );
-        maxDZ = PHSPACE::MAX( maxDZ, PHSPACE::ABS( newZ[ iNode ] - oldZ[ iNode ] ) );
+        maxDx = PHSPACE::MAX(maxDx, PHSPACE::ABS(newX[ iNode ] - oldX[ iNode ]));
+        maxDY = PHSPACE::MAX(maxDY, PHSPACE::ABS(newY[ iNode ] - oldY[ iNode ]));
+        maxDZ = PHSPACE::MAX(maxDZ, PHSPACE::ABS(newZ[ iNode ] - oldZ[ iNode ]));
     }
 
     cout << "<oldGrid, newGrid> max dx, dy, dz = " << maxDx << "	" << maxDY << "	" << maxDZ << endl;
 }
 
-void GridManager::UpdateGridCoordinateByReadingFile( int targetZone )
+void GridManager::UpdateGridCoordinateByReadingFile(int targetZone)
 {
     int innerIterationSteps = GlobalDataBase::GetIntParaFromDB("innstep");
     if (innerIterationSteps != 1) return;
 
-    if ( PHMPI::GetNumberofGlobalZones() == 1 )
+    if (PHMPI::GetNumberofGlobalZones() == 1)
     {
-        this->ComputeLocalToGlobalNodeIndexMappingDirectly( targetZone );
+        this->ComputeLocalToGlobalNodeIndexMappingDirectly(targetZone);
     }
     else
     {
-        this->ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile( targetZone );
+        this->ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile(targetZone);
     }
 
     this->ReadNewCoordinate();
@@ -1765,7 +1765,7 @@ void GridManager::InitializeOldFaceNormalVelocity()
     RDouble * faceNormalVelocity    = gridManager-> GetFaceNormalVelocity();
     RDouble * oldFaceNormalVelocity = gridManager-> GetOldFaceNormalVelocity();
 
-    PHSPACE::SetField( oldFaceNormalVelocity, faceNormalVelocity, numberOfFaces );
+    PHSPACE::SetField(oldFaceNormalVelocity, faceNormalVelocity, numberOfFaces);
 }
 
 void GridManager::InitializeOldCellVolume()
@@ -1776,17 +1776,17 @@ void GridManager::InitializeOldCellVolume()
 
     GridManager * gridManager = this->unstructGrid->GetGridManager();
 
-    RDouble *cellVolume   = gridManager->GetCellVolume( );
+    RDouble *cellVolume   = gridManager->GetCellVolume();
     RDouble *cellVolumeN1 = gridManager->GetCellVolume(1);
     RDouble *cellVolumeN2 = gridManager->GetCellVolume(2);
 
-    PHSPACE::SetField( cellVolumeN2, cellVolume, numberOfTotalCells );
-    PHSPACE::SetField( cellVolumeN1, cellVolume, numberOfTotalCells );
+    PHSPACE::SetField(cellVolumeN2, cellVolume, numberOfTotalCells);
+    PHSPACE::SetField(cellVolumeN1, cellVolume, numberOfTotalCells);
 }
 
 void GridManager::ReadMovingGrid()
 {
-    string fileName = PHSPACE::AggregateGeneralString( "moveGrid", this->unstructGrid->GetZoneID(), ".dat" );
+    string fileName = PHSPACE::AggregateGeneralString("moveGrid", this->unstructGrid->GetZoneID(), ".dat");
 
     RDouble * x    = this->unstructGrid->GetX();
     RDouble * y    = this->unstructGrid->GetY();
@@ -1799,14 +1799,14 @@ void GridManager::ReadMovingGrid()
     int numberOfBoundaryFaces = this->unstructGrid->GetNBoundFace();
     int numberOfTotalCells = numberOfCells + numberOfBoundaryFaces;
     fstream file;
-    OpenFile( file, fileName, ios_base::in|ios_base::binary );
+    OpenFile(file, fileName, ios_base::in|ios_base::binary);
 
-    PHMPI::PH_Read( file, & x[ 0 ], numberOfNodes      );
-    PHMPI::PH_Read( file, & y[ 0 ], numberOfNodes      );
-    PHMPI::PH_Read( file, & z[ 0 ], numberOfNodes      );
-    PHMPI::PH_Read( file, oldCellVolumeN1Container, numberOfTotalCells );
+    PHMPI::PH_Read(file, & x[ 0 ], numberOfNodes     );
+    PHMPI::PH_Read(file, & y[ 0 ], numberOfNodes     );
+    PHMPI::PH_Read(file, & z[ 0 ], numberOfNodes     );
+    PHMPI::PH_Read(file, oldCellVolumeN1Container, numberOfTotalCells);
 
-    CloseFile( file );
+    CloseFile(file);
 }
 
 void GridManager::UpdateOldCellVolume()
@@ -1821,11 +1821,11 @@ void GridManager::UpdateOldCellVolume()
     RDouble* cellVolumeN1 = gridManager->GetCellVolume(1);
     RDouble* cellVolumeN2 = gridManager->GetCellVolume(2);
 
-    PHSPACE::SetField( cellVolumeN2, cellVolumeN1, numberOfTotalCells );
-    PHSPACE::SetField( cellVolumeN1, cellVolume  , numberOfTotalCells );
+    PHSPACE::SetField(cellVolumeN2, cellVolumeN1, numberOfTotalCells);
+    PHSPACE::SetField(cellVolumeN1, cellVolume  , numberOfTotalCells);
 }
 
-void GridManager::ConvergenceNorm( FieldProxy * q1Proxy, FieldProxy * q0Proxy, int numberOfEquations, RFloat & norm )
+void GridManager::ConvergenceNorm(FieldProxy * q1Proxy, FieldProxy * q0Proxy, int numberOfEquations, RFloat & norm)
 {
     int numberOfCells         = this->unstructGrid->GetNTotalCell();
 
@@ -1833,19 +1833,19 @@ void GridManager::ConvergenceNorm( FieldProxy * q1Proxy, FieldProxy * q0Proxy, i
     RDouble** q0 = q0Proxy->GetField_UNS();
 
     norm = zero;
-    for ( int iEquation = 0; iEquation < numberOfEquations; ++ iEquation )
+    for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
     {
-        for ( int iCell = 0; iCell < numberOfCells; ++ iCell )
+        for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
             RFloat diff = q1[ iEquation ][ iCell ] - q0[ iEquation ][ iCell ];
-            norm += PHSPACE::SQR( diff );
+            norm += PHSPACE::SQR(diff);
         }
     }
     
-    norm = sqrt( norm / ( numberOfCells * numberOfEquations ) );
+    norm = sqrt(norm / (numberOfCells * numberOfEquations));
 }
 
-RDouble ComputeVolume4P( RDouble x1, RDouble y1, RDouble z1, RDouble x2, RDouble y2, RDouble z2, RDouble x3, RDouble y3, RDouble z3, RDouble x4, RDouble y4, RDouble z4 )
+RDouble ComputeVolume4P(RDouble x1, RDouble y1, RDouble z1, RDouble x2, RDouble y2, RDouble z2, RDouble x3, RDouble y3, RDouble z3, RDouble x4, RDouble y4, RDouble z4)
 {
     RDouble xx1, yy1, zz1, xx2, yy2, zz2, xx3, yy3, zz3, vol;
 

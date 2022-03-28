@@ -25,7 +25,7 @@ class OversetConfig;
 class MRADTSearch
 {
 public:
-    MRADTSearch(UnstructGrid *gridIn );
+    MRADTSearch(UnstructGrid *gridIn);
     MRADTSearch(UnstructGrid *gridIn, OversetConfig *oversetConfig);
     ~MRADTSearch();
 private:
@@ -75,7 +75,7 @@ public:
                        RDouble x3, RDouble y3, RDouble z3,
                        RDouble x4, RDouble y4, RDouble z4,
                        RDouble xt, RDouble yt, RDouble zt, 
-                       RDouble eps );
+                       RDouble eps);
 
 public:
     int GetNumberOfSearchCells() { return numberOfSearchCells; }

@@ -2,7 +2,6 @@
 #include "GlobalDataBase.h"
 #include "TypeDefine.h"
 #include "Constants.h"
-
 namespace PHSPACE
 {
 
@@ -11,9 +10,9 @@ Geo_NodeTopo_Struct::Geo_NodeTopo_Struct()
     ni = 0;
     nj = 0;
     nk = 0;
-    structx = nullptr;
-    structy = nullptr;
-    structz = nullptr;
+    structx = NULL;
+    structy = NULL;
+    structz = NULL;
 }
 
 Geo_NodeTopo_Struct::~Geo_NodeTopo_Struct()
@@ -65,7 +64,7 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
         
         int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
         //int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-        int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+        int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
         //int nMGLevel = PHSPACE::GlobalDataBase::GetIntParaFromDB("nMGLevel");
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -74,13 +73,13 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
 
         if (tscheme != 4) Rwithghost = false;
         //if (systemGridType != 1) Rwithghost = false;
-        if (codeOfOversetGrid != 0) Rwithghost = false;
+        if (isOverset) Rwithghost = false;
         //if (nMGLevel != 1) Rwithghost = false;
         if (compressible != 1) Rwithghost = false;
-        if (isUnsteady != 0) Rwithghost = false;
+        if (isUnsteady) Rwithghost = false;
         if (nChemical != 0) Rwithghost = false;
         if (ifLowSpeedPrecon != 0) Rwithghost = false;
-        if (wallFunctionType != 0) Rwithghost = false;
+        if (wallFunctionType != WALLFUNCTION::NONE) Rwithghost = false;
 
         if (Rwithghost)
         {

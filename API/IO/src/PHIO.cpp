@@ -212,7 +212,7 @@ LIB_EXPORT void WriteBinaryFile(ActionKey *actkey)
 {
     /*DumpToTecio dumptotecio(actkey);
     dumptotecio.Run();
-    if( !actkey->file ) return;
+    if(!actkey->file) return;
     fstream &file = *(actkey->file);
     WriteASCIIFile(file, actkey->GetData());*/
 }
@@ -462,6 +462,7 @@ LIB_EXPORT void CompleteParamInfo()
 
 LIB_EXPORT void PrintInflowConditionToWindow(void)
 {
+
     int inflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
 
     RDouble refGama                   = GlobalDataBase::GetDoubleParaFromDB("refGama");
@@ -506,7 +507,7 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
         }
         PrintToWindow("  Reynolds Number          :    ", refReNumber,               " 1/m",   "\n");
         PrintToWindow("  Dimensional Pressure     :    ", refDimensionalPressure,    " Pa",    "\n");
-        PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m3", "\n");
+        PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m^3", "\n");
         PrintToWindow("  Dimensional Temperature  :    ", refDimensionalTemperature, " K",     "\n");
 
         int metabolicWallTemperature = -1;
@@ -517,6 +518,10 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
             if (wallTemperature < 0.0)
             {
                 PrintToWindow("  Wall Temperature         :    ", "Adiabatic Wall", "\n");
+            }
+            else if(wallTemperature == 0.0)
+            {
+                PrintToWindow("  Wall Temperature         :    ", "Radiation balance Wall", "\n");
             }
             else
             {
@@ -529,9 +534,9 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     }
 
     PrintToWindow("Geometry Informations"           ,                                     "\n");
-    PrintToWindow("  Scale Factor             :    ", reynoldsReferenceLengthDimensional, "\n");
-    PrintToWindow("  Force Reference Area     :    ", forceReferenceArea                , "\n");
-    PrintToWindow("  Force Reference Length   :    ", forceReferenceLength              , "\n");
+    PrintToWindow("  Scale Factor             :    ", reynoldsReferenceLengthDimensional,  "\n");
+    PrintToWindow("  Force Reference Area     :    ", forceReferenceArea                ,   "m^2", "\n");
+    PrintToWindow("  Force Reference Length   :    ", forceReferenceLength              ,   "m", "\n");
     PrintToWindow("  Force Reference x        :    ", TorqueRefX                        , "\n");
     PrintToWindow("  Force Reference y        :    ", TorqueRefY                        , "\n");
     PrintToWindow("  Force Reference z        :    ", TorqueRefZ                        , "\n");
@@ -539,10 +544,10 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
 
 LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature)
 {
-    if(wallTemperature >= 0.0 )
+    /*if(wallTemperature >= 0.0 )
     {
         return;
-    }
+    }*/
     GlobalBoundaryCondition::ReadGlobalBoundaryCondition();
     vector<SimpleBC *> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
     for (int iBC = 0; iBC < globalBCList->size(); ++ iBC)

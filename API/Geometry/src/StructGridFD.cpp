@@ -1358,22 +1358,22 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
                 zC(i, j, k) = half * (zz(i, j, k + 1) + zz(i, j, k));
 
                 RDouble x_CL2 = half * (xx(i, j, k - 1) + xx(i, j, k - 2));
-                RDouble x_CL1 = half * (xx(i, j, k    ) + xx(i, j, k - 1));
-                RDouble x_fL  =         xx(i, j, k    );
+                RDouble x_CL1 = half * (xx(i, j, k   ) + xx(i, j, k - 1));
+                RDouble x_fL  =         xx(i, j, k   );
                 RDouble x_fR  =         xx(i, j, k + 1);
                 RDouble x_CR1 = half * (xx(i, j, k + 1) + xx(i, j, k + 2));
                 RDouble x_CR2 = half * (xx(i, j, k + 2) + xx(i, j, k + 3));
 
                 RDouble y_CL2 = half * (yy(i, j, k - 1) + yy(i, j, k - 2));
-                RDouble y_CL1 = half * (yy(i, j, k    ) + yy(i, j, k - 1));
-                RDouble y_fL  =         yy(i, j, k    );
+                RDouble y_CL1 = half * (yy(i, j, k   ) + yy(i, j, k - 1));
+                RDouble y_fL  =         yy(i, j, k   );
                 RDouble y_fR  =         yy(i, j, k + 1);
                 RDouble y_CR1 = half * (yy(i, j, k + 1) + yy(i, j, k + 2));
                 RDouble y_CR2 = half * (yy(i, j, k + 2) + yy(i, j, k + 3));
 
                 RDouble z_CL2 = half * (zz(i, j, k - 1) + zz(i, j, k - 2));
-                RDouble z_CL1 = half * (zz(i, j, k    ) + zz(i, j, k - 1));
-                RDouble z_fL  =         zz(i, j, k    );
+                RDouble z_CL1 = half * (zz(i, j, k   ) + zz(i, j, k - 1));
+                RDouble z_fL  =         zz(i, j, k   );
                 RDouble z_fR  =         zz(i, j, k + 1);
                 RDouble z_CR1 = half * (zz(i, j, k + 1) + zz(i, j, k + 2));
                 RDouble z_CR2 = half * (zz(i, j, k + 2) + zz(i, j, k + 3));
@@ -1396,22 +1396,22 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
                 RDouble KZ = 0.0;
 
                 RDouble sx_CL2 = 0.25 * (yeta(i, j, k - 1) + yeta(i, j, k - 2)) * (zB(i, j, k - 1) + zB(i, j, k - 2)) - 0.25 * (yB(i, j, k - 1) + yB(i, j, k - 2)) * (zeta(i, j, k - 1) + zeta(i, j, k - 2));
-                RDouble sx_CL1 = 0.25 * (yeta(i, j, k    ) + yeta(i, j, k - 1)) * (zB(i, j, k    ) + zB(i, j, k - 1)) - 0.25 * (yB(i, j, k    ) + yB(i, j, k - 1)) * (zeta(i, j, k    ) + zeta(i, j, k - 1));
-                RDouble sx_fL  =         yeta(i, j, k    )                      *  zB(i, j, k    )                    -         yB(i, j, k    )                    *  zeta(i, j, k    )                     ;
+                RDouble sx_CL1 = 0.25 * (yeta(i, j, k   ) + yeta(i, j, k - 1)) * (zB(i, j, k   ) + zB(i, j, k - 1)) - 0.25 * (yB(i, j, k   ) + yB(i, j, k - 1)) * (zeta(i, j, k   ) + zeta(i, j, k - 1));
+                RDouble sx_fL  =         yeta(i, j, k   )                      *  zB(i, j, k   )                    -         yB(i, j, k   )                    *  zeta(i, j, k   )                     ;
                 RDouble sx_fR  =         yeta(i, j, k + 1)                      *  zB(i, j, k + 1)                    -         yB(i, j, k + 1)                    *  zeta(i, j, k + 1)                     ;
                 RDouble sx_CR1 = 0.25 * (yeta(i, j, k + 1) + yeta(i, j, k + 2)) * (zB(i, j, k + 1) + zB(i, j, k + 2)) - 0.25 * (yB(i, j, k + 1) + yB(i, j, k + 2)) * (zeta(i, j, k + 1) + zeta(i, j, k + 2));
                 RDouble sx_CR2 = 0.25 * (yeta(i, j, k + 2) + yeta(i, j, k + 3)) * (zB(i, j, k + 2) + zB(i, j, k + 3)) - 0.25 * (yB(i, j, k + 2) + yB(i, j, k + 3)) * (zeta(i, j, k + 2) + zeta(i, j, k + 3));
 
                 RDouble sy_CL2 = 0.25 * (zeta(i, j, k - 1) + zeta(i, j, k - 2)) * (xB(i, j, k - 1) + xB(i, j, k - 2)) - 0.25 * (zB(i, j, k - 1) + zB(i, j, k - 2)) * (xeta(i, j, k - 1) + xeta(i, j, k - 2));
-                RDouble sy_CL1 = 0.25 * (zeta(i, j, k    ) + zeta(i, j, k - 1)) * (xB(i, j, k    ) + xB(i, j, k - 1)) - 0.25 * (zB(i, j, k    ) + zB(i, j, k - 1)) * (xeta(i, j, k    ) + xeta(i, j, k - 1));
-                RDouble sy_fL  =         zeta(i, j, k    )                      *  xB(i, j, k    )                    -         zB(i, j, k    )                    *  xeta(i, j, k    )                     ;
+                RDouble sy_CL1 = 0.25 * (zeta(i, j, k   ) + zeta(i, j, k - 1)) * (xB(i, j, k   ) + xB(i, j, k - 1)) - 0.25 * (zB(i, j, k   ) + zB(i, j, k - 1)) * (xeta(i, j, k   ) + xeta(i, j, k - 1));
+                RDouble sy_fL  =         zeta(i, j, k   )                      *  xB(i, j, k   )                    -         zB(i, j, k   )                    *  xeta(i, j, k   )                     ;
                 RDouble sy_fR  =         zeta(i, j, k + 1)                      *  xB(i, j, k + 1)                    -         zB(i, j, k + 1)                    *  xeta(i, j, k + 1)                     ;
                 RDouble sy_CR1 = 0.25 * (zeta(i, j, k + 1) + zeta(i, j, k + 2)) * (xB(i, j, k + 1) + xB(i, j, k + 2)) - 0.25 * (zB(i, j, k + 1) + zB(i, j, k + 2)) * (xeta(i, j, k + 1) + xeta(i, j, k + 2));
                 RDouble sy_CR2 = 0.25 * (zeta(i, j, k + 2) + zeta(i, j, k + 3)) * (xB(i, j, k + 2) + xB(i, j, k + 3)) - 0.25 * (zB(i, j, k + 2) + zB(i, j, k + 3)) * (xeta(i, j, k + 2) + xeta(i, j, k + 3));
 
                 RDouble sz_CL2 = 0.25 * (xeta(i, j, k - 1) + xeta(i, j, k - 2)) * (yB(i, j, k - 1) + yB(i, j, k - 2)) - 0.25 * (xB(i, j, k - 1) + xB(i, j, k - 2)) * (yeta(i, j, k - 1) + yeta(i, j, k - 2));
-                RDouble sz_CL1 = 0.25 * (xeta(i, j, k    ) + xeta(i, j, k - 1)) * (yB(i, j, k    ) + yB(i, j, k - 1)) - 0.25 * (xB(i, j, k    ) + xB(i, j, k - 1)) * (yeta(i, j, k    ) + yeta(i, j, k - 1));
-                RDouble sz_fL  =         xeta(i, j, k    )                      *  yB(i, j, k    )                    -         xB(i, j, k    )                    *  yeta(i, j, k    )                     ;
+                RDouble sz_CL1 = 0.25 * (xeta(i, j, k   ) + xeta(i, j, k - 1)) * (yB(i, j, k   ) + yB(i, j, k - 1)) - 0.25 * (xB(i, j, k   ) + xB(i, j, k - 1)) * (yeta(i, j, k   ) + yeta(i, j, k - 1));
+                RDouble sz_fL  =         xeta(i, j, k   )                      *  yB(i, j, k   )                    -         xB(i, j, k   )                    *  yeta(i, j, k   )                     ;
                 RDouble sz_fR  =         xeta(i, j, k + 1)                      *  yB(i, j, k + 1)                    -         xB(i, j, k + 1)                    *  yeta(i, j, k + 1)                     ;
                 RDouble sz_CR1 = 0.25 * (xeta(i, j, k + 1) + xeta(i, j, k + 2)) * (yB(i, j, k + 1) + yB(i, j, k + 2)) - 0.25 * (xB(i, j, k + 1) + xB(i, j, k + 2)) * (yeta(i, j, k + 1) + yeta(i, j, k + 2));
                 RDouble sz_CR2 = 0.25 * (xeta(i, j, k + 2) + xeta(i, j, k + 3)) * (yB(i, j, k + 2) + yB(i, j, k + 3)) - 0.25 * (xB(i, j, k + 2) + xB(i, j, k + 3)) * (yeta(i, j, k + 2) + yeta(i, j, k + 3));
@@ -1494,22 +1494,22 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
 
                 sx_CL2 = 0.25 * (zkxi(i, j, k - 1) + zkxi(i, j, k - 2)) * (yA(i, j, k - 1) + yA(i, j, k - 2)) - 0.25 * (zA(i, j, k - 1) + zA(i, j, k - 2)) * (ykxi(i, j, k - 1) + ykxi(i, j, k - 2));
-                sx_CL1 = 0.25 * (zkxi(i, j, k    ) + zkxi(i, j, k - 1)) * (yA(i, j, k    ) + yA(i, j, k - 1)) - 0.25 * (zA(i, j, k    ) + zA(i, j, k - 1)) * (ykxi(i, j, k    ) + ykxi(i, j, k - 1));
-                sx_fL  =         zkxi(i, j, k    )                      *  yA(i, j, k    )                    -         zA(i, j, k    )                    *  ykxi(i, j, k    )                     ;
+                sx_CL1 = 0.25 * (zkxi(i, j, k   ) + zkxi(i, j, k - 1)) * (yA(i, j, k   ) + yA(i, j, k - 1)) - 0.25 * (zA(i, j, k   ) + zA(i, j, k - 1)) * (ykxi(i, j, k   ) + ykxi(i, j, k - 1));
+                sx_fL  =         zkxi(i, j, k   )                      *  yA(i, j, k   )                    -         zA(i, j, k   )                    *  ykxi(i, j, k   )                     ;
                 sx_fR  =         zkxi(i, j, k + 1)                      *  yA(i, j, k + 1)                    -         zA(i, j, k + 1)                    *  ykxi(i, j, k + 1)                     ;
                 sx_CR1 = 0.25 * (zkxi(i, j, k + 1) + zkxi(i, j, k + 2)) * (yA(i, j, k + 1) + yA(i, j, k + 2)) - 0.25 * (zA(i, j, k + 1) + zA(i, j, k + 2)) * (ykxi(i, j, k + 1) + ykxi(i, j, k + 2));
                 sx_CR2 = 0.25 * (zkxi(i, j, k + 2) + zkxi(i, j, k + 3)) * (yA(i, j, k + 2) + yA(i, j, k + 3)) - 0.25 * (zA(i, j, k + 2) + zA(i, j, k + 3)) * (ykxi(i, j, k + 2) + ykxi(i, j, k + 3));
 
                 sy_CL2 = 0.25 * (xkxi(i, j, k - 1) + xkxi(i, j, k - 2)) * (zA(i, j, k - 1) + zA(i, j, k - 2)) - 0.25 * (xA(i, j, k - 1) + xA(i, j, k - 2)) * (zkxi(i, j, k - 1) + zkxi(i, j, k - 2));
-                sy_CL1 = 0.25 * (xkxi(i, j, k    ) + xkxi(i, j, k - 1)) * (zA(i, j, k    ) + zA(i, j, k - 1)) - 0.25 * (xA(i, j, k    ) + xA(i, j, k - 1)) * (zkxi(i, j, k    ) + zkxi(i, j, k - 1));
-                sy_fL  =         xkxi(i, j, k    )                      *  zA(i, j, k    )                    -         xA(i, j, k    )                    *  zkxi(i, j, k    )                     ;
+                sy_CL1 = 0.25 * (xkxi(i, j, k   ) + xkxi(i, j, k - 1)) * (zA(i, j, k   ) + zA(i, j, k - 1)) - 0.25 * (xA(i, j, k   ) + xA(i, j, k - 1)) * (zkxi(i, j, k   ) + zkxi(i, j, k - 1));
+                sy_fL  =         xkxi(i, j, k   )                      *  zA(i, j, k   )                    -         xA(i, j, k   )                    *  zkxi(i, j, k   )                     ;
                 sy_fR  =         xkxi(i, j, k + 1)                      *  zA(i, j, k + 1)                    -         xA(i, j, k + 1)                    *  zkxi(i, j, k + 1)                     ;
                 sy_CR1 = 0.25 * (xkxi(i, j, k + 1) + xkxi(i, j, k + 2)) * (zA(i, j, k + 1) + zA(i, j, k + 2)) - 0.25 * (xA(i, j, k + 1) + xA(i, j, k + 2)) * (zkxi(i, j, k + 1) + zkxi(i, j, k + 2));
                 sy_CR2 = 0.25 * (xkxi(i, j, k + 2) + xkxi(i, j, k + 3)) * (zA(i, j, k + 2) + zA(i, j, k + 3)) - 0.25 * (xA(i, j, k + 2) + xA(i, j, k + 3)) * (zkxi(i, j, k + 2) + zkxi(i, j, k + 3));
 
                 sz_CL2 = 0.25 * (ykxi(i, j, k - 1) + ykxi(i, j, k - 2)) * (xA(i, j, k - 1) + xA(i, j, k - 2)) - 0.25 * (yA(i, j, k - 1) + yA(i, j, k - 2)) * (xkxi(i, j, k - 1) + xkxi(i, j, k - 2));
-                sz_CL1 = 0.25 * (ykxi(i, j, k    ) + ykxi(i, j, k - 1)) * (xA(i, j, k    ) + xA(i, j, k - 1)) - 0.25 * (yA(i, j, k    ) + yA(i, j, k - 1)) * (xkxi(i, j, k    ) + xkxi(i, j, k - 1));
-                sz_fL  =         ykxi(i, j, k    )                      *  xA(i, j, k    )                    -         yA(i, j, k    )                    *  xkxi(i, j, k    )                     ;
+                sz_CL1 = 0.25 * (ykxi(i, j, k   ) + ykxi(i, j, k - 1)) * (xA(i, j, k   ) + xA(i, j, k - 1)) - 0.25 * (yA(i, j, k   ) + yA(i, j, k - 1)) * (xkxi(i, j, k   ) + xkxi(i, j, k - 1));
+                sz_fL  =         ykxi(i, j, k   )                      *  xA(i, j, k   )                    -         yA(i, j, k   )                    *  xkxi(i, j, k   )                     ;
                 sz_fR  =         ykxi(i, j, k + 1)                      *  xA(i, j, k + 1)                    -         yA(i, j, k + 1)                    *  xkxi(i, j, k + 1)                     ;
                 sz_CR1 = 0.25 * (ykxi(i, j, k + 1) + ykxi(i, j, k + 2)) * (xA(i, j, k + 1) + xA(i, j, k + 2)) - 0.25 * (yA(i, j, k + 1) + yA(i, j, k + 2)) * (xkxi(i, j, k + 1) + xkxi(i, j, k + 2));
                 sz_CR2 = 0.25 * (ykxi(i, j, k + 2) + ykxi(i, j, k + 3)) * (xA(i, j, k + 2) + xA(i, j, k + 3)) - 0.25 * (yA(i, j, k + 2) + yA(i, j, k + 3)) * (xkxi(i, j, k + 2) + xkxi(i, j, k + 3));
@@ -1619,20 +1619,20 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
                 RDouble KZ = 0.0;
 
                 RDouble sx_CL2 = 0.0625 * (yeta(i, j, k - 1) + yeta(i, j, k - 2) + yeta(i + 1, j, k - 1) + yeta(i + 1, j, k - 2)) * (zB(i, j, k - 1) + zB(i, j, k - 2) + zB(i + 1, j, k - 1) + zB(i + 1, j, k - 2)) - 0.0625 * (yB(i, j, k - 1) + yB(i, j, k - 2) + yB(i + 1, j, k - 1) + yB(i + 1, j, k - 2)) * (zeta(i, j, k - 1) + zeta(i, j, k - 2) + zeta(i + 1, j, k - 1) + zeta(i + 1, j, k - 2));
-                RDouble sx_CL1 = 0.0625 * (yeta(i, j, k    ) + yeta(i, j, k - 1) + yeta(i + 1, j, k    ) + yeta(i + 1, j, k - 1)) * (zB(i, j, k    ) + zB(i, j, k - 1) + zB(i + 1, j, k    ) + zB(i + 1, j, k - 1)) - 0.0625 * (yB(i, j, k    ) + yB(i, j, k - 1) + yB(i + 1, j, k    ) + yB(i + 1, j, k - 1)) * (zeta(i, j, k    ) + zeta(i, j, k - 1) + zeta(i + 1, j, k    ) + zeta(i + 1, j, k - 1));
-                RDouble sx_fL  = 0.0625 * (yeta(i, j, k    ) + yeta(i, j, k    ) + yeta(i + 1, j, k    ) + yeta(i + 1, j, k    )) * (zB(i, j, k    ) + zB(i, j, k    ) + zB(i + 1, j, k    ) + zB(i + 1, j, k    )) - 0.0625 * (yB(i, j, k    ) + yB(i, j, k    ) + yB(i + 1, j, k    ) + yB(i + 1, j, k    )) * (zeta(i, j, k    ) + zeta(i, j, k    ) + zeta(i + 1, j, k    ) + zeta(i + 1, j, k    ));
+                RDouble sx_CL1 = 0.0625 * (yeta(i, j, k   ) + yeta(i, j, k - 1) + yeta(i + 1, j, k   ) + yeta(i + 1, j, k - 1)) * (zB(i, j, k   ) + zB(i, j, k - 1) + zB(i + 1, j, k   ) + zB(i + 1, j, k - 1)) - 0.0625 * (yB(i, j, k   ) + yB(i, j, k - 1) + yB(i + 1, j, k   ) + yB(i + 1, j, k - 1)) * (zeta(i, j, k   ) + zeta(i, j, k - 1) + zeta(i + 1, j, k   ) + zeta(i + 1, j, k - 1));
+                RDouble sx_fL  = 0.0625 * (yeta(i, j, k   ) + yeta(i, j, k   ) + yeta(i + 1, j, k   ) + yeta(i + 1, j, k   )) * (zB(i, j, k   ) + zB(i, j, k   ) + zB(i + 1, j, k   ) + zB(i + 1, j, k   )) - 0.0625 * (yB(i, j, k   ) + yB(i, j, k   ) + yB(i + 1, j, k   ) + yB(i + 1, j, k   )) * (zeta(i, j, k   ) + zeta(i, j, k   ) + zeta(i + 1, j, k   ) + zeta(i + 1, j, k   ));
                 RDouble sx_fR  = 0.0625 * (yeta(i, j, k + 1) + yeta(i, j, k + 1) + yeta(i + 1, j, k + 1) + yeta(i + 1, j, k + 1)) * (zB(i, j, k + 1) + zB(i, j, k + 1) + zB(i + 1, j, k + 1) + zB(i + 1, j, k + 1)) - 0.0625 * (yB(i, j, k + 1) + yB(i, j, k + 1) + yB(i + 1, j, k + 1) + yB(i + 1, j, k + 1)) * (zeta(i, j, k + 1) + zeta(i, j, k + 1) + zeta(i + 1, j, k + 1) + zeta(i + 1, j, k + 1));
                 RDouble sx_CR1 = 0.0625 * (yeta(i, j, k + 1) + yeta(i, j, k + 2) + yeta(i + 1, j, k + 1) + yeta(i + 1, j, k + 2)) * (zB(i, j, k + 1) + zB(i, j, k + 2) + zB(i + 1, j, k + 1) + zB(i + 1, j, k + 2)) - 0.0625 * (yB(i, j, k + 1) + yB(i, j, k + 2) + yB(i + 1, j, k + 1) + yB(i + 1, j, k + 2)) * (zeta(i, j, k + 1) + zeta(i, j, k + 2) + zeta(i + 1, j, k + 1) + zeta(i + 1, j, k + 2));
                 RDouble sx_CR2 = 0.0625 * (yeta(i, j, k + 2) + yeta(i, j, k + 3) + yeta(i + 1, j, k + 2) + yeta(i + 1, j, k + 3)) * (zB(i, j, k + 2) + zB(i, j, k + 3) + zB(i + 1, j, k + 2) + zB(i + 1, j, k + 3)) - 0.0625 * (yB(i, j, k + 2) + yB(i, j, k + 3) + yB(i + 1, j, k + 2) + yB(i + 1, j, k + 3)) * (zeta(i, j, k + 2) + zeta(i, j, k + 3) + zeta(i + 1, j, k + 2) + zeta(i + 1, j, k + 3));
                 RDouble sy_CL2 = 0.0625 * (zeta(i, j, k - 1) + zeta(i, j, k - 2) + zeta(i + 1, j, k - 1) + zeta(i + 1, j, k - 2)) * (xB(i, j, k - 1) + xB(i, j, k - 2) + xB(i + 1, j, k - 1) + xB(i + 1, j, k - 2)) - 0.0625 * (zB(i, j, k - 1) + zB(i, j, k - 2) + zB(i + 1, j, k - 1) + zB(i + 1, j, k - 2)) * (xeta(i, j, k - 1) + xeta(i, j, k - 2) + xeta(i + 1, j, k - 1) + xeta(i + 1, j, k - 2));
-                RDouble sy_CL1 = 0.0625 * (zeta(i, j, k    ) + zeta(i, j, k - 1) + zeta(i + 1, j, k    ) + zeta(i + 1, j, k - 1)) * (xB(i, j, k    ) + xB(i, j, k - 1) + xB(i + 1, j, k    ) + xB(i + 1, j, k - 1)) - 0.0625 * (zB(i, j, k    ) + zB(i, j, k - 1) + zB(i + 1, j, k    ) + zB(i + 1, j, k - 1)) * (xeta(i, j, k    ) + xeta(i, j, k - 1) + xeta(i + 1, j, k    ) + xeta(i + 1, j, k - 1));
-                RDouble sy_fL  = 0.0625 * (zeta(i, j, k    ) + zeta(i, j, k    ) + zeta(i + 1, j, k    ) + zeta(i + 1, j, k    )) * (xB(i, j, k    ) + xB(i, j, k    ) + xB(i + 1, j, k    ) + xB(i + 1, j, k    )) - 0.0625 * (zB(i, j, k    ) + zB(i, j, k    ) + zB(i + 1, j, k    ) + zB(i + 1, j, k    )) * (xeta(i, j, k    ) + xeta(i, j, k    ) + xeta(i + 1, j, k    ) + xeta(i + 1, j, k    ));
+                RDouble sy_CL1 = 0.0625 * (zeta(i, j, k   ) + zeta(i, j, k - 1) + zeta(i + 1, j, k   ) + zeta(i + 1, j, k - 1)) * (xB(i, j, k   ) + xB(i, j, k - 1) + xB(i + 1, j, k   ) + xB(i + 1, j, k - 1)) - 0.0625 * (zB(i, j, k   ) + zB(i, j, k - 1) + zB(i + 1, j, k   ) + zB(i + 1, j, k - 1)) * (xeta(i, j, k   ) + xeta(i, j, k - 1) + xeta(i + 1, j, k   ) + xeta(i + 1, j, k - 1));
+                RDouble sy_fL  = 0.0625 * (zeta(i, j, k   ) + zeta(i, j, k   ) + zeta(i + 1, j, k   ) + zeta(i + 1, j, k   )) * (xB(i, j, k   ) + xB(i, j, k   ) + xB(i + 1, j, k   ) + xB(i + 1, j, k   )) - 0.0625 * (zB(i, j, k   ) + zB(i, j, k   ) + zB(i + 1, j, k   ) + zB(i + 1, j, k   )) * (xeta(i, j, k   ) + xeta(i, j, k   ) + xeta(i + 1, j, k   ) + xeta(i + 1, j, k   ));
                 RDouble sy_fR  = 0.0625 * (zeta(i, j, k + 1) + zeta(i, j, k + 1) + zeta(i + 1, j, k + 1) + zeta(i + 1, j, k + 1)) * (xB(i, j, k + 1) + xB(i, j, k + 1) + xB(i + 1, j, k + 1) + xB(i + 1, j, k + 1)) - 0.0625 * (zB(i, j, k + 1) + zB(i, j, k + 1) + zB(i + 1, j, k + 1) + zB(i + 1, j, k + 1)) * (xeta(i, j, k + 1) + xeta(i, j, k + 1) + xeta(i + 1, j, k + 1) + xeta(i + 1, j, k + 1));
                 RDouble sy_CR1 = 0.0625 * (zeta(i, j, k + 1) + zeta(i, j, k + 2) + zeta(i + 1, j, k + 1) + zeta(i + 1, j, k + 2)) * (xB(i, j, k + 1) + xB(i, j, k + 2) + xB(i + 1, j, k + 1) + xB(i + 1, j, k + 2)) - 0.0625 * (zB(i, j, k + 1) + zB(i, j, k + 2) + zB(i + 1, j, k + 1) + zB(i + 1, j, k + 2)) * (xeta(i, j, k + 1) + xeta(i, j, k + 2) + xeta(i + 1, j, k + 1) + xeta(i + 1, j, k + 2));
                 RDouble sy_CR2 = 0.0625 * (zeta(i, j, k + 2) + zeta(i, j, k + 3) + zeta(i + 1, j, k + 2) + zeta(i + 1, j, k + 3)) * (xB(i, j, k + 2) + xB(i, j, k + 3) + xB(i + 1, j, k + 2) + xB(i + 1, j, k + 3)) - 0.0625 * (zB(i, j, k + 2) + zB(i, j, k + 3) + zB(i + 1, j, k + 2) + zB(i + 1, j, k + 3)) * (xeta(i, j, k + 2) + xeta(i, j, k + 3) + xeta(i + 1, j, k + 2) + xeta(i + 1, j, k + 3));
                 RDouble sz_CL2 = 0.0625 * (xeta(i, j, k - 1) + xeta(i, j, k - 2) + xeta(i + 1, j, k - 1) + xeta(i + 1, j, k - 2)) * (yB(i, j, k - 1) + yB(i, j, k - 2) + yB(i + 1, j, k - 1) + yB(i + 1, j, k - 2)) - 0.0625 * (xB(i, j, k - 1) + xB(i, j, k - 2) + xB(i + 1, j, k - 1) + xB(i + 1, j, k - 2)) * (yeta(i, j, k - 1) + yeta(i, j, k - 2) + yeta(i + 1, j, k - 1) + yeta(i + 1, j, k - 2));
-                RDouble sz_CL1 = 0.0625 * (xeta(i, j, k    ) + xeta(i, j, k - 1) + xeta(i + 1, j, k    ) + xeta(i + 1, j, k - 1)) * (yB(i, j, k    ) + yB(i, j, k - 1) + yB(i + 1, j, k    ) + yB(i + 1, j, k - 1)) - 0.0625 * (xB(i, j, k    ) + xB(i, j, k - 1) + xB(i + 1, j, k    ) + xB(i + 1, j, k - 1)) * (yeta(i, j, k    ) + yeta(i, j, k - 1) + yeta(i + 1, j, k    ) + yeta(i + 1, j, k - 1));
-                RDouble sz_fL  = 0.0625 * (xeta(i, j, k    ) + xeta(i, j, k    ) + xeta(i + 1, j, k    ) + xeta(i + 1, j, k    )) * (yB(i, j, k    ) + yB(i, j, k    ) + yB(i + 1, j, k    ) + yB(i + 1, j, k    )) - 0.0625 * (xB(i, j, k    ) + xB(i, j, k    ) + xB(i + 1, j, k    ) + xB(i + 1, j, k    )) * (yeta(i, j, k    ) + yeta(i, j, k    ) + yeta(i + 1, j, k    ) + yeta(i + 1, j, k    ));
+                RDouble sz_CL1 = 0.0625 * (xeta(i, j, k   ) + xeta(i, j, k - 1) + xeta(i + 1, j, k   ) + xeta(i + 1, j, k - 1)) * (yB(i, j, k   ) + yB(i, j, k - 1) + yB(i + 1, j, k   ) + yB(i + 1, j, k - 1)) - 0.0625 * (xB(i, j, k   ) + xB(i, j, k - 1) + xB(i + 1, j, k   ) + xB(i + 1, j, k - 1)) * (yeta(i, j, k   ) + yeta(i, j, k - 1) + yeta(i + 1, j, k   ) + yeta(i + 1, j, k - 1));
+                RDouble sz_fL  = 0.0625 * (xeta(i, j, k   ) + xeta(i, j, k   ) + xeta(i + 1, j, k   ) + xeta(i + 1, j, k   )) * (yB(i, j, k   ) + yB(i, j, k   ) + yB(i + 1, j, k   ) + yB(i + 1, j, k   )) - 0.0625 * (xB(i, j, k   ) + xB(i, j, k   ) + xB(i + 1, j, k   ) + xB(i + 1, j, k   )) * (yeta(i, j, k   ) + yeta(i, j, k   ) + yeta(i + 1, j, k   ) + yeta(i + 1, j, k   ));
                 RDouble sz_fR  = 0.0625 * (xeta(i, j, k + 1) + xeta(i, j, k + 1) + xeta(i + 1, j, k + 1) + xeta(i + 1, j, k + 1)) * (yB(i, j, k + 1) + yB(i, j, k + 1) + yB(i + 1, j, k + 1) + yB(i + 1, j, k + 1)) - 0.0625 * (xB(i, j, k + 1) + xB(i, j, k + 1) + xB(i + 1, j, k + 1) + xB(i + 1, j, k + 1)) * (yeta(i, j, k + 1) + yeta(i, j, k + 1) + yeta(i + 1, j, k + 1) + yeta(i + 1, j, k + 1));
                 RDouble sz_CR1 = 0.0625 * (xeta(i, j, k + 1) + xeta(i, j, k + 2) + xeta(i + 1, j, k + 1) + xeta(i + 1, j, k + 2)) * (yB(i, j, k + 1) + yB(i, j, k + 2) + yB(i + 1, j, k + 1) + yB(i + 1, j, k + 2)) - 0.0625 * (xB(i, j, k + 1) + xB(i, j, k + 2) + xB(i + 1, j, k + 1) + xB(i + 1, j, k + 2)) * (yeta(i, j, k + 1) + yeta(i, j, k + 2) + yeta(i + 1, j, k + 1) + yeta(i + 1, j, k + 2));
                 RDouble sz_CR2 = 0.0625 * (xeta(i, j, k + 2) + xeta(i, j, k + 3) + xeta(i + 1, j, k + 2) + xeta(i + 1, j, k + 3)) * (yB(i, j, k + 2) + yB(i, j, k + 3) + yB(i + 1, j, k + 2) + yB(i + 1, j, k + 3)) - 0.0625 * (xB(i, j, k + 2) + xB(i, j, k + 3) + xB(i + 1, j, k + 2) + xB(i + 1, j, k + 3)) * (yeta(i, j, k + 2) + yeta(i, j, k + 3) + yeta(i + 1, j, k + 2) + yeta(i + 1, j, k + 3));
@@ -1705,20 +1705,20 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
                 KZ += half * (alfa_sixth * (sz_fR - sz_fL) + a_sixth * (sz_CR1 - sz_CL1) + b_sixth * (sz_CR2 - sz_CL2));
 
                 sx_CL2 =  0.0625 * (yA(i, j, k - 1) + yA(i, j, k - 2) + yA(i, j + 1, k - 1) + yA(i, j + 1, k - 2)) * (zkxi(i, j, k - 1) + zkxi(i, j, k - 2) + zkxi(i, j + 1, k - 1) + zkxi(i, j + 1, k - 2)) - 0.0625 * (ykxi(i, j, k - 1) + ykxi(i, j, k - 2) + ykxi(i, j + 1, k - 1) + ykxi(i, j + 1, k - 2)) * (zA(i, j, k - 1) + zA(i, j, k - 2) + zA(i, j + 1, k - 1) + zA(i, j + 1, k - 2));
-                sx_CL1 =  0.0625 * (yA(i, j, k    ) + yA(i, j, k - 1) + yA(i, j + 1, k    ) + yA(i, j + 1, k - 1)) * (zkxi(i, j, k    ) + zkxi(i, j, k - 1) + zkxi(i, j + 1, k    ) + zkxi(i, j + 1, k - 1)) - 0.0625 * (ykxi(i, j, k    ) + ykxi(i, j, k - 1) + ykxi(i, j + 1, k    ) + ykxi(i, j + 1, k - 1)) * (zA(i, j, k    ) + zA(i, j, k - 1) + zA(i, j + 1, k    ) + zA(i, j + 1, k - 1));
-                sx_fL  =  0.0625 * (yA(i, j, k    ) + yA(i, j, k    ) + yA(i, j + 1, k    ) + yA(i, j + 1, k    )) * (zkxi(i, j, k    ) + zkxi(i, j, k    ) + zkxi(i, j + 1, k    ) + zkxi(i, j + 1, k    )) - 0.0625 * (ykxi(i, j, k    ) + ykxi(i, j, k    ) + ykxi(i, j + 1, k    ) + ykxi(i, j + 1, k    )) * (zA(i, j, k    ) + zA(i, j, k    ) + zA(i, j + 1, k    ) + zA(i, j + 1, k    ));
+                sx_CL1 =  0.0625 * (yA(i, j, k   ) + yA(i, j, k - 1) + yA(i, j + 1, k   ) + yA(i, j + 1, k - 1)) * (zkxi(i, j, k   ) + zkxi(i, j, k - 1) + zkxi(i, j + 1, k   ) + zkxi(i, j + 1, k - 1)) - 0.0625 * (ykxi(i, j, k   ) + ykxi(i, j, k - 1) + ykxi(i, j + 1, k   ) + ykxi(i, j + 1, k - 1)) * (zA(i, j, k   ) + zA(i, j, k - 1) + zA(i, j + 1, k   ) + zA(i, j + 1, k - 1));
+                sx_fL  =  0.0625 * (yA(i, j, k   ) + yA(i, j, k   ) + yA(i, j + 1, k   ) + yA(i, j + 1, k   )) * (zkxi(i, j, k   ) + zkxi(i, j, k   ) + zkxi(i, j + 1, k   ) + zkxi(i, j + 1, k   )) - 0.0625 * (ykxi(i, j, k   ) + ykxi(i, j, k   ) + ykxi(i, j + 1, k   ) + ykxi(i, j + 1, k   )) * (zA(i, j, k   ) + zA(i, j, k   ) + zA(i, j + 1, k   ) + zA(i, j + 1, k   ));
                 sx_fR  =  0.0625 * (yA(i, j, k + 1) + yA(i, j, k + 1) + yA(i, j + 1, k + 1) + yA(i, j + 1, k + 1)) * (zkxi(i, j, k + 1) + zkxi(i, j, k + 1) + zkxi(i, j + 1, k + 1) + zkxi(i, j + 1, k + 1)) - 0.0625 * (ykxi(i, j, k + 1) + ykxi(i, j, k + 1) + ykxi(i, j + 1, k + 1) + ykxi(i, j + 1, k + 1)) * (zA(i, j, k + 1) + zA(i, j, k + 1) + zA(i, j + 1, k + 1) + zA(i, j + 1, k + 1));
                 sx_CR1 =  0.0625 * (yA(i, j, k + 1) + yA(i, j, k + 2) + yA(i, j + 1, k + 1) + yA(i, j + 1, k + 2)) * (zkxi(i, j, k + 1) + zkxi(i, j, k + 2) + zkxi(i, j + 1, k + 1) + zkxi(i, j + 1, k + 2)) - 0.0625 * (ykxi(i, j, k + 1) + ykxi(i, j, k + 2) + ykxi(i, j + 1, k + 1) + ykxi(i, j + 1, k + 2)) * (zA(i, j, k + 1) + zA(i, j, k + 2) + zA(i, j + 1, k + 1) + zA(i, j + 1, k + 2));
                 sx_CR2 =  0.0625 * (yA(i, j, k + 2) + yA(i, j, k + 3) + yA(i, j + 1, k + 2) + yA(i, j + 1, k + 3)) * (zkxi(i, j, k + 2) + zkxi(i, j, k + 3) + zkxi(i, j + 1, k + 2) + zkxi(i, j + 1, k + 3)) - 0.0625 * (ykxi(i, j, k + 2) + ykxi(i, j, k + 3) + ykxi(i, j + 1, k + 2) + ykxi(i, j + 1, k + 3)) * (zA(i, j, k + 2) + zA(i, j, k + 3) + zA(i, j + 1, k + 2) + zA(i, j + 1, k + 3));
                 sy_CL2 =  0.0625 * (zA(i, j, k - 1) + zA(i, j, k - 2) + zA(i, j + 1, k - 1) + zA(i, j + 1, k - 2)) * (xkxi(i, j, k - 1) + xkxi(i, j, k - 2) + xkxi(i, j + 1, k - 1) + xkxi(i, j + 1, k - 2)) - 0.0625 * (zkxi(i, j, k - 1) + zkxi(i, j, k - 2) + zkxi(i, j + 1, k - 1) + zkxi(i, j + 1, k - 2)) * (xA(i, j, k - 1) + xA(i, j, k - 2) + xA(i, j + 1, k - 1) + xA(i, j + 1, k - 2));
-                sy_CL1 =  0.0625 * (zA(i, j, k    ) + zA(i, j, k - 1) + zA(i, j + 1, k    ) + zA(i, j + 1, k - 1)) * (xkxi(i, j, k    ) + xkxi(i, j, k - 1) + xkxi(i, j + 1, k    ) + xkxi(i, j + 1, k - 1)) - 0.0625 * (zkxi(i, j, k    ) + zkxi(i, j, k - 1) + zkxi(i, j + 1, k    ) + zkxi(i, j + 1, k - 1)) * (xA(i, j, k    ) + xA(i, j, k - 1) + xA(i, j + 1, k    ) + xA(i, j + 1, k - 1));
-                sy_fL  =  0.0625 * (zA(i, j, k    ) + zA(i, j, k    ) + zA(i, j + 1, k    ) + zA(i, j + 1, k    )) * (xkxi(i, j, k    ) + xkxi(i, j, k    ) + xkxi(i, j + 1, k    ) + xkxi(i, j + 1, k    )) - 0.0625 * (zkxi(i, j, k    ) + zkxi(i, j, k    ) + zkxi(i, j + 1, k    ) + zkxi(i, j + 1, k    )) * (xA(i, j, k    ) + xA(i, j, k    ) + xA(i, j + 1, k    ) + xA(i, j + 1, k    ));
+                sy_CL1 =  0.0625 * (zA(i, j, k   ) + zA(i, j, k - 1) + zA(i, j + 1, k   ) + zA(i, j + 1, k - 1)) * (xkxi(i, j, k   ) + xkxi(i, j, k - 1) + xkxi(i, j + 1, k   ) + xkxi(i, j + 1, k - 1)) - 0.0625 * (zkxi(i, j, k   ) + zkxi(i, j, k - 1) + zkxi(i, j + 1, k   ) + zkxi(i, j + 1, k - 1)) * (xA(i, j, k   ) + xA(i, j, k - 1) + xA(i, j + 1, k   ) + xA(i, j + 1, k - 1));
+                sy_fL  =  0.0625 * (zA(i, j, k   ) + zA(i, j, k   ) + zA(i, j + 1, k   ) + zA(i, j + 1, k   )) * (xkxi(i, j, k   ) + xkxi(i, j, k   ) + xkxi(i, j + 1, k   ) + xkxi(i, j + 1, k   )) - 0.0625 * (zkxi(i, j, k   ) + zkxi(i, j, k   ) + zkxi(i, j + 1, k   ) + zkxi(i, j + 1, k   )) * (xA(i, j, k   ) + xA(i, j, k   ) + xA(i, j + 1, k   ) + xA(i, j + 1, k   ));
                 sy_fR  =  0.0625 * (zA(i, j, k + 1) + zA(i, j, k + 1) + zA(i, j + 1, k + 1) + zA(i, j + 1, k + 1)) * (xkxi(i, j, k + 1) + xkxi(i, j, k + 1) + xkxi(i, j + 1, k + 1) + xkxi(i, j + 1, k + 1)) - 0.0625 * (zkxi(i, j, k + 1) + zkxi(i, j, k + 1) + zkxi(i, j + 1, k + 1) + zkxi(i, j + 1, k + 1)) * (xA(i, j, k + 1) + xA(i, j, k + 1) + xA(i, j + 1, k + 1) + xA(i, j + 1, k + 1));
                 sy_CR1 =  0.0625 * (zA(i, j, k + 1) + zA(i, j, k + 2) + zA(i, j + 1, k + 1) + zA(i, j + 1, k + 2)) * (xkxi(i, j, k + 1) + xkxi(i, j, k + 2) + xkxi(i, j + 1, k + 1) + xkxi(i, j + 1, k + 2)) - 0.0625 * (zkxi(i, j, k + 1) + zkxi(i, j, k + 2) + zkxi(i, j + 1, k + 1) + zkxi(i, j + 1, k + 2)) * (xA(i, j, k + 1) + xA(i, j, k + 2) + xA(i, j + 1, k + 1) + xA(i, j + 1, k + 2));
                 sy_CR2 =  0.0625 * (zA(i, j, k + 2) + zA(i, j, k + 3) + zA(i, j + 1, k + 2) + zA(i, j + 1, k + 3)) * (xkxi(i, j, k + 2) + xkxi(i, j, k + 3) + xkxi(i, j + 1, k + 2) + xkxi(i, j + 1, k + 3)) - 0.0625 * (zkxi(i, j, k + 2) + zkxi(i, j, k + 3) + zkxi(i, j + 1, k + 2) + zkxi(i, j + 1, k + 3)) * (xA(i, j, k + 2) + xA(i, j, k + 3) + xA(i, j + 1, k + 2) + xA(i, j + 1, k + 3));
                 sz_CL2 =  0.0625 * (xA(i, j, k - 1) + xA(i, j, k - 2) + xA(i, j + 1, k - 1) + xA(i, j + 1, k - 2)) * (ykxi(i, j, k - 1) + ykxi(i, j, k - 2) + ykxi(i, j + 1, k - 1) + ykxi(i, j + 1, k - 2)) - 0.0625 * (xkxi(i, j, k - 1) + xkxi(i, j, k - 2) + xkxi(i, j + 1, k - 1) + xkxi(i, j + 1, k - 2)) * (yA(i, j, k - 1) + yA(i, j, k - 2) + yA(i, j + 1, k - 1) + yA(i, j + 1, k - 2));
-                sz_CL1 =  0.0625 * (xA(i, j, k    ) + xA(i, j, k - 1) + xA(i, j + 1, k    ) + xA(i, j + 1, k - 1)) * (ykxi(i, j, k    ) + ykxi(i, j, k - 1) + ykxi(i, j + 1, k    ) + ykxi(i, j + 1, k - 1)) - 0.0625 * (xkxi(i, j, k    ) + xkxi(i, j, k - 1) + xkxi(i, j + 1, k    ) + xkxi(i, j + 1, k - 1)) * (yA(i, j, k    ) + yA(i, j, k - 1) + yA(i, j + 1, k    ) + yA(i, j + 1, k - 1));
-                sz_fL  =  0.0625 * (xA(i, j, k    ) + xA(i, j, k    ) + xA(i, j + 1, k    ) + xA(i, j + 1, k    )) * (ykxi(i, j, k    ) + ykxi(i, j, k    ) + ykxi(i, j + 1, k    ) + ykxi(i, j + 1, k    )) - 0.0625 * (xkxi(i, j, k    ) + xkxi(i, j, k    ) + xkxi(i, j + 1, k    ) + xkxi(i, j + 1, k    )) * (yA(i, j, k    ) + yA(i, j, k    ) + yA(i, j + 1, k    ) + yA(i, j + 1, k    ));
+                sz_CL1 =  0.0625 * (xA(i, j, k   ) + xA(i, j, k - 1) + xA(i, j + 1, k   ) + xA(i, j + 1, k - 1)) * (ykxi(i, j, k   ) + ykxi(i, j, k - 1) + ykxi(i, j + 1, k   ) + ykxi(i, j + 1, k - 1)) - 0.0625 * (xkxi(i, j, k   ) + xkxi(i, j, k - 1) + xkxi(i, j + 1, k   ) + xkxi(i, j + 1, k - 1)) * (yA(i, j, k   ) + yA(i, j, k - 1) + yA(i, j + 1, k   ) + yA(i, j + 1, k - 1));
+                sz_fL  =  0.0625 * (xA(i, j, k   ) + xA(i, j, k   ) + xA(i, j + 1, k   ) + xA(i, j + 1, k   )) * (ykxi(i, j, k   ) + ykxi(i, j, k   ) + ykxi(i, j + 1, k   ) + ykxi(i, j + 1, k   )) - 0.0625 * (xkxi(i, j, k   ) + xkxi(i, j, k   ) + xkxi(i, j + 1, k   ) + xkxi(i, j + 1, k   )) * (yA(i, j, k   ) + yA(i, j, k   ) + yA(i, j + 1, k   ) + yA(i, j + 1, k   ));
                 sz_fR  =  0.0625 * (xA(i, j, k + 1) + xA(i, j, k + 1) + xA(i, j + 1, k + 1) + xA(i, j + 1, k + 1)) * (ykxi(i, j, k + 1) + ykxi(i, j, k + 1) + ykxi(i, j + 1, k + 1) + ykxi(i, j + 1, k + 1)) - 0.0625 * (xkxi(i, j, k + 1) + xkxi(i, j, k + 1) + xkxi(i, j + 1, k + 1) + xkxi(i, j + 1, k + 1)) * (yA(i, j, k + 1) + yA(i, j, k + 1) + yA(i, j + 1, k + 1) + yA(i, j + 1, k + 1));
                 sz_CR1 =  0.0625 * (xA(i, j, k + 1) + xA(i, j, k + 2) + xA(i, j + 1, k + 1) + xA(i, j + 1, k + 2)) * (ykxi(i, j, k + 1) + ykxi(i, j, k + 2) + ykxi(i, j + 1, k + 1) + ykxi(i, j + 1, k + 2)) - 0.0625 * (xkxi(i, j, k + 1) + xkxi(i, j, k + 2) + xkxi(i, j + 1, k + 1) + xkxi(i, j + 1, k + 2)) * (yA(i, j, k + 1) + yA(i, j, k + 2) + yA(i, j + 1, k + 1) + yA(i, j + 1, k + 2));
                 sz_CR2 =  0.0625 * (xA(i, j, k + 2) + xA(i, j, k + 3) + xA(i, j + 1, k + 2) + xA(i, j + 1, k + 3)) * (ykxi(i, j, k + 2) + ykxi(i, j, k + 3) + ykxi(i, j + 1, k + 2) + ykxi(i, j + 1, k + 3)) - 0.0625 * (xkxi(i, j, k + 2) + xkxi(i, j, k + 3) + xkxi(i, j + 1, k + 2) + xkxi(i, j + 1, k + 3)) * (yA(i, j, k + 2) + yA(i, j, k + 3) + yA(i, j + 1, k + 2) + yA(i, j + 1, k + 3));
@@ -1946,8 +1946,8 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
                 vol_eta = alfa_sixth * (eta_fR - eta_fL) + a_sixth * (eta_CR1 - eta_CL1) + b_sixth * (eta_CR2 - eta_CL2);
                 
                 RDouble cta_CL2 = half * (xfaceK(i, j, k - 1) + xfaceK(i, j, k - 2)) * Cellxfv(i, j, k - 2, 3) + half * (yfaceK(i, j, k - 1) + yfaceK(i, j, k - 2)) * Cellyfv(i, j, k - 2, 3) + half * (zfaceK(i, j, k - 1) + zfaceK(i, j, k - 2)) * Cellzfv(i, j, k - 2, 3);
-                RDouble cta_CL1 = half * (xfaceK(i, j, k    ) + xfaceK(i, j, k - 1)) * Cellxfv(i, j, k - 1, 3) + half * (yfaceK(i, j, k    ) + yfaceK(i, j, k - 1)) * Cellyfv(i, j, k - 1, 3) + half * (zfaceK(i, j, k    ) + zfaceK(i, j, k - 1)) * Cellzfv(i, j, k - 1, 3);
-                RDouble cta_fL  = half * (xfaceK(i, j, k    ) + xfaceK(i, j, k    )) *     xfv(i, j, k    , 3) + half * (yfaceK(i, j, k    ) + yfaceK(i, j, k    )) *     yfv(i, j, k    , 3) + half * (zfaceK(i, j, k    ) + zfaceK(i, j, k    )) *     zfv(i, j, k    , 3);
+                RDouble cta_CL1 = half * (xfaceK(i, j, k   ) + xfaceK(i, j, k - 1)) * Cellxfv(i, j, k - 1, 3) + half * (yfaceK(i, j, k   ) + yfaceK(i, j, k - 1)) * Cellyfv(i, j, k - 1, 3) + half * (zfaceK(i, j, k   ) + zfaceK(i, j, k - 1)) * Cellzfv(i, j, k - 1, 3);
+                RDouble cta_fL  = half * (xfaceK(i, j, k   ) + xfaceK(i, j, k   )) *     xfv(i, j, k    , 3) + half * (yfaceK(i, j, k   ) + yfaceK(i, j, k   )) *     yfv(i, j, k    , 3) + half * (zfaceK(i, j, k   ) + zfaceK(i, j, k   )) *     zfv(i, j, k    , 3);
                 RDouble cta_fR  = half * (xfaceK(i, j, k + 1) + xfaceK(i, j, k + 1)) *     xfv(i, j, k + 1, 3) + half * (yfaceK(i, j, k + 1) + yfaceK(i, j, k + 1)) *     yfv(i, j, k + 1, 3) + half * (zfaceK(i, j, k + 1) + zfaceK(i, j, k + 1)) *     zfv(i, j, k + 1, 3);
                 RDouble cta_CR1 = half * (xfaceK(i, j, k + 1) + xfaceK(i, j, k + 2)) * Cellxfv(i, j, k + 1, 3) + half * (yfaceK(i, j, k + 1) + yfaceK(i, j, k + 2)) * Cellyfv(i, j, k + 1, 3) + half * (zfaceK(i, j, k + 1) + zfaceK(i, j, k + 2)) * Cellzfv(i, j, k + 1, 3);
                 RDouble cta_CR2 = half * (xfaceK(i, j, k + 2) + xfaceK(i, j, k + 3)) * Cellxfv(i, j, k + 2, 3) + half * (yfaceK(i, j, k + 2) + yfaceK(i, j, k + 3)) * Cellyfv(i, j, k + 2, 3) + half * (zfaceK(i, j, k + 2) + zfaceK(i, j, k + 3)) * Cellzfv(i, j, k + 2, 3);
@@ -2003,7 +2003,7 @@ void StructGrid::GhostMetricsStructHighOrder2D(ActionKey *actkey)
     {
         for(int j = 1; j <= nj - 1; ++j)
         {
-            vol(     1 - layer, j, k) = vol(     layer, j, k);
+            vol(    1 - layer, j, k) = vol(    layer, j, k);
             vol(ni - 1 + layer, j, k) = vol(ni - layer, j, k);
 
             int nsurf = 1;
@@ -2060,7 +2060,7 @@ void StructGrid::GhostMetricsStructHighOrder3D(ActionKey *actkey)
         {
             for(int j = 1; j <= nj - 1; ++j)
             {
-                vol(     1 - layer, j, k) = vol(     layer, j, k);
+                vol(    1 - layer, j, k) = vol(    layer, j, k);
                 vol(ni - 1 + layer, j, k) = vol(ni - layer, j, k);
                 
                 int nsurf = 1;
@@ -2178,13 +2178,13 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
             if (id + jd + kd == 0)
             {
                 (*DiscretePrecisionKXI)(-1) = 2;
-                (*DiscretePrecisionKXI)( 0) = 2;
-                (*DiscretePrecisionKXI)( 1) = 2;
+                (*DiscretePrecisionKXI)(0) = 2;
+                (*DiscretePrecisionKXI)(1) = 2;
             }
             else
             {
                 (*DiscretePrecisionKXI)(ni - 1) = 2;
-                (*DiscretePrecisionKXI)(ni    ) = 2;
+                (*DiscretePrecisionKXI)(ni   ) = 2;
                 (*DiscretePrecisionKXI)(ni + 1) = 2;
             } 
         }
@@ -2193,13 +2193,13 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
             if (id + jd + kd == 0)
             {
                 (*DiscretePrecisionETA)(-1) = 2;
-                (*DiscretePrecisionETA)( 0) = 2;
-                (*DiscretePrecisionETA)( 1) = 2;
+                (*DiscretePrecisionETA)(0) = 2;
+                (*DiscretePrecisionETA)(1) = 2;
             }
             else
             {
                 (*DiscretePrecisionETA)(nj - 1) = 2;
-                (*DiscretePrecisionETA)(nj    ) = 2;
+                (*DiscretePrecisionETA)(nj   ) = 2;
                 (*DiscretePrecisionETA)(nj + 1) = 2;
             } 
         }
@@ -2208,13 +2208,13 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
             if (id + jd + kd == 0)
             {
                 (*DiscretePrecisionCTA)(-1) = 2;
-                (*DiscretePrecisionCTA)( 0) = 2;
-                (*DiscretePrecisionCTA)( 1) = 2;
+                (*DiscretePrecisionCTA)(0) = 2;
+                (*DiscretePrecisionCTA)(1) = 2;
             }
             else
             {
                 (*DiscretePrecisionCTA)(nk - 1) = 2;
-                (*DiscretePrecisionCTA)(nk    ) = 2;
+                (*DiscretePrecisionCTA)(nk   ) = 2;
                 (*DiscretePrecisionCTA)(nk + 1) = 2;
             } 
         }          
@@ -2244,10 +2244,10 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
                 RDouble lb = sqrt(bx * bx + by * by + bz * bz);                
                 RDouble ab = ax * bx + ay * by + az * bz;
                 
-                if ( ab < la * lb * LowerValue )
+                if (ab < la * lb * LowerValue)
                 {
                     (*DiscretePrecisionKXI)(i - 1) = 2;
-                    (*DiscretePrecisionKXI)(i    ) = 2;
+                    (*DiscretePrecisionKXI)(i   ) = 2;
                 }
             }            
         }
@@ -2270,10 +2270,10 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
                 RDouble lb = sqrt(bx * bx + by * by + bz * bz);                
                 RDouble ab = ax * bx + ay * by + az * bz;
                 
-                if ( ab < la * lb * LowerValue )
+                if (ab < la * lb * LowerValue)
                 {
                     (*DiscretePrecisionETA)(j - 1) = 2;
-                    (*DiscretePrecisionETA)(j    ) = 2;
+                    (*DiscretePrecisionETA)(j   ) = 2;
                 }
             }            
         }
@@ -2290,21 +2290,21 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
         {
             for(int i = ist; i <= ied; ++ i)
             {
-                RDouble ax = - xx(i, j, k - 1) + xx(i, j, k    );
-                RDouble ay = - yy(i, j, k - 1) + yy(i, j, k    );
-                RDouble az = - zz(i, j, k - 1) + zz(i, j, k    );
-                RDouble bx = - xx(i, j, k    ) + xx(i, j, k + 1);
-                RDouble by = - yy(i, j, k    ) + yy(i, j, k + 1);
-                RDouble bz = - zz(i, j, k    ) + zz(i, j, k + 1);
+                RDouble ax = - xx(i, j, k - 1) + xx(i, j, k   );
+                RDouble ay = - yy(i, j, k - 1) + yy(i, j, k   );
+                RDouble az = - zz(i, j, k - 1) + zz(i, j, k   );
+                RDouble bx = - xx(i, j, k   ) + xx(i, j, k + 1);
+                RDouble by = - yy(i, j, k   ) + yy(i, j, k + 1);
+                RDouble bz = - zz(i, j, k   ) + zz(i, j, k + 1);
 
                 RDouble la = sqrt(ax * ax + ay * ay + az * az);
                 RDouble lb = sqrt(bx * bx + by * by + bz * bz);                
                 RDouble ab = ax * bx + ay * by + az * bz;
                 
-                if ( ab < la * lb * LowerValue )
+                if (ab < la * lb * LowerValue)
                 {
                     (*DiscretePrecisionCTA)(k - 1) = 2;
-                    (*DiscretePrecisionCTA)(k    ) = 2;
+                    (*DiscretePrecisionCTA)(k   ) = 2;
                 }
             }            
         }
@@ -2348,14 +2348,14 @@ void StructGrid::CorrectDiffOrderNearUnstructBlockforStructHighOrder(const int &
                 {
                     //! left boundary     
                     (*DiscretePrecisionKXI)(-1) = 2;
-                    (*DiscretePrecisionKXI)( 0) = 2;
-                    (*DiscretePrecisionKXI)( 1) = 2;
+                    (*DiscretePrecisionKXI)(0) = 2;
+                    (*DiscretePrecisionKXI)(1) = 2;
                 }
                 else
                 {
                     //! right boundary
                     (*DiscretePrecisionKXI)(ni - 1) = 2;
-                    (*DiscretePrecisionKXI)(ni    ) = 2;
+                    (*DiscretePrecisionKXI)(ni   ) = 2;
                     (*DiscretePrecisionKXI)(ni + 1) = 2;
                 }
             }
@@ -2366,14 +2366,14 @@ void StructGrid::CorrectDiffOrderNearUnstructBlockforStructHighOrder(const int &
                 {
                     //! left boundary                    
                     (*DiscretePrecisionETA)(-1) = 2;
-                    (*DiscretePrecisionETA)( 0) = 2;
-                    (*DiscretePrecisionETA)( 1) = 2;
+                    (*DiscretePrecisionETA)(0) = 2;
+                    (*DiscretePrecisionETA)(1) = 2;
                 }
                 else
                 {
                     //! right boundary
                     (*DiscretePrecisionETA)(nj - 1) = 2;
-                    (*DiscretePrecisionETA)(nj    ) = 2;
+                    (*DiscretePrecisionETA)(nj   ) = 2;
                     (*DiscretePrecisionETA)(nj + 1) = 2;
                 }
             }
@@ -2384,14 +2384,14 @@ void StructGrid::CorrectDiffOrderNearUnstructBlockforStructHighOrder(const int &
                 {
                     //! left boundary                    
                     (*DiscretePrecisionCTA)(-1) = 2;
-                    (*DiscretePrecisionCTA)( 0) = 2;
-                    (*DiscretePrecisionCTA)( 1) = 2;
+                    (*DiscretePrecisionCTA)(0) = 2;
+                    (*DiscretePrecisionCTA)(1) = 2;
                 }
                 else
                 {
                     //! right boundary
                     (*DiscretePrecisionCTA)(nk - 1) = 2;
-                    (*DiscretePrecisionCTA)(nk    ) = 2;
+                    (*DiscretePrecisionCTA)(nk   ) = 2;
                     (*DiscretePrecisionCTA)(nk + 1) = 2;
                 }
             }  
@@ -2447,7 +2447,7 @@ void StructGrid::ComputeMetricsWithBCforStructHighOrder2D()
             RDouble y2 = yy(i, j + 1, k);
             RDouble y3 = yy(i, j + 2, k);
 
-            if ( (*DiscretePrecisionETA)(j) == 2 )
+            if ((*DiscretePrecisionETA)(j) == 2)
             {
                 xeta = (x2 - x1);
                 yeta = (y2 - y1);
@@ -3349,7 +3349,7 @@ void StructGrid::ComputeJacobianforStructHighOrder3D()
                 }
                 
                 RDouble cta0 = xfaceK(i, j, k - 1) * xfv(i, j, k - 1, 3) + yfaceK(i, j, k - 1) * yfv(i, j, k - 1, 3) + zfaceK(i, j, k - 1) * zfv(i, j, k - 1, 3);
-                RDouble cta1 = xfaceK(i, j, k    ) * xfv(i, j, k,     3) + yfaceK(i, j, k    ) * yfv(i, j, k,     3) + zfaceK(i, j, k    ) * zfv(i, j, k,     3);
+                RDouble cta1 = xfaceK(i, j, k   ) * xfv(i, j, k,     3) + yfaceK(i, j, k   ) * yfv(i, j, k,     3) + zfaceK(i, j, k   ) * zfv(i, j, k,     3);
                 RDouble cta2 = xfaceK(i, j, k + 1) * xfv(i, j, k + 1, 3) + yfaceK(i, j, k + 1) * yfv(i, j, k + 1, 3) + zfaceK(i, j, k + 1) * zfv(i, j, k + 1, 3);
                 RDouble cta3 = xfaceK(i, j, k + 2) * xfv(i, j, k + 2, 3) + yfaceK(i, j, k + 2) * yfv(i, j, k + 2, 3) + zfaceK(i, j, k + 2) * zfv(i, j, k + 2, 3);
                 
@@ -3725,17 +3725,17 @@ int StructGrid::GetRelationshipBetweenTwoPairsofNodes(RDouble NodesofABCD[4][3],
 
 void StructGrid::UploadGridInfoOnlyforStructHighOrder(DataContainer *&dataContainer, const int &neighborZoneIndex, int mission)
 {
-    //int mission_Comm( XYZghost                                 ) = 1;
-    //int mission_Comm( XYZghostofghos                           ) = 2;
-    //int mission_Comm( Metrics                                  ) = 3;
-    //int mission_Comm( Jacobian                                 ) = 4;
-    //int mission_Comm( q_FD                                     ) = 5;
-    //int mission_Comm( rtem                                     ) = 6;
-    //int mission_Comm( rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) = 7;
-    //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) = 8;
-    //int mission_Comm( vist, gradqturb                          ) = 9;
-    //int mission_Comm( vist, gradqturb, blending                ) = 10;
-    //int mission_Comm( vist                                     ) = 11 (for LES);
+    //int mission_Comm(XYZghost                                ) = 1;
+    //int mission_Comm(XYZghostofghos                          ) = 2;
+    //int mission_Comm(Metrics                                 ) = 3;
+    //int mission_Comm(Jacobian                                ) = 4;
+    //int mission_Comm(q_FD                                    ) = 5;
+    //int mission_Comm(rtem                                    ) = 6;
+    //int mission_Comm(rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) = 7;
+    //int mission_Comm(rtem, gradUVWTCellCenterXYZ             ) = 8;
+    //int mission_Comm(vist, gradqturb                         ) = 9;
+    //int mission_Comm(vist, gradqturb, blending               ) = 10;
+    //int mission_Comm(vist                                    ) = 11 (for LES);
     
     if(mission == 1)
     {
@@ -3785,17 +3785,17 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder(DataContainer *&dataContai
 
 void StructGrid::DownloadGridInfoOnlyforStructHighOrder(DataContainer *&dataContainer, const int &neighborZoneIndex, int mission)
 {
-    //int mission_Comm( XYZghost                                 ) = 1;
-    //int mission_Comm( XYZghostofghos                           ) = 2;
-    //int mission_Comm( Metrics                                  ) = 3;
-    //int mission_Comm( Jacobian                                 ) = 4;
-    //int mission_Comm( q_FD                                     ) = 5;
-    //int mission_Comm( rtem                                     ) = 6;
-    //int mission_Comm( rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) = 7;
-    //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) = 8;
-    //int mission_Comm( vist, gradqturb                          ) = 9;
-    //int mission_Comm( vist, gradqturb, blending                ) = 10;
-    //int mission_Comm( vist                                     ) = 11 (for LES);
+    //int mission_Comm(XYZghost                                ) = 1;
+    //int mission_Comm(XYZghostofghos                          ) = 2;
+    //int mission_Comm(Metrics                                 ) = 3;
+    //int mission_Comm(Jacobian                                ) = 4;
+    //int mission_Comm(q_FD                                    ) = 5;
+    //int mission_Comm(rtem                                    ) = 6;
+    //int mission_Comm(rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) = 7;
+    //int mission_Comm(rtem, gradUVWTCellCenterXYZ             ) = 8;
+    //int mission_Comm(vist, gradqturb                         ) = 9;
+    //int mission_Comm(vist, gradqturb, blending               ) = 10;
+    //int mission_Comm(vist                                    ) = 11 (for LES);
     
     if(mission == 1)
     {

@@ -32,7 +32,7 @@ class Grid;
 class AleParameter
 {
 public:
-    int isUnsteady, codeOfAleModel;
+    int isUnsteady, isAle;
     int order;
     //! Linear Multi Step Methods flag.
     int lmsmflag; 

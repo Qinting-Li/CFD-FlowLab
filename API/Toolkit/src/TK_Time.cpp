@@ -218,12 +218,12 @@ LIB_EXPORT int WriStatTime()
             {
                 proc = PH_Receive(time_array, 3*sizeof(double), tag);
 
-                if (time_array[SYSTimeIndex]  > max_sys_time ) max_sys_time  = time_array[SYSTimeIndex];
-                if (time_array[CPUTimeIndex]  > max_cpu_time ) max_cpu_time  = time_array[CPUTimeIndex];
+                if (time_array[SYSTimeIndex]  > max_sys_time) max_sys_time  = time_array[SYSTimeIndex];
+                if (time_array[CPUTimeIndex]  > max_cpu_time) max_cpu_time  = time_array[CPUTimeIndex];
                 if (time_array[WallTimeIndex] > max_wall_time) max_wall_time = time_array[WallTimeIndex];
 
-                if (time_array[SYSTimeIndex]  < min_sys_time ) min_sys_time  = time_array[SYSTimeIndex];
-                if (time_array[CPUTimeIndex]  < min_cpu_time ) min_cpu_time  = time_array[CPUTimeIndex];
+                if (time_array[SYSTimeIndex]  < min_sys_time) min_sys_time  = time_array[SYSTimeIndex];
+                if (time_array[CPUTimeIndex]  < min_cpu_time) min_cpu_time  = time_array[CPUTimeIndex];
                 if (time_array[WallTimeIndex] < min_wall_time) min_wall_time = time_array[WallTimeIndex];
 
                 total_sys_time  += time_array[SYSTimeIndex];

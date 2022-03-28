@@ -1,5 +1,5 @@
 #include <cmath>
-#include "GridTranslator.h"
+#include "Pre_GridTranslator.h"
 #include "Pre_GridConversion.h"
 #include "MixGrid.h"
 #include "Task_WriteBinaryTecplot.h"
@@ -14,7 +14,7 @@ namespace PHSPACE
 
 GridTranslator::GridTranslator()
 {
-    GlobalDataBase::GetData("codeOfOversetGrid", &codeOfOversetGrid, PHINT, 1);
+    GlobalDataBase::GetData("codeOfOversetGrid", &isOverset, PHINT, 1);
 
     gridGroup = new vector<StructGrid *>();
 
@@ -25,7 +25,7 @@ GridTranslator::GridTranslator(Grid **&strgrids, int &nBlocks)
 {
     numberOfZones = nBlocks;
 
-    GlobalDataBase::GetData("codeOfOversetGrid", &codeOfOversetGrid, PHINT, 1);
+    GlobalDataBase::GetData("codeOfOversetGrid", &isOverset, PHINT, 1);
 
     gridGroup = new vector<StructGrid *>();
     gridGroup->resize(nBlocks, NULL);
@@ -87,7 +87,7 @@ void GridTranslator::ProcessBoundaryCondition()
 
 void GridTranslator::GenerateStructFaceGroup()
 {
-    structFaceGroup->resize( numberOfZones, NULL );
+    structFaceGroup->resize(numberOfZones, NULL);
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
@@ -224,18 +224,18 @@ void GridTranslator::CheckGrid()
     for (int izone = 0; izone < numberOfZones; ++ izone)
     {
         StructGrid *grid = StructGridCast((*gridGroup)[izone]);
-        InterfaceInfo *iinfo = grid->GetInterfaceInfo();
+        InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
 
         int nIFace = 0;
-        if (iinfo)
+        if (interfaceInfo)
         {
-            nIFace = iinfo->GetNIFace();
+            nIFace = interfaceInfo->GetNIFace();
         }
 
         if (nIFace == 0) continue;
 
-        int *interFace2ZoneID      = iinfo->GetInterFace2ZoneID();
-        int *interFace2InterFaceID = iinfo->GetInterFace2InterFaceID();
+        int *interFace2ZoneID      = interfaceInfo->GetInterFace2ZoneID();
+        int *interFace2InterFaceID = interfaceInfo->GetInterFace2InterFaceID();
 
         int target_zone, itface;
         int is, js, ks, nsurf, s_lr, it, jt, kt, t_lr;

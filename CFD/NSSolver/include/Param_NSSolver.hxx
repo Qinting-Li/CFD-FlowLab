@@ -166,6 +166,11 @@ inline int Param_NSSolver::GetnEnergyRecycle() const
     return nEnergyRecycle;
 }
 
+inline int Param_NSSolver::GetTransitionType() const
+{
+    return transitionType;
+}
+
 inline int Param_NSSolver::GetnViscosityFluxSublevelModified() const
 {
     return nViscosityFluxSublevelModified;
@@ -185,4 +190,35 @@ inline int Param_NSSolver::GetnTurblenceForChemical() const
 {
     return nTurblenceForChemical;
 }
+
+inline RDouble Param_NSSolver::GetDensityMin() const
+{
+    return densityMin;
+}
+
+inline RDouble Param_NSSolver::GetdensityMinFactor() const
+{
+    return densityMinFactor;
+}
+
+inline int Param_NSSolver::GetnGradPrimtiveMethod() const
+{
+    return nGradPrimtiveMethod;
+}
+
+inline int Param_NSSolver::GetnInviscidFluxModify() const
+{
+    return nInviscidFluxModify;
+}
+
+inline int Param_NSSolver::GetSelfAdaptionSolveFlag() const
+{
+    return isSelfAdaptionSolve;
+}
+
+inline int Param_NSSolver::GetnQlLimitMethod() const
+{
+    return nQlLimitMethod;
+}
+
 

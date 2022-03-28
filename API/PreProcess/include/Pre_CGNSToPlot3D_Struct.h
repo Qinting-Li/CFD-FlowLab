@@ -62,6 +62,9 @@ private:
     //! Write the boundary face information into file.
     void WriteToBcinformation();
 
+    //! 
+    void ResetGridScaleAndTranslate();
+
     //!
     void writetoCGNS(fstream &bcfile, cgsize_t *pnts, int lab, string bcName, int nCoords);
 

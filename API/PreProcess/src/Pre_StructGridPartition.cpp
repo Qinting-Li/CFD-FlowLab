@@ -1,9 +1,9 @@
 #include <cmath>
 #include "Pre_Block_Struct.h"
-#include "Pre_StrGridPartition.h"
+#include "Pre_StructGridPartition.h"
 #include "Glb_Dimension.h"
 #include "IO_HDF5File.h"
-#include "GridTranslator.h"
+#include "Pre_GridTranslator.h"
 #include "IO_FileName.h"
 #include "Pre_GridConversion.h"
 #include "PHIO.h"
@@ -41,7 +41,7 @@ LIB_EXPORT Pre_StrGridPartition::Pre_StrGridPartition(int numberOfProcessors_in)
 LIB_EXPORT Pre_StrGridPartition::~Pre_StrGridPartition()
 {
     delete boundaryContainer;
-    delete [] cellIndexOfMark;    cellIndexOfMark = nullptr;
+    delete [] cellIndexOfMark;    cellIndexOfMark = NULL;
     for (set<Pre_Block_Struct *>::iterator iter = generalBlockGroup.begin(); iter != generalBlockGroup.end(); ++ iter)
     {
         delete *iter;
@@ -58,8 +58,8 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
     string partition_grid_file = "metis.fts";
     GlobalDataBase::GetData("partition_grid_file", &partition_grid_file, PHSTRING, 1);
 
-    int codeOfOversetGrid = 0;
-    GlobalDataBase::GetData("codeOfOversetGrid", &codeOfOversetGrid, PHINT, 1);
+    int isOverset = 0;
+    GlobalDataBase::GetData("codeOfOversetGrid", &isOverset, PHINT, 1);
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
 
     Region *region = new Region();
@@ -75,8 +75,8 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 
     ProcessBCInfo();
 
-    int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
-    if (dumpOldGrid)
+    int isOldGrid = GlobalDataBase::GetIntParaFromDB("isOldGrid");
+    if (isOldGrid)
     {
         ReadLnkFile(original_grid_file);
     }
@@ -104,8 +104,9 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
         parititionGrids[izone]->SetLnkInfo();
     }
 
+    int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
     int ndim = PHSPACE::GetDim();
-    if (ndim == TWO_D || codeOfOversetGrid == 1 || (ndim == THREE_D && periodicType != 0))
+    if (ndim == TWO_D || isOverset || (ndim == THREE_D && periodicType != 0))
     {
         CheckMeshMultigrid(parititionGrids, numberOfBasicBlocks);
 
@@ -154,7 +155,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
     {
         delete parititionGrids[i];
     }
-    delete [] parititionGrids;    parititionGrids = nullptr;
+    delete [] parititionGrids;    parititionGrids = NULL;
 
     delete region;
 }
@@ -635,7 +636,7 @@ void Pre_StrGridPartition::OutputProcessorInformation()
 
     cs = oss.str();
     cout << cs << endl;
-    WriteLogFile( cs );
+    WriteLogFile(cs);
 
     int count = 0;
     for (int i = 0; i < numberOfProcessors; ++ i)

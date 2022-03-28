@@ -9,7 +9,7 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      Pre_StrGridPartition.h
+//! @file      Pre_StructGridPartition.h
 //! @brief     Structured grid partition: manager of block splitting.
 //! @author    Baka, Guo Yongheng.
 

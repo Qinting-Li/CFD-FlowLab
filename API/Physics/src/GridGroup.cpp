@@ -216,7 +216,7 @@ void GridGroup::InitZoneLayout(fstream &file)
             {
                 string cs;
                 std::ostringstream oss;
-                oss << "When a parallel policy is run with a specified partition (m_block_proc = 0 ), the number of processes started must be less than the number of partitions!\n" 
+                oss << "When a parallel policy is run with a specified partition (m_block_proc = 0), the number of processes started must be less than the number of partitions!\n" 
                     << "   ---- Number of processes = " << number_of_processor << ", Number of partitions = " << maxproc << " ----\n" 
                     << "Abnormally Exit Program!!!\n";
                 cs = oss.str();
