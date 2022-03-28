@@ -1,6 +1,8 @@
 <div align=left><img src="PHengLEI\Documents/PHengLEI-LOGO.png" style="zoom: 15%;"/><br>
 
-# 风雷软件（PHengLEI2112.v9198）
+# 风雷软件（PHengLEI2206.v10111）
+
+备注：当前为master分支，更多新功能请切换到ActiveBranch分支。
 
 ## 1.软件简介
 
@@ -9,13 +11,22 @@
 &ensp;&ensp;&ensp;&ensp;风雷软件更多动态和Demo请登录以下网址查看：
 
 - 官网地址: http://www.cardc.cn/nnw/software/phenglei
-- 代码库地址：https://forge.osredm.com/projects/p68217053/PHengLEI
-- 算例库地址：https://forge.osredm.com/projects/p68217053/PHengLEI-TestCases
+- 代码库地址：https://forge.osredm.com/p68217053/PHengLEI
+- 算例库地址：https://forge.osredm.com/p68217053/PHengLEI-TestCases
 - 代码参考文档地址：http://116.63.141.248:8088
 - 论坛（常见问题、算例展示、技术分享）地址：https://osredm.com/forums/theme/38
 
 &ensp;&ensp;&ensp;&ensp;风雷软件用户录制视频教程地址：
 - 视频教程：https://www.bilibili.com/video/BV1eX4y1T7yW?from=search&seid=9482198996609923785
+
+  **声明：** 若用户将该软件用于学术研究或工程应用，须在相关的论文成果的显要位置处标注基于国家数值风洞“风雷（PHengLEI）“软件，并引用“风雷（PHengLEI）”软件相关的参考文献（例如[1]和[2]）
+
+  [1] 赵钟,等.通用CFD软件PHengLEI设计[J]. 计算机工程与科学, 2020, 42(2): 210-219.( Zhao Z, et al. 
+  &ensp;&ensp;&ensp;Design of general CFD software PHengLEI [J]. Computer Engineering & Science, 2020, 42(2): 
+  &ensp;&ensp;&ensp;210-219. (in Chinese) )
+  [2] 赵钟,等.适用于任意网格的大规模并行CFD计算框架PHengLEI[J]. 计算机学报, 2018, 42(11):2368
+  &ensp;&ensp;&ensp;-2383. ( Zhao Z, et al. PHengLEI: A Large Scale Parallel CFD Framework for Arbitrary Grids [J]. 
+  &ensp;&ensp;&ensp;Chinese Journal of Computers, 2018, 42(11): 2368-2383. (in Chinese) )
 
 ## 2.软件功能
 

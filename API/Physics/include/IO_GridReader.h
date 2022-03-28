@@ -122,8 +122,8 @@ private:
     void ReadZoneLayoutCSMode(fstream & file, int nZones, int startZoneIndex);
     void RedistributeZonesIfNeed(int startZoneIndex);
     void ClassifyGridSystem();
-    void DecompressDataToGrid(DataContainer *cdata, int izone);
-    void GetSendRecvProcID(int izone, int &send_proc, int &recv_proc);
+    void DecompressDataToGrid(DataContainer *cdata, int iZone);
+    void GetSendRecvProcID(int iZone, int &send_proc, int &recv_proc);
     void GetSendRecvProcID(int localZoneID, int &send_proc, int &recv_proc, int &recv_proc_grid);
     void Read_Bcast(fstream &file, void *data, int size);
     void Read(fstream &file, void *data, int size);
@@ -133,15 +133,15 @@ private:
     void OpenSerialFile(fstream &file, const string &filename, const ios_base::openmode &openmode);
     void Close(fstream &file);
 
-    void DecompressDataToCellNode(DataContainer *cdata, int izone);
+    void DecompressDataToCellNode(DataContainer *cdata, int iZone);
 
     //! Decompress the interpoint information from the DataContainer.
     //! @param[in] cdata               the DataContainer which contains the interpoint information.
-    //! @param[in] izone               the zone number.\n
-    void DecompressInterpointInfo(DataContainer *cdata, int izone);
-    void DecompressDataToFaceBC(DataContainer *cdata, int izone);
-    void DecompressDataToFaceBcDir(DataContainer *cdata, int izone);
-    void DecompressDataToWallDist(DataContainer *cdata, int izone);
+    //! @param[in] iZone               the zone number.\n
+    void DecompressInterpointInfo(DataContainer *cdata, int iZone);
+    void DecompressDataToFaceBC(DataContainer *cdata, int iZone);
+    void DecompressDataToFaceBcDir(DataContainer *cdata, int iZone);
+    void DecompressDataToWallDist(DataContainer *cdata, int iZone);
 
 private:
     //! The file index which the current processor charged.

@@ -54,9 +54,9 @@ public:
     void ReadRestartH5(ActionKey *actkey);
 
     void InitFlowAsRestart();
-    void LoadQ(Grid *gridIn, FieldProxy *q_proxy);
+    void LoadQ(Grid *gridIn, FieldProxy *qProxy);
     void RestrictDefect(Grid *fgrid_in, Grid *cgrid_in);
-    void PutCorrectionBack(Grid *gridIn, FieldProxy *q_proxy);
+    void PutCorrectionBack(Grid *gridIn, FieldProxy *qProxy);
 
     //! Prolongation operator, from coarse mesh to fine mesh.
     void CorrectFineGrid(Grid *fgrid_in, Grid *cgrid_in);
@@ -88,11 +88,13 @@ public:
 
     void GetQlQr  (Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void GetGamaLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+	void GetPressureFactorLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ReConstructFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
     void ZeroResiduals(Grid *gridIn);
     void SpectrumRadiusInviscid(Grid *grid);
     void PreconInvSpectrumRadius(Grid *gridIn);
     void SpectrumRadiusViscous(Grid *grid);
+    void SpectrumRadiusChemical(Grid *grid);
     void Diagonal(Grid *gridIn);
     void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
     void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
@@ -114,6 +116,7 @@ public:
     void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn);
     void RestrictAllQ(Grid *fgrid, Grid *cgrid);
     void ComputeViscousCoeff(Grid *gridIn);
+    void ComputeViscousCoefficient(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
 
     void BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
@@ -161,6 +164,9 @@ public:
     void UpdateUnsteadyFlow(Grid *gridIn);
     RDouble UnsteadyConvergence(Grid *gridIn);
 
+    //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
+    void ComputeFirstLayerGridHeight(Grid *gridIn);
+
     void Turb_Sengy(Grid *gridIn);
     void GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
     void GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
@@ -168,9 +174,9 @@ public:
 
     void ComputeFaceWeight(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ComputeInviscidFlux(Grid *grid, FaceProxy *faceProxy, int localStart, int localEnd);
-    void SolutionFix(Grid *gridIn, RDouble *prim, int icell);
+    void SolutionFix(Grid *gridIn, RDouble *prim, int iCell);
 
-    void UpdateFlowField(Grid *gridIn, FieldProxy *q_proxy, FieldProxy *dqProxy);
+    void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
     void SetGhostDQLUSGS(Grid *gridIn, RDouble **dq, RDouble **q);
     void SetSymmBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq, RDouble **q);
     void SetWallBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq, RDouble **q);
@@ -180,13 +186,13 @@ public:
     void CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
     void DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
     RDouble GetRad(RDouble *prim, RDouble *nxyz, RDouble gama);
-    void SolveLUSGSForward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    void SolveLUSGSBackward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void SolveLUSGSForward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void SolveLUSGSBackward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
 
 
     void AirForceCoef(ActionKey *actkey);
     void AirForceCoefParts(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
-    void AirForceCoefComponents(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
+    void AirForceCoefBodies(ActionKey *actkey);
     void CpDistriCoef(ActionKey *actkey);
     void GetResidual(ActionKey *actkey);
 
@@ -206,6 +212,7 @@ public:
     void SpectrumRadius(Grid *gridIn);
 
     void RestrictDQ(RDouble *dqtry, int nm, RDouble lim_max);
+    void ModifyDensity(RDouble *dq, int nNSEquation,int nLaminar,int nEquation,RDouble &densityRelax);
 
     void UploadInterfaceData(ActionKey *actkey);
     void DownloadInterfaceData(ActionKey *actkey);
@@ -236,7 +243,7 @@ public:
     //! Create and init ControlParameters
     LIB_EXPORT void InitControlParameters();
 
-    //! Get controlParamters( a Para_NSSolver type pointer)
+    //! Get controlParamters(a Para_NSSolver type pointer)
     LIB_EXPORT Param_NSSolverUnstruct * GetControlParameters() const;
 
     void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);

@@ -15,6 +15,7 @@
 
 #pragma once
 #include <cmath>
+#include <float.h>
 #include <algorithm>
 #include "Precision.h"
 #include "TypeDefine.h"
@@ -22,16 +23,6 @@ using namespace std;
 
 namespace PHSPACE
 {
-
-template < typename T >
-bool isErrorData(T data)
-{
-    if (_isnan(data) || !_finite(data))
-    {
-        return true;
-    }
-}
-
 //! Get the interval: size of total is 'nTotal', it's divided into 'nInterval'.
 int GetProgressInterval(int nTotal, int nInterval);
 
@@ -119,6 +110,23 @@ inline void SWAP(T &a, T &b)
     b = c;
 }
 
+template < typename T >
+bool isErrorData(T data)
+{
+#ifdef WIN32
+    if (!_isnan(data) || ABS(data) < SMALL)
+    {
+        return false;
+    }
+#else
+    if (ABS(data) < LARGE && (std::isnormal(data) || ABS(data) < SMALL))
+    {
+        return false;
+    }
+#endif
+    return true;
+}
+
 //! sign(a, b): return |a| * sign(b). a is the same as b.
 template < typename T >
 inline T SIGN(const T &a, const T &b)
@@ -201,6 +209,14 @@ template < typename T1, typename T2, typename T3 >
 void MatrixMultiply(T1 **a, vector< T2 > &b, vector< T3 > &c, int m, int n)
 {
     MatrixMultiply(a, &b[0], &c[0], m, n);
+}
+
+template<typename T> 
+string toString(const T &t)
+{ 
+    ostringstream oss;
+    oss<<t;
+    return oss.str();
 }
 
 //! Compute the cross product of two vectors.

@@ -57,8 +57,8 @@ public:
     PHRigidBodyMovement();
     ~PHRigidBodyMovement();
 protected:
-    void UpdateCoordinate               ( Grid * gridIn );
-    void UpdateGridVelocity             ( Grid * gridIn );
+    void UpdateCoordinate               (Grid * gridIn);
+    void UpdateGridVelocity             (Grid * gridIn);
     void InitializeAircraftProperty     ();
     void InitializeEulerAngleInformation();
     void InitializeInertia      ();
@@ -74,10 +74,10 @@ protected:
     void CalculateEulerAngle();
     void CalculateEulerAngleAcceleration();
     void CalculateAngleOfAttackAndSlide();
-    PHSuperMatrix CalculateGridCellFaceVelocity(Grid* gridIn, int i, int j, int k, int nd );
-    PHSuperMatrix GetCellFaceCoordinate(Grid* gridIn, int i, int j, int k, int nd );
+    PHSuperMatrix CalculateGridCellFaceVelocity(Grid* gridIn, int i, int j, int k, int nd);
+    PHSuperMatrix GetCellFaceCoordinate(Grid* gridIn, int i, int j, int k, int nd);
     void UpdateCellArea(Grid* gridIn);
-    void UpdateSingleZoneGridInformation( Grid * gridIn );
+    void UpdateSingleZoneGridInformation(Grid * gridIn);
 public:
     void InitializeSixDof();
     void MainCallOf6DOF();

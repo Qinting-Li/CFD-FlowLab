@@ -74,11 +74,11 @@ public:
     vector< RDouble > zPresent;
 
 public:
-    void SetInitCoordinate( Grid* grid      );
-    void CalInitCoordinate( SixDofParameter    * sixDof    );
+    void SetInitCoordinate(Grid* grid     );
+    void CalInitCoordinate(SixDofParameter    * sixDof   );
 
-    void Deforming        ( DeformingParameter * deforming );
-    void RigidMoving      ( SixDofParameter    * sixDof    );
+    void Deforming        (DeformingParameter * deforming);
+    void RigidMoving      (SixDofParameter    * sixDof   );
     void UpdateGrid       ();
 };
 
@@ -109,7 +109,7 @@ public:
     SimpleMovingMesh   *movingMesh;
 
 public:
-    void Initialize(Grid* grid, int bodyIndex );
+    void Initialize(Grid* grid, int bodyIndex);
     void Restart();
     void PreProcess();
     void PreProcessRigidMoving();
@@ -124,7 +124,7 @@ public:
     ~MovingMeshManager();
 
 public:
-    int numberOfBodys;
+    int numberOfBodies;
     int numberOfZones;
 
     OriginalMovingMesh ** originalMovingMeshes;

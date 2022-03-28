@@ -22,10 +22,11 @@ namespace PHSPACE
 //! The entropy correction (fix) in Roe scheme of inviscid flux, which is used to limit the magnitude of the three eigenvalue.\n
 //!    @param[in] eigv1,2,3                    The three eigenvalue, which are V/V+c/V-c on the face. They will be corrected and returned.\n
 //!    @param[in] vn                           The normal velocity on the face.\n
+//!	   @param[in] absVel					   The absolute velocity on the face.\n
 //!    @param[in] RoeEntropyCorrectionMethod   The Roe entropy correction method.\n
 //!    @param[in] entropyCorrectionCoef        The Roe entropy correction coefficient.\n
-LIB_EXPORT void Flux_RoeEntropyCorrection(RDouble &eigv1, RDouble &eigv2, RDouble &eigv3, RDouble lrtL, RDouble lrtR, 
-                                          RDouble vn, RDouble cm, int RoeEntropyCorrectionMethod, RDouble acousticEigenLimit, RDouble convectEigenLimit);
+LIB_EXPORT void Flux_RoeEntropyCorrection(RDouble &eigv1, RDouble &eigv2, RDouble &eigv3, RDouble pressureCoeffL, RDouble pressureCoeffR, 
+										  RDouble absVel, RDouble vn, RDouble cm, int RoeEntropyCorrectionMethod, RDouble acousticEigenLimit, RDouble convectEigenLimit);
 
 //! Harten type of entropy correction (fix).\n
 //!    @param[in] eigenValue        The original eigenvalue, which may be invalid.

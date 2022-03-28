@@ -295,9 +295,9 @@ ${Geometry_H_PATH}/LinkStruct.h
 ${Geometry_H_PATH}/Geo_Point.h
 ${Geometry_H_PATH}/Geo_Face.h
 ${Geometry_H_PATH}/GRHash.h
-${Geometry_H_PATH}/SubsonicBC.h
 ${Geometry_H_PATH}/OverLappingGrid.h
 ${Geometry_H_PATH}/GeometryUnit.h
+${Geometry_H_PATH}/Geo_PointFactory.h
 ${Geometry_H_PATH}/Geo_Element.h
 ${Geometry_H_PATH}/Geo_Sample.h
 ${Geometry_H_PATH}/GeomProxy.h
@@ -344,9 +344,9 @@ ${Geometry_CPP_PATH}/Geo_Interface.cpp
 ${Geometry_CPP_PATH}/Geo_Interpoint.cpp
 ${Geometry_CPP_PATH}/MultigridFactory.cpp
 ${Geometry_CPP_PATH}/GRHash.cpp
-${Geometry_CPP_PATH}/SubsonicBC.cpp
 ${Geometry_CPP_PATH}/OverLappingGrid.cpp
 ${Geometry_CPP_PATH}/GeometryUnit.cpp
+${Geometry_CPP_PATH}/Geo_PointFactory.cpp
 ${Geometry_CPP_PATH}/Geo_Element.cpp
 ${Geometry_CPP_PATH}/Geo_Sample.cpp
 ${Geometry_CPP_PATH}/GeomProxy.cpp
@@ -361,6 +361,7 @@ set(Physics_H_PATH Physics/include)
 set(Physics_H_LIST
 ${Physics_H_PATH}/AleModel.h
 ${Physics_H_PATH}/AleManager.h
+${Physics_H_PATH}/AleForceManager.h
 ${Physics_H_PATH}/MovingMesh.h
 ${Physics_H_PATH}/DeformingSolverManager.h
 ${Physics_H_PATH}/SixDofManager.h
@@ -387,6 +388,7 @@ ${Physics_H_PATH}/Flux_Inviscid.h
 ${Physics_H_PATH}/Flux_RoeEntropyCorrection.h
 ${Physics_H_PATH}/Jacobian.h
 ${Physics_H_PATH}/Gradient.h
+${Physics_H_PATH}/MatrixLUSGS.h
 )
 source_group(Physics\\include FILES ${Physics_H_LIST}) 
 include_directories(${Physics_H_PATH})
@@ -395,6 +397,7 @@ set(Physics_CPP_PATH Physics/src)
 set(Physics_CPP_LIST
 ${Physics_CPP_PATH}/Zone.cpp
 ${Physics_CPP_PATH}/Force.cpp
+${Physics_CPP_PATH}/AleForceManager.cpp
 ${Physics_CPP_PATH}/AleModel.cpp
 ${Physics_CPP_PATH}/AleManager.cpp
 ${Physics_CPP_PATH}/MovingMesh.cpp
@@ -420,6 +423,7 @@ ${Physics_CPP_PATH}/Flux_RoeEntropyCorrection.cpp
 ${Physics_CPP_PATH}/Jacobian.cpp
 ${Physics_CPP_PATH}/Gradient.cpp
 ${Physics_CPP_PATH}/Gas.cpp
+${Physics_CPP_PATH}/MatrixLUSGS.cpp
 )
 source_group(Physics\\src FILES ${Physics_CPP_LIST})
 
@@ -437,14 +441,12 @@ ${PreProcess_H_PATH}/Pre_CGNSToPHengLEI_Struct.h
 ${PreProcess_H_PATH}/Pre_Plot3DToPHengLEI_Struct.h
 ${PreProcess_H_PATH}/Pre_FluentToPHengLEI_Unstruct.h
 ${PreProcess_H_PATH}/Pre_HDF5File.h
-${PreProcess_H_PATH}/WallDist.h
 ${PreProcess_H_PATH}/Pre_GridMirror.h
-${PreProcess_H_PATH}/Pre_GridRefine.h
-${PreProcess_H_PATH}/Pre_StrGridPartition.h
+${PreProcess_H_PATH}/Pre_StructGridPartition.h
 ${PreProcess_H_PATH}/Pre_StructToUnstruct.h
-${PreProcess_H_PATH}/GridTranslator.h
-${PreProcess_H_PATH}/CombinGrid.h
-${PreProcess_H_PATH}/GridBase.h
+${PreProcess_H_PATH}/Pre_GridTranslator.h
+${PreProcess_H_PATH}/Pre_GridCombine.h
+${PreProcess_H_PATH}/Pre_GridBase.h
 ${PreProcess_H_PATH}/MixGrid.h
 ${PreProcess_H_PATH}/Pre_Reorder.h
 )
@@ -464,14 +466,12 @@ ${PreProcess_CPP_PATH}/Pre_CGNSToPHengLEI_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_Plot3DToPHengLEI_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_FluentToPHengLEI_Unstruct.cpp
 ${PreProcess_CPP_PATH}/Pre_HDF5File.cpp
-${PreProcess_CPP_PATH}/WallDist.cpp
 ${PreProcess_CPP_PATH}/Pre_GridMirror.cpp
-${PreProcess_CPP_PATH}/Pre_GridRefine.cpp
-${PreProcess_CPP_PATH}/Pre_StrGridPartition.cpp
+${PreProcess_CPP_PATH}/Pre_StructGridPartition.cpp
 ${PreProcess_CPP_PATH}/Pre_StructToUnstruct.cpp
-${PreProcess_CPP_PATH}/GridTranslator.cpp
-${PreProcess_CPP_PATH}/CombinGrid.cpp
-${PreProcess_CPP_PATH}/GridBase.cpp
+${PreProcess_CPP_PATH}/Pre_GridTranslator.cpp
+${PreProcess_CPP_PATH}/Pre_GridCombine.cpp
+${PreProcess_CPP_PATH}/Pre_GridBase.cpp
 ${PreProcess_CPP_PATH}/MixGrid.cpp
 ${PreProcess_CPP_PATH}/Pre_Reorder.cpp
 )
@@ -486,6 +486,7 @@ ${PostProcess_H_PATH}/Post_ForceMoment.h
 ${PostProcess_H_PATH}/PostProcess.h
 ${PostProcess_H_PATH}/IO_FlowReader.h
 ${PostProcess_H_PATH}/ForceProcessStruct.h
+${PostProcess_H_PATH}/ForceProcessUnstruct.h
 ${PostProcess_H_PATH}/PostProcessData.h
 ${PostProcess_H_PATH}/Post_Probes.h
 ${PostProcess_H_PATH}/Post_ProbesWrite.h
@@ -501,6 +502,7 @@ ${PostProcess_CPP_PATH}/Post_ForceMoment.cpp
 ${PostProcess_CPP_PATH}/PostProcess.cpp
 ${PostProcess_CPP_PATH}/IO_FlowReader.cpp
 ${PostProcess_CPP_PATH}/ForceProcessStruct.cpp
+${PostProcess_CPP_PATH}/ForceProcessUnstruct.cpp
 ${PostProcess_CPP_PATH}/PostProcessData.cpp
 ${PostProcess_CPP_PATH}/Post_Probes.cpp
 ${PostProcess_CPP_PATH}/Post_ProbesWrite.cpp
@@ -555,6 +557,25 @@ ${PreProcess_CPP_LIST}
 ${PostProcess_CPP_LIST}
 ${Common_CPP_LIST}
 )
+
+
+# set directory of MultiSpeciesGas.
+set(MultiSpecies_H_PATH MultiSpecies/include)
+set(MultiSpecies_H_LIST
+${MultiSpecies_H_PATH}/ChemModel.h
+${MultiSpecies_H_PATH}/MixedGas.h
+)
+source_group(MultiSpecies\\include FILES ${MultiSpecies_H_LIST}) 
+include_directories(${MultiSpecies_H_PATH})
+
+set(MultiSpecies_CPP_PATH MultiSpecies/src)
+set(MultiSpecies_CPP_LIST
+${MultiSpecies_CPP_PATH}/ChemModel.cpp
+${MultiSpecies_CPP_PATH}/MixedGas.cpp
+)
+source_group(MultiSpecies\\src FILES ${MultiSpecies_CPP_LIST})
+list(APPEND API_HEAD_LIST ${MultiSpecies_H_LIST})
+list(APPEND API_CPP_LIST ${MultiSpecies_CPP_LIST})
 
 
 #21. adds flags to the compiler command line for sources in the current directory and below:
@@ -634,11 +655,12 @@ target_link_libraries(${API_TARGET_NAME} ${LINK_LIBRARY_LIST})
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 # For OpenMP
-find_package ( OpenMP )
-if ( OpenMP_FOUND )
+if(USE_OMP)
+find_package (OpenMP)
+if (OpenMP_FOUND)
 
 if(WIN32)
-target_include_directories ( ${API_TARGET_NAME}
+target_include_directories (${API_TARGET_NAME}
   PRIVATE
     ${OpenMP_CXX_INCLUDE_DIRS}
 )
@@ -648,12 +670,12 @@ target_compile_options (${API_TARGET_NAME}
     ${OpenMP_CXX_FLAGS}
 )
 
-target_compile_features ( ${API_TARGET_NAME}
+target_compile_features (${API_TARGET_NAME}
   PUBLIC 
     cxx_std_14
 )
 
-target_link_libraries ( ${API_TARGET_NAME}
+target_link_libraries (${API_TARGET_NAME}
   PRIVATE 
     ${OpenMP_CXX_LIBRARIES}
 )
@@ -663,6 +685,7 @@ else(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(WIN32)
 endif (OpenMP_FOUND)
+endif (USE_OMP)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")

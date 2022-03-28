@@ -62,6 +62,8 @@ private:
     bool JudgeIfRestart();
     bool JudgeIfReadAverage();
 
+    bool JudgeIfProtectedRestart();
+
     void InitFlowAsRestart();
     void InitGrad(Grid *gridIn);
     void InitCGrid(Grid *fineGridIn, Grid *coarseGridIn);
@@ -101,7 +103,7 @@ private:
 
     //! Compute the chemical source terms.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    void ChemicalSource(Grid *gridIn);    //! Source.
+    void ChemicalSource(Grid *gridIn);  //! Source.
     //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
     void ComputeFirstLayerGridHeight(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
@@ -145,6 +147,7 @@ private:
     //! @param[out]: inviscidFaceProxy is an array that stores the primitive variables of grid faces.
     //! @param[in ]: iSurface denotes the direction index of the grid faces, where 1 indicates the I-direction, 2 for J-direction, and 3 is K-direction.
     void CorrectFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
+    void CorrectFaceVarR(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
     void CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
 
     void GetInvFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
@@ -158,6 +161,7 @@ private:
 
     void RegisterCFDSolverInterfaceField();
     void RegisterCFDSolverOversetField();
+    void ReleaseCFDSolverInterfaceField();
     void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     void RotateVectorFromInterface(Grid *grid, const int &neighborZoneIndex, const int &neqn);
@@ -183,8 +187,21 @@ private:
     void prolhic_eric(Grid *fineGridIn, Grid *coarseGridIn, FieldProxy *workProxy);
     void PositiveUpdate(Grid *grid, FieldProxy *qProxy, FieldProxy *dqProxy);
 
-    void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+
+
+	//! To execute the forward sweep of the Matrix LU-SGS method.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
+    void SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    //! To execute the backward sweep of the Matix LU-SGS method.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
+    void SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+
+    //! To determine the CFL number of the next iteration step.
+    void DetermineCFLNumber(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqProxy1);
 
 
     void SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq);
@@ -200,13 +217,16 @@ private:
     void SymmetryBC3D(Grid *gridIn, StructBC *structBC);
     void SingularAxisBC3D(Grid *gridIn, StructBC *structBC);
     void SingularAxisFullPlaneBC3D(Grid *gridIn, StructBC *structBC);
-    void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC);
+    void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC, RDouble refGama);
     void PreconFarfieldBC(Grid *gridIn, StructBC *structBC);
     void InFlowBC3D(Grid *gridIn, StructBC *structBC);
     void OutFlowBC3D(Grid *gridIn, StructBC *structBC);
     void PressureInletBCRiemann(Grid *gridIn, StructBC *structBC);
     void PressureOutletBC(Grid *gridIn, StructBC *structBC);
-    
+
+    //! Get the primitiveVar of Inflow BC by Interrpolate from trajectory data.
+    void SetBCInitialValuesByInterpolation(StructBC *structBC, RDouble *primitiveVar);
+
     //! Mass flow in boundary condition.
     void MassFlowInletBC(Grid *gridIn, StructBC *structBC);
 
@@ -248,12 +268,45 @@ private:
 
     void DumpRestartH5(ActionKey *actkey);
     void ReadRestartH5(ActionKey *actkey);
+    void ReadRestartFlowH5(ActionKey *actkey);
 
     void AirForceCoef(ActionKey *actkey);
 
+    //! Set the temperatures using the variables reading from the previous file.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[in ]: nChemical denotes the flow type of the previous computation.
+    //! @param[in ]: nTemperatureModel denotes the temperature type of the previous computation.
+    //! @param[in ]: primTemperature denotes the temperatures of the previous computation.
+    void SetFlowfieldTemperature(Grid *grid, int nChemical, int nTemperatureModel, RDouble4D *primTemperature);
+
+    //! Set the primitive variables using the variables reading from the previous file.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[in ]: nChemical denotes the flow type of the previous computation.
+    //! @param[in ]: nTemperatureModel denotes the temperature type of the previous computation.
+    //! @param[in ]: numberOfSpecies denotes the species number of the previous computation.
+    //! @param[in ]: speciesOrder denotes the species order of the previous computation.
+    //! @param[in ]: primVariables denotes the primitive variables of the previous computation.
+    void SetPrimitiveVariables(Grid *grid, int nChemical, int nTemperatureModel, int numberOfSpecies, Int1D *speciesOrder, RDouble4D *primVariables);
+
+    //! Set the surface mass fractions using the variables reading from the previous file.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[in ]: nChemical denotes the flow type of the previous computation.
+    //! @param[in ]: numberOfSpecies denotes the species number of the previous computation.
+    //! @param[in ]: speciesOrder denotes the species order of the previous computation.
+    //! @param[in ]: primMassFractions denotes the surface mass fractions of the previous computation.
+    void SetSurfaceMassFractions(Grid *grid, int nChemical, int numberOfSpecies, Int1D *speciesOrder, RDouble3D *primMassFractions);
+
+    //! Set the surface slip variables using the variables reading from the previous file.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[in ]: nChemical denotes the flow type of the previous computation.
+    //! @param[in ]: numberOfSpecies denotes the species number of the previous computation.
+    //! @param[in ]: speciesOrder denotes the species order of the previous computation.
+    //! @param[in ]: primSlipVar denotes the surface slip variables of the previous computation.
+    void SetSurfaceSlipVariables(Grid *grid, int nChemical, int numberOfSpecies, Int1D *speciesOrder, RDouble3D *primSlipVar);
+
 private:
     void AirForceCoefParts(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
-    void AirForceCoefComponents(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
+    void AirForceCoefBodies(ActionKey *actkey);
     
     //! Write the variables of Cp, Cf, Qw, y+ etc. on surface to the file.
     void CpDistriCoef(ActionKey *actkey);
@@ -261,6 +314,9 @@ private:
     //! To write variables on surface such as p, rho, T etc. to the file. added by Li Peng on Mar.5, 2019.
     //! Add this function in order to verify the chemical codes and the related algorithm of computing thermal distribution.
     void ExportSurfaceVariables(ActionKey *actkey);
+
+    //! Compute the surface heating change and obtain the maximum change of the surface heating ratio.
+    void GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange);
 
     //! Write the surface information to the file.
     void WriteSurfaceInfo(ActionKey *actkey);
@@ -270,11 +326,19 @@ private:
                         RDouble4D &xvn, RDouble4D &yvn, RDouble4D &zvn, RDouble3D &vol, RDouble &dvdx, RDouble &dvdy, RDouble &dvdz);
     
     void GetResidual(ActionKey *actkey);
+    void GetResidual(ActionKey *actkey, RDouble &localMaxRes);
+    void GetResidual(Grid *gridIn, RDouble &localMaxRes);
+
+    //! Obtain the CFL number.
+    void ObtainCFLNumber(Grid *gridIn, RDouble &globalMinCFL, RDouble &globalMaxCFL);
 
     void VisualizationAverageFlow(ActionKey *actkey);
 
+    void ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux);
+
 public:
     RDouble4D *CompMachNumber(Grid *gridIn);
+    RDouble4D *CompMachNodeNumber(Grid* gridIn, Post_Visual *postVisualization);
     RDouble4D *ComputeMachNumberField(Grid *gridIn);
 
     void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble3D *&vorticity_x, RDouble3D *&vorticity_y, RDouble3D *&vorticity_z, RDouble3D *&vorticityMagnitude,  RDouble3D *&strain_rate, RDouble3D *&Q_criteria);
@@ -306,10 +370,10 @@ public:
     //! Create and init control parameters.
     LIB_EXPORT void InitControlParameters();
 
-    //! Get controlParamters( a Para_NSSolver type pointer).
+    //! Get controlParamters(a Para_NSSolver type pointer).
     LIB_EXPORT Param_NSSolverStruct *GetControlParameters() const;
 
-    void Monitor(Grid *gridIn);
+    void Monitor(Grid *gridIn, RDouble4D *dq=NULL);
 };
 
     bool iterijk(int &i, int &j, int &k, int ist, int ied, int jst, int jed, int kst, int ked);

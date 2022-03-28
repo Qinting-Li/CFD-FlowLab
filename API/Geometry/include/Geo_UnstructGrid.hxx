@@ -1,9 +1,9 @@
-inline void UnstructGrid::SetLeftCellOfFace(int *left_cell_of_face_in) 
-{ 
+inline void UnstructGrid::SetLeftCellOfFace(int *left_cell_of_face_in)
+{
     this->faceTopology->SetLeftCellOfFace(left_cell_of_face_in);
 }
 
-inline void UnstructGrid::SetRightCellOfFace(int *right_cell_of_face_in) 
+inline void UnstructGrid::SetRightCellOfFace(int *right_cell_of_face_in)
 {
     this->faceTopology->SetRightCellOfFace(right_cell_of_face_in);
 }
@@ -22,8 +22,8 @@ inline void UnstructGrid::SetFace2NodeSubscript(int *face2nodeSubscript)
     this->faceTopology->SetFace2NodeSubscript(face2nodeSubscript);
 }
 
-inline void UnstructGrid::SetCell2CoarseGridCell(int *cell2coarsegridcell) 
-{ 
+inline void UnstructGrid::SetCell2CoarseGridCell(int *cell2coarsegridcell)
+{
     this->cell2coarsegridcell = cell2coarsegridcell;
 }
 
@@ -32,193 +32,188 @@ inline void UnstructGrid::SetLI_nLine(int nLine)
     this->lineTopology->SetLI_nLine(nLine);
 }
 
-inline void UnstructGrid::SetLI_nCellsInLine(int* nCellsInLines)
+inline void UnstructGrid::SetLI_nCellsInLine(int *nCellsInLines)
 {
     this->lineTopology->SetLI_nCellsInLine(nCellsInLines);
 }
 
-inline void UnstructGrid::SetLI_CellOfLine(int** CellOfLine)
+inline void UnstructGrid::SetLI_CellOfLine(int **CellOfLine)
 {
     this->lineTopology->SetLI_CellOfLine(CellOfLine);
 }
 
-inline void UnstructGrid::SetLI_FaceOfLine(int** FaceOfLine)
+inline void UnstructGrid::SetLI_FaceOfLine(int **FaceOfLine)
 {
     this->lineTopology->SetLI_FaceOfLine(FaceOfLine);
 }
 
-inline void UnstructGrid::SetLI_LineOfCell(int* LineOfCell) 
+inline void UnstructGrid::SetLI_LineOfCell(int *LineOfCell)
 {
     this->lineTopology->SetLI_LineOfCell(LineOfCell);
 }
 
-inline void UnstructGrid::Setfc2cL(int *fc2cL) 
-{ 
-    this->fc2cL = fc2cL; 
+inline void UnstructGrid::Setfc2cL(int *fc2cL)
+{
+    this->fc2cL = fc2cL;
 }
 
-inline void UnstructGrid::Setfc2cR(int *fc2cR) 
-{ 
+inline void UnstructGrid::Setfc2cR(int *fc2cR)
+{
     this->fc2cR = fc2cR;
 }
 
-inline void UnstructGrid::SetBCRecord(CompositeUnstructBC **bcr) 
+inline void UnstructGrid::SetBCRecord(UnstructBCSet **bcr)
 {
-    this->bcr = bcr; 
+    this->bcr = bcr;
 }
 
-inline void UnstructGrid::SetBCRegionUnstruct(UnstructBC **bcRegionUnStruct) 
+inline void UnstructGrid::SetUnstructBCSet(UnstructBCSet *unstructBCSet)
 {
-    this->bcRegionUnstruct = bcRegionUnstruct; 
+    this->unstructBCSet = unstructBCSet;
 }
 
-inline void UnstructGrid::SetNBCRegionUnstruct(int nBCRegionUnstruct) 
+inline void UnstructGrid::SetBlankIndex(int *iBlank)
 {
-    this->nBCRegionUnstruct = nBCRegionUnstruct; 
-}
-
-inline void UnstructGrid::SetBlankIndex(int *iBlank) 
-{
-    this->iBlank = iBlank; 
+    this->iBlank = iBlank;
 }
 
 inline void UnstructGrid::SetZoneProbesCellID(vector <int> zoneProbesCellID)
 {
-    this->zoneProbesCellID = zoneProbesCellID; 
+    this->zoneProbesCellID = zoneProbesCellID;
 }
 
-inline int * UnstructGrid::GetLeftCellOfFace() const 
-{ 
+inline int *UnstructGrid::GetLeftCellOfFace() const
+{
     return this->faceTopology->GetLeftCellOfFace();
 }
 
-inline int * UnstructGrid::GetRightCellOfFace() const
-{ 
+inline int *UnstructGrid::GetRightCellOfFace() const
+{
     return this->faceTopology->GetRightCellOfFace();
 }
 
-inline int * UnstructGrid::GetNodeNumberOfEachFace() const
+inline int *UnstructGrid::GetNodeNumberOfEachFace() const
 {
     return this->faceTopology->GetNodeNumberOfEachFace();
 }
 
-inline int * UnstructGrid::GetFace2Node() const
+inline int *UnstructGrid::GetFace2Node() const
 {
     return this->faceTopology->GetFace2Node();
 }
 
-inline RDouble * UnstructGrid::GetFaceCenterX() const
+inline RDouble *UnstructGrid::GetFaceCenterX() const
 {
     return this->faceMetrics->GetFaceCenterX();
 }
 
-inline RDouble * UnstructGrid::GetFaceCenterY() const
+inline RDouble *UnstructGrid::GetFaceCenterY() const
 {
     return this->faceMetrics->GetFaceCenterY();
 }
 
-inline RDouble * UnstructGrid::GetFaceCenterZ() const
+inline RDouble *UnstructGrid::GetFaceCenterZ() const
 {
     return this->faceMetrics->GetFaceCenterZ();
 }
 
-inline RDouble * UnstructGrid::GetFaceNormalX() const
+inline RDouble *UnstructGrid::GetFaceNormalX() const
 {
     return this->faceMetrics->GetFaceNormalX();
 }
 
-inline RDouble * UnstructGrid::GetFaceNormalY() const
+inline RDouble *UnstructGrid::GetFaceNormalY() const
 {
     return this->faceMetrics->GetFaceNormalY();
 }
 
-inline RDouble * UnstructGrid::GetFaceNormalZ() const
+inline RDouble *UnstructGrid::GetFaceNormalZ() const
 {
     return this->faceMetrics->GetFaceNormalZ();
 }
 
-inline RDouble * UnstructGrid::GetFaceArea() const
+inline RDouble *UnstructGrid::GetFaceArea() const
 {
     return this->faceMetrics->GetFaceArea();
 }
 
-inline RDouble * UnstructGrid::GetCellCenterX() const
+inline RDouble *UnstructGrid::GetCellCenterX() const
 {
     return cellMetrics->GetCellCenterX();
 }
 
-inline RDouble * UnstructGrid::GetCellCenterY() const 
+inline RDouble *UnstructGrid::GetCellCenterY() const
 {
     return cellMetrics->GetCellCenterY();
 }
 
-inline RDouble * UnstructGrid::GetCellCenterZ() const 
+inline RDouble *UnstructGrid::GetCellCenterZ() const
 {
     return cellMetrics->GetCellCenterZ();
 }
 
-inline RDouble * UnstructGrid::GetCellVolume()  const
+inline RDouble *UnstructGrid::GetCellVolume()  const
 {
     return cellMetrics->GetCellVolume();
 }
 
-inline RDouble * UnstructGrid::GetFaceVelocityX() const
-{ 
+inline RDouble *UnstructGrid::GetFaceVelocityX() const
+{
     return dynamicGridMetrics->GetFaceVelocityX();
 }
 
-inline RDouble * UnstructGrid::GetFaceVelocityY() const
+inline RDouble *UnstructGrid::GetFaceVelocityY() const
 {
     return dynamicGridMetrics->GetFaceVelocityY();
 }
 
-inline RDouble * UnstructGrid::GetFaceVelocityZ() const
+inline RDouble *UnstructGrid::GetFaceVelocityZ() const
 {
     return dynamicGridMetrics->GetFaceVelocityZ();
 }
 
-inline RDouble * UnstructGrid::GetFaceNormalVelocity() const 
+inline RDouble *UnstructGrid::GetFaceNormalVelocity() const
 {
     return dynamicGridMetrics->GetFaceNormalVelocity();
 }
 
-inline RDouble * UnstructGrid::GetCellVolumeOld()  const
+inline RDouble *UnstructGrid::GetCellVolumeOld()  const
 {
     return dynamicGridMetrics->GetCellVolumeOld();
 }
 
 
-inline RDouble * UnstructGrid::GetLeastSquareIWT() const
+inline RDouble *UnstructGrid::GetLeastSquareIWT() const
 {
     return leastSquareWeights->GetLeastSquareIWT();
 }
 
-inline RDouble * UnstructGrid::GetLeastSquareIXX() const
+inline RDouble *UnstructGrid::GetLeastSquareIXX() const
 {
     return leastSquareWeights->GetLeastSquareIXX();
 }
 
-inline RDouble * UnstructGrid::GetLeastSquareIYY() const
+inline RDouble *UnstructGrid::GetLeastSquareIYY() const
 {
     return leastSquareWeights->GetLeastSquareIYY();
 }
 
-inline RDouble * UnstructGrid::GetLeastSquareIZZ() const
+inline RDouble *UnstructGrid::GetLeastSquareIZZ() const
 {
     return leastSquareWeights->GetLeastSquareIZZ();
 }
 
-inline RDouble * UnstructGrid::GetLeastSquareIXY() const
+inline RDouble *UnstructGrid::GetLeastSquareIXY() const
 {
     return leastSquareWeights->GetLeastSquareIXY();
 }
 
-inline RDouble * UnstructGrid::GetLeastSquareIXZ() const
+inline RDouble *UnstructGrid::GetLeastSquareIXZ() const
 {
     return leastSquareWeights->GetLeastSquareIXZ();
 }
 
-inline RDouble * UnstructGrid::GetLeastSquareIYZ() const
+inline RDouble *UnstructGrid::GetLeastSquareIYZ() const
 {
     return leastSquareWeights->GetLeastSquareIYZ();
 }
@@ -263,100 +258,115 @@ inline void UnstructGrid::SetFaceMark(char *fMark)
     leastSquareWeights->SetFaceMark(fMark);
 }
 
-inline char * UnstructGrid::GetFaceMark() const
+inline char *UnstructGrid::GetFaceMark() const
 {
     return leastSquareWeights->GetFaceMark();
 }
 
-inline int * UnstructGrid::GetCell2CoarseGridCell(void) const 
+inline int *UnstructGrid::GetCell2CoarseGridCell(void) const
 {
     return cell2coarsegridcell;
 }
 
-inline int * UnstructGrid::Getfc2cL(void) const 
-{ 
+inline int *UnstructGrid::Getfc2cL(void) const
+{
     return fc2cL;
 }
 
-inline int * UnstructGrid::Getfc2cR(void) const
+inline int *UnstructGrid::Getfc2cR(void) const
 {
     return fc2cR;
 }
 
-inline CompositeUnstructBC ** UnstructGrid::GetBCRecord(void) const 
+inline UnstructBCSet **UnstructGrid::GetBCRecord(void) const
 {
-    return bcr; 
+    return bcr;
 }
 
-inline RDouble * UnstructGrid::GetNormalDistanceOfC2C(void) const
+inline UnstructBCSet * UnstructGrid::GetUnstructBCSet(void) const
+{
+    return unstructBCSet;
+}
+
+inline void UnstructGrid::CreateUnstructBCSet(int nBCRegion)
+{
+    if (!unstructBCSet)
+    {
+        unstructBCSet = new UnstructBCSet(this->GetZoneID());
+    }
+
+    unstructBCSet->CreatenBCRegion(nBCRegion);
+}
+
+inline RDouble *UnstructGrid::GetNormalDistanceOfC2C(void) const
 {
     return normalDistanceC2C;
 }
 
-inline int UnstructGrid::GetNBCRegionUnstruct(void) const 
+inline int *UnstructGrid::GetBlankIndex(void) const
 {
-    return nBCRegionUnstruct; 
+    return iBlank;
 }
 
-inline int * UnstructGrid::GetBlankIndex(void) const 
+inline vector <int> UnstructGrid::GetZoneProbesCellID() const
 {
-    return iBlank; 
+    return zoneProbesCellID;
 }
 
-inline vector <int> UnstructGrid::GetZoneProbesCellID() const 
-{
-    return zoneProbesCellID; 
-}
-
-inline RDouble * UnstructGrid::GetWallDist() const
+inline RDouble *UnstructGrid::GetWallDist() const
 {
     return walldist;
 }
 
-inline RDouble * UnstructGrid::GetLamdax() const 
+inline RDouble* UnstructGrid::GetWallDistNode() const
+{
+    return walldistNode;
+}
+
+inline RDouble *UnstructGrid::GetLamdax() const
 {
     return lamdax;
 }
 
-inline RDouble * UnstructGrid::GetLamday() const
+inline RDouble *UnstructGrid::GetLamday() const
 {
     return lamday;
 }
 
-inline RDouble * UnstructGrid::GetLamdaz() const
+inline RDouble *UnstructGrid::GetLamdaz() const
 {
     return lamdaz;
 }
 
-inline int * UnstructGrid::Getknode() const 
+inline int *UnstructGrid::Getknode() const
 {
     return knode;
-} 
+}
 
 //! Set the cell to node: node index of each cell.
-inline void UnstructGrid::SetCell2Node(int * cell2node)
+inline void UnstructGrid::SetCell2Node(int *cell2node)
 {
     cellTopology->SetCell2Node(cell2node);
 }
 
-inline map<int,int> & UnstructGrid::GetBoundaryPointLabel()
+inline map<int, int> &UnstructGrid::GetBoundaryPointLabel()
 {
     return boundaryPointLabel;
 }
 
 //! Set the number of nodes in each cell.
-inline void UnstructGrid::SetNodeNumberOfEachCell(int * node_number_of_each_cell)
+inline void UnstructGrid::SetNodeNumberOfEachCell(int *node_number_of_each_cell)
 {
     cellTopology->SetNodeNumberOfEachCell(node_number_of_each_cell);
 }
 
 //! Set the number of nodes in each cell.
-inline int * UnstructGrid::GetNodeNumberOfEachCell() const
+inline int *UnstructGrid::GetNodeNumberOfEachCell() const
 {
-    cellTopology->GetNodeNumberOfEachCell();
+    return cellTopology->GetNodeNumberOfEachCell();
 }
 
-inline void UnstructGrid::SetOversetConfig( OversetConfig * oversetConfigIn )
+inline void UnstructGrid::SetOversetConfig(OversetConfig *oversetConfigIn)
 {
     this->oversetConfig = oversetConfigIn;
 }
@@ -366,35 +376,25 @@ inline void UnstructGrid::SetAverageVolume(RDouble rIn)
     averageVolume = rIn;
 }
 
-inline int UnstructGrid::GetLI_nLine() const 
+inline int UnstructGrid::GetLI_nLine() const
 {
     return this->lineTopology->GetLI_nLine();
 }
-inline int* UnstructGrid::GetLI_nCellsInLine() const
+inline int *UnstructGrid::GetLI_nCellsInLine() const
 {
     return this->lineTopology->GetLI_nCellsInLine();
 }
-inline int** UnstructGrid::GetLI_CellOfLine() const
+inline int **UnstructGrid::GetLI_CellOfLine() const
 {
     return this->lineTopology->GetLI_CellOfLine();
 }
-inline int** UnstructGrid::GetLI_FaceOfLine() const
+inline int **UnstructGrid::GetLI_FaceOfLine() const
 {
     return this->lineTopology->GetLI_FaceOfLine();
 }
-inline int* UnstructGrid::GetLI_LineOfCell() const
+inline int *UnstructGrid::GetLI_LineOfCell() const
 {
     return this->lineTopology->GetLI_LineOfCell();
 }
-#ifdef USE_IncompressibleSolver
-inline Vector3D * UnstructGrid::GetCellCenterVector() const
-{
-    return cellCenterVector;
-}
 
-inline Vector3D * UnstructGrid::GetFaceNormalVector() const
-{
-    return faceNormalVector;
-}
-#endif
 

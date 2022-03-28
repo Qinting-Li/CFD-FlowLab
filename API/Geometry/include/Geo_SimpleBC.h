@@ -16,6 +16,7 @@
 
 #pragma once
 #include "TypeDefine.h"
+#include "Constants.h"
 #include "Data_Param.h"
 #include "Data_Field.h"
 using namespace std;
@@ -92,6 +93,19 @@ namespace PHENGLEI
     const int OVERSET               = 1000;
 }
 
+namespace INIFLOW_SPACE
+{
+    const int RECTANGLE             = 0;
+    const int SPHERE                = 1;
+    const int CYLINDER              = 2;
+    const int CONE                  = 3;
+
+    const int CUSTOM_ANGLE           = 0;
+    const int CUSTOM_VECTOR          = 1;
+}
+
+
+
 namespace GRIDGEN_SPACE
 {
     const int INTERFACE             = -1;
@@ -144,14 +158,17 @@ namespace FLUENT_SPACE
     const int AXIS               = 37;
 }
 
+//! @brief A boundary condition base class, StructBC and UnstructBC inheriting from it.
 class SimpleBC
 {
 public:
     SimpleBC()
     {
         bcName = "";
+        bodyName = "";
         bcType = 0;
-        bcParamDataBase = 0;
+
+        bcParamDataBase = new Data_Param();
         bcFieldDataBase = new Data_Field();
     }
 
@@ -162,45 +179,74 @@ public:
     }
 
 private:
+    //! Boundary name of BC;
     string bcName;
+
+    string bodyName;
+
+    //! Boundary type value of BC;
     int bcType;
+
+    //! BC control parameters.
     Data_Param *bcParamDataBase;
+
+    //! BC data pointers.
     Data_Field *bcFieldDataBase;
 
 public:
-    //! Get boundary conditions type.
     const string & GetBCName() const { return this->bcName; }
-    int GetBCType() const { return this->bcType; }
-    Data_Param * GetBCParamDataBase();
 
-    void GetData(const string &name, void *data, int type, int size) 
+    const string & GetBodyName()
+    { 
+        //string *bodyName = new string;
+        if (bcParamDataBase->IsExist("bodyName", PHSTRING, 1))
+        {
+            bcParamDataBase->GetData("bodyName", &bodyName, PHSTRING, 1);
+        }
+        return bodyName; 
+    }
+
+    //! Get boundary conditions type.
+    int GetBCType() const { return this->bcType; }
+
+    Data_Param * GetBCParamDataBase();
+    Data_Field * GetBCFieldDataBase();
+
+    void SetBCName(const string &bcName) { this->bcName = bcName; }
+    void SetBodyName(const string &bodyName) { this->bodyName = bodyName; }
+    void SetBCType(int bcType) { this->bcType = bcType; }
+    void SetBCParamDataBase(Data_Param *paraDB)  { this->bcParamDataBase = paraDB; }
+    void SetBCFieldDataBase(Data_Field *fieldDB) { this->bcFieldDataBase = fieldDB; }
+
+    void UpdateParamData(const string &name, void *data, int type, int size) 
+    {
+        bcParamDataBase->UpdateData(name, data, type, size);
+    }
+
+    void GetParamData(const string &name, void *data, int type, int size) 
     {
         bcParamDataBase->GetData(name, data, type, size);
     }
 
-    int CheckData(const string &name)
+    int CheckParamData(const string &name)
     {
         return bcParamDataBase->CheckDataExist(name);
     }
 
-    void UpdateDataPtr(const string &name, void *data)
+    void UpdateFieldDataPtr(const string &name, void *data)
     {
         bcFieldDataBase->UpdateDataPtr(name, data);
     };
 
-    void *GetDataPtr(const string &name) const
+    void * GetFieldDataPtr(const string &name) const
     {
         return bcFieldDataBase->GetDataPtr(name);
     };
 
-    int CheckFieldDataExist(const string &name)
+    int CheckFieldData(const string &name)
     {
         return bcFieldDataBase->CheckDataExist(name);
     }
-
-    void SetBCName(const string &bcName) { this->bcName = bcName; }
-    void SetBCType(int bcType) { this->bcType = bcType; }
-    void SetBCParamDataBase(Data_Param *paraDB) { this->bcParamDataBase = paraDB; }
 };
 
 //! @brief Global boundary conditions, all of the global boundary conditions are stored here.
@@ -218,7 +264,7 @@ private:
 
 public:
     //! Get number of total BC.
-    static uint_t GetNumberofBC()
+    static uint_t GetNumberOfBC()
     {
         if (!globalBCList)
             return 0;
@@ -248,19 +294,21 @@ public:
         return (*globalBCList)[iBC]->GetBCName();
     }
 
-    static set < string > * GetBodyNameList() { return bodyList; }
+    static set <string> * GetBodyNameList() { return bodyList; }
 
     //! Get number of BC with solid_wall BC type.
-    static int GetNumberofSolidWallPart();
+    static int GetNumberOfSolidWallPart();
 
     //! Is solid wall.
     static bool IsSolidWallBC(const int &partID)
-    { return ((*globalBCList)[partID]->GetBCType() == PHENGLEI::SOLID_SURFACE /*|| PHENGLEI::ABLATION_SURFACE*/); }
+    {
+        return ((*globalBCList)[partID]->GetBCType() == PHENGLEI::SOLID_SURFACE /*|| PHENGLEI::ABLATION_SURFACE*/);
+    }
 
-    static SimpleBC * GetBC(const int &iBC) { return (*globalBCList)[iBC]; }
+    static SimpleBC *GetBC(const int &iBC) { return (*globalBCList)[iBC]; }
 
     //! Get global boundary conditions list.
-    static vector<SimpleBC *> * GetGlobalBoundaryConditionList() { return globalBCList; }
+    static vector<SimpleBC *> *GetGlobalBoundaryConditionList() { return globalBCList; }
 
     //! Read global boundary conditions.
     static void ReadGlobalBoundaryCondition();
@@ -279,9 +327,17 @@ public:
 
     static void SetBCInitialValuesByHeight(Data_Param *bcParamDB, RDouble *primitiveVar);
 
+    static void SetMaximumSpeciesForBC(Data_Param *bcParamDB);
+
+    static void SetSpeedDrictionForBC(Data_Param *bcParamDB, RDouble localNonDimensionalVelocity, RDouble *primitiveVar);
+
+    static void SetSpeedDrictionForReferenceVar(RDouble localNonDimensionalVelocity, RDouble *primitiveVar);
+
     static void SetBCInitialValuesByDensity(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
+
+    static void SetBCInitialValuesByTotalPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByMachNumberTemperaturePressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 

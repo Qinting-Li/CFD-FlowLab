@@ -13,17 +13,17 @@ Controller::Controller(int iSolver, Region *region)
     this->solverID = iSolver;
     this->region = region;
 
-    q_proxy = 0;
+    qProxy = 0;
 
     using namespace PHMPI;
 
     int nZones = GetNumberofGlobalZones();
 
-    rhs_proxy = new ZoneFieldProxy(iSolver, GetNumberOfMultiGrid(), nZones);
+    rhsProxy = new ZoneFieldProxy(iSolver, GetNumberOfMultiGrid(), nZones);
 
     if (GetNumberOfMultiGrid() > 1)
     {
-        q_proxy = new ZoneFieldProxy(iSolver, GetNumberOfMultiGrid(), nZones);
+        qProxy = new ZoneFieldProxy(iSolver, GetNumberOfMultiGrid(), nZones);
     }
 }
 
@@ -31,10 +31,10 @@ Controller::~Controller()
 {
     if (GetNumberOfMultiGrid() > 1)
     {
-        delete q_proxy;
+        delete qProxy;
     }
 
-    delete rhs_proxy;
+    delete rhsProxy;
 }
 
 LIB_EXPORT void Controller::InitCoarseGridsFlow(int iSolver, int level)
@@ -57,8 +57,8 @@ LIB_EXPORT void Controller::InitCoarseGridsFlow(int iSolver, int level)
         if (coarseGrid)
         {
             if (iSolver == TURB_SOLVER) continue;
+            
             CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-            //solver->InitCGrid(grid, coarseGrid);
             solver->ComputeGamaAndTemperature(coarseGrid);
             solver->Boundary(coarseGrid);
             solver->ComputeGamaAndTemperature(coarseGrid);
@@ -71,6 +71,11 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
+    int nProtectData = 0;
+    if(GlobalDataBase::IsExist("nProtectData", PHINT, 1))
+    {
+        nProtectData = GlobalDataBase::GetIntParaFromDB("nProtectData");
+    }
 
     int level = 0;
     //! First: Initialize memory.
@@ -102,7 +107,14 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
 
         PHSolver *solver = GetCFDSolver(zoneID, iSolver);
 
-        solver->InitFlow();
+        if (nProtectData == 0)
+        {
+            solver->InitFlow();
+        }
+        else
+        {
+            solver->InitProtectedFlow();
+        }
     }
 
     //! Third: Initialize flow variables on coarser grids, if multi-grid is used.
@@ -150,7 +162,57 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
         }
     }
 
-    ComputeNodeBCType();
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible)
+    {
+        ComputeNodeBCType();
+    }
+}
+
+void Controller::IncompressibleInitial(int iSolver)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int level = 0;
+    //! First: Initialize memory.
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone* zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        PHSolver* solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->IncompressibleInitial();
+    }
+}
+
+void Controller::CleanUp(int iSolver)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int level = 0;
+    //! First: Initialize memory.
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        PHSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->ReleaseMemory();
+    }
 }
 
 void Controller::ComputeNodeBCType()
@@ -238,7 +300,7 @@ void Controller::CommunicationNodeBCType()
                 int iPoint;
                 int globalPoint;
                 int BCType;
-                for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal )
+                for (int ipointLocal = 0; ipointLocal < numberOfInterpointsForNeighbor; ++ ipointLocal)
                 {
                     iPoint = pointIndexForSend[ipointLocal];
                     globalPoint = interPoint2GlobalPoint[iPoint];
@@ -287,6 +349,31 @@ void Controller::CommunicationNodeBCType()
     }
 }
 
+LIB_EXPORT void Controller::SolveIncomFlow()
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+    int iSolver = this->GetSolverIndex();
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+        
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->Solve();
+    }
+
+}
+
 LIB_EXPORT void Controller::SolveSteadyField()
 {
     int iSolver = this->GetSolverIndex();
@@ -318,6 +405,103 @@ LIB_EXPORT void Controller::SolveUnsteadyField()
 
         PHSolver *solver = GetCFDSolver(0, iSolver);
         solver->CommunicationInterpointData();
+    }
+}
+
+//! Incompressible flow
+void Controller::SolveIncompressibleSteadyField()
+{
+    using namespace PHMPI;
+
+    int iSolver = this->GetSolverIndex();
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, 0);
+
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+        const string solverName = solver->GetName();
+        if (solverName == toString(iSolver) + "_" + "FLOW")
+        {
+            this->SolveFlowField(zoneID);
+        }
+        else if (solverName == "TURB")
+        {
+            this->SolveTurbField(zoneID);
+        }
+        else if (solverName == "ENERGY")
+        {
+            this->SolveEnergyField(zoneID);
+        }
+    }
+}
+
+void Controller::InitResultFile(string &fileName)
+{
+    using namespace PHMPI;
+
+    int iSolver = this->GetSolverIndex();
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, 0);
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->InitIncompressibleResultFile(grid, fileName);
+    }
+}
+
+void Controller::DumpResultFile(string &fileName)
+{
+    using namespace PHMPI;
+
+    int iSolver = this->GetSolverIndex();
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, 0);
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->DumpIncompressibleResultFile(grid, fileName);
     }
 }
 
@@ -413,7 +597,7 @@ void Controller::MultiGrid(int iSolver, int level)
     //! Here, we just recover the initial value of res.
     RecoverResidual(iSolver, level);
 
-    //! Delete the temporary variables of rhs_proxy.
+    //! Delete the temporary variables of rhsProxy.
     DestroyRHSProxy(iSolver, level);
 }
 
@@ -437,6 +621,46 @@ void Controller::UpdateUnsteadyFlow(int iSolver, int level)
     }
 }
 
+void Controller::UpdateUnsteadyVariable(int iSolver, int level)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Zone *zone = GetZone(iZone);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(iZone, level);
+        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+
+        solver->UpdateUnsteadyVariable(grid);
+    }
+}
+
+void Controller::UpdateDt(int iSolver, int level)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Zone *zone = GetZone(iZone);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(iZone, level);
+        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+
+        solver->UpdateDt();
+    }
+}
+
 void Controller::Relaxation(int iSolver, int level)
 {
     using namespace PHSPACE;
@@ -446,29 +670,40 @@ void Controller::Relaxation(int iSolver, int level)
         PreSolveforStructHighOrder(iSolver, level);
     }
 
+    int isUseLocalCFL = 0;
+    if (GlobalDataBase::IsExist("isUseLocalCFL", PHINT, 1))
+    {
+        isUseLocalCFL = GlobalDataBase::GetIntParaFromDB("isUseLocalCFL");
+    }
+
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     if (tscheme == LU_SGS || level != 0)
     {
         //! LU-SGS implicit time integration method.
-        //if(!runOriginalSingleSweep)
+        LoadResiduals(iSolver, level);
+
+        UpdateResiduals(iSolver, level);
+
+        SpectrumRadius(iSolver, level);
+
+        TimeStep(iSolver, level);
+
+        if (isUseLocalCFL == 1)
         {
-            LoadResiduals(iSolver, level);
-
-            UpdateResiduals(iSolver, level);
-
-            SpectrumRadius(iSolver, level);
-
-            TimeStep(iSolver, level);
-
+            DualTimeStepsLUSGS(iSolver, level);
+        }
+        else
+        {
             LUSGS(iSolver, level);
         }
+       
     }
     else if (tscheme == MULTI_STAGE)
     {
         //! Explicit multi-stage time marching method.
         SetBoundaryValueOfField(iSolver, level);
 
-        // To obtain the viscous coff in spectrum radium term
+        //! To obtain the viscous coff in spectrum radium term
         ComputeViscousCoeff(iSolver, level);
 
         SpectrumRadius(iSolver, level);
@@ -500,10 +735,22 @@ void Controller::Relaxation(int iSolver, int level)
         TimeStep(iSolver, level);
 
         LineLUSGS(iSolver, level);
-    }   
+    }
+	else if (tscheme == Matrix_LU_SGS)
+    {
+        LoadResiduals(iSolver, level);
+
+        UpdateResiduals(iSolver, level);
+
+        SpectrumRadius(iSolver, level);
+
+        TimeStep(iSolver, level);
+
+        MatrixLUSGS(iSolver, level);
+    }
     else
     {
-        //! default
+        //! Default
         LoadResiduals(iSolver, level);
         
         UpdateResiduals(iSolver, level);
@@ -512,7 +759,14 @@ void Controller::Relaxation(int iSolver, int level)
         
         TimeStep(iSolver, level);
         
-        LUSGS(iSolver, level);
+        if (isUseLocalCFL == 1)
+        {
+            DualTimeStepsLUSGS(iSolver, level);
+        }
+        else
+        {
+            LUSGS(iSolver, level);
+        }
     }
 }
 
@@ -722,8 +976,8 @@ void Controller::UpdateResiduals(int iSolver, int level)
 
     if((systemGridType == MIXGRID && iSolver == NS_SOLVER && isFVMOrFDM == FV_METHOD) || (iSolver == NS_SOLVER && isFVMOrFDM == FD_METHOD && highordersolvername.substr(0, 4) == "HDCS"))
     {
-        //! ugly codes, modify later.
-        //! for mixgrid, more variables need communication for conservation.
+        //! Ugly codes, modify later.
+        //! For mixgrid, more variables need communication for conservation.
         //! InvscidFlux() and ViscousFlux() must be breaked into a lot of small functions.
         UpdateResidualsOnlyforMixGrid(iSolver, level);
         return;
@@ -871,13 +1125,14 @@ void Controller::LoadResiduals(int iSolver, int level)
         CFDSolver *solver = GetCFDSolver(zoneID,iSolver);
 
         solver->LoadResiduals(grid, rhsProxy[zoneID]);
-    }    
+    }
 }
 
 void Controller::PressureFactor(int iSolver, int level)
 {
     int nEntropyFixMethod = GlobalDataBase::GetIntParaFromDB("roeEntropyFixMethod");
-    if (NS_SOLVER != iSolver || nEntropyFixMethod != 2)
+
+    if (NS_SOLVER != iSolver || (nEntropyFixMethod != 2 && nEntropyFixMethod != 6))
     {
         return;
     }
@@ -905,44 +1160,6 @@ void Controller::PressureFactor(int iSolver, int level)
     }
 
     CommunicateSpecificArray(iSolver, level, "rtem", 0);
-}
-
-
-void Controller::ComputeHeatTransferCoeff(int iSolver, int level)
-{
-    if (NS_SOLVER != iSolver)
-    {
-        return;
-    }
-
-    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    if (viscousType == INVISCID || systemGridType != STRUCTGRID)
-    {
-        return;
-    }
-
-    using namespace PHMPI;
-    int nLocalZones = GetNumberofLocalZones();
-
-#ifdef USE_OMP
-#pragma omp parallel for
-#endif
-    for (int iZone = 0; iZone < nLocalZones; ++iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(zoneID, level);
-        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->GetHeatTransferCoeff(grid);
-    }
 }
 
 void Controller::ComputeGradient(int iSolver, int level)
@@ -982,7 +1199,7 @@ void Controller::ComputeGradient(int iSolver, int level)
             GlobalDataBase::GetData("sgsmodel", &sgsmodel, PHSTRING, 1);
             solver->ComputeGradientCellCenter(grid);
 
-            if(MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
+            if (MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
             {
                 solver->ComputeGradientCellCenterOfruvwptOnlyForMixGrid(grid);
             }
@@ -990,7 +1207,7 @@ void Controller::ComputeGradient(int iSolver, int level)
          else if(gridTypeofLocalZone == UNSTRUCTGRID)
          {
             solver->ComputeGradient(grid);
-            if(MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
+            if (MIXGRID == systemGridType && isFVMOrFDM == FV_METHOD)
             {
                 solver->ComputelimiterOnlyForMixGrid(grid);
             }
@@ -1120,13 +1337,6 @@ void Controller::SetBoundaryValueOfField(int iSolver, int level)
 
 void Controller::PreSolveforStructHighOrder(int iSolver, int level)
 {
-    //int mission_Comm( q_FD                                     ) =  5;
-    //int mission_Comm( rtem                                     ) =  6;
-    //int mission_Comm( rtem, dqdxyznokxi,dqdxyznoeta,dqdxyznocta) =  7;
-    //int mission_Comm( rtem, gradUVWTCellCenterXYZ              ) =  8;
-    //int mission_Comm( vist, gradqturb                          ) =  9;
-    //int mission_Comm( vist, gradqturb, blending                ) = 10;
-
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
 
@@ -1281,7 +1491,7 @@ void Controller::Stagefor3rdRK(int iSolver, int level, FieldProxy **q0Proxy, int
     
     if (nstage != 0)
     {
-        //! already solved before timestep;
+        //! Already solved before timestep;
         PreSolveforStructHighOrder(iSolver, level);
     }
 
@@ -1389,7 +1599,7 @@ void Controller::LUSGSInitialization(int iSolver, int level, int nSweep, FieldPr
             //! The delta Flux is initialized by zero, which will be used in the forward sweep.
             solver->FillField(grid, LUplusDQ[iZone], zero);
             
-            //* warning: it is important to research the effect of the initialization in future!
+            //! Warning: it is important to research the effect of the initialization in future!
             //! e.g., using rhs to init when nsweep > 1.
             //! Initialization.
             if(nSweep == 1)
@@ -1435,7 +1645,7 @@ void Controller::BLUSGSInitialization(int iSolver, int level, int nSweep, FieldP
         //! The delta Flux is initialized by zero, which will be used in the forward sweep.
         solver->FillField(grid, LUplusDQ[iZone], zero);
 
-        //* warning: it is important to research the effect of the initialization in future!
+        //! Warning: it is important to research the effect of the initialization in future!
         //! e.g., using rhs to init when nsweep > 1.
         //! Initialization.
         if(nSweep == 1)
@@ -1450,6 +1660,51 @@ void Controller::BLUSGSInitialization(int iSolver, int level, int nSweep, FieldP
             //! Multi-sweep, init by zero.
             solver->FillField(grid, dqProxy[iZone], zero);
         }
+    }
+}
+
+void Controller::MatrixLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ)
+{
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        //! Memory allocating.
+        dqProxy[iZone] = solver->CreateFieldProxy(grid);
+        LUplusDQ[iZone]= solver->CreateFieldProxy(grid);
+
+        //! The delta Flux is initialized by zero, which will be used in the forward sweep.
+        solver->FillField(grid, LUplusDQ[iZone], zero);
+
+        //! Warning: it is important to research the effect of the initialization in future!
+        //! e.g., using rhs to init when nsweep > 1.
+        //! Initialization.
+        if(nSweep == 1)
+        {
+            //! Single sweep, init by res.
+            FieldProxy *rhsProxy = solver->GetFieldProxy(grid, solver->CastName("res")); 
+            solver->FillField(grid, dqProxy[iZone], rhsProxy);
+            delete rhsProxy;
+        }
+        else
+        {
+            //! Multi-sweep, init by zero.
+            solver->FillField(grid, dqProxy[iZone], zero);
+        } 
     }
 }
 
@@ -1488,17 +1743,17 @@ void Controller::LUSGS(int iSolver, int level)
                 CommunicationDQ(iSolver, level, dqProxy);
             }
 
-            ForwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal);
+            ForwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
 
-            BackwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal);
+            BackwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
         }
         else
         {
-            ForwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal);
+            ForwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
 
             CommunicationDQ(iSolver, level, dqProxy);
 
-            BackwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal);
+            BackwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
         }
 
         if (nLUSGSSweeps > 1)
@@ -1507,7 +1762,6 @@ void Controller::LUSGS(int iSolver, int level)
             PH_AllReduce(&sweepNormal, &globleNormal, 1, PH_SUM);
             sweepNormal = globleNormal;
         }
-
 
         //! Check the convergence.
         //! This criterion will lead to at least 2 sweep.
@@ -1539,7 +1793,155 @@ void Controller::LUSGS(int iSolver, int level)
     delete []LUplusDQ;
 }
 
-void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
+void Controller::DualTimeStepsLUSGS(int iSolver, int level)
+{
+    Diagonal(iSolver, level);
+
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    int nLUSGSSweeps = GlobalDataBase::GetIntParaFromDB("nLUSGSSweeps");
+
+    if (level != 0)
+    {
+        nLUSGSSweeps = 1;
+    }
+
+    RDouble LUSGSTolerance = GlobalDataBase::GetDoubleParaFromDB("LUSGSTolerance");
+    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
+
+    FieldProxy **dqProxy = new FieldProxy *[nLocalZones];
+    //! L*Dq or U*Dq, which is equal to DeltaFlux between beighbors.
+    FieldProxy **LUplusDQ= new FieldProxy *[nLocalZones];
+
+    FieldProxy **dqProxy1 = new FieldProxy *[nLocalZones];
+    //! L*Dq or U*Dq, which is equal to DeltaFlux between beighbors.
+    FieldProxy **LUplusDQ1= new FieldProxy *[nLocalZones];
+
+    LUSGSInitialization(iSolver, level, nLUSGSSweeps, dqProxy, LUplusDQ);
+    LUSGSInitialization(iSolver, level, nLUSGSSweeps, dqProxy1, LUplusDQ1);
+
+    //! The basic iteration step.
+    RDouble sweepNormalInit = 0.0, sweepEpsilon = 1.1, globleNormal = 0.0;
+    for (int iSweep = 0; iSweep < nLUSGSSweeps; ++ iSweep)
+    {
+        RDouble sweepNormal = 0.0;
+
+        if (systemGridType == MIXGRID || isFVMOrFDM == FD_METHOD)
+        {
+            if (iSolver == NS_SOLVER)
+            {
+                CommunicationDQ(iSolver, level, dqProxy);
+            }
+
+            ForwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
+
+            BackwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
+        }
+        else
+        {
+            ForwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
+
+            CommunicationDQ(iSolver, level, dqProxy);
+
+            BackwardSweep(iSolver, level, dqProxy, LUplusDQ, sweepNormal, false);
+        }
+
+        if (nLUSGSSweeps > 1)
+        {
+            //! Get the global normal.
+            PH_AllReduce(&sweepNormal, &globleNormal, 1, PH_SUM);
+            sweepNormal = globleNormal;
+        }
+
+        //! Check the convergence.
+        //! This criterion will lead to at least 2 sweep.
+        //! It may be more considered, such as using the maximum normal of dq/dqOld.
+        if(iSweep == 0)
+        {
+            sweepNormalInit = sweepNormal;
+        }
+        else
+        {
+            sweepEpsilon = sweepNormal / sweepNormalInit;
+        }
+
+        if (sweepEpsilon < LUSGSTolerance)
+        {
+            //! The equations have been converged.
+            break;
+        }
+    }
+
+    //! The advancing time iteration step.
+    for (int iSweep = 0; iSweep < nLUSGSSweeps; ++ iSweep)
+    {
+        RDouble sweepNormal = 0.0;
+
+        if (systemGridType == MIXGRID || isFVMOrFDM == FD_METHOD)
+        {
+            if (iSolver == NS_SOLVER)
+            {
+                CommunicationDQ(iSolver, level, dqProxy1);
+            }
+
+            ForwardSweep(iSolver, level, dqProxy1, LUplusDQ1, sweepNormal, true);
+
+            BackwardSweep(iSolver, level, dqProxy1, LUplusDQ1, sweepNormal, true);
+        }
+        else
+        {
+            ForwardSweep(iSolver, level, dqProxy1, LUplusDQ1, sweepNormal, true);
+
+            CommunicationDQ(iSolver, level, dqProxy1);
+
+            BackwardSweep(iSolver, level, dqProxy1, LUplusDQ1, sweepNormal, true);
+        }
+
+        if (nLUSGSSweeps > 1)
+        {
+            //! Get the global normal.
+            PH_AllReduce(&sweepNormal, &globleNormal, 1, PH_SUM);
+            sweepNormal = globleNormal;
+        }
+
+        //! Check the convergence.
+        //! This criterion will lead to at least 2 sweep.
+        //! It may be more considered, such as using the maximum normal of dq/dqOld.
+        if(iSweep == 0)
+        {
+            sweepNormalInit = sweepNormal;
+        }
+        else
+        {
+            sweepEpsilon = sweepNormal / sweepNormalInit;
+        }
+
+        if (sweepEpsilon < LUSGSTolerance)
+        {
+            //! The equations have been converged.
+            break;
+        }
+    }
+
+    //! Determine the CFL number of the next iteration step.
+    DetermineCFLNumber(iSolver, level, dqProxy, dqProxy1);
+
+    UpdateFlowField(iSolver, level, dqProxy);
+
+    for (int iLocalZone = 0; iLocalZone < nLocalZones; ++ iLocalZone)
+    {
+        delete dqProxy[iLocalZone];
+        delete LUplusDQ[iLocalZone];
+        delete dqProxy1[iLocalZone];
+        delete LUplusDQ1[iLocalZone];
+    }
+    delete []dqProxy;
+    delete []LUplusDQ;
+    delete []dqProxy1;
+    delete []LUplusDQ1;
+}
+
+void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -1562,7 +1964,7 @@ void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fiel
         CFDSolver *solver = GetCFDSolver(zoneID,iSolver);       
 
         zoneNormal[iZone] = 0.0;
-        solver->SolveLUSGSForward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);
+        solver->SolveLUSGSForward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone], iAdvanceStep);
     }
 
     //! Sum the zone normal, which is to void OMP data competition.
@@ -1573,7 +1975,7 @@ void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fiel
     delete []zoneNormal;    zoneNormal = NULL;
 }
 
-void Controller::BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
+void Controller::BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -1596,7 +1998,7 @@ void Controller::BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fie
         CFDSolver *solver = GetCFDSolver(zoneID,iSolver);
 
         zoneNormal[iZone] = 0.0;
-        solver->SolveLUSGSBackward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);
+        solver->SolveLUSGSBackward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone], iAdvanceStep);
     }
 
     //! Sum the zone normal, which is to void OMP data competition.
@@ -1643,22 +2045,47 @@ void Controller::UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy)
             FieldProxy *qProxy = solver->GetFieldProxy(grid, solver->CastName("q"));
             solver->UpdateFlowField(grid, qProxy, dqProxy[iZone]);
             delete qProxy;
-        }        
+        }
+    }
+}
+
+void Controller::DetermineCFLNumber(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **dqProxy1)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->DetermineCFLNumber(grid, dqProxy[iZone], dqProxy1[iZone]);
     }
 }
 
 void Controller::CommunicateGradientandLimitOnlyForMixGrid()
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector <PH_Request > requestContainer;
     vector <vector <DataContainer *> > receivedDataBuffer;
     vector <vector <DataContainer *> > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -1687,8 +2114,8 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
                 sendBuffer = new DataContainer;
                 sendDataBuffer[iZone][iNeighbor] = sendBuffer;
 
-                //CFDSolver *solver = GetCFDSolver(iZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(iZone, 0);
+               
                 //! Compress the send information into the actkey.
                 Grid *grid = PHSPACE::GetGrid(iZone, 0);
 
@@ -1698,7 +2125,7 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -1730,11 +2157,6 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
             }
 
             int tag = iZone;
-
-            //if (sendProcessor == receiveProcessor)
-            //{
-            //    continue;
-            //}
 
             //! Communication.
             if (currentProcessor == sendProcessor)
@@ -1789,7 +2211,7 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -1809,7 +2231,6 @@ void Controller::CommunicateGradientandLimitOnlyForMixGrid()
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
                 //! Decompress the interface data from data-container.
-                //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(neighborZone, 0);
 
                 Grid *grid = PHSPACE::GetGrid(neighborZone, 0);
@@ -1849,15 +2270,15 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
         return;
     }
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector <PH_Request > requestContainer;
     vector <vector <DataContainer *> > receivedDataBuffer;
     vector <vector <DataContainer *> > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int gridtypeofiZone = PHMPI::GetZoneGridType(iZone);
 
@@ -1890,8 +2311,8 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
                 sendBuffer = new DataContainer;
                 sendDataBuffer[iZone][iNeighbor] = sendBuffer;
 
-                //CFDSolver *solver = GetCFDSolver(iZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(iZone, 0);
+         
                 //! Compress the send information into the actkey.
                 Grid *grid = PHSPACE::GetGrid(iZone, 0);
 
@@ -1917,7 +2338,7 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -1949,11 +2370,6 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
             }
 
             int tag = iZone;
-
-            //if (sendProcessor == receiveProcessor)
-            //{
-            //    continue;
-            //}
 
             //! Communication.
             if (currentProcessor == sendProcessor)
@@ -2008,7 +2424,7 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int gridtypeofiZone = PHMPI::GetZoneGridType(iZone);
 
@@ -2032,7 +2448,6 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
                 //! Decompress the interface data from data-container.
-                //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(neighborZone, 0);
 
                 Grid *grid = PHSPACE::GetGrid(neighborZone, 0);
@@ -2081,7 +2496,6 @@ void Controller::CommunicateQlQrOnlyforMixGrid()
     requestContainer.clear();
 }
 
-
 void Controller::CommunicateFacefluxOnlyforMixGrid()
 {
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
@@ -2091,15 +2505,15 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
     }
 
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector <PH_Request > requestContainer;
     vector <vector <DataContainer *> > receivedDataBuffer;
     vector <vector <DataContainer *> > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -2128,8 +2542,8 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
                 sendBuffer = new DataContainer;
                 sendDataBuffer[iZone][iNeighbor] = sendBuffer;
 
-                //CFDSolver *solver = GetCFDSolver(iZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(iZone, 0);
+
                 //! Compress the send information into the actkey.
                 Grid *grid = PHSPACE::GetGrid(iZone, 0);
 
@@ -2139,7 +2553,7 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -2225,7 +2639,7 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -2245,7 +2659,6 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
                 //! Decompress the interface data from data-container.
-                //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(neighborZone, 0);
 
                 Grid *grid = PHSPACE::GetGrid(neighborZone, 0);
@@ -2279,12 +2692,6 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
 
 void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
 {
-    //if (iSolver != NS_SOLVER)
-    //{
-    //    //! Only consider the communication of NS-Solver.
-    //    //return;
-    //}
-
     int swapDq = GlobalDataBase::GetIntParaFromDB("swapDq");
     if (swapDq == 0)
     {
@@ -2296,15 +2703,15 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
     int nEquation  = solver->GetNumberOfEquations();
 
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector <PH_Request > requestContainer;
     vector <vector <DataContainer *> > receivedDataBuffer;
     vector <vector <DataContainer *> > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -2344,7 +2751,7 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -2430,7 +2837,7 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -2484,15 +2891,15 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
 void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayName, int nEquation)
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector <PH_Request > requestContainer;
     vector <vector <DataContainer *> > receivedDataBuffer;
     vector <vector <DataContainer *> > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -2521,7 +2928,6 @@ void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayNa
                 sendBuffer = new DataContainer;
                 sendDataBuffer[iZone][iNeighbor] = sendBuffer;
 
-                //CFDSolver *solver = GetCFDSolver(iZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(iZone, iSolver);
                 //! Compress the send information into the actkey.
                 Grid *grid = PHSPACE::GetGrid(iZone, level);
@@ -2532,7 +2938,7 @@ void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayNa
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -2618,7 +3024,7 @@ void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayNa
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -2638,7 +3044,6 @@ void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayNa
                 //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
 
                 //! Decompress the interface data from data-container.
-                //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
                 CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
 
                 Grid *grid = PHSPACE::GetGrid(neighborZone, level);
@@ -2701,10 +3106,10 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
     int iLES = PHSPACE::GlobalDataBase::GetIntParaFromDB("iLES");
 
-    //! gradient has been communicated in another place for isFVMOrFDM == 1.
+    //! Gradient has been communicated in another place for isFVMOrFDM == FDM.
     if (systemGridType == STRUCTGRID && isFVMOrFDM == FV_METHOD)
     {
-        int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         int currentProcessor = PHMPI::GetCurrentProcessorID();
 
         if (iSolver == NS_SOLVER)
@@ -2727,9 +3132,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 CommunicateSpecificArray(iSolver, level, "dcdy", nSpeciesNumber);
                 CommunicateSpecificArray(iSolver, level, "dcdz", nSpeciesNumber);
             }
-            if( periodicType == 2 )
+            if(periodicType == 2)
             {
-                for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+                for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
                     int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
                     ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -2752,15 +3157,15 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                 }
             }
         }
-        else if (iSolver == TURB_SOLVER && iLES != LES_SOLVER)
+        else if (iSolver == TURB_SOLVER && iLES == NOLES_SOLVER)
         {
             int nEquation = solver->GetNumberOfEquations();
             CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterX", nEquation);
             CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterY", nEquation);
             CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterZ", nEquation);
-            if( periodicType == 2 )
+            if(periodicType == 2)
             {
-                for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+                for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
                     int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
                     ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -2785,7 +3190,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
         }
         else if(iSolver == TURB_SOLVER && iLES == LES_SOLVER)
         {
-            //for LES, Gradient Communication should be done another time after NSSolver ends.
+            //! For LES, Gradient Communication should be done another time after NSSolver ends.
             int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
             int nTotalVariable = nTemperatureModel + 3;
 
@@ -2793,9 +3198,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             CommunicateSpecificArray(0, level, "gradUVWTCellCenterY", nTotalVariable);
             CommunicateSpecificArray(0, level, "gradUVWTCellCenterZ", nTotalVariable);
 
-            if( periodicType == 2 )
+            if(periodicType == 2)
             {
-                for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+                for (int iZone = 0; iZone < nZones; ++ iZone)
                 {
                     int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
                     ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -2819,7 +3224,7 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             }
         }
     }
-    else if(systemGridType == MIXGRID && isFVMOrFDM == FV_METHOD)
+    else if (systemGridType == MIXGRID && isFVMOrFDM == FV_METHOD)
     {
         if (iSolver == NS_SOLVER)
         {
@@ -2908,6 +3313,146 @@ void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        if (iSweep == 0)
+        {
+            solver->LHSMatrixs(grid);
+        }
+
+        zoneNormal[iZone] = 0.0;
+        solver->SolveBLUSGSForward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);//! The Block LU-SGS method.
+    }
+
+    //! Sum the zone normal, which is to void OMP data competition.
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        sweepNormal += zoneNormal[iZone];
+    }
+    delete []zoneNormal;    zoneNormal = NULL;
+}
+
+void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+    RDouble *zoneNormal = new RDouble [nLocalZones]();
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        zoneNormal[iZone] = 0.0;
+        solver->SolveBLUSGSBackward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);//! The Block LU-SGS method
+    }
+
+    //! Sum the zone normal, which is to void OMP data competition.
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        sweepNormal += zoneNormal[iZone];
+    }
+    delete []zoneNormal;    zoneNormal = NULL;
+}
+
+void Controller::MatrixLUSGS(int iSolver, int level)
+{
+    //! If the solver is Turb Solver, it will take the LUSGS methods.
+    if (iSolver == TURB_SOLVER)
+    {
+        LUSGS(iSolver, level);
+        return;
+    }
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int nLUSGSSweeps = GlobalDataBase::GetIntParaFromDB("nLUSGSSweeps");
+    RDouble LUSGSTolerance = GlobalDataBase::GetDoubleParaFromDB("LUSGSTolerance");
+
+    FieldProxy **dqProxy = new FieldProxy *[nLocalZones];
+
+    //! L*Dq or U*Dq, which is equal to DeltaFlux between beighbors.
+    FieldProxy **LUplusDQ= new FieldProxy *[nLocalZones];
+
+    MatrixLUSGSInitialization(iSolver, level, nLUSGSSweeps, dqProxy, LUplusDQ);
+
+    RDouble sweepNormalInit, sweepEpsilon = 1.1, globleNormal;
+    
+    for (int iSweep = 0; iSweep < nLUSGSSweeps; ++ iSweep)
+    {
+        RDouble sweepNormal = 0.0;
+        ForwardSweepMatrixLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal,iSweep);
+
+		CommunicationDQ(iSolver, level, dqProxy);
+
+        BackwardSweepMatrixLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal);		
+
+        if (nLUSGSSweeps > 1)
+        {
+            //! Get the global normal.
+            PH_AllReduce(&sweepNormal, &globleNormal, 1, PH_SUM);
+            sweepNormal = globleNormal;
+			
+        }
+
+        //! Check the convergence.
+        //! This criterion will lead to at least 2 sweep.
+        //! It may be more considered, such as using the maximum normal of dq/dqOld.
+        if(iSweep == 0)
+        {
+            sweepNormalInit = sweepNormal;
+        }else
+        {
+            sweepEpsilon = sqrt(sweepNormal / sweepNormalInit);
+        }
+
+        if (sweepEpsilon < LUSGSTolerance)
+        {
+            //! The equations have been converged.
+            break;
+        }
+    }
+
+	UpdateFlowField(iSolver, level, dqProxy);
+
+    for (int iLocalZone = 0; iLocalZone < nLocalZones; ++ iLocalZone)
+    {
+        delete dqProxy[iLocalZone];
+        delete LUplusDQ[iLocalZone];
+    }
+    delete []dqProxy;
+    delete []LUplusDQ;
+}
+
+void Controller::ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+    RDouble *zoneNormal = new RDouble [nLocalZones];
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
     for (int izone = 0; izone < nLocalZones; ++ izone)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
@@ -2927,7 +3472,7 @@ void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy
         }
 
         zoneNormal[izone] = 0.0;
-        solver->SolveBLUSGSForward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]);//! The Block LU-SGS method.
+		solver->SolveMatrixLUSGSForward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]); //! The Matrix LU-SGS method.
     }
 
     //! Sum the zone normal, which is to void OMP data competition.
@@ -2935,14 +3480,14 @@ void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;    zoneNormal = NULL;
+    delete []zoneNormal;
 }
 
-void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
+void Controller::BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
-    RDouble *zoneNormal = new RDouble [nLocalZones]();
+    RDouble *zoneNormal = new RDouble [nLocalZones];
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
@@ -2959,7 +3504,7 @@ void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProx
         CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
 
         zoneNormal[izone] = 0.0;
-        solver->SolveBLUSGSBackward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]);//The Block LU-SGS method
+        solver->SolveMatrixLUSGSBackward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]);//! The Matrix LU-SGS method
     }
 
     //! Sum the zone normal, which is to void OMP data competition.
@@ -2967,7 +3512,7 @@ void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProx
     {
         sweepNormal += zoneNormal[iZone];
     }
-    delete []zoneNormal;    zoneNormal = NULL;
+    delete []zoneNormal;
 }
 
 void Controller::LineLUSGS(int iSolver, int level)
@@ -3066,7 +3611,7 @@ void Controller::LineLUSGSInitialization(int iSolver, int level, int nSweep, Fie
         //! The delta Flux is initialized by zero, which will be used in the forward sweep.
         solver->FillField(grid, LUplusDQ[iZone], zero);
 
-        //* warning: it is important to research the effect of the initialization in future!
+        //! Warning: it is important to research the effect of the initialization in future!
         //! e.g., using rhs to init when nsweep > 1.
         //! Initialization.
         if (nSweep == 1)
@@ -3131,9 +3676,9 @@ void Controller::BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqP
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++izone)
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Zone* zone = GetZone(zoneID);
         if (!zone)
@@ -3143,8 +3688,8 @@ void Controller::BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqP
         Grid* grid = GetGrid(zoneID, level);
         CFDSolver* solver = GetCFDSolver(zoneID, iSolver);
 
-        zoneNormal[izone] = 0.0;
-        solver->SolveLineLUSGSBackward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]);//The Block LU-SGS method
+        zoneNormal[iZone] = 0.0;
+        solver->SolveLineLUSGSBackward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);//The Block LU-SGS method
     }
 
     //! Sum the zone normal, which is to void OMP data competition.
@@ -3277,16 +3822,15 @@ void Controller::CorrectFineGrid(int iSolver, int level)
     }
 }
 
-Zone *Controller::GetZone(int iZone)
+Zone * Controller::GetZone(int iZone)
 {
     return region->GetZone(iZone);
 }
 
-CFDSolver *Controller::GetCFDSolver(int iZone, int iSolver)
+CFDSolver * Controller::GetCFDSolver(int iZone, int iSolver)
 {
-    return static_cast<CFDSolver *>(GlobalSolvers::GetSolver(iZone,iSolver));
+    return static_cast<CFDSolver *>(GlobalSolvers::GetSolver(iZone, iSolver));
 }
-
 
 bool Controller::CVGNorm(int iSolver, int level)
 {
@@ -3321,8 +3865,6 @@ bool Controller::CVGNorm(int iSolver, int level)
         cvgmax = MAX(cvgmax, cvg);
     }
 
-    //cout << "iner_iter = " << iner_iter << " cvg = " << cvg << "\n";
-
     GlobalSolve();
 
     PH_CompareMaxMin(cvgmax, 1);
@@ -3356,8 +3898,6 @@ RDouble Controller::ComputeSubIterationNorm(int iSolver, int level)
 
         maxSubIterationNorm = MAX(maxSubIterationNorm, subIterationNorm);
     }
-
-    //PH_CompareMaxMin(averageQuotientMAX, 1);
 
     return maxSubIterationNorm;
 }
@@ -3415,6 +3955,35 @@ void Controller::PostSolve(int level)
     Grid *grid = GetGrid(zoneIndex, level);
     CFDSolver *solver = static_cast<CFDSolver *>(GlobalSolvers::GetSolver(zoneIndex, iSolver));
     solver->DumpResultFile(grid, level);
+
+     //! Exam the change of key variables such as the pressure, the translational temperature and the vibrational temperature, etc.
+    int isAdaptiveSolver = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
+    if (isAdaptiveSolver > 0)
+    {
+        solver->CheckResult(grid, level);
+    }
+
+    //! Dump the surface heating change.
+    int nSurfHeatMonitor = 0;
+    if (GlobalDataBase::IsExist("nSurfHeatMonitor", PHINT, 1))
+    {
+        nSurfHeatMonitor = GlobalDataBase::GetIntParaFromDB("nSurfHeatMonitor");
+    }
+    if (nSurfHeatMonitor > 0)
+    {
+        solver->CheckSurfaceHeatingChange(grid, level);
+    }
+
+    //! Dump the CFL number to the file.
+    int nDumpCFLNumber = 0;
+    if (GlobalDataBase::IsExist("nDumpCFLNumber", PHINT, 1))
+    {
+        nDumpCFLNumber = GlobalDataBase::GetIntParaFromDB("nDumpCFLNumber");
+    }
+    if (nDumpCFLNumber > 0)
+    {
+        solver->DumpCFLNumber(grid, level);
+    }
 
     //! Node communication: part1.
     for (int iZone = 0; iZone < nZones; ++ iZone)
@@ -3679,12 +4248,12 @@ void Controller::RecoverResidual(int iSolver, int level)
 
 FieldProxy **Controller::GetQProxy(int level)
 {
-    return q_proxy->GetFieldProxy(level);
+    return qProxy->GetFieldProxy(level);
 }
 
 FieldProxy **Controller::GetRHSProxy(int level)
 {
-    return rhs_proxy->GetFieldProxy(level);
+    return rhsProxy->GetFieldProxy(level);
 }
 
 void Controller::LoadQ(int iSolver, int level)
@@ -3765,6 +4334,7 @@ LIB_EXPORT void Controller::MultiGridInitFlow(int level)
 
     //! Create Right Hand Side term.
     CreateRHSProxy(iSolver, level);
+
     StoreRhsByResidual(iSolver, level);
 
     //! Relaxation.
@@ -3772,6 +4342,95 @@ LIB_EXPORT void Controller::MultiGridInitFlow(int level)
 
     //! Recover the residual.
     DestroyRHSProxy(iSolver, level);
+}
+
+//! Incompressible flow
+void Controller::SolveFlowField(int iZone)
+{
+
+    //! Discret momentum equation.
+    CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+    solver->DiscrtMomentumEquations();
+    solver->SolveMomentumEquations(*this->region);
+
+    //! Update the velocity and form the coefficient of pressure equation.
+    solver->UpdateVelocity();
+    solver->DiscrtPressureCorrectionEquation();
+    solver->SolvePressureCorrectionEquation(*this->region);
+
+    //! Update the pressure and velocity.
+    solver->UpdatePressureAndVelocity();
+
+    //! Update the properties.
+    solver->UpdateProperties();
+}
+
+//! Incompressible Flow
+void Controller::SolveScalarField(int iZone)
+{
+    CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+
+    solver->Discrt();
+
+    solver->SolveScalarEquation(*this->region);
+
+    solver->Update();
+
+    solver->UpdateBoundary();
+
+    solver->UpdateProperties();
+
+    solver->UpdateAfterIterloop();
+}
+
+//! Incompressible flow
+void Controller::SolveTurbField(int iZone)
+{
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    if (viscousType == SPALART_ALLMARAS)
+    {
+        SolveScalarField(iZone);
+    }
+    else if (viscousType == KEPSILON)
+    {
+        CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+
+        solver->SolveKEquation(*this->region);
+
+        solver->SolveEpsilonEquation(*this->region);
+
+        solver->UpdateAfterIterloop();
+    }
+}
+
+//! Incompressible flow
+void Controller::SolveEnergyField(int iZone)
+{
+    SolveScalarField(iZone);
+}
+
+bool Controller::IsConverged(int iZone)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    bool isConverged;
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Zone *zone = GetZone(iZone);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(iZone, 0);
+
+        CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+
+        solver->SolutionIsConverged(iZone, &isConverged);
+    }
+
+    return isConverged;
 }
 
 MultiGridFieldProxy::MultiGridFieldProxy(int iSolver, int level, int nZone)

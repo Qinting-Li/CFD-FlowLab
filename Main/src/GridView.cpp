@@ -34,7 +34,7 @@ int PHSimpleFace::GetKeyParameter()
     return this->keyNumber[6];
 }
 
-int *PHSimpleFace::GetLocalParameter()
+int * PHSimpleFace::GetLocalParameter()
 {
     return keyNumber;
 }
@@ -46,7 +46,7 @@ void PHSimpleFace::CreateNewSimpleFace()
     return;
 }
 
-PHSimpleFace *PHSimpleFace::GetNextPointer()
+PHSimpleFace * PHSimpleFace::GetNextPointer()
 {
     return simpleFaceNext;
 }
@@ -75,7 +75,7 @@ BoundaryCluster::~BoundaryCluster()
 
     if (slaveBlockList)
     {
-        delete []slaveBlockList;
+        delete [] slaveBlockList;
     }
 }
 
@@ -209,7 +209,7 @@ void BoundaryCluster::ShowBoundaryCluster()
     return;
 }
 
-PHSimpleFace *BoundaryCluster::GetSimpleFaceHead()
+PHSimpleFace * BoundaryCluster::GetSimpleFaceHead()
 {
     return simpleFaceHead;
 }
@@ -237,7 +237,7 @@ void BoundaryCluster::OutputHoleSurfaceGrid(ofstream &outFile, BasalGrid *basalG
                 {
                     is = i-1;
                     int mm = ni*nj*ks + ni*js + is;
-                    outFile.write((char*)&x[mm],sizeof(RDouble));
+                    outFile.write((char*)&x[mm], sizeof(RDouble));
                 }
             }
         }
@@ -252,7 +252,7 @@ void BoundaryCluster::OutputHoleSurfaceGrid(ofstream &outFile, BasalGrid *basalG
                 {
                     is = i-1;
                     int mm = ni*nj*ks + ni*js + is;
-                    outFile.write((char*)&y[mm],sizeof(RDouble));
+                    outFile.write((char*)&y[mm], sizeof(RDouble));
                 }
             }
         }
@@ -267,7 +267,7 @@ void BoundaryCluster::OutputHoleSurfaceGrid(ofstream &outFile, BasalGrid *basalG
                 {
                     is = i-1;
                     int mm = ni*nj*ks + ni*js + is;
-                    outFile.write((char*)&z[mm],sizeof(RDouble));
+                    outFile.write((char*)&z[mm], sizeof(RDouble));
                 }
             }
         }
@@ -312,7 +312,7 @@ void BoundaryCluster::RecordSolidFaceInformation()
     simpleFaceGuard = simpleFaceHead;
     int counter = 0;
 
-    while(simpleFaceGuard)
+    while (simpleFaceGuard)
     {
         const int *localParameter = simpleFaceGuard->GetLocalParameter();
 
@@ -349,7 +349,7 @@ void BoundaryCluster::SetSlaveBlockList()
         int id = 0;
         slaveBlockList = new int[externalFaceNumber];
         simpleFaceGuard = simpleFaceHead;
-        while(simpleFaceGuard)
+        while (simpleFaceGuard)
         {
             int sign = simpleFaceGuard->GetKeyParameter();
             simpleFaceGuard = simpleFaceGuard->GetNextPointer();
@@ -365,7 +365,7 @@ void BoundaryCluster::SetSlaveBlockList()
     return;
 }
 
-int *BoundaryCluster::GetSlaveBlockList()
+int * BoundaryCluster::GetSlaveBlockList()
 {
     return slaveBlockList;
 }
@@ -400,7 +400,7 @@ int LinkedBlocks::GetBlockLabel()
     return this->blockLabel;
 }
 
-LinkedBlocks *LinkedBlocks::GetNextPointer()
+LinkedBlocks * LinkedBlocks::GetNextPointer()
 {
     return linkedBlocksNext;
 }
@@ -457,7 +457,7 @@ void BlockCluster::SetBlockLabel(int blockLabel)
 void BlockCluster::ShowLinkedBlocks()
 {
     linkedBlocksGuard = linkedBlocksHead;
-    while(linkedBlocksGuard)
+    while (linkedBlocksGuard)
     {
         int blockLabel = linkedBlocksGuard->GetBlockLabel();
         linkedBlocksGuard = linkedBlocksGuard->GetNextPointer();
@@ -504,7 +504,7 @@ int BlockCluster::GetGroupLabel()
     return this->groupLabel;
 }
 
-LinkedBlocks *BlockCluster::GetLinkedBlocksHead()
+LinkedBlocks * BlockCluster::GetLinkedBlocksHead()
 {
     return linkedBlocksHead;
 }
@@ -518,12 +518,12 @@ BasalGrid::BasalGrid()
 
 BasalGrid::~BasalGrid()
 {
-    delete []xCoordinate;
-    delete []yCoordinate;
-    delete []zCoordinate;
+    delete [] xCoordinate;
+    delete [] yCoordinate;
+    delete [] zCoordinate;
 }
 
-void BasalGrid::GenerateBasalSpace(int iDimension,int jDimension,int kDimension)
+void BasalGrid::GenerateBasalSpace(int iDimension, int jDimension, int kDimension)
 {
     this->iDimension = iDimension;
     this->jDimension = jDimension;
@@ -602,12 +602,12 @@ BlockGroupManager::BlockGroupManager()
 
 BlockGroupManager::~BlockGroupManager()
 {
-    delete []basalGrid;
-    delete []boundaryCluster;
-    delete []blockCluster;
-    delete []InverseMapping;
-    delete []blockStart;
-    delete []blockEnd;
+    delete [] basalGrid;
+    delete [] boundaryCluster;
+    delete [] blockCluster;
+    delete [] InverseMapping;
+    delete [] blockStart;
+    delete [] blockEnd;
 }
 
 void BlockGroupManager::Run()
@@ -630,7 +630,6 @@ void BlockGroupManager::Run()
 
     SeparateGrid();
 
-    //OutputNewGrid();
     OutputNewSurfaceGrid();
 
     OutputNewBoundary();
@@ -648,13 +647,13 @@ void BlockGroupManager::InputOriginalGrid()
     GlobalDataBase::GetData("originalGridFileName", &originalGridFileName, PHSTRING,1);
 
     ifstream infile(originalGridFileName.c_str(), ios_base::binary);
-    infile.read((char*)&globalBlockNumber, sizeof(int));
+    infile.read((char *)&globalBlockNumber, sizeof(int));
     basalGrid = new BasalGrid[globalBlockNumber];
     for (int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
-        infile.read((char*)&iDimension, sizeof(int));
-        infile.read((char*)&jDimension, sizeof(int));
-        infile.read((char*)&kDimension, sizeof(int));
+        infile.read((char *)&iDimension, sizeof(int));
+        infile.read((char *)&jDimension, sizeof(int));
+        infile.read((char *)&kDimension, sizeof(int));
         basalGrid[iBlock].GenerateBasalSpace(iDimension, jDimension, kDimension);
     }
 
@@ -671,7 +670,7 @@ void BlockGroupManager::InputOriginalGrid()
                 {
                     for (int i = 0; i < iDimension; ++ i)
                     {
-                        infile.read((char*)&coordinate, sizeof(RDouble));
+                        infile.read((char *)&coordinate, sizeof(RDouble));
                         basalGrid[iBlock].SetCoordinate(aspect, i, j, k, coordinate);
                     }
                 }
@@ -696,8 +695,8 @@ void BlockGroupManager::InputOriginalBoundary()
     fstream file;
     GlobalDataBase::GetData("originalBoundaryFileName", &originalBoundaryFileName, PHSTRING, 1);
     file.open(originalBoundaryFileName.c_str(), ios_base::in);
-    file>>iSolver;
-    file>>globalBlockNumber;
+    file >> iSolver;
+    file >> globalBlockNumber;
     boundaryCluster = new BoundaryCluster[globalBlockNumber];
     for (int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
     {
@@ -705,7 +704,7 @@ void BlockGroupManager::InputOriginalBoundary()
         line = FindNextWord(line, word, separator);
         from_string< int >(iDimension, word, std::dec);
         line = FindNextWord(line, word, separator);
-        from_string< int >(jDimension, word, std::dec); 
+        from_string< int >(jDimension, word, std::dec);
         line = FindNextWord(line, word, separator);
         from_string< int >(kDimension, word, std::dec);
 
@@ -719,23 +718,23 @@ void BlockGroupManager::InputOriginalBoundary()
 
         boundaryCluster[iBlock].SetBlockDimension(iDimension, jDimension, kDimension);
         boundaryCluster[iBlock].SetProcessLabel(processLabel);
-        file>>temp;
+        file >> temp;
 
         int blockLabel = iBlock + 1;
         boundaryCluster[iBlock].SetBlockLabel(blockLabel);
         int overallFaceNumber;
-        file>>overallFaceNumber;
+        file >> overallFaceNumber;
         boundaryCluster[iBlock].SetOverallFaceNumber(overallFaceNumber);
         int iFace = 0, externalFaceNumber = 0;
         for (int overallFace = 0; overallFace < overallFaceNumber; ++ overallFace)
         {
-            file>>keyNumber[0]>>keyNumber[1]>>keyNumber[2]>>keyNumber[3]>>keyNumber[4]>>keyNumber[5]>>keyNumber[6];
+            file >> keyNumber[0] >> keyNumber[1] >> keyNumber[2] >> keyNumber[3] >> keyNumber[4] >> keyNumber[5] >> keyNumber[6];
             boundaryCluster[iBlock].SetKeyNumberPointer(keyNumber);
             boundaryCluster[iBlock].CreateNewSimpleFace(iFace);
             iFace += 1;
             if (keyNumber[6] == -1)
             {
-                file>>keyNumber[0]>>keyNumber[1]>>keyNumber[2]>>keyNumber[3]>>keyNumber[4]>>keyNumber[5]>>keyNumber[6];
+                file >> keyNumber[0] >> keyNumber[1] >> keyNumber[2] >> keyNumber[3] >> keyNumber[4] >> keyNumber[5] >> keyNumber[6];
                 boundaryCluster[iBlock].SetKeyNumberPointer(keyNumber);
                 boundaryCluster[iBlock].CreateNewSimpleFace(iFace);
                 iFace += 1;
@@ -799,7 +798,7 @@ void BlockGroupManager::ShowLinkedBlocks()
 void BlockGroupManager::MarkerBlocksRelation()
 {
     int groupCounter = 0;
-    while(true)
+    while (true)
     {
         int whiteLabel = SearchColorfulList(WHITE);
         if (whiteLabel < 0)
@@ -817,13 +816,13 @@ void BlockGroupManager::MarkerBlocksRelation()
             else
             {
                 blockCluster[whiteLabel].SetListColor(BLUE);
-                while(true)
+                while (true)
                 {
                     int blueLabel = SearchColorfulList(BLUE);
                     LinkedBlocks *listGuide = blockCluster[blueLabel].GetLinkedBlocksHead();
                     if (blueLabel >= 0)
                     {
-                        while(listGuide)
+                        while (listGuide)
                         {
                             int iSlaveBlock = listGuide->GetBlockLabel();
                             blockCluster[iSlaveBlock-1].SetListColor(BLUE);
@@ -906,7 +905,7 @@ void BlockGroupManager::PermuteBlockLabel()
     blockStart = new int [groupNumber];
     blockStart[0] = 0;
     blockEnd = new int [groupNumber];
-    blockEnd[groupNumber-1] = globalBlockNumber-1;
+    blockEnd[groupNumber-1] = globalBlockNumber - 1;
 
     int groupLabel = 0;
     for (int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
@@ -915,7 +914,7 @@ void BlockGroupManager::PermuteBlockLabel()
         int groupGuard = blockCluster[oldBlockLabel].GetGroupLabel();
         if (groupGuard != groupLabel)
         {
-            blockEnd[groupLabel] = iBlock-1;
+            blockEnd[groupLabel] = iBlock - 1;
             groupLabel += 1;
             blockStart[groupLabel] = iBlock;
         }
@@ -944,7 +943,7 @@ void BlockGroupManager::SeparateGrid()
     return;
 }
 
-void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
+void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream &myFile)
 {
     ostringstream oss;
     string gridGroupHeadName;
@@ -974,7 +973,7 @@ void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
     {
         numberOfPhysicsFaces += bcIndexTable[m].size();
     }
-    outFile.write((char*)&numberOfPhysicsFaces, sizeof(int));
+    outFile.write((char *)&numberOfPhysicsFaces, sizeof(int));
 
     int si, sj, sk;
     for (int m = 0; m < localBlockNumber; ++ m)
@@ -988,21 +987,21 @@ void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
             sk = bcIndexTable[m][n][5] - bcIndexTable[m][n][4] + 1;
             if (sk == 1)
             {
-                outFile.write((char*)&si,  sizeof(int));
-                outFile.write((char*)&sj,  sizeof(int));
-                outFile.write((char*)&sk,  sizeof(int));
+                outFile.write((char *)&si,  sizeof(int));
+                outFile.write((char *)&sj,  sizeof(int));
+                outFile.write((char *)&sk,  sizeof(int));
             }
             else if (sj == 1)
             {
-                outFile.write((char*)&si,  sizeof(int));
-                outFile.write((char*)&sk,  sizeof(int));
-                outFile.write((char*)&sj,  sizeof(int));
+                outFile.write((char *)&si,  sizeof(int));
+                outFile.write((char *)&sk,  sizeof(int));
+                outFile.write((char *)&sj,  sizeof(int));
             }
             else
             {
-                outFile.write((char*)&sj,  sizeof(int));
-                outFile.write((char*)&sk,  sizeof(int));
-                outFile.write((char*)&si,  sizeof(int));
+                outFile.write((char *)&sj,  sizeof(int));
+                outFile.write((char *)&sk,  sizeof(int));
+                outFile.write((char *)&si,  sizeof(int));
             }
         }
     }
@@ -1011,7 +1010,7 @@ void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
     {
         if (bcIndexTable[m].size() == 0) continue;
 
-        int oldBlockLabel = InverseMapping[ blockStart[iGroup] + m ];
+        int oldBlockLabel = InverseMapping[blockStart[iGroup] + m];
         for (std::size_t n = 0; n < bcIndexTable[m].size(); ++ n)
         {
             int ist = bcIndexTable[m][n][0];
@@ -1032,7 +1031,7 @@ void BlockGroupManager::OutputNewBlockGroup(int iGroup, ofstream & myFile)
                         for (int i = ist; i <= ied; ++ i)
                         {
                             RDouble coordinate = basalGrid[oldBlockLabel].GetCoordinate(aspect, i, j, k);
-                            outFile.write((char*)&coordinate, sizeof(RDouble));
+                            outFile.write((char *)&coordinate, sizeof(RDouble));
                         }
                     }
                 }
@@ -1060,19 +1059,19 @@ void BlockGroupManager::OutputNewSurfaceGrid()
         ifstream infile(file.c_str(), ios_base::binary);
 
         int ns;
-        infile.read((char*)&ns, sizeof(int));
+        infile.read((char *)&ns, sizeof(int));
         localNumberOfSurfaces.push_back(ns);
 
         int is, js, ks, np = 0;
         for (int id = 0; id < ns; ++ id)
         {
-            infile.read((char*)&is, sizeof(int));
+            infile.read((char *)&is, sizeof(int));
             ni.push_back(is);
 
-            infile.read((char*)&js, sizeof(int));
+            infile.read((char *)&js, sizeof(int));
             nj.push_back(js);
 
-            infile.read((char*)&ks, sizeof(int));
+            infile.read((char *)&ks, sizeof(int));
             np += is * js;
         }
 
@@ -1081,7 +1080,7 @@ void BlockGroupManager::OutputNewSurfaceGrid()
         RDouble ss;
         for (int ip = 0; ip < 3 * np; ++ ip)
         {
-            infile.read((char*)&ss, sizeof(RDouble));
+            infile.read((char *)&ss, sizeof(RDouble));
             coordinate.push_back(ss);
         }
         infile.close();
@@ -1097,17 +1096,17 @@ void BlockGroupManager::OutputNewSurfaceGrid()
         nst += localNumberOfSurfaces[iGroup];
         npt += localNumberOfPoints[iGroup];
     }
-    outFile.write((char*)&nst, sizeof(int));
+    outFile.write((char *)&nst, sizeof(int));
 
     int kk = 1;
     for (int iSurface = 0; iSurface < nst; ++ iSurface)
     {
-        outFile.write((char*)&ni[iSurface], sizeof(int));
-        outFile.write((char*)&nj[iSurface], sizeof(int));
-        outFile.write((char*)&kk          , sizeof(int));
+        outFile.write((char *)&ni[iSurface], sizeof(int));
+        outFile.write((char *)&nj[iSurface], sizeof(int));
+        outFile.write((char *)&kk          , sizeof(int));
     }
 
-    outFile.write((char*)&coordinate[0], 3 * npt * sizeof(RDouble));
+    outFile.write((char *)&coordinate[0], 3 * npt * sizeof(RDouble));
     outFile.close();
 
     string surfaceGroupFileName;
@@ -1131,7 +1130,7 @@ void BlockGroupManager::OutputNewGrid()
     string newGridFileName;
     GlobalDataBase::GetData("newGridFileName", &newGridFileName, PHSTRING,1);
     ofstream outFile(newGridFileName.c_str(), ios::binary);
-    outFile.write((char*)&globalBlockNumber, sizeof(int));
+    outFile.write((char *)&globalBlockNumber, sizeof(int));
 
     for (int iGroup = 0; iGroup < groupNumber; ++ iGroup)
     {
@@ -1142,9 +1141,9 @@ void BlockGroupManager::OutputNewGrid()
             jDimension = basalGrid[oldBlockLabel].GetJDimension();
             kDimension = basalGrid[oldBlockLabel].GetKDimension();
 
-            outFile.write((char*)&iDimension, sizeof(int));
-            outFile.write((char*)&jDimension, sizeof(int));
-            outFile.write((char*)&kDimension, sizeof(int));
+            outFile.write((char *)&iDimension, sizeof(int));
+            outFile.write((char *)&jDimension, sizeof(int));
+            outFile.write((char *)&kDimension, sizeof(int));
         }
     }
 
@@ -1166,7 +1165,7 @@ void BlockGroupManager::OutputNewGrid()
                         for (int i = 0; i < iDimension; ++ i)
                         {
                             RDouble coordinate = basalGrid[oldBlockLabel].GetCoordinate(aspect, i, j, k);
-                            outFile.write((char*)&coordinate, sizeof(RDouble));
+                            outFile.write((char *)&coordinate, sizeof(RDouble));
                         }
                     }
                 }
@@ -1203,7 +1202,7 @@ void BlockGroupManager::OutputNewBoundary()
         int externalSign = 0;
         simpleFaceGuard = boundaryCluster[oldBlockLabel].GetSimpleFaceHead();
 
-        while(simpleFaceGuard)
+        while (simpleFaceGuard)
         {
             const int *localParameter = simpleFaceGuard->GetLocalParameter();
             if (externalSign == 0)
@@ -1258,7 +1257,7 @@ void BlockGroupManager::OutputStandardBoundary()
 
         int proc = boundaryCluster[iBlock].GetProcessLabel();
 
-        if (! readProc)
+        if (!readProc)
         {
             outFile << iDimension << setw(4) << jDimension << setw(4) << kDimension << endl;
         }
@@ -1273,7 +1272,7 @@ void BlockGroupManager::OutputStandardBoundary()
         int externalSign = 0;
         simpleFaceGuard = boundaryCluster[oldBlockLabel].GetSimpleFaceHead();
 
-        while(simpleFaceGuard)
+        while (simpleFaceGuard)
         {
             const int *localParameter = simpleFaceGuard->GetLocalParameter();
             if (externalSign == 0)
@@ -1319,7 +1318,7 @@ void BlockGroupManager::OutputZoneInverseMapping()
     {
         int oldBlockLabel = InverseMapping[iBlock];
         cout << "iBlock = " << iBlock << "  oldBlockLabel = " << oldBlockLabel << endl;
-        outFile.write((char*)&oldBlockLabel, sizeof(int));
+        outFile.write((char *)&oldBlockLabel, sizeof(int));
     }
     outFile.close();
 
@@ -1344,7 +1343,7 @@ void BlockGroupManager::OutputHoleGroup(int iGroup)
         solidFaceCounter += boundaryCluster[oldBlockLabel].GetNumberOfSolidFaces();
     }
 
-    outFile.write((char*)&solidFaceCounter, sizeof(int));
+    outFile.write((char *)&solidFaceCounter, sizeof(int));
 
     for (int iBlock = blockStart[iGroup]; iBlock <= blockEnd[iGroup]; ++ iBlock)
     {

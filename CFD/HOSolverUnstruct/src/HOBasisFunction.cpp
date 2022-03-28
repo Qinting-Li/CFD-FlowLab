@@ -10,13 +10,11 @@ namespace HOUnstruct
 //! @param[in]  i        the i-th basis
 //!
 //! @return      basis function value
-RDouble MonomialBasis( const PHSPACE::RDouble * refCoord, unsigned int i )
+RDouble MonomialBasis(const PHSPACE::RDouble * refCoord, unsigned int i)
 {
     const RDouble xi = refCoord[0];
     const RDouble et = refCoord[1];
     const RDouble zt = refCoord[2];
-
-    //(i < ((order)+1)*((order)+2)*((order)+3)/6);
 
     // monomials. since they are hierarchic we only need one case block.
     switch (i)
@@ -65,7 +63,7 @@ RDouble MonomialBasis( const PHSPACE::RDouble * refCoord, unsigned int i )
 //! @param[in]  j        the j-th grad 0,1,2 means dxi, dzt, dzt
 //!
 //! @return      basis function grad value
-RDouble MonomialBasisGrad( const PHSPACE::RDouble * refCoord, const unsigned int i, const unsigned int j )
+RDouble MonomialBasisGrad(const PHSPACE::RDouble * refCoord, const unsigned int i, const unsigned int j)
 {
     const RDouble xi = refCoord[0];
     const RDouble et = refCoord[1];
@@ -213,7 +211,7 @@ RDouble MonomialBasisGrad( const PHSPACE::RDouble * refCoord, const unsigned int
 //! @param[in]  i        the i-th basis
 //!
 //! @return      basis function value
-RDouble MonomialBasis2d( const PHSPACE::RDouble * refCoord, const unsigned int i )
+RDouble MonomialBasis2d(const PHSPACE::RDouble * refCoord, const unsigned int i)
 {
     const RDouble xi = refCoord[0];
     const RDouble et = refCoord[1];
@@ -281,36 +279,22 @@ void TestBasisFunction()
     const RDouble refCoord[3] = { 0.1, 0.2, 0.3 };
 
     std::cout << "monomial basis function:" << std::endl;
-    for( int i = 0; i < 10; ++i )
+    for(int i = 0; i < 10; ++i)
     {
-        std::cout <<  MonomialBasis( refCoord, i ) << " ";
+        std::cout <<  MonomialBasis(refCoord, i) << " ";
     }
     std::cout << std::endl;
 
-    for( int j = 0; j < 3; ++j )
+    for(int j = 0; j < 3; ++j)
     {
         std::cout << "monomial basis function grad:" << j << std::endl;
 
-        for( int i = 0; i < 10; ++i )
+        for(int i = 0; i < 10; ++i)
         {
-            std::cout <<  MonomialBasisGrad( refCoord, i, j ) << " ";
+            std::cout <<  MonomialBasisGrad(refCoord, i, j) << " ";
         }
         std::cout << std::endl;
     }
-
-    /*/ out
-    monomial basis function:
-    1 0.1 0.2 0.3 0.01 0.02 0.04 0.03 0.06 0.09
-    monomial basis function grad:0
-    0 1 0 0 0.2 0.2 0 0.3 0 0
-    monomial basis function grad:1
-    0 0 1 0 0 0.1 0.4 0 0.3 0
-    monomial basis function grad:2
-    0 0 0 1 0 0 0 0.1 0.2 0.6
-    */
-
-    //char c;
-    //cin.get( c );
 }
 
 }

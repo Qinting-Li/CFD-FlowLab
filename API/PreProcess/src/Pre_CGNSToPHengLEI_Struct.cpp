@@ -2,7 +2,7 @@
 #include "Pre_CGNSToPlot3D_Struct.h"
 #include "TK_Exit.h"
 #include "Pointer.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "Geo_StructGrid.h"
 #include "Glb_Dimension.h"
 #include "TK_Log.h"
@@ -78,9 +78,9 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
     cout << "	Block number = " << nBlocks << endl;
     Str_CGNS_Data = new CGNS_Str_Data(nBlocks);
 
-    for (int izone = 1; izone <= nBlocks; ++ izone)
+    for (int iZone = 1; iZone <= nBlocks; ++ iZone)
     {
-        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(izone-1);
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone-1);
 
         //! Determine the number and names of the coordinates.
         base_cgns->SetNCoords(CellDim);
@@ -88,16 +88,16 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
         char_33 *zonenames = new char_33 [1];
         base_cgns->SetZonenames(zonenames);
 
-        cg_zone_type(fileid, baseid, izone, &zone_type);
+        cg_zone_type(fileid, baseid, iZone, &zone_type);
         if (zone_type == Unstructured)
         {
             TK_Exit::ExceptionExit("Error: the input CGNS mesh must be STRUCTURED type!");
         }
 
-        cg_zone_read(fileid, baseid, izone, zonenames[0], isize[0]);
+        cg_zone_read(fileid, baseid, iZone, zonenames[0], isize[0]);
 
         char_33 zonename;
-        cg_zone_read(fileid, baseid, izone, zonename, isize[0]);
+        cg_zone_read(fileid, baseid, iZone, zonename, isize[0]);
 
         //! Import i¡¢j¡¢k direction information.
         cgsize_t idim = isize[0][0];
@@ -133,23 +133,23 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
         base_cgns->SetZ(z);
 
         int icoor = 0;
-        cg_coord_info(fileid, baseid, izone, icoor+1,  &dataType, coordname);
-        cg_coord_read(fileid, baseid, izone, coordname, dataType, irmin, irmax, **x);
-        cg_coord_info(fileid, baseid, izone, icoor+2,  &dataType, coordname);
-        cg_coord_read(fileid, baseid, izone, coordname, dataType, irmin, irmax, **y);
+        cg_coord_info(fileid, baseid, iZone, icoor+1,  &dataType, coordname);
+        cg_coord_read(fileid, baseid, iZone, coordname, dataType, irmin, irmax, **x);
+        cg_coord_info(fileid, baseid, iZone, icoor+2,  &dataType, coordname);
+        cg_coord_read(fileid, baseid, iZone, coordname, dataType, irmin, irmax, **y);
         if (CellDim == 3)
         {
-            cg_coord_info(fileid, baseid, izone, icoor+3,  &dataType, coordname);
-            cg_coord_read(fileid, baseid, izone, coordname, dataType, irmin, irmax, **z);
+            cg_coord_info(fileid, baseid, iZone, icoor+3,  &dataType, coordname);
+            cg_coord_read(fileid, baseid, iZone, coordname, dataType, irmin, irmax, **z);
         }
 
         //! Read the Connectivity information
         int nBCRegions, n1to1;
-        cg_goto  (fileid, baseid, "Zone_t", izone, "ZoneBC_t", 1, "end");
-        cg_nbocos(fileid, baseid, izone, &nBCRegions);
+        cg_goto  (fileid, baseid, "Zone_t", iZone, "ZoneBC_t", 1, "end");
+        cg_nbocos(fileid, baseid, iZone, &nBCRegions);
         base_cgns->SetNBCRegions(nBCRegions);
 
-        cg_n1to1(fileid, baseid, izone, &n1to1);
+        cg_n1to1(fileid, baseid, iZone, &n1to1);
         char_33 *connectname = new char_33 [n1to1];
         char_33 *donorname   = new char_33 [n1to1];
         base_cgns->SetConnectname(connectname);
@@ -163,7 +163,7 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
         {
             cgsize_t srange[6], donor_range[6];
             int transform[3];
-            cg_1to1_read(fileid, baseid, izone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
+            cg_1to1_read(fileid, baseid, iZone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
             if (strcmp(zonename, donorname[one21-1]) == 0)
             {
                 mark ++;
@@ -193,10 +193,10 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
         //! Read boundary condition information
         for (int boco = 0; boco < nBCRegions; ++ boco)
         {
-            ier = cg_goto(fileid, baseid, "Zone_t", izone, "ZoneBC_t", 1, "BC_t", boco+1, "end");
-            cg_boco_info(fileid, baseid, izone, boco+1, bocoName, &bocoType[boco], &ptsetType, &nPoints, &normalIndex[0], 
+            ier = cg_goto(fileid, baseid, "Zone_t", iZone, "ZoneBC_t", 1, "BC_t", boco+1, "end");
+            cg_boco_info(fileid, baseid, iZone, boco+1, bocoName, &bocoType[boco], &ptsetType, &nPoints, &normalIndex[0], 
                 &normListFlag, &normDataType, &nDataSet);
-            cg_boco_read(fileid, baseid, izone, boco+1, pnts[boco], NULL);
+            cg_boco_read(fileid, baseid, iZone, boco+1, pnts[boco], NULL);
 
             int make_edge_judge = 0;
             for (int nrange = 0; nrange < 3; ++ nrange)
@@ -267,7 +267,7 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
                     dx = abs(x[kMin][jMin][iMin] - x[kMax][jMin][iMin]) * gridScaleFactor;
                     dy = abs(y[kMin][jMin][iMin] - y[kMax][jMin][iMin]) * gridScaleFactor;
                     dz = abs(z[kMin][jMin][iMin] - z[kMax][jMin][iMin]) * gridScaleFactor;
-                    if ((dx+dy+dz ) < SMALL && pnts[boco][2] != pnts[boco][5]) 
+                    if ((dx+dy+dz) < SMALL && pnts[boco][2] != pnts[boco][5]) 
                     {
                         lab1[boco] = 73;
                     }
@@ -292,7 +292,7 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
         base_cgns->SetNconnect(nconnect);
 
         //! Zone Connectivity
-        ier = cg_goto(fileid, baseid, "Zone_t", izone, "ZoneGridConnectivity_t", 1, "GridConnectivity1to1_t", 1, "end");
+        ier = cg_goto(fileid, baseid, "Zone_t", iZone, "ZoneGridConnectivity_t", 1, "GridConnectivity1to1_t", 1, "end");
         base_cgns->SetIer(ier);
 
         int lab2 = 0;
@@ -319,7 +319,7 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
                 srange = new cgsize_t [6]();
                 donor_range = new cgsize_t [6]();
 
-                cg_1to1_read(fileid, baseid, izone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
+                cg_1to1_read(fileid, baseid, iZone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
 
                 base_cgns->SetSrange(srange, count);
                 base_cgns->SetDonor_range(donor_range, count);
@@ -334,7 +334,7 @@ void Pre_CGNSToPHengLEI_Struct::ReadGrid()
                     }
                 }
 
-                if (lab2 == izone)
+                if (lab2 == iZone)
                 {
                     string connectname1 = connectname[one21-1];
                     if (strcmp(connectname1.substr(0,14).c_str(), "1to1InterfaceB") == 0 && CellDim == 3)
@@ -455,6 +455,13 @@ void Pre_CGNSToPHengLEI_Struct::Conversion()
 
 void Pre_CGNSToPHengLEI_Struct::SetCoordinate()
 {
+    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+    RDouble *gridTranslationVector = new RDouble[3]();
+    if (GlobalDataBase::IsExist("gridTranslationVector", PHDOUBLE, 3))
+    {
+        GlobalDataBase::GetData("gridTranslationVector", gridTranslationVector, PHDOUBLE, 3);
+    }
+
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
         BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone);
@@ -495,10 +502,17 @@ void Pre_CGNSToPHengLEI_Struct::SetCoordinate()
             {
                 for (int i = 0; i < idim; ++ i)
                 {
+                    x[k][j][i] *= gridScaleFactor;
+                    x[k][j][i] += gridTranslationVector[0];
                     xx(i+1, j+1, k+1) = x[k][j][i];
+
+                    y[k][j][i] *= gridScaleFactor;
+                    y[k][j][i] += gridTranslationVector[1];
                     yy(i+1, j+1, k+1) = y[k][j][i];
 
                     if (nCoords == 2) z[k][j][i] = 0.0;
+                    z[k][j][i] *= gridScaleFactor;
+                    if (nCoords == 3) z[k][j][i] += gridTranslationVector[2];
                     zz(i+1, j+1, k+1) = z[k][j][i];
                 }
             }
@@ -523,12 +537,12 @@ void Pre_CGNSToPHengLEI_Struct::SetBCInfo()
 
         StructGrid *grid = StructGridCast(grids[iZone]);
         grid->CreateCompositeBCRegion(nBCRegions + n1to1);
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
             StructBC *BCRegions = new StructBC(iZone, iBCRegion);
-            compositeBCRegion->SetBCRegion(iBCRegion, BCRegions);
+            structBCSet->SetBCRegion(iBCRegion, BCRegions);
 
             string bcNameCurrent;
             int iMin, iMax, jMin, jMax, kMin, kMax, BCType;
@@ -576,7 +590,7 @@ void Pre_CGNSToPHengLEI_Struct::SetBCInfo()
                 cgsize_t *donor_ranges = base_cgns->GetDonor_range(one21);
 
                 StructBC *BCRegions = new StructBC(iZone, nBCRegions + one21);
-                compositeBCRegion->SetBCRegion(nBCRegions + one21, BCRegions);
+                structBCSet->SetBCRegion(nBCRegions + one21, BCRegions);
 
                 string bcNameCurrent;
                 int iMin, iMax, jMin, jMax, kMin, kMax, BCType;
@@ -639,19 +653,19 @@ void Pre_CGNSToPHengLEI_Struct::CheckMeshMultigrid()
     int km, NN;
     int km_grid = 1024;
 
-    for (int izone = 0; izone < nBlocks; izone ++)
+    for (int iZone = 0; iZone < nBlocks; iZone ++)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
-        CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        int nBCRegion = structBCSet->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
             km = 1;
             NN = 2;
 
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
 

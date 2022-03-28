@@ -207,7 +207,7 @@ private:
     //! Communicate with each processor,then determine probes' cell of all zones with minimum distance.
     void ServerCollectionProbesData();
     //! Broadcast all probes data to all processor.
-    void BroadCastProbesData();
+    void BroadcastProbesData();
     //! Compress each ProbeData probe cell information to DataContainer.
     void CompressProbesData(DataContainer *cdata);
     //! Decompress DataContainer's probe cell information into each ProbeData

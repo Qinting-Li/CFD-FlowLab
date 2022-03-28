@@ -39,10 +39,10 @@ private:
     Region *region;
 
     //! Flow field variables proxy, actually, it stores the fields on different grid levels in MG.
-    ZoneFieldProxy *q_proxy;
+    ZoneFieldProxy *qProxy;
 
     //! Right Hand Side (RHS) proxy, actually, it stores the RHS on different grid levels in MG.
-    ZoneFieldProxy *rhs_proxy;
+    ZoneFieldProxy *rhsProxy;
 
     //! Solver index.
     int solverID;
@@ -54,6 +54,10 @@ public:
 public:
     LIB_EXPORT void Initialize(int iSolver);
     LIB_EXPORT void InitCoarseGridsFlow(int iSolver, int level);
+
+    LIB_EXPORT void CleanUp(int iSolver);
+    
+    LIB_EXPORT void SolveIncomFlow();
 
     //! Steady simulation by implementing multi-grid cycle.
     //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right
@@ -67,10 +71,30 @@ public:
     //! and the steady relaxation sub-iterations are nested inside the real physical time step.
     LIB_EXPORT void SolveUnsteadyField();
 
+    //! Steady simulation for incompressible situation
+    void SolveIncompressibleSteadyField();
+
+    //! If converged for incompressible situation
+    bool IsConverged(int iZone);
+
+    //! Reinit variable for incompressible situation 
+    void IncompressibleInitial(int iSolver);
     //! Update unsteady flow.
     //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
     void UpdateUnsteadyFlow(int iSolver, int level = 0);
 
+    //! Update unsteady variable for incompressible solvers.
+    //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
+    void UpdateUnsteadyVariable(int iSolver, int level = 0);
+
+    //! Init residual file.
+    void InitResultFile(string &fileName);
+
+    //! Output res to file.
+    void DumpResultFile(string &fileName);
+
+    //! For InCompressible Solvers
+    void UpdateDt(int iSolver, int level);
     //! Multi-Grid (MG) acceleration cycle control.
     //! All MG stages are defined in it, such as relaxation, restriction, prolongation, correction.
     void MultiGrid(int iSolver, int level = 0);
@@ -115,9 +139,6 @@ public:
     //! Compute pressure factor for entropy fix (Method 2).
     void PressureFactor(int iSolver, int level);
 
-    //! Compute pressure factor for entropy fix (Method 2).
-    void ComputeHeatTransferCoeff(int iSolver, int level);
-
     //! Compute the gama and temperature of flowfield on the level-th multigrid.
     void ComputeGamaAndTField(int iSolver, int level);
 
@@ -159,7 +180,7 @@ public:
     LIB_EXPORT void MultiGridInitFlow(int level);
 
     //! Compute the sub-iteration norm.
-    RDouble ComputeSubIterationNorm( int iSolver, int level );
+    RDouble ComputeSubIterationNorm(int iSolver, int level);
 
 private:
     //! Get the current being used solver index.
@@ -174,17 +195,21 @@ private:
     //! Get Right Hand Side on multi-grid of 'level' of iSolver-th solver.
     FieldProxy **GetRHSProxy(int level);
 
-    Zone *GetZone(int izone);
+    //!
+    Zone * GetZone(int iZone);
 
-    CFDSolver *GetCFDSolver(int izone, int iSolver);
+    CFDSolver * GetCFDSolver(int iZone, int iSolver);
 
     //! For New LUSGS with one sweep, Sub-routines of LUSGS method, which is divided into 4 steps.
     void LUSGS(int iSolver, int level);
+    void DualTimeStepsLUSGS(int iSolver, int level);
     void LUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
     void BLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
-    void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
-    void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+	void MatrixLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
+    void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy);
+    void DetermineCFLNumber(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **dqProxy1);
 
     void CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy);
     void CommunicateGenericArray(int iSolver, int level);
@@ -210,6 +235,15 @@ private:
     
     //! Backward sweep in BLUSGS methods.
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+
+	//! Matix Lower-Upper Symmetric Gauss¨CSeidel Scheme for struct grid.
+    void MatrixLUSGS(int iSolver, int level);
+
+    //! Forward sweep in MatrixLUSGS methods.
+    void ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep);
+    
+    //! Backward sweep in MatrixLUSGS methods.
+    void BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
     //! Line implicit Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
     void LineLUSGS(int iSolver, int level);
@@ -257,6 +291,18 @@ private:
     void RecoverResidual   (int iSolver, int level);
     bool CVGNorm(int iSolver, int level = 0);
     bool ISCoarsestGrid(int level);
+
+    //! For solving incompressible flow.
+    void SolveFlowField(int iZone);
+
+    //! For solving incompressible scalar equation.
+    void SolveScalarField(int iZone);
+
+    //! For solving incompressible turb equation.
+    void SolveTurbField(int iZone);
+
+    //! For solving incompressible energy equation.
+    void SolveEnergyField(int iZone);
 };
 
 class MultiGridFieldProxy
@@ -268,7 +314,7 @@ public:
     MultiGridFieldProxy(int iSolver, int level, int nZone);
     ~MultiGridFieldProxy();
 public:
-    FieldProxy **GetFieldProxy() {return field_proxy;};
+    FieldProxy ** GetFieldProxy() { return field_proxy; }
 };
 
 class ZoneFieldProxy
@@ -276,12 +322,12 @@ class ZoneFieldProxy
 private:
     int iSolver, nzone;
     uint_t nlevel;
-    MultiGridFieldProxy ** field_proxy;
+    MultiGridFieldProxy **field_proxy;
 public:
     ZoneFieldProxy(int iSolver, uint_t nLevel, int nZone);
     ~ZoneFieldProxy();
 public:
-    FieldProxy **GetFieldProxy(int level);
+    FieldProxy ** GetFieldProxy(int level);
 };
 
 #include "Controller.hxx"

@@ -3,7 +3,7 @@
 #include "Pre_UnstructGridPartition.h"
 #include "TK_Parse.h"
 #include "GridgenIn.h"
-#include "Pre_StrGridPartition.h"
+#include "Pre_StructGridPartition.h"
 #include "GridType.h"
 #include "TK_Log.h"
 #include "IO_FileName.h"
@@ -535,7 +535,7 @@ void BlockRefine::DumpGrid(fstream &file, Grid *gridIn)
 {
     StructGrid *gridOld = StructGridCast(gridIn);
 
-    //ni,nj,nk are fine grid dimension
+    //! ni,nj,nk are fine grid dimension
     int ni = this->GetNI();
     int nj = this->GetNJ();
     int nk = this->GetNK();
@@ -854,7 +854,7 @@ void GridRefine::DumpGrid()
     uint_t numberOfBlocks = refblock.size();
     int nBlocks;
     Grid **structGrids;
-    ReadGridgenCoor(coordinateFile, nBlocks, structGrids);
+    ReadPlot3DCoorBinary(coordinateFile, nBlocks, structGrids);
 
     fstream file;
     file.open(partitionedCoordinateFile.c_str(),ios_base::out|ios_base::binary|ios_base::trunc);

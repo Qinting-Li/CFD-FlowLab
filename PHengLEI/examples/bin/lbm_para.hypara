@@ -1,0 +1,126 @@
+# nBoundaryConditons : number of global boundary conditions.
+# bcName             : Boundary Condition Name.
+# bcType(in PHengLEI): Boundary Condition Type.
+
+# Account of how to set boundaryconditon.
+# string bcName = "Farfield";
+# {
+#   int bcType = 4;
+#   int inflowParaType = 1;
+#   double attackd = 0;
+#   double reynolds = 6.5e6;
+#   double reference_mach_number = 3.5;
+#   double sideslipd = 0;
+# }
+
+int nBoundaryConditons = 4;
+	
+#设置计算参数，如格子速度、粘度、初始宏观量、运行时间、输出时间	
+string bcName = "calPara";
+{
+  int bcType=4;
+  double latticeVel=1.0;
+  double viscosity=1.0;
+  double iniMacroVar[]=[1.0,0.0,0.0,0.0];
+  int stepEnd=200;
+  int stepOutput=200;
+}
+
+#设置计算区域
+string bcName = "calBox";
+{
+  int bcType = 1;
+  int dim = 3;
+  string geoTypeName = "Box";
+  double box[] = [-70.0, -10.0, -20.0,70.0, 70.0,70.0];
+}
+
+#设置Range，采用正方体网格，注意网格数需成一定的比例关系，与计算区域的三边长度相关
+string bcName = "range";
+{
+  int bcType = 4;
+  int dim = 3;
+  int range[] = [0,0,0,280,160,180];
+}
+
+#读取stlGeo文件，其中dx通过上边的计算区域以及Range计算获得
+string bcName = "StlGeo";
+{
+  int bcType = 1;
+  int dim = 3;
+  string geoTypeName = "StlGeo";
+  string stlName = "./grid/train.stl";
+}
+
+#设置入口，此时流动方向与X轴平行
+string bcName ="inLet";
+{
+  int bcType = 1;
+  int dim = 3;
+  string geoTypeName = "Box";
+  double box[] = [-70.000001,-10.000001,-20.000001,-69.999999,70.000001,70.000001];
+}
+
+#设置入口边界条件，压力边界(给定密度)，需给定格子速度、入口密度、以及找到相邻格点的向量
+string bcName = "nonEquilibriumOfPressureIn";
+{
+  int bcType = 2;
+  string bcTypeName = "NonEquilibriumOfPressureFactory<D3Q15>";
+  double latticeVel = 1.0;
+  double pressure=1.01;
+  int vector[]=[1,0,0]; 
+}
+
+#设置出口
+string bcName ="outLet";
+{
+  int bcType = 1;
+  int dim = 3;
+  double box[] = [69.999999,-10.000001,-20.000001,70.0000001,70.000001,70.000001];
+  string geoTypeName = "Box";
+}
+
+#设置出口压力边界，需给定格子速度、出口密度、向量
+string bcName = "nonEquilibriumOfPressureOut";
+{
+  int bcType = 2;
+  string bcTypeName = "NonEquilibriumOfPressureFactory<D3Q15>";
+  double latticeVel = 1.0;
+  double pressure=0.99;
+  int vector[]=[-1,0,0];
+}
+
+#设置反弹边界
+string bcName = "bounceback";
+{
+  int bcType = 2;
+  string bcTypeName = "BounceBackFactory<D3Q15>";
+}
+
+
+string bcName = "movingbounceback";
+{
+  int bcType = 2;
+  string bcTypeName = "MovingBounceBackFactory<D3Q15>";
+  double latticeVel = 1.0;
+  double macroVar[]=[0.1,0.0,0.0];
+}
+
+#不需要读取网格，以计算区域的左下角端点为原点，根据Range可以获得dx，从而可以在主程序中初始化Grid
+
+
+#'bcType' is defined as following:
+#    99: PERIODIC              	
+#    -2: WAKE                  	
+#    -1: INTERFACE             	
+#    0 : NO_BOUNDARY_CONDITION 	
+#    1 : EXTRAPOLATION         	
+#    2 : SOLID_SURFACE         	
+#    3 : SYMMETRY              	
+#    4 : FARFIELD              	
+#    5 : INFLOW                	
+#    6 : OUTFLOW               	
+#    52: PRESSURE_INLET		    
+#    62: PRESSURE_OUTLET		   	
+#    61: OUTFLOW_CONFINED      	
+#    7 : POLE						

@@ -75,6 +75,9 @@ private:
     int nEntrFix;
     int nNitrogenIndex;
     int nElectronIndex;
+    int nIdealState;
+
+    RDouble AusmpwPlusLimiter;
 
     RDouble refMachNumber;
 
@@ -94,12 +97,14 @@ public:
     void SetLength(const int nLen) {this->nLen = nLen;}
     void SetNumberOfLaminar(const int nLaminar) {this->nLaminar = nLaminar;}
     void Setnm(const int nm) {this->nm = nm;}
-    void SetIfPrecondition(const bool nPrecondition) {this->nPrecondition = nPrecondition;}
+    void SetIfPrecondition(const int nPrecondition) {this->nPrecondition = nPrecondition;}
+    void SetIfIdealState(const int nIdealState) { this->nIdealState = nIdealState; }
     void SetNumberOfChemical(const int nChemical) {this->nChemical = nChemical;}
     void SetNumberOfTemperatureModel(const int nTemperatureModel) {this->nTemperatureModel = nTemperatureModel;}
     void SetNumberOfTotalEquation(const int nEquation) {this->nEquation = nEquation;}
     void SetIndexOfNitrogen(const int nIndex) {this->nNitrogenIndex = nIndex;}
     void SetIndexOfElectron(const int nIndex) {this->nElectronIndex = nIndex;}
+    void SetAusmpwPlusLimiter(const RDouble Limiter) {this->AusmpwPlusLimiter = Limiter;}
 
     void SetEntropyFixMethod(const int nEntrFix) {this->nEntrFix = nEntrFix;}
     void SetEntropyFixCoefficients(const RDouble entrFixCoefLeft, const RDouble entrFixCoefRight)
@@ -125,6 +130,10 @@ public:
 
     int GetEntropyFixMethod() {return this->nEntrFix;}
     int GetIfPrecondition() {return this->nPrecondition;}
+    int GetIfIdealState() { return this->nIdealState; }
+
+    RDouble GetAusmpwPlusLimiter() {return this->AusmpwPlusLimiter;}
+
     RDouble GetLeftEntropyFixCoefficient() {return this->entrFixCoefLeft;}
     RDouble GetRightEntropyFixCoefficient() {return this->entrFixCoefRight;}
     RDouble GetMachNumber() {return this->refMachNumber;}

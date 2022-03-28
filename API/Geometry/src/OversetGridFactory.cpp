@@ -15,15 +15,15 @@ namespace PHSPACE
 {
 int GetCodeOfDigHoles()
 {
-    return GlobalDataBase::GetIntParaFromDB( "codeOfDigHoles" );
+    return GlobalDataBase::GetIntParaFromDB("codeOfDigHoles");
 }
 
 int GetCodeOfTurbulenceModel()
 {
-    int viscousType = GlobalDataBase::GetIntParaFromDB( "viscousType" );
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
 
     int codeOfTurbulenceModel = 0;
-    if ( viscousType != INVISCID && viscousType != LAMINAR )
+    if (viscousType != INVISCID && viscousType != LAMINAR)
     {
         codeOfTurbulenceModel = 1;
     }
@@ -38,14 +38,14 @@ LIB_EXPORT void GenerateStructGridTable()
 {
     using namespace PHMPI;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    structGridTable = new vector< StructGrid * >( numberOfZones, NULL );
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    structGridTable = new vector< StructGrid * >(nZones, NULL);
 
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = PHSPACE::GetGrid( iZone, 0 );
-        if ( ! grid ) continue;
-        ( * structGridTable )[iZone] = PHSPACE::StructGridCast( grid );
+        Grid *grid = PHSPACE::GetGrid(iZone, 0);
+        if (! grid) continue;
+        (* structGridTable)[iZone] = PHSPACE::StructGridCast(grid);
     }
 
     return;
@@ -55,11 +55,11 @@ LIB_EXPORT void DeleteStructGridTable()
 {
     using namespace PHMPI;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        ( * structGridTable )[iZone] = NULL;
+        (* structGridTable)[iZone] = NULL;
     }
 
     delete structGridTable; structGridTable = NULL;
@@ -67,9 +67,9 @@ LIB_EXPORT void DeleteStructGridTable()
     return;
 }
 
-LIB_EXPORT StructGrid * GetStructGrid( int i )
+LIB_EXPORT StructGrid * GetStructGrid(int i)
 {
-    return ( * structGridTable )[i];
+    return (* structGridTable)[i];
 }
 
 
@@ -106,9 +106,9 @@ LIB_EXPORT HoleGrid::~HoleGrid()
     delete nsp; nsp = NULL;
 
     uint_t size = capsule->size();
-    for ( int i = 0; i < size; ++ i )
+    for (int i = 0; i < size; ++ i)
     {
-        delete ( * capsule )[i]; ( * capsule )[i] = NULL;
+        delete (* capsule)[i]; (* capsule)[i] = NULL;
     }
     delete capsule; capsule = NULL;
 }
@@ -120,29 +120,29 @@ LIB_EXPORT void HoleGrid::DigHoles()
 
     ProbeCellsInHole();
 
-    ProbeBorderCell( IN_HOLE_COLOR, SECOND_COLOR );
+    ProbeBorderCell(IN_HOLE_COLOR, SECOND_COLOR);
 
-    ProbeBorderCell( SECOND_COLOR, OVERSET_COLOR );
+    ProbeBorderCell(SECOND_COLOR, OVERSET_COLOR);
 
     return;
 }
 
 LIB_EXPORT void HoleGrid::GenerateSurfaceSpace()
 {
-    nsi = new vector< int >( ns );
-    nsj = new vector< int >( ns );
-    nsp = new vector< int >( ns );
+    nsi = new vector< int >(ns);
+    nsj = new vector< int >(ns);
+    nsp = new vector< int >(ns);
 
     return;
 }
 
 LIB_EXPORT void HoleGrid::GeneratePointSpace()
 {
-    x = new vector< RDouble >( np );
-    y = new vector< RDouble >( np );
-    z = new vector< RDouble >( np );
+    x = new vector< RDouble >(np);
+    y = new vector< RDouble >(np);
+    z = new vector< RDouble >(np);
 
-    box = new vector< RDouble >( 6 );
+    box = new vector< RDouble >(6);
 
     return;
 }
@@ -150,16 +150,16 @@ LIB_EXPORT void HoleGrid::GeneratePointSpace()
 void HoleGrid::GenerateCapsualSpace()
 {
     int numberOfCapsules = 0;
-    for ( int is = 0; is < ns; ++ is )
+    for (int is = 0; is < ns; ++ is)
     {
-        numberOfCapsules += ( ( * nsi )[is] - 1 ) * ( ( * nsj )[is] - 1 );
+        numberOfCapsules += ((* nsi)[is] - 1) * ((* nsj)[is] - 1);
     }
 
-    capsule = new vector< vector< RDouble > * >( numberOfCapsules, NULL );
+    capsule = new vector< vector< RDouble > * >(numberOfCapsules, NULL);
 
-    for ( int ic = 0; ic < numberOfCapsules; ++ ic )
+    for (int ic = 0; ic < numberOfCapsules; ++ ic)
     {
-        ( * capsule )[ic] = new vector< RDouble >( 6 );
+        (* capsule)[ic] = new vector< RDouble >(6);
     }
 
     return;
@@ -168,57 +168,57 @@ void HoleGrid::GenerateCapsualSpace()
 void HoleGrid::MeasureBoxAndCapsual()
 {
     using namespace PHMPI;
-    vector< vector< RDouble > > holeLocalFrame( 3, vector< RDouble >( 4 ) );
-    phy.resize( 3, vector< RDouble >( np ) );
+    vector< vector< RDouble > > holeLocalFrame(3, vector< RDouble >(4));
+    phy.resize(3, vector< RDouble >(np));
 
-    int iZone = PHSPACE::GetZoneInverseIndex( zone_at );
-    int iProc = PHMPI::GetZoneProcessorID( iZone );
+    int iZone = PHSPACE::GetZoneInverseIndex(zone_at);
+    int iProc = PHMPI::GetZoneProcessorID(iZone);
     int jProc = PHMPI::GetCurrentProcessorID();
 
-    if ( iProc == jProc )
+    if (iProc == jProc)
     {
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
         holeLocalFrame = grid->GetLocalFrame();
     }
 
-    for( int i = 0; i < 3; ++i )
+    for(int i = 0; i < 3; ++i)
     {
-        PH_Bcast( & holeLocalFrame[i][0], 4 * sizeof(RDouble), iProc, 0 );
+        PH_Bcast(& holeLocalFrame[i][0], 4 * sizeof(RDouble), iProc, 0);
     }
 
-    vector< RDouble > ss( 3 );
-    for ( int i = 0; i < np; ++ i )
+    vector< RDouble > ss(3);
+    for (int i = 0; i < np; ++ i)
     {
-        PHSPACE::ComputePhysicalCoordinate( holeLocalFrame, ( * x )[i], ( * y )[i], ( * z )[i], ss );
+        PHSPACE::ComputePhysicalCoordinate(holeLocalFrame, (* x)[i], (* y)[i], (* z)[i], ss);
         phy[0][i] = ss[0]; phy[1][i] = ss[1]; phy[2][i] = ss[2];
     }
 
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
-        ( * box )[i*2  ] = * min_element( phy[i].begin(), phy[i].end() );
-        ( * box )[i*2+1] = * max_element( phy[i].begin(), phy[i].end() );
+        (* box)[i*2  ] = * min_element(phy[i].begin(), phy[i].end());
+        (* box)[i*2+1] = * max_element(phy[i].begin(), phy[i].end());
     }
 
-    vector< int > nd( 4 );
-    vector< vector< RDouble > > nodeCoordinate( 3, vector< RDouble >( 4 ) );
+    vector< int > nd(4);
+    vector< vector< RDouble > > nodeCoordinate(3, vector< RDouble >(4));
     int iCapsule = 0;
-    for ( int m = 0; m < ns; ++ m )
+    for (int m = 0; m < ns; ++ m)
     {
-        int spst = ( * nsp )[m];
-        int js = ( * nsj )[m];
-        for ( int j = 0; j < js - 1; ++ j )
+        int spst = (* nsp)[m];
+        int js = (* nsj)[m];
+        for (int j = 0; j < js - 1; ++ j)
         {
-            int is = ( * nsi )[m];
-            for ( int i = 0; i < is - 1; ++ i )
+            int is = (* nsi)[m];
+            for (int i = 0; i < is - 1; ++ i)
             {
                 nd[0] = spst + is * j + i;
-                nd[1] = spst + is * j + ( i + 1 );
-                nd[2] = spst + is * ( j + 1 ) + i;
-                nd[3] = spst + is * ( j + 1 ) + ( i + 1 );
+                nd[1] = spst + is * j + (i + 1);
+                nd[2] = spst + is * (j + 1) + i;
+                nd[3] = spst + is * (j + 1) + (i + 1);
 
-                CopyNodeCoordinate( nodeCoordinate, phy, nd );
+                CopyNodeCoordinate(nodeCoordinate, phy, nd);
 
-                ProduceCasing( nodeCoordinate, iCapsule );
+                ProduceCasing(nodeCoordinate, iCapsule);
 
                 iCapsule += 1;
             }
@@ -232,19 +232,19 @@ void HoleGrid::ProbeCellsInHole()
 {
     using namespace PHMPI;
 
-    for ( int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile )
+    for (int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
     {
-        int iZone = PHSPACE::GetZoneInverseIndex( iSmile );
+        int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if ( ! grid ) continue;
+        if (! grid) continue;
 
-        grid->ProbeHoleCell( this );
+        grid->ProbeHoleCell(this);
     }
 }
 
-void HoleGrid::ProbeBorderCell( int iType, int jType )
+void HoleGrid::ProbeBorderCell(int iType, int jType)
 {
     using namespace PHMPI;
     int numberOfProcessors = PHMPI::GetNumberOfProcessor();
@@ -253,45 +253,45 @@ void HoleGrid::ProbeBorderCell( int iType, int jType )
 
     vector< int > myPoint, myZone;
 
-    for ( int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile )
+    for (int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
     {
-        int iZone = PHSPACE::GetZoneInverseIndex( iSmile );
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
-        if ( ! grid ) continue;
-        grid->ProbeBorderCell( iType, jType, friendPoint, friendZone );
+        int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
+        if (! grid) continue;
+        grid->ProbeBorderCell(iType, jType, friendPoint, friendZone);
     }
         
     int myid = PHMPI::GetCurrentProcessorID();
 
     //std_mm
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
-        if ( ip != myid )
+        if (ip != myid)
         {
             int nfps = static_cast<int>(friendPoint[ip].size());
-            PH_Send( & nfps, sizeof(int), ip, 0 );
+            PH_Send(& nfps, sizeof(int), ip, 0);
 
-            if ( nfps == 0 ) continue;
+            if (nfps == 0) continue;
 
-            PH_Send( & friendPoint[ip][0], nfps * sizeof(int), ip, 0 );
-            PH_Send( & friendZone[ip][0],  nfps * sizeof(int), ip, 0 );
+            PH_Send(& friendPoint[ip][0], nfps * sizeof(int), ip, 0);
+            PH_Send(& friendZone[ip][0],  nfps * sizeof(int), ip, 0);
         }
         else
         {
             int nfps = 0;
-            for ( int jp = 0; jp < numberOfProcessors; ++ jp )
+            for (int jp = 0; jp < numberOfProcessors; ++ jp)
             {
-                if ( jp == myid ) continue;
-                PH_Receive( & nfps, sizeof(int), jp, 0 );
+                if (jp == myid) continue;
+                PH_Receive(& nfps, sizeof(int), jp, 0);
 
-                if ( nfps == 0 ) continue;
-                vector< int > carrier( nfps );
+                if (nfps == 0) continue;
+                vector< int > carrier(nfps);
 
-                PH_Receive( & carrier[0], nfps * sizeof(int), jp, 0 );
-                myPoint.insert( myPoint.end(), carrier.begin(), carrier.end() );
+                PH_Receive(& carrier[0], nfps * sizeof(int), jp, 0);
+                myPoint.insert(myPoint.end(), carrier.begin(), carrier.end());
 
-                PH_Receive( & carrier[0], nfps * sizeof(int), jp, 0 );
-                myZone.insert( myZone.end(), carrier.begin(), carrier.end() );
+                PH_Receive(& carrier[0], nfps * sizeof(int), jp, 0);
+                myZone.insert(myZone.end(), carrier.begin(), carrier.end());
             }
         }
     }
@@ -300,24 +300,24 @@ void HoleGrid::ProbeBorderCell( int iType, int jType )
     delete [] friendZone ; friendZone  = NULL;
 
     uint_t numberOfPoints = myPoint.size();
-    for( int pCounter = 0; pCounter < numberOfPoints; ++ pCounter )
+    for(int pCounter = 0; pCounter < numberOfPoints; ++ pCounter)
     {
         int zoneIndex = myZone[pCounter];
         int globalPointLabel = myPoint[pCounter];
-        StructGrid * grid = PHSPACE::GetStructGrid( zoneIndex );
-        grid->ColorOverlapCell( globalPointLabel, jType );
+        StructGrid * grid = PHSPACE::GetStructGrid(zoneIndex);
+        grid->ColorOverlapCell(globalPointLabel, jType);
     }
 
     return;
 }
 
-LIB_EXPORT int HoleGrid::GetCellColor( RDouble x, RDouble y, RDouble z, RDouble far )
+LIB_EXPORT int HoleGrid::GetCellColor(RDouble x, RDouble y, RDouble z, RDouble far)
 {
-    vector< RDouble > pst( 3 ), ped( 3 ), xqd( 4 ), yqd( 4 ), zqd( 4 ), pp_ist( 6 );
+    vector< RDouble > pst(3), ped(3), xqd(4), yqd(4), zqd(4), pp_ist(6);
     vector< RDouble > xi, yi, zi, xs, ys, zs;
 
     vector< RDouble > & box = * this->box;
-    if( x < box[0] || x > box[1] || y < box[2] || y > box[3] || z < box[4] || z > box[5] )
+    if(x < box[0] || x > box[1] || y < box[2] || y > box[3] || z < box[4] || z > box[5])
     {
         return GENERIC_COLOR;
     }
@@ -326,34 +326,34 @@ LIB_EXPORT int HoleGrid::GetCellColor( RDouble x, RDouble y, RDouble z, RDouble 
     pst[1] = y; ped[1] = far;
     pst[2] = z; ped[2] = z;
 
-    vector< int > nd( 4 );
+    vector< int > nd(4);
     int i_cap = -1;
-    for ( int m = 0; m < ns; ++ m )
+    for (int m = 0; m < ns; ++ m)
     {
-        int spst = ( * nsp )[m];
+        int spst = (* nsp)[m];
 
-        int js = ( * nsj )[m];
-        for ( int j = 0; j < js - 1; ++ j )
+        int js = (* nsj)[m];
+        for (int j = 0; j < js - 1; ++ j)
         {
-            int is = ( * nsi )[m];
-            for ( int i = 0; i < is - 1; ++ i )
+            int is = (* nsi)[m];
+            for (int i = 0; i < is - 1; ++ i)
             {
                 nd[0] = spst + is * j + i;
-                nd[1] = spst + is * j + ( i + 1 );
-                nd[2] = spst + is * ( j + 1 ) + i;
-                nd[3] = spst + is * ( j + 1 ) + ( i + 1 );
+                nd[1] = spst + is * j + (i + 1);
+                nd[2] = spst + is * (j + 1) + i;
+                nd[3] = spst + is * (j + 1) + (i + 1);
 
                 i_cap += 1; //very important part!
 
-                RDouble xqmin = ( * ( * capsule )[i_cap] )[0];
-                RDouble xqmax = ( * ( * capsule )[i_cap] )[1];
-                if ( x < xqmin || x > xqmax ) continue;
+                RDouble xqmin = (* (* capsule)[i_cap])[0];
+                RDouble xqmax = (* (* capsule)[i_cap])[1];
+                if (x < xqmin || x > xqmax) continue;
 
-                RDouble zqmin = ( * ( * capsule )[i_cap] )[4];
-                RDouble zqmax = ( * ( * capsule )[i_cap] )[5];
-                if ( z < zqmin || z > zqmax ) continue;
+                RDouble zqmin = (* (* capsule)[i_cap])[4];
+                RDouble zqmax = (* (* capsule)[i_cap])[5];
+                if (z < zqmin || z > zqmax) continue;
 
-                for ( int k = 0; k < 4; ++ k )
+                for (int k = 0; k < 4; ++ k)
                 {
                     xqd[k] = phy[0][nd[k]];
                     yqd[k] = phy[1][nd[k]];
@@ -361,47 +361,47 @@ LIB_EXPORT int HoleGrid::GetCellColor( RDouble x, RDouble y, RDouble z, RDouble 
                 }
 
                 int pCounter = 0;
-                Radial_Triangle_Intersect( pst, ped, xqd, yqd, zqd, pp_ist, pCounter );
+                Radial_Triangle_Intersect(pst, ped, xqd, yqd, zqd, pp_ist, pCounter);
 
-                for ( int ie = 0; ie < pCounter; ++ ie )
+                for (int ie = 0; ie < pCounter; ++ ie)
                 {
-                    xi.push_back( pp_ist[ie * 3 + 0] );
-                    yi.push_back( pp_ist[ie * 3 + 1] ); 
-                    zi.push_back( pp_ist[ie * 3 + 2] );
+                    xi.push_back(pp_ist[ie * 3 + 0]);
+                    yi.push_back(pp_ist[ie * 3 + 1]); 
+                    zi.push_back(pp_ist[ie * 3 + 2]);
                 }
             }
         }
     }
 
     uint_t microPoints = xi.size();
-    if ( microPoints != 0 )
+    if (microPoints != 0)
     {
-        xs.push_back( xi[0] ); ys.push_back( yi[0] ); zs.push_back( zi[0] );
+        xs.push_back(xi[0]); ys.push_back(yi[0]); zs.push_back(zi[0]);
 
-        for ( int i = 1; i < microPoints; ++ i )
+        for (int i = 1; i < microPoints; ++ i)
         {
             uint_t search_size = xs.size();
             bool ifpushback = true;
-            for ( int j = 0; j < search_size; ++ j )
+            for (int j = 0; j < search_size; ++ j)
             {
-                RDouble distance = abs( xs[j] - xi[i] ) + abs( ys[j] - yi[i] ) + abs( zs[j] - zi[i] );
-                if ( distance < 1.e-13 )
+                RDouble distance = abs(xs[j] - xi[i]) + abs(ys[j] - yi[i]) + abs(zs[j] - zi[i]);
+                if (distance < 1.e-13)
                 {
                     ifpushback = false;
                     break;
                 }
             }
 
-            if ( ifpushback ) 
+            if (ifpushback) 
             {
-                xs.push_back( xi[i] ); ys.push_back( yi[i] ); zs.push_back( zi[i] );
+                xs.push_back(xi[i]); ys.push_back(yi[i]); zs.push_back(zi[i]);
             }
         }
     }
 
     uint_t numberOfViewPoints = xs.size();
 
-    if ( numberOfViewPoints % 2 == 0 )
+    if (numberOfViewPoints % 2 == 0)
     {
         return GENERIC_COLOR;
     }
@@ -411,11 +411,11 @@ LIB_EXPORT int HoleGrid::GetCellColor( RDouble x, RDouble y, RDouble z, RDouble 
     }
 }
 
-void HoleGrid::CopyNodeCoordinate( vector< vector< RDouble > > & r, vector< vector< RDouble > > & s, vector< int > & node )
+void HoleGrid::CopyNodeCoordinate(vector< vector< RDouble > > & r, vector< vector< RDouble > > & s, vector< int > & node)
 {
-    for ( int j = 0; j < 3; ++ j )
+    for (int j = 0; j < 3; ++ j)
     {
-        for ( int i = 0; i < 4; ++ i )
+        for (int i = 0; i < 4; ++ i)
         {
             int node_i = node[i];
 
@@ -425,41 +425,41 @@ void HoleGrid::CopyNodeCoordinate( vector< vector< RDouble > > & r, vector< vect
     return;
 }
 
-void HoleGrid::ProduceCasing( vector< vector< RDouble > > & nodeCoordinate, int i )
+void HoleGrid::ProduceCasing(vector< vector< RDouble > > & nodeCoordinate, int i)
 {
-    vector< RDouble > & ss = * ( * capsule )[i];
+    vector< RDouble > & ss = * (* capsule)[i];
 
-    for ( int m = 0; m < 3; ++ m )
+    for (int m = 0; m < 3; ++ m)
     {
-        ss[2*m  ] = * min_element( nodeCoordinate[m].begin(), nodeCoordinate[m].end() );
-        ss[2*m+1] = * max_element( nodeCoordinate[m].begin(), nodeCoordinate[m].end() );
+        ss[2*m  ] = * min_element(nodeCoordinate[m].begin(), nodeCoordinate[m].end());
+        ss[2*m+1] = * max_element(nodeCoordinate[m].begin(), nodeCoordinate[m].end());
     }
 
     return;
 }
 
-void HoleGrid::Radial_Triangle_Intersect( vector<RDouble> & pst, vector<RDouble> & ped, vector<RDouble> & xqd, vector<RDouble> & yqd, vector<RDouble> & zqd, vector<RDouble> & pp_ist, int & pCounter )
+void HoleGrid::Radial_Triangle_Intersect(vector<RDouble> & pst, vector<RDouble> & ped, vector<RDouble> & xqd, vector<RDouble> & yqd, vector<RDouble> & zqd, vector<RDouble> & pp_ist, int & pCounter)
 {
     const int numberOfTriangles = 2;
     int flag = 0;
-    vector<RDouble> direct( 3 ), xx( 4 ), bb( 4 );
-    vector< vector<RDouble> > amer( 4, vector<RDouble>( 4 ) );
+    vector<RDouble> direct(3), xx(4), bb(4);
+    vector< vector<RDouble> > amer(4, vector<RDouble>(4));
 
     RDouble accumulator = 0.0;
-    for( int i = 0; i < 3; ++ i )
+    for(int i = 0; i < 3; ++ i)
     {
         direct[i] = ped[i] - pst[i];
         accumulator += direct[i] * direct[i];
     }
-    accumulator = 1.0 / sqrt( accumulator );
-    for( int i = 0; i < 3; ++i )
+    accumulator = 1.0 / sqrt(accumulator);
+    for(int i = 0; i < 3; ++i)
     {
         direct[i] *= accumulator;
     }
 
-    for( int iTriangle = 0; iTriangle < numberOfTriangles; ++iTriangle )
+    for(int iTriangle = 0; iTriangle < numberOfTriangles; ++iTriangle)
     {
-        for( int j = 0; j < 3; ++j )
+        for(int j = 0; j < 3; ++j)
         {
             amer[0][j] = xqd[j+iTriangle];
             amer[1][j] = yqd[j+iTriangle];
@@ -467,7 +467,7 @@ void HoleGrid::Radial_Triangle_Intersect( vector<RDouble> & pst, vector<RDouble>
             amer[3][j] = 1.0;
         }
 
-        for( int i = 0; i < 3; ++i )
+        for(int i = 0; i < 3; ++i)
         {
             amer[i][3] = -direct[i];
             bb[i] = pst[i];
@@ -475,12 +475,12 @@ void HoleGrid::Radial_Triangle_Intersect( vector<RDouble> & pst, vector<RDouble>
         amer[3][3] = 0.0;
         bb[3] = 1.0;
 
-        GaussElimination( amer, bb, 4, xx, flag );
-        if ( flag == 0 ) continue;
+        GaussElimination(amer, bb, 4, xx, flag);
+        if (flag == 0) continue;
 
-        if( xx[0] > 0.0 &&  xx[1] > 0.0 &&  xx[2] > 0.0 &&  xx[3] > 0.0 )
+        if(xx[0] > 0.0 &&  xx[1] > 0.0 &&  xx[2] > 0.0 &&  xx[3] > 0.0)
         {
-            for( int i = 0; i < 3; ++i )
+            for(int i = 0; i < 3; ++i)
             {
                 pp_ist[3 * pCounter + i] = pst[i] + direct[i] * xx[3];
             }
@@ -491,22 +491,22 @@ void HoleGrid::Radial_Triangle_Intersect( vector<RDouble> & pst, vector<RDouble>
     return;
 }
 
-void HoleGrid::GaussElimination( vector< vector< RDouble > > & a, vector< RDouble > & b, int n, vector< RDouble > & x, int & flag )
+void HoleGrid::GaussElimination(vector< vector< RDouble > > & a, vector< RDouble > & b, int n, vector< RDouble > & x, int & flag)
 {
     int is = 0;
     flag = 1;
-    vector< int > js( n );
+    vector< int > js(n);
 
-    for( int k = 0; k < n-1; ++k )
+    for(int k = 0; k < n-1; ++k)
     {
         RDouble d = 0.0;
-        for( int i = k; i < n; ++i )
+        for(int i = k; i < n; ++i)
         {
-            for( int j = k; j < n; ++j )
+            for(int j = k; j < n; ++j)
             {
-                if( abs( a[i][j] ) > d )
+                if(abs(a[i][j]) > d)
                 {
-                    d = abs( a[i][j] );
+                    d = abs(a[i][j]);
                     js[k] = j;
                     is = i;
                 }
@@ -521,7 +521,7 @@ void HoleGrid::GaussElimination( vector< vector< RDouble > > & a, vector< RDoubl
         {
             if (js[k] != k)
             {
-                for( int i = 0; i < n; ++i )
+                for(int i = 0; i < n; ++i)
                 {
                     RDouble t = a[i][k];
                     a[i][k] = a[i][js[k]];
@@ -529,9 +529,9 @@ void HoleGrid::GaussElimination( vector< vector< RDouble > > & a, vector< RDoubl
                 }
             }
 
-            if( is != k )
+            if(is != k)
             {
-                for( int j = k; j < n; ++j )
+                for(int j = k; j < n; ++j)
                 {
                     RDouble t = a[k][j];
                     a[k][j] = a[is][j];
@@ -544,19 +544,19 @@ void HoleGrid::GaussElimination( vector< vector< RDouble > > & a, vector< RDoubl
             }
         }
 
-        if( flag == 0 ) return;
+        if(flag == 0) return;
 
         RDouble sfn = 1.0/a[k][k];
-        for( int j = k+1; j < n; ++j )
+        for(int j = k+1; j < n; ++j)
         {
             a[k][j] *= sfn;
         }
 
         b[k] *= sfn;
 
-        for( int i = k+1; i < n; ++i )
+        for(int i = k+1; i < n; ++i)
         {
-            for( int j = k+1; j < n; ++j )
+            for(int j = k+1; j < n; ++j)
             {
                 a[i][j] -= a[i][k]*a[k][j];
             }
@@ -571,10 +571,10 @@ void HoleGrid::GaussElimination( vector< vector< RDouble > > & a, vector< RDoubl
     }
 
     x[n-1] = b[n-1]/a[n-1][n-1];
-    for( int i = n-2; i >= 0; --i )
+    for(int i = n-2; i >= 0; --i)
     {
         RDouble t = 0;
-        for( int j = i+1; j < n; ++j )
+        for(int j = i+1; j < n; ++j)
         {
             t += a[i][j]*x[j];
         }
@@ -582,9 +582,9 @@ void HoleGrid::GaussElimination( vector< vector< RDouble > > & a, vector< RDoubl
     }
 
     js[n-1] = n-1;
-    for( int k = n-1; k >= 0; --k )
+    for(int k = n-1; k >= 0; --k)
     {
-        if( js[k] != k )
+        if(js[k] != k)
         {
             RDouble t = x[k];
             x[k] = x[js[k]];
@@ -603,9 +603,9 @@ LIB_EXPORT Stainer::Stainer()
 
 LIB_EXPORT Stainer::~Stainer()
 {
-    for ( int iHole = 0; iHole < numberOfHoles; ++ iHole )
+    for (int iHole = 0; iHole < numberOfHoles; ++ iHole)
     {
-        delete ( * holeGridContainer )[iHole]; ( * holeGridContainer )[iHole] = NULL;
+        delete (* holeGridContainer)[iHole]; (* holeGridContainer)[iHole] = NULL;
     }
     delete holeGridContainer; holeGridContainer = NULL;
 }
@@ -613,46 +613,46 @@ LIB_EXPORT Stainer::~Stainer()
 LIB_EXPORT void Stainer::ReadHoleData()
 {
     using namespace PHMPI;
-    if( ! PHSPACE::GetCodeOfDigHoles() ) return;
+    if(! PHSPACE::GetCodeOfDigHoles()) return;
 
     int server = GetServerProcessorID();
     fstream file;
-    string fileName = GlobalDataBase::GetStrParaFromDB( "holeFullFileName" );
-    ParallelOpenFile( file, fileName, ios_base::in|ios_base::binary );
+    string fileName = GlobalDataBase::GetStrParaFromDB("holeFullFileName");
+    ParallelOpenFile(file, fileName, ios_base::in|ios_base::binary);
 
-    PH_Read_Bcast( file, & numberOfHoles, sizeof(int), server );
-    holeGridContainer = new vector< HoleGrid* >( numberOfHoles, NULL );
+    PH_Read_Bcast(file, & numberOfHoles, sizeof(int), server);
+    holeGridContainer = new vector< HoleGrid* >(numberOfHoles, NULL);
 
-    vector< int > holeZoneStart( numberOfHoles ), holeZoneEnd( numberOfHoles ), holeZoneAttached( numberOfHoles ), numberOfHoleSurfaces( numberOfHoles ), numberOfHolePoints( numberOfHoles );
-    PH_Read_Bcast( file, & holeZoneStart[0],        numberOfHoles * sizeof(int), server );
-    PH_Read_Bcast( file, & holeZoneEnd[0],          numberOfHoles * sizeof(int), server );
-    PH_Read_Bcast( file, & holeZoneAttached[0],     numberOfHoles * sizeof(int), server );
-    PH_Read_Bcast( file, & numberOfHoleSurfaces[0], numberOfHoles * sizeof(int), server );
-    PH_Read_Bcast( file, & numberOfHolePoints[0],   numberOfHoles * sizeof(int), server );
+    vector< int > holeZoneStart(numberOfHoles), holeZoneEnd(numberOfHoles), holeZoneAttached(numberOfHoles), numberOfHoleSurfaces(numberOfHoles), numberOfHolePoints(numberOfHoles);
+    PH_Read_Bcast(file, & holeZoneStart[0],        numberOfHoles * sizeof(int), server);
+    PH_Read_Bcast(file, & holeZoneEnd[0],          numberOfHoles * sizeof(int), server);
+    PH_Read_Bcast(file, & holeZoneAttached[0],     numberOfHoles * sizeof(int), server);
+    PH_Read_Bcast(file, & numberOfHoleSurfaces[0], numberOfHoles * sizeof(int), server);
+    PH_Read_Bcast(file, & numberOfHolePoints[0],   numberOfHoles * sizeof(int), server);
 
-    for ( int iHole = 0; iHole < numberOfHoles; ++ iHole )
+    for (int iHole = 0; iHole < numberOfHoles; ++ iHole)
     {
         HoleGrid* holeGrid = new HoleGrid();
-        holeGrid->SetZoneStart      ( holeZoneStart[iHole]        );
-        holeGrid->SetZoneEnd        ( holeZoneEnd[iHole]          );
-        holeGrid->SetZoneAttached   ( holeZoneAttached[iHole]     );
-        holeGrid->SetNumberOfSurface( numberOfHoleSurfaces[iHole] );
-        holeGrid->SetNumberOfPoints ( numberOfHolePoints[iHole]   );
+        holeGrid->SetZoneStart      (holeZoneStart[iHole]       );
+        holeGrid->SetZoneEnd        (holeZoneEnd[iHole]         );
+        holeGrid->SetZoneAttached   (holeZoneAttached[iHole]    );
+        holeGrid->SetNumberOfSurface(numberOfHoleSurfaces[iHole]);
+        holeGrid->SetNumberOfPoints (numberOfHolePoints[iHole]  );
 
         holeGrid->GenerateSurfaceSpace();
-        PH_Read_Bcast( file, holeGrid->GetNSI(), numberOfHoleSurfaces[iHole] * sizeof(int), server );
-        PH_Read_Bcast( file, holeGrid->GetNSJ(), numberOfHoleSurfaces[iHole] * sizeof(int), server );
-        PH_Read_Bcast( file, holeGrid->GetNSP(), numberOfHoleSurfaces[iHole] * sizeof(int), server );
+        PH_Read_Bcast(file, holeGrid->GetNSI(), numberOfHoleSurfaces[iHole] * sizeof(int), server);
+        PH_Read_Bcast(file, holeGrid->GetNSJ(), numberOfHoleSurfaces[iHole] * sizeof(int), server);
+        PH_Read_Bcast(file, holeGrid->GetNSP(), numberOfHoleSurfaces[iHole] * sizeof(int), server);
 
         holeGrid->GeneratePointSpace();
-        PH_Read_Bcast( file, holeGrid->GetX(), numberOfHolePoints[iHole] * sizeof(RDouble), server );
-        PH_Read_Bcast( file, holeGrid->GetY(), numberOfHolePoints[iHole] * sizeof(RDouble), server );
-        PH_Read_Bcast( file, holeGrid->GetZ(), numberOfHolePoints[iHole] * sizeof(RDouble), server );
+        PH_Read_Bcast(file, holeGrid->GetX(), numberOfHolePoints[iHole] * sizeof(RDouble), server);
+        PH_Read_Bcast(file, holeGrid->GetY(), numberOfHolePoints[iHole] * sizeof(RDouble), server);
+        PH_Read_Bcast(file, holeGrid->GetZ(), numberOfHolePoints[iHole] * sizeof(RDouble), server);
 
-        ( * holeGridContainer )[iHole] = holeGrid;
+        (* holeGridContainer)[iHole] = holeGrid;
     }
 
-    ParallelCloseFile( file );
+    ParallelCloseFile(file);
 }
 
 LIB_EXPORT void Stainer::ProbeOversetCells()
@@ -668,16 +668,16 @@ void Stainer::PaintGenericColor()
 {
     using namespace PHMPI;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        StructGrid * grid = ( * structGridTable )[iZone];
+        StructGrid * grid = (* structGridTable)[iZone];
         
-        if ( ! grid ) continue;
+        if (! grid) continue;
 
         int * iBlank = grid->GetCellTypeContainer();
         int numberOfCells       = grid->GetNTotalCell();
-        for( int iCell = 0; iCell < numberOfCells; ++iCell )
+        for(int iCell = 0; iCell < numberOfCells; ++iCell)
         {
             iBlank[iCell] = GENERIC_COLOR;
         }
@@ -690,10 +690,10 @@ void Stainer::ProbeInternalOverlapCells()
 {
     using namespace PHMPI;
 
-    if ( ! PHSPACE::GetCodeOfDigHoles() ) return;
-    for ( int iHole = 0; iHole < numberOfHoles; ++ iHole )
+    if (! PHSPACE::GetCodeOfDigHoles()) return;
+    for (int iHole = 0; iHole < numberOfHoles; ++ iHole)
     {
-        HoleGrid* holeGrid = ( * holeGridContainer )[iHole];
+        HoleGrid* holeGrid = (* holeGridContainer)[iHole];
         holeGrid->DigHoles();
     }
     EraseSecondColor();
@@ -701,13 +701,13 @@ void Stainer::ProbeInternalOverlapCells()
     int numberOfInternalOversetCells = 0;
     int numberOfCellsInHole          = 0;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
-        if( ! grid ) continue;
-        grid->GatherCellsByColor( numberOfCellsInHole, IN_HOLE_COLOR );
-        grid->GatherCellsByColor( numberOfInternalOversetCells, OVERSET_COLOR );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
+        if(! grid) continue;
+        grid->GatherCellsByColor(numberOfCellsInHole, IN_HOLE_COLOR);
+        grid->GatherCellsByColor(numberOfInternalOversetCells, OVERSET_COLOR);
     }
 
     cout << "number of internal overset cells = " << numberOfInternalOversetCells << endl;
@@ -721,14 +721,14 @@ void Stainer::ProbeExternalOverlapCells()
     using namespace PHMPI;
 
     int borderCellCounter = 0;
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if ( ! grid ) continue;
+        if (! grid) continue;
 
-        grid->ProbeExternalOverlapCells( borderCellCounter );
+        grid->ProbeExternalOverlapCells(borderCellCounter);
     }
 
     cout << "number of external overset cells = " << borderCellCounter << endl;
@@ -740,11 +740,11 @@ void Stainer::EraseSecondColor()
 {
     using namespace PHMPI;
     
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
-        if ( ! grid ) continue;
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
+        if (! grid) continue;
         grid->ResetCellType();
     }
 
@@ -789,13 +789,13 @@ LIB_EXPORT BackgroundTree ::~BackgroundTree ()
     delete [] fruitInheritMapping; fruitInheritMapping = NULL;
 }
 
-LIB_EXPORT void BackgroundTree ::Generate( int zone_st, int zone_ed )
+LIB_EXPORT void BackgroundTree ::Generate(int zone_st, int zone_ed)
 {
-    SetZoneViewRange( zone_st, zone_ed );
+    SetZoneViewRange(zone_st, zone_ed);
 
     ComputeNumberOfUnitCells();
 
-    if ( IsEmpty() ) return;
+    if (IsEmpty()) return;
 
     GenerateSourceSpace();
 
@@ -815,20 +815,20 @@ void BackgroundTree ::ComputeNumberOfUnitCells()
     using namespace PHMPI;
 
     int counter = 0;
-    for( int iSmile = zone_st; iSmile <= zone_ed; ++iSmile )
+    for(int iSmile = zone_st; iSmile <= zone_ed; ++iSmile)
     {
-        int iZone = PHSPACE::GetZoneInverseIndex( iSmile );
+        int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if( ! grid ) continue;
+        if(! grid) continue;
 
         counter += grid->GetNTotalNode();
     }
 
     numberOfUnitCells = counter;// unitCell(i,j,k)<-->node(i,j,k)
 
-    if ( numberOfUnitCells == 0 ) isEmptyBinaryTree = true; //very important part!
+    if (numberOfUnitCells == 0) isEmptyBinaryTree = true; //very important part!
 
     return;
 }
@@ -847,12 +847,12 @@ void BackgroundTree ::GenerateSourceSpace()
     fruitLevel    = new int [numberOfUnitCells];
     fruitInheritMapping = new vector< int >[numberOfUnitCells];
 
-    for ( int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell )
+    for (int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell)
     {
-        unitCellCapsule[iUnitCell].resize( 6 );
-        inf_plane[iUnitCell].resize( 6 );
-        sup_plane[iUnitCell].resize( 6 );
-        fruitInheritMapping[iUnitCell].resize( 3 );
+        unitCellCapsule[iUnitCell].resize(6);
+        inf_plane[iUnitCell].resize(6);
+        sup_plane[iUnitCell].resize(6);
+        fruitInheritMapping[iUnitCell].resize(3);
     }
     return;
 }
@@ -861,40 +861,40 @@ void BackgroundTree ::ComputeUnitCellCapsule()
 {
     using namespace PHMPI;
     int iUnitCell = 0;
-    for ( int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile )
+    for (int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
     {
-        int iZone = PHSPACE::GetZoneInverseIndex( iSmile );
+        int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if( ! grid ) continue;
+        if(! grid) continue;
 
-        grid->ComputeUnitCellCapsule( this, iUnitCell );
+        grid->ComputeUnitCellCapsule(this, iUnitCell);
     }
 
     return;
 }
 
-LIB_EXPORT void BackgroundTree ::SetUnitCellParameter( int iUnitCell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz )
+LIB_EXPORT void BackgroundTree ::SetUnitCellParameter(int iUnitCell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz)
 {
-    unitCellCapsule[iUnitCell][0] = * min_element( xx.begin(), xx.end() );
-    unitCellCapsule[iUnitCell][1] = * min_element( yy.begin(), yy.end() );
-    unitCellCapsule[iUnitCell][2] = * min_element( zz.begin(), zz.end() );
+    unitCellCapsule[iUnitCell][0] = * min_element(xx.begin(), xx.end());
+    unitCellCapsule[iUnitCell][1] = * min_element(yy.begin(), yy.end());
+    unitCellCapsule[iUnitCell][2] = * min_element(zz.begin(), zz.end());
 
-    unitCellCapsule[iUnitCell][3] = * max_element( xx.begin(), xx.end() );
-    unitCellCapsule[iUnitCell][4] = * max_element( yy.begin(), yy.end() );
-    unitCellCapsule[iUnitCell][5] = * max_element( zz.begin(), zz.end() );
+    unitCellCapsule[iUnitCell][3] = * max_element(xx.begin(), xx.end());
+    unitCellCapsule[iUnitCell][4] = * max_element(yy.begin(), yy.end());
+    unitCellCapsule[iUnitCell][5] = * max_element(zz.begin(), zz.end());
 
     return;
 }
 
 void BackgroundTree ::InitFruitLevelAndInheritMapping()
 {
-    for( int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++iUnitCell )
+    for(int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++iUnitCell)
     {
         fruitLevel[iUnitCell] = 0;
 
-        for( int j = 0; j < 3; ++j )
+        for(int j = 0; j < 3; ++j)
         {
             fruitInheritMapping[iUnitCell][j] = 0;
         }
@@ -907,25 +907,25 @@ void BackgroundTree ::ComputeRootSpaceParameter()
 {
     const int ROOT_NODE_INDEX = 0;
 
-    vector< RDouble > infimumOfRootSpace( 3 ), supremumOfRootSpace( 3 );
-    vector< RDouble > carrier( numberOfUnitCells );
+    vector< RDouble > infimumOfRootSpace(3), supremumOfRootSpace(3);
+    vector< RDouble > carrier(numberOfUnitCells);
 
-    for ( int m = 0; m < 3; ++ m )
+    for (int m = 0; m < 3; ++ m)
     {
-        for ( int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell )
+        for (int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell)
         {
             carrier[iUnitCell] = unitCellCapsule[iUnitCell][m];
         }
-        infimumOfRootSpace[m] = * min_element( carrier.begin(), carrier.end() );
+        infimumOfRootSpace[m] = * min_element(carrier.begin(), carrier.end());
 
-        for ( int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell )
+        for (int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell)
         {
             carrier[iUnitCell] = unitCellCapsule[iUnitCell][m + 3];
         }
-        supremumOfRootSpace[m] = * max_element( carrier.begin(), carrier.end() );
+        supremumOfRootSpace[m] = * max_element(carrier.begin(), carrier.end());
     }
 
-    for ( int m = 0; m < 3; ++ m )
+    for (int m = 0; m < 3; ++ m)
     {
         inf_plane[ROOT_NODE_INDEX][m] = infimumOfRootSpace[m];
         sup_plane[ROOT_NODE_INDEX][m] = supremumOfRootSpace[m];
@@ -935,20 +935,20 @@ void BackgroundTree ::ComputeRootSpaceParameter()
     }
 
     cout << "Root node coordinate: " << endl;
-    cout << "( xmin, ymin, zmin ) = " << "( " << infimumOfRootSpace[0]  << ", " << infimumOfRootSpace[1]  << ", " << infimumOfRootSpace[2]  << " )" << endl;
-    cout << "( xmax, ymax, zmax ) = " << "( " << supremumOfRootSpace[0] << ", " << supremumOfRootSpace[1] << ", " << supremumOfRootSpace[2] << " )" << endl;
+    cout << "(xmin, ymin, zmin) = " << "(" << infimumOfRootSpace[0]  << ", " << infimumOfRootSpace[1]  << ", " << infimumOfRootSpace[2]  << ")" << endl;
+    cout << "(xmax, ymax, zmax) = " << "(" << supremumOfRootSpace[0] << ", " << supremumOfRootSpace[1] << ", " << supremumOfRootSpace[2] << ")" << endl;
 
     return;
 }
 
-bool BackgroundTree ::UnitCellCapsuleBelongsToNewNode( vector< RDouble > & capsule, vector< RDouble > & inf_plane, vector< RDouble > & sup_plane )
+bool BackgroundTree ::UnitCellCapsuleBelongsToNewNode(vector< RDouble > & capsule, vector< RDouble > & inf_plane, vector< RDouble > & sup_plane)
 {
-    if( inf_plane[0] <= capsule[0] && capsule[0] <= sup_plane[0] && 
+    if(inf_plane[0] <= capsule[0] && capsule[0] <= sup_plane[0] && 
         inf_plane[1] <= capsule[1] && capsule[1] <= sup_plane[1] &&
         inf_plane[2] <= capsule[2] && capsule[2] <= sup_plane[2] &&
         inf_plane[3] <= capsule[3] && capsule[3] <= sup_plane[3] &&
         inf_plane[4] <= capsule[4] && capsule[4] <= sup_plane[4] &&
-        inf_plane[5] <= capsule[5] && capsule[5] <= sup_plane[5] )
+        inf_plane[5] <= capsule[5] && capsule[5] <= sup_plane[5])
     {
         return true;
     }
@@ -958,12 +958,12 @@ bool BackgroundTree ::UnitCellCapsuleBelongsToNewNode( vector< RDouble > & capsu
     }
 }
 
-bool BackgroundTree ::PointBelongsToUnitCellCapsule( RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & capsule )
+bool BackgroundTree ::PointBelongsToUnitCellCapsule(RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & capsule)
 {
     const RDouble EPS = 1.e-20;
-    if ( capsule[0] <= xx+EPS && xx <= capsule[3]+EPS &&
+    if (capsule[0] <= xx+EPS && xx <= capsule[3]+EPS &&
          capsule[1] <= yy+EPS && yy <= capsule[4]+EPS &&
-         capsule[2] <= zz+EPS && zz <= capsule[5]+EPS )
+         capsule[2] <= zz+EPS && zz <= capsule[5]+EPS)
     {
         return true;
     }
@@ -973,13 +973,13 @@ bool BackgroundTree ::PointBelongsToUnitCellCapsule( RDouble xx, RDouble yy, RDo
     }
 }
 
-bool BackgroundTree ::PointBelongsToNewNode( RDouble xx, RDouble yy, RDouble zz, int kNode )
+bool BackgroundTree ::PointBelongsToNewNode(RDouble xx, RDouble yy, RDouble zz, int kNode)
 {
-    if ( kNode == 0 ) return false;
+    if (kNode == 0) return false;
 
-    if ( inf_plane[kNode][0] <= xx && xx <= sup_plane[kNode][3] &&
+    if (inf_plane[kNode][0] <= xx && xx <= sup_plane[kNode][3] &&
          inf_plane[kNode][1] <= yy && yy <= sup_plane[kNode][4] &&
-         inf_plane[kNode][2] <= zz && zz <= sup_plane[kNode][5] )
+         inf_plane[kNode][2] <= zz && zz <= sup_plane[kNode][5])
     {
         return true;
     }
@@ -989,16 +989,16 @@ bool BackgroundTree ::PointBelongsToNewNode( RDouble xx, RDouble yy, RDouble zz,
     }
 }
 
-void BackgroundTree ::ProduceNewLeftNode( int kNode, vector< RDouble > & inf_left, vector< RDouble > & sup_left )
+void BackgroundTree ::ProduceNewLeftNode(int kNode, vector< RDouble > & inf_left, vector< RDouble > & sup_left)
 {
-    int j = ( fruitLevel[kNode] + 1 ) % 6;
+    int j = (fruitLevel[kNode] + 1) % 6;
 
-    for ( int i = 0; i < 6; ++ i )
+    for (int i = 0; i < 6; ++ i)
     {
         inf_left[i] = inf_plane[kNode][i];
-        if ( i == j )
+        if (i == j)
         {
-            sup_left[i] = 0.5 * ( inf_plane[kNode][i] + sup_plane[kNode][i] );
+            sup_left[i] = 0.5 * (inf_plane[kNode][i] + sup_plane[kNode][i]);
         }
         else
         {
@@ -1009,14 +1009,14 @@ void BackgroundTree ::ProduceNewLeftNode( int kNode, vector< RDouble > & inf_lef
     return;
 }
 
-void BackgroundTree ::ProduceNewRightNode( int kNode, vector< RDouble > & inf_right, vector< RDouble > & sup_right )
+void BackgroundTree ::ProduceNewRightNode(int kNode, vector< RDouble > & inf_right, vector< RDouble > & sup_right)
 {
-    int j = ( fruitLevel[kNode] + 1 ) % 6;
-    for( int i = 0; i < 6; ++ i )
+    int j = (fruitLevel[kNode] + 1) % 6;
+    for(int i = 0; i < 6; ++ i)
     {
-        if( i == j )
+        if(i == j)
         {
-            inf_right[i] = 0.5 * ( inf_plane[kNode][i] + sup_plane[kNode][i] );
+            inf_right[i] = 0.5 * (inf_plane[kNode][i] + sup_plane[kNode][i]);
         }
         else
         {
@@ -1028,7 +1028,7 @@ void BackgroundTree ::ProduceNewRightNode( int kNode, vector< RDouble > & inf_ri
     return;
 }
 
-void BackgroundTree ::AppendNewLeftNode( int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node )
+void BackgroundTree ::AppendNewLeftNode(int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node)
 {
     const int LEFT = 0, PARENT = 1;
 
@@ -1041,7 +1041,7 @@ void BackgroundTree ::AppendNewLeftNode( int iUnitCell, int kNode, vector< RDoub
     return;
 }
 
-void BackgroundTree ::AppendNewRightNode( int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node )
+void BackgroundTree ::AppendNewRightNode(int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node)
 {
     const int PARENT = 1, RIGHT = 2;
 
@@ -1054,11 +1054,11 @@ void BackgroundTree ::AppendNewRightNode( int iUnitCell, int kNode, vector< RDou
     return;
 }
 
-void BackgroundTree ::ComputeLocalCoordinateByNewtonMethod( RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & ss, vector< int > & node )
+void BackgroundTree ::ComputeLocalCoordinateByNewtonMethod(RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & ss, vector< int > & node)
 {
     uint_t node_size = fruitIndexStorage.size();
 
-    for( int i = 0; i < node_size; ++ i )
+    for(int i = 0; i < node_size; ++ i)
     {
         int nodeIndex = fruitIndexStorage[i];
         int iZone = zone_location[nodeIndex];
@@ -1066,38 +1066,38 @@ void BackgroundTree ::ComputeLocalCoordinateByNewtonMethod( RDouble xx, RDouble 
         int jCore = j_location[nodeIndex];
         int kCore = k_location[nodeIndex];
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
-        grid->ComputeLocalCoordinateByNewtonMethod( iCore, jCore, kCore, xx, yy, zz, ss, node );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
+        grid->ComputeLocalCoordinateByNewtonMethod(iCore, jCore, kCore, xx, yy, zz, ss, node);
 
-        if ( ! ss.empty() ) break;
+        if (! ss.empty()) break;
     }
 
     return;
 }
 
-LIB_EXPORT void BackgroundTree ::ProbeNearestPoint( RDouble xx, RDouble yy, RDouble zz, RDouble & distance, int & index )
+LIB_EXPORT void BackgroundTree ::ProbeNearestPoint(RDouble xx, RDouble yy, RDouble zz, RDouble & distance, int & index)
 {
     vector< RDouble > ss;
     vector< int > globalPointIndex;
 
-    for( int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile )
+    for(int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
     {
-        int iZone = PHSPACE::GetZoneInverseIndex( iSmile );
+        int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if( ! grid ) continue;
+        if(! grid) continue;
 
-        grid->ProbeNearestPoint( xx, yy, zz, ss, globalPointIndex );
+        grid->ProbeNearestPoint(xx, yy, zz, ss, globalPointIndex);
     }
 
     distance = ss[0];
     index = globalPointIndex[0];
 
     uint_t numberOfPoints = globalPointIndex.size();
-    for ( int i = 1; i < numberOfPoints; ++ i )
+    for (int i = 1; i < numberOfPoints; ++ i)
     {
-        if ( ss[i] < distance )
+        if (ss[i] < distance)
         {
             distance = ss[i];
             index = globalPointIndex[i];
@@ -1109,91 +1109,91 @@ LIB_EXPORT void BackgroundTree ::ProbeNearestPoint( RDouble xx, RDouble yy, RDou
 
 void BackgroundTree ::AppendNewFruit()
 {
-    for ( int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell )
+    for (int iUnitCell = 0; iUnitCell < numberOfUnitCells; ++ iUnitCell)
     {
-        AppendNewFruit( iUnitCell );
+        AppendNewFruit(iUnitCell);
     }
 
     return;
 }
 
-LIB_EXPORT void BackgroundTree ::SearchNodes( OversetCellCollector  * oversetCellCollector, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement )
+LIB_EXPORT void BackgroundTree ::SearchNodes(OversetCellCollector  * oversetCellCollector, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement)
 {
     fruitIndexStorage.clear();
 
-    SearchNodes( xx, yy, zz, 0 );
+    SearchNodes(xx, yy, zz, 0);
 
-    if( fruitIndexStorage.empty() )
+    if(fruitIndexStorage.empty())
     {
         RDouble distance = 0.0;
         int index = -1;
-        ProbeNearestPoint( xx, yy, zz, distance, index );
-        oversetCellCollector->SetNearestPointParameter( ip, iElement, distance, index );
+        ProbeNearestPoint(xx, yy, zz, distance, index);
+        oversetCellCollector->SetNearestPointParameter(ip, iElement, distance, index);
     }
     else
     {
         vector< int > node;
         vector< RDouble > ss;
-        ComputeLocalCoordinateByNewtonMethod( xx, yy, zz, ss, node );
-        if ( ! ss.empty() )
+        ComputeLocalCoordinateByNewtonMethod(xx, yy, zz, ss, node);
+        if (! ss.empty())
         {
-            oversetCellCollector->SetOptimalPointParameter( ip, iElement, ss, node );
+            oversetCellCollector->SetOptimalPointParameter(ip, iElement, ss, node);
         }
         else
         {
             RDouble distance = 0.0;
             int index = -1;
-            ProbeNearestPoint( xx, yy, zz, distance, index );
-            oversetCellCollector->SetNearestPointParameter( ip, iElement, distance, index );
+            ProbeNearestPoint(xx, yy, zz, distance, index);
+            oversetCellCollector->SetNearestPointParameter(ip, iElement, distance, index);
         }
     }
 
     return;
 }
 
-void BackgroundTree ::SearchNodes( RDouble xx, RDouble yy, RDouble zz, int n )
+void BackgroundTree ::SearchNodes(RDouble xx, RDouble yy, RDouble zz, int n)
 {
     const int LEFT = 0, RIGHT = 2;
 
     vector< RDouble > & capsule = unitCellCapsule[n];
-    if ( PointBelongsToUnitCellCapsule( xx, yy, zz, capsule ) )
+    if (PointBelongsToUnitCellCapsule(xx, yy, zz, capsule))
     {
-        fruitIndexStorage.push_back( n );
+        fruitIndexStorage.push_back(n);
     }
 
     int leftNodeIndex = fruitInheritMapping[n][LEFT];
-    if ( PointBelongsToNewNode( xx, yy, zz, leftNodeIndex ) )
+    if (PointBelongsToNewNode(xx, yy, zz, leftNodeIndex))
     {
-        SearchNodes( xx, yy, zz, leftNodeIndex );
+        SearchNodes(xx, yy, zz, leftNodeIndex);
     }
 
     int rightNodeIndex = fruitInheritMapping[n][RIGHT];
-    if ( PointBelongsToNewNode( xx, yy, zz, rightNodeIndex ) )
+    if (PointBelongsToNewNode(xx, yy, zz, rightNodeIndex))
     {
-        SearchNodes( xx, yy, zz, rightNodeIndex );
+        SearchNodes(xx, yy, zz, rightNodeIndex);
     }
 
     return;
 }
 
-void BackgroundTree ::AppendNewFruit( int iUnitCell )
+void BackgroundTree ::AppendNewFruit(int iUnitCell)
 {
     const int ROOT_NODE_INDEX = 0;
     const int LEFT = 0, RIGHT = 2;
 
-    vector< RDouble > inf_new_node( 6 ), sup_new_node( 6 );
+    vector< RDouble > inf_new_node(6), sup_new_node(6);
 
-    if ( iUnitCell == ROOT_NODE_INDEX ) return;
+    if (iUnitCell == ROOT_NODE_INDEX) return;
 
     int kNode = ROOT_NODE_INDEX;
     vector< RDouble > & capsule = unitCellCapsule[iUnitCell];
 
-    while ( true )
+    while (true)
     {
         int kLeftNode = fruitInheritMapping[kNode][LEFT];
-        if ( kLeftNode != 0 )
+        if (kLeftNode != 0)
         {
-            if ( UnitCellCapsuleBelongsToNewNode( capsule, inf_plane[kLeftNode], sup_plane[kLeftNode] ) )
+            if (UnitCellCapsuleBelongsToNewNode(capsule, inf_plane[kLeftNode], sup_plane[kLeftNode]))
             {
                 kNode = kLeftNode;
                 continue;
@@ -1201,20 +1201,20 @@ void BackgroundTree ::AppendNewFruit( int iUnitCell )
         }
         else
         {
-            ProduceNewLeftNode( kNode, inf_new_node, sup_new_node );
+            ProduceNewLeftNode(kNode, inf_new_node, sup_new_node);
 
-            if ( UnitCellCapsuleBelongsToNewNode( capsule, inf_new_node, sup_new_node ) )
+            if (UnitCellCapsuleBelongsToNewNode(capsule, inf_new_node, sup_new_node))
             {
-                AppendNewLeftNode( iUnitCell, kNode, inf_new_node, sup_new_node );
+                AppendNewLeftNode(iUnitCell, kNode, inf_new_node, sup_new_node);
                 
                 break;
             }
         }
 
         int kRightNode = fruitInheritMapping[kNode][RIGHT];
-        if ( kRightNode != 0 )
+        if (kRightNode != 0)
         {
-            if ( UnitCellCapsuleBelongsToNewNode( capsule, inf_plane[kRightNode], sup_plane[kRightNode] ) )
+            if (UnitCellCapsuleBelongsToNewNode(capsule, inf_plane[kRightNode], sup_plane[kRightNode]))
             {
                 kNode = kRightNode;
                 continue;
@@ -1222,11 +1222,11 @@ void BackgroundTree ::AppendNewFruit( int iUnitCell )
         }
         else
         {
-            ProduceNewRightNode( kNode, inf_new_node, sup_new_node );
+            ProduceNewRightNode(kNode, inf_new_node, sup_new_node);
 
-            if ( UnitCellCapsuleBelongsToNewNode( capsule, inf_new_node, sup_new_node ) )
+            if (UnitCellCapsuleBelongsToNewNode(capsule, inf_new_node, sup_new_node))
             {
-                AppendNewRightNode( iUnitCell, kNode, inf_new_node, sup_new_node );
+                AppendNewRightNode(iUnitCell, kNode, inf_new_node, sup_new_node);
                 
                 break;
             }
@@ -1280,38 +1280,38 @@ void OversetCellCollector ::GenerateServiceSpace()
     zLocal       = new vector< RDouble > [numberOfProcessors];
     radius       = new vector< RDouble > [numberOfProcessors];
 
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         int numberOfOversetCells = elementNumberRecorder[ip];
 
-        spaceLattice[ip].resize( numberOfOversetCells * NODE_NUM );
+        spaceLattice[ip].resize(numberOfOversetCells * NODE_NUM);
 
-        xLocal[ip].resize( numberOfOversetCells );
-        yLocal[ip].resize( numberOfOversetCells );
-        zLocal[ip].resize( numberOfOversetCells );
-        radius[ip].resize( numberOfOversetCells );
+        xLocal[ip].resize(numberOfOversetCells);
+        yLocal[ip].resize(numberOfOversetCells);
+        zLocal[ip].resize(numberOfOversetCells);
+        radius[ip].resize(numberOfOversetCells);
     }
     
     return;
 }
 
-LIB_EXPORT void OversetCellCollector ::SearchOptimalUnitCell( BackgroundTree  * backgroundTree )
+LIB_EXPORT void OversetCellCollector ::SearchOptimalUnitCell(BackgroundTree  * backgroundTree)
 {
     using namespace PHMPI;
 
-    if ( ! backgroundTree->IsEmpty() )
+    if (! backgroundTree->IsEmpty())
     {
         int numberOfProcessors = PHMPI::GetNumberOfProcessor();
-        for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+        for (int ip = 0; ip < numberOfProcessors; ++ ip)
         {
             int numberOfElements = elementNumberRecorder[ip];
-            for( int iElement = 0; iElement < numberOfElements; ++ iElement )
+            for(int iElement = 0; iElement < numberOfElements; ++ iElement)
             {
                 RDouble xx = xCenter[ip][iElement];
                 RDouble yy = yCenter[ip][iElement];
                 RDouble zz = zCenter[ip][iElement];
 
-                backgroundTree->SearchNodes( this, xx, yy, zz, ip, iElement );
+                backgroundTree->SearchNodes(this, xx, yy, zz, ip, iElement);
             }
         }
     }
@@ -1336,14 +1336,14 @@ void OversetCellCollector ::GenerateTargetSpace()
     yCenter = new vector< RDouble > [numberOfProcessors];
     zCenter = new vector< RDouble > [numberOfProcessors];
 
-    elementNumberRecorder = vector< int >( numberOfProcessors, 0 );
+    elementNumberRecorder = vector< int >(numberOfProcessors, 0);
 
     return;
 }
 
-LIB_EXPORT void OversetCellCollector ::RunGeometricAnalysis( int zone_st, int zone_ed )
+LIB_EXPORT void OversetCellCollector ::RunGeometricAnalysis(int zone_st, int zone_ed)
 {
-    SetZoneViewRange( zone_st, zone_ed );
+    SetZoneViewRange(zone_st, zone_ed);
 
     GenerateTargetSpace();
 
@@ -1361,28 +1361,28 @@ void OversetCellCollector ::BcastOversetCells()
     using namespace PHMPI;
 
     int numberOfProcessors = PHMPI::GetNumberOfProcessor();
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         int numberOfOversetCells = static_cast<int>(localCellIndex[ip].size());
-        PH_Bcast( & numberOfOversetCells, sizeof(int), ip, 0 );
+        PH_Bcast(& numberOfOversetCells, sizeof(int), ip, 0);
         elementNumberRecorder[ip] = numberOfOversetCells;
 
-        if ( numberOfOversetCells == 0 ) continue;
+        if (numberOfOversetCells == 0) continue;
 
-        localCellIndex[ip].resize( numberOfOversetCells );
-        PH_Bcast( & localCellIndex[ip][0], numberOfOversetCells * sizeof(int), ip, 0 );
+        localCellIndex[ip].resize(numberOfOversetCells);
+        PH_Bcast(& localCellIndex[ip][0], numberOfOversetCells * sizeof(int), ip, 0);
 
-        zoneIndex[ip].resize( numberOfOversetCells );
-        PH_Bcast( & zoneIndex[ip][0], numberOfOversetCells * sizeof(int), ip, 0 );
+        zoneIndex[ip].resize(numberOfOversetCells);
+        PH_Bcast(& zoneIndex[ip][0], numberOfOversetCells * sizeof(int), ip, 0);
 
-        xCenter[ip].resize( numberOfOversetCells );
-        PH_Bcast( & xCenter[ip][0], numberOfOversetCells * sizeof(RDouble), ip, 0 );
+        xCenter[ip].resize(numberOfOversetCells);
+        PH_Bcast(& xCenter[ip][0], numberOfOversetCells * sizeof(RDouble), ip, 0);
 
-        yCenter[ip].resize( numberOfOversetCells );
-        PH_Bcast( & yCenter[ip][0], numberOfOversetCells * sizeof(RDouble), ip, 0 );
+        yCenter[ip].resize(numberOfOversetCells);
+        PH_Bcast(& yCenter[ip][0], numberOfOversetCells * sizeof(RDouble), ip, 0);
 
-        zCenter[ip].resize( numberOfOversetCells );
-        PH_Bcast( & zCenter[ip][0], numberOfOversetCells * sizeof(RDouble), ip, 0 );
+        zCenter[ip].resize(numberOfOversetCells);
+        PH_Bcast(& zCenter[ip][0], numberOfOversetCells * sizeof(RDouble), ip, 0);
     }
 
     return;
@@ -1394,27 +1394,27 @@ void OversetCellCollector ::CollectOversetCells()
 
     int myid = PHMPI::GetCurrentProcessorID();
 
-    for( int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile )
+    for(int iSmile = zone_st; iSmile <= zone_ed; ++ iSmile)
     {
-        int iZone = PHSPACE::GetZoneInverseIndex( iSmile );
+        int iZone = PHSPACE::GetZoneInverseIndex(iSmile);
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if ( ! grid ) continue;
+        if (! grid) continue;
 
-        grid->CollectOversetCells( this, myid );
+        grid->CollectOversetCells(this, myid);
     }
 
     return;
 }
 
-void OversetCellCollector ::ProbeNearestPoint( BackgroundTree  * backgroundTree, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement )
+void OversetCellCollector ::ProbeNearestPoint(BackgroundTree  * backgroundTree, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement)
 {
     const int NODE_NUM = 8;
     RDouble distance = 0.0;
     int globalPointIndex = -1;
 
-    backgroundTree->ProbeNearestPoint( xx, yy, zz, distance, globalPointIndex );
+    backgroundTree->ProbeNearestPoint(xx, yy, zz, distance, globalPointIndex);
 
     xLocal[ip][iElement] = 0.0;
     yLocal[ip][iElement] = 0.0;
@@ -1422,7 +1422,7 @@ void OversetCellCollector ::ProbeNearestPoint( BackgroundTree  * backgroundTree,
 
     radius[ip][iElement] = distance;
     
-    for( int iCell = 0; iCell < NODE_NUM; ++ iCell )
+    for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
     {
         spaceLattice[ip][iElement * NODE_NUM + iCell] = globalPointIndex;
     }
@@ -1438,49 +1438,49 @@ LIB_EXPORT void OversetCellCollector ::ResizeSourceIndexContainer()
 
     int numberOfOversetCells = elementNumberRecorder[myid];
 
-    sourceProcessorIndex.resize( numberOfOversetCells );
+    sourceProcessorIndex.resize(numberOfOversetCells);
 
     int numberOfProcessors = PHMPI::GetNumberOfProcessor();
 
     vector< RDouble > * trans = new vector< RDouble > [numberOfProcessors];
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
-        trans[ip].resize( numberOfOversetCells );
+        trans[ip].resize(numberOfOversetCells);
     }
 
     trans[myid] = radius[myid];
 
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
-        if ( ip != myid )
+        if (ip != myid)
         {
             int numberOfElements = elementNumberRecorder[ip];
-            PH_Send( & numberOfElements, sizeof(int), ip, 0 );
+            PH_Send(& numberOfElements, sizeof(int), ip, 0);
 
-            if ( numberOfElements == 0 ) continue;
-            PH_Send( &radius[ip][0], numberOfElements * sizeof(RDouble), ip, 0 );
+            if (numberOfElements == 0) continue;
+            PH_Send(&radius[ip][0], numberOfElements * sizeof(RDouble), ip, 0);
         }
         else
         {
             int numberOfElements = 0;
-            for ( int jp = 0; jp < numberOfProcessors; ++ jp )
+            for (int jp = 0; jp < numberOfProcessors; ++ jp)
             {
-                if ( jp == myid ) continue;
-                PH_Receive( & numberOfElements, sizeof(int), jp, 0 );
+                if (jp == myid) continue;
+                PH_Receive(& numberOfElements, sizeof(int), jp, 0);
 
-                if ( numberOfElements == 0 ) continue;
+                if (numberOfElements == 0) continue;
 
-                PH_Receive( & trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0 );
+                PH_Receive(& trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0);
             }
         }
     }
 
-    for ( int iElement = 0; iElement < numberOfOversetCells; ++ iElement )
+    for (int iElement = 0; iElement < numberOfOversetCells; ++ iElement)
     {
         RDouble distance = trans[0][iElement];
-        for ( int ip = 1; ip < numberOfProcessors; ++ ip )
+        for (int ip = 1; ip < numberOfProcessors; ++ ip)
         {
-            if ( trans[ip][iElement] < distance )
+            if (trans[ip][iElement] < distance)
             {
                 distance = trans[ip][iElement];
 
@@ -1495,23 +1495,23 @@ LIB_EXPORT void OversetCellCollector ::ResizeSourceIndexContainer()
 }
 
 
-LIB_EXPORT void OversetCellCollector ::CollectOversetCells( int iZone, vector< int > & cell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz )
+LIB_EXPORT void OversetCellCollector ::CollectOversetCells(int iZone, vector< int > & cell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz)
 {
     using namespace PHMPI;
 
     int myid = PHMPI::GetCurrentProcessorID();
     uint_t numberOfOversetCells = cell.size();
 
-    zoneIndex[myid].insert( zoneIndex[myid].end(), numberOfOversetCells, iZone );
-    localCellIndex[myid].insert( localCellIndex[myid].end(), cell.begin(), cell.end() );
-    xCenter[myid].insert( xCenter[myid].end(), xx.begin(), xx.end() );
-    yCenter[myid].insert( yCenter[myid].end(), yy.begin(), yy.end() );
-    zCenter[myid].insert( zCenter[myid].end(), zz.begin(), zz.end() );
+    zoneIndex[myid].insert(zoneIndex[myid].end(), numberOfOversetCells, iZone);
+    localCellIndex[myid].insert(localCellIndex[myid].end(), cell.begin(), cell.end());
+    xCenter[myid].insert(xCenter[myid].end(), xx.begin(), xx.end());
+    yCenter[myid].insert(yCenter[myid].end(), yy.begin(), yy.end());
+    zCenter[myid].insert(zCenter[myid].end(), zz.begin(), zz.end());
 
     return;
 }
 
-LIB_EXPORT void OversetCellCollector ::SetNearestPointParameter( int ip, int iElement, RDouble distance, int index )
+LIB_EXPORT void OversetCellCollector ::SetNearestPointParameter(int ip, int iElement, RDouble distance, int index)
 {
     const int NODE_NUM = 8;
 
@@ -1521,7 +1521,7 @@ LIB_EXPORT void OversetCellCollector ::SetNearestPointParameter( int ip, int iEl
 
     radius[ip][iElement] = distance;
     
-    for( int iCell = 0; iCell < NODE_NUM; ++ iCell )
+    for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
     {
         spaceLattice[ip][iElement * NODE_NUM + iCell] = index;
     }
@@ -1529,7 +1529,7 @@ LIB_EXPORT void OversetCellCollector ::SetNearestPointParameter( int ip, int iEl
     return;
 }
 
-LIB_EXPORT void OversetCellCollector ::SetOptimalPointParameter( int ip, int iElement, vector< RDouble > & ss, vector< int > & node )
+LIB_EXPORT void OversetCellCollector ::SetOptimalPointParameter(int ip, int iElement, vector< RDouble > & ss, vector< int > & node)
 {
     const int NODE_NUM = 8;
 
@@ -1541,7 +1541,7 @@ LIB_EXPORT void OversetCellCollector ::SetOptimalPointParameter( int ip, int iEl
 
     radius[ip][iElement] = 0.0;
 
-    for( int iCell = 0; iCell < NODE_NUM; ++ iCell )
+    for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
     {
         spaceLattice[ip][iElement * NODE_NUM + iCell] = node[iCell];
     }
@@ -1557,10 +1557,10 @@ void OversetCellCollector ::SetVirtualPointParameter()
     const RDouble FAR = 1.e20, RELATIVE_LOCATION = 0.0;
 
     int numberOfProcessors = PHMPI::GetNumberOfProcessor();
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         int numberOfElements = elementNumberRecorder[ip];
-        for( int iElement = 0; iElement < numberOfElements; ++ iElement )
+        for(int iElement = 0; iElement < numberOfElements; ++ iElement)
         {
             xLocal[ip][iElement] = RELATIVE_LOCATION;
             yLocal[ip][iElement] = RELATIVE_LOCATION;
@@ -1568,7 +1568,7 @@ void OversetCellCollector ::SetVirtualPointParameter()
 
             radius[ip][iElement] = FAR;
 
-            for( int iCell = 0; iCell < NODE_NUM; ++ iCell )
+            for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
             {
                 spaceLattice[ip][iElement * NODE_NUM + iCell] = VIRTUAL_POINT_LABEL;
             }
@@ -1578,19 +1578,19 @@ void OversetCellCollector ::SetVirtualPointParameter()
     return;
 }
 
-LIB_EXPORT void OversetCellCollector ::InsertOversetParameter( vector< int > * zoneContainer, vector< int > * cellContainer )
+LIB_EXPORT void OversetCellCollector ::InsertOversetParameter(vector< int > * zoneContainer, vector< int > * cellContainer)
 {
     using namespace PHMPI;
 
     int myid = PHMPI::GetCurrentProcessorID();
 
-    zoneContainer->insert( zoneContainer->end(), zoneIndex[myid].begin(),      zoneIndex[myid].end()      );
-    cellContainer->insert( cellContainer->end(), localCellIndex[myid].begin(), localCellIndex[myid].end() );
+    zoneContainer->insert(zoneContainer->end(), zoneIndex[myid].begin(),      zoneIndex[myid].end()     );
+    cellContainer->insert(cellContainer->end(), localCellIndex[myid].begin(), localCellIndex[myid].end());
 
     return;
 }
 
-LIB_EXPORT void OversetCellCollector ::InsertServiceParameter( vector< RDouble > * ksai, vector< int > * waiter )
+LIB_EXPORT void OversetCellCollector ::InsertServiceParameter(vector< RDouble > * ksai, vector< int > * waiter)
 {
     using namespace PHMPI;
 
@@ -1600,8 +1600,8 @@ LIB_EXPORT void OversetCellCollector ::InsertServiceParameter( vector< RDouble >
     int myid = PHMPI::GetCurrentProcessorID();
     int numberOfOversetCells = elementNumberRecorder[myid];
 
-    vector< RDouble > xgroup( numberOfOversetCells ), ygroup( numberOfOversetCells ), zgroup( numberOfOversetCells );
-    vector< int > node_g( numberOfOversetCells * NODE_NUM );
+    vector< RDouble > xgroup(numberOfOversetCells), ygroup(numberOfOversetCells), zgroup(numberOfOversetCells);
+    vector< int > node_g(numberOfOversetCells * NODE_NUM);
 
     vector< RDouble > * x_trans = new vector< RDouble > [numberOfProcessors];
     vector< RDouble > * y_trans = new vector< RDouble > [numberOfProcessors];
@@ -1609,13 +1609,13 @@ LIB_EXPORT void OversetCellCollector ::InsertServiceParameter( vector< RDouble >
     vector< int > * node_trans = new vector< int >    [numberOfProcessors];
 
     
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
-        x_trans[ip].resize( numberOfOversetCells );
-        y_trans[ip].resize( numberOfOversetCells );
-        z_trans[ip].resize( numberOfOversetCells );
+        x_trans[ip].resize(numberOfOversetCells);
+        y_trans[ip].resize(numberOfOversetCells);
+        z_trans[ip].resize(numberOfOversetCells);
 
-        node_trans[ip].resize( numberOfOversetCells * NODE_NUM );
+        node_trans[ip].resize(numberOfOversetCells * NODE_NUM);
     }
 
     x_trans[myid] = xLocal[myid];
@@ -1629,37 +1629,37 @@ LIB_EXPORT void OversetCellCollector ::InsertServiceParameter( vector< RDouble >
         if (ip != myid)
         {
             int numberOfElements = elementNumberRecorder[ip];
-            PH_Send( & numberOfElements, sizeof(int), ip, 0 );
+            PH_Send(& numberOfElements, sizeof(int), ip, 0);
 
-            if ( numberOfElements == 0 ) continue;
+            if (numberOfElements == 0) continue;
 
-            PH_Send( &xLocal[ip][0], numberOfElements * sizeof(RDouble), ip, 0 );
-            PH_Send( &yLocal[ip][0], numberOfElements * sizeof(RDouble), ip, 0 );
-            PH_Send( &zLocal[ip][0], numberOfElements * sizeof(RDouble), ip, 0 );
+            PH_Send(&xLocal[ip][0], numberOfElements * sizeof(RDouble), ip, 0);
+            PH_Send(&yLocal[ip][0], numberOfElements * sizeof(RDouble), ip, 0);
+            PH_Send(&zLocal[ip][0], numberOfElements * sizeof(RDouble), ip, 0);
 
-            PH_Send( &spaceLattice[ip][0], numberOfElements * NODE_NUM * sizeof(int), ip, 0 );
+            PH_Send(&spaceLattice[ip][0], numberOfElements * NODE_NUM * sizeof(int), ip, 0);
         }
         else
         {
             int numberOfElements = 0;
-            for ( int jp = 0; jp < numberOfProcessors; ++ jp )
+            for (int jp = 0; jp < numberOfProcessors; ++ jp)
             {
-                if ( jp == myid ) continue;
-                PH_Receive( & numberOfElements, sizeof(int), jp, 0 );
+                if (jp == myid) continue;
+                PH_Receive(& numberOfElements, sizeof(int), jp, 0);
 
-                if ( numberOfElements == 0 ) continue;
+                if (numberOfElements == 0) continue;
 
-                PH_Receive( & x_trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0 );
-                PH_Receive( & y_trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0 );
-                PH_Receive( & z_trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0 );
+                PH_Receive(& x_trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0);
+                PH_Receive(& y_trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0);
+                PH_Receive(& z_trans[jp][0], numberOfElements * sizeof(RDouble), jp, 0);
 
-                PH_Receive( & node_trans[jp][0], numberOfElements * NODE_NUM * sizeof(int), jp, 0 );
+                PH_Receive(& node_trans[jp][0], numberOfElements * NODE_NUM * sizeof(int), jp, 0);
             }
         }
     }
 
 
-    for ( int iElement = 0; iElement < numberOfOversetCells; ++ iElement )
+    for (int iElement = 0; iElement < numberOfOversetCells; ++ iElement)
     {
         int ip = sourceProcessorIndex[iElement];
 
@@ -1667,7 +1667,7 @@ LIB_EXPORT void OversetCellCollector ::InsertServiceParameter( vector< RDouble >
         ygroup[iElement] = y_trans[ip][iElement];
         zgroup[iElement] = z_trans[ip][iElement];
 
-        for ( int iCell = 0; iCell < NODE_NUM; ++ iCell )
+        for (int iCell = 0; iCell < NODE_NUM; ++ iCell)
         {
             node_g[iElement * NODE_NUM + iCell] = node_trans[ip][iElement * NODE_NUM + iCell];
         }
@@ -1678,11 +1678,11 @@ LIB_EXPORT void OversetCellCollector ::InsertServiceParameter( vector< RDouble >
     delete [] z_trans; z_trans = NULL;
     delete [] node_trans; node_trans = NULL;
 
-    ksai[0].insert( ksai[0].end(), xgroup.begin(), xgroup.end() );
-    ksai[1].insert( ksai[1].end(), ygroup.begin(), ygroup.end() );
-    ksai[2].insert( ksai[2].end(), zgroup.begin(), zgroup.end() );
+    ksai[0].insert(ksai[0].end(), xgroup.begin(), xgroup.end());
+    ksai[1].insert(ksai[1].end(), ygroup.begin(), ygroup.end());
+    ksai[2].insert(ksai[2].end(), zgroup.begin(), zgroup.end());
 
-    waiter->insert( waiter->end(), node_g.begin(), node_g.end() );
+    waiter->insert(waiter->end(), node_g.begin(), node_g.end());
 
     return;
 }
@@ -1756,55 +1756,55 @@ void OversetStructGrid::ReadBasicParameter()
     int thisip = PHMPI::GetCurrentProcessorID();
 
     fstream file0;
-    string fileName0 = PHSPACE::GlobalDataBase::GetStrParaFromDB( "masterFileName" );
-    ParallelOpenFile( file0, fileName0, ios_base::in );
-    if ( thisip == server ) file0 >> searchTimes;
-    PH_Bcast( & searchTimes, sizeof(int), server );
+    string fileName0 = PHSPACE::GlobalDataBase::GetStrParaFromDB("masterFileName");
+    ParallelOpenFile(file0, fileName0, ios_base::in);
+    if (thisip == server) file0 >> searchTimes;
+    PH_Bcast(& searchTimes, sizeof(int), server);
 
-    sourceZoneStart.resize( searchTimes ); sourceZoneEnd.resize( searchTimes );
-    targetZoneStart.resize( searchTimes ); targetZoneEnd.resize( searchTimes );
+    sourceZoneStart.resize(searchTimes); sourceZoneEnd.resize(searchTimes);
+    targetZoneStart.resize(searchTimes); targetZoneEnd.resize(searchTimes);
 
-    if( thisip == server )
+    if(thisip == server)
     {
-        for( int iSearch = 0; iSearch < searchTimes; ++iSearch )
+        for(int iSearch = 0; iSearch < searchTimes; ++iSearch)
         {
             file0 >> sourceZoneStart[iSearch] >> sourceZoneEnd[iSearch] >> targetZoneStart[iSearch] >> targetZoneEnd[iSearch];
         }
     }
 
-    PH_Bcast( & sourceZoneStart[0], searchTimes * sizeof(int), server );
-    PH_Bcast( & sourceZoneEnd[0],   searchTimes * sizeof(int), server );
-    PH_Bcast( & targetZoneStart[0], searchTimes * sizeof(int), server );
-    PH_Bcast( & targetZoneEnd[0],   searchTimes * sizeof(int), server );
-    ParallelCloseFile( file0 );
+    PH_Bcast(& sourceZoneStart[0], searchTimes * sizeof(int), server);
+    PH_Bcast(& sourceZoneEnd[0],   searchTimes * sizeof(int), server);
+    PH_Bcast(& targetZoneStart[0], searchTimes * sizeof(int), server);
+    PH_Bcast(& targetZoneEnd[0],   searchTimes * sizeof(int), server);
+    ParallelCloseFile(file0);
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    zoneInverseIndex.resize( numberOfZones );
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    zoneInverseIndex.resize(nZones);
 
     fstream file1;
-    string fileName1 = PHSPACE::GlobalDataBase::GetStrParaFromDB( "zoneInverseFileName" );
-    ParallelOpenFile( file1, fileName1, ios_base::in|ios_base::binary );
-    PH_Read_Bcast( file1, & zoneInverseIndex[0], numberOfZones * sizeof(int), server );
-    ParallelCloseFile( file1 );
+    string fileName1 = PHSPACE::GlobalDataBase::GetStrParaFromDB("zoneInverseFileName");
+    ParallelOpenFile(file1, fileName1, ios_base::in|ios_base::binary);
+    PH_Read_Bcast(file1, & zoneInverseIndex[0], nZones * sizeof(int), server);
+    ParallelCloseFile(file1);
 
     return;
 }
 
 void OversetStructGrid::ProbeRelativeOversetLocation()
 {
-    for ( int iSearch = 0; iSearch < searchTimes; ++ iSearch )
+    for (int iSearch = 0; iSearch < searchTimes; ++ iSearch)
     {
         BackgroundTree  * backgroundTree = new BackgroundTree ();
 
-        backgroundTree->Generate( sourceZoneStart[iSearch], sourceZoneEnd[iSearch] );
+        backgroundTree->Generate(sourceZoneStart[iSearch], sourceZoneEnd[iSearch]);
 
         OversetCellCollector  * oversetCellCollector = new OversetCellCollector ();
 
-        oversetCellCollector->RunGeometricAnalysis( targetZoneStart[iSearch], targetZoneEnd[iSearch] );
+        oversetCellCollector->RunGeometricAnalysis(targetZoneStart[iSearch], targetZoneEnd[iSearch]);
 
-        oversetCellCollector->SearchOptimalUnitCell( backgroundTree );
+        oversetCellCollector->SearchOptimalUnitCell(backgroundTree);
 
-        InsertOversetAndServiceParameter( oversetCellCollector );
+        InsertOversetAndServiceParameter(oversetCellCollector);
 
         delete oversetCellCollector; oversetCellCollector = NULL;
 
@@ -1818,38 +1818,38 @@ void OversetStructGrid::ProbeRelativeOversetLocation()
     //cout<<"waiter->size() = "<< waiter->size() << endl;
 
     //int numberOfOversetCells = ksai[0].size();
-    //for ( int i = 0; i < numberOfOversetCells; ++ i )
+    //for (int i = 0; i < numberOfOversetCells; ++ i)
     //{
-    //    WriteLogFile( "ksai = ", ksai[0][i], ksai[1][i], ksai[2][i] );
+    //    WriteLogFile("ksai = ", ksai[0][i], ksai[1][i], ksai[2][i]);
     //}
 
-    //for ( int i = 0; i < 8 * numberOfOversetCells; ++ i )
+    //for (int i = 0; i < 8 * numberOfOversetCells; ++ i)
     //{
-    //    WriteLogFile( "waitress = ", ( * waiter )[i] );
+    //    WriteLogFile("waitress = ", (* waiter)[i]);
     //}
 
     return;
 }
 
-void OversetStructGrid::InsertOversetAndServiceParameter( OversetCellCollector  * oversetCellCollector )
+void OversetStructGrid::InsertOversetAndServiceParameter(OversetCellCollector  * oversetCellCollector)
 {
     oversetCellCollector->ResizeSourceIndexContainer();
 
-    oversetCellCollector->InsertOversetParameter( zoneContainer, cellContainer );
+    oversetCellCollector->InsertOversetParameter(zoneContainer, cellContainer);
 
-    oversetCellCollector->InsertServiceParameter( ksai, waiter );
+    oversetCellCollector->InsertServiceParameter(ksai, waiter);
 
     return;
 }
 
-void OversetStructGrid::LinearInsertValue( int numberOfEquations, vector< RDouble > & backdrop, RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & newCellValue )
+void OversetStructGrid::LinearInsertValue(int numberOfEquations, vector< RDouble > & backdrop, RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & newCellValue)
 {
     const int NODE_NUM = 8;
-    vector< RDouble > a( NODE_NUM ), dq( NODE_NUM );
+    vector< RDouble > a(NODE_NUM), dq(NODE_NUM);
 
-    for( int m = 0; m < numberOfEquations; ++ m )
+    for(int m = 0; m < numberOfEquations; ++ m)
     {
-        for( int iCell = 0; iCell < NODE_NUM; ++ iCell )
+        for(int iCell = 0; iCell < NODE_NUM; ++ iCell)
         {
             dq[iCell] = backdrop[m * NODE_NUM + iCell ];
         }
@@ -1887,7 +1887,7 @@ void OversetStructGrid::GenerateSourceAndTargetSpace()
     dataSend = new vector< RDouble > * [numberOfProcessors];
     dataRecv = new vector< RDouble > * [numberOfProcessors];
 
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         dataSend[ip] = NULL;
         dataRecv[ip] = NULL;
@@ -1901,18 +1901,18 @@ void OversetStructGrid::FillNodeIndexContainer()
     using namespace PHMPI;
 
     uint_t numberOfPorts = waiter->size();
-    indexGroup.resize( numberOfPorts );
-    processGroup.resize( numberOfPorts );
+    indexGroup.resize(numberOfPorts);
+    processGroup.resize(numberOfPorts);
 
-    for ( int iPort = 0; iPort < numberOfPorts; ++ iPort )
+    for (int iPort = 0; iPort < numberOfPorts; ++ iPort)
     {
-        int globalNodeIndex = ( * waiter )[iPort];
+        int globalNodeIndex = (* waiter)[iPort];
 
-        int zoneIndex = PHMPI::GetZoneIndexAccordingToGlobalPointLabel( globalNodeIndex );
+        int zoneIndex = PHMPI::GetZoneIndexAccordingToGlobalPointLabel(globalNodeIndex);
 
-        int processorIndex = PHMPI::GetZoneProcessorID( zoneIndex );
+        int processorIndex = PHMPI::GetZoneProcessorID(zoneIndex);
 
-        nodeSend[processorIndex].push_back( globalNodeIndex );
+        nodeSend[processorIndex].push_back(globalNodeIndex);
 
         indexGroup[iPort] = static_cast<int>(nodeSend[processorIndex].size()) - 1;
 
@@ -1924,33 +1924,33 @@ void OversetStructGrid::FillNodeIndexContainer()
 
     nodeRecv[myid] = nodeSend[myid];
 
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
-        if ( ip != myid )
+        if (ip != myid)
         {
             int numberOfElements = static_cast<int>(nodeSend[ip].size());
 
-            PH_Send( & numberOfElements, sizeof(int), ip, 0 );
+            PH_Send(& numberOfElements, sizeof(int), ip, 0);
 
-            if ( numberOfElements == 0 ) continue;
+            if (numberOfElements == 0) continue;
 
-            PH_Send( & nodeSend[ip][0], numberOfElements * sizeof(int), ip, 0 );
+            PH_Send(& nodeSend[ip][0], numberOfElements * sizeof(int), ip, 0);
         }
         else
         {
-            for ( int jp = 0; jp < numberOfProcessors; ++ jp )
+            for (int jp = 0; jp < numberOfProcessors; ++ jp)
             {
-                if ( jp == myid ) continue;
+                if (jp == myid) continue;
 
                 int numberOfElements;
 
-                PH_Receive( & numberOfElements, sizeof(int), jp, 0 );
+                PH_Receive(& numberOfElements, sizeof(int), jp, 0);
 
-                if ( numberOfElements == 0 ) continue;
+                if (numberOfElements == 0) continue;
 
-                nodeRecv[jp].resize( numberOfElements );
+                nodeRecv[jp].resize(numberOfElements);
 
-                PH_Receive( & nodeRecv[jp][0], numberOfElements * sizeof(int), jp, 0 );
+                PH_Receive(& nodeRecv[jp][0], numberOfElements * sizeof(int), jp, 0);
             }
         }
     }
@@ -1963,17 +1963,17 @@ LIB_EXPORT void OversetStructGrid::FillSolverContainer()
     solverNameContainer.clear();
     equationNumberContainer.clear();
 
-    solverNameContainer.push_back( "q" );
+    solverNameContainer.push_back("q");
 
-    int nl = PHSPACE::GlobalDataBase::GetIntParaFromDB( "nl" );
-    equationNumberContainer.push_back( nl );
+    int nl = PHSPACE::GlobalDataBase::GetIntParaFromDB("nl");
+    equationNumberContainer.push_back(nl);
 
-    if( PHSPACE::GetCodeOfTurbulenceModel() )
+    if(PHSPACE::GetCodeOfTurbulenceModel())
     {
-        solverNameContainer.push_back( "q_turb" );
+        solverNameContainer.push_back("q_turb");
 
-        int n_turb = PHSPACE::GlobalDataBase::GetIntParaFromDB( "n_turb" );
-        equationNumberContainer.push_back( n_turb );
+        int n_turb = PHSPACE::GlobalDataBase::GetIntParaFromDB("n_turb");
+        equationNumberContainer.push_back(n_turb);
     }
 
     return;
@@ -1985,21 +1985,21 @@ LIB_EXPORT void OversetStructGrid::InitFieldNew()
     
     uint_t numberOfSolvers = solverNameContainer.size();
 
-    int numberOfZones   = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    field = new vector< RDouble4D * > [numberOfZones];
+    field = new vector< RDouble4D * > [nZones];
 
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        field[iZone].resize( numberOfSolvers, NULL );
+        field[iZone].resize(numberOfSolvers, NULL);
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
-        if ( ! grid ) continue;
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
+        if (! grid) continue;
 
-        for ( int iSolver = 0; iSolver < numberOfSolvers; ++ iSolver )
+        for (int iSolver = 0; iSolver < numberOfSolvers; ++ iSolver)
         {
             string name = solverNameContainer[iSolver];
-            field[iZone][iSolver] = reinterpret_cast< RDouble4D * >( grid->GetDataPtr( name ) );
+            field[iZone][iSolver] = reinterpret_cast< RDouble4D * >(grid->GetDataPtr(name));
         }
     }
     return;
@@ -2011,28 +2011,28 @@ LIB_EXPORT void OversetStructGrid::InitField()
     
     uint_t numberOfSolvers = solverNameContainer.size();
 
-    int numberOfZones   = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    field = new vector< RDouble4D * > [numberOfZones];
+    field = new vector< RDouble4D * > [nZones];
 
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        field[iZone].resize( numberOfSolvers, NULL );
+        field[iZone].resize(numberOfSolvers, NULL);
 
-        Grid *grid = PHSPACE::GetGrid( iZone );
+        Grid *grid = PHSPACE::GetGrid(iZone);
 
-        if ( ! grid ) continue;
+        if (! grid) continue;
 
-        for ( int iSolver = 0; iSolver < numberOfSolvers; ++ iSolver )
+        for (int iSolver = 0; iSolver < numberOfSolvers; ++ iSolver)
         {
             string name = solverNameContainer[iSolver];
-            field[iZone][iSolver] = static_cast< RDouble4D * >( grid->GetDataPtr( name ) );
+            field[iZone][iSolver] = static_cast< RDouble4D * >(grid->GetDataPtr(name));
         }
     }
     return;
 }
 
-LIB_EXPORT void OversetStructGrid::CommunicateOversetField( int iSolver )
+LIB_EXPORT void OversetStructGrid::CommunicateOversetField(int iSolver)
 {
     using namespace PHMPI;
     int iLocal, jLocal, kLocal;
@@ -2040,30 +2040,30 @@ LIB_EXPORT void OversetStructGrid::CommunicateOversetField( int iSolver )
     int numberOfEquations = equationNumberContainer[iSolver];
     int numberOfProcessors = PHMPI::GetNumberOfProcessor();
 
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         dataSend[ip] = new vector< RDouble >();
         dataRecv[ip] = new vector< RDouble >();
     }
 
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         uint_t numberOfElements = nodeRecv[ip].size();
-        for( int iElement = 0; iElement < numberOfElements; ++iElement )
+        for(int iElement = 0; iElement < numberOfElements; ++iElement)
         {
             int globalNodeLabel = nodeRecv[ip][iElement];
 
-            int zoneIndex = PHMPI::GetZoneIndexAccordingToGlobalPointLabel( globalNodeLabel );
+            int zoneIndex = PHMPI::GetZoneIndexAccordingToGlobalPointLabel(globalNodeLabel);
 
-            StructGrid * grid = PHSPACE::GetStructGrid( zoneIndex );
+            StructGrid * grid = PHSPACE::GetStructGrid(zoneIndex);
 
-            grid->GetLocalIndex( globalNodeLabel, iLocal, jLocal, kLocal );
+            grid->GetLocalIndex(globalNodeLabel, iLocal, jLocal, kLocal);
 
-            RDouble4D & myField = * ( field[zoneIndex][iSolver] );
+            RDouble4D & myField = * (field[zoneIndex][iSolver]);
 
-            for( int iEquation = 0; iEquation < numberOfEquations; ++ iEquation )
+            for(int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
             {
-                ( * dataSend[ip] ).push_back( myField( iLocal, jLocal, kLocal, iEquation ) );
+                (* dataSend[ip]).push_back(myField(iLocal, jLocal, kLocal, iEquation));
             }
         }
     }
@@ -2072,31 +2072,31 @@ LIB_EXPORT void OversetStructGrid::CommunicateOversetField( int iSolver )
 
     * dataRecv[myid] = * dataSend[myid];
 
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
-        if ( ip != myid )
+        if (ip != myid)
         {
-            int numberOfElements = static_cast<int>(( * dataSend[ip] ).size());
-            PH_Send( & numberOfElements, sizeof(int), ip, 0 );
+            int numberOfElements = static_cast<int>((* dataSend[ip]).size());
+            PH_Send(& numberOfElements, sizeof(int), ip, 0);
 
-            if ( numberOfElements == 0 ) continue;
+            if (numberOfElements == 0) continue;
 
-            PH_Send( & ( * dataSend[ip] )[0], numberOfElements * sizeof(RDouble), ip, 0 );
+            PH_Send(& (* dataSend[ip])[0], numberOfElements * sizeof(RDouble), ip, 0);
         }
         else
         {
-            for( int jp = 0; jp < numberOfProcessors; ++ jp )
+            for(int jp = 0; jp < numberOfProcessors; ++ jp)
             {
-                if ( jp == myid ) continue;
+                if (jp == myid) continue;
 
                 int numberOfElements;
-                PH_Receive( & numberOfElements, sizeof(int), jp, 0 );
+                PH_Receive(& numberOfElements, sizeof(int), jp, 0);
 
-                if ( numberOfElements == 0 ) continue;
+                if (numberOfElements == 0) continue;
 
-                dataRecv[jp]->resize( numberOfElements );
+                dataRecv[jp]->resize(numberOfElements);
 
-                PH_Receive( & ( * dataRecv[jp] )[0], numberOfElements * sizeof(RDouble), jp, 0 );
+                PH_Receive(& (* dataRecv[jp])[0], numberOfElements * sizeof(RDouble), jp, 0);
             }
         }
     }
@@ -2104,7 +2104,7 @@ LIB_EXPORT void OversetStructGrid::CommunicateOversetField( int iSolver )
     return;
 }
 
-LIB_EXPORT void OversetStructGrid::CorrectOversetField( int iSolver )
+LIB_EXPORT void OversetStructGrid::CorrectOversetField(int iSolver)
 {
     using namespace PHMPI;
 
@@ -2112,22 +2112,22 @@ LIB_EXPORT void OversetStructGrid::CorrectOversetField( int iSolver )
     const int NODE_NUM = 8;
     int numberOfEquations = equationNumberContainer[iSolver];
 
-    vector< RDouble > backdrop( numberOfEquations * NODE_NUM ), newCellValue( numberOfEquations );
+    vector< RDouble > backdrop(numberOfEquations * NODE_NUM), newCellValue(numberOfEquations);
 
     uint_t numberOfOversetCells = cellContainer->size();
-    for( int iOversetCell = 0; iOversetCell < numberOfOversetCells; ++ iOversetCell )
+    for(int iOversetCell = 0; iOversetCell < numberOfOversetCells; ++ iOversetCell)
     {
-        int iZone = ( * zoneContainer )[iOversetCell];
+        int iZone = (* zoneContainer)[iOversetCell];
 
-        StructGrid * grid = PHSPACE::GetStructGrid( iZone );
+        StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
-        if( ! grid ) continue; //Maybe no use!
+        if(! grid) continue; //Maybe no use!
 
         RDouble4D & myField = * field[iZone][iSolver];
 
-        grid->GetLocalCenter( ( * cellContainer )[iOversetCell], ic, jc, kc );
+        grid->GetLocalCenter((* cellContainer)[iOversetCell], ic, jc, kc);
 
-        for( int iNeighbor = 0; iNeighbor < NODE_NUM; ++ iNeighbor )
+        for(int iNeighbor = 0; iNeighbor < NODE_NUM; ++ iNeighbor)
         {
             int neighborCellLabel = NODE_NUM * iOversetCell + iNeighbor;
 
@@ -2135,22 +2135,22 @@ LIB_EXPORT void OversetStructGrid::CorrectOversetField( int iSolver )
 
             int iElement = indexGroup[neighborCellLabel];
 
-            for( int iEquation = 0; iEquation < numberOfEquations; ++iEquation )
+            for(int iEquation = 0; iEquation < numberOfEquations; ++iEquation)
             {
-                backdrop[NODE_NUM * iEquation + iNeighbor] = ( * dataRecv[iProcessor] )[numberOfEquations * iElement + iEquation];
+                backdrop[NODE_NUM * iEquation + iNeighbor] = (* dataRecv[iProcessor])[numberOfEquations * iElement + iEquation];
             }
         }
 
-        LinearInsertValue( numberOfEquations, backdrop, ksai[0][iOversetCell], ksai[1][iOversetCell], ksai[2][iOversetCell], newCellValue );
+        LinearInsertValue(numberOfEquations, backdrop, ksai[0][iOversetCell], ksai[1][iOversetCell], ksai[2][iOversetCell], newCellValue);
 
-        for( int iEquation = 0; iEquation < numberOfEquations; ++ iEquation )
+        for(int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
         {
-            myField( ic + 1, jc + 1, kc + 1, iEquation ) = newCellValue[iEquation];
+            myField(ic + 1, jc + 1, kc + 1, iEquation) = newCellValue[iEquation];
         }
     }
 
     int numberOfProcessors = PHMPI::GetNumberOfProcessor();
-    for ( int ip = 0; ip < numberOfProcessors; ++ ip )
+    for (int ip = 0; ip < numberOfProcessors; ++ ip)
     {
         delete dataSend[ip]; dataSend[ip] = NULL;
         delete dataRecv[ip]; dataRecv[ip] = NULL;
@@ -2176,14 +2176,14 @@ LIB_EXPORT void DeleteOversetStructGrid()
     delete oversetStructGrid; oversetStructGrid = NULL;
 }
 
-LIB_EXPORT int GetZoneInverseIndex( int i_view )
+LIB_EXPORT int GetZoneInverseIndex(int i_view)
 {
-    return oversetStructGrid->GetZoneInverseIndex( i_view );
+    return oversetStructGrid->GetZoneInverseIndex(i_view);
 }
 
-LIB_EXPORT void ComputePhysicalCoordinate( vector< vector< RDouble > > & frame, RDouble x, RDouble y, RDouble z, vector< RDouble > & r )
+LIB_EXPORT void ComputePhysicalCoordinate(vector< vector< RDouble > > & frame, RDouble x, RDouble y, RDouble z, vector< RDouble > & r)
 {
-    for( int i = 0; i < 3; ++ i )
+    for(int i = 0; i < 3; ++ i)
     {
         r[i] = frame[i][0] + x * frame[i][1] + y * frame[i][2] + z * frame[i][3];
     }

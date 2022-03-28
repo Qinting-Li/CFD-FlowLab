@@ -6,6 +6,8 @@
 #include "Geo_UnstructBC.h"
 #include "Constants.h"
 #include "Glb_Dimension.h"
+
+
 #include "Gas.h"
 
 using namespace std;
@@ -84,6 +86,9 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_SST_F2             , "SSTF2"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_INTERMITTENCY      , "intermittency"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_MOMENTUMTHICKREYNOLDS, "MomentumThicknessReynolds"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_U       , "streamline_u"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_V       , "streamline_v"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_W       , "streamline_w"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_GAMAEFF , "gamaeff"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_RESCF   , "stationaryCrossFlowReynolds"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_UX        , "gradientUx"));
@@ -93,6 +98,9 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_DIST          , "walldist"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GAMA               , "gama"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_IBLANK             , "iblank"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_CFL1               , "localCFL"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_CFL2               , "minCFL"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_MACH    , "streamline_mach"));
 
     int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
     if (nsimutask == UGKS_SOLVER)
@@ -103,22 +111,41 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (compressible == 0)
     {
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_U  , "U"  ));
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_V  , "V"  ));
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_W  , "W"  ));
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_P  , "P"  ));
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_CP , "CP" ));
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_T  , "T"  ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_U  , "U" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_V  , "V" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_W  , "W" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_P  , "P" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_CP , "CP"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_T  , "T" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_ENTHALPY , "enthalpy"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_DEN, "DEN"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_VIS, "VIS"));
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_TE , "TE" ));
-        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_ED , "ED" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_TE , "TE"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_ED , "ED"));
+
+
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_U , "U"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_V , "V"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_W , "W"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Pressure , "Pressure"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Density , "Density"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Temperature , "Temperature"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_TurbK         , "Kinetic"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_TurbOMEGA     , "Omega"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_TurbEPSILON   , "Epsilon"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Oxygen        , "Oxygen"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Nitrogen      , "Nitrogen"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_CarbonDioxide , "CarbonDioxide"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Methane       , "Methane"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Visl          , "viscosityLaminar"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Vist          , "viscosityTurbulence"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Gen           , "GenEnergy"));
     }
 
     /*visualVariablesMap.insert(pair<int, string>(VISUAL_O, "O"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_O2, "O2"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_NO, "NO"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_N , "N" ));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_N , "N"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_N2, "N2"));*/
 
     visualVariablesMap.insert(pair<int, string>(VISUAL_DIMENSIONAL_DENSITY,     "density_Dim"));
@@ -257,7 +284,7 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble 
     RDouble *qn = new RDouble[nTotalNode];
 
     bool isVelocityForPostVisual = false;
-    if (name == "u" || name == "v" || name == "w" || name == "u_Dim" || name == "v_Dim" || name == "w_Dim")
+    if (name == "streamline_u" || name == "streamline_v" || name == "streamline_w")
     {
         isVelocityForPostVisual = true;
     }
@@ -301,8 +328,20 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
     Range M(0, 0);
 
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
+    bool isVelocityForPostVisual = false;
 
-    CompNodeVar(grid_str, *qn, 0, cellCenterData, index);
+    if (name == "streamline_u" || name == "streamline_v" || name == "streamline_w")
+    {
+        isVelocityForPostVisual = true;
+    }
+
+    CompNodeVar(grid_str, *qn, 0, cellCenterData, index, isVelocityForPostVisual);
+
+    if (name == "temperature")
+    {
+        ModifyWallTemperature(grid_str, *qn);
+    }
+
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 
@@ -470,6 +509,11 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, Int3D &o
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 
+void Post_Visual::UpdateVisualNodeVarPtr(const string &name, void *data)
+{
+    visualVariablesPtr->UpdateDataPtr(name, data);
+}
+
 LIB_EXPORT void Post_Visual::GetAllVisualNodeVarPtr(RDouble **qn)
 {
     int varCount = 0;
@@ -617,9 +661,9 @@ DumpToVTK::DumpToVTK(vector<DataContainer *> datalist_in, string filename_in, bo
     this->visualFlowType = visualFlowType;
     this->CharacteristicBoundary = CharacteristicBoundary_in;
 
-    for (unsigned int izone = 0; izone < vtkdatalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
     {
-        vtkdatalist[izone]->moveto_begin();
+        vtkdatalist[iZone]->moveto_begin();
     }
     nvarplot = 0;
 }
@@ -700,15 +744,14 @@ void DumpToVTK::WriteVTKFilm()
 
     if (CharacteristicBoundary == false)
     {
-        int nChemical = nvarplot - nVisualVariables;
-        PHWrite(file, nChemical);
-
-        if (nChemical)
+        using namespace GAS_SPACE;
+        int numberOfSpecies = gas->GetNumberOfSpecies();
+        PHWrite(file, numberOfSpecies);
+        int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+        if (nChemical > 0)
         {
-            using namespace GAS_SPACE;
-
             string *varname = gas->GetNameOfSpecies();
-            for (int iChemical = 0; iChemical < nChemical; ++ iChemical)
+            for (int iChemical = 0; iChemical < numberOfSpecies; ++ iChemical)
             {
                 write_string(file, varname[iChemical]);
             }
@@ -734,9 +777,9 @@ void DumpToVTK::WriteVTKFilm()
     int nZones = static_cast<int>(vtkdatalist.size());
     PHWrite(file, nZones);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        DataContainer *cdata = vtkdatalist[izone];
+        DataContainer *cdata = vtkdatalist[iZone];
         
         int GridID;
         int dimension;
@@ -830,15 +873,16 @@ void DumpToVTK::WriteVTKFilm()
     PHSPACE::CloseFile(file);
 }
 
+
 DumpToTecplotASCII::DumpToTecplotASCII(vector<DataContainer *> datalist_in, string filename_in, int visualFlowType)
 {
     this->dataList = datalist_in;
     this->fileName = filename_in;
     this->visualFlowType = visualFlowType;
 
-    for (unsigned int izone = 0; izone < dataList.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < dataList.size(); ++ iZone)
     {
-        dataList[izone]->moveto_begin();
+        dataList[iZone]->moveto_begin();
     }
     nVariable = 0;
 }
@@ -932,9 +976,9 @@ void DumpToTecplotASCII::WriteFlowFilm()
     bcNameMap.insert(pair<int, string>(61, "OUTFLOW_CONFINED"));
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int GridID, dimension, type, dumpMission;
 
@@ -1375,18 +1419,18 @@ void PHCutPlane::SortData(RDouble *value)
     using namespace PHSPACE;
     vector<DataStruct_Sort< RDouble> > value_list;
     DataStruct_Sort<RDouble> var;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        var.value = value[inode];
-        var.index = inode;
+        var.value = value[iNode];
+        var.index = iNode;
         value_list.push_back(var);
     }
     sort(value_list.begin(), value_list.end());
 
     vector<int> index_list;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        index_list.push_back(value_list[inode].index);
+        index_list.push_back(value_list[iNode].index);
     }
 
     ReorderList(x, index_list);
@@ -1462,12 +1506,12 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
     int pcount  = 0;
     int index;
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[nodepos + j];
             coor_min = MIN(xyz[index], coor_min);
@@ -1476,17 +1520,17 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
 
         if (cut < coor_min - eps || cut > coor_max + eps)
         {
-            nodepos += node_number_of_each_face[iface];
+            nodepos += node_number_of_each_face[iFace];
             continue;
         }
 
         RDouble xl, yl, zl, xr, yr, zr, xm, ym, zm;
 
         int p1, p2;
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             p1 = face2node[nodepos + j];
-            p2 = face2node[nodepos + (j + 1) % node_number_of_each_face[iface]];
+            p2 = face2node[nodepos + (j + 1) % node_number_of_each_face[iFace]];
 
             for (int m = 0; m < nvar; ++ m)
             {
@@ -1633,7 +1677,7 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
             }
         }
 
-        nodepos += node_number_of_each_face[iface];
+        nodepos += node_number_of_each_face[iFace];
     }
 
     cutpl->neqn = nvar;
@@ -1648,18 +1692,18 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
     cutpl->y = new RDouble [cutpl->nTotalNode];
     cutpl->z = new RDouble [cutpl->nTotalNode];
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
-        cutpl->x[inode] = x_list[inode];
-        cutpl->y[inode] = y_list[inode];
-        cutpl->z[inode] = z_list[inode];
+        cutpl->x[iNode] = x_list[iNode];
+        cutpl->y[iNode] = y_list[iNode];
+        cutpl->z[iNode] = z_list[iNode];
     }
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
         for (int m = 0; m < nvar; ++ m)
         {
-            cutpl->data[m][inode] = var_list[inode][m];
+            cutpl->data[m][iNode] = var_list[iNode][m];
         }
     }
 }
@@ -1704,15 +1748,15 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
     }
 
     int nodepos = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int cl = left_cell_of_face[iface];
-        int cr = right_cell_of_face[iface];
+        int cl = left_cell_of_face[iFace];
+        int cr = right_cell_of_face[iFace];
 
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[nodepos ++];
             coor_min = MIN(xyz[index], coor_min);
@@ -1725,7 +1769,7 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
         }
 
         cut_cell[cl] = true;
-        if(iface >= nBoundFace) cut_cell[cr] = true;
+        if (iFace >= nBoundFace) cut_cell[cr] = true;
     }
 
     vector<vector<RDouble> > var_list;
@@ -1760,18 +1804,18 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
     cutpl->y = new RDouble [cutpl->nTotalNode];
     cutpl->z = new RDouble [cutpl->nTotalNode];
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
-        cutpl->x[inode] = x_list[inode];
-        cutpl->y[inode] = y_list[inode];
-        cutpl->z[inode] = z_list[inode];
+        cutpl->x[iNode] = x_list[iNode];
+        cutpl->y[iNode] = y_list[iNode];
+        cutpl->z[iNode] = z_list[iNode];
     }
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
         for (int m = 0; m < nvar; ++ m)
         {
-            cutpl->data[m][inode] = var_list[inode][m];
+            cutpl->data[m][iNode] = var_list[iNode][m];
         }
     }
 
@@ -1800,6 +1844,7 @@ LIB_EXPORT Post_VisualWall::Post_VisualWall(int nVisualNumber, int *visualVariab
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_VS, "Vs(m/s)"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_ST, "St"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_CH, "Ch"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_RE, "Re_w"));
 
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     if (nChemical > 0)
@@ -1854,3 +1899,4 @@ LIB_EXPORT Post_VisualWall::~Post_VisualWall()
 }
 
 }
+

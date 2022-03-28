@@ -176,23 +176,23 @@ void DynamicGrid::StationalData2DynamicData()
 
     DYNode *nodeList = new DYNode[nTotalNode];
     this->nodeArray = nodeList;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        nodeList[inode].x = x[inode];
-        nodeList[inode].y = y[inode];
-        nodeList[inode].z = z[inode];
+        nodeList[iNode].x = x[iNode];
+        nodeList[iNode].y = y[iNode];
+        nodeList[iNode].z = z[iNode];
 
-        nodeList[inode].xnew = x[inode];
-        nodeList[inode].ynew = y[inode];
-        nodeList[inode].znew = z[inode];
+        nodeList[iNode].xnew = x[iNode];
+        nodeList[iNode].ynew = y[iNode];
+        nodeList[iNode].znew = z[iNode];
     }
 
     //! Face info.
-    int *face2node            = grid->GetFace2Node();
-    int *nodeNumOfEaceFace    = grid->GetNodeNumberOfEachFace();
-    int *leftCellOfEachFace   = grid->GetLeftCellOfFace();
-    int *rightCellOfEachFace  = grid->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    int *face2node           = grid->GetFace2Node();
+    int *nodeNumOfEaceFace   = grid->GetNodeNumberOfEachFace();
+    int *leftCellOfEachFace  = grid->GetLeftCellOfFace();
+    int *rightCellOfEachFace = grid->GetRightCellOfFace();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     int count = 0;
     DYFace *faceList = new DYFace[nTotalFace];
@@ -227,7 +227,7 @@ void DynamicGrid::StationalData2DynamicData()
     SetField(secondSegment, 0, nTotalNode);
     this->secondSegment = secondSegment;
 
-    SimpleBC *boundaryCondition = 0;
+    SimpleBC *boundaryCondition = NULL;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int bctype = faceArray[iFace].bcType;
@@ -238,7 +238,7 @@ void DynamicGrid::StationalData2DynamicData()
 
         boundaryCondition = bcr[iFace]->GetBoundaryCondition();
         int isSecondSegment = 0;
-        boundaryCondition->GetData("isSecondSegment", &isSecondSegment, PHINT, 1);
+        boundaryCondition->GetParamData("isSecondSegment", &isSecondSegment, PHINT, 1);
 
         if (!isSecondSegment)
         {
@@ -252,10 +252,9 @@ void DynamicGrid::StationalData2DynamicData()
             secondSegment[nodeIndex] = 1;
         }
 
-        boundaryCondition = bcr[iFace]->GetBoundaryCondition();
-        boundaryCondition->GetData("secondSegmentRotatePostionX", &secondSegmentRotatePostionX, PHINT, 1);
-        boundaryCondition->GetData("secondSegmentRotatePostionY", &secondSegmentRotatePostionY, PHINT, 1);
-        boundaryCondition->GetData("secondSegmentRotatePostionZ", &secondSegmentRotatePostionZ, PHINT, 1);
+        boundaryCondition->GetParamData("secondSegmentRotatePostionX", &secondSegmentRotatePostionX, PHINT, 1);
+        boundaryCondition->GetParamData("secondSegmentRotatePostionY", &secondSegmentRotatePostionY, PHINT, 1);
+        boundaryCondition->GetParamData("secondSegmentRotatePostionZ", &secondSegmentRotatePostionZ, PHINT, 1);
     }
 
     rotateNodeIndex = -1;

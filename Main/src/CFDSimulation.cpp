@@ -5,6 +5,7 @@
 #include "Constants.h"
 #include "PHIO.h"
 #include "TK_Log.h"
+#include "Residual.h"
 
 using namespace std;
 
@@ -15,16 +16,16 @@ void RunPHengLEI()
     //! Initialize global variables and MPI.
     PHMPI::Initialization();
 
-    ShowWelcomeTitle();
-
     //! Read control parameters and do self-checking.
     ReadControlParameters();
+
+    ShowWelcomeTitle();
 
     CompleteParamInfo();
 
     ControlParametersPreliminarySelfCheck();
 
-    //! Start CFD simulations.
+    //! Start CFD simulation.
     int dimension = GlobalDataBase::GetIntParaFromDB("ndim");
     Simulation *simulation = new Simulation(dimension);
 
@@ -78,7 +79,7 @@ void ParametersSelfCheckForCFD()
 
     int flowInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("flowInitStep");
     int maxSimuStep  = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
-    if (flowInitStep > maxSimuStep || isUnsteady != 0)
+    if (flowInitStep > maxSimuStep || isUnsteady)
     {
         //! If the maximum simulation step is small than the initialization step,
         //! do not init then.
@@ -106,7 +107,7 @@ void ParametersSelfCheckForCFD()
             }
         }
     }
-    else if (viscousType == LAMINAR && iLES != LES_SOLVER)
+    else if (viscousType == LAMINAR && iLES == NOLES_SOLVER)
     {
         for (int i = 0; i < nVisualVariables; ++ i)
         {
@@ -135,7 +136,7 @@ void ParametersSelfCheckForCFD()
         int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
         for (int i = 0; i < nVisualVariables; ++ i)
         {
-            if (transitionType /= 2)
+            if (transitionType /= IREGAMA)
             {
                 if (visualVariables[i] == 35 || visualVariables[i] == 36)
                 {
@@ -165,7 +166,7 @@ void ParametersSelfCheckForCFD()
             ostringstream oss;
             oss << "Warning: The variable \"min_sub_iter\" cannot be greater than \"max_sub_iter\"! Now let them be equal: max_sub_iter = min_sub_iter!" << endl;
             PrintToWindow(oss.str());
-            WriteLogFile (oss.str());
+            WriteLogFile(oss.str());
 
             maxSubIter = minSubIter;
             GlobalDataBase::UpdateData("max_sub_iter", &maxSubIter, PHINT, 1);
@@ -186,6 +187,18 @@ void ParametersSelfCheckForCFD()
             TK_Exit::ExceptionExit(oss);
         }
     }
+    //! Judge if use wenn scheme, provided by Li Qin.
+    int isWennScheme = 0;
+    string str_limiter_name = GlobalDataBase::GetStrParaFromDB("str_limiter_name");
+    if (str_limiter_name == "weno3_js"
+        || str_limiter_name == "wenn3_zm"
+        || str_limiter_name == "wenn3_zes2"
+        || str_limiter_name == "wenn3_zes3"
+        || str_limiter_name == "wenn3_prm211")
+    {
+        isWennScheme = 1;
+    }
+    GlobalDataBase::UpdateData("isWennScheme", &isWennScheme, PHINT, 1);
 }
 
 void ControlParametersPreliminarySelfCheck()
@@ -203,13 +216,9 @@ void ControlParametersPreliminarySelfCheck()
             break;
         case PARTITION_GRID:
             break;
-        case REPOSITORY:
-            break;
         case OVERSETGRID_VIEW:
             break;
         case OVERSET_CONFIG:
-            break;
-        case CONVERT_PARTITION:
             break;
         case HO_SOLVER:
             break;
@@ -229,5 +238,6 @@ void ControlParametersPreliminarySelfCheck()
 }
 
 }
+
 
 

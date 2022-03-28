@@ -88,7 +88,7 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady != 0)
+    if (isUnsteady)
     {
         RDouble4D *q_unsteady_n1   = new RDouble4D(I, J, K, M, fortranArray);
         RDouble4D *q_unsteady_n2   = new RDouble4D(I, J, K, M, fortranArray);
@@ -193,9 +193,9 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         RDouble4D *dqdx_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
         RDouble4D *dqdy_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
         RDouble4D *dqdz_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
-        grid->UpdateDataPtr("dqdx_cc_ruvwpt", dqdx_cc_ruvwpt );    //! dqdx(q represents r/u/v/w/p/t) at cell center.
-        grid->UpdateDataPtr("dqdy_cc_ruvwpt", dqdy_cc_ruvwpt );    //! dqdy(q represents r/u/v/w/p/t) at cell center.
-        grid->UpdateDataPtr("dqdz_cc_ruvwpt", dqdz_cc_ruvwpt );    //! dqdz(q represents r/u/v/w/p/t) at cell center.
+        grid->UpdateDataPtr("dqdx_cc_ruvwpt", dqdx_cc_ruvwpt);    //! dqdx(q represents r/u/v/w/p/t) at cell center.
+        grid->UpdateDataPtr("dqdy_cc_ruvwpt", dqdy_cc_ruvwpt);    //! dqdy(q represents r/u/v/w/p/t) at cell center.
+        grid->UpdateDataPtr("dqdz_cc_ruvwpt", dqdz_cc_ruvwpt);    //! dqdz(q represents r/u/v/w/p/t) at cell center.
     }
 
     GetSurfaceCellNumber(gridIn, nWallBC, nMaxSurfaceCell);
@@ -214,7 +214,7 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         RDouble refT = Twall / refTemperature;
         if (Twall <= EPSILON)
         {
-            refT = 1.0; //Radiation equilibrium temperature wall.
+            refT = 1.0; //! Radiation equilibrium temperature wall.
         }
 
         RDouble2D *temperatureWall = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
@@ -229,6 +229,19 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         }
         grid->UpdateDataPtr("surfaceTemperature", temperatureWall);
     }
+
+    int nTotalNumber = 16;
+    Int1D *speciesOrder = new Int1D(Range(0, nTotalNumber - 1), fortranArray);
+    for (int n = 0; n < nTotalNumber; ++ n)
+    {
+        (*speciesOrder)(n) = -1;
+    }
+    grid->UpdateDataPtr("speciesOrder", speciesOrder);
+
+    Range IFACE, JFACE, KFACE;
+    GetRange(ni, nj, nk, -2, 2, IFACE, JFACE, KFACE);
+    RDouble4D *heatTransferCoeff = new RDouble4D(I, J, K, T, fortranArray);
+    grid->UpdateDataPtr("heatTransferCoeff", heatTransferCoeff);    //!heat transfer coefficient.
 }
 
 void NSSolverStructFD::DeAllocateGlobalVar(Grid *gridIn)
@@ -245,22 +258,22 @@ void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell
     StructGrid *grid = StructGridCast(gridIn);
 
     //! Obtain the number of boundary condition regions.
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     nWall = 0;
     nCell = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType))
         {
             continue;
         }
-        ++ nWall; //The number of surface regions.
+        ++ nWall; //! The number of surface regions.
 
-        //The following are surface boundary codes.
+        //! The following are surface boundary codes.
         int ist, ied, jst, jed, kst, ked;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
@@ -282,21 +295,21 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
 
     using namespace IDX;
 
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
     //! Obtain the number of boundary condition regions.
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int nBCRegion = structBCSet->GetnBCRegion();
     int indexOfWall = 0, indexOfCell = 0;
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType))
         {
             continue;
         }
-        //The following are surface boundary codes.
+        //! The following are surface boundary codes.
         int ist, ied, jst, jed, kst, ked;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
@@ -332,11 +345,11 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
                     #endif
 
                     (*firstLayerHeight)(indexOfWall, indexOfCell) = deltaHeight;
-                    ++ indexOfCell; //Next grid cell.
+                    ++ indexOfCell; //! Next grid cell.
                 }
             }
         }
-        ++ indexOfWall; //Next surface regions.
+        ++ indexOfWall; //! Next surface regions.
     }
 }
 
@@ -437,8 +450,8 @@ void NSSolverStructFD::GetIndependentVariablesforStructHighOrder(Grid *gridIn)
         {
             for (int j = jst; j <= jed; ++ j)
             {
-                qFD(   - 2, j, k, m) = qFD(   - 1, j, k, m);
-                qFD(   - 3, j, k, m) = qFD(   - 2, j, k, m);
+                qFD(  - 2, j, k, m) = qFD(  - 1, j, k, m);
+                qFD(  - 3, j, k, m) = qFD(  - 2, j, k, m);
                 qFD(ni + 2, j, k, m) = qFD(ni + 1, j, k, m);
                 qFD(ni + 3, j, k, m) = qFD(ni + 2, j, k, m);
             }
@@ -538,7 +551,7 @@ void NSSolverStructFD::ObtainPressureFactor(Grid *gridIn)
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("rtem"));
     
-    RDouble pressureSensorCoefficient = third;  // for 3-D
+    RDouble pressureSensorCoefficient = third;  //! For 3-D
 
     int istp = 1;
     int jstp = 1;
@@ -828,10 +841,6 @@ void NSSolverStructFD::CalPressureFactor(Grid *gridIn)
     //! Already solved in Controller::GetDependentVariablesforStructHighOrder().
 }
 
-void NSSolverStructFD::GetHeatTransferCoeff(Grid *gridIn)
-{
-}
-
 void NSSolverStructFD::ComputeViscousCoeff(Grid *gridIn)
 {
     //! Already solved in Controller::GetDependentVariablesforStructHighOrder().
@@ -857,11 +866,11 @@ void NSSolverStructFD::ObtainBoundaryValue(Grid *gridIn)
 
     using namespace PHENGLEI;
 
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (BCType < 0)
@@ -1117,7 +1126,7 @@ void NSSolverStructFD::ViscousIsotropicWall(Grid *gridIn, StructBC *structBC)
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
     
-    RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature; //! non-dimensional temperature.
+    RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature; //! Non-dimensional temperature.
     RDouble temperaturelimitation = 0.1 * temperatureWallNonDimensional;
 
     using namespace IDX;
@@ -1204,13 +1213,13 @@ void NSSolverStructFD::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structB
     RDouble poo = primitiveVarFarfield[IP];
          
     int nEquation = GetNumberOfEquations();
-    RDouble * prims;  //! the inner point.
-    RDouble * primt;  //! the ghost point.   
+    RDouble * prims;  //! Inner point.
+    RDouble * primt;  //! Ghost point.   
     prims = new RDouble [nEquation];
     primt = new RDouble [nEquation];
 
-    RDouble rin, uin, vin, win, pin, vnin, cinner, vein; //! inner    point variables.
-    RDouble rb , ub , vb , wb , pb , vnb , cb;           //! boundary point variables.
+    RDouble rin, uin, vin, win, pin, vnin, cinner, vein; //! Inner    point variables.
+    RDouble rb , ub , vb , wb , pb , vnb , cb;           //! Boundary point variables.
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -1402,7 +1411,7 @@ void NSSolverStructFD::InitFlowAsRestart()
     GetDependentVariablesforStructHighOrder(grid);
     
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0)
+    if (!isUnsteady)
     {
         RDouble4D &residual = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
         residual   = 0.0;
@@ -1494,7 +1503,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
 
     if(InterpolationType.substr(0, 4) == "test")
     {
-        //! non-uniform interpolation
+        //! Non-uniform interpolation
         RDouble3D &xcc = *grid->GetCellCenterX();
         RDouble3D &ycc = *grid->GetCellCenterY();
         RDouble3D &zcc = *grid->GetCellCenterZ();
@@ -1756,7 +1765,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
     }
     else
     {
-        //! uniform interpolation
+        //! Uniform interpolation
         RDouble Coef[30];
         
         Coef[0] =  1.0  / 16.0;
@@ -1873,11 +1882,6 @@ void NSSolverStructFD::InviscidFlux(Grid *gridIn)
         FluxDifference(grid, fluxProxy, nsurf);
     }
 
-    /*if (total_negative > 0)
-    {
-        std::cout<<"warning:    "<<total_negative<<std::endl;
-    }*/
-
     delete qlProxy;
     delete qrProxy;
     delete fluxProxy;
@@ -1957,7 +1961,7 @@ void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, F
 
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     InterpolationRUVWP3rd(PrimPlate_L, PrimHalf_L);
                     InterpolationRUVWP3rd(PrimPlate_R, PrimHalf_R);
@@ -2003,11 +2007,11 @@ void NSSolverStructFD::GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn,
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature;
     
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (!IsWall(BCType) || nsurf_bc != nsurf)
@@ -2204,7 +2208,7 @@ RDouble NSSolverStructFD::BasicInterpolation3rd(RDouble Qp[5], int m)
 RDouble NSSolverStructFD::Limiter_ThirdSmooth(const RDouble &x, const RDouble &y)
 {
    const RDouble eps2 = 1.0e-6;
-    RDouble Smooth1 = x * ( y * y + 2.0 * eps2 ) +  y * ( 2.0 * x * x + eps2 );
+    RDouble Smooth1 = x * (y * y + 2.0 * eps2) +  y * (2.0 * x * x + eps2);
     RDouble Smooth2 = 2.0 * x * x - x * y + 2.0 * y * y + 3.0 * eps2;
     RDouble Smooth = Smooth1 / Smooth2;
     return  Smooth;
@@ -3255,7 +3259,7 @@ void NSSolverStructFD::FluxDifference_WCNS(Grid *gridIn, FieldProxy *fluxProxy, 
 
                     int localcellID = i * il1 + j * jl1 + k * kl1;
 
-                    if( (*DiffOrder)(localcellID) == 2 )
+                    if((*DiffOrder)(localcellID) == 2)
                     {
                         res(i, j, k, m) -= (f2 - f1);
                     }
@@ -3382,7 +3386,7 @@ void NSSolverStructFD::GetCellInviscidFlux(Grid *gridIn, int nsurf)
                 
                 RDouble RVN = R * (KX * U + KY * V + KZ * W);
                 
-                Cellflux(i, j, k, IR ) = RVN;
+                Cellflux(i, j, k, IR) = RVN;
                 Cellflux(i, j, k, IRU) = RVN * U + KX * P;
                 Cellflux(i, j, k, IRV) = RVN * V + KY * P;
                 Cellflux(i, j, k, IRW) = RVN * W + KZ * P;
@@ -3600,7 +3604,7 @@ void NSSolverStructFD::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++m)
                     {                    
@@ -3749,7 +3753,7 @@ void NSSolverStructFD::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 )
+                if((*DiffOrder)(localcellID) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -3879,7 +3883,7 @@ void NSSolverStructFD::ViscousFlux(Grid *gridIn)
         GetGradientAtFace(gridIn, iSurface);
         GetGradientAtFaceCorrectionAtPhysicalBoundary(gridIn, iSurface);
 
-        if (iLES != LES_SOLVER)
+        if (iLES == NOLES_SOLVER)
         {
             GetFaceViscousFlux(gridIn, fluxProxy, iSurface);
         }
@@ -3976,7 +3980,7 @@ void NSSolverStructFD::GetGradientAtFaceconservation(Grid *gridIn, int nSurface)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     RDouble dx = xcc(i, j, k) - xcc(i - il1, j - jl1, k - kl1);
                     RDouble dy = ycc(i, j, k) - ycc(i - il1, j - jl1, k - kl1);
@@ -4222,7 +4226,7 @@ void NSSolverStructFD::GetGradientAtFacechainrule(Grid *gridIn, int nSurface)
                 nz /= Volume;
 
                 int localcellID = i * il1 + j * jl1 + k * kl1;
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -4308,11 +4312,11 @@ void NSSolverStructFD::GetGradientAtFaceCorrectionAtPhysicalBoundary(Grid *gridi
     RDouble4D &dqdyface = dqdyFaceProxy->GetField_STR();
     RDouble4D &dqdzface = dqdzFaceProxy->GetField_STR();
     
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (BCType < 0 || nsurf_bc != iSurface)
@@ -5015,10 +5019,10 @@ void NSSolverStructFD::Diagonal(Grid *gridIn)
     }
 }
 
-void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == 6)
+    if(tscheme == JACOBIAN_ITERATION)
     {
         SolveLUSGSbyJacobiIteration(gridIn, dqProxy, LUplusDQ, sweepNormal);
         return;
@@ -5130,10 +5134,10 @@ void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
     }
 }
 
-void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == 6)
+    if(tscheme == JACOBIAN_ITERATION)
     {
         return;
     }
@@ -5646,11 +5650,6 @@ void NSSolverStructFD::UpdateQlQrOnlyforMixGrid(Grid *gridIn)
         GetFaceVariableCorrectionAtPhysicalBoundary(grid, qlProxy, qrProxy, iSurface);
         GetFaceVariable_HDCS_otherlayerImplicit(grid, qlProxy, qrProxy, iSurface);
     }
-
-    /*if (total_negative > 0)
-    {
-        std::cout<<"warning:    "<<total_negative<<std::endl;
-    }*/
 
     delete qlProxy;
     delete qrProxy;

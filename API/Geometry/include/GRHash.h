@@ -98,7 +98,7 @@ public:
 
     void    clear() 
     {
-        delete []hash_table; hash_table = nullptr; hash_size = HASH_INIT_SIZE;
+        delete []hash_table; hash_table = NULL; hash_size = HASH_INIT_SIZE;
         (*hash_deque).clear(); 
         delete hash_deque;  
         hash_deque = new deque<T>;
@@ -109,15 +109,15 @@ public:
 
     Hash(const Hash<T>& H) {                    //! Assignment constructor.
         register CAulong i; CAulong sz=H.size();
-        for( i=0; i<sz; i++ )
-            (*this).insert( (*(H.hash_deque))[i] );
+        for (i=0; i<sz; i++)
+            (*this).insert((*(H.hash_deque))[i]);
     }
 
     //     Hash<T>& operator=(const Hash<T>& H) {      //! Assign operator.
     //         clear();
     //         register int i; int sz=H.size();
-    //         for( i=0; i<sz; i++ )
-    //             (*this).insert( (*(H.hash_deque))[i] );
+    //         for (i=0; i<sz; i++)
+    //             (*this).insert((*(H.hash_deque))[i]);
     //         return (*this);
     //     }    
     Hash<T>& operator=(const Hash<T>& H) {      //! Assign operator.
@@ -127,9 +127,9 @@ public:
         hash_table = new CAulong[hash_size];
         register CAulong i; CAulong sz=H.size();
 
-        for(i=0; i<hash_size; i++) hash_table[i] = H.hash_table[i];
+        for (i=0; i<hash_size; i++) hash_table[i] = H.hash_table[i];
 
-        for( i=0; i<sz; i++ )
+        for (i=0; i<sz; i++)
             hash_deque->push_back(H[i]);
         return (*this);
     }    
@@ -158,7 +158,7 @@ void Hash<T>::resize()
     for (int i = 0; i < o_size; ++ i) isDeleted[i] = false;
 
     //! Mark out which elements have been deleted.
-    if ( hash_table )
+    if (hash_table)
     {
         for (int i = 0; i < hash_size; ++ i)
         {
@@ -180,7 +180,7 @@ void Hash<T>::resize()
 
     //! Resize the hash size, multiply by two.
     hash_table = new CAulong[hash_size*=2];
-    for( ii=0; ii<hash_size; ii++ ) hash_table[ii] = 0;
+    for (ii=0; ii<hash_size; ii++) hash_table[ii] = 0;
 
     //************************************************
     //! Erase the deleted element from hash_deque.
@@ -229,13 +229,13 @@ void Hash<T>::resize()
 
     //! Re-build the image: hash_table --> hash_deque.
     o_size = static_cast<CAulong>(hash_deque->size());
-    for( jj=0; jj<o_size; jj++ ) 
+    for (jj=0; jj<o_size; jj++) 
     {
-        key=gethashkey( (*hash_deque)[jj] );
+        key=gethashkey((*hash_deque)[jj]);
         hash1=key%hash_size;
         hash2=key%(hash_size-1)|1;
         kk=0;
-        while( hash_table[ii=((hash1+kk++*hash2)%hash_size)] != NIL );
+        while(hash_table[ii=((hash1+kk++*hash2)%hash_size)] != NIL);
 
         hash_table[ii] = jj+1;
     }
@@ -279,18 +279,18 @@ int Hash<T>::insert(const T& p)
     register CAulong ii;
 
     // ii=(hash1+i_prob*hash2)%hash_size --> Double Hashing.
-    for( i_prob=0; i_prob<hash_size; i_prob++) 
+    for(i_prob=0; i_prob<hash_size; i_prob++) 
     {
-        if ( hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL ) 
+        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL) 
         {
             // Insert
             (*hash_deque).push_back(p);    // empty slot, insert
             hash_table[ii] = o_size = static_cast<CAulong>((*hash_deque).size());
-            if ( o_size > hash_size*HASH_MAXI_LOAD ) resize();
+            if (o_size > hash_size*HASH_MAXI_LOAD) resize();
             ++ data_size;
             return (o_size);
         }
-        else if ( hash_table[ii] < NIL ) 
+        else if (hash_table[ii] < NIL) 
         {
             //****************************************************************************
             //!!This is only used when insert(p, isExist) is used!!!!!
@@ -306,7 +306,7 @@ int Hash<T>::insert(const T& p)
             ++ data_size;
             return position;
         }
-        else if ( equal_hash((*hash_deque)[hash_table[ii]-1], p) ) 
+        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p)) 
         {
             return (hash_table[ii]);    //! Already exist.
         }
@@ -324,20 +324,20 @@ int Hash<T>::erase(const T& p)
     register CAulong ii;
 
     // ii=(hash1+i_prob*hash2)%hash_size --> Double Hashing.
-    for( i_prob=0; i_prob<hash_size; i_prob++) 
+    for(i_prob=0; i_prob<hash_size; i_prob++) 
     {
-        if ( hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL ) 
+        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL) 
         {
             //! Data not here, do not need to erase.
             return 0;
         } 
-        else if ( hash_table[ii] < NIL ) 
+        else if (hash_table[ii] < NIL) 
         {
             //! Deleted position, continue.
             //! Because element may be exist at the position after 'ii'.
             continue;
         }
-        else if ( equal_hash((*hash_deque)[hash_table[ii]-1], p) ) 
+        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p)) 
         {
             /*
             T end = (*hash_deque).back();
@@ -350,12 +350,12 @@ int Hash<T>::erase(const T& p)
             CAulong j_prob;
             for(j_prob=0; j_prob<hash_size; j_prob++) 
             {
-                if ( hash_table[jj=((hash1+j_prob*hash2)%hash_size)]==0 )
+                if (hash_table[jj=((hash1+j_prob*hash2)%hash_size)]==0)
                 {
 
                 } 
-                //else if ( (*hash_deque)[hash_table[jj]-1]==end ) 
-                else if ( equal_hash((*hash_deque)[hash_table[jj]-1], end) ) 
+                //else if ((*hash_deque)[hash_table[jj]-1]==end) 
+                else if (equal_hash((*hash_deque)[hash_table[jj]-1], end)) 
                 {
                     hash_table[jj] = hash_table[ii];
                     break;
@@ -387,19 +387,19 @@ int Hash<T>::search(const T& p)
     register CAulong ii;
 
     // ii=(hash1+i_prob*hash2)%hash_size --> Double Hashing.
-    for( i_prob=0; i_prob<hash_size; i_prob++) 
+    for(i_prob=0; i_prob<hash_size; i_prob++) 
     {
-        if ( hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL ) 
+        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL) 
         {
             return (0);    //! Does not exist.
         }
-        else if ( hash_table[ii] < NIL ) 
+        else if (hash_table[ii] < NIL) 
         {
             //! Deleted position, continue.
             //! Because element may be exist at the position after 'ii'.
             continue;
         }
-        else if ( equal_hash((*hash_deque)[hash_table[ii]-1], p) ) 
+        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p)) 
         {
             return (hash_table[ii]);    //! Found.
         }

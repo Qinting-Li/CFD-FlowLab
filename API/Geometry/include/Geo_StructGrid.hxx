@@ -287,6 +287,36 @@ inline void StructGrid::GetFaceIterationIndex(int &iFaceStart, int &iFaceEnd, in
     }
 }
 
+inline void StructGrid::GetNsurfIndex(int &il1, int &jl1, int &kl1, int iDimension)
+{
+	il1 = 0;
+	jl1 = 0;
+	kl1 = 0;
+	int mide[3][3];
+	memset(mide, 0, sizeof(mide));
+	mide[0][0] = 1;
+	mide[1][1] = 1;
+	mide[2][2] = 1;
+
+	il1 = mide[0][iDimension-1];
+    jl1 = mide[1][iDimension-1];
+    kl1 = mide[2][iDimension-1];
+}
+
+inline void StructGrid::GetLeftCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ile, int &jle, int &kle, int iDimension)
+{
+	ile  = i - il1;
+	jle  = j - jl1;
+	kle  = k - kl1;
+}
+
+inline void StructGrid::GetRightCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ire, int &jre, int &kre, int iDimension)
+{
+	ire  = i + il1;
+	jre  = j + jl1;
+	kre  = k + kl1;
+}
+
 inline void StructGrid::GetND(int &si, int &sj, int &sk) const
 {
     si = nodeTopology->GetNI();
@@ -324,9 +354,9 @@ inline RDouble3D * StructGrid::GetStructZ() const
     return nodeTopology->GetStructZ();
 }
 
-inline CompositeStructBC * StructGrid::GetCompositeBCRegion() const
+inline StructBCSet * StructGrid::GetStructBCSet() const
 {
-    return composite_bcregion;
+    return structBCSet;
 }
 
 inline RDouble4D * StructGrid::GetFaceVelocityX() const

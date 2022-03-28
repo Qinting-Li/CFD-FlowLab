@@ -20,7 +20,7 @@ LIB_EXPORT Post_Probes::Post_Probes(int nProbeVariables_in, int *probeVariables_
     probesVariablesMap.insert(pair<int, string>(PROBE_W          , "w"));
     probesVariablesMap.insert(pair<int, string>(PROBE_PRESSURE   , "pressure"));
     probesVariablesMap.insert(pair<int, string>(PROBE_TEMPERATURE, "temperature"));
-
+    probesVariablesMap.insert(pair<int, string>(PROBE_MACH, "mach"));
     nProbeVariables = nProbeVariables_in;
     for (int iVar = 0; iVar < nProbeVariables; ++ iVar)
     {
@@ -195,9 +195,9 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
             NecessaryVarForInterpolation(unstructGrid, iProbe, neighborCell, numerator,interpolationCellsID, true);
         }
 
-        for (int iface = 0; iface < faceNumberOfEachCell[probeCell]; ++ iface)
+        for (int iFace = 0; iFace < faceNumberOfEachCell[probeCell]; ++ iFace)
         {
-            int faceID = cell2face[probeCell][iface];
+            int faceID = cell2face[probeCell][iFace];
 
             if (faceID < nBoundFace)
             {
@@ -209,10 +209,10 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
         int nCells = interpolationCellsID.size();
         RDouble denominator = SUMMARY(numerator, nCells);
 
-        for (int icell = 0; icell < nCells; ++ icell)
+        for (int iCell = 0; iCell < nCells; ++ iCell)
         {
-            RDouble weightCoef = numerator[icell] / denominator;
-            int cellID = interpolationCellsID[icell];
+            RDouble weightCoef = numerator[iCell] / denominator;
+            int cellID = interpolationCellsID[iCell];
             q_probes[iProbe] += cellCenterData[cellID] * weightCoef;
         }
     }
@@ -253,10 +253,10 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble *c
         int nNodes = interpolationNodesID.size();
         RDouble denominator = SUMMARY(numerator, nNodes);
 
-        for (int inode = 0; inode < nNodes; ++ inode)
+        for (int iNode = 0; iNode < nNodes; ++ iNode)
         {
-            RDouble weightCoef = numerator[inode] / denominator;
-            int nodeID = interpolationNodesID[inode];
+            RDouble weightCoef = numerator[iNode] / denominator;
+            int nodeID = interpolationNodesID[iNode];
             q_probes[iProbe] += qn[nodeID] * weightCoef;
         }
     }
@@ -365,12 +365,12 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble4D 
         int nCells = interpolationCellsID.size();
         RDouble denominator = SUMMARY(numerator, nCells);
 
-        for (int icell = 0; icell < nCells; ++ icell)
+        for (int iCell = 0; iCell < nCells; ++ iCell)
         {
-            RDouble weightCoef = numerator[icell] / denominator;
-            int cellID_i = interpolationCellsID[icell][0];
-            int cellID_j = interpolationCellsID[icell][1];
-            int cellID_k = interpolationCellsID[icell][2];
+            RDouble weightCoef = numerator[iCell] / denominator;
+            int cellID_i = interpolationCellsID[iCell][0];
+            int cellID_j = interpolationCellsID[iCell][1];
+            int cellID_k = interpolationCellsID[iCell][2];
             q_probes[iProbe] += cellCenterData(cellID_i, cellID_j, cellID_k, index) * weightCoef;
         }
     }
@@ -433,12 +433,12 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
         int nNodes = interpolationNodesID.size();
         RDouble denominator = SUMMARY(numerator, nNodes);
 
-        for (int inode = 0; inode < nNodes; ++ inode)
+        for (int iNode = 0; iNode < nNodes; ++ iNode)
         {
-            RDouble weightCoef = numerator[inode] / denominator;
-            int nodeID_i = interpolationNodesID[inode][0];
-            int nodeID_j = interpolationNodesID[inode][1];
-            int nodeID_k = interpolationNodesID[inode][2];
+            RDouble weightCoef = numerator[iNode] / denominator;
+            int nodeID_i = interpolationNodesID[iNode][0];
+            int nodeID_j = interpolationNodesID[iNode][1];
+            int nodeID_k = interpolationNodesID[iNode][2];
             q_probes[iProbe] += (*qn)(nodeID_i, nodeID_j, nodeID_k, 0) * weightCoef;
         }
     }
@@ -545,9 +545,9 @@ DumpToFileASCII::DumpToFileASCII(vector<DataContainer *> datalist_in, string fil
     this->dataList = datalist_in;
     this->fileName = filename_in;
 
-    for (unsigned int izone = 0; izone < dataList.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < dataList.size(); ++ iZone)
     {
-        dataList[izone]->moveto_begin();
+        dataList[iZone]->moveto_begin();
     }
     nVariables = 0;
 }
@@ -632,9 +632,9 @@ void DumpToFileASCII::WriteProbesFlowFile()
 {
     uint_t nzones = dataList.size();
 
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -728,9 +728,9 @@ void DumpToFileASCII::WriteLinesFlowFile()
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -854,9 +854,9 @@ void DumpToFileASCII::WriteSurfacesFlowFile()
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -973,9 +973,9 @@ void DumpToFileASCII::WriteProbesFlowFile(int outerStep)
     qGlobalProbes.resize(nTotalProbes);
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -1086,9 +1086,9 @@ void DumpToFileASCII::WriteLinesFlowFile(int outerStep)
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -1212,9 +1212,9 @@ void DumpToFileASCII::WriteSurfacesFlowFile(int outerStep)
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);

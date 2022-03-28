@@ -11,7 +11,7 @@ namespace HOUnstruct
 //!
 //! @return        void
 
-void ShapeFunctionOfTri( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfTri(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -21,7 +21,7 @@ void ShapeFunctionOfTri( const RDouble * refCoord, RDouble * ret )
     ret[2] = et;
 }
 
-void ShapeFunctionOfTriGrad( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfTriGrad(const RDouble * refCoord, RDouble * ret)
 {
     ret[0] = -1.0;
     ret[1] = -1.0;
@@ -33,7 +33,7 @@ void ShapeFunctionOfTriGrad( const RDouble * refCoord, RDouble * ret )
     ret[5] =  1.0;
 }
 
-void ShapeFunctionOfQuad( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfQuad(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -44,7 +44,7 @@ void ShapeFunctionOfQuad( const RDouble * refCoord, RDouble * ret )
     ret[3] = (1.0 - xi) * et;
 }
 
-void ShapeFunctionOfQuadGrad( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfQuadGrad(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -62,7 +62,7 @@ void ShapeFunctionOfQuadGrad( const RDouble * refCoord, RDouble * ret )
     ret[7] =  1.0 - xi;
 }
 
-void ShapeFunctionOfTetr( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfTetr(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -74,7 +74,7 @@ void ShapeFunctionOfTetr( const RDouble * refCoord, RDouble * ret )
     ret[3] =                 zt;
 }
 
-void ShapeFunctionOfTetrGrad( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfTetrGrad(const RDouble * refCoord, RDouble * ret)
 {
     ret[ 0] = -1.0;
     ret[ 1] = -1.0;
@@ -93,7 +93,7 @@ void ShapeFunctionOfTetrGrad( const RDouble * refCoord, RDouble * ret )
     ret[11] =  1.0;
 }
 
-void ShapeFunctionOfHex( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfHex(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -109,7 +109,7 @@ void ShapeFunctionOfHex( const RDouble * refCoord, RDouble * ret )
     ret[7] = (1 - xi) * et  * zt;
 }
 
-void ShapeFunctionOfHexGrad( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfHexGrad(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -148,7 +148,7 @@ void ShapeFunctionOfHexGrad( const RDouble * refCoord, RDouble * ret )
     ret[23] =  (1 - xi) * et;
 }
 
-void ShapeFunctionOfPrism( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfPrism(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -162,7 +162,7 @@ void ShapeFunctionOfPrism( const RDouble * refCoord, RDouble * ret )
     ret[5] = et * zt;
 }
 
-void ShapeFunctionOfPrismGrad( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfPrismGrad(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -193,7 +193,7 @@ void ShapeFunctionOfPrismGrad( const RDouble * refCoord, RDouble * ret )
     ret[17] =  et;
 }
 
-void ShapeFunctionOfPyra( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfPyra(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -206,7 +206,7 @@ void ShapeFunctionOfPyra( const RDouble * refCoord, RDouble * ret )
     ret[4] = zt;
 }
 
-void ShapeFunctionOfPyraGrad( const RDouble * refCoord, RDouble * ret )
+void ShapeFunctionOfPyraGrad(const RDouble * refCoord, RDouble * ret)
 {
     RDouble xi = refCoord[0];
     RDouble et = refCoord[1];
@@ -253,16 +253,16 @@ namespace HOUnstruct
 //! @retval        £¨return£©1  valToTest near 1
 //! @retval        £¨return£©2  unknown
 
-int Test0Or1( RDouble & valToTest, RDouble eps = HO_SMALL )
+int Test0Or1(RDouble & valToTest, RDouble eps = HO_SMALL)
 {
-    if( abs(valToTest) < eps )
+    if(abs(valToTest) < eps)
     {
-        if( abs(valToTest-1) < eps ) return 2;
+        if(abs(valToTest-1) < eps) return 2;
         else return 0;
     }
     else
     {
-        if( abs(valToTest-1) < eps ) return 1;
+        if(abs(valToTest-1) < eps) return 1;
         else return 2;
     }
 }

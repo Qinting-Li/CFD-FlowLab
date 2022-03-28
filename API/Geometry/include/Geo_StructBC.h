@@ -24,7 +24,7 @@ using namespace std;
 
 namespace PHSPACE
 {
-//! @brief It defines the class 'StructBC', which is the base class of Structured geometry grid operation for boundary condition.
+//! @brief It defines the class 'StructBC', which is the base class of structured geometry grid operation for boundary condition.
 //!        The inheriting order is: SimpleBC -> StructBC/UnstructBC.
 class StructBC : public SimpleBC
 {
@@ -37,21 +37,20 @@ public:
     ~StructBC();
 
 private:
-    //! Region index (the Number of Region).
+    //! Region index (the number of region).
     uint_t nr;
 
-private:
-    //! s_nd: Dimensional Number in the current  zone. s - source, nd - the Number of Dimension.
-    //! t_nd: Dimensional Number in the neighbor zone. t - target, nd - the Number of Dimension.
+    //! s_nd: Dimensional number in the current  zone. s - source, nd - the number of dimension.
+    //! t_nd: Dimensional number in the neighbor zone. t - target, nd - the number of dimension.
     //! -# 0: i direction.
     //! -# 1: j direction.
     //! -# 2: k direction.
     int s_nd, t_nd;
 
-    //! s_lr : This BC region is on the Left or Right Side in the current zone.  s - source, lr - Left/Right.
-    //! t_lr : This BC region is on the Left or Right Side in the neighbor zone. t - target, lr - Left/Right.
-    //! -# -1: Left Side.
-    //! -#  1: Right Side.
+    //! s_lr : This BC region is on the left or right side in the current zone.  s - source, lr - Left/Right.
+    //! t_lr : This BC region is on the left or right side in the neighbor zone. t - target, lr - Left/Right.
+    //! -# -1: Left side.
+    //! -#  1: Right side.
     int s_lr, t_lr;
 
     //! s_lr3d && t_lr3d stores the composite information of both s_nd/t_nd && s_lr/t_lr.
@@ -60,13 +59,15 @@ private:
     //!     if (i == t_nd) t_lr3d[i] = t_lr;  else  t_lr3d[i] = 0;
     int s_lr3d[3], t_lr3d[3];
 
-    //! nbs: the current  zone index of this BC region. nb - the Number of block, s - source.
-    //! nbt: the neighbor zone index of this BC region. nb - the Number of block, t - target.
+    //! nbs: The current  zone index of this BC region. nb - the number of block, s - source.
+    //! nbt: The neighbor zone index of this BC region. nb - the number of block, t - target.
     int nbs, nbt;
 
     //! s_st: Start local point index in the current zone. s - source, st - start.
     //! s_ed: End   local point index in the current zone. s - source, ed - end.
     int s_st[3], s_ed[3];
+
+    //!
     int lnkInfo[12];
 
     //! s_dir3d: the i\j\k direction between the current face and matching target face if the face is a interface.
@@ -201,44 +202,36 @@ private:
     int stam[3], rate[3];
 };
 
-//! @brief CompositeStructBC class defines the composites of StructBC informations.
+//! @brief StructBCSet class defines the composites of StructBC informations.
 //! In one zone (block), several StructBCs may be exist, so all StructBCs in one zone
-//! are defined as a 'CompositeStructBC'.
-class CompositeStructBC
+//! are defined as a 'StructBCSet'.
+class StructBCSet
 {
 private:
     //! Number of zone (block) index this BC in.
     int zoneID;
 
-    //! The BCRegions list in the current CompositeStructBC.
-    vector<StructBC *> * bcregions;
+    //! The BCRegions list in the current StructBCSet.
+    vector<StructBC *> *bcRegions;
 
-    //! The number of Boundary Faces.
-    int nBoundFace;
 
-    //! The number of Interface Faces.
-    int nIFace;
+    //! The I/J/K id of interface faces.
+    int *iID, *jID, *kID;
 
-    int *id_i, *id_j, *id_k;
-
-    //! The bcRegions id of Interface Faces.
-    int *face_of_bcregion;
+    //! The bcRegions id of interface faces.
+    int *bcRegionIDofIFace; 
 
     //! Boundary name of given type;
     string boundaryName[100];
 
 public:
-    CompositeStructBC(int zoneID = 0);
-    ~CompositeStructBC();
+    StructBCSet(int zoneID = 0);
+    ~StructBCSet();
 
 public:
     string GetBCName(int bcType) { return boundaryName[bcType]; }
-    void SetNBoundFace(int nBoundFace);
-    void SetNIFace(int nIFace);
-    int GetNBoundFace() const;
-    int GetNIFace() const;
 
-    void CopyCompositeBCRegion(CompositeStructBC *rightHandSide);
+    void CopyStructBCSet(StructBCSet *rightHandSide);
 
     StructBC * GetBCRegion(uint_t iBCRegion) const;
 
@@ -248,12 +241,12 @@ public:
 
     int GetnBCRegion() const;
 
-    void GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k);
-    void GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsruf, int &s_lr);
-    void GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k);
+    void GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
+    void GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsruf, int &s_lr);
+    void GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
 
-    void GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
-    void GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    void GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    void GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
 
     void ProcessBCInfo();
     void SetLnkInfo();
@@ -286,7 +279,7 @@ void GhostCell2D(PHArray<T, 2> &w, int ni, int nj)
 
     for (int i = 0; i <= ni; ++ i)
     {
-        w(i, 0 ) = w(i, 1   );
+        w(i, 0) = w(i, 1  );
         w(i, nj) = w(i, nj-1);
     }
 
@@ -299,7 +292,7 @@ void GhostCell2D(PHArray<T, 2> &w, int ni, int nj)
 
     for (int i = - 1; i <= ni + 1; ++ i)
     {
-        w(i, -1  ) = w(i, 0 );
+        w(i, -1 ) = w(i, 0);
         w(i, nj+1) = w(i, nj);
     }
 }
@@ -379,10 +372,10 @@ void GhostCell3D(PHArray<T, 3> &w, int ni, int nj, int nk)
     {
         for (int i = -1; i <= ni + 1; ++ i)
         {
-            w(i, j, 0 ) = w(i, j, 1);
+            w(i, j, 0) = w(i, j, 1);
             w(i, j, -1) = w(i, j, 1);
 
-            w(i, j, nk  ) = w(i, j, nk-1);
+            w(i, j, nk ) = w(i, j, nk-1);
             w(i, j, nk+1) = w(i, j, nk-1);
         }
     }
@@ -497,16 +490,16 @@ void FillCornerPoint3D(PHArray<T, 3> &w, int ni, int nj, int nk)
     {
         for (int k = 1; k <= nk - 1; ++ k)
         {
-            w( 0,  0, k) = w(0 ,    1, k) + w(   1,  0, k) - w(   1,    1, k);
-            w( 0, nj, k) = w(0 , nj-1, k) + w(   1, nj, k) - w(   1, nj-1, k);
+            w(0,  0, k) = w(0 ,    1, k) + w(  1,  0, k) - w(  1,    1, k);
+            w(0, nj, k) = w(0 , nj-1, k) + w(  1, nj, k) - w(  1, nj-1, k);
             w(ni,  0, k) = w(ni,    1, k) + w(ni-1,  0, k) - w(ni-1,    1, k);
             w(ni, nj, k) = w(ni, nj-1, k) + w(ni-1, nj, k) - w(ni-1, nj-1, k);
         }
 
         for (int j = 1; j <= nj - 1; ++ j)
         {
-            w( 0, j,  0) = w( 0, j,    1) + w(   1, j,  0) - w(   1, j,    1);
-            w( 0, j, nk) = w( 0, j, nk-1) + w(   1, j, nk) - w(   1, j, nk-1);
+            w(0, j,  0) = w(0, j,    1) + w(  1, j,  0) - w(  1, j,    1);
+            w(0, j, nk) = w(0, j, nk-1) + w(  1, j, nk) - w(  1, j, nk-1);
             w(ni, j,  0) = w(ni, j,    1) + w(ni-1, j,  0) - w(ni-1, j,    1);
             w(ni, j, nk) = w(ni, j, nk-1) + w(ni-1, j, nk) - w(ni-1, j, nk-1);
         }
@@ -520,10 +513,10 @@ void FillCornerPoint3D(PHArray<T, 3> &w, int ni, int nj, int nk)
         }
 
         //! Fill the 8 corner points.
-        w( 0,  0,  0) = third * (w(   1,  0,  0) + w( 0,    1,  0) + w( 0,  0,    1));
-        w( 0, nj,  0) = third * (w(   1, nj,  0) + w( 0, nj-1,  0) + w( 0, nj,    1));
-        w( 0,  0, nk) = third * (w(   1,  0, nk) + w( 0,    1, nk) + w( 0,  0, nk-1));
-        w( 0, nj, nk) = third * (w(   1, nj, nk) + w( 0, nj-1, nk) + w( 0, nj, nk-1));
+        w(0,  0,  0) = third * (w(  1,  0,  0) + w(0,    1,  0) + w(0,  0,    1));
+        w(0, nj,  0) = third * (w(  1, nj,  0) + w(0, nj-1,  0) + w(0, nj,    1));
+        w(0,  0, nk) = third * (w(  1,  0, nk) + w(0,    1, nk) + w(0,  0, nk-1));
+        w(0, nj, nk) = third * (w(  1, nj, nk) + w(0, nj-1, nk) + w(0, nj, nk-1));
         w(ni,  0,  0) = third * (w(ni-1,  0,  0) + w(ni,    1,  0) + w(ni,  0,    1));
         w(ni, nj,  0) = third * (w(ni-1, nj,  0) + w(ni, nj-1,  0) + w(ni, nj,    1));
         w(ni,  0, nk) = third * (w(ni-1,  0, nk) + w(ni,    1, nk) + w(ni,  0, nk-1));
@@ -532,8 +525,8 @@ void FillCornerPoint3D(PHArray<T, 3> &w, int ni, int nj, int nk)
     else
     {
         int k = 1;
-        w( 0,  0, k) = w(0 ,    1, k) + w(   1,  0, k) - w(   1,    1, k);
-        w( 0, nj, k) = w(0 , nj-1, k) + w(   1, nj, k) - w(   1, nj-1, k);
+        w(0,  0, k) = w(0 ,    1, k) + w(  1,  0, k) - w(  1,    1, k);
+        w(0, nj, k) = w(0 , nj-1, k) + w(  1, nj, k) - w(  1, nj-1, k);
         w(ni,  0, k) = w(ni,    1, k) + w(ni-1,  0, k) - w(ni-1,    1, k);
         w(ni, nj, k) = w(ni, nj-1, k) + w(ni-1, nj, k) - w(ni-1, nj-1, k);
     }
@@ -570,16 +563,16 @@ void FillCornerPoint3D(PHArray<T, 4 > &w, int ni, int nj, int nk, int nl)
         {
             for (int k = 1; k <= nk - 1; ++ k)
             {
-                w( 0,  0, k, m) = w(0 ,    1, k, m) + w(   1,  0, k, m) - w(   1,    1, k, m);
-                w( 0, nj, k, m) = w(0 , nj-1, k, m) + w(   1, nj, k, m) - w(   1, nj-1, k, m);
+                w(0,  0, k, m) = w(0 ,    1, k, m) + w(  1,  0, k, m) - w(  1,    1, k, m);
+                w(0, nj, k, m) = w(0 , nj-1, k, m) + w(  1, nj, k, m) - w(  1, nj-1, k, m);
                 w(ni,  0, k, m) = w(ni,    1, k, m) + w(ni-1,  0, k, m) - w(ni-1,    1, k, m);
                 w(ni, nj, k, m) = w(ni, nj-1, k, m) + w(ni-1, nj, k, m) - w(ni-1, nj-1, k, m);
             }
 
             for (int j = 1; j <= nj - 1; ++ j)
             {
-                w( 0, j,  0, m) = w( 0, j,    1, m) + w(   1, j,  0, m) - w(   1, j,    1, m);
-                w( 0, j, nk, m) = w( 0, j, nk-1, m) + w(   1, j, nk, m) - w(   1, j, nk-1, m);
+                w(0, j,  0, m) = w(0, j,    1, m) + w(  1, j,  0, m) - w(  1, j,    1, m);
+                w(0, j, nk, m) = w(0, j, nk-1, m) + w(  1, j, nk, m) - w(  1, j, nk-1, m);
                 w(ni, j,  0, m) = w(ni, j,    1, m) + w(ni-1, j,  0, m) - w(ni-1, j,    1, m);
                 w(ni, j, nk, m) = w(ni, j, nk-1, m) + w(ni-1, j, nk, m) - w(ni-1, j, nk-1, m);
             }
@@ -596,10 +589,10 @@ void FillCornerPoint3D(PHArray<T, 4 > &w, int ni, int nj, int nk, int nl)
         //! Fill the 8 corner points.
         for (int m = 0; m < nl; ++ m)
         {
-            w( 0,  0,  0, m) = third * (w(   1,  0,  0, m) + w( 0,    1,  0, m) + w( 0,  0,    1, m));
-            w( 0, nj,  0, m) = third * (w(   1, nj,  0, m) + w( 0, nj-1,  0, m) + w( 0, nj,    1, m));
-            w( 0,  0, nk, m) = third * (w(   1,  0, nk, m) + w( 0,    1, nk, m) + w( 0,  0, nk-1, m));
-            w( 0, nj, nk, m) = third * (w(   1, nj, nk, m) + w( 0, nj-1, nk, m) + w( 0, nj, nk-1, m));
+            w(0,  0,  0, m) = third * (w(  1,  0,  0, m) + w(0,    1,  0, m) + w(0,  0,    1, m));
+            w(0, nj,  0, m) = third * (w(  1, nj,  0, m) + w(0, nj-1,  0, m) + w(0, nj,    1, m));
+            w(0,  0, nk, m) = third * (w(  1,  0, nk, m) + w(0,    1, nk, m) + w(0,  0, nk-1, m));
+            w(0, nj, nk, m) = third * (w(  1, nj, nk, m) + w(0, nj-1, nk, m) + w(0, nj, nk-1, m));
             w(ni,  0,  0, m) = third * (w(ni-1,  0,  0, m) + w(ni,    1,  0, m) + w(ni,  0,    1, m));
             w(ni, nj,  0, m) = third * (w(ni-1, nj,  0, m) + w(ni, nj-1,  0, m) + w(ni, nj,    1, m));
             w(ni,  0, nk, m) = third * (w(ni-1,  0, nk, m) + w(ni,    1, nk, m) + w(ni,  0, nk-1, m));
@@ -611,8 +604,8 @@ void FillCornerPoint3D(PHArray<T, 4 > &w, int ni, int nj, int nk, int nl)
         int k = 1;
         for (int m = 0; m < nl; ++ m)
         {
-            w( 0,  0, k, m) = w(0 ,    1, k, m) + w(   1,  0, k, m) - w(   1,    1, k, m);
-            w( 0, nj, k, m) = w(0 , nj-1, k, m) + w(   1, nj, k, m) - w(   1, nj-1, k, m);
+            w(0,  0, k, m) = w(0 ,    1, k, m) + w(  1,  0, k, m) - w(  1,    1, k, m);
+            w(0, nj, k, m) = w(0 , nj-1, k, m) + w(  1, nj, k, m) - w(  1, nj-1, k, m);
             w(ni,  0, k, m) = w(ni,    1, k, m) + w(ni-1,  0, k, m) - w(ni-1,    1, k, m);
             w(ni, nj, k, m) = w(ni, nj-1, k, m) + w(ni-1, nj, k, m) - w(ni-1, nj-1, k, m);
         }

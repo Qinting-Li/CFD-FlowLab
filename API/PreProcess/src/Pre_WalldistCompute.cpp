@@ -7,6 +7,8 @@
 #include "Geo_StructGrid.h"
 #include "Geo_Grid.h"
 #include "Geo_UnstructGrid.h"
+#include "Pre_HDF5File.h"
+
 using namespace std;
 
 namespace PHSPACE
@@ -40,6 +42,8 @@ LIB_EXPORT Pre_WalldistCompute::Pre_WalldistCompute(int walldistComputeMethod, i
     wallTolerance = 0.0;
     nTWallFace = 0;
     rotateAxis = 0;
+
+    cellMethodOrNodeMethod = GlobalDataBase::GetIntParaFromDB("cellMethodOrNodeMethod");
 }
 
 LIB_EXPORT Pre_WalldistCompute::~Pre_WalldistCompute()
@@ -50,7 +54,7 @@ LIB_EXPORT Pre_WalldistCompute::~Pre_WalldistCompute()
         delete walldist;
     }
     wallstructureList->clear();
-    delete wallstructureList; wallstructureList = nullptr;
+    delete wallstructureList; wallstructureList = NULL;
 
     WriteLogFile("  Wall face structure deleting ...\n");
     delete wallFaceTree;
@@ -125,7 +129,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
 
     PostWallDistance();
 
-    timeSpan->ShowTimeSpanToLogfile("Wall distance computing");
+    timeSpan->ShowTimeSpanToLogFile("Wall distance computing");
     WriteLogFile("  End Wall Distance Computing ...");
     delete timeSpan;
 }
@@ -140,15 +144,22 @@ LIB_EXPORT void Pre_WalldistCompute::ComputeNodeDistance()
     WriteLogFile("  End Grid Node Distance To Wall Compute ...");
 }
 
+LIB_EXPORT void Pre_WalldistCompute::ComputeNodeDistanceInOtherBlock()
+{
+    FillWallStructureNew();
+
+    ComputeNodeDistanceByKDTreeMethodInOtherBlock();
+}
+
 void Pre_WalldistCompute::FillWallStructureNew()
 {
     TimeSpan *timeSpan = new TimeSpan();
 
     ServerCollection();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure collection to server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure collection to server");
 
     ServerBcast();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure BCasting from server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure BCasting from server");
 
     PrintToWindow("Barrier for wall structure filling ...\n");
     PrintToWindow("End for wall structure filling ...\n");
@@ -162,16 +173,16 @@ void Pre_WalldistCompute::FillWallStructure()
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int tag  = GetSendRecvTag(GRID_BASED, 0, izone);
-        int proc = GetZoneProcessorID(izone);
+        int tag  = GetSendRecvTag(GRID_BASED, 0, iZone);
+        int proc = GetZoneProcessorID(iZone);
 
         DataContainer *cdata = new DataContainer();
 
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, this->level);
+            Grid *grid = GetGrid(iZone, this->level);
             CompressWallStructure(cdata, grid);
         }
 
@@ -193,9 +204,9 @@ void Pre_WalldistCompute::InitWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
         InitWallDistance(grid);
@@ -227,13 +238,35 @@ void Pre_WalldistCompute::InitWallDistance(StructGrid *grid)
 void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
 {
     RDouble *walldist = grid->GetWallDist();
+    RDouble *wallDistNode = grid->GetWallDistNode();
 
+    int nTotalNode = grid->GetNTotalNode();
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
     //! Initialization.
     PHSPACE::SetField(walldist, LARGE, nTotal);
+    PHSPACE::SetField(wallDistNode, LARGE, nTotalNode);
+
+    int **faceNodeIndex = grid->GetFace2NodeArray();
+    int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
+
+    UnstructBCSet **bcr = grid->GetBCRecord();
+    
+    for (int iFace = 0; iFace < nBoundFace; ++iFace)
+    {
+        int bcType = bcr[iFace]->GetKey();
+        if (IsWall(bcType))
+        {
+            int nNode = faceNodeNumber[iFace];
+            for (int iNode = 0; iNode < nNode; ++iNode)
+            {
+                int nodeID = faceNodeIndex[iFace][iNode];
+                wallDistNode[nodeID] = 0.0;
+            }
+        }
+    }
 }
 
 void Pre_WalldistCompute::ComputeWallDistance()
@@ -246,9 +279,9 @@ void Pre_WalldistCompute::ComputeWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
 
@@ -291,11 +324,25 @@ void Pre_WalldistCompute::ComputeWallDistance(UnstructGrid *grid)
     {
         if (walldistComputeMethod == Pre_WalldistCompute::ACCURATE_METHOD)
         {
-            ComputeWallDist3DByProjectingAccurate(grid);
+            if (cellMethodOrNodeMethod == CELL_METHOD)
+            {
+                ComputeWallDist3DByProjectingAccurate(grid);
+            }
+            else
+            {
+                ComputeWallDist3DByProjectingAccurateAndNodeMethod(grid);
+            }
         }
         else
         {
-            ComputeWallDist3DByProjectingFast(grid);
+            if (cellMethodOrNodeMethod == CELL_METHOD)
+            {
+                ComputeWallDist3DByProjectingFast(grid);
+            }
+            else
+            {
+                ComputeWallDist3DByProjectingFastAndNodeMethod(grid);
+            }
         }
     }
 }
@@ -321,18 +368,18 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
     cout.precision(0);
 
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES != LES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (myid == 0 && icell > 0 && icell % interval == 0)
+        if (myid == 0 && iCell > 0 && iCell % interval == 0)
         {
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
         }
 
-        RDouble xcc0 = xcc[icell];
-        RDouble ycc0 = ycc[icell];
-        RDouble zcc0 = zcc[icell];
+        RDouble xcc0 = xcc[iCell];
+        RDouble ycc0 = ycc[iCell];
+        RDouble zcc0 = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -390,10 +437,98 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
                     RDouble wdst = ComputeDistanceOfANodeToSegment(xcc0, ycc0, zcc0, xStart, yStart, zStart,
                                                                    xMid, yMid, zMid, xEnd, yEnd, zEnd);
 
-                    if (walldist[icell] > wdst)
+                    if (walldist[iCell] > wdst)
                     {
-                        walldist[icell] = wdst;
+                        walldist[iCell] = wdst;
                     }
+                }
+            }
+        }
+    }
+}
+
+void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurateAndNodeMethod(UnstructGrid *grid)
+{
+    using namespace PHMPI;
+
+    RDouble *wallDistNode = grid->GetWallDistNode();
+
+    int nTotalNode = grid->GetNTotalNode();
+
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+
+    RDouble nodeCoord[3], faceCenter[3], faceNormal[3];
+
+    int interval = GetProgressInterval(nTotalNode, 10);
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+    {
+        if (iNode > 0 && iNode % interval == 0)
+        {
+            ProgressMonitorToWindows(iNode, nTotalNode, "wall distance");
+            ProgressMonitorToLogFile(iNode, nTotalNode, "wall distance");
+
+            if (rotateAxis >= 3 || timeSpan.GetTimeSpan() > 3600.0)
+            {
+                ostringstream oss;
+                oss.unsetf(ios::scientific);
+                oss.setf(ios::fixed);
+                oss.precision(0);
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iNode * 1.0) / nTotalNode * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                WriteLogFile(oss, false);
+            }
+        }
+
+        if (wallDistNode[iNode] < LARGE * 0.9)
+        {
+            continue;
+        }
+
+        nodeCoord[0] = x[iNode];
+        nodeCoord[1] = y[iNode];
+        nodeCoord[2] = z[iNode];
+
+        for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
+        {
+            WallStructure *cwalldist = (*wallstructureList)[iWall];
+
+            uint_t nWallFaces              = cwalldist->GetNumberOfWallFaces();
+            WallStructure::value_type &xfc = cwalldist->GetXFaceCenter();
+            WallStructure::value_type &yfc = cwalldist->GetYFaceCenter();
+            WallStructure::value_type &zfc = cwalldist->GetZFaceCenter();
+            WallStructure::value_type &x   = cwalldist->GetX();
+            WallStructure::value_type &y   = cwalldist->GetY();
+            WallStructure::value_type &z   = cwalldist->GetZ();
+            WallStructure::value_type &xfn = cwalldist->GetXFaceNormal();
+            WallStructure::value_type &yfn = cwalldist->GetYFaceNormal();
+            WallStructure::value_type &zfn = cwalldist->GetZFaceNormal();
+
+            int *nPointPerFace = cwalldist->GetnPointPerFace();
+            int *wallFace2Node = cwalldist->GetWallFace2Node();
+
+            int nodeCount = 0;
+            for (int iFace = 0; iFace < nWallFaces; ++ iFace)
+            {
+                faceCenter[0] = xfc[iFace];
+                faceCenter[1] = yfc[iFace];
+                faceCenter[2] = zfc[iFace];
+
+                faceNormal[0] = xfn[iFace];
+                faceNormal[1] = yfn[iFace];
+                faceNormal[2] = zfn[iFace];
+
+                vector<int> face2node;
+                face2node.resize(nPointPerFace[iFace]);
+                for (int jNode = 0; jNode < nPointPerFace[iFace]; ++jNode)
+                {
+                    face2node[jNode] = wallFace2Node[nodeCount++];
+                }
+
+                RDouble wdst = ComputeDistanceOfANodeToAFace(nodeCoord, faceCenter, faceNormal, face2node, x, y, z);
+                if (wallDistNode[iNode] > wdst)
+                {
+                    wallDistNode[iNode] = wdst;
                 }
             }
         }
@@ -424,16 +559,16 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
 
     //int interval = GetProgressInterval(nTotal, 10);
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES != LES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (icell > 0 && icell % interval == 0)
+        if (iCell > 0 && iCell % interval == 0)
         {
-            //ProgressMonitorToWindows(icell, nTotal, "wall distance");
-            //ProgressMonitorToLogFile(icell, nTotal, "wall distance");
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
-            ProgressMonitorToLogFile(icell, nTotalCell, "wall distance");
+            //ProgressMonitorToWindows(iCell, nTotal, "wall distance");
+            //ProgressMonitorToLogFile(iCell, nTotal, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
+            ProgressMonitorToLogFile(iCell, nTotalCell, "wall distance");
 
             if (rotateAxis >= 3 || timeSpan.GetTimeSpan() > 3600.0)
             {
@@ -441,19 +576,19 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
                 oss.unsetf(ios::scientific);
                 oss.setf(ios::fixed);
                 oss.precision(0);
-                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((icell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iCell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
                 WriteLogFile(oss, false);
             }
         }
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             continue;
         }
 
-        cellCenter[0] = xcc[icell];
-        cellCenter[1] = ycc[icell];
-        cellCenter[2] = zcc[icell];
+        cellCenter[0] = xcc[iCell];
+        cellCenter[1] = ycc[iCell];
+        cellCenter[2] = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -492,10 +627,212 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
                 }
 
                 RDouble wdst = ComputeDistanceOfANodeToAFace(cellCenter, faceCenter, faceNormal, face2node, x, y, z);
-                if (walldist[icell] > wdst)
+                if (walldist[iCell] > wdst)
                 {
-                    walldist[icell] = wdst;
+                    walldist[iCell] = wdst;
                 }
+            }
+        }
+    }
+}
+
+void Pre_WalldistCompute::ComputeWallDist3DByProjectingFastAndNodeMethod(UnstructGrid *grid)
+{
+    using namespace PHMPI;
+
+    RDouble *wallDistNode = grid->GetWallDistNode();
+    int nTotalNode = grid->GetNTotalNode();
+    int nBoundFace = grid->GetNBoundFace();
+
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+
+    RDouble oldNodeCoord[3], oldFaceCenter[3], oldFaceNormal[3];
+    RDouble nodeCoord[3], faceCenter[3], faceNormal[3];
+
+    RDouble *rmin, *rmax;
+    rmin = wallFaceTree->GetMin();
+    rmax = wallFaceTree->GetMax();
+    RDouble pmin[6], pmax[6];
+    RDouble dis = 0.1 * wallTolerance;
+    RDouble globalGridSize = GetGlobalGridSize();
+
+    PrintToWindow("    Number of total wall faces: ", nTWallFace, "\n");
+
+    //! The maximum wanted wall faces that in the box,
+    //! it is set to be sqrt(nTWallFace), usually.
+    uint_t nBoxLimitedMax = MAX(1 * (int)sqrt(nTWallFace * 1.0), 1);
+    nBoxLimitedMax = MIN(nBoxLimitedMax, nTWallFace);
+    uint_t fixed_nBoxLimitedMax = 1000;
+    nBoxLimitedMax = MIN(nBoxLimitedMax, fixed_nBoxLimitedMax);
+    int nBoxLimitedMin = MAX((int)(nBoxLimitedMax * 0.1), 0);
+
+    int zoneID = grid->GetGridID()->GetIndex();
+
+    PrintToWindow("    Min & Max wall faces in box: ", nBoxLimitedMin, nBoxLimitedMax, "\n");
+
+    TimeSpan partTime;
+    int interval = GetProgressInterval(nTotalNode, 10);
+    for (int iNode = 0; iNode < nTotalNode; ++iNode)
+    {
+        if (iNode > 0 && iNode % interval == 0)
+        {
+            ProgressMonitorToWindows(iNode, nTotalNode, "wall distance");
+            ProgressMonitorToLogFile(iNode, nTotalNode, "wall distance");
+
+            if (rotateAxis >= 1 || timeSpan.GetTimeSpan() > 600.0)
+            {
+                ostringstream oss;
+                oss.unsetf(ios::scientific);
+                oss.setf(ios::fixed);
+                oss.precision(0);
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iNode * 1.0) / nTotalNode * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                WriteLogFile(oss, true);
+            }
+        }
+
+        if (wallDistNode[iNode] < LARGE * 0.9)
+        {
+            //! This cell wall distance has been computed.
+            continue;
+        }
+
+        bool finalFound = false;
+        int boxMin = nBoxLimitedMin;
+        uint_t boxMax = nBoxLimitedMax;
+
+        WallFaceTree::AdtNodeList nList;
+
+        //! Enlarge time, the number of probe time.
+        //! If lose once, enlarge the search scope then, by multiple 2 times.
+        int nEnlargeTime = 3;
+        int iEnlarge = 0;
+        while (iEnlarge < nEnlargeTime)
+        {
+            ++ iEnlarge;
+
+            oldNodeCoord[0] = x[iNode];
+            oldNodeCoord[1] = y[iNode];
+            oldNodeCoord[2] = z[iNode];
+            this->RotateAxis(oldNodeCoord, nodeCoord);
+
+            RDouble x0 = nodeCoord[0];
+            RDouble y0 = nodeCoord[1];
+            RDouble z0 = nodeCoord[2];
+
+            pmin[0] = rmin[0];
+            pmin[1] = rmin[1];
+            pmin[2] = rmin[2];
+            pmax[3] = rmax[3];
+            pmax[4] = rmax[4];
+            pmax[5] = rmax[5];
+
+            pmin[3] = x0 - dis;
+            pmin[4] = y0 - dis;
+            pmin[5] = z0 - dis;
+
+            pmax[0] = x0 + dis;
+            pmax[1] = y0 + dis;
+            pmax[2] = z0 + dis;
+
+            RDouble size_min = 0;
+            RDouble size_max = dis * 2.0;
+            RDouble ra;
+
+            int iSearch = 0;
+            bool isFoundNearestFace = false;
+            int nSearchTimes = 100;
+            while (iSearch < nSearchTimes)
+            {
+                ++ iSearch;
+
+                if (size_min >= globalGridSize) break;
+
+                ra = 0.5 * (size_min + size_max);
+                pmin[3] = x0 - ra;
+                pmin[4] = y0 - ra;
+                pmin[5] = z0 - ra;
+
+                pmax[0] = x0 + ra;
+                pmax[1] = y0 + ra;
+                pmax[2] = z0 + ra;
+
+                nList.clear();
+                nList.reserve(boxMax + 1);
+                wallFaceTree->FindNodesInRegion(pmin, pmax, nList, boxMax + 1);
+
+                uint_t nNearWallFace = nList.size();
+                if ((nNearWallFace > boxMin&& nNearWallFace <= boxMax))
+                {
+
+                    for (int iWall = 0; iWall < nNearWallFace; ++iWall)
+                    {
+                        uint_t wallStructID = nList[iWall]->GetData().first;
+                        int faceID = nList[iWall]->GetData().second;
+                        WallStructure *cwalldist = (*wallstructureList)[wallStructID];
+
+                        vector<int> face2node;
+                        cwalldist->GetFace2NodeVector(face2node, faceID);
+                        WallStructure::value_type &xfc = cwalldist->GetXFaceCenter();
+                        WallStructure::value_type &yfc = cwalldist->GetYFaceCenter();
+                        WallStructure::value_type &zfc = cwalldist->GetZFaceCenter();
+                        WallStructure::value_type &x   = cwalldist->GetX();
+                        WallStructure::value_type &y   = cwalldist->GetY();
+                        WallStructure::value_type &z   = cwalldist->GetZ();
+                        WallStructure::value_type &xfn = cwalldist->GetXFaceNormal();
+                        WallStructure::value_type &yfn = cwalldist->GetYFaceNormal();
+                        WallStructure::value_type &zfn = cwalldist->GetZFaceNormal();
+
+                        oldFaceCenter[0] = xfc[faceID];
+                        oldFaceCenter[1] = yfc[faceID];
+                        oldFaceCenter[2] = zfc[faceID];
+                        this->RotateAxis(oldFaceCenter, faceCenter);
+
+                        oldFaceNormal[0] = xfn[faceID];
+                        oldFaceNormal[1] = yfn[faceID];
+                        oldFaceNormal[2] = zfn[faceID];
+                        this->RotateAxis(oldFaceNormal, faceNormal);
+
+                        RDouble wdst;
+                        wdst = ComputeDistanceOfANodeToAFace(nodeCoord, faceCenter, faceNormal, face2node, x, y, z);
+                        if (wallDistNode[iNode] > wdst&& wdst < 1.0e30)
+                        {
+                            wallDistNode[iNode] = wdst;
+                            isFoundNearestFace = true;
+                        }
+                    }
+
+                    break;
+                }
+                else if (nNearWallFace > boxMax && (size_max - size_min) > 0.01 * dis)
+                {
+                    //! The box is too large and so lead to too large number of wall faces,
+                    //! in order to reduce the wall faces, decrease the search radius.
+                    size_max = ra;
+                    continue;
+                }
+                else
+                {
+                    //! The box is too small and so lead to nearly non wall faces,
+                    //! in order to get more the wall faces, increase the search radius.
+                    size_min = ra;
+                    size_max = size_max * 2.0;
+                    continue;
+                }
+            }
+
+            if (isFoundNearestFace)
+            {
+                finalFound = true;
+                break;
+            }
+            else
+            {
+                //! Enlarge the limitation.
+                boxMax *= 2;
+                boxMin = MAX(1 * (int)sqrt(boxMax * 1.0), 1);
+                continue;
             }
         }
     }
@@ -545,14 +882,14 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
 
     TimeSpan partTime;
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES != LES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (icell > 0 && icell % interval == 0)
+        if (iCell > 0 && iCell % interval == 0)
         {
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
-            ProgressMonitorToLogFile(icell, nTotalCell, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
+            ProgressMonitorToLogFile(iCell, nTotalCell, "wall distance");
 
             if (rotateAxis >= 1 || timeSpan.GetTimeSpan() > 600.0)
             {
@@ -560,12 +897,12 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
                 oss.unsetf(ios::scientific);
                 oss.setf(ios::fixed);
                 oss.precision(0);
-                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((icell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iCell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
                 WriteLogFile(oss, false);
             }
         }
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             //! This cell wall distance has been computed.
             continue;
@@ -586,9 +923,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
             ++ iEnlarge;
 
             //! i-th test.
-            oldCellCenter[0] = xcc[icell];
-            oldCellCenter[1] = ycc[icell];
-            oldCellCenter[2] = zcc[icell];
+            oldCellCenter[0] = xcc[iCell];
+            oldCellCenter[1] = ycc[iCell];
+            oldCellCenter[2] = zcc[iCell];
             this->RotateAxis(oldCellCenter, cellCenter);
 
             //! For method 0: loop over the nearest several box.
@@ -677,9 +1014,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
 
                         //RDouble distTemp = sqrt(wdst);
 
-                        if (walldist[icell] > wdst && wdst < 1.0e30)
+                        if (walldist[iCell] > wdst && wdst < 1.0e30)
                         {
-                            walldist[icell] = wdst;
+                            walldist[iCell] = wdst;
                             isFoundNearestFace = true;
                         }
                     }
@@ -717,7 +1054,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
                 continue;
             }
         }
-    }    //! icell.
+    }    //! iCell.
 }
 
 void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
@@ -775,7 +1112,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
             for (int i = ist; i <= ied; ++i)
             {
                 ++count;
-                if (viscousType <= LAMINAR && iLES != LES_SOLVER)
+                if (viscousType <= LAMINAR && iLES == NOLES_SOLVER)
                 {
                     continue;
                 }
@@ -938,7 +1275,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
                 }
             }
         }
-    }    //! icell.
+    }    //! iCell.
 }
 
 void Pre_WalldistCompute::ComputeNodeWallDist3DByProjectingFast(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist)
@@ -1143,17 +1480,9 @@ void Pre_WalldistCompute::ComputeNodeWallDist3DByKDTreeMethod(int nTotalNode, RD
     cout.setf(ios::fixed);
     cout.precision(0);
 
-    int interval = GetProgressInterval(nTotalNode, 10);
-
+    RDouble *xyz = new RDouble[3];
     for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        int nodeIndex = iNode + 1;
-        if (nodeIndex % interval == 0 || nodeIndex == nTotalNode)
-        {
-            ProgressMonitorToWindows(nodeIndex, nTotalNode, "wall distance");
-            ProgressMonitorToLogFile(nodeIndex, nTotalNode, "wall distance");
-        }
-        RDouble *xyz = new RDouble[3];
         xyz[0] = x[iNode];
         xyz[1] = y[iNode];
         xyz[2] = z[iNode];
@@ -1164,9 +1493,8 @@ void Pre_WalldistCompute::ComputeNodeWallDist3DByKDTreeMethod(int nTotalNode, RD
         {
             nodeWalldist[iNode] = wdst;
         }
-        delete [] xyz;    xyz = NULL;
-
      }
+    delete [] xyz;    xyz = NULL;
 }
 
 void Pre_WalldistCompute::ComputeWallDistance(StructGrid *grid)
@@ -1325,10 +1653,51 @@ void Pre_WalldistCompute::BuildWallStructKDTreeNode()
                 RDouble *xyzWall = new RDouble [nDim];
                 xyzWall[0] = x[nodeID];
                 xyzWall[1] = y[nodeID];
-                xyzWall[2] = z[nodeID];
+                if(nDim == 3)xyzWall[2] = z[nodeID];
 
                 KDInsert(wallNodeKDTree, xyzWall, NULL);
-                delete []xyzWall;
+                delete [] xyzWall;
+            }
+        }
+    }
+}
+
+void Pre_WalldistCompute::BuildWallStructKDTreeNodeInOtherBlock()
+{ 
+    int nDim = 3;
+
+    nTWallFace = 0;
+    for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
+    {
+        WallStructure *cwalldist = (*wallstructureList)[iWall];
+        if (cwalldist->GetIBlock() == presentBlock)
+        {
+            continue;
+        }
+
+        uint_t nWallFaces = cwalldist->GetNumberOfWallFaces();
+        nTWallFace += nWallFaces;
+
+        WallStructure::value_type &x = cwalldist->GetX();
+        WallStructure::value_type &y = cwalldist->GetY();
+        WallStructure::value_type &z = cwalldist->GetZ();
+        int *nPointPerFace = cwalldist->GetnPointPerFace();
+        int *wallFace2Node = cwalldist->GetWallFace2Node();
+
+        int count = 0;
+        for (std::size_t iFace = 0; iFace < nWallFaces; ++ iFace)
+        {
+            int nNode = nPointPerFace[iFace];
+            for (int iNode = 0; iNode < nNode; ++ iNode)
+            {
+                int nodeID = wallFace2Node[count ++];
+                RDouble *xyzWall = new RDouble [nDim];
+                xyzWall[0] = x[nodeID];
+                xyzWall[1] = y[nodeID];
+                if(nDim == 3)xyzWall[2] = z[nodeID];
+
+                KDInsert(wallNodeKDTree, xyzWall, NULL);
+                delete [] xyzWall;
             }
         }
     }
@@ -1393,9 +1762,9 @@ void Pre_WalldistCompute::ServerCollection()
 
     //! Write the number of zones in this processor.
     int nZonesInThisProc = 0;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = GetZoneProcessorIDSepMode(izone);
+        int proc = GetZoneProcessorIDSepMode(iZone);
         if (myid == proc)
         {
             ++ nZonesInThisProc;
@@ -1404,13 +1773,13 @@ void Pre_WalldistCompute::ServerCollection()
     PHWrite(cdata, nZonesInThisProc);
     
     //! Compress all of the wall structure in this processor into data-container.
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = GetZoneProcessorIDSepMode(izone);
+        int proc = GetZoneProcessorIDSepMode(iZone);
 
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, this->level);
+            Grid *grid = GetGrid(iZone, this->level);
             CompressWallStructure(cdata, grid);
         }
     }
@@ -1449,7 +1818,7 @@ void Pre_WalldistCompute::ServerCollection()
             int nZonesInProc;
             cdata->moveto_begin();
             PHRead(cdata, &nZonesInProc, 1);
-            for (int izone = 0; izone < nZonesInProc; ++ izone)
+            for (int iZone = 0; iZone < nZonesInProc; ++ iZone)
             {
                 DeCompressWallStructure(cdata, false);
             }
@@ -1526,12 +1895,12 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 {
     int nSolidFace = 0;
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1552,9 +1921,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     int iBlock = grid->GetIBlock();
     cdata->write(&iBlock, sizeof(int));
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1586,9 +1955,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     //! Compute nWallPoints.
     int nWallPoints = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1637,9 +2006,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     RDouble3D &zz = *grid->GetStructZ();
 
     nWallPoints = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1674,8 +2043,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             Range J(1, nj);
             Range K(1, nk);
 
-            structNode2UnstrNodeID[ibcregion] = new Int3D(I, J, K, fortranArray);
-            Int3D &nodeMap = *(structNode2UnstrNodeID[ibcregion]);
+            structNode2UnstrNodeID[iBCRegion] = new Int3D(I, J, K, fortranArray);
+            Int3D &nodeMap = *(structNode2UnstrNodeID[iBCRegion]);
 
             for (int k = s_st[2]; k <= s_ed[2]; ++ k)
             {
@@ -1733,9 +2102,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     int nk = grid->GetNK();
     count = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1764,7 +2133,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             }
 
             int nsurf = bcregion->GetFaceDirection() + 1;
-            Int3D &nodeMap = *(structNode2UnstrNodeID[ibcregion]);
+            Int3D &nodeMap = *(structNode2UnstrNodeID[iBCRegion]);
             int in, jn, kn;
             for (int k = kst; k <= ked; ++ k)
             {
@@ -1856,9 +2225,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     RDouble4D &yfn = *(grid->GetFaceNormalY());
     RDouble4D &zfn = *(grid->GetFaceNormalZ());
     
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1921,6 +2290,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
 
     //! Compute the number of the wall faces.
     bool *isWallFace = new bool [nBoundFace]();
+    SetField(isWallFace, false, nBoundFace);
+
     grid->FindOutWallFaces(isWallFace, nSolidFace);
 
     cdata->write(&nSolidFace, sizeof(int));
@@ -1939,11 +2310,11 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     int *localWallFace2Global = new int [nSolidFace]();
     SetField(localWallFace2Global, -1, nSolidFace);
     count = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (isWallFace[iface])
+        if (isWallFace[iFace])
         {
-            localWallFace2Global[count] = iface;
+            localWallFace2Global[count] = iFace;
             ++ count;
         }
     }
@@ -1976,36 +2347,36 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     //! Number of nodes per wall face.
     count = 0;
     int *nPointsPerWallFace = new int [nSolidFace]();
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int globalFaceIndex = localWallFace2Global[iface];
-        nPointsPerWallFace[iface] = node_number_of_each_face[globalFaceIndex];
-        count += nPointsPerWallFace[iface];
+        int globalFaceIndex = localWallFace2Global[iFace];
+        nPointsPerWallFace[iFace] = node_number_of_each_face[globalFaceIndex];
+        count += nPointsPerWallFace[iFace];
     }
 
     //! Wall face to node.
     int *wallface2node = new int [count]();
     count = 0;
     int nodepos = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (isWallFace[iface])
+        if (isWallFace[iFace])
         {
-            for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
                 int index = face2node[nodepos + j];
                 wallface2node[count ++] = globalPoint2Wall[index];
             }
         }
 
-        nodepos += node_number_of_each_face[iface];
+        nodepos += node_number_of_each_face[iFace];
     }
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int faceIndex = localWallFace2Global[iface];
+        int faceIndex = localWallFace2Global[iFace];
 
         RDouble xc = 0, yc = 0, zc = 0;
         xc = xfc[faceIndex];
@@ -2031,16 +2402,16 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     }
 
     //! Third: face to node connection.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int nNPF = nPointsPerWallFace[iface];
+        int nNPF = nPointsPerWallFace[iFace];
         cdata->write(&nNPF, sizeof(int));
     }
 
     count = 0;
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int nNPF = nPointsPerWallFace[iface];
+        int nNPF = nPointsPerWallFace[iFace];
         for (int j = 0; j < nNPF; ++ j)
         {
             int nodeIndex = wallface2node[count ++];
@@ -2049,9 +2420,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     }
 
     //! Forth: wall face normal.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int faceIndex = localWallFace2Global[iface];
+        int faceIndex = localWallFace2Global[iFace];
 
         RDouble xfn0 = xfn[faceIndex];
         RDouble yfn0 = yfn[faceIndex];
@@ -2097,12 +2468,12 @@ void Pre_WalldistCompute::FilterWallStructureList()
     RDouble dis = 0.1 * wallTolerance;
 
     int nZones = PHMPI::GetNumberofGlobalZones();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = PHMPI::GetZoneProcessorID(izone);
+        int proc = PHMPI::GetZoneProcessorID(iZone);
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, this->level);
+            Grid *grid = GetGrid(iZone, this->level);
             
             int boxMin = nBoxLimitedMin;
             int boxMax = nBoxLimitedMax;
@@ -2815,9 +3186,9 @@ bool Pre_WalldistCompute::IsWalldistComputOver()
     int nLocalZones = GetNumberofLocalZones();
 
     bool isOver = true;
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
         if (IsWalldistComputOver(grid) == false)
@@ -2873,22 +3244,39 @@ bool Pre_WalldistCompute::IsWalldistComputOver(UnstructGrid *grid)
 {
     bool isOver = true;
 
-    RDouble *walldist = grid->GetWallDist();
-
-    int nTotalCell = grid->GetNTotalCell();
-
-    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
-    int *wallCellLabel = grid->GetWallCellLabel();
-
-    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    if (cellMethodOrNodeMethod == CELL_METHOD)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES != LES_SOLVER) continue;
+        RDouble *walldist = grid->GetWallDist();
 
-        if (walldist[iCell] >= LARGE * 0.9)
+        int nTotalCell = grid->GetNTotalCell();
+
+        int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+        int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
+        int *wallCellLabel = grid->GetWallCellLabel();
+
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            isOver = false;
-            break;
+            if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
+
+            if (walldist[iCell] >= LARGE * 0.9)
+            {
+                isOver = false;
+                break;
+            }
+        }
+    }
+    else
+    {
+        RDouble *wallDistNode = grid->GetWallDistNode();
+
+        int nTotalNode = grid->GetNTotalNode();
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+        {
+            if (wallDistNode[iNode] >= LARGE * 0.9)
+            {
+                isOver = false;
+                break;
+            }
         }
     }
 
@@ -2900,9 +3288,9 @@ bool Pre_WalldistCompute::IsNodeWalldistComputOver()
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
 
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -2934,16 +3322,97 @@ void Pre_WalldistCompute::CheckWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
 
         if ((grid->Type() == PHSPACE::UNSTRUCTGRID) && (grid->GetDim() == PHSPACE::THREE_D))
         {
             UnstructGrid *unstructGrid = UnstructGridCast(grid);
-            CheckWallDistance(unstructGrid);
+            if (cellMethodOrNodeMethod == CELL_METHOD)
+            {
+                CheckWallDistance(unstructGrid);
+            }
+            else
+            {
+                CheckWallDistanceByNodeMethod(unstructGrid);
+            }
+        }
+    }
+}
+
+void Pre_WalldistCompute::CheckWallDistanceByNodeMethod(UnstructGrid *grid)
+{
+    using namespace PHMPI;
+
+    RDouble *wallDistNode = grid->GetWallDistNode();
+
+    int nTotalNode = grid->GetNTotalNode();
+    int nTotalCell = grid->GetNTotalCell();
+    int nBoundFace = grid->GetNBoundFace();
+
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+
+    RDouble nodeCoord[3], faceCenter[3], faceNormal[3];
+
+    int interval = GetProgressInterval(nTotalNode, 10);
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+    {
+        if (wallDistNode[iNode] < LARGE * 0.9)
+        {
+            continue;
+        }
+
+        nodeCoord[0] = x[iNode];
+        nodeCoord[1] = y[iNode];
+        nodeCoord[2] = z[iNode];
+
+        for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
+        {
+            WallStructure *cwalldist = (*wallstructureList)[iWall];
+
+            uint_t nWallFaces              = cwalldist->GetNumberOfWallFaces();
+            WallStructure::value_type &xfc = cwalldist->GetXFaceCenter();
+            WallStructure::value_type &yfc = cwalldist->GetYFaceCenter();
+            WallStructure::value_type &zfc = cwalldist->GetZFaceCenter();
+            WallStructure::value_type &x   = cwalldist->GetX();
+            WallStructure::value_type &y   = cwalldist->GetY();
+            WallStructure::value_type &z   = cwalldist->GetZ();
+            WallStructure::value_type &xfn = cwalldist->GetXFaceNormal();
+            WallStructure::value_type &yfn = cwalldist->GetYFaceNormal();
+            WallStructure::value_type &zfn = cwalldist->GetZFaceNormal();
+
+            int *nPointPerFace = cwalldist->GetnPointPerFace();
+            int *wallFace2Node = cwalldist->GetWallFace2Node();
+
+            int nodeCount = 0;
+            for (int iFace = 0; iFace < nWallFaces; ++ iFace)
+            {
+                faceCenter[0] = xfc[iFace];
+                faceCenter[1] = yfc[iFace];
+                faceCenter[2] = zfc[iFace];
+
+                faceNormal[0] = xfn[iFace];
+                faceNormal[1] = yfn[iFace];
+                faceNormal[2] = zfn[iFace];
+
+                vector<int> face2node;
+                face2node.resize(nPointPerFace[iFace]);
+                for (int jNode = 0; jNode < nPointPerFace[iFace]; ++jNode)
+                {
+                    face2node[jNode] = wallFace2Node[nodeCount++];
+                }
+
+                RDouble wdst = ComputeDistanceOfANodeToAFace(nodeCoord, faceCenter, faceNormal, face2node, x, y, z);
+                if (wallDistNode[iNode] > wdst)
+                {
+                    wallDistNode[iNode] = wdst;
+                }
+            }
         }
     }
 }
@@ -2970,18 +3439,18 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
 
     RDouble cellCenter[3], faceCenter[3], faceNormal[3];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES != LES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             continue;
         }
 
-        cellCenter[0] = xcc[icell];
-        cellCenter[1] = ycc[icell];
-        cellCenter[2] = zcc[icell];
+        cellCenter[0] = xcc[iCell];
+        cellCenter[1] = ycc[iCell];
+        cellCenter[2] = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -3020,9 +3489,9 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
                 }
 
                 RDouble wdst = ComputeDistanceOfANodeToAFace(cellCenter, faceCenter, faceNormal, face2node, x, y, z);
-                if (walldist[icell] > wdst)
+                if (walldist[iCell] > wdst)
                 {
-                    walldist[icell] = wdst;
+                    walldist[iCell] = wdst;
                 }
             }
         }
@@ -3037,9 +3506,9 @@ void Pre_WalldistCompute::PostWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
         PostWallDistance(grid);
@@ -3056,7 +3525,15 @@ void Pre_WalldistCompute::PostWallDistance(Grid *grid)
     else
     {
         UnstructGrid *unstructGrid = UnstructGridCast(grid);
-        PostWallDistance(unstructGrid);
+
+        if (cellMethodOrNodeMethod == CELL_METHOD)
+        {
+            PostWallDistance(unstructGrid);
+        }
+        else
+        {
+            PostWallDistanceByNodeMethod(unstructGrid);
+        }
     }
 }
 
@@ -3083,15 +3560,170 @@ void Pre_WalldistCompute::PostWallDistance(StructGrid *grid)
     GhostCell3D(walldist, ni, nj, nk);
 }
 
+void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
+{
+    RDouble *walldist = grid->GetWallDist();
+    RDouble *wallDistNode = grid->GetWallDistNode();
+
+    int nTotalNode = grid->GetNTotalNode();
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+    {
+        wallDistNode[iNode] = sqrt(wallDistNode[iNode]);
+    }
+
+    int nTotalCell = grid->GetNTotalCell();
+    int **cellNodeIndex = grid->GetCell2NodeArray();
+    int  *cellNodeNumber = grid->GetNodeNumberOfEachCell();
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        int nNode = cellNodeNumber[iCell];
+        walldist[iCell] = 0.0;
+        for (int iNode = 0; iNode < nNode; ++ iNode)
+        {
+            int nodeID = cellNodeIndex[iCell][iNode];
+            walldist[iCell] += wallDistNode[nodeID];
+
+        }
+        walldist[iCell] /= nNode;
+    }
+
+    int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
+    int *face2node = grid->GetFace2Node();
+
+    int nBoundFace = grid->GetNBoundFace();
+    UnstructBCSet **bcr = grid->GetBCRecord();
+
+    bool *nodeOnWall = new bool[nTotalNode];
+    std::fill_n(nodeOnWall, nTotalNode, false);
+
+    int nodeCount = 0;
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int bcType = bcr[iFace]->GetKey();
+        if (!(IsWall(bcType)))
+        {
+            nodeCount = nodeCount + node_number_of_each_face[iFace];
+            continue;
+        }
+
+        for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
+        {
+            int nodeIndex = face2node[nodeCount];
+            nodeOnWall[nodeIndex] = true;
+            nodeCount++;
+        }
+    }
+
+    int countCellOnWall = 0;
+    vector < int > cellIndexOnWall;
+    cellIndexOnWall.resize(0);
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        bool allNodeOnWall = true;
+        int nNodes = cellNodeNumber[iCell];
+        for (int iNode = 0; iNode < nNodes; ++ iNode)
+        {
+            int nodeIndex = cellNodeIndex[iCell][iNode];
+            if (!(nodeOnWall[nodeIndex]))
+            {
+                allNodeOnWall = false;
+                break;
+            }
+        }
+
+        if (allNodeOnWall)
+        {
+            cellIndexOnWall.push_back(iCell);
+            countCellOnWall++;
+        }
+    }
+
+    if (countCellOnWall > 0)
+    {
+        RDouble *xcc = grid->GetCellCenterX();
+        RDouble *ycc = grid->GetCellCenterY();
+        RDouble *zcc = grid->GetCellCenterZ();
+
+        RDouble cellCenter[3], faceCenter[3], faceNormal[3];
+        for (int iCell = 0; iCell < countCellOnWall; ++ iCell)
+        {
+            int cellIndex = cellIndexOnWall[iCell];
+            walldist[cellIndex] = LARGE;
+
+            cellCenter[0] = xcc[cellIndex];
+            cellCenter[1] = ycc[cellIndex];
+            cellCenter[2] = zcc[cellIndex];
+
+            for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
+            {
+                WallStructure *cwalldist = (*wallstructureList)[iWall];
+
+                uint_t nWallFaces              = cwalldist->GetNumberOfWallFaces();
+                WallStructure::value_type &xfc = cwalldist->GetXFaceCenter();
+                WallStructure::value_type &yfc = cwalldist->GetYFaceCenter();
+                WallStructure::value_type &zfc = cwalldist->GetZFaceCenter();
+                WallStructure::value_type &x   = cwalldist->GetX();
+                WallStructure::value_type &y   = cwalldist->GetY();
+                WallStructure::value_type &z   = cwalldist->GetZ();
+                WallStructure::value_type &xfn = cwalldist->GetXFaceNormal();
+                WallStructure::value_type &yfn = cwalldist->GetYFaceNormal();
+                WallStructure::value_type &zfn = cwalldist->GetZFaceNormal();
+
+                int *nPointPerFace = cwalldist->GetnPointPerFace();
+                int *wallFace2Node = cwalldist->GetWallFace2Node();
+
+                nodeCount = 0;
+                for (int iFace = 0; iFace < nWallFaces; ++ iFace)
+                {
+                    faceCenter[0] = xfc[iFace];
+                    faceCenter[1] = yfc[iFace];
+                    faceCenter[2] = zfc[iFace];
+
+                    faceNormal[0] = xfn[iFace];
+                    faceNormal[1] = yfn[iFace];
+                    faceNormal[2] = zfn[iFace];
+
+                    vector<int> currentWallFace2Node;
+                    currentWallFace2Node.resize(nPointPerFace[iFace]);
+                    for (int iNode = 0; iNode < nPointPerFace[iFace]; ++ iNode)
+                    {
+                        currentWallFace2Node[iNode] = wallFace2Node[nodeCount++];
+                    }
+
+                    RDouble wdst = ComputeDistanceOfANodeToAFace(cellCenter, faceCenter, faceNormal, currentWallFace2Node, x, y, z);
+                    RDouble iCellWalldist = sqrt(wdst);
+                    if (walldist[cellIndex] > iCellWalldist)
+                    {
+                        walldist[cellIndex] = iCellWalldist;
+                    }
+                }
+            }
+        }
+    }
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        if (walldist[iCell] < 1.0e-10)
+        {
+            PrintToWindow("     Warning: all cell nodes may lay on solid wall !!!\n");
+            ostringstream oss;
+            oss << "  cellIndex = " << iCell << endl;
+            PrintToWindow(oss);
+        }
+    }
+
+    delete []nodeOnWall;
+}
+
 void Pre_WalldistCompute::PostWallDistance(UnstructGrid *grid)
 {
     RDouble *walldist = grid->GetWallDist();
 
     int nTotalCell = grid->GetNTotalCell();
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        walldist[icell] = sqrt(walldist[icell]);
+        walldist[iCell] = sqrt(walldist[iCell]);
     }
 }
 
@@ -3249,13 +3881,13 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
-    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
+    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         RDouble xc, yc, zc;
 
-        xc = xfc[iface];
-        yc = yfc[iface];
-        zc = zfc[iface];
+        xc = xfc[iFace];
+        yc = yfc[iFace];
+        zc = zfc[iFace];
         
         cdata->write(&xc, sizeof(RDouble));
         cdata->write(&yc, sizeof(RDouble));
@@ -3284,18 +3916,18 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
     PHWrite(cdata, nPointPerFace, nSolidFace);
 
     int count = 0;
-    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
+    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        count += nPointPerFace[iface];
+        count += nPointPerFace[iFace];
     }
     PHWrite(cdata, wallFace2Node, count);
 
     //! Forth: wall face normal.
-    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
+    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        RDouble xfn0 = xfn[iface];
-        RDouble yfn0 = yfn[iface];
-        RDouble zfn0 = zfn[iface];
+        RDouble xfn0 = xfn[iFace];
+        RDouble yfn0 = yfn[iFace];
+        RDouble zfn0 = zfn[iFace];
 
         cdata->write(&xfn0, sizeof(RDouble));
         cdata->write(&yfn0, sizeof(RDouble));
@@ -3366,9 +3998,9 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     PHRead(cdata, nPointPerFace, nSolidFace);
 
     int count = 0;
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        count += nPointPerFace[iface];
+        count += nPointPerFace[iFace];
     }
     wallFace2Node = new int [count];
     PHRead(cdata, wallFace2Node, count);
@@ -3388,16 +4020,16 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     xfn.resize(nSolidFace);
     yfn.resize(nSolidFace);
     zfn.resize(nSolidFace);
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         RDouble xfn0, yfn0, zfn0;
         cdata->read(&xfn0, sizeof(RDouble));
         cdata->read(&yfn0, sizeof(RDouble));
         cdata->read(&zfn0, sizeof(RDouble));
 
-        xfn[iface] = xfn0;
-        yfn[iface] = yfn0;
-        zfn[iface] = zfn0;
+        xfn[iFace] = xfn0;
+        yfn[iFace] = yfn0;
+        zfn[iFace] = zfn0;
     }
 
     this->Box();
@@ -3837,9 +4469,9 @@ RDouble Pre_WalldistCompute::ComputeDistanceOfANodeToAFace(RDouble *cellCenter, 
 
 void Pre_WalldistCompute::ComputeNodeDistanceByDirectMethod()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int zoneProcessor = PHMPI::GetZoneProcessorIDSepMode(iZone);
         if (myid == zoneProcessor)
@@ -3900,7 +4532,6 @@ void Pre_WalldistCompute::ComputeNodeDistanceByDirectMethod(UnstructGrid *grid)
                 nodeWalldistDistance[iNode] = MIN(dis , nodeWalldistDistance[iNode]);
             }
         }
-
     }
 
     if (numberOfWallStructureInPresentBlock == 0)
@@ -3995,9 +4626,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethod()
     int nLocalZones = GetNumberofLocalZones();
 
     //! Set initial value.
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -4010,14 +4641,14 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethod()
         SetField(&nodeWallDis[0], LARGE, numberOfNodes);
     }
 
-    int numberOfBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
+    int nBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
-    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
+    for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
     {
         PrintToWindow("\n    Computing Wall dist for block: ", iBlock, "\n\n");
         ComputeNodeDistanceByADTMethodForBlock(iBlock);
     }
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By ADT Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By ADT Method");
     delete timeSpan;
 }
 
@@ -4030,9 +4661,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethod()
     int nLocalZones = GetNumberofLocalZones();
 
     //! Set initial value.
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -4045,20 +4676,40 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethod()
         SetField(&nodeWallDis[0], LARGE, numberOfNodes);
     }
 
-    int numberOfBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
+    int nBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
-    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
-    {
-        PrintToWindow("\nComputing Wall dist for Grid Group: ", iBlock, " By KDTree Method\n");
-        ComputeNodeDistanceByKDTreeMethodForBlock(iBlock);
-    }
+    ComputeNodeDistanceByKDTreeMethodForBlock();
 
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By KDTree Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By KDTree Method");
     delete timeSpan;
-
 }
 
-void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
+void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodInOtherBlock()
+{
+    using namespace PHMPI;
+
+    int nLocalZones = GetNumberofLocalZones();
+
+    //! Set initial value.
+    for (int izone = 0; izone < nLocalZones; ++ izone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID, this->level));
+
+        vector<RDouble> & nodeWallDistanceInOtherBlock = grid->GetNodeWallDistInOtherBlock();
+
+        int numberOfNodes = grid->GetNTotalNode();
+
+        nodeWallDistanceInOtherBlock.resize(numberOfNodes);
+
+        SetField(&nodeWallDistanceInOtherBlock[0], LARGE, numberOfNodes);
+    }
+
+    ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock();
+}
+
+void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock()
 {
     using namespace PHMPI;
 
@@ -4066,10 +4717,14 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
 
     int nLocalZones = GetNumberofLocalZones();
 
-    this->presentBlock = iBlock;
-
-    //while (!IsNodeWalldistComputOver())
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
+        int iBlock = grid->GetIBlock();
+        this->presentBlock = iBlock;
+
         if (!wallNodeKDTree)
         {
             wallNodeKDTree = CreatKDTree(nDim);
@@ -4080,47 +4735,73 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
         oss << "  iBlock = " << iBlock << " nTWallFace = " << nTWallFace;
         WriteLogFile(oss);
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+
+        vector<RDouble> &nodeWalldist = grid->GetNodeWallDist();
+
+        int nTotalNode = grid->GetNTotalNode();
+
+        //! if nTWallFace = 0, this must be the main back ground block
+        if (nTWallFace == 0)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+            RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-            UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID, this->level));
-            if (grid->GetIBlock()!= presentBlock)
-            {
-                continue;
-            }
+            SetField(nodeWalldist, dist / gridScaleFactor, nTotalNode);
 
-            vector<RDouble> &nodeWalldist = grid->GetNodeWallDist();
-
-            int nTotalNode = grid->GetNTotalNode();
-
-            //! if nTWallFace = 0, this must be the main back ground block
-            if (nTWallFace == 0)
-            {
-                RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
-                RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
-            
-                SetField(nodeWalldist, dist / gridScaleFactor, nTotalNode);
-            
-                continue;
-            }
-
-            RDouble *x = grid->GetX();
-            RDouble *y = grid->GetY();
-            RDouble *z = grid->GetZ();
-
-            PrintToWindow("  Wall distance computing for zone: ", izone, "\n");
-            WriteLogFile("  Wall distance computing for zone: ", izone);
-
-            ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
+            continue;
         }
+
+        RDouble *x = grid->GetX();
+        RDouble *y = grid->GetY();
+        RDouble *z = grid->GetZ();
+
+        PrintToWindow("  Wall distance computing for zone: ", iZone, "\n");
+        WriteLogFile("  Wall distance computing for zone: ", iZone);
+
+        ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
 
         if (wallNodeKDTree)
         {
             delete wallNodeKDTree;
             wallNodeKDTree = 0;
         }
+    }
+}
 
+void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock()
+{
+    using namespace PHMPI;
+
+    int nDim = 3;
+
+    int nLocalZones = GetNumberofLocalZones();
+    int nBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
+
+    for (int izone = 0; izone < nLocalZones; ++ izone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
+        presentBlock = grid->GetIBlock();
+
+        wallNodeKDTree = CreatKDTree(nDim);
+        BuildWallStructKDTreeNodeInOtherBlock();
+
+        vector<RDouble> &nodeWalldist = grid->GetNodeWallDistInOtherBlock();
+
+        int nTotalNode = grid->GetNTotalNode();
+
+        RDouble *x = grid->GetX();
+        RDouble *y = grid->GetY();
+        RDouble *z = grid->GetZ();
+
+        ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
+
+        if (wallNodeKDTree)
+        {
+            delete wallNodeKDTree;
+            wallNodeKDTree = 0;
+        }
     }
 }
 
@@ -4144,9 +4825,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethodForBlock(int iBlock)
         oss << " iBlock = " << iBlock << " nTWallFace = " << nTWallFace << "\n";
         WriteLogFile(oss);
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -4361,7 +5042,7 @@ void Pre_WalldistCompute::ComputeWallDistForNodesListByADT(int blockIndex, int n
     }
 }
 
-void Pre_WalldistCompute::ComputeWallDistForNodesListByKDT(int blockIndex, int nTotalNode, RDouble *x,  RDouble *y, RDouble *z,  RDouble *dist)
+void Pre_WalldistCompute::ComputeWallDistForNodesListByKDT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist)
 {
     using namespace PHMPI;
 
@@ -4415,5 +5096,280 @@ vector<WallStructure *> * Pre_WalldistCompute::GetWallstructureList()
 {
     return wallstructureList;
 };
+
+void GenerateWalldist()
+{
+    if (GetTaskCode() == DSMC_SOLVER || GetTaskCode() == UGKS_SOLVER || GetTaskCode() == HO_SOLVER) return;
+    
+    if (PHMPI::CurrentProcessorIsGridProcessor())
+    {
+        return;
+    }
+
+    int viscousType = 0;
+    GlobalDataBase::GetData("viscousType", &viscousType, PHINT, 1);
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
+    int nIsComputeWallDist = GlobalDataBase::GetIntParaFromDB("nIsComputeWallDist");   //  just for laminar or Euler flow.  by dms
+
+    int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    if(viscousType > 1 || sysGridType != STRUCTGRID)   //turbulence flow  or not STRUCTGRID
+    {
+        nIsComputeWallDist = 0;
+    }
+
+    if (GetTaskCode() == CAL_WALL_DIST || (viscousType != INVISCID && IsReadWalldist() == false))
+    {
+        if(nIsComputeWallDist == 0)
+        {
+            AllocateWalldist();
+
+            ComputeWalldist();
+
+            WriteWalldist();
+        }
+        //VisualWalldist();
+    }
+
+    if (viscousType > LAMINAR || iLES == LES_SOLVER)
+    {
+        GhostWalldist();
+
+        WalldistStatics();
+    }
+}
+
+bool IsReadWalldist()
+{
+    using namespace PHMPI;
+
+    int nZones = GetNumberofGlobalZones();
+    int myid   = GetCurrentProcessorID();
+
+    int isWDTExist = 0;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int procID = GetZoneProcessorID(iZone);
+
+        if (!CurrentProcessorIsGridProcessor())
+        {
+            if (myid == procID)
+            {
+                Grid *grid0 = GetGrid(iZone, 0);
+                if (grid0->Type() == UNSTRUCTGRID)
+                {
+                    UnstructGrid *grid = UnstructGridCast(grid0);
+                    if (grid->GetWallDist()) isWDTExist = 1;
+                }
+                else
+                {
+                    StructGrid *grid = StructGridCast(grid0);
+                    if (grid->GetWallDist()) isWDTExist = 1;
+                }
+            }
+        }
+    }
+
+    PH_CompareMaxMin(isWDTExist, 1);
+
+    if (isWDTExist == 1)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void ComputeWalldist()
+{
+    int walldistMethod;
+    GlobalDataBase::GetData("walldistMethod", &walldistMethod, PHINT, 1);
+
+    int level = 0;
+
+    Pre_WalldistCompute walldistCompute(walldistMethod, level);
+
+    walldistCompute.Run();
+}
+
+void AllocateWalldist()
+{
+    ActionKey *actkey = new ActionKey();
+
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+
+    int myid = GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int proc = GetZoneProcessorIDSepMode(iZone);
+
+        if (myid == proc)
+        {
+            Grid *grid = GetGrid(iZone, actkey->level);
+            grid->AllocateWalldist();
+        }
+    }
+    delete actkey;
+}
+
+void WriteWalldist()
+{
+    string walldistfile = "walldist.dat";
+    GlobalDataBase::GetData("walldistfile", &walldistfile, PHSTRING, 1);
+
+    ActionKey *actkey = new ActionKey();
+    actkey->filename = (walldistfile);
+
+    ParallelCreateHDF5File(actkey);
+
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int send_proc = GetZoneProcessorID(iZone);
+        int recv_proc = GetZoneFileID(iZone);
+
+        int myid = GetCurrentProcessorID();
+        int tag = GetSendRecvTag(actkey, iZone);
+
+        if (myid == send_proc)
+        {
+            Grid *grid = GetGrid(iZone, 0);
+            grid->DumpWalldist(actkey);
+        }
+
+        PH_Trade(actkey, send_proc, recv_proc, tag);
+
+        if (myid == recv_proc)
+        {
+            DumpWalldistToFile(actkey, iZone);
+        }
+    }
+
+    ParallelCloseHDF5File(actkey);
+    delete actkey;
+}
+
+void DumpWalldistToFile(ActionKey *actkey, int iZone)
+{
+    DataContainer *cdata = actkey->GetData();
+    cdata->moveto_begin();
+
+    int nTotalCell = 0;
+    cdata->read(&nTotalCell, sizeof(int));
+
+    RDouble *walldist = new RDouble[nTotalCell];
+    cdata->read(walldist, sizeof(RDouble) * nTotalCell);
+
+    ostringstream oss;
+    oss << "Grid-" << iZone;
+    string dataName = oss.str();
+
+    CreateAndWriteData(actkey->filepos, dataName, 1, nTotalCell, PHDOUBLE, walldist);
+
+    /*test
+    ostringstream oss2;
+    oss2 << nTotalCell << endl;
+    oss2.setf(ios::scientific);
+    oss2.precision(10);
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        oss2 << iCell << " " << walldist[iCell] << endl;
+    }
+    WriteLogFile(oss2);
+    //*/
+
+    delete [] walldist;
+}
+
+void WalldistStatics()
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    int myid = GetCurrentProcessorID();
+
+    RDouble minWalldist = PHSPACE::LARGE;
+    RDouble maxWalldist = PHSPACE::SMALL;
+    
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int proc = GetZoneProcessorIDSepMode(iZone);
+
+        if (myid == proc)
+        {
+            Grid *grid = GetGrid(iZone, 0);
+
+            if (grid->Type() == UNSTRUCTGRID)
+            {
+                int nTotalCell = grid->GetNTotalCell();
+                RDouble *walldist = UnstructGridCast(grid)->GetWallDist();
+                for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+                {
+                    minWalldist = MIN(minWalldist, walldist[iCell]);
+                    maxWalldist = MAX(maxWalldist, walldist[iCell]);
+                    if (maxWalldist > 1.0e8)
+                    {
+                        cout << iCell << endl;
+                        ostringstream oss1;
+                        oss1 << "iCell=" << iCell << endl;
+                        TK_Exit::ExceptionExit(oss1);
+                    }
+                }
+            }
+            else
+            {
+                StructGrid *structGrid = StructGridCast(grid);
+
+                RDouble3D &walldist = *structGrid->GetWallDist();
+
+                int ist, ied, jst, jed, kst, ked;
+                structGrid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+                for (int k = kst; k <= ked; ++ k)
+                {
+                    for (int j = jst; j <= jed; ++ j)
+                    {
+                        for (int i = ist; i <= ied; ++ i)
+                        {
+                            minWalldist = MIN(minWalldist, walldist(i, j, k));
+                            maxWalldist = MAX(maxWalldist, walldist(i, j, k));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    PH_CompareMaxMin(minWalldist, 2);
+
+    PH_CompareMaxMin(maxWalldist, 1);
+
+    ostringstream oss;
+    oss << "Min && Max wall distance : " << minWalldist << ", " << maxWalldist << endl;
+    PrintToWindow(oss);
+}
+
+void GhostWalldist()
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int level = 0;
+
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Grid *grid = GetGrid(zoneID, level);
+
+        if (grid->Type() == PHSPACE::STRUCTGRID)
+        {
+            StructGrid *structGrid = StructGridCast(grid);
+            RDouble3D &walldist = *structGrid->GetWallDist();
+        }
+    }
+}
 
 }

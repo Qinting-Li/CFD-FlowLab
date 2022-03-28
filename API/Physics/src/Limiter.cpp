@@ -31,7 +31,7 @@ LIB_EXPORT Limiter::Limiter(UnstructGrid * gridin, RDouble ** q, int nVariable, 
 
 LIB_EXPORT Limiter::~Limiter()
 {
-    delete limit;    limit = nullptr;
+    delete limit;    limit = NULL;
 }
 
 void Limiter::CreateLimiter(int nsize, int neqn)
@@ -144,9 +144,9 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
         limit2D[0] = limit;
         SetLimitBoundary(gridUnstruct, limit);
     }
-    else if( limitVecctor == VECTOR_LIMITER )
+    else if(limitVecctor == VECTOR_LIMITER)
     {
-        for ( int m = 0; m < nLimiterVariables; ++ m )
+        for (int m = 0; m < nLimiterVariables; ++ m)
         {
             limit = this->GetLimiter(m);
             limit2D[m] = limit;
@@ -163,11 +163,11 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
     {
         PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, 1);
     }
-    else if( limitVecctor == VECTOR_LIMITER )
+    else if(limitVecctor == VECTOR_LIMITER)
     {
         PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, nLimiterVariables);
     }
-    delete [] limit2D;    limit2D = nullptr;
+    delete [] limit2D;    limit2D = NULL;
 }
 
 LIB_EXPORT void Limiter::InitLimitData()
@@ -216,7 +216,7 @@ void Limiter::BarthLimiter(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *d
         RDouble dqFace = dqdx[le] * dx + dqdy[le] * dy + dqdz[le] * dz;
 
         RDouble ds     = sqrt(dx * dx + dy * dy + dz * dz);
-        RDouble dot    = (xfn[iFace] * dx + yfn[iFace] * dy + zfn[iFace] * dz ) / ( ds + SMALL);
+        RDouble dot    = (xfn[iFace] * dx + yfn[iFace] * dy + zfn[iFace] * dz) / (ds + SMALL);
         
         if (dot < 0.0)
         {
@@ -281,8 +281,8 @@ void Limiter::BarthLimiter(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *d
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
 }
 
 /************************************************************************/
@@ -434,8 +434,8 @@ void Limiter::VencatLimiter0(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
 }
 
 void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
@@ -557,8 +557,8 @@ void Limiter::VencatLimiter1(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
 }
 
 //! This limiter type was proposed by CXH.
@@ -589,17 +589,17 @@ void Limiter::VencatLimiter2(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     MinMaxDiff(dmin, dmax, q);
 
     RDouble venkatCoeff = GlobalDataBase::GetDoubleParaFromDB("venkatCoeff");
-    RDouble GloableTotalCells = GlobalDataBase::GetDoubleParaFromDB("UnstrGloableTotalCells");
+    RDouble globalTotalCells = GlobalDataBase::GetDoubleParaFromDB("UnstrGlobalTotalCells");
 
     //! The following 'eps' is the eps^2 actually in the mathematic formation.
     //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
     int dimension = GetDim();
     RDouble n = 3.0;
     RDouble eps;
-    eps = pow((venkatCoeff * pow((1.0 / GloableTotalCells), (1.0 / dimension))), n);
+    eps = pow((venkatCoeff * pow((1.0 / globalTotalCells), (1.0 / dimension))), n);
     if(iVariable == IDX::IP)
     {
-        RDouble * primInflow = reinterpret_cast< RDouble * >( GlobalDataBase::GetDataPtr("prim_inf") );
+        RDouble * primInflow = reinterpret_cast< RDouble * >(GlobalDataBase::GetDataPtr("prim_inf"));
         eps *= primInflow[IDX::IP] * primInflow[IDX::IP];
     }
 
@@ -670,8 +670,8 @@ void Limiter::VencatLimiter2(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
 }
 
 //! This limiter type was modified by NeverMore.
@@ -703,8 +703,8 @@ void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     //! Find the the differences for q.
     MinMaxDiff(dmin, dmax, q);
 
-    RDouble GloableTotalVolume;
-    GlobalDataBase::GetData("UnstrGloableTotalVolume", &GloableTotalVolume, PHDOUBLE, 1);
+    RDouble globalTotalVolume;
+    GlobalDataBase::GetData("UnstrGlobalTotalVolume", &globalTotalVolume, PHDOUBLE, 1);
 
     //! The following 'eps' is the eps^2 actually in the mathematic formation.
     //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
@@ -721,7 +721,7 @@ void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     RDouble *eps = new RDouble [nTotalCell];
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        eps[iCell] = pow(venkatCoeff * pow(volume[iCell] / GloableTotalVolume, dim1), n);
+        eps[iCell] = pow(venkatCoeff * pow(volume[iCell] / globalTotalVolume, dim1), n);
         if(iVariable == IDX::IP)
         {
             eps[iCell]  *= squareOfReferenceVariable;
@@ -790,9 +790,9 @@ void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
-    delete [] eps;     eps = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
+    delete [] eps;     eps = NULL;
 }
 
 /************************************************************************/
@@ -919,8 +919,8 @@ void Limiter::VencatLimiter4(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
 }
 
 /************************************************************************/
@@ -1022,8 +1022,8 @@ void Limiter::VencatLimiter5(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
 }
 
 //! Multidimensional limiting Process.
@@ -1047,10 +1047,10 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     RDouble *zcc    = grid->GetCellCenterZ();
     RDouble *volume = grid->GetCellVolume();
 
-    RDouble GloableTotalVolume = 0.0;
+    RDouble globalTotalVolume = 0.0;
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        GloableTotalVolume += volume[iCell];  
+        globalTotalVolume += volume[iCell];  
     }
     RDouble **qAll = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     using namespace IDX;
@@ -1072,7 +1072,7 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     {
         qmax[iNode] = -1;
         qmin[iNode] = 100000;
-        for( j = 0; j < nCPN[ iNode ]; ++ j)
+        for(j = 0; j < nCPN[ iNode ]; ++ j)
         {
             qmax[iNode] = max(qmax[iNode], q[n2c[count]]);
             qmin[iNode] = min(qmin[iNode], q[n2c[count]]);
@@ -1096,7 +1096,7 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
             ds     =  sqrt(dx * dx + dy * dy + dz * dz);
             dqNode = dqdx[iCell] * dx + dqdy[iCell] * dy + dqdz[iCell] * dz;
 
-            eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds * qAll[IP][iCell] * qAll[IP][iCell] / GloableTotalVolume;
+            eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds * qAll[IP][iCell] * qAll[IP][iCell] / globalTotalVolume;
             if (dqNode > SMALL)
             {
                 tmp          = VenFun(dqmax, dqNode, eps);
@@ -1110,8 +1110,8 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] qmax;    qmax = nullptr;
-    delete [] qmin;    qmin = nullptr;
+    delete [] qmax;    qmax = NULL;
+    delete [] qmin;    qmin = NULL;
 }
 
 void Limiter::VencatLimiter7(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int iVariable)
@@ -1153,7 +1153,7 @@ void Limiter::VencatLimiter7(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
         epsCell[iCell]  = eps_tmp * q[iCell] * q[iCell];
-        epsCell[iCell] *= pow(pow( volume[iCell], 1.0/dimension ), n);
+        epsCell[iCell] *= pow(pow(volume[iCell], 1.0/dimension), n);
     }
     //! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -1220,9 +1220,9 @@ void Limiter::VencatLimiter7(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
         }
     }
 
-    delete [] dmin;    dmin = nullptr;
-    delete [] dmax;    dmax = nullptr;
-    delete [] epsCell;    epsCell = nullptr;
+    delete [] dmin;    dmin = NULL;
+    delete [] dmax;    dmax = NULL;
+    delete [] epsCell;    epsCell = NULL;
 }
 void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
 {
@@ -1232,7 +1232,9 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
 
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     //! Find the maximum and minimum in the neighbor of each cell.
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
@@ -1243,11 +1245,12 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int le       = leftCellOfFace[iFace];
         int re       = rightCellOfFace[iFace];
 
-        int bctype   = bcr[iFace]->GetKey();
-        if (!IsInterface(bctype))
+        int bcType = bcRegion->GetBCType();
+        if (!IsInterface(bcType))
         {
             continue;
         }
@@ -1285,16 +1288,16 @@ void Init_Limiters(Grid *grid_in, RDouble *limit)
     int uns_limiter;
     GlobalDataBase::GetData("uns_limiter", &uns_limiter, PHINT, 1);
 
-    for ( int icell = 0; icell < nTotal; ++ icell )
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        limit[icell] = one;
+        limit[iCell] = one;
     }
     
-    if ( uns_limiter == ILMT_FIRST )
+    if (uns_limiter == ILMT_FIRST)
     {
-        for ( int icell = 0; icell < nTotal; ++ icell )
+        for (int iCell = 0; iCell < nTotal; ++ iCell)
         {
-            limit[icell] = zero;
+            limit[iCell] = zero;
         }
     }
 }
@@ -1353,6 +1356,26 @@ int GetLimiterID(const string &limiter_name)
     else if (limiter_name.substr(0,17) == "3rd_minmod_smooth")
     {
         limiter_id = ILMT_3rd_Minmod_SMOOTH;
+    }
+    else if (limiter_name.substr(0, 8) == "weno3_js")
+    {
+        limiter_id = ILMT_WENO3_JS;
+    }
+    else if (limiter_name.substr(0, 12) == "wenn3_prm211")
+    {
+        limiter_id = ILMT_WENN3_PRM211;
+    }
+    else if (limiter_name.substr(0, 8) == "wenn3_zm")
+    {
+        limiter_id = ILMT_WENN3_ZM;
+    }
+    else if (limiter_name.substr(0, 10) == "wenn3_zes2")
+    {
+        limiter_id = ILMT_WENN3_ZES2;
+    }
+    else if (limiter_name.substr(0, 10) == "wenn3_zes3")
+    {
+        limiter_id = ILMT_WENN3_ZES3;
     }
     else
     {

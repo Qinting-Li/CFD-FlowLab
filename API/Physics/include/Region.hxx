@@ -1,6 +1,6 @@
-inline Zone *Region::GetZone(int iZone)
+inline Zone * Region::GetZone(int iZone)
 {
-    return (*zoneContainer)[iZone];	
+    return (*zoneContainer)[iZone];
 }
 
 inline bool Region::ZoneBelongToCurrentProcessor( int globalZoneIndex )

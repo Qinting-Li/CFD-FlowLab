@@ -34,7 +34,7 @@ class OversetCellCollector ;
 class UnstructGrid;
 
 class VirtualFile;
-class CompositeStructBC;
+class StructBCSet;
 class StructBC;
 
 class StructGrid : public Grid
@@ -79,7 +79,7 @@ private:
     //! Boundary information.
     //! 1: Number of boundary face (nBoundFace).
     //! 2: Number of interface face (nIFace).
-    CompositeStructBC *composite_bcregion;
+    StructBCSet *structBCSet;
 
     //! Topology information of the overset grid.
     Geo_OversetGridTopo_Struct *oversetGridTopology;
@@ -93,6 +93,11 @@ private:
     vector <int> zoneProbesCellNK;
 
     UnstructGrid *gridUnstr;
+
+ //   //! Ordinary grid information.
+ //   int ordinaryGridIndex;
+ //   int ordinaryDimStartIndex[3], ordinaryDimEndIndex[3];
+
 public:
     LIB_EXPORT StructGrid();
     LIB_EXPORT ~StructGrid();
@@ -232,6 +237,15 @@ public:
     //! Return the face iteration index, for example: if nSurface = 1, then iFaceStart = 0, iFaceEnd = ni-1.
     void GetFaceIterationIndex(int &iFaceStart, int &iFaceEnd, int &jFaceStart, int &jFaceEnd, int &kFaceStart, int &kFaceEnd, int iSurface);
 
+	//! Get the face index.
+	void GetNsurfIndex(int &il1, int &jl1, int &kl1, int iDimension);
+
+	//! Get the left cell list of each face.
+	void GetLeftCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ile, int &jle, int &kle, int iDimension);
+
+	//! Get the right cell list of each face.
+	void GetRightCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ire, int &jre, int &kre, int iDimension);
+
     //! Assign the node dimension of I, J, K direction to si, sj ,sk.
     void GetND(int &si, int &sj, int &sk) const;
 
@@ -257,7 +271,7 @@ public:
     LIB_EXPORT void CopyGrid(StructGrid *grid);
 
     //! Copy boundary information from another grid.
-    LIB_EXPORT void CopyCompositeBCRegion(CompositeStructBC *composite_bcregion);
+    LIB_EXPORT void CopyStructBCSet(StructBCSet *structBCSet);
 
     //! Copy coordinates(X, Y, Z) information from another grid.
     LIB_EXPORT void CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble *yy, RDouble *zz);
@@ -274,26 +288,26 @@ public:
     //! Compute metrics (face normal, cell center, et al.).
     LIB_EXPORT void ComputeMetrics(ActionKey *actkey = 0);
     
-    //! Create composite boundary condition region (allocate memory for composite_bcregion).
+    //! Create composite boundary condition region (allocate memory for structBCSet).
     LIB_EXPORT void CreateCompositeBCRegion(int nBCRegion);
 
-    //! Return composite boundary condition region pointer (composite_bcregion).
-    CompositeStructBC * GetCompositeBCRegion() const;
+    //! Return composite boundary condition region pointer (structBCSet).
+    StructBCSet * GetStructBCSet() const;
 
     //! Set boundary face information.
     LIB_EXPORT void SetBCFaceInfo();
 
     //! Get source boundary grid's I, J, K index.
-    LIB_EXPORT void GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k);
+    LIB_EXPORT void GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
 
     //! Get source boundary grid's I, J, K index.
-    LIB_EXPORT void GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr);
+    LIB_EXPORT void GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr);
 
     //! Get target boundary grid's I, J, K index.
-    LIB_EXPORT void GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k);
+    LIB_EXPORT void GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
 
-    LIB_EXPORT void GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
-    LIB_EXPORT void GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    LIB_EXPORT void GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    LIB_EXPORT void GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
     void ComputeMetrics_BC();
     void ComputeMetrics_BC_2D();
     void ComputeMetrics_BC_3D();
@@ -425,7 +439,7 @@ public:
     LIB_EXPORT void CompNodeVar(RDouble4D &q_n, RDouble4D &q);
     
     //! Allocate memory for walldist.
-    LIB_EXPORT void AllocateWalldist(ActionKey *actkey);
+    LIB_EXPORT void AllocateWalldist();
 
     //! Get the largest local grid length, distance of neighbor cell centers.
     LIB_EXPORT RDouble3D * GetLargestLocalGridLength();
@@ -505,6 +519,13 @@ public:
     void GetCellIBlank(ActionKey *actkey);
     void TranslateCellIBlank(ActionKey *actkey);
 
+ //   void SetOrdinaryGridIndex(int ordinaryGridIndexIn);
+ //   void SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn);
+ //   void SetOrdinaryDimEndIndex  (int *ordinaryDimEndIndexIn);
+ //   int  GetOrdinaryGridIndex();
+ //   int *GetOrdinaryDimStartIndex();
+ //   int *GetOrdinaryDimEndIndex();
+
 private:
     void ReadXYZ(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
     void ReadXYZASCII(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
@@ -537,11 +558,11 @@ private:
     void GetCellCenter(ActionKey *actkey);
     void TranslateCellCenter(ActionKey *actkey);
     bool CommunicateNodeLocation();
-    void GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3]);
-    void GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3]);
+    void GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3]);
+    void GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3]);
     void GetRelationBetweenTwoPairsofNodes(int RelationBetweenTwoPairsofNodes[4], RDouble Nodes_ABCD[4][3], RDouble Nodes_abcd[4][3]);
-    void GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3]);
-    void GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3]);
+    void GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3]);
+    void GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3]);
     int GetRelationshipBetweenTwoPairsofNodes(RDouble NodesofABCD[4][3], RDouble Nodesofabcd[4][3]);
     streamsize TranslateCellCenterLength(ActionKey *actkey);
     void GhostMetrics3D();
@@ -601,10 +622,12 @@ extern int mide[3][3];
 
 StructGrid * StructGridCast(Grid *grid_in);
 
+void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn);
+
 void GetRange(int ni, int nj, int nk, int startShift, int endShift, Range &I, Range &J, Range &K);
 void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, int kst, int ked);
 
 //! Used by Post_Visual class.
-void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n);
+void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool isVelocityForPostVisual = false);
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble3D &q);
 }
