@@ -1,0 +1,22 @@
+# Boundary Face Information of Grid E:/SuanliTest1410/ThreeD_Sphere/ThreeD_Sphere_unstruct/grid/sphere_m10.cas
+# nBoundaryConditons : number of global boundary conditions.
+# bcName             : Boundary Condition Name.
+# bcType(in PHengLEI): Boundary Condition Type.
+
+int nBoundaryConditons = 4;
+string bcName = "wall";
+{
+  int bcType = 2;
+}
+string bcName = "symmetry";
+{
+  int bcType = 3;
+}
+string bcName = "pressure-inlet";
+{
+  int bcType = 5;
+}
+string bcName = "outflow";
+{
+  int bcType = 6;
+}

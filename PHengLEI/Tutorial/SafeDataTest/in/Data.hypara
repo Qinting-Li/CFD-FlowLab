@@ -1,0 +1,4 @@
+string name = "value" ;
+int  type = 2  ;
+int  size = 1  ;
+

@@ -1,0 +1,100 @@
+Input data :
+outnstep1   111.1
+outnstep2   222.2
+outnstep3   333.3
+outnstep4   444.4
+
+invoke write function!
+
+invoke read function!
+
+i = 0  outnstep_read  value is :111.1
+i = 1  outnstep_read  value is :222.2
+i = 2  outnstep_read  value is :333.3
+i = 3  outnstep_read  value is :444.4
+i = 4  outnstep_read  value is :111.1
+i = 5  outnstep_read  value is :222.2
+i = 6  outnstep_read  value is :333.3
+i = 7  outnstep_read  value is :444.4
+i = 8  outnstep_read  value is :111.1
+i = 9  outnstep_read  value is :222.2
+i = 10  outnstep_read  value is :333.3
+i = 11  outnstep_read  value is :444.4
+i = 12  outnstep_read  value is :111.1
+i = 13  outnstep_read  value is :222.2
+i = 14  outnstep_read  value is :333.3
+i = 15  outnstep_read  value is :444.4
+i = 16  outnstep_read  value is :111.1
+i = 17  outnstep_read  value is :222.2
+i = 18  outnstep_read  value is :333.3
+i = 19  outnstep_read  value is :444.4
+i = 20  outnstep_read  value is :111.1
+i = 21  outnstep_read  value is :222.2
+i = 22  outnstep_read  value is :333.3
+i = 23  outnstep_read  value is :444.4
+i = 24  outnstep_read  value is :111.1
+i = 25  outnstep_read  value is :222.2
+i = 26  outnstep_read  value is :333.3
+i = 27  outnstep_read  value is :444.4
+i = 28  outnstep_read  value is :111.1
+i = 29  outnstep_read  value is :222.2
+i = 30  outnstep_read  value is :333.3
+i = 31  outnstep_read  value is :444.4
+i = 32  outnstep_read  value is :111.1
+i = 33  outnstep_read  value is :222.2
+i = 34  outnstep_read  value is :333.3
+i = 35  outnstep_read  value is :444.4
+i = 36  outnstep_read  value is :111.1
+i = 37  outnstep_read  value is :222.2
+i = 38  outnstep_read  value is :333.3
+i = 39  outnstep_read  value is :444.4
+i = 40  outnstep_read  value is :111.1
+i = 41  outnstep_read  value is :222.2
+i = 42  outnstep_read  value is :333.3
+i = 43  outnstep_read  value is :444.4
+i = 44  outnstep_read  value is :111.1
+i = 45  outnstep_read  value is :222.2
+i = 46  outnstep_read  value is :333.3
+i = 47  outnstep_read  value is :444.4
+i = 48  outnstep_read  value is :111.1
+i = 49  outnstep_read  value is :222.2
+i = 50  outnstep_read  value is :333.3
+i = 51  outnstep_read  value is :444.4
+i = 52  outnstep_read  value is :111.1
+i = 53  outnstep_read  value is :222.2
+i = 54  outnstep_read  value is :333.3
+i = 55  outnstep_read  value is :444.4
+i = 56  outnstep_read  value is :111.1
+i = 57  outnstep_read  value is :222.2
+i = 58  outnstep_read  value is :333.3
+i = 59  outnstep_read  value is :444.4
+i = 60  outnstep_read  value is :111.1
+i = 61  outnstep_read  value is :222.2
+i = 62  outnstep_read  value is :333.3
+i = 63  outnstep_read  value is :444.4
+i = 64  outnstep_read  value is :111.1
+i = 65  outnstep_read  value is :222.2
+i = 66  outnstep_read  value is :333.3
+i = 67  outnstep_read  value is :444.4
+i = 68  outnstep_read  value is :111.1
+i = 69  outnstep_read  value is :222.2
+i = 70  outnstep_read  value is :333.3
+i = 71  outnstep_read  value is :444.4
+i = 72  outnstep_read  value is :111.1
+i = 73  outnstep_read  value is :222.2
+
+
+invoke moveto_begin function ,  outnstep_read  value is :111.1
+
+invoke movw_pointer function
+
+i = 0   outnstep_read  value is :111.1
+i = 1   outnstep_read  value is :222.2
+i = 2   outnstep_read  value is :333.3
+i = 3   outnstep_read  value is :444.4
+i = 4   outnstep_read  value is :111.1
+i = 5   outnstep_read  value is :222.2
+i = 6   outnstep_read  value is :333.3
+i = 7   outnstep_read  value is :444.4
+i = 8   outnstep_read  value is :111.1
+i = 9   outnstep_read  value is :222.2

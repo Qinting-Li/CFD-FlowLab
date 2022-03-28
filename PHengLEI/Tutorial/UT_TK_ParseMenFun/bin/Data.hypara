@@ -1,0 +1,10 @@
+string LowString = "LowString";
+string UpString = "UpString";
+string TrimBlanks = " TrimBlank";
+string SkipLines = "SkipLines[10]";
+string IsEmptyLine = "IsEmptyLine";
+string ReadNextNonEmptyLine = "ReadNextNonEmptyLine";
+string FindNextWord = "Find Next Word";
+string IsArrayParameter = "FindNextWord[10]";
+string ReadNextLine = "ReadNextLine";
+
