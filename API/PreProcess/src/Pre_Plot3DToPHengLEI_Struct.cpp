@@ -1,7 +1,7 @@
 #include "Pre_Plot3DToPHengLEI_Struct.h"
 #include "TK_Exit.h"
 #include "Glb_Dimension.h"
-#include "GridTranslator.h"
+#include "Pre_GridTranslator.h"
 #include "TK_Parse.h"
 #include "TK_Log.h"
 
@@ -24,7 +24,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGrid()
     //fileformat : Grid file format.
     //             1 --- ASCII
     //             0 --- BINARY
-    fileFormat = CheckGridgenFileIfASCII();
+    fileFormat = CheckPlot3DFileIfASCII();
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
     if (fileFormat == 1)
@@ -47,7 +47,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGrid()
     ReadGridgenBC();
 }
 
-int Pre_Plot3DToPHengLEI_Struct::CheckGridgenFileIfASCII()
+int Pre_Plot3DToPHengLEI_Struct::CheckPlot3DFileIfASCII()
 {
     fstream file;
     file.open(gridFileName.c_str(), ios_base::in|ios_base::binary);

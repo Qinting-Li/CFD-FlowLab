@@ -22,10 +22,10 @@
 namespace HOUnstruct
 {
 
-PHSPACE::RDouble MonomialBasis( const PHSPACE::RDouble * refCoord, unsigned int i );
-PHSPACE::RDouble MonomialBasisGrad( const PHSPACE::RDouble * refCoord, unsigned int i, unsigned int j );
+PHSPACE::RDouble MonomialBasis(const PHSPACE::RDouble * refCoord, unsigned int i);
+PHSPACE::RDouble MonomialBasisGrad(const PHSPACE::RDouble * refCoord, unsigned int i, unsigned int j);
 
-PHSPACE::RDouble MonomialBasis2d( const PHSPACE::RDouble * refCoord, unsigned int i );
+PHSPACE::RDouble MonomialBasis2d(const PHSPACE::RDouble * refCoord, unsigned int i);
 
 void TestBasisFunction();
 

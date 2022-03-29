@@ -67,9 +67,9 @@ void Geo_OversetGrid::DumpOversetGrid(fstream &file)
 
 bool InBox(RDouble &xb, RDouble &yb, RDouble &zb, RDouble *pmin, RDouble *pmax)
 {
-    if ( xb < pmin[0] || xb > pmax[0] ) return false;
-    if ( yb < pmin[1] || yb > pmax[1] ) return false;
-    if ( zb < pmin[2] || zb > pmax[2] ) return false;
+    if (xb < pmin[0] || xb > pmax[0]) return false;
+    if (yb < pmin[1] || yb > pmax[1]) return false;
+    if (zb < pmin[2] || zb > pmax[2]) return false;
     return true;
 }
 
@@ -88,7 +88,7 @@ bool p_On_RHSide(RDouble &x, RDouble &y, RDouble &z, RDouble *p1, RDouble *p2)
     //RDouble sy = dz1 * dx2 - dz2 * dx1;
     RDouble sz = dx1 * dy2 - dx2 * dy1;
 
-    if ( sz <= 0.0 ) return false;
+    if (sz <= 0.0) return false;
     return true;
 }
 
@@ -100,7 +100,7 @@ bool RightSide(RDouble &xm, RDouble &ym, RDouble &zm, RDouble &xfc, RDouble &yfc
 
     RDouble result = dx * xfn + dy * yfn + dz * zfn;
 
-    if ( result > 0 ) return true;
+    if (result > 0) return true;
     return false;
 }
 
@@ -142,7 +142,7 @@ void Visualization(UnstructGrid *grid, RDouble *field, const string &filename, c
 {
     fstream file;
     file.open(filename.c_str(),ios_base::out|ios_base::trunc);
-    if ( !file )
+    if (!file)
     {
         TK_Exit::FileOpenErrorExit(filename);
     }

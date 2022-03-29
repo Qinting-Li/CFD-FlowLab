@@ -39,14 +39,25 @@ const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
 const int INTEGRATIVE_SOLVER  = 14;
+const int GRIDCHECK_SOLVER = 15;
 
 const int SPECDIFFHYB_SOLVER  = 51;
 const int SPEC_SOLVER         = 52;
+
+const int NOLES_SOLVER        = 0;
 const int LES_SOLVER          = 1;
 
 const int DERIVATIVE_IDENITFY = 98;
 
 const int POST_PROCESSING     = 99;
+
+const int GRID_CONVERSION = 1;
+const int GRID_REFINE     = 2;
+const int GRID_MERGING    = 3;
+const int GRID_DEFORMATION= 4;
+const int GRID_REPAIR     = 5;
+const int GRID_MIRROR     = 6;
+const int GRID_STRTOUNS   = 7;
 
 const RDouble half            = 0.5;
 const RDouble third           = 1.0 / 3.0;
@@ -241,6 +252,13 @@ const int OMEGA_EQ = 8;
 const int MAX_SPECIES_NUM = 20;     //! The maximum number of species.
 const int MAX_REACTION_NUM = 50;    //! The maximum number of reactions.
 
+namespace WALLFUNCTION
+{
+    const int NONE = 0;
+    const int STANDARD = 1;
+    const int PAB3D = 2;
+}
+
 namespace ABLATION
 {
 const RDouble FormationHeat = 13.083E+07;
@@ -272,6 +290,14 @@ typedef enum
     OrthogonalCorrection  = 2,
     OverrelaxedCorrection = 3
 } InCom_nonOrthMethod;
+
+typedef enum
+{
+    firstUpWind    = 0,
+    secondUpWind   = 1,
+    QUICKMTHOD     = 2,
+    SecondCentral  = 3,
+} invFluxScheme;
 
 typedef enum
 {

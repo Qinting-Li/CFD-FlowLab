@@ -34,7 +34,7 @@ public:
 
 public:
     void Run();
-    Grid ** GetUnsGrids();
+    Grid ** GetUnstructGrids();
 
 private:
     void InitMemory();

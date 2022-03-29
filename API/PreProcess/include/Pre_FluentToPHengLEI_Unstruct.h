@@ -15,7 +15,7 @@
 
 #pragma once
 #include "Pre_GridConversion.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 
 using namespace std;
 
@@ -104,7 +104,7 @@ public:
     void BuildBCMap();
     int  Fluent2FantasyBC(int bctype);
     void SetBoundaryName(int zoneIndex, const string &BCName);
-    void ResetBCTypeOfSelfDefinePart(int zoneIndex );
+    void ResetBCTypeOfSelfDefinePart(int zoneIndex);
     void DumpSelfDefinePartInformation();
     void Convert2UnsGrid(int nb, UnstructGrid *grid);
 };

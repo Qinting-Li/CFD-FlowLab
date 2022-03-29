@@ -49,12 +49,12 @@ void NOAction (ActionKey *actkey)
 
 void AddTasktoSimu(Task *task)
 {
-    Task::ootasklist->push_back( task );
+    Task::ootasklist->push_back(task);
 }
 
 void RunSimuTask(Task *task, bool run_now)
 {
-    if ( run_now )
+    if (run_now)
     {
         task->RunTask();
     }
@@ -70,7 +70,7 @@ RDouble MaxStoreValue()
 {
     RDouble value = store_value[0];
 
-    for ( size_t i = 0; i < store_value.size(); ++ i )
+    for (size_t i = 0; i < store_value.size(); ++ i)
     {
         value = MAX(store_value[i],value);
     }
@@ -81,7 +81,7 @@ void GlobalSolve()
 {
     uint_t taskNumber = Task::ootasklist->size();
 
-    for ( int iTask = 0; iTask < taskNumber; ++ iTask )
+    for (int iTask = 0; iTask < taskNumber; ++ iTask)
     {
         Task *task = (*Task::ootasklist)[iTask];
 
@@ -124,7 +124,7 @@ void PH_Interface(ActionKey *actkey, int izone, int jzone)
     int tag = GetSendRecvTag(actkey, izone);
     int myid = GetCurrentProcessorID();
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         //! If this process is a send process.
         actkey->ipos = jzone;
@@ -134,7 +134,7 @@ void PH_Interface(ActionKey *actkey, int izone, int jzone)
     
     PH_Trade(actkey, send_proc, recv_proc, tag);   
 
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
         //! If this process is a receive process,there are two situations:
         //! One is that this process is a receive process and also a send process.
@@ -166,11 +166,11 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
             compressData = receivedBuffer;
         }
         //! Fill the send buffer by actkey.
-        actkey->SetData( compressData );
+        actkey->SetData(compressData);
         actkey->ipos = jzone;
         GeneralAction(actkey, izone);
 
-        actkey->SetData( originalData );
+        actkey->SetData(originalData);
     }
 
     if (sendProcessor == receiveProcessor)
@@ -187,7 +187,7 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
     else if (currentProcessor == receiveProcessor)
     {
         //! Pre-calculating the data length of the received data.
-        CharVecSizeType nlen = PH_Interface_GetLength( actkey, izone, jzone );
+        CharVecSizeType nlen = PH_Interface_GetLength(actkey, izone, jzone);
         //! Receive data from neighbors.
         receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
     }
@@ -195,7 +195,7 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
 
 void GeneralTranslateAction(ActionKey *actkey, int izone)
 {
-    if ( actkey->kind == SOLVER_BASED )
+    if (actkey->kind == SOLVER_BASED)
     {
         GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateAction(actkey);
     }
@@ -207,7 +207,7 @@ void GeneralTranslateAction(ActionKey *actkey, int izone)
 
 streamsize GeneralTranslateActionLength(ActionKey *actkey, int izone)
 {
-    if ( actkey->kind == SOLVER_BASED )
+    if (actkey->kind == SOLVER_BASED)
     {
         return GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateActionLength(actkey);
     }
@@ -228,15 +228,15 @@ CharVecSizeType PH_Interface_GetLength(ActionKey *actkey, int izone, int jzone)
 
     int myid = GetCurrentProcessorID();
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         DataContainer *cdata = actkey->GetData();
         nlen = cdata->size();
     }
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
         actkey->ipos = izone;
-        nlen = static_cast< CharVecSizeType >( GeneralTranslateActionLength(actkey, jzone) );
+        nlen = static_cast< CharVecSizeType >(GeneralTranslateActionLength(actkey, jzone));
     }
     return nlen;
 }
@@ -249,7 +249,7 @@ void PH_ReadPattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, 
     int myid = GetCurrentProcessorID();
     int tag = GetSendRecvTag(actkey, izone);
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         //! If this process is a send process.
         main_action(actkey);
@@ -257,7 +257,7 @@ void PH_ReadPattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, 
 
     PH_Trade(actkey, send_proc, recv_proc, tag);
 
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
         //! If this process is a receive process,there are two situations:
         //! One is that this process is a receive process and also a send process.
@@ -274,7 +274,7 @@ void PH_WritePattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc,
     int myid = GetCurrentProcessorID();
     int tag = GetSendRecvTag(actkey, izone);
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         //! If the process zone i belongs to is the current process.
         GeneralAction(actkey, izone);
@@ -282,7 +282,7 @@ void PH_WritePattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc,
 
     PH_Trade(actkey, send_proc, recv_proc, tag);
 
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
         //! If this process is server process.
         main_action(actkey);

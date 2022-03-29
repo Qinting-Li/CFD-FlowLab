@@ -8,20 +8,28 @@
 #include "OverLappingGrid.h"
 #include "PHIO.h"
 #include "TK_Log.h"
+#include "Pre_StructToUnstruct.h"
+
+#ifdef USE_INHOUSE_VERSION
+#include "Mesh_Repair.h"
+#include "ParallelMeshGen.h"
+#endif
+
 #include "FieldViewIn.h"
 #include "GridView.h"
 #include "Pre_CGNSToPlot3D_Struct.h"
-#include "Pre_GridRefine.h"
+#include "Mesh_Refine_Struct.h"
 #include "Pre_CGNSToPHengLEI_Unstruct.h"
 #include "Pre_FluentToPHengLEI_Unstruct.h"
 #include "Pre_FieldViewToPHengLEI_Unstruct.h"
 #include "Pre_Plot3DToPHengLEI_Struct.h"
 #include "Pre_CGNSToPHengLEI_Struct.h"
 #include "Gmesh.h"
-#include "GridTranslator.h"
-#include "CombinGrid.h"
+#include "Pre_GridTranslator.h"
+#include "Pre_GridCombine.h"
 #include "Pre_GridMirror.h"
-#include "GridDeformation.h"
+#include "Mesh_Deformation.h"
+#include "Mesh_Refine_Unstruct.h"
 #pragma warning (disable:913)
 
 namespace PHSPACE
@@ -44,8 +52,8 @@ void CreateGrid()
     case PHSPACE::GRID_CONVERSION:
         ConvertGrid();
         break;
-    case PHSPACE::GRID_ADAPTATION:
-        ReconstructGrid();
+    case PHSPACE::GRID_REFINE:
+        RefineGrid();
         break;
     case PHSPACE::GRID_MERGING:
         CombinationGrid();
@@ -53,9 +61,16 @@ void CreateGrid()
     case PHSPACE::GRID_DEFORMATION:
         DeformGrid();
         break;
+#ifdef USE_INHOUSE_VERSION
+    case PHSPACE::GRID_REPAIR:
+        RepairGrid();
+        break;
+#endif
     case PHSPACE::GRID_MIRROR:
         MirrorGrid();
         break;
+    case PHSPACE::GRID_STRTOUNS:
+        StructToUnstructGrid();
     default:
         break;
     }
@@ -69,6 +84,36 @@ void MirrorGrid()
 
     GridMirror.Run();
 
+}
+
+void StructToUnstructGrid()
+{
+    //! Read grid.
+    string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    GlobalDataBase::UpdateData("gridfile", &fromGridFile, PHSTRING, 1);
+    Region *region = new Region();
+    region->ReadGrid();
+
+    //! Get struct grid.
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    Grid **structGrid = new Grid *[nZones];
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        structGrid[iZone] = GetGrid(iZone);
+    }
+
+    //! Struct to unstruct grid.
+    Pre_StructToUnstruct *struct2Unstruct = new Pre_StructToUnstruct(structGrid, nZones);
+    struct2Unstruct->Run();
+
+    //! Dump grid.
+    Grid **unstructGrid = struct2Unstruct->GetUnstructGrids();
+    string outGridFile = GlobalDataBase::GetStrParaFromDB("out_gfile");
+    DumpGrid(outGridFile, unstructGrid, nZones);
+
+    delete []structGrid;
+    delete struct2Unstruct;
+    delete region;
 }
 
 void MixedGridProcess()
@@ -92,13 +137,23 @@ void MixedGridProcess()
     delete region;
 }
 
+void Plot3DGridProcess()
+{
+    int toGridType = GlobalDataBase::GetIntParaFromDB("to_gtype");
+
+    if (toGridType == FANTASY_TYPE)
+    {
+        Plot3DToPHengLEI();
+    }
+}
+
 void GridgenGridProcess()
 {
     int toGridType = GlobalDataBase::GetIntParaFromDB("to_gtype");
 
     if (toGridType == FANTASY_TYPE)
     {
-        Gridgen2Fantasy();
+        GridgenToPHengLEI();
     }
 }
 
@@ -164,9 +219,9 @@ void FantasyGridProcess()
     {
         Fantasy2Ustar();
     }
-    else if (toGridType == GRIDGEN_TYPE)
+    else if (toGridType == PLOT3D_TYPE)
     {
-        Fantasy2Gridgen();
+        Fantasy2Plot3D();
     }
     else if (toGridType == FANTASY_TYPE)
     {
@@ -200,8 +255,8 @@ void ConvertGrid()
         case CGNS_TYPE:
             CGNSGridProcess();
             break;
-        case GRIDGEN_TYPE:
-            GridgenGridProcess();
+        case PLOT3D_TYPE:
+            Plot3DGridProcess();
             break;
         case FIELDVIEW_TYPE:
             FieldViewGridProcess();
@@ -214,6 +269,9 @@ void ConvertGrid()
             break;
         case GMSH_TYPE:
             GmeshGridProcess();
+            break;
+        case GRIDGEN_TYPE:
+            GridgenGridProcess();
             break;
         default:
             TK_Exit::UnexpectedVarValue("from_gtype", fromGridType);
@@ -266,7 +324,7 @@ void MultiGridConvert()
             totalGrids.push_back(grids[iZone]);
         }
 
-        string outGridFile = ChangeExtensionOfFileName( gridFileName, "fts" );
+        string outGridFile = ChangeExtensionOfFileName(gridFileName, "fts");
         DumpGrid(outGridFile, grids, nZones);
         DumpCharacteristicBoundary(outGridFile, grids, nZones);
         WriteBCNameInfo(outGridFile, grids, nZones);
@@ -311,7 +369,7 @@ Pre_GridConversion *GetConvertType(const string &gridFileName, int gridType, int
         case CGNS_TYPE:
             gridConversion = new Pre_CGNSToPHengLEI_Struct(gridFileName);
             break;
-        case GRIDGEN_TYPE:
+        case PLOT3D_TYPE:
             gridConversion = new Pre_Plot3DToPHengLEI_Struct(gridFileName);
             break;
         default:
@@ -327,23 +385,46 @@ Pre_GridConversion *GetConvertType(const string &gridFileName, int gridType, int
     return gridConversion;
 }
 
-
-
-void ReconstructGrid()
+void RefineGrid()
 {
-    int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
+    RefineParameter *refineParameter = new RefineParameter();
+    int anisoRefine = GlobalDataBase::GetIntParaFromDB("gridtype");
+#ifdef USE_INHOUSE_VERSION
+#ifdef USE_OCC
+    int isProject = GlobalDataBase::GetIntParaFromDB("gridtype");
+    int isDeform = GlobalDataBase::GetIntParaFromDB("gridtype");
+    int exclusiveCase = GlobalDataBase::GetIntParaFromDB("gridtype");
+    int projectOrgPoint = GlobalDataBase::GetIntParaFromDB("gridtype");
+    int geometryUnit = GlobalDataBase::GetIntParaFromDB("gridtype");
+    string geometryFileName = GlobalDataBase::GetStrParaFromDB("from_gfile");
 
-    if  (gridtype == UNSTRUCTGRID)
+    refineParameter->SetIsProject(isProject);
+    refineParameter->SetIsDeform(isDeform);
+    refineParameter->SetExclusiveCase(exclusiveCase);
+    refineParameter->SetProjectOrgPoint(projectOrgPoint);
+    refineParameter->SetGeometryUnit(geometryUnit);
+    refineParameter->SetGeometryFileName(geometryFileName);
+#endif
+#endif
+    refineParameter->SetAnisoRefineType(anisoRefine);
+
+    int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
+    string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    Mesh_Refine *meshRefine = 0;
+    if (gridtype == UNSTRUCTGRID)
     {
+        meshRefine = new Mesh_Refine_Unstruct(fromGridFile);
     }
     else if (gridtype == STRUCTGRID)
     {
-        string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
+        meshRefine = new Mesh_Refine_Struct(fromGridFile);
 
-        Pre_GridRefine gridRefine(fromGridFile);
-
-        gridRefine.Run();
     }
+    meshRefine->SetRefineParameter(refineParameter);
+    meshRefine->Run();
+
+    delete refineParameter;
+    delete meshRefine;
 }
 
 void CombinationGrid()
@@ -383,9 +464,151 @@ void CombinationGrid()
 
 void RepairGrid()
 {
+    #ifdef USE_INHOUSE_VERSION
+    string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    GlobalDataBase::UpdateData("gridfile", &fromGridFile, PHSTRING, 1);
+
+    Region * region = new Region();
+
+    // Step1: Read in the original grid.
+    region->ReadGrid();
+
+    // Create action key.
+    string outGridFile = GlobalDataBase::GetStrParaFromDB("out_gfile");
+    ios_base::openmode openMode = ios_base::out|ios_base::binary|ios_base::trunc;
+    ActionKey *actkey = new ActionKey();
+    actkey->filename = outGridFile;
+    actkey->openmode = openMode;
+
+    // Repair grid.
+    int myid = PHMPI::GetCurrentProcessorID();
+    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+
+    vector <Grid *> gridsList;
+    int *localToGlobal = new int[numberOfZones]();
+    PHSPACE::SetField(localToGlobal, -1, numberOfZones);
+    
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int sendProcess = PHMPI::GetZoneProcessorID(iZone);
+        int recvProcess = PHMPI::GetZoneFileID(iZone);
+
+        int tag = iZone;
+
+        if (myid == sendProcess)
+        {
+            Zone *zone = region->GetZone(iZone); 
+            RepairGrid(zone,actkey);
+        }
+
+        PHMPI::PH_Trade(actkey, sendProcess, recvProcess, tag);
+
+        if (myid == recvProcess)
+        {
+            Grid *grid = CreateGridGeneral(PHMPI::GetZoneGridType(iZone),new GridID(iZone, static_cast<int>(gridsList.size())), 0, GetDim());
+            localToGlobal[gridsList.size()] = iZone;
+
+            // Decompress.
+            DataContainer *cData = actkey->GetData();
+            cData->moveto_begin();
+            grid->Decode(cData, 0);
+
+            UnstructGridCast(grid)->ReSpecifyBC();
+
+            gridsList.push_back(grid);
+        }
+
+    }
+
+    delete region;
+    delete actkey;
+
+    WriteLogFile("Start to wait for all repair work ...\n");
+    PH_Barrier();
+    WriteLogFile("End waiting for all repair work, start to dump repaired grids to file ...\n");
+
+    // Write grids.
+    int numberOfBlocks = static_cast<int>(gridsList.size());
+    if(numberOfBlocks == 0) 
+    {
+        delete []localToGlobal;
+        return;
+    }
+
+    string fileName = outGridFile;
+
+    int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
+    if(!dumpOldGrid)
+    {
+        //! Dump new HDF5 version grid.
+        PrintToWindow("    Writing new HDF5 version grid to file ....\n");
+        WriteLogFile("    Writing  new HDF5 version grid to file ....\n");
+        int numberOfZones = static_cast <int> (gridsList.size());
+        Grid **gridContainer = new Grid *[numberOfZones];
+        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+        {
+            gridContainer[iZone] = gridsList[iZone];
+        }
+
+        IO_HDF5Write writeGrid(fileName, gridContainer, numberOfZones);
+        writeGrid.Run();
+
+        delete []gridContainer;
+    }
+    else
+    {
+        //! Dump old version grid.
+        if(PHMPI::IsParallelRun())
+        {
+            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+            fileName = AddSymbolToFileName(outGridFile, "_", fileID);
+        }
+        else
+        {
+            fileName = AddSymbolToFileName(outGridFile, "_", 0);
+        }
+
+        fstream file;
+        PHSPACE::OpenFile(file, fileName,ios_base::out|ios_base::binary|ios_base::trunc);
+
+        int *block_proc = new int[numberOfBlocks]();
+        int *block_idx  = new int[numberOfBlocks]();
+        int *block_type = new int[numberOfBlocks]();
+
+        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+        {
+            int globalID = localToGlobal[iZone];
+            block_proc[iZone] = iZone;
+            block_idx [iZone] = globalID;
+            block_type[iZone] = PHMPI::GetZoneGridType(globalID);
+        }
+
+        CharVecSizeType sizeOfIntType = sizeof(int);
+
+        file.write(reinterpret_cast <char*> (&numberOfBlocks), sizeOfIntType);
+        file.write(reinterpret_cast <char*> (block_proc), numberOfBlocks * sizeOfIntType);
+        file.write(reinterpret_cast <char*> (block_idx), numberOfBlocks * sizeOfIntType);
+        file.write(reinterpret_cast <char*> (block_type), numberOfBlocks * sizeOfIntType);
+
+        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+        {
+            gridsList[iZone]->WriteGrid(file);
+        }
+
+        file.close();
+        file.clear();
+
+        delete []block_idx;    block_idx = NULL;
+        delete []block_proc;    block_proc = NULL;
+        delete []block_type;    block_type = NULL;
+        delete []localToGlobal;    localToGlobal = NULL;
+    }
+
+    WriteLogFile("End dumping repaired grids to file ...\n");
+    #endif
 }
 
-void Fantasy2Gridgen()
+void Fantasy2Plot3D()
 {
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     GlobalDataBase::UpdateData("gridfile", &fromGridFile, PHSTRING, 1);
@@ -497,7 +720,6 @@ void CGNS2UnstructGrid()
 
     //! Read CGNS grid and convert it's format.
     Pre_CGNSToPHengLEI_Unstruct cgnsGridConversion(fromGridFile);
-
     cgnsGridConversion.Run();
 
     int numberOfBlocks = cgnsGridConversion.GetNumberofBlocks();
@@ -549,7 +771,7 @@ void CGNS2StructGrid()
 
     cgnsGridConversion.Run();
 
-    GridgenGridProcess();
+    Plot3DGridProcess();
 }
 
 void ReadGMSH(CGNSFactory *&factoryCGNS, int &numberOfBlocks, const string &filename)
@@ -614,7 +836,7 @@ void GridgenToMIX()
 
     int numberOfBlocks;
     Grid **structgrids;
-    ReadGridgen(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
+    ReadPlot3dGrid(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
 
     Grid **grids = new Grid *[numberOfBlocks];
 
@@ -678,7 +900,7 @@ void Gridgen2Fantasy()
         sys_gridtype = STRUCTGRID;
         GlobalDataBase::UpdateData("sys_gridtype", &sys_gridtype, PHINT, 1);
 
-        GridgenToStr();
+        Plot3DToPHengLEI();
     }
 }
 
@@ -690,7 +912,7 @@ void GridgenToSingleUns()
 
     int nBlocks;
     Grid **structgrids;
-    ReadGridgen(structgrids, nBlocks, fromGridFile, boundaryFile);
+    ReadPlot3dGrid(structgrids, nBlocks, fromGridFile, boundaryFile);
 
     int numberOfBlocks = 1;
 
@@ -728,7 +950,7 @@ void GridgenToMBlockUns()
     int numberOfBlocks;
 
     Grid **structgrids;
-    ReadGridgen(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
+    ReadPlot3dGrid(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
 
     Grid ** grids = new Grid *[numberOfBlocks];
 
@@ -756,7 +978,7 @@ void GridgenToMBlockUns()
     delete []structgrids;
 }
 
-void GridgenToStr()
+void GridgenToPHengLEI()
 {
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
@@ -767,7 +989,7 @@ void GridgenToStr()
 
     int numberOfBlocks;
     Grid **structgrids;
-    ReadGridgen(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
+    ReadGridgenGrid(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
 
     int ndim = PHSPACE::GetDim();
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
@@ -823,5 +1045,71 @@ void GridgenToStr()
     }
 }
 
+void Plot3DToPHengLEI()
+{
+    string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");
+    string boundaryFile = GlobalDataBase::GetStrParaFromDB("bnd_file");
+    int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
+
+    int isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+
+    int numberOfBlocks;
+    Grid **structgrids;
+    ReadPlot3dGrid(structgrids, numberOfBlocks, fromGridFile, boundaryFile);
+
+    int ndim = PHSPACE::GetDim();
+    int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
+
+    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+    {
+        structgrids[iZone]->SetLnkInfo();
+    }
+
+    if (ndim == TWO_D || isOverset || (ndim == THREE_D && periodicType != 0))
+    {
+        CheckMeshMultigrid(structgrids, numberOfBlocks);
+
+        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+        {
+            structgrids[iZone]->ProcessBCInfo();
+        }
+
+        ConstructGlobalInterfaceLink(structgrids, numberOfBlocks);
+
+        if (dumpOldGrid)
+        {
+            WriteLnkFile(outGridFile, structgrids, numberOfBlocks);
+        }
+
+        DumpGrid(outGridFile, structgrids, numberOfBlocks);
+        WriteBoundaryInfo(structgrids, numberOfBlocks);
+        DumpCharacteristicBoundary(outGridFile, structgrids, numberOfBlocks);
+        WriteBCNameInfo(outGridFile, structgrids, numberOfBlocks);
+
+        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
+        {
+            delete structgrids[iZone];
+        }
+        delete []structgrids;
+    }
+    else
+    {
+        if (dumpOldGrid)
+        {
+            WriteLnkFile(outGridFile, structgrids, numberOfBlocks);
+        }
+
+        CheckMeshMultigrid(structgrids, numberOfBlocks);
+        GridTranslator *gridTranslator = new GridTranslator(structgrids, numberOfBlocks);
+        gridTranslator->Run();
+
+        WriteBoundaryInfo(structgrids, numberOfBlocks);
+        DumpCharacteristicBoundary(outGridFile, structgrids, numberOfBlocks);
+        WriteBCNameInfo(outGridFile, structgrids, numberOfBlocks);
+
+        delete gridTranslator;
+    }
 }
 
+}

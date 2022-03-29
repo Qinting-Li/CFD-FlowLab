@@ -73,7 +73,7 @@ LIB_EXPORT void Param_CFDSolver::Init()
     GlobalDataBase::GetData("lowerPlotFieldBox", &lowerPlotFieldBox, PHDOUBLE, 3);
     GlobalDataBase::GetData("upperPlotFieldBox", &upperPlotFieldBox, PHDOUBLE, 3);
 
-    isOverLapping = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
 }
 
 }

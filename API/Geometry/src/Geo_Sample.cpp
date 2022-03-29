@@ -184,7 +184,7 @@ void ProbeData::SearchNearestCell(StructGrid * grid)
     int nk = grid->GetNK();
 
     Range I, J, K;
-    GetRange( ni, nj, nk, 0, -1, I, J, K );
+    GetRange(ni, nj, nk, 0, -1, I, J, K);
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
@@ -203,11 +203,11 @@ void ProbeData::SearchNearestCell(StructGrid * grid)
     int nearestCellNJ = GetProbeCellNJ();
     int nearestCellNK = GetProbeCellNK();
 
-    for ( int k = kst; k <= ked; ++ k )
+    for (int k = kst; k <= ked; ++ k)
     {
-        for ( int j = jst; j <= jed; ++ j )
+        for (int j = jst; j <= jed; ++ j)
         {
-            for ( int i = ist; i <= ied; ++ i )
+            for (int i = ist; i <= ied; ++ i)
             {
                 RDouble CurrentDistance = DISTANCE(xcc(i, j, k) - coordinates[0], ycc(i, j, k) - coordinates[1], zcc(i, j, k) - coordinates[2]);
                 if (CurrentDistance < nearestCellDistance)
@@ -251,9 +251,9 @@ void ProbeData::SearchNearestCell(UnstructGrid * grid)
     int nearestCellID = GetProbeCellID();
     int nearestCellZoneID = GetProbeCellZoneID();
 
-    for ( int icell = 0; icell < nTotalCell; ++ icell )
+    for (int icell = 0; icell < nTotalCell; ++ icell)
     {
-        RDouble CurrentDistance = DISTANCE( xcc[icell]-coordinates[0], ycc[icell]-coordinates[1], zcc[icell]-coordinates[2] );
+        RDouble CurrentDistance = DISTANCE(xcc[icell]-coordinates[0], ycc[icell]-coordinates[1], zcc[icell]-coordinates[2]);
         if (CurrentDistance < nearestCellDistance)
         {
             nearestCellDistance = CurrentDistance;
@@ -295,7 +295,7 @@ void ProbeData::SearchRealCell(StructGrid * grid, bool &flag)
     int nk = grid->GetNK();
 
     Range I, J, K;
-    GetRange( ni, nj, nk, 0, -1, I, J, K );
+    GetRange(ni, nj, nk, 0, -1, I, J, K);
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
@@ -319,11 +319,11 @@ void ProbeData::SearchRealCell(StructGrid * grid, bool &flag)
     int nDim = GetDim();
     int il, jl, kl;
     RDouble small = 1.0e-8;
-    for ( int k = kst; k <= ked; ++ k )
+    for (int k = kst; k <= ked; ++ k)
     {
-        for ( int j = jst; j <= jed; ++ j )
+        for (int j = jst; j <= jed; ++ j)
         {
-            for ( int i = ist; i <= ied; ++ i )
+            for (int i = ist; i <= ied; ++ i)
             {
                 for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
                 { 
@@ -463,9 +463,9 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
     int realCellZoneID = GetProbeCellZoneID();
 
     RDouble small = 1.0e-8;
-    for ( int icell = 0; icell < nTotalCell; ++ icell )
+    for (int icell = 0; icell < nTotalCell; ++ icell)
     {
-        for ( int iface = 0; iface < faceNumberOfEachCell[icell]; ++ iface )
+        for (int iface = 0; iface < faceNumberOfEachCell[icell]; ++ iface)
         {
             int faceID = cell2face[icell][iface];
 
@@ -547,12 +547,12 @@ void ProbeData::WriteStructProbeCellInfo(fstream &file)
     }
     if (dataMonitorType == SURFACESMONITOR)
     {
-        oss << setw(wordWidth) << surfaceID << "	";
+        oss << setw(wordWidth) << surfaceID << "\t";
     }
-    oss << setw(wordWidth) << distance << "	";
-    oss << " ( " << cellNI << " , " << cellNJ << " , " << cellNK << " ) " << "	";
-    oss << setw(wordWidth) << cellType << "	";
-    oss << setw(wordWidth) << cellZoneID << "	";
+    oss << setw(wordWidth) << distance << "\t";
+    oss << " ( " << cellNI << " , " << cellNJ << " , " << cellNK << " ) " << "\t";
+    oss << setw(wordWidth) << cellType << "\t";
+    oss << setw(wordWidth) << cellZoneID << "\t";
     oss << "\n";
 
     WriteASCIIFile(file, oss.str());
@@ -609,7 +609,7 @@ void ProbeData::CompressUnstructProbeCellInfo(DataContainer *cdata)
     int cellID = GetProbeCellID();
     RDouble distance = GetProbeToCellDistance();
 
-    int nDim =static_cast<int>( coordinates.size());
+    int nDim =static_cast<int>(coordinates.size());
     PHWrite(cdata, nDim);
     for (int iDim = 0; iDim < nDim; ++ iDim)
     {
@@ -640,7 +640,7 @@ void ProbeData::CompressStructProbeCellInfo(DataContainer *cdata)
     int cellNK = GetProbeCellNK();
     RDouble distance = GetProbeToCellDistance();
 
-    int nDim =static_cast<int>( coordinates.size());
+    int nDim =static_cast<int>(coordinates.size());
     PHWrite(cdata, nDim);
 
     for (int iDim = 0; iDim < nDim; ++ iDim)
@@ -773,7 +773,7 @@ void SampleLocationInfo::Run()
 
         CheckIfDefineFileExist();
 
-        if ( IfDefineFileExist())
+        if (IfDefineFileExist())
         {
             ReadProbesData();
         }
@@ -790,7 +790,7 @@ void SampleLocationInfo::Run()
 
         CheckIfDefineFileExist();
 
-        if ( IfDefineFileExist())
+        if (IfDefineFileExist())
         {
             int nLines = GlobalDataBase::GetIntParaFromDB("nLines");
             SetNumberToMonitor(nLines);
@@ -809,7 +809,7 @@ void SampleLocationInfo::Run()
         SetDefineFileName(surfacesDefineFile);
 
         CheckIfDefineFileExist();
-        if ( IfDefineFileExist())
+        if (IfDefineFileExist())
         {
             int nSurfaces = GlobalDataBase::GetIntParaFromDB("nSurfaces");
             SetNumberToMonitor(nSurfaces);
@@ -824,7 +824,7 @@ void SampleLocationInfo::Run()
     }
     else
     {
-        TK_Exit::UnexpectedVarValue( "dataMonitorType", dataMonitorType );
+        TK_Exit::UnexpectedVarValue("dataMonitorType", dataMonitorType);
     }
 
     UpdateAllProbesData();
@@ -838,7 +838,7 @@ void SampleLocationInfo::Run()
     {
         CheckInvalidProbesData();
 
-        string gridfile = GlobalDataBase::GetStrParaFromDB( "gridfile" );
+        string gridfile = GlobalDataBase::GetStrParaFromDB("gridfile");
         string probesCellFileName = PHSPACE::AddSymbolToFileName(gridfile, '_', currentProcessorID);
         WriteProbesCellInfo(probesCellFileName);
     }
@@ -1197,10 +1197,10 @@ void SampleLocationInfo::UpdateNearestCellsData()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for ( int iProbe = 0; iProbe < numberOfTotalProbes; ++ iProbe )
+    for (int iProbe = 0; iProbe < numberOfTotalProbes; ++ iProbe)
     {
         vector <RDouble> coordinates = sampleLocationInfo[iProbe]->GetProbeCoordinates();
-        for ( int izone = 0; izone < nLocalZones; ++ izone )
+        for (int izone = 0; izone < nLocalZones; ++ izone)
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
 
@@ -1224,12 +1224,12 @@ void SampleLocationInfo::UpdateRealCellsData()
 #pragma omp parallel for
 #endif
 
-    for ( int iProbe = 0; iProbe < numberOfTotalProbes; ++ iProbe )
+    for (int iProbe = 0; iProbe < numberOfTotalProbes; ++ iProbe)
     {
         bool flag = false;
         vector <RDouble> coordinates = sampleLocationInfo[iProbe]->GetProbeCoordinates();
 
-        for ( int izone = 0; izone < nLocalZones; ++ izone )
+        for (int izone = 0; izone < nLocalZones; ++ izone)
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
 
@@ -1289,6 +1289,7 @@ void SampleLocationInfo::UpdateProbesGlobalPara()
 
 void SampleLocationInfo::ServerCollectionProbesData()
 {
+    int searchCellsMethod = GlobalDataBase::GetIntParaFromDB("searchCellsMethod");
     int server = GetServerProcessorID();
     int myid   = GetCurrentProcessorID();
     int numberOfProcessor = GetNumberOfProcessor();
@@ -1317,7 +1318,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
         cellNK = sampleLocationInfo[iProbe]->GetProbeCellNK();
         distance = sampleLocationInfo[iProbe]->GetProbeToCellDistance();
 
-        nDim =static_cast<int>( coordinates.size());
+        nDim =static_cast<int>(coordinates.size());
 
         PHWrite(cdata, myid);
         PHWrite(cdata, nDim);
@@ -1393,27 +1394,70 @@ void SampleLocationInfo::ServerCollectionProbesData()
                 PHRead(cdata, cellNKRecv);
                 PHRead(cdata, distanceRecv);
 
+                double distanceTemp = sampleLocationInfo[iProbe]->GetProbeToCellDistance();
+                int cellZoneIDTemp = sampleLocationInfo[iProbe]->GetProbeCellZoneID();
 
-                if (distanceRecv < sampleLocationInfo[iProbe]->GetProbeToCellDistance())
+                if(searchCellsMethod == 0)
                 {
-                    sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                    sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
-                    sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
-                    sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
-                    sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
-                    sampleLocationInfo[iProbe]->SetProbeCellType(cellTypeRecv);
-                    sampleLocationInfo[iProbe]->SetProbeCellZoneID(cellZoneIDRecv);
-                    sampleLocationInfo[iProbe]->SetProbeCellID(cellIDRecv);
-                    sampleLocationInfo[iProbe]->SetProbeCellNI(cellNIRecv);
-                    sampleLocationInfo[iProbe]->SetProbeCellNJ(cellNJRecv);
-                    sampleLocationInfo[iProbe]->SetProbeCellNK(cellNKRecv);
-                    sampleLocationInfo[iProbe]->SetProbeToCellDistance(distanceRecv);
+                    if (distanceRecv < distanceTemp)
+                    {
+                        sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
+                        sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
+                        sampleLocationInfo[iProbe]->SetProbeCellType(cellTypeRecv);
+                        sampleLocationInfo[iProbe]->SetProbeCellZoneID(cellZoneIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeCellID(cellIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeCellNI(cellNIRecv);
+                        sampleLocationInfo[iProbe]->SetProbeCellNJ(cellNJRecv);
+                        sampleLocationInfo[iProbe]->SetProbeCellNK(cellNKRecv);
+                        sampleLocationInfo[iProbe]->SetProbeToCellDistance(distanceRecv);
+                    }
                 }
-
+                else
+                {
+                    if (cellZoneIDTemp < 0)
+                    {
+                        if(cellZoneIDRecv > 0)
+                        {
+                            sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
+                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellType(cellTypeRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellZoneID(cellZoneIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellID(cellIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellNI(cellNIRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellNJ(cellNJRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellNK(cellNKRecv);
+                            sampleLocationInfo[iProbe]->SetProbeToCellDistance(distanceRecv);
+                        }
+                    }
+                    else
+                    {
+                        if(cellZoneIDRecv > 0 && cellZoneIDRecv < cellZoneIDTemp)
+                        {
+                            sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
+                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellType(cellTypeRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellZoneID(cellZoneIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellID(cellIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellNI(cellNIRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellNJ(cellNJRecv);
+                            sampleLocationInfo[iProbe]->SetProbeCellNK(cellNKRecv);
+                            sampleLocationInfo[iProbe]->SetProbeToCellDistance(distanceRecv);
+                        }
+                    }
+                }
             }
-            delete cdata;
-            cdata = NULL;
         }
+        delete cdata;
+        cdata = NULL;
     }
 }
 
@@ -1424,7 +1468,7 @@ void SampleLocationInfo::CheckInvalidProbesData()
     vector<ProbeData *> probesLocationInfo = GetSampleLocationInfo();
 
     int count = 0;
-    for ( int iProbe = 0; iProbe < nTotalProbes; ++ iProbe )
+    for (int iProbe = 0; iProbe < nTotalProbes; ++ iProbe)
     {
         vector <RDouble> coordinates = probesLocationInfo[iProbe]->GetProbeCoordinates();
         int lineID = probesLocationInfo[iProbe]->GetProbeLineID();
@@ -1447,7 +1491,7 @@ void SampleLocationInfo::CheckInvalidProbesData()
             }
             else
             {
-                TK_Exit::UnexpectedVarValue( "dataMonitorType", dataMonitorType );
+                TK_Exit::UnexpectedVarValue("dataMonitorType", dataMonitorType);
             }
 
             PrintToWindow(oss);
@@ -1472,7 +1516,7 @@ void SampleLocationInfo::CheckInvalidProbesData()
         }
         else
         {
-            TK_Exit::UnexpectedVarValue( "dataMonitorType", dataMonitorType );
+            TK_Exit::UnexpectedVarValue("dataMonitorType", dataMonitorType);
         }
 
         TK_Exit::ExceptionExit(oss);
@@ -1481,8 +1525,6 @@ void SampleLocationInfo::CheckInvalidProbesData()
 
 void SampleLocationInfo::BroadCastProbesData()
 {
-    int searchCellsMethod = GlobalDataBase::GetIntParaFromDB("searchCellsMethod");
-    if (searchCellsMethod == 1) return;
 
     int server = GetServerProcessorID();
     int myid   = GetCurrentProcessorID();
@@ -1684,7 +1726,7 @@ void SampleLocationInfo::WriteProbesCellInfo(const string &filename)
 
     WriteProbesCellInfoHeader(file);
 
-    for ( int iProbe = 0; iProbe < nTotalProbes; ++ iProbe )
+    for (int iProbe = 0; iProbe < nTotalProbes; ++ iProbe)
     {
         int gridType = probesSampleLocation[iProbe]->GetProbeCellType();
 
@@ -1706,9 +1748,9 @@ void SampleLocationInfo::WriteProbesCellInfo(const string &filename)
 
 bool CheckIfProbeInMinMaxBox(RDouble coordX,RDouble coordY,RDouble coordZ,RDouble *pmin,RDouble *pmax)
 {
-    if ( coordX < pmin[0] || coordX > pmax[0] ) return false;
-    if ( coordY < pmin[1] || coordY > pmax[1] ) return false;
-    if ( coordZ < pmin[2] || coordZ > pmax[2] ) return false;
+    if (coordX < pmin[0] || coordX > pmax[0]) return false;
+    if (coordY < pmin[1] || coordY > pmax[1]) return false;
+    if (coordZ < pmin[2] || coordZ > pmax[2]) return false;
     return true;
 }
 

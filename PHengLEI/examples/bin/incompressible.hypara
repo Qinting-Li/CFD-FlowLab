@@ -1,0 +1,162 @@
+#########################################################################
+#                             other Parameter                           #
+#########################################################################
+// maxSimuStep: the max simulation step, don't care simulation is restart or not.
+// intervalStepFlow:       the step intervals for 'flow.dat    ' saved.
+// intervalStepForce:   the step intervals for 'aircoef.dat ' saved.
+// intervalStepRes:    the step intervals for 'res.dat     ' saved.
+int    maxSimuStep  = 1000;
+int    intervalStepFlow        = 1000;
+int    intervalStepForce    = 200;
+int    intervalStepRes     = 10;
+
+//compressible:  0 for incompressible flow, 1 for compressible flow (default).
+int compressible        = 0;
+
+// attackd:                           Angle of attack.
+// angleSlide:                         Angle of yaw.
+double attackd                  = 0.00;
+double angleSlide                = 0.00;
+
+int InCom_ScalarEq_Scheme = 1;
+
+// iunsteady:           Steady or unsteady.
+//                          0 - steady
+//                          1 - unsteay
+int    iunsteady        = 0;
+
+// dt: a single time step for unsteay flow simulation.
+double dt = 0.01;
+
+//linearSolver : the method used for solving the Ax =b
+//                          0 - Gauss-Seidel iteration method.
+//                          1 - GMRES krylov sub-space method.
+//                          2 - Bicgstab krylov sub-space method.
+int linearSolver = 0;
+
+// relaxCoeff : under relaxion coeffient used for solve equation, it can improve the convergence.
+double relaxCoeff = 0.7;
+
+//InCom_nonOrthTreatment :  used for non-Orthogonal correction in viscous terms.
+//                          0 - None;
+//                          1 - MinimumCorrection;
+//                          2 - OrthogonalCorrection;
+//                          3 - OverrelaxedCorrection;
+int InCom_nonOrthTreatment = 3;
+
+// the reference dimensional values.
+double refDimensionalPressure = 1.0;
+double refDimensionalU = 1.0;
+double refDimensionalV = 0.0;
+double refDimensionalW = 0.0;
+double refDimensionaldesity = 1.0;
+double refDimensionalTemperature = 1.0;
+
+// the reference dimensionless values.
+double refReNumber = 100;
+
+// gridfile:       The partitioned Grid file path, using relative path,
+//				   which is relative to the working directory.
+//		IMPORTANT WARNNING: the file index should be ignored,
+// 		                    e.g. if the partitioned grid is rae2822_hybrid2d__4_0.fts,
+//					   			 Please use 'rae2822_hybrid2d__4.fts' here!
+
+string gridfile = "./grid/cavitity.fts";
+
+// the method used in solving the pressure possion equations.
+//                          1 - Projection;
+//                          2 - SIMPLE;
+//                          3 - SIMPLEC;
+//                          4 - PISO;
+int PPEMethod = 2;
+
+// methods used for calculating the convention terms.
+//                          0 - FUP (first order upwind method);
+//                          1 - 2nd Upwind method;
+//                          2 - QUICK method;
+//                          3 - SecondCentral;
+int invFluxScheme = 1;
+
+// plotFieldType:          If dump out the field results to visulization
+int    plotFieldType       = 1;
+
+// nVisualVariables:  number of variables want to be dumped for tecplot visualization.
+// visualVariables :  variable types dumped, listed as following:
+//                      -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6)
+//                      -- viscosityLaminar(7), viscosityTurbulent(8)
+//                      -- vorticity_x(9), vorticity_y(10), vorticity_z(11), vorticityMagnitude(12), strain_rate(13), Q_criteria(14)
+//                      -- Cp(15), timeStep(16), volume(17)
+//                      -- modeledTKE(18),modeleddissipationrate(19), SSTF1(20), SSTF2(21) 
+// Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!.
+// Arriables order must from small to larger.
+int    nVisualVariables     = 10;
+int    visualVariables[]  = [22, 23, 24, 25, 26, 27, 28, 29, 31, 32];
+
+
+
+#########################################################################
+#                         Incompressible Parameter                      #
+#########################################################################
+//ContinueCal : 0-continue , 1-restar
+int ContinueCal     =  1;
+double TimeStep     =  0.001;
+int MaxTimeStep		=  200;
+double Velocity     =  30.0;
+int Half      =  0;
+double RefX      =  0.0;
+double RefY      =  0.0;
+double RefZ      =  0.0;
+int ICAL[]      =  [1,1,1,1,0,0,0,1,0];
+double ResMax     =  0.001;
+double DivOfRes     =  1.0e5;
+double CoeOfMixConvection[]  =  [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0];
+double CoeOfSubrelax[]   =  [0.5,0.5,0.5,0.0205,0.15,0.15,0.15,0.05,0.125];
+double CoeOfResDecrease[]   =  [0.1,0.1,0.1,0.01,0.01,0.01,0.01,0.01,0.01];
+int MaxInterSimuStep[]   =  [2,2,2,6,2,2,2,2,2];
+double Density     =  1.225;
+double Viscosity    =  1.7894e-5;
+double ReynoldsNum    =  3.0e5;
+double Cmu      =  0.09;
+double C1      =  1.47;
+double C2      =  1.92;
+double Kappa     =  0.41;
+double Elog      =  8.431;
+double TurbEInit    =  0.66;
+double EDisInit     =  136.0;
+double TempInit     =  270.0;
+double F1In      =  0.0001;
+double F2In      =  0.0;
+double F3In      =  0.0;
+double TELimit     =  30.0;
+double VISLimit     =  1200.0;
+int iTEStart     =  2000;
+int nTEStep      =  4;
+int iWCoe      =  0;
+int nWFlow      =  100;
+int nWForce      =  1;
+double BlendT	=	0.0;
+double FLOWCONL      =  100.0;
+double FLOWCONR      =  100.0;
+double UJET1      =  10.0;
+double VJET1      =  0.0;
+double WJET1      =  0.0;
+double TJET1      =  270.0;
+double DENJET1      =  1.225;
+double UJET2      =  100.0;
+double VJET2      =  0.0;
+double WJET2      =  0.0;
+double TJET2      =  270.0;
+double DENJET2      =  1.225;
+
+
+#########################################################################
+#                  Incompressible structure Parameter                   #
+#########################################################################
+int StrRefI    =  3;
+int StrRefJ    =  3;
+int StrRefK    =  3;
+int nBlock    =  0;
+double CoeOfSPI   =  0.92;
+
+
+string visualfile         = "results/tecflow.plt";

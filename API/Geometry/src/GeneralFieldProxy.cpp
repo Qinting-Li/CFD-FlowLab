@@ -14,7 +14,7 @@ GeneralFieldProxy::GeneralFieldProxy()
 
 GeneralFieldProxy::~GeneralFieldProxy()
 {
-    if ( del_field )
+    if (del_field)
     {
         DelPointer2(field);
     }

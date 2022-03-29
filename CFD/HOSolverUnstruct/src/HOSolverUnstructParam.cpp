@@ -29,16 +29,16 @@ LIB_EXPORT void HOSolverUnstructParam::Init()
     GlobalDataBase::GetData("alf_n", &RoeEntropyFixCoef2, PHDOUBLE, 1);
     angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
 
-    dgSolOrder = GlobalDataBase::GetIntParaFromDB( "dg_sol_order" );
-    fvSolOrder = GlobalDataBase::GetIntParaFromDB( "fv_sol_order" );
+    dgSolOrder = GlobalDataBase::GetIntParaFromDB("dg_sol_order");
+    fvSolOrder = GlobalDataBase::GetIntParaFromDB("fv_sol_order");
 
     dgSolDof = (dgSolOrder+1)*(dgSolOrder+2)*(dgSolOrder+3)/6;
     fvSolDof = (fvSolOrder+1)*(fvSolOrder+2)*(fvSolOrder+3)/6;
 
-    pMultiGrid = GlobalDataBase::GetIntParaFromDB( "p_multigrid" );
-    if( pMultiGrid < 1 ) pMultiGrid = 1;
+    pMultiGrid = GlobalDataBase::GetIntParaFromDB("p_multigrid");
+    if(pMultiGrid < 1) pMultiGrid = 1;
 
-    uns_scheme_name = GlobalDataBase::GetStrParaFromDB( "uns_scheme_name" );
+    uns_scheme_name = GlobalDataBase::GetStrParaFromDB("uns_scheme_name");
 
     RDouble Ma = GetRefMachNumber();
     R = 1/(HO_GAMA * Ma * Ma);

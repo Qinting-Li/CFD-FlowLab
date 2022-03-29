@@ -15,7 +15,7 @@ namespace HOUnstruct
         gamp1 = gama + 1.0;
         gami  = 1.0/gama;
 
-        for( int iGaussPoint = 0; iGaussPoint < totalGaussPoint; ++iGaussPoint )
+        for(int iGaussPoint = 0; iGaussPoint < totalGaussPoint; ++iGaussPoint)
         {
 
             vn_l   = areax[iGaussPoint]*ql[1][iGaussPoint] + areay[iGaussPoint]*ql[2][iGaussPoint] + areaz[iGaussPoint]*ql[3][iGaussPoint];
@@ -80,7 +80,7 @@ namespace HOUnstruct
                 flux[4][iGaussPoint] += fmass*h_r;
             }
 
-            for( int ieqn = 0; ieqn < 5; ++ieqn )
+            for(int ieqn = 0; ieqn < 5; ++ieqn)
             if((flux[ieqn][iGaussPoint] != flux[ieqn][iGaussPoint]) || fabs(flux[ieqn][iGaussPoint]) > 1.0e20)
             {
                 cout << "flux " << ieqn << " = " << flux[ieqn][iGaussPoint] << endl;

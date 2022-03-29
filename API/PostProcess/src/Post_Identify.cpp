@@ -19,6 +19,9 @@ namespace PHSPACE
         reduceFrequency  = reduceFrequency * lenthReference;
         physicalTimeStep = physicalTimeStep / lenthReference;
 
+        nForceVar = 15;
+        nIdentifyVar = 8;
+
         c0 = new RDouble[nIdentifyVar];
         c1 = new RDouble[nIdentifyVar];
         c2 = new RDouble[nIdentifyVar];
@@ -29,18 +32,15 @@ namespace PHSPACE
         nameList.push_back("cmx");
         nameList.push_back("cmy");
         nameList.push_back("cmz");
-        nameList.push_back("cl" );
-        nameList.push_back("cd" );
-
-        nForceVar = 15;
-        nIdentifyVar = 8;
+        nameList.push_back("cl");
+        nameList.push_back("cd");
     }
 
     Identify::~Identify()
     {
-        delete [] c0;    c0 = nullptr;
-        delete [] c1;    c1 = nullptr;
-        delete [] c2;    c2 = nullptr; 
+        delete [] c0;    c0 = NULL;
+        delete [] c1;    c1 = NULL;
+        delete [] c2;    c2 = NULL; 
     }
 
     void Identify::Run()
@@ -286,7 +286,7 @@ namespace PHSPACE
     {
         int totalCycle = nDataLine / nLineOneCycle;
         int startCycle = 0;
-        if( totalCycle > 2 )
+        if(totalCycle > 2)
         {
             nCycle = totalCycle - 1;
             startCycle = 1;
@@ -378,7 +378,7 @@ namespace PHSPACE
         }
         RDouble amp = PHSPACE::GetRDoubleParameterFromDataBase(0, "amplitude");
         RDouble frequency = PHSPACE::GetRDoubleParameterFromDataBase(0, "reduceFrequency");
-        RDouble timeStep = GlobalDataBase::GetDoubleParaFromDB( "physicalTimeStep" );
+        RDouble timeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
 
         fstream file;
         file.open(hysteresisFileName.c_str(), ios_base::out | ios_base::trunc);

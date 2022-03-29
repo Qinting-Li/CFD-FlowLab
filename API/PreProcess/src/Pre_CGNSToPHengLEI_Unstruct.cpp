@@ -1,5 +1,5 @@
 #include "Pre_CGNSToPHengLEI_Unstruct.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "Math_BasisFunction.h"
 #include "Geo_UnstructBC.h"
 #include "PHIO.h"
@@ -46,7 +46,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
     CGNSRawCoor    *raw_coor;
 
     //! Open the CGNS for reading and check if the file was found.
-    //if ( cg_open(cgnsfile.c_str(), MODE_READ, &fileid) != CG_OK )
+    //if (cg_open(cgnsfile.c_str(), MODE_READ, &fileid) != CG_OK)
     if (cg_open(cgnsfile.c_str(), CG_MODE_READ, &fileid) != CG_OK)
     {
         TK_Exit::ExceptionExit(cg_get_error());
@@ -222,7 +222,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
 
                 int iNode = 0;
                 int index = 0;
-                for ( ; iNode < elementdatasize; )
+                for (; iNode < elementdatasize;)
                 {
                     int ptnum = base_elem_elem_pt[base_cgns_conn_list[iSection - 1][iNode]];
                     base_cgns_mixed_conn_list[iSection - 1][index] = iNode;
@@ -316,7 +316,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
             {
                 cout << "  The first 20 points of Region " << ": ";
                 for (int j = 0; j < MIN(20, (int)nBCElem); ++ j)
-                    //for ( int j = 0; j < nBCElem; ++ j )
+                    //for (int j = 0; j < nBCElem; ++ j)
                 {
                     cout << base_cgns_bc_conn_list[iBCRegion-1][j] << " ";
                 }

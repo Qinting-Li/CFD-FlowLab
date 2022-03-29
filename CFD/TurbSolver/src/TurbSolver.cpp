@@ -198,15 +198,15 @@ void TurbSolver::RegisterCFDSolverOversetField()
     Param_TurbSolver *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
-    CFDSolver::RegisterOversetField( "turb::q", PHDOUBLE, nTurbulenceEquation );
+    CFDSolver::RegisterOversetField("turb::q", PHDOUBLE, nTurbulenceEquation);
 
-    CFDSolver::RegisterOversetField( "turb::dqdx", PHDOUBLE, nTurbulenceEquation );
-    CFDSolver::RegisterOversetField( "turb::dqdy", PHDOUBLE, nTurbulenceEquation );
-    CFDSolver::RegisterOversetField( "turb::dqdz", PHDOUBLE, nTurbulenceEquation );
- 
-    CFDSolver::RegisterOversetField( "turb::limit", PHDOUBLE, 1 );
-
-    CFDSolver::RegisterOversetField( "turb::dq", PHDOUBLE, nTurbulenceEquation );
+    //CFDSolver::RegisterOversetField("turb::dqdx", PHDOUBLE, nTurbulenceEquation);
+    //CFDSolver::RegisterOversetField("turb::dqdy", PHDOUBLE, nTurbulenceEquation);
+    //CFDSolver::RegisterOversetField("turb::dqdz", PHDOUBLE, nTurbulenceEquation);
+    //
+    //CFDSolver::RegisterOversetField("turb::limit", PHDOUBLE, 1);
+    //
+    //CFDSolver::RegisterOversetField("turb::dq", PHDOUBLE, nTurbulenceEquation);
 }
 
 void TurbSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy)
@@ -249,7 +249,7 @@ void TurbSolver::UpdateResiduals(Grid *grid)
 
     DualTimeSource(grid);
 
-    ZeroResidualOfSpecialCells( grid );       //! Added By Guo Yongheng 20160825.
+    ZeroResidualOfSpecialCells(grid);       //! Added By Guo Yongheng 20160825.
 
     ModifyResiduals(grid);
 
@@ -289,7 +289,7 @@ void TurbSolver::CompareOutStepOfFlowfieldFile(int outnstepofNS, int outnstepofT
         PrintToWindow(oss.str());
         WriteLogFile (oss.str());
 
-        GlobalDataBase::UpdateData( "outnstep", &outnstepofTurb, PHINT, 1 );
+        GlobalDataBase::UpdateData("outnstep", &outnstepofTurb, PHINT, 1);
     }
     else
     {

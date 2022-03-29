@@ -20,10 +20,11 @@ LIB_EXPORT void Param_NSSolver::Init()
 {
     Param_CFDSolver::Init();
     intervalStepForce   = GlobalDataBase::GetIntParaFromDB("intervalStepForce");
-
     wallTemperature     = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
     AoA                 = GlobalDataBase::GetDoubleParaFromDB("attackd");
     angleSlide          = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
+
+    transitionType      = GlobalDataBase::GetIntParaFromDB("transitionType");
 
     ifLowSpeedPrecon    = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
 
@@ -112,6 +113,40 @@ LIB_EXPORT void Param_NSSolver::Init()
         mTV = 0;
         mTE = 0;
     }
+
+    densityMin = 1.0e-8;
+    if (GlobalDataBase::IsExist("densityMin", PHDOUBLE, 1))
+    {
+        densityMin = GlobalDataBase::GetDoubleParaFromDB("densityMin");
+    }
+    densityMin /= GetRefDimensionalDensity();
+
+    densityMinFactor = SMALL;
+    if (GlobalDataBase::IsExist("densityMinFactor", PHDOUBLE, 1) && nChemical == 1)
+    {
+        densityMinFactor = GlobalDataBase::GetDoubleParaFromDB("densityMinFactor");
+    }
+
+    isSelfAdaptionSolve = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
+
+    nGradPrimtiveMethod = 0;
+    if (GlobalDataBase::IsExist("nGradPrimtiveMethod", PHINT, 1) && nChemical == 1)
+    {
+        nGradPrimtiveMethod = GlobalDataBase::GetIntParaFromDB("nGradPrimtiveMethod");
+    }
+
+    nInviscidFluxModify = 0;
+    if (GlobalDataBase::IsExist("nInviscidFluxModify", PHINT, 1))
+    {
+        nInviscidFluxModify = nChemical * GlobalDataBase::GetIntParaFromDB("nInviscidFluxModify");  //化学反应
+    }
+
+    nQlLimitMethod = 0;
+    if (GlobalDataBase::IsExist("nQlLimitMethod", PHINT, 1))
+    {
+        nQlLimitMethod = GlobalDataBase::GetIntParaFromDB("nQlLimitMethod");  //ql、qr
+    }
+
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()

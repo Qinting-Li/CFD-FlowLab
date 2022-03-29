@@ -15,6 +15,7 @@
 
 #pragma once
 #include <vector>
+#include <cstddef>
 using namespace std;
 
 namespace PHSPACE
@@ -149,37 +150,37 @@ void DelPointer(T *&v)
 {
     if (!v) return;
     delete [] v;
-    v = nullptr;
+    v = NULL;
 }
 
 template < typename T >
 void DelPointer2(T **v)
 {
     if (!v) return;
-    delete [] v[0];    v[0] = nullptr;
-    delete [] v;       v = nullptr;
+    delete [] v[0];    v[0] = NULL;
+    delete [] v;       v = NULL;
 }
 
 
 template < typename T >
 void DelPointer3(T ***v3)
 {
-    delete [] v3[0][0];    v3[0][0] = nullptr;
-    delete [] v3[0];       v3[0] = nullptr;
-    delete [] v3;          v3 = nullptr;
+    delete [] v3[0][0];    v3[0][0] = NULL;
+    delete [] v3[0];       v3[0] = NULL;
+    delete [] v3;          v3 = NULL;
 }
 
 
 template < typename T >
 void DelFastPointer(T **v)
 {
-    delete [] v;    v = nullptr;
+    delete [] v;    v = NULL;
 }
 
 template < typename T >
 void FreePointer(T *&pointer)
 {
     if (!pointer) return;
-    delete pointer;    pointer = nullptr;
+    delete pointer;    pointer = NULL;
 }
 }

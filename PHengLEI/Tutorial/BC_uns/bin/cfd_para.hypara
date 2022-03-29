@@ -1,0 +1,3 @@
+string gridfile            =  "./in/sphere_m10.fts";
+int    numberOfGridGroups = 1;
+int    axisup        =  1;

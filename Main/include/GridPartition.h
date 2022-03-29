@@ -87,7 +87,7 @@ public:
 
 public:
     int size() {return dim[0] * dim[1] * dim[2];}
-    int cellsize() {return ( dim[0] - 1 ) * ( dim[1] - 1 ) * MAX( dim[2] - 1, 1 );}
+    int cellsize() {return (dim[0] - 1) * (dim[1] - 1) * MAX(dim[2] - 1, 1);}
     void SetID(const int &id) {this->id = id;}
     int GetID() const {return id;}
 

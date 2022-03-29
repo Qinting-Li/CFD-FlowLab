@@ -1,0 +1,11 @@
+double a = -2.2 ;
+double b = 1.1 ;
+double c = 3.3 ;
+double i1 = 1 ;
+double j1 = 0 ;
+double k1 = 0 ;
+double i2 = 0 ;
+double j2 = 1 ;
+double k2 = 0 ;
+double v1[3] = 1 0 0 ;
+double v2[3] = 0 1 0 ;
