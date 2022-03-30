@@ -790,8 +790,8 @@ void ComputationalGridProcess::UpdateOtherGridFaceTopologyTerm()
 
     int *faceNodeNumberContainer = unstructuredGrid->GetNodeNumberOfEachFace();
     int *faceNodeIndexContainer  = unstructuredGrid->GetFace2Node();
-    delete []faceNodeNumberContainer; faceNodeNumberContainer = nullptr;
-    delete []faceNodeIndexContainer;  faceNodeIndexContainer = nullptr;
+    delete []faceNodeNumberContainer; faceNodeNumberContainer = NULL;
+    delete []faceNodeIndexContainer;  faceNodeIndexContainer = NULL;
 
     PHVectorInt2D &faceNodeIndexVector = faceNodeIndexVectorList[currentZoneID];
     uint_t sizeOfFaceNodeIndexContainer = 0;
