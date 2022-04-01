@@ -833,7 +833,7 @@ void Simulation::RunGridCheckSolver()
         gridArray[iZone] = GetGrid(iZone);
         int gridType = gridArray[iZone]->Grid::Type();
 
-        if(gridType == 0)
+        if(gridType == UNSTRUCTGRID)
         {
             UnstructGrid *grid = UnstructGridCast(gridArray[iZone]);
 
@@ -1019,7 +1019,7 @@ void Simulation::RunGridCheckSolver()
             file << endl;
 
         }
-        else if (gridType == 1)
+        else if (gridType == STRUCTGRID)
         {
             int iMin, iMax, jMin, jMax, kMin, kMax, bcType;
             int sLr, sNd;
