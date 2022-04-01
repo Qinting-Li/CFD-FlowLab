@@ -159,6 +159,7 @@ const int KW_SST                 = 12;
 const int MULTI_STAGE            = 1;
 const int LU_SGS                 = 4;
 const int Block_LU_SGS           = 5;
+const int JACOBIAN_ITERATION     = 6;
 const int Line_LU_SGS            = 7;
 
 const int OneRefineOneDeform     = 1;
