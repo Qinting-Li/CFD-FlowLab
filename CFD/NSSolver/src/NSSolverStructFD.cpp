@@ -5027,7 +5027,7 @@ void NSSolverStructFD::Diagonal(Grid *gridIn)
 void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == 6)
+    if(tscheme == JACOBIAN_ITERATION)
     {
         SolveLUSGSbyJacobiIteration(gridIn, dqProxy, LUplusDQ, sweepNormal);
         return;
@@ -5142,7 +5142,7 @@ void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
 void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == 6)
+    if(tscheme == JACOBIAN_ITERATION)
     {
         return;
     }

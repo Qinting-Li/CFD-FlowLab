@@ -492,9 +492,7 @@ double AusmpwPlusLimiter = 1.0;
 //               4 -- LU-SGS.
 //               5 -- Block LU-SGS.
 //               6 -- Jacobian iteration.
-//               7 -- Lower G-S iteration.
-//               8 -- Upper G-S iteration.
-//               9 -- Lower/Upper G-S iteration.
+//               7 -- Line LU-SGS.
 // iSimplifyViscousTerm: Simplify the computation of viscous term in the Block LU-SGS method. The default value assigns 1 that could speed up the computation.
 //                       Otherwise, the viscous Jacobian matrix Mv should be computed that will increase the memory and time in iteration of the BLUSGS method.
 // CFLStart: Started cfl number.
