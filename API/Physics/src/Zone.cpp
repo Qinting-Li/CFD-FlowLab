@@ -15,6 +15,10 @@
 #include "EquilibriumGas.h"
 #endif
 
+#ifdef USE_MULTISPECIES_CODE
+#include "RealGas.h"
+#endif
+
 using namespace std;
 
 #pragma warning (disable:913)
@@ -254,6 +258,10 @@ void InitGlobalValuesSolver()
         else
         {
             #ifdef USE_HYFLOW_CODE
+            gas = new RealGas();
+            #endif
+
+            #ifdef USE_MULTISPECIES_CODE
             gas = new RealGas();
             #endif
         }

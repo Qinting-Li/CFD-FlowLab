@@ -348,23 +348,15 @@ ${IncompressibleSolver_H_PATH}/INCompSolverUnstruct.h
 ${IncompressibleSolver_H_PATH}/Param_INCompSolver.h
 ${IncompressibleSolver_H_PATH}/Param_INCompSolverStruct.h
 ${IncompressibleSolver_H_PATH}/Param_INCompSolverUnstruct.h
-${IncompressibleSolver_H_PATH}/DiffCoeffCalculator.h
-${IncompressibleSolver_H_PATH}/DiffusionCoeff.h
-${IncompressibleSolver_H_PATH}/EquationOfState.h
-${IncompressibleSolver_H_PATH}/InCom_Calculator.h
-${IncompressibleSolver_H_PATH}/InCom_Energy_Calculator.h
-${IncompressibleSolver_H_PATH}/InCom_Scalar_Calculator.h
-${IncompressibleSolver_H_PATH}/InCom_Turbulence_Calculator.h
-${IncompressibleSolver_H_PATH}/InComEffectiveViscCalculator.h
-${IncompressibleSolver_H_PATH}/InComEnergyDiffusionCoefficient.h
-${IncompressibleSolver_H_PATH}/VFluxCalculator.h
-${IncompressibleSolver_H_PATH}/ViscLamCalculator.h
 ${IncompressibleSolver_H_PATH}/PPESIMPLESolver.h
 ${IncompressibleSolver_H_PATH}/PPEProjectionSolver.h
 ${IncompressibleSolver_H_PATH}/ScalarSolver.h
 ${IncompressibleSolver_H_PATH}/PPESolver.h
 ${IncompressibleSolver_H_PATH}/LinearEquationSolver.h
 ${IncompressibleSolver_H_PATH}/MomEquationSolver.h
+${IncompressibleSolver_H_PATH}/TurbEquationSolver.h
+${IncompressibleSolver_H_PATH}/EnergyEquationSolver.h
+${IncompressibleSolver_H_PATH}/SpeciesEquationSolver.h
 )
 source_group(IncompressibleSolver\\include FILES ${IncompressibleSolver_H_LIST}) 
 include_directories(${IncompressibleSolver_H_PATH})
@@ -377,23 +369,15 @@ ${IncompressibleSolver_CPP_PATH}/INCompSolverUnstruct.cpp
 ${IncompressibleSolver_CPP_PATH}/Param_INCompSolver.cpp
 ${IncompressibleSolver_CPP_PATH}/Param_INCompSolverStruct.cpp
 ${IncompressibleSolver_CPP_PATH}/Param_INCompSolverUnstruct.cpp
-${IncompressibleSolver_CPP_PATH}/DiffCoeffCalculator.cpp
-${IncompressibleSolver_CPP_PATH}/DiffusionCoeff.cpp
-${IncompressibleSolver_CPP_PATH}/EquationOfState.cpp
-${IncompressibleSolver_CPP_PATH}/InCom_Calculator.cpp
-${IncompressibleSolver_CPP_PATH}/InCom_Energy_Calculator.cpp
-${IncompressibleSolver_CPP_PATH}/InCom_Scalar_Calculator.cpp
-${IncompressibleSolver_CPP_PATH}/InCom_Turbulence_Calculator.cpp
-${IncompressibleSolver_CPP_PATH}/InComEffectiveViscCalculator.cpp
-${IncompressibleSolver_CPP_PATH}/InComEnergyDiffusionCoefficient.cpp
-${IncompressibleSolver_CPP_PATH}/VFluxCalculator.cpp
-${IncompressibleSolver_CPP_PATH}/ViscLamCalculator.cpp
 ${IncompressibleSolver_CPP_PATH}/PPESIMPLESolver.cpp
 ${IncompressibleSolver_CPP_PATH}/PPEProjectionSolver.cpp
 ${IncompressibleSolver_CPP_PATH}/MomEquationSolver.cpp
 ${IncompressibleSolver_CPP_PATH}/ScalarSolver.cpp
 ${IncompressibleSolver_CPP_PATH}/PPESolver.cpp
 ${IncompressibleSolver_CPP_PATH}/LinearEquationSolver.cpp
+${IncompressibleSolver_CPP_PATH}/TurbEquationSolver.cpp
+${IncompressibleSolver_CPP_PATH}/EnergyEquationSolver.cpp
+${IncompressibleSolver_CPP_PATH}/SpeciesEquationSolver.cpp
 )
 source_group(IncompressibleSolver\\src FILES ${IncompressibleSolver_CPP_LIST})
 

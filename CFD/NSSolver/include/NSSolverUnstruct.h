@@ -102,6 +102,7 @@ public:
     void SpectrumRadiusInviscid(Grid *grid);
     void PreconInvSpectrumRadius(Grid *gridIn);
     void SpectrumRadiusViscous(Grid *grid);
+    void SpectrumRadiusChemical(Grid *grid);
     void Diagonal(Grid *gridIn);
     void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
     void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
@@ -123,6 +124,7 @@ public:
     void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *gridIn);
     void RestrictAllQ(Grid *fgrid, Grid *cgrid);
     void ComputeViscousCoeff(Grid *gridIn);
+    void ComputeViscousCoefficient(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
 
     void BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
@@ -169,6 +171,9 @@ public:
     void StoreHistoricalResidual(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
     RDouble UnsteadyConvergence(Grid *gridIn);
+
+    //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
+    void ComputeFirstLayerGridHeight(Grid *gridIn);
 
     void Turb_Sengy(Grid *gridIn);
     void GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
@@ -233,6 +238,7 @@ public:
     void SpectrumRadius(Grid *gridIn);
 
     void RestrictDQ(RDouble *dqtry, int nm, RDouble lim_max);
+    void ModifyDensity(RDouble *dq, int nNSEquation,int nLaminar,int nEquation,RDouble &densityRelax);
 
     void UploadInterfaceData(ActionKey *actkey);
     void DownloadInterfaceData(ActionKey *actkey);

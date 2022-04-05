@@ -58,6 +58,9 @@ public:
     //! Get inviscidSchemeName.
     string GetInviscidSchemeName() const;
 
+    //! Get iniSpeedCoef.
+    RDouble GetIniSpeedCoef() const;
+
 private:
     RDouble MUSCLCoefXk;
     RDouble MUSCLCoefXb;
@@ -75,6 +78,8 @@ private:
     RDouble staticPressureRelaxCorf;
 
     string inviscidSchemeName;
+
+    RDouble iniSpeedCoef;
 };
 
 #include "Param_NSSolverStruct.hxx"

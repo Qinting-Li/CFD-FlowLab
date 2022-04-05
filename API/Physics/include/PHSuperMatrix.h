@@ -151,7 +151,7 @@ PHMatrix<T>  Matrix3X3Inverse(PHMatrix<T> & matrix)
 
     if (detA == 0.0)
     {
-        TK_Exit::ExceptionExit("Error : 矩阵行列式为零，奇异矩阵！");
+        TK_Exit::ExceptionExit("Error : The Determinant of the Matrix is Zero，Singular Matrix ! ");
     }
     else
     {
@@ -234,7 +234,7 @@ PHMatrix<T> BaseMatrixOfRotate(const T & angle, string const & axisLabel)
     }
     else
     {
-        TK_Exit::ExceptionExit("Error : 坐标轴设置错误 in BaseMatrixOfRotate ！");
+        TK_Exit::ExceptionExit("Error : error axis label in BaseMatrixOfRotate ! ");
     }
 
     return matrix;
@@ -256,7 +256,7 @@ PHMatrix<T> AngleRateTransformMatrixBodyToGlobal(PHMatrix<T> & eulerangle, strin
         T cosineofpitchangle = cos(pitchangle);
         if (PHSPACE::ABS(cosineofpitchangle) < SMALL)
         {
-            TK_Exit::ExceptionExit("Error : Euler角之俯仰角达到90度，奇异！");
+            TK_Exit::ExceptionExit("Error : pitching angle is 90 DEG，singular ! ");
         }
         else
         {
@@ -279,7 +279,7 @@ PHMatrix<T> AngleRateTransformMatrixBodyToGlobal(PHMatrix<T> & eulerangle, strin
     } 
     else
     {
-        TK_Exit::ExceptionExit("Error : 未定义Euler角变换顺序 ！");
+        TK_Exit::ExceptionExit("Error : Undefined Euler Angle transformation order ! ");
     }
 
     return matrix;

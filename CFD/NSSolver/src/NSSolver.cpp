@@ -343,6 +343,69 @@ void NSSolver::CheckResult(Grid *grid, int level)
     }
 }
 
+void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
+{
+    //! Compute the surface heating change.
+    ActionKey *actkeyCheckHeatChange = new ActionKey();
+    FillActionKey(actkeyCheckHeatChange, DUMP_RESIDUAL, level);
+    ComputeSurfaceHeatingChange(actkeyCheckHeatChange);
+
+    Param_NSSolver *parameters = GetControlParameters();
+    int interResStep = parameters->GetIntervalStepRes();
+    int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == 0 && (outnstep % interResStep == 0))
+    {
+        RDouble monitorHeatingChange = GlobalDataBase::GetDoubleParaFromDB("monitorHeatingChange");
+        cout<<"The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
+
+        //! Dump to file.
+        string saveHeatRes = "./results/heatResidual.plt";
+        if (GlobalDataBase::IsExist("saveHeatRes", PHSTRING, 1))
+        {
+            saveHeatRes = GlobalDataBase::GetStrParaFromDB("saveHeatRes");
+        }
+        actkeyCheckHeatChange->filename = saveHeatRes;
+        if (actkeyCheckHeatChange->filename == "")
+        {
+            return;
+        }
+        ios_base::openmode openmode = ios_base::out|ios_base::app;
+        actkeyCheckHeatChange->openmode = openmode;
+        //Open file.
+        ParallelOpenFile(actkeyCheckHeatChange);
+        fstream &file = *actkeyCheckHeatChange->file;
+        std::ostringstream oss;
+        if (IfFileEmpty(file))
+        {
+            vector<string> title_tecplot;
+            title_tecplot.push_back("Title=\"The Surface Heating Change\"");
+            title_tecplot.push_back("Variables=");
+            title_tecplot.push_back("\"Iterations\"");
+            title_tecplot.push_back("\"Heating Change\"");
+            for (std::size_t i = 0; i < title_tecplot.size(); ++ i)
+            {
+                oss << title_tecplot[i] << "\n";
+            }
+        }
+        oss << setiosflags(ios::left);
+        oss << setprecision(5);
+        oss << setiosflags(ios::scientific);
+        oss << setiosflags(ios::showpoint);
+
+        oss << setw(7) << outnstep << "    ";
+        oss << monitorHeatingChange <<endl;
+
+        WriteASCIIFile(file, oss.str());
+
+        //Close file.
+        ParallelCloseFile(actkeyCheckHeatChange);
+    }
+
+    delete actkeyCheckHeatChange;
+}
+
 void NSSolver::FillActionKey(ActionKey *actkey, int action, int level)
 {
     actkey->action     = action;
@@ -479,6 +542,7 @@ void NSSolver::InitDependentVariables()
         }
         else
         {
+            ComputeViscousCoefficient(fineGrid);
             #ifdef USE_HYFLOW_CODE
             GAS_SPACE::ComputeViscousLaminarCoefficient(StructGridCast(fineGrid));
             #endif
@@ -525,7 +589,7 @@ void NSSolver::RegisterCFDSolverInterfaceFieldUnstruct()
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
 
-    int nEquation = nLaminar + nChemical;
+    int nEquation = GetNumberOfEquations();
 
     CFDSolver::RegisterInterfaceField("dqdx", PHDOUBLE, nEquation);
     CFDSolver::RegisterInterfaceField("dqdy", PHDOUBLE, nEquation);
@@ -552,7 +616,7 @@ void NSSolver::RegisterCFDSolverInterpointField()
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     
-    int nEquation = nLaminar + nChemical;
+    int nEquation = GetNumberOfEquations();
 
     CFDSolver::RegisterInterpointField("qnode", PHDOUBLE, nEquation);
     
