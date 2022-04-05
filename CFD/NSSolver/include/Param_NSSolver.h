@@ -141,6 +141,12 @@ public:
 
     int GetnQlLimitMethod() const;
 
+    int GetSurfaceGradientMethod() const;
+
+    int GetRapidFlowfieldMethod() const;
+
+    int GetSurfaceHeatingMonitor() const;
+
 private:
     int intervalStepForce;
 
@@ -238,6 +244,14 @@ private:
 
     int nQlLimitMethod;
 
+    //The method to compute the gradient of variable on surface.
+    int nSurfGradMethod;
+
+    //To utilize the rapid method that can directly obtain the initial flowfield in boundary layer.
+    int nRapidFlowfield;
+
+    //To utilize the monitor which exam the surface heating change during the iteration.
+    int nSurfHeatMonitor;
 };
 
 #include "Param_NSSolver.hxx"

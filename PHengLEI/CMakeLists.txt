@@ -24,7 +24,6 @@ if(WIN32)
 else()
   SET(CMAKE_C_COMPILER gcc)
   SET(THIRD_PARTY_COMPILER_FLAG "Unix")
-  add_compile_options(-std=c++14)
 endif()
 include(${PROJECT_SOURCE_DIR}/../PHengLEI/PHMacro.cmake)
 #set cmake environment:
@@ -54,6 +53,7 @@ opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
 opt_build(TUTORIAL "Build Tutorial or not" OFF) #Build API tutorials or not.
 opt(INHOUSE_VERSION "Build In-house version or not" ON) #Build In-house version or not.
 opt_build(IncompressibleSolver "Build In-house version or not" OFF) #Build IncompressibleSolver or not.
+opt_build(MultiSpecies "Build MultiSpecies module or not" OFF) #Build MultiSpecies or not.
 opt(TecplotLib "Use tecplot lib to dump binary flow file" OFF) #Use tecplotlib or not.
 opt_build(LBM "Build LBM module or not" OFF) #Build LBM or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
@@ -130,12 +130,18 @@ endif(BUILD_IncompressibleSolver)
 if(BUILD_LBM)
   message(STATUS "BUILD_LBM is turned on!")
   add_definitions(-DUSE_LBM_CODE)
+  add_compile_options(-std=c++14)
 endif(BUILD_LBM)
 
 if(BUILD_HyFLOW)
   message(STATUS "BUILD_HyFLOW is turned on!")
   add_definitions(-DUSE_HYFLOW_CODE)
 endif(BUILD_HyFLOW)
+
+if(BUILD_MultiSpecies)
+  message(STATUS "BUILD_MultiSpeciesis turned on!")
+  add_definitions(-DUSE_MULTISPECIES_CODE)
+endif(BUILD_MultiSpecies)
 
 if(USE_TecplotLib)
   message(STATUS "USE_TecplotLib is turned on!")

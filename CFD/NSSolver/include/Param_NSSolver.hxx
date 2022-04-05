@@ -221,4 +221,18 @@ inline int Param_NSSolver::GetnQlLimitMethod() const
     return nQlLimitMethod;
 }
 
+inline int Param_NSSolver::GetSurfaceGradientMethod() const
+{
+    return nSurfGradMethod;
+}
+
+inline int Param_NSSolver:: GetRapidFlowfieldMethod() const
+{
+    return nRapidFlowfield;
+}
+
+inline int Param_NSSolver::GetSurfaceHeatingMonitor() const
+{
+    return nSurfHeatMonitor;
+}
 

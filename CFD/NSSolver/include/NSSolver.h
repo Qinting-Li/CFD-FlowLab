@@ -49,7 +49,7 @@ public:
     //! Compute viscous coefficient only for the perfect gas.
     //! Here it is a pure virtual function, it will be re-defined in NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.
     virtual void ComputeViscousCoefficientWithoutChemical(Grid *grid)  = 0;
-
+    virtual void ComputeViscousCoefficient(Grid *grid) {};
     //! Compute specific heat ratio 'gama' and temperature.
     //! Here it is a pure virtual function, it will be re-defined in NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.
     virtual void ComputeGamaAndTemperature(Grid *grid) = 0;
@@ -89,6 +89,9 @@ public:
 
     //! switch the compute method used for self-adaption calculation.
     void CheckResult(Grid *grid, int level = 0);
+
+    //! exam the surface heating change.
+    void CheckSurfaceHeatingChange(Grid *grid, int level = 0);
 
     //! Fill the action.
     //! @param[in ]: action     The task type.

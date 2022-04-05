@@ -244,6 +244,11 @@ void CFDSolver::CheckResult(Grid *grid, int level)
 
 }
 
+void CFDSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
+{
+
+}
+
 void CFDSolver::ZeroResiduals(Grid *grid)
 {
 
@@ -702,6 +707,11 @@ void CFDSolver::GetResidual(ActionKey *actkey, RDouble &localMaxRes)
 }
 
 void CFDSolver::GetResidual(Grid *gridIn, RDouble &localMaxRes)
+{
+
+}
+
+void CFDSolver::GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange)
 {
 
 }
@@ -1759,6 +1769,40 @@ void CFDSolver::CheckResidual(ActionKey *actkey)
         MPI_Allreduce(&localMaxResidual, &globalMaxResidual, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     }
     GlobalDataBase::UpdateData("monitorResidual", &globalMaxResidual, PHDOUBLE, 1);
+}
+
+void CFDSolver::ComputeSurfaceHeatingChange(ActionKey *actkey)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    int nCurrentProcessorID = GetCurrentProcessorID();
+    RDouble localMaxHeatChange = 0.0, localZoneHeatChange = 0.0;
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneProcessorID = GetZoneProcessorID(iZone);
+        if (zoneProcessorID == nCurrentProcessorID)
+        {
+            CFDSolver *solver = static_cast <CFDSolver *> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
+            solver->GetSurfaceHeatingChange(actkey, localZoneHeatChange);
+            if (localZoneHeatChange > localMaxHeatChange)
+            {
+                localMaxHeatChange = localZoneHeatChange;
+            }
+        }
+    }
+
+    RDouble globalMaxHeatChange = localMaxHeatChange;
+    int nProcessorNumber = GetNumberOfProcessor();
+    if (nProcessorNumber > 1)
+    {
+        //synchronization of communication.
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        //Communication.
+        MPI_Allreduce(&localMaxHeatChange, &globalMaxHeatChange, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    }
+    GlobalDataBase::UpdateData("monitorHeatingChange", &globalMaxHeatChange, PHDOUBLE, 1);
 }
 
 //! Get the file name for Residual dumping, NS-solver by default.

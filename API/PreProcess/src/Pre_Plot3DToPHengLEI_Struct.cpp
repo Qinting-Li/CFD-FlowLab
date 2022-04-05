@@ -305,7 +305,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
 
     if (numberOfBlocks != nBlocks)
     {
-        TK_Exit::ExceptionExit("边界文件分块数与网格文件分块数不一致!\n");
+        TK_Exit::ExceptionExit("Block in the boundary file do not match that in the grid file ! \n");
     }
 
     int nDim = GetDim();
@@ -352,7 +352,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
         int ndif = ABS(ni - grid->GetNI()) + ABS(nj - grid->GetNJ()) + ABS(nk - grid->GetNK());
         if (ndif != 0)
         {
-            cout << "第" << iZone + 1 << "块边界条件文件里的维数与网格文件中的维数不一致!\n";
+            cout << "Dimensions of zone " << iZone + 1 << " in the boundary file do not match those in the grid file ! \n";
         }
 
         line = FindNextWord(line, word, separator);

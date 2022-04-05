@@ -17,6 +17,7 @@
 #include "Geo_Interface.h"
 #include "Geo_Interpoint.h"
 #include "TK_Log.h"
+#include "TK_Parse.h"
 #include "FieldProxy.h"
 using namespace std;
 

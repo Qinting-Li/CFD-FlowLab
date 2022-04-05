@@ -175,6 +175,9 @@ public:
     virtual void Read(fstream &file){};
     virtual void Read(DataContainer *cdata){};
     virtual void Write(DataContainer *cdata){};
+
+    virtual void SetMaximumSpecies(RDouble *mass_fraction_ref){};
+    virtual RDouble * GetMaximumSpecies() const { return NULL;}
 public:
     virtual void CompressData  (DataContainer *&cdata){};
     virtual void DecompressData(DataContainer *cdata){};
@@ -315,6 +318,7 @@ public:
     //! To obtain the mass fraction of the last species with the label ns-1.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
     virtual void NormalizePrimitive(RDouble *primitiveVariables){};
+    virtual void NormalizePrimitiveR(RDouble *primitiveVariables){};
 
     //! Compute the molecular weight reciprocal of the mixed gas.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
@@ -1104,6 +1108,7 @@ string GetSpeciesNameByIndex(int nIndex);
 //! Param[IN ]: nameList indicates the name list of species.
 //! Param[OUT]: speciesOrder indicates the order of the species name.
 void SpeciesNameToInteger(int numberOfSpecies, string *nameList, Int1D *speciesOrder);
+void SpeciesNameToInteger(int numberOfSpecies, string *nameList, int *speciesOrder);
 
 //! Determine whether the two gas models are equal.
 //! Param[IN ]: speciesOrder1 indicates the name list of the first gas model.

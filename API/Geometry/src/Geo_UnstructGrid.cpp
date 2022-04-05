@@ -72,6 +72,7 @@ LIB_EXPORT UnstructGrid::UnstructGrid()
     lineTopology = NULL;
     gridManager = NULL;
     iBlank = NULL;
+    walldistNode = NULL;
 }
 
 LIB_EXPORT UnstructGrid::~UnstructGrid()
@@ -127,6 +128,12 @@ LIB_EXPORT UnstructGrid::~UnstructGrid()
     delete cell2cell_connectivity;
 
     delete [] walldist;
+
+    if (walldistNode != NULL)
+    {
+        delete []walldistNode;
+        walldistNode = NULL;
+    }
 
     delete [] lamdax;
     delete [] lamday;
@@ -3694,11 +3701,13 @@ LIB_EXPORT void UnstructGrid::FindOutWallFaces(bool * isWallFace, int & nWallFac
 
 void UnstructGrid::AllocateWalldist()
 {
+    int nTotalNode = this->GetNTotalNode();
     int nTotalCell = this->GetNTotalCell();
     int nBoundFace = this->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
     walldist = new RDouble[nTotal];
+    walldistNode = new RDouble[nTotalNode];
 }
 
 void UnstructGrid::ReadWalldist(RDouble *wallDistIn)
