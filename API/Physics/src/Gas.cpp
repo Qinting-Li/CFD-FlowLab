@@ -170,6 +170,22 @@ namespace GAS_SPACE
             }
         }
     }
+    void SpeciesNameToInteger(int numberOfSpecies, string *nameList, int *speciesOrder)
+    {
+        //Initialization.
+        for (int n = 0; n < numberOfSpecies; ++ n)
+        {
+            speciesOrder[n] = -1;
+        }
+        for (int n = 0; n < numberOfSpecies; ++ n)
+        {
+            int nIndex = GetIndexBySpeciesName(nameList[n]);
+            if (nIndex >= 0)
+            {
+                speciesOrder[nIndex] = n;
+            }
+        }
+    }
 
     bool IsEqualGasModel(Int1D *speciesOrder1, Int1D *speciesOrder2)
     {

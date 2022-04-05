@@ -669,7 +669,9 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody611C7(vector< RDo
 
 void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
-    GetDimensionalAdditionalForceAndMomentOfBodyByParameter(dimensionalGeneralForceContainer, iTimeLayer);
+    //GetDimensionalAdditionalForceAndMomentOfBodyByParameter(dimensionalGeneralForceContainer, iTimeLayer);
+
+	GetDimensionalAdditionalForceAndMomentOfBodyWingStore( dimensionalGeneralForceContainer, iTimeLayer );
 }
 
 void SixDofSolver::ReadSixDofParameterFromFile()

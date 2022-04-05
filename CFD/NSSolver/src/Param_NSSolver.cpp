@@ -147,6 +147,26 @@ LIB_EXPORT void Param_NSSolver::Init()
         nQlLimitMethod = GlobalDataBase::GetIntParaFromDB("nQlLimitMethod");  //ql¡¢qr
     }
 
+    //The method to compute the gradient of variable on surface.
+    nSurfGradMethod = 0;
+    if (GlobalDataBase::IsExist("nSurfGradMethod", PHINT, 1))
+    {
+        nSurfGradMethod = GlobalDataBase::GetIntParaFromDB("nSurfGradMethod");
+    }
+
+    //To utilize the rapid method that can directly obtain the initial flowfield in boundary layer.
+    nRapidFlowfield = 0;
+    if (GlobalDataBase::IsExist("nRapidFlowfield", PHINT, 1))
+    {
+        nRapidFlowfield = GlobalDataBase::GetIntParaFromDB("nRapidFlowfield");
+    }
+
+    //To utilize the monitor which exam the surface heating change during the iteration.
+    nSurfHeatMonitor = 0;
+    if (GlobalDataBase::IsExist("nSurfHeatMonitor", PHINT, 1))
+    {
+        nSurfHeatMonitor = GlobalDataBase::GetIntParaFromDB("nSurfHeatMonitor");
+    }
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()

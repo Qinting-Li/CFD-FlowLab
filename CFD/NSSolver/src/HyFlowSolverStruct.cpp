@@ -15660,7 +15660,7 @@ namespace PHSPACE
         }
 
         int nDim = GetDim();
-        int il, jl, kl;
+        //int il, jl, kl;
 
         for (int k = kCellStart; k <= kCellEnd; ++ k)
         {

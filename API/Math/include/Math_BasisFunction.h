@@ -15,6 +15,7 @@
 
 #pragma once
 #include <cmath>
+#include <float.h>
 #include <algorithm>
 #include "Precision.h"
 #include "TypeDefine.h"
@@ -22,16 +23,6 @@ using namespace std;
 
 namespace PHSPACE
 {
-
-template < typename T >
-bool isErrorData(T data)
-{
-    if (_isnan(data) || !_finite(data))
-    {
-        return true;
-    }
-}
-
 //! Get the interval: size of total is 'nTotal', it's divided into 'nInterval'.
 int GetProgressInterval(int nTotal, int nInterval);
 
@@ -117,6 +108,23 @@ inline void SWAP(T &a, T &b)
     T c = a;
     a = b;
     b = c;
+}
+
+template < typename T >
+bool isErrorData(T data)
+{
+#ifdef WIN32
+    if (!_isnan(data) || ABS(data) < SMALL)
+    {
+        return false;
+    }
+#else
+    if (ABS(data) < LARGE && (std::isnormal(data) || ABS(data) < SMALL))
+    {
+        return false;
+    }
+#endif
+    return true;
 }
 
 //! sign(a, b): return |a| * sign(b). a is the same as b.

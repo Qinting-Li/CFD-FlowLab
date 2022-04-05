@@ -124,6 +124,9 @@ private:
     //! Wall distance: the nearest distance of a cell to the wall.
     RDouble  * walldist;
 
+    //! Wall distance: the nearest distance of a node to the wall.
+    RDouble * walldistNode;
+
     RDouble* normalDistanceC2C;
 
     //! the label for first layer cell of the wall boundary.
@@ -461,6 +464,9 @@ public:
 
     //! Return the wall distance: the nearest distance of a cell to the wall.
     RDouble * GetWallDist() const;
+
+    //! Return the wall distance: the nearest distance of a node to the wall.
+    RDouble* GetWallDistNode() const;
 
     //! Return the wall cell label for the first layer of wall boundary. 
     int * GetWallCellLabel();

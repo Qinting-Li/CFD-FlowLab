@@ -43,12 +43,18 @@ class Pre_WalldistCompute
     static const int FAST_METHOD       = 1;
     static const int SUPER_FAST_METHOD = 2;
     static const int KDTREE_METHOD     = 3;
+
+    static const int CELL_METHOD = 0;
+    static const int NODE_METHOD = 1;
+
 private:
     //! Wall distance computing method.
     //! -# 0: fast but not accurate enough.
     //! -# 1: accurate but not fast enough.
     //! -# 3: k-dimension method.
     int walldistComputeMethod;
+
+    int cellMethodOrNodeMethod;
 
     //! Grid level in multi-grid method.
     //! 0 represents the default initial finest computational mesh.
@@ -91,11 +97,13 @@ private:
 
     void CheckWallDistance();
     void CheckWallDistance(UnstructGrid *grid);
+    void CheckWallDistanceByNodeMethod(UnstructGrid *grid);
 
     void PostWallDistance();
     void PostWallDistance(Grid *grid);
     void PostWallDistance(StructGrid *grid);
     void PostWallDistance(UnstructGrid *grid);
+    void PostWallDistanceByNodeMethod(UnstructGrid *grid);
 
     bool IsWalldistComputOver();
     bool IsWalldistComputOver(Grid *grid);
@@ -112,7 +120,9 @@ private:
     void ComputeWallDistance(UnstructGrid *grid);
     void ComputeWallDist2DByBinarySearching(UnstructGrid *grid);
     void ComputeWallDist3DByProjectingAccurate(UnstructGrid *grid);
+    void ComputeWallDist3DByProjectingAccurateAndNodeMethod(UnstructGrid *grid);
     void ComputeWallDist3DByProjectingFast(UnstructGrid *grid);
+    void ComputeWallDist3DByProjectingFastAndNodeMethod(UnstructGrid *grid);
     void ComputeWallDist3DByProjectingFast(StructGrid *grid);
     void ComputeNodeWallDist3DByProjectingFast(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist);
     void ComputeNodeWallDist3DByKDTreeMethod(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist);
