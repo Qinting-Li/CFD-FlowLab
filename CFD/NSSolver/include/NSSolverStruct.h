@@ -217,7 +217,10 @@ private:
     void OutFlowBC3D(Grid *gridIn, StructBC *structBC);
     void PressureInletBCRiemann(Grid *gridIn, StructBC *structBC);
     void PressureOutletBC(Grid *gridIn, StructBC *structBC);
-    
+
+    //! Get the primitiveVar of Inflow BC by Interrpolate from trajectory data.
+    void SetBCInitialValuesByInterpolation(StructBC *structBC, RDouble *primitiveVar);
+
     //! Mass flow in boundary condition.
     void MassFlowInletBC(Grid *gridIn, StructBC *structBC);
 
@@ -305,6 +308,9 @@ private:
     //! To write variables on surface such as p, rho, T etc. to the file. added by Li Peng on Mar.5, 2019.
     //! Add this function in order to verify the chemical codes and the related algorithm of computing thermal distribution.
     void ExportSurfaceVariables(ActionKey *actkey);
+
+    //! Compute the surface heating change and obtain the maximum change of the surface heating ratio.
+    void GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange);
 
     //! Write the surface information to the file.
     void WriteSurfaceInfo(ActionKey *actkey);

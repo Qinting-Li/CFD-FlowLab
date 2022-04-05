@@ -184,6 +184,24 @@ const int VISUAL_IBLANK                = 81;
 //const int VISUAL_NO                    = 16;
 //const int VISUAL_N                     = 17;
 //const int VISUAL_N2                    = 18;
+
+const int VISUAL_PB_U              = 1000;
+const int VISUAL_PB_V              = 1001;
+const int VISUAL_PB_W              = 1002;
+const int VISUAL_PB_Pressure       = 1003;
+const int VISUAL_PB_Density        = 1004;
+const int VISUAL_PB_Temperature    = 1005;
+const int VISUAL_PB_TurbK          = 1006;
+const int VISUAL_PB_TurbOMEGA      = 1007;
+const int VISUAL_PB_TurbEPSILON    = 1008;
+const int VISUAL_PB_Oxygen         = 1009;
+const int VISUAL_PB_Nitrogen       = 1010;
+const int VISUAL_PB_CarbonDioxide  = 1011;
+const int VISUAL_PB_Methane        = 1012;
+const int VISUAL_PB_Visl           = 1013;
+const int VISUAL_PB_Vist           = 1014;
+const int VISUAL_PB_Gen            = 1015;
+
 const int VISUAL_TAU_XX = 90;
 const int VISUAL_TAU_YY = 91;
 const int VISUAL_TAU_ZZ = 92;

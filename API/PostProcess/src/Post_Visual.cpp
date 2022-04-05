@@ -122,6 +122,24 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_VIS, "VIS"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_TE , "TE"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_ED , "ED"));
+
+
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_U , "U"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_V , "V"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_W , "W"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Pressure , "Pressure"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Density , "Density"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Temperature , "Temperature"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_TurbK         , "Kinetic"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_TurbOMEGA     , "Omega"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_TurbEPSILON   , "Epsilon"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Oxygen        , "Oxygen"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Nitrogen      , "Nitrogen"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_CarbonDioxide , "CarbonDioxide"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Methane       , "Methane"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Visl          , "viscosityLaminar"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Vist          , "viscosityTurbulence"));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Gen           , "GenEnergy"));
     }
 
     /*visualVariablesMap.insert(pair<int, string>(VISUAL_O, "O"));

@@ -56,6 +56,8 @@ public:
     LIB_EXPORT void InitCoarseGridsFlow(int iSolver, int level);
 
     LIB_EXPORT void CleanUp(int iSolver);
+    
+    LIB_EXPORT void SolveIncomFlow();
 
     //! Steady simulation by implementing multi-grid cycle.
     //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right

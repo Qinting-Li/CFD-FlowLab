@@ -328,4 +328,6 @@ string gasfile = "DK5";
 string speciesName = "O, O2, NO, N, N2";
 string initMassFraction = "0.07955, 0.134, 0.0509, 1.0e-9, 0.73555";
 int nContinueModel = 1;
-int ifStartFromPerfectGasResults = 0;
+int nRapidFlowfield = 0;
+int nSurfHeatMonitor = 1;
+double radiationCoef = 0.8;

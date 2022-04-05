@@ -110,10 +110,11 @@ private:
     void PostSolve();
 
     void InitGlobalBoundaryCondition();
-
+    
+    void SolveIncomFlow();
     void SolveUnsteady();
     void SolveSteady();
-
+    
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
 };
 }

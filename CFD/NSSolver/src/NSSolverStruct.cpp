@@ -478,6 +478,33 @@ namespace PHSPACE
             grid->UpdateDataPtr("surfaceSlipVariables", surfaceSlipVariables);
         }
 
+        int nRapidFlowfield = parameters->GetRapidFlowfieldMethod();
+        if (nRapidFlowfield > 0)
+        {
+            RDouble3D *surfacePressure = NULL;
+            if (nWallBC > 0)
+            {
+                surfacePressure = new RDouble3D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), Range(0, 1), fortranArray);
+            }
+            grid->UpdateDataPtr("surfacePressure", surfacePressure);
+#ifdef USE_HYFLOW_CODE
+            ComputeSurfacePressure(grid);
+#endif
+        }
+
+        //To exam the surface heating change.
+        int nSurfHeatMonitor = parameters->GetSurfaceHeatingMonitor();
+        if (nSurfHeatMonitor > 0)
+        {
+            RDouble3D *surfaceHeatFlux = NULL;
+            if (nWallBC > 0)
+            {
+                surfaceHeatFlux = new RDouble3D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), Range(0, 1), fortranArray);
+                *surfaceHeatFlux = 0.0;
+            }
+            grid->UpdateDataPtr("surfaceHeatFlux", surfaceHeatFlux);
+        }
+
         //initialization of parameters on surface.
         InitializeSurfaceParameters(gridIn);
 
@@ -813,6 +840,28 @@ namespace PHSPACE
                 delete injectionVelocity; injectionVelocity = 0;
                 grid->DeleteDataPtr("injectionVelocity");
             }
+        }
+
+        int nRapidFlowfield = parameters->GetRapidFlowfieldMethod();
+        if (nRapidFlowfield > 0)
+        {
+            if (nWallBC > 0)
+            {
+                RDouble3D *surfacePressure = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfacePressure"));
+                delete surfacePressure; surfacePressure = 0;
+            }
+            grid->DeleteDataPtr("surfacePressure");
+        }
+
+        int nSurfHeatMonitor = parameters->GetSurfaceHeatingMonitor();
+        if (nSurfHeatMonitor > 0)
+        {
+            if (nWallBC > 0)
+            {
+                RDouble3D *surfaceHeatFlux = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceHeatFlux"));
+                delete surfaceHeatFlux; surfaceHeatFlux = 0;
+            }
+            grid->DeleteDataPtr("surfaceHeatFlux");
         }
 
         nWallBC = 1; //! The number of surface boundary conditions.
@@ -2953,8 +3002,8 @@ namespace PHSPACE
 
         //! Compute hinge moment.
         int dumpHingeMoment = 0;
-        RDouble localCoordAxis0[3];
-        RDouble localCoordAxis1[3];
+ //       RDouble localCoordAxis0[3];
+ //       RDouble localCoordAxis1[3];
 
         using namespace IDX;
         RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
@@ -3303,6 +3352,10 @@ namespace PHSPACE
         RDouble Qw = 0.0, Qtr = 0.0, Qs = 0.0, Qv = 0.0, Qe = 0.0, Pw = 0.0, Tw = 0.0, Rhow = 0.0, absVelocity = 0.0;
         RDouble StantonNumber = 0.0, HeatCoef = 0.0, deltaT = 0.0, wallTotalEnthalpy = 0.0;
 
+        int nSurfGradMethod = parameters->GetSurfaceGradientMethod();
+        RDouble gradTx[3] = {0.0, 0.0, 0.0}, gradTy[3] = {0.0, 0.0, 0.0}, gradTz[3] = {0.0, 0.0, 0.0};
+        RDouble gradCx[MAX_SPECIES_NUM] = {0.0}, gradCy[MAX_SPECIES_NUM] = {0.0}, gradCz[MAX_SPECIES_NUM] = {0.0};
+
         //! The mass fraction of oxygen and nitrogen under the fully catalytic condition.
         RDouble speciesEnthalpy[MAX_SPECIES_NUM], densityDiffusivity[MAX_SPECIES_NUM];
         string *speciesName;
@@ -3311,6 +3364,13 @@ namespace PHSPACE
         {
             speciesName = gas->GetNameOfSpecies();
             surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
+        }
+
+        int nRapidFlowfield = parameters->GetRapidFlowfieldMethod();
+        RDouble3D *surfacePressure = NULL;
+        if (nRapidFlowfield > 0)
+        {
+            surfacePressure = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfacePressure"));
         }
 
         //! To obtain the reference values.
@@ -3536,7 +3596,16 @@ namespace PHSPACE
                                 DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, IU, dudx, dudy, dudz, leftOrRightIndex);
                                 DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
                                 DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
-                                DXDYDZ_I(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                //DXDYDZ_I(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                for (int m = 0; m < nTemperatureModel; ++ m)
+                                {
+                                    DXDYDZ_I(temperature, geometry3D, i, j, k, nDim, m, gradTx[m], gradTy[m], gradTz[m], leftOrRightIndex);
+                                }
+                                for (int m = 0; m < numberOfSpecies; ++ m)
+                                {
+                                    DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, m + nNSEquation, gradCx[m], gradCy[m], gradCz[m], leftOrRightIndex);
+                                }
+
                                 visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(iCellGhostLayer, j, k));
                                 visTurbulence = 0.0;
                                 if (wallFunctionType != WALLFUNCTION::NONE)
@@ -3553,7 +3622,16 @@ namespace PHSPACE
                                 DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, IU, dudx, dudy, dudz, leftOrRightIndex);
                                 DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
                                 DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
-                                DXDYDZ_J(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                //DXDYDZ_J(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                for (int m = 0; m < nTemperatureModel; ++ m)
+                                {
+                                    DXDYDZ_J(temperature, geometry3D, i, j, k, nDim, m, gradTx[m], gradTy[m], gradTz[m], leftOrRightIndex);
+                                }
+                                for (int m = 0; m < numberOfSpecies; ++ m)
+                                {
+                                    DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, m + nNSEquation, gradCx[m], gradCy[m], gradCz[m], leftOrRightIndex);
+                                }
+
                                 visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, jCellGhostLayer, k));
                                 visTurbulence = 0.0;
                                 if (wallFunctionType != WALLFUNCTION::NONE)
@@ -3570,7 +3648,16 @@ namespace PHSPACE
                                 DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, IU, dudx, dudy, dudz, leftOrRightIndex);
                                 DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
                                 DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
-                                DXDYDZ_K(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                //DXDYDZ_K(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                for (int m = 0; m < nTemperatureModel; ++ m)
+                                {
+                                    DXDYDZ_K(temperature, geometry3D, i, j, k, nDim, m, gradTx[m], gradTy[m], gradTz[m], leftOrRightIndex);
+                                }
+                                for (int m = 0; m < numberOfSpecies; ++ m)
+                                {
+                                    DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, m + nNSEquation, gradCx[m], gradCy[m], gradCz[m], leftOrRightIndex);
+                                }
+
                                 visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, j, kCellGhostLayer));
                                 visTurbulence = 0.0;
                                 if (wallFunctionType != WALLFUNCTION::NONE)
@@ -3579,6 +3666,9 @@ namespace PHSPACE
                                     heatCoeff = heatTransferCoeff(i, j, k, ITT) + heatTransferCoeff(i, j, kCellGhostLayer, ITT);
                                 }
                             }
+                            dtdx = gradTx[ITT];
+                            dtdy = gradTy[ITT];
+                            dtdz = gradTz[ITT];
                             viscousCoef = visLaminar + visTurbulence;
 
                             //! To Compute the heat flux on wall.
@@ -3589,7 +3679,7 @@ namespace PHSPACE
                                 {
                                     if (abs(heatCoeff) > SMALL)
                                     {
-                                        kSpecificHeat = heatCoeff;
+                                        kSpecificHeat += heatCoeff;
                                     }
                                 }
                                 RDouble qx = kSpecificHeat * dtdx;
@@ -3617,31 +3707,63 @@ namespace PHSPACE
                                 //! To compute heat conductivity of mixture gas using the Eucken formula and Wassilewa formula.
                                 gas->ComputeMixtureGasHeatConductivity(wallVariables, wallTemperature[ITT], wallTemperature[ITV], wallTemperature[ITE], heatConductivity[ITT], heatConductivity[ITV], heatConductivity[ITE]);
 
-                                //! Compute the heat flux caused by the gradient of translation-rotation temperature near wall.
-                                Qtr = heatConductivity[ITT] * (temperature(i, j, k, ITT) - wallTemperature[ITT]) / deltaHeight * oRefReNumber;
+                                if (nSurfGradMethod > 0)
+                                {
+                                    //! Compute the heat flux caused by the gradient of translation-rotation temperature near wall.
+                                    Qtr = -heatConductivity[ITT] * (normalComponetX * gradTx[ITT] + normalComponetY * gradTy[ITT] + normalComponetZ * gradTz[ITT]) * oRefReNumber;
 
-                                //! Compute the heat flux caused by the gradient of species enthalpies near wall.
-                                Qs = 0.0;
-                                for (int s = 0; s < numberOfSpecies; ++ s)
-                                {
-                                    //! Compute the diffusion coefficient.
-                                    RDouble diffusionCoefficient = densityDiffusivity[s] * speciesEnthalpy[s];
-                                    //! Compute the mass diffusion energy.
-                                    Qs += diffusionCoefficient * (primitiveVars(i, j, k, nNSEquation + s) - wallVariables[nNSEquation + s]) / deltaHeight;
-                                }
-                                Qs *= oRefReNumber;
+                                    //! Compute the heat flux caused by the gradient of species enthalpies near wall.
+                                    Qs = 0.0;
+                                    for (int s = 0; s < numberOfSpecies; ++ s)
+                                    {
+                                        //! Compute the diffusion coefficient.
+                                        RDouble diffusionCoefficient = densityDiffusivity[s] * speciesEnthalpy[s];
+                                        //! Compute the mass diffusion energy.
+                                        Qs += -diffusionCoefficient * (normalComponetX * gradCx[s] + normalComponetY * gradCy[s] + normalComponetZ * gradCz[s]);
+                                    }
+                                    Qs *= oRefReNumber;
 
-                                //! Compute the heat flux caused by the gradient of vibration-electron temperature near wall.
-                                Qv = 0.0;
-                                Qe = 0.0;
-                                if (nTemperatureModel == 2)
-                                {
-                                    Qv = (heatConductivity[ITV] + heatConductivity[ITE]) * (temperature(i, j, k, ITV) - wallTemperature[ITV]) / deltaHeight * oRefReNumber;
+                                    //! Compute the heat flux caused by the gradient of vibration-electron temperature near wall.
+                                    Qv = 0.0;
+                                    Qe = 0.0;
+                                    if (nTemperatureModel == 2)
+                                    {
+                                        Qv = -(heatConductivity[ITV] + heatConductivity[ITE]) * (normalComponetX * gradTx[ITV] + normalComponetY * gradTy[ITV] + normalComponetZ * gradTz[ITV]) * oRefReNumber;
+                                    }
+                                    else if (nTemperatureModel == 3)
+                                    {
+                                        Qv = -heatConductivity[ITV] * (normalComponetX * gradTx[ITV] + normalComponetY * gradTy[ITV] + normalComponetZ * gradTz[ITV]) * oRefReNumber;
+                                        Qe = -heatConductivity[ITE] * (normalComponetX * gradTx[ITE] + normalComponetY * gradTy[ITE] + normalComponetZ * gradTz[ITE]) * oRefReNumber;
+                                    }
                                 }
-                                else if (nTemperatureModel == 3)
+                                else
                                 {
-                                    Qv = heatConductivity[ITV] * (temperature(i, j, k, ITV) - wallTemperature[ITV]) / deltaHeight * oRefReNumber;
-                                    Qe = heatConductivity[ITE] * (temperature(i, j, k, ITE) - wallTemperature[ITE]) / deltaHeight * oRefReNumber;
+                                    //! Compute the heat flux caused by the gradient of translation-rotation temperature near wall.
+                                    Qtr = heatConductivity[ITT] * (temperature(i, j, k, ITT) - wallTemperature[ITT]) / deltaHeight * oRefReNumber;
+
+                                    //! Compute the heat flux caused by the gradient of species enthalpies near wall.
+                                    Qs = 0.0;
+                                    for (int s = 0; s < numberOfSpecies; ++ s)
+                                    {
+                                        //! Compute the diffusion coefficient.
+                                        RDouble diffusionCoefficient = densityDiffusivity[s] * speciesEnthalpy[s];
+                                        //! Compute the mass diffusion energy.
+                                        Qs += diffusionCoefficient * (primitiveVars(i, j, k, nNSEquation + s) - wallVariables[nNSEquation + s]) / deltaHeight;
+                                    }
+                                    Qs *= oRefReNumber;
+
+                                    //! Compute the heat flux caused by the gradient of vibration-electron temperature near wall.
+                                    Qv = 0.0;
+                                    Qe = 0.0;
+                                    if (nTemperatureModel == 2)
+                                    {
+                                        Qv = (heatConductivity[ITV] + heatConductivity[ITE]) * (temperature(i, j, k, ITV) - wallTemperature[ITV]) / deltaHeight * oRefReNumber;
+                                    }
+                                    else if (nTemperatureModel == 3)
+                                    {
+                                        Qv = heatConductivity[ITV] * (temperature(i, j, k, ITV) - wallTemperature[ITV]) / deltaHeight * oRefReNumber;
+                                        Qe = heatConductivity[ITE] * (temperature(i, j, k, ITE) - wallTemperature[ITE]) / deltaHeight * oRefReNumber;
+                                    }
                                 }
 
                                 //! Set the total heat flux on wall.
@@ -3699,6 +3821,12 @@ namespace PHSPACE
                             RDouble wallDistantOfFirstCell = deltaHeight;
                             yPlus = refReNumber * sqrt(taoWall * densityWall) * wallDistantOfFirstCell / visLaminar;
                         }
+
+                        //if (nRapidFlowfield > 0)
+                        //{
+                        //    pressCoef = (*surfacePressure)(indexOfWall, indexOfCell, 0);
+                        //    Pw = (*surfacePressure)(indexOfWall, indexOfCell, 1) * refDynamicPressure;
+                        //}
 
                         visualVariables[VISUAL_WALL_CP] = pressCoef;
                         visualVariables[VISUAL_WALL_CF] = frictionCoef;
@@ -4487,6 +4615,457 @@ namespace PHSPACE
         DataContainer *chemicalSurfaceData = actkey->GetData();
         chemicalSurfaceData->moveto_begin();
         chemicalSurfaceData->write(const_cast <char *> (str.data()), str.size() * sizeof(char));
+    }
+
+    void NSSolverStruct::GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange)
+    {
+        using namespace IDX;
+        int nDim = GetDim();
+        StructGrid *grid = StructGridCast(GetGrid(actkey->level));
+
+        RDouble4D &primitiveVars = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+        RDouble4D &temperature = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+        RDouble3D &viscousLaminar = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
+        RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
+
+        Param_NSSolverStruct *parameters = GetControlParameters();
+        RDouble oRefReNumber = parameters->GetoRefReNumber();
+        RDouble oPrandtlLaminar = parameters->GetoPrandtlLaminar();
+        RDouble oPrandtlTurbulence = parameters->GetoPrandtlTurbulence();
+        RDouble refGama = parameters->GetRefGama();
+        RDouble refMachNumber = parameters->GetRefMachNumber();
+        RDouble specificHeatAtConstantPressure = 1.0 / ((refGama - 1.0) * refMachNumber * refMachNumber);
+
+        int viscousType = parameters->GetViscousType();
+        int mTT = parameters->GetmTT();
+        int mTV = parameters->GetmTV();
+        int mTE = parameters->GetmTE();
+
+        RDouble4D &xfv = *(grid->GetFaceVectorX());
+        RDouble4D &yfv = *(grid->GetFaceVectorY());
+        RDouble4D &zfv = *(grid->GetFaceVectorZ());
+
+        RDouble4D &faceNormalComponentX = *(grid->GetFaceNormalX());
+        RDouble4D &faceNormalComponentY = *(grid->GetFaceNormalY());
+        RDouble4D &faceNormalComponentZ = *(grid->GetFaceNormalZ());
+        RDouble4D &faceArea = *(grid->GetFaceArea());
+        RDouble3D &cellVolume = *(grid->GetCellVolume());
+
+        RDouble gasConstant = gas->GetUniversalGasConstant();//! The universal gas constant.
+        RDouble catalyticCoef = parameters->GetCatalyticCoef();//! The type of catalytic wall condition.
+        RDouble nonDimensionalSutherlandTemperature = parameters->GetNonDimensionalSutherlandTemperature();
+        RDouble Twall = parameters->GetWallTemperature();    //! Temperature on wall.
+        RDouble referenceTemperature = parameters->GetRefDimensionalTemperature();
+        int nChemical = parameters->GetChemicalFlag();
+        int nNSEquation = parameters->GetNSEquationNumber();
+        int numberOfSpecies = parameters->GetNumberOfSpecies();
+        int nTemperatureModel = parameters->GetTemperatureModel();
+        int nEquation = nNSEquation + numberOfSpecies + nTemperatureModel - 1;
+        int wallFunctionType = GlobalDataBase::GetIntParaFromDB("wallFunctionType");
+
+        RDouble2D *surfaceTemperature = NULL;
+        if (Twall >= 0.0)
+        {
+            surfaceTemperature = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
+        }
+
+        int nSlipBCModel = GlobalDataBase::GetIntParaFromDB("nSlipBCModel");
+        RDouble3D *surfaceSlipVariables = NULL;
+        if (nSlipBCModel > 0)
+        {
+            surfaceSlipVariables = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceSlipVariables"));
+        }
+
+        RDouble2D *firstLayerHeight = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("firstLayerHeight"));
+        RDouble4D &heatTransferCoeff = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("heatTransferCoeff"));
+
+        //! Allocate the dynamic memory space to save the primitive variables on wall.
+        RDouble *wallVariables = new RDouble[nEquation];
+        RDouble nondimTwall = Twall / referenceTemperature;
+        RDouble wallTemperature[3] = { nondimTwall, nondimTwall, nondimTwall };
+        RDouble Qw = 0.0, Qtr = 0.0, Qs = 0.0, Qv = 0.0, Qe = 0.0, prevHeat = 0.0, deltaHeat = 0.0;
+        RDouble maxHeatChangeRatio = 0.0, localHeatChangeRatio = 0.0;
+
+        int nSurfGradMethod = 0;
+        if (GlobalDataBase::IsExist("nSurfGradMethod", PHINT, 1))
+        {
+            nSurfGradMethod = GlobalDataBase::GetIntParaFromDB("nSurfGradMethod");
+        }
+        RDouble gradTx[3] = {0.0, 0.0, 0.0}, gradTy[3] = {0.0, 0.0, 0.0}, gradTz[3] = {0.0, 0.0, 0.0};
+        RDouble gradCx[MAX_SPECIES_NUM] = {0.0}, gradCy[MAX_SPECIES_NUM] = {0.0}, gradCz[MAX_SPECIES_NUM] = {0.0};
+
+        //! The mass fraction of oxygen and nitrogen under the fully catalytic condition.
+        RDouble speciesEnthalpy[MAX_SPECIES_NUM], densityDiffusivity[MAX_SPECIES_NUM];
+        string *speciesName = NULL;
+        RDouble3D *surfaceMassFraction = NULL;
+        if (nChemical > 0 && numberOfSpecies > 0)
+        {
+            speciesName = gas->GetNameOfSpecies();
+            surfaceMassFraction = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceMassFraction"));
+        }
+
+        RDouble3D *surfaceHeatFlux = NULL;
+        int nSurfHeatMonitor = parameters->GetSurfaceHeatingMonitor();
+        if (nSurfHeatMonitor > 0)
+        {
+            surfaceHeatFlux = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("surfaceHeatFlux"));
+        }
+
+        //! To obtain the reference values.
+        RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
+        RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
+        RDouble refVelocity = refDimensionalSonicSpeed * refMachNumber;
+        RDouble refSquareVelocity = refVelocity * refVelocity;
+        RDouble refDynamicPressure = refDimensionalDensity * refSquareVelocity;
+        RDouble refEnergy = refDimensionalDensity * refVelocity * refSquareVelocity;
+        RDouble refHeatFluxDimension = refEnergy * 0.001; // The dimensional value of total heat flux (kW/m2).
+
+        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        //! Obtain the number of boundary condition regions.
+        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        int indexOfWall = 0, indexOfCell = 0;
+
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            int BCType = structBC->GetBCType();
+
+            if (!IsWall(BCType) && BCType != PHENGLEI::ABLATION_SURFACE)
+            {
+                continue;
+            }
+
+            int ist = 0, ied = 0, jst = 0, jed = 0, kst = 0, ked = 0;
+            structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+            //! Obtain the surface information.
+            int *s_lr3d = structBC->GetFaceDirectionIndex();
+            int nSurface = structBC->GetFaceDirection() + 1;
+            int leftOrRightIndex = structBC->GetFaceLeftOrRightIndex();
+
+            indexOfCell = 0;
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        //! i, j, k - is first CELL index near SOLID_SURFACE.
+                        //! iWall, jWall, kWall - is NODE index on SOLID_SURFACE.
+                        int iWall, jWall, kWall;
+                        structBC->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+
+                        RDouble normalComponetX = leftOrRightIndex * faceNormalComponentX(iWall, jWall, kWall, nSurface);
+                        RDouble normalComponetY = leftOrRightIndex * faceNormalComponentY(iWall, jWall, kWall, nSurface);
+                        RDouble normalComponetZ = leftOrRightIndex * faceNormalComponentZ(iWall, jWall, kWall, nSurface);
+                        RDouble surfaceArea = faceArea(iWall, jWall, kWall, nSurface);
+
+                        //! The projection of the dy called the distance between the center of the cell and that of the surface on normal vector.
+                        //RDouble deltaHeight = fabs((xCellCenter - xCenterWall) * normalComponetX + (yCellCenter - yCenterWall) * normalComponetY + (zCellCenter - zCenterWall) * normalComponetZ);
+                        RDouble deltaHeight = (*firstLayerHeight)(indexOfWall, indexOfCell);
+
+                        //! The index of  first ghost cell layer near SOLID_SURFACE.
+                        int iCellGhostLayer = i + s_lr3d[0];
+                        int jCellGhostLayer = j + s_lr3d[1];
+                        int kCellGhostLayer = k + s_lr3d[2];
+
+                        //! To obtain the variables on wall.
+                        wallVariables[IP] = primitiveVars(i, j, k, IP);
+                        if (nSlipBCModel > 0)
+                        {
+                            for (int m = 0; m < 3; ++ m)
+                            {
+                                wallTemperature[m] = (*surfaceSlipVariables)(indexOfWall, indexOfCell, m);
+                                wallVariables[m + 1] = (*surfaceSlipVariables)(indexOfWall, indexOfCell, m + 3);
+                            }
+                        }
+                        else
+                        {
+                            if (viscousType > INVISCID)
+                            {
+                                wallVariables[IU] = 0.0;
+                                wallVariables[IV] = 0.0;
+                                wallVariables[IW] = 0.0;
+                            }
+                            else
+                            {
+                                //The velocity is used to extract the wall streamline, so this velocity is not the real velocity on wall.
+                                wallVariables[IU] = primitiveVars(i, j, k, IU);
+                                wallVariables[IV] = primitiveVars(i, j, k, IV);
+                                wallVariables[IW] = primitiveVars(i, j, k, IW);
+                            }
+
+                            //! Set temperature on wall.
+                            if (Twall < 0.0) //Adabatic wall.
+                            {
+                                wallTemperature[ITT] = temperature(i, j, k, mTT);
+                                wallTemperature[ITV] = temperature(i, j, k, mTV);
+                                wallTemperature[ITE] = temperature(i, j, k, mTE);
+                            }
+                            else //Isothermal wall or radiation equilibrium temperature wall.
+                            {
+                                wallTemperature[ITT] = (*surfaceTemperature)(indexOfWall, indexOfCell);
+                                wallTemperature[ITV] = wallTemperature[ITT];
+                                wallTemperature[ITE] = wallTemperature[ITT];
+                            }
+                        }
+
+                        //! Compute the density on wall using the state equation.
+                        wallVariables[IR] = refGama * refMachNumber * refMachNumber * wallVariables[IP] / wallTemperature[ITT];
+                        if (nChemical >= 1)
+                        {
+                            //! To obtain the mass fraction on wall.
+                            if (ABS(catalyticCoef) <= EPSILON && BCType != PHENGLEI::ABLATION_SURFACE) // Fully non-catalytic wall.
+                            {
+                                for (int s = nNSEquation; s < numberOfSpecies + nNSEquation; ++ s)
+                                {
+                                    wallVariables[s] = primitiveVars(i, j, k, s);
+                                }
+                            }
+                            else // Fully catalytic wall or finite catalytic wall.
+                            {
+                                for (int s = nNSEquation; s < numberOfSpecies + nNSEquation; ++ s)
+                                {
+                                    wallVariables[s] = (*surfaceMassFraction)(indexOfWall, indexOfCell, s - nNSEquation);
+                                }
+                            }
+
+                            RDouble massReciprocal = 0.0;
+                            if (nTemperatureModel > 1)     //! Multi-Temperature model.
+                            {
+                                RDouble ceDivideMe = 0.0;
+                                massReciprocal = gas->ComputeMolecularWeightReciprocalWithoutElectron(wallVariables, ceDivideMe);
+                                wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal + gasConstant * wallTemperature[ITE] * ceDivideMe);
+                            }
+                            else         //! One-Temperature model.
+                            {
+                                //! Obtain molecular weight of the mixture gas.
+                                massReciprocal = gas->ComputeMolecularWeightReciprocal(wallVariables);
+                                wallVariables[IR] = wallVariables[IP] / (gasConstant * wallTemperature[ITT] * massReciprocal);
+                            }
+                        }
+
+                        RDouble dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz;
+                        RDouble dtdx, dtdy, dtdz;
+                        RDouble visLaminar = 0.0, visTurbulence = 0.0;
+                        RDouble heatCoeff = 0.0, heatFlux = 0.0;
+                        if (viscousType > INVISCID)
+                        {
+                            Geometry3D *geometry3D = new Geometry3D;
+
+                            if (nSurface == 1)
+                            {
+                                //! Get i-th face vector on the wall surface.
+                                Get_GEO_I(i, j, k, iWall, iWall, nDim, geometry3D, xfv, yfv, zfv, cellVolume);
+                                //! Get derivative to the wall in i-direction of u,v,w,T.
+                                DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                                DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                                DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                                //DXDYDZ_I(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                for (int m = 0; m < nTemperatureModel; ++ m)
+                                {
+                                    DXDYDZ_I(temperature, geometry3D, i, j, k, nDim, m, gradTx[m], gradTy[m], gradTz[m], leftOrRightIndex);
+                                }
+                                for (int m = 0; m < numberOfSpecies; ++ m)
+                                {
+                                    DXDYDZ_I(primitiveVars, geometry3D, i, j, k, nDim, m + nNSEquation, gradCx[m], gradCy[m], gradCz[m], leftOrRightIndex);
+                                }
+
+                                visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(iCellGhostLayer, j, k));
+                                visTurbulence = 0.0;
+                                if (wallFunctionType != WALLFUNCTION::NONE)
+                                {
+                                    visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(iCellGhostLayer, j, k));
+                                    heatCoeff = heatTransferCoeff(i, j, k, ITT) + heatTransferCoeff(iCellGhostLayer, j, k, ITT);
+                                }
+                            }
+                            else if (nSurface == 2)
+                            {
+                                //! Get j-th face vector on the wall surface;.
+                                Get_GEO_J(i, j, k, jWall, jWall, nDim, geometry3D, xfv, yfv, zfv, cellVolume);
+                                //! Get derivative to the wall in j-direction of u,v,w,T.
+                                DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                                DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                                DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                                //DXDYDZ_J(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                for (int m = 0; m < nTemperatureModel; ++ m)
+                                {
+                                    DXDYDZ_J(temperature, geometry3D, i, j, k, nDim, m, gradTx[m], gradTy[m], gradTz[m], leftOrRightIndex);
+                                }
+                                for (int m = 0; m < numberOfSpecies; ++ m)
+                                {
+                                    DXDYDZ_J(primitiveVars, geometry3D, i, j, k, nDim, m + nNSEquation, gradCx[m], gradCy[m], gradCz[m], leftOrRightIndex);
+                                }
+
+                                visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, jCellGhostLayer, k));
+                                visTurbulence = 0.0;
+                                if (wallFunctionType != WALLFUNCTION::NONE)
+                                {
+                                    visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, jCellGhostLayer, k));
+                                    heatCoeff = heatTransferCoeff(i, j, k, ITT) + heatTransferCoeff(i, jCellGhostLayer, k, ITT);
+                                }
+                            }
+                            else
+                            {
+                                //! Get k-th face vector on the wall surface.
+                                Get_GEO_K(i, j, k, kWall, kWall, nDim, geometry3D, xfv, yfv, zfv, cellVolume);
+                                //! Get derivative to the wall in k-direction of u,v,w,T.
+                                DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                                DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                                DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                                //DXDYDZ_K(temperature, geometry3D, i, j, k, nDim, ITT, dtdx, dtdy, dtdz, leftOrRightIndex);
+                                for (int m = 0; m < nTemperatureModel; ++ m)
+                                {
+                                    DXDYDZ_K(temperature, geometry3D, i, j, k, nDim, m, gradTx[m], gradTy[m], gradTz[m], leftOrRightIndex);
+                                }
+                                for (int m = 0; m < numberOfSpecies; ++ m)
+                                {
+                                    DXDYDZ_K(primitiveVars, geometry3D, i, j, k, nDim, m + nNSEquation, gradCx[m], gradCy[m], gradCz[m], leftOrRightIndex);
+                                }
+
+                                visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, j, kCellGhostLayer));
+                                visTurbulence = 0.0;
+                                if (wallFunctionType != WALLFUNCTION::NONE)
+                                {
+                                    visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, j, kCellGhostLayer));
+                                    heatCoeff = heatTransferCoeff(i, j, k, ITT) + heatTransferCoeff(i, j, kCellGhostLayer, ITT);
+                                }
+                            }
+                            dtdx = gradTx[ITT];
+                            dtdy = gradTy[ITT];
+                            dtdz = gradTz[ITT];
+                            RDouble viscousCoef = visLaminar + visTurbulence;
+
+                            //! To Compute the heat flux on wall.
+                            if (nChemical == 0)
+                            {
+                                RDouble kSpecificHeat = (visLaminar * oPrandtlLaminar + visTurbulence * oPrandtlTurbulence) * specificHeatAtConstantPressure;
+                                if (wallFunctionType == WALLFUNCTION::STANDARD)
+                                {
+                                    if (abs(heatCoeff) > SMALL)
+                                    {
+                                        kSpecificHeat = heatCoeff;
+                                    }
+                                }
+                                RDouble qx = kSpecificHeat * dtdx;
+                                RDouble qy = kSpecificHeat * dtdy;
+                                RDouble qz = kSpecificHeat * dtdz;
+                                //! This value is not the real heat rate on wall, it is just the first term on the right side of the energy equation.\n
+                                //! To obtain the real value, hf = nxs * qx + nys * qy + nzs * qz, and hf is just the non-dimensional variables.\n
+                                //! To obtain the dimensional value of heat rate, hf = (nxs * qx + nys * qy + nzs * qz) * (ref_miu * ref_vel^2/ref_len).
+                                heatFlux += -(normalComponetX * qx + normalComponetY * qy + normalComponetZ * qz) * oRefReNumber;
+                            }
+                            else      //! Non-equilibrium gas.
+                            {
+                                //! Compute Heat conductivity.
+                                RDouble heatConductivity[3] = { 0.0, 0.0, 0.0 };
+                                //! To obtain the enthalpy of each species.
+                                gas->GetEverySpeciesEnthalpy(wallTemperature[ITT], wallTemperature[ITV], wallTemperature[ITE], speciesEnthalpy);
+
+                                //! To Modify the viscosity on wall.
+                                gas->ComputeViscosityByPrimitive(wallVariables, wallTemperature[ITT], wallTemperature[ITE], nonDimensionalSutherlandTemperature, visLaminar);
+                                viscousCoef = visLaminar + visTurbulence;
+
+                                //! To obtain the mass diffusion coefficients of each species.
+                                gas->GetSpeciesMassDiffusionCoef(wallVariables, visLaminar, visTurbulence, densityDiffusivity);
+
+                                //! To compute heat conductivity of mixture gas using the Eucken formula and Wassilewa formula.
+                                gas->ComputeMixtureGasHeatConductivity(wallVariables, wallTemperature[ITT], wallTemperature[ITV], wallTemperature[ITE], heatConductivity[ITT], heatConductivity[ITV], heatConductivity[ITE]);
+
+                                if (nSurfGradMethod > 0)
+                                {
+                                    //! Compute the heat flux caused by the gradient of translation-rotation temperature near wall.
+                                    Qtr = -heatConductivity[ITT] * (normalComponetX * gradTx[ITT] + normalComponetY * gradTy[ITT] + normalComponetZ * gradTz[ITT]) * oRefReNumber;
+
+                                    //! Compute the heat flux caused by the gradient of species enthalpies near wall.
+                                    Qs = 0.0;
+                                    for (int s = 0; s < numberOfSpecies; ++ s)
+                                    {
+                                        //! Compute the diffusion coefficient.
+                                        RDouble diffusionCoefficient = densityDiffusivity[s] * speciesEnthalpy[s];
+                                        //! Compute the mass diffusion energy.
+                                        Qs += -diffusionCoefficient * (normalComponetX * gradCx[s] + normalComponetY * gradCy[s] + normalComponetZ * gradCz[s]);
+                                    }
+                                    Qs *= oRefReNumber;
+
+                                    //! Compute the heat flux caused by the gradient of vibration-electron temperature near wall.
+                                    Qv = 0.0;
+                                    Qe = 0.0;
+                                    if (nTemperatureModel == 2)
+                                    {
+                                        Qv = -(heatConductivity[ITV] + heatConductivity[ITE]) * (normalComponetX * gradTx[ITV] + normalComponetY * gradTy[ITV] + normalComponetZ * gradTz[ITV]) * oRefReNumber;
+                                    }
+                                    else if (nTemperatureModel == 3)
+                                    {
+                                        Qv = -heatConductivity[ITV] * (normalComponetX * gradTx[ITV] + normalComponetY * gradTy[ITV] + normalComponetZ * gradTz[ITV]) * oRefReNumber;
+                                        Qe = -heatConductivity[ITE] * (normalComponetX * gradTx[ITE] + normalComponetY * gradTy[ITE] + normalComponetZ * gradTz[ITE]) * oRefReNumber;
+                                    }
+                                }
+                                else
+                                {
+                                    //! Compute the heat flux caused by the gradient of translation-rotation temperature near wall.
+                                    Qtr = heatConductivity[ITT] * (temperature(i, j, k, ITT) - wallTemperature[ITT]) / deltaHeight * oRefReNumber;
+
+                                    //! Compute the heat flux caused by the gradient of species enthalpies near wall.
+                                    Qs = 0.0;
+                                    for (int s = 0; s < numberOfSpecies; ++ s)
+                                    {
+                                        //! Compute the diffusion coefficient.
+                                        RDouble diffusionCoefficient = densityDiffusivity[s] * speciesEnthalpy[s];
+                                        //! Compute the mass diffusion energy.
+                                        Qs += diffusionCoefficient * (primitiveVars(i, j, k, nNSEquation + s) - wallVariables[nNSEquation + s]) / deltaHeight;
+                                    }
+                                    Qs *= oRefReNumber;
+
+                                    //! Compute the heat flux caused by the gradient of vibration-electron temperature near wall.
+                                    Qv = 0.0;
+                                    Qe = 0.0;
+                                    if (nTemperatureModel == 2)
+                                    {
+                                        Qv = (heatConductivity[ITV] + heatConductivity[ITE]) * (temperature(i, j, k, ITV) - wallTemperature[ITV]) / deltaHeight * oRefReNumber;
+                                    }
+                                    else if (nTemperatureModel == 3)
+                                    {
+                                        Qv = heatConductivity[ITV] * (temperature(i, j, k, ITV) - wallTemperature[ITV]) / deltaHeight * oRefReNumber;
+                                        Qe = heatConductivity[ITE] * (temperature(i, j, k, ITE) - wallTemperature[ITE]) / deltaHeight * oRefReNumber;
+                                    }
+                                }
+
+                                //! Set the total heat flux on wall.
+                                heatFlux = Qtr + Qs + Qv + Qe;
+                                Qtr *= refHeatFluxDimension;
+                                Qs *= refHeatFluxDimension;
+                                Qv *= refHeatFluxDimension;
+                                Qe *= refHeatFluxDimension;
+                            }
+                            //The dimensional value of total surface heating ratio.
+                            Qw = heatFlux * refHeatFluxDimension;
+                        }
+
+                        prevHeat = (*surfaceHeatFlux)(indexOfWall, indexOfCell, 0);
+                        deltaHeight = heatFlux - prevHeat;
+                        if (fabs(prevHeat) <= EPSILON)
+                        {
+                            localHeatChangeRatio = fabs(deltaHeight / EPSILON);
+                        }
+                        else
+                        {
+                            localHeatChangeRatio = fabs(deltaHeight / prevHeat);
+                        }
+                        (*surfaceHeatFlux)(indexOfWall, indexOfCell, 0) = heatFlux;
+                        (*surfaceHeatFlux)(indexOfWall, indexOfCell, 1) = deltaHeight;
+
+                        maxHeatChangeRatio = MAX(maxHeatChangeRatio, localHeatChangeRatio);
+
+                        //Next grid cell.
+                        ++ indexOfCell;
+                    }//i end
+                }//j end
+            }//k end
+            ++ indexOfWall; //Next surface region.
+        }//iBCRegion end
+
+        localMaxHeatChange = maxHeatChangeRatio;
     }
 
     void NSSolverStruct::WriteSurfaceInfo(ActionKey *actkey)
@@ -6358,8 +6937,16 @@ namespace PHSPACE
         RDouble4D &temperatures = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
         RDouble4D &heatTransferCoeff = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("heatTransferCoeff"));
 
+        RDouble refLenth = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
+
+        RDouble3D &Xm = *(grid->GetCellCenterX());
+        RDouble3D &Ym = *(grid->GetCellCenterY());
+        RDouble3D &Zm = *(grid->GetCellCenterZ());
+
         int nEquation = GetNumberOfEquations();
         RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
+
+        RDouble iniSpeedCoef = parameters->GetIniSpeedCoef();
 
         Range M(0, nEquation - 1);
         int mst = M.first();
@@ -6380,6 +6967,110 @@ namespace PHSPACE
         }
 
         temperatures = 1.0;
+
+#ifdef USE_HYFLOW_CODE
+        using namespace PHENGLEI;
+        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            int BCType = structBC->GetBCType();
+
+            if (BCType != INFLOW && BCType != PRESSURE_INLET)
+            {
+                continue;
+            }
+
+            Data_Param *bcParamDB = structBC->GetBCParamDataBase();
+
+            RDouble *primitiveVarBC = new RDouble[nEquation];
+            int initFlowBcType;
+            RDouble firstPoint[3], secondPoint[3], bcRadius;
+
+            //ini initFlowBcType
+            if(!bcParamDB->IsExist("initFlowBcType", PHINT, 1))continue;
+            bcParamDB->GetData("primitiveVarFarfield", primitiveVarBC, PHDOUBLE, nEquation);
+            bcParamDB->GetData("initFlowBcType", &initFlowBcType, PHINT, 1);
+
+            //ini firstPoint
+            if(!bcParamDB->IsExist("firstPoint", PHDOUBLE, 3))continue;
+            bcParamDB->GetData("firstPoint",  &firstPoint , PHDOUBLE, 3);
+
+            //ini secondPoint
+            if(bcParamDB->IsExist("secondPoint", PHDOUBLE, 3))
+            {
+                bcParamDB->GetData("secondPoint", &secondPoint, PHDOUBLE, 3);
+            }
+            else
+            {
+                secondPoint[0] = firstPoint[0];
+                secondPoint[1] = firstPoint[1];
+                secondPoint[2] = firstPoint[2];
+            }
+            
+            //ini bcRadius
+            if(bcParamDB->IsExist("bcRadius", PHDOUBLE, 1))
+            {
+                bcParamDB->GetData("bcRadius", &bcRadius, PHDOUBLE, 1);
+            }
+            else
+            {
+                bcRadius = 0.0;
+            }
+
+            for (int s = 0; s < 3; ++ s)
+            {
+                firstPoint[s] /= refLenth;
+                secondPoint[s] /= refLenth;
+            }
+            bcRadius /= refLenth;
+
+            RDouble TBC[3];
+            gas->GetTemperatureR(primitiveVarBC, TBC[0], TBC[1], TBC[2]);
+
+            for (int k = kCellStart; k <= kCellEnd; ++ k)
+            {
+                for (int j = jCellStart; j <= jCellEnd; ++ j)
+                {
+                    for (int i = iCellStart; i <= iCellEnd; ++ i)
+                    {
+
+                        if(isInside(Xm(i, j, k), Ym(i, j, k), Zm(i, j, k), firstPoint, secondPoint, bcRadius,initFlowBcType))
+                        {
+                            for (int m = mst; m <= med; ++ m)
+                            {
+                                primitiveVariables(i, j, k, m) = primitiveVarBC[m];
+                            }
+
+                            for (int m = 0; m < parameters->GetTemperatureModel(); ++ m)
+                            {
+                                temperatures(i, j, k, m) = TBC[m];
+                            }
+                        }
+                    }
+                }
+            }
+            delete[] primitiveVarBC;
+        }
+
+        if(iniSpeedCoef < 1.0 && iniSpeedCoef >= 0.0)
+        {
+            using namespace IDX;
+            for (int k = kCellStart; k <= kCellEnd; ++ k)
+            {
+                for (int j = jCellStart; j <= jCellEnd; ++ j)
+                {
+                    for (int i = iCellStart; i <= iCellEnd; ++ i)
+                    {
+                        primitiveVariables(i, j, k, IU) *= iniSpeedCoef;
+                        primitiveVariables(i, j, k, IV) *= iniSpeedCoef;
+                        primitiveVariables(i, j, k, IW) *= iniSpeedCoef;
+                    }
+                }
+            }
+        }
+#endif
 
         InitGrad(grid);
 
@@ -7513,6 +8204,126 @@ namespace PHSPACE
         }
     }
 
+    void NSSolverStruct::SetBCInitialValuesByInterpolation(StructBC *structBC, RDouble *primitiveVar)
+    {
+        int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+        if (!isUnsteady)
+        {
+            return;
+        }
+
+        using namespace GAS_SPACE;
+        //Obtain the local parameters on boundary.
+        int dataSize = structBC->GetBCParamDataBase()->GetSizeOfData("time");
+        RDouble *timeVector = new RDouble[dataSize];
+        structBC->GetBCParamDataBase()->GetData("time", &timeVector[0], PHDOUBLE, dataSize);
+        RDouble *pressureVector = new RDouble[dataSize];
+        structBC->GetBCParamDataBase()->GetData("pressure", &timeVector[0], PHDOUBLE, dataSize);
+        RDouble *velocityVector = new RDouble[dataSize];
+        structBC->GetBCParamDataBase()->GetData("velocity", &timeVector[0], PHDOUBLE, dataSize);
+        RDouble *temperatureVector = new RDouble[dataSize];
+        structBC->GetBCParamDataBase()->GetData("temperature", &timeVector[0], PHDOUBLE, dataSize);
+
+        RDouble localDimensionalVelocity = 0, localDimensionalTemperature = 0, localDimensionalPressure = 0, localDimensionalDensity = 0;
+
+        //Obtain the reference parameters.
+        RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
+        RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
+        RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
+
+        RDouble physicalTime = GlobalDataBase::GetDoubleParaFromDB("physicalTime") / refDimensionalVelocity;
+        RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
+        RDouble unit = reynoldsReferenceLengthDimensional / refDimensionalVelocity;
+        RDouble physicalTimeStepDimensional = physicalTime * unit;
+
+        localDimensionalVelocity    =    velocityVector[0];
+        localDimensionalPressure    =    pressureVector[0];
+        localDimensionalTemperature = temperatureVector[0];
+        for (int iData = 1; iData < dataSize; ++ iData)
+        {
+            if (physicalTimeStepDimensional > timeVector[iData - 1] && physicalTimeStepDimensional < timeVector[iData])
+            {
+                RDouble delta = (timeVector[iData] - physicalTimeStepDimensional) / (timeVector[iData] - timeVector[iData - 1]);
+                localDimensionalVelocity    =    velocityVector[iData - 1] + delta * (   velocityVector[iData] -    velocityVector[iData - 1]);
+                localDimensionalPressure    =    pressureVector[iData - 1] + delta * (   pressureVector[iData] -    pressureVector[iData - 1]);
+                localDimensionalTemperature = temperatureVector[iData - 1] + delta * (temperatureVector[iData] - temperatureVector[iData - 1]);
+            }
+        }
+        if(physicalTimeStepDimensional > timeVector[dataSize - 1])
+        {
+            localDimensionalVelocity    =    velocityVector[dataSize - 1];
+            localDimensionalPressure    =    pressureVector[dataSize - 1];
+            localDimensionalTemperature = temperatureVector[dataSize - 1];
+        }
+
+        RDouble attackd = 0, angleSlide = 0;
+        if (structBC->GetBCParamDataBase()->IsExist("attackd", PHDOUBLE, 1))
+        {
+            structBC->GetBCParamDataBase()->GetData("attackd", &attackd, PHDOUBLE, 1);
+        }
+        else
+        {
+            attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
+        }
+        if (structBC->GetBCParamDataBase()->IsExist("angleSlide", PHDOUBLE, 1))
+        {
+            structBC->GetBCParamDataBase()->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
+        }
+        RDouble attack   = attackd * PI / 180.0;
+        RDouble sideslip = angleSlide * PI / 180.0;
+
+        int nchem = gas->GetChemicalType();
+        if (nchem == 0)
+        {
+            RDouble reference_general_gas_constant = GlobalDataBase::GetDoubleParaFromDB("reference_average_general_gas_constant");
+            localDimensionalDensity = localDimensionalPressure / reference_general_gas_constant / localDimensionalTemperature;
+        }
+        else
+        {
+            int nNSEqn = gas->GetNSEquationNumber();
+            int numberOfSpecies = gas->GetNumberOfSpecies();
+            RDouble initMassFraction[MAX_SPECIES_NUM] = { 0 }, primVars[MAX_SPECIES_NUM] = { 0 };
+            if (structBC->GetBCParamDataBase()->IsExist("initMassFraction", PHDOUBLE, numberOfSpecies))
+            {
+                structBC->GetBCParamDataBase()->GetData("initMassFraction", &initMassFraction, PHDOUBLE, numberOfSpecies);
+            }
+            else
+            {
+                RDouble *speciesMass = gas->GetInitMassFraction();
+                for (int s = 0; s < numberOfSpecies; ++ s)
+                {
+                    initMassFraction[s] = speciesMass[s];
+                }
+            }
+            for (int s = 0; s < numberOfSpecies; ++ s)
+            {
+                primVars[nNSEqn + s] = initMassFraction[s];
+            }
+
+            RDouble oMass = 0.0, gasR = 0.0;
+            gas->ComputeMolecularWeightReciprocalDimensional(primVars, oMass);
+            gasR = rjmk * oMass;
+
+            localDimensionalDensity = localDimensionalPressure / (gasR * localDimensionalTemperature);
+
+            for (int s = 0; s < numberOfSpecies; ++ s)
+            {
+                primitiveVar[nNSEqn + s] = initMassFraction[s];
+            }
+        }
+
+        using namespace IDX;
+        primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
+        primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
+        primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
+        primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity * sin(sideslip);
+        primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
+        delete []timeVector; timeVector = NULL;
+        delete []pressureVector; pressureVector = NULL;
+        delete []velocityVector; velocityVector = NULL;
+        delete []temperatureVector; temperatureVector = NULL;
+    }
+
     void NSSolverStruct::InFlowBC3D(Grid *gridIn, StructBC *structBC)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -7527,6 +8338,17 @@ namespace PHSPACE
         RDouble *primitiveVarFarfield = new RDouble[nEquation];
         Data_Param *bcParamDB = structBC->GetBCParamDataBase();
         bcParamDB->GetData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
+
+        int inflowParaType = -1;
+        if (structBC->CheckData("inflowParaType"))
+        {
+            structBC->GetData("inflowParaType", &inflowParaType, PHINT, 1);
+        }
+
+        if (inflowParaType == TRAJECTORY)
+        {
+            SetBCInitialValuesByInterpolation (structBC, primitiveVarFarfield);
+        }
 
         int it, jt, kt;
 
@@ -7962,6 +8784,38 @@ namespace PHSPACE
         RDouble refGama = parameters->GetRefGama();
         RDouble gama1 = refGama - 1;
 
+        int nChemical = parameters->GetChemicalFlag();
+        int numberOfSpecies = gas->GetNumberOfSpecies();
+        Thermo_Energy &Thermo_Energy_temparay = *gas->GetThermo_Energy_temparay();
+        int nNSEquation = parameters->GetNSEquationNumber();
+        int nTemperatureModel = parameters->GetTemperatureModel();
+        RDouble initMassFraction[MAX_SPECIES_NUM] = {0};
+
+        int mTT = parameters->GetmTT();
+        int mTV = parameters->GetmTV();
+        int mTE = parameters->GetmTE();
+        int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+
+        if(nChemical > 0)
+        {
+            if (bcData->IsExist("initMassFraction", PHDOUBLE, numberOfSpecies))
+            {
+                bcData->GetData("initMassFraction", &initMassFraction, PHDOUBLE, numberOfSpecies);
+                for (int s = 0; s < numberOfSpecies; ++ s)
+                {
+                    primitiveVarFarfield[nNSEquation + s] = initMassFraction[s];
+                }
+            }
+            else
+            {
+                RDouble *speciesMass = gas->GetInitMassFraction();
+                for (int s = 0; s < numberOfSpecies; ++ s)
+                {
+                    initMassFraction[s] = speciesMass[s];
+                }
+            }
+        }
+
         //! Nondimensionalization.
         totalPressure /= dynamic_pressure;
         totalTemperature /= refDimensionalTemperature;
@@ -7978,6 +8832,7 @@ namespace PHSPACE
         RDouble4D &zfn = *(grid->GetFaceNormalZ());
 
         RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+        RDouble4D &t = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
 
         int ist, ied, jst, jed, kst, ked;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
@@ -8003,6 +8858,33 @@ namespace PHSPACE
                     nys = lr * yfn(in, jn, kn, iSurface);
                     nzs = lr * zfn(in, jn, kn, iSurface);
 
+                    if(nChemical > 0)  //  for chemical  by dms
+                    {
+                        structBC->GetGhostCellIndex(i, j, k, it, jt, kt, 1);  //ghost
+                        if(outIterStep > 1)
+                        {
+                            gas->ComputeMixturegasThermalParameter(initMassFraction, t(it, jt, kt,mTT), t(it, jt, kt, mTT), t(it, jt, kt, mTT), 0);   //  equlibrim
+                        }
+                        else
+                        {
+                            gas->ComputeMixturegasThermalParameter(initMassFraction, totalTemperature, totalTemperature, totalTemperature, 0);   //  equlibrim
+                        }
+                        
+                        refGama = Thermo_Energy_temparay.gama;
+                        gama1 = refGama - 1;
+                        coefficientOfStateEquation = 1.0 / (refGama * refMachNumber * refMachNumber);
+
+                        if(nTemperatureModel == 2)
+                        {
+                            primitiveVarFarfield[nEquation - 1] = Thermo_Energy_temparay.Ev + Thermo_Energy_temparay.Ee;
+                        }
+                        else if(nTemperatureModel == 3)
+                        {
+                            primitiveVarFarfield[nEquation - 1] = Thermo_Energy_temparay.Ee;
+                            primitiveVarFarfield[nEquation - 2] = Thermo_Energy_temparay.Ev;
+                        }
+                    }
+
                     for (int layer = 1; layer <= 1; ++ layer)
                     {
                         structBC->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
@@ -8024,7 +8906,7 @@ namespace PHSPACE
 
                         RDouble theta = nxs * direction_inlet[0] + nys * direction_inlet[1] + nzs * direction_inlet[2];
 
-                        RDouble totalc2 = gama1 * (totalEnthalpy - (totalEnergy + pInside / rInside) + 0.5 * V2Inside) + c2;
+                        RDouble totalc2 = gama1 * (totalEnthalpy - (totalEnergy + pInside / rInside) + 0.5 * V2Inside) + c2;     //Co^2
 
                         RDouble a = 1.0 + 0.5 * gama1 * theta * theta;
                         RDouble b = -1.0 * gama1 * theta * Riemann;
@@ -8058,6 +8940,11 @@ namespace PHSPACE
                         q(it, jt, kt, IV) = VInside * direction_inlet[1];
                         q(it, jt, kt, IW) = VInside * direction_inlet[2];
                         q(it, jt, kt, IP) = pInside;
+
+                        for (int m = 0; m < nTemperatureModel; ++ m)
+                        {
+                            t(it, jt, kt, m) = tInside;
+                        }
                     }
 
                     int it2, jt2, kt2;
@@ -8396,9 +9283,17 @@ namespace PHSPACE
         int nEquation = GetNumberOfEquations();
 
         RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+        RDouble4D &faceNormalComponentX = *(grid->GetFaceNormalX());
+        RDouble4D &faceNormalComponentY = *(grid->GetFaceNormalY());
+        RDouble4D &faceNormalComponentZ = *(grid->GetFaceNormalZ());
+
 
         int ist, ied, jst, jed, kst, ked;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+        int nSurface = structBC->GetFaceDirection() + 1;
+        int leftOrRightIndex = structBC->GetFaceLeftOrRightIndex();
+
+        RDouble normalComponetX, normalComponetY, normalComponetZ;
 
         int is, js, ks, it, jt, kt;
 
@@ -8423,6 +9318,21 @@ namespace PHSPACE
                         //
 #ifdef USE_HYFLOW_CODE
                         GAS_SPACE::computeOutPressure(q(it, jt, kt, IP), staticPressure, staticPressureCorf);    //! used in injet , modeified  by dms.
+                        if(leftOrRightIndex == -1)
+                        {
+                            normalComponetX = -faceNormalComponentX(is, js, ks, nSurface);
+                            normalComponetY = -faceNormalComponentY(is, js, ks, nSurface);
+                            normalComponetZ = -faceNormalComponentZ(is, js, ks, nSurface);
+                        }
+                        else
+                        {
+                            normalComponetX = faceNormalComponentX(it, jt, kt, nSurface);
+                            normalComponetY = faceNormalComponentY(it, jt, kt, nSurface);
+                            normalComponetZ = faceNormalComponentZ(it, jt, kt, nSurface);
+                        }
+
+                        GAS_SPACE::computeOutSpeed(q(it, jt, kt, IU), q(it, jt, kt, IV), q(it, jt, kt, IW), normalComponetX, normalComponetY, normalComponetZ);   //! modeified  by dms.
+
 #else
                         q(it, jt, kt, IP) = staticPressure;
 #endif
@@ -9967,6 +10877,7 @@ namespace PHSPACE
 
     void NSSolverStruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
     {
+        //return;
         StructGrid *grid = StructGridCast(gridIn);
 
         RDouble4D &q = qProxy->GetField_STR();
@@ -10369,7 +11280,8 @@ namespace PHSPACE
         int nNSNumber = parameters->GetNSEquationNumber();
         int nSpeciesNumber = parameters->GetNumberOfSpecies();
         int nGradPrimtiveMethod = parameters->GetnGradPrimtiveMethod();
-        if (nGradPrimtiveMethod == 1)return;
+        int viscousType = parameters->GetViscousType();
+        if (nGradPrimtiveMethod == 1 && viscousType < 2)return;
 
         RDouble4D &primitiveVaiables = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("q"));
         RDouble4D &temperature = *reinterpret_cast <RDouble4D *> (strgrid->GetDataPtr("t"));
@@ -12305,7 +13217,7 @@ namespace PHSPACE
                         gas->ComputeMixtureGasHeatConductivity(wallVariables, localSurfaceTemperature[ITT], localSurfaceTemperature[ITV], localSurfaceTemperature[ITE],
                             transRotationHeatCoef, vibrationHeatCoef, electronHeatCoef);//Tve=Tv=Te=Tw
 
-//! Compute the heat flux caused by temperature difference.
+                        //! Compute the heat flux caused by temperature difference.
                         transportHeatFlux = leftOrRightIndex * transRotationHeatCoef * surfaceArea * ((temperatures(iCell, jCell, kCell, ITT) - localSurfaceTemperature[ITT]) / deltaHeight);
                         if (nTemperatureModel == 2)         //! Two-Temperature Model.
                         {
@@ -12708,7 +13620,7 @@ namespace PHSPACE
                         //    RDouble hfCoeff = heatTransferCoeff(i, j, k, ITT) + heatTransferCoeff(il, jl, kl, ITT);
                         //    if (abs(hfCoeff) > SMALL)
                         //    {
-                        //        kcp[ITT] = hfCoeff;
+                        //        kcp[ITT] += hfCoeff;
                         //    }
                         //}
 
@@ -15757,7 +16669,6 @@ namespace PHSPACE
         }
 
         int nDim = GetDim();
-        int il, jl, kl;
 
         for (int k = kCellStart; k <= kCellEnd; ++ k)
         {
@@ -18122,6 +19033,8 @@ namespace PHSPACE
         RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
         RDouble4D &temperatures = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
 
+        Param_NSSolverStruct *parameters = GetControlParameters();
+
         using namespace IDX;
         if (postProbesVar->IsNeedMonitoring(PHSPACE::PROBE_DENSITY))
         {
@@ -18157,6 +19070,26 @@ namespace PHSPACE
         {
             string varName = postProbesVar->GetProbesVariableName(PHSPACE::PROBE_TEMPERATURE);
             postProbesVar->UpdateProbesVarPtr(varName, temperatures, IDX::ITT);
+        }
+
+        if (postProbesVar->IsNeedMonitoring(PHSPACE::VISUAL_MACH))
+        {
+            string varName = postProbesVar->GetProbesVariableName(PHSPACE::VISUAL_MACH);
+
+            int isOverset = parameters->GetIsOverLapping();
+
+            RDouble4D *mach = 0;
+            if (!isOverset)
+            {
+                mach = CompMachNumber(grid);
+            }
+            else
+            {
+                mach = ComputeMachNumberField(grid);
+            }
+
+            postProbesVar->UpdateProbesVarPtr(varName, *mach, 0);
+            delete mach;
         }
     }
 
