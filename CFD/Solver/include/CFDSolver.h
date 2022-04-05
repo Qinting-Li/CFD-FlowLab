@@ -174,6 +174,8 @@ public:
 
     virtual void CheckResult(Grid *grid, int level = 0);
 
+    virtual void CheckSurfaceHeatingChange(Grid *grid, int level = 0);
+
     virtual void ZeroResiduals(Grid *grid);
 
     virtual void UpdateResiduals(Grid *grid);
@@ -225,6 +227,9 @@ public:
 
     virtual void GetResidual(Grid *gridIn, RDouble &localMaxRes);
 
+    //! Compute the surface heating change and obtain the maximum change of the surface heating ratio.
+    virtual void GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange);
+
     //! Prepare post visualization variables, store it in to grid's postVisualization database.
     LIB_EXPORT virtual void ComputePostVisualVariables(Post_Visual *postVisualization) {};
     //! Prepare monitored probes variables for post-processing , store it into postProbesVar database.
@@ -265,6 +270,8 @@ public:
     virtual void DumpResidual(ActionKey *actkey);
 
     virtual void CheckResidual(ActionKey *actkey);
+
+    virtual void ComputeSurfaceHeatingChange(ActionKey *actkey);
 
     //! Get the file name for Residual dumping.
     virtual const string GetResidualFileName();
@@ -322,26 +329,26 @@ public:
     //! 1. Upload Interface Data. \n
     //! 2. Update Interface Data. \n
     //! 3. Download Interface Data.
-    virtual void UploadInterfaceData();
-    virtual void UpdateInterfaceData();
-    virtual void DownloadInterfaceData();
+    void UploadInterfaceData();
+    void UpdateInterfaceData();
+    void DownloadInterfaceData();
 
     //! Interpoint information exchange controller process. A complete process include three steps: \n
     //! 1. Upload Interpoint Data. \n
     //! 2. Update Interpoint Data. \n
     //! 3. Download Interpoint Data.
-    virtual void UploadInterpointData();
-    virtual void UpdateInterpointData();
-    virtual void DownloadInterpointData();
+    void UploadInterpointData();
+    void UpdateInterpointData();
+    void DownloadInterpointData();
     void CommunicationInterpointWeight();
 
     //! Overset information exchange controller process, including 3 steps: \n
     //! 1. Upload Overset Data. \n
     //! 2. Update Overset Data. \n
     //! 3. Download Overset Data.
-    virtual void UploadOversetData();
-    virtual void UpdateOversetData();
-    virtual void DownloadOversetData();
+    void UploadOversetData();
+    void UpdateOversetData();
+    void DownloadOversetData();
 
     virtual void DumpRestart(ActionKey *actkey);
     virtual void ReadRestart(ActionKey *actkey);
@@ -352,14 +359,14 @@ public:
     virtual void FillField(Grid *grid, FieldProxy *fieldProxy, RDouble value);
     virtual void FillField(Grid *grid, FieldProxy *field1Proxy, FieldProxy *field2Proxy);
 
+    void Solve();
+
 protected:
     int GetZoneLocalID();
 
     Grid *GetGrid(int level = 0);
 
     uint_t GetNumberOfMultiGrid();
-
-    void Solve();
 
     void Action(ActionKey *actkey);
 

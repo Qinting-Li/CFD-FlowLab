@@ -140,6 +140,7 @@ const int PROBE_V           = 2;
 const int PROBE_W           = 3;
 const int PROBE_PRESSURE    = 4;
 const int PROBE_TEMPERATURE = 5;
+const int PROBE_MACH        = 6;
 
 #include "Post_Probes.hxx"
 

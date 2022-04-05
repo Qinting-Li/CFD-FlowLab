@@ -1593,6 +1593,12 @@ void Simulation::PreSolve()
 
 void Simulation::PostSolve()
 {
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible == 0)
+    {
+        return;
+    }
+
     using namespace PHMPI;
 
     //! Dump tecflow file.
@@ -1624,8 +1630,14 @@ void Simulation::PostSolve()
 
 void Simulation::MainSolve()
 {
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible == 0)
+    {
+        SolveIncomFlow();
+        return;
+    }
 
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (!isUnsteady)
     {
         SolveSteady();
@@ -1647,36 +1659,6 @@ void Simulation::SolveOneOuterStep()
 
 void Simulation::SolveSimulation()
 {
-    #ifdef USE_IncompressibleSolver
-    //! If incompressible, use incompressible solver.
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible == 0)
-    {
-        using namespace PHMPI;
-        int nLocalZones = GetNumberofLocalZones();
-
-        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-        {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-            Zone *zone = region->GetZone(iZone);
-            PHGeometry *geometry = zone->GetGeometry();
-
-            int gridType = geometry->GetGrid()->Type();
-            //! Add compressible solvers.
-            if (gridType == UNSTRUCTGRID)
-            {
-                INCompSolverUnstruct *solver = static_cast<INCompSolverUnstruct *>(GlobalSolvers::GetSolver(iZone, 0));
-                solver->IncompSloverUnstructMain();
-            }
-        }
-
-        INCompSolver *incompressibleSolver = new INCompSolver(this->region);
-        incompressibleSolver->IncompSloverMain();
-        delete incompressibleSolver;
-        return;
-    }
-    #endif
-
     WriteLogFile("Start iterating ...");
     bool continueSolve = true;
 
@@ -1713,36 +1695,6 @@ void Simulation::SolveSimulation()
 
 void Simulation::SelfAdaptionSolve()
 {
-#ifdef USE_IncompressibleSolver
-    //! If incompressible, use incompressible solver.
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible == 0)
-    {
-        using namespace PHMPI;
-        int nLocalZones = GetNumberofLocalZones();
-
-        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-        {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-            Zone *zone = region->GetZone(iZone);
-            PHGeometry *geometry = zone->GetGeometry();
-
-            int gridType = geometry->GetGrid()->Type();
-            //! Add compressible solvers.
-            if (gridType == UNSTRUCTGRID)
-            {
-                INCompSolverUnstruct *solver = static_cast<INCompSolverUnstruct *>(GlobalSolvers::GetSolver(iZone, 0));
-                solver->IncompSloverUnstructMain();
-            }
-        }
-
-        INCompSolver *incompressibleSolver = new INCompSolver(this->region);
-        incompressibleSolver->IncompSloverMain();
-        delete incompressibleSolver;
-        return;
-    }
-#endif
-
     WriteLogFile("Start iterating ...");
     bool continueSolve = true;
 
@@ -1787,6 +1739,12 @@ void Simulation::SelfAdaptionSolve()
 
 void Simulation::PostSimulation()
 {
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible == 0)
+    {
+        // visual files will be added afterforwards for incompressible flow problems.
+        return;
+    }
     this->region->PostSimulation();
 
     int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
@@ -1911,6 +1869,23 @@ void Simulation::MultiGridInitFlow()
 
     PrintToWindow("End init flow by coarse grid ... \n");
     WriteLogFile("End init flow by coarse grid ...");
+}
+
+void Simulation::SolveIncomFlow()
+{
+    int nSolver = Zone::GetNumberOfSolvers();
+    //! Get iteration number.
+    int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+    {
+        Controller *controller = new Controller(iSolver, this->region);
+
+        controller->SolveIncomFlow();
+
+        controller->PostSolve();
+
+        delete controller;
+    }
 }
 
 void Simulation::SolveSteady()
