@@ -39,7 +39,7 @@ const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
 const int INTEGRATIVE_SOLVER  = 14;
-const int GRIDCHECK_SOLVER = 15;
+const int GRIDCHECK_SOLVER    = 15;
 
 const int SPECDIFFHYB_SOLVER  = 51;
 const int SPEC_SOLVER         = 52;
@@ -51,13 +51,13 @@ const int DERIVATIVE_IDENITFY = 98;
 
 const int POST_PROCESSING     = 99;
 
-const int GRID_CONVERSION = 1;
-const int GRID_REFINE     = 2;
-const int GRID_MERGING    = 3;
-const int GRID_DEFORMATION= 4;
-const int GRID_REPAIR     = 5;
-const int GRID_MIRROR     = 6;
-const int GRID_STRTOUNS   = 7;
+const int GRID_CONVERSION  = 1;
+const int GRID_REFINE      = 2;
+const int GRID_MERGING     = 3;
+const int GRID_DEFORMATION = 4;
+const int GRID_REPAIR      = 5;
+const int GRID_MIRROR      = 6;
+const int GRID_STRTOUNS    = 7;
 
 const RDouble half            = 0.5;
 const RDouble third           = 1.0 / 3.0;
@@ -233,19 +233,18 @@ const int S_IV = 1;
 const int S_IW = 2;
 const int S_IP = 3;
 const int S_IR = 4;
-const int S_ITEMP = 5;
+const int S_ITEMP  = 5;
 const int S_ITURBK = 6;
 const int S_IOMEGA = 7;
 
 const int S_IEPSILON  = 8;
 const int S_IEDDYVISC = 0;
 
-const int S_IOxygen  = 9;
-const int S_INitrogen  = 10;
-const int S_ICarbonDioxide  = 11;
-const int S_IMethane  = 12;
-const int S_IH  = 13;
-
+const int S_IOxygen        = 9;
+const int S_INitrogen      = 10;
+const int S_ICarbonDioxide = 11;
+const int S_IMethane       = 12;
+const int S_IH             = 13;
 
 const int MOMX_EQ = 0;
 const int MOMY_EQ = 1;
@@ -257,7 +256,7 @@ const int TURBK_EQ = 6;
 const int EPSILON_EQ = 7;
 const int OMEGA_EQ = 8;
 }
-const int MAX_SPECIES_NUM = 20;     //! The maximum number of species.
+const int MAX_SPECIES_NUM  = 20;     //! The maximum number of species.
 const int MAX_REACTION_NUM = 50;    //! The maximum number of reactions.
 
 namespace WALLFUNCTION
