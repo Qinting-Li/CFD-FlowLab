@@ -11,36 +11,50 @@
 #pragma warning (disable:913)
 namespace PHSPACE
 {
-void ReadGridgen(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
+void ReadPlot3dGrid(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
     //fileformat : Grid file format.
     //             1 --- ASCII
     //             0 --- BINARY
-    fileFormat = CheckGridgenFileIfASCII(gridgenFile);
+    fileFormat = CheckCoorFileIfASCII(gridgenFile);
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
     if (fileFormat == 1)
     {
-        int isPlot3D = 1;
-        isPlot3D = CheckGridgenCoorASCIIFileType(gridgenFile);
-        if (isPlot3D)
-        {
-            ReadGridgenCoorASCIIPlot3D(gridgenFile, numberOfBlocks, structGrids);
-        }
-        else
-        {
-            ReadGridgenCoorASCIIGridgen(gridgenFile, numberOfBlocks, structGrids);
-        }
+        ReadPlot3DCoorASCII(gridgenFile, numberOfBlocks, structGrids);
     }
     else if(fileFormat == 0)
     {
-        ReadGridgenCoor(gridgenFile, numberOfBlocks, structGrids);
+        ReadPlot3DCoorBinary(gridgenFile, numberOfBlocks, structGrids);
     }
-    ReadGridgenBC(structGrids, numberOfBlocks, BCFile);
+    ReadBoundaryFile(structGrids, numberOfBlocks, BCFile);
 }
 
-void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+void ReadGridgenGrid(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
+{
+    int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
+    //fileformat : Grid file format.
+    //             1 --- ASCII
+    //             0 --- BINARY
+    fileFormat = CheckCoorFileIfASCII(gridgenFile);
+    GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
+
+    if (fileFormat == 1)
+    {
+        ReadGridgenCoorASCII(gridgenFile, numberOfBlocks, structGrids);
+    }
+    else
+    {
+        ostringstream oss;
+        oss << "  Error: this situation has not been considered, for file type = BINARY, when from_gtype = Gridgen."<< endl;
+        TK_Exit::ExceptionExit(oss.str());
+    }
+
+    ReadBoundaryFile(structGrids, numberOfBlocks, BCFile);
+}
+
+void ReadPlot3DCoorBinary(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
     file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
@@ -103,7 +117,7 @@ void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&
     file.clear();
 }
 
-void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
     file.open(coordinateFile.c_str(),ios_base::in);
@@ -157,7 +171,7 @@ void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBloc
     file.clear();
 }
 
-int CheckGridgenFileIfASCII(const string &coordinateFile)
+int CheckCoorFileIfASCII(const string &coordinateFile)
 {
     fstream file;
     file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
@@ -174,7 +188,7 @@ int CheckGridgenFileIfASCII(const string &coordinateFile)
     file.close();
     file.clear();
 
-    if(numberOfBlocks <= static_cast <int> (1e8) )
+    if(numberOfBlocks <= static_cast <int> (1e8))
     {
         return 0;
     }
@@ -184,40 +198,7 @@ int CheckGridgenFileIfASCII(const string &coordinateFile)
     }
 }
 
-int  CheckGridgenCoorASCIIFileType(const string &coordinateFile)
-{
-    fstream file;
-    file.open(coordinateFile.c_str(),ios_base::in);
-    if (!file)
-    {
-        TK_Exit::FileOpenErrorExit(coordinateFile);
-    }
-
-    int numberOfBlocks = 0;
-    file >> numberOfBlocks;
-
-    int isPlot3D = 1;
-    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
-    {
-        int ni, nj, nk;
-        file >> ni;
-        file >> nj;
-        file >> nk;
-
-        if (ni < 0 || nj < 0 || nk < 0)
-        {
-            isPlot3D = 0;
-            break;
-        }
-    }
-
-    file.close();
-    file.clear();
-
-    return isPlot3D;
-}
-
-void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+void ReadPlot3DCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
     file.open(coordinateFile.c_str(), ios_base::in);
@@ -274,7 +255,7 @@ void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlock
     file.clear();
 }
 
-void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &BCFile)
+void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const string &BCFile)
 {
     fstream file;
     file.open(BCFile.c_str(),ios_base::in);

@@ -134,7 +134,7 @@ LIB_EXPORT void Pre_BcFace_Struct::Normalize(int geometricDimension)
         {
             if (nodeStart[m] > nodeEnd[m]) PHSPACE::SWAP(nodeStart[m], nodeEnd[m]);
         }
-        //axisLabel[0] = GetSurfaceLabel( nodeStart, nodeEnd );
+        //axisLabel[0] = GetSurfaceLabel(nodeStart, nodeEnd);
         axisLabel[0] = bcDirection;
     }
 }
@@ -411,7 +411,7 @@ LIB_EXPORT void Pre_Block_Struct::Split(RDouble numberOfCells, vector< int > &le
     
     for (int iDimension = 0; iDimension < geometricDimension; ++ iDimension)
     {
-        faceCellNumber[iDimension] = max(nodeDimension[(iDimension+1)%geometricDimension] - 1, 1 ) * max(nodeDimension[(iDimension+2)%geometricDimension] - 1, 1);
+        faceCellNumber[iDimension] = max(nodeDimension[(iDimension+1)%geometricDimension] - 1, 1) * max(nodeDimension[(iDimension+2)%geometricDimension] - 1, 1);
     }
 
     int axisSelect = 0, maxNodeNumber = nodeDimension[0];
@@ -448,9 +448,9 @@ LIB_EXPORT void Pre_Block_Struct::Split(RDouble numberOfCells, vector< int > &le
 void Pre_Block_Struct::CorrectSplitDimension(int axisSelect, RDouble numberOfCells, int geometricDimension, int &isplit)
 {
 
-    //vector< int > leftDimension ( geometricDimension );
-    //vector< int > rightDimension( geometricDimension );
-    //vector< int > faceCellNumber( geometricDimension );
+    //vector< int > leftDimension (geometricDimension);
+    //vector< int > rightDimension(geometricDimension);
+    //vector< int > faceCellNumber(geometricDimension);
 
     uint_t numberOfBoundaryFaces = boundaryFaceList.size();
     for (int iBoundaryFace = 0; iBoundaryFace < numberOfBoundaryFaces; ++ iBoundaryFace)
@@ -579,7 +579,7 @@ LIB_EXPORT void Pre_Block_Struct::GenerateCoordinateSpace()
 
 Pre_BcFace_Struct * Pre_Block_Struct::GetOverlapBoundaryFace(vector< int > &st, vector< int > &ed, vector< int > &st_ref, vector< int > &ed_ref, int geometricDimension)
 {
-    int sourceSurfaceLabel = GetSurfaceLabel(st    , ed    );
+    int sourceSurfaceLabel = GetSurfaceLabel(st    , ed   );
     int targetSurfaceLabel = GetSurfaceLabel(st_ref, ed_ref);
 
     if (sourceSurfaceLabel != targetSurfaceLabel) return 0;
@@ -742,7 +742,7 @@ void Pre_Block_Struct::OutputBoundaryInformation(fstream &file, int geometricDim
         }
     }
 
-    file << setw( width ) << leafBoundaryFace.size() << endl;
+    file << setw(width) << leafBoundaryFace.size() << endl;
 
     uint_t numberOfLeafBoundaryFaces = leafBoundaryFace.size();
     for (int i = 0; i < numberOfLeafBoundaryFaces; ++ i)

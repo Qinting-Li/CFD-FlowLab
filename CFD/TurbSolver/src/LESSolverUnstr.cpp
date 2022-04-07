@@ -848,11 +848,11 @@ void LESSolverUnstr::ComputeDifferentialSigma(RDouble ** velocityGradTensor, RDo
 
     RDouble alpha1 = t1 * t1 / 9.0 - t2 / 3.0;
     RDouble alpha2 = t1 * t1 * t1 / 27.0 - t1 * t2 / 6.0 + t3 / 2.0;
-    RDouble alpha3 = 1.0 /3.0 * acos( MAX( MIN(alpha2 / sqrt(alpha1 * alpha1 * alpha1), 1.0), -1.0 ) );
+    RDouble alpha3 = 1.0 /3.0 * acos(MAX(MIN(alpha2 / sqrt(alpha1 * alpha1 * alpha1), 1.0), -1.0));
 
-    RDouble sigma1 = sqrt( MAX(t1 / 3.0 + 2.0 * sqrt(alpha1) * cos(alpha3), 0.0) );
-    RDouble sigma2 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) + alpha3), 0.0) );
-    RDouble sigma3 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0) );
+    RDouble sigma1 = sqrt(MAX(t1 / 3.0 + 2.0 * sqrt(alpha1) * cos(alpha3), 0.0));
+    RDouble sigma2 = sqrt(MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) + alpha3), 0.0));
+    RDouble sigma3 = sqrt(MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0));
 
     differentialSigma = sigma3 * (sigma1 - sigma2) * (sigma2 - sigma3) / sigma1 / sigma1;
     differentialSigma = MAX(differentialSigma, 0.0);
@@ -1051,7 +1051,7 @@ FieldProxy * LESSolverUnstr::GetFieldProxy(Grid *gridIn, const string &field_nam
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble ** field = reinterpret_cast< RDouble ** > ( grid->GetDataPtr(field_name) );
+    RDouble ** field = reinterpret_cast< RDouble ** > (grid->GetDataPtr(field_name));
 
     FieldProxy * field_proxy = new FieldProxy();
 

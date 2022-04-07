@@ -52,9 +52,11 @@ public:
     //! -# 1 :  1-D array.
     //! -# 2 :  2-D array.
     //! -# n :  n-D array.
-    LIB_EXPORT void RegisterInterfaceField( const string &name, const int type, const int dimesion );
+    LIB_EXPORT void RegisterInterfaceField(const string &name, const int type, const int dimesion);
     LIB_EXPORT void RegisterInterpointField(const string & name, const int type, const int dimesion);
-    LIB_EXPORT void RegisterOversetField( const string &name, const int type, const int dimesion );
+    LIB_EXPORT void RegisterOversetField(const string &name, const int type, const int dimesion);
+
+    LIB_EXPORT void ReleaseInterfaceField();
 
     void SetPostVisualization(Post_Visual *postVisualization_in);
 
@@ -69,8 +71,6 @@ public:
 
     //! Compute pressure factor for entrop fix (Method 2 in Structure solver).
     virtual void CalPressureFactor(Grid *grid) {};
-
-    virtual void GetHeatTransferCoeff(Grid *grid) {};
 
     //! Compute gradient of primitivevariables & temperature for viscous flux computation.
     virtual void ComputeGradient(Grid *grid);
@@ -172,6 +172,10 @@ public:
 
     virtual void DumpResultFile(Grid *grid, int level = 0);
 
+    virtual void CheckResult(Grid *grid, int level = 0);
+
+    virtual void CheckSurfaceHeatingChange(Grid *grid, int level = 0);
+
     virtual void ZeroResiduals(Grid *grid);
 
     virtual void UpdateResiduals(Grid *grid);
@@ -219,6 +223,13 @@ public:
 
     virtual void GetResidual(ActionKey *actkey);
 
+    virtual void GetResidual(ActionKey *actkey, RDouble &localMaxRes);
+
+    virtual void GetResidual(Grid *gridIn, RDouble &localMaxRes);
+
+    //! Compute the surface heating change and obtain the maximum change of the surface heating ratio.
+    virtual void GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange);
+
     //! Prepare post visualization variables, store it in to grid's postVisualization database.
     LIB_EXPORT virtual void ComputePostVisualVariables(Post_Visual *postVisualization) {};
     //! Prepare monitored probes variables for post-processing , store it into postProbesVar database.
@@ -258,6 +269,10 @@ public:
 
     virtual void DumpResidual(ActionKey *actkey);
 
+    virtual void CheckResidual(ActionKey *actkey);
+
+    virtual void ComputeSurfaceHeatingChange(ActionKey *actkey);
+
     //! Get the file name for Residual dumping.
     virtual const string GetResidualFileName();
 
@@ -274,6 +289,8 @@ public:
     void CreateH5RestartFile(ActionKey *actkey);
 
     virtual void InitMemory();
+    virtual void ReleaseMemory();
+
     //! Initialize the flow by two ways:\n
     //! 1. InitFlowAsRestart\n
     //! 2. InitFlowAsReadingRestart.
@@ -298,6 +315,9 @@ public:
     virtual void DumpCpDistri(ActionKey *actkey);
     virtual void DumpSurfaceInfo(ActionKey *actkey);
     void WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *> datalist);
+    #ifdef USE_TecplotLib
+        void WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> datalist);
+    #endif
 
     //! Export the required variables on surface to file, such as the temperature, mass fraction etc.
     virtual void ExportSurfaceVariables(ActionKey *actkey) {}; //added by Li Peng
@@ -309,26 +329,26 @@ public:
     //! 1. Upload Interface Data. \n
     //! 2. Update Interface Data. \n
     //! 3. Download Interface Data.
-    virtual void UploadInterfaceData();
-    virtual void UpdateInterfaceData();
-    virtual void DownloadInterfaceData();
+    void UploadInterfaceData();
+    void UpdateInterfaceData();
+    void DownloadInterfaceData();
 
     //! Interpoint information exchange controller process. A complete process include three steps: \n
     //! 1. Upload Interpoint Data. \n
     //! 2. Update Interpoint Data. \n
     //! 3. Download Interpoint Data.
-    virtual void UploadInterpointData();
-    virtual void UpdateInterpointData();
-    virtual void DownloadInterpointData();
+    void UploadInterpointData();
+    void UpdateInterpointData();
+    void DownloadInterpointData();
     void CommunicationInterpointWeight();
 
     //! Overset information exchange controller process, including 3 steps: \n
     //! 1. Upload Overset Data. \n
     //! 2. Update Overset Data. \n
     //! 3. Download Overset Data.
-    virtual void UploadOversetData();
-    virtual void UpdateOversetData();
-    virtual void DownloadOversetData();
+    void UploadOversetData();
+    void UpdateOversetData();
+    void DownloadOversetData();
 
     virtual void DumpRestart(ActionKey *actkey);
     virtual void ReadRestart(ActionKey *actkey);
@@ -336,9 +356,10 @@ public:
     virtual void DumpRestartH5(ActionKey *actkey);
     virtual void ReadRestartH5(ActionKey *actkey);
 
-
     virtual void FillField(Grid *grid, FieldProxy *fieldProxy, RDouble value);
     virtual void FillField(Grid *grid, FieldProxy *field1Proxy, FieldProxy *field2Proxy);
+
+    void Solve();
 
 protected:
     int GetZoneLocalID();
@@ -346,8 +367,6 @@ protected:
     Grid *GetGrid(int level = 0);
 
     uint_t GetNumberOfMultiGrid();
-
-    void Solve();
 
     void Action(ActionKey *actkey);
 
@@ -465,7 +484,7 @@ protected:
     virtual void FreeGradientProxy(Grid *grid) {};
 
 private:
-    void RegisterInterfaceField( Grid *grid, const string &name, const int type, const int dimesion );
+    void RegisterInterfaceField(Grid *grid, const string &name, const int type, const int dimesion);
 
     //! register the interpoint value field for translating.
     //! @param[in] grid         the mesh in the computing.

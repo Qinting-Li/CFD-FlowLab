@@ -401,32 +401,32 @@ public:
     HighOrderGrid(void) {}
     ~HighOrderGrid(void) {}
 
-    void CopyGeometryInfoToHighOrderCell( UnstructGrid * grid );
-    void CopyGeometryInfoToHighOrderFace( UnstructGrid * grid );
-    void CopyGeometryInfoToHighOrderNode( UnstructGrid * grid );
+    void CopyGeometryInfoToHighOrderCell(UnstructGrid * grid);
+    void CopyGeometryInfoToHighOrderFace(UnstructGrid * grid);
+    void CopyGeometryInfoToHighOrderNode(UnstructGrid * grid);
 
     //! @Initialize HighOrderCellSol for different p_multigrid 
     //! @param[in]   grid                      the input unstructgrid
     //! @param[in]   dgSolOrder                the accuracy of DG solution
     //! @param[in]   pMultiGrid                pmultigrid number
     //! @param[out]                            initialize HighOrderCellSol and build HighOrderStandardCell 
-    void InitHighOrderCellSol( UnstructGrid *grid, int dgSolOrder, int pMultiGrid, int isUnsteady, int viscousType);
+    void InitHighOrderCellSol(UnstructGrid *grid, int dgSolOrder, int pMultiGrid, int isUnsteady, int viscousType);
     
     //! @Initialize HighOrderFaceSol for different p_multigrid 
     //! @param[in]   grid                      the input unstructgrid
     //! @param[in]   dgSolOrder                the accuracy of DG solution
     //! @param[in]   pMultiGrid                pmultigrid number
     //! @param[out]                            initialize HighOrderFaceSol and build HighOrderStandardFace
-    void InitHighOrderFaceSol( UnstructGrid *grid, int dgSolOrder, int pMultiGrid, int isUnsteady, int viscousType );
-    void InitDofOfCell( UnstructGrid *grid, vector < RDouble > & conserValue, int nequ );
-    void InitDofOfCellUnsteady( UnstructGrid * grid, vector < RDouble > & conserValue, int nequ );
-    void InitValueOfFace( const UnstructGrid * grid, const vector < RDouble > & conserValue, int nequ );
-    void InitValueOfFace( const UnstructGrid * grid, const RDouble * conserValue, int nequ );
+    void InitHighOrderFaceSol(UnstructGrid *grid, int dgSolOrder, int pMultiGrid, int isUnsteady, int viscousType);
+    void InitDofOfCell(UnstructGrid *grid, vector < RDouble > & conserValue, int nequ);
+    void InitDofOfCellUnsteady(UnstructGrid * grid, vector < RDouble > & conserValue, int nequ);
+    void InitValueOfFace(const UnstructGrid * grid, const vector < RDouble > & conserValue, int nequ);
+    void InitValueOfFace(const UnstructGrid * grid, const RDouble * conserValue, int nequ);
 
-    void GetNumberOfDOFs( int nCells, int * dofsOfCells );
+    void GetNumberOfDOFs(int nCells, int * dofsOfCells);
 
     //q[iCell][iEqn][iDof]
-    void GetQDOFs( const UnstructGrid *grid, int nequ, RDouble *** q );
+    void GetQDOFs(const UnstructGrid *grid, int nequ, RDouble *** q);
 };
 
 }

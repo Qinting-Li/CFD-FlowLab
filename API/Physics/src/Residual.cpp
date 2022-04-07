@@ -1,5 +1,5 @@
 #include <cmath>
-#include <float.h>
+#include <cfloat>
 #include "Geo_UnstructGrid.h"
 #include "Residual.h"
 #include "PHIO.h"
@@ -192,7 +192,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     oss << setw(7) << outnstep << "    ";
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if(isUnsteady == 1)
+    if(isUnsteady)
     {
         //! Unsteady.
         int innerStep = GlobalDataBase::GetIntParaFromDB("innstep");
@@ -202,15 +202,16 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     RDouble resAverage = 0.0;
     RDouble GloableTotalCells = GlobalDataBase::GetDoubleParaFromDB("GloableTotalCells");
 
-    //for (int m = 0; m < numberOfResidualVariables; ++ m)
-    //{
-        //if((residualNormal[m] != residualNormal[m]) || fabs(residualNormal[m]) > LARGE)
-        //{
-        //    cout << "residual residualNormal[" << m << "] = " << residualNormal[m] << ", on level " << level << endl;
-        //    TK_Exit::ExceptionExit("Error: residual divergence!");
-        //}
-        //resAverage += residualNormal[m];
-    //}
+   //for (int m = 0; m < numberOfResidualVariables; ++ m)
+   //{
+   //  if((residualNormal[m] != residualNormal[m]) || fabs(residualNormal[m]) > LARGE 
+   //      || std::isnan(residualNormal[m]) || std::isinf(residualNormal[m]))
+   //  {
+   //      cout << "residual residualNormal[" << m << "] = " << residualNormal[m] << ", on level " << level << endl;
+   //      TK_Exit::ExceptionExit("Error: residual divergence!");
+   //  }
+   //  //resAverage += residualNormal[m];
+   //}
     //resAverage = resAverage / numberOfResidualVariables;
 
     resAverage += residualNormal[0];
@@ -261,7 +262,7 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
         oss << endl;
         oss << "Iter" << setw(12);
         
-        if (isUnsteady == 1)
+        if (isUnsteady)
         {
             //! Unsteady.
             oss << "Sub-iter" << setw(12);
@@ -545,7 +546,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
     RDouble maxResLocal = maximumResidual;
     RDouble maxResCoorXLocal, maxResCoorYLocal, maxResCoorZLocal;
     int maxResIndexMLocal;
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     RDouble gridScaleUnit = reynoldsReferenceLengthDimensional;
 
     if (GetDim() == THREE_D)
@@ -569,11 +570,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
             RDouble dResm = residual[iEquation][iCell] * gridScaleUnit;
             RDouble res2 = dResm * dResm;
             residualNormal[iEquation] += res2;
-#ifdef WIN32
-            if (_isnan(residualNormal[iEquation]))
-#else               
-            if (residualNormal[iEquation] != residualNormal[iEquation] || ABS(residualNormal[iEquation]) > 1.0e20)
-#endif              
+            if(isErrorData(residualNormal[iEquation]))
             {
                 int izone = grid->GetZoneID();
                 PrintToWindow("residualNormal[", iEquation, "] = ", residualNormal[iEquation]);
@@ -582,7 +579,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
                 PrintToWindow("iCell = ", iCell, "\n");
                 WriteLogFile("residual residualNormal ", iEquation, residualNormal[iEquation], true);
                 WriteLogFile("izone i = ", izone, iEquation, true);
-                TK_Exit::ExceptionExit("Error: residual divergence!", true);
+                TK_Exit::ExceptionExit("Error: residual divergence!\n", true);
             }
 
             if (res2 > maxResLocal)
@@ -627,8 +624,14 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
     RDouble3D &xcc = *grid->GetCellCenterX();
     RDouble3D &ycc = *grid->GetCellCenterY();
     RDouble3D &zcc = *grid->GetCellCenterZ();
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     RDouble gridScaleUnit = reynoldsReferenceLengthDimensional;
+
+    int nDebug = 0;
+    if (GlobalDataBase::IsExist("nDebug", PHINT, 1))
+    {
+        nDebug = GlobalDataBase::GetIntParaFromDB("nDebug");
+    }
 
     if (GetDim() == THREE_D)
     {
@@ -648,6 +651,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
     RDouble maxResCoorXLocal, maxResCoorYLocal, maxResCoorZLocal;
     int maxResIndexMLocal;
     bool maxResChange = false;
+    int iMax = 0, jMax = 0, kMax = 0, mMax = 0;
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -660,11 +664,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                     RDouble dResm = residual(i, j, k, m) * gridScaleUnit;
                     RDouble res2 = dResm * dResm;
                     residualNormal[m] += res2;
-#ifdef WIN32
-                    if(_isnan(residualNormal[m]))
-#else               
-                    if(residualNormal[m] != residualNormal[m] || ABS(residualNormal[m]) > 1.0e20)
-#endif              
+                    if(isErrorData(residualNormal[m]))
                     {
                         int izone = grid->GetZoneID();
                         PrintToWindow("residualNormal[", m, "] = ", residualNormal[m]);
@@ -673,10 +673,14 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                         PrintToWindow("i = ", i, "\n");
                         PrintToWindow("j = ", j, "\n");
                         PrintToWindow("k = ", k, "\n");
+                        PrintToWindow("xc = ", xcc(i, j, k), "\n");
+                        PrintToWindow("yc = ", ycc(i, j, k), "\n");
+                        PrintToWindow("zc = ", zcc(i, j, k), "\n");
                         WriteLogFile("residual residualNormal ",m, residualNormal[m], true);
-                        WriteLogFile("izone i = ",izone, i, true);
-                        WriteLogFile("j k= ",j, k, true);
-                        TK_Exit::ExceptionExit("Error: residual divergence!", true);
+                        WriteLogFile("izone = ",izone, true);
+                        WriteLogFile("i j k = ", i ,j, k, true);
+                        WriteLogFile("xc yc zc = ", xcc(i, j, k) ,ycc(i, j, k), zcc(i, j, k), true);
+                        TK_Exit::ExceptionExit("Error: residual divergence!\n", true);
                     }
 
                     if (res2 > maxResLocal)
@@ -684,6 +688,11 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                         maxResChange = true;
 
                         maxResLocal = res2;
+
+                        iMax = i;
+                        jMax = j;
+                        kMax = k;
+                        mMax = m;
 
                         maxResCoorXLocal = xcc(i, j, k);
                         maxResCoorYLocal = ycc(i, j, k);
@@ -695,6 +704,18 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
             }
         }
     }
+
+    if(nDebug == 1 && maxResChange == true)
+    {
+        int izone = grid->GetZoneID();
+        PrintToWindow("\n","Maxres_izone = ", izone, "\n");
+        PrintToWindow("Maxres_i = ", iMax, "\n");
+        PrintToWindow("Maxres_j = ", jMax, "\n");
+        PrintToWindow("Maxres_k = ", kMax, "\n");
+        PrintToWindow("Maxres_m = ", mMax, "\n");
+        PrintToWindow("Maxres = ", maxResLocal,"\n","\n");
+    }
+    
 
     if (maxResChange)
     {

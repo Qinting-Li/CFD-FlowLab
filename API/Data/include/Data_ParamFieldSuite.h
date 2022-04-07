@@ -72,6 +72,10 @@ public:
     //! If the dataSet doesn't has a same name data, returns null.
     //! @param[in]  name    Source data's name.
     LIB_EXPORT void * GetDataPtr(const string &name) const;
+
+    //! Remove data's address from dataSet by name.
+    //! @param[in]  name    Source data's name.
+    LIB_EXPORT void DeleteDataPtr(const string &name);
 };
 
 }

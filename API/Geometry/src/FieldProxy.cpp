@@ -12,7 +12,7 @@ FieldProxy::FieldProxy()
 
 FieldProxy::~FieldProxy()
 {
-    if ( del_field )
+    if (del_field)
     {
         delete field_str;
         DelPointer2(field_uns);

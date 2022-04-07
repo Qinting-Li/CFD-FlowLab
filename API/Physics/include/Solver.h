@@ -91,6 +91,8 @@ public:
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitMemory() = 0;
 
+    virtual void ReleaseMemory() = 0;
+
     //! Initialize the flow, here it is a pure virtual function, 
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitFlow() = 0;

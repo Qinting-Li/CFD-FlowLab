@@ -476,7 +476,7 @@ void MRADTSearch::SearchInAdt(RDouble x, RDouble y, RDouble z, int &donorIndex)
 
         if (globalBox[0] <= coor[0] && globalBox[3] >= coor[0] &&
             globalBox[1] <= coor[1] && globalBox[4] >= coor[1] &&
-            globalBox[2] <= coor[2] && globalBox[5] >= coor[2] )    //! Firstly, this point falls in the bounding box formed by the maximum and minimum values of the contribution grid.
+            globalBox[2] <= coor[2] && globalBox[5] >= coor[2])    //! Firstly, this point falls in the bounding box formed by the maximum and minimum values of the contribution grid.
         {
             SearchPoint3D(iLay, rootCellIndexNow, coor, donorIndex);
         }

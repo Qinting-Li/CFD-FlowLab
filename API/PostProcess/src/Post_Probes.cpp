@@ -7,7 +7,11 @@
 #include "Glb_Dimension.h"
 #include "TK_Log.h"
 #include "TK_Time.h"
+#ifdef USE_HYFLOW_CODE
+#include "RealGas.h"
+#else
 #include "Gas.h"
+#endif
 
 using namespace std;
 namespace PHSPACE
@@ -20,7 +24,7 @@ LIB_EXPORT Post_Probes::Post_Probes(int nProbeVariables_in, int *probeVariables_
     probesVariablesMap.insert(pair<int, string>(PROBE_W          , "w"));
     probesVariablesMap.insert(pair<int, string>(PROBE_PRESSURE   , "pressure"));
     probesVariablesMap.insert(pair<int, string>(PROBE_TEMPERATURE, "temperature"));
-
+    probesVariablesMap.insert(pair<int, string>(PROBE_MACH, "mach"));
     nProbeVariables = nProbeVariables_in;
     for (int iVar = 0; iVar < nProbeVariables; ++ iVar)
     {

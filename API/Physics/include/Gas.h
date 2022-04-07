@@ -88,7 +88,7 @@ class Gas
 {
 public:
     Gas(){};
-    virtual ~Gas(){};
+    virtual ~Gas() {};
 public:
 
 public:
@@ -111,6 +111,9 @@ public:
     virtual RDouble ComputeReferenceTotalEnthalpy() {return 0.0;};
     virtual RDouble GetMolecularDiameter() {return 3.6e-10;};
     virtual int GetGasModelType() {return 0;};
+    virtual int GetnDiagonalModified() const {return 0;}
+    virtual int GetnSpeciesForWallMethod() const {return 0;}
+    virtual int GetnDensityForWallMethod() const {return 0;}
 public:
     virtual int GetmTT() const {return 0;}
     virtual int GetmTV() const {return 0;}
@@ -120,6 +123,9 @@ public:
     virtual RDouble GetTemperatureMin(){return 0;};
     virtual RDouble GetTemperatureMax(){return 0;};
     virtual Thermo_Energy *GetThermo_Energy_temparay(){ return NULL;};
+
+    virtual RDouble GetveTemperatureMinNonDimensional() const {return 0.0;}
+    virtual RDouble GettrTemperatureMinNonDimensional() const {return 0.0;}
 public:
     virtual void AllocateWorkingSpace(){};
     virtual void DeAllocateWorkingSpace(){};
@@ -169,6 +175,9 @@ public:
     virtual void Read(fstream &file){};
     virtual void Read(DataContainer *cdata){};
     virtual void Write(DataContainer *cdata){};
+
+    virtual void SetMaximumSpecies(RDouble *mass_fraction_ref){};
+    virtual RDouble * GetMaximumSpecies() const { return NULL;}
 public:
     virtual void CompressData  (DataContainer *&cdata){};
     virtual void DecompressData(DataContainer *cdata){};
@@ -303,11 +312,13 @@ public:
     //! @param[out]: vibrationTemperature is the non-dimensional value of vibration temperature.
     //! @param[out]: electronTemperature is the non-dimensional value of electron temperature.
     virtual void GetTemperature(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature){};
-    virtual void GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature){};
+    virtual void GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature,int m =0){};
+    virtual void GetTemperatureR2(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature){};
 
     //! To obtain the mass fraction of the last species with the label ns-1.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
     virtual void NormalizePrimitive(RDouble *primitiveVariables){};
+    virtual void NormalizePrimitiveR(RDouble *primitiveVariables){};
 
     //! Compute the molecular weight reciprocal of the mixed gas.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
@@ -367,7 +378,7 @@ public:
     //! @param[out]: heatConductivity denotes the array of heat conductivity for each mode.
     //! @param[out]: rhoDs denotes the array of mass diffusion coefficients for each species.
     virtual void ComputeTransportCoefficients(RDouble *primitiveVariables, RDouble *temperature, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs){};
-    virtual void ComputeTransportCoefficientsR(RDouble *primitiveVariables, RDouble *temperature, RDouble *speciesCps, RDouble *speciesCvvs,RDouble *speciesCves, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs){};
+    virtual void ComputeTransportCoefficientsR(RDouble *massFractions, RDouble *temperature, RDouble density, RDouble *speciesCps, RDouble *speciesCvvs,RDouble *speciesCves, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs){};
 
     //! To obtain the non-dimensional viscosity of the mixture gas according to the mass fraction of each species.
     //! @param[in ]: density denotes the non-dimensional value of density of the mixed gas.
@@ -451,7 +462,7 @@ public:
     virtual void ComputeChemicalSourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
     virtual void ComputeChemicalSourceJacobian(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives){};
     virtual void ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
-    virtual void ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvs, RDouble3D &totalCv, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
+    virtual void ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesEs, RDouble4D &speciesCvs, RDouble3D &totalCv, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
     //! Compute the partial derivatives of source terms of chemical reaction equations without electron.
     //! @param[in ]: primitiveVariables stores the primitive variables of the specified control cells.
     //! @param[in ]: temperatures stores the temperature values of the specified control cells.
@@ -523,6 +534,7 @@ public:
     //it denotes the temperature of the next time-advancing step as output parameter.
     virtual void Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature){};
     virtual void Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature){};
+    virtual void LimitTemperature(RDouble &Temperature, RDouble &Delta, RDouble &Minimum){};
 
     virtual void GetSpecificHeatRatio(RDouble *prim, RDouble &gama){};
 
@@ -1064,10 +1076,16 @@ public:
     virtual void ComputePressureDerivatives(RDouble *primitiveVars, RDouble *temperatures, RDouble &alpha, RDouble &beta, RDouble &eta, RDouble *speciesBeta) {};
 
     //=======codes for test ================
-    virtual void  ComputeMixturegasThermalParameter(RDouble *massF, RDouble trTemperature, RDouble vTemperature, RDouble eTemperature, int Dimensional){};
+    virtual void  ComputeMixturegasThermalParameter(RDouble *massF, RDouble trTemperature, RDouble vTemperature, RDouble eTemperature, int Dimensional = 0){};
+
     virtual void  ComputeMixtureCvAndEnergy(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};
+    virtual void  ComputeMixtureEnergy(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureEnergy){};
+
     virtual void  ComputeMixtureCvtrAndEtr(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};
+
     virtual void  ComputeMixtureCvveAndEve(RDouble *massF, RDouble tveTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};
+    virtual void  ComputeMixtureEve(RDouble *massF, RDouble tveTemperature, RDouble &gasMixtureEnergy){};
+
     virtual void  ComputeMixtureCvvAndEv(RDouble *massF, RDouble tvTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};
     virtual void  ComputeMixtureCveAndEe(RDouble *massF, RDouble teTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};
 
@@ -1077,5 +1095,27 @@ public:
 
 extern Gas *gas;
 
+//! To obtain the index of the species name.
+//! Param[IN]: speciesName indicates the species name.
+int GetIndexBySpeciesName(string speciesName);
+
+//! To obtain the species name using the index.
+//! Param[IN]: nIndex indicates the index of the species name.
+string GetSpeciesNameByIndex(int nIndex);
+
+//! Transfer the string to the integer.
+//! Param[IN ]: numberOfSpecies indicates the number of the species.
+//! Param[IN ]: nameList indicates the name list of species.
+//! Param[OUT]: speciesOrder indicates the order of the species name.
+void SpeciesNameToInteger(int numberOfSpecies, string *nameList, Int1D *speciesOrder);
+void SpeciesNameToInteger(int numberOfSpecies, string *nameList, int *speciesOrder);
+
+//! Determine whether the two gas models are equal.
+//! Param[IN ]: speciesOrder1 indicates the name list of the first gas model.
+//! Param[OUT]: speciesOrder2 indicates the name list of the second gas model.
+bool IsEqualGasModel(Int1D *speciesOrder1, Int1D *speciesOrder2);
+
+
 }
+
 }

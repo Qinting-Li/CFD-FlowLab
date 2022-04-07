@@ -45,7 +45,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
     freeStreamViscosity = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
 
     using namespace IDX;
-    RDouble * prim_inf = reinterpret_cast< RDouble * > ( GlobalDataBase::GetDataPtr("prim_inf"  ) );
+    RDouble * prim_inf = reinterpret_cast< RDouble * > (GlobalDataBase::GetDataPtr("prim_inf" ));
     RDouble reference_density_farfield = prim_inf[IR];
 
     RDouble refReNumber = 1.0e5;
@@ -77,7 +77,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     int nolstress, nrokplus;
 
-    if ( viscousType >= TWO_EQU && neasm > 0 )
+    if (viscousType >= TWO_EQU && neasm > 0)
     {
         nolstress = 1;
         nrokplus  = 1;
@@ -119,7 +119,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
             SST_betaStar = 1.0;
             turb_cmu    = 0.09;
 
-            if ( neasm == 1 )
+            if (neasm == 1)
             {
                 KW_sigmaK   = 0.5;
                 KW_sigmaW   = 0.5;
@@ -137,7 +137,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
             KW_sigmaK   = 0.5;
             KW_sigmaW   = 0.5;
 
-            if ( neasm == 1 )
+            if (neasm == 1)
             {
                 KW_sigmaK   = 0.5;
                 KW_sigmaW   = 0.5;
@@ -155,7 +155,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
             KW_sigmaK   = 0.667;
             KW_sigmaW   = 0.5;
 
-            if ( neasm == 1 )
+            if (neasm == 1)
             {
                 KW_sigmaK   = 1.0 / 1.4;
                 KW_sigmaW   = 1.0 / 2.2;
@@ -207,24 +207,24 @@ LIB_EXPORT void Param_TurbSolver::Init()
         {
         }
     }
-    else if (viscousName.substr(0,4 ) == "easm")
+    else if (viscousName.substr(0,4) == "easm")
     {
         //! It is a specific easm, not a random collected one.
-        if (viscousName.substr(0,12 ) == "easm-kw-2001")
+        if (viscousName.substr(0,12) == "easm-kw-2001")
         {
             KW_sigmaK   = 0.5;
             KW_sigmaW   = 0.5339;
             SST_betaStar = 1.0;
             turb_cmu    = 0.0895;
         }
-        else if (viscousName.substr(0,12 ) == "easm-kw-2003")
+        else if (viscousName.substr(0,12) == "easm-kw-2003")
         {
             KW_sigmaK   = 1.0;
             KW_sigmaW   = 0.5339;
             SST_betaStar = 1.0;
             turb_cmu    = 0.0895;
         }
-        else if (viscousName.substr(0,12 ) == "easm-kw-2005")
+        else if (viscousName.substr(0,12) == "easm-kw-2005")
         {
             KW_sigmaK1  = 1.1;
             KW_sigmaW1  = 0.53;

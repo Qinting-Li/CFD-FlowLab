@@ -54,14 +54,14 @@ FaceProxy::~FaceProxy()
     DelPointer2(tl);
     DelPointer2(tr);
 
-    delete [] gamal;    gamal = nullptr;
-    delete [] gamar;    gamar = nullptr;
+    delete [] gamal;    gamal = NULL;
+    delete [] gamar;    gamar = NULL;
 
-    delete [] deltl;    deltl = nullptr;
-    delete [] deltr;    deltr = nullptr;
+    delete [] deltl;    deltl = NULL;
+    delete [] deltr;    deltr = NULL;
 
-    delete [] lrtl;    lrtl = nullptr;
-    delete [] lrtr;    lrtr = nullptr;
+    delete [] lrtl;    lrtl = NULL;
+    delete [] lrtr;    lrtr = NULL;
 
     delete ns_facevar;
     delete turb_facevar;
@@ -206,9 +206,9 @@ NSFaceValue::~NSFaceValue()
     delete prim;
     delete t;
 
-    delete [] kcp;    kcp = nullptr;
-    delete [] mul;    mul = nullptr;
-    delete [] mut;    mut = nullptr;
+    delete [] kcp;    kcp = NULL;
+    delete [] mul;    mul = NULL;
+    delete [] mut;    mut = NULL;
 }
 
 TurbFaceValue::TurbFaceValue(int neqn, int nlen)
@@ -222,8 +222,8 @@ TurbFaceValue::TurbFaceValue(int neqn, int nlen)
 
 TurbFaceValue::~TurbFaceValue()
 {
-    delete [] mul;    mul = nullptr;
-    delete [] mut;    mut = nullptr;
+    delete [] mul;    mul = NULL;
+    delete [] mut;    mut = NULL;
 
     DelPointer2(mlt);
     DelPointer2(prim);
@@ -264,15 +264,15 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
 
     RDouble (*LIMIT_FUN)(const RDouble &x, const RDouble &y);
 
-    if ( uns_limiter == ILMT_MINMOD )
+    if (uns_limiter == ILMT_MINMOD)
     {
         LIMIT_FUN = MINMOD;
     }
-    else if ( uns_limiter == ILMT_VAN_ALBADA )
+    else if (uns_limiter == ILMT_VAN_ALBADA)
     {
         LIMIT_FUN = VANALBADA;
     }
-    else if ( uns_limiter == ILMT_SMOOTH )
+    else if (uns_limiter == ILMT_SMOOTH)
     {
         LIMIT_FUN = SMOOTH;
     }
@@ -286,13 +286,13 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
     RDouble **dqdz = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarZ"));
 
     int le,re,j;
-    for ( int iface = nst; iface < ned; ++ iface )
+    for (int iface = nst; iface < ned; ++ iface)
     {
         j  = iface - nst;
         le = left_cell_of_face [ iface ];
         re = right_cell_of_face[ iface ];
 
-        for ( int m = 0; m < neqn; ++ m )
+        for (int m = 0; m < neqn; ++ m)
         {
             qltry[m] = ql[m][j];
             qrtry[m] = qr[m][j];
@@ -302,7 +302,7 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
         dy = yfc[iface] - ycc[le];
         dz = zfc[iface] - zcc[le];
 
-        for ( int m = 0; m < neqn; ++ m )
+        for (int m = 0; m < neqn; ++ m)
         {
             RDouble lx = LIMIT_FUN(dqdx[m][le],dqdx[m][re]);
             RDouble ly = LIMIT_FUN(dqdy[m][le],dqdy[m][re]);
@@ -318,7 +318,7 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
         dy = yfc[iface] - ycc[re];
         dz = zfc[iface] - zcc[re];
 
-        for ( int m = 0; m < neqn; ++ m )
+        for (int m = 0; m < neqn; ++ m)
         {
             RDouble lx = LIMIT_FUN(dqdx[m][le],dqdx[m][re]);
             RDouble ly = LIMIT_FUN(dqdy[m][le],dqdy[m][re]);
@@ -330,25 +330,25 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
             qrtry[m] += limdq;
         }
 
-        if ( PositiveCheckForDensityAndPressure(qltry) )
+        if (PositiveCheckForDensityAndPressure(qltry))
         {
-            for ( int m = 0; m < neqn; ++ m )
+            for (int m = 0; m < neqn; ++ m)
             {
                 ql[m][j] = qltry[m];
             }
         }
 
-        if ( PositiveCheckForDensityAndPressure(qrtry) )
+        if (PositiveCheckForDensityAndPressure(qrtry))
         {
-            for ( int m = 0; m < neqn; ++ m )
+            for (int m = 0; m < neqn; ++ m)
             {
                 qr[m][j] = qrtry[m];
             }
         }
     }
 
-    delete [] qltry;    qltry = nullptr;
-    delete [] qrtry;    qrtry = nullptr;
+    delete [] qltry;    qltry = NULL;
+    delete [] qrtry;    qrtry = NULL;
 }
 
 }

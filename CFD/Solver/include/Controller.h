@@ -55,6 +55,10 @@ public:
     LIB_EXPORT void Initialize(int iSolver);
     LIB_EXPORT void InitCoarseGridsFlow(int iSolver, int level);
 
+    LIB_EXPORT void CleanUp(int iSolver);
+    
+    LIB_EXPORT void SolveIncomFlow();
+
     //! Steady simulation by implementing multi-grid cycle.
     //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right
     //! reason why this class is named as 'Controller'.
@@ -115,9 +119,6 @@ public:
     //! Compute pressure factor for entropy fix (Method 2).
     void PressureFactor(int iSolver, int level);
 
-    //! Compute pressure factor for entropy fix (Method 2).
-    void ComputeHeatTransferCoeff(int iSolver, int level);
-
     //! Compute the gama and temperature of flowfield on the level-th multigrid.
     void ComputeGamaAndTField(int iSolver, int level);
 
@@ -159,7 +160,7 @@ public:
     LIB_EXPORT void MultiGridInitFlow(int level);
 
     //! Compute the sub-iteration norm.
-    RDouble ComputeSubIterationNorm( int iSolver, int level );
+    RDouble ComputeSubIterationNorm(int iSolver, int level);
 
 private:
     //! Get the current being used solver index.

@@ -123,12 +123,34 @@ public:
 
     int GetnEnergyRecycle() const;
 
+    int GetTransitionType() const;
+
     int GetnTurblenceForChemical() const;
 
     int GetnViscosityFluxSublevelModified() const;
 
+    RDouble  GetDensityMin() const;
+
+    RDouble  GetdensityMinFactor() const;
+
+    int GetSelfAdaptionSolveFlag() const;
+
+    int GetnGradPrimtiveMethod() const;
+
+    int GetnInviscidFluxModify() const;    
+
+    int GetnQlLimitMethod() const;
+
+    int GetSurfaceGradientMethod() const;
+
+    int GetRapidFlowfieldMethod() const;
+
+    int GetSurfaceHeatingMonitor() const;
+
 private:
     int intervalStepForce;
+
+    int transitionType;
 
     RDouble wallTemperature;
 
@@ -209,6 +231,27 @@ private:
     int nTurblenceForChemical;
 
     int nViscosityFluxSublevelModified;
+
+    RDouble densityMin;
+
+    RDouble densityMinFactor;
+
+    int nGradPrimtiveMethod;
+
+    int isSelfAdaptionSolve;
+
+    int nInviscidFluxModify;
+
+    int nQlLimitMethod;
+
+    //The method to compute the gradient of variable on surface.
+    int nSurfGradMethod;
+
+    //To utilize the rapid method that can directly obtain the initial flowfield in boundary layer.
+    int nRapidFlowfield;
+
+    //To utilize the monitor which exam the surface heating change during the iteration.
+    int nSurfHeatMonitor;
 };
 
 #include "Param_NSSolver.hxx"

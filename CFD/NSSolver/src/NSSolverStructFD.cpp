@@ -88,7 +88,7 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
 
     Param_NSSolverStruct *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady != 0)
+    if (isUnsteady)
     {
         RDouble4D *q_unsteady_n1   = new RDouble4D(I, J, K, M, fortranArray);
         RDouble4D *q_unsteady_n2   = new RDouble4D(I, J, K, M, fortranArray);
@@ -193,9 +193,9 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         RDouble4D *dqdx_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
         RDouble4D *dqdy_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
         RDouble4D *dqdz_cc_ruvwpt = new RDouble4D(I, J, K, Range(0,5), fortranArray);
-        grid->UpdateDataPtr("dqdx_cc_ruvwpt", dqdx_cc_ruvwpt );    //! dqdx(q represents r/u/v/w/p/t) at cell center.
-        grid->UpdateDataPtr("dqdy_cc_ruvwpt", dqdy_cc_ruvwpt );    //! dqdy(q represents r/u/v/w/p/t) at cell center.
-        grid->UpdateDataPtr("dqdz_cc_ruvwpt", dqdz_cc_ruvwpt );    //! dqdz(q represents r/u/v/w/p/t) at cell center.
+        grid->UpdateDataPtr("dqdx_cc_ruvwpt", dqdx_cc_ruvwpt);    //! dqdx(q represents r/u/v/w/p/t) at cell center.
+        grid->UpdateDataPtr("dqdy_cc_ruvwpt", dqdy_cc_ruvwpt);    //! dqdy(q represents r/u/v/w/p/t) at cell center.
+        grid->UpdateDataPtr("dqdz_cc_ruvwpt", dqdz_cc_ruvwpt);    //! dqdz(q represents r/u/v/w/p/t) at cell center.
     }
 
     GetSurfaceCellNumber(gridIn, nWallBC, nMaxSurfaceCell);
@@ -229,6 +229,19 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         }
         grid->UpdateDataPtr("surfaceTemperature", temperatureWall);
     }
+
+    int nTotalNumber = 16;
+    Int1D *speciesOrder = new Int1D(Range(0, nTotalNumber - 1), fortranArray);
+    for (int n = 0; n < nTotalNumber; ++ n)
+    {
+        (*speciesOrder)(n) = -1;
+    }
+    grid->UpdateDataPtr("speciesOrder", speciesOrder);
+
+    Range IFACE, JFACE, KFACE;
+    GetRange(ni, nj, nk, -2, 2, IFACE, JFACE, KFACE);
+    RDouble4D *heatTransferCoeff = new RDouble4D(I, J, K, T, fortranArray);
+    grid->UpdateDataPtr("heatTransferCoeff", heatTransferCoeff);    //!heat transfer coefficient.
 }
 
 void NSSolverStructFD::DeAllocateGlobalVar(Grid *gridIn)
@@ -437,8 +450,8 @@ void NSSolverStructFD::GetIndependentVariablesforStructHighOrder(Grid *gridIn)
         {
             for (int j = jst; j <= jed; ++ j)
             {
-                qFD(   - 2, j, k, m) = qFD(   - 1, j, k, m);
-                qFD(   - 3, j, k, m) = qFD(   - 2, j, k, m);
+                qFD(  - 2, j, k, m) = qFD(  - 1, j, k, m);
+                qFD(  - 3, j, k, m) = qFD(  - 2, j, k, m);
                 qFD(ni + 2, j, k, m) = qFD(ni + 1, j, k, m);
                 qFD(ni + 3, j, k, m) = qFD(ni + 2, j, k, m);
             }
@@ -826,10 +839,6 @@ void NSSolverStructFD::ComputeGamaAndTemperature(Grid *gridIn)
 void NSSolverStructFD::CalPressureFactor(Grid *gridIn)
 {
     //! Already solved in Controller::GetDependentVariablesforStructHighOrder().
-}
-
-void NSSolverStructFD::GetHeatTransferCoeff(Grid *gridIn)
-{
 }
 
 void NSSolverStructFD::ComputeViscousCoeff(Grid *gridIn)
@@ -1402,7 +1411,7 @@ void NSSolverStructFD::InitFlowAsRestart()
     GetDependentVariablesforStructHighOrder(grid);
     
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady == 0)
+    if (!isUnsteady)
     {
         RDouble4D &residual = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
         residual   = 0.0;
@@ -1957,7 +1966,7 @@ void NSSolverStructFD::GetFaceVariable_WCNS(Grid *gridIn, FieldProxy *qlProxy, F
 
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     InterpolationRUVWP3rd(PrimPlate_L, PrimHalf_L);
                     InterpolationRUVWP3rd(PrimPlate_R, PrimHalf_R);
@@ -2204,7 +2213,7 @@ RDouble NSSolverStructFD::BasicInterpolation3rd(RDouble Qp[5], int m)
 RDouble NSSolverStructFD::Limiter_ThirdSmooth(const RDouble &x, const RDouble &y)
 {
    const RDouble eps2 = 1.0e-6;
-    RDouble Smooth1 = x * ( y * y + 2.0 * eps2 ) +  y * ( 2.0 * x * x + eps2 );
+    RDouble Smooth1 = x * (y * y + 2.0 * eps2) +  y * (2.0 * x * x + eps2);
     RDouble Smooth2 = 2.0 * x * x - x * y + 2.0 * y * y + 3.0 * eps2;
     RDouble Smooth = Smooth1 / Smooth2;
     return  Smooth;
@@ -3255,7 +3264,7 @@ void NSSolverStructFD::FluxDifference_WCNS(Grid *gridIn, FieldProxy *fluxProxy, 
 
                     int localcellID = i * il1 + j * jl1 + k * kl1;
 
-                    if( (*DiffOrder)(localcellID) == 2 )
+                    if((*DiffOrder)(localcellID) == 2)
                     {
                         res(i, j, k, m) -= (f2 - f1);
                     }
@@ -3382,7 +3391,7 @@ void NSSolverStructFD::GetCellInviscidFlux(Grid *gridIn, int nsurf)
                 
                 RDouble RVN = R * (KX * U + KY * V + KZ * W);
                 
-                Cellflux(i, j, k, IR ) = RVN;
+                Cellflux(i, j, k, IR) = RVN;
                 Cellflux(i, j, k, IRU) = RVN * U + KX * P;
                 Cellflux(i, j, k, IRV) = RVN * V + KY * P;
                 Cellflux(i, j, k, IRW) = RVN * W + KZ * P;
@@ -3600,7 +3609,7 @@ void NSSolverStructFD::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++m)
                     {                    
@@ -3749,7 +3758,7 @@ void NSSolverStructFD::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 )
+                if((*DiffOrder)(localcellID) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -3879,7 +3888,7 @@ void NSSolverStructFD::ViscousFlux(Grid *gridIn)
         GetGradientAtFace(gridIn, iSurface);
         GetGradientAtFaceCorrectionAtPhysicalBoundary(gridIn, iSurface);
 
-        if (iLES != LES_SOLVER)
+        if (iLES == NOLES_SOLVER)
         {
             GetFaceViscousFlux(gridIn, fluxProxy, iSurface);
         }
@@ -3976,7 +3985,7 @@ void NSSolverStructFD::GetGradientAtFaceconservation(Grid *gridIn, int nSurface)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     RDouble dx = xcc(i, j, k) - xcc(i - il1, j - jl1, k - kl1);
                     RDouble dy = ycc(i, j, k) - ycc(i - il1, j - jl1, k - kl1);
@@ -4222,7 +4231,7 @@ void NSSolverStructFD::GetGradientAtFacechainrule(Grid *gridIn, int nSurface)
                 nz /= Volume;
 
                 int localcellID = i * il1 + j * jl1 + k * kl1;
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -5018,7 +5027,7 @@ void NSSolverStructFD::Diagonal(Grid *gridIn)
 void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == 6)
+    if(tscheme == JACOBIAN_ITERATION)
     {
         SolveLUSGSbyJacobiIteration(gridIn, dqProxy, LUplusDQ, sweepNormal);
         return;
@@ -5133,7 +5142,7 @@ void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
 void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
-    if(tscheme == 6)
+    if(tscheme == JACOBIAN_ITERATION)
     {
         return;
     }

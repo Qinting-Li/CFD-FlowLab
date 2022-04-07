@@ -10,8 +10,8 @@ namespace PHSPACE
 {
 InterpointPatch::InterpointPatch()
 {
-    pointIndexForReceive = nullptr;
-    pointIndexForSend = nullptr;
+    pointIndexForReceive = NULL;
+    pointIndexForSend = NULL;
     dataStorageSend = new Data_ParamFieldSuite();
     dataStorageReceive = new Data_ParamFieldSuite();
     zoneID = 0;
@@ -70,19 +70,19 @@ InterpointInformation::InterpointInformation()
 {
     numberOfInterpoints = 0;
     numberOfNeighbor = 0;
-    cellNumberOfInterPoint = nullptr;
-    totalZonesOfInterPoint = nullptr;
-    labelOfInterPoint = nullptr;
-    parent = nullptr;
-    interPoint2ZoneID = nullptr;
-    interPoint2InterPointID = nullptr;
-    interPoint2GlobalPoint = nullptr;
+    cellNumberOfInterPoint = NULL;
+    totalZonesOfInterPoint = NULL;
+    labelOfInterPoint = NULL;
+    parent = NULL;
+    interPoint2ZoneID = NULL;
+    interPoint2InterPointID = NULL;
+    interPoint2GlobalPoint = NULL;
 
     dataForSend = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
     dataForReceive = new Data_ParamFieldSuite[GetNumberOfGhostCellLayers()];
 
-    interPointPatch = nullptr;
-    isNeighborInterpointFound = nullptr;
+    interPointPatch = NULL;
+    isNeighborInterpointFound = NULL;
 }
 
 InterpointInformation::InterpointInformation(const InterpointInformation &interpointInformationIn)

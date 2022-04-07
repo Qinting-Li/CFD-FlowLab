@@ -1,11 +1,12 @@
 #include "GeometryUnit.h"
+#include <cstddef>
 
 namespace PHSPACE
 {
 DYNode::DYNode()
 {
-    node2node  = nullptr;
-    node2nodeK = nullptr;
+    node2node  = NULL;
+    node2nodeK = NULL;
 }
 
 DYNode::~DYNode()
@@ -16,7 +17,7 @@ DYNode::~DYNode()
 
 DYFace::DYFace()
 {
-    face2node = nullptr;
+    face2node = NULL;
 }
 DYFace::~DYFace()
 {
@@ -25,9 +26,9 @@ DYFace::~DYFace()
 
 DYCell::DYCell()
 {
-    cell2face = nullptr;
-    cell2node = nullptr;
-    cell2cell = nullptr;
+    cell2face = NULL;
+    cell2node = NULL;
+    cell2cell = NULL;
 }
 DYCell::~DYCell()
 {

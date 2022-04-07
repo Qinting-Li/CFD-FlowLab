@@ -51,4 +51,9 @@ LIB_EXPORT void * Data_ParamFieldSuite::GetDataPtr(const string &name) const
     return field->GetDataPtr(name);
 };
 
+LIB_EXPORT void Data_ParamFieldSuite::DeleteDataPtr(const string &name)
+{
+    field->DeleteDataPtr(name);
+}
+
 }

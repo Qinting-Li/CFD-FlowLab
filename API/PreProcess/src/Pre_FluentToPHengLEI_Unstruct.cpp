@@ -7,7 +7,7 @@
 #include "PHIO.h"
 #include "Constants.h"
 #include "TK_Parse.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 
 namespace PHSPACE
 {
@@ -322,7 +322,7 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentFace(GridFormat_Fluent *fluent_fac
     //! The order of the cell indices is important, and is determined by the right-hand rule: 
     //! if you curl the fingers of your right hand in the order of the nodes, your thumb will point toward c1.
 
-    //! If the face zone is of mixed type ( face-type = 0), 
+    //! If the face zone is of mixed type (face-type = 0), 
     //! each line of the section body will begin with a reference to the number of nodes that make up that particular face,
     //! and has the following format: 
     //! x n0 n1 ... nf c0 c1
@@ -458,26 +458,26 @@ void GridFormat_Fluent::BuildBCMap()
 {
     typedef pair <int, int> Int_Pair;
     using namespace PHSPACE;
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERIOR          , PHENGLEI::INTERIOR             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::WALL              , PHENGLEI::SOLID_SURFACE        ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_INLET    , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INLET_VENT        , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INTAKE_FAN        , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_OUTLET   , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::EXHAUST_FAN       , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTLET_VENT       , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::SYMMETRY          , PHENGLEI::SYMMETRY             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC_SHADOW   , PHENGLEI::PERIODIC             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_FAR_FIELD, PHENGLEI::FARFIELD             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC          , PHENGLEI::PERIODIC             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERIOR          , PHENGLEI::INTERIOR            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::WALL              , PHENGLEI::SOLID_SURFACE       ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_INLET    , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INLET_VENT        , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INTAKE_FAN        , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_OUTLET   , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::EXHAUST_FAN       , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTLET_VENT       , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::SYMMETRY          , PHENGLEI::SYMMETRY            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC_SHADOW   , PHENGLEI::PERIODIC            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_FAR_FIELD, PHENGLEI::FARFIELD            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC          , PHENGLEI::PERIODIC            ));
     bcmap.insert(Int_Pair(FLUENT_SPACE::FAN               , PHENGLEI::NO_BOUNDARY_CONDITION));
     bcmap.insert(Int_Pair(FLUENT_SPACE::POROUS_JUMP       , PHENGLEI::NO_BOUNDARY_CONDITION));
     bcmap.insert(Int_Pair(FLUENT_SPACE::RADIATOR          , PHENGLEI::NO_BOUNDARY_CONDITION));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::MASS_FLOW_INLET   , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERFACE         , PHENGLEI::OVERSET              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTFLOW           , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::AXIS              , PHENGLEI::POLE                 ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::UNSPECIFIED       , PHENGLEI::GENERIC_1            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::MASS_FLOW_INLET   , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERFACE         , PHENGLEI::OVERSET             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTFLOW           , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::AXIS              , PHENGLEI::POLE                ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::UNSPECIFIED       , PHENGLEI::GENERIC_1           ));
 
     int maxNumberOfBody = PHENGLEI::ENDNumberOfBodyOfHyperFLOW - PHENGLEI::StartNumberOfBodyOfHyperFLOW + 1;
     for (int iBody = 0; iBody < maxNumberOfBody; iBody ++)

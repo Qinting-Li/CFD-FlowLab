@@ -137,7 +137,7 @@ void Pre_GridConversion::WriteFaceBC(const string &out_grid_file, Grid **grids_i
         grid->WriteFaceBC(file);
     }
 
-    PHSPACE::CloseFile( file );
+    PHSPACE::CloseFile(file);
 }
 
 LIB_EXPORT void DumpGrid(const string &gridFileName, Grid **grids, int nBlocks)
@@ -201,7 +201,7 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
         file.write(reinterpret_cast<char*>(block_proc), nZones*sizeof(int));
     }
 
-    file.write(reinterpret_cast<char*>(block_idx ), nZones*sizeof(int));
+    file.write(reinterpret_cast<char*>(block_idx), nZones*sizeof(int));
     file.write(reinterpret_cast<char*>(block_type), nZones*sizeof(int));
 
     for (int izone = 0; izone < nBlocks; ++ izone)
@@ -255,10 +255,10 @@ void GetGridsMinMaxDS(Grid **grids, int nBlocks, RDouble &mindis, RDouble &maxdi
 
 void MatchInterface(Grid *grid, LinkStruct *link)
 {
-    InterfaceInfo *iinfo = grid->GetInterfaceInfo();
-    if (iinfo == 0) return;
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+    if (!interfaceInfo) return;
 
-    int nIFace    = iinfo->GetNIFace();
+    int nIFace    = interfaceInfo->GetNIFace();
     int zoneIndex = grid->GetZoneID();
     int npeoridic = 0;
 
@@ -266,8 +266,8 @@ void MatchInterface(Grid *grid, LinkStruct *link)
     VVInt &faceid  = link->GetFaceID();
     VVInt &facemap = link->GetFaceMap();
 
-    int *interFace2ZoneID      = iinfo->GetInterFace2ZoneID();
-    int *interFace2InterFaceID = iinfo->GetInterFace2InterFaceID();
+    int *interFace2ZoneID      = interfaceInfo->GetInterFace2ZoneID();
+    int *interFace2InterFaceID = interfaceInfo->GetInterFace2InterFaceID();
 
     for (int iiface = 0; iiface < nIFace; ++ iiface)
     {
@@ -636,7 +636,7 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
         Range K(kst, ked);
 
         if (nDim != THREE_D)
-        //if ( nk == 1 ) 
+        //if (nk == 1) 
         {
             K.setRange(1, 1);
             kst = 1;
@@ -663,7 +663,7 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
         int nTotalNode = count;
         int nTotalCell = 1;
 
-        //for ( int m = 0; m < nDim; ++ m )
+        //for (int m = 0; m < nDim; ++ m)
         for (int m = 0; m < 3; ++ m)
         {
             nTotalCell *= (bcregion->GetEndPoint(m) - bcregion->GetStartPoint(m) + 1);
@@ -726,15 +726,15 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
 
                     if (nsurf == 1)
                     {
-                        p1 = newindex(i, j , k ) + 1;
-                        p2 = newindex(i, jl, k ) + 1;
+                        p1 = newindex(i, j , k) + 1;
+                        p2 = newindex(i, jl, k) + 1;
                         p3 = newindex(i, jl, kl) + 1;
                         p4 = newindex(i, j , kl) + 1;
                     }
                     else if (nsurf == 2)
                     {
-                        p1 = newindex(i , j, k ) + 1;
-                        p2 = newindex(il, j, k ) + 1;
+                        p1 = newindex(i , j, k) + 1;
+                        p2 = newindex(il, j, k) + 1;
                         p3 = newindex(il, j, kl) + 1;
                         p4 = newindex(i , j, kl) + 1;
                     }
@@ -816,8 +816,8 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
             {
                 cell2node[ncount++] = i     + (j - 1) * ni;
                 cell2node[ncount++] = i + 1 + (j - 1) * ni;
-                cell2node[ncount++] = i + 1 + (j    ) * ni;
-                cell2node[ncount++] = i     + (j    ) * ni;
+                cell2node[ncount++] = i + 1 + (j   ) * ni;
+                cell2node[ncount++] = i     + (j   ) * ni;
             }
         }
 

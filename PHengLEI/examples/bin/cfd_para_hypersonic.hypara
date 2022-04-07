@@ -123,7 +123,7 @@ double roeEntropyScale  = 1.0;
 //                     Using this when solve structered grid or hybrid.
 //                     -- "vanleer", "steger", "ausmpw", "ausmpw+".
 // str_limiter_name: Limiter of struct grid.
-//                   -- "minmod", "3rd_minmod_smooth".
+//                   -- "minmod", "3rd_minmod_smooth", "vanalbada".
 
 string inviscidSchemeName = "steger";
 string str_limiter_name   = "minmod";
@@ -221,6 +221,10 @@ int limitVector = 1;
 #########################################################################
 #                       Non-equilibrium gas                             #
 #########################################################################
+// iCodeBranch:  iCodeBranch=0 indicates the generic Navier-Stokes solver, 
+//				 iCodeBranch>0 indicates the HyFlow self-adaptive solver.
+//               1 -- using HyFlow self-adaptive solver where the switch is controlled by the total iteration steps.
+//               2 -- using HyFlow self-adaptive solver where the switch is controlled by variation of the key residual.
 // nGasModel: The type of gas. less than and equal to 1 represents the mixture gas. 
 //            Otherwise, the pure gas with one component is used for perfect gas.
 //               0 -- Earth gas.
@@ -240,9 +244,13 @@ int limitVector = 1;
 //          1 -- One-temperature model.
 //          2 -- Two-temperature model.
 //          3 -- Three-temperature model.
+// nContinueModel: The new continue model can switch different computation model.
+//          0 -- Not use the new continue model.
+//          1 -- use the new continue model.
 // nTEnergyModel: the method to computing temperature energy model.
-//                0 -- the energy term is computed using the conventional method.
-//                1 -- the energy term is computed using the curve fitting method.
+//               0 -- the energy term is computed using the conventional method.
+//               1 -- the energy term is computed using the polynomial fitting method.
+//               2 -- the energy term is computed using the piecewise polynomial fitting method.
 // nSlipBCModel : The computational model of slip boundary conditions.
 //              0 -- no slip.
 //              1 -- the conventional Maxwell slip conditions.
@@ -274,6 +282,33 @@ int limitVector = 1;
 // speciesName: Used to list the names of each species, while each species name is separated by the symbol of comma.
 // initMassFraction: Used to list the initial mass fractions of species in accordance with the sequence of names in the parameter speciesName.
 // ifStartFromPerfectGasResults: The chemical reaction simulation is start from perfect gas flowfield or not, 0 is for no and else is for yes.
+// nIterFirstStep  : the maximum number of iteration in the first step for the self-adaptive calculation.
+// nIterSecondStep : the maximum number of iteration in the second step for the self-adaptive calculation.
+// nIterThirdStep  : the maximum number of iteration in the third step for the self-adaptive calculation.
+// nEnergyAssembly : the vibration energy is computed with combined method which includes the fitting method and the molecular kinetic theory.
+//                 0 -- no, 
+//                 1 -- yes.
+// nControlVariable: the variable to computing the residual error that determines the convergence is meet or not in the one-temperature model.
+//                 0 -- the density.
+//                 1 -- the translation temperature.
+//                 2 -- the vibration temperature.
+//                 3 -- the electron temperature.
+//                 4 -- the pressure.
+//                 5 -- the mass fraction of oxygen.
+//                 6 -- the mass fraction of nitrogen.
+// firstStepError  : the residual error of the first step iteration for the self-adaptive calculation.
+// secondStepError : the residual error of the second step iteration for the self-adaptive calculation.
+// thirdStepError  : the residual error of the third step iteration for the self-adaptive calculation.
+
+int iCodeBranch = 0;
+int nIterFirstStep = 1000;
+int nIterSecondStep= 2000;
+int nIterThirdStep = 2000;
+int nEnergyAssembly = 0;
+int nControlVariable = 1;
+double firstStepError  = 0.01;
+double secondStepError = 0.001;
+double thirdStepError  = 0.001;
 
 int nGasModel = 0;
 int nchem    = 0;
@@ -292,4 +327,7 @@ int isInjection = 0;
 string gasfile = "DK5";
 string speciesName = "O, O2, NO, N, N2";
 string initMassFraction = "0.07955, 0.134, 0.0509, 1.0e-9, 0.73555";
-int    ifStartFromPerfectGasResults = 0;
+int nContinueModel = 1;
+int nRapidFlowfield = 0;
+int nSurfHeatMonitor = 1;
+double radiationCoef = 0.8;

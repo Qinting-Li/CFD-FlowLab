@@ -86,31 +86,65 @@ namespace PHSPACE
         RDouble Flength;
         if (Rectabar < 103.0)
         {
-            Flength = 30.0 - Rectabar * (0.02104 + 2.592e-006 * Rectabar * Rectabar);
+            Flength = 39.0 - Rectabar * (0.01482 + 2.687e-007 * Rectabar * Rectabar);
         }
-        else if (Rectabar < 179.0)
+        else if (Rectabar < 182.0)
         {
-            Flength = 20.95 + Rectabar * (0.2425 - Rectabar * (0.002558  - 5.687e-006 * Rectabar));
+            Flength = 40.74 - Rectabar * (0.06538 - Rectabar * (0.0004908 - 1.857e-006 * Rectabar));
         }
         else if (Rectabar < 360.0)
         {
-            Flength = 58.11 - Rectabar * (0.3803 - Rectabar * (0.0009207 - 7.916e-007 * Rectabar));
+            Flength = 20.09 + Rectabar * (0.2749 - Rectabar * (0.001379 -  1.567e-006 * Rectabar));
         }
-        else if (Rectabar < 692.0)
+        else if (Rectabar < 687.0)
         {
-            Flength = 24.01 - Rectabar * (0.09608 - Rectabar * (0.0001312 - 6.059e-008 * Rectabar));
+            Flength = 107.7 - Rectabar * (0.4551 - Rectabar * (0.000649 - 3.103e-007 * Rectabar));
         }
-        else if (Rectabar < 944.0)
+        else if (Rectabar < 959.0)
         {
-            Flength = 6.399 - Rectabar * (0.01975 - Rectabar * (2.094e-005 - 7.456e-009 * Rectabar));
+            Flength = 10.73 - Rectabar * (0.0317 - Rectabar * (3.263e-005 - 1.127e-008 * Rectabar));
         }
-        else if (Rectabar < 1200.0)
+        else if (Rectabar < 1870.0)
         {
-            Flength = -0.06442 + Rectabar * (0.0007924 - Rectabar * (8.193e-007 - 2.276e-010 * Rectabar));
+            Flength = 0.8605 - Rectabar * (0.0008168 - Rectabar * (4.233e-007 - 7.545e-011 * Rectabar));
         }
         else
         {
-            Flength = 0.1;
+            Flength = 0.32;
+        }
+        return Flength;
+    };
+
+    RDouble FlengthUnstrCaliBrated(RDouble Rectabar)
+    {
+        RDouble Flength;
+        if (Rectabar < 102.7)
+        {
+            Flength = 39.0 - Rectabar * (0.01137 + 6.02e-007 * Rectabar * Rectabar);
+        }
+        else if (Rectabar < 170.3)
+        {
+            Flength = 39.67 - Rectabar * (0.03083 - Rectabar * (0.0001895 - 1.217e-006 * Rectabar));
+        }
+        else if (Rectabar < 360.0)
+        {
+            Flength = 27.49 + Rectabar * (0.1838 - Rectabar * (0.001071 -  1.249e-006 * Rectabar));
+        }
+        else if (Rectabar < 694.0)
+        {
+            Flength = 98.13 - Rectabar * (0.4049 - Rectabar * (0.0005647 - 2.648e-007 * Rectabar));
+        }
+        else if (Rectabar < 959.0)
+        {
+            Flength = 15.2 - Rectabar * (0.04645 - Rectabar * (4.814e-005 - 1.668e-008 * Rectabar));
+        }
+        else if (Rectabar < 1870.0)
+        {
+            Flength = 0.5262 - Rectabar * (0.000556 - Rectabar * (2.846e-007 - 5.073e-011 * Rectabar));
+        }
+        else
+        {
+            Flength = 0.15;
         }
         return Flength;
     };
@@ -154,14 +188,54 @@ namespace PHSPACE
 
     RDouble TransitionOnsetMomentumThicknessReynoldsCaliBrated(RDouble Rectabar)
     {
-        if (Rectabar > 1480.0)
+        RDouble rectac = 0.0;
+        if (Rectabar < 103.0)
         {
-            return -49.0267 + 0.47914 * Rectabar;
+            rectac = 7.0 + Rectabar * (0.875 + 8.04e-007 * Rectabar * Rectabar);
+        }
+        else if (Rectabar < 181.0)
+        {
+            rectac = 11.92 + Rectabar * (0.7317 + Rectabar * (0.001391 - 3.698e-006 * Rectabar));
+        }
+        else if (Rectabar < 685.0)
+        {
+            rectac = -12.75 + Rectabar * (1.141 - Rectabar * (0.0008683 - 4.631e-007 * Rectabar));
+        }
+        else if (Rectabar < 959.0)
+        {
+            rectac = 159.0 + Rectabar * (0.3885 + Rectabar * (0.0002297 - 7.122e-008 * Rectabar));
         }
         else
         {
-            return 51.41 + Rectabar * (0.6426  +Rectabar * (3.01e-4 + Rectabar*(3.025e-10 * Rectabar - 7.567e-7)));
+            rectac = 104.2 + Rectabar * (0.56 + Rectabar * (5.09e-005 - 9.073e-009 * Rectabar));
         }
+        return rectac;
+    };
+
+    RDouble TransitionOnsetMomentumThicknessReynoldsUnstrCaliBrated(RDouble Rectabar)
+    {
+        RDouble rectac = 0.0;
+        if (Rectabar < 102.7)
+        {
+            rectac = -7.0 + Rectabar * (1.058 + 3.394e-006 * Rectabar * Rectabar);
+        }
+        else if (Rectabar < 170.3)
+        {
+            rectac = -12.45 + Rectabar * (1.217 - Rectabar * (0.001549 - 1.633e-006 * Rectabar));
+        }
+        else if (Rectabar < 694.0)
+        {
+            rectac = -7.556 + Rectabar * (1.131 - Rectabar * (0.001043 - 6.43e-007 * Rectabar));
+        }
+        else if (Rectabar < 959.0)
+        {
+            rectac = 82.62 + Rectabar * (0.7413 - Rectabar * (0.0004813 - 3.732e-007 * Rectabar));
+        }
+        else
+        {
+            rectac = 602.9 - Rectabar * (0.8863 - Rectabar * (0.001216 - 2.167e-007 * Rectabar));
+        }
+        return rectac;
     };
 
     RDouble SeparationCorrectionOfIntermittency(RDouble gmori, RDouble Rev, RDouble Rectac, RDouble RT, RDouble Fctat, RDouble s1, RDouble refMaNumber)
@@ -233,7 +307,7 @@ namespace PHSPACE
             Rectat = Flamdacta * (1173.51 - 589.428 * Tu + 0.2196 / (Tu * Tu));
         }
 
-        return MAX(20.0, Rectat);
+        return MIN(MAX(20.0, Rectat), 5000);
     }
 
     RDouble AccelerationAlongStreamline(RDouble u, RDouble v, RDouble w,
@@ -276,7 +350,7 @@ namespace PHSPACE
     {
         RDouble lamdacta = density * momentumThickness * momentumThickness * dUds * reynoldsInflow / viscosity;
 
-        return MAX(-0.1, MIN(0.1, lamdacta));
+        return lamdacta;
     };
 
 }

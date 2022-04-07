@@ -1,0 +1,8 @@
+string title = "PHengLEI Main Parameter Control File";
+// IMPORTANT NOTICE: DON NOT MODIFY THE FOWLLOWING LINE.
+string defaultParaFile = "./bin/cfd_para.hypara";
+int  ndim  =  3;
+int  nparafile  =  1;
+int    nsimutask  =  2;
+string parafilename  =  "./bin/cfd_para.hypara";
+

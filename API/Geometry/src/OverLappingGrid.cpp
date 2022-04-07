@@ -9,12 +9,12 @@ void DumpFlags(Geo_OversetGrid **oversetGrids, int nBlocks, const string &filena
 {
     fstream file;
     file.open(filename.c_str(),ios_base::out);
-    if ( !file )
+    if (!file)
     {
         TK_Exit::FileOpenErrorExit(filename);
     }
 
-    for ( int izone = 0; izone < nBlocks; ++ izone )
+    for (int izone = 0; izone < nBlocks; ++ izone)
     {
         file << " izone = " << izone << " nBlocks = " << nBlocks << "\n";
         oversetGrids[izone]->DumpFlags(file);
@@ -28,12 +28,12 @@ void DumpOversetGrid(Geo_OversetGrid **oversetGrids, int nBlocks, const string &
 {
     fstream file;
     file.open(filename.c_str(),ios_base::out|ios_base::binary);
-    if ( !file )
+    if (!file)
     {
         TK_Exit::FileOpenErrorExit(filename);
     }
 
-    for ( int izone = 0; izone < nBlocks; ++ izone )
+    for (int izone = 0; izone < nBlocks; ++ izone)
     {
         oversetGrids[izone]->DumpOversetGrid(file);
     }

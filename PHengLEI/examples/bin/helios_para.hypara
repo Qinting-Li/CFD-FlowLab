@@ -1,0 +1,4 @@
+int numberOfHelicopterParts = 2;
+int procSpanForEachParts[] = [64, 64];
+int turb_sweeps = 1;
+double turb_epsilon = 0.01;

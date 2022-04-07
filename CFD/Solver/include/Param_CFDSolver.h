@@ -181,7 +181,7 @@ private:
     RDouble TorqueRefY;
     RDouble TorqueRefZ;
 
-    int isOverLapping;
+    int isOverset;
 
 };
 

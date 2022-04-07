@@ -10,12 +10,19 @@
 #include "Geo_Sample.h"
 #include "UnstructuredOversetConfig.h"
 #include "HOSimulation.h"
+#ifdef USE_INHOUSE_VERSION
+#include "Post_Identify.h"
+#endif
+#ifdef USE_LBM_CODE
+#include "cavity.h"
+#endif
+
 #include "OversetInformation.h"
 #include "SolversList.h"
 #include "PostProcess.h"
 #include "Glb_Dimension.h"
 #include "Zone.h"
-#include "WallDist.h"
+#include "Pre_WalldistCompute.h"
 #include "Post_WriteTecplot.h"
 #include "LESSolverStruct.h"
 #include "LESSolverUnstr.h"
@@ -23,8 +30,9 @@
 #include "SpecDiffHybSolver.h"
 #include "SpecSolver.h"
 #endif
-#include "Post_Identify.h"
+
 #include "Post_ProbesWrite.h"
+#include "HyFlowSolverStruct.h"
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"
 #endif
@@ -85,9 +93,33 @@ void Simulation::Start()
             delete uho;
             break;
         }
+    #ifdef USE_INHOUSE_VERSION
+    case DSMC_SOLVER:
+        RunDSMC();
+        break;
+    case HELICOPTER:
+        RunHelicopterSolver();
+        break;
+    case UGKS_SOLVER:
+        RunUGKS();
+        break;
+    case DERIVATIVE_IDENITFY:
+        IdentifyDerivative();
+        break;
+    #endif
+    #ifdef USE_LBM_CODE
+    case LBM_SOLVER:
+        RunLBMSolver();
+        break;
+    #endif
     case INTEGRATIVE_SOLVER:
         RunIntegrativeSolver();
         break;
+    #ifdef USE_INHOUSE_VERSION
+    case GRIDCHECK_SOLVER:
+        RunGridCheckSolver();
+        break;
+    #endif
     case POST_PROCESSING:
         RunPostProcessing();
         break;
@@ -115,7 +147,7 @@ void Simulation::IsNeedConvert()
     set < pair<string, int> > gridTypeMap;
     gridTypeMap.insert(pair <string, int> ("fts",  FANTASY_TYPE  ));
     gridTypeMap.insert(pair <string, int> ("cgns", CGNS_TYPE     ));
-    gridTypeMap.insert(pair <string, int> ("grd",  GRIDGEN_TYPE  ));
+    gridTypeMap.insert(pair <string, int> ("grd",  PLOT3D_TYPE   ));
     gridTypeMap.insert(pair <string, int> ("uns",  FIELDVIEW_TYPE));
     gridTypeMap.insert(pair <string, int> ("cas",  FLUENT_TYPE   ));
 
@@ -199,6 +231,15 @@ void Simulation::RunCFD()
         return;
     }
 
+    int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
+    if (iCodeBranch > 0)
+    {
+        GenerateWallDist();
+
+        SelfAdaptionRunCFD(); //run CFD using the adaptive method.
+        return;
+    }
+
     //! Define solver names for all zones and create the new defined solvers.
     //! IMPORTANT for solver developers:
     //! Define your solver name which is same with the solver class name here!
@@ -217,6 +258,420 @@ void Simulation::RunCFD()
     SolveSimulation();
 
     //! Do some work after simulation.
+    PostSimulation();
+}
+
+bool Simulation::IsRestartProcess()
+{
+    using namespace PHMPI;
+
+    string restartFile = ".\results\flow.dat";
+    GlobalDataBase::GetData("restartNSFile", &restartFile, PHSTRING, 1);
+    if(PHMPI::IsParallelRun())
+    {
+        restartFile = PHSPACE::AddSymbolToFileName(restartFile, "_", 0);
+    }
+
+    ifstream infile(restartFile.c_str(), ios::in);
+    bool isRestart = false;
+    if (infile)
+    {
+        isRestart = true;
+        infile.close();
+        infile.clear();
+    }
+
+    if (isRestart)
+    {
+        hid_t file;
+        file = OpenHDF5File(restartFile);
+        int gridID = 0;
+        hid_t grploc;
+        string grpName;
+        ostringstream oss;
+        oss<<"Group"<<gridID;
+        grpName = oss.str();
+
+        grploc = OpenGroup(file, grpName);
+
+        int preChemical = 0, preTemperatureModel = 1;
+        if (CheckDataExist(grploc, "nIsChemicalFlow"))
+        {
+            ReadData(grploc, &preChemical, "nIsChemicalFlow");
+        }
+        if (CheckDataExist(grploc, "nTemperatureModel"))
+        {
+            ReadData(grploc, &preTemperatureModel, "nTemperatureModel");
+        }
+
+        GlobalDataBase::UpdateData("previousChemical", &preChemical, PHINT, 1);
+        GlobalDataBase::UpdateData("previousTModel", &preTemperatureModel, PHINT, 1);
+
+        H5Gclose(grploc);
+        H5Fclose(file);
+    }
+
+    return isRestart;
+}
+
+void Simulation::SelfAdaptionRunCFD()
+{
+    int nFinalChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+    GlobalDataBase::UpdateData("nFinalChemical", &nFinalChemical, PHINT, 1);
+    int nFinalTModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
+    GlobalDataBase::UpdateData("nFinalTModel", &nFinalTModel, PHINT, 1);
+    string nFinalNameList = GlobalDataBase::GetStrParaFromDB("speciesName");
+    string nFinalMassFraction = GlobalDataBase::GetStrParaFromDB("initMassFraction");
+    GlobalDataBase::UpdateData("nFinalNameList", &nFinalNameList, PHSTRING, 1);
+    GlobalDataBase::UpdateData("nFinalMassFraction", &nFinalMassFraction, PHSTRING, 1);
+
+    if (IsRestartProcess())
+    {
+        int preChemical = GlobalDataBase::GetIntParaFromDB("previousChemical");
+        int preTModel = GlobalDataBase::GetIntParaFromDB("previousTModel");
+
+        if (preChemical == 1 && preTModel == 1)
+        {
+            //! restart from the one-temperature model.
+            SecondStepRunCFD(true);
+            if (nFinalTModel == 1)
+            {
+                //The third step: the final gas model.
+                FinalStepRunCFD();
+            }
+            else
+            {
+                //The second step: two-temperature model.
+                ThirdStepRunCFD();
+
+                //The third step: the final gas model.
+                FinalStepRunCFD();
+            }
+
+            return;
+        }
+        else if (preChemical == 1 && preTModel == 2)
+        {
+            //! restart from the two-temperature model.
+            ThirdStepRunCFD(true);
+
+            //The third step: the final gas model.
+            FinalStepRunCFD();
+
+            return;
+        }
+    }
+
+    //The first step: the perfect gas.
+    FirstStepRunCFD();
+    if (nFinalChemical == 0)
+    {
+        return;
+    }
+    //The second step: one-temperature model.
+    SecondStepRunCFD();
+    if (nFinalTModel == 1)
+    {
+        //The third step: the final gas model.
+        FinalStepRunCFD();
+    }
+    else
+    {
+        //The second step: two-temperature model.
+        ThirdStepRunCFD();
+
+        //The third step: the final gas model.
+        FinalStepRunCFD();
+    }
+}
+
+void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
+{
+    //Record the serial number of current iteration step.
+    int nCurrentStep = 1;
+    GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == PHMPI::server)
+    {
+        cout<<endl;
+        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+    }
+
+    //The first step: run CFD using the perfect gas model.
+    int nCurChemical = 0;
+    GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
+    int nCurTModel = 1;
+    GlobalDataBase::UpdateData("ntmodel", &nCurTModel, PHINT, 1);
+
+    //The index of the variable pressure.
+    int nKeyVariableIndex = 4;
+    GlobalDataBase::UpdateData("nKeyVariableIndex", &nKeyVariableIndex, PHINT, 1);
+    string keyVariable = "pressure";
+    GlobalDataBase::UpdateData("keyVariable", &keyVariable, PHSTRING, 1);
+
+    DefineAndCreateSolvers();
+
+    InitGlobalBoundaryCondition();
+
+    GenerateWallDist();
+
+    InitializeSolvers();
+
+    MultiGridInitFlow();
+
+    SelfAdaptionSolve();
+
+    PostSimulation();
+
+    //Release the dynamic memories at first.
+    CleanGlobalValuesSolver();
+
+    RefreshSolvers();
+}
+
+void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
+{
+    //Record the serial number of current iteration step.
+    int nCurrentStep = 2;
+    GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == PHMPI::server)
+    {
+        cout<<endl;
+        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+    }
+
+    //The second step: run CFD using the one-temperature model.
+    int nCurChemical = 1;
+    GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
+    int nCurTModel = 1;
+    GlobalDataBase::UpdateData("ntmodel", &nCurTModel, PHINT, 1);
+    string speciesName = "O, O2, NO, N, N2";
+    GlobalDataBase::UpdateData("speciesName", &speciesName, PHSTRING, 1);
+    string initMassFraction = "0.0, 0.233, 0.0, 0.0, 0.767";
+    GlobalDataBase::UpdateData("initMassFraction", &initMassFraction, PHSTRING, 1);
+
+    int nControlVariable = 1;
+    if (GlobalDataBase::IsExist("nControlVariable",PHINT, 1))
+    {
+        nControlVariable = GlobalDataBase::GetIntParaFromDB("nControlVariable");
+    }
+    int nKeyVariableIndex = nControlVariable;
+    if (nControlVariable == 5)
+    {
+        nKeyVariableIndex = 6;
+    }
+    else if (nControlVariable == 6)
+    {
+        nKeyVariableIndex = 9;
+    }
+    else if (nControlVariable > 6) //default
+    {
+        nKeyVariableIndex = 1; //The index of the variable temperature.
+    }
+    GlobalDataBase::UpdateData("nKeyVariableIndex", &nKeyVariableIndex, PHINT, 1);
+
+    string keyVariable = "";
+    switch (nControlVariable)
+    {
+    case 0:
+        keyVariable = "density";
+    case 1:
+        keyVariable = "translation temperature";
+    case 2:
+        keyVariable = "vibration temperature";
+    case 3:
+        keyVariable = "electron temperature";
+    case 4:
+        keyVariable = "pressure";
+    default:
+        keyVariable = "translation temperature";
+        break;
+    }
+    GlobalDataBase::UpdateData("keyVariable", &keyVariable, PHSTRING, 1);
+
+    if (!isStart)
+    {
+        InitGlobalValuesSolver();
+    }
+    else
+    {
+        DefineAndCreateSolvers();
+
+        GenerateWallDist();
+    }
+
+    InitGlobalBoundaryCondition();
+
+    InitializeSolvers();
+
+    MultiGridInitFlow();
+
+    SelfAdaptionSolve();
+
+    PostSimulation();
+
+    //Release the dynamic memories at first.
+    CleanGlobalValuesSolver();
+
+    RefreshSolvers();
+}
+
+void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
+{
+    //Record the serial number of current iteration step.
+    int nCurrentStep = 3;
+    GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == PHMPI::server)
+    {
+        cout<<endl;
+        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+    }
+
+    //The third step: run CFD using the two-temperature model.
+    int nCurChemical = 1;
+    GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
+    int nCurTModel = 2;
+    GlobalDataBase::UpdateData("ntmodel", &nCurTModel, PHINT, 1);
+    int nEnergyAssembly = 0;
+    if (GlobalDataBase::IsExist("nEnergyAssembly", PHINT, 1))
+    {
+        nEnergyAssembly = GlobalDataBase::GetIntParaFromDB("nEnergyAssembly");
+    }
+    if (nEnergyAssembly == 1)
+    {
+        //the vibration energy is computed using the polynomial fitting method.
+        int nTEnergyModel = 1;
+        GlobalDataBase::UpdateData("nTEnergyModel", &nTEnergyModel, PHINT, 1);
+    }
+
+    string speciesName = "O, O2, NO, N, N2";
+    GlobalDataBase::UpdateData("speciesName", &speciesName, PHSTRING, 1);
+    string initMassFraction = "0.0, 0.233, 0.0, 0.0, 0.767";
+    GlobalDataBase::UpdateData("initMassFraction", &initMassFraction, PHSTRING, 1);
+
+    //The index of the variable vibrational temperature.
+    int nKeyVariableIndex = 2;
+    GlobalDataBase::UpdateData("nKeyVariableIndex", &nKeyVariableIndex, PHINT, 1);
+    string keyVariable = "vibration temperature";
+    GlobalDataBase::UpdateData("keyVariable", &keyVariable, PHSTRING, 1);
+
+    if (!isStart)
+    {
+        InitGlobalValuesSolver();
+    }
+    else
+    {
+        DefineAndCreateSolvers();
+
+        GenerateWallDist();
+    }
+
+    InitGlobalBoundaryCondition();
+
+    InitializeSolvers();
+
+    MultiGridInitFlow();
+
+    SelfAdaptionSolve();
+
+    PostSimulation();
+
+    //Release the dynamic memories at first.
+    CleanGlobalValuesSolver();
+
+    RefreshSolvers();
+}
+
+void Simulation::FinalStepRunCFD()
+{
+    //Record the serial number of current iteration step.
+    int nCurrentStep = 4;
+    GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == PHMPI::server)
+    {
+        cout<<endl;
+        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+    }
+
+    //The third step: run CFD using the final gas model.
+    int nCurChemical = GlobalDataBase::GetIntParaFromDB("nFinalChemical");
+    GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
+    int nCurTModel = GlobalDataBase::GetIntParaFromDB("nFinalTModel");
+    GlobalDataBase::UpdateData("ntmodel", &nCurTModel, PHINT, 1);
+    string speciesName = GlobalDataBase::GetStrParaFromDB("nFinalNameList");
+    GlobalDataBase::UpdateData("speciesName", &speciesName, PHSTRING, 1);
+    string initMassFraction = GlobalDataBase::GetStrParaFromDB("nFinalMassFraction");
+    GlobalDataBase::UpdateData("initMassFraction", &initMassFraction, PHSTRING, 1);
+    int nEnergyAssembly = 0;
+    if (GlobalDataBase::IsExist("nEnergyAssembly", PHINT, 1))
+    {
+        nEnergyAssembly = GlobalDataBase::GetIntParaFromDB("nEnergyAssembly");
+    }
+    if (nEnergyAssembly == 1)
+    {
+        //the vibration energy is computed using the default method.
+        int nTEnergyModel = 0;
+        GlobalDataBase::UpdateData("nTEnergyModel", &nTEnergyModel, PHINT, 1);
+    }
+
+    //default: the index of the variable vibrational temperature.
+    int nKeyVariableIndex = 2;
+    string keyVariable = "vibration temperature";
+    if (nCurTModel == 1)
+    {
+        int nControlVariable = 1;
+        if (GlobalDataBase::IsExist("nControlVariable",PHINT, 1))
+        {
+            nControlVariable = GlobalDataBase::GetIntParaFromDB("nControlVariable");
+        }
+
+        switch (nControlVariable)
+        {
+        case 0:
+            keyVariable = "density";
+        case 1:
+            keyVariable = "translation temperature";
+        case 2:
+            keyVariable = "vibration temperature";
+        case 3:
+            keyVariable = "electron temperature";
+        case 4:
+            keyVariable = "pressure";
+        default:
+            keyVariable = "translation temperature";
+            break;
+        }
+
+        nKeyVariableIndex = nControlVariable; //The index of the variable temperature.
+        if (nControlVariable == 5)
+        {
+            nKeyVariableIndex = 6;
+        }
+        else if (nControlVariable == 6)
+        {
+            nKeyVariableIndex = 9;
+        }
+        else if (nControlVariable > 6)
+        {
+            nKeyVariableIndex = 1;
+        }
+    }
+    GlobalDataBase::UpdateData("nKeyVariableIndex", &nKeyVariableIndex, PHINT, 1);
+    GlobalDataBase::UpdateData("keyVariable", &keyVariable, PHSTRING, 1);
+
+    InitGlobalValuesSolver();
+
+    InitGlobalBoundaryCondition();
+
+    InitializeSolvers();
+
+    MultiGridInitFlow();
+
+    SelfAdaptionSolve();
+
     PostSimulation();
 }
 
@@ -332,6 +787,381 @@ void Simulation::RunIntegrativeSolver()
     RunCFD();
 }
 
+void Simulation::RunGridCheckSolver()
+{
+    string inputGridName = GlobalDataBase::GetStrParaFromDB("input_gfile");
+    GlobalDataBase::UpdateData("gridfile", &inputGridName, PHSTRING, 1);
+
+    Region *region = new Region();
+    region->ReadGrid();
+
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    Grid **gridArray = new Grid * [nZones];
+
+    fstream file;
+    string FantasyCheckFileName = ChangeExtensionOfFileName(inputGridName, "fts_check");
+    PHSPACE::OpenSerialFile(file, FantasyCheckFileName, ios_base::out);
+
+    int *globalBlockProcInp = PHMPI::GetZoneProcessorID_INP();
+    int *globalBlockType    = PHMPI::GetZoneGridType();
+    int *globalBlockIdx     = PHMPI::GetZoneGridID();
+
+    file << "TotalInfo : Global information of current grid." << endl;
+    file << "block_idxNumber  ZoneID" << endl;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        file << iZone << setw(10) << globalBlockIdx[iZone] << endl;
+    }
+
+    file << "block_procNumber  ZoneProcessorID" << endl;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        file << iZone << setw(10) << globalBlockProcInp[iZone] << endl;
+    }
+
+    file << "block_typeNumber  ZoneGridType" << endl;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        file << iZone << setw(10) << globalBlockType[iZone] << endl;
+    }
+
+    file << "nBlocks" << setw(10) << nZones << endl;
+    file << endl;
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        gridArray[iZone] = GetGrid(iZone);
+        int gridType = gridArray[iZone]->Grid::Type();
+
+        if(gridType == UNSTRUCTGRID)
+        {
+            UnstructGrid *grid = UnstructGridCast(gridArray[iZone]);
+
+            int nTotalNode = grid->GetNTotalNode();
+            int nTotalFace = grid->GetNTotalFace();
+            int nTotalCell = grid->GetNTotalCell();
+
+            file << "ZoneID : " << iZone << endl;
+            file << "GridInformation  Value" << endl;
+            file << "nTotalNode" << setw(10) << nTotalNode << endl;
+            file << "nTotalFace" << setw(10) << nTotalFace << endl;
+            file << "nTotalCell" << setw(10) << nTotalCell << endl;
+
+            file << "CellTopology." << endl;
+            int *nodeNumberOfEachCell = grid->GetNodeNumberOfEachCell();
+            int *cell2Node = grid->GetCell2Node();
+            int nodeCount = 0;
+
+            file << "nodeNumberOfEachCell :" << endl;
+            file << "cellNumber nodeNumber " << endl;
+            for (int iCell =0; iCell < nTotalCell; iCell++)
+            {
+                file << iCell << setw(8) << nodeNumberOfEachCell[iCell] << endl;
+                nodeCount += nodeNumberOfEachCell[iCell];
+            }
+
+            file << "cell2Node :" << endl;
+            file << "nodeCountNumber nodeNumber " << endl;
+            for (int iCount =0; iCount < nodeCount; iCount++)
+            {
+                file << iCount << setw(8) << cell2Node[iCount] << endl;
+            }
+
+            file << "FaceTopology." << endl;
+
+            int nBoundFace = grid->GetNBoundFace();
+            CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+
+            file << "nBoundFace : " << nBoundFace << endl;
+
+            file << "faceNumber  BcType  BCName" << endl;
+            for (int iFace = 0; iFace < nBoundFace; iFace++)
+            {
+                int bcType = bcRecord[iFace]->GetKey();
+                string bcName = bcRecord[iFace]->GetBCName();
+                file << iFace << setw(10) << bcType << setw(20) << bcName <<endl;
+            }
+
+            int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
+            int *face2Node = grid->GetFace2Node();
+            int faceCount = 0;
+
+            file << "nodeNumberOfEachFace :" << endl;
+            file << "faceNumber nodeNumber " << endl;
+            for (int iFace = 0; iFace < nTotalFace; iFace++)
+            {
+                file << iFace << setw(8) << nodeNumberOfEachFace[iFace] << endl;
+                faceCount += nodeNumberOfEachFace[iFace];
+            }
+
+            file << "face2Node :" << endl;
+            file << "faceCountNumber nodeNumber " << endl;
+            for (int iCount =0; iCount < faceCount; iCount++)
+            {
+                file << iCount << setw(8) << face2Node[iCount] << endl;
+            }
+
+            int *leftCellOfFace  = grid->GetLeftCellOfFace();
+            int *rightCellOfFace = grid->GetRightCellOfFace();
+            
+            file << "leftCellOfFace :" << endl;
+            file << "faceNumber leftCellNumber " << endl;
+            for (int iFace = 0; iFace < nTotalFace; iFace++)
+            {
+                file << iFace << setw(8) << leftCellOfFace[iFace] << endl;;
+            }
+
+            file << "rightCellOfFace :" << endl;
+            file << "faceNumber rightCellNumber " << endl;
+            for (int iFace = 0; iFace < nTotalFace; iFace++)
+            {
+                file << iFace << setw(8) << rightCellOfFace[iFace] << endl;;
+            }
+
+            InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+            if (interfaceInfo)
+            {
+                int nIFace = interfaceInfo->GetNIFace();
+                file << "nIFace = " << nIFace << endl;
+
+                int *interFace2ZoneID       = interfaceInfo->GetInterFace2ZoneID();
+                int *interFace2InterFaceID  = interfaceInfo->GetInterFace2InterFaceID();
+                int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+
+                file << "interFace2ZoneID" << endl;
+                file << "interFaceNumber  ZoneID" << endl;
+                for (int iFace = 0; iFace < nIFace; iFace++)
+                {
+                    file << iFace << setw(8) << interFace2ZoneID[iFace] << endl;
+                }
+
+                file << "interFace2InterFaceID" << endl;
+                file << "interFaceNumber  InterFaceID" << endl;
+                for (int iFace = 0; iFace < nIFace; iFace++)
+                {
+                    file << iFace << setw(8) << interFace2InterFaceID[iFace] << endl;
+                }
+
+                file << "interFace2BoundaryFace" << endl;
+                file << "interFaceNumber  BoundaryFaceID" << endl;
+                for (int iFace = 0; iFace < nIFace; iFace++)
+                {
+                    file << iFace << setw(8) << interFace2BoundaryFace[iFace] << endl;
+                }
+                
+            }
+            else
+            {
+                file << "There is no interface exist, nIFace = 0." << endl;
+            }
+
+            InterpointInformation *interpointInformation = grid->GetInterpointInfo();
+            if (interpointInformation)
+            {
+                int nIPoint = interpointInformation->GetNumberOfInterpoints();
+                file << "nIPoint = " << nIPoint << endl;
+
+                int *cellNumberOfInterPoint = interpointInformation->GetCellNumberOfInterPoint();
+                int *interPoint2GlobalPoint = interpointInformation->GetInterPoint2GlobalPoint();
+                int *interPoint2InterPointID = interpointInformation->GetInterPoint2InterPointID();
+                int *interPoint2ZoneID = interpointInformation->GetInterPoint2ZoneID();
+                int *labelOfInterPoint = interpointInformation->GetLabelOfInterPoint();
+                int *totalZonesOfInterPoint = interpointInformation->GetTotalZonesOfInterPoint();
+
+                file << "cellNumberOfInterPoint" << endl;
+                file << "interPointNumber  totalCellNumbers" << endl;
+                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                {
+                    file << iPoint << setw(8) << cellNumberOfInterPoint[iPoint] << endl;
+                }
+
+                file << "interPoint2GlobalPoint" << endl;
+                file << "interPointNumber  gobalPointNumber" << endl;
+                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                {
+                    file << iPoint << setw(8) << interPoint2GlobalPoint[iPoint] << endl;
+                }
+
+                file << "interPoint2InterPointID" << endl;
+                file << "interPointNumber  interPointID" << endl;
+                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                {
+                    file << iPoint << setw(8) << interPoint2InterPointID[iPoint] << endl;
+                }
+
+                file << "interPoint2ZoneID" << endl;
+                file << "interPointNumber  ZoneID" << endl;
+                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                {
+                    file << iPoint << setw(8) << interPoint2ZoneID[iPoint] << endl;
+                }
+
+                file << "labelOfInterPoint" << endl;
+                file << "interPointNumber  label" << endl;
+                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                {
+                    file << iPoint << setw(8) << labelOfInterPoint[iPoint] << endl;
+                }
+
+                file << "totalZonesOfInterPoint" << endl;
+                file << "interPointNumber  totalZones" << endl;
+                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                {
+                    file << iPoint << setw(8) << totalZonesOfInterPoint[iPoint] << endl;
+                }
+                
+            }
+            else
+            {
+                file << "There is no interpoint exist, nIPoint = 0." << endl;
+            }
+
+            file << endl;
+
+        }
+        else if (gridType == STRUCTGRID)
+        {
+            int iMin, iMax, jMin, jMax, kMin, kMax, bcType;
+            int sLr, sNd;
+            StructGrid *grid = StructGridCast(gridArray[iZone]);
+
+            int iDimensions[3];
+            iDimensions[0] = grid->GetNI();
+            iDimensions[1] = grid->GetNJ();
+            iDimensions[2] = grid->GetNK();
+
+            file << "ZoneID : " << iZone << endl;
+            file << "iDimensions : Dimensions of different directions in current zone." << endl;
+            file << "iDimensions_i" << setw(10) << iDimensions[0] << endl;
+            file << "iDimensions_j" << setw(10) << iDimensions[1] << endl;
+            file << "iDimensions_k" << setw(10) << iDimensions[2] << endl;
+
+            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+            int nBCRegion = compositeBCRegion->GetnBCRegion();
+            file << "nBCRegion : " << nBCRegion << endl;
+
+            file << "BCInfor : Boundary information of current zone ." << endl;
+            file << "bcNumber  iMin  iMax  jMin  jMax  kMin  kMax  bcType  sLr  sNd  BCName" << endl;
+            int nBCTotal = nBCRegion;
+            for (int ibcRegion = 0; ibcRegion < nBCRegion; ++ ibcRegion)
+            {
+                StructBC *bcRegion = compositeBCRegion->GetBCRegion(ibcRegion);
+                bcType = bcRegion->GetBCType();
+                if (bcType == -1)
+                {
+                    nBCTotal ++;
+                }
+            }
+
+            int **BCInfor = NewPointer2<int>(nBCTotal, 9);
+            int iBCinfo = 0;
+
+            for (int ibcRegion = 0; ibcRegion < nBCRegion; ++ ibcRegion)
+            {
+                int index = 0;
+                StructBC *bcRegion = compositeBCRegion->GetBCRegion(ibcRegion);
+                bcRegion->GetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
+                bcType = bcRegion->GetBCType();
+                sLr = bcRegion->GetFaceLeftOrRightIndex();
+                sNd = bcRegion->GetFaceDirection();
+                string bcName = bcRegion->GetBCName();
+
+                BCInfor[iBCinfo][index++] = iMin;
+                BCInfor[iBCinfo][index++] = iMax;
+                BCInfor[iBCinfo][index++] = jMin;
+                BCInfor[iBCinfo][index++] = jMax;
+                BCInfor[iBCinfo][index++] = kMin;
+                BCInfor[iBCinfo][index++] = kMax;
+                BCInfor[iBCinfo][index++] = bcType;
+                BCInfor[iBCinfo][index++] = sLr;
+                BCInfor[iBCinfo][index++] = sNd;
+
+                file << iBCinfo << setw(8) << iMin << setw(8) << iMax 
+                    << setw(8) << jMin << setw(8) << jMax << setw(8) << kMin 
+                    << setw(8) << kMax << setw(8) << bcType << setw(8) 
+                    << sLr << setw(10) << sNd << setw(20) << bcName <<endl;
+
+                iBCinfo ++;
+
+                if (bcType == -1)
+                {
+                    index = 0;
+                    int *t_st = bcRegion->GetTargetStart();
+                    int *t_ed = bcRegion->GetTargetEnd();
+                    int neighborZoneIndex = bcRegion->GetTargetRegionBlock();
+
+                    BCInfor[iBCinfo][index++] = t_st[0];
+                    BCInfor[iBCinfo][index++] = t_ed[0];
+                    BCInfor[iBCinfo][index++] = t_st[1];
+                    BCInfor[iBCinfo][index++] = t_ed[1];
+                    BCInfor[iBCinfo][index++] = t_st[2];
+                    BCInfor[iBCinfo][index++] = t_ed[2];
+                    BCInfor[iBCinfo][index++] = neighborZoneIndex;
+                    BCInfor[iBCinfo][index++] = 0;
+                    BCInfor[iBCinfo][index++] = 0;
+
+                    file << iBCinfo << setw(8) << t_st[0] << setw(8) << t_ed[0] 
+                    << setw(8) << t_st[1] << setw(8) << t_ed[1] << setw(8) << t_st[2] 
+                    << setw(8) << t_ed[2] << setw(8) << neighborZoneIndex << setw(8) 
+                        << 0 << setw(8) << 0 << endl;
+
+                    iBCinfo ++;
+                }
+            }
+
+            InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+            if (interfaceInfo)
+            {
+                int nIFace = interfaceInfo->GetNIFace();
+                file << "nIFace = " << nIFace << endl;
+
+                int *interFace2ZoneID       = interfaceInfo->GetInterFace2ZoneID();
+                int *interFace2InterFaceID  = interfaceInfo->GetInterFace2InterFaceID();
+                int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+
+                file << "interFace2ZoneID" << endl;
+                file << "interFaceNumber  ZoneID" << endl;
+                for (int iFace = 0; iFace < nIFace; iFace++)
+                {
+                    file << iFace << setw(8) << interFace2ZoneID[iFace] << endl;
+                }
+
+                file << "interFace2InterFaceID" << endl;
+                file << "interFaceNumber  InterFaceID" << endl;
+                for (int iFace = 0; iFace < nIFace; iFace++)
+                {
+                    file << iFace << setw(8) << interFace2InterFaceID[iFace] << endl;
+                }
+
+                file << "interFace2BoundaryFace" << endl;
+                file << "interFaceNumber  BoundaryFaceID" << endl;
+                for (int iFace = 0; iFace < nIFace; iFace++)
+                {
+                    file << iFace << setw(8) << interFace2BoundaryFace[iFace] << endl;
+                }
+
+            }
+            else
+            {
+                file << "There is no interface exist, nIFace = 0." << endl;
+            }
+
+            file << endl;
+
+        }
+        else
+        {
+            TK_Exit :: UnexpectedVarValue("gridType", gridType);
+        }
+
+    }
+
+    PHSPACE::CloseFile(file);
+
+    delete region;
+    delete [] gridArray;
+}
+
 void Simulation::RunPostProcessing()
 {
     PostProcess *postProcess = new PostProcess(this->region);
@@ -342,6 +1172,52 @@ void Simulation::RunPostProcessing()
     postProcess = NULL;
 }
 
+#ifdef USE_INHOUSE_VERSION
+void Simulation::IdentifyDerivative()
+{
+    Identify *identify = new Identify();
+    identify->Run();
+
+    delete identify;
+
+    identify = NULL;
+}
+
+void Simulation::RunHelicopterSolver()
+{
+    MYHelicopter *helicopter = new MYHelicopter(this->region);
+
+    helicopter->ReadGeometry();
+
+    helicopter->Run();
+
+    delete helicopter;
+
+    helicopter = NULL;
+}
+
+void Simulation::RunDSMC()
+{
+    DSMC *dsmc = new DSMC();
+
+    dsmc->Run();
+
+    delete dsmc;
+
+    dsmc = NULL;
+}
+
+void Simulation::RunUGKS()
+{
+    UGKSSimulation *ugks = new UGKSSimulation();
+
+    ugks->Run();
+
+    delete ugks;
+
+    ugks = NULL;
+}
+#endif
 
 #ifdef USE_SpecDiffHybSolver
 void Simulation::RunSpecDiffHybSolver()
@@ -398,9 +1274,10 @@ void Simulation::InitOversetGrid()
     //! The overset config process must be taken after reading in ordinary grid and initializing!
     //! Read overset information files or config.
 
-    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if (!codeOfOversetGrid)
+    if (!isOverset || isAle)
     {
         return;
     }
@@ -429,8 +1306,11 @@ void Simulation::InitOversetGrid()
         //! Else it should be done by these processors by themselves.
         else
         {
+            TimeSpan *timeSpan = new TimeSpan();
+            WriteLogFile("Run overset configuration ...\n");
             OversetGridConfig();
-            WriteLogFile("Run overset configuration \n");
+            timeSpan->ShowTimeSpanToLogfile("Run overset configuration");
+            delete timeSpan;
         }
 
         InitializeOversetInterfaceTopology();
@@ -490,6 +1370,23 @@ void Simulation::InitializeSolvers()
     WriteLogFile("Creating and initialization solvers over \n");
 }
 
+void Simulation::RefreshSolvers()
+{
+    FreeAleManager();
+
+    int nSolver = Zone::GetNumberOfSolvers();
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+    {
+        Controller *controller = new Controller(iSolver, this->region);
+
+        controller->CleanUp(iSolver);
+
+        delete controller;
+    }
+
+    WriteLogFile("Creating and initialization solvers over \n");
+}
+
 void Simulation::DefineAndCreateSolvers()
 {
     InitGlobalValuesOfAllZones();
@@ -539,14 +1436,15 @@ void Simulation::DefineAndCreateSolvers()
                 }
                 else if (gridType == STRUCTGRID)
                 {
-                    int FVorFD = 0;
-                    zone->GetData("isFVMOrFDM", &FVorFD, PHINT, 1);
+                    int isFVMOrFDM = 0;
+                    zone->GetData("isFVMOrFDM", &isFVMOrFDM, PHINT, 1);
 
                     int iCodeBranch = 0;
                     zone->GetData("iCodeBranch", &iCodeBranch, PHINT, 1);
 
-                    if (FVorFD == FV_METHOD) //! Add structured FV NS solver.
+                    if (isFVMOrFDM == FV_METHOD) //! Add structured FV NS solver.
                     {
+#ifdef USE_OLD_CODE
                         if (iCodeBranch == 0)
                         {
                             PHSolver *solver = new NSSolverStructFV();
@@ -554,7 +1452,12 @@ void Simulation::DefineAndCreateSolvers()
                         }
                         else //! A new code branch is active for Navier-Stokes solver.
                         {
+                            PHSolver *solver = new HyFlowSolverStruct();
+                            solverList.push_back(solver);
                         }
+#endif
+                        PHSolver *solver = new NSSolverStructFV();
+                        solverList.push_back(solver);
                     }
                     else //! Add structured FD NS solver.
                     {
@@ -565,6 +1468,21 @@ void Simulation::DefineAndCreateSolvers()
             }
             else
             {
+                #ifdef USE_IncompressibleSolver
+                //! Add incompressible solvers.
+                if (gridType == UNSTRUCTGRID)
+                {
+                    //! Add unstructured incompressible solver.
+                    PHSolver *solver = new INCompSolverUnstruct();
+                    solverList.push_back(solver);
+                }
+                else if (gridType == STRUCTGRID)
+                {
+                    //! Add structured incompressible solver.
+                    PHSolver *solver = new INCompSolverStruct();
+                    solverList.push_back(solver);
+                }
+                #endif
             }
         }
         else
@@ -594,10 +1512,10 @@ void Simulation::DefineAndCreateSolvers()
                     const int FD_METHOD = 1;
                     const int NS_METHOD = 2;
 
-                    int FVorFD = 0;
-                    zone->GetData("isFVMOrFDM", &FVorFD, PHINT, 1);
+                    int isFVMOrFDM = 0;
+                    zone->GetData("isFVMOrFDM", &isFVMOrFDM, PHINT, 1);
 
-                    if (FVorFD == FV_METHOD || FVorFD == NS_METHOD)
+                    if (isFVMOrFDM == FV_METHOD || isFVMOrFDM == NS_METHOD)
                     {
                         //! Add structured turbulent solver.
                         PHSolver *solver = new TurbSolverStr();
@@ -675,6 +1593,12 @@ void Simulation::PreSolve()
 
 void Simulation::PostSolve()
 {
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible == 0)
+    {
+        return;
+    }
+
     using namespace PHMPI;
 
     //! Dump tecflow file.
@@ -706,9 +1630,15 @@ void Simulation::PostSolve()
 
 void Simulation::MainSolve()
 {
-    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible == 0)
+    {
+        SolveIncomFlow();
+        return;
+    }
 
-    if (isUnsteady == 0)
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    if (!isUnsteady)
     {
         SolveSteady();
     }
@@ -733,11 +1663,11 @@ void Simulation::SolveSimulation()
     bool continueSolve = true;
 
     int maxSimuStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
-    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
 
     //! Wait for all processors here!
-    if (codeOfOversetGrid == 0 || sysGridType == STRUCTGRID)
+    if (!isOverset || sysGridType == STRUCTGRID)
     {
         PrintToWindow("Wait for all processors before iteration ... \n");
         PH_Barrier();
@@ -763,17 +1693,63 @@ void Simulation::SolveSimulation()
     }
 }
 
-void Simulation::PostSimulation()
+void Simulation::SelfAdaptionSolve()
 {
-    this->region->PostSimulation();
+    WriteLogFile("Start iterating ...");
+    bool continueSolve = true;
 
-    int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-
+    int maxSimuStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
 
+    //! Wait for all processors here!
+    if (!isOverset || sysGridType == STRUCTGRID)
+    {
+        PrintToWindow("Wait for all processors before iteration ... \n");
+        PH_Barrier();
+        PrintToWindow("Wait is over,start iteration ... \n");
+    }
+
+    //Set the flag to pause the numerical iteration.
+    RDouble monitorResidual = 0.0;
+    PHSPACE::GlobalDataBase::UpdateData("monitorResidual", &monitorResidual, PHDOUBLE, 1);
+    int nPauseKey = 0;
+    PHSPACE::GlobalDataBase::UpdateData("nPauseKey", &nPauseKey, PHINT, 1);
+
+    int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+    if (maxSimuStep == 0)
+    {
+        continueSolve = false;
+    }
+
+    while (continueSolve)
+    {
+        UpdateOuterIterationStep(outIterStep);
+
+        SolveOneOuterStep();
+
+        int nPauseKey = PHSPACE::GlobalDataBase::GetIntParaFromDB("nPauseKey");
+
+        if ((outIterStep >= maxSimuStep && maxSimuStep > 0) || nPauseKey == 1)
+        {
+            continueSolve = false;
+        }
+    }
+}
+
+void Simulation::PostSimulation()
+{
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible == 0)
+    {
+        // visual files will be added afterforwards for incompressible flow problems.
+        return;
+    }
+    this->region->PostSimulation();
+
     int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    int IsAleSimulation = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if (IsUnsteady != 0  && IsAleSimulation !=0)
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (IsUnsteady  && isAle)
     {
         FreeAleManager();
     }
@@ -791,7 +1767,7 @@ void Simulation::UpdateOuterIterationStep(int &outIterStep)
     GlobalDataBase::UpdateData("newnstep", &newIterStep, PHINT, 1);
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if (isUnsteady == 0)
+    if (!isUnsteady)
     {
         return;
     }
@@ -893,6 +1869,23 @@ void Simulation::MultiGridInitFlow()
 
     PrintToWindow("End init flow by coarse grid ... \n");
     WriteLogFile("End init flow by coarse grid ...");
+}
+
+void Simulation::SolveIncomFlow()
+{
+    int nSolver = Zone::GetNumberOfSolvers();
+    //! Get iteration number.
+    int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+    {
+        Controller *controller = new Controller(iSolver, this->region);
+
+        controller->SolveIncomFlow();
+
+        controller->PostSolve();
+
+        delete controller;
+    }
 }
 
 void Simulation::SolveSteady()
@@ -1008,4 +2001,3 @@ bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &
     return isSubIterationConvergence;
 }
 }
-

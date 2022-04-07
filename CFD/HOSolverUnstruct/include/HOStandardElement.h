@@ -40,7 +40,7 @@ protected:
 public:
     HighOrderStandardElementBase() {}
     virtual ~HighOrderStandardElementBase() {}
-    HighOrderStandardElementBase( unsigned short iVTK_Type,unsigned short iIntegrationOrder );  //! import:VTK_Type and integrationOrder£¬define:xiIntegration,wtIntegration
+    HighOrderStandardElementBase(unsigned short iVTK_Type,unsigned short iIntegrationOrder);  //! import:VTK_Type and integrationOrder£¬define:xiIntegration,wtIntegration
 
     int GetVTK_Type(void) const {return VTK_Type; }; //Get StandardElementBase type
     int GetNumberOfIntegrationPoint(void) const {return nIntegrationPoint;}          //Get integration point's number of StandardElementBase
@@ -66,13 +66,13 @@ public:
     * \param[in,out] GLPoints  - The location of the Gauss-Legendre integration points.
     * \param[in,out] GLWeights - The weights of the Gauss-Legendre integration points.
     */
-    void GaussLegendrePoints1D( vector<RDouble> & GLPoints, vector<RDouble> & GLWeights );
+    void GaussLegendrePoints1D(vector<RDouble> & GLPoints, vector<RDouble> & GLWeights);
 
     /*!
     * \brief Function, which copies the data of the given object into the current object.
     * \param[in] other - Object, whose data is copied.
     */
-    void Copy( const HighOrderStandardElementBase & other );
+    void Copy(const HighOrderStandardElementBase & other);
 
     void ComputeOrthogoMatrix();
 };
@@ -126,17 +126,17 @@ public:
 
     const vector< vector< RDouble > > & GetShapeFunctionsIntegration() { return shapeFunctionAtIntegration; }
     //RDouble * GetShapeFunctionsIntegration(int iGaussPoint);
-    RDouble * GetdXiShapeFunctionAtIntegration( int iGaussPoint )
+    RDouble * GetdXiShapeFunctionAtIntegration(int iGaussPoint)
     {
         return dXiShapeFunctionAtIntegration[iGaussPoint].data();
     }
 
-    RDouble * GetdEtShapeFunctionAtIntegration( int iGaussPoint )
+    RDouble * GetdEtShapeFunctionAtIntegration(int iGaussPoint)
     {
         return dEtShapeFunctionAtIntegration[iGaussPoint].data();
     }
 
-    RDouble * GetdZtShapeFunctionAtIntegration( int iGaussPoint )
+    RDouble * GetdZtShapeFunctionAtIntegration(int iGaussPoint)
     {
         return dZtShapeFunctionAtIntegration[iGaussPoint].data();
     }
@@ -145,7 +145,7 @@ public:
     * \brief Function, which makes available the connectivity of face faceIdx.
     * \return  The pointer to data, which stores the connectivity of face faceIdx.
     */
-    unsigned short * GetConnFace( short int faceIdx );
+    unsigned short * GetConnFace(short int faceIdx);
 
     /*!
     * \brief Function, which makes available the number of DOFs for this standard element.
@@ -206,12 +206,12 @@ public:
     basis functions of side 0 in the integration points.
     * \return  The pointer to data, which stores this information.
     */
-    RDouble * GetdXiShapeFunctionAtIntegration( int iGaussPoint )
+    RDouble * GetdXiShapeFunctionAtIntegration(int iGaussPoint)
     {
         return dXiShapeFuncFaceIntegration[iGaussPoint].data();
     }
 
-    RDouble * GetdEtShapeFunctionAtIntegration( int iGaussPoint )
+    RDouble * GetdEtShapeFunctionAtIntegration(int iGaussPoint)
     {
         return dEtShapeFuncFaceIntegration[iGaussPoint].data();
     }
@@ -234,13 +234,13 @@ public:
     //! @param[in] integrationOrder    - integration order of face .
     //! @return Whether or not the function arguments correspond to this standard element.
     
-    bool SameStandardElement( unsigned short val_VTK_Type, unsigned short val_nPoly, unsigned short integrationOrder );
+    bool SameStandardElement(unsigned short val_VTK_Type, unsigned short val_nPoly, unsigned short integrationOrder);
     //! @Determine shape function and its derivativew
     void DataStandardTriangle(void);
     void DataStandardQuadrilateral(void);
 };
 typedef Eigen::Matrix<RDouble, Eigen::Dynamic, Eigen::Dynamic> HighOrderMatrix;
-void Orthogonalize( int degreeOfFreedom, const HighOrderMatrix & taylorBasisMassMatrix, 
-                   HighOrderMatrix & orthogonalizationMatrix );
+void Orthogonalize(int degreeOfFreedom, const HighOrderMatrix & taylorBasisMassMatrix, 
+                   HighOrderMatrix & orthogonalizationMatrix);
 
 }

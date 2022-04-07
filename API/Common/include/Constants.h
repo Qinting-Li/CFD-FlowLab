@@ -39,14 +39,25 @@ const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
 const int INTEGRATIVE_SOLVER  = 14;
+const int GRIDCHECK_SOLVER = 15;
 
 const int SPECDIFFHYB_SOLVER  = 51;
 const int SPEC_SOLVER         = 52;
+
+const int NOLES_SOLVER        = 0;
 const int LES_SOLVER          = 1;
 
 const int DERIVATIVE_IDENITFY = 98;
 
 const int POST_PROCESSING     = 99;
+
+const int GRID_CONVERSION = 1;
+const int GRID_REFINE     = 2;
+const int GRID_MERGING    = 3;
+const int GRID_DEFORMATION= 4;
+const int GRID_REPAIR     = 5;
+const int GRID_MIRROR     = 6;
+const int GRID_STRTOUNS   = 7;
 
 const RDouble half            = 0.5;
 const RDouble third           = 1.0 / 3.0;
@@ -93,6 +104,7 @@ const int TEMPERATURE_DENSITY   = 4;
 const int TEMPERATURE_PRESSURE  = 5;
 const int MACH_TEMP_PRE         = 6;
 const int PRIMITIVE_VARIABLES   = 9;
+const int TRAJECTORY            = 10;
 
 const int VIS_STD             = 0;
 const int VIS_AVER            = 1;
@@ -148,6 +160,7 @@ const int KW_SST                 = 12;
 const int MULTI_STAGE            = 1;
 const int LU_SGS                 = 4;
 const int Block_LU_SGS           = 5;
+const int JACOBIAN_ITERATION     = 6;
 const int Line_LU_SGS            = 7;
 
 const int OneRefineOneDeform     = 1;
@@ -227,6 +240,12 @@ const int S_IOMEGA = 7;
 const int S_IEPSILON  = 8;
 const int S_IEDDYVISC = 0;
 
+const int S_IOxygen  = 9;
+const int S_INitrogen  = 10;
+const int S_ICarbonDioxide  = 11;
+const int S_IMethane  = 12;
+const int S_IH  = 13;
+
 
 const int MOMX_EQ = 0;
 const int MOMY_EQ = 1;
@@ -240,6 +259,13 @@ const int OMEGA_EQ = 8;
 }
 const int MAX_SPECIES_NUM = 20;     //! The maximum number of species.
 const int MAX_REACTION_NUM = 50;    //! The maximum number of reactions.
+
+namespace WALLFUNCTION
+{
+    const int NONE = 0;
+    const int STANDARD = 1;
+    const int PAB3D = 2;
+}
 
 namespace ABLATION
 {
@@ -272,6 +298,14 @@ typedef enum
     OrthogonalCorrection  = 2,
     OverrelaxedCorrection = 3
 } InCom_nonOrthMethod;
+
+typedef enum
+{
+    firstUpWind    = 0,
+    secondUpWind   = 1,
+    QUICKMTHOD     = 2,
+    SecondCentral  = 3,
+} invFluxScheme;
 
 typedef enum
 {

@@ -232,6 +232,15 @@ public:
     //! Return the face iteration index, for example: if nSurface = 1, then iFaceStart = 0, iFaceEnd = ni-1.
     void GetFaceIterationIndex(int &iFaceStart, int &iFaceEnd, int &jFaceStart, int &jFaceEnd, int &kFaceStart, int &kFaceEnd, int iSurface);
 
+	//! Get the face index.
+	void GetNsurfIndex(int &il1, int &jl1, int &kl1, int iDimension);
+
+	//! Get the left cell list of each face.
+	void GetLeftCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ile, int &jle, int &kle, int iDimension);
+
+	//! Get the right cell list of each face.
+	void GetRightCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ire, int &jre, int &kre, int iDimension);
+
     //! Assign the node dimension of I, J, K direction to si, sj ,sk.
     void GetND(int &si, int &sj, int &sk) const;
 
@@ -425,7 +434,7 @@ public:
     LIB_EXPORT void CompNodeVar(RDouble4D &q_n, RDouble4D &q);
     
     //! Allocate memory for walldist.
-    LIB_EXPORT void AllocateWalldist(ActionKey *actkey);
+    LIB_EXPORT void AllocateWalldist();
 
     //! Get the largest local grid length, distance of neighbor cell centers.
     LIB_EXPORT RDouble3D * GetLargestLocalGridLength();
@@ -605,6 +614,6 @@ void GetRange(int ni, int nj, int nk, int startShift, int endShift, Range &I, Ra
 void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, int kst, int ked);
 
 //! Used by Post_Visual class.
-void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n);
+void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool isVelocityForPostVisual = false);
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble3D &q);
 }
