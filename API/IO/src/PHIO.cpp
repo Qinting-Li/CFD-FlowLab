@@ -401,7 +401,7 @@ LIB_EXPORT void CompleteParamInfo()
         string walldistfile = ChangeExtensionOfFileName(origialGridFile, "wdt");
         GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
     }
-    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION)
+    else if (nsimutask == CREATE_GRID)
     {
         string from_gfile = GlobalDataBase::GetStrParaFromDB("from_gfile");
         string bnd_file = ChangeExtensionOfFileName(from_gfile, "inp");

@@ -136,5 +136,6 @@ private:
     static void SetDefaultParamInfo();
 };
 
+//! Get task type.
 LIB_EXPORT int GetTaskCode();
 }
