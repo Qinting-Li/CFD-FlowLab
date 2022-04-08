@@ -7007,9 +7007,8 @@ void NSSolverUnstruct::AirForceCoefParts(ActionKey *actkey, int partID, int Coor
     int viscousType = parameters->GetViscousType();
 
     const int ALL_PART = -1;
-    SimpleBC * boundaryCondition = 0;
-    string partBCName = "";
-
+    SimpleBC * boundaryCondition = NULL;
+	string partBCName = "";
     RDouble TorqueRefX = 0.0, TorqueRefY = 0.0, TorqueRefZ = 0.0;
 
     //! Used to compute hinge moment:
@@ -7036,14 +7035,17 @@ void NSSolverUnstruct::AirForceCoefParts(ActionKey *actkey, int partID, int Coor
     else if ((partID != ALL_PART) && (Coordinate == LocalCoordinate))
     {
         boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-        boundaryCondition->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-        boundaryCondition->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-        boundaryCondition->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
-        partBCName = boundaryCondition->GetBCName();
+		partBCName = boundaryCondition->GetBCName();
+		Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
+
+        bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+        bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+        bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
         
-        boundaryCondition->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
-        boundaryCondition->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
-        boundaryCondition->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
+        
+        bcParamDB->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
+        bcParamDB->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
+        bcParamDB->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
     }
 
     int vis_run = 0;
@@ -9907,18 +9909,20 @@ void NSSolverUnstruct::ViscousIsotropicWallBCRegion(Grid *gridIn, UnstructBC *bc
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
 
     //! Get the variables defined in boundarycondition.hypara file.
-    Data_Param *bcData = bcRegionUnstruct->GetBCParamDataBase();
+    Data_Param *bcParamDB = bcRegionUnstruct->GetBCParamDataBase();
+	Data_Field *bcFieldDB = bcRegionUnstruct->GetBCFieldDataBase();
     RDouble wallTemperature = 0.0;
-    if (bcData)
+
+    if (bcParamDB)
     {
-        if (!bcData->IsExist("wallTemperature", PHDOUBLE, 1))
+        if (!bcParamDB->IsExist("wallTemperature", PHDOUBLE, 1))
         {
             wallTemperature = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
-            bcData->UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+            bcParamDB->UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
         }
         else
         {
-            bcData->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+            bcParamDB->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
         }
     }
     else
@@ -9930,10 +9934,10 @@ void NSSolverUnstruct::ViscousIsotropicWallBCRegion(Grid *gridIn, UnstructBC *bc
     bool wallTempArrayExist = false;
     RDouble *wallTempArray;
     int countFace = 0;
-    if (bcRegionUnstruct->CheckFieldDataExist("wallTempArray"))
+    if (bcFieldDB->CheckDataExist("wallTempArray"))
     {
         wallTempArrayExist = true;
-        wallTempArray = reinterpret_cast <RDouble *> (bcRegionUnstruct->GetDataPtr("wallTempArray"));
+        wallTempArray = reinterpret_cast <RDouble *> (bcFieldDB->GetDataPtr("wallTempArray"));
     }
 
     

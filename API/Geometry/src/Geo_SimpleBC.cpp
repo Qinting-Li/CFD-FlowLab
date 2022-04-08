@@ -38,32 +38,12 @@ set < string > * GlobalBoundaryCondition::bodyList = 0;
 
 Data_Param * SimpleBC::GetBCParamDataBase()
 {
-    //vector <SimpleBC *> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
-    //if (bcParamDataBase == NULL)
-    //{
-    //    if (globalBCList != NULL)
-    //    {
-    //        vector <SimpleBC *> :: iterator iter;
-    //        string bcRegionName = this->GetBCName();
-    //        for (iter = globalBCList->begin(); iter != globalBCList->end(); iter ++)
-    //        {
-    //            string globalBCName = (*iter)->GetBCName();
-    //            Data_Param *globalBCParam = (*iter)->GetBCParamDataBase();
-    //            Data_Param *bcParamDataBase = new Data_Param(*globalBCParam);
-    //            if (globalBCName == bcRegionName)
-    //            {
-    //                this->SetBCParamDataBase(bcParamDataBase);
-    //            }
-    //        }
-    //    }
-    //    else
-    //    {
-    //        Data_Param *bcParamDataBase = new Data_Param();
-    //        this->SetBCParamDataBase(bcParamDataBase);
-    //    }
-    //    return bcParamDataBase;
-    //}
     return bcParamDataBase;
+}
+
+Data_Field * SimpleBC::GetBCFieldDataBase()
+{
+	return bcFieldDataBase;
 }
 
 GlobalBoundaryCondition::GlobalBoundaryCondition() 
@@ -338,9 +318,9 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
         string bcName = (*bcNameSetIter).first;
         int bcType = (*bcNameSetIter).second;
 
-        SimpleBC *boundaryCondtion = new SimpleBC();
-        boundaryCondtion->SetBCName(bcName);
-        boundaryCondtion->SetBCType(bcType);
+        SimpleBC *boundaryCondition = new SimpleBC();
+        boundaryCondition->SetBCName(bcName);
+        boundaryCondition->SetBCType(bcType);
 
         Data_Param *bcParamDataBase = new Data_Param();
         bcParamDataBase->UpdateData("bcType", &bcType, PHINT, 1);
@@ -397,8 +377,8 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             }
         }
 
-        boundaryCondtion->SetBCParamDataBase(bcParamDataBase);
-        globalBCList->push_back(boundaryCondtion);
+        boundaryCondition->SetBCParamDataBase(bcParamDataBase);
+        globalBCList->push_back(boundaryCondition);
     }
 }
 
@@ -425,19 +405,20 @@ void GlobalBoundaryCondition::BuildBodyMap()
 
     for (int iBC = 0; iBC < globalBCList->size(); ++ iBC)
     {
-        SimpleBC * bcParamDataBase = (*globalBCList)[iBC];
-        int bcType = bcParamDataBase->GetBCType();
+        SimpleBC * boundaryCondition = (*globalBCList)[iBC];
+        int bcType = boundaryCondition->GetBCType();
+	    Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
 
         if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::ABLATION_SURFACE)
         {
             continue;
         }
 
-        bool isSetBodyName = bcParamDataBase->CheckData("bodyName");
+        bool isSetBodyName = bcParamDB->CheckDataExist("bodyName");
         if (isSetBodyName)
         {
             string bodyName;
-            bcParamDataBase->GetData("bodyName",   &bodyName, PHSTRING, 1);
+            bcParamDB->GetData("bodyName",   &bodyName, PHSTRING, 1);
             pair<int,string> bodyNamePair(iBC ,bodyName);
             bodyNameSet.insert(bodyNamePair);
             bodyList->insert(bodyName);
@@ -481,9 +462,9 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
 
     for (int iBC = 0; iBC < globalBCList->size(); ++ iBC)
     {
-        SimpleBC *bcParamDataBase = (*globalBCList)[iBC];
-        int bcType = bcParamDataBase->GetBCType();
-        Data_Param *bcParamDB = bcParamDataBase->GetBCParamDataBase();
+        SimpleBC *boundaryCondition = (*globalBCList)[iBC];
+        int bcType = boundaryCondition->GetBCType();
+        Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
 
         if (bcType < 0)
         {
@@ -2012,7 +1993,7 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
 
     int taskType = GetTaskCode();
 
-    int nBoundaryConditons = 0;
+    int nBoundaryConditions = 0;
     while (!file.eof())
     {
         getline(file, line);
@@ -2053,9 +2034,9 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
 
         int type, size = arraysize;
         type = keywordmap[keyword];
-        if (type == PHINT && name != "nBoundaryConditons")
+        if (type == PHINT && name != "nBoundaryConditions")
         {
-            TK_Exit::ExceptionExit("Error: the first line must be format \"int nBoundaryConditons = INTEGER\"!", true);
+            TK_Exit::ExceptionExit("Error: the first line must be format \"int nBoundaryConditions = INTEGER\"!", true);
         }
         if (type == PHSTRING && name != "bcName")
         {
@@ -2069,10 +2050,10 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
                 from_string< int >(data[i], value[i], std::dec);
             }
 
-            nBoundaryConditons = data[0];
+            nBoundaryConditions = data[0];
             delete [] data;
 
-            if (nBoundaryConditons == 0)
+            if (nBoundaryConditions == 0)
             {
                 //! To compatible the old version.
                 SetDefaultSolidBoundaryCondition();
@@ -2086,16 +2067,16 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
         else if (type == PHSTRING)
         {
             //! Parse out the parameters into data base in each Boundary Condition.
-            SimpleBC *boundaryCondtion = new SimpleBC();
-            boundaryCondtion->SetBCName(*value);
+            SimpleBC *boundaryCondition = new SimpleBC();
+            boundaryCondition->SetBCName(*value);
 
             Data_Param *bcParamDataBase = new Data_Param();
             TK_Parse::ReadBasicData(file, bcParamDataBase);
-            boundaryCondtion->SetBCParamDataBase(bcParamDataBase);
+            boundaryCondition->SetBCParamDataBase(bcParamDataBase);
 
             int bcType;
             bcParamDataBase->GetData("bcType", &bcType, PHINT, 1);
-            boundaryCondtion->SetBCType(bcType);
+            boundaryCondition->SetBCType(bcType);
 
             if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
             {
@@ -2193,7 +2174,7 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
                 }
             }
 
-            globalBCList->push_back(boundaryCondtion);
+            globalBCList->push_back(boundaryCondition);
         }
 
         delete [] value;
@@ -2278,7 +2259,6 @@ map<int,string> CreatFantasybctype()
     Fantasybctype[28]   = "BODY";
     Fantasybctype[29]   = "BODY";
     Fantasybctype[30]   = "ENDNumberOfBodyOfHyperFLOW";
-    Fantasybctype[99]   = "PERIODIC";
     Fantasybctype[100]  = "INTERIOR";
     Fantasybctype[1001] = "PRESSURE_INLET_PLATE";
     Fantasybctype[1002] = "PRESSURE_OUTLET_PLATE";

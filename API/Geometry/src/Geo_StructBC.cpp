@@ -738,7 +738,6 @@ void CompositeStructBC::InitBoundaryName()
     boundaryName[71] = "POLE1";
     boundaryName[72] = "POLE2";
     boundaryName[73] = "POLE3";
-    boundaryName[99] = "PERIODIC";
 
     for (size_t iName = 0; iName < boundaryName->size(); ++ iName)
     {

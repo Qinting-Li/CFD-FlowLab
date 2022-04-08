@@ -1037,6 +1037,7 @@ namespace PHSPACE
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
             StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+			Data_Field *bcFieldDB = structBC->GetBCFieldDataBase();
             int BCType = structBC->GetBCType();
 
             if (!IsWall(BCType) && BCType != PHENGLEI::ABLATION_SURFACE)
@@ -1045,9 +1046,9 @@ namespace PHSPACE
             }
 
             RDouble3D *wallTempArray;
-            if (structBC->CheckFieldDataExist("wallTempArray"))
+            if (bcFieldDB->CheckDataExist("wallTempArray"))
             {
-                wallTempArray = reinterpret_cast <RDouble3D *> (structBC->GetDataPtr("wallTempArray"));
+                wallTempArray = reinterpret_cast <RDouble3D *> (bcFieldDB->GetDataPtr("wallTempArray"));
             }
             else
             {
@@ -2701,9 +2702,9 @@ namespace PHSPACE
         int viscousType = parameters->GetViscousType();
 
         const int ALL_PART = -1;
-        SimpleBC *boundaryCondition = 0;
-        string partBCName = "";
-        RDouble TorqueRefX = 0, TorqueRefY = 0, TorqueRefZ = 0;
+        SimpleBC *boundaryCondition = NULL;
+		string partBCName = "";
+        RDouble TorqueRefX = 0.0, TorqueRefY = 0.0, TorqueRefZ = 0.0;
 
         //! Compute hinge moment.
         int dumpHingeMoment = 0;
@@ -2719,7 +2720,7 @@ namespace PHSPACE
         else if ((partID != ALL_PART) && (coordinate == GlobalCoordinate))
         {
             boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-            partBCName = boundaryCondition->GetBCName();
+			partBCName = boundaryCondition->GetBCName();
 
             TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
             TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
@@ -2728,14 +2729,16 @@ namespace PHSPACE
         else if ((partID != ALL_PART) && (coordinate == LocalCoordinate))
         {
             boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-            boundaryCondition->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-            boundaryCondition->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-            boundaryCondition->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
-            partBCName = boundaryCondition->GetBCName();
+			partBCName = boundaryCondition->GetBCName();
+			Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
+            bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+            bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+            bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+       
 
-            boundaryCondition->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
-            boundaryCondition->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
-            boundaryCondition->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
+            bcParamDB->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
+            bcParamDB->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
+            bcParamDB->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
         }
 
         using namespace IDX;
@@ -8070,28 +8073,29 @@ namespace PHSPACE
         RDouble refGama = parameters->GetRefGama();
         RDouble refMachNumber = parameters->GetRefMachNumber();
 
-        Data_Param *bcData = structBC->GetBCParamDataBase();
+        Data_Param *bcParamDB = structBC->GetBCParamDataBase();
+		Data_Field *bcFieldDB = structBC->GetBCFieldDataBase();
 
         RDouble uWall = 0.0;
         RDouble vWall = 0.0;
         RDouble wWall = 0.0;
 
         RDouble wallTemperature;
-        bcData->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+        bcParamDB->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
 
-        if (bcData->IsExist("uWall", PHDOUBLE, 1))
+        if (bcParamDB->IsExist("uWall", PHDOUBLE, 1))
         {
-            bcData->GetData("uWall", &uWall, PHDOUBLE, 1);
-            bcData->GetData("vWall", &vWall, PHDOUBLE, 1);
-            bcData->GetData("wWall", &wWall, PHDOUBLE, 1);
+            bcParamDB->GetData("uWall", &uWall, PHDOUBLE, 1);
+            bcParamDB->GetData("vWall", &vWall, PHDOUBLE, 1);
+            bcParamDB->GetData("wWall", &wWall, PHDOUBLE, 1);
         }
 
         bool wallTempArrayExist = false;
         RDouble3D *wallTempArray = NULL;
-        if (structBC->CheckFieldDataExist("wallTempArray"))
+        if (bcFieldDB->CheckDataExist("wallTempArray"))
         {
             wallTempArrayExist = true;
-            wallTempArray = reinterpret_cast <RDouble3D *> (structBC->GetDataPtr("wallTempArray"));
+            wallTempArray = reinterpret_cast <RDouble3D *> (bcFieldDB->GetDataPtr("wallTempArray"));
         }
         RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
 
@@ -8340,9 +8344,9 @@ namespace PHSPACE
         bcParamDB->GetData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
 
         int inflowParaType = -1;
-        if (structBC->CheckData("inflowParaType"))
+        if (bcParamDB->CheckDataExist("inflowParaType"))
         {
-            structBC->GetData("inflowParaType", &inflowParaType, PHINT, 1);
+            bcParamDB->GetData("inflowParaType", &inflowParaType, PHINT, 1);
         }
 
         if (inflowParaType == TRAJECTORY)
@@ -14351,27 +14355,28 @@ namespace PHSPACE
                 vector<SimpleBC *>::iterator iter;
                 for (iter = globalBCList->begin(); iter != globalBCList->end(); ++ iter)
                 {
-                    SimpleBC *bc = *iter;
-
+                    SimpleBC *boundaryCondition = *iter;
                     string BCName = structBC->GetBCName();
-                    if (BCName != bc->GetBCName())
+					Data_Param *bcParamDB = structBC->GetBCParamDataBase();
+
+                    if (BCName != boundaryCondition->GetBCName())
                     {
                         continue;
                     }
 
-                    if (bc->CheckData("uWall"))
+                    if (bcParamDB->CheckDataExist("uWall"))
                     {
-                        bc->GetData("uWall", &uWall, PHDOUBLE, 1);
+                        bcParamDB->GetData("uWall", &uWall, PHDOUBLE, 1);
                     }
 
-                    if (bc->CheckData("vWall"))
+                    if (bcParamDB->CheckDataExist("vWall"))
                     {
-                        bc->GetData("vWall", &vWall, PHDOUBLE, 1);
+                        bcParamDB->GetData("vWall", &vWall, PHDOUBLE, 1);
                     }
 
-                    if (bc->CheckData("wWall"))
+                    if (bcParamDB->CheckDataExist("wWall"))
                     {
-                        bc->GetData("wWall", &wWall, PHDOUBLE, 1);
+                        bcParamDB->GetData("wWall", &wWall, PHDOUBLE, 1);
                     }
                 }
             }
@@ -14598,27 +14603,28 @@ namespace PHSPACE
                 vector<SimpleBC *>::iterator iter;
                 for (iter = globalBCList->begin(); iter != globalBCList->end(); ++ iter)
                 {
-                    SimpleBC *bc = *iter;
-
+                    SimpleBC *boundaryCondition = *iter;
                     string BCName = structBC->GetBCName();
-                    if (BCName != bc->GetBCName())
+					Data_Param *bcParamDB = structBC->GetBCParamDataBase();
+
+                    if (BCName != boundaryCondition->GetBCName())
                     {
                         continue;
                     }
 
-                    if (bc->CheckData("uWall"))
+                    if (bcParamDB->CheckDataExist("uWall"))
                     {
-                        bc->GetData("uWall", &uWall, PHDOUBLE, 1);
+                        bcParamDB->GetData("uWall", &uWall, PHDOUBLE, 1);
                     }
 
-                    if (bc->CheckData("vWall"))
+                    if (bcParamDB->CheckDataExist("vWall"))
                     {
-                        bc->GetData("vWall", &vWall, PHDOUBLE, 1);
+                        bcParamDB->GetData("vWall", &vWall, PHDOUBLE, 1);
                     }
 
-                    if (bc->CheckData("wWall"))
+                    if (bcParamDB->CheckDataExist("wWall"))
                     {
-                        bc->GetData("wWall", &wWall, PHDOUBLE, 1);
+                        bcParamDB->GetData("wWall", &wWall, PHDOUBLE, 1);
                     }
                 }
             }

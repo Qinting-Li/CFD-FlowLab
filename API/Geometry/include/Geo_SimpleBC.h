@@ -151,7 +151,7 @@ namespace FLUENT_SPACE
     const int OUTFLOW            = 36;
     const int AXIS               = 37;
 }
-
+//! @brief A boundary condition base class, StructBC and UnstructBC inheriting from it.
 class SimpleBC
 {
 public:
@@ -159,8 +159,8 @@ public:
     {
         bcName = "";
         bcType = 0;
-        bcParamDataBase = 0;
-        bcFieldDataBase = new Data_Field();
+        bcParamDataBase = new Data_Param;
+        bcFieldDataBase = new Data_Field;
     }
 
     ~SimpleBC()
@@ -180,35 +180,12 @@ public:
     const string & GetBCName() const { return this->bcName; }
     int GetBCType() const { return this->bcType; }
     Data_Param * GetBCParamDataBase();
-
-    void GetData(const string &name, void *data, int type, int size) 
-    {
-        bcParamDataBase->GetData(name, data, type, size);
-    }
-
-    int CheckData(const string &name)
-    {
-        return bcParamDataBase->CheckDataExist(name);
-    }
-
-    void UpdateDataPtr(const string &name, void *data)
-    {
-        bcFieldDataBase->UpdateDataPtr(name, data);
-    };
-
-    void *GetDataPtr(const string &name) const
-    {
-        return bcFieldDataBase->GetDataPtr(name);
-    };
-
-    int CheckFieldDataExist(const string &name)
-    {
-        return bcFieldDataBase->CheckDataExist(name);
-    }
+	Data_Field * GetBCFieldDataBase();
 
     void SetBCName(const string &bcName) { this->bcName = bcName; }
     void SetBCType(int bcType) { this->bcType = bcType; }
     void SetBCParamDataBase(Data_Param *paraDB) { this->bcParamDataBase = paraDB; }
+	void SetBCFieldDataBase(Data_Field *fieldDB) { this->bcFieldDataBase = fieldDB; }
 };
 
 //! @brief Global boundary conditions, all of the global boundary conditions are stored here.
