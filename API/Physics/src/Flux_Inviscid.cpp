@@ -189,7 +189,8 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         RDouble hint_L = (gmL / (gmL - one)) * (pL / rL);
         RDouble hint_R = (gmR / (gmR - one)) * (pR / rR);
         RDouble peL = 0.0, peR = 0.0;
-        if (nChemical != 0)
+        int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
+        if (nChemical != 0 && nIdealState == 0)
         {
             for (int i = 0; i < 3; ++ i)
             {
@@ -708,7 +709,10 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
         RDouble hintRight = (gmR / (gmR - one)) * (pr / rr);
 
         RDouble pel = 0.0, per = 0.0;
-        if (nChemical != 0)
+
+        int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
+        if (nChemical != 0 && nIdealState == 0)
+        //if (nChemical != 0)
         {
             for (int i = 0; i < 3; ++ i)
             {
@@ -935,7 +939,8 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
         RDouble hintRight = (gmR / (gmR - one)) * (pr / rr);
 
         RDouble peL = 0.0, peR = 0.0;
-        if (nChemical != 0)
+        int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
+        if (nChemical != 0 && nIdealState == 0)
         {
             for (int i = 0; i < 3; ++ i)
             {

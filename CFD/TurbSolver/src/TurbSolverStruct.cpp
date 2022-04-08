@@ -4829,8 +4829,8 @@ namespace PHSPACE
 
                     //RDouble alphaT = densityWall * wallDistance * utao * specificHeatAtConstantPressure / tempturePlus * refReNumber;
                     RDouble alphaT = densityWall * wallDistance * specificHeatAtConstantPressure / (tempturePlus * pow(CMu, 0.25)) * refReNumber;
-                    //RDouble alpha = alphaLaminar + alphaTurbulent;
-                    heatTransferCoeff(it1, jt1, kt1, ITT) = alphaT;
+                    RDouble alpha = alphaLaminar + alphaTurbulent;
+                    heatTransferCoeff(it1, jt1, kt1, ITT) = alphaT - alpha;
 
                     if (viscousType == ONE_EQU)
                     {

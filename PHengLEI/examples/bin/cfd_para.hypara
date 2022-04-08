@@ -492,9 +492,7 @@ double AusmpwPlusLimiter = 1.0;
 //               4 -- LU-SGS.
 //               5 -- Block LU-SGS.
 //               6 -- Jacobian iteration.
-//               7 -- Lower G-S iteration.
-//               8 -- Upper G-S iteration.
-//               9 -- Lower/Upper G-S iteration.
+//               7 -- Line LU-SGS.
 // iSimplifyViscousTerm: Simplify the computation of viscous term in the Block LU-SGS method. The default value assigns 1 that could speed up the computation.
 //                       Otherwise, the viscous Jacobian matrix Mv should be computed that will increase the memory and time in iteration of the BLUSGS method.
 // CFLStart: Started cfl number.
@@ -603,6 +601,7 @@ string wallTemperaturefile= "";
 
 int    nIsComputeWallDist = 0;
 int    walldistMethod     = 1;
+int    cellMethodOrNodeMethod = 0;
 
 string resSaveFile        = "results/res.dat";
 string turbresfile        = "results/turbres.dat";
@@ -709,7 +708,7 @@ int dumpStandardModel = 0;
 //                    1 -- Real cell where the probe is located.
 // nProbeVariables: Number of variables want to be dumped for probes monitered.
 // probeVariables : Variable types dumped, listed as following:
-//                  -- density(0), u(1), v(2), w(3), pressure(4), temperature(5).
+//                  -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6).
 // Important Warning: Array size of probeVariables MUST be equal to nProbeVariables!!!
 // probeVariables order must from small to big.
 // probeVariablesInterpolationMethod: Interpolation method used to compute the probe variables.
@@ -731,8 +730,8 @@ string probesDefineFile = "bin/probes_XYZ.dat";
 
 int searchCellsMethod = 0;
 
-int nProbeVariables  = 6;
-int probeVariables[] = [0, 1, 2, 3, 4, 5];
+int nProbeVariables  = 7;
+int probeVariables[] = [0, 1, 2, 3, 4, 5, 6];
 int probeVariablesInterpolationMethod  = 0;
 //-----------------------------------------------------------------------
 #                           Turbulence Parameter                        #
@@ -899,6 +898,11 @@ int    monitorNegativeConstant = 0;
 // nTemperatureJump : the method to calculate the temperature jump.
 //             0 -- calculated by the variables of heat conductivity and constant volume specific heat for each energy mode.
 //             1 -- the general method where the iteration is calculated with the translation-rotation temperature.
+// nSurfGradMethod : the method to compute the surface heating ratio.
+//             0 -- the gradient of variable is computed with the first-order difference method.
+//             1 -- the gradient of variable is computed with the Green-Guass integral method.
+// nRapidFlowfield : initialize the flowfield using the rapid engineering method when it is greater than zero.
+// nSurfHeatMonitor : To exam the surface heating change or not. 0 is no, 1 is yes.
 // sigmaVelocity: the coordination coefficient of tangential momentum for computation of slip velocity. The value is in range of (0.0, 2.0].
 // sigmaTemperature: the heat coordination coefficient for computation of slip temperature. The value is in range of (0.0, 2.0].
 // sigmaMassFraction: the species coordination coefficient for computation of slip mass fractions. The value is in range of (0.0, 2.0].
@@ -1031,6 +1035,7 @@ int    nchemsrc   = 1;
 int    nchemrad   = 1;
 int    ntmodel    = 1;
 
+int nIdealState = 0;
 int nEnergyRecycle = 1;
 int nSlipBCModel   = 0;
 int nDensityModify = 1;
@@ -1039,6 +1044,9 @@ int nMeanFreePathType = 0;
 int nIsChemicalFreeze = 0;
 int nIsSuperCatalytic = 1;
 int nTemperatureJump  = 0;
+int nSurfGradMethod = 0;
+int nRapidFlowfield = 0;
+int nSurfHeatMonitor = 0;
 
 double parkVDPower   = 0.6;
 double catalyticCoef = 0.0;
@@ -1061,6 +1069,7 @@ double maxTemperature = 50000.0;
 double densityMin = 1.0e-8;
 double densityMinFactor = 0.1;
 double tAdjustmentFactor = 10.0;
+double iniSpeedCoef = 1.0;
 
 int    nDebug = 0;
 int    nSpeciesLimit = 1;
@@ -1320,4 +1329,13 @@ int    integralOrder            = 4;
 #                             Old Parameter                             #
 #########################################################################
 int isPlotVolumeField = 0;
+
+
+#########################################################################
+#                         Incompressible Parameter                      #
+#########################################################################
+
+int isSolveEnergyEquation = 0;
+int isSolveTurbEquation = 0;
+int isSolveSpeciesEquation = 0;
 

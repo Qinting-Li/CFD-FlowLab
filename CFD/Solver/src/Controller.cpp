@@ -310,6 +310,31 @@ void Controller::CommunicationNodeBCType()
     }
 }
 
+LIB_EXPORT void Controller::SolveIncomFlow()
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+    int iSolver = this->GetSolverIndex();
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+        
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->Solve();
+    }
+
+}
+
 LIB_EXPORT void Controller::SolveSteadyField()
 {
     int iSolver = this->GetSolverIndex();
@@ -3401,10 +3426,22 @@ void Controller::PostSolve(int level)
     CFDSolver *solver = static_cast<CFDSolver *>(GlobalSolvers::GetSolver(zoneIndex, iSolver));
     solver->DumpResultFile(grid, level);
 
+     //exam the change of key variables such as the pressure, the translational temperature and the vibrational temperature, etc.
     int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
     if (iCodeBranch > 0)
     {
         solver->CheckResult(grid, level);
+    }
+
+    //exam the surface heating change.
+    int nSurfHeatMonitor = 0;
+    if (GlobalDataBase::IsExist("nSurfHeatMonitor", PHINT, 1))
+    {
+        nSurfHeatMonitor = GlobalDataBase::GetIntParaFromDB("nSurfHeatMonitor");
+    }
+    if (nSurfHeatMonitor > 0)
+    {
+        solver->CheckSurfaceHeatingChange(grid, level);
     }
 
     //! Node communication: part1.

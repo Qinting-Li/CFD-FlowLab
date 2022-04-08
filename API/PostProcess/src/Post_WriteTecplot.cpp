@@ -170,11 +170,11 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
             int type = grid->Type();
             PHWrite(actkey->GetData(), &type, 1);
             
-            BoundaryVTKVisualization(grid, actkey, qn, nvarplot);
+            BoundaryVTKVisualization(grid, actkey, qn, nVisualVariables);
 
             if (WantVisualField(grid))
             {
-                FieldVisualization(grid, actkey, qn, nvarplot);
+                FieldVisualization(grid, actkey, qn, nVisualVariables);
             }
 
             int TecioMission = TEC_SPACE::Writecomplete;

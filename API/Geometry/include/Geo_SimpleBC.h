@@ -92,6 +92,14 @@ namespace PHENGLEI
     const int OVERSET               = 1000;
 }
 
+namespace INIFLOW_SPACE
+{
+    const int RECTANGLE             = 0;
+    const int SPHERE                = 1;
+    const int CYLINDER              = 2;
+    const int CONE                  = 3;
+}
+
 namespace GRIDGEN_SPACE
 {
     const int INTERFACE             = -1;
@@ -279,9 +287,13 @@ public:
 
     static void SetBCInitialValuesByHeight(Data_Param *bcParamDB, RDouble *primitiveVar);
 
+    static void SetMaximumSpeciesForBC(Data_Param *bcParamDB);
+
     static void SetBCInitialValuesByDensity(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
+
+    static void SetBCInitialValuesByTotalPressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByMachNumberTemperaturePressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 

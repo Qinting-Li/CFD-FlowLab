@@ -104,6 +104,7 @@ const int TEMPERATURE_DENSITY   = 4;
 const int TEMPERATURE_PRESSURE  = 5;
 const int MACH_TEMP_PRE         = 6;
 const int PRIMITIVE_VARIABLES   = 9;
+const int TRAJECTORY            = 10;
 
 const int VIS_STD             = 0;
 const int VIS_AVER            = 1;
@@ -159,6 +160,7 @@ const int KW_SST                 = 12;
 const int MULTI_STAGE            = 1;
 const int LU_SGS                 = 4;
 const int Block_LU_SGS           = 5;
+const int JACOBIAN_ITERATION     = 6;
 const int Line_LU_SGS            = 7;
 
 const int OneRefineOneDeform     = 1;
@@ -237,6 +239,12 @@ const int S_IOMEGA = 7;
 
 const int S_IEPSILON  = 8;
 const int S_IEDDYVISC = 0;
+
+const int S_IOxygen  = 9;
+const int S_INitrogen  = 10;
+const int S_ICarbonDioxide  = 11;
+const int S_IMethane  = 12;
+const int S_IH  = 13;
 
 
 const int MOMX_EQ = 0;
