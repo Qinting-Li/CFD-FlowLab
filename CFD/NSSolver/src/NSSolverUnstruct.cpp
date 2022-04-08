@@ -10138,7 +10138,7 @@ void NSSolverUnstruct::ViscousAdiabaticWallBCRegion(Grid *gridIn, UnstructBC *bc
     using namespace GAS_SPACE;
     RDouble coefficientofstateEquation = gas->GetCoefficientOfStateEquation();
     RDouble rGhost = 0.0, pGhost = 0.0, tGhost = 0.0;
-    RDouble *qL = nullptr;
+    RDouble *qL = NULL;
     if (nChemical == 1)
     {
         qL = new RDouble [nEquation];
