@@ -227,7 +227,7 @@ void DynamicGrid::StationalData2DynamicData()
     SetField(secondSegment, 0, nTotalNode);
     this->secondSegment = secondSegment;
 
-    SimpleBC *boundaryCondition = 0;
+    SimpleBC *boundaryCondition = NULL;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int bctype = faceArray[iFace].bcType;
@@ -237,8 +237,9 @@ void DynamicGrid::StationalData2DynamicData()
         }
 
         boundaryCondition = bcr[iFace]->GetBoundaryCondition();
+		Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
         int isSecondSegment = 0;
-        boundaryCondition->GetData("isSecondSegment", &isSecondSegment, PHINT, 1);
+        bcParamDB->GetData("isSecondSegment", &isSecondSegment, PHINT, 1);
 
         if (!isSecondSegment)
         {
@@ -252,10 +253,9 @@ void DynamicGrid::StationalData2DynamicData()
             secondSegment[nodeIndex] = 1;
         }
 
-        boundaryCondition = bcr[iFace]->GetBoundaryCondition();
-        boundaryCondition->GetData("secondSegmentRotatePostionX", &secondSegmentRotatePostionX, PHINT, 1);
-        boundaryCondition->GetData("secondSegmentRotatePostionY", &secondSegmentRotatePostionY, PHINT, 1);
-        boundaryCondition->GetData("secondSegmentRotatePostionZ", &secondSegmentRotatePostionZ, PHINT, 1);
+        bcParamDB->GetData("secondSegmentRotatePostionX", &secondSegmentRotatePostionX, PHINT, 1);
+        bcParamDB->GetData("secondSegmentRotatePostionY", &secondSegmentRotatePostionY, PHINT, 1);
+        bcParamDB->GetData("secondSegmentRotatePostionZ", &secondSegmentRotatePostionZ, PHINT, 1);
     }
 
     rotateNodeIndex = -1;

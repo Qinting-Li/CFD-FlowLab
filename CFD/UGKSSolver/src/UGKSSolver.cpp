@@ -4651,9 +4651,9 @@ namespace PHSPACE
 
         Param_UGKSSolver * controlParameters = GetControlParameters();
         const int ALL_PART = -1;
-        SimpleBC * boundaryCondition = 0;
+        SimpleBC * boundaryCondition = NULL;
         string partBCName = "";
-        RDouble TorqueRefX, TorqueRefY, TorqueRefZ;
+        RDouble TorqueRefX = 0.0, TorqueRefY = 0.0, TorqueRefZ = 0.0;
 
         if(partID == ALL_PART)
         {
@@ -4664,9 +4664,10 @@ namespace PHSPACE
         else
         {
             boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-            boundaryCondition->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-            boundaryCondition->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-            boundaryCondition->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+			Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
+            bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+            bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+            bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
             partBCName = boundaryCondition->GetBCName();
         }
 
