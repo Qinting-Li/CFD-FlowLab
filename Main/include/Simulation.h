@@ -46,7 +46,7 @@ private:
     //! Compute wall distance for turbulent flow while there was no .wdt file.
     void ComputeWallDistance();
 
-    //! 
+    //! Need convert process or not.
     void IsNeedConvert();
 
     #ifdef USE_INHOUSE_VERSION
@@ -56,13 +56,13 @@ private:
     void RunUGKS();
     #endif
 
-    //! 
+    //! The work flow to convert, partition and compute.
     void RunIntegrativeSolver();
 
-    //! 
+    //! Check the .fts grid.
     void RunGridCheckSolver();
 
-    //!
+    //! Run SpecDiffHyb solver.
     #ifdef USE_SpecDiffHybSolver
     void RunSpecDiffHybSolver();
     void RunSpecSolver();
@@ -73,30 +73,30 @@ private:
     void IdentifyDerivative();
     #endif
 
-    //! Run post processing without flow field simulation.
+    //! Run post process without flow field simulation.
     void RunPostProcessing();
 
     //! Read the grid such as grid coordinate, boundary information, wall distance for turbulent flow and interpoint information.
     void ReadGeometry();
 
-    //!
+    //! Update all zones parameter.
     void UpdateAllZonesPara();
 
-    //!
+    //! Initialize the geometry.
     void InitGeometry();
 
-    //!
+    //! Communicate the grid metrics on the interfaces.
     void SwapGeommetry();
 
-    //!
+    //! Initialize overset grid.
     void InitOversetGrid();
 
     //! Run CFD using the self-adaption method.
     void SelfAdaptionRunCFD();
-    void FirstStepRunCFD(bool isStart = true);
+    void FirstStepRunCFD (bool isStart = true);
     void SecondStepRunCFD(bool isStart = false);
-    void ThirdStepRunCFD(bool isStart = false);
-    void FinalStepRunCFD();
+    void ThirdStepRunCFD (bool isStart = false);
+    void FinalStepRunCFD ();
     
     //! The numerical iteration process similar to the function named SolveSimulation.
     void SelfAdaptionSolve();
@@ -112,7 +112,7 @@ private:
     //! Define your solver name which is same with the solver class name here!
     void DefineAndCreateSolvers();
 
-    //!
+    //! Initialize global boundary condition.
     void InitGlobalBoundaryCondition();
 
     //! Initialize each solver on each zone.
@@ -121,24 +121,34 @@ private:
     //! Initionalize flow field in the first flowInitStep steps with coarse grid when multigrid simulation.
     void MultiGridInitFlow();
 
+    //!
     void OversetGridConfig();
 
+    //!
     void UpdateOuterIterationStep(int &outerIterStep);
 
+    //! 
     void SolveOneOuterStep();
 
+    //!
     void PreSolve();
 
+    //!
     void MainSolve();
 
+    //!
     void PostSolve();
 
+    //!
     void SolveIncomFlow();
 
+    //!
     void SolveSteady();
 
+    //!
     void SolveUnsteady();
 
+    //!
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
 };
 }

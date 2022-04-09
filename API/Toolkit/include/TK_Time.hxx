@@ -33,7 +33,7 @@ inline void TimeSpan::ShowTimeSpan(const string &title)
     cout << title << "time elapsed : " << GetSecondTime(time_elapsed) << " seconds" << "\n";
 }
 
-inline void TimeSpan::ShowTimeSpanToLogfile(const string &title)
+inline void TimeSpan::ShowTimeSpanToLogFile(const string &title)
 {
     ostringstream oss;
     now_time = GetWallTime();

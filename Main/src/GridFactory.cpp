@@ -56,7 +56,7 @@ void CreateGrid()
         RefineGrid();
         break;
     case PHSPACE::GRID_MERGING:
-        CombinationGrid();
+        CombineGrid();
         break;
     case PHSPACE::GRID_DEFORMATION:
         DeformGrid();
@@ -427,7 +427,7 @@ void RefineGrid()
     delete meshRefine;
 }
 
-void CombinationGrid()
+void CombineGrid()
 {
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");

@@ -132,7 +132,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
 
     PostWallDistance();
 
-    timeSpan->ShowTimeSpanToLogfile("Wall distance computing");
+    timeSpan->ShowTimeSpanToLogFile("Wall distance computing");
     WriteLogFile("  End Wall Distance Computing ...");
     delete timeSpan;
 }
@@ -152,10 +152,10 @@ void Pre_WalldistCompute::FillWallStructureNew()
     TimeSpan *timeSpan = new TimeSpan();
 
     ServerCollection();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure collection to server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure collection to server");
 
     ServerBcast();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure BCasting from server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure BCasting from server");
 
     PrintToWindow("Barrier for wall structure filling ...\n");
     PrintToWindow("End for wall structure filling ...\n");
@@ -4607,7 +4607,7 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethod()
         PrintToWindow("\n    Computing Wall dist for block: ", iBlock, "\n\n");
         ComputeNodeDistanceByADTMethodForBlock(iBlock);
     }
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By ADT Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By ADT Method");
     delete timeSpan;
 }
 
@@ -4643,7 +4643,7 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethod()
         ComputeNodeDistanceByKDTreeMethodForBlock(iBlock);
     }
 
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By KDTree Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By KDTree Method");
     delete timeSpan;
 }
 

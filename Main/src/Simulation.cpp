@@ -1308,7 +1308,7 @@ void Simulation::InitOversetGrid()
             TimeSpan *timeSpan = new TimeSpan();
             WriteLogFile("Run overset configuration ...\n");
             OversetGridConfig();
-            timeSpan->ShowTimeSpanToLogfile("Run overset configuration");
+            timeSpan->ShowTimeSpanToLogFile("Run overset configuration");
             delete timeSpan;
         }
 
@@ -1337,7 +1337,7 @@ void Simulation::ReadGeometry()
 
     this->region->ReadGrid();
 
-    testTime.ShowTimeSpanToLogfile("Grid Reading");
+    testTime.ShowTimeSpanToLogFile("Grid Reading");
 }
 
 void Simulation::InitGeometry()

@@ -2119,7 +2119,7 @@ void ParallelMeshGen::FixCellRefineType()
     }
     PrintToWindow("\n");
 
-    fixTime.ShowTimeSpanToLogfile("Fix cell refine type");
+    fixTime.ShowTimeSpanToLogFile("Fix cell refine type");
     WriteLogFile("End fix cell type!");
 }
 

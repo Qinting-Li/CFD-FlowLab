@@ -26,7 +26,7 @@ void MultiGridConvert();
 Pre_GridConversion *GetConvertType(const string &gridFileName, int gridType, int fromGridType);
 
 void RefineGrid();
-void CombinationGrid();
+void CombineGrid();
 void OversetGridView();
 void RepairGrid();
 void MirrorGrid();

@@ -1770,12 +1770,12 @@ void Region::SwapZoneNeighborsInformation()
    
     TimeSpan timeSpan;
     BroadCastZoneNeighborInformation();
-    timeSpan.ShowTimeSpanToLogfile("Neighbor zone information BCast "); 
+    timeSpan.ShowTimeSpanToLogFile("Neighbor zone information BCast "); 
    
     timeSpan.ResetTime();
     SwapNeighborsSendContent();
     //SwapNeighborsSendContentNonblocking();
-    timeSpan.ShowTimeSpanToLogfile("Swap Neighbor Send Content ");
+    timeSpan.ShowTimeSpanToLogFile("Swap Neighbor Send Content ");
     
     WriteLogFile("End Swapping Zone Neighbors Information!");
 }
