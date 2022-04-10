@@ -66,7 +66,7 @@ inline void TimeSpan::ShowTimeSpan(const string &title)
     cout << title << "time elapsed : " << GetTimeSpan() << " seconds" << "\n";
 }
 
-inline void TimeSpan::ShowTimeSpanToLogfile(const string &title)
+inline void TimeSpan::ShowTimeSpanToLogFile(const string &title)
 {
     PH_BarrierSepMode();
 

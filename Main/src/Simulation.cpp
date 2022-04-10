@@ -144,7 +144,7 @@ void Simulation::IsNeedConvert()
     GetNameExt(originalGridFile, fileMame, fileSuffix, ".");
 
     set < pair<string, int> > gridTypeMap;
-    gridTypeMap.insert(pair <string, int> ("fts",  FANTASY_TYPE  ));
+    gridTypeMap.insert(pair <string, int> ("fts",  PHENGLEI_TYPE ));
     gridTypeMap.insert(pair <string, int> ("cgns", CGNS_TYPE     ));
     gridTypeMap.insert(pair <string, int> ("grd",  PLOT3D_TYPE   ));
     gridTypeMap.insert(pair <string, int> ("uns",  FIELDVIEW_TYPE));
@@ -170,7 +170,7 @@ void Simulation::IsNeedConvert()
         TK_Exit::ExceptionExit(oss.str());
     }
 
-    if (sourceGridType != FANTASY_TYPE)
+    if (sourceGridType != PHENGLEI_TYPE)
     {
         GlobalDataBase::UpdateData("from_gtype", &sourceGridType, PHINT, 1);
         GlobalDataBase::UpdateData("from_gfile", &originalGridFile, PHSTRING, 1);

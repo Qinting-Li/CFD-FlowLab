@@ -18,32 +18,21 @@
 
 namespace PHSPACE
 {
-class Pre_GridConversion;
-
+//! 
 void CreateGrid();
+
 void ConvertGrid();
-void MultiGridConvert();
-Pre_GridConversion *GetConvertType(const string &gridFileName, int gridType, int fromGridType);
 
 void RefineGrid();
-void CombineGrid();
-void OversetGridView();
-void RepairGrid();
-void MirrorGrid();
-void StructToUnstructGrid();
-void CGNS2UnstructGrid();
-void CGNS2StructGrid();
-void Fantasy2Plot3D();
-void FantasyOld2New();
-void Ustar2PHengLEI();
-void PHengLEI2CGNS();
 
-void ReadGMSH(CGNSFactory *&factory_cgns, int &nBlocks, const string &filename);
-void GMSH2PHengLEI();
-void GridgenToMIX();
-void Gridgen2Fantasy();
-void GridgenToSingleUns();
-void GridgenToMBlockUns();
-void Plot3DToPHengLEI();
-void GridgenToPHengLEI();
+void CombineGrid();
+
+void RepairGrid();
+
+void MirrorGrid();
+
+void StructToUnstructGrid();
+
+//!
+void OversetGridView();
 }

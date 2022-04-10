@@ -26,7 +26,7 @@ class StructGrid;
 class UnstructGrid;
 
 const int MULTI_TYPE     = -1;
-const int FANTASY_TYPE   = 1;
+const int PHENGLEI_TYPE  = 1;
 const int CGNS_TYPE      = 2;
 const int PLOT3D_TYPE    = 3;
 const int FIELDVIEW_TYPE = 4;
