@@ -222,15 +222,15 @@ inline int CompositeStructBC::GetNIFace() const
 
 inline void CompositeStructBC::CreateBCRegion(uint_t nBCRegion)
 {
-    bcregions = new vector<StructBC *>(nBCRegion);
+    bcRegions = new vector<StructBC *>(nBCRegion);
 }
 
 inline void CompositeStructBC::SetBCRegion(uint_t iBCRegion, StructBC *bcregion)
 {
-    (*bcregions)[iBCRegion] = bcregion;
+    (*bcRegions)[iBCRegion] = bcregion;
 }
 
 inline int CompositeStructBC::GetnBCRegion() const
 {
-    return static_cast<int>(bcregions->size());
+    return static_cast<int>(bcRegions->size());
 }

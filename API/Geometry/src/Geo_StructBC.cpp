@@ -463,25 +463,25 @@ void StructBC::ProcessBCInfo()
 CompositeStructBC::CompositeStructBC(int zoneID)
 {
     this->zoneID = zoneID;
-    bcregions = 0;
-    id_i = 0;
-    id_j = 0;
-    id_k = 0;
-    face_of_bcregion = 0;
+    bcRegions = 0;
+    iID = 0;
+    jID = 0;
+    kID = 0;
+    bcRegionIDofIFace = 0;
 
     InitBoundaryName();
 }
 
 CompositeStructBC::~CompositeStructBC()
 {
-    if (bcregions)
+    if (bcRegions)
     {
-        for (std::size_t i = 0; i < bcregions->size(); ++ i)
+        for (std::size_t i = 0; i < bcRegions->size(); ++ i)
         {
-            delete (*bcregions)[i];
+            delete (*bcRegions)[i];
         }
     }
-    delete bcregions;
+    delete bcRegions;
 
     DeleteIndex();
 }
@@ -503,33 +503,33 @@ void CompositeStructBC::CopyCompositeBCRegion(CompositeStructBC *rightHandSide)
 
 StructBC * CompositeStructBC::GetBCRegion(uint_t iBCRegion) const
 {
-    return (*bcregions)[iBCRegion];
+    return (*bcRegions)[iBCRegion];
 }
 
 void CompositeStructBC::DeleteIndex()
 {
-    delete [] id_i;
-    delete [] id_j;
-    delete [] id_k;
-    delete [] face_of_bcregion;
+    delete [] iID;
+    delete [] jID;
+    delete [] kID;
+    delete [] bcRegionIDofIFace;
 
     //! The reason for setting zero is that DeleteIndex may be called many times.
-    id_i = NULL;
-    id_j = NULL;
-    id_k = NULL;
-    face_of_bcregion = NULL;
+    iID = NULL;
+    jID = NULL;
+    kID = NULL;
+    bcRegionIDofIFace = NULL;
 }
 
 void CompositeStructBC::DecodeIJK(int index, int &i, int &j, int &k)
 {
-    i = id_i[index];
-    j = id_j[index];
-    k = id_k[index];
+    i = iID[index];
+    j = jID[index];
+    k = kID[index];
 }
 
 void CompositeStructBC::GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k)
 {
-    int ibcregion = face_of_bcregion[iface];
+    int ibcregion = bcRegionIDofIFace[iface];
     StructBC *bcregion = this->GetBCRegion(ibcregion);
 
     int is, js, ks;
@@ -544,9 +544,9 @@ void CompositeStructBC::GetSourceIndexIJK(int iface, int ipos, int &i, int &j, i
 
 void CompositeStructBC::GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr)
 {
-    if (!face_of_bcregion) SetIFaceInfo();
+    if (!bcRegionIDofIFace) SetIFaceInfo();
 
-    int ibcregion = face_of_bcregion[iface];
+    int ibcregion = bcRegionIDofIFace[iface];
     StructBC *bcregion = this->GetBCRegion(ibcregion);
 
     int is, js, ks;
@@ -564,7 +564,7 @@ void CompositeStructBC::GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, 
 
 void CompositeStructBC::GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k)
 {
-    int ibcregion = face_of_bcregion[iface];
+    int ibcregion = bcRegionIDofIFace[iface];
     StructBC *bcregion = this->GetBCRegion(ibcregion);
 
     int is, js, ks;
@@ -579,7 +579,7 @@ void CompositeStructBC::GetTargetIndexIJK(int iface, int ipos, int &i, int &j, i
 
 void CompositeStructBC::GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    int ibcregion = face_of_bcregion[iface];
+    int ibcregion = bcRegionIDofIFace[iface];
     StructBC *bcregion = this->GetBCRegion(ibcregion);
     
     int *s_lr3d = bcregion->GetFaceDirectionIndex();
@@ -608,7 +608,7 @@ void CompositeStructBC::GetSourceIndexIJK_fornodetransfer(int iface, int &id, in
 
 void CompositeStructBC::GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    int ibcregion = face_of_bcregion[iface];
+    int ibcregion = bcRegionIDofIFace[iface];
     StructBC *bcregion = this->GetBCRegion(ibcregion);
 
     int *s_lr3d = bcregion->GetFaceDirectionIndex();
@@ -662,10 +662,10 @@ void CompositeStructBC::SetIFaceInfo()
 
     if (nIFace == 0) return;
 
-    id_i = new int [nIFace];
-    id_j = new int [nIFace];
-    id_k = new int [nIFace];
-    face_of_bcregion = new int [nIFace];
+    iID = new int [nIFace];
+    jID = new int [nIFace];
+    kID = new int [nIFace];
+    bcRegionIDofIFace = new int [nIFace];
 
     int iiface = 0;
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
@@ -682,10 +682,10 @@ void CompositeStructBC::SetIFaceInfo()
                 {
                     for (int i = imin; i <= imax; ++ i)
                     {
-                        id_i[iiface] = i;
-                        id_j[iiface] = j;
-                        id_k[iiface] = k;
-                        face_of_bcregion[iiface] = ibcregion;
+                        iID[iiface] = i;
+                        jID[iiface] = j;
+                        kID[iiface] = k;
+                        bcRegionIDofIFace[iiface] = ibcregion;
                         ++ iiface;
                     }
                 }
@@ -696,7 +696,7 @@ void CompositeStructBC::SetIFaceInfo()
 
 int * CompositeStructBC::GetIFaceInfo()
 {
-    return face_of_bcregion;
+    return bcRegionIDofIFace;
 }
 
 void CompositeStructBC::ProcessBCInfo()

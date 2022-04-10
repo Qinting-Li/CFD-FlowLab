@@ -159,6 +159,7 @@ public:
     {
         bcName = "";
         bcType = 0;
+
         bcParamDataBase = new Data_Param();
         bcFieldDataBase = new Data_Field();
     }
@@ -170,9 +171,16 @@ public:
     }
 
 private:
+    //! Boundary name of BC;
     string bcName;
+
+    //! Boundary type value of BC;
     int bcType;
+
+    //! BC control parameters.
     Data_Param *bcParamDataBase;
+
+    //! BC data pointers.
     Data_Field *bcFieldDataBase;
 
 public:
