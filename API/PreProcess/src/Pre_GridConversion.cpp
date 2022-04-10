@@ -429,11 +429,11 @@ void DumpBCNameInfo(const set< pair<int, string> > &bcNamePairSet, const string 
     PHSPACE::OpenSerialFile(file, BCNameFileName, ios_base::out);
 
     file << "# Boundary Face Information of Grid " << gridFileName << endl;
-    file << "# nBoundaryConditons : number of global boundary conditions." << endl;
+    file << "# nBoundaryConditions: number of global boundary conditions." << endl;
     file << "# bcName             : Boundary Condition Name." << endl;
     file << "# bcType(in PHengLEI): Boundary Condition Type." << endl;
     file << endl;
-    file << "int nBoundaryConditons = " << bcNamePairSet.size() << ";" << endl;
+    file << "int nBoundaryConditions = " << bcNamePairSet.size() << ";" << endl;
 
     set< pair<int, string> >::iterator iter;
     for (iter = bcNamePairSet.begin(); iter != bcNamePairSet.end(); ++ iter)
@@ -477,7 +477,7 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
     }
 
     //file << "# Boundary Face Information of Grid " << gridFileName << endl;
-    file << "# nBoundaryConditons : Number of global boundary conditions." << endl;
+    file << "# nBoundaryConditions: Number of global boundary conditions." << endl;
     file << "# bcName             : Boundary condition name." << endl;
     file << "# bcType(in PHengLEI): Boundary condition type." << endl;
     file << endl;
@@ -506,7 +506,7 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
     file << "# For more information, see examples/bin/boundary_condition.hypara file!!!" << endl;
     file << endl;
 
-    file << "int nBoundaryConditons = " << bcNamePairSet.size() << ";" << endl;
+    file << "int nBoundaryConditions = " << bcNamePairSet.size() << ";" << endl;
 
     set< pair<int, string> >::iterator iter;
     for (iter = bcNamePairSet.begin(); iter != bcNamePairSet.end(); ++ iter)
@@ -527,7 +527,6 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
     file << endl;
 
     file << "# 'bcType' is defined as following:" << endl;
-    file << "#    99: PERIODIC                  " << endl;
     file << "#    -2: WAKE                      " << endl;
     file << "#    -1: INTERFACE                 " << endl;
     file << "#    0 : NO_BOUNDARY_CONDITION     " << endl;
