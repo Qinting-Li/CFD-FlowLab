@@ -471,7 +471,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
         }
         else if (bcType == PHENGLEI::INFLOW || bcType == PHENGLEI::FARFIELD)
         {
-            if (bcParamDB->IsExist("infloboundaryConditionwParaType", PHINT, 1))
+            if (bcParamDB->IsExist("inflowParaType", PHINT, 1))
             {
                 int inflowParaType;
                 bcParamDB->GetData("inflowParaType", &inflowParaType, PHINT, 1);
