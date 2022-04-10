@@ -429,7 +429,7 @@ void DumpBCNameInfo(const set< pair<int, string> > &bcNamePairSet, const string 
     PHSPACE::OpenSerialFile(file, BCNameFileName, ios_base::out);
 
     file << "# Boundary Face Information of Grid " << gridFileName << endl;
-    file << "# nBoundaryConditions : number of global boundary conditions." << endl;
+    file << "# nBoundaryConditions: number of global boundary conditions." << endl;
     file << "# bcName             : Boundary Condition Name." << endl;
     file << "# bcType(in PHengLEI): Boundary Condition Type." << endl;
     file << endl;
@@ -477,7 +477,7 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
     }
 
     //file << "# Boundary Face Information of Grid " << gridFileName << endl;
-    file << "# nBoundaryConditions : Number of global boundary conditions." << endl;
+    file << "# nBoundaryConditions: Number of global boundary conditions." << endl;
     file << "# bcName             : Boundary condition name." << endl;
     file << "# bcType(in PHengLEI): Boundary condition type." << endl;
     file << endl;

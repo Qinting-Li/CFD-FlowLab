@@ -13391,19 +13391,19 @@ namespace PHSPACE
                         continue;
                     }
 
-                    if (structBC->CheckParamData("uWall"))
+                    if (boundaryCondition->CheckParamData("uWall"))
                     {
-                        structBC->GetParamData("uWall", &uWall, PHDOUBLE, 1);
+                        boundaryCondition->GetParamData("uWall", &uWall, PHDOUBLE, 1);
                     }
 
-                    if (structBC->CheckParamData("vWall"))
+                    if (boundaryCondition->CheckParamData("vWall"))
                     {
-                        structBC->GetParamData("vWall", &vWall, PHDOUBLE, 1);
+                        boundaryCondition->GetParamData("vWall", &vWall, PHDOUBLE, 1);
                     }
 
-                    if (structBC->CheckParamData("wWall"))
+                    if (boundaryCondition->CheckParamData("wWall"))
                     {
-                        structBC->GetParamData("wWall", &wWall, PHDOUBLE, 1);
+                        boundaryCondition->GetParamData("wWall", &wWall, PHDOUBLE, 1);
                     }
                 }
             }
@@ -13638,19 +13638,19 @@ namespace PHSPACE
                         continue;
                     }
 
-                    if (structBC->CheckParamData("uWall"))
+                    if (boundaryCondition->CheckParamData("uWall"))
                     {
-                        structBC->GetParamData("uWall", &uWall, PHDOUBLE, 1);
+                        boundaryCondition->GetParamData("uWall", &uWall, PHDOUBLE, 1);
                     }
 
-                    if (structBC->CheckParamData("vWall"))
+                    if (boundaryCondition->CheckParamData("vWall"))
                     {
-                        structBC->GetParamData("vWall", &vWall, PHDOUBLE, 1);
+                        boundaryCondition->GetParamData("vWall", &vWall, PHDOUBLE, 1);
                     }
 
-                    if (structBC->CheckParamData("wWall"))
+                    if (boundaryCondition->CheckParamData("wWall"))
                     {
-                        structBC->GetParamData("wWall", &wWall, PHDOUBLE, 1);
+                        boundaryCondition->GetParamData("wWall", &wWall, PHDOUBLE, 1);
                     }
                 }
             }
