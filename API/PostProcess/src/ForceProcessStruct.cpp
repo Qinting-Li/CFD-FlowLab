@@ -126,14 +126,14 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
 
     const int ALL_PART = -1;
-    SimpleBC *boundaryCondition = 0;
-    string partBCName = "";
-    RDouble TorqueRefX, TorqueRefY, TorqueRefZ;
+    SimpleBC *boundaryCondition = NULL;
+	string partBCName = "";
+    RDouble TorqueRefX = 0.0, TorqueRefY = 0.0, TorqueRefZ = 0.0;
 
     //! used to compute hinge moment:
     int dumpHingeMoment = 0;
-    RDouble localCoordAxis0[3];
-    RDouble localCoordAxis1[3];
+	RDouble localCoordAxis0[3] = {0.0};
+	RDouble localCoordAxis1[3] = {0.0};
     RDouble hingeMoment = 0.0;
 
     if (partID == ALL_PART)
@@ -145,14 +145,15 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     else
     {
         boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-        boundaryCondition->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-        boundaryCondition->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-        boundaryCondition->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
-        partBCName = boundaryCondition->GetBCName();
+		partBCName = boundaryCondition->GetBCName();
 
-        boundaryCondition->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
-        boundaryCondition->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
-        boundaryCondition->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
+        boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+
+        boundaryCondition->GetParamData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
+        boundaryCondition->GetParamData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
+        boundaryCondition->GetParamData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
     }
 
     using namespace IDX;

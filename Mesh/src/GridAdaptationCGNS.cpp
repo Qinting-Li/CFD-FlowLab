@@ -1478,7 +1478,6 @@ map<int,string> ElementFaceProxy::CreatFantasybctype()
     Fantasybctype[29]  = "BODY";
     Fantasybctype[30]  = "ENDNumberOfBodyOfHyperFLOW";
 
-    Fantasybctype[99]  = "PERIODIC";
     Fantasybctype[100] = "INTERIOR";
 
     Fantasybctype[1001] = "PRESSURE_INLET_PLATE";
