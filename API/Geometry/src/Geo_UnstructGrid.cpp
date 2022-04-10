@@ -2029,7 +2029,6 @@ void UnstructGrid::InitVariableWallTemperature()
     int nBCRegionUnstruct = this->GetNBCRegionUnstruct();
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        Data_Field *bcFieldDB = bcRegionUnstruct[iBCRegionUnstruct]->GetBCFieldDataBase();
 		int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
 
         if (!IsWall(bcType) && bcType != PHENGLEI::ABLATION_SURFACE)
