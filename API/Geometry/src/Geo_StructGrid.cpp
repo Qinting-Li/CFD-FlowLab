@@ -6577,7 +6577,6 @@ void StructGrid::InitVariableWallTemperature()
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
-		Data_Field *bcFieldDB = structBC->GetBCFieldDataBase();
         int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType) && BCType != PHENGLEI::ABLATION_SURFACE)
@@ -6765,7 +6764,7 @@ void StructGrid::InitVariableWallTemperature()
             WriteLogFile("Error !!!!");
         }*/
 
-        bcFieldDB->UpdateDataPtr("wallTempArray" , wallTempArray);
+        structBC->UpdateFieldDataPtr("wallTempArray" , wallTempArray);
     }
 
     delete []dataUsed;

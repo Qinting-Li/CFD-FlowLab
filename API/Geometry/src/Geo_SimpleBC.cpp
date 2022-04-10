@@ -407,18 +407,17 @@ void GlobalBoundaryCondition::BuildBodyMap()
     {
         SimpleBC * boundaryCondition = (*globalBCList)[iBC];
         int bcType = boundaryCondition->GetBCType();
-	    Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
 
         if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::ABLATION_SURFACE)
         {
             continue;
         }
 
-        bool isSetBodyName = bcParamDB->CheckDataExist("bodyName");
+        bool isSetBodyName = boundaryCondition->CheckParamData("bodyName");
         if (isSetBodyName)
         {
             string bodyName;
-            bcParamDB->GetData("bodyName",   &bodyName, PHSTRING, 1);
+            boundaryCondition->GetParamData("bodyName",   &bodyName, PHSTRING, 1);
             pair<int,string> bodyNamePair(iBC ,bodyName);
             bodyNameSet.insert(bodyNamePair);
             bodyList->insert(bodyName);
@@ -472,7 +471,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
         }
         else if (bcType == PHENGLEI::INFLOW || bcType == PHENGLEI::FARFIELD)
         {
-            if (bcParamDB->IsExist("inflowParaType", PHINT, 1))
+            if (bcParamDB->IsExist("infloboundaryConditionwParaType", PHINT, 1))
             {
                 int inflowParaType;
                 bcParamDB->GetData("inflowParaType", &inflowParaType, PHINT, 1);
@@ -481,14 +480,14 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 {
                     RDouble *prim_inf = new RDouble [nEquation];
                     SetBCInitialValuesByReynolds(bcParamDB, prim_inf);
-                    bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
                     delete [] prim_inf;
                 }
                 else if (inflowParaType == FLIGHTCONDITION)
                 {
                     RDouble *prim_inf = new RDouble [nEquation];
                     SetBCInitialValuesByHeight(bcParamDB, prim_inf);
-                    bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
                     delete [] prim_inf;
                 }
                 else if (inflowParaType == EXPERIMENTCONDITION)
@@ -499,34 +498,34 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 {
                     RDouble *prim_inf = new RDouble [nEquation];
                     SetBCInitialValuesByDensity(bcParamDB, prim_inf);
-                    bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
                     delete [] prim_inf;
                 }
                 else if (inflowParaType == TEMPERATURE_PRESSURE)
                 {
                     RDouble *prim_inf = new RDouble [nEquation];
                     SetBCInitialValuesByPressure(bcParamDB, prim_inf);
-                    bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
                     delete [] prim_inf;
                 }
                 else if (inflowParaType == MACH_TEMP_PRE)
                 {
                     RDouble *prim_inf = new RDouble [nEquation];
                     SetBCInitialValuesByMachNumberTemperaturePressure(bcParamDB, prim_inf);
-                    bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
                     delete []prim_inf;
                 }
                 else if (inflowParaType == PRIMITIVE_VARIABLES)
                 {
                     RDouble *prim_inf = new RDouble [nEquation];
                     SetBCInitialValuesByPrimitive(bcParamDB, prim_inf);
-                    bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
                     delete [] prim_inf;
                 }
                 else if (inflowParaType == TRAJECTORY)
                 {
                     RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-                    bcParamDB->UpdateData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
                 }
                 else
                 {
@@ -536,7 +535,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
             else
             {
                 RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-                bcParamDB->UpdateData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
+                boundaryCondition->UpdateParamData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
             }
         }
         else if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
@@ -547,17 +546,17 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
             if (!bcParamDB->IsExist("viscousType", PHINT, 1))
             {
                 GlobalDataBase::GetData("viscousType", &viscousType, PHINT, 1);
-                bcParamDB->UpdateData("viscousType", &viscousType, PHINT, 1);
+                boundaryCondition->UpdateParamData("viscousType", &viscousType, PHINT, 1);
             }
 
             if (!bcParamDB->IsExist("wallTemperature", PHDOUBLE, 1))
             {
                 GlobalDataBase::GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
-                bcParamDB->UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+                boundaryCondition->UpdateParamData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
             }
             else
             {
-                bcParamDB->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+                boundaryCondition->GetParamData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
                 GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
             }
         }
@@ -569,7 +568,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
 
              RDouble *prim_inf = new RDouble [nEquation];
              SetBCInitialValuesByTotalPressure(bcParamDB, prim_inf);
-             bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+             boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
              delete [] prim_inf;
 
         }
@@ -1907,8 +1906,8 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
     vector<SimpleBC *>::iterator iter;
     for (iter = globalBCList->begin(); iter != globalBCList->end(); ++ iter)
     {
-        SimpleBC *bc = *iter;
-        bcnameMap.insert(pair<string, int>(bc->GetBCName(), bc->GetBCType()));
+        SimpleBC *boundaryCondition = *iter;
+        bcnameMap.insert(pair<string, int>(boundaryCondition->GetBCName(), boundaryCondition->GetBCType()));
     }
 
     using namespace PHMPI;

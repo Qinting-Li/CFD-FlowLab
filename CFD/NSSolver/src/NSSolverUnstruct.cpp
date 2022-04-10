@@ -7036,16 +7036,15 @@ void NSSolverUnstruct::AirForceCoefParts(ActionKey *actkey, int partID, int Coor
     {
         boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
 		partBCName = boundaryCondition->GetBCName();
-		Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
 
-        bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-        bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-        bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
         
         
-        bcParamDB->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
-        bcParamDB->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
-        bcParamDB->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
+        boundaryCondition->GetParamData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
+        boundaryCondition->GetParamData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
+        boundaryCondition->GetParamData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
     }
 
     int vis_run = 0;
@@ -9910,7 +9909,6 @@ void NSSolverUnstruct::ViscousIsotropicWallBCRegion(Grid *gridIn, UnstructBC *bc
 
     //! Get the variables defined in boundarycondition.hypara file.
     Data_Param *bcParamDB = bcRegionUnstruct->GetBCParamDataBase();
-	Data_Field *bcFieldDB = bcRegionUnstruct->GetBCFieldDataBase();
     RDouble wallTemperature = 0.0;
 
     if (bcParamDB)
@@ -9934,10 +9932,10 @@ void NSSolverUnstruct::ViscousIsotropicWallBCRegion(Grid *gridIn, UnstructBC *bc
     bool wallTempArrayExist = false;
     RDouble *wallTempArray;
     int countFace = 0;
-    if (bcFieldDB->CheckDataExist("wallTempArray"))
+    if (bcRegionUnstruct->CheckFieldData("wallTempArray"))
     {
         wallTempArrayExist = true;
-        wallTempArray = reinterpret_cast <RDouble *> (bcFieldDB->GetDataPtr("wallTempArray"));
+        wallTempArray = reinterpret_cast <RDouble *> (bcRegionUnstruct->GetFieldDataPtr("wallTempArray"));
     }
 
     

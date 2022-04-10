@@ -458,11 +458,11 @@ void Force::CompForce()
         }
         else
         {
-            SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-            Data_Param *bcParamDB = bc->GetBCParamDataBase();
-            bcParamDB->GetData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLengthSpanWise", &forceReferenceLengthPart_B, PHDOUBLE, 1);
+            SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+
+			boundaryCondition->GetParamData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLengthSpanWise", &forceReferenceLengthPart_B, PHDOUBLE, 1);
             isGlobalCoordinate = true;
         }
 
@@ -681,8 +681,8 @@ void Force::DumpForce(ActionKey *actkey, int outnstep)
     {
         int bcID = partBCID[iPart];
 
-        SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-        const string &bcName = bc->GetBCName();
+        SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+        const string &bcName = boundaryCondition->GetBCName();
 
         string totalForceFileName  = actkey->filename;
         string partAircoefFileName = PHSPACE::AddSymbolToFileName(totalForceFileName, "_", bcName);
@@ -858,8 +858,8 @@ void Force::DumpAllForceData(ActionKey *actkey, int outnstep)
         }
         else
         {
-            SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-            const string &bcName = bc->GetBCName();
+            SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+            const string &bcName = boundaryCondition->GetBCName();
             partName = bcName;
         }
 
@@ -897,14 +897,14 @@ void Force::DumpAllLocalForceData(const string &partName, int partID, std::ostri
 {
     RDouble TorqueRefX, TorqueRefY, TorqueRefZ, forceReferenceAreaPart, forceReferenceLengthPart, forceReferenceLengthSpanWisePart;
     int bcID = partBCID[partID];
-    SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-    Data_Param *bcParamDB = bc->GetBCParamDataBase();
-    bcParamDB->GetData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
-    bcParamDB->GetData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
-    bcParamDB->GetData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWisePart, PHDOUBLE, 1);
-    bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-    bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-    bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+    SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+
+	boundaryCondition->GetParamData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
+    boundaryCondition->GetParamData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWisePart, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
 
     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
 
@@ -2126,20 +2126,18 @@ void Force::DumpData(DataContainer * data)
 
             partBCID[partCount] = iBC;
 
-            SimpleBC *bc = GlobalBoundaryCondition::GetBC(iBC);
-            Data_Param *bcParamDB = bc->GetBCParamDataBase();
-
+            SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(iBC);
             AerodynamicForce* aerodynamicForce = this->GetAerodynamicForce(partCount);
 
-            bcParamDB->GetData("forceReferenceArea",           &forceReferenceArea,           PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLength",         &forceReferenceLength,         PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWise, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceArea",           &forceReferenceArea,           PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLength",         &forceReferenceLength,         PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWise, PHDOUBLE, 1);
             aerodynamicForce->Initialize(angleOfAttackDenotedByRadian, angleOfSideslipDenotedByRadian, forceReferenceArea,
                 forceReferenceLength, forceReferenceLengthSpanWise);
 
-            bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-            bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-            bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
             aerodynamicForce->SetTorqueRef(TorqueRefX, TorqueRefY, TorqueRefZ);
             partCount ++;
         }
@@ -2344,8 +2342,8 @@ void Force::DumpData(DataContainer * data)
         {
             int bcID = partBCID[iComponent];
 
-            SimpleBC* bc = GlobalBoundaryCondition::GetBC(bcID);
-            const string& bcName = bc->GetBCName();
+            SimpleBC* boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+            const string& bcName = boundaryCondition->GetBCName();
             partName = bcName;
 
             aerodynamicForceContainer[iComponent]->DumpAllGlobalForceData(partName, iComponent, ossGlobalData);
