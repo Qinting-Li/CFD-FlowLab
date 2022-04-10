@@ -4664,10 +4664,9 @@ namespace PHSPACE
         else
         {
             boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-			Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
-            bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-            bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-            bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
             partBCName = boundaryCondition->GetBCName();
         }
 

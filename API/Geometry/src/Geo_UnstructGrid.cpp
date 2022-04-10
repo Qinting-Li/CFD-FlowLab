@@ -2121,7 +2121,7 @@ void UnstructGrid::InitVariableWallTemperature()
             WriteLogFile("Error !!!!");
         }
 
-        bcFieldDB->UpdateDataPtr("wallTempArray" , wallTempArray);
+        bcRegionUnstruct[iBCRegionUnstruct]->UpdateFieldDataPtr("wallTempArray" , wallTempArray);
 
     }
 

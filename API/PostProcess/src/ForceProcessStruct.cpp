@@ -146,15 +146,14 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     {
         boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
 		partBCName = boundaryCondition->GetBCName();
-		Data_Param *bcParamDB = boundaryCondition->GetBCParamDataBase();
 
-        bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-        bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-        bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+        boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
 
-        bcParamDB->GetData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
-        bcParamDB->GetData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
-        bcParamDB->GetData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
+        boundaryCondition->GetParamData("dumpHingeMoment", &dumpHingeMoment, PHINT, 1);
+        boundaryCondition->GetParamData("localCoordAxis0", localCoordAxis0, PHDOUBLE, 3);
+        boundaryCondition->GetParamData("localCoordAxis1", localCoordAxis1, PHDOUBLE, 3);
     }
 
     using namespace IDX;
