@@ -41,7 +41,7 @@ private:
     //! Data_Param is usually used to store the parameters from *.hypara file, such as refReNumber, viscousName, limitVariables, et. al.
     static Data_Param *globalParam;
 
-    //! zonal data pointers.
+    //! Zonal data pointers.
     static Data_Field *globalField;
 public:
     //! Add or update a data(with name, type, size) to global database.

@@ -1,10 +1,10 @@
-# nBoundaryConditons: number of global boundary conditions.
+# nBoundaryConditions: number of global boundary conditions.
 # bcName            : Boundary Condition Name.
 # bcType            : Boundary Condition Type.
 # dumpHingeMoment   : whether or not dump monment of hinge(0/1, if 0 the moment of hinge is zero)
 # localCoordAxis0   : lcoal coordinates axis, defined for calculation of moment of hinge.
 # localCoordAxis1   : lcoal coordinates axis, defined for calculation of moment of hinge(rotation around the axis O->Z).
-int nBoundaryConditons = 0;
+int nBoundaryConditions = 0;
 # If the boundary condition type is SOLID_SURFACE, then the parameters should be set as follows:
 string bcName = "DownWall";
 {
@@ -188,7 +188,6 @@ string bcName = "MassFlowOutlet";
   double massFlow = 0.500;
 }
 # 'bcType' is defined as following:
-#      99: PERIODIC
 #     -2 : WAKE
 #     -1 : INTERFACE
 #      0 : NO_BOUNDARY_CONDITION

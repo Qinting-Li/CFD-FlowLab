@@ -6764,7 +6764,7 @@ void StructGrid::InitVariableWallTemperature()
             WriteLogFile("Error !!!!");
         }*/
 
-        structBC->UpdateDataPtr("wallTempArray" , wallTempArray);
+        structBC->UpdateFieldDataPtr("wallTempArray" , wallTempArray);
     }
 
     delete []dataUsed;
