@@ -254,6 +254,10 @@ protected:
     void Pitching               ();
     void Yawing                 ();
     void Rolling                ();
+    
+    void RotationInXDirection   ();
+    void RotationInZDirection   ();
+    
     void XDirectionOnly         ();
     void ModifyForceAndSixDofInformationForPitchingOnly          ();
     void ModifyForceAndSixDofInformationForRollingOnly           ();
