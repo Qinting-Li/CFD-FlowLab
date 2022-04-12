@@ -57,6 +57,7 @@ private:
     //! Each face has a Boundary Condition Record.
     CompositeUnstructBC ** bcr;
 
+    CompositeUnstructBC *compositeBCRegion;
     //! The boundary condition list for each BC Region.\n
     //! it is different with **bcr,bcr is for a single face and **bcRegionUnStruct is for some face
     //! with a same bc name.

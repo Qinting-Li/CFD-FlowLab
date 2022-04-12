@@ -183,8 +183,8 @@ LIB_EXPORT void StructGrid::SetBCFaceInfo()
             MPI_Abort(MPI_COMM_WORLD, -1);
         }
     }
-    compositeBCRegion->SetNIFace(nIFace);
-    compositeBCRegion->SetIFaceInfo();
+    this->SetNIFace(nIFace);
+    if (!compositeBCRegion->GetIFaceInfo())compositeBCRegion->SetIFaceInfo();
     this->SetNBoundFace(nBoundFace);
 }
 

@@ -62,6 +62,9 @@ private:
     string bcName;
     SimpleBC * boundaryCondition;
     UnstructBC * bcRegion;
+
+    //! The BCRegions list in the current CompositeUnstructBC.
+    vector<UnstructBC *> * bcRegions;
 public:
     void SetKey(int key) { this->key = key; }
     int GetKey() const { return key; }    //! Return the key.

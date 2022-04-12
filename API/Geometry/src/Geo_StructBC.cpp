@@ -463,7 +463,6 @@ void StructBC::ProcessBCInfo()
 CompositeStructBC::CompositeStructBC(int zoneID)
 {
     this->zoneID = zoneID;
-    nIFace = -1;
     bcRegions = 0;
     iID = 0;
     jID = 0;
@@ -644,24 +643,21 @@ void CompositeStructBC::SetIFaceInfo()
 
     int nBCRegion = this->GetnBCRegion();
     int imin, imax, jmin, jmax, kmin, kmax, bcType;
-
-    int nIFace = this->GetNIFace();
-    if (nIFace == -1)
+    int nIFace = 0;
+ 
+    for (uint_t ibcregion = 0; ibcregion < nBCRegion; ++ibcregion)
     {
-        for (uint_t ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+        StructBC *bcRegion = this->GetBCRegion(ibcregion);
+
+        bcRegion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+        bcType = bcRegion->GetBCType();
+
+        if (IsInterface(bcType))
         {
-            StructBC *bcRegion = this->GetBCRegion(ibcregion);
-
-            bcRegion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
-            bcType = bcRegion->GetBCType();
-
-            if (IsInterface(bcType))
-            {
-                nIFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
-            }
+            nIFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
         }
-        this->SetNIFace(nIFace);
     }
+
     if (nIFace == 0) return;
 
     iID = new int [nIFace];
