@@ -1402,7 +1402,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                     if (distanceRecv < distanceTemp)
                     {
                         sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                        sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
@@ -1422,7 +1422,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                         if(cellZoneIDRecv > 0)
                         {
                             sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
@@ -1440,7 +1440,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                         if(cellZoneIDRecv > 0 && cellZoneIDRecv < cellZoneIDTemp)
                         {
                             sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);

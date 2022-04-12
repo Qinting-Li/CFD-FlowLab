@@ -18,6 +18,7 @@
 #include <vector>
 #include "LIB_Macro.h"
 #include "Data_ParamFieldSuite.h"
+#include "GlobalDataBase.h"
 
 namespace PHSPACE
 {
@@ -28,7 +29,12 @@ inline int GetNumberOfGhostCellLayers()
     //! different with the previous, using 2 layers temporary.
     //! the bellowing judge should be used in future.
     return 2;
-
+    //! Modify by xmu:add one layer ghost cell.
+    int ifModifyWennScheme = PHSPACE::GlobalDataBase::GetIntParaFromDB("ifModifyWennScheme");
+    if (ifModifyWennScheme == 1)
+    {
+        return 3;
+    }
     //! The bellowing judge should be used in future.
     //const int UNSTRUCTGRID = 0;
     //const int STRUCTGRID   = 1;

@@ -172,3 +172,7 @@ inline int Param_TurbSolver::GetKindOfTurbSource() const
 {
     return kindOfTurbSource;
 }
+inline int Param_TurbSolver::GetIfModifyWennScheme() const
+{
+    return ifModifyWennScheme;
+}

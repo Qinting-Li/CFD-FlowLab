@@ -1354,6 +1354,27 @@ int GetLimiterID(const string &limiter_name)
     {
         limiter_id = ILMT_3rd_Minmod_SMOOTH;
     }
+    //! Modified by xmu: new limiters.
+    else if (limiter_name.substr(0, 8) == "weno3_js")
+    {
+        limiter_id = ILMT_WENO3_JS;
+    }
+    else if (limiter_name.substr(0, 12) == "wenn3_prm211")
+    {
+        limiter_id = ILMT_WENN3_PRM211;
+    }
+    else if (limiter_name.substr(0, 8) == "wenn3_zm")
+    {
+        limiter_id = ILMT_WENN3_ZM;
+    }
+    else if (limiter_name.substr(0, 10) == "wenn3_zes2")
+    {
+        limiter_id = ILMT_WENN3_ZES2;
+    }
+    else if (limiter_name.substr(0, 10) == "wenn3_zes3")
+    {
+        limiter_id = ILMT_WENN3_ZES3;
+    }
     else
     {
         TK_Exit::ExceptionExit("this limiter does'nt exist\n");

@@ -49,6 +49,7 @@ namespace PHSPACE
         }
 
         int transitionType = parameters->GetTransitionType();
+        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
 
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -57,6 +58,12 @@ namespace PHSPACE
 
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+        //! Modify by xmu :for the additional ghost cell.
+        if (ifModifyWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
 
         Range IFACE, JFACE, KFACE;
         GetRange(ni, nj, nk, -2, 2, IFACE, JFACE, KFACE);

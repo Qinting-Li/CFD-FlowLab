@@ -145,6 +145,11 @@ const int ILMT_MINMODTEST        = 16;
 const int ILMT_MIN_VAN           = 17;
 const int ILMT_3rd_SMOOTH        = 18;
 const int ILMT_3rd_Minmod_SMOOTH = 19;
+const int ILMT_WENO3_JS = 20;        //! Modify by xmu:new limiter.
+const int ILMT_WENN3_PRM211 = 21;        //! Modify by xmu:new limiter.
+const int ILMT_WENN3_ZM = 22;        //! Modify by xmu:new limiter.
+const int ILMT_WENN3_ZES2 = 23;        //! Modify by xmu:new limiter.
+const int ILMT_WENN3_ZES3 = 24;        //! Modify by xmu:new limiter.
 
 const int INVISCID               = 0;
 const int LAMINAR                = 1;
@@ -192,6 +197,7 @@ const int NODESTOPROBE = 2;
 const int NON_GHOST       = 0;    //! These are interior cells.
 const int ONE_GHOST_LAYER = 1;    //! Their have one-layer ghost cells.
 const int TWO_GHOST_LAYER = 2;    //! Their have two-layer ghost cells.
+const int THREE_GHOST_LAYER = 3;    //! Their have three-layer ghost cells.
 
 namespace IDX
 {

@@ -61,6 +61,9 @@ public:
     //! Get iniSpeedCoef.
     RDouble GetIniSpeedCoef() const;
 
+    //! Get parameter judge whether modify Wenn Scheme.
+    int GetIfModifyWennScheme() const;
+
 private:
     RDouble MUSCLCoefXk;
     RDouble MUSCLCoefXb;
@@ -80,6 +83,8 @@ private:
     string inviscidSchemeName;
 
     RDouble iniSpeedCoef;
+
+    int ifModifyWennScheme;
 };
 
 #include "Param_NSSolverStruct.hxx"
