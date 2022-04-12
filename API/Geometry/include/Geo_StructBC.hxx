@@ -200,19 +200,9 @@ inline void StructBC::GetBoundaryFaceIndex(int i, int j, int k, int &ib, int &jb
     }
 }
 
-inline void CompositeStructBC::SetNBoundFace(int nBoundFace)
-{
-    this->nBoundFace = nBoundFace;
-}
-
 inline void CompositeStructBC::SetNIFace(int nIFace)
 {
     this->nIFace = nIFace;
-}
-
-inline int CompositeStructBC::GetNBoundFace() const
-{
-    return nBoundFace;
 }
 
 inline int CompositeStructBC::GetNIFace() const

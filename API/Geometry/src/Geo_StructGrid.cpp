@@ -138,9 +138,27 @@ LIB_EXPORT void StructGrid::CreateCompositeBCRegion(int nBCRegion)
 }
 
 LIB_EXPORT void StructGrid::SetBCFaceInfo()
-{ 
-    this->composite_bcregion->SetIFaceInfo();
-    int nBoundFace = composite_bcregion->GetNBoundFace();
+{  
+    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    
+    int imin, imax, jmin, jmax, kmin, kmax, bcType;
+    int nBoundFace = 0, nIFace = 0;
+
+    for (uint_t ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    {
+        StructBC *bcRegion = compositeBCRegion->GetBCRegion(ibcregion);
+        
+        bcRegion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+        bcType = bcRegion->GetBCType();
+       
+        nBoundFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
+       
+        if (IsInterface(bcType))
+        {
+            nIFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
+        }
+    }
 
     int ni = this->GetNI();
     int nj = this->GetNJ();
@@ -165,7 +183,8 @@ LIB_EXPORT void StructGrid::SetBCFaceInfo()
             MPI_Abort(MPI_COMM_WORLD, -1);
         }
     }
-
+    compositeBCRegion->SetNIFace(nIFace);
+    compositeBCRegion->SetIFaceInfo();
     this->SetNBoundFace(nBoundFace);
 }
 

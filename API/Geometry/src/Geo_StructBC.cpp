@@ -463,6 +463,7 @@ void StructBC::ProcessBCInfo()
 CompositeStructBC::CompositeStructBC(int zoneID)
 {
     this->zoneID = zoneID;
+    nIFace = -1;
     bcRegions = 0;
     iID = 0;
     jID = 0;
@@ -642,24 +643,25 @@ void CompositeStructBC::SetIFaceInfo()
     DeleteIndex();
 
     int nBCRegion = this->GetnBCRegion();
-    int imin, imax, jmin, jmax, kmin, kmax, bctype;
+    int imin, imax, jmin, jmax, kmin, kmax, bcType;
 
-    nIFace = 0;
-    nBoundFace = 0;
-    for (uint_t ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    int nIFace = this->GetNIFace();
+    if (nIFace == -1)
     {
-        StructBC *bcregion = this->GetBCRegion(ibcregion);
-        bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
-
-        nBoundFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
-
-        bctype = bcregion->GetBCType();
-        if (IsInterface(bctype))
+        for (uint_t ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
         {
-            nIFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
-        }
-    }
+            StructBC *bcRegion = this->GetBCRegion(ibcregion);
 
+            bcRegion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+            bcType = bcRegion->GetBCType();
+
+            if (IsInterface(bcType))
+            {
+                nIFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
+            }
+        }
+        this->SetNIFace(nIFace);
+    }
     if (nIFace == 0) return;
 
     iID = new int [nIFace];
@@ -670,11 +672,11 @@ void CompositeStructBC::SetIFaceInfo()
     int iiface = 0;
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        StructBC *bcregion = this->GetBCRegion(ibcregion);
-        bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
-        bctype = bcregion->GetBCType();
+        StructBC *bcRegion = this->GetBCRegion(ibcregion);
+        bcRegion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+        bcType = bcRegion->GetBCType();
 
-        if (IsInterface(bctype))
+        if (IsInterface(bcType))
         {
             for (int k = kmin; k <= kmax; ++ k)
             {

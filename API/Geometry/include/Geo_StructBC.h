@@ -213,9 +213,6 @@ private:
     //! The BCRegions list in the current CompositeStructBC.
     vector<StructBC *> * bcRegions;
 
-    //! The number of Boundary Faces.
-    int nBoundFace;
-
     //! The number of Interface Faces.
     int nIFace;
 
@@ -234,10 +231,10 @@ public:
 
 public:
     string GetBCName(int bcType) { return boundaryName[bcType]; }
-    void SetNBoundFace(int nBoundFace);
     void SetNIFace(int nIFace);
-    int GetNBoundFace() const;
     int GetNIFace() const;
+
+    void SetNIFace(int* bcRegionIDofIFace) { this->bcRegionIDofIFace = bcRegionIDofIFace; }
 
     void CopyCompositeBCRegion(CompositeStructBC *rightHandSide);
 
