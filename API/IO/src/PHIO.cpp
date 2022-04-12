@@ -307,7 +307,7 @@ LIB_EXPORT void ReadControlParameters()
         ReadParamInfo();
     }
 
-    BroadCastInfo();
+    BroadcastInfo();
 }
 
 LIB_EXPORT void ReadKeyInfo()
@@ -362,7 +362,7 @@ LIB_EXPORT void ReadParamInfo(const string &filename)
     file.clear();
 }
 
-LIB_EXPORT void BroadCastInfo()
+LIB_EXPORT void BroadcastInfo()
 {
     using namespace PHMPI;
     int number_of_processor = GetNumberOfProcessor();

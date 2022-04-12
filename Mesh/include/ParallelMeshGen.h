@@ -70,7 +70,7 @@ public:
     Zone * GetZone(int izone);
     bool ZoneBelongToCurrentProcessor(int zoneIndex);
     PHVector1D < int > GetNeighborZones(ZoneGridSolver * zoneGridSolver);
-    void BroadCastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor);
+    void BroadcastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor);
     void AddOneZoneNeighborToAllZonesNeighbor(PHVector1D < int > & dataOfThisZone, int zoneIndex, int targetZoneIndex);
     void InitialInterFaceInformation();
     void SwapNeighborsSendContent();

@@ -1012,7 +1012,7 @@ void ParallelMeshGen::BroadcastNeighborZonesToEachProcessor()
             neighborZones = GetNeighborZones(zoneGridSolver);
         }
         
-        this->BroadCastToEachProcessor(iZone, neighborZones);
+        this->BroadcastToEachProcessor(iZone, neighborZones);
     }
 
     //PH_Barrier();
@@ -1151,7 +1151,7 @@ void ParallelMeshGen::BroadcastNeighborZonesToEachProcessorNew()
     }
 }
 
-void ParallelMeshGen::BroadCastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor)
+void ParallelMeshGen::BroadcastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor)
 {
     PHVector1D < int > targetZones = GetAllOtherZones(zoneIndex);
 

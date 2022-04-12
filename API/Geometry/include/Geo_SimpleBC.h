@@ -151,6 +151,7 @@ namespace FLUENT_SPACE
     const int OUTFLOW            = 36;
     const int AXIS               = 37;
 }
+
 //! @brief A boundary condition base class, StructBC and UnstructBC inheriting from it.
 class SimpleBC
 {
