@@ -329,7 +329,6 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
     boundaryName[71] = "POLE1";
     boundaryName[72] = "POLE2";
     boundaryName[73] = "POLE3";
-    boundaryName[99] = "PERIODIC";
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
