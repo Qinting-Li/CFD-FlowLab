@@ -3399,7 +3399,7 @@ void Region::GridValidityCheck()
     }
     else
     {
-       if (IsReadWallDist() == true)
+       if (IsReadWalldist() == true)
         {
             //! For general CFD computing, only server processor need know the box.
             PH_Reduce(minBox, globalMinBox, 3, MPI_MIN);

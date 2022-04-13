@@ -233,7 +233,7 @@ void Simulation::RunCFD()
     int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
     if (iCodeBranch > 0)
     {
-        GenerateWallDist();
+        GenerateWalldist();
 
         SelfAdaptionRunCFD(); //! Run CFD using the adaptive method.
         return;
@@ -246,7 +246,7 @@ void Simulation::RunCFD()
 
     InitGlobalBoundaryCondition();
 
-    GenerateWallDist();
+    GenerateWalldist();
 
     //! Initialize each solver on each zone.
     InitializeSolvers();
@@ -413,7 +413,7 @@ void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
 
     InitGlobalBoundaryCondition();
 
-    GenerateWallDist();
+    GenerateWalldist();
 
     InitializeSolvers();
 
@@ -499,7 +499,7 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
     {
         DefineAndCreateSolvers();
 
-        GenerateWallDist();
+        GenerateWalldist();
     }
 
     InitGlobalBoundaryCondition();
@@ -567,7 +567,7 @@ void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
     {
         DefineAndCreateSolvers();
 
-        GenerateWallDist();
+        GenerateWalldist();
     }
 
     InitGlobalBoundaryCondition();
@@ -1263,7 +1263,7 @@ void Simulation::ComputeWallDistance()
 
     InitGlobalBoundaryCondition();
 
-    GenerateWallDist();
+    GenerateWalldist();
 
     WriteLogFile("Generate wall distance ...");
 }
