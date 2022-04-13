@@ -1497,11 +1497,14 @@ void TurbSolverUnstr::SetGhostDQLUSGS(Grid *gridIn, RDouble **dq)
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *rightCellOfFace  = grid->GetRightCellOfFace();
 
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType < 0)
         {
             continue;
@@ -1509,17 +1512,17 @@ void TurbSolverUnstr::SetGhostDQLUSGS(Grid *gridIn, RDouble **dq)
 
         if (IsWall(bcType))
         {
-            SetWallBCGhostDQLUSGS(grid, bcRegionUnstruct[iBCRegionUnstruct], dq);
+            SetWallBCGhostDQLUSGS(grid, bcRegion, dq);
         }
         //FARFIELD, SYMMETRY, INFLOW and OUTFLOW can use the same module.
         else if (bcType == PHENGLEI::FARFIELD || bcType == PHENGLEI::SYMMETRY 
             || bcType == PHENGLEI::INFLOW   || bcType == PHENGLEI::OUTFLOW)
         {
-            SetFarfieldBCGhostDQLUSGS(grid, bcRegionUnstruct[iBCRegionUnstruct], dq);
+            SetFarfieldBCGhostDQLUSGS(grid, bcRegion, dq);
         }
         else
         {
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
                 int iFace = *iter;
@@ -2126,14 +2129,17 @@ void TurbSolverUnstr::ModifyResidualOnWallBoundary(Grid *gridIn)
     using namespace PHENGLEI;
     if (viscoueType == 3)
     {
-        UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-        int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct ++)
         {
-            int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
+
             if (IsWall(bcType))
             {
-                vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+                vector<int> *faceIndex = bcRegion->GetFaceIndex();
                 for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter ++)
                 {
                     // iFace is the face number in the set of faceIndex.
@@ -2160,14 +2166,17 @@ void TurbSolverUnstr::ResetWallScalar(Grid *gridIn)
     using namespace PHENGLEI;
     if (viscoueType == 3)
     {
-        UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-        int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
+
             if (IsWall(bcType))
             {
-                vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+                vector<int> *faceIndex = bcRegion->GetFaceIndex();
                 for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
                 {
                     // iFace is the face number in the set of faceIndex.
@@ -3064,7 +3073,8 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     int *face2node = grid->GetFace2Node();
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
  
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     for (int iNode = 0; iNode < numberOfTotalNode; ++ iNode)
     {
@@ -3080,7 +3090,9 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     int nodePosition = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         int le = leftCellOfFace [iFace];
         int re = rightCellOfFace[iFace];
         if (bcType != PHENGLEI::INTERFACE)
@@ -3146,7 +3158,9 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     nodePosition = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::SYMMETRY)
         {
             for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
@@ -3168,7 +3182,10 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     {
         int le = leftCellOfFace[iFace];
         int re = iFace + numberOfTotalCell;
-        int bcType = bcRecord[iFace]->GetKey();
+        
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::SYMMETRY)
         {
             for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
@@ -3194,7 +3211,9 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     nodePosition = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::FARFIELD)
         {
             for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
@@ -3216,7 +3235,10 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     {
         int le = leftCellOfFace[iFace];
         int re = iFace + numberOfTotalCell;
-        int bcType = bcRecord[iFace]->GetKey();
+       
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::FARFIELD)
         {
             for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
@@ -3242,7 +3264,9 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     nodePosition = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
             for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
@@ -3264,7 +3288,10 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     {
         int le = leftCellOfFace[iFace];
         int re = iFace + numberOfTotalCell;
-        int bcType = bcRecord[iFace]->GetKey();
+        
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
             for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
@@ -3425,7 +3452,8 @@ void TurbSolverUnstr::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int lo
         mut[jFace] = half * (viscousTurbulence[le] + viscousTurbulence[re]);
     }
 
-    CompositeUnstructBC  **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int nMid = numberOfBoundaryFace;
     if (localEnd < numberOfBoundaryFace) nMid = localEnd;
@@ -3434,7 +3462,9 @@ void TurbSolverUnstr::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int lo
     {
         for (int iFace = localStart; iFace < nMid; ++ iFace)
         {
-            int bcType = bcRecord[iFace]->GetKey();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+            int bcType = bcRegion->GetBCType();
+
             int jFace  = iFace - localStart;
 
             le = leftCellOfFace[iFace];
@@ -3552,7 +3582,8 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC **bcRecord  = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     RDouble **flux  = faceProxy->GetFlux();
     TurbFaceValue *faceVariable = faceProxy->GetTurbFaceValue();
@@ -3668,7 +3699,8 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
 
             if (iFace < numberOfBoundaryFace)
             {
-                int bcType = bcRecord[iFace]->GetKey();
+                UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+                int bcType = bcRegion->GetBCType();
 
                 if (bcType != PHENGLEI::INTERFACE && bcType != PHENGLEI::SYMMETRY)
                 {
@@ -4070,7 +4102,9 @@ void TurbSolverUnstr::GetQlQrTurbulence(Grid *gridIn, FaceProxy *faceProxy, int 
     }
 
     //! Boundary fix.
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     int nBoundFace = grid->GetNBoundFace();
     int nMid = 0;
 
@@ -4093,15 +4127,17 @@ void TurbSolverUnstr::GetQlQrTurbulence(Grid *gridIn, FaceProxy *faceProxy, int 
 
     for (int iFace = localStart; iFace < nMid; ++ iFace)
     {
-        int BCType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         int jFace = iFace - localStart;
 
-        if (BCType == PHENGLEI::INTERFACE)
+        if (bcType == PHENGLEI::INTERFACE)
         {
             continue;
         }
 
-        if (BCType == PHENGLEI::SYMMETRY)
+        if (bcType == PHENGLEI::SYMMETRY)
         {
             for (int m = 0; m < nTurbulenceEquation; ++ m)
             {
@@ -4150,7 +4186,9 @@ void TurbSolverUnstr::GetQlQrNS(Grid *gridIn, FaceProxy *faceProxy, int localSta
     }
 
     //! Boundary fix.
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    
     int nBoundFace = grid->GetNBoundFace();
     int nMid = 0;
 
@@ -4173,10 +4211,12 @@ void TurbSolverUnstr::GetQlQrNS(Grid *gridIn, FaceProxy *faceProxy, int localSta
 
     for (int iFace = localStart; iFace < nMid; ++ iFace)
     {
-        int BCType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+       
         int jFace = iFace - localStart;
 
-        if (BCType == PHENGLEI::INTERFACE)
+        if (bcType == PHENGLEI::INTERFACE)
         {
             continue;
         }
@@ -4434,33 +4474,36 @@ void TurbSolverUnstr::Boundary(Grid *gridIn)
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     using namespace PHENGLEI;
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType < 0)
         {
             continue;
         }
         if (bcType == EXTRAPOLATION || bcType == SYMMETRY || bcType == OUTFLOW || bcType == PRESSURE_OUTLET || bcType == MASS_FLOW_OUTLET)
         {
-            OutflowBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+            OutflowBCRegion(grid, bcRegion);
         }
         else if(bcType == INFLOW || bcType == PRESSURE_INLET || bcType == MASS_FLOW_INLET)
         {
-            InflowBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+            InflowBCRegion(grid, bcRegion);
         }
         else if(IsWall(bcType))
         {
-            WallBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+            WallBCRegion(grid, bcRegion);
         }
         else if (bcType == FARFIELD)
         {
-            FarfieldBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+            FarfieldBCRegion(grid, bcRegion);
         }else
         {
-            OutflowBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+            OutflowBCRegion(grid, bcRegion);
         }
     }
 }

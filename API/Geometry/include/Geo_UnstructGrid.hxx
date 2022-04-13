@@ -67,15 +67,6 @@ inline void UnstructGrid::SetBCRecord(CompositeUnstructBC **bcr)
     this->bcr = bcr;
 }
 
-inline void UnstructGrid::SetBCRegionUnstruct(UnstructBC **bcRegionUnStruct)
-{
-    this->bcRegionUnstruct = bcRegionUnstruct;
-}
-
-inline void UnstructGrid::SetNBCRegionUnstruct(int nBCRegionUnstruct)
-{
-    this->nBCRegionUnstruct = nBCRegionUnstruct;
-}
 
 inline void UnstructGrid::SetBlankIndex(int *iBlank)
 {
@@ -288,14 +279,24 @@ inline CompositeUnstructBC **UnstructGrid::GetBCRecord(void) const
     return bcr;
 }
 
+inline CompositeUnstructBC * UnstructGrid::GetUnstructBCRegion(void) const
+{
+    return unstructBCRegion;
+}
+
+inline void UnstructGrid::CreateUnstructBCRegion(int nBCRegion)
+{
+    if (!unstructBCRegion)
+    {
+        unstructBCRegion = new CompositeUnstructBC(this->GetZoneID());
+    }
+
+    unstructBCRegion->CreatenBCRegion(nBCRegion);
+}
+
 inline RDouble *UnstructGrid::GetNormalDistanceOfC2C(void) const
 {
     return normalDistanceC2C;
-}
-
-inline int UnstructGrid::GetNBCRegionUnstruct(void) const
-{
-    return nBCRegionUnstruct;
 }
 
 inline int *UnstructGrid::GetBlankIndex(void) const

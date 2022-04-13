@@ -1161,7 +1161,7 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
     InterfaceInfo *interfaceInfo = 0;
     grid->SetInterfaceInfo(interfaceInfo);
 
-    grid->SpecifyBC();
+    grid->SpecifyRightCellofBC();
 
     file.close();
 }
@@ -1343,7 +1343,7 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
     InterfaceInfo *interfaceInfo = 0;
     grid->SetInterfaceInfo(interfaceInfo);
 
-    grid->SpecifyBC();
+    grid->SpecifyRightCellofBC();
 
     infile.close();
     infile.clear();

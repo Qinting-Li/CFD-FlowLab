@@ -57,14 +57,7 @@ private:
     //! Each face has a Boundary Condition Record.
     CompositeUnstructBC ** bcr;
 
-    CompositeUnstructBC *compositeBCRegion;
-    //! The boundary condition list for each BC Region.\n
-    //! it is different with **bcr,bcr is for a single face and **bcRegionUnStruct is for some face
-    //! with a same bc name.
-    UnstructBC **bcRegionUnstruct;
-
-    //! The number of BC Region,i.e. the number of different BC names.
-    int nBCRegionUnstruct;
+    CompositeUnstructBC *unstructBCRegion;
 
     //! The volume condition list, without using at the moment.\n
     //CompositeUnstructBC **vcr;
@@ -186,12 +179,6 @@ public:
     //! Set the boundary condition records.
     void SetBCRecord(CompositeUnstructBC **bcr);
 
-    //! Set the boundary Region condition.
-    void SetBCRegionUnstruct(UnstructBC **bcr);
-
-    //! Set the boundary Region condition.
-    void SetNBCRegionUnstruct(int nBCRegionUnstruct);
-
     //! Set the left cell list of each face.
     void SetLeftCellOfFace(int *left_cell_of_face_in);
 
@@ -238,18 +225,19 @@ public:
 
     //! Return the boundary condition records.
     CompositeUnstructBC **GetBCRecord() const;
+    
+    //! Create composite boundary condition region (allocate memory for composite_bcregion).
+    LIB_EXPORT void CreateUnstructBCRegion(int nBCRegion);
 
+    //! Return composite boundary condition region pointer (composite_bcregion).
+    CompositeUnstructBC * GetUnstructBCRegion() const;
+   
     RDouble * GetNormalDistanceOfC2C() const;
 
-    //! Get the boundary Region condition.
-    UnstructBC ** GetBCRegionUnstruct();
 
     vector <int> & GetBoundaryConditionType();
 
     vector <int> & GetLocalToGlobalNodesMap();
-
-    //! Set the boundary Region condition.
-    int GetNBCRegionUnstruct() const;
 
     //! Get the left cell list of each face.
     int * GetLeftCellOfFace() const;
@@ -546,7 +534,7 @@ public:
 
     void AllocateWalldist();
 
-    void SpecifyBC();
+    void SpecifyRightCellofBC();
 
     //! Return the gradient computed by ggnode.
     //! @param[in] qnode : the flow value on the point.

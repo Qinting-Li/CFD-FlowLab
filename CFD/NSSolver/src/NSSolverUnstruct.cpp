@@ -2263,11 +2263,16 @@ void NSSolverUnstruct::ComputeFirstLayerGridHeight(Grid *gridIn)
     RDouble *firstLayerHeight = reinterpret_cast <RDouble *> (grid->GetDataPtr("firstLayerHeight"));
 
     using namespace IDX;
-    CompositeUnstructBC ** bcr = grid->GetBCRecord();
+
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
     {
-        int type = bcr[ iFace ]->GetKey();
-        if (!IsWall(type) && type != PHENGLEI::ABLATION_SURFACE)
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
+        if (!IsWall(bcType) && bcType != PHENGLEI::ABLATION_SURFACE)
         {
             continue;
         }
@@ -2387,7 +2392,9 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
     int **face2nodeArray      = grid->GetFace2NodeArray();
 
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
@@ -2403,23 +2410,32 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
     int * nodeBC = NewPointer< int > (nTotalNode);
     PHSPACE::SetField(nodeBC, PHENGLEI::NO_BOUNDARY_CONDITION, nTotalNode);
 
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRecord[iFace]->GetKey();
-        if(bcType == PHENGLEI::SOLID_SURFACE)
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (bcType == PHENGLEI::SOLID_SURFACE)
         {
-            //! Solid surface has the highest priority.
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
-            {            
-                int point = face2nodeArray[iFace][jNode];
-                nodeBC[point] = bcType;
-            } 
-        }       
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+                {            
+                    int point = face2nodeArray[iFace][jNode];
+                    nodeBC[point] = bcType;
+                } 
+            }
+        }
     }
+   
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if(bcType == PHENGLEI::FARFIELD)
         {
             //! Far field has the second highest priority.
@@ -2438,7 +2454,9 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::FARFIELD ||
            bcType == PHENGLEI::SYMMETRY || bcType == PHENGLEI::INTERFACE)
         {
@@ -2466,7 +2484,9 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
     //! Init q on BC faces.
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::SYMMETRY)
         {
             continue;
@@ -2484,101 +2504,119 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
     }
 
     //! Step1: solid surface.
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRecord[iFace]->GetKey();
-
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                int point = face2nodeArray[iFace][jNode];
-
-                RDouble dx = x[point] - xfc[iFace];
-                RDouble dy = y[point] - yfc[iFace];
-                RDouble dz = z[point] - zfc[iFace];
-                RDouble dist = DISTANCE(dx, dy, dz);
-                RDouble weightTemp = 1.0 / dist;                
-
-                for (int m = 0; m < nEquation; ++ m)
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
-                    RDouble faceQtemp = qOnBCFace[m][iFace];
-                    qNode[m][point] += faceQtemp * weightTemp;
-                }            
-                tNode[0][point] += qOnBCFace[nEquation][iFace] * weightTemp;
+                    int point = face2nodeArray[iFace][jNode];
 
-                nodeWeight[point] += weightTemp;
+                    RDouble dx = x[point] - xfc[iFace];
+                    RDouble dy = y[point] - yfc[iFace];
+                    RDouble dz = z[point] - zfc[iFace];
+                    RDouble dist = DISTANCE(dx, dy, dz);
+                    RDouble weightTemp = 1.0 / dist;                
+
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        RDouble faceQtemp = qOnBCFace[m][iFace];
+                        qNode[m][point] += faceQtemp * weightTemp;
+                    }            
+                    tNode[0][point] += qOnBCFace[nEquation][iFace] * weightTemp;
+
+                    nodeWeight[point] += weightTemp;
+                }
             }
-        }               
+        }
     }
-
+    
     //! Step2: Far-field.
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRecord[iFace]->GetKey();
-
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
         if (bcType == PHENGLEI::FARFIELD)
         {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                int point = face2nodeArray[iFace][jNode];
-                if(nodeBC[point] == PHENGLEI::SOLID_SURFACE)
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
-                    continue;
+                    int point = face2nodeArray[iFace][jNode];
+                    if(nodeBC[point] == PHENGLEI::SOLID_SURFACE)
+                    {
+                        continue;
+                    }
+
+                    RDouble dx = x[point] - xfc[iFace];
+                    RDouble dy = y[point] - yfc[iFace];
+                    RDouble dz = z[point] - zfc[iFace];
+                    RDouble dist = DISTANCE(dx, dy, dz);
+                    RDouble weightTemp = 1.0 / dist;                
+
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        RDouble faceQtemp = qOnBCFace[m][iFace];
+                        qNode[m][point] += faceQtemp * weightTemp;
+                    }            
+                    tNode[0][point] += qOnBCFace[nEquation][iFace] * weightTemp;
+
+                    nodeWeight[point] += weightTemp;                
                 }
-                
-                RDouble dx = x[point] - xfc[iFace];
-                RDouble dy = y[point] - yfc[iFace];
-                RDouble dz = z[point] - zfc[iFace];
-                RDouble dist = DISTANCE(dx, dy, dz);
-                RDouble weightTemp = 1.0 / dist;                
-
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    RDouble faceQtemp = qOnBCFace[m][iFace];
-                    qNode[m][point] += faceQtemp * weightTemp;
-                }            
-                tNode[0][point] += qOnBCFace[nEquation][iFace] * weightTemp;
-
-                nodeWeight[point] += weightTemp;                
             }
-        }               
+        }
     }
 
     //! Step3: other BC except solid surface/far field/symmetry/Interface.
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRecord[iFace]->GetKey();
-
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
         if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::FARFIELD && 
             bcType != PHENGLEI::SYMMETRY      && bcType != PHENGLEI::INTERFACE)
         {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                int point = face2nodeArray[iFace][jNode];
-                if(nodeBC[point] == PHENGLEI::SOLID_SURFACE || nodeBC[point] == PHENGLEI::FARFIELD)
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
-                    continue;
+                    int point = face2nodeArray[iFace][jNode];
+                    if(nodeBC[point] == PHENGLEI::SOLID_SURFACE || nodeBC[point] == PHENGLEI::FARFIELD)
+                    {
+                        continue;
+                    }
+
+                    RDouble dx = x[point] - xfc[iFace];
+                    RDouble dy = y[point] - yfc[iFace];
+                    RDouble dz = z[point] - zfc[iFace];
+                    RDouble dist = DISTANCE(dx, dy, dz);
+                    RDouble weightTemp = 1.0 / dist;                
+
+                    for (int m = 0; m < nEquation; ++ m)
+                    {
+                        RDouble faceQtemp = qOnBCFace[m][iFace];
+                        qNode[m][point] += faceQtemp * weightTemp;
+                    }            
+                    tNode[0][point] += qOnBCFace[nEquation][iFace] * weightTemp;
+
+                    nodeWeight[point] += weightTemp;                
                 }
-
-                RDouble dx = x[point] - xfc[iFace];
-                RDouble dy = y[point] - yfc[iFace];
-                RDouble dz = z[point] - zfc[iFace];
-                RDouble dist = DISTANCE(dx, dy, dz);
-                RDouble weightTemp = 1.0 / dist;                
-
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    RDouble faceQtemp = qOnBCFace[m][iFace];
-                    qNode[m][point] += faceQtemp * weightTemp;
-                }            
-                tNode[0][point] += qOnBCFace[nEquation][iFace] * weightTemp;
-
-                nodeWeight[point] += weightTemp;                
             }
-        }               
+        }
     }
-
+   
     //! Step4: Now the interior points.
     //!        Importantly, the symmetry points are used as interior points.
     int ** cell2NodeArray       = grid->GetCell2NodeArray();
@@ -4500,11 +4538,14 @@ void NSSolverUnstruct::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int l
     //! Check if there are boundary faces. If no, return.
     if (localStart < nBoundFace)
     {
-        CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+        
         RDouble tw = tWall / refDimensionalTemperature;
         for (int iFace = localStart; iFace < nMid; ++ iFace)
         {
-            int bcType = bcRecord[iFace]->GetKey();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+            int bcType = bcRegion->GetBCType();
             int jFace  = iFace - localStart;
 
             le = leftCellOfFace[iFace];
@@ -4523,7 +4564,7 @@ void NSSolverUnstruct::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int l
                 RDouble uWall = 0.0;
                 RDouble vWall = 0.0;
                 RDouble wWall = 0.0;
-                Data_Param *bcData  = bcRecord[iFace]->GetBCRegion()->GetBCParamDataBase();
+                Data_Param *bcData  = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace])->GetBCParamDataBase();
                 if(bcData)
                 {
                     if (bcData->IsExist("uWall", PHDOUBLE, 1))
@@ -4571,7 +4612,8 @@ void NSSolverUnstruct::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int lo
     int *leftCellofFace = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     RDouble **dqdx = reinterpret_cast <RDouble **> (gridIn->GetDataPtr("gradPrimtiveVarX"));
     RDouble **dqdy = reinterpret_cast <RDouble **> (gridIn->GetDataPtr("gradPrimtiveVarY"));
@@ -4824,7 +4866,8 @@ void NSSolverUnstruct::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int lo
 
             if (iFace < nBoundFace)
             {
-                int bcType = bcRecord[iFace]->GetKey();
+                UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+                int bcType = bcRegion->GetBCType();
 
                 if (bcType != PHENGLEI::INTERFACE)
                 {
@@ -4976,76 +5019,78 @@ void NSSolverUnstruct::Boundary(Grid *gridIn)
     
     int isViscous = parameters->IsViscous();
 
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
         if (bcType < 0)
         {
             continue;
         }
         else if (bcType == EXTRAPOLATION)
         {
-            OutflowBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+            OutflowBCRegion(grid, bcRegion);
         }
         else if (IsWall(bcType))
         {
             if (!isViscous)
             {
-                SymmetryBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+                SymmetryBCRegion(grid, bcRegion);
             }
             else if (wallTemperature <= 0.0)
             {
-                ViscousAdiabaticWallBCRegion(gridIn,bcRegionUnstruct[iBCRegionUnstruct]);
+                ViscousAdiabaticWallBCRegion(gridIn,bcRegion);
             }
             else
             {
-                ViscousIsotropicWallBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+                ViscousIsotropicWallBCRegion(grid, bcRegion);
             }
         }
         else if (bcType == SYMMETRY)
         {
-            SymmetryBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+            SymmetryBCRegion(grid, bcRegion);
         }
         else if (bcType == FARFIELD)
         {
             if (ifLowSpeedPrecon == 0)
             {
-                FarfieldBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+                FarfieldBCRegion(grid, bcRegion);
             }
             else
             {
-                PreconFarfieldBCRegion(grid, bcRegionUnstruct[iBCRegionUnstruct]);
+                PreconFarfieldBCRegion(grid, bcRegion);
             }
         }
         else if (bcType == INFLOW)
         {
-            InflowBCRegion(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            InflowBCRegion(gridIn, bcRegion);
         }
         else if (bcType == OUTFLOW)
         {
-            OutflowBCRegion(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            OutflowBCRegion(gridIn, bcRegion);
         }
         else if (bcType == PRESSURE_OUTLET)
         {
-            PressureOutletBCRegion(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            PressureOutletBCRegion(gridIn, bcRegion);
         }
         else if (bcType == PRESSURE_INLET)
         {
-            PressureInletBCRiemannRegion(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            PressureInletBCRiemannRegion(gridIn, bcRegion);
         }
         else if (bcType == MASS_FLOW_INLET)
         {
-            MassFlowInletBCRegion(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            MassFlowInletBCRegion(gridIn, bcRegion);
         }
         else if (bcType == MASS_FLOW_OUTLET)
         {
-            MassFlowOutletBCRegion(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            MassFlowOutletBCRegion(gridIn, bcRegion);
         }
         else if (bcType == OVERSET)
         {
-            OutflowBCRegion(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            OutflowBCRegion(gridIn, bcRegion);
         }
         else
         {
@@ -5059,18 +5104,21 @@ void NSSolverUnstruct::ComputeMassFlow(Grid *gridIn)
     UnstructGrid *grid = UnstructGridCast(gridIn);
     using namespace PHENGLEI;
 
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        
         if (bcType == INFLOW)
         {
-            ComputeMassInFlow(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            ComputeMassInFlow(gridIn, bcRegion);
         }
         else if (bcType == OUTFLOW)
         {
-            ComputeMassOutFlow(gridIn, bcRegionUnstruct[iBCRegionUnstruct]);
+            ComputeMassOutFlow(gridIn, bcRegion);
         }
     }
 }
@@ -5177,7 +5225,9 @@ void NSSolverUnstruct::BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int l
     RDouble *faceVelocityX = grid->GetFaceVelocityX();
     RDouble *faceVelocityY = grid->GetFaceVelocityY();
     RDouble *faceVelocityZ = grid->GetFaceVelocityZ();
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
@@ -5210,10 +5260,11 @@ void NSSolverUnstruct::BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int l
 
     for (int iFace = localStart; iFace < nMid; ++ iFace)
     {
-        int BCType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
         int jFace = iFace - localStart;
 
-        if (BCType != PHENGLEI::SOLID_SURFACE && BCType != PHENGLEI::SYMMETRY)
+        if (bcType != PHENGLEI::SOLID_SURFACE && bcType != PHENGLEI::SYMMETRY)
         {
             continue;
         }
@@ -5228,7 +5279,7 @@ void NSSolverUnstruct::BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int l
             qR[m][jFace] = temp;
         }
 
-        if (BCType == PHENGLEI::SYMMETRY)
+        if (bcType == PHENGLEI::SYMMETRY)
         {
             RDouble vn = 2.0 * (xfn[iFace] * qL[IU][jFace] + yfn[iFace] * qL[IV][jFace] + zfn[iFace] * qL[IW][jFace]);
 
@@ -5239,12 +5290,12 @@ void NSSolverUnstruct::BoundaryQlQrFix(Grid *gridIn, FaceProxy *faceProxy, int l
             qR[IP][jFace] = qL[IP][jFace];
         }
 
-        if (BCType == PHENGLEI::SOLID_SURFACE && isViscous)
+        if (bcType == PHENGLEI::SOLID_SURFACE && isViscous)
         {
             RDouble uWall = 0.0;
             RDouble vWall = 0.0;
             RDouble wWall = 0.0;                
-            Data_Param *bcData  = bcRecord[iFace]->GetBCRegion()->GetBCParamDataBase();
+            Data_Param *bcData  = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace])->GetBCParamDataBase();
             if(bcData)
             {
                 if (bcData->IsExist("uWall", PHDOUBLE, 1))
@@ -5828,6 +5879,9 @@ void NSSolverUnstruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPr
 
     if (nNegativeCell > 0)
     {
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
         cout.setf(ios::scientific);
         cout.precision(4);
         cout << "      Warning: negative pressure appears in " << nNegativeCell << " cells";
@@ -5852,8 +5906,8 @@ void NSSolverUnstruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPr
                 }
 
                 isInteriorCell = 0;
-                CompositeUnstructBC **bcr = grid->GetBCRecord();
-                int bcType = bcr[faceID]->GetKey();
+                UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[faceID]);
+                int bcType = bcRegion->GetBCType();
                 cout << "            face bcType = " << bcType << endl;
             }
         }
@@ -5888,25 +5942,28 @@ void NSSolverUnstruct::SetGhostDQLUSGS(Grid *gridIn, RDouble **dq, RDouble **q)
     using namespace PHSPACE;
     using namespace GAS_SPACE; 
 
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::SYMMETRY || (IsWall(bcType) && !isViscous))
         {
-            SetSymmBCGhostDQLUSGS(grid, bcRegionUnstruct[iBCRegionUnstruct], dq, q);
+            SetSymmBCGhostDQLUSGS(grid, bcRegion, dq, q);
         }
         else if (IsWall(bcType) && isViscous)
         {
-            SetWallBCGhostDQLUSGS(grid, bcRegionUnstruct[iBCRegionUnstruct], dq, q);
+            SetWallBCGhostDQLUSGS(grid, bcRegion, dq, q);
         }
         else if (bcType == PHENGLEI::EXTRAPOLATION)
         {
-            SetExtraBCGhostDQLUSGS(grid, bcRegionUnstruct[iBCRegionUnstruct], dq, q);
+            SetExtraBCGhostDQLUSGS(grid, bcRegion, dq, q);
         }else
         {
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
                 // iFace is the face number in the set of faceIndex.
@@ -7105,14 +7162,15 @@ void NSSolverUnstruct::AirForceCoefParts(ActionKey *actkey, int partID, int Coor
     using namespace IDX;
 
     // get the bcRegion information of unstruct grid.
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     // cycle all bcregions and find the solid surface type of boundary.
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
-        string bcName = bcRegionUnstruct[iBCRegionUnstruct]->GetBCName();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
 
         // if the bc type is wall, calculate the wall coefficient.
         if(bcType == PHENGLEI::SOLID_SURFACE)
@@ -7121,7 +7179,7 @@ void NSSolverUnstruct::AirForceCoefParts(ActionKey *actkey, int partID, int Coor
             {
                 continue;
             }
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             int iFace, le, re;
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
@@ -7341,8 +7399,9 @@ void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int
     int nsolid_surface = grid->GetNumberOfWallCell();
 
     // get the BCRegion information of unstruct grid.
-    UnstructBC** bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
     int nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
 
     int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
@@ -7352,8 +7411,9 @@ void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int
     // cycle all bcregions and find the solid surface type of boundary.
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
-        string bcName = bcRegionUnstruct[iBCRegionUnstruct]->GetBCName();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
 
         BasicAerodynamicForce tmpBasicAerodynamicForce;
         // if the bc type is wall, calculate the wall coefficient.
@@ -7373,7 +7433,7 @@ void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int
                     {
                         tmpBasicAerodynamicForce.SetMomentReferencePoint(TorqueRefXGlobal, TorqueRefYGlobal, TorqueRefZGlobal);
 
-                        vector<int>* faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+                        vector<int>* faceIndex = bcRegion->GetFaceIndex();
                         int iFace, le, re;
                         for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
                         {
@@ -7540,7 +7600,9 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
     int *node_number_of_each_face  = grid->GetNodeNumberOfEachFace();
     int *nodePosi  = grid->GetFace2NodeSubscript();
     int *face2node = grid->GetFace2Node();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     int nTotalCell = grid->GetNTotalCell();
     int nTotalNode = grid->GetNTotalNode();
@@ -7591,14 +7653,13 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
     RDouble *facePW    = new RDouble[nBoundFace]();
 
     //! Compute cp and cf on wall face.
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
         if (IsWall(bcType))
         {
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
                 // iFace is the face number in the set of faceIndex.
@@ -7761,10 +7822,12 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
 
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
+
             if (IsWall(bcType))
             {
-                vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+                vector<int> *faceIndex = bcRegion->GetFaceIndex();
                 for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
                 {
                     // iFace is the face number in the set of faceIndex.
@@ -7793,10 +7856,12 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
         if (IsWall(bcType))
         {
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
                 int iFace = *iter;
@@ -7804,17 +7869,17 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
                 lableCell[le] = 1;
             }
         }
-    }
-
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-    {
-        int bcType = bcr[iFace]->GetKey();
         if (bcType == INTERFACE)
         {
-            int cL = leftCellofFace[iFace];
-            if (lableCell[cL] == 1)
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                lableCell[cL] = 2;
+                int iFace = *iter;
+                int cL = leftCellofFace[iFace];
+                if (lableCell[cL] == 1)
+                {
+                    lableCell[cL] = 2;
+                }
             }
         }
     }
@@ -7833,10 +7898,12 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
         if (IsWall(bcType))
         {
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
                 int iFace = *iter;
@@ -7884,10 +7951,12 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
         if (IsWall(bcType))
         {
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
                 int iFace = *iter;
@@ -7906,6 +7975,32 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
                 }
             }
         }
+        if (bcType == INTERFACE)
+        {
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                int iFace = *iter;
+                int cR = rightCellofFace[iFace];
+                if (ABS(cellQ[cR]) > SMALL)
+                {
+                    for (int iNode = nodePosi[iFace]; iNode < nodePosi[iFace+1]; ++ iNode)
+                    {
+                        int nodeIndex = face2node[iNode];
+                        if (nCell[nodeIndex] != 0)
+                        {
+                            nodeCP[nodeIndex] += cellCP[cR];
+                            nodeCF[nodeIndex] += cellCF[cR];
+                            if (wallTemperature >= 0)
+                            {
+                                nodeQ[nodeIndex] += cellQ[cR];
+                            }
+                            nCell[nodeIndex] ++;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     for (int iNode = 0; iNode < nTotalNode; ++ iNode)
@@ -7918,26 +8013,33 @@ void NSSolverUnstruct::CpDistriCoef(ActionKey *actkey)
     }
 
     //! For interface.
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == INTERFACE)
         {
-            int cR = rightCellofFace[iFace];
-            if (ABS(cellQ[cR]) > SMALL)
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                for (int iNode = nodePosi[iFace]; iNode < nodePosi[iFace+1]; ++ iNode)
+                int iFace = *iter;
+                int cR = rightCellofFace[iFace];
+                if (ABS(cellQ[cR]) > SMALL)
                 {
-                    int nodeIndex = face2node[iNode];
-                    if (nCell[nodeIndex] != 0)
+                    for (int iNode = nodePosi[iFace]; iNode < nodePosi[iFace+1]; ++ iNode)
                     {
-                        nodeCP[nodeIndex] += cellCP[cR];
-                        nodeCF[nodeIndex] += cellCF[cR];
-                        if (wallTemperature >= 0)
+                        int nodeIndex = face2node[iNode];
+                        if (nCell[nodeIndex] != 0)
                         {
-                            nodeQ[nodeIndex] += cellQ[cR];
+                            nodeCP[nodeIndex] += cellCP[cR];
+                            nodeCF[nodeIndex] += cellCF[cR];
+                            if (wallTemperature >= 0)
+                            {
+                                nodeQ[nodeIndex] += cellQ[cR];
+                            }
+                            nCell[nodeIndex] ++;
                         }
-                        nCell[nodeIndex] ++;
                     }
                 }
             }
@@ -8391,25 +8493,42 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
     int nXStand = 0;
     int nBoundFace  = grid->GetNBoundFace();
     RDouble* xfc = grid->GetFaceCenterX();
-    CompositeUnstructBC ** bcr = grid->GetBCRecord();
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+   
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+    
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int type = bcr[ iFace ]->GetKey();
-        if (type == PHENGLEI::SOLID_SURFACE || type == PHENGLEI::SYMMETRY)
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY)
         {
-            ++ nXStand;
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                ++ nXStand;
+            }
+
         }
     }
 
     // Get the x stand position.
     RDouble* xOfStand = new RDouble [nXStand];
     nXStand = 0;
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int type = bcr[ iFace ]->GetKey();
-        if (type == PHENGLEI::SOLID_SURFACE || type == PHENGLEI::SYMMETRY)
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY)
         {
-            xOfStand[nXStand++] = xfc[iFace];
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                int iFace = *iter;
+                xOfStand[nXStand++] = xfc[iFace];
+            }
+
         }
     }
 
@@ -8563,10 +8682,15 @@ void NSSolverUnstruct::SliceVisualization(Grid *gridIn, ActionKey *actkey, RDoub
 
     RDouble Small = 1.0e-10;
     int nCount = 0;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+ 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcr[ iFace ]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int bcType = bcRegion->GetBCType();
 
         if (bcType != PHENGLEI::SOLID_SURFACE)
         {
@@ -10557,17 +10681,19 @@ void NSSolverUnstruct::calculateBCArea(Grid *gridIn, UnstructBC *bcRegionUnstruc
         Grid * iGrid = PHSPACE::GetGrid(iZoneID);
         UnstructGrid *grid = UnstructGridCast(iGrid);      
         
-        UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-        int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            string jBCName = bcRegionUnstruct[iBCRegionUnstruct]->GetBCName();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+            string jBCName = bcRegion->GetBCName();
 
             //judge the same BC region according the BC name.
             if (jBCName == bcName)
             {
                 int iFace;
-                vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+                vector<int> *faceIndex = bcRegion->GetFaceIndex();
                 RDouble   *area    = grid->GetFaceArea();
                 for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
                 {
@@ -10589,15 +10715,17 @@ void NSSolverUnstruct::calculateBCArea(Grid *gridIn, UnstructBC *bcRegionUnstruc
         Grid * iGrid = PHSPACE::GetGrid(iZoneID);
         UnstructGrid *grid = UnstructGridCast(iGrid); 
 
-        UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-        int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            string jBCName = bcRegionUnstruct[iBCRegionUnstruct]->GetBCName();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+            string jBCName = bcRegion->GetBCName();
 
             if (jBCName == bcName)
             {
-                Data_Param *bcData = bcRegionUnstruct[iBCRegionUnstruct]->GetBCParamDataBase();
+                Data_Param *bcData = bcRegion->GetBCParamDataBase();
                 bcData->UpdateData("BCTotalArea", &BCTotalArea, PHDOUBLE, 1);
             }
         }                       
@@ -10623,18 +10751,20 @@ void NSSolverUnstruct::calculateMassFluxRatio(Grid *gridIn, UnstructBC *bcRegion
         Grid * iGrid = PHSPACE::GetGrid(iZoneID);
         UnstructGrid *grid = UnstructGridCast(iGrid);      
 
-        UnstructBC **bcRegionUnstructLocal = grid->GetBCRegionUnstruct();
-        int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
         RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            string jBCName = bcRegionUnstructLocal[iBCRegionUnstruct]->GetBCName();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+            string jBCName = bcRegion->GetBCName();
             
             //judge the same BC region according the BC name.
             if (jBCName == bcName)
             {
                 int iFace;
-                vector<int> *faceIndex = bcRegionUnstructLocal[iBCRegionUnstruct]->GetFaceIndex();
+                vector<int> *faceIndex = bcRegion->GetFaceIndex();
                 RDouble *area = grid->GetFaceArea();
                 int *leftCellofFace  = grid->GetLeftCellOfFace();
                 RDouble *xfn = grid->GetFaceNormalX();
