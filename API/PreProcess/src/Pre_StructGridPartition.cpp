@@ -302,9 +302,16 @@ void Pre_StrGridPartition::SetWallDist()
         StructGrid *Ordinary_grid = StructGridCast(OrdinaryGrid[iBasic]);
 
         WriteGridWallDist(grid, Ordinary_grid, nst, ned);
+
+        grid->SetOrdinaryGridIndex(iBasic);
+        grid->SetOrdinaryDimStartIndex(&nst[0]);
+        grid->SetOrdinaryDimEndIndex(&ned[0]);
     }
 
-    cout << "\nWrite ParititionGrids' WallDist completed ... \n" << endl;
+    if (partitionWallDist)
+    {
+        cout << "\nWrite ParititionGrids' WallDist completed ... \n" << endl;
+    }
 }
 
 void Pre_StrGridPartition::WriteGridWallDist(StructGrid *grid, StructGrid *Ordinary_grid, vector< int > &nst, vector< int > &ned)

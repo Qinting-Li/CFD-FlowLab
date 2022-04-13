@@ -275,6 +275,7 @@ void IO_HDF5Write::WriteStructGrid(hid_t loc_id, Grid *gridIn)
     WriteInterfaceInfo(grpData, gridIn);
     WriteStrBCName(grpData, gridIn);
     WriteLnkInfo(grpData, gridIn, gridID);
+    WritePartitionInfo(grpData, gridIn, gridID);
 
     H5Gclose(grpData);
 }
@@ -652,6 +653,29 @@ void IO_HDF5Write::WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID)
 
     CreateAndWriteData(grpData, "LnkInfor", nBCLnkTotal * 2, 7, PHINT, LnkInfor[0]);
     DelPointer2(LnkInfor);
+
+    H5Gclose(grpData);
+}
+
+void IO_HDF5Write::WritePartitionInfo(hid_t loc_id, Grid *gridIn, int gridID)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ordinaryGridIndex = grid->GetOrdinaryGridIndex();
+    if (ordinaryGridIndex == -1)
+    {
+        return;
+    }
+
+    hid_t grpData;
+    grpData = GetGroup(loc_id, "PartitionInfo");
+
+    int *ordinaryDimStartIndex = grid->GetOrdinaryDimStartIndex();
+    int *ordinaryDimEndIndex   = grid->GetOrdinaryDimEndIndex();
+
+    CreateAndWriteData(grpData, "OrdinaryGrid"    , 1, 1, PHINT, &ordinaryGridIndex);
+    CreateAndWriteData(grpData, "OrdinaryDimStart", 1, 3, PHINT, ordinaryDimStartIndex);
+    CreateAndWriteData(grpData, "OrdinaryDimEnd"  , 1, 3, PHINT, ordinaryDimEndIndex  );
 
     H5Gclose(grpData);
 }
@@ -1265,6 +1289,7 @@ void IO_HDF5Read::ReadStructGrid(hid_t loc_id, int iZone)
 
     ReadStrBCName(grpData, grid);
     ReadBCRegion(grpData, grid);
+    ReadPartitionInfo(grpData, grid);
     ReadInterfaceInfo(grpData, grid);
 
     grid->ReviseNeighborZoneIndex(zoneStart);
@@ -1487,6 +1512,36 @@ void IO_HDF5Read::ReadStrBCName(hid_t loc_id, Grid *gridIn)
 
     delete [] BCNameList;
     delete [] BCName;
+    H5Gclose(grpData);
+}
+
+void IO_HDF5Read::ReadPartitionInfo(hid_t loc_id, Grid *gridIn)
+{
+    bool dataExist = CheckDataExist(loc_id, "PartitionInfo");
+    if (!dataExist)
+    {
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(loc_id, "PartitionInfo");
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ordinaryGridIndex = -1;
+    int *ordinaryDimStartIndex = new int[3];
+    int *ordinaryDimEndIndex   = new int[3];
+
+    ReadData(grpData, &ordinaryGridIndex   , "OrdinaryGrid");
+    ReadData(grpData, ordinaryDimStartIndex, "OrdinaryDimStart");
+    ReadData(grpData, ordinaryDimEndIndex  , "OrdinaryDimEnd");
+
+    grid->SetOrdinaryGridIndex(ordinaryGridIndex);
+    grid->SetOrdinaryDimStartIndex(ordinaryDimStartIndex);
+    grid->SetOrdinaryDimEndIndex(ordinaryDimEndIndex);
+
+    delete []ordinaryDimStartIndex;
+    delete []ordinaryDimEndIndex;
+
     H5Gclose(grpData);
 }
 
