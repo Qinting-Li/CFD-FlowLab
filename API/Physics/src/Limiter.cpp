@@ -589,14 +589,14 @@ void Limiter::VencatLimiter2(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     MinMaxDiff(dmin, dmax, q);
 
     RDouble venkatCoeff = GlobalDataBase::GetDoubleParaFromDB("venkatCoeff");
-    RDouble GloableTotalCells = GlobalDataBase::GetDoubleParaFromDB("UnstrGloableTotalCells");
+    RDouble globalTotalCells = GlobalDataBase::GetDoubleParaFromDB("UnstrGlobalTotalCells");
 
     //! The following 'eps' is the eps^2 actually in the mathematic formation.
     //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
     int dimension = GetDim();
     RDouble n = 3.0;
     RDouble eps;
-    eps = pow((venkatCoeff * pow((1.0 / GloableTotalCells), (1.0 / dimension))), n);
+    eps = pow((venkatCoeff * pow((1.0 / globalTotalCells), (1.0 / dimension))), n);
     if(iVariable == IDX::IP)
     {
         RDouble * primInflow = reinterpret_cast< RDouble * >(GlobalDataBase::GetDataPtr("prim_inf"));
@@ -703,8 +703,8 @@ void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     //! Find the the differences for q.
     MinMaxDiff(dmin, dmax, q);
 
-    RDouble GloableTotalVolume;
-    GlobalDataBase::GetData("UnstrGloableTotalVolume", &GloableTotalVolume, PHDOUBLE, 1);
+    RDouble globalTotalVolume;
+    GlobalDataBase::GetData("UnstrGlobalTotalVolume", &globalTotalVolume, PHDOUBLE, 1);
 
     //! The following 'eps' is the eps^2 actually in the mathematic formation.
     //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
@@ -721,7 +721,7 @@ void Limiter::VencatLimiter3(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     RDouble *eps = new RDouble [nTotalCell];
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        eps[iCell] = pow(venkatCoeff * pow(volume[iCell] / GloableTotalVolume, dim1), n);
+        eps[iCell] = pow(venkatCoeff * pow(volume[iCell] / globalTotalVolume, dim1), n);
         if(iVariable == IDX::IP)
         {
             eps[iCell]  *= squareOfReferenceVariable;
@@ -1047,10 +1047,10 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     RDouble *zcc    = grid->GetCellCenterZ();
     RDouble *volume = grid->GetCellVolume();
 
-    RDouble GloableTotalVolume = 0.0;
+    RDouble globalTotalVolume = 0.0;
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        GloableTotalVolume += volume[iCell];  
+        globalTotalVolume += volume[iCell];  
     }
     RDouble **qAll = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
     using namespace IDX;
@@ -1096,7 +1096,7 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
             ds     =  sqrt(dx * dx + dy * dy + dz * dz);
             dqNode = dqdx[iCell] * dx + dqdy[iCell] * dy + dqdz[iCell] * dz;
 
-            eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds * qAll[IP][iCell] * qAll[IP][iCell] / GloableTotalVolume;
+            eps = venkatCoeff * venkatCoeff * venkatCoeff * ds * ds * ds * qAll[IP][iCell] * qAll[IP][iCell] / globalTotalVolume;
             if (dqNode > SMALL)
             {
                 tmp          = VenFun(dqmax, dqNode, eps);

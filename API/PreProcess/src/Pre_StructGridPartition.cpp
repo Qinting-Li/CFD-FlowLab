@@ -148,7 +148,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
         delete gridTranslator;
     }
 
-    WriteWallDist(partition_grid_file, parititionGrids);
+    WriteWalldist(partition_grid_file, parititionGrids);
     DumpMarkInfo();
 
     for (int i = 0; i < numberOfBasicBlocks; ++ i)
@@ -160,7 +160,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
     delete region;
 }
 
-void Pre_StrGridPartition::WriteWallDist(const string &out_grid_file, Grid **grids_in)
+void Pre_StrGridPartition::WriteWalldist(const string &out_grid_file, Grid **grids_in)
 {
     if (!partitionWallDist) return;
     string walldistfile = ChangeExtensionOfFileName(out_grid_file, "wdt");
@@ -178,14 +178,14 @@ void Pre_StrGridPartition::WriteWallDist(const string &out_grid_file, Grid **gri
         if (!grids_in[izone]) continue;
 
         StructGrid *grid = StructGridCast(grids_in[izone]);
-        WriteWallDist(actkey, grid);
+        WriteWalldist(actkey, grid);
     }
     
     H5Fclose(actkey->filepos);
     delete actkey;    actkey = NULL;
 }
 
-void Pre_StrGridPartition::WriteWallDist(ActionKey *actkey, StructGrid *grid)
+void Pre_StrGridPartition::WriteWalldist(ActionKey *actkey, StructGrid *grid)
 {
     ostringstream oss;
     oss << "Grid-" << grid->GetZoneID();

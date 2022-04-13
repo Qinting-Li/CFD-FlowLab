@@ -197,7 +197,7 @@ void HOSimulation::ReadGeometry()
 {
     PHSPACE::TimeSpan testTime;
     ReadGrid();
-    testTime.ShowTimeSpanToLogfile("Grid Reading");
+    testTime.ShowTimeSpanToLogFile("Grid Reading");
 }
 
 void HOSimulation::InitializeSolvers()

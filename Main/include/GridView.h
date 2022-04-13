@@ -32,17 +32,38 @@ public:
     ~PHSimpleFace();
 public:
     void SetKeyParameter(int *keyNumber);
-    PHSimpleFace *GetNextPointer();
+    PHSimpleFace * GetNextPointer();
     void CreateNewSimpleFace();
     void ShowSimpleFace();
     int GetKeyParameter();
-    int *GetLocalParameter();
+    int * GetLocalParameter();
 protected:
     int keyNumber[7];
     PHSimpleFace *simpleFaceNext;
 };
 
-class BasalGrid;
+class BasalGrid
+{
+public:
+    BasalGrid();
+    ~BasalGrid();
+public:
+    void GenerateBasalSpace(int iDimension, int jDimension, int kDimension);
+    void SetCoordinate(int aspect, int i, int j, int k, RDouble coordinate);
+    int GetIDimension();
+    int GetJDimension();
+    int GetKDimension();
+    RDouble GetCoordinate(int aspect, int i, int j, int k);
+    RDouble * GetX() { return xCoordinate; }
+    RDouble * GetY() { return yCoordinate; }
+    RDouble * GetZ() { return zCoordinate; }
+protected:
+    int iDimension, jDimension, kDimension;
+    int pointNumber;
+    RDouble *xCoordinate;
+    RDouble *yCoordinate;
+    RDouble *zCoordinate;
+};
 
 class BoundaryCluster
 {
@@ -64,14 +85,14 @@ public:
     void CreateNewSimpleFace(int iFace);
     void DeleteLinkedTable();
 public:
-    PHSimpleFace *GetSimpleFaceHead();
+    PHSimpleFace * GetSimpleFaceHead();
     void RecordSolidFaceInformation();
-    void OutputHoleSurfaceDimension(ofstream & outfile);
-    void OutputHoleSurfaceGrid(ofstream & outfile, BasalGrid *basalGrid);
+    void OutputHoleSurfaceDimension(ofstream &outfile);
+    void OutputHoleSurfaceGrid(ofstream &outfile, BasalGrid *basalGrid);
     int GetNumberOfSolidFaces() { return numberOfSolidFaces; }
     void ShowBoundaryCluster();
     void SetSlaveBlockList();
-    int *GetSlaveBlockList();
+    int * GetSlaveBlockList();
 protected:
     int iDimension, jDimension, kDimension;
     int overallFaceNumber, externalFaceNumber;
@@ -93,7 +114,7 @@ public:
 public:
     void SetBlockLabel(int blockLabel);
     int GetBlockLabel();
-    LinkedBlocks *GetNextPointer();
+    LinkedBlocks * GetNextPointer();
     void CreateNewLinkedBlock();
 protected:
     int blockLabel;
@@ -116,34 +137,11 @@ public:
     int GetListColor();
     int GetGroupLabel();
     int GetNewBlockLabel();
-    LinkedBlocks *GetLinkedBlocksHead();
+    LinkedBlocks * GetLinkedBlocksHead();
 protected:
     LinkedBlocks *linkedBlocksHead;
     LinkedBlocks *linkedBlocksGuard;
     int listColor, groupLabel, newBlockLabel;
-};
-
-class BasalGrid
-{
-public:
-    BasalGrid();
-    ~BasalGrid();
-public:
-    void GenerateBasalSpace(int iDimension,int jDimension,int kDimension);
-    void SetCoordinate(int aspect, int i, int j, int k, RDouble coordinate);
-    int GetIDimension();
-    int GetJDimension();
-    int GetKDimension();
-    RDouble GetCoordinate(int aspect, int i, int j, int k);
-    RDouble *GetX(){ return xCoordinate; }
-    RDouble *GetY(){ return yCoordinate; }
-    RDouble *GetZ(){ return zCoordinate; }
-protected:
-    int iDimension, jDimension, kDimension;
-    int pointNumber;
-    RDouble *xCoordinate;
-    RDouble *yCoordinate;
-    RDouble *zCoordinate;
 };
 
 class BlockGroupManager
@@ -162,7 +160,7 @@ protected:
     void MarkerBlocksRelation();
     void PermuteBlockLabel();
     void SeparateGrid();
-    void OutputNewBlockGroup(int iGroup, ofstream & myFile);
+    void OutputNewBlockGroup(int iGroup, ofstream &myFile);
     int SearchColorfulList(int spectrum);
     void OutputNewSurfaceGrid();
     void OutputNewGrid();

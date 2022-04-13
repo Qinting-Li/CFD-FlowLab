@@ -1922,8 +1922,8 @@ void UnstructGrid::DumpWallFaceCenter(ActionKey *actkey)
     int girdIndex = this->GetZoneID();
     if (girdIndex == 0)
     {
-        int GloableTotalWallFace = GlobalDataBase::GetIntParaFromDB("GloableTotalWallFace");
-        oss << GloableTotalWallFace << "\n";
+        int globalTotalWallFace = GlobalDataBase::GetIntParaFromDB("GlobalTotalWallFace");
+        oss << globalTotalWallFace << "\n";
     }
 
     int nsolid_surface = this->GetNumberOfWallCell();

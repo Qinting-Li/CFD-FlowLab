@@ -38,7 +38,6 @@ public:
 //  static const int CREATE_GRID     ;
 //  static const int CAL_WALL_DIST   ;
 //  static const int PARTITION_GRID  ;
-//  static const int REPOSITORY      ;
 //  static const int OVERSETGRID_VIEW;
 //  static const int OVERSET_CONFIG;
 

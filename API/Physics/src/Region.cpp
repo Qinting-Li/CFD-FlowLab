@@ -1234,7 +1234,7 @@ void Region::GetProcessorZones(int iZone, ZoneNeighbor *zoneNeighbor, vector< in
     }
 }
 
-void Region::BroadCastZoneNeighborInformationCollectBcast()
+void Region::BroadcastZoneNeighborInformationCollectBcast()
 {
     WriteLogFile("Start broadcasting neighbor information to each zones by collect-bcast method ... ");
 
@@ -1441,7 +1441,7 @@ void Region::CleanNeighborInfor()
     }
 }
 
-void Region::BroadCastZoneNeighborInformation()
+void Region::BroadcastZoneNeighborInformation()
 {
     //! This is old code.
     bool isStructuredGrid = false;
@@ -1463,7 +1463,7 @@ void Region::BroadCastZoneNeighborInformation()
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     if (isOverset && sysGridType != STRUCTGRID)
     {
-        BroadCastZoneNeighborInformationCollectBcast();
+        BroadcastZoneNeighborInformationCollectBcast();
     }
     else
     {
@@ -1471,7 +1471,7 @@ void Region::BroadCastZoneNeighborInformation()
     }
 }
 
-void Region::BroadCastZoneNeighborForPointInformation()
+void Region::BroadcastZoneNeighborForPointInformation()
 {
     int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     int sysGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
@@ -1483,7 +1483,7 @@ void Region::BroadCastZoneNeighborForPointInformation()
         SwapZoneConnectivityForPointBetweenNeighborZones();
     }
 }
-void Region::BroadCastZoneNeighborInformationToEachProcessor()
+void Region::BroadcastZoneNeighborInformationToEachProcessor()
 {
     WriteLogFile("Start broadcasting neighbor information to each zones by old method... ");
 
@@ -1514,7 +1514,7 @@ void Region::BroadCastZoneNeighborInformationToEachProcessor()
     WriteLogFile("End broadcasting neighbor information to each zones ... ");
 }
 
-void Region::BroadCastZoneNeighborInformationToNeighborZones()
+void Region::BroadcastZoneNeighborInformationToNeighborZones()
 {
     WriteLogFile("Start broadcasting neighbor information to neighbor zones ... ");
 
@@ -1769,20 +1769,20 @@ void Region::SwapZoneNeighborsInformation()
     WriteLogFile("Start Swapping Zone Neighbors Information!");
    
     TimeSpan timeSpan;
-    BroadCastZoneNeighborInformation();
-    timeSpan.ShowTimeSpanToLogfile("Neighbor zone information BCast "); 
+    BroadcastZoneNeighborInformation();
+    timeSpan.ShowTimeSpanToLogFile("Neighbor zone information BCast "); 
    
     timeSpan.ResetTime();
     SwapNeighborsSendContent();
     //SwapNeighborsSendContentNonblocking();
-    timeSpan.ShowTimeSpanToLogfile("Swap Neighbor Send Content ");
+    timeSpan.ShowTimeSpanToLogFile("Swap Neighbor Send Content ");
     
     WriteLogFile("End Swapping Zone Neighbors Information!");
 }
 
 void Region::SwapZoneNeighborsForPointInformation()
 {
-    BroadCastZoneNeighborForPointInformation();
+    BroadcastZoneNeighborForPointInformation();
     SwapNeighborsSendContentForPoint();
 }
 
@@ -2373,26 +2373,26 @@ void Region::ComputeGlobalCellSize(int level)
         maxNTCell = MAX(maxNTCell, TotalCells);
     }
     
-    RDouble GloableTotalNodes = TotalNodes * 1.0;
-    RDouble GloableTotalFaces = TotalFaces * 1.0;
-    RDouble GloableTotalCells = TotalCells * 1.0;
-    int GloableTotalWallFace = TotalWallFace;
+    RDouble globalTotalNodes = TotalNodes * 1.0;
+    RDouble globalTotalFaces = TotalFaces * 1.0;
+    RDouble globalTotalCells = TotalCells * 1.0;
+    int globalTotalWallFace = TotalWallFace;
 
     if (PHMPI::GetNumberOfProcessor() > 1)
     {
-        PH_AllReduce(&TotalNodes, &GloableTotalNodes, 1, PH_SUM);
-        PH_AllReduce(&TotalFaces, &GloableTotalFaces, 1, PH_SUM);
-        PH_AllReduce(&TotalCells, &GloableTotalCells, 1, PH_SUM);
-        PH_AllReduce(&TotalWallFace, &GloableTotalWallFace, 1, PH_SUM);
+        PH_AllReduce(&TotalNodes, &globalTotalNodes, 1, PH_SUM);
+        PH_AllReduce(&TotalFaces, &globalTotalFaces, 1, PH_SUM);
+        PH_AllReduce(&TotalCells, &globalTotalCells, 1, PH_SUM);
+        PH_AllReduce(&TotalWallFace, &globalTotalWallFace, 1, PH_SUM);
     }
 
-    GlobalDataBase::UpdateData("GloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
-    GlobalDataBase::UpdateData("GloableTotalWallFace", &GloableTotalWallFace, PHINT, 1);
+    GlobalDataBase::UpdateData("GlobalTotalCells", &globalTotalCells, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("GlobalTotalWallFace", &globalTotalWallFace, PHINT, 1);
 
-    PrintToWindow("The Gloable Information of StructGrid ", "\n");
-    PrintToWindow("  GloableTotalNodes: ", GloableTotalNodes, "\n");
-    PrintToWindow("  GloableTotalFaces: ", GloableTotalFaces, "\n");
-    PrintToWindow("  GloableTotalCells: ", GloableTotalCells, "\n");
+    PrintToWindow("The Global Information of StructGrid ", "\n");
+    PrintToWindow("  GlobalTotalNodes: ", globalTotalNodes, "\n");
+    PrintToWindow("  GlobalTotalFaces: ", globalTotalFaces, "\n");
+    PrintToWindow("  GlobalTotalCells: ", globalTotalCells, "\n");
 
     RDouble minNTCellCompare = minNTCell * 1.0;
     RDouble maxNTCellCompare = maxNTCell * 1.0;
@@ -2445,32 +2445,32 @@ void Region::ComputeGlobalGridSize(int level)
             }
         }
 
-        RDouble GloableTotalNodes = TotalNodes * 1.0;
-        RDouble GloableTotalFaces = TotalFaces * 1.0;
-        RDouble GloableTotalCells = TotalCells * 1.0;
-        RDouble GloableTotalVolume = TotalVolume;
-        int GloableTotalWallFace = TotalWallFace;
+        RDouble globalTotalNodes = TotalNodes * 1.0;
+        RDouble globalTotalFaces = TotalFaces * 1.0;
+        RDouble globalTotalCells = TotalCells * 1.0;
+        RDouble globalTotalVolume = TotalVolume;
+        int globalTotalWallFace = TotalWallFace;
 
         if (PHMPI::GetNumberOfProcessor() > 1)
         {
-            PH_AllReduce(&TotalNodes, &GloableTotalNodes, 1, PH_SUM);
-            PH_AllReduce(&TotalFaces, &GloableTotalFaces, 1, PH_SUM);
-            PH_AllReduce(&TotalCells, &GloableTotalCells, 1, PH_SUM);
-            PH_AllReduce(&TotalVolume, &GloableTotalVolume, 1, PH_SUM);
-            PH_AllReduce(&TotalWallFace, &GloableTotalWallFace, 1, PH_SUM);
+            PH_AllReduce(&TotalNodes, &globalTotalNodes, 1, PH_SUM);
+            PH_AllReduce(&TotalFaces, &globalTotalFaces, 1, PH_SUM);
+            PH_AllReduce(&TotalCells, &globalTotalCells, 1, PH_SUM);
+            PH_AllReduce(&TotalVolume, &globalTotalVolume, 1, PH_SUM);
+            PH_AllReduce(&TotalWallFace, &globalTotalWallFace, 1, PH_SUM);
         }
 
-        GlobalDataBase::UpdateData("GloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
-        GlobalDataBase::UpdateData("UnstrGloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
-        GlobalDataBase::UpdateData("UnstrGloableTotalVolume", &GloableTotalVolume, PHDOUBLE, 1);
-        GlobalDataBase::UpdateData("GloableTotalWallFace", &GloableTotalWallFace, PHINT, 1);
+        GlobalDataBase::UpdateData("GlobalTotalCells", &globalTotalCells, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("UnstrGlobalTotalCells", &globalTotalCells, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("UnstrGlobalTotalVolume", &globalTotalVolume, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("GlobalTotalWallFace", &globalTotalWallFace, PHINT, 1);
 
-        PrintToWindow("The Gloable Information of UnstructGrid ", "\n");
-        PrintToWindow("  GloableTotalNodes: ", GloableTotalNodes, "\n");
-        PrintToWindow("  GloableTotalFaces: ", GloableTotalFaces, "\n");
-        PrintToWindow("  GloableTotalCells: ", GloableTotalCells, "\n");
+        PrintToWindow("The Global Information of UnstructGrid ", "\n");
+        PrintToWindow("  GlobalTotalNodes: ", globalTotalNodes, "\n");
+        PrintToWindow("  GlobalTotalFaces: ", globalTotalFaces, "\n");
+        PrintToWindow("  GlobalTotalCells: ", globalTotalCells, "\n");
 
-        averageVolume = GloableTotalVolume / GloableTotalCells;
+        averageVolume = globalTotalVolume / globalTotalCells;
         for (int izone = 0; izone < nZones; ++ izone)
         {
             if (STRUCTGRID == PHMPI::GetZoneGridType(izone))
@@ -2535,62 +2535,62 @@ void Region::ComputeGlobalGridCellSize(int level)
         }
     }
     
-    RDouble GloableTotalNodes_unstr = TotalNodes_unstr * 1.0;
-    RDouble GloableTotalFaces_unstr = TotalFaces_unstr * 1.0;
-    RDouble GloableTotalCells_unstr = TotalCells_unstr * 1.0;
-    RDouble GloableTotalVolume_unstr = TotalVolume_unstr;
+    RDouble globalTotalNodes_unstr = TotalNodes_unstr * 1.0;
+    RDouble globalTotalFaces_unstr = TotalFaces_unstr * 1.0;
+    RDouble globalTotalCells_unstr = TotalCells_unstr * 1.0;
+    RDouble globalTotalVolume_unstr = TotalVolume_unstr;
     
-    RDouble GloableTotalNodes_str = TotalNodes_str * 1.0;
-    RDouble GloableTotalFaces_str = TotalFaces_str * 1.0;
-    RDouble GloableTotalCells_str = TotalCells_str * 1.0;
+    RDouble globalTotalNodes_str = TotalNodes_str * 1.0;
+    RDouble globalTotalFaces_str = TotalFaces_str * 1.0;
+    RDouble globalTotalCells_str = TotalCells_str * 1.0;
 
     RDouble minNTCellCompare_str = minNTCell_str * 1.0;
     RDouble maxNTCellCompare_str = maxNTCell_str * 1.0;
     
     if (PHMPI::GetNumberOfProcessor() > 1)
     {
-        PH_AllReduce(&TotalNodes_unstr,  &GloableTotalNodes_unstr, 1, PH_SUM);
-        PH_AllReduce(&TotalFaces_unstr,  &GloableTotalFaces_unstr, 1, PH_SUM);
-        PH_AllReduce(&TotalCells_unstr,  &GloableTotalCells_unstr, 1, PH_SUM);
-        PH_AllReduce(&TotalVolume_unstr, &GloableTotalVolume_unstr, 1, PH_SUM);
+        PH_AllReduce(&TotalNodes_unstr,  &globalTotalNodes_unstr, 1, PH_SUM);
+        PH_AllReduce(&TotalFaces_unstr,  &globalTotalFaces_unstr, 1, PH_SUM);
+        PH_AllReduce(&TotalCells_unstr,  &globalTotalCells_unstr, 1, PH_SUM);
+        PH_AllReduce(&TotalVolume_unstr, &globalTotalVolume_unstr, 1, PH_SUM);
         
-        PH_AllReduce(&TotalNodes_str, &GloableTotalNodes_str, 1, PH_SUM);
-        PH_AllReduce(&TotalFaces_str, &GloableTotalFaces_str, 1, PH_SUM);
-        PH_AllReduce(&TotalCells_str, &GloableTotalCells_str, 1, PH_SUM);
+        PH_AllReduce(&TotalNodes_str, &globalTotalNodes_str, 1, PH_SUM);
+        PH_AllReduce(&TotalFaces_str, &globalTotalFaces_str, 1, PH_SUM);
+        PH_AllReduce(&TotalCells_str, &globalTotalCells_str, 1, PH_SUM);
 
         PH_CompareMaxMin(minNTCellCompare_str, 2);
         PH_CompareMaxMin(maxNTCellCompare_str, 1);
         WriteLogFile("Min && Max nTCell of all zones: ", minNTCellCompare_str, maxNTCellCompare_str);
     }
 
-    RDouble GloableTotalNodes = GloableTotalNodes_unstr + GloableTotalNodes_str;
-    RDouble GloableTotalFaces = GloableTotalFaces_unstr + GloableTotalFaces_str;
-    RDouble GloableTotalCells = GloableTotalCells_unstr + GloableTotalCells_str;
+    RDouble globalTotalNodes = globalTotalNodes_unstr + globalTotalNodes_str;
+    RDouble globalTotalFaces = globalTotalFaces_unstr + globalTotalFaces_str;
+    RDouble globalTotalCells = globalTotalCells_unstr + globalTotalCells_str;
 
-    GlobalDataBase::UpdateData("GloableTotalCells", &GloableTotalCells, PHDOUBLE, 1);
-    GlobalDataBase::UpdateData("UnstrGloableTotalCells", &GloableTotalCells_unstr, PHDOUBLE, 1);
-    GlobalDataBase::UpdateData("UnstrGloableTotalVolume", &GloableTotalVolume_unstr, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("GlobalTotalCells", &globalTotalCells, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("UnstrGlobalTotalCells", &globalTotalCells_unstr, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("UnstrGlobalTotalVolume", &globalTotalVolume_unstr, PHDOUBLE, 1);
     
-    PrintToWindow("The Gloable Information of MixGrid ", "\n");
-    PrintToWindow("  GloableTotalNodes: ", GloableTotalNodes, "\n");
-    PrintToWindow("  GloableTotalFaces: ", GloableTotalFaces, "\n");
-    PrintToWindow("  GloableTotalCells: ", GloableTotalCells, "\n");
-    
-    PrintToWindow("\n");
-    
-    PrintToWindow("The Gloable Information of UnstrGrid ", "\n");
-    PrintToWindow("  GloableTotalNodes_unstr: ", GloableTotalNodes_unstr, "\n");
-    PrintToWindow("  GloableTotalFaces_unstr: ", GloableTotalFaces_unstr, "\n");
-    PrintToWindow("  GloableTotalCells_unstr: ", GloableTotalCells_unstr, "\n");
+    PrintToWindow("The Global Information of MixGrid ", "\n");
+    PrintToWindow("  GlobalTotalNodes: ", globalTotalNodes, "\n");
+    PrintToWindow("  GlobalTotalFaces: ", globalTotalFaces, "\n");
+    PrintToWindow("  GlobalTotalCells: ", globalTotalCells, "\n");
     
     PrintToWindow("\n");
     
-    PrintToWindow("The Gloable Information of StructGrid ", "\n");
-    PrintToWindow("  GloableTotalNodes_str: ", GloableTotalNodes_str, "\n");
-    PrintToWindow("  GloableTotalFaces_str: ", GloableTotalFaces_str, "\n");
-    PrintToWindow("  GloableTotalCells_str: ", GloableTotalCells_str, "\n");
+    PrintToWindow("The Global Information of UnstrGrid ", "\n");
+    PrintToWindow("  GlobalTotalNodes_unstr: ", globalTotalNodes_unstr, "\n");
+    PrintToWindow("  GlobalTotalFaces_unstr: ", globalTotalFaces_unstr, "\n");
+    PrintToWindow("  GlobalTotalCells_unstr: ", globalTotalCells_unstr, "\n");
     
-    averageVolume_unstr = GloableTotalVolume_unstr / GloableTotalCells_unstr;
+    PrintToWindow("\n");
+    
+    PrintToWindow("The Global Information of StructGrid ", "\n");
+    PrintToWindow("  GlobalTotalNodes_str: ", globalTotalNodes_str, "\n");
+    PrintToWindow("  GlobalTotalFaces_str: ", globalTotalFaces_str, "\n");
+    PrintToWindow("  GlobalTotalCells_str: ", globalTotalCells_str, "\n");
+    
+    averageVolume_unstr = globalTotalVolume_unstr / globalTotalCells_unstr;
     for (int izone = 0; izone < nZones; ++ izone)
     {
         if (STRUCTGRID == PHMPI::GetZoneGridType(izone))
@@ -3399,7 +3399,7 @@ void Region::GridValidityCheck()
     }
     else
     {
-       if (IsReadWallDist() == true)
+       if (IsReadWalldist() == true)
         {
             //! For general CFD computing, only server processor need know the box.
             PH_Reduce(minBox, globalMinBox, 3, MPI_MIN);

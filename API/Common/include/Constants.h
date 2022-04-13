@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Constants.h
-//! @brief     define some global const value.
+//! @brief     Define some global const value.
 //! @author    He Xin.
 
 #pragma once
@@ -28,10 +28,10 @@ const int SOLVE_FIELD         = 0;
 const int CREATE_GRID         = 1;
 const int CAL_WALL_DIST       = 2;
 const int PARTITION_GRID      = 3;
-const int REPOSITORY          = 4;
+const int REPOSITORY          = 4;  //! Useless.
 const int OVERSETGRID_VIEW    = 5;
 const int OVERSET_CONFIG      = 6;
-const int CONVERT_PARTITION   = 7;
+const int CONVERT_PARTITION   = 7;  //! Useless.
 const int DSMC_SOLVER         = 8;
 const int HELICOPTER          = 9;
 const int UGKS_SOLVER         = 10;
@@ -39,25 +39,24 @@ const int HO_SOLVER           = 12;
 const int LBM_SOLVER          = 13;
 
 const int INTEGRATIVE_SOLVER  = 14;
-const int GRIDCHECK_SOLVER = 15;
+const int GRIDCHECK_SOLVER    = 15;
 
 const int SPECDIFFHYB_SOLVER  = 51;
 const int SPEC_SOLVER         = 52;
 
+const int DERIVATIVE_IDENITFY = 98;
+const int POST_PROCESSING     = 99;
+
 const int NOLES_SOLVER        = 0;
 const int LES_SOLVER          = 1;
 
-const int DERIVATIVE_IDENITFY = 98;
-
-const int POST_PROCESSING     = 99;
-
-const int GRID_CONVERSION = 1;
-const int GRID_REFINE     = 2;
-const int GRID_MERGING    = 3;
-const int GRID_DEFORMATION= 4;
-const int GRID_REPAIR     = 5;
-const int GRID_MIRROR     = 6;
-const int GRID_STRTOUNS   = 7;
+const int GRID_CONVERSION     = 1;
+const int GRID_REFINE         = 2;
+const int GRID_MERGING        = 3;
+const int GRID_DEFORMATION    = 4;
+const int GRID_REPAIR         = 5;
+const int GRID_MIRROR         = 6;
+const int GRID_STRTOUNS       = 7;
 
 const RDouble half            = 0.5;
 const RDouble third           = 1.0 / 3.0;
@@ -106,12 +105,12 @@ const int MACH_TEMP_PRE         = 6;
 const int PRIMITIVE_VARIABLES   = 9;
 const int TRAJECTORY            = 10;
 
-const int VIS_STD             = 0;
-const int VIS_AVER            = 1;
-const int VIS_TEST            = 2;
-const int VIS_NEW1            = 3;
-const int VIS_NEW2            = 4;
-const int VIS_ERIC            = 5;
+const int VIS_STD               = 0;
+const int VIS_AVER              = 1;
+const int VIS_TEST              = 2;
+const int VIS_NEW1              = 3;
+const int VIS_NEW2              = 4;
+const int VIS_ERIC              = 5;
 
 const int ISCHEME_ROE            = 1;
 const int ISCHEME_VANLEER        = 2;
@@ -185,9 +184,9 @@ const int SURFACESMONITOR = 2;
 const int NEARESTCELLDATA = 0;
 const int REALCELLDATA    = 1;
 
-const int CELLVALUE    = 0;
-const int CELLSTOPROBE = 1;
-const int NODESTOPROBE = 2;
+const int CELLVALUE       = 0;
+const int CELLSTOPROBE    = 1;
+const int NODESTOPROBE    = 2;
 
 const int NON_GHOST       = 0;    //! These are interior cells.
 const int ONE_GHOST_LAYER = 1;    //! Their have one-layer ghost cells.
@@ -233,38 +232,37 @@ const int S_IV = 1;
 const int S_IW = 2;
 const int S_IP = 3;
 const int S_IR = 4;
-const int S_ITEMP = 5;
+const int S_ITEMP  = 5;
 const int S_ITURBK = 6;
 const int S_IOMEGA = 7;
 
 const int S_IEPSILON  = 8;
 const int S_IEDDYVISC = 0;
 
-const int S_IOxygen  = 9;
-const int S_INitrogen  = 10;
-const int S_ICarbonDioxide  = 11;
-const int S_IMethane  = 12;
-const int S_IH  = 13;
+const int S_IOxygen        = 9;
+const int S_INitrogen      = 10;
+const int S_ICarbonDioxide = 11;
+const int S_IMethane       = 12;
+const int S_IH             = 13;
 
-
-const int MOMX_EQ = 0;
-const int MOMY_EQ = 1;
-const int MOMZ_EQ = 2;
-const int CONT_EQ = 3;
-const int ENER_EQ = 4;
-const int ZNUT_EQ = 5;
-const int TURBK_EQ = 6;
+const int MOMX_EQ    = 0;
+const int MOMY_EQ    = 1;
+const int MOMZ_EQ    = 2;
+const int CONT_EQ    = 3;
+const int ENER_EQ    = 4;
+const int ZNUT_EQ    = 5;
+const int TURBK_EQ   = 6;
 const int EPSILON_EQ = 7;
-const int OMEGA_EQ = 8;
+const int OMEGA_EQ   = 8;
 }
-const int MAX_SPECIES_NUM = 20;     //! The maximum number of species.
+const int MAX_SPECIES_NUM  = 20;     //! The maximum number of species.
 const int MAX_REACTION_NUM = 50;    //! The maximum number of reactions.
 
 namespace WALLFUNCTION
 {
-    const int NONE = 0;
+    const int NONE     = 0;
     const int STANDARD = 1;
-    const int PAB3D = 2;
+    const int PAB3D    = 2;
 }
 
 namespace ABLATION
@@ -301,10 +299,10 @@ typedef enum
 
 typedef enum
 {
-    firstUpWind    = 0,
-    secondUpWind   = 1,
-    QUICKMTHOD     = 2,
-    SecondCentral  = 3,
+    firstUpWind   = 0,
+    secondUpWind  = 1,
+    QUICKMTHOD    = 2,
+    SecondCentral = 3,
 } invFluxScheme;
 
 typedef enum
