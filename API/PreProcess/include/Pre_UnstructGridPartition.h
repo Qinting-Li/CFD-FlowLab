@@ -193,8 +193,8 @@ private:
 
     void WriteFaceBC(const string &out_grid_file);
     void WriteFaceBC(fstream &file, UnstructGrid *gridPart);
-    void WriteWallDist(const string &out_grid_file);
-    void WriteWallDist(ActionKey *actkey, UnstructGrid *gridPart);
+    void WriteWalldist(const string &out_grid_file);
+    void WriteWalldist(ActionKey *actkey, UnstructGrid *gridPart);
 
     void ComputeGlobalToLocalCellToNodeMapping(UnstructGrid *gridpart, int izone);
 

@@ -1922,8 +1922,8 @@ void UnstructGrid::DumpWallFaceCenter(ActionKey *actkey)
     int girdIndex = this->GetZoneID();
     if (girdIndex == 0)
     {
-        int GloableTotalWallFace = GlobalDataBase::GetIntParaFromDB("GloableTotalWallFace");
-        oss << GloableTotalWallFace << "\n";
+        int globalTotalWallFace = GlobalDataBase::GetIntParaFromDB("GlobalTotalWallFace");
+        oss << globalTotalWallFace << "\n";
     }
 
     int nsolid_surface = this->GetNumberOfWallCell();
@@ -2029,7 +2029,8 @@ void UnstructGrid::InitVariableWallTemperature()
     int nBCRegionUnstruct = this->GetNBCRegionUnstruct();
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+		int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
+
         if (!IsWall(bcType) && bcType != PHENGLEI::ABLATION_SURFACE)
         {
             continue;
@@ -2119,7 +2120,7 @@ void UnstructGrid::InitVariableWallTemperature()
             WriteLogFile("Error !!!!");
         }
 
-        bcRegionUnstruct[iBCRegionUnstruct]->UpdateDataPtr("wallTempArray" , wallTempArray);
+        bcRegionUnstruct[iBCRegionUnstruct]->UpdateFieldDataPtr("wallTempArray" , wallTempArray);
 
     }
 

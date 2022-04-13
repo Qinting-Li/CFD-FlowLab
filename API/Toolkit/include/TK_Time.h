@@ -80,7 +80,7 @@ public:
     //! Write the elapsed time to log file.
     //! @param[in] title    testing tag.
     //! -# default is null("").
-    void ShowTimeSpanToLogfile(const string &title = "");
+    void ShowTimeSpanToLogFile(const string &title = "");
 
 private:
     double last_time, now_time;
@@ -114,7 +114,7 @@ public:
     //! Write the elapsed time to log file.
     //! @param[in] title    testing tag.
     //! -# default is null("").
-    void ShowTimeSpanToLogfile(const string &title = "");
+    void ShowTimeSpanToLogFile(const string &title = "");
 
 private:
     struct timeval last_time, now_time;

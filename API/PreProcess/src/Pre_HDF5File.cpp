@@ -501,7 +501,6 @@ void IO_HDF5Write::WriteStrBCName(hid_t loc_id, Grid *gridIn)
     boundaryName[71] = "POLE1";
     boundaryName[72] = "POLE2";
     boundaryName[73] = "POLE3";
-    boundaryName[99] = "PERIODIC";
 
     StructGrid *grid = StructGridCast(gridIn);
     CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
@@ -1501,13 +1500,6 @@ void IO_HDF5Read::ReadStrBCName(hid_t loc_id, Grid *gridIn)
         compositeBCRegion->SetBCRegion(ibcregion, bcregion);
 
         bcregion->SetBCName(BCNameList[ibcregion]);
-
-        int bctype = bcregion->GetBCType();
-        if ((bctype >7) && (bctype <51))
-        {
-            bctype = 2;
-            bcregion->SetBCType(bctype);
-        }
     }
 
     delete [] BCNameList;

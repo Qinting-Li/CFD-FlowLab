@@ -198,13 +198,13 @@ private:
 
     void SwapNeighborsSendContentNonblocking();
 
-    void BroadCastZoneNeighborInformation();
+    void BroadcastZoneNeighborInformation();
 
     //! swap the zone Neighbor information for point.
-    void BroadCastZoneNeighborForPointInformation();
+    void BroadcastZoneNeighborForPointInformation();
 
-    void BroadCastZoneNeighborInformationToEachProcessor();
-    void BroadCastZoneNeighborInformationToNeighborZones();
+    void BroadcastZoneNeighborInformationToEachProcessor();
+    void BroadcastZoneNeighborInformationToNeighborZones();
     void SwapZoneConnectivityBetweenNeighborZones();
 
     //! swap the zone Connectivity information for point in neighbor zones.
@@ -213,7 +213,7 @@ private:
     //! New method to bcast zone neighbor information.\n
     //! step1: collecting from each other processor by server.
     //! step2: bcasting to each other processor by server.
-    void BroadCastZoneNeighborInformationCollectBcast();
+    void BroadcastZoneNeighborInformationCollectBcast();
     void ServerCollectionNeighborInfor();
     void ServerBcastNeighborInfor();
     void CleanNeighborInfor();

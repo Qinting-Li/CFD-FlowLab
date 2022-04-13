@@ -152,6 +152,7 @@ namespace FLUENT_SPACE
     const int AXIS               = 37;
 }
 
+//! @brief A boundary condition base class, StructBC and UnstructBC inheriting from it.
 class SimpleBC
 {
 public:
@@ -159,7 +160,8 @@ public:
     {
         bcName = "";
         bcType = 0;
-        bcParamDataBase = 0;
+
+        bcParamDataBase = new Data_Param();
         bcFieldDataBase = new Data_Field();
     }
 
@@ -170,45 +172,59 @@ public:
     }
 
 private:
+    //! Boundary name of BC;
     string bcName;
+
+    //! Boundary type value of BC;
     int bcType;
+
+    //! BC control parameters.
     Data_Param *bcParamDataBase;
+
+    //! BC data pointers.
     Data_Field *bcFieldDataBase;
 
 public:
     //! Get boundary conditions type.
     const string & GetBCName() const { return this->bcName; }
     int GetBCType() const { return this->bcType; }
-    Data_Param * GetBCParamDataBase();
-
-    void GetData(const string &name, void *data, int type, int size) 
-    {
-        bcParamDataBase->GetData(name, data, type, size);
-    }
-
-    int CheckData(const string &name)
-    {
-        return bcParamDataBase->CheckDataExist(name);
-    }
-
-    void UpdateDataPtr(const string &name, void *data)
-    {
-        bcFieldDataBase->UpdateDataPtr(name, data);
-    };
-
-    void *GetDataPtr(const string &name) const
-    {
-        return bcFieldDataBase->GetDataPtr(name);
-    };
-
-    int CheckFieldDataExist(const string &name)
-    {
-        return bcFieldDataBase->CheckDataExist(name);
-    }
+	Data_Param * GetBCParamDataBase();
+	Data_Field * GetBCFieldDataBase();
 
     void SetBCName(const string &bcName) { this->bcName = bcName; }
     void SetBCType(int bcType) { this->bcType = bcType; }
     void SetBCParamDataBase(Data_Param *paraDB) { this->bcParamDataBase = paraDB; }
+	void SetBCFieldDataBase(Data_Field *fieldDB) { this->bcFieldDataBase = fieldDB; }
+
+	void UpdateParamData(const string &name, void *data, int type, int size) 
+	{
+		bcParamDataBase->UpdateData(name, data, type, size);
+	}
+
+	void GetParamData(const string &name, void *data, int type, int size) 
+	{
+		bcParamDataBase->GetData(name, data, type, size);
+	}
+
+	int CheckParamData(const string &name)
+	{
+		return bcParamDataBase->CheckDataExist(name);
+	}
+
+	void UpdateFieldDataPtr(const string &name, void *data)
+	{
+		bcFieldDataBase->UpdateDataPtr(name, data);
+	};
+
+	void *GetFieldDataPtr(const string &name) const
+	{
+		return bcFieldDataBase->GetDataPtr(name);
+	};
+
+	int CheckFieldData(const string &name)
+	{
+		return bcFieldDataBase->CheckDataExist(name);
+	}
 };
 
 //! @brief Global boundary conditions, all of the global boundary conditions are stored here.

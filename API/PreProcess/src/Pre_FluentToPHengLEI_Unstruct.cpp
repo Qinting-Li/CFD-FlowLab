@@ -49,8 +49,8 @@ void Pre_FluentToPHengLEI_Unstruct::Conversion()
         fluent_factory->Convert2UnsGrid(izone, UnstructGridCast(grid));
     }
     delete fluent_factory;
-
 }
+
 void Pre_FluentToPHengLEI_Unstruct::ReadFluent(GridFormat_Fluent *&fluent_factory, int &nBlocks, const string &casefile)
 {
     fstream file;

@@ -211,18 +211,19 @@ private:
     int zoneID;
 
     //! The BCRegions list in the current CompositeStructBC.
-    vector<StructBC *> * bcregions;
+    vector<StructBC *> *bcRegions;
 
-    //! The number of Boundary Faces.
+    //! The number of boundary faces.
     int nBoundFace;
 
-    //! The number of Interface Faces.
+    //! The number of interface faces.
     int nIFace;
 
-    int *id_i, *id_j, *id_k;
+    //! The I/J/K id of interface faces.
+    int *iID, *jID, *kID;
 
-    //! The bcRegions id of Interface Faces.
-    int *face_of_bcregion;
+    //! The bcRegions id of interface faces.
+    int *bcRegionIDofIFace; 
 
     //! Boundary name of given type;
     string boundaryName[100];
