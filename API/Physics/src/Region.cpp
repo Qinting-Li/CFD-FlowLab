@@ -198,7 +198,6 @@ LIB_EXPORT void Region::BuildAndDumpMixedGrid()
 
     //! Dump out grid.
     DumpGrid(outGridFile, gridArray, nZones);
-    DumpAdditionalData(outGridFile, gridArray, nZones);
     WriteFaceBoundaryName(gridArray, nZones, outGridFile);
 
     delete [] gridArray;
