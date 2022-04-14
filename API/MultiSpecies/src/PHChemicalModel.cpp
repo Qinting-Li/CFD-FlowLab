@@ -1676,8 +1676,8 @@ namespace PHSPACE
                 speciesName[3] = "CO2";
                 speciesName[4] = "H2";
                 speciesName[5] = "N2";
-                speciesName[6] = "SpeciesA";
-                speciesName[7] = "SpeciesB";
+                speciesName[6] = "Air";
+                speciesName[7] = "CH4";
             }
 
             else    //! Earth Gas
@@ -2108,14 +2108,15 @@ namespace PHSPACE
             //speciesName[17] = "H2";
             //speciesName[18] = "OH";
             //speciesName[19] = "H2O";
-            speciesName[16] = "SpeciesA";
-            speciesName[17] = "SpeciesB";
+            speciesName[16] = "Air";
+            speciesName[17] = "CH4";
 
-            int IndexSpeciesA = 16;
-            int IndexSpeciesB = 17;
-            RDouble gamaSpeciesA = GlobalDataBase::GetDoubleParaFromDB("gamaSpeciesA");
-            RDouble gamaSpeciesB = GlobalDataBase::GetDoubleParaFromDB("gamaSpeciesB");
-
+            int IndexAir = 16;
+            int IndexCH4 = 17;
+            //RDouble gamaAir = GlobalDataBase::GetDoubleParaFromDB("gamaAir");
+            //RDouble gamaCH4 = GlobalDataBase::GetDoubleParaFromDB("gamaCH4");
+            RDouble gamaAir = 1.400;
+            RDouble gamaCH4 = 1.229;
             //Create the curve fitting data according to the chemkin method.
             RDouble curveFitData[540] = {
                 2.823600E+00, -8.947800E-04,  8.306000E-07, -1.683700E-10, -7.320500E-14,  2.915000E+04,
@@ -2220,13 +2221,13 @@ namespace PHSPACE
                 //4.40650000E+00,  1.37050000E-04, -1.14540000E-08,  3.62640000E-13, -4.12340000E-18,  9.88690000E+04,
                 //5.45660000E+00, -4.88060000E-05,  9.16120000E-10, -4.04850000E-15, -4.16240000E-20,  9.88690000E+04
 
-                2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,//SpeciesA
+                2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,//Air
                 2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,
                 2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,
                 2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,
                 2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,
 
-                2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,//SpeciesB
+                2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,//CH4
                 2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,
                 2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,
                 2.500000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00,  0.000000E+00, 0.000000E+00,
@@ -2268,8 +2269,8 @@ namespace PHSPACE
                 //CO2
                -4.726773E+04,  6.798947E+00,  8.349937E-05, -4.568962E-09,  1.725463E-13, -2.501434E-18,
 
-               0.000000E+00,  4.230253E+00,  1.445665E-05, -3.763594E-11,  5.344843E-14, -1.361599E-18,   //SpeciesA
-              -4.691950E+04,  6.798947E+00,  8.349937E-05, -4.568962E-09,  1.725463E-13, -2.501434E-18    //SpeciesB
+               0.000000E+00,  4.230253E+00,  1.445665E-05, -3.763594E-11,  5.344843E-14, -1.361599E-18,   //Air
+              -4.691950E+04,  6.798947E+00,  8.349937E-05, -4.568962E-09,  1.725463E-13, -2.501434E-18    //CH4
             };
 
             int nIndex = 0, nStart = 0;
@@ -2291,13 +2292,13 @@ namespace PHSPACE
                 }
             }
             RDouble aA =0.0, aB =0.0;
-            aA = gamaSpeciesA / (gamaSpeciesA - 1);
-            aB = gamaSpeciesB / (gamaSpeciesB - 1);
+            aA = gamaAir / (gamaAir - 1);
+            aB = gamaCH4 / (gamaCH4 - 1);
 
             for(int i = 0; i < this->nInterval; ++ i)
             {
-                this->curveFittingData[IndexSpeciesA][i][0] = aA;
-                this->curveFittingData[IndexSpeciesB][i][0] = aB;
+                this->curveFittingData[IndexAir][i][0] = aA;
+                this->curveFittingData[IndexCH4][i][0] = aB;
             }
         }
 
@@ -2435,8 +2436,8 @@ namespace PHSPACE
             speciesName[17] = "H2";
             speciesName[18] = "OH";
             speciesName[19] = "H2O";
-            speciesName[20] = "SpeciesA";
-            speciesName[21] = "SpeciesB";
+            speciesName[20] = "Air";
+            speciesName[21] = "CH4";
 
             RDouble curveFitData2[88] = {
                 0.0000, -0.0207,  0.0780,  3.5658,
@@ -2459,8 +2460,8 @@ namespace PHSPACE
                 0.0000,  0.0000, -2.0000,  24.3602,
                 0.0000,  0.0000, -2.0000,  24.3602,
                 0.0000,  0.0000, -2.0000,  24.3602,
-                0.0000,  0.0000, -2.0000,  24.3602,  //SpeciesA
-                0.0000,  0.0000, -2.0000,  24.3602  //SpeciesB
+                0.0000,  0.0000, -2.0000,  24.3602,  //Air
+                0.0000,  0.0000, -2.0000,  24.3602  //CH4
             };
 
             //Initialization.
@@ -2493,8 +2494,8 @@ namespace PHSPACE
                     0.0000000,   0.0000000,   0.1029,   -0.8896,   -7.2273,
                     0.0000000,   0.0000000,  -0.00421,   0.713,    -12.44,
                     0.0000000,   0.0000000,  -0.097,     2.29,     -19.1,
-                    0.0,            0.0,     0.0268142,  0.3177838,  -11.3155513,  //SpeciesA
-                    0.0000000,   0.0000000,  -0.0577200,   1.5430000,   -15.7600000  //SpeciesB
+                    0.0,            0.0,     0.0268142,  0.3177838,  -11.3155513,  //Air
+                    0.0000000,   0.0000000,  -0.0577200,   1.5430000,   -15.7600000  //CH4
                 };
 
                 int nIndex = 0;
@@ -2536,8 +2537,8 @@ namespace PHSPACE
                     0.0,   0.0,   0.1029,   -0.8896,  -7.2273,
                     0.0,   0.0,  -0.00421,   0.713,   -12.44,
                     0.0,   0.0,  -0.097,     2.29,    -19.1,
-                    0.0,            0.0,     0.0268142,  0.3177838,  -11.3155513,  //SpeciesA
-                    0.0000000,   0.0000000,  -0.0577200,   1.5430000,   -15.7600000  //SpeciesB
+                    0.0,            0.0,     0.0268142,  0.3177838,  -11.3155513,  //Air
+                    0.0000000,   0.0000000,  -0.0577200,   1.5430000,   -15.7600000  //CH4
                 };
                 int nIndex = 0;
                 for (int s = 0; s < this->nSpecies; ++ s)
@@ -2702,12 +2703,12 @@ namespace PHSPACE
             speciesName[17] = "H2";
             speciesName[18] = "OH";
             speciesName[19] = "H2O";
-            speciesName[20] = "SpeciesA";
-            speciesName[21] = "SpeciesB";
+            speciesName[20] = "Air";
+            speciesName[21] = "CH4";
 
             int IndexCO2 = 15;
-            int IndexSpeciesA = 20;
-            int IndexSpeciesB = 21;
+            int IndexAir = 20;
+            int IndexCH4 = 21;
             // The type and charge of species.
             int data1[88] = {
                 //The type.
@@ -2722,7 +2723,7 @@ namespace PHSPACE
             // The other parameter.
             RDouble data2[132] = {
                 //The molecular weight.
-                15.9994, 31.9988, 30.00614, 14.00674, 15.99885, 31.99825, 30.00564, 14.00619, 28.01293, 28.01348, 5.486e-4, 12.011, 24.022, 26.01774, 28.01, 44.01, 1.0, 2.0, 16.999, 17.999, 16.043, 30.0,
+                15.9994, 31.9988, 30.00614, 14.00674, 15.99885, 31.99825, 30.00564, 14.00619, 28.01293, 28.01348, 5.486e-4, 12.011, 24.022, 26.01774, 28.01, 44.01, 1.0, 2.0, 16.999, 17.999, 28.946, 16.043,
                 //The the characteristic temperature.
                 216.0, 37.0, 106.7, 260.0, 216.0, 37.0, 106.7, 260.0, 106.7, 106.7, 106.7, 216.0, 216.0, 216.0, 216.0, 216.0, 216.0, 216.0, 216.0, 216.0, 216.0, 216.0,
                 //The characteristic vibrational Temperature.
@@ -2774,10 +2775,10 @@ namespace PHSPACE
                 this->speciesVibrationalModeData[s].Tv[0] = dataArray2[2][s];
             }
 
-            RDouble molecularWeightSpeciesA = GlobalDataBase::GetDoubleParaFromDB("molecularWeightSpeciesA");
-            RDouble molecularWeightSpeciesB = GlobalDataBase::GetDoubleParaFromDB("molecularWeightSpeciesB");
-            this->speciesMass[IndexSpeciesA] = molecularWeightSpeciesA;
-            this->speciesMass[IndexSpeciesB] = molecularWeightSpeciesB;
+            //RDouble molecularWeightAir = GlobalDataBase::GetDoubleParaFromDB("molecularWeightAir");
+            //RDouble molecularWeightCH4 = GlobalDataBase::GetDoubleParaFromDB("molecularWeightCH4");
+            //this->speciesMass[IndexAir] = molecularWeightAir;
+            //this->speciesMass[IndexCH4] = molecularWeightCH4;
 
             //The CO2
             this->speciesVibrationalModeData[IndexCO2].nMode = 3;

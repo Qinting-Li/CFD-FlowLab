@@ -70,7 +70,6 @@ private:
 public:
     void Init(int numberOfSpecies);
     void Read(fstream &file);
-    void Create(int nGasModel = 0);
     void GenerateData(vector<string>&namelist);
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
@@ -157,8 +156,6 @@ private:
 public:
     void Init(int numberOfSpecies, int nGasModel = 0);
     void Read(fstream &file);
-    //!Parm[in]: gasModel is the type of atmosphere. 0 indicates the Earth atmosphere, while 1 indicates the Mars atmosphere.
-    void Create(int gasModel = 0);
     void GenerateData(vector<string>&namelist);
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
@@ -251,7 +248,6 @@ private:
 public:
     void Init(int numberOfSpecies);
     void Read(fstream &file);
-    void Create(int nGasType = 0);
     void GenerateData(vector<string>&namelist, vector<RDouble> &initMassFractions);
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
@@ -446,10 +442,6 @@ public:
     void InitGlobalParameterOfNSEquation();
     void ReadGasModel(fstream &file);
     //! To Generate the gas model.
-    //! Param[in]: chemicalModel indicates the name of the chemical model.
-    //! Param[in]: ns indicates the number of species.
-    //! Param[in]: nr indicates the number of reactions.
-    void CreateGasModel(string chemicalModel, int ns, int nr);
     void GenerateGasModel(string chemicalModel);
     void GetNameList(vector<string> &namelist, vector<RDouble> &initMassFraction);
 

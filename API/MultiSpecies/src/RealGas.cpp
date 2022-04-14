@@ -6,7 +6,6 @@
 #include "TK_Parse.h"
 #include "Glb_Dimension.h"
 #include "Geo_SimpleBC.h"
-#include "ChemicalModel.h"
 #include "TK_Log.h"
 #include "PHIO.h"
 
@@ -214,57 +213,6 @@ void ThermodynamicManager::Read(fstream &file)
         SkipLines(file,3);
         thermoDynamicFunction[ispecies]->ReadPolynomialCoefficient(file);
     }
-}
-
-void ThermodynamicManager::Create(int nGasModel/* = 0*/)
-{
-    ChemkinData myChemkinData;
-    myChemkinData.CreateChemkinData(nGasModel, numberOfSpecies);
-
-    //! To obtain the basic information of interpolation.
-    int nSpecies, nInterval, nCoefNum;
-    myChemkinData.GetInterpolationInfo(nSpecies, nInterval, nCoefNum);
-    numberOfTemperatureInterval = nInterval;
-    numberofpolynomialcoefficient = nCoefNum;
-    for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-    {
-        thermoDynamicFunction[ispecies]->Init(numberOfTemperatureInterval, numberofpolynomialcoefficient);
-    }
-
-    //! To obtain the temperature range of interpolation.
-    RDouble *temperatures = myChemkinData.GetTemperatureRange();
-    temperatureRange = new RDouble[numberOfTemperatureInterval + 1];
-    for (int m = 0; m < numberOfTemperatureInterval + 1; ++ m)
-    {
-        temperatureRange[m] = temperatures[m];
-    }
-
-    //! To obtain the curve fitting data of interpolation of each species.
-    RDouble ***curveFittingData = myChemkinData.GetCurveFittingData();
-    RDouble **curveFitData = NewPointer2 <RDouble> (numberOfTemperatureInterval, numberofpolynomialcoefficient);
-    RDouble **curveFitDataT2 = NewPointer2 <RDouble> (numberOfTemperatureInterval + 1, numberofpolynomialcoefficient);
-    RDouble ***curveFittingDataT2 = myChemkinData.GetCurveFittingData();
-    RDouble *tmpFitData = new RDouble[numberofpolynomialcoefficient];
-
-    for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-    {
-        for (int m = 0; m < numberOfTemperatureInterval; ++ m)
-        {
-            for (int n = 0; n < numberofpolynomialcoefficient; ++ n)
-            {
-                curveFitData[m][n] = curveFittingData[ispecies][m][n];
-            }
-        }
-
-        for (int n = 0; n < numberofpolynomialcoefficient; ++ n)
-        {
-            tmpFitData[n] = 0.0;
-        }
-        thermoDynamicFunction[ispecies]->CreatePolynomialCoefficient(curveFitData, curveFitDataT2, tmpFitData);
-    }
-    delete []tmpFitData;
-    DelPointer2(curveFitData);
-    DelPointer2(curveFitDataT2);
 }
 
 void ThermodynamicManager::GenerateData(vector<string>&namelist)
@@ -1009,29 +957,6 @@ void CurveFitsMethod::Read(fstream &file)
     }
 }
 
-void CurveFitsMethod::Create(int gasModel/* = 0*/)
-{
-    TransportData myCurveFitData;
-    myCurveFitData.CreateCurveFittingData(gasModel, this->numberOfSpecies);
-
-    RDouble **viscosityFitData = myCurveFitData.GetViscosityCurveFittingData();
-    RDouble **collisionAreaFitData = myCurveFitData.GetCollisionAreaCurveFittingData();
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        blotter_ai[s] = viscosityFitData[s][0];
-        blotter_bi[s] = viscosityFitData[s][1];
-        blotter_ci[s] = viscosityFitData[s][2];
-        blotter_di[s] = viscosityFitData[s][3];
-        blotter_ei[s] = viscosityFitData[s][4];
-
-        omega_ai[s] = collisionAreaFitData[s][0];
-        omega_bi[s] = collisionAreaFitData[s][1];
-        omega_ci[s] = collisionAreaFitData[s][2];
-        omega_di[s] = collisionAreaFitData[s][3];
-    }
-    SetEffectiveCollisionCrossSectionalAreaCurveFits(gasModel);
-}
-
 void CurveFitsMethod::GenerateData(vector<string>&namelist)
 {
     TransportFitData myCurveFitData;
@@ -1385,157 +1310,7 @@ void MolecularProperty::Read(fstream &file)
             }
         }
     }         //! End of reading the parameters to species.
-
 }
-
-void MolecularProperty::Create(int nGasType/* = 0*/)
-{
-    //! Obtain the name of species.
-    //string speciesName[20];
-    //RDouble initMassFraction[20];
-    //GlobalDataBase::GetData("speciesName", &speciesName, PHSTRING, this->numberOfSpecies);
-    //GlobalDataBase::GetData("initMassFraction", &initMassFraction, PHDOUBLE, this->numberOfSpecies);
-    string speciesName[20], line1, line2;
-    RDouble initMassFraction[20];
-    GlobalDataBase::GetData("speciesName", &line1, PHSTRING, 1);
-    GlobalDataBase::GetData("initMassFraction", &line2, PHSTRING, 1);
-    string word;
-    string separator  = " =\t\r\n#$,;\"'";
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        line1 = FindNextWord(line1, word, separator);
-        speciesName[s] = word;
-
-        line2 = FindNextWord(line2, word, separator);
-        from_string<RDouble>(initMassFraction[s], word, std::dec);
-    }
-
-    //! Generate the physical and chemical data.
-    SpeciesData mySpecies;
-    MarsSpeciesData myMarsSpecies;
-    string tempName[20];
-    RDouble speciesMassFraction[20];
-    int *speciesType;
-    int *speciesCharge;
-    int *speciesG0;
-    int *speciesG1;
-    RDouble *speciesMass;
-    RDouble *speciesTtr;
-    RDouble *speciesTvs;
-    RDouble *speciesTes;
-    RDouble *speciesSigma;
-    RDouble *speciesEnthalpy;
-
-    int nIndex = 0;
-    if (nGasType == 1) //Gas of Mars.
-    {
-        myMarsSpecies.CreatePhysicalChemicalData(this->numberOfSpecies);
-        for (int s = 0; s < this->numberOfSpecies; ++ s)
-        {
-            nIndex = myMarsSpecies.GetSpeciesIndex(speciesName[s]);
-            tempName[nIndex] = speciesName[s];
-            speciesMassFraction[nIndex] = initMassFraction[s];
-        }
-        if (this->numberOfSpecies == 8 || this->numberOfSpecies == 12)
-        {
-            for (int s = 0; s < numberOfSpecies; ++ s)
-            {
-                name_of_species[s] = tempName[s];
-                mass_fraction_reference[s] = speciesMassFraction[s];
-            }
-        }
-
-        speciesType = myMarsSpecies.GetSpeciesType();
-        speciesCharge= myMarsSpecies.GetSpeciesCharge();
-        speciesG0 = myMarsSpecies.GetSpeciesDegeneracy0();
-        speciesG1 = myMarsSpecies.GetSpeciesDegeneracy1();
-        speciesMass = myMarsSpecies.GetSpeciesMolecularWeight();
-        speciesTtr = myMarsSpecies.GetSpeciesTemperature();
-        speciesTvs = myMarsSpecies.GetSpeciesVibrationTemperature();
-        speciesTes = myMarsSpecies.GetSpeciesElectronTemperature();
-        speciesSigma = myMarsSpecies.GetSpeciesCollisionArea();
-        speciesEnthalpy = myMarsSpecies.GetSpeciesFormationEnthalpy();
-    }
-    else //! Gas of Earth.
-    {
-        mySpecies.CreatePhysicalChemicalData(this->numberOfSpecies);
-        for (int s = 0; s < this->numberOfSpecies; ++ s)
-        {
-            nIndex = mySpecies.GetSpeciesIndex(speciesName[s]);
-            tempName[nIndex] = speciesName[s];
-            speciesMassFraction[nIndex] = initMassFraction[s];
-        }
-
-        //! Reorder the sequence of the species.
-        if (this->numberOfSpecies == 5 || this->numberOfSpecies == 7)
-        {
-            for (int s = 0; s < 4; ++ s)
-            {
-                name_of_species[s] = tempName[s];
-                mass_fraction_reference[s] = speciesMassFraction[s];
-            }
-            if (this->numberOfSpecies == 5)
-            {
-                name_of_species[4] = tempName[9];
-                mass_fraction_reference[4] = speciesMassFraction[9];
-            }
-            else
-            {
-                name_of_species[4] = tempName[6];
-                mass_fraction_reference[4] = speciesMassFraction[6];
-
-                name_of_species[5] = tempName[9];
-                mass_fraction_reference[5] = speciesMassFraction[9];
-
-                name_of_species[6] = tempName[10];
-                mass_fraction_reference[6] = speciesMassFraction[10];
-            }
-        }
-        else if (this->numberOfSpecies == 11)
-        {
-            for (int s = 0; s < 11; ++ s)
-            {
-                name_of_species[s] = tempName[s];
-                mass_fraction_reference[s] = speciesMassFraction[s];
-            }
-        }
-
-        //! Allocate the other parameter.
-        speciesType = mySpecies.GetSpeciesType();
-        speciesCharge = mySpecies.GetSpeciesCharge();
-        speciesG0 = mySpecies.GetSpeciesDegeneracy0();
-        speciesG1 = mySpecies.GetSpeciesDegeneracy1();
-        speciesMass = mySpecies.GetSpeciesMolecularWeight();
-        speciesTtr = mySpecies.GetSpeciesTemperature();
-        speciesTvs = mySpecies.GetSpeciesVibrationTemperature();
-        speciesTes = mySpecies.GetSpeciesElectronTemperature();
-        speciesSigma = mySpecies.GetSpeciesCollisionArea();
-        speciesEnthalpy = mySpecies.GetSpeciesFormationEnthalpy();
-    }
-
-    for (int s = 0; s < this->numberOfSpecies; ++ s)
-    {
-        //! Generate the ion type of species.
-        ionTypeOfSpecies[s] = speciesCharge[s];
-        //! Generate the molecular weight of species.
-        molecularWeightDimensional[s] = speciesMass[s];
-        //! Generate the collision cross section of species.
-        collisionCrossSection[s] = speciesSigma[s];
-        //! Generate the characteristic temperature of species.
-        characteristicTemperatureOfSpecies[s] = speciesTtr[s];
-
-        thermodynamicProperties[s].nType = speciesType[s];
-        thermodynamicProperties[s].gs0 = speciesG0[s];
-        thermodynamicProperties[s].gs1 = speciesG1[s];
-        thermodynamicProperties[s].Tvs.nMode = 1;
-        thermodynamicProperties[s].Tvs.g[0] = 1;
-        thermodynamicProperties[s].Tvs.Tv[0] = speciesTvs[s];
-        thermodynamicProperties[s].Tes = speciesTes[s];
-        thermodynamicProperties[s].hs0 = speciesEnthalpy[s];
-    }
-    schmidt_number->ComputeSpeciesSchmidtNumber(ionTypeOfSpecies);
-}
-
 void MolecularProperty::GenerateData(vector<string>&namelist, vector<RDouble> &initMassFractions)
 {
     AtmosphereData *baseData = new AtmosphereData();
@@ -2500,15 +2275,7 @@ void RealGas::ReadGasModel()
     }
     else                        //! Generate the gas model in the code.
     {
-#ifdef USE_OLD_GAS_MODEL
-
-        CreateGasModel(chemicalModel, nSpecies, nReaction);
-
-#else
-
         GenerateGasModel(chemicalModel);
-
-#endif
     }
 
 }
@@ -3582,66 +3349,6 @@ void RealGas::ReadGasModel(fstream &file)
 
     CreateAllDataClass(numberOfSpecies, numberOfReaction);
     Read(file);
-}
-
-void RealGas::CreateGasModel(string chemicalModel, int ns, int nr)
-{
-    if (ns <= 0 || nr <= 0)
-    {
-        cout<<"Failed to create the gas model!"<<endl;
-        return;
-    }
-    //! The number of species and reaction are imported from the database.
-    numberOfSpecies = ns;
-    numberOfReaction = nr;
-    //! Allocate memories.
-    CreateAllDataClass(numberOfSpecies, numberOfReaction);
-
-    int nGasType = 0;
-    //! Generate the chemical reaction model.
-    ChemicalModel myChemModel;
-    if (chemicalModel == "Gupta")
-    {
-        myChemModel.CreateGuptaModel(numberOfSpecies, numberOfReaction);
-    }
-    else if (chemicalModel == "Park")
-    {
-        myChemModel.CreateParkModel(numberOfSpecies, numberOfReaction);
-    }
-    else if (chemicalModel == "Dunn-Kang")    //! The Dunn-Kang Model.
-    {
-        myChemModel.CreateDunnKangModel(numberOfSpecies, numberOfReaction);
-    }
-    else if (chemicalModel == "Mars-Park")    //! The Park Model for Mars.
-    {
-        nGasType = 1;
-        myChemModel.CreateMarsGasModel(numberOfSpecies, numberOfReaction, 0);
-    }
-    else if (chemicalModel == "Mars-McKenzie")    //! The McKenzie Model for Mars.
-    {
-        nGasType = 1;
-        myChemModel.CreateMarsGasModel(numberOfSpecies, numberOfReaction, 1);
-    }
-
-    //! Generate the physical and chemical data of species.
-    molecularProperty->Create(nGasType);
-
-    //! Generate the curve fitting data of chemical reaction rate.
-    RDouble **reactionCoef = myChemModel.GetReactionRateCurveFittingData();
-    reactionRate->Create(reactionCoef);
-
-    //! Generate the curve fitting data of chemkin model for computing the specific heat and enthalpy in the one-temperature model.
-    thermodynamicManager->Create(nGasType);
-
-    //! Generate the curve fitting data of transport coefficients, such as viscosity.
-    CurveFits->Create(nGasType);
-
-    //! Generate the chemical reaction equations.
-    int **reactionFlag = myChemModel.GetReactionType();
-    int **forwardCoef = myChemModel.GetForwardStoichiometricCoefficient();
-    int **backwardCoef = myChemModel.GetBackwardStoichiometricCoefficient();
-    RDouble **collisionCoef = myChemModel.GetThirdBodyCollisionCoefficient();
-    stoichiometricEquation->Create(forwardCoef, backwardCoef, collisionCoef, reactionFlag);
 }
 
 void RealGas::GenerateGasModel(string chemicalModel)

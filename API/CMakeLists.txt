@@ -625,7 +625,6 @@ if(BUILD_MultiSpecies)
 # set directory of MultiSpeciesGas.
 set(MultiSpecies_H_PATH MultiSpecies/include)
 set(MultiSpecies_H_LIST
-${MultiSpecies_H_PATH}/ChemicalModel.h
 ${MultiSpecies_H_PATH}/PHChemicalModel.h
 ${MultiSpecies_H_PATH}/RealGas.h
 )
@@ -634,7 +633,6 @@ include_directories(${MultiSpecies_H_PATH})
 
 set(MultiSpecies_CPP_PATH MultiSpecies/src)
 set(MultiSpecies_CPP_LIST
-${MultiSpecies_CPP_PATH}/ChemicalModel.cpp
 ${MultiSpecies_CPP_PATH}/PHChemicalModel.cpp
 ${MultiSpecies_CPP_PATH}/RealGas.cpp
 )
