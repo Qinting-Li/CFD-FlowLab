@@ -996,13 +996,13 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
     }
 
     int numberOfNodesOnInterfaces = 0;
-    PHVectorInt1D gloableNodeIndexToLocalNodeIndex(numberOfNodes);
-    SetField(gloableNodeIndexToLocalNodeIndex, -1, numberOfNodes);
+    PHVectorInt1D globalNodeIndexToLocalNodeIndex(numberOfNodes);
+    SetField(globalNodeIndexToLocalNodeIndex, -1, numberOfNodes);
     for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         if (isInterfaceNode[iNode])
         {
-            gloableNodeIndexToLocalNodeIndex[iNode] = numberOfNodesOnInterfaces;
+            globalNodeIndexToLocalNodeIndex[iNode] = numberOfNodesOnInterfaces;
             ++ numberOfNodesOnInterfaces;
         }
     }
@@ -1050,7 +1050,7 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
         for (int iNode = 0; iNode < faceNodeNumber; ++ iNode)
         {
             int globalNodeIndex = faceNodeIndexContainer[nodePosition + iNode];
-            int localNodeIndex  = gloableNodeIndexToLocalNodeIndex[globalNodeIndex];
+            int localNodeIndex  = globalNodeIndexToLocalNodeIndex[globalNodeIndex];
             faceNodeIndexContainerOfZoneInterfaces[interfaceIndex][iNode] = localNodeIndex;
         }
 

@@ -14,7 +14,6 @@ vector<Task *> * Task::ootasklist = new vector<Task *>;
 // const int Task::CREATE_GRID      = 1;
 // const int Task::CAL_WALL_DIST    = 2;
 // const int Task::PARTITION_GRID   = 3;
-// const int Task::REPOSITORY       = 4;
 // const int Task::OVERSETGRID_VIEW = 5;
 // const int Task::OVERSET_CONFIG   = 6;
 

@@ -30,91 +30,125 @@ public:
     Simulation(int dimension);
     ~Simulation();
 public:
-    //! select task according to taskType
+    //! Select task according to taskType.
     void Start();
-    //! main part of simulation
+
+    //! Main part of simulation.
     void SolveSimulation();
 
+    //! Post process of simulation.
+    void PostSimulation();
+
+private:
+    //! Main work flow of CFD simulation process.
+    void RunCFD();
+
+    //! Compute wall distance for turbulent flow while there was no .wdt file.
+    void ComputeWallDistance();
+
+    //! Need convert process or not.
+    void IsNeedConvert();
+
+    #ifdef USE_INHOUSE_VERSION
+    //! Work flow of some specific simulation process.
+    void RunDSMC();
+    void RunHelicopterSolver();
+    void RunUGKS();
+    #endif
+
+    //! The work flow to convert, partition and compute.
+    void RunIntegrativeSolver();
+
+    //! Check the .fts grid.
+    void RunGridCheckSolver();
+
+    //! Run SpecDiffHyb solver.
+    #ifdef USE_SpecDiffHybSolver
+    void RunSpecDiffHybSolver();
+    void RunSpecSolver();
+    #endif
+
+    //! Identify the motive derivatives from the unsteady result file "./results/aircoef.dat".
+    #ifdef USE_INHOUSE_VERSION
+    void IdentifyDerivative();
+    #endif
+
+    //! Run post process without flow field simulation.
+    void RunPostProcessing();
+
+    //! Read the grid such as grid coordinate, boundary information, wall distance for turbulent flow and interpoint information.
+    void ReadGeometry();
+
+    //! Update all zones parameter.
+    void UpdateAllZonesPara();
+
+    //! Initialize the geometry.
+    void InitGeometry();
+
+    //! Communicate the grid metrics on the interfaces.
+    void SwapGeommetry();
+
+    //! Initialize overset grid.
+    void InitOversetGrid();
+
+    //! Run CFD using the self-adaption method.
+    void SelfAdaptionRunCFD();
+    void FirstStepRunCFD (bool isStart = true);
+    void SecondStepRunCFD(bool isStart = false);
+    void ThirdStepRunCFD (bool isStart = false);
+    void FinalStepRunCFD ();
+    
     //! The numerical iteration process similar to the function named SolveSimulation.
     void SelfAdaptionSolve();
 
-    //! post process of simulation
-    void PostSimulation();
+    //! Release the dynamic memories related to the solvers.
+    void RefreshSolvers();
 
-    //! initionalize flow field in the first flowInitStep steps with coarse grid when multigrid simulation
-    void MultiGridInitFlow();
-private:
-    //! read the grid such as grid coordinate, boundary information, wall distance for turbulent flow and interpoint information
-    void ReadGeometry();
-    void InitGeometry();
-    void SwapGeommetry();
-    void InitOversetGrid();
-    void OversetGridConfig();
+    //! Check whether the current computation is restart process.
+    bool IsRestartProcess();
 
     //! Define solver names for all zones and create the newly defined solvers.
     //! IMPORTANT for solver developers:
     //! Define your solver name which is same with the solver class name here!
     void DefineAndCreateSolvers();
 
+    //! Initialize global boundary condition.
+    void InitGlobalBoundaryCondition();
+
     //! Initialize each solver on each zone.
     void InitializeSolvers();
 
-    //! Release the dynamic memories related to the solvers.
-    void RefreshSolvers();
+    //! Initionalize flow field in the first flowInitStep steps with coarse grid when multigrid simulation.
+    void MultiGridInitFlow();
 
-    //main work flow of CFD simulation process
-    void RunCFD();
+    //!
+    void OversetGridConfig();
 
-    //! Check whether the current computation is restart process.
-    bool IsRestartProcess();
-
-    //run CFD using the self-adaption method.
-    void SelfAdaptionRunCFD();
-    void FirstStepRunCFD(bool isStart = true);
-    void SecondStepRunCFD(bool isStart = false);
-    void ThirdStepRunCFD(bool isStart = false);
-    void FinalStepRunCFD();
-
-    void RunIntegrativeSolver();
-    void RunGridCheckSolver();
-
-    #ifdef USE_INHOUSE_VERSION
-    //! work flow of some specific simulation process
-    void RunDSMC();
-    void RunUGKS();
-    void RunHelicopterSolver();
-
-     //! Identify the motive derivatives from the unsteady result file "./results/aircoef.dat"
-    void IdentifyDerivative();
-    #endif
-
-    #ifdef USE_SpecDiffHybSolver
-    void RunSpecDiffHybSolver();
-    void RunSpecSolver();
-    #endif
-
-    //! compute wall distance for turbulence flow while there was no wdt files.
-    void ComputeWallDistance();
-
-    void IsNeedConvert();
-    void UpdateAllZonesPara();
-
-    //! run post processing without flow field simulation
-    void RunPostProcessing();
-
-    void SolveOneOuterStep();
+    //!
     void UpdateOuterIterationStep(int &outerIterStep);
 
+    //! 
+    void SolveOneOuterStep();
+
+    //!
     void PreSolve();
+
+    //!
     void MainSolve();
+
+    //!
     void PostSolve();
 
-    void InitGlobalBoundaryCondition();
-    
+    //!
     void SolveIncomFlow();
-    void SolveUnsteady();
+
+    //!
     void SolveSteady();
-    
+
+    //!
+    void SolveUnsteady();
+
+    //!
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
 };
 }

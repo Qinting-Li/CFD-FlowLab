@@ -11,7 +11,7 @@
 #pragma warning (disable:913)
 namespace PHSPACE
 {
-void ReadPlot3dGrid(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
+void ReadPlot3dGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
     //fileformat : Grid file format.
@@ -24,14 +24,14 @@ void ReadPlot3dGrid(Grid **& structGrids, int &numberOfBlocks, const string &gri
     {
         ReadPlot3DCoorASCII(gridgenFile, numberOfBlocks, structGrids);
     }
-    else if(fileFormat == 0)
+    else if (fileFormat == 0)
     {
         ReadPlot3DCoorBinary(gridgenFile, numberOfBlocks, structGrids);
     }
     ReadBoundaryFile(structGrids, numberOfBlocks, BCFile);
 }
 
-void ReadGridgenGrid(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
+void ReadGridgenGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
     //fileformat : Grid file format.
@@ -47,7 +47,7 @@ void ReadGridgenGrid(Grid **& structGrids, int &numberOfBlocks, const string &gr
     else
     {
         ostringstream oss;
-        oss << "  Error: this situation has not been considered, for file type = BINARY, when from_gtype = Gridgen."<< endl;
+        oss << "  Error: this situation has not been considered, for file type = BINARY, when from_gtype = Gridgen." << endl;
         TK_Exit::ExceptionExit(oss.str());
     }
 
@@ -57,7 +57,7 @@ void ReadGridgenGrid(Grid **& structGrids, int &numberOfBlocks, const string &gr
 void ReadPlot3DCoorBinary(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
-    file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
+    file.open(coordinateFile.c_str(), ios_base::in|ios_base::binary);
     if (!file)
     {
         TK_Exit::FileOpenErrorExit(coordinateFile);
@@ -130,7 +130,7 @@ void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Gri
     structGrids = new Grid *[numberOfBlocks];
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
-        int ni,nj,nk;
+        int ni, nj, nk;
         file >> ni;
         file >> nj;
         file >> nk;
@@ -174,7 +174,7 @@ void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Gri
 int CheckCoorFileIfASCII(const string &coordinateFile)
 {
     fstream file;
-    file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
+    file.open(coordinateFile.c_str(), ios_base::in|ios_base::binary);
     if (!file)
     {
         TK_Exit::FileOpenErrorExit(coordinateFile);
@@ -211,7 +211,7 @@ void ReadPlot3DCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid
     structGrids = new Grid *[numberOfBlocks];
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
-        int ni,nj,nk;
+        int ni, nj, nk;
         file >> ni;
         file >> nj;
         file >> nk;
@@ -258,13 +258,13 @@ void ReadPlot3DCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid
 void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const string &BCFile)
 {
     fstream file;
-    file.open(BCFile.c_str(),ios_base::in);
+    file.open(BCFile.c_str(), ios_base::in);
     if(!file)
     {
         TK_Exit::FileOpenErrorExit(BCFile);
     }
 
-    string line,word;
+    string line, word;
     string separator = " =\t\r\n#$,;";
 
     ReadNewLine(file, line);
@@ -294,12 +294,12 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
     int *blockProcessorINP = GetZoneProcessorID_INP();
 
     string boundaryName[100] = {"NO_BOUNDARY_CONDITION", "EXTRAPOLATION", "SOLID_SURFACE", "SYMMETRY", 
-                            "FARFIELD", "INFLOW", "OUTFLOW", "POLE", "Wall_8", "Wall_9", "Wall_10", "Wall_11", 
-                            "Wall_12", "Wall_13", "Wall_14", "Wall_15", "Wall_16", "Wall_17", "Wall_18", "Wall_19",
-                            "Wall_20", "Wall_21", "Wall_22", "Wall_23", "Wall_24", "Wall_25", "Wall_26", "Wall_27", 
-                            "Wall_28", "Wall_29", "Wall_30", "Wall_31", "Wall_32", "Wall_33", "Wall_34", "Wall_35",
-                            "Wall_36", "Wall_37", "Wall_38", "Wall_39", "Wall_40", "Wall_41", "Wall_42", "Wall_43",
-                            "Wall_44", "Wall_45", "Wall_46", "Wall_47", "Wall_48", "Wall_49", "Wall_50"};
+                                "FARFIELD", "INFLOW", "OUTFLOW", "POLE", "Wall_8", "Wall_9", "Wall_10", "Wall_11", 
+                                "Wall_12", "Wall_13", "Wall_14", "Wall_15", "Wall_16", "Wall_17", "Wall_18", "Wall_19",
+                                "Wall_20", "Wall_21", "Wall_22", "Wall_23", "Wall_24", "Wall_25", "Wall_26", "Wall_27", 
+                                "Wall_28", "Wall_29", "Wall_30", "Wall_31", "Wall_32", "Wall_33", "Wall_34", "Wall_35",
+                                "Wall_36", "Wall_37", "Wall_38", "Wall_39", "Wall_40", "Wall_41", "Wall_42", "Wall_43",
+                                "Wall_44", "Wall_45", "Wall_46", "Wall_47", "Wall_48", "Wall_49", "Wall_50"};
     boundaryName[52] = "PRESSURE_INLET";
     boundaryName[62] = "PRESSURE_OUTLET";
     boundaryName[71] = "POLE1";
@@ -332,7 +332,6 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
 
         line = FindNextWord(line, word, separator);
 
-
         if (word == "proc")
         {
             blockProcessFlag = true;
@@ -351,7 +350,7 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
         from_string <int> (numberOfBCRegion, word, std::dec);
 
         grid->CreateCompositeBCRegion(numberOfBCRegion);
-        CompositeStructBC * compositeBCRegion = grid->GetCompositeBCRegion();
+        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
         for (int iBCRegion = 0; iBCRegion < numberOfBCRegion; ++ iBCRegion)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;
@@ -398,7 +397,7 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
                 else
                 {
                     bcName = boundaryName[BCType];
-                    if ((BCType >7) && (BCType <51))
+                    if ((BCType > 7) && (BCType < 51))
                     {
                         BCType = 2;
                         BCRegions->SetBCType(BCType);
@@ -451,9 +450,9 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
         }
     }
 
-    if(!blockProcessFlag)
+    if (!blockProcessFlag)
     {
-        delete []blockProcessorINP;
+        delete [] blockProcessorINP;
         SetZoneProcessID_INP(0);
     }
 

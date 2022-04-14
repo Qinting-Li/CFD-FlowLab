@@ -307,7 +307,7 @@ LIB_EXPORT void ReadControlParameters()
         ReadParamInfo();
     }
 
-    BroadCastInfo();
+    BroadcastInfo();
 }
 
 LIB_EXPORT void ReadKeyInfo()
@@ -362,7 +362,7 @@ LIB_EXPORT void ReadParamInfo(const string &filename)
     file.clear();
 }
 
-LIB_EXPORT void BroadCastInfo()
+LIB_EXPORT void BroadcastInfo()
 {
     using namespace PHMPI;
     int number_of_processor = GetNumberOfProcessor();
@@ -401,7 +401,7 @@ LIB_EXPORT void CompleteParamInfo()
         string walldistfile = ChangeExtensionOfFileName(origialGridFile, "wdt");
         GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
     }
-    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION)
+    else if (nsimutask == CREATE_GRID)
     {
         string from_gfile = GlobalDataBase::GetStrParaFromDB("from_gfile");
         string bnd_file = ChangeExtensionOfFileName(from_gfile, "inp");

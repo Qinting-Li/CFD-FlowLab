@@ -15,7 +15,6 @@
 
 #pragma once
 
-//! Include the solvers start.
 #include "NSSolver.h"                 //! Base NS solver.
 #include "NSSolverStructFD.h"         //! Structured NS solver, Finite Difference Method.
 #include "NSSolverStructFV.h"         //! Structured NS solver, Finite Volume Method.
@@ -41,9 +40,3 @@
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"
 #endif
-//! Include the solvers end.
-
-namespace PHSPACE
-{
-
-}

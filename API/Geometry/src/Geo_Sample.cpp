@@ -843,7 +843,7 @@ void SampleLocationInfo::Run()
         WriteProbesCellInfo(probesCellFileName);
     }
 
-    BroadCastProbesData();
+    BroadcastProbesData();
 
     SampleLocationInfoToGrid();
 }
@@ -1523,7 +1523,7 @@ void SampleLocationInfo::CheckInvalidProbesData()
     }
 }
 
-void SampleLocationInfo::BroadCastProbesData()
+void SampleLocationInfo::BroadcastProbesData()
 {
 
     int server = GetServerProcessorID();

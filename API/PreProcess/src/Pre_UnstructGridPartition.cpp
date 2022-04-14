@@ -2097,10 +2097,10 @@ void Pre_UnstructGridPartition::WriteAdditionalData(const string &out_grid_file)
     WriteFaceBC(out_grid_file);
 
     //! Write walldist information.
-    WriteWallDist(out_grid_file);
+    WriteWalldist(out_grid_file);
 }
 
-void Pre_UnstructGridPartition::WriteWallDist(const string &out_grid_file)
+void Pre_UnstructGridPartition::WriteWalldist(const string &out_grid_file)
 {
     if (!partitionWallDist) return;
     string walldistfile = ChangeExtensionOfFileName(out_grid_file, "wdt");
@@ -2118,14 +2118,14 @@ void Pre_UnstructGridPartition::WriteWallDist(const string &out_grid_file)
         if (!grids[izone]) continue;
 
         UnstructGrid *grid = UnstructGridCast(grids[izone]);
-        WriteWallDist(actkey, grid);
+        WriteWalldist(actkey, grid);
     }
     
     H5Fclose(actkey->filepos);
     delete actkey;    actkey = NULL;
 }
 
-void Pre_UnstructGridPartition::WriteWallDist(ActionKey *actkey, UnstructGrid *gridPart)
+void Pre_UnstructGridPartition::WriteWalldist(ActionKey *actkey, UnstructGrid *gridPart)
 {
     ostringstream oss;
     oss << "Grid-" << gridPart->GetZoneID();
@@ -2411,7 +2411,7 @@ void Pre_UnstructGridPartition::DumpSerialPartitionGrid(const string &gridFileNa
         WriteAdditionalData(partitionedGridFileName);
     }
 
-    WriteWallDist(gridFileName);
+    WriteWalldist(gridFileName);
 }
 
 void Pre_UnstructGridPartition::DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks)
@@ -2421,7 +2421,7 @@ void Pre_UnstructGridPartition::DumpParallelPartitionGrid(const string &gridFile
     {
         DumpGrid(gridFileName, grids, nBlocks);
 
-        WriteWallDist(gridFileName);
+        WriteWalldist(gridFileName);
         return;
     }
 

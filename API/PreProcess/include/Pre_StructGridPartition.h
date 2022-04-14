@@ -78,8 +78,8 @@ private:
 
     void SetWallDist();
     void WriteGridWallDist(StructGrid *grid, StructGrid *Ordinary_grid, vector<int> &nst, vector<int> &ned);
-    void WriteWallDist(const string &out_grid_file, Grid **grids_in);
-    void WriteWallDist(ActionKey *actkey, StructGrid *grid);
+    void WriteWalldist(const string &out_grid_file, Grid **grids_in);
+    void WriteWalldist(ActionKey *actkey, StructGrid *grid);
 
     void ProbeLargestBlock(Pre_Block_Struct *&simpleBlock, RDouble &numberOfCells);
     void SplitSingleBlock(Pre_Block_Struct *simpleBlock, RDouble ntarget, int ip, bool allotted);

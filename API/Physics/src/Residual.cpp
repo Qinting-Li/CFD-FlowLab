@@ -200,7 +200,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     }
 
     RDouble resAverage = 0.0;
-    RDouble GloableTotalCells = GlobalDataBase::GetDoubleParaFromDB("GloableTotalCells");
+    RDouble globalTotalCells = GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
 
    //for (int m = 0; m < numberOfResidualVariables; ++ m)
    //{
@@ -215,7 +215,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     //resAverage = resAverage / numberOfResidualVariables;
 
     resAverage += residualNormal[0];
-    resAverage = sqrt(resAverage / GloableTotalCells);
+    resAverage = sqrt(resAverage / globalTotalCells);
     oss << resAverage << "    ";
 
     RDouble maximumResidual = maxResidual->GetMaxRes();
@@ -236,7 +236,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     formatRes = oss.str();
 }
 
-void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
+void ResidualGlobal::PrintResidualtoWindow(int outnstep, string &formatRes)
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int intervalStepRes = GlobalDataBase::GetIntParaFromDB("intervalStepRes");
@@ -247,10 +247,10 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
     }
 
     bool dumpTitle = true;// Print the NS-equations residual to window only.
-    if(isUnsteady)
+    if (isUnsteady)
     {
         int innerStep = GlobalDataBase::GetIntParaFromDB("innstep");
-        if(innerStep != 1)
+        if (innerStep != 1)
         {
             dumpTitle = false;
         }
@@ -284,7 +284,7 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
     cout << oss.str();
 }
 
-void ResidualGlobal::OutResResidualNorm(fstream &file, string & formatRes, std::ostringstream &oss, int outnstep)
+void ResidualGlobal::OutResResidualNorm(fstream &file, string &formatRes, std::ostringstream &oss, int outnstep)
 {
     if (IfFileEmpty(file))
     {
@@ -294,7 +294,7 @@ void ResidualGlobal::OutResResidualNorm(fstream &file, string & formatRes, std::
         title_tecplot.push_back("\"iter\"");
 
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-        if(isUnsteady == 1)
+        if (isUnsteady == 1)
         {
             //! Unsteady.
             title_tecplot.push_back("\"Sub-iter\"");
@@ -343,7 +343,7 @@ void ResidualGlobal::DumpResidual(ActionKey *actkey, int outnstep)
 
     PrintResidualtoWindow(outnstep, formatRes);
 
-    if(!actkey->IsNeedOpenFile())
+    if (!actkey->IsNeedOpenFile())
     {
         return;
     }

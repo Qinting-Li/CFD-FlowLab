@@ -872,7 +872,7 @@ namespace PHSPACE
         //start = omp_get_wtime();
         TimeSpan* testTime = new TimeSpan();
         UGKSFlux(grid);
-        testTime->ShowTimeSpanToLogfile("Calculate Flux Time");
+        testTime->ShowTimeSpanToLogFile("Calculate Flux Time");
         delete testTime;
         //end = omp_get_wtime();
         //diff = end - start;
@@ -882,7 +882,7 @@ namespace PHSPACE
         // start = omp_get_wtime();
         TimeSpan* testTime1 = new TimeSpan();
         UpdateUGKS(grid);
-        testTime1->ShowTimeSpanToLogfile("Update Time");
+        testTime1->ShowTimeSpanToLogFile("Update Time");
         delete testTime1;
         //end = omp_get_wtime();
         // diff = end - start;

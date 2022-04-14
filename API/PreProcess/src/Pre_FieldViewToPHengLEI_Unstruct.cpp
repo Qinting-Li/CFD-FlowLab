@@ -114,7 +114,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewVersion(fstream &file, int &n
     do
     { 
         getline(file, line);
-    } while (line == "");
+    }while (line == "");
 
     nversion = FIELDVIEW_2_4;
 

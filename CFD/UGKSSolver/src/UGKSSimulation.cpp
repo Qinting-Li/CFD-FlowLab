@@ -32,7 +32,7 @@ namespace PHSPACE
     {
         TimeSpan* testTime = new TimeSpan();
         ReadGrid();
-        testTime->ShowTimeSpanToLogfile("Grid Reading");
+        testTime->ShowTimeSpanToLogFile("Grid Reading");
         delete testTime;
     }
     
@@ -53,7 +53,7 @@ namespace PHSPACE
         //RDouble start = omp_get_wtime();
         //TimeSpan* testTime = new TimeSpan();
         Preprocess();
-        //testTime->ShowTimeSpanToLogfile("Process");
+        //testTime->ShowTimeSpanToLogFile("Process");
         //delete testTime;
 
         SolveSimulation();
@@ -206,7 +206,7 @@ namespace PHSPACE
         //end = omp_get_wtime();
         //diff = end - start;
         //cout <<"postsolve:"<<diff << endl;
-        //testTime->ShowTimeSpanToLogfile("Process Time");
+        //testTime->ShowTimeSpanToLogFile("Process Time");
         //delete testTime;
     }
     
