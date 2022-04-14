@@ -1224,7 +1224,7 @@ void ParallelProjection::FixCellProjectType()
     PrintToWindow("\n");
     
 
-    fixTime.ShowTimeSpanToLogfile("Fix cell project type");
+    fixTime.ShowTimeSpanToLogFile("Fix cell project type");
     WriteLogFile("End fix cell project type!");
 }
 

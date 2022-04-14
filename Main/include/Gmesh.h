@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Gmesh.h
-//! @brief     Conver fluent grid to fts grid.
+//! @brief     Convert gmsh grid to fts grid.
 //! @author    He Xin.
 
 #pragma once
