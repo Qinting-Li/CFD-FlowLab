@@ -1413,7 +1413,7 @@ RDouble * MolecularProperty::GetTurbulentSchmidtNumberReciprocal() const
     return schmidt_number->GetTurbulentSchmidtNumberReciprocal();
 }
 
-RealGas::RealGas()
+MixedGas::MixedGas()
 {
     molecularProperty      = 0;
     thermodynamicManager   = 0;
@@ -1428,7 +1428,7 @@ RealGas::RealGas()
     polynomialCoefT2 = 0;
 }
 
-RealGas::~RealGas()
+MixedGas::~MixedGas()
 {
     if (nchem > 0)
     {
@@ -1446,7 +1446,7 @@ RealGas::~RealGas()
     }
 }
 
-RDouble RealGas::ComputeReferenceTotalEnthalpy()
+RDouble MixedGas::ComputeReferenceTotalEnthalpy()
 {
     RDouble totalEnthalpy = 0.0, staticEnthalpy = 0.0;
     RDouble *initMassFraction = this->GetInitMassFraction();
@@ -1470,7 +1470,7 @@ RDouble RealGas::ComputeReferenceTotalEnthalpy()
     return totalEnthalpy;
 }
 
-void RealGas::AllocateWorkingSpace()
+void MixedGas::AllocateWorkingSpace()
 {
     moleFractions = new RDouble[numberOfSpecies];
     massFractions = new RDouble[numberOfSpecies];
@@ -1521,7 +1521,7 @@ void RealGas::AllocateWorkingSpace()
     polynomialCoefT2 = NewPointer2<RDouble>(numberOfSpecies, n);
 }
 
-void RealGas::DeAllocateWorkingSpace()
+void MixedGas::DeAllocateWorkingSpace()
 {
     delete []moleFractions;
     delete []massFractions;
@@ -1567,7 +1567,7 @@ void RealGas::DeAllocateWorkingSpace()
     DelPointer2(polynomialCoefT2);
 }
 
-void RealGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q)
+void MixedGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q)
 {
     using namespace IDX;
     RDouble em;
@@ -1606,7 +1606,7 @@ void RealGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RD
     }
 }
 
-void RealGas::Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble staticE, RDouble *q)
+void MixedGas::Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble staticE, RDouble *q)
 {
     using namespace IDX;
     RDouble em;
@@ -1705,7 +1705,7 @@ void RealGas::Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, R
 //}
 
 
-void RealGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature)
+void MixedGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature)
 {
     using namespace IDX;
     RDouble density, oDensity, um, vm, wm, pressure, totalInternalEnergy, squareVelocity, internalEnergy, deltC,fcs,fmin;
@@ -1791,7 +1791,7 @@ void RealGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RD
 
 }
 
-void RealGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature)
+void MixedGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature)
 {
     using namespace IDX;
     RDouble gasConstant = this->GetUniversalGasConstant();
@@ -2042,18 +2042,18 @@ void RealGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, R
 }
 
 
-RDouble * RealGas::GetLaminarSchmidtNumberReciprocal() const
+RDouble * MixedGas::GetLaminarSchmidtNumberReciprocal() const
 { 
     return molecularProperty->GetLaminarSchmidtNumberReciprocal();
 }
 
-RDouble * RealGas::GetTurbulentSchmidtNumberReciprocal() const
+RDouble * MixedGas::GetTurbulentSchmidtNumberReciprocal() const
 {
     return molecularProperty->GetTurbulentSchmidtNumberReciprocal();
 }
 
 //! To obtain the laminar Schmidt number of each component.
-void RealGas::GetLaminarSchmidtNumber(RDouble *Scl) const
+void MixedGas::GetLaminarSchmidtNumber(RDouble *Scl) const
 {
     if (Scl == NULL)
     {
@@ -2070,7 +2070,7 @@ void RealGas::GetLaminarSchmidtNumber(RDouble *Scl) const
 }
 
 //! To obtain the turbulent Schmidt number of each component.
-void RealGas::GetTurbulentSchmidtNumber(RDouble *Sct) const
+void MixedGas::GetTurbulentSchmidtNumber(RDouble *Sct) const
 {
     if (Sct == NULL)
     {
@@ -2086,7 +2086,7 @@ void RealGas::GetTurbulentSchmidtNumber(RDouble *Sct) const
     }
 }
 
-void RealGas::GetSpecificHeatRatio(RDouble *prim, RDouble &gama)
+void MixedGas::GetSpecificHeatRatio(RDouble *prim, RDouble &gama)
 {
     if (nchem == 0)      //! Perfect gas.
     {
@@ -2117,7 +2117,7 @@ void RealGas::GetSpecificHeatRatio(RDouble *prim, RDouble &gama)
     }
 }
 
-void RealGas::GetSpecificHeatRatioAndTemperatute(RDouble *primitiveVariables, RDouble &gama, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
+void MixedGas::GetSpecificHeatRatioAndTemperatute(RDouble *primitiveVariables, RDouble &gama, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
   {
   
     GetTemperature(primitiveVariables, transRotationTemperature, vibrationTemperature, electronTemperature);
@@ -2150,7 +2150,7 @@ void RealGas::GetSpecificHeatRatioAndTemperatute(RDouble *primitiveVariables, RD
     }
 }
 
-void RealGas::ReadGasModel()
+void MixedGas::ReadGasModel()
 {
     string gasfile;
     GlobalDataBase::GetData("gasfile", &gasfile, PHSTRING, 1);
@@ -2280,7 +2280,7 @@ void RealGas::ReadGasModel()
 
 }
 
-void RealGas::InitGasModel()
+void MixedGas::InitGasModel()
 {
     using namespace PHMPI;
     int myid = GetCurrentProcessorID();
@@ -2300,7 +2300,7 @@ void RealGas::InitGasModel()
     PH_BcastComposite(ChemCompressData,ChemDecompressData,server,tag);
 }
 
-void RealGas::ComputeReferenceViscosityDimensionalChemical()
+void MixedGas::ComputeReferenceViscosityDimensionalChemical()
 {
     RDouble reference_viscosity_dimensional;
     RDouble reference_tempereature = 1.0;
@@ -2349,7 +2349,7 @@ void RealGas::ComputeReferenceViscosityDimensionalChemical()
     referenceParameterDimensional.SetViscosity( reference_viscosity_dimensional );
 }
 
-void RealGas::ComputeReferenceViscosityDimensionalNoChemical()
+void MixedGas::ComputeReferenceViscosityDimensionalNoChemical()
 {
     RDouble t0i  = 288.15;
     RDouble tsi  = 110.4;
@@ -2360,7 +2360,7 @@ void RealGas::ComputeReferenceViscosityDimensionalNoChemical()
     referenceParameterDimensional.SetViscosity(reference_viscosity_dimensional);
 }
 
-void RealGas::ComputeReferenceTsuth()
+void MixedGas::ComputeReferenceTsuth()
 {
     RDouble tsi  = 110.4;
 
@@ -2370,7 +2370,7 @@ void RealGas::ComputeReferenceTsuth()
     GlobalDataBase::UpdateData("tsuth", &tsuth, PHDOUBLE, 1);
 }
 
-void RealGas::ComputeReferenceViscosityDimensional()
+void MixedGas::ComputeReferenceViscosityDimensional()
 {
     if ( nchem > 0 )
     {
@@ -2384,7 +2384,7 @@ void RealGas::ComputeReferenceViscosityDimensional()
     ComputeReferenceTsuth();
 }
 
-void RealGas::ComputeReferenceSpecificHeatRatio()
+void MixedGas::ComputeReferenceSpecificHeatRatio()
 {
     if ( nchem > 0 )
     {
@@ -2398,7 +2398,7 @@ void RealGas::ComputeReferenceSpecificHeatRatio()
     }
 }
 
-void RealGas::ComputeReferenceSpecificHeatRatioWithChemical()
+void MixedGas::ComputeReferenceSpecificHeatRatioWithChemical()
 {
     RDouble reference_temperature = 1.0;
     RDouble refGama = 1.4;
@@ -2432,7 +2432,7 @@ void RealGas::ComputeReferenceSpecificHeatRatioWithChemical()
     GlobalDataBase::UpdateData("refGama", &refGama, PHDOUBLE, 1);
 }
 
-void RealGas::ComputeReferenceGeneralGasConstant()
+void MixedGas::ComputeReferenceGeneralGasConstant()
 {
     RDouble reference_average_molecular_weight_dimensional = referenceParameterDimensional.GetAverageMolecularWeight();
     RDouble reference_average_general_gas_constant = rjmk / reference_average_molecular_weight_dimensional;
@@ -2441,7 +2441,7 @@ void RealGas::ComputeReferenceGeneralGasConstant()
     GlobalDataBase::UpdateData("reference_average_general_gas_constant", &reference_average_general_gas_constant, PHDOUBLE, 1);
 }
 
-void RealGas::SetAirInformationByDataBase()
+void MixedGas::SetAirInformationByDataBase()
 {
     RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
 
@@ -2463,7 +2463,7 @@ void RealGas::SetAirInformationByDataBase()
     GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
 }
 
-void RealGas::SetAirInformationByExpData()
+void MixedGas::SetAirInformationByExpData()
 {
     RDouble refDimensionalTemperature;
     RDouble refDimensionalPressure;
@@ -2502,7 +2502,7 @@ void RealGas::SetAirInformationByExpData()
     GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
 }
 
-void RealGas::ComputeReferenceGasInformation()
+void MixedGas::ComputeReferenceGasInformation()
 {
     int inflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
 
@@ -2544,7 +2544,7 @@ void RealGas::ComputeReferenceGasInformation()
     }
 }
 
-void RealGas::ComputeReferenceSoundVelocity()
+void MixedGas::ComputeReferenceSoundVelocity()
 {
     RDouble gama0 = referenceParameterDimensional.GetAverageSpecificHeatRatio();
     RDouble reference_general_gas_constant = referenceParameterDimensional.GetAverageGeneralGasConstant();
@@ -2557,7 +2557,7 @@ void RealGas::ComputeReferenceSoundVelocity()
     GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
 }
 
-void RealGas::ComputeReferenceMolecularInformation()
+void MixedGas::ComputeReferenceMolecularInformation()
 {
     if (nchem > 0)
     {
@@ -2573,7 +2573,7 @@ void RealGas::ComputeReferenceMolecularInformation()
     this->electronMass = 5.486e-7 / refMass;    //! non-dimensional value.
 }
 
-void RealGas::ComputeReferenceMolecularInformationWithoutChemical()
+void MixedGas::ComputeReferenceMolecularInformationWithoutChemical()
 {
     //! Unit: kg/mol.
     RDouble reference_average_molecular_weight_dimensional = 28.9644 * 1.0e-3;
@@ -2581,7 +2581,7 @@ void RealGas::ComputeReferenceMolecularInformationWithoutChemical()
     referenceParameterDimensional.SetAverageMolecularWeight( reference_average_molecular_weight_dimensional );
 }
 
-void RealGas::ComputeReferenceMolecularInformationWithChemical()
+void MixedGas::ComputeReferenceMolecularInformationWithChemical()
 {
     RDouble *molecularWeight  = molecularProperty->GetMolecularWeight          ();
     RDouble *oMolecularWeight = molecularProperty->GetMolecularWeightReciprocal();
@@ -2624,7 +2624,7 @@ void RealGas::ComputeReferenceMolecularInformationWithChemical()
     }
 }
 
-void RealGas::ComputeReferenceVelocity()
+void MixedGas::ComputeReferenceVelocity()
 {
     RDouble refDimensionalSonicSpeed = referenceParameterDimensional.GetSoundVelocity();
 
@@ -2646,7 +2646,7 @@ void RealGas::ComputeReferenceVelocity()
     }
 }
 
-void RealGas::ComputeReferenceReynoldsNumber()
+void MixedGas::ComputeReferenceReynoldsNumber()
 {
     RDouble refDimensionalDensity = referenceParameterDimensional.GetDensity();
     RDouble reference_velocity_dimensional  = referenceParameterDimensional.GetVelocity();
@@ -2660,7 +2660,7 @@ void RealGas::ComputeReferenceReynoldsNumber()
     GlobalDataBase::UpdateData("oreynolds", &oreynolds, PHDOUBLE, 1);
 }
 
-void RealGas::ComputeProperReynoldsNumberForGrid()
+void MixedGas::ComputeProperReynoldsNumberForGrid()
 {
     RDouble refReNumber = referenceParameterDimensional.GetReynoldsNumber();
     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
@@ -2673,7 +2673,7 @@ void RealGas::ComputeProperReynoldsNumberForGrid()
     GlobalDataBase::UpdateData("oreynolds", &oreynolds, PHDOUBLE, 1);
 }
 
-void RealGas::ComputeOtherProperParameterForGrid()
+void MixedGas::ComputeOtherProperParameterForGrid()
 {
     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     RDouble forceReferenceLength = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
@@ -2721,7 +2721,7 @@ void RealGas::ComputeOtherProperParameterForGrid()
     }
 }
 
-void RealGas::ComputeDensityWithReynoldsNumber()
+void MixedGas::ComputeDensityWithReynoldsNumber()
 {
     RDouble refReNumber = referenceParameterDimensional.GetReynoldsNumber();
     RDouble reference_viscosity_dimensional = referenceParameterDimensional.GetViscosity();
@@ -2733,7 +2733,7 @@ void RealGas::ComputeDensityWithReynoldsNumber()
     GlobalDataBase::UpdateData("refDimensionalDensity", &refDimensionalDensity, PHDOUBLE, 1);
 }
 
-void RealGas::ComputePressureInGasStateEquation()
+void MixedGas::ComputePressureInGasStateEquation()
 {
     RDouble refDimensionalDensity = referenceParameterDimensional.GetDensity();
     RDouble reference_average_generanl_gas_constant = referenceParameterDimensional.GetAverageGeneralGasConstant();
@@ -2745,7 +2745,7 @@ void RealGas::ComputePressureInGasStateEquation()
     GlobalDataBase::UpdateData("refDimensionalPressure", &refDimensionalPressure, PHDOUBLE, 1);
 }
 
-void RealGas::InitNumberOfSpecies()
+void MixedGas::InitNumberOfSpecies()
 {
     if (nchem == 0)
     {
@@ -2796,7 +2796,7 @@ void RealGas::InitNumberOfSpecies()
     }
 }
 
-RDouble RealGas::ComputeReferenceReynoldsNumberFromTotalPT( void )
+RDouble MixedGas::ComputeReferenceReynoldsNumberFromTotalPT( void )
 {
     RDouble Re0, refMachNumber;
     RDouble T0 = referenceParameterDimensional.GetTemperature();
@@ -2822,7 +2822,7 @@ RDouble RealGas::ComputeReferenceReynoldsNumberFromTotalPT( void )
     return Re0;
 }
 
-void RealGas::Print()
+void MixedGas::Print()
 {
     ostringstream oss;
     string *speciesName = GetNameOfSpecies();
@@ -2906,7 +2906,7 @@ void RealGas::Print()
     WriteLogFile(oss);
 }
 
-void RealGas::InitReferenceParameter()
+void MixedGas::InitReferenceParameter()
 {
     InitGasModel();
     InitNumberOfSpecies();
@@ -2991,7 +2991,7 @@ void RealGas::InitReferenceParameter()
     this->oprt = oprt;
 }
 
-void RealGas::ComputeCoefficientOfStateEquation()
+void MixedGas::ComputeCoefficientOfStateEquation()
 {
     //! No matter whether chemical reactions exist or not.
     RDouble gama0 = referenceParameterDimensional.GetAverageSpecificHeatRatio();
@@ -3002,7 +3002,7 @@ void RealGas::ComputeCoefficientOfStateEquation()
     GlobalDataBase::UpdateData("coefficientOfStateEquation", &coefficientOfStateEquation, PHDOUBLE, 1);
 }
 
-void RealGas::NormalizeAirInformation()
+void MixedGas::NormalizeAirInformation()
 {
     RDouble refDimensionalPressure = referenceParameterDimensional.GetPressure();
     RDouble refDimensionalTemperature = referenceParameterDimensional.GetTemperature();
@@ -3014,7 +3014,7 @@ void RealGas::NormalizeAirInformation()
     GlobalDataBase::UpdateData("refDimensionalDensity", &refDimensionalDensity, PHDOUBLE, 1);
 }
 
-void RealGas::InitCommonParameter()
+void MixedGas::InitCommonParameter()
 {
     nchem = GlobalDataBase::GetIntParaFromDB("nchem");
     nm    = GlobalDataBase::GetIntParaFromDB("nm");
@@ -3089,7 +3089,7 @@ void RealGas::InitCommonParameter()
     }
 }
 
-void RealGas::InitOtherParameter()
+void MixedGas::InitOtherParameter()
 {
     int nolstress, nrokplus;
     nolstress = -1;
@@ -3131,7 +3131,7 @@ void RealGas::InitOtherParameter()
     GlobalDataBase::UpdateData("indexOfTE", &nIndexTE, PHINT, 1);
 }
 
-void RealGas::ComputeReferenceParameter()
+void MixedGas::ComputeReferenceParameter()
 {
     //! The first two variables is temperature independent, 
     //! depend on molecular weight and mass fraction of species if chemical reactions exist.
@@ -3159,7 +3159,7 @@ void RealGas::ComputeReferenceParameter()
     ComputeReferencePrimitive();
 }
 
-void RealGas::InitGlobalParameterOfNSEquation()
+void MixedGas::InitGlobalParameterOfNSEquation()
 {
     //! Obtain the variable of "reynoldsReferenceLengthDimensional" according to "gridScaleFactor".
     InitCommonParameter();
@@ -3185,7 +3185,7 @@ void RealGas::InitGlobalParameterOfNSEquation()
     GlobalBoundaryCondition::SetBCDataBaseByGlobalBC();
 }
 
-void RealGas::ComputeReferencePrimitive()
+void MixedGas::ComputeReferencePrimitive()
 {
     RDouble refMachNumber = referenceParameterDimensional.GetMachNumber();
     RDouble reference_sound_velocity, reference_pressure;
@@ -3305,7 +3305,7 @@ void RealGas::ComputeReferencePrimitive()
     }
 }
 
-void RealGas::CreateAllDataClass(int numberOfSpecies, int numberOfReaction)
+void MixedGas::CreateAllDataClass(int numberOfSpecies, int numberOfReaction)
 {
     molecularProperty = new MolecularProperty();
     molecularProperty->Init(numberOfSpecies);
@@ -3323,7 +3323,7 @@ void RealGas::CreateAllDataClass(int numberOfSpecies, int numberOfReaction)
     thermodynamicManager->Init(numberOfSpecies);
 }
 
-void RealGas::Read(fstream &file)
+void MixedGas::Read(fstream &file)
 {
     molecularProperty->Read(file);
     reactionRate->Read(file);
@@ -3332,7 +3332,7 @@ void RealGas::Read(fstream &file)
     stoichiometricEquation->Read(file);
 }
 
-void RealGas::ReadGasModel(fstream &file)
+void MixedGas::ReadGasModel(fstream &file)
 {
     string line,word;
     string separator  = " =\t\r\n#$,;\"'";
@@ -3351,7 +3351,7 @@ void RealGas::ReadGasModel(fstream &file)
     Read(file);
 }
 
-void RealGas::GenerateGasModel(string chemicalModel)
+void MixedGas::GenerateGasModel(string chemicalModel)
 {
     int nGasType = 0;
     int Ablation = GlobalDataBase::GetIntParaFromDB("nAblation");
@@ -3455,7 +3455,7 @@ void RealGas::GenerateGasModel(string chemicalModel)
     delete currentReaction;
 }
 
-void RealGas::GetNameList(vector<string> &namelist, vector<RDouble> &initMassFraction)
+void MixedGas::GetNameList(vector<string> &namelist, vector<RDouble> &initMassFraction)
 {
     string speciesName[30], line1, line2;
     RDouble massFraction[30];
@@ -3486,7 +3486,7 @@ void RealGas::GetNameList(vector<string> &namelist, vector<RDouble> &initMassFra
     }
 }
 
-void RealGas::Read(DataContainer *cdata)
+void MixedGas::Read(DataContainer *cdata)
 {
     molecularProperty->Read(cdata);
     reactionRate->Read(cdata);
@@ -3495,7 +3495,7 @@ void RealGas::Read(DataContainer *cdata)
     thermodynamicManager->Read(cdata);
 }
 
-void RealGas::Write(DataContainer *cdata)
+void MixedGas::Write(DataContainer *cdata)
 {
     molecularProperty->Write(cdata);
     reactionRate->Write(cdata);
@@ -3504,7 +3504,7 @@ void RealGas::Write(DataContainer *cdata)
     thermodynamicManager->Write(cdata);
 }
 
-void RealGas::CompressData(DataContainer *&cdata)
+void MixedGas::CompressData(DataContainer *&cdata)
 {
     cdata->append(&numberOfSpecies, sizeof(int));
     cdata->append(&numberOfReaction, sizeof(int));
@@ -3512,7 +3512,7 @@ void RealGas::CompressData(DataContainer *&cdata)
     Write(cdata);
 }
 
-void RealGas::DecompressData(DataContainer *cdata)
+void MixedGas::DecompressData(DataContainer *cdata)
 {
     cdata->moveto_begin();
 
@@ -3523,12 +3523,12 @@ void RealGas::DecompressData(DataContainer *cdata)
     Read(cdata);
 }
 
-void RealGas::GetTemperatureRangeIndex(const RDouble &temperature_dimensional, int &indexOfTemperatureRange)
+void MixedGas::GetTemperatureRangeIndex(const RDouble &temperature_dimensional, int &indexOfTemperatureRange)
 {
     this->thermodynamicManager->GetTemperatureRangeIndex(temperature_dimensional, indexOfTemperatureRange);
 }
 
-void RealGas::ComputeSpeciesConstantPressureSpecificHeatDimensional(RDouble temperature, RDouble *cpSpeciesDimensional)
+void MixedGas::ComputeSpeciesConstantPressureSpecificHeatDimensional(RDouble temperature, RDouble *cpSpeciesDimensional)
 {
     int ntype = 1;    //! 0 stands for applying the old method, 1 for the new method.
 
@@ -3594,7 +3594,7 @@ void RealGas::ComputeSpeciesConstantPressureSpecificHeatDimensional(RDouble temp
     }
 }
 
-RDouble RealGas::GetMixedGasMolecularWeight(RDouble *massFraction)
+RDouble MixedGas::GetMixedGasMolecularWeight(RDouble *massFraction)
 {
     RDouble mixedMass = 0.0;
     RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
@@ -3608,7 +3608,7 @@ RDouble RealGas::GetMixedGasMolecularWeight(RDouble *massFraction)
     return mixedMass;
 }
 
-RDouble RealGas::GetMixedGasMolecularWeightReciprocalWithoutElectron(RDouble *massFraction, RDouble &ceDivideMe)
+RDouble MixedGas::GetMixedGasMolecularWeightReciprocalWithoutElectron(RDouble *massFraction, RDouble &ceDivideMe)
 {
     RDouble *speciesMass = molecularProperty->GetMolecularWeight();
     //! Obtain the average molecular weight.
@@ -3622,7 +3622,7 @@ RDouble RealGas::GetMixedGasMolecularWeightReciprocalWithoutElectron(RDouble *ma
     return (1.0 / mixedMass - ceDivideMe);
 }
 
-RDouble RealGas::GetUniversalGasConstant()
+RDouble MixedGas::GetUniversalGasConstant()
 {
     //! To obtain the non-dimensional universal gas constant called R = 8.314J/(mol*K).
     //RDouble gasConstant = rjmk;//!unit£ºJ/(mol*K)
@@ -3636,7 +3636,7 @@ RDouble RealGas::GetUniversalGasConstant()
     return coefficientOfStateEquation;
 }
 
-RDouble RealGas::GetMixtureGasEnthalpy(RDouble *massFraction, RDouble temperature)
+RDouble MixedGas::GetMixtureGasEnthalpy(RDouble *massFraction, RDouble temperature)
 {
     //! Obtain the enthalpy of each species.
     this->ComputeSpeciesEnthalpy(temperature, speciesEnthalpy);
@@ -3647,7 +3647,7 @@ RDouble RealGas::GetMixtureGasEnthalpy(RDouble *massFraction, RDouble temperatur
     return mixedGasEnthalpy;
 }
 
-void RealGas::ComputeConstantVolumeSpecificHeatByMassFraction(RDouble *massFraction, RDouble temperature, RDouble &mixedGasCv)
+void MixedGas::ComputeConstantVolumeSpecificHeatByMassFraction(RDouble *massFraction, RDouble temperature, RDouble &mixedGasCv)
 {
     RDouble mixedGasCp;       //! Specific heat at constant pressure.
     this->ComputeConstantPressureSpecificHeatByMassFraction(massFraction, temperature, mixedGasCp);
@@ -3661,7 +3661,7 @@ void RealGas::ComputeConstantVolumeSpecificHeatByMassFraction(RDouble *massFract
     mixedGasCv = mixedGasCp - gasConstant / mixedGasMass;
 }
 
-void RealGas::ComputeSpeciesConstantVolumeSpecificHeat(RDouble temperature, RDouble *cvSpecies)
+void MixedGas::ComputeSpeciesConstantVolumeSpecificHeat(RDouble temperature, RDouble *cvSpecies)
 {
     //! To obtain the non-dimensional constant volume specific heat called cv of each species by fitting formula.
     //! temperature is the non-dimensional temperature of the mixture gas.
@@ -3682,7 +3682,7 @@ void RealGas::ComputeSpeciesConstantVolumeSpecificHeat(RDouble temperature, RDou
     }
 }
 
-void RealGas::ComputeSpeciesConstantVolumeSpecificHeatDimensional(RDouble temperature, RDouble *cvSpeciesDimensional)
+void MixedGas::ComputeSpeciesConstantVolumeSpecificHeatDimensional(RDouble temperature, RDouble *cvSpeciesDimensional)
 {
     //! To obtain the dimensional constant volume specific heat called cv[J/(kg*K)] of each species by fitting formula.
     //! temperature is the non-dimensional temperature of the mixture gas.
@@ -3703,13 +3703,13 @@ void RealGas::ComputeSpeciesConstantVolumeSpecificHeatDimensional(RDouble temper
     }
 }
 
-void RealGas::ComputeConstantPressureSpecificHeatByMassFraction(RDouble *massFraction, RDouble temperature, RDouble &mixedcp)
+void MixedGas::ComputeConstantPressureSpecificHeatByMassFraction(RDouble *massFraction, RDouble temperature, RDouble &mixedcp)
 {
     ComputeSpeciesConstantPressureSpecificHeat(temperature, speciesCp);
     ComputeMixtureByMassFraction(massFraction, speciesCp, mixedcp);
 }
 
-void RealGas::ComputeSpeciesConstantPressureSpecificHeat(RDouble temperature, RDouble *cpSpecies)
+void MixedGas::ComputeSpeciesConstantPressureSpecificHeat(RDouble temperature, RDouble *cpSpecies)
 {
     //! Obtain the dimensional value of species specific heat at constant pressure.
     this->ComputeSpeciesConstantPressureSpecificHeatDimensional(temperature, cpSpecies);
@@ -3721,7 +3721,7 @@ void RealGas::ComputeSpeciesConstantPressureSpecificHeat(RDouble temperature, RD
     }
 }
 
-void RealGas::ComputeSpeciesEnthalpy(RDouble temperature, RDouble *speciesEnthaly)
+void MixedGas::ComputeSpeciesEnthalpy(RDouble temperature, RDouble *speciesEnthaly)
 {
     //! Obtain the dimensional values of species enthalpies.
     this->ComputeSpeciesEnthalpyDimensional(temperature, speciesEnthaly);
@@ -3733,7 +3733,7 @@ void RealGas::ComputeSpeciesEnthalpy(RDouble temperature, RDouble *speciesEnthal
     }
 }
 
-void RealGas::ComputeSpeciesEnthalpyDimensional(RDouble temperature, RDouble *speciesEnthaly)
+void MixedGas::ComputeSpeciesEnthalpyDimensional(RDouble temperature, RDouble *speciesEnthaly)
 {
     int ntype = 1;     //! 0 stands for applying the old method, 1 for the new method.
 
@@ -3799,7 +3799,7 @@ void RealGas::ComputeSpeciesEnthalpyDimensional(RDouble temperature, RDouble *sp
     }
 }
 
-void RealGas::ComputeSpeciesEnergy(RDouble temperature, RDouble *speciesEnergy)
+void MixedGas::ComputeSpeciesEnergy(RDouble temperature, RDouble *speciesEnergy)
 {
     //! Obtain the dimensional values of species energies.
     this->ComputeSpeciesEnergyDimensional(temperature, speciesEnergy);
@@ -3811,7 +3811,7 @@ void RealGas::ComputeSpeciesEnergy(RDouble temperature, RDouble *speciesEnergy)
     }
 }
 
-void RealGas::ComputeSpeciesEnergyDimensional(RDouble temperature, RDouble *speciesEnergy)
+void MixedGas::ComputeSpeciesEnergyDimensional(RDouble temperature, RDouble *speciesEnergy)
 {
     RDouble gasConstant = rjmk;
     RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
@@ -3825,7 +3825,7 @@ void RealGas::ComputeSpeciesEnergyDimensional(RDouble temperature, RDouble *spec
     }
 }
 
-void RealGas::ComputeMixtureByMassFraction(RDouble *massFraction, RDouble *mixtureOfSpecies, RDouble &mixture)
+void MixedGas::ComputeMixtureByMassFraction(RDouble *massFraction, RDouble *mixtureOfSpecies, RDouble &mixture)
 {
     mixture = 0.0;
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
@@ -3834,7 +3834,7 @@ void RealGas::ComputeMixtureByMassFraction(RDouble *massFraction, RDouble *mixtu
     }
 }
 
-void RealGas::ComputeMixtureByPrimitive(RDouble *prim, RDouble *mixtureOfSpecies, RDouble &mixture)
+void MixedGas::ComputeMixtureByPrimitive(RDouble *prim, RDouble *mixtureOfSpecies, RDouble &mixture)
 {
     mixture = 0.0;
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
@@ -3843,7 +3843,7 @@ void RealGas::ComputeMixtureByPrimitive(RDouble *prim, RDouble *mixtureOfSpecies
     }
 }
 
-void RealGas::ComputeMoleFractionByMassFraction(RDouble *massFractionOfSpecies, RDouble *moleFractionOfSpecies)
+void MixedGas::ComputeMoleFractionByMassFraction(RDouble *massFractionOfSpecies, RDouble *moleFractionOfSpecies)
 {
     RDouble *oMolecularWeight = molecularProperty->GetMolecularWeightReciprocal();     //! The reciprocal value of mass fraction.
 
@@ -3862,7 +3862,7 @@ void RealGas::ComputeMoleFractionByMassFraction(RDouble *massFractionOfSpecies, 
     }
 }
 
-void RealGas::ComputeMixtureCoefficientByWilkeFormula(RDouble *moleFractionOfSpecies, RDouble *chem_var, RDouble *chem_phi)
+void MixedGas::ComputeMixtureCoefficientByWilkeFormula(RDouble *moleFractionOfSpecies, RDouble *chem_var, RDouble *chem_phi)
 {
 //! Arguments: moleFractionOfSpecies saves the mole fraction of the species,chem_var stores the viscosity of the given species,
 //! return the value phi stored in the variable chem_phi.
@@ -3884,7 +3884,7 @@ void RealGas::ComputeMixtureCoefficientByWilkeFormula(RDouble *moleFractionOfSpe
     }
 }
 
-void RealGas::ComputeMixtureByWilkeFormula(RDouble *moleFractionOfSpecies, RDouble *mixtureOfSpecies, RDouble *phiOfSpecies, RDouble &mixture)
+void MixedGas::ComputeMixtureByWilkeFormula(RDouble *moleFractionOfSpecies, RDouble *mixtureOfSpecies, RDouble *phiOfSpecies, RDouble &mixture)
 {
     mixture = 0.0;
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
@@ -3893,7 +3893,7 @@ void RealGas::ComputeMixtureByWilkeFormula(RDouble *moleFractionOfSpecies, RDoub
     }
 }
 
-void RealGas::ComputeTemperature(RDouble *primitiveVariables, RDouble &temperature)
+void MixedGas::ComputeTemperature(RDouble *primitiveVariables, RDouble &temperature)
 {
     //! To compute the non-dimensional temperature of the mixture gas in accordance with primitive variables.
     using namespace IDX;
@@ -3906,7 +3906,7 @@ void RealGas::ComputeTemperature(RDouble *primitiveVariables, RDouble &temperatu
     temperature = pressure / (density * coefficientOfStateEquation * massReciprocal);
 }
 
-void RealGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
+void MixedGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
 {
     using namespace IDX;
     RDouble density, pressure, gasConstant, Tk = 0.0;
@@ -3968,7 +3968,7 @@ void RealGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotation
     }
 }
 
-void RealGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
+void MixedGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
 {
     using namespace IDX;
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
@@ -4119,25 +4119,25 @@ void RealGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotatio
     }
 }
 
-RDouble RealGas::GetTemperatureMin()
+RDouble MixedGas::GetTemperatureMin()
 {
     RDouble refDimensionalTemperature = this->referenceParameterDimensional.GetTemperature();
     return this->thermodynamicManager->GetTemperatureMin() / refDimensionalTemperature;
 }
 
-RDouble RealGas::GetTemperatureMax()
+RDouble MixedGas::GetTemperatureMax()
 {
     RDouble refDimensionalTemperature = this->referenceParameterDimensional.GetTemperature();
     return this->thermodynamicManager->GetTemperatureMax() / refDimensionalTemperature;
 }
 
-string * RealGas::GetNameOfSpecies() const 
+string * MixedGas::GetNameOfSpecies() const 
 {
     if ( !molecularProperty ) return 0;
     return molecularProperty->GetNameOfSpecies(); 
 };
 
-void RealGas::GetElectronMolecularWeightAndMassFraction(RDouble *massFraction, RDouble &ce, RDouble &Me)
+void MixedGas::GetElectronMolecularWeightAndMassFraction(RDouble *massFraction, RDouble &ce, RDouble &Me)
 {
     RDouble Mref = referenceParameterDimensional.GetAverageMolecularWeight();
     //! Initialize.
@@ -4152,7 +4152,7 @@ void RealGas::GetElectronMolecularWeightAndMassFraction(RDouble *massFraction, R
     }
 }
 
-void RealGas::GetPressure(RDouble *primitiveVars, RDouble gama, RDouble internalEnergy, RDouble temperature, RDouble &pressure)
+void MixedGas::GetPressure(RDouble *primitiveVars, RDouble gama, RDouble internalEnergy, RDouble temperature, RDouble &pressure)
 {
     if (nchem != 1)      //! Perfect gas.
     {
@@ -4207,7 +4207,7 @@ void RealGas::GetPressure(RDouble *primitiveVars, RDouble gama, RDouble internal
     }
 }
 
-void RealGas::GetTemperatureAndPressure(RDouble *primitiveVars, RDouble internalEnergy, RDouble *temperature, RDouble &pressure)
+void MixedGas::GetTemperatureAndPressure(RDouble *primitiveVars, RDouble internalEnergy, RDouble *temperature, RDouble &pressure)
 {
     using namespace IDX;
     RDouble density, specificInternalEnergy, gasConstant;
@@ -4276,7 +4276,7 @@ void RealGas::GetTemperatureAndPressure(RDouble *primitiveVars, RDouble internal
     }
 }
 
-void RealGas::NormalizePrimitive(RDouble *primitiveVariables)
+void MixedGas::NormalizePrimitive(RDouble *primitiveVariables)
 {
     RDouble fSum = 0.0;
     //! Obtain the index of electron.
@@ -4313,7 +4313,7 @@ void RealGas::NormalizePrimitive(RDouble *primitiveVariables)
     }
 }
 
-void RealGas::ComputeMolecularWeightReciprocal(RDouble *primitiveVariables, RDouble &massReciprocal)
+void MixedGas::ComputeMolecularWeightReciprocal(RDouble *primitiveVariables, RDouble &massReciprocal)
 {
     RDouble *oMolecularWeight = molecularProperty->GetMolecularWeightReciprocal();
 
@@ -4324,7 +4324,7 @@ void RealGas::ComputeMolecularWeightReciprocal(RDouble *primitiveVariables, RDou
     }
 }
 
-void RealGas::ComputeMolecularWeightReciprocalDimensional(RDouble *prim, RDouble &omavDimensional)
+void MixedGas::ComputeMolecularWeightReciprocalDimensional(RDouble *prim, RDouble &omavDimensional)
 {
     RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
 
@@ -4335,7 +4335,7 @@ void RealGas::ComputeMolecularWeightReciprocalDimensional(RDouble *prim, RDouble
     }
 }
 
-void RealGas::ComputeOneTemperatureModelSpeciesViscosity(RDouble temperature, RDouble *viscosityOfSpecies)
+void MixedGas::ComputeOneTemperatureModelSpeciesViscosity(RDouble temperature, RDouble *viscosityOfSpecies)
 {
     //! Obtain the dimensional values of each species viscosity.
     ComputeOneTemperatureModelSpeciesViscosityDimensional(temperature, speciesViscosity);
@@ -4349,7 +4349,7 @@ void RealGas::ComputeOneTemperatureModelSpeciesViscosity(RDouble temperature, RD
     }
 }
 
-void RealGas::ComputeOneTemperatureModelSpeciesViscosityDimensional(RDouble temperature, RDouble *viscosityOfSpeciesDimensional)
+void MixedGas::ComputeOneTemperatureModelSpeciesViscosityDimensional(RDouble temperature, RDouble *viscosityOfSpeciesDimensional)
 {
     //! To obtain the dimensional viscosity of each species according to the Blotter fitting formula.
     //! temperature is the non-dimensional temperature of the mixture gas.
@@ -4399,7 +4399,7 @@ void RealGas::ComputeOneTemperatureModelSpeciesViscosityDimensional(RDouble temp
     }
 }
 
-void RealGas::ComputeSpeciesEnthalpy(RDouble temperature, RDouble *speciesCv, RDouble *speciesE, RDouble *speciesH)
+void MixedGas::ComputeSpeciesEnthalpy(RDouble temperature, RDouble *speciesCv, RDouble *speciesE, RDouble *speciesH)
 {
     ComputeSpeciesConstantVolumeSpecificHeat(temperature, speciesCv);
 
@@ -4413,7 +4413,7 @@ void RealGas::ComputeSpeciesEnthalpy(RDouble temperature, RDouble *speciesCv, RD
     }
 }
 
-void RealGas::ComputeSpeciesConstantPressureSpecificHeatByEuckenFormula(RDouble *cpSpecies)
+void MixedGas::ComputeSpeciesConstantPressureSpecificHeatByEuckenFormula(RDouble *cpSpecies)
 {
     RDouble *molecularWeightDimensional = molecularProperty->GetMolecularWeightDimensional();
 
@@ -4440,7 +4440,7 @@ void RealGas::ComputeSpeciesConstantPressureSpecificHeatByEuckenFormula(RDouble 
     return;
 }
 
-void RealGas::ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble* temperatures)
+void MixedGas::ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble* temperatures)
 {
     using namespace IDX;
 
@@ -4458,7 +4458,7 @@ void RealGas::ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble ga
     }
 }
 
-void RealGas::ComputeInternalEnergy(RDouble *primitiveVariables, RDouble gama, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &totalEnergy)
+void MixedGas::ComputeInternalEnergy(RDouble *primitiveVariables, RDouble gama, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &totalEnergy)
 {
     using namespace IDX;
     RDouble temperature = 0.0, squareVelocity = 0.0, massReciprocal = 0.0, staticEnthalpy = 0.0;
@@ -4521,7 +4521,7 @@ void RealGas::ComputeInternalEnergy(RDouble *primitiveVariables, RDouble gama, R
     }
 }
 
-void RealGas::ComputeDensityDiffusionAndKCP(RDouble temperature, RDouble *primface, RDouble mul, RDouble mut, RDouble *rho_ds_face, RDouble *hintSpeciesOfFace, RDouble &kcp)
+void MixedGas::ComputeDensityDiffusionAndKCP(RDouble temperature, RDouble *primface, RDouble mul, RDouble mut, RDouble *rho_ds_face, RDouble *hintSpeciesOfFace, RDouble &kcp)
 {
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
     {
@@ -4559,7 +4559,7 @@ void RealGas::ComputeDensityDiffusionAndKCP(RDouble temperature, RDouble *primfa
     }
 }
 
-void RealGas::ComputeDHAndTotalEnthalpy(RDouble *primitiveVariables, RDouble &gama, RDouble *deltaQ, RDouble &deltaEnthalpy, RDouble &totalEnthalpy)
+void MixedGas::ComputeDHAndTotalEnthalpy(RDouble *primitiveVariables, RDouble &gama, RDouble *deltaQ, RDouble &deltaEnthalpy, RDouble &totalEnthalpy)
 {
     using namespace IDX;
 
@@ -4609,7 +4609,7 @@ void RealGas::ComputeDHAndTotalEnthalpy(RDouble *primitiveVariables, RDouble &ga
     totalEnthalpy = enthalpy + half * squareVelocity;
 }
 
-void RealGas::ComputeTotalEnthalpyAndDH(RDouble *primitiveVariables, RDouble &gama, RDouble *deltaQ, RDouble &totalEnthalpy, RDouble &deltaEnthalpy)
+void MixedGas::ComputeTotalEnthalpyAndDH(RDouble *primitiveVariables, RDouble &gama, RDouble *deltaQ, RDouble &totalEnthalpy, RDouble &deltaEnthalpy)
 {
     //! This function is used for perfect gas and single temperature model.
     //! To compute the total enthalpy and the variable dh in the function MXDQ_STD(). dh=b2, b2 denotes the coefficient \n
@@ -4697,7 +4697,7 @@ void RealGas::ComputeTotalEnthalpyAndDH(RDouble *primitiveVariables, RDouble &ga
     totalEnthalpy = enthalpy + half * squareVelocity;
 }
 
-void RealGas::ComputeViscosityByPrimitive(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &electronTemperature, RDouble &suthTemperature, RDouble &viscosity)
+void MixedGas::ComputeViscosityByPrimitive(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &electronTemperature, RDouble &suthTemperature, RDouble &viscosity)
 {
     using namespace IDX;
     for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
@@ -4708,7 +4708,7 @@ void RealGas::ComputeViscosityByPrimitive(RDouble *primitiveVariables, RDouble &
     ComputeViscosity(primitiveVariables[IR], massFractions, transRotationTemperature, electronTemperature, suthTemperature, viscosity);
 }
 
-void RealGas::ComputeTransportCoefficients(RDouble *primitiveVariables, RDouble *temperature, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs)
+void MixedGas::ComputeTransportCoefficients(RDouble *primitiveVariables, RDouble *temperature, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs)
 {
     using namespace IDX;
     //RDouble rho = primitiveVariables[IR];
@@ -4759,7 +4759,7 @@ void RealGas::ComputeTransportCoefficients(RDouble *primitiveVariables, RDouble 
 
 }
 
-void RealGas::ComputeTransportCoefficientsR(RDouble *massFractions, RDouble *temperature, RDouble *speciesCps, RDouble *speciesCvvs,RDouble *speciesCves, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs)
+void MixedGas::ComputeTransportCoefficientsR(RDouble *massFractions, RDouble *temperature, RDouble *speciesCps, RDouble *speciesCvvs,RDouble *speciesCves, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs)
 {
     using namespace IDX;
 
@@ -4885,7 +4885,7 @@ void RealGas::ComputeTransportCoefficientsR(RDouble *massFractions, RDouble *tem
 }
 
 
-void RealGas::ComputeViscosity(RDouble density, RDouble *massFractionOfSpecies, RDouble &transRotationTemperature, RDouble &electronTemperature, RDouble &suthTemperature, RDouble &viscosity)
+void MixedGas::ComputeViscosity(RDouble density, RDouble *massFractionOfSpecies, RDouble &transRotationTemperature, RDouble &electronTemperature, RDouble &suthTemperature, RDouble &viscosity)
 {
     if (nchem == 0)     //! Perfect gas.
     {
@@ -4927,7 +4927,7 @@ void RealGas::ComputeViscosity(RDouble density, RDouble *massFractionOfSpecies, 
     }
 }
 
-void RealGas::ComputeSpeciesHeatConductivityByEuckenFormula(RDouble *viscosity, RDouble *cps, RDouble *conductivity)
+void MixedGas::ComputeSpeciesHeatConductivityByEuckenFormula(RDouble *viscosity, RDouble *cps, RDouble *conductivity)
 {
     //! Obtain the universal gas constant.
     RDouble gasConstant = this->GetUniversalGasConstant(); 
@@ -4941,7 +4941,7 @@ void RealGas::ComputeSpeciesHeatConductivityByEuckenFormula(RDouble *viscosity, 
     }
 }
 
-RDouble RealGas::ComputeMixtureGasHeatConductivityByWassilewaFormula(RDouble *primitiveVariables, RDouble temperature)
+RDouble MixedGas::ComputeMixtureGasHeatConductivityByWassilewaFormula(RDouble *primitiveVariables, RDouble temperature)
 {
     //int nSpecies = this->GetNumberOfSpecies();
 
@@ -4993,7 +4993,7 @@ RDouble RealGas::ComputeMixtureGasHeatConductivityByWassilewaFormula(RDouble *pr
     return lambda;
 }
 
-void RealGas::GetPartitionFunctionValues(RDouble *target, RDouble *speciesMass, RDouble *moleFraction, RDouble *phi)
+void MixedGas::GetPartitionFunctionValues(RDouble *target, RDouble *speciesMass, RDouble *moleFraction, RDouble *phi)
 {
     //! To obtain the partition function values based on the targets, e.g conductivity or viscosity.
     RDouble tmp = 0.0;
@@ -5150,7 +5150,7 @@ void RealGas::GetPartitionFunctionValues(RDouble *target, RDouble *speciesMass, 
 //    delete []backwardRates;
 //}
 
-void RealGas::ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int iCell)
+void MixedGas::ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int iCell)
 {
     using namespace IDX;
     RDouble *speciesMass  = molecularProperty->GetMolecularWeightDimensional();
@@ -5274,7 +5274,7 @@ void RealGas::ChemicalSource(RDouble **primitiveVariables, RDouble **temperature
     delete []backwardRates;
 }
 
-void RealGas::EnergySource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble **energySourceTerms, int nCellNumber)
+void MixedGas::EnergySource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble **energySourceTerms, int nCellNumber)
 {
     using namespace IDX;
     int nEquation = nl + ntmodel;
@@ -5338,7 +5338,7 @@ void RealGas::EnergySource(RDouble **primitiveVariables, RDouble **temperatures,
     delete []primitiveVars;
 }
 
-RDouble RealGas::ComputeVibrationAndElectronEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
+RDouble MixedGas::ComputeVibrationAndElectronEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
 {
     using namespace IDX;
     //! Obtain the reference values.
@@ -5426,7 +5426,7 @@ RDouble RealGas::ComputeVibrationAndElectronEnergySourceTerm(RDouble *primitiveV
     return vibrationOmega;       //! Return the source item of vibration energy equation.
 }
 
-RDouble RealGas::ComputeVibrationEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
+RDouble MixedGas::ComputeVibrationEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
 {
     using namespace IDX;
     //! Obtain the reference values.
@@ -5505,7 +5505,7 @@ RDouble RealGas::ComputeVibrationEnergySourceTerm(RDouble *primitiveVariables, R
     return vibrationOmega;     //! Return the source item of vibration energy equation.
 }
 
-void RealGas::GetTranslationAndVibrationRelaxationTime(Thermo_Param *thermodynamicProperties, RDouble *massFraction,
+void MixedGas::GetTranslationAndVibrationRelaxationTime(Thermo_Param *thermodynamicProperties, RDouble *massFraction,
                                                         RDouble *speciesMass, RDouble temperature, RDouble pressure, RDouble density, RDouble *tvs)
 {
     RDouble tvsMW, tvsP;
@@ -5555,7 +5555,7 @@ void RealGas::GetTranslationAndVibrationRelaxationTime(Thermo_Param *thermodynam
     delete []particle;
 }
 
-void RealGas::GetTranslationAndVibrationRelaxationTimeR(Thermo_Param *thermodynamicProperties, RDouble *massFraction,
+void MixedGas::GetTranslationAndVibrationRelaxationTimeR(Thermo_Param *thermodynamicProperties, RDouble *massFraction,
                                                         RDouble *speciesMass, RDouble temperature, RDouble pressure, RDouble density, RDouble *tvs)
 {
     RDouble tvsMW, tvsP;
@@ -5604,7 +5604,7 @@ void RealGas::GetTranslationAndVibrationRelaxationTimeR(Thermo_Param *thermodyna
     }
 }
 
-void RealGas::GetElectronAndVibrationRelaxationTime(Thermo_Param *thermodynamicProperties, RDouble electronPressure, RDouble electronTemperature, RDouble *tes)
+void MixedGas::GetElectronAndVibrationRelaxationTime(Thermo_Param *thermodynamicProperties, RDouble electronPressure, RDouble electronTemperature, RDouble *tes)
 {
     if (nNitrogenIndex < 0)
     {
@@ -5634,7 +5634,7 @@ void RealGas::GetElectronAndVibrationRelaxationTime(Thermo_Param *thermodynamicP
     tes[nNitrogenIndex] /= 0.5 * kevj10 * (1.0 - exp(-thermodynamicProperties[nNitrogenIndex].Tvs.Tv[0] / electronTemperature));
 }
 
-RDouble RealGas::ComputeElectronEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
+RDouble MixedGas::ComputeElectronEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
 {
     using namespace IDX;
     //! Obtain the reference values.
@@ -5719,7 +5719,7 @@ RDouble RealGas::ComputeElectronEnergySourceTerm(RDouble *primitiveVariables, RD
     return electronOmega;     //! Return the source item of electron energy equation.
 }
 
-void RealGas::GetEffectiveCollisionCrossSectionalArea(Thermo_Param *thermodynamicProperties, RDouble electronTemperature, RDouble electronNumberDensity, RDouble *sigma)
+void MixedGas::GetEffectiveCollisionCrossSectionalArea(Thermo_Param *thermodynamicProperties, RDouble electronTemperature, RDouble electronNumberDensity, RDouble *sigma)
 {
     int *ionType = molecularProperty->GetIonTypeOfSpecies();
     RDouble ce = ELECTRIC_QUANTITY;       //! Obtain the electric quantity.
@@ -5931,7 +5931,7 @@ void RealGas::GetEffectiveCollisionCrossSectionalArea(Thermo_Param *thermodynami
 //    delete []prim;
 //}
 
-void RealGas::ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **srs, int iCell)
+void MixedGas::ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **srs, int iCell)
 {
     using namespace IDX;
     RDouble *molecularWeightDimensional  = molecularProperty->GetMolecularWeightDimensional();
@@ -6109,7 +6109,7 @@ void RealGas::ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDo
 }
 
 
-void RealGas::ComputeChemicalSourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
+void MixedGas::ComputeChemicalSourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
     using namespace IDX;     //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -6306,7 +6306,7 @@ void RealGas::ComputeChemicalSourceDerivatives(RDouble **primitiveVariables, RDo
     DelPointer2(partialValues);
 }
 
-void RealGas::ComputeChemicalSourceJacobian(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
+void MixedGas::ComputeChemicalSourceJacobian(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
 {
     using namespace IDX;     //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -6502,7 +6502,7 @@ void RealGas::ComputeChemicalSourceJacobian(RDouble *primitiveVariables, RDouble
     DelPointer2(partialValues);
 }
 
-void RealGas::ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
+void MixedGas::ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
     if (nIsChemicalFreeze > 0)
     {
@@ -6789,7 +6789,7 @@ void RealGas::ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RDo
 }
 
 
-void RealGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures,RDouble4D &speciesEs, RDouble4D &speciesCvs, RDouble3D &totalCv, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
+void MixedGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures,RDouble4D &speciesEs, RDouble4D &speciesCvs, RDouble3D &totalCv, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
 {
     using namespace IDX;     //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -7120,7 +7120,7 @@ void RealGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primiti
 
 
 
-void RealGas::ComputeChemicalSourceDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
+void MixedGas::ComputeChemicalSourceDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
     //! The function is used for chemical reaction without electron.
 
@@ -7320,7 +7320,7 @@ void RealGas::ComputeChemicalSourceDerivatives1(RDouble **primitiveVariables, RD
     DelPointer2(partialValues);
 }
 
-void RealGas::ComputeChemicalSourceDerivatives2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
+void MixedGas::ComputeChemicalSourceDerivatives2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
     //! The function is used for chemical reaction including electron.
 
@@ -7531,7 +7531,7 @@ void RealGas::ComputeChemicalSourceDerivatives2(RDouble **primitiveVariables, RD
     DelPointer2(partialValues);
 }
 
-void RealGas::ComputeEnergySourceDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
+void MixedGas::ComputeEnergySourceDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                               RDouble ***chemicalSourceDerivatives, RDouble ***energySourceDerivatives, int nCellNumber)
 {
     //! The function is used for two-temperature model.
@@ -7723,7 +7723,7 @@ void RealGas::ComputeEnergySourceDerivatives1(RDouble **primitiveVariables, RDou
     DelPointer2(energyDerivatives);
 }
 
-void RealGas::ComputeEnergySourceDiagonalDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
+void MixedGas::ComputeEnergySourceDiagonalDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                                       RDouble ***chemicalSourceDerivatives, RDouble **energySourceDerivatives, int nCellNumber)
 {
     //! The function is used for two-temperature model.
@@ -7872,7 +7872,7 @@ void RealGas::ComputeEnergySourceDiagonalDerivatives1(RDouble **primitiveVariabl
     DelPointer2(OmegaDerivative);
 }
 
-void RealGas::ComputeEnergySourceDiagonalDerivatives2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
+void MixedGas::ComputeEnergySourceDiagonalDerivatives2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                                       RDouble ***chemicalSourceDerivatives, RDouble **energySourceDerivatives, int nCellNumber)
 {
     //! The function is used for three-temperature model.
@@ -8055,7 +8055,7 @@ void RealGas::ComputeEnergySourceDiagonalDerivatives2(RDouble **primitiveVariabl
     DelPointer2(OmegaDerivative);
 }
 
-void RealGas::ComputeEnergySourceJacobianT2(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
+void MixedGas::ComputeEnergySourceJacobianT2(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
 {
     using namespace IDX;    //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -8190,7 +8190,7 @@ void RealGas::ComputeEnergySourceJacobianT2(RDouble *primitiveVariables, RDouble
     DelPointer2(OmegaDerivative);
 }
 
-void RealGas::ComputeEnergySourceJacobianT3(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
+void MixedGas::ComputeEnergySourceJacobianT3(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
 {
     using namespace IDX;     //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -8360,7 +8360,7 @@ void RealGas::ComputeEnergySourceJacobianT3(RDouble *primitiveVariables, RDouble
     DelPointer2(OmegaDerivative);
 }
 
-void RealGas::ComputeEnergySourceAndJacobianT2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
+void MixedGas::ComputeEnergySourceAndJacobianT2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
     using namespace IDX;    //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -8514,7 +8514,7 @@ void RealGas::ComputeEnergySourceAndJacobianT2(RDouble **primitiveVariables, RDo
     DelPointer2(OmegaDerivative);
 }
 
-void RealGas::ComputeEnergySourceAndJacobianT2D3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
+void MixedGas::ComputeEnergySourceAndJacobianT2D3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
 {                                              
     using namespace IDX;    //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -8690,7 +8690,7 @@ void RealGas::ComputeEnergySourceAndJacobianT2D3(int *Inzone, RDouble4D &primiti
 }
 
 
-void RealGas::ComputeEnergySourceAndJacobianT3(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
+void MixedGas::ComputeEnergySourceAndJacobianT3(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
     using namespace IDX;     //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -8871,7 +8871,7 @@ void RealGas::ComputeEnergySourceAndJacobianT3(RDouble **primitiveVariables, RDo
     DelPointer2(OmegaDerivative);
 }
 
-void RealGas::ComputeEnergySourceAndJacobianT3D3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
+void MixedGas::ComputeEnergySourceAndJacobianT3D3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
 {
     using namespace IDX;     //! The following variables is dimensional values.
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -9074,7 +9074,7 @@ void RealGas::ComputeEnergySourceAndJacobianT3D3(int *Inzone, RDouble4D &primiti
     }
 }
 
-void RealGas::GetLinearlyAveragedPolynomialCoefficients(int nSpecies, RDouble temperature, RDouble *polynomialCoef)
+void MixedGas::GetLinearlyAveragedPolynomialCoefficients(int nSpecies, RDouble temperature, RDouble *polynomialCoef)
 {
     int nIndex1, nIndex2;      //! Record the index of temperature range.
     RDouble coef1, coef2;      //! The coefficients for linear polynomial on the temperature boundary.
@@ -9156,7 +9156,7 @@ void RealGas::GetLinearlyAveragedPolynomialCoefficients(int nSpecies, RDouble te
     }
 }
 
-void RealGas::GetLinearlyAveragedPolynomialCoefficientsT2(RDouble temperature, RDouble **polynomialCoef)
+void MixedGas::GetLinearlyAveragedPolynomialCoefficientsT2(RDouble temperature, RDouble **polynomialCoef)
 {
     int nIndex1, nIndex2;      //! Record the index of temperature range.
     RDouble coef1, coef2;      //! The coefficients for linear polynomial on the temperature boundary.
@@ -9312,7 +9312,7 @@ void RealGas::GetLinearlyAveragedPolynomialCoefficientsT2(RDouble temperature, R
 }
 
 
-void RealGas::GetLinearlyAveragedPolynomialCoefficientsIndex(RDouble temperature,RDouble &coef, int &nIndex1, int &nIndex2)
+void MixedGas::GetLinearlyAveragedPolynomialCoefficientsIndex(RDouble temperature,RDouble &coef, int &nIndex1, int &nIndex2)
 {
     //int nIndex1, nIndex2;      //! Record the index of temperature range.
     RDouble coef1 = 1.0, coef2 = 0.0;      //! The coefficients for linear polynomial on the temperature boundary.
@@ -9382,7 +9382,7 @@ void RealGas::GetLinearlyAveragedPolynomialCoefficientsIndex(RDouble temperature
 }
 
 
-void RealGas::GetLinearlyAveragedPolynomialCoefficientsByIndex(int nSpecies, RDouble *polynomialCoef, RDouble coef, int nIndex1, int nIndex2)
+void MixedGas::GetLinearlyAveragedPolynomialCoefficientsByIndex(int nSpecies, RDouble *polynomialCoef, RDouble coef, int nIndex1, int nIndex2)
 {
     RDouble *a = this->thermodynamicManager->GetPolynomialCoefficient(nSpecies, nIndex1);
     int n = thermodynamicManager->GetNumberofPolynomialCoefficient();
@@ -9402,7 +9402,7 @@ void RealGas::GetLinearlyAveragedPolynomialCoefficientsByIndex(int nSpecies, RDo
         }
     }
 }
-void RealGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a)
+void MixedGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a)
 {
     //! USSA 76 Model for atmosphere.
     RDouble h      = h1 * 1000.0;
@@ -9634,7 +9634,7 @@ void RealGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den
     den = rho;
 }
 
-void RealGas::ComputeCoefficientInMXDQ(RDouble *primitiveVars, RDouble &alpha, RDouble &beta, RDouble *speciesBeta)
+void MixedGas::ComputeCoefficientInMXDQ(RDouble *primitiveVars, RDouble &alpha, RDouble &beta, RDouble *speciesBeta)
 {
     //! The arguments alpha, beta and beta_s are referred to the formular (A.5) in the appendix A of the PHengLEI Theory manual.
     //! alpha = R/(M*cv)
@@ -9704,7 +9704,7 @@ void RealGas::ComputeCoefficientInMXDQ(RDouble *primitiveVars, RDouble &alpha, R
     }
 }
 
-void RealGas::ComputeCoefficientInMXDQR(RDouble *primitiveVars, RDouble trTemperature, RDouble squareVelocity, RDouble *speciesCvs, RDouble totalCv, RDouble &alpha, RDouble &beta, RDouble *speciesBeta)
+void MixedGas::ComputeCoefficientInMXDQR(RDouble *primitiveVars, RDouble trTemperature, RDouble squareVelocity, RDouble *speciesCvs, RDouble totalCv, RDouble &alpha, RDouble &beta, RDouble *speciesBeta)
 {
     //! The arguments alpha, beta and beta_s are referred to the formular (A.5) in the appendix A of the PHengLEI Theory manual.
     //! alpha = R/(M*cv)
@@ -9762,7 +9762,7 @@ void RealGas::ComputeCoefficientInMXDQR(RDouble *primitiveVars, RDouble trTemper
 }
 
 //! To obtain the coefficients of computing the M*dQ in the function MVXDQ_STD_LP(), added by LiPeng on Jan. 21, 2019.
-void RealGas::ComputeCoefficientInMVXDQ(RDouble *prim, RDouble K, RDouble rD, RDouble *theta_s, RDouble *phi_s, RDouble *Ds)
+void MixedGas::ComputeCoefficientInMVXDQ(RDouble *prim, RDouble K, RDouble rD, RDouble *theta_s, RDouble *phi_s, RDouble *Ds)
 {
     //! K=visl/Prl + vist/Prt denotes the thermal conductivity coefficient, rD=visl/Scl + vist/Sct is the species diffusion coefficient,\n
     //! Ds is an array of saving the diffusion coefficient of each species.
@@ -9834,7 +9834,7 @@ void RealGas::ComputeCoefficientInMVXDQ(RDouble *prim, RDouble K, RDouble rD, RD
     delete [] cps;
 }
 
-void RealGas::GetEarthFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw)
+void MixedGas::GetEarthFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw)
 {
     RDouble *Ms = this->molecularProperty->GetMolecularWeightDimensional();
     RDouble M = 0.0;
@@ -9883,7 +9883,7 @@ void RealGas::GetEarthFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw)
     }
 }
 
-void RealGas::GetMarsFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw)
+void MixedGas::GetMarsFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw)
 {
     RDouble *Ms = this->molecularProperty->GetMolecularWeightDimensional();
     RDouble M = 0.0;
@@ -9953,7 +9953,7 @@ void RealGas::GetMarsFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw)
     }
 }
 
-bool RealGas::FindChemicalElement(string species_name, char element_name, int &coef)
+bool MixedGas::FindChemicalElement(string species_name, char element_name, int &coef)
 {
     bool bflag = false;
     coef = 0;
@@ -9987,7 +9987,7 @@ bool RealGas::FindChemicalElement(string species_name, char element_name, int &c
     return bflag;
 }
 
-int RealGas::GetSpeciesIndex(string species_name)
+int MixedGas::GetSpeciesIndex(string species_name)
 {
     string *name_array = this->molecularProperty->GetNameOfSpecies();
     for (int i = 0; i < this->numberOfSpecies; i++)
@@ -10000,7 +10000,7 @@ int RealGas::GetSpeciesIndex(string species_name)
     return -1;
 }
 
-void RealGas::ComputeTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *speciesTransRotationCv)
+void MixedGas::ComputeTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *speciesTransRotationCv)
 {
     //! The dimensional value of translation-rotation specific heat at constant volume.
     ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesTransRotationCv);
@@ -10012,7 +10012,7 @@ void RealGas::ComputeTranslationAndRotationSpecificHeatAtConstantVolume(RDouble 
     }
 }
 
-void RealGas::ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *speciesTransRotationCv)
+void MixedGas::ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *speciesTransRotationCv)
 {
     RDouble gasConstant = rjmk; //Unit: J/(kg*K)
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -10032,7 +10032,7 @@ void RealGas::ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolu
     }
 }
 
-void RealGas::ComputeTranslationAndRotationEnergy(RDouble transRotationTemperature, RDouble *speciesTransRotationEnergy)
+void MixedGas::ComputeTranslationAndRotationEnergy(RDouble transRotationTemperature, RDouble *speciesTransRotationEnergy)
 {
     //! Obtain the translation-rotation specific heat at constant volume.
     ComputeTranslationAndRotationSpecificHeatAtConstantVolume(speciesTransRotationEnergy);
@@ -10047,7 +10047,7 @@ void RealGas::ComputeTranslationAndRotationEnergy(RDouble transRotationTemperatu
     }
 }
 
-void RealGas::ComputeVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *speciesVibrationCv)
+void MixedGas::ComputeVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *speciesVibrationCv)
 {
     //! The dimensional value of vibration specific heat at constant volume.
     ComputeDimensionalVibrationSpecificHeatAtConstantVolume(vibrationTemperature, speciesVibrationCv);
@@ -10059,7 +10059,7 @@ void RealGas::ComputeVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemp
     }
 }
 
-void RealGas::ComputeDimensionalVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *speciesVibrationCv)
+void MixedGas::ComputeDimensionalVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *speciesVibrationCv)
 {
     RDouble gasConstant = rjmk; //Unit: J/(kg*K)
     RDouble *speciesMass = this->molecularProperty->GetMolecularWeightDimensional();
@@ -10118,7 +10118,7 @@ void RealGas::ComputeDimensionalVibrationSpecificHeatAtConstantVolume(RDouble vi
     }
 }
 
-void RealGas::ComputeDimensionalVibrationEnergy(RDouble vibrationTemperature, RDouble *speciesVibrationEnergy)
+void MixedGas::ComputeDimensionalVibrationEnergy(RDouble vibrationTemperature, RDouble *speciesVibrationEnergy)
 {
     RDouble gasConstant = rjmk;     //! Unit: J/(kg*K).
     RDouble *speciesMass = this->molecularProperty->GetMolecularWeightDimensional();
@@ -10177,7 +10177,7 @@ void RealGas::ComputeDimensionalVibrationEnergy(RDouble vibrationTemperature, RD
     }
 }
 
-void RealGas::ComputeVibrationEnergy(RDouble vibrationTemperature, RDouble *speciesVibrationEnergy)
+void MixedGas::ComputeVibrationEnergy(RDouble vibrationTemperature, RDouble *speciesVibrationEnergy)
 {
     //! Obtain the dimensional value of vibration energy.
     ComputeDimensionalVibrationEnergy(vibrationTemperature, speciesVibrationEnergy);
@@ -10189,7 +10189,7 @@ void RealGas::ComputeVibrationEnergy(RDouble vibrationTemperature, RDouble *spec
     }
 }
 
-void RealGas::ComputeElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *speciesElectronCv)
+void MixedGas::ComputeElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *speciesElectronCv)
 {
     //! The dimensional value of electron specific heat at constant volume.
     ComputeDimensionalElectronSpecificHeatAtConstantVolume(electronTemperature, speciesElectronCv);
@@ -10201,7 +10201,7 @@ void RealGas::ComputeElectronSpecificHeatAtConstantVolume(RDouble electronTemper
     }
 }
 
-void RealGas::ComputeDimensionalElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *speciesElectronCv)
+void MixedGas::ComputeDimensionalElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *speciesElectronCv)
 {
     RDouble gasConstant = rjmk;      //! Unit: J/(kg*K).
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -10260,7 +10260,7 @@ void RealGas::ComputeDimensionalElectronSpecificHeatAtConstantVolume(RDouble ele
     }
 }
 
-void RealGas::ComputeDimensionalElectronEnergy(RDouble electronTemperature, RDouble *speciesElectronEnergy)
+void MixedGas::ComputeDimensionalElectronEnergy(RDouble electronTemperature, RDouble *speciesElectronEnergy)
 {
     RDouble gasConstant = rjmk;     //! Unit: J/(kg*K).
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -10317,7 +10317,7 @@ void RealGas::ComputeDimensionalElectronEnergy(RDouble electronTemperature, RDou
     }
 }
 
-void RealGas::ComputeElectronEnergy(RDouble electronTemperature, RDouble *speciesElectronEnergy)
+void MixedGas::ComputeElectronEnergy(RDouble electronTemperature, RDouble *speciesElectronEnergy)
 {
     //! Obtain the dimensional value of electron energy.
     ComputeDimensionalElectronEnergy(electronTemperature, speciesElectronEnergy);
@@ -10329,7 +10329,7 @@ void RealGas::ComputeElectronEnergy(RDouble electronTemperature, RDouble *specie
     }
 }
 
-void RealGas::ComputeSpeciesEnthalpy(RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature, RDouble *speciesEnthalpy)
+void MixedGas::ComputeSpeciesEnthalpy(RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature, RDouble *speciesEnthalpy)
 {
     //! Compute energies.
     ComputeTranslationAndRotationEnergy(transRotationTemperature, this->speciesEnergyTr);
@@ -10352,7 +10352,7 @@ void RealGas::ComputeSpeciesEnthalpy(RDouble transRotationTemperature, RDouble v
     }
 }
 
-RDouble RealGas::GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *massFraction)
+RDouble MixedGas::GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *massFraction)
 {
     //! Get dimensional value of translation-rotation specific heat at constant volume.
     RDouble transRotationCv = GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
@@ -10361,7 +10361,7 @@ RDouble RealGas::GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(R
     return (transRotationCv * referenceSpecificHeat);
 }
 
-RDouble RealGas::GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *massFraction)
+RDouble MixedGas::GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(RDouble *massFraction)
 {
     ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCv);
 
@@ -10371,7 +10371,7 @@ RDouble RealGas::GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConst
     return transRotationCv;
 }
 
-RDouble RealGas::GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *massFraction)
 {
     //! Get dimensional value of vibration specific heat at constant volume.
     RDouble vibrationCv = GetMixedGasDimensionalVibrationSpecificHeatAtConstantVolume(vibrationTemperature, massFraction);
@@ -10380,7 +10380,7 @@ RDouble RealGas::GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble vibrat
     return (vibrationCv * referenceSpecificHeat);
 }
 
-RDouble RealGas::GetMixedGasDimensionalVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasDimensionalVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *massFraction)
 {
     ComputeDimensionalVibrationSpecificHeatAtConstantVolume(vibrationTemperature, speciesCv);
 
@@ -10391,7 +10391,7 @@ RDouble RealGas::GetMixedGasDimensionalVibrationSpecificHeatAtConstantVolume(RDo
     return vibrationCv;
 }
 
-RDouble RealGas::GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *massFraction)
 {
     //! Get dimensional value of electron specific heat at constant volume.
     RDouble electronCv = GetMixedGasDimensionalElectronSpecificHeatAtConstantVolume(electronTemperature, massFraction);
@@ -10400,7 +10400,7 @@ RDouble RealGas::GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble electro
     return (electronCv * referenceSpecificHeat);
 }
 
-RDouble RealGas::GetMixedGasDimensionalElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasDimensionalElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *massFraction)
 {
     this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(electronTemperature, speciesCv);
 
@@ -10410,7 +10410,7 @@ RDouble RealGas::GetMixedGasDimensionalElectronSpecificHeatAtConstantVolume(RDou
     return electronCv;
 }
 
-RDouble RealGas::GetMixedGasTranslationAndRotationEnergy(RDouble transRotationTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasTranslationAndRotationEnergy(RDouble transRotationTemperature, RDouble *massFraction)
 {
     //! To obtain the translation-rotation energy.
     ComputeTranslationAndRotationEnergy(transRotationTemperature, speciesEnergyTr);
@@ -10421,7 +10421,7 @@ RDouble RealGas::GetMixedGasTranslationAndRotationEnergy(RDouble transRotationTe
     return transRotationEnergy;
 }
 
-RDouble RealGas::GetMixedGasDimensionalVibrationEnergy(RDouble vibrationTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasDimensionalVibrationEnergy(RDouble vibrationTemperature, RDouble *massFraction)
 {
     //! To obtain the vibration energy.
     this->ComputeDimensionalVibrationEnergy(vibrationTemperature, speciesEnergyVb);
@@ -10432,7 +10432,7 @@ RDouble RealGas::GetMixedGasDimensionalVibrationEnergy(RDouble vibrationTemperat
     return vibrationEnergy;
 }
 
-RDouble RealGas::GetMixedGasVibrationEnergy(RDouble vibrationTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasVibrationEnergy(RDouble vibrationTemperature, RDouble *massFraction)
 {
     RDouble vibrationEnergy = GetMixedGasDimensionalVibrationEnergy(vibrationTemperature, massFraction);
     //! Translate to non-dimensional value.
@@ -10441,7 +10441,7 @@ RDouble RealGas::GetMixedGasVibrationEnergy(RDouble vibrationTemperature, RDoubl
     return vibrationEnergy;
 }
 
-RDouble RealGas::GetMixedGasDimensionalElectronEnergy(RDouble electronTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasDimensionalElectronEnergy(RDouble electronTemperature, RDouble *massFraction)
 {
     //! To obtain the electron energy.
     this->ComputeDimensionalElectronEnergy(electronTemperature, speciesEnergyEe);
@@ -10452,7 +10452,7 @@ RDouble RealGas::GetMixedGasDimensionalElectronEnergy(RDouble electronTemperatur
     return electronEnergy;
 }
 
-RDouble RealGas::GetMixedGasElectronEnergy(RDouble electronTemperature, RDouble *massFraction)
+RDouble MixedGas::GetMixedGasElectronEnergy(RDouble electronTemperature, RDouble *massFraction)
 {
     RDouble electronEnergy = GetMixedGasDimensionalElectronEnergy(electronTemperature, massFraction);
     //! Translate to non-dimensional value.
@@ -10461,7 +10461,7 @@ RDouble RealGas::GetMixedGasElectronEnergy(RDouble electronTemperature, RDouble 
     return electronEnergy;
 }
 
-RDouble RealGas::ComputeMixedGasEnthalpy(RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature, RDouble *massFraction)
+RDouble MixedGas::ComputeMixedGasEnthalpy(RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature, RDouble *massFraction)
 {
     //! To obtain the enthalpies of species.
     ComputeSpeciesEnthalpy(transRotationTemperature, vibrationTemperature, electronTemperature, speciesEnthalpy);
@@ -10472,7 +10472,7 @@ RDouble RealGas::ComputeMixedGasEnthalpy(RDouble transRotationTemperature, RDoub
     return enthalpy;
 }
 
-RDouble RealGas::ComputeMixedGasEnthalpy(RDouble *primitiveVars, RDouble *temperatures)
+RDouble MixedGas::ComputeMixedGasEnthalpy(RDouble *primitiveVars, RDouble *temperatures)
 {
     using namespace IDX;
     for (int s = 0; s < numberOfSpecies; ++ s)
@@ -10491,7 +10491,7 @@ RDouble RealGas::ComputeMixedGasEnthalpy(RDouble *primitiveVars, RDouble *temper
     return staticEnthalpy;
 }
 
-RDouble RealGas::GetTotalFormationEnthalpy(RDouble *massFraction)
+RDouble MixedGas::GetTotalFormationEnthalpy(RDouble *massFraction)
 {
     //! To obtain the thermodynamic properties of species.
     Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
@@ -10505,7 +10505,7 @@ RDouble RealGas::GetTotalFormationEnthalpy(RDouble *massFraction)
     return (formationEnthalpy / referenceEnergy);
 }
 
-RDouble RealGas::ComputeTranslationAndRotationTemperatureByPrimitiveVariables(RDouble *primitiveVariables, RDouble electronPressure/* = 0.0*/)
+RDouble MixedGas::ComputeTranslationAndRotationTemperatureByPrimitiveVariables(RDouble *primitiveVariables, RDouble electronPressure/* = 0.0*/)
 {
     using namespace IDX;
     RDouble density = primitiveVariables[IR];
@@ -10527,7 +10527,7 @@ RDouble RealGas::ComputeTranslationAndRotationTemperatureByPrimitiveVariables(RD
     return transRotationTemperature;
 }
 
-RDouble RealGas::ComputeTranslationAndRotationTemperature(RDouble *massFraction, RDouble transRotationEnergy)
+RDouble MixedGas::ComputeTranslationAndRotationTemperature(RDouble *massFraction, RDouble transRotationEnergy)
 {
     RDouble transRotationCv = GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
     RDouble formationEnthalpy = GetTotalFormationEnthalpy(massFraction);
@@ -10535,7 +10535,7 @@ RDouble RealGas::ComputeTranslationAndRotationTemperature(RDouble *massFraction,
     return (transRotationEnergy - formationEnthalpy) / transRotationCv;
 }
 
-RDouble RealGas::ComputeVibrationTemperature(RDouble *massFraction, RDouble vibrationEnergy, RDouble initTemperature/* = 0.0*/)
+RDouble MixedGas::ComputeVibrationTemperature(RDouble *massFraction, RDouble vibrationEnergy, RDouble initTemperature/* = 0.0*/)
 {
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
@@ -10606,7 +10606,7 @@ RDouble RealGas::ComputeVibrationTemperature(RDouble *massFraction, RDouble vibr
     return Tk1;
 }
 
-RDouble RealGas::ComputeElectronTemperature(RDouble *massFraction, RDouble electronEnergy, RDouble initTemperature)
+RDouble MixedGas::ComputeElectronTemperature(RDouble *massFraction, RDouble electronEnergy, RDouble initTemperature)
 {
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
@@ -10677,7 +10677,7 @@ RDouble RealGas::ComputeElectronTemperature(RDouble *massFraction, RDouble elect
     return Tk1;
 }
 
-RDouble RealGas::ComputeVibrationAndElectronTemperature(RDouble *massFraction, RDouble vibrationElectronEnergy, RDouble initTemperature)
+RDouble MixedGas::ComputeVibrationAndElectronTemperature(RDouble *massFraction, RDouble vibrationElectronEnergy, RDouble initTemperature)
 {
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
@@ -10774,7 +10774,7 @@ RDouble RealGas::ComputeVibrationAndElectronTemperature(RDouble *massFraction, R
     return Tk1;
 }
 
-RDouble RealGas::ComputeOneTemperatureModelTemperature(RDouble *massFraction, RDouble internalEnergy)
+RDouble MixedGas::ComputeOneTemperatureModelTemperature(RDouble *massFraction, RDouble internalEnergy)
 {
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
@@ -10841,7 +10841,7 @@ RDouble RealGas::ComputeOneTemperatureModelTemperature(RDouble *massFraction, RD
     return Tk1;
 }
 
-RDouble RealGas::ComputeNonequilibrumTemperatureViaBisectionMethod(RDouble *massFraction, RDouble internalEnergy)
+RDouble MixedGas::ComputeNonequilibrumTemperatureViaBisectionMethod(RDouble *massFraction, RDouble internalEnergy)
 {
     RDouble gasConstant = this->GetUniversalGasConstant();
     RDouble mass = this->GetMixedGasMolecularWeight(massFraction);
@@ -10928,7 +10928,7 @@ RDouble RealGas::ComputeNonequilibrumTemperatureViaBisectionMethod(RDouble *mass
     return Tm;
 }
 
-RDouble RealGas::ComputeNonequilibrumTemperature(RDouble *massFraction, RDouble internalEnergy, RDouble initTemperature)
+RDouble MixedGas::ComputeNonequilibrumTemperature(RDouble *massFraction, RDouble internalEnergy, RDouble initTemperature)
 {
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
@@ -11002,7 +11002,7 @@ RDouble RealGas::ComputeNonequilibrumTemperature(RDouble *massFraction, RDouble 
     return Tk1;
 }
 
-RDouble RealGas::GetElectronPressure(RDouble *primitiveVariables, RDouble electronTemperature)
+RDouble MixedGas::GetElectronPressure(RDouble *primitiveVariables, RDouble electronTemperature)
 {
     RDouble density = primitiveVariables[IDX::IR];
     RDouble gasConstant = this->GetUniversalGasConstant();
@@ -11024,7 +11024,7 @@ RDouble RealGas::GetElectronPressure(RDouble *primitiveVariables, RDouble electr
     return electronPressure;
 }
 
-void RealGas::ComputeSpeciesTranslationAndRotationHeatConductivity(RDouble *viscosity, RDouble *conductivity)
+void MixedGas::ComputeSpeciesTranslationAndRotationHeatConductivity(RDouble *viscosity, RDouble *conductivity)
 {
     //! nTypes denotes the types of species which is used to identity the electron, monoatom and polyatom.
     Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
@@ -11057,7 +11057,7 @@ void RealGas::ComputeSpeciesTranslationAndRotationHeatConductivity(RDouble *visc
     delete []cvrs;
 }
 
-void RealGas::ComputeSpeciesVibrationHeatConductivity(RDouble *viscosity, RDouble *speciesVibrationCv, RDouble *conductivity)
+void MixedGas::ComputeSpeciesVibrationHeatConductivity(RDouble *viscosity, RDouble *speciesVibrationCv, RDouble *conductivity)
 {
     for (int i = 0; i < this->numberOfSpecies; ++ i)
     {
@@ -11065,7 +11065,7 @@ void RealGas::ComputeSpeciesVibrationHeatConductivity(RDouble *viscosity, RDoubl
     }
 }
 
-void RealGas::ComputeSpeciesElectronHeatConductivity(RDouble *viscosity, RDouble *speciesElectronCv, RDouble *conductivity)
+void MixedGas::ComputeSpeciesElectronHeatConductivity(RDouble *viscosity, RDouble *speciesElectronCv, RDouble *conductivity)
 {
     for (int i = 0; i < this->numberOfSpecies; ++ i)
     {
@@ -11073,7 +11073,7 @@ void RealGas::ComputeSpeciesElectronHeatConductivity(RDouble *viscosity, RDouble
     }
 }
 
-RDouble RealGas::GetMixedGasTranslationAndRotationHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
+RDouble MixedGas::GetMixedGasTranslationAndRotationHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
 {
     RDouble *viscosity = new RDouble[this->numberOfSpecies];
     RDouble *conductivity = new RDouble[this->numberOfSpecies];
@@ -11125,7 +11125,7 @@ RDouble RealGas::GetMixedGasTranslationAndRotationHeatConductivity(RDouble *prim
     return lambda;
 }
 
-RDouble RealGas::GetMixedGasVibrationHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature)
+RDouble MixedGas::GetMixedGasVibrationHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature)
 {
     RDouble *viscosity = new RDouble[this->numberOfSpecies];
     RDouble *speciesVibrationCv = new RDouble[this->numberOfSpecies];
@@ -11182,7 +11182,7 @@ RDouble RealGas::GetMixedGasVibrationHeatConductivity(RDouble *primitiveVariable
     return lambda;
 }
 
-RDouble RealGas::GetMixedGasElectronHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
+RDouble MixedGas::GetMixedGasElectronHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
 {
     RDouble *viscosity = new RDouble[this->numberOfSpecies];
     RDouble *speciesElectronCv = new RDouble[this->numberOfSpecies];
@@ -11239,7 +11239,7 @@ RDouble RealGas::GetMixedGasElectronHeatConductivity(RDouble *primitiveVariables
     return lambda;
 }
 
-void RealGas::ComputeMixedGasTranslationVibrationElectronHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &transRotationConductivity, RDouble &vibrationConductivity, RDouble &electronConductivity)
+void MixedGas::ComputeMixedGasTranslationVibrationElectronHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &transRotationConductivity, RDouble &vibrationConductivity, RDouble &electronConductivity)
 {
     RDouble *viscosity = new RDouble[this->numberOfSpecies];
     RDouble *conductivity = new RDouble[this->numberOfSpecies];
@@ -11309,7 +11309,7 @@ void RealGas::ComputeMixedGasTranslationVibrationElectronHeatConductivity(RDoubl
     delete []speciesElectronCv;
 }
 
-RDouble RealGas::GetMixedGasHeatConductivityWithWilkeFormula(RDouble *moleFraction, RDouble *conductivity, RDouble *phi)
+RDouble MixedGas::GetMixedGasHeatConductivityWithWilkeFormula(RDouble *moleFraction, RDouble *conductivity, RDouble *phi)
 {
     RDouble lambda = 0.0;
     for (int i = 0; i < this->numberOfSpecies; ++ i)
@@ -11319,7 +11319,7 @@ RDouble RealGas::GetMixedGasHeatConductivityWithWilkeFormula(RDouble *moleFracti
     return lambda;
 }
 
-void RealGas::ComputeSpeciesViscosityWithCurveFitMethod(RDouble transRotationTemperature, RDouble electronTemperature, RDouble *speciesViscosity)
+void MixedGas::ComputeSpeciesViscosityWithCurveFitMethod(RDouble transRotationTemperature, RDouble electronTemperature, RDouble *speciesViscosity)
 {
     //! Obtain the reference viscosity.
     RDouble referenceViscosity = this->referenceParameterDimensional.GetViscosity();
@@ -11334,7 +11334,7 @@ void RealGas::ComputeSpeciesViscosityWithCurveFitMethod(RDouble transRotationTem
     }
 }
 
-void RealGas::ComputeSpeciesDimensionalViscosityWithCurveFitMethod(RDouble transRotationTemperature, RDouble electronTemperature, RDouble *speciesViscosity)
+void MixedGas::ComputeSpeciesDimensionalViscosityWithCurveFitMethod(RDouble transRotationTemperature, RDouble electronTemperature, RDouble *speciesViscosity)
 {
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     RDouble dimensionalTransRotationTemperature, dimensionalElectronTemperature;
@@ -11374,7 +11374,7 @@ void RealGas::ComputeSpeciesDimensionalViscosityWithCurveFitMethod(RDouble trans
     }
 }
 
-void RealGas::ComputeSpeciesViscosityWithLennardJonesMethod(RDouble transRotationTemperature, RDouble electronPressure, RDouble *speciesViscosity)
+void MixedGas::ComputeSpeciesViscosityWithLennardJonesMethod(RDouble transRotationTemperature, RDouble electronPressure, RDouble *speciesViscosity)
 {
     //! Obtain the reference viscosity.
     RDouble referenceViscosity = this->referenceParameterDimensional.GetViscosity();
@@ -11389,7 +11389,7 @@ void RealGas::ComputeSpeciesViscosityWithLennardJonesMethod(RDouble transRotatio
     }
 }
 
-void RealGas::ComputeSpeciesDimensionalViscosityWithLennardJonesMethod(RDouble transRotationTemperature, RDouble electronPressure, RDouble *speciesViscosity)
+void MixedGas::ComputeSpeciesDimensionalViscosityWithLennardJonesMethod(RDouble transRotationTemperature, RDouble electronPressure, RDouble *speciesViscosity)
 {
     //! Obtain the reference temperature.
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
@@ -11409,7 +11409,7 @@ void RealGas::ComputeSpeciesDimensionalViscosityWithLennardJonesMethod(RDouble t
     delete []collisionArea;
 }
 
-void RealGas::ComputeAverageCollisionAreaOmega22(RDouble transRotationTemperature, RDouble electronPressure, RDouble *piOmega)
+void MixedGas::ComputeAverageCollisionAreaOmega22(RDouble transRotationTemperature, RDouble electronPressure, RDouble *piOmega)
 {
     //! Obtain the reference temperature and reference pressure.
     RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
@@ -11454,7 +11454,7 @@ void RealGas::ComputeAverageCollisionAreaOmega22(RDouble transRotationTemperatur
     }
 }
 
-RDouble RealGas::GetMixedGasViscosityWithWilkeFormula(RDouble *moleFraction, RDouble *viscosity, RDouble *phi)
+RDouble MixedGas::GetMixedGasViscosityWithWilkeFormula(RDouble *moleFraction, RDouble *viscosity, RDouble *phi)
 {
     RDouble mixedViscosity = 0.0;
     for (int i = 0; i < this->numberOfSpecies; ++ i)
@@ -11464,7 +11464,7 @@ RDouble RealGas::GetMixedGasViscosityWithWilkeFormula(RDouble *moleFraction, RDo
     return mixedViscosity;
 }
 
-void RealGas::ComputeSpeciesMassDiffusionCoefficient(RDouble *massFraction, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble *speciesDiffusionCoef)
+void MixedGas::ComputeSpeciesMassDiffusionCoefficient(RDouble *massFraction, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble *speciesDiffusionCoef)
 {
     //! The function returns the diffusion coefficients of each species which saved in rDs = (1 - Cs)/(1- Xs) * (mul/Scl + mut/Sct).
     //! nTypes denotes the types of species which is used to identity the electron, monoatom and polyatom.
@@ -11516,7 +11516,7 @@ void RealGas::ComputeSpeciesMassDiffusionCoefficient(RDouble *massFraction, RDou
     }
 }
 
-RDouble RealGas::GetMassDiffusionCoefficientWithCLNModel(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
+RDouble MixedGas::GetMassDiffusionCoefficientWithCLNModel(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
 {
     RDouble *massFraction = new RDouble[this->numberOfSpecies]();
     //! Obtain the mass fractions of species.
@@ -11537,7 +11537,7 @@ RDouble RealGas::GetMassDiffusionCoefficientWithCLNModel(RDouble *primitiveVaria
     return (mixedConductivity * lewisNumber / transRotationCp);
 }
 
-void RealGas::GetElectronPressurePartialDerivatives(RDouble *primitiveVars, RDouble electronTemperature, RDouble &gama, RDouble *speciesGama)
+void MixedGas::GetElectronPressurePartialDerivatives(RDouble *primitiveVars, RDouble electronTemperature, RDouble &gama, RDouble *speciesGama)
 {
     if (nElectronIndex < 0)
     {
@@ -11581,7 +11581,7 @@ void RealGas::GetElectronPressurePartialDerivatives(RDouble *primitiveVars, RDou
 
 }
 
-void RealGas::GetPressurePartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
+void MixedGas::GetPressurePartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                              RDouble &alpha, RDouble &beta, RDouble *speciesBeta)
 {
     //! Initialization.
@@ -11627,7 +11627,7 @@ void RealGas::GetPressurePartialDerivatives(RDouble *primitiveVars, RDouble tran
 
 }
 
-void RealGas::GetMultiTemperatureModelPartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
+void MixedGas::GetMultiTemperatureModelPartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                                              RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama)
 {
     //! Compute partial derivatives of electron pressure to conservative variables.
@@ -11636,7 +11636,7 @@ void RealGas::GetMultiTemperatureModelPartialDerivatives(RDouble *primitiveVars,
     this->GetPressurePartialDerivatives(primitiveVars, transRotationTemperature, electronTemperature, alpha, beta, speciesBeta);
 }
 
-void RealGas::GetMultiTemperatureModelPartialDerivativesR(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
+void MixedGas::GetMultiTemperatureModelPartialDerivativesR(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                                           RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama,
                                                           RDouble squareVelocity, RDouble *speciesEtrs, RDouble totalCvtr,RDouble totalCvv, RDouble totalCve)
 {
@@ -11708,7 +11708,7 @@ void RealGas::GetMultiTemperatureModelPartialDerivativesR(RDouble *primitiveVars
 }
 
 
-RDouble RealGas::ComputePressureDerivativeToTotalDensity(RDouble *primitiveVars)
+RDouble MixedGas::ComputePressureDerivativeToTotalDensity(RDouble *primitiveVars)
 {
     RDouble *massFraction = new RDouble[numberOfSpecies];
     for (int s = 0; s < numberOfSpecies; ++ s)
@@ -11725,7 +11725,7 @@ RDouble RealGas::ComputePressureDerivativeToTotalDensity(RDouble *primitiveVars)
     return alpha;
 }
 
-RDouble RealGas::GetMixedGasEnthalpy(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature)
+RDouble MixedGas::GetMixedGasEnthalpy(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature)
 {
     int nChemical = GetChemicalType();
     RDouble staticEnthaly = 0.0;
@@ -11743,21 +11743,21 @@ RDouble RealGas::GetMixedGasEnthalpy(RDouble *primitiveVars, RDouble transRotati
     return staticEnthaly;
 }
 
-RDouble RealGas::ComputeMolecularWeightReciprocal(RDouble *prim)
+RDouble MixedGas::ComputeMolecularWeightReciprocal(RDouble *prim)
 {
     RDouble omav = 1.0;
     ComputeMolecularWeightReciprocal(prim, omav);
     return omav;
 }
 
-RDouble RealGas::ComputeMolecularWeight(RDouble *prim)
+RDouble MixedGas::ComputeMolecularWeight(RDouble *prim)
 {
     RDouble omav = 1.0;
     ComputeMolecularWeightReciprocal(prim, omav);
     return (1.0 / omav);
 }
 
-void RealGas::ComputeSpeciesMassDiffusionFlux(RDouble *primitiveVars, RDouble *dfsdx, RDouble *dfsdy, RDouble *dfsdz, RDouble transRotationTemperature, RDouble vibrationTemperatuare, RDouble electronTemperature,
+void MixedGas::ComputeSpeciesMassDiffusionFlux(RDouble *primitiveVars, RDouble *dfsdx, RDouble *dfsdy, RDouble *dfsdz, RDouble transRotationTemperature, RDouble vibrationTemperatuare, RDouble electronTemperature,
                                      RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble nx, RDouble ny, RDouble nz, RDouble &qx, RDouble &qy, RDouble &qz, RDouble *speciesFluxes)
 {
     int nm = GetNSEquationNumber();
@@ -11842,7 +11842,7 @@ void RealGas::ComputeSpeciesMassDiffusionFlux(RDouble *primitiveVars, RDouble *d
     delete []speciesElectronEnergy;
 }
 
-void RealGas::ComputeMixtureGasHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature,
+void MixedGas::ComputeMixtureGasHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature,
                                        RDouble &transRotationConductivity, RDouble &vibrationConductivity, RDouble &electronConductivity)
 {
     //int nTemperatureModel = GetTemperatureModel();
@@ -11862,7 +11862,7 @@ void RealGas::ComputeMixtureGasHeatConductivity(RDouble *primitiveVariables, RDo
     }
 }
 
-void RealGas::ComputeMixtureGasSpecificHeatAtConstantVolume(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature,
+void MixedGas::ComputeMixtureGasSpecificHeatAtConstantVolume(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature,
                                                    RDouble &cvtr, RDouble &cvv, RDouble &cve)
 {
     RDouble speciesMassFraction[MAX_SPECIES_NUM];
@@ -11884,7 +11884,7 @@ void RealGas::ComputeMixtureGasSpecificHeatAtConstantVolume(RDouble *primitiveVa
     }
 }
 
-void RealGas::ComputeEnergySourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
+void MixedGas::ComputeEnergySourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                     RDouble ***chemicalSourceDerivatives, RDouble ***energySourceDerivatives, int nCellNumber)
 {
     int nTemperatureModel = GetTemperatureModel();
@@ -11901,7 +11901,7 @@ void RealGas::ComputeEnergySourceDerivatives(RDouble **primitiveVariables, RDoub
 }
 
 
-void RealGas::ComputeEnergySourceDiagonalDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
+void MixedGas::ComputeEnergySourceDiagonalDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                             RDouble ***chemicalSourceDerivatives, RDouble **energySourceDerivatives, int nCellNumber)
 {
     //! Compute the partial derivative of energy source to the vibration and electron energy in the main diagonal position.
@@ -11918,7 +11918,7 @@ void RealGas::ComputeEnergySourceDiagonalDerivatives(RDouble **primitiveVariable
     }
 }
 
-RDouble RealGas::GetMaximumSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscosityLaminar, RDouble viscosityTurbulence)
+RDouble MixedGas::GetMaximumSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscosityLaminar, RDouble viscosityTurbulence)
 {
     //! The function returns the maximum mass diffusion coefficient called (1 - Cs)/(1- Xs) * (mul/Scl + mut/Sct).
     RDouble maxDiffusionCoef = 0.0;
@@ -11939,7 +11939,7 @@ RDouble RealGas::GetMaximumSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDou
     return maxDiffusionCoef;     //! Returned value.
 }
 
-void RealGas::GetSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble *speciesDiffusionCoef)
+void MixedGas::GetSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble *speciesDiffusionCoef)
 {
     //! The function returns the diffusion coefficients of each species which saved in rDs = (1 - Cs)/(1- Xs) * (mul/Scl + mut/Sct).
     for (int i = 0; i < numberOfSpecies; ++ i)
@@ -11950,7 +11950,7 @@ void RealGas::GetSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscos
     ComputeSpeciesMassDiffusionCoefficient(massFractions, viscosityLaminar, viscosityTurbulence, speciesDiffusionCoef);
 }
 
-void RealGas::GetTemperatureAndCP(RDouble *prim,RDouble &Tm, RDouble &cp)
+void MixedGas::GetTemperatureAndCP(RDouble *prim,RDouble &Tm, RDouble &cp)
 {
     int nchem = GetChemicalType();
     int nm = GetNSEquationNumber();
@@ -11984,7 +11984,7 @@ void RealGas::GetTemperatureAndCP(RDouble *prim,RDouble &Tm, RDouble &cp)
     }
 }
 
-RDouble RealGas::GetTemperature(RDouble *prim)
+RDouble MixedGas::GetTemperature(RDouble *prim)
 {
     int nchem = GetChemicalType();
     int nm = GetNSEquationNumber();
@@ -12016,7 +12016,7 @@ RDouble RealGas::GetTemperature(RDouble *prim)
     return Tm;
 }
 
-void RealGas::GetEverySpeciesEnthalpy(RDouble trTemperature, RDouble vTemperature, RDouble eTemperature, RDouble *hs)
+void MixedGas::GetEverySpeciesEnthalpy(RDouble trTemperature, RDouble vTemperature, RDouble eTemperature, RDouble *hs)
 {
     if (ntmodel > 1)      //! Multi-temperature model.
     {
@@ -12028,7 +12028,7 @@ void RealGas::GetEverySpeciesEnthalpy(RDouble trTemperature, RDouble vTemperatur
     }
 }
 
-RDouble RealGas::ComputeMolecularWeightReciprocalWithoutElectron(RDouble *prim, RDouble &ce_div_me)
+RDouble MixedGas::ComputeMolecularWeightReciprocalWithoutElectron(RDouble *prim, RDouble &ce_div_me)
 {
     RDouble massFraction[MAX_SPECIES_NUM];
     for (int i = 0; i < numberOfSpecies; i++)
@@ -12040,7 +12040,7 @@ RDouble RealGas::ComputeMolecularWeightReciprocalWithoutElectron(RDouble *prim, 
     return M;
 }
 
-RDouble RealGas::GetMixedGasTranslationAndRotationEnergy(RDouble *prim, RDouble Ttr)
+RDouble MixedGas::GetMixedGasTranslationAndRotationEnergy(RDouble *prim, RDouble Ttr)
 {
     RDouble massFraction[MAX_SPECIES_NUM];
     for(int i = 0; i < numberOfSpecies; i++)
@@ -12052,7 +12052,7 @@ RDouble RealGas::GetMixedGasTranslationAndRotationEnergy(RDouble *prim, RDouble 
     return Etr;
 }
 
-RDouble RealGas::GetMixedGasVibrationEnergy(RDouble *prim, RDouble Tv)
+RDouble MixedGas::GetMixedGasVibrationEnergy(RDouble *prim, RDouble Tv)
 {
     RDouble massFraction[MAX_SPECIES_NUM];
     for(int i = 0; i < numberOfSpecies; ++ i)
@@ -12064,7 +12064,7 @@ RDouble RealGas::GetMixedGasVibrationEnergy(RDouble *prim, RDouble Tv)
     return vibrationEnergy;
 }
 
-RDouble RealGas::GetMixedGasElectronEnergy(RDouble *prim, RDouble Te)
+RDouble MixedGas::GetMixedGasElectronEnergy(RDouble *prim, RDouble Te)
 {
     RDouble massFraction[MAX_SPECIES_NUM];
     for(int i = 0; i < numberOfSpecies; ++ i)
@@ -12076,7 +12076,7 @@ RDouble RealGas::GetMixedGasElectronEnergy(RDouble *prim, RDouble Te)
     return electronEnergy;
 }
 
-RDouble RealGas::GetMixedGasTransAndRotatSpecHeatAtConstVolume(RDouble *prim)
+RDouble MixedGas::GetMixedGasTransAndRotatSpecHeatAtConstVolume(RDouble *prim)
 {
     RDouble massFraction[MAX_SPECIES_NUM];
     for(int i = 0; i < numberOfSpecies; i++)
@@ -12088,7 +12088,7 @@ RDouble RealGas::GetMixedGasTransAndRotatSpecHeatAtConstVolume(RDouble *prim)
     return cvtr;
 }
 
-RDouble RealGas::GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble* prim, RDouble Tv)
+RDouble MixedGas::GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble* prim, RDouble Tv)
 {
     RDouble massFraction[MAX_SPECIES_NUM];
     for(int i = 0; i < numberOfSpecies; i++)
@@ -12100,7 +12100,7 @@ RDouble RealGas::GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble* prim,
     return cvv;
 }
 
-RDouble RealGas::GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble *prim, RDouble Te)
+RDouble MixedGas::GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble *prim, RDouble Te)
 {
     RDouble massFraction[MAX_SPECIES_NUM];
     for(int i = 0; i < numberOfSpecies; i++)
@@ -12112,7 +12112,7 @@ RDouble RealGas::GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble *prim, 
     return cve;
 }
 
-RDouble RealGas::ComputeFrozenSoundSpeed(RDouble *primitiveVars)
+RDouble MixedGas::ComputeFrozenSoundSpeed(RDouble *primitiveVars)
 {
     int nm = GetNSEquationNumber();
     int nChemical = GetChemicalType();
@@ -12137,7 +12137,7 @@ RDouble RealGas::ComputeFrozenSoundSpeed(RDouble *primitiveVars)
     return soundSpeed;
 }
 
-void RealGas::ComputeSpecificHeat(RDouble *primitiveVars, RDouble *temperatures, RDouble *spciesCvtr, RDouble *spciesCvv, RDouble &totalCvtr, RDouble &totalCvv)
+void MixedGas::ComputeSpecificHeat(RDouble *primitiveVars, RDouble *temperatures, RDouble *spciesCvtr, RDouble *spciesCvv, RDouble &totalCvtr, RDouble &totalCvv)
 {
     RDouble modifyCoef = 1.5;
     RDouble gasConstant = GetUniversalGasConstant();
@@ -12161,7 +12161,7 @@ void RealGas::ComputeSpecificHeat(RDouble *primitiveVars, RDouble *temperatures,
     }
 }
 
-void RealGas::ComputeEnergy(RDouble *primitiveVars, RDouble *temperatures, RDouble *spciesEtr, RDouble *spciesEv, RDouble *spciesEnthalpy, RDouble &totalEtr, RDouble &totalEv, RDouble &totalEnthalpy)
+void MixedGas::ComputeEnergy(RDouble *primitiveVars, RDouble *temperatures, RDouble *spciesEtr, RDouble *spciesEv, RDouble *spciesEnthalpy, RDouble &totalEtr, RDouble &totalEv, RDouble &totalEnthalpy)
 {
     RDouble modifyCoef = 1.5;
     RDouble speciesCvtr[MAX_SPECIES_NUM];
@@ -12201,7 +12201,7 @@ void RealGas::ComputeEnergy(RDouble *primitiveVars, RDouble *temperatures, RDoub
     }
 }
 
-void RealGas::ComputePressureDerivatives(RDouble *primitiveVars, RDouble *temperatures, RDouble &alpha, RDouble &beta, RDouble &eta, RDouble *speciesBeta)
+void MixedGas::ComputePressureDerivatives(RDouble *primitiveVars, RDouble *temperatures, RDouble &alpha, RDouble &beta, RDouble &eta, RDouble *speciesBeta)
 {
     using namespace IDX;
     RDouble sigma1 = 0.0, sigma2 = 0.0;
@@ -12254,7 +12254,7 @@ void RealGas::ComputePressureDerivatives(RDouble *primitiveVars, RDouble *temper
     }
 }
 
-void RealGas::ModifyVibrationEnergy(char *filepath)
+void MixedGas::ModifyVibrationEnergy(char *filepath)
 {
     FILE *pfile = fopen(filepath, "wb");
 
@@ -12317,7 +12317,7 @@ void RealGas::ModifyVibrationEnergy(char *filepath)
     fclose(pfile);
 }
 
-void RealGas::ComputeSpecificHeatByFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel/* = true*/)
+void MixedGas::ComputeSpecificHeatByFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel/* = true*/)
 {
     RDouble gasConstant = rjmk;     //! Unit: J/(kg*K).
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -12362,7 +12362,7 @@ void RealGas::ComputeSpecificHeatByFitMethod(RDouble temperature, RDouble *cvSpe
     }
 }
 
-void RealGas::ComputeEnthalpyByFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel/* = true*/)
+void MixedGas::ComputeEnthalpyByFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel/* = true*/)
 {
     RDouble gasConstant = rjmk;     //! Unit: J/(kg*K).
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -12408,7 +12408,7 @@ void RealGas::ComputeEnthalpyByFitMethod(RDouble temperature, RDouble *hSpecies,
     }
 }
 
-void RealGas::ComputeSpecificHeatByPolynomialFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel/* = true*/)
+void MixedGas::ComputeSpecificHeatByPolynomialFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel/* = true*/)
 {
     RDouble gasConstant = rjmk;     //! Unit: J/(kg*K).
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -12453,7 +12453,7 @@ void RealGas::ComputeSpecificHeatByPolynomialFitMethod(RDouble temperature, RDou
     }
 }
 
-void RealGas::ComputeEnthalpyByPolynomialFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel/* = true*/)
+void MixedGas::ComputeEnthalpyByPolynomialFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel/* = true*/)
 {
     RDouble gasConstant = rjmk;     //! Unit: J/(kg*K).
     RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
@@ -12521,7 +12521,7 @@ void  computeOutPressure(RDouble &Pressure, RDouble &staticPressure,  RDouble &s
 
 
 
-void RealGas::SetMaximumSpecies(RDouble *fs)
+void MixedGas::SetMaximumSpecies(RDouble *fs)
 {
     RDouble *Ms = this->molecularProperty->GetMolecularWeightDimensional();
     string *species_name = this->molecularProperty->GetNameOfSpecies();
@@ -12568,819 +12568,8 @@ void RealGas::SetMaximumSpecies(RDouble *fs)
         }
     }
     delete [] xs;    xs = NULL;
-    //cout <<"  elementMaximum=   "<<  elementMaximum[0] <<  elementMaximum[1] << endl;
-    //cout <<"  maximumSpecies=   "<<  maximumSpecies[0]  << "   "<< maximumSpecies[1]  <<  "   "<< maximumSpecies[2]  <<  "   "<< maximumSpecies[3]  << "   "<<  maximumSpecies[4]   << endl;
-    //abort();
 
-}
 
-void  RealGas:: ComputeMixturegasThermalParameter(RDouble *massF, RDouble trTemperature, RDouble vTemperature, RDouble eTemperature,int Dimensional)
-{    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-  //  RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    //! nTypes denotes the types of species which is used to identity the electron, monoatom and polyatom.
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Ttr,Tv,Te;
-    if(Dimensional == 0)    //input or output  are NoN Dimensional Values
-    {
-        Ttr= trTemperature * referenceTemperature;
-        Tv = MAX(veTemperatureMin, vTemperature  * referenceTemperature);
-        Te = MAX(veTemperatureMin, eTemperature  * referenceTemperature);
-        //Tv = vTemperature  * referenceTemperature;
-        //Te = eTemperature  * referenceTemperature;
-    }
-    else                 //input or output  are  Dimensional Values
-    {
-        Ttr= trTemperature;
-        Tv = MAX(veTemperatureMin, vTemperature);
-        Te = MAX(veTemperatureMin, eTemperature);
-        //Tv = vTemperature;
-        //Te = eTemperature;
-    }
-
-    RDouble *Rms = Thermo_Energy_temparay.Rms;
-    RDouble &Rm  = Thermo_Energy_temparay.Rm;
-    RDouble &Rme = Thermo_Energy_temparay.Rme;
-
-    Rm = 0; Rme = 0;
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        Rms[i] = gasConstant * oMolecularWeightDimensional[i];
-
-        if (thermodynamicProperties[i].nType == 0) 
-        {
-            Rme =  massF[i] * Rms[i];
-        }
-        else
-        {
-            Rm +=  massF[i] * Rms[i];
-        }
-    }
-
-    RDouble *Cps = Thermo_Energy_temparay.Cps;
-    RDouble *Cvs = Thermo_Energy_temparay.Cvs;
-    RDouble *Hs  = Thermo_Energy_temparay.Hs;
-    RDouble *Es  = Thermo_Energy_temparay.Es;
-
-    RDouble &H   = Thermo_Energy_temparay.H;
-    RDouble &E   = Thermo_Energy_temparay.E;
-    RDouble &gama= Thermo_Energy_temparay.gama;
-    RDouble &Cv  = Thermo_Energy_temparay.Cv;
-    RDouble &Cp  = Thermo_Energy_temparay.Cp;
-
-    if (ntmodel == 1)       //! 1T mode
-    {
-        if (this->thermodynamicManager->GetNumberofPolynomialCoefficient() < 1)return;
-        RDouble coef[7], relax;
-        int nIndex1, nIndex2;
-        GetLinearlyAveragedPolynomialCoefficientsIndex(Ttr, relax, nIndex1, nIndex2);
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            //GetLinearlyAveragedPolynomialCoefficients(i, Ttr, coef);  //! Apply the polynomial by linearly averaging the coefficients on the temperature boundary.
-            GetLinearlyAveragedPolynomialCoefficientsByIndex(i, coef, relax, nIndex1, nIndex2);
-            Hs[i]  = coef[0]  +  ( coef[1] * 0.5 + ( coef[2] / 3.0  +  ( coef[3] * 0.25  +  coef[4] * 0.2 * Ttr ) * Ttr ) * Ttr ) * Ttr    +   coef[5] / Ttr;
-            Cps[i] = coef[0]  +  ( coef[1]       + ( coef[2]        +  ( coef[3]         +  coef[4]       * Ttr ) * Ttr ) * Ttr ) * Ttr ;        
-
-            Hs[i] *= ( Rms[i] * Ttr )        ;   Cps[i] *= Rms[i];    
-            Es[i]  = Hs[i] - Rms[i] * Ttr     ;   Cvs[i]  = Cps[i] - Rms[i];                  
-        }
-        Cv = 0;   E = 0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        {
-            E   += massF[i] * Es[i];
-            Cv  += massF[i] * Cvs[i];
-        }
-
-        Rm    = Rm + Rme;
-        Rme   = 0 ;
-        Cp    = Cv + Rm;
-        gama  = Cp / Cv;
-        H     = E  + Rm * Ttr ; 
-
-        if( Dimensional == 0)    //input or output  are NoN Dimensional Values
-        {
-            for (int i = 0; i < this->numberOfSpecies; ++ i)
-            {
-                Cvs[i] *= referenceSpecificHeat;
-                Cps[i] *= referenceSpecificHeat;
-                Es[i]  /= referenceEnergy;
-                Hs[i]  /= referenceEnergy;    
-            }
-            Rme *= referenceSpecificHeat;        
-            Rm  *= referenceSpecificHeat;
-            Cp  *= referenceSpecificHeat;
-            Cv  *= referenceSpecificHeat;
-            E   /= referenceEnergy;
-            H   /= referenceEnergy;
-        }
-        return;
-    }
-
-    RDouble *Cvtrs=Thermo_Energy_temparay.Cvtrs;
-    RDouble *Cvvs=Thermo_Energy_temparay.Cvvs;
-    RDouble *Cves=Thermo_Energy_temparay.Cves;
-
-    RDouble *Etrs=Thermo_Energy_temparay.Etrs;
-    RDouble *Evs=Thermo_Energy_temparay.Evs;
-    RDouble *Ees=Thermo_Energy_temparay.Ees;
-
-    ////T-R temperature mode
-    for (int i = 0; i <= this->nLastSpeciesIndex; ++ i)
-    {  
-        if(thermodynamicProperties[i].nType <2)
-        {
-            Cvtrs[i] = 1.5 * Rms[i];
-        }
-        else
-        { 
-            Cvtrs[i] = 2.5 * Rms[i];
-        }  //! Polyatom species. 
-        Etrs[i]  = Cvtrs[i] * Ttr + thermodynamicProperties[i].hs0;
-    }
-    if (nElectronIndex >= 0)
-    {
-        Cvtrs[nElectronIndex] = 0.0;
-        Etrs[nElectronIndex]  = thermodynamicProperties[nElectronIndex].hs0;
-    }
-    
-    //   two methods for Tv and Te         
-    if( nTEnergyModel == 0)    
-    {
-        //V  temperature modal    
-        RDouble theta = 0.0, expValue = 0.0, powValue = 0.0 , Rs=0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        {
-            Evs[i] = 0.0 ;     Cvvs[i] = 0.0;
-            if (thermodynamicProperties[i].nType < 2) continue;
-
-            for (int m = 0; m < thermodynamicProperties[i].Tvs.nMode; ++ m)                //! Polyatom species. 
-            {
-                theta = MIN(lnMaximum,thermodynamicProperties[i].Tvs.Tv[m] / Tv);          //by dms
-                expValue = exp(static_cast<RealData>(theta));
-          //      expValue = exp(static_cast<RealData>(lnMaximum));
-                powValue = thermodynamicProperties[i].Tvs.Tv[m] / ((expValue - 1.0) + SMALL);
-                Rs    = thermodynamicProperties[i].Tvs.g[m] * Rms[i];
-
-                Evs[i] +=  Rs * powValue;
-                powValue = powValue / Tv;
-                Cvvs[i] += Rs * powValue * expValue * powValue;
-            }
-        }
-        //E  temperature modal    
-        RDouble gs0 = 0.0, gs1 = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        {
-            if (thermodynamicProperties[i].nType == 0) //electron
-            {
-                Cves[i] = 1.5 * Rms[i];
-                Ees[i] = Cves[i]  * Te;
-                continue;
-            }
-            theta = MIN(lnMaximum,thermodynamicProperties[i].Tes / Te);    //! by  dms
-            gs0 = thermodynamicProperties[i].gs0;                    //! The degeneracy of species.
-            gs1 = thermodynamicProperties[i].gs1;
-
-            expValue = exp(static_cast<RealData>(theta));
-            //expValue = MIN(expValue, LARGE);
-            Rs = gs1 * Rms[i];
-            powValue= thermodynamicProperties[i].Tes / (gs0 * expValue + gs1);
-
-            Ees[i] = Rs * powValue;
-            powValue = powValue / Te;  
-            Cves[i] = Rs * gs0  * powValue * expValue * powValue;
-        }
-    }
-    else
-    {   //VE  temperature modal        
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            RDouble *coef = thermodynamicManager->GetEnthalpyFitCoefficient(i);
-
-            if (thermodynamicProperties[i].nType >= 2)
-            {
-                Cvvs[i] =   coef[1] + ( 2.0 * coef[2] + ( 3.0 * coef[3]  + ( 4.0 * coef[4] + 5.0 * coef[5]  * Tv ) * Tv ) * Tv ) * Tv;
-                Evs[i]  = ((coef[1] + (       coef[2] + (       coef[3]  + (       coef[4] +       coef[5]  * Tv ) * Tv ) * Tv ) * Tv ) * Tv + coef[0] )* Rms[i];
-    
-                Cvvs[i]  =   (Cvvs[i] - 1.0      ) * Rms[i] - Cvtrs[i];
-                Evs[i]  -=   ( Rms[i] + Cvtrs[i] ) * Tv     + thermodynamicProperties[i].hs0 ;
-
-                Cves[i] = 0.0;
-                Ees[i]  = 0.0;
-            }
-            else 
-            {
-                Cvvs[i] = 0.0;
-                Evs[i]  = 0.0;
-
-                Cves[i] =   coef[1] + ( 2 * coef[2] + ( 3 * coef[3]  + ( 4 * coef[4] + 5 * coef[5]  * Te ) * Te ) * Te ) * Te;
-                Ees[i]  = ((coef[1] + (     coef[2] + (     coef[3]  + (     coef[4] +     coef[5]  * Te ) * Te ) * Te ) * Te ) * Te + coef[0] )* Rms[i];
-
-                Cves[i]  = ( Cves[i] - 1.0      ) * Rms[i] - Cvtrs[i]; 
-                Ees[i]  -= ( Rms[i]  + Cvtrs[i] ) * Te     + thermodynamicProperties[i].hs0 ;
-            }            
-        }
-    }
-
-    for (int i = 0; i < this->numberOfSpecies; ++ i)    
-    {   
-        Cvs[i] = Cvtrs[i];
-        Cps[i] = Cvtrs[i] + Rms[i];
-
-        Es[i] = Etrs[i] + Evs[i] + Ees[i];
-        if (thermodynamicProperties[i].nType == 0)        //electron    
-        {
-            Hs[i]  = Es[i]+ Te  * Rms[i];
-        }
-        else
-        {
-        Hs[i]  = Es[i]+ Ttr * Rms[i];
-        } 
-    }
-
-    if(Dimensional == 0)    //input or output  are NoN Dimensional Values
-    {
-        Rme *= referenceSpecificHeat;        
-        Rm  *= referenceSpecificHeat;
-
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        {
-            Cvtrs[i] *= referenceSpecificHeat;
-            Cvvs[i]  *= referenceSpecificHeat;
-            Cves[i]  *= referenceSpecificHeat;
-     
-            Etrs[i] /= referenceEnergy;
-            Evs[i]  /= referenceEnergy;
-            Ees[i]  /= referenceEnergy;
-
-            Cvs[i]  *= referenceSpecificHeat;
-            Cps[i]  *= referenceSpecificHeat;
-
-            Es[i]   /= referenceEnergy;
-            Hs[i]   /= referenceEnergy;        
-        }
-    }
-
-    RDouble &Etr =Thermo_Energy_temparay.Etr;
-    RDouble &Ev  =Thermo_Energy_temparay.Ev;
-    RDouble &Ee  =Thermo_Energy_temparay.Ee;
-
-    RDouble &Cvtr=Thermo_Energy_temparay.Cvtr;
-    RDouble &Cvv =Thermo_Energy_temparay.Cvv;
-    RDouble &Cve =Thermo_Energy_temparay.Cve;
-
-    Etr = 0 ; Cvtr = 0;  Ev = 0 ; Cvv = 0;   Ee = 0 ; Cve = 0;  
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        Etr  += massF[i] * Etrs[i];
-        Cvtr += massF[i] * Cvtrs[i];
-
-        Ev   += massF[i] * Evs[i];
-        Cvv  += massF[i] * Cvvs[i];
-
-        Ee   += massF[i] * Ees[i];
-        Cve  += massF[i] * Cves[i];
-    }
-    Cv   = Cvtr;
-    Cp   = Cv + Rm;
-    gama = Cp / Cv;
-    E    = Etr + Ev + Ee;
-    H    = E + Rm * trTemperature + Rme * eTemperature; 
-}
-
-void RealGas::ComputeMixtureCvAndEnergy(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy)  // just for 1T model
-{
-    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Ttr = trTemperature * referenceTemperature;
-    RDouble coef[7], relax;
-    RDouble Rms, Cvs, Es;
-    int nIndex1, nIndex2;
-
-
-    gasMixtureCv = 0;
-    gasMixtureEnergy = 0;
-    GetLinearlyAveragedPolynomialCoefficientsIndex(Ttr, relax, nIndex1, nIndex2);
-    for (int i = 0; i < numberOfSpecies; ++ i)
-    {
-        Rms = gasConstant * oMolecularWeightDimensional[i];
-        //GetLinearlyAveragedPolynomialCoefficients(i, Ttr, coef);  //! Apply the polynomial by linearly averaging the coefficients on the temperature boundary.
-        GetLinearlyAveragedPolynomialCoefficientsByIndex(i, coef, relax, nIndex1, nIndex2);
-        Es  = coef[0]  +  ( coef[1] * 0.5 + ( coef[2] / 3.0  +  ( coef[3] * 0.25  +  coef[4] * 0.2 * Ttr ) * Ttr ) * Ttr ) * Ttr    +   coef[5] / Ttr;
-        Cvs = coef[0]  +  ( coef[1]       + ( coef[2]        +  ( coef[3]         +  coef[4]       * Ttr ) * Ttr ) * Ttr ) * Ttr ;
- 
-        Es  = (Es - 1.0) * Rms * Ttr;  
-        Cvs = (Cvs - 1.0) * Rms;
-
-        gasMixtureEnergy   += massF[i] * Es;
-        gasMixtureCv  += massF[i] * Cvs;
-
-
-        //Rms = massF[i] * gasConstant * oMolecularWeightDimensional[i];
-        //GetLinearlyAveragedPolynomialCoefficients(i, Ttr, coef);  //! Apply the polynomial by linearly averaging the coefficients on the temperature boundary.
-
-        //Es  = (coef[0]  +  ( coef[1] * 0.5 + ( coef[2] / 3.0  +  ( coef[3] * 0.25  +  coef[4] * 0.2 * Ttr ) * Ttr ) * Ttr ) * Ttr) * Ttr + coef[5] - 1.0;
-        //Cvs =  coef[0]  +  ( coef[1]       + ( coef[2]        +  ( coef[3]         +  coef[4]       * Ttr ) * Ttr ) * Ttr ) * Ttr - 1.0;
-
-        //gasMixtureEnergy   += Rms * Es ;
-        //gasMixtureCv  += Rms * Cvs;
-    }
-    gasMixtureCv *= referenceSpecificHeat;
-    gasMixtureEnergy /= referenceEnergy;
-}
-
-void RealGas::ComputeMixtureCvtrAndEtr(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy)
-{
-    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Rms, Cvtrs, Etrs;
-    RDouble Ttr = trTemperature * referenceTemperature;
-
-    gasMixtureCv = 0;
-    gasMixtureEnergy = 0;
-    for (int i = 0; i < numberOfSpecies; ++ i)
-    {
-        Rms = gasConstant * oMolecularWeightDimensional[i];
-
-        if(thermodynamicProperties[i].nType > 1)
-        {
-            Cvtrs = 2.5 * Rms;
-        }
-        else if(thermodynamicProperties[i].nType == 1)
-        {
-            Cvtrs = 1.5 * Rms;
-        }
-        else
-        {
-            Cvtrs = 0.0;
-        }
-        Etrs  = Cvtrs * Ttr + thermodynamicProperties[i].hs0;
-        gasMixtureCv += massF[i] * Cvtrs;
-        gasMixtureEnergy += massF[i] * Etrs;
-    }
-    gasMixtureCv *= referenceSpecificHeat;
-    gasMixtureEnergy /= referenceEnergy;
-}
-
-void RealGas::ComputeMixtureCvveAndEve(RDouble *massF, RDouble tveTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy)
-{
-    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Rms, Cvtrs, Cvves, Eves;
-    RDouble Tve = MAX(veTemperatureMin, tveTemperature * referenceTemperature);
-    //RDouble Tve = tveTemperature * referenceTemperature;
-
-    gasMixtureCv = 0;
-    gasMixtureEnergy = 0;
-
-    if( nTEnergyModel == 0)    
-    {
-        //VE  temperature model
-        RDouble theta = 0.0, expValue = 0.0, powValue = 0.0 , Rs = 0.0;
-        RDouble gs0 = 0.0, gs1 = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        { 
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-
-            if (thermodynamicProperties[i].nType == 0)
-            {
-                Cvves = 1.5 * Rms;
-                Eves = Cvves  * Tve;
-                gasMixtureCv += massF[i] * Cvves;
-                gasMixtureEnergy  += massF[i] * Eves;
-                continue;
-            }
-
-            Eves = 0.0 ;     Cvves = 0.0;
-            if (thermodynamicProperties[i].nType > 1)
-            {   
-                for (int m = 0; m < thermodynamicProperties[i].Tvs.nMode; ++ m)                //! Polyatom species. 
-                {
-                    //theta = thermodynamicProperties[i].Tvs.Tv[m] / MAX(Tve, veTemperatureMin);  //by dms 
-                    theta = MIN(lnMaximum,thermodynamicProperties[i].Tvs.Tv[m] / Tve);  //by dms 
-                    //expValue = MIN(exp(theta), LARGE);
-                    expValue = exp(static_cast<RealData>(theta));
-                   // expValue = MIN(expValue, LARGE);
-                    powValue = thermodynamicProperties[i].Tvs.Tv[m] / ((expValue - 1.0) + SMALL);
-                    Rs    = thermodynamicProperties[i].Tvs.g[m] * Rms;
-
-                    Eves +=  Rs * powValue;
-                    powValue = powValue / Tve;
-                    Cvves += Rs * powValue * expValue * powValue;                    
-                }
-            }
-            
-            //theta = thermodynamicProperties[i].Tes / MAX(Tve, veTemperatureMin);    //! The monoaton species and polyatom species.            
-            theta = MIN(lnMaximum,thermodynamicProperties[i].Tes / Tve);    //! The monoaton species and polyatom species.            
-            gs0 = thermodynamicProperties[i].gs0;                    //! The degeneracy of species.
-            gs1 = thermodynamicProperties[i].gs1;
-
-            expValue = exp(static_cast<RealData>(theta));
-            //expValue = MIN(expValue, LARGE);
-
-            Rs = gs1 * Rms;
-            powValue= thermodynamicProperties[i].Tes  / (gs0 * expValue + gs1);
-
-            Eves += Rs * powValue;
-            powValue = powValue/ Tve;
-            Cvves += Rs * gs0  * powValue * expValue * powValue;
-
-            /*RDouble Eves_non = Eves  /referenceEnergy;
-            RDouble Cvves_non = Cvves*referenceSpecificHeat;
-            RDouble Cvves_no=1;*/
-
-            gasMixtureCv += massF[i] * Cvves;
-            gasMixtureEnergy  += massF[i] * Eves;
-        }
-    }
-    else
-    {   //VE  temperature modal        
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            RDouble *coef = thermodynamicManager->GetEnthalpyFitCoefficient(i);
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-
-            if(thermodynamicProperties[i].nType > 1)
-            {
-                Cvtrs = 2.5 * Rms;
-            }
-            else if(thermodynamicProperties[i].nType == 1)
-            {
-                Cvtrs = 1.5 * Rms;
-            }
-            else
-            {
-                Cvtrs = 0.0;
-            }
-
-            Cvves =   coef[1] + ( 2.0 * coef[2] + ( 3.0 * coef[3]  + ( 4.0 * coef[4] + 5.0 * coef[5]  * Tve ) * Tve ) * Tve ) * Tve;
-            Eves  = ((coef[1] + (       coef[2] + (       coef[3]  + (       coef[4] +       coef[5]  * Tve ) * Tve ) * Tve ) * Tve ) * Tve + coef[0] )* Rms;
-    
-            Cvves  = (Cvves - 1.0) * Rms - Cvtrs;
-            Eves  -= ( Rms  + Cvtrs) * Tve + thermodynamicProperties[i].hs0;
-
-            gasMixtureCv += massF[i] * Cvves;
-            gasMixtureEnergy  += massF[i] * Eves;
-        }
-    }
-
-    gasMixtureCv *= referenceSpecificHeat;
-    gasMixtureEnergy /= referenceEnergy;
-}
-void RealGas::ComputeMixtureCvvAndEv(RDouble *massF, RDouble tvTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy)
-{
-    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Rms, Cvvs, Evs;
-    RDouble Tv = MAX(veTemperatureMin, tvTemperature * referenceTemperature);
-    //RDouble Tv = tvTemperature * referenceTemperature;
-
-    gasMixtureCv = 0;
-    gasMixtureEnergy = 0;
-
-    if( nTEnergyModel == 0)    
-    {
-        //V  temperature model
-        RDouble theta = 0.0, expValue = 0.0, powValue = 0.0 , Rs = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        { 
-            if (thermodynamicProperties[i].nType < 2)
-            {
-                continue;
-            }
-
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-            Evs = 0.0 ;     Cvvs = 0.0;
-            for (int m = 0; m < thermodynamicProperties[i].Tvs.nMode; ++ m)                //! Polyatom species. 
-            {
-                //theta = thermodynamicProperties[i].Tvs.Tv[m] / MAX(Tv, veTemperatureMin);  //by dms 
-                theta = MIN(lnMaximum,thermodynamicProperties[i].Tvs.Tv[m] / Tv);  //by dms
-                //expValue = MIN(exp(theta), LARGE);
-                expValue = exp(static_cast<RealData>(theta));
-                //expValue = MIN(expValue, LARGE);
-                powValue = thermodynamicProperties[i].Tvs.Tv[m] / ((expValue - 1.0) + SMALL);
-                Rs    = thermodynamicProperties[i].Tvs.g[m] * Rms;
-
-                Evs +=  Rs * powValue;
-                powValue = powValue / Tv;  
-                Cvvs += Rs * powValue * expValue * powValue;
-            }
-
-            gasMixtureCv += massF[i] * Cvvs;
-            gasMixtureEnergy += massF[i] * Evs;
-        }
-    }
-    else
-    {   //V  temperature modal        
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            if (thermodynamicProperties[i].nType < 2)
-            {
-                continue;
-            }
-            RDouble *coef = thermodynamicManager->GetEnthalpyFitCoefficient(i);
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-
-            Cvvs =   coef[1] + ( 2.0 * coef[2] + ( 3.0 * coef[3]  + ( 4.0 * coef[4] + 5.0 * coef[5]  * Tv ) * Tv ) * Tv ) * Tv;
-            Evs  = ((coef[1] + (       coef[2] + (       coef[3]  + (       coef[4] +       coef[5]  * Tv ) * Tv ) * Tv ) * Tv ) * Tv + coef[0] )* Rms;
-    
-            Cvvs  = (Cvvs - 3.5) * Rms;
-            Evs  -= 3.5 * Rms * Tv + thermodynamicProperties[i].hs0;
-
-            gasMixtureCv += massF[i] * Cvvs;
-            gasMixtureEnergy += massF[i] * Evs;
-        }
-    }
-
-    gasMixtureCv *= referenceSpecificHeat;
-    gasMixtureEnergy /= referenceEnergy;
-}
-
-void RealGas::ComputeMixtureCveAndEe(RDouble *massF, RDouble teTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy)
-{
-    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Rms, Cvtrs, Cves, Ees;
-    RDouble Te = MAX(veTemperatureMin, teTemperature * referenceTemperature);
-    //RDouble Te = teTemperature * referenceTemperature;
-
-    gasMixtureCv = 0;
-    gasMixtureEnergy = 0;
-
-    if( nTEnergyModel == 0)
-    {
-        //E  temperature model
-        RDouble theta = 0.0, expValue = 0.0, powValue = 0.0 , Rs = 0.0;
-        RDouble gs0 = 0.0, gs1 = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        { 
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-
-            if (thermodynamicProperties[i].nType != 0)
-            {   
-                theta = MIN(lnMaximum,thermodynamicProperties[i].Tes / Te);  //by dms     //! The monoaton species and polyatom species.
-                gs0 = thermodynamicProperties[i].gs0;                    //! The degeneracy of species.
-                gs1 = thermodynamicProperties[i].gs1;
-
-                expValue = exp(static_cast<RealData>(theta));
-                //expValue = MIN(expValue, LARGE);
-
-                Rs = gs1 * Rms;
-                powValue= thermodynamicProperties[i].Tes  / (gs0 * expValue + gs1);
-
-                Ees = Rs * powValue;
-                powValue = powValue / Te;  
-                Cves = Rs * gs0  * powValue * expValue * powValue;
-            }
-            else
-            {
-                Cves = 1.5 * Rms;
-                Ees = Cves  * Te;
-            }
-
-            gasMixtureCv += massF[i] * Cves;
-            gasMixtureEnergy += massF[i] * Ees;
-        }
-    }
-    else
-    {   //E  temperature modal        
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            RDouble *coef = thermodynamicManager->GetEnthalpyFitCoefficient(i);
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-
-            if(thermodynamicProperties[i].nType > 1)
-            {
-                continue;
-            }
-            else if(thermodynamicProperties[i].nType == 1)
-            {
-                Cvtrs = 1.5 * Rms;
-            }
-            else
-            {
-                Cvtrs = 0.0;
-            }
-
-            Cves =   coef[1] + ( 2.0 * coef[2] + ( 3.0 * coef[3]  + ( 4.0 * coef[4] + 5.0 * coef[5]  * Te ) * Te ) * Te ) * Te;
-            Ees  = ((coef[1] + (       coef[2] + (       coef[3]  + (       coef[4] +       coef[5]  * Te ) * Te ) * Te ) * Te ) * Te + coef[0] )* Rms;
-    
-            Cves  = (Cves - 1.0) * Rms - Cvtrs;
-            Ees  -= ( Rms  + Cvtrs) * Te + thermodynamicProperties[i].hs0;
-
-            gasMixtureCv += massF[i] * Cves;
-            gasMixtureEnergy += massF[i] * Ees;
-        }
-    }
-    gasMixtureCv *= referenceSpecificHeat;
-    gasMixtureEnergy /= referenceEnergy;
-}
-
-
-void RealGas::ComputeCvvesAndEvesForSpecies(RDouble tveTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional)
-{
-    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Rms, Cvtrs;
-    RDouble Tve;
-        
-    if(Dimensional==0)
-    {
-        Tve= MAX(veTemperatureMin, tveTemperature * referenceTemperature);
-        //Tve= tveTemperature * referenceTemperature;
-    }
-    else
-    {
-        Tve= MAX(veTemperatureMin, tveTemperature);
-        //Tve= tveTemperature;
-    }
-
-    if( nTEnergyModel == 0)
-    {
-        //VE  temperature model
-        RDouble theta = 0.0, expValue = 0.0, powValue = 0.0 , Rs = 0.0;
-        RDouble gs0 = 0.0, gs1 = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        { 
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-
-            if (thermodynamicProperties[i].nType == 0)
-            {
-                gasCvs[i] = 1.5 * Rms;
-                gasEnergys[i] = gasCvs[i] * Tve;
-                continue;
-            }
-
-            gasEnergys[i] = 0.0 ;     gasCvs[i] = 0.0;
-            if (thermodynamicProperties[i].nType > 1)
-            {   
-                for (int m = 0; m < thermodynamicProperties[i].Tvs.nMode; ++ m)                //! Polyatom species. 
-                {
-                    theta = MIN(lnMaximum,thermodynamicProperties[i].Tvs.Tv[m] / Tve);  //by dms 
-                    //expValue = MIN(exp(theta), LARGE);
-                    expValue = exp(static_cast<RealData>(theta));
-                    //expValue = MIN(expValue, LARGE);
-                    powValue = thermodynamicProperties[i].Tvs.Tv[m] / ((expValue - 1.0) + SMALL);
-                    Rs    = thermodynamicProperties[i].Tvs.g[m] * Rms;
-
-                    gasEnergys[i] +=  Rs * powValue;
-                    powValue = powValue / Tve;  
-                    gasCvs[i] += Rs * powValue * expValue * powValue;                    
-                }
-            }
-            
-            theta = MIN(lnMaximum,thermodynamicProperties[i].Tes / Tve);    //! The monoaton species and polyatom species.            
-            gs0 = thermodynamicProperties[i].gs0;                    //! The degeneracy of species.
-            gs1 = thermodynamicProperties[i].gs1;
-
-            expValue = exp(static_cast<RealData>(theta));
-            //expValue = MIN(expValue, LARGE);
-
-            Rs = gs1 * Rms;
-            powValue= thermodynamicProperties[i].Tes  / (gs0 * expValue + gs1);
-
-            gasEnergys[i] += Rs * powValue;
-            powValue = powValue / Tve;  
-            gasCvs[i] += Rs * gs0  * powValue * expValue * powValue;
-        }
-    }
-    else
-    {   //VE  temperature modal        
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            RDouble *coef = thermodynamicManager->GetEnthalpyFitCoefficient(i);
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-
-            if(thermodynamicProperties[i].nType > 1)
-            {
-                Cvtrs = 2.5 * Rms;
-            }
-            else if(thermodynamicProperties[i].nType == 1)
-            {
-                Cvtrs = 1.5 * Rms;
-            }
-            else
-            {
-                Cvtrs = 0.0;
-            }
-
-            gasCvs[i] =   coef[1] + ( 2.0 * coef[2] + ( 3.0 * coef[3]  + ( 4.0 * coef[4] + 5.0 * coef[5]  * Tve ) * Tve ) * Tve ) * Tve;
-            gasEnergys[i] = ((coef[1] + (       coef[2] + (       coef[3]  + (       coef[4] +       coef[5]  * Tve ) * Tve ) * Tve ) * Tve ) * Tve + coef[0] )* Rms;
-    
-            gasCvs[i] = (gasCvs[i] - 1.0) * Rms - Cvtrs;
-            gasEnergys[i] -= ( Rms  + Cvtrs) * Tve + thermodynamicProperties[i].hs0;
-        }
-    }
-    if(Dimensional==0)
-    {
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            gasCvs[i] *= referenceSpecificHeat;
-            gasEnergys[i] /= referenceEnergy;
-        }
-    }
-}
-
-
-void RealGas::ComputeCvvsAndEvsForSpecies(RDouble tvTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional)
-{
-    RDouble gasConstant = rjmk;     //Unit: J/(kg*K)
-    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-
-    RDouble Rms, Cvtrs;
-    RDouble Tv;
-        
-    if(Dimensional==0)
-    {
-       Tv= MAX(veTemperatureMin, tvTemperature * referenceTemperature);
-       //Tv= tvTemperature * referenceTemperature;
-    }
-    else
-    {
-       Tv= MAX(veTemperatureMin, tvTemperature);
-       //Tv= tvTemperature;
-    }
-
-    if( nTEnergyModel == 0)    
-    {
-        //VE  temperature model
-        RDouble theta = 0.0, expValue = 0.0, powValue = 0.0 , Rs = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        { 
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-            gasEnergys[i] = 0.0 ;     gasCvs[i] = 0.0;
-            if (thermodynamicProperties[i].nType > 1)
-            {   
-                for (int m = 0; m < thermodynamicProperties[i].Tvs.nMode; ++ m)                //! Polyatom species. 
-                {
-                    theta = MIN(lnMaximum,thermodynamicProperties[i].Tvs.Tv[m] / Tv);  //by dms 
-                    //expValue = MIN(exp(theta), LARGE);
-                    expValue = exp(static_cast<RealData>(theta));
-                    //expValue = MIN(expValue, LARGE);
-                    powValue = thermodynamicProperties[i].Tvs.Tv[m] / ((expValue - 1.0) + SMALL);
-                    Rs    = thermodynamicProperties[i].Tvs.g[m] * Rms;
-
-                    gasEnergys[i] +=  Rs * powValue;
-                    powValue = powValue / Tv;  
-                    gasCvs[i] += Rs * powValue * expValue * powValue;                    
-                }
-            }
-        }
-    }
-    else
-    {   //VE  temperature modal        
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            Rms = gasConstant * oMolecularWeightDimensional[i];
-            if(thermodynamicProperties[i].nType > 1)
-            {
-                Cvtrs = 2.5 * Rms;
-            }
-            else
-            {
-                gasCvs[i] = 0.0;
-                gasEnergys[i] =0.0;
-                continue;
-            }
-            RDouble *coef = thermodynamicManager->GetEnthalpyFitCoefficient(i);
-
-            gasCvs[i] =   coef[1] + ( 2.0 * coef[2] + ( 3.0 * coef[3]  + ( 4.0 * coef[4] + 5.0 * coef[5]  * Tv ) * Tv ) * Tv ) * Tv;
-            gasEnergys[i] = ((coef[1] + (       coef[2] + (       coef[3]  + (       coef[4] +       coef[5]  * Tv ) * Tv ) * Tv ) * Tv ) * Tv + coef[0] )* Rms;
-    
-            gasCvs[i] = (gasCvs[i] - 1.0) * Rms - Cvtrs;
-            gasEnergys[i] -= ( Rms  + Cvtrs) * Tv + thermodynamicProperties[i].hs0;
-        }
-    }
-
-    if(Dimensional==0)
-    {
-        for (int i = 0; i < numberOfSpecies; ++ i)
-        {
-            if(thermodynamicProperties[i].nType < 2)continue;
-            gasCvs[i] *= referenceSpecificHeat;
-            gasEnergys[i] /= referenceEnergy;
-        }
-    }
 }
 
 }

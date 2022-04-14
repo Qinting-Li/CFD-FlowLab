@@ -9,16 +9,16 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      RealGas.h
+//! @file      MixedGas.h
 //! @brief     Explain this file briefly.
-//! @author    Li Peng, He Xin.
+//! @author    Meng Liyuan,Li Peng, He Xin.
 
 #pragma once
 #include "Precision.h"
 #include "Gas.h"
 #include "Geo_StructGrid.h"
 #include "Geo_UnstructGrid.h"
-#include "PHChemicalModel.h"
+#include "ChemicalModel.h"
 
 #include <string>
 using namespace std;
@@ -273,11 +273,11 @@ public:
     int * GetIonTypeOfSpecies() const { return ionTypeOfSpecies; };
 };
 
-class RealGas : public Gas
+class MixedGas : public Gas
 {
 public:
-    RealGas();
-    ~RealGas();
+    MixedGas();
+    ~MixedGas();
 private:
     FluidParameter referenceParameterDimensional;    //ref
     ThermodynamicManager  *thermodynamicManager;     //polynomial fitting for Species Energy
@@ -1375,31 +1375,13 @@ public:
 
     void ModifyVibrationEnergy(char *filepath);
 
-    void ComputeSpeciesThermalParameter(RDouble &trTemperature, RDouble &vTemperature, RDouble &eTemperature,int Dimensional);
-
-    void ComputeMixturegasThermalParameter(RDouble *massF, RDouble &trTemperature, RDouble &vTemperature, RDouble &eTemperature, RDouble *cvs,RDouble *cps,RDouble *es, RDouble *hs, 
-         RDouble *cvvs,RDouble *evs, RDouble *ces,RDouble *ees);
-
     void ComputeSpecificHeatByFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel = true);
     void ComputeEnthalpyByFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel = true);
 
     void ComputeSpecificHeatByPolynomialFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel = true);
     void ComputeEnthalpyByPolynomialFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel = true);
 
-public:
-    //=======codes for test ================
-    void ComputeMixturegasThermalParameter(RDouble *massF, RDouble trTemperature, RDouble vTemperature, RDouble eTemperature, int Dimensional);
-    void ComputeMixtureCvAndEnergy(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy);
-    void ComputeMixtureCvtrAndEtr(RDouble *massF, RDouble trTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy);
-    void ComputeMixtureCvveAndEve(RDouble *massF, RDouble tveTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy);
-    void ComputeMixtureCvvAndEv(RDouble *massF, RDouble tvTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy);
-    void ComputeMixtureCveAndEe(RDouble *massF, RDouble teTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy);
-
-    void ComputeCvvesAndEvesForSpecies(RDouble tveTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional);
-    void ComputeCvvsAndEvsForSpecies(RDouble tvTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional);
-
 };
-
 
 void ChemCompressData(DataContainer *&cdata);
 
