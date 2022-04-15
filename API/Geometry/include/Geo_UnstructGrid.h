@@ -179,6 +179,9 @@ public:
     //! Set the boundary condition records.
     void SetBCRecord(CompositeUnstructBC **bcr);
 
+    //! Set the boundary condition region.
+    void SetUnstructBCRegion(CompositeUnstructBC* unstructBCRegion);
+
     //! Set the left cell list of each face.
     void SetLeftCellOfFace(int *left_cell_of_face_in);
 

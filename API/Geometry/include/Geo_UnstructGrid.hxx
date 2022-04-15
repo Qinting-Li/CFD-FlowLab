@@ -67,6 +67,10 @@ inline void UnstructGrid::SetBCRecord(CompositeUnstructBC **bcr)
     this->bcr = bcr;
 }
 
+inline void UnstructGrid::SetUnstructBCRegion(CompositeUnstructBC *unstructBCRegion)
+{
+    this->unstructBCRegion = unstructBCRegion;
+}
 
 inline void UnstructGrid::SetBlankIndex(int *iBlank)
 {

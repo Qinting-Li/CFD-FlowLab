@@ -159,7 +159,7 @@ LIB_EXPORT UnstructGrid::~UnstructGrid()
 
     delete [] cell2coarsegridcell;
 
-    if (unstructBCRegion != NULL)
+    if (unstructBCRegion != NULL && IsFinestGrid())
     {
         delete unstructBCRegion;
         unstructBCRegion = NULL;
@@ -7224,8 +7224,8 @@ LIB_EXPORT void UnstructGrid::CoarseGrids(int maxLevel)
 
         agglomeratedGrid->SetFineGrid(this);
         agglomeratedGrid->SetLevel(this->GetLevel()+1);
-        agglomeratedGrid->SetBCRecord(this->GetBCRecord());
-
+        agglomeratedGrid->SetUnstructBCRegion(this->GetUnstructBCRegion());
+      
         if(preGrid != this)
         {
             int *pre_cell2coarsegridcell = preGrid->GetCell2CoarseGridCell();
