@@ -6,6 +6,7 @@
 #include "PHIO.h"
 #include "Glb_Dimension.h"
 #include "TK_Log.h"
+#include "Math_BasisFunction.h"
 
 namespace PHSPACE
 {
