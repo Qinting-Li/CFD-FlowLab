@@ -304,7 +304,6 @@ ${Geometry_H_PATH}/LinkStruct.h
 ${Geometry_H_PATH}/Geo_Point.h
 ${Geometry_H_PATH}/Geo_Face.h
 ${Geometry_H_PATH}/GRHash.h
-${Geometry_H_PATH}/SubsonicBC.h
 ${Geometry_H_PATH}/OverLappingGrid.h
 ${Geometry_H_PATH}/GeometryUnit.h
 ${Geometry_H_PATH}/Geo_PointFactory.h
@@ -354,7 +353,6 @@ ${Geometry_CPP_PATH}/Geo_Interface.cpp
 ${Geometry_CPP_PATH}/Geo_Interpoint.cpp
 ${Geometry_CPP_PATH}/MultigridFactory.cpp
 ${Geometry_CPP_PATH}/GRHash.cpp
-${Geometry_CPP_PATH}/SubsonicBC.cpp
 ${Geometry_CPP_PATH}/OverLappingGrid.cpp
 ${Geometry_CPP_PATH}/GeometryUnit.cpp
 ${Geometry_CPP_PATH}/Geo_PointFactory.cpp

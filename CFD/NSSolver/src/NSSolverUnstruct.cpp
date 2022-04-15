@@ -5,7 +5,6 @@
 #include "AerodynamicsBasicRelations.h"
 #include "Glb_Dimension.h"
 #include "Constants.h"
-#include "SubsonicBC.h"
 #include <list>
 #include "Param_NSSolverUnstruct.h"
 #include "Post_ForceMoment.h"

@@ -3,7 +3,6 @@
 #include "Geo_StructBC.h"
 #include "MultiGridOperation.h"
 #include "GradientOperation.h"
-#include "SubsonicBC.h"
 #include "Force.h"
 #include "OversetGridFactory.h"
 #include "TK_Exit.h"
@@ -7281,10 +7280,6 @@ namespace PHSPACE
             else if (BCType == EXTERNAL_BC)
             {
                 OutFlowBC3D(grid, structBC);
-            }
-            else if (SetSubsonicBC(grid, structBC, BCType))
-            {
-                continue;
             }
             else if (BCType == NOZZLE_INFLOW)
             {
