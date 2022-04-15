@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PostProcessData.h
-//! @brief     Flow post-processing data store
+//! @brief     Flow post-processing data store.
 //! @author    Baka.
 
 #pragma once
@@ -85,7 +85,6 @@ public:
     RDouble * GetXcp();
     RDouble * GetSide();
     RDouble * GetHingeMoment();
-
 };
 
 }

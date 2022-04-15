@@ -175,9 +175,10 @@ private:
     //! Get Right Hand Side on multi-grid of 'level' of iSolver-th solver.
     FieldProxy **GetRHSProxy(int level);
 
-    Zone *GetZone(int izone);
+    //!
+    Zone * GetZone(int izone);
 
-    CFDSolver *GetCFDSolver(int izone, int iSolver);
+    CFDSolver * GetCFDSolver(int izone, int iSolver);
 
     //! For New LUSGS with one sweep, Sub-routines of LUSGS method, which is divided into 4 steps.
     void LUSGS(int iSolver, int level);
@@ -269,7 +270,7 @@ public:
     MultiGridFieldProxy(int iSolver, int level, int nZone);
     ~MultiGridFieldProxy();
 public:
-    FieldProxy **GetFieldProxy() {return field_proxy;};
+    FieldProxy ** GetFieldProxy() { return field_proxy; }
 };
 
 class ZoneFieldProxy
@@ -277,12 +278,12 @@ class ZoneFieldProxy
 private:
     int iSolver, nzone;
     uint_t nlevel;
-    MultiGridFieldProxy ** field_proxy;
+    MultiGridFieldProxy **field_proxy;
 public:
     ZoneFieldProxy(int iSolver, uint_t nLevel, int nZone);
     ~ZoneFieldProxy();
 public:
-    FieldProxy **GetFieldProxy(int level);
+    FieldProxy ** GetFieldProxy(int level);
 };
 
 #include "Controller.hxx"
