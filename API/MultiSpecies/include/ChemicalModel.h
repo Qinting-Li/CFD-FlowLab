@@ -1,7 +1,7 @@
 //==============================================
 //! @file      ChemicalModel.h
 //! @brief     define chemical reactions.
-//! @author    Li Peng.
+//! @author    Meng Liyuan, Li Peng.
 //==============================================
 #pragma once
 #include <string>
