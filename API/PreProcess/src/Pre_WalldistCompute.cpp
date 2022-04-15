@@ -249,21 +249,25 @@ void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
     int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
 
     CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
-    for (int iFace = 0; iFace < nBoundFace; ++iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
-
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
         if (IsWall(bcType))
         {
-            int nNode = faceNodeNumber[iFace];
-            for (int iNode = 0; iNode < nNode; ++iNode)
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                int nodeID = faceNodeIndex[iFace][iNode];
-                wallDistNode[nodeID] = 0.0;
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int nNode = faceNodeNumber[iFace];
+                for (int iNode = 0; iNode < nNode; ++iNode)
+                {
+                    int nodeID = faceNodeIndex[iFace][iNode];
+                    wallDistNode[nodeID] = 0.0;
+                }
             }
         }
     }
@@ -2258,6 +2262,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
 
     //! Compute the number of the wall faces.
     bool *isWallFace = new bool [nBoundFace]();
+    SetField(isWallFace, false, nBoundFace);
+
     grid->FindOutWallFaces(isWallFace, nSolidFace);
 
     cdata->write(&nSolidFace, sizeof(int));

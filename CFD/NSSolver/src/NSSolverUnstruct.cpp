@@ -2430,26 +2430,31 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
         }
     }
    
-
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
-
-        if(bcType == PHENGLEI::FARFIELD)
+        if (bcType == PHENGLEI::FARFIELD)
         {
-            //! Far field has the second highest priority.
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
-            {            
-                int point = face2nodeArray[iFace][jNode];
-                if(nodeBC[point] == PHENGLEI::SOLID_SURFACE)
-                {
-                    continue;
-                }
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
 
-                nodeBC[point] = bcType;
-            } 
-        }       
+                //! Far field has the second highest priority.
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+                {            
+                    int point = face2nodeArray[iFace][jNode];
+                    if(nodeBC[point] == PHENGLEI::SOLID_SURFACE)
+                    {
+                        continue;
+                    }
+
+                    nodeBC[point] = bcType;
+                } 
+            }
+        }
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
