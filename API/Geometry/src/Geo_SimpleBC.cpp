@@ -1898,6 +1898,7 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                     }
 
                 } 
+                gridofThisProcessor = gridofThisProcessor->GetCoarseGrid();
             }
         }
     }

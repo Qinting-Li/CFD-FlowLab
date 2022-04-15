@@ -283,9 +283,14 @@ int* UnstructGrid::GetWallCellLabel()
             wallCellLabel[iCell] = 0;
         }
 
+        CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+        int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            int bcType = bcr[iFace]->GetKey();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+            int bcType = bcRegion->GetBCType();
+            
             int le = leftCellOfFace[ iFace ];
             if (IsWall(bcType))
             {
@@ -443,10 +448,15 @@ void UnstructGrid::ComputeCell2Cell()
     int le,re;
 
     // If boundary is an INTERFACE, need to count ghost cell
+    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype  = bcr[iFace]->GetKey();
-        if (IsInterface(bctype))
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
+        if (IsInterface(bcType))
         {
             le      = leftCellOfFace[ iFace ];
             re      = iFace + nTotalCell;
@@ -2985,9 +2995,13 @@ LIB_EXPORT void UnstructGrid::ComputeNodeBCType()
     bcTypeMap.insert(pair<int,int>(PRESSURE_OUTLET , 1));
     bcTypeMap.insert(pair<int,int>(OUTFLOW_CONFINED, 1));
 
+    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int bcType = bcRegion->GetBCType();
         int bcTypeIndex = bcTypeMap[bcType];
 
         for (int iNode = face2NodeSubscript[iFace]; iNode < face2NodeSubscript[iFace + 1]; ++ iNode)

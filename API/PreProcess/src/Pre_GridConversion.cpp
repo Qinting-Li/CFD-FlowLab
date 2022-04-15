@@ -55,11 +55,14 @@ void Pre_GridConversion::WriteFaceBoundaryName(const string &out_grid_file, Grid
         UnstructGrid *grid = UnstructGridCast(grids[0]);
         int nBoundFace = grid->GetNBoundFace();
 
-        CompositeUnstructBC **bcr = grid->GetBCRecord();
-        for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegion = unstructBCRegion->GetnBCRegion();
+
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
         {
-            int bcType = bcr[iFace]->GetKey();
-            const string &bcName = bcr[iFace]->GetBCName();
+            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+            string bcName = bcRegion->GetBCName();
+            int bcType = bcRegion->GetBCType();
             pair<int, string> bcNamePair(bcType, bcName);
             bcNamePairSet.insert(bcNamePair);
         }
@@ -852,14 +855,14 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         vector < int > linkmap;
 
         set< pair<int, string> > bcnameMap;
-
-        CompositeUnstructBC **bcr = grid->GetBCRecord();
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegion = unstructBCRegion->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
         {
-            int bctype = bcr[iface]->GetKey();
-            string bcname = bcr[iface]->GetBCName();
-
-            bcnameMap.insert(pair<int, string>(bctype, bcname));
+            UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+            string bcName = bcRegion->GetBCName();
+            int bcType = bcRegion->GetBCType();
+            bcnameMap.insert(pair<int, string>(bcType, bcName));
         }
 
         set< pair<int, string> >::iterator iter;

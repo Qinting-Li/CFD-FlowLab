@@ -247,10 +247,16 @@ void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
 
     int **faceNodeIndex = grid->GetFace2NodeArray();
     int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
+
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     CompositeUnstructBC **bcr = grid->GetBCRecord();
     for (int iFace = 0; iFace < nBoundFace; ++iFace)
     {
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int bcType = bcRegion->GetBCType();
         if (IsWall(bcType))
         {
             int nNode = faceNodeNumber[iFace];

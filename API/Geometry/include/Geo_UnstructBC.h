@@ -36,6 +36,7 @@ public:
     vector <int> * GetFaceIndex() const { return this->faceIndex; }
     void SetFaceIndex(vector<int> *faceIndex) { this->faceIndex = faceIndex; }
 
+
 public:
     //! copy constructor function of this class.
     UnstructBC(UnstructBC &bcRegionUnstruct)
@@ -55,7 +56,7 @@ public:
     {
         this->zoneID = zoneID;
         this->bcRegionID = bcRegionID;
-        faceIndex = new vector<int>;
+        this->faceIndex = new vector<int>;
     }
 
     ~UnstructBC()
@@ -80,7 +81,7 @@ private:
     vector<UnstructBC *> * bcRegions;
 
     //! The bcRegions id of boundary condition faces.
-    int *bcRegionIDofBCFace; 
+    int *bcRegionIDofBCFace;
 
 public:
     void SetKey(int key) { this->key = key; }
@@ -101,6 +102,7 @@ public:
 
     //! Get the bcregion id by interfaceIndexContainerForReceive value.
     int * GetBCFaceInfo() const {  return this->bcRegionIDofBCFace; }
+
 public:
     CompositeUnstructBC(const CompositeUnstructBC &rhs)
     {
