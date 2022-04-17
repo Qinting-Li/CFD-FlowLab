@@ -16,7 +16,7 @@
 #endif
 
 #ifdef USE_MULTISPECIES_CODE
-#include "RealGas.h"
+#include "MixedGas.h"
 #endif
 
 using namespace std;

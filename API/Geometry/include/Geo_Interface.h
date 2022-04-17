@@ -29,7 +29,8 @@ inline int GetNumberOfGhostCellLayers()
     //! different with the previous, using 2 layers temporary.
     //! the bellowing judge should be used in future.
     return 2;
-    //! Modify by xmu:add one layer ghost cell.
+
+    //! Add one layer ghost cell for high order method.
     int ifModifyWennScheme = PHSPACE::GlobalDataBase::GetIntParaFromDB("ifModifyWennScheme");
     if (ifModifyWennScheme == 1)
     {

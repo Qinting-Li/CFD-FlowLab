@@ -1,4 +1,4 @@
-#include "RealGas.h"
+#include "MixedGas.h"
 #include "Constants.h"
 #include "PHMatrix.h"
 #include "SubsonicBC.h"

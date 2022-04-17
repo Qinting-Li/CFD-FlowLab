@@ -144,11 +144,11 @@ const int ILMT_MINMODTEST        = 16;
 const int ILMT_MIN_VAN           = 17;
 const int ILMT_3rd_SMOOTH        = 18;
 const int ILMT_3rd_Minmod_SMOOTH = 19;
-const int ILMT_WENO3_JS = 20;        //! Modify by xmu:new limiter.
-const int ILMT_WENN3_PRM211 = 21;        //! Modify by xmu:new limiter.
-const int ILMT_WENN3_ZM = 22;        //! Modify by xmu:new limiter.
-const int ILMT_WENN3_ZES2 = 23;        //! Modify by xmu:new limiter.
-const int ILMT_WENN3_ZES3 = 24;        //! Modify by xmu:new limiter.
+const int ILMT_WENO3_JS          = 20;
+const int ILMT_WENN3_PRM211      = 21;
+const int ILMT_WENN3_ZM          = 22;
+const int ILMT_WENN3_ZES2        = 23;
+const int ILMT_WENN3_ZES3        = 24;
 
 const int INVISCID               = 0;
 const int LAMINAR                = 1;

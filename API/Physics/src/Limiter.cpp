@@ -1354,7 +1354,6 @@ int GetLimiterID(const string &limiter_name)
     {
         limiter_id = ILMT_3rd_Minmod_SMOOTH;
     }
-    //! Modified by xmu: new limiters.
     else if (limiter_name.substr(0, 8) == "weno3_js")
     {
         limiter_id = ILMT_WENO3_JS;

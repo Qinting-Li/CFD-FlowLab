@@ -370,7 +370,7 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
 //                     -- "vanalbada", "vanleer", "minmod", "smooth", "minvan", "3rdsmooth", "3rd_minmod_smooth".
 //                     -- "nolim", no limiter.
 //                     -- "vanalbada_clz", clz supersonic version.
-                       -- "weno3_js", "wenn3_prm211", "wenn3_ZM", "wenn3_ZS2", "wenn3_ZS3"
+                       -- "weno3_js", "wenn3_prm211", "wenn3_zm", "wenn3_zes2", "wenn3_zes3"
 
 string inviscidSchemeName = "roe";
 int    ifModifyWennScheme = 0；
@@ -986,7 +986,7 @@ int    monitorNegativeConstant = 0;
 //            "DK" -- indicates the Dunn-Kang Model, three-Type Models are embeded in the library, namely, the 5-species-11-reactions, the 7-species-15-reactions, the 11-species-26-reactions.
 //            "Mars-Pa8" is for Park model of Mars gas, "Mars-Mc8" for McKenzie model of Mars gas.
 //            "Combustion-12" -- indicates the Combustion Chamber Gas Model which includes 12-species-20-reactions.
-//            "Gas-Mixture" -- indicates the process of mixing two species without reacting（O2 NO CO CO2 H2 N2 Air CH4）.
+//            "Gas-Mixture" -- indicates the process of mixing multi-species gas without reacting（O2 NO CO CO2 H2 N2 Air CH4）.
 //            For self-definition model, the gasfile is used to indicate the file path of the new gas model.
 // speciesName: Used to list the names of each species, while each species name is separated by the symbol of comma.
 // initMassFraction: Used to list the initial mass fractions of species in accordance with the sequence of names in the parameter speciesName.

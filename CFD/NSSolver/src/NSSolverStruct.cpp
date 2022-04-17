@@ -113,6 +113,11 @@ namespace PHSPACE
         int nDim = GetDim();
         const int nUVWTIndex = nTemperatureModel + 3;
 
+        if (ifModifyWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
+
         Range M(0, nEquation - 1);
         Range N(0, nUVWTIndex - 1);
         Range T(0, nTemperatureModel - 1);
@@ -131,10 +136,8 @@ namespace PHSPACE
         int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
         grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
 
-        //! Modify by xmu :for the additional ghost cell
         if (ifModifyWennScheme == 1)
         {
-            GetRange(ni, nj, nk, -3, 2, I, J, K);
             grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, THREE_GHOST_LAYER);
         }
 
@@ -7507,7 +7510,6 @@ namespace PHSPACE
         bcData->UpdateData("massFluxRatio", &massFluxRatio, PHDOUBLE, 1);
     }
 
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::OutFlowBC3D(Grid *gridIn, StructBC *structBC)
     {
         using namespace IDX;
@@ -7555,6 +7557,7 @@ namespace PHSPACE
                         q(it1, jt1, kt1, m) = q(is1, js1, ks1, m);
                         q(it2, jt2, kt2, m) = q(it1, jt1, kt1, m);
                     }
+
                     if (ifModifyWennScheme == 1)
                     {
                         int is3, js3, ks3;
@@ -7578,7 +7581,6 @@ namespace PHSPACE
         }
     }
 
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::SymmetryBC3D(Grid *gridIn, StructBC *structBC)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -7990,7 +7992,6 @@ namespace PHSPACE
     }
 
     //! Set viscous adiabatic wall condition.
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::ViscousAdiabaticWall(Grid *gridIn, StructBC *structBC)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -8093,7 +8094,7 @@ namespace PHSPACE
                         int it3, jt3, kt3;
 
                         //! Third cell index inside flowfield.
-                        structBC->GetInsideCellIndex(i, j, k, is2, js2, ks2, 3);
+                        structBC->GetInsideCellIndex(i, j, k, is3, js3, ks3, 3);
 
                         RestrictIndex(is3, js3, ks3, ni - 1, nj - 1, nk - 1);
 
@@ -8117,7 +8118,6 @@ namespace PHSPACE
     }
 
     //! Set viscous isothermal wall condition.
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::ViscousIsotropicWall(Grid *gridIn, StructBC *structBC, int iWallBC)
     {
         //! chemical = 1 is not need to be cared, it is treated in another function.
@@ -8394,7 +8394,6 @@ namespace PHSPACE
         delete []temperatureVector; temperatureVector = NULL;
     }
 
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::InFlowBC3D(Grid *gridIn, StructBC *structBC)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -8455,7 +8454,6 @@ namespace PHSPACE
 
     //! He Xin. Numerical simulation and qualitative analysis investigation of the supersonic flows over sharp cones at high angle of attack[D].
     //! China Aerodynamics Research and Development Center graduate department, December 2002.
-    //! Modify by xmu :for the additional ghost cell
     void NSSolverStruct::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -8653,6 +8651,7 @@ namespace PHSPACE
                 }
             }
         }
+
         if (ifModifyWennScheme == 1)
         {
             int is3, js3, ks3;
@@ -8803,7 +8802,6 @@ namespace PHSPACE
         delete[] primitiveVarFarfield;
     }
 
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::PreconFarfieldBC(Grid *gridIn, StructBC *structBC)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -8974,6 +8972,7 @@ namespace PHSPACE
                 }
             }
         }
+
         if (ifModifyWennScheme == 1)
         {
             int is3, js3, ks3;
@@ -8997,6 +8996,12 @@ namespace PHSPACE
                         //! Third cell index of ghostcell.
                         structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
 
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            prims3[m] = q(is3, js3, ks3, m);
+                            primt3[m] = prims3[m];
+                        }
+
                         //! The needed (nx, ny, nz) is stored in the cell of (in, jn, kn).
                         structBC->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
 
@@ -9018,12 +9023,6 @@ namespace PHSPACE
                         //! Infinite.
                         vnoo = nxs * uoo + nys * voo + nzs * woo;
                         coo = sqrt(ABS(refGama * poo / roo));
-
-                        for (int m = 0; m < nEquation; ++m)
-                        {
-                            prims3[m] = q(is3, js3, ks3, m);
-                            primt3[m] = prims3[m];
-                        }
 
                         if (rmach < 1.0)
                         {
@@ -9097,7 +9096,6 @@ namespace PHSPACE
         delete[] primitiveVarFarfield;
     }
 
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::PressureInletBCRiemann(Grid *gridIn, StructBC *structBC)
     {
         using namespace IDX;
@@ -9296,6 +9294,7 @@ namespace PHSPACE
                     {
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
+
                     if (ifModifyWennScheme == 1)
                     {
                         int it3, jt3, kt3;
@@ -9312,7 +9311,6 @@ namespace PHSPACE
         delete[] primitiveVarFarfield;
     }
 
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::MassFlowInletBC(Grid *gridIn, StructBC *structBC)
     {
         calculateBCArea(gridIn, structBC);
@@ -9405,6 +9403,7 @@ namespace PHSPACE
                     {
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
+
                     if (ifModifyWennScheme == 1)
                     {
                         int it3, jt3, kt3;
@@ -9419,7 +9418,6 @@ namespace PHSPACE
         }
     }
 
-    //! Modify by xmu :for the additional ghost cell.
     void NSSolverStruct::MassFlowOutletBC(Grid *gridIn, StructBC *structBC)
     {
         // calculate BC area and mass flux ratio of this BC region.
@@ -9474,6 +9472,7 @@ namespace PHSPACE
         {
             nLayer = 3;
         }
+
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -9538,7 +9537,6 @@ namespace PHSPACE
         }
     }
 
-    //! Modify by xmu :for the additional ghost cell
     void NSSolverStruct::NozzleInletFlow(Grid *gridIn, StructBC *structBC)
     {
         using namespace IDX;
@@ -9618,6 +9616,7 @@ namespace PHSPACE
                     {
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
+
                     if (ifModifyWennScheme == 1)
                     {
                         int it3, jt3, kt3;
@@ -9636,7 +9635,7 @@ namespace PHSPACE
     {
 
     }
-    //! Modify by xmu :for the additional ghost cell.
+
     void NSSolverStruct::PressureOutletBC(Grid *gridIn, StructBC *structBC)
     {
         using namespace IDX;
@@ -9764,7 +9763,6 @@ namespace PHSPACE
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-        //! modify by xmu :for the additional ghost cell
         if (ifModifyWennScheme == 1)
         {
             GetRange(ni, nj, nk, -3, 2, I, J, K);
@@ -15512,7 +15510,6 @@ namespace PHSPACE
             ql(I, J, K, M) = q(I, J, K, M) + half * Third_Order_SMOOTH(dqr(I, J, K, M), dql(I, J, K, M));
             qr(I, J, K, M) = q(I, J, K, M) - half * Third_Order_SMOOTH(dql(I, J, K, M), dqr(I, J, K, M));
         }
-        //!Modify by xmu : new limiter WENO3-JS
         else if (structureLimiter == ILMT_WENO3_JS)
         {
             //! Define WENO3-JS constants.
@@ -15552,7 +15549,6 @@ namespace PHSPACE
             //! Compute qr and normalize
             qr(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
         }
-        //! Modify by xmu : new limiter WENN3-PRM211
         else if (structureLimiter == ILMT_WENN3_PRM211)
         {
             //! Define WENN3_PRM211 constants.
@@ -15668,7 +15664,6 @@ namespace PHSPACE
             //! 
             qr(I, J, K, M) = (w0(I, J, K, M) * q02(I, J, K, M) + w1(I, J, K, M) * q12(I, J, K, M)) / (w0(I, J, K, M) + w1(I, J, K, M));
         }
-        //! Modify by xmu:new limiter WENN3_ZM
         else if (structureLimiter == ILMT_WENN3_ZM)
         {
             //! Define WENN3_ZM constants.
@@ -15777,7 +15772,6 @@ namespace PHSPACE
             //! Compute qr.
             qr(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
         }
-        //! Modify by xmu:new limiter WENN3_ZES2
         else if (structureLimiter == ILMT_WENN3_ZES2)
         {
             //! Define WENN3_ZES2 constants.
@@ -15892,7 +15886,6 @@ namespace PHSPACE
             //! Compute ql.
             qr(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
         }
-        //! Modify by xmu:new limiter WENN3_ZES3
         else if (structureLimiter == ILMT_WENN3_ZES3)
         {
             //! Define WENN3_ZES3 constants.
