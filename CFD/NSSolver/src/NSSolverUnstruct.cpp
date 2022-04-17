@@ -6976,7 +6976,7 @@ void NSSolverUnstruct::AirForceCoef(ActionKey *actkey)
     AirForceCoefParts(actkey, ALL_PART);
 
     int Coordinate = LocalCoordinate;
-    uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+    uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
     for (int iPart = 0; iPart < nTBC; ++ iPart)
     {
         if(!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
@@ -7342,7 +7342,7 @@ void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int
     // get the BCRegion information of unstruct grid.
     UnstructBC** bcRegionUnstruct = grid->GetBCRegionUnstruct();
     int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
-    int nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+    int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
 
     int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
 
@@ -10046,7 +10046,7 @@ void NSSolverUnstruct::ViscousAdiabaticWallBCRegion(Grid *gridIn, UnstructBC *bc
         }
     }    
 
-    int isUnsteady     = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
     int iFace, le, re;

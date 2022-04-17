@@ -2614,7 +2614,7 @@ namespace PHSPACE
             AirForceCoefParts(actkey, ALL_PART);
 
             int coordinate = LocalCoordinate;
-            uint_t nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+            uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
             for (int iPart = 0; iPart < nTotalBC; ++ iPart)
             {
                 if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
@@ -2983,7 +2983,7 @@ namespace PHSPACE
 
         CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
-        int nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+        int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
