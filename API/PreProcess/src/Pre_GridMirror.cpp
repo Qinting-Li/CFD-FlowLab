@@ -422,7 +422,9 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
         int *right_cell_of_face = grid->GetRightCellOfFace();
         int *cell2node          = grid->GetCell2Node();
        
-        CompositeUnstructBC **bcr_ordinary = grid->GetBCRecord();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
         InterfaceInfo *iinfo_ordinary = grid->GetInterfaceInfo();
 
         int *interFace2BoundaryFace = iinfo_ordinary->GetInterFace2BoundaryFace(); 
@@ -442,10 +444,12 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
 
             if (iface < nBoundFace)
             {
-                int bctype = bcr_ordinary[iface]->GetKey();
-                oss << "The Boundary condition is :	" << bctype << "\n";
+                UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
 
-                if (bctype == -1)
+                int bcType = bcRegion->GetBCType();
+                oss << "The Boundary condition is :	" << bcType << "\n";
+
+                if (bcType == -1)
                 {
                     oss << "	interFace2BoundaryFace:	" << interFace2BoundaryFace[count] << "\n";
                     oss << "	interFace2ZoneID:	" << interFace2ZoneID[count] << "\n";
@@ -1246,23 +1250,28 @@ void Pre_GridMirror::MirrorBCRegion()
         {
             UnstructGrid *grid_ordinary = UnstructGridCast(OrdinaryGrid[izone]);
 
-            CompositeUnstructBC **bcr_ordinary = grid_ordinary->GetBCRecord();
+            CompositeUnstructBC *unstructBCRegion = grid_ordinary->GetUnstructBCRegion();
+            int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+            int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
             int nBoundFace = grid_ordinary->GetNBoundFace();
             PHWrite(gridinfo, &nBoundFace, 1);
             
             int count = 0;
-            for (int iface = 0; iface < nBoundFace; ++ iface)
+            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
             {
-                if (bcr_ordinary[iface]->GetKey() == PHENGLEI::INTERFACE)
+                UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+                int bcType = bcRegion->GetBCType();
+                if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::SYMMETRY)
                 {
-                    count ++;
-                }
-
-                if (bcr_ordinary[iface]->GetKey() == PHENGLEI::SYMMETRY)
-                {
-                    count ++;
+                    vector<int>* faceIndex = bcRegion->GetFaceIndex();
+                    for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                    {
+                        count ++;
+                    }
                 }
             }
+           
             PHWrite(gridinfo, &count, 1);
 
             InterfaceInfo *iinfo_ordinary = grid_ordinary->GetInterfaceInfo();
@@ -1304,9 +1313,12 @@ void Pre_GridMirror::MirrorBCRegion()
 
             count = 0;
             int iInterfae = 0;
+
+
             for (int iface = 0; iface < nBoundFace; ++ iface)
             {
-                int bctype = bcr_ordinary[iface]->GetKey();
+                UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+                int bctype = bcRegion->GetBCType();
 
                 if (bctype == PHENGLEI::INTERFACE)
                 {

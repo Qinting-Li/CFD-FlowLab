@@ -225,13 +225,16 @@ LIB_EXPORT void Region::WriteFaceBoundaryName(Grid **grids, int nZones, const st
         if (grid->Type() == UNSTRUCTGRID)
         {
             UnstructGrid *unstrGrid = UnstructGridCast(grid);
-            int nBoundFace = unstrGrid->GetNBoundFace();
 
-            CompositeUnstructBC **bcr = unstrGrid->GetBCRecord();
-            for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
+            CompositeUnstructBC *unstructBCRegion = unstrGrid->GetUnstructBCRegion();
+            int nBCRegion = unstructBCRegion->GetnBCRegion();
+
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
             {
-                int bcType = bcr[iFace]->GetKey();
-                const string &bcName = bcr[iFace]->GetBCName();
+                UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+                string bcName = bcRegion->GetBCName();
+                int bcType = bcRegion->GetBCType();
+
                 pair<int, string> bcNamePair(bcType, bcName);
                 bcNamePairSet.insert(bcNamePair);
             }
@@ -3230,16 +3233,20 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
             }
             UnstructGrid *unstructGrid = UnstructGridCast(grid);
 
-            CompositeUnstructBC **bcr = unstructGrid->GetBCRecord();
-            for (int iface = 0; iface < unstructGrid->GetNBoundFace(); ++ iface)
+            CompositeUnstructBC *unstructBCRegion = unstructGrid->GetUnstructBCRegion();
+            int nBCRegion = unstructBCRegion->GetnBCRegion();
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
             {
-                int originalBC = bcr[iface]->GetKey();
+                UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+             
+                int originalBC = bcRegion->GetBCType();
                 int newBC = bcMap.TranslateBC(originalBC);
                 if (newBC != originalBC)
                 {
                     changedBC.insert(originalBC);
                 }
-                bcr[iface]->SetKey(newBC);
+                bcRegion->SetBCType(newBC);
+
             }
         }
     }

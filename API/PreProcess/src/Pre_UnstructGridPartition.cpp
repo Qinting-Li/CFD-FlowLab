@@ -870,7 +870,9 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int izone, UnstructG
     int *left_cell_of_face  = gridSource->GetLeftCellOfFace();
     int *right_cell_of_face = gridSource->GetRightCellOfFace();
     int le, re;
-    CompositeUnstructBC **bcr = gridSource->GetBCRecord();
+
+    CompositeUnstructBC *unstructBCRegion = gridSource->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     //! Re-compute bc_face_mark for each sub-partition.
     //! The original face_mark have been overwritten.
@@ -905,11 +907,13 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int izone, UnstructG
     
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+
         if (bc_face_mark[iface] == -1)
         {
             bc_face_mark[iface] = i_nTFace ++;
 
-            int bcType = bcr[iface]->GetKey();
+            int bcType = bcRegion->GetBCType();
             if (bcType == PHENGLEI::INTERFACE)
             {
                 local_interFace2ZoneID[i_nIFace]       = partIndexInNewPartion_recv[iface];

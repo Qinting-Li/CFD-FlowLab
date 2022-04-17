@@ -1069,13 +1069,16 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
 
         set< pair<int, string> > bcnameMap;
 
-        CompositeUnstructBC **bcr = grid->GetBCRecord();
-        for (int iface = 0; iface < nBoundFace; ++ iface)
-        {
-            int bctype = bcr[iface]->GetKey();
-            string bcname = bcr[iface]->GetBCName();
+        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        int nBCRegion = unstructBCRegion->GetnBCRegion();
 
-            bcnameMap.insert(pair<int, string>(bctype, bcname));
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+        {
+            UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+            string bcName = bcRegion->GetBCName();
+            int bcType = bcRegion->GetBCType();
+
+            bcnameMap.insert(pair<int, string>(bcType, bcName));
         }
 
         int TecioMission;

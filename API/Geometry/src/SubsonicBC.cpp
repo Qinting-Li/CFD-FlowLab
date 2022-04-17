@@ -70,12 +70,14 @@ void SubnicBCInfo::CheckSpecificBCExist(int specificBCID)
             else if(sys_gridtype == PHSPACE::UNSTRUCTGRID)
             {
                 UnstructGrid *grid = UnstructGridCast(gridIn);
-                CompositeUnstructBC ** bcr = grid->GetBCRecord();
-                for (int iFace = 0; iFace < grid->GetNBoundFace(); ++ iFace)
+                CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+                int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+               
+                for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
                 {
-                    int type = bcr[ iFace ]->GetKey();
-
-                    if (type == specificBCID)
+                    UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+                    int bcType = bcRegion->GetBCType();
+                    if (bcType == specificBCID)
                     {
                         hasBCp = 1;
                         break;

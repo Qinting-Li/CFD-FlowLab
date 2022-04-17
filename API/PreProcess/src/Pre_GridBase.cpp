@@ -1907,11 +1907,40 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
     HyList<int> cgnsBCList;
     HyList<int> fantasyBCList;
 
+    map<int, string> Fantasybctype = CreatFantasybctype();
+
     vector<CGNS_BCFace *> *bcFace = gconn->GetBCFace();
 
     int nBCRegionUnstruct = cgnsGrid->GetNumberOfBCRegions();
-    int *bcType = cgnsGrid->GetBCType();
     string *bcRegionName = cgnsGrid->GetBCName();
+
+    for (cgsize_t iFace = 0; iFace < nBoundFace; ++iFace)
+    {
+        const string &bcName = (*bcFace)[iFace]->GetBCName();
+        int cgnsBCType = (*bcFace)[iFace]->GetBCType();
+        int fantasyBCType = factory_cgns->GetBaseBCType()->GetBCType(cgnsBCType);
+        
+        //!Collect faces which is NO_BOUNDARY_CONDITION into a BCRegion
+        if (fantasyBCType == 0) 
+        {
+            nBCRegionUnstruct ++;
+            string *boundaryName = new string [nBCRegionUnstruct]();
+            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; ++ iBCRegionUnstruct)
+            {
+                if (iBCRegionUnstruct < nBCRegionUnstruct - 1)
+                {
+                    boundaryName[iBCRegionUnstruct] = bcRegionName[iBCRegionUnstruct];
+                }
+                else
+                {
+                    boundaryName[iBCRegionUnstruct] = bcName;
+                }
+            }
+            cgnsGrid->SetBCName(boundaryName);
+            break;
+        }
+    }
+    string *boundaryName = cgnsGrid->GetBCName();
 
     grid->CreateUnstructBCRegion(nBCRegionUnstruct);
     int gridIndex = grid->GetZoneID();
@@ -1921,13 +1950,19 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
     {
         UnstructBC *unstructBC = new UnstructBC(gridIndex, iBCRegionUnstruct);
         unstructBCRegion->SetBCRegion(iBCRegionUnstruct, unstructBC);
-        unstructBC->SetBCName(bcRegionName[iBCRegionUnstruct]);
-
+        unstructBC->SetBCName(boundaryName[iBCRegionUnstruct]);
+        
         for (cgsize_t iface = 0; iface < nBoundFace; ++iface)
         {
             const string &bcName = (*bcFace)[iface]->GetBCName();
             int cgnsBCType = (*bcFace)[iface]->GetBCType();
             int fantasyBCType = factory_cgns->GetBaseBCType()->GetBCType(cgnsBCType);
+  
+            cgnsBCList.insert(cgnsBCType);
+            fantasyBCList.insert(fantasyBCType);
+
+            cgnsBCList.insert(cgnsBCType);
+            fantasyBCList.insert(fantasyBCType);
             if (bcName == unstructBC->GetBCName())
             {
                 unstructBC->SetBCType(fantasyBCType);
@@ -1935,8 +1970,6 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
                 vector<int> *faceIndex = unstructBC->GetFaceIndex();
                 faceIndex->push_back(iface);
             }
-            cgnsBCList.insert(cgnsBCType);
-            fantasyBCList.insert(fantasyBCType);
         }
     }
     unstructBCRegion->SetBCFaceInfo(bcRegionIDofBCFace);
@@ -1947,7 +1980,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
         cout<< "  The "<< iBC + 1 << " CGNS BC Name is: " << BCTypeName[cgnsBCList[ iBC ]] << endl;
     }
 
-    map<int, string> Fantasybctype = CreatFantasybctype();
+    //map<int, string> Fantasybctype = CreatFantasybctype();
 
     cout << "Number of Final Boundary Condition: " << fantasyBCList.size() << "\n";
     for (int iBC = 0; iBC < fantasyBCList.size(); ++ iBC)

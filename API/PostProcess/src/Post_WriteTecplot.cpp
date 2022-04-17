@@ -1622,12 +1622,16 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
     }
 
     int ncount = 0;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        int bctype = bcr[iface]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        int bcType = bcRegion->GetBCType();
 
-        if (bctype != PHENGLEI::SOLID_SURFACE)
+        if (bcType != PHENGLEI::SOLID_SURFACE)
         {
             ncount += node_number_of_each_face[iface];
             continue;

@@ -101,22 +101,27 @@ void MBGridFactory::Register(UnstructGrid * grid)
         physicalType[iFace] = MB_SPACE::NEUTRAL_TYPE;
     }
 
-    CompositeUnstructBC ** bcRecord = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     int numberOfBcFaces = grid->GetNBoundFace();
     for (int iBcFace = 0; iBcFace < numberOfBcFaces; ++ iBcFace)
     {
-        int type = bcRecord[iBcFace]->GetKey();
-        if (IsInternalFace(type))
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iBcFace]);
+
+        int bcType = bcRegion->GetBCType();
+
+        if (IsInternalFace(bcType))
         {
             physicalType[iBcFace] = MB_SPACE::INTERNAL_TYPE;
         }
-        else if (IsExternalFace(type))
+        else if (IsExternalFace(bcType))
         {
             physicalType[iBcFace] = MB_SPACE::EXTERNAL_TYPE;
         }
         else
         {
-            physicalType[iBcFace] = type;
+            physicalType[iBcFace] = bcType;
         }
     }
 

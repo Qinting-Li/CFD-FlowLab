@@ -3563,14 +3563,17 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
     int *face2node = grid->GetFace2Node();
 
     int nBoundFace = grid->GetNBoundFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     bool *nodeOnWall = new bool[nTotalNode];
     std::fill_n(nodeOnWall, nTotalNode, false);
 
     int nodeCount = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
         if (!(IsWall(bcType)))
         {
             nodeCount = nodeCount + node_number_of_each_face[iFace];

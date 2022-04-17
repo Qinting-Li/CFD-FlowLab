@@ -4199,33 +4199,45 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
 
     using namespace PHENGLEI;
     vector<int> wallFaceTemp;
-    for (int iFace = 0; iFace < nBoundFace; iFace++)
-    {
-        if (bcr[iFace]->GetKey() == SOLID_SURFACE)
-        {
-            wallFaceTemp.push_back(iFace);
-        }
-    }
-    {
-        sortIdxValue* data = new sortIdxValue[wallFaceTemp.size()];
-        
-        for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
-        {
-            int faceNum = wallFaceTemp[iFace];
-            data[iFace].val = AspectRatio(normalDistanceC2C[faceNum], area[faceNum], node_number_of_each_face[faceNum]);
-            data[iFace].idx = faceNum;
-        }
 
-        heapSortInplace< sortIdxValue > FaceARValueIndexHeap(data, static_cast<int>(wallFaceTemp.size()));
-        FaceARValueIndexHeap.sort();
-    
-        for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
+    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (bcType == SOLID_SURFACE)
         {
-            wallFaceTemp[iFace] = data[iFace].idx;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                wallFaceTemp.push_back(iFace);
+            }
         }
-        
-        delete [] data;
     }
+       
+    sortIdxValue* data = new sortIdxValue[wallFaceTemp.size()];
+
+    for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
+    {
+        int faceNum = wallFaceTemp[iFace];
+        data[iFace].val = AspectRatio(normalDistanceC2C[faceNum], area[faceNum], node_number_of_each_face[faceNum]);
+        data[iFace].idx = faceNum;
+    }
+
+    heapSortInplace< sortIdxValue > FaceARValueIndexHeap(data, static_cast<int>(wallFaceTemp.size()));
+    FaceARValueIndexHeap.sort();
+
+    for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
+    {
+        wallFaceTemp[iFace] = data[iFace].idx;
+    }
+
+    delete[] data;
+   
 
     //find the line nearby the wall.
     for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
@@ -4619,17 +4631,17 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
     RDouble voo = primitiveVarFarfield[IV];
     RDouble woo = primitiveVarFarfield[IW];
 
-    sortIdxValue* data = new sortIdxValue[nLineTemp];
+    sortIdxValue* dataIdx = new sortIdxValue[nLineTemp];
 
     int count = 0;
     for (int iLine = 0; iLine < nLineTemp; ++iLine)
     {
-        data[iLine].val = -(xcc[CellOfLineTemp[count]] * uoo + ycc[CellOfLineTemp[count]] * voo + zcc[CellOfLineTemp[count]] * woo);
-        data[iLine].idx = iLine;
+        dataIdx[iLine].val = -(xcc[CellOfLineTemp[count]] * uoo + ycc[CellOfLineTemp[count]] * voo + zcc[CellOfLineTemp[count]] * woo);
+        dataIdx[iLine].idx = iLine;
         count += LineTemp[iLine];
     }
 
-    heapSortInplace< sortIdxValue > CellVelValueIndexHeap(data, nLineTemp);
+    heapSortInplace< sortIdxValue > CellVelValueIndexHeap(dataIdx, nLineTemp);
     CellVelValueIndexHeap.sort();
 
     int* oldElemStartIndex = new int[nLineTemp]();
@@ -4647,7 +4659,7 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
     count = 0;
     for (int iLine = 0; iLine < nLineTemp; ++iLine) 
     {
-        int oldIndex = data[iLine].idx;
+        int oldIndex = dataIdx[iLine].idx;
         LineTemp[iLine] = LineTempOld[oldIndex];
 
         for (int jFaceCell = 0; jFaceCell < LineTemp[iLine]; jFaceCell++) 
@@ -4669,39 +4681,47 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
     //find the seeds from farfield boundary.
     {
         vector<sortIdxValue> seedsBeforeSorted;
-        for (int iFace = 0; iFace < nBoundFace; iFace++) 
+        for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            int type = bcr[iFace]->GetKey();
-            if (type == SOLID_SURFACE) 
+            UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
+            if (bcType == SOLID_SURFACE)
             {
                 continue;
             }
-
-            int cell = leftCellOfFace[iFace];
-            RDouble rho = roo;
-            RDouble u = uoo;
-            RDouble v = voo;
-            RDouble w = woo;
-
-            if (q != NULL) 
+            
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                rho = q[IR][cell];
-                u = q[IU][cell];
-                v = q[IV][cell];
-                w = q[IW][cell];
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int cell = leftCellOfFace[iFace];
+                RDouble rho = roo;
+                RDouble u = uoo;
+                RDouble v = voo;
+                RDouble w = woo;
+
+                if (q != NULL) 
+                {
+                    rho = q[IR][cell];
+                    u = q[IU][cell];
+                    v = q[IV][cell];
+                    w = q[IW][cell];
+                }
+
+                RDouble Vn = rho * (xfn[iFace] * u + yfn[iFace] * v + zfn[iFace] * w);
+
+                if (Vn / RVelFarfield < -1.0e-14) 
+                {
+                    sortIdxValue SVn2ValIndex;
+                    SVn2ValIndex.val = area[iFace] * Vn * Vn;
+                    SVn2ValIndex.idx = cell;
+                    seedsBeforeSorted.push_back(SVn2ValIndex);
+                }
+                
             }
-
-            RDouble Vn = rho * (xfn[iFace] * u + yfn[iFace] * v + zfn[iFace] * w);
-
-            if (Vn / RVelFarfield < -1.0e-14) 
-            {
-                sortIdxValue SVn2ValIndex;
-                SVn2ValIndex.val = area[iFace] * Vn * Vn;
-                SVn2ValIndex.idx = cell;
-                seedsBeforeSorted.push_back(SVn2ValIndex);
-            }
-        } //end of bdface
-
+            
+        }
         heapSortInplace< sortIdxValue > seedsBeforeSortedValIndexHeap(&seedsBeforeSorted[0], static_cast<int>(seedsBeforeSorted.size()));
         seedsBeforeSortedValIndexHeap.sort();
 
@@ -5158,7 +5178,7 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
 
     delete [] oldLineMark;          oldLineMark = NULL;
     delete [] oldElemStartIndex;    oldElemStartIndex = NULL;
-    delete [] data;                 data = NULL;
+    delete [] dataIdx;                 dataIdx = NULL;
     delete [] markCell;             markCell = NULL;
     delete [] nodeOnWallMark;       nodeOnWallMark = NULL;
     delete [] LineOfCellOld;        LineOfCellOld = NULL;
@@ -5391,11 +5411,14 @@ void UnstructGrid::WriteGrid(VirtualFile *vfile)
     vfile->write(reinterpret_cast<char*>(&nBoundFace),sizeof(int));
 
     //! Write the boundary condition.
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+
     int *tmpbctype = new int [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        tmpbctype[iFace] = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        tmpbctype[iFace] = bcRegion->GetBCType();
     }
     vfile->write(reinterpret_cast<char*>(tmpbctype), nBoundFace*sizeof(int));
     delete [] tmpbctype;
@@ -7154,11 +7177,16 @@ LIB_EXPORT void UnstructGrid::WriteFaceBC(fstream & file)
     string * bcNameList = new string [nBoundFace];
 
     CompositeUnstructBC **bcr = this->GetBCRecord();
+    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
     uint_long totalSize = 0;
     for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
     {
-        int bcType = bcr[iFace]->GetKey();
-        const string &bcName = bcr[iFace]->GetBCName();
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
         bcTypeList[iFace] = bcType;
         bcNameList[iFace] = bcName;
 
@@ -8936,8 +8964,6 @@ void UnstructGrid::CompareMaxMinValue(RDouble &local_data, int flag)
 
 void UnstructGrid::ChangeBCType(int from_bctype, int to_bctype)
 {
-    int nBoundFace = this->GetNBoundFace();
-
     CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
@@ -9040,7 +9066,7 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
     int nodepos = 0;
     for (int ibface = 0; ibface < nBoundFace; ++ ibface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[ibface]);
         int bcType = bcRegion->GetBCType();
 
         if (!IsInterface(bcType))
