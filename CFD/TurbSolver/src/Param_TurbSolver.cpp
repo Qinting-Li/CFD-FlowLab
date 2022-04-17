@@ -281,7 +281,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
     }
 
     kindOfTurbSource = GlobalDataBase::GetIntParaFromDB("kindOfTurbSource");
-    ifModifyWennScheme = GlobalDataBase::GetIntParaFromDB("ifModifyWennScheme");
+    isWennScheme = GlobalDataBase::GetIntParaFromDB("isWennScheme");
 }
 
 }

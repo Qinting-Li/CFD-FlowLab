@@ -62,7 +62,7 @@ public:
     RDouble GetIniSpeedCoef() const;
 
     //! Get parameter judge whether modify Wenn Scheme.
-    int GetIfModifyWennScheme() const;
+    int GetWennSchemeFlag() const;
 
 private:
     RDouble MUSCLCoefXk;
@@ -84,7 +84,7 @@ private:
 
     RDouble iniSpeedCoef;
 
-    int ifModifyWennScheme;
+    int isWennScheme;
 };
 
 #include "Param_NSSolverStruct.hxx"

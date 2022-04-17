@@ -49,7 +49,7 @@ namespace PHSPACE
         }
 
         int transitionType = parameters->GetTransitionType();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -59,7 +59,7 @@ namespace PHSPACE
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             GetRange(ni, nj, nk, -3, 2, I, J, K);
         }

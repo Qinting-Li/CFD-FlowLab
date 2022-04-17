@@ -106,15 +106,17 @@ namespace PHSPACE
         int nLaminar = parameters->GetLaminarNumber();
         int nChemical = parameters->GetChemicalFlag();
         int nTemperatureModel = parameters->GetTemperatureModel();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
         int nSourceTerm = nEquation - nNSEquation;    //! The number of source term.
         int nDim = GetDim();
         const int nUVWTIndex = nTemperatureModel + 3;
+        int nLayer = 2;
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
+            nLayer = 3;
             GetRange(ni, nj, nk, -3, 2, I, J, K);
         }
 
@@ -134,12 +136,8 @@ namespace PHSPACE
         RDouble4D *diagonal0 = new RDouble4D(I, J, K, M, fortranArray);
 
         int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
-        grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
+        grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, nLayer);
 
-        if (ifModifyWennScheme == 1)
-        {
-            grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, THREE_GHOST_LAYER);
-        }
 
         for (int k = kCellStart; k <= kCellEnd; ++ k)
         {
@@ -7522,7 +7520,7 @@ namespace PHSPACE
         int it1, jt1, kt1, it2, jt2, kt2;
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -7558,7 +7556,7 @@ namespace PHSPACE
                         q(it2, jt2, kt2, m) = q(it1, jt1, kt1, m);
                     }
 
-                    if (ifModifyWennScheme == 1)
+                    if (isWennScheme == 1)
                     {
                         int is3, js3, ks3;
                         int it3, jt3, kt3;
@@ -7597,7 +7595,7 @@ namespace PHSPACE
         int nChemical = parameters->GetChemicalFlag();
         int nNSEquation = parameters->GetNSEquationNumber();
         int nTemperatureModel = parameters->GetTemperatureModel();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
         int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
         RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
@@ -7616,7 +7614,7 @@ namespace PHSPACE
 
         using namespace IDX;
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             nLayer = 3;
         }
@@ -8004,7 +8002,7 @@ namespace PHSPACE
         int nLaminar = parameters->GetLaminarNumber();
         int nChemical = parameters->GetChemicalFlag();
         int nTemperatureModel = parameters->GetTemperatureModel();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
         //! Obtain the number of the physical equations.
         int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
@@ -8088,7 +8086,7 @@ namespace PHSPACE
                         q(it2, jt2, kt2, m) = q(it1, jt1, kt1, m);
                     }
 
-                    if (ifModifyWennScheme == 1)
+                    if (isWennScheme == 1)
                     {
                         int is3, js3, ks3;
                         int it3, jt3, kt3;
@@ -8128,7 +8126,7 @@ namespace PHSPACE
         int nk = grid->GetNK();
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
@@ -8192,7 +8190,7 @@ namespace PHSPACE
 
         using namespace IDX;
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             nLayer = 3;
         }
@@ -8399,7 +8397,7 @@ namespace PHSPACE
         StructGrid *grid = StructGridCast(gridIn);
 
         Param_NSSolverStruct* parameters = GetControlParameters();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -8426,7 +8424,7 @@ namespace PHSPACE
 
         int nLayer = 2;
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             nLayer = 3;
         }
@@ -8465,7 +8463,7 @@ namespace PHSPACE
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -8652,7 +8650,7 @@ namespace PHSPACE
             }
         }
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             int is3, js3, ks3;
             int it3, jt3, kt3;
@@ -8813,7 +8811,7 @@ namespace PHSPACE
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -8973,7 +8971,7 @@ namespace PHSPACE
             }
         }
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             int is3, js3, ks3;
             int it3, jt3, kt3;
@@ -9101,7 +9099,7 @@ namespace PHSPACE
         using namespace IDX;
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -9295,7 +9293,7 @@ namespace PHSPACE
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
 
-                    if (ifModifyWennScheme == 1)
+                    if (isWennScheme == 1)
                     {
                         int it3, jt3, kt3;
                         structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
@@ -9346,7 +9344,7 @@ namespace PHSPACE
         RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
         RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
         RDouble refGama = parameters->GetRefGama();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         //! Nondimensionalization.
         massFlow /= BCTotalArea;
@@ -9404,7 +9402,7 @@ namespace PHSPACE
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
 
-                    if (ifModifyWennScheme == 1)
+                    if (isWennScheme == 1)
                     {
                         int it3, jt3, kt3;
                         structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
@@ -9430,7 +9428,7 @@ namespace PHSPACE
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
         RDouble refGama = parameters->GetRefGama();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         Data_Param *bcData = structBC->GetBCParamDataBase();
         RDouble massFluxRatio, massFlow, BCTotalArea;
@@ -9468,7 +9466,7 @@ namespace PHSPACE
         RDouble nxs, nys, nzs;
 
         int nLayer = 2;
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             nLayer = 3;
         }
@@ -9555,7 +9553,7 @@ namespace PHSPACE
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
         RDouble refVelocity = refMachNumber * refDimensionalSonicSpeed;
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         inletVelocity = inletVelocity / refVelocity;
         StructGrid *grid = StructGridCast(gridIn);
@@ -9617,7 +9615,7 @@ namespace PHSPACE
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
 
-                    if (ifModifyWennScheme == 1)
+                    if (isWennScheme == 1)
                     {
                         int it3, jt3, kt3;
                         structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
@@ -9654,7 +9652,7 @@ namespace PHSPACE
         RDouble dynamicPressure = refDimensionalDensity * velocity * velocity;
         RDouble staticPressureCorf = parameters->GetStaticPressureRelaxCorf();
         staticPressure /= dynamicPressure;
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -9678,7 +9676,7 @@ namespace PHSPACE
 
         int is, js, ks, it, jt, kt;
         int nLayer = 2;
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             nLayer = 3;
         }
@@ -9756,14 +9754,14 @@ namespace PHSPACE
         int nk = grid->GetNK();
 
         Param_NSSolverStruct* parameters = GetControlParameters();
-        int ifModifyWennScheme = parameters->GetIfModifyWennScheme();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-        if (ifModifyWennScheme == 1)
+        if (isWennScheme == 1)
         {
             GetRange(ni, nj, nk, -3, 2, I, J, K);
         }

@@ -31,8 +31,8 @@ inline int GetNumberOfGhostCellLayers()
     return 2;
 
     //! Add one layer ghost cell for high order method.
-    int ifModifyWennScheme = PHSPACE::GlobalDataBase::GetIntParaFromDB("ifModifyWennScheme");
-    if (ifModifyWennScheme == 1)
+    int isWennScheme = PHSPACE::GlobalDataBase::GetIntParaFromDB("isWennScheme");
+    if (isWennScheme == 1)
     {
         return 3;
     }

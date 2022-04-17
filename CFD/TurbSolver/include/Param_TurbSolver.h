@@ -100,7 +100,7 @@ public:
 
     int GetKindOfTurbSource() const;
 
-    int GetIfModifyWennScheme() const;
+    int GetWennSchemeFlag() const;
 
 private:
 
@@ -166,7 +166,7 @@ private:
     RDouble * freeStreamTurbVar;
 
     int kindOfTurbSource;
-    int ifModifyWennScheme;
+    int isWennScheme;
 };
 
 #include "Param_TurbSolver.hxx"

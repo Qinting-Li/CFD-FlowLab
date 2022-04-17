@@ -373,7 +373,6 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
                        -- "weno3_js", "wenn3_prm211", "wenn3_zm", "wenn3_zes2", "wenn3_zes3"
 
 string inviscidSchemeName = "roe";
-int    ifModifyWennScheme = 0；
 string str_limiter_name   = "vanalbada";
 
 #*******************************************************************
