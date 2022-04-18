@@ -9370,7 +9370,8 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     DataStruct_Sort<int> fysort;
 
     CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+
 
     face2nodelist.resize(0);
     linkmap.resize(0);
@@ -9378,93 +9379,43 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     int * leftCellIndexContainer = grid->GetLeftCellOfFace();
     int * keyActiveOfCells       = grid->GetBlankIndex();
     int nodepos = 0;
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
-
-        if (bcType != bcRegion->GetBCType())
+        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            nodepos += node_number_of_each_face[iFace];
-            continue;
-        }
-
-        if (bcRegion->GetBCName() != bcName)
-        {
-            nodepos += node_number_of_each_face[iFace];
-            continue;
-        }
-
-        if (keyActiveOfCells[leftCellIndexContainer[iFace]] != 1)
-        {
-            nodepos += node_number_of_each_face[iFace];
-            continue;
-        }
-
-        if (node_number_of_each_face[iFace] <= 4)
-        {
-            loc_face2node.resize(0);
-            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (bcType != bcRegion->GetBCType())
             {
-                int index = face2node[ nodepos + j ];
-
-                fysort.value = index;
-                ifind = iset.find(fysort);
-
-                if (ifind == iset.end())
-                {
-                    linkmap.push_back(index);
-                    fysort.index = static_cast<int>(linkmap.size() - 1);
-
-                    iset.insert(fysort);
-                    loc_face2node.push_back(fysort.index);
-                }
-                else
-                {
-                    loc_face2node.push_back(ifind->index);
-                }
-
+                nodepos += node_number_of_each_face[iFace];
+                continue;
             }
-            nodepos += node_number_of_each_face[iFace];
-            face2nodelist.push_back(loc_face2node);
-        }
-        else
-        {
-            int nodesWrite = 0;
-            while (nodesWrite < node_number_of_each_face[iFace])
+            if (bcRegion->GetBCName() != bcName)
+            {
+                nodepos += node_number_of_each_face[iFace];
+                continue;
+            }
+            if (keyActiveOfCells[leftCellIndexContainer[iFace]] != 1)
+            {
+                nodepos += node_number_of_each_face[iFace];
+                continue;
+            }
+
+            if (node_number_of_each_face[iFace] <= 4)
             {
                 loc_face2node.resize(0);
-
-                //! Write face center.
-                int index = iFace + nTotalNode;
-
-                fysort.value = index;
-                ifind = iset.find(fysort);
-
-                if (ifind == iset.end())
+                for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
                 {
-                    linkmap.push_back(index);
-                    fysort.index = static_cast<int>(linkmap.size() - 1);
+                    int index = face2node[ nodepos + j ];
 
-                    iset.insert(fysort);
-                    loc_face2node.push_back(fysort.index);
-                }
-                else
-                {
-                    loc_face2node.push_back(ifind->index);
-                }
-
-                //! Write node.
-                for (int inode = 0; inode < 2; ++ inode)
-                {
-                    int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
-                    int nodeIndex = face2node[nodepos + index];
-
-                    fysort.value = nodeIndex;
+                    fysort.value = index;
                     ifind = iset.find(fysort);
 
                     if (ifind == iset.end())
                     {
-                        linkmap.push_back(nodeIndex);
+                        linkmap.push_back(index);
                         fysort.index = static_cast<int>(linkmap.size() - 1);
 
                         iset.insert(fysort);
@@ -9474,13 +9425,68 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
                     {
                         loc_face2node.push_back(ifind->index);
                     }
-                }
 
-                ++ nodesWrite;
+                }
+                nodepos += node_number_of_each_face[iFace];
                 face2nodelist.push_back(loc_face2node);
             }
-            nodepos += node_number_of_each_face[iFace];
+            else
+            {
+                int nodesWrite = 0;
+                while (nodesWrite < node_number_of_each_face[iFace])
+                {
+                    loc_face2node.resize(0);
+
+                    //! Write face center.
+                    int index = iFace + nTotalNode;
+
+                    fysort.value = index;
+                    ifind = iset.find(fysort);
+
+                    if (ifind == iset.end())
+                    {
+                        linkmap.push_back(index);
+                        fysort.index = static_cast<int>(linkmap.size() - 1);
+
+                        iset.insert(fysort);
+                        loc_face2node.push_back(fysort.index);
+                    }
+                    else
+                    {
+                        loc_face2node.push_back(ifind->index);
+                    }
+
+                    //! Write node.
+                    for (int inode = 0; inode < 2; ++ inode)
+                    {
+                        int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
+                        int nodeIndex = face2node[nodepos + index];
+
+                        fysort.value = nodeIndex;
+                        ifind = iset.find(fysort);
+
+                        if (ifind == iset.end())
+                        {
+                            linkmap.push_back(nodeIndex);
+                            fysort.index = static_cast<int>(linkmap.size() - 1);
+
+                            iset.insert(fysort);
+                            loc_face2node.push_back(fysort.index);
+                        }
+                        else
+                        {
+                            loc_face2node.push_back(ifind->index);
+                        }
+                    }
+
+                    ++ nodesWrite;
+                    face2nodelist.push_back(loc_face2node);
+                }
+                nodepos += node_number_of_each_face[iFace];
+            }
+
         }
+        
     }
 }
 
