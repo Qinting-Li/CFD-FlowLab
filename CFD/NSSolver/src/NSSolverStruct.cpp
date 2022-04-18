@@ -112,11 +112,11 @@ namespace PHSPACE
         int nSourceTerm = nEquation - nNSEquation;    //! The number of source term.
         int nDim = GetDim();
         const int nUVWTIndex = nTemperatureModel + 3;
-        int nLayer = 2;
+
+        int nLayer = GetNumberOfGhostCellLayers();
 
         if (isWennScheme == 1)
         {
-            nLayer = 3;
             GetRange(ni, nj, nk, -3, 2, I, J, K);
         }
 
@@ -7601,7 +7601,6 @@ namespace PHSPACE
         int nChemical = parameters->GetChemicalFlag();
         int nNSEquation = parameters->GetNSEquationNumber();
         int nTemperatureModel = parameters->GetTemperatureModel();
-        int isWennScheme = parameters->GetWennSchemeFlag();
         int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
         RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
@@ -7616,14 +7615,9 @@ namespace PHSPACE
 
         int is = 0, js = 0, ks = 0, it = 0, jt = 0, kt = 0, in = 0, jn = 0, kn = 0;
         RDouble vx = 0, vy = 0, vz = 0, vn = 0, vgn = 0;
-        int nLayer = 2;
+        int nLayer = GetNumberOfGhostCellLayers();
 
         using namespace IDX;
-
-        if (isWennScheme == 1)
-        {
-            nLayer = 3;
-        }
 
         for (int k = kst; k <= ked; ++ k)
         {
@@ -8132,8 +8126,6 @@ namespace PHSPACE
         int nk = grid->GetNK();
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-        int isWennScheme = parameters->GetWennSchemeFlag();
-
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
@@ -8192,14 +8184,10 @@ namespace PHSPACE
         RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature;  //! non-dimensional temperature.
         RDouble temperaturelimitation = 1.E-6;
 
-        int nLayer = 2;
+        int nLayer = GetNumberOfGhostCellLayers();
 
         using namespace IDX;
 
-        if (isWennScheme == 1)
-        {
-            nLayer = 3;
-        }
         int is, js, ks, it, jt, kt;
         int nIndexOfCell = 0;
         for (int k = kst; k <= ked; ++ k)
@@ -8403,7 +8391,6 @@ namespace PHSPACE
         StructGrid *grid = StructGridCast(gridIn);
 
         Param_NSSolverStruct* parameters = GetControlParameters();
-        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -8428,12 +8415,7 @@ namespace PHSPACE
 
         int it, jt, kt;
 
-        int nLayer = 2;
-
-        if (isWennScheme == 1)
-        {
-            nLayer = 3;
-        }
+        int nLayer = GetNumberOfGhostCellLayers();
 
         for (int k = kst; k <= ked; ++ k)
         {
@@ -9434,7 +9416,6 @@ namespace PHSPACE
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
         RDouble refGama = parameters->GetRefGama();
-        int isWennScheme = parameters->GetWennSchemeFlag();
 
         Data_Param *bcData = structBC->GetBCParamDataBase();
         RDouble massFluxRatio, massFlow, BCTotalArea;
@@ -9471,11 +9452,7 @@ namespace PHSPACE
         int in, jn, kn;
         RDouble nxs, nys, nzs;
 
-        int nLayer = 2;
-        if (isWennScheme == 1)
-        {
-            nLayer = 3;
-        }
+        int nLayer = GetNumberOfGhostCellLayers();
 
         for (int k = kst; k <= ked; ++ k)
         {
@@ -9658,7 +9635,6 @@ namespace PHSPACE
         RDouble dynamicPressure = refDimensionalDensity * velocity * velocity;
         RDouble staticPressureCorf = parameters->GetStaticPressureRelaxCorf();
         staticPressure /= dynamicPressure;
-        int isWennScheme = parameters->GetWennSchemeFlag();
 
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -9681,11 +9657,7 @@ namespace PHSPACE
         RDouble normalComponetX, normalComponetY, normalComponetZ;
 
         int is, js, ks, it, jt, kt;
-        int nLayer = 2;
-        if (isWennScheme == 1)
-        {
-            nLayer = 3;
-        }
+        int nLayer = GetNumberOfGhostCellLayers();
 
         for (int k = kst; k <= ked; ++ k)
         {
