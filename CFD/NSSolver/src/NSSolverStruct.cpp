@@ -3418,6 +3418,12 @@ namespace PHSPACE
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
 
+        int isWennScheme = parameters->GetWennSchemeFlag();
+        if (isWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
+
         RDouble4D dataStore(I, J, K, M, fortranArray);
         RDouble3D isWall(I, J, K, fortranArray);
         dataStore = 0.0;

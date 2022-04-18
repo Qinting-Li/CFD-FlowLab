@@ -28,14 +28,17 @@ inline int GetNumberOfGhostCellLayers()
     //! however, it will lead to RESTART file (flow.dat/turb.dat)
     //! different with the previous, using 2 layers temporary.
     //! the bellowing judge should be used in future.
-    return 2;
+    int nLayers = 2;
 
     //! Add one layer ghost cell for high order method.
     int isWennScheme = PHSPACE::GlobalDataBase::GetIntParaFromDB("isWennScheme");
     if (isWennScheme == 1)
     {
-        return 3;
+        nLayers = 3;
     }
+
+    return nLayers;
+
     //! The bellowing judge should be used in future.
     //const int UNSTRUCTGRID = 0;
     //const int STRUCTGRID   = 1;
