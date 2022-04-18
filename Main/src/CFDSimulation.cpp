@@ -217,6 +217,18 @@ void ParametersSelfCheckForCFD()
             TK_Exit::ExceptionExit(oss);
         }
     }
+    //! Judge if use wenn scheme.
+    int isWennScheme = 0;
+    string str_limiter_name = GlobalDataBase::GetStrParaFromDB("str_limiter_name");
+    if (str_limiter_name == "weno3_js"
+        || str_limiter_name == "wenn3_zm"
+        || str_limiter_name == "wenn3_zes2"
+        || str_limiter_name == "wenn3_zes3"
+        || str_limiter_name == "wenn3_prm211")
+    {
+        isWennScheme = 1;
+    }
+    GlobalDataBase::UpdateData("isWennScheme", &isWennScheme, PHINT, 1);
 }
 
 void ControlParametersPreliminarySelfCheck()
