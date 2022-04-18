@@ -621,20 +621,18 @@ endif(USE_INHOUSE_VERSION)
 
 if(BUILD_MultiSpecies)
 # set directory of MultiSpeciesGas.
-set(MultiSpecies_H_PATH ${PROJECT_SOURCE_DIR}/../MultiSpecies/include)
+set(MultiSpecies_H_PATH MultiSpecies/include)
 set(MultiSpecies_H_LIST
 ${MultiSpecies_H_PATH}/ChemicalModel.h
-${MultiSpecies_H_PATH}/PHChemicalModel.h
-${MultiSpecies_H_PATH}/RealGas.h
+${MultiSpecies_H_PATH}/MixedGas.h
 )
 source_group(MultiSpecies\\include FILES ${MultiSpecies_H_LIST}) 
 include_directories(${MultiSpecies_H_PATH})
 
-set(MultiSpecies_CPP_PATH ${PROJECT_SOURCE_DIR}/../MultiSpecies/src)
+set(MultiSpecies_CPP_PATH MultiSpecies/src)
 set(MultiSpecies_CPP_LIST
 ${MultiSpecies_CPP_PATH}/ChemicalModel.cpp
-${MultiSpecies_CPP_PATH}/PHChemicalModel.cpp
-${MultiSpecies_CPP_PATH}/RealGas.cpp
+${MultiSpecies_CPP_PATH}/MixedGas.cpp
 )
 source_group(MultiSpecies\\src FILES ${MultiSpecies_CPP_LIST})
 list(APPEND API_HEAD_LIST ${MultiSpecies_H_LIST})
