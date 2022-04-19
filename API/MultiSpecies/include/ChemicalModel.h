@@ -1,8 +1,18 @@
-//==============================================
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      ChemicalModel.h
-//! @brief     define chemical reactions.
+//! @brief     Define chemical reactions.
 //! @author    Meng Liyuan, Li Peng.
-//==============================================
+
 #pragma once
 #include <string>
 #include "Precision.h"
@@ -43,16 +53,16 @@ namespace PHSPACE
             ~ChemicalReactions();
             void AllocateMemories();
             void DeAllocateMemories();
-            int GetChemicalReactionType() const {return nReactionType;};
-            void SetChemicalReactionType(int ntype) {this->nReactionType = ntype;};
-            void GetChemicalModelInfo(int &ns, int &nr) {ns = nSpecies; nr = nReaction;};
+            int GetChemicalReactionType() const { return nReactionType; }
+            void SetChemicalReactionType(int ntype) { this->nReactionType = ntype; }
+            void GetChemicalModelInfo(int &ns, int &nr) { ns = nSpecies; nr = nReaction; }
             void SetChemicalModelInfo(int ns, int nr);
-            string* GetSpeciesNames() const {return this->speciesName;};
-            int** GetForwardStoichiometricCoefficient() const {return stoichForward;};
-            int** GetBackwardStoichiometricCoefficient() const {return stoichBackward;};
-            RDouble** GetThirdBodyCollisionCoefficient() const {return collisionCoef;};
-            RDouble** GetReactionRateCurveFittingData() const {return reactionData;};
-            int** GetReactionType() const {return reactionType;}
+            string * GetSpeciesNames() const { return this->speciesName; }
+            int ** GetForwardStoichiometricCoefficient() const { return stoichForward; }
+            int ** GetBackwardStoichiometricCoefficient() const { return stoichBackward; }
+            RDouble ** GetThirdBodyCollisionCoefficient() const { return collisionCoef; }
+            RDouble ** GetReactionRateCurveFittingData() const { return reactionData; }
+            int ** GetReactionType() const { return reactionType; }
         public:
             //! To obtain the data of the Gupta 11s20r reaction model.
             //! Param[in/out]: reactionCoef denotes the stoichiometric coefficients of forward and backward reaction equation.
@@ -107,7 +117,6 @@ namespace PHSPACE
             //! Param[in ]: namelist indicates the vector of the species names in the new model.
             //! Param[out]: pNewModel indicates the new chemical reaction model.
             void CreateChemicalReactionModel(vector<string> &namelist, ChemicalReactions *pNewModel);
-
         };
 
         //Find the species in the name list, if found, return the index of the species in the name list.
@@ -129,14 +138,14 @@ namespace PHSPACE
             ~ChemkinFitData();
             void AllocateMemories();
             void DeAllocateMemories();
-            void GetInterpolationInfo(int &ns, int &m, int &n) {ns = nSpecies; m = nInterval; n = nCoefNum;}
+            void GetInterpolationInfo(int &ns, int &m, int &n) { ns = nSpecies; m = nInterval; n = nCoefNum; }
             void SetInterpolationInfo(int ns, int m = 5, int n = 6);
-            string* GetSpeciesNames() const {return this->speciesName;};
-            RDouble*** GetCurveFittingData() const {return curveFittingData;}
-            RDouble* GetTemperatureRange() const {return temperatureRange;}
-            RDouble** GetEnthalpyFitData() const {return enthalpyFitData;}
-            RDouble* GetStartTemperature() const {return temperatureStart;}
-            RDouble*** GetCurveFittingDataT2() const {return curveFittingDataT2;}
+            string * GetSpeciesNames() const { return this->speciesName; }
+            RDouble *** GetCurveFittingData() const { return curveFittingData; }
+            RDouble * GetTemperatureRange() const { return temperatureRange; }
+            RDouble ** GetEnthalpyFitData() const { return enthalpyFitData; }
+            RDouble * GetStartTemperature() const { return temperatureStart; }
+            RDouble *** GetCurveFittingDataT2() const { return curveFittingDataT2; }
         public:
             void SetCurveFittingDataT2();
 
@@ -162,10 +171,10 @@ namespace PHSPACE
             void AllocateMemories();
             void DeAllocateMemories();
             void SetSpeciesNumber(int ns);
-            int GetSpeciesNumber() const {return nSpecies;}
-            string* GetSpeciesNames() const {return this->speciesName;};
-            RDouble** GetViscosityCurveFittingData() const {return viscosityFitData;}
-            RDouble** GetCollisionAreaCurveFittingData() const {return collisionAreaFitData;}
+            int GetSpeciesNumber() const { return nSpecies; }
+            string * GetSpeciesNames() const { return this->speciesName; }
+            RDouble ** GetViscosityCurveFittingData() const { return viscosityFitData; }
+            RDouble ** GetCollisionAreaCurveFittingData() const { return collisionAreaFitData; }
         public:
             //! To Generate the full curve fitting data of 16 species.
             void GenerateFullCurveFittingData();
@@ -203,18 +212,18 @@ namespace PHSPACE
             void AllocateMemories();
             void DeAllocateMemories();
             void SetSpeciesNumber(int ns);
-            string* GetSpeciesNames() const {return speciesName;}
-            int GetSpeciesNumber() const {return nSpecies;}
-            int* GetSpeciesType() const {return nSpeciesType;}
-            int* GetSpeciesCharge() const {return nSpeciesCharge;}
-            RDouble* GetSpeciesMolecularWeight() const{ return speciesMass; }
-            int* GetSpeciesDegeneracy0() const {return nSpeciesG0;}
-            int* GetSpeciesDegeneracy1() const {return nSpeciesG1;}
-            RDouble* GetSpeciesTemperature() const {return speciesTtr;}
-            VibrationModeData* GetSpeciesVibrationalModeData() const {return speciesVibrationalModeData;}
-            RDouble* GetSpeciesElectronTemperature() const {return speciesTes;}
-            RDouble* GetSpeciesFormationEnthalpy() const {return speciesEnthalpy;}
-            RDouble* GetSpeciesCollisionArea() const {return speciesSigma;}
+            string * GetSpeciesNames() const { return speciesName; }
+            int GetSpeciesNumber() const { return nSpecies; }
+            int * GetSpeciesType() const { return nSpeciesType; }
+            int * GetSpeciesCharge() const { return nSpeciesCharge; }
+            RDouble * GetSpeciesMolecularWeight() const{ return speciesMass; }
+            int * GetSpeciesDegeneracy0() const { return nSpeciesG0; }
+            int * GetSpeciesDegeneracy1() const { return nSpeciesG1; }
+            RDouble * GetSpeciesTemperature() const { return speciesTtr; }
+            VibrationModeData * GetSpeciesVibrationalModeData() const { return speciesVibrationalModeData; }
+            RDouble * GetSpeciesElectronTemperature() const { return speciesTes; }
+            RDouble * GetSpeciesFormationEnthalpy() const { return speciesEnthalpy; }
+            RDouble * GetSpeciesCollisionArea() const { return speciesSigma; }
         public:
             //! To Generate the physical and chemicla data of 16 species.
             void GenerateFullPhysicalChemicalData();

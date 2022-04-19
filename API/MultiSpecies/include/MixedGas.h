@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      MixedGas.h
 //! @brief     Explain this file briefly.
-//! @author    Meng Liyuan,Li Peng, He Xin.
+//! @author    Meng Liyuan, Li Peng.
 
 #pragma once
 #include "Precision.h"
@@ -26,9 +26,10 @@ using namespace std;
 namespace PHSPACE
 {
 class DataContainer;
+
 namespace GAS_SPACE
 {
-const RDouble chem_temp_diff  = 1.0e-8;
+const RDouble chem_temp_diff = 1.0e-8;
 const int chem_pres_iter_max = 1000;
 
 class ThermodynamicFunction
@@ -43,12 +44,12 @@ private:
     RDouble *enthalpyFitCoefficient;
     RDouble **polynomial_coefficientT2;
 public:
-    int  GetNumberOfPolynomialCoefficient() const { return number_of_polynomial_coefficient; };
+    int  GetNumberOfPolynomialCoefficient() const { return number_of_polynomial_coefficient; }
     void SetNumberOfPolynomialCoefficient(int number_of_polynomial_coefficient) { this->number_of_polynomial_coefficient = number_of_polynomial_coefficient; }
     void Init(int number_of_temperature_interval, int number_of_polynomial_coefficient);
     RDouble * GetPolynomialCoefficient(int i_temperature_interval) { return polynomial_coefficient[i_temperature_interval]; }
     RDouble * GetPolynomialCoefficientT2(int i_temperature_interval) { return polynomial_coefficientT2[i_temperature_interval]; }
-    RDouble* GetEnthalpyFitCoefficient() {return enthalpyFitCoefficient;}
+    RDouble * GetEnthalpyFitCoefficient() { return enthalpyFitCoefficient; }
 public:
     void ReadPolynomialCoefficient(fstream &file);
     void CreatePolynomialCoefficient(RDouble **curveFitData, RDouble **curveFitDataT2, RDouble *enthalpyFitData);
@@ -70,11 +71,11 @@ private:
 public:
     void Init(int numberOfSpecies);
     void Read(fstream &file);
-    void GenerateData(vector<string>&namelist);
+    void GenerateData(vector<string> &namelist);
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
 public:
-    RDouble* GetEnthalpyFitCoefficient(int iSpecies);
+    RDouble * GetEnthalpyFitCoefficient(int iSpecies);
     RDouble * GetPolynomialCoefficient(int iSpecies, int itemperature);
     RDouble * GetPolynomialCoefficientT2(int iSpecies, int itemperature);
     void GetTemperatureRangeIndex(const RDouble &temperature_dimensional, int &indexOfTemperatureRange);
@@ -102,13 +103,13 @@ public:
     void Create(RDouble **reationCoef);
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
-    RDouble * GetForwardReactionRateCoefficientA() { return afr; };
-    RDouble * GetForwardReactionRateCoefficientB() { return bfr; };
-    RDouble * GetForwardReactionRateCoefficientC() { return cfr; };
+    RDouble * GetForwardReactionRateCoefficientA() { return afr; }
+    RDouble * GetForwardReactionRateCoefficientB() { return bfr; }
+    RDouble * GetForwardReactionRateCoefficientC() { return cfr; }
 
-    RDouble * GetBackwardReactionRateCoefficientA() { return abr; };
-    RDouble * GetBackwardReactionRateCoefficientB() { return bbr; };
-    RDouble * GetBackwardReactionRateCoefficientC() { return cbr; };
+    RDouble * GetBackwardReactionRateCoefficientA() { return abr; }
+    RDouble * GetBackwardReactionRateCoefficientB() { return bbr; }
+    RDouble * GetBackwardReactionRateCoefficientC() { return cbr; }
 };
 
 class StoichiometricEquation
@@ -129,12 +130,12 @@ public:
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
 
-    int* GetChemicalReactionType() {return reactionType;}
-    bool* GetCollisionReactionFlag() {return isCollisionType;}
+    int * GetChemicalReactionType() { return reactionType; }
+    bool * GetCollisionReactionFlag() { return isCollisionType; }
 
-    int    ** GetForwardReactionStoichiometricCoefficient() const { return cvp; }
-    int    ** GetBackwardReactionStoichiometricCoefficient() const { return cvn; }
-    RDouble    ** GetReactionStoichiometricThirdBodyCoefficient() const { return cpz; }
+    int ** GetForwardReactionStoichiometricCoefficient() const { return cvp; }
+    int ** GetBackwardReactionStoichiometricCoefficient() const { return cvn; }
+    RDouble ** GetReactionStoichiometricThirdBodyCoefficient() const { return cpz; }
 };
 
 class CurveFitsMethod
@@ -156,16 +157,16 @@ private:
 public:
     void Init(int numberOfSpecies, int nGasModel = 0);
     void Read(fstream &file);
-    void GenerateData(vector<string>&namelist);
+    void GenerateData(vector<string> &namelist);
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
 public:
     //!Obtain the array of curve fit coefficients that is used to compute the viscosities of species.
-    RDouble* GetBlotterCurveFittingCoefficientA() const { return blotter_ai; };
-    RDouble* GetBlotterCurveFittingCoefficientB() const { return blotter_bi; };
-    RDouble* GetBlotterCurveFittingCoefficientC() const { return blotter_ci; };
-    RDouble* GetBlotterCurveFittingCoefficientD() const { return blotter_di; };
-    RDouble* GetBlotterCurveFittingCoefficientE() const { return blotter_ei; };
+    RDouble * GetBlotterCurveFittingCoefficientA() const { return blotter_ai; }
+    RDouble * GetBlotterCurveFittingCoefficientB() const { return blotter_bi; }
+    RDouble * GetBlotterCurveFittingCoefficientC() const { return blotter_ci; }
+    RDouble * GetBlotterCurveFittingCoefficientD() const { return blotter_di; }
+    RDouble * GetBlotterCurveFittingCoefficientE() const { return blotter_ei; }
     //! Set the curve fitting data of Blotter viscosity.
     //! @param[in ]: speciesName is an array of saving the names of species.
     //! @param[in ]: nSpecies is the number of the total species.
@@ -173,26 +174,26 @@ public:
     //void SetGuptaCurveFittingCoefficients(string *speciesName, int nSpecies);
 
     //!Obtain the array of curve fit coefficients that is used to compute the average collision areas of species couples.
-    RDouble * GetOmegaCurveFittingCoefficientA() const { return omega_ai; };
-    RDouble * GetOmegaCurveFittingCoefficientB() const { return omega_bi; };
-    RDouble * GetOmegaCurveFittingCoefficientC() const { return omega_ci; };
-    RDouble * GetOmegaCurveFittingCoefficientD() const { return omega_di; };
+    RDouble * GetOmegaCurveFittingCoefficientA() const { return omega_ai; }
+    RDouble * GetOmegaCurveFittingCoefficientB() const { return omega_bi; }
+    RDouble * GetOmegaCurveFittingCoefficientC() const { return omega_ci; }
+    RDouble * GetOmegaCurveFittingCoefficientD() const { return omega_di; }
 
     //!Set the curve fit coefficients of vibrational excitation rate of electron collision-N2.
     void SetNitrogenVibrationalExcitationRate();
     //!Obtain the array of curve fit coefficients that is used to compute the vibrational excitation rate of electron collision-N2.
-    RDouble * GetNitrogenVibrationalExcitationRateA() const { return curvefit_av; };
-    RDouble * GetNitrogenVibrationalExcitationRateB() const { return curvefit_bv; };
-    RDouble * GetNitrogenVibrationalExcitationRateC() const { return curvefit_cv; };
+    RDouble * GetNitrogenVibrationalExcitationRateA() const { return curvefit_av; }
+    RDouble * GetNitrogenVibrationalExcitationRateB() const { return curvefit_bv; }
+    RDouble * GetNitrogenVibrationalExcitationRateC() const { return curvefit_cv; }
 
     //!Set the curve fit coefficients of effective collision cross-sectional area between the electron and neutral heavy particle.
     void SetEffectiveCollisionCrossSectionalAreaCurveFits(int nGasModel = 0);
-    void SetEffectiveCollisionCrossSectionalAreaCurveFits(vector<string>&namelist);
+    void SetEffectiveCollisionCrossSectionalAreaCurveFits(vector<string> &namelist);
 
     //!Obtain the array of curve fit coefficients that is used to compute the effective collision cross-sectional area between the electron and neutral heavy particle.
-    RDouble * GetEffectiveCollisionCrossSectionalAreaCurveFitsA() const { return curvefit_aes; };
-    RDouble * GetEffectiveCollisionCrossSectionalAreaCurveFitsB() const { return curvefit_bes; };
-    RDouble * GetEffectiveCollisionCrossSectionalAreaCurveFitsC() const { return curvefit_ces; };
+    RDouble * GetEffectiveCollisionCrossSectionalAreaCurveFitsA() const { return curvefit_aes; }
+    RDouble * GetEffectiveCollisionCrossSectionalAreaCurveFitsB() const { return curvefit_bes; }
+    RDouble * GetEffectiveCollisionCrossSectionalAreaCurveFitsC() const { return curvefit_ces; }
 };
 
 class SchmidtNumber
@@ -248,29 +249,29 @@ private:
 public:
     void Init(int numberOfSpecies);
     void Read(fstream &file);
-    void GenerateData(vector<string>&namelist, vector<RDouble> &initMassFractions);
+    void GenerateData(vector<string> &namelist, vector<RDouble> &initMassFractions);
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
 public:
     //!Obtain the nondimensional molecular weight of the mixture gas.
-    RDouble * GetMolecularWeight          () const { return molecularWeight  ; };
-    RDouble * GetMolecularWeightReciprocal() const { return oMolecularWeight; };
+    RDouble * GetMolecularWeight() const { return molecularWeight; }
+    RDouble * GetMolecularWeightReciprocal() const { return oMolecularWeight; }
 
     //!Obtain the dimensional molecular weight of the mixture gas whose unit is kg/mol.
-    RDouble * GetMolecularWeightDimensional() const { return molecularWeightDimensional; };
-    RDouble * GetMolecularWeightReciprocalDimensional() const { return oMolecularWeightDimensional; };
+    RDouble * GetMolecularWeightDimensional() const { return molecularWeightDimensional; }
+    RDouble * GetMolecularWeightReciprocalDimensional() const { return oMolecularWeightDimensional; }
 
-    RDouble * GetInitialMassFraction() const { return mass_fraction_reference; };
+    RDouble * GetInitialMassFraction() const { return mass_fraction_reference; }
 
-    string * GetNameOfSpecies() const { return name_of_species; };
+    string * GetNameOfSpecies() const { return name_of_species; }
 
-    RDouble * GetLaminarSchmidtNumberReciprocal  () const;
+    RDouble * GetLaminarSchmidtNumberReciprocal() const;
     RDouble * GetTurbulentSchmidtNumberReciprocal() const;
 
     //!To obtain the thermodynamic properties of species.
-    Thermo_Param * GetThermodynamicProperties() const { return thermodynamicProperties; };
+    Thermo_Param * GetThermodynamicProperties() const { return thermodynamicProperties; }
 
-    int * GetIonTypeOfSpecies() const { return ionTypeOfSpecies; };
+    int * GetIonTypeOfSpecies() const { return ionTypeOfSpecies; }
 };
 
 class MixedGas : public Gas
@@ -286,7 +287,7 @@ private:
     CurveFitsMethod *CurveFits;                      //curve fitting for viscosity¡¢collision section
     MolecularProperty *molecularProperty;            // Species characteristic parameter
 private:
-    int nm, nl, numberOfSpecies, numberOfReaction, nchem, ntmodel,nEquation;
+    int nm, nl, numberOfSpecies, numberOfReaction, nchem, ntmodel, nEquation;
     int nTEnergyModel;  // 0 indicates Energy level method ,  1 is for  curve fitting method.
     int nSpeciesEquation; // The number of species equation.
     int nElectronIndex; // The index of electron in the array.
@@ -321,30 +322,30 @@ private:
     RDouble lnMaximum;
   //  int nMaxStepTemperature, precisionTemperature;
 public:
-    void GetReferenceParameters(FluidParameter &refParam){refParam = referenceParameterDimensional;};
-    int GetSpeciesEquationNumber() const {return nSpeciesEquation;}
-    int GetNitrogenIndex() const {return nNitrogenIndex;}
-    int GetElectronIndex() const {return nElectronIndex;}
-    void SetSpeciesEquationNumber(int ns) {nSpeciesEquation = ns;}
-    void SetNitrogenIndex(int nn) {nNitrogenIndex = nn;}
-    void SetElectronIndex(int ne) {nElectronIndex = ne;}
-    void SetElectronMolecularWeight(RDouble me) {electronMass = me;}
-    RDouble GetElectronMolecularWeight() const {return electronMass;}
-    RDouble GetDimensionalElectronMolecularWeight() const {return electronMassDimension;}
-    int GetNSEquationNumber() const {return nm;}
-    int GetLaminarNumber() const {return nl;}
-    int GetTemperatureModel() const {return ntmodel;}
-    int GetChemicalType() const {return nchem;}
-    int GetnLastSpeciesIndex() const {return nLastSpeciesIndex;}
-    RDouble* GetInitMassFraction() const {return molecularProperty->GetInitialMassFraction();}
-    virtual RDouble* GetMolecularWeightDimensional() const {return molecularProperty->GetMolecularWeightDimensional();}
+    void GetReferenceParameters(FluidParameter &refParam) { refParam = referenceParameterDimensional; }
+    int GetSpeciesEquationNumber() const { return nSpeciesEquation; }
+    int GetNitrogenIndex() const { return nNitrogenIndex; }
+    int GetElectronIndex() const { return nElectronIndex; }
+    void SetSpeciesEquationNumber(int ns) { nSpeciesEquation = ns; }
+    void SetNitrogenIndex(int nn) { nNitrogenIndex = nn; }
+    void SetElectronIndex(int ne) { nElectronIndex = ne; }
+    void SetElectronMolecularWeight(RDouble me) { electronMass = me; }
+    RDouble GetElectronMolecularWeight() const { return electronMass; }
+    RDouble GetDimensionalElectronMolecularWeight() const { return electronMassDimension; }
+    int GetNSEquationNumber() const { return nm; }
+    int GetLaminarNumber() const { return nl; }
+    int GetTemperatureModel() const { return ntmodel; }
+    int GetChemicalType() const { return nchem; }
+    int GetnLastSpeciesIndex() const { return nLastSpeciesIndex; }
+    RDouble * GetInitMassFraction() const { return molecularProperty->GetInitialMassFraction(); }
+    virtual RDouble * GetMolecularWeightDimensional() const { return molecularProperty->GetMolecularWeightDimensional(); }
     RDouble ComputeReferenceTotalEnthalpy();
-    int GetmTT() const {return mTT;}
-    int GetmTV() const {return mTV;}
-    int GetmTE() const {return mTE;}
-    int GetnEnergyRecycle() const {return nEnergyRecycle;}
-    int GetnChemcalSourceModified() const {return nChemcalSourceModified;}
-    int GetGasModelType() {return this->nGasModel;};
+    int GetmTT() const { return mTT; }
+    int GetmTV() const { return mTV; }
+    int GetmTE() const { return mTE; }
+    int GetnEnergyRecycle() const { return nEnergyRecycle; }
+    int GetnChemcalSourceModified() const { return nChemcalSourceModified; }
+    int GetGasModelType() { return this->nGasModel; }
 private:
     RDouble *moleFractions;
     RDouble *massFractions;
@@ -363,14 +364,14 @@ private:
     RDouble *dfsdy;
     RDouble *dfsdz;
     RDouble *fvis;
-    Thermo_Energy  Thermo_Energy_temparay;            //energy parameter 
+    Thermo_Energy Thermo_Energy_temparay;    //energy parameter 
     
-    RDouble *maximumSpecies;                          //the maximum of each Specie
+    RDouble *maximumSpecies;    //the maximum of each Specie
     RDouble **polynomialCoefT2; //The interpolation coefficients for the polynomial in the two-temperature model.
 private:
     RDouble GetTemperatureMin();
     RDouble GetTemperatureMax();
-    Thermo_Energy *GetThermo_Energy_temparay(){return &Thermo_Energy_temparay;};
+    Thermo_Energy *GetThermo_Energy_temparay() { return &Thermo_Energy_temparay; }
 private:
     void AllocateWorkingSpace();
     void DeAllocateWorkingSpace();
@@ -395,7 +396,7 @@ private:
     void ComputeReferenceReynoldsNumber();
     void ComputeProperReynoldsNumberForGrid();
     void ComputeOtherProperParameterForGrid();
-    RDouble ComputeReferenceReynoldsNumberFromTotalPT( void );
+    RDouble ComputeReferenceReynoldsNumberFromTotalPT(void);
     void ComputeDensityWithReynoldsNumber();
     void ComputePressureInGasStateEquation();
     void InitReferenceParameter();
@@ -424,20 +425,20 @@ private:
 
     void SetMaximumSpecies(RDouble *mass_fraction_ref);
 public:
-    void CompressData  (DataContainer *&cdata);
+    void CompressData(DataContainer *&cdata);
     void DecompressData(DataContainer *cdata);
 private:
-    RDouble * GetLaminarSchmidtNumberReciprocal  () const;
+    RDouble * GetLaminarSchmidtNumberReciprocal() const;
     RDouble * GetTurbulentSchmidtNumberReciprocal() const;
 public:
     //! To obtain the laminar Schmidt number of each component.
-    void GetLaminarSchmidtNumber  (RDouble *Scl) const;
+    void GetLaminarSchmidtNumber(RDouble *Scl) const;
     //! To obtain the turbulent Schmidt number of each component.
     void GetTurbulentSchmidtNumber(RDouble *Sct) const;
     //! To obtain the molecular weight of each component.
     RDouble * GetMolecularWeight() const { return molecularProperty->GetMolecularWeight(); }
 
-    int  GetNumberOfSpecies() const { return numberOfSpecies; };
+    int  GetNumberOfSpecies() const { return numberOfSpecies; }
     void SetNumberOfSpecies(int numberOfSpecies) { this->numberOfSpecies = numberOfSpecies; }
     void InitGlobalParameterOfNSEquation();
     void ReadGasModel(fstream &file);
@@ -450,7 +451,7 @@ public:
     void ReadGasModel();
 
     void GetTemperatureRangeIndex(const RDouble &temperature_dimensional, int &indexOfTemperatureRange);
-    RDouble GetCoefficientOfStateEquation() { return coefficientOfStateEquation; };
+    RDouble GetCoefficientOfStateEquation() { return coefficientOfStateEquation; }
     string * GetNameOfSpecies() const;
 
     void GetElectronMolecularWeightAndMassFraction(RDouble *massFraction, RDouble &ce, RDouble &Me);
@@ -591,7 +592,7 @@ public:
     //! @param[in ]: gama is the specific heat ratio.
     //! @param[out]: enthalpy denotes the static enthalpy.
     //! @param[in ]: temperatures stores the translation-rotation temperature, vibration temperature and the electron temperature.
-    void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble* temperatures);
+    void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble *temperatures);
 
     //! To obtain the total energy E = e + 1/2*V2.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables, gama is the specific heat ratio of the mixture gas.
@@ -633,7 +634,7 @@ public:
     //! @param[out]: heatConductivity denotes the array of heat conductivity for each mode.
     //! @param[out]: rhoDs denotes the array of mass diffusion coefficients for each species.
     void ComputeTransportCoefficients(RDouble *primitiveVariables, RDouble *temperature, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs);
-    void ComputeTransportCoefficientsR(RDouble *primitiveVariables, RDouble *temperature, RDouble *speciesCps, RDouble *speciesCvvs,RDouble *speciesCves, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs);
+    void ComputeTransportCoefficientsR(RDouble *primitiveVariables, RDouble *temperature, RDouble *speciesCps, RDouble *speciesCvvs, RDouble *speciesCves, RDouble visTurbulence, RDouble &viscosity, RDouble *heatConductivity, RDouble *rhoDs);
 
     //! To obtain the non-dimensional viscosity of the mixture gas according to the mass fraction of each species.
     //! @param[in ]: density denotes the non-dimensional value of density of the mixed gas.
@@ -736,7 +737,7 @@ public:
     //! @param[out]: polynomialCoef is an array of saving the polynomial coefficients.
     void GetLinearlyAveragedPolynomialCoefficients(int nSpecies, RDouble temperature, RDouble *polynomialCoef);
     void GetLinearlyAveragedPolynomialCoefficientsT2(RDouble temperature, RDouble **polynomialCoef);
-    void GetLinearlyAveragedPolynomialCoefficientsIndex(RDouble temperature,RDouble &coef, int &nIndex1, int &nIndex2);
+    void GetLinearlyAveragedPolynomialCoefficientsIndex(RDouble temperature, RDouble &coef, int &nIndex1, int &nIndex2);
     void GetLinearlyAveragedPolynomialCoefficientsByIndex(int nSpecies, RDouble *polynomialCoef, RDouble coef, int nIndex1, int nIndex2);
 
     //! Compute chemical source term and its Jacobian matrix. The first function is batch processing of data, the second is single processing of data.
@@ -1208,7 +1209,7 @@ public: //The function library of multi-temperature model.
                                                     RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama);
     void GetMultiTemperatureModelPartialDerivativesR(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                                     RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama,
-                                                    RDouble squareVelocity, RDouble *speciesEtrs, RDouble totalCvtr,RDouble totalCvv, RDouble totalCve);
+                                                    RDouble squareVelocity, RDouble *speciesEtrs, RDouble totalCvtr, RDouble totalCvv, RDouble totalCve);
 
     //! Compute partial derivative of pressure to total density.
     //! @param[in ]: primitiveVars is an array of saving the primitive variables.
@@ -1387,8 +1388,7 @@ void ChemCompressData(DataContainer *&cdata);
 
 void ChemDecompressData(DataContainer *cdata);
 
-void computeOutPressure(RDouble &Pressure, RDouble &staticPressure,  RDouble &staticPressureRelaxCorf );
-
+void computeOutPressure(RDouble &Pressure, RDouble &staticPressure,  RDouble &staticPressureRelaxCorf);
 
 }
 

@@ -34,7 +34,7 @@ public:
     Grid * GetGrid(int level = 0);
     int GetNumberOfMultiGrid() const { return static_cast<int>(grids->size()); };
     void AddGrid(Grid *grid);
-    vector < Grid * > *GetVectorGrid();
+    vector < Grid * > * GetVectorGrid();
 };
 
 }

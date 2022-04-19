@@ -30,13 +30,14 @@ AleManager * aleManager = NULL;
 
 void CreateAleManager()
 {
-    int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if (!IsUnsteady)
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    if (!isUnsteady)
     {
         return;
     }
+
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if(!isAle)
+    if (!isAle)
     {
         return;
     }

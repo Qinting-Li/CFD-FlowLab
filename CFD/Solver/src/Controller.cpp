@@ -3287,16 +3287,15 @@ void Controller::CorrectFineGrid(int iSolver, int level)
     }
 }
 
-Zone *Controller::GetZone(int iZone)
+Zone * Controller::GetZone(int iZone)
 {
     return region->GetZone(iZone);
 }
 
-CFDSolver *Controller::GetCFDSolver(int iZone, int iSolver)
+CFDSolver * Controller::GetCFDSolver(int iZone, int iSolver)
 {
-    return static_cast<CFDSolver *>(GlobalSolvers::GetSolver(iZone,iSolver));
+    return static_cast<CFDSolver *>(GlobalSolvers::GetSolver(iZone, iSolver));
 }
-
 
 bool Controller::CVGNorm(int iSolver, int level)
 {

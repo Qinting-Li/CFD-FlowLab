@@ -257,8 +257,8 @@ void ParallelProjection::CheckPointsAttribute(ZoneGridSolver * zoneGridSolver)
 
         if (IsParentFace(parentFaceIndex)) continue;
 
-        SimpleBC * boundaryCondition = faceBoundaryCondition[iFace];
-        Data_Param * bcParamDataBase = boundaryCondition->GetBCParamDataBase();
+        SimpleBC *boundaryCondition = faceBoundaryCondition[iFace];
+        Data_Param *bcParamDataBase = boundaryCondition->GetBCParamDataBase();
         string geometryFileName;
         bcParamDataBase->GetData("geometryFileName", &geometryFileName, PHSTRING, 1);
 

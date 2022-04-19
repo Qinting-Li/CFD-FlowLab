@@ -65,7 +65,7 @@ namespace PHSPACE
             if (this->nSpecies <= 0 || this->nReaction <= 0)
                 return;
             // Remove the allocated memories.
-            delete []speciesName;
+            delete [] speciesName;
             DelPointer2(stoichForward);
             DelPointer2(stoichBackward);
             DelPointer2(collisionCoef);
@@ -1764,9 +1764,9 @@ namespace PHSPACE
                 }
             }
 
-            delete []reactionCoef;
-            delete []thirdBodyCoef;
-            delete []rateCoef;
+            delete [] reactionCoef;
+            delete [] thirdBodyCoef;
+            delete [] rateCoef;
         }
 
         void ChemicalReactions::CreateChemicalReactionModel(vector<string> &namelist, ChemicalReactions *pNewModel)
@@ -1905,9 +1905,9 @@ namespace PHSPACE
         {
             if (nSpecies > 0 && nInterval > 0 && nCoefNum > 0)
             {
-                delete []speciesName;
-                delete []temperatureRange;
-                delete []temperatureStart;
+                delete [] speciesName;
+                delete [] temperatureRange;
+                delete [] temperatureStart;
                 DelPointer3(curveFittingData);
                 DelPointer3(curveFittingDataT2);
                 DelPointer2(enthalpyFitData);
@@ -2071,7 +2071,6 @@ namespace PHSPACE
                 }
                 temperatureStart[s] = temperature[s];
             }
-
         }
 
         void ChemkinFitData::GenerateFullChemkinData()
@@ -2295,7 +2294,7 @@ namespace PHSPACE
             aA = gamaAir / (gamaAir - 1);
             aB = gamaCH4 / (gamaCH4 - 1);
 
-            for(int i = 0; i < this->nInterval; ++ i)
+            for (int i = 0; i < this->nInterval; ++ i)
             {
                 this->curveFittingData[IndexAir][i][0] = aA;
                 this->curveFittingData[IndexCH4][i][0] = aB;
@@ -2336,7 +2335,7 @@ namespace PHSPACE
             RDouble ***targetFitDataT2 = pNewData->GetCurveFittingDataT2();
 
             int nIndex = -1;
-            for(int s = 0; s < this->nSpecies; ++ s)
+            for (int s = 0; s < this->nSpecies; ++ s)
             {
                 nIndex = flag[s];
                 if (nIndex == -1)
@@ -2363,7 +2362,6 @@ namespace PHSPACE
                     }
                 }
             }
-
         }
 
         //=======================================
@@ -2393,7 +2391,7 @@ namespace PHSPACE
         {
             if (this->nSpecies <= 0)
                 return;
-            delete []speciesName;
+            delete [] speciesName;
             DelPointer2(viscosityFitData);
             DelPointer2(collisionAreaFitData);
             nSpecies = 0;
@@ -2583,7 +2581,7 @@ namespace PHSPACE
             RDouble **targetCollisionAreaFitData = pNewData->GetCollisionAreaCurveFittingData();
 
             int nIndex = -1;
-            for(int s = 0; s < this->nSpecies; ++ s)
+            for (int s = 0; s < this->nSpecies; ++ s)
             {
                 nIndex = flag[s];
                 if (nIndex == -1)
@@ -2597,7 +2595,6 @@ namespace PHSPACE
                     targetCollisionAreaFitData[nIndex][i] = this->collisionAreaFitData[s][i];
                 }
             }
-
         }
 
         //============================================================
@@ -2643,17 +2640,17 @@ namespace PHSPACE
         {
             if (this->nSpecies <= 0)
                 return;
-            delete []speciesName;
-            delete []nSpeciesType;
-            delete []nSpeciesCharge;
-            delete []nSpeciesG0;
-            delete []nSpeciesG1;
-            delete []speciesMass;
-            delete []speciesTtr;
-            delete []speciesTes;
-            delete []speciesEnthalpy;
-            delete []speciesSigma;
-            delete []speciesVibrationalModeData;
+            delete [] speciesName;
+            delete [] nSpeciesType;
+            delete [] nSpeciesCharge;
+            delete [] nSpeciesG0;
+            delete [] nSpeciesG1;
+            delete [] speciesMass;
+            delete [] speciesTtr;
+            delete [] speciesTes;
+            delete [] speciesEnthalpy;
+            delete [] speciesSigma;
+            delete [] speciesVibrationalModeData;
 
             nSpecies = 0;
             speciesName = NULL;
@@ -2845,6 +2842,5 @@ namespace PHSPACE
                 targetTv[nIndex] = this->speciesVibrationalModeData[s];
             }
         }
-
     }// end of GAS_SPACE
 }// end of PHSPACE
