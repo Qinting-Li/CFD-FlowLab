@@ -8385,7 +8385,7 @@ namespace PHSPACE
     {
         StructGrid *grid = StructGridCast(gridIn);
 
-        Param_NSSolverStruct* parameters = GetControlParameters();
+        Param_NSSolverStruct *parameters = GetControlParameters();
 
         int nEquation = GetNumberOfEquations();
 
@@ -9726,7 +9726,7 @@ namespace PHSPACE
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
 
-        Param_NSSolverStruct* parameters = GetControlParameters();
+        Param_NSSolverStruct *parameters = GetControlParameters();
         int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
