@@ -49,6 +49,7 @@ namespace PHSPACE
         }
 
         int transitionType = parameters->GetTransitionType();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -57,6 +58,11 @@ namespace PHSPACE
 
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+        if (isWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
 
         Range IFACE, JFACE, KFACE;
         GetRange(ni, nj, nk, -2, 2, IFACE, JFACE, KFACE);
@@ -888,9 +894,16 @@ namespace PHSPACE
 
         Param_TurbSolverStruct *parameters = GetControlParameters();
         int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+        if (isWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
+
         Range M(0, nTurbulenceEquation - 1);
 
         RDouble4D *field = new RDouble4D(I, J, K, M, fortranArray);

@@ -132,7 +132,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
 
     PostWallDistance();
 
-    timeSpan->ShowTimeSpanToLogfile("Wall distance computing");
+    timeSpan->ShowTimeSpanToLogFile("Wall distance computing");
     WriteLogFile("  End Wall Distance Computing ...");
     delete timeSpan;
 }
@@ -152,10 +152,10 @@ void Pre_WalldistCompute::FillWallStructureNew()
     TimeSpan *timeSpan = new TimeSpan();
 
     ServerCollection();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure collection to server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure collection to server");
 
     ServerBcast();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure BCasting from server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure BCasting from server");
 
     PrintToWindow("Barrier for wall structure filling ...\n");
     PrintToWindow("End for wall structure filling ...\n");
@@ -4622,7 +4622,7 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethod()
         PrintToWindow("\n    Computing Wall dist for block: ", iBlock, "\n\n");
         ComputeNodeDistanceByADTMethodForBlock(iBlock);
     }
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By ADT Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By ADT Method");
     delete timeSpan;
 }
 
@@ -4658,7 +4658,7 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethod()
         ComputeNodeDistanceByKDTreeMethodForBlock(iBlock);
     }
 
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By KDTree Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By KDTree Method");
     delete timeSpan;
 }
 
@@ -5019,7 +5019,7 @@ vector<WallStructure *> * Pre_WalldistCompute::GetWallstructureList()
     return wallstructureList;
 };
 
-void GenerateWallDist()
+void GenerateWalldist()
 {
     if (GetTaskCode() == DSMC_SOLVER || GetTaskCode() == UGKS_SOLVER || GetTaskCode() == HO_SOLVER) return;
     
@@ -5039,28 +5039,28 @@ void GenerateWallDist()
         nIsComputeWallDist = 0;
     }
 
-    if (GetTaskCode() == CAL_WALL_DIST || (viscousType != INVISCID && IsReadWallDist() == false))
+    if (GetTaskCode() == CAL_WALL_DIST || (viscousType != INVISCID && IsReadWalldist() == false))
     {
         if(nIsComputeWallDist == 0)
         {
             AllocateWalldist();
 
-            ComputeWallDist();
+            ComputeWalldist();
 
-            WriteWallDist();
+            WriteWalldist();
         }
-        //VisualWallDist();
+        //VisualWalldist();
     }
 
     if (viscousType > LAMINAR || iLES == LES_SOLVER)
     {
-        GhostWallDistance();
+        GhostWalldist();
 
-        WallDistStatics();
+        WalldistStatics();
     }
 }
 
-bool IsReadWallDist()
+bool IsReadWalldist()
 {
     using namespace PHMPI;
 
@@ -5101,7 +5101,7 @@ bool IsReadWallDist()
     return false;
 }
 
-void ComputeWallDist()
+void ComputeWalldist()
 {
     int walldistMethod;
     GlobalDataBase::GetData("walldistMethod", &walldistMethod, PHINT, 1);
@@ -5136,7 +5136,7 @@ void AllocateWalldist()
 }
 
 #ifdef USE_TecplotLib
-void VisualWallDist()
+void VisualWalldist()
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -5303,7 +5303,7 @@ void VisualWallDist()
 }
 #endif
 
-void WriteWallDist()
+void WriteWalldist()
 {
     string walldistfile = "walldist.dat";
     GlobalDataBase::GetData("walldistfile", &walldistfile, PHSTRING, 1);
@@ -5334,7 +5334,7 @@ void WriteWallDist()
 
         if (myid == recv_proc)
         {
-            DumpWallDistToFile(actkey, izone);
+            DumpWalldistToFile(actkey, izone);
         }
     }
 
@@ -5342,7 +5342,7 @@ void WriteWallDist()
     delete actkey;
 }
 
-void DumpWallDistToFile(ActionKey *actkey, int iZone)
+void DumpWalldistToFile(ActionKey *actkey, int iZone)
 {
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
@@ -5374,7 +5374,7 @@ void DumpWallDistToFile(ActionKey *actkey, int iZone)
     delete [] walldist;
 }
 
-void WallDistStatics()
+void WalldistStatics()
 {
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
@@ -5441,7 +5441,7 @@ void WallDistStatics()
     PrintToWindow(oss);
 }
 
-void GhostWallDistance()
+void GhostWalldist()
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();

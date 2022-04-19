@@ -2168,51 +2168,21 @@ void NSSolverUnstruct::ChemicalSource(Grid *gridIn)
 
     int nEquation = GetNumberOfEquations();
 
-    RDouble **qi   = NewPointer2<RDouble>(nEquation   ,SEGCTION_LENGTH);
-    RDouble **ti   = NewPointer2<RDouble>(nTemperatureModel,SEGCTION_LENGTH);
-    RDouble **srci = NewPointer2<RDouble>(nLaminar,SEGCTION_LENGTH);
-    RDouble *voli  = new RDouble [SEGCTION_LENGTH];
+    RDouble **src = NewPointer2<RDouble>(nLaminar,nTotalCell);
 
     using namespace GAS_SPACE;
     using namespace IDX;
 
-    int localStart,localEnd;
-    localStart = 0;
-    do
+    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
     {
-        localEnd = localStart + SEGCTION_LENGTH;
-        if ( localEnd > nTotalCell ) localEnd = nTotalCell;
-
-        int ix = 0;
-        for ( int iCell = localStart; iCell < localEnd; ++ iCell )
+        gas->ChemicalSource(q,t,vol,src,iCell);
+        for ( int m = nm; m < nLaminar; ++ m )
         {
-            for ( int m = 0; m < nEquation; ++ m )
-            {
-                qi[m][ix] = q[m][iCell];
-            }
-            ti[ITT][ix] = t[ITT][iCell];
-            voli[ix]    = vol[iCell];
-            ++ ix;
+            res[m][iCell] += src[m - nm][iCell];
         }
-        int ncallen = ix;
-        gas->ChemicalSource(qi,ti,voli,srci,ncallen);
+    }
 
-        ix = 0;
-        for ( int iCell = localStart; iCell < localEnd; ++ iCell )
-        {
-            for ( int m = nm; m < nLaminar; ++ m )
-            {
-                res[m][iCell] += srci[m - nm][ix];
-            }
-            ++ ix;
-        }
-        localStart = localEnd;
-    } while ( localStart < nTotalCell );
-
-    DelPointer2(qi  );
-    DelPointer2(ti  );
-    DelPointer2(srci);
-    delete [] voli;
+    DelPointer2(src);
 }
 
 #ifdef USE_INHOUSE_VERSION
@@ -3387,53 +3357,22 @@ void NSSolverUnstruct::SpectrumRadiusChemical(Grid *gridIn)
 
     PHSPACE::SetField(chemSpectrum, nSpeciesNumber, nTotalCell,0.0);
 
-    RDouble **qi   = NewPointer2<RDouble>(nEquation   ,SEGCTION_LENGTH);
-    RDouble **ti   = NewPointer2<RDouble>(nTemperatureModel,SEGCTION_LENGTH);
-    RDouble **srsi = NewPointer2<RDouble>(nSpeciesNumber,SEGCTION_LENGTH);
-    RDouble *voli  = new RDouble [SEGCTION_LENGTH];
+    RDouble **srs = NewPointer2<RDouble>(nSpeciesNumber,nTotalCell);
 
     using namespace IDX;
 
-    int localStart,localEnd;
-    localStart = 0;
-    do
+
+    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
     {
-        localEnd = localStart + SEGCTION_LENGTH;
-        if ( localEnd > nTotalCell ) localEnd = nTotalCell;
+        gas->ChemicalSpectrumRadius(q,t,vol,srs,iCell);
 
-        int ix = 0;
-
-        for ( int iCell = localStart; iCell < localEnd; ++ iCell )
+        for ( int m = 0; m < nSpeciesNumber - 1; ++ m )
         {
-            for ( int m = 0; m < nEquation; ++ m )
-            {
-                qi[m][ix] = q[m][iCell];
-            }
-            ti[ITT][ix] = t[ITT][iCell];
-            voli[ix]  = vol[iCell];
-            ++ ix;
+            chemSpectrum[m][iCell] += srs[m][iCell];
         }
+    }
 
-        int ncallen = ix;
-        gas->ChemicalSpectrumRadius(qi,ti,voli,srsi,ncallen);
-
-        ix = 0;
-        for ( int iCell = localStart; iCell < localEnd; ++ iCell )
-        {
-            for ( int m = 0; m < nSpeciesNumber - 1; ++ m )
-            {
-                chemSpectrum[m][iCell] += srsi[m][ix];
-            }
-            ++ ix;
-        }
-        localStart = localEnd;
-    } while ( localStart < nTotalCell );
-
-    DelPointer2(qi  );
-    DelPointer2(ti  );
-    DelPointer2(srsi);
-
-    delete [] voli;
+    DelPointer2(srs);
 
 }
 

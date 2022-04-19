@@ -727,7 +727,7 @@ void Mesh_Refine_Unstruct::FixAnisoRefineType()
 
     PrintToWindow("\n");
 
-    fixTime.ShowTimeSpanToLogfile("Fix cell refine type");
+    fixTime.ShowTimeSpanToLogFile("Fix cell refine type");
     WriteLogFile("End fix cell type!");
 }
 

@@ -25,7 +25,7 @@ void RunPHengLEI()
 
     ControlParametersPreliminarySelfCheck();
 
-    //! Start CFD simulations.
+    //! Start CFD simulation.
     int dimension = GlobalDataBase::GetIntParaFromDB("ndim");
     Simulation *simulation = new Simulation(dimension);
 
@@ -196,7 +196,7 @@ void ParametersSelfCheckForCFD()
             ostringstream oss;
             oss << "Warning: The variable \"min_sub_iter\" cannot be greater than \"max_sub_iter\"! Now let them be equal: max_sub_iter = min_sub_iter!" << endl;
             PrintToWindow(oss.str());
-            WriteLogFile (oss.str());
+            WriteLogFile(oss.str());
 
             maxSubIter = minSubIter;
             GlobalDataBase::UpdateData("max_sub_iter", &maxSubIter, PHINT, 1);
@@ -217,6 +217,18 @@ void ParametersSelfCheckForCFD()
             TK_Exit::ExceptionExit(oss);
         }
     }
+    //! Judge if use wenn scheme.
+    int isWennScheme = 0;
+    string str_limiter_name = GlobalDataBase::GetStrParaFromDB("str_limiter_name");
+    if (str_limiter_name == "weno3_js"
+        || str_limiter_name == "wenn3_zm"
+        || str_limiter_name == "wenn3_zes2"
+        || str_limiter_name == "wenn3_zes3"
+        || str_limiter_name == "wenn3_prm211")
+    {
+        isWennScheme = 1;
+    }
+    GlobalDataBase::UpdateData("isWennScheme", &isWennScheme, PHINT, 1);
 }
 
 void ControlParametersPreliminarySelfCheck()
@@ -234,13 +246,9 @@ void ControlParametersPreliminarySelfCheck()
             break;
         case PARTITION_GRID:
             break;
-        case REPOSITORY:
-            break;
         case OVERSETGRID_VIEW:
             break;
         case OVERSET_CONFIG:
-            break;
-        case CONVERT_PARTITION:
             break;
         case HO_SOLVER:
             break;

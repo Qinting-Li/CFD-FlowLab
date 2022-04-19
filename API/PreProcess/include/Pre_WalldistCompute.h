@@ -289,32 +289,33 @@ private:
 };
 
 //! Process of generate wall distance.
-void GenerateWallDist();
-
-//! Compute wall distance.
-void ComputeWallDist();
+void GenerateWalldist();
 
 //!
 void AllocateWalldist();
 
+//! Compute wall distance.
+void ComputeWalldist();
+
 //! Write wall distance.
-void WriteWallDist();
+void WriteWalldist();
+
+//!
+void GhostWalldist();
+
+//!
+void WalldistStatics();
 
 //! Dump out the wall distance to file.
-void DumpWallDistToFile(ActionKey *actkey, int iZone);
+void DumpWalldistToFile(ActionKey *actkey, int iZone);
 
 #ifdef USE_TecplotLib
 //! Visualization of wall distance.
-void VisualWallDist();
+void VisualWalldist();
 #endif
 
-//!
-void WallDistStatics();
-
 //! If read wall distance file or not.
-bool IsReadWallDist();
-
-void GhostWallDistance();
+bool IsReadWalldist();
 
 #include "Pre_WalldistCompute.hxx"
 

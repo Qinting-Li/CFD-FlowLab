@@ -1,4 +1,5 @@
-API/bin/
-CFD/bin/
-Mesh/bin/
-PHengLEI/build/
+﻿/.vs
+/API/bin/
+/CFD/bin/
+/Mesh/bin/
+/PHengLEI/build/

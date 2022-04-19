@@ -211,12 +211,13 @@ private:
     int zoneID;
 
     //! The BCRegions list in the current CompositeStructBC.
-    vector<StructBC *> * bcRegions;
+    vector<StructBC *> *bcRegions;
 
-    //! The I/J/K id of Interface Faces.
+
+    //! The I/J/K id of interface faces.
     int *iID, *jID, *kID;
 
-    //! The bcRegions id of Interface Faces.
+    //! The bcRegions id of interface faces.
     int *bcRegionIDofIFace; 
 
     //! Boundary name of given type;

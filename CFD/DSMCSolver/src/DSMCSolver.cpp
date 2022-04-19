@@ -348,7 +348,7 @@ void DSMC::ReadGeometry()
 
     region->UpdateAllZonesPara();
 
-    testTime->ShowTimeSpanToLogfile("Grid Reading");
+    testTime->ShowTimeSpanToLogFile("Grid Reading");
 
     int nZones = GetNumberofGlobalZones();
     dsmcgrid = new DSMCUnstructGrid * [nZones];
