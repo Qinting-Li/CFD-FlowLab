@@ -364,7 +364,7 @@ public:
 protected:
     int GetZoneLocalID();
 
-    Grid *GetGrid(int level = 0);
+    Grid * GetGrid(int level = 0);
 
     uint_t GetNumberOfMultiGrid();
 

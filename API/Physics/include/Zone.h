@@ -34,14 +34,14 @@ class Region;
 class Zone
 {
 private:
-    //! Zone Index
+    //! Zone Index.
     int index;
 
     //! Computational grid.
     PHGeometry *geom;
 
     //! Solvers list, load on the current zone.
-    vector < PHSolver * > *solvers;
+    vector <PHSolver *> *solvers;
 
     //! Control parameters, usually read from file.
     Data_Param *zPara;
@@ -93,9 +93,6 @@ public:
     }
 
     void SetInterface(Grid *base_grid, Grid *cgrid);
-
-private:
-
 };
 
 void InitGlobalValuesOfAllZones();

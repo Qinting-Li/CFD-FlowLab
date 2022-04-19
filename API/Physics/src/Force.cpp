@@ -156,7 +156,7 @@ void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, R
     numberofSolidWallPart = 0;
     if(isPartExist)
     {
-        numberofSolidWallPart = GlobalBoundaryCondition::GetNumberofSolidWallPart();
+        numberofSolidWallPart = GlobalBoundaryCondition::GetNumberOfSolidWallPart();
     }
     //! Because of global and local part force, numberofSolidWallPart * 2
     numberofTotalPart = numberofSolidWallPart * 2 + 1;
@@ -254,7 +254,7 @@ void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, R
         PHSPACE::SetField(partBCID, ALL_SOLID_WALL, numberofTotalPart);
 
         int partCount = 1;
-        uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+        uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
         for (int iBC = 0; iBC < nTBC; ++ iBC)
         {
             if((!GlobalBoundaryCondition::IsSolidWallBC(iBC)) && ((GlobalBoundaryCondition::GetBC(iBC)->GetBCType() != PHENGLEI::ABLATION_SURFACE))) continue;
@@ -283,7 +283,7 @@ void Force::CollectionForce(DataContainer *data_in)
     RDouble *localForceVar = new RDouble [nTotalVarDim];
     PHSPACE::SetField(localForceVar, 0.0, nTotalVarDim);
 
-    int nTBC = static_cast<int>(GlobalBoundaryCondition::GetNumberofBC());
+    int nTBC = static_cast<int>(GlobalBoundaryCondition::GetNumberOfBC());
    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int varCount = 0;
@@ -1066,10 +1066,10 @@ void Force::DumpData(DataContainer * data)
         {
             int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
             AerodynamicForceComponent::components.resize(numberOfAerodynamicForceComponents);
-            int nTBCWall = GlobalBoundaryCondition::GetNumberofSolidWallPart();
+            int nTBCWall = GlobalBoundaryCondition::GetNumberOfSolidWallPart();
             SimpleBC* boundaryCondition = 0;
             int iComponent = 0;
-            int nTBC = GlobalBoundaryCondition::GetNumberofBC();
+            int nTBC = GlobalBoundaryCondition::GetNumberOfBC();
             if (numberOfAerodynamicForceComponents != nTBCWall)
             {
                 TK_Exit::ExceptionExit("Error in AerodynamicForceComponent::initialize : numberOfAerodynamicForceComponents != nTBCWall");
@@ -1842,7 +1842,7 @@ void Force::DumpData(DataContainer * data)
         int server = GetServerProcessorID();
         if (myID != server) return;
 
-        int nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+        int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
         for (int iPart = 0; iPart < nTotalBC; ++iPart)
         {
             SimpleBC* boundaryCondition = GlobalBoundaryCondition::GetBC(iPart);
@@ -2100,7 +2100,7 @@ void Force::DumpData(DataContainer * data)
         numberOfAerodynamicForceComponents = 0;
         if(isComponentsExist)
         {
-            numberOfAerodynamicForceComponents = GlobalBoundaryCondition::GetNumberofSolidWallPart();
+            numberOfAerodynamicForceComponents = GlobalBoundaryCondition::GetNumberOfSolidWallPart();
         }
         GlobalDataBase::UpdateData("numberOfAerodynamicForceComponents", &numberOfAerodynamicForceComponents, PHINT, 1);
 
@@ -2119,7 +2119,7 @@ void Force::DumpData(DataContainer * data)
         RDouble angleOfSideslipDenotedByRadian = GlobalDataBase::GetDoubleParaFromDB("sideslip");
 
         int partCount = 0;
-        uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+        uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
         for (int iBC = 0; iBC < nTBC; ++iBC)
         {
             if (!GlobalBoundaryCondition::IsSolidWallBC(iBC)) continue;

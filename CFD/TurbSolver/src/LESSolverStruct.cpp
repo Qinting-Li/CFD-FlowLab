@@ -28,7 +28,7 @@ LESSolverStruct::~LESSolverStruct()
 
 void LESSolverStruct::AllocateGlobalVar(Grid *gridIn)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -139,7 +139,7 @@ void LESSolverStruct::AllocateGlobalVar(Grid *gridIn)
 
 void LESSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     StructGrid *grid = StructGridCast(gridIn);
 
     RDouble3D *cellLengthScale = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cellLengthScale"));
@@ -952,7 +952,7 @@ void LESSolverStruct::ComputeWallFunction(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
     
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int wallDampingFunctionType = parameters->GetWallDampingFunctionType();
 
     RDouble3D &wallFunction = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("wallFunction"));
@@ -1016,7 +1016,7 @@ void LESSolverStruct::WallFunctionofVanDriest(Grid *gridIn)
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
 
     const double kappa = 0.41;
@@ -1064,7 +1064,7 @@ void LESSolverStruct::WallFunctionofDXB(Grid *gridIn)
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble rgam = parameters->GetRgam();
 
@@ -1117,7 +1117,7 @@ void LESSolverStruct::WallFunctionofPiomelli(Grid *gridIn)
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
 
     const double kappa = 0.41;
@@ -1763,7 +1763,7 @@ void LESSolverStruct::ObtainViscosity(Grid *gridIn)
 
     ComputeWallFunction(grid);
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
 
     int iterationStep;
@@ -1827,7 +1827,7 @@ void LESSolverStruct::Smagorinsky(Grid *gridIn)
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
@@ -4349,7 +4349,7 @@ void LESSolverStruct::ComputeTestFilteredTemperatureFD(Grid *gridIn)
 
 void LESSolverStruct::ComputeStrainRateTensor(Grid *gridIn)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
     if(subgridScaleModel == 6)
     {
@@ -4919,7 +4919,7 @@ void LESSolverStruct::ComputeLeonardStress(Grid *gridIn)
         ComputeTestFilteredQFD(grid);
     }
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
 
     if (subgridScaleModel == 4)
@@ -7044,7 +7044,7 @@ void LESSolverStruct::TestFilter(const int &nn, RFloat1D *fu)
     tfu = new RFloat1D(II, fortranArray);
     (* tfu) = 0.0;
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     int testFilterWidth = parameters->GetTestFilterWidth();
 
@@ -7072,7 +7072,7 @@ void LESSolverStruct::TestFilter(const int &nn, RFloat1D *fu)
 
 void LESSolverStruct::TestFilter(const int &n0, const int &nn, RDouble1D *&tf, RDouble1D *&f)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     int testFilterWidth = parameters->GetTestFilterWidth();
 
@@ -7094,7 +7094,7 @@ void LESSolverStruct::TestFilter(const int &n0, const int &nn, RDouble1D *&tf, R
 
 void LESSolverStruct::TestFilter(const int &n0, const int &nn, RDouble *tf, RDouble *f)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     int testFilterWidth = parameters->GetTestFilterWidth();
 
