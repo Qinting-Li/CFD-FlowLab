@@ -1408,10 +1408,10 @@ void Simulation::DefineAndCreateSolvers()
 #ifdef USE_DEMOSOLVER
         PHSolver *solver = new DemoSolver();
         solverList.push_back(solver);
-#else  
+#else
 
         //! For each zone, define the solver names on it.
-        //! If you are solver developer, define your solve name here,
+        //! If you are solver developer, define your solver name here,
         //! according your solver logic.
         int dgHighOrder = 0;
         zone->GetData("dg_high_order", &dgHighOrder, PHINT, 1);
@@ -1467,7 +1467,7 @@ void Simulation::DefineAndCreateSolvers()
             }
             else
             {
-                #ifdef USE_IncompressibleSolver
+#ifdef USE_IncompressibleSolver
                 //! Add incompressible solvers.
                 if (gridType == UNSTRUCTGRID)
                 {
@@ -1481,7 +1481,7 @@ void Simulation::DefineAndCreateSolvers()
                     PHSolver *solver = new INCompSolverStruct();
                     solverList.push_back(solver);
                 }
-                #endif
+#endif
             }
         }
         else
@@ -1507,14 +1507,10 @@ void Simulation::DefineAndCreateSolvers()
                 }
                 else if (gridType == STRUCTGRID)
                 {
-                    const int FV_METHOD = 0;
-                    const int FD_METHOD = 1;
-                    const int NS_METHOD = 2;
-
                     int isFVMOrFDM = 0;
                     zone->GetData("isFVMOrFDM", &isFVMOrFDM, PHINT, 1);
 
-                    if (isFVMOrFDM == FV_METHOD || isFVMOrFDM == NS_METHOD)
+                    if (isFVMOrFDM == FV_METHOD)
                     {
                         //! Add structured turbulent solver.
                         PHSolver *solver = new TurbSolverStr();

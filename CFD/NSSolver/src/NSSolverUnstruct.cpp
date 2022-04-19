@@ -5,7 +5,6 @@
 #include "AerodynamicsBasicRelations.h"
 #include "Glb_Dimension.h"
 #include "Constants.h"
-#include "SubsonicBC.h"
 #include <list>
 #include "Param_NSSolverUnstruct.h"
 #include "Post_ForceMoment.h"
@@ -53,7 +52,7 @@ NSSolverUnstruct::~NSSolverUnstruct()
 
 void NSSolverUnstruct::ReadParameter()
 {
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
 
     //string uns_scheme_name;
@@ -131,7 +130,7 @@ void NSSolverUnstruct::AllocateGlobalVar(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nNSEquation = parameters->GetNSEquationNumber();
 
     int nLaminar  = parameters->GetLaminarNumber();
@@ -303,7 +302,7 @@ void NSSolverUnstruct::DeAllocateGlobalVar(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nChemical = parameters->GetChemicalFlag();
 
     int nChemicalRadius = parameters->GetNChemicalRadius();
@@ -485,7 +484,7 @@ bool NSSolverUnstruct::JudgeIfReadAverage()
 
 void NSSolverUnstruct::DumpRestart(ActionKey *actkey)
 {
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int level = actkey->level;
     UnstructGrid * grid = UnstructGridCast(GetGrid(level));
 
@@ -693,7 +692,7 @@ void NSSolverUnstruct::ReadRestartH5(ActionKey *actkey)
     Grid *grid = GetGrid(actkey->level);
     int gridID = grid->GetZoneID();
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
 
     int nEquation = GetNumberOfEquations();
 
@@ -883,7 +882,7 @@ void NSSolverUnstruct::ReadRestart(ActionKey *actkey)
     int level = actkey->level;
     UnstructGrid * grid = UnstructGridCast(GetGrid(level));
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -980,7 +979,7 @@ void NSSolverUnstruct::ReadRestart(ActionKey *actkey)
 
 void NSSolverUnstruct::InitFlowAsRestart()
 {
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     UnstructGrid *grid = UnstructGridCast(GetGrid(0));
     int outnstep = 0;
     GlobalDataBase::UpdateData("outnstep",&outnstep, PHINT, 1);
@@ -1098,7 +1097,7 @@ void NSSolverUnstruct::DownloadInterfaceData(ActionKey *actkey)
     InterfaceInfo * interfaceInfo = grid->GetInterfaceInfo();
     if (!interfaceInfo) return;
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -1121,7 +1120,7 @@ void NSSolverUnstruct::UploadInterpointData(ActionKey *actkey)
     {
         return;
     }
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -1144,7 +1143,7 @@ void NSSolverUnstruct::DownloadInterpointData(ActionKey *actkey)
     {
         return;
     }
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -1275,7 +1274,7 @@ void NSSolverUnstruct::UploadOversetData(ActionKey *actkey)
     int level = actkey->level;
     UnstructGrid * grid = reinterpret_cast< UnstructGrid * >(GetGrid(level));
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -1291,7 +1290,7 @@ void NSSolverUnstruct::UploadOversetData(ActionKey *actkey)
 
 void NSSolverUnstruct::DownloadOversetData(ActionKey *actkey)
 {
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int level = actkey->level;
     UnstructGrid * grid = reinterpret_cast< UnstructGrid * >(GetGrid(level));
 
@@ -1448,7 +1447,7 @@ void NSSolverUnstruct::Turb_Sengy(Grid *gridIn)
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
 
     if (viscousType >= TWO_EQU)
@@ -1906,7 +1905,7 @@ void NSSolverUnstruct::UpdateUnsteadyFlow(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int isUnsteady = parameters->GetIsUnsteady();
 
     if (!isUnsteady) return;
@@ -2154,13 +2153,13 @@ void NSSolverUnstruct::ChemicalSource(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    RDouble * vol  = grid->GetCellVolume();
+    RDouble *vol  = grid->GetCellVolume();
 
-    RDouble **q   = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q") );
-    RDouble **t   = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("t") );
-    RDouble **res = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("res") );
+    RDouble **q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
+    RDouble **t   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("t"));
+    RDouble **res = reinterpret_cast< RDouble ** > (grid->GetDataPtr("res"));
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nm = parameters->GetNSEquationNumber();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
@@ -2168,15 +2167,15 @@ void NSSolverUnstruct::ChemicalSource(Grid *gridIn)
 
     int nEquation = GetNumberOfEquations();
 
-    RDouble **src = NewPointer2<RDouble>(nLaminar,nTotalCell);
+    RDouble **src = NewPointer2<RDouble>(nLaminar, nTotalCell);
 
     using namespace GAS_SPACE;
     using namespace IDX;
 
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        gas->ChemicalSource(q,t,vol,src,iCell);
-        for ( int m = nm; m < nLaminar; ++ m )
+        gas->ChemicalSource(q, t, vol, src, iCell);
+        for (int m = nm; m < nLaminar; ++ m)
         {
             res[m][iCell] += src[m - nm][iCell];
         }
@@ -2192,9 +2191,9 @@ void NSSolverUnstruct::LHSMatrixs(Grid *gridIn)
     LHSMatrixsInHouse(grid);
 }
 
-void NSSolverUnstruct::LineLUSGSMatrixs(Grid* gridIn)
+void NSSolverUnstruct::LineLUSGSMatrixs(Grid *gridIn)
 {
-    UnstructGrid* grid = UnstructGridCast(gridIn);
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     if (grid->GetLineTopology() == NULL)
     {
         grid->ReorderCellForLineLUSGS();
@@ -3339,14 +3338,13 @@ void NSSolverUnstruct::SpectrumRadiusChemical(Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    RDouble * vol  = grid->GetCellVolume();
+    RDouble *vol = grid->GetCellVolume();
 
+    RDouble **q = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
+    RDouble **t = reinterpret_cast< RDouble ** > (grid->GetDataPtr("t"));
+    RDouble **chemSpectrum = reinterpret_cast< RDouble ** > (grid->GetDataPtr("chemSpectralRadius"));
 
-    RDouble **q   = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("q") );
-    RDouble **t   = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("t") );
-    RDouble **chemSpectrum = reinterpret_cast< RDouble ** > ( grid->GetDataPtr("chemSpectralRadius") );
-
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nm = parameters->GetNSEquationNumber();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
@@ -3355,25 +3353,23 @@ void NSSolverUnstruct::SpectrumRadiusChemical(Grid *gridIn)
 
     int nEquation = GetNumberOfEquations();
 
-    PHSPACE::SetField(chemSpectrum, nSpeciesNumber, nTotalCell,0.0);
+    PHSPACE::SetField(chemSpectrum, nSpeciesNumber, nTotalCell, 0.0);
 
-    RDouble **srs = NewPointer2<RDouble>(nSpeciesNumber,nTotalCell);
+    RDouble **srs = NewPointer2<RDouble>(nSpeciesNumber, nTotalCell);
 
     using namespace IDX;
 
-
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        gas->ChemicalSpectrumRadius(q,t,vol,srs,iCell);
+        gas->ChemicalSpectrumRadius(q, t, vol, srs, iCell);
 
-        for ( int m = 0; m < nSpeciesNumber - 1; ++ m )
+        for (int m = 0; m < nSpeciesNumber - 1; ++ m)
         {
             chemSpectrum[m][iCell] += srs[m][iCell];
         }
     }
 
     DelPointer2(srs);
-
 }
 
 void NSSolverUnstruct::LocalTimeStep(Grid *gridIn)
@@ -3455,7 +3451,7 @@ void NSSolverUnstruct::LocalTimeStep_Prince(Grid* gridIn)
     //! Set dt to LARGE.
     PHSPACE::SetField(dt, LARGE, nTotalCell);
 
-    Param_NSSolverUnstruct* parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     RDouble refGama = parameters->GetRefGama();
     RDouble isViscous = parameters->IsViscous();
     RDouble prandtlLaminar = parameters->GetPrandtlLaminar();
@@ -3619,7 +3615,7 @@ void NSSolverUnstruct::LocalGlobalTimeStep(Grid *gridIn)
         dt[iCell] = cfl * vol[iCell] / dt[iCell];
     }
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
 
     if (viscousType > INVISCID)
@@ -6978,7 +6974,7 @@ void NSSolverUnstruct::AirForceCoef(ActionKey *actkey)
     AirForceCoefParts(actkey, ALL_PART);
 
     int Coordinate = LocalCoordinate;
-    uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+    uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
     for (int iPart = 0; iPart < nTBC; ++ iPart)
     {
         if(!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
@@ -7002,7 +6998,7 @@ void NSSolverUnstruct::AirForceCoefParts(ActionKey *actkey, int partID, int Coor
 
     RDouble **q   = reinterpret_cast< RDouble ** > (grid->GetDataPtr("q"));
     RDouble *visl = reinterpret_cast< RDouble * > (grid->GetDataPtr("visl"));
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     RDouble oRefReNumber = parameters->GetoRefReNumber();
 
     int viscousType = parameters->GetViscousType();
@@ -7271,7 +7267,7 @@ void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int
     RDouble** q = reinterpret_cast<RDouble**> (grid->GetDataPtr("q"));
     RDouble* visl = reinterpret_cast<RDouble*> (grid->GetDataPtr("visl"));
     RDouble* vistl = reinterpret_cast<RDouble*> (grid->GetDataPtr("vist"));
-    Param_NSSolverUnstruct* parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     RDouble oRefReNumber = parameters->GetoRefReNumber();
 
     int viscousType = parameters->GetViscousType();
@@ -7346,7 +7342,7 @@ void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int
     CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
-    int nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+    int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
 
     int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
 
@@ -8213,7 +8209,7 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
     int nvarplot;
     nvarplot = 2;
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -9419,7 +9415,7 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         postVisualization->UpdateVisualNodeVarPtr(varName, iBlank);
     }
 
-    Param_NSSolverUnstruct * parameters = GetControlParameters();
+    Param_NSSolverUnstruct *parameters = GetControlParameters();
     int viscousType = parameters->GetViscousType();
     string viscousName = parameters->GetViscousName();
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
@@ -10115,7 +10111,7 @@ void NSSolverUnstruct::ViscousAdiabaticWallBCRegion(Grid *gridIn, UnstructBC *bc
         }
     }    
 
-    int isUnsteady     = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
     int iFace, le, re;

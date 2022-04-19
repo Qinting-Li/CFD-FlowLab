@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PostProcess.h
-//! @brief     Flow result post-processing
+//! @brief     Flow result post-processing.
 //! @author    Baka.
 
 #pragma once
