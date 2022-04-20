@@ -374,6 +374,7 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
 
 string inviscidSchemeName = "roe";
 string str_limiter_name   = "vanalbada";
+int isWennScheme = 0;
 
 #*******************************************************************
 #                         UnStruct Solver or Common                *
