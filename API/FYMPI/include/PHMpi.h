@@ -58,7 +58,7 @@ void SetGridServerProcessorID(int serverId);
 //! Set the number of global zones, which make up the whole computation domain,
 //! no matter the domain is divided into many partition or not. The number of global zone
 //! is equal to the sum of number of local zone on each processor.
-LIB_EXPORT void SetNumberofGlobalZones(int nblock);
+LIB_EXPORT void SetNumberOfGlobalZones(int nblock);
 
 //! Set the number of processors used in this simulation process.
 void SetNumberOfProcessor(int nproc);

@@ -1166,7 +1166,7 @@ void CombinGrid::DumpMergedGridP2P(const string &gridFileName, Grid **grids, int
     using namespace PHMPI;
 
     //! Notice: Directly writing to grid file will affect the number of grid blocks,so you can not dump it at will.
-    SetNumberofGlobalZones(nBlocks);
+    SetNumberOfGlobalZones(nBlocks);
 
     int nZones = GetNumberofGlobalZones();
 
