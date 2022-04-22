@@ -136,7 +136,7 @@ void SetGridServerProcessorID(int serverId)
     gridServer = serverId;
 }
 
-LIB_EXPORT void SetNumberofGlobalZones(int nblock)
+LIB_EXPORT void SetNumberOfGlobalZones(int nblock)
 {
     nZones = nblock;
 }
