@@ -967,7 +967,7 @@ void TurbSolverStrFD::VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *st
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    Param_TurbSolverStruct* parameters = GetControlParameters();
+    Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
     RDouble4D& qLaminar = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q"));
@@ -1094,7 +1094,7 @@ void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *struc
     RDouble paba12[5] = { 31.08654, 5.0429072e-02, -2.0072314e-8 };
     RDouble beta1 = 0.075;
 
-    Param_TurbSolverStruct* parameters = GetControlParameters();
+    Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
     RDouble4D& qLaminar = *reinterpret_cast<RDouble4D*> (grid->GetDataPtr("q"));

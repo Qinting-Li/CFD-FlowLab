@@ -51,10 +51,10 @@ class InterpointDataProxy;
 
 //! @brief The base class of all other solvers. Although different types of solver are create,
 //!        they are all handled in the form of 'Solver' during simulation, this let them look same.
-//!        The inherit order is: Solver->NSSolver->NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.\n
-//!                                    ->TurbSolver->TurbSolverStr/TurbSolverUnstr.\n
-//!                                    ->INCompSolver->INCompSolverStruct/INCompSolverUnstruct.\n
-//!                                    ->UGKSSimulation, and other solvers.\n
+//!        The inherit order is: Solver->NSSolver->NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.
+//!                                    ->TurbSolver->TurbSolverStr/TurbSolverUnstr.
+//!                                    ->INCompSolver->INCompSolverStruct/INCompSolverUnstruct.
+//!                                    ->UGKSSimulation, and other solvers.
 //!        Note that, each zone can load several different solvers.
 class PHSolver
 {
@@ -65,6 +65,7 @@ private:
     //! The geometry, which is grid actually, bind to the solver.
     PHGeometry *geometry;
 
+    //!
     int key; 
 
 public:
@@ -82,9 +83,12 @@ public:
     int  GetIndex() const;
 
     //! Return the geometry(grid).
-    PHGeometry *GetGeometry();
+    PHGeometry * GetGeometry();
     
+    //!
     void SetKey(int key);
+
+    //!
     int  GetKey() const;
     
     //! Initialize the data, 
@@ -129,7 +133,6 @@ public:
 };
 #include "Solver.hxx"
 
-
 //! @brief GlobalSolvers stores the global solver list on each zone.
 class GlobalSolvers
 {
@@ -142,7 +145,7 @@ public:
     //! Return the 'solverID'-th solver on 'zoneID'-th zone from global solvers list.
     //! @param[in] zoneID    The global zone index.
     //! @param[in] solverID  The solver index on the zone of 'zoneID'.
-    static PHSolver *GetSolver(int zoneID, int solverID = 0);
+    static PHSolver * GetSolver(int zoneID, int solverID = 0);
 
     //! Return the total number of solvers on the zone of 'iZone'.
     //! @param[in] iZone    The zone index that you want to know the number of solvers.

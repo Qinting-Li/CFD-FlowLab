@@ -6,7 +6,7 @@ namespace PHSPACE
 
 PHGeometry::PHGeometry(vector < Grid * > *grids)
 {
-    this->grids  = grids;
+    this->grids = grids;
 }
 
 PHGeometry::~PHGeometry()

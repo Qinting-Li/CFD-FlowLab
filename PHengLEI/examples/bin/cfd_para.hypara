@@ -370,10 +370,11 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
 //                     -- "vanalbada", "vanleer", "minmod", "smooth", "minvan", "3rdsmooth", "3rd_minmod_smooth".
 //                     -- "nolim", no limiter.
 //                     -- "vanalbada_clz", clz supersonic version.
-                       -- "weno3_js", "wenn3_prm211", "wenn3_zm", "wenn3_zes2", "wenn3_zes3"
+//                     -- "weno3_js", "wenn3_prm211", "wenn3_zm", "wenn3_zes2", "wenn3_zes3"
 
 string inviscidSchemeName = "roe";
 string str_limiter_name   = "vanalbada";
+int isWennScheme = 0;
 
 #*******************************************************************
 #                         UnStruct Solver or Common                *
@@ -885,8 +886,8 @@ int    monitorNegativeConstant = 0;
 //               2 -- Two-temperature model.
 //               3 -- Three-temperature model.
 // nIdealState: whether take all gas species as ideal gas for gas-mixture process.
-                0 -- No.
-                1 -- Yes.
+//               0 -- No.
+//               1 -- Yes.
 // nTEnergyModel: the method to computing temperature energy model.
 //               0 -- the energy term is computed using the conventional method.
 //               1 -- the energy term is computed using the polynomial fitting method.

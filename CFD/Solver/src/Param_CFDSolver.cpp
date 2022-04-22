@@ -17,28 +17,28 @@ LIB_EXPORT Param_CFDSolver::~Param_CFDSolver()
 
 LIB_EXPORT void Param_CFDSolver::Init()
 {
-    restartNSFile             = GlobalDataBase::GetStrParaFromDB("restartNSFile");
-    resSaveFile               = GlobalDataBase::GetStrParaFromDB("resSaveFile");
-    viscousName               = GlobalDataBase::GetStrParaFromDB("viscousName");
+    restartNSFile            = GlobalDataBase::GetStrParaFromDB("restartNSFile");
+    resSaveFile              = GlobalDataBase::GetStrParaFromDB("resSaveFile");
+    viscousName              = GlobalDataBase::GetStrParaFromDB("viscousName");
 
-    plotFieldType             = GlobalDataBase::GetIntParaFromDB("plotFieldType");
+    plotFieldType            = GlobalDataBase::GetIntParaFromDB("plotFieldType");
 
-    viscousType               = GlobalDataBase::GetIntParaFromDB("viscousType");
-    isUnsteady                = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    viscousType              = GlobalDataBase::GetIntParaFromDB("viscousType");
+    isUnsteady               = GlobalDataBase::GetIntParaFromDB("iunsteady");
 
-    intervalStepRes           = GlobalDataBase::GetIntParaFromDB("intervalStepRes");
-    intervalStepPlot          = GlobalDataBase::GetIntParaFromDB("intervalStepPlot");
-    intervalStepFlow          = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
+    intervalStepRes          = GlobalDataBase::GetIntParaFromDB("intervalStepRes");
+    intervalStepPlot         = GlobalDataBase::GetIntParaFromDB("intervalStepPlot");
+    intervalStepFlow         = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
 
-    ifLocalTimeStep           = GlobalDataBase::GetIntParaFromDB("ifLocalTimeStep");
+    ifLocalTimeStep          = GlobalDataBase::GetIntParaFromDB("ifLocalTimeStep");
 
-    CFLVaryStep               = GlobalDataBase::GetIntParaFromDB("CFLVaryStep");
-    nLUSGSSweeps              = GlobalDataBase::GetIntParaFromDB("nLUSGSSweeps");
-    nMGLevel                  = GlobalDataBase::GetIntParaFromDB("nMGLevel");
+    CFLVaryStep              = GlobalDataBase::GetIntParaFromDB("CFLVaryStep");
+    nLUSGSSweeps             = GlobalDataBase::GetIntParaFromDB("nLUSGSSweeps");
+    nMGLevel                 = GlobalDataBase::GetIntParaFromDB("nMGLevel");
 
-    ifStartFromSteadyResults  = GlobalDataBase::GetIntParaFromDB("ifStartFromSteadyResults");
-    ifStaticsFlowField        = GlobalDataBase::GetIntParaFromDB("ifStaticsFlowField");
-    ifStaticsReynoldsStress = 0;
+    ifStartFromSteadyResults = GlobalDataBase::GetIntParaFromDB("ifStartFromSteadyResults");
+    ifStaticsFlowField       = GlobalDataBase::GetIntParaFromDB("ifStaticsFlowField");
+    ifStaticsReynoldsStress  = 0;
     if (GlobalDataBase::IsExist("ifStaticsReynoldsStress", PHINT, 1))
     {
         ifStaticsReynoldsStress = GlobalDataBase::GetIntParaFromDB("ifStaticsReynoldsStress");

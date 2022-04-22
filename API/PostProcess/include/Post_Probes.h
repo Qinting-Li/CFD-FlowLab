@@ -26,6 +26,7 @@ namespace PHSPACE
 
 class Grid;
 class SampleLocationInfo;
+
 //! @brief Post_Probes class is used to manage post variables data of probes.
 class Post_Probes
 {

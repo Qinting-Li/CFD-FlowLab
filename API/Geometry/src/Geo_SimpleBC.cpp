@@ -384,7 +384,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
 
 void GlobalBoundaryCondition::BuildBodyMap()
 {
-    vector<SimpleBC *> * globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
+    vector<SimpleBC *> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
     if (globalBCList == 0)
     {
         return;
@@ -2180,7 +2180,7 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
     }
 }
 
-int GlobalBoundaryCondition::GetNumberofSolidWallPart()
+int GlobalBoundaryCondition::GetNumberOfSolidWallPart()
 {
     if (globalBCList == 0) return 0;
 
@@ -2198,7 +2198,7 @@ int GlobalBoundaryCondition::GetNumberofSolidWallPart()
     return nSolidWallPart;
 }
 
-bool IsInterface(const int& boundaryConditionType)
+bool IsInterface(const int &boundaryConditionType)
 {
     if (boundaryConditionType == PHENGLEI::INTERFACE || boundaryConditionType < 0)
     {
