@@ -2,6 +2,8 @@
 #include "ForceProcessStruct.h"
 #include "GridType.h"
 #include "PHIO.h"
+#include "IO_FileName.h"
+#include "Glb_Dimension.h"
 #include <cmath>
 
 using namespace std;
@@ -10,24 +12,29 @@ namespace PHSPACE
 
 PostProcess::PostProcess(Region *region_in)
 {
-    gridtype = 0;
     this->region = region_in;
-    data = new PostProcessData();
 }
 
 PostProcess::~PostProcess()
 {
-    delete data;
+
 }
 
 void PostProcess::Run()
 {
     ReadGridFile();
-    ComputeMetrics();
     ReadFlowFile();
-    InitGlobalValues();
-    ReadBCFile();
-    CompAirForceCoef();
+
+    int postTask = GlobalDataBase::GetIntParaFromDB("postTask");
+    switch (postTask)
+    {
+    case COMPAIRFORCE:
+        CompAirForceCoef();
+        break;
+    default:
+        TK_Exit::UnexpectedVarValue("postTask = ", postTask);
+        break;
+    }
 }
 
 void PostProcess::ReadGridFile()
@@ -37,22 +44,28 @@ void PostProcess::ReadGridFile()
     region->ReadGrid();
     cout << endl << "Read grid finish ..." << endl;
 
-    Grid *grid = GetGrid(0);
-    gridtype = grid->Type();
 }
 
 void PostProcess::ComputeMetrics()
 {
-    /*ActionKey *actkey = new ActionKey();
-    actkey->action = COMPUTEMETRICS;
-    actkey->kind   = GRID_BASED;
-    actkey->level  = 0;
+    using namespace PHMPI;
 
-    Task *task = new Task_Client2Server();
-    task->SetMainAction(WriteScreen);
-    task->SetActionKey(actkey);
-    PHSPACE::RunSimuTask(task, true);
-    delete task;*/
+    ActionKey *actkey = new ActionKey();
+    actkey->action = COMPUTEMETRICS;
+
+    int myid = PHMPI::GetCurrentProcessorID();
+    int nZones = GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int send_proc = GetZoneProcessorIDSepMode(iZone);
+        if (myid == send_proc)
+        {
+            Grid *grid = GetGrid(iZone, 0);
+            grid->ComputeMetrics(actkey);
+        }
+    }
+    delete actkey;
+
 }
 
 void PostProcess::ReadFlowFile()
@@ -61,6 +74,29 @@ void PostProcess::ReadFlowFile()
     flowReader->Run();
 
     delete flowReader;
+}
+
+void PostProcess::CompAirForceCoef()
+{
+    InitGlobalValues();
+    ReadBCFile();
+    ComputeMetrics();
+
+    Grid *grid = GetGrid(0);
+    int gridtype = grid->Type();
+    if (gridtype == STRUCTGRID)
+    {
+        ForceProcessStruct *forceprocess = new ForceProcessStruct();
+        forceprocess->Run();
+
+        delete forceprocess;
+    }
+    else
+    {
+
+    }
+
+
 }
 
 void PostProcess::ReadBCFile()
@@ -79,6 +115,9 @@ void PostProcess::InitGlobalValues()
     int nm    = GlobalDataBase::GetIntParaFromDB("nm");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
     int neqn  = nm + nchem;
+
+    int nl    = nm;
+    GlobalDataBase::UpdateData("nl", &nl, PHINT, 1);
 
     RDouble *prim_inf = new RDouble[neqn];
     GlobalDataBase::UpdateDataPtr("prim_inf", prim_inf);
@@ -138,78 +177,8 @@ void PostProcess::ComputeReferenceLengthDimensional()
     GlobalDataBase::UpdateData("reynoldsReferenceLengthDimensional", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
 }
 
-void PostProcess::CompAirForceCoef()
-{
-    if (gridtype == STRUCTGRID)
-    {
-        ForceProcessStruct *forceprocess = new ForceProcessStruct(this->data);
-        forceprocess->Run();
 
-        delete forceprocess;
-    }
-    else
-    {
-    }
 
-    DumpAirForceCoef();
-}
 
-void PostProcess::DumpAirForceCoef()
-{
-    ostringstream oss;
-
-    string header = "# iter		CL		Cd		Side		Cd_p		Cd_f\
-    Cd-CL2par	Xcp		cfx		cfy		cfz		Cmx		Cmy		Cmz";
-
-    oss << setiosflags(ios::left);
-    oss << setiosflags(ios::scientific);
-    oss << setprecision(4);
-
-    int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
-
-    oss << header << endl;
-
-    const int ALL = 0;
-
-    RDouble *cfx      = data->GetCfx();
-    RDouble *cfy      = data->GetCfy();
-    RDouble *cfz      = data->GetCfz();
-    RDouble *cmx      = data->GetCmx();
-    RDouble *cmy      = data->GetCmy();
-    RDouble *cmz      = data->GetCmz();
-    RDouble *cl_tot   = data->GetClTot();
-    RDouble *cd_tot   = data->GetCdTot();
-    RDouble *cd_pr    = data->GetCdPr();
-    RDouble *cd_sf    = data->GetCdSf();
-    RDouble *cd_cl2pa = data->GetCdCl2Pa();
-    RDouble *xcp      = data->GetXcp();
-    RDouble *side     = data->GetSide();
-
-    oss << outnstep << "	";
-    oss << cl_tot[ALL] << "	";
-    oss << cd_tot[ALL] << "	";
-    oss << side[ALL]   << "	";
-    oss << cd_pr[ALL] << "	";
-    oss << cd_sf[ALL] << "	";
-    oss << cd_cl2pa[ALL] << "	";
-    oss << xcp[ALL] << "	";
-    oss << cfx[ALL] << "	";
-    oss << cfy[ALL] << "	";
-    oss << cfz[ALL] << "	";
-    oss << cmx[ALL] << "	";
-    oss << cmy[ALL] << "	";
-    oss << cmz[ALL] << "	";
-
-    oss << "\n";
-
-    string filename = "results/AirForceCoef.dat";
-    ios_base::openmode openmode = ios_base::out|ios_base::trunc;
-    fstream file;
-    ParallelOpenFile(file, filename, openmode);
-
-    WriteASCIIFile(file, oss.str());
-
-    ParallelCloseFile(file);
-}
 
 }

@@ -1167,7 +1167,6 @@ void Simulation::RunPostProcessing()
     postProcess->Run();
 
     delete postProcess;
-
     postProcess = NULL;
 }
 

@@ -192,6 +192,8 @@ const int NON_GHOST       = 0;    //! These are interior cells.
 const int ONE_GHOST_LAYER = 1;    //! Their have one-layer ghost cells.
 const int TWO_GHOST_LAYER = 2;    //! Their have two-layer ghost cells.
 
+const int GlobalCoordinate = 0;
+const int LocalCoordinate  = 1;
 namespace IDX
 {
 const int IR   = 0;

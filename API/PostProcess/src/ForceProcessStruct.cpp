@@ -9,9 +9,8 @@
 namespace PHSPACE
 {
 
-ForceProcessStruct::ForceProcessStruct(PostProcessData *Data)
+ForceProcessStruct::ForceProcessStruct()
 {
-    this->ForceData = Data;
     CollectData = new DataContainer();
 }
 
@@ -25,8 +24,9 @@ void ForceProcessStruct::Run()
     InitValueField();
     CompValueField();
     InitForce();
-    CollectionForce();
     CompForce();
+    CollectionForce();
+    DumpForce();
 }
 
 void ForceProcessStruct::InitValueField()
@@ -38,7 +38,7 @@ void ForceProcessStruct::InitValueField()
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
         StructGrid *grid = StructGridCast(GetGrid(zoneID));
-        
+
         int ni = grid->GetNI();
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
@@ -74,29 +74,13 @@ void ForceProcessStruct::InitForce()
     RDouble forceReferenceArea   = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
     RDouble forceReferenceLength = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
     RDouble forceReferenceLengthSpanWise = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLengthSpanWise");
-    RDouble TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
-    RDouble TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
-    RDouble TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
 
-    globalAerodynamicForce.Initialize(attack, sideslip, forceReferenceArea, forceReferenceLength, forceReferenceLengthSpanWise);
-    globalAerodynamicForce.SetTorqueRef(TorqueRefX, TorqueRefY, TorqueRefZ);
+    globalAerodynamicForce.Init(attack, sideslip, forceReferenceArea, forceReferenceLength, forceReferenceLengthSpanWise);
 }
 
 void ForceProcessStruct::CollectionForce()
 {
-    using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        int zone_proc = GetZoneProcessorID(iZone);
-        int myid = GetCurrentProcessorID();
-
-        if (myid == zone_proc)
-        {
-            AirForceCoef(iZone);
-        }
-    }
-    globalAerodynamicForce.CollectOfAllProcessors();
+    globalAerodynamicForce.CollectionForce(CollectData);
 }
 
 void ForceProcessStruct::AirForceCoef(int iZone)
@@ -109,32 +93,34 @@ void ForceProcessStruct::AirForceCoef(int iZone)
     {
         if (!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
 
+        AirForceCoefParts(iZone, iPart, LocalCoordinate);
+
         AirForceCoefParts(iZone, iPart);
     }
 }
 
-void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
+void ForceProcessStruct::AirForceCoefParts(int iZone, int partID, int Coordinate)
 {
     StructGrid *grid = StructGridCast(GetGrid(iZone));
 
-    RDouble4D &q    = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("q"));
-    RDouble3D &visl = * reinterpret_cast<RDouble3D *>(grid->GetDataPtr("visl"));
+    RDouble4D &primitiveVars = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble3D &viscousLaminar = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
+    RDouble3D &viscousTurbulence = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
 
     RDouble refReNumber = GlobalDataBase::GetDoubleParaFromDB("refReNumber");
-    RDouble oreynolds = 1.0 / refReNumber;
+    RDouble oRefReNumber = 1.0 / refReNumber;
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
 
     const int ALL_PART = -1;
     SimpleBC *boundaryCondition = NULL;
-	string partBCName = "";
+    string partBCName = "";
     RDouble TorqueRefX = 0.0, TorqueRefY = 0.0, TorqueRefZ = 0.0;
 
-    //! used to compute hinge moment:
+    //! Compute hinge moment.
     int dumpHingeMoment = 0;
-	RDouble localCoordAxis0[3] = {0.0};
-	RDouble localCoordAxis1[3] = {0.0};
-    RDouble hingeMoment = 0.0;
+    RDouble localCoordAxis0[3] = { 0 };
+    RDouble localCoordAxis1[3] = { 0 };
 
     if (partID == ALL_PART)
     {
@@ -142,11 +128,19 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
         TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
         TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
     }
-    else
+    else if ((partID != ALL_PART) && (Coordinate == GlobalCoordinate))
     {
         boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-		partBCName = boundaryCondition->GetBCName();
+        partBCName = boundaryCondition->GetBCName();
 
+        TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
+        TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
+        TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
+    }
+    else if ((partID != ALL_PART) && (Coordinate == LocalCoordinate))
+    {
+        boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
+        partBCName = boundaryCondition->GetBCName();
         boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
         boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
         boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
@@ -157,49 +151,53 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
     }
 
     using namespace IDX;
-    RDouble *prim_inf = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
-    RDouble poo = prim_inf[IP];
+    RDouble *primitiveVarFarfield = reinterpret_cast<RDouble *>(GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble pressureFarfield = primitiveVarFarfield[IP];
 
-    RDouble4D &xfn  = * (grid->GetFaceNormalX());
-    RDouble4D &yfn  = * (grid->GetFaceNormalY());
-    RDouble4D &zfn  = * (grid->GetFaceNormalZ());
-    RDouble4D &xfv  = * (grid->GetFaceVectorX());
-    RDouble4D &yfv  = * (grid->GetFaceVectorY());
-    RDouble4D &zfv  = * (grid->GetFaceVectorZ());
-    RDouble4D &area = * (grid->GetFaceArea());
-    RDouble3D &vol  = * (grid->GetCellVolume());
+    RDouble4D &xfv = *(grid->GetFaceVectorX());
+    RDouble4D &yfv = *(grid->GetFaceVectorY());
+    RDouble4D &zfv = *(grid->GetFaceVectorZ());
+    RDouble3D &vol = *(grid->GetCellVolume());
 
-    RDouble cfx, cfy, cfz, cpx, cpy, cpz, cmx, cmy, cmz;
-    cfx = 0.0;
-    cfy = 0.0;
-    cfz = 0.0;
-    cpx = 0.0;
-    cpy = 0.0;
-    cpz = 0.0;
-    cmx = 0.0;
-    cmy = 0.0;
-    cmz = 0.0;
+    RDouble cpx = 0.0;
+    RDouble cpy = 0.0;
+    RDouble cpz = 0.0;
+    RDouble hingeMoment = 0.0;
+
+    RDouble CA_f = 0.0;
+    RDouble CA_p = 0.0;
+    RDouble CN_f = 0.0;
+    RDouble CN_p = 0.0;
+    RDouble CZ_f = 0.0;
+    RDouble CZ_p = 0.0;
+    RDouble Cl_f = 0.0;
+    RDouble Cl_p = 0.0;
+    RDouble Cn_f = 0.0;
+    RDouble Cn_p = 0.0;
+    RDouble Cm_f = 0.0;
+    RDouble Cm_p = 0.0;
 
     int ndim = GetDim();
+
     using namespace IDX;
 
     int ix = 0;
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
-    
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
-        int bctype = bcregion->GetBCType();
-        
-        int ist, ied, jst, jed, kst, ked;
-        bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
-        
-        bool isNeedComputeAirForce = (bctype == PHENGLEI::SOLID_SURFACE);
+        StructBC *bcRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = bcRegion->GetBCType();
+
+        int ist = 0, ied = 0, jst = 0, jed = 0, kst = 0, ked = 0;
+        bcRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+        bool isNeedComputeAirForce = (BCType == PHENGLEI::SOLID_SURFACE || BCType == PHENGLEI::ABLATION_SURFACE);
         if (isNeedComputeAirForce && partID != ALL_PART)
         {
-            const string &bcName = bcregion->GetBCName();
+            const string &bcName = bcRegion->GetBCName();
             isNeedComputeAirForce = isNeedComputeAirForce && (bcName == partBCName);
         }
 
@@ -209,25 +207,13 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
             continue;
         }
 
-        int *s_lr3d = bcregion->GetFaceDirectionIndex();
+        int *s_lr3d = bcRegion->GetFaceDirectionIndex();
+        int nSurface = bcRegion->GetFaceDirection() + 1;
+        int leftOrRightIndex = bcRegion->GetFaceLeftOrRightIndex();
 
-        int nsurf = bcregion->GetFaceDirection() + 1;
-        int lr    = bcregion->GetFaceLeftOrRightIndex();
+        int iWall = 0, jWall = 0, kWall = 0;
 
-        int id, jd, kd;
-        GetBCFaceIDX(s_lr3d, id, jd, kd);
-
-        int in, jn, kn, i1, j1, k1, il, jl, kl;
-        RDouble pw, p1, p2, cp;
-        RDouble dfx, dfy, dfz, dpx, dpy, dpz, dmx, dmy, dmz, fvsx, fvsy, fvsz;
-        RDouble nxs, nys, nzs, ns, nx, ny, nz;
-        RDouble dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz;
-        RDouble xc, yc, zc;
-
-        RDouble vsl, vst;
-        RDouble vis, divv2p3;
-        RDouble txx, tyy, tzz;
-        RDouble txy, txz, tyz;
+        RDouble dfx = 0, dfy = 0, dfz = 0, dpx = 0, dpy = 0, dpz = 0;
 
         for (int k = kst; k <= ked; ++ k)
         {
@@ -235,119 +221,119 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    in = i + id;
-                    jn = j + jd;
-                    kn = k + kd;
+                    //! i, j, k - is first cell index near SOLID_SURFACE.
+                    bcRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
 
-                    nxs = xfn (in, jn, kn, nsurf);
-                    nys = yfn (in, jn, kn, nsurf);
-                    nzs = zfn (in, jn, kn, nsurf);
-                    ns  = area(in, jn, kn, nsurf);
+                    //! The surface direction of SOLID_SURFACE.
+                    RDouble nx = leftOrRightIndex * xfv(iWall, jWall, kWall, nSurface);
+                    RDouble ny = leftOrRightIndex * yfv(iWall, jWall, kWall, nSurface);
+                    RDouble nz = leftOrRightIndex * zfv(iWall, jWall, kWall, nSurface);
 
-                    nx = lr * nxs * ns;
-                    ny = lr * nys * ns;
-                    nz = lr * nzs * ns;
+                    //! The index of  first ghost cell layer near SOLID_SURFACE.
+                    int iCellGhostLayer = i + s_lr3d[0];
+                    int jCellGhostLayer = j + s_lr3d[1];
+                    int kCellGhostLayer = k + s_lr3d[2];
 
-                    i1 = i - s_lr3d[0];
-                    j1 = j - s_lr3d[1];
-                    k1 = k - s_lr3d[2];
+                    RDouble pCellfirstLayer = primitiveVars(i, j, k, IP);
 
-                    il = i + s_lr3d[0];
-                    jl = j + s_lr3d[1];
-                    kl = k + s_lr3d[2];
+                    RDouble pressureWall = pCellfirstLayer;
+                    RDouble pressureCoef = two * (pressureWall - pressureFarfield);
 
-                    p2 = q(i1, j1, k1, IP);
-                    p1 = q(i, j, k, IP);
+                    dpx = nx * pressureCoef;
+                    dpy = ny * pressureCoef;
+                    dpz = nz * pressureCoef;
 
-                    //! pressure drag.
-                    pw = p1;
-                    cp = two * (pw - poo);
-
-                    dpx = nx * cp;
-                    dpy = ny * cp;
-                    dpz = nz * cp;
+                    CA_p += dpx;
+                    CN_p += dpy;
+                    CZ_p += dpz;
 
                     dfx = dpx;
                     dfy = dpy;
                     dfz = dpz;
 
+                    RDouble xc = 0, yc = 0, zc = 0;
+                    grid->FaceCoor(iWall, jWall, kWall, nSurface, xc, yc, zc);
+
+                    RDouble visLaminar = 0, visTurbulence = 0;
+                    RDouble dudx = 0, dudy = 0, dudz = 0, dvdx = 0, dvdy = 0, dvdz = 0, dwdx = 0, dwdy = 0, dwdz = 0;
                     if (viscousType > INVISCID)
                     {
                         Geometry3D *geometry3D = new Geometry3D;
 
-                        if (nsurf == 1)
+                        if (nSurface == 1)
                         {
-                            //Get ith-facevector on the wall surface;
-                            Get_GEO_I(i, j, k, in, in, ndim, geometry3D, xfv, yfv, zfv, vol);
-                            //! Get derivative to the wall in i-direction of u, v, w.
-                            DXDYDZ_I(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
-                            DXDYDZ_I(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
-                            DXDYDZ_I(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
-                            vsl = half * (visl(i, j, k) + visl(i+lr, j, k));
+                            //! Get i-th face vector on the wall surface.
+                            Get_GEO_I(i, j, k, iWall, iWall, ndim, geometry3D, xfv, yfv, zfv, vol);
+                            //! Get derivative to the wall in i-direction of u,v,w.
+                            DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                            DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                            DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                            visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(iCellGhostLayer, j, k));
+                            visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(iCellGhostLayer, j, k));
                         }
-                        else if (nsurf == 2)
+                        else if (nSurface == 2)
                         {
-                            //! Get jth-facevector on the wall surface.
-                            Get_GEO_J(i, j, k, jn, jn, ndim, geometry3D, xfv, yfv, zfv, vol);
-                            //! Get derivative to the wall in j-direction of u, v, w.
-                            DXDYDZ_J(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
-                            DXDYDZ_J(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
-                            DXDYDZ_J(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
-                            vsl = half * (visl(i, j, k) + visl(i, j+lr, k));
+                            //! Get j-th face vector on the wall surface.
+                            Get_GEO_J(i, j, k, jWall, jWall, ndim, geometry3D, xfv, yfv, zfv, vol);
+                            //! Get derivative to the wall in j-direction of u,v,w.
+                            DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                            DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                            DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                            visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, jCellGhostLayer, k));
+                            visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, jCellGhostLayer, k));
                         }
                         else
                         {
-                            //! Get kth-facevector on the wall surface.
-                            Get_GEO_K(i, j, k, kn, kn, ndim, geometry3D, xfv, yfv, zfv, vol);
-                            //! Get derivative to the wall in k-direction of u, v, w.
-                            DXDYDZ_K(q, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, lr);
-                            DXDYDZ_K(q, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, lr);
-                            DXDYDZ_K(q, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, lr);
-                            vsl = half * (visl(i, j, k) + visl(i, j, k+lr));
+                            //! Get k-th face vector on the wall surface.
+                            Get_GEO_K(i, j, k, kWall, kWall, ndim, geometry3D, xfv, yfv, zfv, vol);
+                            //! Get derivative to the wall in k-direction of u,v,w.
+                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                            visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, j, kCellGhostLayer));
+                            visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, j, kCellGhostLayer));
                         }
 
-                        vsl = half * (visl(il, jl, kl) + visl(i, j, k));
-                        vst = 0.0;
-                        vis = vsl + vst;
+                        //! It is unnecessary to consider because the turbulence viscosity coefficient is 0.
+                        //visTurbulence = 0.0;
+                        RDouble viscousCoef = visLaminar + visTurbulence;
 
-                        divv2p3 = two3rd * (dudx + dvdy + dwdz);
+                        RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
 
-                        //! stress components.
-                        txx = vis * (two * dudx - divv2p3);
-                        tyy = vis * (two * dvdy - divv2p3);
-                        tzz = vis * (two * dwdz - divv2p3);
-                        txy = vis * (dudy + dvdx);
-                        txz = vis * (dudz + dwdx);
-                        tyz = vis * (dvdz + dwdy);
+                        //! Stress components.
+                        RDouble txx = viscousCoef * (two * dudx - divv2p3);
+                        RDouble tyy = viscousCoef * (two * dvdy - divv2p3);
+                        RDouble tzz = viscousCoef * (two * dwdz - divv2p3);
+                        RDouble txy = viscousCoef * (dudy + dvdx);
+                        RDouble txz = viscousCoef * (dudz + dwdx);
+                        RDouble tyz = viscousCoef * (dvdz + dwdy);
 
-                        fvsx = - two * (nx * txx + ny * txy + nz * txz) * oreynolds;
-                        fvsy = - two * (nx * txy + ny * tyy + nz * tyz) * oreynolds;
-                        fvsz = - two * (nx * txz + ny * tyz + nz * tzz) * oreynolds;
+                        RDouble fvsx = -two * (nx * txx + ny * txy + nz * txz) * oRefReNumber;
+                        RDouble fvsy = -two * (nx * txy + ny * tyy + nz * tyz) * oRefReNumber;
+                        RDouble fvsz = -two * (nx * txz + ny * tyz + nz * tzz) * oRefReNumber;
 
                         dfx += fvsx;
                         dfy += fvsy;
                         dfz += fvsz;
 
+                        CA_f += fvsx;
+                        CN_f += fvsy;
+                        CZ_f += fvsz;
+
+                        Cl_f += (yc - TorqueRefY) * fvsz - (zc - TorqueRefZ) * fvsy;
+                        Cn_f += (zc - TorqueRefZ) * fvsx - (xc - TorqueRefX) * fvsz;
+                        Cm_f += (xc - TorqueRefX) * fvsy - (yc - TorqueRefY) * fvsx;
+
                         delete geometry3D;
                     }
 
-                    grid->FaceCoor(in, jn, kn, nsurf, xc, yc, zc);
-
-                    dmx = (yc - TorqueRefY) * dfz - (zc - TorqueRefZ) * dfy;
-                    dmy = (zc - TorqueRefZ) * dfx - (xc - TorqueRefX) * dfz;
-                    dmz = (xc - TorqueRefX) * dfy - (yc - TorqueRefY) * dfx;
+                    Cl_p += (yc - TorqueRefY) * dpz - (zc - TorqueRefZ) * dpy;
+                    Cn_p += (zc - TorqueRefZ) * dpx - (xc - TorqueRefX) * dpz;
+                    Cm_p += (xc - TorqueRefX) * dpy - (yc - TorqueRefY) * dpx;
 
                     cpx += dpx;
                     cpy += dpy;
                     cpz += dpz;
-
-                    cfx += dfx;
-                    cfy += dfy;
-                    cfz += dfz;
-
-                    cmx += dmx;
-                    cmy += dmy;
-                    cmz += dmz;
 
                     if (dumpHingeMoment)
                     {
@@ -363,99 +349,65 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
         }
     }
 
-    this->CollectData->write(&cfx, sizeof(RDouble));
-    this->CollectData->write(&cfy, sizeof(RDouble));
-    this->CollectData->write(&cfz, sizeof(RDouble));
+    this->CollectData->write(&CA_f, sizeof(RDouble));
+    this->CollectData->write(&CA_p, sizeof(RDouble));
+    this->CollectData->write(&CN_f, sizeof(RDouble));
+    this->CollectData->write(&CN_p, sizeof(RDouble));
+    this->CollectData->write(&CZ_f, sizeof(RDouble));
+    this->CollectData->write(&CZ_p, sizeof(RDouble));
+
     this->CollectData->write(&cpx, sizeof(RDouble));
     this->CollectData->write(&cpy, sizeof(RDouble));
     this->CollectData->write(&cpz, sizeof(RDouble));
-    this->CollectData->write(&cmx, sizeof(RDouble));
-    this->CollectData->write(&cmy, sizeof(RDouble));
-    this->CollectData->write(&cmz, sizeof(RDouble));
+
+    this->CollectData->write(&Cl_f, sizeof(RDouble));
+    this->CollectData->write(&Cl_p, sizeof(RDouble));
+    this->CollectData->write(&Cn_f, sizeof(RDouble));
+    this->CollectData->write(&Cn_p, sizeof(RDouble));
+    this->CollectData->write(&Cm_f, sizeof(RDouble));
+    this->CollectData->write(&Cm_p, sizeof(RDouble));
+
     this->CollectData->write(&hingeMoment, sizeof(RDouble));
 }
 
 void ForceProcessStruct::CompForce()
 {
-    DataContainer *data = new DataContainer();
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zone_proc = GetZoneProcessorID(iZone);
+        int myid = GetCurrentProcessorID();
 
-    globalAerodynamicForce.ComputeCoefficient();
-    globalAerodynamicForce.ComputeCoefficient();
-
-    DecodeData(data);
-
-    delete data;
+        if (myid == zone_proc)
+        {
+            AirForceCoef(iZone);
+        }
+    }
 }
 
-void ForceProcessStruct::DecodeData(DataContainer *data)
+void ForceProcessStruct::DumpForce()
 {
-    data->moveto_begin();
+    ActionKey *actkeyDumpAirForceCoef = new ActionKey();
+    delete actkeyDumpAirForceCoef->data;
+    actkeyDumpAirForceCoef->data = this->CollectData;
 
-    int numberofSolidWallPart = 0;
-    PHRead(data, numberofSolidWallPart);
-    ForceData->SetNWallPart(numberofSolidWallPart);
+    string airCoefFile = "aircoef.dat";
+    GlobalDataBase::GetData("aircoeffile", &airCoefFile, PHSTRING, 1);
 
-    int numberofTotalPart = 0;
-    PHRead(data, numberofTotalPart);
-    ForceData->SetNPart(numberofTotalPart);
+    actkeyDumpAirForceCoef->filename = airCoefFile;
+    ios_base::openmode openmode = ios_base::out|ios_base::app;
+    actkeyDumpAirForceCoef->openmode = openmode;
 
-    int *partBCID        = new int     [numberofTotalPart];
-    RDouble *cfx         = new RDouble [numberofTotalPart];
-    RDouble *cfy         = new RDouble [numberofTotalPart];
-    RDouble *cfz         = new RDouble [numberofTotalPart];
-    RDouble *cpx         = new RDouble [numberofTotalPart];
-    RDouble *cpy         = new RDouble [numberofTotalPart];
-    RDouble *cpz         = new RDouble [numberofTotalPart];
-    RDouble *cmx         = new RDouble [numberofTotalPart];
-    RDouble *cmy         = new RDouble [numberofTotalPart];
-    RDouble *cmz         = new RDouble [numberofTotalPart];
-    RDouble *cl_tot      = new RDouble [numberofTotalPart];
-    RDouble *cd_tot      = new RDouble [numberofTotalPart];
-    RDouble *cd_pr       = new RDouble [numberofTotalPart];
-    RDouble *cd_sf       = new RDouble [numberofTotalPart];
-    RDouble *cd_cl2pa    = new RDouble [numberofTotalPart];
-    RDouble *xcp         = new RDouble [numberofTotalPart];
-    RDouble *side        = new RDouble [numberofTotalPart];
-    RDouble *hingeMoment = new RDouble [numberofTotalPart];
+    int iterationStep;
+    GlobalDataBase::GetData("outnstep", &iterationStep, PHINT, 1);
 
-    PHRead(data, partBCID,    numberofTotalPart);
-    PHRead(data, cfx,         numberofTotalPart);
-    PHRead(data, cfy,         numberofTotalPart);
-    PHRead(data, cfz,         numberofTotalPart);
-    PHRead(data, cpx,         numberofTotalPart);
-    PHRead(data, cpy,         numberofTotalPart);
-    PHRead(data, cpz,         numberofTotalPart);
-    PHRead(data, cmx,         numberofTotalPart);
-    PHRead(data, cmy,         numberofTotalPart);
-    PHRead(data, cmz,         numberofTotalPart);
-    PHRead(data, cl_tot,      numberofTotalPart);
-    PHRead(data, cd_tot,      numberofTotalPart);
-    PHRead(data, cd_pr,       numberofTotalPart);
-    PHRead(data, cd_sf,       numberofTotalPart);
-    PHRead(data, cd_cl2pa,    numberofTotalPart);
-    PHRead(data, xcp,         numberofTotalPart);
-    PHRead(data, side,        numberofTotalPart);
-    PHRead(data, hingeMoment, numberofTotalPart);
+    globalAerodynamicForce.DumpForce(actkeyDumpAirForceCoef, iterationStep);
 
-    ForceData->SetPartBCID(partBCID);
+    DataContainer *dataNew = new DataContainer();
+    actkeyDumpAirForceCoef->data = dataNew;
 
-    ForceData->SetCfx(cfx);
-    ForceData->SetCfy(cfy);
-    ForceData->SetCfz(cfz);
-    ForceData->SetCpx(cpx);
-    ForceData->SetCpy(cpy);
-    ForceData->SetCpz(cpz);
-    ForceData->SetCmx(cmx);
-    ForceData->SetCmy(cmy);
-    ForceData->SetCmz(cmz);
-    ForceData->SetClTot(cl_tot);
-    ForceData->SetCdTot(cd_tot);
-    ForceData->SetCdPr(cd_pr);
-    ForceData->SetCdSf(cd_sf);
-    ForceData->SetCdCl2Pa(cd_cl2pa);
-    ForceData->SetXcp(xcp);
-    ForceData->SetSide(side);
-    ForceData->SetHingeMoment(hingeMoment);
+    delete actkeyDumpAirForceCoef;
 }
 
 void ForceProcessStruct::CompValueField()
