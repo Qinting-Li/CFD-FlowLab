@@ -283,7 +283,7 @@ int* UnstructGrid::GetWallCellLabel()
             wallCellLabel[iCell] = 0;
         }
 
-        CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
         int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -453,7 +453,7 @@ void UnstructGrid::ComputeCell2Cell()
     int le,re;
 
     // If boundary is an INTERFACE, need to count ghost cell
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -574,7 +574,7 @@ void UnstructGrid::ComputeNumberOfNeighborCell()
     int *leftCellOfFace  = this->GetLeftCellOfFace();
     int *rightCellOfFace = this->GetRightCellOfFace();
     
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     // Allocate memories for number of cells per cell
@@ -680,7 +680,7 @@ void UnstructGrid::computeBoundaryPointLabel()
     int* face2node = GetFace2Node();
     int *node_number_of_each_face   = this->GetNodeNumberOfEachFace();
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int pt, bcType;
@@ -772,7 +772,7 @@ vector <int> & UnstructGrid::GetBoundaryConditionType()
 
     boundaryConditionType.resize(nBoundFace);
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -1048,7 +1048,7 @@ void UnstructGrid::SetGhostCellExceptInterface(RDouble * f)
     int *leftCellOfFace = this->GetLeftCellOfFace();
     int *rightCellOfFace = this->GetRightCellOfFace();
     int le, re;
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -1628,7 +1628,7 @@ void UnstructGrid::FaceWeight(RDouble *deltL, RDouble *deltR, int localStart, in
     //! If there are some boundary faces, make modifications.
     if (localStart < nBoundFace)
     {
-        CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
         int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
         int nMid = nBoundFace;
@@ -1906,7 +1906,7 @@ void UnstructGrid::AllocateMetricsALE(ActionKey *actkey)
 
 void UnstructGrid::GetBcNamePair(set< pair<int, string> > &bcNamePairSet)
 {
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegion = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
@@ -2033,7 +2033,7 @@ void UnstructGrid::InitVariableWallTemperature()
     int *nodePosi  = this->GetFace2NodeSubscript();
     int *face2node = this->GetFace2Node();
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -3013,7 +3013,7 @@ LIB_EXPORT void UnstructGrid::ComputeNodeBCType()
     bcTypeMap.insert(pair<int,int>(PRESSURE_OUTLET , 1));
     bcTypeMap.insert(pair<int,int>(OUTFLOW_CONFINED, 1));
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
@@ -3270,7 +3270,7 @@ void UnstructGrid::CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *d
         dqdz[iCell] = 0.0;
     }
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -3657,7 +3657,7 @@ streamsize UnstructGrid::TranslateCellIBlankLength(ActionKey *actkey)
 
 LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallPoints)
 {
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int nBoundFace = this->GetNBoundFace();
@@ -3699,7 +3699,7 @@ LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallP
 
 LIB_EXPORT void UnstructGrid::FindOutWallFaces(bool * isWallFace, int & nWallFaces)
 {
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
     
     nWallFaces = 0;
@@ -4081,7 +4081,7 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
     
     virtualFile->EndReadWork();
     
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
@@ -4209,7 +4209,7 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
     using namespace PHENGLEI;
     vector<int> wallFaceTemp;
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -5339,12 +5339,12 @@ void UnstructGrid::ReadGrid(VirtualFile *vfile)
     PrintToWindow("  Number of Boundary Faces : ", nBoundFace, "\n");
 
     //! Set the boundary condition.
-    CompositeUnstructBC **bcr = new CompositeUnstructBC * [ nBoundFace ];
+    UnstructBCSet **bcr = new UnstructBCSet * [ nBoundFace ];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int bctype;
         vfile->read(reinterpret_cast<char*>(&bctype),sizeof(int));
-        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace] = new UnstructBCSet();
         bcr[iFace]->SetKey(bctype);
     }
     this->SetBCRecord(bcr);
@@ -5420,7 +5420,7 @@ void UnstructGrid::WriteGrid(VirtualFile *vfile)
     vfile->write(reinterpret_cast<char*>(&nBoundFace),sizeof(int));
 
     //! Write the boundary condition.
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int *tmpbctype = new int [nBoundFace];
@@ -7185,8 +7185,8 @@ LIB_EXPORT void UnstructGrid::WriteFaceBC(fstream & file)
     int * bcTypeList    = new int [nBoundFace];
     string * bcNameList = new string [nBoundFace];
 
-    CompositeUnstructBC **bcr = this->GetBCRecord();
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet **bcr = this->GetBCRecord();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
     uint_long totalSize = 0;
     for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
@@ -8017,7 +8017,7 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, in
     int *face2node = grid->GetFace2Node();
     int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     //! Bell 20140409 add.
@@ -8141,7 +8141,7 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count
     int *face2node = grid->GetFace2Node();
     int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     //! Reprocessing the points of interface.
@@ -8239,7 +8239,7 @@ void CompNodeVar(UnstructGrid *grid, RDouble *qNode, RDouble *q, bool isVelocity
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
     int **face2nodeArray      = grid->GetFace2NodeArray();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -8742,7 +8742,7 @@ void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q)
         nodepos += node_number_of_each_face[iFace];
     }
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     //! Reprocessing the points of interface.
@@ -8900,7 +8900,7 @@ void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q)
     }
 
     //! Reset wall and symmetry faces.
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
     nodepos = 0;
 
@@ -8973,7 +8973,7 @@ void UnstructGrid::CompareMaxMinValue(RDouble &local_data, int flag)
 
 void UnstructGrid::ChangeBCType(int from_bctype, int to_bctype)
 {
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -8991,7 +8991,7 @@ int UnstructGrid::CompNIFace()
 {
     int nBoundFace = this->GetNBoundFace();
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     int nIFace = 0;
@@ -9022,7 +9022,7 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
 
     int nBoundFace = this->GetNBoundFace();
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int * face2node = this->GetFace2Node();
@@ -9120,7 +9120,7 @@ void UnstructGrid::CalCNNCF()
     int *leftCellOfFace  = this->GetLeftCellOfFace();
     int *rightCellOfFace = this->GetRightCellOfFace();
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     int *number_of_neighbor_cell = this->GetNumberOfNeighborCell();
@@ -9182,7 +9182,7 @@ void UnstructGrid::CalCNNCF()
 
 int UnstructGrid::GetNumberOfWallCell()
 {
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
     int nsolid_surface = 0;
 
@@ -9229,7 +9229,7 @@ void UnstructGrid::ReSetBoundaryConditionByGlobalBC()
 
     int nBoundFace = this->GetNBoundFace();
 
-    CompositeUnstructBC *unstructBCRegion = this->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = this->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
@@ -9261,7 +9261,7 @@ void GetFace2NodeList(UnstructGrid *grid, int bcType, vector<int> &linkmap, vect
     set< DataStruct_Sort<int> >::iterator ifind;
     DataStruct_Sort<int> fysort;
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     face2nodelist.resize(0);
@@ -9378,9 +9378,9 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     set< DataStruct_Sort<int> >::iterator ifind;
     DataStruct_Sort<int> fysort;
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
-
+    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     face2nodelist.resize(0);
     linkmap.resize(0);
@@ -9388,43 +9388,94 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     int * leftCellIndexContainer = grid->GetLeftCellOfFace();
     int * keyActiveOfCells       = grid->GetBlankIndex();
     int nodepos = 0;
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
-    {
-        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
-        vector<int>* faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
-        {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if (bcType != bcRegion->GetBCType())
-            {
-                nodepos += node_number_of_each_face[iFace];
-                continue;
-            }
-            if (bcRegion->GetBCName() != bcName)
-            {
-                nodepos += node_number_of_each_face[iFace];
-                continue;
-            }
-            if (keyActiveOfCells[leftCellIndexContainer[iFace]] != 1)
-            {
-                nodepos += node_number_of_each_face[iFace];
-                continue;
-            }
 
-            if (node_number_of_each_face[iFace] <= 4)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        if (bcType != bcRegion->GetBCType())
+        {
+            nodepos += node_number_of_each_face[iFace];
+            continue;
+        }
+
+        if (bcRegion->GetBCName() != bcName)
+        {
+            nodepos += node_number_of_each_face[iFace];
+            continue;
+        }
+
+        if (keyActiveOfCells[leftCellIndexContainer[iFace]] != 1)
+        {
+            nodepos += node_number_of_each_face[iFace];
+            continue;
+        }
+
+        if (node_number_of_each_face[iFace] <= 4)
+        {
+            loc_face2node.resize(0);
+            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
+            {
+                int index = face2node[ nodepos + j ];
+
+                fysort.value = index;
+                ifind = iset.find(fysort);
+
+                if (ifind == iset.end())
+                {
+                    linkmap.push_back(index);
+                    fysort.index = static_cast<int>(linkmap.size() - 1);
+
+                    iset.insert(fysort);
+                    loc_face2node.push_back(fysort.index);
+                }
+                else
+                {
+                    loc_face2node.push_back(ifind->index);
+                }
+
+            }
+            nodepos += node_number_of_each_face[iFace];
+            face2nodelist.push_back(loc_face2node);
+        }
+        else
+        {
+            int nodesWrite = 0;
+            while (nodesWrite < node_number_of_each_face[iFace])
             {
                 loc_face2node.resize(0);
-                for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
-                {
-                    int index = face2node[ nodepos + j ];
 
-                    fysort.value = index;
+                //! Write face center.
+                int index = iFace + nTotalNode;
+
+                fysort.value = index;
+                ifind = iset.find(fysort);
+
+                if (ifind == iset.end())
+                {
+                    linkmap.push_back(index);
+                    fysort.index = static_cast<int>(linkmap.size() - 1);
+
+                    iset.insert(fysort);
+                    loc_face2node.push_back(fysort.index);
+                }
+                else
+                {
+                    loc_face2node.push_back(ifind->index);
+                }
+
+                //! Write node.
+                for (int inode = 0; inode < 2; ++ inode)
+                {
+                    int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
+                    int nodeIndex = face2node[nodepos + index];
+
+                    fysort.value = nodeIndex;
                     ifind = iset.find(fysort);
 
                     if (ifind == iset.end())
                     {
-                        linkmap.push_back(index);
+                        linkmap.push_back(nodeIndex);
                         fysort.index = static_cast<int>(linkmap.size() - 1);
 
                         iset.insert(fysort);
@@ -9434,68 +9485,13 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
                     {
                         loc_face2node.push_back(ifind->index);
                     }
-
                 }
-                nodepos += node_number_of_each_face[iFace];
+
+                ++ nodesWrite;
                 face2nodelist.push_back(loc_face2node);
             }
-            else
-            {
-                int nodesWrite = 0;
-                while (nodesWrite < node_number_of_each_face[iFace])
-                {
-                    loc_face2node.resize(0);
-
-                    //! Write face center.
-                    int index = iFace + nTotalNode;
-
-                    fysort.value = index;
-                    ifind = iset.find(fysort);
-
-                    if (ifind == iset.end())
-                    {
-                        linkmap.push_back(index);
-                        fysort.index = static_cast<int>(linkmap.size() - 1);
-
-                        iset.insert(fysort);
-                        loc_face2node.push_back(fysort.index);
-                    }
-                    else
-                    {
-                        loc_face2node.push_back(ifind->index);
-                    }
-
-                    //! Write node.
-                    for (int inode = 0; inode < 2; ++ inode)
-                    {
-                        int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
-                        int nodeIndex = face2node[nodepos + index];
-
-                        fysort.value = nodeIndex;
-                        ifind = iset.find(fysort);
-
-                        if (ifind == iset.end())
-                        {
-                            linkmap.push_back(nodeIndex);
-                            fysort.index = static_cast<int>(linkmap.size() - 1);
-
-                            iset.insert(fysort);
-                            loc_face2node.push_back(fysort.index);
-                        }
-                        else
-                        {
-                            loc_face2node.push_back(ifind->index);
-                        }
-                    }
-
-                    ++ nodesWrite;
-                    face2nodelist.push_back(loc_face2node);
-                }
-                nodepos += node_number_of_each_face[iFace];
-            }
-
+            nodepos += node_number_of_each_face[iFace];
         }
-        
     }
 }
 
@@ -9542,7 +9538,7 @@ void SetLimitBoundary(Grid *grid_in, RDouble *limit)
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -10178,7 +10174,7 @@ void GetFaceToNodeList(UnstructGrid * grid, int boundaryConditionType, PHVectorI
     set< DataStruct_Sort< int > > setForSorting;
     DataStruct_Sort< int > dataForSorting;
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     faceToNodeList.resize(0);
@@ -10385,7 +10381,7 @@ void VisualizationMesh3D(UnstructGrid * gridIn, const string & fileName)
     set< int > bcList;
     bool doseNeedDump = false;
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -10807,7 +10803,7 @@ void VisualizationEigenMeshofCoarseGrid3D(UnstructGrid * grid, const string & fi
     int * leftCellIndexContainer  = grid->GetLeftCellOfFace();
     int * rightCellIndexContainer = grid->GetRightCellOfFace();
     
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 

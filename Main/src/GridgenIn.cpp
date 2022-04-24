@@ -350,7 +350,7 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
         from_string <int> (numberOfBCRegion, word, std::dec);
 
         grid->CreateCompositeBCRegion(numberOfBCRegion);
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         for (int iBCRegion = 0; iBCRegion < numberOfBCRegion; ++ iBCRegion)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;

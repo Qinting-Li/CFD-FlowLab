@@ -2156,7 +2156,7 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
+    StructBCSet *compositeBCRegion = this->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {

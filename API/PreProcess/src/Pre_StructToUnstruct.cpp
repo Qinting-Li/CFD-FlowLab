@@ -65,7 +65,7 @@ void Pre_StructToUnstruct::ConstructCellMapStrToUns()
         int nTotalCell = strGrid->GetNTotalCell();
 
         //! Gost cell.
-        CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int iBoundFace = 0;
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -222,10 +222,10 @@ void Pre_StructToUnstruct::ConstructBCType()
 
         int nBoundFace = strGrid->GetNBoundFace();
         unsGrid->SetNBoundFace(nBoundFace);
-        CompositeUnstructBC **bcrs = new CompositeUnstructBC * [nBoundFace];
+        UnstructBCSet **bcrs = new UnstructBCSet * [nBoundFace];
 
         int boundFaceIndex = 0;
-        CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
@@ -242,7 +242,7 @@ void Pre_StructToUnstruct::ConstructBCType()
                 {
                     for (int i = ist; i <= ied; ++ i)
                     {
-                        bcrs[boundFaceIndex] = new CompositeUnstructBC();
+                        bcrs[boundFaceIndex] = new UnstructBCSet();
                         bcrs[boundFaceIndex]->SetBCName(bcName);
                         bcrs[boundFaceIndex]->SetKey(BCType);
 
@@ -294,7 +294,7 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
         //! Boundary face
         int faceIndex = 0;
         int nodeCount = 0;
-        CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {

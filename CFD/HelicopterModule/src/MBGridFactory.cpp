@@ -101,7 +101,7 @@ void MBGridFactory::Register(UnstructGrid * grid)
         physicalType[iFace] = MB_SPACE::NEUTRAL_TYPE;
     }
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int numberOfBcFaces = grid->GetNBoundFace();

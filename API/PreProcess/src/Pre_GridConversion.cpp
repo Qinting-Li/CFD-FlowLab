@@ -55,7 +55,7 @@ void Pre_GridConversion::WriteFaceBoundaryName(const string &out_grid_file, Grid
         UnstructGrid *grid = UnstructGridCast(grids[0]);
         int nBoundFace = grid->GetNBoundFace();
 
-        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
         int nBCRegion = unstructBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
@@ -585,7 +585,7 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
     RDouble3D &yy = * grid->GetStructY();
     RDouble3D &zz = * grid->GetStructZ();
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
     int TecioMission;
@@ -855,7 +855,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         vector < int > linkmap;
 
         set< pair<int, string> > bcnameMap;
-        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
         int nBCRegion = unstructBCRegion->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
         {
@@ -1069,7 +1069,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
 
         set< pair<int, string> > bcnameMap;
 
-        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
         int nBCRegion = unstructBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)

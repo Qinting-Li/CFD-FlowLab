@@ -898,7 +898,7 @@ namespace PHSPACE
         StructGrid * grid = StructGridCast(grid_in);
 
         using namespace PHENGLEI;
-        CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
@@ -4384,7 +4384,7 @@ namespace PHSPACE
         using namespace PHENGLEI;
         StructGrid * grid = StructGridCast(grid_in);
 
-        CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
@@ -4694,7 +4694,7 @@ namespace PHSPACE
 
         int ix = 0;//
 
-        CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)

@@ -225,7 +225,7 @@ LIB_EXPORT void Region::WriteFaceBoundaryName(Grid **grids, int nZones, const st
         {
             UnstructGrid *unstrGrid = UnstructGridCast(grid);
 
-            CompositeUnstructBC *unstructBCRegion = unstrGrid->GetUnstructBCRegion();
+            UnstructBCSet *unstructBCRegion = unstrGrid->GetUnstructBCRegion();
             int nBCRegion = unstructBCRegion->GetnBCRegion();
 
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
@@ -241,7 +241,7 @@ LIB_EXPORT void Region::WriteFaceBoundaryName(Grid **grids, int nZones, const st
         else if (grid->Type() == STRUCTGRID)
         {
             StructGrid *strGrid = StructGridCast(grid);
-            CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
+            StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
             int  nBCRegion = compositeBCRegion->GetnBCRegion();
 
             for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
@@ -2208,7 +2208,7 @@ void Region::CheckMeshMultigridByFTS()
             {
                 StructGrid *grid = StructGridCast(gridofThisProcessor);
 
-                CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+                StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
 
                 int nBCRegion = composite_bcregion->GetnBCRegion();
                 for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
@@ -3232,7 +3232,7 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
             }
             UnstructGrid *unstructGrid = UnstructGridCast(grid);
 
-            CompositeUnstructBC *unstructBCRegion = unstructGrid->GetUnstructBCRegion();
+            UnstructBCSet *unstructBCRegion = unstructGrid->GetUnstructBCRegion();
             int nBCRegion = unstructBCRegion->GetnBCRegion();
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
             {

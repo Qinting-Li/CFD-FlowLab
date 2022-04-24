@@ -873,7 +873,7 @@ void Simulation::RunGridCheckSolver()
             file << "FaceTopology." << endl;
 
             int nBoundFace = grid->GetNBoundFace();
-            CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+            UnstructBCSet **bcRecord = grid->GetBCRecord();
 
             file << "nBoundFace : " << nBoundFace << endl;
 
@@ -1037,7 +1037,7 @@ void Simulation::RunGridCheckSolver()
             file << "iDimensions_j" << setw(10) << iDimensions[1] << endl;
             file << "iDimensions_k" << setw(10) << iDimensions[2] << endl;
 
-            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+            StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
             int nBCRegion = compositeBCRegion->GetnBCRegion();
             file << "nBCRegion : " << nBCRegion << endl;
 

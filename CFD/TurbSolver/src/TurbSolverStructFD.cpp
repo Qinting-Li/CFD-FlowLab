@@ -189,7 +189,7 @@ void TurbSolverStrFD::GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn, 
     RDouble4D & ql = qlProxy->GetField_STR();
     RDouble4D & qr = qrProxy->GetField_STR();
     
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
@@ -342,7 +342,7 @@ void TurbSolverStrFD::ObtainBoundaryValue(Grid *gridIn)
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int wallFunctionType = parameters->GetWallFunctionType();
 
-    CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
+    StructBCSet *compositeBCRregion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRregion->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)

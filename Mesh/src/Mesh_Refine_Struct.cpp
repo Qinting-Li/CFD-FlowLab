@@ -231,7 +231,7 @@ void Mesh_Refine_Struct::GenerateBCRegion()
         StructGrid *strGridNew = StructGridCast(refinedGrids[izone]);
 
         strGridNew->CopyCompositeBCRegion(grid->GetCompositeBCRegion());
-        CompositeStructBC *rhs = strGridNew->GetCompositeBCRegion();
+        StructBCSet *rhs = strGridNew->GetCompositeBCRegion();
 
         int numberOfBoundaryFaces = rhs->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)

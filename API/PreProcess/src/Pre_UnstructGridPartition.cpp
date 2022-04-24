@@ -871,7 +871,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int izone, UnstructG
     int *right_cell_of_face = gridSource->GetRightCellOfFace();
     int le, re;
 
-    CompositeUnstructBC *unstructBCRegion = gridSource->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = gridSource->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     //! Re-compute bc_face_mark for each sub-partition.
@@ -1318,7 +1318,7 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int izone, UnstructGrid *gridp
     gridpart->SetLeftCellOfFace (left_cell_of_face);
     gridpart->SetRightCellOfFace(right_cell_of_face);
 
-    CompositeUnstructBC *unstructBCRegionSrc = gridSource->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegionSrc = gridSource->GetUnstructBCRegion();
     int *bcRegionIDofBCFaceSrc = unstructBCRegionSrc->GetBCFaceInfo();
 
     vector <string> bcNameList;
@@ -1374,15 +1374,14 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int izone, UnstructGrid *gridp
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
     gridpart->CreateUnstructBCRegion(nBCRegionUnstruct);
 
-    CompositeUnstructBC *unstructBCRegion = gridpart->GetUnstructBCRegion();
-    int gridIndex = gridpart->GetZoneID();
+    UnstructBCSet *unstructBCRegion = gridpart->GetUnstructBCRegion();
     int* bcRegionIDofBCFace = new int[nBoundFace];
     set<string>::iterator iter;
 
     int count = 0;
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
-        UnstructBC *unstructBC = new UnstructBC(gridIndex, count);
+        UnstructBC *unstructBC = new UnstructBC(count);
         unstructBCRegion->SetBCRegion(count, unstructBC);
         unstructBC->SetBCName(*iter);
 
@@ -1719,7 +1718,7 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int izone, UnstructGrid *gridpar
     int *left_cell_of_face  = gridSource->GetLeftCellOfFace();
     int *right_cell_of_face = gridSource->GetRightCellOfFace();
     
-    CompositeUnstructBC *unstructBCRegion = gridSource->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = gridSource->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
 
@@ -1977,7 +1976,7 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     }
 
     nodepos = 0;
-    CompositeUnstructBC *unstructBCRegion = gridSource->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = gridSource->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     for (int iface = 0; iface < nBoundFace; ++ iface)

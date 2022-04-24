@@ -185,7 +185,7 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID)
 
     int ix = 0;
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
     
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)

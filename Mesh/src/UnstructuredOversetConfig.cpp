@@ -277,10 +277,10 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
     gridIn->SetNBoundFace(nBoundFace);
 
     int *BcType = ReadIntOneRow(grpData, "BcType");
-    CompositeUnstructBC **bcr = new CompositeUnstructBC * [nBoundFace];
+    UnstructBCSet **bcr = new UnstructBCSet * [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace] = new UnstructBCSet();
         bcr[iFace]->SetKey(BcType[iFace]);
     }
     gridIn->SetBCRecord(bcr);
@@ -3287,7 +3287,7 @@ void OversetAuxilaryGrid::CalCellWallDistance()
 
     walldistCompute->ComputeWallDistForNodesList(blockIndex, numberOfCells, x, y, z, &cellWallDistance[0]);
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
 
@@ -3618,7 +3618,7 @@ void OversetConfig::SearchBoundary()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
@@ -4690,7 +4690,7 @@ void OversetConfig::CharacterInterfaceToNode()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();

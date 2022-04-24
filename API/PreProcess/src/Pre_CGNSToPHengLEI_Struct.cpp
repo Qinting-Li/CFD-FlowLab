@@ -523,7 +523,7 @@ void Pre_CGNSToPHengLEI_Struct::SetBCInfo()
 
         StructGrid *grid = StructGridCast(grids[iZone]);
         grid->CreateCompositeBCRegion(nBCRegions + n1to1);
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
@@ -643,7 +643,7 @@ void Pre_CGNSToPHengLEI_Struct::CheckMeshMultigrid()
     {
         StructGrid *grid = StructGridCast(grids[izone]);
 
-        CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
 
         int nBCRegion = composite_bcregion->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)

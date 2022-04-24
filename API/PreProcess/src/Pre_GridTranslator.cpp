@@ -79,7 +79,7 @@ void GridTranslator::ProcessBoundaryCondition()
 {
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        CompositeStructBC *compositeBCRegion = (*gridGroup)[iZone]->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = (*gridGroup)[iZone]->GetCompositeBCRegion();
         
         compositeBCRegion->ProcessBCInfo();
     }

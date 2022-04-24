@@ -342,7 +342,7 @@ void Mesh_Refine_Unstruct::ConstructFaceTopo(Grid *grid)
         faceBoundaryCondition[iFace] = 0;
     }
 
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         SimpleBC *iFaceBoundaryCondtion = new SimpleBC();

@@ -218,7 +218,7 @@ void ComputationalGridProcess::CreateInterfaceInformation(int iZone)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
 
     InterfaceInfo *interfaceInformation = 0;
@@ -250,7 +250,7 @@ void ComputationalGridProcess::CreateLocalInterfaceToBoundaryFaceIndexesMapping(
     InterfaceInfo *interfaceInformation = unstructuredGrid->GetInterfaceInfo();
     if (! interfaceInformation) return;
 
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
 
     int *localInterfaceToBoundaryFaceIndexesMapping = interfaceInformation->GetInterFace2BoundaryFace();
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
@@ -378,7 +378,7 @@ void ComputationalGridProcess::ModifyBoundaryInformation(InterfaceLinkStructure 
     int localInterfaceIndex = 0;
 
     PHVectorInt1D localInterfaceIndexToBoundaryFaceIndexMapping;
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
         int boundaryConditionType = bcr[iFace]->GetKey();
@@ -428,7 +428,7 @@ void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStruc
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
 
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
 
@@ -580,7 +580,7 @@ void ComputationalGridProcess::SetNewFaceToCellIndexesContainer(InterfaceLinkStr
     int zoneIndex = unstructuredGrid->GetZoneID();
 
     int localInterfaceIndex = 0;
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
         int boundaryConditionType = bcr[iFace]->GetKey();
@@ -653,7 +653,7 @@ void ComputationalGridProcess::SetBoundaryFaceNodeIndexVector( InterfaceLinkStru
     int localInterfaceIndex = 0;
     int facePointStartPosition = 0;
 
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
         int boundaryConditionType = bcr[iFace]->GetKey();
@@ -823,7 +823,7 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     UnstructGrid *unstructuredGrid = currentGrid;
 
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
         delete bcr[iFace];
@@ -836,10 +836,10 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     int newNumberOfBoundaryFaces = static_cast<int>(boundaryTypeVector.size());
     unstructuredGrid->SetNBoundFace(newNumberOfBoundaryFaces);
 
-    CompositeUnstructBC **bcrNew = new CompositeUnstructBC *[newNumberOfBoundaryFaces];
+    UnstructBCSet **bcrNew = new UnstructBCSet *[newNumberOfBoundaryFaces];
     for (int iFace = 0; iFace < newNumberOfBoundaryFaces; ++ iFace)
     {
-        bcrNew[iFace] = new CompositeUnstructBC;
+        bcrNew[iFace] = new UnstructBCSet;
     }
 
     for (int iFace = 0; iFace < newNumberOfBoundaryFaces; ++ iFace)
@@ -972,7 +972,7 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
     int *faceNodeNumberContainer = unstructuredGrid->GetNodeNumberOfEachFace();
     int *faceNodeIndexContainer  = unstructuredGrid->GetFace2Node();
     int numberOfBoundaryFaces  = unstructuredGrid->GetNBoundFace();
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
 
     int interfaceIndex = 0;
     int nodePosition = 0;
@@ -1348,7 +1348,7 @@ void ComputationalGridProcess::AddZoneInterfacesTopology(ZoneInterface *zoneInte
 bool ExistInterfaces(UnstructGrid *unstructuredGrid)
 {
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
-    CompositeUnstructBC **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
 
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {

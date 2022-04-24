@@ -626,7 +626,7 @@ void CGNSZone::CopyStructuredGrid(Grid *grid_in)
     int nBCRegion = bcregion_proxy->GetNBCRegion();
 
     grid->CreateCompositeBCRegion(nBCRegion);
-    CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
 
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
@@ -1495,7 +1495,7 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     //设置边界条件
     int nBoundFace     = this->GetNBoundFace();
     int nTotalFace = this->GetNTotalFace();
-    CompositeUnstructBC **bcrs = new CompositeUnstructBC * [ nBoundFace ];
+    UnstructBCSet **bcrs = new UnstructBCSet * [ nBoundFace ];
 
     BaseBCType *bc_convert = new BaseBCType();
 
@@ -1507,7 +1507,7 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
         int f2cr = (*face_to_cell_right)[iface];
         if ((f2cr == - 1) && ((*face_child)[iface].size() == 0))
         {
-            bcrs[icount] = new CompositeUnstructBC();
+            bcrs[icount] = new UnstructBCSet();
             int bctype = bc_convert->GetBCType((*face_boundary_type)[iface]);
             bcrs[icount]->SetKey(bctype);
             s1.insert((*face_boundary_type)[iface]);

@@ -2889,7 +2889,7 @@ namespace PHSPACE
         int viscousType = parameters->GetViscousType();
 
         using namespace IDX;
-        CompositeStructBC *compositBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositBCRegion->GetnBCRegion();
 
         int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
@@ -3313,7 +3313,7 @@ namespace PHSPACE
 
         StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
         InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-        CompositeStructBC *composite_bcregion = finestGrid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = finestGrid->GetCompositeBCRegion();
         RDouble4D &rotTurbgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueX"));
         RDouble4D &rotTurbgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueY"));
         RDouble4D &rotTurbgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueZ"));
@@ -3469,7 +3469,7 @@ namespace PHSPACE
         RDouble4D &gradTurbulenceCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterY"));
         RDouble4D &gradTurbulenceCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterZ"));
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         using namespace PHENGLEI;
@@ -4414,7 +4414,7 @@ namespace PHSPACE
         Param_TurbSolverStruct *parameters = GetControlParameters();
         int wallFunctionType = parameters->GetWallFunctionType();
 
-        CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRregion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRregion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)

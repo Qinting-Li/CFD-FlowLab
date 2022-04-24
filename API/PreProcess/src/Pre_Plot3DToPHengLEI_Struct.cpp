@@ -374,7 +374,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
         from_string <int> (numberOfBCRegion, word, std::dec);
 
         grid->CreateCompositeBCRegion(numberOfBCRegion);
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         for (int iBCRegion = 0; iBCRegion < numberOfBCRegion; ++ iBCRegion)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;
@@ -505,7 +505,7 @@ void Pre_Plot3DToPHengLEI_Struct::CheckMeshMultigrid()
     {
         StructGrid *grid = StructGridCast(grids[izone]);
 
-        CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
 
         int nBCRegion = composite_bcregion->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)

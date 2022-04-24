@@ -34,7 +34,7 @@ class OversetCellCollector ;
 class UnstructGrid;
 
 class VirtualFile;
-class CompositeStructBC;
+class StructBCSet;
 class StructBC;
 
 class StructGrid : public Grid
@@ -79,7 +79,7 @@ private:
     //! Boundary information.
     //! 1: Number of boundary face (nBoundFace).
     //! 2: Number of interface face (nIFace).
-    CompositeStructBC *composite_bcregion;
+    StructBCSet *composite_bcregion;
 
     //! Topology information of the overset grid.
     Geo_OversetGridTopo_Struct *oversetGridTopology;
@@ -266,7 +266,7 @@ public:
     LIB_EXPORT void CopyGrid(StructGrid *grid);
 
     //! Copy boundary information from another grid.
-    LIB_EXPORT void CopyCompositeBCRegion(CompositeStructBC *composite_bcregion);
+    LIB_EXPORT void CopyCompositeBCRegion(StructBCSet *composite_bcregion);
 
     //! Copy coordinates(X, Y, Z) information from another grid.
     LIB_EXPORT void CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble *yy, RDouble *zz);
@@ -287,7 +287,7 @@ public:
     LIB_EXPORT void CreateCompositeBCRegion(int nBCRegion);
 
     //! Return composite boundary condition region pointer (composite_bcregion).
-    CompositeStructBC * GetCompositeBCRegion() const;
+    StructBCSet * GetCompositeBCRegion() const;
 
     //! Set boundary face information.
     LIB_EXPORT void SetBCFaceInfo();

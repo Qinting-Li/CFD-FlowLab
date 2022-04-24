@@ -872,7 +872,7 @@ void ParallelMeshGen::RecoverFacess(Zone * zone)
         rightElementIndexContainer[ iFace ] = rightCell;
     }
 
-    CompositeUnstructBC ** bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet ** bcr = unstructuredGrid->GetBCRecord();
 
     //读单元中face对应边界条件类型
     PHVectorInt1D & faceBoundaryTypeContainer   = elementFaceSolver->GetFaceBoundaryTypeContainer();

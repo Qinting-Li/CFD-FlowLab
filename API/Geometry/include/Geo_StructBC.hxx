@@ -200,17 +200,17 @@ inline void StructBC::GetBoundaryFaceIndex(int i, int j, int k, int &ib, int &jb
     }
 }
 
-inline void CompositeStructBC::CreateBCRegion(uint_t nBCRegion)
+inline void StructBCSet::CreateBCRegion(uint_t nBCRegion)
 {
     bcRegions = new vector<StructBC *>(nBCRegion);
 }
 
-inline void CompositeStructBC::SetBCRegion(uint_t iBCRegion, StructBC *bcregion)
+inline void StructBCSet::SetBCRegion(uint_t iBCRegion, StructBC *bcregion)
 {
     (*bcRegions)[iBCRegion] = bcregion;
 }
 
-inline int CompositeStructBC::GetnBCRegion() const
+inline int StructBCSet::GetnBCRegion() const
 {
     return static_cast<int>(bcRegions->size());
 }

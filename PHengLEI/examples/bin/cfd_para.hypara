@@ -1312,9 +1312,9 @@ int  RBDMethod_0                = 0;
 double amplitude_0              = 0.0;
 double reduceFrequency_0        = 0.0;
 //direction of rotation
-//         1 -- anticlockwise.
-//        -1 -- clockwise.
-int direction_0                 = 1;
+//         1 -- clockwise from the point of view along the positive x axis.
+//        -1 -- anticlockwise from the point of view along the positive x axis.
+int direction_0                 = -1;
 double rotateFrequency_0        = 0.0;
 //string uDFSixDofFileName_0    = "./Bin/UDFSixDof.Parameter";
 //additional force  (system axis)             fX        fY        fZ        

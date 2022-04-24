@@ -883,7 +883,7 @@ namespace PHSPACE
         StructGrid *grid = StructGridCast(gridIn);
 
         //! Obtain the number of boundary condition regions.
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         nWallBC = 0;
         nMaxSurfaceCell = 0;
@@ -1038,7 +1038,7 @@ namespace PHSPACE
         RDouble refTemperature = parameters->GetRefDimensionalTemperature();
 
         //! Obtain the number of boundary condition regions.
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int nIndexOfWall = 0, nIndexOfCell = 0;
 
@@ -2781,7 +2781,7 @@ namespace PHSPACE
 
         int ix = 0;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -3040,7 +3040,7 @@ namespace PHSPACE
         int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
         vector< BasicAerodynamicForce * > *basicAerodynamicForceVector = CreateBasicAerodynamicForceVector();
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
 
@@ -3320,7 +3320,7 @@ namespace PHSPACE
 
         using namespace IDX;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         //! Obtain the number of boundary condition regions.
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
@@ -4312,7 +4312,7 @@ namespace PHSPACE
         RDouble gasConstant = gas->GetUniversalGasConstant();
 
         int nIndex = 0, indexOfWall = 0, indexOfCell = 0;
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();    //! Obtain the number of boundary condition regions.
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -4736,7 +4736,7 @@ namespace PHSPACE
         RDouble refEnergy = refDimensionalDensity * refVelocity * refSquareVelocity;
         RDouble refHeatFluxDimension = refEnergy * 0.001; // The dimensional value of total heat flux (kW/m2).
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         //! Obtain the number of boundary condition regions.
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int indexOfWall = 0, indexOfCell = 0;
@@ -5132,7 +5132,7 @@ namespace PHSPACE
             js = 0;
         }
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         //! Obtain the number of boundary condition regions.
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int nIndex = 0, indexOfWall = 0, indexOfCell = 0;
@@ -6216,7 +6216,7 @@ namespace PHSPACE
 
         int s_st[3], s_ed[3];
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -6570,7 +6570,7 @@ namespace PHSPACE
         RDouble3D &zs = *grid->GetStructZ();
 
         int count = 0;
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -6795,7 +6795,7 @@ namespace PHSPACE
         RDouble3D &zs = *grid->GetStructZ();
 
         int count = 0;
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -6986,7 +6986,7 @@ namespace PHSPACE
 
 #ifdef USE_HYFLOW_CODE
         using namespace PHENGLEI;
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
@@ -7163,7 +7163,7 @@ namespace PHSPACE
 
         using namespace PHENGLEI;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int iWallBC = 0;
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -7358,7 +7358,7 @@ namespace PHSPACE
 
             StructGrid *grid = StructGridCast(iGrid);
 
-            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+            StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
             int nBCRegion = compositeBCRegion->GetnBCRegion();
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
             {
@@ -7401,7 +7401,7 @@ namespace PHSPACE
 
             StructGrid *grid = StructGridCast(iGrid);
 
-            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+            StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
             int nBCRegion = compositeBCRegion->GetnBCRegion();
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
             {
@@ -7439,7 +7439,7 @@ namespace PHSPACE
             Grid *iGrid = PHSPACE::GetGrid(iZoneID);
             StructGrid *grid = StructGridCast(iGrid);
 
-            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+            StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
             int nBCRegion = compositeBCRegion->GetnBCRegion();
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
             {
@@ -7679,7 +7679,7 @@ namespace PHSPACE
 
         int iii[3][3] = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
         //! To judge if the singular axis using half-plane symmetry boundary conditions or using full plane boundary conditions
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int iSingularDim = 0;
         bool isWhole = 1;
@@ -7835,7 +7835,7 @@ namespace PHSPACE
 
         RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int bcType = structBC->GetBCType();
         int SingularDim = bcType - 71;
@@ -10897,7 +10897,7 @@ namespace PHSPACE
 
         using namespace IDX;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         //! Obtain the number of boundary condition regions.
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int indexOfWall = 0, indexOfCell = 0;
@@ -12773,7 +12773,7 @@ namespace PHSPACE
             gradSpeciesCellCenterZ = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dcdz"));
         }
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         using namespace PHENGLEI;
@@ -13429,7 +13429,7 @@ namespace PHSPACE
 
         int indexOfWall = 0, indexOfCell = 0;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -14689,7 +14689,7 @@ namespace PHSPACE
 
         using namespace IDX;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int nWallBC = 0, nIndexOfCell = 0;
 
@@ -14938,7 +14938,7 @@ namespace PHSPACE
         using namespace PHENGLEI;
         using namespace IDX;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int indexOfWall = 0, indexOfCell = 0;
 
@@ -16060,7 +16060,7 @@ namespace PHSPACE
         RDouble normalComponentX = 0.0, normalComponentY = 0.0, normalComponentZ = 0.0, surfaceArea = 0.0;
         RDouble relativeVelocity = 0.0, faceMotionVelocity = 0.0, totalEnthalpy = 0.0, vibrationEnergy = 0.0, electronEnergy = 0.0;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int indexOfWall = 0, indexOfCell = 0;
 
@@ -17976,7 +17976,7 @@ namespace PHSPACE
         RDouble *prim = new RDouble[nEquation];
         RDouble *Q = new RDouble[nEquation];
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -18284,7 +18284,7 @@ namespace PHSPACE
 
         StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
         InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-        CompositeStructBC *composite_bcregion = finestGrid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = finestGrid->GetCompositeBCRegion();
         RDouble4D &rotNSgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueX"));
         RDouble4D &rotNSgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueY"));
         RDouble4D &rotNSgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueZ"));
@@ -19270,7 +19270,7 @@ namespace PHSPACE
 
         StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
         InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-        CompositeStructBC *composite_bcregion = finestGrid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = finestGrid->GetCompositeBCRegion();
 
         int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
         int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);

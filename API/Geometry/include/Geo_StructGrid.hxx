@@ -354,7 +354,7 @@ inline RDouble3D * StructGrid::GetStructZ() const
     return nodeTopology->GetStructZ();
 }
 
-inline CompositeStructBC * StructGrid::GetCompositeBCRegion() const
+inline StructBCSet * StructGrid::GetCompositeBCRegion() const
 {
     return composite_bcregion;
 }

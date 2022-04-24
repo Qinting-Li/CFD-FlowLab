@@ -62,12 +62,12 @@ inline void UnstructGrid::Setfc2cR(int *fc2cR)
     this->fc2cR = fc2cR;
 }
 
-inline void UnstructGrid::SetBCRecord(CompositeUnstructBC **bcr)
+inline void UnstructGrid::SetBCRecord(UnstructBCSet **bcr)
 {
     this->bcr = bcr;
 }
 
-inline void UnstructGrid::SetUnstructBCRegion(CompositeUnstructBC *unstructBCRegion)
+inline void UnstructGrid::SetUnstructBCRegion(UnstructBCSet *unstructBCRegion)
 {
     this->unstructBCRegion = unstructBCRegion;
 }
@@ -278,12 +278,12 @@ inline int *UnstructGrid::Getfc2cR(void) const
     return fc2cR;
 }
 
-inline CompositeUnstructBC **UnstructGrid::GetBCRecord(void) const
+inline UnstructBCSet **UnstructGrid::GetBCRecord(void) const
 {
     return bcr;
 }
 
-inline CompositeUnstructBC * UnstructGrid::GetUnstructBCRegion(void) const
+inline UnstructBCSet * UnstructGrid::GetUnstructBCRegion(void) const
 {
     return unstructBCRegion;
 }
@@ -292,7 +292,7 @@ inline void UnstructGrid::CreateUnstructBCRegion(int nBCRegion)
 {
     if (!unstructBCRegion)
     {
-        unstructBCRegion = new CompositeUnstructBC(this->GetZoneID());
+        unstructBCRegion = new UnstructBCSet(this->GetZoneID());
     }
 
     unstructBCRegion->CreatenBCRegion(nBCRegion);

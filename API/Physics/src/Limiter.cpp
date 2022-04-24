@@ -1233,7 +1233,7 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     //! Find the maximum and minimum in the neighbor of each cell.

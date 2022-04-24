@@ -766,15 +766,14 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
     grid->CreateUnstructBCRegion(nBCRegionUnstruct);
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
-    int gridIndex = grid->GetZoneID();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int* bcRegionIDofBCFace = new int[nBoundFace];
     set<string>::iterator iter;
     
     count = 0;
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
-        UnstructBC *unstructBC = new UnstructBC(gridIndex, count);
+        UnstructBC *unstructBC = new UnstructBC(count);
         unstructBCRegion->SetBCRegion(count, unstructBC);
         unstructBC->SetBCName(*iter);
 

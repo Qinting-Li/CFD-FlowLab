@@ -86,7 +86,7 @@ StructFace::~StructFace()
 void StructFace::PaintSelf()
 {
     const int GHOST_INDEX = -1;
-    CompositeStructBC *compositeBCRegion = structGrid->GetCompositeBCRegion();
+    StructBCSet *compositeBCRegion = structGrid->GetCompositeBCRegion();
     
     int iBoundaryFace = 0, iInterface = 0;
     int nBCRegion = compositeBCRegion->GetnBCRegion();
@@ -152,7 +152,7 @@ void StructFace::PaintSelf()
 void StructFace::PaintNeighbor()
 {
     vector< int > ti(3), di(3);
-    CompositeStructBC * compositeBCRegion = structGrid->GetCompositeBCRegion();
+    StructBCSet * compositeBCRegion = structGrid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
     for (int ibc = 0; ibc < nBCRegion; ++ ibc)
     {
@@ -1322,7 +1322,7 @@ void MultigridManager::ReadBoundaryCondition()
     {
         StructGrid * grid = StructGridCast(OrdinaryGrid[iBlock]);
 
-        CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
         overallFaceNumber[iBlock] = composite_bcregion->GetnBCRegion();
         
         int patchCounter = 0, innerCounter = 0, ComparePatchInner;
@@ -1366,7 +1366,7 @@ void MultigridManager::ReadBoundaryCondition()
     {
         StructGrid * grid = StructGridCast(OrdinaryGrid[iBlock]);
 
-        CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
 
         int patchLabel = 0, innerLabel = 0;
         int imin, imax, jmin, jmax, kmin, kmax, boundaryLabel, targetLabel;

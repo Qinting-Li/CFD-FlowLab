@@ -606,31 +606,35 @@ void TurbSolverUnstr::ReadRestartH5(ActionKey *actkey)
         int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
         bool isReadAverageFlow = ifStaticsFlowField && (outerIterationStepOfTurbulence >= startStatisticStep);
-        if(isReadAverageFlow && (!ifStartFromSteadyResults))
+        if (isReadAverageFlow)
         {
-            ReadData(grploc, qTemporary[0], "qAverageTurb");
-            for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
+            if(!ifStartFromSteadyResults)
             {
-                for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
+                ReadData(grploc, qTemporary[0], "qAverageTurb");
+                for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
                 {
-                    qAverageTurb[iEquation][iCell] = qTemporary[iEquation][iCell];
+                    for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
+                    {
+                        qAverageTurb[iEquation][iCell] = qTemporary[iEquation][iCell];
+                    }
                 }
+
+                ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
+                GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+            }
+            else
+            {
+                for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
+                {
+                    for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
+                    {
+                        qAverageTurb[iEquation][iCell] = qTurbulence[iEquation][iCell];
+                    }
+                }
+
+                GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
             }
 
-            ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
-            GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
-        }
-        else
-        {
-            for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
-            {
-                for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
-                {
-                    qAverageTurb[iEquation][iCell] = qTurbulence[iEquation][iCell];
-                }
-            }
-
-            GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
         }
     }
 
@@ -1497,7 +1501,7 @@ void TurbSolverUnstr::SetGhostDQLUSGS(Grid *gridIn, RDouble **dq)
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *rightCellOfFace  = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -2129,7 +2133,7 @@ void TurbSolverUnstr::ModifyResidualOnWallBoundary(Grid *gridIn)
     using namespace PHENGLEI;
     if (viscoueType == 3)
     {
-        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
         int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct ++)
@@ -2166,7 +2170,7 @@ void TurbSolverUnstr::ResetWallScalar(Grid *gridIn)
     using namespace PHENGLEI;
     if (viscoueType == 3)
     {
-        CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
         int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -3073,7 +3077,7 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     int *face2node = grid->GetFace2Node();
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
  
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     for (int iNode = 0; iNode < numberOfTotalNode; ++ iNode)
@@ -3452,7 +3456,7 @@ void TurbSolverUnstr::GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int lo
         mut[jFace] = half * (viscousTurbulence[le] + viscousTurbulence[re]);
     }
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int nMid = numberOfBoundaryFace;
@@ -3582,7 +3586,7 @@ void TurbSolverUnstr::ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int loc
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     RDouble **flux  = faceProxy->GetFlux();
@@ -4102,7 +4106,7 @@ void TurbSolverUnstr::GetQlQrTurbulence(Grid *gridIn, FaceProxy *faceProxy, int 
     }
 
     //! Boundary fix.
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     int nBoundFace = grid->GetNBoundFace();
@@ -4186,7 +4190,7 @@ void TurbSolverUnstr::GetQlQrNS(Grid *gridIn, FaceProxy *faceProxy, int localSta
     }
 
     //! Boundary fix.
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
     
     int nBoundFace = grid->GetNBoundFace();
@@ -4474,7 +4478,7 @@ void TurbSolverUnstr::Boundary(Grid *gridIn)
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
     using namespace PHENGLEI;
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)

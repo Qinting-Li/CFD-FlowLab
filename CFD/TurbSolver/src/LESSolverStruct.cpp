@@ -564,7 +564,7 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
 
     StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
     InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-    CompositeStructBC * composite_bcregion = finestGrid->GetCompositeBCRegion();
+    StructBCSet * composite_bcregion = finestGrid->GetCompositeBCRegion();
     RDouble4D &rotNSgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueX"));
     RDouble4D &rotNSgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueY"));
     RDouble4D &rotNSgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueZ"));
@@ -7167,7 +7167,7 @@ void LESSolverStruct::Boundary(Grid *gridIn)
     using namespace PHENGLEI;
     StructGrid *grid = StructGridCast(gridIn);
 
-    CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
+    StructBCSet *compositeBCRregion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRregion->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -7243,7 +7243,7 @@ void LESSolverStruct::ObtainBoundaryValue(Grid *gridIn)
     using namespace PHENGLEI;
     StructGrid *grid = StructGridCast(gridIn);
 
-    CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
+    StructBCSet *compositeBCRregion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRregion->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)

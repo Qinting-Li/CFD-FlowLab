@@ -248,7 +248,7 @@ void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
     int **faceNodeIndex = grid->GetFace2NodeArray();
     int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
 
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -1867,7 +1867,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 {
     int nSolidFace = 0;
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
@@ -3563,7 +3563,7 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
     int *face2node = grid->GetFace2Node();
 
     int nBoundFace = grid->GetNBoundFace();
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     bool *nodeOnWall = new bool[nTotalNode];

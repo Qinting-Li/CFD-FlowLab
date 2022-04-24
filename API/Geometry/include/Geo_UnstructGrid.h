@@ -44,7 +44,7 @@ public:
     ~Connectivity();
 };
 
-class CompositeUnstructBC;
+class UnstructBCSet;
 class UnstructBC;
 class VirtualFile;
 class OversetConfig;
@@ -55,12 +55,12 @@ class UnstructGrid : public Grid
 private:
     //! The boundary condition list.\n
     //! Each face has a Boundary Condition Record.
-    CompositeUnstructBC ** bcr;
+    UnstructBCSet ** bcr;
 
-    CompositeUnstructBC *unstructBCRegion;
+    UnstructBCSet *unstructBCRegion;
 
     //! The volume condition list, without using at the moment.\n
-    //CompositeUnstructBC **vcr;
+    //UnstructBCSet **vcr;
 
     //! Unstructured node topology information:\n
     //! Defines the node-face, node-cell, node-node \n
@@ -177,10 +177,10 @@ public:
 public:
     GridManager * GetGridManager();
     //! Set the boundary condition records.
-    void SetBCRecord(CompositeUnstructBC **bcr);
+    void SetBCRecord(UnstructBCSet **bcr);
 
     //! Set the boundary condition region.
-    void SetUnstructBCRegion(CompositeUnstructBC* unstructBCRegion);
+    void SetUnstructBCRegion(UnstructBCSet* unstructBCRegion);
 
     //! Set the left cell list of each face.
     void SetLeftCellOfFace(int *left_cell_of_face_in);
@@ -227,13 +227,13 @@ public:
     void SetZoneProbesCellID(vector <int> zoneProbesCellID);
 
     //! Return the boundary condition records.
-    CompositeUnstructBC **GetBCRecord() const;
+    UnstructBCSet **GetBCRecord() const;
     
     //! Create composite boundary condition region (allocate memory for composite_bcregion).
     LIB_EXPORT void CreateUnstructBCRegion(int nBCRegion);
 
     //! Return composite boundary condition region pointer (composite_bcregion).
-    CompositeUnstructBC * GetUnstructBCRegion() const;
+    UnstructBCSet * GetUnstructBCRegion() const;
    
     RDouble * GetNormalDistanceOfC2C() const;
 

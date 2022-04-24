@@ -1063,7 +1063,7 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
     RDouble *yfn  = gridIn->GetFaceNormalY();
     RDouble *zfn  = gridIn->GetFaceNormalZ();
 
-    CompositeUnstructBC *unstructBCRegion = gridIn->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = gridIn->GetUnstructBCRegion();
     int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
     RDouble *gama = reinterpret_cast<RDouble *> (gridIn->GetDataPtr("gama"));

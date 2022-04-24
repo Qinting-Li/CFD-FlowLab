@@ -205,7 +205,7 @@ void Pre_StrGridPartition::ProcessBCInfo()
     for (int iBlock = 0; iBlock < numberOfOriginalBlocks; iBlock ++)
     {
         StructGrid *grid = StructGridCast(OrdinaryGrid[iBlock]);
-        CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
 
         int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
@@ -670,7 +670,7 @@ void Pre_StrGridPartition::OutputBoundaryInformation(Pre_Block_Struct *Pre_Block
 
     int numberOfLeafBoundaryFaces = static_cast<int>(leafBoundaryFace.size());
     grid->CreateCompositeBCRegion(numberOfLeafBoundaryFaces);
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
 
     for (int i = 0; i < numberOfLeafBoundaryFaces; ++ i)
     {
@@ -1035,7 +1035,7 @@ void Pre_StrGridPartition::ReadLnkFile(const string &fileName_in)
     {
         StructGrid *grid = StructGridCast(OrdinaryGrid[iBlock]);
 
-        CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
 
         int nBCRegion = composite_bcregion->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
@@ -1115,7 +1115,7 @@ void Pre_StrGridPartition::ReadLnkInfor(const string &fileName_in)
         OrdinaryGrid[iZone] = GetGrid(iZone, 0);
 
         StructGrid *grid = StructGridCast(OrdinaryGrid[iZone]);
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
 
         int nBCLnkTotal = 0;
         int nBCRegion = compositeBCRegion->GetnBCRegion();
@@ -1232,7 +1232,7 @@ void Pre_StrGridPartition::ReadBoundaryData()
         simpleBlock->SetNJ(nodeDimension[1]);
         simpleBlock->SetNK(nodeDimension[2]);
 
-        CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
         int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
         simpleBlock->GenerateBoundaryFaceList(numberOfBoundaryFaces);
 

@@ -1943,12 +1943,11 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
     string *boundaryName = cgnsGrid->GetBCName();
 
     grid->CreateUnstructBCRegion(nBCRegionUnstruct);
-    int gridIndex = grid->GetZoneID();
-    CompositeUnstructBC *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
     int* bcRegionIDofBCFace = new int[nBoundFace];
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *unstructBC = new UnstructBC(gridIndex, iBCRegionUnstruct);
+        UnstructBC *unstructBC = new UnstructBC(iBCRegionUnstruct);
         unstructBCRegion->SetBCRegion(iBCRegionUnstruct, unstructBC);
         unstructBC->SetBCName(boundaryName[iBCRegionUnstruct]);
         

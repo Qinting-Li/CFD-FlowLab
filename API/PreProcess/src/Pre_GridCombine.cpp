@@ -207,7 +207,7 @@ void CombinGrid::MergeInterface2All()
     {
         UnstructGrid *gridLocal = UnstructGridCast(grid_in[iZone]);
 
-        CompositeUnstructBC *unstructBCRegion = gridLocal->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = gridLocal->GetUnstructBCRegion();
         int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
         int nBFaceLocal = gridLocal->GetNBoundFace();
@@ -277,7 +277,7 @@ void CombinGrid::MergeFace2All()
         int *left_cell_of_face_current        = unstr_current->GetLeftCellOfFace();
         int *right_cell_of_face_current       = unstr_current->GetRightCellOfFace();
         
-        CompositeUnstructBC *unstructBCRegion = unstr_current->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = unstr_current->GetUnstructBCRegion();
         int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
        
         InterfaceInfo *iinfo_current          = unstr_current->GetInterfaceInfo();
@@ -516,7 +516,7 @@ void CombinGrid::MergeBCType()
         int nBoundFace = unstr->GetNBoundFace();
         int *face2all = GetFace2All(iZone);
 
-        CompositeUnstructBC *unstructBCRegion = unstr->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = unstr->GetUnstructBCRegion();
         int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
 
         for (int iface = 0; iface < nBoundFace; ++ iface)
@@ -537,7 +537,7 @@ void CombinGrid::MergeBCType()
     }
 
     grid_all->SetNBoundFace(nBFace_all);
-    CompositeUnstructBC **bcr_all = new CompositeUnstructBC * [nTFace_all];
+    UnstructBCSet **bcr_all = new UnstructBCSet * [nTFace_all];
 
     set<string> bcNameSet;
     int count = 0;
@@ -548,7 +548,7 @@ void CombinGrid::MergeBCType()
         int nBoundFace = unstr->GetNBoundFace();
         int *face2all = GetFace2All(iZone);
 
-        CompositeUnstructBC *unstructBCRegion = unstr->GetUnstructBCRegion();
+        UnstructBCSet *unstructBCRegion = unstr->GetUnstructBCRegion();
         int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
         
 
@@ -567,7 +567,7 @@ void CombinGrid::MergeBCType()
                     continue;
                 }
             }
-            bcr_all[globalFaceID] = new CompositeUnstructBC();
+            bcr_all[globalFaceID] = new UnstructBCSet();
             bcr_all[globalFaceID]->SetKey(bcType);
             bcr_all[globalFaceID]->SetBCName(bcName);
             bcNameSet.insert(bcName);
@@ -656,14 +656,13 @@ void CombinGrid::MergeBCType()
 
     grid_all->CreateUnstructBCRegion(nBCRegionUnstruct);
 
-    CompositeUnstructBC *unstructBCRegionAll = grid_all->GetUnstructBCRegion();
-    int* bcRegionIDofBCFaceAll = new int[nTFace_all];
-    int gridIndexAll = grid_all->GetZoneID();
+    UnstructBCSet *unstructBCRegionAll = grid_all->GetUnstructBCRegion();
+    int* bcRegionIDofBCFaceAll = new int[nBFace_all];
     set<string>::iterator iter;
     count = 0;
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
-        UnstructBC *unstructBCAll = new UnstructBC(gridIndexAll, count);
+        UnstructBC *unstructBCAll = new UnstructBC(count);
         unstructBCRegionAll->SetBCRegion(count, unstructBCAll);
         unstructBCAll->SetBCName(*iter);
 

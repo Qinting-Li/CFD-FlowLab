@@ -202,16 +202,16 @@ private:
     int stam[3], rate[3];
 };
 
-//! @brief CompositeStructBC class defines the composites of StructBC informations.
+//! @brief StructBCSet class defines the composites of StructBC informations.
 //! In one zone (block), several StructBCs may be exist, so all StructBCs in one zone
-//! are defined as a 'CompositeStructBC'.
-class CompositeStructBC
+//! are defined as a 'StructBCSet'.
+class StructBCSet
 {
 private:
     //! Number of zone (block) index this BC in.
     int zoneID;
 
-    //! The BCRegions list in the current CompositeStructBC.
+    //! The BCRegions list in the current StructBCSet.
     vector<StructBC *> *bcRegions;
 
 
@@ -225,13 +225,13 @@ private:
     string boundaryName[100];
 
 public:
-    CompositeStructBC(int zoneID = 0);
-    ~CompositeStructBC();
+    StructBCSet(int zoneID = 0);
+    ~StructBCSet();
 
 public:
     string GetBCName(int bcType) { return boundaryName[bcType]; }
 
-    void CopyCompositeBCRegion(CompositeStructBC *rightHandSide);
+    void CopyCompositeBCRegion(StructBCSet *rightHandSide);
 
     StructBC * GetBCRegion(uint_t iBCRegion) const;
 
