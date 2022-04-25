@@ -886,7 +886,7 @@ void IO_HDF5Read::ReadNumberOfZones()
         }
     }
 
-    PHMPI::SetNumberofGlobalZones   (nZones);
+    PHMPI::SetNumberOfGlobalZones   (nZones);
     PHMPI::CreateZoneProcessorIDDump(nZones);
     PHMPI::CreateZoneProcessorID    (nZones);
     PHMPI::CreateZoneGridID         (nZones);
@@ -922,7 +922,7 @@ void IO_HDF5Read::ReadNumberOfZonesOld(hid_t loc_id)
     //PH_AllReduce(nZonesListTemp, nZonesList, globalFileNumber, MPI_SUM);
     delete [] nZonesListTemp;
 
-    PHMPI::SetNumberofGlobalZones   (nZones);
+    PHMPI::SetNumberOfGlobalZones   (nZones);
     PHMPI::CreateZoneProcessorIDDump(nZones);
     PHMPI::CreateZoneProcessorID    (nZones);
     PHMPI::CreateZoneGridID         (nZones);
@@ -1830,7 +1830,7 @@ void IO_HDF5Read::SetGlobalZoneLayout()
 {
     if (!PHMPI::GetZoneGridType())
     {
-        PHMPI::SetNumberofGlobalZones(nZones);
+        PHMPI::SetNumberOfGlobalZones(nZones);
         PHMPI::CreateZoneProcessorIDDump(nZones);
         PHMPI::CreateZoneProcessorID(nZones);
         PHMPI::CreateZoneGridID(nZones);

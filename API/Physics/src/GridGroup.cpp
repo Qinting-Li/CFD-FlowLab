@@ -49,7 +49,7 @@ void GridGroup::SetGlobalZoneLayout()
 
     if(!GetZoneGridType())
     {
-        SetNumberofGlobalZones(nzones);
+        SetNumberOfGlobalZones(nzones);
         CreateZoneProcessorIDDump(nzones);
         CreateZoneProcessorID(nzones);
         CreateZoneGridID     (nzones);

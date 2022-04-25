@@ -683,15 +683,15 @@ void ConvertGrid()
 void RefineGrid()
 {
     RefineParameter *refineParameter = new RefineParameter();
-    int anisoRefine = GlobalDataBase::GetIntParaFromDB("gridtype");
+    int anisoRefine = GlobalDataBase::GetIntParaFromDB("anisoRefine");
 #ifdef USE_INHOUSE_VERSION
 #ifdef USE_OCC
-    int isProject = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int isDeform = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int exclusiveCase = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int projectOrgPoint = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int geometryUnit = GlobalDataBase::GetIntParaFromDB("gridtype");
-    string geometryFileName = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    int isProject = GlobalDataBase::GetIntParaFromDB("isProject");
+    int isDeform = GlobalDataBase::GetIntParaFromDB("isDeform");
+    int exclusiveCase = GlobalDataBase::GetIntParaFromDB("exclusiveCase");
+    int projectOrgPoint = GlobalDataBase::GetIntParaFromDB("projectOrgPoint");
+    int geometryUnit = GlobalDataBase::GetIntParaFromDB("geometryUnit");
+    string geometryFileName = GlobalDataBase::GetStrParaFromDB("geometryFileName");
 
     refineParameter->SetIsProject(isProject);
     refineParameter->SetIsDeform(isDeform);

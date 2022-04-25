@@ -168,7 +168,7 @@ void IO_GridReader::ReadNumberOfTotalZonesAndInitialGlobalValue()
     }
 
     //! Allocate global zone layout information.
-    SetNumberofGlobalZones   (numberOfTotalZones);
+    SetNumberOfGlobalZones   (numberOfTotalZones);
     CreateZoneProcessorIDDump(numberOfTotalZones);
     CreateZoneProcessorID    (numberOfTotalZones);
     CreateZoneGridID         (numberOfTotalZones);
@@ -328,7 +328,7 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
     }
 
     //! Allocate global zone layout information.
-    SetNumberofGlobalZones   (numberOfTotalZones);
+    SetNumberOfGlobalZones   (numberOfTotalZones);
     CreateZoneProcessorIDDump(numberOfTotalZones);
     CreateZoneProcessorID    (numberOfTotalZones);
     CreateZoneGridID         (numberOfTotalZones);

@@ -160,7 +160,7 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
 
     using namespace PHMPI;
 
-    SetNumberofGlobalZones(nBlocks);
+    SetNumberOfGlobalZones(nBlocks);
 
     int nZones = GetNumberofGlobalZones();
 
