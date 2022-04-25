@@ -56,9 +56,7 @@ void ForceProcessStruct::InitValueField()
         grid->UpdateDataPtr("t", t);
 
         RDouble3D *visl = new RDouble3D(I, J, K, fortranArray);
-        RDouble3D *vist = new RDouble3D(I, J, K, fortranArray);
         grid->UpdateDataPtr("visl", visl);
-        grid->UpdateDataPtr("vist", vist);
     }
 }
 
@@ -429,18 +427,12 @@ void ForceProcessStruct::CompValueField()
     }
 }
 
-void ForceProcessStruct::ComputeGamaAndTemperature(Grid *grid_in)
+void ForceProcessStruct::ComputeGamaAndTemperature(Grid *gridIn)
 {
-    StructGrid *grid = StructGridCast(grid_in);
+    StructGrid *grid = StructGridCast(gridIn);
 
     RDouble4D &q = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("q"));
     RDouble4D &t = * reinterpret_cast<RDouble4D *>(grid->GetDataPtr("t"));
-
-    int nm = 5;
-    GlobalDataBase::GetData("nm", &nm, PHINT, 1);
-
-    int nchem = 0;
-    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
 
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
@@ -464,9 +456,9 @@ void ForceProcessStruct::ComputeGamaAndTemperature(Grid *grid_in)
     }
 }
 
-void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *grid_in)
+void ForceProcessStruct::ComputeViscousLaminarCoefficient(Grid *gridIn)
 {
-    StructGrid *grid = StructGridCast(grid_in);
+    StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();

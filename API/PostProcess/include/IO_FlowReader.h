@@ -35,16 +35,16 @@ public:
 
 private:
     void Init();
-    void InitMemoryStruct(Grid *grid_in);
-    void InitMemoryUnstruct(Grid *grid_in);
+    void InitMemoryStruct(Grid *gridIn);
+    void InitMemoryUnstruct(Grid *gridIn);
 
     void ReadFlowFile();
-    void ReadFlowFileStr(hid_t loc_id, Grid *grid_in);
-    void ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData);
+    void ReadFlowFileStr(hid_t loc_id, Grid *gridIn);
+    void ReadFlowFileUnStr(hid_t loc_id, Grid *gridIn);
 
     void ReadTurbFile();
-    void ReadTurbFileStr(hid_t loc_id, Grid *grid_in);
-    void ReadTurbFileUnStr(Grid *grid_in, DataContainer *flowData);
+    void ReadTurbFileStr(hid_t loc_id, Grid *gridIn);
+    void ReadTurbFileUnStr(hid_t loc_id, Grid *gridIn);
 
 private:
     string restartNSFile;

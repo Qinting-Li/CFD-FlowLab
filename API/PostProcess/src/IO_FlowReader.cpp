@@ -71,9 +71,9 @@ void IO_FlowReader::Init()
     }
 }
 
-void IO_FlowReader::InitMemoryStruct(Grid *grid_in)
+void IO_FlowReader::InitMemoryStruct(Grid *gridIn)
 {
-    StructGrid *grid = StructGridCast(grid_in);
+    StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
@@ -87,9 +87,6 @@ void IO_FlowReader::InitMemoryStruct(Grid *grid_in)
     RDouble4D *q = new RDouble4D(I, J, K, M, fortranArray);
     grid->UpdateDataPtr("q", q);
 
-    RDouble4D *t = new RDouble4D(I, J, K, T, fortranArray);
-    grid->UpdateDataPtr("t", t);
-
     if (nTurbulenceEquation > 0)
     {
         Range Mturb(0, nTurbulenceEquation - 1);
@@ -101,9 +98,29 @@ void IO_FlowReader::InitMemoryStruct(Grid *grid_in)
     }
 }
 
-void IO_FlowReader::InitMemoryUnstruct(Grid *grid_in)
+void IO_FlowReader::InitMemoryUnstruct(Grid *gridIn)
 {
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+    int nTotalCell = grid->GetNTotalCell();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotal = nTotalCell + nBoundFace;
 
+    RDouble **q   = NewPointer2<RDouble>(nEquation, nTotal);
+    grid->UpdateDataPtr("q", q);
+
+    RDouble **gradPrimtiveVarX = NewPointer2<RDouble>(nEquation, nTotal);
+    RDouble **gradPrimtiveVarY = NewPointer2<RDouble>(nEquation, nTotal);
+    RDouble **gradPrimtiveVarZ = NewPointer2<RDouble>(nEquation, nTotal);
+
+    grid->UpdateDataPtr("gradPrimtiveVarX", gradPrimtiveVarX);
+    grid->UpdateDataPtr("gradPrimtiveVarY", gradPrimtiveVarY);
+    grid->UpdateDataPtr("gradPrimtiveVarZ", gradPrimtiveVarZ);
+
+    if (nTurbulenceEquation > 0)
+    {
+        RDouble **qTurbulence = NewPointer2<RDouble>(nTurbulenceEquation, nTotal);
+        grid->UpdateDataPtr("q_turb", qTurbulence);
+    }
 }
 
 void IO_FlowReader::ReadFlowFile()
@@ -126,24 +143,39 @@ void IO_FlowReader::ReadFlowFile()
         }
         else
         {
-
+            ReadFlowFileUnStr(file, grid);
         }
     }
 
     H5Fclose(file);
 }
 
-void IO_FlowReader::ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData)
+void IO_FlowReader::ReadFlowFileUnStr(hid_t loc_id, Grid *gridIn)
 {
+    RDouble **q = reinterpret_cast< RDouble ** > ( gridIn->GetDataPtr("q") );
 
+    hid_t grploc;
+    string grpName;
+
+    int outIterStep = 0;
+    ReadData(loc_id, &outIterStep, "outnstep");
+    GlobalDataBase::UpdateData("outnstep", &outIterStep, PHINT, 1);
+
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
+
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, q[0], "q");
+
+    H5Gclose(grploc);
 }
 
-void IO_FlowReader::ReadFlowFileStr(hid_t loc_id, Grid *grid_in)
+void IO_FlowReader::ReadFlowFileStr(hid_t loc_id, Grid *gridIn)
 {
-    RDouble4D &temperatures       = *reinterpret_cast <RDouble4D *> (grid_in->GetDataPtr("t"));
-    RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (grid_in->GetDataPtr("q"));
+    RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (gridIn->GetDataPtr("q"));
 
-    StructGrid *strGrid = StructGridCast(grid_in);
+    StructGrid *strGrid = StructGridCast(gridIn);
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
     strGrid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
 
@@ -155,12 +187,11 @@ void IO_FlowReader::ReadFlowFileStr(hid_t loc_id, Grid *grid_in)
     GlobalDataBase::UpdateData("outnstep", &outIterStep, PHINT, 1);
 
     ostringstream oss;
-    oss << "Group" << grid_in->GetZoneID();
+    oss << "Group" << gridIn->GetZoneID();
     grpName = oss.str();
 
     grploc = OpenGroup(loc_id, grpName);
     ReadData(grploc, &primitiveVariables(iCellStart, jCellStart, kCellStart, 0), "q");
-    ReadData(grploc, &temperatures(iCellStart, jCellStart, kCellStart, 0), "t");
 
     H5Gclose(grploc);
 }
@@ -190,16 +221,16 @@ void IO_FlowReader::ReadTurbFile()
         }
         else
         {
-
+            ReadTurbFileUnStr(file, grid);
         }
     }
 
     H5Fclose(file);
 }
 
-void IO_FlowReader::ReadTurbFileStr(hid_t loc_id, Grid *grid_in)
+void IO_FlowReader::ReadTurbFileStr(hid_t loc_id, Grid *gridIn)
 {
-    StructGrid *strGrid = StructGridCast(grid_in);
+    StructGrid *strGrid = StructGridCast(gridIn);
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
     strGrid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
 
@@ -210,7 +241,7 @@ void IO_FlowReader::ReadTurbFileStr(hid_t loc_id, Grid *grid_in)
     string grpName;
 
     ostringstream oss;
-    oss << "Group" << grid_in->GetZoneID();
+    oss << "Group" << gridIn->GetZoneID();
     grpName = oss.str();
 
     grploc = OpenGroup(loc_id, grpName);
@@ -220,9 +251,21 @@ void IO_FlowReader::ReadTurbFileStr(hid_t loc_id, Grid *grid_in)
     H5Gclose(grploc);
 }
 
-void IO_FlowReader::ReadTurbFileUnStr(Grid *grid_in, DataContainer *flowData)
+void IO_FlowReader::ReadTurbFileUnStr(hid_t loc_id, Grid *gridIn)
 {
-    
+    RDouble **qTurbulence     = reinterpret_cast<RDouble **> (gridIn->GetDataPtr("q_turb"));
+
+    hid_t grploc;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
+
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, qTurbulence[0], "q_turb");
+
+    H5Gclose(grploc);
 }
 
 }

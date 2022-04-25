@@ -9,7 +9,7 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      PostProcessing.h
+//! @file      ForceProcessStruct.h
 //! @brief     StructGrid Flow result post-processing
 //! @author    Baka.
 
@@ -44,8 +44,8 @@ private:
 
     void InitValueField();
     void CompValueField();
-    void ComputeGamaAndTemperature(Grid *grid_in);
-    void ComputeViscousLaminarCoefficient(Grid *grid_in);
+    void ComputeGamaAndTemperature(Grid *gridIn);
+    void ComputeViscousLaminarCoefficient(Grid *gridIn);
 
 private:
     string filename;

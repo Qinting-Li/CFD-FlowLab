@@ -1,5 +1,6 @@
 #include "PostProcess.h"
 #include "ForceProcessStruct.h"
+#include "ForceProcessUnstruct.h"
 #include "GridType.h"
 #include "PHIO.h"
 #include "IO_FileName.h"
@@ -93,7 +94,10 @@ void PostProcess::CompAirForceCoef()
     }
     else
     {
+        ForceProcessUnstruct *forceprocess = new ForceProcessUnstruct();
+        forceprocess->Run();
 
+        delete forceprocess;
     }
 
 
