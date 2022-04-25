@@ -21,43 +21,11 @@ ForceProcessStruct::~ForceProcessStruct()
 
 void ForceProcessStruct::Run()
 {
-    InitValueField();
     CompValueField();
     InitForce();
     CompForce();
     CollectionForce();
     DumpForce();
-}
-
-void ForceProcessStruct::InitValueField()
-{
-    using namespace PHMPI;
-
-    int nLocalZones = GetNumberofLocalZones();
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-        StructGrid *grid = StructGridCast(GetGrid(zoneID));
-
-        int ni = grid->GetNI();
-        int nj = grid->GetNJ();
-        int nk = grid->GetNK();
-        Range I(-1, ni+1);
-        Range J(-1, nj+1);
-        Range K(-1, nk+1);
-        if (nk == 1)
-        {
-            K.setRange(1, 1);
-        }
-        int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-
-        Range T(0, nTemperatureModel - 1);
-        RDouble4D *t = new RDouble4D(I, J, K, T, fortranArray);
-        grid->UpdateDataPtr("t", t);
-
-        RDouble3D *visl = new RDouble3D(I, J, K, fortranArray);
-        grid->UpdateDataPtr("visl", visl);
-    }
 }
 
 void ForceProcessStruct::InitForce()

@@ -40,11 +40,9 @@ void PostProcess::Run()
 
 void PostProcess::ReadGridFile()
 {
-    cout << endl;
-    cout << "Begin to read grid finish ..." << endl << endl;
     region->ReadGrid();
-    cout << endl << "Read grid finish ..." << endl;
 
+    cout << endl << "Read grid finish ..." << endl;
 }
 
 void PostProcess::ComputeMetrics()
@@ -71,14 +69,20 @@ void PostProcess::ComputeMetrics()
 
 void PostProcess::ReadFlowFile()
 {
+    cout << endl<< "Begin to read flow data ..." << endl << endl;
+
     IO_FlowReader *flowReader = new IO_FlowReader(this->region);
     flowReader->Run();
 
     delete flowReader;
+
+    cout << "Read flow data finish ..." << endl;
 }
 
 void PostProcess::CompAirForceCoef()
 {
+    cout << endl << "Computer air force coefficient ..." << endl;
+
     InitGlobalValues();
     ReadBCFile();
     ComputeMetrics();
@@ -100,7 +104,7 @@ void PostProcess::CompAirForceCoef()
         delete forceprocess;
     }
 
-
+    cout << endl << "Computer finish ..." << endl;
 }
 
 void PostProcess::ReadBCFile()

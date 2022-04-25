@@ -42,7 +42,6 @@ private:
     void CompForce();
     void DumpForce();
 
-    void InitValueField();
     void CompValueField();
     void ComputeGamaAndTemperature(Grid *gridIn);
     void ComputeViscousLaminarCoefficient(Grid *gridIn);

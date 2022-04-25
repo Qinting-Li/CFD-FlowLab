@@ -87,14 +87,21 @@ void IO_FlowReader::InitMemoryStruct(Grid *gridIn)
     RDouble4D *q = new RDouble4D(I, J, K, M, fortranArray);
     grid->UpdateDataPtr("q", q);
 
+    RDouble4D *t = new RDouble4D(I, J, K, T, fortranArray);
+    grid->UpdateDataPtr("t", t);
+
+    RDouble3D *visl = new RDouble3D(I, J, K, fortranArray);
+    grid->UpdateDataPtr("visl", visl);
+
+    RDouble3D *viscousTurbulent = new RDouble3D(I, J, K, fortranArray);
+    grid->UpdateDataPtr("vist", viscousTurbulent);
+    *viscousTurbulent = 0.0;
+
     if (nTurbulenceEquation > 0)
     {
         Range Mturb(0, nTurbulenceEquation - 1);
         RDouble4D *q_turb = new RDouble4D(I, J, K, Mturb, fortranArray);
         grid->UpdateDataPtr("q_turb", q_turb);
-
-        RDouble3D *viscousTurbulent = new RDouble3D(I, J, K, fortranArray);
-        grid->UpdateDataPtr("vist", viscousTurbulent);
     }
 }
 
