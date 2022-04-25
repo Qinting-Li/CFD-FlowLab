@@ -617,7 +617,7 @@ void Region::AllocateZoneLayoutInformation()
 {
     using namespace PHMPI;
 
-    SetNumberofGlobalZones(numberOfTotalZones);
+    SetNumberOfGlobalZones(numberOfTotalZones);
 
     CreateZoneProcessorIDDump(numberOfTotalZones);
     CreateZoneProcessorID(numberOfTotalZones);
@@ -1184,7 +1184,6 @@ void Region::InitZoneNeighborsForPointInformation()
         }
     }
 }
-
 
 void Region::GetProcessorZones(int iZone, ZoneNeighbor *zoneNeighbor, vector< int > *neighborProcessors, vector< set< int > > *processorZones)
 {

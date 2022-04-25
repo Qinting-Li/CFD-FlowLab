@@ -54,7 +54,7 @@ void ForceProcessStruct::AirForceCoef(int iZone)
     const int ALL_PART = -1;
     AirForceCoefParts(iZone, ALL_PART);
 
-    uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+    uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
     for (int iPart = 0; iPart < nTBC; ++ iPart)
     {
         if (!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;

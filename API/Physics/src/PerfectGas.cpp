@@ -6,7 +6,7 @@
 #include "PHIO.h"
 #include "Glb_Dimension.h"
 #include "TK_Log.h"
-#include "SubsonicBC.h"
+#include "Math_BasisFunction.h"
 
 namespace PHSPACE
 {
@@ -343,16 +343,6 @@ void PerfectGas::InitReferenceParameter()
         referenceParameterDimensional.SetPressure(refDimensionalPressure);
 
         SetAirInformationByExpData();
-    }
-    else if (inflowParaType == SUBSONICBCCONDITION)
-    {
-        RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
-        RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
-        RDouble refDimensionalPressure = GlobalDataBase::GetDoubleParaFromDB("refDimensionalPressure");
-
-        referenceParameterDimensional.SetMachNumber(refMachNumber);
-        referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
-        referenceParameterDimensional.SetPressure(refDimensionalPressure);
     }
     else if (inflowParaType == TEMPERATURE_DENSITY) //where temperature and density are fixed.
     {
@@ -778,15 +768,10 @@ void PerfectGas::ComputeReferenceGasInformation()
         ComputeDensityWithReynoldsNumber();
         ComputePressureInGasStateEquation();
     }
-    else if (inflowParaType == FLIGHTCONDITION || inflowParaType == EXPERIMENTCONDITION || inflowParaType == SUBSONICBCCONDITION)  //obtain the referce density for nondimension, and the Re.
+    else if (inflowParaType == FLIGHTCONDITION || inflowParaType == EXPERIMENTCONDITION)  //obtain the referce density for nondimension, and the Re.
     {
         NormalizeAirInformation();
         ComputeReferenceReynoldsNumber();
-
-        if (inflowParaType == SUBSONICBCCONDITION)
-        {
-            GetSubsonicBCData();
-        }
     }
     else if (inflowParaType == TEMPERATURE_DENSITY)
     {

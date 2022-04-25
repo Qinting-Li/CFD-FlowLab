@@ -16,7 +16,7 @@
 #endif
 
 #ifdef USE_MULTISPECIES_CODE
-#include "RealGas.h"
+#include "MixedGas.h"
 #endif
 
 using namespace std;
@@ -262,7 +262,7 @@ void InitGlobalValuesSolver()
             #endif
 
             #ifdef USE_MULTISPECIES_CODE
-            gas = new RealGas();
+            gas = new MixedGas();
             #endif
         }
         gas->InitGlobalParameterOfNSEquation();

@@ -3,7 +3,6 @@
 #include "Geo_StructBC.h"
 #include "MultiGridOperation.h"
 #include "GradientOperation.h"
-#include "SubsonicBC.h"
 #include "Force.h"
 #include "OversetGridFactory.h"
 #include "TK_Exit.h"
@@ -106,11 +105,19 @@ namespace PHSPACE
         int nLaminar = parameters->GetLaminarNumber();
         int nChemical = parameters->GetChemicalFlag();
         int nTemperatureModel = parameters->GetTemperatureModel();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
         int nSourceTerm = nEquation - nNSEquation;    //! The number of source term.
         int nDim = GetDim();
         const int nUVWTIndex = nTemperatureModel + 3;
+
+        int nLayer = GetNumberOfGhostCellLayers();
+
+        if (isWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
 
         Range M(0, nEquation - 1);
         Range N(0, nUVWTIndex - 1);
@@ -128,7 +135,9 @@ namespace PHSPACE
         RDouble4D *diagonal0 = new RDouble4D(I, J, K, M, fortranArray);
 
         int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
-        grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
+        grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, nLayer);
+
+
         for (int k = kCellStart; k <= kCellEnd; ++ k)
         {
             for (int j = jCellStart; j <= jCellEnd; ++ j)
@@ -2663,7 +2672,7 @@ namespace PHSPACE
             AirForceCoefParts(actkey, ALL_PART);
 
             int coordinate = LocalCoordinate;
-            uint_t nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+            uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
             for (int iPart = 0; iPart < nTotalBC; ++ iPart)
             {
                 if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
@@ -3033,7 +3042,7 @@ namespace PHSPACE
 
         CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
-        int nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+        int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
@@ -3407,6 +3416,12 @@ namespace PHSPACE
 
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+        int isWennScheme = parameters->GetWennSchemeFlag();
+        if (isWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
 
         RDouble4D dataStore(I, J, K, M, fortranArray);
         RDouble3D isWall(I, J, K, fortranArray);
@@ -7282,10 +7297,6 @@ namespace PHSPACE
             {
                 OutFlowBC3D(grid, structBC);
             }
-            else if (SetSubsonicBC(grid, structBC, BCType))
-            {
-                continue;
-            }
             else if (BCType == NOZZLE_INFLOW)
             {
                 NozzleInletFlow(grid, structBC);
@@ -7509,6 +7520,9 @@ namespace PHSPACE
         int is1, js1, ks1, is2, js2, ks2;
         int it1, jt1, kt1, it2, jt2, kt2;
 
+        Param_NSSolverStruct *parameters = GetControlParameters();
+        int isWennScheme = parameters->GetWennSchemeFlag();
+
         int nEquation = GetNumberOfEquations();
 
         RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
@@ -7541,6 +7555,25 @@ namespace PHSPACE
                     {
                         q(it1, jt1, kt1, m) = q(is1, js1, ks1, m);
                         q(it2, jt2, kt2, m) = q(it1, jt1, kt1, m);
+                    }
+
+                    if (isWennScheme == 1)
+                    {
+                        int is3, js3, ks3;
+                        int it3, jt3, kt3;
+
+                        //! Third cell index inside flow field.
+                        structBC->GetInsideCellIndex(i, j, k, is3, js3, ks3, 3);
+
+                        RestrictIndex(is3, js3, ks3, ni - 1, nj - 1, nk - 1);
+
+                        //! Third cell index of ghost cell.
+                        structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            q(it3, jt3, kt3, m) = q(it1, jt1, kt1, m);
+                        }
                     }
                 }
             }
@@ -7577,6 +7610,7 @@ namespace PHSPACE
 
         int is = 0, js = 0, ks = 0, it = 0, jt = 0, kt = 0, in = 0, jn = 0, kn = 0;
         RDouble vx = 0, vy = 0, vz = 0, vn = 0, vgn = 0;
+        int nLayer = GetNumberOfGhostCellLayers();
 
         using namespace IDX;
 
@@ -7593,7 +7627,7 @@ namespace PHSPACE
                     nzs = zfn(in, jn, kn, iSurface);
                     vgn = faceNormalVelocity(in, jn, kn, iSurface);
 
-                    for (int layer = 1; layer <= 2; ++ layer)
+                    for (int layer = 1; layer <= nLayer; ++ layer)
                     {
                         structBC->GetInsideCellIndex(i, j, k, is, js, ks, layer);
                         RestrictIndex(is, js, ks, ni - 1, nj - 1, nk - 1);
@@ -7963,6 +7997,7 @@ namespace PHSPACE
         int nLaminar = parameters->GetLaminarNumber();
         int nChemical = parameters->GetChemicalFlag();
         int nTemperatureModel = parameters->GetTemperatureModel();
+        int isWennScheme = parameters->GetWennSchemeFlag();
         //! Obtain the number of the physical equations.
         int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
@@ -8045,6 +8080,31 @@ namespace PHSPACE
                         q(it1, jt1, kt1, m) = q(is1, js1, ks1, m);
                         q(it2, jt2, kt2, m) = q(it1, jt1, kt1, m);
                     }
+
+                    if (isWennScheme == 1)
+                    {
+                        int is3, js3, ks3;
+                        int it3, jt3, kt3;
+
+                        //! Third cell index inside flowfield.
+                        structBC->GetInsideCellIndex(i, j, k, is3, js3, ks3, 3);
+
+                        RestrictIndex(is3, js3, ks3, ni - 1, nj - 1, nk - 1);
+
+                        //! Third cell index of ghostcell.
+                        structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
+
+                        q(it3, jt3, kt3, IR) = q(it1, jt1, kt1, IR);
+                        q(it3, jt3, kt3, IU) = q(it1, jt1, kt1, IU);
+                        q(it3, jt3, kt3, IV) = q(it1, jt1, kt1, IV);
+                        q(it3, jt3, kt3, IW) = q(it1, jt1, kt1, IW);
+                        q(it3, jt3, kt3, IP) = q(it1, jt1, kt1, IP);
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            q(it3, jt3, kt3, m) = q(it1, jt1, kt1, m);
+                        }
+                    }
                 }
             }
         }
@@ -8061,7 +8121,6 @@ namespace PHSPACE
         int nk = grid->GetNK();
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
@@ -8120,6 +8179,8 @@ namespace PHSPACE
         RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature;  //! non-dimensional temperature.
         RDouble temperaturelimitation = 1.E-6;
 
+        int nLayer = GetNumberOfGhostCellLayers();
+
         using namespace IDX;
 
         int is, js, ks, it, jt, kt;
@@ -8130,7 +8191,7 @@ namespace PHSPACE
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    for (int layer = 1; layer <= 2; ++ layer)
+                    for (int layer = 1; layer <= nLayer; ++ layer)
                     {
                         int in, jn, kn;
                         structBC->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
@@ -8324,6 +8385,8 @@ namespace PHSPACE
     {
         StructGrid *grid = StructGridCast(gridIn);
 
+        Param_NSSolverStruct *parameters = GetControlParameters();
+
         int nEquation = GetNumberOfEquations();
 
         RDouble4D &primitiveVars = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
@@ -8342,10 +8405,12 @@ namespace PHSPACE
 
         if (inflowParaType == TRAJECTORY)
         {
-            SetBCInitialValuesByInterpolation (structBC, primitiveVarFarfield);
+            SetBCInitialValuesByInterpolation(structBC, primitiveVarFarfield);
         }
 
         int it, jt, kt;
+
+        int nLayer = GetNumberOfGhostCellLayers();
 
         for (int k = kst; k <= ked; ++ k)
         {
@@ -8353,7 +8418,7 @@ namespace PHSPACE
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    for (int layer = 1; layer <= 2; ++ layer)
+                    for (int layer = 1; layer <= nLayer; ++ layer)
                     {
                         structBC->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
 
@@ -8381,6 +8446,7 @@ namespace PHSPACE
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
         Param_NSSolverStruct *parameters = GetControlParameters();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -8566,6 +8632,149 @@ namespace PHSPACE
                 }
             }
         }
+
+        if (isWennScheme == 1)
+        {
+            int is3, js3, ks3;
+            int it3, jt3, kt3;
+            RDouble* prims3;
+            RDouble* primt3;
+            prims3 = new RDouble[nEquation];
+            primt3 = new RDouble[nEquation];
+
+            for (int k = kst; k <= ked; ++k)
+            {
+                for (int j = jst; j <= jed; ++j)
+                {
+                    for (int i = ist; i <= ied; ++i)
+                    {
+                        //! Third cell index inside flowfield.
+                        structBC->GetInsideCellIndex(i, j, k, is3, js3, ks3, 3);
+
+                        RestrictIndex(is3, js3, ks3, ni - 1, nj - 1, nk - 1);
+
+                        //! Third cell index of ghostcell.
+                        structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            prims3[m] = q(is3, js3, ks3, m);
+                            primt3[m] = prims3[m];
+                        }
+                        //! The needed (nx, ny, nz) is stored in the cell of (in, jn, kn).
+                        structBC->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+
+                        nxs = lr * xfn(in, jn, kn, iSurface);
+                        nys = lr * yfn(in, jn, kn, iSurface);
+                        nzs = lr * zfn(in, jn, kn, iSurface);
+                        RDouble vgn = faceNormalVelocity(in, jn, kn, iSurface);
+
+                        //! The first inner point.
+                        rin = prims1[IR];
+                        uin = prims1[IU];
+                        vin = prims1[IV];
+                        win = prims1[IW];
+                        pin = prims1[IP];
+                        vnin = nxs * uin + nys * vin + nzs * win - vgn;
+                        cinner = sqrt(ABS(refGama * pin / rin));
+                        vein = sqrt(uin * uin + vin * vin + win * win);
+
+                        //! Infinite.
+                        vnoo = nxs * uoo + nys * voo + nzs * woo - vgn;
+                        coo = sqrt(ABS(refGama * poo / roo));
+
+                        if (vein > cinner)
+                        {
+                            //! Supersonic.
+                            if (vnin >= 0.0)
+                            {
+                                //! Supersonic outlet.
+                                for (int m = 0; m < nEquation; ++m)
+                                {
+                                    q(it3, jt3, kt3, m) = 3.0 * prims1[m] - 2.0 * prims2[m];
+                                }
+
+                                if (q(it3, jt3, kt3, IR) <= 0.0 || q(it3, jt3, kt3, IP) <= 0.0)
+                                {
+                                    for (int m = 0; m < nEquation; ++m)
+                                    {
+                                        q(it3, jt3, kt3, m) = prims1[m];
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                //! Supersonic inlet.
+                                for (int m = 0; m < nEquation; ++m)
+                                {
+                                    q(it3, jt3, kt3, m) = primitiveVarFarfield[m];
+                                }
+                            }
+                        }
+                        else
+                        {
+                            //! Subsonic.
+                            RDouble gama1 = refGama - 1.0;
+                            RDouble riemp;     //! Riemann invariant for inner.
+                            RDouble riemm;     //! Riemann invariant for infinite.
+                            riemp = vnin + 2.0 * cinner / gama1;
+                            riemm = vnoo - 2.0 * coo / gama1;
+
+                            vnb = half * (riemp + riemm);
+                            cb = fourth * (riemp - riemm) * gama1;
+
+                            RDouble sb;                          //! Entropy at the boundary.
+                            RDouble uref, vref, wref, vnref;     //! Outlet refers to inner point, and inlet refers to infinite.
+
+                            if (vnb > 0.0)
+                            {
+                                //! Subsonic outlet.
+                                sb = pin / pow(rin, refGama);
+                                uref = uin;
+                                vref = vin;
+                                wref = win;
+                                vnref = vnin;
+                            }
+                            else
+                            {
+                                //! Subsonic inlet.
+                                sb = poo / pow(roo, refGama);
+                                uref = uoo;
+                                vref = voo;
+                                wref = woo;
+                                vnref = vnoo;
+                            }
+
+                            rb = pow((cb * cb / (sb * refGama)), 1.0 / gama1);
+                            ub = uref + nxs * (vnb - vnref);
+                            vb = vref + nys * (vnb - vnref);
+                            wb = wref + nzs * (vnb - vnref);
+                            pb = cb * cb * rb / refGama;     //! The same to "pb = sb * pow(rb, refGama);".
+
+                            primt1[IR] = rb;
+                            primt1[IU] = ub;
+                            primt1[IV] = vb;
+                            primt1[IW] = wb;
+                            primt1[IP] = pb;
+
+                            for (int m = 0; m < nEquation; ++m)
+                            {
+                                primt3[m] = primt1[m];
+                            }
+
+                            for (int m = 0; m < nEquation; ++m)
+                            {
+                                q(it3, jt3, kt3, m) = primt3[m];
+                            }
+                        }
+                    }
+                }
+            }
+
+            delete[] prims3;
+            delete[] primt3;
+        }
+
         delete[] prims1;
         delete[] prims2;
         delete[] primt1;
@@ -8585,6 +8794,7 @@ namespace PHSPACE
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
         Param_NSSolverStruct *parameters = GetControlParameters();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
 
@@ -8743,6 +8953,122 @@ namespace PHSPACE
                 }
             }
         }
+
+        if (isWennScheme == 1)
+        {
+            int is3, js3, ks3;
+            int it3, jt3, kt3;
+            RDouble* prims3;
+            RDouble* primt3;
+            prims3 = new RDouble[nEquation];
+            primt3 = new RDouble[nEquation];
+
+            for (int k = kst; k <= ked; ++k)
+            {
+                for (int j = jst; j <= jed; ++j)
+                {
+                    for (int i = ist; i <= ied; ++i)
+                    {
+                        //! Third cell index inside flowfield.
+                        structBC->GetInsideCellIndex(i, j, k, is3, js3, ks3, 3);
+
+                        RestrictIndex(is3, js3, ks3, ni - 1, nj - 1, nk - 1);
+
+                        //! Third cell index of ghostcell.
+                        structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            prims3[m] = q(is3, js3, ks3, m);
+                            primt3[m] = prims3[m];
+                        }
+
+                        //! The needed (nx, ny, nz) is stored in the cell of (in, jn, kn).
+                        structBC->GetBoundaryFaceIndex(i, j, k, in, jn, kn);
+
+                        nxs = lr * xfn(in, jn, kn, iSurface);
+                        nys = lr * yfn(in, jn, kn, iSurface);
+                        nzs = lr * zfn(in, jn, kn, iSurface);
+
+                        //! The first inner point.
+                        rin = prims1[IR];
+                        uin = prims1[IU];
+                        vin = prims1[IV];
+                        win = prims1[IW];
+                        pin = prims1[IP];
+                        tin = refGama * mach2 * pin / rin;
+                        vnin = nxs * uin + nys * vin + nzs * win; //! Not consider the "vgn".
+                        cinner = sqrt(ABS(refGama * pin / rin));
+                        vein = sqrt(uin * uin + vin * vin + win * win);
+                        RDouble rmach = ABS(vein / cinner);
+                        //! Infinite.
+                        vnoo = nxs * uoo + nys * voo + nzs * woo;
+                        coo = sqrt(ABS(refGama * poo / roo));
+
+                        if (rmach < 1.0)
+                        {
+                            //! Subsonic.
+                            if (vnin < 0.0)
+                            {
+                                ub = uoo;
+                                vb = voo;
+                                wb = woo;
+                                pb = pin;
+                                tb = too;
+                                rb = refGama * mach2 * pb / tb;
+                            }
+                            else
+                            {
+                                ub = uin;
+                                vb = vin;
+                                wb = win;
+                                pb = poo;
+                                tb = tin;
+                                rb = refGama * mach2 * pb / tb;
+                            }
+
+                            primt1[IR] = rb;
+                            primt1[IU] = ub;
+                            primt1[IV] = vb;
+                            primt1[IW] = wb;
+                            primt1[IP] = pb;
+
+                            for (int m = 0; m < nEquation; ++m)
+                            {
+                                primt3[m] = primt1[m];
+                            }
+
+                            for (int m = 0; m < nEquation; ++m)
+                            {
+                                q(it3, jt3, kt3, m) = primt3[m];
+                            }
+                        }
+                        else
+                        {
+                            //! Supersonic.
+                            if (vnin < 0.0)
+                            {
+                                //! Supersonic inlet.
+                                for (int m = 0; m < nEquation; ++m)
+                                {
+                                    q(it3, jt3, kt3, m) = primitiveVarFarfield[m];
+                                }
+                            }
+                            else
+                            {
+                                //! Supersonic outlet.
+                                for (int m = 0; m < nEquation; ++m)
+                                {
+                                    q(it3, jt3, kt3, m) = prims1[m];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            delete[] prims3;
+            delete[] primt3;
+        }
         delete[] prims1;
         delete[] prims2;
         delete[] primt1;
@@ -8756,6 +9082,8 @@ namespace PHSPACE
         using namespace IDX;
 
         Param_NSSolverStruct *parameters = GetControlParameters();
+        int isWennScheme = parameters->GetWennSchemeFlag();
+
         int nEquation = GetNumberOfEquations();
 
         RDouble *primitiveVarFarfield = new RDouble[nEquation];
@@ -8947,6 +9275,17 @@ namespace PHSPACE
                     {
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
+
+                    if (isWennScheme == 1)
+                    {
+                        int it3, jt3, kt3;
+                        structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
+
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            q(it3, jt3, kt3, m) = q(it, jt, kt, m);
+                        }
+                    }
                 }
             }
         }
@@ -8988,6 +9327,7 @@ namespace PHSPACE
         RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
         RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
         RDouble refGama = parameters->GetRefGama();
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         //! Nondimensionalization.
         massFlow /= BCTotalArea;
@@ -9044,6 +9384,16 @@ namespace PHSPACE
                     {
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
+
+                    if (isWennScheme == 1)
+                    {
+                        int it3, jt3, kt3;
+                        structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            q(it3, jt3, kt3, m) = q(it, jt, kt, m);
+                        }
+                    }
                 }
             }
         }
@@ -9097,6 +9447,8 @@ namespace PHSPACE
         int in, jn, kn;
         RDouble nxs, nys, nzs;
 
+        int nLayer = GetNumberOfGhostCellLayers();
+
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
@@ -9147,7 +9499,7 @@ namespace PHSPACE
                     }
 
                     //! allocate value to the ghost cell.
-                    for (int layer = 1; layer <= 2; ++ layer)
+                    for (int layer = 1; layer <= nLayer; ++ layer)
                     {
                         structBC->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
                         q(it, jt, kt, IR) = rb;
@@ -9179,6 +9531,7 @@ namespace PHSPACE
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
         RDouble refVelocity = refMachNumber * refDimensionalSonicSpeed;
+        int isWennScheme = parameters->GetWennSchemeFlag();
 
         inletVelocity = inletVelocity / refVelocity;
         StructGrid *grid = StructGridCast(gridIn);
@@ -9239,6 +9592,16 @@ namespace PHSPACE
                     {
                         q(it2, jt2, kt2, m) = q(it, jt, kt, m);
                     }
+
+                    if (isWennScheme == 1)
+                    {
+                        int it3, jt3, kt3;
+                        structBC->GetGhostCellIndex(i, j, k, it3, jt3, kt3, 3);
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            q(it3, jt3, kt3, m) = q(it, jt, kt, m);
+                        }
+                    }
                 }
             }
         }
@@ -9289,6 +9652,7 @@ namespace PHSPACE
         RDouble normalComponetX, normalComponetY, normalComponetZ;
 
         int is, js, ks, it, jt, kt;
+        int nLayer = GetNumberOfGhostCellLayers();
 
         for (int k = kst; k <= ked; ++ k)
         {
@@ -9300,7 +9664,7 @@ namespace PHSPACE
 
                     RestrictIndex(is, js, ks, ni - 1, nj - 1, nk - 1);
 
-                    for (int layer = 1; layer <= 2; ++ layer)
+                    for (int layer = 1; layer <= nLayer; ++ layer)
                     {
                         structBC->GetGhostCellIndex(i, j, k, it, jt, kt, layer);
 
@@ -9362,10 +9726,19 @@ namespace PHSPACE
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
 
+        Param_NSSolverStruct *parameters = GetControlParameters();
+        int isWennScheme = parameters->GetWennSchemeFlag();
+
         int nEquation = GetNumberOfEquations();
 
         Range I, J, K;
         GetRange(ni, nj, nk, -2, 1, I, J, K);
+
+        if (isWennScheme == 1)
+        {
+            GetRange(ni, nj, nk, -3, 2, I, J, K);
+        }
+
         Range M(0, nEquation - 1);
 
         RDouble4D *field = new RDouble4D(I, J, K, M, fortranArray);
@@ -15107,6 +15480,436 @@ namespace PHSPACE
 
             ql(I, J, K, M) = q(I, J, K, M) + half * Third_Order_SMOOTH(dqr(I, J, K, M), dql(I, J, K, M));
             qr(I, J, K, M) = q(I, J, K, M) - half * Third_Order_SMOOTH(dql(I, J, K, M), dqr(I, J, K, M));
+        }
+        else if (structureLimiter == ILMT_WENO3_JS)
+        {
+            //! Define WENO3-JS constants.
+            const RDouble epsilon = 1.0e-40;
+            const RDouble dk02 = 1.0 / 3.0, dk12 = 2.0 / 3.0;
+            RDouble4D beta0(I, J, K, M, fortranArray), beta1(I, J, K, M, fortranArray);
+            RDouble4D q02(I, J, K, M, fortranArray), q12(I, J, K, M, fortranArray);
+            RDouble4D alpha0(I, J, K, M, fortranArray), alpha1(I, J, K, M, fortranArray);
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) * (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M));
+            beta1(I, J, K, M) = (q(I + il1, J + jl1, K + kl1, M) - q(I, J, K, M)) * (q(I + il1, J + jl1, K + kl1, M) - q(I, J, K, M));
+
+            //! Non-linear weights (not normalized)
+            alpha0(I, J, K, M) = dk02 / ((beta0(I, J, K, M) + epsilon) * (beta0(I, J, K, M) + epsilon));
+            alpha1(I, J, K, M) = dk12 / ((beta1(I, J, K, M) + epsilon) * (beta1(I, J, K, M) + epsilon));
+
+            //! Candidate template
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M);
+
+            //! Compute ql and Normalize
+            ql(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+
+            //! Smooth coefficient
+            beta0(I, J, K, M) = (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) * (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M));
+            beta1(I, J, K, M) = (q(I - il1, J - jl1, K - kl1, M) - q(I, J, K, M)) * (q(I - il1, J - jl1, K - kl1, M) - q(I, J, K, M));
+
+            //! Non-linear weights (not normalized)
+            alpha0(I, J, K, M) = dk02 / ((beta0(I, J, K, M) + epsilon) * (beta0(I, J, K, M) + epsilon));
+            alpha1(I, J, K, M) = dk12 / ((beta1(I, J, K, M) + epsilon) * (beta1(I, J, K, M) + epsilon));
+
+            //! Candidate template
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M);
+
+            //! Compute qr and normalize
+            qr(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+        }
+        else if (structureLimiter == ILMT_WENN3_PRM211)
+        {
+            //! Define WENN3_PRM211 constants.
+            const RDouble EPSILON = 1.0e-45;
+            const RDouble DK02 = 1.0 / 3.0, DK12 = 2.0 / 3.0;
+            const RDouble C1 = 1.0, C20L = 7.0e7, C20R = 3.0e6, C21L = 1.0e5, C21R = 3.0e6;
+            const int M10 = 5, M11 = 4;
+
+            RDouble4D beta0(I, J, K, M, fortranArray), beta1(I, J, K, M, fortranArray);
+            RDouble4D q02(I, J, K, M, fortranArray), q12(I, J, K, M, fortranArray);
+            RDouble4D alpha0(I, J, K, M, fortranArray), alpha1(I, J, K, M, fortranArray);
+            RDouble4D w0(I, J, K, M, fortranArray), w1(I, J, K, M, fortranArray);
+
+            //! Smooth coefficient
+            beta0(I, J, K, M) = 1.0 / 4.0 * (3.0 * q(I, J, K, M) - 4.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) * (3.0 * q(I, J, K, M) - 4.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M))
+                + 13.0 / 12.0 * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M));
+            beta1(I, J, K, M) = 1.0 / 4.0 * (3.0 * q(I, J, K, M) - 4.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) * (3.0 * q(I, J, K, M) - 4.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M))
+                + 13.0 / 12.0 * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M));
+
+            //! Non-linear weights (not normalized).
+            alpha0(I, J, K, M) = DK02 / ((beta0(I, J, K, M) + EPSILON) * (beta0(I, J, K, M) + EPSILON));
+            alpha1(I, J, K, M) = DK12 / ((beta1(I, J, K, M) + EPSILON) * (beta1(I, J, K, M) + EPSILON));
+
+            //! Non-linear weights (not normalized).
+            w0(I, J, K, M) = alpha0(I, J, K, M) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+            w1(I, J, K, M) = alpha1(I, J, K, M) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+
+            for (int k = K.first(); k <= K.last(); ++k)
+            {
+                for (int j = 1 - jl1; j <= nj - 1 + jl1; ++j)
+                {
+                    for (int i = 1 - il1; i <= ni - 1 + il1; ++i)
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+
+                            //! Map function.
+                            if (w0(i, j, k, m) <= DK02)
+                            {
+                                w0(i, j, k, m) = DK02 + (w0(i, j, k, m) - DK02) * (w0(i, j, k, m) - DK02) / ((w0(i, j, k, m) - DK02) + C20L * (w0(i, j, k, m) - DK02) * pow(w0(i, j, k, m), M10) - C1 * w0(i, j, k, m) * w0(i, j, k, m));
+                            }
+                            else
+                            {
+                                w0(i, j, k, m) = DK02 + (w0(i, j, k, m) - DK02) * (w0(i, j, k, m) - DK02) / ((w0(i, j, k, m) - DK02) + C20R * (w0(i, j, k, m) - DK02) * pow(1.0 - w0(i, j, k, m), M10) - C1 * (1.0 - w0(i, j, k, m)) * (1.0 - w0(i, j, k, m)));
+                            }
+                            if (w1(i, j, k, m) <= DK12)
+                            {
+                                w1(i, j, k, m) = DK12 + (w1(i, j, k, m) - DK12) * (w1(i, j, k, m) - DK12) / ((w1(i, j, k, m) - DK12) + C21L * (w1(i, j, k, m) - DK12) * pow(w1(i, j, k, m), M11) - C1 * w1(i, j, k, m) * w1(i, j, k, m));
+                            }
+                            else
+                            {
+                                w1(i, j, k, m) = DK12 + (w1(i, j, k, m) - DK12) * (w1(i, j, k, m) - DK12) / ((w1(i, j, k, m) - DK12) + C21R * (w1(i, j, k, m) - DK12) * pow(1.0 - w1(i, j, k, m), M11) - C1 * (1.0 - w1(i, j, k, m)) * (1.0 - w1(i, j, k, m)));
+                            }
+                        }
+                    }
+                }
+            }
+            //! Candidate template.
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M);
+
+            //! Compute ql
+            ql(I, J, K, M) = (w0(I, J, K, M) * q02(I, J, K, M) + w1(I, J, K, M) * q12(I, J, K, M)) / (w0(I, J, K, M) + w1(I, J, K, M));
+
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = 1.0 / 4.0 * (3.0 * q(I, J, K, M) - 4.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) * (3.0 * q(I, J, K, M) - 4.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M))
+                + 13.0 / 12.0 * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M));
+            beta1(I, J, K, M) = 1.0 / 4.0 * (3.0 * q(I, J, K, M) - 4.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) * (3.0 * q(I, J, K, M) - 4.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M))
+                + 13.0 / 12.0 * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M));
+
+            //! Non-linear weights(not normalized).
+            alpha0(I, J, K, M) = DK02 / ((beta0(I, J, K, M) + EPSILON) * (beta0(I, J, K, M) + EPSILON));
+            alpha1(I, J, K, M) = DK12 / ((beta1(I, J, K, M) + EPSILON) * (beta1(I, J, K, M) + EPSILON));
+
+            //! Non-linear weights(normalized).
+            w0(I, J, K, M) = alpha0(I, J, K, M) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+            w1(I, J, K, M) = alpha1(I, J, K, M) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+
+            for (int k = K.first(); k <= K.last(); ++k)
+            {
+                for (int j = 1 - jl1; j <= nj - 1 + jl1; ++j)
+                {
+                    for (int i = 1 - il1; i <= ni - 1 + il1; ++i)
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            //! Map function.
+                            if (w0(i, j, k, m) <= DK02)
+                            {
+                                w0(i, j, k, m) = DK02 + (w0(i, j, k, m) - DK02) * (w0(i, j, k, m) - DK02) / ((w0(i, j, k, m) - DK02) + C20L * (w0(i, j, k, m) - DK02) * pow(w0(i, j, k, m), M10) - C1 * w0(i, j, k, m) * w0(i, j, k, m));
+                            }
+                            else
+                            {
+                                w0(i, j, k, m) = DK02 + (w0(i, j, k, m) - DK02) * (w0(i, j, k, m) - DK02) / ((w0(i, j, k, m) - DK02) + C20R * (w0(i, j, k, m) - DK02) * pow(1.0 - w0(i, j, k, m), M10) - C1 * (1.0 - w0(i, j, k, m)) * (1.0 - w0(i, j, k, m)));
+                            }
+                            if (w1(i, j, k, m) <= DK12)
+                            {
+                                w1(i, j, k, m) = DK12 + (w1(i, j, k, m) - DK12) * (w1(i, j, k, m) - DK12) / ((w1(i, j, k, m) - DK12) + C21L * (w1(i, j, k, m) - DK12) * pow(w1(i, j, k, m), M11) - C1 * w1(i, j, k, m) * w1(i, j, k, m));
+                            }
+                            else
+                            {
+                                w1(i, j, k, m) = DK12 + (w1(i, j, k, m) - DK12) * (w1(i, j, k, m) - DK12) / ((w1(i, j, k, m) - DK12) + C21R * (w1(i, j, k, m) - DK12) * pow(1.0 - w1(i, j, k, m), M11) - C1 * (1.0 - w1(i, j, k, m)) * (1.0 - w1(i, j, k, m)));
+                            }
+                        }
+                    }
+                }
+            }
+
+            //! Candidate template.
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M);
+            //! 
+            qr(I, J, K, M) = (w0(I, J, K, M) * q02(I, J, K, M) + w1(I, J, K, M) * q12(I, J, K, M)) / (w0(I, J, K, M) + w1(I, J, K, M));
+        }
+        else if (structureLimiter == ILMT_WENN3_ZM)
+        {
+            //! Define WENN3_ZM constants.
+            const RDouble EPSILON = 1.0e-40;
+            const RDouble DK02 = 1.0 / 3.0, DK12 = 2.0 / 3.0;
+            const RDouble C1 = 0.1, C2 = 0.1, C30 = 29.0, C31 = 29.0;
+
+            RDouble4D beta0(I, J, K, M, fortranArray), beta1(I, J, K, M, fortranArray), w0(I, J, K, M, fortranArray), w1(I, J, K, M, fortranArray), tau(I, J, K, M, fortranArray);
+            RDouble4D q02(I, J, K, M, fortranArray), q12(I, J, K, M, fortranArray), alpha0(I, J, K, M, fortranArray), alpha1(I, J, K, M, fortranArray);;
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) * (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M));
+            beta1(I, J, K, M) = 1.0 / 4.0 * (3.0 * q(I, J, K, M) - 4.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) *
+                (3.0 * q(I, J, K, M) - 4.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M))
+                + 13.0 / 12.0 * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) *
+                (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M));
+
+            for (int k = K.first(); k <= K.last(); ++k)
+            {
+                for (int j = 1 - jl1; j <= nj - 1 + jl1; ++j)
+                {
+                    for (int i = 1 - il1; i <= ni - 1 + il1; ++i)
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+
+                            //! Global smooth coefficient.
+                            tau(i, j, k, m) = abs(1.0 / 4.0 * (q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m) - 3.0 * q(i + il1, j + jl1, k + kl1, m) - 21.0 * q(i, j, k, m) + 23.0 * q(i - il1, j - jl1, k - kl1, m))
+                                * (q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m) - 3.0 * q(i + il1, j + jl1, k + kl1, m) + 3.0 * q(i, j, k, m) - q(i - il1, j - jl1, k - kl1, m)));
+
+                            //! tau/beta
+                            w0(i, j, k, m) = tau(i, j, k, m) / (EPSILON + beta0(i, j, k, m));
+                            w1(i, j, k, m) = tau(i, j, k, m) / (EPSILON + beta1(i, j, k, m));
+
+                            //! Map function.
+                            if (w0(i, j, k, m) < C30)
+                            {
+                                w0(i, j, k, m) = w0(i, j, k, m) * w0(i, j, k, m) / (w0(i, j, k, m) + (C2 * w0(i, j, k, m) + C1) * (C30 - w0(i, j, k, m)) * (C30 - w0(i, j, k, m)));
+                            }
+                            if (w1(i, j, k, m) < C31)
+                            {
+                                w1(i, j, k, m) = w1(i, j, k, m) * w1(i, j, k, m) / (w1(i, j, k, m) + (C2 * w1(i, j, k, m) + C1) * (C31 - w1(i, j, k, m)) * (C31 - w1(i, j, k, m)));
+                            }
+                        }
+                    }
+                }
+            }
+
+            //! Non-linear weights (not normalized).
+            alpha0(I, J, K, M) = DK02 * (1.0 + w0(I, J, K, M));
+            alpha1(I, J, K, M) = DK12 * (1.0 + w1(I, J, K, M));
+
+            //! Candidate template.
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M);
+
+            //! Compute ql.
+            ql(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) * (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M));
+            beta1(I, J, K, M) = 1.0 / 4.0 * (3.0 * q(I, J, K, M) - 4.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) *
+                (3.0 * q(I, J, K, M) - 4.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M))
+                + 13.0 / 12.0 * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) *
+                (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M));
+
+            for (int k = K.first(); k <= K.last(); ++k)
+            {
+                for (int j = 1 - jl1; j <= nj - 1 + jl1; ++j)
+                {
+                    for (int i = 1 - il1; i <= ni - 1 + il1; ++i)
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+
+                            //! Global Smooth coefficient.
+                            tau(i, j, k, m) = abs(1.0 / 4.0 * (q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m) - 3.0 * q(i - il1, j - jl1, k - kl1, m) - 21.0 * q(i, j, k, m) + 23.0 * q(i + il1, j + jl1, k + kl1, m))
+                                * (q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m) - 3.0 * q(i - il1, j - jl1, k - kl1, m) + 3.0 * q(i, j, k, m) - q(i + il1, j + jl1, k + kl1, m)));
+
+                            //! tau/beta
+                            w0(i, j, k, m) = tau(i, j, k, m) / (EPSILON + beta0(i, j, k, m));
+                            w1(i, j, k, m) = tau(i, j, k, m) / (EPSILON + beta1(i, j, k, m));
+
+                            //! Map function.
+                            if (w0(i, j, k, m) <= C30)
+                            {
+                                w0(i, j, k, m) = w0(i, j, k, m) * w0(i, j, k, m) / (w0(i, j, k, m) + (C2 * w0(i, j, k, m) + C1) * (C30 - w0(i, j, k, m)) * (C30 - w0(i, j, k, m)));
+                            }
+                            if (w1(i, j, k, m) <= C31)
+                            {
+                                w1(i, j, k, m) = w1(i, j, k, m) * w1(i, j, k, m) / (w1(i, j, k, m) + (C2 * w1(i, j, k, m) + C1) * (C31 - w1(i, j, k, m)) * (C31 - w1(i, j, k, m)));
+                            }
+                        }
+                    }
+                }
+            }
+
+            //! Non-linear weights (not normalized)
+            alpha0(I, J, K, M) = DK02 * (1.0 + w0(I, J, K, M));
+            alpha1(I, J, K, M) = DK12 * (1.0 + w1(I, J, K, M));
+
+            //! Candidate template.
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M);
+
+            //! Compute qr.
+            qr(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+        }
+        else if (structureLimiter == ILMT_WENN3_ZES2)
+        {
+            //! Define WENN3_ZES2 constants.
+            const RDouble EPSILON = 1.0e-40;
+            const RDouble DK02 = 1.0 / 3.0, DK12 = 2.0 / 3.0;
+            const RDouble cAlpha = 0.15, cBeta1 = 0.15, cBeta0Max = 1.0, cBeta0Min = 1.0e-8, kc = 0.75, psic = 0.3;
+
+            RDouble df1, df2, df3, df4, kn, psi, sigma, kmkc, signkmkc;
+
+            RDouble4D w0(I, J, K, M, fortranArray), w1(I, J, K, M, fortranArray), cbeta0(I, J, K, M, fortranArray);
+            RDouble4D q02(I, J, K, M, fortranArray), q12(I, J, K, M, fortranArray), alpha0(I, J, K, M, fortranArray), alpha1(I, J, K, M, fortranArray);
+            RDouble4D beta20(I, J, K, M, fortranArray), beta21(I, J, K, M, fortranArray), beta0(I, J, K, M, fortranArray), beta1(I, J, K, M, fortranArray), tau(I, J, K, M, fortranArray);
+
+            beta20(I, J, K, M) = (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) * (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M));
+            beta21(I, J, K, M) = (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) * (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M));
+
+            for (int k = K.first(); k <= K.last(); ++k)
+            {
+                for (int j = 1 - jl1; j <= nj - 1 + jl1; ++j)
+                {
+                    for (int i = 1 - il1; i <= ni - 1 + il1; ++i)
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+                            // !Compute cbeta0.
+                            df1 = (q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m) - 8. * q(i - il1, j - jl1, k - kl1, m) + 8. * q(i + il1, j + jl1, k + kl1, m) - q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m)) / 12.;
+                            df2 = (-q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m) + 16. * q(i - il1, j - jl1, k - kl1, m) - 30. * q(i, j, k, m) + 16. * q(i + il1, j + jl1, k + kl1, m) - q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m)) / 12.;
+                            df3 = (-q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m) + 2. * q(i - il1, j - jl1, k - kl1, m) - 2. * q(i + il1, j + jl1, k + kl1, m) + q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m)) / 2.;
+                            df4 = (q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m) - 4. * q(i - il1, j - jl1, k - kl1, m) + 6. * q(i, j, k, m) - 4. * q(i + il1, j + jl1, k + kl1, m) + q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m));
+                            kn = sqrt((abs(df3) + abs(df4)) / (abs(df1) + abs(df2) + 1.0e-3));
+                            psi = 1. - abs(beta20(i, j, k, m) - beta21(i, j, k, m)) / (beta20(i, j, k, m) + beta21(i, j, k, m) + EPSILON);
+                            psi = min(1.0, psi / psic);
+                            kmkc = kc - kn;
+                            signkmkc = 2.0 * (((signed char*)&kmkc)[sizeof(kmkc) - 1] >> 7) + 1.0;
+                            sigma = (1.0 + signkmkc) / 2. + (1.0 - signkmkc) / 2. * psi;
+                            cbeta0(i, j, k, m) = (cBeta0Min + sigma * sigma * (cBeta0Max - cBeta0Min));
+
+                        }
+                    }
+                }
+            }
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = beta20(I, J, K, M) + cbeta0 * (q(I - il1, J - jl1, K - kl1, M) - 2.0 * q(I, J, K, M) + q(I + il1, J + jl1, K + kl1, M)) * (q(I - il1, J - jl1, K - kl1, M) - 2.0 * q(I, J, K, M) + q(I + il1, J + jl1, K + kl1, M));
+            beta1(I, J, K, M) = beta21(I, J, K, M) + cBeta1 * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M));
+
+            //! Global Smooth coefficient.
+            tau(I, J, K, M) = ((2. * q(I + il1, J + jl1, K + kl1, M) - 3. * q(I, J, K, M) + 1. * q(I - il1, J - jl1, K - kl1, M)) * (q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M) - 3. * q(I + il1, J + jl1, K + kl1, M) + 3. * q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)));
+
+            //! tau/beta
+            w0(I, J, K, M) = tau / (EPSILON + beta0);
+            w1(I, J, K, M) = tau / (EPSILON + beta1);
+
+            //! Non-linear weights(not normalized )
+            alpha0(I, J, K, M) = DK02 * (1.0 + cAlpha * w0(I, J, K, M) * w0(I, J, K, M));
+            alpha1(I, J, K, M) = DK12 * (1.0 + cAlpha * w1(I, J, K, M) * w1(I, J, K, M));
+
+            //! Candidate template.
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M);
+
+            //! Compute ql.
+            ql(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+
+            beta20(I, J, K, M) = (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) * (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M));
+            beta21(I, J, K, M) = (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) * (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M));
+
+            for (int k = K.first(); k <= K.last(); ++k)
+            {
+                for (int j = 1 - jl1; j <= nj - 1 + jl1; ++j)
+                {
+                    for (int i = 1 - il1; i <= ni - 1 + il1; ++i)
+                    {
+                        for (int m = 0; m < nEquation; ++m)
+                        {
+
+                            df1 = (q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m) - 8. * q(i + il1, j + jl1, k + kl1, m) + 8. * q(i - il1, j - jl1, k - kl1, m) - q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m)) / 12.;
+                            df2 = (-q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m) + 16. * q(i + il1, j + jl1, k + kl1, m) - 30. * q(i, j, k, m) + 16. * q(i - il1, j - jl1, k - kl1, m) - q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m)) / 12.;
+                            df3 = (-q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m) + 2. * q(i + il1, j + jl1, k + kl1, m) - 2. * q(i - il1, j - jl1, k - kl1, m) + q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m)) / 2.;
+                            df4 = (q(i + 2 * il1, j + 2 * jl1, k + 2 * kl1, m) - 4. * q(i + il1, j + jl1, k + kl1, m) + 6. * q(i, j, k, m) - 4. * q(i - il1, j - jl1, k - kl1, m) + q(i - 2 * il1, j - 2 * jl1, k - 2 * kl1, m));
+                            kn = sqrt((abs(df3) + abs(df4)) / (abs(df1) + abs(df2) + 1.0e-3));
+                            psi = 1. - abs(beta20(i, j, k, m) - beta21(i, j, k, m)) / (beta20(i, j, k, m) + beta21(i, j, k, m) + EPSILON);
+                            psi = min(1.0, psi / psic);
+                            kmkc = kc - kn;
+                            signkmkc = 2.0 * (((signed char*)&kmkc)[sizeof(kmkc) - 1] >> 7) + 1.0;
+                            sigma = (1.0 + signkmkc) / 2. + (1.0 - signkmkc) / 2. * psi;
+                            cbeta0(i, j, k, m) = (cBeta0Min + sigma * sigma * (cBeta0Max - cBeta0Min));
+
+                        }
+                    }
+                }
+            }
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = beta20(I, J, K, M) + cbeta0 * (q(I + il1, J + jl1, K + kl1, M) - 2.0 * q(I, J, K, M) + q(I - il1, J - jl1, K - kl1, M)) * (q(I + il1, J + jl1, K + kl1, M) - 2.0 * q(I, J, K, M) + q(I - il1, J - jl1, K - kl1, M));
+            beta1(I, J, K, M) = beta21(I, J, K, M) + cBeta1 * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M));
+
+            //! Global coefficient.
+            tau(I, J, K, M) = ((2. * q(I - il1, J - jl1, K - kl1, M) - 3. * q(I, J, K, M) + 1. * q(I + il1, J + jl1, K + kl1, M)) * (q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M) - 3. * q(I - il1, J - jl1, K - kl1, M) + 3. * q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)));
+
+            //! tau/beta
+            w0(I, J, K, M) = tau / (EPSILON + beta0);
+            w1(I, J, K, M) = tau / (EPSILON + beta1);
+
+            //! Non-linear weights(not normalized)
+            alpha0(I, J, K, M) = DK02 * (1.0 + cAlpha * w0(I, J, K, M) * w0(I, J, K, M));
+            alpha1(I, J, K, M) = DK12 * (1.0 + cAlpha * w1(I, J, K, M) * w1(I, J, K, M));
+
+            //! Candidate template.
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M);
+            //! Compute ql.
+            qr(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+        }
+        else if (structureLimiter == ILMT_WENN3_ZES3)
+        {
+            //! Define WENN3_ZES3 constants.
+            const RDouble EPSILON = 1.0e-40;
+            const RDouble DK02 = 1.0 / 3.0, DK12 = 2.0 / 3.0;
+            const RDouble cBeta0 = 0.5, cBeta1 = 0.15, cAlpha = 0.4;
+
+            RDouble4D q02(I, J, K, M, fortranArray), q12(I, J, K, M, fortranArray), alpha0(I, J, K, M, fortranArray), alpha1(I, J, K, M, fortranArray);
+            RDouble4D tau(I, J, K, M, fortranArray), beta0(I, J, K, M, fortranArray), beta1(I, J, K, M, fortranArray), w0(I, J, K, M, fortranArray), w1(I, J, K, M, fortranArray), tmp(I, J, K, M, fortranArray);
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) * (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) + cBeta0 * (q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I, J, K, M)) * (q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I, J, K, M));
+            beta1(I, J, K, M) = (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) * (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) + cBeta1 * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M));
+
+            //! Global smooth coefficient.
+            tau(I, J, K, M) = (2. * q(I + il1, J + jl1, K + kl1, M) - 3. * q(I, J, K, M) + 1. * q(I - il1, J - jl1, K - kl1, M)) * (q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M) - 3. * q(I + il1, J + jl1, K + kl1, M) + 3. * q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M));
+
+            //! tau(I, J, K, M)/beta
+            w0(I, J, K, M) = tau(I, J, K, M) / (EPSILON + beta0(I, J, K, M));
+            w1(I, J, K, M) = tau(I, J, K, M) / (EPSILON + beta1(I, J, K, M));
+
+            //! Non-linear weights(not normalized).
+            alpha0(I, J, K, M) = DK02 * (1.0 + cAlpha * w0(I, J, K, M) * w0(I, J, K, M));
+            alpha1(I, J, K, M) = DK12 * (1.0 + cAlpha * w1(I, J, K, M) * w1(I, J, K, M));
+
+            //! Candidate template. 
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M);
+
+            //! Compute ql and normalized.
+            ql(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
+
+            //! Smooth coefficient.
+            beta0(I, J, K, M) = (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) * (q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M)) + cBeta0 * (q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I, J, K, M)) * (q(I + 2 * il1, J + 2 * jl1, K + 2 * kl1, M) - 2.0 * q(I + il1, J + jl1, K + kl1, M) + q(I, J, K, M));
+            beta1(I, J, K, M) = (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) * (q(I, J, K, M) - q(I - il1, J - jl1, K - kl1, M)) + cBeta1 * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M)) * (q(I, J, K, M) - 2.0 * q(I - il1, J - jl1, K - kl1, M) + q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M));
+
+            //! Global smooth coefficient.
+            tau(I, J, K, M) = 1. * (2. * q(I - il1, J - jl1, K - kl1, M) - 3. * q(I, J, K, M) + 1. * q(I + il1, J + jl1, K + kl1, M)) * (q(I - 2 * il1, J - 2 * jl1, K - 2 * kl1, M) - 3. * q(I - il1, J - jl1, K - kl1, M) + 3. * q(I, J, K, M) - q(I + il1, J + jl1, K + kl1, M));
+
+            //! tau/beta
+            w0(I, J, K, M) = (tau(I, J, K, M) / (EPSILON + beta0(I, J, K, M)));
+            w1(I, J, K, M) = (tau(I, J, K, M) / (EPSILON + beta1(I, J, K, M)));
+
+            //! Non-linear weights(not normalized)
+            alpha0(I, J, K, M) = DK02 * (1.0 + cAlpha * w0(I, J, K, M) * w0(I, J, K, M));
+            alpha1(I, J, K, M) = DK12 * (1.0 + cAlpha * w1(I, J, K, M) * w1(I, J, K, M));
+
+            //! Candidate template.
+            q02(I, J, K, M) = -1.0 / 2.0 * q(I + il1, J + jl1, K + kl1, M) + 3.0 / 2.0 * q(I, J, K, M);
+            q12(I, J, K, M) = 1.0 / 2.0 * q(I, J, K, M) + 1.0 / 2.0 * q(I - il1, J - jl1, K - kl1, M);
+
+            //! Compute qr and normalized.
+            qr(I, J, K, M) = (alpha0(I, J, K, M) * q02(I, J, K, M) + alpha1(I, J, K, M) * q12(I, J, K, M)) / (alpha0(I, J, K, M) + alpha1(I, J, K, M));
         }
         else if (structureLimiter == ILMT_3rd_Minmod_SMOOTH)
         {

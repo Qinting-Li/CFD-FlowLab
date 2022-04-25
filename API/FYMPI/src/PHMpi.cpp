@@ -35,17 +35,17 @@ int csmode     = 0;    // Initialization()
 int server     = 0;    // Initialization()
 int myID       = 0;    // Initialization()
 int gridServer = 0;
-int nZones     = 0;
+int nZones     = 0;     //! The number of global zones.
 
 //! Some special zones information for HYBRID SOLVER.
 int *nZones_in_proc = 0;    // Initialization()
 
 VVInt zone_over_link;
 
-int numberOfProcessor         = 1;    // Initialization()
-int numberOfGridProcessor     = 0;
-int numberofZoneInThisProcess = 0;
-int numberofFiles             = 0;    // Initialization()
+int numberOfProcessor          = 1;    // Initialization()
+int numberOfGridProcessor      = 0;
+int numberOfZonesInThisProcess = 0;
+int numberofFiles              = 0;    // Initialization()
 
 int *block_proc = NULL;               // Initialization()
 int *block_proc_grid = NULL;
@@ -136,7 +136,7 @@ void SetGridServerProcessorID(int serverId)
     gridServer = serverId;
 }
 
-LIB_EXPORT void SetNumberofGlobalZones(int nblock)
+LIB_EXPORT void SetNumberOfGlobalZones(int nblock)
 {
     nZones = nblock;
 }
@@ -163,7 +163,7 @@ void SetNumberOfGridProcessor(int nproc)
 
 LIB_EXPORT void SetNumberofLocalZones(int nblock)
 {
-    numberofZoneInThisProcess = nblock;
+    numberOfZonesInThisProcess = nblock;
 }
 
 void SetNumberofFiles(int fileNumber)
@@ -296,7 +296,7 @@ LIB_EXPORT int GetNumberOfGridProcessor()
 
 LIB_EXPORT int GetNumberofLocalZones()
 {
-    return numberofZoneInThisProcess;
+    return numberOfZonesInThisProcess;
 }
 
 LIB_EXPORT int GetNumberofFiles()

@@ -414,8 +414,8 @@ public:
     //! @param[in ]: cellVolume is an array that stores the volume values of the specified control cells.
     //! @param[out]: chemicalSourceTerms returns the source terms of chemical reaction equations in the specified control cells.
     //! @param[in ]: nCellNumber denotes the number of the specified control cells.
-    virtual void ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int nCellNumber){};
-
+    //virtual void ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int nCellNumber){};
+    virtual void ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int iCell){};
     //! Compute the source terms of vibration-electron energy equations.
     //! @param[in ]: primitiveVariables stores the primitive variables of the specified control cells.
     //! @param[in ]: temperatures stores the temperature values of the specified control cells.
@@ -446,8 +446,8 @@ public:
     //! @param[out]: return the dimensional value of source term of vibration energy equation.
     virtual RDouble ComputeElectronEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature){return 0.0;};
 
-    virtual void ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **src, int nlen){};
-
+    //virtual void ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **src, int nlen){};
+    virtual void ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **src, int iCell){};
     //! To obtain the approximating polynomial coefficients from the polynomial curve fits in five temperature ranges. \n
     //! The approximating polynomial is input for evaluating the species specific heats and enthalpies, and the temperature\n
     //! boundary is smoothed by linearly averaging the polynomial coefficients.

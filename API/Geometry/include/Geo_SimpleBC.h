@@ -185,15 +185,17 @@ private:
     Data_Field *bcFieldDataBase;
 
 public:
-    //! Get boundary conditions type.
     const string & GetBCName() const { return this->bcName; }
+
+    //! Get boundary conditions type.
     int GetBCType() const { return this->bcType; }
+
 	Data_Param * GetBCParamDataBase();
 	Data_Field * GetBCFieldDataBase();
 
     void SetBCName(const string &bcName) { this->bcName = bcName; }
     void SetBCType(int bcType) { this->bcType = bcType; }
-    void SetBCParamDataBase(Data_Param *paraDB) { this->bcParamDataBase = paraDB; }
+    void SetBCParamDataBase(Data_Param *paraDB)  { this->bcParamDataBase = paraDB; }
 	void SetBCFieldDataBase(Data_Field *fieldDB) { this->bcFieldDataBase = fieldDB; }
 
 	void UpdateParamData(const string &name, void *data, int type, int size) 
@@ -216,7 +218,7 @@ public:
 		bcFieldDataBase->UpdateDataPtr(name, data);
 	};
 
-	void *GetFieldDataPtr(const string &name) const
+	void * GetFieldDataPtr(const string &name) const
 	{
 		return bcFieldDataBase->GetDataPtr(name);
 	};
@@ -242,7 +244,7 @@ private:
 
 public:
     //! Get number of total BC.
-    static uint_t GetNumberofBC()
+    static uint_t GetNumberOfBC()
     {
         if (!globalBCList)
             return 0;
@@ -272,10 +274,10 @@ public:
         return (*globalBCList)[iBC]->GetBCName();
     }
 
-    static set < string > * GetBodyNameList() { return bodyList; }
+    static set <string> * GetBodyNameList() { return bodyList; }
 
     //! Get number of BC with solid_wall BC type.
-    static int GetNumberofSolidWallPart();
+    static int GetNumberOfSolidWallPart();
 
     //! Is solid wall.
     static bool IsSolidWallBC(const int &partID)

@@ -374,7 +374,7 @@ void ProbeData::SearchRealCell(StructGrid * grid, bool &flag)
                     // Judge if the probe and cell center at the same side of the current face.
                     // First face.
 
-                    if (ABS(dotProduct11 / probeToFaceDistance1) < small)
+                    if (ABS(dotProduct11 / (probeToFaceDistance1 + TINY)) < small)
                     {
                         flag = true;
                     }
@@ -389,7 +389,7 @@ void ProbeData::SearchRealCell(StructGrid * grid, bool &flag)
                     }
 
                     // Second face.
-                    if (ABS(dotProduct12 / probeToFaceDistance2) < small)
+                    if (ABS(dotProduct12 / (probeToFaceDistance2 + TINY)) < small)
                     {
                         flag = true;
                     }
@@ -481,7 +481,7 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
             RDouble dotProduct2 = centerToFaceVecX * xfn[faceID] + centerToFaceVecY * yfn[faceID] + centerToFaceVecZ * zfn[faceID];
 
             // Judge if the probe and cell center at the same side of the current face.
-            if (ABS(dotProduct1 / probeToFaceDistance) < small)
+            if (ABS(dotProduct1 / (probeToFaceDistance + TINY)) < small)
             {
                 flag = true;
             }
@@ -1402,7 +1402,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                     if (distanceRecv < distanceTemp)
                     {
                         sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                        sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
@@ -1422,7 +1422,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                         if(cellZoneIDRecv > 0)
                         {
                             sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
@@ -1440,7 +1440,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                         if(cellZoneIDRecv > 0 && cellZoneIDRecv < cellZoneIDTemp)
                         {
                             sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
