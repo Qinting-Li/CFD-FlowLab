@@ -222,17 +222,28 @@ void Pre_StructToUnstruct::ConstructBCType()
 
         int nBoundFace = strGrid->GetNBoundFace();
         unsGrid->SetNBoundFace(nBoundFace);
-        UnstructBCSet **bcrs = new UnstructBCSet * [nBoundFace];
 
         int boundFaceIndex = 0;
         StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
+
+        int nBCRegionUnstruct = static_cast<int>(nBCRegion);
+        unsGrid->CreateUnstructBCRegion(nBCRegionUnstruct);
+        UnstructBCSet *unstructBCRegion = unsGrid->GetUnstructBCRegion();
+        int* bcRegionIDofBCFace = new int[nBoundFace];
+
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
             StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
             int BCType = structBC->GetBCType();
             string bcName = structBC->GetBCName();
 
+            UnstructBC *unstructBC = new UnstructBC(iBCRegion);
+            unstructBCRegion->SetBCRegion(iBCRegion, unstructBC);
+
+            unstructBC->SetBCType(BCType);
+            unstructBC->SetBCName(bcName);
+            vector<int> *faceIndex = unstructBC->GetFaceIndex();
             int ist, ied, jst, jed, kst, ked;
             structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
@@ -242,16 +253,16 @@ void Pre_StructToUnstruct::ConstructBCType()
                 {
                     for (int i = ist; i <= ied; ++ i)
                     {
-                        bcrs[boundFaceIndex] = new UnstructBCSet();
-                        bcrs[boundFaceIndex]->SetBCName(bcName);
-                        bcrs[boundFaceIndex]->SetKey(BCType);
+                        bcRegionIDofBCFace[boundFaceIndex] = iBCRegion;
+                        vector<int>* faceIndex = unstructBC->GetFaceIndex();
+                        faceIndex->push_back(boundFaceIndex);
 
                         boundFaceIndex ++;
                     }
                 }
             }
         }
-        unsGrid->SetBCRecord(bcrs);
+        unstructBCRegion->SetBCFaceInfo(bcRegionIDofBCFace);
     }
 }
 
