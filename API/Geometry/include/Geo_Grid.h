@@ -515,6 +515,8 @@ public:
     virtual void AllocateWalldist() = 0;
     virtual void GetBcNamePair(set< pair<int, string> > &bcNamePairSet) = 0;
 
+    virtual int  GetOrdinaryGridIndex() { return -1; };
+
 protected:
     virtual void AllocateMetrics(ActionKey *actkey) = 0;
     void FreeInterfaceField();
