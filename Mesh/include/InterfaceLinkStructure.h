@@ -132,7 +132,7 @@ protected:
     FaceSearchingManager *faceSearchingManager;
 
 public:
-    InterfaceLinkStructure(RDouble *pmin, RDouble *pmax, RDouble tolerance, int numberOfZones);
+    InterfaceLinkStructure(RDouble *pmin, RDouble *pmax, RDouble tolerance, int nZones);
     ~InterfaceLinkStructure();
 
 public:

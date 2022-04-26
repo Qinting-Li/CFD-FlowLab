@@ -8,7 +8,7 @@ namespace PHSPACE
 Mesh_Refine::Mesh_Refine(const string &gridFileNameIn)
 {
     this->gridFileName = gridFileNameIn;
-    nLocalZones = 0;
+    numberOfZones = 0;
 
     region = 0;
     refinedGrids = 0;
@@ -19,7 +19,7 @@ Mesh_Refine::~Mesh_Refine()
 {
     delete region;
 
-    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
         delete refinedGrids[iZone];
     }
@@ -76,7 +76,7 @@ void Mesh_Refine::DumpComputationalGrid()
     PrintToWindow("    Writing new HDF5 version grid to file ....\n");
     WriteLogFile("    Writing new HDF5 version grid to file ....\n");
 
-    IO_HDF5Write writeGrid(out_gfile, refinedGrids, nLocalZones);
+    IO_HDF5Write writeGrid(out_gfile, refinedGrids, numberOfZones);
     writeGrid.Run();
 
     WriteLogFile(" End Writing Grid!");

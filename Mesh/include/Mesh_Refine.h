@@ -111,7 +111,7 @@ protected:
 
 protected:
     //! Number of grid in this process.
-    int nLocalZones;
+    int numberOfZones;
 
     //! Grid refine parameter.
     RefineParameter *refineParameter;

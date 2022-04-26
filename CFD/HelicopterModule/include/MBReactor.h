@@ -11,7 +11,7 @@ private:
     FieldProxy ** fieldProxy;
     int numberOfZones;
 public:
-    ReginalFieldProxy(int numberOfZones);
+    ReginalFieldProxy(int nZones);
     ~ReginalFieldProxy();
 public:
     FieldProxy ** GetFieldProxy() { return fieldProxy; }
@@ -23,7 +23,7 @@ private:
     int numberOfLevels;
     ReginalFieldProxy ** reginalFieldProxy;
 public:
-    MultiFieldProxy(int numberOfLevels, int numberOfZones);
+    MultiFieldProxy(int numberOfLevels, int nZones);
     ~MultiFieldProxy();
 public:
     FieldProxy ** GetFieldProxy(int level) { return reginalFieldProxy[level]->GetFieldProxy(); }

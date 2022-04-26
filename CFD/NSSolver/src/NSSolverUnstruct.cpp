@@ -8309,7 +8309,7 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
 
     //! Dump out the the MAXIMUM eddy viscosity as a function of x
     using namespace PHMPI;
-    if(GetNumberofGlobalZones() > 1)
+    if (GetNumberofGlobalZones() > 1)
     {
         return;
     }
@@ -10801,16 +10801,16 @@ void NSSolverUnstruct::PressureInletBCRiemannRegion(Grid *gridIn, UnstructBC *bc
 void NSSolverUnstruct::SwapNeighborsDQNonblocking(Grid *gridIn, FieldProxy *dqProxy)
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector< PH_Request > requestContainer;
     vector< vector< DataContainer * > > receivedDataBuffer;
     vector< vector< DataContainer * > > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
     int level = gridIn->GetLevel();
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -10847,7 +10847,7 @@ void NSSolverUnstruct::SwapNeighborsDQNonblocking(Grid *gridIn, FieldProxy *dqPr
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -10935,7 +10935,7 @@ void NSSolverUnstruct::SwapNeighborsDQNonblocking(Grid *gridIn, FieldProxy *dqPr
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();

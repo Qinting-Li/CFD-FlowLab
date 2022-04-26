@@ -35,7 +35,7 @@ public:
     ParallelMeshGen();
     ~ParallelMeshGen();
 private:
-    int nZones;
+    int numberOfZones;
     SuperElement **super_elements;
     CGNSMultiZone *cgns_multizone;
     Region * region;
@@ -109,10 +109,10 @@ public:
     void AllocateComputationalGrid();
     void GenerateComputationalGrid();
     void DumpComputationalGrid();
-    void DumpMultiZoneComputationalGrids(const string & fileName, Grid ** gridContainer, int numberOfZones);
-    void DumpMultiZoneComputationalGridsCSMode(const string & fileName, Grid ** gridContainer, int numberOfZones);
-    void DumpMultiZoneComputationalGridsP2PMode(const string & fileName, Grid ** gridContainer, int numberOfZones);
-    void WriteFaceBC(const string &gridfileName, Grid ** gridContainer, int numberOfZones);
+    void DumpMultiZoneComputationalGrids(const string & fileName, Grid ** gridContainer, int nZones);
+    void DumpMultiZoneComputationalGridsCSMode(const string & fileName, Grid ** gridContainer, int nZones);
+    void DumpMultiZoneComputationalGridsP2PMode(const string & fileName, Grid ** gridContainer, int nZones);
+    void WriteFaceBC(const string &gridfileName, Grid ** gridContainer, int nZones);
     void WriteCellToNode(const string & cellToNodeFileName);
 
 private:

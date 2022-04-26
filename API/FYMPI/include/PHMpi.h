@@ -186,19 +186,19 @@ void CreateZoneGroupID(int nZones);
 
 void FreeBlockData();
 
-void CreateZoneStartPointContainer(int numberOfZones);
+void CreateZoneStartPointContainer(int nZones);
 
 int * GetZoneStartPointContainer();
 
 void DeleteZoneStartPointContainer();
 
-void CreateZoneStartCenterContainer(int numberOfZones);
+void CreateZoneStartCenterContainer(int nZones);
 
 int * GetZoneStartCenterContainer();
 
 void DeleteZoneStartCenterContainer();
 
-void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int numberOfZones, int numberOfPoints);
+void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int nZones, int numberOfPoints);
 
 //! The following 8 functions should be moved to overset file.
 int GetZoneIndexAccordingToGlobalPointLabel(int globalPointLabel);

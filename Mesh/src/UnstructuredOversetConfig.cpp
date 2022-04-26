@@ -420,21 +420,21 @@ void OversetConfigFactoryMulti::ReadInInnerGrid()
 
             OpenFile(file, fileName, ios_base::in | ios_base::binary);
 
-            int numberOfZones;
+            int nZones;
 
             vector < int > zoneProcessorIndexContainer;
             vector < int > zoneIndexContainer;
             vector < int > zoneTypeContainer;
 
-            PHRead(file, numberOfZones);
+            PHRead(file, nZones);
 
-            zoneProcessorIndexContainer.resize(numberOfZones);
-            zoneIndexContainer.resize(numberOfZones);
-            zoneTypeContainer.resize(numberOfZones);
+            zoneProcessorIndexContainer.resize(nZones);
+            zoneIndexContainer.resize(nZones);
+            zoneTypeContainer.resize(nZones);
 
-            PHRead(file, zoneProcessorIndexContainer, numberOfZones);
-            PHRead(file, zoneIndexContainer, numberOfZones);
-            PHRead(file, zoneTypeContainer, numberOfZones);
+            PHRead(file, zoneProcessorIndexContainer, nZones);
+            PHRead(file, zoneIndexContainer, nZones);
+            PHRead(file, zoneTypeContainer, nZones);
 
             dataContainer->readfile(file);
 
@@ -487,21 +487,21 @@ void OversetConfigFactoryMulti::ReadInOuterGrid()
 
             OpenFile(file, fileName, ios_base::in | ios_base::binary);
 
-            int numberOfZones;
+            int nZones;
 
             vector < int > zoneProcessorIndexContainer;
             vector < int > zoneIndexContainer;
             vector < int > zoneTypeContainer;
 
-            PHRead(file, numberOfZones);
+            PHRead(file, nZones);
 
-            zoneProcessorIndexContainer.resize(numberOfZones);
-            zoneIndexContainer.resize(numberOfZones);
-            zoneTypeContainer.resize(numberOfZones);
+            zoneProcessorIndexContainer.resize(nZones);
+            zoneIndexContainer.resize(nZones);
+            zoneTypeContainer.resize(nZones);
 
-            PHRead(file, zoneProcessorIndexContainer, numberOfZones);
-            PHRead(file, zoneIndexContainer, numberOfZones);
-            PHRead(file, zoneTypeContainer, numberOfZones);
+            PHRead(file, zoneProcessorIndexContainer, nZones);
+            PHRead(file, zoneIndexContainer, nZones);
+            PHRead(file, zoneTypeContainer, nZones);
 
             dataContainer->readfile(file);
 
@@ -596,7 +596,7 @@ void OversetConfigFactoryMulti::ReadInSklFiles()
         ossSkl << mainName << ".skl";
         string sklFileName = ossSkl.str();
 
-        int numberOfZones;
+        int nZones;
         int numberOfNodes;
         int numberOfFaces;
         int numberOfCells;
@@ -607,18 +607,18 @@ void OversetConfigFactoryMulti::ReadInSklFiles()
             cout << "sklFileName = " << sklFileName << endl;
             OpenFile(file, sklFileName, ios_base::in | ios_base::binary);
 
-            PHSPACE::PHRead(file, numberOfZones);
+            PHSPACE::PHRead(file, nZones);
             PHSPACE::PHRead(file, numberOfNodes);
             PHSPACE::PHRead(file, numberOfFaces);
             PHSPACE::PHRead(file, numberOfCells);
         }
 
-        PHMPI::PH_BcastSepMode(&numberOfZones, sizeof(int), serverProcessor);
+        PHMPI::PH_BcastSepMode(&nZones, sizeof(int), serverProcessor);
         PHMPI::PH_BcastSepMode(&numberOfNodes, sizeof(int), serverProcessor);
 
         numberOfGlobalNodes[iGridFile] = numberOfNodes;
 
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             int numberOfLocalNodes;
             int numberOfLocalFaces;
@@ -1764,10 +1764,10 @@ void OversetConfigFactoryMulti::CreatGlobalInterCellsServerCollectAndBcastNonBlo
     dataForBcast->moveto_begin();
     for (int iData = 0; iData < numberOfProcessor; ++ iData)
     {
-        int numberOfZones = 0;
-        PHRead(dataForBcast, numberOfZones);
+        int nZones = 0;
+        PHRead(dataForBcast, nZones);
 
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             InitializeInterCellByDataContainer(dataForBcast);
         }
