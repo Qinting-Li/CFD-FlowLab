@@ -247,9 +247,9 @@ int InterfaceInfo::ComputeNumberOfNeighbor(int *zoneflag)
 
     //! Compute the number of neighbor zones of the current zone,including itself.
     int numberOfNeighbor = 0;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        numberOfNeighbor += zoneflag[izone];
+        numberOfNeighbor += zoneflag[iZone];
     }
 
     return numberOfNeighbor;

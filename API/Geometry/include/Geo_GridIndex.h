@@ -313,12 +313,12 @@ public:
         delete [] zoneNeighbor;
     }
     int  GetNumberOfZones() const { return numberOfZones; };
-    void SetNumberOfZones(int numberOfZones) { this->numberOfZones = numberOfZones; };
-    void CreateAllZones(int numberOfZones)
+    void SetNumberOfZones(int nZones) { this->numberOfZones = nZones; };
+    void CreateAllZones(int nZones)
     {
-        SetNumberOfZones(numberOfZones);
-        zoneNeighbor = new ZoneNeighbor *[numberOfZones];
-        for (int izone = 0; izone < numberOfZones; ++ izone)
+        SetNumberOfZones(nZones);
+        zoneNeighbor = new ZoneNeighbor *[nZones];
+        for (int izone = 0; izone < nZones; ++ izone)
         {
             zoneNeighbor[izone] = new ZoneNeighbor();
         } 
@@ -374,7 +374,7 @@ InterfaceInfo * GetInterfaceInfo(int izone, int level = 0);
 //! @param[in] izone : the zone number.
 //! @param[in] level : the number of ghost cell layers.
 //! @param[out] the object of the class InterpointInformation.
-InterpointInformation *GetInterpointInfo(int izone, int level);
+InterpointInformation * GetInterpointInfo(int izone, int level);
 OversetInfoProxy * GetOversetInfoProxy(int izone, int level = 0);
 
 }

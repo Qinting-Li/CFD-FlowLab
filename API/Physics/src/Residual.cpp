@@ -99,9 +99,9 @@ void ResidualGlobal::CollectResidual(ActionKey *actkey)
 {
     DataContainer *cData = actkey->GetData();
     cData->moveto_begin();
-    int numberOfLocalZones = PHMPI::GetNumberofLocalZones();
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
 
-    for (int iZone = 0; iZone < numberOfLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int nVar;
         PHRead(cData, nVar);
@@ -705,7 +705,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
         }
     }
 
-    if(nDebug == 1 && maxResChange == true)
+    if (nDebug == 1 && maxResChange == true)
     {
         int izone = grid->GetZoneID();
         PrintToWindow("\n","Maxres_izone = ", izone, "\n");

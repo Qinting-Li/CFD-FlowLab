@@ -75,7 +75,7 @@ private:
     void DumpUnstrGrid(string out_gfile);
 
 private:
-    int nZones;
+    int numberOfZones;
     int mirrorindex;
     int Dimension;
     int numberOfOriginalBlocks;

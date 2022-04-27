@@ -24,7 +24,7 @@ class StructGrid;
 class Pre_StructToUnstruct
 {
 private:
-    int nZones;
+    int numberOfZones;
     Grid **structGrid;
     Grid **structToUnstruct;
 

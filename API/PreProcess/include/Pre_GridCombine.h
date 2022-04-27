@@ -99,7 +99,7 @@ private:
     UnstructGrid *grid_all;
 
     //! The number of total zones.
-    int nZones;
+    int numberOfZones;
 
     //! The number of total cells.
     int nTotalCell;

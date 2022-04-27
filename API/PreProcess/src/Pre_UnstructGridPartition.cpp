@@ -163,8 +163,8 @@ Grid ** Pre_UnstructGridPartition::CreateAllPartGrid()
     
     Grid **grids = new Grid * [maxProcessor];
 
-    int totalZone = this->GetNumberofLocalZones();
-    int interval = GetProgressInterval(totalZone, 10);
+    int nLocalZones = this->GetNumberofLocalZones();
+    int interval = GetProgressInterval(nLocalZones, 10);
     int myid = PHMPI::GetCurrentProcessorID();
     int count = 0;
 
@@ -181,8 +181,8 @@ Grid ** Pre_UnstructGridPartition::CreateAllPartGrid()
         ++ count;
         if (myid == PHMPI::GetServerProcessorID() && count > 0 && count % interval == 0)
         {
-            ProgressMonitorToLogFile(count, totalZone, "grid partition reconstructing");
-            ProgressMonitorToWindows(count, totalZone, "grid partition reconstructing");
+            ProgressMonitorToLogFile(count, nLocalZones, "grid partition reconstructing");
+            ProgressMonitorToWindows(count, nLocalZones, "grid partition reconstructing");
         }
 
         GridID *index = new GridID(iproc);
@@ -713,7 +713,7 @@ void Pre_UnstructGridPartition::SetProcessorList()
     WriteLogFile(oss.str());
     
     //! Compute the global zone index of each cell.
-    int nZonesLocal = this->GetNumberofLocalZones();
+    int nLocalZones = this->GetNumberofLocalZones();
 
     int nZones = PHMPI::GetNumberofGlobalZones();
     int nProc  = PHMPI::GetNumberOfProcessor();
@@ -728,7 +728,7 @@ void Pre_UnstructGridPartition::SetProcessorList()
         SetField(localSizeTemp, 1, nProc);
         int **nPartListTemp = new int * [nProc];
 
-        PHMPI::FillGobalDataCollectBcast(&nZonesLocal, localSizeTemp, nPartListTemp);
+        PHMPI::FillGobalDataCollectBcast(&nLocalZones, localSizeTemp, nPartListTemp);
 
         for (int iProc = 0; iProc < nProc; ++ iProc)
         {
@@ -741,7 +741,7 @@ void Pre_UnstructGridPartition::SetProcessorList()
     else
     {
         TK_Exit::ExceptionExit("number of processors != number of zones.");
-        //PHMPI::FillGobalData(nZonesLocal, nPartOfEachProcessor);
+        //PHMPI::FillGobalData(nLocalZones, nPartOfEachProcessor);
     }
 
     part2LocalZoneIndex  = new int[maxProcessor];

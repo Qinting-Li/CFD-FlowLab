@@ -308,9 +308,9 @@ void Force::CollectionForce(DataContainer *data_in)
             data_in->read(&dCZ_f, sizeof(RDouble));
             data_in->read(&dCZ_p, sizeof(RDouble));
 
-            data_in->read(&dcpx,sizeof(RDouble));
-            data_in->read(&dcpy,sizeof(RDouble));
-            data_in->read(&dcpz,sizeof(RDouble));
+            data_in->read(&dcpx, sizeof(RDouble));
+            data_in->read(&dcpy, sizeof(RDouble));
+            data_in->read(&dcpz, sizeof(RDouble));
 
             data_in->read(&dCl_f, sizeof(RDouble));
             data_in->read(&dCl_p, sizeof(RDouble));

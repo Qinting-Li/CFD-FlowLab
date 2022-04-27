@@ -15,7 +15,7 @@ LIB_EXPORT Pre_GridMirror::Pre_GridMirror(const string &from_gfile)
 {
     this->gridFileName = from_gfile;
 
-    nZones          = 0;
+    numberOfZones   = 0;
     gridtype        = 0;
     BlockofEachProc = 0;
     GlobalDataBase::GetData("ndim", &Dimension, PHINT, 1);
@@ -99,7 +99,7 @@ LIB_EXPORT void Pre_GridMirror::Run()
         delete OrdinaryGrid[iBlock];
     }*/
 
-    /*for (int izone = 0; izone < nZones; ++ izone)
+    /*for (int izone = 0; izone < numberOfZones; ++ izone)
     {
         delete grids[izone];
         delete MirrorGrids[izone];
@@ -143,17 +143,17 @@ void Pre_GridMirror::TradeGridInfo()
 
 void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
 {
-    /*if (nZones > 1)
+    /*if (numberOfZones > 1)
     {
         cout<<"\n";
         cout << "Blocks > 1, Start to Combine Grids" << endl;
-        CombinGrid * combinGrid = new CombinGrid(OutputGrid, nZones);
+        CombinGrid * combinGrid = new CombinGrid(OutputGrid, numberOfZones);
 
         combinGrid->RunCombinGrid();
         
         Grid ** gridMerged = combinGrid->GetGridAll();
         
-        for (int izone = 0; izone < nZones; ++ izone)
+        for (int izone = 0; izone < numberOfZones; ++ izone)
         {
             delete OutputGrid[izone];
         }
@@ -167,12 +167,12 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
     }
     else
     {
-        DumpGrid(out_gfile, OutputGrid, nZones);
+        DumpGrid(out_gfile, OutputGrid, numberOfZones);
     }
 
     delete OutputGrid[0];*/
 
-    Grid **grids = new Grid * [nZones];
+    Grid **grids = new Grid * [numberOfZones];
 
     uint_t sizes = Gridlist.size();
 
@@ -385,7 +385,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
 
     ostringstream oss;
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int izone = 0; izone < numberOfZones; ++ izone)
     {
         UnstructGrid *grid = UnstructGridCast(grids[izone]);
 
@@ -471,13 +471,13 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
     file.close();
     file.clear();
 
-    //ConstructGlobalInterfaceLink(grids,nZones);
-    DumpGrid(out_gfile, grids, nZones);
+    //ConstructGlobalInterfaceLink(grids, numberOfZones);
+    DumpGrid(out_gfile, grids, numberOfZones);
 }
 
 void Pre_GridMirror::DumpStrGrid(string out_gfile)
 {
-    Grid **grids = new Grid * [nZones];
+    Grid **grids = new Grid * [numberOfZones];
 
     uint_t sizes = Gridlist.size();
 
@@ -608,15 +608,15 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
         delete cdata;
     }
     
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int izone = 0; izone < numberOfZones; ++ izone)
     {
         StructGridCast(grids[izone])->ProcessBCInfo();
     }
 
-    ConstructGlobalInterfaceLink(grids, nZones);
-    DumpGrid(out_gfile, grids, nZones);
+    ConstructGlobalInterfaceLink(grids, numberOfZones);
+    DumpGrid(out_gfile, grids, numberOfZones);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int izone = 0; izone < numberOfZones; ++ izone)
     {
         delete grids[izone];
     }
@@ -774,10 +774,10 @@ void Pre_GridMirror::CalBlocksNumberOfMirrorGrid()
         }
     }
 
-    nZones = numberOfOriginalBlocks * 2 - SymmetryBlock;*/
+    numberOfZones = numberOfOriginalBlocks * 2 - SymmetryBlock;*/
 
-    nZones = numberOfOriginalBlocks * 2;
-    //OutputGrid = new Grid * [nZones];
+    numberOfZones = numberOfOriginalBlocks * 2;
+    //OutputGrid = new Grid * [numberOfZones];
 }
 
 void Pre_GridMirror::CalSymmetryFace()
@@ -1289,7 +1289,7 @@ void Pre_GridMirror::MirrorBCRegion()
             int * interFace2BoundaryFace_ordinary = NULL;
             //int * interFaceDirection_ordinary;
 
-            if (nZones > 2)
+            if (numberOfZones > 2)
             {
                 interFace2ZoneID_ordinary       = iinfo_ordinary->GetInterFace2ZoneID();
                 interFace2InterFaceID_ordinary  = iinfo_ordinary->GetInterFace2InterFaceID();

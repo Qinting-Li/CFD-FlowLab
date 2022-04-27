@@ -151,9 +151,9 @@ LIB_EXPORT int Region::GetProcessGlobalZoneIndexToLocalZoneIndex(int globalZoneI
 {
     int localZoneIndex = -1;
 
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         if (GetProcessLocalZoneIndexToGlobalZoneIndex(iZone) == globalZoneIndex)
         {
@@ -188,9 +188,9 @@ LIB_EXPORT void Region::BuildAndDumpMixedGrid()
     int nZones = PHMPI::GetNumberofGlobalZones();
 
     Grid **gridArray = new Grid * [nZones];
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        gridArray[izone] = GetGrid(izone);
+        gridArray[iZone] = GetGrid(iZone);
     }
 
     //! Construct connections.
@@ -398,9 +398,9 @@ void Region::ReadUnstructuredOversetGrid()
         OpenFile(file, fileName, ios_base::in|ios_base::binary);
     }
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         DataContainer *dataContainer = new DataContainer();
 
@@ -431,11 +431,11 @@ void Region::ReadStructuredOversetGrid()
 {
     using namespace PHMPI;
 
-    int numberOfZones = GetNumberofGlobalZones();
+    int nZones = GetNumberofGlobalZones();
 
-    PHMPI::CreateZoneStartPointContainer(numberOfZones);
+    PHMPI::CreateZoneStartPointContainer(nZones);
 
-    PHMPI::CreateZoneStartCenterContainer(numberOfZones);
+    PHMPI::CreateZoneStartCenterContainer(nZones);
 
     string linkFileName = PHSPACE::GlobalDataBase::GetStrParaFromDB("linkFileName");
 
@@ -560,9 +560,9 @@ LIB_EXPORT void Region::SetOversetGrid()
 {
     using namespace PHMPI;
 
-    int nZones = GetNumberofLocalZones();
+    int nLocalZones = GetNumberofLocalZones();
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
         Grid *grid = GetGrid(zoneID, 0);
@@ -657,9 +657,9 @@ void Region::ReadGrid(fstream &file)
 void Region::AllocateOversetGrid()
 {
     using namespace PHMPI;
-    int nZones = GetNumberofLocalZones();
+    int nLocalZones = GetNumberofLocalZones();
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
         Grid *grid = GetGrid(zoneID, 0);
@@ -671,18 +671,18 @@ void Region::AllocateOversetGrid()
 void Region::AddUnStructInfoToStructGrid()
 {
     using namespace PHMPI;
-    int numberOfZones = GetNumberofLocalZones();
-    Grid **gridArray = new Grid * [numberOfZones];
-    for (int iZone = 0; iZone < numberOfZones; iZone ++)
+    int nLocalZones = GetNumberofLocalZones();
+    Grid **gridArray = new Grid * [nLocalZones];
+    for (int iZone = 0; iZone < nLocalZones; iZone ++)
     {
         int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
         gridArray[iZone] = GetGrid(zoneID, 0);
     }
 
-    Pre_StructToUnstruct *StructToUnstruct = new Pre_StructToUnstruct(gridArray, numberOfZones);
+    Pre_StructToUnstruct *StructToUnstruct = new Pre_StructToUnstruct(gridArray, nLocalZones);
     StructToUnstruct->Run();
     Grid **unstructGridArray = StructToUnstruct->GetUnstructGrids();
-    for (int iZone = 0; iZone < numberOfZones; iZone ++)
+    for (int iZone = 0; iZone < nLocalZones; iZone ++)
     {
         Grid *grid = gridArray[iZone];
         if (grid->Type() != STRUCTGRID) continue;
@@ -744,8 +744,8 @@ void Region::CreateZonesFromGridReader(IO_GridReader *gridReader)
         {
             Zone *zone = new Zone(iZone);
             Grid *grid = gridReader->GetGrid(iZone);
-            int numberOfZoneInLocalProcess = PHMPI::GetNumberofLocalZones();
-            grid->GetGridID()->SetLocalIndex(numberOfZoneInLocalProcess);
+            int nLocalZones = PHMPI::GetNumberofLocalZones();
+            grid->GetGridID()->SetLocalIndex(nLocalZones);
 
             zone->AddGridAndCopyZonePara(grid);
             zone->AddGridToGlobal(iZone);
@@ -768,9 +768,9 @@ void Region::ExcangeProcessorIDForGridProcessor()
 
     if (PHMPI::CurrentProcessorIsGridProcessor())
     {
-        int numberOfGlobalZones = GetNumberofGlobalZones();
+        int nZones = GetNumberofGlobalZones();
 
-        SetField(block_procs, block_procs_grid, numberOfGlobalZones);
+        SetField(block_procs, block_procs_grid, nZones);
     }
 }
 
@@ -792,9 +792,9 @@ void Region::CreateZonesFromGridGroups(IO_GridReader *gridReader)
     {
         GridGroup *gridGroup = gridGroups[iGroup];
 
-        int numberOfZones = gridGroup->GetNZones();
+        int nZones = gridGroup->GetNZones();
 
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             int globalZoneIndex = zoneStart + iZone;
 
@@ -807,9 +807,9 @@ void Region::CreateZonesFromGridGroups(IO_GridReader *gridReader)
 
                 Grid *grid = gridGroup->GetGrid(iZone);
 
-                int numberOfZoneInLocalProcess = PHMPI::GetNumberofLocalZones();
+                int nLocalZones = PHMPI::GetNumberofLocalZones();
 
-                grid->GetGridID()->SetLocalIndex(numberOfZoneInLocalProcess);
+                grid->GetGridID()->SetLocalIndex(nLocalZones);
 
                 zone->AddGridAndCopyZonePara(grid);
 
@@ -823,7 +823,7 @@ void Region::CreateZonesFromGridGroups(IO_GridReader *gridReader)
                 continue;
             }
         }
-        zoneStart += numberOfZones;
+        zoneStart += nZones;
     }
 }
 
@@ -1517,11 +1517,11 @@ void Region::BroadcastZoneNeighborInformationToNeighborZones()
     WriteLogFile("Start broadcasting neighbor information to neighbor zones ... ");
 
     using namespace PHMPI;
-    int numberOfZones = GetNumberofGlobalZones();
+    int nZones = GetNumberofGlobalZones();
 
     int sizeOfInt = sizeof(int);
     int tag = 0;
-    for (int zoneIndex = 0; zoneIndex < numberOfZones; ++ zoneIndex)
+    for (int zoneIndex = 0; zoneIndex < nZones; ++ zoneIndex)
     {
         if (!GetZone(zoneIndex)) continue;
         
@@ -1608,13 +1608,13 @@ void Region::SwapZoneConnectivityBetweenNeighborZones()
 {
     WriteLogFile("Start broadcasting neighbor information to neighbor zones using new method... ");
     using namespace PHMPI;
-    int numberOfZones = GetNumberofGlobalZones();
+    int nZones = GetNumberofGlobalZones();
 
     int currentProcessor = GetCurrentProcessorID();
 
     int sizeOfInt = sizeof(int);
     int tag = 0;
-    for (int zoneIndex = 0; zoneIndex < numberOfZones;  zoneIndex ++)
+    for (int zoneIndex = 0; zoneIndex < nZones;  zoneIndex ++)
     {
         //! "This" refers to zoneIndex, "current" refers to information on current processor.
         ZoneNeighbor *zoneNeighborOfThisZone = zoneConnectivity->GetZoneNeighbor(zoneIndex);
@@ -1687,13 +1687,13 @@ void Region::SwapZoneConnectivityForPointBetweenNeighborZones()
 {
     WriteLogFile("Start broadcasting neighbor information for point ");
     using namespace PHMPI;
-    int numberOfZones = GetNumberofGlobalZones();
+    int nZones = GetNumberofGlobalZones();
 
     int currentProcessor = GetCurrentProcessorID();
 
     int sizeOfInt = sizeof(int);
     int tag = 0;
-    for (int zoneIndex = 0; zoneIndex < numberOfZones;  zoneIndex ++)
+    for (int zoneIndex = 0; zoneIndex < nZones;  zoneIndex ++)
     {
         //! "This" refers to zoneIndex, "current" refers to information on current processor.
         ZoneNeighbor *zoneNeighborOfThisZone = zoneConnectivityForPoint->GetZoneNeighborForPoint(zoneIndex);
@@ -1787,16 +1787,16 @@ void Region::SwapZoneNeighborsForPointInformation()
 void Region::SwapNeighborsSendContentNonblocking()
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector< PH_Request > requestContainer;
     vector< vector< DataContainer * > > receivedDataBuffer;
     vector< vector< DataContainer * > > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Step 0: Compressing data firstly.
     WriteLogFile("        Compressing data ...");
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Zone *zone = GetZone(iZone);
         if (!zone)
@@ -1846,7 +1846,7 @@ void Region::SwapNeighborsSendContentNonblocking()
 
     //! Step 1: Communication.
     WriteLogFile("        Communication ...");
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -1935,7 +1935,7 @@ void Region::SwapNeighborsSendContentNonblocking()
 
     //! Step3: Translate the data container.
     WriteLogFile("        Translating data ...");
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -1991,7 +1991,6 @@ void Region::SwapNeighborsSendContentNonblocking()
     sendDataBuffer.clear();
     requestContainer.clear();
 }
-
 
 void Region::SwapNeighborsSendContent()
 {
@@ -2264,9 +2263,9 @@ void Region::CoarseGrids()
 #ifdef USE_OMP
     #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
         Zone *zone = GetZone(zoneID);
         if (!zone) continue;
@@ -2887,15 +2886,15 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
     }
 
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector <PH_Request > requestContainer;
     vector <vector <DataContainer *> > receivedDataBuffer;
     vector <vector <DataContainer *> > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int gridtypeofiZone = PHMPI::GetZoneGridType(iZone);
 
@@ -2954,7 +2953,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -3040,7 +3039,7 @@ void Region::CommGridInfoOnlyforStructHighOrder(int mission)
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int gridtypeofiZone = PHMPI::GetZoneGridType(iZone);
 
@@ -3409,7 +3408,6 @@ void Region::GridValidityCheck()
             PH_AllReduce(minBox, globalMinBox, 3, MPI_MIN);
             PH_AllReduce(maxBox, globalMaxBox, 3, MPI_MAX);
         }
-
     }
 
     SetGlobalMinMaxBox(globalMinBox, globalMaxBox);

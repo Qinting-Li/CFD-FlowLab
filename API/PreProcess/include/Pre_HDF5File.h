@@ -91,7 +91,7 @@ private:
 
     void ReadVersionInfo(hid_t loc_id);
     void ReadTotalInfoOld(hid_t loc_id);
-    void ReadNumberOfZonesOld(hid_t loc_id);
+    void ReadNumberOfZonesOld(hid_t loc_id);    //! Useless.
     void ReadEachGridOld(hid_t loc_id);
 
     void ReadTotalInfo();
@@ -113,8 +113,8 @@ private:
     void ReadUnstrBCName(hid_t loc_id, Grid *gridIn);
     void ReadInterpointInfo(hid_t loc_id, Grid *gridIn);
 
-    void SetNZones(int nZonesIn) { this->nZones = nZonesIn; }
-    int GetNZones() const { return nZones; }
+    void SetNZones(int nZonesIn) { this->numberOfZones = nZonesIn; }
+    int GetNZones() const { return numberOfZones; }
 
     void RedistributeZonesIfNeed();
     bool IsZoneLayoutInitialized();
@@ -153,7 +153,7 @@ private:
     vector < vector<string> > localGridNameList;
 
     //! The total number of global zones.
-    int nZones;
+    int numberOfZones;
 
     //! Number of zones in each .fts file.
     VVInt nZonesList;

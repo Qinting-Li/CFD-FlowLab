@@ -252,10 +252,10 @@ void AleManager::CommunicateCellCenterData()
 
 void AleManager::ComputeGridFaceVelocity()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    for (int iZone = 0; iZone < nZones; ++iZone)
     {
         Grid* grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
         if (!grid) continue;
@@ -409,10 +409,10 @@ void AleManager::DumpRestart()
 
 void BackupAllZonesOldGrid()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid* grid = GetGrid(iZone, gridLevelIndex);
         if (! grid) continue;
@@ -425,9 +425,9 @@ void DeAllocateOversetStorage()
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int numberOfZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < numberOfZones; ++iZone)
+        for (int iZone = 0; iZone < nZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
@@ -457,9 +457,9 @@ void AllocateOversetStorage()
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int numberOfZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < numberOfZones; ++iZone)
+        for (int iZone = 0; iZone < nZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
@@ -480,7 +480,6 @@ void AllocateOversetStorage()
                 GreatAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
             }
         }
-
     }
 }
 

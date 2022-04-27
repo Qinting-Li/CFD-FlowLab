@@ -4428,9 +4428,9 @@ RDouble Pre_WalldistCompute::ComputeDistanceOfANodeToAFace(RDouble *cellCenter, 
 
 void Pre_WalldistCompute::ComputeNodeDistanceByDirectMethod()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int zoneProcessor = PHMPI::GetZoneProcessorIDSepMode(iZone);
         if (myid == zoneProcessor)

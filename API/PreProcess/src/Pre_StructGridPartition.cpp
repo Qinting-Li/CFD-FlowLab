@@ -243,8 +243,8 @@ void Pre_StrGridPartition::SetBlockIndex()
 
     for (int iProcessor = 0; iProcessor < numberOfProcessors; ++ iProcessor)
     {
-        uint_t numberOfZones = specialBlockTable[iProcessor].size();
-        for (int j = 0; j < numberOfZones; ++ j)
+        uint_t nZones = specialBlockTable[iProcessor].size();
+        for (int j = 0; j < nZones; ++ j)
         {
             int oldZoneIndex = specialBlockTable[iProcessor][j]->GetZoneIndex();
             if (!blockIndexOfMarkChanged && blockIndexOfMark == oldZoneIndex)
@@ -1109,8 +1109,8 @@ void Pre_StrGridPartition::ReadLnkInfor(const string &fileName_in)
     string actualFileName = AddSymbolToFileName(fileName_in, "_", fileID);
     file = OpenHDF5File(actualFileName);
 
-    int numberOfZone = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfZone; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         OrdinaryGrid[iZone] = GetGrid(iZone, 0);
 
