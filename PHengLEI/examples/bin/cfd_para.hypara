@@ -1,4 +1,4 @@
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+22//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
@@ -191,8 +191,16 @@ double rotationAngle = 0.0;
 //            1 -- struct grid.
 //            2 -- refine structured grid.
 // maxproc: The number of partition zones that want to be divided into.
+// outMultifile: Whether to dump out multiple partition grid files.
+//            0 -- No.
+//            1 -- Yes.
+// numberOfMultifile: The number of partition grid files that want to be dumped out.
+
 int pgridtype = 0;
 int maxproc   = 4;
+
+int outMultifile = 0;
+int numberOfMultifile = 0;
 
 // traceMark: Trace mark or not, only for structured grid partition.
 //            0 -- Not.
