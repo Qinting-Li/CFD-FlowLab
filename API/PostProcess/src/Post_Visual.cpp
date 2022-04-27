@@ -335,6 +335,12 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
     }
 
     CompNodeVar(grid_str, *qn, 0, cellCenterData, index, isVelocityForPostVisual);
+
+    if (name == "temperature")
+    {
+        ModifyWallTemperature(grid_str, *qn);
+    }
+
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 

@@ -622,6 +622,8 @@ extern int mide[3][3];
 
 StructGrid * StructGridCast(Grid *grid_in);
 
+void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn);
+
 void GetRange(int ni, int nj, int nk, int startShift, int endShift, Range &I, Range &J, Range &K);
 void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, int kst, int ked);
 
