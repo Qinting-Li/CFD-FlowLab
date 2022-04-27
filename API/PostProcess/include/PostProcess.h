@@ -26,7 +26,6 @@ class PostProcess
 {
 public:
     Region *region;
-    int gridtype;
 
 public:
     PostProcess(Region *region_in);
@@ -38,19 +37,23 @@ public:
 private:
     void ReadGridFile();
     void ReadFlowFile();
+    void ComputeMetrics();
 
     void InitGlobalValues();
     void ComputeCoefficientOfStateEquation();
     void ComputeReferenceTsuth();
     void ComputeReferenceLengthDimensional();
-
-    void ComputeMetrics();
     void ReadBCFile();
     void CompAirForceCoef();
-    void DumpAirForceCoef();
 
 private:
-    PostProcessData *data;
+
 };
+
+const int COMPAIRFORCE = 0;
+
+
+
+
 
 }

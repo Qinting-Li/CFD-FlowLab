@@ -11,119 +11,15 @@ namespace PHSPACE
 IO_FlowReader::IO_FlowReader(Region *region_in)
 {
     this->region = region_in;
-    IfReadTurb = false;
+
+    this->nEquation           = 0;
+    this->nTemperatureModel   = 0;
+    this->nTurbulenceEquation = 0;
 }
 
 IO_FlowReader::~IO_FlowReader()
 {
 
-}
-
-void IO_FlowReader::Init()
-{
-    using namespace PHMPI;
-
-    restartNSFile = GlobalDataBase::GetStrParaFromDB("restartNSFile");
-    turbfile = GlobalDataBase::GetStrParaFromDB("turbfile");
-
-    if (GetNumberOfProcessor() > 1)
-    {
-        restartNSFile = AddSymbolToFileName(restartNSFile, "_", 0);
-        turbfile = AddSymbolToFileName(turbfile, "_", 0);
-    }
-
-    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-
-    if (viscousType > LAMINAR)
-    {
-        IfReadTurb = true;
-    }
-
-    int numberOfEquations = 0;
-
-    if (viscousType == ALGEBRAIC)
-    {
-        numberOfEquations = 0;
-    }
-    else if (viscousType == ONE_EQU)
-    {
-        numberOfEquations = 1;
-    }
-    else if (viscousType == TWO_EQU)
-    {
-        numberOfEquations = 2;
-        int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
-        numberOfEquations += transitionType;
-    }
-
-    GlobalDataBase::UpdateData("n_turb", &numberOfEquations, PHINT, 1);
-
-    int nLocalZones = GetNumberofLocalZones();
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Grid *grid = GetGrid(zoneID);
-        int gridType = grid->Type();
-
-        if (gridType == STRUCTGRID)
-        {
-            InitMemoryStr(grid);
-        }
-        else
-        {
-            InitMemoryUnStr(grid);
-        }
-    }
-}
-
-void IO_FlowReader::InitMemoryStr(Grid *grid_in)
-{
-    StructGrid *grid = StructGridCast(grid_in);
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
-    Range I(-1, ni+1);
-    Range J(-1, nj+1);
-    Range K(-1, nk+1);
-    if (nk == 1)
-    {
-        K.setRange(1, 1);
-    }
-
-    int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    int neqn  = nm + nchem;
-
-    Range M(0, neqn - 1);
-
-    RFloat4D *q = new RFloat4D(I, J, K, M, fortranArray);
-    grid->UpdateDataPtr("q", q);
-
-    RFloat4D *q_turb = new RFloat4D(I, J, K, M, fortranArray);
-    grid->UpdateDataPtr("q_turb", q_turb);
-}
-
-void IO_FlowReader::InitMemoryUnStr(Grid *grid_in)
-{
-    UnstructGrid *grid = UnstructGridCast(grid_in);
-    int nTotalCell = grid->GetNTotalCell();
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotal = nTotalCell + nBoundFace;
-
-    int nm = 5;
-    GlobalDataBase::GetData("nm", &nm, PHINT, 1);
-
-    int nchem = 0;
-    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
-
-    int neqn = nm + nchem;
-
-    RFloat **q = NewPointer2<RFloat>(neqn, nTotal);
-    RFloat **q_turb = NewPointer2<RFloat>(neqn, nTotal);
-
-    grid->UpdateDataPtr("q", q);
-    grid->UpdateDataPtr("q_turb", q_turb);
 }
 
 void IO_FlowReader::Run()
@@ -133,218 +29,250 @@ void IO_FlowReader::Run()
     ReadTurbFile();
 }
 
-void IO_FlowReader::ReadFlowFile()
+void IO_FlowReader::Init()
 {
     using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
 
-    fstream file;
-    ParallelOpenFile(file, restartNSFile, ios_base::in|ios_base::binary);
+    restartNSFile = GlobalDataBase::GetStrParaFromDB("restartNSFile");
+    turbfile = GlobalDataBase::GetStrParaFromDB("turbfile");
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    int nChemical           = GlobalDataBase::GetIntParaFromDB("nchem");
+    int nNSEquation         = GlobalDataBase::GetIntParaFromDB("nm");
+    this->nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
+    this->nEquation         = nNSEquation + nChemical + nTemperatureModel - 1;
+
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    if (viscousType == 3)
     {
-        int send_proc = server;
-        int recv_proc = GetZoneProcessorID(izone);
-
-        int myid = GetCurrentProcessorID();
-
-        DataContainer *flowData = new DataContainer();
-        
-        if (myid == send_proc)
-        {
-            ReadFile(file, flowData);
-        }
-
-        PH_Trade(flowData, send_proc, recv_proc);
-
-        if (myid == recv_proc)
-        {
-            Grid *grid = GetGrid(izone);
-            int gridType = grid->Type();
-
-            if (gridType == STRUCTGRID)
-            {
-                ReadFlowFileStr(grid, flowData);
-            }
-            else
-            {
-                ReadFlowFileUnStr(grid, flowData);
-            }
-        }
-
-        delete flowData;
+        this->nTurbulenceEquation = 1;
+    }
+    else if (viscousType == 4)
+    {
+        this->nTurbulenceEquation = 2;
+        int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
+        this->nTurbulenceEquation += transitionType;
     }
 
-    ParallelCloseFile(file);
+    int nLocalZones = GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Grid *grid = GetGrid(zoneID);
+        int gridType = grid->Type();
+        if (gridType == STRUCTGRID)
+        {
+            InitMemoryStruct(grid);
+        }
+        else
+        {
+            InitMemoryUnstruct(grid);
+        }
+    }
 }
 
-void IO_FlowReader::ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData)
+void IO_FlowReader::InitMemoryStruct(Grid *gridIn)
 {
-    UnstructGrid *grid = UnstructGridCast(grid_in);
+    StructGrid *grid = StructGridCast(gridIn);
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
 
-    int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    int neqn  = nm + nchem;
+    Range I, J, K;
+    GetRange(ni, nj, nk, -2, 1, I, J, K);
 
-    flowData->moveto_begin();
-    int outnstep = 0;
-    flowData->read(&outnstep, sizeof(int));
-    GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
+    Range M(0, nEquation - 1);
+    Range T(0, nTemperatureModel - 1);
 
-    int nBoundFace = grid->GetNBoundFace();
+    RDouble4D *q = new RDouble4D(I, J, K, M, fortranArray);
+    grid->UpdateDataPtr("q", q);
+
+    RDouble4D *t = new RDouble4D(I, J, K, T, fortranArray);
+    grid->UpdateDataPtr("t", t);
+
+    RDouble3D *visl = new RDouble3D(I, J, K, fortranArray);
+    grid->UpdateDataPtr("visl", visl);
+
+    RDouble3D *viscousTurbulent = new RDouble3D(I, J, K, fortranArray);
+    grid->UpdateDataPtr("vist", viscousTurbulent);
+    *viscousTurbulent = 0.0;
+
+    if (nTurbulenceEquation > 0)
+    {
+        Range Mturb(0, nTurbulenceEquation - 1);
+        RDouble4D *q_turb = new RDouble4D(I, J, K, Mturb, fortranArray);
+        grid->UpdateDataPtr("q_turb", q_turb);
+    }
+}
+
+void IO_FlowReader::InitMemoryUnstruct(Grid *gridIn)
+{
+    UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
+    int nBoundFace = grid->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    RFloat **q = reinterpret_cast<RFloat **>(grid->GetDataPtr("q"));
+    RDouble **q   = NewPointer2<RDouble>(nEquation, nTotal);
+    grid->UpdateDataPtr("q", q);
 
-    for (int m = 0; m < neqn; ++ m)
+    RDouble **gradPrimtiveVarX = NewPointer2<RDouble>(nEquation, nTotal);
+    RDouble **gradPrimtiveVarY = NewPointer2<RDouble>(nEquation, nTotal);
+    RDouble **gradPrimtiveVarZ = NewPointer2<RDouble>(nEquation, nTotal);
+
+    grid->UpdateDataPtr("gradPrimtiveVarX", gradPrimtiveVarX);
+    grid->UpdateDataPtr("gradPrimtiveVarY", gradPrimtiveVarY);
+    grid->UpdateDataPtr("gradPrimtiveVarZ", gradPrimtiveVarZ);
+
+    if (nTurbulenceEquation > 0)
     {
-        flowData->read(q[m], sizeof(RFloat) * nTotal);
+        RDouble **qTurbulence = NewPointer2<RDouble>(nTurbulenceEquation, nTotal);
+        grid->UpdateDataPtr("q_turb", qTurbulence);
     }
 }
 
-void IO_FlowReader::ReadFlowFileStr(Grid *grid_in, DataContainer *flowData)
+void IO_FlowReader::ReadFlowFile()
 {
-    StructGrid *grid = StructGridCast(grid_in);
+    hid_t file;
+    file = OpenHDF5File(restartNSFile);
 
-    int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
 
-    int nm    = GlobalDataBase::GetIntParaFromDB("nm");
-    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
-    int neqn  = nm + nchem;
-
-    Range M(0, neqn - 1);
-    int mst = M.first();
-    int med = M.last();
-
-    flowData->moveto_begin();
-
-    int outnstep = 0;
-    flowData->read(&outnstep, sizeof(int));
-    GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
-
-    RFloat4D &q = *reinterpret_cast<RFloat4D *>(grid->GetDataPtr("q"));
-
-    for (int m = mst; m <= med; ++ m)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        for (int k = kst; k <= ked; ++ k)
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Grid *grid = GetGrid(zoneID);
+        int gridType = grid->Type();
+        if (gridType == STRUCTGRID)
         {
-            for (int j = jst; j <= jed; ++ j)
-            {
-                for (int i = ist; i <= ied; ++ i)
-                {
-                    flowData->read(&q(i, j, k, m), sizeof(RFloat));
-                }
-            }
+            ReadFlowFileStr(file, grid);
+        }
+        else
+        {
+            ReadFlowFileUnStr(file, grid);
         }
     }
+
+    H5Fclose(file);
+}
+
+void IO_FlowReader::ReadFlowFileUnStr(hid_t loc_id, Grid *gridIn)
+{
+    RDouble **q = reinterpret_cast< RDouble ** > ( gridIn->GetDataPtr("q") );
+
+    hid_t grploc;
+    string grpName;
+
+    int outIterStep = 0;
+    ReadData(loc_id, &outIterStep, "outnstep");
+    GlobalDataBase::UpdateData("outnstep", &outIterStep, PHINT, 1);
+
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
+
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, q[0], "q");
+
+    H5Gclose(grploc);
+}
+
+void IO_FlowReader::ReadFlowFileStr(hid_t loc_id, Grid *gridIn)
+{
+    RDouble4D &primitiveVariables = *reinterpret_cast <RDouble4D *> (gridIn->GetDataPtr("q"));
+
+    StructGrid *strGrid = StructGridCast(gridIn);
+    int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
+    strGrid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
+
+    hid_t grploc;
+    string grpName;
+
+    int outIterStep = 0;
+    ReadData(loc_id, &outIterStep, "outnstep");
+    GlobalDataBase::UpdateData("outnstep", &outIterStep, PHINT, 1);
+
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
+
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, &primitiveVariables(iCellStart, jCellStart, kCellStart, 0), "q");
+
+    H5Gclose(grploc);
 }
 
 void IO_FlowReader::ReadTurbFile()
 {
-    if (IfReadTurb == false) return;
+    if (!nTurbulenceEquation)
+    {
+        return;
+    }
+
+    hid_t file;
+    file = OpenHDF5File(turbfile);
 
     using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
+    int nLocalZones = GetNumberofLocalZones();
 
-    fstream file;
-
-    ParallelOpenFile(file, turbfile, ios_base::in|ios_base::binary);
-
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int send_proc = server;
-        int recv_proc = GetZoneProcessorID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        int myid = GetCurrentProcessorID();
-
-        DataContainer *flowData = new DataContainer();
-        if (myid == send_proc)
+        Grid *grid = GetGrid(zoneID);
+        int gridType = grid->Type();
+        if (gridType == STRUCTGRID)
         {
-            ReadFile(file, flowData);
+            ReadTurbFileStr(file, grid);
         }
-
-        PH_Trade(flowData, send_proc, recv_proc);
-
-        if (myid == recv_proc)
+        else
         {
-            Grid *grid = GetGrid(izone, 0);
-            int gridType = grid->Type();
-
-            if (gridType == STRUCTGRID)
-            {
-                ReadTurbFileStr(grid, flowData);
-            }
-            else
-            {
-                ReadTurbFileUnStr(grid, flowData);
-            }
+            ReadTurbFileUnStr(file, grid);
         }
-
-        delete flowData;
     }
 
-    ParallelCloseFile(file);
+    H5Fclose(file);
 }
 
-void IO_FlowReader::ReadTurbFileStr(Grid *grid_in, DataContainer *flowData)
+void IO_FlowReader::ReadTurbFileStr(hid_t loc_id, Grid *gridIn)
 {
-    StructGrid *grid = StructGridCast(grid_in);
+    StructGrid *strGrid = StructGridCast(gridIn);
+    int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
+    strGrid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
 
-    int ist, ied, jst, jed, kst, ked;
-    grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
+    RDouble4D &qTurbulent = *reinterpret_cast<RDouble4D *> (strGrid->GetDataPtr("q_turb"));
+    RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (strGrid->GetDataPtr("vist"));
 
-    int n_turb = GlobalDataBase::GetIntParaFromDB("n_turb");
+    hid_t grploc;
+    string grpName;
 
-    RFloat4D &q = *reinterpret_cast<RFloat4D *>(grid->GetDataPtr("q_turb"));
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
 
-    Range M(0, n_turb - 1);
-    int mst = M.first();
-    int med = M.last();
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, &qTurbulent(iCellStart, jCellStart, kCellStart, 0), "q_turb");
+    ReadData(grploc, &viscousTurbulent(iCellStart, jCellStart, kCellStart), "visturb");
 
-    flowData->moveto_begin();
-    int outnstepofTurb = 0;
-    flowData->read(&outnstepofTurb, sizeof(int));
-
-    for (int m = mst; m <= med; ++ m)
-    {
-        for (int k = kst; k <= ked; ++ k)
-        {
-            for (int j = jst; j <= jed; ++ j)
-            {
-                for (int i = ist; i <= ied; ++ i)
-                {
-                    flowData->read(&q(i, j, k, m), sizeof(RFloat));
-                }
-            }
-        }
-    }
+    H5Gclose(grploc);
 }
 
-void IO_FlowReader::ReadTurbFileUnStr(Grid *grid_in, DataContainer *flowData)
+void IO_FlowReader::ReadTurbFileUnStr(hid_t loc_id, Grid *gridIn)
 {
-    UnstructGrid *grid = UnstructGridCast(grid_in);
+    RDouble **qTurbulence     = reinterpret_cast<RDouble **> (gridIn->GetDataPtr("q_turb"));
 
-    int nBoundFace = grid->GetNBoundFace();
-    int nTotalCell = grid->GetNTotalCell();
-    int nTotal = nTotalCell + nBoundFace;
+    hid_t grploc;
+    string grpName;
 
-    int n_turb = GlobalDataBase::GetIntParaFromDB("n_turb");
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
 
-    RFloat **q = reinterpret_cast<RFloat **>(grid->GetDataPtr("q_turb"));
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, qTurbulence[0], "q_turb");
 
-    flowData->moveto_begin();
-    int outnstepofTurb = 0;
-    flowData->read(&outnstepofTurb, sizeof(int));
-
-    for (int m = 0; m < n_turb; ++ m)
-    {
-        for (int icell = 0; icell < nTotal; ++ icell)
-        {
-            flowData->read(&q[m][icell], sizeof(RFloat));
-        }
-    }
+    H5Gclose(grploc);
 }
 
 }

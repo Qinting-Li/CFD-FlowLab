@@ -198,6 +198,8 @@ const int ONE_GHOST_LAYER = 1;    //! Their have one-layer ghost cells.
 const int TWO_GHOST_LAYER = 2;    //! Their have two-layer ghost cells.
 const int THREE_GHOST_LAYER = 3;    //! Their have three-layer ghost cells.
 
+const int GlobalCoordinate = 0;
+const int LocalCoordinate  = 1;
 namespace IDX
 {
 const int IR   = 0;
