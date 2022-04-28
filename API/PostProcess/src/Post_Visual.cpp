@@ -93,6 +93,9 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_SST_F2             , "SSTF2"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_INTERMITTENCY      , "intermittency"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_MOMENTUMTHICKREYNOLDS, "MomentumThicknessReynolds"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_U       , "streamline_u"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_V       , "streamline_v"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_W       , "streamline_w"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_GAMAEFF , "gamaeff"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_RESCF   , "stationaryCrossFlowReynolds"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_UX        , "gradientUx"));
@@ -284,7 +287,7 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble 
     RDouble *qn = new RDouble[nTotalNode];
 
     bool isVelocityForPostVisual = false;
-    if (name == "u" || name == "v" || name == "w" || name == "u_Dim" || name == "v_Dim" || name == "w_Dim")
+    if (name == "streamline_u" || name == "streamline_v" || name == "streamline_w")
     {
         isVelocityForPostVisual = true;
     }
@@ -329,7 +332,7 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
 
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
     bool isVelocityForPostVisual = false;
-    if (name == "u" || name == "v" || name == "w" || name == "u_Dim" || name == "v_Dim" || name == "w_Dim")
+    if (name == "streamline_u" || name == "streamline_v" || name == "streamline_w")
     {
         isVelocityForPostVisual = true;
     }

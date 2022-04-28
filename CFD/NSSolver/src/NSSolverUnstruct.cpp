@@ -9261,6 +9261,25 @@ LIB_EXPORT void NSSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         postVisualization->UpdateVisualNodeVarPtr(varName, mach);
         delete [] mach;
     }
+
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_U))
+    {
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_U);
+        postVisualization->UpdateVisualNodeVarPtr(varName, q[IDX::IU]);
+    }
+
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_V))
+    {
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_V);
+        postVisualization->UpdateVisualNodeVarPtr(varName, q[IDX::IV]);
+    }
+
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_W))
+    {
+        string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_W);
+        postVisualization->UpdateVisualNodeVarPtr(varName, q[IDX::IW]);
+    }
+
     if(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TIME_STEP))
     {
         string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TIME_STEP);
