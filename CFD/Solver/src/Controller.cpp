@@ -2917,9 +2917,9 @@ void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Zone *zone = GetZone(zoneID);
         if (!zone)
@@ -2935,8 +2935,8 @@ void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy
             solver->LHSMatrixs(grid);
         }
 
-        zoneNormal[izone] = 0.0;
-        solver->SolveBLUSGSForward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]);//! The Block LU-SGS method.
+        zoneNormal[iZone] = 0.0;
+        solver->SolveBLUSGSForward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);//! The Block LU-SGS method.
     }
 
     //! Sum the zone normal, which is to void OMP data competition.
@@ -2955,9 +2955,9 @@ void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProx
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Zone *zone = GetZone(zoneID);
         if (!zone)
@@ -2967,8 +2967,8 @@ void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProx
         Grid *grid = GetGrid(zoneID, level);
         CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
 
-        zoneNormal[izone] = 0.0;
-        solver->SolveBLUSGSBackward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]);//The Block LU-SGS method
+        zoneNormal[iZone] = 0.0;
+        solver->SolveBLUSGSBackward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);//The Block LU-SGS method
     }
 
     //! Sum the zone normal, which is to void OMP data competition.
@@ -3140,9 +3140,9 @@ void Controller::BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqP
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++izone)
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Zone* zone = GetZone(zoneID);
         if (!zone)
@@ -3152,8 +3152,8 @@ void Controller::BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqP
         Grid* grid = GetGrid(zoneID, level);
         CFDSolver* solver = GetCFDSolver(zoneID, iSolver);
 
-        zoneNormal[izone] = 0.0;
-        solver->SolveLineLUSGSBackward(grid, dqProxy[izone], LUplusDQ[izone], zoneNormal[izone]);//The Block LU-SGS method
+        zoneNormal[iZone] = 0.0;
+        solver->SolveLineLUSGSBackward(grid, dqProxy[iZone], LUplusDQ[iZone], zoneNormal[iZone]);//The Block LU-SGS method
     }
 
     //! Sum the zone normal, which is to void OMP data competition.

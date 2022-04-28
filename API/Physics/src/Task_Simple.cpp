@@ -16,13 +16,13 @@ void Task_Simple::MainTask(ActionKey *actkey)
 
     int myid = GetCurrentProcessorID();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = GetZoneProcessorIDSepMode(izone);
+        int proc = GetZoneProcessorIDSepMode(iZone);
 
         if (myid == proc)
         {
-            GeneralAction(actkey, izone);
+            GeneralAction(actkey, iZone);
         }
     }
 }

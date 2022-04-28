@@ -306,9 +306,9 @@ public:
     };
     ~ZoneConnectivity()
     {
-        for (int izone = 0; izone < numberOfZones; ++ izone)
+        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
-            delete zoneNeighbor[izone];
+            delete zoneNeighbor[iZone];
         }
         delete [] zoneNeighbor;
     }
@@ -318,12 +318,12 @@ public:
     {
         SetNumberOfZones(nZones);
         zoneNeighbor = new ZoneNeighbor *[nZones];
-        for (int izone = 0; izone < nZones; ++ izone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
-            zoneNeighbor[izone] = new ZoneNeighbor();
+            zoneNeighbor[iZone] = new ZoneNeighbor();
         } 
     }
-    ZoneNeighbor *GetZoneNeighbor(int izone) const { return zoneNeighbor[izone]; }
+    ZoneNeighbor *GetZoneNeighbor(int iZone) const { return zoneNeighbor[iZone]; }
 private:
     int numberOfZones;
     ZoneNeighbor **zoneNeighbor;
@@ -338,7 +338,7 @@ public:
     int  GetNumberOfZonesForPoint() const;
     void SetNumberOfZonesForPoint(int numberOfZonesForPoint);
     void CreateAllZones(int numberOfZonesForPoint);
-    ZoneNeighbor *GetZoneNeighborForPoint(int izone) const;
+    ZoneNeighbor * GetZoneNeighborForPoint(int iZone) const;
 private:
     int numberOfZonesForPoint;
     ZoneNeighbor **zoneNeighborForPoint;
@@ -361,20 +361,20 @@ private:
 
 //! The level  number of multigrid.
 uint_t GetNumberOfMultiGrid();
-uint_t GetNumberOfMultiGrid(int izone);
+uint_t GetNumberOfMultiGrid(int iZone);
 
-Grid * GetGrid(int izone, int level = 0);
+Grid * GetGrid(int iZone, int level = 0);
 void DeleteGGrids();
-void AddGridToGlobal(int izone, vector < Grid   * > *grids);
+void AddGridToGlobal(int iZone, vector <Grid *> *grids);
 void GetGlobalMinMaxBox(RDouble * globalMinBox, RDouble * globalMaxBox);
 void SetGlobalMinMaxBox(RDouble * globalMinBox, RDouble * globalMaxBox);
 
-InterfaceInfo * GetInterfaceInfo(int izone, int level = 0);
-//! Return the interpoint information of the izone.
-//! @param[in] izone : the zone number.
+InterfaceInfo * GetInterfaceInfo(int iZone, int level = 0);
+//! Return the interpoint information of the iZone.
+//! @param[in] iZone : the zone number.
 //! @param[in] level : the number of ghost cell layers.
 //! @param[out] the object of the class InterpointInformation.
-InterpointInformation * GetInterpointInfo(int izone, int level);
-OversetInfoProxy * GetOversetInfoProxy(int izone, int level = 0);
+InterpointInformation * GetInterpointInfo(int iZone, int level);
+OversetInfoProxy * GetOversetInfoProxy(int iZone, int level = 0);
 
 }

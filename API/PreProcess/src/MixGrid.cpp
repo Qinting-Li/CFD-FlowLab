@@ -271,9 +271,9 @@ void WriteLnkFile (const string &gridFileName, Grid **grids_in, int nBlocks)
     VirtualFile *virtualFile = new VirtualFile(&file);
     virtualFile->BeginWriteWork();
 
-    for (int izone = 0; izone < nBlocks; izone ++)
+    for (int iZone = 0; iZone < nBlocks; iZone ++)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
@@ -328,9 +328,9 @@ void CheckMeshMultigrid(Grid **grids_in, int nBlocks)
     int km, NN;
     int km_grid = 1024;
 
-    for (int izone = 0; izone < nBlocks; izone ++)
+    for (int iZone = 0; iZone < nBlocks; iZone ++)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
@@ -1576,9 +1576,9 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
     nBoundFace = 0;
     nBCRegions = 0;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
         int ni = grid->GetNI();
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
@@ -1659,11 +1659,11 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
 
     conn_list = base_cgns_conn_list[0];
     start_pos = 0;
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
-        Int3D &unsindex = *unsindexlist[izone];
+        Int3D &unsindex = *unsindexlist[iZone];
 
         int ist, ied, jst, jed, kst, ked;
         grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
@@ -1714,10 +1714,10 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
 
     cout << "    Warning: the cgsize_t type of conn_list has been convert to int type, when StrGridToUnsGrid()!!!" << endl;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
-        Int3D &unsindex = *unsindexlist[izone];
+        StructGrid *grid = StructGridCast(grids[iZone]);
+        Int3D &unsindex = *unsindexlist[iZone];
 
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
@@ -1767,9 +1767,9 @@ void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid)
     maxdis = - LARGE;
 
     int nTotalNode = 0;
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
         int ni = grid->GetNI();
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
@@ -1798,9 +1798,9 @@ void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid)
     pmax[1] = - LARGE;
     pmax[2] = - LARGE;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
         RDouble *ptmin = grid->GetMinBox();
         RDouble *ptmax = grid->GetMaxBox();
 
@@ -1828,9 +1828,9 @@ void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid)
     RDouble *zuns = new RDouble[nTotalNode];
 
     int nTotalCell = 0;
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
         int ni = grid->GetNI();
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
@@ -1843,16 +1843,16 @@ void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid)
 
     Int3D **unsindexlist = new Int3D * [nBlocks];
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
         int ni = grid->GetNI();
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
 
-        unsindexlist[izone] = new Int3D(Range(1, ni), Range(1, nj), Range(1, nk), fortranArray);
-        Int3D &unsindex = *unsindexlist[izone];
-        cout << " block = " << izone + 1 << "\n";
+        unsindexlist[iZone] = new Int3D(Range(1, ni), Range(1, nj), Range(1, nk), fortranArray);
+        Int3D &unsindex = *unsindexlist[iZone];
+        cout << " block = " << iZone + 1 << "\n";
         GetUnsIndex(grid, adtTree, count, tol, unsindex, xuns, yuns, zuns);
     }
 
@@ -1864,11 +1864,11 @@ void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid)
     RDouble *y = new RDouble [nTotalNode];
     RDouble *z = new RDouble [nTotalNode];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xuns[inode];
-        y[inode] = yuns[inode];
-        z[inode] = zuns[inode];
+        x[iNode] = xuns[iNode];
+        y[iNode] = yuns[iNode];
+        z[iNode] = zuns[iNode];
     }
 
     delete [] xuns;
@@ -1892,9 +1892,9 @@ void StrGridToUnsGrid(Grid **grids, int nBlocks, UnstructGrid *uns_grid)
 
     FillSection(grids, nBlocks, base_cgns, base_elem, unsindexlist);
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete unsindexlist[izone];
+        delete unsindexlist[iZone];
     }
     delete [] unsindexlist;
 

@@ -200,9 +200,9 @@ void GridTranslator::OutputMultiZoneComputationalGrids()
 
     if (block_proc_inp)
     {
-        for (int izone = 0; izone < numberOfZones; ++ izone)
+        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
-            SetZoneProcessorID(izone, block_proc_inp[izone]);
+            SetZoneProcessorID(iZone, block_proc_inp[iZone]);
         }
     }
 
@@ -221,9 +221,9 @@ void GridTranslator::OutputMultiZoneComputationalGrids()
 
 void GridTranslator::CheckGrid()
 {
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        StructGrid *grid = StructGridCast((*gridGroup)[izone]);
+        StructGrid *grid = StructGridCast((*gridGroup)[iZone]);
         InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
 
         int nIFace = 0;
@@ -245,7 +245,7 @@ void GridTranslator::CheckGrid()
         for (int iface = 0; iface < nIFace; ++ iface)
         {
             target_zone = interFace2ZoneID[iface];
-            if (target_zone < izone) continue;
+            if (target_zone < iZone) continue;
             
             grid->GetSourceIndexIJK_Nsurf_LR(iface, 1, is, js, ks, nsurf, s_lr);
             if (s_lr == 1)
@@ -259,7 +259,7 @@ void GridTranslator::CheckGrid()
 
             itface = interFace2InterFaceID[iface];
 
-            if (target_zone == izone)
+            if (target_zone == iZone)
             {
                 grid->GetSourceIndexIJK_Nsurf_LR(itface, 1, it, jt, kt, nsurf, t_lr);
                 if (t_lr == 1)

@@ -225,10 +225,10 @@ void Mesh_Refine_Struct::GenerateAndDumpComputationalGrid()
 
 void Mesh_Refine_Struct::GenerateBCRegion()
 {
-    for (int izone = 0; izone < numberOfZones; izone ++)
+    for (int iZone = 0; iZone < numberOfZones; iZone ++)
     {
-        StructGrid *grid       = StructGridCast(OrdinaryGrid[izone]);
-        StructGrid *strGridNew = StructGridCast(refinedGrids[izone]);
+        StructGrid *grid       = StructGridCast(OrdinaryGrid[iZone]);
+        StructGrid *strGridNew = StructGridCast(refinedGrids[iZone]);
 
         strGridNew->CopyCompositeBCRegion(grid->GetCompositeBCRegion());
         CompositeStructBC *rhs = strGridNew->GetCompositeBCRegion();

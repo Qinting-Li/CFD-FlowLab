@@ -4960,13 +4960,13 @@ void TurbSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
 
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int myid = GetCurrentProcessorID();
-        int tag = izone + level * nZones;
-        int send_proc = GetZoneProcessorID(izone);
+        int tag = iZone + level * nZones;
+        int send_proc = GetZoneProcessorID(iZone);
 
-        ZoneNeighbor *zoneNeighborForPoint = zoneConnectivityForPoint->GetZoneNeighborForPoint(izone);
+        ZoneNeighbor *zoneNeighborForPoint = zoneConnectivityForPoint->GetZoneNeighborForPoint(iZone);
         std::size_t numberOfNeighbor = zoneNeighborForPoint->GetNumberOfNeighbor();
 
         for (std::size_t iNeighborZone = 0; iNeighborZone < numberOfNeighbor; ++ iNeighborZone)
@@ -4974,11 +4974,11 @@ void TurbSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
             int neighborZoneIndex = zoneNeighborForPoint->GetZoneIndexOfNeighbor(iNeighborZone);
             int recv_proc = GetZoneProcessorID(neighborZoneIndex);
 
-            DataContainer * cdata = new DataContainer();
+            DataContainer *cdata = new DataContainer();
 
             if (myid == send_proc)
             {
-                UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(izone, level));
+                UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(iZone, level));
                 InterpointInformation *interpointInformation = grid->GetInterpointInfo();
                 int *nodeValueSliceTurb = reinterpret_cast<int *>(grid->GetDataPtr("nodeValueSliceTurb"));
 
@@ -5012,7 +5012,7 @@ void TurbSolverUnstr::CommunicationInterpointWeight(ActionKey *actkey)
 
                 cdata->moveto_begin();
 
-                int iNeighbor = interpointInformationNeighbor->FindIthNeighbor(izone);
+                int iNeighbor = interpointInformationNeighbor->FindIthNeighbor(iZone);
                 int numberOfInterpointsForNeighbor = interpointInformationNeighbor->GetNumberOfInterpointsForNeighbor(iNeighbor);
                 int *pointIndexForReceive = interpointInformationNeighbor->GetPointIndexForReceive(iNeighbor);
                 int *interPoint2GlobalPoint = interpointInformationNeighbor->GetInterPoint2GlobalPoint();
@@ -5043,16 +5043,16 @@ void TurbSolverUnstr::DownloadInterpointWeight(ActionKey *actkey)
 
     int myid = GetCurrentProcessorID();
     int nZones = GetNumberofGlobalZones();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int currentZoneProc = GetZoneProcessorID(izone);
+        int currentZoneProc = GetZoneProcessorID(iZone);
 
         if (myid != currentZoneProc)
         {
             continue;
         }
 
-        UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(izone, level));
+        UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(iZone, level));
         int nTotalNode = grid->GetNTotalNode();
         int *nodeValueSliceTurb = reinterpret_cast<int *>(grid->GetDataPtr("nodeValueSliceTurb"));
         int *nodeValueSliceTurbTrade = reinterpret_cast<int *>(grid->GetDataPtr("nodeValueSliceTurbTrade"));

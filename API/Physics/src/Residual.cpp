@@ -572,13 +572,13 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
             residualNormal[iEquation] += res2;
             if(isErrorData(residualNormal[iEquation]))
             {
-                int izone = grid->GetZoneID();
+                int iZone = grid->GetZoneID();
                 PrintToWindow("residualNormal[", iEquation, "] = ", residualNormal[iEquation]);
                 PrintToWindow("\n");
-                PrintToWindow("izone = ", izone, "\n");
+                PrintToWindow("iZone = ", iZone, "\n");
                 PrintToWindow("iCell = ", iCell, "\n");
                 WriteLogFile("residual residualNormal ", iEquation, residualNormal[iEquation], true);
-                WriteLogFile("izone i = ", izone, iEquation, true);
+                WriteLogFile("iZone i = ", iZone, iEquation, true);
                 TK_Exit::ExceptionExit("Error: residual divergence!\n", true);
             }
 
@@ -666,10 +666,10 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                     residualNormal[m] += res2;
                     if(isErrorData(residualNormal[m]))
                     {
-                        int izone = grid->GetZoneID();
+                        int iZone = grid->GetZoneID();
                         PrintToWindow("residualNormal[", m, "] = ", residualNormal[m]);
                         PrintToWindow("\n");
-                        PrintToWindow("izone = ", izone, "\n");
+                        PrintToWindow("iZone = ", iZone, "\n");
                         PrintToWindow("i = ", i, "\n");
                         PrintToWindow("j = ", j, "\n");
                         PrintToWindow("k = ", k, "\n");
@@ -677,7 +677,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                         PrintToWindow("yc = ", ycc(i, j, k), "\n");
                         PrintToWindow("zc = ", zcc(i, j, k), "\n");
                         WriteLogFile("residual residualNormal ",m, residualNormal[m], true);
-                        WriteLogFile("izone = ",izone, true);
+                        WriteLogFile("iZone = ",iZone, true);
                         WriteLogFile("i j k = ", i ,j, k, true);
                         WriteLogFile("xc yc zc = ", xcc(i, j, k) ,ycc(i, j, k), zcc(i, j, k), true);
                         TK_Exit::ExceptionExit("Error: residual divergence!\n", true);
@@ -707,8 +707,8 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
 
     if (nDebug == 1 && maxResChange == true)
     {
-        int izone = grid->GetZoneID();
-        PrintToWindow("\n","Maxres_izone = ", izone, "\n");
+        int iZone = grid->GetZoneID();
+        PrintToWindow("\n","Maxres_izone = ", iZone, "\n");
         PrintToWindow("Maxres_i = ", iMax, "\n");
         PrintToWindow("Maxres_j = ", jMax, "\n");
         PrintToWindow("Maxres_k = ", kMax, "\n");
@@ -716,7 +716,6 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
         PrintToWindow("Maxres = ", maxResLocal,"\n","\n");
     }
     
-
     if (maxResChange)
     {
         maxResidual->SetMaxRes(maxResLocal);

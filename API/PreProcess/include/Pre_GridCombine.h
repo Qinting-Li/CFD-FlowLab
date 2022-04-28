@@ -70,10 +70,10 @@ private:
     //! Whether this node is boundary node.
     bool IsBcNode(int *p, int node_in);
 
-    int * GetNode2All(int izone) { return node2all[izone]; }
-    int * GetFace2All(int izone) { return face2all[izone]; }
-    int * GetCell2All(int izone) { return cell2all[izone]; }
-    //bool *GetIsBCFaceMerged(int izone) { return isBCFaceMerged[izone]; }
+    int * GetNode2All(int iZone) { return node2all[iZone]; }
+    int * GetFace2All(int iZone) { return face2all[iZone]; }
+    int * GetCell2All(int iZone) { return cell2all[iZone]; }
+    //bool * GetIsBCFaceMerged(int iZone) { return isBCFaceMerged[iZone]; }
 
     int GetNTotalCell() const { return nTotalCell; }
     int GetNTotalNode() const { return nTotalNode; }

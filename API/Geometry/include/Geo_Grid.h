@@ -528,7 +528,7 @@ protected:
 void CheckGrid(Grid **grids, int nBlocks);
 
 //!
-LIB_EXPORT void Create_Link_Info(VInt &pindex, int izone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link);
+LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link);
 //!
 LIB_EXPORT void GetFaceCoorList(VInt &index, int nlist, RDouble *xlist, RDouble *ylist, RDouble *zlist, RDouble *x, RDouble *y, RDouble *z);
 //!

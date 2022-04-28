@@ -88,10 +88,10 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
     }
 
     factory_cgns = new CGNSFactory(nBlocks);
-    for (int izone = 1; izone <= nBlocks; ++ izone)
+    for (int iZone = 1; iZone <= nBlocks; ++ iZone)
     {
         //! Check the zone type.
-        cg_zone_type(fileid, baseid, izone, &zoneType);
+        cg_zone_type(fileid, baseid, iZone, &zoneType);
 
         if (zoneType == Structured)
         {
@@ -99,12 +99,12 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         }
 
         //! Determine the number of vertices and volume elements in this zone.
-        cg_zone_read(fileid, baseid, izone, zonename, isize[0]);
+        cg_zone_read(fileid, baseid, iZone, zonename, isize[0]);
 
         nTotalNode = isize[0][0];
         nTotalCell = isize[1][0];
 
-        CGNSBase *base_cgns = factory_cgns->GetCGNSBase(izone-1);
+        CGNSBase *base_cgns = factory_cgns->GetCGNSBase(iZone-1);
 
         base_cgns->SetNTotalNode(nTotalNode);
         base_cgns->SetNTotalCell(nTotalCell);
@@ -112,7 +112,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         cout << " nTotalNode = " << nTotalNode << " nTotalCell = " << nTotalCell << "\n";
 
         //! Determine the number and names of the coordinates.
-        cg_ncoords(fileid, baseid, izone, &nCoords);
+        cg_ncoords(fileid, baseid, iZone, &nCoords);
 
         //! Lower range index.
         irmin = 1;
@@ -124,7 +124,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         RDouble *y = new RDouble[nTotalNode]();
         RDouble *z = new RDouble[nTotalNode]();
 
-        RawGrid *rawgrid = factory_cgns->GetRawGrid(izone-1);
+        RawGrid *rawgrid = factory_cgns->GetRawGrid(iZone-1);
 
         rawgrid->SetNTotalNode(nTotalNode);
         rawgrid->SetX(x);
@@ -135,11 +135,11 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
 
         for (int icoor = 0; icoor < nCoords; ++ icoor)
         {
-            cg_coord_info(fileid, baseid, izone, icoor+1, &dataType, coordname);
+            cg_coord_info(fileid, baseid, iZone, icoor+1, &dataType, coordname);
             raw_coor->AllocateData(icoor, nTotalNode, dataType);
 
             //! Read the x-, y-, z-coordinates.
-            cg_coord_read(fileid, baseid, izone, coordname, dataType, &irmin, &irmax, raw_coor->GetCoor(icoor));
+            cg_coord_read(fileid, baseid, iZone, coordname, dataType, &irmin, &irmax, raw_coor->GetCoor(icoor));
         }
 
         if (nCoords == 2)
@@ -168,7 +168,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         //! surface elements can be stored in a volume zone, but they
         //! are NOT taken into account in the number obtained from 
         //! cg_zone_read.
-        cg_nsections(fileid, baseid, izone, &nSections);
+        cg_nsections(fileid, baseid, iZone, &nSections);
 
         //! Loop over the number of sections and read the element
         //! connectivities. As CGNS starts the numbering at 1 the
@@ -187,10 +187,10 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         cout << " nSections = " << nSections << "\n";
         for (int iSection = 1; iSection <= nSections; ++ iSection)
         {
-            cg_section_read(fileid, baseid, izone, iSection, sectionname, &etype,
+            cg_section_read(fileid, baseid, iZone, iSection, sectionname, &etype,
                             &istart, &iend, &nbndry, &iparent_flag);
 
-            cg_ElementDataSize(fileid, baseid, izone, iSection, &elementdatasize);
+            cg_ElementDataSize(fileid, baseid, iZone, iSection, &elementdatasize);
 
             cout << "\nReading section " << iSection << " ...\n";
             cout << "   section name = " << sectionname << "\n";
@@ -214,7 +214,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
             //! connectivities start at 1. If internally a starting index 
             //! of 0 is used (typical for C-codes) 1 must be subtracted 
             //! from the connectivities read.
-            cg_elements_read(fileid, baseid, izone, iSection, base_cgns_conn_list[iSection - 1], NULL);
+            cg_elements_read(fileid, baseid, iZone, iSection, base_cgns_conn_list[iSection - 1], NULL);
 
             if (etype == MIXED)
             {
@@ -234,7 +234,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         }
 
         // Determine the number of boundary conditions for this zone.
-        cg_nbocos(fileid, baseid, izone, &nBCRegions);
+        cg_nbocos(fileid, baseid, iZone, &nBCRegions);
 
         cout << "\nNumber of BC Regions: " << nBCRegions << endl;
         base_cgns->CreateBC(nBCRegions);
@@ -254,7 +254,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         for (int iBCRegion = 1; iBCRegion <= nBCRegions; ++ iBCRegion)
         {
             cout << "  Reading bcRegion " << iBCRegion << " ... " << endl;
-            cg_goto(fileid, baseid, "Zone_t", izone, "ZoneBC_t", 1, "BC_t", iBCRegion, "end");
+            cg_goto(fileid, baseid, "Zone_t", iZone, "ZoneBC_t", 1, "BC_t", iBCRegion, "end");
             cg_gridlocation_read(&igr);
 
             cout << "  Grid Location Name = " << GridLocationName[igr] << "\n";
@@ -275,7 +275,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
                 //igr = FaceCenter;
             }
             //! Read the info for this boundary condition.
-            cg_boco_info(fileid, baseid, izone, iBCRegion, bocoName, &bocoType, &ptsetType, &nBCElem, &normalIndex,
+            cg_boco_info(fileid, baseid, iZone, iBCRegion, bocoName, &bocoType, &ptsetType, &nBCElem, &normalIndex,
                          &normListFlag, &normDataType, &nDataSet);
 
             if (bocoType == FamilySpecified || nFamilies > 0)
@@ -305,7 +305,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
             cout << "  PointSetType_t = " << PointSetTypeName[ptsetType] << "\n";
 
             //! Read the element ID¡¯s.
-            cg_boco_read(fileid, baseid, izone, iBCRegion, base_cgns_bc_conn_list[iBCRegion-1], NULL);
+            cg_boco_read(fileid, baseid, iZone, iBCRegion, base_cgns_bc_conn_list[iBCRegion-1], NULL);
 
             if (nBCElem == 2)
             {
@@ -339,12 +339,12 @@ void Pre_CGNSToPHengLEI_Unstruct::Conversion()
 
     grids = new Grid * [nBlocks];
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        GridID *index = new GridID(izone);
+        GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-        grids[izone] = grid;
-        CGNS2UnsGrid(factory_cgns, izone, UnstructGridCast(grid));
+        grids[iZone] = grid;
+        CGNS2UnsGrid(factory_cgns, iZone, UnstructGridCast(grid));
         grid->ComputeMinMaxBox();
     }
 }

@@ -1417,9 +1417,9 @@ int ParallelMeshGen::GetFaceTypeOfFTS(const int & dimension, const int & nodeNum
     return faceType;
 }
 
-Zone * ParallelMeshGen::GetZone(int izone)
+Zone * ParallelMeshGen::GetZone(int iZone)
 {
-    return region->GetZone(izone);
+    return region->GetZone(iZone);
 }
 
 bool ParallelMeshGen::ZoneBelongToCurrentProcessor(int zoneIndex)
@@ -1850,38 +1850,38 @@ void ParallelMeshGen::ConstructGrid()
 
 void ParallelMeshGen::ResolveComputationGrid()
 {
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        super_elements[izone]->ResolveComputationGrid();
+        super_elements[iZone]->ResolveComputationGrid();
     }
 }
 
-int ParallelMeshGen::GetGridType(int izone) const
+int ParallelMeshGen::GetGridType(int iZone) const
 {
-    //return cgns_multizone->GetZone(izone)->GetZoneType();
+    //return cgns_multizone->GetZone(iZone)->GetZoneType();
     return (int)Unstructured;
 }
 
-Grid * ParallelMeshGen::CreateBasicGrid(int izone)
+Grid * ParallelMeshGen::CreateBasicGrid(int iZone)
 {
-    int grid_type = GetGridType(izone);
+    int grid_type = GetGridType(iZone);
     if (grid_type == Unstructured)
     {
-        return CreateGridGeneral(UNSTRUCTGRID, new GridID(izone), 0, GetDim());
+        return CreateGridGeneral(UNSTRUCTGRID, new GridID(iZone), 0, GetDim());
     }
     else
     {
-        return CreateGridGeneral(STRUCTGRID, new GridID(izone), 0, GetDim());
+        return CreateGridGeneral(STRUCTGRID, new GridID(iZone), 0, GetDim());
     }
 }
 
 void ParallelMeshGen::CreateAllSingleGrid(Grid ** grids)
 {
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        Grid *grid  = CreateBasicGrid(izone);
-        grids[izone] = grid;
-        super_elements[izone]->CreateFantasyGrid(grid, GetGridType(izone));
+        Grid *grid  = CreateBasicGrid(iZone);
+        grids[iZone] = grid;
+        super_elements[iZone]->CreateFantasyGrid(grid, GetGridType(iZone));
     }
 }
 
@@ -1898,9 +1898,9 @@ void ParallelMeshGen::CreateGeneralMultiBlockGrid()
 
     DumpGrid(out_gfile, grids, numberOfZones);
 
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        delete grids[izone];
+        delete grids[iZone];
     }
     delete [] grids;
 }
@@ -1918,9 +1918,9 @@ void ParallelMeshGen::ReadGrid()
     numberOfZones = cgns_multizone->GetNZones();
 
     super_elements = new SuperElement * [numberOfZones];
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        super_elements[izone] = new SuperElement(cgns_multizone->GetZone(izone), iadapt);
+        super_elements[iZone] = new SuperElement(cgns_multizone->GetZone(iZone), iadapt);
     }
 }
 

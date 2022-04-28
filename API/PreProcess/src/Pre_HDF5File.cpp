@@ -67,19 +67,19 @@ void IO_HDF5Write::Run()
     WriteTotalInfo(file);
 
     int nBlocksLocal = nPartOfEachProcessor[myid];
-    for (int izone = 0; izone < nBlocksLocal; ++ izone)
+    for (int iZone = 0; iZone < nBlocksLocal; ++ iZone)
     {
         ostringstream oss;
-        oss << "      Dumping zone " << izone << " ....\n";
+        oss << "      Dumping zone " << iZone << " ....\n";
         PrintToWindow(oss);
 
-        if (block_type[izone] == STRUCTGRID)
+        if (block_type[iZone] == STRUCTGRID)
         {
-            WriteStructGrid(file, gridsLocal[izone]);
+            WriteStructGrid(file, gridsLocal[iZone]);
         }
         else
         {
-            WriteUnstructGrid(file, gridsLocal[izone],izone);
+            WriteUnstructGrid(file, gridsLocal[iZone], iZone);
         }
     }
 
@@ -161,9 +161,9 @@ void IO_HDF5Write::CreateTotalInfo()
         // For OpenMP case, reset the processor ID of sub-zone to the source grid's.
         int zoneID = gridSource->GetGridID()->GetIndex();
         int processorID = PHMPI::GetZoneProcessorID(zoneID);
-        for (int izone = 0; izone < nBlocks; ++ izone)
+        for (int iZone = 0; iZone < nBlocks; ++ iZone)
         {
-            block_proc[izone] = processorID;     
+            block_proc[iZone] = processorID;     
         }
     }*/
 }
@@ -989,9 +989,9 @@ void IO_HDF5Read::SetMixGridInfo()
 
     CreatetZoneProcessorID_INP(numberOfZones);
     int *global_block_proc_inp = GetZoneProcessorID_INP();
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        global_block_proc_inp[izone] = blockProc[izone];
+        global_block_proc_inp[iZone] = blockProc[iZone];
     }
 }
 
@@ -1025,13 +1025,13 @@ void IO_HDF5Read::ReadTotalInfo()
             int *blockIdx_local  = ReadIntOneRow(grpData, "block_idx");
             int *blockType_local = ReadIntOneRow(grpData, "block_type");
 
-            for (int izone = 0; izone < nZonesList[iGrid][iFile]; ++ izone)
+            for (int iZone = 0; iZone < nZonesList[iGrid][iFile]; ++ iZone)
             {
-                blockProc[count + izone] = blockProc_local[izone];
-                blockType[count + izone] = blockType_local[izone];
-                blockIdx [count + izone] = blockIdx_local [izone];
+                blockProc[count + iZone] = blockProc_local[iZone];
+                blockType[count + iZone] = blockType_local[iZone];
+                blockIdx [count + iZone] = blockIdx_local [iZone];
 
-                blockFileProc[count + izone] = processorNumInEachFile * iFile;
+                blockFileProc[count + iZone] = processorNumInEachFile * iFile;
             }
             delete [] blockProc_local;
             delete [] blockIdx_local ;
@@ -1044,9 +1044,9 @@ void IO_HDF5Read::ReadTotalInfo()
     }
 
     blockProcDump = new int[numberOfZones];
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        blockProcDump[izone] = blockProc[izone];
+        blockProcDump[iZone] = blockProc[iZone];
     }
 }
 
@@ -1083,13 +1083,13 @@ void IO_HDF5Read::ReadTotalInfoOld(hid_t loc_id)
         }
 
         int myid = PHMPI::GetCurrentProcessorID();
-        for (int izone = 0; izone < nZonesList[0][fileID]; ++ izone)
+        for (int iZone = 0; iZone < nZonesList[0][fileID]; ++ iZone)
         {
-            blockProcTemp[count + izone] = blockProc_local[izone];
-            blockTypeTemp[count + izone] = blockType_local[izone];
-            blockIdxTemp [count + izone] = blockIdx_local [izone];
+            blockProcTemp[count + iZone] = blockProc_local[iZone];
+            blockTypeTemp[count + iZone] = blockType_local[iZone];
+            blockIdxTemp [count + iZone] = blockIdx_local [iZone];
 
-            blockFileProcTemp[count + izone] = myid;
+            blockFileProcTemp[count + iZone] = myid;
         }
 
         delete [] blockProc_local;
@@ -1108,9 +1108,9 @@ void IO_HDF5Read::ReadTotalInfoOld(hid_t loc_id)
     delete [] blockFileProcTemp;
 
     blockProcDump = new int[numberOfZones];
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        blockProcDump[izone] = blockProc[izone];
+        blockProcDump[iZone] = blockProc[iZone];
     }
 
     H5Gclose(grpData);
@@ -1817,9 +1817,9 @@ void IO_HDF5Read::RedistributeZonesIfNeed()
         else
         {
             PrintToWindow("Waining: nZones % numberOfProcessor != 0 !!");
-            for (int izone = 0; izone < nZones; ++ izone)
+            for (int iZone = 0; iZone < nZones; ++ iZone)
             {
-                blockProc[izone] = izone % numberOfProcessor;
+                blockProc[iZone] = iZone % numberOfProcessor;
             }
         }
     }
@@ -1832,11 +1832,11 @@ void IO_HDF5Read::RedistributeZonesIfNeed()
                 if (blockType[0] == PHSPACE::STRUCTGRID)
                 {
                     int maxproc = blockProc[0];
-                    for (int izone = 0; izone < nZones; ++ izone)
+                    for (int iZone = 0; iZone < nZones; ++ iZone)
                     {
-                        if (blockProc[izone] > maxproc)
+                        if (blockProc[iZone] > maxproc)
                         {
-                            maxproc = blockProc[izone];
+                            maxproc = blockProc[iZone];
                         }
                     }
                     maxproc += 1;
@@ -1844,16 +1844,16 @@ void IO_HDF5Read::RedistributeZonesIfNeed()
                 }
                 else
                 {
-                    for (int izone = 0; izone < nZones; ++ izone)
+                    for (int iZone = 0; iZone < nZones; ++ iZone)
                     {
-                        blockProcDump[izone] += PHMPI::GetNumberOfProcStructUsed();
+                        blockProcDump[iZone] += PHMPI::GetNumberOfProcStructUsed();
                     }
                 }
             }
 
-            for (int izone = 0; izone < nZones; ++ izone)
+            for (int iZone = 0; iZone < nZones; ++ iZone)
             {
-                blockProc[izone] = 0;
+                blockProc[iZone] = 0;
             }
         }
     }
@@ -1903,17 +1903,17 @@ void IO_HDF5Read::SetGlobalZoneLayout()
     set<int> zoneIDinCurrentProc;
     int myid = PHMPI::GetCurrentProcessorID();
 
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        globalBlockProc    [izone] = blockProc    [izone];
-        globalBlockProcGrid[izone] = blockProcGrid[izone];
-        globalBlockType    [izone] = blockType    [izone];
-        globalBlockIdx     [izone] = blockIdx     [izone];
-        globalBlockFile    [izone] = blockFileProc[izone];
+        globalBlockProc    [iZone] = blockProc    [iZone];
+        globalBlockProcGrid[iZone] = blockProcGrid[iZone];
+        globalBlockType    [iZone] = blockType    [iZone];
+        globalBlockIdx     [iZone] = blockIdx     [iZone];
+        globalBlockFile    [iZone] = blockFileProc[iZone];
 
-        if (blockProc[izone] == myid || blockProcGrid[izone] == myid)
+        if (blockProc[iZone] == myid || blockProcGrid[iZone] == myid)
         {
-            zoneIDinCurrentProc.insert(izone);
+            zoneIDinCurrentProc.insert(iZone);
         }
     }
 
@@ -1927,9 +1927,9 @@ void IO_HDF5Read::SetGlobalZoneLayout()
     oss << endl;
     WriteLogFile(oss.str());
 
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        globalBlockProcDump[izone] = blockProcDump[izone];
+        globalBlockProcDump[iZone] = blockProcDump[iZone];
     }
 }
 
@@ -1938,9 +1938,9 @@ void IO_HDF5Read::ClassifyGridSystem()
     int nZones = PHMPI::GetNumberofGlobalZones();
 
     set<int> gridType;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        gridType.insert(PHMPI::GetZoneGridType(izone));
+        gridType.insert(PHMPI::GetZoneGridType(iZone));
     }
 
     int sysGridType = GetSystemGridType(gridType);

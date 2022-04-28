@@ -67,7 +67,7 @@ public:
     void BroadcastNeighborZonesToEachProcessor();
     void BroadcastNeighborZonesToEachProcessorNew();
 
-    Zone * GetZone(int izone);
+    Zone * GetZone(int iZone);
     bool ZoneBelongToCurrentProcessor(int zoneIndex);
     PHVector1D < int > GetNeighborZones(ZoneGridSolver * zoneGridSolver);
     void BroadcastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor);
@@ -96,8 +96,8 @@ public:
     void ReadGrid();
     void ResolveComputationGrid();
     void CreateGeneralMultiBlockGrid();
-    int  GetGridType(int izone) const;
-    Grid * CreateBasicGrid(int izone);
+    int  GetGridType(int iZone) const;
+    Grid * CreateBasicGrid(int iZone);
 
     int GetElementTypeOfFTS(const int & dimension, const int & nodeNumberOfCell);
     int GetFaceTypeOfFTS(const int & dimension, const int & nodeNumberOfCell);

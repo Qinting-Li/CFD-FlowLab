@@ -797,15 +797,15 @@ void CombinGrid::MergeCell2Node()
 
     int cell2node_size = 0;
 
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        int *gnode_number_of_each_cell = UnstructGridCast(grid_in[izone])->GetNodeNumberOfEachCell();
-        int *gcell2node = UnstructGridCast(grid_in[izone])->GetCell2Node();
+        int *gnode_number_of_each_cell = UnstructGridCast(grid_in[iZone])->GetNodeNumberOfEachCell();
+        int *gcell2node = UnstructGridCast(grid_in[iZone])->GetCell2Node();
 
-        int *gnode2all = GetNode2All(izone);
+        int *gnode2all = GetNode2All(iZone);
 
         int count = 0;
-        for (int icell = 0; icell < nTotalCellEachZone[izone]; ++ icell)
+        for (int icell = 0; icell < nTotalCellEachZone[iZone]; ++ icell)
         {
             node_number_of_each_cell_all.push_back(gnode_number_of_each_cell[icell]);
             cell2node_size += gnode_number_of_each_cell[icell];
@@ -863,9 +863,9 @@ void CombinGrid::DumpCombinationGrid()
     int nZones = 1;
 
     Grid **grid_array = new Grid * [nZones];
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        grid_array[izone] = grid_all;
+        grid_array[iZone] = grid_all;
     }
 
     ConstructGlobalInterfaceLink(grid_array, nZones);
@@ -1180,24 +1180,24 @@ void CombinGrid::DumpMergedGridP2P(const string &gridFileName, Grid **grids, int
     int *block_proc_inp = GetZoneProcessorID_INP();
 
     int myid = GetCurrentProcessorID();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        block_proc[izone] = myid;
-        block_idx [izone] = myid;
-        block_type[izone] = grids[izone]->Type();
+        block_proc[iZone] = myid;
+        block_idx [iZone] = myid;
+        block_type[iZone] = grids[iZone]->Type();
     }
 
     if (block_proc_inp)
     {
-        for (int izone = 0; izone < nZones; ++ izone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
-            SetZoneProcessorID(izone, block_proc_inp[izone]);
+            SetZoneProcessorID(iZone, block_proc_inp[iZone]);
         }
     }
 
     int m_block_proc = PHMPI::GetZoneDistributionMethod();
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
         fstream file;
         string processorGridFileName = AddSymbolToFileName(gridFileName, '_', PHMPI::GetCurrentProcessorID());
@@ -1205,13 +1205,13 @@ void CombinGrid::DumpMergedGridP2P(const string &gridFileName, Grid **grids, int
 
         int nBlocksLocal = 1;
         file.write(reinterpret_cast<char*>(&nBlocksLocal), sizeof(int));
-        int blockIndex = block_idx[izone];
-        int blockType  = block_type[izone];
-        int blockProc  = block_proc[izone];
+        int blockIndex = block_idx[iZone];
+        int blockType  = block_type[iZone];
+        int blockProc  = block_proc[iZone];
         if (m_block_proc == DETERMIN_BY_PARTITION && IsConvertGridToMixGrid())
         {
             int *block_proc_dump = GetZoneProcessorIDDump();
-            int blockProcDump = block_proc_dump[izone];
+            int blockProcDump = block_proc_dump[iZone];
             file.write(reinterpret_cast<char*>(&blockProcDump), nBlocksLocal * sizeof(int));
         }
         else
@@ -1221,7 +1221,7 @@ void CombinGrid::DumpMergedGridP2P(const string &gridFileName, Grid **grids, int
         file.write(reinterpret_cast<char*>(&blockIndex), nBlocksLocal * sizeof(int));
         file.write(reinterpret_cast<char*>(&blockType), nBlocksLocal * sizeof(int));
 
-        grids[izone]->WriteGrid(file);
+        grids[iZone]->WriteGrid(file);
 
         PHSPACE::CloseFile(file);
     }

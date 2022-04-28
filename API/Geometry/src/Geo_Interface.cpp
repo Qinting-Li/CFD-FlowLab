@@ -234,9 +234,9 @@ int InterfaceInfo::ComputeNumberOfNeighbor(int *zoneflag)
     int nIFace = this->GetNIFace();
 
     //! Set zoneflag to zero, assuming that the current zone has no neighbor.
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        zoneflag[izone] = 0;
+        zoneflag[iZone] = 0;
     }
 
     //! Find out all the neighbors of current zone,and set their zoneflag to one.

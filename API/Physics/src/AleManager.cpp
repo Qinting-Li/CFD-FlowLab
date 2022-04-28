@@ -192,17 +192,17 @@ void AleManager::ComputeMetrics()
     ActionKey* actkey = new ActionKey();
     actkey->action = COMPUTEMETRICS;
 
-    for (int izone = 0; izone < nZones; ++izone)
+    for (int iZone = 0; iZone < nZones; ++iZone)
     {
-        int send_proc = GetZoneProcessorIDSepMode(izone);
+        int send_proc = GetZoneProcessorIDSepMode(iZone);
         int recv_proc = GetServerSepMode();
 
-        int tag = GetSendRecvTag(GRID_BASED, 0, izone);
+        int tag = GetSendRecvTag(GRID_BASED, 0, iZone);
         int myid = PHMPI::GetCurrentProcessorID();
         if (myid == send_proc)
         {
             //! If the ProcessorID of i-th zone equal to the running ProcessorID, compute grid metrics.
-            Grid* grid = GetGrid(izone, 0);
+            Grid* grid = GetGrid(iZone, 0);
             grid->ComputeMetrics(actkey);
             if (grid->Type() == PHSPACE::STRUCTGRID)
             {
