@@ -58,11 +58,11 @@ void IO_HDF5Write::Run()
 {
     hid_t file;
     int tasktype = GetTaskCode();
-    int outMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("outMultifile");
+    int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
     CreateTotalInfo();
 
     int myid = PHMPI::GetCurrentProcessorID();
-    if (tasktype == PHSPACE::PARTITION_GRID && outMultifile == 1)
+    if (tasktype == PHSPACE::PARTITION_GRID && numberOfMultifile > 1)
     {
         file = CreateFile(gridFileName);
     }

@@ -147,7 +147,7 @@ void GridTranslator::OutputGrid()
 {
     string out_gfile = "grid.fts";
     int tasktype = GetTaskCode();
-    int outMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("outMultifile");
+    int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
     if (tasktype == PHSPACE::PARTITION_GRID)
     {
         GlobalDataBase::GetData("partition_grid_file", &out_gfile, PHSTRING, 1);
@@ -163,12 +163,17 @@ void GridTranslator::OutputGrid()
         grids[iZone] = (*gridGroup)[iZone];
     }
 
-    if (tasktype == PHSPACE::PARTITION_GRID && outMultifile == 1)
+    if (tasktype == PHSPACE::PARTITION_GRID && numberOfMultifile > 1)
     {
         int maximumProcess = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxproc");
-        int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
         
-        if (maximumProcess % numberOfMultifile != 0)
+        if (maximumProcess < numberOfMultifile)
+        {
+            ostringstream oss;
+            oss << " Error: the numberOfMultifile's value is larger than maximumProcess's value "<< endl;
+            TK_Exit::ExceptionExit(oss.str());
+        }
+        else if(maximumProcess % numberOfMultifile != 0)
         {
             ostringstream oss;
             oss << " Error: the maximumProcess's value is not an integral multiple of numberOfMultifile's value "<< endl;
@@ -210,14 +215,6 @@ void GridTranslator::OutputGrid()
     {
         DumpGrid(out_gfile, grids, numberOfZones);
     }
-    
-
-
-
-
-
-
-
 }
 
 void GridTranslator::OutputMultiZoneComputationalGrids()

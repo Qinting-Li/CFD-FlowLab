@@ -123,14 +123,21 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
         }
 
         int tasktype = GetTaskCode();
-        int outMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("outMultifile");
+        int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
 
-        if (tasktype == PHSPACE::PARTITION_GRID && outMultifile == 1)
+        if (tasktype == PHSPACE::PARTITION_GRID && numberOfMultifile > 1)
         {
             int maximumProcess = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxproc");
-            int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
+            
 
-            if (maximumProcess % numberOfMultifile != 0)
+            if (maximumProcess < numberOfMultifile)
+            {
+                ostringstream oss;
+                oss << " Error: the numberOfMultifile's value is larger than maximumProcess's value "<< endl;
+                TK_Exit::ExceptionExit(oss.str());
+                
+            }
+            else if(maximumProcess % numberOfMultifile != 0)
             {
                 ostringstream oss;
                 oss << " Error: the maximumProcess's value is not an integral multiple of numberOfMultifile's value "<< endl;
