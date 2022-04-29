@@ -630,10 +630,10 @@ void PHRigidBodyMovement::MainCallOf6DOF()
 
     this->UpdateDynamicInfo6DOF();
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid * grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
         if (! grid) continue;

@@ -22,7 +22,7 @@ public:
     void SetNumberOfGroups(int ngs) { this->numberOfGroups = ngs;  }
     int  GetNumberOfGroups()          { return this->numberOfGroups; }
 private:
-    void DetermineGroupRange(vector< int > & span);
+    void DetermineGroupRange(vector< int > &span);
     bool GetCodeOfDynamicMultiBodies();
 };
 

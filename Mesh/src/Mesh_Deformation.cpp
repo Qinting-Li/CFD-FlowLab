@@ -11,7 +11,7 @@ namespace PHSPACE
 
 Mesh_Deformation::Mesh_Deformation(int nZonesIn, Grid **stationalGridIn)
 {
-    this->nZones = nZonesIn;
+    this->numberOfZones = nZonesIn;
     this->stationalGrid = stationalGridIn;
 
     this->deformedGrid = 0;
@@ -20,7 +20,7 @@ Mesh_Deformation::Mesh_Deformation(int nZonesIn, Grid **stationalGridIn)
 
 Mesh_Deformation::~Mesh_Deformation()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         delete deformedGrid[iZone];
     }
@@ -70,7 +70,7 @@ void Mesh_Deformation::SetNodeAttribute(DynamicGrid *grid)
 
 void Mesh_Deformation::SetSymmetryToZero()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         DynamicGrid *grid = deformedGrid[iZone];
         grid->SetSymmetryToZero();
@@ -93,7 +93,7 @@ void Mesh_Deformation::PostVisual(string visualFileName, int iStep)
     const int OUT   = 1;
     const int UNOUT = 2;
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         DynamicGrid *grid = deformedGrid[iZone];
 

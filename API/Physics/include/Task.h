@@ -93,16 +93,16 @@ void GlobalSolve();
 void AddTasktoSimu(Task *task);
 void ClearTaskList();
 
-void PH_Interface(ActionKey *actkey, int izone, int jzone);
-void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer * sendBuffer, DataContainer * receivedBuffer, int izone, int jzone, vector< PH_Request > & requestContainer);
-void GeneralTranslateAction(ActionKey *actkey, int izone);
-streamsize GeneralTranslateActionLength(ActionKey *actkey, int izone);
-CharVecSizeType PH_Interface_GetLength(ActionKey *actkey, int izone, int jzone);
+void PH_Interface(ActionKey *actkey, int iZone, int jZone);
+void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer * sendBuffer, DataContainer * receivedBuffer, int iZone, int jZone, vector< PH_Request > & requestContainer);
+void GeneralTranslateAction(ActionKey *actkey, int iZone);
+streamsize GeneralTranslateActionLength(ActionKey *actkey, int iZone);
+CharVecSizeType PH_Interface_GetLength(ActionKey *actkey, int iZone, int jZone);
 
-void PH_ReadPattern (ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int izone);
-void PH_WritePattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int izone);
+void PH_ReadPattern (ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int iZone);
+void PH_WritePattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int iZone);
 
-void GeneralAction(ActionKey *actkey, int izone);
+void GeneralAction(ActionKey *actkey, int iZone);
 
 #include "Task.hxx"
 

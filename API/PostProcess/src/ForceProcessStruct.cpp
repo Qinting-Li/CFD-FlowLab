@@ -384,9 +384,9 @@ void ForceProcessStruct::CompValueField()
     #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID,0);
 

@@ -78,8 +78,8 @@ LIB_EXPORT void SetNumberofLocalZones(int nblock);
 //! Set the number of files, that are the groups to manage grid/visualization/flow files, etc.
 void SetNumberofFiles(int fileNumber);
 
-//! Set the corresponding processor ID to be 'id' of izone-th zone.
-LIB_EXPORT void SetZoneProcessorID(int izone, int id);
+//! Set the corresponding processor ID to be 'id' of iZone-th zone.
+LIB_EXPORT void SetZoneProcessorID(int iZone, int id);
 
 void SetZoneProcessID_INP(int *data);
 
@@ -126,18 +126,18 @@ LIB_EXPORT int GetNumberofFiles();
 //! Return the zone processor ID array pointer.
 LIB_EXPORT int * GetZoneProcessorID();
 
-//! Return the corresponding processor ID of izone-th zone.
-LIB_EXPORT int GetZoneProcessorID(int izone);
+//! Return the corresponding processor ID of iZone-th zone.
+LIB_EXPORT int GetZoneProcessorID(int iZone);
 
 LIB_EXPORT int * GetZoneProcessorIDForGrid();
 
-LIB_EXPORT int GetZoneProcessorIDForGrid(int izone);
+LIB_EXPORT int GetZoneProcessorIDForGrid(int iZone);
 
 //! Return the zone grid type array pointer.
 LIB_EXPORT int * GetZoneGridType();
 
-//! Return the grid type of izone-th zone.
-LIB_EXPORT int GetZoneGridType(int izone);
+//! Return the grid type of iZone-th zone.
+LIB_EXPORT int GetZoneGridType(int iZone);
 
 //! Return the zone block ID array pointer.
 LIB_EXPORT int * GetZoneGridID();
@@ -145,10 +145,10 @@ LIB_EXPORT int * GetZoneGridID();
 //! Return the zone file ID array pointer.
 LIB_EXPORT int * GetZoneFileID();
 
-//! Return the corresponding file manager processor ID of izone-th zone.
-//! File manage processor: which is used to read or write information of izone-th zone.
+//! Return the corresponding file manager processor ID of iZone-th zone.
+//! File manage processor: which is used to read or write information of iZone-th zone.
 //! The zone ID is not necessary equal to the file manager processor ID.
-LIB_EXPORT int GetZoneFileID(int izone);
+LIB_EXPORT int GetZoneFileID(int iZone);
 
 //! This function is special used in HYBRID solver.
 LIB_EXPORT int * GetZoneProcessorID_INP();
@@ -186,19 +186,19 @@ void CreateZoneGroupID(int nZones);
 
 void FreeBlockData();
 
-void CreateZoneStartPointContainer(int numberOfZones);
+void CreateZoneStartPointContainer(int nZones);
 
 int * GetZoneStartPointContainer();
 
 void DeleteZoneStartPointContainer();
 
-void CreateZoneStartCenterContainer(int numberOfZones);
+void CreateZoneStartCenterContainer(int nZones);
 
 int * GetZoneStartCenterContainer();
 
 void DeleteZoneStartCenterContainer();
 
-void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int numberOfZones, int numberOfPoints);
+void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int nZones, int numberOfPoints);
 
 //! The following 8 functions should be moved to overset file.
 int GetZoneIndexAccordingToGlobalPointLabel(int globalPointLabel);
@@ -216,10 +216,10 @@ LIB_EXPORT int GetIntervalofProcessorFiles();
 //! Return the file index that manage current processor data.
 LIB_EXPORT int GetFileIndexofCurrentProcessor();
 
-LIB_EXPORT int GetZoneProcessorIDSepMode(int izone);
+LIB_EXPORT int GetZoneProcessorIDSepMode(int iZone);
 
-//! Return the send or receive processor ID of izone-th zone.
-LIB_EXPORT void GetSendRecvProc(int izone, int &send_proc, int &recv_proc);
+//! Return the send or receive processor ID of iZone-th zone.
+LIB_EXPORT void GetSendRecvProc(int iZone, int &send_proc, int &recv_proc);
 
 int GetServerSepMode();
 
@@ -671,8 +671,8 @@ void ZeroField(PHVector1D <T> &field, uint_t numberOfElements)
 void StreamToActionKey(ActionKey *actkey, ostringstream &oss);
 void DataCharToString(DataContainer *cdata, string &str);
 
-int GetSendRecvTag(ActionKey *actkey, int izone);
-int GetSendRecvTag(int tagKind, int index, int izone);
+int GetSendRecvTag(ActionKey *actkey, int iZone);
+int GetSendRecvTag(int tagKind, int index, int iZone);
 
 void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op);
 void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op);

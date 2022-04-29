@@ -1699,21 +1699,21 @@ CGNSFactory::CGNSFactory(int nBlocks)
 {
     this->nBlocks = nBlocks;
     base_conn = new Base_Grid_Conn *[nBlocks];
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        base_conn[izone] = new Base_Grid_Conn();
+        base_conn[iZone] = new Base_Grid_Conn();
     }
 
     rawgrid = new RawGrid *[nBlocks];
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        rawgrid[izone] = new RawGrid();
+        rawgrid[iZone] = new RawGrid();
     }
 
     base_cgns = new CGNSBase *[nBlocks];
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        base_cgns[izone] = new CGNSBase();
+        base_cgns[iZone] = new CGNSBase();
     }
 
     base_elem = new BaseElement();
@@ -1725,21 +1725,21 @@ CGNSFactory::~CGNSFactory()
     delete base_elem;
     delete fantasy_bc;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete base_conn[izone];
+        delete base_conn[iZone];
     }
     delete [] base_conn;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete rawgrid[izone];
+        delete rawgrid[iZone];
     }
     delete [] rawgrid;
 
-    //for (int izone = 0; izone < nBlocks; ++ izone)
+    //for (int iZone = 0; iZone < nBlocks; ++ iZone)
     //{
-    //    delete base_cgns[izone];
+    //    delete base_cgns[iZone];
     //}
     delete [] base_cgns;
 }
@@ -1748,10 +1748,10 @@ void CGNSFactory::ConvertGrid2Fantasy()
 {
     //ReLableSelfDefineBC();
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        std::cout << "Converting Grid to PHengLEI for Zone " << izone << " of Total Blocks " << nBlocks << "\n";
-        ComputeGridConn(this->GetCGNSBase(izone), base_conn[izone]);
+        std::cout << "Converting Grid to PHengLEI for Zone " << iZone << " of Total Blocks " << nBlocks << "\n";
+        ComputeGridConn(this->GetCGNSBase(iZone), base_conn[iZone]);
     }
 
     DumpSelfDefinePartInformation();
@@ -1797,9 +1797,9 @@ void CGNSFactory::DumpSelfDefinePartInformation()
     vector<int> bcType;
     vector<string> boundaryName;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        CGNSBase *cgnsgrid = this->GetCGNSBase(izone);
+        CGNSBase *cgnsgrid = this->GetCGNSBase(iZone);
 
         int *bc_type = cgnsgrid->GetBCType();
         string *bc_name = cgnsgrid->GetBCName();
@@ -1869,10 +1869,10 @@ void CGNSFactory::DumpSelfDefinePartInformation()
     outfile.clear();
 }
 
-void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
+void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
 {
-    Base_Grid_Conn *gconn   = factory_cgns->GetBaseGridConnection(izone);
-    RawGrid        *rawgrid = factory_cgns->GetRawGrid(izone);
+    Base_Grid_Conn *gconn   = factory_cgns->GetBaseGridConnection(iZone);
+    RawGrid        *rawgrid = factory_cgns->GetRawGrid(iZone);
 
     int nTotalCell = static_cast<int>(gconn->GetNTotalCell());
     int nTotalNode = static_cast<int>(gconn->GetNTotalNode());

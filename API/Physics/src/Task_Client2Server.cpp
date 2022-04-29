@@ -42,20 +42,20 @@ void Task_Client2Server::MainTask(ActionKey *actkey)
 
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Client2Server(actkey, izone);
+        Client2Server(actkey, iZone);
     }
 }
 
-void Task_Client2Server::Client2Server(ActionKey *actkey, int izone)
+void Task_Client2Server::Client2Server(ActionKey *actkey, int iZone)
 {
     using namespace PHMPI;
 
-    int send_proc = GetZoneProcessorIDSepMode(izone);
+    int send_proc = GetZoneProcessorIDSepMode(iZone);
     int recv_proc = GetServerSepMode();
 
-    PH_WritePattern(actkey, GetMainAction(), send_proc, recv_proc, izone);
+    PH_WritePattern(actkey, GetMainAction(), send_proc, recv_proc, iZone);
 }
 
 }
