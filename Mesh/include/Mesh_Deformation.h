@@ -106,7 +106,7 @@ protected:
 
 protected:
     //! Number of grid.
-    int nZones;
+    int numberOfZones;
 
     //! Original grid.
     Grid **stationalGrid;

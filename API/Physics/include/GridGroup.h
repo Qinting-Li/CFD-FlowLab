@@ -39,9 +39,9 @@ public:
     void SetNZones(int nZonesIn) { this->nzones = nZonesIn; }
     int GetNZones() const { return nzones; }
     int GetNumberofGrid() const;
-    Grid *GetGrid(int izone) const { return grids[izone]; }
+    Grid * GetGrid(int iZone) const { return grids[iZone]; }
     
-    //void ReadSingleGrid(fstream &file, int izone);
+    //void ReadSingleGrid(fstream &file, int iZone);
     void InitZoneLayoutInformation(const string &filename);
 
     void SetBlockProcDump(int * block_proc_dump) { this->block_proc_dump = block_proc_dump; }

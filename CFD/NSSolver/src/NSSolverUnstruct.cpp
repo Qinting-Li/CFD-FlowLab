@@ -1163,13 +1163,13 @@ void NSSolverUnstruct::CommunicationInterpointWeight(ActionKey *actkey)
 
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int myid = GetCurrentProcessorID();
-        int tag = izone + level * nZones;
-        int send_proc = GetZoneProcessorID(izone);
+        int tag = iZone + level * nZones;
+        int send_proc = GetZoneProcessorID(iZone);
 
-        ZoneNeighbor *zoneNeighborForPoint = zoneConnectivityForPoint->GetZoneNeighborForPoint(izone);
+        ZoneNeighbor *zoneNeighborForPoint = zoneConnectivityForPoint->GetZoneNeighborForPoint(iZone);
         std::size_t numberOfNeighbor = zoneNeighborForPoint->GetNumberOfNeighbor();
 
         for (std::size_t iNeighborZone = 0; iNeighborZone < numberOfNeighbor; ++ iNeighborZone)
@@ -1181,7 +1181,7 @@ void NSSolverUnstruct::CommunicationInterpointWeight(ActionKey *actkey)
 
             if (myid == send_proc)
             {
-                UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(izone, level));
+                UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(iZone, level));
                 InterpointInformation *interpointInformation = grid->GetInterpointInfo();
                 RDouble *nodeWeight = reinterpret_cast<RDouble *>(grid->GetDataPtr("nodeWeight"));
 
@@ -1215,7 +1215,7 @@ void NSSolverUnstruct::CommunicationInterpointWeight(ActionKey *actkey)
 
                 cdata->moveto_begin();
 
-                int iNeighbor = interpointInformationNeighbor->FindIthNeighbor(izone);
+                int iNeighbor = interpointInformationNeighbor->FindIthNeighbor(iZone);
                 int numberOfInterpointsForNeighbor = interpointInformationNeighbor->GetNumberOfInterpointsForNeighbor(iNeighbor);
                 int *pointIndexForReceive = interpointInformationNeighbor->GetPointIndexForReceive(iNeighbor);
                 int *interPoint2GlobalPoint = interpointInformationNeighbor->GetInterPoint2GlobalPoint();
@@ -1246,16 +1246,16 @@ void NSSolverUnstruct::DownloadInterpointWeight(ActionKey *actkey)
 
     int myid = GetCurrentProcessorID();
     int nZones = GetNumberofGlobalZones();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int currentZoneProc = GetZoneProcessorID(izone);
+        int currentZoneProc = GetZoneProcessorID(iZone);
 
         if (myid != currentZoneProc)
         {
             continue;
         }
 
-        UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(izone, level));
+        UnstructGrid *grid = UnstructGridCast(PHSPACE::GetGrid(iZone, level));
         int nTotalNode = grid->GetNTotalNode();
         RDouble *nodeWeight = reinterpret_cast<RDouble *>(grid->GetDataPtr("nodeWeight"));
         RDouble *nodeWeightTrade = reinterpret_cast<RDouble *>(grid->GetDataPtr("nodeWeightTrade"));
@@ -8309,7 +8309,7 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
 
     //! Dump out the the MAXIMUM eddy viscosity as a function of x
     using namespace PHMPI;
-    if(GetNumberofGlobalZones() > 1)
+    if (GetNumberofGlobalZones() > 1)
     {
         return;
     }
@@ -10820,16 +10820,16 @@ void NSSolverUnstruct::PressureInletBCRiemannRegion(Grid *gridIn, UnstructBC *bc
 void NSSolverUnstruct::SwapNeighborsDQNonblocking(Grid *gridIn, FieldProxy *dqProxy)
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector< PH_Request > requestContainer;
     vector< vector< DataContainer * > > receivedDataBuffer;
     vector< vector< DataContainer * > > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
     int level = gridIn->GetLevel();
 
     //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -10866,7 +10866,7 @@ void NSSolverUnstruct::SwapNeighborsDQNonblocking(Grid *gridIn, FieldProxy *dqPr
     }
 
     //! Step 1: Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -10954,7 +10954,7 @@ void NSSolverUnstruct::SwapNeighborsDQNonblocking(Grid *gridIn, FieldProxy *dqPr
     }
 
     //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();

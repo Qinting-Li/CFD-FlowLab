@@ -156,13 +156,13 @@ void IO_GridReader::ReadNumberOfTotalZonesAndInitialGlobalValue()
     {
         fstream file;
 
-        int numberOfZones = 0;
+        int nZones = 0;
 
         Open(file, gridGroupNameList[ iGridGroup ], ios_base::in|ios_base::binary);
 
-        ReadNumberOfZones(file, numberOfZones);
+        ReadNumberOfZones(file, nZones);
 
-        numberOfTotalZones += numberOfZones;
+        numberOfTotalZones += nZones;
 
         Close(file);
     }
@@ -304,16 +304,16 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
     {
         fstream file;
 
-        int numberOfZones = 0;
+        int nZones = 0;
 
         //Open(file, gridGroupNameList[ iFile ], ios_base::in|ios_base::binary);
         OpenSerialFile(file, gridGroupNameList[ iFile ], ios_base::in|ios_base::binary);
 
-        Read_Bcast(file, & numberOfZones, sizeof(int));
+        Read_Bcast(file, &nZones, sizeof(int));
 
-        this->numberOfZones.push_back(numberOfZones);
+        this->numberOfZones.push_back(nZones);
 
-        numberOfTotalZones += numberOfZones;
+        numberOfTotalZones += nZones;
 
         Close(file);
     }
@@ -350,33 +350,33 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
 
         OpenSerialFile(file, gridGroupNameList[ iFile ], ios_base::in|ios_base::binary);
 
-        int numberOfZones = 0;
+        int nZones = 0;
 
-        Read_Bcast(file, & numberOfZones, sizeof(int));
+        Read_Bcast(file, &nZones, sizeof(int));
 
         gridGroup = new GridGroup(startZoneIndex);
 
         gridGroups.push_back(gridGroup);
 
-        gridGroup->SetNZones(numberOfZones);
+        gridGroup->SetNZones(nZones);
 
-        int * block_proc      = new int [ numberOfZones ];
-        int * block_proc_grid = new int [ numberOfZones ];
-        int * block_proc_dump = new int [ numberOfZones ];
-        int * block_idx       = new int [ numberOfZones ];
-        int * block_type      = new int [ numberOfZones ];
-        int * block_file      = new int [ numberOfZones ];
-        int * block_proc_tmpformix = new int [ numberOfZones ];
+        int * block_proc      = new int [nZones];
+        int * block_proc_grid = new int [nZones];
+        int * block_proc_dump = new int [nZones];
+        int * block_idx       = new int [nZones];
+        int * block_type      = new int [nZones];
+        int * block_file      = new int [nZones];
+        int * block_proc_tmpformix = new int [nZones];
 
-        Read_Bcast(file, block_proc, numberOfZones * sizeof(int));
-        Read_Bcast(file, block_idx , numberOfZones * sizeof(int));
-        Read_Bcast(file, block_type, numberOfZones * sizeof(int));
+        Read_Bcast(file, block_proc, nZones * sizeof(int));
+        Read_Bcast(file, block_idx , nZones * sizeof(int));
+        Read_Bcast(file, block_type, nZones * sizeof(int));
 
-        for (int izone = 0; izone < numberOfZones; ++ izone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
-            block_proc_tmpformix[ izone ] = block_proc[ izone ];
-            block_proc_dump[ izone ] = block_proc[ izone ];
-            block_file[ izone ]      = serverProcID;
+            block_proc_tmpformix[iZone] = block_proc[iZone];
+            block_proc_dump[iZone] = block_proc[iZone];
+            block_file[iZone]      = serverProcID;
         }
 
         gridGroup->SetBlockProc    (block_proc     );
@@ -387,21 +387,21 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
         gridGroup->SetBockFileProc (block_file     );
 
         //! Attribute the grid zone to processor
-        //for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        //for (int iZone = 0; iZone < nZones; ++ iZone)
         //{
         //    block_proc[ iZone ] = (startZoneIndex + iZone) % numberOfOriginalProcessor;
         //}
 
         //if(numberOfGridProcessor != 0)
         //{
-        //    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        //    for (int iZone = 0; iZone < nZones; ++ iZone)
         //    {
         //        block_proc_grid[ iZone ] = (startZoneIndex + iZone) % numberOfGridProcessor + numberOfOriginalProcessor;
         //    }
         //}
         //else
         //{
-        //    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        //    for (int iZone = 0; iZone < nZones; ++ iZone)
         //    {
         //        block_proc_grid[ iZone ] = -1;
         //    }
@@ -414,23 +414,23 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
         if (gridconvertionmixgrid)
         {
             int *global_block_proc_inp = GetZoneProcessorID_INP();
-            for (int izone = 0; izone < numberOfZones; ++ izone)
+            for (int iZone = 0; iZone < nZones; ++ iZone)
             {
-                int multi_izone = startZoneIndex + izone;
-                global_block_proc_inp[multi_izone] = block_proc_tmpformix[izone];
+                int multi_izone = startZoneIndex + iZone;
+                global_block_proc_inp[multi_izone] = block_proc_tmpformix[iZone];
             }
         }
 
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             ReadOneZoneGrid(file, iZone);
         }
 
-        startZoneIndex += numberOfZones;
+        startZoneIndex += nZones;
 
         Close(file);
 
-        delete []block_proc_tmpformix;
+        delete [] block_proc_tmpformix;
     }
 
     ClassifyGridSystem();
@@ -438,9 +438,9 @@ LIB_EXPORT void IO_GridReader::ReadGridsByCSMode()
     WriteLogFile("End reading grid ... ");
 }
 
-void IO_GridReader::ReadGridGroup(const string & gridFileName, int startZoneIndex)
+void IO_GridReader::ReadGridGroup(const string &gridFileName, int startZoneIndex)
 {
-    int numberOfZones = 0;
+    int nZones = 0;
 
     fstream file;
 
@@ -450,14 +450,14 @@ void IO_GridReader::ReadGridGroup(const string & gridFileName, int startZoneInde
 
     ostringstream oss;
 
-    ReadNumberOfZones(file, numberOfZones);
+    ReadNumberOfZones(file, nZones);
 
     oss << "ReadNumberOfZones:" << partTime.GetTimeSpan() << endl; partTime.ResetTime();
 
-    ReadZoneLayout(file, numberOfZones);
+    ReadZoneLayout(file, nZones);
     oss << "ReadZoneLayout:" << partTime.GetTimeSpan() << endl; partTime.ResetTime();
 
-    gridGroup->SetNZones(numberOfZones);
+    gridGroup->SetNZones(nZones);
 
     RedistributeZonesIfNeed(startZoneIndex);
 
@@ -467,7 +467,7 @@ void IO_GridReader::ReadGridGroup(const string & gridFileName, int startZoneInde
 
     //! All of the global zones need to be looped over.
     //! The zone not belong to this processor would be added by 'null'.
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ReadOneZoneGrid(file, iZone);
     }
@@ -513,7 +513,7 @@ void IO_GridReader::ReadNumberOfZones(fstream & file, int & nZones)
         nZones += nZonesList[ iProc ];
     }
 
-    if(nZones == 0)
+    if (nZones == 0)
     {
         TK_Exit::ExceptionExit("Error: number of zones is 0");
     }
@@ -588,9 +588,9 @@ void IO_GridReader::ReadZoneLayout(fstream & file, int nZones)
         }
     }
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        block_proc_dump[izone] = block_proc[izone];
+        block_proc_dump[iZone] = block_proc[iZone];
     }
 
     //! Free memory.
@@ -631,9 +631,9 @@ void IO_GridReader::ClassifyGridSystem()
     using namespace PHMPI;
 
     set<int> grid_type;
-    for (int izone = 0; izone < numberOfTotalZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfTotalZones; ++ iZone)
     {
-        grid_type.insert(GetZoneGridType(izone));
+        grid_type.insert(GetZoneGridType(iZone));
     }
 
     int sys_gridtype = GetSystemGridType(grid_type);
@@ -664,9 +664,9 @@ void IO_GridReader::RedistributeZonesIfNeed(int startZoneIndex)
     int zoneDistributionMethod;
     int maxproc = block_proc[0];
     
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        maxproc = MAX(maxproc, block_proc[izone]);
+        maxproc = MAX(maxproc, block_proc[iZone]);
     }
     maxproc += 1;
     if (number_of_processor == maxproc)
@@ -709,9 +709,9 @@ void IO_GridReader::RedistributeZonesIfNeed(int startZoneIndex)
         }
         else
         {
-            for (int izone = 0; izone < nZones; ++ izone)
+            for (int iZone = 0; iZone < nZones; ++ iZone)
             {
-                block_proc[izone] = (startZoneIndex + izone) % number_of_processor;
+                block_proc[iZone] = (startZoneIndex + iZone) % number_of_processor;
             }
         }
     }
@@ -726,11 +726,11 @@ void IO_GridReader::RedistributeZonesIfNeed(int startZoneIndex)
                 if (block_type[0] == PHSPACE::STRUCTGRID)
                 {
                     int maxproc = block_proc[0];
-                    for (int izone = 0; izone < nZones; ++ izone)
+                    for (int iZone = 0; iZone < nZones; ++ iZone)
                     {
-                        if(block_proc[izone] > maxproc)
+                        if(block_proc[iZone] > maxproc)
                         {
-                            maxproc = block_proc[izone];
+                            maxproc = block_proc[iZone];
                         }
                     }
                     maxproc += 1;
@@ -738,15 +738,15 @@ void IO_GridReader::RedistributeZonesIfNeed(int startZoneIndex)
                 }
                 else
                 {
-                    for (int izone = 0; izone < nZones; ++ izone)
+                    for (int iZone = 0; iZone < nZones; ++ iZone)
                     {
-                        block_proc_dump[izone] += GetNumberOfProcStructUsed();
+                        block_proc_dump[iZone] += GetNumberOfProcStructUsed();
                     }
                 }
             }
-            for (int izone = 0; izone < nZones; ++ izone)
+            for (int iZone = 0; iZone < nZones; ++ iZone)
             {
-                block_proc[izone] = 0;
+                block_proc[iZone] = 0;
             }
         }
     }
@@ -804,13 +804,13 @@ void IO_GridReader::ReadOneZoneGrid(fstream & file, int & iZone)
     delete gridData;
 }
 
-void IO_GridReader::DecompressDataToGrid(DataContainer *cdata, int izone)
+void IO_GridReader::DecompressDataToGrid(DataContainer *cdata, int iZone)
 {
     int send_proc      = 0;
     int recv_proc      = 0;
     int recv_proc_grid = 0;
 
-    GetSendRecvProcID(izone, send_proc, recv_proc, recv_proc_grid);
+    GetSendRecvProcID(iZone, send_proc, recv_proc, recv_proc_grid);
 
     if (!(myProcID == recv_proc || myProcID == recv_proc_grid))
     {
@@ -820,11 +820,11 @@ void IO_GridReader::DecompressDataToGrid(DataContainer *cdata, int izone)
 
     //! Create new grid.
     int * block_type = gridGroup->GetBlockType();
-    int gridType = block_type[izone];
+    int gridType = block_type[iZone];
 
     //! The id of the zone needs to be added with zoneStart(cxh 20180515).
     int zoneStart = gridGroup->GetZoneStart();
-    GridID * index = new GridID(izone + zoneStart);
+    GridID * index = new GridID(iZone + zoneStart);
 
     Grid *grid = 0;
     if(gridType == PHSPACE::UNSTRUCTGRID)
@@ -850,9 +850,9 @@ void IO_GridReader::DecompressDataToGrid(DataContainer *cdata, int izone)
     gridGroup->AddGrid(grid);
 }
 
-void IO_GridReader::GetSendRecvProcID(int izone, int &send_proc, int &recv_proc)
+void IO_GridReader::GetSendRecvProcID(int iZone, int &send_proc, int &recv_proc)
 {
-    int * block_proc = PHMPI::GetZoneProcessorID();
+    int *block_proc = PHMPI::GetZoneProcessorID();
     if (! IsParallelRun())
     {
         send_proc = this->serverProcID;
@@ -860,9 +860,9 @@ void IO_GridReader::GetSendRecvProcID(int izone, int &send_proc, int &recv_proc)
     }
     else
     {
-        int * block_fileProc = PHMPI::GetZoneFileID();
-        send_proc = block_fileProc[izone];
-        recv_proc = block_proc[izone];
+        int *block_fileProc = PHMPI::GetZoneFileID();
+        send_proc = block_fileProc[iZone];
+        recv_proc = block_proc[iZone];
     }
 }
 
@@ -1013,9 +1013,9 @@ LIB_EXPORT void IO_GridReader::ReadWallDistByCSMode()
 
         OpenSerialFile(file, cellToNodeFileName, ios_base::in|ios_base::binary);
 
-        int numberOfZones = this->numberOfZones[iFile];
+        int nZones = this->numberOfZones[iFile];
 
-        for (int iZone = zoneStart; iZone < numberOfZones + zoneStart; ++ iZone)
+        for (int iZone = zoneStart; iZone < nZones + zoneStart; ++ iZone)
         {
             int send_proc = 0;
             int recv_proc = 0;
@@ -1031,7 +1031,7 @@ LIB_EXPORT void IO_GridReader::ReadWallDistByCSMode()
             delete WallDistData;
         }
 
-        zoneStart += numberOfZones;
+        zoneStart += nZones;
 
         Close(file);
     }
@@ -1073,11 +1073,11 @@ LIB_EXPORT void IO_GridReader::ReadCellToNodeByCSMode()
 
         OpenSerialFile(file, cellToNodeFileName, ios_base::in|ios_base::binary);
 
-        int numberOfZones = 0;
+        int nZones = 0;
 
-        Read_Bcast(file, & numberOfZones, sizeof(int));
+        Read_Bcast(file, & nZones, sizeof(int));
 
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             int send_proc = 0;
             int recv_proc = 0;
@@ -1096,7 +1096,7 @@ LIB_EXPORT void IO_GridReader::ReadCellToNodeByCSMode()
             delete c2nData;
         }
 
-        zoneStart += numberOfZones;
+        zoneStart += nZones;
 
         Close(file);
     }
@@ -1127,7 +1127,7 @@ LIB_EXPORT void IO_GridReader::ReadInterpointInfoByCSMode()
     int zoneStart = 0;
 
     bool gridIsHdf = false;
-    if(numberOfZones.size() == 0)
+    if (numberOfZones.size() == 0)
     {
         gridIsHdf = true;
     }
@@ -1147,16 +1147,16 @@ LIB_EXPORT void IO_GridReader::ReadInterpointInfoByCSMode()
 
         OpenSerialFile(file, interpointInfoFileName, ios_base::in|ios_base::binary);
 
-        int numberOfZones = 0;
+        int nZones = 0;
 
-        Read_Bcast(file, & numberOfZones, sizeof(int));
+        Read_Bcast(file, & nZones, sizeof(int));
 
         if(gridIsHdf)
         {
-            this->numberOfZones.push_back(numberOfZones);
+            this->numberOfZones.push_back(nZones);
         }
 
-        for (int iZone = 0; iZone < numberOfZones + zoneStart; ++ iZone)
+        for (int iZone = 0; iZone < nZones + zoneStart; ++ iZone)
         {
             int send_proc = 0;
             int recv_proc = 0;
@@ -1175,7 +1175,7 @@ LIB_EXPORT void IO_GridReader::ReadInterpointInfoByCSMode()
             delete interpointData;
         }
 
-        zoneStart += numberOfZones;
+        zoneStart += nZones;
 
         Close(file);
     }
@@ -1221,9 +1221,9 @@ LIB_EXPORT void IO_GridReader::ReadWallDistByP2PMode()
     Open(file, WallDistFileName, ios_base::in|ios_base::binary);
 
     //Number of zones in each .fts file, 1 is default.
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int send_proc = 0;
         int recv_proc = 0;
@@ -1257,16 +1257,16 @@ LIB_EXPORT void IO_GridReader::ReadCellToNodeByP2PMode()
     fstream file;
     Open(file, cellToNodeFileName, ios_base::in|ios_base::binary);
 
-    int numberOfZones = 0;
-    Read_Bcast(file,&numberOfZones,sizeof(int));
+    int nZones = 0;
+    Read_Bcast(file, &nZones, sizeof(int));
 
-    //if(numberOfZones > 1) return;
-    if(numberOfZones == 0)
+    //if(nZones > 1) return;
+    if (nZones == 0)
     {
-        numberOfZones = this->numberOfTotalZones;
+        nZones = this->numberOfTotalZones;
     }
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int send_proc = 0;
         int recv_proc = 0;
@@ -1308,16 +1308,16 @@ LIB_EXPORT void IO_GridReader::ReadInterpointInfoByP2PMode()
     fstream file;
     Open(file, interpointInfoFileName, ios_base::in|ios_base::binary);
 
-    int numberOfZones = 0;
-    Read_Bcast(file, &numberOfZones, sizeof(int));
+    int nZones = 0;
+    Read_Bcast(file, &nZones, sizeof(int));
 
-    //if(numberOfZones > 1) return;
-    if(numberOfZones == 0)
+    //if(nZones > 1) return;
+    if (nZones == 0)
     {
-        numberOfZones = this->numberOfTotalZones;
+        nZones = this->numberOfTotalZones;
     }
     
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int send_proc = 0;
         int recv_proc = 0;
@@ -1375,11 +1375,11 @@ LIB_EXPORT void IO_GridReader::ReadFaceBCByCSMode()
 
         OpenSerialFile(file, faceBCFileName, ios_base::in|ios_base::binary);
 
-        int numberOfZones = 0;
+        int nZones = 0;
 
-        Read_Bcast(file, & numberOfZones, sizeof(int));
+        Read_Bcast(file, & nZones, sizeof(int));
 
-        for (int iZone = zoneStart; iZone < numberOfZones + zoneStart; ++ iZone)
+        for (int iZone = zoneStart; iZone < nZones + zoneStart; ++ iZone)
         {
             int send_proc = 0;
             int recv_proc = 0;
@@ -1398,7 +1398,7 @@ LIB_EXPORT void IO_GridReader::ReadFaceBCByCSMode()
             delete faceBCData;
         }
 
-        zoneStart += numberOfZones;
+        zoneStart += nZones;
 
         Close(file);
     }
@@ -1438,11 +1438,11 @@ LIB_EXPORT void IO_GridReader::ReadFaceBcDirByCSMode()
 
         OpenSerialFile(file, faceBCFileName, ios_base::in|ios_base::binary);
 
-        int numberOfZones = 0;
+        int nZones = 0;
 
-        Read_Bcast(file, &numberOfZones, sizeof(int));
+        Read_Bcast(file, &nZones, sizeof(int));
 
-        for (int iZone = 0; iZone < numberOfZones + zoneStart; ++ iZone)
+        for (int iZone = 0; iZone < nZones + zoneStart; ++ iZone)
         {
             int send_proc = 0;
             int recv_proc = 0;
@@ -1461,7 +1461,7 @@ LIB_EXPORT void IO_GridReader::ReadFaceBcDirByCSMode()
             delete faceBcDirData;
         }
 
-        zoneStart += numberOfZones;
+        zoneStart += nZones;
 
         Close(file);
     }
@@ -1484,15 +1484,15 @@ LIB_EXPORT void IO_GridReader::ReadFaceBCByP2PMode()
     fstream file;
     Open(file, faceBCFileName, ios_base::in|ios_base::binary);
 
-    int numberOfZones = 0;
-    Read_Bcast(file,&numberOfZones,sizeof(int));
-    //if(numberOfZones > 1) return;
-    if(numberOfZones == 0)
+    int nZones = 0;
+    Read_Bcast(file, &nZones, sizeof(int));
+    //if(nZones > 1) return;
+    if (nZones == 0)
     {
-        numberOfZones = this->numberOfTotalZones;
+        nZones = this->numberOfTotalZones;
     }
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int send_proc = 0;
         int recv_proc = 0;
@@ -1529,15 +1529,15 @@ LIB_EXPORT void IO_GridReader::ReadFaceBcDirByP2PMode()
     fstream file;
     Open(file, faceBCFileName, ios_base::in|ios_base::binary);
 
-    int numberOfZones = 0;
-    Read_Bcast(file,&numberOfZones,sizeof(int));
-    //if(numberOfZones > 1) return;
-    if(numberOfZones == 0)
+    int nZones = 0;
+    Read_Bcast(file, &nZones, sizeof(int));
+    //if(nZones > 1) return;
+    if (nZones == 0)
     {
-        numberOfZones = this->numberOfTotalZones;
+        nZones = this->numberOfTotalZones;
     }
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int send_proc = 0;
         int recv_proc = 0;
@@ -1557,12 +1557,12 @@ LIB_EXPORT void IO_GridReader::ReadFaceBcDirByP2PMode()
     Close(file);
 }
 
-void IO_GridReader::DecompressDataToWallDist(DataContainer *cdata, int izone)
+void IO_GridReader::DecompressDataToWallDist(DataContainer *cdata, int iZone)
 {
     int send_proc = 0;
     int recv_proc = 0;
 
-    GetSendRecvProcID(izone, send_proc, recv_proc);
+    GetSendRecvProcID(iZone, send_proc, recv_proc);
 
     if (myProcID != recv_proc)
     {
@@ -1575,10 +1575,10 @@ void IO_GridReader::DecompressDataToWallDist(DataContainer *cdata, int izone)
         zoneStart = this->gridGroup->GetZoneStart();
     }
 
-    Grid *grid = PHSPACE::GetGrid(izone + zoneStart, 0);
+    Grid *grid = PHSPACE::GetGrid(iZone + zoneStart, 0);
 
     int * block_type = PHMPI::GetZoneGridType();
-    int gridType = block_type[izone];
+    int gridType = block_type[iZone];
 
     if(gridType == PHSPACE::UNSTRUCTGRID)
     {
@@ -1594,12 +1594,12 @@ void IO_GridReader::DecompressDataToWallDist(DataContainer *cdata, int izone)
     }
 }
 
-void IO_GridReader::DecompressDataToCellNode(DataContainer *cdata, int izone)
+void IO_GridReader::DecompressDataToCellNode(DataContainer *cdata, int iZone)
 {
     int send_proc = 0;
     int recv_proc = 0;
 
-    GetSendRecvProcID(izone, send_proc, recv_proc);
+    GetSendRecvProcID(iZone, send_proc, recv_proc);
 
     if (myProcID != recv_proc)
     {
@@ -1608,18 +1608,18 @@ void IO_GridReader::DecompressDataToCellNode(DataContainer *cdata, int izone)
 
     //! Decode the read-in data to cell-node.
     int zoneStart = this->gridGroup->GetZoneStart();
-    Grid *grid = PHSPACE::GetGrid(izone + zoneStart, 0);
+    Grid *grid = PHSPACE::GetGrid(iZone + zoneStart, 0);
     UnstructGrid *unstructuredGrid = UnstructGridCast(grid);
 
     unstructuredGrid->DecodeCellNode(cdata);
 }
 
-void IO_GridReader::DecompressInterpointInfo(DataContainer *cdata, int izone)
+void IO_GridReader::DecompressInterpointInfo(DataContainer *cdata, int iZone)
 {
     int send_proc = 0;
     int recv_proc = 0;
 
-    GetSendRecvProcID(izone, send_proc, recv_proc);
+    GetSendRecvProcID(iZone, send_proc, recv_proc);
 
     if (myProcID != recv_proc)
     {        
@@ -1632,18 +1632,18 @@ void IO_GridReader::DecompressInterpointInfo(DataContainer *cdata, int izone)
     {
         zoneStart = this->gridGroup->GetZoneStart();
     }
-    Grid *grid = PHSPACE::GetGrid(izone + zoneStart, 0);
+    Grid *grid = PHSPACE::GetGrid(iZone + zoneStart, 0);
     UnstructGrid * unstructuredGrid = UnstructGridCast(grid);    
 
     unstructuredGrid->DecodeInterpointInfo(cdata);
 }
 
-void IO_GridReader::DecompressDataToFaceBC(DataContainer *cdata, int izone)
+void IO_GridReader::DecompressDataToFaceBC(DataContainer *cdata, int iZone)
 {
     int send_proc = 0;
     int recv_proc = 0;
 
-    GetSendRecvProcID(izone, send_proc, recv_proc);
+    GetSendRecvProcID(iZone, send_proc, recv_proc);
 
     if (myProcID != recv_proc)
     {
@@ -1652,9 +1652,9 @@ void IO_GridReader::DecompressDataToFaceBC(DataContainer *cdata, int izone)
 
     //! Decode the data into face BC information.
     //int zoneStart = this->gridGroup->GetZoneStart();
-    //Grid *grid = PHSPACE::GetGrid(izone + zoneStart, 0);
+    //Grid *grid = PHSPACE::GetGrid(iZone + zoneStart, 0);
 
-    Grid *grid = PHSPACE::GetGrid(izone, 0);
+    Grid *grid = PHSPACE::GetGrid(iZone, 0);
     if (grid->Type() == UNSTRUCTGRID)
     {
         UnstructGrid *unstructuredGrid = UnstructGridCast(grid);
@@ -1669,12 +1669,12 @@ void IO_GridReader::DecompressDataToFaceBC(DataContainer *cdata, int izone)
     }
 }
 
-void IO_GridReader::DecompressDataToFaceBcDir(DataContainer *cdata, int izone)
+void IO_GridReader::DecompressDataToFaceBcDir(DataContainer *cdata, int iZone)
 {
     int send_proc = 0;
     int recv_proc = 0;
 
-    GetSendRecvProcID(izone, send_proc, recv_proc);
+    GetSendRecvProcID(iZone, send_proc, recv_proc);
 
     if (myProcID != recv_proc)
     {
@@ -1682,7 +1682,7 @@ void IO_GridReader::DecompressDataToFaceBcDir(DataContainer *cdata, int izone)
     }
 
     //! Decode the data into face BC information.
-    Grid *grid = PHSPACE::GetGrid(izone, 0);
+    Grid *grid = PHSPACE::GetGrid(iZone, 0);
     if (grid->Type() == UNSTRUCTGRID)
     {
         return;

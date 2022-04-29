@@ -1094,8 +1094,8 @@ void ParallelProjection::GetFaceToNodeList(ZoneGridSolver * zoneGridSolver, int 
 
 void ParallelProjection::InitCellProjectType()
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
 
@@ -1240,8 +1240,8 @@ int ParallelProjection::ResetCellProjectTypeByRightCell()
 {
     int isContinueInfect = 0;
 
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
 
@@ -1329,8 +1329,8 @@ bool ParallelProjection::IfNeedProjection()
 
     bool ifNeed = false;
 
-    int nZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
         ElementFaceSolver * elementFaceSolver = zoneGridSolver->GetElementFaceSolver();

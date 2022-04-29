@@ -658,9 +658,9 @@ DumpToVTK::DumpToVTK(vector<DataContainer *> datalist_in, string filename_in, bo
     this->visualFlowType = visualFlowType;
     this->CharacteristicBoundary = CharacteristicBoundary_in;
 
-    for (unsigned int izone = 0; izone < vtkdatalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
     {
-        vtkdatalist[izone]->moveto_begin();
+        vtkdatalist[iZone]->moveto_begin();
     }
     nvarplot = 0;
 }
@@ -775,9 +775,9 @@ void DumpToVTK::WriteVTKFilm()
     int nZones = static_cast<int>(vtkdatalist.size());
     PHWrite(file, nZones);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        DataContainer *cdata = vtkdatalist[izone];
+        DataContainer *cdata = vtkdatalist[iZone];
         
         int GridID;
         int dimension;
@@ -878,9 +878,9 @@ DumpToTecio::DumpToTecio(vector<DataContainer *> datalist_in, string filename_in
     this->filename = filename_in;
     this->visualFlowType = visualFlowType;
 
-    for (unsigned int izone = 0; izone < datalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < datalist.size(); ++ iZone)
     {
-        datalist[izone]->moveto_begin();
+        datalist[iZone]->moveto_begin();
     }
     nvarplot = 0;
 }
@@ -954,9 +954,9 @@ void DumpToTecio::WriteGridFilm()
     bool FileIsFull = false;
 
     uint_t nzones = datalist.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = datalist[izone];
+        DataContainer *cdata = datalist[iZone];
         
         INTEGER4 IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;
         INTEGER4 ZoneType;
@@ -1335,9 +1335,9 @@ DumpToTecplotASCII::DumpToTecplotASCII(vector<DataContainer *> datalist_in, stri
     this->fileName = filename_in;
     this->visualFlowType = visualFlowType;
 
-    for (unsigned int izone = 0; izone < dataList.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < dataList.size(); ++ iZone)
     {
-        dataList[izone]->moveto_begin();
+        dataList[iZone]->moveto_begin();
     }
     nVariable = 0;
 }
@@ -1431,9 +1431,9 @@ void DumpToTecplotASCII::WriteFlowFilm()
     bcNameMap.insert(pair<int, string>(61, "OUTFLOW_CONFINED"));
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int GridID, dimension, type, dumpMission;
 

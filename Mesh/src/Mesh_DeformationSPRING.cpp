@@ -34,7 +34,7 @@ void Mesh_DeformationSPRING::SurfaceGridMove(int iStep)
     RDouble angle_step = amplitude * sin(omega * tNow);
     angle_step        -= amplitude * sin(omega * tOld);
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         DynamicGrid *grid = deformedGrid[iZone];
         DYNode *nodeArray = grid->GetNodeArray();
@@ -139,9 +139,9 @@ void Mesh_DeformationSPRING::SurfaceGridMove(int iStep)
 
 void Mesh_DeformationSPRING::TransformGrid()
 {
-    deformedGrid = new DynamicGrid *[nZones];
+    deformedGrid = new DynamicGrid *[numberOfZones];
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         deformedGrid[iZone] = new DynamicGrid(stationalGrid[iZone]);
         deformedGrid[iZone]->StationalData2DynamicData();
@@ -166,7 +166,7 @@ void Mesh_DeformationSPRING::Deforming()
         PrintToWindow("  iStep =  ", iStep + 1, "\n");
         SurfaceGridMove(iStep);
 
-        for (int iZone = 0; iZone < nZones; ++ iZone)
+        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
             DynamicGrid *grid = deformedGrid[iZone];
             DYNode *nodeArray = grid->GetNodeArray();
@@ -261,7 +261,7 @@ void Mesh_DeformationSPRING::MatchControlPoints()
 {
     RDouble rotatePostion = this->deformParameter->GetRotatePostionZ();
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         DynamicGrid *grid = deformedGrid[iZone];
         DYFace *faceArray = grid->GetFaceArray();
@@ -305,7 +305,7 @@ void Mesh_DeformationSPRING::MatchControlPoints()
 
 void Mesh_DeformationSPRING::PostTreat()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         DynamicGrid *grid = deformedGrid[iZone];
         DYNode *nodeArray = grid->GetNodeArray();

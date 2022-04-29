@@ -67,19 +67,19 @@ void IO_HDF5Write::Run()
     WriteTotalInfo(file);
 
     int nBlocksLocal = nPartOfEachProcessor[myid];
-    for (int izone = 0; izone < nBlocksLocal; ++ izone)
+    for (int iZone = 0; iZone < nBlocksLocal; ++ iZone)
     {
         ostringstream oss;
-        oss << "      Dumping zone " << izone << " ....\n";
+        oss << "      Dumping zone " << iZone << " ....\n";
         PrintToWindow(oss);
 
-        if (block_type[izone] == STRUCTGRID)
+        if (block_type[iZone] == STRUCTGRID)
         {
-            WriteStructGrid(file, gridsLocal[izone]);
+            WriteStructGrid(file, gridsLocal[iZone]);
         }
         else
         {
-            WriteUnstructGrid(file, gridsLocal[izone],izone);
+            WriteUnstructGrid(file, gridsLocal[iZone], iZone);
         }
     }
 
@@ -161,9 +161,9 @@ void IO_HDF5Write::CreateTotalInfo()
         // For OpenMP case, reset the processor ID of sub-zone to the source grid's.
         int zoneID = gridSource->GetGridID()->GetIndex();
         int processorID = PHMPI::GetZoneProcessorID(zoneID);
-        for (int izone = 0; izone < nBlocks; ++ izone)
+        for (int iZone = 0; iZone < nBlocks; ++ iZone)
         {
-            block_proc[izone] = processorID;     
+            block_proc[iZone] = processorID;     
         }
     }*/
 }
@@ -696,7 +696,7 @@ IO_HDF5Read::IO_HDF5Read(PHVectorString1D &gridNameListIn, Region *region_in)
     this->isP2PMode = false;
 
     blockProcDump = 0;
-    nZones        = 0;
+    numberOfZones = 0;
     blockProc     = 0;
     blockType     = 0;
     blockIdx      = 0;
@@ -900,28 +900,28 @@ void IO_HDF5Read::ReadNumberOfZones()
             hid_t grpData;
             grpData = OpenGroup(file, "Information");
 
-            int numberOfZones = 0;
-            ReadData(grpData, &numberOfZones, "nBlocks");
-            nZones += numberOfZones;
-            nZonesList[iGrid][iFile] = numberOfZones;
+            int nZones = 0;
+            ReadData(grpData, &nZones, "nBlocks");
+            numberOfZones += nZones;
+            nZonesList[iGrid][iFile] = nZones;
 
             H5Gclose(grpData);
             H5Fclose(file);
         }
     }
 
-    PHMPI::SetNumberOfGlobalZones   (nZones);
-    PHMPI::CreateZoneProcessorIDDump(nZones);
-    PHMPI::CreateZoneProcessorID    (nZones);
-    PHMPI::CreateZoneGridID         (nZones);
-    PHMPI::CreateZoneGridType       (nZones);
-    PHMPI::CreateZoneFileID         (nZones);
+    PHMPI::SetNumberOfGlobalZones   (numberOfZones);
+    PHMPI::CreateZoneProcessorIDDump(numberOfZones);
+    PHMPI::CreateZoneProcessorID    (numberOfZones);
+    PHMPI::CreateZoneGridID         (numberOfZones);
+    PHMPI::CreateZoneGridType       (numberOfZones);
+    PHMPI::CreateZoneFileID         (numberOfZones);
 
     int numberOfProcessor = PHMPI::GetNumberOfProcessor();
-    if (nZones < numberOfProcessor)
+    if (numberOfZones < numberOfProcessor)
     {
         ostringstream oss;
-        oss << "   ---- numberOfProcessor = " << numberOfProcessor << ", numberOfTotalZones = " << nZones << " ----\n" << "Abnormally Exit Program!!!\n";
+        oss << "   ---- numberOfProcessor = " << numberOfProcessor << ", numberOfTotalZones = " << numberOfZones << " ----\n" << "Abnormally Exit Program!!!\n";
         TK_Exit::ExceptionExit(oss.str());
     }
 }
@@ -934,30 +934,30 @@ void IO_HDF5Read::ReadNumberOfZonesOld(hid_t loc_id)
     int *nZonesListTemp = new int[globalFileNumber];
     SetField(nZonesListTemp, 0, globalFileNumber);
 
-    int numberOfZones = 0;
+    int nZones = 0;
     if (isFileProcessor)
     {
-        ReadData(grpData, &numberOfZones, "nBlocks");
-        nZonesListTemp[fileID] = numberOfZones;
-        //MPI_Allgather(&numberOfZones, 1, MPI_INT, nZonesList, 1, MPI_INT, MPI_COMM_WORLD);
+        ReadData(grpData, &nZones, "nBlocks");
+        nZonesListTemp[fileID] = nZones;
+        //MPI_Allgather(&nZones, 1, MPI_INT, nZonesList, 1, MPI_INT, MPI_COMM_WORLD);
     }
 
-    PH_AllReduce(&numberOfZones, &nZones, 1, MPI_SUM);
+    PH_AllReduce(&nZones, &numberOfZones, 1, MPI_SUM);
     //PH_AllReduce(nZonesListTemp, nZonesList, globalFileNumber, MPI_SUM);
     delete [] nZonesListTemp;
 
-    PHMPI::SetNumberOfGlobalZones   (nZones);
-    PHMPI::CreateZoneProcessorIDDump(nZones);
-    PHMPI::CreateZoneProcessorID    (nZones);
-    PHMPI::CreateZoneGridID         (nZones);
-    PHMPI::CreateZoneGridType       (nZones);
-    PHMPI::CreateZoneFileID         (nZones);
+    PHMPI::SetNumberOfGlobalZones   (numberOfZones);
+    PHMPI::CreateZoneProcessorIDDump(numberOfZones);
+    PHMPI::CreateZoneProcessorID    (numberOfZones);
+    PHMPI::CreateZoneGridID         (numberOfZones);
+    PHMPI::CreateZoneGridType       (numberOfZones);
+    PHMPI::CreateZoneFileID         (numberOfZones);
 
     int numberOfProcessor = PHMPI::GetNumberOfProcessor();
-    if (nZones < numberOfProcessor)
+    if (numberOfZones < numberOfProcessor)
     {
         ostringstream oss;
-        oss << "   ---- numberOfProcessor = " << numberOfProcessor << ", numberOfTotalZones = " << nZones << " ----\n" << "Abnormally Exit Program!!!\n";
+        oss << "   ---- numberOfProcessor = " << numberOfProcessor << ", numberOfTotalZones = " << numberOfZones << " ----\n" << "Abnormally Exit Program!!!\n";
         TK_Exit::ExceptionExit(oss.str());
     }
 
@@ -987,25 +987,25 @@ void IO_HDF5Read::SetMixGridInfo()
         }
     }
 
-    CreatetZoneProcessorID_INP(nZones);
+    CreatetZoneProcessorID_INP(numberOfZones);
     int *global_block_proc_inp = GetZoneProcessorID_INP();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        global_block_proc_inp[izone] = blockProc[izone];
+        global_block_proc_inp[iZone] = blockProc[iZone];
     }
 }
 
 void IO_HDF5Read::ReadTotalInfo()
 {
-    blockProc     = new int[nZones];
-    blockType     = new int[nZones];
-    blockIdx      = new int[nZones];
-    blockFileProc = new int[nZones];
+    blockProc     = new int[numberOfZones];
+    blockType     = new int[numberOfZones];
+    blockIdx      = new int[numberOfZones];
+    blockFileProc = new int[numberOfZones];
 
-    SetField(blockProc    , 0, nZones);
-    SetField(blockType    , 0, nZones);
-    SetField(blockIdx     , 0, nZones);
-    SetField(blockFileProc, 0, nZones);
+    SetField(blockProc    , 0, numberOfZones);
+    SetField(blockType    , 0, numberOfZones);
+    SetField(blockIdx     , 0, numberOfZones);
+    SetField(blockFileProc, 0, numberOfZones);
 
     int processorNumInEachFile = PHMPI::GetNumberOfProcessor() / PHMPI::GetNumberofFiles();
 
@@ -1025,13 +1025,13 @@ void IO_HDF5Read::ReadTotalInfo()
             int *blockIdx_local  = ReadIntOneRow(grpData, "block_idx");
             int *blockType_local = ReadIntOneRow(grpData, "block_type");
 
-            for (int izone = 0; izone < nZonesList[iGrid][iFile]; ++ izone)
+            for (int iZone = 0; iZone < nZonesList[iGrid][iFile]; ++ iZone)
             {
-                blockProc[count + izone] = blockProc_local[izone];
-                blockType[count + izone] = blockType_local[izone];
-                blockIdx [count + izone] = blockIdx_local [izone];
+                blockProc[count + iZone] = blockProc_local[iZone];
+                blockType[count + iZone] = blockType_local[iZone];
+                blockIdx [count + iZone] = blockIdx_local [iZone];
 
-                blockFileProc[count + izone] = processorNumInEachFile * iFile;
+                blockFileProc[count + iZone] = processorNumInEachFile * iFile;
             }
             delete [] blockProc_local;
             delete [] blockIdx_local ;
@@ -1043,10 +1043,10 @@ void IO_HDF5Read::ReadTotalInfo()
         }
     }
 
-    blockProcDump = new int[nZones];
-    for (int izone = 0; izone < nZones; ++ izone)
+    blockProcDump = new int[numberOfZones];
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        blockProcDump[izone] = blockProc[izone];
+        blockProcDump[iZone] = blockProc[iZone];
     }
 }
 
@@ -1055,20 +1055,20 @@ void IO_HDF5Read::ReadTotalInfoOld(hid_t loc_id)
     hid_t grpData;
     grpData = OpenGroup(loc_id, "Information");
 
-    int *blockProcTemp     = new int[nZones];
-    int *blockTypeTemp     = new int[nZones];
-    int *blockIdxTemp      = new int[nZones];
-    int *blockFileProcTemp = new int[nZones];
+    int *blockProcTemp     = new int[numberOfZones];
+    int *blockTypeTemp     = new int[numberOfZones];
+    int *blockIdxTemp      = new int[numberOfZones];
+    int *blockFileProcTemp = new int[numberOfZones];
 
-    blockProc     = new int[nZones];
-    blockType     = new int[nZones];
-    blockIdx      = new int[nZones];
-    blockFileProc = new int[nZones];
+    blockProc     = new int[numberOfZones];
+    blockType     = new int[numberOfZones];
+    blockIdx      = new int[numberOfZones];
+    blockFileProc = new int[numberOfZones];
 
-    SetField(blockProcTemp    , 0, nZones);
-    SetField(blockTypeTemp    , 0, nZones);
-    SetField(blockIdxTemp     , 0, nZones);
-    SetField(blockFileProcTemp, 0, nZones);
+    SetField(blockProcTemp    , 0, numberOfZones);
+    SetField(blockTypeTemp    , 0, numberOfZones);
+    SetField(blockIdxTemp     , 0, numberOfZones);
+    SetField(blockFileProcTemp, 0, numberOfZones);
 
     if (isFileProcessor)
     {
@@ -1083,13 +1083,13 @@ void IO_HDF5Read::ReadTotalInfoOld(hid_t loc_id)
         }
 
         int myid = PHMPI::GetCurrentProcessorID();
-        for (int izone = 0; izone < nZonesList[0][fileID]; ++ izone)
+        for (int iZone = 0; iZone < nZonesList[0][fileID]; ++ iZone)
         {
-            blockProcTemp[count + izone] = blockProc_local[izone];
-            blockTypeTemp[count + izone] = blockType_local[izone];
-            blockIdxTemp [count + izone] = blockIdx_local [izone];
+            blockProcTemp[count + iZone] = blockProc_local[iZone];
+            blockTypeTemp[count + iZone] = blockType_local[iZone];
+            blockIdxTemp [count + iZone] = blockIdx_local [iZone];
 
-            blockFileProcTemp[count + izone] = myid;
+            blockFileProcTemp[count + iZone] = myid;
         }
 
         delete [] blockProc_local;
@@ -1097,20 +1097,20 @@ void IO_HDF5Read::ReadTotalInfoOld(hid_t loc_id)
         delete [] blockType_local;
     }
 
-    PH_AllReduce(blockProcTemp    , blockProc    , nZones, MPI_SUM);
-    PH_AllReduce(blockIdxTemp     , blockIdx     , nZones, MPI_SUM);
-    PH_AllReduce(blockTypeTemp    , blockType    , nZones, MPI_SUM);
-    PH_AllReduce(blockFileProcTemp, blockFileProc, nZones, MPI_SUM);
+    PH_AllReduce(blockProcTemp    , blockProc    , numberOfZones, MPI_SUM);
+    PH_AllReduce(blockIdxTemp     , blockIdx     , numberOfZones, MPI_SUM);
+    PH_AllReduce(blockTypeTemp    , blockType    , numberOfZones, MPI_SUM);
+    PH_AllReduce(blockFileProcTemp, blockFileProc, numberOfZones, MPI_SUM);
 
     delete [] blockProcTemp;
     delete [] blockIdxTemp ;
     delete [] blockTypeTemp;
     delete [] blockFileProcTemp;
 
-    blockProcDump = new int[nZones];
-    for (int izone = 0; izone < nZones; ++ izone)
+    blockProcDump = new int[numberOfZones];
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        blockProcDump[izone] = blockProc[izone];
+        blockProcDump[iZone] = blockProc[iZone];
     }
 
     H5Gclose(grpData);
@@ -1299,8 +1299,8 @@ void IO_HDF5Read::ReadStructGrid(hid_t loc_id, int iZone)
 
 void IO_HDF5Read::ReadLnk(hid_t loc_id, int iZone)
 {
-    int numberOfOriginalBlocks = PHMPI::GetNumberofGlobalZones();
-    Grid **OrdinaryGrid = new Grid *[numberOfOriginalBlocks];
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    Grid **OrdinaryGrid = new Grid *[nZones];
 
     hid_t  grpData;
     string grpName;
@@ -1817,9 +1817,9 @@ void IO_HDF5Read::RedistributeZonesIfNeed()
         else
         {
             PrintToWindow("Waining: nZones % numberOfProcessor != 0 !!");
-            for (int izone = 0; izone < nZones; ++ izone)
+            for (int iZone = 0; iZone < nZones; ++ iZone)
             {
-                blockProc[izone] = izone % numberOfProcessor;
+                blockProc[iZone] = iZone % numberOfProcessor;
             }
         }
     }
@@ -1832,11 +1832,11 @@ void IO_HDF5Read::RedistributeZonesIfNeed()
                 if (blockType[0] == PHSPACE::STRUCTGRID)
                 {
                     int maxproc = blockProc[0];
-                    for (int izone = 0; izone < nZones; ++ izone)
+                    for (int iZone = 0; iZone < nZones; ++ iZone)
                     {
-                        if (blockProc[izone] > maxproc)
+                        if (blockProc[iZone] > maxproc)
                         {
-                            maxproc = blockProc[izone];
+                            maxproc = blockProc[iZone];
                         }
                     }
                     maxproc += 1;
@@ -1844,16 +1844,16 @@ void IO_HDF5Read::RedistributeZonesIfNeed()
                 }
                 else
                 {
-                    for (int izone = 0; izone < nZones; ++ izone)
+                    for (int iZone = 0; iZone < nZones; ++ iZone)
                     {
-                        blockProcDump[izone] += PHMPI::GetNumberOfProcStructUsed();
+                        blockProcDump[iZone] += PHMPI::GetNumberOfProcStructUsed();
                     }
                 }
             }
 
-            for (int izone = 0; izone < nZones; ++ izone)
+            for (int iZone = 0; iZone < nZones; ++ iZone)
             {
-                blockProc[izone] = 0;
+                blockProc[iZone] = 0;
             }
         }
     }
@@ -1885,12 +1885,12 @@ void IO_HDF5Read::SetGlobalZoneLayout()
 {
     if (!PHMPI::GetZoneGridType())
     {
-        PHMPI::SetNumberOfGlobalZones(nZones);
-        PHMPI::CreateZoneProcessorIDDump(nZones);
-        PHMPI::CreateZoneProcessorID(nZones);
-        PHMPI::CreateZoneGridID(nZones);
-        PHMPI::CreateZoneGridType(nZones);
-        PHMPI::CreateZoneFileID(nZones);
+        PHMPI::SetNumberOfGlobalZones(numberOfZones);
+        PHMPI::CreateZoneProcessorIDDump(numberOfZones);
+        PHMPI::CreateZoneProcessorID(numberOfZones);
+        PHMPI::CreateZoneGridID(numberOfZones);
+        PHMPI::CreateZoneGridType(numberOfZones);
+        PHMPI::CreateZoneFileID(numberOfZones);
     }
 
     int *globalBlockProc     = PHMPI::GetZoneProcessorID();
@@ -1903,17 +1903,17 @@ void IO_HDF5Read::SetGlobalZoneLayout()
     set<int> zoneIDinCurrentProc;
     int myid = PHMPI::GetCurrentProcessorID();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        globalBlockProc    [izone] = blockProc    [izone];
-        globalBlockProcGrid[izone] = blockProcGrid[izone];
-        globalBlockType    [izone] = blockType    [izone];
-        globalBlockIdx     [izone] = blockIdx     [izone];
-        globalBlockFile    [izone] = blockFileProc[izone];
+        globalBlockProc    [iZone] = blockProc    [iZone];
+        globalBlockProcGrid[iZone] = blockProcGrid[iZone];
+        globalBlockType    [iZone] = blockType    [iZone];
+        globalBlockIdx     [iZone] = blockIdx     [iZone];
+        globalBlockFile    [iZone] = blockFileProc[iZone];
 
-        if (blockProc[izone] == myid || blockProcGrid[izone] == myid)
+        if (blockProc[iZone] == myid || blockProcGrid[iZone] == myid)
         {
-            zoneIDinCurrentProc.insert(izone);
+            zoneIDinCurrentProc.insert(iZone);
         }
     }
 
@@ -1927,9 +1927,9 @@ void IO_HDF5Read::SetGlobalZoneLayout()
     oss << endl;
     WriteLogFile(oss.str());
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        globalBlockProcDump[izone] = blockProcDump[izone];
+        globalBlockProcDump[iZone] = blockProcDump[iZone];
     }
 }
 
@@ -1938,9 +1938,9 @@ void IO_HDF5Read::ClassifyGridSystem()
     int nZones = PHMPI::GetNumberofGlobalZones();
 
     set<int> gridType;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        gridType.insert(PHMPI::GetZoneGridType(izone));
+        gridType.insert(PHMPI::GetZoneGridType(iZone));
     }
 
     int sysGridType = GetSystemGridType(gridType);
@@ -1962,7 +1962,7 @@ void IO_HDF5Read::AddGrid(Grid *grid)
 void IO_HDF5Read::CreateZones()
 {
     zoneStart = 0;
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int globalZoneIndex = zoneStart + iZone;
 
@@ -1971,10 +1971,10 @@ void IO_HDF5Read::CreateZones()
 
         if (myProcID == recvProc || myProcID == recvProcGrid)
         {
-            int numberOfZoneInThisProcess = PHMPI::GetNumberofLocalZones();
+            int nLocalZones = PHMPI::GetNumberofLocalZones();
 
             Grid *grid = grids[iZone];
-            grid->GetGridID()->SetLocalIndex(numberOfZoneInThisProcess);
+            grid->GetGridID()->SetLocalIndex(nLocalZones);
 
             Zone *zone = new Zone(globalZoneIndex);
             zone->AddGridAndCopyZonePara(grid);

@@ -134,9 +134,9 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
     cout << "	Block number = " << nzones << endl;
     Str_CGNS_Data = new CGNS_Str_Data(nzones);
 
-    for (int izone = 1; izone <= nzones; ++ izone)
+    for (int iZone = 1; iZone <= nzones; ++ iZone)
     {
-        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(izone-1);
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone-1);
 
         //! Determine the number and names of the coordinates.
         base_cgns->SetNCoords(CellDim);
@@ -144,16 +144,16 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
         char_33 *zonenames = new char_33 [1];
         base_cgns->SetZonenames(zonenames);
 
-        cg_zone_type(fileid, baseid, izone, &zone_type);
+        cg_zone_type(fileid, baseid, iZone, &zone_type);
         if (zone_type == Unstructured)
         {
             TK_Exit::ExceptionExit("Error: the input CGNS mesh must be STRUCTURED type!");
         }
 
-        cg_zone_read(fileid, baseid, izone, zonenames[0], isize[0]);
+        cg_zone_read(fileid, baseid, iZone, zonenames[0], isize[0]);
 
         char_33 zonename;
-        cg_zone_read(fileid, baseid, izone, zonename, isize[0]);
+        cg_zone_read(fileid, baseid, iZone, zonename, isize[0]);
 
         //! Import i¡¢j¡¢k direction information.
         cgsize_t idim = isize[0][0];
@@ -189,23 +189,23 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
         base_cgns->SetZ(z);
 
         int icoor = 0;
-        cg_coord_info(fileid, baseid, izone, icoor+1,  &dataType, coordname);
-        cg_coord_read(fileid, baseid, izone, coordname, dataType, irmin, irmax, **x);
-        cg_coord_info(fileid, baseid, izone, icoor+2,  &dataType, coordname);
-        cg_coord_read(fileid, baseid, izone, coordname, dataType, irmin, irmax, **y);
+        cg_coord_info(fileid, baseid, iZone, icoor+1,  &dataType, coordname);
+        cg_coord_read(fileid, baseid, iZone, coordname, dataType, irmin, irmax, **x);
+        cg_coord_info(fileid, baseid, iZone, icoor+2,  &dataType, coordname);
+        cg_coord_read(fileid, baseid, iZone, coordname, dataType, irmin, irmax, **y);
         if (CellDim == 3)
         {
-            cg_coord_info(fileid, baseid, izone, icoor+3,  &dataType, coordname);
-            cg_coord_read(fileid, baseid, izone, coordname, dataType, irmin, irmax, **z);
+            cg_coord_info(fileid, baseid, iZone, icoor+3,  &dataType, coordname);
+            cg_coord_read(fileid, baseid, iZone, coordname, dataType, irmin, irmax, **z);
         }
 
         //! Read the Connectivity information
         int nBCRegions, n1to1;
-        cg_goto  (fileid, baseid, "Zone_t", izone, "ZoneBC_t", 1, "end");
-        cg_nbocos(fileid, baseid, izone, &nBCRegions);
+        cg_goto  (fileid, baseid, "Zone_t", iZone, "ZoneBC_t", 1, "end");
+        cg_nbocos(fileid, baseid, iZone, &nBCRegions);
         base_cgns->SetNBCRegions(nBCRegions);
 
-        cg_n1to1(fileid, baseid, izone, &n1to1);
+        cg_n1to1(fileid, baseid, iZone, &n1to1);
         char_33 *connectname = new char_33 [n1to1]();
         char_33 *donorname   = new char_33 [n1to1]();
         base_cgns->SetConnectname(connectname);
@@ -219,7 +219,7 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
         {
             cgsize_t srange[6], donor_range[6];
             int transform[3];
-            cg_1to1_read(fileid, baseid, izone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
+            cg_1to1_read(fileid, baseid, iZone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
             if (strcmp(zonename, donorname[one21-1]) == 0)
             {
                 mark ++;
@@ -249,10 +249,10 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
         //! Read boundary condition information
         for (int boco = 0; boco < nBCRegions; ++ boco)
         {
-            ier = cg_goto(fileid, baseid, "Zone_t", izone, "ZoneBC_t", 1, "BC_t", boco+1, "end");
-            cg_boco_info(fileid, baseid, izone, boco+1, bocoName, &bocoType[boco], &ptsetType, &nPoints, &normalIndex[0], 
+            ier = cg_goto(fileid, baseid, "Zone_t", iZone, "ZoneBC_t", 1, "BC_t", boco+1, "end");
+            cg_boco_info(fileid, baseid, iZone, boco+1, bocoName, &bocoType[boco], &ptsetType, &nPoints, &normalIndex[0], 
                          &normListFlag, &normDataType, &nDataSet);
-            cg_boco_read(fileid, baseid, izone, boco+1, pnts[boco], NULL);
+            cg_boco_read(fileid, baseid, iZone, boco+1, pnts[boco], NULL);
 
             int make_edge_judge = 0;
             for (int nrange = 0; nrange < 3; ++ nrange)
@@ -351,7 +351,7 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
         base_cgns->SetNconnect(nconnect);
 
         //! Zone Connectivity
-        ier = cg_goto(fileid, baseid, "Zone_t", izone, "ZoneGridConnectivity_t", 1, "GridConnectivity1to1_t", 1, "end");
+        ier = cg_goto(fileid, baseid, "Zone_t", iZone, "ZoneGridConnectivity_t", 1, "GridConnectivity1to1_t", 1, "end");
         base_cgns->SetIer(ier);
 
         int lab2 = 0;
@@ -377,7 +377,7 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
                 srange = new cgsize_t [6]();
                 donor_range = new cgsize_t [6]();
 
-                cg_1to1_read(fileid, baseid, izone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
+                cg_1to1_read(fileid, baseid, iZone, one21, connectname[one21-1], donorname[one21-1], srange, donor_range, transform);
 
                 base_cgns->SetSrange(srange, count);
                 base_cgns->SetDonor_range(donor_range, count);
@@ -392,7 +392,7 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
                     }
                 }
 
-                if (lab2 == izone)
+                if (lab2 == iZone)
                 {
                     string connectname1 = connectname[one21-1];
                     if (strcmp(connectname1.substr(0,14).c_str(), "1to1InterfaceB") == 0 && CellDim == 3)
@@ -497,9 +497,9 @@ void Pre_CGNSToPlot3D_Struct::ResetGridScaleAndTranslate()
         GlobalDataBase::GetData("gridTranslationVector", gridTranslationVector, PHDOUBLE, 3);
     }
 
-    for (int izone = 1; izone <= nzones; ++ izone)
+    for (int iZone = 1; iZone <= nzones; ++ iZone)
     {
-        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(izone-1);
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone-1);
 
         int nCoords =base_cgns->GetNCoords();
 
@@ -558,9 +558,9 @@ void Pre_CGNSToPlot3D_Struct::WriteToGrd()
     Gridgenfile.write(reinterpret_cast<char *>(&nzones), sizeof(int));
 
     //! Import the maximum value of i, j, k.
-    for (int izone = 1; izone <= nzones; ++ izone)
+    for (int iZone = 1; iZone <= nzones; ++ iZone)
     {
-        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(izone-1);
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone-1);
 
         int idim = base_cgns->GetIdim();
         int jdim = base_cgns->GetJdim();
@@ -572,9 +572,9 @@ void Pre_CGNSToPlot3D_Struct::WriteToGrd()
     }
 
     //! Import the coordinates of node in the CGNS Grid.
-    for (int izone = 1; izone <= nzones; ++ izone)
+    for (int iZone = 1; iZone <= nzones; ++ iZone)
     {
-        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(izone-1);
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone-1);
 
         int nCoords =base_cgns->GetNCoords();
 
@@ -632,9 +632,9 @@ void Pre_CGNSToPlot3D_Struct::WriteToInp()
     GridgenBCfile << 1 << endl;
     GridgenBCfile << nzones << endl;
 
-    for (int izone = 1; izone <= nzones; ++ izone)
+    for (int iZone = 1; iZone <= nzones; ++ iZone)
     {
-        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(izone-1);
+        BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone-1);
 
         int nCoords = base_cgns->GetNCoords();
 
@@ -704,7 +704,7 @@ void Pre_CGNSToPlot3D_Struct::WriteToInp()
         }
         else
         {
-            cout << "Warning: " << "Zone " << (izone-1) << " has no interface!" << endl;
+            cout << "Warning: " << "Zone " << (iZone-1) << " has no interface!" << endl;
         }
     }
 
@@ -862,9 +862,9 @@ CGNS_Str_Data::CGNS_Str_Data(int nzones_in)
 {
     this->nzones = nzones_in;
     base_cgns = new BaseData *[nzones_in];
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        base_cgns[izone] = new BaseData();
+        base_cgns[iZone] = new BaseData();
     }
 }
 
