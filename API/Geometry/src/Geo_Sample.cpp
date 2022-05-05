@@ -1200,9 +1200,9 @@ void SampleLocationInfo::UpdateNearestCellsData()
     for (int iProbe = 0; iProbe < numberOfTotalProbes; ++ iProbe)
     {
         vector <RDouble> coordinates = sampleLocationInfo[iProbe]->GetProbeCoordinates();
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Grid *grid = GetGrid(zoneID, 0);
 
@@ -1229,9 +1229,9 @@ void SampleLocationInfo::UpdateRealCellsData()
         bool flag = false;
         vector <RDouble> coordinates = sampleLocationInfo[iProbe]->GetProbeCoordinates();
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Grid *grid = GetGrid(zoneID, 0);
 
@@ -1243,7 +1243,6 @@ void SampleLocationInfo::UpdateRealCellsData()
             sampleLocationInfo[iProbe]->SearchRealCell(grid, flag);
             if (flag) break;
         }
-
     }
 }
 

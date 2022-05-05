@@ -9,7 +9,7 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      PostProcessing.h
+//! @file      ForceProcessStruct.h
 //! @brief     StructGrid Flow result post-processing
 //! @author    Baka.
 
@@ -17,6 +17,7 @@
 #include "Force.h"
 #include "Geo_Grid.h"
 #include "PostProcessData.h"
+#include "Constants.h"
 
 namespace PHSPACE
 {
@@ -24,10 +25,10 @@ namespace PHSPACE
 class ForceProcessStruct
 {
 public:
-    AerodynamicForce globalAerodynamicForce;
+    Force globalAerodynamicForce;
 
 public:
-    ForceProcessStruct(PostProcessData *Data);
+    ForceProcessStruct();
     ~ForceProcessStruct();
 
 public:
@@ -37,20 +38,18 @@ private:
     void InitForce();
     void CollectionForce();
     void AirForceCoef(int iZone);
-    void AirForceCoefParts(int iZone, int partID);
+    void AirForceCoefParts(int iZone, int partID, int Coordinate = GlobalCoordinate);
     void CompForce();
-    void DecodeData(DataContainer *data);
+    void DumpForce();
 
-    void InitValueField();
     void CompValueField();
-    void ComputeGamaAndTemperature(Grid *grid_in);
-    void ComputeViscousLaminarCoefficient(Grid *grid_in);
+    void ComputeGamaAndTemperature(Grid *gridIn);
+    void ComputeViscousLaminarCoefficient(Grid *gridIn);
 
 private:
     string filename;
     DataContainer *CollectData;
-    
-    PostProcessData *ForceData;
+
 };
 
 }

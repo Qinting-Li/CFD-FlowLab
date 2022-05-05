@@ -66,7 +66,7 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
         }
     }
 
-    for (int izone =  0; izone < nZones; ++ izone)
+    for (int iZone =  0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkey->GetData();
         cdata->moveto_begin();
@@ -74,15 +74,15 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
         DataContainer *tecdata = actkey->GetTecData();
         tecdata->moveto_begin();
 
-        int send_proc = GetZoneProcessorID(izone);
-        recv_proc = GetZoneFileID(izone);
+        int send_proc = GetZoneProcessorID(iZone);
+        recv_proc = GetZoneFileID(iZone);
 
         myid = GetCurrentProcessorID();
-        int tag = GetSendRecvTag(actkey, izone);
+        int tag = GetSendRecvTag(actkey, iZone);
 
         if (myid == send_proc)
         {
-            GeneralAction(actkey, izone);
+            GeneralAction(actkey, iZone);
         }
         
         PH_Trade(actkey, send_proc, recv_proc, tag);
@@ -95,7 +95,7 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
             }
 
             datalist.push_back(tecdata);
-            DataContainer * cdata1 = new DataContainer();
+            DataContainer *cdata1 = new DataContainer();
             actkey->SetTecData(cdata1);
         }
     }

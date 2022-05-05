@@ -30,12 +30,12 @@ void Task_Write::ServerWrite(ActionKey *actkey)
 
     ParallelOpenFile(actkey);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int send_proc = GetZoneProcessorID(izone);
-        int recv_proc = GetZoneFileID(izone);
+        int send_proc = GetZoneProcessorID(iZone);
+        int recv_proc = GetZoneFileID(iZone);
 
-        PH_WritePattern(actkey, GetMainAction(), send_proc, recv_proc, izone);
+        PH_WritePattern(actkey, GetMainAction(), send_proc, recv_proc, iZone);
     }
 
     ParallelCloseFile(actkey);
@@ -48,12 +48,12 @@ void Task_Write::ThreadWrite(ActionKey *actkey)
 
     ParallelOpenFile2(actkey);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int send_proc = GetZoneProcessorID(izone);
-        int recv_proc = GetZoneFileID(izone);
+        int send_proc = GetZoneProcessorID(iZone);
+        int recv_proc = GetZoneFileID(iZone);
 
-        PH_WritePattern(actkey, GetMainAction(), send_proc, recv_proc, izone);
+        PH_WritePattern(actkey, GetMainAction(), send_proc, recv_proc, iZone);
     }
 
     ParallelCloseFile(actkey);

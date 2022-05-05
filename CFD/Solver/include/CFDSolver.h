@@ -529,9 +529,6 @@ protected:
 
 void UpdateInterfaceData();
 
-const int GlobalCoordinate = 0;
-const int LocalCoordinate = 1;
-
 #include "CFDSolver.hxx"
 
 }

@@ -70,7 +70,7 @@ public:
     void AddGridAndCopyZonePara(Grid *grid);
 
     void AddGrid(Grid *grid);
-    void AddGridToGlobal(int izone);
+    void AddGridToGlobal(int iZone);
     void UpdateAllData();
     void UpdateData(const string &name, void *data, int type, int size)
     {

@@ -27,9 +27,9 @@ LIB_EXPORT Pre_GridConversion::~Pre_GridConversion()
 
 LIB_EXPORT void Pre_GridConversion::Clear()
 {
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete grids[izone];
+        delete grids[iZone];
     }
     delete [] grids;
 }
@@ -173,18 +173,18 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
     int *block_type     = GetZoneGridType();
     int *block_proc_inp = GetZoneProcessorID_INP();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        block_proc[izone] = izone;
-        block_idx [izone] = izone;
-        block_type[izone] = grids[izone]->Type();
+        block_proc[iZone] = iZone;
+        block_idx [iZone] = iZone;
+        block_type[iZone] = grids[iZone]->Type();
     }
 
     if (block_proc_inp)
     {
-        for (int izone = 0; izone < nZones; ++ izone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
-            SetZoneProcessorID(izone, block_proc_inp[izone]);
+            SetZoneProcessorID(iZone, block_proc_inp[iZone]);
         }
     }
 
@@ -204,9 +204,9 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
     file.write(reinterpret_cast<char*>(block_idx), nZones*sizeof(int));
     file.write(reinterpret_cast<char*>(block_type), nZones*sizeof(int));
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        grids[izone]->WriteGrid(file);
+        grids[iZone]->WriteGrid(file);
     }
 
     file.close();
@@ -289,11 +289,11 @@ void MatchInterface(Grid *grid, LinkStruct *link)
 
         for (std::size_t m = 0; m < zoneid[ipos].size(); ++ m)
         {
-            int izone = zoneid[ipos][m];
+            int iZone = zoneid[ipos][m];
             int iface = faceid[ipos][m];
-            if ((izone != zoneIndex) || (iface != iiface))
+            if ((iZone != zoneIndex) || (iface != iiface))
             {
-                interFace2ZoneID[iiface]      = izone;
+                interFace2ZoneID[iiface]      = iZone;
                 interFace2InterFaceID[iiface] = iface;
                 find_flag = true;
                 break;
@@ -391,12 +391,12 @@ void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nB
     vector < DataContainer * > datalist;
     datalist.resize(0);
 
-    for (int izone =  0; izone < nBlocks; ++ izone)
+    for (int iZone =  0; iZone < nBlocks; ++ iZone)
     {
         DataContainer *data = new DataContainer();
         data->moveto_begin();
 
-        Grid *grid = grids[izone];
+        Grid *grid = grids[iZone];
         grid->AllocateOversetGrid();
         ComputeCharacteristicBoundary(grid, data);
 

@@ -29,6 +29,6 @@ private:
     void PreTask(ActionKey *actkey);
     void PostTask(ActionKey *actkey);
     void MainTask(ActionKey *actkey);
-    void LocalCollection(ActionKey *actkey, int izone);
+    void LocalCollection(ActionKey *actkey, int iZone);
 };
 }

@@ -1831,11 +1831,6 @@ void CFDSolver::DumpRestartData(ActionKey *actkey)
         return;
     }
 
-    if(PHMPI::IsParallelRun())
-    {
-        actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, "_", 0);
-    }
-
     hid_t file;
     file = CreateHDF5File(actkey->filename);
     actkey->filepos = file;
@@ -2024,11 +2019,6 @@ void CFDSolver::InitFlowAsReadingRestart(ActionKey *actkey)
     if (actkey->filename == "")
     {
         return;
-    }
-
-    if(PHMPI::IsParallelRun())
-    {
-        actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, "_", 0);
     }
 
     hid_t file;
@@ -2228,9 +2218,9 @@ void CFDSolver::DumpCpDistri(ActionKey *actkey)
         }
     }
 
-    for(unsigned int izone = 0 ; izone < datalist.size(); ++izone)
+    for(unsigned int iZone = 0 ; iZone < datalist.size(); ++ iZone)
     {
-        delete datalist[izone];
+        delete datalist[iZone];
     }
 }
 
@@ -2343,11 +2333,11 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
     wallAircoefFile << ossTitle.str() << endl;
 
     uint_t nzones = datalist.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        int gridTypeofLocalZone = PHMPI::GetZoneGridType(izone);
+        int gridTypeofLocalZone = PHMPI::GetZoneGridType(iZone);
 
-        DataContainer *cdata = datalist[izone];
+        DataContainer *cdata = datalist[iZone];
         cdata->moveto_begin();
 
         int IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;
@@ -2556,11 +2546,11 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
 
     bool FileIsFull = false;
     uint_t nzones = datalist.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        int gridTypeofLocalZone = PHMPI::GetZoneGridType(izone);
+        int gridTypeofLocalZone = PHMPI::GetZoneGridType(iZone);
 
-        DataContainer *cdata = datalist[izone];
+        DataContainer *cdata = datalist[iZone];
         cdata->moveto_begin();
 
         INTEGER4 IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;

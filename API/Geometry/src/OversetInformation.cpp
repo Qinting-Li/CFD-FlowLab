@@ -441,17 +441,17 @@ int OversetTopologyManager::GetNeighborOversetZoneIndex(int zoneIndex, int ithOv
 
 void OversetTopologyManager::InitializeOversetInterfaceTopology()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     PHVectorInt2D & oversetTopology           = this->GetOversetTopology();
     PHVectorInt2D & oversetTopologyForSend    = this->GetOversetTopologyForSend();
     PHVectorInt2D & oversetTopologyForReceive = this->GetOversetTopologyForReceive();
 
-    oversetTopologyForSend   .resize(numberOfZones);
-    oversetTopologyForReceive.resize(numberOfZones);
+    oversetTopologyForSend   .resize(nZones);
+    oversetTopologyForReceive.resize(nZones);
 
-    oversetTopology.resize(numberOfZones);
+    oversetTopology.resize(nZones);
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int processorIndex   = PHMPI::GetZoneProcessorID(iZone);
         int currentProcessor = PHMPI::GetCurrentProcessorID();
@@ -471,7 +471,7 @@ void OversetTopologyManager::InitializeOversetInterfaceTopology()
         oversetTopology[ iZone ] = neighborZoneIndexArray;
     }
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
 
@@ -489,7 +489,7 @@ void OversetTopologyManager::InitializeOversetInterfaceTopology()
 
 void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndBcast()
 {
-    int numberOfZones    = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     int serverProcessor  = PHMPI::GetServerSepMode();
 
@@ -497,9 +497,9 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
     PHVectorInt2D & oversetTopologyForSend    = this->GetOversetTopologyForSend();
     PHVectorInt2D & oversetTopologyForReceive = this->GetOversetTopologyForReceive();
 
-    oversetTopologyForSend   .resize(numberOfZones);
-    oversetTopologyForReceive.resize(numberOfZones);
-    oversetTopology          .resize(numberOfZones);
+    oversetTopologyForSend   .resize(nZones);
+    oversetTopologyForReceive.resize(nZones);
+    oversetTopology          .resize(nZones);
 
     DataContainer * dataContainerLocal  = new DataContainer();
     DataContainer * dataContainerGlobal = new DataContainer();
@@ -507,7 +507,7 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
     int nZonesInThisProc = 0;
 
     //! Get the number of blocks in each process nZonesInThisProc.
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for(int iZone = 0; iZone < nZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
 
@@ -520,7 +520,7 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
     PHSPACE::PHWrite(dataContainerLocal, nZonesInThisProc);
 
     //! For each process,get the interCell information of all zones and write into dataContainer.
-    for(int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for(int iZone = 0; iZone < nZones; ++ iZone)
     {
         int processorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
 

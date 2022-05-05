@@ -3,11 +3,11 @@ using namespace std;
 
 namespace PHSPACE
 {
-DataStruct_BinaryTree::DataStruct_BinaryTree(int *startPointLabel, int numberOfZones, int numberOfPoints)
+DataStruct_BinaryTree::DataStruct_BinaryTree(int *startPointLabel, int nZones, int numberOfPoints)
 {
-    CopyOriginalVector(startPointLabel, numberOfZones);
+    CopyOriginalVector(startPointLabel, nZones);
     this->numberOfPoints = numberOfPoints;
-    root = Create(root, 0, numberOfZones-1);
+    root = Create(root, 0, nZones-1);
     return;
 }
 
@@ -38,13 +38,13 @@ int DataStruct_BinaryTree::ComputeZoneLabel(DataStuct_BinaryNode *binaryNode, in
     }
 }
 
-void DataStruct_BinaryTree::CopyOriginalVector(int *startPointLabel, int numberOfZones)
+void DataStruct_BinaryTree::CopyOriginalVector(int *startPointLabel, int nZones)
 {
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         this->startPointLabel.push_back(startPointLabel[iZone]);
     }
-    this->numberOfZones = numberOfZones;
+    this->numberOfZones = nZones;
     return;
 }
 

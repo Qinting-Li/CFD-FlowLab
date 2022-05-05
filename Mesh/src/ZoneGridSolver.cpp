@@ -409,12 +409,12 @@ void ZoneGridSolver::DecompressCellProjectType(DataContainer *& dataContainer, i
 void SwapInterfaceData(Region * region, ZoneGridSolver ** zoneGridSolverList, CompressData compressData, DeCompressData decompressData)
 {
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector< PH_Request > requestContainer;
     vector< vector< DataContainer * > > receivedDataBuffer;
     vector< vector< DataContainer * > > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Very Important!!!!!
     //! Warning: this function should not be used before the interfaces of newly refined grid
@@ -422,7 +422,7 @@ void SwapInterfaceData(Region * region, ZoneGridSolver ** zoneGridSolverList, Co
 
     // Step 0: Compressing data firstly.
     WriteLogFile("        Compressing data ...");
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -462,7 +462,7 @@ void SwapInterfaceData(Region * region, ZoneGridSolver ** zoneGridSolverList, Co
 
     // Step 1: Communication.
     WriteLogFile("        Communication ...");
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -552,7 +552,7 @@ void SwapInterfaceData(Region * region, ZoneGridSolver ** zoneGridSolverList, Co
 
     // Step3: Translate the data container.
     WriteLogFile("        Translating data ...");
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor * globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -601,13 +601,5 @@ void SwapInterfaceData(Region * region, ZoneGridSolver ** zoneGridSolverList, Co
     sendDataBuffer.clear();
     requestContainer.clear();
 }
-
-
-
-
-
-
-
-
 
 }

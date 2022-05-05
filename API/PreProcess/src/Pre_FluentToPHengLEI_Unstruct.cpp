@@ -41,12 +41,12 @@ void Pre_FluentToPHengLEI_Unstruct::Conversion()
 
     grids = new Grid * [nBlocks];
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        GridID *index = new GridID(izone);
+        GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-        grids[izone] = grid;
-        fluent_factory->Convert2UnsGrid(izone, UnstructGridCast(grid));
+        grids[iZone] = grid;
+        fluent_factory->Convert2UnsGrid(iZone, UnstructGridCast(grid));
     }
     delete fluent_factory;
 }
