@@ -38,10 +38,10 @@ LIB_EXPORT void GenerateStructGridTable()
 {
     using namespace PHMPI;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    structGridTable = new vector< StructGrid * >(numberOfZones, NULL);
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    structGridTable = new vector< StructGrid * >(nZones, NULL);
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = PHSPACE::GetGrid(iZone, 0);
         if (! grid) continue;
@@ -55,9 +55,9 @@ LIB_EXPORT void DeleteStructGridTable()
 {
     using namespace PHMPI;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         (* structGridTable)[iZone] = NULL;
     }
@@ -668,8 +668,8 @@ void Stainer::PaintGenericColor()
 {
     using namespace PHMPI;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         StructGrid * grid = (* structGridTable)[iZone];
         
@@ -701,8 +701,8 @@ void Stainer::ProbeInternalOverlapCells()
     int numberOfInternalOversetCells = 0;
     int numberOfCellsInHole          = 0;
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
         if(! grid) continue;
@@ -721,8 +721,8 @@ void Stainer::ProbeExternalOverlapCells()
     using namespace PHMPI;
 
     int borderCellCounter = 0;
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
 
@@ -740,8 +740,8 @@ void Stainer::EraseSecondColor()
 {
     using namespace PHMPI;
     
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         StructGrid * grid = PHSPACE::GetStructGrid(iZone);
         if (! grid) continue;
@@ -1778,13 +1778,13 @@ void OversetStructGrid::ReadBasicParameter()
     PH_Bcast(& targetZoneEnd[0],   searchTimes * sizeof(int), server);
     ParallelCloseFile(file0);
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    zoneInverseIndex.resize(numberOfZones);
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    zoneInverseIndex.resize(nZones);
 
     fstream file1;
     string fileName1 = PHSPACE::GlobalDataBase::GetStrParaFromDB("zoneInverseFileName");
     ParallelOpenFile(file1, fileName1, ios_base::in|ios_base::binary);
-    PH_Read_Bcast(file1, & zoneInverseIndex[0], numberOfZones * sizeof(int), server);
+    PH_Read_Bcast(file1, & zoneInverseIndex[0], nZones * sizeof(int), server);
     ParallelCloseFile(file1);
 
     return;
@@ -1985,11 +1985,11 @@ LIB_EXPORT void OversetStructGrid::InitFieldNew()
     
     uint_t numberOfSolvers = solverNameContainer.size();
 
-    int numberOfZones   = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    field = new vector< RDouble4D * > [numberOfZones];
+    field = new vector< RDouble4D * > [nZones];
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         field[iZone].resize(numberOfSolvers, NULL);
 
@@ -2011,11 +2011,11 @@ LIB_EXPORT void OversetStructGrid::InitField()
     
     uint_t numberOfSolvers = solverNameContainer.size();
 
-    int numberOfZones   = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    field = new vector< RDouble4D * > [numberOfZones];
+    field = new vector< RDouble4D * > [nZones];
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         field[iZone].resize(numberOfSolvers, NULL);
 

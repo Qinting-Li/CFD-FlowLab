@@ -320,11 +320,11 @@ public:
     ~CGNSFactory();
 public:
     Base_Grid_Conn ** GetBaseGridConnection() const { return base_conn; }
-    Base_Grid_Conn * GetBaseGridConnection(int izone) const { return base_conn[izone]; }
+    Base_Grid_Conn * GetBaseGridConnection(int iZone) const { return base_conn[iZone]; }
     BaseElement * GetBaseElement() const { return base_elem; }
     BaseBCType * GetBaseBCType() const { return fantasy_bc; }
-    RawGrid  * GetRawGrid(int izone) { return rawgrid[izone]; }
-    CGNSBase * GetCGNSBase(int izone = 0) { return base_cgns[izone]; }
+    RawGrid  * GetRawGrid(int iZone) { return rawgrid[iZone]; }
+    CGNSBase * GetCGNSBase(int iZone = 0) { return base_cgns[iZone]; }
     int GetNumberofBlocks() const { return nBlocks; }
     void ConvertGrid2Fantasy();
     void DumpSelfDefinePartInformation();
@@ -334,6 +334,6 @@ private:
     void ReLableSelfDefineBC();
 };
 
-void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid);
+void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid);
 
 }

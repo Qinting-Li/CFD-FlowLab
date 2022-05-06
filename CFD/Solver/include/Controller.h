@@ -176,9 +176,9 @@ private:
     FieldProxy **GetRHSProxy(int level);
 
     //!
-    Zone * GetZone(int izone);
+    Zone * GetZone(int iZone);
 
-    CFDSolver * GetCFDSolver(int izone, int iSolver);
+    CFDSolver * GetCFDSolver(int iZone, int iSolver);
 
     //! For New LUSGS with one sweep, Sub-routines of LUSGS method, which is divided into 4 steps.
     void LUSGS(int iSolver, int level);

@@ -49,29 +49,29 @@ void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
     int recv_proc;
     int myid;
 
-    for (int izone =  0; izone < nZones; ++ izone)
+    for (int iZone =  0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkey->GetData();
         cdata->moveto_begin();
 
-        int send_proc = GetZoneProcessorID(izone);
+        int send_proc = GetZoneProcessorID(iZone);
         recv_proc = GetServerProcessorID();
 
         myid = GetCurrentProcessorID();
-        int tag = GetSendRecvTag(actkey, izone);
+        int tag = GetSendRecvTag(actkey, iZone);
 
         if (myid == send_proc)
         {
-            Grid *grid = GetGrid(izone, actkey->level);
+            Grid *grid = GetGrid(iZone, actkey->level);
             int nProbeVariables = GlobalDataBase::GetIntParaFromDB("nProbeVariables");
             int probeVariables[100] = {0};
 
             GlobalDataBase::GetData("probeVariables", probeVariables, PHINT, nProbeVariables);
             Post_Probes *postProbesVar = new Post_Probes(nProbeVariables, probeVariables, grid);
-            int Nsolver = GlobalSolvers::GetNumberOfSolvers(izone);
+            int Nsolver = GlobalSolvers::GetNumberOfSolvers(iZone);
             for (int isolver = 0; isolver < Nsolver; ++ isolver)
             {
-                GlobalSolvers::GetSolver(izone, isolver)->ComputePostProbesVariables(postProbesVar);
+                GlobalSolvers::GetSolver(iZone, isolver)->ComputePostProbesVariables(postProbesVar);
             }
 
             StoreProbesVarariables(actkey, postProbesVar);
@@ -137,9 +137,9 @@ void Post_ProbesWrite::PostProbesWrite(ActionKey *actkey)
         dumpToFileASCII.Run();
     }
 
-    for (unsigned int izone = 0; izone < datalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < datalist.size(); ++ iZone)
     {
-        delete datalist[izone];
+        delete datalist[iZone];
     }
 }
 

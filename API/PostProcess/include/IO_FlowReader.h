@@ -15,6 +15,7 @@
 
 #pragma once
 #include "Region.h"
+#include "IO_HDF5File.h"
 
 using namespace std;
 
@@ -34,23 +35,24 @@ public:
 
 private:
     void Init();
-    void InitMemoryStr(Grid *grid_in);
-    void InitMemoryUnStr(Grid *grid_in);
+    void InitMemoryStruct(Grid *gridIn);
+    void InitMemoryUnstruct(Grid *gridIn);
 
     void ReadFlowFile();
-    void ReadFlowFileStr(Grid *grid_in, DataContainer *flowData);
-    void ReadFlowFileUnStr(Grid *grid_in, DataContainer *flowData);
+    void ReadFlowFileStr(hid_t loc_id, Grid *gridIn);
+    void ReadFlowFileUnStr(hid_t loc_id, Grid *gridIn);
 
     void ReadTurbFile();
-    void ReadTurbFileStr(Grid *grid_in, DataContainer *flowData);
-    void ReadTurbFileUnStr(Grid *grid_in, DataContainer *flowData);
-    void ReadTurbInterface(Grid *grid_in, DataContainer *flowData);
-    void ReadTurbInterfaceGrad (int nIFace, Data_ParamFieldSuite *datastore, DataContainer *flowData);
+    void ReadTurbFileStr(hid_t loc_id, Grid *gridIn);
+    void ReadTurbFileUnStr(hid_t loc_id, Grid *gridIn);
 
 private:
     string restartNSFile;
     string turbfile;
-    bool IfReadTurb;
+
+    int nEquation;
+    int nTurbulenceEquation;
+    int nTemperatureModel;
 };
 
 }

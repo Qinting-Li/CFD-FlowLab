@@ -82,6 +82,13 @@ LIB_EXPORT StructGrid::StructGrid()
     zoneProbesCellNI.resize(0);
     zoneProbesCellNJ.resize(0);
     zoneProbesCellNK.resize(0);
+
+    ordinaryGridIndex = -1;
+    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+    {
+        ordinaryDimStartIndex[iDim] = 0;
+        ordinaryDimEndIndex  [iDim] = 0;
+    }
 }
 
 LIB_EXPORT void StructGrid::InitGrid(GridID *index, int level, int dim, int type)
@@ -6329,6 +6336,42 @@ void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, 
     return;
 }
 
+void StructGrid::SetOrdinaryGridIndex(int ordinaryGridIndexIn)
+{
+    this->ordinaryGridIndex = ordinaryGridIndexIn;
+}
+
+void StructGrid::SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn)
+{
+    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+    {
+        this->ordinaryDimStartIndex[iDim] = ordinaryDimStartIndexIn[iDim];
+    }
+}
+
+void StructGrid::SetOrdinaryDimEndIndex(int *ordinaryDimEndIndexIn)
+{
+    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+    {
+        this->ordinaryDimEndIndex[iDim] = ordinaryDimEndIndexIn[iDim];
+    }
+}
+
+int StructGrid::GetOrdinaryGridIndex()
+{
+    return this->ordinaryGridIndex;
+}
+
+int *StructGrid::GetOrdinaryDimStartIndex()
+{
+    return ordinaryDimStartIndex;
+}
+
+int *StructGrid::GetOrdinaryDimEndIndex()
+{
+    return ordinaryDimEndIndex;
+}
+
 void StructGrid::GetLocalIndex(int gp, int &ip, int &jp, int &kp) const
 {
     int zoneStartPointLabel = GetZoneStartPointLabel();
@@ -6891,6 +6934,138 @@ void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble3D &q)
             }
         }
     }
+}
+
+void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn)
+{
+    if (GetDim() == TWO_D)
+    {
+        return;
+    }
+
+    StructGrid *grid = StructGridCast(grid_in);
+
+    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
+
+        if (!(IsWall(BCType)))
+        {
+            continue;
+        }
+
+        RDouble wallTemperature;
+        structBC->GetParamData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+
+        if (wallTemperature < 0.0)
+        {
+            continue;
+        }
+
+        int *s_st = structBC->GetStartPoint();
+        int *s_ed = structBC->GetEndPoint();
+        int *s_lr3d = structBC->GetFaceDirectionIndex();
+
+        int nodeIndexStart[3];
+        int nodeIndexEnd[3];
+
+        for (int iDim = 0; iDim < 3; ++ iDim)
+        {
+            nodeIndexStart[iDim] = s_st[iDim];
+            nodeIndexEnd  [iDim] = s_ed[iDim];
+        }
+
+        for (int m = 0; m < GetDim(); ++ m)
+        {
+            if (structBC->GetFaceDirection() == m)
+            {
+                if (s_st[m] > 1 || s_lr3d[m] == 1)
+                {
+                    nodeIndexStart[m] += 1;
+                    nodeIndexEnd  [m] += 1;
+                }
+            }
+            else
+            {
+                nodeIndexEnd[m] += 1;
+            }
+        }
+
+        int ist = nodeIndexStart[0];
+        int ied = nodeIndexEnd  [0];
+
+        int jst = nodeIndexStart[1];
+        int jed = nodeIndexEnd  [1];
+
+        int kst = nodeIndexStart[2];
+        int ked = nodeIndexEnd  [2];
+
+        int nsurf = structBC->GetFaceDirection();
+        if (nsurf == 0)
+        {
+            for (int iNode = jst; iNode <= jed; ++ iNode)
+            {
+                qn(ist, iNode, kst, 0) = qn(ist, iNode, kst + 1, 0);
+                qn(ist, iNode, ked, 0) = qn(ist, iNode, ked - 1, 0);
+            }
+
+            for (int iNode = kst; iNode <= ked; ++ iNode)
+            {
+                qn(ist, jst, iNode, 0) = qn(ist, jst + 1, iNode, 0);
+                qn(ist, jed, iNode, 0) = qn(ist, jed - 1, iNode, 0);
+            }
+
+            qn(ist, jst, kst, 0) = qn(ist, jst + 1, kst + 1, 0);
+            qn(ist, jed, kst, 0) = qn(ist, jed - 1, kst + 1, 0);
+            qn(ist, jst, ked, 0) = qn(ist, jst + 1, ked - 1, 0);
+            qn(ist, jed, ked, 0) = qn(ist, jed - 1, ked - 1, 0);
+        }
+
+        if (nsurf == 1)
+        {
+            for (int iNode = ist; iNode <= ied; ++ iNode)
+            {
+                qn(iNode, jst, kst, 0) = qn(iNode, jst, kst + 1, 0);
+                qn(iNode, jst, ked, 0) = qn(iNode, jst, ked - 1, 0);
+            }
+
+            for (int iNode = kst; iNode <= ked; ++ iNode)
+            {
+                qn(ist, jst, iNode, 0) = qn(ist + 1, jst, iNode, 0);
+                qn(ied, jst, iNode, 0) = qn(ied - 1, jst, iNode, 0);
+            }
+
+            qn(ist, jst, kst, 0) = qn(ist + 1, jst, kst + 1, 0);
+            qn(ied, jst, kst, 0) = qn(ied - 1, jst, kst + 1, 0);
+            qn(ist, jst, ked, 0) = qn(ist + 1, jst, ked - 1, 0);
+            qn(ied, jst, ked, 0) = qn(ied - 1, jst, ked - 1, 0);
+        }
+
+        if (nsurf == 2)
+        {
+            for (int iNode = ist; iNode <= ied; ++ iNode)
+            {
+                qn(iNode, jst, kst, 0) = qn(iNode, jst + 1, kst, 0);
+                qn(iNode, jed, kst, 0) = qn(iNode, jed - 1, kst, 0);
+            }
+
+            for (int iNode = jst; iNode <= jed; ++ iNode)
+            {
+                qn(ist, iNode, kst, 0) = qn(ist + 1, iNode, kst, 0);
+                qn(ied, iNode, kst, 0) = qn(ied - 1, iNode, kst, 0);
+            }
+
+            qn(ist, jst, kst, 0) = qn(ist + 1, jst + 1, kst, 0);
+            qn(ied, jst, kst, 0) = qn(ied - 1, jst + 1, kst, 0);
+            qn(ist, jed, kst, 0) = qn(ist + 1, jed - 1, kst, 0);
+            qn(ied, jed, kst, 0) = qn(ied - 1, jed - 1, kst, 0);
+        }
+    }
+
 }
 
 void GetIJKROT(int ijk[4][3], int *irot, int *jrot, int *krot)

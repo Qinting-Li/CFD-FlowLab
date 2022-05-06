@@ -93,6 +93,9 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_SST_F2             , "SSTF2"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_INTERMITTENCY      , "intermittency"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_MOMENTUMTHICKREYNOLDS, "MomentumThicknessReynolds"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_U       , "streamline_u"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_V       , "streamline_v"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_W       , "streamline_w"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_GAMAEFF , "gamaeff"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TRANSITION_RESCF   , "stationaryCrossFlowReynolds"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GRADIENT_UX        , "gradientUx"));
@@ -284,7 +287,7 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble 
     RDouble *qn = new RDouble[nTotalNode];
 
     bool isVelocityForPostVisual = false;
-    if (name == "u" || name == "v" || name == "w" || name == "u_Dim" || name == "v_Dim" || name == "w_Dim")
+    if (name == "streamline_u" || name == "streamline_v" || name == "streamline_w")
     {
         isVelocityForPostVisual = true;
     }
@@ -329,12 +332,18 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
 
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
     bool isVelocityForPostVisual = false;
-    if (name == "u" || name == "v" || name == "w" || name == "u_Dim" || name == "v_Dim" || name == "w_Dim")
+    if (name == "streamline_u" || name == "streamline_v" || name == "streamline_w")
     {
         isVelocityForPostVisual = true;
     }
 
     CompNodeVar(grid_str, *qn, 0, cellCenterData, index, isVelocityForPostVisual);
+
+    if (name == "temperature")
+    {
+        ModifyWallTemperature(grid_str, *qn);
+    }
+
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 
@@ -649,9 +658,9 @@ DumpToVTK::DumpToVTK(vector<DataContainer *> datalist_in, string filename_in, bo
     this->visualFlowType = visualFlowType;
     this->CharacteristicBoundary = CharacteristicBoundary_in;
 
-    for (unsigned int izone = 0; izone < vtkdatalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
     {
-        vtkdatalist[izone]->moveto_begin();
+        vtkdatalist[iZone]->moveto_begin();
     }
     nvarplot = 0;
 }
@@ -766,9 +775,9 @@ void DumpToVTK::WriteVTKFilm()
     int nZones = static_cast<int>(vtkdatalist.size());
     PHWrite(file, nZones);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        DataContainer *cdata = vtkdatalist[izone];
+        DataContainer *cdata = vtkdatalist[iZone];
         
         int GridID;
         int dimension;
@@ -869,9 +878,9 @@ DumpToTecio::DumpToTecio(vector<DataContainer *> datalist_in, string filename_in
     this->filename = filename_in;
     this->visualFlowType = visualFlowType;
 
-    for (unsigned int izone = 0; izone < datalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < datalist.size(); ++ iZone)
     {
-        datalist[izone]->moveto_begin();
+        datalist[iZone]->moveto_begin();
     }
     nvarplot = 0;
 }
@@ -945,9 +954,9 @@ void DumpToTecio::WriteGridFilm()
     bool FileIsFull = false;
 
     uint_t nzones = datalist.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = datalist[izone];
+        DataContainer *cdata = datalist[iZone];
         
         INTEGER4 IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;
         INTEGER4 ZoneType;
@@ -1326,9 +1335,9 @@ DumpToTecplotASCII::DumpToTecplotASCII(vector<DataContainer *> datalist_in, stri
     this->fileName = filename_in;
     this->visualFlowType = visualFlowType;
 
-    for (unsigned int izone = 0; izone < dataList.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < dataList.size(); ++ iZone)
     {
-        dataList[izone]->moveto_begin();
+        dataList[iZone]->moveto_begin();
     }
     nVariable = 0;
 }
@@ -1422,9 +1431,9 @@ void DumpToTecplotASCII::WriteFlowFilm()
     bcNameMap.insert(pair<int, string>(61, "OUTFLOW_CONFINED"));
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int GridID, dimension, type, dumpMission;
 
