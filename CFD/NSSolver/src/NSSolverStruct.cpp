@@ -19458,6 +19458,24 @@ namespace PHSPACE
             delete mach;
         }
 
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_U))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_U);
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, IDX::IU);
+        }
+
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_V))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_V);
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, IDX::IV);
+        }
+
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_W))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_W);
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, IDX::IW);
+        }
+
         if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TIME_STEP))
         {
             string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_TIME_STEP);
