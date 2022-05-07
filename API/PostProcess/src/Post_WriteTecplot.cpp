@@ -99,7 +99,8 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
         tecdata->moveto_begin();
 
         int send_proc = GetZoneProcessorID(iZone);
-        recv_proc = GetServerProcessorID();
+        //recv_proc = GetServerProcessorID();
+        recv_proc = GetZoneFileID(iZone);
 
         myid = GetCurrentProcessorID();
         int tag = GetSendRecvTag(actkey, iZone);
