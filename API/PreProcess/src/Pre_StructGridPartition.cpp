@@ -121,8 +121,64 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
         {
             WriteLnkFile(partition_grid_file, parititionGrids, numberOfBasicBlocks);
         }
-        DumpGrid(partition_grid_file, parititionGrids, numberOfBasicBlocks);
 
+        int tasktype = GetTaskCode();
+        int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
+
+        if (tasktype == PHSPACE::PARTITION_GRID && numberOfMultifile > 1)
+        {
+            int maximumProcess = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxproc");
+            
+
+            if (maximumProcess < numberOfMultifile)
+            {
+                ostringstream oss;
+                oss << " Error: the numberOfMultifile's value is larger than maximumProcess's value "<< endl;
+                TK_Exit::ExceptionExit(oss.str());
+                
+            }
+            else if(maximumProcess % numberOfMultifile != 0)
+            {
+                ostringstream oss;
+                oss << " Error: the maximumProcess's value is not an integral multiple of numberOfMultifile's value "<< endl;
+                TK_Exit::ExceptionExit(oss.str());
+            }
+
+            int procNumberOfEachfile = maximumProcess / numberOfMultifile;
+            for (int iFile = 0; iFile < numberOfMultifile; ++iFile)
+            {
+                vector < Grid*> tempGrids;
+                tempGrids.resize(0);
+
+                for (int iBlock = 0; iBlock < numberOfBasicBlocks; ++iBlock)
+                {
+                    int procIndex = parititionGrids[iBlock]->GetGridID()->GetIndex();
+                    int* block_proc_inp = PHMPI::GetZoneProcessorID_INP();
+                    if (block_proc_inp)
+                    {
+                        procIndex = block_proc_inp[iBlock];
+                    }
+
+                    if ((procIndex / procNumberOfEachfile) == iFile)
+                    {
+                        tempGrids.push_back(parititionGrids[iBlock]);
+                    }
+                    else
+                    {
+                        Grid* tempZero = 0;
+                        tempGrids.push_back(tempZero);
+                    }
+                }
+
+                string out_gfile_temp = AddSymbolToFileName(partition_grid_file, "_", iFile);
+                DumpGrid(out_gfile_temp, &tempGrids[0], numberOfBasicBlocks);
+            }
+        }
+        else
+        {
+            DumpGrid(partition_grid_file, parititionGrids, numberOfBasicBlocks);
+        }
+        
         string faceBCFileName = ChangeExtensionOfFileName(original_grid_file, "bc");
         if (SerialFileExist(faceBCFileName))
         {

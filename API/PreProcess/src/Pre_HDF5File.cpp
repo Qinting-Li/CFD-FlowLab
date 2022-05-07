@@ -57,11 +57,19 @@ hid_t IO_HDF5Write::CreateFile(const string &filename)
 void IO_HDF5Write::Run()
 {
     hid_t file;
-
+    int tasktype = GetTaskCode();
+    int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
     CreateTotalInfo();
 
     int myid = PHMPI::GetCurrentProcessorID();
-    file = CreateFile(AddSymbolToFileName(gridFileName, "_", myid));
+    if (tasktype == PHSPACE::PARTITION_GRID && numberOfMultifile > 1)
+    {
+        file = CreateFile(gridFileName);
+    }
+    else
+    {
+        file = CreateFile(AddSymbolToFileName(gridFileName, "_", myid));
+    }
 
     WriteVersionInfo(file);
     WriteTotalInfo(file);
@@ -142,7 +150,7 @@ void IO_HDF5Write::CreateTotalInfo()
     for (int iBlock = 0; iBlock < nBlocksLocal; ++ iBlock)
     {
         block_proc[iBlock] = gridsLocal[iBlock]->GetGridID()->GetIndex();
-        block_idx [iBlock] = iBlock + count;
+        block_idx [iBlock] = gridsLocal[iBlock]->GetGridID()->GetIndex() + count;
         block_type[iBlock] = gridsLocal[iBlock]->Type();
         file_index[iBlock] = gridsLocal[iBlock]->GetFileIndex();
     }
@@ -150,9 +158,14 @@ void IO_HDF5Write::CreateTotalInfo()
     int *block_proc_inp = GetZoneProcessorID_INP();
     if (block_proc_inp)
     {
-        for (int iBlock = 0; iBlock < nBlocksLocal; ++ iBlock)
+        count = 0;
+        for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
         {
-            block_proc[iBlock] = block_proc_inp[iBlock + count];
+            if (grids[iBlock])
+            {
+                block_proc[count] = block_proc_inp[iBlock];
+                count++;
+            }
         }
     }
 
