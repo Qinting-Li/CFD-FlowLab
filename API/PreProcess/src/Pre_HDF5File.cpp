@@ -317,7 +317,7 @@ void IO_HDF5Write::WriteFaceTopology(hid_t loc_id, Grid *gridIn)
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
     CreateAndWriteData(grpData, "nodeNumberOfEachFace", 1, nTotalFace, PHINT, nodeNumberOfEachFace);
 
-    int faceCount = 0;
+    long long int faceCount = 0;
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         faceCount += nodeNumberOfEachFace[iFace];
@@ -358,7 +358,7 @@ void IO_HDF5Write::WriteCellTopology(hid_t loc_id, Grid *gridIn)
     CreateAndWriteData(grpData, "nodeNumberOfEachCell", 1, nTotalCell, PHINT, nodeNumberOfEachCell);
 
     int *cell2Node = grid->GetCell2Node();
-    int nodeCount = 0;
+    long long int nodeCount = 0;
     for (int icell = 0; icell < nTotalCell; ++ icell)
     {
         nodeCount += nodeNumberOfEachCell[icell];
