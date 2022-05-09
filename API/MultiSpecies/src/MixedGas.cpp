@@ -1027,64 +1027,6 @@ void CurveFitsMethod::Write(DataContainer *cdata)
     cdata->append(curvefit_ces, numberOfSpecies * sizeof(RDouble));
 }
 
-//void CurveFitsMethod::SetBlotterCurveFittingCoefficients(string *speciesName, int nSpecies)
-//{
-//    int nIndex = 0;
-//    RDouble visCoef[55] = {
-//        0.0, 0.0, 0.0203144,  0.4294404, -11.6031403,   //O
-//        0.0, 0.0, 0.0449290, -0.0826158, -9.2019475,    //O2
-//        0.0, 0.0, 0.0436378, -0.0335511, -9.5767430,    //NO
-//        0.0, 0.0, 0.0115572,  0.6031679, -12.432750,    //N
-//        0.0, 0.0, 0.0268142,  0.3177838, -11.3155513,   //N2
-//        0.0912, -3.3154, 45.1290, -270.4211, 586.2903,  //O+
-//        0.0908, -3.3020, 44.9511, -269.3877, 584.4130,  //O2+
-//        0.0913, -3.3178,  45.1426, -270.3948, 586.3300, //NO+
-//        0.0895, -3.2573,  44.3511, -265.8276, 576.1313, //N+
-//        0.0897, -3.2618,  44.4079, -266.1462, 577.1449, //N2+
-//        0.0899, -3.2731, 44.5782, -267.2522, 574.4149}; //e-
-//
-//    for (int s = 0; s < nSpecies; ++ s)
-//    {
-//        nIndex = GetSpeciesIndex(speciesName[s]);
-//        int nStart = 5 * nIndex;
-//
-//        blotter_ai[s] = visCoef[nStart];
-//        blotter_bi[s] = visCoef[nStart + 1];
-//        blotter_ci[s] = visCoef[nStart + 2];
-//        blotter_di[s] = visCoef[nStart + 3];
-//        blotter_ei[s] = visCoef[nStart + 4];
-//    }
-//}
-//
-//void CurveFitsMethod::SetGuptaCurveFittingCoefficients(string *speciesName, int nSpecies)
-//{
-//    int nIndex = 0;
-//    RDouble visCoef[55] = {
-//        0.0, 0.0, 0.0205, 0.4257, -11.5803, //O
-//        0.0, 0.0, 0.0484, -0.1455, -8.9231, //O2
-//        0.0, 0.0, 0.0452, -0.0609, -9.4596, //NO
-//        0.0, 0.0, 0.0120, 0.5930, -12.3805, //N
-//        0.0, 0.0, 0.0203, 0.4329, -11.8153, //N2
-//        0.0, 0.0, 0.0000, 2.5000, -32.3606, //O+
-//        0.0, 0.0, 0.0000, 2.5000, -32.0148, //O2+
-//        0.0, 0.0, 0.0000, 2.5000, -32.0453, //NO+
-//        0.0, 0.0, 0.0000, 2.5000, -32.4285, //N+
-//        0.0, 0.0, 0.0000, 2.5000, -32.0827, //N2+
-//        0.0, 0.0, 0.0000, 2.5000, -37.4475}; //e-
-//
-//    for (int s = 0; s < nSpecies; ++ s)
-//    {
-//        nIndex = GetSpeciesIndex(speciesName[s]);
-//        int nStart = 5 * nIndex;
-//
-//        blotter_ai[s] = visCoef[nStart];
-//        blotter_bi[s] = visCoef[nStart + 1];
-//        blotter_ci[s] = visCoef[nStart + 2];
-//        blotter_di[s] = visCoef[nStart + 3];
-//        blotter_ei[s] = visCoef[nStart + 4];
-//    }
-//}
-
 SchmidtNumber::SchmidtNumber()
 {
     scl  = 0;
@@ -1629,77 +1571,6 @@ void MixedGas::Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, 
     }
 }
 
-//void RealGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature)
-//{
-//    using namespace IDX;
-//    RDouble density, oDensity, um, vm, wm, pressure, totalInternalEnergy, squareVelocity, internalEnergy, deltC,fcs,fmin;
-//    int mci;
-//    density = q[IR];
-//    if (density <= zero)
-//    {
-//        prim[IR] = density;
-//        return;
-//    }
-//
-//    oDensity  = 1.0 / density;
-//    um   = q[IU] * oDensity;
-//    vm   = q[IV] * oDensity;
-//    wm   = q[IW] * oDensity;
-//    totalInternalEnergy  = q[IP];    ///den*H
-//    squareVelocity   = um * um + vm * vm + wm * wm;
-//    internalEnergy  = totalInternalEnergy - half * density * squareVelocity;
-//
-//    prim[IR] = density;
-//    prim[IU] = um;
-//    prim[IV] = vm;
-//    prim[IW] = wm;
-//
-//    if (nchem == 1)
-//    {  if(nSpeciesLimit==1)
-//        {
-//            fmin=1.0;
-//            for (int m = nm; m < nl; ++ m)
-//            {       
-//                mci = m-nm;
-//                deltC = q[m] * oDensity - prim[m];
-//                massFractions[mci] = deltC;
-//        
-//                if( prim[m] +  deltC < 0  )
-//                {
-//                    fcs = MIN(MAX(prim[m], 0.1) / (SMALL - deltC), 1.0);
-//                    fmin = MIN(fmin, fcs);
-//                }
-//            }
-//             
-//            for (int m = nm; m < nl; ++ m)
-//            {
-//                mci = m-nm;
-//                massFractions[mci] = prim[m] + fmin * massFractions[mci];
-//                prim[m] = MIN( maximumSpecies[mci], MAX(SMALL,  (1.0 - chemicalRelaxCorf) * prim[m] + chemicalRelaxCorf * massFractions[mci]));
-//            }
-//            //SetMaximumSpecies
-//        }
-//        else
-//        {
-//            for (int m = nm; m < nl; ++ m)
-//            {
-//                prim[m] =MIN( static_cast<RDouble>(one), MAX(SMALL,  (1.0-chemicalRelaxCorf)* prim[m] + chemicalRelaxCorf * q[m] * oDensity));
-//            }
-//        }
-//        NormalizePrimitive(prim);
-//    }
-//
-//    for (int i = 0; i < ntmodel - 1; ++ i)        //! multi-temperature model.
-//    {
-//        prim[nl + nchem + i] = MAX(q[nl + nchem + i] * oDensity, 1.0e-30);
-//    }
-//
-//    //GetPressure(prim, gama, internalEnergy, temperature[0], pressure);
-//    this->GetTemperatureAndPressure(prim, internalEnergy, temperature, pressure);
-//
-//    prim[IP] =  MAX(SMALL, pressure);
-//}
-
 void MixedGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature)
 {
     using namespace IDX;
@@ -1849,11 +1720,6 @@ void MixedGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, 
         prim[nl + i] = MAX(q[nl + i] * oDensity, 1.0e-30);
     }
 
-  /*   internalEnergy = internalEnergy * density;
-   this->GetTemperatureAndPressure(prim, internalEnergy, temperature, pressure);
-    prim[IP] =  MAX(SMALL, pressure);
-    return;*/
-
     //! Obtain the average molecular weight.
     massReciprocal = 0.0;
     for (int i = 0; i < numberOfSpecies; ++ i)
@@ -1932,11 +1798,6 @@ void MixedGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, 
 
         RDouble Etr = internalEnergy - Eve, &trTemperature = temperature[mTT];
         ComputeMixtureCvtrAndEtr(massFractions, trTemperature, gasMixtureCv, gasMixtureEnergy);
-        /*trTemperature = trTemperature + (Etr - gasMixtureEnergy) / gasMixtureCv;
-        if(trTemperature<1e-10)
-        {
-            trTemperature = MAX(trTemperature, SMALL);
-        }*/
 
         TkLimit = (gasMixtureEnergy - Etr) / gasMixtureCv;
         if (TkLimit > 0.9 * trTemperature)
@@ -2011,13 +1872,6 @@ void MixedGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, 
 
         RDouble Etr = internalEnergy - Ev - Ee, &trTemperature = temperature[mTT];
         ComputeMixtureCvtrAndEtr(massFractions, trTemperature, gasMixtureCv, gasMixtureEnergy);
-        /*trTemperature = trTemperature + (Etr - gasMixtureEnergy) / gasMixtureCv;
-        trTemperature = MAX(trTemperature, SMALL);*/
-        /*trTemperature = trTemperature + (Etr - gasMixtureEnergy) / gasMixtureCv;
-        if(trTemperature<1e-10)
-        {
-            trTemperature = MAX(trTemperature, SMALL);
-        }*/
 
         TkLimit = (gasMixtureEnergy - Etr) / gasMixtureCv;
         if (TkLimit > 0.9 * trTemperature)
@@ -3885,9 +3739,7 @@ void MixedGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotatio
     RDouble density, pressure, gasConstant, Tk = 0.0;
     density = primitiveVariables[IR];
     pressure = primitiveVariables[IP];
-    gasConstant = GetUniversalGasConstant();
-    //int nChemicalFlowStep = GlobalDataBase::GetIntParaFromDB("nChemicalFlowStep");
-    //int nOuterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    gasConstant = GetUniversalGasConstant();;
 
     if (nchem == 0)     //! Perfect gas.
     {
@@ -3949,8 +3801,6 @@ void MixedGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotati
     density = primitiveVariables[IR];
     pressure = primitiveVariables[IP];
     gasConstant = GetUniversalGasConstant();
-    //int nChemicalFlowStep = GlobalDataBase::GetIntParaFromDB("nChemicalFlowStep");
-    //int nOuterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
 
    // Compute the mass fraction of the last species.
     NormalizePrimitive(primitiveVariables);
@@ -4129,9 +3979,6 @@ void MixedGas::GetPressure(RDouble *primitiveVars, RDouble gama, RDouble interna
         pressure = (gama - one) * internalEnergy;
         return;
     }
-
-    //int nOuterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
-    //int nChemicalFlowStep = GlobalDataBase::GetIntParaFromDB("nChemicalFlowStep");
 
     using namespace IDX;
     RDouble density, specificInternalEnergy, gasConstant;
@@ -4911,16 +4758,6 @@ void MixedGas::ComputeSpeciesHeatConductivityByEuckenFormula(RDouble *viscosity,
 
 RDouble MixedGas::ComputeMixtureGasHeatConductivityByWassilewaFormula(RDouble *primitiveVariables, RDouble temperature)
 {
-    //int nSpecies = this->GetNumberOfSpecies();
-
-    //! Allocate the memory spaces.
-    //RDouble *massFraction = new RDouble[nSpecies];
-    //RDouble *moleFraction = new RDouble[nSpecies];// To store the mole fraction of each species.
-    //RDouble *speciesCp = new RDouble[nSpecies];   // To store the species' specific heat at constant pressure.
-    //RDouble *phi = new RDouble[nSpecies];         // To store the partition function of each species.
-    //RDouble *viscosity = new RDouble[nSpecies];   // To store the viscosity of each species.
-    //RDouble *conductivity = new RDouble[nSpecies];// To store the heat conductivity of each species.
-
     for (int i = 0; i < numberOfSpecies; ++ i)
     {
         massFractions[i] = primitiveVariables[nm + i];
@@ -4950,14 +4787,6 @@ RDouble MixedGas::ComputeMixtureGasHeatConductivityByWassilewaFormula(RDouble *p
         lambda += speciesConductivity[i] * moleFractions[i] / workSpecies[i];
     }
 
-    //! Remove the allocated memory space.
-    //delete []massFraction;
-    //delete []moleFraction;
-    //delete []speciesCp;
-    //delete []phi;
-    //delete []viscosity;
-    //delete []conductivity;
-    // Return the value.
     return lambda;
 }
 
@@ -4979,144 +4808,6 @@ void MixedGas::GetPartitionFunctionValues(RDouble *target, RDouble *speciesMass,
         phi[s] = phiTmp;
     }
 }
-
-//void RealGas::ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int nCellNumber)
-//{
-//    using namespace IDX;
-//    RDouble *speciesMass  = molecularProperty->GetMolecularWeightDimensional();
-//    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-//    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-//    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-//    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-//
-//    //! The dimensional value of control temperature of chemical reaction.
-//    //RDouble dimensionalDensity, forwardReactionTemperature, backwardReactionTemperature;
-//    //RDouble forwardReactionItem, backwardReactionItem, collisionItem;
-//    //RDouble densityPerMass, fSum;
-//
-//    //! The variables is used for dimensionless processing. referenceSpeciesEquation denotes the reference values of source items \n
-//    //! in the species transport equations, while referenceEnergyEquation is the reference values of source items for the energy equations.
-//    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-//
-//    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-//    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-//    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-//
-//    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-//    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-//    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-//
-//    int *reactionType = stoichiometricEquation->GetChemicalReactionType();
-//    bool *isCollisionFlag = stoichiometricEquation->GetCollisionReactionFlag();
-//
-//    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-//    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-//    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-//
-//    RDouble *formationRates = new RDouble [numberOfReaction];     //! Formation rates of chemical reactions.
-//    RDouble *forwardRates   = new RDouble [numberOfReaction];     //! Equilibrium constant of forward reaction.
-//    RDouble *backwardRates  = new RDouble [numberOfReaction];     //! Equilibrium constant of backward reaction.
-//
-//    RDouble trsTemperature, vibTemperature, Tf[6], Tb[6];
-//    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-//    {
-//        //! The control temperature of front reaction.
-//        //RDouble forwardReactionTemperature = MAX(temperatures[ITT][iCell] * referenceTemperature, SMALL);
-//
-//        ////! The control temperature of back reaction. it is temperature of translation and rotation.
-//        //RDouble backwardReactionTemperature = forwardReactionTemperature;
-//        //if (ntmodel > 1)
-//        //{
-//        //    //! Referred to the Park and Sharma formula.
-//        //    forwardReactionTemperature = pow(forwardReactionTemperature, 0.6) * pow(temperatures[ITV][iCell] * referenceTemperature, 0.4);
-//        //}
-//
-//        //Obtain the dimensional temperature.
-//        trsTemperature = MAX(temperatures[ITT][iCell] * referenceTemperature, SMALL);
-//        vibTemperature = trsTemperature;
-//        if (ntmodel > 1)
-//        {
-//            vibTemperature = MAX(temperatures[ITV][iCell] * referenceTemperature, SMALL);
-//        }
-//        //the control temperature of dissociation reaction, e.g. AB = A + B.
-//        Tf[0] = pow(trsTemperature, parkVDPower) * pow(vibTemperature, 1.0 - parkVDPower);
-//        Tb[0] = trsTemperature;
-//        //the control temperature of electron collision dissociation reaction, e.g. AB + e- = A + B + e-.
-//        Tf[1] = vibTemperature;
-//        Tb[1] = sqrt(trsTemperature * vibTemperature);
-//        //the control temperature of neutral exchange reaction, e.g. AB + C = A + BC.
-//        Tf[2] = trsTemperature;
-//        Tb[2] = trsTemperature;
-//        //the control temperature of charge exchange reaction, e.g. AB+ + C = A+ + BC.
-//        Tf[3] = trsTemperature;
-//        Tb[3] = trsTemperature;
-//        //the control temperature of recombination ionization reaction, e.g. A + B = AB+ + e-.
-//        Tf[4] = trsTemperature;
-//        Tb[4] = Tb[1];
-//        //the control temperature of electron collision ionization reaction, e.g. A + e- = A+ + 2e-.
-//        Tf[5] = vibTemperature;
-//        Tb[5] = vibTemperature;
-//
-//        //! The control temperature of front reaction.
-//        RDouble forwardReactionTemperature = Tf[0];
-//        //! The control temperature of back reaction. it is temperature of translation and rotation.
-//        RDouble backwardReactionTemperature = Tb[0];
-//        RDouble dimensionalDensity = primitiveVariables[IR][iCell] * referenceDensity;
-//        for (int iReaction = 0; iReaction < numberOfReaction; ++ iReaction)
-//        {
-//            RDouble forwardReactionItem = 1.0;
-//            RDouble backwardReactionItem = 1.0;
-//            RDouble collisionItem = 0.0;
-//            int nType = reactionType[iReaction]; //Get the type of chemical reaction.
-//            forwardReactionTemperature = Tf[nType];
-//            backwardReactionTemperature = Tb[nType];
-//
-//            for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
-//            {
-//                RDouble densityPerMass = dimensionalDensity * primitiveVariables[nm + iSpecies][iCell] * speciesMassReciprocal[iSpecies];
-//
-//                for (int i = 0; i < forwardStoichNumber[iReaction][iSpecies]; ++ i)
-//                {
-//                    forwardReactionItem *= densityPerMass;
-//                }
-//                for (int i = 0; i < backwardStoichNumber[iReaction][iSpecies]; ++ i)
-//                {
-//                    backwardReactionItem *= densityPerMass;
-//                }
-//                //forwardReactionItem *= pow(densityPerMass, forwardStoichNumber[iReaction][iSpecies]);
-//                //backwardReactionItem *= pow(densityPerMass, backwardStoichNumber[iReaction][iSpecies]);
-//                //! The collision efficiency of species ispecies in the ireaction reaction.
-//                collisionItem = collisionItem + densityPerMass * thirdBodyStoichNumber[iReaction][iSpecies]; 
-//            }
-//
-//            if (!isCollisionFlag[iReaction])
-//            {
-//                collisionItem = 1.0;
-//            }
-//
-//            //! Compute equilibrium constant of the front reaction.
-//            forwardRates[iReaction] = forwardRateCoefA[iReaction] * pow(forwardReactionTemperature, forwardRateCoefB[iReaction]) * exp(-forwardRateCoefC[iReaction] / forwardReactionTemperature);
-//            //! Compute equilibrium constant of the reverse reaction.
-//            backwardRates[iReaction] = backwardRateCoefA[iReaction] * pow(backwardReactionTemperature, backwardRateCoefB[iReaction]) * exp(-backwardRateCoefC[iReaction] / backwardReactionTemperature);
-//            //! Formation rate of the ireaction reaction.
-//            formationRates[iReaction] = (forwardRates[iReaction] * forwardReactionItem - backwardRates[iReaction] * backwardReactionItem) * collisionItem;
-//        }
-//
-//        for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
-//        {
-//            RDouble fSum = 0.0;
-//            for (int iReaction = 0; iReaction < numberOfReaction; ++ iReaction)
-//            {
-//                fSum += formationRates[iReaction] * (backwardStoichNumber[iReaction][iSpecies] - forwardStoichNumber[iReaction][iSpecies]);
-//            }
-//            //! Compute the source terms of the specified species.
-//            chemicalSourceTerms[iSpecies][iCell] = speciesMass[iSpecies] * fSum * cellVolume[iCell] * referenceSpeciesEquation;
-//        }
-//    }
-//    delete []formationRates;
-//    delete []forwardRates;
-//    delete []backwardRates;
-//}
 
 void MixedGas::ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int iCell)
 {
@@ -5719,185 +5410,6 @@ void MixedGas::GetEffectiveCollisionCrossSectionalArea(Thermo_Param *thermodynam
         }
     }
 }
-
-//void RealGas::ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **srs, int nlen)
-//{
-//    using namespace IDX;
-//    RDouble *molecularWeightDimensional  = molecularProperty->GetMolecularWeightDimensional();
-//    RDouble *oMolecularWeightDimensional = molecularProperty->GetMolecularWeightReciprocalDimensional();
-//
-//    RDouble refDimensionalTemperature = this->referenceParameterDimensional.GetTemperature();
-//    RDouble reference_velocity_dimensional = this->referenceParameterDimensional.GetVelocity();
-//    RDouble refDimensionalDensity = this->referenceParameterDimensional.GetDensity();
-//
-//    RDouble temperatureDimensional, densityDimensional, oTemperatureDimensional, oTemperatureDimensional2;
-//    RDouble diffp, diffn, posr, negr, comm, pztt;
-//    RDouble xis, srst;
-//    RDouble density, temperature;
-//    RDouble odensityDimensionalJS, odensityDimensionalNS;
-//    RDouble cpDimensional, cvDimensional, omav, coef_tr;
-//
-//    RDouble lov = reynoldsReferenceLengthDimensional / reference_velocity_dimensional;
-//
-//    int neqn = nl + nchem;
-//
-//    RDouble *afr = reactionRate->GetForwardReactionRateCoefficientA();
-//    RDouble *bfr = reactionRate->GetForwardReactionRateCoefficientB();
-//    RDouble *cfr = reactionRate->GetForwardReactionRateCoefficientC();
-//             
-//    RDouble *abr = reactionRate->GetBackwardReactionRateCoefficientA();
-//    RDouble *bbr = reactionRate->GetBackwardReactionRateCoefficientB();
-//    RDouble *cbr = reactionRate->GetBackwardReactionRateCoefficientC();
-//
-//    int **cvp = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-//    int **cvn = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-//    RDouble **cpz = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-//
-//    RDouble *cq = new RDouble [numberOfReaction];
-//    RDouble *kf = new RDouble [numberOfReaction];
-//    RDouble *kb = new RDouble [numberOfReaction];
-//
-//    RDouble *pos = new RDouble[numberOfReaction];
-//    RDouble *neg = new RDouble[numberOfReaction];
-//    RDouble *pzt = new RDouble[numberOfReaction];
-//    int    *npz = new int   [numberOfReaction];
-//
-//    RDouble *c_a1 = new RDouble[numberOfSpecies];
-//    RDouble *c_a2 = new RDouble[numberOfSpecies];
-//    RDouble *c_bk = new RDouble[numberOfSpecies];
-//    RDouble *c_tr = new RDouble[numberOfSpecies];
-//
-//    RDouble *prim = new RDouble[neqn];
-//
-//    for (int i = 0; i < nlen; ++ i)
-//    {
-//        density     = q[IR ][i];
-//        temperature = t[ITT][i];
-//
-//        densityDimensional = density * refDimensionalDensity;
-//        temperatureDimensional = temperature * refDimensionalTemperature;
-//        oTemperatureDimensional = one / ( temperatureDimensional + SMALL );
-//        oTemperatureDimensional2 = SQR( oTemperatureDimensional );
-//
-//        for (int m = 0; m < neqn; ++ m)
-//        {
-//            prim[m] = q[m][i];
-//        }
-//
-//        for (int ireaction = 0; ireaction < numberOfReaction; ++ ireaction)
-//        {
-//            pos[ireaction] = 1.0;
-//            neg[ireaction] = 1.0;
-//            pzt[ireaction] = 0.0;
-//            for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-//            {
-//                xis = densityDimensional * ( prim[nm+ispecies] + SMALL ) * oMolecularWeightDimensional[ispecies];
-//
-//                for (int nexp = 0; nexp < cvp[ireaction][ispecies]; ++ nexp)
-//                {
-//                    pos[ireaction] *= xis;
-//                }
-//
-//                for (int nexp = 0; nexp < cvn[ireaction][ispecies]; ++ nexp)
-//                {
-//                    neg[ireaction] *= xis;
-//                }
-//
-//                pzt[ireaction] += xis * cpz[ireaction][ispecies];
-//            }
-//
-//            npz[ireaction] = 0;
-//            for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-//            {
-//                npz[ireaction] += static_cast<int>(cpz[ireaction][ispecies] + 0.1);
-//            }
-//
-//            if (npz[ireaction] == 0)
-//            {
-//                pzt[ireaction] = one;
-//            }
-//
-//            kf[ireaction] = afr[ireaction] * pow(temperatureDimensional, bfr[ireaction]) * exp(-cfr[ireaction] * oTemperatureDimensional);
-//            kb[ireaction] = abr[ireaction] * pow(temperatureDimensional, bbr[ireaction]) * exp(-cbr[ireaction] * oTemperatureDimensional);
-//        }
-//
-//        for (int ispecies = 0; ispecies < numberOfSpecies - 1; ++ ispecies)
-//        {
-//            c_a2[ispecies] = 0.0;
-//            for (int ireaction = 0; ireaction < numberOfReaction; ++ ireaction)
-//            {
-//                diffp = bfr[ireaction] * oTemperatureDimensional + cfr[ireaction] * oTemperatureDimensional2;
-//                diffn = bbr[ireaction] * oTemperatureDimensional + cbr[ireaction] * oTemperatureDimensional2;
-//                posr = pos[ireaction] * pzt[ireaction] * kf[ireaction] * diffp;
-//                negr = neg[ireaction] * pzt[ireaction] * kb[ireaction] * diffn;
-//                comm = ( cvn[ireaction][ispecies] - cvp[ireaction][ispecies] );
-//                c_a2[ispecies] += comm * ( posr - negr );
-//            }
-//            c_a2[ispecies] *= molecularWeightDimensional[ispecies];
-//        }
-//
-//        ComputeSpeciesEnthalpyDimensional(temperature, speciesEnthalpy);
-//        ComputeSpeciesConstantPressureSpecificHeatDimensional(temperature, speciesCp);
-//        ComputeMixtureByPrimitive(prim, speciesCp, cpDimensional);
-//        ComputeMixtureByPrimitive(prim, oMolecularWeightDimensional, omav);
-//
-//        cvDimensional = cpDimensional - rjmk * omav;
-//        coef_tr       = - 1.0 / ( densityDimensional * cvDimensional );
-//
-//        for (int ispecies = 0; ispecies < numberOfSpecies - 1; ++ ispecies)
-//        {
-//            c_tr[ispecies] = coef_tr * ( speciesEnthalpy[ispecies] - speciesEnthalpy[numberOfSpecies-1] - rjmk * temperatureDimensional * 
-//                                 ( oMolecularWeightDimensional[ispecies] - oMolecularWeightDimensional[numberOfSpecies-1] )  );
-//        }
-//
-//        for (int ispecies = 0; ispecies < numberOfSpecies - 1; ++ ispecies)
-//        {
-//            for (int jspecies = 0; jspecies < numberOfSpecies - 1; ++ jspecies)
-//            {
-//                c_bk[jspecies] = 0.0;
-//                odensityDimensionalJS = 1.0 / ( densityDimensional * ( prim[nm+jspecies         ] + SMALL ) );
-//                odensityDimensionalNS = 1.0 / ( densityDimensional * ( prim[nm+numberOfSpecies-1] + SMALL ) );
-//                for (int ireaction = 0; ireaction < numberOfReaction; ++ ireaction)
-//                {
-//                    diffp = cvp[ireaction][jspecies] * odensityDimensionalJS - cvp[ireaction][numberOfSpecies-1] * odensityDimensionalNS;
-//                    diffn = cvn[ireaction][jspecies] * odensityDimensionalJS - cvn[ireaction][numberOfSpecies-1] * odensityDimensionalNS;
-//                    posr  = pos[ireaction] * kf[ireaction] * diffp;
-//                    negr  = neg[ireaction] * kb[ireaction] * diffn;
-//                    comm  = ( cvn[ireaction][ispecies] - cvp[ireaction][ispecies] );
-//                    c_bk[jspecies] += comm * ( posr - negr ) * pzt[ireaction];
-//                    if (npz[ireaction] != 0)
-//                    {
-//                        pztt = cpz[ireaction][jspecies         ] * oMolecularWeightDimensional[jspecies         ]
-//                             - cpz[ireaction][numberOfSpecies-1] * oMolecularWeightDimensional[numberOfSpecies-1];
-//                        c_bk[jspecies] += comm * ( kf[ireaction] * pos[ireaction] - kb[ireaction] * neg[ireaction] ) * pztt;
-//                    }
-//                }
-//                c_bk[jspecies] = molecularWeightDimensional[ispecies] * c_bk[jspecies];
-//            }
-//            srst = 0.0;
-//            for (int jspecies = 0; jspecies < numberOfSpecies - 1; ++ jspecies)
-//            {
-//                srst += ABS( c_bk[jspecies] + c_a2[ispecies] * c_tr[jspecies] );
-//            }
-//            srs[ispecies][i] = srst * lov * vol[i];
-//        }
-//    }
-//    delete []cq;
-//    delete []kf;
-//    delete []kb;
-//
-//    delete []pos;
-//    delete []neg;
-//    delete []pzt;
-//    delete []npz;
-//
-//    delete []c_a1;
-//    delete []c_a2;
-//    delete []c_bk;
-//    delete []c_tr;
-//
-//    delete []prim;
-//}
 
 void MixedGas::ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **srs, int iCell)
 {
@@ -6589,34 +6101,14 @@ void MixedGas::ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RD
         }
         else         //! Multi-Temperature Model.
         {
-            //if (ntmodel == 2 && nTEnergyModel == 1)
-            //{
-            //    for (int s = 0; s < numberOfSpecies; ++ s)
-            //    {
-            //        primVars[nm + s] = massFractions[s];
-            //    }
-            //    RDouble tArray[3] = {temperatures[ITT][iCell], temperatures[ITV][iCell], temperatures[ITV][iCell]};
-            //    this->ComputeSpecificHeat(primVars, tArray, speciesCvtr, speciesCvv, totalCvtr, totalCvv);
-            //    totalCvtr = totalCvtr / referenceSpecificHeat;
-            //    totalCvv  = totalCvv / referenceSpecificHeat;
-
-            //    this->ComputeEnergy(primVars, tArray, speciesEtr, speciesEv, speciesH, totalEtr, totalEv, totalH0);
-            //    for (int s = 0; s < numberOfSpecies; ++ s)
-            //    {
-            //        energy[s] = speciesEtr[s] * referenceEnergy;
-            //    }
-            //}
-            //else
-            //{
-                // Compute the specific heat at constant volume of each species.
-                this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(specificHeatCv);
-                this->ComputeMixtureByMassFraction(massFractions, specificHeatCv, mixGasCv);
-                for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-                {
-                    energy[s] = specificHeatCv[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
-                    //energy[s] = specificHeatCv[s] * trsTemperature + thermodynamicProperties[s].hs0; //this is correct.
-                }
-            //}
+            // Compute the specific heat at constant volume of each species.
+            this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(specificHeatCv);
+            this->ComputeMixtureByMassFraction(massFractions, specificHeatCv, mixGasCv);
+            for (int s = 0; s < numberOfSpecies; ++s)     //! Compute internal energy of each species.
+            {
+                energy[s] = specificHeatCv[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
+                //energy[s] = specificHeatCv[s] * trsTemperature + thermodynamicProperties[s].hs0; //this is correct.
+            }
         }
 
         forwardEnergy = density * mixGasCv * forwardReactionTemperature;
@@ -6656,22 +6148,8 @@ void MixedGas::ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RD
             backwardRates[r] = kb * backwardRates[r];   //! RBr.
 
             //Compute the partial derivative coefficient of the reaction temperature to the vibrational energy, namely dT / d(rho * Ev);
-            //if (ntmodel == 2 && nTEnergyModel == 1)
-            //{
-            //    RDouble TvDivT = vibTemperature / trsTemperature;
-            //    RDouble phi_1 = Tc1[nType] * pow(TvDivT, 1.0 - Tc1[nType]) / (density * totalCvtr);
-            //    phi_1 -= (1.0 - Tc1[nType]) * pow (TvDivT, -Tc1[nType]) / (density * totalCvv);
-            //    Drf = phi_1 * (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardReactionTemperature;
-
-            //    RDouble phi_2 = Tc2[nType] * pow(TvDivT, 1.0 - Tc2[nType]) / (density * totalCvtr);
-            //    phi_2 -= (1.0 - Tc2[nType]) * pow (TvDivT, -Tc2[nType]) / (density * totalCvv);
-            //    Drb = phi_2 * (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardReactionTemperature;
-            //}
-            //else
-            //{
-                Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
-                Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
-            //}
+            Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
+            Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
 
             //! Compute the partial derivatives to each species, (dRr / dCs).
             for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
@@ -6792,8 +6270,7 @@ void MixedGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primit
     RDouble *densityMassFraction = Thermo_Energy_temparay.Cvvs;
     RDouble **partialValues =  Thermo_Energy_temparay.partialValues;
     RDouble **partialValues2 =  Thermo_Energy_temparay.partialValues2;
-    //RDouble primVars[MAX_SPECIES_NUM], speciesCvtr[MAX_SPECIES_NUM], speciesCvv[MAX_SPECIES_NUM], totalCvtr, totalCvv;
-    //RDouble speciesEtr[MAX_SPECIES_NUM], speciesEv[MAX_SPECIES_NUM], speciesH[MAX_SPECIES_NUM], totalEtr, totalEv, totalH0;
+
     //The power of the translational temperature in Park model.
     RDouble Tc1[6] = {parkVDPower, 0.0, 1.0, 1.0, 1.0, 0.0}; //for the forward reaction.
     RDouble Tc2[6] = {1.0, 0.5, 1.0, 1.0, 0.5, 0.0}; //for the backward reaction.
@@ -6833,22 +6310,22 @@ void MixedGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primit
                 {
                     vibTemperature = MAX(temperatures(i, j, k, ITV)  * referenceTemperature, SMALL);
                 }
-                //the control temperature of dissociation reaction, e.g. AB = A + B.
+                //! The control temperature of dissociation reaction, e.g. AB = A + B.
                 Tf[0] = pow(static_cast<RealData>(trsTemperature), static_cast<RealData>(parkVDPower)) * pow(static_cast<RealData>(vibTemperature), static_cast<RealData>(1.0 - parkVDPower));
                 Tb[0] = trsTemperature;
-                //the control temperature of electron collision dissociation reaction, e.g. AB + e- = A + B + e-.
+                //! The control temperature of electron collision dissociation reaction, e.g. AB + e- = A + B + e-.
                 Tf[1] = vibTemperature;
                 Tb[1] = sqrt(static_cast<RealData>(trsTemperature * vibTemperature));
-                //the control temperature of neutral exchange reaction, e.g. AB + C = A + BC.
+                //! The control temperature of neutral exchange reaction, e.g. AB + C = A + BC.
                 Tf[2] = trsTemperature;
                 Tb[2] = trsTemperature;
-                //the control temperature of charge exchange reaction, e.g. AB+ + C = A+ + BC.
+                //! The control temperature of charge exchange reaction, e.g. AB+ + C = A+ + BC.
                 Tf[3] = trsTemperature;
                 Tb[3] = trsTemperature;
-                //the control temperature of recombination ionization reaction, e.g. A + B = AB+ + e-.
+                //! The control temperature of recombination ionization reaction, e.g. A + B = AB+ + e-.
                 Tf[4] = trsTemperature;
                 Tb[4] = Tb[1];
-                //the control temperature of electron collision ionization reaction, e.g. A + e- = A+ + 2e-.
+                //! The control temperature of electron collision ionization reaction, e.g. A + e- = A+ + 2e-.
                 Tf[5] = vibTemperature;
                 Tb[5] = vibTemperature;
 
@@ -6930,33 +6407,13 @@ void MixedGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primit
 
                     kf = exp(static_cast<RealData>(kf));
                     kb = exp(static_cast<RealData>(kb));
-                    
-                   /* if(r>10)
-                    {
-                        kf=0.1*kf;
-                        kb=0.1*kb;                    
-                    }*/
 
                     forwardRates[r] = kf * forwardRates[r];     //! RAr.
                     backwardRates[r] = kb * backwardRates[r];   //! RBr.
 
-                    //Compute the partial derivative coefficient of the reaction temperature to the vibrational energy, namely dT / d(rho * Ev);
-                    //if (ntmodel == 2 && nTEnergyModel == 1)
-                    //{
-                    //    RDouble TvDivT = vibTemperature / trsTemperature;
-                    //    RDouble phi_1 = Tc1[nType] * pow(TvDivT, 1.0 - Tc1[nType]) / (density * totalCvtr);
-                    //    phi_1 -= (1.0 - Tc1[nType]) * pow (TvDivT, -Tc1[nType]) / (density * totalCvv);
-                    //    Drf = phi_1 * (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardReactionTemperature;
+                    Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
+                    Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
 
-                    //    RDouble phi_2 = Tc2[nType] * pow(TvDivT, 1.0 - Tc2[nType]) / (density * totalCvtr);
-                    //    phi_2 -= (1.0 - Tc2[nType]) * pow (TvDivT, -Tc2[nType]) / (density * totalCvv);
-                    //    Drb = phi_2 * (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardReactionTemperature;
-                    //}
-                    //else
-                    //{
-                        Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
-                        Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
-                    //}
 
                     //! Compute the partial derivatives to each species, (dRr / dCs).
                     for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
@@ -7046,37 +6503,11 @@ void MixedGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primit
                     }
                 }
 
-                /*double r0[10],r1[10];
-
-                if(i==114&&j==29&&k==1)
-                {
-                    for (int s = 0; s < numberOfSpecies; ++ s)
-                    {
-                        r0[s] = chemicalSourceTerms(i, j, k, s);
-                    }
-
-
-                    for (int s = 0; s < numberOfSpecies; ++ s)
-                    {
-                        r1[s] = sourceDerivatives(i, j, k, s, s);
-                    }
-
-                    r1[0] = 0;
-                }*/
-
-
         //Inside of the loop.
             }
         }
     }
 
-    //delete []energy;
-    //delete []specificHeatCv;
-    //delete []forwardRates;
-    //delete []backwardRates;
-    //delete []collisionRates;
-    //delete []densityMassFraction;
-    //DelPointer2(partialValues);
 }
 
 void MixedGas::ComputeChemicalSourceDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
@@ -8839,20 +8270,6 @@ void MixedGas::ComputeEnergySourceAndJacobianT3D3(int *Inzone, RDouble4D &primit
     RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
     RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
     RDouble reference2 = referenceSpeciesEquation / squareVelocity;
-
-    //RDouble *Omegas = new RDouble[numberOfSpecies];
-    //RDouble *sigma = new RDouble[numberOfSpecies];
-    //RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    //RDouble *speciesCve = new RDouble[numberOfSpecies];
-    //RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    //RDouble *speciesCvvStar2 = new RDouble[numberOfSpecies];
-    //RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    //RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    //RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    //RDouble *vibrationEnergyStar2 = new RDouble[numberOfSpecies];
-    //RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    //RDouble *transElectronTime = new RDouble[numberOfSpecies];
-    //RDouble **OmegaDerivative = NewPointer2 <RDouble> (numberOfSpecies, ntmodel - 1);
 
     RDouble *Omegas = Thermo_Energy_temparay.Cps;
     RDouble *sigma = Thermo_Energy_temparay.Cvs;
@@ -11798,9 +11215,6 @@ void MixedGas::ComputeMixtureGasHeatConductivity(RDouble *primitiveVariables, RD
     //int nTemperatureModel = GetTemperatureModel();
     if (ntmodel > 1)
     {
-        //transRotationConductivity = GetMixedGasTranslationAndRotationHeatConductivity(primitiveVariables, transRotationTemperature, electronTemperature);
-        //vibrationConductivity = GetMixedGasVibrationHeatConductivity(primitiveVariables, transRotationTemperature, vibrationTemperature, electronTemperature);
-        //electronConductivity = GetMixedGasElectronHeatConductivity(primitiveVariables, transRotationTemperature, electronTemperature);
         ComputeMixedGasTranslationVibrationElectronHeatConductivity(primitiveVariables, transRotationTemperature, vibrationTemperature, electronTemperature, transRotationConductivity, vibrationConductivity, electronConductivity);
     }
     else     //! One-temperature model.
@@ -11903,16 +11317,22 @@ void MixedGas::GetTemperatureAndCP(RDouble *prim, RDouble &Tm, RDouble &cp)
     int nchem = GetChemicalType();
     int nm = GetNSEquationNumber();
 
-    RDouble gama = 1.4;     //! Specific heat ratio.
+    //! Specific heat ratio
+    RDouble gama = 1.4;
     RDouble &ro = prim[0];
     RDouble &pm = prim[4];
-    RDouble R = GetCoefficientOfStateEquation();     //! The non-dimensional universal gas constant.
-    cp = gama / (gama - 1.0) * R;    //! The constant pressure specific heat of perfect gas.
-    Tm = pm / (ro * R);     //! Compute the temperature using the state equation of perfect gas.
+    //! The non-dimensional universal gas constant.
+    RDouble R = GetCoefficientOfStateEquation();
+    //! The constant pressure specific heat of perfect gas.
+    cp = gama / (gama - 1.0) * R;
+    //! Compute the temperature using the state equation of perfect gas.
+    Tm = pm / (ro * R);
 
-    if (nchem == 1)     //! Mixture gas condition.
+    //! Mixture gas condition.
+    if (nchem == 1)
     {
-        int ns = GetNumberOfSpecies();    //! Save the number of species.
+        //! Save the number of species
+        int ns = GetNumberOfSpecies();
         RDouble *fs = new RDouble[ns];
         for (int i = 0; i < ns; i ++)
         {
@@ -11928,7 +11348,8 @@ void MixedGas::GetTemperatureAndCP(RDouble *prim, RDouble &Tm, RDouble &cp)
         //! Compute constant pressure specific heat of each species.
         ComputeConstantPressureSpecificHeatByMassFraction(fs, Tm, cp);
 
-        delete [] fs;     //! Remove the memory space.
+        //! Remove the memory space.
+        delete [] fs;
     }
 }
 
@@ -11945,12 +11366,13 @@ RDouble MixedGas::GetTemperature(RDouble *prim)
 
     if (nchem == 1)
     {
-        //! Compute the temperature of mixture gas.
-        int ns = GetNumberOfSpecies();     //! Save the number of species.
+        //! Save the number of species.
+        int ns = GetNumberOfSpecies();
         RDouble *fs = new RDouble[ns];
+        //! Obtain the mass fraction of each species.
         for (int i = 0; i < ns; i ++)
         {
-            fs[i] = prim[i + nm];     //! Obtain the mass fraction of each species.
+            fs[i] = prim[i + nm];
         }
 
         //! Obtain the average molecular weight of mixture gas.
@@ -11958,8 +11380,8 @@ RDouble MixedGas::GetTemperature(RDouble *prim)
         R = GetUniversalGasConstant();     //! The non-dimensional universal gas constant.
         //! Compute the temperature using the state equation of mixture gas.
         Tm = pm * M / (ro * R);
-
-        delete [] fs;     //! Remove the memory space.
+        //! Remove the memory space.
+        delete [] fs;
     }
     return Tm;
 }
@@ -12091,13 +11513,13 @@ void MixedGas::ComputeSpecificHeat(RDouble *primitiveVars, RDouble *temperatures
     RDouble gasConstant = GetUniversalGasConstant();
     RDouble *speciesMass = molecularProperty->GetMolecularWeight();
 
-    //Compute the translational-rotational specific heat of species.
+    //! Compute the translational-rotational specific heat of species.
     this->ComputeTranslationAndRotationSpecificHeatAtConstantVolume(spciesCvtr);
 
-    //Compute the vibrational specific heat of species.
+    //! Compute the vibrational specific heat of species.
     this->ComputeSpeciesConstantVolumeSpecificHeat(temperatures[IDX::ITV], spciesCvv);
 
-    //Compute the total specific heat of mixture gas.
+    //! Compute the total specific heat of mixture gas.
     totalCvtr = 0.0;
     totalCvv = 0.0;
     for (int s = 0; s < numberOfSpecies; ++ s)
@@ -12113,12 +11535,12 @@ void MixedGas::ComputeEnergy(RDouble *primitiveVars, RDouble *temperatures, RDou
 {
     RDouble modifyCoef = 1.5;
     RDouble speciesCvtr[MAX_SPECIES_NUM];
-    //Obtain the translation-rotation specific heat at constant volume.
+    //! Obtain the translation-rotation specific heat at constant volume.
     ComputeTranslationAndRotationSpecificHeatAtConstantVolume(speciesCvtr);
 
-    //Obtain the thermodynamic properties of species.
+    //! Obtain the thermodynamic properties of species.
     Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
-    //Compute the translational-rotational energies of species.
+    //! Compute the translational-rotational energies of species.
     for (int s = 0; s < this->numberOfSpecies; ++ s)
     {
         spciesEtr[s]  = speciesCvtr[s] * temperatures[IDX::ITT];
@@ -12128,10 +11550,10 @@ void MixedGas::ComputeEnergy(RDouble *primitiveVars, RDouble *temperatures, RDou
     RDouble gasConstant = this->GetUniversalGasConstant();// dimensional universal gas constant.
     RDouble *speciesMass = molecularProperty->GetMolecularWeight();
 
-    //Compute the enthalpies of species.
+    //! Compute the enthalpies of species.
     this->ComputeSpeciesEnthalpy(temperatures[IDX::ITV], spciesEnthalpy);
 
-    //Compute the vibrational energies of species.
+    //! Compute the vibrational energies of species.
     totalEtr = 0.0;
     totalEv = 0.0;
     totalEnthalpy = 0.0;
@@ -12153,7 +11575,7 @@ void MixedGas::ComputePressureDerivatives(RDouble *primitiveVars, RDouble *tempe
 {
     using namespace IDX;
     RDouble sigma1 = 0.0, sigma2 = 0.0;
-    //Obtain the thermodynamic properties of species.
+    //! Obtain the thermodynamic properties of species.
     Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
     int *speciesCharge = this->molecularProperty->GetIonTypeOfSpecies();
     RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
@@ -12211,9 +11633,9 @@ void MixedGas::ModifyVibrationEnergy(char *filepath)
 
     RDouble speciesCvtr[MAX_SPECIES_NUM], spciesEtr[MAX_SPECIES_NUM], spciesEnthalpy[MAX_SPECIES_NUM], spciesEv[MAX_SPECIES_NUM];
     RDouble speciesEv1[MAX_SPECIES_NUM], speciesEe[MAX_SPECIES_NUM], speciesCvv[MAX_SPECIES_NUM], speciesCve[MAX_SPECIES_NUM];
-    //Obtain the thermodynamic properties of species.
+    //! Obtain the thermodynamic properties of species.
     Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
-    //Obtain the translation-rotation specific heat at constant volume.
+    //! Obtain the translation-rotation specific heat at constant volume.
     this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCvtr);
 
     RDouble gasConstant = rjmk;// dimensional universal gas constant.
@@ -12223,13 +11645,13 @@ void MixedGas::ModifyVibrationEnergy(char *filepath)
     while (Tv <= 30000.0)
     {
         Ttr = Tv;
-        //Compute the translational-rotational energies of species.
+        //! Compute the translational-rotational energies of species.
         for (int s = 0; s < this->numberOfSpecies; ++ s)
         {
             spciesEtr[s] = speciesCvtr[s] * Ttr + thermodynamicProperties[s].hs0;
         }
 
-        //Compute the enthalpies of species.
+        //! Compute the enthalpies of species.
         this->ComputeSpeciesEnthalpyDimensional(Tv / refTemperature, spciesEnthalpy);
 
         this->ComputeDimensionalVibrationEnergy(Tv / refTemperature, speciesEv1);
@@ -12237,7 +11659,7 @@ void MixedGas::ModifyVibrationEnergy(char *filepath)
         this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(Tv / refTemperature, speciesCvv);
         this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(Tv / refTemperature, speciesCve);
 
-        //Compute the vibrational energies of species.
+        //! Compute the vibrational energies of species.
         fprintf(pfile, "%f", Tv);
         for (int s = 0; s < this->numberOfSpecies; ++ s)
         {
@@ -12369,7 +11791,7 @@ void MixedGas::ComputeSpecificHeatByPolynomialFitMethod(RDouble temperature, RDo
     T3 = T1 * T2;
     T4 = T1 * T3;
 
-    //Obtain the interpolation coefficients for the polynomial.
+    //! Obtain the interpolation coefficients for the polynomial.
     this->GetLinearlyAveragedPolynomialCoefficientsT2(T1, this->polynomialCoefT2);
 
     if (isVibrationModel)
@@ -12415,7 +11837,7 @@ void MixedGas::ComputeEnthalpyByPolynomialFitMethod(RDouble temperature, RDouble
     T4 = T1 * T3;
     T5 = T1 * T4;
 
-    //Obtain the interpolation coefficients for the polynomial.
+    //! Obtain the interpolation coefficients for the polynomial.
     this->GetLinearlyAveragedPolynomialCoefficientsT2(T1, this->polynomialCoefT2);
 
     if (isVibrationModel)
@@ -12457,11 +11879,8 @@ void ChemDecompressData(DataContainer *cdata)
 }
 
 void computeOutPressure(RDouble &Pressure, RDouble &staticPressure, RDouble &staticPressureRelaxCorf)
-{   
+{
     Pressure= MAX(staticPressureRelaxCorf * staticPressure + (1.0 - staticPressureRelaxCorf) * Pressure, staticPressure);
-
-//  cout <<"  staticPressure=   "<<  staticPressure  <<"  staticPressureRelaxCorf=   "<<  staticPressureRelaxCorf  << endl;
-//  abort();
 }
 
 void MixedGas::SetMaximumSpecies(RDouble *fs)
@@ -12486,7 +11905,7 @@ void MixedGas::SetMaximumSpecies(RDouble *fs)
 
     if (nSpeciesLimit == 0) return;
 
-    //compute the maximum of each element
+    //! Compute the maximum of each element.
     for (int n = 0; n < 4; n ++)
     {
         for (int i = 0; i < this->numberOfSpecies; i ++)
@@ -12498,7 +11917,7 @@ void MixedGas::SetMaximumSpecies(RDouble *fs)
         }
     }
 
-    //compute the maximum of each Specie
+    //! Compute the maximum of each Specie.
     for (int i = 0; i < this->numberOfSpecies; i ++)
     {
         for (int n = 0; n < 4; n ++)
