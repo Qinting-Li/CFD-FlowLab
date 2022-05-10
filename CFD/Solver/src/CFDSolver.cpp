@@ -1831,6 +1831,11 @@ void CFDSolver::DumpRestartData(ActionKey *actkey)
         return;
     }
 
+    if(PHMPI::IsParallelRun())
+    {
+        actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, "_", 0);
+    }
+
     hid_t file;
     file = CreateHDF5File(actkey->filename);
     actkey->filepos = file;
@@ -2019,6 +2024,11 @@ void CFDSolver::InitFlowAsReadingRestart(ActionKey *actkey)
     if (actkey->filename == "")
     {
         return;
+    }
+
+    if(PHMPI::IsParallelRun())
+    {
+        actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, "_", 0);
     }
 
     hid_t file;

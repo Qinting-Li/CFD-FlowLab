@@ -150,7 +150,13 @@ void IO_HDF5Write::CreateTotalInfo()
     for (int iBlock = 0; iBlock < nBlocksLocal; ++ iBlock)
     {
         block_proc[iBlock] = gridsLocal[iBlock]->GetGridID()->GetIndex();
-        block_idx [iBlock] = gridsLocal[iBlock]->GetGridID()->GetIndex() + count;
+
+        block_idx [iBlock] = gridsLocal[iBlock]->GetGridID()->GetIndex();
+        if (GlobalDataBase::GetIntParaFromDB("parallelPartitionMethod") == 1)
+        {
+            block_idx [iBlock] = iBlock + count;
+        }
+
         block_type[iBlock] = gridsLocal[iBlock]->Type();
         file_index[iBlock] = gridsLocal[iBlock]->GetFileIndex();
     }
