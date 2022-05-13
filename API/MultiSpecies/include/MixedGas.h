@@ -218,14 +218,19 @@ public:
     RDouble * GetTurbulentSchmidtNumberReciprocal() const { return osct; }
 };
 
-//Define the struct to store thermodynamic properties.
+//! Define the struct to store thermodynamic properties.
 typedef struct{
-    int nType; //the type is used to identify electron, monatom and polyatom.
-    int gs0, gs1; //the degeneracy.
-    //RDouble Tvs; //the characteristic temperature of vibration mode.
+    //! The type is used to identify electron, monatom and polyatom.
+    int nType;
+    //! The degeneracy.
+    int gs0, gs1;
+    //! The characteristic temperature of vibration mode.
+    //RDouble Tvs;
     VibrationModeData Tvs;
-    RDouble Tes; //the characteristic temperature of electron mode.
-    RDouble hs0; //the enthalpy of formation.
+    //! The characteristic temperature of electron mode.
+    RDouble Tes;
+    //! The enthalpy of formation.
+    RDouble hs0;
 }Thermo_Param;
 
 
@@ -244,7 +249,7 @@ private:
     RDouble *collisionCrossSection;
     SchmidtNumber *schmidt_number;
 private:
-    //the thermodynamic parameters of species in the mixed gas.
+    //! The thermodynamic parameters of species in the mixed gas.
     Thermo_Param *thermodynamicProperties;
 public:
     void Init(int numberOfSpecies);
@@ -253,11 +258,11 @@ public:
     void Read(DataContainer *cdata);
     void Write(DataContainer *cdata);
 public:
-    //!Obtain the nondimensional molecular weight of the mixture gas.
+    //! Obtain the nondimensional molecular weight of the mixture gas.
     RDouble * GetMolecularWeight() const { return molecularWeight; }
     RDouble * GetMolecularWeightReciprocal() const { return oMolecularWeight; }
 
-    //!Obtain the dimensional molecular weight of the mixture gas whose unit is kg/mol.
+    //! Obtain the dimensional molecular weight of the mixture gas whose unit is kg/mol.
     RDouble * GetMolecularWeightDimensional() const { return molecularWeightDimensional; }
     RDouble * GetMolecularWeightReciprocalDimensional() const { return oMolecularWeightDimensional; }
 
@@ -268,7 +273,7 @@ public:
     RDouble * GetLaminarSchmidtNumberReciprocal() const;
     RDouble * GetTurbulentSchmidtNumberReciprocal() const;
 
-    //!To obtain the thermodynamic properties of species.
+    //! To obtain the thermodynamic properties of species.
     Thermo_Param * GetThermodynamicProperties() const { return thermodynamicProperties; }
 
     int * GetIonTypeOfSpecies() const { return ionTypeOfSpecies; }
@@ -280,21 +285,21 @@ public:
     MixedGas();
     ~MixedGas();
 private:
-    FluidParameter referenceParameterDimensional;    //ref
-    ThermodynamicManager  *thermodynamicManager;     //polynomial fitting for Species Energy
-    ReactionRate *reactionRate;                      //kb、kf
-    StoichiometricEquation *stoichiometricEquation;  //equation  coef. matrix
-    CurveFitsMethod *CurveFits;                      //curve fitting for viscosity、collision section
-    MolecularProperty *molecularProperty;            // Species characteristic parameter
+    FluidParameter referenceParameterDimensional;    //! Ref
+    ThermodynamicManager  *thermodynamicManager;     //! Ppolynomial fitting for Species Energy
+    ReactionRate *reactionRate;                      //! kb、kf
+    StoichiometricEquation *stoichiometricEquation;  //! Equation coef for matrix
+    CurveFitsMethod *CurveFits;                      //! Curve fitting for viscosity、collision section
+    MolecularProperty *molecularProperty;            //! Species characteristic parameter
 private:
     int nm, nl, numberOfSpecies, numberOfReaction, nchem, ntmodel, nEquation;
-    int nTEnergyModel;  // 0 indicates Energy level method ,  1 is for  curve fitting method.
-    int nSpeciesEquation; // The number of species equation.
-    int nElectronIndex; // The index of electron in the array.
-    int nNitrogenIndex; // The index of nitrogen in the array.
-    int nLastSpeciesIndex; //The index of the key species with the maximum mass fraction in the array.
-    int nGasModel;    // nGasModel = 0 indicates the gas of Earth, nGasModel = 1 is for gas of Mars.
-    int nSpeciesLimit ; //
+    int nTEnergyModel;  //! 0 indicates Energy level method ,  1 is for  curve fitting method.
+    int nSpeciesEquation; //! The number of species equation.
+    int nElectronIndex; //! The index of electron in the array.
+    int nNitrogenIndex; //! The index of nitrogen in the array.
+    int nLastSpeciesIndex; //! The index of the key species with the maximum mass fraction in the array.
+    int nGasModel;    //! nGasModel = 0 indicates the gas of Earth, nGasModel = 1 is for gas of Mars.
+    int nSpeciesLimit ;
     int mTT;
     int mTV;
     int mTE;
@@ -311,7 +316,7 @@ private:
     RDouble oprl, oprt;
     RDouble referenceEnergy;
     RDouble referenceSpecificHeat;
-    //The power of translational-rotational temperature in the Park's V-D(Vibration-Dissociation) coupling model.
+    //! The power of translational-rotational temperature in the Park's V-D(Vibration-Dissociation) coupling model.
     RDouble parkVDPower; //the value is in range of [0.0, 1.0].
     RDouble chemicalRelaxCorf;
     RDouble veTemperatureMin;
@@ -364,10 +369,10 @@ private:
     RDouble *dfsdy;
     RDouble *dfsdz;
     RDouble *fvis;
-    Thermo_Energy Thermo_Energy_temparay;    //energy parameter 
+    Thermo_Energy Thermo_Energy_temparay;    //! Energy parameter.
     
-    RDouble *maximumSpecies;    //the maximum of each Specie
-    RDouble **polynomialCoefT2; //The interpolation coefficients for the polynomial in the two-temperature model.
+    RDouble *maximumSpecies;    //! The maximum of each Specie.
+    RDouble **polynomialCoefT2; //! The interpolation coefficients for the polynomial in the two-temperature model.
 private:
     RDouble GetTemperatureMin();
     RDouble GetTemperatureMax();
@@ -404,16 +409,16 @@ private:
     void ComputeCoefficientOfStateEquation();
     void Print();
 
-    //!Obtain the T, p, rho and c by the height (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
-    //!The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
+    //! Obtain the T, p, rho and c by the height (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
+    //! The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
     void SetAirInformationByDataBase();
 
-    //!Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
+    //! Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
     //!The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
     void SetAirInformationByExpData();
 
-    //!This function is mainly for the average density of the mixture in chemical reactions, 
-    //!the value of mixture density has little difference with that of no chemical reaction, which can be ignored.
+    //! This function is mainly for the average density of the mixture in chemical reactions, 
+    //! The value of mixture density has little difference with that of no chemical reaction, which can be ignored.
     void NormalizeAirInformation();
 
     void ComputeReferencePrimitive();
@@ -669,8 +674,7 @@ public:
     //! @param[in ]: temperatures stores the temperature values of the specified control cells.
     //! @param[in ]: cellVolume is an array that stores the volume values of the specified control cells.
     //! @param[out]: chemicalSourceTerms returns the source terms of chemical reaction equations in the specified control cells.
-    //! @param[in ]: nCellNumber denotes the number of the specified control cells.
-    //void ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int nCellNumber);
+    //! @param[in ]: iCell denotes the number of the specified control cell.
     void ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int iCell);
     //! Compute the source terms of vibration-electron energy equations.
     //! @param[in ]: primitiveVariables stores the primitive variables of the specified control cells.
@@ -727,7 +731,6 @@ public:
     //! @param[out]: sigma saves the effective collision cross-sectional areas of each heavy species.
     void GetEffectiveCollisionCrossSectionalArea(Thermo_Param *thermodynamicProperties, RDouble electronTemperature, RDouble electronNumberDensity, RDouble *sigma);
 
-    //void ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **src, int nlen);
     void ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **src, int iCell);
     //! To obtain the approximating polynomial coefficients from the polynomial curve fits in five temperature ranges. \n
     //! The approximating polynomial is input for evaluating the species specific heats and enthalpies, and the temperature\n
@@ -813,7 +816,7 @@ public:
 
 public:
 
-    //The primitive variables are transfered to the conservative variables.
+    //! The primitive variables are transfered to the conservative variables.
     //! @param[in ]: q prim indicates the primitive variables.
     //! @param[in ]: gama denotes the specific heat ratio, which is valid in the perfect gas.
     //! @param[in ]: Tv denotes the vibrational temperature(The non-dimensional value).
@@ -822,13 +825,13 @@ public:
     void Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q);
     void Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble staticE, RDouble *q);
 
-    //The conservative variables are transfered to the primitive variables.
+    //! The conservative variables are transfered to the primitive variables.
     //! @param[in ]: q indicates the conservative variables.
     //! @param[in ]: gama denotes the specific heat ratio, which is valid in the perfect gas.
     //! @param[out]: prim indicates the primitive variables.
     //! @param[in/out]: temperature denotes the array of temperatures in the current time-advancing step and next time-advancing step.
-    //As input parameter, temperature indicates the temperature of the current time-advancing step. Meanwhile,
-    //it denotes the temperature of the next time-advancing step as output parameter.
+    //! As input parameter, temperature indicates the temperature of the current time-advancing step. Meanwhile,
+    //! It denotes the temperature of the next time-advancing step as output parameter.
     void Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature);
     void Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature);
 
@@ -858,28 +861,28 @@ public:
 
 public:
 
-    //!Compute the mass fractions of Earth mixture for fully catalytic wall condition.
-    //!@param[in ]: fs is array of mass fractions of the components in the multi-species.
-    //!@param[out]: fcw is array of mass fractions under fully catalytic condition.
+    //! Compute the mass fractions of Earth mixture for fully catalytic wall condition.
+    //! @param[in ]: fs is array of mass fractions of the components in the multi-species.
+    //! @param[out]: fcw is array of mass fractions under fully catalytic condition.
     void GetEarthFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw);
 
-    //!Compute the mass fractions of Mars mixture for fully catalytic wall condition.
-    //!@param[in ]: fs is array of mass fractions of the components in the multi-species.
-    //!@param[out]: fcw is array of mass fractions under fully catalytic condition.
+    //! Compute the mass fractions of Mars mixture for fully catalytic wall condition.
+    //! @param[in ]: fs is array of mass fractions of the components in the multi-species.
+    //! @param[out]: fcw is array of mass fractions under fully catalytic condition.
     void GetMarsFullyCatalyticMassFraction(RDouble *fs, RDouble *fcw);
 
-    //!To find the chemical element in the species, if found, return the coefficient of the element.
-    //!@param[in ]: species_name denotes the name of the species.
-    //!@param[out]: element_name denotes the name of the specified element.
-    //!@param[out]: coef is the stoichiometric coefficient of the element.
+    //! To find the chemical element in the species, if found, return the coefficient of the element.
+    //! @param[in ]: species_name denotes the name of the species.
+    //! @param[out]: element_name denotes the name of the specified element.
+    //! @param[out]: coef is the stoichiometric coefficient of the element.
     bool FindChemicalElement(string species_name, char element_name, int &coef);
 
-    //!To obtain the index of the specified species in the sequence in accordance with its name.
-    //!@param[in ]: species_name denotes the name of the species.
-    //!@param[out]: the function returns the index of the species if found, otherwise, returns value of -1.
+    //! To obtain the index of the specified species in the sequence in accordance with its name.
+    //! @param[in ]: species_name denotes the name of the species.
+    //! @param[out]: the function returns the index of the species if found, otherwise, returns value of -1.
     int GetSpeciesIndex(string species_name);
 
-public: //The function library of multi-temperature model.
+public:
 
     //! To compute the translation and rotation specific heat at constant volume.
     //! @param[out]: speciesTransRotationCv is an array saving the translation and rotation specific heat at constant volume of each species.
@@ -1291,48 +1294,48 @@ public: //The function library of multi-temperature model.
     //! The function returns the diffusion coefficients of each species which saved in rDs = (1 - Cs)/(1- Xs) * (mul/Scl + mut/Sct).
     void GetSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble *speciesDiffusionCoef);
 
-    //!To obtain the non-dimensional constant pressure specific heat in accordance with the primary variables.
-    //!prim is an array of saving the primary variables, the non-dimensional temperature called Tm and the non-dimensional \n
-    //!constant pressure specific heat called cp are returned.
+    //! To obtain the non-dimensional constant pressure specific heat in accordance with the primary variables.
+    //! prim is an array of saving the primary variables, the non-dimensional temperature called Tm and the non-dimensional \n
+    //! Constant pressure specific heat called cp are returned.
     void GetTemperatureAndCP(RDouble *prim, RDouble &Tm, RDouble &cp);
     
-    //!To obtain the non-dimensional enthalpy of each species, the variable Tm is the non-dimensional temperature of the mixture gas,\n
-    //!the enthalpy of each species saved in the array of hs is returned.
+    //! To obtain the non-dimensional enthalpy of each species, the variable Tm is the non-dimensional temperature of the mixture gas,\n
+    //! The enthalpy of each species saved in the array of hs is returned.
     void GetEverySpeciesEnthalpy(RDouble trTemperature, RDouble vTemperature, RDouble eTemperature, RDouble *hs);
 
-    //To compute the electron energy of the mixed gas.
-    //!@param[in ]: prim is an array of saving the primary variables.
-    //!@param[in ]: Te is the non-dimensional electron temperature of the mixture gas.
-    //!@param[out]: return the total electron energy.
+    //! To compute the electron energy of the mixed gas.
+    //! @param[in ]: prim is an array of saving the primary variables.
+    //! @param[in ]: Te is the non-dimensional electron temperature of the mixture gas.
+    //! @param[out]: return the total electron energy.
     RDouble GetMixedGasElectronEnergy(RDouble *prim, RDouble Te);
 
-    //To compute the vibration specific heat at constant volume of the mixed gas.
-    //!@param[in ]: prim is an array of saving the primary variables.
-    //!@param[in ]: Tv is the non-dimensional vibration temperature of the mixture gas.
-    //!@param[out]: return the total vibration specific heat at constant volume.
+    //! To compute the vibration specific heat at constant volume of the mixed gas.
+    //! @param[in ]: prim is an array of saving the primary variables.
+    //! @param[in ]: Tv is the non-dimensional vibration temperature of the mixture gas.
+    //! @param[out]: return the total vibration specific heat at constant volume.
     RDouble GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble *prim, RDouble Tv);
 
-    //To compute the vibration specific heat at constant volume of the mixed gas.
-    //!@param[in ]: prim is an array of saving the primary variables.
-    //!@param[in ]: Te is the non-dimensional electron temperature of the mixture gas.
-    //!@param[out]: return the dimensional value of total vibration specific heat at constant volume.
+    //! To compute the vibration specific heat at constant volume of the mixed gas.
+    //! @param[in ]: prim is an array of saving the primary variables.
+    //! @param[in ]: Te is the non-dimensional electron temperature of the mixture gas.
+    //! @param[out]: return the dimensional value of total vibration specific heat at constant volume.
     RDouble GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble *prim, RDouble Te);
 
-    //To compute the translation-rotation specific heat at constant volume of the mixed gas.
-    //!@param[in ]: prim is an array of saving the primary variables. 
-    //!@param[out]: return the dimensional value of total translation-rotation specific heat at constant volume.
+    //! To compute the translation-rotation specific heat at constant volume of the mixed gas.
+    //! @param[in ]: prim is an array of saving the primary variables. 
+    //! @param[out]: return the dimensional value of total translation-rotation specific heat at constant volume.
     RDouble GetMixedGasTransAndRotatSpecHeatAtConstVolume(RDouble *prim);
 
-    //To compute the translation-rotation energy of the mixed gas.
-    //!@param[in ]: prim is an array of saving the primary variables.
-    //!@param[in ]: Ttr is the non-dimensional translation-rotation temperature of the mixture gas. 
-    //!@param[out]: return the total translation-rotation energy.
+    //! To compute the translation-rotation energy of the mixed gas.
+    //! @param[in ]: prim is an array of saving the primary variables.
+    //! @param[in ]: Ttr is the non-dimensional translation-rotation temperature of the mixture gas. 
+    //! @param[out]: return the total translation-rotation energy.
     RDouble GetMixedGasTranslationAndRotationEnergy(RDouble *prim, RDouble Ttr);
 
-    //To compute the vibration energy of the mixed gas.
-    //!@param[in ]: prim is an array of saving the primary variables.
-    //!@param[in ]: Tv is the non-dimensional vibration temperature of the mixture gas.
-    //!@param[out]: return the total vibration energy.
+    //! To compute the vibration energy of the mixed gas.
+    //! @param[in ]: prim is an array of saving the primary variables.
+    //! @param[in ]: Tv is the non-dimensional vibration temperature of the mixture gas.
+    //! @param[out]: return the total vibration energy.
     RDouble GetMixedGasVibrationEnergy(RDouble *prim, RDouble Tv);
 
     //! Compute the frozen sound speed in the multi-temperature model.
@@ -1340,12 +1343,11 @@ public: //The function library of multi-temperature model.
     //! @param[out]: return the frozen sound speed.
     RDouble ComputeFrozenSoundSpeed(RDouble *primitiveVars);
 
-    //!To obtain the non-dimensional temperature according to the primary variables,\n
-    //!prim is an array of saving the primary variables, the non-dimensional temperature is returned.
+    //! To obtain the non-dimensional temperature according to the primary variables,\n
+    //! prim is an array of saving the primary variables, the non-dimensional temperature is returned.
     RDouble GetTemperature(RDouble *prim);
 
 public:
-    //=======New codes for temperature energy terms================
 
     //! Compute the specific heat of species.
     //! @param[in ]: primitiveVars is an array of saving the primitive variables.

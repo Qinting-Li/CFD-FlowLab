@@ -380,20 +380,20 @@ void Fantasy2Plot3D()
 
     region->ReadGrid();
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    Grid **Grids = new Grid * [numberOfZones];
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    Grid **Grids = new Grid * [nZones];
 
-    for (int iZone = 0; iZone < numberOfZones; iZone ++)
+    for (int iZone = 0; iZone < nZones; iZone ++)
     {
         Grids[iZone] = GetGrid(iZone, 0);
     }
 
-    ReProcessBCInfo(Grids, numberOfZones);
-    ReadLnkFile(fromGridFile, Grids, numberOfZones);
+    ReProcessBCInfo(Grids, nZones);
+    ReadLnkFile(fromGridFile, Grids, nZones);
 
     cout << endl << "Writing grd file ...." << endl;
-    FantasyWriteToGrd(cellFile, Grids, numberOfZones);
-    FantasyWriteToInp(boundaryFile, Grids, numberOfZones);
+    FantasyWriteToGrd(cellFile, Grids, nZones);
+    FantasyWriteToInp(boundaryFile, Grids, nZones);
 
     delete region;
 }
@@ -408,15 +408,15 @@ void FantasyOld2New()
     Region *region = new Region();
     region->ReadGrid();
 
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    Grid **Grids = new Grid * [numberOfZones];
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    Grid **Grids = new Grid * [nZones];
 
-    for (int iZone = 0; iZone < numberOfZones; iZone ++)
+    for (int iZone = 0; iZone < nZones; iZone ++)
     {
         Grids[iZone] = GetGrid(iZone);
     }
 
-    DumpGrid(outGridFile, Grids, numberOfZones);
+    DumpGrid(outGridFile, Grids, nZones);
 
     delete region;
 }
@@ -683,15 +683,15 @@ void ConvertGrid()
 void RefineGrid()
 {
     RefineParameter *refineParameter = new RefineParameter();
-    int anisoRefine = GlobalDataBase::GetIntParaFromDB("gridtype");
+    int anisoRefine = GlobalDataBase::GetIntParaFromDB("anisoRefine");
 #ifdef USE_INHOUSE_VERSION
 #ifdef USE_OCC
-    int isProject = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int isDeform = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int exclusiveCase = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int projectOrgPoint = GlobalDataBase::GetIntParaFromDB("gridtype");
-    int geometryUnit = GlobalDataBase::GetIntParaFromDB("gridtype");
-    string geometryFileName = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    int isProject = GlobalDataBase::GetIntParaFromDB("isProject");
+    int isDeform = GlobalDataBase::GetIntParaFromDB("isDeform");
+    int exclusiveCase = GlobalDataBase::GetIntParaFromDB("exclusiveCase");
+    int projectOrgPoint = GlobalDataBase::GetIntParaFromDB("projectOrgPoint");
+    int geometryUnit = GlobalDataBase::GetIntParaFromDB("geometryUnit");
+    string geometryFileName = GlobalDataBase::GetStrParaFromDB("geometryFileName");
 
     refineParameter->SetIsProject(isProject);
     refineParameter->SetIsDeform(isDeform);
@@ -733,8 +733,8 @@ void CombineGrid()
     region->SetupMultiBlockRelationship();
 
     using namespace PHMPI;
-    int numberOfZones = GetNumberofGlobalZones();
-    if (numberOfZones < 2)
+    int nZones = GetNumberofGlobalZones();
+    if (nZones < 2)
     {
         TK_Exit::ExceptionExit("/n Error: number of blocks < 2, don't need to merge or combine grid!");
     }
@@ -777,13 +777,13 @@ void RepairGrid()
 
     //! Repair grid.
     int myid = PHMPI::GetCurrentProcessorID();
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     vector <Grid *> gridsList;
-    int *localToGlobal = new int[numberOfZones]();
-    PHSPACE::SetField(localToGlobal, -1, numberOfZones);
+    int *localToGlobal = new int[nZones]();
+    PHSPACE::SetField(localToGlobal, -1, nZones);
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcess = PHMPI::GetZoneProcessorID(iZone);
         int recvProcess = PHMPI::GetZoneFileID(iZone);
@@ -837,14 +837,14 @@ void RepairGrid()
         //! Dump new HDF5 version grid.
         PrintToWindow("    Writing new HDF5 version grid to file ....\n");
         WriteLogFile("    Writing  new HDF5 version grid to file ....\n");
-        int numberOfZones = static_cast <int> (gridsList.size());
-        Grid **gridContainer = new Grid * [numberOfZones];
+        int nZones = static_cast <int> (gridsList.size());
+        Grid **gridContainer = new Grid * [nZones];
         for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
         {
             gridContainer[iZone] = gridsList[iZone];
         }
 
-        IO_HDF5Write writeGrid(fileName, gridContainer, numberOfZones);
+        IO_HDF5Write writeGrid(fileName, gridContainer, nZones);
         writeGrid.Run();
 
         delete [] gridContainer;

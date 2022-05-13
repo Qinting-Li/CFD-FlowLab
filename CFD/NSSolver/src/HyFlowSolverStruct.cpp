@@ -10157,12 +10157,12 @@ namespace PHSPACE
 
                         if (nDebug != 0)
                         {
-                            int izone = grid->GetZoneID();
+                            int iZone = grid->GetZoneID();
                             int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
                             cout << "  i=   " << i << "  j=    " << j << "   k=    " << k << endl;
                             cout << "  X=   " << Xm(i, j, k) << "  Y=    " << Ym(i, j, k) << "   Z=    " << Zm(i, j, k) << endl;
                             cout << "  density=   " << rm << "  pressure=    " << pm << endl;
-                            cout << "  izone=   " << izone << "  outIterStep=    " << outIterStep << endl;
+                            cout << "  iZone=   " << iZone << "  outIterStep=    " << outIterStep << endl;
                             abort();
                         }
                     }

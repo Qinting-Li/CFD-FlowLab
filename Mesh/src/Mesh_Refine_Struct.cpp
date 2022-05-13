@@ -20,10 +20,10 @@ LIB_EXPORT Mesh_Refine_Struct::~Mesh_Refine_Struct()
 
 void Mesh_Refine_Struct::AllocateMemory()
 {
-    nLocalZones = PHMPI::GetNumberofLocalZones();
-    refinedGrids = new Grid*[nLocalZones];
+    numberOfZones = PHMPI::GetNumberofLocalZones();
+    refinedGrids = new Grid*[numberOfZones];
 
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Zone *zone = region->GetZone(iZone);
         if (!zone) continue;
@@ -35,7 +35,7 @@ void Mesh_Refine_Struct::AllocateMemory()
 
 void Mesh_Refine_Struct::RefineGrid()
 {
-    for (int iZone = 0; iZone < nLocalZones; iZone ++)
+    for (int iZone = 0; iZone < numberOfZones; iZone ++)
     {
         StructGrid *grid = StructGridCast(OrdinaryGrid[iZone]);
         RefineGrid(iZone, grid);
@@ -218,17 +218,17 @@ void Mesh_Refine_Struct::GenerateAndDumpComputationalGrid()
 {
     GenerateBCRegion();
 
-    ConstructGlobalInterfaceLink(refinedGrids, nLocalZones);
+    ConstructGlobalInterfaceLink(refinedGrids, numberOfZones);
 
     DumpComputationalGrid();
 }
 
 void Mesh_Refine_Struct::GenerateBCRegion()
 {
-    for (int izone = 0; izone < nLocalZones; izone ++)
+    for (int iZone = 0; iZone < numberOfZones; iZone ++)
     {
-        StructGrid *grid       = StructGridCast(OrdinaryGrid[izone]);
-        StructGrid *strGridNew = StructGridCast(refinedGrids[izone]);
+        StructGrid *grid       = StructGridCast(OrdinaryGrid[iZone]);
+        StructGrid *strGridNew = StructGridCast(refinedGrids[iZone]);
 
         strGridNew->CopyCompositeBCRegion(grid->GetCompositeBCRegion());
         StructBCSet *rhs = strGridNew->GetCompositeBCRegion();

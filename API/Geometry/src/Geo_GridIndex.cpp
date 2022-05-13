@@ -6,19 +6,19 @@ using namespace std;
 
 namespace PHSPACE
 {
-vector< vector< Grid *> * > ggrids;
+vector< vector< Grid * > * > ggrids;
 ZoneConnectivity *zoneConnectivity;
 ZoneConnectivityForPoint *zoneConnectivityForPoint;
 RDouble globalGridMinBox[3], globalGridMaxBox[3];
 
-Grid *GetGrid(int izone, int level)
+Grid * GetGrid(int iZone, int level)
 {
-    if (!ggrids[izone])
+    if (!ggrids[iZone])
     {
         return 0;
     }
 
-    return (*ggrids[izone])[level];
+    return (*ggrids[iZone])[level];
 }
 
 void DeleteGGrids()
@@ -26,34 +26,34 @@ void DeleteGGrids()
     ggrids.clear();
 }
 
-InterfaceInfo * GetInterfaceInfo(int izone, int level)
+InterfaceInfo * GetInterfaceInfo(int iZone, int level)
 {
-    Grid *grid = GetGrid(izone, level);
+    Grid *grid = GetGrid(iZone, level);
     if (!grid) return 0;
     return grid->GetInterfaceInfo();
 }
 
-InterpointInformation *GetInterpointInfo(int izone, int level)
+InterpointInformation * GetInterpointInfo(int iZone, int level)
 {
-    Grid *grid = GetGrid(izone, level);
+    Grid *grid = GetGrid(iZone, level);
     if (! grid)
     {
         return 0;
     }
     //! Temporarily debug to obtain the interpoint information of unstructured grid.
-    return (static_cast<UnstructGrid*>(grid))->GetInterpointInfo();
+    return (static_cast<UnstructGrid *>(grid))->GetInterpointInfo();
 }
 
-OversetInfoProxy * GetOversetInfoProxy(int izone, int level)
+OversetInfoProxy * GetOversetInfoProxy(int iZone, int level)
 {
-    Grid *grid = GetGrid(izone, level);
+    Grid *grid = GetGrid(iZone, level);
     if (!grid) return 0;
     return grid->GetOversetInfoProxy();
 }
 
-uint_t GetNumberOfMultiGrid(int izone)
+uint_t GetNumberOfMultiGrid(int iZone)
 {
-    return ggrids[izone]->size();
+    return ggrids[iZone]->size();
 }
 
 uint_t GetNumberOfMultiGrid()
@@ -61,29 +61,29 @@ uint_t GetNumberOfMultiGrid()
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        if (ggrids[izone])
+        if (ggrids[iZone])
         {
-            return ggrids[izone]->size();
+            return ggrids[iZone]->size();
         }
     }
     return 0;
 }
 
-void AddGridToGlobal(int izone, vector < Grid   * > *grids)
+void AddGridToGlobal(int iZone, vector <Grid *> *grids)
 {
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
     if (ggrids.size() == 0)
     {
-        ggrids.resize(nZones,0);
+        ggrids.resize(nZones, 0);
     }
-    ggrids[izone] = grids;
+    ggrids[iZone] = grids;
 }
 
-void GetGlobalMinMaxBox(RDouble * globalMinBox, RDouble * globalMaxBox)
+void GetGlobalMinMaxBox(RDouble *globalMinBox, RDouble *globalMaxBox)
 {
     for (int iDim = 0; iDim < 3; ++ iDim)
     {
@@ -109,9 +109,9 @@ ZoneConnectivityForPoint::ZoneConnectivityForPoint()
 
 ZoneConnectivityForPoint::~ZoneConnectivityForPoint()
 {
-    for (int izone = 0; izone < numberOfZonesForPoint; ++ izone)
+    for (int iZone = 0; iZone < numberOfZonesForPoint; ++ iZone)
     {
-        delete zoneNeighborForPoint[izone];
+        delete zoneNeighborForPoint[iZone];
     }
     delete [] zoneNeighborForPoint;
 }
@@ -130,15 +130,15 @@ void ZoneConnectivityForPoint::CreateAllZones(int numberOfZonesForPoint)
 {
     SetNumberOfZonesForPoint(numberOfZonesForPoint);
     zoneNeighborForPoint = new ZoneNeighbor *[numberOfZonesForPoint];
-    for (int izone = 0; izone < numberOfZonesForPoint; ++ izone)
+    for (int iZone = 0; iZone < numberOfZonesForPoint; ++ iZone)
     {
-        zoneNeighborForPoint[izone] = new ZoneNeighbor();
+        zoneNeighborForPoint[iZone] = new ZoneNeighbor();
     }
 }
 
-ZoneNeighbor * ZoneConnectivityForPoint::GetZoneNeighborForPoint(int izone) const 
+ZoneNeighbor * ZoneConnectivityForPoint::GetZoneNeighborForPoint(int iZone) const 
 {
-    return zoneNeighborForPoint[izone];
+    return zoneNeighborForPoint[iZone];
 }
 
 GridID::GridID(int index, int local_index)
@@ -178,11 +178,11 @@ void OversetInfo::Encode(DataContainer *cdata)
 void OversetInfo::Decode(DataContainer *cdata)
 {
     int zoneIndexOfNeighbor = 0;
-    cdata->read(reinterpret_cast<char *>(&zoneIndexOfNeighbor),sizeof(int));
+    cdata->read(reinterpret_cast<char *>(&zoneIndexOfNeighbor), sizeof(int));
     SetZoneIndexOfNeighbor(zoneIndexOfNeighbor);
 
     int numberOfCellForTransfer;
-    cdata->read(reinterpret_cast<char *>(&numberOfCellForTransfer),sizeof(int));
+    cdata->read(reinterpret_cast<char *>(&numberOfCellForTransfer), sizeof(int));
 
     int * cellIndexForTransfer = new int [numberOfCellForTransfer];
     cdata->read(reinterpret_cast<char *>(cellIndexForTransfer), numberOfCellForTransfer * sizeof(int));
@@ -201,14 +201,14 @@ CompositeOversetInfo::~CompositeOversetInfo()
 void CompositeOversetInfo::Encode(DataContainer *cdata)
 {
     int numberOfZone = this->GetNumberOfZone();
-    cdata->write(reinterpret_cast<char *>(&numberOfZone),sizeof(int));
+    cdata->write(reinterpret_cast<char *>(&numberOfZone), sizeof(int));
 
     int numberOfCell = this->GetNumberOfCell();
-    cdata->write(reinterpret_cast<char *>(&numberOfCell),sizeof(int));
+    cdata->write(reinterpret_cast<char *>(&numberOfCell), sizeof(int));
 
-    for (int izone = 0; izone < numberOfZone; ++ izone)
+    for (int iZone = 0; iZone < numberOfZone; ++ iZone)
     {
-        OversetInfo *oversetInfo = GetOversetInfo(izone);
+        OversetInfo *oversetInfo = GetOversetInfo(iZone);
         oversetInfo->Encode(cdata);
     }
 }
@@ -216,15 +216,15 @@ void CompositeOversetInfo::Encode(DataContainer *cdata)
 void CompositeOversetInfo::Decode(DataContainer *cdata)
 {
     int numberOfZone;
-    cdata->read(reinterpret_cast<char *>(&numberOfZone),sizeof(int));
+    cdata->read(reinterpret_cast<char *>(&numberOfZone), sizeof(int));
 
     SetNumberOfZone(numberOfZone);
 
     int numberOfCell;
-    cdata->read(reinterpret_cast<char *>(&numberOfCell),sizeof(int));
+    cdata->read(reinterpret_cast<char *>(&numberOfCell), sizeof(int));
     SetNumberOfCell(numberOfCell);
 
-    for (int izone = 0; izone < numberOfZone; ++ izone)
+    for (int iZone = 0; iZone < numberOfZone; ++ iZone)
     {
         OversetInfo *oversetInfo = new OversetInfo();
         AddOversetInfo(oversetInfo);
@@ -277,23 +277,23 @@ void OversetInfoProxy::InitReceivingInformation(vector<int> &cellIndexRef1, vect
 
     for (set<int>::iterator iter = neighborZoneIndexSet.begin(); iter != neighborZoneIndexSet.end(); ++ iter)
     {
-        //! jzone is the neighbor,which is the interpolated zone overlapped with izone.
-        int jzone = *iter;
+        //! jZone is the neighbor, which is the interpolated zone overlapped with iZone.
+        int jZone = *iter;
 
         vector<int> cellIndexI, cellIndexJ;
 
-        GetPartOfArrayByCondition(zoneIndexRef2, jzone, cellIndexRef1, cellIndexI);
-        GetPartOfArrayByCondition(zoneIndexRef2, jzone, cellIndexRef2, cellIndexJ);
+        GetPartOfArrayByCondition(zoneIndexRef2, jZone, cellIndexRef1, cellIndexI);
+        GetPartOfArrayByCondition(zoneIndexRef2, jZone, cellIndexRef2, cellIndexJ);
 
-        IndexSlice * indexSlice = new IndexSlice();
+        IndexSlice *indexSlice = new IndexSlice();
 
-        indexSlice->SetTag(jzone);
+        indexSlice->SetTag(jZone);
         indexSlice->SetIndex(cellIndexI);
         recvIndexProxy->AddIndexSlice(indexSlice);
 
-        IndexSlice * temporaryIndexSlice = new IndexSlice();
+        IndexSlice *temporaryIndexSlice = new IndexSlice();
 
-        temporaryIndexSlice->SetTag(jzone);
+        temporaryIndexSlice->SetTag(jZone);
         temporaryIndexSlice->SetIndex(cellIndexJ);
         temporaryIndexProxy->AddIndexSlice(temporaryIndexSlice);
     }
@@ -309,8 +309,8 @@ void OversetInfoProxy::PrepareSendingInformation(Geo_OversetGrid **oversetGrids)
     for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
     {
         IndexSlice * temporaryIndexSlice = temporaryIndexProxy->GetIndexSlice(iNeighbor);
-        int jzone = temporaryIndexSlice->GetTag();
-        OversetInfoProxy * jOversetInfoProxy = GetOversetInfoProxy(jzone);
+        int jZone = temporaryIndexSlice->GetTag();
+        OversetInfoProxy * jOversetInfoProxy = GetOversetInfoProxy(jZone);
         IndexProxy *sendIndexProxy = jOversetInfoProxy->GetSendIndexProxy();
 
         IndexSlice * sendIndexSlice = new IndexSlice();
@@ -379,27 +379,26 @@ void OversetInfoProxy::Process()
 
     for (set<int>::iterator iter = neighborZoneIndexSet.begin(); iter != neighborZoneIndexSet.end(); ++ iter)
     {
-        //! jzone is the neighbor,which is the interpolated zone overlapped with izone.
-        int jzone = *iter;
+        //! jZone is the neighbor,which is the interpolated zone overlapped with iZone.
+        int jZone = *iter;
 
         vector<int> cellIndexI, cellIndexJ;
 
-        GetPartOfArrayByCondition(zoneIndexRef2, jzone, cellIndexRef1, cellIndexI);
-        GetPartOfArrayByCondition(zoneIndexRef2, jzone, cellIndexRef2, cellIndexJ);
+        GetPartOfArrayByCondition(zoneIndexRef2, jZone, cellIndexRef1, cellIndexI);
+        GetPartOfArrayByCondition(zoneIndexRef2, jZone, cellIndexRef2, cellIndexJ);
 
         IndexSlice * indexSlice = new IndexSlice();
 
-        indexSlice->SetTag(jzone);
+        indexSlice->SetTag(jZone);
         indexSlice->SetIndex(cellIndexI);
         recvIndexProxy->AddIndexSlice(indexSlice);
 
         IndexSlice * temporaryIndexSlice = new IndexSlice();
 
-        temporaryIndexSlice->SetTag(jzone);
+        temporaryIndexSlice->SetTag(jZone);
         temporaryIndexSlice->SetIndex(cellIndexJ);
         temporaryIndexProxy->AddIndexSlice(temporaryIndexSlice);
     }
 }
-
 
 }

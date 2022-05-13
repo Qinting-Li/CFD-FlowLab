@@ -7275,7 +7275,23 @@ void LESSolverStruct::ObtainBoundaryValue(Grid *gridIn)
         {
             InFlowBC(grid, structBC);
         }
+        else if (BCType == PRESSURE_INLET)
+        {
+            InFlowBC(grid, structBC);
+        }
+        else if (BCType == MASS_FLOW_INLET)
+        {
+            InFlowBC(grid, structBC);
+        }
         else if (BCType == OUTFLOW)
+        {
+            OutFlowBC(grid, structBC);
+        }
+        else if (BCType == PRESSURE_OUTLET)
+        {
+            OutFlowBC(grid, structBC);
+        }
+        else if (BCType == MASS_FLOW_OUTLET)
         {
             OutFlowBC(grid, structBC);
         }

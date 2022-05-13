@@ -11,14 +11,14 @@ namespace PHSPACE
 Pre_StructToUnstruct::Pre_StructToUnstruct(Grid **structGridIn, int nZonesIn)
 {
     this->structGrid = structGridIn;
-    this->nZones = nZonesIn;
+    this->numberOfZones = nZonesIn;
 
     structToUnstruct = 0;
 }
 
 Pre_StructToUnstruct::~Pre_StructToUnstruct()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         delete structToUnstruct[iZone];
     }
@@ -38,7 +38,7 @@ void Pre_StructToUnstruct::Run()
 
 void Pre_StructToUnstruct::ConstructCellMapStrToUns()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid   *strGrid = StructGridCast  (structGrid[iZone]);
@@ -134,7 +134,7 @@ void Pre_StructToUnstruct::ConstructCellMapStrToUns()
 
 void Pre_StructToUnstruct::CopyInterface()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         UnstructGrid *unsGrid = UnstructGridCast(structToUnstruct[iZone]);
@@ -152,8 +152,8 @@ Grid **Pre_StructToUnstruct::GetUnstructGrids()
 
 void Pre_StructToUnstruct::InitMemory()
 {
-    structToUnstruct = new Grid *[nZones];
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    structToUnstruct = new Grid *[numberOfZones];
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         int gridIndex = structGrid[iZone]->GetZoneID();
@@ -166,7 +166,7 @@ void Pre_StructToUnstruct::InitMemory()
 
 void Pre_StructToUnstruct::CopyIBlock()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         Grid *strGrid = structGrid[iZone];
@@ -178,7 +178,7 @@ void Pre_StructToUnstruct::CopyIBlock()
 
 void Pre_StructToUnstruct::CopyCoordinate()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid   *strGrid = StructGridCast  (structGrid[iZone]);
@@ -214,7 +214,7 @@ void Pre_StructToUnstruct::CopyCoordinate()
 
 void Pre_StructToUnstruct::ConstructBCType()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid *strGrid = StructGridCast(structGrid[iZone]);
@@ -268,7 +268,7 @@ void Pre_StructToUnstruct::ConstructBCType()
 
 void Pre_StructToUnstruct::ConstructFaceTopo()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid *strGrid = StructGridCast(structGrid[iZone]);

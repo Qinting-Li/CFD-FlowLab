@@ -93,6 +93,11 @@ private:
     vector <int> zoneProbesCellNK;
 
     UnstructGrid *gridUnstr;
+
+    //! Ordinary grid information.
+    int ordinaryGridIndex;
+    int ordinaryDimStartIndex[3], ordinaryDimEndIndex[3];
+
 public:
     LIB_EXPORT StructGrid();
     LIB_EXPORT ~StructGrid();
@@ -514,6 +519,13 @@ public:
     void GetCellIBlank(ActionKey *actkey);
     void TranslateCellIBlank(ActionKey *actkey);
 
+    void SetOrdinaryGridIndex(int ordinaryGridIndexIn);
+    void SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn);
+    void SetOrdinaryDimEndIndex  (int *ordinaryDimEndIndexIn);
+    int  GetOrdinaryGridIndex();
+    int *GetOrdinaryDimStartIndex();
+    int *GetOrdinaryDimEndIndex();
+
 private:
     void ReadXYZ(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
     void ReadXYZASCII(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
@@ -609,6 +621,8 @@ void GetIJKROT(int ijk[4][3], int *irot, int *jrot, int *krot);
 extern int mide[3][3];
 
 StructGrid * StructGridCast(Grid *grid_in);
+
+void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn);
 
 void GetRange(int ni, int nj, int nk, int startShift, int endShift, Range &I, Range &J, Range &K);
 void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, int kst, int ked);

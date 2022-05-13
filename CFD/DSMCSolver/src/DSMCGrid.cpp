@@ -140,24 +140,24 @@ RDouble CalMaxCellVolume()
     RDouble maxCellVolume = 0.0;
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
-        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID));
 
         int nTotalCell = grid->GetNTotalCell();
 
-        RDouble * vol = grid->GetCellVolume();
+        RDouble *vol = grid->GetCellVolume();
 
-        for(int icell = 0; icell < nTotalCell; ++ icell)
+        for(int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            if(vol[icell] > maxCellVolume) maxCellVolume = vol[icell];
+            if(vol[iCell] > maxCellVolume) maxCellVolume = vol[iCell];
         }
     }
     
     ostringstream oss;
-    oss<<"maxCellVolume:"<<maxCellVolume;
+    oss << "maxCellVolume:" << maxCellVolume;
     WriteLogFile(oss.str());
     return maxCellVolume;
 }
@@ -168,9 +168,9 @@ RDouble CalMinCellVolume()
     RDouble minCellVolume = 1.0e30;
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
         UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
 

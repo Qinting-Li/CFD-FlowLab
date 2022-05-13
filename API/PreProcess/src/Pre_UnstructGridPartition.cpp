@@ -163,8 +163,8 @@ Grid ** Pre_UnstructGridPartition::CreateAllPartGrid()
     
     Grid **grids = new Grid * [maxProcessor];
 
-    int totalZone = this->GetNumberofLocalZones();
-    int interval = GetProgressInterval(totalZone, 10);
+    int nLocalZones = this->GetNumberofLocalZones();
+    int interval = GetProgressInterval(nLocalZones, 10);
     int myid = PHMPI::GetCurrentProcessorID();
     int count = 0;
 
@@ -181,8 +181,8 @@ Grid ** Pre_UnstructGridPartition::CreateAllPartGrid()
         ++ count;
         if (myid == PHMPI::GetServerProcessorID() && count > 0 && count % interval == 0)
         {
-            ProgressMonitorToLogFile(count, totalZone, "grid partition reconstructing");
-            ProgressMonitorToWindows(count, totalZone, "grid partition reconstructing");
+            ProgressMonitorToLogFile(count, nLocalZones, "grid partition reconstructing");
+            ProgressMonitorToWindows(count, nLocalZones, "grid partition reconstructing");
         }
 
         GridID *index = new GridID(iproc);
@@ -612,29 +612,29 @@ void Pre_UnstructGridPartition::CommunicateNeiborCell(int *neighborCell)
 
     // Each processor runs along the same order, which is from 0 to nZones.
     // Each simulation zone is looped over to judge if the communication is necessary.
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(izone);
+        ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = zoneNeighbor->GetNumberOfNeighbor();
         for (std::size_t ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
         {
             int neighborZoneIndex = zoneNeighbor->GetZoneIndexOfNeighbor(ineighbor);
-            SwapInterface(neighborCell, izone, neighborZoneIndex);
+            SwapInterface(neighborCell, iZone, neighborZoneIndex);
         }
     }
 
     WriteLogFile("End to Communicate Neighbor Cells");
 }
 
-void Pre_UnstructGridPartition::SwapInterface(int *neighborCell, int izone, int jzone)
+void Pre_UnstructGridPartition::SwapInterface(int *neighborCell, int iZone, int jZone)
 {
     using namespace PHMPI;
 
-    //! izone is the current zone, and jzone is the target zone.
-    int send_proc = GetZoneProcessorID(izone);
-    int recv_proc = GetZoneProcessorID(jzone);
+    //! iZone is the current zone, and jZone is the target zone.
+    int send_proc = GetZoneProcessorID(iZone);
+    int recv_proc = GetZoneProcessorID(jZone);
 
-    int tag = izone;
+    int tag = iZone;
     int myid = GetCurrentProcessorID();
 
     DataContainer *cdata = new DataContainer();
@@ -642,11 +642,11 @@ void Pre_UnstructGridPartition::SwapInterface(int *neighborCell, int izone, int 
 
     if (myid == send_proc)
     {
-        UnstructGrid  *grid  = UnstructGridCast(GetGrid(izone, 0));
+        UnstructGrid  *grid  = UnstructGridCast(GetGrid(iZone, 0));
         InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
         if (interfaceInfo)
         {
-            int ineighbor = interfaceInfo->FindIthNeighbor(jzone);
+            int ineighbor = interfaceInfo->FindIthNeighbor(jZone);
             int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
             int *faceIndexForSend = interfaceInfo->GetFaceIndexForSend(ineighbor);
             int iface,sourceCell;
@@ -663,11 +663,11 @@ void Pre_UnstructGridPartition::SwapInterface(int *neighborCell, int izone, int 
 
     if (myid == recv_proc)
     {
-        UnstructGrid *grid = UnstructGridCast(GetGrid(jzone, 0));
+        UnstructGrid *grid = UnstructGridCast(GetGrid(jZone, 0));
         InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
         if (interfaceInfo)
         {
-            int ineighbor = interfaceInfo->FindIthNeighbor(izone);
+            int ineighbor = interfaceInfo->FindIthNeighbor(iZone);
             int iface;
             int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
             int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
@@ -713,7 +713,7 @@ void Pre_UnstructGridPartition::SetProcessorList()
     WriteLogFile(oss.str());
     
     //! Compute the global zone index of each cell.
-    int nZonesLocal = this->GetNumberofLocalZones();
+    int nLocalZones = this->GetNumberofLocalZones();
 
     int nZones = PHMPI::GetNumberofGlobalZones();
     int nProc  = PHMPI::GetNumberOfProcessor();
@@ -728,7 +728,7 @@ void Pre_UnstructGridPartition::SetProcessorList()
         SetField(localSizeTemp, 1, nProc);
         int **nPartListTemp = new int * [nProc];
 
-        PHMPI::FillGobalDataCollectBcast(&nZonesLocal, localSizeTemp, nPartListTemp);
+        PHMPI::FillGobalDataCollectBcast(&nLocalZones, localSizeTemp, nPartListTemp);
 
         for (int iProc = 0; iProc < nProc; ++ iProc)
         {
@@ -741,7 +741,7 @@ void Pre_UnstructGridPartition::SetProcessorList()
     else
     {
         TK_Exit::ExceptionExit("number of processors != number of zones.");
-        //PHMPI::FillGobalData(nZonesLocal, nPartOfEachProcessor);
+        //PHMPI::FillGobalData(nLocalZones, nPartOfEachProcessor);
     }
 
     part2LocalZoneIndex  = new int[maxProcessor];
@@ -861,7 +861,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(Grid **grids)
     }
 }
 
-void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int iZone, UnstructGrid *gridpart)
 {
     if (npartmethod != 1) return;
     
@@ -886,11 +886,11 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int izone, UnstructG
     {
         le = left_cell_of_face [iface];
         re = right_cell_of_face[iface];
-        if (part[le] == izone)
+        if (part[le] == iZone)
         {
             bc_face_mark[iface] = -1;
         }
-        else if (re < nTotalCell && part[re] == izone)
+        else if (re < nTotalCell && part[re] == iZone)
         {
             bc_face_mark[iface] = -1;
         }
@@ -931,17 +931,17 @@ void Pre_UnstructGridPartition::BuildInterfaceLinkForParallelPartition(Grid **gr
 {
     if (!IsParallelPartition()) return;
 
-    for (int izone = 0; izone < maxProcessor; ++ izone)
+    for (int iZone = 0; iZone < maxProcessor; ++ iZone)
     {
-        if (!grids[izone]) continue;
+        if (!grids[iZone]) continue;
 
-        InterfaceInfo *interfaceInfo = grids[izone]->GetInterfaceInfo();
+        InterfaceInfo *interfaceInfo = grids[iZone]->GetInterfaceInfo();
         if (!interfaceInfo) continue;
 
         int *interFace2ZoneID      = interfaceInfo->GetInterFace2ZoneID();
         int *interFace2InterFaceID = interfaceInfo->GetInterFace2InterFaceID();
 
-        UnstructGrid *grid = UnstructGridCast(grids[izone]);
+        UnstructGrid *grid = UnstructGridCast(grids[iZone]);
 
         int nBoundFace = grid->GetNBoundFace();
         int nIFace = interfaceInfo->GetNIFace();
@@ -957,7 +957,7 @@ void Pre_UnstructGridPartition::BuildInterfaceLinkForParallelPartition(Grid **gr
         //! Interfaces count from 0.
         for (int iface = 0; iface < nIFace; ++ iface)
         {
-            if (iface < nIFaceInOrgBC[izone])
+            if (iface < nIFaceInOrgBC[iZone])
             {
                 //! The interfaces in the original BC \n
                 //! have been built in function SetInterfaceInfoPartInOrgBC.
@@ -975,10 +975,10 @@ void Pre_UnstructGridPartition::BuildInterfaceLinkForParallelPartition(Grid **gr
             le  = left_cell_of_face [iface + nphysi];
             re  = right_cell_of_face[iface + nphysi];
             ie  = MAX(le, re);
-            if (nbz >= izone)
+            if (nbz >= iZone)
             {
                 UnstructGrid *grid_t = UnstructGridCast(grids[nbz]);
-                if (!FindMatchPart(grid_t, izone, iface, ie, interFace2InterFaceID))
+                if (!FindMatchPart(grid_t, iZone, iface, ie, interFace2InterFaceID))
                 {
                     TK_Exit::ExceptionExit("!FindMatchPart\n");
                 }
@@ -991,18 +991,18 @@ void Pre_UnstructGridPartition::BuildInterfaceLinkForParallelPartition(Grid **gr
     }
 
     //! Map the local part index to global zone index.
-    for (int izone = 0; izone < maxProcessor; ++ izone)
+    for (int iZone = 0; iZone < maxProcessor; ++ iZone)
     {
-        if (!grids[izone]) continue;
+        if (!grids[iZone]) continue;
 
-        InterfaceInfo *interfaceInfo = grids[izone]->GetInterfaceInfo();
+        InterfaceInfo *interfaceInfo = grids[iZone]->GetInterfaceInfo();
         if (!interfaceInfo) continue;
 
         int *interFace2ZoneID = interfaceInfo->GetInterFace2ZoneID();
         int nIFace = interfaceInfo->GetNIFace();
         for (int iface = 0; iface < nIFace; ++ iface)
         {
-            if (iface < nIFaceInOrgBC[izone])
+            if (iface < nIFaceInOrgBC[iZone])
             {
                 //! The interfaces in the original BC \n
                 //! have been built in function SetInterfaceInfoPartInOrgBC.
@@ -1023,40 +1023,40 @@ void Pre_UnstructGridPartition::CommunicateInterfaceTopo()
 
     //! Each processor runs along the same order, which is from 0 to nZones.
     //! Each simulation zone is looped over to judge if the communication is necessary.
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(izone);
+        ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = zoneNeighbor->GetNumberOfNeighbor();
 
         for (std::size_t ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
         {
             int neighborZoneIndex = zoneNeighbor->GetZoneIndexOfNeighbor(ineighbor);
 
-            SwapInterfaceTopo(izone, neighborZoneIndex);
+            SwapInterfaceTopo(iZone, neighborZoneIndex);
         }
     }
 }
 
-void Pre_UnstructGridPartition::SwapInterfaceTopo(int izone, int jzone)
+void Pre_UnstructGridPartition::SwapInterfaceTopo(int iZone, int jZone)
 {
     using namespace PHMPI;
 
-    //! izone is the current zone, and jzone is the target zone.
-    int send_proc = GetZoneProcessorID(izone);
-    int recv_proc = GetZoneProcessorID(jzone);
+    //! iZone is the current zone, and jZone is the target zone.
+    int send_proc = GetZoneProcessorID(iZone);
+    int recv_proc = GetZoneProcessorID(jZone);
 
-    int tag = izone;
+    int tag = iZone;
     int myid = GetCurrentProcessorID();
 
     DataContainer *cdata = new DataContainer();
 
     if (myid == send_proc)
     {
-        UnstructGrid  *grid = UnstructGridCast(GetGrid(izone, 0));
+        UnstructGrid  *grid = UnstructGridCast(GetGrid(iZone, 0));
         InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
         if (interfaceInfo)
         {
-            int ineighbor = interfaceInfo->FindIthNeighbor(jzone);
+            int ineighbor = interfaceInfo->FindIthNeighbor(jZone);
             int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
             int *faceIndexForSend = interfaceInfo->GetFaceIndexForSend(ineighbor);
             int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
@@ -1081,13 +1081,13 @@ void Pre_UnstructGridPartition::SwapInterfaceTopo(int izone, int jzone)
 
     if (myid == recv_proc)
     {
-        UnstructGrid *grid = UnstructGridCast(GetGrid(jzone, 0));
+        UnstructGrid *grid = UnstructGridCast(GetGrid(jZone, 0));
         InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
         if (interfaceInfo)
         {
             int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
 
-            int ineighbor = interfaceInfo->FindIthNeighbor(izone);
+            int ineighbor = interfaceInfo->FindIthNeighbor(iZone);
             int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
             int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
             int iface, globalZoneIndexInNeighbor, localInterfaceIndexInNeighbor, bcFaceIndex;
@@ -1143,7 +1143,7 @@ bool Pre_UnstructGridPartition::FindMatchPart(UnstructGrid *grid, int izone_t, i
             continue;
         }
 
-        //! The interface iface target zone==izone.
+        //! The interface iface target zone == iZone.
         if ((interFace2ZoneID[iface]      == izone_t) &&
             (interFace2InterFaceID[iface] == ie_t) && 
             (ie  == interface_interfaceid_t[iface_t]))
@@ -1181,17 +1181,17 @@ void Pre_UnstructGridPartition::BuildInterfaceLink(Grid **grids, int maxProcesso
 
 //! For each interface in the current zone,\n
 //! Find out the interface-index in the neighbor zone.
-void Pre_UnstructGridPartition::ReconInterfaces(Grid **grids, int izone, int maxProcessor)
+void Pre_UnstructGridPartition::ReconInterfaces(Grid **grids, int iZone, int maxProcessor)
 {
-    if (!grids[izone]) return;
+    if (!grids[iZone]) return;
 
-    InterfaceInfo *interfaceInfo = grids[izone]->GetInterfaceInfo();
+    InterfaceInfo *interfaceInfo = grids[iZone]->GetInterfaceInfo();
     if (!interfaceInfo) return;
 
     int *interFace2ZoneID      = interfaceInfo->GetInterFace2ZoneID();
     int *interFace2InterFaceID = interfaceInfo->GetInterFace2InterFaceID();
 
-    UnstructGrid *grid = UnstructGridCast(grids[izone]);
+    UnstructGrid *grid = UnstructGridCast(grids[iZone]);
 
     int nBoundFace = grid->GetNBoundFace();
     int nIFace = interfaceInfo->GetNIFace();
@@ -1219,10 +1219,10 @@ void Pre_UnstructGridPartition::ReconInterfaces(Grid **grids, int izone, int max
         re  = right_cell_of_face[iface + nphysi];
         ie  = MAX(le, re);
 
-        if (nbz >= izone)
+        if (nbz >= iZone)
         {
             UnstructGrid *grid_t = UnstructGridCast(grids[nbz]);
-            if (!FindMatchPart(grid_t, izone, iface, ie, interFace2InterFaceID))
+            if (!FindMatchPart(grid_t, iZone, iface, ie, interFace2InterFaceID))
             {
                 TK_Exit::ExceptionExit("!FindMatchPart\n");
             }
@@ -1303,7 +1303,7 @@ void Pre_UnstructGridPartition::SetNodeNumberOfEachFaceAndFace2Node(UnstructGrid
     }
 }
 
-void Pre_UnstructGridPartition::SetFace2CellAndBC(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridpart)
 {
     int nBFace_src = gridSource->GetNBoundFace();
     int *left_cell_of_face_src  = gridSource->GetLeftCellOfFace();
@@ -1348,12 +1348,12 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int izone, UnstructGrid *gridp
             bctype = -1;
             bcName = "Interface";
             //! int face.
-            if (part[le_src] == izone)
+            if (part[le_src] == iZone)
             {
                 le = cell_mark[le_src];
                 re = - 1;
             }
-            else if (part[re_src] == izone)
+            else if (part[re_src] == iZone)
             {
                 re = cell_mark[re_src];
                 le = - 1;
@@ -1411,17 +1411,17 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int izone, UnstructGrid *gridp
     }
 }
 
-void Pre_UnstructGridPartition::SetLinkPart(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::SetLinkPart(int iZone, UnstructGrid *gridpart)
 {
     SetNodeNumberOfEachFaceAndFace2Node(gridpart);
-    SetFace2CellAndBC(izone, gridpart);
+    SetFace2CellAndBC(iZone, gridpart);
 }
 
-void Pre_UnstructGridPartition::SetInterfaceInfoPart(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::SetInterfaceInfoPart(int iZone, UnstructGrid *gridpart)
 {
     if (IsParallelPartition())
     {
-        SetInterfaceInfoPartForParallelPartition(izone, gridpart);
+        SetInterfaceInfoPartForParallelPartition(iZone, gridpart);
         return;
     }
 
@@ -1468,7 +1468,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPart(int izone, UnstructGrid *gr
 
             //! interface_interfaceid£ºtemporarily records local index of the neighbor interface cell.
             //! It will be modified to the interface index of neighbor zone.
-            if (part[le] == izone)
+            if (part[le] == iZone)
             {
                 interFaceDirection    [ii_local] = 1;
                 interFace2ZoneID      [ii_local] = static_cast<int>(part[re]);
@@ -1476,7 +1476,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPart(int izone, UnstructGrid *gr
                 interFace2InterFaceID [ii_local] = cell_mark[re];
                 interFace2BoundaryFace[ii_local] = face_mark[iface];
             }
-            else if (part[re] == izone)
+            else if (part[re] == iZone)
             {
                 interFaceDirection    [ii_local] = - 1;
                 interFace2ZoneID      [ii_local] = static_cast<int>(part[le]);
@@ -1492,7 +1492,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPart(int izone, UnstructGrid *gr
     }
 }
 
-void Pre_UnstructGridPartition::SetInterpointInfoPart(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::SetInterpointInfoPart(int iZone, UnstructGrid *gridpart)
 {
     if (npartmethod != 1) return;
 
@@ -1538,7 +1538,7 @@ void Pre_UnstructGridPartition::SetInterpointInfoPart(int izone, UnstructGrid *g
         if (pointPosition2zoneID[numberofnode2all+1] - pointPosition2zoneID[numberofnode2all] == 1) continue;
         for (int i = pointPosition2zoneID[numberofnode2all]; i < pointPosition2zoneID[numberofnode2all+1]; i ++)
         {
-            if (point2ZoneID[i] != izone)
+            if (point2ZoneID[i] != iZone)
             {
                 interPoint2ZoneID[count] = point2ZoneID[i];
                 interPoint2InterPointID[count] = node2all[inode];    //! Temporarily to stores the index of global points,it is modified to the index of interpoints later.
@@ -1593,7 +1593,7 @@ void Pre_UnstructGridPartition::ModifyInterpointInfoPart(Grid **grids)
     }
 }
 
-void Pre_UnstructGridPartition::SetInterfaceInfoPartForParallelPartition(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::SetInterfaceInfoPartForParallelPartition(int iZone, UnstructGrid *gridpart)
 {
     if (npartmethod != 1) return;
 
@@ -1645,14 +1645,14 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartForParallelPartition(int izo
 
             //! interface_interfaceid£ºtemporarily records local index of the neighbor interface cell.
             //! It will be modified to the interface index of neighbor zone.
-            if (part[le] == izone)
+            if (part[le] == iZone)
             {
                 interFaceDirection    [ii_local] = 1;
                 interFace2ZoneID      [ii_local] = static_cast<int>(part[re]);
                 interFace2InterFaceID [ii_local] = cell_mark[re];
                 interFace2BoundaryFace[ii_local] = face_mark[iface];
             }
-            else if (part[re] == izone)
+            else if (part[re] == iZone)
             {
                 interFaceDirection    [ii_local] = -1;
                 interFace2ZoneID      [ii_local] = static_cast<int>(part[le]);
@@ -1669,7 +1669,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartForParallelPartition(int izo
     //WriteLogFile(" nIFace in Interior = ", count);
 }
 
-void Pre_UnstructGridPartition::ComputeNodeMark(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::ComputeNodeMark(int iZone, UnstructGrid *gridpart)
 {
     int nTotalFace = gridSource->GetNTotalFace();
     int nTotalNode = gridSource->GetNTotalNode();
@@ -1681,7 +1681,7 @@ void Pre_UnstructGridPartition::ComputeNodeMark(int izone, UnstructGrid *gridpar
         node_mark[inode] = NOT_IN_THIS_ZONE;
     }
 
-    //! Set all the node_mark belong to izone to -1.
+    //! Set all the node_mark belong to iZone to -1.
     int count = 0;
     for (int iface = 0; iface < nTotalFace; ++ iface)
     {
@@ -1710,7 +1710,7 @@ void Pre_UnstructGridPartition::ComputeNodeMark(int izone, UnstructGrid *gridpar
     gridpart->SetNTotalNode(i_nTNode);
 }
 
-void Pre_UnstructGridPartition::ComputeFaceMark(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::ComputeFaceMark(int iZone, UnstructGrid *gridpart)
 {
     int nTotalCell = gridSource->GetNTotalCell();
     int nTotalFace = gridSource->GetNTotalFace();
@@ -1735,11 +1735,11 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int izone, UnstructGrid *gridpar
         le = left_cell_of_face [iface];
         re = right_cell_of_face[iface];
 
-        if (part[le] == izone)
+        if (part[le] == iZone)
         {
             face_mark[iface] = IN_THIS_ZONE;
         }
-        else if (re < nTotalCell && part[re] == izone)
+        else if (re < nTotalCell && part[re] == iZone)
         {
             face_mark[iface] = IN_THIS_ZONE;
         }
@@ -1767,7 +1767,7 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int izone, UnstructGrid *gridpar
         }
     }
 
-    nIFaceInOrgBC[izone] = i_nIFace;
+    nIFaceInOrgBC[iZone] = i_nIFace;
 
     //! Interior interfaces.
     for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
@@ -1820,13 +1820,13 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int izone, UnstructGrid *gridpar
     }
 }
 
-int Pre_UnstructGridPartition::GetNTotalCell(int izone, idx_t *part)
+int Pre_UnstructGridPartition::GetNTotalCell(int iZone, idx_t *part)
 {
     int nTotalCell = gridSource->GetNTotalCell();
     int count = 0;
     for (int icell = 0; icell < nTotalCell; ++ icell)
     {
-        if (part[icell] == izone)
+        if (part[icell] == iZone)
         {
             count ++;
         }
@@ -1834,7 +1834,7 @@ int Pre_UnstructGridPartition::GetNTotalCell(int izone, idx_t *part)
     return count;
 }
 
-int * Pre_UnstructGridPartition::GetNode2All(int izone, UnstructGrid *gridpart)
+int * Pre_UnstructGridPartition::GetNode2All(int iZone, UnstructGrid *gridpart)
 {
     int i_nTNode = gridpart->GetNTotalNode();
 
@@ -1853,7 +1853,7 @@ int * Pre_UnstructGridPartition::GetNode2All(int izone, UnstructGrid *gridpart)
     return node2all;
 }
 
-int * Pre_UnstructGridPartition::GetFace2All(int izone, UnstructGrid *gridpart)
+int * Pre_UnstructGridPartition::GetFace2All(int iZone, UnstructGrid *gridpart)
 {
     int i_nTFace = gridpart->GetNTotalFace();
 
@@ -1861,18 +1861,18 @@ int * Pre_UnstructGridPartition::GetFace2All(int izone, UnstructGrid *gridpart)
 
     int nTotalFace = gridSource->GetNTotalFace();
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        if (face_mark[iface] > -1)
+        if (face_mark[iFace] > -1)
         {
-            face2all[face_mark[iface]] = iface;
+            face2all[face_mark[iFace]] = iFace;
         }
     }
 
     return face2all;
 }
 
-int * Pre_UnstructGridPartition::GetCell2All(int izone, UnstructGrid *gridpart)
+int * Pre_UnstructGridPartition::GetCell2All(int iZone, UnstructGrid *gridpart)
 {
     int nTotalCell = gridpart->GetNTotalCell();
 
@@ -1883,7 +1883,7 @@ int * Pre_UnstructGridPartition::GetCell2All(int izone, UnstructGrid *gridpart)
     int count = 0;
     for (int icell = 0; icell < nTotalCell_All; ++ icell)
     {
-        if (part[icell] == izone)
+        if (part[icell] == iZone)
         {
             cell2all[count] = icell;
             ++ count;
@@ -2092,31 +2092,31 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     }
 }
 
-void Pre_UnstructGridPartition::SetNTotalCell(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::SetNTotalCell(int iZone, UnstructGrid *gridpart)
 {
-    int i_nTotalCell = GetNTotalCell(izone, part);
+    int i_nTotalCell = GetNTotalCell(iZone, part);
     gridpart->SetNTotalCell(i_nTotalCell);
 }
 
-void Pre_UnstructGridPartition::CreateLocal2All(int izone, UnstructGrid *gridpart)
+void Pre_UnstructGridPartition::CreateLocal2All(int iZone, UnstructGrid *gridpart)
 {
-    node2all = GetNode2All(izone, gridpart);
-    face2all = GetFace2All(izone, gridpart);
-    cell2all = GetCell2All(izone, gridpart);
+    node2all = GetNode2All(iZone, gridpart);
+    face2all = GetFace2All(iZone, gridpart);
+    cell2all = GetCell2All(iZone, gridpart);
 }
 
-void Pre_UnstructGridPartition::ComputeGridForPartition(UnstructGrid *gridpart, int izone)
+void Pre_UnstructGridPartition::ComputeGridForPartition(UnstructGrid *gridpart, int iZone)
 {
-    SetNTotalCell(izone, gridpart);
-    ComputeFaceMark(izone, gridpart);
-    ComputeNodeMark(izone, gridpart);
+    SetNTotalCell(iZone, gridpart);
+    ComputeFaceMark(iZone, gridpart);
+    ComputeNodeMark(iZone, gridpart);
     
-    CreateLocal2All(izone, gridpart);
+    CreateLocal2All(iZone, gridpart);
     
     SetCoorPart(gridpart);
-    SetLinkPart(izone, gridpart);
-    SetInterfaceInfoPart(izone, gridpart);
-    SetInterpointInfoPart(izone, gridpart);
+    SetLinkPart(iZone, gridpart);
+    SetInterfaceInfoPart(iZone, gridpart);
+    SetInterpointInfoPart(iZone, gridpart);
     
     SetWallDist(gridpart);
     
@@ -2167,11 +2167,11 @@ void Pre_UnstructGridPartition::WriteWalldist(const string &out_grid_file)
     actkey->filepos = H5Fcreate(finalFileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     using namespace PHMPI;
-    for (int izone = 0; izone < maxProcessor; ++ izone)
+    for (int iZone = 0; iZone < maxProcessor; ++ iZone)
     {
-        if (!grids[izone]) continue;
+        if (!grids[iZone]) continue;
 
-        UnstructGrid *grid = UnstructGridCast(grids[izone]);
+        UnstructGrid *grid = UnstructGridCast(grids[iZone]);
         WriteWalldist(actkey, grid);
     }
     
@@ -2326,7 +2326,7 @@ void Pre_UnstructGridPartition::WriteFaceBC(fstream &file, UnstructGrid *gridPar
     gridPart->WriteFaceBC(file);
 }
 
-void Pre_UnstructGridPartition::ComputeGlobalToLocalCellToNodeMapping(UnstructGrid *gridpart, int izone)
+void Pre_UnstructGridPartition::ComputeGlobalToLocalCellToNodeMapping(UnstructGrid *gridpart, int iZone)
 {
     if (!partitionCellToNode) return;
 
@@ -2346,7 +2346,7 @@ void Pre_UnstructGridPartition::ComputeGlobalToLocalCellToNodeMapping(UnstructGr
     int count = 0;
     for (int iCell = 0; iCell < numberOfGlobalCells; ++ iCell)
     {
-        if (globalCellIndexToLocalZoneIndexMapping[iCell] == izone)
+        if (globalCellIndexToLocalZoneIndexMapping[iCell] == iZone)
         {
             int nodeNumber = nodeNumberOfCellGlobal[iCell];
             nodeNumberOfCellLocal[iCount ++] = nodeNumber;
@@ -2363,7 +2363,7 @@ void Pre_UnstructGridPartition::ComputeGlobalToLocalCellToNodeMapping(UnstructGr
     {
         int nodeNumber = nodeNumberOfCellGlobal[iCell];
 
-        if (globalCellIndexToLocalZoneIndexMapping[iCell] == izone)
+        if (globalCellIndexToLocalZoneIndexMapping[iCell] == iZone)
         {
             for (int iNode = 0; iNode < nodeNumber; ++ iNode)
             {
@@ -2559,11 +2559,11 @@ void Pre_UnstructGridPartition::DumpParallelPartitionGrid(const string &gridFile
     int *block_type     = new int [nBlocks];
     int *block_proc_inp = new int [nBlocks];
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        block_proc[izone] = grids[izone]->GetGridID()->GetIndex();  // Processor ID actually.
-        block_idx [izone] = block_index_in[izone];
-        block_type[izone] = grids[izone]->Type();
+        block_proc[iZone] = grids[iZone]->GetGridID()->GetIndex();  // Processor ID actually.
+        block_idx [iZone] = block_index_in[iZone];
+        block_type[iZone] = grids[iZone]->Type();
     }
 
     if (parallelPartitionMethod == METIS_OPENMP_METHOD)
@@ -2571,9 +2571,9 @@ void Pre_UnstructGridPartition::DumpParallelPartitionGrid(const string &gridFile
         //! For OpenMP case, reset the processor ID of sub-zone to the source grid's.
         int zoneID = gridSource->GetGridID()->GetIndex();
         int processorID = PHMPI::GetZoneProcessorID(zoneID);
-        for (int izone = 0; izone < nBlocks; ++ izone)
+        for (int iZone = 0; iZone < nBlocks; ++ iZone)
         {
-            block_proc[izone] = processorID;
+            block_proc[iZone] = processorID;
         }
     }
 
@@ -2582,9 +2582,9 @@ void Pre_UnstructGridPartition::DumpParallelPartitionGrid(const string &gridFile
     file.write(reinterpret_cast<char*>(block_idx), nBlocks * sizeof(int));
     file.write(reinterpret_cast<char*>(block_type), nBlocks * sizeof(int));
     
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        grids[izone]->WriteGrid(file);
+        grids[iZone]->WriteGrid(file);
     }
 
     file.close();

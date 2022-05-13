@@ -286,7 +286,7 @@ public:
     ~CGNSMultiZone();
 public:
     int GetNZones() const { return nzones; }
-    CGNSZone *GetZone(int izone) const {  return zones[izone]; };
+    CGNSZone *GetZone(int iZone) const {  return zones[iZone]; };
 public:
     void InitAllZones();
     void ReadGrid(const string &filename);
@@ -522,8 +522,8 @@ public:
     void ReadGrid();
     void ResolveComputationGrid();
     void CreateGeneralMultiBlockGrid();
-    int  GetGridType(int izone) const;
-    Grid * CreateBasicGrid(int izone);
+    int  GetGridType(int iZone) const;
+    Grid * CreateBasicGrid(int iZone);
 private:
     void CreateAllSingleGrid(Grid ** grids);
 };

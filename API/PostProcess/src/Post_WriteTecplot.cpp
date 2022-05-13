@@ -90,7 +90,7 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
     int recv_proc;
     int myid;
 
-    for (int izone =  0; izone < nZones; ++ izone)
+    for (int iZone =  0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkey->GetData();
         cdata->moveto_begin();
@@ -98,24 +98,25 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
         DataContainer *tecdata = actkey->GetTecData();
         tecdata->moveto_begin();
 
-        int send_proc = GetZoneProcessorID(izone);
-        recv_proc = GetServerProcessorID();
+        int send_proc = GetZoneProcessorID(iZone);
+        //recv_proc = GetServerProcessorID();
+        recv_proc = GetZoneFileID(iZone);
 
         myid = GetCurrentProcessorID();
-        int tag = GetSendRecvTag(actkey, izone);
+        int tag = GetSendRecvTag(actkey, iZone);
 
         if (myid == send_proc)
         {
-            Grid *grid = GetGrid(izone, actkey->level);
+            Grid *grid = GetGrid(iZone, actkey->level);
             int nVisualVariables = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
             int visualVariables[100];
             GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
             Post_Visual *postVisualization = new Post_Visual(nVisualVariables, visualVariables, grid, flowType);
 
-            int Nsolver = GlobalSolvers::GetNumberOfSolvers(izone);
+            int Nsolver = GlobalSolvers::GetNumberOfSolvers(iZone);
             for (int isolver = 0; isolver < Nsolver; ++ isolver)
             {
-                GlobalSolvers::GetSolver(izone, isolver)->ComputePostVisualVariables(postVisualization);
+                GlobalSolvers::GetSolver(iZone, isolver)->ComputePostVisualVariables(postVisualization);
             }
             
             StoreVisualizationVar(actkey, postVisualization);
@@ -324,14 +325,14 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
         }
     }
 
-    for (unsigned int izone = 0; izone < vtkdatalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
     {
-        delete vtkdatalist[izone];
+        delete vtkdatalist[iZone];
     }
 
-    for (unsigned int izone = 0; izone < datalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < datalist.size(); ++ iZone)
     {
-        delete datalist[izone];
+        delete datalist[iZone];
     }
 }
 

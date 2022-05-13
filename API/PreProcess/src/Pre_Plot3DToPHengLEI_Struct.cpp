@@ -501,9 +501,9 @@ void Pre_Plot3DToPHengLEI_Struct::CheckMeshMultigrid()
     int km, NN;
     int km_grid = 1024;
 
-    for (int izone = 0; izone < nBlocks; izone ++)
+    for (int iZone = 0; iZone < nBlocks; iZone ++)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
         StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
 

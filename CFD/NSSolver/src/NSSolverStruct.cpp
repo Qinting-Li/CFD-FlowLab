@@ -11455,12 +11455,12 @@ namespace PHSPACE
 
                         if (nDebug != 0)
                         {
-                            int izone = grid->GetZoneID();
+                            int iZone = grid->GetZoneID();
                             int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
                             cout << "  i=   " << i << "  j=    " << j << "   k=    " << k << endl;
                             cout << "  X=   " << Xm(i, j, k) << "  Y=    " << Ym(i, j, k) << "   Z=    " << Zm(i, j, k) << endl;
                             cout << "  density=   " << rm << "  pressure=    " << pm << endl;
-                            cout << "  izone=   " << izone << "  outIterStep=    " << outIterStep << endl;
+                            cout << "  iZone=   " << iZone << "  outIterStep=    " << outIterStep << endl;
                             abort();
                         }
                     }
@@ -11510,18 +11510,6 @@ namespace PHSPACE
                             t(i, j, k, m) = temperature[m];
                         }
                     }
-
-                    /*int izone = grid->GetZoneID();
-                    int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
-
-                    if(izone == 1&&i==9&&j==38)
-                    {cout << "  i=   "<<  i  <<"  j=    " <<  j  <<"   k=    " <<  k  << endl;
-                     cout << "  X=   "<<  Xm(i,j,k)<<"  Y=    " <<  Ym(i,j,k) <<"   Z=    " <<  Zm(i,j,k) << endl;
-                     cout << "  density=   "<<  rm    <<"  pressure=    " <<  pm        << endl;
-                     cout << "  izone=   "<<  izone    <<"  outIterStep=    " <<  outIterStep << endl;
-                     cout << "  izone=   "<<  izone    <<"  outIterStep=    " <<  outIterStep << endl;
-
-                     }*/
                 }
             }
         }
@@ -14456,20 +14444,6 @@ namespace PHSPACE
         Range M(0, nEquation - 1);
 
         residual(I, J, K, M) -= (flux(I + il1, J + jl1, K + kl1, M) - flux(I, J, K, M));
-
-        /* int izone = grid->GetZoneID();
-         if(izone==6 && iSurface==3)
-         {
-
-             RDouble  aa[20];
-             for(int m=0;  m<nEquation;  m++ )
-             {
-                 aa[m]=flux(10, 10, 1, m);
-             }
-             aa[19]=0.0;
-         }*/
-
-
     }
 
     void NSSolverStruct::UpdateQlQrOnlyforMixGrid(Grid *gridIn)
@@ -19482,6 +19456,24 @@ namespace PHSPACE
 
             postVisualization->UpdateVisualNodeVarPtr(varName, *mach, 0);
             delete mach;
+        }
+
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_U))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_U);
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, IDX::IU);
+        }
+
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_V))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_V);
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, IDX::IV);
+        }
+
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_W))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_W);
+            postVisualization->UpdateVisualNodeVarPtr(varName, primitiveVariables, IDX::IW);
         }
 
         if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_TIME_STEP))

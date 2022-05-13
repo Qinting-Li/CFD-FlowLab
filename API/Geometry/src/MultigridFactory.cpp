@@ -1992,11 +1992,11 @@ void MultigridManager::ReadOriginalHoleFile()
 
 void MultigridManager::ReadZoneInverseMapping()
 {
-    int numberOfZones = globalBlockNumber;
-    zoneInverseIndex.resize(numberOfZones);
+    int nZones = globalBlockNumber;
+    zoneInverseIndex.resize(nZones);
     string zoneInverseFileName = GlobalDataBase::GetStrParaFromDB("zoneInverseFileName");
     fstream file(zoneInverseFileName.c_str(), ios_base::in|ios_base::binary);
-    file.read((char*)&zoneInverseIndex[0], numberOfZones * sizeof(int));
+    file.read((char*)&zoneInverseIndex[0], nZones * sizeof(int));
     file.close();
     file.clear();
     return;

@@ -51,6 +51,9 @@ public:
     //! Get if carry out precondition or not.
     int GetIfLowSpeedPrecon() const;
 
+    //! Get if ideal gas state .
+    int GetIfIdealGasState() const;
+
     //! Get attacked of angle.
     RDouble GetAoA() const;
 
@@ -165,6 +168,9 @@ private:
 
     //! For incompressible flow (mach < 0.3), using precondition method or not.
     int ifLowSpeedPrecon;
+
+    //! judge if ideal gas state or not.
+    int nIdealState;
 
     //! Angle of attacked.
     double AoA;

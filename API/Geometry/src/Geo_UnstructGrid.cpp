@@ -8958,9 +8958,9 @@ void UnstructGrid::CompareMaxMinValue(RDouble &local_data, int flag)
     }
     else
     {
-        for (int izone = 0; izone < nZones; ++ izone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
-            int gridtype = GetZoneGridType(izone);
+            int gridtype = GetZoneGridType(iZone);
             if (gridtype != PHSPACE::UNSTRUCTGRID)
             {
                 return;

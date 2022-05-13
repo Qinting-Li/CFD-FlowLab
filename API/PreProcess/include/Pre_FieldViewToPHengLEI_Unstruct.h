@@ -79,7 +79,7 @@ private:
                               int *&istart, int *&iend, cgsize_t **&conn_list);
 
     //!
-    void MergeFieldViewCell(CGNSFactory *factory_cgns, int izone, int nBoundFace, int nTotalNode, int nTotalCell,
+    void MergeFieldViewCell(CGNSFactory *factory_cgns, int iZone, int nBoundFace, int nTotalNode, int nTotalCell,
                             int nElem_Sections, int *elem_type, int *elem_istart, int *elem_iend, cgsize_t **elem_conn_list,
                             int nBC_Sections, int *bc_elem_type, int *bc_istart, int *bc_iend, cgsize_t **bc_elem_conn_list,
                             int nBCRegions, cgsize_t **bc_conn_list, int *nBCElem, int *bc_type);

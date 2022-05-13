@@ -33,6 +33,11 @@ inline int Param_NSSolver::GetIfLowSpeedPrecon() const
 	return ifLowSpeedPrecon;
 }
 
+inline int Param_NSSolver::GetIfIdealGasState() const
+{
+    return nIdealState;
+}
+
 inline RDouble Param_NSSolver::GetAoA() const
 {
 	return AoA;

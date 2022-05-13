@@ -27,6 +27,7 @@ LIB_EXPORT void Param_NSSolver::Init()
     transitionType      = GlobalDataBase::GetIntParaFromDB("transitionType");
 
     ifLowSpeedPrecon    = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+    nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
 
     roeEntropyFixMethod = GlobalDataBase::GetIntParaFromDB("roeEntropyFixMethod");
     roeEntropyScale     = GlobalDataBase::GetDoubleParaFromDB("roeEntropyScale");
