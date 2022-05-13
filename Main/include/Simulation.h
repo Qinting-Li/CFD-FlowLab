@@ -142,7 +142,6 @@ private:
     //!
     void SolveIncomFlow();
     
-    void SolveIncomFlow();
     //!
     void SolveSteady();
     
