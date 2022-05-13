@@ -809,9 +809,9 @@ RawGrid::RawGrid()
 
 RawGrid::~RawGrid()
 {
-    delete [] x;
-    delete [] y;
-    delete [] z;
+    //delete [] x;
+    //delete [] y;
+    //delete [] z;
 }
 
 Base_Grid_Conn::Base_Grid_Conn()
@@ -1408,6 +1408,22 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)
             if (flag) break;
         }
     }
+
+    if (conn_list)
+    {
+        for (int i = 0; i < nSections; ++ i)
+        {
+            delete [] conn_list[i];
+        }
+    }
+    delete [] conn_list;
+
+    delete [] elem_type;
+    delete [] istart;
+    delete [] iend;
+    delete [] nBCElem;
+    delete [] bc_type;
+    delete [] ElementDataSize;
 }
 
 void CGNSBase::ComputeElemFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
@@ -1561,6 +1577,15 @@ void CGNSBase::ComputeBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
     }
 
     MarkBCInterface(gconn);
+
+    if (bc_conn_list)
+    {
+        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        {
+            delete [] bc_conn_list[ibcregion];
+        }
+    }
+    delete [] bc_conn_list;
 }
 
 void CGNSBase::MarkBCInterface(Base_Grid_Conn *gconn)
@@ -1699,21 +1724,21 @@ CGNSFactory::CGNSFactory(int nBlocks)
 {
     this->nBlocks = nBlocks;
     base_conn = new Base_Grid_Conn *[nBlocks];
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        base_conn[izone] = new Base_Grid_Conn();
+        base_conn[iZone] = new Base_Grid_Conn();
     }
 
     rawgrid = new RawGrid *[nBlocks];
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        rawgrid[izone] = new RawGrid();
+        rawgrid[iZone] = new RawGrid();
     }
 
     base_cgns = new CGNSBase *[nBlocks];
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        base_cgns[izone] = new CGNSBase();
+        base_cgns[iZone] = new CGNSBase();
     }
 
     base_elem = new BaseElement();
@@ -1725,21 +1750,21 @@ CGNSFactory::~CGNSFactory()
     delete base_elem;
     delete fantasy_bc;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete base_conn[izone];
+        delete base_conn[iZone];
     }
     delete [] base_conn;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete rawgrid[izone];
+        delete rawgrid[iZone];
     }
     delete [] rawgrid;
 
-    //for (int izone = 0; izone < nBlocks; ++ izone)
+    //for (int iZone = 0; iZone < nBlocks; ++ iZone)
     //{
-    //    delete base_cgns[izone];
+    //    delete base_cgns[iZone];
     //}
     delete [] base_cgns;
 }
@@ -1748,10 +1773,10 @@ void CGNSFactory::ConvertGrid2Fantasy()
 {
     //ReLableSelfDefineBC();
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        std::cout << "Converting Grid to PHengLEI for Zone " << izone << " of Total Blocks " << nBlocks << "\n";
-        ComputeGridConn(this->GetCGNSBase(izone), base_conn[izone]);
+        std::cout << "Converting Grid to PHengLEI for Zone " << iZone << " of Total Blocks " << nBlocks << "\n";
+        ComputeGridConn(this->GetCGNSBase(iZone), base_conn[iZone]);
     }
 
     DumpSelfDefinePartInformation();
@@ -1797,9 +1822,9 @@ void CGNSFactory::DumpSelfDefinePartInformation()
     vector<int> bcType;
     vector<string> boundaryName;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        CGNSBase *cgnsgrid = this->GetCGNSBase(izone);
+        CGNSBase *cgnsgrid = this->GetCGNSBase(iZone);
 
         int *bc_type = cgnsgrid->GetBCType();
         string *bc_name = cgnsgrid->GetBCName();
@@ -1869,10 +1894,10 @@ void CGNSFactory::DumpSelfDefinePartInformation()
     outfile.clear();
 }
 
-void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
+void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
 {
-    Base_Grid_Conn *gconn   = factory_cgns->GetBaseGridConnection(izone);
-    RawGrid        *rawgrid = factory_cgns->GetRawGrid(izone);
+    Base_Grid_Conn *gconn   = factory_cgns->GetBaseGridConnection(iZone);
+    RawGrid        *rawgrid = factory_cgns->GetRawGrid(iZone);
 
     int nTotalCell = static_cast<int>(gconn->GetNTotalCell());
     int nTotalNode = static_cast<int>(gconn->GetNTotalNode());
@@ -1901,6 +1926,10 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
         z[inode] = zz[inode];
     }
 
+    delete []xx;
+    delete []yy;
+    delete []zz;
+
     cout << "  Boundary condition setting ......\n";
     //! Set the boundary conditions.
     CompositeUnstructBC **bcrs = new CompositeUnstructBC * [nBoundFace];
@@ -1919,7 +1948,10 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
         bcrs[iface]->SetBCName(bcName);
         cgnsBCList.insert(cgnsBCType);
         fantasyBCList.insert(fantasyBCType);
+
+        delete (*bcFace)[iface];
     }
+    (*bcFace).clear();
     grid->SetBCRecord(bcrs);
 
     cout << "After converting CGNS grid,\n";
@@ -1958,11 +1990,10 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
         node_number_of_each_face[iface] = (*gconn_node_number_of_each_face)[iface];
     }
     grid->SetNodeNumberOfEachFace(node_number_of_each_face);
-    //cout << " Set node_number_of_each_face finished\n";
 
     gconn->FreeNodeNumberOfEachFace();
 
-    int face2node_size = 0;
+    long long int face2node_size = 0;
     for (cgsize_t iface = 0; iface < nTotalFace; ++ iface)
     {
         face2node_size += node_number_of_each_face[iface];
@@ -1972,7 +2003,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
 
     vector< vector<cgsize_t> > *gface2node = gconn->GetFace2Node();
 
-    int count = 0;
+    long long int count = 0;
     for (cgsize_t iface = 0; iface < nTotalFace; ++ iface)
     {
         for (std::size_t j = 0; j < (*gface2node)[iface].size(); ++ j)
@@ -2010,7 +2041,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int izone, UnstructGrid *grid)
 
     gconn->FreeNodeNumberOfEachCell();
 
-    int cell2node_size =0;
+    long long int cell2node_size =0;
 
     for (cgsize_t icell = 0; icell < nTotalCell; ++ icell)
     {

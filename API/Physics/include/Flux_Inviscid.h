@@ -75,6 +75,7 @@ private:
     int nEntrFix;
     int nNitrogenIndex;
     int nElectronIndex;
+    int nIdealState;
 
     RDouble refMachNumber;
 
@@ -94,7 +95,8 @@ public:
     void SetLength(const int nLen) {this->nLen = nLen;}
     void SetNumberOfLaminar(const int nLaminar) {this->nLaminar = nLaminar;}
     void Setnm(const int nm) {this->nm = nm;}
-    void SetIfPrecondition(const bool nPrecondition) {this->nPrecondition = nPrecondition;}
+    void SetIfPrecondition(const int nPrecondition) {this->nPrecondition = nPrecondition;}
+    void SetIfIdealState(const int nIdealState) { this->nIdealState = nIdealState; }
     void SetNumberOfChemical(const int nChemical) {this->nChemical = nChemical;}
     void SetNumberOfTemperatureModel(const int nTemperatureModel) {this->nTemperatureModel = nTemperatureModel;}
     void SetNumberOfTotalEquation(const int nEquation) {this->nEquation = nEquation;}
@@ -125,6 +127,7 @@ public:
 
     int GetEntropyFixMethod() {return this->nEntrFix;}
     int GetIfPrecondition() {return this->nPrecondition;}
+    int GetIfIdealState() { return this->nIdealState; }
     RDouble GetLeftEntropyFixCoefficient() {return this->entrFixCoefLeft;}
     RDouble GetRightEntropyFixCoefficient() {return this->entrFixCoefRight;}
     RDouble GetMachNumber() {return this->refMachNumber;}

@@ -136,7 +136,7 @@ void SetGridServerProcessorID(int serverId)
     gridServer = serverId;
 }
 
-LIB_EXPORT void SetNumberofGlobalZones(int nblock)
+LIB_EXPORT void SetNumberOfGlobalZones(int nblock)
 {
     nZones = nblock;
 }
@@ -520,11 +520,11 @@ void FreeBlockData()
     localZoneIDToGlobalZoneID = NULL;
 }
 
-void CreateZoneStartPointContainer(int numberOfZones)
+void CreateZoneStartPointContainer(int nZones)
 {
     using namespace PHMPI;
 
-    zoneStartPointContainer = new int [numberOfZones];
+    zoneStartPointContainer = new int [nZones];
 }
 
 int *GetZoneStartPointContainer()
@@ -538,11 +538,11 @@ void DeleteZoneStartPointContainer()
     zoneStartPointContainer = NULL;
 }
 
-void CreateZoneStartCenterContainer(int numberOfZones)
+void CreateZoneStartCenterContainer(int nZones)
 {
     using namespace PHMPI;
 
-    zoneStartCenterContainer = new int [numberOfZones];
+    zoneStartCenterContainer = new int [nZones];
 }
 
 int * GetZoneStartCenterContainer()
@@ -556,9 +556,9 @@ void DeleteZoneStartCenterContainer()
     zoneStartCenterContainer = NULL;
 }
 
-void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int numberOfZones, int numberOfPoints)
+void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int nZones, int numberOfPoints)
 {
-    binaryTree = new DataStruct_BinaryTree(zoneStartPointContainer, numberOfZones, numberOfPoints);
+    binaryTree = new DataStruct_BinaryTree(zoneStartPointContainer, nZones, numberOfPoints);
     return;
 }
 

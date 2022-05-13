@@ -224,9 +224,9 @@ namespace PHSPACE
         int isolver = 0;//only one solver
 
         RDouble globalMinDt = LARGE,minDt;
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
@@ -258,9 +258,9 @@ namespace PHSPACE
         int level = 0;
         int isolver = 0;//only one solver
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;

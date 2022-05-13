@@ -549,9 +549,9 @@ DumpToFileASCII::DumpToFileASCII(vector<DataContainer *> datalist_in, string fil
     this->dataList = datalist_in;
     this->fileName = filename_in;
 
-    for (unsigned int izone = 0; izone < dataList.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < dataList.size(); ++ iZone)
     {
-        dataList[izone]->moveto_begin();
+        dataList[iZone]->moveto_begin();
     }
     nVariables = 0;
 }
@@ -636,9 +636,9 @@ void DumpToFileASCII::WriteProbesFlowFile()
 {
     uint_t nzones = dataList.size();
 
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -732,9 +732,9 @@ void DumpToFileASCII::WriteLinesFlowFile()
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -858,9 +858,9 @@ void DumpToFileASCII::WriteSurfacesFlowFile()
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -977,9 +977,9 @@ void DumpToFileASCII::WriteProbesFlowFile(int outerStep)
     qGlobalProbes.resize(nTotalProbes);
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -1090,9 +1090,9 @@ void DumpToFileASCII::WriteLinesFlowFile(int outerStep)
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);
@@ -1216,9 +1216,9 @@ void DumpToFileASCII::WriteSurfacesFlowFile(int outerStep)
     }
 
     uint_t nzones = dataList.size();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        DataContainer *cdata = dataList[izone];
+        DataContainer *cdata = dataList[iZone];
 
         int probesLocalNumber;
         PHRead(cdata, &probesLocalNumber, 1);

@@ -68,9 +68,9 @@ void Zone::AddSolver(PHSolver *solver)
     GlobalSolvers::AddSolverToGlobal(this->GetIndex(), this->solvers);
 }
 
-void Zone::AddGridToGlobal(int izone)
+void Zone::AddGridToGlobal(int iZone)
 {
-    PHSPACE::AddGridToGlobal(izone, geom->GetVectorGrid());
+    PHSPACE::AddGridToGlobal(iZone, geom->GetVectorGrid());
 }
 
 void Zone::AddGrid(Grid *grid)

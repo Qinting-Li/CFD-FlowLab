@@ -693,6 +693,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     int nTemperatureModel = parameters->GetTemperatureModel();
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
     int nPrecondition = parameters->GetIfLowSpeedPrecon();
+    int nIdealState = parameters->GetIfIdealGasState();
     int nNitrogenIndex = parameters->GetIndexOfNitrogen();
     int nElectronIndex = parameters->GetIndexOfElectron();
 
@@ -708,6 +709,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetNumberOfTemperatureModel(nTemperatureModel);
     invSchemePara->SetNumberOfTotalEquation(nEquation);
     invSchemePara->SetIfPrecondition(nPrecondition);
+    invSchemePara->SetIfIdealState(nIdealState);
     invSchemePara->SetEntropyFixMethod(RoeEntropyFixMethod);
     invSchemePara->SetMachNumber(refMachNumber);
     invSchemePara->SetEntropyFixCoefficients(entrFixCoefLeft, entrFixCoefRight);

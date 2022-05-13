@@ -364,9 +364,9 @@ void Grid::RotateTranslation()
 
 void CheckGrid(Grid **grids, int nBlocks)
 {
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
         InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
 
         int nIFace = 0;
@@ -388,7 +388,7 @@ void CheckGrid(Grid **grids, int nBlocks)
         for (int iface = 0; iface < nIFace; ++ iface)
         {
             target_zone = interFace2ZoneID[iface];
-            if (target_zone < izone) continue;
+            if (target_zone < iZone) continue;
             
             grid->GetSourceIndexIJK_Nsurf_LR(iface, 1, is, js, ks, nsurf, s_lr);
             if (s_lr == 1)
@@ -402,7 +402,7 @@ void CheckGrid(Grid **grids, int nBlocks)
 
             itface = interFace2InterFaceID[iface];
 
-            if (target_zone == izone)
+            if (target_zone == iZone)
             {
                 grid->GetSourceIndexIJK_Nsurf_LR(itface, 1, it, jt, kt, nsurf, t_lr);
                 if (t_lr == 1)
@@ -460,7 +460,7 @@ bool IsConvertGridToMixGrid()
     return flag;
 }
 
-LIB_EXPORT void Create_Link_Info(VInt &pindex, int izone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link)
+LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link)
 {
     sort(pindex.begin(), pindex.end());
     DataStruct_Sort< VInt > face(pindex, static_cast<int>(fcount));
@@ -471,10 +471,10 @@ LIB_EXPORT void Create_Link_Info(VInt &pindex, int izone, int iface, uint_t &fco
     if (iter == face_list.end())
     {
         face_list.insert(face);
-        facemap[izone][iface] = static_cast<int>(fcount);
+        facemap[iZone][iface] = static_cast<int>(fcount);
         VInt l_zoneid;
         VInt l_faceid;
-        l_zoneid.push_back(izone);
+        l_zoneid.push_back(iZone);
         l_faceid.push_back(iface);
 
         zoneid.push_back(l_zoneid);
@@ -484,8 +484,8 @@ LIB_EXPORT void Create_Link_Info(VInt &pindex, int izone, int iface, uint_t &fco
     }
     else
     {
-        facemap[izone][iface] = iter->index;
-        zoneid[iter->index].push_back(izone);
+        facemap[iZone][iface] = iter->index;
+        zoneid[iter->index].push_back(iZone);
         faceid[iter->index].push_back(iface);
     }
 }

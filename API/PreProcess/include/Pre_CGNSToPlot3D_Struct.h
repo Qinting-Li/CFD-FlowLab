@@ -107,7 +107,7 @@ private:
     BaseData **base_cgns;
 
 public:
-    BaseData * GetBaseData(int izone) { return base_cgns[izone]; }
+    BaseData * GetBaseData(int iZone) { return base_cgns[iZone]; }
 };
 
 //! @brief Collection the grid information in each block.

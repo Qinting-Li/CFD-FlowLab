@@ -28,25 +28,25 @@ void Task_ServerCollection::MainTask(ActionKey *actkey)
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
     actkey->GetData()->moveto_begin();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        LocalCollection(actkey, izone);
+        LocalCollection(actkey, iZone);
     }
 
     this->GetMainAction()(actkey);
 }
 
-void Task_ServerCollection::LocalCollection(ActionKey *actkey, int izone)
+void Task_ServerCollection::LocalCollection(ActionKey *actkey, int iZone)
 {
     using namespace PHMPI;
 
-    int zone_proc = GetZoneProcessorID(izone);
+    int zone_proc = GetZoneProcessorID(iZone);
     int myid      = GetCurrentProcessorID();
 
     if (myid == zone_proc)
     {
         //! If the process zone i belongs to is the current process.
-        GeneralAction(actkey, izone);
+        GeneralAction(actkey, iZone);
     }
 }
 }

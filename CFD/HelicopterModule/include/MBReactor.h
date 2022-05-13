@@ -11,7 +11,7 @@ private:
     FieldProxy ** fieldProxy;
     int numberOfZones;
 public:
-    ReginalFieldProxy(int numberOfZones);
+    ReginalFieldProxy(int nZones);
     ~ReginalFieldProxy();
 public:
     FieldProxy ** GetFieldProxy() { return fieldProxy; }
@@ -23,7 +23,7 @@ private:
     int numberOfLevels;
     ReginalFieldProxy ** reginalFieldProxy;
 public:
-    MultiFieldProxy(int numberOfLevels, int numberOfZones);
+    MultiFieldProxy(int numberOfLevels, int nZones);
     ~MultiFieldProxy();
 public:
     FieldProxy ** GetFieldProxy(int level) { return reginalFieldProxy[level]->GetFieldProxy(); }
@@ -51,8 +51,8 @@ public:
     bool IsCoarsestLevel(int level)      { return (level == numberOfLevels - 1); }
     FieldProxy ** GetQProxy(int level)   { return q_proxy->GetFieldProxy(level);   }
     FieldProxy ** GetRHSProxy(int level) { return rhs_proxy->GetFieldProxy(level); }
-    Zone * GetZone(int izone)            { return region->GetZone(izone); }
-    CFDSolver * GetCFDSolver(int izone)  { return static_cast< CFDSolver * >(GlobalSolvers::GetSolver(izone,this->solverIndex)); }
+    Zone * GetZone(int iZone)            { return region->GetZone(iZone); }
+    CFDSolver * GetCFDSolver(int iZone)  { return static_cast< CFDSolver * >(GlobalSolvers::GetSolver(iZone, this->solverIndex)); }
 private:
     void SolveLinearSystem(int level, int numberOfSteps);
     void UpdateSteadyFlowField(int level, FieldProxy ** dq_proxy);

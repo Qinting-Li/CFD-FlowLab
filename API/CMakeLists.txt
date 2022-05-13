@@ -505,6 +505,7 @@ ${PostProcess_H_PATH}/Post_ForceMoment.h
 ${PostProcess_H_PATH}/PostProcess.h
 ${PostProcess_H_PATH}/IO_FlowReader.h
 ${PostProcess_H_PATH}/ForceProcessStruct.h
+${PostProcess_H_PATH}/ForceProcessUnstruct.h
 ${PostProcess_H_PATH}/PostProcessData.h
 ${PostProcess_H_PATH}/Post_Probes.h
 ${PostProcess_H_PATH}/Post_ProbesWrite.h
@@ -520,6 +521,7 @@ ${PostProcess_CPP_PATH}/Post_ForceMoment.cpp
 ${PostProcess_CPP_PATH}/PostProcess.cpp
 ${PostProcess_CPP_PATH}/IO_FlowReader.cpp
 ${PostProcess_CPP_PATH}/ForceProcessStruct.cpp
+${PostProcess_CPP_PATH}/ForceProcessUnstruct.cpp
 ${PostProcess_CPP_PATH}/PostProcessData.cpp
 ${PostProcess_CPP_PATH}/Post_Probes.cpp
 ${PostProcess_CPP_PATH}/Post_ProbesWrite.cpp

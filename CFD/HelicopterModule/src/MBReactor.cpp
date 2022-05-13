@@ -6,11 +6,11 @@ using namespace std;
 
 namespace PHSPACE
 {
-    ReginalFieldProxy::ReginalFieldProxy(int numberOfZones)
+    ReginalFieldProxy::ReginalFieldProxy(int nZones)
     {
-        this->numberOfZones = numberOfZones;
-        fieldProxy = new FieldProxy * [numberOfZones];
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        this->numberOfZones = nZones;
+        fieldProxy = new FieldProxy * [nZones];
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             fieldProxy[iZone] = NULL;
         }
@@ -25,13 +25,13 @@ namespace PHSPACE
         delete [] fieldProxy; fieldProxy = NULL;
     }
 
-    MultiFieldProxy::MultiFieldProxy(int numberOfLevels, int numberOfZones)
+    MultiFieldProxy::MultiFieldProxy(int numberOfLevels, int nZones)
     {
         this->numberOfLevels = numberOfLevels;
         reginalFieldProxy = new ReginalFieldProxy * [numberOfLevels];
         for (int iLevel = 0; iLevel < numberOfLevels; ++ iLevel)
         {
-            reginalFieldProxy[iLevel] = new ReginalFieldProxy(numberOfZones);
+            reginalFieldProxy[iLevel] = new ReginalFieldProxy(nZones);
         }
     }
 

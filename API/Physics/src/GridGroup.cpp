@@ -49,7 +49,7 @@ void GridGroup::SetGlobalZoneLayout()
 
     if(!GetZoneGridType())
     {
-        SetNumberofGlobalZones(nzones);
+        SetNumberOfGlobalZones(nzones);
         CreateZoneProcessorIDDump(nzones);
         CreateZoneProcessorID(nzones);
         CreateZoneGridID     (nzones);
@@ -66,19 +66,19 @@ void GridGroup::SetGlobalZoneLayout()
 
     set< int > zoneIDinCurrentProc;
     int myid = GetCurrentProcessorID();
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        int multi_izone = zoneStart + izone;
+        int multi_izone = zoneStart + iZone;
 
-        global_block_proc     [ multi_izone ] = block_proc     [ izone ];
-        global_block_proc_grid[ multi_izone ] = block_proc_grid[ izone ];
-        global_block_type     [ multi_izone ] = block_type     [ izone ];
-        global_block_idx      [ multi_izone ] = block_idx      [ izone ];
-        global_block_file     [ multi_izone ] = block_fileProc [ izone ];
+        global_block_proc     [multi_izone] = block_proc     [iZone];
+        global_block_proc_grid[multi_izone] = block_proc_grid[iZone];
+        global_block_type     [multi_izone] = block_type     [iZone];
+        global_block_idx      [multi_izone] = block_idx      [iZone];
+        global_block_file     [multi_izone] = block_fileProc [iZone];
 
-        if(block_proc[ izone ] == myid || block_proc_grid[ izone ] == myid)
+        if (block_proc[iZone] == myid || block_proc_grid[iZone] == myid)
         {
-            zoneIDinCurrentProc.insert(izone);
+            zoneIDinCurrentProc.insert(iZone);
         }
     }
 
@@ -93,10 +93,10 @@ void GridGroup::SetGlobalZoneLayout()
     WriteLogFile(oss.str());
 
     //! global_block_proc_dump would be deleted?
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        int multi_izone = zoneStart + izone;
-        global_block_proc_dump[ multi_izone ] = block_proc_dump[ izone ];
+        int multi_izone = zoneStart + iZone;
+        global_block_proc_dump[multi_izone] = block_proc_dump[iZone];
     }
 }
 
@@ -107,38 +107,38 @@ void GridGroup::InitZoneLayout(fstream &file)
     int file_proc;
     GetFileProc(file_proc);
 
-    PH_Read_Bcast(file,&nzones,sizeof(int),file_proc);
+    PH_Read_Bcast(file, &nzones, sizeof(int), file_proc);
 
-    block_proc = new int [ nzones ];
-    block_proc_grid = new int [ nzones ];
+    block_proc = new int [nzones];
+    block_proc_grid = new int [nzones];
     block_fileProc = new int [nzones];
 
     //! Initialization.
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        block_proc[izone] = 0;
-        block_proc_grid[izone] = 0;
-        block_fileProc[izone] = 0;
+        block_proc[iZone] = 0;
+        block_proc_grid[iZone] = 0;
+        block_fileProc[iZone] = 0;
     }
 
-    PH_Read_Bcast(file,block_proc,nzones*sizeof(int),file_proc);
-    PH_Read_Bcast(file,block_proc_grid,nzones*sizeof(int),file_proc);
+    PH_Read_Bcast(file, block_proc, nzones*sizeof(int), file_proc);
+    PH_Read_Bcast(file, block_proc_grid, nzones*sizeof(int), file_proc);
 
     //! block_proc_dump is deleted in ~GridGroup() function.
     block_proc_dump = new int [nzones];
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        block_proc_dump[izone] = block_proc[izone];
+        block_proc_dump[iZone] = block_proc[iZone];
     }
 
-    block_idx  = new int [ nzones ];
-    block_type = new int [ nzones ];
+    block_idx  = new int [nzones];
+    block_type = new int [nzones];
 
-    //! Read the index of each block,actually nb defaults to izone.
-    PH_Read_Bcast(file,block_idx ,nzones*sizeof(int),file_proc);
+    //! Read the index of each block,actually nb defaults to iZone.
+    PH_Read_Bcast(file, block_idx, nzones*sizeof(int), file_proc);
 
     //! Read the grid type of each block,it can be unstructured and structured.
-    PH_Read_Bcast(file,block_type,nzones*sizeof(int),file_proc);
+    PH_Read_Bcast(file, block_type, nzones*sizeof(int), file_proc);
 
     int m_block_proc = PHMPI::GetZoneDistributionMethod();
 
@@ -148,9 +148,9 @@ void GridGroup::InitZoneLayout(fstream &file)
     {
         if (number_of_processor <= nzones)
         {
-            for (int izone = 0; izone < nzones; ++ izone)
+            for (int iZone = 0; iZone < nzones; ++ iZone)
             {
-                block_proc[izone] = (zoneStart + izone) % number_of_processor;
+                block_proc[iZone] = (zoneStart + iZone) % number_of_processor;
             }
         }
         else
@@ -177,11 +177,11 @@ void GridGroup::InitZoneLayout(fstream &file)
                 if (block_type[0] == PHSPACE::STRUCTGRID)
                 {
                     int maxproc = block_proc[0];
-                    for (int izone = 0; izone < nzones; ++ izone)
+                    for (int iZone = 0; iZone < nzones; ++ iZone)
                     {
-                        if(block_proc[izone] > maxproc)
+                        if (block_proc[iZone] > maxproc)
                         {
-                            maxproc = block_proc[izone];
+                            maxproc = block_proc[iZone];
                         }
                     }
                     maxproc += 1;
@@ -189,25 +189,25 @@ void GridGroup::InitZoneLayout(fstream &file)
                 }
                 else
                 {
-                    for (int izone = 0; izone < nzones; ++ izone)
+                    for (int iZone = 0; iZone < nzones; ++ iZone)
                     {
-                        block_proc_dump[izone] += GetNumberOfProcStructUsed();
+                        block_proc_dump[iZone] += GetNumberOfProcStructUsed();
                     }
                 }
             }
-            for (int izone = 0; izone < nzones; ++ izone)
+            for (int iZone = 0; iZone < nzones; ++ iZone)
             {
-                block_proc[izone] = 0;
+                block_proc[iZone] = 0;
             }
         }
         else
         {
             int maxproc = block_proc[0];
-            for (int izone = 0; izone < nzones; ++ izone)
+            for (int iZone = 0; iZone < nzones; ++ iZone)
             {
-                if(block_proc[izone] > maxproc)
+                if (block_proc[iZone] > maxproc)
                 {
-                    maxproc = block_proc[izone];
+                    maxproc = block_proc[iZone];
                 }
             }
 

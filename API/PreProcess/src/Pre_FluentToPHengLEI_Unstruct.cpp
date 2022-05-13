@@ -41,12 +41,12 @@ void Pre_FluentToPHengLEI_Unstruct::Conversion()
 
     grids = new Grid * [nBlocks];
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        GridID *index = new GridID(izone);
+        GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-        grids[izone] = grid;
-        fluent_factory->Convert2UnsGrid(izone, UnstructGridCast(grid));
+        grids[iZone] = grid;
+        fluent_factory->Convert2UnsGrid(iZone, UnstructGridCast(grid));
     }
     delete fluent_factory;
 }
@@ -463,6 +463,7 @@ void GridFormat_Fluent::BuildBCMap()
     bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_INLET    , PHENGLEI::INFLOW              ));
     bcmap.insert(Int_Pair(FLUENT_SPACE::INLET_VENT        , PHENGLEI::INFLOW              ));
     bcmap.insert(Int_Pair(FLUENT_SPACE::INTAKE_FAN        , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::VELOCITY_INLET    , PHENGLEI::INFLOW));
     bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_OUTLET   , PHENGLEI::OUTFLOW             ));
     bcmap.insert(Int_Pair(FLUENT_SPACE::EXHAUST_FAN       , PHENGLEI::OUTFLOW             ));
     bcmap.insert(Int_Pair(FLUENT_SPACE::OUTLET_VENT       , PHENGLEI::OUTFLOW             ));
@@ -822,8 +823,18 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
 
         for (int i = 0; i < nfsum; ++ i)
         {
-            left_cell_of_face[fcount]  = left_cell_of_face_tmp[i];
-            right_cell_of_face[fcount] = right_cell_of_face_tmp[i];
+
+            if (left_cell_of_face_tmp[i] < 0)
+            {
+                left_cell_of_face[fcount] = right_cell_of_face_tmp[i];
+                right_cell_of_face[fcount] = left_cell_of_face_tmp[i];
+            }
+            else
+            {
+                left_cell_of_face[fcount] = left_cell_of_face_tmp[i];
+                right_cell_of_face[fcount] = right_cell_of_face_tmp[i];
+            }
+            
             fcount ++;
         }
     }

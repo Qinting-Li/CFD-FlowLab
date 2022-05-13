@@ -104,7 +104,7 @@ private:
     void Init();
     Grid ** CreateAllPartGrid();
     void CreatePartition();
-    void ComputeGridForPartition(UnstructGrid *gridpart, int izone);
+    void ComputeGridForPartition(UnstructGrid *gridpart, int iZone);
     void GetVertexDist();
     bool IsParallelPartition();
     int GetMaxProcessorIndexInThisZone();
@@ -116,9 +116,9 @@ private:
     void ParMetisGrid(int nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part, idx_t *vtxdist);
     void ConvertPartNumberToGlobal(idx_t *part, int nTotalCell);
     void CommunicateNeiborCell(int *neighborCell);
-    void SwapInterface(int *neighborCell, int izone, int jzone);
+    void SwapInterface(int *neighborCell, int iZone, int jZone);
     bool FindMatchPart(UnstructGrid *grid, int izone_t, int iface_t, int ie_t, int *interface_interfaceid_t);
-    void ReconInterfaces(Grid **grids, int izone, int maxProcessor);
+    void ReconInterfaces(Grid **grids, int iZone, int maxProcessor);
     void BuildInterfaceLink(Grid **grids, int maxProcessor);
 
     void FillnTCellofEachZone(int *&nTCellOfZones);
@@ -134,14 +134,14 @@ private:
     bool DoseProcExist(int iproc);
 
     void FreeLocal2All();
-    void CreateLocal2All(int izone, UnstructGrid *gridpart);
+    void CreateLocal2All(int iZone, UnstructGrid *gridpart);
 
-    void ComputeNodeMark(int izone, UnstructGrid *gridpart);
-    void ComputeFaceMark(int izone, UnstructGrid *gridpart);
+    void ComputeNodeMark(int iZone, UnstructGrid *gridpart);
+    void ComputeFaceMark(int iZone, UnstructGrid *gridpart);
 
-    int * GetNode2All(int izone, UnstructGrid *gridpart);
-    int * GetFace2All(int izone, UnstructGrid *gridpart);
-    int * GetCell2All(int izone, UnstructGrid *gridpart);
+    int * GetNode2All(int iZone, UnstructGrid *gridpart);
+    int * GetFace2All(int iZone, UnstructGrid *gridpart);
+    int * GetCell2All(int iZone, UnstructGrid *gridpart);
 
     //! Compute the point to zone ID.
     void ComputePoint2ZoneID();
@@ -150,30 +150,30 @@ private:
     void ComputeCellNumberForNodeValue();
 
     void SetCoorPart(UnstructGrid *gridpart);
-    void SetLinkPart(int izone, UnstructGrid *gridpart);
+    void SetLinkPart(int iZone, UnstructGrid *gridpart);
     void SetWallDist(UnstructGrid *gridpart);
 
     void SetNodeNumberOfEachFaceAndFace2Node(UnstructGrid *gridpart);
-    void SetFace2CellAndBC(int izone, UnstructGrid *gridpart);
-    void SetInterfaceInfoPart(int izone, UnstructGrid *gridpart);
+    void SetFace2CellAndBC(int iZone, UnstructGrid *gridpart);
+    void SetInterfaceInfoPart(int iZone, UnstructGrid *gridpart);
 
-    //! Set the interpoint information in the partition for izone.
-    //! @param[in] izone       the number of zone.
+    //! Set the interpoint information in the partition for iZone.
+    //! @param[in] iZone       the number of zone.
     //! @param[in] gridpart    the grid after partition.
-    void SetInterpointInfoPart(int izone, UnstructGrid *gridpart);
+    void SetInterpointInfoPart(int iZone, UnstructGrid *gridpart);
 
-    //! Modify the interpoint information in the partition for izone.
-    //! @param[in] izone    the number of zone.
+    //! Modify the interpoint information in the partition for iZone.
+    //! @param[in] iZone    the number of zone.
     //! @param[in] grids    the grid after partition.
     void ModifyInterpointInfoPart(Grid **grids);
-    void SetInterfaceInfoPartForParallelPartition(int izone, UnstructGrid *gridpart);
-    void SetNTotalCell(int izone, UnstructGrid *gridpart);
-    int  GetNTotalCell(int izone, idx_t *part);
+    void SetInterfaceInfoPartForParallelPartition(int iZone, UnstructGrid *gridpart);
+    void SetNTotalCell(int iZone, UnstructGrid *gridpart);
+    int  GetNTotalCell(int iZone, idx_t *part);
 
     void CommunicateInterfaceTopo();
-    void SwapInterfaceTopo(int izone, int jzone);
+    void SwapInterfaceTopo(int iZone, int jZone);
     void SetInterfaceInfoPartInOrgBC(Grid **grids);
-    void SetInterfaceInfoPartInOrgBC(int izone, UnstructGrid *gridpart);
+    void SetInterfaceInfoPartInOrgBC(int iZone, UnstructGrid *gridpart);
     void BuildInterfaceLinkForParallelPartition(Grid **grids);
 
     void CheckDoseNeedPartitionAdditionalData();
@@ -196,7 +196,7 @@ private:
     void WriteWalldist(const string &out_grid_file);
     void WriteWalldist(ActionKey *actkey, UnstructGrid *gridPart);
 
-    void ComputeGlobalToLocalCellToNodeMapping(UnstructGrid *gridpart, int izone);
+    void ComputeGlobalToLocalCellToNodeMapping(UnstructGrid *gridpart, int iZone);
 
     int GetNumberofLocalZones();
 
