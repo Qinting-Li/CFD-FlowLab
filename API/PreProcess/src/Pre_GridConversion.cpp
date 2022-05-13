@@ -97,9 +97,9 @@ void Pre_GridConversion::WriteCellToNode(const string &targetGridFileName, Grid 
 
         int nPoints;
         int count = 0;
-        for (int icell = 0; icell < nTotalCell; icell ++)
+        for (int iCell = 0; iCell < nTotalCell; iCell ++)
         {
-            nPoints = node_number_of_each_cell[icell];
+            nPoints = node_number_of_each_cell[iCell];
             PHWrite(virtualFile, nPoints);
 
             for (int jPoint = 0; jPoint < nPoints; ++ jPoint)

@@ -537,45 +537,45 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
         highOrderCells[iCell].nNodes = pNodeNumberOfCell[iCell];
         for (int ilocalnode = 0; ilocalnode < highOrderCells[iCell].nNodes; ++ ilocalnode)
         {
-            //highOrderCells[icell].nodeIDsGrid.push_back(ppNodesOfCells[icell][ilocalnode]);
+            //highOrderCells[iCell].nodeIDsGrid.push_back(ppNodesOfCells[iCell][ilocalnode]);
             highOrderCells[iCell].nodeIDs.push_back(pNodesOfCells[cellToNodeIndex++]);
         }
-        if(highOrderCells[iCell].nNodes == 4)
+        if (highOrderCells[iCell].nNodes == 4)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::TETRAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 5)
+        else if (highOrderCells[iCell].nNodes == 5)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PYRAMID;
         }
-        else if(highOrderCells[iCell].nNodes == 6)
+        else if (highOrderCells[iCell].nNodes == 6)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PRISM;
         }
-        else if(highOrderCells[iCell].nNodes == 8)
+        else if (highOrderCells[iCell].nNodes == 8)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::HEXAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 10)
+        else if (highOrderCells[iCell].nNodes == 10)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::TETRAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 14)
+        else if (highOrderCells[iCell].nNodes == 14)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PYRAMID;
         }
-        else if(highOrderCells[iCell].nNodes == 18)
+        else if (highOrderCells[iCell].nNodes == 18)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PRISM;
         }
-        else if(highOrderCells[iCell].nNodes == 27)
+        else if (highOrderCells[iCell].nNodes == 27)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::HEXAHEDRON;
@@ -583,17 +583,17 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
 
         highOrderCells[iCell].nDOFsGrid = highOrderCells[iCell].nNodes;
 
-        //highOrderCells[icell].volume = grid->GetVolume()[icell];
-        //highOrderCells[icell].centerCoord[0] = grid->GetCellCenterX()[icell];
-        //highOrderCells[icell].centerCoord[1] = grid->GetCellCenterY()[icell];
-        //highOrderCells[icell].centerCoord[2] = grid->GetCellCenterZ()[icell];
+        //highOrderCells[iCell].volume = grid->GetVolume()[iCell];
+        //highOrderCells[iCell].centerCoord[0] = grid->GetCellCenterX()[iCell];
+        //highOrderCells[iCell].centerCoord[1] = grid->GetCellCenterY()[iCell];
+        //highOrderCells[iCell].centerCoord[2] = grid->GetCellCenterZ()[iCell];
 
-        //highOrderCells[icell].lenScale = pow(abs(highOrderCells[icell].volume), 1.0/3.0);
+        //highOrderCells[iCell].lenScale = pow(abs(highOrderCells[iCell].volume), 1.0/3.0);
     }
 
     //ghost cell value , we should attention parallel BC
-    int       * left_cell_of_face   = grid->GetLeftCellOfFace();
-    int       * right_cell_of_face  = grid->GetRightCellOfFace();
+    int *left_cell_of_face  = grid->GetLeftCellOfFace();
+    int *right_cell_of_face = grid->GetRightCellOfFace();
     CompositeUnstructBC **bcr = grid->GetBCRecord();
     int le, re, bcType;
     
@@ -629,7 +629,7 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
 }
 
 //! @Application memory for high order face and  copy the geometry of grid to high order face,containing 
-void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid * grid)
+void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid *grid)
 {
     int nTotalFace = grid->GetNTotalFace();
 

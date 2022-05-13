@@ -362,18 +362,18 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
     cout.precision(0);
 
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (myid == 0 && icell > 0 && icell % interval == 0)
+        if (myid == 0 && iCell > 0 && iCell % interval == 0)
         {
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
         }
 
-        RDouble xcc0 = xcc[icell];
-        RDouble ycc0 = ycc[icell];
-        RDouble zcc0 = zcc[icell];
+        RDouble xcc0 = xcc[iCell];
+        RDouble ycc0 = ycc[iCell];
+        RDouble zcc0 = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -431,9 +431,9 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
                     RDouble wdst = ComputeDistanceOfANodeToSegment(xcc0, ycc0, zcc0, xStart, yStart, zStart,
                                                                    xMid, yMid, zMid, xEnd, yEnd, zEnd);
 
-                    if (walldist[icell] > wdst)
+                    if (walldist[iCell] > wdst)
                     {
-                        walldist[icell] = wdst;
+                        walldist[iCell] = wdst;
                     }
                 }
             }
@@ -553,16 +553,16 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
 
     //int interval = GetProgressInterval(nTotal, 10);
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (icell > 0 && icell % interval == 0)
+        if (iCell > 0 && iCell % interval == 0)
         {
-            //ProgressMonitorToWindows(icell, nTotal, "wall distance");
-            //ProgressMonitorToLogFile(icell, nTotal, "wall distance");
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
-            ProgressMonitorToLogFile(icell, nTotalCell, "wall distance");
+            //ProgressMonitorToWindows(iCell, nTotal, "wall distance");
+            //ProgressMonitorToLogFile(iCell, nTotal, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
+            ProgressMonitorToLogFile(iCell, nTotalCell, "wall distance");
 
             if (rotateAxis >= 3 || timeSpan.GetTimeSpan() > 3600.0)
             {
@@ -570,19 +570,19 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
                 oss.unsetf(ios::scientific);
                 oss.setf(ios::fixed);
                 oss.precision(0);
-                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((icell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iCell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
                 WriteLogFile(oss, false);
             }
         }
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             continue;
         }
 
-        cellCenter[0] = xcc[icell];
-        cellCenter[1] = ycc[icell];
-        cellCenter[2] = zcc[icell];
+        cellCenter[0] = xcc[iCell];
+        cellCenter[1] = ycc[iCell];
+        cellCenter[2] = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -621,9 +621,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
                 }
 
                 RDouble wdst = ComputeDistanceOfANodeToAFace(cellCenter, faceCenter, faceNormal, face2node, x, y, z);
-                if (walldist[icell] > wdst)
+                if (walldist[iCell] > wdst)
                 {
-                    walldist[icell] = wdst;
+                    walldist[iCell] = wdst;
                 }
             }
         }
@@ -876,14 +876,14 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
 
     TimeSpan partTime;
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (icell > 0 && icell % interval == 0)
+        if (iCell > 0 && iCell % interval == 0)
         {
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
-            ProgressMonitorToLogFile(icell, nTotalCell, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
+            ProgressMonitorToLogFile(iCell, nTotalCell, "wall distance");
 
             if (rotateAxis >= 1 || timeSpan.GetTimeSpan() > 600.0)
             {
@@ -891,12 +891,12 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
                 oss.unsetf(ios::scientific);
                 oss.setf(ios::fixed);
                 oss.precision(0);
-                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((icell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iCell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
                 WriteLogFile(oss, false);
             }
         }
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             //! This cell wall distance has been computed.
             continue;
@@ -917,9 +917,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
             ++ iEnlarge;
 
             //! i-th test.
-            oldCellCenter[0] = xcc[icell];
-            oldCellCenter[1] = ycc[icell];
-            oldCellCenter[2] = zcc[icell];
+            oldCellCenter[0] = xcc[iCell];
+            oldCellCenter[1] = ycc[iCell];
+            oldCellCenter[2] = zcc[iCell];
             this->RotateAxis(oldCellCenter, cellCenter);
 
             //! For method 0: loop over the nearest several box.
@@ -1008,9 +1008,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
 
                         //RDouble distTemp = sqrt(wdst);
 
-                        if (walldist[icell] > wdst && wdst < 1.0e30)
+                        if (walldist[iCell] > wdst && wdst < 1.0e30)
                         {
-                            walldist[icell] = wdst;
+                            walldist[iCell] = wdst;
                             isFoundNearestFace = true;
                         }
                     }
@@ -1048,7 +1048,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
                 continue;
             }
         }
-    }    //! icell.
+    }    //! iCell.
 }
 
 void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
@@ -1269,7 +1269,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
                 }
             }
         }
-    }    //! icell.
+    }    //! iCell.
 }
 
 void Pre_WalldistCompute::ComputeNodeWallDist3DByProjectingFast(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist)
@@ -3399,18 +3399,18 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
 
     RDouble cellCenter[3], faceCenter[3], faceNormal[3];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             continue;
         }
 
-        cellCenter[0] = xcc[icell];
-        cellCenter[1] = ycc[icell];
-        cellCenter[2] = zcc[icell];
+        cellCenter[0] = xcc[iCell];
+        cellCenter[1] = ycc[iCell];
+        cellCenter[2] = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -3449,9 +3449,9 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
                 }
 
                 RDouble wdst = ComputeDistanceOfANodeToAFace(cellCenter, faceCenter, faceNormal, face2node, x, y, z);
-                if (walldist[icell] > wdst)
+                if (walldist[iCell] > wdst)
                 {
-                    walldist[icell] = wdst;
+                    walldist[iCell] = wdst;
                 }
             }
         }
@@ -3680,9 +3680,9 @@ void Pre_WalldistCompute::PostWallDistance(UnstructGrid *grid)
 
     int nTotalCell = grid->GetNTotalCell();
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        walldist[icell] = sqrt(walldist[icell]);
+        walldist[iCell] = sqrt(walldist[iCell]);
     }
 }
 

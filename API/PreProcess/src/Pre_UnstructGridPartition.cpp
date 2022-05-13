@@ -336,9 +336,9 @@ idx_t * Pre_UnstructGridPartition::CreatePartitionSerial(UnstructGrid *grid, int
     idx_t *adjncy = new idx_t[2 * (nTotalFace - nBoundFace)];
     idx_t *part   = new idx_t[nTotalCell];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        part[icell] = -1;
+        part[iCell] = -1;
     }
 
     Get_Xadj_Adjncy(grid, xadj, adjncy);
@@ -365,9 +365,9 @@ idx_t * Pre_UnstructGridPartition::CreatePartitionParallel(UnstructGrid *grid, i
     idx_t *xadj   = new idx_t[nTotalCell + 1];
     idx_t *adjncy = new idx_t[2 * (nTotalFace - nBoundFace + nIFace)];
     idx_t *part   = new idx_t[nTotalCell];
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        part[icell] = -1;
+        part[iCell] = -1;
     }
 
     int *neighborCell = new int[nIFace];
@@ -513,12 +513,12 @@ void Pre_UnstructGridPartition::Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj,
 
     xadj[0]   = 0;
     int count = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        xadj[icell+1] = xadj[icell] + c2c[icell].size();
-        for (std::size_t j = 0; j < c2c[icell].size(); ++ j)
+        xadj[iCell+1] = xadj[iCell] + c2c[iCell].size();
+        for (std::size_t j = 0; j < c2c[iCell].size(); ++ j)
         {
-            adjncy[count ++] = c2c[icell][j];
+            adjncy[count ++] = c2c[iCell][j];
         }
     }
 }
@@ -572,19 +572,19 @@ void Pre_UnstructGridPartition::Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj,
     // Second: compute the xadj and adjncy.
     xadj[0]   = 0;
     int count = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        xadj[icell+1] = xadj[icell] + c2c[icell].size();
-        for (std::size_t j = 0; j < c2c[icell].size(); ++ j)
+        xadj[iCell+1] = xadj[iCell] + c2c[iCell].size();
+        for (std::size_t j = 0; j < c2c[iCell].size(); ++ j)
         {
-            adjncy[count ++] = c2c[icell][j];
+            adjncy[count ++] = c2c[iCell][j];
         }
     }
 
     // Free memory.
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        c2c[icell].clear();
+        c2c[iCell].clear();
     }
     delete [] c2c;
 }
@@ -830,9 +830,9 @@ void Pre_UnstructGridPartition::ComputeCellMark()
         count_array[i] = 0;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell_mark[icell] = count_array[ part[icell] ] ++;
+        cell_mark[iCell] = count_array[ part[iCell] ] ++;
     }
 
     delete [] count_array;
@@ -1782,9 +1782,9 @@ int Pre_UnstructGridPartition::GetNTotalCell(int iZone, idx_t *part)
 {
     int nTotalCell = gridSource->GetNTotalCell();
     int count = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (part[icell] == iZone)
+        if (part[iCell] == iZone)
         {
             count ++;
         }
@@ -1839,11 +1839,11 @@ int * Pre_UnstructGridPartition::GetCell2All(int iZone, UnstructGrid *gridpart)
     int nTotalCell_All = gridSource->GetNTotalCell();
 
     int count = 0;
-    for (int icell = 0; icell < nTotalCell_All; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell_All; ++ iCell)
     {
-        if (part[icell] == iZone)
+        if (part[iCell] == iZone)
         {
-            cell2all[count] = icell;
+            cell2all[count] = iCell;
             ++ count;
         }
     }

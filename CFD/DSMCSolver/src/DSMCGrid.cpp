@@ -121,15 +121,15 @@ void DSMCUnstructGrid::CalCellWeight(UnstructGrid * grid,RDouble referenceCellVo
 
     cellWeight = new RDouble [nTotalCell];
 
-    for(int icell = 0; icell < nTotalCell; ++icell)
+    for(int iCell = 0; iCell < nTotalCell; ++iCell)
     {
-        //if(cellVolume[icell] > referenceCellVolume)
+        //if(cellVolume[iCell] > referenceCellVolume)
         //{
-            cellWeight[icell] = cellVolume[icell]/referenceCellVolume;
+            cellWeight[iCell] = cellVolume[iCell]/referenceCellVolume;
         //}
         //else
         //{
-        //    cellWeight[icell] = 1.0;
+        //    cellWeight[iCell] = 1.0;
         //}
     }
 }
@@ -176,16 +176,16 @@ RDouble CalMinCellVolume()
 
         int nTotalCell = grid->GetNTotalCell();
 
-        RDouble * vol = grid->GetCellVolume();
+        RDouble *vol = grid->GetCellVolume();
 
-        for(int icell = 0; icell < nTotalCell; ++ icell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            if(vol[icell] < minCellVolume) minCellVolume = vol[icell];
+            if (vol[iCell] < minCellVolume) minCellVolume = vol[iCell];
         }
     }
 
     ostringstream oss;
-    oss<<"minCellVolume:"<<minCellVolume;
+    oss << "minCellVolume:" << minCellVolume;
     WriteLogFile(oss.str());
     return minCellVolume;
 }

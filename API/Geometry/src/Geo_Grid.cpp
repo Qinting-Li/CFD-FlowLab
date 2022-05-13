@@ -167,15 +167,15 @@ LIB_EXPORT void Grid::RotTransVel(RDouble *xyzref, RDouble *dangle, RDouble *tco
     m33 =   cf * ct;
 
     //! Update the grid.
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        xm = x[inode] - xp;
-        ym = y[inode] - yp;
-        zm = z[inode] - zp;
+        xm = x[iNode] - xp;
+        ym = y[iNode] - yp;
+        zm = z[iNode] - zp;
 
-        x[inode] = m11 * xm + m12 * ym + m13 * zm + xp + dx;
-        y[inode] = m21 * xm + m22 * ym + m23 * zm + yp + dy;
-        z[inode] = m31 * xm + m32 * ym + m33 * zm + zp + dz;
+        x[iNode] = m11 * xm + m12 * ym + m13 * zm + xp + dx;
+        y[iNode] = m21 * xm + m22 * ym + m23 * zm + yp + dy;
+        z[iNode] = m31 * xm + m32 * ym + m33 * zm + zp + dz;
     }
 
     //! Update xyzref array.
@@ -221,11 +221,11 @@ LIB_EXPORT void Grid::ComputeGDVel(RDouble *xt, RDouble *yt, RDouble *zt, RDoubl
     omega3 =   psip * cos(theta) * cos(phi) - thetap * sin(phi);
 
     //! Calculate the grid velocity with the formula dOM =dOP+Omega*PM.
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        xt[inode] = coord0[0][1] + omega2 * (z[inode] - coord0[2][0]) - omega3 * (y[inode] - coord0[1][0]);
-        yt[inode] = coord0[1][1] + omega3 * (x[inode] - coord0[0][0]) - omega1 * (z[inode] - coord0[2][0]);
-        zt[inode] = coord0[2][1] + omega1 * (y[inode] - coord0[1][0]) - omega2 * (x[inode] - coord0[0][0]);
+        xt[iNode] = coord0[0][1] + omega2 * (z[iNode] - coord0[2][0]) - omega3 * (y[iNode] - coord0[1][0]);
+        yt[iNode] = coord0[1][1] + omega3 * (x[iNode] - coord0[0][0]) - omega1 * (z[iNode] - coord0[2][0]);
+        zt[iNode] = coord0[2][1] + omega1 * (y[iNode] - coord0[1][0]) - omega2 * (x[iNode] - coord0[0][0]);
     }
 }
 
@@ -240,26 +240,26 @@ LIB_EXPORT void Grid::TurnZAxis2YAxis()
     z = this->GetZ();
 
     RDouble tmp;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        tmp      = y[inode];
-        y[inode] = z[inode];
-        z[inode] = - tmp;
+        tmp      = y[iNode];
+        y[iNode] = z[iNode];
+        z[iNode] = - tmp;
     }
 
     RDouble xmin, ymin, zmin, xmax, ymax, zmax;
     xmin = ymin = zmin =   LARGE;
     xmax = ymax = zmax = - LARGE;
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        xmin = MIN(xmin, x[inode]);
-        ymin = MIN(ymin, y[inode]);
-        zmin = MIN(zmin, z[inode]);
+        xmin = MIN(xmin, x[iNode]);
+        ymin = MIN(ymin, y[iNode]);
+        zmin = MIN(zmin, z[iNode]);
 
-        xmax = MAX(xmax, x[inode]);
-        ymax = MAX(ymax, y[inode]);
-        zmax = MAX(zmax, z[inode]);
+        xmax = MAX(xmax, x[iNode]);
+        ymax = MAX(ymax, y[iNode]);
+        zmax = MAX(zmax, z[iNode]);
     }
 
     ostringstream oss;

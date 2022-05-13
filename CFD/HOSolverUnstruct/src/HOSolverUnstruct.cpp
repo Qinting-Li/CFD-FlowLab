@@ -1950,13 +1950,13 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
 
     int * cellIBlank = grid->GetBlankIndex();
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cellIBlank[ icell ] != 1) continue;
+        if(cellIBlank[ iCell ] != 1) continue;
 
         for (int m = 0; m < neqn; ++ m)
         {
-            RDouble res2 = res[icell][m][0] * res[icell][m][0];
+            RDouble res2 = res[iCell][m][0] * res[iCell][m][0];
             residualNormal[m] += res2;
 
             if (res2 > maxResLocal)
@@ -1965,9 +1965,9 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
 
                 maxResLocal = res2;
 
-                maxResCoorXLocal = xcc[icell];
-                maxResCoorYLocal = ycc[icell];
-                maxResCoorZLocal = zcc[icell];
+                maxResCoorXLocal = xcc[iCell];
+                maxResCoorYLocal = ycc[iCell];
+                maxResCoorZLocal = zcc[iCell];
 
                 maxResIndexMLocal = m;
             }

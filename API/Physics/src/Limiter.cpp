@@ -1285,16 +1285,16 @@ void Init_Limiters(Grid *grid_in, RDouble *limit)
     int uns_limiter;
     GlobalDataBase::GetData("uns_limiter", &uns_limiter, PHINT, 1);
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        limit[icell] = one;
+        limit[iCell] = one;
     }
     
     if (uns_limiter == ILMT_FIRST)
     {
-        for (int icell = 0; icell < nTotal; ++ icell)
+        for (int iCell = 0; iCell < nTotal; ++ iCell)
         {
-            limit[icell] = zero;
+            limit[iCell] = zero;
         }
     }
 }

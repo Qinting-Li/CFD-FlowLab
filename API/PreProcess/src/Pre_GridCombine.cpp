@@ -805,16 +805,16 @@ void CombinGrid::MergeCell2Node()
         int *gnode2all = GetNode2All(iZone);
 
         int count = 0;
-        for (int icell = 0; icell < nTotalCellEachZone[iZone]; ++ icell)
+        for (int iCell = 0; iCell < nTotalCellEachZone[iZone]; ++ iCell)
         {
-            node_number_of_each_cell_all.push_back(gnode_number_of_each_cell[icell]);
-            cell2node_size += gnode_number_of_each_cell[icell];
+            node_number_of_each_cell_all.push_back(gnode_number_of_each_cell[iCell]);
+            cell2node_size += gnode_number_of_each_cell[iCell];
 
             vector<cgsize_t> single_cell;
             single_cell.resize(0);
-            single_cell.reserve(gnode_number_of_each_cell[icell]);
+            single_cell.reserve(gnode_number_of_each_cell[iCell]);
 
-            for (int inode = 0; inode < gnode_number_of_each_cell[icell]; ++ inode)
+            for (int inode = 0; inode < gnode_number_of_each_cell[iCell]; ++ inode)
             {
                 int node_index = gcell2node[count];
                 ++ count;
@@ -828,12 +828,12 @@ void CombinGrid::MergeCell2Node()
     int *cell2node = new int [cell2node_size];
 
     int count = 0;
-    for (cgsize_t icell = 0; icell < nTotalCell; ++ icell)
+    for (cgsize_t iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        node_number_of_each_cell[icell] = node_number_of_each_cell_all[icell];
-        for (int inode =0; inode < node_number_of_each_cell[icell]; ++ inode)
+        node_number_of_each_cell[iCell] = node_number_of_each_cell_all[iCell];
+        for (int inode =0; inode < node_number_of_each_cell[iCell]; ++ inode)
         {
-            cell2node[count] = static_cast<int>(cell2node_all[icell][inode]);
+            cell2node[count] = static_cast<int>(cell2node_all[iCell][inode]);
             ++ count;
         }
     }

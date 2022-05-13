@@ -225,11 +225,11 @@ LIB_EXPORT void StructGrid::CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble
     this->SetZ(z);
     this->SetArrayLayout();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
     cout << "ni, nj, nk = " << ni << " " << nj  << " " << nk << "\n";
     ComputeMinMaxBox();

@@ -251,13 +251,13 @@ void ProbeData::SearchNearestCell(UnstructGrid * grid)
     int nearestCellID = GetProbeCellID();
     int nearestCellZoneID = GetProbeCellZoneID();
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        RDouble CurrentDistance = DISTANCE(xcc[icell]-coordinates[0], ycc[icell]-coordinates[1], zcc[icell]-coordinates[2]);
+        RDouble CurrentDistance = DISTANCE(xcc[iCell]-coordinates[0], ycc[iCell]-coordinates[1], zcc[iCell]-coordinates[2]);
         if (CurrentDistance < nearestCellDistance)
         {
             nearestCellDistance = CurrentDistance;
-            nearestCellID = icell;
+            nearestCellID = iCell;
             nearestCellZoneID = zoneID;
             if (nearestCellDistance <= maxDistance) isValid = true;
         }
@@ -463,11 +463,11 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
     int realCellZoneID = GetProbeCellZoneID();
 
     RDouble small = 1.0e-8;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        for (int iface = 0; iface < faceNumberOfEachCell[icell]; ++ iface)
+        for (int iface = 0; iface < faceNumberOfEachCell[iCell]; ++ iface)
         {
-            int faceID = cell2face[icell][iface];
+            int faceID = cell2face[iCell][iface];
 
             RDouble probeToFaceVecX = coordinates[0] - xfc[faceID];
             RDouble probeToFaceVecY = coordinates[1] - yfc[faceID];
@@ -475,9 +475,9 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
             RDouble probeToFaceDistance = DISTANCE(probeToFaceVecX, probeToFaceVecY, probeToFaceVecZ);
             RDouble dotProduct1 = probeToFaceVecX * xfn[faceID] + probeToFaceVecY * yfn[faceID] + probeToFaceVecZ * zfn[faceID];
 
-            RDouble centerToFaceVecX = xcc[icell] - xfc[faceID];
-            RDouble centerToFaceVecY = ycc[icell] - yfc[faceID];
-            RDouble centerToFaceVecZ = zcc[icell] - zfc[faceID];
+            RDouble centerToFaceVecX = xcc[iCell] - xfc[faceID];
+            RDouble centerToFaceVecY = ycc[iCell] - yfc[faceID];
+            RDouble centerToFaceVecZ = zcc[iCell] - zfc[faceID];
             RDouble dotProduct2 = centerToFaceVecX * xfn[faceID] + centerToFaceVecY * yfn[faceID] + centerToFaceVecZ * zfn[faceID];
 
             // Judge if the probe and cell center at the same side of the current face.
@@ -499,12 +499,11 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
         if (flag) 
         {
             isValid = true;
-            realCellID = icell;
+            realCellID = iCell;
             realCellZoneID = zoneID;
             realCellDistance = DISTANCE(xcc[realCellID] - coordinates[0], ycc[realCellID] - coordinates[1], zcc[realCellID] - coordinates[2]);
             break;
         }
-
     }
 
     SetProbeCellType(gridtype);
@@ -512,7 +511,6 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
     SetProbeCellZoneID(realCellZoneID);
     SetProbeCellID(realCellID);
     SetProbeValidity(isValid);
-
 }
 
 void ProbeData::WriteStructProbeCellInfo(fstream &file)

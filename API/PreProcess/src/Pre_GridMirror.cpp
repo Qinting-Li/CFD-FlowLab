@@ -460,10 +460,10 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
         oss << "write nodes info: " << "\n";
         oss << "	Number of cells: " << nTotalCells << "\n";
 
-        for (int icell = 0; icell < nTotalCells; ++ icell)
+        for (int iCell = 0; iCell < nTotalCells; ++ iCell)
         {
-            oss << "	Cell number: " << icell << "\n";
-            oss << "	cell2node:	" << cell2node[icell * 4] << "	" << cell2node[icell * 4 + 1] << "	" << cell2node[icell * 4 + 2] << "	" << cell2node[icell * 4 + 3] << "\n";
+            oss << "	Cell number: " << iCell << "\n";
+            oss << "	cell2node:	" << cell2node[iCell * 4] << "	" << cell2node[iCell * 4 + 1] << "	" << cell2node[iCell * 4 + 2] << "	" << cell2node[iCell * 4 + 3] << "\n";
         }
     }
 
@@ -945,9 +945,9 @@ void Pre_GridMirror::MirrorCell2Node(int iZone, UnstructGrid *grid_in)
     PHWrite(gridinfo, node_number_of_each_cell_ordinary, nTotalCells);
 
     int num = 0;
-    for (int icell = 0; icell < nTotalCells; ++ icell)
+    for (int iCell = 0; iCell < nTotalCells; ++ iCell)
     {
-        num += node_number_of_each_cell_ordinary[icell];
+        num += node_number_of_each_cell_ordinary[iCell];
     }
 
     PHWrite(gridinfo, &num, 1);

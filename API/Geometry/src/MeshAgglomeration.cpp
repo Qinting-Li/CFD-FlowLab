@@ -49,9 +49,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
 
 
     RDouble *tarea = new RDouble[nTotalCell];   // total area of each cell
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tarea[icell] = 0.0;
+        tarea[iCell] = 0.0;
     }
 
     int le = 0, re = 0;
@@ -169,9 +169,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     Tlist mylist;
 
     bool * unMerged = new bool [nTotalCell];
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        unMerged[icell] = true;
+        unMerged[iCell] = true;
     }
 
     for (curr = myset.begin(); curr != myset.end(); ++ curr)
@@ -194,9 +194,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     // now merging
     int *cell2coarsegridcell = new int[ nTotalCell ];
     fineGrid->SetCell2CoarseGridCell(cell2coarsegridcell);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell2coarsegridcell[icell] = - 1;
+        cell2coarsegridcell[iCell] = - 1;
     }
 
     int cnTCell = 0;
@@ -211,11 +211,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     }
 
     // some cells may not have been merged, merge them now
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cell2coarsegridcell[icell] == -1)
+        if(cell2coarsegridcell[iCell] == -1)
         {
-            cell2coarsegridcell[icell] = cnTCell ++;
+            cell2coarsegridcell[iCell] = cnTCell ++;
         }
     }
 
@@ -264,15 +264,15 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     int le = 0, re = 0;
 
     RDouble *tarea = new RDouble[nTotalCell];   // total area of each cell
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tarea[icell] = 0.0;
+        tarea[iCell] = 0.0;
     }
 
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        le = left_cell_of_face[ iface ];
-        tarea[le] += ns[ iface ];
+        le = left_cell_of_face[iFace];
+        tarea[le] += ns[iFace];
     }
 
     for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
@@ -365,9 +365,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     typedef list<int> Tlist;
     Tlist mylist;
     bool * unMerged = new bool [nTotalCell];
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        unMerged[icell] = true;
+        unMerged[iCell] = true;
     }
     for (curr = myset.begin(); curr != myset.end(); ++ curr)
     {
@@ -385,9 +385,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     // now merging
     int *cell2coarsegridcell = new int[ nTotalCell ];
     fineGrid->SetCell2CoarseGridCell(cell2coarsegridcell);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell2coarsegridcell[icell] = - 1;
+        cell2coarsegridcell[iCell] = - 1;
     }
 
     int cnTCell = 0;
@@ -402,11 +402,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     }
 
     // some cells may not have been merged, merge them now
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cell2coarsegridcell[icell] == -1)
+        if(cell2coarsegridcell[iCell] == -1)
         {
-            cell2coarsegridcell[icell] = cnTCell ++;
+            cell2coarsegridcell[iCell] = cnTCell ++;
         }
     }
 

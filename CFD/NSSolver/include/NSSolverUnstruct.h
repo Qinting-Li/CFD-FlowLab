@@ -182,7 +182,7 @@ public:
 
     void ComputeFaceWeight(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ComputeInviscidFlux(Grid *grid, FaceProxy *faceProxy, int localStart, int localEnd);
-    void SolutionFix(Grid *gridIn, RDouble *prim, int icell);
+    void SolutionFix(Grid *gridIn, RDouble *prim, int iCell);
 
     void UpdateFlowField(Grid *gridIn, FieldProxy *q_proxy, FieldProxy *dqProxy);
     void SetGhostDQLUSGS(Grid *gridIn, RDouble **dq, RDouble **q);

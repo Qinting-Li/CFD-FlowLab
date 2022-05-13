@@ -378,9 +378,9 @@ void IO_HDF5Write::WriteCellTopology(hid_t loc_id, Grid *gridIn)
 
     int *cell2Node = grid->GetCell2Node();
     long long int nodeCount = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        nodeCount += nodeNumberOfEachCell[icell];
+        nodeCount += nodeNumberOfEachCell[iCell];
     }
     CreateAndWriteData(grpData, "cell2Node", 1, nodeCount, PHINT, cell2Node);
 
