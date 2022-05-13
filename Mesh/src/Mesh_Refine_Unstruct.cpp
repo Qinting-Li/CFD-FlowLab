@@ -19,7 +19,7 @@ Mesh_Refine_Unstruct::Mesh_Refine_Unstruct(const string &gridFileNameIn) :
 
 Mesh_Refine_Unstruct::~Mesh_Refine_Unstruct()
 {
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         delete gridRefineControllers[iZone];
     }
@@ -43,7 +43,7 @@ void Mesh_Refine_Unstruct::GenerateAndDumpComputationalGrid()
 void Mesh_Refine_Unstruct::GenerateGlobalInterfaceLink()
 {
     ComputationalGridProcess *computationalGridProcess = new ComputationalGridProcess(region);
-    computationalGridProcess->Initialize(refinedGrids, nLocalZones);
+    computationalGridProcess->Initialize(refinedGrids, numberOfZones);
     computationalGridProcess->PostProcessMultiZoneComputationalGrids();
 
     delete computationalGridProcess;
@@ -52,7 +52,7 @@ void Mesh_Refine_Unstruct::GenerateGlobalInterfaceLink()
 void Mesh_Refine_Unstruct::GenerateComputationalGrid()
 {
     int nTCellLocal = 0;
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         gridRefineControllers[iZone]->GenerateComputationalGrid(refinedGrids[iZone]);
 
@@ -72,8 +72,8 @@ void Mesh_Refine_Unstruct::GenerateComputationalGrid()
 
 void Mesh_Refine_Unstruct::AllocateComputationalGrid()
 {
-    refinedGrids = new Grid *[nLocalZones];
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    refinedGrids = new Grid *[numberOfZones];
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, new GridID(iZone), 0, GetDim());
         refinedGrids[iZone] = grid;
@@ -82,9 +82,9 @@ void Mesh_Refine_Unstruct::AllocateComputationalGrid()
 
 void Mesh_Refine_Unstruct::AllocateMemory()
 {
-    nLocalZones = PHMPI::GetNumberofLocalZones();
-    gridRefineControllers = new Mesh_RefineController *[nLocalZones];
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    numberOfZones = PHMPI::GetNumberofLocalZones();
+    gridRefineControllers = new Mesh_RefineController *[numberOfZones];
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Mesh_RefineController *gridRefineController = new Mesh_RefineController();
         gridRefineController->SetZoneIndex(iZone);
@@ -96,7 +96,7 @@ void Mesh_Refine_Unstruct::ConstructGridTopo()
 {
     WriteLogFile("Start Constructing Grid Info!");
 
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int globalZoneIndex = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
@@ -399,7 +399,7 @@ void Mesh_Refine_Unstruct::RefineGrid()
     PH_Barrier();
     TimeSpan timeSpan;
 
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
         currentController->RefineGrid();
@@ -425,7 +425,7 @@ void Mesh_Refine_Unstruct::ShapePreserving()
     RDouble influenceRadius = GlobalDataBase::GetDoubleParaFromDB("influenceRadius");
 
     PointVector *zoneProjectVector = new PointVector;
-    zoneProjectVector->resize(nLocalZones);
+    zoneProjectVector->resize(numberOfZones);
 
     ParallelProjection *projection = new ParallelProjection(geometryFileName, GetDim());
     if (isProject)
@@ -440,7 +440,7 @@ void Mesh_Refine_Unstruct::ShapePreserving()
         int projectOrgPoint;
         GlobalDataBase::GetData("projectOrgPoint", &projectOrgPoint, PHINT, 1);
 
-        projection->SetZoneGridSolverContainer(nLocalZones, this->zoneGridSolverContainer);
+        projection->SetZoneGridSolverContainer(numberOfZones, this->zoneGridSolverContainer);
         projection->SetSymmetryPlane(symmetryPlane);
         projection->SetGeometryUnit(geometryUnit);
         projection->SetExclusiveCase(exclusiveCase);
@@ -461,7 +461,7 @@ void Mesh_Refine_Unstruct::ShapePreserving()
     if (isProject && isDeform)
     {
         //! Preparing the data that RBF needs.
-        int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         vector< vector<bool> >* isSolidWallPoint = new vector< vector<bool> >;
         vector< vector<bool> >* isSymmetryPoint = new vector< vector<bool> >;
         vector< vector<bool> >* needDeform = new vector< vector<bool> >;
@@ -477,7 +477,7 @@ void Mesh_Refine_Unstruct::ShapePreserving()
         PH_Barrier();
         TimeSpan timeSpan;
 
-        parallelRBF->SetNumberOfZone(nLocalZones, numberOfSimulationZones);
+        parallelRBF->SetNumberOfZone(numberOfZones, nZones);
         parallelRBF->SetPointsCoordinates(pointsCoord);
         parallelRBF->SetBoundaryDeformedPoints(boundaryDeformedPoints);
         parallelRBF->SetDeformedVector(deformedVector);
@@ -508,9 +508,9 @@ void Mesh_Refine_Unstruct::ShapePreserving()
 
 void Mesh_Refine_Unstruct::PrepareCheckIsSymmetryPoint(vector< vector<bool> > *isSymmetryPoint)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    isSymmetryPoint->resize(numberOfZones);
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    isSymmetryPoint->resize(nLocalZones);
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
         Mesh_FaceTopo  *faceTopo = currentController->GetFaceFactory();
@@ -540,10 +540,10 @@ void Mesh_Refine_Unstruct::PrepareCheckIsSymmetryPoint(vector< vector<bool> > *i
 
 void Mesh_Refine_Unstruct::PrepareCheckIsSolidWallPoint(vector< vector<bool> > *isSolidWallPoint, vector< vector<bool> > *needDeform)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    isSolidWallPoint->resize(numberOfZones);
-    needDeform->resize(numberOfZones);
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    isSolidWallPoint->resize(nLocalZones);
+    needDeform->resize(nLocalZones);
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
         Mesh_FaceTopo  *faceTopo = currentController->GetFaceFactory();
@@ -584,10 +584,10 @@ void Mesh_Refine_Unstruct::PrepareCheckIsSolidWallPoint(vector< vector<bool> > *
 
 void Mesh_Refine_Unstruct::PrepareBoundaryDeformedPoint(vector< vector<bool> > *isSolidWallPoint, PointVector *zoneProjectVector, PointVector *boundaryDeformedPoints, PointVector *deformedVector)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    boundaryDeformedPoints->resize(numberOfZones);
-    deformedVector->resize(numberOfZones);
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    boundaryDeformedPoints->resize(nLocalZones);
+    deformedVector->resize(nLocalZones);
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
         Geo_PointFactory *nodeTopo = currentController->GetNodeFactory();
@@ -631,10 +631,10 @@ void Mesh_Refine_Unstruct::PrepareBoundaryDeformedPoint(vector< vector<bool> > *
 
 void Mesh_Refine_Unstruct::PreparePointsCoordinates(PointVector* pointsCoord)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    pointsCoord->resize(numberOfZones);
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    pointsCoord->resize(nLocalZones);
 
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
         Geo_PointFactory *nodeTopo = currentController->GetNodeFactory();
@@ -659,10 +659,10 @@ void Mesh_Refine_Unstruct::PreparePointsCoordinates(PointVector* pointsCoord)
 
 void Mesh_Refine_Unstruct::UpdatePointsCoordinates(PointVector* pointsCoord, vector< vector<bool> >* needDeform)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    pointsCoord->resize(numberOfZones);
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    pointsCoord->resize(nLocalZones);
 
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
         Geo_PointFactory *nodeTopo = currentController->GetNodeFactory();
@@ -710,7 +710,7 @@ void Mesh_Refine_Unstruct::FixAnisoRefineType()
             WriteLogFile("\nInfect isotropic refine type time: ", infectTime, "......");
         }
 
-        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
             Mesh_RefineController *currentController = gridRefineControllers[iZone];
             currentController->FixAnisoRefineType();
@@ -727,7 +727,7 @@ void Mesh_Refine_Unstruct::FixAnisoRefineType()
 
     PrintToWindow("\n");
 
-    fixTime.ShowTimeSpanToLogfile("Fix cell refine type");
+    fixTime.ShowTimeSpanToLogFile("Fix cell refine type");
     WriteLogFile("End fix cell type!");
 }
 
@@ -735,7 +735,7 @@ bool Mesh_Refine_Unstruct::IsNeedInfectInterfaceIsotropicRefineType()
 {
     bool isContinue = false;
 
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
 
@@ -754,15 +754,15 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
     WriteLogFile("Start Swapping refine type!");
 
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector< PH_Request > requestContainer;
     vector< vector< DataContainer* > > receivedDataBuffer;
     vector< vector< DataContainer* > > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     //! Compress the send information into the actkey.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
 
@@ -798,7 +798,7 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
     }
 
     //! Communication.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -874,7 +874,7 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
     }
 
     //! Decompress the interface data from datacontainer.
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
@@ -921,7 +921,7 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
 
 void Mesh_Refine_Unstruct::InitAnisoRefineType()
 {
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Mesh_RefineController *currentController = gridRefineControllers[iZone];
         currentController->InitAnisoRefineType();
@@ -930,7 +930,7 @@ void Mesh_Refine_Unstruct::InitAnisoRefineType()
 
 void Mesh_Refine_Unstruct::BuildRefineProperty()
 {
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         SetDefaultRefineProperty(iZone);
 

@@ -24,7 +24,7 @@ using namespace std;
 
 namespace PHSPACE
 {
-//! @brief It defines the class 'StructBC', which is the base class of Structured geometry grid operation for boundary condition.
+//! @brief It defines the class 'StructBC', which is the base class of structured geometry grid operation for boundary condition.
 //!        The inheriting order is: SimpleBC -> StructBC/UnstructBC.
 class StructBC : public SimpleBC
 {
@@ -37,21 +37,20 @@ public:
     ~StructBC();
 
 private:
-    //! Region index (the Number of Region).
+    //! Region index (the number of region).
     uint_t nr;
 
-private:
-    //! s_nd: Dimensional Number in the current  zone. s - source, nd - the Number of Dimension.
-    //! t_nd: Dimensional Number in the neighbor zone. t - target, nd - the Number of Dimension.
+    //! s_nd: Dimensional number in the current  zone. s - source, nd - the number of dimension.
+    //! t_nd: Dimensional number in the neighbor zone. t - target, nd - the number of dimension.
     //! -# 0: i direction.
     //! -# 1: j direction.
     //! -# 2: k direction.
     int s_nd, t_nd;
 
-    //! s_lr : This BC region is on the Left or Right Side in the current zone.  s - source, lr - Left/Right.
-    //! t_lr : This BC region is on the Left or Right Side in the neighbor zone. t - target, lr - Left/Right.
-    //! -# -1: Left Side.
-    //! -#  1: Right Side.
+    //! s_lr : This BC region is on the left or right side in the current zone.  s - source, lr - Left/Right.
+    //! t_lr : This BC region is on the left or right side in the neighbor zone. t - target, lr - Left/Right.
+    //! -# -1: Left side.
+    //! -#  1: Right side.
     int s_lr, t_lr;
 
     //! s_lr3d && t_lr3d stores the composite information of both s_nd/t_nd && s_lr/t_lr.
@@ -60,13 +59,15 @@ private:
     //!     if (i == t_nd) t_lr3d[i] = t_lr;  else  t_lr3d[i] = 0;
     int s_lr3d[3], t_lr3d[3];
 
-    //! nbs: the current  zone index of this BC region. nb - the Number of block, s - source.
-    //! nbt: the neighbor zone index of this BC region. nb - the Number of block, t - target.
+    //! nbs: The current  zone index of this BC region. nb - the number of block, s - source.
+    //! nbt: The neighbor zone index of this BC region. nb - the number of block, t - target.
     int nbs, nbt;
 
     //! s_st: Start local point index in the current zone. s - source, st - start.
     //! s_ed: End   local point index in the current zone. s - source, ed - end.
     int s_st[3], s_ed[3];
+
+    //!
     int lnkInfo[12];
 
     //! s_dir3d: the i\j\k direction between the current face and matching target face if the face is a interface.
@@ -211,18 +212,19 @@ private:
     int zoneID;
 
     //! The BCRegions list in the current CompositeStructBC.
-    vector<StructBC *> * bcregions;
+    vector<StructBC *> *bcRegions;
 
-    //! The number of Boundary Faces.
+    //! The number of boundary faces.
     int nBoundFace;
 
-    //! The number of Interface Faces.
+    //! The number of interface faces.
     int nIFace;
 
-    int *id_i, *id_j, *id_k;
+    //! The I/J/K id of interface faces.
+    int *iID, *jID, *kID;
 
-    //! The bcRegions id of Interface Faces.
-    int *face_of_bcregion;
+    //! The bcRegions id of interface faces.
+    int *bcRegionIDofIFace; 
 
     //! Boundary name of given type;
     string boundaryName[100];

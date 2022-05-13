@@ -150,10 +150,10 @@ void FaceSearchingManager::SplitQuadrilateralToTriangle(FaceSearching *parentFac
     }
 }
 
-InterfaceLinkStructure::InterfaceLinkStructure(RDouble *pmin, RDouble *pmax, RDouble tolerance, int numberOfZones) : coordinateTree(3, pmin, pmax)
+InterfaceLinkStructure::InterfaceLinkStructure(RDouble *pmin, RDouble *pmax, RDouble tolerance, int nZones) : coordinateTree(3, pmin, pmax)
 {
     this->tolerance = tolerance;
-    localInterfaceIndexToGlobalInterfaceIndexMapping.resize(numberOfZones);
+    localInterfaceIndexToGlobalInterfaceIndexMapping.resize(nZones);
 
     faceSearchingManager = new FaceSearchingManager();
 }

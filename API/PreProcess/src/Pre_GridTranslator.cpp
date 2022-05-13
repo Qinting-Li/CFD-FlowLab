@@ -6,6 +6,8 @@
 #include "Geo_StructBC.h"
 #include "MultigridFactory.h"
 #include "PHIO.h"
+#include "IO_FileName.h"
+#include "TK_Exit.h"
 
 using namespace std;
 
@@ -145,6 +147,7 @@ void GridTranslator::OutputGrid()
 {
     string out_gfile = "grid.fts";
     int tasktype = GetTaskCode();
+    int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
     if (tasktype == PHSPACE::PARTITION_GRID)
     {
         GlobalDataBase::GetData("partition_grid_file", &out_gfile, PHSTRING, 1);
@@ -160,7 +163,58 @@ void GridTranslator::OutputGrid()
         grids[iZone] = (*gridGroup)[iZone];
     }
 
-    DumpGrid(out_gfile, grids, numberOfZones);
+    if (tasktype == PHSPACE::PARTITION_GRID && numberOfMultifile > 1)
+    {
+        int maximumProcess = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxproc");
+        
+        if (maximumProcess < numberOfMultifile)
+        {
+            ostringstream oss;
+            oss << " Error: the numberOfMultifile's value is larger than maximumProcess's value "<< endl;
+            TK_Exit::ExceptionExit(oss.str());
+        }
+        else if(maximumProcess % numberOfMultifile != 0)
+        {
+            ostringstream oss;
+            oss << " Error: the maximumProcess's value is not an integral multiple of numberOfMultifile's value "<< endl;
+            TK_Exit::ExceptionExit(oss.str());
+        }
+
+        int procNumberOfEachfile = maximumProcess / numberOfMultifile;
+        for (int iFile = 0; iFile < numberOfMultifile; ++iFile)
+        {
+            vector < Grid*> tempGrids;
+            tempGrids.resize(0);
+
+            for (int iZone = 0; iZone < numberOfZones; ++iZone)
+            {
+                int procIndex = grids[iZone]->GetGridID()->GetIndex();
+                int* block_proc_inp = PHMPI::GetZoneProcessorID_INP();
+                if (block_proc_inp)
+                {
+                    procIndex = block_proc_inp[iZone];
+                }
+
+                if ((procIndex / procNumberOfEachfile) == iFile)
+                {
+                    tempGrids.push_back(grids[iZone]);
+                }
+                else
+                {
+                    Grid* tempZero = 0;
+                    tempGrids.push_back(tempZero);
+                }
+            }
+
+            string out_gfile_temp = AddSymbolToFileName(out_gfile, "_", iFile);
+            DumpGrid(out_gfile_temp, &tempGrids[0], numberOfZones);
+        }
+
+    }
+    else
+    {
+        DumpGrid(out_gfile, grids, numberOfZones);
+    }
 }
 
 void GridTranslator::OutputMultiZoneComputationalGrids()
@@ -200,9 +254,9 @@ void GridTranslator::OutputMultiZoneComputationalGrids()
 
     if (block_proc_inp)
     {
-        for (int izone = 0; izone < numberOfZones; ++ izone)
+        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
-            SetZoneProcessorID(izone, block_proc_inp[izone]);
+            SetZoneProcessorID(iZone, block_proc_inp[iZone]);
         }
     }
 
@@ -221,9 +275,9 @@ void GridTranslator::OutputMultiZoneComputationalGrids()
 
 void GridTranslator::CheckGrid()
 {
-    for (int izone = 0; izone < numberOfZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        StructGrid *grid = StructGridCast((*gridGroup)[izone]);
+        StructGrid *grid = StructGridCast((*gridGroup)[iZone]);
         InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
 
         int nIFace = 0;
@@ -245,7 +299,7 @@ void GridTranslator::CheckGrid()
         for (int iface = 0; iface < nIFace; ++ iface)
         {
             target_zone = interFace2ZoneID[iface];
-            if (target_zone < izone) continue;
+            if (target_zone < iZone) continue;
             
             grid->GetSourceIndexIJK_Nsurf_LR(iface, 1, is, js, ks, nsurf, s_lr);
             if (s_lr == 1)
@@ -259,7 +313,7 @@ void GridTranslator::CheckGrid()
 
             itface = interFace2InterFaceID[iface];
 
-            if (target_zone == izone)
+            if (target_zone == iZone)
             {
                 grid->GetSourceIndexIJK_Nsurf_LR(itface, 1, it, jt, kt, nsurf, t_lr);
                 if (t_lr == 1)

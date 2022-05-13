@@ -829,15 +829,15 @@ void CGNSMultiZone::InitAllZones()
 {
     this->nzones = PHMPI::GetNumberofGlobalZones();
     zones = new CGNSZone *[nzones];
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        zones[izone] = new CGNSZone();
-        zones[izone]->Create();
-        zones[izone]->SetCellDimension(cellDim);
-        zones[izone]->SetPhysDimension(physDim);
-        zones[izone]->SetFileIndex(fileid);
-        zones[izone]->SetBaseIndex(baseid);
-        zones[izone]->SetZoneID(izone+1); //zoneindex start from 1
+        zones[iZone] = new CGNSZone();
+        zones[iZone]->Create();
+        zones[iZone]->SetCellDimension(cellDim);
+        zones[iZone]->SetPhysDimension(physDim);
+        zones[iZone]->SetFileIndex(fileid);
+        zones[iZone]->SetBaseIndex(baseid);
+        zones[iZone]->SetZoneID(iZone+1); //zoneindex start from 1
     }
 }
 
@@ -862,9 +862,9 @@ void CGNSMultiZone::ReadGrid(const string &filename)
 
     InitAllZones();
 
-    for (int izone = 1; izone <= nzones; ++ izone)
+    for (int iZone = 1; iZone <= nzones; ++ iZone)
     {
-        CGNSZone *cgns_zone = GetZone(izone-1);
+        CGNSZone *cgns_zone = GetZone(iZone-1);
         cgns_zone->ReadGrid();
     }
 
@@ -1478,7 +1478,6 @@ map<int,string> ElementFaceProxy::CreatFantasybctype()
     Fantasybctype[29]  = "BODY";
     Fantasybctype[30]  = "ENDNumberOfBodyOfHyperFLOW";
 
-    Fantasybctype[99]  = "PERIODIC";
     Fantasybctype[100] = "INTERIOR";
 
     Fantasybctype[1001] = "PRESSURE_INLET_PLATE";
@@ -2179,9 +2178,9 @@ CGNSGridFactory::CGNSGridFactory()
 
 CGNSGridFactory::~CGNSGridFactory()
 {
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        delete super_elements[izone];
+        delete super_elements[iZone];
     }
     delete [] super_elements;
 }
@@ -2219,38 +2218,38 @@ void CGNSGridFactory::CreateGeneralMultiBlockGrid()
 
     DumpGrid(out_gfile, grids, nzones);
 
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        delete grids[izone];
+        delete grids[iZone];
     }
     delete [] grids;
 }
 
-int CGNSGridFactory::GetGridType(int izone) const
+int CGNSGridFactory::GetGridType(int iZone) const
 {
-    return cgns_multizone->GetZone(izone)->GetZoneType();
+    return cgns_multizone->GetZone(iZone)->GetZoneType();
 }
 
-Grid * CGNSGridFactory::CreateBasicGrid(int izone)
+Grid * CGNSGridFactory::CreateBasicGrid(int iZone)
 {
-    int grid_type = GetGridType(izone);
+    int grid_type = GetGridType(iZone);
     if (grid_type == Unstructured)
     {
-        return CreateGridGeneral(UNSTRUCTGRID, new GridID(izone), 0, GetDim());
+        return CreateGridGeneral(UNSTRUCTGRID, new GridID(iZone), 0, GetDim());
     }
     else
     {
-        return CreateGridGeneral(STRUCTGRID, new GridID(izone), 0, GetDim());
+        return CreateGridGeneral(STRUCTGRID, new GridID(iZone), 0, GetDim());
     }
 }
 
 void CGNSGridFactory::CreateAllSingleGrid(Grid ** grids)
 {
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        Grid *grid  = CreateBasicGrid(izone);
-        grids[izone] = grid;
-        super_elements[izone]->CreateFantasyGrid(grid, GetGridType(izone));
+        Grid *grid  = CreateBasicGrid(iZone);
+        grids[iZone] = grid;
+        super_elements[iZone]->CreateFantasyGrid(grid, GetGridType(iZone));
     }
 }
 
@@ -2262,18 +2261,16 @@ void CGNSGridFactory::ResolveComputationGrid()
     GlobalDataBase::GetData("iadapt", &iadapt, PHINT, 1);
 
     super_elements = new SuperElement * [nzones];
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        super_elements[izone] = new SuperElement(cgns_multizone->GetZone(izone), iadapt);
+        super_elements[iZone] = new SuperElement(cgns_multizone->GetZone(iZone), iadapt);
     }
 
-    for (int izone = 0; izone < nzones; ++ izone)
+    for (int iZone = 0; iZone < nzones; ++ iZone)
     {
-        super_elements[izone]->ResolveComputationGrid();
+        super_elements[iZone]->ResolveComputationGrid();
     }
 }
-
-
 
 void PointOperation::CheckBCPoint(vector<int> &elem, vector<int> &point_list, int index)
 {

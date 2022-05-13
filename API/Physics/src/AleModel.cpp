@@ -504,9 +504,9 @@ void AleModel::RotateTranslation()
 
     ComputeRelativeRotateMatrix();
     int level = 0;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
+        Grid *grid = GetGrid(iZone, level);
         if (!grid) continue;
         RotateTranslation(grid);
     }
@@ -527,15 +527,15 @@ void AleModel::RotateTranslation(Grid *grid)
     RDouble yref_old = xyz_ref[1][1];
     RDouble zref_old = xyz_ref[1][2];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        RDouble dx = x[inode] - xref_old;
-        RDouble dy = y[inode] - yref_old;
-        RDouble dz = z[inode] - zref_old;
+        RDouble dx = x[iNode] - xref_old;
+        RDouble dy = y[iNode] - yref_old;
+        RDouble dz = z[iNode] - zref_old;
         
-        x[inode] = matrix[0][0] * dx + matrix[0][1] * dy + matrix[0][2] * dz + xref_new;
-        y[inode] = matrix[1][0] * dx + matrix[1][1] * dy + matrix[1][2] * dz + yref_new;
-        z[inode] = matrix[2][0] * dx + matrix[2][1] * dy + matrix[2][2] * dz + zref_new;
+        x[iNode] = matrix[0][0] * dx + matrix[0][1] * dy + matrix[0][2] * dz + xref_new;
+        y[iNode] = matrix[1][0] * dx + matrix[1][1] * dy + matrix[1][2] * dz + yref_new;
+        z[iNode] = matrix[2][0] * dx + matrix[2][1] * dy + matrix[2][2] * dz + zref_new;
     }
 }
 
@@ -645,9 +645,9 @@ void AleModel::UpdateGridInfo()
     int nZones = GetNumberofGlobalZones();
 
     int level = 0;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
+        Grid *grid = GetGrid(iZone, level);
         if (!grid) continue;
         grid->ComputeMinMaxBox();
         grid->ComputeMetrics();
@@ -690,9 +690,9 @@ void AleModel::BackUpOldGrid()
     int nZones = GetNumberofGlobalZones();
 
     int level = 0;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
+        Grid *grid = GetGrid(iZone, level);
         if (!grid) continue;
         grid->BackUpOldGrid();
     }
@@ -704,9 +704,9 @@ void AleModel::ComputeGridVelocity()
     int nZones = GetNumberofGlobalZones();
 
     int level = 0;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
+        Grid *grid = GetGrid(iZone, level);
         if (!grid) continue;
 
         int nTotalNode = grid->GetNTotalNode();
@@ -744,20 +744,20 @@ void AleModel::ReadDynamicGrid(fstream &file)
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        ReadGridCoordinate(file, izone);
+        ReadGridCoordinate(file, iZone);
     }
 }
 
-void AleModel::ReadGridCoordinate(fstream &file, int izone)
+void AleModel::ReadGridCoordinate(fstream &file, int iZone)
 {
     using namespace PHMPI;
 
     int send_proc = 0;
     int recv_proc = 0;
 
-    GetSendRecvProc(izone, send_proc, recv_proc);
+    GetSendRecvProc(iZone, send_proc, recv_proc);
 
     int myid = GetCurrentProcessorID();
 
@@ -771,7 +771,7 @@ void AleModel::ReadGridCoordinate(fstream &file, int izone)
 
     if (myid == recv_proc)
     {
-        Grid *grid = GetGrid(izone, 0);
+        Grid *grid = GetGrid(iZone, 0);
         grid->UpdateCoordinate(cdata);
     }
 

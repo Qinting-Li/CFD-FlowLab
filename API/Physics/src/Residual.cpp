@@ -99,9 +99,9 @@ void ResidualGlobal::CollectResidual(ActionKey *actkey)
 {
     DataContainer *cData = actkey->GetData();
     cData->moveto_begin();
-    int numberOfLocalZones = PHMPI::GetNumberofLocalZones();
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
 
-    for (int iZone = 0; iZone < numberOfLocalZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int nVar;
         PHRead(cData, nVar);
@@ -200,7 +200,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     }
 
     RDouble resAverage = 0.0;
-    RDouble GloableTotalCells = GlobalDataBase::GetDoubleParaFromDB("GloableTotalCells");
+    RDouble globalTotalCells = GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
 
    //for (int m = 0; m < numberOfResidualVariables; ++ m)
    //{
@@ -215,7 +215,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     //resAverage = resAverage / numberOfResidualVariables;
 
     resAverage += residualNormal[0];
-    resAverage = sqrt(resAverage / GloableTotalCells);
+    resAverage = sqrt(resAverage / globalTotalCells);
     oss << resAverage << "    ";
 
     RDouble maximumResidual = maxResidual->GetMaxRes();
@@ -236,7 +236,7 @@ void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, in
     formatRes = oss.str();
 }
 
-void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
+void ResidualGlobal::PrintResidualtoWindow(int outnstep, string &formatRes)
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int intervalStepRes = GlobalDataBase::GetIntParaFromDB("intervalStepRes");
@@ -247,10 +247,10 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
     }
 
     bool dumpTitle = true;// Print the NS-equations residual to window only.
-    if(isUnsteady)
+    if (isUnsteady)
     {
         int innerStep = GlobalDataBase::GetIntParaFromDB("innstep");
-        if(innerStep != 1)
+        if (innerStep != 1)
         {
             dumpTitle = false;
         }
@@ -284,7 +284,7 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string & formatRes)
     cout << oss.str();
 }
 
-void ResidualGlobal::OutResResidualNorm(fstream &file, string & formatRes, std::ostringstream &oss, int outnstep)
+void ResidualGlobal::OutResResidualNorm(fstream &file, string &formatRes, std::ostringstream &oss, int outnstep)
 {
     if (IfFileEmpty(file))
     {
@@ -294,7 +294,7 @@ void ResidualGlobal::OutResResidualNorm(fstream &file, string & formatRes, std::
         title_tecplot.push_back("\"iter\"");
 
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-        if(isUnsteady == 1)
+        if (isUnsteady == 1)
         {
             //! Unsteady.
             title_tecplot.push_back("\"Sub-iter\"");
@@ -343,7 +343,7 @@ void ResidualGlobal::DumpResidual(ActionKey *actkey, int outnstep)
 
     PrintResidualtoWindow(outnstep, formatRes);
 
-    if(!actkey->IsNeedOpenFile())
+    if (!actkey->IsNeedOpenFile())
     {
         return;
     }
@@ -572,13 +572,13 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
             residualNormal[iEquation] += res2;
             if(isErrorData(residualNormal[iEquation]))
             {
-                int izone = grid->GetZoneID();
+                int iZone = grid->GetZoneID();
                 PrintToWindow("residualNormal[", iEquation, "] = ", residualNormal[iEquation]);
                 PrintToWindow("\n");
-                PrintToWindow("izone = ", izone, "\n");
+                PrintToWindow("iZone = ", iZone, "\n");
                 PrintToWindow("iCell = ", iCell, "\n");
                 WriteLogFile("residual residualNormal ", iEquation, residualNormal[iEquation], true);
-                WriteLogFile("izone i = ", izone, iEquation, true);
+                WriteLogFile("iZone i = ", iZone, iEquation, true);
                 TK_Exit::ExceptionExit("Error: residual divergence!\n", true);
             }
 
@@ -666,10 +666,10 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                     residualNormal[m] += res2;
                     if(isErrorData(residualNormal[m]))
                     {
-                        int izone = grid->GetZoneID();
+                        int iZone = grid->GetZoneID();
                         PrintToWindow("residualNormal[", m, "] = ", residualNormal[m]);
                         PrintToWindow("\n");
-                        PrintToWindow("izone = ", izone, "\n");
+                        PrintToWindow("iZone = ", iZone, "\n");
                         PrintToWindow("i = ", i, "\n");
                         PrintToWindow("j = ", j, "\n");
                         PrintToWindow("k = ", k, "\n");
@@ -677,7 +677,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
                         PrintToWindow("yc = ", ycc(i, j, k), "\n");
                         PrintToWindow("zc = ", zcc(i, j, k), "\n");
                         WriteLogFile("residual residualNormal ",m, residualNormal[m], true);
-                        WriteLogFile("izone = ",izone, true);
+                        WriteLogFile("iZone = ",iZone, true);
                         WriteLogFile("i j k = ", i ,j, k, true);
                         WriteLogFile("xc yc zc = ", xcc(i, j, k) ,ycc(i, j, k), zcc(i, j, k), true);
                         TK_Exit::ExceptionExit("Error: residual divergence!\n", true);
@@ -705,10 +705,10 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
         }
     }
 
-    if(nDebug == 1 && maxResChange == true)
+    if (nDebug == 1 && maxResChange == true)
     {
-        int izone = grid->GetZoneID();
-        PrintToWindow("\n","Maxres_izone = ", izone, "\n");
+        int iZone = grid->GetZoneID();
+        PrintToWindow("\n","Maxres_izone = ", iZone, "\n");
         PrintToWindow("Maxres_i = ", iMax, "\n");
         PrintToWindow("Maxres_j = ", jMax, "\n");
         PrintToWindow("Maxres_k = ", kMax, "\n");
@@ -716,7 +716,6 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
         PrintToWindow("Maxres = ", maxResLocal,"\n","\n");
     }
     
-
     if (maxResChange)
     {
         maxResidual->SetMaxRes(maxResLocal);

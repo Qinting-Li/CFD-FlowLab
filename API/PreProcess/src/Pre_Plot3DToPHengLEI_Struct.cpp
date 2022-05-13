@@ -329,7 +329,6 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
     boundaryName[71] = "POLE1";
     boundaryName[72] = "POLE2";
     boundaryName[73] = "POLE3";
-    boundaryName[99] = "PERIODIC";
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
@@ -502,9 +501,9 @@ void Pre_Plot3DToPHengLEI_Struct::CheckMeshMultigrid()
     int km, NN;
     int km_grid = 1024;
 
-    for (int izone = 0; izone < nBlocks; izone ++)
+    for (int iZone = 0; iZone < nBlocks; iZone ++)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 

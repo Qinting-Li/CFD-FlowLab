@@ -120,6 +120,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     int RoeEntropyFixMethod = invSchemePara->GetEntropyFixMethod();
     int nChemical = invSchemePara->GetNumberOfChemical();
     int nPrecondition = invSchemePara->GetIfPrecondition();
+    int nIdealState = invSchemePara->GetIfIdealState();
 
     RDouble refMachNumber = invSchemePara->GetMachNumber();
     RDouble entrFixCoefLeft = invSchemePara->GetLeftEntropyFixCoefficient();
@@ -189,7 +190,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         RDouble hint_L = (gmL / (gmL - one)) * (pL / rL);
         RDouble hint_R = (gmR / (gmR - one)) * (pR / rR);
         RDouble peL = 0.0, peR = 0.0;
-        int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
+
         if (nChemical != 0 && nIdealState == 0)
         {
             for (int i = 0; i < 3; ++ i)
@@ -648,6 +649,7 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
     int nm = invSchemePara->Getnm();
     int EntropyFixMethod = invSchemePara->GetEntropyFixMethod();
     int nChemical = invSchemePara->GetNumberOfChemical();
+    int nIdealState = invSchemePara->GetIfIdealState();
 
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
@@ -710,9 +712,7 @@ void Steger_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara
 
         RDouble pel = 0.0, per = 0.0;
 
-        int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
         if (nChemical != 0 && nIdealState == 0)
-        //if (nChemical != 0)
         {
             for (int i = 0; i < 3; ++ i)
             {
@@ -879,6 +879,7 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
     int nm = invSchemePara->Getnm();
     int nChemical = invSchemePara->GetNumberOfChemical();
     int nPrecondition = invSchemePara->GetIfPrecondition();
+    int nIdealState = invSchemePara->GetIfIdealState();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
 
     RDouble **ql = invSchemePara->GetLeftQ();
@@ -939,7 +940,7 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
         RDouble hintRight = (gmR / (gmR - one)) * (pr / rr);
 
         RDouble peL = 0.0, peR = 0.0;
-        int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
+
         if (nChemical != 0 && nIdealState == 0)
         {
             for (int i = 0; i < 3; ++ i)

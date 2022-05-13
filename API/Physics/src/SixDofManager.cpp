@@ -423,6 +423,14 @@ void SixDofSolver::Run()
         XDirectionOnly();
         //SolveSixDofEquation();
     }
+    else if ( RBDMethod == 17  )//! Forced rotation along X periodically;
+    {
+        RotationInXDirection();
+    }
+    else if (RBDMethod == 19)//! Forced rotation along Z periodically;
+    {
+        RotationInZDirection();
+    }
     else if (RBDMethod == 22 )//! single DOF Y-axis motion
     {
         TK_Exit::ExceptionExit("There is no single DOF Y-axis motion in temporary.");
@@ -868,6 +876,102 @@ void SixDofSolver::Pitching()
     alpha = aleAmplitude * alpha;
     RDouble angularVelocity = cos(2.0 * aleSimulationTime * aleReduceFrequency);
     angularVelocity = 2.0 * aleAmplitude * aleReduceFrequency * angularVelocity;
+
+    newEulerAngleAlpha = alpha;
+    newEulerAngleBeta  = oldEulerAngleBeta;
+    newEulerAngleGama  = oldEulerAngleGama;
+
+    newAngularVelocityX = angularVelocity;
+    newAngularVelocityY = oldAngularVelocityY;
+    newAngularVelocityZ = oldAngularVelocityZ;
+
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta(newEulerAngleBeta);
+    sixDofParameter0->SetEulerAngleGama(newEulerAngleGama);
+
+    sixDofParameter0->SetAngularVelocityX(newAngularVelocityX);
+    sixDofParameter0->SetAngularVelocityY(newAngularVelocityY);
+    sixDofParameter0->SetAngularVelocityZ(newAngularVelocityZ);
+}
+
+void SixDofSolver::RotationInXDirection()
+{
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter(1);
+
+    RDouble oldEulerAngleAlpha = sixDofParameter1->GetEulerAngleAlpha();
+    RDouble oldEulerAngleBeta  = sixDofParameter1->GetEulerAngleBeta();
+
+    RDouble oldAngularVelocityX = sixDofParameter1->GetAngularVelocityX();
+    RDouble oldAngularVelocityY = sixDofParameter1->GetAngularVelocityY();
+
+    RDouble newEulerAngleAlpha = sixDofParameter0->GetEulerAngleAlpha();
+    RDouble newEulerAngleBeta  = sixDofParameter0->GetEulerAngleBeta();
+    RDouble newEulerAngleGama  = sixDofParameter0->GetEulerAngleGama();
+
+    RDouble newAngularVelocityX = sixDofParameter0->GetAngularVelocityX();
+    RDouble newAngularVelocityY = sixDofParameter0->GetAngularVelocityY();
+    RDouble newAngularVelocityZ = sixDofParameter0->GetAngularVelocityZ();
+
+    int aleDirection  = PHSPACE::GetIntegerParameterFromDataBase( bodyIndex, "direction" );
+    RDouble aleRotateFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "rotateFrequency");
+
+    RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
+
+    RDouble deltGama =  2.0 * PI * aleRotateFrequency * aleDirection;
+    RDouble gama = aleSimulationTime * deltGama;
+
+    RDouble angularVelocity = deltGama;
+
+    newEulerAngleAlpha = oldEulerAngleAlpha;
+    newEulerAngleBeta  = oldEulerAngleBeta;
+    newEulerAngleGama  = gama;
+
+    newAngularVelocityX = oldAngularVelocityX;
+    newAngularVelocityY = oldAngularVelocityY;
+    newAngularVelocityZ = angularVelocity;
+
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta (newEulerAngleBeta);
+    sixDofParameter0->SetEulerAngleGama (newEulerAngleGama);
+
+    sixDofParameter0->SetAngularVelocityX(newAngularVelocityX);
+    sixDofParameter0->SetAngularVelocityY(newAngularVelocityY);
+    sixDofParameter0->SetAngularVelocityZ(newAngularVelocityZ);
+}
+
+void SixDofSolver::RotationInZDirection()
+{
+    SixDofParameter* sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter* sixDofParameter1 = this->GetSixDofParameter(1);
+
+    RDouble oldEulerAngleBeta = sixDofParameter1->GetEulerAngleBeta();
+    RDouble oldEulerAngleGama = sixDofParameter1->GetEulerAngleGama();
+
+    RDouble oldAngularVelocityY = sixDofParameter1->GetAngularVelocityY();
+    RDouble oldAngularVelocityZ = sixDofParameter1->GetAngularVelocityZ();
+
+    RDouble newEulerAngleAlpha = sixDofParameter0->GetEulerAngleAlpha();
+    RDouble newEulerAngleBeta = sixDofParameter0->GetEulerAngleBeta();
+    RDouble newEulerAngleGama = sixDofParameter0->GetEulerAngleGama();
+
+    RDouble newAngularVelocityX = sixDofParameter0->GetAngularVelocityX();
+    RDouble newAngularVelocityY = sixDofParameter0->GetAngularVelocityY();
+    RDouble newAngularVelocityZ = sixDofParameter0->GetAngularVelocityZ();
+
+    RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
+
+    int aleDirection = PHSPACE::GetIntegerParameterFromDataBase(bodyIndex, "direction");
+    RDouble aleRotateFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "rotateFrequency");
+
+    RDouble deltAlpha =  2.0 * PI * aleRotateFrequency * aleDirection;
+    RDouble alpha = deltAlpha * aleSimulationTime; 
+
+    RDouble angularVelocity = deltAlpha;
 
     newEulerAngleAlpha = alpha;
     newEulerAngleBeta  = oldEulerAngleBeta;

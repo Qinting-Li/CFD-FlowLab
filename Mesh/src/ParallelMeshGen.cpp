@@ -40,7 +40,7 @@ void AnasysVectorFromDataContainer(DataContainer *& dataContainer, PHVector1D < 
 
 ParallelMeshGen::ParallelMeshGen()
 {
-    nZones         = 0;
+    numberOfZones = 0;
     super_elements = 0;
     region   = 0;
     zoneGridSolverContainer = 0;
@@ -54,7 +54,7 @@ ParallelMeshGen::~ParallelMeshGen()
 {
     delete region;
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         delete zoneGridSolverContainer[iZone];
     }
@@ -102,18 +102,18 @@ void ParallelMeshGen::ReadZoneGridFromFTS()
 
 void ParallelMeshGen::AllocateZoneGridSolverContainer()
 {
-    nZones = PHMPI::GetNumberofLocalZones();
+    numberOfZones = PHMPI::GetNumberofLocalZones();
 
-    zoneGridSolverContainer = new ZoneGridSolver * [nZones];
+    zoneGridSolverContainer = new ZoneGridSolver * [numberOfZones];
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         PHVector1D < CgnsZone * > cgnsZoneContainer;
         zoneGridSolverContainer[iZone] = new ZoneGridSolver(cgnsZoneContainer);
         zoneGridSolverContainer[iZone]->SetZoneHandler(this->region);
     }
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         zoneGridSolverContainer[iZone]->SetZoneIndex(iZone);
     }
@@ -150,8 +150,8 @@ void ParallelMeshGen::ConstructZoneGridSolver()
 
 void ParallelMeshGen::BuildElementAdaptProperty()
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
         this->SetCurrentZoneGridSolver(zoneGridSolver);
@@ -260,8 +260,8 @@ void ParallelMeshGen::AdaptGrid()
     PH_Barrier();
     TimeSpan timeSpan;
 
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
         this->SetCurrentZoneGridSolver(zoneGridSolver);
@@ -357,7 +357,7 @@ void ParallelMeshGen::ShapePreserving()
     RDouble influenceRadius = GlobalDataBase::GetDoubleParaFromDB("influenceRadius");
 
     PointVector *zoneProjectVector = new PointVector;
-    zoneProjectVector->resize(nZones);
+    zoneProjectVector->resize(numberOfZones);
 
     ParallelProjection * projection = new ParallelProjection(geometryFileName, GetDim());
     if(isProject)
@@ -372,7 +372,7 @@ void ParallelMeshGen::ShapePreserving()
         int projectOrgPoint;
         GlobalDataBase::GetData("projectOrgPoint", &projectOrgPoint, PHINT, 1);
 
-        projection->SetZoneGridSolverContainer(nZones, this->zoneGridSolverContainer);
+        projection->SetZoneGridSolverContainer(numberOfZones, this->zoneGridSolverContainer);
         projection->SetSymmetryPlane(symmetryPlane);
         projection->SetGeometryUnit(geometryUnit);
         projection->SetExclusiveCase(exclusiveCase);
@@ -393,7 +393,7 @@ void ParallelMeshGen::ShapePreserving()
     if(isProject && isDeform)
     {
         //! Preparing the data that RBF needs.
-        int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         vector< vector<bool> > *isSolidWallPoint = new vector< vector<bool> >;
         vector< vector<bool> > *isSymmetryPoint  = new vector< vector<bool> >;
         vector< vector<bool> > *needDeform       = new vector< vector<bool> >;
@@ -409,7 +409,7 @@ void ParallelMeshGen::ShapePreserving()
         PH_Barrier();
         TimeSpan timeSpan;
 
-        parallelRBF->SetNumberOfZone(nZones, numberOfSimulationZones);
+        parallelRBF->SetNumberOfZone(numberOfZones, nZones);
         parallelRBF->SetPointsCoordinates(pointsCoord);
         parallelRBF->SetBoundaryDeformedPoints(boundaryDeformedPoints);
         parallelRBF->SetDeformedVector(deformedVector);
@@ -500,8 +500,8 @@ void ParallelMeshGen::VisulizationOriginalGrid()
 {
     if(PHMPI::GetNumberOfProcessor() >= 64) return;
 
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int globalZoneIndex = region->GetProcessLocalZoneIndexToGlobalZoneIndex(iZone);
 
@@ -527,7 +527,7 @@ void ParallelMeshGen::RecoverZoneGridSolverFromFTS()
 {
     WriteLogFile("Start Recovering Zone Grid Solver From .fts!");
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         int globalZoneIndex = region->GetProcessLocalZoneIndexToGlobalZoneIndex(iZone);
 
@@ -994,14 +994,13 @@ void ParallelMeshGen::BroadcastNeighborZonesToEachProcessor()
 {
     WriteLogFile("Start Broadcasting Neighbor Zones To Each Processor!");
 
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     // 并行标准模式：遍历全局所有的zone
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         PHVector1D < int > neighborZones;
 
-        
         if(ZoneBelongToCurrentProcessor(iZone))
         {
             int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
@@ -1012,7 +1011,7 @@ void ParallelMeshGen::BroadcastNeighborZonesToEachProcessor()
             neighborZones = GetNeighborZones(zoneGridSolver);
         }
         
-        this->BroadCastToEachProcessor(iZone, neighborZones);
+        this->BroadcastToEachProcessor(iZone, neighborZones);
     }
 
     //PH_Barrier();
@@ -1039,8 +1038,8 @@ void ParallelMeshGen::BroadcastNeighborZonesToEachProcessor()
 void ParallelMeshGen::BroadcastNeighborZonesToEachProcessorNew()
 {
     int tag = 0;
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int localZone = 0; localZone < numberOfZones; ++ localZone )
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int localZone = 0; localZone < nLocalZones; ++ localZone )
     {
         ZoneGridSolver * zoneGridSolver = this->GetZoneGridSolver(localZone);
         PHVector1D < int > neighborZones = GetNeighborZones(zoneGridSolver);
@@ -1151,7 +1150,7 @@ void ParallelMeshGen::BroadcastNeighborZonesToEachProcessorNew()
     }
 }
 
-void ParallelMeshGen::BroadCastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor)
+void ParallelMeshGen::BroadcastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor)
 {
     PHVector1D < int > targetZones = GetAllOtherZones(zoneIndex);
 
@@ -1185,12 +1184,12 @@ void ParallelMeshGen::BroadCastToEachProcessor(const int zoneIndex, PHVector1D <
 
 void ParallelMeshGen::InitialInterFaceInformation()
 {
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     ZoneConnectivity * zoneNeighborConnectivity = new ZoneConnectivity();
-    zoneNeighborConnectivity->CreateAllZones(numberOfSimulationZones);
+    zoneNeighborConnectivity->CreateAllZones(nZones);
 
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         if (!GetZone(iZone)) continue;
 
@@ -1210,11 +1209,11 @@ void ParallelMeshGen::SwapNeighborsSendContent()
 {
     WriteLogFile("Start Swapping Neighbors Send Content!");
 
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
     int tag = 0;
 
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int sendProcessorIndex = PHMPI::GetZoneProcessorID(iZone);
 
@@ -1303,12 +1302,12 @@ void ParallelMeshGen::AddOneZoneNeighborToAllZonesNeighbor(PHVector1D < int > & 
         return;
     }
 
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int localZoneIndexOfTargetZone = region->GetProcessGlobalZoneIndexToLocalZoneIndex(targetZoneIndex);
     ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ localZoneIndexOfTargetZone ];
     PHVector2D < int > & globalNeighborZones       = zoneGridSolver->GetGlobalNeighborZones();
-    if(globalNeighborZones.size() == 0) globalNeighborZones.resize(numberOfSimulationZones);
+    if(globalNeighborZones.size() == 0) globalNeighborZones.resize(nZones);
 
     globalNeighborZones[ zoneIndex ].resize(dataOfThisZone.size());
     int dataOfThisZoneSize = static_cast<int>(dataOfThisZone.size());
@@ -1322,9 +1321,9 @@ PHVector1D < int > ParallelMeshGen::GetAllOtherZones(int zoneIndex)
 {
     PHVector1D < int > allOtherZones;
 
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
-    allOtherZones.resize(numberOfSimulationZones);
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    allOtherZones.resize(nZones);
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         allOtherZones[ iZone ] = iZone;
     }
@@ -1418,9 +1417,9 @@ int ParallelMeshGen::GetFaceTypeOfFTS(const int & dimension, const int & nodeNum
     return faceType;
 }
 
-Zone * ParallelMeshGen::GetZone(int izone)
+Zone * ParallelMeshGen::GetZone(int iZone)
 {
-    return region->GetZone(izone);
+    return region->GetZone(iZone);
 }
 
 bool ParallelMeshGen::ZoneBelongToCurrentProcessor(int zoneIndex)
@@ -1467,8 +1466,8 @@ PHVector2D < int > & ParallelMeshGen::GetCurrentNeighborZones(int zoneIndex)
         return zoneGridSolver->GetGlobalNeighborZones();
     }
 
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         if(ZoneBelongToCurrentProcessor(iZone))
         {
@@ -1501,9 +1500,9 @@ void ParallelMeshGen::GenerateAndDumpComputationalGrid()
 
 void ParallelMeshGen::AllocateComputationalGrid()
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    fantasyGrids  = new Grid * [ numberOfZones ];
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    fantasyGrids  = new Grid * [ nLocalZones ];
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         Grid *grid  = CreateBasicGrid(iZone);
         fantasyGrids[ iZone ] = grid;
@@ -1512,9 +1511,9 @@ void ParallelMeshGen::AllocateComputationalGrid()
 
 void ParallelMeshGen::GenerateComputationalGrid()
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
     int nTCellLocal = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         zoneGridSolverContainer[ iZone ]->GenerateComputationalGrid(fantasyGrids[ iZone ], GetGridType(iZone));
         
@@ -1534,7 +1533,7 @@ void ParallelMeshGen::GenerateComputationalGrid()
 
 void ParallelMeshGen::MeshQualityChecking()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Grid *grid = fantasyGrids[iZone];
 
@@ -1551,17 +1550,17 @@ void ParallelMeshGen::DumpComputationalGrid()
     string adapt_grid_file;
     GlobalDataBase::GetData("adapt_grid_file", &adapt_grid_file, PHSTRING, 1);
 
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
 
 	ComputationalGridProcess* computationalGridProcess = new ComputationalGridProcess(region);
-	computationalGridProcess->Initialize(fantasyGrids, numberOfZones);
+	computationalGridProcess->Initialize(fantasyGrids, nLocalZones);
 	computationalGridProcess->PostProcessMultiZoneComputationalGrids();
 	delete computationalGridProcess;
 
-    DumpMultiZoneComputationalGrids(adapt_grid_file, fantasyGrids, numberOfZones);
+    DumpMultiZoneComputationalGrids(adapt_grid_file, fantasyGrids, nLocalZones);
 }
 
-void ParallelMeshGen::DumpMultiZoneComputationalGrids(const string & fileName, Grid ** gridContainer, int numberOfZones)
+void ParallelMeshGen::DumpMultiZoneComputationalGrids(const string & fileName, Grid ** gridContainer, int nZones)
 {
     WriteLogFile(" Grid Writing ...");
     if(PHMPI::GetCurrentProcessorID() == 0) cout << "  Grid Writing ... " << endl;
@@ -1575,7 +1574,7 @@ void ParallelMeshGen::DumpMultiZoneComputationalGrids(const string & fileName, G
         PrintToWindow("    Writing new HDF5 version grid to file ....\n");
         WriteLogFile("    Writing  new HDF5 version grid to file ....\n");
 
-        IO_HDF5Write writeGrid(fileName, gridContainer, numberOfZones);
+        IO_HDF5Write writeGrid(fileName, gridContainer, nZones);
         writeGrid.Run();
     }
     else
@@ -1586,14 +1585,14 @@ void ParallelMeshGen::DumpMultiZoneComputationalGrids(const string & fileName, G
         int fileMode = P2P_MODE;
         if (fileMode == PHSPACE::P2P_MODE)
         {
-            DumpMultiZoneComputationalGridsP2PMode(fileName, gridContainer, numberOfZones);
+            DumpMultiZoneComputationalGridsP2PMode(fileName, gridContainer, nZones);
         }
         else if (fileMode == PHSPACE::CS_MODE)
         {
-            DumpMultiZoneComputationalGridsCSMode(fileName, gridContainer, numberOfZones);
+            DumpMultiZoneComputationalGridsCSMode(fileName, gridContainer, nZones);
         }
 
-        WriteFaceBC(fileName, gridContainer, numberOfZones);
+        WriteFaceBC(fileName, gridContainer, nZones);
 
         WriteCellToNode(fileName);
     }
@@ -1601,7 +1600,7 @@ void ParallelMeshGen::DumpMultiZoneComputationalGrids(const string & fileName, G
     WriteLogFile(" End Writing Grid.");
 }
 
-void ParallelMeshGen::DumpMultiZoneComputationalGridsP2PMode(const string & fileName, Grid ** gridContainer, int numberOfZones)
+void ParallelMeshGen::DumpMultiZoneComputationalGridsP2PMode(const string &fileName, Grid **gridContainer, int nZones)
 {
     using namespace PHMPI;
 
@@ -1633,7 +1632,7 @@ void ParallelMeshGen::DumpMultiZoneComputationalGridsP2PMode(const string & file
 
     if (zoneProcessorIndexContainerFromFile)
     {
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             SetZoneProcessorID(iZone, zoneProcessorIndexContainerFromFile[ iZone ]);
         }
@@ -1650,7 +1649,7 @@ void ParallelMeshGen::DumpMultiZoneComputationalGridsP2PMode(const string & file
     }  
 
     // Self Mode.
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int globalZoneIndex = region->GetProcessLocalZoneIndexToGlobalZoneIndex(iZone);
 
@@ -1680,10 +1679,9 @@ void ParallelMeshGen::DumpMultiZoneComputationalGridsP2PMode(const string & file
     {
         delete [] zoneProcessorIndexContainer;    zoneProcessorIndexContainer = NULL;
     }
-
 }
 
-void ParallelMeshGen::DumpMultiZoneComputationalGridsCSMode(const string & fileName, Grid ** gridContainer, int numberOfZones)
+void ParallelMeshGen::DumpMultiZoneComputationalGridsCSMode(const string &fileName, Grid **gridContainer, int nZones)
 {
     using namespace PHMPI;
 
@@ -1699,7 +1697,7 @@ void ParallelMeshGen::DumpMultiZoneComputationalGridsCSMode(const string & fileN
     int * zoneTypeContainer                   = GetZoneGridType();
     int * zoneProcessorIndexContainerFromFile = GetZoneProcessorID_INP();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         zoneProcessorIndexContainer[ iZone ] = iZone;
         zoneIndexContainer         [ iZone ] = iZone;
@@ -1708,7 +1706,7 @@ void ParallelMeshGen::DumpMultiZoneComputationalGridsCSMode(const string & fileN
 
     if (zoneProcessorIndexContainerFromFile)
     {
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             SetZoneProcessorID(iZone, zoneProcessorIndexContainerFromFile[ iZone ]);
         }
@@ -1717,12 +1715,12 @@ void ParallelMeshGen::DumpMultiZoneComputationalGridsCSMode(const string & fileN
     fstream file;
     PHSPACE::OpenFile(file, fileName, ios_base::out|ios_base::binary|ios_base::trunc);
 
-    PHWrite(file, numberOfZones);
-    PHWrite(file, zoneProcessorIndexContainer, numberOfZones);
-    PHWrite(file, zoneIndexContainer         , numberOfZones);
-    PHWrite(file, zoneTypeContainer          , numberOfZones);
+    PHWrite(file, nZones);
+    PHWrite(file, zoneProcessorIndexContainer, nZones);
+    PHWrite(file, zoneIndexContainer         , nZones);
+    PHWrite(file, zoneTypeContainer          , nZones);
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         gridContainer[ iZone ]->WriteGrid(file);
     }
@@ -1732,7 +1730,7 @@ void ParallelMeshGen::DumpMultiZoneComputationalGridsCSMode(const string & fileN
     WriteLogFile(" End Writing Grid.");
 }
 
-void ParallelMeshGen::WriteFaceBC(const string &gridfileName, Grid ** gridContainer, int numberOfZones)
+void ParallelMeshGen::WriteFaceBC(const string &gridfileName, Grid ** gridContainer, int nZones)
 {
     int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
 
@@ -1745,7 +1743,7 @@ void ParallelMeshGen::WriteFaceBC(const string &gridfileName, Grid ** gridContai
         PHSPACE::OpenFile(file, faceBCFileName, ios_base::out|ios_base::binary);
 
         PHWrite(file, numberOfSimulationZones);
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             UnstructGrid * grid = UnstructGridCast(gridContainer[iZone]);
             grid->WriteFaceBC(file);
@@ -1756,7 +1754,7 @@ void ParallelMeshGen::WriteFaceBC(const string &gridfileName, Grid ** gridContai
     else if (fileMode == PHSPACE::P2P_MODE)
     {
         //! parallel model.
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             int globalZoneIndex = region->GetProcessLocalZoneIndexToGlobalZoneIndex(iZone);
 
@@ -1775,7 +1773,7 @@ void ParallelMeshGen::WriteFaceBC(const string &gridfileName, Grid ** gridContai
     }
 }
 
-void ParallelMeshGen::WriteCellToNode(const string & gridfileName)
+void ParallelMeshGen::WriteCellToNode(const string &gridfileName)
 {
     int fileMode = P2P_MODE;
 
@@ -1783,8 +1781,7 @@ void ParallelMeshGen::WriteCellToNode(const string & gridfileName)
 
     if (fileMode == PHSPACE::P2P_MODE)
     {
-        int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
-        int numberOfZones = nZones;
+        int nZones = PHMPI::GetNumberofGlobalZones();
 
         for (int iZone = 0; iZone < numberOfZones; ++ iZone)
         {
@@ -1795,7 +1792,7 @@ void ParallelMeshGen::WriteCellToNode(const string & gridfileName)
             string cellToNodeFileName = ChangeExtensionOfFileName(tempName, "c2n");
             PHSPACE::OpenFile(file, cellToNodeFileName, ios_base::out|ios_base::binary);
 
-            PHWrite(file, numberOfSimulationZones);
+            PHWrite(file, nZones);
 
             VirtualFile * virtualFile = new VirtualFile(&file);
             virtualFile->BeginWriteWork();
@@ -1819,7 +1816,6 @@ void ParallelMeshGen::WriteCellToNode(const string & gridfileName)
         fstream file;
         PHSPACE::OpenFile(file, cellToNodeFileName, ios_base::out|ios_base::binary);
 
-        int numberOfZones = nZones;
         PHWrite(file, numberOfZones);
 
         for (int iZone = 0; iZone < numberOfZones; ++ iZone)
@@ -1854,57 +1850,57 @@ void ParallelMeshGen::ConstructGrid()
 
 void ParallelMeshGen::ResolveComputationGrid()
 {
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        super_elements[izone]->ResolveComputationGrid();
+        super_elements[iZone]->ResolveComputationGrid();
     }
 }
 
-int ParallelMeshGen::GetGridType(int izone) const
+int ParallelMeshGen::GetGridType(int iZone) const
 {
-    //return cgns_multizone->GetZone(izone)->GetZoneType();
+    //return cgns_multizone->GetZone(iZone)->GetZoneType();
     return (int)Unstructured;
 }
 
-Grid * ParallelMeshGen::CreateBasicGrid(int izone)
+Grid * ParallelMeshGen::CreateBasicGrid(int iZone)
 {
-    int grid_type = GetGridType(izone);
+    int grid_type = GetGridType(iZone);
     if (grid_type == Unstructured)
     {
-        return CreateGridGeneral(UNSTRUCTGRID, new GridID(izone), 0, GetDim());
+        return CreateGridGeneral(UNSTRUCTGRID, new GridID(iZone), 0, GetDim());
     }
     else
     {
-        return CreateGridGeneral(STRUCTGRID, new GridID(izone), 0, GetDim());
+        return CreateGridGeneral(STRUCTGRID, new GridID(iZone), 0, GetDim());
     }
 }
 
 void ParallelMeshGen::CreateAllSingleGrid(Grid ** grids)
 {
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        Grid *grid  = CreateBasicGrid(izone);
-        grids[izone] = grid;
-        super_elements[izone]->CreateFantasyGrid(grid, GetGridType(izone));
+        Grid *grid  = CreateBasicGrid(iZone);
+        grids[iZone] = grid;
+        super_elements[iZone]->CreateFantasyGrid(grid, GetGridType(iZone));
     }
 }
 
 void ParallelMeshGen::CreateGeneralMultiBlockGrid()
 {
-    Grid ** grids  = new Grid * [nZones];
+    Grid ** grids  = new Grid * [numberOfZones];
 
     string out_gfile = "grid.fts";
     GlobalDataBase::GetData("out_gfile", &out_gfile, PHSTRING, 1);
 
     CreateAllSingleGrid(grids);
 
-    ConstructGlobalInterfaceLink(grids, nZones);
+    ConstructGlobalInterfaceLink(grids, numberOfZones);
 
-    DumpGrid(out_gfile, grids, nZones);
+    DumpGrid(out_gfile, grids, numberOfZones);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        delete grids[izone];
+        delete grids[iZone];
     }
     delete [] grids;
 }
@@ -1919,12 +1915,12 @@ void ParallelMeshGen::ReadGrid()
 
     cgns_multizone = new CGNSMultiZone();
     cgns_multizone->ReadGrid(from_gfile);
-    nZones = cgns_multizone->GetNZones();
+    numberOfZones = cgns_multizone->GetNZones();
 
-    super_elements = new SuperElement * [nZones];
-    for (int izone = 0; izone < nZones; ++ izone)
+    super_elements = new SuperElement * [numberOfZones];
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
-        super_elements[izone] = new SuperElement(cgns_multizone->GetZone(izone), iadapt);
+        super_elements[iZone] = new SuperElement(cgns_multizone->GetZone(iZone), iadapt);
     }
 }
 
@@ -1932,7 +1928,7 @@ bool ParallelMeshGen::IfNeedProjection()
 {
     bool ifNeed = false;
 
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
         ElementFaceSolver * elementFaceSolver = zoneGridSolver->GetElementFaceSolver();
@@ -1967,8 +1963,8 @@ void ParallelMeshGen::SetAdaptTropic()
 
 void ParallelMeshGen::InitCellRefineType()
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
 
@@ -2016,8 +2012,8 @@ bool ParallelMeshGen::IsNeedInfectInterfaceIsotropicRefineType()
 {
     bool isContinue = false;
 
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
 
@@ -2101,8 +2097,8 @@ void ParallelMeshGen::FixCellRefineType()
             WriteLogFile("\nInfect isotropic refine type time: ", infectTime, "......");
         }
 
-        int numberOfZones = PHMPI::GetNumberofLocalZones();
-        for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+        int nLocalZones = PHMPI::GetNumberofLocalZones();
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
             ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
 
@@ -2119,7 +2115,7 @@ void ParallelMeshGen::FixCellRefineType()
     }
     PrintToWindow("\n");
 
-    fixTime.ShowTimeSpanToLogfile("Fix cell refine type");
+    fixTime.ShowTimeSpanToLogFile("Fix cell refine type");
     WriteLogFile("End fix cell type!");
 }
 
@@ -2227,10 +2223,10 @@ void ParallelMeshGen::InitGlobalBoundaryCondition()
 
 void ParallelMeshGen::PreparePointsCoordinates(PointVector *pointsCoord)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    pointsCoord->resize(numberOfZones);
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    pointsCoord->resize(nLocalZones);
     
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[iZone];
         Geo_PointFactory * pointFactory = zoneGridSolver->GetPointFactory();
@@ -2255,10 +2251,10 @@ void ParallelMeshGen::PreparePointsCoordinates(PointVector *pointsCoord)
 
 void ParallelMeshGen::PrepareCheckIsSolidWallPoint(vector< vector<bool> > *isSolidWallPoint, vector< vector<bool> > *needDeform)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    isSolidWallPoint->resize(numberOfZones);
-    needDeform->resize(numberOfZones);
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    isSolidWallPoint->resize(nLocalZones);
+    needDeform->resize(nLocalZones);
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[iZone];
 
@@ -2301,9 +2297,9 @@ void ParallelMeshGen::PrepareCheckIsSolidWallPoint(vector< vector<bool> > *isSol
 
 void ParallelMeshGen::PrepareCheckIsSymmetryPoint(vector< vector<bool> > *isSymmetryPoint)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    isSymmetryPoint->resize(numberOfZones);
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    isSymmetryPoint->resize(nLocalZones);
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver *zoneGridSolver = zoneGridSolverContainer[iZone];
 
@@ -2336,16 +2332,16 @@ void ParallelMeshGen::PrepareCheckIsSymmetryPoint(vector< vector<bool> > *isSymm
 void ParallelMeshGen::PrepareBoundaryDeformedPoint(vector< vector<bool> > *isSolidWallPoint, PointVector *zoneProjectVector,
                                                    PointVector *boundaryDeformedPoints, PointVector *deformedVector)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    boundaryDeformedPoints->resize(numberOfZones);
-    deformedVector->resize(numberOfZones);
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    boundaryDeformedPoints->resize(nLocalZones);
+    deformedVector->resize(nLocalZones);
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver *zoneGridSolver = zoneGridSolverContainer[iZone];
 
-        Geo_PointFactory      *pointFactory = zoneGridSolver->GetPointFactory();
+        Geo_PointFactory *pointFactory = zoneGridSolver->GetPointFactory();
 
-        int numberOfNodes  =static_cast<int>(pointFactory->GetNumberOfComputationalNodes());
+        int numberOfNodes = static_cast<int>(pointFactory->GetNumberOfComputationalNodes());
 
         //! Compute number of wall points.
         int nBoundaryDeformedPoints = 0;
@@ -2386,10 +2382,10 @@ void ParallelMeshGen::PrepareBoundaryDeformedPoint(vector< vector<bool> > *isSol
 
 void ParallelMeshGen::UpdatePointsCoordinates(PointVector *pointsCoord, vector< vector<bool> > *needDeform)
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    pointsCoord->resize(numberOfZones);
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    pointsCoord->resize(nLocalZones);
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver *zoneGridSolver = zoneGridSolverContainer[iZone];
         Geo_PointFactory *pointFactory = zoneGridSolver->GetPointFactory();

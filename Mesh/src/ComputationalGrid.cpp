@@ -111,19 +111,19 @@ ComputationalGridProcess::~ComputationalGridProcess()
     delete interfaceLinkStructure;
 }
 
-void ComputationalGridProcess::Initialize(Grid **gridContainer, int numberOfZones)
+void ComputationalGridProcess::Initialize(Grid **gridContainer, int nZones)
 {
-    this->numberOfZones = numberOfZones;
+    this->numberOfZones = nZones;
     this->gridContainer = gridContainer;
 
-    boundaryTypeVectorList.resize(numberOfZones);
-    boundaryNameVectorList.resize(numberOfZones);
-    newLocalInterfaceIndexToGlobalInterfaceIndexMappingList.resize(numberOfZones);
-    faceNodeIndexVectorList.resize(numberOfZones);
-    newBoundaryLeftCellIndexList.resize(numberOfZones);
-    newLeftCellIndexVectorList.resize(numberOfZones);
-    newRightCellIndexVectorList.resize(numberOfZones);
-    zoneInterfacesTopologyList.resize(numberOfZones);
+    boundaryTypeVectorList.resize(nZones);
+    boundaryNameVectorList.resize(nZones);
+    newLocalInterfaceIndexToGlobalInterfaceIndexMappingList.resize(nZones);
+    faceNodeIndexVectorList.resize(nZones);
+    newBoundaryLeftCellIndexList.resize(nZones);
+    newLeftCellIndexVectorList.resize(nZones);
+    newRightCellIndexVectorList.resize(nZones);
+    zoneInterfacesTopologyList.resize(nZones);
 }
 
 void ComputationalGridProcess::PostProcessMultiZoneComputationalGrids()
@@ -876,7 +876,7 @@ void ComputationalGridProcess::ReconstructInterfaceTopology()
     interfaceLinkStructure->ReconstructInterfaceTopology();
 }
 
-void ComputationalGridProcess::GetNeighborZoneBoundingBox(Grid **gridContainer, int numberOfZones, RDouble *pmin, RDouble *pmax)
+void ComputationalGridProcess::GetNeighborZoneBoundingBox(Grid **gridContainer, int nZones, RDouble *pmin, RDouble *pmax)
 {
     pmin[0] = LARGE;
     pmin[1] = LARGE;
@@ -904,7 +904,7 @@ void ComputationalGridProcess::GetNeighborZoneBoundingBox(Grid **gridContainer, 
     }
 }
 
-void ComputationalGridProcess::GetNeighborZoneMinMaxDistance(Grid **gridContainer, int numberOfZones, RDouble &mindis, RDouble &maxdis)
+void ComputationalGridProcess::GetNeighborZoneMinMaxDistance(Grid **gridContainer, int nZones, RDouble &mindis, RDouble &maxdis)
 {
     mindis =   LARGE;
     maxdis = - LARGE;
@@ -996,13 +996,13 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
     }
 
     int numberOfNodesOnInterfaces = 0;
-    PHVectorInt1D gloableNodeIndexToLocalNodeIndex(numberOfNodes);
-    SetField(gloableNodeIndexToLocalNodeIndex, -1, numberOfNodes);
+    PHVectorInt1D globalNodeIndexToLocalNodeIndex(numberOfNodes);
+    SetField(globalNodeIndexToLocalNodeIndex, -1, numberOfNodes);
     for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
     {
         if (isInterfaceNode[iNode])
         {
-            gloableNodeIndexToLocalNodeIndex[iNode] = numberOfNodesOnInterfaces;
+            globalNodeIndexToLocalNodeIndex[iNode] = numberOfNodesOnInterfaces;
             ++ numberOfNodesOnInterfaces;
         }
     }
@@ -1050,7 +1050,7 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
         for (int iNode = 0; iNode < faceNodeNumber; ++ iNode)
         {
             int globalNodeIndex = faceNodeIndexContainer[nodePosition + iNode];
-            int localNodeIndex  = gloableNodeIndexToLocalNodeIndex[globalNodeIndex];
+            int localNodeIndex  = globalNodeIndexToLocalNodeIndex[globalNodeIndex];
             faceNodeIndexContainerOfZoneInterfaces[interfaceIndex][iNode] = localNodeIndex;
         }
 
@@ -1072,9 +1072,9 @@ void ComputationalGridProcess::SwapZoneInterfaceLengthToNeighborZones(vector<Cha
 {
     PHSPACE::WriteLogFile("Start Swapping Length of Neighbor Zones ...");
 
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
         if(region->ZoneBelongToCurrentProcessor(iZone))
@@ -1140,8 +1140,8 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZones()
 
 void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesBlocking()
 {
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
         if(region->ZoneBelongToCurrentProcessor(iZone))
@@ -1173,15 +1173,15 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
     PHSPACE::WriteLogFile("Start Swapping Zone Interface Topology To Neighbor Zones!");
     
     int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int numberOfSimulationZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
     vector< PH_Request > requestContainer;
     vector< vector< DataContainer * > > receivedDataBuffer;
     vector< vector< DataContainer * > > sendDataBuffer;
-    receivedDataBuffer.resize(numberOfSimulationZones);
-    sendDataBuffer.resize(numberOfSimulationZones);
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
 
     int neighborCount = 0;
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
         if(region->ZoneBelongToCurrentProcessor(iZone))
@@ -1243,7 +1243,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
 
-    for (int iZone = 0; iZone < numberOfSimulationZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
         if(region->ZoneBelongToCurrentProcessor(iZone))

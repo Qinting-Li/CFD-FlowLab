@@ -35,17 +35,17 @@ int csmode     = 0;    // Initialization()
 int server     = 0;    // Initialization()
 int myID       = 0;    // Initialization()
 int gridServer = 0;
-int nZones     = 0;
+int nZones     = 0;     //! The number of global zones.
 
 //! Some special zones information for HYBRID SOLVER.
 int *nZones_in_proc = 0;    // Initialization()
 
 VVInt zone_over_link;
 
-int numberOfProcessor         = 1;    // Initialization()
-int numberOfGridProcessor     = 0;
-int numberofZoneInThisProcess = 0;
-int numberofFiles             = 0;    // Initialization()
+int numberOfProcessor          = 1;    // Initialization()
+int numberOfGridProcessor      = 0;
+int numberOfZonesInThisProcess = 0;
+int numberofFiles              = 0;    // Initialization()
 
 int *block_proc = NULL;               // Initialization()
 int *block_proc_grid = NULL;
@@ -136,7 +136,7 @@ void SetGridServerProcessorID(int serverId)
     gridServer = serverId;
 }
 
-LIB_EXPORT void SetNumberofGlobalZones(int nblock)
+LIB_EXPORT void SetNumberOfGlobalZones(int nblock)
 {
     nZones = nblock;
 }
@@ -163,7 +163,7 @@ void SetNumberOfGridProcessor(int nproc)
 
 LIB_EXPORT void SetNumberofLocalZones(int nblock)
 {
-    numberofZoneInThisProcess = nblock;
+    numberOfZonesInThisProcess = nblock;
 }
 
 void SetNumberofFiles(int fileNumber)
@@ -296,7 +296,7 @@ LIB_EXPORT int GetNumberOfGridProcessor()
 
 LIB_EXPORT int GetNumberofLocalZones()
 {
-    return numberofZoneInThisProcess;
+    return numberOfZonesInThisProcess;
 }
 
 LIB_EXPORT int GetNumberofFiles()
@@ -520,11 +520,11 @@ void FreeBlockData()
     localZoneIDToGlobalZoneID = NULL;
 }
 
-void CreateZoneStartPointContainer(int numberOfZones)
+void CreateZoneStartPointContainer(int nZones)
 {
     using namespace PHMPI;
 
-    zoneStartPointContainer = new int [numberOfZones];
+    zoneStartPointContainer = new int [nZones];
 }
 
 int *GetZoneStartPointContainer()
@@ -538,11 +538,11 @@ void DeleteZoneStartPointContainer()
     zoneStartPointContainer = NULL;
 }
 
-void CreateZoneStartCenterContainer(int numberOfZones)
+void CreateZoneStartCenterContainer(int nZones)
 {
     using namespace PHMPI;
 
-    zoneStartCenterContainer = new int [numberOfZones];
+    zoneStartCenterContainer = new int [nZones];
 }
 
 int * GetZoneStartCenterContainer()
@@ -556,9 +556,9 @@ void DeleteZoneStartCenterContainer()
     zoneStartCenterContainer = NULL;
 }
 
-void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int numberOfZones, int numberOfPoints)
+void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int nZones, int numberOfPoints)
 {
-    binaryTree = new DataStruct_BinaryTree(zoneStartPointContainer, numberOfZones, numberOfPoints);
+    binaryTree = new DataStruct_BinaryTree(zoneStartPointContainer, nZones, numberOfPoints);
     return;
 }
 
@@ -1863,16 +1863,16 @@ void PH_CompareMaxMin(int &local_data, int flag)
     }
 
 #ifdef PH_PARALLEL
-    int gloable_data = 0;
+    int global_data = 0;
     if (flag == MAX)
     {
-        MPI_Allreduce(&local_data, &gloable_data, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(&local_data, &global_data, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     }
     else if (flag == MIN)
     {
-        MPI_Allreduce(&local_data, &gloable_data, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+        MPI_Allreduce(&local_data, &global_data, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
     }
-    local_data = gloable_data;
+    local_data = global_data;
 #endif
 }
 
@@ -1885,18 +1885,18 @@ void PH_CompareMaxMin(RDouble &local_data, int flag)
     const int MIN = 2;
 
 #ifdef PH_PARALLEL
-    RDouble gloable_data = 0.0;
+    RDouble global_data = 0.0;
     if (flag == MAX)
     {
-        MPI_Allreduce(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        //PH_AllreduceSepMode(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MAX);
+        MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        //PH_AllreduceSepMode(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MAX);
     }
     else if (flag == MIN)
     {
-        MPI_Allreduce(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        //PH_AllreduceSepMode(&local_data, &gloable_data, 1, MPI_DOUBLE, MPI_MIN);
+        MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        //PH_AllreduceSepMode(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MIN);
     }
-    local_data = gloable_data;
+    local_data = global_data;
 #endif
 }
 

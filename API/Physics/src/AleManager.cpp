@@ -30,13 +30,14 @@ AleManager * aleManager = NULL;
 
 void CreateAleManager()
 {
-    int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if (!IsUnsteady)
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    if (!isUnsteady)
     {
         return;
     }
+
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if(!isAle)
+    if (!isAle)
     {
         return;
     }
@@ -191,17 +192,17 @@ void AleManager::ComputeMetrics()
     ActionKey* actkey = new ActionKey();
     actkey->action = COMPUTEMETRICS;
 
-    for (int izone = 0; izone < nZones; ++izone)
+    for (int iZone = 0; iZone < nZones; ++iZone)
     {
-        int send_proc = GetZoneProcessorIDSepMode(izone);
+        int send_proc = GetZoneProcessorIDSepMode(iZone);
         int recv_proc = GetServerSepMode();
 
-        int tag = GetSendRecvTag(GRID_BASED, 0, izone);
+        int tag = GetSendRecvTag(GRID_BASED, 0, iZone);
         int myid = PHMPI::GetCurrentProcessorID();
         if (myid == send_proc)
         {
             //! If the ProcessorID of i-th zone equal to the running ProcessorID, compute grid metrics.
-            Grid* grid = GetGrid(izone, 0);
+            Grid* grid = GetGrid(iZone, 0);
             grid->ComputeMetrics(actkey);
             if (grid->Type() == PHSPACE::STRUCTGRID)
             {
@@ -251,10 +252,10 @@ void AleManager::CommunicateCellCenterData()
 
 void AleManager::ComputeGridFaceVelocity()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    for (int iZone = 0; iZone < nZones; ++iZone)
     {
         Grid* grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
         if (!grid) continue;
@@ -408,10 +409,10 @@ void AleManager::DumpRestart()
 
 void BackupAllZonesOldGrid()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid* grid = GetGrid(iZone, gridLevelIndex);
         if (! grid) continue;
@@ -424,9 +425,9 @@ void DeAllocateOversetStorage()
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int numberOfZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < numberOfZones; ++iZone)
+        for (int iZone = 0; iZone < nZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
@@ -456,9 +457,9 @@ void AllocateOversetStorage()
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int numberOfZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < numberOfZones; ++iZone)
+        for (int iZone = 0; iZone < nZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
@@ -479,7 +480,6 @@ void AllocateOversetStorage()
                 GreatAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
             }
         }
-
     }
 }
 

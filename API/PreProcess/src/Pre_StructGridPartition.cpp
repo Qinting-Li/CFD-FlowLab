@@ -99,9 +99,9 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
 
     OutputPartitionedGrid();
     
-    for (int izone = 0; izone < numberOfBasicBlocks; ++ izone)
+    for (int iZone = 0; iZone < numberOfBasicBlocks; ++ iZone)
     {
-        parititionGrids[izone]->SetLnkInfo();
+        parititionGrids[iZone]->SetLnkInfo();
     }
 
     int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
@@ -110,9 +110,9 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
     {
         CheckMeshMultigrid(parititionGrids, numberOfBasicBlocks);
 
-        for (int izone = 0; izone < numberOfBasicBlocks; ++ izone)
+        for (int iZone = 0; iZone < numberOfBasicBlocks; ++ iZone)
         {
-            parititionGrids[izone]->ProcessBCInfo();
+            parititionGrids[iZone]->ProcessBCInfo();
         }
 
         ConstructGlobalInterfaceLink(parititionGrids, numberOfBasicBlocks);
@@ -121,8 +121,64 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
         {
             WriteLnkFile(partition_grid_file, parititionGrids, numberOfBasicBlocks);
         }
-        DumpGrid(partition_grid_file, parititionGrids, numberOfBasicBlocks);
 
+        int tasktype = GetTaskCode();
+        int numberOfMultifile = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMultifile");
+
+        if (tasktype == PHSPACE::PARTITION_GRID && numberOfMultifile > 1)
+        {
+            int maximumProcess = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxproc");
+            
+
+            if (maximumProcess < numberOfMultifile)
+            {
+                ostringstream oss;
+                oss << " Error: the numberOfMultifile's value is larger than maximumProcess's value "<< endl;
+                TK_Exit::ExceptionExit(oss.str());
+                
+            }
+            else if(maximumProcess % numberOfMultifile != 0)
+            {
+                ostringstream oss;
+                oss << " Error: the maximumProcess's value is not an integral multiple of numberOfMultifile's value "<< endl;
+                TK_Exit::ExceptionExit(oss.str());
+            }
+
+            int procNumberOfEachfile = maximumProcess / numberOfMultifile;
+            for (int iFile = 0; iFile < numberOfMultifile; ++iFile)
+            {
+                vector < Grid*> tempGrids;
+                tempGrids.resize(0);
+
+                for (int iBlock = 0; iBlock < numberOfBasicBlocks; ++iBlock)
+                {
+                    int procIndex = parititionGrids[iBlock]->GetGridID()->GetIndex();
+                    int* block_proc_inp = PHMPI::GetZoneProcessorID_INP();
+                    if (block_proc_inp)
+                    {
+                        procIndex = block_proc_inp[iBlock];
+                    }
+
+                    if ((procIndex / procNumberOfEachfile) == iFile)
+                    {
+                        tempGrids.push_back(parititionGrids[iBlock]);
+                    }
+                    else
+                    {
+                        Grid* tempZero = 0;
+                        tempGrids.push_back(tempZero);
+                    }
+                }
+
+                string out_gfile_temp = AddSymbolToFileName(partition_grid_file, "_", iFile);
+                DumpGrid(out_gfile_temp, &tempGrids[0], numberOfBasicBlocks);
+            }
+        }
+        else
+        {
+            DumpGrid(partition_grid_file, parititionGrids, numberOfBasicBlocks);
+        }
+        
         string faceBCFileName = ChangeExtensionOfFileName(original_grid_file, "bc");
         if (SerialFileExist(faceBCFileName))
         {
@@ -148,7 +204,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
         delete gridTranslator;
     }
 
-    WriteWallDist(partition_grid_file, parititionGrids);
+    WriteWalldist(partition_grid_file, parititionGrids);
     DumpMarkInfo();
 
     for (int i = 0; i < numberOfBasicBlocks; ++ i)
@@ -160,7 +216,7 @@ LIB_EXPORT void Pre_StrGridPartition::Run()
     delete region;
 }
 
-void Pre_StrGridPartition::WriteWallDist(const string &out_grid_file, Grid **grids_in)
+void Pre_StrGridPartition::WriteWalldist(const string &out_grid_file, Grid **grids_in)
 {
     if (!partitionWallDist) return;
     string walldistfile = ChangeExtensionOfFileName(out_grid_file, "wdt");
@@ -173,19 +229,19 @@ void Pre_StrGridPartition::WriteWallDist(const string &out_grid_file, Grid **gri
     actkey->filepos = H5Fcreate(finalFileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 
     using namespace PHMPI;
-    for (int izone = 0; izone < numberOfBasicBlocks; ++ izone)
+    for (int iZone = 0; iZone < numberOfBasicBlocks; ++ iZone)
     {
-        if (!grids_in[izone]) continue;
+        if (!grids_in[iZone]) continue;
 
-        StructGrid *grid = StructGridCast(grids_in[izone]);
-        WriteWallDist(actkey, grid);
+        StructGrid *grid = StructGridCast(grids_in[iZone]);
+        WriteWalldist(actkey, grid);
     }
     
     H5Fclose(actkey->filepos);
     delete actkey;    actkey = NULL;
 }
 
-void Pre_StrGridPartition::WriteWallDist(ActionKey *actkey, StructGrid *grid)
+void Pre_StrGridPartition::WriteWalldist(ActionKey *actkey, StructGrid *grid)
 {
     ostringstream oss;
     oss << "Grid-" << grid->GetZoneID();
@@ -243,8 +299,8 @@ void Pre_StrGridPartition::SetBlockIndex()
 
     for (int iProcessor = 0; iProcessor < numberOfProcessors; ++ iProcessor)
     {
-        uint_t numberOfZones = specialBlockTable[iProcessor].size();
-        for (int j = 0; j < numberOfZones; ++ j)
+        uint_t nZones = specialBlockTable[iProcessor].size();
+        for (int j = 0; j < nZones; ++ j)
         {
             int oldZoneIndex = specialBlockTable[iProcessor][j]->GetZoneIndex();
             if (!blockIndexOfMarkChanged && blockIndexOfMark == oldZoneIndex)
@@ -302,9 +358,16 @@ void Pre_StrGridPartition::SetWallDist()
         StructGrid *Ordinary_grid = StructGridCast(OrdinaryGrid[iBasic]);
 
         WriteGridWallDist(grid, Ordinary_grid, nst, ned);
+
+        grid->SetOrdinaryGridIndex(iBasic);
+        grid->SetOrdinaryDimStartIndex(&nst[0]);
+        grid->SetOrdinaryDimEndIndex(&ned[0]);
     }
 
-    cout << "\nWrite ParititionGrids' WallDist completed ... \n" << endl;
+    if (partitionWallDist)
+    {
+        cout << "\nWrite ParititionGrids' WallDist completed ... \n" << endl;
+    }
 }
 
 void Pre_StrGridPartition::WriteGridWallDist(StructGrid *grid, StructGrid *Ordinary_grid, vector< int > &nst, vector< int > &ned)
@@ -652,7 +715,7 @@ void Pre_StrGridPartition::OutputProcessorInformation()
     return;
 }
 
-void Pre_StrGridPartition::OutputBoundaryInformation(Pre_Block_Struct *Pre_Block_Struct_in, StructGrid *grid, int izone)
+void Pre_StrGridPartition::OutputBoundaryInformation(Pre_Block_Struct *Pre_Block_Struct_in, StructGrid *grid, int iZone)
 {
     vector< Pre_BcFace_Struct * > leafBoundaryFace;
     vector< Pre_BcFace_Struct * > boundaryFaceList = Pre_Block_Struct_in->GetBoundaryFaceList();
@@ -674,7 +737,7 @@ void Pre_StrGridPartition::OutputBoundaryInformation(Pre_Block_Struct *Pre_Block
 
     for (int i = 0; i < numberOfLeafBoundaryFaces; ++ i)
     {
-        StructBC *bcregion = new StructBC(izone, i);
+        StructBC *bcregion = new StructBC(iZone, i);
         composite_bcregion->SetBCRegion(i, bcregion);
         leafBoundaryFace[i]->OutputBoundaryInformation(bcregion, geometricDimension);
     }
@@ -692,12 +755,12 @@ void Pre_StrGridPartition::InitParititionGrids()
     PHMPI::CreatetZoneProcessorID_INP(numberOfBasicBlocks);
 
     parititionGrids = new Grid * [numberOfBasicBlocks];
-    for (int izone = 0; izone < numberOfBasicBlocks; ++ izone)
+    for (int iZone = 0; iZone < numberOfBasicBlocks; ++ iZone)
     {
-        GridID *index = new GridID(izone);
+        GridID *index = new GridID(iZone);
         Grid *grid;
         grid = CreateGridGeneral(STRUCTGRID, index, 0, geometricDimension);
-        parititionGrids[izone] = grid;
+        parititionGrids[iZone] = grid;
     }
 }
 
@@ -1109,8 +1172,8 @@ void Pre_StrGridPartition::ReadLnkInfor(const string &fileName_in)
     string actualFileName = AddSymbolToFileName(fileName_in, "_", fileID);
     file = OpenHDF5File(actualFileName);
 
-    int numberOfZone = PHMPI::GetNumberofGlobalZones();
-    for (int iZone = 0; iZone < numberOfZone; ++ iZone)
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         OrdinaryGrid[iZone] = GetGrid(iZone, 0);
 

@@ -25,7 +25,6 @@ void Task_Read::MainTask(ActionKey *actkey)
     }
 }
 
-
 void Task_Read::ServerRead(ActionKey *actkey)
 {
     using namespace PHMPI;
@@ -33,12 +32,12 @@ void Task_Read::ServerRead(ActionKey *actkey)
 
     ParallelOpenFile(actkey);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int send_proc = server;
-        int recv_proc = GetZoneProcessorID(izone);
+        int recv_proc = GetZoneProcessorID(iZone);
 
-        PH_ReadPattern(actkey, GetMainAction(), send_proc, recv_proc, izone);
+        PH_ReadPattern(actkey, GetMainAction(), send_proc, recv_proc, iZone);
     }
 
     ParallelCloseFile(actkey);
@@ -51,13 +50,13 @@ void Task_Read::ThreadRead(ActionKey *actkey)
 
     ParallelOpenFile2(actkey);
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        //int send_proc = GetZoneProcessorID(izone);
-        int send_proc = GetZoneFileID(izone);
-        int recv_proc = GetZoneProcessorID(izone);
+        //int send_proc = GetZoneProcessorID(iZone);
+        int send_proc = GetZoneFileID(iZone);
+        int recv_proc = GetZoneProcessorID(iZone);
 
-        PH_ReadPattern(actkey, GetMainAction(), send_proc, recv_proc, izone);
+        PH_ReadPattern(actkey, GetMainAction(), send_proc, recv_proc, iZone);
     }
     ParallelCloseFile(actkey);
 }

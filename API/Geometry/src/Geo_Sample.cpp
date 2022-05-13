@@ -374,7 +374,7 @@ void ProbeData::SearchRealCell(StructGrid * grid, bool &flag)
                     // Judge if the probe and cell center at the same side of the current face.
                     // First face.
 
-                    if (ABS(dotProduct11 / probeToFaceDistance1) < small)
+                    if (ABS(dotProduct11 / (probeToFaceDistance1 + TINY)) < small)
                     {
                         flag = true;
                     }
@@ -389,7 +389,7 @@ void ProbeData::SearchRealCell(StructGrid * grid, bool &flag)
                     }
 
                     // Second face.
-                    if (ABS(dotProduct12 / probeToFaceDistance2) < small)
+                    if (ABS(dotProduct12 / (probeToFaceDistance2 + TINY)) < small)
                     {
                         flag = true;
                     }
@@ -481,7 +481,7 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
             RDouble dotProduct2 = centerToFaceVecX * xfn[faceID] + centerToFaceVecY * yfn[faceID] + centerToFaceVecZ * zfn[faceID];
 
             // Judge if the probe and cell center at the same side of the current face.
-            if (ABS(dotProduct1 / probeToFaceDistance) < small)
+            if (ABS(dotProduct1 / (probeToFaceDistance + TINY)) < small)
             {
                 flag = true;
             }
@@ -843,7 +843,7 @@ void SampleLocationInfo::Run()
         WriteProbesCellInfo(probesCellFileName);
     }
 
-    BroadCastProbesData();
+    BroadcastProbesData();
 
     SampleLocationInfoToGrid();
 }
@@ -1200,9 +1200,9 @@ void SampleLocationInfo::UpdateNearestCellsData()
     for (int iProbe = 0; iProbe < numberOfTotalProbes; ++ iProbe)
     {
         vector <RDouble> coordinates = sampleLocationInfo[iProbe]->GetProbeCoordinates();
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Grid *grid = GetGrid(zoneID, 0);
 
@@ -1229,9 +1229,9 @@ void SampleLocationInfo::UpdateRealCellsData()
         bool flag = false;
         vector <RDouble> coordinates = sampleLocationInfo[iProbe]->GetProbeCoordinates();
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Grid *grid = GetGrid(zoneID, 0);
 
@@ -1243,7 +1243,6 @@ void SampleLocationInfo::UpdateRealCellsData()
             sampleLocationInfo[iProbe]->SearchRealCell(grid, flag);
             if (flag) break;
         }
-
     }
 }
 
@@ -1402,7 +1401,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                     if (distanceRecv < distanceTemp)
                     {
                         sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                        sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                        sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                         sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
@@ -1422,7 +1421,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                         if(cellZoneIDRecv > 0)
                         {
                             sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
@@ -1440,7 +1439,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
                         if(cellZoneIDRecv > 0 && cellZoneIDRecv < cellZoneIDTemp)
                         {
                             sampleLocationInfo[iProbe]->SetProbeCoordinates(coordinatesRecv);
-                            sampleLocationInfo[iProbe]->SetProbeLineID(probeIDRecv);
+                            sampleLocationInfo[iProbe]->SetProbeGlobalID(probeIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeLineID(lineIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeSurfaceID(surfaceIDRecv);
                             sampleLocationInfo[iProbe]->SetProbeValidity(isValidRecv);
@@ -1523,7 +1522,7 @@ void SampleLocationInfo::CheckInvalidProbesData()
     }
 }
 
-void SampleLocationInfo::BroadCastProbesData()
+void SampleLocationInfo::BroadcastProbesData()
 {
 
     int server = GetServerProcessorID();

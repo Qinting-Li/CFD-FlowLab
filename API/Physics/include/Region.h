@@ -47,7 +47,7 @@ private:
     vector <Zone *> *zoneContainer;
 
 public:
-    //! Return the izone-th zone.
+    //! Return the iZone-th zone.
     Zone * GetZone(int iZone);
 
     //! If the iZone-th zone belong to current processor.\n
@@ -198,13 +198,13 @@ private:
 
     void SwapNeighborsSendContentNonblocking();
 
-    void BroadCastZoneNeighborInformation();
+    void BroadcastZoneNeighborInformation();
 
     //! swap the zone Neighbor information for point.
-    void BroadCastZoneNeighborForPointInformation();
+    void BroadcastZoneNeighborForPointInformation();
 
-    void BroadCastZoneNeighborInformationToEachProcessor();
-    void BroadCastZoneNeighborInformationToNeighborZones();
+    void BroadcastZoneNeighborInformationToEachProcessor();
+    void BroadcastZoneNeighborInformationToNeighborZones();
     void SwapZoneConnectivityBetweenNeighborZones();
 
     //! swap the zone Connectivity information for point in neighbor zones.
@@ -213,7 +213,7 @@ private:
     //! New method to bcast zone neighbor information.\n
     //! step1: collecting from each other processor by server.
     //! step2: bcasting to each other processor by server.
-    void BroadCastZoneNeighborInformationCollectBcast();
+    void BroadcastZoneNeighborInformationCollectBcast();
     void ServerCollectionNeighborInfor();
     void ServerBcastNeighborInfor();
     void CleanNeighborInfor();
@@ -247,9 +247,9 @@ private:
     void ComputeWeight();
     void TestReconstruction();
 
-    int *GetNode2All(int izone);
-    int *GetFace2All(int izone);
-    int *GetCell2All(int izone);
+    int *GetNode2All(int iZone);
+    int *GetFace2All(int iZone);
+    int *GetCell2All(int iZone);
 
     void ReadStructuredOversetGrid();
     void ReadGridTopologyData(const string & fileName);
@@ -258,16 +258,16 @@ private:
     void ReadUnstructuredOversetGrid();
     void ReadGrid(fstream &file);
     void ReadOversetGrid(const string &gridfile);
-    void ReadSingleOversetGrid(fstream &file, int izone);
+    void ReadSingleOversetGrid(fstream &file, int iZone);
     void AllocateOversetGrid();
     void AddUnStructInfoToStructGrid();
 
     void CreateZonesFromGridReader(IO_GridReader * gridReader);
     void CreateZonesFromGridGroups(IO_GridReader * gridReader);
     void ExcangeProcessorIDForGridProcessor();
-    void CreateZoneAndGrid(int izone);
-    void RecoverGridFromFile(fstream &file, int izone);
-    void InterpretDataToGrid(DataContainer *cdata, int izone);
+    void CreateZoneAndGrid(int iZone);
+    void RecoverGridFromFile(fstream &file, int iZone);
+    void InterpretDataToGrid(DataContainer *cdata, int iZone);
     //! Check grid validity.
     void GridValidityCheck();
 

@@ -364,7 +364,7 @@ public:
 protected:
     int GetZoneLocalID();
 
-    Grid *GetGrid(int level = 0);
+    Grid * GetGrid(int level = 0);
 
     uint_t GetNumberOfMultiGrid();
 
@@ -528,9 +528,6 @@ protected:
 };
 
 void UpdateInterfaceData();
-
-const int GlobalCoordinate = 0;
-const int LocalCoordinate = 1;
 
 #include "CFDSolver.hxx"
 

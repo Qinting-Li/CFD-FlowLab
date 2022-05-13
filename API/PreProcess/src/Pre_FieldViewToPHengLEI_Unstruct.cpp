@@ -44,18 +44,18 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadGrid()
 
     factory_cgns = new CGNSFactory(nBlocks);
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        factory_cgns->GetCGNSBase(izone)->SetBCName(bctype_name_list);
+        factory_cgns->GetCGNSBase(iZone)->SetBCName(bctype_name_list);
 
-        cout << " izone = " << izone << " nBlocks = " << nBlocks << "\n";
+        cout << " iZone = " << iZone << " nBlocks = " << nBlocks << "\n";
         GetFieldViewNTNode(file, nversion, nTotalNode);
 
         RDouble *x = new RDouble[nTotalNode];
         RDouble *y = new RDouble[nTotalNode];
         RDouble *z = new RDouble[nTotalNode];
 
-        RawGrid *rawgrid = factory_cgns->GetRawGrid(izone);
+        RawGrid *rawgrid = factory_cgns->GetRawGrid(iZone);
 
         rawgrid->SetX(x);
         rawgrid->SetY(y);
@@ -85,7 +85,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadGrid()
 
         GetFieldViewMainCell(file, nversion, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list);
 
-        MergeFieldViewCell(factory_cgns, izone, nBoundFace, nTotalNode, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list,
+        MergeFieldViewCell(factory_cgns, iZone, nBoundFace, nTotalNode, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list,
             nBC_Sections, bc_elem_type, bc_istart, bc_iend, bc_elem_conn_list, nBCRegions, bc_conn_list, nBCElem, bc_type);
     }
 
@@ -114,7 +114,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewVersion(fstream &file, int &n
     do
     { 
         getline(file, line);
-    } while (line == "");
+    }while (line == "");
 
     nversion = FIELDVIEW_2_4;
 
@@ -890,13 +890,13 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewMainCell(fstream &file, int n
     delete [] elem_pt;
 }
 
-void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_cgns, int izone, int nBoundFace, int nTotalNode, int nTotalCell, 
+void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_cgns, int iZone, int nBoundFace, int nTotalNode, int nTotalCell, 
                         int nElem_Sections, int *elem_type, int *elem_istart, int *elem_iend, cgsize_t **elem_conn_list,
                         int nBC_Sections, int *bc_elem_type, int *bc_istart, int *bc_iend, cgsize_t **bc_elem_conn_list,
                         int nBCRegions, cgsize_t **bc_conn_list, int *nBCElem, int *bc_type)
 {
-    CGNSBase *base_cgns = factory_cgns->GetCGNSBase(izone);
-    Base_Grid_Conn *gconn = factory_cgns->GetBaseGridConnection(izone);
+    CGNSBase *base_cgns = factory_cgns->GetCGNSBase(iZone);
+    Base_Grid_Conn *gconn = factory_cgns->GetBaseGridConnection(iZone);
 
     cout << "Merging cell..............................\n";
     cout << "nElem_Sections = " << nElem_Sections << " nBC_Sections = " << nBC_Sections << "\n";
@@ -1045,12 +1045,12 @@ void Pre_FieldViewToPHengLEI_Unstruct::Conversion()
         exit(0);
     }
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        GridID *index = new GridID(izone);
+        GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-        grids[izone] = grid;
-        CGNS2UnsGrid(factory_cgns, izone, UnstructGridCast(grid));
+        grids[iZone] = grid;
+        CGNS2UnsGrid(factory_cgns, iZone, UnstructGridCast(grid));
     }
 
     delete factory_cgns;

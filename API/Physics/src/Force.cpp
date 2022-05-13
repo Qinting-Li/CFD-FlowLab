@@ -156,7 +156,7 @@ void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, R
     numberofSolidWallPart = 0;
     if(isPartExist)
     {
-        numberofSolidWallPart = GlobalBoundaryCondition::GetNumberofSolidWallPart();
+        numberofSolidWallPart = GlobalBoundaryCondition::GetNumberOfSolidWallPart();
     }
     //! Because of global and local part force, numberofSolidWallPart * 2
     numberofTotalPart = numberofSolidWallPart * 2 + 1;
@@ -254,7 +254,7 @@ void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, R
         PHSPACE::SetField(partBCID, ALL_SOLID_WALL, numberofTotalPart);
 
         int partCount = 1;
-        uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+        uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
         for (int iBC = 0; iBC < nTBC; ++ iBC)
         {
             if((!GlobalBoundaryCondition::IsSolidWallBC(iBC)) && ((GlobalBoundaryCondition::GetBC(iBC)->GetBCType() != PHENGLEI::ABLATION_SURFACE))) continue;
@@ -283,7 +283,7 @@ void Force::CollectionForce(DataContainer *data_in)
     RDouble *localForceVar = new RDouble [nTotalVarDim];
     PHSPACE::SetField(localForceVar, 0.0, nTotalVarDim);
 
-    int nTBC = static_cast<int>(GlobalBoundaryCondition::GetNumberofBC());
+    int nTBC = static_cast<int>(GlobalBoundaryCondition::GetNumberOfBC());
    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int varCount = 0;
@@ -308,9 +308,9 @@ void Force::CollectionForce(DataContainer *data_in)
             data_in->read(&dCZ_f, sizeof(RDouble));
             data_in->read(&dCZ_p, sizeof(RDouble));
 
-            data_in->read(&dcpx,sizeof(RDouble));
-            data_in->read(&dcpy,sizeof(RDouble));
-            data_in->read(&dcpz,sizeof(RDouble));
+            data_in->read(&dcpx, sizeof(RDouble));
+            data_in->read(&dcpy, sizeof(RDouble));
+            data_in->read(&dcpz, sizeof(RDouble));
 
             data_in->read(&dCl_f, sizeof(RDouble));
             data_in->read(&dCl_p, sizeof(RDouble));
@@ -458,11 +458,11 @@ void Force::CompForce()
         }
         else
         {
-            SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-            Data_Param *bcParamDB = bc->GetBCParamDataBase();
-            bcParamDB->GetData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLengthSpanWise", &forceReferenceLengthPart_B, PHDOUBLE, 1);
+            SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+
+			boundaryCondition->GetParamData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLengthSpanWise", &forceReferenceLengthPart_B, PHDOUBLE, 1);
             isGlobalCoordinate = true;
         }
 
@@ -681,8 +681,8 @@ void Force::DumpForce(ActionKey *actkey, int outnstep)
     {
         int bcID = partBCID[iPart];
 
-        SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-        const string &bcName = bc->GetBCName();
+        SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+        const string &bcName = boundaryCondition->GetBCName();
 
         string totalForceFileName  = actkey->filename;
         string partAircoefFileName = PHSPACE::AddSymbolToFileName(totalForceFileName, "_", bcName);
@@ -858,8 +858,8 @@ void Force::DumpAllForceData(ActionKey *actkey, int outnstep)
         }
         else
         {
-            SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-            const string &bcName = bc->GetBCName();
+            SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+            const string &bcName = boundaryCondition->GetBCName();
             partName = bcName;
         }
 
@@ -897,14 +897,14 @@ void Force::DumpAllLocalForceData(const string &partName, int partID, std::ostri
 {
     RDouble TorqueRefX, TorqueRefY, TorqueRefZ, forceReferenceAreaPart, forceReferenceLengthPart, forceReferenceLengthSpanWisePart;
     int bcID = partBCID[partID];
-    SimpleBC *bc = GlobalBoundaryCondition::GetBC(bcID);
-    Data_Param *bcParamDB = bc->GetBCParamDataBase();
-    bcParamDB->GetData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
-    bcParamDB->GetData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
-    bcParamDB->GetData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWisePart, PHDOUBLE, 1);
-    bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-    bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-    bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+    SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+
+	boundaryCondition->GetParamData("forceReferenceArea",   &forceReferenceAreaPart,   PHDOUBLE, 1);
+    boundaryCondition->GetParamData("forceReferenceLength", &forceReferenceLengthPart, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWisePart, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+    boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
 
     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
 
@@ -1066,10 +1066,10 @@ void Force::DumpData(DataContainer * data)
         {
             int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
             AerodynamicForceComponent::components.resize(numberOfAerodynamicForceComponents);
-            int nTBCWall = GlobalBoundaryCondition::GetNumberofSolidWallPart();
+            int nTBCWall = GlobalBoundaryCondition::GetNumberOfSolidWallPart();
             SimpleBC* boundaryCondition = 0;
             int iComponent = 0;
-            int nTBC = GlobalBoundaryCondition::GetNumberofBC();
+            int nTBC = GlobalBoundaryCondition::GetNumberOfBC();
             if (numberOfAerodynamicForceComponents != nTBCWall)
             {
                 TK_Exit::ExceptionExit("Error in AerodynamicForceComponent::initialize : numberOfAerodynamicForceComponents != nTBCWall");
@@ -1842,7 +1842,7 @@ void Force::DumpData(DataContainer * data)
         int server = GetServerProcessorID();
         if (myID != server) return;
 
-        int nTotalBC = GlobalBoundaryCondition::GetNumberofBC();
+        int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
         for (int iPart = 0; iPart < nTotalBC; ++iPart)
         {
             SimpleBC* boundaryCondition = GlobalBoundaryCondition::GetBC(iPart);
@@ -2100,7 +2100,7 @@ void Force::DumpData(DataContainer * data)
         numberOfAerodynamicForceComponents = 0;
         if(isComponentsExist)
         {
-            numberOfAerodynamicForceComponents = GlobalBoundaryCondition::GetNumberofSolidWallPart();
+            numberOfAerodynamicForceComponents = GlobalBoundaryCondition::GetNumberOfSolidWallPart();
         }
         GlobalDataBase::UpdateData("numberOfAerodynamicForceComponents", &numberOfAerodynamicForceComponents, PHINT, 1);
 
@@ -2119,27 +2119,25 @@ void Force::DumpData(DataContainer * data)
         RDouble angleOfSideslipDenotedByRadian = GlobalDataBase::GetDoubleParaFromDB("sideslip");
 
         int partCount = 0;
-        uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+        uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
         for (int iBC = 0; iBC < nTBC; ++iBC)
         {
             if (!GlobalBoundaryCondition::IsSolidWallBC(iBC)) continue;
 
             partBCID[partCount] = iBC;
 
-            SimpleBC *bc = GlobalBoundaryCondition::GetBC(iBC);
-            Data_Param *bcParamDB = bc->GetBCParamDataBase();
-
+            SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(iBC);
             AerodynamicForce* aerodynamicForce = this->GetAerodynamicForce(partCount);
 
-            bcParamDB->GetData("forceReferenceArea",           &forceReferenceArea,           PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLength",         &forceReferenceLength,         PHDOUBLE, 1);
-            bcParamDB->GetData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWise, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceArea",           &forceReferenceArea,           PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLength",         &forceReferenceLength,         PHDOUBLE, 1);
+            boundaryCondition->GetParamData("forceReferenceLengthSpanWise", &forceReferenceLengthSpanWise, PHDOUBLE, 1);
             aerodynamicForce->Initialize(angleOfAttackDenotedByRadian, angleOfSideslipDenotedByRadian, forceReferenceArea,
                 forceReferenceLength, forceReferenceLengthSpanWise);
 
-            bcParamDB->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-            bcParamDB->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-            bcParamDB->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
             aerodynamicForce->SetTorqueRef(TorqueRefX, TorqueRefY, TorqueRefZ);
             partCount ++;
         }
@@ -2344,8 +2342,8 @@ void Force::DumpData(DataContainer * data)
         {
             int bcID = partBCID[iComponent];
 
-            SimpleBC* bc = GlobalBoundaryCondition::GetBC(bcID);
-            const string& bcName = bc->GetBCName();
+            SimpleBC* boundaryCondition = GlobalBoundaryCondition::GetBC(bcID);
+            const string& bcName = boundaryCondition->GetBCName();
             partName = bcName;
 
             aerodynamicForceContainer[iComponent]->DumpAllGlobalForceData(partName, iComponent, ossGlobalData);

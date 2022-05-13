@@ -872,7 +872,7 @@ namespace PHSPACE
         //start = omp_get_wtime();
         TimeSpan* testTime = new TimeSpan();
         UGKSFlux(grid);
-        testTime->ShowTimeSpanToLogfile("Calculate Flux Time");
+        testTime->ShowTimeSpanToLogFile("Calculate Flux Time");
         delete testTime;
         //end = omp_get_wtime();
         //diff = end - start;
@@ -882,7 +882,7 @@ namespace PHSPACE
         // start = omp_get_wtime();
         TimeSpan* testTime1 = new TimeSpan();
         UpdateUGKS(grid);
-        testTime1->ShowTimeSpanToLogfile("Update Time");
+        testTime1->ShowTimeSpanToLogFile("Update Time");
         delete testTime1;
         //end = omp_get_wtime();
         // diff = end - start;
@@ -4633,7 +4633,7 @@ namespace PHSPACE
         const int ALL_PART = -1;
         AirForceCoefParts(actkey,  ALL_PART);
 
-        uint_t nTBC = GlobalBoundaryCondition::GetNumberofBC();
+        uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
         for (int iPart = 0; iPart < nTBC; ++ iPart)
         {
             if(!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
@@ -4651,9 +4651,9 @@ namespace PHSPACE
 
         Param_UGKSSolver * controlParameters = GetControlParameters();
         const int ALL_PART = -1;
-        SimpleBC * boundaryCondition = 0;
+        SimpleBC * boundaryCondition = NULL;
         string partBCName = "";
-        RDouble TorqueRefX, TorqueRefY, TorqueRefZ;
+        RDouble TorqueRefX = 0.0, TorqueRefY = 0.0, TorqueRefZ = 0.0;
 
         if(partID == ALL_PART)
         {
@@ -4664,9 +4664,9 @@ namespace PHSPACE
         else
         {
             boundaryCondition = GlobalBoundaryCondition::GetBC(partID);
-            boundaryCondition->GetData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
-            boundaryCondition->GetData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
-            boundaryCondition->GetData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
+            boundaryCondition->GetParamData("TorqueRefZ", &TorqueRefZ, PHDOUBLE, 1);
             partBCName = boundaryCondition->GetBCName();
         }
 

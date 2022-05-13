@@ -83,16 +83,6 @@ void Simulation::Start()
     case OVERSET_CONFIG:
         PHSPACE::RunOversetGridConfig();
         break;
-    case CONVERT_PARTITION:
-        //ConvertAndPartition();
-        break;
-    case HO_SOLVER:
-        {
-            HOUnstruct::HOSimulation * uho = new HOUnstruct::HOSimulation();
-            uho->Run();
-            delete uho;
-            break;
-        }
     #ifdef USE_INHOUSE_VERSION
     case DSMC_SOLVER:
         RunDSMC();
@@ -103,10 +93,14 @@ void Simulation::Start()
     case UGKS_SOLVER:
         RunUGKS();
         break;
-    case DERIVATIVE_IDENITFY:
-        IdentifyDerivative();
-        break;
     #endif
+    case HO_SOLVER:
+        {
+            HOUnstruct::HOSimulation *uho = new HOUnstruct::HOSimulation();
+            uho->Run();
+            delete uho;
+            break;
+        }
     #ifdef USE_LBM_CODE
     case LBM_SOLVER:
         RunLBMSolver();
@@ -120,9 +114,6 @@ void Simulation::Start()
         RunGridCheckSolver();
         break;
     #endif
-    case POST_PROCESSING:
-        RunPostProcessing();
-        break;
     #ifdef USE_SpecDiffHybSolver
     case SPECDIFFHYB_SOLVER:
         RunSpecDiffHybSolver();
@@ -131,6 +122,14 @@ void Simulation::Start()
         RunSpecSolver();
         break;
     #endif
+    #ifdef USE_INHOUSE_VERSION
+    case DERIVATIVE_IDENITFY:
+        IdentifyDerivative();
+        break;
+    #endif
+    case POST_PROCESSING:
+        RunPostProcessing();
+        break;
     default:
         TK_Exit::UnexpectedVarValue("taskType = ", taskType);
         break;
@@ -145,7 +144,7 @@ void Simulation::IsNeedConvert()
     GetNameExt(originalGridFile, fileMame, fileSuffix, ".");
 
     set < pair<string, int> > gridTypeMap;
-    gridTypeMap.insert(pair <string, int> ("fts",  FANTASY_TYPE  ));
+    gridTypeMap.insert(pair <string, int> ("fts",  PHENGLEI_TYPE ));
     gridTypeMap.insert(pair <string, int> ("cgns", CGNS_TYPE     ));
     gridTypeMap.insert(pair <string, int> ("grd",  PLOT3D_TYPE   ));
     gridTypeMap.insert(pair <string, int> ("uns",  FIELDVIEW_TYPE));
@@ -171,7 +170,7 @@ void Simulation::IsNeedConvert()
         TK_Exit::ExceptionExit(oss.str());
     }
 
-    if (sourceGridType != FANTASY_TYPE)
+    if (sourceGridType != PHENGLEI_TYPE)
     {
         GlobalDataBase::UpdateData("from_gtype", &sourceGridType, PHINT, 1);
         GlobalDataBase::UpdateData("from_gfile", &originalGridFile, PHSTRING, 1);
@@ -234,9 +233,9 @@ void Simulation::RunCFD()
     int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
     if (iCodeBranch > 0)
     {
-        GenerateWallDist();
+        GenerateWalldist();
 
-        SelfAdaptionRunCFD(); //run CFD using the adaptive method.
+        SelfAdaptionRunCFD(); //! Run CFD using the adaptive method.
         return;
     }
 
@@ -247,7 +246,7 @@ void Simulation::RunCFD()
 
     InitGlobalBoundaryCondition();
 
-    GenerateWallDist();
+    GenerateWalldist();
 
     //! Initialize each solver on each zone.
     InitializeSolvers();
@@ -267,7 +266,7 @@ bool Simulation::IsRestartProcess()
 
     string restartFile = ".\results\flow.dat";
     GlobalDataBase::GetData("restartNSFile", &restartFile, PHSTRING, 1);
-    if(PHMPI::IsParallelRun())
+    if (PHMPI::IsParallelRun())
     {
         restartFile = PHSPACE::AddSymbolToFileName(restartFile, "_", 0);
     }
@@ -289,7 +288,7 @@ bool Simulation::IsRestartProcess()
         hid_t grploc;
         string grpName;
         ostringstream oss;
-        oss<<"Group"<<gridID;
+        oss << "Group" << gridID;
         grpName = oss.str();
 
         grploc = OpenGroup(file, grpName);
@@ -332,19 +331,19 @@ void Simulation::SelfAdaptionRunCFD()
 
         if (preChemical == 1 && preTModel == 1)
         {
-            //! restart from the one-temperature model.
+            //! Restart from the one-temperature model.
             SecondStepRunCFD(true);
             if (nFinalTModel == 1)
             {
-                //The third step: the final gas model.
+                //! The third step: the final gas model.
                 FinalStepRunCFD();
             }
             else
             {
-                //The second step: two-temperature model.
+                //! The second step: two-temperature model.
                 ThirdStepRunCFD();
 
-                //The third step: the final gas model.
+                //! The third step: the final gas model.
                 FinalStepRunCFD();
             }
 
@@ -352,58 +351,59 @@ void Simulation::SelfAdaptionRunCFD()
         }
         else if (preChemical == 1 && preTModel == 2)
         {
-            //! restart from the two-temperature model.
+            //! Restart from the two-temperature model.
             ThirdStepRunCFD(true);
 
-            //The third step: the final gas model.
+            //! The third step: the final gas model.
             FinalStepRunCFD();
 
             return;
         }
     }
 
-    //The first step: the perfect gas.
+    //! The first step: the perfect gas.
     FirstStepRunCFD();
     if (nFinalChemical == 0)
     {
         return;
     }
-    //The second step: one-temperature model.
+    //! The second step: one-temperature model.
     SecondStepRunCFD();
     if (nFinalTModel == 1)
     {
-        //The third step: the final gas model.
+        //! The third step: the final gas model.
         FinalStepRunCFD();
     }
     else
     {
-        //The second step: two-temperature model.
+        //! The second step: two-temperature model.
         ThirdStepRunCFD();
 
-        //The third step: the final gas model.
+        //! The third step: the final gas model.
         FinalStepRunCFD();
     }
 }
 
 void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
 {
-    //Record the serial number of current iteration step.
+    //! Record the serial number of current iteration step.
     int nCurrentStep = 1;
     GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+
     int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
     if (nCurrentProcessorID == PHMPI::server)
     {
-        cout<<endl;
-        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+        cout << endl;
+        cout << "nCurrentStep=" << nCurrentStep << endl;
     }
 
-    //The first step: run CFD using the perfect gas model.
+    //! The first step: run CFD using the perfect gas model.
     int nCurChemical = 0;
     GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
     int nCurTModel = 1;
     GlobalDataBase::UpdateData("ntmodel", &nCurTModel, PHINT, 1);
 
-    //The index of the variable pressure.
+    //! The index of the variable pressure.
     int nKeyVariableIndex = 4;
     GlobalDataBase::UpdateData("nKeyVariableIndex", &nKeyVariableIndex, PHINT, 1);
     string keyVariable = "pressure";
@@ -413,7 +413,7 @@ void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
 
     InitGlobalBoundaryCondition();
 
-    GenerateWallDist();
+    GenerateWalldist();
 
     InitializeSolvers();
 
@@ -423,7 +423,7 @@ void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
 
     PostSimulation();
 
-    //Release the dynamic memories at first.
+    //! Release the dynamic memories at first.
     CleanGlobalValuesSolver();
 
     RefreshSolvers();
@@ -431,17 +431,18 @@ void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
 
 void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
 {
-    //Record the serial number of current iteration step.
+    //! Record the serial number of current iteration step.
     int nCurrentStep = 2;
     GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+
     int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
     if (nCurrentProcessorID == PHMPI::server)
     {
-        cout<<endl;
-        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+        cout << endl;
+        cout << "nCurrentStep=" << nCurrentStep << endl;
     }
 
-    //The second step: run CFD using the one-temperature model.
+    //! The second step: run CFD using the one-temperature model.
     int nCurChemical = 1;
     GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
     int nCurTModel = 1;
@@ -452,7 +453,7 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
     GlobalDataBase::UpdateData("initMassFraction", &initMassFraction, PHSTRING, 1);
 
     int nControlVariable = 1;
-    if (GlobalDataBase::IsExist("nControlVariable",PHINT, 1))
+    if (GlobalDataBase::IsExist("nControlVariable", PHINT, 1))
     {
         nControlVariable = GlobalDataBase::GetIntParaFromDB("nControlVariable");
     }
@@ -465,9 +466,9 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
     {
         nKeyVariableIndex = 9;
     }
-    else if (nControlVariable > 6) //default
+    else if (nControlVariable > 6)  //! default.
     {
-        nKeyVariableIndex = 1; //The index of the variable temperature.
+        nKeyVariableIndex = 1;      //! The index of the variable temperature.
     }
     GlobalDataBase::UpdateData("nKeyVariableIndex", &nKeyVariableIndex, PHINT, 1);
 
@@ -498,7 +499,7 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
     {
         DefineAndCreateSolvers();
 
-        GenerateWallDist();
+        GenerateWalldist();
     }
 
     InitGlobalBoundaryCondition();
@@ -511,7 +512,7 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
 
     PostSimulation();
 
-    //Release the dynamic memories at first.
+    //! Release the dynamic memories at first.
     CleanGlobalValuesSolver();
 
     RefreshSolvers();
@@ -519,17 +520,18 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
 
 void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
 {
-    //Record the serial number of current iteration step.
+    //! Record the serial number of current iteration step.
     int nCurrentStep = 3;
     GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+
     int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
     if (nCurrentProcessorID == PHMPI::server)
     {
-        cout<<endl;
-        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+        cout << endl;
+        cout << "nCurrentStep=" << nCurrentStep << endl;
     }
 
-    //The third step: run CFD using the two-temperature model.
+    //! The third step: run CFD using the two-temperature model.
     int nCurChemical = 1;
     GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
     int nCurTModel = 2;
@@ -541,7 +543,7 @@ void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
     }
     if (nEnergyAssembly == 1)
     {
-        //the vibration energy is computed using the polynomial fitting method.
+        //! The vibration energy is computed using the polynomial fitting method.
         int nTEnergyModel = 1;
         GlobalDataBase::UpdateData("nTEnergyModel", &nTEnergyModel, PHINT, 1);
     }
@@ -551,7 +553,7 @@ void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
     string initMassFraction = "0.0, 0.233, 0.0, 0.0, 0.767";
     GlobalDataBase::UpdateData("initMassFraction", &initMassFraction, PHSTRING, 1);
 
-    //The index of the variable vibrational temperature.
+    //! The index of the variable vibrational temperature.
     int nKeyVariableIndex = 2;
     GlobalDataBase::UpdateData("nKeyVariableIndex", &nKeyVariableIndex, PHINT, 1);
     string keyVariable = "vibration temperature";
@@ -565,7 +567,7 @@ void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
     {
         DefineAndCreateSolvers();
 
-        GenerateWallDist();
+        GenerateWalldist();
     }
 
     InitGlobalBoundaryCondition();
@@ -578,7 +580,7 @@ void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
 
     PostSimulation();
 
-    //Release the dynamic memories at first.
+    //! Release the dynamic memories at first.
     CleanGlobalValuesSolver();
 
     RefreshSolvers();
@@ -586,17 +588,18 @@ void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
 
 void Simulation::FinalStepRunCFD()
 {
-    //Record the serial number of current iteration step.
+    //! Record the serial number of current iteration step.
     int nCurrentStep = 4;
     GlobalDataBase::UpdateData("nCurrentStep", &nCurrentStep, PHINT, 1);
+
     int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
     if (nCurrentProcessorID == PHMPI::server)
     {
-        cout<<endl;
-        cout<<"nCurrentStep="<<nCurrentStep<<endl;
+        cout << endl;
+        cout << "nCurrentStep=" << nCurrentStep << endl;
     }
 
-    //The third step: run CFD using the final gas model.
+    //! The third step: run CFD using the final gas model.
     int nCurChemical = GlobalDataBase::GetIntParaFromDB("nFinalChemical");
     GlobalDataBase::UpdateData("nchem", &nCurChemical, PHINT, 1);
     int nCurTModel = GlobalDataBase::GetIntParaFromDB("nFinalTModel");
@@ -612,12 +615,12 @@ void Simulation::FinalStepRunCFD()
     }
     if (nEnergyAssembly == 1)
     {
-        //the vibration energy is computed using the default method.
+        //! The vibration energy is computed using the default method.
         int nTEnergyModel = 0;
         GlobalDataBase::UpdateData("nTEnergyModel", &nTEnergyModel, PHINT, 1);
     }
 
-    //default: the index of the variable vibrational temperature.
+    //! Default: the index of the variable vibrational temperature.
     int nKeyVariableIndex = 2;
     string keyVariable = "vibration temperature";
     if (nCurTModel == 1)
@@ -645,7 +648,7 @@ void Simulation::FinalStepRunCFD()
             break;
         }
 
-        nKeyVariableIndex = nControlVariable; //The index of the variable temperature.
+        nKeyVariableIndex = nControlVariable;   //! The index of the variable temperature.
         if (nControlVariable == 5)
         {
             nKeyVariableIndex = 6;
@@ -833,7 +836,7 @@ void Simulation::RunGridCheckSolver()
         gridArray[iZone] = GetGrid(iZone);
         int gridType = gridArray[iZone]->Grid::Type();
 
-        if(gridType == UNSTRUCTGRID)
+        if (gridType == UNSTRUCTGRID)
         {
             UnstructGrid *grid = UnstructGridCast(gridArray[iZone]);
 
@@ -854,7 +857,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "nodeNumberOfEachCell :" << endl;
             file << "cellNumber nodeNumber " << endl;
-            for (int iCell =0; iCell < nTotalCell; iCell++)
+            for (int iCell =0; iCell < nTotalCell; iCell ++)
             {
                 file << iCell << setw(8) << nodeNumberOfEachCell[iCell] << endl;
                 nodeCount += nodeNumberOfEachCell[iCell];
@@ -862,7 +865,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "cell2Node :" << endl;
             file << "nodeCountNumber nodeNumber " << endl;
-            for (int iCount =0; iCount < nodeCount; iCount++)
+            for (int iCount =0; iCount < nodeCount; iCount ++)
             {
                 file << iCount << setw(8) << cell2Node[iCount] << endl;
             }
@@ -875,7 +878,7 @@ void Simulation::RunGridCheckSolver()
             file << "nBoundFace : " << nBoundFace << endl;
 
             file << "faceNumber  BcType  BCName" << endl;
-            for (int iFace = 0; iFace < nBoundFace; iFace++)
+            for (int iFace = 0; iFace < nBoundFace; iFace ++)
             {
                 int bcType = bcRecord[iFace]->GetKey();
                 string bcName = bcRecord[iFace]->GetBCName();
@@ -888,7 +891,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "nodeNumberOfEachFace :" << endl;
             file << "faceNumber nodeNumber " << endl;
-            for (int iFace = 0; iFace < nTotalFace; iFace++)
+            for (int iFace = 0; iFace < nTotalFace; iFace ++)
             {
                 file << iFace << setw(8) << nodeNumberOfEachFace[iFace] << endl;
                 faceCount += nodeNumberOfEachFace[iFace];
@@ -896,7 +899,7 @@ void Simulation::RunGridCheckSolver()
 
             file << "face2Node :" << endl;
             file << "faceCountNumber nodeNumber " << endl;
-            for (int iCount =0; iCount < faceCount; iCount++)
+            for (int iCount =0; iCount < faceCount; iCount ++)
             {
                 file << iCount << setw(8) << face2Node[iCount] << endl;
             }
@@ -906,16 +909,16 @@ void Simulation::RunGridCheckSolver()
             
             file << "leftCellOfFace :" << endl;
             file << "faceNumber leftCellNumber " << endl;
-            for (int iFace = 0; iFace < nTotalFace; iFace++)
+            for (int iFace = 0; iFace < nTotalFace; iFace ++)
             {
-                file << iFace << setw(8) << leftCellOfFace[iFace] << endl;;
+                file << iFace << setw(8) << leftCellOfFace[iFace] << endl;
             }
 
             file << "rightCellOfFace :" << endl;
             file << "faceNumber rightCellNumber " << endl;
-            for (int iFace = 0; iFace < nTotalFace; iFace++)
+            for (int iFace = 0; iFace < nTotalFace; iFace ++)
             {
-                file << iFace << setw(8) << rightCellOfFace[iFace] << endl;;
+                file << iFace << setw(8) << rightCellOfFace[iFace] << endl;
             }
 
             InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
@@ -930,25 +933,24 @@ void Simulation::RunGridCheckSolver()
 
                 file << "interFace2ZoneID" << endl;
                 file << "interFaceNumber  ZoneID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace++)
+                for (int iFace = 0; iFace < nIFace; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2ZoneID[iFace] << endl;
                 }
 
                 file << "interFace2InterFaceID" << endl;
                 file << "interFaceNumber  InterFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace++)
+                for (int iFace = 0; iFace < nIFace; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2InterFaceID[iFace] << endl;
                 }
 
                 file << "interFace2BoundaryFace" << endl;
                 file << "interFaceNumber  BoundaryFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace++)
+                for (int iFace = 0; iFace < nIFace; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2BoundaryFace[iFace] << endl;
                 }
-                
             }
             else
             {
@@ -970,46 +972,45 @@ void Simulation::RunGridCheckSolver()
 
                 file << "cellNumberOfInterPoint" << endl;
                 file << "interPointNumber  totalCellNumbers" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
                 {
                     file << iPoint << setw(8) << cellNumberOfInterPoint[iPoint] << endl;
                 }
 
                 file << "interPoint2GlobalPoint" << endl;
                 file << "interPointNumber  gobalPointNumber" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
                 {
                     file << iPoint << setw(8) << interPoint2GlobalPoint[iPoint] << endl;
                 }
 
                 file << "interPoint2InterPointID" << endl;
                 file << "interPointNumber  interPointID" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
                 {
                     file << iPoint << setw(8) << interPoint2InterPointID[iPoint] << endl;
                 }
 
                 file << "interPoint2ZoneID" << endl;
                 file << "interPointNumber  ZoneID" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
                 {
                     file << iPoint << setw(8) << interPoint2ZoneID[iPoint] << endl;
                 }
 
                 file << "labelOfInterPoint" << endl;
                 file << "interPointNumber  label" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
                 {
                     file << iPoint << setw(8) << labelOfInterPoint[iPoint] << endl;
                 }
 
                 file << "totalZonesOfInterPoint" << endl;
                 file << "interPointNumber  totalZones" << endl;
-                for (int iPoint = 0; iPoint < nIPoint; iPoint++)
+                for (int iPoint = 0; iPoint < nIPoint; iPoint ++)
                 {
                     file << iPoint << setw(8) << totalZonesOfInterPoint[iPoint] << endl;
-                }
-                
+                }  
             }
             else
             {
@@ -1077,9 +1078,9 @@ void Simulation::RunGridCheckSolver()
                 BCInfor[iBCinfo][index++] = sNd;
 
                 file << iBCinfo << setw(8) << iMin << setw(8) << iMax 
-                    << setw(8) << jMin << setw(8) << jMax << setw(8) << kMin 
-                    << setw(8) << kMax << setw(8) << bcType << setw(8) 
-                    << sLr << setw(10) << sNd << setw(20) << bcName <<endl;
+                     << setw(8) << jMin << setw(8) << jMax << setw(8) << kMin 
+                     << setw(8) << kMax << setw(8) << bcType << setw(8) 
+                     << sLr << setw(10) << sNd << setw(20) << bcName << endl;
 
                 iBCinfo ++;
 
@@ -1101,9 +1102,9 @@ void Simulation::RunGridCheckSolver()
                     BCInfor[iBCinfo][index++] = 0;
 
                     file << iBCinfo << setw(8) << t_st[0] << setw(8) << t_ed[0] 
-                    << setw(8) << t_st[1] << setw(8) << t_ed[1] << setw(8) << t_st[2] 
-                    << setw(8) << t_ed[2] << setw(8) << neighborZoneIndex << setw(8) 
-                        << 0 << setw(8) << 0 << endl;
+                         << setw(8) << t_st[1] << setw(8) << t_ed[1] << setw(8) << t_st[2] 
+                         << setw(8) << t_ed[2] << setw(8) << neighborZoneIndex << setw(8) 
+                         << 0 << setw(8) << 0 << endl;
 
                     iBCinfo ++;
                 }
@@ -1121,25 +1122,24 @@ void Simulation::RunGridCheckSolver()
 
                 file << "interFace2ZoneID" << endl;
                 file << "interFaceNumber  ZoneID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace++)
+                for (int iFace = 0; iFace < nIFace; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2ZoneID[iFace] << endl;
                 }
 
                 file << "interFace2InterFaceID" << endl;
                 file << "interFaceNumber  InterFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace++)
+                for (int iFace = 0; iFace < nIFace; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2InterFaceID[iFace] << endl;
                 }
 
                 file << "interFace2BoundaryFace" << endl;
                 file << "interFaceNumber  BoundaryFaceID" << endl;
-                for (int iFace = 0; iFace < nIFace; iFace++)
+                for (int iFace = 0; iFace < nIFace; iFace ++)
                 {
                     file << iFace << setw(8) << interFace2BoundaryFace[iFace] << endl;
                 }
-
             }
             else
             {
@@ -1151,9 +1151,8 @@ void Simulation::RunGridCheckSolver()
         }
         else
         {
-            TK_Exit :: UnexpectedVarValue("gridType", gridType);
+            TK_Exit::UnexpectedVarValue("gridType", gridType);
         }
-
     }
 
     PHSPACE::CloseFile(file);
@@ -1168,7 +1167,6 @@ void Simulation::RunPostProcessing()
     postProcess->Run();
 
     delete postProcess;
-
     postProcess = NULL;
 }
 
@@ -1225,7 +1223,7 @@ void Simulation::RunSpecDiffHybSolver()
     double last_time[3];
     TIME_SPACE::StartTime(last_time);
 
-    SpecDiffHybSolver * solver = new SpecDiffHybSolver();
+    SpecDiffHybSolver *solver = new SpecDiffHybSolver();
 
     solver->Run();
 
@@ -1239,7 +1237,7 @@ void Simulation::RunSpecSolver()
     double last_time[3];
     TIME_SPACE::StartTime(last_time);
 
-    SpecSolver * solver = new SpecSolver();
+    SpecSolver *solver = new SpecSolver();
 
     solver->Run();
 
@@ -1264,7 +1262,7 @@ void Simulation::ComputeWallDistance()
 
     InitGlobalBoundaryCondition();
 
-    GenerateWallDist();
+    GenerateWalldist();
 
     WriteLogFile("Generate wall distance ...");
 }
@@ -1309,7 +1307,7 @@ void Simulation::InitOversetGrid()
             TimeSpan *timeSpan = new TimeSpan();
             WriteLogFile("Run overset configuration ...\n");
             OversetGridConfig();
-            timeSpan->ShowTimeSpanToLogfile("Run overset configuration");
+            timeSpan->ShowTimeSpanToLogFile("Run overset configuration");
             delete timeSpan;
         }
 
@@ -1338,7 +1336,7 @@ void Simulation::ReadGeometry()
 
     this->region->ReadGrid();
 
-    testTime.ShowTimeSpanToLogfile("Grid Reading");
+    testTime.ShowTimeSpanToLogFile("Grid Reading");
 }
 
 void Simulation::InitGeometry()
@@ -1409,10 +1407,10 @@ void Simulation::DefineAndCreateSolvers()
 #ifdef USE_DEMOSOLVER
         PHSolver *solver = new DemoSolver();
         solverList.push_back(solver);
-#else  
+#else
 
         //! For each zone, define the solver names on it.
-        //! If you are solver developer, define your solve name here,
+        //! If you are solver developer, define your solver name here,
         //! according your solver logic.
         int dgHighOrder = 0;
         zone->GetData("dg_high_order", &dgHighOrder, PHINT, 1);
@@ -1468,7 +1466,7 @@ void Simulation::DefineAndCreateSolvers()
             }
             else
             {
-                #ifdef USE_IncompressibleSolver
+#ifdef USE_IncompressibleSolver
                 //! Add incompressible solvers.
                 if (gridType == UNSTRUCTGRID)
                 {
@@ -1482,7 +1480,7 @@ void Simulation::DefineAndCreateSolvers()
                     PHSolver *solver = new INCompSolverStruct();
                     solverList.push_back(solver);
                 }
-                #endif
+#endif
             }
         }
         else
@@ -1508,14 +1506,10 @@ void Simulation::DefineAndCreateSolvers()
                 }
                 else if (gridType == STRUCTGRID)
                 {
-                    const int FV_METHOD = 0;
-                    const int FD_METHOD = 1;
-                    const int NS_METHOD = 2;
-
                     int isFVMOrFDM = 0;
                     zone->GetData("isFVMOrFDM", &isFVMOrFDM, PHINT, 1);
 
-                    if (isFVMOrFDM == FV_METHOD || isFVMOrFDM == NS_METHOD)
+                    if (isFVMOrFDM == FV_METHOD)
                     {
                         //! Add structured turbulent solver.
                         PHSolver *solver = new TurbSolverStr();
@@ -1749,7 +1743,7 @@ void Simulation::PostSimulation()
 
     int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if (IsUnsteady  && isAle)
+    if (IsUnsteady && isAle)
     {
         FreeAleManager();
     }

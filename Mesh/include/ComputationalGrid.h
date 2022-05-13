@@ -116,7 +116,7 @@ protected:
 
  public:
     //! Initialize: allocate memory.
-    void Initialize(Grid **gridContainer, int numberOfZones);
+    void Initialize(Grid **gridContainer, int nZones);
 
     //! Construct grid interface information. 
     void PostProcessMultiZoneComputationalGrids();
@@ -149,8 +149,8 @@ protected:
     void CreateInterfaceLinkStructure();
 
     //! Get neighbor grid coordinates information.
-    void GetNeighborZoneBoundingBox   (Grid **gridContainer, int numberOfZones, RDouble *pmin, RDouble *pmax);
-    void GetNeighborZoneMinMaxDistance(Grid **gridContainer, int numberOfZones, RDouble &mindis, RDouble &maxdis);
+    void GetNeighborZoneBoundingBox   (Grid **gridContainer, int nZones, RDouble *pmin, RDouble *pmax);
+    void GetNeighborZoneMinMaxDistance(Grid **gridContainer, int nZones, RDouble &mindis, RDouble &maxdis);
 
     //! Covert NO_BOUNDARY_CONDITION to INTERFACE.
     void PreprocessBoundaryCondition();

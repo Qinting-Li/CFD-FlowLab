@@ -82,6 +82,7 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
         ;
     }
 }
+
 GmeshElem::GmeshElem()
 {
     ntype      = 0;
@@ -518,15 +519,15 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
 
     int nBlocks = 1;
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        cout << " izone = " << izone << " nBlocks = " << nBlocks << "\n";
+        cout << " iZone = " << iZone << " nBlocks = " << nBlocks << "\n";
 
         RDouble *x = new RDouble[ nTotalNode ];
         RDouble *y = new RDouble[ nTotalNode ];
         RDouble *z = new RDouble[ nTotalNode ];
 
-        RawGrid *rawgrid = factory_cgns->GetRawGrid(izone);
+        RawGrid *rawgrid = factory_cgns->GetRawGrid(iZone);
 
         rawgrid->SetX(x);
         rawgrid->SetY(y);
@@ -541,32 +542,32 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
         int iskip = 500000;
         int index;
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            if (inode % iskip == 0)
+            if (iNode % iskip == 0)
             {
-                cout << " inode = " << inode << " nTotalNode = " << nTotalNode << "\n";
+                cout << " inode = " << iNode << " nTotalNode = " << nTotalNode << "\n";
             }
             getline(file,line);
             line = FindNextWord(line,word,separator);
             from_string< int >(index,word,std::dec);
 
             line = FindNextWord(line,word,separator);
-            from_string< RDouble >(x[inode],word,std::dec);
+            from_string< RDouble >(x[iNode],word,std::dec);
 
             line = FindNextWord(line,word,separator);
-            from_string< RDouble >(y[inode],word,std::dec);
+            from_string< RDouble >(y[iNode],word,std::dec);
 
             line = FindNextWord(line,word,separator);
-            from_string< RDouble >(z[inode],word,std::dec);
+            from_string< RDouble >(z[iNode],word,std::dec);
 
-            xmin = MIN(xmin, x[inode]);
-            ymin = MIN(ymin, y[inode]);
-            zmin = MIN(zmin, z[inode]);
+            xmin = MIN(xmin, x[iNode]);
+            ymin = MIN(ymin, y[iNode]);
+            zmin = MIN(zmin, z[iNode]);
 
-            xmax = MAX(xmax, x[inode]);
-            ymax = MAX(ymax, y[inode]);
-            zmax = MAX(zmax, z[inode]);
+            xmax = MAX(xmax, x[iNode]);
+            ymax = MAX(ymax, y[iNode]);
+            zmax = MAX(zmax, z[iNode]);
         }
 
         cout << setiosflags(ios::right);

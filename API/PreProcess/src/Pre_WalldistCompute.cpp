@@ -132,7 +132,7 @@ LIB_EXPORT void Pre_WalldistCompute::Run()
 
     PostWallDistance();
 
-    timeSpan->ShowTimeSpanToLogfile("Wall distance computing");
+    timeSpan->ShowTimeSpanToLogFile("Wall distance computing");
     WriteLogFile("  End Wall Distance Computing ...");
     delete timeSpan;
 }
@@ -152,10 +152,10 @@ void Pre_WalldistCompute::FillWallStructureNew()
     TimeSpan *timeSpan = new TimeSpan();
 
     ServerCollection();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure collection to server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure collection to server");
 
     ServerBcast();
-    timeSpan->ShowTimeSpanToLogfile("Wall structure BCasting from server");
+    timeSpan->ShowTimeSpanToLogFile("Wall structure BCasting from server");
 
     PrintToWindow("Barrier for wall structure filling ...\n");
     PrintToWindow("End for wall structure filling ...\n");
@@ -169,16 +169,16 @@ void Pre_WalldistCompute::FillWallStructure()
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int tag  = GetSendRecvTag(GRID_BASED, 0, izone);
-        int proc = GetZoneProcessorID(izone);
+        int tag  = GetSendRecvTag(GRID_BASED, 0, iZone);
+        int proc = GetZoneProcessorID(iZone);
 
         DataContainer *cdata = new DataContainer();
 
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, this->level);
+            Grid *grid = GetGrid(iZone, this->level);
             CompressWallStructure(cdata, grid);
         }
 
@@ -200,9 +200,9 @@ void Pre_WalldistCompute::InitWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
         InitWallDistance(grid);
@@ -273,9 +273,9 @@ void Pre_WalldistCompute::ComputeWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
 
@@ -1724,9 +1724,9 @@ void Pre_WalldistCompute::ServerCollection()
 
     //! Write the number of zones in this processor.
     int nZonesInThisProc = 0;
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = GetZoneProcessorIDSepMode(izone);
+        int proc = GetZoneProcessorIDSepMode(iZone);
         if (myid == proc)
         {
             ++ nZonesInThisProc;
@@ -1735,13 +1735,13 @@ void Pre_WalldistCompute::ServerCollection()
     PHWrite(cdata, nZonesInThisProc);
     
     //! Compress all of the wall structure in this processor into data-container.
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = GetZoneProcessorIDSepMode(izone);
+        int proc = GetZoneProcessorIDSepMode(iZone);
 
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, this->level);
+            Grid *grid = GetGrid(iZone, this->level);
             CompressWallStructure(cdata, grid);
         }
     }
@@ -1780,7 +1780,7 @@ void Pre_WalldistCompute::ServerCollection()
             int nZonesInProc;
             cdata->moveto_begin();
             PHRead(cdata, &nZonesInProc, 1);
-            for (int izone = 0; izone < nZonesInProc; ++ izone)
+            for (int iZone = 0; iZone < nZonesInProc; ++ iZone)
             {
                 DeCompressWallStructure(cdata, false);
             }
@@ -2428,12 +2428,12 @@ void Pre_WalldistCompute::FilterWallStructureList()
     RDouble dis = 0.1 * wallTolerance;
 
     int nZones = PHMPI::GetNumberofGlobalZones();
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = PHMPI::GetZoneProcessorID(izone);
+        int proc = PHMPI::GetZoneProcessorID(iZone);
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, this->level);
+            Grid *grid = GetGrid(iZone, this->level);
             
             int boxMin = nBoxLimitedMin;
             int boxMax = nBoxLimitedMax;
@@ -3146,9 +3146,9 @@ bool Pre_WalldistCompute::IsWalldistComputOver()
     int nLocalZones = GetNumberofLocalZones();
 
     bool isOver = true;
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
         if (IsWalldistComputOver(grid) == false)
@@ -3248,9 +3248,9 @@ bool Pre_WalldistCompute::IsNodeWalldistComputOver()
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
 
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -3282,9 +3282,9 @@ void Pre_WalldistCompute::CheckWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
 
@@ -3466,9 +3466,9 @@ void Pre_WalldistCompute::PostWallDistance()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, this->level);
         PostWallDistance(grid);
@@ -4428,9 +4428,9 @@ RDouble Pre_WalldistCompute::ComputeDistanceOfANodeToAFace(RDouble *cellCenter, 
 
 void Pre_WalldistCompute::ComputeNodeDistanceByDirectMethod()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         int zoneProcessor = PHMPI::GetZoneProcessorIDSepMode(iZone);
         if (myid == zoneProcessor)
@@ -4585,9 +4585,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethod()
     int nLocalZones = GetNumberofLocalZones();
 
     //! Set initial value.
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -4600,14 +4600,14 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethod()
         SetField(&nodeWallDis[0], LARGE, numberOfNodes);
     }
 
-    int numberOfBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
+    int nBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
-    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
+    for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
     {
         PrintToWindow("\n    Computing Wall dist for block: ", iBlock, "\n\n");
         ComputeNodeDistanceByADTMethodForBlock(iBlock);
     }
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By ADT Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By ADT Method");
     delete timeSpan;
 }
 
@@ -4620,9 +4620,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethod()
     int nLocalZones = GetNumberofLocalZones();
 
     //! Set initial value.
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -4635,15 +4635,15 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethod()
         SetField(&nodeWallDis[0], LARGE, numberOfNodes);
     }
 
-    int numberOfBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
+    int nBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
-    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
+    for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
     {
         PrintToWindow("\nComputing Wall dist for Grid Group: ", iBlock, " By KDTree Method\n");
         ComputeNodeDistanceByKDTreeMethodForBlock(iBlock);
     }
 
-    timeSpan->ShowTimeSpanToLogfile("Compute Node Distance By KDTree Method");
+    timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By KDTree Method");
     delete timeSpan;
 }
 
@@ -4669,9 +4669,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
         oss << "  iBlock = " << iBlock << " nTWallFace = " << nTWallFace;
         WriteLogFile(oss);
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
             if (grid->GetIBlock()!= presentBlock)
@@ -4698,8 +4698,8 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
             RDouble *y = grid->GetY();
             RDouble *z = grid->GetZ();
 
-            PrintToWindow("  Wall distance computing for zone: ", izone, "\n");
-            WriteLogFile("  Wall distance computing for zone: ", izone);
+            PrintToWindow("  Wall distance computing for zone: ", iZone, "\n");
+            WriteLogFile("  Wall distance computing for zone: ", iZone);
 
             ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
         }
@@ -4732,9 +4732,9 @@ void Pre_WalldistCompute::ComputeNodeDistanceByADTMethodForBlock(int iBlock)
         oss << " iBlock = " << iBlock << " nTWallFace = " << nTWallFace << "\n";
         WriteLogFile(oss);
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
 
@@ -5004,7 +5004,7 @@ vector<WallStructure *> * Pre_WalldistCompute::GetWallstructureList()
     return wallstructureList;
 };
 
-void GenerateWallDist()
+void GenerateWalldist()
 {
     if (GetTaskCode() == DSMC_SOLVER || GetTaskCode() == UGKS_SOLVER || GetTaskCode() == HO_SOLVER) return;
     
@@ -5024,28 +5024,28 @@ void GenerateWallDist()
         nIsComputeWallDist = 0;
     }
 
-    if (GetTaskCode() == CAL_WALL_DIST || (viscousType != INVISCID && IsReadWallDist() == false))
+    if (GetTaskCode() == CAL_WALL_DIST || (viscousType != INVISCID && IsReadWalldist() == false))
     {
         if(nIsComputeWallDist == 0)
         {
             AllocateWalldist();
 
-            ComputeWallDist();
+            ComputeWalldist();
 
-            WriteWallDist();
+            WriteWalldist();
         }
-        //VisualWallDist();
+        //VisualWalldist();
     }
 
     if (viscousType > LAMINAR || iLES == LES_SOLVER)
     {
-        GhostWallDistance();
+        GhostWalldist();
 
-        WallDistStatics();
+        WalldistStatics();
     }
 }
 
-bool IsReadWallDist()
+bool IsReadWalldist()
 {
     using namespace PHMPI;
 
@@ -5086,7 +5086,7 @@ bool IsReadWallDist()
     return false;
 }
 
-void ComputeWallDist()
+void ComputeWalldist()
 {
     int walldistMethod;
     GlobalDataBase::GetData("walldistMethod", &walldistMethod, PHINT, 1);
@@ -5107,13 +5107,13 @@ void AllocateWalldist()
 
     int myid = GetCurrentProcessorID();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = GetZoneProcessorIDSepMode(izone);
+        int proc = GetZoneProcessorIDSepMode(iZone);
 
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, actkey->level);
+            Grid *grid = GetGrid(iZone, actkey->level);
             grid->AllocateWalldist();
         }
     }
@@ -5121,7 +5121,7 @@ void AllocateWalldist()
 }
 
 #ifdef USE_TecplotLib
-void VisualWallDist()
+void VisualWalldist()
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -5151,9 +5151,9 @@ void VisualWallDist()
 #ifdef USE_OMP
 #pragma omp parallel for
 #endif
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
         UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, 0));
 
         INTEGER4 IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;
@@ -5288,7 +5288,7 @@ void VisualWallDist()
 }
 #endif
 
-void WriteWallDist()
+void WriteWalldist()
 {
     string walldistfile = "walldist.dat";
     GlobalDataBase::GetData("walldistfile", &walldistfile, PHSTRING, 1);
@@ -5301,17 +5301,17 @@ void WriteWallDist()
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int send_proc = GetZoneProcessorID(izone);
-        int recv_proc = GetZoneFileID(izone);
+        int send_proc = GetZoneProcessorID(iZone);
+        int recv_proc = GetZoneFileID(iZone);
 
         int myid = GetCurrentProcessorID();
-        int tag = GetSendRecvTag(actkey, izone);
+        int tag = GetSendRecvTag(actkey, iZone);
 
         if (myid == send_proc)
         {
-            Grid *grid = GetGrid(izone, 0);
+            Grid *grid = GetGrid(iZone, 0);
             grid->DumpWalldist(actkey);
         }
 
@@ -5319,7 +5319,7 @@ void WriteWallDist()
 
         if (myid == recv_proc)
         {
-            DumpWallDistToFile(actkey, izone);
+            DumpWalldistToFile(actkey, iZone);
         }
     }
 
@@ -5327,7 +5327,7 @@ void WriteWallDist()
     delete actkey;
 }
 
-void DumpWallDistToFile(ActionKey *actkey, int iZone)
+void DumpWalldistToFile(ActionKey *actkey, int iZone)
 {
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
@@ -5359,7 +5359,7 @@ void DumpWallDistToFile(ActionKey *actkey, int iZone)
     delete [] walldist;
 }
 
-void WallDistStatics()
+void WalldistStatics()
 {
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
@@ -5368,13 +5368,13 @@ void WallDistStatics()
     RDouble minWalldist = PHSPACE::LARGE;
     RDouble maxWalldist = PHSPACE::SMALL;
     
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        int proc = GetZoneProcessorIDSepMode(izone);
+        int proc = GetZoneProcessorIDSepMode(iZone);
 
         if (myid == proc)
         {
-            Grid *grid = GetGrid(izone, 0);
+            Grid *grid = GetGrid(iZone, 0);
 
             if (grid->Type() == UNSTRUCTGRID)
             {
@@ -5426,16 +5426,16 @@ void WallDistStatics()
     PrintToWindow(oss);
 }
 
-void GhostWallDistance()
+void GhostWalldist()
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
 
     int level = 0;
 
-    for (int izone = 0; izone < nLocalZones; ++ izone)
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
         Grid *grid = GetGrid(zoneID, level);
 

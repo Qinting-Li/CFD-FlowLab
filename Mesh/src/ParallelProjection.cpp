@@ -257,8 +257,8 @@ void ParallelProjection::CheckPointsAttribute(ZoneGridSolver * zoneGridSolver)
 
         if (IsParentFace(parentFaceIndex)) continue;
 
-        SimpleBC * boundaryCondition = faceBoundaryCondition[iFace];
-        Data_Param * bcParamDataBase = boundaryCondition->GetBCParamDataBase();
+        SimpleBC *boundaryCondition = faceBoundaryCondition[iFace];
+        Data_Param *bcParamDataBase = boundaryCondition->GetBCParamDataBase();
         string geometryFileName;
         bcParamDataBase->GetData("geometryFileName", &geometryFileName, PHSTRING, 1);
 
@@ -1094,8 +1094,8 @@ void ParallelProjection::GetFaceToNodeList(ZoneGridSolver * zoneGridSolver, int 
 
 void ParallelProjection::InitCellProjectType()
 {
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
 
@@ -1224,7 +1224,7 @@ void ParallelProjection::FixCellProjectType()
     PrintToWindow("\n");
     
 
-    fixTime.ShowTimeSpanToLogfile("Fix cell project type");
+    fixTime.ShowTimeSpanToLogFile("Fix cell project type");
     WriteLogFile("End fix cell project type!");
 }
 
@@ -1240,8 +1240,8 @@ int ParallelProjection::ResetCellProjectTypeByRightCell()
 {
     int isContinueInfect = 0;
 
-    int numberOfZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
 
@@ -1329,8 +1329,8 @@ bool ParallelProjection::IfNeedProjection()
 
     bool ifNeed = false;
 
-    int nZones = PHMPI::GetNumberofLocalZones();
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         ZoneGridSolver * zoneGridSolver = zoneGridSolverContainer[ iZone ];
         ElementFaceSolver * elementFaceSolver = zoneGridSolver->GetElementFaceSolver();

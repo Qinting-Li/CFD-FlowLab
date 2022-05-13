@@ -6,7 +6,7 @@ using namespace std;
 #pragma warning (disable:913)
 namespace PHSPACE
 {
-void FieldView2Fantasy()
+void FieldView2PHengLEI()
 {
     string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
     string outGridFile  = GlobalDataBase::GetStrParaFromDB("out_gfile");

@@ -32,7 +32,7 @@ namespace PHSPACE
     {
         TimeSpan* testTime = new TimeSpan();
         ReadGrid();
-        testTime->ShowTimeSpanToLogfile("Grid Reading");
+        testTime->ShowTimeSpanToLogFile("Grid Reading");
         delete testTime;
     }
     
@@ -53,7 +53,7 @@ namespace PHSPACE
         //RDouble start = omp_get_wtime();
         //TimeSpan* testTime = new TimeSpan();
         Preprocess();
-        //testTime->ShowTimeSpanToLogfile("Process");
+        //testTime->ShowTimeSpanToLogFile("Process");
         //delete testTime;
 
         SolveSimulation();
@@ -206,7 +206,7 @@ namespace PHSPACE
         //end = omp_get_wtime();
         //diff = end - start;
         //cout <<"postsolve:"<<diff << endl;
-        //testTime->ShowTimeSpanToLogfile("Process Time");
+        //testTime->ShowTimeSpanToLogFile("Process Time");
         //delete testTime;
     }
     
@@ -224,9 +224,9 @@ namespace PHSPACE
         int isolver = 0;//only one solver
 
         RDouble globalMinDt = LARGE,minDt;
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
@@ -258,9 +258,9 @@ namespace PHSPACE
         int level = 0;
         int isolver = 0;//only one solver
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
             Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
