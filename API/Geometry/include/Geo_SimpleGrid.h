@@ -43,6 +43,9 @@ protected:
     //! If the min-max box has been calculated.
     bool has_cal_minmax;
 
+    //! The material type of grid, such as water and air.
+    int materialType;
+
 public:
     SimpleGrid();
     SimpleGrid(const SimpleGrid &rhs);

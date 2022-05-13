@@ -894,7 +894,7 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
     RDouble mach2 = refMachNumber * refMachNumber;
     RDouble **tl = invSchemePara->GetLeftTemperature();
     RDouble **tr = invSchemePara->GetRightTemperature();
-
+    int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
     using namespace IDX;
     using namespace GAS_SPACE;
 
@@ -939,7 +939,6 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
         RDouble hintRight = (gmR / (gmR - one)) * (pr / rr);
 
         RDouble peL = 0.0, peR = 0.0;
-        int nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
         if (nChemical != 0 && nIdealState == 0)
         {
             for (int i = 0; i < 3; ++ i)
