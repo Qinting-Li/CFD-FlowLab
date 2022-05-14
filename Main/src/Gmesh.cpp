@@ -546,7 +546,7 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
         {
             if (iNode % iskip == 0)
             {
-                cout << " inode = " << iNode << " nTotalNode = " << nTotalNode << "\n";
+                cout << " iNode = " << iNode << " nTotalNode = " << nTotalNode << "\n";
             }
             getline(file,line);
             line = FindNextWord(line,word,separator);

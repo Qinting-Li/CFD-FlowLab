@@ -1247,13 +1247,13 @@ void Pre_UnstructGridPartition::SetCoorPart(UnstructGrid *gridpart)
     RDouble *z_src = gridSource->GetZ();
 
     int count = 0;
-    for (int inode = 0; inode < nTNodeSrc; ++ inode)
+    for (int iNode = 0; iNode < nTNodeSrc; ++ iNode)
     {
-        if (node_mark[inode] > -1)
+        if (node_mark[iNode] > -1)
         {
-            x[count] = x_src[inode];
-            y[count] = y_src[inode];
-            z[count] = z_src[inode];
+            x[count] = x_src[iNode];
+            y[count] = y_src[iNode];
+            z[count] = z_src[iNode];
             ++ count;
         }
     }
@@ -1496,20 +1496,20 @@ void Pre_UnstructGridPartition::SetInterpointInfoPart(int iZone, UnstructGrid *g
     int *labelOfInterPoint = interpointInformation->GetLabelOfInterPoint();
 
     int count = 0;
-    for (int inode = 0; inode < i_nTNode; inode ++)
+    for (int iNode = 0; iNode < i_nTNode; iNode ++)
     {
-        int numberofnode2all = node2all[inode];
+        int numberofnode2all = node2all[iNode];
         if (pointPosition2zoneID[numberofnode2all+1] - pointPosition2zoneID[numberofnode2all] == 1) continue;
         for (int i = pointPosition2zoneID[numberofnode2all]; i < pointPosition2zoneID[numberofnode2all+1]; i ++)
         {
             if (point2ZoneID[i] != iZone)
             {
                 interPoint2ZoneID[count] = point2ZoneID[i];
-                interPoint2InterPointID[count] = node2all[inode];    //! Temporarily to stores the index of global points,it is modified to the index of interpoints later.
-                interPoint2GlobalPoint[count] = inode;
+                interPoint2InterPointID[count] = node2all[iNode];    //! Temporarily to stores the index of global points,it is modified to the index of interpoints later.
+                interPoint2GlobalPoint[count] = iNode;
                 cellNumberOfInterPoint[count] = cellNumberForNodeValue[numberofnode2all];
                 totalZonesOfInterPoint[count] = pointPosition2zoneID[numberofnode2all+1] - pointPosition2zoneID[numberofnode2all];
-                if (boundaryPointLabel_gridpart[inode] != boundaryPointLabel_gridSource[numberofnode2all])
+                if (boundaryPointLabel_gridpart[iNode] != boundaryPointLabel_gridSource[numberofnode2all])
                 {
                     labelOfInterPoint[count] = 0;
                 }
@@ -1640,9 +1640,9 @@ void Pre_UnstructGridPartition::ComputeNodeMark(int iZone, UnstructGrid *gridpar
     int *node_number_of_each_face  = gridSource->GetNodeNumberOfEachFace();
     int *face2node = gridSource->GetFace2Node();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        node_mark[inode] = NOT_IN_THIS_ZONE;
+        node_mark[iNode] = NOT_IN_THIS_ZONE;
     }
 
     //! Set all the node_mark belong to iZone to -1.
@@ -1663,11 +1663,11 @@ void Pre_UnstructGridPartition::ComputeNodeMark(int iZone, UnstructGrid *gridpar
     }
 
     int i_nTNode = 0;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        if (IsBelongtoThisZone(node_mark[inode]))
+        if (IsBelongtoThisZone(node_mark[iNode]))
         {
-            node_mark[inode] = i_nTNode ++;
+            node_mark[iNode] = i_nTNode ++;
         }
     }
 
@@ -1800,11 +1800,11 @@ int * Pre_UnstructGridPartition::GetNode2All(int iZone, UnstructGrid *gridpart)
 
     int nTotalNode = gridSource->GetNTotalNode();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        if (node_mark[inode] > -1)
+        if (node_mark[iNode] > -1)
         {
-            node2all[node_mark[inode]] = inode;
+            node2all[node_mark[iNode]] = iNode;
         }
     }
 
@@ -1866,27 +1866,27 @@ void Pre_UnstructGridPartition::ComputePoint2ZoneID()
     pointPosition2zoneID[0] = 0;
 
     int count = 0;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
         //! node2ZoneSet is used to store and filter the repeated corresponding relationship from nodes to zone.
-        for (int jcell=0; jcell < nCPN[inode]; ++ jcell)
+        for (int jcell = 0; jcell < nCPN[iNode]; ++ jcell)
         {
             if (!(n2c[count + jcell] < nTotalCell))
             {
                 continue;
             }
-                point2ZoneIDSet[inode].insert(static_cast<int>(part[n2c[count + jcell]]));
+                point2ZoneIDSet[iNode].insert(static_cast<int>(part[n2c[count + jcell]]));
         }
-        count += nCPN[inode];
+        count += nCPN[iNode];
 
         //! The size of the corresponding relationship from nodes to zone can not be determined,we can not creat static array to store.
         //! So it can only be stored with vector.
-        for (set<int>::iterator iter = point2ZoneIDSet[inode].begin(); iter != point2ZoneIDSet[inode].end(); ++ iter)
+        for (set<int>::iterator iter = point2ZoneIDSet[iNode].begin(); iter != point2ZoneIDSet[iNode].end(); ++ iter)
         {
-            pointsForPartition.push_back(inode);
+            pointsForPartition.push_back(iNode);
             point2ZoneID_Vector.push_back((*iter));
         }
-        pointPosition2zoneID[inode+1] = pointPosition2zoneID[inode] + static_cast<int>(point2ZoneIDSet[inode].size());
+        pointPosition2zoneID[iNode+1] = pointPosition2zoneID[iNode] + static_cast<int>(point2ZoneIDSet[iNode].size());
     }
 
     int pointsSize = static_cast<int>(pointsForPartition.size());

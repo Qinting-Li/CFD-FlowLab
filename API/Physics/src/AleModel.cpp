@@ -816,11 +816,11 @@ void AleModel::GridVerticeVelocityGeneral(Grid *grid, RDouble *xt, RDouble *yt, 
     RDouble dtau;
     GlobalDataBase::GetData("dtau", &dtau, PHDOUBLE, 1);
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        xt[inode] = (x[inode] - xold[inode]) / dtau;
-        yt[inode] = (y[inode] - yold[inode]) / dtau;
-        zt[inode] = (z[inode] - zold[inode]) / dtau;
+        xt[iNode] = (x[iNode] - xold[iNode]) / dtau;
+        yt[iNode] = (y[iNode] - yold[iNode]) / dtau;
+        zt[iNode] = (z[iNode] - zold[iNode]) / dtau;
     }
 }
 
@@ -848,11 +848,11 @@ void AleModel::GridVerticeVelocityRigid(Grid *grid, RDouble *xt, RDouble *yt, RD
     RDouble *vel   = CreateVector();
 
     //! Calculate the grid velocity with the formula dOM =dOP+Omega*PM.
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        RDouble dx = x[inode] - xref_old;
-        RDouble dy = y[inode] - yref_old;
-        RDouble dz = z[inode] - zref_old;
+        RDouble dx = x[iNode] - xref_old;
+        RDouble dy = y[iNode] - yref_old;
+        RDouble dz = z[iNode] - zref_old;
 
         dr[0] = dx;
         dr[1] = dy;
@@ -860,12 +860,12 @@ void AleModel::GridVerticeVelocityRigid(Grid *grid, RDouble *xt, RDouble *yt, RD
 
         CrossMultiply(omega, dr, vel);
 
-        //xt[inode] = trans_ref[1][0] + vel[0];
-        //yt[inode] = trans_ref[1][1] + vel[1];
-        //zt[inode] = trans_ref[1][2] + vel[2];
-        xt[inode] = zero;
-        yt[inode] = zero;
-        zt[inode] = zero;
+        //xt[iNode] = trans_ref[1][0] + vel[0];
+        //yt[iNode] = trans_ref[1][1] + vel[1];
+        //zt[iNode] = trans_ref[1][2] + vel[2];
+        xt[iNode] = zero;
+        yt[iNode] = zero;
+        zt[iNode] = zero;
     }
 
     DestroyVector(dr  );

@@ -6864,40 +6864,40 @@ void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool 
 
         int nsurf = bcregion->GetFaceDirection() + 1;
 
-        int inode, jnode, knode;
+        int iNode, jNode, kNode;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    bcregion->GetBoundaryFaceIndex(i, j, k, inode, jnode, knode);
+                    bcregion->GetBoundaryFaceIndex(i, j, k, iNode, jNode, kNode);
 
                     int il, jl, kl;
-                    il = inode + il1;
-                    jl = jnode + jl1;
-                    kl = knode + kl1;
+                    il = iNode + il1;
+                    jl = jNode + jl1;
+                    kl = kNode + kl1;
 
                     if (nsurf == 1)
                     {
-                        qn(inode, jnode, knode, m) = q(i, j, k, n);
-                        qn(inode, jl   , knode, m) = q(i, j, k, n);
-                        qn(inode, jl   , kl   , m) = q(i, j, k, n);
-                        qn(inode, jnode, kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kNode, m) = q(i, j, k, n);
+                        qn(iNode, jl   , kNode, m) = q(i, j, k, n);
+                        qn(iNode, jl   , kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kl   , m) = q(i, j, k, n);
                     }
                     else if (nsurf == 2)
                     {
-                        qn(inode, jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jnode, kl   , m) = q(i, j, k, n);
-                        qn(inode, jnode, kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jNode, kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kl   , m) = q(i, j, k, n);
                     }
                     else if (nsurf == 3)
                     {
-                        qn(inode, jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jl   , knode, m) = q(i, j, k, n);
-                        qn(inode, jl   , knode, m) = q(i, j, k, n);
+                        qn(iNode, jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jl   , kNode, m) = q(i, j, k, n);
+                        qn(iNode, jl   , kNode, m) = q(i, j, k, n);
                     }
                 }
             }

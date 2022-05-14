@@ -610,9 +610,9 @@ void CombinGrid::MergeBCType()
     nsum = 0;
     for (int iface = 0; iface < nTFace_all; ++ iface)
     {
-        for (int inode = 0; inode < node_number_of_each_face[iface]; ++ inode)
+        for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
         {
-            face2node[nsum] = vface2node[iface][inode];
+            face2node[nsum] = vface2node[iface][iNode];
             ++ nsum;
         }
     }
@@ -710,11 +710,11 @@ void CombinGrid::ResetCoordinate()
     grid_all->SetY(y_all);
     grid_all->SetZ(z_all);
 
-    for (int inode = 0; inode < nTNode_all; ++ inode)
+    for (int iNode = 0; iNode < nTNode_all; ++ iNode)
     {
-        x_all[inode] = Globalx[inode];
-        y_all[inode] = Globaly[inode];
-        z_all[inode] = Globalz[inode];
+        x_all[iNode] = Globalx[iNode];
+        y_all[iNode] = Globaly[iNode];
+        z_all[iNode] = Globalz[iNode];
     }
 
     grid_all->ComputeMinMaxBox();
@@ -733,9 +733,9 @@ void CombinGrid::ResetNodeNumberOfEachFace()
 
     int *node_number_of_all_face = GetNodeNumberOfAllFace();
 
-    for (int inode = 0; inode < nTFace_all; ++ inode)
+    for (int iNode = 0; iNode < nTFace_all; ++ iNode)
     {
-        node_number_of_each_face[inode] = node_number_of_all_face[inode];
+        node_number_of_each_face[iNode] = node_number_of_all_face[iNode];
     }
 }
 
@@ -814,7 +814,7 @@ void CombinGrid::MergeCell2Node()
             single_cell.resize(0);
             single_cell.reserve(gnode_number_of_each_cell[iCell]);
 
-            for (int inode = 0; inode < gnode_number_of_each_cell[iCell]; ++ inode)
+            for (int iNode = 0; iNode < gnode_number_of_each_cell[iCell]; ++ iNode)
             {
                 int node_index = gcell2node[count];
                 ++ count;
@@ -831,9 +831,9 @@ void CombinGrid::MergeCell2Node()
     for (cgsize_t iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         node_number_of_each_cell[iCell] = node_number_of_each_cell_all[iCell];
-        for (int inode =0; inode < node_number_of_each_cell[iCell]; ++ inode)
+        for (int iNode =0; iNode < node_number_of_each_cell[iCell]; ++ iNode)
         {
-            cell2node[count] = static_cast<int>(cell2node_all[iCell][inode]);
+            cell2node[count] = static_cast<int>(cell2node_all[iCell][iNode]);
             ++ count;
         }
     }

@@ -1874,18 +1874,18 @@ void PHCutPlane::SortData(RDouble *value)
     using namespace PHSPACE;
     vector<DataStruct_Sort< RDouble> > value_list;
     DataStruct_Sort<RDouble> var;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        var.value = value[inode];
-        var.index = inode;
+        var.value = value[iNode];
+        var.index = iNode;
         value_list.push_back(var);
     }
     sort(value_list.begin(), value_list.end());
 
     vector<int> index_list;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        index_list.push_back(value_list[inode].index);
+        index_list.push_back(value_list[iNode].index);
     }
 
     ReorderList(x, index_list);
@@ -2147,18 +2147,18 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
     cutpl->y = new RDouble [cutpl->nTotalNode];
     cutpl->z = new RDouble [cutpl->nTotalNode];
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
-        cutpl->x[inode] = x_list[inode];
-        cutpl->y[inode] = y_list[inode];
-        cutpl->z[inode] = z_list[inode];
+        cutpl->x[iNode] = x_list[iNode];
+        cutpl->y[iNode] = y_list[iNode];
+        cutpl->z[iNode] = z_list[iNode];
     }
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
         for (int m = 0; m < nvar; ++ m)
         {
-            cutpl->data[m][inode] = var_list[inode][m];
+            cutpl->data[m][iNode] = var_list[iNode][m];
         }
     }
 }
@@ -2259,18 +2259,18 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
     cutpl->y = new RDouble [cutpl->nTotalNode];
     cutpl->z = new RDouble [cutpl->nTotalNode];
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
-        cutpl->x[inode] = x_list[inode];
-        cutpl->y[inode] = y_list[inode];
-        cutpl->z[inode] = z_list[inode];
+        cutpl->x[iNode] = x_list[iNode];
+        cutpl->y[iNode] = y_list[iNode];
+        cutpl->z[iNode] = z_list[iNode];
     }
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
         for (int m = 0; m < nvar; ++ m)
         {
-            cutpl->data[m][inode] = var_list[inode][m];
+            cutpl->data[m][iNode] = var_list[iNode][m];
         }
     }
 

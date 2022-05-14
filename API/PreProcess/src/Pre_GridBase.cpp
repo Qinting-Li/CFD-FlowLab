@@ -92,17 +92,17 @@ void CGNSRawCoor::SetData(int icoor, DataType_t type, RDouble *x)
     if (type == RealSingle)
     {
         RDouble *data = static_cast<RDouble *>(coor[icoor]);
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            x[inode] = data[inode];
+            x[iNode] = data[iNode];
         }
     }
     else
     {
         RDouble *data = static_cast<RDouble *>(coor[icoor]);
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            x[inode] = data[inode];
+            x[iNode] = data[iNode];
         }
     }
 }
@@ -1919,16 +1919,16 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     RDouble *yy = rawgrid->GetY();
     RDouble *zz = rawgrid->GetZ();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
 
-    delete []xx;
-    delete []yy;
-    delete []zz;
+    delete [] xx;
+    delete [] yy;
+    delete [] zz;
 
     cout << "  Boundary condition setting ......\n";
     //! Set the boundary conditions.
@@ -2055,9 +2055,9 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     count = 0;
     for (cgsize_t iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        for (int inode =0; inode < node_number_of_each_cell[iCell]; ++ inode)
+        for (int iNode =0; iNode < node_number_of_each_cell[iCell]; ++ iNode)
         {
-            cell2node[count] = static_cast<int>((*gcell2node)[iCell][inode]);
+            cell2node[count] = static_cast<int>((*gcell2node)[iCell][iNode]);
             ++ count;
         }
     }

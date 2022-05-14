@@ -425,29 +425,29 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadFieldViewCoor(fstream &file, int nver
     cout << " Grid coordinates reading ... \n";
 
     int iskip = MAX(nTotalNode / 10, 1);
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        if (inode > 0 && inode % iskip == 0)
+        if (iNode > 0 && iNode % iskip == 0)
         {
-            cout << "     " << (int)((inode * 1.0) / nTotalNode * 100 + 1) << "% nodes read ..." << endl;
+            cout << "     " << (int)((iNode * 1.0) / nTotalNode * 100 + 1) << "% nodes read ..." << endl;
         }
         getline(file, line);
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(x[inode], word, std::dec);
+        from_string< RDouble >(x[iNode], word, std::dec);
 
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(y[inode], word, std::dec);
+        from_string< RDouble >(y[iNode], word, std::dec);
 
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(z[inode], word, std::dec);
+        from_string< RDouble >(z[iNode], word, std::dec);
 
-        xmin = MIN(xmin, x[inode]);
-        ymin = MIN(ymin, y[inode]);
-        zmin = MIN(zmin, z[inode]);
+        xmin = MIN(xmin, x[iNode]);
+        ymin = MIN(ymin, y[iNode]);
+        zmin = MIN(zmin, z[iNode]);
 
-        xmax = MAX(xmax, x[inode]);
-        ymax = MAX(ymax, y[inode]);
-        zmax = MAX(zmax, z[inode]);
+        xmax = MAX(xmax, x[iNode]);
+        ymax = MAX(ymax, y[iNode]);
+        zmax = MAX(zmax, z[iNode]);
     }
 
     cout << setiosflags(ios::right);
@@ -501,11 +501,11 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
 
         cell_type[iface] = node2Type[nNode];
 
-        for (int inode = 0; inode < nNode; ++ inode)
+        for (int iNode = 0; iNode < nNode; ++ iNode)
         {
             line = FindNextWord(line, word, separator);
             from_string< cgsize_t >(nodeIndex, word, std::dec);
-            ref_conn_list[nodepos+inode] = nodeIndex;
+            ref_conn_list[nodepos+iNode] = nodeIndex;
         }
         nodepos += max_face_node;
     }

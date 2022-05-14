@@ -238,11 +238,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     y = new RDouble[ nTotalNode ];
     z = new RDouble[ nTotalNode ];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
     coarseGrid->SetX(x);
     coarseGrid->SetY(y);
@@ -429,11 +429,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     y = new RDouble[ nTotalNode ];
     z = new RDouble[ nTotalNode ];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
     coarseGrid->SetX(x);
     coarseGrid->SetY(y);

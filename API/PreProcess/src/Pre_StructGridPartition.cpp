@@ -620,11 +620,11 @@ void Pre_StrGridPartition::ExtractOriginalGridInformation()
         RDouble *yy = originalBlock->GetY();
         RDouble *zz = originalBlock->GetZ();
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            xx[inode] = x[inode];
-            yy[inode] = y[inode];
-            zz[inode] = z[inode];
+            xx[iNode] = x[iNode];
+            yy[iNode] = y[iNode];
+            zz[iNode] = z[iNode];
         }
     }
 

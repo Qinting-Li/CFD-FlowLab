@@ -8385,17 +8385,17 @@ void NSSolverUnstruct::Turbulence_Flat_Plate_Output_NASA(Grid *gridIn)
     cutpl->x = new RDouble [ cutpl->nTotalNode ];
     cutpl->y = new RDouble [ cutpl->nTotalNode ];
     cutpl->z = new RDouble [ cutpl->nTotalNode ];
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
-        cutpl->x[inode] = x_list[inode];
-        cutpl->y[inode] = 0;
-        cutpl->z[inode] = 0;
+        cutpl->x[iNode] = x_list[iNode];
+        cutpl->y[iNode] = 0;
+        cutpl->z[iNode] = 0;
     }
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
         for (int m = 0; m < 1; ++ m)
         {
-            cutpl->data[m][inode] = var_list[inode][m];
+            cutpl->data[m][iNode] = var_list[iNode][m];
         }
     }
 

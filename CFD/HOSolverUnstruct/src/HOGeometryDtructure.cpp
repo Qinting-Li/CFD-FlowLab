@@ -692,25 +692,25 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderNode(UnstructGrid * grid)
     int * ppCellsOfNodes = grid->GetCell2Node();
     int * NodeNumberOfEachCell = grid->GetNodeNumberOfEachCell();
     */
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        highOrderNodes[inode].ID = inode;
+        highOrderNodes[iNode].ID = iNode;
 
-        highOrderNodes[inode].coor[0] = grid->GetX()[inode];
-        highOrderNodes[inode].coor[1] = grid->GetY()[inode];
-        highOrderNodes[inode].coor[2] = grid->GetZ()[inode];
+        highOrderNodes[iNode].coor[0] = grid->GetX()[iNode];
+        highOrderNodes[iNode].coor[1] = grid->GetY()[iNode];
+        highOrderNodes[iNode].coor[2] = grid->GetZ()[iNode];
 
-        highOrderNodes[inode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[inode]);
+        highOrderNodes[iNode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[iNode]);
 
-        for (int ilocalcell = 0; ilocalcell < highOrderNodes[inode].cellIDsOfPoint.size(); ++ ilocalcell)
+        for (int ilocalcell = 0; ilocalcell < highOrderNodes[iNode].cellIDsOfPoint.size(); ++ ilocalcell)
         {
-            highOrderNodes[inode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[inode][ilocalcell];
+            highOrderNodes[iNode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[iNode][ilocalcell];
         }
-       // highOrderNodes[inode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[inode]);
+       // highOrderNodes[iNode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[iNode]);
        //
-       // for (int ilocalcell = 0; ilocalcell < highOrderNodes[inode].cellIDsOfPoint.size(); ++ ilocalcell)
+       // for (int ilocalcell = 0; ilocalcell < highOrderNodes[iNode].cellIDsOfPoint.size(); ++ ilocalcell)
        // {
-       //     highOrderNodes[inode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[inode][ilocalcell];
+       //     highOrderNodes[iNode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[iNode][ilocalcell];
        // }
     }
 }

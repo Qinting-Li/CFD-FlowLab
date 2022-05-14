@@ -176,15 +176,15 @@ void DynamicGrid::StationalData2DynamicData()
 
     DYNode *nodeList = new DYNode[nTotalNode];
     this->nodeArray = nodeList;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        nodeList[inode].x = x[inode];
-        nodeList[inode].y = y[inode];
-        nodeList[inode].z = z[inode];
+        nodeList[iNode].x = x[iNode];
+        nodeList[iNode].y = y[iNode];
+        nodeList[iNode].z = z[iNode];
 
-        nodeList[inode].xnew = x[inode];
-        nodeList[inode].ynew = y[inode];
-        nodeList[inode].znew = z[inode];
+        nodeList[iNode].xnew = x[iNode];
+        nodeList[iNode].ynew = y[iNode];
+        nodeList[iNode].znew = z[iNode];
     }
 
     //! Face info.

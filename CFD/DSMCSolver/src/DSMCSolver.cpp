@@ -972,11 +972,11 @@ void DSMC::InitData()
                                 moleculeSpecies[nMolecule] = isp;
                                 moleculeLocation[nMolecule] = iCell;
 
-                                for(int inode = 0; inode < 4; ++inode)
+                                for (int iNode = 0; iNode < 4; ++ iNode)
                                 {
-                                    xcell[inode] = x[cell2node[iCell * 4 + inode]];
-                                    ycell[inode] = y[cell2node[iCell * 4 + inode]];
-                                    zcell[inode] = z[cell2node[iCell * 4 + inode]];
+                                    xcell[iNode] = x[cell2node[iCell * 4 + iNode]];
+                                    ycell[iNode] = y[cell2node[iCell * 4 + iNode]];
+                                    zcell[iNode] = z[cell2node[iCell * 4 + iNode]];
                                 }
 
                                 RDouble ss1 = myrand();

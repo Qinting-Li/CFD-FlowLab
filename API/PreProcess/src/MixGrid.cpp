@@ -565,9 +565,9 @@ void Fantasy2Ustar2D()
     file << "grid 1\n";
     file << nTotalNode << " " << nTotalFace << " " << nTotalCell << " " << nBoundFace << "\n";
  
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        file << x[inode] << " " << y[inode] << "\n";
+        file << x[iNode] << " " << y[iNode] << "\n";
     }
 
     int *nodePosi = new int [nTotalFace+1];
@@ -745,14 +745,14 @@ void Fantasy2Ustar3D()
 
         file << nTotalNode << "  " << nTotalFace << "  " << nTotalCell << endl;
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            file << x[inode] << "  " << y[inode] << "  " << z[inode] << endl;
+            file << x[iNode] << "  " << y[iNode] << "  " << z[iNode] << endl;
         }
 
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            file << node_number_of_each_face[iface] << endl;
+            file << node_number_of_each_face[iFace] << endl;
         }
 
         int count = 0;
@@ -998,23 +998,23 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
     grid->SetY(y);
     grid->SetZ(z);
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
         getline(file, line);
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(x[inode], word, std::dec);
+        from_string< RDouble >(x[iNode], word, std::dec);
 
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(y[inode], word, std::dec);
+        from_string< RDouble >(y[iNode], word, std::dec);
 
         if (GetDim() == THREE_D)
         {
             line = FindNextWord(line, word, separator);
-            from_string< RDouble >(z[inode], word, std::dec);
+            from_string< RDouble >(z[iNode], word, std::dec);
         }
         else
         {
-            z[inode] = zero;
+            z[iNode] = zero;
         }
     }
 

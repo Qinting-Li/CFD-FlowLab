@@ -435,9 +435,9 @@ void CGNSBCRegion::ProcessBCFace(set<cgsize_t> &bc_vertex)
         for (cgsize_t ibc = bc_connection_list[0]; ibc <= bc_connection_list[1]; ++ ibc)
         {
             zone->GetElementIndex(static_cast<int>(ibc), face_node);
-            for (std::size_t inode = 0; inode < face_node.size(); ++ inode)
+            for (std::size_t iNode = 0; iNode < face_node.size(); ++ iNode)
             {
-                bc_vertex.insert(face_node[inode]);
+                bc_vertex.insert(face_node[iNode]);
             }
         }
     }
@@ -446,9 +446,9 @@ void CGNSBCRegion::ProcessBCFace(set<cgsize_t> &bc_vertex)
         for (cgsize_t ibc = 0; ibc < bc_element_number; ++ ibc)
         {
             zone->GetElementIndex(static_cast<int>(bc_connection_list[ibc]), face_node);
-            for (std::size_t inode = 0; inode < face_node.size(); ++ inode)
+            for (std::size_t iNode = 0; iNode < face_node.size(); ++ iNode)
             {
-                bc_vertex.insert(face_node[inode]);
+                bc_vertex.insert(face_node[iNode]);
             }
         }
     }
@@ -786,9 +786,9 @@ void CGNSZone::BuildPoints(PointOperation *point_operation)
     RDouble *y = grid->GetY();
     RDouble *z = grid->GetZ();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        PointOperation::point_type point(x[inode],y[inode],z[inode],inode);
+        PointOperation::point_type point(x[iNode], y[iNode], z[iNode], iNode);
         point_operation->AddPoint(point);
     }
 }
@@ -1311,9 +1311,9 @@ void ElementFaceProxy::AddChildBoundaryFace(vector<int> &face_node, int face_typ
         int node_number = GetElementNodeNumbers(subcell_type);
 
         ptlist.resize(0);
-        for (int inode = 0; inode < node_number; ++ inode)
+        for (int iNode = 0; iNode < node_number; ++ iNode)
         {
-            ptlist.push_back(face_node_fixed[ child_index[inode] ]);
+            ptlist.push_back(face_node_fixed[child_index[iNode]]);
         }
 
         boundary_face_bctype->push_back(bctype);
@@ -1729,11 +1729,11 @@ void SuperElement::CreateFantasyUnstructGrid(Grid *grid_in)
     grid->SetY(y);
     grid->SetZ(z);
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = point_operation->GetPoint(inode).X();
-        y[inode] = point_operation->GetPoint(inode).Y();
-        z[inode] = point_operation->GetPoint(inode).Z();
+        x[iNode] = point_operation->GetPoint(iNode).X();
+        y[iNode] = point_operation->GetPoint(iNode).Y();
+        z[iNode] = point_operation->GetPoint(iNode).Z();
     }
 
     element_face_proxy->CreateUnstructGrid(grid);
@@ -2024,9 +2024,9 @@ void SuperElement::SplitCompositeFace(vector<int> &facenodes, int composite_face
     vector<int> simple_face_nodes;
     int simple_face_type        = GetSimpleElementType(composite_face_type);
     int simple_face_node_number = GetElementNodeNumbers(simple_face_type);
-    for (int inode = 0; inode < simple_face_node_number; ++ inode)
+    for (int iNode = 0; iNode < simple_face_node_number; ++ iNode)
     {
-        simple_face_nodes.push_back(facenodes[inode]);
+        simple_face_nodes.push_back(facenodes[iNode]);
     }
 
     int parent_face_id = element_face_proxy->FindFace(simple_face_nodes);
@@ -2079,9 +2079,9 @@ void SuperElement::SplitElementFace(int ielement)
         vector<int> facenodeslocal = basic_element->GetElementPhysicsFace(icompositeface);
         vector<int> facenodes;
         vector<int> & parent_index = GetElementIndex(ielement);
-        for (std::size_t inode = 0; inode < facenodeslocal.size(); ++ inode)
+        for (std::size_t iNode = 0; iNode < facenodeslocal.size(); ++ iNode)
         {
-            facenodes.push_back(parent_index[ facenodeslocal[inode] ]);
+            facenodes.push_back(parent_index[facenodeslocal[iNode]]);
         }
 
         //对单个物理面进行子面的分裂

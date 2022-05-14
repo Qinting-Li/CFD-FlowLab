@@ -1198,7 +1198,7 @@ void UnstructGrid::SpecifyBC()
 //! Get laplacian weitht of nodes(cxh, 2012.12.12).
 void UnstructGrid::CalcLaplacianWeitht()
 {
-    int inode,j,count,iCell;
+    int iNode,j,count,iCell;
     int nTotalNode = this->GetNTotalNode();
     RDouble xn,yn,zn;
     RDouble xc,yc,zc;
@@ -1229,13 +1229,13 @@ void UnstructGrid::CalcLaplacianWeitht()
 
     count = 0;
 
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
         Rx = Ry = Rz = Ixx = Iyy = Izz = Ixy = Ixz = Iyz = 0.0;
-        xn = xp[ inode ];
-        yn = yp[ inode ];
-        zn = zp[ inode ];
-        for (j = 0; j < nCPN[ inode ]; ++ j)
+        xn = xp[ iNode ];
+        yn = yp[ iNode ];
+        zn = zp[ iNode ];
+        for (j = 0; j < nCPN[ iNode ]; ++ j)
         {
             xc = xcc[ n2c[ count ] ];
             yc = ycc[ n2c[ count ] ];
@@ -1259,11 +1259,11 @@ void UnstructGrid::CalcLaplacianWeitht()
         {
             D = Ixx *  Iyy - Ixy * Ixy;
 
-            lamdax[ inode ] = (Ry * Ixy - Rx * Iyy) / D;
+            lamdax[ iNode ] = (Ry * Ixy - Rx * Iyy) / D;
 
-            lamday[ inode ] = (Rx * Ixy - Ry * Ixx) / D;
+            lamday[ iNode ] = (Rx * Ixy - Ry * Ixx) / D;
 
-            lamdaz[ inode ] = 0.0;
+            lamdaz[ iNode ] = 0.0;
         } 
         else 
         {
@@ -1271,38 +1271,38 @@ void UnstructGrid::CalcLaplacianWeitht()
                 Ixy * (Ixy * Izz - Ixz * Iyz) +
                 Ixz * (Ixy * Iyz - Iyy * Ixz);
 
-            lamdax[ inode ] = (-Rx * (Iyy * Izz - Iyz * Iyz)
+            lamdax[ iNode ] = (-Rx * (Iyy * Izz - Iyz * Iyz)
                                 +Ry * (Ixy * Izz - Ixz * Iyz)
                                 -Rz * (Ixy * Iyz - Iyy * Ixz)) / D;
 
-            lamday[ inode ] = ( Rx * (Ixy * Izz - Ixz * Iyz)
+            lamday[ iNode ] = ( Rx * (Ixy * Izz - Ixz * Iyz)
                                 -Ry * (Ixx * Izz - Ixz * Ixz)
                                 +Rz * (Ixx * Iyz - Ixy * Ixz)) / D;
 
-            lamdaz[ inode ] = (-Rx * (Ixy * Iyz - Iyy * Ixz)
+            lamdaz[ iNode ] = (-Rx * (Ixy * Iyz - Iyy * Ixz)
                                 +Ry * (Ixx * Iyz - Ixy * Ixz)
                                 -Rz * (Ixx * Iyy - Ixy * Ixy)) / D;
         }
     }
         
     if (knode == NULL) knode = new int [ nTotalNode ];
-    for (inode = 0; inode < nTotalNode; ++ inode) knode[ inode ] = 0;
+    for (iNode = 0; iNode < nTotalNode; ++ iNode) knode[ iNode ] = 0;
 
     count=0;
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        for (j = 0; j < nCPN[ inode ]; ++ j)
+        for (j = 0; j < nCPN[ iNode ]; ++ j)
         {
             iCell = n2c[ count++ ];
-            weight = 1 + lamdax[ inode ] * (xcc[ iCell ] - xp[ inode ]) + lamday[ inode ] * (ycc[ iCell ] - yp[ inode ]) + lamdaz[ inode ] * (zcc[ iCell ] - zp[ inode ]);
-            if (weight <= 0.0) knode[ inode ] = 1;
+            weight = 1 + lamdax[ iNode ] * (xcc[ iCell ] - xp[ iNode ]) + lamday[ iNode ] * (ycc[ iCell ] - yp[ iNode ]) + lamdaz[ iNode ] * (zcc[ iCell ] - zp[ iNode ]);
+            if (weight <= 0.0) knode[ iNode ] = 1;
         }
     }
 
-    count=0;
-    for (inode = 0; inode < nTotalNode; ++ inode) 
+    count = 0;
+    for (iNode = 0; iNode < nTotalNode; ++ iNode) 
     {
-        if (knode[ inode ] == 1) count ++;
+        if (knode[ iNode ] == 1) count ++;
     }
     printf(" Number of negative weight cells : %d  %f\n", count, static_cast<RDouble>(count)/nTotalNode);
 }
@@ -8219,7 +8219,7 @@ void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     int nTotalNode = grid->GetNTotalNode();
     int *nCPN = grid->GetCellNumberOfEachNode();
     int *n2c  = grid->GetNode2Cell();
-    int inode, j, iCell, count;
+    int iNode, j, iCell, count;
     int *knode;
 
     RDouble *xcc = grid->GetCellCenterX();
@@ -8245,33 +8245,33 @@ void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     knode = grid->Getknode();
 
     n_count = new RDouble [ nTotalNode ];
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        q_n[ inode ]     = 0.0;
-        n_count[ inode ] = 0.0;
+        q_n[ iNode ]     = 0.0;
+        n_count[ iNode ] = 0.0;
     }
     count = 0;
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        for (j = 0; j < nCPN[ inode ]; ++j)
+        for (j = 0; j < nCPN[ iNode ]; ++j)
         {
             iCell = n2c[ count++ ];
-            weight1 = 1 + lamdax[ inode ] * (xcc[ iCell ] - xn[ inode ])
-                        + lamday[ inode ] * (ycc[ iCell ] - yn[ inode ])
-                        + lamdaz[ inode ] * (zcc[ iCell ] - zn[ inode ]);
-            weight2 = 1 / sqrt((xcc[ iCell ] - xn[ inode ]) * (xcc[ iCell ] - xn[ inode ])
-                              + (ycc[ iCell ] - yn[ inode ]) * (ycc[ iCell ] - yn[ inode ])
-                              + (zcc[ iCell ] - zn[ inode ]) * (zcc[ iCell ] - zn[ inode ]));
-            weight  = weight1 * (1 - knode[ inode ]) + weight2 * knode[ inode ];
+            weight1 = 1 + lamdax[ iNode ] * (xcc[ iCell ] - xn[ iNode ])
+                        + lamday[ iNode ] * (ycc[ iCell ] - yn[ iNode ])
+                        + lamdaz[ iNode ] * (zcc[ iCell ] - zn[ iNode ]);
+            weight2 = 1 / sqrt((xcc[ iCell ] - xn[ iNode ]) * (xcc[ iCell ] - xn[ iNode ])
+                              + (ycc[ iCell ] - yn[ iNode ]) * (ycc[ iCell ] - yn[ iNode ])
+                              + (zcc[ iCell ] - zn[ iNode ]) * (zcc[ iCell ] - zn[ iNode ]));
+            weight  = weight1 * (1 - knode[ iNode ]) + weight2 * knode[ iNode ];
 
-            q_n[ inode ] += weight * q[ iCell ];
-            n_count[ inode ] += weight;
+            q_n[ iNode ] += weight * q[ iCell ];
+            n_count[ iNode ] += weight;
         }
     }
 
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        q_n[inode] /= n_count[inode] + TINY;
+        q_n[iNode] /= n_count[iNode] + TINY;
     }
 
     delete [] n_count;
@@ -8303,12 +8303,12 @@ void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEq
 
     RDouble *n_count = new RDouble [nTotalNode];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)    
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)    
     {
-        n_count[inode] = 0.0;
+        n_count[iNode] = 0.0;
         for (int m = 0; m < nEquation; ++ m)
         {
-            q_n    [m][inode] = 0.0;
+            q_n[m][iNode] = 0.0;
         }
     }
 
@@ -9206,9 +9206,9 @@ void GetFace2NodeList(UnstructGrid *grid, int bcType, vector<int> &linkmap, vect
                 }
 
                 //! Write node.
-                for (int inode = 0; inode < 2; ++ inode)
+                for (int iNode = 0; iNode < 2; ++ iNode)
                 {
-                    int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
+                    int index = (iNode + nodesWrite) % node_number_of_each_face[iFace];
                     int nodeIndex = face2node[nodepos + index];
 
                     fysort.value = nodeIndex;
@@ -9334,9 +9334,9 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
                 }
 
                 //! Write node.
-                for (int inode = 0; inode < 2; ++ inode)
+                for (int iNode = 0; iNode < 2; ++ iNode)
                 {
-                    int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
+                    int index = (iNode + nodesWrite) % node_number_of_each_face[iFace];
                     int nodeIndex = face2node[nodepos + index];
 
                     fysort.value = nodeIndex;
