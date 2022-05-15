@@ -483,7 +483,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     cgsize_t *ref_conn_list = new cgsize_t[nBoundFace * max_face_node];
 
     int nodepos = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         getline(file, line);
 
@@ -491,7 +491,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
         line = FindNextWord(line, word, separator);
         from_string< int >(bctype_index, word, std::dec);
 
-        cell_bctype[iface] = bctype_list[bctype_index-1];
+        cell_bctype[iFace] = bctype_list[bctype_index-1];
 
         //! The nodes number of each boundary face.
         int nNode;
@@ -499,7 +499,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
         line = FindNextWord(line, word, separator);
         from_string< int >(nNode, word, std::dec);
 
-        cell_type[iface] = node2Type[nNode];
+        cell_type[iFace] = node2Type[nNode];
 
         for (int iNode = 0; iNode < nNode; ++ iNode)
         {
@@ -512,9 +512,9 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
 
     set<int> bctype_temp;
     vector<int> bctype_set;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int type = cell_bctype[iface];
+        int type = cell_bctype[iFace];
         set<int> :: const_iterator iter;
         iter = bctype_temp.find(type);
         if (iter == bctype_temp.end())
@@ -539,9 +539,9 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
     {
         int icount = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_bctype[iface] == bc_type[ibcregion])
+            if (cell_bctype[iFace] == bc_type[ibcregion])
             {
                 icount ++;
             }
@@ -553,11 +553,11 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
     {
         int icount = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_bctype[iface] == bc_type[ibcregion])
+            if (cell_bctype[iFace] == bc_type[ibcregion])
             {
-                bc_conn_list[ibcregion][icount ++] = iface;
+                bc_conn_list[ibcregion][icount ++] = iFace;
             }
         }
     }
@@ -565,13 +565,13 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     nTri    = 0;
     nQuad   = 0;
     nOthers = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (cell_type[iface] == TRI_3)
+        if (cell_type[iFace] == TRI_3)
         {
             nTri ++;
         }
-        else if (cell_type[iface] == QUAD_4)
+        else if (cell_type[iFace] == QUAD_4)
         {
             nQuad ++;
         }
@@ -648,11 +648,11 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     {
         nodepos = 0;
         int bc_cell_pos = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_type[iface] == elem_type[m])
+            if (cell_type[iFace] == elem_type[m])
             {
-                ptnum = elem_pt[ elem_type[m] ];
+                ptnum = elem_pt[elem_type[m]];
                 for (int j = 0; j < ptnum; ++ j)
                 {
                     conn_list[m][bc_cell_pos+j] = ref_conn_list[nodepos+j];
@@ -671,12 +671,12 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     for (int m = 0; m < nBC_Sections; ++ m)
     {
         int icount = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_type[iface] == elem_type[m])
+            if (cell_type[iFace] == elem_type[m])
             {
-                sec_bc[iface] = m;
-                sec_pos[iface] = icount;
+                sec_bc[iFace] = m;
+                sec_pos[iFace] = icount;
                 icount ++;
             }
         }

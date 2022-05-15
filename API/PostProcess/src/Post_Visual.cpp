@@ -1961,12 +1961,12 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
     int pcount  = 0;
     int index;
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[nodepos + j];
             coor_min = MIN(xyz[index], coor_min);
@@ -1975,17 +1975,17 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
 
         if (cut < coor_min - eps || cut > coor_max + eps)
         {
-            nodepos += node_number_of_each_face[iface];
+            nodepos += node_number_of_each_face[iFace];
             continue;
         }
 
         RDouble xl, yl, zl, xr, yr, zr, xm, ym, zm;
 
         int p1, p2;
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             p1 = face2node[nodepos + j];
-            p2 = face2node[nodepos + (j + 1) % node_number_of_each_face[iface]];
+            p2 = face2node[nodepos + (j + 1) % node_number_of_each_face[iFace]];
 
             for (int m = 0; m < nvar; ++ m)
             {
@@ -2132,7 +2132,7 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
             }
         }
 
-        nodepos += node_number_of_each_face[iface];
+        nodepos += node_number_of_each_face[iFace];
     }
 
     cutpl->neqn = nvar;
@@ -2203,15 +2203,15 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
     }
 
     int nodepos = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int cl = left_cell_of_face[iface];
-        int cr = right_cell_of_face[iface];
+        int cl = left_cell_of_face[iFace];
+        int cr = right_cell_of_face[iFace];
 
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[nodepos ++];
             coor_min = MIN(xyz[index], coor_min);
@@ -2224,7 +2224,7 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
         }
 
         cut_cell[cl] = true;
-        if(iface >= nBoundFace) cut_cell[cr] = true;
+        if (iFace >= nBoundFace) cut_cell[cr] = true;
     }
 
     vector<vector<RDouble> > var_list;

@@ -290,11 +290,11 @@ void MatchInterface(Grid *grid, LinkStruct *link)
         for (std::size_t m = 0; m < zoneid[ipos].size(); ++ m)
         {
             int iZone = zoneid[ipos][m];
-            int iface = faceid[ipos][m];
-            if ((iZone != zoneIndex) || (iface != iiface))
+            int iFace = faceid[ipos][m];
+            if ((iZone != zoneIndex) || (iFace != iiface))
             {
                 interFace2ZoneID[iiface]      = iZone;
-                interFace2InterFaceID[iiface] = iface;
+                interFace2InterFaceID[iiface] = iFace;
                 find_flag = true;
                 break;
             }
@@ -854,10 +854,10 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         set< pair<int, string> > bcnameMap;
 
         CompositeUnstructBC **bcr = grid->GetBCRecord();
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            int bctype = bcr[iface]->GetKey();
-            string bcname = bcr[iface]->GetBCName();
+            int bctype = bcr[iFace]->GetKey();
+            string bcname = bcr[iFace]->GetBCName();
 
             bcnameMap.insert(pair<int, string>(bctype, bcname));
         }
@@ -971,9 +971,9 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
             bool isClockWise = false;
             while (!isClockWise)
             {
-                for (int iface = 1; iface < nFaceOfCell; ++ iface)
+                for (int iFace = 1; iFace < nFaceOfCell; ++ iFace)
                 {
-                    int face  = cell2face[iCell][iface];
+                    int face  = cell2face[iCell][iFace];
                     int node1 = face2node[2 * face];
                     int node2 = face2node[2 * face + 1];
 
@@ -1067,10 +1067,10 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         set< pair<int, string> > bcnameMap;
 
         CompositeUnstructBC **bcr = grid->GetBCRecord();
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            int bctype = bcr[iface]->GetKey();
-            string bcname = bcr[iface]->GetBCName();
+            int bctype = bcr[iFace]->GetKey();
+            string bcname = bcr[iFace]->GetBCName();
 
             bcnameMap.insert(pair<int, string>(bctype, bcname));
         }

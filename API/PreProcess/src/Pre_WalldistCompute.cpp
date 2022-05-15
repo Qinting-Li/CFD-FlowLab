@@ -2270,11 +2270,11 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     int *localWallFace2Global = new int [nSolidFace]();
     SetField(localWallFace2Global, -1, nSolidFace);
     count = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (isWallFace[iface])
+        if (isWallFace[iFace])
         {
-            localWallFace2Global[count] = iface;
+            localWallFace2Global[count] = iFace;
             ++ count;
         }
     }
@@ -2307,36 +2307,36 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     //! Number of nodes per wall face.
     count = 0;
     int *nPointsPerWallFace = new int [nSolidFace]();
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int globalFaceIndex = localWallFace2Global[iface];
-        nPointsPerWallFace[iface] = node_number_of_each_face[globalFaceIndex];
-        count += nPointsPerWallFace[iface];
+        int globalFaceIndex = localWallFace2Global[iFace];
+        nPointsPerWallFace[iFace] = node_number_of_each_face[globalFaceIndex];
+        count += nPointsPerWallFace[iFace];
     }
 
     //! Wall face to node.
     int *wallface2node = new int [count]();
     count = 0;
     int nodepos = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (isWallFace[iface])
+        if (isWallFace[iFace])
         {
-            for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
                 int index = face2node[nodepos + j];
                 wallface2node[count ++] = globalPoint2Wall[index];
             }
         }
 
-        nodepos += node_number_of_each_face[iface];
+        nodepos += node_number_of_each_face[iFace];
     }
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int faceIndex = localWallFace2Global[iface];
+        int faceIndex = localWallFace2Global[iFace];
 
         RDouble xc = 0, yc = 0, zc = 0;
         xc = xfc[faceIndex];
@@ -2362,16 +2362,16 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     }
 
     //! Third: face to node connection.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int nNPF = nPointsPerWallFace[iface];
+        int nNPF = nPointsPerWallFace[iFace];
         cdata->write(&nNPF, sizeof(int));
     }
 
     count = 0;
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int nNPF = nPointsPerWallFace[iface];
+        int nNPF = nPointsPerWallFace[iFace];
         for (int j = 0; j < nNPF; ++ j)
         {
             int nodeIndex = wallface2node[count ++];
@@ -2380,9 +2380,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     }
 
     //! Forth: wall face normal.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int faceIndex = localWallFace2Global[iface];
+        int faceIndex = localWallFace2Global[iFace];
 
         RDouble xfn0 = xfn[faceIndex];
         RDouble yfn0 = yfn[faceIndex];
@@ -3957,9 +3957,9 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     PHRead(cdata, nPointPerFace, nSolidFace);
 
     int count = 0;
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        count += nPointPerFace[iface];
+        count += nPointPerFace[iFace];
     }
     wallFace2Node = new int [count];
     PHRead(cdata, wallFace2Node, count);
@@ -3979,16 +3979,16 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     xfn.resize(nSolidFace);
     yfn.resize(nSolidFace);
     zfn.resize(nSolidFace);
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         RDouble xfn0, yfn0, zfn0;
         cdata->read(&xfn0, sizeof(RDouble));
         cdata->read(&yfn0, sizeof(RDouble));
         cdata->read(&zfn0, sizeof(RDouble));
 
-        xfn[iface] = xfn0;
-        yfn[iface] = yfn0;
-        zfn[iface] = zfn0;
+        xfn[iFace] = xfn0;
+        yfn[iFace] = yfn0;
+        zfn[iFace] = zfn0;
     }
 
     this->Box();

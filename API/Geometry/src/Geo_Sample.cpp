@@ -465,9 +465,9 @@ void ProbeData::SearchRealCell(UnstructGrid * grid, bool &flag)
     RDouble small = 1.0e-8;
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        for (int iface = 0; iface < faceNumberOfEachCell[iCell]; ++ iface)
+        for (int iFace = 0; iFace < faceNumberOfEachCell[iCell]; ++ iFace)
         {
-            int faceID = cell2face[iCell][iface];
+            int faceID = cell2face[iCell][iFace];
 
             RDouble probeToFaceVecX = coordinates[0] - xfc[faceID];
             RDouble probeToFaceVecY = coordinates[1] - yfc[faceID];

@@ -341,16 +341,16 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
             int *interFace2BoundaryFace_mir = iinfo_mir->GetInterFace2BoundaryFace(); 
 
             count = 0;
-            for (int iface = 0; iface < nBoundFace; ++ iface)
+            for (int iFace = 0; iFace < nBoundFace; ++ iFace)
             {
                 int bctype;
                 PHRead(cdata, &bctype, 1);
 
-                bcrs[iface] = new CompositeUnstructBC();
-                bcrs[iface]->SetKey(bctype);
+                bcrs[iFace] = new CompositeUnstructBC();
+                bcrs[iFace]->SetKey(bctype);
 
-                bcrs_mir[iface] = new CompositeUnstructBC();
-                bcrs_mir[iface]->SetKey(bctype);
+                bcrs_mir[iFace] = new CompositeUnstructBC();
+                bcrs_mir[iFace]->SetKey(bctype);
 
                 if (bctype == PHENGLEI::INTERFACE)
                 {
@@ -430,19 +430,19 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
         int *interFace2InterFaceID  = iinfo_ordinary->GetInterFace2InterFaceID();
 
         int count = 0;
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
             oss << "\n";
 
-            oss << "	Face number: " << iface << "\n";
-            oss << "	face2node:	" << face2node[iface * 2] << "	" << face2node[iface * 2 + 1] << "\n";
+            oss << "	Face number: " << iFace << "\n";
+            oss << "	face2node:	" << face2node[iFace * 2] << "	" << face2node[iFace * 2 + 1] << "\n";
 
-            oss << "	left_cell:	" << left_cell_of_face[iface] << "\n";
-            oss << "	right_cell:	" << right_cell_of_face[iface] << "\n";
+            oss << "	left_cell:	" << left_cell_of_face[iFace] << "\n";
+            oss << "	right_cell:	" << right_cell_of_face[iFace] << "\n";
 
-            if (iface < nBoundFace)
+            if (iFace < nBoundFace)
             {
-                int bctype = bcr_ordinary[iface]->GetKey();
+                int bctype = bcr_ordinary[iFace]->GetKey();
                 oss << "The Boundary condition is :	" << bctype << "\n";
 
                 if (bctype == -1)
@@ -963,9 +963,9 @@ void Pre_GridMirror::MirrorCellOfFace(int iZone, UnstructGrid *grid_in)
     int *left_cell_of_face_ordinary  = grid_in->GetLeftCellOfFace();
     int *right_cell_of_face_ordinary = grid_in->GetRightCellOfFace();
 
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        right_cell_of_face_ordinary[iface] = -1;
+        right_cell_of_face_ordinary[iFace] = -1;
     }
 
     PHWrite(gridinfo, left_cell_of_face_ordinary, nTotalFace);
@@ -981,17 +981,17 @@ void Pre_GridMirror::MirrorFace2Node(int iZone, UnstructGrid *grid_in)
     int *face2node_ordinary = grid_in->GetFace2Node();
 
     int nsum = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        nsum += node_number_of_each_face_ordinary[iface];
+        nsum += node_number_of_each_face_ordinary[iFace];
     }
 
     int *face2node_mir = new int [nsum];
 
     int count = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int nodeos = node_number_of_each_face_ordinary[iface];
+        int nodeos = node_number_of_each_face_ordinary[iFace];
 
         for (int iNode = 0; iNode < nodeos; ++ iNode)
         {
@@ -1251,14 +1251,14 @@ void Pre_GridMirror::MirrorBCRegion()
             PHWrite(gridinfo, &nBoundFace, 1);
             
             int count = 0;
-            for (int iface = 0; iface < nBoundFace; ++ iface)
+            for (int iFace = 0; iFace < nBoundFace; ++ iFace)
             {
-                if (bcr_ordinary[iface]->GetKey() == PHENGLEI::INTERFACE)
+                if (bcr_ordinary[iFace]->GetKey() == PHENGLEI::INTERFACE)
                 {
                     count ++;
                 }
 
-                if (bcr_ordinary[iface]->GetKey() == PHENGLEI::SYMMETRY)
+                if (bcr_ordinary[iFace]->GetKey() == PHENGLEI::SYMMETRY)
                 {
                     count ++;
                 }

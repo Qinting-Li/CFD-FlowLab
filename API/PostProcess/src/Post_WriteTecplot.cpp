@@ -392,25 +392,25 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     set<pair<int, string> > bcnameMap;
     CompositeUnstructBC **bcr = grid->GetBCRecord();
     int nodeCount = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iface]->GetKey();
-        string bcname = bcr[iface]->GetBCName();
+        int bctype = bcr[iFace]->GetKey();
+        string bcname = bcr[iFace]->GetBCName();
         bcnameMap.insert(pair<int, string>(bctype, bcname));
 
         for (int m = 0; m < nvarplot; ++ m)
         {
             RDouble value = 0.0;
-            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
             {
                 int nodeIndex = face2node[nodeCount + iNode];
                 value += qn[m][nodeIndex];
             }
 
-            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
+            qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
         }
 
-        nodeCount += node_number_of_each_face[iface];
+        nodeCount += node_number_of_each_face[iFace];
     }
 
     int TecioMission;
@@ -549,25 +549,25 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
     CompositeUnstructBC **bcr = grid->GetBCRecord();
     int nodeCount = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iface]->GetKey();
-        string bcname = bcr[iface]->GetBCName();
+        int bctype = bcr[iFace]->GetKey();
+        string bcname = bcr[iFace]->GetBCName();
         bcnameMap.insert(pair<int, string>(bctype, bcname));
 
         for (int m = 0; m < nvarplot; ++ m)
         {
             RDouble value = 0.0;
-            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
             {
                 int nodeIndex = face2node[nodeCount + iNode];
                 value += qn[m][nodeIndex];
             }
 
-            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
+            qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
         }
 
-        nodeCount += node_number_of_each_face[iface];
+        nodeCount += node_number_of_each_face[iFace];
     }
 
     int TecioMission;
@@ -1110,9 +1110,9 @@ void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actke
         int isClockWise = false;
         while (! isClockWise)
         {
-            for (int iface = 1; iface < nFaceOfCell; ++ iface)
+            for (int iFace = 1; iFace < nFaceOfCell; ++ iFace)
             {
-                int face  = cell2face[iCell][iface];
+                int face  = cell2face[iCell][iFace];
                 int node1 = face2node[2 * face];
                 int node2 = face2node[2 * face + 1];
 
@@ -1614,20 +1614,20 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
 
     int ncount = 0;
     CompositeUnstructBC **bcr = grid->GetBCRecord();
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iface]->GetKey();
+        int bctype = bcr[iFace]->GetKey();
 
         if (bctype != PHENGLEI::SOLID_SURFACE)
         {
-            ncount += node_number_of_each_face[iface];
+            ncount += node_number_of_each_face[iFace];
             continue;
         }
 
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[ncount + j];
             coor_min = MIN(xyz[index], coor_min);
@@ -1636,14 +1636,14 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
 
         if ((coor_min - slice) * (coor_max - slice) > 0.0)
         {
-            ncount += node_number_of_each_face[iface];
+            ncount += node_number_of_each_face[iFace];
             continue;
         }
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
-            int Node_index0 = face2node[ncount + j % node_number_of_each_face[iface]];
-            int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iface]];
+            int Node_index0 = face2node[ncount + j % node_number_of_each_face[iFace]];
+            int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iFace]];
 
             if ((xyz[Node_index0] - slice) * (xyz[Node_index1] - slice) > 0.0) continue;
 
@@ -1704,7 +1704,7 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
             }
         }
 
-        ncount += node_number_of_each_face[iface];
+        ncount += node_number_of_each_face[iFace];
     }
 
     int NumPts = static_cast<int>(xx.size());

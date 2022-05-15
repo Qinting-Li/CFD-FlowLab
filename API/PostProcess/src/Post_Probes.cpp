@@ -199,9 +199,9 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
             NecessaryVarForInterpolation(unstructGrid, iProbe, neighborCell, numerator,interpolationCellsID, true);
         }
 
-        for (int iface = 0; iface < faceNumberOfEachCell[probeCell]; ++ iface)
+        for (int iFace = 0; iFace < faceNumberOfEachCell[probeCell]; ++ iFace)
         {
-            int faceID = cell2face[probeCell][iface];
+            int faceID = cell2face[probeCell][iFace];
 
             if (faceID < nBoundFace)
             {

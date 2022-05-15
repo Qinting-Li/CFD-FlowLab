@@ -2912,12 +2912,12 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
-    int iface, is, js, ks;
+    int iFace, is, js, ks;
     bool ifCommunicateNodeLocation = CommunicateNodeLocation();
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iface = faceIndexForSend[ifaceLocal];
-        fgrid->GetSourceIndexIJK(iface, 1 , is, js, ks);
+        iFace = faceIndexForSend[iLocalFace];
+        fgrid->GetSourceIndexIJK(iFace, 1 , is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
         cdata->write(&xcc(is, js, ks), sizeof(RDouble));
@@ -2933,8 +2933,8 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
         int IJKofNodes_1st_Layer[4][3];
         int IJKofNodes_2nd_Layer[4][3];
 
-        GetNodeIJKfromSourceIndex(fgrid, iface, 1, IJKofNodes_1st_Layer);
-        GetNodeIJKfromSourceIndex(fgrid, iface, 2, IJKofNodes_2nd_Layer);
+        GetNodeIJKfromSourceIndex(fgrid, iFace, 1, IJKofNodes_1st_Layer);
+        GetNodeIJKfromSourceIndex(fgrid, iFace, 2, IJKofNodes_2nd_Layer);
         
         for (int nodeID = 0; nodeID < 4; ++ nodeID)
         {
@@ -4919,7 +4919,7 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
     VVInt &faceid = link->GetFaceID();
     RDouble tol = link->GetTolerance();
 
-    int iface = 0;
+    int iFace = 0;
     uint_t fcount = zoneid.size();
     int pcount = coor_tree.GetNodeNum();
 
@@ -4988,19 +4988,19 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
                     }
 
                     GetCoorIndexList(&coor_tree, tol, pcount, xlist, ylist, zlist, nlist, pindex);
-                    Create_Link_Info(pindex, zoneIndex, iface, fcount, facelist, zoneid, faceid, link);
+                    Create_Link_Info(pindex, zoneIndex, iFace, fcount, facelist, zoneid, faceid, link);
 
-                    interFace2BoundaryFace[iface] = ibface;
+                    interFace2BoundaryFace[iFace] = ibface;
 
                     ++ ibface;
-                    ++ iface;
+                    ++ iFace;
                 }
             }
         }
     }
 
     uint_t nface = facelist.size();
-    cout << "iface = " << iface << "\n";
+    cout << "iface = " << iFace << "\n";
 }
 
 LIB_EXPORT int StructGrid::GetNumberOfWallCell()
@@ -5686,15 +5686,15 @@ void UploadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, in
 
         int nIFace = fiinfo->GetNIFace();
         
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int is, js, ks;
-            fgrid->GetSourceIndexIJK(iface, ngst + 1, is, js, ks);
+            fgrid->GetSourceIndexIJK(iFace, ngst + 1, is, js, ks);
             fgrid->RemapMultigridIJK(level, is, js, ks);
 
             for (int m = 0; m < neqn; ++ m)
             {
-                fg[m][iface] = (*f)(is, js, ks, m);
+                fg[m][iFace] = (*f)(is, js, ks, m);
             }
         }
     }
@@ -5717,13 +5717,13 @@ void UploadInterfaceValue(StructGrid *grid, RDouble3D *f, const string &name)
 
         int nIFace = fiinfo->GetNIFace();
         
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int is, js, ks;
-            fgrid->GetSourceIndexIJK(iface, ngst + 1, is, js, ks);
+            fgrid->GetSourceIndexIJK(iFace, ngst + 1, is, js, ks);
             fgrid->RemapMultigridIJK(level, is, js, ks);
 
-            fg[m][iface] = (*f)(is, js, ks);
+            fg[m][iFace] = (*f)(is, js, ks);
         }
     }
 }
@@ -5749,15 +5749,15 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
         RDouble **fg = reinterpret_cast<RDouble **> (drecv->GetDataPtr(name));
 
         int nIFace = fiinfo->GetNIFace();
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int it, jt, kt;
-            fgrid->GetTargetIndexIJK(iface, ngst+1, it, jt, kt);
+            fgrid->GetTargetIndexIJK(iFace, ngst+1, it, jt, kt);
             fgrid->RemapMultigridIJK(level, it, jt, kt);
 
             //! Rotate vector for periodic boundary at the end of communication for InterfaceValue.
             int *ibcregions = composite_bcregion->GetIFaceInfo();
-            int ibcregion = ibcregions[iface];
+            int ibcregion = ibcregions[iFace];
             StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
             string bcName = bcregion->GetBCName();
             //! Rotate process only for vector in rotational periodicity.
@@ -5768,26 +5768,26 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
                     RDouble rotfg[3] = {0.0, 0.0, 0.0};
                     if (bcName == "Periodic_up")
                     {
-                        rotfg[0] = fg[1][iface];
-                        rotfg[1] = fg[2][iface] * cos(2 * PI - rotationAngle) - fg[3][iface] * sin(2 * PI - rotationAngle);
-                        rotfg[2] = fg[2][iface] * sin(2 * PI - rotationAngle) + fg[3][iface] * cos(2 * PI - rotationAngle);
+                        rotfg[0] = fg[1][iFace];
+                        rotfg[1] = fg[2][iFace] * cos(2 * PI - rotationAngle) - fg[3][iFace] * sin(2 * PI - rotationAngle);
+                        rotfg[2] = fg[2][iFace] * sin(2 * PI - rotationAngle) + fg[3][iFace] * cos(2 * PI - rotationAngle);
                     }
                     else if (bcName == "Periodic_down")
                     {
-                        rotfg[0] = fg[1][iface];
-                        rotfg[1] = fg[2][iface] * cos(rotationAngle) - fg[3][iface] * sin(rotationAngle);
-                        rotfg[2] = fg[2][iface] * sin(rotationAngle) + fg[3][iface] * cos(rotationAngle);
+                        rotfg[0] = fg[1][iFace];
+                        rotfg[1] = fg[2][iFace] * cos(rotationAngle) - fg[3][iFace] * sin(rotationAngle);
+                        rotfg[2] = fg[2][iFace] * sin(rotationAngle) + fg[3][iFace] * cos(rotationAngle);
                     }
 
                     for (int m = 1; m <= 3; ++ m)
                     {
-                        fg[m][iface] = rotfg[m-1];
+                        fg[m][iFace] = rotfg[m-1];
                     }
                 }
             }
             for (int m = 0; m < neqn; ++ m)
             {
-                (*f)(it, jt, kt, m) = fg[m][iface];
+                (*f)(it, jt, kt, m) = fg[m][iFace];
             }
         }
     }
@@ -5809,12 +5809,12 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble3D *f, const string &name)
 
         RDouble **fg = reinterpret_cast<RDouble **> (drecv->GetDataPtr(name));
         int nIFace = fiinfo->GetNIFace();
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int it, jt, kt;
-            fgrid->GetTargetIndexIJK(iface, ngst + 1, it, jt, kt);
+            fgrid->GetTargetIndexIJK(iFace, ngst + 1, it, jt, kt);
             fgrid->RemapMultigridIJK(level, it, jt, kt);
-            (*f)(it, jt, kt) = fg[m][iface];
+            (*f)(it, jt, kt) = fg[m][iFace];
         }
     }
 }
@@ -5992,14 +5992,14 @@ void MinMaxDiffINF(StructGrid *grid, int ig, RDouble *dmin, RDouble *dmax, RDoub
     int idx[6], jdx[6], kdx[6];
 
     //! Find the maximum and minimum in the neighbor of each cell.
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
         int is, js, ks;
-        fgrid->GetSourceIndexIJK(iface, ig+1, is, js, ks);
+        fgrid->GetSourceIndexIJK(iFace, ig+1, is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
-        dmin[iface] = (*q)(is, js, ks, m);
-        dmax[iface] = (*q)(is, js, ks, m);
+        dmin[iFace] = (*q)(is, js, ks, m);
+        dmax[iFace] = (*q)(is, js, ks, m);
 
         idx[0] = is + id;
         jdx[0] = js;
@@ -6027,12 +6027,12 @@ void MinMaxDiffINF(StructGrid *grid, int ig, RDouble *dmin, RDouble *dmax, RDoub
 
         for (int n = 0; n < 6; ++ n)
         {
-            dmin[iface] = MIN(dmin[iface], (*q)(idx[n], jdx[n], kdx[n], m));
-            dmax[iface] = MAX(dmax[iface], (*q)(idx[n], jdx[n], kdx[n], m));
+            dmin[iFace] = MIN(dmin[iFace], (*q)(idx[n], jdx[n], kdx[n], m));
+            dmax[iFace] = MAX(dmax[iFace], (*q)(idx[n], jdx[n], kdx[n], m));
         }
 
-        dmin[iface] -= (*q)(is, js, ks, m);
-        dmax[iface] -= (*q)(is, js, ks, m);
+        dmin[iFace] -= (*q)(is, js, ks, m);
+        dmax[iFace] -= (*q)(is, js, ks, m);
     }
 }
 
@@ -6076,10 +6076,10 @@ void BarthLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RDo
     int idx[6], jdx[6], kdx[6], ndx[6], ipn[6];
 
     //! Find the maximum and minimum in the neighbor of each cell.
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
         int is, js, ks;
-        fgrid->GetSourceIndexIJK(iface, ig + 1, is, js, ks);
+        fgrid->GetSourceIndexIJK(iFace, ig + 1, is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
         grid->CenterCoor(is, js, ks, xcc, ycc, zcc);
@@ -6134,20 +6134,20 @@ void BarthLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RDo
             dx = xfc - xcc;
             dy = yfc - ycc;
             dz = zfc - zcc;
-            dq_face = dqdx[iface] * dx + dqdy[iface] * dy + dqdz[iface] * dz;
+            dq_face = dqdx[iFace] * dx + dqdy[iFace] * dy + dqdz[iFace] * dz;
 
             ds  = sqrt(dx * dx + dy * dy + dz * dz);
             dot = ipn[n] * (xfn * dx + yfn * dy + zfn * dz) / (ds + SMALL);
 
-            if (dot < 0.0) limit[iface] = 0.0;
+            if (dot < 0.0) limit[iFace] = 0.0;
 
-            if (dq_face > dmax[iface])
+            if (dq_face > dmax[iFace])
             {
-                limit[iface] = MIN(limit[iface], dmax[iface] / dq_face);
+                limit[iFace] = MIN(limit[iFace], dmax[iFace] / dq_face);
             }
-            else if (dq_face < dmin[iface])
+            else if (dq_face < dmin[iFace])
             {
-                limit[iface] = MIN(limit[iface], dmin[iface] / dq_face);
+                limit[iFace] = MIN(limit[iFace], dmin[iFace] / dq_face);
             }
         }
 
@@ -6199,10 +6199,10 @@ void VencatLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RD
     int idx[6], jdx[6], kdx[6], ndx[6], ipn[6];
 
     //! Find the maximum and minimum in the neighbor of each cell.
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
         int is, js, ks;
-        fgrid->GetSourceIndexIJK(iface, ig + 1, is, js, ks);
+        fgrid->GetSourceIndexIJK(iFace, ig + 1, is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
         grid->CenterCoor(is, js, ks, xcc, ycc, zcc);
@@ -6257,25 +6257,25 @@ void VencatLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RD
             dx = xfc - xcc;
             dy = yfc - ycc;
             dz = zfc - zcc;
-            dq_face = dqdx[iface] * dx + dqdy[iface] * dy + dqdz[iface] * dz;
+            dq_face = dqdx[iFace] * dx + dqdy[iFace] * dy + dqdz[iFace] * dz;
 
             ds = sqrt(dx * dx + dy * dy + dz * dz);
             dot = ipn[n] * (xfn * dx + yfn * dy + zfn * dz) / (ds + SMALL);
 
-            if (dot < 0.0) limit[iface] = 0.0;
+            if (dot < 0.0) limit[iFace] = 0.0;
 
             eps = venkatCoeff * ds;
             eps = eps * eps * eps;
 
             if (dq_face > SMALL)
             {
-                tmp = VenFun(dmax[iface], dq_face, eps);
-                limit[iface] = MIN(limit[iface], tmp);
+                tmp = VenFun(dmax[iFace], dq_face, eps);
+                limit[iFace] = MIN(limit[iFace], tmp);
             }
             else if (dq_face < - SMALL)
             {
-                tmp = VenFun(dmin[iface], dq_face, eps);
-                limit[iface] = MIN(limit[iface], tmp);
+                tmp = VenFun(dmin[iFace], dq_face, eps);
+                limit[iFace] = MIN(limit[iFace], tmp);
             }
         }
     }

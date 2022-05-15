@@ -3228,15 +3228,15 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
             UnstructGrid *unstructGrid = UnstructGridCast(grid);
 
             CompositeUnstructBC **bcr = unstructGrid->GetBCRecord();
-            for (int iface = 0; iface < unstructGrid->GetNBoundFace(); ++ iface)
+            for (int iFace = 0; iFace < unstructGrid->GetNBoundFace(); ++ iFace)
             {
-                int originalBC = bcr[iface]->GetKey();
+                int originalBC = bcr[iFace]->GetKey();
                 int newBC = bcMap.TranslateBC(originalBC);
                 if (newBC != originalBC)
                 {
                     changedBC.insert(originalBC);
                 }
-                bcr[iface]->SetKey(newBC);
+                bcr[iFace]->SetKey(newBC);
             }
         }
     }

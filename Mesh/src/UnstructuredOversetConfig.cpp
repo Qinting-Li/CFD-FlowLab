@@ -312,11 +312,11 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
         int *interFace2InterFaceIDTemp = ReadIntOneRow(grpData, "interFace2InterFaceID");
         int *interFace2BoundaryFaceTemp = ReadIntOneRow(grpData, "interFace2BoundaryFace");
 
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
-            interFace2ZoneID[iface] = interFace2ZoneIDTemp[iface];
-            interFace2InterFaceID[iface] = interFace2InterFaceIDTemp[iface];
-            interFace2BoundaryFace[iface] = interFace2BoundaryFaceTemp[iface];
+            interFace2ZoneID[iFace] = interFace2ZoneIDTemp[iFace];
+            interFace2InterFaceID[iFace] = interFace2InterFaceIDTemp[iFace];
+            interFace2BoundaryFace[iFace] = interFace2BoundaryFaceTemp[iFace];
         }
 
         delete [] interFace2ZoneIDTemp;
