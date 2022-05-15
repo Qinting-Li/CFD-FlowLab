@@ -6964,7 +6964,7 @@ void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn)
 
     StructGrid *grid = StructGridCast(grid_in);
 
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)

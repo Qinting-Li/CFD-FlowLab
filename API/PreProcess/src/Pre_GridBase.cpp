@@ -1898,7 +1898,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
 {
     Base_Grid_Conn *gconn   = factory_cgns->GetBaseGridConnection(iZone);
     RawGrid        *rawgrid = factory_cgns->GetRawGrid(iZone);
-    CGNSBase *cgnsGrid = factory_cgns->GetCGNSBase(izone);
+    CGNSBase *cgnsGrid = factory_cgns->GetCGNSBase(iZone);
 
     int nTotalCell = static_cast<int>(gconn->GetNTotalCell());
     int nTotalNode = static_cast<int>(gconn->GetNTotalNode());
@@ -1969,7 +1969,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
             break;
         }
 
-        delete (*bcFace)[iface];
+        delete (*bcFace)[iFace];
     }
     string *boundaryName = cgnsGrid->GetBCName();
 

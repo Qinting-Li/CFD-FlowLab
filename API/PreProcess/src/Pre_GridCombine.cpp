@@ -509,7 +509,7 @@ void CombinGrid::MergeBCType()
     int nTFace_all = grid_all->GetNTotalFace();
 
     int nBFace_all = 0;
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         UnstructGrid *unstr = UnstructGridCast(grid_in[iZone]);
         int nBoundFace = unstr->GetNBoundFace();
