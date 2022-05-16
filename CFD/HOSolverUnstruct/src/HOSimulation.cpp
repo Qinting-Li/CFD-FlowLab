@@ -329,9 +329,9 @@ void HOSimulation::MultiGridInitFlow()
             UpdateOuterIterationStep(outnstep);
 
             //using namespace PHMPI;
-            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+            for (int isolver = 0; isolver < nSolver; ++ isolver)
             {
-                Controller *controller = new Controller(iSolver, this->region);
+                Controller * controller = new Controller(isolver, this->region);
                 controller->MultiGridInitFlow(level);
                 controller->PostSolve(level);
                 delete controller;
@@ -339,10 +339,10 @@ void HOSimulation::MultiGridInitFlow()
         }
 
         //! Interpolate from coarse grid to fine grid.
-        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+        for (int isolver = 0; isolver < nSolver; ++ isolver)
         {
-            Controller *controller = new Controller(iSolver, this->region);
-            controller->InterpolatFineGrid(iSolver, level - 1);
+            Controller * controller = new Controller(isolver, this->region);
+            controller->InterpolatFineGrid(isolver, level - 1);
             delete controller;
         }
     }
@@ -366,7 +366,7 @@ void HOSimulation::SolveSteady()
 
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
-        //! iSolver = 1 or 2, is supposed as turbulence computing.
+        // isolver=1 or 2, is supposed as turbulence computing
         if ((iSolver != NS_SOLVER) && (outnstep % turbInterval != 0))
         {
             return;

@@ -373,9 +373,9 @@ void DSMC::ReadGeometry()
         //int **cell2face  = grid->GetCell2Face();
         //int * face_number_of_each_cell = grid->GetFaceNumberOfEachCell();
 
-        //for (int iFace = 0; iFace < face_number_of_each_cell[0]; ++ iFace)
+        //for (int iface = 0; iface < face_number_of_each_cell[0]; ++ iface)
         //{
-        //  int face = cell2face[0][iFace];
+        //  int face = cell2face[0][iface];
         //}
 
         //int * cell2node = grid->GetCell2Node(); 
@@ -403,18 +403,18 @@ void DSMC::ReadGeometry()
 
         //CompositeUnstructBC **bcr = grid->GetBCRecord();
         //ostringstream oss;
-        //for(int iFace = 0; iFace < nTotalFace; ++ iFace)
+        //for(int iface = 0; iface < nTotalFace; ++ iface)
         //{
-        //  int le = left_cell_of_face[iFace];
-        //  int re = right_cell_of_face[iFace];
+        //  int le = left_cell_of_face[iface];
+        //  int re = right_cell_of_face[iface];
         //  oss<<le<<" "<<re<<endl;
         //}
         //oss<<"========================"<<endl;
-        //for(int iFace = 0; iFace < nBoundFace; ++ iFace)
+        //for(int iface = 0; iface < nBoundFace; ++ iface)
         //{
-        //  int le = left_cell_of_face[iFace];
-        //  int re = right_cell_of_face[iFace];
-        //  oss<<le<<" "<<re<<" "<<bcr[iFace]->GetKey()<<endl;
+        //  int le = left_cell_of_face[iface];
+        //  int re = right_cell_of_face[iface];
+        //  oss<<le<<" "<<re<<" "<<bcr[iface]->GetKey()<<endl;
         //
         //}
         //WriteLogFile(oss.str());
@@ -1139,18 +1139,21 @@ void DSMC::InitSample()
         {
             for(int ispecies = 0; ispecies < nSpecies; ++ ispecies)
             {
-                for(int iFace = 0; iFace < nWallFace; ++ iFace)
+                for(int iface = 0; iface < nWallFace; ++ iface)
                 {
                     for(int K = 0; K< 8; ++ K)
                     {
-                        CSS1[K][iFace][ispecies] = 0.0;
-                        CSS2[K][iFace][ispecies] = 0.0;
+                        CSS1[K][iface][ispecies] = 0.0;
+                        CSS2[K][iface][ispecies] = 0.0;
                     }
                 }
             }
         }
-    }
+    }   
+
 }
+
+
 
 void DSMC::MoleculeCollision()
 {

@@ -981,17 +981,17 @@ void ElementFaceProxy::ResolveElementFace(vector<int> &element_index, int elemen
     vector<int> element_face;
     //vector<int> sort_face;
 
-    for (int iFace = 0; iFace < face_number; ++ iFace)
+    for (int iface = 0; iface < face_number; ++ iface)
     {
-        vector<int> &face_index = basic_element->GetElementFace(iFace);
-        int face_type = basic_element->GetFaceElementType(iFace);
+        vector<int> & face_index = basic_element->GetElementFace(iface);
+        int face_type = basic_element->GetFaceElementType(iface);
          
         int face_point_number = static_cast<int>(face_index.size());
 
         element_face.resize(0);
         for (int i = 0; i < face_point_number; ++ i)
         {
-            element_face.push_back(element_index[face_index[i]]);
+            element_face.push_back(element_index[ face_index[i] ]);
         }
 
         vector<int> face_of_sort = element_face;
@@ -1113,25 +1113,26 @@ bool ElementFaceProxy::CheckBCFace(set<cgsize_t> &bc_vertex, vector<int> &face_n
 void ElementFaceProxy::ResolveElementBoundaryFace(set<cgsize_t> &bc_vertex, int bctype)
 {
     int nTotalFace = this->GetNTotalFace();
-    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    for (int iface = 0; iface < nTotalFace; ++ iface)
     {
-        int original_bc_type = (*face_boundary_type)[iFace];
-        int right_cell_of_face = (*face_to_cell_right)[iFace];
+        int original_bc_type = (*face_boundary_type)[iface];
+        int right_cell_of_face = (*face_to_cell_right)[iface];
 
-        if (right_cell_of_face == -1 && original_bc_type == 0)
+        if (right_cell_of_face == - 1 && original_bc_type == 0)
         {
-            if (CheckBCFace(bc_vertex, (*face_to_nodes)[iFace]))
+            if (CheckBCFace(bc_vertex, (*face_to_nodes)[iface]))
             { 
-                (*face_boundary_type)[iFace] = bctype;
+                (*face_boundary_type)[iface] = bctype;
 
                 boundary_face_bctype->push_back(bctype);
-                boundary_face_element_type->push_back((*face_element_type)[iFace]);
-                boundary_face_to_nodes->push_back((*face_to_nodes)[iFace]);
+                boundary_face_element_type->push_back((*face_element_type)[iface]);
+                boundary_face_to_nodes->push_back((*face_to_nodes)[iface]);
             }
         }
     }
 
     point_operation->SetBoundaryPoint(bc_vertex, bctype);
+
 }
 
 void ElementFaceProxy::ResolveElementBoundaryFace(int iadapt)
@@ -1160,9 +1161,9 @@ void ElementFaceProxy::MarkElementBoundaryFace()
     }
 }
 
-int ElementFaceProxy::GetRootFaceID(int iFace)
+int ElementFaceProxy::GetRootFaceID(int iface)
 {
-    int parent_face_id = (*face_parent)[iFace];
+    int parent_face_id = (*face_parent)[iface];
     int next_parent_face_id = -1;
     if (parent_face_id != -1)
     {
@@ -1178,7 +1179,7 @@ int ElementFaceProxy::GetRootFaceID(int iFace)
     }
     else
     {
-        return iFace;
+        return iface;
     }
 }
 
@@ -1368,13 +1369,13 @@ void ElementFaceProxy::Normalize(vector< int > &element_all_to_local_map)
     }
 }
 
-void ElementFaceProxy::SwapElementFace(int iFace, int jFace)
+void ElementFaceProxy::SwapElementFace(int iface, int jface)
 {
-    //! Swap face iFace, jFace.
-    SWAP((*face_to_cell_left)[iFace] , (*face_to_cell_left)[jFace] );
-    SWAP((*face_to_cell_right)[iFace], (*face_to_cell_right)[jFace]);
-    SWAP((*face_boundary_type)[iFace], (*face_boundary_type)[jFace]);
-    SWAP((*face_to_nodes)[iFace]     , (*face_to_nodes)[jFace]     );
+    //Swap Face iface, jface
+    SWAP((*face_to_cell_left)[iface], (*face_to_cell_left)[jface]);
+    SWAP((*face_to_cell_right)[iface], (*face_to_cell_right)[jface]);
+    SWAP((*face_boundary_type)[iface], (*face_boundary_type)[jface]);
+    SWAP((*face_to_nodes)[iface]     , (*face_to_nodes)[jface]     );
 }
 
 void ElementFaceProxy::ReorderElementFace()
@@ -1415,7 +1416,7 @@ void ElementFaceProxy::PrintBoundaryFace()
 
         if (re == -1)
         {
-            file << "iFace = " << iFace << " nTFace = " << nTFace;
+            file << "iface = " << iFace << " nTFace = " << nTFace;
             for (std::size_t i = 0; i < (*face_to_nodes)[iFace].size(); ++ i)
             {
                 file << " " << (*face_to_nodes)[iFace][i];
@@ -2034,7 +2035,7 @@ void SuperElement::SplitCompositeFace(vector<int> &facenodes, int composite_face
 
     vector<int> ptlist; 
  
-    //这里的iFace实际上是单元，只不过表现形式为面的形式
+    //这里的iface实际上是单元，只不过表现形式为面的形式
     for (int ichildelem = 0; ichildelem < child_element_number; ++ ichildelem)
     {
         //子单元的类型

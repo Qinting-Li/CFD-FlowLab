@@ -1148,11 +1148,11 @@ void DumpToTecio::WriteGridFilm()
                     PHRead(cdata, left_cell_of_face, KMxOrNumFaces);
                     PHRead(cdata, right_cell_of_face, KMxOrNumFaces);
 
-                    for (INTEGER4 iFace = 0; iFace < KMxOrNumFaces; ++ iFace)
+                    for (INTEGER4 iface = 0; iface < KMxOrNumFaces; ++ iface)
                     {
-                        FaceLeftElems [iFace] = left_cell_of_face [iFace] + 1;
-                        FaceRightElems[iFace] = right_cell_of_face[iFace] + 1;
-                        //if (FaceRightElems[iFace] > JMxOrNumElements || FaceRightElems[iFace] < 0) FaceRightElems[iFace] = 0;
+                        FaceLeftElems [iface] = left_cell_of_face [iface] + 1;
+                        FaceRightElems[iface] = right_cell_of_face[iface] + 1;
+                        //if (FaceRightElems[iface] > JMxOrNumElements || FaceRightElems[iface] < 0) FaceRightElems[iface] = 0;
                     }
 
                     INTEGER4 FaceBndryConnectionCounts = 0;

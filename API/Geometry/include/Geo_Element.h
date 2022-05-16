@@ -41,9 +41,9 @@ private:
 public:
     void Init(int elem_type);
     //!
-    int_array & GetElementPhysicsFace(int iFace) { return composite_face_list[iFace]; }
+    int_array & GetElementPhysicsFace(int iface) { return composite_face_list[iface]; };
     //!
-    int GetElementPhysicsFaceType(int iFace) const { return composite_face_element_type[iFace]; }
+    int GetElementPhysicsFaceType(int iface) const { return composite_face_element_type[iface]; }
     //! Get the face number of element.
     uint_t GetElementFaceNumber() const { return face_list.size(); }
     //!
@@ -65,9 +65,9 @@ public:
     //! Whether the type is volume element or not.
     bool IsBasicVolumeElementType(int elementType);
     //! Get the faces of element.
-    int_array & GetElementFace(int iFace) { return face_list[iFace]; }
+    int_array & GetElementFace(int iface) { return face_list[iface]; }
     //! Get the type of the element faces.
-    int GetFaceElementType(int iFace) const { return face_element_type[iFace]; }
+    int GetFaceElementType(int iface) const { return face_element_type[iface]; }
 
     int_array & GetMPlist(int i) { return mp_struct[i]; }
     //! Get the index of child element.

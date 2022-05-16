@@ -637,56 +637,56 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid *grid)
     int * pNodeNumberOfFaces = grid->GetNodeNumberOfEachFace();
     int ** ppNodesOfFaces = grid->GetFace2NodeArray();
 
-    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    for (int iface = 0; iface < nTotalFace; ++ iface)
     {
-        highOrderFaces[iFace].ID = iFace;
+        highOrderFaces[iface].ID = iface;
 
-        highOrderFaces[iFace].nNodes = pNodeNumberOfFaces[iFace];
-        for (unsigned int ilocalnode = 0; ilocalnode < highOrderFaces[iFace].nNodes; ++ ilocalnode)
+        highOrderFaces[iface].nNodes = pNodeNumberOfFaces[iface];
+        for (unsigned int ilocalnode = 0; ilocalnode < highOrderFaces[iface].nNodes; ++ ilocalnode)
         {
-            highOrderFaces[iFace].nodeIDs.push_back(ppNodesOfFaces[iFace][ilocalnode]);
-        }
-
-        if (highOrderFaces[iFace].nNodes == 3)
-        {
-            highOrderFaces[iFace].nPolyGrid = 1;
-            highOrderFaces[iFace].VTK_Type = TRIANGLE;
-        }
-        else if (highOrderFaces[iFace].nNodes == 4)
-        {
-            highOrderFaces[iFace].nPolyGrid = 1;
-            highOrderFaces[iFace].VTK_Type = QUADRILATERAL;
-        }
-        else if (highOrderFaces[iFace].nNodes == 6)
-        {
-            highOrderFaces[iFace].nPolyGrid = 2;
-            highOrderFaces[iFace].VTK_Type = TRIANGLE;
-        }
-        else if (highOrderFaces[iFace].nNodes == 9)
-        {
-            highOrderFaces[iFace].nPolyGrid = 2;
-            highOrderFaces[iFace].VTK_Type = QUADRILATERAL;
+            highOrderFaces[iface].nodeIDs.push_back(ppNodesOfFaces[iface][ilocalnode]);
         }
 
-        highOrderFaces[iFace].nDOFsGrid = highOrderFaces[iFace].nNodes;
-        highOrderFaces[iFace].cellID0 = grid->GetLeftCellOfFace()[iFace];
-        highOrderFaces[iFace].cellID1 = grid->GetRightCellOfFace()[iFace];
+        if(highOrderFaces[iface].nNodes == 3)
+        {
+            highOrderFaces[iface].nPolyGrid = 1;
+            highOrderFaces[iface].VTK_Type = TRIANGLE;
+        }
+        else if(highOrderFaces[iface].nNodes == 4)
+        {
+            highOrderFaces[iface].nPolyGrid = 1;
+            highOrderFaces[iface].VTK_Type = QUADRILATERAL;
+        }
+        else if(highOrderFaces[iface].nNodes == 6)
+        {
+            highOrderFaces[iface].nPolyGrid = 2;
+            highOrderFaces[iface].VTK_Type = TRIANGLE;
+        }
+        else if(highOrderFaces[iface].nNodes == 9)
+        {
+            highOrderFaces[iface].nPolyGrid = 2;
+            highOrderFaces[iface].VTK_Type = QUADRILATERAL;
+        }
 
-        //highOrderFaces[iFace].area = grid->GetFaceArea()[iFace];
-        //highOrderFaces[iFace].centerCoord[0] = grid->GetFaceCenterX()[iFace];
-        //highOrderFaces[iFace].centerCoord[1] = grid->GetFaceCenterY()[iFace];
-        //highOrderFaces[iFace].centerCoord[2] = grid->GetFaceCenterZ()[iFace];
+        highOrderFaces[iface].nDOFsGrid = highOrderFaces[iface].nNodes;
+        highOrderFaces[iface].cellID0 = grid->GetLeftCellOfFace()[iface];
+        highOrderFaces[iface].cellID1 = grid->GetRightCellOfFace()[iface];
+
+        //highOrderFaces[iface].area = grid->GetFaceArea()[iface];
+        //highOrderFaces[iface].centerCoord[0] = grid->GetFaceCenterX()[iface];
+        //highOrderFaces[iface].centerCoord[1] = grid->GetFaceCenterY()[iface];
+        //highOrderFaces[iface].centerCoord[2] = grid->GetFaceCenterZ()[iface];
     }
 }
 
 //! @Application memory for high order node and  copy the geometry of grid to high order node,containing 
-void HighOrderGrid::CopyGeometryInfoToHighOrderNode(UnstructGrid *grid)
+void HighOrderGrid::CopyGeometryInfoToHighOrderNode(UnstructGrid * grid)
 {
     int nTotalNode = grid->GetNTotalNode();
 
     highOrderNodes.resize(nTotalNode);
 
-    int **ppCellsOfNodes = grid->GetNode2CellArray();
+    int ** ppCellsOfNodes = grid->GetNode2CellArray();
 
     /*  Xu-Gang
     int * ppCellsOfNodes = grid->GetCell2Node();

@@ -45,9 +45,9 @@ void DSMCUnstructGrid::BoundaryCount(UnstructGrid * grid)
 
     CompositeUnstructBC **bcr = grid->GetBCRecord();
 
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for(int iface = 0; iface < nBoundFace; ++ iface)
     {
-        int bctype = bcr[iFace]->GetKey();
+        int bctype = bcr[iface]->GetKey();
 
         switch (bctype)
         {

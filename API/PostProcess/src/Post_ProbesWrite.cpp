@@ -69,9 +69,9 @@ void Post_ProbesWrite::ServerProbesWrite(ActionKey *actkey)
             GlobalDataBase::GetData("probeVariables", probeVariables, PHINT, nProbeVariables);
             Post_Probes *postProbesVar = new Post_Probes(nProbeVariables, probeVariables, grid);
             int Nsolver = GlobalSolvers::GetNumberOfSolvers(iZone);
-            for (int iSolver = 0; iSolver < Nsolver; ++ iSolver)
+            for (int isolver = 0; isolver < Nsolver; ++ isolver)
             {
-                GlobalSolvers::GetSolver(iZone, iSolver)->ComputePostProbesVariables(postProbesVar);
+                GlobalSolvers::GetSolver(iZone, isolver)->ComputePostProbesVariables(postProbesVar);
             }
 
             StoreProbesVarariables(actkey, postProbesVar);

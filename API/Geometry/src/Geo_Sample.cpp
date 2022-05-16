@@ -1623,7 +1623,7 @@ void SampleLocationInfo::SampleLocationInfoToGrid()
             vector <int> probesSurfaceID;
             vector <vector<RDouble> > probesCoordinates;
             int count = 0;
-            for (int iProbe = 0; iProbe < nTotalProbes; ++ iProbe)
+            for(int iProbe = 0; iProbe < nTotalProbes; ++ iProbe)
             {
                 int cellZoneID = probesSampleLocation[iProbe]->GetProbeCellZoneID();
                 bool isValid = probesSampleLocation[iProbe]->GetProbeValidity();

@@ -497,7 +497,7 @@ void DataContainer::init_buffer(int elem_num, int ptr_dim,
 {
     element_resize(elem_num);
 
-    for (int i = 0; i < ptr_dim; i ++)
+    for(int i = 0; i < ptr_dim; i ++)
     {
         CharVecSizeType remainder  = ptr_elem_len[i] % max_unit_size;
         ContainerSizeType elem_end = ptr_elem_beg[i] + ptr_elem_num[i];

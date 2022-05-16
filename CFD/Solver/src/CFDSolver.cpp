@@ -1267,7 +1267,7 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
     {
         string dataName = vectorName[iDim];
 
-        int iFace;
+        int iface;
         int nm = vectorDimension[iDim];
         RDouble **q = vectorData[iDim];
 
@@ -1279,10 +1279,10 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
         int icount = 0;
         for (int jFaceOfNeighbor = 0; jFaceOfNeighbor < nIFaceOfNeighbor; ++ jFaceOfNeighbor)
         {
-            iFace = faceIndexForSend[jFaceOfNeighbor];
+            iface = faceIndexForSend[jFaceOfNeighbor];
             for (int m = 0; m < nm; ++ m)
             {
-                qtmp[icount ++] = q[m][iFace];
+                qtmp[icount ++] = q[m][iface];
             }
         }
         cdata->write(qtmp, nlen * sizeof(RDouble));
@@ -1359,7 +1359,7 @@ void CFDSolver::TranslateInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *a
     cData->moveto_begin();
     for (std::size_t iDim = 0; iDim < vectorDimension.size(); ++ iDim)
     {
-        int iFace;
+        int iface;
         int nm = vectorDimension[iDim];
         RDouble **q = vectorData[iDim];
 
@@ -1373,14 +1373,14 @@ void CFDSolver::TranslateInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *a
         int icount = 0;
         for (int jFaceOfNeighbor = 0; jFaceOfNeighbor < nIFaceOfNeighbor; ++ jFaceOfNeighbor)
         {
-            iFace = faceIndexForRecv[jFaceOfNeighbor];
+            iface = faceIndexForRecv[jFaceOfNeighbor];
 
             for (int m = 0; m < nm; ++ m)
             {
-                q[m][iFace] = qTemp[icount ++];
+                q[m][iface] = qTemp[icount ++];
             }
         }
-        delete [] qTemp;
+        delete []qTemp;
     }
 }
 

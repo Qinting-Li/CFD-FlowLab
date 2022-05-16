@@ -191,19 +191,19 @@ LIB_EXPORT void StructGrid::CopyGrid(StructGrid *grid)
     CopyCompositeBCRegion(grid->GetCompositeBCRegion());
 }
 
-LIB_EXPORT void StructGrid::GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k)
+LIB_EXPORT void StructGrid::GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k)
 {
-    this->composite_bcregion->GetSourceIndexIJK(iFace, ipos, i, j, k);
+    this->composite_bcregion->GetSourceIndexIJK(iface, ipos, i, j, k);
 }
 
-LIB_EXPORT void StructGrid::GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr)
+LIB_EXPORT void StructGrid::GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr)
 {
-    this->composite_bcregion->GetSourceIndexIJK_Nsurf_LR(iFace, ipos, i, j, k, nsurf, s_lr);
+    this->composite_bcregion->GetSourceIndexIJK_Nsurf_LR(iface, ipos, i, j, k, nsurf, s_lr);
 }
 
-LIB_EXPORT void StructGrid::GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k)
+LIB_EXPORT void StructGrid::GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k)
 {
-    this->composite_bcregion->GetTargetIndexIJK(iFace, ipos, i, j, k);
+    this->composite_bcregion->GetTargetIndexIJK(iface, ipos, i, j, k);
 }
 
 LIB_EXPORT void StructGrid::CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble *yy, RDouble *zz)
@@ -2975,16 +2975,16 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
     int nIFaceOfNeighbor = fiinfo->GetNIFaceOfNeighbor(ineighbor);
     int *faceIndexForRecv = fiinfo->GetFaceIndexForRecv(ineighbor);
 
-    int iFace, it, jt, kt;
+    int iface, it, jt, kt;
 
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
     bool ifCommunicateNodeLocation = CommunicateNodeLocation();
-    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
+    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
     {
-        iFace = faceIndexForRecv[iLocalFace];
-        fgrid->GetTargetIndexIJK(iFace, 1 , it, jt, kt);
+        iface = faceIndexForRecv[ifaceLocal];
+        fgrid->GetTargetIndexIJK(iface, 1 , it, jt, kt);
         fgrid->RemapMultigridIJK(level, it, jt, kt);
 
         cdata->read(&xcc(it, jt, kt), sizeof(RDouble));
@@ -2993,7 +2993,7 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
         cdata->read(&vol(it, jt, kt), sizeof(RDouble));
 
         int *ibcregions = composite_bcregion->GetIFaceInfo();
-        int ibcregion = ibcregions[iFace];
+        int ibcregion = ibcregions[iface];
         StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
         string bcName = bcregion->GetBCName();
         if (periodicType == 2)
@@ -3061,8 +3061,8 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
 
         int IJKofNodes_1st_Layer[4][3];
         int IJKofNodes_2nd_Layer[4][3];
-        GetNodeIJKfromTargetIndex(fgrid, iFace, 1, IJKofNodes_1st_Layer);
-        GetNodeIJKfromTargetIndex(fgrid, iFace, 2, IJKofNodes_2nd_Layer);
+        GetNodeIJKfromTargetIndex(fgrid, iface, 1, IJKofNodes_1st_Layer);
+        GetNodeIJKfromTargetIndex(fgrid, iface, 2, IJKofNodes_2nd_Layer);
 
         RDouble XYZofNodes_1st_Layer[4][3];
         for (int nodeID = 0; nodeID < 4; ++ nodeID)
@@ -3111,13 +3111,13 @@ void StructGrid::TranslateCellIBlank(ActionKey *actkey)
     //cdata->moveto_begin();
 
     //int iFace, it, jt, kt;
-    //for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
+    //for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
     //{
-    //    iFace = faceIndexForRecv[iLocalFace];
+    //    iFace = faceIndexForRecv[ifaceLocal];
     //    this->GetTargetIndexIJK(iFace, 1 , it, jt, kt);
     //    int iCell = cellMapStrToUns(it, jt, kt);
 
-    //    cdata->read(&iBlank[iCell], sizeof(int));
+    //    cdata->read(&iBlank[iCell],sizeof(int));
     //}
 }
 
@@ -3196,14 +3196,14 @@ bool StructGrid::CommunicateNodeLocation()
     return Rwithghost;
 }
 
-void StructGrid::GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3])
+void StructGrid::GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3])
 {
     int is, js, ks;
-    fgrid->GetSourceIndexIJK(iFace, layer, is, js, ks);
+    fgrid->GetSourceIndexIJK(iface, layer, is, js, ks);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetSourceIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
 
     int dijk1[3];
     int dijk2[3];
@@ -3270,14 +3270,14 @@ void StructGrid::GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iFace, int lay
     IJKofNodes[3][2] = IJKofNodes[0][2] + dijk3[2];
 }
 
-void StructGrid::GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3])
+void StructGrid::GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3])
 {
     int it, jt, kt;
-    fgrid->GetTargetIndexIJK(iFace, layer, it, jt, kt);
+    fgrid->GetTargetIndexIJK(iface, layer, it, jt, kt);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetTargetIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
 
     int dijk1[3];
     int dijk2[3];
@@ -3382,15 +3382,16 @@ void StructGrid::GetRelationBetweenTwoPairsofNodes(int RelationBetweenTwoPairsof
     }
 }
 
-LIB_EXPORT void StructGrid::GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
+LIB_EXPORT void StructGrid::GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    this->composite_bcregion->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+    this->composite_bcregion->GetSourceIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
 }
 
-LIB_EXPORT void StructGrid::GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
+LIB_EXPORT void StructGrid::GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    this->composite_bcregion->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+    this->composite_bcregion->GetTargetIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
 }
+
 
 void StructGrid::ComputeMetrics_BC()
 {
@@ -3969,17 +3970,17 @@ streamsize StructGrid::TranslateCellCenterLength(ActionKey *actkey)
     streamsize nlen = nIFaceOfNeighbor * sizeof(RDouble) * 4;
     return nlen;
 
-// for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
+// for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
 // {
-//     iFace = faceIndexForRecv[iLocalFace];
-//     fgrid->GetTargetIndexIJK(iFace, 1, it, jt, kt);
-//     fgrid->RemapMultigridIJK(level, it, jt, kt);
+//     iface = faceIndexForRecv[ifaceLocal];
+//     fgrid->GetTargetIndexIJK(iface,1,it,jt,kt);
+//     fgrid->RemapMultigridIJK(level,it,jt,kt);
 // 
-//     cdata->read(&xcc(it, jt, kt), sizeof(RDouble));
-//     cdata->read(&ycc(it, jt, kt), sizeof(RDouble));
-//     cdata->read(&zcc(it, jt, kt), sizeof(RDouble));
+//     cdata->read(&xcc(it,jt,kt),sizeof(RDouble));
+//     cdata->read(&ycc(it,jt,kt),sizeof(RDouble));
+//     cdata->read(&zcc(it,jt,kt),sizeof(RDouble));
 //     RDouble tmp;
-//     cdata->read(&tmp, sizeof(RDouble));
+//     cdata->read(&tmp,sizeof(RDouble));
 // }
 }
 

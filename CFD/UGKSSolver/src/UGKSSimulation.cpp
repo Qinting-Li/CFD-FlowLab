@@ -133,16 +133,16 @@ namespace PHSPACE
 
         using namespace PHMPI;
         int nLocalZones = GetNumberofLocalZones();
-        int iSolver = 0; //! Only one solver.
+        int isolver = 0;//only one solver
 
         //! First: initialize memory.
         for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-            Zone *zone = region->GetZone(zoneID);
+            Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
-            PHSolver *solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID, iSolver));
+            PHSolver * solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID,isolver));
             solver->InitMemory();
         }
         //! Second: initialize flow variables on the finest mesh.
@@ -150,9 +150,9 @@ namespace PHSPACE
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-            Zone *zone = region->GetZone(zoneID);
+            Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
-            PHSolver *solver = static_cast<UGKSSolver *>( GlobalSolvers::GetSolver(zoneID, iSolver));
+            PHSolver * solver = static_cast<UGKSSolver *>( GlobalSolvers::GetSolver(zoneID,isolver));
 
             solver->InitFlow();
         }
@@ -161,9 +161,9 @@ namespace PHSPACE
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-            Zone *zone = region->GetZone(zoneID);
+            Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
-            UGKSSolver *solver = static_cast<UGKSSolver *>( GlobalSolvers::GetSolver(zoneID, iSolver));
+            UGKSSolver * solver = static_cast<UGKSSolver *>( GlobalSolvers::GetSolver(zoneID,isolver));
 
             solver->CommunicationInterfaceDataInit();
         }
@@ -221,26 +221,26 @@ namespace PHSPACE
         using namespace PHMPI;
         int nLocalZones = GetNumberofLocalZones();
         int level = 0;
-        int iSolver = 0; //only one solver
+        int isolver = 0;//only one solver
 
         RDouble globalMinDt = LARGE,minDt;
         for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-            Zone *zone = region->GetZone(zoneID);
+            Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
-            Grid *grid = GetGrid(zoneID, level);
-            UGKSSolver *solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID, iSolver));
-            solver->ComputeMinTimeStep(grid, minDt);
+            Grid * grid = GetGrid(zoneID,level);
+            UGKSSolver * solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID,isolver));
+            solver->ComputeMinTimeStep(grid,minDt);
             globalMinDt = MIN(globalMinDt, minDt);
         }
         PH_CompareMaxMin(globalMinDt, 2);
         GlobalDataBase::UpdateData("globalMinTimeStep", &globalMinDt, PHDOUBLE, 1);
 
-        if (PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
+        if(PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
         {
-            int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+            int outnstep             = GlobalDataBase::GetIntParaFromDB("outnstep");
             ostringstream oss;
             oss.setf(ios::scientific);
             oss.precision(2);
@@ -256,16 +256,16 @@ namespace PHSPACE
         using namespace PHMPI;
         int nLocalZones = GetNumberofLocalZones();
         int level = 0;
-        int iSolver = 0; //only one solver
+        int isolver = 0;//only one solver
 
         for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-            Zone *zone = region->GetZone(zoneID);
+            Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
-            Grid *grid = GetGrid(zoneID, level);
-            UGKSSolver *solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID, iSolver));
+            Grid * grid = GetGrid(zoneID,level);
+            UGKSSolver * solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID,isolver));
 
             solver->UGKSSolve(grid);
         }
@@ -276,16 +276,16 @@ namespace PHSPACE
         using namespace PHMPI;
         int nLocalZones = GetNumberofLocalZones();
         int level = 0;
-        int iSolver = 0; //only one solver
+        int isolver = 0;//only one solver
 
         for (int iZone = 0; iZone < nLocalZones; ++ iZone)
         {
             int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-            Zone *zone = region->GetZone(zoneID);
+            Zone * zone = region->GetZone(zoneID);
             if (!zone) continue;
-            Grid *grid = GetGrid(zoneID, level);
-            UGKSSolver *solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID, iSolver));
+            Grid * grid = GetGrid(zoneID,level);
+            UGKSSolver * solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID,isolver));
 
             solver->PostSolve(grid);
         }
@@ -303,15 +303,15 @@ namespace PHSPACE
             using namespace PHMPI;
             int nLocalZones = GetNumberofLocalZones();
             int level = 0;
-            int iSolver = 0; //only one solver
+            int isolver = 0;//only one solver
             for (int iZone = 0; iZone < nLocalZones; ++ iZone)
             {
                 int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-                Zone *zone = region->GetZone(zoneID);
+                Zone * zone = region->GetZone(zoneID);
                 if (!zone) continue;
-                Grid *grid = GetGrid(zoneID, level);
-                UGKSSolver *solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID, iSolver));
+                Grid * grid = GetGrid(zoneID,level);
+                UGKSSolver * solver = static_cast<UGKSSolver *>(GlobalSolvers::GetSolver(zoneID,isolver));
 
                 solver->VisulizeGhostCell(grid);
             }  

@@ -298,16 +298,16 @@ public:
     LIB_EXPORT void SetBCFaceInfo();
 
     //! Get source boundary grid's I, J, K index.
-    LIB_EXPORT void GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
+    LIB_EXPORT void GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k);
 
     //! Get source boundary grid's I, J, K index.
-    LIB_EXPORT void GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr);
+    LIB_EXPORT void GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr);
 
     //! Get target boundary grid's I, J, K index.
-    LIB_EXPORT void GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
+    LIB_EXPORT void GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k);
 
-    LIB_EXPORT void GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
-    LIB_EXPORT void GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    LIB_EXPORT void GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    LIB_EXPORT void GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
     void ComputeMetrics_BC();
     void ComputeMetrics_BC_2D();
     void ComputeMetrics_BC_3D();
@@ -558,11 +558,11 @@ private:
     void GetCellCenter(ActionKey *actkey);
     void TranslateCellCenter(ActionKey *actkey);
     bool CommunicateNodeLocation();
-    void GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3]);
-    void GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3]);
+    void GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3]);
+    void GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3]);
     void GetRelationBetweenTwoPairsofNodes(int RelationBetweenTwoPairsofNodes[4], RDouble Nodes_ABCD[4][3], RDouble Nodes_abcd[4][3]);
-    void GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3]);
-    void GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3]);
+    void GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3]);
+    void GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3]);
     int GetRelationshipBetweenTwoPairsofNodes(RDouble NodesofABCD[4][3], RDouble Nodesofabcd[4][3]);
     streamsize TranslateCellCenterLength(ActionKey *actkey);
     void GhostMetrics3D();

@@ -460,7 +460,7 @@ bool IsConvertGridToMixGrid()
     return flag;
 }
 
-LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iFace, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link)
+LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link)
 {
     sort(pindex.begin(), pindex.end());
     DataStruct_Sort< VInt > face(pindex, static_cast<int>(fcount));
@@ -471,11 +471,11 @@ LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iFace, uint_t &fco
     if (iter == face_list.end())
     {
         face_list.insert(face);
-        facemap[iZone][iFace] = static_cast<int>(fcount);
+        facemap[iZone][iface] = static_cast<int>(fcount);
         VInt l_zoneid;
         VInt l_faceid;
         l_zoneid.push_back(iZone);
-        l_faceid.push_back(iFace);
+        l_faceid.push_back(iface);
 
         zoneid.push_back(l_zoneid);
         faceid.push_back(l_faceid);
@@ -484,9 +484,9 @@ LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iFace, uint_t &fco
     }
     else
     {
-        facemap[iZone][iFace] = iter->index;
+        facemap[iZone][iface] = iter->index;
         zoneid[iter->index].push_back(iZone);
-        faceid[iter->index].push_back(iFace);
+        faceid[iter->index].push_back(iface);
     }
 }
 

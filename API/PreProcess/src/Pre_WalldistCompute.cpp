@@ -3840,13 +3840,13 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
-    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
+    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
     {
         RDouble xc, yc, zc;
 
-        xc = xfc[iFace];
-        yc = yfc[iFace];
-        zc = zfc[iFace];
+        xc = xfc[iface];
+        yc = yfc[iface];
+        zc = zfc[iface];
         
         cdata->write(&xc, sizeof(RDouble));
         cdata->write(&yc, sizeof(RDouble));
@@ -3875,18 +3875,18 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
     PHWrite(cdata, nPointPerFace, nSolidFace);
 
     int count = 0;
-    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
+    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
     {
-        count += nPointPerFace[iFace];
+        count += nPointPerFace[iface];
     }
     PHWrite(cdata, wallFace2Node, count);
 
     //! Forth: wall face normal.
-    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
+    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
     {
-        RDouble xfn0 = xfn[iFace];
-        RDouble yfn0 = yfn[iFace];
-        RDouble zfn0 = zfn[iFace];
+        RDouble xfn0 = xfn[iface];
+        RDouble yfn0 = yfn[iface];
+        RDouble zfn0 = zfn[iface];
 
         cdata->write(&xfn0, sizeof(RDouble));
         cdata->write(&yfn0, sizeof(RDouble));
@@ -5199,9 +5199,9 @@ void VisualWalldist()
         int *faceNodeNumberContainer = grid->GetNodeNumberOfEachFace();
         int *faceNodeIndexContainer  = grid->GetFace2Node();
     
-        for (int iFace = 0; iFace < KMxOrNumFaces; ++ iFace)
+        for (int iface = 0; iface < KMxOrNumFaces; ++ iface)
         {
-            TotalNumFaceNodes_Rect += faceNodeNumberContainer[iFace];
+            TotalNumFaceNodes_Rect += faceNodeNumberContainer[iface];
         }
 
         INTEGER4 *FaceNodes_Rect = new INTEGER4[TotalNumFaceNodes_Rect];
@@ -5259,12 +5259,12 @@ void VisualWalldist()
         int *leftCellIndexContainer  = grid->GetLeftCellOfFace();
         int *rightCellIndexContainer = grid->GetRightCellOfFace();
 
-        for (INTEGER4 iFace = 0; iFace < KMxOrNumFaces; ++ iFace)
+        for (INTEGER4 iface = 0; iface < KMxOrNumFaces; ++ iface)
         {
-            FaceLeftElems [iFace] = leftCellIndexContainer [iFace] + 1;
-            FaceRightElems[iFace] = rightCellIndexContainer[iFace] + 1;
-            if (FaceRightElems[iFace] > JMxOrNumElements || FaceRightElems[iFace] < 0) FaceRightElems[iFace] = 0;
-            if (FaceLeftElems[iFace] > JMxOrNumElements || FaceLeftElems[iFace] < 0) FaceLeftElems[iFace] = 0;
+            FaceLeftElems [iface] = leftCellIndexContainer [iface] + 1;
+            FaceRightElems[iface] = rightCellIndexContainer[iface] + 1;
+            if (FaceRightElems[iface] > JMxOrNumElements || FaceRightElems[iface] < 0) FaceRightElems[iface] = 0;
+            if (FaceLeftElems[iface] > JMxOrNumElements || FaceLeftElems[iface] < 0) FaceLeftElems[iface] = 0;
         }
 
         INTEGER4 FaceBndryConnectionCounts = 0;

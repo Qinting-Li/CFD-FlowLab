@@ -3213,13 +3213,13 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for (int iLevel = 0; iLevel < nMGLevel; ++ iLevel)
+    for (int ilevel = 0; ilevel < nMGLevel; ++ ilevel)
     {
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             Zone *zone = GetZone(iZone);
             if (!zone) continue;
-            Grid *grid = GetGrid(iZone, iLevel);
+            Grid *grid = GetGrid(iZone, ilevel);
             int gridtype = grid->Type();
             if (gridtype == STRUCTGRID)
             {
@@ -3247,7 +3247,7 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
         int count = 1;
         for (set< int >::iterator iter = changedBC.begin(); iter != changedBC.end(); ++ iter)
         {
-            int originalBC = (*iter);
+            int originalBC = (* iter);
             int newBC = bcMap.TranslateBC(originalBC);
             cout << "Changed BC " << count ++ << ": " << originalBC << " --> " << newBC << endl;
         }

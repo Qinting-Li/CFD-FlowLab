@@ -207,11 +207,11 @@ void CombinGrid::MergeInterface2All()
     {
         UnstructGrid *gridLocal = UnstructGridCast(grid_in[iZone]);
         CompositeUnstructBC **bcrLocal = gridLocal->GetBCRecord();
-        int nBLocalFace = gridLocal->GetNBoundFace();
+        int nBFaceLocal = gridLocal->GetNBoundFace();
         int *face2all = GetFace2All(iZone);
         
         int nMergedInterfaces = 0;
-        for (int iFace = 0; iFace < nBLocalFace; ++ iFace)
+        for (int iFace = 0; iFace < nBFaceLocal; ++ iFace)
         {
             int globalFaceID = face2all[iFace];
 
@@ -587,20 +587,20 @@ void CombinGrid::MergeBCType()
         if (right_cell_of_face[iFace] != -1)
         {
             //! iFace is interior face, it must be reject out of nBoundFace.
-            for (int jFace = jstart; jFace < nTFace_all; ++ jFace)
+            for (int jface = jstart; jface < nTFace_all; ++ jface)
             {
-                if (right_cell_of_face[jFace] == -1)
+                if (right_cell_of_face[jface] == -1)
                 {
-                    SWAP(left_cell_of_face[iFace], left_cell_of_face[jFace]);
-                    SWAP(right_cell_of_face[iFace], right_cell_of_face[jFace]);
-                    SWAP(vface2node[iFace], vface2node[jFace]);
-                    SWAP(node_number_of_each_face[iFace], node_number_of_each_face[jFace]);
-                    SWAP(bcr_all[iFace], bcr_all[jFace]);
+                    SWAP(left_cell_of_face[iFace], left_cell_of_face[jface]);
+                    SWAP(right_cell_of_face[iFace], right_cell_of_face[jface]);
+                    SWAP(vface2node[iFace], vface2node[jface]);
+                    SWAP(node_number_of_each_face[iFace], node_number_of_each_face[jface]);
+                    SWAP(bcr_all[iFace], bcr_all[jface]);
 
-                    face2NewFaceafterReorder[iFace] = jFace;
-                    face2NewFaceafterReorder[jFace] = iFace;
+                    face2NewFaceafterReorder[iFace] = jface;
+                    face2NewFaceafterReorder[jface] = iFace;
 
-                    jstart = jFace + 1;
+                    jstart = jface + 1;
                     break;
                 }
             }

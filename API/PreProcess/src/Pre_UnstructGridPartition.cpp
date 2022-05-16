@@ -1058,9 +1058,9 @@ void Pre_UnstructGridPartition::SwapInterfaceTopo(int iZone, int jZone)
             int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
             int iFace, le, partIndex, localInterfaceIndex, bcFaceIndex;
             cdata->moveto_begin();
-            for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
+            for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
             {
-                iFace = faceIndexForSend[iLocalFace];
+                iFace = faceIndexForSend[ifaceLocal];
                 bcFaceIndex = interFace2BoundaryFace[iFace];    // BC face index in old grid.
                 grid->GetSourceIndex(iFace, 1, le);
 
@@ -1139,12 +1139,12 @@ bool Pre_UnstructGridPartition::FindMatchPart(UnstructGrid *grid, int izone_t, i
             continue;
         }
 
-        //! The interface iFace target zone == iZone.
+        //! The interface iface target zone == iZone.
         if ((interFace2ZoneID[iFace] == izone_t) &&
             (interFace2InterFaceID[iFace] == ie_t) && 
             (ie == interface_interfaceid_t[iface_t]))
         {
-            //! The jFace of current zone and the iFace corresponding to target zone are all count from 0.
+            //! The jface of current zone and the iface corresponding to target zone are all count from 0.
             interFace2InterFaceID  [iFace  ] = iface_t;
             interface_interfaceid_t[iface_t] = iFace;
 
