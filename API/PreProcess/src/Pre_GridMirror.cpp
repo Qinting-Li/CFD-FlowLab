@@ -1352,11 +1352,11 @@ void Pre_GridMirror::MirrorBCRegion()
 
                     /*interFace2ZoneID[count] = Gridindex + numberOfOriginalBlocks;
                     interFace2InterFaceID[count] = count;
-                    interFace2BoundaryFace[count] = iface;
+                    interFace2BoundaryFace[count] = iFace;
 
                     interFace2ZoneID_mir[count] = Gridindex;
                     interFace2InterFaceID_mir[count] = count;
-                    interFace2BoundaryFace_mir[count] = iface;*/
+                    interFace2BoundaryFace_mir[count] = iFace;*/
                     
                     //iInterfae ++;
                     count ++;

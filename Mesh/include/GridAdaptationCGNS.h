@@ -418,16 +418,16 @@ public:
     void MarkElementBoundaryFace();
     void MarkAllCandidateBoundaryFace();
     bool CheckBCFace(set<cgsize_t> &bc_vertex, vector<int> &face_node);
-    int  GetRootFaceID(int iface);
+    int  GetRootFaceID(int iFace);
     int  GetNBoundFace() const;
-    int  GetFacePointNumber(int iface) { return static_cast<int>((*face_to_nodes)[iface].size()); }
+    int  GetFacePointNumber(int iFace) { return static_cast<int>((*face_to_nodes)[iFace].size()); }
     int  GetNTotalCell() const { return nTotalCell; }
     void SetNTotalCell(int nTotalCell) { this->nTotalCell = nTotalCell; }
 public: 
     void Normalize(vector< int > &element_all_to_local_map);
     void CreateUnstructGrid(UnstructGrid *grid);
     void ReorderElementFace();
-    void SwapElementFace(int iface, int jface);
+    void SwapElementFace(int iFace, int jFace);
     void FreeMemory();
     void PrintBoundaryFace();
     void AddChildBoundaryFace(vector<int> &face_node, int face_type, int bctype);

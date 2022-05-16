@@ -250,12 +250,12 @@ public:
 
     int GetnBCRegion() const;
 
-    void GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k);
-    void GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsruf, int &s_lr);
-    void GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k);
+    void GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
+    void GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsruf, int &s_lr);
+    void GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
 
-    void GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
-    void GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    void GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    void GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
 
     void ProcessBCInfo();
     void SetLnkInfo();

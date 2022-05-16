@@ -3391,14 +3391,14 @@ void StructGrid::ComputeJacobianforStructHighOrder3D()
     delete &zfaceK;
 }
 
-void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3])
+void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3])
 {
     int is, js, ks;
-    fgrid->GetSourceIndexIJK(iface, layer, is, js, ks);
+    fgrid->GetSourceIndexIJK(iFace, layer, is, js, ks);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetSourceIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 
     int a[3];
     int b[3];
@@ -3506,14 +3506,14 @@ void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int if
     }
 }
 
-void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3])
+void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3])
 {
     int it, jt, kt;
-    fgrid->GetTargetIndexIJK(iface, layer, it, jt, kt);
+    fgrid->GetTargetIndexIJK(iFace, layer, it, jt, kt);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetTargetIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 
     int a[3];
     int b[3];

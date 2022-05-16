@@ -390,7 +390,7 @@ void UnstructGrid::ComputeFace2NodeArray()
     face2NodeArray = new int * [numberOfFaces];
 
     face2NodeArray[0] = face2Node;
-    for(int iFace = 1; iFace < numberOfFaces; ++ iFace)
+    for (int iFace = 1; iFace < numberOfFaces; ++ iFace)
     {
         face2NodeArray[iFace] = &(face2NodeArray[iFace-1][nodeNumberOfEachFace[iFace-1]]);
     }
@@ -407,7 +407,7 @@ void UnstructGrid::ComputeFace2NodeSubscript()
     int *  face2NodeSubscript   = faceTopology->GetFace2NodeSubscript();
 
     //! Considering that it is often used as follows.
-    //for(iFace = 0; iFace < nTotalFace; ++iFace){
+    //for (iFace = 0; iFace < nTotalFace; ++iFace){
     //    g = f(face2NodeSubscript[iFace]) + f(face2NodeSubscript[iFace+1]);
     //}
     //! So we set the array length is numberOfFaces + 1.
@@ -415,7 +415,7 @@ void UnstructGrid::ComputeFace2NodeSubscript()
     face2NodeSubscript = new int[numberOfFaces + 1]; 
 
     face2NodeSubscript[0] = 0;
-    for(int iFace = 1; iFace <= numberOfFaces; ++ iFace)
+    for (int iFace = 1; iFace <= numberOfFaces; ++ iFace)
     {
         face2NodeSubscript[iFace] = face2NodeSubscript[iFace-1] + nodeNumberOfEachFace[iFace-1];
     }
@@ -944,20 +944,20 @@ void UnstructGrid::ComputeNode2Cell()
     struct linkbase *link, *tmp;
 
     int * nCPN = new int[ nTotalNode ];
-    nc  = new struct linkbase * [ nTotalNode ];
+    nc = new struct linkbase * [ nTotalNode ];
 
-    for(i = 0; i<nTotalNode; ++i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
-        nCPN[ i ] = 0;
-        nc[ i ]  = NULL;
+        nCPN[i] = 0;
+        nc[i] = NULL;
     }
     //firstly, search all the face
     node=0;
-    for(i = 0; i < nTotalFace; ++ i)
+    for (i = 0; i < nTotalFace; ++ i)
     {
         le = leftCellOfFace[ i ];
         re = rightCellOfFace[ i ];
-        for(j = 0; j < node_number_of_each_face[ i ]; ++ j)
+        for (j = 0; j < node_number_of_each_face[ i ]; ++ j)
         {
             ip = face2node[ node  ++  ];
             addn2c(le, ip, nCPN, nc);
@@ -967,23 +967,23 @@ void UnstructGrid::ComputeNode2Cell()
 
     //change date from linkbase to array
     count=0;
-    for(i = 0; i < nTotalNode; ++ i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
         count = count + nCPN[ i ];
     }
     int * n2c = new int [count];
 
     count=0;
-    for(i = 0; i < nTotalNode; ++ i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
-        for(link = nc[ i ]; link != NULL; link = link->next)
+        for (link = nc[ i ]; link != NULL; link = link->next)
         {
             n2c[ count++ ] = link->ic;
         }
     }
 
     //delete linkbase
-    for(i = 0; i < nTotalNode; ++ i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
         link = nc[ i ];
         while (link != NULL)
@@ -1010,7 +1010,7 @@ void UnstructGrid::ComputeNode2CellArray()
     int **node2CellArray = new int * [nTotalNode];
 
     node2CellArray[0] = node2Cell;
-    for(int iNode = 1; iNode < nTotalNode; ++iNode)
+    for (int iNode = 1; iNode < nTotalNode; ++iNode)
     {
         node2CellArray[iNode] = &(node2CellArray[iNode-1][nCellPerNode[iNode-1]]);
     }
@@ -1020,12 +1020,12 @@ void UnstructGrid::ComputeNode2CellArray()
     printf("Get Node2CellArray, well down!");
 }
 
-void UnstructGrid::GetSourceIndex(int iFace,int ipos,int &s)
+void UnstructGrid::GetSourceIndex(int iFace,int ipos, int &s)
 {
-    InterfaceInfo * interfaceInfo = this->GetInterfaceInfo();
-    int * interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
-    int * leftCellOfFace = this->GetLeftCellOfFace();
-    s = leftCellOfFace[ interFace2BoundaryFace[iFace] ];
+    InterfaceInfo *interfaceInfo = this->GetInterfaceInfo();
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+    int *leftCellOfFace = this->GetLeftCellOfFace();
+    s = leftCellOfFace[interFace2BoundaryFace[iFace]];
 }
 
 void UnstructGrid::GetSourcePointIndex(int ipoint,int ipos,int &s)
@@ -1034,12 +1034,12 @@ void UnstructGrid::GetSourcePointIndex(int ipoint,int ipos,int &s)
     int *interPoint2GlobalPoint = interpointInformation->GetInterPoint2GlobalPoint();
     s = interPoint2GlobalPoint[ipoint];
 }
-void UnstructGrid::GetTargetIndex(int iFace,int ipos,int &t)
+void UnstructGrid::GetTargetIndex(int iFace,int ipos, int &t)
 {
-    InterfaceInfo * interfaceInfo = this->GetInterfaceInfo();
-    int * interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
-    int * rightCellOfFace = this->GetRightCellOfFace();
-    t = rightCellOfFace[ interFace2BoundaryFace[iFace] ];
+    InterfaceInfo *interfaceInfo = this->GetInterfaceInfo();
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
+    t = rightCellOfFace[interFace2BoundaryFace[iFace]];
 }
 
 void UnstructGrid::GetTargetPointIndex(int ipoint,int ipos,int &t)
@@ -3498,10 +3498,10 @@ void UnstructGrid::GetCellCenter(ActionKey *actkey)
     RDouble * vol = this->GetCellVolume();
 
     int iFace,s1;
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForSend[ ifaceLocal ];
-        this->GetSourceIndex(iFace,1,s1);
+        iFace = faceIndexForSend[iLocalFace];
+        this->GetSourceIndex(iFace, 1, s1);
 
         cdata->write(&xcc[s1], sizeof(RDouble));
         cdata->write(&ycc[s1], sizeof(RDouble));
@@ -3529,9 +3529,9 @@ void UnstructGrid::TranslateCellCenter(ActionKey *actkey)
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ifaceLocal];
+        iFace = faceIndexForRecv[iLocalFace];
         this->GetTargetIndex(iFace, 1, t1);
 
         cdata->read(&xcc[t1], sizeof(RDouble));
@@ -3556,10 +3556,10 @@ void UnstructGrid::GetCellIBlank(ActionKey *actkey)
     int * iBlank = this->GetBlankIndex();
 
     int iFace,s1;
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForSend[ ifaceLocal ];
-        this->GetSourceIndex(iFace,1,s1);
+        iFace = faceIndexForSend[iLocalFace];
+        this->GetSourceIndex(iFace, 1, s1);
 
         cdata->write(&iBlank[s1], sizeof(int));
     }
@@ -3581,12 +3581,12 @@ void UnstructGrid::TranslateCellIBlank(ActionKey *actkey)
     DataContainer * cdata = actkey->GetData();
     cdata->moveto_begin();
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ ifaceLocal ];
-        this->GetTargetIndex(iFace,1,t1);
+        iFace = faceIndexForRecv[iLocalFace];
+        this->GetTargetIndex(iFace, 1, t1);
 
-        cdata->read(&iBlank[t1],sizeof(int));
+        cdata->read(&iBlank[t1], sizeof(int));
     }
 }
 
@@ -3603,10 +3603,10 @@ streamsize UnstructGrid::TranslateCellCenterLength(ActionKey *actkey)
     int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
     int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ ifaceLocal ];
-        this->GetTargetIndex(iFace,1,t1);
+        iFace = faceIndexForRecv[iLocalFace];
+        this->GetTargetIndex(iFace, 1, t1);
 
         nlen += sizeof(RDouble) * 4;
     }
@@ -3627,10 +3627,10 @@ streamsize UnstructGrid::TranslateCellIBlankLength(ActionKey *actkey)
     int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
     int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ ifaceLocal ];
-        this->GetTargetIndex(iFace,1,t1);
+        iFace = faceIndexForRecv[iLocalFace];
+        this->GetTargetIndex(iFace, 1, t1);
 
         nlen += sizeof(int) * 1;
     }
@@ -9383,11 +9383,11 @@ void MinMaxDiffINF(Grid *grid_in, int ig, RDouble *dmin, RDouble *dmax, RDouble 
         grid->GetSourceIndex(iFace,ig+1,ie);
         dmin[iFace] = q[ie];
         dmax[iFace] = q[ie];
-        for (int jface = 0; jface < face_number_of_each_cell[ie]; ++ jface)
+        for (int jFace = 0; jFace < face_number_of_each_cell[ie]; ++ jFace)
         {
-            face  = cell2face[ie][jface];
-            le    = leftCellOfFace[ face ];
-            re    = rightCellOfFace[ face ];
+            face = cell2face[ie][jFace];
+            le   = leftCellOfFace[face];
+            re   = rightCellOfFace[face];
             dmin[iFace] = MIN(dmin[iFace], q[le]);
             dmin[iFace] = MIN(dmin[iFace], q[re]);
 
@@ -9795,11 +9795,11 @@ void BarthLimiterINF(Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble 
     {
         int ie,face,le,re,iflag;
         grid->GetSourceIndex(iFace,ig+1,ie);
-        for (int jface = 0; jface < face_number_of_each_cell[ie]; ++ jface)
+        for (int jFace = 0; jFace < face_number_of_each_cell[ie]; ++ jFace)
         {
-            face  = cell2face[ie][jface];
-            le    = leftCellOfFace[ face ];
-            re    = rightCellOfFace[ face ];
+            face = cell2face[ie][jFace];
+            le   = leftCellOfFace[face];
+            re   = rightCellOfFace[face];
 
             iflag = 1;
 
@@ -9883,11 +9883,11 @@ void VencatLimiterINF(Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble
     {
         int ie,face,le,re,iflag;
         grid->GetSourceIndex(iFace,ig+1,ie);
-        for (int jface = 0; jface < face_number_of_each_cell[ie]; ++ jface)
+        for (int jFace = 0; jFace < face_number_of_each_cell[ie]; ++ jFace)
         {
-            face  = cell2face[ie][jface];
-            le    = leftCellOfFace[ face ];
-            re    = rightCellOfFace[ face ];
+            face = cell2face[ie][jFace];
+            le   = leftCellOfFace[face];
+            re   = rightCellOfFace[face];
 
             dx = xcc[re] - xcc[le];
             dy = ycc[re] - ycc[le];
@@ -9913,12 +9913,12 @@ void VencatLimiterINF(Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble
 
             if (dq_face > SMALL)
             {
-                tmp       = VenFun(dmax[iFace], dq_face, eps);
+                tmp = VenFun(dmax[iFace], dq_face, eps);
                 limit[iFace] = MIN(limit[iFace], tmp);
             }
             else if (dq_face < - SMALL)
             {
-                tmp       = VenFun(dmin[iFace], dq_face, eps);
+                tmp = VenFun(dmin[iFace], dq_face, eps);
                 limit[iFace] = MIN(limit[iFace], tmp);
             }
         }

@@ -3787,13 +3787,13 @@ namespace PHSPACE
 
             int nIFace = fiinfo->GetNIFace();
 
-            for (int iface = 0; iface < nIFace; ++ iface)
+            for (int iFace = 0; iFace < nIFace; ++ iFace)
             {
-                int is,js,ks;
-                fgrid->GetSourceIndexIJK(iface, ngst+1, is, js, ks);
+                int is, js, ks;
+                fgrid->GetSourceIndexIJK(iFace, ngst+1, is, js, ks);
                 fgrid->RemapMultigridIJK(level, is, js, ks);
 
-                fg[0][iface] = (*f)(is, js, ks);
+                fg[0][iFace] = (*f)(is, js, ks);
             }
         }
     }
@@ -3814,14 +3814,14 @@ namespace PHSPACE
             RDouble **fg = reinterpret_cast< RDouble ** > (drecv->GetDataPtr(name));
 
             int nIFace = fiinfo->GetNIFace();
-            for (int iface = 0; iface < nIFace; ++ iface)
+            for (int iFace = 0; iFace < nIFace; ++ iFace)
             {
-                int it,jt,kt;
-                fgrid->GetTargetIndexIJK(iface, ngst+1, it, jt, kt);
+                int it, jt, kt;
+                fgrid->GetTargetIndexIJK(iFace, ngst+1, it, jt, kt);
                 fgrid->RemapMultigridIJK(level, it, jt, kt);
 
                 int m = 0;
-                (*f)(it, jt, kt) = fg[m][iface];
+                (*f)(it, jt, kt) = fg[m][iFace];
             }
         }
     }
@@ -3845,10 +3845,10 @@ namespace PHSPACE
 
             int nIFace = fiinfo->GetNIFace();
 
-            for (int iface = 0; iface < nIFace; ++ iface)
+            for (int iFace = 0; iFace < nIFace; ++ iFace)
             {
-                int is,js,ks;
-                fgrid->GetSourceIndexIJK(iface, ngst+1, is, js, ks);
+                int is, js, ks;
+                fgrid->GetSourceIndexIJK(iFace, ngst+1, is, js, ks);
                 fgrid->RemapMultigridIJK(level, is, js, ks);
 
                 int mm = 0;
@@ -3857,21 +3857,21 @@ namespace PHSPACE
 #ifdef USE_OMP
 #pragma omp parallel for private (mm) shared (lxm,lx)
 #endif 
-                 for(int n = wBegin; n < wEnd + 1; ++ n)
+                for (int n = wBegin; n < wEnd + 1; ++ n)
                 {
-                    for(int m = vBegin; m < vEnd + 1; ++ m)
+                    for (int m = vBegin; m < vEnd + 1; ++ m)
                     {
-                        for(int l = uBegin; l < uEnd + 1; ++ l)
+                        for (int l = uBegin; l < uEnd + 1; ++ l)
                         {
                             mm = (n - 1) * lxm + (m - 1) * lx + (l - 1);
-                            fg[mm][iface] = f(l, m, n, is, js, ks);
+                            fg[mm][iFace] = f(l, m, n, is, js, ks);
                         }
                     }
                 }
-                /* if(mm != neqn - 1)
+                /*if (mm != neqn - 1)
                  {
                      ostringstream oss;
-                     oss << "Error: UploadInterfaceValue6DArray Function Veclocity != addValue"<<endl;
+                     oss << "Error: UploadInterfaceValue6DArray Function Veclocity != addValue" << endl;
                      WriteLogFile(oss);
                  }*/
             }
@@ -3897,10 +3897,10 @@ namespace PHSPACE
             RDouble **fg = reinterpret_cast< RDouble ** > (drecv->GetDataPtr(name));
 
             int nIFace = fiinfo->GetNIFace();
-            for (int iface = 0; iface < nIFace; ++ iface)
+            for (int iFace = 0; iFace < nIFace; ++ iFace)
             {
-                int it,jt,kt;
-                fgrid->GetTargetIndexIJK(iface, ngst+1, it, jt, kt);
+                int it, jt, kt;
+                fgrid->GetTargetIndexIJK(iFace, ngst+1, it, jt, kt);
                 fgrid->RemapMultigridIJK(level, it, jt, kt);
                 int mm = 0;
                 int lxm = (vEnd - vBegin + 1) * (uEnd - uBegin + 1);
@@ -3908,20 +3908,20 @@ namespace PHSPACE
 #ifdef USE_OMP
 #pragma omp parallel for private (mm) shared(lxm,lx)
 #endif 
-                 for(int n = wBegin; n < wEnd + 1; ++ n)
+                for (int n = wBegin; n < wEnd + 1; ++ n)
                 {
-                    for(int m = vBegin; m < vEnd + 1; ++ m)
+                    for (int m = vBegin; m < vEnd + 1; ++ m)
                     {
-                        for(int l = uBegin; l < uEnd + 1; ++ l)
+                        for (int l = uBegin; l < uEnd + 1; ++ l)
                         {
                             mm = (n - 1) * lxm + (m - 1) * lx + (l - 1);
-                            f(l, m, n, it, jt, kt) = fg[mm][iface];
+                            f(l, m, n, it, jt, kt) = fg[mm][iFace];
                         }
                     }
                 }
-                /*if(mm != neqn - 1)
+                /*if (mm != neqn - 1)
                 {
-                //cout <<"kk:"<<mm<<"neqn:"<<neqn<<endl;
+                //cout << "kk:" << mm << "neqn:" << neqn << endl;
                 TK_Exit::ExceptionExit("Error: DownloadInterfaceValue6DArray Function Veclocity != addValue!\n");
                 }*/
             }
@@ -4192,9 +4192,9 @@ namespace PHSPACE
         cdata->moveto_begin();
         for (std::size_t idim = 0; idim < vectorDimension.size(); ++ idim)
         {
-            int iface;
-            int nm = vectorDimension[ idim ];
-            RDouble **q = vectorData[ idim ];
+            int iFace;
+            int nm = vectorDimension[idim];
+            RDouble **q = vectorData[idim];
 
             int nlen = nm * nIFaceOfNeighbor;
             RDouble *qtmp = new RDouble [nlen];
@@ -4202,11 +4202,11 @@ namespace PHSPACE
             int icount = 0;
             for (int j = 0; j < nIFaceOfNeighbor; ++ j)
             {
-                iface = faceIndexForSend[j];
-               // iface = 0;
+                iFace = faceIndexForSend[j];
+               // iFace = 0;
                 for (int m = 0; m < nm; ++ m)
                 {
-                    qtmp[icount ++] = q[m][iface];
+                    qtmp[icount ++] = q[m][iFace];
                 }
             }
             cdata->write(qtmp, nlen * sizeof(RDouble));
@@ -4255,9 +4255,9 @@ namespace PHSPACE
         cdata->moveto_begin();
         for (std::size_t idim = 0; idim < vectorDimension.size(); ++ idim)
         {
-            int iface;
-            int nm = vectorDimension[ idim ];
-            RDouble **q = vectorData[ idim ];
+            int iFace;
+            int nm = vectorDimension[idim];
+            RDouble **q = vectorData[idim];
 
             int nlen = nm * nIFaceOfNeighbor;
             RDouble *qtmp = new RDouble [nlen];
@@ -4266,11 +4266,11 @@ namespace PHSPACE
             int icount = 0;
             for (int j = 0; j < nIFaceOfNeighbor; ++ j)
             {
-                iface = faceIndexForRecv[j];
+                iFace = faceIndexForRecv[j];
 
                 for (int m = 0; m < nm; ++ m)
                 {
-                    q[m][iface] = qtmp[icount ++];
+                    q[m][iFace] = qtmp[icount ++];
                 }
             }
             delete [] qtmp;    qtmp = NULL;
