@@ -1109,7 +1109,7 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
                 //! Need to reverse the node ordering.
                 //! This problem is very hidden,mainly cause by the unclear definition of reverse.
                 //! The bottom line is wrong.
-                //std::reverse(face2node + nodePosi[iface],face2node + nodePosi[iface+1] - 1);
+                //std::reverse(face2node + nodePosi[iFace],face2node + nodePosi[iFace+1] - 1);
                 std::reverse(face2node + nodePosi[iFace], face2node + nodePosi[iFace+1]);
 
                 //! Now reverse le and re.
@@ -1239,9 +1239,9 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
 
     if (GetDim() == TWO_D)
     {
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            node_number_of_each_face[iface] = 2;
+            node_number_of_each_face[iFace] = 2;
         }
     }
     else
@@ -1252,10 +1252,10 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
     int *nodePosi = new int[nTotalFace + 1];
     int nsum = 0;
     nodePosi[0] = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        nsum += node_number_of_each_face[iface];
-        nodePosi[iface+1] = nsum;
+        nsum += node_number_of_each_face[iFace];
+        nodePosi[iFace+1] = nsum;
     }
 
     cout << "set the connection relationship of face to node......\n";
@@ -1289,32 +1289,32 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
         int *f2c_temp = new int [count];
         infile.read((char *)f2c_temp, count * SizeInt);
 
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            left_cell_of_face [iface] = f2c_temp[2 * iface];
-            right_cell_of_face[iface] = f2c_temp[2 * iface + 1];
+            left_cell_of_face [iFace] = f2c_temp[2 * iFace];
+            right_cell_of_face[iFace] = f2c_temp[2 * iFace + 1];
 
-            if (left_cell_of_face[iface] < 0)
+            if (left_cell_of_face[iFace] < 0)
             {
-                -- right_cell_of_face[iface];
-                std::reverse(face2node + nodePosi[iface], face2node + nodePosi[iface+1]);
+                -- right_cell_of_face[iFace];
+                std::reverse(face2node + nodePosi[iFace], face2node + nodePosi[iFace+1]);
 
                 //! Now reverse le and re.
-                SWAP(left_cell_of_face[iface], right_cell_of_face[iface]);
+                SWAP(left_cell_of_face[iFace], right_cell_of_face[iFace]);
 
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
-            else if (right_cell_of_face[iface] < 0)
+            else if (right_cell_of_face[iFace] < 0)
             {
-                -- left_cell_of_face[iface];
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                -- left_cell_of_face[iFace];
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
             else
             {
-                -- left_cell_of_face [iface];
-                -- right_cell_of_face[iface];
+                -- left_cell_of_face [iFace];
+                -- right_cell_of_face[iFace];
             }
         }
 
@@ -1331,11 +1331,11 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
 
     //! Set the boundary conditions.
     CompositeUnstructBC **bcr = new CompositeUnstructBC * [nBoundFace];
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = u2fbc.TranslateBC(-right_cell_of_face[iface]);
-        bcr[iface] = new CompositeUnstructBC();
-        bcr[iface]->SetKey(bctype);
+        int bctype = u2fbc.TranslateBC(-right_cell_of_face[iFace]);
+        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace]->SetKey(bctype);
     }
 
     grid->SetBCRecord(bcr);

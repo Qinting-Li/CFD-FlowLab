@@ -114,9 +114,9 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
             Post_Visual *postVisualization = new Post_Visual(nVisualVariables, visualVariables, grid, flowType);
 
             int Nsolver = GlobalSolvers::GetNumberOfSolvers(iZone);
-            for (int isolver = 0; isolver < Nsolver; ++ isolver)
+            for (int iSolver = 0; iSolver < Nsolver; ++ iSolver)
             {
-                GlobalSolvers::GetSolver(iZone, isolver)->ComputePostVisualVariables(postVisualization);
+                GlobalSolvers::GetSolver(iZone, iSolver)->ComputePostVisualVariables(postVisualization);
             }
             
             StoreVisualizationVar(actkey, postVisualization);
