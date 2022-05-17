@@ -267,7 +267,7 @@ void CGNSBCRegion::SetStructuredGridBoundary(StructBC * bcregion)
     delete bc_convert;
 }
 
-void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
+void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int iBCRegion)
 {
     cgsize_t npts;
     int normal_index[3], normal_list, ndataset;
@@ -281,7 +281,7 @@ void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
     int baseid = zone->GetBaseIndex();
     int zoneid = zone->GetZoneID();
 
-    cg_goto(fileid, baseid, "Zone_t", zoneid, "ZoneBC_t", 1, "BC_t", ibcregion, "end");
+    cg_goto(fileid, baseid, "Zone_t", zoneid, "ZoneBC_t", 1, "BC_t", iBCRegion, "end");
     cg_gridlocation_read(&igrid_location);
 
     cout << " Grid Location Name = " << GridLocationName[igrid_location] << "\n";
@@ -297,7 +297,7 @@ void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
         //igrid_location = FaceCenter;
     }
     // Read the info for this boundary condition.
-    cg_boco_info(fileid, baseid, zoneid, ibcregion, bcregion_name, &bctype, &iptset, &npts, normal_index,
+    cg_boco_info(fileid, baseid, zoneid, iBCRegion, bcregion_name, &bctype, &iptset, &npts, normal_index,
                 &norm_list_flag, &norm_data_type, &ndataset);
 
 
@@ -317,7 +317,7 @@ void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
     cout << " PointSetType_t = " << iptset << "\n";
 
     // Read the element ID¡¯s.
-    cg_boco_read(fileid, baseid, zoneid, ibcregion, bc_conn_list, &normal_list);
+    cg_boco_read(fileid, baseid, zoneid, iBCRegion, bc_conn_list, &normal_list);
     PrintConnectionList();
 }
 
@@ -465,9 +465,9 @@ CGNSBCRegionProxy::CGNSBCRegionProxy(CGNSZone *zone)
 
 CGNSBCRegionProxy::~CGNSBCRegionProxy()
 {
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        delete bcregions[ibcregion];
+        delete bcregions[iBCRegion];
     }
     delete [] bcregions;
 };
@@ -479,25 +479,25 @@ void CGNSBCRegionProxy::Create(int n_ordinary_bcregions, int n1to1)
     this->nbcregions = n_ordinary_bcregions + n1to1;
     bcregions = new CGNSBCRegion *[nbcregions];
 
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        bcregions[ibcregion] = new CGNSBCRegion(zone);
+        bcregions[iBCRegion] = new CGNSBCRegion(zone);
     }
 };
 
 void CGNSBCRegionProxy::Convert2InerDataStandard()
 {
     int nbcregions = GetNBCRegion();
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        CGNSBCRegion * bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
         bcregion->Convert2InerDataStandard();
     }
 
     int bcregion_base = 1;
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        CGNSBCRegion * bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
         if (!bcregion->DetermineBase())
         {
             bcregion_base = 0;
@@ -507,9 +507,9 @@ void CGNSBCRegionProxy::Convert2InerDataStandard()
 
     if (bcregion_base == 0)
     {
-        for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
         {
-            CGNSBCRegion * bcregion = GetBCRegion(ibcregion);
+            CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
             bcregion->ShiftBCRegion();
         }
     }
@@ -628,12 +628,12 @@ void CGNSZone::CopyStructuredGrid(Grid *grid_in)
     grid->CreateCompositeBCRegion(nBCRegion);
     CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC * bcregion = new StructBC(GetZoneID()-1, ibcregion);
-        composite_bcregion->SetBCRegion(ibcregion, bcregion);
+        StructBC *bcregion = new StructBC(GetZoneID()-1, iBCRegion);
+        composite_bcregion->SetBCRegion(iBCRegion, bcregion);
 
-        CGNSBCRegion *cgns_bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *cgns_bcregion = GetBCRegion(iBCRegion);
         cgns_bcregion->SetStructuredGridBoundary(bcregion);
     }
 
@@ -678,10 +678,10 @@ void CGNSZone::ReadGridBoundaryConditions()
     CreateBCRegions(nOrdinaryBCRegions, n1to1);
 
     // Loop over the number of boundary conditions.
-    for (int ibcregion = 1; ibcregion <= nOrdinaryBCRegions; ++ ibcregion)
+    for (int iBCRegion = 1; iBCRegion <= nOrdinaryBCRegions; ++ iBCRegion)
     {
-        CGNSBCRegion *cgns_bcregion = GetBCRegion(ibcregion-1);
-        cgns_bcregion->ReadOrdinaryBoundaryRegion(ibcregion);
+        CGNSBCRegion *cgns_bcregion = GetBCRegion(iBCRegion-1);
+        cgns_bcregion->ReadOrdinaryBoundaryRegion(iBCRegion);
     }
 
     for (int i1to1 = 1; i1to1 <= n1to1; ++ i1to1)
@@ -796,9 +796,9 @@ void CGNSZone::BuildPoints(PointOperation *point_operation)
 void CGNSZone::ResolveElementBoundaryFace(ElementFaceProxy *element_face_proxy)
 {
     int nbcregions = GetNBCRegion();
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        CGNSBCRegion *bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
 
         bcregion->ResolveElementBoundaryFace(element_face_proxy);
     }

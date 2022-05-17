@@ -586,9 +586,9 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
     int TecioMission;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;

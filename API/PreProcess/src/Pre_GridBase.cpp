@@ -933,9 +933,9 @@ CGNSBase::~CGNSBase()
 
     if (bc_conn_list)
     {
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            delete [] bc_conn_list[ibcregion];
+            delete [] bc_conn_list[iBCRegion];
         }
     }
     delete [] bc_conn_list;
@@ -1000,23 +1000,23 @@ void CGNSBase::PreProcess(Base_Grid_Conn *gconn, BaseElement *base_elem)
         }
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         //! It is true for all situation.
-        for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+        for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
         {
-            bc_conn_list[ibcregion][j] -= 1;
+            bc_conn_list[iBCRegion][j] -= 1;
         }
     }
 
     //! For boundary BC's, it should be checked index base.
     int ibase = 1;
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+        for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
         {
-            if (bc_conn_list[ibcregion][j] < nTotalCell)
+            if (bc_conn_list[iBCRegion][j] < nTotalCell)
             {
                 ibase = 0;
                 break;
@@ -1027,13 +1027,13 @@ void CGNSBase::PreProcess(Base_Grid_Conn *gconn, BaseElement *base_elem)
 
     if (ibase == 0)
     {
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            if ((this->bc_grid_location[ibcregion] != Vertex))
+            if ((this->bc_grid_location[iBCRegion] != Vertex))
             {
-                for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+                for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
                 {
-                    bc_conn_list[ibcregion][j] += nTotalCell;
+                    bc_conn_list[iBCRegion][j] += nTotalCell;
                 }
             }
         }
@@ -1496,82 +1496,82 @@ void CGNSBase::ComputeBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
     }
     cgsize_t MaxCell = this->nTotalCell + nBoundFace;
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        BCType_t bctype = static_cast<BCType_t> (bc_type[ibcregion]);
-        GridLocation_t igr = static_cast<GridLocation_t>(bc_grid_location[ibcregion]);
+        BCType_t bctype = static_cast<BCType_t> (bc_type[iBCRegion]);
+        GridLocation_t igr = static_cast<GridLocation_t>(bc_grid_location[iBCRegion]);
 
         string BCName = "";
         if (boundaryName)
         {
-            BCName = boundaryName[ibcregion];
+            BCName = boundaryName[iBCRegion];
             if (bctype < NofValidBCTypes)
             {
-                std::cout << "  Boundary Condition : the " << ibcregion + 1 
+                std::cout << "  Boundary Condition : the " << iBCRegion + 1 
                     << " BCName = "   << BCName 
                     << ", BCType = "  << BCTypeName[bctype]
                     << "\n";
             }
             else
             {
-                std::cout << "  Boundary Condition : the " << ibcregion + 1 
+                std::cout << "  Boundary Condition : the " << iBCRegion + 1 
                     << " BCName = " << BCName << "(SelfDefined)\n";
             }
         }
 
-        if (bc_elem_set_type[ibcregion] == PointRange)
+        if (bc_elem_set_type[iBCRegion] == PointRange)
         {
             if (igr == EdgeCenter || igr == FaceCenter)
             {
-                bc_elem_set_type[ibcregion] = ElementRange;
+                bc_elem_set_type[iBCRegion] = ElementRange;
             }
         }
-        else if (bc_elem_set_type[ibcregion] == PointList)
+        else if (bc_elem_set_type[iBCRegion] == PointList)
         {
             if (igr == EdgeCenter || igr == FaceCenter)
             {
-                bc_elem_set_type[ibcregion] = ElementList;
+                bc_elem_set_type[iBCRegion] = ElementList;
             }
         }
 
-        if (bc_elem_set_type[ibcregion] == ElementRange)
+        if (bc_elem_set_type[iBCRegion] == ElementRange)
         {
-            if (bc_conn_list[ibcregion][0] >= MaxCell)
+            if (bc_conn_list[iBCRegion][0] >= MaxCell)
             {
                 continue;
             }
 
-            cgsize_t startElement = bc_conn_list[ibcregion][0];
-            cgsize_t endElement   = bc_conn_list[ibcregion][1];
+            cgsize_t startElement = bc_conn_list[iBCRegion][0];
+            cgsize_t endElement   = bc_conn_list[iBCRegion][1];
             for (cgsize_t iElement = startElement; iElement <= endElement; ++ iElement)
             {
                 ProcessBCFace(gconn, base_elem, iElement, bctype, BCName);
             }
         }
-        else if (bc_elem_set_type[ibcregion] == ElementList)
+        else if (bc_elem_set_type[iBCRegion] == ElementList)
         {
-            if (bc_conn_list[ibcregion][0] >= MaxCell)
+            if (bc_conn_list[iBCRegion][0] >= MaxCell)
             {
                 continue;
             }
 
-            for (int i = 0; i < nBCElem[ibcregion]; ++ i)
+            for (int i = 0; i < nBCElem[iBCRegion]; ++ i)
             {
-                ProcessBCFace(gconn, base_elem, bc_conn_list[ibcregion][i], bctype, BCName);
+                ProcessBCFace(gconn, base_elem, bc_conn_list[iBCRegion][i], bctype, BCName);
             }
         }
         //! This situation has not been encountered, we can not ensure the code is right! 
-        else if (bc_elem_set_type[ibcregion] == PointRange ||
-                 bc_elem_set_type[ibcregion] == PointList)
+        else if (bc_elem_set_type[iBCRegion] == PointRange ||
+                 bc_elem_set_type[iBCRegion] == PointList)
         {
-            ProcessBCVertex(gconn, base_elem, bc_elem_set_type[ibcregion], 
-                nBCElem[ibcregion], bc_conn_list[ibcregion], bctype, BCName);
+            ProcessBCVertex(gconn, base_elem, bc_elem_set_type[iBCRegion], 
+                nBCElem[iBCRegion], bc_conn_list[iBCRegion], bctype, BCName);
         }
         else
         {
             ostringstream oss;
-            oss << "Error: this situation has not been considered, for points set type is " << PointSetTypeName[bc_elem_set_type[ibcregion]];
-            oss << " in BCRegions " << ibcregion << endl;
+            oss << "Error: this situation has not been considered, for points set type is " << PointSetTypeName[bc_elem_set_type[iBCRegion]];
+            oss << " in BCRegions " << iBCRegion << endl;
             TK_Exit::ExceptionExit(oss);
         }
     }
@@ -1580,9 +1580,9 @@ void CGNSBase::ComputeBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
 
     if (bc_conn_list)
     {
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            delete [] bc_conn_list[ibcregion];
+            delete [] bc_conn_list[iBCRegion];
         }
     }
     delete [] bc_conn_list;
@@ -1797,9 +1797,9 @@ void CGNSFactory::ReLableSelfDefineBC()
         int *bc_type = cgnsGrid->GetBCType();
         int nBCRegions = cgnsGrid->GetNumberOfBCRegions();
 
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            BCType_t bctype = static_cast<BCType_t>(bc_type[ibcregion]);
+            BCType_t bctype = static_cast<BCType_t>(bc_type[iBCRegion]);
             //! Since the number of custom boundary condition is 1, all of them are forced to add the maximum number NofValidBCTypes.
             if (bctype == BCTypeUserDefined)
             {
@@ -1809,7 +1809,7 @@ void CGNSFactory::ReLableSelfDefineBC()
 
             if (bctype >= NofValidBCTypes)
             {
-                bc_type[ibcregion] = bctype;
+                bc_type[iBCRegion] = bctype;
             }
         }
     }

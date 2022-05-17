@@ -646,12 +646,12 @@ void Pre_CGNSToPHengLEI_Struct::CheckMeshMultigrid()
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
         int nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
             km = 1;
             NN = 2;
 
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
 

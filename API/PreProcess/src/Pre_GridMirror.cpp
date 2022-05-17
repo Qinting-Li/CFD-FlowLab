@@ -576,13 +576,13 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
             CompositeStructBC *rhs = StructGridCast(grid)->GetCompositeBCRegion();
             CompositeStructBC *compositeStructBC = StructGridCast(Mirror)->GetCompositeBCRegion();
 
-            for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+            for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
             {
-                StructBC *bcregion = new StructBC(Gridindex, ibcregion);
-                StructBC *MirrorBCRegion = new StructBC(Gridindex + numberOfOriginalBlocks, ibcregion);
+                StructBC *bcregion = new StructBC(Gridindex, iBCRegion);
+                StructBC *MirrorBCRegion = new StructBC(Gridindex + numberOfOriginalBlocks, iBCRegion);
 
-                rhs->SetBCRegion(ibcregion, bcregion);
-                compositeStructBC->SetBCRegion(ibcregion, MirrorBCRegion);
+                rhs->SetBCRegion(iBCRegion, bcregion);
+                compositeStructBC->SetBCRegion(iBCRegion, MirrorBCRegion);
 
                 int bctype = 0;
                 PHRead(cdata, &bctype, 1);
@@ -650,9 +650,9 @@ void Pre_GridMirror::ReadLnkFile(const string &fileName_in)
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
         int nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
             if (bctype >= 0) continue;
@@ -722,9 +722,9 @@ void Pre_GridMirror::RevertBCInfo()
             CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
             int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
-            for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+            for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
             {
-                StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+                StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
                 int *s_st = structBC->GetStartPoint();
                 int *s_ed = structBC->GetEndPoint();
@@ -761,9 +761,9 @@ void Pre_GridMirror::CalBlocksNumberOfMirrorGrid()
         CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
         int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
 
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
 
@@ -799,9 +799,9 @@ void Pre_GridMirror::CalSymmetryFace()
         RDouble AA, BB, CC, DD;
 
         int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
 
@@ -1175,10 +1175,10 @@ void Pre_GridMirror::MirrorBCRegion()
             int numberOfBoundaryFaces = rhs->GetnBCRegion();
             PHWrite(gridinfo, &numberOfBoundaryFaces, 1);
 
-            for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+            for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
             {
-                StructBC *bcregion = rhs->GetBCRegion(ibcregion);
-                /*StructBC *MirrorBCRegion = compositeStructBC->GetBCRegion(ibcregion);*/
+                StructBC *bcregion = rhs->GetBCRegion(iBCRegion);
+                /*StructBC *MirrorBCRegion = compositeStructBC->GetBCRegion(iBCRegion);*/
 
                 int bctype = bcregion->GetBCType();
 

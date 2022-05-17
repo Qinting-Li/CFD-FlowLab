@@ -151,9 +151,9 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
 
                 CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
                 int nBCRegion = composite_bcregion->GetnBCRegion();
-                for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+                for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
                     string bcName = bcregion->GetBCName();
                     int bcType = bcregion->GetBCType();
                     if (bcType == PHENGLEI::INTERFACE)
@@ -1847,9 +1847,9 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
     
                     CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
                     int nBCRegion = composite_bcregion->GetnBCRegion();
-                    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+                    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                     {
-                        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
                         string bcRegionName = bcregion->GetBCName();
                         int bcRegionType = bcregion->GetBCType();
     
@@ -1931,9 +1931,9 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
 
                 CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
                 int nBCRegion = composite_bcregion->GetnBCRegion();
-                for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+                for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
                     string bcname = bcregion->GetBCName();
 
                     set< pair<string, int> >::iterator iter;

@@ -234,9 +234,9 @@ void Mesh_Refine_Struct::GenerateBCRegion()
         CompositeStructBC *rhs = strGridNew->GetCompositeBCRegion();
 
         int numberOfBoundaryFaces = rhs->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *bcregion = rhs->GetBCRegion(ibcregion);
+            StructBC *bcregion = rhs->GetBCRegion(iBCRegion);
 
             int bctype = bcregion->GetBCType();
 

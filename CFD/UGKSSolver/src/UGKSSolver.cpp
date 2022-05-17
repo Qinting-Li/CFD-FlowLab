@@ -901,9 +901,9 @@ namespace PHSPACE
         CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
 
-        for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
             int bctype = bcregion->GetBCType();
 
             if (bctype < 0)   
@@ -4387,9 +4387,9 @@ namespace PHSPACE
         CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
 
-        for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
             int bctype = bcregion->GetBCType();
 
             if (bctype < 0)   
@@ -4697,9 +4697,9 @@ namespace PHSPACE
         CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
 
-        for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
             int bctype = bcregion->GetBCType();
 
             int ist, ied, jst, jed, kst, ked;
@@ -4711,7 +4711,6 @@ namespace PHSPACE
                 const string & bcName = bcregion->GetBCName();
                 isNeedComputeAirForce = isNeedComputeAirForce && (bcName == partBCName);
             }
-
 
             if (!isNeedComputeAirForce)
             {

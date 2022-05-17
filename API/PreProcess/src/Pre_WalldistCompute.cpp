@@ -1860,9 +1860,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1883,9 +1883,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     int iBlock = grid->GetIBlock();
     cdata->write(&iBlock, sizeof(int));
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1917,9 +1917,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     //! Compute nWallPoints.
     int nWallPoints = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1968,9 +1968,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     RDouble3D &zz = *grid->GetStructZ();
 
     nWallPoints = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2005,8 +2005,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             Range J(1, nj);
             Range K(1, nk);
 
-            structNode2UnstrNodeID[ibcregion] = new Int3D(I, J, K, fortranArray);
-            Int3D &nodeMap = *(structNode2UnstrNodeID[ibcregion]);
+            structNode2UnstrNodeID[iBCRegion] = new Int3D(I, J, K, fortranArray);
+            Int3D &nodeMap = *(structNode2UnstrNodeID[iBCRegion]);
 
             for (int k = s_st[2]; k <= s_ed[2]; ++ k)
             {
@@ -2064,9 +2064,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     int nk = grid->GetNK();
     count = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2095,7 +2095,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             }
 
             int nsurf = bcregion->GetFaceDirection() + 1;
-            Int3D &nodeMap = *(structNode2UnstrNodeID[ibcregion]);
+            Int3D &nodeMap = *(structNode2UnstrNodeID[iBCRegion]);
             int in, jn, kn;
             for (int k = kst; k <= ked; ++ k)
             {
@@ -2187,9 +2187,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     RDouble4D &yfn = *(grid->GetFaceNormalY());
     RDouble4D &zfn = *(grid->GetFaceNormalZ());
     
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))

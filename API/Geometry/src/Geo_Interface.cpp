@@ -339,20 +339,20 @@ void InterfaceInfo::InitNeighbors()
     FindNeighbors();
 
     int numberOfNeighbor = this->GetNumberOfNeighbor();
-    for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
     {
-        InitNeighbors(ineighbor);
+        InitNeighbors(iNeighbor);
     }
 }
 
 int InterfaceInfo::FindIthNeighbor(int zone)
 {
     int idx = -1;
-    for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
     {
-        if (zone == this->GetZoneIndexOfNeighbor(ineighbor))
+        if (zone == this->GetZoneIndexOfNeighbor(iNeighbor))
         {
-            idx = ineighbor;
+            idx = iNeighbor;
             break;
         }
     }

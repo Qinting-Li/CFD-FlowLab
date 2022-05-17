@@ -536,28 +536,28 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
         bc_type[icount++] = *iter;
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         int icount = 0;
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_bctype[iFace] == bc_type[ibcregion])
+            if (cell_bctype[iFace] == bc_type[iBCRegion])
             {
                 icount ++;
             }
         }
-        nBCElem[ibcregion] = icount;
-        bc_conn_list[ibcregion] = new cgsize_t [nBCElem[ibcregion]];
+        nBCElem[iBCRegion] = icount;
+        bc_conn_list[iBCRegion] = new cgsize_t [nBCElem[iBCRegion]];
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         int icount = 0;
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_bctype[iFace] == bc_type[ibcregion])
+            if (cell_bctype[iFace] == bc_type[iBCRegion])
             {
-                bc_conn_list[ibcregion][icount ++] = iFace;
+                bc_conn_list[iBCRegion][icount ++] = iFace;
             }
         }
     }
@@ -682,14 +682,14 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
         }
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        for (int i = 0; i < nBCElem[ibcregion]; ++ i)
+        for (int i = 0; i < nBCElem[iBCRegion]; ++ i)
         {
-            uint_t idx = bc_conn_list[ibcregion][i];
+            uint_t idx = bc_conn_list[iBCRegion][i];
             int m_sec = sec_bc [idx];
             int m_pos = sec_pos[idx];
-            bc_conn_list[ibcregion][i] = istart[m_sec] + m_pos;
+            bc_conn_list[iBCRegion][i] = istart[m_sec] + m_pos;
         }
     }
 
@@ -950,12 +950,12 @@ void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_c
         base_cgns_conn_list[nElem_Sections+m] = bc_elem_conn_list[m];
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        base_cgns_bc_conn_list[ibcregion] = bc_conn_list[ibcregion];
-        for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+        base_cgns_bc_conn_list[iBCRegion] = bc_conn_list[iBCRegion];
+        for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
         {
-            base_cgns_bc_conn_list[ibcregion][j] += nTotalCell;
+            base_cgns_bc_conn_list[iBCRegion][j] += nTotalCell;
         }
     }
 
@@ -964,10 +964,10 @@ void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_c
     int *base_cgns_bc_grid_location = base_cgns->GetBoundaryGridLocation();
 
     base_cgns->SetBCType(bc_type);
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        base_cgns_bc_elem_set_type[ibcregion] = ElementList;
-        base_cgns_bc_grid_location[ibcregion] = CellCenter;
+        base_cgns_bc_elem_set_type[iBCRegion] = ElementList;
+        base_cgns_bc_grid_location[iBCRegion] = CellCenter;
     }
 
     for (int m = 0; m < nElem_Sections; ++ m)

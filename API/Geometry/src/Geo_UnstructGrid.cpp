@@ -7725,31 +7725,31 @@ void SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarpl
         PHWrite(cdata, z[iNode]);
     }
 
-    for (int iVarible = 0; iVarible < nvarplot; ++ iVarible)
+    for (int iVar = 0; iVar < nvarplot; ++ iVar)
     {
-        RDouble * qq = qn[ iVarible ];
-        for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
+        RDouble *qq = qn[iVar];
+        for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
         {
-            if(keyNodes[ iNode ] != 1) continue;
-            PHWrite(cdata, qq[ iNode ]);
+            if (keyNodes[iNode] != 1) continue;
+            PHWrite(cdata, qq[iNode]);
         }
     }
     
     count = 0;
 
-    for(int iFace = 0; iFace < numberOfFaces; ++ iFace)
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int faceNodeNumber = faceNodeNumberContainer[ iFace ];
+        int faceNodeNumber = faceNodeNumberContainer[iFace];
 
-        if(keyFaces[ iFace ] != 1)
+        if (keyFaces[iFace] != 1)
         {
             count += faceNodeNumber;
             continue;
         }
 
-        for(int iNode = 0; iNode < faceNodeNumberContainer[ iFace ]; ++ iNode)
+        for (int iNode = 0; iNode < faceNodeNumberContainer[iFace]; ++ iNode)
         {
-            int nodeIndex = nodeList[ faceNodeIndexContainer[ count ++ ] ];
+            int nodeIndex = nodeList[faceNodeIndexContainer[count ++]];
             PHWrite(cdata, nodeIndex);
         }
     }
@@ -8971,28 +8971,28 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
     int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
 
     int nodepos = 0;
-    for (int ibface = 0; ibface < nBoundFace; ++ ibface)
+    for (int iBFace = 0; iBFace < nBoundFace; ++ iBFace)
     {
-        int bctype = bcr[ibface]->GetKey();
+        int bctype = bcr[iBFace]->GetKey();
         if (!IsInterface(bctype))
         {
-            nodepos += node_number_of_each_face[ibface];
+            nodepos += node_number_of_each_face[iBFace];
             continue;
         }
-        for (int m = 0; m < node_number_of_each_face[ibface]; ++ m)
+        for (int m = 0; m < node_number_of_each_face[iBFace]; ++ m)
         {
             index[m] = face2node[ nodepos + m ];
         }
-        nodepos += node_number_of_each_face[ibface];
+        nodepos += node_number_of_each_face[iBFace];
 
-        int nlist = node_number_of_each_face[ibface];
+        int nlist = node_number_of_each_face[iBFace];
         pindex.resize(nlist);
 
         GetFaceCoorList(index, nlist, xlist, ylist, zlist, x, y, z);
         GetCoorIndexList(&coor_tree, tol, pcount, xlist, ylist, zlist, nlist, pindex);
         Create_Link_Info(pindex, zoneIndex, iFace, fcount, facelist, zoneid, faceid, link);
 
-        interFace2BoundaryFace[iFace] = ibface;
+        interFace2BoundaryFace[iFace] = iBFace;
         ++ iFace;
     }
     cout << "iFace = " << iFace << "\n";
@@ -9452,15 +9452,15 @@ void UploadInterfaceValue(UnstructGrid *grid, RDouble **f, const string &name, i
     if (!interfaceInfo) return;
 
     int nIFace = interfaceInfo->GetNIFace();
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite * sendData = interfaceInfo->GetSendDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast< RDouble ** > (sendData->GetDataPtr(name));
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int sourceCell;
-            grid->GetSourceIndex(iFace, iGhostLayer + 1, sourceCell);
+            grid->GetSourceIndex(iFace, iGhost + 1, sourceCell);
             for (int m = 0; m < neqn; ++ m)
             {
                 fg[m][iFace] = f[m][sourceCell];
@@ -9478,15 +9478,15 @@ void UploadInterfaceValue(UnstructGrid *grid, RDouble *f, const string &name)
     }
 
     int nIFace = interfaceInfo->GetNIFace();
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast <RDouble **> (sendData->GetDataPtr(name));
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int sourceCell;
-            grid->GetSourceIndex(iFace, iGhostLayer + 1, sourceCell);
+            grid->GetSourceIndex(iFace, iGhost + 1, sourceCell);
             fg[0][iFace] = f[sourceCell];
         }
     }
@@ -9499,16 +9499,16 @@ void DownloadInterfaceValue(UnstructGrid *grid, RDouble **f, const string &name,
 
     int nIFace = interfaceInfo->GetNIFace();
 
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite * recieveData = interfaceInfo->GetRecvDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *recieveData = interfaceInfo->GetRecvDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast< RDouble ** > (recieveData->GetDataPtr(name));
 
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int targetCell;
-            grid->GetTargetIndex(iFace, iGhostLayer + 1, targetCell);
+            grid->GetTargetIndex(iFace, iGhost + 1, targetCell);
             for (int m = 0; m < neqn; ++ m)
             {
                 f[m][targetCell] = fg[m][iFace];
@@ -9527,16 +9527,16 @@ void DownloadInterfaceValue(UnstructGrid *grid, RDouble *f, const string &name)
 
     int nIFace = interfaceInfo->GetNIFace();
 
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *recieveData = interfaceInfo->GetRecvDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *recieveData = interfaceInfo->GetRecvDataStorage(iGhost);
         
         RDouble **fg = reinterpret_cast <RDouble **> (recieveData->GetDataPtr(name));
         
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int targetCell;
-            grid->GetTargetIndex(iFace, iGhostLayer + 1, targetCell);
+            grid->GetTargetIndex(iFace, iGhost + 1, targetCell);
             f[targetCell] = fg[0][iFace];
         }
     }
@@ -9550,16 +9550,16 @@ void UploadInterpointValue(UnstructGrid *grid, RDouble **f, const string &name, 
     }
 
     int numberOfInterpoints = interpointInformation->GetNumberOfInterpoints();
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *sendData = interpointInformation->GetSendDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *sendData = interpointInformation->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast<RDouble **>(sendData->GetDataPtr(name));
         
         for (int iPoint = 0; iPoint < numberOfInterpoints; ++ iPoint)
         {
             int sourcePoint;
-            grid->GetSourcePointIndex(iPoint, iGhostLayer + 1, sourcePoint);
+            grid->GetSourcePointIndex(iPoint, iGhost + 1, sourcePoint);
             for (int m = 0; m < nEquation; ++ m)
             {
                 fg[m][iPoint] = f[m][sourcePoint];
@@ -9608,11 +9608,11 @@ void UploadOversetValueDefault(UnstructGrid *grid, RDouble **field, const string
 
     int numberOfNeighbors = oversetDataProxy->GetNumberOfNeighbors();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
@@ -9653,15 +9653,15 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
     RDouble *yNode = grid->GetY();
     RDouble *zNode = grid->GetZ();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
-        RDouble *interCellCenterX    = oversetDataProxy->GetInterCellCenterX(neighborIndex);
-        RDouble *interCellCenterY    = oversetDataProxy->GetInterCellCenterY(neighborIndex);
-        RDouble *interCellCenterZ    = oversetDataProxy->GetInterCellCenterZ(neighborIndex);
+        RDouble *interCellCenterX    = oversetDataProxy->GetInterCellCenterX(iNeighbor);
+        RDouble *interCellCenterY    = oversetDataProxy->GetInterCellCenterY(iNeighbor);
+        RDouble *interCellCenterZ    = oversetDataProxy->GetInterCellCenterZ(iNeighbor);
 
         vector< RDouble > nodeValue(numberOfEquations);
 
@@ -9692,7 +9692,6 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
                     nodeValue[iEquation] += (1 / dist) * qNodeField[iEquation][nodeIndex];
                 }
                 weight += 1 / dist;
-
             }
             
             for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
@@ -9737,11 +9736,11 @@ void DownloadOversetValue(UnstructGrid *grid, RDouble **field, const string &nam
 
     int numberOfNeighborZones = oversetDataProxy->GetNumberOfNeighbors();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighborZones; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighborZones; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
