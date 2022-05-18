@@ -316,11 +316,11 @@ LIB_EXPORT void StartTime(double *last_time)
 
 LIB_EXPORT void GetFileModifiedTime(string &fileName, RDouble &TimeFile)
 {
-    auto filename = fileName;
+    string filename = fileName;
     struct stat result;
-    if(stat(filename.c_str(), &result) == 0 )
+    if (stat(filename.c_str(), &result) == 0 )
     {
-        auto mod_time = result.st_mtime;
+        RDouble mod_time = result.st_mtime;
         TimeFile = mod_time;
     }
 }
