@@ -370,6 +370,7 @@ set(Physics_H_PATH Physics/include)
 set(Physics_H_LIST
 ${Physics_H_PATH}/AleModel.h
 ${Physics_H_PATH}/AleManager.h
+${Physics_H_PATH}/AleForceManager.h
 ${Physics_H_PATH}/MovingMesh.h
 ${Physics_H_PATH}/DeformingSolverManager.h
 ${Physics_H_PATH}/SixDofManager.h
@@ -402,6 +403,7 @@ ${Physics_H_PATH}/Flux_RoeEntropyCorrection.h
 ${Physics_H_PATH}/Jacobian.h
 ${Physics_H_PATH}/Gradient.h
 ${Physics_H_PATH}/BLUSGS.h
+${Physics_H_PATH}/MatrixLUSGS.h
 ${Physics_H_PATH}/LineLUSGS.h
 )
 source_group(Physics\\include FILES ${Physics_H_LIST}) 
@@ -411,6 +413,7 @@ set(Physics_CPP_PATH Physics/src)
 set(Physics_CPP_LIST
 ${Physics_CPP_PATH}/Zone.cpp
 ${Physics_CPP_PATH}/Force.cpp
+${Physics_CPP_PATH}/AleForceManager.cpp
 ${Physics_CPP_PATH}/AleModel.cpp
 ${Physics_CPP_PATH}/AleManager.cpp
 ${Physics_CPP_PATH}/MovingMesh.cpp
@@ -442,6 +445,7 @@ ${Physics_CPP_PATH}/Jacobian.cpp
 ${Physics_CPP_PATH}/Gradient.cpp
 ${Physics_CPP_PATH}/Gas.cpp
 ${Physics_CPP_PATH}/BLUSGS.cpp
+${Physics_CPP_PATH}/MatrixLUSGS.cpp
 ${Physics_CPP_PATH}/LineLUSGS.cpp
 )
 source_group(Physics\\src FILES ${Physics_CPP_LIST})

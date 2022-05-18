@@ -3,7 +3,7 @@
 #include "Precision.h"
 #include "Constants.h"
 #include "AleManager.h"
-#include "Force.h"
+#include "AleForceManager.h"
 #include "Solver.h"
 #include "Geometry.h"
 #include "SixDofManager.h"

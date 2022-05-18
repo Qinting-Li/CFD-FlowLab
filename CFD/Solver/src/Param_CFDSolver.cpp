@@ -74,6 +74,34 @@ LIB_EXPORT void Param_CFDSolver::Init()
     GlobalDataBase::GetData("upperPlotFieldBox", &upperPlotFieldBox, PHDOUBLE, 3);
 
     isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+
+    pMax = 0.5, pMin = 0.2, deltaMax = 0.5, magnifyFactor = 2.0;
+    if (GlobalDataBase::IsExist("pMaxForCFL", PHDOUBLE, 1))
+    {
+        pMax = GlobalDataBase::GetDoubleParaFromDB("pMaxForCFL");
+    }
+    if (GlobalDataBase::IsExist("pMinForCFL", PHDOUBLE, 1))
+    {
+        pMin = GlobalDataBase::GetDoubleParaFromDB("pMinForCFL");
+    }
+    if (GlobalDataBase::IsExist("deltaMaxForCFL", PHDOUBLE, 1))
+    {
+        deltaMax = GlobalDataBase::GetDoubleParaFromDB("deltaMaxForCFL");
+    }
+    if (GlobalDataBase::IsExist("magnifyFactorForCFL", PHDOUBLE, 1))
+    {
+        magnifyFactor = GlobalDataBase::GetDoubleParaFromDB("magnifyFactorForCFL");
+    }
+    reduceFactor = 1.0 / magnifyFactor;
+    if (GlobalDataBase::IsExist("reduceFactorForCFL", PHDOUBLE, 1))
+    {
+        reduceFactor = GlobalDataBase::GetDoubleParaFromDB("reduceFactorForCFL"); //reduceFactorForCFL
+    }
+    fineCFL = 0.5;
+    if (GlobalDataBase::IsExist("fineCFL", PHDOUBLE, 1))
+    {
+        fineCFL = GlobalDataBase::GetDoubleParaFromDB("fineCFL"); //fineCFL
+    }
 }
 
 }

@@ -5024,7 +5024,7 @@ void NSSolverStructFD::Diagonal(Grid *gridIn)
     }
 }
 
-void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     if(tscheme == JACOBIAN_ITERATION)
@@ -5139,7 +5139,7 @@ void NSSolverStructFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Fiel
     }
 }
 
-void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void NSSolverStructFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
     if(tscheme == JACOBIAN_ITERATION)

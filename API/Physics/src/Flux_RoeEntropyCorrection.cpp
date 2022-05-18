@@ -5,11 +5,10 @@
 namespace PHSPACE
 {
 LIB_EXPORT void Flux_RoeEntropyCorrection(RDouble &eigv1, RDouble &eigv2, RDouble &eigv3, RDouble lrtL, RDouble lrtR, 
-                                          RDouble vn, RDouble cm, int RoeEntropyCorrectionMethod, RDouble acousticEigenLimit, RDouble convectEigenLimit)
+										  RDouble absVel, RDouble vn, RDouble cm, int RoeEntropyCorrectionMethod, RDouble acousticEigenLimit, RDouble convectEigenLimit)
 {
     //! eigv1,2,3: The three eigenvalue, which are V/V+c/V-c on the face.
-    //! Entropy fix from JCP LIN
-    if (RoeEntropyCorrectionMethod == 1)
+	if (RoeEntropyCorrectionMethod == 1)
     {
         RDouble maxEigvalue = MAX(eigv2, eigv3);
         RDouble tmp0 = maxEigvalue * acousticEigenLimit;
@@ -67,6 +66,16 @@ LIB_EXPORT void Flux_RoeEntropyCorrection(RDouble &eigv1, RDouble &eigv2, RDoubl
         eigv1 += delta;
         eigv2 += delta;
         eigv3 += delta;
+    }
+    else if (RoeEntropyCorrectionMethod == 6)
+    {
+        // for arbitary grid type, based on the shock wave detector and the absolute velocity V + sound speed C
+		RDouble pressureSensorOnface = MIN(lrtL, lrtR);
+		RDouble limitEig = (one - pressureSensorOnface) * (absVel + cm) + 0.0001 * cm;
+
+		eigv1 = Harten(eigv1, limitEig);
+		eigv2 = Harten(eigv2, limitEig);
+		eigv3 = Harten(eigv3, limitEig);
     }
     else
     {

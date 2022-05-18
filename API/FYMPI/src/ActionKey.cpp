@@ -42,7 +42,8 @@ const char * ActionName[NofValidAction] =
     "READ_AVERAGE_FLOW",
     "VISUALIZATION_AVERAGE_FLOW",
     "DUMP_SURFACE_INFO",
-    "DUMP_PROBES_FLOW"
+    "DUMP_PROBES_FLOW",
+    "DUMP_HEATFLUX"
 };
 
 ActionKey::ActionKey()

@@ -2406,7 +2406,7 @@ LIB_EXPORT void StructGrid::GetBoundaryMinMax(RDouble *pmin, RDouble *pmax)
         int nsurf = bcregion->GetFaceDirection() + 1;
 
         int il1, jl1, kl1;
-        GetNsurfIndex(nsurf, il1, jl1, kl1);
+        this->GetNsurfIndex( il1, jl1, kl1, nsurf);
 
         Range I(imin, imax + il1);
         Range J(jmin, jmax + jl1);
@@ -7065,7 +7065,6 @@ void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn)
             qn(ied, jed, kst, 0) = qn(ied - 1, jed - 1, kst, 0);
         }
     }
-
 }
 
 void GetIJKROT(int ijk[4][3], int *irot, int *jrot, int *krot)

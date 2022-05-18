@@ -1919,7 +1919,7 @@ void TurbSolverStrFD::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fi
     }
 }
 
-void TurbSolverStrFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void TurbSolverStrFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     StructGrid *grid = StructGridCast(gridIn);
 
@@ -1999,7 +1999,7 @@ void TurbSolverStrFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Field
     delete []mat_abc;
 }
 
-void TurbSolverStrFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void TurbSolverStrFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     StructGrid *grid = StructGridCast(gridIn);
 

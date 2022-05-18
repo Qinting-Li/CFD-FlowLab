@@ -124,16 +124,23 @@ public:
     virtual void RungeKutta(Grid *grid, FieldProxy *rhsProxy);
 
     //! Implicit LU-SGS time integration method.
-    virtual void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    virtual void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    virtual void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    virtual void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
    
     //! Implicit Block LU-SGS time integration method.
-    virtual void SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);    
+    virtual void SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
     virtual void SolveBLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+
+	//! Implicit Matrix LU-SGS time integration method.
+    virtual void SolveMatrixLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);    
+    virtual void SolveMatrixLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
     //! Implicit Line LU-SGS time integration method.
     virtual void SolveLineLUSGSForward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
     virtual void SolveLineLUSGSBackward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
+
+    //! To determine the CFL number of the next iteration step.
+    virtual void DetermineCFLNumber(Grid *grid, FieldProxy *dqProxy, FieldProxy *dqProxy1);
 
     //! Line implicit LU-SGS time integration method.
     virtual void LineLUSGS(Grid* grid, int level);
@@ -173,6 +180,8 @@ public:
     virtual void DumpResultFile(Grid *grid, int level = 0);
 
     virtual void CheckResult(Grid *grid, int level = 0);
+
+    virtual void DumpCFLNumber(Grid *grid, int level = 0);
 
     virtual void CheckSurfaceHeatingChange(Grid *grid, int level = 0);
 
@@ -227,6 +236,9 @@ public:
 
     virtual void GetResidual(Grid *gridIn, RDouble &localMaxRes);
 
+    //! Obtain the CFL number.
+    virtual void ObtainCFLNumber(Grid *gridIn, RDouble &globalMinCFL, RDouble &globalMaxCFL);
+
     //! Compute the surface heating change and obtain the maximum change of the surface heating ratio.
     virtual void GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange);
 
@@ -264,12 +276,16 @@ public:
     virtual void AirForceCoef(ActionKey *actkey){};
     virtual void CpDistriCoef(ActionKey *actkey){};
 
+    virtual void ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux){};
+
     //! Interpoint data communications.
     virtual void CommunicationInterpointData();
 
     virtual void DumpResidual(ActionKey *actkey);
 
     virtual void CheckResidual(ActionKey *actkey);
+
+    virtual void ObtainCFLNumber(ActionKey *actkey);
 
     virtual void ComputeSurfaceHeatingChange(ActionKey *actkey);
 
@@ -286,6 +302,7 @@ public:
     virtual const string GetFlowTecFileName();
 
     virtual void DumpRestartData(ActionKey *actkey);
+    virtual void DumpProtectData(ActionKey *actkey, int &RestartFile);
     void CreateH5RestartFile(ActionKey *actkey);
 
     virtual void InitMemory();
@@ -296,6 +313,8 @@ public:
     //! 2. InitFlowAsReadingRestart.
     virtual void InitFlow();
 
+    virtual void InitProtectedFlow();
+
     //! Initialize flow by inflow condition, or set the flow variables to be zero.
     virtual void InitFlowAsRestart();
 
@@ -304,6 +323,8 @@ public:
     //! for turbulent solver, the turbulent variables are store in turb.dat.
     virtual void InitFlowAsReadingRestart();
     virtual void InitFlowAsReadingRestart(ActionKey *actkey);
+
+    virtual void InitFlowAsReadingProtectedRestart(ActionKey *actkey);
 
     //! To output Average Flow for visualization by tecplot format.
     virtual void TecOutAverageFlow(ActionKey *actkey);
@@ -315,6 +336,8 @@ public:
     virtual void DumpCpDistri(ActionKey *actkey);
     virtual void DumpSurfaceInfo(ActionKey *actkey);
     void WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *> datalist);
+    virtual void DumpHeatFlux(ActionKey *actkey);
+    void WriteHeatFluxASCII(ActionKey *actkey, RDouble *HeatFlux);
     #ifdef USE_TecplotLib
         void WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> datalist);
     #endif
@@ -378,6 +401,8 @@ protected:
 
     virtual bool JudgeIfReadAverage();
     virtual bool JudgeIfRestart();
+
+    virtual bool JudgeIfProtectedRestart();
 
     virtual void InitCoarseGridsFlow();
 

@@ -1,6 +1,7 @@
 #include "Post_Identify.h"
 #include "PHIO.h"
 #include "TK_Exit.h"
+#include "TK_Log.h"
 #include "GlobalDataBase.h"
 #include "Constants.h"
 #include "AleManager.h"
@@ -62,7 +63,7 @@ namespace PHSPACE
         int nBlankLine = 17;
         fstream file;
         string forceFile = GlobalDataBase::GetStrParaFromDB("aircoeffile");
-        file.open(forceFile.c_str(), ios_base::in | ios_base::app);
+        file.open(forceFile.c_str(), ios_base::in);
         vector <RDouble> force(nForceVar);
 
         string blankLine, line;

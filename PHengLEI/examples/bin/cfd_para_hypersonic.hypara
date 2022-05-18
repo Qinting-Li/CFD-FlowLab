@@ -221,8 +221,8 @@ int limitVector = 1;
 #########################################################################
 #                       Non-equilibrium gas                             #
 #########################################################################
-// iCodeBranch:  iCodeBranch=0 indicates the generic Navier-Stokes solver, 
-//				 iCodeBranch>0 indicates the HyFlow self-adaptive solver.
+// isAdaptiveSolver:  isAdaptiveSolver=0 indicates the generic Navier-Stokes solver, 
+//				 isAdaptiveSolver>0 indicates the HyFlow self-adaptive solver.
 //               1 -- using HyFlow self-adaptive solver where the switch is controlled by the total iteration steps.
 //               2 -- using HyFlow self-adaptive solver where the switch is controlled by variation of the key residual.
 // nGasModel: The type of gas. less than and equal to 1 represents the mixture gas. 
@@ -300,7 +300,7 @@ int limitVector = 1;
 // secondStepError : the residual error of the second step iteration for the self-adaptive calculation.
 // thirdStepError  : the residual error of the third step iteration for the self-adaptive calculation.
 
-int iCodeBranch = 0;
+int isAdaptiveSolver = 0;
 int nIterFirstStep = 1000;
 int nIterSecondStep= 2000;
 int nIterThirdStep = 2000;
