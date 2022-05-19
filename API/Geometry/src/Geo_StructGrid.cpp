@@ -83,12 +83,12 @@ LIB_EXPORT StructGrid::StructGrid()
     zoneProbesCellNJ.resize(0);
     zoneProbesCellNK.resize(0);
 
-    ordinaryGridIndex = -1;
-    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-    {
-        ordinaryDimStartIndex[iDim] = 0;
-        ordinaryDimEndIndex  [iDim] = 0;
-    }
+ //   ordinaryGridIndex = -1;
+ //   for (int iDim = 0; iDim < THREE_D; ++ iDim)
+ //   {
+ //       ordinaryDimStartIndex[iDim] = 0;
+ //       ordinaryDimEndIndex  [iDim] = 0;
+ //   }
 }
 
 LIB_EXPORT void StructGrid::InitGrid(GridID *index, int level, int dim, int type)
@@ -6336,41 +6336,41 @@ void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, 
     return;
 }
 
-void StructGrid::SetOrdinaryGridIndex(int ordinaryGridIndexIn)
-{
-    this->ordinaryGridIndex = ordinaryGridIndexIn;
-}
-
-void StructGrid::SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn)
-{
-    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-    {
-        this->ordinaryDimStartIndex[iDim] = ordinaryDimStartIndexIn[iDim];
-    }
-}
-
-void StructGrid::SetOrdinaryDimEndIndex(int *ordinaryDimEndIndexIn)
-{
-    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-    {
-        this->ordinaryDimEndIndex[iDim] = ordinaryDimEndIndexIn[iDim];
-    }
-}
-
-int StructGrid::GetOrdinaryGridIndex()
-{
-    return this->ordinaryGridIndex;
-}
-
-int *StructGrid::GetOrdinaryDimStartIndex()
-{
-    return ordinaryDimStartIndex;
-}
-
-int *StructGrid::GetOrdinaryDimEndIndex()
-{
-    return ordinaryDimEndIndex;
-}
+//void StructGrid::SetOrdinaryGridIndex(int ordinaryGridIndexIn)
+//{
+//    this->ordinaryGridIndex = ordinaryGridIndexIn;
+//}
+//
+//void StructGrid::SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn)
+//{
+//    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+//    {
+//        this->ordinaryDimStartIndex[iDim] = ordinaryDimStartIndexIn[iDim];
+//    }
+//}
+//
+//void StructGrid::SetOrdinaryDimEndIndex(int *ordinaryDimEndIndexIn)
+//{
+//    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+//    {
+//        this->ordinaryDimEndIndex[iDim] = ordinaryDimEndIndexIn[iDim];
+//    }
+//}
+//
+//int StructGrid::GetOrdinaryGridIndex()
+//{
+//    return this->ordinaryGridIndex;
+//}
+//
+//int *StructGrid::GetOrdinaryDimStartIndex()
+//{
+//    return ordinaryDimStartIndex;
+//}
+//
+//int *StructGrid::GetOrdinaryDimEndIndex()
+//{
+//    return ordinaryDimEndIndex;
+//}
 
 void StructGrid::GetLocalIndex(int gp, int &ip, int &jp, int &kp) const
 {
