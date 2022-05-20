@@ -75,7 +75,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_W                  , "w"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_PRESSURE           , "pressure"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE        , "temperature"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_MACH               , "mach"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_MACH               , "streamline_mach"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_VISCOSITY_LAMINAR  , "viscosityLaminar"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_VISCOSITY_TURBULENT, "viscosityTurbulence"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_VORTICITY_X        , "vorticity_x"));
@@ -105,6 +105,8 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_DIST          , "walldist"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_GAMA               , "gama"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_IBLANK             , "iblank"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_CFL1               , "localCFL"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_CFL2               , "minCFL"));
 
     int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
     if (nsimutask == UGKS_SOLVER)
@@ -332,6 +334,7 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
 
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
     bool isVelocityForPostVisual = false;
+
     if (name == "streamline_u" || name == "streamline_v" || name == "streamline_w")
     {
         isVelocityForPostVisual = true;
@@ -2299,6 +2302,7 @@ LIB_EXPORT Post_VisualWall::Post_VisualWall(int nVisualNumber, int *visualVariab
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_VS, "Vs(m/s)"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_ST, "St"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_CH, "Ch"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_RE, "Re_w"));
 
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     if (nChemical > 0)

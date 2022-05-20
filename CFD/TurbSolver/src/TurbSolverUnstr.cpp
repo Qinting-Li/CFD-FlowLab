@@ -527,10 +527,10 @@ void TurbSolverUnstr::ReadRestartH5(ActionKey *actkey)
         RDouble **qTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n1"));
         RDouble **qTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("q_turb_unsteady_n2"));
 
-        RDouble **residualTurbulence           = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb"));
+        RDouble **residualTurbulence = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb"));
         RDouble **residualTurbulenceUnsteadyN1 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n1"));
         RDouble **residualTurbulenceUnsteadyN2 = reinterpret_cast<RDouble **> (grid->GetDataPtr("res_turb_unsteady_n2"));
-        RDouble **qAverageTurb                 = reinterpret_cast<RDouble **> (grid->GetDataPtr("qAverageTurb"));
+        RDouble **qAverageTurb = reinterpret_cast<RDouble **> (grid->GetDataPtr("qAverageTurb"));
 
         //! Start from steady flow field and reset the outer step when start from steady flow.
         int ifStartFromSteadyResults = parameters->GetIfStartFromSteadyResults();
@@ -548,7 +548,7 @@ void TurbSolverUnstr::ReadRestartH5(ActionKey *actkey)
                     qTurbulenceUnsteadyN1[m][iCell] = qTurbulence[m][iCell];
                     qTurbulenceUnsteadyN2[m][iCell] = qTurbulence[m][iCell];
 
-                    residualTurbulence[m][iCell]           = 0.0;
+                    residualTurbulence[m][iCell] = 0.0;
                     residualTurbulenceUnsteadyN1[m][iCell] = 0.0;
                     residualTurbulenceUnsteadyN2[m][iCell] = 0.0;
                 }
@@ -606,31 +606,34 @@ void TurbSolverUnstr::ReadRestartH5(ActionKey *actkey)
         int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
         bool isReadAverageFlow = ifStaticsFlowField && (outerIterationStepOfTurbulence >= startStatisticStep);
-        if(isReadAverageFlow && (!ifStartFromSteadyResults))
+        if (isReadAverageFlow)
         {
-            ReadData(grploc, qTemporary[0], "qAverageTurb");
-            for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
+            if (ifStartFromSteadyResults)
             {
-                for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
+                for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
                 {
-                    qAverageTurb[iEquation][iCell] = qTemporary[iEquation][iCell];
+                    for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
+                    {
+                        qAverageTurb[iEquation][iCell] = qTurbulence[iEquation][iCell];
+                    }
                 }
-            }
 
-            ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
-            GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
-        }
-        else
-        {
-            for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
+                GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+            }
+            else
             {
-                for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
+                ReadData(grploc, qTemporary[0], "qAverageTurb");
+                for (int iEquation = 0; iEquation < nTurbulenceEquation; ++ iEquation)
                 {
-                    qAverageTurb[iEquation][iCell] = qTurbulence[iEquation][iCell];
+                    for (int iCell = 0; iCell < numberOfTotal; ++ iCell)
+                    {
+                        qAverageTurb[iEquation][iCell] = qTemporary[iEquation][iCell];
+                    }
                 }
-            }
 
-            GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+                ReadData(actkey->filepos, &nStatisticalStep, "nStatisticalStep");
+                GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
+            }
         }
     }
 
@@ -1248,7 +1251,7 @@ void TurbSolverUnstr::RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDou
     }
 }
 
-void TurbSolverUnstr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void TurbSolverUnstr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfTotalCell = grid->GetNTotalCell();
@@ -1367,7 +1370,7 @@ void TurbSolverUnstr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Field
     delete []matrixUx;
 }
 
-void TurbSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void TurbSolverUnstr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int numberOfTotalCell = grid->GetNTotalCell();

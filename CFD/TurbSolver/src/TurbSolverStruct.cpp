@@ -3908,7 +3908,7 @@ namespace PHSPACE
         }
     }
 
-    void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
     {
         StructGrid *grid = StructGridCast(gridIn);
 
@@ -4026,7 +4026,7 @@ namespace PHSPACE
         delete[]Ux;
     }
 
-    void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
     {
         StructGrid *grid = StructGridCast(gridIn);
 

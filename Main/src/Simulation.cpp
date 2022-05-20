@@ -230,8 +230,10 @@ void Simulation::RunCFD()
         return;
     }
 
-    int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
-    if (iCodeBranch > 0)
+    //the flag of solver, the adaptive method sets value great than zero.
+    int isAdaptiveSolver = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
+    //solving the NS equations using the automated process from the perfect gas to the thermochemical nonequilibrium gas.
+    if (isAdaptiveSolver > 0)
     {
         GenerateWalldist();
 
@@ -1437,13 +1439,13 @@ void Simulation::DefineAndCreateSolvers()
                     int isFVMOrFDM = 0;
                     zone->GetData("isFVMOrFDM", &isFVMOrFDM, PHINT, 1);
 
-                    int iCodeBranch = 0;
-                    zone->GetData("iCodeBranch", &iCodeBranch, PHINT, 1);
+                    int isAdaptiveSolver = 0;
+                    zone->GetData("isAdaptiveSolver", &isAdaptiveSolver, PHINT, 1);
 
                     if (isFVMOrFDM == FV_METHOD) //! Add structured FV NS solver.
                     {
 #ifdef USE_OLD_CODE
-                        if (iCodeBranch == 0)
+                        if (isAdaptiveSolver == 0)
                         {
                             PHSolver *solver = new NSSolverStructFV();
                             solverList.push_back(solver);

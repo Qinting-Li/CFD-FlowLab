@@ -2511,7 +2511,7 @@ RDouble HOSolverUnstruct::ComputeCFL(int level)
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
-    RDouble cflEnd   = parameters->GetCFDEnd();
+    RDouble cflEnd   = parameters->GetCFLEnd();
 
     RDouble cfl = cflEnd;
     if (iterationStep < cflNstep)

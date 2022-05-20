@@ -182,11 +182,14 @@ private:
 
     //! For New LUSGS with one sweep, Sub-routines of LUSGS method, which is divided into 4 steps.
     void LUSGS(int iSolver, int level);
+    void DualTimeStepsLUSGS(int iSolver, int level);
     void LUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
     void BLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
-    void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
-    void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+	void MLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
+    void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy);
+    void DetermineCFLNumber(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **dqProxy1);
 
     void CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy);
     void CommunicateGenericArray(int iSolver, int level);
@@ -212,6 +215,15 @@ private:
     
     //! Backward sweep in BLUSGS methods.
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+
+	//! Matix Lower-Upper Symmetric Gauss¨CSeidel Scheme for struct grid.
+    void MLUSGS(int iSolver, int level);
+
+    //! Forward sweep in MLUSGS methods.
+    void ForwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep);
+    
+    //! Backward sweep in MLUSGS methods.
+    void BackwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
     //! Line implicit Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
     void LineLUSGS(int iSolver, int level);

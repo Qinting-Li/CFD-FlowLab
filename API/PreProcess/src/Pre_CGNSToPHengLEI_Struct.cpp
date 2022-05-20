@@ -455,6 +455,13 @@ void Pre_CGNSToPHengLEI_Struct::Conversion()
 
 void Pre_CGNSToPHengLEI_Struct::SetCoordinate()
 {
+    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+    RDouble *gridTranslationVector = new RDouble[3]();
+    if (GlobalDataBase::IsExist("gridTranslationVector", PHDOUBLE, 3))
+    {
+        GlobalDataBase::GetData("gridTranslationVector", gridTranslationVector, PHDOUBLE, 3);
+    }
+
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
         BaseData *base_cgns = Str_CGNS_Data->GetBaseData(iZone);
@@ -495,10 +502,17 @@ void Pre_CGNSToPHengLEI_Struct::SetCoordinate()
             {
                 for (int i = 0; i < idim; ++ i)
                 {
+                    x[k][j][i] *= gridScaleFactor;
+                    x[k][j][i] += gridTranslationVector[0];
                     xx(i+1, j+1, k+1) = x[k][j][i];
+
+                    y[k][j][i] *= gridScaleFactor;
+                    y[k][j][i] += gridTranslationVector[1];
                     yy(i+1, j+1, k+1) = y[k][j][i];
 
                     if (nCoords == 2) z[k][j][i] = 0.0;
+                    z[k][j][i] *= gridScaleFactor;
+                    if (nCoords == 3) z[k][j][i] += gridTranslationVector[2];
                     zz(i+1, j+1, k+1) = z[k][j][i];
                 }
             }

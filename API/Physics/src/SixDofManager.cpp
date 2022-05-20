@@ -7,6 +7,7 @@
 #include "GlobalDataBase.h"
 #include "Constants.h"
 #include "Force.h"
+#include "AleForceManager.h"
 #include "PHIO.h"
 #include "IO_FileName.h"
 #include "IO_FileReader.h"

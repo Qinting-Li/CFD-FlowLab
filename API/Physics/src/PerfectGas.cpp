@@ -736,27 +736,28 @@ void PerfectGas::ComputeReferencePrimitive()
     reference_sound_velocity = 1.0 / refMachNumber;
     
     reference_pressure = coefficientOfStateEquation * 
-        reference_density * reference_temperature / massoo_ref;
+    reference_density * reference_temperature / massoo_ref;
 
-    RDouble attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
+    /*RDouble attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
     RDouble angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
 
     RDouble attack   = attackd * PI / 180.0;
     RDouble sideslip = angleSlide * PI / 180.0;
 
     GlobalDataBase::UpdateData("attack", &attack, PHDOUBLE, 1);
-    GlobalDataBase::UpdateData("sideslip", &sideslip, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("sideslip", &sideslip, PHDOUBLE, 1);*/
 
     using namespace IDX;
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     RDouble *prim_inf = new RDouble[nLaminar];
-    GlobalDataBase::UpdateDataPtr("prim_inf", prim_inf);
 
     prim_inf[IR] = reference_density;
-    prim_inf[IU] = 1.0 * cos(attack) * cos(sideslip);
-    prim_inf[IV] = 1.0 * sin(attack) * cos(sideslip);
-    prim_inf[IW] = 1.0 *               sin(sideslip);
+
+    GlobalBoundaryCondition::SetSpeedDrictionForReferenceVar(one, prim_inf);
+
     prim_inf[IP] = reference_pressure;
+
+    GlobalDataBase::UpdateDataPtr("prim_inf", prim_inf);
 }
 
 void PerfectGas::ComputeReferenceGasInformation()

@@ -314,6 +314,17 @@ LIB_EXPORT void StartTime(double *last_time)
     delete [] ptr_time;
 }
 
+LIB_EXPORT void GetFileModifiedTime(string &fileName, RDouble &TimeFile)
+{
+    string filename = fileName;
+    struct stat result;
+    if (stat(filename.c_str(), &result) == 0 )
+    {
+        RDouble mod_time = result.st_mtime;
+        TimeFile = mod_time;
+    }
+}
+
 }
 #ifdef WIN32
 LIB_EXPORT TimeSpan::TimeSpan()

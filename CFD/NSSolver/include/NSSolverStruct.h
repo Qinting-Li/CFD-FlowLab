@@ -62,6 +62,8 @@ private:
     bool JudgeIfRestart();
     bool JudgeIfReadAverage();
 
+    bool JudgeIfProtectedRestart();
+
     void InitFlowAsRestart();
     void InitGrad(Grid *gridIn);
     void InitCGrid(Grid *fineGridIn, Grid *coarseGridIn);
@@ -145,6 +147,7 @@ private:
     //! @param[out]: inviscidFaceProxy is an array that stores the primitive variables of grid faces.
     //! @param[in ]: iSurface denotes the direction index of the grid faces, where 1 indicates the I-direction, 2 for J-direction, and 3 is K-direction.
     void CorrectFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
+    void CorrectFaceVarR(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
     void CorrectChemicalFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
 
     void GetInvFaceVar(Grid *gridIn, FieldProxy *qlProxy, FieldProxy *qrProxy, int iSurface);
@@ -184,8 +187,11 @@ private:
     void prolhic_eric(Grid *fineGridIn, Grid *coarseGridIn, FieldProxy *workProxy);
     void PositiveUpdate(Grid *grid, FieldProxy *qProxy, FieldProxy *dqProxy);
 
-    void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+
+    //! To determine the CFL number of the next iteration step.
+    void DetermineCFLNumber(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqProxy1);
 
 #ifdef USE_INHOUSE_VERSION
     //! To execute the forward sweep of the block LU-SGS method.
@@ -196,6 +202,14 @@ private:
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
     void SolveBLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+	//! To execute the forward sweep of the Matrix LU-SGS method.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
+    void SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    //! To execute the backward sweep of the Matix LU-SGS method.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
+    void SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 #endif
 
     void SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq);
@@ -323,7 +337,12 @@ private:
     void GetResidual(ActionKey *actkey, RDouble &localMaxRes);
     void GetResidual(Grid *gridIn, RDouble &localMaxRes);
 
+    //! Obtain the CFL number.
+    void ObtainCFLNumber(Grid *gridIn, RDouble &globalMinCFL, RDouble &globalMaxCFL);
+
     void VisualizationAverageFlow(ActionKey *actkey);
+
+    void ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux);
 
 public:
     RDouble4D *CompMachNumber(Grid *gridIn);
