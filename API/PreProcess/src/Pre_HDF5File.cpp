@@ -2009,6 +2009,500 @@ void IO_HDF5Read::CreateZones()
     }
 }
 
+IO_ReadHDF5Grid::IO_ReadHDF5Grid(const string &gridFileNameIn)
+{
+    this->gridFileName = gridFileNameIn;
+    this->fileID = -1;
+    this->numberOfZones = 0;
+    this->fileOpened = false;
+
+    zoneIndexs = 0;
+    zoneTypes  = 0;
+    zoneProcs  = 0;
+}
+
+IO_ReadHDF5Grid::~IO_ReadHDF5Grid()
+{
+    if (fileOpened)
+    {
+        CloseFile();
+    }
+
+    if (zoneIndexs)
+    {
+        delete []zoneIndexs;
+    }
+
+    if (zoneTypes)
+    {
+        delete []zoneTypes;
+    }
+
+    if (zoneProcs)
+    {
+        delete []zoneProcs;
+    }
+
+}
+
+void IO_ReadHDF5Grid::OpenFile()
+{
+    if (fileOpened)
+    {
+        ostringstream errorMess;
+        errorMess << "  Error: This grid file have been opened, file name = " << gridFileName << endl;
+        TK_Exit::ExceptionExit(errorMess.str());
+    }
+
+    fileID = OpenHDF5File(this->gridFileName);
+    if (fileID < 0)
+    {
+        ostringstream errorMess;
+        errorMess << "  Error: This grid file can not open, file name = " << gridFileName << endl;
+        TK_Exit::ExceptionExit(errorMess.str());
+    }
+    fileOpened = true;
+}
+
+void IO_ReadHDF5Grid::CloseFile()
+{
+    if (!fileOpened)
+    {
+        ostringstream errorMess;
+        errorMess << "  Error: This grid file is not opened, file name = " << gridFileName << endl;
+        TK_Exit::ExceptionExit(errorMess.str());
+    }
+
+    H5Fclose(fileID);
+    fileOpened = false;
+}
+
+void IO_ReadHDF5Grid::GetNumberOfZones(int &nZones)
+{
+    if (!fileOpened)
+    {
+        ostringstream errorMess;
+        errorMess << "  Error: This grid file is not opened, file name = " << gridFileName << endl;
+        TK_Exit::ExceptionExit(errorMess.str());
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(fileID, "Information");
+
+    ReadData(grpData, &numberOfZones, "nBlocks");
+
+    nZones = numberOfZones;
+    H5Gclose(grpData);
+}
+
+void IO_ReadHDF5Grid::GetZoneIndex(int *zoneIndexOut)
+{
+    if (!fileOpened)
+    {
+        ostringstream errorMess;
+        errorMess << "  Error: This grid file is not opened, file name = " << gridFileName << endl;
+        TK_Exit::ExceptionExit(errorMess.str());
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(fileID, "Information");
+
+    if (zoneIndexs)
+    {
+        delete []zoneIndexs;
+    }
+    zoneIndexs = ReadIntOneRow(grpData, "block_idx");
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        zoneIndexOut[iZone] = zoneIndexs[iZone];
+    }
+
+    H5Gclose(grpData);
+}
+
+void IO_ReadHDF5Grid::GetZoneType(int *zoneTypeOut)
+{
+    if (!fileOpened)
+    {
+        ostringstream errorMess;
+        errorMess << "  Error: This grid file is not opened, file name = " << gridFileName << endl;
+        TK_Exit::ExceptionExit(errorMess.str());
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(fileID, "Information");
+
+    if (zoneTypes)
+    {
+        delete []zoneTypes;
+    }
+    zoneTypes = ReadIntOneRow(grpData, "block_type");
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        zoneTypeOut[iZone] = zoneTypes[iZone];
+    }
+
+    H5Gclose(grpData);
+}
+
+void IO_ReadHDF5Grid::GetZoneProc(int *zoneProcOut)
+{
+    if (!fileOpened)
+    {
+        ostringstream errorMess;
+        errorMess << "  Error: This grid file is not opened, file name = " << gridFileName << endl;
+        TK_Exit::ExceptionExit(errorMess.str());
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(fileID, "Information");
+
+    if (zoneProcs)
+    {
+        delete []zoneProcs;
+    }
+    zoneProcs = ReadIntOneRow(grpData, "block_proc");
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        zoneProcOut[iZone] = zoneProcs[iZone];
+    }
+
+    H5Gclose(grpData);
+}
+
+void IO_ReadHDF5Grid::GetZoneSize(int zoneIndex, int *iDimensionsOut)
+{
+    hid_t  gridGroup;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    int *iDimensions = ReadIntOneRow(gridGroup, "iDimensions");
+
+    for (int iSize = 0; iSize < THREE_D; ++ iSize)
+    {
+        iDimensionsOut[iSize] = iDimensions[iSize];
+    }
+
+    delete []iDimensions;
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::GetZoneCoord(int zoneIndex, int iCoord, int dataSize, RDouble *coordOut)
+{
+    hid_t  gridGroup, grpData;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    grpData = OpenGroup(gridGroup, "GridCoordinates");
+
+    RDouble *coordinate = 0;
+    if (iCoord + 1 == X_DIR)
+    {
+        coordinate = ReadDoubleOneRow(grpData, "CoordinateX");
+    }
+    else if(iCoord + 1 == Y_DIR)
+    {
+        coordinate = ReadDoubleOneRow(grpData, "CoordinateY");
+    }
+    else
+    {
+        coordinate = ReadDoubleOneRow(grpData, "CoordinateZ");
+    }
+
+    for (int iData = 0; iData < dataSize; ++ iData)
+    {
+        coordOut[iData] = coordinate[iData];
+    }
+
+    delete []coordinate;
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::GetNIFace(int zoneIndex, int &nIFaceOut)
+{
+    hid_t  gridGroup, grpData;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    grpData = OpenGroup(gridGroup, "InterfaceInfo");
+
+    int nIFace = 0;
+    ReadData(grpData, &nIFace, "nIFace");
+
+    nIFaceOut = nIFace;
+
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::GetInterfaceInfo(int zoneIndex, InterfaceInfo *interfaceInfo)
+{
+    hid_t  gridGroup, grpData;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    grpData = OpenGroup(gridGroup, "InterfaceInfo");
+
+    int *interFace2ZoneID       = interfaceInfo->GetInterFace2ZoneID();
+    int *interFace2InterFaceID  = interfaceInfo->GetInterFace2InterFaceID();
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+
+    int *interFace2ZoneIDTemp       = ReadIntOneRow(grpData, "interFace2ZoneID");
+    int *interFace2InterFaceIDTemp  = ReadIntOneRow(grpData, "interFace2InterFaceID");
+    int *interFace2BoundaryFaceTemp = ReadIntOneRow(grpData, "interFace2BoundaryFace");
+
+    int nIFace = interfaceInfo->GetNIFace();
+    for (int iface = 0; iface < nIFace; ++ iface)
+    {
+        interFace2ZoneID[iface]       = interFace2ZoneIDTemp[iface];
+        interFace2InterFaceID[iface]  = interFace2InterFaceIDTemp[iface];
+        interFace2BoundaryFace[iface] = interFace2BoundaryFaceTemp[iface];
+    }
+
+    delete [] interFace2ZoneIDTemp;
+    delete [] interFace2InterFaceIDTemp;
+    delete [] interFace2BoundaryFaceTemp;
+
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::GetNBCRegion(int zoneIndex, int &nBCRegionOut)
+{
+    hid_t  gridGroup, grpData;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    grpData = OpenGroup(gridGroup, "BCRegion");
+
+    int nBCRegion = 0;
+    ReadData(grpData, &nBCRegion, "nBCRegion");
+
+    nBCRegionOut = nBCRegion;
+
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::GetBCName(int zoneIndex, CompositeStructBC *compositeBCRegion)
+{
+    hid_t  gridGroup, grpData;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    grpData = OpenGroup(gridGroup, "BCName");
+
+    char *BCName = ReadCharData(grpData, "BCName");
+
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    string *BCNameList = new string[nBCRegion];
+    uint_long count = 0;
+
+    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    {
+        while (BCName[count] != '\0')
+        {
+            BCNameList[ibcregion].push_back(BCName[count]);
+            ++ count;
+        }
+        ++ count;
+    }
+
+    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    {
+        StructBC *bcregion = new StructBC(zoneIndex, ibcregion);
+        compositeBCRegion->SetBCRegion(ibcregion, bcregion);
+
+        bcregion->SetBCName(BCNameList[ibcregion]);
+    }
+
+    delete []BCNameList;
+    delete []BCName;
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::GetBCRegion(int zoneIndex, CompositeStructBC *compositeBCRegion)
+{
+    hid_t  gridGroup, grpData;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Grid-" << zoneIndex;
+    grpName = oss.str();
+    gridGroup = OpenGroup(fileID, grpName);
+
+    grpData = OpenGroup(gridGroup, "BCRegion");
+
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+
+    int **BCInfor = ReadIntTwoRow(grpData, "BCInfor");
+
+    int iMin, iMax, jMin, jMax, kMin, kMax, bcType;
+    int sLr, sNd;
+    int iBCinfo = 0;
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        int index = 0;
+        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+
+        iMin   = BCInfor[iBCinfo][index++];
+        iMax   = BCInfor[iBCinfo][index++];
+        jMin   = BCInfor[iBCinfo][index++];
+        jMax   = BCInfor[iBCinfo][index++];
+        kMin   = BCInfor[iBCinfo][index++];
+        kMax   = BCInfor[iBCinfo][index++];
+        bcType = BCInfor[iBCinfo][index++];
+        sLr    = BCInfor[iBCinfo][index++];
+        sNd    = BCInfor[iBCinfo][index++];
+        iBCinfo ++;
+
+        //! Restore periodic boundary bcType and correct read information only for PARTITION_GRID task.
+        if (GetTaskCode() == PARTITION_GRID && PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != 0)
+        {
+            if (bcregion->GetBCName() == "Periodic_up"|| bcregion->GetBCName() == "Periodic_down")
+            {
+                bcType = PHENGLEI::PERIODIC;
+                iBCinfo ++;
+            }
+        }
+
+        bcregion->SetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
+        bcregion->SetBCType(bcType);
+        bcregion->SetFaceLeftOrRightIndex(sLr);
+        bcregion->SetFaceDirection(sNd);
+        bcregion->InitFaceDirectionIndex();
+
+        if (bcType == -1)
+        {
+            index = 0;
+
+            iMin = BCInfor[iBCinfo][index++];
+            iMax = BCInfor[iBCinfo][index++];
+            jMin = BCInfor[iBCinfo][index++];
+            jMax = BCInfor[iBCinfo][index++];
+            kMin = BCInfor[iBCinfo][index++];
+            kMax = BCInfor[iBCinfo][index++];
+            bcregion->SetTargetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
+
+            int neighborZoneIndex = BCInfor[iBCinfo][index++];
+            bcregion->SetTargetRegionBlock(neighborZoneIndex);
+
+            iBCinfo ++;
+        }
+    }
+
+    DelPointer2(BCInfor);
+    H5Gclose(grpData);
+    H5Gclose(gridGroup);
+}
+
+void IO_ReadHDF5Grid::GetStructGridInfo(Grid *gridOut)
+{
+    int gridIndex       = gridOut->GetZoneID();
+    StructGrid *strGrid = StructGridCast(gridOut);
+
+
+    //! Read grid size.
+    int *iDimensions = new int[THREE_D];
+    GetZoneSize(gridIndex, iDimensions);
+    strGrid->SetNI(iDimensions[0]);
+    strGrid->SetNJ(iDimensions[1]);
+    strGrid->SetNK(iDimensions[2]);
+    strGrid->SetBasicDimension();
+
+
+    //! Read grid coordiate.
+    int nTotalNode = iDimensions[0] * iDimensions[1] * iDimensions[2];
+    RDouble **coordinates = new RDouble*[THREE_D];
+
+    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+    {
+        coordinates[iDim] = new RDouble[nTotalNode];
+        GetZoneCoord(gridIndex, iDim, nTotalNode, coordinates[iDim]);
+    }
+    strGrid->SetX(coordinates[0]);
+    strGrid->SetY(coordinates[1]);
+    strGrid->SetZ(coordinates[2]);
+
+    int axisup = 1;
+    PHSPACE::GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
+    if (axisup == 2)
+    {
+        strGrid->TurnZAxis2YAxis();
+    }
+    strGrid->ComputeMinMaxBox();
+    strGrid->SetArrayLayout();
+
+
+    //! Read boundary information.
+    int nBCRegion = 0;
+    GetNBCRegion(gridIndex, nBCRegion);
+    strGrid->CreateCompositeBCRegion(nBCRegion);
+
+    CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
+    GetBCName(gridIndex, compositeBCRegion);
+    GetBCRegion(gridIndex, compositeBCRegion);
+    strGrid->SetBCFaceInfo();
+
+
+    //! Read interface information.
+    int nIFace = 0;
+    GetNIFace(gridIndex, nIFace);
+
+    InterfaceInfo *interfaceInfo = 0;
+    if (nIFace > 0)
+    {
+        interfaceInfo = new InterfaceInfo(nIFace, strGrid);
+        GetInterfaceInfo(gridIndex, interfaceInfo);
+    }
+    strGrid->SetInterfaceInfo(interfaceInfo);
+
+    delete []coordinates;
+    delete []iDimensions;
+}
+
+void IO_ReadHDF5Grid::GetGridInfo(Grid *gridOut)
+{
+    int gridType  = gridOut->Type();
+    if (gridType == UNSTRUCTGRID)
+    {
+
+    }
+    else
+    {
+        GetStructGridInfo(gridOut);
+    }
+}
+
 LIB_EXPORT void DumpHDF5Grid(const string &gridFileName, Grid **grids, int nBlocks)
 {
     PrintToWindow("    Writing new HDF5 version grid to file ....\n");

@@ -571,6 +571,11 @@ LIB_EXPORT void Post_Visual::GetAllVisualNodeVarPtr(RDouble4D **qn)
     }
 }
 
+void Post_Visual::UpdateDataPtr(const string &name, void *data)
+{
+    visualVariablesPtr->UpdateDataPtr(name, data);
+}
+
 void Post_Visual::FreeAllVisualNodeVarPtr()
 {
     if (gridType == UNSTRUCTGRID)

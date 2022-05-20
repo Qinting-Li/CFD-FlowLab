@@ -62,8 +62,6 @@ private:
     //!
     void SliceVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
 
-    bool WantVisualField(Grid *grid);
-
     //!
     void FieldVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
 
@@ -81,5 +79,54 @@ private:
 
     void Clear();
 };
+
+class Post_WriteTecplotByOriginalGrid
+{
+private:
+    int nOriginalGrids;
+    Grid **OriginalGrid;
+
+public:
+    Post_WriteTecplotByOriginalGrid();
+    ~Post_WriteTecplotByOriginalGrid();
+
+public:
+    void Run();
+
+private:
+    void ServerWrite(ActionKey *actkey);
+    void ComputerNodeDataOnPartitionGrid(int iZone, ActionKey *actkey);
+    void CollectNodeData(ActionKey *actkey);
+    void CollectStructedData(ActionKey *actkey, Post_Visual *postVisualization);
+
+    void StoreVisualizationVar(ActionKey *actkey);
+    void BoundaryVTKVisualization(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nvarplot);
+    void FieldVisualization(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nvarplot);
+    void BoundaryVisualization(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nvarplot);
+    void SaveDataForTecio(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nl);
+
+    void PostWrite(ActionKey *actkey);
+
+    void UpdataNodeData(ActionKey *actkey, Grid *grid, RDouble4D **qn, int nVisualVariables);
+
+    int GetOriginalGridProc(int iZone);
+
+public:
+    void Initialize();
+    void SetOriginalGrid(Grid **gridsIn) { this->OriginalGrid = gridsIn; };
+    void SetOriginalGridProc(int nOriginalGridsIn, int *originalGridProcOut);
+
+private:
+    int *originalGridProc;
+    int *originalGridIndexOfEachGrid;
+    vector <Post_Visual * > originalGridData;
+    vector<DataContainer *> datalist;
+    vector<DataContainer *> vtkdatalist;
+
+};
+
+Post_WriteTecplotByOriginalGrid *GetWriteTecplotByOriginalGrid();
+bool WantVisualField(Grid *grid);
+
 
 }

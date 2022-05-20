@@ -155,6 +155,8 @@ public:
 
     void InitVariableWallTemperature();
 
+    void InitOriginalGrid();
+
     void ReSetBoundaryConditionByGlobalBC();
 
     void CommunicateCellIBlank();

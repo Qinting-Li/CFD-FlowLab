@@ -16,6 +16,8 @@
 namespace PHSPACE
 {
 
+Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = new Post_WriteTecplotByOriginalGrid();
+
 LIB_EXPORT Post_WriteTecplot::Post_WriteTecplot(int flowType)
 {
     this->flowType = flowType;
@@ -334,34 +336,6 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
     {
         delete datalist[iZone];
     }
-}
-
-bool Post_WriteTecplot::WantVisualField(Grid *grid)
-{
-    int plotFieldType = 0;
-    GlobalDataBase::GetData("plotFieldType", &plotFieldType, PHINT, 1);
-
-    if (plotFieldType == TEC_SPACE::BlockVisual)
-    {
-        int dimension = GetDim();
-
-        RDouble *pmin = grid->GetMinBox();
-        RDouble *pmax = grid->GetMaxBox();
-
-        RDouble lowerPlotFieldBox[3], upperPlotFieldBox[3];
-        GlobalDataBase::GetData("lowerPlotFieldBox", &lowerPlotFieldBox, PHDOUBLE, 3);
-        GlobalDataBase::GetData("upperPlotFieldBox", &upperPlotFieldBox, PHDOUBLE, 3);
-
-        if ((pmin[0] > upperPlotFieldBox[0]) || (pmax[0] < lowerPlotFieldBox[0])) return false;
-
-        if ((pmin[1] > upperPlotFieldBox[1]) || (pmax[1] < lowerPlotFieldBox[1])) return false;
-
-        if (dimension == THREE_D)
-        {
-            if ((pmin[2] > upperPlotFieldBox[2]) || (pmax[2] < lowerPlotFieldBox[2])) return false;
-        }
-    }
-    return grid->GetDim() == TWO_D || (grid->GetDim() == THREE_D && plotFieldType != TEC_SPACE::BoundaryVisual);
 }
 
 void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot)
@@ -1733,5 +1707,1027 @@ void Post_WriteTecplot::Clear()
     this->vtkdatalist.clear();
     this->datalist.clear();
 }
+
+
+Post_WriteTecplotByOriginalGrid::Post_WriteTecplotByOriginalGrid()
+{
+    nOriginalGrids = 0;
+    OriginalGrid = 0;
+    originalGridProc = 0;
+    originalGridIndexOfEachGrid = 0;
+
+    originalGridData.resize(0);
+}
+
+Post_WriteTecplotByOriginalGrid::~Post_WriteTecplotByOriginalGrid()
+{
+    delete []originalGridProc;
+    delete []originalGridIndexOfEachGrid;
+
+    for (int iZone = 0; iZone < nOriginalGrids; ++ iZone)
+    {
+        delete originalGridData[iZone];
+        delete OriginalGrid[iZone];
+    }
+    delete []OriginalGrid;
+}
+
+void Post_WriteTecplotByOriginalGrid::Run()
+{
+    string visualfile = "tecflow.dat";
+    GlobalDataBase::GetData("visualfile", &visualfile, PHSTRING, 1);
+
+    if (visualfile == "")
+    {
+        return;
+    }
+
+    ActionKey *actkey = new ActionKey();
+    actkey->filename = visualfile + ".bak";
+    actkey->tecfilename = visualfile;
+    actkey->VTKvisual = false;
+
+    string sentinelfilename = "results/sentinel";
+    fstream sentinelfile;
+    sentinelfile.open(sentinelfilename.c_str(), ios::in);
+
+    if (!sentinelfile)
+    {
+        actkey->VTKvisual = true;
+    }
+
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    if (isUnsteady)
+    {
+        int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+        actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', outnstep);
+    }
+
+    ServerWrite(actkey);
+    PostWrite(actkey);
+    delete actkey;
+
+    //this->Clear();
+}
+
+void Post_WriteTecplotByOriginalGrid::Initialize()
+{
+    int myid = PHMPI::GetCurrentProcessorID();
+    int nVisualVariables = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
+    int visualVariables[100];
+    GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
+
+    originalGridData.resize(nOriginalGrids);
+    for (int iZone = 0; iZone < nOriginalGrids; ++ iZone)
+    {
+        Post_Visual *postVisualization = 0;
+        if (myid == originalGridProc[iZone])
+        {
+            postVisualization = new Post_Visual(nVisualVariables, visualVariables, OriginalGrid[iZone]);
+
+            set<int> visualVariables = postVisualization->GetVisualVariables();
+            for (set<int>::iterator varIter = visualVariables.begin(); varIter != visualVariables.end(); ++ varIter)
+            {
+                int variableType = *varIter;
+                string varName = postVisualization->GetVariableName(variableType);
+
+                int gridType = OriginalGrid[iZone]->Type();
+                if (gridType == UNSTRUCTGRID)
+                {
+                    int nTotalNode = OriginalGrid[iZone]->GetNTotalNode();
+                    RDouble *qn = new RDouble[nTotalNode];
+                    postVisualization->UpdateDataPtr(varName, qn);
+                }
+                else
+                {
+                    StructGrid *grid_str = StructGridCast(OriginalGrid[iZone]);
+
+                    int ni = grid_str->GetNI();
+                    int nj = grid_str->GetNJ();
+                    int nk = grid_str->GetNK();
+
+                    Range I(-1, ni+1);
+                    Range J(-1, nj+1);
+                    Range K(-1, nk+1);
+                    if (nk == 1) K.setRange(1, 1);
+                    Range M(0, 0);
+
+                    RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
+                    postVisualization->UpdateDataPtr(varName, qn);
+                }
+            }
+        }
+        originalGridData[iZone] = postVisualization;
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::ServerWrite(ActionKey *actkey)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+
+    int myid = GetCurrentProcessorID();
+    int recv_proc;
+
+    for (int iZone =  0; iZone < nZones; ++ iZone)
+    {
+        DataContainer *cdata = actkey->GetData();
+        cdata->moveto_begin();
+
+        int originalGridIndex = originalGridIndexOfEachGrid[iZone];
+
+        int send_proc = GetZoneProcessorID(iZone);
+        recv_proc = GetOriginalGridProc(originalGridIndex);
+
+        int tag = GetSendRecvTag(actkey, iZone);
+
+        if (myid == send_proc)
+        {
+            PHWrite(cdata, &originalGridIndex, 1);
+            ComputerNodeDataOnPartitionGrid(iZone, actkey);
+        }
+
+        PH_Trade(actkey, send_proc, recv_proc, tag);
+
+        if (myid == recv_proc)
+        {
+            CollectNodeData(actkey);
+        }
+    }
+
+    StoreVisualizationVar(actkey);
+}
+
+void Post_WriteTecplotByOriginalGrid::StoreVisualizationVar(ActionKey *actkey)
+{
+    int myid = PHMPI::GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < nOriginalGrids; ++ iZone)
+    {
+        int send_proc = GetOriginalGridProc(iZone);
+        if (myid != send_proc)
+        {
+            continue;
+        }
+
+        Post_Visual *postVisualization = originalGridData[iZone];
+        Grid *grid = postVisualization->GetGrid();
+        if (grid->Type() == UNSTRUCTGRID)
+        {
+
+        }
+        else if (grid->Type() == STRUCTGRID)
+        {
+            int nvarplot = postVisualization->GetNumberofVisualVariables();
+
+            int nVisualVariables = nvarplot;
+            int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
+            if (nchem)
+            {
+                int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+                nVisualVariables = nVisualVariables + numberOfSpecies;
+            }
+
+            RDouble4D **qn = new RDouble4D *[nVisualVariables];
+            postVisualization->GetAllVisualNodeVarPtr(qn);
+
+            if (actkey->VTKvisual == true)
+            {
+                DataContainer *cdata = new DataContainer();
+
+                int GridID = grid->GetGridID()->GetIndex();
+                PHWrite(cdata, GridID);
+
+                int dimension = grid->GetDim();
+                PHWrite(cdata, dimension);
+
+                int type = grid->Type();
+                PHWrite(cdata, &type, 1);
+
+                BoundaryVTKVisualization(grid, cdata, qn, nVisualVariables);
+
+                if (WantVisualField(grid))
+                {
+                    FieldVisualization(grid, cdata, qn, nVisualVariables);
+                }
+
+                int TecioMission = TEC_SPACE::Writecomplete;
+                PHWrite(cdata, &TecioMission, 1);
+
+                vtkdatalist.push_back(cdata);
+            }
+
+            if (actkey->tecfilename != "")
+            {
+                DataContainer *cdata = new DataContainer();
+
+                int GridID = grid->GetGridID()->GetIndex();
+                PHWrite(cdata, GridID);
+
+                int dimension = grid->GetDim();
+                PHWrite(cdata, dimension);
+
+                int type = grid->Type();
+                PHWrite(cdata, &type, 1);
+
+                BoundaryVisualization(grid, cdata, qn, nVisualVariables);
+
+                if (WantVisualField(grid))
+                {
+                    SaveDataForTecio(grid, cdata, qn, nVisualVariables);
+                }
+
+                int TecioMission = TEC_SPACE::Writecomplete;
+                PHWrite(cdata, &TecioMission, 1);
+
+                datalist.push_back(cdata);
+            }
+
+            delete []qn;
+        }
+        else
+        {
+            TK_Exit::ExceptionExit("Error!!! Task_GenerateVisualFile::Visualization grid type not right!");
+        }
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::BoundaryVTKVisualization(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nvarplot)
+{
+    StructGrid *grid = StructGridCast(grid_in);
+
+    int s_st[3] = {0}, s_ed[3] = {0};
+    int nk = grid->GetNK();
+
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
+    
+    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    int nBCRegion = composite_bcregion->GetnBCRegion();
+
+    int TecioMission;
+    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    {
+        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        int bctype = bcregion->GetBCType();
+        if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
+
+        TecioMission = TEC_SPACE::WriteBoundary;
+        PHWrite(cdata, &TecioMission, 1);
+
+        PHWrite(cdata, &bctype, 1);
+
+        string bcName = bcregion->GetBCName();
+        cdata->write_string(bcName);
+
+        int *s_lr3d = bcregion->GetFaceDirectionIndex();
+        int nDim = GetDim();
+        
+        for (int m = 0; m < nDim; ++ m)
+        //for (int m = 0; m < 3; ++ m)
+        {
+            s_st[m] = bcregion->GetStartPoint(m);
+            s_ed[m] = bcregion->GetEndPoint(m);
+            if (bcregion->GetFaceDirection() == m)
+            {
+                if (s_st[m] > 1 || s_lr3d[m] == 1)
+                {
+                    s_st[m] += 1;
+                    s_ed[m] += 1;
+                }
+            }
+            else
+            {
+                s_ed[m] += 1;
+            }
+        }
+
+        int ist = s_st[0];
+        int ied = s_ed[0];
+        int jst = s_st[1];
+        int jed = s_ed[1];
+        int kst = s_st[2];
+        int ked = s_ed[2];
+
+        Range I(ist, ied);
+        Range J(jst, jed);
+        Range K(kst, ked);
+
+        if (nDim != THREE_D)
+        {
+            K.setRange(1, 1);
+            kst = 1;
+            ked = 1;
+        }
+
+        Int3D newindex(I, J, K, fortranArray);
+
+        int nsurf = bcregion->GetFaceDirection() + 1;
+        //int lr = bcregion->GetFaceLeftOrRightIndex();
+
+        int count = 0;
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    newindex(i, j, k) = count;
+                    ++ count;
+                }
+            }
+        }
+
+        int nTotalNode = count;
+        int nTotalCell = 1;
+
+        for (int m = 0; m < 3; ++ m)
+        {
+            nTotalCell *= (bcregion->GetEndPoint(m) - bcregion->GetStartPoint(m) + 1);
+        }
+
+        PHWrite(cdata, &nTotalNode, 1);
+        PHWrite(cdata, &nTotalCell, 1);
+
+        RDouble *xBoundary = new RDouble [nTotalNode];
+        RDouble *yBoundary = new RDouble [nTotalNode];
+        RDouble *zBoundary = new RDouble [nTotalNode];
+
+        RDouble **qBoundary = new RDouble *[nvarplot];
+        for (int m = 0; m < nvarplot; ++ m)
+        {
+            qBoundary[m] = new RDouble [nTotalNode];
+        }
+
+        int iNode = 0;
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    xBoundary[iNode] = xx(i, j, k);
+                    yBoundary[iNode] = yy(i, j, k);
+                    zBoundary[iNode] = zz(i, j, k);
+
+                    for (int m = 0; m < nvarplot; ++ m)
+                    {
+                        qBoundary[m][iNode] = (*qn[m])(i, j, k, 0);
+                    }
+
+                    ++ iNode;
+                }
+            }
+        }
+
+        PHWrite(cdata, xBoundary, nTotalNode);
+        PHWrite(cdata, yBoundary, nTotalNode);
+        PHWrite(cdata, zBoundary, nTotalNode);
+
+        delete [] xBoundary;
+        delete [] yBoundary;
+        delete [] zBoundary;
+
+        for (int m = 0; m < nvarplot; ++ m)
+        {
+            PHWrite(cdata, qBoundary[m], nTotalNode);
+            delete [] qBoundary[m];
+        }
+
+        delete [] qBoundary;
+
+        int il1, jl1, kl1;
+        GetNsurfIndex(nsurf, il1, jl1, kl1);
+
+        il1 = 1 - il1;
+        jl1 = 1 - jl1;
+        kl1 = 1 - kl1;
+
+        if (nk == 1) kl1 = 0;
+
+        int *cell2node = new int [nTotalCell * 4];
+        int ncount = 0;
+        for (int k = kst; k <= ked - kl1; ++ k)
+        {
+            for (int j = jst; j <= jed - jl1; ++ j)
+            {
+                for (int i = ist; i <= ied - il1; ++ i)
+                {
+                    int p1, p2, p3, p4;
+
+                    int il = i + il1;
+                    int jl = j + jl1;
+                    int kl = k + kl1;
+
+                    if (nsurf == 1)
+                    {
+                        p1 = newindex(i, j , k) + 1;
+                        p2 = newindex(i, jl, k) + 1;
+                        p3 = newindex(i, jl, kl) + 1;
+                        p4 = newindex(i, j , kl) + 1;
+                    }
+                    else if (nsurf == 2)
+                    {
+                        p1 = newindex(i , j, k) + 1;
+                        p2 = newindex(il, j, k) + 1;
+                        p3 = newindex(il, j, kl) + 1;
+                        p4 = newindex(i , j, kl) + 1;
+                    }
+                    else
+                    {
+                        p1 = newindex(i , j , k) + 1;
+                        p2 = newindex(il, j , k) + 1;
+                        p3 = newindex(il, jl, k) + 1;
+                        p4 = newindex(i , jl, k) + 1;
+                    }
+
+                    cell2node[ncount++] = p1;
+                    cell2node[ncount++] = p2;
+                    cell2node[ncount++] = p3;
+                    cell2node[ncount++] = p4;
+                }
+            }
+        }
+
+        PHWrite(cdata, cell2node, nTotalCell * 4);
+        delete [] cell2node;
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::FieldVisualization(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nvarplot)
+{
+    StructGrid *grid = StructGridCast(grid_in);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
+
+    int nl = 5;
+    GlobalDataBase::GetData("nl", &nl, PHINT, 1);
+
+    int nchem = 0;
+    GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
+
+    RDouble refGama = 1.4;
+    GlobalDataBase::GetData("refGama", &refGama, PHDOUBLE, 1);
+
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotalNode = grid->GetNTotalNode();
+
+    if (nk == 1)
+    {
+        int TecioMission = TEC_SPACE::WriteBlock;
+        PHWrite(cdata, &TecioMission, 1);
+
+        PHWrite(cdata, &nTotalNode, 1);
+        PHWrite(cdata, &nTotalCell, 1);
+
+        RDouble *xBoundary = new RDouble [nTotalNode];
+        RDouble *yBoundary = new RDouble [nTotalNode];
+        RDouble *zBoundary = new RDouble [nTotalNode];
+
+        RDouble **qBoundary = new RDouble *[nvarplot];
+        for (int m = 0; m < nvarplot; ++ m)
+        {
+            qBoundary[m] = new RDouble [nTotalNode];
+        }
+
+        int ist, ied, jst, jed, kst, ked;
+        grid->GetNodeIterationIndex(ist, ied, jst, jed, kst, ked);
+
+        int iNode = 0;
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    xBoundary[iNode] = xx(i, j, k);
+                    yBoundary[iNode] = yy(i, j, k);
+                    zBoundary[iNode] = zz(i, j, k);
+
+                    for (int m = 0; m < nvarplot; ++ m)
+                    {
+                        qBoundary[m][iNode] = (*qn[m])(i, j, k, 0);
+                    }
+
+                    iNode ++ ;
+                }
+            }
+        }
+
+        PHWrite(cdata, xBoundary, nTotalNode);
+        PHWrite(cdata, yBoundary, nTotalNode);
+        PHWrite(cdata, zBoundary, nTotalNode);
+
+        delete [] xBoundary;
+        delete [] yBoundary;
+        delete [] zBoundary;
+
+        for (int m = 0; m < nvarplot; ++ m)
+        {
+            PHWrite(cdata, qBoundary[m], nTotalNode);
+            delete [] qBoundary[m];
+        }
+
+        delete [] qBoundary;
+
+        int *cell2node = new int [nTotalCell * 4];
+        int ncount = 0;
+        for (int j = 1; j <= nj - 1; ++ j)
+        {
+            for (int i = 1; i <= ni - 1; ++ i)
+            {
+                cell2node[ncount++] = i     + (j - 1) * ni;
+                cell2node[ncount++] = i + 1 + (j - 1) * ni;
+                cell2node[ncount++] = i + 1 + (j   ) * ni;
+                cell2node[ncount++] = i     + (j   ) * ni;
+            }
+        }
+
+        PHWrite(cdata, cell2node, nTotalCell * 4);
+        delete [] cell2node;
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::BoundaryVisualization(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nvarplot)
+{
+    StructGrid *grid = StructGridCast(grid_in);
+    int s_st[3] = {0}, s_ed[3] = {0};
+
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
+
+    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    int nBCRegion = composite_bcregion->GetnBCRegion();
+
+    int TecioMission;
+
+    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    {
+        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        int bctype = bcregion->GetBCType();
+
+        if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
+
+        TecioMission = TEC_SPACE::WriteBoundary;
+        PHWrite(cdata, &TecioMission, 1);
+
+        PHWrite(cdata, &bctype, 1);
+
+        string bcName = bcregion->GetBCName();
+        cdata->write_string(bcName);
+
+        int *s_lr3d = bcregion->GetFaceDirectionIndex();
+        int nDim = GetDim();
+        
+        for (int m = 0; m < nDim; ++ m)
+        {
+            s_st[m] = bcregion->GetStartPoint(m);
+            s_ed[m] = bcregion->GetEndPoint(m);
+            if (bcregion->GetFaceDirection() == m)
+            {
+                if (s_st[m] > 1 || s_lr3d[m] == 1)
+                {
+                    s_st[m] += 1;
+                    s_ed[m] += 1;
+                }
+            }
+            else
+            {
+                s_ed[m] += 1;
+            }
+        }
+
+        int ist = s_st[0];
+        int ied = s_ed[0];
+        int jst = s_st[1];
+        int jed = s_ed[1];
+        int kst = s_st[2];
+        int ked = s_ed[2];
+
+        Range I(ist, ied);
+        Range J(jst, jed);
+        Range K(kst, ked);
+
+        if (nDim != THREE_D)
+        {
+            K.setRange(1, 1);
+            kst = 1;
+            ked = 1;
+        }
+
+        Int3D newindex(I, J, K, fortranArray);
+
+        int count = 0;
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    newindex(i, j, k) = count;
+                    ++ count;
+                }
+            }
+        }
+
+        int ii = ied - ist + 1;
+        int jj = jed - jst + 1;
+        int kk = ked - kst + 1;
+
+        PHWrite(cdata, &ii, 1);
+        PHWrite(cdata, &jj, 1);
+        PHWrite(cdata, &kk, 1);
+
+        int nTotalNode = count;
+        PHWrite(cdata, &nTotalNode, 1);
+
+        RDouble *x = new RDouble [nTotalNode];
+        RDouble *y = new RDouble [nTotalNode];
+        RDouble *z = new RDouble [nTotalNode];
+
+        count = 0;
+        for (int k = kst; k <= ked; ++ k)
+        {
+            for (int j = jst; j <= jed; ++ j)
+            {
+                for (int i = ist; i <= ied; ++ i)
+                {
+                    x[count] = xx(i, j, k);
+                    y[count] = yy(i, j, k);
+                    z[count] = zz(i, j, k);
+                    count ++;
+                }
+            }
+        }
+
+        PHWrite(cdata, x, nTotalNode);
+        PHWrite(cdata, y, nTotalNode);
+        PHWrite(cdata, z, nTotalNode);
+
+        delete [] x;
+        delete [] y;
+        delete [] z;
+
+        count = 0;
+        for (int n = 0; n < nvarplot; ++ n)
+        {
+            RDouble *qq = new RDouble [nTotalNode];
+            for (int k = kst; k <= ked; ++ k)
+            {
+                for (int j = jst; j <= jed; ++ j)
+                {
+                    for (int i = ist; i <= ied; ++ i)
+                    {
+                        qq[count] = (*qn[n])(i, j, k, 0);
+                        count ++;
+                    }
+                }
+            }
+
+            PHWrite(cdata, qq, nTotalNode);
+            delete [] qq;
+            count = 0;
+        }
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::SaveDataForTecio(Grid *grid_in, DataContainer *cdata, RDouble4D **qn, int nl)
+{
+    StructGrid *grid = StructGridCast(grid_in);
+
+    int TecioMission = TEC_SPACE::WriteBlock;
+    PHWrite(cdata, &TecioMission, 1);
+
+    int ni = grid->GetNI();
+    int nj = grid->GetNJ();
+    int nk = grid->GetNK();
+
+    PHWrite(cdata, &ni, 1);
+    PHWrite(cdata, &nj, 1);
+    PHWrite(cdata, &nk, 1);
+
+    int nTotalNode = grid->GetNTotalNode();
+    PHWrite(cdata, &nTotalNode, 1);
+
+    RDouble *x = new RDouble [nTotalNode];
+    RDouble *y = new RDouble [nTotalNode];
+    RDouble *z = new RDouble [nTotalNode];
+
+    RDouble3D &xx = * grid->GetStructX();
+    RDouble3D &yy = * grid->GetStructY();
+    RDouble3D &zz = * grid->GetStructZ();
+
+    int count = 0;
+    for (int k = 1; k <= nk; ++ k)
+    {
+        for (int j = 1; j <= nj; ++ j)
+        {
+            for (int i = 1; i <= ni; ++ i)
+            {
+                x[count] = xx(i, j, k);
+                y[count] = yy(i, j, k);
+                z[count] = zz(i, j, k);
+                count ++;
+            }
+        }
+    }
+
+    PHWrite(cdata, x, nTotalNode);
+    PHWrite(cdata, y, nTotalNode);
+    PHWrite(cdata, z, nTotalNode);
+
+    delete [] x;
+    delete [] y;
+    delete [] z;
+
+    count = 0;
+    for (int m = 0; m < nl; ++ m)
+    {
+        RDouble *qq = new RDouble [nTotalNode];
+        for (int k = 1; k <= nk; ++ k)
+        {
+            for (int j = 1; j <= nj; ++ j)
+            {
+                for (int i = 1; i <= ni; ++ i)
+                {
+                    qq[count] = (*qn[m])(i, j, k, 0);
+                    count ++;
+                }
+            }
+        }
+
+        PHWrite(cdata, qq, nTotalNode);
+        delete [] qq;
+        count = 0;
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::PostWrite(ActionKey *actkey)
+{
+    using namespace PHMPI;
+    int myid = GetCurrentProcessorID();
+
+    /*if (actkey->VTKvisual == true && myid == server)
+    {
+        bool CharacteristicBoundary = false;
+        DumpToVTK DumpToVTK(vtkdatalist, actkey->filename, CharacteristicBoundary, this->flowType);
+        DumpToVTK.Run();
+
+        WriteSentinelFile(actkey);
+    }*/
+
+    if (datalist.size() > 0)
+    {
+        int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
+        if (visualfileType == 0)
+        {
+            #ifdef USE_TecplotLib
+                DumpToTecio dumptotecio(datalist, actkey->tecfilename);
+                dumptotecio.Run();
+            #else
+                ostringstream WarningInfo;
+                WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
+                PrintToWindow(WarningInfo);
+
+                DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename);
+                dumpToTecplotASCII.Run();
+            #endif
+        }
+        else if (visualfileType == 1)
+        {
+            DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename);
+            dumpToTecplotASCII.Run();
+        }
+        else
+        {
+            TK_Exit::UnexpectedVarValue("visualfileType = ", visualfileType);
+        }
+    }
+
+    for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
+    {
+        delete vtkdatalist[iZone];
+    }
+    vtkdatalist.resize(0);
+
+    for (unsigned int iZone = 0; iZone < datalist.size(); ++ iZone)
+    {
+        delete datalist[iZone];
+    }
+    datalist.resize(0);
+}
+
+void Post_WriteTecplotByOriginalGrid::ComputerNodeDataOnPartitionGrid(int iZone, ActionKey *actkey)
+{
+    Grid *grid = GetGrid(iZone, actkey->level);
+    int nVisualVariables = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
+    int visualVariables[100];
+    GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
+    Post_Visual *postVisualization = new Post_Visual(nVisualVariables, visualVariables, grid);
+
+    int Nsolver = GlobalSolvers::GetNumberOfSolvers(iZone);
+    for (int isolver = 0; isolver < Nsolver; ++ isolver)
+    {
+        GlobalSolvers::GetSolver(iZone, isolver)->ComputePostVisualVariables(postVisualization);
+    }
+
+    int nvarplot = postVisualization->GetNumberofVisualVariables();
+    nVisualVariables = nvarplot;
+    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
+    if (nchem)
+    {
+        int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+        nVisualVariables = nVisualVariables + numberOfSpecies;
+    }
+
+    int gridType = grid->Type();
+    if (gridType == UNSTRUCTGRID)
+    {
+
+    }
+    else
+    {
+        RDouble4D **qn = new RDouble4D *[nVisualVariables];
+        postVisualization->GetAllVisualNodeVarPtr(qn);
+        UpdataNodeData(actkey, grid, qn, nVisualVariables);
+        delete []qn;
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::CollectNodeData(ActionKey *actkey)
+{
+    DataContainer *cdata = actkey->GetData();
+    cdata->moveto_begin();
+
+    int originalGridIndex = -1;
+    PHRead(cdata, &originalGridIndex, 1);
+
+    Post_Visual *postVisualization = originalGridData[originalGridIndex];
+    Grid *grid = OriginalGrid[originalGridIndex];
+    int gridType = grid->Type();
+    if (gridType == UNSTRUCTGRID)
+    {
+
+    }
+    else
+    {
+        CollectStructedData(actkey, postVisualization);
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::CollectStructedData(ActionKey *actkey, Post_Visual *postVisualization)
+{
+    StructGrid *grid = StructGridCast(postVisualization->GetGrid());
+
+    DataContainer *cdata = actkey->GetData();
+
+    int ordinaryDimStartIndex[THREE_D];
+    int ordinaryDimEndIndex[THREE_D];
+    PHRead(cdata, ordinaryDimStartIndex, THREE_D);
+    PHRead(cdata, ordinaryDimEndIndex  , THREE_D);
+
+    int nvarplot = postVisualization->GetNumberofVisualVariables();
+    int nVisualVariables = nvarplot;
+    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
+    if (nchem)
+    {
+        int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+        nVisualVariables = nVisualVariables + numberOfSpecies;
+    }
+
+    RDouble4D **qn = new RDouble4D *[nVisualVariables];
+    postVisualization->GetAllVisualNodeVarPtr(qn);
+
+    for (int iVar = 0; iVar < nVisualVariables; ++ iVar)
+    {
+        for (int kIndex = ordinaryDimStartIndex[2]; kIndex <= ordinaryDimEndIndex[2]; ++ kIndex)
+        {
+            for (int jIndex = ordinaryDimStartIndex[1]; jIndex <= ordinaryDimEndIndex[1]; ++ jIndex)
+            {
+                for (int iIndex = ordinaryDimStartIndex[0]; iIndex <= ordinaryDimEndIndex[0]; ++ iIndex)
+                {
+                    RDouble qVar;
+                    PHRead(cdata, &qVar, 1);
+                    (*qn[iVar])(iIndex, jIndex, kIndex, 0) = qVar;
+                }
+            }
+        }
+    }
+
+    delete []qn;
+}
+
+void Post_WriteTecplotByOriginalGrid::UpdataNodeData(ActionKey *actkey, Grid *grid, RDouble4D **qn, int nVisualVariables)
+{
+    DataContainer *cdata = actkey->GetData();
+
+    StructGrid *strGrid = StructGridCast(grid);
+    int ni = strGrid->GetNI();
+    int nj = strGrid->GetNJ();
+    int nk = strGrid->GetNK();
+
+    int *ordinaryDimStartIndex = strGrid->GetOrdinaryDimStartIndex();
+    int *ordinaryDimEndIndex   = strGrid->GetOrdinaryDimEndIndex();
+
+    PHWrite(cdata, ordinaryDimStartIndex, THREE_D);
+    PHWrite(cdata, ordinaryDimEndIndex  , THREE_D);
+
+    for (int iVar = 0; iVar < nVisualVariables; ++ iVar)
+    {
+        for (int kIndex = 1; kIndex <= nk; ++ kIndex)
+        {
+            for (int jIndex = 1; jIndex <= nj; ++ jIndex)
+            {
+                for (int iIndex = 1; iIndex <= ni; ++ iIndex)
+                {
+                    RDouble qVar = (*qn[iVar])(iIndex, jIndex, kIndex, 0);
+                    PHWrite(cdata, &qVar, 1);
+                }
+            }
+        }
+    }
+}
+
+void Post_WriteTecplotByOriginalGrid::SetOriginalGridProc(int nOriginalGridsIn, int *originalGridProcOut)
+{
+    int numberOfProcessor = PHMPI::GetNumberOfProcessor();
+
+    this->nOriginalGrids   = nOriginalGridsIn;
+    this->originalGridProc = new int[nOriginalGridsIn];
+    for (int iZone = 0; iZone < nOriginalGridsIn; ++ iZone)
+    {
+        originalGridProcOut[iZone] = iZone % numberOfProcessor;
+        originalGridProc[iZone] = iZone % numberOfProcessor;
+    }
+
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    originalGridIndexOfEachGrid = new int[nZones];
+    SetField(originalGridIndexOfEachGrid, 0, nZones);
+
+    int *tempIndex = new int[nZones];
+    SetField(tempIndex, 0, nZones);
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Grid *grid = GetGrid(iZone);
+        if (!grid)
+        {
+            continue;
+        }
+
+        int originalGridIndex = grid->GetOrdinaryGridIndex();
+        tempIndex[iZone] = originalGridIndex;
+    }
+
+    PH_AllReduce(tempIndex, originalGridIndexOfEachGrid, nZones, PH_SUM);
+    delete []tempIndex;
+}
+
+int Post_WriteTecplotByOriginalGrid::GetOriginalGridProc(int iZone)
+{
+    return originalGridProc[iZone];
+}
+
+Post_WriteTecplotByOriginalGrid *GetWriteTecplotByOriginalGrid()
+{
+    return writeTecplotByOriginalGrid;
+}
+
+bool WantVisualField(Grid *grid)
+{
+    int plotFieldType = 0;
+    GlobalDataBase::GetData("plotFieldType", &plotFieldType, PHINT, 1);
+
+    if (plotFieldType == TEC_SPACE::BlockVisual)
+    {
+        int dimension = GetDim();
+
+        RDouble *pmin = grid->GetMinBox();
+        RDouble *pmax = grid->GetMaxBox();
+
+        RDouble lowerPlotFieldBox[3], upperPlotFieldBox[3];
+        GlobalDataBase::GetData("lowerPlotFieldBox", &lowerPlotFieldBox, PHDOUBLE, 3);
+        GlobalDataBase::GetData("upperPlotFieldBox", &upperPlotFieldBox, PHDOUBLE, 3);
+
+        if ((pmin[0] > upperPlotFieldBox[0]) || (pmax[0] < lowerPlotFieldBox[0])) return false;
+
+        if ((pmin[1] > upperPlotFieldBox[1]) || (pmax[1] < lowerPlotFieldBox[1])) return false;
+
+        if (dimension == THREE_D)
+        {
+            if ((pmin[2] > upperPlotFieldBox[2]) || (pmax[2] < lowerPlotFieldBox[2])) return false;
+        }
+    }
+    return grid->GetDim() == TWO_D || (grid->GetDim() == THREE_D && plotFieldType != TEC_SPACE::BoundaryVisual);
+}
+
+
 
 }

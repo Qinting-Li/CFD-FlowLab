@@ -93,6 +93,7 @@ public:
 
     Grid * GetGrid() const;
     int GetFlowType() { return this->flowType; }
+    void UpdateDataPtr(const string &name, void *data);
 
 private:
     //! Geometry information.
