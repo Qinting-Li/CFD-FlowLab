@@ -181,6 +181,8 @@ const int VISUAL_DIMENSIONAL_U         = 53;
 const int VISUAL_DIMENSIONAL_V         = 54;
 const int VISUAL_DIMENSIONAL_W         = 55;
 const int VISUAL_GAMA                  = 56;
+const int VISUAL_CFL1                  = 57;
+const int VISUAL_CFL2                  = 58;
 
 const int VISUAL_IBLANK                = 81;
 //const int VISUAL_O2                    = 15;
@@ -237,6 +239,7 @@ const int VISUAL_WALL_VS       = 19;
 const int VISUAL_WALL_ST       = 20;
 const int VISUAL_WALL_CH       = 21;
 const int VISUAL_SLIP_DTS      = 22;
+const int VISUAL_WALL_RE       = 23;
 //! The code number must be less than VISUAL_SPECIES_START.
 
 class Post_VisualWall

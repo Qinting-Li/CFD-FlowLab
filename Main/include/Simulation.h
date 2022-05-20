@@ -141,10 +141,10 @@ private:
 
     //!
     void SolveIncomFlow();
-
+    
     //!
     void SolveSteady();
-
+    
     //!
     void SolveUnsteady();
 

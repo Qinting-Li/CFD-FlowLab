@@ -871,7 +871,7 @@ void RoeDeltaFlux(RDouble* flux, RDouble* qL, RDouble* qR, RDouble* DQ, RDouble*
 {
     RDouble nx, ny, nz;
 
-    RDouble r, u, v, w, h, c, Vn, halfV2, c2, ratio, coef;
+    RDouble r, u, v, w, h, c, Vn, halfV2, absVel, c2, ratio, coef;
     RDouble rl, ul, vl, wl, pl, hl, v2l;
     RDouble rr, ur, vr, wr, pr, hr, v2r;
     RDouble z0, z1, X1, X2, b1, b2;
@@ -919,6 +919,7 @@ void RoeDeltaFlux(RDouble* flux, RDouble* qL, RDouble* qR, RDouble* DQ, RDouble*
     h = (hl + hr * ratio) * coef;
 
     halfV2 = half * (u * u + v * v + w * w);
+	absVel = sqrt(two * halfV2);
     Vn = nx * u + ny * v + nz * w;
 
     c2 = gamm1 * (h - halfV2);
@@ -928,7 +929,7 @@ void RoeDeltaFlux(RDouble* flux, RDouble* qL, RDouble* qR, RDouble* DQ, RDouble*
     eigv2 = ABS(Vn + c);
     eigv3 = ABS(Vn - c);
 
-    Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, 0.0, 0.0, Vn, c, 3, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
+    Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, 0.0, 0.0, absVel, Vn, c, 3, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
 
     z0 = u * DQ[IRU] + v * DQ[IRV] + w * DQ[IRW];
     z1 = nx * DQ[IRU] + ny * DQ[IRV] + nz * DQ[IRW];

@@ -83,12 +83,12 @@ LIB_EXPORT StructGrid::StructGrid()
     zoneProbesCellNJ.resize(0);
     zoneProbesCellNK.resize(0);
 
-    ordinaryGridIndex = -1;
-    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-    {
-        ordinaryDimStartIndex[iDim] = 0;
-        ordinaryDimEndIndex  [iDim] = 0;
-    }
+ //   ordinaryGridIndex = -1;
+ //   for (int iDim = 0; iDim < THREE_D; ++ iDim)
+ //   {
+ //       ordinaryDimStartIndex[iDim] = 0;
+ //       ordinaryDimEndIndex  [iDim] = 0;
+ //   }
 }
 
 LIB_EXPORT void StructGrid::InitGrid(GridID *index, int level, int dim, int type)
@@ -2406,7 +2406,7 @@ LIB_EXPORT void StructGrid::GetBoundaryMinMax(RDouble *pmin, RDouble *pmax)
         int nsurf = bcregion->GetFaceDirection() + 1;
 
         int il1, jl1, kl1;
-        GetNsurfIndex(nsurf, il1, jl1, kl1);
+        this->GetNsurfIndex( il1, jl1, kl1, nsurf);
 
         Range I(imin, imax + il1);
         Range J(jmin, jmax + jl1);
@@ -6336,41 +6336,41 @@ void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, 
     return;
 }
 
-void StructGrid::SetOrdinaryGridIndex(int ordinaryGridIndexIn)
-{
-    this->ordinaryGridIndex = ordinaryGridIndexIn;
-}
-
-void StructGrid::SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn)
-{
-    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-    {
-        this->ordinaryDimStartIndex[iDim] = ordinaryDimStartIndexIn[iDim];
-    }
-}
-
-void StructGrid::SetOrdinaryDimEndIndex(int *ordinaryDimEndIndexIn)
-{
-    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-    {
-        this->ordinaryDimEndIndex[iDim] = ordinaryDimEndIndexIn[iDim];
-    }
-}
-
-int StructGrid::GetOrdinaryGridIndex()
-{
-    return this->ordinaryGridIndex;
-}
-
-int *StructGrid::GetOrdinaryDimStartIndex()
-{
-    return ordinaryDimStartIndex;
-}
-
-int *StructGrid::GetOrdinaryDimEndIndex()
-{
-    return ordinaryDimEndIndex;
-}
+//void StructGrid::SetOrdinaryGridIndex(int ordinaryGridIndexIn)
+//{
+//    this->ordinaryGridIndex = ordinaryGridIndexIn;
+//}
+//
+//void StructGrid::SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn)
+//{
+//    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+//    {
+//        this->ordinaryDimStartIndex[iDim] = ordinaryDimStartIndexIn[iDim];
+//    }
+//}
+//
+//void StructGrid::SetOrdinaryDimEndIndex(int *ordinaryDimEndIndexIn)
+//{
+//    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+//    {
+//        this->ordinaryDimEndIndex[iDim] = ordinaryDimEndIndexIn[iDim];
+//    }
+//}
+//
+//int StructGrid::GetOrdinaryGridIndex()
+//{
+//    return this->ordinaryGridIndex;
+//}
+//
+//int *StructGrid::GetOrdinaryDimStartIndex()
+//{
+//    return ordinaryDimStartIndex;
+//}
+//
+//int *StructGrid::GetOrdinaryDimEndIndex()
+//{
+//    return ordinaryDimEndIndex;
+//}
 
 void StructGrid::GetLocalIndex(int gp, int &ip, int &jp, int &kp) const
 {
@@ -7065,7 +7065,6 @@ void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn)
             qn(ied, jed, kst, 0) = qn(ied - 1, jed - 1, kst, 0);
         }
     }
-
 }
 
 void GetIJKROT(int ijk[4][3], int *irot, int *jrot, int *krot)
