@@ -175,7 +175,7 @@ LIB_EXPORT void CompleteParamInfo();
 
 LIB_EXPORT void PrintInflowConditionToWindow(void);
 
-LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature);
+LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature, vector< RDouble > &WallT, vector< int > &WallNumber);
 
 #include "PHIO.hxx"
 }

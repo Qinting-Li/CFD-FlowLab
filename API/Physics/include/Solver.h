@@ -101,6 +101,8 @@ public:
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitFlow() = 0;
 
+    virtual void InitProtectedFlow() {};
+
     //! Interface data communications.    
     virtual void CommunicationInterfaceData() {};
 

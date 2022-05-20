@@ -250,6 +250,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         RDouble gamm1 = gama - one;
 
         RDouble vSquareRoeAverage = uRoeAverage * uRoeAverage + vRoeAverage * vRoeAverage + wRoeAverage * wRoeAverage;
+		RDouble absVel = sqrt(vSquareRoeAverage);
         RDouble hRoeAverage = gama / gamm1 * pRoeAverage / rRoeAverage + half * vSquareRoeAverage;
 
         RDouble vn = xsn * uRoeAverage + ysn * vRoeAverage + zsn * wRoeAverage - vb;
@@ -307,7 +308,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
 
         //! Entropy correction, to limit the magnitude of the three eigenvalue.
         //! Warning: This function calling may affect the efficient!
-        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
+        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
 
         RDouble xi1 = 0.0, xi2 = 0.0, xi3 = 0.0, xi4 = 0.0;
         if (nPrecondition == 0) 
@@ -532,7 +533,7 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
         RDouble gamm1 = gama - one;
 
         RDouble vSquareRoeAverage = uRoeAverage * uRoeAverage + vRoeAverage * vRoeAverage + wRoeAverage * wRoeAverage;
-
+		RDouble absVel = sqrt(vSquareRoeAverage);
         RDouble vn = xsn * uRoeAverage + ysn * vRoeAverage + zsn * wRoeAverage - vb;
 
         //! c2: square of sound speed.             
@@ -574,7 +575,7 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
 
         //! Entropy correction, to limit the magnitude of the three eigenvalue.
         //! Warning: This function calling may affect the efficient!
-        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
+        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
 
         RDouble eigv1Term, eigv2Term, eigv3Term;
         RDouble oSoundSpeed2 = 1.0 / (cm * cm);
