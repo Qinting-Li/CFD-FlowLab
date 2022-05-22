@@ -330,7 +330,10 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
         if (bcType == PHENGLEI::SOLID_SURFACE)
         {
             string bodyName = "body";
-            bcParamDataBase->UpdateData("bodyName", &bodyName, PHSTRING, 1);
+            if (!bcParamDataBase->CheckDataExist("bodyName"))
+            {
+                bcParamDataBase->UpdateData("bodyName", &bodyName, PHSTRING, 1);
+            }
 
             int taskType = GetTaskCode();
             if (taskType == SOLVE_FIELD || taskType == POST_PROCESSING)
@@ -347,20 +350,6 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
                 partForceReferenceX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
                 partForceReferenceY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
                 partForceReferenceZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
-
-                //if (GetDim() == THREE_D)
-                //{
-                //    partForceReferenceArea /= reynoldsReferenceLengthDimensional * reynoldsReferenceLengthDimensional;
-                //}
-                //else if (GetDim() == TWO_D)
-                //{
-                //    partForceReferenceArea /= reynoldsReferenceLengthDimensional;
-                //}
-                //partForceReferenceLength /= reynoldsReferenceLengthDimensional;
-                //partForceReferenceLength_B /= reynoldsReferenceLengthDimensional;
-                //partForceReferenceX /= reynoldsReferenceLengthDimensional;
-                //partForceReferenceY /= reynoldsReferenceLengthDimensional;
-                //partForceReferenceZ /= reynoldsReferenceLengthDimensional;
 
                 bcParamDataBase->UpdateData("forceReferenceArea", &partForceReferenceArea, PHDOUBLE, 1);
                 bcParamDataBase->UpdateData("forceReferenceLength", &partForceReferenceLength, PHDOUBLE, 1);
@@ -494,7 +483,10 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 }
                 else if (inflowParaType == EXPERIMENTCONDITION)
                 {
-                    SetMaximumSpeciesForBC(bcParamDB);
+                    RDouble *prim_inf = new RDouble [nEquation];
+                    SetBCInitialValuesByTotalPressure(bcParamDB, prim_inf);
+                    bcParamDB->UpdateData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    delete [] prim_inf;
                 }
                 else if (inflowParaType == TEMPERATURE_DENSITY)
                 {
@@ -526,8 +518,15 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 }
                 else if (inflowParaType == TRAJECTORY)
                 {
+                    RDouble *prim_inf = new RDouble [nEquation];
                     RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-                    boundaryCondition->UpdateParamData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
+                    for (int s = 0; s < nEquation; ++ s)
+                    {
+                        prim_inf[s] = primitiveVarFarfield[s];
+                    }
+                    SetSpeedDrictionForBC(bcParamDB, 1.0, prim_inf);
+                    boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                    delete [] prim_inf;
                 }
                 else
                 {
@@ -536,8 +535,15 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
             }
             else
             {
+                RDouble *prim_inf = new RDouble [nEquation];
                 RDouble *primitiveVarFarfield = reinterpret_cast <RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-                boundaryCondition->UpdateParamData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
+                for (int s = 0; s < nEquation; ++ s)
+                {
+                    prim_inf[s] = primitiveVarFarfield[s];
+                }
+                SetSpeedDrictionForBC(bcParamDB, 1.0, prim_inf);
+                boundaryCondition->UpdateParamData("primitiveVarFarfield", prim_inf, PHDOUBLE, nEquation);
+                delete [] prim_inf;
             }
         }
         else if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
@@ -556,11 +562,11 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
                 GlobalDataBase::GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
                 boundaryCondition->UpdateParamData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
             }
-            else
+            /*else
             {
                 boundaryCondition->GetParamData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
                 GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
-            }
+            }*/
         }
         else if (bcType == PHENGLEI::PRESSURE_INLET)
         {
@@ -644,7 +650,7 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
 void GlobalBoundaryCondition::SetBCInitialValuesByReynolds(Data_Param *bcParamDB, RDouble *primitiveVar)
 {
     using namespace GAS_SPACE;
-    RDouble localMachNumber = 0, attackd = 0, angleSlide = 0, localReNumber = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
+    RDouble localMachNumber = 0, localReNumber = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
     //Obtain the local parameters on boundary.
     if (bcParamDB->IsExist("refMachNumber", PHDOUBLE, 1))
     {
@@ -653,22 +659,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByReynolds(Data_Param *bcParamDB
     else
     {
         localMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
-    }
-    if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
-    }
-    else
-    {
-        attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    }
-    if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
-    }
-    else
-    {
-        angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
     }
     if (bcParamDB->IsExist("refReNumber", PHDOUBLE, 1))
     {
@@ -695,8 +685,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByReynolds(Data_Param *bcParamDB
         //localVibrationTemperature = GlobalDataBase::GetDoubleParaFromDB("freestream_vibration_temperature");
         localVibrationTemperature = localDimensionalTemperature;
     }
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
 
     //Obtain the reference parameters.
     RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
@@ -802,17 +790,18 @@ void GlobalBoundaryCondition::SetBCInitialValuesByReynolds(Data_Param *bcParamDB
     }
 
     using namespace IDX;
+
     primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
-    primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
-    primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
-    primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity *               sin(sideslip);
+
+    SetSpeedDrictionForBC(bcParamDB,localDimensionalVelocity / refDimensionalVelocity, primitiveVar);
+
     primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
 }
 
 void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, RDouble *primitiveVar)
 {
     using namespace GAS_SPACE;
-    RDouble localMachNumber = 0, attackd = 0, angleSlide = 0, height = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
+    RDouble localMachNumber = 0, height = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
     //Obtain the local parameters on boundary.
     if (bcParamDB->IsExist("refMachNumber", PHDOUBLE, 1))
     {
@@ -822,22 +811,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, 
     {
         localMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
     }
-    if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
-    }
-    else
-    {
-        attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    }
-    if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
-    }
-    else
-    {
-        angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
-    }
     if (bcParamDB->IsExist("height", PHDOUBLE, 1))
     {
         bcParamDB->GetData("height", &height, PHDOUBLE, 1);
@@ -846,9 +819,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, 
     {
         height = GlobalDataBase::GetDoubleParaFromDB("height");
     }
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
-
     RDouble localDimensionalDensity, localDimensionalVelocity, localDimensionalPressure, localDimensionalSonicSpeed;
     gas->GetAirInfo(height, localDimensionalTemperature, localDimensionalPressure, localDimensionalDensity, localDimensionalSonicSpeed);
     localVibrationTemperature = localDimensionalTemperature;
@@ -941,12 +911,11 @@ void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, 
 
     using namespace IDX;
     primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
-    primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
-    primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
-    primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity *               sin(sideslip);
+
+    SetSpeedDrictionForBC(bcParamDB,localDimensionalVelocity / refDimensionalVelocity, primitiveVar);
+
     primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
 }
-
 
 void GlobalBoundaryCondition::SetMaximumSpeciesForBC(Data_Param *bcParamDB)
 {
@@ -964,11 +933,199 @@ void GlobalBoundaryCondition::SetMaximumSpeciesForBC(Data_Param *bcParamDB)
     }
 }
 
+void GlobalBoundaryCondition::SetSpeedDrictionForBC(Data_Param *bcParamDB, RDouble localNonDimensionalVelocity, RDouble *primitiveVar)
+{
+    using namespace GAS_SPACE;
+    using namespace IDX;
+    using namespace INIFLOW_SPACE;
+  /*const int CUSTOM_ANGLE           = 0;
+    const int CUSTOM_VECTOR          = 1;
+  */
+    int directionMethod = CUSTOM_ANGLE;
+    if (bcParamDB->IsExist("directionMethod", PHINT, 1))
+    {
+        bcParamDB->GetData("directionMethod", &directionMethod, PHINT, 1);
+    }
+
+    RDouble direction_inlet[3] = {1.0,0.0,0.0};
+
+    if(directionMethod == CUSTOM_VECTOR )
+    {
+        if (bcParamDB->IsExist("direction_inlet", PHDOUBLE, 3))
+        {
+            bcParamDB->GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
+
+            RDouble sum = sqrt( direction_inlet[0] * direction_inlet[0] + direction_inlet[1] * direction_inlet[1] + direction_inlet[2] * direction_inlet[2]);
+            if(sum < SMALL)
+            {
+                direction_inlet[0] = 1.0;
+                direction_inlet[1] = 0.0;
+                direction_inlet[2] = 0.0;
+            }
+            else
+            {
+                sum = 1.0 / sum;
+                direction_inlet[0] *= sum;
+                direction_inlet[1] *= sum;
+                direction_inlet[2] *= sum;
+            }
+        }
+        else
+        {
+            if(GlobalDataBase::GetIntParaFromDB("directionMethod") == CUSTOM_VECTOR)
+            {
+                GlobalDataBase::GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
+            }
+            else
+            {
+                RDouble attack   =  PI / 180.0 * GlobalDataBase::GetDoubleParaFromDB("attackd");
+                RDouble sideslip =  PI / 180.0 * GlobalDataBase::GetDoubleParaFromDB("angleSlide");
+
+                direction_inlet[0] = cos(attack) * cos(sideslip);
+                direction_inlet[1] = sin(attack) * cos(sideslip);
+                direction_inlet[2] = sin(sideslip);
+            }
+        }
+    }
+    else  //  attackd and angleSlide
+    {
+        RDouble attackd = 0.0, angleSlide = 0.0;
+        if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
+        {
+            bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
+            if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
+            {
+                bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
+            }
+
+            attackd    *= PI / 180.0;
+            angleSlide *= PI / 180.0;
+
+            direction_inlet[0] = cos(attackd) * cos(angleSlide);
+            direction_inlet[1] = sin(attackd) * cos(angleSlide);
+            direction_inlet[2] = sin(angleSlide);
+        }
+        else
+        {
+            if(GlobalDataBase::GetIntParaFromDB("directionMethod") == CUSTOM_VECTOR)
+            {
+                GlobalDataBase::GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
+            }
+            else
+            {
+                RDouble attack   =  PI / 180.0 * GlobalDataBase::GetDoubleParaFromDB("attackd");
+                RDouble sideslip =  PI / 180.0 * GlobalDataBase::GetDoubleParaFromDB("angleSlide");
+
+                direction_inlet[0] = cos(attack) * cos(sideslip);
+                direction_inlet[1] = sin(attack) * cos(sideslip);
+                direction_inlet[2] = sin(sideslip);
+            }
+        }
+    }
+
+    bcParamDB->UpdateData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
+    primitiveVar[IU] = localNonDimensionalVelocity * direction_inlet[0];
+    primitiveVar[IV] = localNonDimensionalVelocity * direction_inlet[1];
+    primitiveVar[IW] = localNonDimensionalVelocity * direction_inlet[2];
+}
+
+void GlobalBoundaryCondition::SetSpeedDrictionForReferenceVar(RDouble localNonDimensionalVelocity, RDouble *primitiveVar)
+{
+    using namespace GAS_SPACE;
+    using namespace IDX;
+    using namespace INIFLOW_SPACE;
+  /*const int CUSTOM_ANGLE           = 0;
+    const int CUSTOM_VECTOR          = 1;
+  */
+    int directionMethod = CUSTOM_ANGLE;
+    if (GlobalDataBase::IsExist("directionMethod", PHINT, 1))
+    {
+        GlobalDataBase::GetData("directionMethod", &directionMethod, PHINT, 1);
+    }
+    else
+    {
+        GlobalDataBase::UpdateData("directionMethod", &directionMethod, PHINT, 1);
+    }
+
+    RDouble attackd = 0.0, angleSlide = 0.0;
+    RDouble direction_inlet[3] = {1.0,0.0,0.0};
+
+    if(directionMethod == CUSTOM_VECTOR )  //  VECTOR
+    {
+        if (GlobalDataBase::IsExist("direction_inlet", PHDOUBLE, 3))
+        {
+            GlobalDataBase::GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
+
+            RDouble sum = sqrt( direction_inlet[0] * direction_inlet[0] + direction_inlet[1] * direction_inlet[1] + direction_inlet[2] * direction_inlet[2]);
+            if(sum < SMALL)
+            {
+                direction_inlet[0] = 1.0;
+                direction_inlet[1] = 0.0;
+                direction_inlet[2] = 0.0;
+            }
+            else
+            {
+                sum = 1.0 / sum;
+                direction_inlet[0] *= sum;
+                direction_inlet[1] *= sum;
+                direction_inlet[2] *= sum;
+            }
+        }
+
+        RDouble sideslip = asin( min(one, direction_inlet[2]) );
+        RDouble attack   = asin( min(one, direction_inlet[1] / max(SMALL, cos(sideslip))) );
+
+        GlobalDataBase::UpdateData("attack", &attack, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("sideslip", &sideslip, PHDOUBLE, 1);
+
+        attackd = attack * 180.0 / PI;
+        angleSlide = sideslip * 180.0 / PI;
+
+        GlobalDataBase::UpdateData("attackd", &attackd, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("angleSlide", &angleSlide, PHDOUBLE, 1);
+    }
+    else  //  attackd and angleSlide
+    {
+        if (GlobalDataBase::IsExist("attackd", PHDOUBLE, 1))
+        {
+            GlobalDataBase::GetData("attackd", &attackd, PHDOUBLE, 1);
+        }
+        else
+        {
+            GlobalDataBase::UpdateData("attackd", &attackd, PHDOUBLE, 1);
+        }
+
+        if (GlobalDataBase::IsExist("angleSlide", PHDOUBLE, 1))
+        {
+            GlobalDataBase::GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
+        }
+        else
+        {
+            GlobalDataBase::UpdateData("angleSlide", &angleSlide, PHDOUBLE, 1);
+        }
+        RDouble attack   = attackd * PI / 180.0;
+        RDouble sideslip = angleSlide * PI / 180.0;
+
+        GlobalDataBase::UpdateData("attack", &attack, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("sideslip", &sideslip, PHDOUBLE, 1);
+
+        direction_inlet[0] = cos(attack) * cos(sideslip);
+        direction_inlet[1] = sin(attack) * cos(sideslip);
+        direction_inlet[2] = sin(sideslip);
+    }
+
+    GlobalDataBase::UpdateData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
+
+    primitiveVar[IU] = localNonDimensionalVelocity * direction_inlet[0];
+    primitiveVar[IV] = localNonDimensionalVelocity * direction_inlet[1];
+    primitiveVar[IW] = localNonDimensionalVelocity * direction_inlet[2];
+}
+
 void GlobalBoundaryCondition::SetBCInitialValuesByDensity(Data_Param *bcParamDB, RDouble *primitiveVar)
 {
     using namespace GAS_SPACE;
     RDouble localDimensionalVelocity = 0, localDimensionalDensity = 0, localDimensionalPressure = 0;
-    RDouble attackd = 0, angleSlide = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
+    RDouble localDimensionalTemperature = 0, localVibrationTemperature = 0;
     //Obtain the local parameters on boundary.
     if (bcParamDB->IsExist("refDimensionalVelocity", PHDOUBLE, 1))
     {
@@ -985,22 +1142,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByDensity(Data_Param *bcParamDB,
     else
     {
         localDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
-    }
-    if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
-    }
-    else
-    {
-        attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    }
-    if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
-    }
-    else
-    {
-        angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
     }
     if (bcParamDB->IsExist("refDimensionalTemperature", PHDOUBLE, 1))
     {
@@ -1019,9 +1160,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByDensity(Data_Param *bcParamDB,
         //localVibrationTemperature = GlobalDataBase::GetDoubleParaFromDB("freestream_vibration_temperature");
         localVibrationTemperature = localDimensionalTemperature;
     }
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
-
     //Obtain the reference parameters.
     RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
     RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
@@ -1088,9 +1226,9 @@ void GlobalBoundaryCondition::SetBCInitialValuesByDensity(Data_Param *bcParamDB,
 
     using namespace IDX;
     primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
-    primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
-    primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
-    primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity *               sin(sideslip);
+
+    SetSpeedDrictionForBC(bcParamDB,localDimensionalVelocity / refDimensionalVelocity, primitiveVar);
+
     primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
 }
 
@@ -1098,7 +1236,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPressure(Data_Param *bcParamDB
 {
     using namespace GAS_SPACE;
     RDouble localDimensionalVelocity = 0, localDimensionalDensity = 0, localDimensionalPressure = 0;
-    RDouble attackd = 0, angleSlide = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
+    RDouble localDimensionalTemperature = 0, localVibrationTemperature = 0;
     //Obtain the local Velocity.
     if (bcParamDB->IsExist("refDimensionalVelocity", PHDOUBLE, 1))
     {
@@ -1118,27 +1256,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPressure(Data_Param *bcParamDB
     {
         localDimensionalPressure = GlobalDataBase::GetDoubleParaFromDB("refDimensionalPressure");
     }
-
-    //Obtain the local attackd.
-    if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
-    }
-    else
-    {
-        attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    }
-
-    //Obtain the local angleSlide.
-    if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
-    }
-    else
-    {
-        angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
-    }
-
     //Obtain the local Temperature.
     if (bcParamDB->IsExist("refDimensionalTemperature", PHDOUBLE, 1))
     {
@@ -1159,10 +1276,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPressure(Data_Param *bcParamDB
         //localVibrationTemperature = GlobalDataBase::GetDoubleParaFromDB("freestream_vibration_temperature");
         localVibrationTemperature = localDimensionalTemperature;
     }
-
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
-
     //Obtain the reference parameters.
     RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
     RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
@@ -1230,80 +1343,46 @@ void GlobalBoundaryCondition::SetBCInitialValuesByPressure(Data_Param *bcParamDB
 
     using namespace IDX;
     primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
-    primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
-    primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
-    primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity *               sin(sideslip);
+
+    SetSpeedDrictionForBC(bcParamDB,localDimensionalVelocity / refDimensionalVelocity, primitiveVar);
+
     primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
 }
 
 void GlobalBoundaryCondition::SetBCInitialValuesByTotalPressure(Data_Param *bcParamDB, RDouble *primitiveVar)
 {
     using namespace GAS_SPACE;
-    RDouble localDimensionalVelocity = 0, localDimensionalDensity = 0, localDimensionalPressure = 0;
-    RDouble attackd = 0, angleSlide = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
+    RDouble localMachNumber = 0, localDimensionalDensity = 0, localDimensionalPressure = 0, localDimensionalVelocity = 0;
+    RDouble localDimensionalTemperature = 0, localVibrationTemperature = 0;
+    RDouble totalPressure = 0, totalTemperature = 0;
     //Obtain the local Velocity.
-    if (bcParamDB->IsExist("refDimensionalVelocity", PHDOUBLE, 1))
+    if (bcParamDB->IsExist("refMachNumber", PHDOUBLE, 1))
     {
-        bcParamDB->GetData("refDimensionalVelocity", &localDimensionalVelocity, PHDOUBLE, 1);
+        bcParamDB->GetData("refMachNumber", &localMachNumber, PHDOUBLE, 1);
     }
     else
     {
-        localDimensionalVelocity = 0.0;
+        localMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
     }
 
     //Obtain the local Pressure.
     if (bcParamDB->IsExist("totalPressure", PHDOUBLE, 1))
     {
-        bcParamDB->GetData("totalPressure", &localDimensionalPressure, PHDOUBLE, 1);
+        bcParamDB->GetData("totalPressure", &totalPressure, PHDOUBLE, 1);
     }
     else
     {
-        localDimensionalPressure = GlobalDataBase::GetDoubleParaFromDB("refDimensionalPressure");
+        totalPressure = GlobalDataBase::GetDoubleParaFromDB("refDimensionalPressure");
     }
-
-    //Obtain the local attackd.
-    if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
-    }
-    else
-    {
-        attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    }
-
-    //Obtain the local angleSlide.
-    if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
-    }
-    else
-    {
-        angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
-    }
-
     //Obtain the local Temperature.
     if (bcParamDB->IsExist("totalTemperature", PHDOUBLE, 1))
     {
-        bcParamDB->GetData("totalTemperature", &localDimensionalTemperature, PHDOUBLE, 1);
+        bcParamDB->GetData("totalTemperature", &totalTemperature, PHDOUBLE, 1);
     }
     else
     {
-        localDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
+        totalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
     }
-
-    //Obtain the local VibrationTemperature.
-    if (bcParamDB->IsExist("totalTemperature", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("totalTemperature", &localVibrationTemperature, PHDOUBLE, 1);
-    }
-    else
-    {
-        //localVibrationTemperature = GlobalDataBase::GetDoubleParaFromDB("freestream_vibration_temperature");
-        localVibrationTemperature = localDimensionalTemperature;
-    }
-
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
 
     //Obtain the reference parameters.
     RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
@@ -1313,14 +1392,25 @@ void GlobalBoundaryCondition::SetBCInitialValuesByTotalPressure(Data_Param *bcPa
     int nchem = gas->GetChemicalType();
     if (nchem == 0)
     {
+        RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
         RDouble reference_general_gas_constant = GlobalDataBase::GetDoubleParaFromDB("reference_average_general_gas_constant");
-        localDimensionalDensity = localDimensionalPressure / reference_general_gas_constant / localDimensionalTemperature;
+
+        RDouble localDimensionalSonicSpeed = sqrt(refGama * reference_general_gas_constant * localDimensionalTemperature);
+        localDimensionalVelocity = localDimensionalSonicSpeed * localMachNumber;
+
+        localDimensionalTemperature = totalTemperature /(1.0 + 0.5 * (refGama - 1.0) * localMachNumber * localMachNumber);
+        localDimensionalPressure = totalPressure * pow(localDimensionalTemperature / totalTemperature, refGama /(refGama - 1.0));
+
+        localDimensionalDensity = localDimensionalPressure / (reference_general_gas_constant * localDimensionalTemperature);
+
     }
     else
     {
         int nNSEqn = gas->GetNSEquationNumber();
         int numberOfSpecies = gas->GetNumberOfSpecies();
-        RDouble initMassFraction[MAX_SPECIES_NUM] = {0}, primVars[MAX_SPECIES_NUM] = {0};
+        Thermo_Energy &Thermo_Energy_temparay = *gas->GetThermo_Energy_temparay();
+
+        RDouble initMassFraction[MAX_SPECIES_NUM] = {0}, primVars[MAX_REACTION_NUM] = {0};
         if (bcParamDB->IsExist("initMassFraction", PHDOUBLE, numberOfSpecies))
         {
             bcParamDB->GetData("initMassFraction", &initMassFraction, PHDOUBLE, numberOfSpecies);
@@ -1339,16 +1429,35 @@ void GlobalBoundaryCondition::SetBCInitialValuesByTotalPressure(Data_Param *bcPa
             primVars[nNSEqn + s] = initMassFraction[s];
         }
 
+        for (int s = 0; s < numberOfSpecies; ++ s)
+        {
+            primitiveVar[nNSEqn + s] = initMassFraction[s];
+        }
+
+        RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
+        RDouble deltaGama = 100.0;
+        int  count = 0;
+        while(deltaGama > 0.001 && count < 10)
+        {
+            localDimensionalTemperature = totalTemperature /(1.0 + 0.5 * (refGama - 1.0) * localMachNumber * localMachNumber);
+            gas->ComputeMixturegasThermalParameter(initMassFraction, localDimensionalTemperature, localDimensionalTemperature, localDimensionalTemperature, 1);   //  equlibrim
+            deltaGama = abs(refGama - Thermo_Energy_temparay.gama);
+            refGama = Thermo_Energy_temparay.gama;
+            count++;
+        };
+        localDimensionalTemperature = totalTemperature /(1.0 + 0.5 * (refGama - 1.0) * localMachNumber * localMachNumber);
+        localDimensionalPressure = totalPressure * pow(localDimensionalTemperature / totalTemperature, refGama /(refGama - 1.0));
+
+        localVibrationTemperature = localDimensionalTemperature;
+
         RDouble oMass = 0.0, gasR = 0.0;
         gas->ComputeMolecularWeightReciprocalDimensional(primVars, oMass);
         gasR = rjmk * oMass;
 
         localDimensionalDensity = localDimensionalPressure / (gasR * localDimensionalTemperature);
 
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            primitiveVar[nNSEqn + s] = initMassFraction[s];
-        }
+        localDimensionalVelocity = localMachNumber * sqrt(refGama * gasR * localDimensionalTemperature);
+
 
         int ntmodel = gas->GetTemperatureModel();
         if (ntmodel > 1)       //! multi-temperature model.
@@ -1372,9 +1481,9 @@ void GlobalBoundaryCondition::SetBCInitialValuesByTotalPressure(Data_Param *bcPa
 
     using namespace IDX;
     primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
-    primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
-    primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
-    primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity *               sin(sideslip);
+
+    SetSpeedDrictionForBC(bcParamDB,localDimensionalVelocity / refDimensionalVelocity, primitiveVar);
+
     primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
 }
 
@@ -1382,7 +1491,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMachNumberTemperaturePressure(
 {
     using namespace GAS_SPACE;
     RDouble localMachNumber = 0, localDimensionalDensity = 0, localDimensionalPressure = 0;
-    RDouble attackd = 0, angleSlide = 0, localDimensionalTemperature = 0, localVibrationTemperature = 0;
+    RDouble localDimensionalTemperature = 0, localVibrationTemperature = 0;
     //Obtain the local parameters on boundary.
     if (bcParamDB->IsExist("refMachNumber", PHDOUBLE, 1))
     {
@@ -1400,22 +1509,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMachNumberTemperaturePressure(
     {
         localDimensionalPressure = GlobalDataBase::GetDoubleParaFromDB("refDimensionalPressure");
     }
-    if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
-    }
-    else
-    {
-        attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    }
-    if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
-    }
-    else
-    {
-        angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
-    }
+    
     if (bcParamDB->IsExist("refDimensionalTemperature", PHDOUBLE, 1))
     {
         bcParamDB->GetData("refDimensionalTemperature", &localDimensionalTemperature, PHDOUBLE, 1);
@@ -1433,8 +1527,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMachNumberTemperaturePressure(
         //localVibrationTemperature = GlobalDataBase::GetDoubleParaFromDB("freestream_vibration_temperature");
         localVibrationTemperature = localDimensionalTemperature;
     }
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
 
     //Obtain the reference parameters.
     RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
@@ -1540,9 +1632,9 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMachNumberTemperaturePressure(
     }
     using namespace IDX;
     primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
-    primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
-    primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
-    primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity *               sin(sideslip);
+
+    SetSpeedDrictionForBC(bcParamDB,localDimensionalVelocity / refDimensionalVelocity, primitiveVar);
+
     primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
 }
 
@@ -1682,7 +1774,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMolecularWeightGama(Data_Param
 {
     using namespace GAS_SPACE;
     RDouble localDimensionalVelocity, localDimensionalPressure, localDimensionalDensity;
-    RDouble attackd, angleSlide, localDimensionalTemperature, localVibrationTemperature;
+    RDouble localDimensionalTemperature, localVibrationTemperature;
     //Obtain the local parameters on boundary.
     if (bcParamDB->IsExist("refDimensionalVelocity", PHDOUBLE, 1))
     {
@@ -1700,22 +1792,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMolecularWeightGama(Data_Param
     {
         localDimensionalPressure = GlobalDataBase::GetDoubleParaFromDB("refDimensionalPressure");
     }
-    if (bcParamDB->IsExist("attackd", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("attackd", &attackd, PHDOUBLE, 1);
-    }
-    else
-    {
-        attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    }
-    if (bcParamDB->IsExist("angleSlide", PHDOUBLE, 1))
-    {
-        bcParamDB->GetData("angleSlide", &angleSlide, PHDOUBLE, 1);
-    }
-    else
-    {
-        angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
-    }
+
     if (bcParamDB->IsExist("refDimensionalTemperature", PHDOUBLE, 1))
     {
         bcParamDB->GetData("refDimensionalTemperature", &localDimensionalTemperature, PHDOUBLE, 1);
@@ -1734,9 +1811,6 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMolecularWeightGama(Data_Param
         localVibrationTemperature = localDimensionalTemperature;
     }
 
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
-
     //Obtain the reference parameters.
     RDouble refDimensionalDensity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalDensity");
     RDouble refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
@@ -1754,7 +1828,7 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMolecularWeightGama(Data_Param
         int nNSEqn = gas->GetNSEquationNumber();
         int numberOfSpecies = gas->GetNumberOfSpecies();
         RDouble initMassFraction[MAX_SPECIES_NUM], primVars[MAX_SPECIES_NUM];
-        RDouble localGama, fireMoleWeight;
+        RDouble localGama;
         if (bcParamDB->IsExist("initMassFraction", PHDOUBLE, numberOfSpecies))
         {
             bcParamDB->GetData("initMassFraction", &initMassFraction, PHDOUBLE, numberOfSpecies);
@@ -1815,9 +1889,9 @@ void GlobalBoundaryCondition::SetBCInitialValuesByMolecularWeightGama(Data_Param
 
     using namespace IDX;
     primitiveVar[IR] = localDimensionalDensity / refDimensionalDensity;
-    primitiveVar[IU] = localDimensionalVelocity / refDimensionalVelocity * cos(attack) * cos(sideslip);
-    primitiveVar[IV] = localDimensionalVelocity / refDimensionalVelocity * sin(attack) * cos(sideslip);
-    primitiveVar[IW] = localDimensionalVelocity / refDimensionalVelocity *               sin(sideslip);
+
+    SetSpeedDrictionForBC(bcParamDB,localDimensionalVelocity / refDimensionalVelocity, primitiveVar);
+
     primitiveVar[IP] = localDimensionalPressure / (refDimensionalDensity * refDimensionalVelocity * refDimensionalVelocity);
 }
 
@@ -2088,6 +2162,13 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
 
             if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::ABLATION_SURFACE)
             {
+                string bodyName = "body";
+                if (bcParamDataBase->CheckDataExist("bodyName"))
+                {
+                    bcParamDataBase->GetData("bodyName", &bodyName, PHSTRING, 1);
+                }
+
+                boundaryCondition->SetBodyName(bodyName);
                 if (taskType == SOLVE_FIELD || taskType == POST_PROCESSING)
                 {
                     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");

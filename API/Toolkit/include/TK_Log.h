@@ -159,6 +159,26 @@ void PrintToWindow(const string &name, const T1 &data1, const T2 &data2, const T
     PrintToWindow(oss.str());
 }
 
+template < typename T1, typename T2, typename T3, typename T4>
+void PrintToWindow(const string &name, const T1 &data1, const T2 &data2, const T3 &data3,  const T4 &data4)
+{
+    if (PHMPI::GetCurrentProcessorID() != 0) return;
+
+    ostringstream oss;
+    oss << name << " " << data1 << " " << data2 << " " << data3 << " " << data4 ;
+    PrintToWindow(oss.str());
+}
+
+template < typename T1, typename T2, typename T3, typename T4, typename T5 >
+void PrintToWindow(const string &name, const T1 &data1, const T2 &data2, const T3 &data3, const T4 &data4, const T5 &data5)
+{
+    if (PHMPI::GetCurrentProcessorID() != 0) return;
+
+    ostringstream oss;
+    oss << name << " " << data1 << " " << data2 << " " << data3 << " " << data4 << " " << data5;
+    PrintToWindow(oss.str());
+}
+
 //! Monitor the progress to log files.
 void ProgressMonitorToLogFile(const int &iNow, const int &nTotal, const string &monitorName);
 

@@ -63,9 +63,39 @@ inline RDouble Param_CFDSolver::GetCFLStart() const
     return CFLStart;
 }
 
-inline RDouble Param_CFDSolver::GetCFDEnd() const
+inline RDouble Param_CFDSolver::GetPMax() const
+{
+    return pMax;
+}
+
+inline RDouble Param_CFDSolver::GetPMin() const
+{
+    return pMin;
+}
+
+inline RDouble Param_CFDSolver::GetDeltaMax() const
+{
+    return deltaMax;
+}
+
+inline RDouble Param_CFDSolver::GetMagnifyFactor() const
+{
+    return magnifyFactor;
+}
+
+inline RDouble Param_CFDSolver::GetReduceFactor() const
+{
+    return reduceFactor;
+}
+
+inline RDouble Param_CFDSolver::GetCFLEnd() const
 {
     return CFLEnd;
+}
+
+inline RDouble Param_CFDSolver::GetFineCFL() const
+{
+    return fineCFL;
 }
 
 inline int Param_CFDSolver::GetCFLVaryStep() const

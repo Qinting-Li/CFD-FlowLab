@@ -80,7 +80,15 @@ public:
     RDouble GetCFLStart() const;
 
     //! Get final CFL.
-    RDouble GetCFDEnd() const;
+    RDouble GetCFLEnd() const;
+
+    RDouble GetFineCFL() const;
+
+    RDouble GetPMax() const;
+    RDouble GetPMin() const;
+    RDouble GetDeltaMax() const;
+    RDouble GetMagnifyFactor() const;
+    RDouble GetReduceFactor() const;
 
     //! The number of step when cfl increase from CFLStart to CFLEnd.
     int GetCFLVaryStep() const;
@@ -156,7 +164,9 @@ private:
 
     RDouble CFLStart;
     RDouble CFLEnd;
+    RDouble fineCFL;
     int CFLVaryStep;
+    RDouble pMax, pMin, deltaMax, magnifyFactor, reduceFactor;
 
     int nMGLevel;
 

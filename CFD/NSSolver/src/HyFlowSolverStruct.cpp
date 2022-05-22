@@ -4,6 +4,7 @@
 #include "MultiGridOperation.h"
 #include "GradientOperation.h"
 #include "Force.h"
+#include "AleForceManager.h"
 #include "OversetGridFactory.h"
 #include "TK_Exit.h"
 #include "Gradient.h"
@@ -293,8 +294,8 @@ namespace PHSPACE
             (*speciesOrder)(n) = -1;
         }
 
-        int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
-        if (iCodeBranch > 0)
+        int isAdaptiveSolver = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
+        if (isAdaptiveSolver > 0)
         {
             RDouble *maxResidualVariation = new RDouble[nEquation];
             for (int m = 0; m < nEquation; ++m)
@@ -688,8 +689,8 @@ namespace PHSPACE
         delete speciesOrder; speciesOrder = 0;
         grid->DeleteDataPtr("speciesOrder");
 
-        int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
-        if (iCodeBranch > 0)
+        int isAdaptiveSolver = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
+        if (isAdaptiveSolver > 0)
         {
             RDouble *maxResidualVariation = reinterpret_cast <RDouble *> (grid->GetDataPtr("maxResidualVariation"));
             delete[]maxResidualVariation;
@@ -10024,8 +10025,8 @@ namespace PHSPACE
         RDouble densityRelax = 1.0;
         RDouble *residualVariation = new RDouble[nEquation];
         RDouble *localMaxResidual = NULL;
-        int iCodeBranch = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
-        if (iCodeBranch > 0)
+        int isAdaptiveSolver = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
+        if (isAdaptiveSolver > 0)
         {
             localMaxResidual = reinterpret_cast <RDouble *> (grid->GetDataPtr("maxResidualVariation"));
             //Initialization.
@@ -10172,7 +10173,7 @@ namespace PHSPACE
                         qnew(i, j, k, m) = prim[m];
                     }
 
-                    if (iCodeBranch > 0)
+                    if (isAdaptiveSolver > 0)
                     {
                         //The variation of the variable density.
                         residualVariation[IR] = ABS((prim[IR] - residualVariation[IR])) / (residualVariation[IR] + SMALL);
@@ -15560,7 +15561,7 @@ namespace PHSPACE
     }
 #else
     //! Without any array optimization.
-    void HyFlowSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    void HyFlowSolverStruct::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
     {
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -15839,7 +15840,7 @@ namespace PHSPACE
         delete[] Ux;    Ux = NULL;
     }
 
-    void HyFlowSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    void HyFlowSolverStruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
     {
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
