@@ -1149,7 +1149,7 @@ namespace PHSPACE
                 grid->UpdateDataPtr("surfaceTemperature", temperatureWall);
             }
 
-            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+            StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
             int nBCRegion = compositeBCRegion->GetnBCRegion();
             int indexOfWall = 0;
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -1261,7 +1261,7 @@ namespace PHSPACE
                 }
             }
             
-            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+            StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
             int nBCRegion = compositeBCRegion->GetnBCRegion();
             int indexOfWall = 0;
             for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
@@ -4465,7 +4465,7 @@ namespace PHSPACE
         int level = actkey->level;
         int nEquation = GetNumberOfEquations();
         StructGrid *grid = StructGridCast(GetGrid(level));
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
 
         using namespace IDX;
@@ -15887,7 +15887,7 @@ namespace PHSPACE
 
         using namespace IDX;
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
         int nBCRegion = compositeBCRegion->GetnBCRegion();
         int nWallBC = 0, nIndexOfCell = 0;
 
