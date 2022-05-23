@@ -690,6 +690,9 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 int nVisualVariables = 8;
 int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
 
+int dumpFlowOnOriginalGrid = 0;
+string OriginalGridFile    = "./grid/rae2822_hybrid2d.fts";
+
 int nVisualWallVariables = 9;
 int visualWallVariables[] = [0, 1, 2, 3, 4, 5, 9, 10, 11];
 
