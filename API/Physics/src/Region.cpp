@@ -1072,6 +1072,8 @@ void Region::InitOriginalGrid()
 
     gridReader->CloseFile();
     delete gridReader;
+    delete []zoneIndex;
+    delete []zoneType;
     delete []originalGridProc;
 }
 

@@ -916,7 +916,17 @@ void DumpToTecio::WriteGridFilm()
     }
     else
     {
-        int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+        int fileID;
+        int dumpFlowOnOriginalGrid = 0;
+        GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
+        if (dumpFlowOnOriginalGrid)
+        {
+            fileID = PHMPI::GetCurrentProcessorID();
+        }
+        else
+        {
+            fileID = PHMPI::GetFileIndexofCurrentProcessor();
+        }
         string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
         oss0 << finalFileName;
     }
@@ -1406,7 +1416,17 @@ void DumpToTecplotASCII::WriteFlowFilm()
     }
     else
     {
-        int fileID = PHMPI::GetFileIndexofCurrentProcessor();
+        int fileID;
+        int dumpFlowOnOriginalGrid = 0;
+        GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
+        if (dumpFlowOnOriginalGrid)
+        {
+            fileID = PHMPI::GetCurrentProcessorID();
+        }
+        else
+        {
+            fileID = PHMPI::GetFileIndexofCurrentProcessor();
+        }
         string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
         ossFileName << finalFileName;
     }

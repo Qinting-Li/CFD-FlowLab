@@ -1766,8 +1766,6 @@ void Post_WriteTecplotByOriginalGrid::Run()
     ServerWrite(actkey);
     PostWrite(actkey);
     delete actkey;
-
-    //this->Clear();
 }
 
 void Post_WriteTecplotByOriginalGrid::Initialize()
@@ -2560,6 +2558,8 @@ void Post_WriteTecplotByOriginalGrid::ComputerNodeDataOnPartitionGrid(int iZone,
         UpdataNodeData(actkey, grid, qn, nVisualVariables);
         delete []qn;
     }
+
+    FreePointer(postVisualization);
 }
 
 void Post_WriteTecplotByOriginalGrid::CollectNodeData(ActionKey *actkey)
