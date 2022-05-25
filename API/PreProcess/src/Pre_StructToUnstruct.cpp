@@ -65,12 +65,12 @@ void Pre_StructToUnstruct::ConstructCellMapStrToUns()
         int nTotalCell = strGrid->GetNTotalCell();
 
         //! Gost cell.
-        StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = strGrid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
         int iBoundFace = 0;
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int BCType = structBC->GetBCType();
             string bcName = structBC->GetBCName();
 
@@ -224,22 +224,22 @@ void Pre_StructToUnstruct::ConstructBCType()
         unsGrid->SetNBoundFace(nBoundFace);
 
         int boundFaceIndex = 0;
-        StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = strGrid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         int nBCRegionUnstruct = static_cast<int>(nBCRegion);
-        unsGrid->CreateUnstructBCRegion(nBCRegionUnstruct);
-        UnstructBCSet *unstructBCRegion = unsGrid->GetUnstructBCRegion();
+        unsGrid->CreateUnstructBCSet(nBCRegionUnstruct);
+        UnstructBCSet *unstructBCSet = unsGrid->GetUnstructBCSet();
         int* bcRegionIDofBCFace = new int[nBoundFace];
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int BCType = structBC->GetBCType();
             string bcName = structBC->GetBCName();
 
             UnstructBC *unstructBC = new UnstructBC(iBCRegion);
-            unstructBCRegion->SetBCRegion(iBCRegion, unstructBC);
+            unstructBCSet->SetBCRegion(iBCRegion, unstructBC);
 
             unstructBC->SetBCType(BCType);
             unstructBC->SetBCName(bcName);
@@ -262,7 +262,7 @@ void Pre_StructToUnstruct::ConstructBCType()
                 }
             }
         }
-        unstructBCRegion->SetBCFaceInfo(bcRegionIDofBCFace);
+        unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
     }
 }
 
@@ -305,11 +305,11 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
         //! Boundary face
         int faceIndex = 0;
         int nodeCount = 0;
-        StructBCSet *compositeBCRegion = strGrid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = strGrid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int ist, ied, jst, jed, kst, ked;
             structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);

@@ -564,7 +564,7 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
 
     StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
     InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-    StructBCSet * composite_bcregion = finestGrid->GetCompositeBCRegion();
+    StructBCSet * structBCSet = finestGrid->GetStructBCSet();
     RDouble4D &rotNSgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueX"));
     RDouble4D &rotNSgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueY"));
     RDouble4D &rotNSgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueZ"));
@@ -592,9 +592,9 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
                 int it, jt, kt;
                 finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
                 finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                int *ibcregions = composite_bcregion->GetIFaceInfo();
+                int *ibcregions = structBCSet->GetIFaceInfo();
                 int ibcregion = ibcregions[iFace];
-                StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                StructBC * bcregion = structBCSet->GetBCRegion(ibcregion);
                 string bcName = bcregion->GetBCName();
                 if (bcName == "Periodic_up")
                 {
@@ -7167,12 +7167,12 @@ void LESSolverStruct::Boundary(Grid *gridIn)
     using namespace PHENGLEI;
     StructGrid *grid = StructGridCast(gridIn);
 
-    StructBCSet *compositeBCRregion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (BCType < 0)
@@ -7243,12 +7243,12 @@ void LESSolverStruct::ObtainBoundaryValue(Grid *gridIn)
     using namespace PHENGLEI;
     StructGrid *grid = StructGridCast(gridIn);
 
-    StructBCSet *compositeBCRregion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (BCType < 0)

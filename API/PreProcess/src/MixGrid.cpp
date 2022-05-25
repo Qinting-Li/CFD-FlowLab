@@ -64,14 +64,14 @@ void FantasyWriteToInp(const string &bnd_file, Grid **grids, int nBlocks)
         GridgenBCfile << endl;
         GridgenBCfile << iBlock + 1 << endl;
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int  numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
+        int  numberOfBoundaryFaces = structBCSet->GetnBCRegion();
         GridgenBCfile << numberOfBoundaryFaces << endl;
 
         for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
@@ -142,12 +142,12 @@ void ReProcessBCInfo(Grid **grids, int nBlocks)
     for (int iBlock = 0; iBlock < nBlocks; iBlock ++)
     {
         StructGrid *grid = StructGridCast(grids[iBlock]);
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
+        int numberOfBoundaryFaces = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
@@ -193,12 +193,12 @@ void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks)
     {
         StructGrid *grid = StructGridCast(grids[iBlock]);
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int bctype = structBC->GetBCType();
             if (bctype >= 0) continue;
@@ -275,12 +275,12 @@ void WriteLnkFile (const string &gridFileName, Grid **grids_in, int nBlocks)
     {
         StructGrid *grid = StructGridCast(grids[iZone]);
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int bctype = structBC->GetBCType();
             if (bctype >= 0) continue;
@@ -332,15 +332,15 @@ void CheckMeshMultigrid(Grid **grids_in, int nBlocks)
     {
         StructGrid *grid = StructGridCast(grids[iZone]);
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int  nBCRegion = composite_bcregion->GetnBCRegion();
+        int  nBCRegion = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
         {
             km = 1;
             NN = 2;
 
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
 
@@ -376,9 +376,9 @@ void WriteBcFileFromFTS (const string &gridFileName, Grid **grids_in, int nBlock
 
         StructGrid *grid = StructGridCast(grids[iZone]);
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int nBCRegion = static_cast< int > (composite_bcregion->GetnBCRegion());
+        int nBCRegion = static_cast< int > (structBCSet->GetnBCRegion());
 
         PHWrite(virtualFile, nBCRegion);
 
@@ -387,7 +387,7 @@ void WriteBcFileFromFTS (const string &gridFileName, Grid **grids_in, int nBlock
         uint_long totalSize = 0;
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             string bcName = structBC->GetBCName();
             int bctype = structBC->GetBCType();
@@ -399,7 +399,7 @@ void WriteBcFileFromFTS (const string &gridFileName, Grid **grids_in, int nBlock
                 }
                 else
                 {
-                    bcName = composite_bcregion->GetBCName(bctype);
+                    bcName = structBCSet->GetBCName(bctype);
                     if ((bctype >7) && (bctype <51))
                     {
                         bctype = 2;
@@ -1588,14 +1588,14 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
         if (nk == 1) K.setRange(1, 1);
         nTotalCell += I.length() * J.length() * K.length();
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
         {
             //! Read the source region imin,imax,jmin,jmax,kmin,kmax,bctype.
             int imin, imax, jmin, jmax, kmin, kmax, bctype;
-            StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
             bcregion->GetNormalizeIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
             bctype = bcregion->GetBCType();
             if (bctype != 7 || bctype / 10 != 7)
@@ -1719,13 +1719,13 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
         StructGrid *grid = StructGridCast(grids[iZone]);
         Int3D &unsindex = *unsindexlist[iZone];
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
         {
             //! Read the source region imin,imax,jmin,jmax,kmin,kmax,bctype.
             int imin, imax, jmin, jmax, kmin, kmax, bctype;
-            StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
              
             bcregion->GetNormalizeIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
             bctype = bcregion->GetBCType();
@@ -1921,13 +1921,13 @@ void SetBcRegion(StructGrid *grid, VInt &imin, VInt &imax, VInt &jmin, VInt &jma
     int nBCRegion = static_cast<int>(imin.size());
 
     grid->CreateCompositeBCRegion(nBCRegion);
-    StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
 
     int nb = 0;
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
         StructBC *bcregion = new StructBC(nb, ibcregion);
-        composite_bcregion->SetBCRegion(ibcregion, bcregion);
+        structBCSet->SetBCRegion(ibcregion, bcregion);
         bcregion->SetIJKRegion(imin[ibcregion], imax[ibcregion], jmin[ibcregion], jmax[ibcregion], kmin[ibcregion], kmax[ibcregion]);
         bcregion->SetBCType(bctype[ibcregion]);
     }

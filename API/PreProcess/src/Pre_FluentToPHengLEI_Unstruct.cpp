@@ -765,9 +765,9 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
         }
     }
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
-    grid->CreateUnstructBCRegion(nBCRegionUnstruct);
+    grid->CreateUnstructBCSet(nBCRegionUnstruct);
 
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int* bcRegionIDofBCFace = new int[nBoundFace];
     set<string>::iterator iter;
     
@@ -775,7 +775,7 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
         UnstructBC *unstructBC = new UnstructBC(count);
-        unstructBCRegion->SetBCRegion(count, unstructBC);
+        unstructBCSet->SetBCRegion(count, unstructBC);
         unstructBC->SetBCName(*iter);
 
         for (int iFace = 0; iFace < nBoundFace; iFace++)
@@ -791,7 +791,7 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
         }
         count++;
     }
-    unstructBCRegion->SetBCFaceInfo(bcRegionIDofBCFace);
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
 
     int nTotalFace = GetNTotalFace();
     grid->SetNTotalFace(nTotalFace);

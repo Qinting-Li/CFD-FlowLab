@@ -248,12 +248,12 @@ void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
     int **faceNodeIndex = grid->GetFace2NodeArray();
     int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
 
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
         if (IsWall(bcType))
         {
@@ -1867,12 +1867,12 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 {
     int nSolidFace = 0;
 
-    StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1895,7 +1895,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1929,7 +1929,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     int nWallPoints = 0;
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1980,7 +1980,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     nWallPoints = 0;
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2076,7 +2076,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     count = 0;
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2199,7 +2199,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -3563,8 +3563,8 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
     int *face2node = grid->GetFace2Node();
 
     int nBoundFace = grid->GetNBoundFace();
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     bool *nodeOnWall = new bool[nTotalNode];
     std::fill_n(nodeOnWall, nTotalNode, false);
@@ -3572,7 +3572,7 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
     int nodeCount = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
         if (!(IsWall(bcType)))
         {

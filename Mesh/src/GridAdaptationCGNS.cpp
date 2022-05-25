@@ -626,12 +626,12 @@ void CGNSZone::CopyStructuredGrid(Grid *grid_in)
     int nBCRegion = bcregion_proxy->GetNBCRegion();
 
     grid->CreateCompositeBCRegion(nBCRegion);
-    StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet * structBCSet = grid->GetStructBCSet();
 
     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
     {
         StructBC * bcregion = new StructBC(GetZoneID()-1, ibcregion);
-        composite_bcregion->SetBCRegion(ibcregion, bcregion);
+        structBCSet->SetBCRegion(ibcregion, bcregion);
 
         CGNSBCRegion *cgns_bcregion = GetBCRegion(ibcregion);
         cgns_bcregion->SetStructuredGridBoundary(bcregion);

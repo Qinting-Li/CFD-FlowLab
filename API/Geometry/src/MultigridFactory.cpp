@@ -86,13 +86,13 @@ StructFace::~StructFace()
 void StructFace::PaintSelf()
 {
     const int GHOST_INDEX = -1;
-    StructBCSet *compositeBCRegion = structGrid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = structGrid->GetStructBCSet();
     
     int iBoundaryFace = 0, iInterface = 0;
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int ibc = 0; ibc < nBCRegion; ++ ibc)
     {
-        StructBC * bcRegion = compositeBCRegion->GetBCRegion(ibc);
+        StructBC * bcRegion = structBCSet->GetBCRegion(ibc);
         
         int fds = bcRegion->GetFaceDirection();
         int fns = bcRegion->GetFaceLeftOrRightIndex();
@@ -152,11 +152,11 @@ void StructFace::PaintSelf()
 void StructFace::PaintNeighbor()
 {
     vector< int > ti(3), di(3);
-    StructBCSet * compositeBCRegion = structGrid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet * structBCSet = structGrid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int ibc = 0; ibc < nBCRegion; ++ ibc)
     {
-        StructBC * bcRegion = compositeBCRegion->GetBCRegion(ibc);
+        StructBC * bcRegion = structBCSet->GetBCRegion(ibc);
         int bc_type = bcRegion->GetBCType();
         if (! IsInterface(bc_type)) continue;
 
@@ -1322,8 +1322,8 @@ void MultigridManager::ReadBoundaryCondition()
     {
         StructGrid * grid = StructGridCast(OrdinaryGrid[iBlock]);
 
-        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
-        overallFaceNumber[iBlock] = composite_bcregion->GetnBCRegion();
+        StructBCSet * structBCSet = grid->GetStructBCSet();
+        overallFaceNumber[iBlock] = structBCSet->GetnBCRegion();
         
         int patchCounter = 0, innerCounter = 0, ComparePatchInner;
         int boundaryLabel;
@@ -1334,7 +1334,7 @@ void MultigridManager::ReadBoundaryCondition()
         
         for(int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             boundaryLabel = structBC->GetBCType();
             if(boundaryLabel < 0)
@@ -1366,14 +1366,14 @@ void MultigridManager::ReadBoundaryCondition()
     {
         StructGrid * grid = StructGridCast(OrdinaryGrid[iBlock]);
 
-        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet * structBCSet = grid->GetStructBCSet();
 
         int patchLabel = 0, innerLabel = 0;
         int imin, imax, jmin, jmax, kmin, kmax, boundaryLabel, targetLabel;
 
         for(int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int * s_st = structBC->GetStartPoint();
             int * s_ed = structBC->GetEndPoint();

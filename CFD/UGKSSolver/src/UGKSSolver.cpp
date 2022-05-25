@@ -898,12 +898,12 @@ namespace PHSPACE
         StructGrid * grid = StructGridCast(grid_in);
 
         using namespace PHENGLEI;
-        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        StructBCSet * structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
         {
-            StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC * bcregion = structBCSet->GetBCRegion(ibcregion);
             int bctype = bcregion->GetBCType();
 
             if (bctype < 0)   
@@ -4384,12 +4384,12 @@ namespace PHSPACE
         using namespace PHENGLEI;
         StructGrid * grid = StructGridCast(grid_in);
 
-        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        StructBCSet * structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
         {
-            StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC * bcregion = structBCSet->GetBCRegion(ibcregion);
             int bctype = bcregion->GetBCType();
 
             if (bctype < 0)   
@@ -4694,12 +4694,12 @@ namespace PHSPACE
 
         int ix = 0;//
 
-        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        StructBCSet * structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
         {
-            StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC * bcregion = structBCSet->GetBCRegion(ibcregion);
             int bctype = bcregion->GetBCType();
 
             int ist, ied, jst, jed, kst, ked;

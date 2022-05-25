@@ -79,7 +79,7 @@ private:
     //! Boundary information.
     //! 1: Number of boundary face (nBoundFace).
     //! 2: Number of interface face (nIFace).
-    StructBCSet *composite_bcregion;
+    StructBCSet *structBCSet;
 
     //! Topology information of the overset grid.
     Geo_OversetGridTopo_Struct *oversetGridTopology;
@@ -271,7 +271,7 @@ public:
     LIB_EXPORT void CopyGrid(StructGrid *grid);
 
     //! Copy boundary information from another grid.
-    LIB_EXPORT void CopyCompositeBCRegion(StructBCSet *composite_bcregion);
+    LIB_EXPORT void CopyStructBCSet(StructBCSet *structBCSet);
 
     //! Copy coordinates(X, Y, Z) information from another grid.
     LIB_EXPORT void CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble *yy, RDouble *zz);
@@ -288,11 +288,11 @@ public:
     //! Compute metrics (face normal, cell center, et al.).
     LIB_EXPORT void ComputeMetrics(ActionKey *actkey = 0);
     
-    //! Create composite boundary condition region (allocate memory for composite_bcregion).
+    //! Create composite boundary condition region (allocate memory for structBCSet).
     LIB_EXPORT void CreateCompositeBCRegion(int nBCRegion);
 
-    //! Return composite boundary condition region pointer (composite_bcregion).
-    StructBCSet * GetCompositeBCRegion() const;
+    //! Return composite boundary condition region pointer (structBCSet).
+    StructBCSet * GetStructBCSet() const;
 
     //! Set boundary face information.
     LIB_EXPORT void SetBCFaceInfo();

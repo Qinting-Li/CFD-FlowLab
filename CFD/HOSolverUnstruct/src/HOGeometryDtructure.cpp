@@ -595,14 +595,14 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
     int       * left_cell_of_face   = grid->GetLeftCellOfFace();
     int       * right_cell_of_face  = grid->GetRightCellOfFace();
     
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int le, re, bcType;
     
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
 
         le = left_cell_of_face [ iFace ];
         re = right_cell_of_face[ iFace ];
@@ -1007,8 +1007,8 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
     const RDouble *Ycc = grid->GetCellCenterY();
     const RDouble *Zcc = grid->GetCellCenterZ();
 
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
 
     int * leftCellOfFace = grid->GetLeftCellOfFace();
@@ -1039,7 +1039,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
         if (bcType == INTERFACE)
         {

@@ -1064,8 +1064,8 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
     RDouble *yfn  = gridIn->GetFaceNormalY();
     RDouble *zfn  = gridIn->GetFaceNormalZ();
 
-    UnstructBCSet *unstructBCRegion = gridIn->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = gridIn->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     RDouble *gama = reinterpret_cast<RDouble *> (gridIn->GetDataPtr("gama"));
     RDouble **t   = reinterpret_cast<RDouble **> (gridIn->GetDataPtr("t"));
@@ -1089,7 +1089,7 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
     int le, re, bcType;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
 
         le = leftCellofFace[iFace];
         re = rightCellofFace[iFace];

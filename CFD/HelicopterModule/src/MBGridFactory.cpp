@@ -101,13 +101,13 @@ void MBGridFactory::Register(UnstructGrid * grid)
         physicalType[iFace] = MB_SPACE::NEUTRAL_TYPE;
     }
 
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int numberOfBcFaces = grid->GetNBoundFace();
     for (int iBcFace = 0; iBcFace < numberOfBcFaces; ++ iBcFace)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iBcFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBcFace]);
 
         int bcType = bcRegion->GetBCType();
 

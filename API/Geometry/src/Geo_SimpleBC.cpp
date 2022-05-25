@@ -149,11 +149,11 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             {
                 StructGrid *grid = StructGridCast(gridofThisProcessor);
 
-                StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
-                int nBCRegion = composite_bcregion->GetnBCRegion();
+                StructBCSet *structBCSet = grid->GetStructBCSet();
+                int nBCRegion = structBCSet->GetnBCRegion();
                 for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
                     string bcName = bcregion->GetBCName();
                     int bcType = bcregion->GetBCType();
                     if (bcType == PHENGLEI::INTERFACE)
@@ -175,12 +175,12 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             {
                 UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
 
-                UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-                int nBCRegion = unstructBCRegion->GetnBCRegion();
+                UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+                int nBCRegion = unstructBCSet->GetnBCRegion();
            
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+                    UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcRegion->GetBCName();
                     int bcType = bcRegion->GetBCType();
                     if (bcType == PHENGLEI::INTERFACE)
@@ -1921,11 +1921,11 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                 {
                     StructGrid *grid = StructGridCast(gridofThisProcessor);
     
-                    StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
-                    int nBCRegion = composite_bcregion->GetnBCRegion();
+                    StructBCSet *structBCSet = grid->GetStructBCSet();
+                    int nBCRegion = structBCSet->GetnBCRegion();
                     for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
                     {
-                        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
                         string bcRegionName = bcregion->GetBCName();
                         int bcRegionType = bcregion->GetBCType();
     
@@ -1948,11 +1948,11 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                 {
                     UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
 
-                    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-                    int nBCRegion = unstructBCRegion->GetnBCRegion();
+                    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+                    int nBCRegion = unstructBCSet->GetnBCRegion();
                     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
                     {
-                        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+                        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
                         string bcRegionName = bcRegion->GetBCName();
                         int bcRegionType = bcRegion->GetBCType();
 
@@ -2010,11 +2010,11 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
             {
                 StructGrid *grid = StructGridCast(gridofThisProcessor);
 
-                StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
-                int nBCRegion = composite_bcregion->GetnBCRegion();
+                StructBCSet *structBCSet = grid->GetStructBCSet();
+                int nBCRegion = structBCSet->GetnBCRegion();
                 for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
                     string bcname = bcregion->GetBCName();
 
                     set< pair<string, int> >::iterator iter;
@@ -2031,12 +2031,12 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
             {
                 UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
 
-                UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-                int nBCRegion = unstructBCRegion->GetnBCRegion();
+                UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+                int nBCRegion = unstructBCSet->GetnBCRegion();
                 
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
                 {
-                    UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegion);
+                    UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcRegion->GetBCName();
                    
                     set< pair<string, int> >::iterator iter;

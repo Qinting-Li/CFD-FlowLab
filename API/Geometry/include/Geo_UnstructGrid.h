@@ -57,7 +57,7 @@ private:
     //! Each face has a Boundary Condition Record.
     UnstructBCSet ** bcr;
 
-    UnstructBCSet *unstructBCRegion;
+    UnstructBCSet *unstructBCSet;
 
     //! The volume condition list, without using at the moment.\n
     //UnstructBCSet **vcr;
@@ -180,7 +180,7 @@ public:
     void SetBCRecord(UnstructBCSet **bcr);
 
     //! Set the boundary condition region.
-    void SetUnstructBCRegion(UnstructBCSet* unstructBCRegion);
+    void SetUnstructBCSet(UnstructBCSet* unstructBCSet);
 
     //! Set the left cell list of each face.
     void SetLeftCellOfFace(int *left_cell_of_face_in);
@@ -229,11 +229,11 @@ public:
     //! Return the boundary condition records.
     UnstructBCSet **GetBCRecord() const;
     
-    //! Create composite boundary condition region (allocate memory for composite_bcregion).
-    LIB_EXPORT void CreateUnstructBCRegion(int nBCRegion);
+    //! Create composite boundary condition region (allocate memory for structBCSet).
+    LIB_EXPORT void CreateUnstructBCSet(int nBCRegion);
 
-    //! Return composite boundary condition region pointer (composite_bcregion).
-    UnstructBCSet * GetUnstructBCRegion() const;
+    //! Return composite boundary condition region pointer (structBCSet).
+    UnstructBCSet * GetUnstructBCSet() const;
    
     RDouble * GetNormalDistanceOfC2C() const;
 

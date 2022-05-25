@@ -422,8 +422,8 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
         int *right_cell_of_face = grid->GetRightCellOfFace();
         int *cell2node          = grid->GetCell2Node();
        
-        UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-        int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+        UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+        int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
         InterfaceInfo *iinfo_ordinary = grid->GetInterfaceInfo();
 
@@ -444,7 +444,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
 
             if (iface < nBoundFace)
             {
-                UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
 
                 int bcType = bcRegion->GetBCType();
                 oss << "The Boundary condition is :	" << bcType << "\n";
@@ -577,8 +577,8 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
             StructGridCast(grid)->CreateCompositeBCRegion(numberOfBoundaryFaces);
             StructGridCast(Mirror)->CreateCompositeBCRegion(numberOfBoundaryFaces);
 
-            StructBCSet *rhs = StructGridCast(grid)->GetCompositeBCRegion();
-            StructBCSet *compositeStructBC = StructGridCast(Mirror)->GetCompositeBCRegion();
+            StructBCSet *rhs = StructGridCast(grid)->GetStructBCSet();
+            StructBCSet *structBCSet = StructGridCast(Mirror)->GetStructBCSet();
 
             for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
             {
@@ -586,7 +586,7 @@ void Pre_GridMirror::DumpStrGrid(string out_gfile)
                 StructBC *MirrorBCRegion = new StructBC(Gridindex + numberOfOriginalBlocks, ibcregion);
 
                 rhs->SetBCRegion(ibcregion, bcregion);
-                compositeStructBC->SetBCRegion(ibcregion, MirrorBCRegion);
+                structBCSet->SetBCRegion(ibcregion, MirrorBCRegion);
 
                 int bctype = 0;
                 PHRead(cdata, &bctype, 1);
@@ -651,12 +651,12 @@ void Pre_GridMirror::ReadLnkFile(const string &fileName_in)
     {
         StructGrid *grid = StructGridCast(OrdinaryGrid[iBlock]);
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int bctype = structBC->GetBCType();
             if (bctype >= 0) continue;
@@ -723,12 +723,12 @@ void Pre_GridMirror::RevertBCInfo()
         for (int iBlock = 0; iBlock < BlockofEachProc; iBlock ++)
         {
             StructGrid *grid = StructGridCast(OrdinaryGrid[iBlock]);
-            StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+            StructBCSet *structBCSet = grid->GetStructBCSet();
 
-            int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
+            int numberOfBoundaryFaces = structBCSet->GetnBCRegion();
             for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
             {
-                StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+                StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
                 int *s_st = structBC->GetStartPoint();
                 int *s_ed = structBC->GetEndPoint();
@@ -762,12 +762,12 @@ void Pre_GridMirror::CalBlocksNumberOfMirrorGrid()
     for (int iZone = 0; iZone < numberOfOriginalBlocks; iZone ++)
     {
         StructGrid * grid = StructGridCast(OrdinaryGrid[iZone]);
-        StructBCSet * composite_bcregion = grid->GetCompositeBCRegion();
-        int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
+        StructBCSet * structBCSet = grid->GetStructBCSet();
+        int numberOfBoundaryFaces = structBCSet->GetnBCRegion();
 
         for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int bctype = structBC->GetBCType();
 
@@ -798,14 +798,14 @@ void Pre_GridMirror::CalSymmetryFace()
         if (SymmetryFace == true) break;
 
         StructGrid *grid = StructGridCast(OrdinaryGrid[iZone]);
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
         RDouble AA, BB, CC, DD;
 
-        int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
+        int numberOfBoundaryFaces = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
 
             int bctype = structBC->GetBCType();
 
@@ -1161,7 +1161,7 @@ void Pre_GridMirror::MirrorGridStr(int iZone, StructGrid *grid_in)
     PHWrite(gridinfo, MirrorZ, nTotalNode);
 
     /*StructGridCast(Mirror)->ComputeMinMaxBox();
-    StructGridCast(Mirror)->CopyCompositeBCRegion(grid_in->GetCompositeBCRegion());*/
+    StructGridCast(Mirror)->CopyStructBCSet(grid_in->GetStructBCSet());*/
 }
 
 void Pre_GridMirror::MirrorBCRegion()
@@ -1173,8 +1173,8 @@ void Pre_GridMirror::MirrorBCRegion()
             StructGrid *grid = StructGridCast(OrdinaryGrid[iZone]);
             /*StructGrid * Mirror = StructGridCast(MirrorGrids[iZone * 2 + 1]);*/
 
-            StructBCSet *rhs = grid->GetCompositeBCRegion();
-            /*StructBCSet * compositeStructBC = Mirror->GetCompositeBCRegion();*/
+            StructBCSet *rhs = grid->GetStructBCSet();
+            /*StructBCSet * structBCSet = Mirror->GetStructBCSet();*/
 
             int numberOfBoundaryFaces = rhs->GetnBCRegion();
             PHWrite(gridinfo, &numberOfBoundaryFaces, 1);
@@ -1182,7 +1182,7 @@ void Pre_GridMirror::MirrorBCRegion()
             for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
             {
                 StructBC *bcregion = rhs->GetBCRegion(ibcregion);
-                /*StructBC *MirrorBCRegion = compositeStructBC->GetBCRegion(ibcregion);*/
+                /*StructBC *MirrorBCRegion = structBCSet->GetBCRegion(ibcregion);*/
 
                 int bctype = bcregion->GetBCType();
 
@@ -1250,9 +1250,9 @@ void Pre_GridMirror::MirrorBCRegion()
         {
             UnstructGrid *grid_ordinary = UnstructGridCast(OrdinaryGrid[iZone]);
 
-            UnstructBCSet *unstructBCRegion = grid_ordinary->GetUnstructBCRegion();
-            int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
-            int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+            UnstructBCSet *unstructBCSet = grid_ordinary->GetUnstructBCSet();
+            int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+            int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
             int nBoundFace = grid_ordinary->GetNBoundFace();
             PHWrite(gridinfo, &nBoundFace, 1);
@@ -1260,7 +1260,7 @@ void Pre_GridMirror::MirrorBCRegion()
             int count = 0;
             for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
             {
-                UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+                UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
                 int bcType = bcRegion->GetBCType();
                 if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::SYMMETRY)
                 {
@@ -1317,7 +1317,7 @@ void Pre_GridMirror::MirrorBCRegion()
 
             for (int iface = 0; iface < nBoundFace; ++ iface)
             {
-                UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
                 int bctype = bcRegion->GetBCType();
 
                 if (bctype == PHENGLEI::INTERFACE)

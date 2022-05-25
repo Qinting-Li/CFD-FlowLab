@@ -871,8 +871,8 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int iZone, UnstructG
     int *right_cell_of_face = gridSource->GetRightCellOfFace();
     int le, re;
 
-    UnstructBCSet *unstructBCRegion = gridSource->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = gridSource->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     //! Re-compute bc_face_mark for each sub-partition.
     //! The original face_mark have been overwritten.
@@ -907,7 +907,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPartInOrgBC(int iZone, UnstructG
     
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
 
         if (bc_face_mark[iface] == -1)
         {
@@ -1318,8 +1318,8 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridp
     gridpart->SetLeftCellOfFace (left_cell_of_face);
     gridpart->SetRightCellOfFace(right_cell_of_face);
 
-    UnstructBCSet *unstructBCRegionSrc = gridSource->GetUnstructBCRegion();
-    int *bcRegionIDofBCFaceSrc = unstructBCRegionSrc->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSetSrc = gridSource->GetUnstructBCSet();
+    int *bcRegionIDofBCFaceSrc = unstructBCSetSrc->GetBCFaceInfo();
 
     vector <string> bcNameList;
     vector <int> bcTypeList;
@@ -1336,7 +1336,7 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridp
         string bcName = " ";
         if (faceid < nBFace_src)
         {     
-            UnstructBC *bcRegion = unstructBCRegionSrc->GetBCRegion(bcRegionIDofBCFaceSrc[faceid]);
+            UnstructBC *bcRegion = unstructBCSetSrc->GetBCRegion(bcRegionIDofBCFaceSrc[faceid]);
 
             re = - 1;
             le = cell_mark[le_src];
@@ -1372,9 +1372,9 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridp
         right_cell_of_face[iface] = re;
     }
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
-    gridpart->CreateUnstructBCRegion(nBCRegionUnstruct);
+    gridpart->CreateUnstructBCSet(nBCRegionUnstruct);
 
-    UnstructBCSet *unstructBCRegion = gridpart->GetUnstructBCRegion();
+    UnstructBCSet *unstructBCSet = gridpart->GetUnstructBCSet();
     int* bcRegionIDofBCFace = new int[nBoundFace];
     set<string>::iterator iter;
 
@@ -1382,7 +1382,7 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridp
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
         UnstructBC *unstructBC = new UnstructBC(count);
-        unstructBCRegion->SetBCRegion(count, unstructBC);
+        unstructBCSet->SetBCRegion(count, unstructBC);
         unstructBC->SetBCName(*iter);
 
         for (int iFace = 0; iFace < nBoundFace; iFace++)
@@ -1398,7 +1398,7 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridp
         }
         count++;
     }
-    unstructBCRegion->SetBCFaceInfo(bcRegionIDofBCFace);
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
 
     for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
     {
@@ -1718,8 +1718,8 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int iZone, UnstructGrid *gridpar
     int *left_cell_of_face  = gridSource->GetLeftCellOfFace();
     int *right_cell_of_face = gridSource->GetRightCellOfFace();
     
-    UnstructBCSet *unstructBCRegion = gridSource->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = gridSource->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
 
     int le, re;
@@ -1755,7 +1755,7 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int iZone, UnstructGrid *gridpar
         {
             face_mark[iface] = i_nTFace ++;
 
-            UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
 
             int bcType = bcRegion->GetBCType();
             if (bcType == PHENGLEI::INTERFACE)
@@ -1976,12 +1976,12 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     }
 
     nodepos = 0;
-    UnstructBCSet *unstructBCRegion = gridSource->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = gridSource->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
         int bcType = bcRegion->GetBCType();
 
         if (bcType == PHENGLEI::SYMMETRY)
@@ -1998,7 +1998,7 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     nodepos = 0;
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
         int bcType = bcRegion->GetBCType();
 
         if (bcType == PHENGLEI::SYMMETRY)
@@ -2018,7 +2018,7 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     nodepos = 0;
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
         int bcType = bcRegion->GetBCType();
 
         if (bcType == PHENGLEI::FARFIELD)
@@ -2036,7 +2036,7 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     nodepos = 0;
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
         int bcType = bcRegion->GetBCType();
 
         if (bcType == PHENGLEI::FARFIELD)
@@ -2056,7 +2056,7 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     nodepos = 0;
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
         int bcType = bcRegion->GetBCType();
 
         if (bcType == PHENGLEI::SOLID_SURFACE)
@@ -2074,7 +2074,7 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
     nodepos = 0;
     for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
         int bcType = bcRegion->GetBCType();
 
         if (bcType == PHENGLEI::SOLID_SURFACE)

@@ -3287,15 +3287,15 @@ void OversetAuxilaryGrid::CalCellWallDistance()
 
     walldistCompute->ComputeWallDistForNodesList(blockIndex, numberOfCells, x, y, z, &cellWallDistance[0]);
 
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
 
     int *leftCellIndexContainer = grid->GetLeftCellOfFace();
     int *rightCellIndexContainer = grid->GetRightCellOfFace();
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
         vector<int>* faceIndex = bcRegion->GetFaceIndex();
         if (bcType == PHENGLEI::SOLID_SURFACE)
@@ -3618,8 +3618,8 @@ void OversetConfig::SearchBoundary()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int nBCRegionUnstruct = unstructBCRegion->GetnBCRegion();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
@@ -3634,7 +3634,7 @@ void OversetConfig::SearchBoundary()
 
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC* bcRegion = unstructBCRegion->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
         vector<int>* faceIndex = bcRegion->GetFaceIndex();
         switch (bcType)
@@ -4690,8 +4690,8 @@ void OversetConfig::CharacterInterfaceToNode()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    UnstructBCSet *unstructBCRegion = grid->GetUnstructBCRegion();
-    int *bcRegionIDofBCFace = unstructBCRegion->GetBCFaceInfo();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int *faceNodeIndex = grid->GetFace2Node();
@@ -4704,7 +4704,7 @@ void OversetConfig::CharacterInterfaceToNode()
     int iCount = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCRegion->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
 
         int numberOfNodesInFace = faceNodeNumber[iFace];

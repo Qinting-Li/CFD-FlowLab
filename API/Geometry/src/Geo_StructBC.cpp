@@ -486,7 +486,7 @@ StructBCSet::~StructBCSet()
     DeleteIndex();
 }
 
-void StructBCSet::CopyCompositeBCRegion(StructBCSet *rightHandSide)
+void StructBCSet::CopyStructBCSet(StructBCSet *rightHandSide)
 {
     int nBCRegion = rightHandSide->GetnBCRegion();
 

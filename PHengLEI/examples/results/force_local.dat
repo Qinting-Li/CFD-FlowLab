@@ -1,0 +1,25 @@
+#     MeshFile             :       ./grid/rae2822_hybrid2d__4.fts
+#     Reynolds             :       6.500000e+06  1/m
+#     Mach                 :       0.73
+#     Alpha                :       2.79  degree
+#     Beta                 :       0  degree
+#     Wall Temperature     :       Adiabatic Wall
+#     gridScaleFactor      :       1
+#     iter                 :       200
+
+#        CA             CN            CZ1           Cml             Cmn            Cm
+#        CA_p           CN_p          CZ1_p         Cml_p           Cmn_p          Cm_p
+#        CA_f           CN_f          CZ1_f         Cml_f           Cmn_f          Cm_f
+#        CMh
+
+*wall
+#forceReferenceLength         :    1  m
+#forceReferenceLengthSpanWise :    1  m
+#forceReferenceArea           :    1  m^2
+#TorqueRefX                   :    0
+#TorqueRefY                   :    0
+#TorqueRefZ                   :    0
+5.3917303005e-02	4.2793376650e-01	0.0000000000e+00	0.0000000000e+00	0.0000000000e+00	2.6406753962e-01
+4.2768648451e-02	4.2772138821e-01	0.0000000000e+00	0.0000000000e+00	0.0000000000e+00	2.6398649294e-01
+1.1148654554e-02	2.1237829291e-04	0.0000000000e+00	0.0000000000e+00	0.0000000000e+00	8.1046679326e-05
+0.0000000000e+00

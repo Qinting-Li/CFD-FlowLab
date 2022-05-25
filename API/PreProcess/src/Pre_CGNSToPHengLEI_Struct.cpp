@@ -537,12 +537,12 @@ void Pre_CGNSToPHengLEI_Struct::SetBCInfo()
 
         StructGrid *grid = StructGridCast(grids[iZone]);
         grid->CreateCompositeBCRegion(nBCRegions + n1to1);
-        StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
             StructBC *BCRegions = new StructBC(iZone, iBCRegion);
-            compositeBCRegion->SetBCRegion(iBCRegion, BCRegions);
+            structBCSet->SetBCRegion(iBCRegion, BCRegions);
 
             string bcNameCurrent;
             int iMin, iMax, jMin, jMax, kMin, kMax, BCType;
@@ -590,7 +590,7 @@ void Pre_CGNSToPHengLEI_Struct::SetBCInfo()
                 cgsize_t *donor_ranges = base_cgns->GetDonor_range(one21);
 
                 StructBC *BCRegions = new StructBC(iZone, nBCRegions + one21);
-                compositeBCRegion->SetBCRegion(nBCRegions + one21, BCRegions);
+                structBCSet->SetBCRegion(nBCRegions + one21, BCRegions);
 
                 string bcNameCurrent;
                 int iMin, iMax, jMin, jMax, kMin, kMax, BCType;
@@ -657,15 +657,15 @@ void Pre_CGNSToPHengLEI_Struct::CheckMeshMultigrid()
     {
         StructGrid *grid = StructGridCast(grids[iZone]);
 
-        StructBCSet *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int nBCRegion = composite_bcregion->GetnBCRegion();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
         {
             km = 1;
             NN = 2;
 
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
 

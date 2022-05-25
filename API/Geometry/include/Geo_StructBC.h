@@ -231,7 +231,7 @@ public:
 public:
     string GetBCName(int bcType) { return boundaryName[bcType]; }
 
-    void CopyCompositeBCRegion(StructBCSet *rightHandSide);
+    void CopyStructBCSet(StructBCSet *rightHandSide);
 
     StructBC * GetBCRegion(uint_t iBCRegion) const;
 

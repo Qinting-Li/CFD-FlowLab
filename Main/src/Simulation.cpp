@@ -1039,8 +1039,8 @@ void Simulation::RunGridCheckSolver()
             file << "iDimensions_j" << setw(10) << iDimensions[1] << endl;
             file << "iDimensions_k" << setw(10) << iDimensions[2] << endl;
 
-            StructBCSet *compositeBCRegion = grid->GetCompositeBCRegion();
-            int nBCRegion = compositeBCRegion->GetnBCRegion();
+            StructBCSet *structBCSet = grid->GetStructBCSet();
+            int nBCRegion = structBCSet->GetnBCRegion();
             file << "nBCRegion : " << nBCRegion << endl;
 
             file << "BCInfor : Boundary information of current zone ." << endl;
@@ -1048,7 +1048,7 @@ void Simulation::RunGridCheckSolver()
             int nBCTotal = nBCRegion;
             for (int ibcRegion = 0; ibcRegion < nBCRegion; ++ ibcRegion)
             {
-                StructBC *bcRegion = compositeBCRegion->GetBCRegion(ibcRegion);
+                StructBC *bcRegion = structBCSet->GetBCRegion(ibcRegion);
                 bcType = bcRegion->GetBCType();
                 if (bcType == -1)
                 {
@@ -1062,7 +1062,7 @@ void Simulation::RunGridCheckSolver()
             for (int ibcRegion = 0; ibcRegion < nBCRegion; ++ ibcRegion)
             {
                 int index = 0;
-                StructBC *bcRegion = compositeBCRegion->GetBCRegion(ibcRegion);
+                StructBC *bcRegion = structBCSet->GetBCRegion(ibcRegion);
                 bcRegion->GetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
                 bcType = bcRegion->GetBCType();
                 sLr = bcRegion->GetFaceLeftOrRightIndex();
