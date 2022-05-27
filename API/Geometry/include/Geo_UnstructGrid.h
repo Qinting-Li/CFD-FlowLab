@@ -519,8 +519,8 @@ public:
     //! Get the average volume.
     LIB_EXPORT RDouble GetAverageVolume();
 
-    void GetSourceIndex(int iface, int ipos, int &s);
-    void GetTargetIndex(int iface, int ipos, int &t);
+    void GetSourceIndex(int iFace, int ipos, int &s);
+    void GetTargetIndex(int iFace, int ipos, int &t);
 
     //! Return the global point number map to the interpoint for send.
     //! @param[in] ipoint : the interpoint number.
@@ -604,7 +604,7 @@ public:
 
     void DXDYDZ(RDouble *f, int ie, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
     void DXDYDZ(RDouble *f, int ie, int **cell2face, int *face_number_of_each_cell, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
-    void DXDYDZ_Face(RDouble *f, int iface, int nodepos, RDouble fl, RDouble fr, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
+    void DXDYDZ_Face(RDouble *f, int iFace, int nodepos, RDouble fl, RDouble fr, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
     void DXDYDZ_GG (RDouble *f, int ie, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
     void DXDYDZ_LSQ(RDouble *f, int ie, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
 

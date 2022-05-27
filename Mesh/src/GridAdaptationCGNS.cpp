@@ -267,7 +267,7 @@ void CGNSBCRegion::SetStructuredGridBoundary(StructBC * bcregion)
     delete bc_convert;
 }
 
-void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
+void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int iBCRegion)
 {
     cgsize_t npts;
     int normal_index[3], normal_list, ndataset;
@@ -281,7 +281,7 @@ void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
     int baseid = zone->GetBaseIndex();
     int zoneid = zone->GetZoneID();
 
-    cg_goto(fileid, baseid, "Zone_t", zoneid, "ZoneBC_t", 1, "BC_t", ibcregion, "end");
+    cg_goto(fileid, baseid, "Zone_t", zoneid, "ZoneBC_t", 1, "BC_t", iBCRegion, "end");
     cg_gridlocation_read(&igrid_location);
 
     cout << " Grid Location Name = " << GridLocationName[igrid_location] << "\n";
@@ -297,7 +297,7 @@ void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
         //igrid_location = FaceCenter;
     }
     // Read the info for this boundary condition.
-    cg_boco_info(fileid, baseid, zoneid, ibcregion, bcregion_name, &bctype, &iptset, &npts, normal_index,
+    cg_boco_info(fileid, baseid, zoneid, iBCRegion, bcregion_name, &bctype, &iptset, &npts, normal_index,
                 &norm_list_flag, &norm_data_type, &ndataset);
 
 
@@ -317,7 +317,7 @@ void CGNSBCRegion::ReadOrdinaryBoundaryRegion(int ibcregion)
     cout << " PointSetType_t = " << iptset << "\n";
 
     // Read the element ID’s.
-    cg_boco_read(fileid, baseid, zoneid, ibcregion, bc_conn_list, &normal_list);
+    cg_boco_read(fileid, baseid, zoneid, iBCRegion, bc_conn_list, &normal_list);
     PrintConnectionList();
 }
 
@@ -435,9 +435,9 @@ void CGNSBCRegion::ProcessBCFace(set<cgsize_t> &bc_vertex)
         for (cgsize_t ibc = bc_connection_list[0]; ibc <= bc_connection_list[1]; ++ ibc)
         {
             zone->GetElementIndex(static_cast<int>(ibc), face_node);
-            for (std::size_t inode = 0; inode < face_node.size(); ++ inode)
+            for (std::size_t iNode = 0; iNode < face_node.size(); ++ iNode)
             {
-                bc_vertex.insert(face_node[inode]);
+                bc_vertex.insert(face_node[iNode]);
             }
         }
     }
@@ -446,9 +446,9 @@ void CGNSBCRegion::ProcessBCFace(set<cgsize_t> &bc_vertex)
         for (cgsize_t ibc = 0; ibc < bc_element_number; ++ ibc)
         {
             zone->GetElementIndex(static_cast<int>(bc_connection_list[ibc]), face_node);
-            for (std::size_t inode = 0; inode < face_node.size(); ++ inode)
+            for (std::size_t iNode = 0; iNode < face_node.size(); ++ iNode)
             {
-                bc_vertex.insert(face_node[inode]);
+                bc_vertex.insert(face_node[iNode]);
             }
         }
     }
@@ -465,9 +465,9 @@ CGNSBCRegionProxy::CGNSBCRegionProxy(CGNSZone *zone)
 
 CGNSBCRegionProxy::~CGNSBCRegionProxy()
 {
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        delete bcregions[ibcregion];
+        delete bcregions[iBCRegion];
     }
     delete [] bcregions;
 };
@@ -479,25 +479,25 @@ void CGNSBCRegionProxy::Create(int n_ordinary_bcregions, int n1to1)
     this->nbcregions = n_ordinary_bcregions + n1to1;
     bcregions = new CGNSBCRegion *[nbcregions];
 
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        bcregions[ibcregion] = new CGNSBCRegion(zone);
+        bcregions[iBCRegion] = new CGNSBCRegion(zone);
     }
 };
 
 void CGNSBCRegionProxy::Convert2InerDataStandard()
 {
     int nbcregions = GetNBCRegion();
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        CGNSBCRegion * bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
         bcregion->Convert2InerDataStandard();
     }
 
     int bcregion_base = 1;
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        CGNSBCRegion * bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
         if (!bcregion->DetermineBase())
         {
             bcregion_base = 0;
@@ -507,9 +507,9 @@ void CGNSBCRegionProxy::Convert2InerDataStandard()
 
     if (bcregion_base == 0)
     {
-        for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
         {
-            CGNSBCRegion * bcregion = GetBCRegion(ibcregion);
+            CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
             bcregion->ShiftBCRegion();
         }
     }
@@ -628,12 +628,12 @@ void CGNSZone::CopyStructuredGrid(Grid *grid_in)
     grid->CreateCompositeBCRegion(nBCRegion);
     CompositeStructBC * composite_bcregion = grid->GetCompositeBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC * bcregion = new StructBC(GetZoneID()-1, ibcregion);
-        composite_bcregion->SetBCRegion(ibcregion, bcregion);
+        StructBC *bcregion = new StructBC(GetZoneID()-1, iBCRegion);
+        composite_bcregion->SetBCRegion(iBCRegion, bcregion);
 
-        CGNSBCRegion *cgns_bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *cgns_bcregion = GetBCRegion(iBCRegion);
         cgns_bcregion->SetStructuredGridBoundary(bcregion);
     }
 
@@ -678,10 +678,10 @@ void CGNSZone::ReadGridBoundaryConditions()
     CreateBCRegions(nOrdinaryBCRegions, n1to1);
 
     // Loop over the number of boundary conditions.
-    for (int ibcregion = 1; ibcregion <= nOrdinaryBCRegions; ++ ibcregion)
+    for (int iBCRegion = 1; iBCRegion <= nOrdinaryBCRegions; ++ iBCRegion)
     {
-        CGNSBCRegion *cgns_bcregion = GetBCRegion(ibcregion-1);
-        cgns_bcregion->ReadOrdinaryBoundaryRegion(ibcregion);
+        CGNSBCRegion *cgns_bcregion = GetBCRegion(iBCRegion-1);
+        cgns_bcregion->ReadOrdinaryBoundaryRegion(iBCRegion);
     }
 
     for (int i1to1 = 1; i1to1 <= n1to1; ++ i1to1)
@@ -786,9 +786,9 @@ void CGNSZone::BuildPoints(PointOperation *point_operation)
     RDouble *y = grid->GetY();
     RDouble *z = grid->GetZ();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        PointOperation::point_type point(x[inode],y[inode],z[inode],inode);
+        PointOperation::point_type point(x[iNode], y[iNode], z[iNode], iNode);
         point_operation->AddPoint(point);
     }
 }
@@ -796,9 +796,9 @@ void CGNSZone::BuildPoints(PointOperation *point_operation)
 void CGNSZone::ResolveElementBoundaryFace(ElementFaceProxy *element_face_proxy)
 {
     int nbcregions = GetNBCRegion();
-    for (int ibcregion = 0; ibcregion < nbcregions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nbcregions; ++ iBCRegion)
     {
-        CGNSBCRegion *bcregion = GetBCRegion(ibcregion);
+        CGNSBCRegion *bcregion = GetBCRegion(iBCRegion);
 
         bcregion->ResolveElementBoundaryFace(element_face_proxy);
     }
@@ -981,17 +981,17 @@ void ElementFaceProxy::ResolveElementFace(vector<int> &element_index, int elemen
     vector<int> element_face;
     //vector<int> sort_face;
 
-    for (int iface = 0; iface < face_number; ++ iface)
+    for (int iFace = 0; iFace < face_number; ++ iFace)
     {
-        vector<int> & face_index = basic_element->GetElementFace(iface);
-        int face_type = basic_element->GetFaceElementType(iface);
+        vector<int> &face_index = basic_element->GetElementFace(iFace);
+        int face_type = basic_element->GetFaceElementType(iFace);
          
         int face_point_number = static_cast<int>(face_index.size());
 
         element_face.resize(0);
         for (int i = 0; i < face_point_number; ++ i)
         {
-            element_face.push_back(element_index[ face_index[i] ]);
+            element_face.push_back(element_index[face_index[i]]);
         }
 
         vector<int> face_of_sort = element_face;
@@ -1113,26 +1113,25 @@ bool ElementFaceProxy::CheckBCFace(set<cgsize_t> &bc_vertex, vector<int> &face_n
 void ElementFaceProxy::ResolveElementBoundaryFace(set<cgsize_t> &bc_vertex, int bctype)
 {
     int nTotalFace = this->GetNTotalFace();
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int original_bc_type = (*face_boundary_type)[iface];
-        int right_cell_of_face = (*face_to_cell_right)[iface];
+        int original_bc_type = (*face_boundary_type)[iFace];
+        int right_cell_of_face = (*face_to_cell_right)[iFace];
 
-        if (right_cell_of_face == - 1 && original_bc_type == 0)
+        if (right_cell_of_face == -1 && original_bc_type == 0)
         {
-            if (CheckBCFace(bc_vertex, (*face_to_nodes)[iface]))
+            if (CheckBCFace(bc_vertex, (*face_to_nodes)[iFace]))
             { 
-                (*face_boundary_type)[iface] = bctype;
+                (*face_boundary_type)[iFace] = bctype;
 
                 boundary_face_bctype->push_back(bctype);
-                boundary_face_element_type->push_back((*face_element_type)[iface]);
-                boundary_face_to_nodes->push_back((*face_to_nodes)[iface]);
+                boundary_face_element_type->push_back((*face_element_type)[iFace]);
+                boundary_face_to_nodes->push_back((*face_to_nodes)[iFace]);
             }
         }
     }
 
     point_operation->SetBoundaryPoint(bc_vertex, bctype);
-
 }
 
 void ElementFaceProxy::ResolveElementBoundaryFace(int iadapt)
@@ -1161,9 +1160,9 @@ void ElementFaceProxy::MarkElementBoundaryFace()
     }
 }
 
-int ElementFaceProxy::GetRootFaceID(int iface)
+int ElementFaceProxy::GetRootFaceID(int iFace)
 {
-    int parent_face_id = (*face_parent)[iface];
+    int parent_face_id = (*face_parent)[iFace];
     int next_parent_face_id = -1;
     if (parent_face_id != -1)
     {
@@ -1179,7 +1178,7 @@ int ElementFaceProxy::GetRootFaceID(int iface)
     }
     else
     {
-        return iface;
+        return iFace;
     }
 }
 
@@ -1187,17 +1186,17 @@ void ElementFaceProxy::MarkAllCandidateBoundaryFace()
 {
     int nTotalFace = this->GetNTotalFace();
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int re = (*face_to_cell_right)[iface];
+        int re = (*face_to_cell_right)[iFace];
 
         if (re == -1)
         {
             //说明具有候选资格
-            if ((*face_child)[iface].size() == 0)
+            if ((*face_child)[iFace].size() == 0)
             {
                 //说明无子面
-                int parent_face_id = (*face_parent)[iface];
+                int parent_face_id = (*face_parent)[iFace];
                 //说明此单元面是简单物理面，应该已经mark
                 if (parent_face_id == -1) continue;
 
@@ -1205,11 +1204,11 @@ void ElementFaceProxy::MarkAllCandidateBoundaryFace()
                 if (bctype == 0)
                 {
                     //说明为内部边界
-                    (*face_to_cell_right)[iface] = (*face_to_cell_right)[parent_face_id];
+                    (*face_to_cell_right)[iFace] = (*face_to_cell_right)[parent_face_id];
                 }
                 else
                 {
-                    (*face_boundary_type)[iface] = (*face_boundary_type)[parent_face_id];
+                    (*face_boundary_type)[iFace] = (*face_boundary_type)[parent_face_id];
                 }
             }
         }
@@ -1311,9 +1310,9 @@ void ElementFaceProxy::AddChildBoundaryFace(vector<int> &face_node, int face_typ
         int node_number = GetElementNodeNumbers(subcell_type);
 
         ptlist.resize(0);
-        for (int inode = 0; inode < node_number; ++ inode)
+        for (int iNode = 0; iNode < node_number; ++ iNode)
         {
-            ptlist.push_back(face_node_fixed[ child_index[inode] ]);
+            ptlist.push_back(face_node_fixed[child_index[iNode]]);
         }
 
         boundary_face_bctype->push_back(bctype);
@@ -1326,9 +1325,9 @@ int ElementFaceProxy::GetNTFace() const
 {
     int nTotalFace = this->GetNTotalFace();
     int nTFace = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        if ((*face_child)[iface].size() == 0)
+        if ((*face_child)[iFace].size() == 0)
         {
             ++ nTFace;
         }
@@ -1340,10 +1339,10 @@ int ElementFaceProxy::GetNBoundFace()  const
 {
     int nTotalFace = this->GetNTotalFace();
     int nBoundFace = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr == - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr == - 1) && ((*face_child)[iFace].size() == 0))
         {
             ++ nBoundFace;
         }
@@ -1355,27 +1354,27 @@ void ElementFaceProxy::Normalize(vector< int > &element_all_to_local_map)
 {
     int nTotalFace = this->GetNTotalFace();
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int le = (*face_to_cell_left)[iface];
-        int re = (*face_to_cell_right)[iface];
+        int le = (*face_to_cell_left)[iFace];
+        int re = (*face_to_cell_right)[iFace];
 
-        (*face_to_cell_left)[iface] = element_all_to_local_map[le];
+        (*face_to_cell_left)[iFace] = element_all_to_local_map[le];
         if (re == -1)
         {
             continue;
         }
-        (*face_to_cell_right)[iface] = element_all_to_local_map[re];
+        (*face_to_cell_right)[iFace] = element_all_to_local_map[re];
     }
 }
 
-void ElementFaceProxy::SwapElementFace(int iface, int jface)
+void ElementFaceProxy::SwapElementFace(int iFace, int jFace)
 {
-    //Swap Face iface, jface
-    SWAP((*face_to_cell_left)[iface], (*face_to_cell_left)[jface]);
-    SWAP((*face_to_cell_right)[iface], (*face_to_cell_right)[jface]);
-    SWAP((*face_boundary_type)[iface], (*face_boundary_type)[jface]);
-    SWAP((*face_to_nodes)[iface]     , (*face_to_nodes)[jface]     );
+    //! Swap face iFace, jFace.
+    SWAP((*face_to_cell_left)[iFace] , (*face_to_cell_left)[jFace] );
+    SWAP((*face_to_cell_right)[iFace], (*face_to_cell_right)[jFace]);
+    SWAP((*face_boundary_type)[iFace], (*face_boundary_type)[jFace]);
+    SWAP((*face_to_nodes)[iFace]     , (*face_to_nodes)[jFace]     );
 }
 
 void ElementFaceProxy::ReorderElementFace()
@@ -1384,19 +1383,19 @@ void ElementFaceProxy::ReorderElementFace()
     int nBoundFace = this->GetNBoundFace();
 
     int isort_start = nBoundFace;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if ((*face_to_cell_right)[iface] == -1) continue;
+        if ((*face_to_cell_right)[iFace] == -1) continue;
         //满足条件的属于内边界，应该移到后面去（nBoundFace之后）
 
         //需要交换
-        for (int jface = isort_start; jface < nTFace; ++ jface)
+        for (int jFace = isort_start; jFace < nTFace; ++ jFace)
         {
             //第j个面属于边界面
-            if ((*face_to_cell_right)[jface] == -1)
+            if ((*face_to_cell_right)[jFace] == -1)
             {
-                SwapElementFace(iface, jface);
-                isort_start = jface + 1;
+                SwapElementFace(iFace, jFace);
+                isort_start = jFace + 1;
                 break;
             }
         }
@@ -1410,16 +1409,16 @@ void ElementFaceProxy::PrintBoundaryFace()
     fstream file;
     file.open("boundaryface.plt",ios_base::out);
 
-    for (int iface = 0; iface < nTFace; ++ iface)
+    for (int iFace = 0; iFace < nTFace; ++ iFace)
     {
-        int re = (*face_to_cell_right)[iface];
+        int re = (*face_to_cell_right)[iFace];
 
         if (re == -1)
         {
-            file << "iface = " << iface << " nTFace = " << nTFace;
-            for (std::size_t i = 0; i < (*face_to_nodes)[iface].size(); ++ i)
+            file << "iFace = " << iFace << " nTFace = " << nTFace;
+            for (std::size_t i = 0; i < (*face_to_nodes)[iFace].size(); ++ i)
             {
-                file << " " << (*face_to_nodes)[iface][i];
+                file << " " << (*face_to_nodes)[iFace][i];
             }
             file << "\n";
         }
@@ -1428,9 +1427,9 @@ void ElementFaceProxy::PrintBoundaryFace()
     file.clear();
 }
 
-map<int,string> ElementFaceProxy::CreatFantasybctype()
+map<int, string> ElementFaceProxy::CreatFantasybctype()
 {
-    map<int,string> Fantasybctype;
+    map<int, string> Fantasybctype;
 
     Fantasybctype[-2]  = "WAKE";
     Fantasybctype[-1]  = "INTERFACE";
@@ -1502,15 +1501,15 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     set<int> s1,s2;
     HyList<int> bcList;    // Bell 20131204 add
     int icount = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr == - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr == - 1) && ((*face_child)[iFace].size() == 0))
         {
             bcrs[icount] = new CompositeUnstructBC();
-            int bctype = bc_convert->GetBCType((*face_boundary_type)[iface]);
+            int bctype = bc_convert->GetBCType((*face_boundary_type)[iFace]);
             bcrs[icount]->SetKey(bctype);
-            s1.insert((*face_boundary_type)[iface]);
+            s1.insert((*face_boundary_type)[iFace]);
             s2.insert(bctype);
             bcList.insert(bctype);
             ++ icount;
@@ -1528,7 +1527,7 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     }
     cout << "\n";
 
-    map<int,string> Fantasybctype = CreatFantasybctype();
+    map<int, string> Fantasybctype = CreatFantasybctype();
 
     cout << "final bc num are " << s2.size() << "\n";
     for (int iBC = 0; iBC < bcList.size(); ++ iBC)
@@ -1549,23 +1548,23 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     int * node_number_of_each_face = new int [nTFace];
     icount = 0;
     //先处理边界
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr == - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr == - 1) && ((*face_child)[iFace].size() == 0))
         {
-            node_number_of_each_face[icount] = GetFacePointNumber(iface);
+            node_number_of_each_face[icount] = GetFacePointNumber(iFace);
             ++ icount;
         }
     }
 
     //再处理内部面
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr != - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr != - 1) && ((*face_child)[iFace].size() == 0))
         {
-            node_number_of_each_face[icount] = GetFacePointNumber(iface);
+            node_number_of_each_face[icount] = GetFacePointNumber(iFace);
             ++ icount;
         }
     }
@@ -1575,10 +1574,10 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     int face2node_size = 0;
     icount = 0;
     //先处理边界
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr == - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr == - 1) && ((*face_child)[iFace].size() == 0))
         {
             face2node_size += node_number_of_each_face[icount];
             ++ icount;
@@ -1586,32 +1585,32 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     }
 
     //再处理内部面
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr != - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr != - 1) && ((*face_child)[iFace].size() == 0))
         {
             face2node_size += node_number_of_each_face[icount];
             ++ icount;
         }
     }
 
-    int * face2node  = new int [ face2node_size ];
+    int *face2node = new int [face2node_size];
     grid->SetFace2Node(face2node);
 
     int count = 0;
     icount = 0;
 
     //先处理边界
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr == - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr == - 1) && ((*face_child)[iFace].size() == 0))
         {
-            uint_t size = (*face_to_nodes)[iface].size();
+            uint_t size = (*face_to_nodes)[iFace].size();
             for (int n = 0; n < size; ++ n)
             {
-                face2node[count] = (*face_to_nodes)[iface][n];
+                face2node[count] = (*face_to_nodes)[iFace][n];
                 ++ count;
             }
             ++ icount;
@@ -1619,15 +1618,15 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     }
 
     //再处理内部面
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr != - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr != - 1) && ((*face_child)[iFace].size() == 0))
         {
-            uint_t size = (*face_to_nodes)[iface].size();
+            uint_t size = (*face_to_nodes)[iFace].size();
             for (int n = 0; n < size; ++ n)
             {
-                face2node[count] = (*face_to_nodes)[iface][n];
+                face2node[count] = (*face_to_nodes)[iFace][n];
                 ++ count;
             }
             ++ icount;
@@ -1642,31 +1641,30 @@ void ElementFaceProxy::CreateUnstructGrid(UnstructGrid *grid)
     grid->SetRightCellOfFace(right_cell_of_face);
 
     icount = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr == - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr == - 1) && ((*face_child)[iFace].size() == 0))
         {
             //先考虑边界面
-            left_cell_of_face[ icount ] = (*face_to_cell_left)[iface];
-            right_cell_of_face[ icount ] = (*face_to_cell_right)[iface];
+            left_cell_of_face[icount] = (*face_to_cell_left)[iFace];
+            right_cell_of_face[icount] = (*face_to_cell_right)[iFace];
             ++ icount;
         }
     }
 
     icount = nBoundFace;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int f2cr = (*face_to_cell_right)[iface];
-        if ((f2cr != - 1) && ((*face_child)[iface].size() == 0))
+        int f2cr = (*face_to_cell_right)[iFace];
+        if ((f2cr != - 1) && ((*face_child)[iFace].size() == 0))
         {
             //先考虑边界面
-            left_cell_of_face[ icount ] = (*face_to_cell_left)[iface];
-            right_cell_of_face[ icount ] = (*face_to_cell_right)[iface];
+            left_cell_of_face[icount] = (*face_to_cell_left)[iFace];
+            right_cell_of_face[icount] = (*face_to_cell_right)[iFace];
             ++ icount;
         }
     }
-
 }
 
 SuperElement::SuperElement(CGNSZone *cgns_zone, int iadapt)
@@ -1729,11 +1727,11 @@ void SuperElement::CreateFantasyUnstructGrid(Grid *grid_in)
     grid->SetY(y);
     grid->SetZ(z);
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = point_operation->GetPoint(inode).X();
-        y[inode] = point_operation->GetPoint(inode).Y();
-        z[inode] = point_operation->GetPoint(inode).Z();
+        x[iNode] = point_operation->GetPoint(iNode).X();
+        y[iNode] = point_operation->GetPoint(iNode).Y();
+        z[iNode] = point_operation->GetPoint(iNode).Z();
     }
 
     element_face_proxy->CreateUnstructGrid(grid);
@@ -2024,9 +2022,9 @@ void SuperElement::SplitCompositeFace(vector<int> &facenodes, int composite_face
     vector<int> simple_face_nodes;
     int simple_face_type        = GetSimpleElementType(composite_face_type);
     int simple_face_node_number = GetElementNodeNumbers(simple_face_type);
-    for (int inode = 0; inode < simple_face_node_number; ++ inode)
+    for (int iNode = 0; iNode < simple_face_node_number; ++ iNode)
     {
-        simple_face_nodes.push_back(facenodes[inode]);
+        simple_face_nodes.push_back(facenodes[iNode]);
     }
 
     int parent_face_id = element_face_proxy->FindFace(simple_face_nodes);
@@ -2036,7 +2034,7 @@ void SuperElement::SplitCompositeFace(vector<int> &facenodes, int composite_face
 
     vector<int> ptlist; 
  
-    //这里的iface实际上是单元，只不过表现形式为面的形式
+    //这里的iFace实际上是单元，只不过表现形式为面的形式
     for (int ichildelem = 0; ichildelem < child_element_number; ++ ichildelem)
     {
         //子单元的类型
@@ -2079,9 +2077,9 @@ void SuperElement::SplitElementFace(int ielement)
         vector<int> facenodeslocal = basic_element->GetElementPhysicsFace(icompositeface);
         vector<int> facenodes;
         vector<int> & parent_index = GetElementIndex(ielement);
-        for (std::size_t inode = 0; inode < facenodeslocal.size(); ++ inode)
+        for (std::size_t iNode = 0; iNode < facenodeslocal.size(); ++ iNode)
         {
-            facenodes.push_back(parent_index[ facenodeslocal[inode] ]);
+            facenodes.push_back(parent_index[facenodeslocal[iNode]]);
         }
 
         //对单个物理面进行子面的分裂

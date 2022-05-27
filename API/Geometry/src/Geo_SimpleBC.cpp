@@ -151,9 +151,9 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
 
                 CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
                 int nBCRegion = composite_bcregion->GetnBCRegion();
-                for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+                for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
                     string bcName = bcregion->GetBCName();
                     int bcType = bcregion->GetBCType();
                     if (bcType == PHENGLEI::INTERFACE)
@@ -216,7 +216,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             PHWrite(eachProc2Server, bcNameSetSize);
 
             set < pair<string, int> >::iterator bcNameSetIter;
-            for(bcNameSetIter = bcNameSet.begin(); bcNameSetIter != bcNameSet.end(); ++ bcNameSetIter)
+            for (bcNameSetIter = bcNameSet.begin(); bcNameSetIter != bcNameSet.end(); ++ bcNameSetIter)
             {
                 string bcName = (*bcNameSetIter).first;
                 int bcType = (*bcNameSetIter).second;
@@ -272,7 +272,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
         PHWrite(server2EachProc, bcNameSetSize);
 
         set < pair<string, int> >::iterator bcNameSetIter;
-        for(bcNameSetIter = bcNameSet.begin(); bcNameSetIter != bcNameSet.end(); ++ bcNameSetIter)
+        for (bcNameSetIter = bcNameSet.begin(); bcNameSetIter != bcNameSet.end(); ++ bcNameSetIter)
         {
             string bcName = (*bcNameSetIter).first;
             int bcType = (*bcNameSetIter).second;
@@ -313,7 +313,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
     delete server2EachProc;
 
     set < pair<string, int> >::iterator bcNameSetIter;
-    for(bcNameSetIter = bcNameSet.begin(); bcNameSetIter != bcNameSet.end(); ++ bcNameSetIter)
+    for (bcNameSetIter = bcNameSet.begin(); bcNameSetIter != bcNameSet.end(); ++ bcNameSetIter)
     {
         string bcName = (*bcNameSetIter).first;
         int bcType = (*bcNameSetIter).second;
@@ -414,7 +414,7 @@ void GlobalBoundaryCondition::BuildBodyMap()
     }
 
     set < pair<int, string> >::iterator bodyNameSetIter;
-    for(bodyNameSetIter = bodyNameSet.begin(); bodyNameSetIter != bodyNameSet.end(); ++ bodyNameSetIter)
+    for (bodyNameSetIter = bodyNameSet.begin(); bodyNameSetIter != bodyNameSet.end(); ++ bodyNameSetIter)
     {
         int iBC = (*bodyNameSetIter).first;
         string bodyName = (*bodyNameSetIter).second;
@@ -1921,9 +1921,9 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
     
                     CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
                     int nBCRegion = composite_bcregion->GetnBCRegion();
-                    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+                    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                     {
-                        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
                         string bcRegionName = bcregion->GetBCName();
                         int bcRegionType = bcregion->GetBCType();
     
@@ -2005,9 +2005,9 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
 
                 CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
                 int nBCRegion = composite_bcregion->GetnBCRegion();
-                for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+                for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                    StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
                     string bcname = bcregion->GetBCName();
 
                     set< pair<string, int> >::iterator iter;

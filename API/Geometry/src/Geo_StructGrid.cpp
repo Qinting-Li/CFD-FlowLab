@@ -191,19 +191,19 @@ LIB_EXPORT void StructGrid::CopyGrid(StructGrid *grid)
     CopyCompositeBCRegion(grid->GetCompositeBCRegion());
 }
 
-LIB_EXPORT void StructGrid::GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k)
+LIB_EXPORT void StructGrid::GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k)
 {
-    this->composite_bcregion->GetSourceIndexIJK(iface, ipos, i, j, k);
+    this->composite_bcregion->GetSourceIndexIJK(iFace, ipos, i, j, k);
 }
 
-LIB_EXPORT void StructGrid::GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr)
+LIB_EXPORT void StructGrid::GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr)
 {
-    this->composite_bcregion->GetSourceIndexIJK_Nsurf_LR(iface, ipos, i, j, k, nsurf, s_lr);
+    this->composite_bcregion->GetSourceIndexIJK_Nsurf_LR(iFace, ipos, i, j, k, nsurf, s_lr);
 }
 
-LIB_EXPORT void StructGrid::GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k)
+LIB_EXPORT void StructGrid::GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k)
 {
-    this->composite_bcregion->GetTargetIndexIJK(iface, ipos, i, j, k);
+    this->composite_bcregion->GetTargetIndexIJK(iFace, ipos, i, j, k);
 }
 
 LIB_EXPORT void StructGrid::CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble *yy, RDouble *zz)
@@ -225,11 +225,11 @@ LIB_EXPORT void StructGrid::CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble
     this->SetZ(z);
     this->SetArrayLayout();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
     cout << "ni, nj, nk = " << ni << " " << nj  << " " << nk << "\n";
     ComputeMinMaxBox();
@@ -350,9 +350,9 @@ LIB_EXPORT void StructGrid::WriteFaceBC(fstream &file)
 
     //StringSizeType totalSize = 0;
     uint_long totalSize = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
         string bcName = structBC->GetBCName();
         int bctype = structBC->GetBCType();
@@ -374,18 +374,18 @@ LIB_EXPORT void StructGrid::WriteFaceBC(fstream &file)
             structBC->SetBCName(bcName);
         }
 
-        bcNameList[ibcregion] = bcName;
+        bcNameList[iBCRegion] = bcName;
 
-        //totalSize += bcNameList[ibcregion].size();
-        totalSize += static_cast< uint_long > (bcNameList[ibcregion].size());
+        //totalSize += bcNameList[iBCRegion].size();
+        totalSize += static_cast< uint_long > (bcNameList[iBCRegion].size());
         totalSize += 1;
     }
 
     char *bcNameChar = new char [totalSize];
     unsigned int count = 0;
-    for (int boco = 0; boco < nBCRegion; ++ boco)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        string &bcName = bcNameList[boco];
+        string &bcName = bcNameList[iBCRegion];
         streamsize nameSize = bcName.size();
         for (unsigned int iChar = 0; iChar < nameSize; ++ iChar)
         {
@@ -1785,9 +1785,9 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
     CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
     int nBCRegion = compositeBCRegion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(ibcregion);
+        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
 
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
 
@@ -1959,9 +1959,9 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
     string bcname;
     int s_lr, s_nd;
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
 
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
@@ -1971,8 +1971,8 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
 
         int nsurf = bcregion->GetFaceDirection() + 1;
 
-        StructBC *cbcregion = new StructBC(nb, ibcregion);
-        c_composite_bcregion->SetBCRegion(ibcregion, cbcregion);
+        StructBC *cbcregion = new StructBC(nb, iBCRegion);
+        c_composite_bcregion->SetBCRegion(iBCRegion, cbcregion);
 
         cbcregion->ComputeMultiGridIJKRegion(imin, imax, jmin, jmax, kmin, kmax, istp, jstp, kstp, nsurf);
         cbcregion->SetBCType(bctype);
@@ -2232,10 +2232,10 @@ void StructGrid::ReadGrid(VirtualFile *vfile)
     int imin, imax, jmin, jmax, kmin, kmax, bctype;
     int s_lr, s_nd;
     //! Read the source region imin, imax, jmin, jmax, kmin, kmax, bctype.
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = new StructBC(nb, ibcregion);
-        composite_bcregion->SetBCRegion(ibcregion, bcregion);
+        StructBC *bcregion = new StructBC(nb, iBCRegion);
+        composite_bcregion->SetBCRegion(iBCRegion, bcregion);
         vfile->read(reinterpret_cast<char*>(&imin), sizeint);
         vfile->read(reinterpret_cast<char*>(&imax), sizeint);
         vfile->read(reinterpret_cast<char*>(&jmin), sizeint);
@@ -2268,8 +2268,8 @@ void StructGrid::ReadGrid(VirtualFile *vfile)
         int *interFace2InterFaceID  = interfaceInfo->GetInterFace2InterFaceID();
         int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
 
-        vfile->read(reinterpret_cast<char*>(interFace2ZoneID     ), nIFace * sizeof(int));
-        vfile->read(reinterpret_cast<char*>(interFace2InterFaceID), nIFace * sizeof(int));
+        vfile->read(reinterpret_cast<char*>(interFace2ZoneID      ), nIFace * sizeof(int));
+        vfile->read(reinterpret_cast<char*>(interFace2InterFaceID ), nIFace * sizeof(int));
         vfile->read(reinterpret_cast<char*>(interFace2BoundaryFace), nIFace * sizeof(int));
     }
 }
@@ -2309,9 +2309,9 @@ void StructGrid::WriteGrid(VirtualFile *vfile)
     vfile->write(reinterpret_cast<char*>(&nBCRegion), sizeof(int));
 
     //! Read the source region imin,imax,jmin,jmax,kmin,kmax,bctype.
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
         s_lr = bcregion->GetFaceLeftOrRightIndex();
@@ -2343,8 +2343,8 @@ void StructGrid::WriteGrid(VirtualFile *vfile)
         int *interFace2InterFaceID  = interfaceInfo->GetInterFace2InterFaceID();
         int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
 
-        vfile->write(reinterpret_cast<char*>(interFace2ZoneID     ), nIFace * sizeof(int));
-        vfile->write(reinterpret_cast<char*>(interFace2InterFaceID), nIFace * sizeof(int));
+        vfile->write(reinterpret_cast<char*>(interFace2ZoneID      ), nIFace * sizeof(int));
+        vfile->write(reinterpret_cast<char*>(interFace2InterFaceID ), nIFace * sizeof(int));
         vfile->write(reinterpret_cast<char*>(interFace2BoundaryFace), nIFace * sizeof(int));
     }
 }
@@ -2397,9 +2397,9 @@ LIB_EXPORT void StructGrid::GetBoundaryMinMax(RDouble *pmin, RDouble *pmax)
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
 
@@ -2912,12 +2912,12 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
-    int iface, is, js, ks;
+    int iFace, is, js, ks;
     bool ifCommunicateNodeLocation = CommunicateNodeLocation();
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iface = faceIndexForSend[ifaceLocal];
-        fgrid->GetSourceIndexIJK(iface, 1 , is, js, ks);
+        iFace = faceIndexForSend[iLocalFace];
+        fgrid->GetSourceIndexIJK(iFace, 1 , is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
         cdata->write(&xcc(is, js, ks), sizeof(RDouble));
@@ -2933,8 +2933,8 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
         int IJKofNodes_1st_Layer[4][3];
         int IJKofNodes_2nd_Layer[4][3];
 
-        GetNodeIJKfromSourceIndex(fgrid, iface, 1, IJKofNodes_1st_Layer);
-        GetNodeIJKfromSourceIndex(fgrid, iface, 2, IJKofNodes_2nd_Layer);
+        GetNodeIJKfromSourceIndex(fgrid, iFace, 1, IJKofNodes_1st_Layer);
+        GetNodeIJKfromSourceIndex(fgrid, iFace, 2, IJKofNodes_2nd_Layer);
         
         for (int nodeID = 0; nodeID < 4; ++ nodeID)
         {
@@ -2975,16 +2975,16 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
     int nIFaceOfNeighbor = fiinfo->GetNIFaceOfNeighbor(ineighbor);
     int *faceIndexForRecv = fiinfo->GetFaceIndexForRecv(ineighbor);
 
-    int iface, it, jt, kt;
+    int iFace, it, jt, kt;
 
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
     bool ifCommunicateNodeLocation = CommunicateNodeLocation();
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iface = faceIndexForRecv[ifaceLocal];
-        fgrid->GetTargetIndexIJK(iface, 1 , it, jt, kt);
+        iFace = faceIndexForRecv[iLocalFace];
+        fgrid->GetTargetIndexIJK(iFace, 1 , it, jt, kt);
         fgrid->RemapMultigridIJK(level, it, jt, kt);
 
         cdata->read(&xcc(it, jt, kt), sizeof(RDouble));
@@ -2993,8 +2993,8 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
         cdata->read(&vol(it, jt, kt), sizeof(RDouble));
 
         int *ibcregions = composite_bcregion->GetIFaceInfo();
-        int ibcregion = ibcregions[iface];
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        int iBCRegion = ibcregions[iFace];
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         string bcName = bcregion->GetBCName();
         if (periodicType == 2)
         {
@@ -3061,8 +3061,8 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
 
         int IJKofNodes_1st_Layer[4][3];
         int IJKofNodes_2nd_Layer[4][3];
-        GetNodeIJKfromTargetIndex(fgrid, iface, 1, IJKofNodes_1st_Layer);
-        GetNodeIJKfromTargetIndex(fgrid, iface, 2, IJKofNodes_2nd_Layer);
+        GetNodeIJKfromTargetIndex(fgrid, iFace, 1, IJKofNodes_1st_Layer);
+        GetNodeIJKfromTargetIndex(fgrid, iFace, 2, IJKofNodes_2nd_Layer);
 
         RDouble XYZofNodes_1st_Layer[4][3];
         for (int nodeID = 0; nodeID < 4; ++ nodeID)
@@ -3111,13 +3111,13 @@ void StructGrid::TranslateCellIBlank(ActionKey *actkey)
     //cdata->moveto_begin();
 
     //int iFace, it, jt, kt;
-    //for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    //for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     //{
-    //    iFace = faceIndexForRecv[ifaceLocal];
+    //    iFace = faceIndexForRecv[iLocalFace];
     //    this->GetTargetIndexIJK(iFace, 1 , it, jt, kt);
     //    int iCell = cellMapStrToUns(it, jt, kt);
 
-    //    cdata->read(&iBlank[iCell],sizeof(int));
+    //    cdata->read(&iBlank[iCell], sizeof(int));
     //}
 }
 
@@ -3196,14 +3196,14 @@ bool StructGrid::CommunicateNodeLocation()
     return Rwithghost;
 }
 
-void StructGrid::GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3])
+void StructGrid::GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3])
 {
     int is, js, ks;
-    fgrid->GetSourceIndexIJK(iface, layer, is, js, ks);
+    fgrid->GetSourceIndexIJK(iFace, layer, is, js, ks);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetSourceIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 
     int dijk1[3];
     int dijk2[3];
@@ -3270,14 +3270,14 @@ void StructGrid::GetNodeIJKfromSourceIndex(StructGrid *fgrid, int iface, int lay
     IJKofNodes[3][2] = IJKofNodes[0][2] + dijk3[2];
 }
 
-void StructGrid::GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iface, int layer, int IJKofNodes[4][3])
+void StructGrid::GetNodeIJKfromTargetIndex(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[4][3])
 {
     int it, jt, kt;
-    fgrid->GetTargetIndexIJK(iface, layer, it, jt, kt);
+    fgrid->GetTargetIndexIJK(iFace, layer, it, jt, kt);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetTargetIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 
     int dijk1[3];
     int dijk2[3];
@@ -3382,16 +3382,15 @@ void StructGrid::GetRelationBetweenTwoPairsofNodes(int RelationBetweenTwoPairsof
     }
 }
 
-LIB_EXPORT void StructGrid::GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
+LIB_EXPORT void StructGrid::GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    this->composite_bcregion->GetSourceIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    this->composite_bcregion->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 }
 
-LIB_EXPORT void StructGrid::GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
+LIB_EXPORT void StructGrid::GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    this->composite_bcregion->GetTargetIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    this->composite_bcregion->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 }
-
 
 void StructGrid::ComputeMetrics_BC()
 {
@@ -3970,17 +3969,17 @@ streamsize StructGrid::TranslateCellCenterLength(ActionKey *actkey)
     streamsize nlen = nIFaceOfNeighbor * sizeof(RDouble) * 4;
     return nlen;
 
-// for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+// for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
 // {
-//     iface = faceIndexForRecv[ifaceLocal];
-//     fgrid->GetTargetIndexIJK(iface,1,it,jt,kt);
-//     fgrid->RemapMultigridIJK(level,it,jt,kt);
+//     iFace = faceIndexForRecv[iLocalFace];
+//     fgrid->GetTargetIndexIJK(iFace, 1, it, jt, kt);
+//     fgrid->RemapMultigridIJK(level, it, jt, kt);
 // 
-//     cdata->read(&xcc(it,jt,kt),sizeof(RDouble));
-//     cdata->read(&ycc(it,jt,kt),sizeof(RDouble));
-//     cdata->read(&zcc(it,jt,kt),sizeof(RDouble));
+//     cdata->read(&xcc(it, jt, kt), sizeof(RDouble));
+//     cdata->read(&ycc(it, jt, kt), sizeof(RDouble));
+//     cdata->read(&zcc(it, jt, kt), sizeof(RDouble));
 //     RDouble tmp;
-//     cdata->read(&tmp,sizeof(RDouble));
+//     cdata->read(&tmp, sizeof(RDouble));
 // }
 }
 
@@ -3989,9 +3988,9 @@ LIB_EXPORT void StructGrid::ChangeBCType(int from_bctype, int to_bctype)
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
 
         if (bcregion->GetBCType() == from_bctype)
         {
@@ -4008,9 +4007,9 @@ int StructGrid::CompNIFace()
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
 
@@ -4919,7 +4918,7 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
     VVInt &faceid = link->GetFaceID();
     RDouble tol = link->GetTolerance();
 
-    int iface = 0;
+    int iFace = 0;
     uint_t fcount = zoneid.size();
     int pcount = coor_tree.GetNodeNum();
 
@@ -4934,9 +4933,9 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
         nsurf  = bcregion->GetFaceDirection() + 1;
@@ -4988,19 +4987,19 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
                     }
 
                     GetCoorIndexList(&coor_tree, tol, pcount, xlist, ylist, zlist, nlist, pindex);
-                    Create_Link_Info(pindex, zoneIndex, iface, fcount, facelist, zoneid, faceid, link);
+                    Create_Link_Info(pindex, zoneIndex, iFace, fcount, facelist, zoneid, faceid, link);
 
-                    interFace2BoundaryFace[iface] = ibface;
+                    interFace2BoundaryFace[iFace] = ibface;
 
                     ++ ibface;
-                    ++ iface;
+                    ++ iFace;
                 }
             }
         }
     }
 
     uint_t nface = facelist.size();
-    cout << "iface = " << iface << "\n";
+    cout << "iface = " << iFace << "\n";
 }
 
 LIB_EXPORT int StructGrid::GetNumberOfWallCell()
@@ -5010,9 +5009,9 @@ LIB_EXPORT int StructGrid::GetNumberOfWallCell()
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype) || bctype == PHENGLEI::ABLATION_SURFACE)
@@ -5035,9 +5034,9 @@ LIB_EXPORT void StructGrid::GetWallBCInfo(int &wallBCNum, int &maxCellNum)
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype) || bctype == PHENGLEI::ABLATION_SURFACE)
@@ -5394,13 +5393,13 @@ void StructGrid::DecodeBCFace(DataContainer *cdata)
     
     string *bcNameList = new string [numberOfBCRegions];
     uint_long count = 0;
-    for (int ibcregion = 0; ibcregion < numberOfBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < numberOfBCRegions; ++ iBCRegion)
     {
         if (count < totalSize)
         {
             while (bcNameChar[count] != '\0')
             {
-                bcNameList[ibcregion].push_back(bcNameChar[count]);
+                bcNameList[iBCRegion].push_back(bcNameChar[count]);
                 ++ count;
             }
             ++ count;
@@ -5415,10 +5414,10 @@ void StructGrid::DecodeBCFace(DataContainer *cdata)
 
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
-        bcregion->SetBCName(bcNameList[ibcregion]);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        bcregion->SetBCName(bcNameList[iBCRegion]);
 
         int bctype = bcregion->GetBCType();
         if ((bctype > 7) && (bctype < 51))
@@ -5449,9 +5448,9 @@ void StructGrid::DecodeBcDirFace(DataContainer *cdata)
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     ASSERT(numberOfBCRegions == composite_bcregion->GetnBCRegion());
 
-    for (int ibcregion = 0; ibcregion < numberOfBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < numberOfBCRegions; ++ iBCRegion)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
         int *s_dir3d = structBC->GetFaceMatchingTargetDirIndex();
         virtualFile->read(reinterpret_cast<char*>(s_dir3d), 3 * sizeof(int));
     }
@@ -5495,11 +5494,11 @@ void StructGrid::GhostCell3DExceptInterface(RDouble3D &TargetArray3D)
                     int kStartInsideLayer1 = k - faceDirectionIndex3d[2] * firstInsideLayer;
 
                     RestrictIndex(iStartInsideLayer1, jStartInsideLayer1, kStartInsideLayer1, ni-1, nj-1, nk-1);
-                    for (int nGhostLayer = 1; nGhostLayer <= 2; ++ nGhostLayer)
+                    for (int iGhost = 1; iGhost <= 2; ++ iGhost)
                     {
-                        int iGhostLayer = i + faceDirectionIndex3d[0] * nGhostLayer;
-                        int jGhostLayer = j + faceDirectionIndex3d[1] * nGhostLayer;
-                        int kGhostLayer = k + faceDirectionIndex3d[2] * nGhostLayer;
+                        int iGhostLayer = i + faceDirectionIndex3d[0] * iGhost;
+                        int jGhostLayer = j + faceDirectionIndex3d[1] * iGhost;
+                        int kGhostLayer = k + faceDirectionIndex3d[2] * iGhost;
 
                         TargetArray3D(iGhostLayer, jGhostLayer, kGhostLayer) = TargetArray3D(iStartInsideLayer1, jStartInsideLayer1, kStartInsideLayer1);
                     }
@@ -5544,11 +5543,11 @@ void StructGrid::GhostCell3DExceptInterface(RDouble4D &TargetArray4D, const int 
 
                     RestrictIndex(iStartInsideLayer1, jStartInsideLayer1, kStartInsideLayer1, ni-1, nj-1, nk-1);
 
-                    for (int nGhostLayer = 1; nGhostLayer <= 2; ++ nGhostLayer)
+                    for (int iGhost = 1; iGhost <= 2; ++ iGhost)
                     {
-                        int iGhostLayer = i + faceDirectionIndex3d[0] * nGhostLayer;
-                        int jGhostLayer = j + faceDirectionIndex3d[1] * nGhostLayer;
-                        int kGhostLayer = k + faceDirectionIndex3d[2] * nGhostLayer;
+                        int iGhostLayer = i + faceDirectionIndex3d[0] * iGhost;
+                        int jGhostLayer = j + faceDirectionIndex3d[1] * iGhost;
+                        int kGhostLayer = k + faceDirectionIndex3d[2] * iGhost;
                         for (int iVar = 0; iVar < nVariables; ++ iVar)
                         {
                             TargetArray4D(iGhostLayer, jGhostLayer, kGhostLayer, iVar) = 
@@ -5566,9 +5565,9 @@ void StructGrid::GetBcNamePair(set< pair<int, string> > &bcNamePairSet)
     CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
     int  nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
         string bcName = structBC->GetBCName();
         int bctype = structBC->GetBCType();
@@ -5675,9 +5674,9 @@ void UploadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, in
     InterfaceInfo *fiinfo = fgrid->GetInterfaceInfo();
     int level = grid->GetLevel();
 
-    for (int ngst = GetNumberOfGhostCellLayers() - 1; ngst >= 0; -- ngst)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *dsend = interfaceInfo->GetSendDataStorage(ngst);
+        Data_ParamFieldSuite *dsend = interfaceInfo->GetSendDataStorage(iGhost);
         RDouble **fg = reinterpret_cast<RDouble **> (dsend->GetDataPtr(name));
         if (fg == NULL)
         {
@@ -5686,15 +5685,15 @@ void UploadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, in
 
         int nIFace = fiinfo->GetNIFace();
         
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int is, js, ks;
-            fgrid->GetSourceIndexIJK(iface, ngst + 1, is, js, ks);
+            fgrid->GetSourceIndexIJK(iFace, iGhost + 1, is, js, ks);
             fgrid->RemapMultigridIJK(level, is, js, ks);
 
             for (int m = 0; m < neqn; ++ m)
             {
-                fg[m][iface] = (*f)(is, js, ks, m);
+                fg[m][iFace] = (*f)(is, js, ks, m);
             }
         }
     }
@@ -5710,20 +5709,20 @@ void UploadInterfaceValue(StructGrid *grid, RDouble3D *f, const string &name)
     int level = grid->GetLevel();
 
     int m = 0;
-    for (int ngst = GetNumberOfGhostCellLayers() - 1; ngst >= 0; -- ngst)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *dsend = interfaceInfo->GetSendDataStorage(ngst);
+        Data_ParamFieldSuite *dsend = interfaceInfo->GetSendDataStorage(iGhost);
         RDouble **fg = reinterpret_cast<RDouble **> (dsend->GetDataPtr(name));
 
         int nIFace = fiinfo->GetNIFace();
         
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int is, js, ks;
-            fgrid->GetSourceIndexIJK(iface, ngst + 1, is, js, ks);
+            fgrid->GetSourceIndexIJK(iFace, iGhost + 1, is, js, ks);
             fgrid->RemapMultigridIJK(level, is, js, ks);
 
-            fg[m][iface] = (*f)(is, js, ks);
+            fg[m][iFace] = (*f)(is, js, ks);
         }
     }
 }
@@ -5742,23 +5741,23 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
     double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
     rotationAngle = rotationAngle * PI / 180;
 
-    for (int ngst = GetNumberOfGhostCellLayers() - 1; ngst >= 0; -- ngst)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *drecv = interfaceInfo->GetRecvDataStorage(ngst);
+        Data_ParamFieldSuite *drecv = interfaceInfo->GetRecvDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast<RDouble **> (drecv->GetDataPtr(name));
 
         int nIFace = fiinfo->GetNIFace();
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int it, jt, kt;
-            fgrid->GetTargetIndexIJK(iface, ngst+1, it, jt, kt);
+            fgrid->GetTargetIndexIJK(iFace, iGhost+1, it, jt, kt);
             fgrid->RemapMultigridIJK(level, it, jt, kt);
 
             //! Rotate vector for periodic boundary at the end of communication for InterfaceValue.
             int *ibcregions = composite_bcregion->GetIFaceInfo();
-            int ibcregion = ibcregions[iface];
-            StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            int iBCRegion = ibcregions[iFace];
+            StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
             string bcName = bcregion->GetBCName();
             //! Rotate process only for vector in rotational periodicity.
             if (neqn >= 4 && periodicType == 2)
@@ -5768,26 +5767,26 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
                     RDouble rotfg[3] = {0.0, 0.0, 0.0};
                     if (bcName == "Periodic_up")
                     {
-                        rotfg[0] = fg[1][iface];
-                        rotfg[1] = fg[2][iface] * cos(2 * PI - rotationAngle) - fg[3][iface] * sin(2 * PI - rotationAngle);
-                        rotfg[2] = fg[2][iface] * sin(2 * PI - rotationAngle) + fg[3][iface] * cos(2 * PI - rotationAngle);
+                        rotfg[0] = fg[1][iFace];
+                        rotfg[1] = fg[2][iFace] * cos(2 * PI - rotationAngle) - fg[3][iFace] * sin(2 * PI - rotationAngle);
+                        rotfg[2] = fg[2][iFace] * sin(2 * PI - rotationAngle) + fg[3][iFace] * cos(2 * PI - rotationAngle);
                     }
                     else if (bcName == "Periodic_down")
                     {
-                        rotfg[0] = fg[1][iface];
-                        rotfg[1] = fg[2][iface] * cos(rotationAngle) - fg[3][iface] * sin(rotationAngle);
-                        rotfg[2] = fg[2][iface] * sin(rotationAngle) + fg[3][iface] * cos(rotationAngle);
+                        rotfg[0] = fg[1][iFace];
+                        rotfg[1] = fg[2][iFace] * cos(rotationAngle) - fg[3][iFace] * sin(rotationAngle);
+                        rotfg[2] = fg[2][iFace] * sin(rotationAngle) + fg[3][iFace] * cos(rotationAngle);
                     }
 
                     for (int m = 1; m <= 3; ++ m)
                     {
-                        fg[m][iface] = rotfg[m-1];
+                        fg[m][iFace] = rotfg[m-1];
                     }
                 }
             }
             for (int m = 0; m < neqn; ++ m)
             {
-                (*f)(it, jt, kt, m) = fg[m][iface];
+                (*f)(it, jt, kt, m) = fg[m][iFace];
             }
         }
     }
@@ -5803,18 +5802,18 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble3D *f, const string &name)
     int level = grid->GetLevel();
 
     int m = 0;
-    for (int ngst = GetNumberOfGhostCellLayers() - 1; ngst >= 0; -- ngst)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *drecv = interfaceInfo->GetRecvDataStorage(ngst);
+        Data_ParamFieldSuite *drecv = interfaceInfo->GetRecvDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast<RDouble **> (drecv->GetDataPtr(name));
         int nIFace = fiinfo->GetNIFace();
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int it, jt, kt;
-            fgrid->GetTargetIndexIJK(iface, ngst + 1, it, jt, kt);
+            fgrid->GetTargetIndexIJK(iFace, iGhost + 1, it, jt, kt);
             fgrid->RemapMultigridIJK(level, it, jt, kt);
-            (*f)(it, jt, kt) = fg[m][iface];
+            (*f)(it, jt, kt) = fg[m][iFace];
         }
     }
 }
@@ -5834,11 +5833,11 @@ void UploadOversetValue(StructGrid *grid, RDouble4D *field, const string &name, 
     RDouble **fieldStorage = reinterpret_cast<RDouble **> (dataStorage->GetDataPtr(name));
     int numberOfNeighbors = oversetDataProxy->GetNumberOfNeighbors();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
@@ -5872,11 +5871,11 @@ void UploadOversetValue(StructGrid *grid, RDouble3D *field, const string &name)
     int numberOfNeighbors = oversetDataProxy->GetNumberOfNeighbors();
 
     int iEquation = 0;
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
@@ -5911,11 +5910,11 @@ void DownloadOversetValue(StructGrid *grid, RDouble4D *field, const string &name
 
     int numberOfNeighborZones = oversetDataProxy->GetNumberOfNeighbors();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighborZones; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighborZones; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
@@ -5953,11 +5952,11 @@ void DownloadOversetValue(StructGrid *grid, RDouble3D *field, const string &name
 
     int numberOfNeighborZones = oversetDataProxy->GetNumberOfNeighbors();
     int iEquation = 0;
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighborZones; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighborZones; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
@@ -5992,14 +5991,14 @@ void MinMaxDiffINF(StructGrid *grid, int ig, RDouble *dmin, RDouble *dmax, RDoub
     int idx[6], jdx[6], kdx[6];
 
     //! Find the maximum and minimum in the neighbor of each cell.
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
         int is, js, ks;
-        fgrid->GetSourceIndexIJK(iface, ig+1, is, js, ks);
+        fgrid->GetSourceIndexIJK(iFace, ig+1, is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
-        dmin[iface] = (*q)(is, js, ks, m);
-        dmax[iface] = (*q)(is, js, ks, m);
+        dmin[iFace] = (*q)(is, js, ks, m);
+        dmax[iFace] = (*q)(is, js, ks, m);
 
         idx[0] = is + id;
         jdx[0] = js;
@@ -6027,12 +6026,12 @@ void MinMaxDiffINF(StructGrid *grid, int ig, RDouble *dmin, RDouble *dmax, RDoub
 
         for (int n = 0; n < 6; ++ n)
         {
-            dmin[iface] = MIN(dmin[iface], (*q)(idx[n], jdx[n], kdx[n], m));
-            dmax[iface] = MAX(dmax[iface], (*q)(idx[n], jdx[n], kdx[n], m));
+            dmin[iFace] = MIN(dmin[iFace], (*q)(idx[n], jdx[n], kdx[n], m));
+            dmax[iFace] = MAX(dmax[iFace], (*q)(idx[n], jdx[n], kdx[n], m));
         }
 
-        dmin[iface] -= (*q)(is, js, ks, m);
-        dmax[iface] -= (*q)(is, js, ks, m);
+        dmin[iFace] -= (*q)(is, js, ks, m);
+        dmax[iFace] -= (*q)(is, js, ks, m);
     }
 }
 
@@ -6076,10 +6075,10 @@ void BarthLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RDo
     int idx[6], jdx[6], kdx[6], ndx[6], ipn[6];
 
     //! Find the maximum and minimum in the neighbor of each cell.
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
         int is, js, ks;
-        fgrid->GetSourceIndexIJK(iface, ig + 1, is, js, ks);
+        fgrid->GetSourceIndexIJK(iFace, ig + 1, is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
         grid->CenterCoor(is, js, ks, xcc, ycc, zcc);
@@ -6134,20 +6133,20 @@ void BarthLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RDo
             dx = xfc - xcc;
             dy = yfc - ycc;
             dz = zfc - zcc;
-            dq_face = dqdx[iface] * dx + dqdy[iface] * dy + dqdz[iface] * dz;
+            dq_face = dqdx[iFace] * dx + dqdy[iFace] * dy + dqdz[iFace] * dz;
 
             ds  = sqrt(dx * dx + dy * dy + dz * dz);
             dot = ipn[n] * (xfn * dx + yfn * dy + zfn * dz) / (ds + SMALL);
 
-            if (dot < 0.0) limit[iface] = 0.0;
+            if (dot < 0.0) limit[iFace] = 0.0;
 
-            if (dq_face > dmax[iface])
+            if (dq_face > dmax[iFace])
             {
-                limit[iface] = MIN(limit[iface], dmax[iface] / dq_face);
+                limit[iFace] = MIN(limit[iFace], dmax[iFace] / dq_face);
             }
-            else if (dq_face < dmin[iface])
+            else if (dq_face < dmin[iFace])
             {
-                limit[iface] = MIN(limit[iface], dmin[iface] / dq_face);
+                limit[iFace] = MIN(limit[iFace], dmin[iFace] / dq_face);
             }
         }
 
@@ -6199,10 +6198,10 @@ void VencatLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RD
     int idx[6], jdx[6], kdx[6], ndx[6], ipn[6];
 
     //! Find the maximum and minimum in the neighbor of each cell.
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
         int is, js, ks;
-        fgrid->GetSourceIndexIJK(iface, ig + 1, is, js, ks);
+        fgrid->GetSourceIndexIJK(iFace, ig + 1, is, js, ks);
         fgrid->RemapMultigridIJK(level, is, js, ks);
 
         grid->CenterCoor(is, js, ks, xcc, ycc, zcc);
@@ -6257,25 +6256,25 @@ void VencatLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RD
             dx = xfc - xcc;
             dy = yfc - ycc;
             dz = zfc - zcc;
-            dq_face = dqdx[iface] * dx + dqdy[iface] * dy + dqdz[iface] * dz;
+            dq_face = dqdx[iFace] * dx + dqdy[iFace] * dy + dqdz[iFace] * dz;
 
             ds = sqrt(dx * dx + dy * dy + dz * dz);
             dot = ipn[n] * (xfn * dx + yfn * dy + zfn * dz) / (ds + SMALL);
 
-            if (dot < 0.0) limit[iface] = 0.0;
+            if (dot < 0.0) limit[iFace] = 0.0;
 
             eps = venkatCoeff * ds;
             eps = eps * eps * eps;
 
             if (dq_face > SMALL)
             {
-                tmp = VenFun(dmax[iface], dq_face, eps);
-                limit[iface] = MIN(limit[iface], tmp);
+                tmp = VenFun(dmax[iFace], dq_face, eps);
+                limit[iFace] = MIN(limit[iFace], tmp);
             }
             else if (dq_face < - SMALL)
             {
-                tmp = VenFun(dmin[iface], dq_face, eps);
-                limit[iface] = MIN(limit[iface], tmp);
+                tmp = VenFun(dmin[iFace], dq_face, eps);
+                limit[iFace] = MIN(limit[iFace], tmp);
             }
         }
     }
@@ -6850,9 +6849,9 @@ void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool 
 
     CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (!IsWall(bctype) && bctype != PHENGLEI::ABLATION_SURFACE)
@@ -6864,40 +6863,40 @@ void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool 
 
         int nsurf = bcregion->GetFaceDirection() + 1;
 
-        int inode, jnode, knode;
+        int iNode, jNode, kNode;
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)
             {
                 for (int i = ist; i <= ied; ++ i)
                 {
-                    bcregion->GetBoundaryFaceIndex(i, j, k, inode, jnode, knode);
+                    bcregion->GetBoundaryFaceIndex(i, j, k, iNode, jNode, kNode);
 
                     int il, jl, kl;
-                    il = inode + il1;
-                    jl = jnode + jl1;
-                    kl = knode + kl1;
+                    il = iNode + il1;
+                    jl = jNode + jl1;
+                    kl = kNode + kl1;
 
                     if (nsurf == 1)
                     {
-                        qn(inode, jnode, knode, m) = q(i, j, k, n);
-                        qn(inode, jl   , knode, m) = q(i, j, k, n);
-                        qn(inode, jl   , kl   , m) = q(i, j, k, n);
-                        qn(inode, jnode, kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kNode, m) = q(i, j, k, n);
+                        qn(iNode, jl   , kNode, m) = q(i, j, k, n);
+                        qn(iNode, jl   , kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kl   , m) = q(i, j, k, n);
                     }
                     else if (nsurf == 2)
                     {
-                        qn(inode, jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jnode, kl   , m) = q(i, j, k, n);
-                        qn(inode, jnode, kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jNode, kl   , m) = q(i, j, k, n);
+                        qn(iNode, jNode, kl   , m) = q(i, j, k, n);
                     }
                     else if (nsurf == 3)
                     {
-                        qn(inode, jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jnode, knode, m) = q(i, j, k, n);
-                        qn(il   , jl   , knode, m) = q(i, j, k, n);
-                        qn(inode, jl   , knode, m) = q(i, j, k, n);
+                        qn(iNode, jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jNode, kNode, m) = q(i, j, k, n);
+                        qn(il   , jl   , kNode, m) = q(i, j, k, n);
+                        qn(iNode, jl   , kNode, m) = q(i, j, k, n);
                     }
                 }
             }

@@ -69,9 +69,9 @@ void FantasyWriteToInp(const string &bnd_file, Grid **grids, int nBlocks)
         int  numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
         GridgenBCfile << numberOfBoundaryFaces << endl;
 
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
@@ -145,9 +145,9 @@ void ReProcessBCInfo(Grid **grids, int nBlocks)
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
         int numberOfBoundaryFaces = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
@@ -196,9 +196,9 @@ void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks)
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
         int nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
             if (bctype >= 0) continue;
@@ -278,9 +278,9 @@ void WriteLnkFile (const string &gridFileName, Grid **grids_in, int nBlocks)
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
         int nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
             if (bctype >= 0) continue;
@@ -335,12 +335,12 @@ void CheckMeshMultigrid(Grid **grids_in, int nBlocks)
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
         int  nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
             km = 1;
             NN = 2;
 
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
 
@@ -385,9 +385,9 @@ void WriteBcFileFromFTS (const string &gridFileName, Grid **grids_in, int nBlock
         string *bcNameList = new string [nBCRegion];
 
         uint_long totalSize = 0;
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
 
             string bcName = structBC->GetBCName();
             int bctype = structBC->GetBCType();
@@ -409,10 +409,10 @@ void WriteBcFileFromFTS (const string &gridFileName, Grid **grids_in, int nBlock
                 structBC->SetBCName(bcName);
             }
             
-            bcNameList[ibcregion] = bcName;
+            bcNameList[iBCRegion] = bcName;
             
-            //totalSize += bcNameList[ibcregion].size();
-            totalSize += static_cast< uint_long > (bcNameList[ibcregion].size());
+            //totalSize += bcNameList[iBCRegion].size();
+            totalSize += static_cast< uint_long > (bcNameList[iBCRegion].size());
             totalSize += 1;
         }
 
@@ -512,9 +512,9 @@ void Fantasy2Ustar2D()
     file.read(reinterpret_cast<char*>(node_number_of_each_face), nTotalFace * sizeint);
 
     int nsum = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        nsum += node_number_of_each_face[iface];
+        nsum += node_number_of_each_face[iFace];
     }
 
     cout << "set the connection relationship of face to node......\n";
@@ -535,20 +535,20 @@ void Fantasy2Ustar2D()
 
     //! Set the boundary conditions.
     int *bctype = new int [nBoundFace];
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int tmp;
         file.read(reinterpret_cast<char*>(&tmp), sizeint);
-        bctype[iface] = tmp;
+        bctype[iFace] = tmp;
     }
 
     file.close();
     file.clear();
 
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int type = u2fbc.TranslateBC(bctype[iface]);
-        bctype[iface] = type;
+        int type = u2fbc.TranslateBC(bctype[iFace]);
+        bctype[iFace] = type;
     }  
 
     file.open(out_gfile.c_str(), ios_base::out);
@@ -565,17 +565,17 @@ void Fantasy2Ustar2D()
     file << "grid 1\n";
     file << nTotalNode << " " << nTotalFace << " " << nTotalCell << " " << nBoundFace << "\n";
  
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        file << x[inode] << " " << y[inode] << "\n";
+        file << x[iNode] << " " << y[iNode] << "\n";
     }
 
     int *nodePosi = new int [nTotalFace+1];
 
     nodePosi[0] = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        nodePosi[iface+1] = nodePosi[iface] + 2;
+        nodePosi[iFace+1] = nodePosi[iFace] + 2;
     }
     delete [] nodePosi;
 
@@ -592,16 +592,16 @@ void Fantasy2Ustar2D()
         }
     }
 
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        file << left_cell_of_face[ iface ] + 1 << " ";
-        file << bctype[iface]   << "\n";
+        file << left_cell_of_face[iFace] + 1 << " ";
+        file << bctype[iFace] << "\n";
     }
 
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        file << left_cell_of_face [ iface ] + 1 << " ";
-        file << right_cell_of_face[ iface ] + 1 << "\n";
+        file << left_cell_of_face [iFace] + 1 << " ";
+        file << right_cell_of_face[iFace] + 1 << "\n";
     }
 
     file.close();
@@ -688,9 +688,9 @@ void Fantasy2Ustar3D()
     file.read(reinterpret_cast<char*>(node_number_of_each_face), nTotalFace * sizeint);
 
     int nsum = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        nsum += node_number_of_each_face[iface];
+        nsum += node_number_of_each_face[iFace];
     }
 
     cout << "set the connection relationship of face to node ......\n";
@@ -711,19 +711,19 @@ void Fantasy2Ustar3D()
 
     //! Set the boundary conditions.
     int *bctype = new int [nBoundFace];
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int tmp;
         file.read(reinterpret_cast<char*>(&tmp), sizeint);
-        bctype[iface] = tmp;
+        bctype[iFace] = tmp;
     }
     file.close();
     file.clear();
 
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int type = u2fbc.TranslateBC(bctype[iface]);
-        bctype[iface] = type;
+        int type = u2fbc.TranslateBC(bctype[iFace]);
+        bctype[iFace] = type;
     }  
 
     //! Output file in Ustar format.
@@ -745,36 +745,36 @@ void Fantasy2Ustar3D()
 
         file << nTotalNode << "  " << nTotalFace << "  " << nTotalCell << endl;
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            file << x[inode] << "  " << y[inode] << "  " << z[inode] << endl;
+            file << x[iNode] << "  " << y[iNode] << "  " << z[iNode] << endl;
         }
 
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            file << node_number_of_each_face[iface] << endl;
+            file << node_number_of_each_face[iFace] << endl;
         }
 
         int count = 0;
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
                 file << face2node[count++] + 1 << "  ";
             }
             file << endl;
         }
 
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            file << left_cell_of_face[iface] + 1 << " ";
-            file << bctype[iface] << "\n"; 
+            file << left_cell_of_face[iFace] + 1 << " ";
+            file << bctype[iFace] << "\n"; 
         }
 
-        for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+        for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
         {
-            file << left_cell_of_face [iface] + 1 << " ";
-            file << right_cell_of_face[iface] + 1 << "\n";
+            file << left_cell_of_face [iFace] + 1 << " ";
+            file << right_cell_of_face[iFace] + 1 << "\n";
         }
 
         file.close();
@@ -816,9 +816,9 @@ void Fantasy2Ustar3D()
         file.write((char *)node_number_of_each_face, nTotalFace * SizeInt);
 
         count = 0;
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
                 ++ count;
             }
@@ -837,16 +837,16 @@ void Fantasy2Ustar3D()
         count = 2 * nTotalFace;
         int *f2c_temp = new int [count];
         
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            f2c_temp[2 * iface] = left_cell_of_face[iface] + 1;
-            f2c_temp[2 * iface + 1] = bctype[iface];
+            f2c_temp[2 * iFace] = left_cell_of_face[iFace] + 1;
+            f2c_temp[2 * iFace + 1] = bctype[iFace];
         }
 
-        for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+        for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
         {
-            f2c_temp[2 * iface] = left_cell_of_face[iface] + 1;
-            f2c_temp[2 * iface + 1] = right_cell_of_face[iface] + 1;
+            f2c_temp[2 * iFace] = left_cell_of_face[iFace] + 1;
+            f2c_temp[2 * iFace + 1] = right_cell_of_face[iFace] + 1;
         }
 
         file.write((char *)f2c_temp, count * SizeInt);
@@ -998,23 +998,23 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
     grid->SetY(y);
     grid->SetZ(z);
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
         getline(file, line);
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(x[inode], word, std::dec);
+        from_string< RDouble >(x[iNode], word, std::dec);
 
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(y[inode], word, std::dec);
+        from_string< RDouble >(y[iNode], word, std::dec);
 
         if (GetDim() == THREE_D)
         {
             line = FindNextWord(line, word, separator);
-            from_string< RDouble >(z[inode], word, std::dec);
+            from_string< RDouble >(z[iNode], word, std::dec);
         }
         else
         {
-            z[inode] = zero;
+            z[iNode] = zero;
         }
     }
 
@@ -1024,26 +1024,26 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
 
     if (GetDim() == TWO_D)
     {
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            node_number_of_each_face[iface] = 2;
+            node_number_of_each_face[iFace] = 2;
         }
     }
     else
     {
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            file >> node_number_of_each_face[iface];
+            file >> node_number_of_each_face[iFace];
         }
     }
 
     int *nodePosi = new int[nTotalFace + 1];
     int nsum = 0;
     nodePosi[0] = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        nsum += node_number_of_each_face[iface];
-        nodePosi[iface+1] = nsum;
+        nsum += node_number_of_each_face[iFace];
+        nodePosi[iFace+1] = nsum;
     }
 
     cout << "set the connection relationship of face to node......\n";
@@ -1068,66 +1068,66 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
 
     if (GetDim() == TWO_D)
     {
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            file >> left_cell_of_face[iface];
-            file >> right_cell_of_face[iface];
+            file >> left_cell_of_face[iFace];
+            file >> right_cell_of_face[iFace];
 
-            if (left_cell_of_face[ iface ] <= 0)
+            if (left_cell_of_face[ iFace ] <= 0)
             {
-                -- left_cell_of_face [iface];
-                -- right_cell_of_face[iface];
+                -- left_cell_of_face [iFace];
+                -- right_cell_of_face[iFace];
                 // need to reverse the node ordering
-                SWAP(face2node[2*iface], face2node[2*iface+1]);
-                SWAP(left_cell_of_face[iface],right_cell_of_face[iface]);
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                SWAP(face2node[2*iFace], face2node[2*iFace+1]);
+                SWAP(left_cell_of_face[iFace], right_cell_of_face[iFace]);
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
-            else if (right_cell_of_face[iface] <= 0)
+            else if (right_cell_of_face[iFace] <= 0)
             {
-                -- left_cell_of_face [iface];
-                -- right_cell_of_face[iface];
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                -- left_cell_of_face [iFace];
+                -- right_cell_of_face[iFace];
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
             else
             {
-                -- left_cell_of_face [iface];
-                -- right_cell_of_face[iface];
+                -- left_cell_of_face [iFace];
+                -- right_cell_of_face[iFace];
             }
         }
     }
     else
     {
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            file >> left_cell_of_face [iface];
-            file >> right_cell_of_face[iface];
-            if (left_cell_of_face[iface] < 0)
+            file >> left_cell_of_face [iFace];
+            file >> right_cell_of_face[iFace];
+            if (left_cell_of_face[iFace] < 0)
             {
-                -- right_cell_of_face[iface];
+                -- right_cell_of_face[iFace];
                 //! Need to reverse the node ordering.
                 //! This problem is very hidden,mainly cause by the unclear definition of reverse.
                 //! The bottom line is wrong.
-                //std::reverse(face2node + nodePosi[iface],face2node + nodePosi[iface+1] - 1);
-                std::reverse(face2node + nodePosi[iface], face2node + nodePosi[iface+1]);
+                //std::reverse(face2node + nodePosi[iFace],face2node + nodePosi[iFace+1] - 1);
+                std::reverse(face2node + nodePosi[iFace], face2node + nodePosi[iFace+1]);
 
                 //! Now reverse le and re.
-                SWAP(left_cell_of_face[iface], right_cell_of_face[iface]);
+                SWAP(left_cell_of_face[iFace], right_cell_of_face[iFace]);
 
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
-            else if (right_cell_of_face[iface] < 0)
+            else if (right_cell_of_face[iFace] < 0)
             {
-                -- left_cell_of_face[iface];
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                -- left_cell_of_face[iFace];
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
             else
             {
-                -- left_cell_of_face [iface];
-                -- right_cell_of_face[iface];
+                -- left_cell_of_face [iFace];
+                -- right_cell_of_face[iFace];
             }
         }
     }
@@ -1149,11 +1149,11 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
 
     //! Set the boundary conditions.
     CompositeUnstructBC **bcr = new CompositeUnstructBC * [nBoundFace];
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = u2fbc.TranslateBC(-right_cell_of_face[iface]);
-        bcr[iface] = new CompositeUnstructBC();
-        bcr[iface]->SetKey(bctype);
+        int bctype = u2fbc.TranslateBC(-right_cell_of_face[iFace]);
+        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace]->SetKey(bctype);
     }
 
     grid->SetBCRecord(bcr);
@@ -1239,9 +1239,9 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
 
     if (GetDim() == TWO_D)
     {
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            node_number_of_each_face[iface] = 2;
+            node_number_of_each_face[iFace] = 2;
         }
     }
     else
@@ -1252,10 +1252,10 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
     int *nodePosi = new int[nTotalFace + 1];
     int nsum = 0;
     nodePosi[0] = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        nsum += node_number_of_each_face[iface];
-        nodePosi[iface+1] = nsum;
+        nsum += node_number_of_each_face[iFace];
+        nodePosi[iFace+1] = nsum;
     }
 
     cout << "set the connection relationship of face to node......\n";
@@ -1289,32 +1289,32 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
         int *f2c_temp = new int [count];
         infile.read((char *)f2c_temp, count * SizeInt);
 
-        for (int iface = 0; iface < nTotalFace; ++ iface)
+        for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            left_cell_of_face [iface] = f2c_temp[2 * iface];
-            right_cell_of_face[iface] = f2c_temp[2 * iface + 1];
+            left_cell_of_face [iFace] = f2c_temp[2 * iFace];
+            right_cell_of_face[iFace] = f2c_temp[2 * iFace + 1];
 
-            if (left_cell_of_face[iface] < 0)
+            if (left_cell_of_face[iFace] < 0)
             {
-                -- right_cell_of_face[iface];
-                std::reverse(face2node + nodePosi[iface], face2node + nodePosi[iface+1]);
+                -- right_cell_of_face[iFace];
+                std::reverse(face2node + nodePosi[iFace], face2node + nodePosi[iFace+1]);
 
                 //! Now reverse le and re.
-                SWAP(left_cell_of_face[iface], right_cell_of_face[iface]);
+                SWAP(left_cell_of_face[iFace], right_cell_of_face[iFace]);
 
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
-            else if (right_cell_of_face[iface] < 0)
+            else if (right_cell_of_face[iFace] < 0)
             {
-                -- left_cell_of_face[iface];
-                n_patch = MAX(n_patch, -right_cell_of_face[iface]);
+                -- left_cell_of_face[iFace];
+                n_patch = MAX(n_patch, -right_cell_of_face[iFace]);
                 ++ nBFaceReal;
             }
             else
             {
-                -- left_cell_of_face [iface];
-                -- right_cell_of_face[iface];
+                -- left_cell_of_face [iFace];
+                -- right_cell_of_face[iFace];
             }
         }
 
@@ -1331,11 +1331,11 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
 
     //! Set the boundary conditions.
     CompositeUnstructBC **bcr = new CompositeUnstructBC * [nBoundFace];
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = u2fbc.TranslateBC(-right_cell_of_face[iface]);
-        bcr[iface] = new CompositeUnstructBC();
-        bcr[iface]->SetKey(bctype);
+        int bctype = u2fbc.TranslateBC(-right_cell_of_face[iFace]);
+        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace]->SetKey(bctype);
     }
 
     grid->SetBCRecord(bcr);
@@ -1591,11 +1591,11 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
 
-        for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
             //! Read the source region imin,imax,jmin,jmax,kmin,kmax,bctype.
             int imin, imax, jmin, jmax, kmin, kmax, bctype;
-            StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
             bcregion->GetNormalizeIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
             bctype = bcregion->GetBCType();
             if (bctype != 7 || bctype / 10 != 7)
@@ -1721,11 +1721,11 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
 
         CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
         int nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
             //! Read the source region imin,imax,jmin,jmax,kmin,kmax,bctype.
             int imin, imax, jmin, jmax, kmin, kmax, bctype;
-            StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
              
             bcregion->GetNormalizeIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
             bctype = bcregion->GetBCType();
@@ -1924,12 +1924,12 @@ void SetBcRegion(StructGrid *grid, VInt &imin, VInt &imax, VInt &jmin, VInt &jma
     CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
 
     int nb = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = new StructBC(nb, ibcregion);
-        composite_bcregion->SetBCRegion(ibcregion, bcregion);
-        bcregion->SetIJKRegion(imin[ibcregion], imax[ibcregion], jmin[ibcregion], jmax[ibcregion], kmin[ibcregion], kmax[ibcregion]);
-        bcregion->SetBCType(bctype[ibcregion]);
+        StructBC *bcregion = new StructBC(nb, iBCRegion);
+        composite_bcregion->SetBCRegion(iBCRegion, bcregion);
+        bcregion->SetIJKRegion(imin[iBCRegion], imax[iBCRegion], jmin[iBCRegion], jmax[iBCRegion], kmin[iBCRegion], kmax[iBCRegion]);
+        bcregion->SetBCType(bctype[iBCRegion]);
     }
 }
 

@@ -198,16 +198,16 @@ public:
     void CreateBC(int nBCRegions);
     void PreProcess(Base_Grid_Conn *gconn, BaseElement *base_elem);
     void PostProcess(Base_Grid_Conn *gconn);
-    void GetISection(cgsize_t icell, int &isection);
+    void GetISection(cgsize_t iCell, int &isection);
 
     bool CheckBCFace(int *bc_face, int nfacept, set<cgsize_t> &bc_vertex);
 
     void ComputeGridConn(Base_Grid_Conn *gconn, BaseElement *base_elem);
-    void GetElem(cgsize_t *elem_source, cgsize_t icell, int ptnum, cgsize_t *&elem);
-    void GetBCFaceMixed(cgsize_t *elem_source, cgsize_t icell, int isection, cgsize_t *&elem);
-    void GetElem(BaseElement *base_elem, cgsize_t icell, int &etype, cgsize_t *&elem);
-    void GetFace(BaseElement *base_elem, cgsize_t icell, int &facept_num, cgsize_t *&bcface);
-    void GetFace(Base_Grid_Conn *gconn, cgsize_t *elem, cgsize_t icell, CElemFace *elemface);
+    void GetElem(cgsize_t *elem_source, cgsize_t iCell, int ptnum, cgsize_t *&elem);
+    void GetBCFaceMixed(cgsize_t *elem_source, cgsize_t iCell, int isection, cgsize_t *&elem);
+    void GetElem(BaseElement *base_elem, cgsize_t iCell, int &etype, cgsize_t *&elem);
+    void GetFace(BaseElement *base_elem, cgsize_t iCell, int &facept_num, cgsize_t *&bcface);
+    void GetFace(Base_Grid_Conn *gconn, cgsize_t *elem, cgsize_t iCell, CElemFace *elemface);
     void GetFace(cgsize_t *elem, int loc, int *bc_face, int &nfacept, CElemFace *elemface);
 
     void ComputeElemFace(Base_Grid_Conn *gconn, BaseElement *base_elem);
@@ -216,8 +216,8 @@ public:
     bool MarkBCFace(Base_Grid_Conn *gconn, cgsize_t *bcface, int facept_num, BCType_t bctype, const string &BCName);
     void MarkBCInterface(Base_Grid_Conn *gconn);
 
-    void GetBCFace(BaseElement *base_elem, cgsize_t icell, int &facept_num, cgsize_t *&bcface);
-    void ProcessBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem, cgsize_t icell, BCType_t bctype, const string &BCName);
+    void GetBCFace(BaseElement *base_elem, cgsize_t iCell, int &facept_num, cgsize_t *&bcface);
+    void ProcessBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem, cgsize_t iElement, BCType_t bctype, const string &BCName);
     void ProcessBCVertex(Base_Grid_Conn *gconn, BaseElement *base_elem, int bc_elem_set_type, int nBCElem, cgsize_t *bc_conn_list, int bctype, const string &BCName);
     void ProcessBCVertex(Base_Grid_Conn *gconn, BaseElement *base_elem, set<cgsize_t> &bc_vertex, int bctype, const string &BCName);
 };

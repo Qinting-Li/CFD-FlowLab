@@ -362,18 +362,18 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
     cout.precision(0);
 
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (myid == 0 && icell > 0 && icell % interval == 0)
+        if (myid == 0 && iCell > 0 && iCell % interval == 0)
         {
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
         }
 
-        RDouble xcc0 = xcc[icell];
-        RDouble ycc0 = ycc[icell];
-        RDouble zcc0 = zcc[icell];
+        RDouble xcc0 = xcc[iCell];
+        RDouble ycc0 = ycc[iCell];
+        RDouble zcc0 = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -431,9 +431,9 @@ void Pre_WalldistCompute::ComputeWallDist2DByBinarySearching(UnstructGrid *grid)
                     RDouble wdst = ComputeDistanceOfANodeToSegment(xcc0, ycc0, zcc0, xStart, yStart, zStart,
                                                                    xMid, yMid, zMid, xEnd, yEnd, zEnd);
 
-                    if (walldist[icell] > wdst)
+                    if (walldist[iCell] > wdst)
                     {
-                        walldist[icell] = wdst;
+                        walldist[iCell] = wdst;
                     }
                 }
             }
@@ -553,16 +553,16 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
 
     //int interval = GetProgressInterval(nTotal, 10);
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (icell > 0 && icell % interval == 0)
+        if (iCell > 0 && iCell % interval == 0)
         {
-            //ProgressMonitorToWindows(icell, nTotal, "wall distance");
-            //ProgressMonitorToLogFile(icell, nTotal, "wall distance");
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
-            ProgressMonitorToLogFile(icell, nTotalCell, "wall distance");
+            //ProgressMonitorToWindows(iCell, nTotal, "wall distance");
+            //ProgressMonitorToLogFile(iCell, nTotal, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
+            ProgressMonitorToLogFile(iCell, nTotalCell, "wall distance");
 
             if (rotateAxis >= 3 || timeSpan.GetTimeSpan() > 3600.0)
             {
@@ -570,19 +570,19 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
                 oss.unsetf(ios::scientific);
                 oss.setf(ios::fixed);
                 oss.precision(0);
-                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((icell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iCell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
                 WriteLogFile(oss, false);
             }
         }
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             continue;
         }
 
-        cellCenter[0] = xcc[icell];
-        cellCenter[1] = ycc[icell];
-        cellCenter[2] = zcc[icell];
+        cellCenter[0] = xcc[iCell];
+        cellCenter[1] = ycc[iCell];
+        cellCenter[2] = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -621,9 +621,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingAccurate(UnstructGrid *gr
                 }
 
                 RDouble wdst = ComputeDistanceOfANodeToAFace(cellCenter, faceCenter, faceNormal, face2node, x, y, z);
-                if (walldist[icell] > wdst)
+                if (walldist[iCell] > wdst)
                 {
-                    walldist[icell] = wdst;
+                    walldist[iCell] = wdst;
                 }
             }
         }
@@ -876,14 +876,14 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
 
     TimeSpan partTime;
     int interval = GetProgressInterval(nTotalCell, 10);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (icell > 0 && icell % interval == 0)
+        if (iCell > 0 && iCell % interval == 0)
         {
-            ProgressMonitorToWindows(icell, nTotalCell, "wall distance");
-            ProgressMonitorToLogFile(icell, nTotalCell, "wall distance");
+            ProgressMonitorToWindows(iCell, nTotalCell, "wall distance");
+            ProgressMonitorToLogFile(iCell, nTotalCell, "wall distance");
 
             if (rotateAxis >= 1 || timeSpan.GetTimeSpan() > 600.0)
             {
@@ -891,12 +891,12 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
                 oss.unsetf(ios::scientific);
                 oss.setf(ios::fixed);
                 oss.precision(0);
-                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((icell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
+                oss << "     rotateAxis = " << this->rotateAxis << ", " << floor((iCell * 1.0) / nTotalCell * 100 + 0.5) << "% " << "wall distance" << " completed ...";
                 WriteLogFile(oss, false);
             }
         }
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             //! This cell wall distance has been computed.
             continue;
@@ -917,9 +917,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
             ++ iEnlarge;
 
             //! i-th test.
-            oldCellCenter[0] = xcc[icell];
-            oldCellCenter[1] = ycc[icell];
-            oldCellCenter[2] = zcc[icell];
+            oldCellCenter[0] = xcc[iCell];
+            oldCellCenter[1] = ycc[iCell];
+            oldCellCenter[2] = zcc[iCell];
             this->RotateAxis(oldCellCenter, cellCenter);
 
             //! For method 0: loop over the nearest several box.
@@ -1008,9 +1008,9 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
 
                         //RDouble distTemp = sqrt(wdst);
 
-                        if (walldist[icell] > wdst && wdst < 1.0e30)
+                        if (walldist[iCell] > wdst && wdst < 1.0e30)
                         {
-                            walldist[icell] = wdst;
+                            walldist[iCell] = wdst;
                             isFoundNearestFace = true;
                         }
                     }
@@ -1048,7 +1048,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(UnstructGrid *grid)
                 continue;
             }
         }
-    }    //! icell.
+    }    //! iCell.
 }
 
 void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
@@ -1269,7 +1269,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFast(StructGrid *grid)
                 }
             }
         }
-    }    //! icell.
+    }    //! iCell.
 }
 
 void Pre_WalldistCompute::ComputeNodeWallDist3DByProjectingFast(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist)
@@ -1860,9 +1860,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
     int nBCRegion = composite_bcregion->GetnBCRegion();
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1883,9 +1883,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     int iBlock = grid->GetIBlock();
     cdata->write(&iBlock, sizeof(int));
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1917,9 +1917,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     //! Compute nWallPoints.
     int nWallPoints = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1968,9 +1968,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     RDouble3D &zz = *grid->GetStructZ();
 
     nWallPoints = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2005,8 +2005,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             Range J(1, nj);
             Range K(1, nk);
 
-            structNode2UnstrNodeID[ibcregion] = new Int3D(I, J, K, fortranArray);
-            Int3D &nodeMap = *(structNode2UnstrNodeID[ibcregion]);
+            structNode2UnstrNodeID[iBCRegion] = new Int3D(I, J, K, fortranArray);
+            Int3D &nodeMap = *(structNode2UnstrNodeID[iBCRegion]);
 
             for (int k = s_st[2]; k <= s_ed[2]; ++ k)
             {
@@ -2064,9 +2064,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     int nk = grid->GetNK();
     count = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2095,7 +2095,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
             }
 
             int nsurf = bcregion->GetFaceDirection() + 1;
-            Int3D &nodeMap = *(structNode2UnstrNodeID[ibcregion]);
+            Int3D &nodeMap = *(structNode2UnstrNodeID[iBCRegion]);
             int in, jn, kn;
             for (int k = kst; k <= ked; ++ k)
             {
@@ -2187,9 +2187,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     RDouble4D &yfn = *(grid->GetFaceNormalY());
     RDouble4D &zfn = *(grid->GetFaceNormalZ());
     
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2270,11 +2270,11 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     int *localWallFace2Global = new int [nSolidFace]();
     SetField(localWallFace2Global, -1, nSolidFace);
     count = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (isWallFace[iface])
+        if (isWallFace[iFace])
         {
-            localWallFace2Global[count] = iface;
+            localWallFace2Global[count] = iFace;
             ++ count;
         }
     }
@@ -2307,36 +2307,36 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     //! Number of nodes per wall face.
     count = 0;
     int *nPointsPerWallFace = new int [nSolidFace]();
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int globalFaceIndex = localWallFace2Global[iface];
-        nPointsPerWallFace[iface] = node_number_of_each_face[globalFaceIndex];
-        count += nPointsPerWallFace[iface];
+        int globalFaceIndex = localWallFace2Global[iFace];
+        nPointsPerWallFace[iFace] = node_number_of_each_face[globalFaceIndex];
+        count += nPointsPerWallFace[iFace];
     }
 
     //! Wall face to node.
     int *wallface2node = new int [count]();
     count = 0;
     int nodepos = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (isWallFace[iface])
+        if (isWallFace[iFace])
         {
-            for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
                 int index = face2node[nodepos + j];
                 wallface2node[count ++] = globalPoint2Wall[index];
             }
         }
 
-        nodepos += node_number_of_each_face[iface];
+        nodepos += node_number_of_each_face[iFace];
     }
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int faceIndex = localWallFace2Global[iface];
+        int faceIndex = localWallFace2Global[iFace];
 
         RDouble xc = 0, yc = 0, zc = 0;
         xc = xfc[faceIndex];
@@ -2362,16 +2362,16 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     }
 
     //! Third: face to node connection.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int nNPF = nPointsPerWallFace[iface];
+        int nNPF = nPointsPerWallFace[iFace];
         cdata->write(&nNPF, sizeof(int));
     }
 
     count = 0;
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int nNPF = nPointsPerWallFace[iface];
+        int nNPF = nPointsPerWallFace[iFace];
         for (int j = 0; j < nNPF; ++ j)
         {
             int nodeIndex = wallface2node[count ++];
@@ -2380,9 +2380,9 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
     }
 
     //! Forth: wall face normal.
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        int faceIndex = localWallFace2Global[iface];
+        int faceIndex = localWallFace2Global[iFace];
 
         RDouble xfn0 = xfn[faceIndex];
         RDouble yfn0 = yfn[faceIndex];
@@ -3399,18 +3399,18 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
 
     RDouble cellCenter[3], faceCenter[3], faceNormal[3];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if (viscousType <= LAMINAR && wallCellLabel[icell] != 1 && iLES == NOLES_SOLVER) continue;
+        if (viscousType <= LAMINAR && wallCellLabel[iCell] != 1 && iLES == NOLES_SOLVER) continue;
 
-        if (walldist[icell] < LARGE * 0.9)
+        if (walldist[iCell] < LARGE * 0.9)
         {
             continue;
         }
 
-        cellCenter[0] = xcc[icell];
-        cellCenter[1] = ycc[icell];
-        cellCenter[2] = zcc[icell];
+        cellCenter[0] = xcc[iCell];
+        cellCenter[1] = ycc[iCell];
+        cellCenter[2] = zcc[iCell];
 
         for (std::size_t iWall = 0; iWall < wallstructureList->size(); ++ iWall)
         {
@@ -3449,9 +3449,9 @@ void Pre_WalldistCompute::CheckWallDistance(UnstructGrid *grid)
                 }
 
                 RDouble wdst = ComputeDistanceOfANodeToAFace(cellCenter, faceCenter, faceNormal, face2node, x, y, z);
-                if (walldist[icell] > wdst)
+                if (walldist[iCell] > wdst)
                 {
-                    walldist[icell] = wdst;
+                    walldist[iCell] = wdst;
                 }
             }
         }
@@ -3680,9 +3680,9 @@ void Pre_WalldistCompute::PostWallDistance(UnstructGrid *grid)
 
     int nTotalCell = grid->GetNTotalCell();
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        walldist[icell] = sqrt(walldist[icell]);
+        walldist[iCell] = sqrt(walldist[iCell]);
     }
 }
 
@@ -3840,13 +3840,13 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
 
     //! Write the wall face data structure into the data-container.
     //! First: wall face center.
-    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
+    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         RDouble xc, yc, zc;
 
-        xc = xfc[iface];
-        yc = yfc[iface];
-        zc = zfc[iface];
+        xc = xfc[iFace];
+        yc = yfc[iFace];
+        zc = zfc[iFace];
         
         cdata->write(&xc, sizeof(RDouble));
         cdata->write(&yc, sizeof(RDouble));
@@ -3875,18 +3875,18 @@ void WallStructure::Encode(DataContainer *&cdata, const bool &ifMoveToBegin)
     PHWrite(cdata, nPointPerFace, nSolidFace);
 
     int count = 0;
-    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
+    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        count += nPointPerFace[iface];
+        count += nPointPerFace[iFace];
     }
     PHWrite(cdata, wallFace2Node, count);
 
     //! Forth: wall face normal.
-    for (uint_t iface = 0; iface < nSolidFace; ++ iface)
+    for (uint_t iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        RDouble xfn0 = xfn[iface];
-        RDouble yfn0 = yfn[iface];
-        RDouble zfn0 = zfn[iface];
+        RDouble xfn0 = xfn[iFace];
+        RDouble yfn0 = yfn[iFace];
+        RDouble zfn0 = zfn[iFace];
 
         cdata->write(&xfn0, sizeof(RDouble));
         cdata->write(&yfn0, sizeof(RDouble));
@@ -3957,9 +3957,9 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     PHRead(cdata, nPointPerFace, nSolidFace);
 
     int count = 0;
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
-        count += nPointPerFace[iface];
+        count += nPointPerFace[iFace];
     }
     wallFace2Node = new int [count];
     PHRead(cdata, wallFace2Node, count);
@@ -3979,16 +3979,16 @@ void WallStructure::Decode(DataContainer *&cdata, const bool &ifMoveToBegin)
     xfn.resize(nSolidFace);
     yfn.resize(nSolidFace);
     zfn.resize(nSolidFace);
-    for (int iface = 0; iface < nSolidFace; ++ iface)
+    for (int iFace = 0; iFace < nSolidFace; ++ iFace)
     {
         RDouble xfn0, yfn0, zfn0;
         cdata->read(&xfn0, sizeof(RDouble));
         cdata->read(&yfn0, sizeof(RDouble));
         cdata->read(&zfn0, sizeof(RDouble));
 
-        xfn[iface] = xfn0;
-        yfn[iface] = yfn0;
-        zfn[iface] = zfn0;
+        xfn[iFace] = xfn0;
+        yfn[iFace] = yfn0;
+        zfn[iFace] = zfn0;
     }
 
     this->Box();
@@ -5199,9 +5199,9 @@ void VisualWalldist()
         int *faceNodeNumberContainer = grid->GetNodeNumberOfEachFace();
         int *faceNodeIndexContainer  = grid->GetFace2Node();
     
-        for (int iface = 0; iface < KMxOrNumFaces; ++ iface)
+        for (int iFace = 0; iFace < KMxOrNumFaces; ++ iFace)
         {
-            TotalNumFaceNodes_Rect += faceNodeNumberContainer[iface];
+            TotalNumFaceNodes_Rect += faceNodeNumberContainer[iFace];
         }
 
         INTEGER4 *FaceNodes_Rect = new INTEGER4[TotalNumFaceNodes_Rect];
@@ -5259,12 +5259,12 @@ void VisualWalldist()
         int *leftCellIndexContainer  = grid->GetLeftCellOfFace();
         int *rightCellIndexContainer = grid->GetRightCellOfFace();
 
-        for (INTEGER4 iface = 0; iface < KMxOrNumFaces; ++ iface)
+        for (INTEGER4 iFace = 0; iFace < KMxOrNumFaces; ++ iFace)
         {
-            FaceLeftElems [iface] = leftCellIndexContainer [iface] + 1;
-            FaceRightElems[iface] = rightCellIndexContainer[iface] + 1;
-            if (FaceRightElems[iface] > JMxOrNumElements || FaceRightElems[iface] < 0) FaceRightElems[iface] = 0;
-            if (FaceLeftElems[iface] > JMxOrNumElements || FaceLeftElems[iface] < 0) FaceLeftElems[iface] = 0;
+            FaceLeftElems [iFace] = leftCellIndexContainer [iFace] + 1;
+            FaceRightElems[iFace] = rightCellIndexContainer[iFace] + 1;
+            if (FaceRightElems[iFace] > JMxOrNumElements || FaceRightElems[iFace] < 0) FaceRightElems[iFace] = 0;
+            if (FaceLeftElems[iFace] > JMxOrNumElements || FaceLeftElems[iFace] < 0) FaceLeftElems[iFace] = 0;
         }
 
         INTEGER4 FaceBndryConnectionCounts = 0;

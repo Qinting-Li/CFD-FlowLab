@@ -207,11 +207,11 @@ void CombinGrid::MergeInterface2All()
     {
         UnstructGrid *gridLocal = UnstructGridCast(grid_in[iZone]);
         CompositeUnstructBC **bcrLocal = gridLocal->GetBCRecord();
-        int nBFaceLocal = gridLocal->GetNBoundFace();
+        int nBLocalFace = gridLocal->GetNBoundFace();
         int *face2all = GetFace2All(iZone);
         
         int nMergedInterfaces = 0;
-        for (int iFace = 0; iFace < nBFaceLocal; ++ iFace)
+        for (int iFace = 0; iFace < nBLocalFace; ++ iFace)
         {
             int globalFaceID = face2all[iFace];
 
@@ -282,12 +282,12 @@ void CombinGrid::MergeFace2All()
 
         int interface_current = 0;
         int node_sum = 0;
-        for (int iface = 0; iface < nTotalFaceEachZone[iZone]; ++ iface)
+        for (int iFace = 0; iFace < nTotalFaceEachZone[iZone]; ++ iFace)
         {
-            int node_number_of_iface = node_number_of_each_face_current[iface];
-            if (iface < nBFace_current)
+            int node_number_of_iface = node_number_of_each_face_current[iFace];
+            if (iFace < nBFace_current)
             {
-                int bctype = bcr_current[iface]->GetKey();
+                int bctype = bcr_current[iFace]->GetKey();
                 if (bctype == PHENGLEI::INTERFACE)
                 {
                     int GridID_Neighbor = interFace2ZoneID_current[interface_current];
@@ -314,9 +314,9 @@ void CombinGrid::MergeFace2All()
 
                         int bcFace_Neighbor = interFace2BoundaryFace_Neighbor[interface_Neighbor];
                         int *face2all_Neighbor = GetFace2All(localIndexNeighbor);
-                        face2all[iface] = face2all_Neighbor[bcFace_Neighbor];
+                        face2all[iFace] = face2all_Neighbor[bcFace_Neighbor];
 
-                        right_cell_of_all_face[face2all_Neighbor[bcFace_Neighbor]] = cell2all[left_cell_of_face_current[iface]];
+                        right_cell_of_all_face[face2all_Neighbor[bcFace_Neighbor]] = cell2all[left_cell_of_face_current[iFace]];
 
                         isFaceMerged[face2all_Neighbor[bcFace_Neighbor]] = true;
                         node_sum += node_number_of_iface;
@@ -329,7 +329,7 @@ void CombinGrid::MergeFace2All()
                 }
             }
 
-            face2all[iface] = globalFace_count;
+            face2all[iFace] = globalFace_count;
 
             node_number_of_all_face[globalFace_count] = node_number_of_iface;
 
@@ -340,23 +340,23 @@ void CombinGrid::MergeFace2All()
             }
             node_sum += node_number_of_iface;
             
-            if (left_cell_of_face_current[iface] >= nTotalCellEachZone[iZone] || left_cell_of_face_current[iface] < 0)
+            if (left_cell_of_face_current[iFace] >= nTotalCellEachZone[iZone] || left_cell_of_face_current[iFace] < 0)
             {
                 left_cell_of_all_face[globalFace_count] = -1;
             }
             else
             {
-                left_cell_of_all_face[globalFace_count] = cell2all[left_cell_of_face_current[iface]];
+                left_cell_of_all_face[globalFace_count] = cell2all[left_cell_of_face_current[iFace]];
             }
             
 
-            if (right_cell_of_face_current[iface] >= nTotalCellEachZone[iZone] || right_cell_of_face_current[iface] < 0)
+            if (right_cell_of_face_current[iFace] >= nTotalCellEachZone[iZone] || right_cell_of_face_current[iFace] < 0)
             {
                 right_cell_of_all_face[globalFace_count] = -1;
             }
             else
             {
-                right_cell_of_all_face[globalFace_count] = cell2all[right_cell_of_face_current[iface]];
+                right_cell_of_all_face[globalFace_count] = cell2all[right_cell_of_face_current[iFace]];
             }
             
             ++ globalFace_count;
@@ -439,13 +439,13 @@ void CombinGrid::MergeNode2All()
 
         int nsum = 0;
 
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
             {
                 isBCNode_iZone[face2node[nsum+iNode]] = 1;
             }
-            nsum += node_number_of_each_face[iface];
+            nsum += node_number_of_each_face[iFace];
         }
         
         uint_t bc_node_number = bc_node_all.size();
@@ -508,11 +508,11 @@ void CombinGrid::MergeBCType()
 
         CompositeUnstructBC **bcr = unstr->GetBCRecord();
 
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (bcr[iface]->GetKey() == PHENGLEI::INTERFACE)
+            if (bcr[iFace]->GetKey() == PHENGLEI::INTERFACE)
             {
-                int globalFaceID = face2all[iface];
+                int globalFaceID = face2all[iFace];
                 if (isFaceMerged[globalFaceID])
                 {
                     //! The interface has been merged, it no longer be boundary face now.
@@ -535,10 +535,10 @@ void CombinGrid::MergeBCType()
 
         CompositeUnstructBC **bcr = unstr->GetBCRecord();
 
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            int globalFaceID = face2all[iface];
-            if (bcr[iface]->GetKey() == PHENGLEI::INTERFACE)
+            int globalFaceID = face2all[iFace];
+            if (bcr[iFace]->GetKey() == PHENGLEI::INTERFACE)
             {
                 if (isFaceMerged[globalFaceID])
                 {
@@ -548,8 +548,8 @@ void CombinGrid::MergeBCType()
             }
 
             bcr_all[globalFaceID] = new CompositeUnstructBC();
-            bcr_all[globalFaceID]->SetKey(bcr[iface]->GetKey());
-            bcr_all[globalFaceID]->SetBCName(bcr[iface]->GetBCName());
+            bcr_all[globalFaceID]->SetKey(bcr[iFace]->GetKey());
+            bcr_all[globalFaceID]->SetBCName(bcr[iFace]->GetBCName());
         }
     }
 
@@ -561,11 +561,11 @@ void CombinGrid::MergeBCType()
     int *right_cell_of_face = grid_all->GetRightCellOfFace();
 
     int nsum = 0;
-    for (int iface = 0; iface < nTFace_all; ++ iface)
+    for (int iFace = 0; iFace < nTFace_all; ++ iFace)
     {
         vector< int > eachface2node;
-        eachface2node.reserve(node_number_of_each_face[iface]);
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        eachface2node.reserve(node_number_of_each_face[iFace]);
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             eachface2node.push_back(face2node[nsum]);
             ++ nsum;
@@ -582,25 +582,25 @@ void CombinGrid::MergeBCType()
     }
 
     int jstart = nBFace_all;
-    for (int iface = 0; iface < nBFace_all; ++ iface)
+    for (int iFace = 0; iFace < nBFace_all; ++ iFace)
     {
-        if (right_cell_of_face[iface] != -1)
+        if (right_cell_of_face[iFace] != -1)
         {
             //! iFace is interior face, it must be reject out of nBoundFace.
-            for (int jface = jstart; jface < nTFace_all; ++ jface)
+            for (int jFace = jstart; jFace < nTFace_all; ++ jFace)
             {
-                if (right_cell_of_face[jface] == -1)
+                if (right_cell_of_face[jFace] == -1)
                 {
-                    SWAP(left_cell_of_face[iface], left_cell_of_face[jface]);
-                    SWAP(right_cell_of_face[iface], right_cell_of_face[jface]);
-                    SWAP(vface2node[iface], vface2node[jface]);
-                    SWAP(node_number_of_each_face[iface], node_number_of_each_face[jface]);
-                    SWAP(bcr_all[iface], bcr_all[jface]);
+                    SWAP(left_cell_of_face[iFace], left_cell_of_face[jFace]);
+                    SWAP(right_cell_of_face[iFace], right_cell_of_face[jFace]);
+                    SWAP(vface2node[iFace], vface2node[jFace]);
+                    SWAP(node_number_of_each_face[iFace], node_number_of_each_face[jFace]);
+                    SWAP(bcr_all[iFace], bcr_all[jFace]);
 
-                    face2NewFaceafterReorder[iface] = jface;
-                    face2NewFaceafterReorder[jface] = iface;
+                    face2NewFaceafterReorder[iFace] = jFace;
+                    face2NewFaceafterReorder[jFace] = iFace;
 
-                    jstart = jface + 1;
+                    jstart = jFace + 1;
                     break;
                 }
             }
@@ -608,11 +608,11 @@ void CombinGrid::MergeBCType()
     }
 
     nsum = 0;
-    for (int iface = 0; iface < nTFace_all; ++ iface)
+    for (int iFace = 0; iFace < nTFace_all; ++ iFace)
     {
-        for (int inode = 0; inode < node_number_of_each_face[iface]; ++ inode)
+        for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
         {
-            face2node[nsum] = vface2node[iface][inode];
+            face2node[nsum] = vface2node[iFace][iNode];
             ++ nsum;
         }
     }
@@ -630,14 +630,14 @@ void CombinGrid::MergeBCType()
     PHSPACE::SetField(interface2BoundaryFaceafterReorder, -1, nBFace_all);
 
     int interfaceID = 0;
-    for (int iface = 0; iface < nBFace_all; ++ iface)
+    for (int iFace = 0; iFace < nBFace_all; ++ iFace)
     {
-        bcr_all2[iface] = bcr_all[iface];
+        bcr_all2[iFace] = bcr_all[iFace];
 
-        if (bcr_all[iface]->GetKey() == PHENGLEI::INTERFACE)
+        if (bcr_all[iFace]->GetKey() == PHENGLEI::INTERFACE)
         {
-            interface2BoundaryFaceafterReorder[interfaceID] = iface;
-            face2InterfaceafterReorder[iface] = interfaceID ++;
+            interface2BoundaryFaceafterReorder[interfaceID] = iFace;
+            face2InterfaceafterReorder[iFace] = interfaceID ++;
         }
     }
     delete [] bcr_all;
@@ -710,11 +710,11 @@ void CombinGrid::ResetCoordinate()
     grid_all->SetY(y_all);
     grid_all->SetZ(z_all);
 
-    for (int inode = 0; inode < nTNode_all; ++ inode)
+    for (int iNode = 0; iNode < nTNode_all; ++ iNode)
     {
-        x_all[inode] = Globalx[inode];
-        y_all[inode] = Globaly[inode];
-        z_all[inode] = Globalz[inode];
+        x_all[iNode] = Globalx[iNode];
+        y_all[iNode] = Globaly[iNode];
+        z_all[iNode] = Globalz[iNode];
     }
 
     grid_all->ComputeMinMaxBox();
@@ -733,9 +733,9 @@ void CombinGrid::ResetNodeNumberOfEachFace()
 
     int *node_number_of_all_face = GetNodeNumberOfAllFace();
 
-    for (int inode = 0; inode < nTFace_all; ++ inode)
+    for (int iNode = 0; iNode < nTFace_all; ++ iNode)
     {
-        node_number_of_each_face[inode] = node_number_of_all_face[inode];
+        node_number_of_each_face[iNode] = node_number_of_all_face[iNode];
     }
 }
 
@@ -770,10 +770,10 @@ void CombinGrid::ResetLeftRightCell()
     grid_all->SetLeftCellOfFace (left_cell_of_face);
     grid_all->SetRightCellOfFace(right_cell_of_face);
 
-    for (int iface = 0; iface < nTFace_all; ++ iface)
+    for (int iFace = 0; iFace < nTFace_all; ++ iFace)
     {
-        left_cell_of_face[iface]  = left_cell_of_all_face[iface];
-        right_cell_of_face[iface] = right_cell_of_all_face[iface];
+        left_cell_of_face[iFace]  = left_cell_of_all_face[iFace];
+        right_cell_of_face[iFace] = right_cell_of_all_face[iFace];
     }
 }
 
@@ -805,16 +805,16 @@ void CombinGrid::MergeCell2Node()
         int *gnode2all = GetNode2All(iZone);
 
         int count = 0;
-        for (int icell = 0; icell < nTotalCellEachZone[iZone]; ++ icell)
+        for (int iCell = 0; iCell < nTotalCellEachZone[iZone]; ++ iCell)
         {
-            node_number_of_each_cell_all.push_back(gnode_number_of_each_cell[icell]);
-            cell2node_size += gnode_number_of_each_cell[icell];
+            node_number_of_each_cell_all.push_back(gnode_number_of_each_cell[iCell]);
+            cell2node_size += gnode_number_of_each_cell[iCell];
 
             vector<cgsize_t> single_cell;
             single_cell.resize(0);
-            single_cell.reserve(gnode_number_of_each_cell[icell]);
+            single_cell.reserve(gnode_number_of_each_cell[iCell]);
 
-            for (int inode = 0; inode < gnode_number_of_each_cell[icell]; ++ inode)
+            for (int iNode = 0; iNode < gnode_number_of_each_cell[iCell]; ++ iNode)
             {
                 int node_index = gcell2node[count];
                 ++ count;
@@ -828,12 +828,12 @@ void CombinGrid::MergeCell2Node()
     int *cell2node = new int [cell2node_size];
 
     int count = 0;
-    for (cgsize_t icell = 0; icell < nTotalCell; ++ icell)
+    for (cgsize_t iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        node_number_of_each_cell[icell] = node_number_of_each_cell_all[icell];
-        for (int inode =0; inode < node_number_of_each_cell[icell]; ++ inode)
+        node_number_of_each_cell[iCell] = node_number_of_each_cell_all[iCell];
+        for (int iNode =0; iNode < node_number_of_each_cell[iCell]; ++ iNode)
         {
-            cell2node[count] = static_cast<int>(cell2node_all[icell][inode]);
+            cell2node[count] = static_cast<int>(cell2node_all[iCell][iNode]);
             ++ count;
         }
     }
