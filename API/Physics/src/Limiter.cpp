@@ -1234,7 +1234,7 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
     int *rightCellOfFace = grid->GetRightCellOfFace();
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     //! Find the maximum and minimum in the neighbor of each cell.
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
@@ -1242,27 +1242,21 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
         dmin[iCell] = q[iCell];
         dmax[iCell] = q[iCell];
     }
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int le       = leftCellOfFace[iFace];
+        int re       = rightCellOfFace[iFace];
+
         int bcType = bcRegion->GetBCType();
-
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        if (!IsInterface(bcType))
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            int le       = leftCellOfFace[iFace];
-            int re       = rightCellOfFace[iFace];
-
-            if (!IsInterface(bcType))
-            {
-                continue;
-            }
-
-            dmin[le] = MIN(dmin[le], q[re]);
-            dmax[le] = MAX(dmax[le], q[re]);
+            continue;
         }
+
+        dmin[le] = MIN(dmin[le], q[re]);
+        dmax[le] = MAX(dmax[le], q[re]);
     }
 
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)

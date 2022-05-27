@@ -391,36 +391,31 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
 
     set<pair<int, string> > bcnameMap;
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int nodeCount = 0;
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-        int bcType = bcRegion->GetBCType();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
+
         string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
 
         bcnameMap.insert(pair<int, string>(bcType, bcName));
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        for (int m = 0; m < nvarplot; ++ m)
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            for (int m = 0; m < nvarplot; ++ m)
+            RDouble value = 0.0;
+            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
             {
-                RDouble value = 0.0;
-                for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
-                {
-                    int nodeIndex = face2node[nodeCount + iNode];
-                    value += qn[m][nodeIndex];
-                }
-
-                qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
+                int nodeIndex = face2node[nodeCount + iNode];
+                value += qn[m][nodeIndex];
             }
 
-            nodeCount += node_number_of_each_face[iFace];
+            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
         }
+
+        nodeCount += node_number_of_each_face[iface];
     }
 
     int TecioMission;
@@ -558,36 +553,31 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
     set<pair<int, string> > bcnameMap;
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int nodeCount = 0;
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-        int bcType = bcRegion->GetBCType();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
+
         string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
 
         bcnameMap.insert(pair<int, string>(bcType, bcName));
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        for (int m = 0; m < nvarplot; ++ m)
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            for (int m = 0; m < nvarplot; ++ m)
+            RDouble value = 0.0;
+            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
             {
-                RDouble value = 0.0;
-                for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
-                {
-                    int nodeIndex = face2node[nodeCount + iNode];
-                    value += qn[m][nodeIndex];
-                }
-
-                qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
+                int nodeIndex = face2node[nodeCount + iNode];
+                value += qn[m][nodeIndex];
             }
 
-            nodeCount += node_number_of_each_face[iFace];
+            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
         }
+
+        nodeCount += node_number_of_each_face[iface];
     }
 
     int TecioMission;
@@ -1635,106 +1625,100 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
     int ncount = 0;
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iface = 0; iface < nBoundFace; ++ iface)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
         int bcType = bcRegion->GetBCType();
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        if (bcType != PHENGLEI::SOLID_SURFACE)
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if (bcType != PHENGLEI::SOLID_SURFACE)
-            {
-                ncount += node_number_of_each_face[iFace];
-                continue;
-            }
-
-            RDouble coor_min =   LARGE;
-            RDouble coor_max = - LARGE;
-
-            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
-            {
-                int index = face2node[ncount + j];
-                coor_min = MIN(xyz[index], coor_min);
-                coor_max = MAX(xyz[index], coor_max);
-            }
-
-            if ((coor_min - slice) * (coor_max - slice) > 0.0)
-            {
-                ncount += node_number_of_each_face[iFace];
-                continue;
-            }
-
-            for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
-            {
-                int Node_index0 = face2node[ncount + j % node_number_of_each_face[iFace]];
-                int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iFace]];
-
-                if ((xyz[Node_index0] - slice) * (xyz[Node_index1] - slice) > 0.0) continue;
-
-                if (slice_dir == X_DIR)
-                {
-                    xx.push_back(slice);
-                }
-                else if (fabs(x[Node_index0] - x[Node_index1]) < SMALL)
-                {
-                    xx.push_back(x[Node_index0]);
-                }
-                else
-                {
-                    RDouble Node_x = (slice - xyz[Node_index0]) * (x[Node_index1] - x[Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + x[Node_index0];
-                    xx.push_back(Node_x);
-                }
-
-                if (slice_dir == Y_DIR)
-                {
-                    yy.push_back(slice);
-                }
-                else if (fabs(y[Node_index0] - y[Node_index1]) < SMALL)
-                {
-                    yy.push_back(y[Node_index0]);
-                }
-                else
-                {
-                    RDouble Node_y = (slice - xyz[Node_index0]) * (y[Node_index1] - y[Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + y[Node_index0];
-                    yy.push_back(Node_y);
-                }
-
-                if (slice_dir == Z_DIR)
-                {
-                    zz.push_back(slice);
-                }
-                else if (fabs(z[Node_index0] - z[Node_index1]) < SMALL)
-                {
-                    zz.push_back(z[Node_index0]);
-                }
-                else
-                {
-                    RDouble Node_z = (slice - xyz[Node_index0]) * (z[Node_index1] - z[Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + z[Node_index0];
-                    zz.push_back(Node_z);
-                }
-
-                for (int m = 0; m < nvarplot; ++ m)
-                {
-                    if (fabs(qn[m][Node_index0] - qn[m][Node_index1]) < SMALL)
-                    {
-                        RDouble Node_q = qn[m][Node_index0];
-                        qq[m].push_back(Node_q);
-                    }
-                    else
-                    {
-                        RDouble Node_q = (slice - xyz[Node_index0]) * (qn[m][Node_index1] - qn[m][Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + qn[m][Node_index0];
-                        qq[m].push_back(Node_q);
-                    }
-                }
-            }
-
-            ncount += node_number_of_each_face[iFace];
+            ncount += node_number_of_each_face[iface];
+            continue;
         }
+
+        RDouble coor_min =   LARGE;
+        RDouble coor_max = - LARGE;
+
+        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        {
+            int index = face2node[ncount + j];
+            coor_min = MIN(xyz[index], coor_min);
+            coor_max = MAX(xyz[index], coor_max);
+        }
+
+        if ((coor_min - slice) * (coor_max - slice) > 0.0)
+        {
+            ncount += node_number_of_each_face[iface];
+            continue;
+        }
+
+        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        {
+            int Node_index0 = face2node[ncount + j % node_number_of_each_face[iface]];
+            int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iface]];
+
+            if ((xyz[Node_index0] - slice) * (xyz[Node_index1] - slice) > 0.0) continue;
+
+            if (slice_dir == X_DIR)
+            {
+                xx.push_back(slice);
+            }
+            else if (fabs(x[Node_index0] - x[Node_index1]) < SMALL)
+            {
+                xx.push_back(x[Node_index0]);
+            }
+            else
+            {
+                RDouble Node_x = (slice - xyz[Node_index0]) * (x[Node_index1] - x[Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + x[Node_index0];
+                xx.push_back(Node_x);
+            }
+
+            if (slice_dir == Y_DIR)
+            {
+                yy.push_back(slice);
+            }
+            else if (fabs(y[Node_index0] - y[Node_index1]) < SMALL)
+            {
+                yy.push_back(y[Node_index0]);
+            }
+            else
+            {
+                RDouble Node_y = (slice - xyz[Node_index0]) * (y[Node_index1] - y[Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + y[Node_index0];
+                yy.push_back(Node_y);
+            }
+
+            if (slice_dir == Z_DIR)
+            {
+                zz.push_back(slice);
+            }
+            else if (fabs(z[Node_index0] - z[Node_index1]) < SMALL)
+            {
+                zz.push_back(z[Node_index0]);
+            }
+            else
+            {
+                RDouble Node_z = (slice - xyz[Node_index0]) * (z[Node_index1] - z[Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + z[Node_index0];
+                zz.push_back(Node_z);
+            }
+
+            for (int m = 0; m < nvarplot; ++ m)
+            {
+                if (fabs(qn[m][Node_index0] - qn[m][Node_index1]) < SMALL)
+                {
+                    RDouble Node_q = qn[m][Node_index0];
+                    qq[m].push_back(Node_q);
+                }
+                else
+                {
+                    RDouble Node_q = (slice - xyz[Node_index0]) * (qn[m][Node_index1] - qn[m][Node_index0]) / (xyz[Node_index1] - xyz[Node_index0]) + qn[m][Node_index0];
+                    qq[m].push_back(Node_q);
+                }
+            }
+        }
+
+        ncount += node_number_of_each_face[iface];
     }
 
     int NumPts = static_cast<int>(xx.size());

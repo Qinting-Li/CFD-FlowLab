@@ -2235,32 +2235,28 @@ void NSSolverUnstruct::ComputeFirstLayerGridHeight(Grid *gridIn)
     using namespace IDX;
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        if (!IsWall(bcType) && bcType != PHENGLEI::ABLATION_SURFACE)
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if (!IsWall(bcType) && bcType != PHENGLEI::ABLATION_SURFACE)
-            {
-                continue;
-            }
+            continue;
+        }
 
 #ifdef USE_ALTERNATIVE_CODE
-            RDouble cellVolume = gridCellVolume(iWall, jWall, kWall); //The volume of first cell.
-            RDouble deltaHeight = half * cellVolume / surfaceArea;
+        RDouble cellVolume = gridCellVolume(iWall, jWall, kWall); //The volume of first cell.
+        RDouble deltaHeight = half * cellVolume / surfaceArea;
 #else
-            //! The projection of the dy called the distance between the center of the cell and that of the surface on normal vector.
-            RDouble deltaHeight = fabs((xcc - xfc) *xfn[iFace] + (ycc - yfc) * yfn[iFace] + (zcc - zfc) * zfn[iFace]);
+        //! The projection of the dy called the distance between the center of the cell and that of the surface on normal vector.
+        RDouble deltaHeight = fabs((xcc - xfc) *xfn[iFace] + (ycc - yfc) * yfn[iFace] + (zcc - zfc) * zfn[iFace]);
 #endif
-        }
+
     }
+
 }
 
 void NSSolverUnstruct::ComputeGamaAndTemperature(Grid *gridIn)
@@ -2368,6 +2364,7 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
@@ -2430,66 +2427,55 @@ void NSSolverUnstruct::ComputeNodeValue(Grid *gridIn)
         }
     }
 
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::FARFIELD ||
+           bcType == PHENGLEI::SYMMETRY || bcType == PHENGLEI::INTERFACE)
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::FARFIELD ||
-                bcType == PHENGLEI::SYMMETRY || bcType == PHENGLEI::INTERFACE)
+            continue;
+        }
+
+        //! other BC, except symmetry and interface.
+        for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+        {            
+            int point = face2nodeArray[iFace][jNode];
+            if(nodeBC[point] == PHENGLEI::SOLID_SURFACE || nodeBC[point] == PHENGLEI::FARFIELD)
             {
                 continue;
             }
 
-            //! other BC, except symmetry and interface.
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
-            {            
-                int point = face2nodeArray[iFace][jNode];
-                if(nodeBC[point] == PHENGLEI::SOLID_SURFACE || nodeBC[point] == PHENGLEI::FARFIELD)
-                {
-                    continue;
-                }
-
-                nodeBC[point] = bcType;
-            } 
-        }
+            nodeBC[point] = bcType;
+        }        
     }
+
 
     //! Boundary faces.
     RDouble ** qOnBCFace = NewPointer2< RDouble >(nEquation + 1, nBoundFace);  // '1' is temperature.
     PHSPACE::SetField(qOnBCFace, nEquation + 1, nBoundFace, 0.0);
 
     //! Init q on BC faces.
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::SYMMETRY)
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::SYMMETRY)
-            {
-                continue;
-            }
-
-            int le = leftCellOfFace [iFace];
-            int re = rightCellOfFace[iFace];
-
-            for (int m = 0; m < nEquation; ++ m)
-            {
-                qOnBCFace[m][iFace] = half * (q[m][le] + q[m][re]);
-            }
-
-            qOnBCFace[nEquation][iFace] = half * (t[0][le] + t[0][re]);
+            continue;
         }
+
+        int le = leftCellOfFace [iFace];
+        int re = rightCellOfFace[iFace];
+
+        for (int m = 0; m < nEquation; ++ m)
+        {
+            qOnBCFace[m][iFace] = half * (q[m][le] + q[m][re]);
+        }
+
+        qOnBCFace[nEquation][iFace] = half * (t[0][le] + t[0][re]);
     }
 
     //! Step1: solid surface.
@@ -8639,120 +8625,115 @@ void NSSolverUnstruct::SliceVisualization(Grid *gridIn, ActionKey *actkey, RDoub
     int nCount = 0;
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
-
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+ 
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
         int bcType = bcRegion->GetBCType();
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        if (bcType != PHENGLEI::SOLID_SURFACE)
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if (bcType != PHENGLEI::SOLID_SURFACE)
-            {
-                nCount += node_number_of_each_face[iFace];
-                continue;
-            }
-
-            RDouble coor_min =   LARGE;
-            RDouble coor_max = - LARGE;
-
-            for (int iNode = 0; iNode < node_number_of_each_face[ iFace ]; ++ iNode)
-            {
-                int index = face2node[ nCount + iNode ];
-                coor_min = MIN(xyz[ index ],coor_min);
-                coor_max = MAX(xyz[ index ],coor_max);
-            }
-
-            if ((coor_min - slicePostion) * (coor_max - slicePostion) > 0.0)
-            {
-                nCount += node_number_of_each_face[ iFace ];
-                continue;
-            }
-
-            for (int iNode = 0; iNode < node_number_of_each_face[ iFace ]; ++ iNode)
-            {
-                int Node_index0 = face2node[ nCount + iNode % node_number_of_each_face[ iFace ] ];
-                int Node_index1 = face2node[ nCount + (iNode + 1) % node_number_of_each_face[ iFace ] ];
-
-                if ((xyz[ Node_index0 ] - slicePostion) * (xyz[ Node_index1 ] - slicePostion) > 0.0) continue;
-
-                if (fabs(xyz[ Node_index1 ] - xyz[ Node_index0 ]) < Small)
-                {
-                    xSlice.push_back(x[ Node_index0 ]);
-                    xSlice.push_back(x[ Node_index1 ]);
-
-                    ySlice.push_back(x[ Node_index0 ]);
-                    ySlice.push_back(x[ Node_index1 ]);
-
-                    zSlice.push_back(x[ Node_index0 ]);
-                    zSlice.push_back(x[ Node_index1 ]);
-
-                    continue;
-                }
-
-                if (sliceAxis == X_DIR)
-                {
-                    xSlice.push_back(slicePostion);
-                }
-                else if (fabs(x[ Node_index0 ] - x[ Node_index1 ]) < Small)
-                {
-                    xSlice.push_back(x[ Node_index0]);
-                }
-                else
-                {
-                    RDouble Node_x = (slicePostion - xyz[ Node_index0]) * (x[ Node_index1 ] - x[ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + x[ Node_index0 ];
-                    xSlice.push_back(Node_x);
-                }
-
-                if (sliceAxis == Y_DIR)
-                {
-                    ySlice.push_back(slicePostion);
-                }
-                else if (fabs(y[ Node_index0 ] - y[ Node_index1 ]) < Small)
-                {
-                    ySlice.push_back(y[ Node_index0 ]);
-                }
-                else
-                {
-                    RDouble Node_y = (slicePostion - xyz[ Node_index0 ]) * (y[ Node_index1 ] - y[ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + y[ Node_index0 ];
-                    ySlice.push_back(Node_y);
-                }
-
-                if (sliceAxis == Z_DIR)
-                {
-                    zSlice.push_back(slicePostion);
-                }
-                else if (fabs(z[ Node_index0 ] - z[ Node_index1 ]) < Small)
-                {
-                    zSlice.push_back(z[ Node_index0 ]);
-                }
-                else
-                {
-                    RDouble Node_z = (slicePostion - xyz[ Node_index0 ]) * (z[ Node_index1 ] - z[ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + z[ Node_index0 ];
-                    zSlice.push_back(Node_z);
-                }
-
-                for (int iVarplot = 0; iVarplot < nvarplot; ++ iVarplot)
-                {
-                    if (fabs(qn[ iVarplot ][ Node_index0 ] - qn[ iVarplot ][ Node_index1 ]) < Small)
-                    {
-                        RDouble Node_q = qn[ iVarplot ][ Node_index0 ];
-                        qnSlice[ iVarplot ].push_back(Node_q);
-                    }
-                    else
-                    {
-                        RDouble Node_q = (slicePostion - xyz[ Node_index0 ]) * (qn[ iVarplot ][ Node_index1 ] - qn[ iVarplot ][ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + qn[ iVarplot ][ Node_index0 ];
-                        qnSlice[ iVarplot ].push_back(Node_q);
-                    }
-                }
-            }
-
-            nCount += node_number_of_each_face[ iFace ];
+            nCount += node_number_of_each_face[iFace];
+            continue;
         }
+
+        RDouble coor_min =   LARGE;
+        RDouble coor_max = - LARGE;
+
+        for (int iNode = 0; iNode < node_number_of_each_face[ iFace ]; ++ iNode)
+        {
+            int index = face2node[ nCount + iNode ];
+            coor_min = MIN(xyz[ index ],coor_min);
+            coor_max = MAX(xyz[ index ],coor_max);
+        }
+
+        if ((coor_min - slicePostion) * (coor_max - slicePostion) > 0.0)
+        {
+            nCount += node_number_of_each_face[ iFace ];
+            continue;
+        }
+
+        for (int iNode = 0; iNode < node_number_of_each_face[ iFace ]; ++ iNode)
+        {
+            int Node_index0 = face2node[ nCount + iNode % node_number_of_each_face[ iFace ] ];
+            int Node_index1 = face2node[ nCount + (iNode + 1) % node_number_of_each_face[ iFace ] ];
+
+            if ((xyz[ Node_index0 ] - slicePostion) * (xyz[ Node_index1 ] - slicePostion) > 0.0) continue;
+
+            if (fabs(xyz[ Node_index1 ] - xyz[ Node_index0 ]) < Small)
+            {
+                xSlice.push_back(x[ Node_index0 ]);
+                xSlice.push_back(x[ Node_index1 ]);
+
+                ySlice.push_back(x[ Node_index0 ]);
+                ySlice.push_back(x[ Node_index1 ]);
+
+                zSlice.push_back(x[ Node_index0 ]);
+                zSlice.push_back(x[ Node_index1 ]);
+
+                continue;
+            }
+
+            if (sliceAxis == X_DIR)
+            {
+                xSlice.push_back(slicePostion);
+            }
+            else if (fabs(x[ Node_index0 ] - x[ Node_index1 ]) < Small)
+            {
+                xSlice.push_back(x[ Node_index0]);
+            }
+            else
+            {
+                RDouble Node_x = (slicePostion - xyz[ Node_index0]) * (x[ Node_index1 ] - x[ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + x[ Node_index0 ];
+                xSlice.push_back(Node_x);
+            }
+
+            if (sliceAxis == Y_DIR)
+            {
+                ySlice.push_back(slicePostion);
+            }
+            else if (fabs(y[ Node_index0 ] - y[ Node_index1 ]) < Small)
+            {
+                ySlice.push_back(y[ Node_index0 ]);
+            }
+            else
+            {
+                RDouble Node_y = (slicePostion - xyz[ Node_index0 ]) * (y[ Node_index1 ] - y[ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + y[ Node_index0 ];
+                ySlice.push_back(Node_y);
+            }
+
+            if (sliceAxis == Z_DIR)
+            {
+                zSlice.push_back(slicePostion);
+            }
+            else if (fabs(z[ Node_index0 ] - z[ Node_index1 ]) < Small)
+            {
+                zSlice.push_back(z[ Node_index0 ]);
+            }
+            else
+            {
+                RDouble Node_z = (slicePostion - xyz[ Node_index0 ]) * (z[ Node_index1 ] - z[ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + z[ Node_index0 ];
+                zSlice.push_back(Node_z);
+            }
+
+            for (int iVarplot = 0; iVarplot < nvarplot; ++ iVarplot)
+            {
+                if (fabs(qn[ iVarplot ][ Node_index0 ] - qn[ iVarplot ][ Node_index1 ]) < Small)
+                {
+                    RDouble Node_q = qn[ iVarplot ][ Node_index0 ];
+                    qnSlice[ iVarplot ].push_back(Node_q);
+                }
+                else
+                {
+                    RDouble Node_q = (slicePostion - xyz[ Node_index0 ]) * (qn[ iVarplot ][ Node_index1 ] - qn[ iVarplot ][ Node_index0 ]) / (xyz[ Node_index1 ] - xyz[ Node_index0 ]) + qn[ iVarplot ][ Node_index0 ];
+                    qnSlice[ iVarplot ].push_back(Node_q);
+                }
+            }
+        }
+
+        nCount += node_number_of_each_face[ iFace ];
     }
 
     size_t NumPts = xSlice.size();

@@ -596,44 +596,39 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
     int       * right_cell_of_face  = grid->GetRightCellOfFace();
     
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    int le = 0, re = 0;
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    int le, re, bcType;
+    
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-        int bcType = bcRegion->GetBCType();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
 
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        le = left_cell_of_face [ iFace ];
+        re = right_cell_of_face[ iFace ];
+        bcType = bcRegion->GetBCType();
+        // if is parallel BC, we should get the physical cell 
+        if (bcType < 0) //interface
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            le = left_cell_of_face [ iFace ];
-            re = right_cell_of_face[ iFace ];
-            // if is parallel BC, we should get the physical cell 
-            if (bcType < 0) //interface
-            {
-                continue;
-            }
-            else
-            {
-                highOrderCells[re].ID = re;
+            continue;
+        }
+        else
+        {
+            highOrderCells[re].ID = re;
 
-                highOrderCells[re].nFaces = highOrderCells[le].nFaces;
-                highOrderCells[re].nNodes = highOrderCells[le].nNodes;
+            highOrderCells[re].nFaces = highOrderCells[le].nFaces;
+            highOrderCells[re].nNodes = highOrderCells[le].nNodes;
 
-                highOrderCells[re].nPolyGrid = highOrderCells[le].nPolyGrid;
-                highOrderCells[re].VTK_Type = highOrderCells[le].VTK_Type;
-                highOrderCells[re].nDOFsGrid =  highOrderCells[le].nDOFsGrid;
+            highOrderCells[re].nPolyGrid = highOrderCells[le].nPolyGrid;
+            highOrderCells[re].VTK_Type = highOrderCells[le].VTK_Type;
+            highOrderCells[re].nDOFsGrid =  highOrderCells[le].nDOFsGrid;
 
-                //highOrderCells[re].volume = grid->GetVolume()[re];
-                //highOrderCells[re].centerCoord[0] = grid->GetCellCenterX()[re];
-                //highOrderCells[re].centerCoord[1] = grid->GetCellCenterY()[re];
-                //highOrderCells[re].centerCoord[2] = grid->GetCellCenterZ()[re];
+            //highOrderCells[re].volume = grid->GetVolume()[re];
+            //highOrderCells[re].centerCoord[0] = grid->GetCellCenterX()[re];
+            //highOrderCells[re].centerCoord[1] = grid->GetCellCenterY()[re];
+            //highOrderCells[re].centerCoord[2] = grid->GetCellCenterZ()[re];
 
-                //highOrderCells[re].lenScale = pow(abs(highOrderCells[re].volume), 1.0/3.0);
-            }
+            //highOrderCells[re].lenScale = pow(abs(highOrderCells[re].volume), 1.0/3.0);
         }
     }
 }
