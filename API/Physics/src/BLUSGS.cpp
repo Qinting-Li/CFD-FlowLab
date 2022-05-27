@@ -1065,7 +1065,7 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
     RDouble *zfn  = gridIn->GetFaceNormalZ();
 
     UnstructBCSet *unstructBCSet = gridIn->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     RDouble *gama = reinterpret_cast<RDouble *> (gridIn->GetDataPtr("gama"));
     RDouble **t   = reinterpret_cast<RDouble **> (gridIn->GetDataPtr("t"));
@@ -1086,114 +1086,117 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
 
     using namespace IDX;
 
-    int le, re, bcType;
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    int le = 0, re = 0;
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-
-        le = leftCellofFace[iFace];
-        re = rightCellofFace[iFace];
-
-        //! Conservative Variables on level n+1.
-
-        for (int m = 0; m < nEquation; ++ m)
-        {
-            primitiveVariable[m] = q[m][le];
-        }
-
-        temperature[ITT] = t[ITT][le];
-        temperature[ITV] = temperature[ITT];
-        temperature[ITE] = temperature[ITT];
-        if (ntmodel > 1)     //! Consider Two-Temperature model and Three-Temperature model.
-        {
-            temperature[ITV] = t[ITV][le];
-            temperature[ITE] = temperature[ITV];
-            if (ntmodel == 3)
-            {
-                temperature[ITE] = t[ITE][le];
-            }
-        }
-        gas->Primitive2Conservative(primitiveVariable, gama[le], temperature[ITV], temperature[ITE], Q);
-
-        for (int m = 0; m < nl; ++ m)
-        {
-            Q[m] += dq[m][le];
-        }
-        for (int m = 0; m < ntmodel - 1; m++)
-        {
-            Q[nl + nchem + m] += dq[nl + nchem + m][le];
-        }
-
-        //! Non-conservative variables in re in level n.
-        rm = q[IR][re];
-        um = q[IU][re];
-        vm = q[IV][re];
-        wm = q[IW][re];
-        pm = q[IP][re];
-
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
 
-        for (int m = 0; m < nl; ++ m)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            dq[m][re] = dq[m][le];
-        }
-        for (int m = 0; m < ntmodel - 1; m++)
-        {
-            dq[nl + nchem + m][re] = dq[nl + nchem + m][le];
-        }
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            le = leftCellofFace[iFace];
+            re = rightCellofFace[iFace];
 
-        if (bcType == PHENGLEI::SYMMETRY || (IsWall(bcType) && !viscousType))
-        {
-            //! Inviscid wall or symmetry boundary.
-            dq[IR][re] = dq[IR][le];
-            rvn = 2.0 * (xfn[iFace]*dq[IRU][le] + yfn[iFace]*dq[IRV][le] + zfn[iFace]*dq[IRW][le]);
-            dq[IRU][re] = dq[IRU][le] - xfn[iFace] * rvn;
-            dq[IRV][re] = dq[IRV][le] - yfn[iFace] * rvn;
-            dq[IRW][re] = dq[IRW][le] - zfn[iFace] * rvn;
-            rvn   = 2.0 * (xfn[iFace]*Q[IRU] + yfn[iFace]*Q[IRV] + zfn[iFace]*Q[IRW]);
-            ru    = Q[IRU] - xfn[iFace] * rvn;
-            rv    = Q[IRV] - yfn[iFace] * rvn;
-            rw    = Q[IRW] - zfn[iFace] * rvn;
-            p_new = Q[IRE] - 0.5 * (Q[IRU]*Q[IRU] + Q[IRV]*Q[IRV] + Q[IRW]*Q[IRW]) / Q[IR];
+            for (int m = 0; m < nEquation; ++ m)
+            {
+                primitiveVariable[m] = q[m][le];
+            }
 
-            gam1 = gama[le] - 1.0;
-            dq[IRE][re] = p_new - pm/gam1 + half*((ru*ru + rv*rv + rw*rw)/Q[IR] - rm*(um*um + vm*vm + wm*wm));
-        }
-        else if (IsWall(bcType) && viscousType)
-        {
-            ub = 0.0;
-            vb = 0.0;
-            wb = 0.0;
-            dq[IR ][re] =   dq[IR ][le];
-            dq[IRU][re] = - dq[IRU][le] + two * ub * dq[IR][le];
-            dq[IRV][re] = - dq[IRV][le] + two * vb * dq[IR][le];
-            dq[IRW][re] = - dq[IRW][le] + two * wb * dq[IR][le];
-            dq[IRE][re] =   dq[IRE][le] + ub * (dq[IRU][re] - dq[IRU][le])
-                + vb * (dq[IRV][re] - dq[IRV][le])
-                + wb * (dq[IRW][re] - dq[IRW][le]);
-        }
-        else if (bcType == PHENGLEI::EXTRAPOLATION)
-        {
+            temperature[ITT] = t[ITT][le];
+            temperature[ITV] = temperature[ITT];
+            temperature[ITE] = temperature[ITT];
+            if (ntmodel > 1)     //! Consider Two-Temperature model and Three-Temperature model.
+            {
+                temperature[ITV] = t[ITV][le];
+                temperature[ITE] = temperature[ITV];
+                if (ntmodel == 3)
+                {
+                    temperature[ITE] = t[ITE][le];
+                }
+            }
+            gas->Primitive2Conservative(primitiveVariable, gama[le], temperature[ITV], temperature[ITE], Q);
+
             for (int m = 0; m < nl; ++ m)
             {
-                dq[m][re] =  dq[m][le];
+                Q[m] += dq[m][le];
+            }
+            for (int m = 0; m < ntmodel - 1; m++)
+            {
+                Q[nl + nchem + m] += dq[nl + nchem + m][le];
+            }
+
+            //! Non-conservative variables in re in level n.
+            rm = q[IR][re];
+            um = q[IU][re];
+            vm = q[IV][re];
+            wm = q[IW][re];
+            pm = q[IP][re];
+
+            for (int m = 0; m < nl; ++ m)
+            {
+                dq[m][re] = dq[m][le];
             }
             for (int m = 0; m < ntmodel - 1; m++)
             {
                 dq[nl + nchem + m][re] = dq[nl + nchem + m][le];
             }
-        }
-        else
-        {
-            //! FIX_ALL set DQ = 0.
-            //! Far_FIELD, PROFILE and FIX_V have not been implemented yet.
-            for (int m = 0; m < nl; ++ m)
+
+            if (bcType == PHENGLEI::SYMMETRY || (IsWall(bcType) && !viscousType))
             {
-                dq[m][re] = 0.0;
+                //! Inviscid wall or symmetry boundary.
+                dq[IR][re] = dq[IR][le];
+                rvn = 2.0 * (xfn[iFace]*dq[IRU][le] + yfn[iFace]*dq[IRV][le] + zfn[iFace]*dq[IRW][le]);
+                dq[IRU][re] = dq[IRU][le] - xfn[iFace] * rvn;
+                dq[IRV][re] = dq[IRV][le] - yfn[iFace] * rvn;
+                dq[IRW][re] = dq[IRW][le] - zfn[iFace] * rvn;
+                rvn   = 2.0 * (xfn[iFace]*Q[IRU] + yfn[iFace]*Q[IRV] + zfn[iFace]*Q[IRW]);
+                ru    = Q[IRU] - xfn[iFace] * rvn;
+                rv    = Q[IRV] - yfn[iFace] * rvn;
+                rw    = Q[IRW] - zfn[iFace] * rvn;
+                p_new = Q[IRE] - 0.5 * (Q[IRU]*Q[IRU] + Q[IRV]*Q[IRV] + Q[IRW]*Q[IRW]) / Q[IR];
+
+                gam1 = gama[le] - 1.0;
+                dq[IRE][re] = p_new - pm/gam1 + half*((ru*ru + rv*rv + rw*rw)/Q[IR] - rm*(um*um + vm*vm + wm*wm));
             }
-            for (int m = 0; m < ntmodel - 1; m++)
+            else if (IsWall(bcType) && viscousType)
             {
-                dq[nl + nchem + m][re] = 0.0;
+                ub = 0.0;
+                vb = 0.0;
+                wb = 0.0;
+                dq[IR ][re] =   dq[IR ][le];
+                dq[IRU][re] = - dq[IRU][le] + two * ub * dq[IR][le];
+                dq[IRV][re] = - dq[IRV][le] + two * vb * dq[IR][le];
+                dq[IRW][re] = - dq[IRW][le] + two * wb * dq[IR][le];
+                dq[IRE][re] =   dq[IRE][le] + ub * (dq[IRU][re] - dq[IRU][le])
+                    + vb * (dq[IRV][re] - dq[IRV][le])
+                    + wb * (dq[IRW][re] - dq[IRW][le]);
+            }
+            else if (bcType == PHENGLEI::EXTRAPOLATION)
+            {
+                for (int m = 0; m < nl; ++ m)
+                {
+                    dq[m][re] =  dq[m][le];
+                }
+                for (int m = 0; m < ntmodel - 1; m++)
+                {
+                    dq[nl + nchem + m][re] = dq[nl + nchem + m][le];
+                }
+            }
+            else
+            {
+                //! FIX_ALL set DQ = 0.
+                //! Far_FIELD, PROFILE and FIX_V have not been implemented yet.
+                for (int m = 0; m < nl; ++ m)
+                {
+                    dq[m][re] = 0.0;
+                }
+                for (int m = 0; m < ntmodel - 1; m++)
+                {
+                    dq[nl + nchem + m][re] = 0.0;
+                }
             }
         }
     }
