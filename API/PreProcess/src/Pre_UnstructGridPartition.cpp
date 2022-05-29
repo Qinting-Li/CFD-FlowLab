@@ -2040,7 +2040,6 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
 
     nodepos = 0;
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
