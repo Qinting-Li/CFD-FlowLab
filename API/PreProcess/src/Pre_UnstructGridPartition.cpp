@@ -1493,7 +1493,7 @@ void Pre_UnstructGridPartition::SetInterfaceInfoPart(int iZone, UnstructGrid *gr
             }
             else
             {
-                TK_Exit::ExceptionExit("Error: can NOT find neighbor interface cell!");
+                TK_Exit::ExceptionExit("Error: CAN NOT find neighbor interface cell!");
             }
         }
     }
@@ -1726,7 +1726,7 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int iZone, UnstructGrid *gridpar
     int *right_cell_of_face = gridSource->GetRightCellOfFace();
     
     UnstructBCSet *unstructBCSet = gridSource->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int le = 0, re = 0;
 
@@ -1755,25 +1755,20 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int iZone, UnstructGrid *gridpar
     int i_nIFace = 0;
 
     //! BC faces.
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-        int bcType = bcRegion->GetBCType();
-
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        if (IsBelongtoThisZone(face_mark[iFace]))
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if (IsBelongtoThisZone(face_mark[iFace]))
+            face_mark[iFace] = i_nTFace ++;
+
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+            int bcType = bcRegion->GetBCType();
+            if (bcType == PHENGLEI::INTERFACE)
             {
-                face_mark[iFace] = i_nTFace ++;
-                if (bcType == PHENGLEI::INTERFACE)
-                {
-                    //! Parallel partition.
-                    interfaceIndexInBC_send[iFace] = i_nIFace;
-                    i_nIFace ++;
-                }
+                //! Parallel partition.
+                interfaceIndexInBC_send[iFace] = i_nIFace;
+                i_nIFace ++;
             }
         }
     }
