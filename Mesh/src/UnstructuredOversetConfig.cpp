@@ -4691,7 +4691,7 @@ void OversetConfig::CharacterInterfaceToNode()
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int *faceNodeIndex = grid->GetFace2Node();
@@ -4702,34 +4702,41 @@ void OversetConfig::CharacterInterfaceToNode()
     int *keyActiveOfCells = grid->GetBlankIndex();
 
     int iCount = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
 
-        int numberOfNodesInFace = faceNodeNumber[iFace];
-
-        int leftCell = leftCellIndex[iFace];
-        int rightCell = rightCellIndex[iFace];
-
-        if (bcType == PHENGLEI::INTERFACE)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            if (keyActiveOfCells[leftCell] != 1 && keyActiveOfCells[rightCell] != 1)
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            int numberOfNodesInFace = faceNodeNumber[iFace];
+
+            int leftCell = leftCellIndex[iFace];
+            int rightCell = rightCellIndex[iFace];
+
+            if (bcType == PHENGLEI::INTERFACE)
+            {
+                if (keyActiveOfCells[leftCell] != 1 && keyActiveOfCells[rightCell] != 1)
+                {
+                    iCount += numberOfNodesInFace;
+                    continue;
+                }
+
+                for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
+                {
+                    int nodeIndex = faceNodeIndex[iCount];
+                    keyActiveOfNodes[nodeIndex] = 1;
+                    iCount++;
+                }
+            }
+            else
             {
                 iCount += numberOfNodesInFace;
-                continue;
             }
 
-            for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
-            {
-                int nodeIndex = faceNodeIndex[iCount];
-                keyActiveOfNodes[nodeIndex] = 1;
-                iCount++;
-            }
-        }
-        else
-        {
-            iCount += numberOfNodesInFace;
         }
     }
 }

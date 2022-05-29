@@ -3077,7 +3077,7 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
  
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     for (int iNode = 0; iNode < numberOfTotalNode; ++ iNode)
     {
@@ -3091,47 +3091,54 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
 
     //! Boundary faces
     int nodePosition = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
 
-        int le = leftCellOfFace [iFace];
-        int re = rightCellOfFace[iFace];
-        if (bcType != PHENGLEI::INTERFACE)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            int le = leftCellOfFace [iFace];
+            int re = rightCellOfFace[iFace];
+
+            if (bcType != PHENGLEI::INTERFACE)
             {
-                //! From left
-                int point = face2node[nodePosition + jNode];
-
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
-                    qTurbulenceNode[m][point] += qTurbulence[m][le];
-                }            
-                nodeValueSliceTurb[point] += 1;
+                    //! From left
+                    int point = face2node[nodePosition + jNode];
 
-                //! From right
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][le];
+                    }            
+                    nodeValueSliceTurb[point] += 1;
+
+                    //! From right
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    }
+                    nodeValueSliceTurb[point] += 1;
                 }
-                nodeValueSliceTurb[point] += 1;
             }
+            else
+            {
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+                {
+                    int point = face2node[nodePosition + jNode];
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][le];
+                    }
+                    nodeValueSliceTurb[point] += 1;
+                }
+            }        
+            nodePosition += nodeNumberOfEachFace[iFace];
         }
-        else
-        {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
-            {
-                int point = face2node[nodePosition + jNode];
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][le];
-                }
-                nodeValueSliceTurb[point] += 1;
-            }
-        }        
-        nodePosition += nodeNumberOfEachFace[iFace];
     }
 
     //! Interior faces
@@ -3159,162 +3166,197 @@ void TurbSolverUnstr::ComputeQTurbNodeValue(Grid *gridIn)
     }
 
     nodePosition = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
 
-        if (bcType == PHENGLEI::SYMMETRY)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (bcType == PHENGLEI::SYMMETRY)
             {
-                int point = face2node[nodePosition + jNode];
-            
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
-                    qTurbulenceNode[m][point] = 0;
-                }            
-                nodeValueSliceTurb[point] = 0;
-            }
-        }
-        nodePosition += nodeNumberOfEachFace[iFace];
-    }
+                    int point = face2node[nodePosition + jNode];
 
-    nodePosition = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
-    {
-        int le = leftCellOfFace[iFace];
-        int re = iFace + numberOfTotalCell;
-        
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-        int bcType = bcRegion->GetBCType();
-
-        if (bcType == PHENGLEI::SYMMETRY)
-        {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
-            {
-                int point = face2node[nodePosition + jNode];
-            
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][le];
-                }            
-                ++ nodeValueSliceTurb[point];
-
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] = 0;
+                    }            
+                    nodeValueSliceTurb[point] = 0;
                 }
-                ++ nodeValueSliceTurb[point];
             }
+            nodePosition += nodeNumberOfEachFace[iFace];
         }
-        nodePosition += nodeNumberOfEachFace[iFace];
     }
 
     nodePosition = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
 
-        if (bcType == PHENGLEI::FARFIELD)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            int le = leftCellOfFace[iFace];
+            int re = iFace + numberOfTotalCell;
+
+            if (bcType == PHENGLEI::SYMMETRY)
             {
-                int point = face2node[nodePosition + jNode];
-            
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
-                    qTurbulenceNode[m][point] = 0;
-                }            
-                nodeValueSliceTurb[point] = 0;
-            }
-        }
-        nodePosition += nodeNumberOfEachFace[iFace];
-    }
+                    int point = face2node[nodePosition + jNode];
 
-    nodePosition = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
-    {
-        int le = leftCellOfFace[iFace];
-        int re = iFace + numberOfTotalCell;
-       
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-        int bcType = bcRegion->GetBCType();
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][le];
+                    }            
+                    ++ nodeValueSliceTurb[point];
 
-        if (bcType == PHENGLEI::FARFIELD)
-        {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
-            {
-                int point = face2node[nodePosition + jNode];
-            
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][le];
-                }            
-                ++ nodeValueSliceTurb[point];
-
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    }
+                    ++ nodeValueSliceTurb[point];
                 }
-                ++ nodeValueSliceTurb[point];
             }
+            nodePosition += nodeNumberOfEachFace[iFace];
         }
-        nodePosition += nodeNumberOfEachFace[iFace];
     }
 
     nodePosition = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
 
-        if (bcType == PHENGLEI::SOLID_SURFACE)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (bcType == PHENGLEI::FARFIELD)
             {
-                int point = face2node[nodePosition + jNode];
-            
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
                 {
-                    qTurbulenceNode[m][point] = 0;
-                }            
-                nodeValueSliceTurb[point] = 0;
-            }
-        }
-        nodePosition += nodeNumberOfEachFace[iFace];
-    }
+                    int point = face2node[nodePosition + jNode];
 
-    nodePosition = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
-    {
-        int le = leftCellOfFace[iFace];
-        int re = iFace + numberOfTotalCell;
-        
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-        int bcType = bcRegion->GetBCType();
-
-        if (bcType == PHENGLEI::SOLID_SURFACE)
-        {
-            for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
-            {
-                int point = face2node[nodePosition + jNode];
-            
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][le];
-                }            
-                ++ nodeValueSliceTurb[point];
-
-                for (int m = 0; m < nTurbulenceEquation; ++ m)
-                {
-                    qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] = 0;
+                    }            
+                    nodeValueSliceTurb[point] = 0;
                 }
-                ++ nodeValueSliceTurb[point];
             }
+            nodePosition += nodeNumberOfEachFace[iFace];
         }
-        nodePosition += nodeNumberOfEachFace[iFace];
+    }
+
+    nodePosition = 0;
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        {
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            int le = leftCellOfFace[iFace];
+            int re = iFace + numberOfTotalCell;
+
+            if (bcType == PHENGLEI::FARFIELD)
+            {
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+                {
+                    int point = face2node[nodePosition + jNode];
+
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][le];
+                    }            
+                    ++ nodeValueSliceTurb[point];
+
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    }
+                    ++ nodeValueSliceTurb[point];
+                }
+            }
+            nodePosition += nodeNumberOfEachFace[iFace];
+        }
+    }
+
+    nodePosition = 0;
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        {
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (bcType == PHENGLEI::SOLID_SURFACE)
+            {
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+                {
+                    int point = face2node[nodePosition + jNode];
+
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] = 0;
+                    }            
+                    nodeValueSliceTurb[point] = 0;
+                }
+            }
+            nodePosition += nodeNumberOfEachFace[iFace];
+        }
+    }
+
+    nodePosition = 0;
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        {
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            int le = leftCellOfFace[iFace];
+            int re = iFace + numberOfTotalCell;
+            if (bcType == PHENGLEI::SOLID_SURFACE)
+            {
+                for (int jNode = 0; jNode < nodeNumberOfEachFace[iFace]; ++ jNode)
+                {
+                    int point = face2node[nodePosition + jNode];
+
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][le];
+                    }            
+                    ++ nodeValueSliceTurb[point];
+
+                    for (int m = 0; m < nTurbulenceEquation; ++ m)
+                    {
+                        qTurbulenceNode[m][point] += qTurbulence[m][re];
+                    }
+                    ++ nodeValueSliceTurb[point];
+                }
+            }
+            nodePosition += nodeNumberOfEachFace[iFace];
+        }
     }
 
     //! Change the number of points divided by the interpoint to the number of points before partition,because it is a face loop,each point is calculated twice,so the number of points needs to be multiplied by 2.
