@@ -2251,7 +2251,6 @@ void NSSolverUnstruct::ComputeFirstLayerGridHeight(Grid *gridIn)
 #endif
 
     }
-
 }
 
 void NSSolverUnstruct::ComputeGamaAndTemperature(Grid *gridIn)

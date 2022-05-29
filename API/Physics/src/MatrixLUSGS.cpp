@@ -624,6 +624,7 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
                 for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
                 {
                     int il1, jl1, kl1;
+                    GetNsurfIndex(iSurface, il1, jl1, kl1);
 					gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL, iSurface);
 					gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR, iSurface);
 
