@@ -302,7 +302,7 @@ void CombinGrid::MergeFace2All()
             int node_number_of_iface = node_number_of_each_face_current[iFace];
             if (iFace < nBFace_current)
             {
-                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
                 int bctype = bcRegion->GetBCType();
                 if (bctype == PHENGLEI::INTERFACE)
                 {
@@ -592,8 +592,6 @@ void CombinGrid::MergeBCType()
 
                 ++ count;
             }
-            bcr_all[globalFaceID]->SetKey(bcr[iFace]->GetKey());
-            bcr_all[globalFaceID]->SetBCName(bcr[iFace]->GetBCName());
         }
     }
 

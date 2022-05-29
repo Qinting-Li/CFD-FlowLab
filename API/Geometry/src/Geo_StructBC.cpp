@@ -645,9 +645,10 @@ void StructBCSet::SetIFaceInfo()
 
     int nBCRegion = this->GetnBCRegion();
     int imin, imax, jmin, jmax, kmin, kmax, bcType;
+    int nIFace = 0;
      for (uint_t iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = this->GetBCRegion(iBCRegion);
+        StructBC *bcRegion = this->GetBCRegion(iBCRegion);
 
         bcRegion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bcType = bcRegion->GetBCType();

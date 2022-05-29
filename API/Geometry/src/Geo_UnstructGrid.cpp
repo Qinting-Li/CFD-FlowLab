@@ -604,8 +604,6 @@ void UnstructGrid::ComputeNumberOfNeighborCell()
                 le      = leftCellOfFace[ iFace ];
                 number_of_neighbor_cell[le] ++;
             }
-            le = leftCellOfFace[ iFace ];
-            number_of_neighbor_cell[le] ++;
         }
     }
  
@@ -9072,7 +9070,7 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
     int nodepos = 0;
     for (int iBFace = 0; iBFace < nBoundFace; ++ iBFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[ibface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
         int bcType = bcRegion->GetBCType();
 
         if (!IsInterface(bcType))

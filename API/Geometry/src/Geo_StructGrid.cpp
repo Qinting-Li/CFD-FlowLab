@@ -5783,7 +5783,7 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
 
             //! Rotate vector for periodic boundary at the end of communication for InterfaceValue.
             int *ibcregions = structBCSet->GetIFaceInfo();
-            int ibcregion = ibcregions[iFace];
+            int iBCRegion = ibcregions[iFace];
             StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
             string bcName = bcregion->GetBCName();
             //! Rotate process only for vector in rotational periodicity.

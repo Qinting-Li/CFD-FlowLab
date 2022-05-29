@@ -1948,8 +1948,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
         const string &bcName = (*bcFace)[iFace]->GetBCName();
         int cgnsBCType = (*bcFace)[iFace]->GetBCType();
         int fantasyBCType = factory_cgns->GetBaseBCType()->GetBCType(cgnsBCType);
-        bcrs[iFace]->SetKey(fantasyBCType);
-        bcrs[iFace]->SetBCName(bcName);
+
         cgnsBCList.insert(cgnsBCType);
         fantasyBCList.insert(fantasyBCType);
 

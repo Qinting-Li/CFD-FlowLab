@@ -396,7 +396,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     int nodeCount = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
 
         string bcName = bcRegion->GetBCName();
         int bcType = bcRegion->GetBCType();
@@ -558,7 +558,7 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
     int nodeCount = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
 
         string bcName = bcRegion->GetBCName();
         int bcType = bcRegion->GetBCType();

@@ -155,7 +155,7 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
                     
-                    StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
+                    StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcregion->GetBCName();
                     int bcType = bcregion->GetBCType();
                     if (bcType == PHENGLEI::INTERFACE)
@@ -1926,7 +1926,7 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                     int nBCRegion = structBCSet->GetnBCRegion();
                     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                     {
-                        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
+                        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                         string bcRegionName = bcregion->GetBCName();
                         int bcRegionType = bcregion->GetBCType();
     
@@ -2015,7 +2015,7 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
                 int nBCRegion = structBCSet->GetnBCRegion();
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
+                    StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                     string bcname = bcregion->GetBCName();
 
                     set< pair<string, int> >::iterator iter;

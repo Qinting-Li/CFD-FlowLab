@@ -1152,8 +1152,8 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int bctype = u2fbc.TranslateBC(-right_cell_of_face[iFace]);
-        bcr[iface] = new UnstructBCSet();
-        bcr[iface]->SetKey(bctype);
+        bcr[iFace] = new UnstructBCSet();
+        bcr[iFace]->SetKey(bctype);
     }
 
     grid->SetBCRecord(bcr);
@@ -1334,8 +1334,8 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int bctype = u2fbc.TranslateBC(-right_cell_of_face[iFace]);
-        bcr[iface] = new UnstructBCSet();
-        bcr[iface]->SetKey(bctype);
+        bcr[iFace] = new UnstructBCSet();
+        bcr[iFace]->SetKey(bctype);
     }
 
     grid->SetBCRecord(bcr);

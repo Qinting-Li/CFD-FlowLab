@@ -1373,7 +1373,7 @@ void Pre_UnstructGridPartition::SetFace2CellAndBC(int iZone, UnstructGrid *gridp
 
         bcTypeList.push_back(bctype);
         bcNameList.push_back(bcName);
-        bcNameSet.insert(bcNameList[iface]);
+        bcNameSet.insert(bcNameList[iFace]);
 
         left_cell_of_face [iFace] = le;
         right_cell_of_face[iFace] = re;
@@ -1730,7 +1730,7 @@ void Pre_UnstructGridPartition::ComputeFaceMark(int iZone, UnstructGrid *gridpar
 
     int le = 0, re = 0;
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         face_mark[iFace] = NOT_IN_THIS_ZONE;
     }
@@ -2087,7 +2087,6 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
             }
             nodepos += node_number_of_each_face[iFace];
         }
-        nodepos += node_number_of_each_face[iFace];
     }
 
     nodepos = 0;
@@ -2138,7 +2137,6 @@ void Pre_UnstructGridPartition::ComputeCellNumberForNodeValue()
             }
             nodepos += node_number_of_each_face[iFace];
         }
-        nodepos += node_number_of_each_face[iFace];
     }
 }
 
