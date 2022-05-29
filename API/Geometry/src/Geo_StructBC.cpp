@@ -644,8 +644,9 @@ void StructBCSet::SetIFaceInfo()
     DeleteIndex();
 
     int nBCRegion = this->GetnBCRegion();
-    int imin, imax, jmin, jmax, kmin, kmax, bcType;
+    int imin = 0, imax = 0, jmin = 0, jmax = 0, kmin = 0, kmax = 0, bcType = 0;
     int nIFace = 0;
+
      for (uint_t iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         StructBC *bcRegion = this->GetBCRegion(iBCRegion);
@@ -671,6 +672,7 @@ void StructBCSet::SetIFaceInfo()
     {
         StructBC *bcregion = this->GetBCRegion(iBCRegion);
         bcType = bcregion->GetBCType();
+        bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
 
         if (IsInterface(bcType))
         {
