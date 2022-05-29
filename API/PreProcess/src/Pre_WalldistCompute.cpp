@@ -3564,27 +3564,34 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
 
     int nBoundFace = grid->GetNBoundFace();
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     bool *nodeOnWall = new bool[nTotalNode];
     std::fill_n(nodeOnWall, nTotalNode, false);
 
     int nodeCount = 0;
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
         int bcType = bcRegion->GetBCType();
-        if (!(IsWall(bcType)))
-        {
-            nodeCount = nodeCount + node_number_of_each_face[iFace];
-            continue;
-        }
 
-        for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            int nodeIndex = face2node[nodeCount];
-            nodeOnWall[nodeIndex] = true;
-            nodeCount++;
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (!(IsWall(bcType)))
+            {
+                nodeCount = nodeCount + node_number_of_each_face[iFace];
+                continue;
+            }
+
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
+            {
+                int nodeIndex = face2node[nodeCount];
+                nodeOnWall[nodeIndex] = true;
+                nodeCount++;
+            }
         }
     }
 
