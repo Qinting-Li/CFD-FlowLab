@@ -875,16 +875,26 @@ void Simulation::RunGridCheckSolver()
             file << "FaceTopology." << endl;
 
             int nBoundFace = grid->GetNBoundFace();
-            UnstructBCSet **bcRecord = grid->GetBCRecord();
 
+            UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+            int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+          
             file << "nBoundFace : " << nBoundFace << endl;
 
             file << "faceNumber  BcType  BCName" << endl;
-            for (int iFace = 0; iFace < nBoundFace; iFace ++)
+            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
             {
-                int bcType = bcRecord[iFace]->GetKey();
-                string bcName = bcRecord[iFace]->GetBCName();
-                file << iFace << setw(10) << bcType << setw(20) << bcName <<endl;
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+                int bcType = bcRegion->GetBCType();
+                string bcName = bcRegion->GetBCName();
+
+                vector<int> *faceIndex = bcRegion->GetFaceIndex();
+                for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                {
+                    // iFace is the face number in the set of faceIndex.
+                    int iFace = *iter;
+                    file << iFace << setw(10) << bcType << setw(20) << bcName <<endl;
+                }
             }
 
             int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
