@@ -1849,9 +1849,9 @@ void Simulation::MultiGridInitFlow()
             UpdateOuterIterationStep(outIterStep);
 
             //using namespace PHMPI;
-            for (int isolver = 0; isolver < nSolver; ++ isolver)
+            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
             {
-                Controller *controller = new Controller(isolver, this->region);
+                Controller *controller = new Controller(iSolver, this->region);
                 controller->MultiGridInitFlow(iLevel);
                 controller->PostSolve(iLevel);
                 delete controller;
@@ -1859,10 +1859,10 @@ void Simulation::MultiGridInitFlow()
         }
 
         //! Interpolate from coarse grid to fine grid.
-        for (int isolver = 0; isolver < nSolver; ++ isolver)
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
-            Controller *controller = new Controller(isolver, this->region);
-            controller->InterpolatFineGrid(isolver, iLevel - 1);
+            Controller *controller = new Controller(iSolver, this->region);
+            controller->InterpolatFineGrid(iSolver, iLevel - 1);
             delete controller;
         }
     }
@@ -1903,7 +1903,7 @@ void Simulation::SolveSteady()
 
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
-        //! isolver = 1 or 2, is supposed as turbulence computing.
+        //! iSolver = 1 or 2, is supposed as turbulence computing.
         if ((iSolver == TURB_SOLVER) && (outerIterStep % turbInterval != 0))
         {
             return;

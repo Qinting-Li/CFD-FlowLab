@@ -160,21 +160,21 @@ void GlobalDataBase::UpdateData(DataContainer *cdata, const string &name, int ty
 void GlobalDataBase::CompressData(DataContainer *&cdata)
 {
     set < Data_SafeData > *basep = GetBaseP();
-    set < Data_SafeData >::iterator it;
+    set < Data_SafeData >::iterator iter;
 
     uint_t ndata = basep->size();
 
     cdata->write(&ndata, sizeof(uint_t));
 
-    for (it = basep->begin(); it != basep->end(); ++ it)
+    for (iter = basep->begin(); iter != basep->end(); ++ iter)
     {
-        int type = it->GetType();
-        int size = it->GetSize();
+        int type = iter->GetType();
+        int size = iter->GetSize();
 
-        WriteString(cdata, it->GetName());
+        WriteString(cdata, iter->GetName());
         cdata->write(&type, sizeof(int));
         cdata->write(&size, sizeof(int));
-        WriteVoid(cdata, it->GetData(), type, size);
+        WriteVoid(cdata, iter->GetData(), type, size);
     }
 }
 

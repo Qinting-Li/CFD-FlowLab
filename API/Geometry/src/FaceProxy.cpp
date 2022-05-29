@@ -286,11 +286,11 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
     RDouble **dqdz = reinterpret_cast <RDouble **> (grid->GetDataPtr("gradPrimtiveVarZ"));
 
     int le,re,j;
-    for (int iface = nst; iface < ned; ++ iface)
+    for (int iFace = nst; iFace < ned; ++ iFace)
     {
-        j  = iface - nst;
-        le = left_cell_of_face [ iface ];
-        re = right_cell_of_face[ iface ];
+        j  = iFace - nst;
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
 
         for (int m = 0; m < neqn; ++ m)
         {
@@ -298,15 +298,15 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
             qrtry[m] = qr[m][j];
         }
 
-        dx = xfc[iface] - xcc[le];
-        dy = yfc[iface] - ycc[le];
-        dz = zfc[iface] - zcc[le];
+        dx = xfc[iFace] - xcc[le];
+        dy = yfc[iFace] - ycc[le];
+        dz = zfc[iFace] - zcc[le];
 
         for (int m = 0; m < neqn; ++ m)
         {
-            RDouble lx = LIMIT_FUN(dqdx[m][le],dqdx[m][re]);
-            RDouble ly = LIMIT_FUN(dqdy[m][le],dqdy[m][re]);
-            RDouble lz = LIMIT_FUN(dqdz[m][le],dqdz[m][re]);
+            RDouble lx = LIMIT_FUN(dqdx[m][le], dqdx[m][re]);
+            RDouble ly = LIMIT_FUN(dqdy[m][le], dqdy[m][re]);
+            RDouble lz = LIMIT_FUN(dqdz[m][le], dqdz[m][re]);
             RDouble limdq = lx * dx + ly * dy + lz * dz;
 
             //limdq = MINMOD(limdq,0.5*(qr[m][j]-ql[m][j]));
@@ -314,18 +314,18 @@ void ReConstructQlQr_STR(Grid *grid_in, FaceProxy *face_proxy, int neqn, int nst
             qltry[m] += limdq;
         }
 
-        dx = xfc[iface] - xcc[re];
-        dy = yfc[iface] - ycc[re];
-        dz = zfc[iface] - zcc[re];
+        dx = xfc[iFace] - xcc[re];
+        dy = yfc[iFace] - ycc[re];
+        dz = zfc[iFace] - zcc[re];
 
         for (int m = 0; m < neqn; ++ m)
         {
-            RDouble lx = LIMIT_FUN(dqdx[m][le],dqdx[m][re]);
-            RDouble ly = LIMIT_FUN(dqdy[m][le],dqdy[m][re]);
-            RDouble lz = LIMIT_FUN(dqdz[m][le],dqdz[m][re]);
+            RDouble lx = LIMIT_FUN(dqdx[m][le], dqdx[m][re]);
+            RDouble ly = LIMIT_FUN(dqdy[m][le], dqdy[m][re]);
+            RDouble lz = LIMIT_FUN(dqdz[m][le], dqdz[m][re]);
             RDouble limdq = lx * dx + ly * dy + lz * dz;
 
-            //limdq = MINMOD(limdq,0.5*(ql[m][j]-qr[m][j]));
+            //limdq = MINMOD(limdq, 0.5*(ql[m][j]-qr[m][j]));
 
             qrtry[m] += limdq;
         }

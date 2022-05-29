@@ -537,45 +537,45 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
         highOrderCells[iCell].nNodes = pNodeNumberOfCell[iCell];
         for (int ilocalnode = 0; ilocalnode < highOrderCells[iCell].nNodes; ++ ilocalnode)
         {
-            //highOrderCells[icell].nodeIDsGrid.push_back(ppNodesOfCells[icell][ilocalnode]);
+            //highOrderCells[iCell].nodeIDsGrid.push_back(ppNodesOfCells[iCell][ilocalnode]);
             highOrderCells[iCell].nodeIDs.push_back(pNodesOfCells[cellToNodeIndex++]);
         }
-        if(highOrderCells[iCell].nNodes == 4)
+        if (highOrderCells[iCell].nNodes == 4)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::TETRAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 5)
+        else if (highOrderCells[iCell].nNodes == 5)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PYRAMID;
         }
-        else if(highOrderCells[iCell].nNodes == 6)
+        else if (highOrderCells[iCell].nNodes == 6)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PRISM;
         }
-        else if(highOrderCells[iCell].nNodes == 8)
+        else if (highOrderCells[iCell].nNodes == 8)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::HEXAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 10)
+        else if (highOrderCells[iCell].nNodes == 10)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::TETRAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 14)
+        else if (highOrderCells[iCell].nNodes == 14)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PYRAMID;
         }
-        else if(highOrderCells[iCell].nNodes == 18)
+        else if (highOrderCells[iCell].nNodes == 18)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PRISM;
         }
-        else if(highOrderCells[iCell].nNodes == 27)
+        else if (highOrderCells[iCell].nNodes == 27)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::HEXAHEDRON;
@@ -583,17 +583,17 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
 
         highOrderCells[iCell].nDOFsGrid = highOrderCells[iCell].nNodes;
 
-        //highOrderCells[icell].volume = grid->GetVolume()[icell];
-        //highOrderCells[icell].centerCoord[0] = grid->GetCellCenterX()[icell];
-        //highOrderCells[icell].centerCoord[1] = grid->GetCellCenterY()[icell];
-        //highOrderCells[icell].centerCoord[2] = grid->GetCellCenterZ()[icell];
+        //highOrderCells[iCell].volume = grid->GetVolume()[iCell];
+        //highOrderCells[iCell].centerCoord[0] = grid->GetCellCenterX()[iCell];
+        //highOrderCells[iCell].centerCoord[1] = grid->GetCellCenterY()[iCell];
+        //highOrderCells[iCell].centerCoord[2] = grid->GetCellCenterZ()[iCell];
 
-        //highOrderCells[icell].lenScale = pow(abs(highOrderCells[icell].volume), 1.0/3.0);
+        //highOrderCells[iCell].lenScale = pow(abs(highOrderCells[iCell].volume), 1.0/3.0);
     }
 
     //ghost cell value , we should attention parallel BC
-    int       * left_cell_of_face   = grid->GetLeftCellOfFace();
-    int       * right_cell_of_face  = grid->GetRightCellOfFace();
+    int *left_cell_of_face  = grid->GetLeftCellOfFace();
+    int *right_cell_of_face = grid->GetRightCellOfFace();
     
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
@@ -639,7 +639,7 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
 }
 
 //! @Application memory for high order face and  copy the geometry of grid to high order face,containing 
-void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid * grid)
+void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid *grid)
 {
     int nTotalFace = grid->GetNTotalFace();
 
@@ -647,80 +647,80 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid * grid)
     int * pNodeNumberOfFaces = grid->GetNodeNumberOfEachFace();
     int ** ppNodesOfFaces = grid->GetFace2NodeArray();
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        highOrderFaces[iface].ID = iface;
+        highOrderFaces[iFace].ID = iFace;
 
-        highOrderFaces[iface].nNodes = pNodeNumberOfFaces[iface];
-        for (unsigned int ilocalnode = 0; ilocalnode < highOrderFaces[iface].nNodes; ++ ilocalnode)
+        highOrderFaces[iFace].nNodes = pNodeNumberOfFaces[iFace];
+        for (unsigned int ilocalnode = 0; ilocalnode < highOrderFaces[iFace].nNodes; ++ ilocalnode)
         {
-            highOrderFaces[iface].nodeIDs.push_back(ppNodesOfFaces[iface][ilocalnode]);
-        }
-
-        if(highOrderFaces[iface].nNodes == 3)
-        {
-            highOrderFaces[iface].nPolyGrid = 1;
-            highOrderFaces[iface].VTK_Type = TRIANGLE;
-        }
-        else if(highOrderFaces[iface].nNodes == 4)
-        {
-            highOrderFaces[iface].nPolyGrid = 1;
-            highOrderFaces[iface].VTK_Type = QUADRILATERAL;
-        }
-        else if(highOrderFaces[iface].nNodes == 6)
-        {
-            highOrderFaces[iface].nPolyGrid = 2;
-            highOrderFaces[iface].VTK_Type = TRIANGLE;
-        }
-        else if(highOrderFaces[iface].nNodes == 9)
-        {
-            highOrderFaces[iface].nPolyGrid = 2;
-            highOrderFaces[iface].VTK_Type = QUADRILATERAL;
+            highOrderFaces[iFace].nodeIDs.push_back(ppNodesOfFaces[iFace][ilocalnode]);
         }
 
-        highOrderFaces[iface].nDOFsGrid = highOrderFaces[iface].nNodes;
-        highOrderFaces[iface].cellID0 = grid->GetLeftCellOfFace()[iface];
-        highOrderFaces[iface].cellID1 = grid->GetRightCellOfFace()[iface];
+        if (highOrderFaces[iFace].nNodes == 3)
+        {
+            highOrderFaces[iFace].nPolyGrid = 1;
+            highOrderFaces[iFace].VTK_Type = TRIANGLE;
+        }
+        else if (highOrderFaces[iFace].nNodes == 4)
+        {
+            highOrderFaces[iFace].nPolyGrid = 1;
+            highOrderFaces[iFace].VTK_Type = QUADRILATERAL;
+        }
+        else if (highOrderFaces[iFace].nNodes == 6)
+        {
+            highOrderFaces[iFace].nPolyGrid = 2;
+            highOrderFaces[iFace].VTK_Type = TRIANGLE;
+        }
+        else if (highOrderFaces[iFace].nNodes == 9)
+        {
+            highOrderFaces[iFace].nPolyGrid = 2;
+            highOrderFaces[iFace].VTK_Type = QUADRILATERAL;
+        }
 
-        //highOrderFaces[iface].area = grid->GetFaceArea()[iface];
-        //highOrderFaces[iface].centerCoord[0] = grid->GetFaceCenterX()[iface];
-        //highOrderFaces[iface].centerCoord[1] = grid->GetFaceCenterY()[iface];
-        //highOrderFaces[iface].centerCoord[2] = grid->GetFaceCenterZ()[iface];
+        highOrderFaces[iFace].nDOFsGrid = highOrderFaces[iFace].nNodes;
+        highOrderFaces[iFace].cellID0 = grid->GetLeftCellOfFace()[iFace];
+        highOrderFaces[iFace].cellID1 = grid->GetRightCellOfFace()[iFace];
+
+        //highOrderFaces[iFace].area = grid->GetFaceArea()[iFace];
+        //highOrderFaces[iFace].centerCoord[0] = grid->GetFaceCenterX()[iFace];
+        //highOrderFaces[iFace].centerCoord[1] = grid->GetFaceCenterY()[iFace];
+        //highOrderFaces[iFace].centerCoord[2] = grid->GetFaceCenterZ()[iFace];
     }
 }
 
 //! @Application memory for high order node and  copy the geometry of grid to high order node,containing 
-void HighOrderGrid::CopyGeometryInfoToHighOrderNode(UnstructGrid * grid)
+void HighOrderGrid::CopyGeometryInfoToHighOrderNode(UnstructGrid *grid)
 {
     int nTotalNode = grid->GetNTotalNode();
 
     highOrderNodes.resize(nTotalNode);
 
-    int ** ppCellsOfNodes = grid->GetNode2CellArray();
+    int **ppCellsOfNodes = grid->GetNode2CellArray();
 
     /*  Xu-Gang
     int * ppCellsOfNodes = grid->GetCell2Node();
     int * NodeNumberOfEachCell = grid->GetNodeNumberOfEachCell();
     */
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        highOrderNodes[inode].ID = inode;
+        highOrderNodes[iNode].ID = iNode;
 
-        highOrderNodes[inode].coor[0] = grid->GetX()[inode];
-        highOrderNodes[inode].coor[1] = grid->GetY()[inode];
-        highOrderNodes[inode].coor[2] = grid->GetZ()[inode];
+        highOrderNodes[iNode].coor[0] = grid->GetX()[iNode];
+        highOrderNodes[iNode].coor[1] = grid->GetY()[iNode];
+        highOrderNodes[iNode].coor[2] = grid->GetZ()[iNode];
 
-        highOrderNodes[inode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[inode]);
+        highOrderNodes[iNode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[iNode]);
 
-        for (int ilocalcell = 0; ilocalcell < highOrderNodes[inode].cellIDsOfPoint.size(); ++ ilocalcell)
+        for (int ilocalcell = 0; ilocalcell < highOrderNodes[iNode].cellIDsOfPoint.size(); ++ ilocalcell)
         {
-            highOrderNodes[inode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[inode][ilocalcell];
+            highOrderNodes[iNode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[iNode][ilocalcell];
         }
-       // highOrderNodes[inode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[inode]);
+       // highOrderNodes[iNode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[iNode]);
        //
-       // for (int ilocalcell = 0; ilocalcell < highOrderNodes[inode].cellIDsOfPoint.size(); ++ ilocalcell)
+       // for (int ilocalcell = 0; ilocalcell < highOrderNodes[iNode].cellIDsOfPoint.size(); ++ ilocalcell)
        // {
-       //     highOrderNodes[inode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[inode][ilocalcell];
+       //     highOrderNodes[iNode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[iNode][ilocalcell];
        // }
     }
 }

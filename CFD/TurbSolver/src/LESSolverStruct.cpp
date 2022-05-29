@@ -593,8 +593,9 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
                 finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
                 finestGrid->RemapMultigridIJK(level, it, jt, kt);
                 int *ibcregions = structBCSet->GetIFaceInfo();
-                int ibcregion = ibcregions[iFace];
-                StructBC * bcregion = structBCSet->GetBCRegion(ibcregion);
+                int iBCRegion = ibcregions[iFace];
+                StructBC * bcregion = structBCSet->GetBCRegion(iBCRegion);
+
                 string bcName = bcregion->GetBCName();
                 if (bcName == "Periodic_up")
                 {

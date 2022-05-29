@@ -92,17 +92,17 @@ void CGNSRawCoor::SetData(int icoor, DataType_t type, RDouble *x)
     if (type == RealSingle)
     {
         RDouble *data = static_cast<RDouble *>(coor[icoor]);
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            x[inode] = data[inode];
+            x[iNode] = data[iNode];
         }
     }
     else
     {
         RDouble *data = static_cast<RDouble *>(coor[icoor]);
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            x[inode] = data[inode];
+            x[iNode] = data[iNode];
         }
     }
 }
@@ -933,9 +933,9 @@ CGNSBase::~CGNSBase()
 
     if (bc_conn_list)
     {
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            delete [] bc_conn_list[ibcregion];
+            delete [] bc_conn_list[iBCRegion];
         }
     }
     delete [] bc_conn_list;
@@ -1000,23 +1000,23 @@ void CGNSBase::PreProcess(Base_Grid_Conn *gconn, BaseElement *base_elem)
         }
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         //! It is true for all situation.
-        for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+        for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
         {
-            bc_conn_list[ibcregion][j] -= 1;
+            bc_conn_list[iBCRegion][j] -= 1;
         }
     }
 
     //! For boundary BC's, it should be checked index base.
     int ibase = 1;
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+        for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
         {
-            if (bc_conn_list[ibcregion][j] < nTotalCell)
+            if (bc_conn_list[iBCRegion][j] < nTotalCell)
             {
                 ibase = 0;
                 break;
@@ -1027,25 +1027,25 @@ void CGNSBase::PreProcess(Base_Grid_Conn *gconn, BaseElement *base_elem)
 
     if (ibase == 0)
     {
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            if ((this->bc_grid_location[ibcregion] != Vertex))
+            if ((this->bc_grid_location[iBCRegion] != Vertex))
             {
-                for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+                for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
                 {
-                    bc_conn_list[ibcregion][j] += nTotalCell;
+                    bc_conn_list[iBCRegion][j] += nTotalCell;
                 }
             }
         }
     }
 }
 
-void CGNSBase::GetElem(cgsize_t *elem_source, cgsize_t icell, int ptnum, cgsize_t *&elem)
+void CGNSBase::GetElem(cgsize_t *elem_source, cgsize_t iCell, int ptnum, cgsize_t *&elem)
 {
-    elem = &elem_source[ptnum * icell];
+    elem = &elem_source[ptnum * iCell];
 }
 
-void CGNSBase::GetFace(Base_Grid_Conn *gconn, cgsize_t *elem, cgsize_t icell, CElemFace *elemface)
+void CGNSBase::GetFace(Base_Grid_Conn *gconn, cgsize_t *elem, cgsize_t iCell, CElemFace *elemface)
 {
     int face_list[100], face_now[100];
     int maxface = elemface->GetFaceNumber();
@@ -1083,7 +1083,7 @@ void CGNSBase::GetFace(Base_Grid_Conn *gconn, cgsize_t *elem, cgsize_t icell, CE
         if (iter == faceSet->end())
         {
             faceSet->insert(faceIndex);
-            left_cell_of_face->push_back(icell);
+            left_cell_of_face->push_back(iCell);
             right_cell_of_face->push_back(-1);
 
             CGNS_BCFace *boundaryFace = new CGNS_BCFace(static_cast<int>(bcFace->size()), 0, "");
@@ -1102,7 +1102,7 @@ void CGNSBase::GetFace(Base_Grid_Conn *gconn, cgsize_t *elem, cgsize_t icell, CE
         }
         else
         {
-            (*right_cell_of_face)[iter->id] = icell;
+            (*right_cell_of_face)[iter->id] = iCell;
         }
     }
 }
@@ -1120,9 +1120,9 @@ void CGNSBase::PostProcess(Base_Grid_Conn *gconn)
     gconn->SetNTotalFace(nTotalFace);
 
     nBoundFace = 0;
-    for (cgsize_t iface = 0; iface < nTotalFace; ++ iface)
+    for (cgsize_t iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        if ((*right_cell_of_face)[iface] == -1)
+        if ((*right_cell_of_face)[iFace] == -1)
         {
             ++ nBoundFace;
         }
@@ -1136,37 +1136,37 @@ void CGNSBase::PostProcess(Base_Grid_Conn *gconn)
 
     //! Reorder faces, make sure the boundary faces lie in the first part.
     cgsize_t jstart = nBoundFace;
-    for (cgsize_t iface = 0; iface < nBoundFace; ++ iface)
+    for (cgsize_t iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if ((*right_cell_of_face)[iface] != -1)
+        if ((*right_cell_of_face)[iFace] != -1)
         {
             //! It needs to swap.
-            for (cgsize_t jface = jstart; jface < nTotalFace; ++ jface)
+            for (cgsize_t jFace = jstart; jFace < nTotalFace; ++ jFace)
             {
-                if ((*right_cell_of_face)[jface] == -1)
+                if ((*right_cell_of_face)[jFace] == -1)
                 {
                     //! Swap i,j.
-                    SWAP((*left_cell_of_face)[iface], (*left_cell_of_face)[jface]);
-                    SWAP((*right_cell_of_face)[iface], (*right_cell_of_face)[jface]);
+                    SWAP((*left_cell_of_face)[iFace], (*left_cell_of_face)[jFace]);
+                    SWAP((*right_cell_of_face)[iFace], (*right_cell_of_face)[jFace]);
 
                     //! Swap bctype && bcname only, do not swap faceID.
-                    //! So, did not use SWAP((*bcFace)[iface], (*bcFace)[jface]) here.
-                    ASSERT((*bcFace)[iface]->GetFaceID() == iface);
-                    int iFaceBCType = (*bcFace)[iface]->GetBCType();
-                    int jFaceBCType = (*bcFace)[jface]->GetBCType();
+                    //! So, did not use SWAP((*bcFace)[iFace], (*bcFace)[jFace]) here.
+                    ASSERT((*bcFace)[iFace]->GetFaceID() == iFace);
+                    int iFaceBCType = (*bcFace)[iFace]->GetBCType();
+                    int jFaceBCType = (*bcFace)[jFace]->GetBCType();
                     SWAP(iFaceBCType, jFaceBCType);
-                    (*bcFace)[iface]->SetBCType(iFaceBCType);
-                    (*bcFace)[jface]->SetBCType(jFaceBCType);
-                    string iFaceBCName = (*bcFace)[iface]->GetBCName();
-                    string jFaceBCName = (*bcFace)[jface]->GetBCName();
+                    (*bcFace)[iFace]->SetBCType(iFaceBCType);
+                    (*bcFace)[jFace]->SetBCType(jFaceBCType);
+                    string iFaceBCName = (*bcFace)[iFace]->GetBCName();
+                    string jFaceBCName = (*bcFace)[jFace]->GetBCName();
                     SWAP(iFaceBCName, jFaceBCName);
-                    (*bcFace)[iface]->SetBCName(iFaceBCName);
-                    (*bcFace)[jface]->SetBCName(jFaceBCName);    
+                    (*bcFace)[iFace]->SetBCName(iFaceBCName);
+                    (*bcFace)[jFace]->SetBCName(jFaceBCName);    
 
-                    SWAP((*face2node)[iface], (*face2node)[jface]);
-                    SWAP((*node_number_of_each_face)[iface], (*node_number_of_each_face)[jface]);
+                    SWAP((*face2node)[iFace], (*face2node)[jFace]);
+                    SWAP((*node_number_of_each_face)[iFace], (*node_number_of_each_face)[jFace]);
 
-                    jstart = jface + 1;
+                    jstart = jFace + 1;
                     break;
                 }
             }
@@ -1174,9 +1174,9 @@ void CGNSBase::PostProcess(Base_Grid_Conn *gconn)
     }
 }
 
-void CGNSBase::GetISection(cgsize_t icell, int &isection)
+void CGNSBase::GetISection(cgsize_t iCell, int &isection)
 {
-    cgsize_t iabscell = icell;
+    cgsize_t iabscell = iCell;
     isection = 0;
     for (int i = 0; i < nSections; ++ i)
     {
@@ -1190,12 +1190,12 @@ void CGNSBase::GetISection(cgsize_t icell, int &isection)
     }
 }
 
-void CGNSBase::GetBCFace(BaseElement *base_elem, cgsize_t icell, int &facept_num, cgsize_t *&bcface)
+void CGNSBase::GetBCFace(BaseElement *base_elem, cgsize_t iCell, int &facept_num, cgsize_t *&bcface)
 {
-    cgsize_t iabscell = icell;
+    cgsize_t iabscell = iCell;
     int isection = 0;
 
-    GetISection(icell, isection);
+    GetISection(iCell, isection);
     
     ElementType_t etype = static_cast<ElementType_t>(elem_type[isection]);
     cgsize_t *base_elem_elem_pt = base_elem->GetElementPoint();
@@ -1215,30 +1215,30 @@ void CGNSBase::GetBCFace(BaseElement *base_elem, cgsize_t icell, int &facept_num
     }
 }
 
-void CGNSBase::GetBCFaceMixed(cgsize_t *elem_source, cgsize_t icell, int isection, cgsize_t *&elem)
+void CGNSBase::GetBCFaceMixed(cgsize_t *elem_source, cgsize_t iCell, int isection, cgsize_t *&elem)
 {
-    elem = &elem_source[mixed_conn_index[isection][icell] + 1];
+    elem = &elem_source[mixed_conn_index[isection][iCell] + 1];
 }
 
-void CGNSBase::GetElem(BaseElement *base_elem, cgsize_t icell, int &etype, cgsize_t *&elem)
+void CGNSBase::GetElem(BaseElement *base_elem, cgsize_t iCell, int &etype, cgsize_t *&elem)
 {
     int isection = 0;
     int elempt_num;
 
-    GetISection(icell, isection);
+    GetISection(iCell, isection);
     etype = elem_type[isection];
 
     cgsize_t *base_elem_elem_pt = base_elem->GetElementPoint();
 
     if (etype == MIXED)
     {
-        etype = static_cast<ElementType_t>(conn_list[isection][mixed_conn_index[isection][icell]] + 1);
-        elem = &conn_list[isection][mixed_conn_index[isection][icell] + 1];
+        etype = static_cast<ElementType_t>(conn_list[isection][mixed_conn_index[isection][iCell]] + 1);
+        elem = &conn_list[isection][mixed_conn_index[isection][iCell] + 1];
     }
     else
     {
         elempt_num = base_elem_elem_pt[etype];
-        GetElem(conn_list[isection], icell - istart[isection], elempt_num, elem);
+        GetElem(conn_list[isection], iCell - istart[isection], elempt_num, elem);
     }
 }
 
@@ -1351,16 +1351,16 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)
             int nPoints = base_elem_elem_pt[etype];
 
             int count = 0;
-            for (cgsize_t icell = base_cgns_istart[sec]; icell <= base_cgns_iend[sec]; ++ icell)
+            for (cgsize_t iCell = base_cgns_istart[sec]; iCell <= base_cgns_iend[sec]; ++ iCell)
             {
-                if (icell >= nTotalCell)
+                if (iCell >= nTotalCell)
                 {
                     flag = true;
                     break;
                 }
 
                 //node_number_of_each_cell->push_back(nPoints);
-                (*node_number_of_each_cell)[icell] = nPoints;
+                (*node_number_of_each_cell)[iCell] = nPoints;
 
                 vector<cgsize_t> single_cell;
                 single_cell.resize(0);
@@ -1372,16 +1372,16 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)
                     count ++;
                 }
                 //cell2node->push_back(single_cell);
-                (*cell2node)[icell] = single_cell;
+                (*cell2node)[iCell] = single_cell;
             }
             if (flag) break;
         }
         else
         {
             int count = 0;
-            for (cgsize_t icell = base_cgns_istart[sec]; icell <= base_cgns_iend[sec]; ++ icell)
+            for (cgsize_t iCell = base_cgns_istart[sec]; iCell <= base_cgns_iend[sec]; ++ iCell)
             {
-                if (icell >= nTotalCell)
+                if (iCell >= nTotalCell)
                 {
                     flag = true;
                     break;
@@ -1391,7 +1391,7 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)
                 count ++;
 
                 //node_number_of_each_cell->push_back(nPoints);
-                (*node_number_of_each_cell)[icell] = nPoints;
+                (*node_number_of_each_cell)[iCell] = nPoints;
 
                 vector<cgsize_t> single_cell;
                 single_cell.resize(0);
@@ -1403,7 +1403,7 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)
                     count ++;
                 }
                 //cell2node->push_back(single_cell);
-                (*cell2node)[icell] = single_cell;
+                (*cell2node)[iCell] = single_cell;
             }
             if (flag) break;
         }
@@ -1450,31 +1450,31 @@ void CGNSBase::ComputeElemFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
         }
 
         //! Reconstruct NON-BC faces ONLY.
-        for (cgsize_t icell = istart[iSection]; icell <= iend[iSection]; ++ icell)
+        for (cgsize_t iCell = istart[iSection]; iCell <= iend[iSection]; ++ iCell)
         {
             ElementType_t etype = static_cast<ElementType_t>(elem_type[iSection]);
 
-            if (icell >= nTotalCell)
+            if (iCell >= nTotalCell)
             {
                 intoBCSection = true;
                 break;
             }
 
             ++ count;
-            if (count % 200000 == 0) std::cout << "  icell = " << count << "\n";
+            if (count % 200000 == 0) std::cout << "  iCell = " << count << "\n";
             
             if (etype == MIXED)
             {
-                etype = static_cast<ElementType_t>(conn_list[iSection][mixed_conn_index[iSection][icell - istart[iSection]]] + 1);
-                elem = &conn_list[iSection][mixed_conn_index[iSection][icell - istart[iSection]] + 1];
+                etype = static_cast<ElementType_t>(conn_list[iSection][mixed_conn_index[iSection][iCell - istart[iSection]]] + 1);
+                elem = &conn_list[iSection][mixed_conn_index[iSection][iCell - istart[iSection]] + 1];
             }
             else
             {
                 int ptnum = base_elem_elem_pt[etype];
-                GetElem(conn_list[iSection], icell - istart[iSection], ptnum, elem);
+                GetElem(conn_list[iSection], iCell - istart[iSection], ptnum, elem);
             }
 
-            GetFace(gconn, elem, icell, &face_list[etype]);
+            GetFace(gconn, elem, iCell, &face_list[etype]);
         }
         if (intoBCSection) break;
     }
@@ -1487,91 +1487,91 @@ void CGNSBase::ComputeBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
     vector<cgsize_t> &right_cell_of_face = *gconn->GetRightCellOfFace();
     cgsize_t nTotalFace = right_cell_of_face.size();
     cgsize_t nBoundFace = 0;
-    for (cgsize_t iface = 0; iface < static_cast<cgsize_t>(nTotalFace); ++ iface)
+    for (cgsize_t iFace = 0; iFace < static_cast<cgsize_t>(nTotalFace); ++ iFace)
     {
-        if (right_cell_of_face[iface] == -1)
+        if (right_cell_of_face[iFace] == -1)
         {
             nBoundFace ++;
         }
     }
     cgsize_t MaxCell = this->nTotalCell + nBoundFace;
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        BCType_t bctype = static_cast<BCType_t> (bc_type[ibcregion]);
-        GridLocation_t igr = static_cast<GridLocation_t>(bc_grid_location[ibcregion]);
+        BCType_t bctype = static_cast<BCType_t> (bc_type[iBCRegion]);
+        GridLocation_t igr = static_cast<GridLocation_t>(bc_grid_location[iBCRegion]);
 
         string BCName = "";
         if (boundaryName)
         {
-            BCName = boundaryName[ibcregion];
+            BCName = boundaryName[iBCRegion];
             if (bctype < NofValidBCTypes)
             {
-                std::cout << "  Boundary Condition : the " << ibcregion + 1 
+                std::cout << "  Boundary Condition : the " << iBCRegion + 1 
                     << " BCName = "   << BCName 
                     << ", BCType = "  << BCTypeName[bctype]
                     << "\n";
             }
             else
             {
-                std::cout << "  Boundary Condition : the " << ibcregion + 1 
+                std::cout << "  Boundary Condition : the " << iBCRegion + 1 
                     << " BCName = " << BCName << "(SelfDefined)\n";
             }
         }
 
-        if (bc_elem_set_type[ibcregion] == PointRange)
+        if (bc_elem_set_type[iBCRegion] == PointRange)
         {
             if (igr == EdgeCenter || igr == FaceCenter)
             {
-                bc_elem_set_type[ibcregion] = ElementRange;
+                bc_elem_set_type[iBCRegion] = ElementRange;
             }
         }
-        else if (bc_elem_set_type[ibcregion] == PointList)
+        else if (bc_elem_set_type[iBCRegion] == PointList)
         {
             if (igr == EdgeCenter || igr == FaceCenter)
             {
-                bc_elem_set_type[ibcregion] = ElementList;
+                bc_elem_set_type[iBCRegion] = ElementList;
             }
         }
 
-        if (bc_elem_set_type[ibcregion] == ElementRange)
+        if (bc_elem_set_type[iBCRegion] == ElementRange)
         {
-            if (bc_conn_list[ibcregion][0] >= MaxCell)
+            if (bc_conn_list[iBCRegion][0] >= MaxCell)
             {
                 continue;
             }
 
-            cgsize_t startElement = bc_conn_list[ibcregion][0];
-            cgsize_t endElement   = bc_conn_list[ibcregion][1];
+            cgsize_t startElement = bc_conn_list[iBCRegion][0];
+            cgsize_t endElement   = bc_conn_list[iBCRegion][1];
             for (cgsize_t iElement = startElement; iElement <= endElement; ++ iElement)
             {
                 ProcessBCFace(gconn, base_elem, iElement, bctype, BCName);
             }
         }
-        else if (bc_elem_set_type[ibcregion] == ElementList)
+        else if (bc_elem_set_type[iBCRegion] == ElementList)
         {
-            if (bc_conn_list[ibcregion][0] >= MaxCell)
+            if (bc_conn_list[iBCRegion][0] >= MaxCell)
             {
                 continue;
             }
 
-            for (int i = 0; i < nBCElem[ibcregion]; ++ i)
+            for (int i = 0; i < nBCElem[iBCRegion]; ++ i)
             {
-                ProcessBCFace(gconn, base_elem, bc_conn_list[ibcregion][i], bctype, BCName);
+                ProcessBCFace(gconn, base_elem, bc_conn_list[iBCRegion][i], bctype, BCName);
             }
         }
         //! This situation has not been encountered, we can not ensure the code is right! 
-        else if (bc_elem_set_type[ibcregion] == PointRange ||
-                 bc_elem_set_type[ibcregion] == PointList)
+        else if (bc_elem_set_type[iBCRegion] == PointRange ||
+                 bc_elem_set_type[iBCRegion] == PointList)
         {
-            ProcessBCVertex(gconn, base_elem, bc_elem_set_type[ibcregion], 
-                nBCElem[ibcregion], bc_conn_list[ibcregion], bctype, BCName);
+            ProcessBCVertex(gconn, base_elem, bc_elem_set_type[iBCRegion], 
+                nBCElem[iBCRegion], bc_conn_list[iBCRegion], bctype, BCName);
         }
         else
         {
             ostringstream oss;
-            oss << "Error: this situation has not been considered, for points set type is " << PointSetTypeName[bc_elem_set_type[ibcregion]];
-            oss << " in BCRegions " << ibcregion << endl;
+            oss << "Error: this situation has not been considered, for points set type is " << PointSetTypeName[bc_elem_set_type[iBCRegion]];
+            oss << " in BCRegions " << iBCRegion << endl;
             TK_Exit::ExceptionExit(oss);
         }
     }
@@ -1580,9 +1580,9 @@ void CGNSBase::ComputeBCFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
 
     if (bc_conn_list)
     {
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            delete [] bc_conn_list[ibcregion];
+            delete [] bc_conn_list[iBCRegion];
         }
     }
     delete [] bc_conn_list;
@@ -1594,9 +1594,9 @@ void CGNSBase::MarkBCInterface(Base_Grid_Conn *gconn)
 
     uint_t nTotalFace = right_cell_of_face.size();
     int nBoundFace = 0;
-    for (cgsize_t iface = 0; iface <static_cast<cgsize_t>(nTotalFace); ++ iface)
+    for (cgsize_t iFace = 0; iFace <static_cast<cgsize_t>(nTotalFace); ++ iFace)
     {
-        if (right_cell_of_face[iface] == -1)
+        if (right_cell_of_face[iFace] == -1)
         {
             nBoundFace ++;
         }
@@ -1626,12 +1626,12 @@ void CGNSBase::ProcessBCVertex(Base_Grid_Conn *gconn, BaseElement *base_elem,
     ProcessBCVertex(gconn, base_elem, bc_vertex, bctype, BCName);
 }
 
-void CGNSBase::GetFace(BaseElement *base_elem, cgsize_t icell, int &facept_num, cgsize_t *&bcface)
+void CGNSBase::GetFace(BaseElement *base_elem, cgsize_t iCell, int &facept_num, cgsize_t *&bcface)
 {
-    cgsize_t iabscell = icell;
+    cgsize_t iabscell = iCell;
     int isection = 0;
 
-    GetISection(icell, isection);
+    GetISection(iCell, isection);
     ElementType_t etype = static_cast<ElementType_t>(elem_type[isection]);
     cgsize_t *base_elem_elem_pt = base_elem->GetElementPoint();
     facept_num = base_elem_elem_pt[etype];
@@ -1674,9 +1674,9 @@ void CGNSBase::ProcessBCVertex(Base_Grid_Conn *gconn, BaseElement *base_elem,
 
     uint_t nTotalFace = right_cell_of_face.size();
     int nBoundFace = 0;
-    for (cgsize_t iface = 0; iface < static_cast<cgsize_t>(nTotalFace); ++ iface)
+    for (cgsize_t iFace = 0; iFace < static_cast<cgsize_t>(nTotalFace); ++ iFace)
     {
-        if (right_cell_of_face[iface] == -1)
+        if (right_cell_of_face[iFace] == -1)
         {
             nBoundFace ++;
         }
@@ -1686,7 +1686,7 @@ void CGNSBase::ProcessBCVertex(Base_Grid_Conn *gconn, BaseElement *base_elem,
     cout << "All Candidate bc num is : " << nBoundFace << "\n";
 
     cgsize_t *elem;
-    cgsize_t icell;
+    cgsize_t iCell;
     int etype, loc, nfacept;
     const int maxfacept = 100;
     int bc_face[maxfacept];
@@ -1696,21 +1696,21 @@ void CGNSBase::ProcessBCVertex(Base_Grid_Conn *gconn, BaseElement *base_elem,
 
     CElemFace *face_list = base_elem->GetElementFace();
 
-    for (cgsize_t iface = 0; iface < static_cast<cgsize_t>(nTotalFace); ++ iface)
+    for (cgsize_t iFace = 0; iFace < static_cast<cgsize_t>(nTotalFace); ++ iFace)
     {
-        int old_bc_type = (*bcFace)[iface]->GetBCType();
-        if (right_cell_of_face[iface] == - 1 && old_bc_type == 0)
+        int old_bc_type = (*bcFace)[iFace]->GetBCType();
+        if (right_cell_of_face[iFace] == - 1 && old_bc_type == 0)
         {
-            icell = left_cell_of_face[iface];
-            loc   = (*face_location)[iface];
+            iCell = left_cell_of_face[iFace];
+            loc   = (*face_location)[iFace];
 
-            GetElem(base_elem, icell, etype, elem);
+            GetElem(base_elem, iCell, etype, elem);
             GetFace(elem, loc, bc_face, nfacept, &face_list[etype]);
 
             if (CheckBCFace(bc_face, nfacept, bc_vertex))
             {
-                (*bcFace)[iface]->SetBCType(bctype);
-                (*bcFace)[iface]->SetBCName(BCName);
+                (*bcFace)[iFace]->SetBCType(bctype);
+                (*bcFace)[iFace]->SetBCName(BCName);
                 if (bctype == 0)
                 {
                     cout << "impossible bctype == 0 in ProcessBCVertex\n";
@@ -1797,9 +1797,9 @@ void CGNSFactory::ReLableSelfDefineBC()
         int *bc_type = cgnsGrid->GetBCType();
         int nBCRegions = cgnsGrid->GetNumberOfBCRegions();
 
-        for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
         {
-            BCType_t bctype = static_cast<BCType_t>(bc_type[ibcregion]);
+            BCType_t bctype = static_cast<BCType_t>(bc_type[iBCRegion]);
             //! Since the number of custom boundary condition is 1, all of them are forced to add the maximum number NofValidBCTypes.
             if (bctype == BCTypeUserDefined)
             {
@@ -1809,7 +1809,7 @@ void CGNSFactory::ReLableSelfDefineBC()
 
             if (bctype >= NofValidBCTypes)
             {
-                bc_type[ibcregion] = bctype;
+                bc_type[iBCRegion] = bctype;
             }
         }
     }
@@ -1920,16 +1920,16 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     RDouble *yy = rawgrid->GetY();
     RDouble *zz = rawgrid->GetZ();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
 
-    delete []xx;
-    delete []yy;
-    delete []zz;
+    delete [] xx;
+    delete [] yy;
+    delete [] zz;
 
     cout << "  Boundary condition setting ......\n";
     //! Set the boundary conditions.
@@ -1948,26 +1948,10 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
         const string &bcName = (*bcFace)[iFace]->GetBCName();
         int cgnsBCType = (*bcFace)[iFace]->GetBCType();
         int fantasyBCType = factory_cgns->GetBaseBCType()->GetBCType(cgnsBCType);
-        
-        //!Collect faces which is NO_BOUNDARY_CONDITION into a BCRegion
-        if (fantasyBCType == 0) 
-        {
-            nBCRegionUnstruct ++;
-            string *boundaryName = new string [nBCRegionUnstruct]();
-            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; ++ iBCRegionUnstruct)
-            {
-                if (iBCRegionUnstruct < nBCRegionUnstruct - 1)
-                {
-                    boundaryName[iBCRegionUnstruct] = bcRegionName[iBCRegionUnstruct];
-                }
-                else
-                {
-                    boundaryName[iBCRegionUnstruct] = bcName;
-                }
-            }
-            cgnsGrid->SetBCName(boundaryName);
-            break;
-        }
+        bcrs[iFace]->SetKey(fantasyBCType);
+        bcrs[iFace]->SetBCName(bcName);
+        cgnsBCList.insert(cgnsBCType);
+        fantasyBCList.insert(fantasyBCType);
 
         delete (*bcFace)[iFace];
     }
@@ -2034,18 +2018,18 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     cout << "Number of total faces: " << nTotalFace << "\n";
 
     int *node_number_of_each_face = new int [nTotalFace];
-    for (cgsize_t iface = 0; iface < nTotalFace; ++ iface)
+    for (cgsize_t iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        node_number_of_each_face[iface] = (*gconn_node_number_of_each_face)[iface];
+        node_number_of_each_face[iFace] = (*gconn_node_number_of_each_face)[iFace];
     }
     grid->SetNodeNumberOfEachFace(node_number_of_each_face);
 
     gconn->FreeNodeNumberOfEachFace();
 
     long long int face2node_size = 0;
-    for (cgsize_t iface = 0; iface < nTotalFace; ++ iface)
+    for (cgsize_t iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        face2node_size += node_number_of_each_face[iface];
+        face2node_size += node_number_of_each_face[iFace];
     }
     int *face2node = new int [face2node_size];
     grid->SetFace2Node(face2node);
@@ -2053,11 +2037,11 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     vector< vector<cgsize_t> > *gface2node = gconn->GetFace2Node();
 
     long long int count = 0;
-    for (cgsize_t iface = 0; iface < nTotalFace; ++ iface)
+    for (cgsize_t iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        for (std::size_t j = 0; j < (*gface2node)[iface].size(); ++ j)
+        for (std::size_t j = 0; j < (*gface2node)[iFace].size(); ++ j)
         {
-            face2node[count] = static_cast<int>((*gface2node)[iface][j]);
+            face2node[count] = static_cast<int>((*gface2node)[iFace][j]);
             ++ count;
         }
     }
@@ -2068,11 +2052,11 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     int *right_cell_of_face = new int[nTotalFace];
     grid->SetLeftCellOfFace (left_cell_of_face);
     grid->SetRightCellOfFace(right_cell_of_face);
-    for (cgsize_t iface = 0; iface < nTotalFace; ++ iface)
+    for (cgsize_t iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        left_cell_of_face [iface] = static_cast<int>((*gconn_left_cell_of_face)[iface]);
+        left_cell_of_face [iFace] = static_cast<int>((*gconn_left_cell_of_face)[iFace]);
         //! Set the label of ghostcell.
-        right_cell_of_face[iface] = static_cast<int>((*gconn_right_cell_of_face)[iface]);
+        right_cell_of_face[iFace] = static_cast<int>((*gconn_right_cell_of_face)[iFace]);
     }
 
     gconn->FreeCellOfFace();
@@ -2081,9 +2065,9 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
 
     vector<int> *gconn_node_number_of_each_cell = gconn->GetNodeNumberOfEachCell();
 
-    for (cgsize_t icell = 0; icell < nTotalCell; ++ icell)
+    for (cgsize_t iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        node_number_of_each_cell[icell] = (*gconn_node_number_of_each_cell)[icell];
+        node_number_of_each_cell[iCell] = (*gconn_node_number_of_each_cell)[iCell];
     }
     grid->SetNodeNumberOfEachCell(node_number_of_each_cell);
     //cout << " Set node_number_of_each_cell finished\n";
@@ -2092,9 +2076,9 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
 
     long long int cell2node_size =0;
 
-    for (cgsize_t icell = 0; icell < nTotalCell; ++ icell)
+    for (cgsize_t iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell2node_size += node_number_of_each_cell[icell];
+        cell2node_size += node_number_of_each_cell[iCell];
     }
     int *cell2node = new int [cell2node_size];
     grid->SetCell2Node(cell2node);
@@ -2102,11 +2086,11 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     vector< vector<cgsize_t> > *gcell2node = gconn->GetCell2Node();
 
     count = 0;
-    for (cgsize_t icell = 0; icell < nTotalCell; ++ icell)
+    for (cgsize_t iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        for (int inode =0; inode < node_number_of_each_cell[icell]; ++ inode)
+        for (int iNode =0; iNode < node_number_of_each_cell[iCell]; ++ iNode)
         {
-            cell2node[count] = static_cast<int>((*gcell2node)[icell][inode]);
+            cell2node[count] = static_cast<int>((*gcell2node)[iCell][iNode]);
             ++ count;
         }
     }

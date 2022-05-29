@@ -264,9 +264,10 @@ void Pre_StrGridPartition::ProcessBCInfo()
         StructBCSet *structBCSet = grid->GetStructBCSet();
 
         int numberOfBoundaryFaces = structBCSet->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
+           
 
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
@@ -620,11 +621,11 @@ void Pre_StrGridPartition::ExtractOriginalGridInformation()
         RDouble *yy = originalBlock->GetY();
         RDouble *zz = originalBlock->GetZ();
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            xx[inode] = x[inode];
-            yy[inode] = y[inode];
-            zz[inode] = z[inode];
+            xx[iNode] = x[iNode];
+            yy[iNode] = y[iNode];
+            zz[iNode] = z[iNode];
         }
     }
 
@@ -1101,9 +1102,9 @@ void Pre_StrGridPartition::ReadLnkFile(const string &fileName_in)
         StructBCSet *structBCSet = grid->GetStructBCSet();
 
         int nBCRegion = structBCSet->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
-            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
             if (bctype >= 0) continue;
@@ -1182,9 +1183,9 @@ void Pre_StrGridPartition::ReadLnkInfor(const string &fileName_in)
 
         int nBCLnkTotal = 0;
         int nBCRegion = structBCSet->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
-            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
             if (bctype == PHENGLEI::INTERFACE)
@@ -1299,9 +1300,9 @@ void Pre_StrGridPartition::ReadBoundaryData()
         int numberOfBoundaryFaces = structBCSet->GetnBCRegion();
         simpleBlock->GenerateBoundaryFaceList(numberOfBoundaryFaces);
 
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             vector< int > nst(3), ned(3);
             int bctype;
@@ -1320,7 +1321,7 @@ void Pre_StrGridPartition::ReadBoundaryData()
             int bcdirection = structBC->GetFaceDirection();
 
             Pre_BcFace_Struct *boundaryFace = new Pre_BcFace_Struct();
-            simpleBlock->SetBoundaryFace(ibcregion, boundaryFace);
+            simpleBlock->SetBoundaryFace(iBCRegion, boundaryFace);
             boundaryFace->SetSimpleBlock(simpleBlock);
             boundaryFace->SetBoundaryType(bctype);
             boundaryFace->SetBoundaryName(bcname);

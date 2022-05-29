@@ -49,27 +49,27 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
 
 
     RDouble *tarea = new RDouble[nTotalCell];   // total area of each cell
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tarea[icell] = 0.0;
+        tarea[iCell] = 0.0;
     }
 
     int le = 0, re = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        le = left_cell_of_face[ iface ];
-        tarea[le] += ns[ iface ];
+        le = left_cell_of_face[iFace];
+        tarea[le] += ns[iFace];
     }
 
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        le = left_cell_of_face [ iface ];
-        re = right_cell_of_face[ iface ];
-        tarea [le] += ns[ iface ];
-        tarea [re] += ns[ iface ];
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
+        tarea[le] += ns[iFace];
+        tarea[re] += ns[iFace];
     }
 
-    int * fmark = new int[nTotalFace];
+    int *fmark = new int[nTotalFace];
 
     SetField(fmark, -1, nTotalFace);
     int cnTFace = 0;
@@ -81,12 +81,12 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     int nInteriorFace = nTotalFace - nBoundFace;
     FaceHash faceHash;
     vector<Geo_Face *> faceList;
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        le = left_cell_of_face [ iface ];
-        re = right_cell_of_face[ iface ];
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
 
-        Geo_Face * face = new Geo_Face(le, re, iface, nInteriorFace);
+        Geo_Face *face = new Geo_Face(le, re, iFace, nInteriorFace);
 
         bool isFaceExist;
 
@@ -99,12 +99,12 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
             // the coarse face have been built.
             delete face;
             face = faceHash[faceIndexinHash];
-            fmark[iface] = face->GetID();
+            fmark[iFace] = face->GetID();
         }else
         {
             // build new coarse face.
             face->SetID(cnTFace);
-            fmark[iface] = cnTFace;
+            fmark[iFace] = cnTFace;
             cnTFace ++;
 
             faceList.push_back(face);
@@ -126,24 +126,24 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
         barea[i] = 0.0;
     }
 
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        barea[ fmark[iface] ] += ns[iface];
+        barea[fmark[iFace]] += ns[iFace];
     }
 
-    RDouble * ratio = new RDouble[nTotalFace];
+    RDouble *ratio = new RDouble[nTotalFace];
     int fno;
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        le = left_cell_of_face [ iface ];
-        re = right_cell_of_face[ iface ];
-        fno = fmark[ iface ];
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
+        fno = fmark[iFace];
 
-        ratio[iface] = pow((tarea[le] + tarea[re] - 2.0 * barea[fno]), 1.5) / (vol[le] + vol[re]);
+        ratio[iFace] = pow((tarea[le] + tarea[re] - 2.0 * barea[fno]), 1.5) / (vol[le] + vol[re]);
 
-        virtualCellCenterX[iface] = (vol[le] * xcc[le] + vol[re] * xcc[re]) / (vol[le] + vol[re]);
-        virtualCellCenterY[iface] = (vol[le] * ycc[le] + vol[re] * ycc[re]) / (vol[le] + vol[re]);
-        virtualCellCenterZ[iface] = (vol[le] * zcc[le] + vol[re] * zcc[re]) / (vol[le] + vol[re]);
+        virtualCellCenterX[iFace] = (vol[le] * xcc[le] + vol[re] * xcc[re]) / (vol[le] + vol[re]);
+        virtualCellCenterY[iFace] = (vol[le] * ycc[le] + vol[re] * ycc[re]) / (vol[le] + vol[re]);
+        virtualCellCenterZ[iFace] = (vol[le] * zcc[le] + vol[re] * zcc[re]) / (vol[le] + vol[re]);
     }
 
 
@@ -158,9 +158,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
 
     Tset myset;
 
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        myset.insert(TRatioIndex(ratio[iface], iface));
+        myset.insert(TRatioIndex(ratio[iFace], iFace));
     }
 
     Tset::iterator curr = myset.begin();
@@ -169,9 +169,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     Tlist mylist;
 
     bool * unMerged = new bool [nTotalCell];
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        unMerged[icell] = true;
+        unMerged[iCell] = true;
     }
 
     for (curr = myset.begin(); curr != myset.end(); ++ curr)
@@ -194,9 +194,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     // now merging
     int *cell2coarsegridcell = new int[ nTotalCell ];
     fineGrid->SetCell2CoarseGridCell(cell2coarsegridcell);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell2coarsegridcell[icell] = - 1;
+        cell2coarsegridcell[iCell] = - 1;
     }
 
     int cnTCell = 0;
@@ -211,11 +211,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     }
 
     // some cells may not have been merged, merge them now
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cell2coarsegridcell[icell] == -1)
+        if(cell2coarsegridcell[iCell] == -1)
         {
-            cell2coarsegridcell[icell] = cnTCell ++;
+            cell2coarsegridcell[iCell] = cnTCell ++;
         }
     }
 
@@ -238,11 +238,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     y = new RDouble[ nTotalNode ];
     z = new RDouble[ nTotalNode ];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
     coarseGrid->SetX(x);
     coarseGrid->SetY(y);
@@ -264,26 +264,26 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     int le = 0, re = 0;
 
     RDouble *tarea = new RDouble[nTotalCell];   // total area of each cell
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tarea[icell] = 0.0;
+        tarea[iCell] = 0.0;
     }
 
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        le = left_cell_of_face[ iface ];
-        tarea[le] += ns[ iface ];
+        le = left_cell_of_face[iFace];
+        tarea[le] += ns[iFace];
     }
 
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        le = left_cell_of_face [ iface ];
-        re = right_cell_of_face[ iface ];
-        tarea [le] += ns[ iface ];
-        tarea [re] += ns[ iface ];
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
+        tarea[le] += ns[iFace];
+        tarea[re] += ns[iFace];
     }
 
-    int * fmark = new int[nTotalFace];
+    int *fmark = new int[nTotalFace];
     SetField(fmark, -1, nTotalFace);
     int cnTFace = 0;
 
@@ -294,12 +294,12 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     int nInteriorFace = nTotalFace - nBoundFace;
     FaceHash faceHash;
     vector<Geo_Face *> faceList;
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        le = left_cell_of_face [ iface ];
-        re = right_cell_of_face[ iface ];
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
 
-        Geo_Face * face = new Geo_Face(le, re, iface, nInteriorFace);
+        Geo_Face *face = new Geo_Face(le, re, iFace, nInteriorFace);
 
         bool isFaceExist;
 
@@ -307,17 +307,18 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
         int faceIndexinHash = faceHash.insert(face, isFaceExist) - 1;
 
         // Push the node into node list of GRAdvanceFront.
-        if(isFaceExist)
+        if (isFaceExist)
         {
             // the coarse face have been built.
             delete face;
             face = faceHash[faceIndexinHash];
-            fmark[iface] = face->GetID();
-        }else
+            fmark[iFace] = face->GetID();
+        }
+        else
         {
             // build new coarse face.
             face->SetID(cnTFace);
-            fmark[iface] = cnTFace;
+            fmark[iFace] = cnTFace;
             cnTFace ++;
         }
     }
@@ -325,7 +326,7 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     vector<Geo_Face *>::iterator faceIter;
     for (faceIter = faceList.begin(); faceIter != faceList.end(); ++ faceIter)
     {
-        delete (* faceIter);
+        delete (*faceIter);
     }
     faceList.clear();
 
@@ -335,39 +336,38 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     {
         barea[i] = 0.0;
     }
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        barea[ fmark[iface] ] += ns[iface];
+        barea[fmark[iFace]] += ns[iFace];
     }
 
     RDouble * ratio = new RDouble[nTotalFace];
     int fno;
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        le = left_cell_of_face [ iface ];
-        re = right_cell_of_face[ iface ];
-        fno = fmark[ iface ];
-        ratio[iface] = pow((tarea[le] + tarea[re] - 2.0 * barea[fno]), 1.5) / (vol[le] + vol[re]);
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
+        fno = fmark[iFace];
+        ratio[iFace] = pow((tarea[le] + tarea[re] - 2.0 * barea[fno]), 1.5) / (vol[le] + vol[re]);
     }
     delete [] barea;
     delete [] tarea;
 
-
     typedef pair<RDouble,int> TRatioIndex;
     typedef set<TRatioIndex,less<TRatioIndex> > Tset;
     Tset myset;
-    for (int iface = nBoundFace; iface < nTotalFace; ++ iface)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
-        myset.insert(TRatioIndex(ratio[iface], iface));
+        myset.insert(TRatioIndex(ratio[iFace], iFace));
     }
 
     Tset::iterator curr = myset.begin();
     typedef list<int> Tlist;
     Tlist mylist;
     bool * unMerged = new bool [nTotalCell];
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        unMerged[icell] = true;
+        unMerged[iCell] = true;
     }
     for (curr = myset.begin(); curr != myset.end(); ++ curr)
     {
@@ -385,9 +385,9 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     // now merging
     int *cell2coarsegridcell = new int[ nTotalCell ];
     fineGrid->SetCell2CoarseGridCell(cell2coarsegridcell);
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        cell2coarsegridcell[icell] = - 1;
+        cell2coarsegridcell[iCell] = - 1;
     }
 
     int cnTCell = 0;
@@ -402,11 +402,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     }
 
     // some cells may not have been merged, merge them now
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cell2coarsegridcell[icell] == -1)
+        if(cell2coarsegridcell[iCell] == -1)
         {
-            cell2coarsegridcell[icell] = cnTCell ++;
+            cell2coarsegridcell[iCell] = cnTCell ++;
         }
     }
 
@@ -429,11 +429,11 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
     y = new RDouble[ nTotalNode ];
     z = new RDouble[ nTotalNode ];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
     coarseGrid->SetX(x);
     coarseGrid->SetY(y);

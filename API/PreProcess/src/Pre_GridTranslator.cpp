@@ -296,12 +296,12 @@ void GridTranslator::CheckGrid()
         RDouble s_xfc, s_yfc, s_zfc, t_xfc, t_yfc, t_zfc;
         int il1, jl1, kl1;
   
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
-            target_zone = interFace2ZoneID[iface];
+            target_zone = interFace2ZoneID[iFace];
             if (target_zone < iZone) continue;
             
-            grid->GetSourceIndexIJK_Nsurf_LR(iface, 1, is, js, ks, nsurf, s_lr);
+            grid->GetSourceIndexIJK_Nsurf_LR(iFace, 1, is, js, ks, nsurf, s_lr);
             if (s_lr == 1)
             {
                 GetNsurfIndex(nsurf, il1, jl1, kl1);
@@ -311,7 +311,7 @@ void GridTranslator::CheckGrid()
             }
             grid->FaceCoor(is, js, ks, nsurf, s_xfc, s_yfc, s_zfc);
 
-            itface = interFace2InterFaceID[iface];
+            itface = interFace2InterFaceID[iFace];
 
             if (target_zone == iZone)
             {

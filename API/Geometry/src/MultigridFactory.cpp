@@ -90,9 +90,9 @@ void StructFace::PaintSelf()
     
     int iBoundaryFace = 0, iInterface = 0;
     int nBCRegion = structBCSet->GetnBCRegion();
-    for (int ibc = 0; ibc < nBCRegion; ++ ibc)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC * bcRegion = structBCSet->GetBCRegion(ibc);
+        StructBC * bcRegion = structBCSet->GetBCRegion(iBCRegion);
         
         int fds = bcRegion->GetFaceDirection();
         int fns = bcRegion->GetFaceLeftOrRightIndex();
@@ -100,8 +100,8 @@ void StructFace::PaintSelf()
         int delta = (fns + 1) / 2;
         int mfds = fds * 2 + delta;
 
-        PHSurface & localBoundaryFace = this->GetLocalBoundaryFaceIndexContainer(mfds);
-        PHSurface & localInterface    = this->GetLocalInterfaceIndexContainer(mfds);
+        PHSurface &localBoundaryFace = this->GetLocalBoundaryFaceIndexContainer(mfds);
+        PHSurface &localInterface    = this->GetLocalInterfaceIndexContainer(mfds);
         vector< int > sst(3), sed(3);
         for (int m = 0; m < 3; ++ m)
         {
@@ -154,14 +154,14 @@ void StructFace::PaintNeighbor()
     vector< int > ti(3), di(3);
     StructBCSet * structBCSet = structGrid->GetStructBCSet();
     int nBCRegion = structBCSet->GetnBCRegion();
-    for (int ibc = 0; ibc < nBCRegion; ++ ibc)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC * bcRegion = structBCSet->GetBCRegion(ibc);
+        StructBC * bcRegion = structBCSet->GetBCRegion(iBCRegion);
         int bc_type = bcRegion->GetBCType();
         if (! IsInterface(bc_type)) continue;
 
-        int * st_map = bcRegion->GetStam();
-        int * rate   = bcRegion->GetRate();
+        int *st_map = bcRegion->GetStam();
+        int *rate   = bcRegion->GetRate();
 
         int fds = bcRegion->GetFaceDirection();
         int fns = bcRegion->GetFaceLeftOrRightIndex();
@@ -1332,12 +1332,12 @@ void MultigridManager::ReadBoundaryCondition()
         jDimension[iBlock] = grid->GetNJ();
         kDimension[iBlock] = grid->GetNK();
         
-        for(int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion)
+        for (int iBCRegion = 0; iBCRegion < overallFaceNumber[iBlock]; ++ iBCRegion)
         {
-            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             boundaryLabel = structBC->GetBCType();
-            if(boundaryLabel < 0)
+            if (boundaryLabel < 0)
             {
                 patchCounter += 1;
             }
@@ -1348,17 +1348,16 @@ void MultigridManager::ReadBoundaryCondition()
         }
 
         ComparePatchInner = max(patchCounter, innerCounter);
-        if(ComparePatchInner > maxLocalFaceNumber)
+        if (ComparePatchInner > maxLocalFaceNumber)
         {
             maxLocalFaceNumber = ComparePatchInner;
             specialBlockLabel = iBlock;
         }
     }
 
-    cout<<" Grid Information :"<<endl;
-    cout<<" maxLocalFaceNumber = "<<maxLocalFaceNumber<<endl;
-    cout<<" specialblockLabel  = "<<specialBlockLabel<<endl;
-
+    cout << " Grid Information :" << endl;
+    cout << " maxLocalFaceNumber = " << maxLocalFaceNumber << endl;
+    cout << " specialblockLabel  = " << specialBlockLabel << endl;
 
     GenerateLocalFaceSpace();
     
@@ -1371,9 +1370,9 @@ void MultigridManager::ReadBoundaryCondition()
         int patchLabel = 0, innerLabel = 0;
         int imin, imax, jmin, jmax, kmin, kmax, boundaryLabel, targetLabel;
 
-        for(int ibcregion = 0; ibcregion < overallFaceNumber[iBlock]; ++ ibcregion)
+        for(int iBCRegion = 0; iBCRegion < overallFaceNumber[iBlock]; ++ iBCRegion)
         {
-            StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int * s_st = structBC->GetStartPoint();
             int * s_ed = structBC->GetEndPoint();

@@ -2209,12 +2209,12 @@ void Region::CheckMeshMultigridByFTS()
                 StructBCSet *structBCSet = grid->GetStructBCSet();
 
                 int nBCRegion = structBCSet->GetnBCRegion();
-                for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+                for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
                 {
                     km = 1;
                     NN = 2;
 
-                    StructBC *structBC = structBCSet->GetBCRegion(ibcregion);
+                    StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
                     int *s_st = structBC->GetStartPoint();
                     int *s_ed = structBC->GetEndPoint();
 
@@ -3216,13 +3216,13 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for (int ilevel = 0; ilevel < nMGLevel; ++ ilevel)
+    for (int iLevel = 0; iLevel < nMGLevel; ++ iLevel)
     {
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
             Zone *zone = GetZone(iZone);
             if (!zone) continue;
-            Grid *grid = GetGrid(iZone, ilevel);
+            Grid *grid = GetGrid(iZone, iLevel);
             int gridtype = grid->Type();
             if (gridtype == STRUCTGRID)
             {
@@ -3254,7 +3254,7 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
         int count = 1;
         for (set< int >::iterator iter = changedBC.begin(); iter != changedBC.end(); ++ iter)
         {
-            int originalBC = (* iter);
+            int originalBC = (*iter);
             int newBC = bcMap.TranslateBC(originalBC);
             cout << "Changed BC " << count ++ << ": " << originalBC << " --> " << newBC << endl;
         }

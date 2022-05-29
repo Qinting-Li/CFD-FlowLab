@@ -5954,12 +5954,12 @@ namespace PHSPACE
         int *n_count = new int[nTotalNode];
         RDouble **q_n_list = NewPointer2<RDouble>(nEquation, nTotalNode);
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            n_count[inode] = 0;
+            n_count[iNode] = 0;
             for (int m = 0; m < nEquation; ++ m)
             {
-                q_n_list[m][inode] = 0.0;
+                q_n_list[m][iNode] = 0.0;
             }
         }
 
@@ -6179,12 +6179,12 @@ namespace PHSPACE
         int *n_count = new int[nTotalNode];
         RDouble **q_n_list = NewPointer2<RDouble>(nEquation, nTotalNode);
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            n_count[inode] = 0;
+            n_count[iNode] = 0;
             for (int m = 0; m < nEquation; ++ m)
             {
-                q_n_list[m][inode] = 0.0;
+                q_n_list[m][iNode] = 0.0;
             }
         }
 
@@ -16499,8 +16499,8 @@ namespace PHSPACE
                     finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
                     finestGrid->RemapMultigridIJK(level, it, jt, kt);
                     int *ibcregions = structBCSet->GetIFaceInfo();
-                    int ibcregion = ibcregions[iFace];
-                    StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
+                    int iBCRegion = ibcregions[iFace];
+                    StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcregion->GetBCName();
                     if (bcName == "Periodic_up")
                     {
@@ -17485,8 +17485,8 @@ namespace PHSPACE
                 if (periodicType == 2)
                 {
                     int *ibcregions = structBCSet->GetIFaceInfo();
-                    int ibcregion = ibcregions[iFace];
-                    StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
+                    int iBCRegion = ibcregions[iFace];
+                    StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcregion->GetBCName();
                     if (bcName == "Periodic_up" || bcName == "Periodic_down")
                     {

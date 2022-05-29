@@ -34,9 +34,9 @@ LIB_EXPORT void Mesh_Repair::Repair()
     PickOutBadSkewnessFaces(originalGrid, isBadFace, isBadCell);
 
     bool * unMerged = new bool [nTotalCell];
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        unMerged[icell] = true;
+        unMerged[iCell] = true;
     }
 
     // now merging

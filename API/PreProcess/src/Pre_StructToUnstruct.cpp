@@ -203,11 +203,11 @@ void Pre_StructToUnstruct::CopyCoordinate()
         RDouble *yy = strGrid->GetY();
         RDouble *zz = strGrid->GetZ();
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            x[inode] = xx[inode];
-            y[inode] = yy[inode];
-            z[inode] = zz[inode];
+            x[iNode] = xx[iNode];
+            y[iNode] = yy[iNode];
+            z[iNode] = zz[iNode];
         }
     }
 }

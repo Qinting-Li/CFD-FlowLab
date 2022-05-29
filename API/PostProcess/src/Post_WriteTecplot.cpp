@@ -114,9 +114,9 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
             Post_Visual *postVisualization = new Post_Visual(nVisualVariables, visualVariables, grid, flowType);
 
             int Nsolver = GlobalSolvers::GetNumberOfSolvers(iZone);
-            for (int isolver = 0; isolver < Nsolver; ++ isolver)
+            for (int iSolver = 0; iSolver < Nsolver; ++ iSolver)
             {
-                GlobalSolvers::GetSolver(iZone, isolver)->ComputePostVisualVariables(postVisualization);
+                GlobalSolvers::GetSolver(iZone, iSolver)->ComputePostVisualVariables(postVisualization);
             }
             
             StoreVisualizationVar(actkey, postVisualization);
@@ -394,7 +394,7 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int nodeCount = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
 
@@ -406,16 +406,16 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
         for (int m = 0; m < nvarplot; ++ m)
         {
             RDouble value = 0.0;
-            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
             {
                 int nodeIndex = face2node[nodeCount + iNode];
                 value += qn[m][nodeIndex];
             }
 
-            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
+            qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
         }
 
-        nodeCount += node_number_of_each_face[iface];
+        nodeCount += node_number_of_each_face[iFace];
     }
 
     int TecioMission;
@@ -556,7 +556,7 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
     int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int nodeCount = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
 
@@ -568,16 +568,16 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
         for (int m = 0; m < nvarplot; ++ m)
         {
             RDouble value = 0.0;
-            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
             {
                 int nodeIndex = face2node[nodeCount + iNode];
                 value += qn[m][nodeIndex];
             }
 
-            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
+            qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
         }
 
-        nodeCount += node_number_of_each_face[iface];
+        nodeCount += node_number_of_each_face[iFace];
     }
 
     int TecioMission;
@@ -723,9 +723,9 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
     int TecioMission;
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
@@ -870,9 +870,9 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     int nBCRegion = structBCSet->GetnBCRegion();
 
     int TecioMission;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
 
@@ -1120,9 +1120,9 @@ void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actke
         int isClockWise = false;
         while (! isClockWise)
         {
-            for (int iface = 1; iface < nFaceOfCell; ++ iface)
+            for (int iFace = 1; iFace < nFaceOfCell; ++ iFace)
             {
-                int face  = cell2face[iCell][iface];
+                int face  = cell2face[iCell][iFace];
                 int node1 = face2node[2 * face];
                 int node2 = face2node[2 * face + 1];
 
@@ -1627,21 +1627,21 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iface]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
 
         if (bcType != PHENGLEI::SOLID_SURFACE)
         {
-            ncount += node_number_of_each_face[iface];
+            ncount += node_number_of_each_face[iFace];
             continue;
         }
 
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[ncount + j];
             coor_min = MIN(xyz[index], coor_min);
@@ -1650,14 +1650,14 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
 
         if ((coor_min - slice) * (coor_max - slice) > 0.0)
         {
-            ncount += node_number_of_each_face[iface];
+            ncount += node_number_of_each_face[iFace];
             continue;
         }
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
-            int Node_index0 = face2node[ncount + j % node_number_of_each_face[iface]];
-            int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iface]];
+            int Node_index0 = face2node[ncount + j % node_number_of_each_face[iFace]];
+            int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iFace]];
 
             if ((xyz[Node_index0] - slice) * (xyz[Node_index1] - slice) > 0.0) continue;
 
@@ -1718,7 +1718,7 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
             }
         }
 
-        ncount += node_number_of_each_face[iface];
+        ncount += node_number_of_each_face[iFace];
     }
 
     int NumPts = static_cast<int>(xx.size());

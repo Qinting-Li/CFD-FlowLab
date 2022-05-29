@@ -1514,16 +1514,16 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
         receivingBuffer[iElement] = sendingBuffer[iElement];
     }
 
-    for (int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
+    for (int iProc = startProcessor; iProc < endProcessor; ++ iProc)
     {
-        if (iProcessor == server)
+        if (iProc == server)
         {
             continue;
         }
 
-        int tag = iProcessor;
+        int tag = iProc;
 
-        if (myID == iProcessor)
+        if (myID == iProc)
         {
             PH_SmartSend(sendingBuffer, numberOfElements, server, tag);
         }
@@ -1532,7 +1532,7 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
         {
             int *tmpBuffer = new int[numberOfElements];
 
-            PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
+            PH_SmartRecv(tmpBuffer, numberOfElements, iProc, tag);
 
             if (op == MPI_MAX)
             {
@@ -1623,16 +1623,16 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
         receivingBuffer[iElement] = sendingBuffer[iElement];
     }
 
-    for (int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
+    for (int iProc = startProcessor; iProc < endProcessor; ++ iProc)
     {
-        if (iProcessor == server)
+        if (iProc == server)
         {
             continue;
         }
 
-        int tag = iProcessor;
+        int tag = iProc;
 
-        if (myID == iProcessor)
+        if (myID == iProc)
         {
             PH_SmartSend(sendingBuffer, numberOfElements, server, tag);
         }
@@ -1641,7 +1641,7 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
         {
             float *tmpBuffer = new float [numberOfElements];
 
-            PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
+            PH_SmartRecv(tmpBuffer, numberOfElements, iProc, tag);
 
             if (op == MPI_MAX)
             {
@@ -1732,16 +1732,16 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
         receivingBuffer[iElement] = sendingBuffer[iElement];
     }
 
-    for (int iProcessor = startProcessor; iProcessor < endProcessor; ++ iProcessor)
+    for (int iProc = startProcessor; iProc < endProcessor; ++ iProc)
     {
-        if (iProcessor == server)
+        if (iProc == server)
         {
             continue;
         }
 
-        int tag = iProcessor;
+        int tag = iProc;
 
-        if (myID == iProcessor)
+        if (myID == iProc)
         {
             PH_SmartSend(sendingBuffer, numberOfElements, server, tag);
         }
@@ -1750,7 +1750,7 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
         {
             double *tmpBuffer = new double[numberOfElements];
 
-            PH_SmartRecv(tmpBuffer, numberOfElements, iProcessor, tag);
+            PH_SmartRecv(tmpBuffer, numberOfElements, iProc, tag);
 
             if (op == MPI_MAX)
             {
@@ -1835,9 +1835,9 @@ int PH_Reduce(double *sendbuf, double *recvbuf, int count, PH_Op op)
 
     if (PHMPI::GetNumberOfProcessor() == 1)
     {
-        for (int idata = 0; idata < count; ++ idata)
+        for (int iData = 0; iData < count; ++ iData)
         {
-            recvbuf[idata] = sendbuf[idata];
+            recvbuf[iData] = sendbuf[iData];
         }
         return 1;
     }

@@ -405,10 +405,10 @@ void InterpointFields::RegisterField(const string &name, const int type, const i
     variableDimensions.push_back(dimesion);
     solverIndex.push_back(solverID);
 
-    for (int IDOfGhostLayer = GetNumberOfGhostCellLayers() - 1; IDOfGhostLayer >= 0; -- IDOfGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        AllocateInterpointVariable(name, type, dimesion, interpointInformation->GetSendDataStorage(IDOfGhostLayer));
-        AllocateInterpointVariable(name, type, dimesion, interpointInformation->GetReceiveDataStorage(IDOfGhostLayer));
+        AllocateInterpointVariable(name, type, dimesion, interpointInformation->GetSendDataStorage(iGhost));
+        AllocateInterpointVariable(name, type, dimesion, interpointInformation->GetReceiveDataStorage(iGhost));
     }
 }
 
@@ -421,11 +421,11 @@ void InterpointFields::AllocateInterpointVariable(const string &name, const int 
     case PHINT:
         {
             int **qInt = NewPointer2<int>(dimesion, numberOfInterpoints);
-            for (int iDimension = 0; iDimension < dimesion; ++ iDimension)
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
             {
-                for (int jDimension = 0; jDimension < numberOfInterpoints; ++ jDimension)
+                for (int jDim = 0; jDim < numberOfInterpoints; ++ jDim)
                 {
-                    qInt[iDimension][jDimension] = 0;
+                    qInt[iDim][jDim] = 0;
                 }
             }
             datastore->UpdateDataPtr(name, qInt);
@@ -434,11 +434,11 @@ void InterpointFields::AllocateInterpointVariable(const string &name, const int 
     case PHFLOAT:
         {
             float **qFloat = NewPointer2<float>(dimesion, numberOfInterpoints);
-            for (int iDimension = 0; iDimension < dimesion; ++ iDimension)
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
             {
-                for (int jDimension = 0; jDimension < numberOfInterpoints; ++ jDimension)
+                for (int jDim = 0; jDim < numberOfInterpoints; ++ jDim)
                 {
-                    qFloat[iDimension][jDimension] = 0.0;
+                    qFloat[iDim][jDim] = 0.0;
                 }
             }
             datastore->UpdateDataPtr(name, qFloat);
@@ -447,11 +447,11 @@ void InterpointFields::AllocateInterpointVariable(const string &name, const int 
     case PHDOUBLE:
         {
             RDouble **qDouble = NewPointer2<RDouble>(dimesion, numberOfInterpoints);
-            for (int iDimension = 0; iDimension < dimesion; ++ iDimension)
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
             {
-                for (int jDimension = 0; jDimension < numberOfInterpoints; ++ jDimension)
+                for (int jDim = 0; jDim < numberOfInterpoints; ++ jDim)
                 {
-                    qDouble[iDimension][jDimension] = 0.0;
+                    qDouble[iDim][jDim] = 0.0;
                 }
             }
             datastore->UpdateDataPtr(name, qDouble);
@@ -460,11 +460,11 @@ void InterpointFields::AllocateInterpointVariable(const string &name, const int 
     case PHBOOL:
         {
             bool **qBool = NewPointer2<bool>(dimesion, numberOfInterpoints);
-            for (int iDimension = 0; iDimension < dimesion; ++ iDimension)
+            for (int iDim = 0; iDim < dimesion; ++ iDim)
             {
-                for (int jDimension = 0; jDimension < numberOfInterpoints; ++ jDimension)
+                for (int jDim = 0; jDim < numberOfInterpoints; ++ jDim)
                 {
-                    qBool[iDimension][jDimension] = 0;
+                    qBool[iDim][jDim] = 0;
                 }
             }
             datastore->UpdateDataPtr(name, qBool);
@@ -480,18 +480,18 @@ void InterpointFields::AllocateInterpointVariable(const string &name, const int 
 
 void InterpointFields::FreeInterpointVariable()
 {
-    for (int IDOfGhostLayer = GetNumberOfGhostCellLayers() - 1; IDOfGhostLayer >= 0; -- IDOfGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        FreeInterpointVariable(interpointInformation->GetSendDataStorage(IDOfGhostLayer));
-        FreeInterpointVariable(interpointInformation->GetReceiveDataStorage(IDOfGhostLayer));
+        FreeInterpointVariable(interpointInformation->GetSendDataStorage(iGhost));
+        FreeInterpointVariable(interpointInformation->GetReceiveDataStorage(iGhost));
     }
 }
 
 void InterpointFields::FreeInterpointVariable(Data_ParamFieldSuite *dataStore)
 {
-    for (int iVariable = 0; iVariable < Size(); ++ iVariable)
+    for (int iVar = 0; iVar < Size(); ++ iVar)
     {
-        string variableName = variableNames[iVariable];
+        string variableName = variableNames[iVar];
         void **q = reinterpret_cast<void **> (dataStore->GetDataPtr(variableName));
         DelPointer2(q);
     }

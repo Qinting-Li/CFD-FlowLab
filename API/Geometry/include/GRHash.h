@@ -109,14 +109,14 @@ public:
 
     Hash(const Hash<T>& H) {                    //! Assignment constructor.
         register CAulong i; CAulong sz=H.size();
-        for(i=0; i<sz; i++)
+        for (i=0; i<sz; i++)
             (*this).insert((*(H.hash_deque))[i]);
     }
 
     //     Hash<T>& operator=(const Hash<T>& H) {      //! Assign operator.
     //         clear();
     //         register int i; int sz=H.size();
-    //         for(i=0; i<sz; i++)
+    //         for (i=0; i<sz; i++)
     //             (*this).insert((*(H.hash_deque))[i]);
     //         return (*this);
     //     }    
@@ -127,9 +127,9 @@ public:
         hash_table = new CAulong[hash_size];
         register CAulong i; CAulong sz=H.size();
 
-        for(i=0; i<hash_size; i++) hash_table[i] = H.hash_table[i];
+        for (i=0; i<hash_size; i++) hash_table[i] = H.hash_table[i];
 
-        for(i=0; i<sz; i++)
+        for (i=0; i<sz; i++)
             hash_deque->push_back(H[i]);
         return (*this);
     }    
@@ -180,7 +180,7 @@ void Hash<T>::resize()
 
     //! Resize the hash size, multiply by two.
     hash_table = new CAulong[hash_size*=2];
-    for(ii=0; ii<hash_size; ii++) hash_table[ii] = 0;
+    for (ii=0; ii<hash_size; ii++) hash_table[ii] = 0;
 
     //************************************************
     //! Erase the deleted element from hash_deque.
@@ -229,7 +229,7 @@ void Hash<T>::resize()
 
     //! Re-build the image: hash_table --> hash_deque.
     o_size = static_cast<CAulong>(hash_deque->size());
-    for(jj=0; jj<o_size; jj++) 
+    for (jj=0; jj<o_size; jj++) 
     {
         key=gethashkey((*hash_deque)[jj]);
         hash1=key%hash_size;
