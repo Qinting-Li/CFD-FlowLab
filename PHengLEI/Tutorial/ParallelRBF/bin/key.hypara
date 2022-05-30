@@ -1,9 +1,0 @@
-string title      =  "HyperFlow ¶àÑ§¿Æ Ö÷¿ØÎÄ¼þ"
-int csmode  =  0;
-int  ndim  =  3;
-int  nparafile  =  1;
-int    nsimutask  =  2;
-string parafilename  =  "./bin/cfd_para.hypara";
-int nComponent               =  0;
-string componentDefineFile   =  "./in/sphere.part";
-

@@ -40,12 +40,6 @@ void Mesh_Refine::Run()
 
     RefineGrid();
 
-#ifdef USE_INHOUSE_VERSION
-#ifdef USE_OCC
-    ShapePreserving();
-#endif
-#endif
-
     GenerateAndDumpComputationalGrid();
 }
 
@@ -93,69 +87,6 @@ int RefineParameter::GetAnisoRefineType()
     return this->anisoRefine;
 }
 
-#ifdef USE_INHOUSE_VERSION
-#ifdef USE_OCC
-void RefineParameter::SetIsProject(int isProjectIn)
-{
-    this->isProject = isProjectIn;
 }
 
-void RefineParameter::SetIsDeform(int isDeformIn)
-{
-    this->isDeform = isDeformIn;
-}
-
-void RefineParameter::SetExclusiveCase(int exclusiveCaseIn)
-{
-    this->exclusiveCase = exclusiveCaseIn;
-}
-
-void RefineParameter::SetProjectOrgPoint(int projectOrgPointIn)
-{
-    this->projectOrgPoint = projectOrgPointIn;
-}
-
-void RefineParameter::SetGeometryUnit(int geometryUnitIn)
-{
-    this->geometryUnit = geometryUnitIn;
-}
-
-void RefineParameter::SetGeometryFileName(int geometryFileNameIn)
-{
-    this->geometryFileName = geometryFileNameIn;
-}
-
-int RefineParameter::GetIsProject()
-{
-    return this->isProject;
-}
-
-int RefineParameter::GetIsDeform()
-{
-    return this->isDeform;
-}
-
-int RefineParameter::GetExclusiveCase()
-{
-    return this->exclusiveCase;
-}
-
-int RefineParameter::GetProjectOrgPoint()
-{
-    return this->projectOrgPoint;
-}
-
-int RefineParameter::GetGeometryUnit()
-{
-    return this->geometryUnit;
-}
-
-string RefineParameter::GetGeometryFileName()
-{
-    return this->geometryFileName;
-}
-#endif
-#endif
-
-}
 

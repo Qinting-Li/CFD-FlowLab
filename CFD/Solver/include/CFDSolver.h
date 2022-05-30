@@ -338,9 +338,6 @@ public:
     void WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *> datalist);
     virtual void DumpHeatFlux(ActionKey *actkey);
     void WriteHeatFluxASCII(ActionKey *actkey, RDouble *HeatFlux);
-    #ifdef USE_TecplotLib
-        void WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> datalist);
-    #endif
 
     //! Export the required variables on surface to file, such as the temperature, mass fraction etc.
     virtual void ExportSurfaceVariables(ActionKey *actkey) {}; //added by Li Peng
@@ -557,3 +554,4 @@ void UpdateInterfaceData();
 #include "CFDSolver.hxx"
 
 }
+

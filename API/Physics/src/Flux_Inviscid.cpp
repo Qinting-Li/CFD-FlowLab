@@ -4,11 +4,7 @@
 #include "Flux_RoeEntropyCorrection.h"
 using namespace std;
 
-#ifdef USE_HYFLOW_CODE
-#include "RealGas.h"
-#else
 #include "Gas.h"
-#endif
 
 namespace PHSPACE
 {
@@ -1996,3 +1992,4 @@ InviscidSchemeParameter::~InviscidSchemeParameter()
 
 
 }
+

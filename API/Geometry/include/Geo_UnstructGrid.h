@@ -27,9 +27,6 @@
 #include "Geo_UnstructBC.h"
 #include "Geo_LineTopo_Unstruct.h"
 
-#ifdef USE_IncompressibleSolver
-#include "PHVector3.h"
-#endif
 
 namespace PHSPACE
 {
@@ -161,14 +158,6 @@ private:
 
 public:
 
-#ifdef USE_IncompressibleSolver
-    //! This is values for SIMPLE algorithm.
-    //! cellCenterVector container the three coordinates of the cells center. 
-    Vector3D *cellCenterVector;
-
-    //! faceNormalVector container the three units of the face normal directions. 
-    Vector3D *faceNormalVector;
-#endif
 
 public:
     LIB_EXPORT UnstructGrid();
@@ -567,9 +556,6 @@ public:
 
     // calculate the normal distance between two neighbor cells.
     LIB_EXPORT void CalNormalDistanceOfC2C();
-    #ifdef USE_INHOUSE_VERSION
-    LIB_EXPORT void ReorderCellForLineLUSGS();
-    #endif
     void ReadGrid (fstream &file);
     void ReadGrid (VirtualFile *vfile);
     LIB_EXPORT void WriteGrid(fstream &file);
@@ -680,13 +666,6 @@ private:
     void ComputeCellCenterVol3DNew2(ActionKey *actkey);
 
 public:
-#ifdef USE_IncompressibleSolver
-    //! This is function for SIMPLE algorithm.
-    Vector3D * GetCellCenterVector() const;
-    Vector3D * GetFaceNormalVector() const;
-    void SetCellCenterVector(Vector3D *cellC);
-    void SetFaceNormalVector(Vector3D *faceN);
-#endif
 };
 
 #include "Geo_UnstructGrid.hxx"
@@ -789,3 +768,5 @@ void DumpSliceGrid(UnstructGrid *unstructGrid, int sliceAxis, RDouble slicePosit
 
 RDouble AspectRatio(RDouble dist, RDouble area, int nodeNumOfPerFace);
 }
+
+

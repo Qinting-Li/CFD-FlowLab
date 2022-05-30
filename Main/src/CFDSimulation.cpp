@@ -39,59 +39,29 @@ void ShowWelcomeTitle()
     using namespace PHMPI;
     PH_Barrier();
 
-    int useHyflowOutput = GlobalDataBase::GetIntParaFromDB("useHyflowOutput");
     int myid = GetCurrentProcessorID();
     if (myid == PHMPI::GetServerProcessorID())
-    {
-        if (useHyflowOutput == 0)
-        {
-            ostringstream oss;
-            oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-            oss << "$#                                                     #$" << endl;
-            oss << "$#  PPPPP H   H  EEEE N     N  GGGGG  L     EEEEE III  #$" << endl;
-            oss << "$#  P   P H   H  E    N N   N  G      L     E      I   #$" << endl;
-            oss << "$#  PPPPP HHHHH  EEEE N  N  N  G  GG  L     EEEEE  I   #$" << endl;
-            oss << "$#  P     H   H  E    N   N N  G   G  L     E      I   #$" << endl;
-            oss << "$#  P     H   H  EEEE N     N  GGGGG  LLLLL EEEEE III  #$" << endl;
-            oss << "$#                                                     #$" << endl;
-            oss << "$#=====================================================#$" << endl;
-            oss << "$#                                                     #$" << endl;
-            oss << "$# Platform for Hybrid Engineering Simulation of Flows #$" << endl;
-            oss << "$#                                                     #$" << endl;
-            oss << "$#       Computational Aerodynamics Institute          #$" << endl;
-            oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
-            oss << "$#            (C) Copyright, Since 2010                #$" << endl;
-            oss << "$#                                                     #$" << endl;
-            oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+    {     
+        ostringstream oss;
+        oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+        oss << "$#                                                     #$" << endl;
+        oss << "$#  PPPPP H   H  EEEE N     N  GGGGG  L     EEEEE III  #$" << endl;
+        oss << "$#  P   P H   H  E    N N   N  G      L     E      I   #$" << endl;
+        oss << "$#  PPPPP HHHHH  EEEE N  N  N  G  GG  L     EEEEE  I   #$" << endl;
+        oss << "$#  P     H   H  E    N   N N  G   G  L     E      I   #$" << endl;
+        oss << "$#  P     H   H  EEEE N     N  GGGGG  LLLLL EEEEE III  #$" << endl;
+        oss << "$#                                                     #$" << endl;
+        oss << "$#=====================================================#$" << endl;
+        oss << "$#                                                     #$" << endl;
+        oss << "$# Platform for Hybrid Engineering Simulation of Flows #$" << endl;
+        oss << "$#                                                     #$" << endl;
+        oss << "$#       Computational Aerodynamics Institute          #$" << endl;
+        oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
+        oss << "$#            (C) Copyright, Since 2010                #$" << endl;
+        oss << "$#                                                     #$" << endl;
+        oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
-            cout << oss.str();
-        }
-
-        #ifdef USE_HYFLOW_CODE
-        else
-        {
-            ostringstream oss;
-            oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-            oss << "$#                                                                                               #$" << endl;
-            oss << "$#    H       H  Y        Y  FFFFF  L            OOO   W                 W    #$" << endl;
-            oss << "$#    H       H     Y  Y     F         L          O       O  W      W      W     #$" << endl;
-            oss << "$#    HHHHH       Y       FFF     L         O         O  W     W     W      #$" << endl;
-            oss << "$#    H       H       Y       F         L          O       O     W W W W        #$" << endl;
-            oss << "$#    H       H       Y       F         L L L L L  OOO         W     W          #$" << endl;
-            oss << "$#                                                                                               #$" << endl;
-            oss << "$# =======================================#$" << endl;
-            oss << "$#                                                                                               #$" << endl;
-            oss << "$#          NNW --- Hypersonic flow simulation software.              #$" << endl;
-            oss << "$#                                                                                               #$" << endl;
-            oss << "$#                Computational Aerodynamics Institute                    #$" << endl;
-            oss << "$#    China Aerodynamics Research and Development Center      #$" << endl;
-            oss << "$#                           (C) Copyright, Since 2018                              #$" << endl;
-            oss << "$#                                                                                               #$" << endl;
-            oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-
-            cout << oss.str();
-        }
-        #endif
+        cout << oss.str();
     }
 }
 
@@ -252,25 +222,9 @@ void ControlParametersPreliminarySelfCheck()
             break;
         case HO_SOLVER:
             break;
-        #ifdef USE_INHOUSE_VERSION
-        case DSMC_SOLVER:
-            break;
-        case HELICOPTER:
-            break;
-        case UGKS_SOLVER:
-            break;
-        case LBM_SOLVER:
-            break;
-        case DERIVATIVE_IDENITFY:
-            break;
-        #endif
         case INTEGRATIVE_SOLVER:
             ParametersSelfCheckForCFD();
             break;
-        #ifdef USE_INHOUSE_VERSION
-        case GRIDCHECK_SOLVER:
-            break;
-        #endif
         case POST_PROCESSING:
             break;
         case SPECDIFFHYB_SOLVER:
@@ -284,4 +238,6 @@ void ControlParametersPreliminarySelfCheck()
 }
 
 }
+
+
 

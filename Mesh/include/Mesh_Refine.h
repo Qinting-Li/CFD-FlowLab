@@ -26,43 +26,9 @@ private:
     //! Mesh refine type, ISOTROPICREFINE or ANISOTROPICREFINE.
     int anisoRefine;
 
-#ifdef USE_INHOUSE_VERSION
-#ifdef USE_OCC
-    int isProject;
-
-    int isDeform;
-
-    int exclusiveCase;
-
-    int projectOrgPoint;
-
-    int geometryUnit;
-
-    string geometryFileName;
-#endif
-#endif
-
 public:
     void SetAnisoRefineType(int anisoRefineIn);
     int GetAnisoRefineType();
-
-#ifdef USE_INHOUSE_VERSION
-#ifdef USE_OCC
-    void SetIsProject(int isProjectIn);
-    void SetIsDeform(int isDeformIn);
-    void SetExclusiveCase(int exclusiveCaseIn);
-    void SetProjectOrgPoint(int projectOrgPointIn);
-    void SetGeometryUnit(int geometryUnitIn);
-    void SetGeometryFileName(int geometryFileNameIn);
-
-    int GetIsProject();
-    int GetIsDeform();
-    int GetExclusiveCase();
-    int GetProjectOrgPoint();
-    int GetGeometryUnit();
-    string GetGeometryFileName();
-#endif
-#endif
 
 };
 
@@ -98,12 +64,6 @@ protected:
 
     //! Grid refine.
     virtual void RefineGrid() {};
-
-#ifdef USE_INHOUSE_VERSION
-#ifdef USE_OCC
-    virtual void ShapePreserving() {};
-#endif
-#endif
 
     //! Generate refined grid, and then dump grid.
     virtual void GenerateAndDumpComputationalGrid() {};

@@ -1,3 +1,0 @@
-The data's name is : value
-The data's type is : 2
-The data's size is : 1

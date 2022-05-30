@@ -10,10 +10,6 @@
 #include "MixGrid.h"
 #include "Solver.h"
 
-#ifdef USE_HYFLOW_CODE
-#include "RealGas.h"
-#include "EquilibriumGas.h"
-#endif
 
 #ifdef USE_MULTISPECIES_CODE
 #include "MixedGas.h"
@@ -247,19 +243,9 @@ void InitGlobalValuesSolver()
         if (chemical == 0)
         {
             gas = new PerfectGas();
-            #ifdef USE_HYFLOW_CODE
-            int nEquilibriumGas = GlobalDataBase::GetIntParaFromDB("nEquilibriumGas");
-            if (nEquilibriumGas > 0)
-            {
-                eqGas = new EquilibriumGas(nEquilibriumGas);
-            }
-            #endif
         }
         else
         {
-            #ifdef USE_HYFLOW_CODE
-            gas = new RealGas();
-            #endif
 
             #ifdef USE_MULTISPECIES_CODE
             gas = new MixedGas();
@@ -283,14 +269,6 @@ void CleanGlobalValuesSolver()
         using namespace GAS_SPACE;
         delete gas;
         gas = 0;
-        #ifdef USE_HYFLOW_CODE
-        int nEquilibriumGas = GlobalDataBase::GetIntParaFromDB("nEquilibriumGas");
-        if (chemical == 0 && nEquilibriumGas > 0)
-        {
-            delete eqGas;
-            eqGas = 0;
-        }
-        #endif
     }
     else if (iapplication == 1)
     {

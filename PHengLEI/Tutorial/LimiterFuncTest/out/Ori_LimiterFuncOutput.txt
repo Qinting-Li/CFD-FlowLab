@@ -1,9 +1,0 @@
-The returned value of CheckLimit function is:  1
-The returned value of NOLIMITER function is:  2e-12
-The returned value of MINMOD function is:  5e-14
-The returned value of VANLEER function is:  9.75134e-14
-The returned value of MIX_MINMOD_VANLEER function is:  5e-14
-The returned value of VANALBADA function is:  1.025e-12
-The returned value of VANALBADACLZ function is:  1.025e-12
-There turned value of SMOOTH function is:  1.025e-12
-The returned value of VenFun function is:  1

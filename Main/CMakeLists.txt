@@ -174,7 +174,6 @@ endif(WIN32)
 set(API_TARGET_NAME "PHAPI")
 set(MESH_TARGET_NAME "PHMesh")
 set(CFD_TARGET_NAME "PHCFD")
-#set(HYFLOW_TARGET_NAME "HyFLOW")
 
 message(STATUS "Linking ${MESH_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${MESH_TARGET_NAME})
@@ -189,16 +188,6 @@ message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 #23. link a target to given libraries:
 target_link_libraries(${EXECUTABLE_TARGET_NAME} ${LINK_LIBRARY_LIST})
-
-if(USE_TecplotLib)
-  if(WIN32)
-    if(USE_Windows_X64)
-      add_custom_command(TARGET ${EXECUTABLE_TARGET_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/tecio.dll" $<TARGET_FILE_DIR:${EXECUTABLE_TARGET_NAME}>)
-    else(USE_Windows_X64) 
-      add_custom_command(TARGET ${EXECUTABLE_TARGET_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x86/tecio.dll" $<TARGET_FILE_DIR:${EXECUTABLE_TARGET_NAME}>)
-    endif(USE_Windows_X64)
-  endif(WIN32)
-endif(USE_TecplotLib)
 
 # Some pre-definitions that occ need.
 if(USE_OCC)
@@ -239,18 +228,7 @@ endif(WIN32)
 endif (OpenMP_FOUND)
 
 # For UGKS
-if(USE_INHOUSE_VERSION)
-if(WIN32)
-else(WIN32)
-    FIND_PACKAGE(OpenMP REQUIRED)
-    if(OPENMP_FOUND)
-        message("OPENMP FOUND ${CMAKE_C_FLAGS} ${OpenMP_CXX_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-    endif(OPENMP_FOUND)
-endif(WIN32)
-endif(USE_INHOUSE_VERSION)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
+

@@ -309,10 +309,6 @@ void WalldistStatics();
 //! Dump out the wall distance to file.
 void DumpWalldistToFile(ActionKey *actkey, int iZone);
 
-#ifdef USE_TecplotLib
-//! Visualization of wall distance.
-void VisualWalldist();
-#endif
 
 //! If read wall distance file or not.
 bool IsReadWalldist();

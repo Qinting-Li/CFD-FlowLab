@@ -69,15 +69,6 @@ public:
 
     void InterpolatFineGrid(Grid *fgrid_in, Grid *cgrid_in);
 
-#ifdef USE_INHOUSE_VERSION
-    //! Compute the Matrix of left hand side for time integration on unstructured grid:\n
-    //! @param[in] gridIn    computational mesh.
-    void LHSMatrixs(Grid *gridIn);
-
-    //! Compute the Matrix of left hand side for time integration on unstructured grid:\n
-    //! @param[in] gridIn    computational mesh.
-    void LineLUSGSMatrixs(Grid* gridIn);
-#endif
 
     void LoadResiduals(Grid *gridIn, FieldProxy *rhsProxy);   
 
@@ -197,24 +188,6 @@ public:
     void SolveLUSGSForward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void SolveLUSGSBackward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
 
-#ifdef USE_INHOUSE_VERSION
-    //! Forward sweep in line implicit LUSGS time methods.
-    void SolveLineLUSGSForward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
-
-    //! Backward sweep in line implicit LUSGS time methods.
-    void SolveLineLUSGSBackward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
-
-    //! This is for Block Lower-Upper Symmetric Gauss¨CSeidel Scheme according wzj reference in 2000 year.
-    //! Forward sweep in BLUSGS time methods.
-    //! @param[in] grid    computational mesh.
-    //! @param[in] dqProxy        a proxy to store dq.
-    //! @param[in] LUplusDQ       a proxy to store dq.
-    //! @param[in] sweepNormal    a value depends the number of inner iterations.
-    void SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    
-    //! Backward sweep in BLUSGS time methods.
-    void SolveBLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-#endif
 
     void AirForceCoef(ActionKey *actkey);
     void AirForceCoefParts(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
@@ -353,3 +326,4 @@ private:
 };
 
 }
+

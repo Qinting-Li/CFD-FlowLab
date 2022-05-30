@@ -19,17 +19,8 @@
 #include "Jacobian.h"
 #include "TK_Log.h"
 
-#ifdef USE_INHOUSE_VERSION
-#include "BLUSGS.h"
-#include "MatrixLUSGS.h"
-#endif
 
-#ifdef USE_HYFLOW_CODE
-#include "RealGas.h"
-#include "EquilibriumGas.h"
-#else
 #include "Gas.h"
-#endif
 #include "TK_Time.h"
 using namespace std;
 
@@ -440,9 +431,6 @@ namespace PHSPACE
             }
             grid->UpdateDataPtr("tflag", tflag);
 
-#ifdef USE_HYFLOW_CODE
-            modifyFlagForWall(grid);
-#endif 
 
             grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
 
@@ -550,9 +538,6 @@ namespace PHSPACE
                 surfacePressure = new RDouble3D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), Range(0, 1), fortranArray);
             }
             grid->UpdateDataPtr("surfacePressure", surfacePressure);
-#ifdef USE_HYFLOW_CODE
-            GAS_SPACE::ComputeSurfacePressure(grid);
-#endif
         }
 
         //To exam the surface heating change.
@@ -7753,108 +7738,6 @@ namespace PHSPACE
 
         temperatures = 1.0;
 
-#ifdef USE_HYFLOW_CODE
-        using namespace PHENGLEI;
-        StructBCSet *structBCSet = grid->GetStructBCSet();
-        int nBCRegion = structBCSet->GetnBCRegion();
-        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
-
-        {
-            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
-            int BCType = structBC->GetBCType();
-
-            if (BCType != INFLOW && BCType != PRESSURE_INLET)
-            {
-                continue;
-            }
-
-            RDouble *primitiveVarBC = new RDouble[nEquation];
-            int initFlowBcType;
-            RDouble firstPoint[3], secondPoint[3], bcRadius;
-
-            //ini initFlowBcType
-            if(!structBC->CheckParamData("initFlowBcType"))continue;
-            structBC->GetParamData("primitiveVarFarfield", primitiveVarBC, PHDOUBLE, nEquation);
-            structBC->GetParamData("initFlowBcType", &initFlowBcType, PHINT, 1);
-
-            //ini firstPoint
-            if(!structBC->CheckParamData("firstPoint"))continue;
-            structBC->GetParamData("firstPoint",  &firstPoint , PHDOUBLE, 3);
-
-            //ini secondPoint
-            if(structBC->CheckParamData("secondPoint"))
-            {
-                structBC->GetParamData("secondPoint", &secondPoint, PHDOUBLE, 3);
-            }
-            else
-            {
-                secondPoint[0] = firstPoint[0];
-                secondPoint[1] = firstPoint[1];
-                secondPoint[2] = firstPoint[2];
-            }
-            
-            //ini bcRadius
-            if(structBC->CheckParamData("bcRadius"))
-            {
-                structBC->GetParamData("bcRadius", &bcRadius, PHDOUBLE, 1);
-            }
-            else
-            {
-                bcRadius = 0.0;
-            }
-
-            for (int s = 0; s < 3; ++ s)
-            {
-                firstPoint[s] /= refLenth;
-                secondPoint[s] /= refLenth;
-            }
-            bcRadius /= refLenth;
-
-            RDouble TBC[3];
-            gas->GetTemperatureR(primitiveVarBC, TBC[0], TBC[1], TBC[2]);
-
-            for (int k = kCellStart; k <= kCellEnd; ++ k)
-            {
-                for (int j = jCellStart; j <= jCellEnd; ++ j)
-                {
-                    for (int i = iCellStart; i <= iCellEnd; ++ i)
-                    {
-
-                        if(isInside(Xm(i, j, k), Ym(i, j, k), Zm(i, j, k), firstPoint, secondPoint, bcRadius,initFlowBcType))
-                        {
-                            for (int m = mst; m <= med; ++ m)
-                            {
-                                primitiveVariables(i, j, k, m) = primitiveVarBC[m];
-                            }
-
-                            for (int m = 0; m < parameters->GetTemperatureModel(); ++ m)
-                            {
-                                temperatures(i, j, k, m) = TBC[m];
-                            }
-                        }
-                    }
-                }
-            }
-            delete[] primitiveVarBC;
-        }
-
-        if(iniSpeedCoef < 1.0 && iniSpeedCoef >= 0.0)
-        {
-            using namespace IDX;
-            for (int k = kCellStart; k <= kCellEnd; ++ k)
-            {
-                for (int j = jCellStart; j <= jCellEnd; ++ j)
-                {
-                    for (int i = iCellStart; i <= iCellEnd; ++ i)
-                    {
-                        primitiveVariables(i, j, k, IU) *= iniSpeedCoef;
-                        primitiveVariables(i, j, k, IV) *= iniSpeedCoef;
-                        primitiveVariables(i, j, k, IW) *= iniSpeedCoef;
-                    }
-                }
-            }
-        }
-#endif
 
         InitGrad(grid);
 
@@ -7960,24 +7843,11 @@ namespace PHSPACE
                 }
                 else
                 {
-#ifdef USE_HYFLOW_CODE
-                    //! Compute the temperature of wall.
-                    GAS_SPACE::ComputeSurfaceTemperature(grid, structBC, iWallBC);
-
-                    //! Compute the mass fractions of species on wall.
-                    GAS_SPACE::ComputeSurfaceMassFraction(grid, structBC, iWallBC);
-
-                    //! Compute the slip variables on wall.
-                    GAS_SPACE::ComputeSurfaceSlipVariables(grid, structBC, iWallBC);
-#endif
 
                     if (wallTemperature < 0.0)
                     {
                         if (nChemical > 0)
                         {
-#ifdef USE_HYFLOW_CODE
-                            GAS_SPACE::ChemicalVisWallISO3D(grid, structBC, iWallBC);
-#endif
                         }
                         else    //! Viscous adiabatic wall condition.
                         {
@@ -7988,10 +7858,6 @@ namespace PHSPACE
                     {
                         if (nChemical > 0)
                         {
-#ifdef USE_HYFLOW_CODE
-                            GAS_SPACE::ChemicalVisWallISO3D(grid, structBC, iWallBC);
-                            //GAS_SPACE::SetChemicalIsothermalWall(grid, StructBC);
-#endif
                         }
                         else
                         {
@@ -8003,16 +7869,6 @@ namespace PHSPACE
             }
             else if (BCType == ABLATION_SURFACE)
             {
-#ifdef USE_HYFLOW_CODE
-                structBC->GetParamData("viscousType", &viscousType, PHINT, 1);
-                if (viscousType > INVISCID)
-                {
-                    //! Compute the temperature and mass fractions of species under the ablation wall condition.(added by meijie in 2021.09)
-                    GAS_SPACE::ComputeSurfaceAblation(grid, structBC, iWallBC);
-                }
-
-                GAS_SPACE::ChemicalAblationWall(grid, structBC, iWallBC);
-#endif
                 ++ iWallBC;
             }
             else if (BCType == SYMMETRY)
@@ -10463,26 +10319,7 @@ namespace PHSPACE
                             q(it, jt, kt, iEquation) = q(is, js, ks, iEquation);
                         }
                         //
-#ifdef USE_HYFLOW_CODE
-                        GAS_SPACE::computeOutPressure(q(it, jt, kt, IP), staticPressure, staticPressureCorf);    //! used in injet , modeified  by dms.
-                        if(leftOrRightIndex == -1)
-                        {
-                            normalComponetX = -faceNormalComponentX(is, js, ks, nSurface);
-                            normalComponetY = -faceNormalComponentY(is, js, ks, nSurface);
-                            normalComponetZ = -faceNormalComponentZ(is, js, ks, nSurface);
-                        }
-                        else
-                        {
-                            normalComponetX = faceNormalComponentX(it, jt, kt, nSurface);
-                            normalComponetY = faceNormalComponentY(it, jt, kt, nSurface);
-                            normalComponetZ = faceNormalComponentZ(it, jt, kt, nSurface);
-                        }
-
-                        GAS_SPACE::computeOutSpeed(q(it, jt, kt, IU), q(it, jt, kt, IV), q(it, jt, kt, IW), normalComponetX, normalComponetY, normalComponetZ);   //! modeified  by dms.
-
-#else
                         q(it, jt, kt, IP) = staticPressure;
-#endif
                     }
                 }
             }
@@ -10636,19 +10473,6 @@ namespace PHSPACE
         }
         else
         {
-#ifdef USE_HYFLOW_CODE
-            //Compute viscosity.
-            //GAS_SPACE::ComputeViscousLaminarCoefficient(StructGridCast(gridIn));
-            //Compute transport coefficients.
-            if (nEnergyRecycle == 0)
-            {
-                GAS_SPACE::ComputeTransportCoefficients(StructGridCast(gridIn));
-            }
-            else
-            {
-                GAS_SPACE::ComputeTransportCoefficientsR(StructGridCast(gridIn));
-            }
-#endif
         }
     }
 
@@ -10918,9 +10742,6 @@ namespace PHSPACE
 
         if (nChemical == 1 && nChemicalSource && nChemicalRadius == 1)
         {
-#ifdef USE_HYFLOW_CODE
-            GAS_SPACE::AddChemicalSourceInSpectrumRadius(StructGridCast(grid));
-#endif
         }
 #endif
 
@@ -11650,34 +11471,6 @@ namespace PHSPACE
 
     void NSSolverStruct::ChemicalSource(Grid *gridIn)
     {
-#ifdef USE_HYFLOW_CODE
-
-        StructGrid *grid = StructGridCast(gridIn);
-
-        Param_NSSolverStruct *parameters = GetControlParameters();
-        int nChemicalRadius = parameters->GetNChemicalRadius();
-
-        if (nChemicalRadius == 1)           //! The source term has been computed in the implicit scheme.
-        {
-            //GAS_SPACE::ObtainChemicalSource(grid);
-            //! Compute chemical source term and its Jacobian matrix.
-            int nEnergyRecycle = parameters->GetnEnergyRecycle();
-            if (nEnergyRecycle == 0)
-            {
-                GAS_SPACE::ComputeSourceAndJacobian(grid);
-            }
-            else
-            {
-                GAS_SPACE::ComputeSourceAndJacobianD3(grid);
-            }
-
-        }
-        else                                //! Compute the source term in the explicit scheme.
-        {
-            GAS_SPACE::ComputeChemicalSource(grid);
-        }
-
-#endif 
     }
 
     //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
@@ -11908,39 +11701,6 @@ namespace PHSPACE
                     }
                 }
             }
-#ifdef USE_HYFLOW_CODE
-            else //Equilibrium Gas
-            {
-                RDouble coefficientOfStateEquation = gas->GetCoefficientOfStateEquation();
-                RDouble refDensity = parameters->GetRefDimensionalDensity();
-                RDouble refVelocity = parameters->GetRefDimensionalVelocity();
-                RDouble refTemperature = parameters->GetRefDimensionalTemperature();
-                RDouble refPressure = refDensity * refVelocity * refVelocity;
-                RDouble gama1 = refGama, density = 0.0, pressure = 0.0, temperature = 0.0;
-                RDouble massFraction[11];
-                for (int k = kCellStart; k <= kCellEnd; ++ k)
-                {
-                    for (int j = jCellStart; j <= jCellEnd; ++ j)
-                    {
-                        for (int i = iCellStart; i <= iCellEnd; ++ i)
-                        {
-                            //The perfect gas.
-                            density = primitiveVariables(i, j, k, IR);
-                            pressure = primitiveVariables(i, j, k, IP);
-                            temperature = pressure / (coefficientOfStateEquation * density);
-                            temperatures(i, j, k, ITT) = temperature;
-
-                            //To compute the equilibrium gas.
-                            pressure = pressure * refPressure;
-                            temperature = temperature * refTemperature;
-                            //Modify the specific heat ratio.
-                            eqGas->GetEquilibriumGasComponents(pressure, temperature, massFraction, gama1);
-                            gama(i, j, k) = gama1;
-                        }
-                    }
-                }
-            }
-#endif
         }
 
         // added by clz : 2012-8-3
@@ -12235,10 +11995,6 @@ namespace PHSPACE
 
                     if(isUseLocalCFL == 6 )
                     {
-                        #ifdef USE_HYFLOW_CODE
-                            ModifyiedCFL6(nSpeciesEquation,deltPressure(i, j, k), qtry, dqtry, iterCFL(i, j, k), localCFL(i, j, k), updateFlow, 
-                                         pMax, pMin, deltaMax, reduceFactor, magnifyFactor, nCFLStart, nCFLEnd, minCFL(i, j, k));
-                        #endif
                     }
 
       //            double aa= localCFL(i, j, k);
@@ -12266,18 +12022,10 @@ namespace PHSPACE
                         }
                         else
                         {
-#ifdef USE_HYFLOW_CODE
-                            GAS_SPACE::densitiModify(dqlocal, nNSEquation, nLaminar, nEquation, densityRelax);
-                            for (int m = 1; m < nEquation; ++ m)
-                            {
-                                qtry[m] += dq(i, j, k, m) * dqlocal[m];    //! used in chemical.
-                            }
-#else
                             for (int m = 1; m < nEquation; ++ m)
                             {
                                 qtry[m] += dq(i, j, k, m);    //! used in chemical.
                             }
-#endif
                         }
                     }
                     else
@@ -12362,31 +12110,15 @@ namespace PHSPACE
                     }
                     else if(isUseLocalCFL == 3)
                     {
-                        #ifdef USE_HYFLOW_CODE
-                            ModifyiedCFL3(nSpeciesNumber,deltPressure(i, j, k), &prim[IP], &qtry[IP], iterCFL(i, j, k), localCFL(i, j, k), updateFlow, 
-                                         pMax, pMin, deltaMax, reduceFactor, magnifyFactor, nCFLStart, nCFLEnd);
-                        #endif
                     }
                     else if(isUseLocalCFL == 4 )
                     {
-                        #ifdef USE_HYFLOW_CODE
-                            ModifyiedCFL4(nSpeciesNumber,deltPressure(i, j, k), &prim[IP], &qtry[IP], iterCFL(i, j, k), localCFL(i, j, k), updateFlow, 
-                                         pMax, pMin, deltaMax, reduceFactor, magnifyFactor, nCFLStart, nCFLEnd);
-                        #endif
                     }
                     else if(isUseLocalCFL == 5 )
                     {
-                        #ifdef USE_HYFLOW_CODE
-                            ModifyiedCFL5(nSpeciesNumber,deltPressure(i, j, k), &prim[IP], &qtry[IP], iterCFL(i, j, k), localCFL(i, j, k), updateFlow, 
-                                         pMax, pMin, deltaMax, reduceFactor, magnifyFactor, nCFLStart, nCFLEnd, minCFL(i, j, k), fineCFL);
-                        #endif
                     }
                     else if(isUseLocalCFL == 7 )
                     {
-                        #ifdef USE_HYFLOW_CODE
-                            ModifyiedCFL7(nSpeciesNumber,deltPressure(i, j, k), temperature[0], t(i, j, k, 0), &prim[IP], &qtry[IP], iterCFL(i, j, k), localCFL(i, j, k), updateFlow, 
-                                         pMax, pMin, deltaMax, reduceFactor, magnifyFactor, nCFLStart, nCFLEnd, minCFL(i, j, k));
-                        #endif
                     }
 
 
@@ -12517,18 +12249,7 @@ namespace PHSPACE
                     CorrectViscousFlux(grid, fluxProxy, iSurface);
                 }
 #else
-#ifdef USE_HYFLOW_CODE
-                if (nGradPrimtiveMethod == 1)
-                {
-                    GAS_SPACE::ReconGradVolWeightedwithCorrectionR(gridIn, iSurface);
-                }
-                else
-                {
-                    ReconGradVolWeightedwithCorrection(gridIn, iSurface);
-                }
-#else
                 ReconGradVolWeightedwithCorrection(gridIn, iSurface);
-#endif
 
                 CompVisFluxnew(grid, fluxProxy, iSurface);
 
@@ -17291,10 +17012,6 @@ namespace PHSPACE
         //! To compute the inviscid flux of the faces using the QL and QR.
         InviscidFluxWrap(grid, qlProxy, qrProxy, fluxProxy, inviscidScheme, iSurface);
 
-#ifdef USE_HYFLOW_CODE
-        if (nInviscidFluxModify == 1)
-            ModifyFlux(gridIn, fluxProxy, iSurface);   //by dms
-#endif
 //! To compute the summation of fluxes on faces.
         LoadFlux(grid, fluxProxy, iSurface);
 
@@ -17672,49 +17389,6 @@ namespace PHSPACE
             int jl = j + jl1;
             int kl = k + kl1;
 
-            #ifdef USE_HYFLOW_CODE
-            if (nEnergyRecycle > 0)
-            {
-                if (nQlLimitMethod == 0)
-                {
-                    if (ql(i, j, k, IR) <= 0.0) ql(i, j, k, IR) = q(i, j, k, IR);
-                    if (ql(i, j, k, IP) <= 0.0) ql(i, j, k, IP) = q(i, j, k, IP);
-
-                    if (qr(il, jl, kl, IR) <= 0.0) qr(il, jl, kl, IR) = q(il, jl, kl, IR);
-                    if (qr(il, jl, kl, IP) <= 0.0) qr(il, jl, kl, IP) = q(il, jl, kl, IP);
-
-                    for (int n = nm; n < nEquation; ++ n)
-                    {
-                        if (ql(i, j, k, n) <= 0.0) ql(i, j, k, n) = q(i, j, k, n);
-                        if (qr(il, jl, kl, n) <= 0.0) qr(il, jl, kl, n) = q(il, jl, kl, n);
-                    }
-                }
-                else if (nQlLimitMethod == 1)
-                {
-                    if (ql(i, j, k, IR) <= 0.0) ql(i, j, k, IR) = densityMin;
-                    if (ql(i, j, k, IP) <= 0.0) ql(i, j, k, IP) = 1.0e-25;
-
-                    if (qr(il, jl, kl, IR) <= 0.0) qr(il, jl, kl, IR) = densityMin;
-                    if (qr(il, jl, kl, IP) <= 0.0) qr(il, jl, kl, IP) = 1.0e-25;
-
-                    for (int n = nm; n < nEquation; ++ n)
-                    {
-                        if (ql(i, j, k, n) <= 0.0) ql(i, j, k, n) = 1.0e-25;
-                        if (qr(il, jl, kl, n) <= 0.0) qr(il, jl, kl, n) = 1.0e-25;
-                    }
-                }
-                else if (nQlLimitMethod == 2)
-                {
-                    ModifyFluxRL(ql(i, j, k, IR), qr(il, jl, kl, IR), q(i, j, k, IR), q(il, jl, kl, IR));
-                    ModifyFluxRL(ql(i, j, k, IP), qr(il, jl, kl, IP), q(i, j, k, IP), q(il, jl, kl, IP));
-
-                    for (int n = nm; n < nEquation; ++ n)
-                    {
-                        ModifyFluxRL(ql(i, j, k, n), qr(il, jl, kl, n), q(i, j, k, n), q(il, jl, kl, n));
-                    }
-                }
-            }
-            #endif
 
             for (int m = 0; m < nEquation; ++ m)
             {
@@ -18093,9 +17767,6 @@ namespace PHSPACE
             GhostCell3D(diagonal1, ni, nj, nk, nEquation);
         }
 
-#ifdef USE_HYFLOW_CODE
-        //GAS_SPACE::modifyDiagonal(grid, nEquation);
-#endif
 
     }
 
@@ -19352,32 +19023,6 @@ namespace PHSPACE
 
     }
 
-#ifdef USE_INHOUSE_VERSION
-    void NSSolverStruct::SolveBLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-    {
-        StructGrid *grid = StructGridCast(gridIn);
-        SolveBLUSGSForwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-    }
-
-    void NSSolverStruct::SolveBLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-    {
-        StructGrid *grid = StructGridCast(gridIn);
-        SolveBLUSGSBackwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-
-    }
-
-	void NSSolverStruct::SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-	{
-		StructGrid *grid = StructGridCast(gridIn);
-		SolveMLUSGSForwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-	}
-	
-	void NSSolverStruct::SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-	{
-		StructGrid *grid = StructGridCast(gridIn);
-		SolveMLUSGSBackwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-	}
-#endif
 
     void NSSolverStruct::SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq)
     {
@@ -21460,3 +21105,5 @@ namespace PHSPACE
     }
 
 }
+
+

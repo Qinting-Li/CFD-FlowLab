@@ -193,24 +193,6 @@ private:
     //! To determine the CFL number of the next iteration step.
     void DetermineCFLNumber(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqProxy1);
 
-#ifdef USE_INHOUSE_VERSION
-    //! To execute the forward sweep of the block LU-SGS method.
-    //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
-    void SolveBLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    //! To execute the backward sweep of the block LU-SGS method.
-    //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
-    void SolveBLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-	//! To execute the forward sweep of the Matrix LU-SGS method.
-    //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
-    void SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    //! To execute the backward sweep of the Matix LU-SGS method.
-    //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
-    void SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-#endif
 
     void SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq);
 
@@ -385,3 +367,4 @@ public:
 
     bool iterijk(int &i, int &j, int &k, int ist, int ied, int jst, int jed, int kst, int ked);
 }
+

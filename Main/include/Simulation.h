@@ -49,12 +49,6 @@ private:
     //! Need convert process or not.
     void IsNeedConvert();
 
-    #ifdef USE_INHOUSE_VERSION
-    //! Work flow of some specific simulation process.
-    void RunDSMC();
-    void RunHelicopterSolver();
-    void RunUGKS();
-    #endif
 
     //! The work flow to convert, partition and compute.
     void RunIntegrativeSolver();
@@ -69,9 +63,6 @@ private:
     #endif
 
     //! Identify the motive derivatives from the unsteady result file "./results/aircoef.dat".
-    #ifdef USE_INHOUSE_VERSION
-    void IdentifyDerivative();
-    #endif
 
     //! Run post process without flow field simulation.
     void RunPostProcessing();
@@ -152,3 +143,4 @@ private:
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
 };
 }
+

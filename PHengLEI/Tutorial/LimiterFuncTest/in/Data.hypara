@@ -1,6 +1,0 @@
-double vmin = 1.0e-10  ;
-double vmax = 2.0e-10  ;
-double value = 1.3e-10  ;
-double lx = 2.0e-12  ;
-double ly = 5.0e-14  ;
-double eps = 1.0e-8 ;

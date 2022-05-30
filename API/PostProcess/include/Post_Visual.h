@@ -313,49 +313,6 @@ private:
     bool CharacteristicBoundary;
 };
 
-#ifdef USE_TecplotLib
-class DumpToTecio
-{
-private:
-    //ActionKey *actkey;
-    vector<DataContainer *> datalist;
-    string filename;
-
-    //! Visual flow type: 0 -- main flow;  1 -- average flow.
-    int visualFlowType;
-
-public:
-    DumpToTecio(vector<DataContainer *> datalist_in, string filename_in, int visualFlowType = 0);
-    ~DumpToTecio();
-
-public:
-    void Run();
-
-private:
-    void WriteGridFilm_old();
-    void WriteGridFilm();
-    void WriteSliceFilm();
-    void InitVariables();
-
-    //! Set the variables.
-    void SetVariables(string Variables_in) { this->Variables = Variables_in; }
-
-    //! Get the variables.
-    string GetVariables() { return Variables; }
-
-    //! Set number of variables in tecplot.
-    void SetNvarplot(int nvarplot_in) { this->nvarplot = nvarplot_in; }
-
-    //! Return number of variables in tecplot.
-    int GetNvarplot() { return nvarplot; }
-
-    //! Get the file name.
-    string GetFilename() { return filename; }
-private:
-    string Variables;
-    int nvarplot;
-};
-#endif
 
 class DumpToTecplotASCII
 {

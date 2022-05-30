@@ -24,12 +24,6 @@
 #include "Mesh_Refine.h"
 #include "Mesh_RefineController.h"
 
-#ifdef USE_INHOUSE_VERSION
-#ifdef USE_OCC
-#include "ParallelProjection.h"
-#endif
-#endif
-
 namespace PHSPACE
 {
 
@@ -74,17 +68,6 @@ private:
 
     //! Grid refine.
     void RefineGrid();
-
-    #ifdef USE_INHOUSE_VERSION
-        #ifdef USE_OCC
-    void ShapePreserving();
-    void UpdatePointsCoordinates     (PointVector *pointsCoord, vector< vector<bool> > *needDeform);
-    void PreparePointsCoordinates    (PointVector *pointsCoord);
-    void PrepareCheckIsSymmetryPoint (vector< vector<bool> > *isSymmetryPoint);
-    void PrepareCheckIsSolidWallPoint(vector< vector<bool> > *isSolidWallPoint, vector< vector<bool> > *needDeform);
-    void PrepareBoundaryDeformedPoint(vector< vector<bool> > *isSolidWallPoint, PointVector *zoneProjectVector, PointVector *boundaryDeformedPoints, PointVector *deformedVector);
-        #endif
-    #endif
 
     //! Generate refined grid, and then dump grid.
     void GenerateAndDumpComputationalGrid();

@@ -19,15 +19,8 @@
 #include <stdio.h>
 #include "TK_Time.h"
 
-#ifdef USE_TecplotLib
-#include "TECXXX.h"
-#endif
 
-#ifdef USE_HYFLOW_CODE
-#include "RealGas.h"
-#else
 #include "Gas.h"
-#endif
 
 using namespace std;
 
@@ -2484,15 +2477,11 @@ void CFDSolver::DumpCpDistri(ActionKey *actkey)
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
         if (visualfileType == 0)
         {
-            #ifdef USE_TecplotLib
-                WriteWallAircoef(actkey, datalist);
-            #else
                 ostringstream WarningInfo;
                 WarningInfo << "Warning : visualfileType = 0 is not right, dump wall aircoef data into ASCII file! \n";
                 PrintToWindow(WarningInfo);
 
                 WriteWallAircoefASCII(actkey, datalist);
-            #endif
         }
         else if (visualfileType == 1)
         {
@@ -2881,214 +2870,6 @@ void CFDSolver::WriteHeatFluxASCII(ActionKey *actkey, RDouble *HeatFlux)
     ParallelCloseFile(actkey);
 }
 
-#ifdef USE_TecplotLib
-void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> datalist)
-{
-    ostringstream oss;
-    oss << "x y z";
-
-    int systemgridtype = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
-    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
-
-    int dataNumber;
-    dataNumber = 6;
-    oss << " "<< "cp";
-    oss << " "<< "cf";
-    oss << " "<< "yplus";
-    oss << " "<< "Q_NonDim";
-    oss << " "<< "Q_Dim(kW/m2)";
-    oss << " "<< "pw(Pa)";
-
-    if(systemgridtype == STRUCTGRID && nChemical == 1)
-    {
-        dataNumber = 9;
-        oss << " "<< "Qs(kW/m2)";
-        oss << " "<< "Qv(kW/m2)";
-        oss << " "<< "Qe(kW/m2)";
-    }
-
-    string Variable = oss.str();
-    const char *Variables = Variable.c_str();
-
-    const char *pltname = actkey->filename.c_str();
-
-    INTEGER4 Debug = 0;
-    INTEGER4 VIsDouble = 1;
-    INTEGER4 FileType = 0;
-    INTEGER4 I;
-
-    I = TECINI112((char*)"PHengLEI Grid Videotex",
-                  (char*)Variables,
-                  (char*)pltname,
-                  (char*)".",
-                  &FileType,
-                  &Debug,
-                  &VIsDouble);
-
-    bool FileIsFull = false;
-    uint_t nzones = datalist.size();
-    for (int iZone = 0; iZone < nzones; ++ iZone)
-    {
-        int gridTypeofLocalZone = PHMPI::GetZoneGridType(iZone);
-
-        DataContainer *cdata = datalist[iZone];
-        cdata->moveto_begin();
-
-        INTEGER4 IMxOrNumPts, JMxOrNumElements, KMxOrNumFaces;
-        INTEGER4 ZoneType;
-
-        if (gridTypeofLocalZone == STRUCTGRID)
-        {
-            ZoneType = TEC_SPACE::ORDERED;
-        }
-        else
-        {
-            ZoneType = TEC_SPACE::FEQUADRILATERAL;
-        }
-
-        int GridID;
-        PHRead(cdata, &GridID, 1);
-
-        int TecioMission;
-        PHRead(cdata, &TecioMission, 1);
-
-        while (true)
-        {
-            if (TecioMission == 0) break;
-
-            PHRead(cdata, &IMxOrNumPts, 1);
-            PHRead(cdata, &JMxOrNumElements, 1);
-            PHRead(cdata, &KMxOrNumFaces, 1);
-
-            int coor_count = 0;
-            PHRead(cdata, coor_count);
-
-            RDouble *x = new RDouble[coor_count];
-            RDouble *y = new RDouble[coor_count];
-            RDouble *z = new RDouble[coor_count];
-            PHRead(cdata, x, coor_count);
-            PHRead(cdata, y, coor_count);
-            PHRead(cdata, z, coor_count);
-
-            INTEGER4 *ValueLocation = new INTEGER4[dataNumber + 3];
-            ValueLocation[0] = 1;
-            ValueLocation[1] = 1;
-            ValueLocation[2] = 1;
-
-            vector < int > data_count;
-            data_count.resize(0);
-            vector < RDouble *> vector_data;
-            vector_data.resize(0);
-            for (int iData = 0; iData < dataNumber; ++ iData)
-            {
-                int idata_count = 0;
-                PHRead(cdata, idata_count);
-                data_count.push_back(idata_count);
-
-                int iValueLocation = 0;
-                PHRead(cdata, iValueLocation);
-                ValueLocation[3 + iData] = iValueLocation;
-
-                RDouble *qq = new RDouble [idata_count];
-                PHRead(cdata, qq, idata_count);
-
-                vector_data.push_back(qq);
-            }
-
-            INTEGER4 ICellMax                   = 0;
-            INTEGER4 JCellMax                   = 0;
-            INTEGER4 KCellMax                   = 0;
-            double   SolutionTime               = 360.0;
-            INTEGER4 StrandID                   = 0;
-            INTEGER4 ParentZone                 = 0;
-            INTEGER4 IsBlock                    = 1;
-            INTEGER4 NumFaceConnections         = 0;
-            INTEGER4 FaceNeighborMode           = 0;
-
-            INTEGER4 TotalNumFaceNodes_Rect     = 0;
-
-            if (gridTypeofLocalZone == UNSTRUCTGRID)
-            {
-                PHRead(cdata, &TotalNumFaceNodes_Rect, 1);
-            }
-
-            INTEGER4 NumConnBndryFaces_Rect  = 0;
-            INTEGER4 TotalNumBndryConns_Rect = 0;
-            INTEGER4 SharConn                = 0;
-
-            ostringstream oss1;
-            oss1 << "Zone "<< GridID;
-            string Zonetitle = oss1.str();
-            const char * ZoneTitle = Zonetitle.c_str();
-
-            I = TECZNE112((char*)ZoneTitle,
-                          &ZoneType,
-                          &IMxOrNumPts,
-                          &JMxOrNumElements,
-                          &KMxOrNumFaces,
-                          &ICellMax,
-                          &JCellMax,
-                          &KCellMax,
-                          &SolutionTime,
-                          &StrandID,
-                          &ParentZone,
-                          &IsBlock,
-                          &NumFaceConnections,
-                          &FaceNeighborMode,
-                          &TotalNumFaceNodes_Rect,
-                          &NumConnBndryFaces_Rect,
-                          &TotalNumBndryConns_Rect,
-                          NULL,
-                          ValueLocation,
-                          NULL,
-                          &SharConn);
-
-            INTEGER4 IsDouble = 1;
-            I = TECDAT112(&coor_count, x, &IsDouble);
-            I = TECDAT112(&coor_count, y, &IsDouble);
-            I = TECDAT112(&coor_count, z, &IsDouble);
-
-            for (int iData = 0; iData < dataNumber; ++ iData)
-            {
-                I = TECDAT112(&data_count[iData], vector_data[iData], &IsDouble);
-
-                delete [] vector_data[iData];
-            }
-
-            if (gridTypeofLocalZone == UNSTRUCTGRID)
-            {
-                int *face2node = new INTEGER4[TotalNumFaceNodes_Rect];
-                PHRead(cdata, face2node, TotalNumFaceNodes_Rect);
-
-                I = TECNOD112(face2node);
-
-                delete []face2node;
-            }
-
-            if (FileIsFull == false)
-            {
-                FileIsFull = true;
-            }
-
-            delete []x;
-            delete []y;
-            delete []z;
-
-            PHRead(cdata, &TecioMission, 1);
-            delete []ValueLocation;
-        }
-    }
-
-    I = TECEND112();
-    
-    if (FileIsFull == false)
-    {
-        remove(pltname);
-    }
-
-    return;
-}
-#endif
 
 void CFDSolver::UploadInterfaceData()
 {
@@ -3453,3 +3234,5 @@ const string CFDSolver::GetFlowTecFileName()
 
 
 }
+
+

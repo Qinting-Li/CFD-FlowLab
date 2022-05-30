@@ -20,16 +20,8 @@
 #include <cmath>
 #include "Flux_RoeEntropyCorrection.h"
 
-#ifdef USE_INHOUSE_VERSION
-#include "BLUSGS.h"
-#include "LineLUSGS.h"
-#endif
 
-#ifdef USE_HYFLOW_CODE
-#include "RealGas.h"
-#else
 #include "Gas.h"
-#endif
 
 using namespace std;
 
@@ -2185,26 +2177,6 @@ void NSSolverUnstruct::ChemicalSource(Grid *gridIn)
     DelPointer2(src);
 }
 
-#ifdef USE_INHOUSE_VERSION
-void NSSolverUnstruct::LHSMatrixs(Grid *gridIn)
-{
-    UnstructGrid * grid = UnstructGridCast (gridIn);
-    LHSMatrixsInHouse(grid);
-}
-
-void NSSolverUnstruct::LineLUSGSMatrixs(Grid *gridIn)
-{
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-    if (grid->GetLineTopology() == NULL)
-    {
-        grid->ReorderCellForLineLUSGS();
-    }
-
-    CalDLUMatrixLineLUSGS(grid);
-
-    GetDLUMatrixByLine(grid);
-}
-#endif
 
 void NSSolverUnstruct::ComputeFirstLayerGridHeight(Grid *gridIn)
 {
@@ -6772,34 +6744,6 @@ void NSSolverUnstruct::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, Fie
     delete []qPrecondition;
 }
 
-#ifdef USE_INHOUSE_VERSION
-void NSSolverUnstruct::SolveLineLUSGSForward(Grid* gridIn, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal)
-{
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-    SolveLineLUSGSForwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-}
-
-void NSSolverUnstruct::SolveLineLUSGSBackward(Grid* gridIn, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal)
-{
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-    SolveLineLUSGSBackwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-}
-
-//! This is for blusgs according wzj reference in 2000 year.
-//! This is blusgsforward.
-void NSSolverUnstruct::SolveBLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-{
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-    SolveBLUSGSForwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-}
-
-//! This is Blusgs Backward Sweep;
-void NSSolverUnstruct::SolveBLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-{
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-    SolveBLUSGSBackwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-}
-#endif
 
 void NSSolverUnstruct::ZeroResidualOfSpecialCells(Grid *gridIn)
 {
@@ -11510,3 +11454,5 @@ void NSSolverUnstruct::DecompressFacefluxToInterfaceOnlyForMixGrid(DataContainer
 }
 
 }
+
+

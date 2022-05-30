@@ -24,10 +24,6 @@ void Task_WriteBinaryTecplot::PostTask(ActionKey *actkey)
         ActionKeyFUN post_action = this->GetPostAction();
         post_action(actkey);
 
-        #ifdef USE_TecplotLib
-        DumpToTecio dumptotecio(datalist, actkey->tecfilename, this->flowType);
-        dumptotecio.Run();
-        #endif
     }
 }
 
@@ -107,3 +103,4 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
 }
 
 }
+

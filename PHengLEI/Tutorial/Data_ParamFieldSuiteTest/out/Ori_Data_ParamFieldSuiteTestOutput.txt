@@ -1,2 +1,0 @@
-The updated value of a is: 3
-The value of b is: 1.71828

@@ -1,6 +1,0 @@
-string title      =  "HyperFlow ¶àÑ§¿Æ Ö÷¿ØÎÄ¼þ"
-int  ndim  =  3;
-int  nparafile  =  1;
-int    nsimutask  =  0;
-string parafilename  =  "./bin/cfd_para.hypara";
-string defaultParaFile = "./bin/default.hypara";

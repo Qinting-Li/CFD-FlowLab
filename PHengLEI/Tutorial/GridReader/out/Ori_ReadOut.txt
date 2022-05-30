@@ -1,8 +1,0 @@
-  Number of Global Zones : 1
-  Number of grid files : 1
-  Number of Zones in processor 0: 1
-  The grid type:  0
-  Dim = 2
-  For Grid 0, minDis = 0.144119, maxDis = 0.666816 
-  nTNode = 110, nTCell = 182
-  nTFace = 292, nBFace = 38, nIFace = 0

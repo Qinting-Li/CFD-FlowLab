@@ -6,11 +6,7 @@
 #include "Math_BasisFunction.h"
 #include "PHIO.h"
 
-#ifdef USE_HYFLOW_CODE
-#include "RealGas.h"
-#else
 #include "Gas.h"
-#endif
 #include "TK_Log.h"
 
 using namespace std;
@@ -680,9 +676,6 @@ void NSSolver::InitDependentVariables()
         else
         {
             ComputeViscousCoefficient(fineGrid);
-            #ifdef USE_HYFLOW_CODE
-            GAS_SPACE::ComputeViscousLaminarCoefficient(StructGridCast(fineGrid));
-            #endif
         }
     }
 
@@ -870,3 +863,4 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
 }
 
 }
+

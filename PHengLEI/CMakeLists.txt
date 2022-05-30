@@ -48,14 +48,8 @@ opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
 opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
-opt_build(HyFLOW "Build HyFLOW module or not" OFF) #Build HyFLOW or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
-opt_build(TUTORIAL "Build Tutorial or not" OFF) #Build API tutorials or not.
-opt(INHOUSE_VERSION "Build In-house version or not" ON) #Build In-house version or not.
-opt_build(IncompressibleSolver "Build In-house version or not" OFF) #Build IncompressibleSolver or not.
 opt_build(MultiSpecies "Build MultiSpecies module or not" OFF) #Build MultiSpecies or not.
-opt(TecplotLib "Use tecplot lib to dump binary flow file" OFF) #Use tecplotlib or not.
-opt_build(LBM "Build LBM module or not" OFF) #Build LBM or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
 
 set(GPROF OFF)
@@ -116,37 +110,11 @@ if(USE_ErrorDataDebug)
   add_definitions(-DUSE_ErrorDataDebug)
 endif(USE_ErrorDataDebug)
 
-if(USE_INHOUSE_VERSION)
-  message(STATUS "USE_INHOUSE_VERSION is turned on!")
-  add_definitions(-DUSE_INHOUSE_VERSION)
-endif(USE_INHOUSE_VERSION)
-
-if(BUILD_IncompressibleSolver)
-  message(STATUS "USE_IncompressibleSolver is turned on!")
-  add_definitions(-DUSE_IncompressibleSolver)
-endif(BUILD_IncompressibleSolver)
-
-
-if(BUILD_LBM)
-  message(STATUS "BUILD_LBM is turned on!")
-  add_definitions(-DUSE_LBM_CODE)
-  add_compile_options(-std=c++14)
-endif(BUILD_LBM)
-
-if(BUILD_HyFLOW)
-  message(STATUS "BUILD_HyFLOW is turned on!")
-  add_definitions(-DUSE_HYFLOW_CODE)
-endif(BUILD_HyFLOW)
 
 if(BUILD_MultiSpecies)
   message(STATUS "BUILD_MultiSpeciesis turned on!")
   add_definitions(-DUSE_MULTISPECIES_CODE)
 endif(BUILD_MultiSpecies)
-
-if(USE_TecplotLib)
-  message(STATUS "USE_TecplotLib is turned on!")
-  add_definitions(-DUSE_TecplotLib)
-endif(USE_TecplotLib)
 
 if(WIN32)
 if(USE_Windows_X64)
@@ -170,10 +138,6 @@ set(GMSH_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/Gmsh/include)
 include_directories("${GMSH_H_PATH}")
 set(PARMETIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/parmetis/include)
 include_directories("${PARMETIS_H_PATH}")
-if(USE_TecplotLib)
-  set(TECIO_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
-  include_directories("${TECIO_H_PATH}")
-endif(USE_TecplotLib)
 set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
@@ -245,24 +209,15 @@ include_directories(${CFD_H_PATH}/Solver/include)
 include_directories(${CFD_H_PATH}/TurbSolver/include)
 include_directories(${CFD_H_PATH}/PostProcess/include)
 include_directories(${CFD_H_PATH}/HOSolverUnstruct/include)
-if(USE_INHOUSE_VERSION)
 
-include_directories(${CFD_H_PATH}/HelicopterModule/include)
-include_directories(${CFD_H_PATH}/DSMCSolver/include)
-include_directories(${CFD_H_PATH}/UGKSSolver/include)
-endif(USE_INHOUSE_VERSION)
 if(BUILD_SpecDiffHybSolver)
 include_directories(${CFD_H_PATH}/SpecDiffHybSolver/include)
 endif(BUILD_SpecDiffHybSolver)
-if(BUILD_IncompressibleSolver)
-include_directories(${CFD_H_PATH}/IncompressibleSolver/include)
-endif(BUILD_IncompressibleSolver)
+
 if(BUILD_DemoSolver)
 include_directories(${CFD_H_PATH}/DemoSolver/include)
 endif(BUILD_DemoSolver)
-if(BUILD_LBM)
-include_directories(${CFD_H_PATH}/LBMSolver/include)
-endif(BUILD_LBM)
+
 if(BUILD_CFD)
   message(STATUS "Build CFD!")
   add_subdirectory(../CFD ${EXEC_WORKING_DIR}/CFD)
@@ -288,45 +243,8 @@ endif(WIN32)
 #look for CMakeLists.txt in subdirectory <codes> and build an executable target:
 add_subdirectory(../Main ${EXEC_WORKING_DIR})
 
-if(BUILD_TUTORIAL)
-  #ADD_SUBDIRECTORY(Tutorial/CGNSConversion            ${EXEC_WORKING_DIR}/Tutorial/CGNSConversion          )
-  #ADD_SUBDIRECTORY(Tutorial/GridReader                ${EXEC_WORKING_DIR}/Tutorial/GridReader              )
-  #ADD_SUBDIRECTORY(Tutorial/MathBasicTest             ${EXEC_WORKING_DIR}/Tutorial/MathBasicTest           )
-  #ADD_SUBDIRECTORY(Tutorial/LimiterFuncTest           ${EXEC_WORKING_DIR}/Tutorial/LimiterFuncTest         )
-  #ADD_SUBDIRECTORY(Tutorial/BasisFuncTest             ${EXEC_WORKING_DIR}/Tutorial/BasisFuncTest           )
-  #ADD_SUBDIRECTORY(Tutorial/FieldViewGridConversion   ${EXEC_WORKING_DIR}/Tutorial/FieldViewGridConversion )
-  #ADD_SUBDIRECTORY(Tutorial/PreUnstructGridPartition  ${EXEC_WORKING_DIR}/Tutorial/PreUnstructGridPartition)
-  #ADD_SUBDIRECTORY(Tutorial/PreStructGridPartition    ${EXEC_WORKING_DIR}/Tutorial/PreStructGridPartition  )
-  #ADD_SUBDIRECTORY(Tutorial/ExitTest                  ${EXEC_WORKING_DIR}/Tutorial/ExitTest                )
-  #ADD_SUBDIRECTORY(Tutorial/GeoCellMetrics_uns        ${EXEC_WORKING_DIR}/Tutorial/GeoCellMetrics_uns      )
-  #ADD_SUBDIRECTORY(Tutorial/GeoCellMetrics_str        ${EXEC_WORKING_DIR}/Tutorial/GeoCellMetrics_str      )
-  #ADD_SUBDIRECTORY(Tutorial/GeoFaceMetrics_uns        ${EXEC_WORKING_DIR}/Tutorial/GeoFaceMetrics_uns      )
-  #ADD_SUBDIRECTORY(Tutorial/GeoFaceMetrics_str        ${EXEC_WORKING_DIR}/Tutorial/GeoFaceMetrics_str      )
-  #ADD_SUBDIRECTORY(Tutorial/GeoNodeTopo_uns           ${EXEC_WORKING_DIR}/Tutorial/GeoNodeTopo_uns         )
-  #ADD_SUBDIRECTORY(Tutorial/GeoNodeTopo_str           ${EXEC_WORKING_DIR}/Tutorial/GeoNodeTopo_str         )
-  #ADD_SUBDIRECTORY(Tutorial/GeoFaceTopo_uns           ${EXEC_WORKING_DIR}/Tutorial/GeoFaceTopo_uns         )
-  #ADD_SUBDIRECTORY(Tutorial/GeoCellTopo_uns           ${EXEC_WORKING_DIR}/Tutorial/GeoCellTopo_uns         )
-  #ADD_SUBDIRECTORY(Tutorial/TimeSpanTest              ${EXEC_WORKING_DIR}/Tutorial/TimeSpanTest            )
-  #ADD_SUBDIRECTORY(Tutorial/DYutilTest                ${EXEC_WORKING_DIR}/Tutorial/DYutilTest              )
-  #ADD_SUBDIRECTORY(Tutorial/TK_ParseTest              ${EXEC_WORKING_DIR}/Tutorial/TK_ParseTest            )
-  #ADD_SUBDIRECTORY(Tutorial/CGNSConversionToPlot3D    ${EXEC_WORKING_DIR}/Tutorial/CGNSConversionToPlot3D  )
-  #ADD_SUBDIRECTORY(Tutorial/GlobalDataBaseTest        ${EXEC_WORKING_DIR}/Tutorial/GlobalDataBaseTest      )
-  #ADD_SUBDIRECTORY(Tutorial/SafeDataTest              ${EXEC_WORKING_DIR}/Tutorial/SafeDataTest            )
-  #ADD_SUBDIRECTORY(Tutorial/BC_str                    ${EXEC_WORKING_DIR}/Tutorial/BC_str                  )
-  #ADD_SUBDIRECTORY(Tutorial/BC_uns                    ${EXEC_WORKING_DIR}/Tutorial/BC_uns                  )
-  #ADD_SUBDIRECTORY(Tutorial/Data_UtilTest             ${EXEC_WORKING_DIR}/Tutorial/Data_UtilTest           )
-  #ADD_SUBDIRECTORY(Tutorial/Data_FieldTest            ${EXEC_WORKING_DIR}/Tutorial/Data_FieldTest          )
-  #ADD_SUBDIRECTORY(Tutorial/Data_IndexDataTest        ${EXEC_WORKING_DIR}/Tutorial/Data_IndexDataTest      )
-  #ADD_SUBDIRECTORY(Tutorial/Data_ParamFieldSuiteTest  ${EXEC_WORKING_DIR}/Tutorial/Data_ParamFieldSuiteTest)
-  #ADD_SUBDIRECTORY(Tutorial/FluentToPHengLEI_uns      ${EXEC_WORKING_DIR}/Tutorial/FluentToPHengLEI_uns    )
-  #ADD_SUBDIRECTORY(Tutorial/PreGridMirror            ${EXEC_WORKING_DIR}/Tutorial                         )
-  #ADD_SUBDIRECTORY(Tutorial/KDTree                   ${EXEC_WORKING_DIR}/Tutorial/KDTree                  )
-  #ADD_SUBDIRECTORY(Tutorial/WalldistCompute           ${EXEC_WORKING_DIR}/Tutorial/WalldistCompute         )
-  #ADD_SUBDIRECTORY(Tutorial/ParallelRBF    ${EXEC_WORKING_DIR}/Tutorial/ParallelRBF   )
-  
- # ADD_SUBDIRECTORY(Tutorial/SolverDemo ${EXEC_WORKING_DIR}/Tutorial/SolverDemo)
-endif(BUILD_TUTORIAL)
 #exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
 message(STATUS "Finished build project ${PROJECT_NAME}!")
+
 

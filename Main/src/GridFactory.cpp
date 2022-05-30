@@ -10,10 +10,6 @@
 #include "TK_Log.h"
 #include "Pre_StructToUnstruct.h"
 
-#ifdef USE_INHOUSE_VERSION
-#include "Mesh_Repair.h"
-#include "ParallelMeshGen.h"
-#endif
 
 #include "FieldViewIn.h"
 #include "GridView.h"
@@ -52,11 +48,6 @@ void CreateGrid()
     case PHSPACE::GRID_DEFORMATION:
         DeformGrid();
         break;
-#ifdef USE_INHOUSE_VERSION
-    case PHSPACE::GRID_REPAIR:
-        RepairGrid();
-        break;
-#endif
     case PHSPACE::GRID_MIRROR:
         MirrorGrid();
         break;
@@ -684,23 +675,7 @@ void RefineGrid()
 {
     RefineParameter *refineParameter = new RefineParameter();
     int anisoRefine = GlobalDataBase::GetIntParaFromDB("anisoRefine");
-#ifdef USE_INHOUSE_VERSION
-#ifdef USE_OCC
-    int isProject = GlobalDataBase::GetIntParaFromDB("isProject");
-    int isDeform = GlobalDataBase::GetIntParaFromDB("isDeform");
-    int exclusiveCase = GlobalDataBase::GetIntParaFromDB("exclusiveCase");
-    int projectOrgPoint = GlobalDataBase::GetIntParaFromDB("projectOrgPoint");
-    int geometryUnit = GlobalDataBase::GetIntParaFromDB("geometryUnit");
-    string geometryFileName = GlobalDataBase::GetStrParaFromDB("geometryFileName");
 
-    refineParameter->SetIsProject(isProject);
-    refineParameter->SetIsDeform(isDeform);
-    refineParameter->SetExclusiveCase(exclusiveCase);
-    refineParameter->SetProjectOrgPoint(projectOrgPoint);
-    refineParameter->SetGeometryUnit(geometryUnit);
-    refineParameter->SetGeometryFileName(geometryFileName);
-#endif
-#endif
     refineParameter->SetAnisoRefineType(anisoRefine);
 
     int gridtype = GlobalDataBase::GetIntParaFromDB("gridtype");
@@ -759,147 +734,6 @@ void CombineGrid()
 
 void RepairGrid()
 {
-#ifdef USE_INHOUSE_VERSION
-    string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
-    GlobalDataBase::UpdateData("gridfile", &fromGridFile, PHSTRING, 1);
-
-    Region *region = new Region();
-
-    //! Step1: Read in the original grid.
-    region->ReadGrid();
-
-    //! Create action key.
-    string outGridFile = GlobalDataBase::GetStrParaFromDB("out_gfile");
-    ios_base::openmode openMode = ios_base::out | ios_base::binary | ios_base::trunc;
-    ActionKey *actkey = new ActionKey();
-    actkey->filename = outGridFile;
-    actkey->openmode = openMode;
-
-    //! Repair grid.
-    int myid = PHMPI::GetCurrentProcessorID();
-    int nZones = PHMPI::GetNumberofGlobalZones();
-
-    vector <Grid *> gridsList;
-    int *localToGlobal = new int[nZones]();
-    PHSPACE::SetField(localToGlobal, -1, nZones);
-
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        int sendProcess = PHMPI::GetZoneProcessorID(iZone);
-        int recvProcess = PHMPI::GetZoneFileID(iZone);
-
-        int tag = iZone;
-
-        if (myid == sendProcess)
-        {
-            Zone *zone = region->GetZone(iZone);
-            RepairGrid(zone, actkey);
-        }
-
-        PHMPI::PH_Trade(actkey, sendProcess, recvProcess, tag);
-
-        if (myid == recvProcess)
-        {
-            Grid *grid = CreateGridGeneral(PHMPI::GetZoneGridType(iZone), new GridID(iZone, static_cast<int>(gridsList.size())), 0, GetDim());
-            localToGlobal[gridsList.size()] = iZone;
-
-            //! Decompress.
-            DataContainer *cData = actkey->GetData();
-            cData->moveto_begin();
-            grid->Decode(cData, 0);
-
-            UnstructGridCast(grid)->ReSpecifyBC();
-
-            gridsList.push_back(grid);
-        }
-    }
-
-    delete region;
-    delete actkey;
-
-    WriteLogFile("Start to wait for all repair work ...\n");
-    PH_Barrier();
-    WriteLogFile("End waiting for all repair work, start to dump repaired grids to file ...\n");
-
-    // Write grids.
-    int numberOfBlocks = static_cast<int>(gridsList.size());
-    if (numberOfBlocks == 0)
-    {
-        delete [] localToGlobal;
-        return;
-    }
-
-    string fileName = outGridFile;
-
-    int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
-    if (!dumpOldGrid)
-    {
-        //! Dump new HDF5 version grid.
-        PrintToWindow("    Writing new HDF5 version grid to file ....\n");
-        WriteLogFile("    Writing  new HDF5 version grid to file ....\n");
-        int nZones = static_cast <int> (gridsList.size());
-        Grid **gridContainer = new Grid * [nZones];
-        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
-        {
-            gridContainer[iZone] = gridsList[iZone];
-        }
-
-        IO_HDF5Write writeGrid(fileName, gridContainer, nZones);
-        writeGrid.Run();
-
-        delete [] gridContainer;
-    }
-    else
-    {
-        //! Dump old version grid.
-        if (PHMPI::IsParallelRun())
-        {
-            int fileID = PHMPI::GetFileIndexofCurrentProcessor();
-            fileName = AddSymbolToFileName(outGridFile, "_", fileID);
-        }
-        else
-        {
-            fileName = AddSymbolToFileName(outGridFile, "_", 0);
-        }
-
-        fstream file;
-        PHSPACE::OpenFile(file, fileName, ios_base::out | ios_base::binary | ios_base::trunc);
-
-        int *block_proc = new int[numberOfBlocks]();
-        int *block_idx  = new int[numberOfBlocks]();
-        int *block_type = new int[numberOfBlocks]();
-
-        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
-        {
-            int globalID = localToGlobal[iZone];
-            block_proc[iZone] = iZone;
-            block_idx[iZone]  = globalID;
-            block_type[iZone] = PHMPI::GetZoneGridType(globalID);
-        }
-
-        CharVecSizeType sizeOfIntType = sizeof(int);
-
-        file.write(reinterpret_cast <char*> (&numberOfBlocks), sizeOfIntType);
-        file.write(reinterpret_cast <char*> (block_proc), numberOfBlocks * sizeOfIntType);
-        file.write(reinterpret_cast <char*> (block_idx) , numberOfBlocks * sizeOfIntType);
-        file.write(reinterpret_cast <char*> (block_type), numberOfBlocks * sizeOfIntType);
-
-        for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
-        {
-            gridsList[iZone]->WriteGrid(file);
-        }
-
-        file.close();
-        file.clear();
-
-        delete [] block_idx;     block_idx  = NULL;
-        delete [] block_proc;    block_proc = NULL;
-        delete [] block_type;    block_type = NULL;
-        delete [] localToGlobal;    localToGlobal = NULL;
-    }
-
-    WriteLogFile("End dumping repaired grids to file ...\n");
-#endif
 }
 
 void MirrorGrid()
@@ -1092,3 +926,4 @@ void Gridgen2Fantasy()
 }
 
 }
+

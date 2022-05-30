@@ -42,10 +42,6 @@ if(USE_SMARTARRAY)
   message(STATUS "USE_SMARTARRAY is turned on!")
   add_definitions(-DUSE_SMARTARRAY)
 endif()
-if(USE_INHOUSE_VERSION)
-  message(STATUS "USE_INHOUSE_VERSION is turned on!")
-  add_definitions(-DUSE_INHOUSE_VERSION)
-endif(USE_INHOUSE_VERSION)
 if(WIN32)
 if(USE_Windows_X64)
   message(STATUS "USE_Windows_X64 is turned on!")
@@ -56,10 +52,7 @@ if(BUILD_SpecDiffHybSolver)
   message(STATUS "BUILD_SpecDiffHybSolver is turned on!")
   add_definitions(-DUSE_SpecDiffHybSolver)
 endif()
-if(BUILD_IncompressibleSolver)
-  message(STATUS "BUILD_IncompressibleSolver is turned on!")
-  add_definitions(-DUSE_IncompressibleSolver)
-endif(BUILD_IncompressibleSolver)
+
 #1. output message:
 message(STATUS "") 
 message(STATUS "--- Enter subdirectory <CFD>, Start to call ${CMAKE_CURRENT_LIST_FILE} ---") 
@@ -77,18 +70,6 @@ else(WIN32)
   set(LIB_API_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../API/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 endif(WIN32)
 link_directories("${LIB_API_EXPORT_PATH}")
-
-#if(WIN32)
-#if(USE_Windows_X64)
-#  set(LIB_HYFLOW_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../HyFLOW/bin/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE})
-#  set(CMAKE_EXE_LINKER_FLAGS "/machine:x64")
-#else(USE_Windows_X64)
-#  set(LIB_HYFLOW_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../HyFLOW/bin/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE})
-#endif(USE_Windows_X64)
-#else(WIN32)
-#  set(LIB_HYFLOW_EXPORT_PATH ${PROJECT_SOURCE_DIR}/../HyFLOW/bin/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-#endif(WIN32)
-#link_directories("${LIB_HYFLOW_EXPORT_PATH}")
 
 set(CFD_TARGET_NAME "PHCFD")
 set(LIBRARY_OUTPUT_PATH)
@@ -136,11 +117,6 @@ includeHeadFiles()
 set(HDF5_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
 
-if(USE_TecplotLib)
-set(TECIO_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
-include_directories("${TECIO_H_PATH}")
-endif(USE_TecplotLib)
-
 set(MEITIS_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
@@ -178,7 +154,6 @@ ${NSSOLVER_H_PATH}/MultiGridOperation.h
 ${NSSOLVER_H_PATH}/Param_NSSolver.h
 ${NSSOLVER_H_PATH}/Param_NSSolverUnstruct.h
 ${NSSOLVER_H_PATH}/Param_NSSolverStruct.h
-${NSSOLVER_H_PATH}/HyFlowSolverStruct.h
 )
 source_group(NSSolver\\include FILES ${NSSOLVER_H_LIST}) 
 include_directories(${NSSOLVER_H_PATH})
@@ -193,7 +168,6 @@ ${NSSOLVER_CPP_PATH}/NSSolverUnstruct.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolver.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverUnstruct.cpp
 ${NSSOLVER_CPP_PATH}/Param_NSSolverStruct.cpp
-${NSSOLVER_CPP_PATH}/HyFlowSolverStruct.cpp
 )
 source_group(NSSolver\\src FILES ${NSSOLVER_CPP_LIST})
 
@@ -270,205 +244,6 @@ ${HOSOLVERUNSTRUCT_CPP_PATH}/HOStandardElement.cpp
 )
 source_group(HOSolverUnstruct\\src FILES ${HOSOLVERUNSTRUCT_CPP_LIST})
 
-if(BUILD_LBM)
-set(LBMSOLVER_H_PATH           LBMSolver/include)
-set(LBMSOLVER_H_LIST
-${LBMSOLVER_H_PATH}/BinBase.h
-${LBMSOLVER_H_PATH}/BoundaryCondition.h
-${LBMSOLVER_H_PATH}/BoundaryFactory.h
-${LBMSOLVER_H_PATH}/cavity.h
-${LBMSOLVER_H_PATH}/Collision.h
-${LBMSOLVER_H_PATH}/CommonAPI.h
-${LBMSOLVER_H_PATH}/CommonLibDll.h
-${LBMSOLVER_H_PATH}/D2Q9.h
-${LBMSOLVER_H_PATH}/D3Q15.h
-${LBMSOLVER_H_PATH}/D3Q19.h
-${LBMSOLVER_H_PATH}/DevEnv.h
-${LBMSOLVER_H_PATH}/DimClass.h
-${LBMSOLVER_H_PATH}/Function.h
-${LBMSOLVER_H_PATH}/GenBcMap.h
-${LBMSOLVER_H_PATH}/GenColorMap.h
-${LBMSOLVER_H_PATH}/Geo3d.h
-${LBMSOLVER_H_PATH}/GetConfig.h
-${LBMSOLVER_H_PATH}/GlobalData.h
-${LBMSOLVER_H_PATH}/InitField.h
-${LBMSOLVER_H_PATH}/json.hpp
-${LBMSOLVER_H_PATH}/JsonGeoGen.h
-${LBMSOLVER_H_PATH}/JsonGridGen.h
-${LBMSOLVER_H_PATH}/JsonRangeGen.h
-${LBMSOLVER_H_PATH}/JsonReader.h
-${LBMSOLVER_H_PATH}/Lattice.h
-${LBMSOLVER_H_PATH}/LatticeMPI.h
-${LBMSOLVER_H_PATH}/LBMGeometry.h
-${LBMSOLVER_H_PATH}/MemPool.h
-${LBMSOLVER_H_PATH}/PHLBM.h
-${LBMSOLVER_H_PATH}/PHLBMGenerator.h
-${LBMSOLVER_H_PATH}/PHLBMGeoGen.h
-${LBMSOLVER_H_PATH}/PHLBMGridGen.h
-${LBMSOLVER_H_PATH}/PHLBMRangeGen.h
-${LBMSOLVER_H_PATH}/PHLBMUnstructGrid.h
-${LBMSOLVER_H_PATH}/Range.h
-${LBMSOLVER_H_PATH}/StlGeo.h
-${LBMSOLVER_H_PATH}/TimeMarching.h
-${LBMSOLVER_H_PATH}/UniformGrid.h
-)
-source_group(LBMSolver\\include FILES ${LBMSOLVER_H_LIST}) 
-include_directories(${LBMSOLVER_H_PATH})
-
-set(LBMSOLVER_CPP_PATH      LBMSolver/src)
-set(LBMSOLVER_CPP_LIST
-${LBMSOLVER_CPP_PATH}/BinBase.cpp
-${LBMSOLVER_CPP_PATH}/cavity-mpi.cpp
-${LBMSOLVER_CPP_PATH}/Collision.cpp
-${LBMSOLVER_CPP_PATH}/D2Q9.cpp
-${LBMSOLVER_CPP_PATH}/D3Q15.cpp
-${LBMSOLVER_CPP_PATH}/D3Q19.cpp
-${LBMSOLVER_CPP_PATH}/EnrollBinReader.cpp
-${LBMSOLVER_CPP_PATH}/Function.cpp
-${LBMSOLVER_CPP_PATH}/Geometry.cpp
-${LBMSOLVER_CPP_PATH}/GetConfig.cpp
-${LBMSOLVER_CPP_PATH}/GlobalData.cpp
-${LBMSOLVER_CPP_PATH}/JsonReader.cpp
-${LBMSOLVER_CPP_PATH}/LatticeMPI.cpp
-${LBMSOLVER_CPP_PATH}/PHLBMBCGen.cpp
-${LBMSOLVER_CPP_PATH}/PHLBMGeoGen.cpp
-${LBMSOLVER_CPP_PATH}/PHLBMUnstructGrid.cpp
-${LBMSOLVER_CPP_PATH}/StlGeo.cpp
-)
-source_group(LBMSolver\\src FILES ${LBMSOLVER_CPP_LIST})
-endif(BUILD_LBM)
-# Build In-house version:
-if(BUILD_IncompressibleSolver)
-# set directory of IncompressibleSolver:
-set(IncompressibleSolver_H_PATH        IncompressibleSolver/include)
-set(IncompressibleSolver_H_LIST
-${IncompressibleSolver_H_PATH}/INCompSolver.h
-${IncompressibleSolver_H_PATH}/INCompSolverStruct.h
-${IncompressibleSolver_H_PATH}/INCompSolverUnstruct.h
-${IncompressibleSolver_H_PATH}/Param_INCompSolver.h
-${IncompressibleSolver_H_PATH}/Param_INCompSolverStruct.h
-${IncompressibleSolver_H_PATH}/Param_INCompSolverUnstruct.h
-${IncompressibleSolver_H_PATH}/PPESIMPLESolver.h
-${IncompressibleSolver_H_PATH}/PPEProjectionSolver.h
-${IncompressibleSolver_H_PATH}/ScalarSolver.h
-${IncompressibleSolver_H_PATH}/PPESolver.h
-${IncompressibleSolver_H_PATH}/LinearEquationSolver.h
-${IncompressibleSolver_H_PATH}/MomEquationSolver.h
-${IncompressibleSolver_H_PATH}/TurbEquationSolver.h
-${IncompressibleSolver_H_PATH}/EnergyEquationSolver.h
-${IncompressibleSolver_H_PATH}/SpeciesEquationSolver.h
-)
-source_group(IncompressibleSolver\\include FILES ${IncompressibleSolver_H_LIST}) 
-include_directories(${IncompressibleSolver_H_PATH})
-
-set(IncompressibleSolver_CPP_PATH      IncompressibleSolver/src)
-set(IncompressibleSolver_CPP_LIST
-${IncompressibleSolver_CPP_PATH}/INCompSolver.cpp
-${IncompressibleSolver_CPP_PATH}/INCompSolverStruct.cpp
-${IncompressibleSolver_CPP_PATH}/INCompSolverUnstruct.cpp
-${IncompressibleSolver_CPP_PATH}/Param_INCompSolver.cpp
-${IncompressibleSolver_CPP_PATH}/Param_INCompSolverStruct.cpp
-${IncompressibleSolver_CPP_PATH}/Param_INCompSolverUnstruct.cpp
-${IncompressibleSolver_CPP_PATH}/PPESIMPLESolver.cpp
-${IncompressibleSolver_CPP_PATH}/PPEProjectionSolver.cpp
-${IncompressibleSolver_CPP_PATH}/MomEquationSolver.cpp
-${IncompressibleSolver_CPP_PATH}/ScalarSolver.cpp
-${IncompressibleSolver_CPP_PATH}/PPESolver.cpp
-${IncompressibleSolver_CPP_PATH}/LinearEquationSolver.cpp
-${IncompressibleSolver_CPP_PATH}/TurbEquationSolver.cpp
-${IncompressibleSolver_CPP_PATH}/EnergyEquationSolver.cpp
-${IncompressibleSolver_CPP_PATH}/SpeciesEquationSolver.cpp
-)
-source_group(IncompressibleSolver\\src FILES ${IncompressibleSolver_CPP_LIST})
-
-endif(BUILD_IncompressibleSolver)
-
-if(USE_INHOUSE_VERSION)
-# set directory of DSMCSolver:
-set(DSMCSOLVER_H_PATH        DSMCSolver/include)
-set(DSMCSOLVER_H_LIST
-${DSMCSOLVER_H_PATH}/DSMCSolver.h
-${DSMCSOLVER_H_PATH}/DSMCCollision.h
-${DSMCSOLVER_H_PATH}/DSMCPointers.h
-${DSMCSOLVER_H_PATH}/DSMCMolecule.h
-${DSMCSOLVER_H_PATH}/DSMCGrid.h
-${DSMCSOLVER_H_PATH}/DSMCConsts.h
-${DSMCSOLVER_H_PATH}/DSMCSample.h
-${DSMCSOLVER_H_PATH}/DSMCIndex.h
-)
-source_group(DSMCSolver\\include FILES ${DSMCSOLVER_H_LIST}) 
-include_directories(${DSMCSOLVER_H_PATH})
-
-set(DSMCSOLVER_CPP_PATH      DSMCSolver/src)
-set(DSMCSOLVER_CPP_LIST
-${DSMCSOLVER_CPP_PATH}/DSMCSolver.cpp
-${DSMCSOLVER_CPP_PATH}/DSMCCollision.cpp
-${DSMCSOLVER_CPP_PATH}/DSMCMolecule.cpp
-${DSMCSOLVER_CPP_PATH}/DSMCGrid.cpp
-${DSMCSOLVER_CPP_PATH}/DSMCSample.cpp
-${DSMCSOLVER_CPP_PATH}/DSMCIndex.cpp
-)
-source_group(DSMCSolver\\src FILES ${DSMCSOLVER_CPP_LIST})
-
-# set directory of Helicopter module
-set(HelicopterModule_H_PATH HelicopterModule/include)
-set(HelicopterModule_H_LIST
-${HelicopterModule_H_PATH}/MBConstTable.h
-${HelicopterModule_H_PATH}/HelicopterSolver.h
-${HelicopterModule_H_PATH}/RotaryCoordinateSystem.h
-${HelicopterModule_H_PATH}/MBGridFactory.h
-${HelicopterModule_H_PATH}/MBGridGroup.h
-${HelicopterModule_H_PATH}/MBModualCenter.h
-${HelicopterModule_H_PATH}/MBReactor.h
-)
-source_group(HelicopterModule\\include FILES ${HelicopterModule_H_LIST})
-include_directories(${HelicopterModule_H_PATH})
-
-set(HelicopterModule_CPP_PATH HelicopterModule/src)
-set(HelicopterModule_CPP_LIST
-${HelicopterModule_CPP_PATH}/HelicopterSolver.cpp
-${HelicopterModule_CPP_PATH}/RotaryCoordinateSystem.cpp
-${HelicopterModule_CPP_PATH}/MBGridFactory.cpp
-${HelicopterModule_CPP_PATH}/MBGridGroup.cpp
-${HelicopterModule_CPP_PATH}/MBModualCenter.cpp
-${HelicopterModule_CPP_PATH}/MBReactor.cpp
-)
-source_group(HelicopterModule\\src FILES ${HelicopterModule_CPP_LIST})
-
-# set directory of UGKSSolver:
-set(UGKSSOLVER_H_PATH        UGKSSolver/include)
-set(UGKSSOLVER_H_LIST
-${UGKSSOLVER_H_PATH}/UGKSSolver.h
-${UGKSSOLVER_H_PATH}/UGKSSimulation.h
-${UGKSSOLVER_H_PATH}/Param_UGKSSolver.h
-${UGKSSOLVER_H_PATH}/UGKSContants.h
-${UGKSSOLVER_H_PATH}/UGKSLimiter.h
-${UGKSSOLVER_H_PATH}/FluxParamProxy.h
-)
-source_group(UGKSSolver\\include FILES ${UGKSSOLVER_H_LIST}) 
-include_directories(${UGKSSOLVER_H_PATH})
-
-set(UGKSSOLVER_CPP_PATH      UGKSSolver/src)
-set(UGKSSOLVER_CPP_LIST
-${UGKSSOLVER_CPP_PATH}/UGKSSolver.cpp
-${UGKSSOLVER_CPP_PATH}/UGKSSimulation.cpp
-${UGKSSOLVER_CPP_PATH}/Param_UGKSSolver.cpp
-${UGKSSOLVER_CPP_PATH}/FluxParamProxy.cpp
-)
-source_group(UGKSSolver\\src FILES ${UGKSSOLVER_CPP_LIST})
-endif(USE_INHOUSE_VERSION)
-
-if(USE_INHOUSE_VERSION)
-if(WIN32)
-if(USE_Windows_X64)
-    LINK_DIRECTORIES("${PROJECT_SOURCE_DIR}/../HelicopterModule/lib/${CMAKE_SYSTEM_NAME}-x64/${CMAKE_BUILD_TYPE}")
-else(USE_Windows_X64)
-    LINK_DIRECTORIES("${PROJECT_SOURCE_DIR}/../HelicopterModule/lib/${CMAKE_SYSTEM_NAME}-x86/${CMAKE_BUILD_TYPE}")
-endif(USE_Windows_X64)
-else(WIN32)
-    LINK_DIRECTORIES("${PROJECT_SOURCE_DIR}/../HelicopterModule/lib/Linux")
-endif(WIN32)
-endif(USE_INHOUSE_VERSION)
 
 # set directory of SpecDiffHybSolver:
 if(BUILD_SpecDiffHybSolver)
@@ -544,24 +319,15 @@ ${NSSOLVER_H_LIST}
 ${TurbSOLVER_H_LIST}
 ${SpecDiffHybSolver_H_LIST}
 ${HOSOLVERUNSTRUCT_H_LIST}
-${LBMSOLVER_H_LIST}
 ${DEMOSOLVER_H_LIST}
 )
 
 # add INHOUSE_VERSION_H_LIST
-if(USE_INHOUSE_VERSION)
-list(APPEND CFD_HEAD_LIST ${HelicopterModule_H_LIST} ${DSMCSOLVER_H_LIST} ${UGKSSOLVER_H_LIST})
-endif(USE_INHOUSE_VERSION)
 
 # add SpecDiffHybSolver_H_LIST
 if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_HEAD_LIST ${SpecDiffHybSolver_H_LIST})
 endif()
-
-# add IncompressibleSolver_H_LIST
-if(BUILD_IncompressibleSolver)
-list(APPEND CFD_HEAD_LIST ${IncompressibleSolver_H_LIST})
-endif(BUILD_IncompressibleSolver)
 
 # add DEMOSOLVER_H_LIST
 if(BUILD_DEMOSOLVER)
@@ -575,24 +341,15 @@ ${NSSOLVER_CPP_LIST}
 ${TurbSOLVER_CPP_LIST}
 ${SpecDiffHybSolver_CPP_LIST}
 ${HOSOLVERUNSTRUCT_CPP_LIST}
-${LBMSOLVER_CPP_LIST}
 ${DEMOSOLVER_CPP_LIST}
 
 )
 # add INHOUSE_VERSION_CPP_LIST
-if(USE_INHOUSE_VERSION)
-list(APPEND CFD_CPP_LIST ${HelicopterModule_CPP_LIST} ${DSMCSOLVER_CPP_LIST} ${UGKSSOLVER_CPP_LIST})
-endif(USE_INHOUSE_VERSION)
 
 # add SpecDiffHybSolver_CPP_LIST
 if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_CPP_LIST ${SpecDiffHybSolver_CPP_LIST})
 endif()
-
-# add IncompressibleSolver_CPP_LIST
-if(BUILD_IncompressibleSolver)
-list(APPEND CFD_CPP_LIST ${IncompressibleSolver_CPP_LIST})
-endif(BUILD_IncompressibleSolver)
 
 # add DEMOSOLVER_CPP_LIST
 if(BUILD_DEMOSOLVER)
@@ -666,10 +423,6 @@ endif()
 set(API_TARGET_NAME "PHAPI")
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5)
 
-if(USE_TecplotLib)
-  list(APPEND LINK_LIBRARY_LIST tecio)
-endif(USE_TecplotLib)
-
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST msmpi)
 endif(WIN32)
@@ -716,3 +469,4 @@ endif (OpenMP_FOUND)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
+

@@ -302,17 +302,12 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
         if (visualfileType == 0)
         {
-            #ifdef USE_TecplotLib
-                DumpToTecio dumptotecio(datalist, actkey->tecfilename, this->flowType);
-                dumptotecio.Run();
-            #else
                 ostringstream WarningInfo;
                 WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
                 PrintToWindow(WarningInfo);
 
                 DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
                 dumpToTecplotASCII.Run();
-            #endif
         }
         else if (visualfileType == 1)
         {

@@ -1,7 +1,0 @@
-    Number of Blocks: 1
-    For Block 0, minDis = 0.0556579, maxDis = 0.164884 
-    The grid type:  0
-    Dim = 3
-    nTNode = 6845
-    nTCell = 33575
-    nTFace = 69531,   nBFace = 4762,   nIFace = 0

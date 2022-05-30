@@ -10,12 +10,6 @@
 #include "Geo_Sample.h"
 #include "UnstructuredOversetConfig.h"
 #include "HOSimulation.h"
-#ifdef USE_INHOUSE_VERSION
-#include "Post_Identify.h"
-#endif
-#ifdef USE_LBM_CODE
-#include "cavity.h"
-#endif
 
 #include "OversetInformation.h"
 #include "SolversList.h"
@@ -32,7 +26,6 @@
 #endif
 
 #include "Post_ProbesWrite.h"
-#include "HyFlowSolverStruct.h"
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"
 #endif
@@ -83,17 +76,6 @@ void Simulation::Start()
     case OVERSET_CONFIG:
         PHSPACE::RunOversetGridConfig();
         break;
-    #ifdef USE_INHOUSE_VERSION
-    case DSMC_SOLVER:
-        RunDSMC();
-        break;
-    case HELICOPTER:
-        RunHelicopterSolver();
-        break;
-    case UGKS_SOLVER:
-        RunUGKS();
-        break;
-    #endif
     case HO_SOLVER:
         {
             HOUnstruct::HOSimulation *uho = new HOUnstruct::HOSimulation();
@@ -101,30 +83,15 @@ void Simulation::Start()
             delete uho;
             break;
         }
-    #ifdef USE_LBM_CODE
-    case LBM_SOLVER:
-        RunLBMSolver();
-        break;
-    #endif
     case INTEGRATIVE_SOLVER:
         RunIntegrativeSolver();
         break;
-    #ifdef USE_INHOUSE_VERSION
-    case GRIDCHECK_SOLVER:
-        RunGridCheckSolver();
-        break;
-    #endif
     #ifdef USE_SpecDiffHybSolver
     case SPECDIFFHYB_SOLVER:
         RunSpecDiffHybSolver();
         break;
     case SPEC_SOLVER:
         RunSpecSolver();
-        break;
-    #endif
-    #ifdef USE_INHOUSE_VERSION
-    case DERIVATIVE_IDENITFY:
-        IdentifyDerivative();
         break;
     #endif
     case POST_PROCESSING:
@@ -1191,52 +1158,6 @@ void Simulation::RunPostProcessing()
     postProcess = NULL;
 }
 
-#ifdef USE_INHOUSE_VERSION
-void Simulation::IdentifyDerivative()
-{
-    Identify *identify = new Identify();
-    identify->Run();
-
-    delete identify;
-
-    identify = NULL;
-}
-
-void Simulation::RunHelicopterSolver()
-{
-    MYHelicopter *helicopter = new MYHelicopter(this->region);
-
-    helicopter->ReadGeometry();
-
-    helicopter->Run();
-
-    delete helicopter;
-
-    helicopter = NULL;
-}
-
-void Simulation::RunDSMC()
-{
-    DSMC *dsmc = new DSMC();
-
-    dsmc->Run();
-
-    delete dsmc;
-
-    dsmc = NULL;
-}
-
-void Simulation::RunUGKS()
-{
-    UGKSSimulation *ugks = new UGKSSimulation();
-
-    ugks->Run();
-
-    delete ugks;
-
-    ugks = NULL;
-}
-#endif
 
 #ifdef USE_SpecDiffHybSolver
 void Simulation::RunSpecDiffHybSolver()
@@ -1463,18 +1384,7 @@ void Simulation::DefineAndCreateSolvers()
 
                     if (isFVMOrFDM == FV_METHOD) //! Add structured FV NS solver.
                     {
-#ifdef USE_OLD_CODE
-                        if (isAdaptiveSolver == 0)
-                        {
-                            PHSolver *solver = new NSSolverStructFV();
-                            solverList.push_back(solver);
-                        }
-                        else //! A new code branch is active for Navier-Stokes solver.
-                        {
-                            PHSolver *solver = new HyFlowSolverStruct();
-                            solverList.push_back(solver);
-                        }
-#endif
+
                         PHSolver *solver = new NSSolverStructFV();
                         solverList.push_back(solver);
                     }
@@ -1487,21 +1397,6 @@ void Simulation::DefineAndCreateSolvers()
             }
             else
             {
-#ifdef USE_IncompressibleSolver
-                //! Add incompressible solvers.
-                if (gridType == UNSTRUCTGRID)
-                {
-                    //! Add unstructured incompressible solver.
-                    PHSolver *solver = new INCompSolverUnstruct();
-                    solverList.push_back(solver);
-                }
-                else if (gridType == STRUCTGRID)
-                {
-                    //! Add structured incompressible solver.
-                    PHSolver *solver = new INCompSolverStruct();
-                    solverList.push_back(solver);
-                }
-#endif
             }
         }
         else
@@ -2016,3 +1911,6 @@ bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &
     return isSubIterationConvergence;
 }
 }
+
+
+

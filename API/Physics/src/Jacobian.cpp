@@ -3,11 +3,7 @@
 #include "Math_BasisFunction.h"
 #include "GlobalDataBase.h"
 
-#ifdef USE_HYFLOW_CODE
-#include "RealGas.h"
-#else
 #include "Gas.h"
-#endif
 
 using namespace std;
 namespace PHSPACE
@@ -935,3 +931,4 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble nxs, RDouble nys, RDoub
 }
 
 }
+

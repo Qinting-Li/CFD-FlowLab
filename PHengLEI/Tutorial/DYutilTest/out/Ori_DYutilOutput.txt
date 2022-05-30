@@ -1,2 +1,0 @@
-The distance is : 4.09145
-The determinant is : -9

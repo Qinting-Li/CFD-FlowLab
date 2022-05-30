@@ -396,25 +396,5 @@ inline int *UnstructGrid::GetLI_LineOfCell() const
 {
     return this->lineTopology->GetLI_LineOfCell();
 }
-#ifdef USE_IncompressibleSolver
-inline Vector3D *UnstructGrid::GetCellCenterVector() const
-{
-    return cellCenterVector;
-}
 
-inline Vector3D *UnstructGrid::GetFaceNormalVector() const
-{
-    return faceNormalVector;
-}
-
-inline void UnstructGrid::SetCellCenterVector(Vector3D *cellC)
-{
-    cellCenterVector = cellC;
-}
-
-inline void UnstructGrid::SetFaceNormalVector(Vector3D *faceN)
-{
-    faceNormalVector = faceN;
-}
-#endif
 

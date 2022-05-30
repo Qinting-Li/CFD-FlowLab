@@ -21,9 +21,6 @@
 #include "PHIO.h"
 #include <omp.h>
 
-#ifdef USE_INHOUSE_VERSION
-#include "omp.h"
-#endif
 
 namespace PHSPACE
 {
