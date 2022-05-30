@@ -3,7 +3,7 @@
 
 namespace PHSPACE
 {
-    SimpleBC * CompositeUnstructBC::GetBoundaryCondition() const 
+    SimpleBC * UnstructBCSet::GetBoundaryCondition() const 
     {
         if (!this->boundaryCondition)
         {

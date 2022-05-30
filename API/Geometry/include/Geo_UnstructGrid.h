@@ -44,7 +44,7 @@ public:
     ~Connectivity();
 };
 
-class CompositeUnstructBC;
+class UnstructBCSet;
 class UnstructBC;
 class VirtualFile;
 class OversetConfig;
@@ -55,18 +55,12 @@ class UnstructGrid : public Grid
 private:
     //! The boundary condition list.\n
     //! Each face has a Boundary Condition Record.
-    CompositeUnstructBC ** bcr;
+    UnstructBCSet ** bcr;
 
-    //! The boundary condition list for each BC Region.\n
-    //! it is different with **bcr,bcr is for a single face and **bcRegionUnStruct is for some face
-    //! with a same bc name.
-    UnstructBC **bcRegionUnstruct;
-
-    //! The number of BC Region,i.e. the number of different BC names.
-    int nBCRegionUnstruct;
+    UnstructBCSet *unstructBCSet;
 
     //! The volume condition list, without using at the moment.\n
-    //CompositeUnstructBC **vcr;
+    //UnstructBCSet **vcr;
 
     //! Unstructured node topology information:\n
     //! Defines the node-face, node-cell, node-node \n
@@ -183,13 +177,10 @@ public:
 public:
     GridManager * GetGridManager();
     //! Set the boundary condition records.
-    void SetBCRecord(CompositeUnstructBC **bcr);
+    void SetBCRecord(UnstructBCSet **bcr);
 
-    //! Set the boundary Region condition.
-    void SetBCRegionUnstruct(UnstructBC **bcr);
-
-    //! Set the boundary Region condition.
-    void SetNBCRegionUnstruct(int nBCRegionUnstruct);
+    //! Set the boundary condition region.
+    void SetUnstructBCSet(UnstructBCSet* unstructBCSet);
 
     //! Set the left cell list of each face.
     void SetLeftCellOfFace(int *left_cell_of_face_in);
@@ -236,19 +227,20 @@ public:
     void SetZoneProbesCellID(vector <int> zoneProbesCellID);
 
     //! Return the boundary condition records.
-    CompositeUnstructBC **GetBCRecord() const;
+    UnstructBCSet **GetBCRecord() const;
+    
+    //! Create composite boundary condition region (allocate memory for structBCSet).
+    LIB_EXPORT void CreateUnstructBCSet(int nBCRegion);
 
+    //! Return composite boundary condition region pointer (structBCSet).
+    UnstructBCSet * GetUnstructBCSet() const;
+   
     RDouble * GetNormalDistanceOfC2C() const;
 
-    //! Get the boundary Region condition.
-    UnstructBC ** GetBCRegionUnstruct();
 
     vector <int> & GetBoundaryConditionType();
 
     vector <int> & GetLocalToGlobalNodesMap();
-
-    //! Set the boundary Region condition.
-    int GetNBCRegionUnstruct() const;
 
     //! Get the left cell list of each face.
     int * GetLeftCellOfFace() const;
@@ -545,7 +537,7 @@ public:
 
     void AllocateWalldist();
 
-    void SpecifyBC();
+    void SpecifyRightCellofBC();
 
     //! Return the gradient computed by ggnode.
     //! @param[in] qnode : the flow value on the point.

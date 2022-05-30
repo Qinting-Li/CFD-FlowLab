@@ -247,17 +247,27 @@ void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
 
     int **faceNodeIndex = grid->GetFace2NodeArray();
     int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
-    for (int iFace = 0; iFace < nBoundFace; ++iFace)
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
         if (IsWall(bcType))
         {
-            int nNode = faceNodeNumber[iFace];
-            for (int iNode = 0; iNode < nNode; ++iNode)
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                int nodeID = faceNodeIndex[iFace][iNode];
-                wallDistNode[nodeID] = 0.0;
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int nNode = faceNodeNumber[iFace];
+                for (int iNode = 0; iNode < nNode; ++iNode)
+                {
+                    int nodeID = faceNodeIndex[iFace][iNode];
+                    wallDistNode[nodeID] = 0.0;
+                }
             }
         }
     }
@@ -1857,12 +1867,12 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 {
     int nSolidFace = 0;
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1885,7 +1895,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1919,7 +1929,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     int nWallPoints = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -1970,7 +1980,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     nWallPoints = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2066,7 +2076,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     count = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2189,7 +2199,7 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, StructGri
     
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype))
@@ -2252,6 +2262,8 @@ void Pre_WalldistCompute::CompressWallStructure(DataContainer *&cdata, UnstructG
 
     //! Compute the number of the wall faces.
     bool *isWallFace = new bool [nBoundFace]();
+    SetField(isWallFace, false, nBoundFace);
+
     grid->FindOutWallFaces(isWallFace, nSolidFace);
 
     cdata->write(&nSolidFace, sizeof(int));
@@ -3551,25 +3563,35 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
     int *face2node = grid->GetFace2Node();
 
     int nBoundFace = grid->GetNBoundFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
     bool *nodeOnWall = new bool[nTotalNode];
     std::fill_n(nodeOnWall, nTotalNode, false);
 
     int nodeCount = 0;
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bcType = bcr[iFace]->GetKey();
-        if (!(IsWall(bcType)))
-        {
-            nodeCount = nodeCount + node_number_of_each_face[iFace];
-            continue;
-        }
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
 
-        for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            int nodeIndex = face2node[nodeCount];
-            nodeOnWall[nodeIndex] = true;
-            nodeCount++;
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (!(IsWall(bcType)))
+            {
+                nodeCount = nodeCount + node_number_of_each_face[iFace];
+                continue;
+            }
+
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
+            {
+                int nodeIndex = face2node[nodeCount];
+                nodeOnWall[nodeIndex] = true;
+                nodeCount++;
+            }
         }
     }
 

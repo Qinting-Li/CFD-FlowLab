@@ -2889,15 +2889,15 @@ namespace PHSPACE
         int viscousType = parameters->GetViscousType();
 
         using namespace IDX;
-        CompositeStructBC *compositBCRegion = grid->GetCompositeBCRegion();
-        int nBCRegion = compositBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
         Range M(0, nTurbulenceEquation - 1);
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
         {
-            StructBC *structBC = compositBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int BCType = structBC->GetBCType();
 
             if (!(IsWall(BCType) && viscousType > INVISCID))
@@ -3313,7 +3313,7 @@ namespace PHSPACE
 
         StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
         InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-        CompositeStructBC *composite_bcregion = finestGrid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = finestGrid->GetStructBCSet();
         RDouble4D &rotTurbgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueX"));
         RDouble4D &rotTurbgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueY"));
         RDouble4D &rotTurbgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotTurbgradValueZ"));
@@ -3342,9 +3342,9 @@ namespace PHSPACE
                     int it, jt, kt;
                     finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
                     finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                    int *ibcregions = composite_bcregion->GetIFaceInfo();
+                    int *ibcregions = structBCSet->GetIFaceInfo();
                     int iBCRegion = ibcregions[iFace];
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+                    StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcregion->GetBCName();
                     if (bcName == "Periodic_up")
                     {
@@ -3469,14 +3469,14 @@ namespace PHSPACE
         RDouble4D &gradTurbulenceCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterY"));
         RDouble4D &gradTurbulenceCellCenterZ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterZ"));
 
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         using namespace PHENGLEI;
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
         {
-            StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
             int BCType = bcregion->GetBCType();
             int nsurf_bc = bcregion->GetFaceDirection() + 1;
 
@@ -4414,12 +4414,12 @@ namespace PHSPACE
         Param_TurbSolverStruct *parameters = GetControlParameters();
         int wallFunctionType = parameters->GetWallFunctionType();
 
-        CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRregion->GetnBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
 
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
         {
-            StructBC *structBC = compositeBCRregion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int BCType = structBC->GetBCType();
 
             if (BCType < 0)

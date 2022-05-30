@@ -1232,7 +1232,9 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
 
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     //! Find the maximum and minimum in the neighbor of each cell.
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
@@ -1243,11 +1245,12 @@ void Limiter::MinMaxDiff(RDouble *dmin, RDouble *dmax, RDouble *q)
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int le       = leftCellOfFace[iFace];
         int re       = rightCellOfFace[iFace];
 
-        int bctype   = bcr[iFace]->GetKey();
-        if (!IsInterface(bctype))
+        int bcType = bcRegion->GetBCType();
+        if (!IsInterface(bcType))
         {
             continue;
         }

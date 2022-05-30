@@ -390,13 +390,18 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     vector<int> linkmap;
 
     set<pair<int, string> > bcnameMap;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int nodeCount = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iFace]->GetKey();
-        string bcname = bcr[iFace]->GetBCName();
-        bcnameMap.insert(pair<int, string>(bctype, bcname));
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
+        bcnameMap.insert(pair<int, string>(bcType, bcName));
 
         for (int m = 0; m < nvarplot; ++ m)
         {
@@ -547,13 +552,18 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
     set<pair<int, string> > bcnameMap;
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int nodeCount = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iFace]->GetKey();
-        string bcname = bcr[iFace]->GetBCName();
-        bcnameMap.insert(pair<int, string>(bctype, bcname));
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
+        bcnameMap.insert(pair<int, string>(bcType, bcName));
 
         for (int m = 0; m < nvarplot; ++ m)
         {
@@ -708,14 +718,14 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
     RDouble3D &yy = * grid->GetStructY();
     RDouble3D &zz = * grid->GetStructZ();
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     int TecioMission;
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
@@ -856,13 +866,13 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     RDouble3D &yy = * grid->GetStructY();
     RDouble3D &zz = * grid->GetStructZ();
     
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     int TecioMission;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
 
@@ -1613,12 +1623,16 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
     }
 
     int ncount = 0;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
 
-        if (bctype != PHENGLEI::SOLID_SURFACE)
+        if (bcType != PHENGLEI::SOLID_SURFACE)
         {
             ncount += node_number_of_each_face[iFace];
             continue;
