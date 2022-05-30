@@ -1361,7 +1361,7 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
     {
         string dataName = vectorName[iDim];
 
-        int iface;
+        int iFace;
         int nm = vectorDimension[iDim];
         RDouble **q = vectorData[iDim];
 
@@ -1373,10 +1373,10 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
         int icount = 0;
         for (int jFaceOfNeighbor = 0; jFaceOfNeighbor < nIFaceOfNeighbor; ++ jFaceOfNeighbor)
         {
-            iface = faceIndexForSend[jFaceOfNeighbor];
+            iFace = faceIndexForSend[jFaceOfNeighbor];
             for (int m = 0; m < nm; ++ m)
             {
-                qtmp[icount ++] = q[m][iface];
+                qtmp[icount ++] = q[m][iFace];
             }
         }
         cdata->write(qtmp, nlen * sizeof(RDouble));
@@ -1453,7 +1453,7 @@ void CFDSolver::TranslateInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *a
     cData->moveto_begin();
     for (std::size_t iDim = 0; iDim < vectorDimension.size(); ++ iDim)
     {
-        int iface;
+        int iFace;
         int nm = vectorDimension[iDim];
         RDouble **q = vectorData[iDim];
 
@@ -1467,14 +1467,14 @@ void CFDSolver::TranslateInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *a
         int icount = 0;
         for (int jFaceOfNeighbor = 0; jFaceOfNeighbor < nIFaceOfNeighbor; ++ jFaceOfNeighbor)
         {
-            iface = faceIndexForRecv[jFaceOfNeighbor];
+            iFace = faceIndexForRecv[jFaceOfNeighbor];
 
             for (int m = 0; m < nm; ++ m)
             {
-                q[m][iface] = qTemp[icount ++];
+                q[m][iFace] = qTemp[icount ++];
             }
         }
-        delete []qTemp;
+        delete [] qTemp;
     }
 }
 
@@ -2676,7 +2676,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
             data_count.resize(0);
             vector < RDouble *> vector_data;
             vector_data.resize(0);
-            for (int idata = 0; idata < dataNumber; ++ idata)
+            for (int iData = 0; iData < dataNumber; ++ iData)
             {
                 int idata_count = 0;
                 PHRead(cdata, idata_count);
@@ -2734,11 +2734,11 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                 }
                 if (coor_count % nWordOfLine != 0) wallAircoefFile << "\n";
 
-                for (int idata = 0; idata < dataNumber; ++ idata)
+                for (int iData = 0; iData < dataNumber; ++ iData)
                 {
                     for (int iNode = 0; iNode < coor_count; ++ iNode)
                     {
-                        wallAircoefFile << setw(wordWidth) << vector_data[idata][iNode];
+                        wallAircoefFile << setw(wordWidth) << vector_data[iData][iNode];
                         if ((iNode + 1) % nWordOfLine == 0) 
                         {
                             wallAircoefFile << "\n";
@@ -2746,7 +2746,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     }
                     if (coor_count % nWordOfLine != 0) wallAircoefFile << "\n";
 
-                    delete []vector_data[idata];
+                    delete [] vector_data[iData];
                 }
             }
             else
@@ -2768,16 +2768,16 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     wallAircoefFile << setw(wordWidth) << x[iNode]
                                     << setw(wordWidth) << y[iNode]
                                     << setw(wordWidth) << z[iNode];
-                    for (int idata = 0; idata < dataNumber; ++ idata)
+                    for (int iData = 0; iData < dataNumber; ++ iData)
                     {
-                        wallAircoefFile << setw(wordWidth) << vector_data[idata][iNode];
+                        wallAircoefFile << setw(wordWidth) << vector_data[iData][iNode];
                     }
                     wallAircoefFile << "\n";
                 }
 
-                for (int idata = 0; idata < dataNumber; ++ idata)
+                for (int iData = 0; iData < dataNumber; ++ iData)
                 {
-                    delete []vector_data[idata];
+                    delete [] vector_data[iData];
                 }
 
                 int count = 0;
@@ -2791,16 +2791,15 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     wallAircoefFile << "\n";
                 }
 
-                delete []face2node;
+                delete [] face2node;
             }
 
-            delete []x;
-            delete []y;
-            delete []z;
+            delete [] x;
+            delete [] y;
+            delete [] z;
 
             PHRead(cdata, &TecioMission, 1);
         }
-
     }
 
     CloseFile(wallAircoefFile);
@@ -3000,7 +2999,7 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
             data_count.resize(0);
             vector < RDouble *> vector_data;
             vector_data.resize(0);
-            for (int idata = 0; idata < dataNumber; ++ idata)
+            for (int iData = 0; iData < dataNumber; ++ iData)
             {
                 int idata_count = 0;
                 PHRead(cdata, idata_count);
@@ -3008,7 +3007,7 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
 
                 int iValueLocation = 0;
                 PHRead(cdata, iValueLocation);
-                ValueLocation[3 + idata] = iValueLocation;
+                ValueLocation[3 + iData] = iValueLocation;
 
                 RDouble *qq = new RDouble [idata_count];
                 PHRead(cdata, qq, idata_count);
@@ -3069,13 +3068,12 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
             I = TECDAT112(&coor_count, y, &IsDouble);
             I = TECDAT112(&coor_count, z, &IsDouble);
 
-            for (int idata = 0; idata < dataNumber; ++ idata)
+            for (int iData = 0; iData < dataNumber; ++ iData)
             {
-                I = TECDAT112(&data_count[idata], vector_data[idata], &IsDouble);
+                I = TECDAT112(&data_count[iData], vector_data[iData], &IsDouble);
 
-                delete []vector_data[idata];
+                delete [] vector_data[iData];
             }
-
 
             if (gridTypeofLocalZone == UNSTRUCTGRID)
             {

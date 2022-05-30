@@ -39,9 +39,9 @@ Zone::Zone(int index)
 
 Zone::~Zone()
 {
-    for (std::size_t isolver = 0; isolver < solvers->size(); ++ isolver)
+    for (std::size_t iSolver = 0; iSolver < solvers->size(); ++ iSolver)
     {
-        delete (*solvers)[isolver];
+        delete (*solvers)[iSolver];
     }
     delete solvers;
 

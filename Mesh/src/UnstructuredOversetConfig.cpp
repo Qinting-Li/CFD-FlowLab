@@ -277,16 +277,16 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
     gridIn->SetNBoundFace(nBoundFace);
 
     int *BcType = ReadIntOneRow(grpData, "BcType");
-    CompositeUnstructBC **bcr = new CompositeUnstructBC * [nBoundFace];
+    UnstructBCSet **bcr = new UnstructBCSet * [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace] = new UnstructBCSet();
         bcr[iFace]->SetKey(BcType[iFace]);
     }
     gridIn->SetBCRecord(bcr);
     delete [] BcType;
 
-    gridIn->SpecifyBC();
+    gridIn->SpecifyRightCellofBC();
 
     H5Gclose(grpData);
 
@@ -312,11 +312,11 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
         int *interFace2InterFaceIDTemp = ReadIntOneRow(grpData, "interFace2InterFaceID");
         int *interFace2BoundaryFaceTemp = ReadIntOneRow(grpData, "interFace2BoundaryFace");
 
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
-            interFace2ZoneID[iface] = interFace2ZoneIDTemp[iface];
-            interFace2InterFaceID[iface] = interFace2InterFaceIDTemp[iface];
-            interFace2BoundaryFace[iface] = interFace2BoundaryFaceTemp[iface];
+            interFace2ZoneID[iFace] = interFace2ZoneIDTemp[iFace];
+            interFace2InterFaceID[iFace] = interFace2InterFaceIDTemp[iFace];
+            interFace2BoundaryFace[iFace] = interFace2BoundaryFaceTemp[iFace];
         }
 
         delete [] interFace2ZoneIDTemp;
@@ -3287,29 +3287,43 @@ void OversetAuxilaryGrid::CalCellWallDistance()
 
     walldistCompute->ComputeWallDistForNodesList(blockIndex, numberOfCells, x, y, z, &cellWallDistance[0]);
 
-    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
 
     int *leftCellIndexContainer = grid->GetLeftCellOfFace();
     int *rightCellIndexContainer = grid->GetRightCellOfFace();
-
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int boundaryConditionType = boundaryConditionRecord[iFace]->GetKey();
-
-        int leftCellIndex = leftCellIndexContainer[iFace];
-        int rightCellIndex = rightCellIndexContainer[iFace];
-
-        if (boundaryConditionType == PHENGLEI::SOLID_SURFACE)
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        if (bcType == PHENGLEI::SOLID_SURFACE)
         {
-            cellWallDistance[rightCellIndex] = -cellWallDistance[leftCellIndex];
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                cellWallDistance[rightCellIndexContainer[iFace]] = -cellWallDistance[leftCellIndexContainer[iFace]];
+            }
         }
-        else if (boundaryConditionType == PHENGLEI::SYMMETRY)
+        else if (bcType == PHENGLEI::SYMMETRY)
         {
-            cellWallDistance[rightCellIndex] = cellWallDistance[leftCellIndex];
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                cellWallDistance[rightCellIndexContainer[iFace]] = cellWallDistance[leftCellIndexContainer[iFace]];
+            }
         }
         else
         {
-            cellWallDistance[rightCellIndex] = cellWallDistance[leftCellIndex];
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                cellWallDistance[rightCellIndexContainer[iFace]] = cellWallDistance[leftCellIndexContainer[iFace]];
+            }
         }
     }
 }
@@ -3604,7 +3618,8 @@ void OversetConfig::SearchBoundary()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
@@ -3617,46 +3632,74 @@ void OversetConfig::SearchBoundary()
 
     int symetryOrNot = GetSymetryOrNot();
 
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int boundaryType = boundaryConditionRecord[iFace]->GetKey();
-
-        int numberOfNodesInFace = faceNodeNumber[iFace];
-
-        switch (boundaryType)
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        switch (bcType)
         {
-            case PHENGLEI::INTERFACE:
+        case PHENGLEI::INTERFACE:
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int numberOfNodesInFace = faceNodeNumber[iFace];
                 for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
                 {
                     interfaceBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
                 }
-                break;
-            case PHENGLEI::SOLID_SURFACE:
+            }
+            break;
+        case PHENGLEI::SOLID_SURFACE:
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int numberOfNodesInFace = faceNodeNumber[iFace];
                 for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
                 {
                     wallBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
                 }
-                break;
-            case PHENGLEI::OVERSET:
+            }
+            break;
+        case PHENGLEI::OVERSET:
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int numberOfNodesInFace = faceNodeNumber[iFace];
                 for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
                 {
                     oversetBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
                 }
-                break;
-            case PHENGLEI::SYMMETRY:
+            }
+            break;
+        case PHENGLEI::SYMMETRY:
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int numberOfNodesInFace = faceNodeNumber[iFace];
                 for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
                 {
                     symmetryBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
                 }
-                break;
-            default:
+            }
+            break;
+        default:
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int numberOfNodesInFace = faceNodeNumber[iFace];
                 for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
                 {
                     physicalBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
                 }
+            }
         }
     }
-
     for (set< int >::iterator iter = interfaceBoundaryNodeSet.begin(); iter != interfaceBoundaryNodeSet.end(); ++ iter)
     {
         interfaceBoundaryNodesList.push_back(*iter);
@@ -4647,7 +4690,8 @@ void OversetConfig::CharacterInterfaceToNode()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int *faceNodeIndex = grid->GetFace2Node();
@@ -4658,33 +4702,41 @@ void OversetConfig::CharacterInterfaceToNode()
     int *keyActiveOfCells = grid->GetBlankIndex();
 
     int iCount = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int boundaryType = boundaryConditionRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
 
-        int numberOfNodesInFace = faceNodeNumber[iFace];
-
-        int leftCell = leftCellIndex[iFace];
-        int rightCell = rightCellIndex[iFace];
-
-        if (boundaryType == PHENGLEI::INTERFACE)
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            if (keyActiveOfCells[leftCell] != 1 && keyActiveOfCells[rightCell] != 1)
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            int numberOfNodesInFace = faceNodeNumber[iFace];
+
+            int leftCell = leftCellIndex[iFace];
+            int rightCell = rightCellIndex[iFace];
+
+            if (bcType == PHENGLEI::INTERFACE)
+            {
+                if (keyActiveOfCells[leftCell] != 1 && keyActiveOfCells[rightCell] != 1)
+                {
+                    iCount += numberOfNodesInFace;
+                    continue;
+                }
+
+                for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
+                {
+                    int nodeIndex = faceNodeIndex[iCount];
+                    keyActiveOfNodes[nodeIndex] = 1;
+                    iCount++;
+                }
+            }
+            else
             {
                 iCount += numberOfNodesInFace;
-                continue;
             }
 
-            for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
-            {
-                int nodeIndex = faceNodeIndex[iCount];
-                keyActiveOfNodes[nodeIndex] = 1;
-                iCount++;
-            }
-        }
-        else
-        {
-            iCount += numberOfNodesInFace;
         }
     }
 }

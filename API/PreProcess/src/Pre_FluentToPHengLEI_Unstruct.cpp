@@ -734,15 +734,16 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
     RDouble *yy = rawgrid->GetY();
     RDouble *zz = rawgrid->GetZ();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
 
-    CompositeUnstructBC **bcrs = new CompositeUnstructBC *[nBoundFace];
-
+    vector <string> bcNameList;
+    vector <int> bcTypeList;
+    set<string> bcNameSet;
     count = 0;
     vector< FluentFacePatch * > &face_patchs = GetFluentFacePatchS();
     for (std::size_t m = 0; m < face_patchs.size(); ++ m)
@@ -757,14 +758,40 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
         int nfsum = face_patchs[m]->GetNTotalFace();
         for (int i = 0; i < nfsum; ++ i)
         {
-            bcrs[count] = new CompositeUnstructBC();
-            bcrs[count]->SetKey(bc_type);
-            bcrs[count]->SetBCName(bcNam);
+            bcTypeList.push_back(bc_type);
+            bcNameList.push_back(bcNam);
+            bcNameSet.insert(bcNameList[count]);
             ++ count;
         }
     }
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+    grid->CreateUnstructBCSet(nBCRegionUnstruct);
 
-    grid->SetBCRecord(bcrs);
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int* bcRegionIDofBCFace = new int[nBoundFace];
+    set<string>::iterator iter;
+    
+    count = 0;
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSet->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < nBoundFace; iFace++)
+        {
+            if (bcNameList[iFace] == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(bcTypeList[iFace]);
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+
+        }
+        count++;
+    }
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
 
     int nTotalFace = GetNTotalFace();
     grid->SetNTotalFace(nTotalFace);
@@ -785,9 +812,9 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
     grid->SetNodeNumberOfEachFace(node_number_of_each_face);
 
     int face2node_size = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        face2node_size += node_number_of_each_face[iface];
+        face2node_size += node_number_of_each_face[iFace];
     }
     int *face2node = new int[face2node_size];
     grid->SetFace2Node(face2node);

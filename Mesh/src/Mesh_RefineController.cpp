@@ -1278,7 +1278,7 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
     grid->SetNBoundFace(numberOfBoundaryFaces);
     grid->SetNTotalFace(numberOfFaces);
 
-    CompositeUnstructBC **bcr = new CompositeUnstructBC *[numberOfBoundaryFaces];
+    UnstructBCSet **bcr = new UnstructBCSet *[numberOfBoundaryFaces];
     grid->SetBCRecord(bcr);
 
     int iCount = 0;
@@ -1294,7 +1294,7 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
             TK_Exit::ExceptionExit("bcName = null in generate unstruct grid!");
         }
 
-        bcr[iCount] = new CompositeUnstructBC();
+        bcr[iCount] = new UnstructBCSet();
         bcr[iCount]->SetKey(bc->GetBCType());
         bcr[iCount]->SetBCName(bc->GetBCName());
         bcr[iCount]->SetBoundaryCondition(bc);

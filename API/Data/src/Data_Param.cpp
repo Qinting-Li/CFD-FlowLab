@@ -49,15 +49,28 @@ LIB_EXPORT void Data_Param::GetData(const string &name, void *data, int type, in
     set < Data_SafeData >::iterator iter;
     Data_SafeData datas = Data_SafeData(name, data, type, size);
     iter = dataSet->find(datas);
+
+    /*static set<string> bcNameSet;
+    static int count = 0;*/
+
     if (iter != dataSet->end())
     {
         CopyDataValue(data, iter->GetData(), iter->GetType(), iter->GetSize());
+        
+        //bcNameSet.insert(name);
+        //count ++;
     }
     else
     {
         cout << "This data does not exist: " << name.c_str() << endl;
         exit(0);    //! It is temporary!!!
     }
+    
+    /*int iCount = static_cast<int>(bcNameSet.size()) + 10000;
+    if (iCount < count)
+    {
+        cout << "  Warning: this data has been read  more times: "<< name.c_str() << endl;
+    }*/
 }
 
 LIB_EXPORT int Data_Param::CheckDataExist(const string &name)

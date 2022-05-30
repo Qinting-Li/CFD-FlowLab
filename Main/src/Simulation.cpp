@@ -879,17 +879,36 @@ void Simulation::RunGridCheckSolver()
             file << "FaceTopology." << endl;
 
             int nBoundFace = grid->GetNBoundFace();
-            CompositeUnstructBC **bcRecord = grid->GetBCRecord();
 
+            UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+            int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+            int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+          
             file << "nBoundFace : " << nBoundFace << endl;
 
             file << "faceNumber  BcType  BCName" << endl;
-            for (int iFace = 0; iFace < nBoundFace; iFace ++)
+            //for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+            //{
+            //    UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+            //    int bcType = bcRegion->GetBCType();
+            //    string bcName = bcRegion->GetBCName();
+
+            //    vector<int> *faceIndex = bcRegion->GetFaceIndex();
+            //    for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            //    {
+            //        // iFace is the face number in the set of faceIndex.
+            //        int iFace = *iter;
+            //        file << iFace << setw(10) << bcType << setw(20) << bcName <<endl;
+            //    }
+            //}
+            for (int iFace = 0; iFace < nBoundFace; ++iFace)
             {
-                int bcType = bcRecord[iFace]->GetKey();
-                string bcName = bcRecord[iFace]->GetBCName();
+                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+                int bcType = bcRegion->GetBCType();
+                string bcName = bcRegion->GetBCName();
                 file << iFace << setw(10) << bcType << setw(20) << bcName <<endl;
             }
+
 
             int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
             int *face2Node = grid->GetFace2Node();
@@ -1043,8 +1062,8 @@ void Simulation::RunGridCheckSolver()
             file << "iDimensions_j" << setw(10) << iDimensions[1] << endl;
             file << "iDimensions_k" << setw(10) << iDimensions[2] << endl;
 
-            CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-            int nBCRegion = compositeBCRegion->GetnBCRegion();
+            StructBCSet *structBCSet = grid->GetStructBCSet();
+            int nBCRegion = structBCSet->GetnBCRegion();
             file << "nBCRegion : " << nBCRegion << endl;
 
             file << "BCInfor : Boundary information of current zone ." << endl;
@@ -1052,7 +1071,7 @@ void Simulation::RunGridCheckSolver()
             int nBCTotal = nBCRegion;
             for (int ibcRegion = 0; ibcRegion < nBCRegion; ++ ibcRegion)
             {
-                StructBC *bcRegion = compositeBCRegion->GetBCRegion(ibcRegion);
+                StructBC *bcRegion = structBCSet->GetBCRegion(ibcRegion);
                 bcType = bcRegion->GetBCType();
                 if (bcType == -1)
                 {
@@ -1066,7 +1085,7 @@ void Simulation::RunGridCheckSolver()
             for (int ibcRegion = 0; ibcRegion < nBCRegion; ++ ibcRegion)
             {
                 int index = 0;
-                StructBC *bcRegion = compositeBCRegion->GetBCRegion(ibcRegion);
+                StructBC *bcRegion = structBCSet->GetBCRegion(ibcRegion);
                 bcRegion->GetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
                 bcType = bcRegion->GetBCType();
                 sLr = bcRegion->GetFaceLeftOrRightIndex();
@@ -1952,9 +1971,9 @@ void Simulation::MultiGridInitFlow()
             UpdateOuterIterationStep(outIterStep);
 
             //using namespace PHMPI;
-            for (int isolver = 0; isolver < nSolver; ++ isolver)
+            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
             {
-                Controller *controller = new Controller(isolver, this->region);
+                Controller *controller = new Controller(iSolver, this->region);
                 controller->MultiGridInitFlow(iLevel);
                 controller->PostSolve(iLevel);
                 delete controller;
@@ -1962,10 +1981,10 @@ void Simulation::MultiGridInitFlow()
         }
 
         //! Interpolate from coarse grid to fine grid.
-        for (int isolver = 0; isolver < nSolver; ++ isolver)
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
-            Controller *controller = new Controller(isolver, this->region);
-            controller->InterpolatFineGrid(isolver, iLevel - 1);
+            Controller *controller = new Controller(iSolver, this->region);
+            controller->InterpolatFineGrid(iSolver, iLevel - 1);
             delete controller;
         }
     }
@@ -2011,7 +2030,7 @@ void Simulation::SolveSteady()
     {
         for (int iSolver = 0; iSolver < nSolver; ++iSolver)
         {
-            //! isolver = 1 or 2, is supposed as turbulence computing.
+        //! iSolver = 1 or 2, is supposed as turbulence computing.
             if ((iSolver == TURB_SOLVER) && (outerIterStep % turbInterval != 0))
             {
                 return;

@@ -155,7 +155,7 @@ public:
     void PrintConnectionList();
     void SetStructuredGridBoundary(StructBC * bcregion);
 public:
-    void ReadOrdinaryBoundaryRegion(int ibcregion);
+    void ReadOrdinaryBoundaryRegion(int iBCRegion);
     void Read1to1BoundaryRegion(int i1to1);
 };
 
@@ -178,7 +178,7 @@ public:
     int GetNOrdinaryBCRegion() const { return n_ordinary_bcregions; }
     void SetNOrdinaryBCRegion(int n_ordinary_bcregions) { this->n_ordinary_bcregions = n_ordinary_bcregions; }
 
-    CGNSBCRegion *GetBCRegion(int ibcregion) const {  return bcregions[ibcregion]; }
+    CGNSBCRegion *GetBCRegion(int iBCRegion) const {  return bcregions[iBCRegion]; }
     CGNSBCRegion *Get1to1BCRegion(int i1to1) const { return bcregions[n_ordinary_bcregions + i1to1]; }
 public:
     void Convert2InerDataStandard();
@@ -252,13 +252,13 @@ public:
     int GetNBCRegion() const { return bcregion_proxy->GetNBCRegion(); };
     int GetN1to1BCRegion() const { return n1to1; }
     int GetNOrdinaryBCRegion() const { return n_ordinary_bcregions; }
-    CGNSection   *GetSection (int isection) const {  return section_proxy->GetSection(isection); }
-    CGNSBCRegion *GetBCRegion(int ibcregion) const {  return bcregion_proxy->GetBCRegion(ibcregion); }
+    CGNSection   * GetSection (int isection) const {  return section_proxy->GetSection(isection); }
+    CGNSBCRegion * GetBCRegion(int iBCRegion) const {  return bcregion_proxy->GetBCRegion(iBCRegion); }
 
-    CGNSBCRegion *Get1to1BCRegion(int i1to1) const {  return bcregion_proxy->Get1to1BCRegion(i1to1); }
+    CGNSBCRegion * Get1to1BCRegion(int i1to1) const {  return bcregion_proxy->Get1to1BCRegion(i1to1); }
 public:
-    SimpleGrid *GetSimpleGrid() const { return grid; };
-    CGNSectionProxy *GetSectionProxy() const { return section_proxy; }
+    SimpleGrid * GetSimpleGrid() const { return grid; };
+    CGNSectionProxy * GetSectionProxy() const { return section_proxy; }
     void SetElementTypeAndIndex(vector<int> &element_type, vector< vector<int> > &element_index);
     void Convert2InerDataStandard();
     void BuildPoints(PointOperation *point_operation);
@@ -418,16 +418,16 @@ public:
     void MarkElementBoundaryFace();
     void MarkAllCandidateBoundaryFace();
     bool CheckBCFace(set<cgsize_t> &bc_vertex, vector<int> &face_node);
-    int  GetRootFaceID(int iface);
+    int  GetRootFaceID(int iFace);
     int  GetNBoundFace() const;
-    int  GetFacePointNumber(int iface) { return static_cast<int>((*face_to_nodes)[iface].size()); }
+    int  GetFacePointNumber(int iFace) { return static_cast<int>((*face_to_nodes)[iFace].size()); }
     int  GetNTotalCell() const { return nTotalCell; }
     void SetNTotalCell(int nTotalCell) { this->nTotalCell = nTotalCell; }
 public: 
     void Normalize(vector< int > &element_all_to_local_map);
     void CreateUnstructGrid(UnstructGrid *grid);
     void ReorderElementFace();
-    void SwapElementFace(int iface, int jface);
+    void SwapElementFace(int iFace, int jFace);
     void FreeMemory();
     void PrintBoundaryFace();
     void AddChildBoundaryFace(vector<int> &face_node, int face_type, int bctype);

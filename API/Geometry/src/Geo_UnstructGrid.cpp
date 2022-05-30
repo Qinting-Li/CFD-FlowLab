@@ -64,7 +64,7 @@ UnstructGrid * UnstructGridCast(Grid *grid_in)
 LIB_EXPORT UnstructGrid::UnstructGrid()
 {
     wallCellLabel = NULL;
-    bcRegionUnstruct = NULL;
+    unstructBCSet = NULL;
     cell2coarsegridcell  = 0;
     averageVolume = -1.0;
     zoneProbesCellID.resize(0);
@@ -159,15 +159,11 @@ LIB_EXPORT UnstructGrid::~UnstructGrid()
 
     delete [] cell2coarsegridcell;
 
-    //if (bcRegionUnstruct != NULL)
-    //{
-        //for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct ++)
-        //{
-        //    delete bcRegionUnstruct[iBCRegionUnstruct];
-        //}
-        //delete [] bcRegionUnstruct;
-    //}
-
+    if (unstructBCSet != NULL && IsFinestGrid())
+    {
+        delete unstructBCSet;
+        unstructBCSet = NULL;
+    }
     zoneProbesCellID.clear();
 
     if (normalDistanceC2C != NULL)
@@ -287,13 +283,23 @@ int* UnstructGrid::GetWallCellLabel()
             wallCellLabel[iCell] = 0;
         }
 
-        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+        UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+        int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+        for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            int bcType = bcr[iFace]->GetKey();
-            int le = leftCellOfFace[ iFace ];
+            UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
             if (IsWall(bcType))
             {
-                wallCellLabel[le] = 1;
+                vector<int>* faceIndex = bcRegion->GetFaceIndex();
+                for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                {
+                    // iFace is the face number in the set of faceIndex.
+                    int iFace = *iter;
+                    int le = leftCellOfFace[ iFace ];
+                    wallCellLabel[le] = 1;
+                }
             }
         }
     }
@@ -319,9 +325,9 @@ void UnstructGrid::ComputeCell2Node()
     int nTotal = nBoundFace + nTotalCell;
 
     uint_t count = 0;
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        count += cell2node_set[icell].size();
+        count += cell2node_set[iCell].size();
     }
 
     int * cell2node = new int [count];
@@ -329,10 +335,10 @@ void UnstructGrid::ComputeCell2Node()
     int * npc = new int [nTotal];
 
     count = 0;
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        npc[icell] = static_cast<int>(cell2node_set[icell].size());
-        for (set<int>::iterator iter = cell2node_set[icell].begin(); iter != cell2node_set[icell].end(); ++ iter)
+        npc[iCell] = static_cast<int>(cell2node_set[iCell].size());
+        for (set<int>::iterator iter = cell2node_set[iCell].begin(); iter != cell2node_set[iCell].end(); ++ iter)
         {
             cell2node[count ++] = (*iter);
         }
@@ -390,7 +396,7 @@ void UnstructGrid::ComputeFace2NodeArray()
     face2NodeArray = new int * [numberOfFaces];
 
     face2NodeArray[0] = face2Node;
-    for(int iFace = 1; iFace < numberOfFaces; ++ iFace)
+    for (int iFace = 1; iFace < numberOfFaces; ++ iFace)
     {
         face2NodeArray[iFace] = &(face2NodeArray[iFace-1][nodeNumberOfEachFace[iFace-1]]);
     }
@@ -407,7 +413,7 @@ void UnstructGrid::ComputeFace2NodeSubscript()
     int *  face2NodeSubscript   = faceTopology->GetFace2NodeSubscript();
 
     //! Considering that it is often used as follows.
-    //for(iFace = 0; iFace < nTotalFace; ++iFace){
+    //for (iFace = 0; iFace < nTotalFace; ++iFace){
     //    g = f(face2NodeSubscript[iFace]) + f(face2NodeSubscript[iFace+1]);
     //}
     //! So we set the array length is numberOfFaces + 1.
@@ -415,7 +421,7 @@ void UnstructGrid::ComputeFace2NodeSubscript()
     face2NodeSubscript = new int[numberOfFaces + 1]; 
 
     face2NodeSubscript[0] = 0;
-    for(int iFace = 1; iFace <= numberOfFaces; ++ iFace)
+    for (int iFace = 1; iFace <= numberOfFaces; ++ iFace)
     {
         face2NodeSubscript[iFace] = face2NodeSubscript[iFace-1] + nodeNumberOfEachFace[iFace-1];
     }
@@ -447,14 +453,24 @@ void UnstructGrid::ComputeCell2Cell()
     int le,re;
 
     // If boundary is an INTERFACE, need to count ghost cell
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bctype  = bcr[iFace]->GetKey();
-        if (IsInterface(bctype))
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (IsInterface(bcType))
         {
-            le      = leftCellOfFace[ iFace ];
-            re      = iFace + nTotalCell;
-            cell2cell[le].push_back(re);
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                le      = leftCellOfFace[ iFace ];
+                re      = iFace + nTotalCell;
+                cell2cell[le].push_back(re);
+            }
         }
     }
 
@@ -519,18 +535,18 @@ void UnstructGrid::ComputeCell2Face()
 
     int * face_number_of_each_cell = new int [nTotalCell];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        face_number_of_each_cell[icell] = static_cast<int>(vcell2face[icell].size());
+        face_number_of_each_cell[iCell] = static_cast<int>(vcell2face[iCell].size());
     }
 
     cell2face = NewPointer2<int>(nTotalCell, face_number_of_each_cell); 
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        for (std::size_t j = 0; j < vcell2face[icell].size(); ++ j)
+        for (std::size_t j = 0; j < vcell2face[iCell].size(); ++ j)
         {
-            cell2face[icell][j] = vcell2face[icell][j];
+            cell2face[iCell][j] = vcell2face[iCell][j];
         }
     }
 
@@ -557,31 +573,40 @@ void UnstructGrid::ComputeNumberOfNeighborCell()
     int nTotalCell = this->GetNTotalCell();
     int *leftCellOfFace  = this->GetLeftCellOfFace();
     int *rightCellOfFace = this->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     // Allocate memories for number of cells per cell
     int * number_of_neighbor_cell = new int[ nTotalCell ];
 
     // set number_of_neighbor_cell to be 0 without including itself
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        number_of_neighbor_cell[icell] = 0;
+        number_of_neighbor_cell[iCell] = 0;
     }
 
-    int le,re;
+    int le = 0, re = 0;
 
     // If boundary is an INTERFACE, need to count ghost cell
     // Note: Symmetry???
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bctype    = bcr[iFace]->GetKey();
-        if (IsInterface(bctype))
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (IsInterface(bcType))
         {
-            le      = leftCellOfFace[ iFace ];
-            number_of_neighbor_cell[le] ++;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                le      = leftCellOfFace[ iFace ];
+                number_of_neighbor_cell[le] ++;
+            }
         }
     }
-
+ 
     // Interior faces
     for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
@@ -655,14 +680,16 @@ void UnstructGrid::computeBoundaryPointLabel()
     int* face2node = GetFace2Node();
     int *node_number_of_each_face   = this->GetNodeNumberOfEachFace();
 
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    int pt, bctype;
+    int pt, bcType;
     int nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; iFace++)
     {
-        bctype = bcr[iFace]->GetKey();
-        if (bctype != PHENGLEI::INTERFACE)
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType    = bcRegion->GetBCType();
+        if (bcType != PHENGLEI::INTERFACE)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -676,8 +703,9 @@ void UnstructGrid::computeBoundaryPointLabel()
     nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; iFace++)
     {
-        bctype = bcr[iFace]->GetKey();
-        if (bctype == PHENGLEI::SYMMETRY)
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType    = bcRegion->GetBCType();
+        if (bcType == PHENGLEI::SYMMETRY)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -690,8 +718,10 @@ void UnstructGrid::computeBoundaryPointLabel()
     nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; iFace++)
     {
-        bctype = bcr[iFace]->GetKey();
-        if (bctype == PHENGLEI::FARFIELD)
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType    = bcRegion->GetBCType();
+
+        if (bcType == PHENGLEI::FARFIELD)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -705,8 +735,10 @@ void UnstructGrid::computeBoundaryPointLabel()
     nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; iFace++)
     {
-        bctype = bcr[iFace]->GetKey();
-        if (bctype == PHENGLEI::SOLID_SURFACE)
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType    = bcRegion->GetBCType();
+
+        if (bcType == PHENGLEI::SOLID_SURFACE)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -738,104 +770,65 @@ vector <int> & UnstructGrid::GetBoundaryConditionType()
 {
     if (boundaryConditionType.size() != 0) return boundaryConditionType;
 
-    int numberOfBoundaryElements = this->GetNBoundFace();
-    boundaryConditionType.resize(numberOfBoundaryElements);
+    boundaryConditionType.resize(nBoundFace);
 
-    CompositeUnstructBC **bcr = this->GetBCRecord();
-    for (int iElement = 0; iElement < numberOfBoundaryElements; ++ iElement)
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int boundaryConditionTypeOld = bcr[iElement]->GetKey();
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcTypeOld = bcRegion->GetBCType();
+        vector<int>* faceIndex = bcRegion->GetFaceIndex();
 
-        if (boundaryConditionTypeOld == PHENGLEI::INTERFACE)
+        if (bcTypeOld == PHENGLEI::INTERFACE)
         {
-            boundaryConditionType[iElement] = 0;
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                boundaryConditionType[iFace] = 0;
+            }
         }
-        else if (boundaryConditionTypeOld == PHENGLEI::SOLID_SURFACE)
+        else if (bcTypeOld == PHENGLEI::SOLID_SURFACE)
         {
-            boundaryConditionType[iElement] = 1;
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                boundaryConditionType[iFace] = 1;
+            }
         }
-        else if (boundaryConditionTypeOld == PHENGLEI::OVERSET)
+        else if (bcTypeOld == PHENGLEI::OVERSET)
         {
-            boundaryConditionType[iElement] = 2;
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                boundaryConditionType[iFace] = 2;
+            }
         }
-        else if (boundaryConditionTypeOld == PHENGLEI::SYMMETRY)
+        else if (bcTypeOld == PHENGLEI::SYMMETRY)
         {
-            boundaryConditionType[iElement] = 3;
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                boundaryConditionType[iFace] = 3;
+            }
         }
-        else
+        else 
         {
-            boundaryConditionType[iElement] = 9;
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                boundaryConditionType[iFace] = 9;
+            }
         }
     }
 
     return boundaryConditionType;
-}
-
-UnstructBC** UnstructGrid::GetBCRegionUnstruct()
-{
-    if (!bcRegionUnstruct)
-    {
-        CompositeUnstructBC **bcRecord = this->GetBCRecord();
-
-        //! Create bcRegion.
-        set<string> bcNameSet;
-        for (int iFace = 0; iFace < nBoundFace; iFace++)
-        {
-            string bcName = bcRecord[iFace]->GetBCName();
-            bcNameSet.insert(bcName);
-        }
-        nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
-        bcRegionUnstruct = new UnstructBC* [nBCRegionUnstruct];
-        set<string>::iterator iter;
-        int count = 0;
-        for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
-        {
-            bcRegionUnstruct[count] = new UnstructBC();
-            bcRegionUnstruct[count]->SetBCName(*iter);
-            count++;
-        }
-
-        //! Assign the global BC list to the bcRegion.
-        vector<SimpleBC *> * globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
-        if (globalBCList != NULL)
-        {
-            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
-            {
-                string bcRegionName = bcRegionUnstruct[iBCRegionUnstruct]->GetBCName();
-                for (vector<SimpleBC *>::iterator iter = globalBCList->begin(); iter != globalBCList->end(); iter++)
-                {
-                    string globalBCName = (*iter)->GetBCName();
-                    Data_Param * globalBCParam = (*iter)->GetBCParamDataBase();
-                    if (globalBCName == bcRegionName)
-                    {
-                        bcRegionUnstruct[iBCRegionUnstruct]->SetBCParamDataBase(globalBCParam);
-                        break;
-                    }
-                }
-            }
-        }
-
-        //! Connect the bcRegion with the bcRecord of each face.
-        for (int iFace = 0; iFace < nBoundFace; iFace++)
-        {
-            string bcRecordName = bcRecord[iFace]->GetBCName();
-            int bcRecordType    = bcRecord[iFace]->GetKey();
-            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
-            {
-                string bcRegionName = bcRegionUnstruct[iBCRegionUnstruct]->GetBCName();
-                if (bcRegionName == bcRecordName)
-                {
-                    bcRecord[iFace]->SetBCRegion(bcRegionUnstruct[iBCRegionUnstruct]);
-
-                    bcRegionUnstruct[iBCRegionUnstruct]->SetBCType(bcRecordType);
-                    vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
-                    faceIndex->push_back(iFace);
-                }
-            }
-        }
-    }
-
-    return bcRegionUnstruct;
 }
 
 //! Compute the minimum distance of the grid edges.
@@ -944,20 +937,20 @@ void UnstructGrid::ComputeNode2Cell()
     struct linkbase *link, *tmp;
 
     int * nCPN = new int[ nTotalNode ];
-    nc  = new struct linkbase * [ nTotalNode ];
+    nc = new struct linkbase * [ nTotalNode ];
 
-    for(i = 0; i<nTotalNode; ++i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
-        nCPN[ i ] = 0;
-        nc[ i ]  = NULL;
+        nCPN[i] = 0;
+        nc[i] = NULL;
     }
     //firstly, search all the face
     node=0;
-    for(i = 0; i < nTotalFace; ++ i)
+    for (i = 0; i < nTotalFace; ++ i)
     {
         le = leftCellOfFace[ i ];
         re = rightCellOfFace[ i ];
-        for(j = 0; j < node_number_of_each_face[ i ]; ++ j)
+        for (j = 0; j < node_number_of_each_face[ i ]; ++ j)
         {
             ip = face2node[ node  ++  ];
             addn2c(le, ip, nCPN, nc);
@@ -967,23 +960,23 @@ void UnstructGrid::ComputeNode2Cell()
 
     //change date from linkbase to array
     count=0;
-    for(i = 0; i < nTotalNode; ++ i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
         count = count + nCPN[ i ];
     }
     int * n2c = new int [count];
 
     count=0;
-    for(i = 0; i < nTotalNode; ++ i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
-        for(link = nc[ i ]; link != NULL; link = link->next)
+        for (link = nc[ i ]; link != NULL; link = link->next)
         {
             n2c[ count++ ] = link->ic;
         }
     }
 
     //delete linkbase
-    for(i = 0; i < nTotalNode; ++ i)
+    for (i = 0; i < nTotalNode; ++ i)
     {
         link = nc[ i ];
         while (link != NULL)
@@ -1010,9 +1003,9 @@ void UnstructGrid::ComputeNode2CellArray()
     int **node2CellArray = new int * [nTotalNode];
 
     node2CellArray[0] = node2Cell;
-    for(int inode = 1; inode < nTotalNode; ++inode)
+    for (int iNode = 1; iNode < nTotalNode; ++iNode)
     {
-        node2CellArray[inode] = &(node2CellArray[inode-1][nCellPerNode[inode-1]]);
+        node2CellArray[iNode] = &(node2CellArray[iNode-1][nCellPerNode[iNode-1]]);
     }
 
     nodeTopology->SetNode2CellArray(node2CellArray);
@@ -1020,12 +1013,12 @@ void UnstructGrid::ComputeNode2CellArray()
     printf("Get Node2CellArray, well down!");
 }
 
-void UnstructGrid::GetSourceIndex(int iFace,int ipos,int &s)
+void UnstructGrid::GetSourceIndex(int iFace,int ipos, int &s)
 {
-    InterfaceInfo * interfaceInfo = this->GetInterfaceInfo();
-    int * interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
-    int * leftCellOfFace = this->GetLeftCellOfFace();
-    s = leftCellOfFace[ interFace2BoundaryFace[iFace] ];
+    InterfaceInfo *interfaceInfo = this->GetInterfaceInfo();
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+    int *leftCellOfFace = this->GetLeftCellOfFace();
+    s = leftCellOfFace[interFace2BoundaryFace[iFace]];
 }
 
 void UnstructGrid::GetSourcePointIndex(int ipoint,int ipos,int &s)
@@ -1034,12 +1027,12 @@ void UnstructGrid::GetSourcePointIndex(int ipoint,int ipos,int &s)
     int *interPoint2GlobalPoint = interpointInformation->GetInterPoint2GlobalPoint();
     s = interPoint2GlobalPoint[ipoint];
 }
-void UnstructGrid::GetTargetIndex(int iFace,int ipos,int &t)
+void UnstructGrid::GetTargetIndex(int iFace,int ipos, int &t)
 {
-    InterfaceInfo * interfaceInfo = this->GetInterfaceInfo();
-    int * interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
-    int * rightCellOfFace = this->GetRightCellOfFace();
-    t = rightCellOfFace[ interFace2BoundaryFace[iFace] ];
+    InterfaceInfo *interfaceInfo = this->GetInterfaceInfo();
+    int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
+    t = rightCellOfFace[interFace2BoundaryFace[iFace]];
 }
 
 void UnstructGrid::GetTargetPointIndex(int ipoint,int ipos,int &t)
@@ -1055,17 +1048,26 @@ void UnstructGrid::SetGhostCellExceptInterface(RDouble * f)
     int *leftCellOfFace = this->GetLeftCellOfFace();
     int *rightCellOfFace = this->GetRightCellOfFace();
     int le, re;
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int BCType = bcr[iFace]->GetKey();
-        if (BCType == PHENGLEI::INTERFACE)
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        vector<int>* faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            continue;
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (bcType == PHENGLEI::INTERFACE)
+            {
+                continue;
+            }
+            le = leftCellOfFace [iFace];
+            re = rightCellOfFace[iFace];
+            f[re] = f[le];
         }
-        le = leftCellOfFace [iFace];
-        re = rightCellOfFace[iFace];
-        f[re] = f[le];
     }
 }
 
@@ -1184,7 +1186,7 @@ streamsize UnstructGrid::TranslateActionLength(ActionKey *actkey)
     return 0;
 }
 
-void UnstructGrid::SpecifyBC()
+void UnstructGrid::SpecifyRightCellofBC()
 {
     int nBoundFace = this->GetNBoundFace();
     int nTotalCell = this->GetNTotalCell();
@@ -1198,7 +1200,7 @@ void UnstructGrid::SpecifyBC()
 //! Get laplacian weitht of nodes(cxh, 2012.12.12).
 void UnstructGrid::CalcLaplacianWeitht()
 {
-    int inode,j,count,icell;
+    int iNode,j,count,iCell;
     int nTotalNode = this->GetNTotalNode();
     RDouble xn,yn,zn;
     RDouble xc,yc,zc;
@@ -1227,15 +1229,15 @@ void UnstructGrid::CalcLaplacianWeitht()
     lamday = new RDouble [ nTotalNode ];
     lamdaz = new RDouble [ nTotalNode ];
 
-    count=0;
+    count = 0;
 
-    for(inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
         Rx = Ry = Rz = Ixx = Iyy = Izz = Ixy = Ixz = Iyz = 0.0;
-        xn = xp[ inode ];
-        yn = yp[ inode ];
-        zn = zp[ inode ];
-        for(j = 0; j < nCPN[ inode ]; ++ j)
+        xn = xp[ iNode ];
+        yn = yp[ iNode ];
+        zn = zp[ iNode ];
+        for (j = 0; j < nCPN[ iNode ]; ++ j)
         {
             xc = xcc[ n2c[ count ] ];
             yc = ycc[ n2c[ count ] ];
@@ -1259,11 +1261,11 @@ void UnstructGrid::CalcLaplacianWeitht()
         {
             D = Ixx *  Iyy - Ixy * Ixy;
 
-            lamdax[ inode ] = (Ry * Ixy - Rx * Iyy) / D;
+            lamdax[ iNode ] = (Ry * Ixy - Rx * Iyy) / D;
 
-            lamday[ inode ] = (Rx * Ixy - Ry * Ixx) / D;
+            lamday[ iNode ] = (Rx * Ixy - Ry * Ixx) / D;
 
-            lamdaz[ inode ] = 0.0;
+            lamdaz[ iNode ] = 0.0;
         } 
         else 
         {
@@ -1271,40 +1273,40 @@ void UnstructGrid::CalcLaplacianWeitht()
                 Ixy * (Ixy * Izz - Ixz * Iyz) +
                 Ixz * (Ixy * Iyz - Iyy * Ixz);
 
-            lamdax[ inode ] = (-Rx * (Iyy * Izz - Iyz * Iyz)
+            lamdax[ iNode ] = (-Rx * (Iyy * Izz - Iyz * Iyz)
                                 +Ry * (Ixy * Izz - Ixz * Iyz)
                                 -Rz * (Ixy * Iyz - Iyy * Ixz)) / D;
 
-            lamday[ inode ] = ( Rx * (Ixy * Izz - Ixz * Iyz)
+            lamday[ iNode ] = ( Rx * (Ixy * Izz - Ixz * Iyz)
                                 -Ry * (Ixx * Izz - Ixz * Ixz)
                                 +Rz * (Ixx * Iyz - Ixy * Ixz)) / D;
 
-            lamdaz[ inode ] = (-Rx * (Ixy * Iyz - Iyy * Ixz)
+            lamdaz[ iNode ] = (-Rx * (Ixy * Iyz - Iyy * Ixz)
                                 +Ry * (Ixx * Iyz - Ixy * Ixz)
                                 -Rz * (Ixx * Iyy - Ixy * Ixy)) / D;
         }
     }
         
     if (knode == NULL) knode = new int [ nTotalNode ];
-    for(inode = 0; inode < nTotalNode; ++ inode) knode[ inode ] = 0;
+    for (iNode = 0; iNode < nTotalNode; ++ iNode) knode[ iNode ] = 0;
 
     count=0;
-    for(inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        for(j = 0; j < nCPN[ inode ]; ++ j)
+        for (j = 0; j < nCPN[ iNode ]; ++ j)
         {
-            icell = n2c[ count++ ];
-            weight = 1 + lamdax[ inode ] * (xcc[ icell ] - xp[ inode ]) + lamday[ inode ] * (ycc[ icell ] - yp[ inode ]) + lamdaz[ inode ] * (zcc[ icell ] - zp[ inode ]);
-            if (weight <= 0.0) knode[ inode ] = 1;
+            iCell = n2c[ count++ ];
+            weight = 1 + lamdax[ iNode ] * (xcc[ iCell ] - xp[ iNode ]) + lamday[ iNode ] * (ycc[ iCell ] - yp[ iNode ]) + lamdaz[ iNode ] * (zcc[ iCell ] - zp[ iNode ]);
+            if (weight <= 0.0) knode[ iNode ] = 1;
         }
     }
 
-    count=0;
-    for(inode = 0; inode < nTotalNode; ++ inode) 
+    count = 0;
+    for (iNode = 0; iNode < nTotalNode; ++ iNode) 
     {
-        if (knode[ inode ] == 1) count ++;
+        if (knode[ iNode ] == 1) count ++;
     }
-    printf(" Number of negative weight cells : %d  %f\n",count, static_cast<RDouble>(count)/nTotalNode);
+    printf(" Number of negative weight cells : %d  %f\n", count, static_cast<RDouble>(count)/nTotalNode);
 }
 
 void UnstructGrid::ComputeCell2CellConnectivity()
@@ -1318,9 +1320,9 @@ void UnstructGrid::ComputeCell2CellConnectivity()
     cell2cell_connectivity = new Connectivity();
 
     int *nnpc = new int [nTotalCell];
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        nnpc[icell] = 0;
+        nnpc[iCell] = 0;
     }
 
     int le,re;
@@ -1350,9 +1352,9 @@ void UnstructGrid::ComputeCell2CellConnectivity()
 
     index[0] = 0;
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        index[icell+1] = index[icell] + nnpc[icell];
+        index[iCell+1] = index[iCell] + nnpc[iCell];
     }
 
     cell2cell_connectivity->index = index;
@@ -1361,9 +1363,9 @@ void UnstructGrid::ComputeCell2CellConnectivity()
 
     cell2cell_connectivity->data = new int [cell2cell_connectivity->n];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        nnpc[icell] = 0;
+        nnpc[iCell] = 0;
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -1626,13 +1628,17 @@ void UnstructGrid::FaceWeight(RDouble *deltL, RDouble *deltR, int localStart, in
     //! If there are some boundary faces, make modifications.
     if (localStart < nBoundFace)
     {
-        CompositeUnstructBC **bcr = this->GetBCRecord();
+        UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+        int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
         int nMid = nBoundFace;
         if (localEnd < nBoundFace) nMid = localEnd;
 
         for(int iFace = localStart; iFace < nMid; ++ iFace)
         {
-            int bcType = bcr[iFace]->GetKey();
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+            int bcType = bcRegion->GetBCType();
+
             if (!IsInterface(bcType))
             {
                 int jFace = iFace - localStart;
@@ -1655,9 +1661,9 @@ void UnstructGrid::CVGNorm(FieldProxy *q_1_proxy, FieldProxy *q_0_proxy, int neq
     norm = zero;
     for (int m = 0; m < neqn; ++ m)
     {
-        for (int icell = 0; icell < nTotalCell; ++ icell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            diff = q_1[m][icell] - q_0[m][icell];
+            diff = q_1[m][iCell] - q_0[m][iCell];
             norm = norm + diff * diff;
         }
     }
@@ -1680,9 +1686,9 @@ void UnstructGrid::UpdateVolold()
     RDouble *vol  = this->GetCellVolume();
     RDouble *voln = this->GetCellVolumeOld();
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        voln[icell] = vol[icell];
+        voln[iCell] = vol[iCell];
     }
 }
 
@@ -1696,9 +1702,9 @@ void UnstructGrid::ClosureCheck(RDouble *xfn, RDouble *area)
 
     sum = new RDouble[ nTotalCell ];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        sum[icell] = 0.0;
+        sum[iCell] = 0.0;
     }
 
     int count, le, re;
@@ -1714,10 +1720,10 @@ void UnstructGrid::ClosureCheck(RDouble *xfn, RDouble *area)
     }
 
     total = 0.0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        total += ABS(sum[icell]);
-        if (ABS(sum[icell]) > 1.0e-8)
+        total += ABS(sum[iCell]);
+        if (ABS(sum[iCell]) > 1.0e-8)
         {
         }
     }
@@ -1900,13 +1906,15 @@ void UnstructGrid::AllocateMetricsALE(ActionKey *actkey)
 
 void UnstructGrid::GetBcNamePair(set< pair<int, string> > &bcNamePairSet)
 {
-    int nBoundFace = this->GetNBoundFace();
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegion = unstructBCSet->GetnBCRegion();
 
-    for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
     {
-        int bcType = bcr[iFace]->GetKey();
-        const string & bcName = bcr[iFace]->GetBCName();
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
         pair<int, string> bcNamePair(bcType, bcName);
         bcNamePairSet.insert(bcNamePair);
     }
@@ -2025,18 +2033,20 @@ void UnstructGrid::InitVariableWallTemperature()
     int *nodePosi  = this->GetFace2NodeSubscript();
     int *face2node = this->GetFace2Node();
 
-    UnstructBC **bcRegionUnstruct = this->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = this->GetNBCRegionUnstruct();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
     for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-		int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
-
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+		
         if (!IsWall(bcType) && bcType != PHENGLEI::ABLATION_SURFACE)
         {
             continue;
         }
 
-        vector<int> *faceIndexArray = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+        vector<int> *faceIndexArray = bcRegion->GetFaceIndex();
         int faceNum = faceIndexArray->size();
         RDouble *wallTempArray = new RDouble[faceNum];
 
@@ -2120,7 +2130,7 @@ void UnstructGrid::InitVariableWallTemperature()
             WriteLogFile("Error !!!!");
         }
 
-        bcRegionUnstruct[iBCRegionUnstruct]->UpdateFieldDataPtr("wallTempArray" , wallTempArray);
+       bcRegion->UpdateFieldDataPtr("wallTempArray" , wallTempArray);
 
     }
 
@@ -2181,11 +2191,11 @@ void UnstructGrid::CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *d
     int nBoundFace = this->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        dqdx[icell] = 0.0;
-        dqdy[icell] = 0.0;
-        dqdz[icell] = 0.0;
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
     }
 
     //! Initial value of gradient.
@@ -2226,12 +2236,12 @@ void UnstructGrid::CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *d
         dqdz0[re] -= qfc * nz;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        RDouble ovol = 1.0 / vol[icell];
-        dqdx0[icell] *= ovol;
-        dqdy0[icell] *= ovol;
-        dqdz0[icell] *= ovol;
+        RDouble ovol = 1.0 / vol[iCell];
+        dqdx0[iCell] *= ovol;
+        dqdy0[iCell] *= ovol;
+        dqdz0[iCell] *= ovol;
     }    
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -2314,12 +2324,12 @@ void UnstructGrid::CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *d
         dqdz[re] -= qfc * nz;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {       
-        RDouble ovol = 1.0 / vol[icell];
-        dqdx[icell] *= ovol;
-        dqdy[icell] *= ovol;
-        dqdz[icell] *= ovol;
+        RDouble ovol = 1.0 / vol[iCell];
+        dqdx[iCell] *= ovol;
+        dqdy[iCell] *= ovol;
+        dqdz[iCell] *= ovol;
     }    
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -2483,11 +2493,11 @@ void UnstructGrid::CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqd
     int nBoundFace = this->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        dqdx[icell] = 0.0;
-        dqdy[icell] = 0.0;
-        dqdz[icell] = 0.0;
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -2532,12 +2542,12 @@ void UnstructGrid::CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqd
         dqdz[re] -= qfr * nz;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        RDouble ovol = one / vol[icell];
-        dqdx[icell] *= ovol;
-        dqdy[icell] *= ovol;
-        dqdz[icell] *= ovol;
+        RDouble ovol = one / vol[iCell];
+        dqdx[iCell] *= ovol;
+        dqdy[iCell] *= ovol;
+        dqdz[iCell] *= ovol;
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -2575,11 +2585,11 @@ void UnstructGrid::CompGradientGGCellW(RDouble *q, RDouble *dqdx, RDouble *dqdy,
     int * leftCellOfFace = this->GetLeftCellOfFace();
     int * rightCellOfFace = this->GetRightCellOfFace();
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        dqdx[icell] = 0.0;
-        dqdy[icell] = 0.0;
-        dqdz[icell] = 0.0;
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
     }
 
     RDouble dxl,dyl,dzl,dxr,dyr,dzr;
@@ -2623,12 +2633,12 @@ void UnstructGrid::CompGradientGGCellW(RDouble *q, RDouble *dqdx, RDouble *dqdy,
         }
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        ovol = one / vol[icell];
-        dqdx[icell] *= ovol;
-        dqdy[icell] *= ovol;
-        dqdz[icell] *= ovol;
+        ovol = one / vol[iCell];
+        dqdx[iCell] *= ovol;
+        dqdy[iCell] *= ovol;
+        dqdz[iCell] *= ovol;
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -2894,18 +2904,17 @@ void UnstructGrid::ComputeWeight()
         fMark[iFace] = 1;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        ixx[icell] = 0.0;
-        iyy[icell] = 0.0;
-        izz[icell] = 0.0;
-        ixy[icell] = 0.0;
-        ixz[icell] = 0.0;
-        iyz[icell] = 0.0;
+        ixx[iCell] = 0.0;
+        iyy[iCell] = 0.0;
+        izz[iCell] = 0.0;
+        ixy[iCell] = 0.0;
+        ixz[iCell] = 0.0;
+        iyz[iCell] = 0.0;
     }
 
-
-    int le,re;
+    int le, re;
 
     RDouble dx,dy,dz,txx,tyy,tzz,txy,txz,tyz;
     RDouble ods;
@@ -2976,72 +2985,71 @@ void UnstructGrid::ComputeWeight()
 
     if (this->GetDim() == THREE_D)
     {
-        for (int icell = 0; icell < nTotalCell; ++ icell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            txx    = ixx[icell];
-            tyy    = iyy[icell];
-            tzz    = izz[icell];
-            txy    = ixy[icell];
-            txz    = ixz[icell];
-            tyz    = iyz[icell];
+            txx = ixx[iCell];
+            tyy = iyy[iCell];
+            tzz = izz[iCell];
+            txy = ixy[iCell];
+            txz = ixz[iCell];
+            tyz = iyz[iCell];
           
-            delt   = (txx * tyy * tzz
-                    + 2.0 * txy * txz * tyz 
-                    - txx * tyz * tyz
-                    - tyy * txz * txz
-                    - tzz * txy * txy);
+            delt = (txx * tyy * tzz
+                  + 2.0 * txy * txz * tyz 
+                  - txx * tyz * tyz
+                  - tyy * txz * txz
+                  - tzz * txy * txy);
 
             if (ABS(delt) < SMALL)
             {
-                ixx[icell] = 0.0;
-                iyy[icell] = 0.0;
-                izz[icell] = 0.0;
-                ixy[icell] = 0.0;
-                ixz[icell] = 0.0;
-                iyz[icell] = 0.0;
+                ixx[iCell] = 0.0;
+                iyy[iCell] = 0.0;
+                izz[iCell] = 0.0;
+                ixy[iCell] = 0.0;
+                ixz[iCell] = 0.0;
+                iyz[iCell] = 0.0;
             }
             else
             {
-                odelt  = 1.0 / delt;
-                ixx[icell] = (tyy * tzz - tyz * tyz) * odelt;
-                iyy[icell] = (txx * tzz - txz * txz) * odelt;
-                izz[icell] = (txx * tyy - txy * txy) * odelt;
-                ixy[icell] = (txz * tyz - txy * tzz) * odelt;
-                ixz[icell] = (txy * tyz - txz * tyy) * odelt;
-                iyz[icell] = (txy * txz - tyz * txx) * odelt;
+                odelt = 1.0 / delt;
+                ixx[iCell] = (tyy * tzz - tyz * tyz) * odelt;
+                iyy[iCell] = (txx * tzz - txz * txz) * odelt;
+                izz[iCell] = (txx * tyy - txy * txy) * odelt;
+                ixy[iCell] = (txz * tyz - txy * tzz) * odelt;
+                ixz[iCell] = (txy * tyz - txz * tyy) * odelt;
+                iyz[iCell] = (txy * txz - tyz * txx) * odelt;
            }
         }
     }
     else
     {
-        for (int icell = 0; icell < nTotalCell; ++ icell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            txx    = ixx[icell];
-            tyy    = iyy[icell];
-            txy    = ixy[icell];
+            txx = ixx[iCell];
+            tyy = iyy[iCell];
+            txy = ixy[iCell];
 
-            delt   = txx * tyy - txy * txy;
+            delt = txx * tyy - txy * txy;
 
             if (ABS(delt) < SMALL)
             {
-                ixx[icell] = 0.0;
-                iyy[icell] = 0.0;
-                izz[icell] = 0.0;
-                ixy[icell] = 0.0;
-                ixz[icell] = 0.0;
-                iyz[icell] = 0.0;
+                ixx[iCell] = 0.0;
+                iyy[iCell] = 0.0;
+                izz[iCell] = 0.0;
+                ixy[iCell] = 0.0;
+                ixz[iCell] = 0.0;
+                iyz[iCell] = 0.0;
             }
             else
             {
-                odelt  = 1.0 / delt;
+                odelt = 1.0 / delt;
 
-                ixx[icell] = (  tyy) * odelt;
-                iyy[icell] = (  txx) * odelt;
-                ixy[icell] = (- txy) * odelt;
-                izz[icell] = 0.0;
-                ixz[icell] = 0.0;
-                iyz[icell] = 0.0;
-
+                ixx[iCell] = (  tyy) * odelt;
+                iyy[iCell] = (  txx) * odelt;
+                ixy[iCell] = (- txy) * odelt;
+                izz[iCell] = 0.0;
+                ixz[iCell] = 0.0;
+                iyz[iCell] = 0.0;
             }
         }
     }
@@ -3049,8 +3057,8 @@ void UnstructGrid::ComputeWeight()
 
 LIB_EXPORT void UnstructGrid::ComputeNodeBCType()
 {
-    int *face2NodeSubscript        = this->GetFace2NodeSubscript();
-    int *face2node       = this->GetFace2Node();
+    int *face2NodeSubscript = this->GetFace2NodeSubscript();
+    int *face2node = this->GetFace2Node();
 
     int *nodeBCType = reinterpret_cast <int *> (this->GetDataPtr("nodeBCType"));
     int *nodeBCTypeIndex = new int[nTotalNode];
@@ -3069,9 +3077,13 @@ LIB_EXPORT void UnstructGrid::ComputeNodeBCType()
     bcTypeMap.insert(pair<int,int>(PRESSURE_OUTLET , 1));
     bcTypeMap.insert(pair<int,int>(OUTFLOW_CONFINED, 1));
 
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int bcType = bcRegion->GetBCType();
         int bcTypeIndex = bcTypeMap[bcType];
 
         for (int iNode = face2NodeSubscript[iFace]; iNode < face2NodeSubscript[iFace + 1]; ++ iNode)
@@ -3110,25 +3122,25 @@ void UnstructGrid::CompGradientLSQ(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDo
     int nBoundFace = this->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        dqdx[icell] = 0.0;
-        dqdy[icell] = 0.0;
-        dqdz[icell] = 0.0;
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int le = leftCellOfFace[ iFace ];
         int re = iFace + nTotalCell;
-        RDouble dx  = xcc[re] - xcc[le];
-        RDouble dy  = ycc[re] - ycc[le];
-        RDouble dz  = zcc[re] - zcc[le];
+        RDouble dx = xcc[re] - xcc[le];
+        RDouble dy = ycc[re] - ycc[le];
+        RDouble dz = zcc[re] - zcc[le];
  
-        RDouble dq        = iwt[iFace] * (q[re] - q[le]) * fMark[iFace];
-        RDouble tmpx      = dq * dx;
-        RDouble tmpy      = dq * dy;
-        RDouble tmpz      = dq * dz;
+        RDouble dq   = iwt[iFace] * (q[re] - q[le]) * fMark[iFace];
+        RDouble tmpx = dq * dx;
+        RDouble tmpy = dq * dy;
+        RDouble tmpz = dq * dz;
         dqdx[le] += tmpx;
         dqdy[le] += tmpy;
         dqdz[le] += tmpz;
@@ -3139,15 +3151,15 @@ void UnstructGrid::CompGradientLSQ(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDo
         int le = leftCellOfFace [ iFace ];
         int re = rightCellOfFace[ iFace ];
 
-        RDouble dx  = xcc[re] - xcc[le];
-        RDouble dy  = ycc[re] - ycc[le];
-        RDouble dz  = zcc[re] - zcc[le];
+        RDouble dx = xcc[re] - xcc[le];
+        RDouble dy = ycc[re] - ycc[le];
+        RDouble dz = zcc[re] - zcc[le];
  
-        RDouble dq        = iwt[iFace] * (q[re] - q[le]) * fMark[iFace];
+        RDouble dq = iwt[iFace] * (q[re] - q[le]) * fMark[iFace];
 
-        RDouble tmpx      = dq * dx;
-        RDouble tmpy      = dq * dy;
-        RDouble tmpz      = dq * dz;
+        RDouble tmpx = dq * dx;
+        RDouble tmpy = dq * dy;
+        RDouble tmpz = dq * dz;
 
         dqdx[le] += tmpx;
         dqdy[le] += tmpy;
@@ -3158,15 +3170,15 @@ void UnstructGrid::CompGradientLSQ(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDo
         dqdz[re] += tmpz;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        RDouble tmpx    = dqdx[icell];
-        RDouble tmpy    = dqdy[icell];
-        RDouble tmpz    = dqdz[icell];
+        RDouble tmpx    = dqdx[iCell];
+        RDouble tmpy    = dqdy[iCell];
+        RDouble tmpz    = dqdz[iCell];
 
-        dqdx[icell] = ixx[icell] * tmpx + ixy[icell] * tmpy + ixz[icell] * tmpz;
-        dqdy[icell] = ixy[icell] * tmpx + iyy[icell] * tmpy + iyz[icell] * tmpz;
-        dqdz[icell] = ixz[icell] * tmpx + iyz[icell] * tmpy + izz[icell] * tmpz;
+        dqdx[iCell] = ixx[iCell] * tmpx + ixy[iCell] * tmpy + ixz[iCell] * tmpz;
+        dqdy[iCell] = ixy[iCell] * tmpx + iyy[iCell] * tmpy + iyz[iCell] * tmpz;
+        dqdz[iCell] = ixz[iCell] * tmpx + iyz[iCell] * tmpy + izz[iCell] * tmpz;
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -3322,8 +3334,8 @@ void UnstructGrid::CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *d
         dqdz[iCell] = 0.0;
     }
 
-
-    CompositeUnstructBC **bcRecord = this->GetBCRecord();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
@@ -3331,8 +3343,9 @@ void UnstructGrid::CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *d
         int re = iFace + nTotalCell;
 
         double qFace = 0.0;
-
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+       
         if (bcType == PHENGLEI::SYMMETRY || bcType == PHENGLEI::INTERFACE)
         {
             for (int jNode = 0; jNode < node_number_of_each_face[iFace]; ++ jNode)
@@ -3471,11 +3484,11 @@ void UnstructGrid::CompGradientGGNodeWeight(RDouble *q, RDouble *dqdx, RDouble *
     RDouble *q_n = new RDouble [nTotalNode];
     CompNodeVarWeight(this, q_n, q);
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        dqdx[icell] = 0.0;
-        dqdy[icell] = 0.0;
-        dqdz[icell] = 0.0;
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
     }
 
     int nodepos = 0;
@@ -3528,11 +3541,11 @@ void UnstructGrid::CompGradientGGNodeWeight(RDouble *q, RDouble *dqdx, RDouble *
         dqdz[re] -= qfc * nz;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        dqdx[icell] /= vol[icell];
-        dqdy[icell] /= vol[icell];
-        dqdz[icell] /= vol[icell];
+        dqdx[iCell] /= vol[iCell];
+        dqdy[iCell] /= vol[iCell];
+        dqdz[iCell] /= vol[iCell];
     }
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -3566,10 +3579,10 @@ void UnstructGrid::GetCellCenter(ActionKey *actkey)
     RDouble * vol = this->GetCellVolume();
 
     int iFace,s1;
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForSend[ ifaceLocal ];
-        this->GetSourceIndex(iFace,1,s1);
+        iFace = faceIndexForSend[iLocalFace];
+        this->GetSourceIndex(iFace, 1, s1);
 
         cdata->write(&xcc[s1], sizeof(RDouble));
         cdata->write(&ycc[s1], sizeof(RDouble));
@@ -3597,9 +3610,9 @@ void UnstructGrid::TranslateCellCenter(ActionKey *actkey)
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ifaceLocal];
+        iFace = faceIndexForRecv[iLocalFace];
         this->GetTargetIndex(iFace, 1, t1);
 
         cdata->read(&xcc[t1], sizeof(RDouble));
@@ -3624,10 +3637,10 @@ void UnstructGrid::GetCellIBlank(ActionKey *actkey)
     int * iBlank = this->GetBlankIndex();
 
     int iFace,s1;
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForSend[ ifaceLocal ];
-        this->GetSourceIndex(iFace,1,s1);
+        iFace = faceIndexForSend[iLocalFace];
+        this->GetSourceIndex(iFace, 1, s1);
 
         cdata->write(&iBlank[s1], sizeof(int));
     }
@@ -3649,12 +3662,12 @@ void UnstructGrid::TranslateCellIBlank(ActionKey *actkey)
     DataContainer * cdata = actkey->GetData();
     cdata->moveto_begin();
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ ifaceLocal ];
-        this->GetTargetIndex(iFace,1,t1);
+        iFace = faceIndexForRecv[iLocalFace];
+        this->GetTargetIndex(iFace, 1, t1);
 
-        cdata->read(&iBlank[t1],sizeof(int));
+        cdata->read(&iBlank[t1], sizeof(int));
     }
 }
 
@@ -3671,10 +3684,10 @@ streamsize UnstructGrid::TranslateCellCenterLength(ActionKey *actkey)
     int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
     int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ ifaceLocal ];
-        this->GetTargetIndex(iFace,1,t1);
+        iFace = faceIndexForRecv[iLocalFace];
+        this->GetTargetIndex(iFace, 1, t1);
 
         nlen += sizeof(RDouble) * 4;
     }
@@ -3695,10 +3708,10 @@ streamsize UnstructGrid::TranslateCellIBlankLength(ActionKey *actkey)
     int nIFaceOfNeighbor = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
     int *faceIndexForRecv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
 
-    for (int ifaceLocal = 0; ifaceLocal < nIFaceOfNeighbor; ++ ifaceLocal)
+    for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
-        iFace = faceIndexForRecv[ ifaceLocal ];
-        this->GetTargetIndex(iFace,1,t1);
+        iFace = faceIndexForRecv[iLocalFace];
+        this->GetTargetIndex(iFace, 1, t1);
 
         nlen += sizeof(int) * 1;
     }
@@ -3708,7 +3721,9 @@ streamsize UnstructGrid::TranslateCellIBlankLength(ActionKey *actkey)
 
 LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallPoints)
 {
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int nBoundFace = this->GetNBoundFace();
     int nTotalNode = this->GetNTotalNode();
 
@@ -3722,8 +3737,9 @@ LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallP
     int nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iFace]->GetKey();
-        if (IsWall(bctype))
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+        if (IsWall(bcType))
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -3747,21 +3763,26 @@ LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallP
 
 LIB_EXPORT void UnstructGrid::FindOutWallFaces(bool * isWallFace, int & nWallFaces)
 {
-    CompositeUnstructBC **bcr = this->GetBCRecord();
-    int nBoundFace = this->GetNBoundFace();
-
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    
     nWallFaces = 0;
 
     //! Compute the number of the wall faces.
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        isWallFace[iFace] = false;
-
-        int bctype = bcr[iFace]->GetKey();
-        if (IsWall(bctype))
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (IsWall(bcType))
         {
-            isWallFace[iFace] = true;
-            ++ nWallFaces;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                isWallFace[iFace] = true;
+                ++ nWallFaces;
+            }
         }
     }
 }
@@ -3856,10 +3877,10 @@ void UnstructGrid::GetMinMaxDS(RDouble &dismin, RDouble &dismax)
     RDouble dx,dy,dz,ds;
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        for (int inode = 0; inode < node_number_of_each_face[iFace]; ++ inode)
+        for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
         {
-            int p1 = face2node[ nodepos + inode ];
-            int p2 = face2node[ nodepos + (inode + 1)%node_number_of_each_face[iFace] ];
+            int p1 = face2node[ nodepos + iNode ];
+            int p2 = face2node[ nodepos + (iNode + 1)%node_number_of_each_face[iFace] ];
             dx = x[ p2 ] - x[ p1 ];
             dy = y[ p2 ] - y[ p1 ];
             dz = z[ p2 ] - z[ p1 ];
@@ -3938,9 +3959,9 @@ void UnstructGrid::EncodeOversetGrid(DataContainer *cdata)
 
     cdata->write(reinterpret_cast<char *>(&nTotal),sizeof(int)); 
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        cdata->write(reinterpret_cast<char *>(&iBlank[icell]),sizeof(int)); 
+        cdata->write(reinterpret_cast<char *>(&iBlank[iCell]),sizeof(int)); 
     }
     this->GetOversetInformationProxy()->EncodeOversetInformation(cdata);
 }
@@ -3959,9 +3980,9 @@ void UnstructGrid::DecodeOversetGrid(DataContainer *cdata)
 
     cdata->read(reinterpret_cast<char *>(&nTotal),sizeof(int)); 
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        cdata->read(reinterpret_cast<char *>(&iBlank[icell]),sizeof(int)); 
+        cdata->read(reinterpret_cast<char *>(&iBlank[iCell]),sizeof(int)); 
     }
 
     OversetInformationProxy * oversetInformationProxy = new OversetInformationProxy();
@@ -4124,13 +4145,15 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
     
     virtualFile->EndReadWork();
     
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    CompositeUnstructBC **bcr = this->GetBCRecord();
     for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
     {
-        bcr[iFace]->SetBCName(bcNameList[iFace]);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcRegion->SetBCName(bcNameList[iFace]);
     }
-
+ 
     delete [] bcTypeList;
     delete [] bcNameList;
     delete [] bcNameChar;
@@ -4249,33 +4272,45 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
 
     using namespace PHENGLEI;
     vector<int> wallFaceTemp;
-    for (int iFace = 0; iFace < nBoundFace; iFace++)
-    {
-        if (bcr[iFace]->GetKey() == SOLID_SURFACE)
-        {
-            wallFaceTemp.push_back(iFace);
-        }
-    }
-    {
-        sortIdxValue* data = new sortIdxValue[wallFaceTemp.size()];
-        
-        for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
-        {
-            int faceNum = wallFaceTemp[iFace];
-            data[iFace].val = AspectRatio(normalDistanceC2C[faceNum], area[faceNum], node_number_of_each_face[faceNum]);
-            data[iFace].idx = faceNum;
-        }
 
-        heapSortInplace< sortIdxValue > FaceARValueIndexHeap(data, static_cast<int>(wallFaceTemp.size()));
-        FaceARValueIndexHeap.sort();
-    
-        for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (bcType == SOLID_SURFACE)
         {
-            wallFaceTemp[iFace] = data[iFace].idx;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                wallFaceTemp.push_back(iFace);
+            }
         }
-        
-        delete [] data;
     }
+       
+    sortIdxValue* data = new sortIdxValue[wallFaceTemp.size()];
+
+    for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
+    {
+        int faceNum = wallFaceTemp[iFace];
+        data[iFace].val = AspectRatio(normalDistanceC2C[faceNum], area[faceNum], node_number_of_each_face[faceNum]);
+        data[iFace].idx = faceNum;
+    }
+
+    heapSortInplace< sortIdxValue > FaceARValueIndexHeap(data, static_cast<int>(wallFaceTemp.size()));
+    FaceARValueIndexHeap.sort();
+
+    for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
+    {
+        wallFaceTemp[iFace] = data[iFace].idx;
+    }
+
+    delete[] data;
+   
 
     //find the line nearby the wall.
     for (int iFace = 0; iFace < wallFaceTemp.size(); ++iFace)
@@ -4669,17 +4704,17 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
     RDouble voo = primitiveVarFarfield[IV];
     RDouble woo = primitiveVarFarfield[IW];
 
-    sortIdxValue* data = new sortIdxValue[nLineTemp];
+    sortIdxValue* dataIdx = new sortIdxValue[nLineTemp];
 
     int count = 0;
     for (int iLine = 0; iLine < nLineTemp; ++iLine)
     {
-        data[iLine].val = -(xcc[CellOfLineTemp[count]] * uoo + ycc[CellOfLineTemp[count]] * voo + zcc[CellOfLineTemp[count]] * woo);
-        data[iLine].idx = iLine;
+        dataIdx[iLine].val = -(xcc[CellOfLineTemp[count]] * uoo + ycc[CellOfLineTemp[count]] * voo + zcc[CellOfLineTemp[count]] * woo);
+        dataIdx[iLine].idx = iLine;
         count += LineTemp[iLine];
     }
 
-    heapSortInplace< sortIdxValue > CellVelValueIndexHeap(data, nLineTemp);
+    heapSortInplace< sortIdxValue > CellVelValueIndexHeap(dataIdx, nLineTemp);
     CellVelValueIndexHeap.sort();
 
     int* oldElemStartIndex = new int[nLineTemp]();
@@ -4697,7 +4732,7 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
     count = 0;
     for (int iLine = 0; iLine < nLineTemp; ++iLine) 
     {
-        int oldIndex = data[iLine].idx;
+        int oldIndex = dataIdx[iLine].idx;
         LineTemp[iLine] = LineTempOld[oldIndex];
 
         for (int jFaceCell = 0; jFaceCell < LineTemp[iLine]; jFaceCell++) 
@@ -4719,39 +4754,47 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
     //find the seeds from farfield boundary.
     {
         vector<sortIdxValue> seedsBeforeSorted;
-        for (int iFace = 0; iFace < nBoundFace; iFace++) 
+        for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            int type = bcr[iFace]->GetKey();
-            if (type == SOLID_SURFACE) 
+            UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
+            if (bcType == SOLID_SURFACE)
             {
                 continue;
             }
-
-            int cell = leftCellOfFace[iFace];
-            RDouble rho = roo;
-            RDouble u = uoo;
-            RDouble v = voo;
-            RDouble w = woo;
-
-            if (q != NULL) 
+            
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                rho = q[IR][cell];
-                u = q[IU][cell];
-                v = q[IV][cell];
-                w = q[IW][cell];
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int cell = leftCellOfFace[iFace];
+                RDouble rho = roo;
+                RDouble u = uoo;
+                RDouble v = voo;
+                RDouble w = woo;
+
+                if (q != NULL) 
+                {
+                    rho = q[IR][cell];
+                    u = q[IU][cell];
+                    v = q[IV][cell];
+                    w = q[IW][cell];
+                }
+
+                RDouble Vn = rho * (xfn[iFace] * u + yfn[iFace] * v + zfn[iFace] * w);
+
+                if (Vn / RVelFarfield < -1.0e-14) 
+                {
+                    sortIdxValue SVn2ValIndex;
+                    SVn2ValIndex.val = area[iFace] * Vn * Vn;
+                    SVn2ValIndex.idx = cell;
+                    seedsBeforeSorted.push_back(SVn2ValIndex);
+                }
+                
             }
-
-            RDouble Vn = rho * (xfn[iFace] * u + yfn[iFace] * v + zfn[iFace] * w);
-
-            if (Vn / RVelFarfield < -1.0e-14) 
-            {
-                sortIdxValue SVn2ValIndex;
-                SVn2ValIndex.val = area[iFace] * Vn * Vn;
-                SVn2ValIndex.idx = cell;
-                seedsBeforeSorted.push_back(SVn2ValIndex);
-            }
-        } //end of bdface
-
+            
+        }
         heapSortInplace< sortIdxValue > seedsBeforeSortedValIndexHeap(&seedsBeforeSorted[0], static_cast<int>(seedsBeforeSorted.size()));
         seedsBeforeSortedValIndexHeap.sort();
 
@@ -5208,7 +5251,7 @@ LIB_EXPORT void UnstructGrid::ReorderCellForLineLUSGS()
 
     delete [] oldLineMark;          oldLineMark = NULL;
     delete [] oldElemStartIndex;    oldElemStartIndex = NULL;
-    delete [] data;                 data = NULL;
+    delete [] dataIdx;                 dataIdx = NULL;
     delete [] markCell;             markCell = NULL;
     delete [] nodeOnWallMark;       nodeOnWallMark = NULL;
     delete [] LineOfCellOld;        LineOfCellOld = NULL;
@@ -5360,12 +5403,12 @@ void UnstructGrid::ReadGrid(VirtualFile *vfile)
     PrintToWindow("  Number of Boundary Faces : ", nBoundFace, "\n");
 
     //! Set the boundary condition.
-    CompositeUnstructBC **bcr = new CompositeUnstructBC * [ nBoundFace ];
+    UnstructBCSet **bcr = new UnstructBCSet * [ nBoundFace ];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         int bctype;
         vfile->read(reinterpret_cast<char*>(&bctype),sizeof(int));
-        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace] = new UnstructBCSet();
         bcr[iFace]->SetKey(bctype);
     }
     this->SetBCRecord(bcr);
@@ -5386,7 +5429,7 @@ void UnstructGrid::ReadGrid(VirtualFile *vfile)
         vfile->read(reinterpret_cast<char*>(interFace2InterFaceID), nIFace*sizeof(int));
         vfile->read(reinterpret_cast<char*>(interFace2BoundaryFace), nIFace*sizeof(int));
     }
-    SpecifyBC();
+    SpecifyRightCellofBC();
     PrintToWindow("\n");
 }
 
@@ -5441,11 +5484,14 @@ void UnstructGrid::WriteGrid(VirtualFile *vfile)
     vfile->write(reinterpret_cast<char*>(&nBoundFace),sizeof(int));
 
     //! Write the boundary condition.
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int *tmpbctype = new int [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        tmpbctype[iFace] = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        tmpbctype[iFace] = bcRegion->GetBCType();
     }
     vfile->write(reinterpret_cast<char*>(tmpbctype), nBoundFace*sizeof(int));
     delete [] tmpbctype;
@@ -6075,24 +6121,24 @@ void UnstructGrid::ComputeCellCenterVol3D(ActionKey *actkey)
     RDouble x21, y21, z21, x31, y31, z31, nx, ny, nz;
     RDouble xc,  yc,  zc,  tmp;
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        xcc[icell] = 0.0;
-        ycc[icell] = 0.0;
-        zcc[icell] = 0.0;
+        xcc[iCell] = 0.0;
+        ycc[iCell] = 0.0;
+        zcc[iCell] = 0.0;
     }
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        vol[icell] = 0.0;
+        vol[iCell] = 0.0;
     }
 
     int nodepos = 0;
 
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        le     = leftCellOfFace [ iFace ];
-        re     = rightCellOfFace[ iFace ];
+        le = leftCellOfFace [iFace];
+        re = rightCellOfFace[iFace];
         if (iFace < nBoundFace) re = iFace + nTotalCell;
 
         for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
@@ -6142,29 +6188,29 @@ void UnstructGrid::ComputeCellCenterVol3D(ActionKey *actkey)
     cell = 0;
     RDouble minvol = LARGE, maxvol = 0.0;
     int index_minv = 0,index_maxv = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tmp     = 1.0 / (4.0 * vol[icell] + SMALL);
-        xcc[icell] *= tmp;
-        ycc[icell] *= tmp;
-        zcc[icell] *= tmp;
-        vol[icell] /= 18.0;
-        if (minvol > vol[icell])
+        tmp     = 1.0 / (4.0 * vol[iCell] + SMALL);
+        xcc[iCell] *= tmp;
+        ycc[iCell] *= tmp;
+        zcc[iCell] *= tmp;
+        vol[iCell] /= 18.0;
+        if (minvol > vol[iCell])
         {
-            minvol     = vol[icell];
-            index_minv = icell;
+            minvol     = vol[iCell];
+            index_minv = iCell;
         }
-        if (maxvol < vol[icell])
+        if (maxvol < vol[iCell])
         {
-            maxvol     = vol[icell];
-            index_maxv = icell;
+            maxvol     = vol[iCell];
+            index_maxv = iCell;
         }
 
-        if (vol[icell] <= 0.0)
+        if (vol[iCell] <= 0.0)
         {
             ++ cell;
             oss << "zone " << this->GetZoneID()
-                << " negative cell index : " << icell << " " << xcc[icell] << " " << ycc[icell] << " " << zcc[icell] << " vol = " << vol[icell] << "\n";
+                << " negative cell index : " << iCell << " " << xcc[iCell] << " " << ycc[iCell] << " " << zcc[iCell] << " vol = " << vol[iCell] << "\n";
         }
     }
 
@@ -6226,42 +6272,42 @@ void UnstructGrid::ComputeCellCenterVol3DNew2(ActionKey *actkey)
 
     RDouble *vol = this->GetCellVolume();
 
-    int iFace, icell, le, re, j, p2, p3, nodepos, index1, index2, cell;
+    int iFace, iCell, le, re, j, p2, p3, nodepos, index1, index2, cell;
     RDouble x21, y21, z21, x31, y31, z31, x41, y41, z41, nx, ny, nz;
     RDouble xc,  yc,  zc,  tmp;
     std::ostringstream oss;
 
     nodepos = 0;
-    for(icell = 0; icell < nTotalCell; ++icell)
+    for (iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        xcc[icell] = 0.0;
-        ycc[icell] = 0.0;
-        zcc[icell] = 0.0;
+        xcc[iCell] = 0.0;
+        ycc[iCell] = 0.0;
+        zcc[iCell] = 0.0;
 
-        for (j = 0; j < node_number_of_each_cell[icell]; ++ j)
+        for (j = 0; j < node_number_of_each_cell[iCell]; ++ j)
         {
             p2 = cell2node[ nodepos + j ];
-            xcc[icell] += x[p2];
-            ycc[icell] += y[p2];
-            zcc[icell] += z[p2];
+            xcc[iCell] += x[p2];
+            ycc[iCell] += y[p2];
+            zcc[iCell] += z[p2];
         }
 
-        xcc[icell] /= node_number_of_each_cell[icell];
-        ycc[icell] /= node_number_of_each_cell[icell];
-        zcc[icell] /= node_number_of_each_cell[icell];
+        xcc[iCell] /= node_number_of_each_cell[iCell];
+        ycc[iCell] /= node_number_of_each_cell[iCell];
+        zcc[iCell] /= node_number_of_each_cell[iCell];
 
-        nodepos += node_number_of_each_cell[icell];
+        nodepos += node_number_of_each_cell[iCell];
     }
     
     RDouble *xcct = new RDouble[nTotalCell];
     RDouble *ycct = new RDouble[nTotalCell];
     RDouble *zcct = new RDouble[nTotalCell];
-    for (icell = 0; icell < nTotalCell; ++ icell)
+    for (iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        xcct[icell] = 0.0;
-        ycct[icell] = 0.0;
-        zcct[icell] = 0.0;
-        vol[icell]  = 0.0;
+        xcct[iCell] = 0.0;
+        ycct[iCell] = 0.0;
+        zcct[iCell] = 0.0;
+        vol [iCell] = 0.0;
     }
 
     nodepos = 0;
@@ -6373,38 +6419,38 @@ void UnstructGrid::ComputeCellCenterVol3DNew2(ActionKey *actkey)
     cell = 0;
     RDouble minvol = LARGE, maxvol = 0.0;
     int index_minv = 0,index_maxv = 0;
-    for (icell = 0; icell < nTotalCell; ++ icell)
+    for (iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tmp          = 1.0 / (4.0 * vol[icell] + SMALL);
-        xcct[icell] *= tmp;
-        ycct[icell] *= tmp;
-        zcct[icell] *= tmp;
-        vol[icell]  /= 6.0;
-        if (minvol > vol[icell])
+        tmp          = 1.0 / (4.0 * vol[iCell] + SMALL);
+        xcct[iCell] *= tmp;
+        ycct[iCell] *= tmp;
+        zcct[iCell] *= tmp;
+        vol[iCell]  /= 6.0;
+        if (minvol > vol[iCell])
         {
-            minvol     = vol[icell];
-            index_minv = icell;
+            minvol     = vol[iCell];
+            index_minv = iCell;
         }
-        if (maxvol < vol[icell])
+        if (maxvol < vol[iCell])
         {
-            maxvol     = vol[icell];
-            index_maxv = icell;
+            maxvol     = vol[iCell];
+            index_maxv = iCell;
         }
 
-        if (vol[icell] <= 0.0)
+        if (vol[iCell] <= 0.0)
         {
             ++ cell;
             oss << "zone " << this->GetZoneID()
-                << " negative cell index : " << icell << " " << xcct[icell] << " " << ycct[icell] << " " << zcct[icell] << " vol = " << vol[icell] << "\n";
+                << " negative cell index : " << iCell << " " << xcct[iCell] << " " << ycct[iCell] << " " << zcct[iCell] << " vol = " << vol[iCell] << "\n";
         }
     }
 
     if (cell) oss << cell << " cells have negative vols \n";
     
     int *mark = new int[nTotalCell];
-    for(int icell = 0; icell < nTotalCell; ++icell) mark[icell] = 1;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell) mark[iCell] = 1;
     
-    for(int iFace = 0; iFace < nBoundFace; ++iFace)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le = leftCellOfFace[iFace];
 
@@ -6414,7 +6460,7 @@ void UnstructGrid::ComputeCellCenterVol3DNew2(ActionKey *actkey)
         tmp = x21 * nxs[iFace] + y21 * nys[iFace] + z21 * nzs[iFace];
         if(tmp > 0.0) mark[le] = 0;
     }
-    for(int iFace = nBoundFace; iFace < nTotalFace; ++iFace)
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
         le = leftCellOfFace[iFace];
         re = rightCellOfFace[iFace];
@@ -6432,13 +6478,13 @@ void UnstructGrid::ComputeCellCenterVol3DNew2(ActionKey *actkey)
         if(tmp < 0.0) mark[re] = 0;
     }
 
-    for(int icell = 0; icell < nTotalCell; ++icell)
+    for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
-        if(mark[icell])
+        if (mark[iCell])
         {
-            xcc[icell] = xcct[icell];
-            ycc[icell] = ycct[icell];
-            zcc[icell] = zcct[icell];
+            xcc[iCell] = xcct[iCell];
+            ycc[iCell] = ycct[iCell];
+            zcc[iCell] = zcct[iCell];
         }
     }
 
@@ -6509,16 +6555,16 @@ void UnstructGrid::ComputeCellCenterVol3DNew(ActionKey *actkey)
     int cell, le, re, p2, p3;
     RDouble c34 = 3.0 / 4.0;
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        xcc[icell] = 0.0;
-        ycc[icell] = 0.0;
-        zcc[icell] = 0.0;
+        xcc[iCell] = 0.0;
+        ycc[iCell] = 0.0;
+        zcc[iCell] = 0.0;
     }
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        vol[icell] = 0.0;
+        vol[iCell] = 0.0;
     }
 
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
@@ -6547,35 +6593,35 @@ void UnstructGrid::ComputeCellCenterVol3DNew(ActionKey *actkey)
         vol[re] -= vvol;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tmp    = 1.0 / (vol[icell] + SMALL);
-        xcc[icell] *= tmp;
-        ycc[icell] *= tmp;
-        zcc[icell] *= tmp;
+        tmp = 1.0 / (vol[iCell] + SMALL);
+        xcc[iCell] *= tmp;
+        ycc[iCell] *= tmp;
+        zcc[iCell] *= tmp;
     }
 
     RDouble *txc = new RDouble[nTotal];
     RDouble *tyc = new RDouble[nTotal];
     RDouble *tzc = new RDouble[nTotal];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        txc[icell] = xcc[icell];
-        tyc[icell] = ycc[icell];
-        tzc[icell] = zcc[icell];
+        txc[iCell] = xcc[iCell];
+        tyc[iCell] = ycc[iCell];
+        tzc[iCell] = zcc[iCell];
     }
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        xcc[icell] = 0.0;
-        ycc[icell] = 0.0;
-        zcc[icell] = 0.0;
+        xcc[iCell] = 0.0;
+        ycc[iCell] = 0.0;
+        zcc[iCell] = 0.0;
     }
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        vol[icell] = 0.0;
+        vol[iCell] = 0.0;
     }
 
     int nodepos = 0;
@@ -6655,32 +6701,32 @@ void UnstructGrid::ComputeCellCenterVol3DNew(ActionKey *actkey)
     cell = 0;
     RDouble minvol = LARGE, maxvol = 0.0;
     int index_minv = 0,index_maxv = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tmp     = 1.0 / (vol[icell] + SMALL);
-        xcc[icell] *= tmp;
-        ycc[icell] *= tmp;
-        zcc[icell] *= tmp;
+        tmp = 1.0 / (vol[iCell] + SMALL);
+        xcc[iCell] *= tmp;
+        ycc[iCell] *= tmp;
+        zcc[iCell] *= tmp;
 
-        if (minvol > vol[icell])
+        if (minvol > vol[iCell])
         {
-            minvol = vol[icell];
-            index_minv = icell;
+            minvol = vol[iCell];
+            index_minv = iCell;
         }
-        if (maxvol < vol[icell])
+        if (maxvol < vol[iCell])
         {
-            maxvol = vol[icell];
-            index_maxv = icell;
+            maxvol = vol[iCell];
+            index_maxv = iCell;
         }
 
-        //minvol = MIN(minvol, vol[icell]);
-        //maxvol = MAX(maxvol, vol[icell]);
-        if (vol[icell] <= 0.0)
+        //minvol = MIN(minvol, vol[iCell]);
+        //maxvol = MAX(maxvol, vol[iCell]);
+        if (vol[iCell] <= 0.0)
         {
-            vol[icell] = - vol[icell];
+            vol[iCell] = - vol[iCell];
             ++ cell;
             oss << "zone " << this->GetZoneID()
-                << " negative cell index : " << icell << " " << xcc[icell] << " " << ycc[icell] << " " << zcc[icell] << " vol = " << vol[icell] << "\n";
+                << " negative cell index : " << iCell << " " << xcc[iCell] << " " << ycc[iCell] << " " << zcc[iCell] << " vol = " << vol[iCell] << "\n";
         }
     }
 
@@ -6689,12 +6735,12 @@ void UnstructGrid::ComputeCellCenterVol3DNew(ActionKey *actkey)
     //! For ghost cells.
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        le         = leftCellOfFace[ iFace ];
-        re         = iFace + nTotalCell;
+        le = leftCellOfFace[ iFace ];
+        re = iFace + nTotalCell;
 
         if (area[iFace] > SMALL)
         {
-           tmp     = 2.0 * ((xcc[le] - xfc[iFace]) * xfn[iFace] + (ycc[le] - yfc[iFace]) * yfn[iFace] + (zcc[le] - zfc[iFace]) * zfn[iFace]);
+           tmp = 2.0 * ((xcc[le] - xfc[iFace]) * xfn[iFace] + (ycc[le] - yfc[iFace]) * yfn[iFace] + (zcc[le] - zfc[iFace]) * zfn[iFace]);
            xcc[re] = xcc[le] - xfn[iFace] * tmp;
            ycc[re] = ycc[le] - yfn[iFace] * tmp;
            zcc[re] = zcc[le] - zfn[iFace] * tmp;
@@ -6713,12 +6759,12 @@ void UnstructGrid::ComputeCellCenterVol3DNew(ActionKey *actkey)
 
 void UnstructGrid::ComputeCellCenterVol2D(ActionKey *actkey)
 {
-    int      nBoundFace = this->GetNBoundFace();
-    int      nTotalFace = this->GetNTotalFace();
-    int      nTotalCell = this->GetNTotalCell();
-    int      nTotal = nTotalCell + nBoundFace;
-    int      * leftCellOfFace = this->GetLeftCellOfFace();
-    int      * rightCellOfFace = this->GetRightCellOfFace();
+    int nBoundFace = this->GetNBoundFace();
+    int nTotalFace = this->GetNTotalFace();
+    int nTotalCell = this->GetNTotalCell();
+    int nTotal = nTotalCell + nBoundFace;
+    int *leftCellOfFace = this->GetLeftCellOfFace();
+    int *rightCellOfFace = this->GetRightCellOfFace();
 
     RDouble * xcc  = this->GetCellCenterX();
     RDouble * ycc  = this->GetCellCenterY();
@@ -6734,19 +6780,19 @@ void UnstructGrid::ComputeCellCenterVol2D(ActionKey *actkey)
     RDouble * ns   = this->GetFaceArea();
     RDouble * vol  = this->GetCellVolume();
 
-    int      negativecell, le, re;
-    RDouble dot,tmp;
+    int negativecell, le, re;
+    RDouble dot, tmp;
 
-    for (int icell = 0; icell < nTotal; ++ icell)
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        xcc[icell] = 0.0;
-        ycc[icell] = 0.0;
-        zcc[icell] = 0.0;
+        xcc[iCell] = 0.0;
+        ycc[iCell] = 0.0;
+        zcc[iCell] = 0.0;
     }
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        vol[icell] = 0.0;
+        vol[iCell] = 0.0;
     }
 
     //! Now the cell center and volume.
@@ -6783,32 +6829,32 @@ void UnstructGrid::ComputeCellCenterVol2D(ActionKey *actkey)
     negativecell = 0;
     RDouble minvol = LARGE, maxvol = 0.0;
     int index_minv = 0,index_maxv = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        tmp         = 1.0 / (1.5 * vol[icell] + SMALL);
-        xcc[icell] *= tmp;
-        ycc[icell] *= tmp;
-        zcc[icell] *= tmp;
-        vol[icell] *= half;
+        tmp = 1.0 / (1.5 * vol[iCell] + SMALL);
+        xcc[iCell] *= tmp;
+        ycc[iCell] *= tmp;
+        zcc[iCell] *= tmp;
+        vol[iCell] *= half;
 
-        if (minvol > vol[icell])
+        if (minvol > vol[iCell])
         {
-            minvol     = vol[icell];
-            index_minv = icell;
+            minvol = vol[iCell];
+            index_minv = iCell;
         }
-        if (maxvol < vol[icell])
+        if (maxvol < vol[iCell])
         {
-            maxvol = vol[icell];
-            index_maxv = icell;
+            maxvol = vol[iCell];
+            index_maxv = iCell;
         }
-        //minvol = MIN(minvol, vol[icell]);
-        //maxvol = MAX(maxvol, vol[icell]);
-        if (vol[icell] <= 0.0)
+        //minvol = MIN(minvol, vol[iCell]);
+        //maxvol = MAX(maxvol, vol[iCell]);
+        if (vol[iCell] <= 0.0)
         {
-            vol[icell] = - vol[icell];
+            vol[iCell] = - vol[iCell];
             ++ negativecell;
-            oss << " Warning: negative cell index : " << icell << "   (x, y): " << xcc[icell] << " " << ycc[icell] << " £¡£¡£¡£¡£¡\n";
-            if(PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
+            oss << " Warning: negative cell index : " << iCell << "   (x, y): " << xcc[iCell] << " " << ycc[iCell] << " £¡£¡£¡£¡£¡\n";
+            if (PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
             {
                 cout << oss.str();
             }
@@ -6820,7 +6866,6 @@ void UnstructGrid::ComputeCellCenterVol2D(ActionKey *actkey)
         //oss << cell << " cells have negative vols \n";
         TK_Exit::ExceptionExit("ERROR: cells have negative vols, maybe the i j k normal direction has set error! ");
     }
-
 
     //! For ghost cells.
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
@@ -7203,12 +7248,17 @@ LIB_EXPORT void UnstructGrid::WriteFaceBC(fstream & file)
     int * bcTypeList    = new int [nBoundFace];
     string * bcNameList = new string [nBoundFace];
 
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    UnstructBCSet **bcr = this->GetBCRecord();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
     uint_long totalSize = 0;
     for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
     {
-        int bcType = bcr[iFace]->GetKey();
-        const string &bcName = bcr[iFace]->GetBCName();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
         bcTypeList[iFace] = bcType;
         bcNameList[iFace] = bcName;
 
@@ -7284,8 +7334,8 @@ LIB_EXPORT void UnstructGrid::CoarseGrids(int maxLevel)
 
         agglomeratedGrid->SetFineGrid(this);
         agglomeratedGrid->SetLevel(this->GetLevel()+1);
-        agglomeratedGrid->SetBCRecord(this->GetBCRecord());
-
+        agglomeratedGrid->SetUnstructBCSet(this->GetUnstructBCSet());
+      
         if(preGrid != this)
         {
             int *pre_cell2coarsegridcell = preGrid->GetCell2CoarseGridCell();
@@ -7794,31 +7844,31 @@ void SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarpl
         PHWrite(cdata, z[iNode]);
     }
 
-    for (int iVarible = 0; iVarible < nvarplot; ++ iVarible)
+    for (int iVar = 0; iVar < nvarplot; ++ iVar)
     {
-        RDouble * qq = qn[ iVarible ];
-        for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
+        RDouble *qq = qn[iVar];
+        for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
         {
-            if(keyNodes[ iNode ] != 1) continue;
-            PHWrite(cdata, qq[ iNode ]);
+            if (keyNodes[iNode] != 1) continue;
+            PHWrite(cdata, qq[iNode]);
         }
     }
     
     count = 0;
 
-    for(int iFace = 0; iFace < numberOfFaces; ++ iFace)
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int faceNodeNumber = faceNodeNumberContainer[ iFace ];
+        int faceNodeNumber = faceNodeNumberContainer[iFace];
 
-        if(keyFaces[ iFace ] != 1)
+        if (keyFaces[iFace] != 1)
         {
             count += faceNodeNumber;
             continue;
         }
 
-        for(int iNode = 0; iNode < faceNodeNumberContainer[ iFace ]; ++ iNode)
+        for (int iNode = 0; iNode < faceNodeNumberContainer[iFace]; ++ iNode)
         {
-            int nodeIndex = nodeList[ faceNodeIndexContainer[ count ++ ] ];
+            int nodeIndex = nodeList[faceNodeIndexContainer[count ++]];
             PHWrite(cdata, nodeIndex);
         }
     }
@@ -7907,35 +7957,34 @@ void FieldVisualization(Grid *grid_in, std::ostringstream &oss, vector<string> &
     oss << "NumConnectedBoundaryFaces = 0\n";
     oss << "TotalNumBoundaryConnections = 0\n";
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        oss << x[inode] << " ";
-        if ((inode + 1) % nword_of_line == 0) oss << "\n";
+        oss << x[iNode] << " ";
+        if ((iNode + 1) % nword_of_line == 0) oss << "\n";
     }
     if (nTotalNode % nword_of_line != 0) oss << "\n";
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        oss << y[inode] << " ";
-        if ((inode + 1) % nword_of_line == 0) oss << "\n";
+        oss << y[iNode] << " ";
+        if ((iNode + 1) % nword_of_line == 0) oss << "\n";
     }
     if (nTotalNode % nword_of_line != 0) oss << "\n";
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        oss << z[inode] << " ";
-        if ((inode + 1) % nword_of_line == 0) oss << "\n";
+        oss << z[iNode] << " ";
+        if ((iNode + 1) % nword_of_line == 0) oss << "\n";
     }
     if (nTotalNode % nword_of_line != 0) oss << "\n";
-
 
     for (int m = 0; m < nl; ++ m)
     {
         RDouble *qq = qn[m];
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            oss << qq[inode] << " ";
-            if ((inode + 1) % nword_of_line == 0) oss << "\n";
+            oss << qq[iNode] << " ";
+            if ((iNode + 1) % nword_of_line == 0) oss << "\n";
         }
         if (nTotalNode % nword_of_line != 0) oss << "\n";
     }
@@ -8030,7 +8079,8 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, in
     int *face2node = grid->GetFace2Node();
     int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     //! Bell 20140409 add.
     //! Find out the corner points(corner_point = 2) of boundary conditions with both interface and solid wall attributes.For this kind of corner points,do not fix.
@@ -8044,11 +8094,12 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, in
         }
 
         int nodepos = 0;
-        int bctype, pt;
+        int bcType, pt;
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            bctype = bcr[iFace]->GetKey();
-            if (bctype == PHENGLEI::INTERFACE)
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+            bcType = bcRegion->GetBCType();
+            if (bcType == PHENGLEI::INTERFACE)
             {
                 for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
                 {
@@ -8062,8 +8113,9 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, in
         nodepos = 0;
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            bctype = bcr[iFace]->GetKey();
-            if (bctype == PHENGLEI::SOLID_SURFACE)
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+            bcType = bcRegion->GetBCType();
+            if (bcType == PHENGLEI::SOLID_SURFACE)
             {
                 for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
                 {
@@ -8079,14 +8131,17 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, in
     }
 
     //! Reprocessing the points of interface.
-    int le,re,pt,bctype;
+    int le,re,pt,bcType;
     int nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le = leftCellOfFace[ iFace ];
         re = iFace + nTotalCell;
-        bctype = bcr[iFace]->GetKey();
-        if (bctype == bctype_in)
+
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType = bcRegion->GetBCType();
+
+        if (bcType == bctype_in)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -8106,8 +8161,11 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, in
     {
         le = leftCellOfFace[ iFace ];
         re = iFace + nTotalCell;
-        bctype = bcr[iFace]->GetKey();
-        if (bctype == bctype_in)
+
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType = bcRegion->GetBCType();
+
+        if (bcType == bctype_in)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -8145,17 +8203,21 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count
     int *face2node = grid->GetFace2Node();
     int *node_number_of_each_face = grid->GetNodeNumberOfEachFace();
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     //! Reprocessing the points of interface.
-    int le,re,pt,bctype;
+    int le,re,pt,bcType;
     int nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le = leftCellOfFace[ iFace ];
         re = iFace + nTotalCell;
-        bctype = bcr[iFace]->GetKey();
-        if (bctype == bctype_in)
+
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType = bcRegion->GetBCType();
+
+        if (bcType == bctype_in)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -8172,8 +8234,11 @@ void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count
     {
         le = leftCellOfFace[ iFace ];
         re = iFace + nTotalCell;
-        bctype = bcr[iFace]->GetKey();
-        if (bctype == bctype_in)
+
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        bcType = bcRegion->GetBCType();
+
+        if (bcType == bctype_in)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -8236,10 +8301,14 @@ void CompNodeVar(UnstructGrid *grid, RDouble *qNode, RDouble *q, bool isVelocity
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
     int **face2nodeArray      = grid->GetFace2NodeArray();
 
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcRecord[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if (bcType == PHENGLEI::SYMMETRY)
         {
             continue;
@@ -8289,7 +8358,7 @@ void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     int nTotalNode = grid->GetNTotalNode();
     int *nCPN = grid->GetCellNumberOfEachNode();
     int *n2c  = grid->GetNode2Cell();
-    int inode, j, icell, count;
+    int iNode, j, iCell, count;
     int *knode;
 
     RDouble *xcc = grid->GetCellCenterX();
@@ -8315,33 +8384,33 @@ void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     knode = grid->Getknode();
 
     n_count = new RDouble [ nTotalNode ];
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        q_n[ inode ]     = 0.0;
-        n_count[ inode ] = 0.0;
+        q_n[ iNode ]     = 0.0;
+        n_count[ iNode ] = 0.0;
     }
     count = 0;
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        for (j = 0; j < nCPN[ inode ]; ++j)
+        for (j = 0; j < nCPN[ iNode ]; ++j)
         {
-            icell = n2c[ count++ ];
-            weight1 = 1 + lamdax[ inode ] * (xcc[ icell ] - xn[ inode ])
-                        + lamday[ inode ] * (ycc[ icell ] - yn[ inode ])
-                        + lamdaz[ inode ] * (zcc[ icell ] - zn[ inode ]);
-            weight2 = 1 / sqrt((xcc[ icell ] - xn[ inode ]) * (xcc[ icell ] - xn[ inode ])
-                              + (ycc[ icell ] - yn[ inode ]) * (ycc[ icell ] - yn[ inode ])
-                              + (zcc[ icell ] - zn[ inode ]) * (zcc[ icell ] - zn[ inode ]));
-            weight  = weight1 * (1 - knode[ inode ]) + weight2 * knode[ inode ];
+            iCell = n2c[ count++ ];
+            weight1 = 1 + lamdax[ iNode ] * (xcc[ iCell ] - xn[ iNode ])
+                        + lamday[ iNode ] * (ycc[ iCell ] - yn[ iNode ])
+                        + lamdaz[ iNode ] * (zcc[ iCell ] - zn[ iNode ]);
+            weight2 = 1 / sqrt((xcc[ iCell ] - xn[ iNode ]) * (xcc[ iCell ] - xn[ iNode ])
+                              + (ycc[ iCell ] - yn[ iNode ]) * (ycc[ iCell ] - yn[ iNode ])
+                              + (zcc[ iCell ] - zn[ iNode ]) * (zcc[ iCell ] - zn[ iNode ]));
+            weight  = weight1 * (1 - knode[ iNode ]) + weight2 * knode[ iNode ];
 
-            q_n[ inode ] += weight * q[ icell ];
-            n_count[ inode ] += weight;
+            q_n[ iNode ] += weight * q[ iCell ];
+            n_count[ iNode ] += weight;
         }
     }
 
-    for (inode = 0; inode < nTotalNode; ++ inode)
+    for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        q_n[inode] /= n_count[inode] + TINY;
+        q_n[iNode] /= n_count[iNode] + TINY;
     }
 
     delete [] n_count;
@@ -8373,12 +8442,12 @@ void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEq
 
     RDouble *n_count = new RDouble [nTotalNode];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)    
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)    
     {
-        n_count[inode] = 0.0;
+        n_count[iNode] = 0.0;
         for (int m = 0; m < nEquation; ++ m)
         {
-            q_n    [m][inode] = 0.0;
+            q_n[m][iNode] = 0.0;
         }
     }
 
@@ -8455,9 +8524,9 @@ void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEq
         FixBCNodeVar(grid, q[m], q_n[m], n_count, PHENGLEI::SYMMETRY     , true);
         FixBCNodeVar(grid, q[m], q_n[m], n_count, PHENGLEI::SOLID_SURFACE, true);
         FixBCNodeVar(grid, q[m], q_n[m], n_count, PHENGLEI::INTERFACE    , true);
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            q_n[m][inode] /= (n_count[inode] + SMALL);
+            q_n[m][iNode] /= (n_count[iNode] + SMALL);
         }
     }
 
@@ -8490,10 +8559,10 @@ void CompNodeVarWeight(UnstructGrid *grid, RDouble *q_n, RDouble *q)
 
     RDouble *n_count = new RDouble [nTotalNode];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        n_count[inode] = 0.0;
-        q_n[inode]     = 0.0;
+        n_count[iNode] = 0.0;
+        q_n[iNode]     = 0.0;
     }
 
     RDouble dx, dy, dz, dd;
@@ -8556,9 +8625,9 @@ void CompNodeVarWeight(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     FixBCNodeVar(grid, q, q_n, n_count, PHENGLEI::SOLID_SURFACE, true);
     FixBCNodeVar(grid, q, q_n, n_count, PHENGLEI::INTERFACE    , true);
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        q_n[inode] /= (n_count[inode] + SMALL);
+        q_n[iNode] /= (n_count[iNode] + SMALL);
     }
 
     delete [] n_count;
@@ -8566,42 +8635,42 @@ void CompNodeVarWeight(UnstructGrid *grid, RDouble *q_n, RDouble *q)
 
 void CompNodeVarForVisual(UnstructGrid *grid, RDouble *q_n, RDouble *q)
 {
-    int        nTotalNode = grid->GetNTotalNode();
-    int        nBoundFace = grid->GetNBoundFace();
-    int        nTotalFace = grid->GetNTotalFace();
-    int        * leftCellOfFace = grid->GetLeftCellOfFace();
-    int        * rightCellOfFace = grid->GetRightCellOfFace();
-    int        *face2node = grid->GetFace2Node();
-    int        *node_number_of_each_face  = grid->GetNodeNumberOfEachFace();
-    int        nTotalCell = grid->GetNTotalCell();
-    int        nTotal = nBoundFace + nTotalCell;
+    int nTotalNode = grid->GetNTotalNode();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalFace = grid->GetNTotalFace();
+    int * leftCellOfFace = grid->GetLeftCellOfFace();
+    int * rightCellOfFace = grid->GetRightCellOfFace();
+    int *face2node = grid->GetFace2Node();
+    int *node_number_of_each_face  = grid->GetNodeNumberOfEachFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotal = nBoundFace + nTotalCell;
 
-    RDouble * x = grid->GetX();
-    RDouble * y = grid->GetY();
-    RDouble * z = grid->GetZ();
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
 
-    RDouble   *xcc   = grid->GetCellCenterX();
-    RDouble   *ycc   = grid->GetCellCenterY();
-    RDouble   *zcc   = grid->GetCellCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
 
     //! Get gradients.
-    RDouble * dqdx = new RDouble[nTotal];
-    RDouble * dqdy = new RDouble[nTotal];
-    RDouble * dqdz = new RDouble[nTotal];
+    RDouble *dqdx = new RDouble[nTotal];
+    RDouble *dqdy = new RDouble[nTotal];
+    RDouble *dqdz = new RDouble[nTotal];
 
     int order;
     GlobalDataBase::GetData("order", &order, PHINT, 1);
 
     int *n_count = new int [nTotalNode];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        n_count[inode] = 0;
-        q_n[inode]     = 0.0;
+        n_count[iNode] = 0;
+        q_n[iNode]     = 0.0;
     }
 
-    RDouble dx,dy,dz;
-    int le,re,pt;
+    RDouble dx, dy, dz;
+    int le, re, pt;
 
     //! Boundary faces.
     int nodepos = 0;
@@ -8646,9 +8715,9 @@ void CompNodeVarForVisual(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     FixBCNodeVar(grid, q, q_n, n_count, PHENGLEI::SOLID_SURFACE, false);
     FixBCNodeVar(grid, q, q_n, n_count, PHENGLEI::INTERFACE    , true);
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        q_n[inode] /= (n_count[inode] + SMALL);
+        q_n[iNode] /= (n_count[iNode] + SMALL);
     }
 
     delete [] n_count;
@@ -8687,14 +8756,14 @@ void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q)
 
     int *n_count = new int [nTotalNode];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        n_count[inode] = 0;
-        q_n[inode]     = 0.0;
+        n_count[iNode] = 0;
+        q_n[iNode]     = 0.0;
     }
 
-    RDouble dx,dy,dz;
-    int le,re,pt;
+    RDouble dx, dy, dz;
+    int le, re, pt;
 
     //! Boundary faces.
     int nodepos = 0;
@@ -8735,7 +8804,8 @@ void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q)
         nodepos += node_number_of_each_face[iFace];
     }
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     //! Reprocessing the points of interface.
     nodepos = 0;
@@ -8743,8 +8813,11 @@ void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     {
         le = leftCellOfFace [ iFace ];
         re = rightCellOfFace[ iFace ];
-        int bctype = bcr[iFace]->GetKey();
-        if (IsInterface(bctype))
+
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+       
+        if (IsInterface(bcType))
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -8761,8 +8834,11 @@ void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q)
     {
         le = leftCellOfFace [ iFace ];
         re = rightCellOfFace[ iFace ];
-        int bctype = bcr[iFace]->GetKey();
-        if (IsInterface(bctype))
+
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
+        if (IsInterface(bcType))
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
             {
@@ -8779,9 +8855,9 @@ void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q)
         nodepos += node_number_of_each_face[iFace];
     }
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        q_n[inode] /= (n_count[inode] + SMALL);
+        q_n[iNode] /= (n_count[iNode] + SMALL);
     }
 
     delete [] n_count;
@@ -8810,13 +8886,13 @@ void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q)
 
     RDouble *weight = new RDouble [nTotalNode];
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        weight[inode] = 0;
-        qNode[inode]     = 0.0;
+        weight[iNode] = 0;
+        qNode[iNode]  = 0.0;
     }
 
-    int le,re,pt;
+    int le, re, pt;
 
     //! Boundary faces.
     int nodepos = 0;
@@ -8877,20 +8953,24 @@ void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q)
         nodepos += node_number_of_each_face[iFace];
     }
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        if(weight[inode] > SMALL)
+        if (weight[iNode] > SMALL)
         {
-            qNode[inode] /= weight[inode];
+            qNode[iNode] /= weight[iNode];
         }        
     }
 
     //! Reset wall and symmetry faces.
-    CompositeUnstructBC ** bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
     nodepos = 0;
+
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
@@ -8904,13 +8984,14 @@ void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q)
         nodepos += node_number_of_each_face[iFace];
     }
 
-
     nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le = leftCellOfFace [ iFace ];
 
-        int bcType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
         if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY)
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
@@ -8953,16 +9034,16 @@ void UnstructGrid::CompareMaxMinValue(RDouble &local_data, int flag)
 
 void UnstructGrid::ChangeBCType(int from_bctype, int to_bctype)
 {
-    int nBoundFace = this->GetNBoundFace();
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bctype = bcr[iFace]->GetKey();
-
-        if (bctype == from_bctype)
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (bcType == from_bctype)
         {
-            bcr[iFace]->SetKey(to_bctype);
+            bcRegion->SetBCType(to_bctype);
         }
     }
 }
@@ -8970,15 +9051,23 @@ void UnstructGrid::ChangeBCType(int from_bctype, int to_bctype)
 int UnstructGrid::CompNIFace()
 {
     int nBoundFace = this->GetNBoundFace();
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     int nIFace = 0;
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bctype = bcr[iFace]->GetKey();
-        if (IsInterface(bctype))
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (IsInterface(bcType))
         {
-            ++ nIFace;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                ++ nIFace;
+            }
         }
     }
 
@@ -8993,7 +9082,10 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
     int zoneIndex = this->GetZoneID();
 
     int nBoundFace = this->GetNBoundFace();
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int * face2node = this->GetFace2Node();
     int * node_number_of_each_face = this->GetNodeNumberOfEachFace();
 
@@ -9042,28 +9134,30 @@ void UnstructGrid::BuildGridLink(LinkStruct * link)
     int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
 
     int nodepos = 0;
-    for (int ibface = 0; ibface < nBoundFace; ++ ibface)
+    for (int iBFace = 0; iBFace < nBoundFace; ++ iBFace)
     {
-        int bctype = bcr[ibface]->GetKey();
-        if (!IsInterface(bctype))
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iBFace]);
+        int bcType = bcRegion->GetBCType();
+
+        if (!IsInterface(bcType))
         {
-            nodepos += node_number_of_each_face[ibface];
+            nodepos += node_number_of_each_face[iBFace];
             continue;
         }
-        for (int m = 0; m < node_number_of_each_face[ibface]; ++ m)
+        for (int m = 0; m < node_number_of_each_face[iBFace]; ++ m)
         {
             index[m] = face2node[ nodepos + m ];
         }
-        nodepos += node_number_of_each_face[ibface];
+        nodepos += node_number_of_each_face[iBFace];
 
-        int nlist = node_number_of_each_face[ibface];
+        int nlist = node_number_of_each_face[iBFace];
         pindex.resize(nlist);
 
         GetFaceCoorList(index, nlist, xlist, ylist, zlist, x, y, z);
         GetCoorIndexList(&coor_tree, tol, pcount, xlist, ylist, zlist, nlist, pindex);
         Create_Link_Info(pindex, zoneIndex, iFace, fcount, facelist, zoneid, faceid, link);
 
-        interFace2BoundaryFace[iFace] = ibface;
+        interFace2BoundaryFace[iFace] = iBFace;
         ++ iFace;
     }
     cout << "iFace = " << iFace << "\n";
@@ -9086,7 +9180,10 @@ void UnstructGrid::CalCNNCF()
     int nTotalCell = this->GetNTotalCell();
     int *leftCellOfFace  = this->GetLeftCellOfFace();
     int *rightCellOfFace = this->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = this->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
     int *number_of_neighbor_cell = this->GetNumberOfNeighborCell();
     
     //! Allocate memories for number of cells per cell.
@@ -9102,21 +9199,28 @@ void UnstructGrid::CalCNNCF()
     int le, re;
     
     //! Need to reset number_of_neighbor_cell to zero and recover it later.
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        number_of_neighbor_cell[icell] = 0;
+        number_of_neighbor_cell[iCell] = 0;
     }
 
     //! If boundary is an INTERFACE, need to count ghost cell.
     //! Note: Symmetry???
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bctype  = bcr[iFace]->GetKey();
-        if (IsInterface(bctype))
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (IsInterface(bcType))
         {
-           le = leftCellOfFace[iFace];
-           number_of_neighbor_cell[le] ++;
-           fc2cL[iFace] = number_of_neighbor_cell[le];
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                le = leftCellOfFace[iFace];
+                number_of_neighbor_cell[le] ++;
+                fc2cL[iFace] = number_of_neighbor_cell[le];
+            }
         }
     }
 
@@ -9139,17 +9243,21 @@ void UnstructGrid::CalCNNCF()
 
 int UnstructGrid::GetNumberOfWallCell()
 {
-    CompositeUnstructBC **bcr = this->GetBCRecord();
-
-    int nBoundFace = this->GetNBoundFace();
-
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
     int nsolid_surface = 0;
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int bctype = bcr[iFace]->GetKey();
-        if (IsWall(bctype))
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (IsWall(bcType))
         {
-            ++ nsolid_surface;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                ++ nsolid_surface;
+            }
         }
     }
 
@@ -9181,10 +9289,13 @@ void UnstructGrid::ReSetBoundaryConditionByGlobalBC()
     }
 
     int nBoundFace = this->GetNBoundFace();
-    CompositeUnstructBC **bcr = this->GetBCRecord();
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        const string &bcName = bcr[iFace]->GetBCName();
+        UnstructBC* bcRegion  = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        const string &bcName  = bcRegion->GetBCName();
         SimpleBC *bc = 0;
         map<string, SimpleBC *>::iterator iter = globalBCMap.find(bcName);
 
@@ -9193,7 +9304,7 @@ void UnstructGrid::ReSetBoundaryConditionByGlobalBC()
             bc = iter->second;
         }
 
-        bcr[iFace]->SetBoundaryCondition(bc);
+        unstructBCSet->SetBoundaryCondition(bc);
     }
 }
 
@@ -9210,14 +9321,18 @@ void GetFace2NodeList(UnstructGrid *grid, int bcType, vector<int> &linkmap, vect
     set< DataStruct_Sort<int> > iset;
     set< DataStruct_Sort<int> >::iterator ifind;
     DataStruct_Sort<int> fysort;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     face2nodelist.resize(0);
     linkmap.resize(0);
     int nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (bcType != bcr[iFace]->GetKey())
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        if (bcType != bcRegion->GetBCType())
         {
             nodepos += node_number_of_each_face[iFace];
             continue;
@@ -9277,9 +9392,9 @@ void GetFace2NodeList(UnstructGrid *grid, int bcType, vector<int> &linkmap, vect
                 }
 
                 //! Write node.
-                for (int inode = 0; inode < 2; ++ inode)
+                for (int iNode = 0; iNode < 2; ++ iNode)
                 {
-                    int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
+                    int index = (iNode + nodesWrite) % node_number_of_each_face[iFace];
                     int nodeIndex = face2node[nodepos + index];
 
                     fysort.value = nodeIndex;
@@ -9309,7 +9424,7 @@ void GetFace2NodeList(UnstructGrid *grid, int bcType, vector<int> &linkmap, vect
 
 void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &linkmap, vector < vector < int > > &face2nodelist)
 {
-    int bctype = (iter).first;
+    int bcType = (iter).first;
     string bcName = (iter).second;
 
     int nTotalNode = grid->GetNTotalNode();
@@ -9323,7 +9438,10 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     set< DataStruct_Sort<int> > iset;
     set< DataStruct_Sort<int> >::iterator ifind;
     DataStruct_Sort<int> fysort;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     face2nodelist.resize(0);
     linkmap.resize(0);
@@ -9331,15 +9449,18 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     int * leftCellIndexContainer = grid->GetLeftCellOfFace();
     int * keyActiveOfCells       = grid->GetBlankIndex();
     int nodepos = 0;
+
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (bctype != bcr[iFace]->GetKey())
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        if (bcType != bcRegion->GetBCType())
         {
             nodepos += node_number_of_each_face[iFace];
             continue;
         }
 
-        if (bcr[iFace]->GetBCName() != bcName)
+        if (bcRegion->GetBCName() != bcName)
         {
             nodepos += node_number_of_each_face[iFace];
             continue;
@@ -9405,9 +9526,9 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
                 }
 
                 //! Write node.
-                for (int inode = 0; inode < 2; ++ inode)
+                for (int iNode = 0; iNode < 2; ++ iNode)
                 {
-                    int index = (inode + nodesWrite) % node_number_of_each_face[iFace];
+                    int index = (iNode + nodesWrite) % node_number_of_each_face[iFace];
                     int nodeIndex = face2node[nodepos + index];
 
                     fysort.value = nodeIndex;
@@ -9454,11 +9575,11 @@ void MinMaxDiffINF(Grid *grid_in, int ig, RDouble *dmin, RDouble *dmax, RDouble 
         grid->GetSourceIndex(iFace,ig+1,ie);
         dmin[iFace] = q[ie];
         dmax[iFace] = q[ie];
-        for (int jface = 0; jface < face_number_of_each_cell[ie]; ++ jface)
+        for (int jFace = 0; jFace < face_number_of_each_cell[ie]; ++ jFace)
         {
-            face  = cell2face[ie][jface];
-            le    = leftCellOfFace[ face ];
-            re    = rightCellOfFace[ face ];
+            face = cell2face[ie][jFace];
+            le   = leftCellOfFace[face];
+            re   = rightCellOfFace[face];
             dmin[iFace] = MIN(dmin[iFace], q[le]);
             dmin[iFace] = MIN(dmin[iFace], q[re]);
 
@@ -9477,22 +9598,30 @@ void SetLimitBoundary(Grid *grid_in, RDouble *limit)
 
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
 
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int le = leftCellOfFace [iFace];
-        int re = rightCellOfFace[iFace];
-
-        int bctype = bcr[iFace]->GetKey();
-        //! Whether the boundary conditions like EXTRAPOLATION should not be corrected? Bell.
-        if (bctype != PHENGLEI::INTERFACE && 
-            bctype != PHENGLEI::SYMMETRY  &&
-            !IsWall(bctype) &&
-            bctype != PHENGLEI::OUTFLOW)
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (bcType != PHENGLEI::INTERFACE && 
+            bcType != PHENGLEI::SYMMETRY  &&
+            !IsWall(bcType) &&
+            bcType != PHENGLEI::OUTFLOW)
         {
-            limit[le] = 0.0;
-            limit[re] = 0.0;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                int le = leftCellOfFace [iFace];
+                int re = rightCellOfFace[iFace];
+
+                limit[le] = 0.0;
+                limit[re] = 0.0;
+            }
         }
     }
 }
@@ -9523,15 +9652,15 @@ void UploadInterfaceValue(UnstructGrid *grid, RDouble **f, const string &name, i
     if (!interfaceInfo) return;
 
     int nIFace = interfaceInfo->GetNIFace();
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite * sendData = interfaceInfo->GetSendDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast< RDouble ** > (sendData->GetDataPtr(name));
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int sourceCell;
-            grid->GetSourceIndex(iFace, iGhostLayer + 1, sourceCell);
+            grid->GetSourceIndex(iFace, iGhost + 1, sourceCell);
             for (int m = 0; m < neqn; ++ m)
             {
                 fg[m][iFace] = f[m][sourceCell];
@@ -9549,15 +9678,15 @@ void UploadInterfaceValue(UnstructGrid *grid, RDouble *f, const string &name)
     }
 
     int nIFace = interfaceInfo->GetNIFace();
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast <RDouble **> (sendData->GetDataPtr(name));
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int sourceCell;
-            grid->GetSourceIndex(iFace, iGhostLayer + 1, sourceCell);
+            grid->GetSourceIndex(iFace, iGhost + 1, sourceCell);
             fg[0][iFace] = f[sourceCell];
         }
     }
@@ -9570,16 +9699,16 @@ void DownloadInterfaceValue(UnstructGrid *grid, RDouble **f, const string &name,
 
     int nIFace = interfaceInfo->GetNIFace();
 
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite * recieveData = interfaceInfo->GetRecvDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *recieveData = interfaceInfo->GetRecvDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast< RDouble ** > (recieveData->GetDataPtr(name));
 
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int targetCell;
-            grid->GetTargetIndex(iFace, iGhostLayer + 1, targetCell);
+            grid->GetTargetIndex(iFace, iGhost + 1, targetCell);
             for (int m = 0; m < neqn; ++ m)
             {
                 f[m][targetCell] = fg[m][iFace];
@@ -9598,16 +9727,16 @@ void DownloadInterfaceValue(UnstructGrid *grid, RDouble *f, const string &name)
 
     int nIFace = interfaceInfo->GetNIFace();
 
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *recieveData = interfaceInfo->GetRecvDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *recieveData = interfaceInfo->GetRecvDataStorage(iGhost);
         
         RDouble **fg = reinterpret_cast <RDouble **> (recieveData->GetDataPtr(name));
         
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int targetCell;
-            grid->GetTargetIndex(iFace, iGhostLayer + 1, targetCell);
+            grid->GetTargetIndex(iFace, iGhost + 1, targetCell);
             f[targetCell] = fg[0][iFace];
         }
     }
@@ -9621,16 +9750,16 @@ void UploadInterpointValue(UnstructGrid *grid, RDouble **f, const string &name, 
     }
 
     int numberOfInterpoints = interpointInformation->GetNumberOfInterpoints();
-    for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
+    for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)
     {
-        Data_ParamFieldSuite *sendData = interpointInformation->GetSendDataStorage(iGhostLayer);
+        Data_ParamFieldSuite *sendData = interpointInformation->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast<RDouble **>(sendData->GetDataPtr(name));
         
         for (int iPoint = 0; iPoint < numberOfInterpoints; ++ iPoint)
         {
             int sourcePoint;
-            grid->GetSourcePointIndex(iPoint, iGhostLayer + 1, sourcePoint);
+            grid->GetSourcePointIndex(iPoint, iGhost + 1, sourcePoint);
             for (int m = 0; m < nEquation; ++ m)
             {
                 fg[m][iPoint] = f[m][sourcePoint];
@@ -9679,11 +9808,11 @@ void UploadOversetValueDefault(UnstructGrid *grid, RDouble **field, const string
 
     int numberOfNeighbors = oversetDataProxy->GetNumberOfNeighbors();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
@@ -9724,15 +9853,15 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
     RDouble *yNode = grid->GetY();
     RDouble *zNode = grid->GetZ();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
-        RDouble *interCellCenterX    = oversetDataProxy->GetInterCellCenterX(neighborIndex);
-        RDouble *interCellCenterY    = oversetDataProxy->GetInterCellCenterY(neighborIndex);
-        RDouble *interCellCenterZ    = oversetDataProxy->GetInterCellCenterZ(neighborIndex);
+        RDouble *interCellCenterX    = oversetDataProxy->GetInterCellCenterX(iNeighbor);
+        RDouble *interCellCenterY    = oversetDataProxy->GetInterCellCenterY(iNeighbor);
+        RDouble *interCellCenterZ    = oversetDataProxy->GetInterCellCenterZ(iNeighbor);
 
         vector< RDouble > nodeValue(numberOfEquations);
 
@@ -9763,7 +9892,6 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
                     nodeValue[iEquation] += (1 / dist) * qNodeField[iEquation][nodeIndex];
                 }
                 weight += 1 / dist;
-
             }
             
             for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
@@ -9808,11 +9936,11 @@ void DownloadOversetValue(UnstructGrid *grid, RDouble **field, const string &nam
 
     int numberOfNeighborZones = oversetDataProxy->GetNumberOfNeighbors();
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighborZones; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighborZones; ++ iNeighbor)
     {
-        int   numberOfCells           = oversetDataProxy->GetNumberOfCells          (neighborIndex);
-        int * cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (neighborIndex);
-        int * cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
+        int  numberOfCells           = oversetDataProxy->GetNumberOfCells          (iNeighbor);
+        int *cellIndexContainer      = oversetDataProxy->GetCellIndexContainer     (iNeighbor);
+        int *cellStorageIndexMapping = oversetDataProxy->GetCellStorageIndexMapping(iNeighbor);
 
         for (int iCell = 0; iCell < numberOfCells; ++ iCell)
         {
@@ -9866,11 +9994,11 @@ void BarthLimiterINF(Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble 
     {
         int ie,face,le,re,iflag;
         grid->GetSourceIndex(iFace,ig+1,ie);
-        for (int jface = 0; jface < face_number_of_each_cell[ie]; ++ jface)
+        for (int jFace = 0; jFace < face_number_of_each_cell[ie]; ++ jFace)
         {
-            face  = cell2face[ie][jface];
-            le    = leftCellOfFace[ face ];
-            re    = rightCellOfFace[ face ];
+            face = cell2face[ie][jFace];
+            le   = leftCellOfFace[face];
+            re   = rightCellOfFace[face];
 
             iflag = 1;
 
@@ -9954,11 +10082,11 @@ void VencatLimiterINF(Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble
     {
         int ie,face,le,re,iflag;
         grid->GetSourceIndex(iFace,ig+1,ie);
-        for (int jface = 0; jface < face_number_of_each_cell[ie]; ++ jface)
+        for (int jFace = 0; jFace < face_number_of_each_cell[ie]; ++ jFace)
         {
-            face  = cell2face[ie][jface];
-            le    = leftCellOfFace[ face ];
-            re    = rightCellOfFace[ face ];
+            face = cell2face[ie][jFace];
+            le   = leftCellOfFace[face];
+            re   = rightCellOfFace[face];
 
             dx = xcc[re] - xcc[le];
             dy = ycc[re] - ycc[le];
@@ -9984,12 +10112,12 @@ void VencatLimiterINF(Grid *grid_in, int ig, RDouble *limit, RDouble *q, RDouble
 
             if (dq_face > SMALL)
             {
-                tmp       = VenFun(dmax[iFace], dq_face, eps);
+                tmp = VenFun(dmax[iFace], dq_face, eps);
                 limit[iFace] = MIN(limit[iFace], tmp);
             }
             else if (dq_face < - SMALL)
             {
-                tmp       = VenFun(dmin[iFace], dq_face, eps);
+                tmp = VenFun(dmin[iFace], dq_face, eps);
                 limit[iFace] = MIN(limit[iFace], tmp);
             }
         }
@@ -10010,43 +10138,43 @@ void SmoothField(UnstructGrid *grid, RDouble *q)
 
     RDouble *tmp = new RDouble[nTotalCell];
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        q  [icell] *= vol[icell];
-        tmp[icell]  = q[icell];
+        q  [iCell] *= vol[iCell];
+        tmp[iCell]  = q[iCell];
     }
 
     RDouble epsl = 0.2;
     int nsmooth = 0;
     do
     {
-        for (int icell = 0; icell < nTotalCell; ++ icell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            RDouble sum    = 0.0;
-            int      count  = 0;
-            for (int iFace = 0; iFace < face_number_of_each_cell[icell]; ++ iFace)
+            RDouble sum = 0.0;
+            int count = 0;
+            for (int iFace = 0; iFace < face_number_of_each_cell[iCell]; ++ iFace)
             {
-                int face  = cell2face[icell][iFace];
-                int le    = leftCellOfFace [ face ];
-                int re    = rightCellOfFace[ face ];
-                int ie    = le;
-                if (le == icell) ie = re;
+                int face = cell2face[iCell][iFace];
+                int le   = leftCellOfFace [ face ];
+                int re   = rightCellOfFace[ face ];
+                int ie   = le;
+                if (le == iCell) ie = re;
 
                 if (ie >= nTotalCell) continue;
 
                 sum += tmp[ie];
                 ++ count;
             }
-            RDouble coef  = one / (one + epsl * count);
-            tmp[icell] =  (q[icell] + epsl * sum) * coef;
+            RDouble coef = one / (one + epsl * count);
+            tmp[iCell] = (q[iCell] + epsl * sum) * coef;
         }
         ++ nsmooth;
     } while (nsmooth < 3);
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        RDouble ovol = 1.0 / vol[icell];
-        q[icell] = tmp[icell] * ovol;
+        RDouble ovol = 1.0 / vol[iCell];
+        q[iCell] = tmp[iCell] * ovol;
     }
     delete [] tmp;
 }
@@ -10105,7 +10233,9 @@ void GetFaceToNodeList(UnstructGrid * grid, int boundaryConditionType, PHVectorI
     PHVectorInt1D locFaceToNode(4);
     set< DataStruct_Sort< int > > setForSorting;
     DataStruct_Sort< int > dataForSorting;
-    CompositeUnstructBC ** bcr = grid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     faceToNodeList.resize(0);
     linkMap.resize(0);
@@ -10113,8 +10243,10 @@ void GetFaceToNodeList(UnstructGrid * grid, int boundaryConditionType, PHVectorI
     int nodePosition = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
         int faceNodeNumber = faceNodeNumberContainer[ iFace ];
-        if (boundaryConditionType != bcr[iFace]->GetKey())
+        if (boundaryConditionType != bcRegion->GetBCType())
         {
             nodePosition += faceNodeNumber;
             continue;
@@ -10307,16 +10439,19 @@ void VisualizationMesh3D(UnstructGrid * gridIn, const string & fileName)
     PHVectorInt2D faceToNodeList(numberOfBoundaryFaces);
     PHVectorInt1D linkMap;
     set< int > bcList;
-
-    CompositeUnstructBC ** bcr = grid->GetBCRecord();
-
     bool doseNeedDump = false;
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        int boundaryConditionType = bcr[iFace]->GetKey();
-        bcList.insert(boundaryConditionType);
-        if (boundaryConditionType == PHENGLEI::SOLID_SURFACE || boundaryConditionType == PHENGLEI::SYMMETRY
-           || boundaryConditionType == PHENGLEI::INFLOW || boundaryConditionType == PHENGLEI::OUTFLOW)
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        bcList.insert(bcType);
+
+        if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY
+            || bcType == PHENGLEI::INFLOW || bcType == PHENGLEI::OUTFLOW)
         {
             doseNeedDump = true;
         }
@@ -10325,10 +10460,13 @@ void VisualizationMesh3D(UnstructGrid * gridIn, const string & fileName)
     if (PHMPI::GetNumberofGlobalZones() >= 256)
     {
         doseNeedDump = false;
-        for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+
+        for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
-            int boundaryConditionType = bcr[iFace]->GetKey();
-            if(boundaryConditionType == PHENGLEI::SOLID_SURFACE)
+            UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
+          
+            if (bcType == PHENGLEI::SOLID_SURFACE)
             {
                 doseNeedDump = true;
                 break;
@@ -10724,21 +10862,30 @@ void VisualizationEigenMeshofCoarseGrid3D(UnstructGrid * grid, const string & fi
 
     int * leftCellIndexContainer  = grid->GetLeftCellOfFace();
     int * rightCellIndexContainer = grid->GetRightCellOfFace();
-
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
     int *mark = NULL;
-    int node = 0, n = 0, i = 0, j = 0, type = 0, nline = 0;
+    int node = 0, n = 0, i = 0, j = 0, bcType = 0, nline = 0;
 
     int nTotalCell = 0;
-    for (i = 0; i < nBoundFace; ++ i)
+
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        type = bcr[i]->GetKey();
-        if (type == PHENGLEI::SOLID_SURFACE || type == PHENGLEI::SYMMETRY)
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY)
         {
-            nTotalCell ++;
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            {
+                nTotalCell ++;
+            }
         }
     }
+
     if (nTotalCell == 0) return;
 
     mark = new int[nTotalNode]();
@@ -10752,14 +10899,16 @@ void VisualizationEigenMeshofCoarseGrid3D(UnstructGrid * grid, const string & fi
 
     file << "ZONE T=\"Level " << grid->GetLevel() << " \"" << endl;
     file << " N= " << nTotalNode << ", E= " << nTotalCell << ", F=FEPOINT, ET=Quadrilateral" << endl;
-    for(i=0; i<nTotalNode; i++)
+    for(int i=0; i<nTotalNode; i++)
     {
         file << x[i] << " " << y[i] << " " << z[i] << endl;
     }
     for(node=i=0; i<nBoundFace; i++) 
     {
-        type = bcr[i]->GetKey();
-        if(type == PHENGLEI::SOLID_SURFACE || type == PHENGLEI::SYMMETRY)
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[i]);
+        bcType = bcRegion->GetBCType();
+
+        if(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY)
         {
             for(j=0; j<nNPF[i]; j++) 
             {
@@ -10789,8 +10938,10 @@ void VisualizationEigenMeshofCoarseGrid3D(UnstructGrid * grid, const string & fi
     int fnBDNode = 0;
     for (node=i=0; i<nBoundFace; ++i)
     {
-        type = bcr[i]->GetKey();
-        if(!(type == PHENGLEI::SOLID_SURFACE || type == PHENGLEI::SYMMETRY))
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[i]);
+        bcType = bcRegion->GetBCType();
+
+        if(!(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY))
         {
             node += nNPF[i];
             continue;
@@ -10825,8 +10976,10 @@ void VisualizationEigenMeshofCoarseGrid3D(UnstructGrid * grid, const string & fi
     for(int i=0; i<fnBDNode; ++i) p2l[i] = -1;
     for(node=i=0; i<nBoundFace; ++i)
     {
-        type = bcr[i]->GetKey();
-        if(!(type == PHENGLEI::SOLID_SURFACE || type == PHENGLEI::SYMMETRY))
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[i]);
+        bcType = bcRegion->GetBCType();
+
+        if(!(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY))
         {
             node += nNPF[i];
             continue;
@@ -10895,8 +11048,10 @@ void VisualizationEigenMeshofCoarseGrid3D(UnstructGrid * grid, const string & fi
     vector< set<int> > p2c(fnBDNode);
     for(node=i=0; i<nBoundFace; ++i)
     {
-        type = bcr[i]->GetKey();
-        if(!(type == PHENGLEI::SOLID_SURFACE || type == PHENGLEI::SYMMETRY))
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[i]);
+        bcType = bcRegion->GetBCType();
+
+        if(!(bcType == PHENGLEI::SOLID_SURFACE || bcType == PHENGLEI::SYMMETRY))
         {
             node += nNPF[i];
             continue;

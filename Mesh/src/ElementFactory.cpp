@@ -1416,13 +1416,13 @@ void ElementFaceSolver::GenerateComputationalUnstructuredGrid(UnstructGrid * gri
     {
         int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-        CompositeUnstructBC ** bcr = new CompositeUnstructBC * [ numberOfBoundaryFaces ];
+        UnstructBCSet ** bcr = new UnstructBCSet * [ numberOfBoundaryFaces ];
         grid->SetBCRecord(bcr);
         
         int iCount = 0;
         for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
         {
-            bcr[ iCount ] = new CompositeUnstructBC();
+            bcr[ iCount ] = new UnstructBCSet();
             int boundaryConditionType = faceBoundaryTypeContainer[ iFace ];
             bcr[ iCount ]->SetKey(boundaryConditionType);
             SimpleBC * bc = faceBoundaryCondition[iFace];

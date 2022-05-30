@@ -537,45 +537,45 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
         highOrderCells[iCell].nNodes = pNodeNumberOfCell[iCell];
         for (int ilocalnode = 0; ilocalnode < highOrderCells[iCell].nNodes; ++ ilocalnode)
         {
-            //highOrderCells[icell].nodeIDsGrid.push_back(ppNodesOfCells[icell][ilocalnode]);
+            //highOrderCells[iCell].nodeIDsGrid.push_back(ppNodesOfCells[iCell][ilocalnode]);
             highOrderCells[iCell].nodeIDs.push_back(pNodesOfCells[cellToNodeIndex++]);
         }
-        if(highOrderCells[iCell].nNodes == 4)
+        if (highOrderCells[iCell].nNodes == 4)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::TETRAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 5)
+        else if (highOrderCells[iCell].nNodes == 5)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PYRAMID;
         }
-        else if(highOrderCells[iCell].nNodes == 6)
+        else if (highOrderCells[iCell].nNodes == 6)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PRISM;
         }
-        else if(highOrderCells[iCell].nNodes == 8)
+        else if (highOrderCells[iCell].nNodes == 8)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::HEXAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 10)
+        else if (highOrderCells[iCell].nNodes == 10)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::TETRAHEDRON;
         }
-        else if(highOrderCells[iCell].nNodes == 14)
+        else if (highOrderCells[iCell].nNodes == 14)
         {
             highOrderCells[iCell].nPolyGrid = 1;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PYRAMID;
         }
-        else if(highOrderCells[iCell].nNodes == 18)
+        else if (highOrderCells[iCell].nNodes == 18)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::PRISM;
         }
-        else if(highOrderCells[iCell].nNodes == 27)
+        else if (highOrderCells[iCell].nNodes == 27)
         {
             highOrderCells[iCell].nPolyGrid = 2;
             highOrderCells[iCell].VTK_Type = HOUnstruct::HEXAHEDRON;
@@ -583,53 +583,63 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
 
         highOrderCells[iCell].nDOFsGrid = highOrderCells[iCell].nNodes;
 
-        //highOrderCells[icell].volume = grid->GetVolume()[icell];
-        //highOrderCells[icell].centerCoord[0] = grid->GetCellCenterX()[icell];
-        //highOrderCells[icell].centerCoord[1] = grid->GetCellCenterY()[icell];
-        //highOrderCells[icell].centerCoord[2] = grid->GetCellCenterZ()[icell];
+        //highOrderCells[iCell].volume = grid->GetVolume()[iCell];
+        //highOrderCells[iCell].centerCoord[0] = grid->GetCellCenterX()[iCell];
+        //highOrderCells[iCell].centerCoord[1] = grid->GetCellCenterY()[iCell];
+        //highOrderCells[iCell].centerCoord[2] = grid->GetCellCenterZ()[iCell];
 
-        //highOrderCells[icell].lenScale = pow(abs(highOrderCells[icell].volume), 1.0/3.0);
+        //highOrderCells[iCell].lenScale = pow(abs(highOrderCells[iCell].volume), 1.0/3.0);
     }
 
     //ghost cell value , we should attention parallel BC
-    int       * left_cell_of_face   = grid->GetLeftCellOfFace();
-    int       * right_cell_of_face  = grid->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
-    int le, re, bcType;
+    int *left_cell_of_face  = grid->GetLeftCellOfFace();
+    int *right_cell_of_face = grid->GetRightCellOfFace();
     
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
+    int le = 0, re = 0;
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
     {
-        le = left_cell_of_face [ iFace ];
-        re = right_cell_of_face[ iFace ];
-        bcType = bcr[iFace]->GetKey();
-        // if is parallel BC, we should get the physical cell 
-        if (bcType < 0) //interface
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            continue;
-        }
-        else
-        {
-            highOrderCells[re].ID = re;
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            le = left_cell_of_face [ iFace ];
+            re = right_cell_of_face[ iFace ];
+            // if is parallel BC, we should get the physical cell 
+            if (bcType < 0) //interface
+            {
+                continue;
+            }
+            else
+            {
+                highOrderCells[re].ID = re;
 
-            highOrderCells[re].nFaces = highOrderCells[le].nFaces;
-            highOrderCells[re].nNodes = highOrderCells[le].nNodes;
+                highOrderCells[re].nFaces = highOrderCells[le].nFaces;
+                highOrderCells[re].nNodes = highOrderCells[le].nNodes;
 
-            highOrderCells[re].nPolyGrid = highOrderCells[le].nPolyGrid;
-            highOrderCells[re].VTK_Type = highOrderCells[le].VTK_Type;
-            highOrderCells[re].nDOFsGrid =  highOrderCells[le].nDOFsGrid;
+                highOrderCells[re].nPolyGrid = highOrderCells[le].nPolyGrid;
+                highOrderCells[re].VTK_Type = highOrderCells[le].VTK_Type;
+                highOrderCells[re].nDOFsGrid =  highOrderCells[le].nDOFsGrid;
 
-            //highOrderCells[re].volume = grid->GetVolume()[re];
-            //highOrderCells[re].centerCoord[0] = grid->GetCellCenterX()[re];
-            //highOrderCells[re].centerCoord[1] = grid->GetCellCenterY()[re];
-            //highOrderCells[re].centerCoord[2] = grid->GetCellCenterZ()[re];
+                //highOrderCells[re].volume = grid->GetVolume()[re];
+                //highOrderCells[re].centerCoord[0] = grid->GetCellCenterX()[re];
+                //highOrderCells[re].centerCoord[1] = grid->GetCellCenterY()[re];
+                //highOrderCells[re].centerCoord[2] = grid->GetCellCenterZ()[re];
 
-            //highOrderCells[re].lenScale = pow(abs(highOrderCells[re].volume), 1.0/3.0);
+                //highOrderCells[re].lenScale = pow(abs(highOrderCells[re].volume), 1.0/3.0);
+            }
         }
     }
 }
 
 //! @Application memory for high order face and  copy the geometry of grid to high order face,containing 
-void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid * grid)
+void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid *grid)
 {
     int nTotalFace = grid->GetNTotalFace();
 
@@ -637,80 +647,80 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid * grid)
     int * pNodeNumberOfFaces = grid->GetNodeNumberOfEachFace();
     int ** ppNodesOfFaces = grid->GetFace2NodeArray();
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        highOrderFaces[iface].ID = iface;
+        highOrderFaces[iFace].ID = iFace;
 
-        highOrderFaces[iface].nNodes = pNodeNumberOfFaces[iface];
-        for (unsigned int ilocalnode = 0; ilocalnode < highOrderFaces[iface].nNodes; ++ ilocalnode)
+        highOrderFaces[iFace].nNodes = pNodeNumberOfFaces[iFace];
+        for (unsigned int ilocalnode = 0; ilocalnode < highOrderFaces[iFace].nNodes; ++ ilocalnode)
         {
-            highOrderFaces[iface].nodeIDs.push_back(ppNodesOfFaces[iface][ilocalnode]);
-        }
-
-        if(highOrderFaces[iface].nNodes == 3)
-        {
-            highOrderFaces[iface].nPolyGrid = 1;
-            highOrderFaces[iface].VTK_Type = TRIANGLE;
-        }
-        else if(highOrderFaces[iface].nNodes == 4)
-        {
-            highOrderFaces[iface].nPolyGrid = 1;
-            highOrderFaces[iface].VTK_Type = QUADRILATERAL;
-        }
-        else if(highOrderFaces[iface].nNodes == 6)
-        {
-            highOrderFaces[iface].nPolyGrid = 2;
-            highOrderFaces[iface].VTK_Type = TRIANGLE;
-        }
-        else if(highOrderFaces[iface].nNodes == 9)
-        {
-            highOrderFaces[iface].nPolyGrid = 2;
-            highOrderFaces[iface].VTK_Type = QUADRILATERAL;
+            highOrderFaces[iFace].nodeIDs.push_back(ppNodesOfFaces[iFace][ilocalnode]);
         }
 
-        highOrderFaces[iface].nDOFsGrid = highOrderFaces[iface].nNodes;
-        highOrderFaces[iface].cellID0 = grid->GetLeftCellOfFace()[iface];
-        highOrderFaces[iface].cellID1 = grid->GetRightCellOfFace()[iface];
+        if (highOrderFaces[iFace].nNodes == 3)
+        {
+            highOrderFaces[iFace].nPolyGrid = 1;
+            highOrderFaces[iFace].VTK_Type = TRIANGLE;
+        }
+        else if (highOrderFaces[iFace].nNodes == 4)
+        {
+            highOrderFaces[iFace].nPolyGrid = 1;
+            highOrderFaces[iFace].VTK_Type = QUADRILATERAL;
+        }
+        else if (highOrderFaces[iFace].nNodes == 6)
+        {
+            highOrderFaces[iFace].nPolyGrid = 2;
+            highOrderFaces[iFace].VTK_Type = TRIANGLE;
+        }
+        else if (highOrderFaces[iFace].nNodes == 9)
+        {
+            highOrderFaces[iFace].nPolyGrid = 2;
+            highOrderFaces[iFace].VTK_Type = QUADRILATERAL;
+        }
 
-        //highOrderFaces[iface].area = grid->GetFaceArea()[iface];
-        //highOrderFaces[iface].centerCoord[0] = grid->GetFaceCenterX()[iface];
-        //highOrderFaces[iface].centerCoord[1] = grid->GetFaceCenterY()[iface];
-        //highOrderFaces[iface].centerCoord[2] = grid->GetFaceCenterZ()[iface];
+        highOrderFaces[iFace].nDOFsGrid = highOrderFaces[iFace].nNodes;
+        highOrderFaces[iFace].cellID0 = grid->GetLeftCellOfFace()[iFace];
+        highOrderFaces[iFace].cellID1 = grid->GetRightCellOfFace()[iFace];
+
+        //highOrderFaces[iFace].area = grid->GetFaceArea()[iFace];
+        //highOrderFaces[iFace].centerCoord[0] = grid->GetFaceCenterX()[iFace];
+        //highOrderFaces[iFace].centerCoord[1] = grid->GetFaceCenterY()[iFace];
+        //highOrderFaces[iFace].centerCoord[2] = grid->GetFaceCenterZ()[iFace];
     }
 }
 
 //! @Application memory for high order node and  copy the geometry of grid to high order node,containing 
-void HighOrderGrid::CopyGeometryInfoToHighOrderNode(UnstructGrid * grid)
+void HighOrderGrid::CopyGeometryInfoToHighOrderNode(UnstructGrid *grid)
 {
     int nTotalNode = grid->GetNTotalNode();
 
     highOrderNodes.resize(nTotalNode);
 
-    int ** ppCellsOfNodes = grid->GetNode2CellArray();
+    int **ppCellsOfNodes = grid->GetNode2CellArray();
 
     /*  Xu-Gang
     int * ppCellsOfNodes = grid->GetCell2Node();
     int * NodeNumberOfEachCell = grid->GetNodeNumberOfEachCell();
     */
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        highOrderNodes[inode].ID = inode;
+        highOrderNodes[iNode].ID = iNode;
 
-        highOrderNodes[inode].coor[0] = grid->GetX()[inode];
-        highOrderNodes[inode].coor[1] = grid->GetY()[inode];
-        highOrderNodes[inode].coor[2] = grid->GetZ()[inode];
+        highOrderNodes[iNode].coor[0] = grid->GetX()[iNode];
+        highOrderNodes[iNode].coor[1] = grid->GetY()[iNode];
+        highOrderNodes[iNode].coor[2] = grid->GetZ()[iNode];
 
-        highOrderNodes[inode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[inode]);
+        highOrderNodes[iNode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[iNode]);
 
-        for (int ilocalcell = 0; ilocalcell < highOrderNodes[inode].cellIDsOfPoint.size(); ++ ilocalcell)
+        for (int ilocalcell = 0; ilocalcell < highOrderNodes[iNode].cellIDsOfPoint.size(); ++ ilocalcell)
         {
-            highOrderNodes[inode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[inode][ilocalcell];
+            highOrderNodes[iNode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[iNode][ilocalcell];
         }
-       // highOrderNodes[inode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[inode]);
+       // highOrderNodes[iNode].cellIDsOfPoint.resize(grid->GetCellNumberOfEachNode()[iNode]);
        //
-       // for (int ilocalcell = 0; ilocalcell < highOrderNodes[inode].cellIDsOfPoint.size(); ++ ilocalcell)
+       // for (int ilocalcell = 0; ilocalcell < highOrderNodes[iNode].cellIDsOfPoint.size(); ++ ilocalcell)
        // {
-       //     highOrderNodes[inode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[inode][ilocalcell];
+       //     highOrderNodes[iNode].cellIDsOfPoint[ilocalcell] = ppCellsOfNodes[iNode][ilocalcell];
        // }
     }
 }
@@ -1002,7 +1012,9 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
     const RDouble *Ycc = grid->GetCellCenterY();
     const RDouble *Zcc = grid->GetCellCenterZ();
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+
 
     int * leftCellOfFace = grid->GetLeftCellOfFace();
     int * rightCellOfFace = grid->GetRightCellOfFace();
@@ -1030,175 +1042,198 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
 
     highOrderFacesSol[pMultiGrid].resize(nTotalFace);
 
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-    {        
-        //get bcType of iFace
-        int bcType = bcr[iFace]->GetKey();
-        highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
-
-        leftCell  = leftCellOfFace[iFace];
-        rightCell = rightCellOfFace[iFace]; 
-        highOrderFacesSol[pMultiGrid][iFace].offsetGaussPoint = pTotalGaussPoint;
-
-        if(bcType == INTERFACE)
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        if (bcType == INTERFACE)
         {
-            nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
-            nPloyOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nPolySol;
-
-            highOrderFacesSol[pMultiGrid][iFace].nPolySol = max(nPloyOfLeftCell, nPloyOfRightCell);   //polynomial order
-            // the face integation accuracy
-            highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration = 2 * highOrderFacesSol[pMultiGrid][iFace].nPolySol + 2;
-            accuracyOfIntigration = highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration;
-
-            // unsigned short iFaceVTKType 
-            iFaceVTKType = highOrderFaces[iFace].VTK_Type;
-
-            // get nodes of face
-            nFaceNodes = highOrderFaces[iFace].nNodes;
-
-            //! Determine the VTK type
-            for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex) 
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                if(standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+                highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
+
+                leftCell  = leftCellOfFace[iFace];
+                rightCell = rightCellOfFace[iFace]; 
+                highOrderFacesSol[pMultiGrid][iFace].offsetGaussPoint = pTotalGaussPoint;
+
+                nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
+                nPloyOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nPolySol;
+
+                highOrderFacesSol[pMultiGrid][iFace].nPolySol = max(nPloyOfLeftCell, nPloyOfRightCell);   //polynomial order
+                                                                                                          // the face integation accuracy
+                highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration = 2 * highOrderFacesSol[pMultiGrid][iFace].nPolySol + 2;
+                accuracyOfIntigration = highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration;
+
+                // unsigned short iFaceVTKType 
+                iFaceVTKType = highOrderFaces[iFace].VTK_Type;
+
+                // get nodes of face
+                nFaceNodes = highOrderFaces[iFace].nNodes;
+
+                //! Determine the VTK type
+                for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex) 
                 {
-                    break;
+                    if(standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
+                    {
+                        break;
+                    }
                 }
-            }
 
-            if(iStandElemIndex == standardFaceElements.size())
-                standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
+                if(iStandElemIndex == standardFaceElements.size())
+                    standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
 
-            highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint();
-            integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
-            pTotalGaussPoint += integNumberOfGauss;
-            //apply memory to save coord of integration
-            highOrderFacesSol[pMultiGrid][iFace].coorXIntegrationPoints.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].coorYIntegrationPoints.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].coorZIntegrationPoints.resize(integNumberOfGauss);
-            const unsigned long * nodeID = highOrderFaces[iFace].GetnodeIDsGrid();
+                highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint();
+                integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
+                pTotalGaussPoint += integNumberOfGauss;
+                //apply memory to save coord of integration
+                highOrderFacesSol[pMultiGrid][iFace].coorXIntegrationPoints.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].coorYIntegrationPoints.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].coorZIntegrationPoints.resize(integNumberOfGauss);
+                const unsigned long * nodeID = highOrderFaces[iFace].GetnodeIDsGrid();
 
-            //1:compute Coor of face integration
-            highOrderFacesSol[pMultiGrid][iFace].ComputeCoorOfIntegrationPoint(standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ, 
-                standardFaceElements[iStandElemIndex].GetShapeFuncFaceIntegration());
+                //1:compute Coor of face integration
+                highOrderFacesSol[pMultiGrid][iFace].ComputeCoorOfIntegrationPoint(standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ, 
+                    standardFaceElements[iStandElemIndex].GetShapeFuncFaceIntegration());
 
-            //compute basis function of face integration
-            //2:compute orthgonal basis function    
-            dofOfLeftCell = highOrderCellsSol[pMultiGrid][leftCell].nDOFsSol;
-            dofOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nDOFsSol;
-            lenScaleOfLeftCell  = highOrderCells[leftCell].lenScale;
-            lenScaleOfRightCell = highOrderCells[rightCell].lenScale;
-            leftOrthMatrix = highOrderCellsSol[pMultiGrid][leftCell].GetOrthogonalizedMatrix();
-            rightOrthMatrix = highOrderCellsSol[pMultiGrid][rightCell].GetOrthogonalizedMatrix();
+                //compute basis function of face integration
+                //2:compute orthgonal basis function    
+                dofOfLeftCell = highOrderCellsSol[pMultiGrid][leftCell].nDOFsSol;
+                dofOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nDOFsSol;
+                lenScaleOfLeftCell  = highOrderCells[leftCell].lenScale;
+                lenScaleOfRightCell = highOrderCells[rightCell].lenScale;
+                leftOrthMatrix = highOrderCellsSol[pMultiGrid][leftCell].GetOrthogonalizedMatrix();
+                rightOrthMatrix = highOrderCellsSol[pMultiGrid][rightCell].GetOrthogonalizedMatrix();
 
-            highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration.resize(integNumberOfGauss);
-            for(int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
-            {                
-                highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration[iGaussPoint].resize(dofOfLeftCell); 
-                highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration[iGaussPoint].resize(dofOfRightCell);
+                highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration.resize(integNumberOfGauss);
+                for(int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++iGaussPoint)
+                {                
+                    highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration[iGaussPoint].resize(dofOfLeftCell); 
+                    highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration[iGaussPoint].resize(dofOfRightCell);
 
-                highOrderFacesSol[pMultiGrid][iFace].ComputeBasisFunction(iGaussPoint, leftCell, rightCell, nTotalCell, nPloyOfLeftCell, nPloyOfRightCell, 
-                    lenScaleOfLeftCell, lenScaleOfRightCell, Xcc, Ycc, Zcc, leftOrthMatrix, rightOrthMatrix);
-            }
+                    highOrderFacesSol[pMultiGrid][iFace].ComputeBasisFunction(iGaussPoint, leftCell, rightCell, nTotalCell, nPloyOfLeftCell, nPloyOfRightCell, 
+                        lenScaleOfLeftCell, lenScaleOfRightCell, Xcc, Ycc, Zcc, leftOrthMatrix, rightOrthMatrix);
+                }
 
-            //3:compute the normals in the integration points of the face
-            highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].JacDetFaceIntegration.resize(integNumberOfGauss);
-            //3-1: compute dx/dxi,dx/det,   dy/dxi,dy/det,   dz/dxi,dz/det
-            RDouble * gradXiShapeFunction;
-            RDouble * gradEtShapeFunction;
+                //3:compute the normals in the integration points of the face
+                highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].JacDetFaceIntegration.resize(integNumberOfGauss);
+                //3-1: compute dx/dxi,dx/det,   dy/dxi,dy/det,   dz/dxi,dz/det
+                RDouble * gradXiShapeFunction;
+                RDouble * gradEtShapeFunction;
 
-            for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint)
-            {
-                gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
-                gradEtShapeFunction = standardFaceElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
+                for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint)
+                {
+                    gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
+                    gradEtShapeFunction = standardFaceElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
 
-                //0:nx,1:ny,2:nz
-                highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace[iGaussPoint].resize(3);
+                    //0:nx,1:ny,2:nz
+                    highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace[iGaussPoint].resize(3);
 
-                highOrderFacesSol[pMultiGrid][iFace].ComputeMetricNormalsFace(iGaussPoint, iFaceVTKType, standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ,
-                    gradXiShapeFunction, gradEtShapeFunction);
+                    highOrderFacesSol[pMultiGrid][iFace].ComputeMetricNormalsFace(iGaussPoint, iFaceVTKType, standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ,
+                        gradXiShapeFunction, gradEtShapeFunction);
+                }
+
             }
         }
-        else if(bcType != INTERFACE)   //need modify to fit parallel
+        else if (bcType != INTERFACE)   //need modify to fit parallel
         {
-            nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
-            nPloyOfRightCell = nPloyOfLeftCell;
-            highOrderFacesSol[pMultiGrid][iFace].nPolySol = nPloyOfLeftCell;   //polynomial order
-            // the face integation accuracy
-            highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration = 2 * highOrderFacesSol[pMultiGrid][iFace].nPolySol + 2;
-            accuracyOfIntigration = highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration;
-
-            // unsigned short iFaceVTKType
-            iFaceVTKType = highOrderFaces[iFace].VTK_Type;
-
-            // get nodes of face
-            nFaceNodes = highOrderFaces[iFace].nNodes;
-
-            //! Determine the VTK type
-            for (iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++ iStandElemIndex)
+            vector<int>* faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {
-                if(standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
+                // iFace is the face number in the set of faceIndex.
+                int iFace = *iter;
+
+                highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
+
+                leftCell  = leftCellOfFace[iFace];
+                rightCell = rightCellOfFace[iFace]; 
+                highOrderFacesSol[pMultiGrid][iFace].offsetGaussPoint = pTotalGaussPoint;
+
+
+                nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
+                nPloyOfRightCell = nPloyOfLeftCell;
+                highOrderFacesSol[pMultiGrid][iFace].nPolySol = nPloyOfLeftCell;   //polynomial order
+                                                                                   // the face integation accuracy
+                highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration = 2 * highOrderFacesSol[pMultiGrid][iFace].nPolySol + 2;
+                accuracyOfIntigration = highOrderFacesSol[pMultiGrid][iFace].accuracyOfFaceIntigration;
+
+                // unsigned short iFaceVTKType
+                iFaceVTKType = highOrderFaces[iFace].VTK_Type;
+
+                // get nodes of face
+                nFaceNodes = highOrderFaces[iFace].nNodes;
+
+                //! Determine the VTK type
+                for (iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++ iStandElemIndex)
                 {
-                    break;
+                    if(standardFaceElements[iStandElemIndex].SameStandardElement(iFaceVTKType, highOrderFaces[iFace].nPolyGrid, accuracyOfIntigration))
+                    {
+                        break;
+                    }
                 }
+
+                if(iStandElemIndex == standardFaceElements.size())
+                    standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
+
+                highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint();
+                integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
+                pTotalGaussPoint += integNumberOfGauss;
+                //apply memory to save coord of integration
+                highOrderFacesSol[pMultiGrid][iFace].coorXIntegrationPoints.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].coorYIntegrationPoints.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].coorZIntegrationPoints.resize(integNumberOfGauss);
+                const unsigned long *nodeID = highOrderFaces[iFace].GetnodeIDsGrid();
+
+                //1:compute Coor of face integration
+                highOrderFacesSol[pMultiGrid][iFace].ComputeCoorOfIntegrationPoint(standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ, 
+                    standardFaceElements[iStandElemIndex].GetShapeFuncFaceIntegration());
+
+                //compute basis function of face integration
+                //2:compute orthgonal basis function    
+                dofOfLeftCell = highOrderCellsSol[pMultiGrid][leftCell].nDOFsSol;
+                dofOfRightCell = dofOfLeftCell;
+                lenScaleOfLeftCell  = highOrderCells[leftCell].lenScale;
+                lenScaleOfRightCell = lenScaleOfLeftCell;
+                leftOrthMatrix = highOrderCellsSol[pMultiGrid][leftCell].GetOrthogonalizedMatrix();
+                rightOrthMatrix = leftOrthMatrix;
+
+                highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration.resize(integNumberOfGauss);
+
+                for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint)
+                {
+                    highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration[iGaussPoint].resize(dofOfLeftCell);
+                    highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration[iGaussPoint].resize(dofOfRightCell);
+                    highOrderFacesSol[pMultiGrid][iFace].ComputeBasisFunction(iGaussPoint, leftCell, rightCell, nTotalCell, nPloyOfLeftCell, nPloyOfRightCell, 
+                        lenScaleOfLeftCell, lenScaleOfRightCell, Xcc, Ycc, Zcc, leftOrthMatrix, rightOrthMatrix);
+                }
+
+                //3:compute the normals in the integration points of the face
+                highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace.resize(integNumberOfGauss);
+                highOrderFacesSol[pMultiGrid][iFace].JacDetFaceIntegration.resize(integNumberOfGauss);
+
+                //3-1: compute dx/dxi,dx/det, dy/dxi,dy/det, dz/dxi,dz/det
+                RDouble * gradXiShapeFunction;
+                RDouble * gradEtShapeFunction;
+
+                for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint)
+                {
+                    gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
+                    gradEtShapeFunction = standardFaceElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
+
+                    //0:nx,1:ny,2:nz
+                    highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace[iGaussPoint].resize(3);
+
+                    highOrderFacesSol[pMultiGrid][iFace].ComputeMetricNormalsFace(iGaussPoint, iFaceVTKType, standardFaceElements[iStandElemIndex].GetNnode(), 
+                        nodeID, pointX, pointY, pointZ, gradXiShapeFunction, gradEtShapeFunction);
+                }
+
             }
 
-            if(iStandElemIndex == standardFaceElements.size())
-                standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
-
-            highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint();
-            integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
-            pTotalGaussPoint += integNumberOfGauss;
-            //apply memory to save coord of integration
-            highOrderFacesSol[pMultiGrid][iFace].coorXIntegrationPoints.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].coorYIntegrationPoints.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].coorZIntegrationPoints.resize(integNumberOfGauss);
-            const unsigned long *nodeID = highOrderFaces[iFace].GetnodeIDsGrid();
-
-            //1:compute Coor of face integration
-            highOrderFacesSol[pMultiGrid][iFace].ComputeCoorOfIntegrationPoint(standardFaceElements[iStandElemIndex].GetNnode(), nodeID, pointX, pointY, pointZ, 
-                standardFaceElements[iStandElemIndex].GetShapeFuncFaceIntegration());
-
-            //compute basis function of face integration
-            //2:compute orthgonal basis function    
-            dofOfLeftCell = highOrderCellsSol[pMultiGrid][leftCell].nDOFsSol;
-            dofOfRightCell = dofOfLeftCell;
-            lenScaleOfLeftCell  = highOrderCells[leftCell].lenScale;
-            lenScaleOfRightCell = lenScaleOfLeftCell;
-            leftOrthMatrix = highOrderCellsSol[pMultiGrid][leftCell].GetOrthogonalizedMatrix();
-            rightOrthMatrix = leftOrthMatrix;
-
-            highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration.resize(integNumberOfGauss);
-
-            for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint)
-            {
-                highOrderFacesSol[pMultiGrid][iFace].leftBasisFuncFaceIntegration[iGaussPoint].resize(dofOfLeftCell);
-                highOrderFacesSol[pMultiGrid][iFace].rightBasisFuncFaceIntegration[iGaussPoint].resize(dofOfRightCell);
-                highOrderFacesSol[pMultiGrid][iFace].ComputeBasisFunction(iGaussPoint, leftCell, rightCell, nTotalCell, nPloyOfLeftCell, nPloyOfRightCell, 
-                    lenScaleOfLeftCell, lenScaleOfRightCell, Xcc, Ycc, Zcc, leftOrthMatrix, rightOrthMatrix);
-            }
-
-            //3:compute the normals in the integration points of the face
-            highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace.resize(integNumberOfGauss);
-            highOrderFacesSol[pMultiGrid][iFace].JacDetFaceIntegration.resize(integNumberOfGauss);
-
-            //3-1: compute dx/dxi,dx/det, dy/dxi,dy/det, dz/dxi,dz/det
-            RDouble * gradXiShapeFunction;
-            RDouble * gradEtShapeFunction;
-
-            for (int iGaussPoint = 0; iGaussPoint < integNumberOfGauss; ++ iGaussPoint)
-            {
-                gradXiShapeFunction = standardFaceElements[iStandElemIndex].GetdXiShapeFunctionAtIntegration(iGaussPoint);
-                gradEtShapeFunction = standardFaceElements[iStandElemIndex].GetdEtShapeFunctionAtIntegration(iGaussPoint);
-
-                //0:nx,1:ny,2:nz
-                highOrderFacesSol[pMultiGrid][iFace].metricNormalsFace[iGaussPoint].resize(3);
-
-                highOrderFacesSol[pMultiGrid][iFace].ComputeMetricNormalsFace(iGaussPoint, iFaceVTKType, standardFaceElements[iStandElemIndex].GetNnode(), 
-                    nodeID, pointX, pointY, pointZ, gradXiShapeFunction, gradEtShapeFunction);
-            }
         }
     }
 
