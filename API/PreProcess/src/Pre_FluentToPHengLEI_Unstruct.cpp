@@ -741,8 +741,9 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
         z[iNode] = zz[iNode];
     }
 
-    CompositeUnstructBC **bcrs = new CompositeUnstructBC *[nBoundFace];
-
+    vector <string> bcNameList;
+    vector <int> bcTypeList;
+    set<string> bcNameSet;
     count = 0;
     vector< FluentFacePatch * > &face_patchs = GetFluentFacePatchS();
     for (std::size_t m = 0; m < face_patchs.size(); ++ m)
@@ -757,14 +758,40 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
         int nfsum = face_patchs[m]->GetNTotalFace();
         for (int i = 0; i < nfsum; ++ i)
         {
-            bcrs[count] = new CompositeUnstructBC();
-            bcrs[count]->SetKey(bc_type);
-            bcrs[count]->SetBCName(bcNam);
+            bcTypeList.push_back(bc_type);
+            bcNameList.push_back(bcNam);
+            bcNameSet.insert(bcNameList[count]);
             ++ count;
         }
     }
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+    grid->CreateUnstructBCSet(nBCRegionUnstruct);
 
-    grid->SetBCRecord(bcrs);
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int* bcRegionIDofBCFace = new int[nBoundFace];
+    set<string>::iterator iter;
+    
+    count = 0;
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSet->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < nBoundFace; iFace++)
+        {
+            if (bcNameList[iFace] == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(bcTypeList[iFace]);
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+
+        }
+        count++;
+    }
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
 
     int nTotalFace = GetNTotalFace();
     grid->SetNTotalFace(nTotalFace);

@@ -2156,11 +2156,11 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (BCType < 0)

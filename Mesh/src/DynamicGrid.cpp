@@ -192,7 +192,7 @@ void DynamicGrid::StationalData2DynamicData()
     int *nodeNumOfEaceFace    = grid->GetNodeNumberOfEachFace();
     int *leftCellOfEachFace   = grid->GetLeftCellOfFace();
     int *rightCellOfEachFace  = grid->GetRightCellOfFace();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     int count = 0;
     DYFace *faceList = new DYFace[nTotalFace];

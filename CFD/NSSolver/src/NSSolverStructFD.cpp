@@ -258,13 +258,13 @@ void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell
     StructGrid *grid = StructGridCast(gridIn);
 
     //! Obtain the number of boundary condition regions.
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     nWall = 0;
     nCell = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType))
@@ -295,14 +295,14 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
 
     using namespace IDX;
 
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
     //! Obtain the number of boundary condition regions.
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int nBCRegion = structBCSet->GetnBCRegion();
     int indexOfWall = 0, indexOfCell = 0;
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType))
@@ -866,11 +866,11 @@ void NSSolverStructFD::ObtainBoundaryValue(Grid *gridIn)
 
     using namespace PHENGLEI;
 
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (BCType < 0)
@@ -2012,11 +2012,11 @@ void NSSolverStructFD::GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn,
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature;
     
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (!IsWall(BCType) || nsurf_bc != nsurf)
@@ -4317,11 +4317,11 @@ void NSSolverStructFD::GetGradientAtFaceCorrectionAtPhysicalBoundary(Grid *gridi
     RDouble4D &dqdyface = dqdyFaceProxy->GetField_STR();
     RDouble4D &dqdzface = dqdzFaceProxy->GetField_STR();
     
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (BCType < 0 || nsurf_bc != iSurface)

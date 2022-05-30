@@ -17,7 +17,7 @@ string defaultParaFile = "./bin/cfd_para.hypara";
 int ndim      = 2;
 int nparafile = 1;
 
-int nsimutask = 0;
+int    nsimutask    = 0;
 //string parafilename = "./bin/cfd_para_subsonic.hypara";
 string parafilename = "./bin/cfd_para_transonic.hypara";
 //string parafilename = "./bin/cfd_para_supersonic.hypara";
@@ -35,6 +35,9 @@ string parafilename = "./bin/cfd_para_transonic.hypara";
 
 //int    nsimutask    = 1;
 //string parafilename = "./bin/grid_deform_para.hypara";
+
+//int    nsimutask    = 1;
+//string parafilename = "./bin/grid_refine_para.hypara";
 
 //int    nsimutask    = 5;
 //string parafilename = "./bin/overset_grid_view.hypara";

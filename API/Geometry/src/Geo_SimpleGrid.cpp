@@ -28,6 +28,7 @@ SimpleGrid::SimpleGrid()
 
     this->minEdgeLength = -1.0;
     this->maxEdgeLength = -1.0;
+    this->materialType  = 0.0;
 
     nTotalNode = 0;
 }

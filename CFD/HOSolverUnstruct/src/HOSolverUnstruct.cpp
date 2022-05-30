@@ -412,7 +412,7 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
     int       *left_cell_of_face   = grid->GetLeftCellOfFace();
     int       *right_cell_of_face  = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     int       nBoundFace = grid->GetNBoundFace();
     
@@ -2037,7 +2037,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     RDouble *xfn = grid->GetFaceNormalX();
     RDouble *yfn = grid->GetFaceNormalY();
     RDouble *zfn = grid->GetFaceNormalZ();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int pLevel = parameters->pMultiGrid;

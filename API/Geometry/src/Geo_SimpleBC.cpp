@@ -149,11 +149,13 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             {
                 StructGrid *grid = StructGridCast(gridofThisProcessor);
 
-                CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-                int nBCRegion = composite_bcregion->GetnBCRegion();
+                StructBCSet *structBCSet = grid->GetStructBCSet();
+                int nBCRegion = structBCSet->GetnBCRegion();
+               
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+                    
+                    StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                     string bcName = bcregion->GetBCName();
                     int bcType = bcregion->GetBCType();
                     if (bcType == PHENGLEI::INTERFACE)
@@ -175,13 +177,14 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
             {
                 UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
 
-                CompositeUnstructBC **bcr = grid->GetBCRecord();
-
-                int numberOfBCFaces = grid->GetNBoundFace();
-                for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
+                UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+                int nBCRegion = unstructBCSet->GetnBCRegion();
+           
+                for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    string bcName = bcr[iFace]->GetBCName();
-                    int bcType = bcr[iFace]->GetKey();
+                    UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+                    string bcName = bcRegion->GetBCName();
+                    int bcType = bcRegion->GetBCType();
                     if (bcType == PHENGLEI::INTERFACE)
                     {
                         continue;
@@ -190,12 +193,13 @@ void GlobalBoundaryCondition::SetDefaultSolidBoundaryCondition()
                     if (bcName.empty())
                     {
                         bcName = bcnameMap[bcType];
-                        bcr[iFace]->SetBCName(bcName);
+                        bcRegion->SetBCName(bcName);
                     }
 
                     pair<string,int> bcNamePair(bcName ,bcType);
                     bcNameSet.insert(bcNamePair);
                 }
+
             }
         }
     }
@@ -1918,12 +1922,11 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                 if (gridtype == PHSPACE::STRUCTGRID)
                 {
                     StructGrid *grid = StructGridCast(gridofThisProcessor);
-    
-                    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-                    int nBCRegion = composite_bcregion->GetnBCRegion();
+                    StructBCSet *structBCSet = grid->GetStructBCSet();
+                    int nBCRegion = structBCSet->GetnBCRegion();
                     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                     {
-                        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+                        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                         string bcRegionName = bcregion->GetBCName();
                         int bcRegionType = bcregion->GetBCType();
     
@@ -1942,31 +1945,36 @@ void GlobalBoundaryCondition::SetBCDataBaseByGlobalBC()
                         }
                     }
                 }
+                else if (gridtype == PHSPACE::UNSTRUCTGRID)
+                {
+                    UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
 
+                    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+                    int nBCRegion = unstructBCSet->GetnBCRegion();
+                    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+                    {
+                        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+                        string bcRegionName = bcRegion->GetBCName();
+                        int bcRegionType = bcRegion->GetBCType();
+
+                        vector <SimpleBC *> :: iterator iter;
+                        for (iter = globalBCList->begin(); iter != globalBCList->end(); iter ++)
+                        {
+                            string globalBCName = (*iter)->GetBCName();
+                            int globalBCType = (*iter)->GetBCType();
+                            Data_Param *globalBCParam = (*iter)->GetBCParamDataBase();
+                            Data_Param *bcParamDataBase = new Data_Param(*globalBCParam);
+                            if (globalBCName == bcRegionName && bcRegionType == globalBCType)
+                            {
+                                bcRegion->SetBCParamDataBase(bcParamDataBase);
+                                break;
+                            }
+                        }
+                    }
+
+                } 
                 gridofThisProcessor = gridofThisProcessor->GetCoarseGrid();
             }
-            
-            //else
-            //{
-            //    UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
-            //
-            //    CompositeUnstructBC **bcr = grid->GetBCRecord();
-            //
-            //    int numberOfBCFaces = grid->GetNBoundFace();
-            //    for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
-            //    {
-            //        string bcname = bcr[iFace]->GetBCName();
-            //
-            //        set< pair<string, int> >::iterator iter;
-            //        for (iter = bcnameMap.begin(); iter != bcnameMap.end(); ++ iter)
-            //        {
-            //            if ((*iter).first != bcname) continue;
-            //
-            //            bcr[iFace]->SetKey((*iter).second);
-            //            break;
-            //        }
-            //    }
-            //}
         }
     }
 }
@@ -2003,11 +2011,11 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
             {
                 StructGrid *grid = StructGridCast(gridofThisProcessor);
 
-                CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-                int nBCRegion = composite_bcregion->GetnBCRegion();
+                StructBCSet *structBCSet = grid->GetStructBCSet();
+                int nBCRegion = structBCSet->GetnBCRegion();
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
                 {
-                    StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+                    StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
                     string bcname = bcregion->GetBCName();
 
                     set< pair<string, int> >::iterator iter;
@@ -2020,26 +2028,28 @@ void GlobalBoundaryCondition::ChangeBCTypeByGlobalBC()
                     }
                 }
             }
-            else
+            else if (gridtype == PHSPACE::UNSTRUCTGRID)
             {
                 UnstructGrid *grid = UnstructGridCast(gridofThisProcessor);
 
-                CompositeUnstructBC **bcr = grid->GetBCRecord();
-
-                int numberOfBCFaces = grid->GetNBoundFace();
-                for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
+                UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+                int nBCRegion = unstructBCSet->GetnBCRegion();
+                
+                for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
                 {
-                    string bcname = bcr[iFace]->GetBCName();
-
+                    UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+                    string bcName = bcRegion->GetBCName();
+                   
                     set< pair<string, int> >::iterator iter;
                     for (iter = bcnameMap.begin(); iter != bcnameMap.end(); ++ iter)
                     {
-                        if ((*iter).first != bcname) continue;
+                        if ((*iter).first != bcName) continue;
 
-                        bcr[iFace]->SetKey((*iter).second);
+                        bcRegion->SetBCType((*iter).second);
                         break;
                     }
                 }
+
             }
         }
     }

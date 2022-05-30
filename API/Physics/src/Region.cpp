@@ -224,13 +224,16 @@ LIB_EXPORT void Region::WriteFaceBoundaryName(Grid **grids, int nZones, const st
         if (grid->Type() == UNSTRUCTGRID)
         {
             UnstructGrid *unstrGrid = UnstructGridCast(grid);
-            int nBoundFace = unstrGrid->GetNBoundFace();
 
-            CompositeUnstructBC **bcr = unstrGrid->GetBCRecord();
-            for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
+            UnstructBCSet *unstructBCSet = unstrGrid->GetUnstructBCSet();
+            int nBCRegion = unstructBCSet->GetnBCRegion();
+
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
             {
-                int bcType = bcr[iFace]->GetKey();
-                const string &bcName = bcr[iFace]->GetBCName();
+                UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+                string bcName = bcRegion->GetBCName();
+                int bcType = bcRegion->GetBCType();
+
                 pair<int, string> bcNamePair(bcType, bcName);
                 bcNamePairSet.insert(bcNamePair);
             }
@@ -238,12 +241,12 @@ LIB_EXPORT void Region::WriteFaceBoundaryName(Grid **grids, int nZones, const st
         else if (grid->Type() == STRUCTGRID)
         {
             StructGrid *strGrid = StructGridCast(grid);
-            CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
-            int  nBCRegion = compositeBCRegion->GetnBCRegion();
+            StructBCSet *structBCSet = strGrid->GetStructBCSet();
+            int  nBCRegion = structBCSet->GetnBCRegion();
 
             for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
             {
-                StructBC *bcRegion = compositeBCRegion->GetBCRegion(iBCRegion);
+                StructBC *bcRegion = structBCSet->GetBCRegion(iBCRegion);
 
                 int bcType = bcRegion->GetBCType();
                 string bcName = bcRegion->GetBCName();
@@ -2203,15 +2206,15 @@ void Region::CheckMeshMultigridByFTS()
             {
                 StructGrid *grid = StructGridCast(gridofThisProcessor);
 
-                CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+                StructBCSet *structBCSet = grid->GetStructBCSet();
 
-                int nBCRegion = composite_bcregion->GetnBCRegion();
+                int nBCRegion = structBCSet->GetnBCRegion();
                 for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
                 {
                     km = 1;
                     NN = 2;
 
-                    StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
+                    StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
                     int *s_st = structBC->GetStartPoint();
                     int *s_ed = structBC->GetEndPoint();
 
@@ -3227,16 +3230,20 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
             }
             UnstructGrid *unstructGrid = UnstructGridCast(grid);
 
-            CompositeUnstructBC **bcr = unstructGrid->GetBCRecord();
-            for (int iFace = 0; iFace < unstructGrid->GetNBoundFace(); ++ iFace)
+            UnstructBCSet *unstructBCSet = unstructGrid->GetUnstructBCSet();
+            int nBCRegion = unstructBCSet->GetnBCRegion();
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
             {
-                int originalBC = bcr[iFace]->GetKey();
+                UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+             
+                int originalBC = bcRegion->GetBCType();
                 int newBC = bcMap.TranslateBC(originalBC);
                 if (newBC != originalBC)
                 {
                     changedBC.insert(originalBC);
                 }
-                bcr[iFace]->SetKey(newBC);
+                bcRegion->SetBCType(newBC);
+
             }
         }
     }

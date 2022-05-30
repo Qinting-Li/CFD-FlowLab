@@ -401,7 +401,7 @@ void DSMC::ReadGeometry()
         //int * left_cell_of_face = grid->GetLeftCellOfFace();
         //int * right_cell_of_face = grid->GetRightCellOfFace();
 
-        //CompositeUnstructBC **bcr = grid->GetBCRecord();
+        //UnstructBCSet **bcr = grid->GetBCRecord();
         //ostringstream oss;
         //for(int iFace = 0; iFace < nTotalFace; ++ iFace)
         //{

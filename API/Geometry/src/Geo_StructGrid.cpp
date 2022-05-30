@@ -76,7 +76,8 @@ LIB_EXPORT StructGrid::StructGrid()
     iBlank3D = NULL;
     gridUnstr = NULL;
     wallCellLabel = NULL;
-    composite_bcregion = NULL;
+
+    structBCSet = NULL;
     oversetGridTopology = NULL;
 
     zoneProbesCellNI.resize(0);
@@ -108,7 +109,7 @@ LIB_EXPORT void StructGrid::InitGrid(GridID *index, int level, int dim, int type
     }
 
     walldist = 0;
-    composite_bcregion = 0;
+    structBCSet = 0;
     oversetGridTopology = new Geo_OversetGridTopo_Struct();
 }
 
@@ -122,7 +123,7 @@ LIB_EXPORT StructGrid::~StructGrid()
     if (gridUnstr) { delete gridUnstr; gridUnstr = NULL; }
     if (oversetGridTopology) { delete oversetGridTopology; oversetGridTopology = NULL; }
     delete walldist;
-    delete composite_bcregion;
+    delete structBCSet;
 
     zoneProbesCellNI.clear();
     zoneProbesCellNJ.clear();
@@ -136,18 +137,36 @@ LIB_EXPORT StructGrid::~StructGrid()
 
 LIB_EXPORT void StructGrid::CreateCompositeBCRegion(int nBCRegion)
 {
-    if (!composite_bcregion)
+    if (!structBCSet)
     {
-        composite_bcregion = new CompositeStructBC(this->GetZoneID());
+        structBCSet = new StructBCSet(this->GetZoneID());
     }
 
-    composite_bcregion->CreateBCRegion(nBCRegion);
+    structBCSet->CreateBCRegion(nBCRegion);
 }
 
 LIB_EXPORT void StructGrid::SetBCFaceInfo()
-{ 
-    this->composite_bcregion->SetIFaceInfo();
-    int nBoundFace = composite_bcregion->GetNBoundFace();
+{  
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
+    
+    int imin, imax, jmin, jmax, kmin, kmax, bcType;
+    int nBoundFace = 0, nIFace = 0;
+
+    for (uint_t ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    {
+        StructBC *bcRegion = structBCSet->GetBCRegion(ibcregion);
+        
+        bcRegion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
+        bcType = bcRegion->GetBCType();
+       
+        nBoundFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
+       
+        if (IsInterface(bcType))
+        {
+            nIFace += (imax - imin + 1) * (jmax - jmin + 1) * (kmax - kmin + 1);
+        }
+    }
 
     int ni = this->GetNI();
     int nj = this->GetNJ();
@@ -172,38 +191,42 @@ LIB_EXPORT void StructGrid::SetBCFaceInfo()
             MPI_Abort(MPI_COMM_WORLD, -1);
         }
     }
-
+    this->SetNIFace(nIFace);
+    if (!structBCSet->GetIFaceInfo())structBCSet->SetIFaceInfo();
     this->SetNBoundFace(nBoundFace);
 }
 
-LIB_EXPORT void StructGrid::CopyCompositeBCRegion(CompositeStructBC *composite_bcregion)
+LIB_EXPORT void StructGrid::CopyStructBCSet(StructBCSet *structBCSet)
 {
-    if (!this->composite_bcregion)
+    if (!this->structBCSet)
     {
-        this->composite_bcregion = new CompositeStructBC(this->GetZoneID());
+        this->structBCSet = new StructBCSet(this->GetZoneID());
     }
-    this->composite_bcregion->CopyCompositeBCRegion(composite_bcregion);
+    this->structBCSet->CopyStructBCSet(structBCSet);
 }
 
 LIB_EXPORT void StructGrid::CopyGrid(StructGrid *grid)
 {
     CopyXYZ(grid->GetNI(), grid->GetNJ(), grid->GetNK(), grid->GetX(), grid->GetY(), grid->GetZ());
-    CopyCompositeBCRegion(grid->GetCompositeBCRegion());
+    CopyStructBCSet(grid->GetStructBCSet());
 }
+
 
 LIB_EXPORT void StructGrid::GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k)
 {
-    this->composite_bcregion->GetSourceIndexIJK(iFace, ipos, i, j, k);
+    this->structBCSet->GetSourceIndexIJK(iFace, ipos, i, j, k);
 }
+
 
 LIB_EXPORT void StructGrid::GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsurf, int &s_lr)
 {
-    this->composite_bcregion->GetSourceIndexIJK_Nsurf_LR(iFace, ipos, i, j, k, nsurf, s_lr);
+
+    this->structBCSet->GetSourceIndexIJK_Nsurf_LR(iFace, ipos, i, j, k, nsurf, s_lr);
 }
 
 LIB_EXPORT void StructGrid::GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k)
 {
-    this->composite_bcregion->GetTargetIndexIJK(iFace, ipos, i, j, k);
+    this->structBCSet->GetTargetIndexIJK(iFace, ipos, i, j, k);
 }
 
 LIB_EXPORT void StructGrid::CopyXYZ(int ni, int nj, int nk, RDouble *xx, RDouble *yy, RDouble *zz)
@@ -340,9 +363,9 @@ LIB_EXPORT void StructGrid::WriteFaceBC(fstream &file)
     int iZone = this->GetGridID()->GetIndex();
     PHWrite(virtualFile, iZone);
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
 
-    int nBCRegion = static_cast<int> (composite_bcregion->GetnBCRegion());
+    int nBCRegion = static_cast<int> (structBCSet->GetnBCRegion());
 
     PHWrite(virtualFile, nBCRegion);
 
@@ -352,7 +375,7 @@ LIB_EXPORT void StructGrid::WriteFaceBC(fstream &file)
     uint_long totalSize = 0;
     for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
         string bcName = structBC->GetBCName();
         int bctype = structBC->GetBCType();
@@ -364,7 +387,8 @@ LIB_EXPORT void StructGrid::WriteFaceBC(fstream &file)
             }
             else
             {
-                bcName = composite_bcregion->GetBCName(bctype);
+               
+                bcName = structBCSet->GetBCName(bctype);
                 if ((bctype > 7) && (bctype < 51))
                 {
                     bctype = 2;
@@ -383,6 +407,7 @@ LIB_EXPORT void StructGrid::WriteFaceBC(fstream &file)
 
     char *bcNameChar = new char [totalSize];
     unsigned int count = 0;
+  
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         string &bcName = bcNameList[iBCRegion];
@@ -1710,12 +1735,12 @@ void StructGrid::GhostMetrics3D()
 
 LIB_EXPORT void StructGrid::SetLnkInfo()
 {
-    this->composite_bcregion->SetLnkInfo();
+    this->structBCSet->SetLnkInfo();
 }
 
 LIB_EXPORT void StructGrid::ProcessBCInfo()
 {
-    this->composite_bcregion->ProcessBCInfo();
+    this->structBCSet->ProcessBCInfo();
     this->SetBCFaceInfo();
 }
 
@@ -1782,12 +1807,13 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
 
     int imin, jmin, kmin, imax, jmax, kmax;
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
 
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
 
@@ -1953,7 +1979,7 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
     int nb = this->GetZoneID();
 
     cgrid->CreateCompositeBCRegion(nBCRegion);
-    CompositeStructBC *c_composite_bcregion = cgrid->GetCompositeBCRegion();
+    StructBCSet *cstructBCSet = cgrid->GetStructBCSet();
 
     int bctype;
     string bcname;
@@ -1961,7 +1987,7 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
 
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
@@ -1970,9 +1996,8 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
         s_nd   = bcregion->GetFaceDirection();
 
         int nsurf = bcregion->GetFaceDirection() + 1;
-
         StructBC *cbcregion = new StructBC(nb, iBCRegion);
-        c_composite_bcregion->SetBCRegion(iBCRegion, cbcregion);
+        cstructBCSet->SetBCRegion(iBCRegion, cbcregion);
 
         cbcregion->ComputeMultiGridIJKRegion(imin, imax, jmin, jmax, kmin, kmax, istp, jstp, kstp, nsurf);
         cbcregion->SetBCType(bctype);
@@ -2226,7 +2251,7 @@ void StructGrid::ReadGrid(VirtualFile *vfile)
     vfile->read(reinterpret_cast<char*>(&nBCRegion), sizeint);
 
     this->CreateCompositeBCRegion(nBCRegion);
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
 
     int nb = this->GetZoneID();
     int imin, imax, jmin, jmax, kmin, kmax, bctype;
@@ -2235,7 +2260,7 @@ void StructGrid::ReadGrid(VirtualFile *vfile)
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         StructBC *bcregion = new StructBC(nb, iBCRegion);
-        composite_bcregion->SetBCRegion(iBCRegion, bcregion);
+        structBCSet->SetBCRegion(iBCRegion, bcregion);
         vfile->read(reinterpret_cast<char*>(&imin), sizeint);
         vfile->read(reinterpret_cast<char*>(&imax), sizeint);
         vfile->read(reinterpret_cast<char*>(&jmin), sizeint);
@@ -2303,15 +2328,15 @@ void StructGrid::WriteGrid(VirtualFile *vfile)
     int imin, imax, jmin, jmax, kmin, kmax, bctype;
     int s_lr, s_nd;
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     vfile->write(reinterpret_cast<char*>(&nBCRegion), sizeof(int));
 
     //! Read the source region imin,imax,jmin,jmax,kmin,kmax,bctype.
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
         s_lr = bcregion->GetFaceLeftOrRightIndex();
@@ -2394,12 +2419,13 @@ LIB_EXPORT void StructGrid::GetBoundaryMinMax(RDouble *pmin, RDouble *pmax)
 
     int imin, imax, jmin, jmax, kmin, kmax, bctype;
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
+
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
 
@@ -2956,7 +2982,8 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
 
     StructGrid *fgrid = StructGridCast(this->GetFinestGrid());
     int level = this->GetLevel();
-    CompositeStructBC *composite_bcregion = fgrid->GetCompositeBCRegion();
+
+    StructBCSet *structBCSet = fgrid->GetStructBCSet();
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
     double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
     rotationAngle = rotationAngle * PI / 180;
@@ -2992,9 +3019,9 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
         cdata->read(&zcc(it, jt, kt), sizeof(RDouble));
         cdata->read(&vol(it, jt, kt), sizeof(RDouble));
 
-        int *ibcregions = composite_bcregion->GetIFaceInfo();
-        int iBCRegion = ibcregions[iFace];
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        int *ibcregions = structBCSet->GetIFaceInfo();
+        int ibcregion = ibcregions[iFace];
+        StructBC *bcregion = structBCSet->GetBCRegion(ibcregion);
         string bcName = bcregion->GetBCName();
         if (periodicType == 2)
         {
@@ -3384,12 +3411,12 @@ void StructGrid::GetRelationBetweenTwoPairsofNodes(int RelationBetweenTwoPairsof
 
 LIB_EXPORT void StructGrid::GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    this->composite_bcregion->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+    this->structBCSet->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 }
 
 LIB_EXPORT void StructGrid::GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr)
 {
-    this->composite_bcregion->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
+    this->structBCSet->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 }
 
 void StructGrid::ComputeMetrics_BC()
@@ -3985,12 +4012,12 @@ streamsize StructGrid::TranslateCellCenterLength(ActionKey *actkey)
 
 LIB_EXPORT void StructGrid::ChangeBCType(int from_bctype, int to_bctype)
 {
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
 
         if (bcregion->GetBCType() == from_bctype)
         {
@@ -4004,12 +4031,12 @@ int StructGrid::CompNIFace()
     int nIFace = 0;
     int imin, imax, jmin, jmax, kmin, kmax, bctype;
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
 
@@ -4074,11 +4101,11 @@ Int3D * StructGrid::GetWallCellLabel()
 
         wallLabel(I, J, K) = 0;
 
-        CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = this->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int is, js, ks;
             int iStart, iEnd, jStart, jEnd, kStart, kEnd;
@@ -4523,10 +4550,10 @@ LIB_EXPORT void StructGrid::ProbeExternalOverlapCells(int &counter)
     int nj = GetNJ();
     int nk = GetNK();
     int *iBlank = GetCellTypeContainer();
-    int nBcRegions = composite_bcregion->GetnBCRegion();
+    int nBcRegions = structBCSet->GetnBCRegion();
     for (int i = 0; i < nBcRegions; ++ i)
     {
-        StructBC *bcRegion = composite_bcregion->GetBCRegion(i);
+        StructBC *bcRegion = structBCSet->GetBCRegion(i);
 
         int bcType = bcRegion->GetBCType();
 
@@ -4930,12 +4957,12 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
     double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
     rotationAngle = rotationAngle * PI / 180;
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
         bctype = bcregion->GetBCType();
         nsurf  = bcregion->GetFaceDirection() + 1;
@@ -5006,12 +5033,12 @@ LIB_EXPORT int StructGrid::GetNumberOfWallCell()
 {
     int nsolid_surface = 0;
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype) || bctype == PHENGLEI::ABLATION_SURFACE)
@@ -5031,12 +5058,12 @@ LIB_EXPORT void StructGrid::GetWallBCInfo(int &wallBCNum, int &maxCellNum)
     int nCell = 0;
     wallBCNum = 0;
     maxCellNum = 0;
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (IsWall(bctype) || bctype == PHENGLEI::ABLATION_SURFACE)
@@ -5383,7 +5410,7 @@ void StructGrid::DecodeBCFace(DataContainer *cdata)
 
     int numberOfBCRegions;
     PHRead(virtualFile, numberOfBCRegions);
-    ASSERT(numberOfBCRegions == this->GetCompositeBCRegion()->GetnBCRegion());
+    ASSERT(numberOfBCRegions == this->GetStructBCSet()->GetnBCRegion());
 
     uint_long totalSize;
     PHRead(virtualFile, totalSize);
@@ -5412,11 +5439,11 @@ void StructGrid::DecodeBCFace(DataContainer *cdata)
 
     virtualFile->EndReadWork();
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         bcregion->SetBCName(bcNameList[iBCRegion]);
 
         int bctype = bcregion->GetBCType();
@@ -5445,12 +5472,12 @@ void StructGrid::DecodeBcDirFace(DataContainer *cdata)
     int numberOfBCRegions;
     PHRead(virtualFile, numberOfBCRegions);
 
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    ASSERT(numberOfBCRegions == composite_bcregion->GetnBCRegion());
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    ASSERT(numberOfBCRegions == structBCSet->GetnBCRegion());
 
     for (int iBCRegion = 0; iBCRegion < numberOfBCRegions; ++ iBCRegion)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int *s_dir3d = structBC->GetFaceMatchingTargetDirIndex();
         virtualFile->read(reinterpret_cast<char*>(s_dir3d), 3 * sizeof(int));
     }
@@ -5466,11 +5493,11 @@ void StructGrid::GhostCell3DExceptInterface(RDouble3D &TargetArray3D)
     int nj = this->GetNJ();
     int nk = this->GetNK();
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         //int BCType = structBC->GetBCType();
         //if (BCType == PHENGLEI::INTERFACE || BCType < 0)
         //{
@@ -5514,11 +5541,11 @@ void StructGrid::GhostCell3DExceptInterface(RDouble4D &TargetArray4D, const int 
     int nj = this->GetNJ();
     int nk = this->GetNK();
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         //int BCType = structBC->GetBCType();
         //if (BCType == PHENGLEI::INTERFACE || BCType < 0)
         //{
@@ -5562,12 +5589,12 @@ void StructGrid::GhostCell3DExceptInterface(RDouble4D &TargetArray4D, const int 
 
 void StructGrid::GetBcNamePair(set< pair<int, string> > &bcNamePairSet)
 {
-    CompositeStructBC *composite_bcregion = this->GetCompositeBCRegion();
-    int  nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int  nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
         string bcName = structBC->GetBCName();
         int bctype = structBC->GetBCType();
@@ -5605,12 +5632,12 @@ void StructGrid::DumpWallFaceCenter(ActionKey *actkey)
     oss << setiosflags(ios::scientific);
     oss << setiosflags(ios::showpoint);
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType))
@@ -5736,7 +5763,7 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
     InterfaceInfo *fiinfo = fgrid->GetInterfaceInfo();
     int level = grid->GetLevel();
 
-    CompositeStructBC *composite_bcregion = fgrid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = fgrid->GetStructBCSet();
     int periodicType = PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType");
     double rotationAngle = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("rotationAngle");
     rotationAngle = rotationAngle * PI / 180;
@@ -5755,9 +5782,9 @@ void DownloadInterfaceValue(StructGrid *grid, RDouble4D *f, const string &name, 
             fgrid->RemapMultigridIJK(level, it, jt, kt);
 
             //! Rotate vector for periodic boundary at the end of communication for InterfaceValue.
-            int *ibcregions = composite_bcregion->GetIFaceInfo();
+            int *ibcregions = structBCSet->GetIFaceInfo();
             int iBCRegion = ibcregions[iFace];
-            StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+            StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
             string bcName = bcregion->GetBCName();
             //! Rotate process only for vector in rotational periodicity.
             if (neqn >= 4 && periodicType == 2)
@@ -6613,12 +6640,12 @@ void StructGrid::InitVariableWallTemperature()
     RDouble3D &structz = * this->GetStructZ();
     RDouble4D &faceArea= *(this->GetFaceArea());
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (!IsWall(BCType) && BCType != PHENGLEI::ABLATION_SURFACE)
@@ -6847,11 +6874,11 @@ void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool 
         return;
     }
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (!IsWall(bctype) && bctype != PHENGLEI::ABLATION_SURFACE)
@@ -6944,12 +6971,12 @@ void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn)
 
     StructGrid *grid = StructGridCast(grid_in);
 
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (!(IsWall(BCType)))
