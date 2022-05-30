@@ -71,10 +71,30 @@ public:
     //! and the steady relaxation sub-iterations are nested inside the real physical time step.
     LIB_EXPORT void SolveUnsteadyField();
 
+    //! Steady simulation for incompressible situation
+    void SolveIncompressibleSteadyField();
+
+    //! If converged for incompressible situation
+    bool IsConverged(int iZone);
+
+    //! Reinit variable for incompressible situation 
+    void ReinitField(int iSolver);
     //! Update unsteady flow.
     //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
     void UpdateUnsteadyFlow(int iSolver, int level = 0);
 
+    //! Update unsteady variable for incompressible solvers.
+    //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
+    void UpdateUnsteadyVariable(int iSolver, int level = 0);
+
+    //! Init residual file.
+    void InitResultFile(string &fileName);
+
+    //! Output res to file.
+    void DumpResultFile(string &fileName);
+
+    //! For InCompressible Solvers
+    void UpdateDt(int iSolver, int level);
     //! Multi-Grid (MG) acceleration cycle control.
     //! All MG stages are defined in it, such as relaxation, restriction, prolongation, correction.
     void MultiGrid(int iSolver, int level = 0);
@@ -271,6 +291,18 @@ private:
     void RecoverResidual   (int iSolver, int level);
     bool CVGNorm(int iSolver, int level = 0);
     bool ISCoarsestGrid(int level);
+
+    //! For solving incompressible flow.
+    void SolveFlowField(int iZone);
+
+    //! For solving incompressible scalar equation.
+    void SolveScalarField(int iZone);
+
+    //! For solving incompressible turb equation.
+    void SolveTurbField(int iZone);
+
+    //! For solving incompressible energy equation.
+    void SolveEnergyField(int iZone);
 };
 
 class MultiGridFieldProxy

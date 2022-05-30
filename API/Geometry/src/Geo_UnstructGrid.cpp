@@ -2399,6 +2399,72 @@ void UnstructGrid::CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, 
     }
 }
 
+void UnstructGrid::CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *wfR, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
+{
+    RDouble *nxs, *nys, *nzs, *ns, *vol;
+
+    nxs = this->GetFaceNormalX();
+    nys = this->GetFaceNormalY();
+    nzs = this->GetFaceNormalZ();
+    ns = this->GetFaceArea();
+    vol = this->GetCellVolume();
+
+    int *leftCellofFace = this->GetLeftCellOfFace();
+    int *rightCellofFace = this->GetRightCellOfFace();
+
+    int nTotalCell = this->GetNTotalCell();
+    int nTotalFace = this->GetNTotalFace();
+    int nBoundFace = this->GetNBoundFace();
+    int nTotal = nTotalCell + nBoundFace;
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        dqdx[iCell] = 0.0;
+        dqdy[iCell] = 0.0;
+        dqdz[iCell] = 0.0;
+    }
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int le = leftCellofFace[iFace];
+        int re = iFace + nTotalCell;
+
+        RDouble qfc = q[re]; 
+        RDouble nx = nxs[iFace] * ns[iFace];
+        RDouble ny = nys[iFace] * ns[iFace];
+        RDouble nz = nzs[iFace] * ns[iFace];
+        dqdx[le] += qfc * nx;
+        dqdy[le] += qfc * ny;
+        dqdz[le] += qfc * nz;
+    }
+
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        int le = leftCellofFace[iFace];
+        int re = rightCellofFace[iFace];
+
+        RDouble nx = nxs[iFace] * ns[iFace];
+        RDouble ny = nys[iFace] * ns[iFace];
+        RDouble nz = nzs[iFace] * ns[iFace];
+
+        RDouble qfc = wfL[iFace] * q[le] + wfR[iFace] * q[re];
+        dqdx[le] += qfc * nx;
+        dqdy[le] += qfc * ny;
+        dqdz[le] += qfc * nz;
+        dqdx[re] -= qfc * nx;
+        dqdy[re] -= qfc * ny;
+        dqdz[re] -= qfc * nz;
+    }
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        RDouble ovol = one / vol[iCell];
+        dqdx[iCell] *= ovol;
+        dqdy[iCell] *= ovol;
+        dqdz[iCell] *= ovol;
+    }
+}
+
 void UnstructGrid::CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz)
 {
     RDouble *nxs,*nys,*nzs,*ns,*vol;

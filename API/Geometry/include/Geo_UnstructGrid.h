@@ -553,6 +553,7 @@ public:
     void CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGNodeWeight(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
+    void CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *wfR, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellW(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
@@ -714,7 +715,7 @@ void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVisual(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q);
 void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEquation);
-void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, int bctype_in, bool twoside);
+void FixBCNodeVar(UnstructGrid* grid, RDouble* q, RDouble* q_n, int* n_count, int bctype_in, bool twoside);
 void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count, int bctype_in, bool twoside);    // Bell 20121220 add
 void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 

@@ -163,7 +163,11 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
         }
     }
 
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (compressible)
+    {
     ComputeNodeBCType();
+}
 }
 
 void Controller::CleanUp(int iSolver)
@@ -186,6 +190,29 @@ void Controller::CleanUp(int iSolver)
         PHSolver *solver = GetCFDSolver(zoneID, iSolver);
 
         solver->ReleaseMemory();
+    }
+}
+
+void Controller::ReinitField(int iSolver)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int level = 0;
+    //! First: Initialize memory.
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        PHSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->ReinitField();
     }
 }
 
@@ -382,6 +409,103 @@ LIB_EXPORT void Controller::SolveUnsteadyField()
     }
 }
 
+//! Incompressible Flow
+void Controller::SolveIncompressibleSteadyField()
+{
+    using namespace PHMPI;
+
+    int iSolver = this->GetSolverIndex();
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, 0);
+
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+        const string solverName = solver->GetName();
+        if (solverName == std::to_string(iSolver) + "_" + "FLOW")
+        {
+            this->SolveFlowField(zoneID);
+        }
+        else if (solverName == "TURB")
+        {
+            this->SolveTurbField(zoneID);
+        }
+        else if (solverName == "ENERGY")
+        {
+            this->SolveEnergyField(zoneID);
+        }
+    }
+}
+
+void Controller::InitResultFile(string &fileName)
+{
+    using namespace PHMPI;
+
+    int iSolver = this->GetSolverIndex();
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, 0);
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->InitIncompressibleResultFile(grid, fileName);
+    }
+}
+
+void Controller::DumpResultFile(string &fileName)
+{
+    using namespace PHMPI;
+
+    int iSolver = this->GetSolverIndex();
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, 0);
+
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->DumpIncompressibleResultFile(grid, fileName);
+    }
+}
+
 void Controller::MultiGrid(int iSolver, int level)
 {
     CreateRHSProxy(iSolver, level);
@@ -495,6 +619,46 @@ void Controller::UpdateUnsteadyFlow(int iSolver, int level)
         CFDSolver *solver = GetCFDSolver(iZone, iSolver);
 
         solver->UpdateUnsteadyFlow(grid);
+    }
+}
+
+void Controller::UpdateUnsteadyVariable(int iSolver, int level)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Zone *zone = GetZone(iZone);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(iZone, level);
+        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+
+        solver->UpdateUnsteadyVariable(grid);
+    }
+}
+
+void Controller::UpdateDt(int iSolver, int level)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Zone *zone = GetZone(iZone);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(iZone, level);
+        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+
+        solver->UpdateDt();
     }
 }
 
@@ -4213,6 +4377,95 @@ LIB_EXPORT void Controller::MultiGridInitFlow(int level)
 
     //! Recover the residual.
     DestroyRHSProxy(iSolver, level);
+}
+
+//! Incompressible Flow
+void Controller::SolveFlowField(int iZone)
+{
+
+    //! Discret momentum equation.
+    CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+    solver->DiscrtMomentumEquations();
+    solver->SolveMomentumEquations(*this->region);
+
+    //! Update the velocity and form the coefficient of pressure equation.
+    solver->UpdateVelocity();
+    solver->DiscrtPressureCorrectionEquation();
+    solver->SolvePressureCorrectionEquation(*this->region);
+
+    //! Update the pressure and velocity.
+    solver->UpdatePressureAndVelocity();
+
+    //! Update the properties.
+    solver->UpdateProperties();
+}
+
+//! Incompressible Flow
+void Controller::SolveScalarField(int iZone)
+{
+    CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+
+    solver->Discrt();
+
+    solver->SolveScalarEquation(*this->region);
+
+    solver->Update();
+
+    solver->UpdateBoundary();
+
+    solver->UpdateProperties();
+
+    solver->UpdateAfterIterloop();
+}
+
+//! Incompressible Flow
+void Controller::SolveTurbField(int iZone)
+{
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    if (viscousType == SPALART_ALLMARAS)
+    {
+        SolveScalarField(iZone);
+    }
+    else if (viscousType == KEPSILON)
+    {
+        CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+
+        solver->SolveKEquation(*this->region);
+
+        solver->SolveEpsilonEquation(*this->region);
+
+        solver->UpdateAfterIterloop();
+    }
+}
+
+//! Incompressible Flow
+void Controller::SolveEnergyField(int iZone)
+{
+    SolveScalarField(iZone);
+}
+
+bool Controller::IsConverged(int iZone)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    bool isConverged;
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        Zone *zone = GetZone(iZone);
+        if (!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(iZone, 0);
+
+        CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
+
+        solver->SolutionIsConverged(iZone, &isConverged);
+    }
+
+    return isConverged;
 }
 
 MultiGridFieldProxy::MultiGridFieldProxy(int iSolver, int level, int nZone)
