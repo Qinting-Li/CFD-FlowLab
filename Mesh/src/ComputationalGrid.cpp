@@ -218,14 +218,18 @@ void ComputationalGridProcess::CreateInterfaceInformation(int iZone)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
+   
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     InterfaceInfo *interfaceInformation = 0;
     int numberOfInterfaces = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
-        int boundaryConditionType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
         if(boundaryConditionType == PHENGLEI::INTERFACE || boundaryConditionType < 0)
         {
             ++ numberOfInterfaces;
@@ -250,7 +254,8 @@ void ComputationalGridProcess::CreateLocalInterfaceToBoundaryFaceIndexesMapping(
     InterfaceInfo *interfaceInformation = unstructuredGrid->GetInterfaceInfo();
     if (! interfaceInformation) return;
 
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int *localInterfaceToBoundaryFaceIndexesMapping = interfaceInformation->GetInterFace2BoundaryFace();
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
@@ -258,7 +263,8 @@ void ComputationalGridProcess::CreateLocalInterfaceToBoundaryFaceIndexesMapping(
     int iLocalInterfaceCount  = 0;
     for (int iBoundaryFace = 0; iBoundaryFace < numberOfBoundaryFaces; ++ iBoundaryFace)
     {
-        int boundaryConditionType = bcr[iBoundaryFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iBoundaryFace]);
+        int boundaryConditionType = bcRegion->GetBCType();
         if (!IsInterface(boundaryConditionType))
         {
             continue;
@@ -378,10 +384,15 @@ void ComputationalGridProcess::ModifyBoundaryInformation(InterfaceLinkStructure 
     int localInterfaceIndex = 0;
 
     PHVectorInt1D localInterfaceIndexToBoundaryFaceIndexMapping;
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
-        int boundaryConditionType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
         if (IsInterface(boundaryConditionType))
         {
             localInterfaceIndexToBoundaryFaceIndexMapping.push_back(iFace);
@@ -428,7 +439,8 @@ void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStruc
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
 
@@ -441,8 +453,10 @@ void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStruc
     int localInterfaceIndex = 0;
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
-        int boundaryConditionType = bcr[iFace]->GetKey();
-        string bcName = bcr[iFace]->GetBCName();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
+        string bcName = bcRegion->GetBCName();
         if (IsInterface(boundaryConditionType))
         {
             int numberOfChildFaces = numberOfChildFacesOfInterface[localInterfaceIndex];
@@ -580,10 +594,15 @@ void ComputationalGridProcess::SetNewFaceToCellIndexesContainer(InterfaceLinkStr
     int zoneIndex = unstructuredGrid->GetZoneID();
 
     int localInterfaceIndex = 0;
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+  
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
-        int boundaryConditionType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
 
         if (IsInterface(boundaryConditionType))
         {
@@ -653,10 +672,14 @@ void ComputationalGridProcess::SetBoundaryFaceNodeIndexVector( InterfaceLinkStru
     int localInterfaceIndex = 0;
     int facePointStartPosition = 0;
 
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
-        int boundaryConditionType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
         int numberOfFaceNodes = faceNodeNumberContainer[iFace];
         PHVectorInt1D tmpVector;
 
@@ -823,12 +846,10 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     UnstructGrid *unstructuredGrid = currentGrid;
 
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
-    {
-        delete bcr[iFace];
-    }
-    delete []bcr;
+    
+    /*UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    
+    delete unstructBCSet;*/
 
     PHVectorInt1D &boundaryTypeVector    = boundaryTypeVectorList[currentZoneID];
     vector< string > &boundaryNameVector = boundaryNameVectorList[currentZoneID];
@@ -836,7 +857,7 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     int newNumberOfBoundaryFaces = static_cast<int>(boundaryTypeVector.size());
     unstructuredGrid->SetNBoundFace(newNumberOfBoundaryFaces);
 
-    UnstructBCSet **bcrNew = new UnstructBCSet *[newNumberOfBoundaryFaces];
+    /*UnstructBCSet **bcrNew = new UnstructBCSet *[newNumberOfBoundaryFaces];
     for (int iFace = 0; iFace < newNumberOfBoundaryFaces; ++ iFace)
     {
         bcrNew[iFace] = new UnstructBCSet;
@@ -848,7 +869,43 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
         bcrNew[iFace]->SetBCName(boundaryNameVector[iFace]);
     }
 
-    unstructuredGrid->SetBCRecord(bcrNew);
+    unstructuredGrid->SetBCRecord(bcrNew);*/
+
+    //! Create UnstructbcRegion.
+    set<string> bcNameSet;
+    for (int iFace = 0; iFace < newNumberOfBoundaryFaces; iFace++)
+    {   
+        bcNameSet.insert(boundaryNameVector[iFace]);
+    }
+
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+
+    unstructuredGrid->CreateUnstructBCSet(nBCRegionUnstruct);
+
+    UnstructBCSet *unstructBCSetNew = unstructuredGrid->GetUnstructBCSet();
+    int* bcRegionIDofBCFace = new int[newNumberOfBoundaryFaces];
+    set<string>::iterator iter;
+    uint_long count = 0;
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSetNew->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < newNumberOfBoundaryFaces; iFace++)
+        {
+            if (boundaryNameVector[iFace] == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(boundaryTypeVector[iFace]);
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+
+        }
+        count++;
+    }
+    unstructBCSetNew->SetBCFaceInfo(bcRegionIDofBCFace);
 }
 
 void ComputationalGridProcess::MatchInterfaceTopology()
@@ -972,13 +1029,17 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
     int *faceNodeNumberContainer = unstructuredGrid->GetNodeNumberOfEachFace();
     int *faceNodeIndexContainer  = unstructuredGrid->GetFace2Node();
     int numberOfBoundaryFaces  = unstructuredGrid->GetNBoundFace();
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     int interfaceIndex = 0;
     int nodePosition = 0;
     for (int iBoundaryFace = 0; iBoundaryFace < numberOfBoundaryFaces; ++ iBoundaryFace)
     {
-        int boundaryConditionType = bcr[iBoundaryFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iBoundaryFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
         int faceNodeNumber = faceNodeNumberContainer[iBoundaryFace];
         if (!IsInterface(boundaryConditionType))
         {
@@ -1038,7 +1099,9 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
     nodePosition = 0;
     for (int iBoundaryFace = 0; iBoundaryFace < numberOfBoundaryFaces; ++ iBoundaryFace)
     {
-        int boundaryConditionType = bcr[iBoundaryFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iBoundaryFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
         int faceNodeNumber = faceNodeNumberContainer[iBoundaryFace];
         if (!IsInterface(boundaryConditionType))
         {
@@ -1348,11 +1411,15 @@ void ComputationalGridProcess::AddZoneInterfacesTopology(ZoneInterface *zoneInte
 bool ExistInterfaces(UnstructGrid *unstructuredGrid)
 {
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
 
     for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
     {
-        int boundaryConditionType = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        int boundaryConditionType = bcRegion->GetBCType();
         if (IsInterface(boundaryConditionType))
         {
             return true;

@@ -341,16 +341,19 @@ void Mesh_Refine_Unstruct::ConstructFaceTopo(Grid *grid)
     {
         faceBoundaryCondition[iFace] = 0;
     }
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
         SimpleBC *iFaceBoundaryCondtion = new SimpleBC();
-        int boundaryType = bcr[iFace]->GetKey();
+        int boundaryType = bcRegion->GetBCType();
         iFaceBoundaryCondtion->SetBCType(boundaryType);
         if(boundaryType != PHENGLEI::INTERFACE)
         {
-            string bcName = bcr[iFace]->GetBCName();
+            string bcName = bcRegion->GetBCName();
             iFaceBoundaryCondtion->SetBCName(bcName);
         }
         else
