@@ -43,13 +43,13 @@ namespace PHSPACE
 
 				RDouble currentTime = 0.0;
 				GlobalDataBase::GetData("currentTime", &currentTime, PHDOUBLE, 1);
-				fileName = Name() + "_time" + std::to_string(currentTime) + "_zone" + std::to_string(zone->GetIndex()) + ".dat";
+				fileName = Name() + "_time" + toString(currentTime) + "_zone" + toString(zone->GetIndex()) + ".dat";
 			}
 			else
 			{
 				int innerIter = 0;
 				GlobalDataBase::GetData("innerIter", &innerIter, PHINT, 1);
-				fileName = Name() + "_iter" + std::to_string(innerIter) + "_zone" + std::to_string(zone->GetIndex()) + ".dat";
+				fileName = Name() + "_iter" + toString(innerIter) + "_zone" + toString(zone->GetIndex()) + ".dat";
 			}
 			
 			std::transform(fileName.begin(), fileName.end(), fileName.begin(), ::tolower);
@@ -167,8 +167,8 @@ namespace PHSPACE
 
 				if (ObjGetIntParaFromDB("isunsteady", 0))
 				{
-					file << "ZONE T=\"" << std::to_string(ObjGetDoubleParaFromDB("currentTime", 0.0)) 
-						<< "s\",SOLUTIONTIME=" << std::to_string(ObjGetDoubleParaFromDB("currentTime", 0.0))
+					file << "ZONE T=\"" << toString(ObjGetDoubleParaFromDB("currentTime", 0.0)) 
+						<< "s\",SOLUTIONTIME=" << toString(ObjGetDoubleParaFromDB("currentTime", 0.0))
 						<< ",N = " << grid->GetNTotalNode()
 						<< ",E=" << grid->GetNTotalCell()
 						<< ",DATAPACKING=BLOCK,ZONETYPE=FEQUADRILATERAL,VARLOCATION=([";

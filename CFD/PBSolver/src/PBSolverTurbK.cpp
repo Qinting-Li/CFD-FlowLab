@@ -110,11 +110,10 @@ namespace PHSPACE
         RDouble *vist = reinterpret_cast<RDouble*>(grid->GetDataPtr("vist"));
         RDouble *gen = reinterpret_cast<RDouble*>(grid->GetDataPtr("gen"));
 
-        std::shared_ptr<PBGrad>(PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB("UGradCalc", "GAUSS")))->Calc(grid, "U", "dudx", "dudy", "dudz");
-
-        std::shared_ptr<PBGrad>(PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB("VGradCalc", "GAUSS")))->Calc(grid, "V", "dvdx", "dvdy", "dvdz");
-
-        std::shared_ptr<PBGrad>(PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB("WGradCalc", "GAUSS")))->Calc(grid, "W", "dwdx", "dwdy", "dwdz");
+        PBGrad *gradCalc = PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB(gradCalcConfigName, "GAUSS"));
+        gradCalc->Calc(grid, "U", "dudx", "dudy", "dudz");
+        gradCalc->Calc(grid, "V", "dvdx", "dvdy", "dvdz");
+        gradCalc->Calc(grid, "W", "dwdx", "dwdy", "dwdz");
 
         for (int iCell = 0; iCell < grid->GetNTotalCell(); ++ iCell)
         {

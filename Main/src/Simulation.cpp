@@ -1523,7 +1523,7 @@ void Simulation::DefineAndCreateSolvers()
                 PHSolver *solver = PBSolverFactory::CreatePBSolver(flowSolver);
                 solverList.push_back(solver);
                 int solverIndex = solverList.size();
-                solver->SetName(std::to_string(solverIndex - 1) + "_" + flowSolver);
+                solver->SetName(toString(solverIndex - 1) + "_" + flowSolver);
 
 
             }

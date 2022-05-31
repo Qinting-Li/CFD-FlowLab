@@ -164,9 +164,9 @@ namespace PHSPACE
     void PBSolverScalar::InitField()
     {
         PHString1D phiNameList;
-        phiNameList.emplace_back(ScalarName());
+        phiNameList.push_back(ScalarName());
         PHDouble1D phiInitValueList;
-        phiInitValueList.emplace_back(initPhi);
+        phiInitValueList.push_back(initPhi);
         tranCalc->AllocateMemory(grid, phiNameList, phiInitValueList);
     }
 
@@ -179,7 +179,7 @@ namespace PHSPACE
     {
         UnstructGrid *gridIn = UnstructGridCast(grid); 
         std::vector<std::string> phiNameList;
-        phiNameList.emplace_back(ScalarName());
+        phiNameList.push_back(ScalarName());
         tranCalc->SaveOldTimeValue(gridIn, phiNameList);
     }
 

@@ -115,9 +115,10 @@ namespace PHSPACE
 		RDouble* dwdy = reinterpret_cast<RDouble*>(grid->GetDataPtr("dwdy"));
 		RDouble* dwdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("dwdz"));
 
-		std::shared_ptr<PBGrad>(PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB("UGradCalc", "GAUSS")))->Calc(grid,"U","dudx", "dudy", "dudz");
-		std::shared_ptr<PBGrad>(PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB("VGradCalc", "GAUSS")))->Calc(grid,"V","dvdx", "dvdy", "dvdz");
-		std::shared_ptr<PBGrad>(PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB("WGradCalc", "GAUSS")))->Calc(grid,"W","dwdx", "dwdy", "dwdz");
+        PBGrad *gradCalc = PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB(gradCalcConfigName, "GAUSS"));
+        gradCalc->Calc(grid, "U", "dudx", "dudy", "dudz");
+        gradCalc->Calc(grid, "V", "dvdx", "dvdy", "dvdz");
+        gradCalc->Calc(grid, "W", "dwdx", "dwdy", "dwdz");
 		
 
 		int numberOfTotalCell = grid->GetNTotalCell();
@@ -168,7 +169,10 @@ namespace PHSPACE
 		RDouble* dkdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("dkdz"));
 		RDouble* k = reinterpret_cast<RDouble*>(grid->GetDataPtr("kinetic"));
 		RDouble* gra = reinterpret_cast<RDouble*>(grid->GetDataPtr("gra"));
-		std::shared_ptr<PBGrad>(PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB("UGradCalc", "GAUSS")))->Calc(grid,"kinetic","dkdx","dkdy","dkdz");
+
+        PBGrad *gradCalc = PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB(gradCalcConfigName, "GAUSS"));
+        gradCalc->Calc(grid,"kinetic","dkdx","dkdy","dkdz");
+
 		for (int iCell = 0; iCell < grid->GetNTotalCell(); ++iCell)
 		{
 			RDouble _dkdx = dkdx[iCell];
