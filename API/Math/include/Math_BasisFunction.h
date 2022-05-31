@@ -211,6 +211,14 @@ void MatrixMultiply(T1 **a, vector< T2 > &b, vector< T3 > &c, int m, int n)
     MatrixMultiply(a, &b[0], &c[0], m, n);
 }
 
+template<typename T> 
+string toString(const T &t)
+{ 
+    ostringstream oss;
+    oss<<t;
+    return oss.str();
+}
+
 //! Compute the cross product of two vectors.
 //! @param[in]  vec1        The 1st vector, 3D array.
 //! @param[in]  vec2        The 2nd vector, 3D array.

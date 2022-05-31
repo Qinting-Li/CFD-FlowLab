@@ -123,6 +123,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_P  , "P" ));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_CP , "CP"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_T  , "T" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_ENTHALPY , "enthalpy"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_DEN, "DEN"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_VIS, "VIS"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_TE , "TE"));

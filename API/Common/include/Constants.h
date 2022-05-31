@@ -160,6 +160,7 @@ const int IREGAMA                = 2;
 const int BALDWIN_LOMAX          = 10;
 const int SPALART_ALLMARAS       = 11;
 const int KW_SST                 = 12;
+const int KEPSILON               = 13;
 
 const int MULTI_STAGE            = 1;
 const int LU_SGS                 = 4;

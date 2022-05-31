@@ -26,6 +26,10 @@
 #include "Post_WriteTecplot.h"
 #include "LESSolverStruct.h"
 #include "LESSolverUnstr.h"
+//! Incompressible Flow
+#include "PBS.h"
+//!
+
 #ifdef USE_SpecDiffHybSolver
 #include "SpecDiffHybSolver.h"
 #include "SpecSolver.h"
@@ -904,7 +908,7 @@ void Simulation::RunGridCheckSolver()
                 string bcName = bcRegion->GetBCName();
                 file << iFace << setw(10) << bcType << setw(20) << bcName <<endl;
             }
-            
+
 
             int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
             int *face2Node = grid->GetFace2Node();
@@ -1386,6 +1390,16 @@ void Simulation::InitializeSolvers()
         delete controller;
     }
 
+    //! For Incompressible Flow
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+    {
+        Controller *controller = new Controller(iSolver, this->region);
+
+        controller->ReinitField(iSolver);
+
+        delete controller;
+    }
+
     WriteLogFile("Creating and initialization solvers over \n");
 }
 
@@ -1502,6 +1516,16 @@ void Simulation::DefineAndCreateSolvers()
                     solverList.push_back(solver);
                 }
 #endif
+
+                //! Incompressible Flow
+                string flowSolver;
+                zone->GetData("FLOW", &flowSolver, PHSTRING, 1);
+                PHSolver *solver = PBSolverFactory::CreatePBSolver(flowSolver);
+                solverList.push_back(solver);
+                int solverIndex = solverList.size();
+                solver->SetName(toString(solverIndex - 1) + "_" + flowSolver);
+
+
             }
         }
         else
@@ -1544,6 +1568,23 @@ void Simulation::DefineAndCreateSolvers()
                     }
                 }
             }
+            else
+            {
+                //! Incompressible Flow
+                if (viscousType == SPALART_ALLMARAS)
+                {
+                    PHSolver *solver = PBSolverFactory::CreatePBSolver("TURB_SA");
+                    solverList.push_back(solver);
+                    solver->SetName("TURB");
+                }
+                else if (viscousType == KEPSILON)
+                {
+                    PHSolver *solver = PBSolverFactory::CreatePBSolver("TURB_KEPSILON");
+                    solverList.push_back(solver);
+                    solver->SetName("TURB");
+                    solver->SetGeometry(geometry);
+                }
+            }
         }
 
         int iLES = 0;
@@ -1562,6 +1603,21 @@ void Simulation::DefineAndCreateSolvers()
                 //! Add structured LES solver.
                 PHSolver *solver = new LESSolverStruct();
                 solverList.push_back(solver);
+            }
+        }
+
+        //! Incompressible Flow
+        int compressible = 1;
+        zone->GetData("compressible", &compressible, PHINT, 1);
+        if (!compressible)
+        {
+            int energyType;
+            zone->GetData("energyType", &energyType, PHINT, 1);
+            if (energyType)
+            {
+                PHSolver *solver = PBSolverFactory::CreatePBSolver("ENERGY");
+                solverList.push_back(solver);
+                solver->SetName("ENERGY");
             }
         }
 #endif
@@ -1604,15 +1660,34 @@ void Simulation::PreSolve()
             }
         }
     }
+
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (!compressible)
+    {
+        string fileName = "residual.txt";
+        int nSolver = Zone::GetNumberOfSolvers();
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+        {
+            Controller *controller = new Controller(iSolver, this->region);
+
+            controller->InitResultFile(fileName);
+
+            delete controller;
+        }
+
+        string outputFileName = string("results/") + fileName;
+        ofstream file(outputFileName.c_str(), ios::app);
+        file << '\n';
+    }
 }
 
 void Simulation::PostSolve()
 {
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible == 0)
-    {
-        return;
-    }
+    //int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    //if (compressible == 0)
+    //{
+    //    return;
+    //}
 
     using namespace PHMPI;
 
@@ -1620,10 +1695,31 @@ void Simulation::PostSolve()
     int intervalStepPlot = GlobalDataBase::GetIntParaFromDB("intervalStepPlot");
     int intervalStepSample = GlobalDataBase::GetIntParaFromDB("intervalStepSample");
     int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    int nMaxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
     if (outIterStep % intervalStepPlot == 0)
     {
         Post_WriteTecplot generateVisualFile;
         generateVisualFile.Run();
+    }
+
+    //! Incompressible Flow
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (!compressible)
+    {
+        string fileName = "residual.txt";
+        int nSolver = Zone::GetNumberOfSolvers();
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+        {
+            Controller *controller = new Controller(iSolver, this->region);
+
+            controller->DumpResultFile(fileName);
+
+            delete controller;
+        }
+
+        string outputFileName = string("results/") + fileName;
+        ofstream file(outputFileName.c_str(), ios::app);
+        file << '\n';
     }
 
     if (!GlobalDataBase::IsExist("ifSetDataMonitor", PHINT, 1))
@@ -1645,12 +1741,12 @@ void Simulation::PostSolve()
 
 void Simulation::MainSolve()
 {
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible == 0)
-    {
-        SolveIncomFlow();
-        return;
-    }
+    //int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    //if (compressible == 0)
+    //{
+    //    SolveIncomFlow();
+    //    return;
+    //}
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (!isUnsteady)
@@ -1697,6 +1793,15 @@ void Simulation::SolveSimulation()
 
     while (continueSolve)
     {
+        //! Incompressible Flow
+        int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+        int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+
+        if (!compressible)
+        {
+            continueSolve = ContinueSolve();
+        }
+
         UpdateOuterIterationStep(outIterStep);
 
         SolveOneOuterStep();
@@ -1705,7 +1810,15 @@ void Simulation::SolveSimulation()
         {
             continueSolve = false;
         }
+
+        if (isUnsteady == 0)
+        {
+            std::cout << "outIterStep: " << outIterStep << std::endl;
+        }
     }
+
+    Post_WriteTecplot generateVisualFile;
+    generateVisualFile.Run();
 }
 
 void Simulation::SelfAdaptionSolve()
@@ -1910,85 +2023,158 @@ void Simulation::SolveSteady()
     int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
 
-    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+    //! Incompressible Flow
+    int compressible = 1;
+    GlobalDataBase::GetData("compressible", &compressible, PHINT, 1);
+    if (compressible)
     {
-        //! iSolver = 1 or 2, is supposed as turbulence computing.
-        if ((iSolver == TURB_SOLVER) && (outerIterStep % turbInterval != 0))
+        for (int iSolver = 0; iSolver < nSolver; ++iSolver)
         {
-            return;
+        //! iSolver = 1 or 2, is supposed as turbulence computing.
+            if ((iSolver == TURB_SOLVER) && (outerIterStep % turbInterval != 0))
+            {
+                return;
+            }
+
+            Controller *controller = new Controller(iSolver, this->region);
+
+            controller->SolveSteadyField();
+
+            controller->PostSolve();
+
+            delete controller;
         }
+    }
+    else
+    {
+        //! Incompressible Flow
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+        {
+            Controller *controller = new Controller(iSolver, this->region);
 
-        Controller *controller = new Controller(iSolver, this->region);
+            controller->SolveIncompressibleSteadyField();
 
-        controller->SolveSteadyField();
-
-        controller->PostSolve();
-
-        delete controller;
+            delete controller;
+        }
     }
 }
 
 void Simulation::SolveUnsteady()
 {
-    int minSubItertation = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
-    int maxSubItertation = GlobalDataBase::GetIntParaFromDB("max_sub_iter");
-    RDouble toltalSubItertation = GlobalDataBase::GetDoubleParaFromDB("tol_sub_iter");
+    int compressible = 1;
 
-    int innerIterStep = 0;
-    int nSolver = Zone::GetNumberOfSolvers();
-
-    bool isSubIterationDump = false;
-    GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
-
-    bool isSubIterationConvergence = false;
-    while (!isSubIterationConvergence)
+    GlobalDataBase::GetData("compressible", &compressible, PHINT, 1);
+    if (compressible)
     {
-        innerIterStep += 1;
-        GlobalDataBase::UpdateData("innstep", &innerIterStep, PHINT, 1);
+        int minSubItertation = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
+        int maxSubItertation = GlobalDataBase::GetIntParaFromDB("max_sub_iter");
+        RDouble toltalSubItertation = GlobalDataBase::GetDoubleParaFromDB("tol_sub_iter");
 
-        SolveSingleInnerIterationStepForAleSolvers();
+        int innerIterStep = 0;
+        int nSolver = Zone::GetNumberOfSolvers();
 
-        RDouble subIterationNormOneSolver = zero;
-        RDouble maxSubIterationNormAllSolvers = -LARGE;
+        bool isSubIterationDump = false;
+        GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
+
+        bool isSubIterationConvergence = false;
+        while (!isSubIterationConvergence)
+        {
+            innerIterStep += 1;
+            GlobalDataBase::UpdateData("innstep", &innerIterStep, PHINT, 1);
+
+            SolveSingleInnerIterationStepForAleSolvers();
+
+            RDouble subIterationNormOneSolver = zero;
+            RDouble maxSubIterationNormAllSolvers = -LARGE;
+
+            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+            {
+                Controller *controller = new Controller(iSolver, this->region);
+
+                controller->SolveSteadyField();
+
+                //! Here is in the sub-iteration, PostSolve is only for the CommunicationInterfaceData and dumps the "res.dat", which contains index of the sub-iteration residual.
+                controller->PostSolve();
+
+                subIterationNormOneSolver = controller->ComputeSubIterationNorm(iSolver, 0);
+                maxSubIterationNormAllSolvers = MAX(maxSubIterationNormAllSolvers, subIterationNormOneSolver);
+
+                delete controller;
+            }
+
+            PH_CompareMaxMin(maxSubIterationNormAllSolvers, 1);
+
+            //! Sub-iteration continue or not judgement.
+            isSubIterationConvergence = IsSubIterationConvergence(innerIterStep, minSubItertation, maxSubItertation, toltalSubItertation, maxSubIterationNormAllSolvers);
+        }
+
+        PostprocessAfterInnerIterationStepForAleSolvers();
+
+        //! Here is already (innstep == max_sub_iter || isSubIterationConvergence).
+        isSubIterationDump = true;
+        GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
+
+        //! Update physical time step flow field after sub-iteration convergence.
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+        {
+            Controller *controller = new Controller(iSolver, this->region);
+
+            controller->UpdateUnsteadyFlow(iSolver, 0);
+
+            //! Here is out of the sub-iteration, PostSolve is to dump various files according to the parameters in the "cfd_para.hypara", such as intervalStepFlow, intervalStepPlot, intervalStepForce, intervalStepRes, et al.
+            controller->PostSolve();
+
+            delete controller;
+        }
+    }
+    else
+    {
+        //! Incompressible Flow
+        int innerIterStep = GlobalDataBase::GetIntParaFromDB("innerIter");
+        int nSolver = Zone::GetNumberOfSolvers();
+
+        //! Parameter for unsteady simulation
+        RDouble CurrentTime = GlobalDataBase::GetDoubleParaFromDB("currentTime");
+        RDouble detat = GlobalDataBase::GetDoubleParaFromDB("dt");
+        int CurrentTimeStep = (int)((CurrentTime / detat) + 0.5);
+        int OutputTimeStep = GlobalDataBase::GetIntParaFromDB("OutputTimeStep");
+        RDouble endtime = GlobalDataBase::GetDoubleParaFromDB("endTime");
+
+        for (int innerIter = 0; innerIter < innerIterStep; ++ innerIter)
+        {
+            std::cout << "innerIterStep= " << innerIter << endl;
+            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+            {
+                Controller *controller = new Controller(iSolver, this->region);
+
+                controller->SolveIncompressibleSteadyField();
+
+                delete controller;
+            }
+            std::cout << endl;
+        }
+
+        //! Here is in the sub-iteration, PostSolve is only for the CommunicationInterfaceData and dumps the "res.dat", which contains index of the sub-iteration residual.
+        if (CurrentTimeStep % OutputTimeStep == 0 || endtime == CurrentTime)
+        {
+            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+            {
+                Controller *controller = new Controller(iSolver, this->region);
+
+                controller->PostSolve();
+
+                delete controller;
+            }
+        }
 
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
             Controller *controller = new Controller(iSolver, this->region);
 
-            controller->SolveSteadyField();
-
-            //! Here is in the sub-iteration, PostSolve is only for the CommunicationInterfaceData and dumps the "res.dat", which contains index of the sub-iteration residual.
-            controller->PostSolve();
-
-            subIterationNormOneSolver = controller->ComputeSubIterationNorm(iSolver, 0);
-            maxSubIterationNormAllSolvers = MAX(maxSubIterationNormAllSolvers, subIterationNormOneSolver);
+            controller->UpdateUnsteadyVariable(iSolver, 0);
 
             delete controller;
         }
-
-        PH_CompareMaxMin(maxSubIterationNormAllSolvers, 1);
-
-        //! Sub-iteration continue or not judgement.
-        isSubIterationConvergence = IsSubIterationConvergence(innerIterStep, minSubItertation, maxSubItertation, toltalSubItertation, maxSubIterationNormAllSolvers);
-    }
-
-    PostprocessAfterInnerIterationStepForAleSolvers();
-
-    //! Here is already (innstep == max_sub_iter || isSubIterationConvergence).
-    isSubIterationDump = true;
-    GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
-
-    //! Update physical time step flow field after sub-iteration convergence.
-    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-    {
-        Controller *controller = new Controller(iSolver, this->region);
-
-        controller->UpdateUnsteadyFlow(iSolver, 0);
-
-        //! Here is out of the sub-iteration, PostSolve is to dump various files according to the parameters in the "cfd_para.hypara", such as intervalStepFlow, intervalStepPlot, intervalStepForce, intervalStepRes, et al.
-        controller->PostSolve();
-
-        delete controller;
     }
 }
 
@@ -2015,4 +2201,114 @@ bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &
 
     return isSubIterationConvergence;
 }
+
+bool Simulation::ContinueSolve()
+{
+    bool continueSolve = true;
+
+    if (GlobalDataBase::GetIntParaFromDB("iunsteady"))
+    {
+        int timeStepNow;
+        GlobalDataBase::GetData("timeStepNow", &timeStepNow, PHINT, 1);
+        timeStepNow++;
+        GlobalDataBase::UpdateData("timeStepNow", &timeStepNow, PHINT, 1);
+
+        RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
+        RDouble endTime = GlobalDataBase::GetDoubleParaFromDB("endTime");
+        RDouble currentTime;
+        GlobalDataBase::GetData("currentTime", &currentTime, PHDOUBLE, 1);
+        if (&dt == NULL)
+        {
+            dt = 0.0;
+        }
+
+        if (endTime - currentTime < dt && endTime - currentTime > 1e-10)
+        {
+            dt = endTime - currentTime;
+
+            GlobalDataBase::UpdateData("dt", &dt, PHDOUBLE, 1);
+
+            currentTime += dt;
+        }
+        else
+        {
+            currentTime += dt;
+
+            if (endTime < currentTime)
+            {
+                continueSolve = false;
+            }
+        }
+
+        //! Incompressible Flow
+        bool isContinueSolveByConverge = false;
+        int nSolver = Zone::GetNumberOfSolvers();
+        bool converged = false;
+
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+        {
+            Controller *controller = new Controller(iSolver, this->region);
+
+            converged = controller->IsConverged(iSolver);
+
+            delete controller;
+
+            if (converged == false)
+            {
+                isContinueSolveByConverge = true;
+                break;
+            }
+            else
+            {
+                isContinueSolveByConverge = false;
+            }
+        }
+
+        if (continueSolve && isContinueSolveByConverge)
+        {
+            continueSolve = true;
+        }
+        else
+        {
+            continueSolve = false;
+        }
+
+        if (continueSolve)
+        {
+            GlobalDataBase::UpdateData("outnstep", &timeStepNow, PHINT, 1);
+            GlobalDataBase::UpdateData("currentTime", &currentTime, PHDOUBLE, 1);
+
+            std::cout << "\nTIME = " << currentTime << ", DT = " << dt << ", TIMESTEP = " << timeStepNow << std::endl;
+        }
+    }
+    else
+    {
+        int nSolver = Zone::GetNumberOfSolvers();
+        bool converged = false;
+
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+        {
+            Controller *controller = new Controller(iSolver, this->region);
+
+            converged = controller->IsConverged(iSolver);
+
+            delete controller;
+
+            if (converged == false)
+            {
+                continueSolve = true;
+                break;
+            }
+            else
+            {
+                continueSolve = false;
+            }
+        }
+    }
+
+    return(continueSolve);
 }
+}
+
+
+
