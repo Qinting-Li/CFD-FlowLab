@@ -86,7 +86,7 @@ public:
     void SetGeometry(PHGeometry *geometry);
 
     //! Return the solver name,
-    inline string PHSolver::GetName() const;
+    inline string GetName() const;
 
     //! Return the solver index, 
     int  GetIndex() const;
