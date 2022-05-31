@@ -9,7 +9,7 @@ namespace PHSPACE
      using namespace GAS_SPACE;
 //! This is for Matrix LU-SGS according NSMB handbook in 1995 year.
 //! This is Matrix LU-SGS method.
-void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -25,7 +25,7 @@ void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LU
     RDouble4D &gyfn  = *(grid->GetFaceNormalY());
     RDouble4D &gzfn  = *(grid->GetFaceNormalZ());
     RDouble4D &gvgn  = *(grid->GetFaceNormalVelocity());
-    RDouble4D &garea = *(grid->GetFaceArea()  );
+    RDouble4D &garea = *(grid->GetFaceArea());
     RDouble3D &gvol  = *(grid->GetCellVolume());
 
     int *cellTypeContainer = grid->GetCellTypeContainer();
@@ -33,26 +33,26 @@ void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LU
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-    int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
+    int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
     RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
 
     int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
 
-    RDouble *dqNeighbor     = new RDouble[nEquation];
-    RDouble *prim    = new RDouble[nEquation];
-    RDouble *qNeighbor   = new RDouble[nEquation];
-    RDouble *rhs0    = new RDouble[nEquation];
-    RDouble *df      = new RDouble[nEquation];   
-    RDouble *dqCell  = new RDouble[nEquation];
-    RDouble *dqOld   = new RDouble [nEquation];
+    RDouble *dqNeighbor = new RDouble[nEquation];
+    RDouble *prim   = new RDouble[nEquation];
+    RDouble *qNeighbor = new RDouble[nEquation];
+    RDouble *rhs0   = new RDouble[nEquation];
+    RDouble *df     = new RDouble[nEquation];   
+    RDouble *dqCell = new RDouble[nEquation];
+    RDouble *dqOld  = new RDouble[nEquation];
     RDouble *temperature = new RDouble[nTemperatureModel];
     RDouble *qPrecondition = new RDouble[nEquation];
     RDouble *Ux = new RDouble [nEquation];
 	RDouble *deltaQ = new RDouble[nEquation];
 	RDouble *rhsMatrix = new RDouble[nEquation];
-	RDouble *priml    = new RDouble[nEquation];
-	RDouble *primr    = new RDouble[nEquation];
+	RDouble *priml = new RDouble[nEquation];
+	RDouble *primr = new RDouble[nEquation];
 	
     Range M(0, nEquation - 1);
 	RDouble2D *diagonalMatrixD = new RDouble2D(M, M, fortranArray);
@@ -135,12 +135,12 @@ void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LU
 
                     for (int m = 0; m < nEquation; ++ m)
                     {
-                        prim[m]  =  q(il, jl, kl, m);
-                        qNeighbor[m] =  q(il, jl, kl, m);
-                        dqNeighbor[m]= dq(il, jl, kl, m);
+                        prim[m] = q(il, jl, kl, m);
+                        qNeighbor[m] = q(il, jl, kl, m);
+                        dqNeighbor[m] = dq(il, jl, kl, m);
 
-						priml[m]  =  q(il, jl, kl, m);
-                        primr[m]  =  q(i, j, k, m);
+						priml[m] = q(il, jl, kl, m);
+                        primr[m] = q(i, j, k, m);
                     }
                    
                     RDouble &xfn1  = gxfn (i ,j ,k ,iSurface);
@@ -239,7 +239,6 @@ void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LU
                     deltaFlux(i, j, k, m) += rhs0[m];
                     sweepNormal += SQR(dq(i, j, k, m) - dqOld[m]);
                 }
-
             }
         }
     }
@@ -252,8 +251,8 @@ void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LU
 	delete [] primr;
 
     delete [] df;
-	delete []deltaQ;
-	delete []rhsMatrix;
+	delete [] deltaQ;
+	delete [] rhsMatrix;
 	delete diagonalMatrixD;
 	delete tempMatrix;
 	delete jacobianMatrix;
@@ -266,7 +265,7 @@ void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LU
     delete [] Ux;
 }
 
-void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -280,7 +279,7 @@ void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *
     RDouble4D &gyfn  = *(grid->GetFaceNormalY());
     RDouble4D &gzfn  = *(grid->GetFaceNormalZ());
     RDouble4D &gvgn  = *(grid->GetFaceNormalVelocity());
-    RDouble4D &garea = *(grid->GetFaceArea()  );
+    RDouble4D &garea = *(grid->GetFaceArea());
     RDouble3D &gvol  = *(grid->GetCellVolume());
 
     int *cellTypeContainer = grid->GetCellTypeContainer();
@@ -288,25 +287,25 @@ void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-    int nEquation  = nLaminar + nChemical + nTemperatureModel - 1;
+    int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
     RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
     int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
 
-    RDouble *dqNeighbor  = new RDouble [nEquation];
-    RDouble *prim = new RDouble [nEquation];
-    RDouble *qNeighbor = new RDouble [nEquation];
-    RDouble *dqOld= new RDouble [nEquation];
-    RDouble *rhs0 = new RDouble [nEquation];
-    RDouble *df   = new RDouble [nEquation];
-    RDouble *temperature = new RDouble [nTemperatureModel];
-    RDouble *qPrecondition  = new RDouble [nEquation];
-    RDouble *dqCell  = new RDouble[nEquation];
-    RDouble *Lx = new RDouble [nEquation];
+    RDouble *dqNeighbor = new RDouble[nEquation];
+    RDouble *prim = new RDouble[nEquation];
+    RDouble *qNeighbor = new RDouble[nEquation];
+    RDouble *dqOld = new RDouble[nEquation];
+    RDouble *rhs0  = new RDouble[nEquation];
+    RDouble *df    = new RDouble[nEquation];
+    RDouble *temperature = new RDouble[nTemperatureModel];
+    RDouble *qPrecondition = new RDouble[nEquation];
+    RDouble *dqCell = new RDouble[nEquation];
+    RDouble *Lx = new RDouble[nEquation];
 	RDouble *deltaQ = new RDouble[nEquation];
 	RDouble *rhsMatrix = new RDouble[nEquation];
-	RDouble *priml    = new RDouble[nEquation];
-	RDouble *primr    = new RDouble[nEquation];
+	RDouble *priml = new RDouble[nEquation];
+	RDouble *primr = new RDouble[nEquation];
 	
 	//! Allocate the memories.
     Range M(0, nEquation - 1);
@@ -359,7 +358,7 @@ void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *
                 for (int m = 0; m < nEquation; ++ m)
                 {
                     rhs0[m] = 0.0;
-                    dqNeighbor[m]  = dq(i, j, k, m);
+                    dqNeighbor[m] = dq(i, j, k, m);
 
                     //! Temporary variable, only because it is convenient for in/out in function.
                     qPrecondition[m] = q(i, j, k, m);  
@@ -372,7 +371,7 @@ void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *
                     //! it is convenient for precondition transform.
                     dq(i, j, k, m) = res(i, j, k, m);
 
-                    Lx[m] =  deltaFlux(i, j, k, m);
+                    Lx[m] = deltaFlux(i, j, k, m);
 
                     //! Then reset it to zero to store the upper forward sweep!
                     deltaFlux(i, j, k, m) = 0.0;
@@ -390,12 +389,12 @@ void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *
 
                     for (int m = 0; m < nEquation; ++ m)
                     {
-                        prim[m]  =  q(il, jl, kl, m);
-                        qNeighbor[m] =  q(il, jl, kl, m);
-                        dqNeighbor[m]   = dq(il, jl, kl, m);
+                        prim[m] = q(il, jl, kl, m);
+                        qNeighbor[m] = q(il, jl, kl, m);
+                        dqNeighbor[m] = dq(il, jl, kl, m);
 
-						priml[m]  =  q(i, j, k, m);
-                        primr[m]  =  q(il, jl, kl, m);
+						priml[m] = q(i, j, k, m);
+                        primr[m] = q(il, jl, kl, m);
                     }
 
                     //clz begin
@@ -417,7 +416,7 @@ void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *
                     RDouble area = half * (area1 + area2);
                     RDouble vgn  = half * (vgn1  + vgn2);
 
-                    RDouble  &rad  = invSpectralRadius(il, jl, kl, iSurface - 1);
+                    RDouble &rad = invSpectralRadius(il, jl, kl, iSurface - 1);
 
                     RDouble gama = gamma(il, jl, kl);
                     RDouble tm = t(il, jl, kl, 0);
@@ -501,25 +500,25 @@ void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *
         }
     }
 
-    delete []dqNeighbor;
-    delete []dqOld;
-    delete []prim;
-    delete []qNeighbor;
-    delete []rhs0;
+    delete [] dqNeighbor;
+    delete [] dqOld;
+    delete [] prim;
+    delete [] qNeighbor;
+    delete [] rhs0;
 	delete [] priml;
 	delete [] primr;
 
-    delete []df;
-	delete []deltaQ;
-	delete []rhsMatrix;
+    delete [] df;
+	delete [] deltaQ;
+	delete [] rhsMatrix;
 	delete diagonalMatrixD;
 	delete tempMatrix;
 	delete jacobianMatrix;
 
-    delete []temperature;
-    delete []Lx;
-    delete []qPrecondition;
-    delete []dqCell;
+    delete [] temperature;
+    delete [] Lx;
+    delete [] qPrecondition;
+    delete [] dqCell;
 }
 
 void ObtaindiagonalMatrix(StructGrid *gridIn)
@@ -539,11 +538,11 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
     RDouble3D &viscosityLaminar = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("visl"));
     RDouble3D &viscosityTurbulence = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("vist"));
 
-    RDouble4D &gxfn = *(gridIn->GetFaceNormalX());
-    RDouble4D &gyfn = *(gridIn->GetFaceNormalY());
-    RDouble4D &gzfn = *(gridIn->GetFaceNormalZ());
-    RDouble3D &gvol = *(gridIn->GetCellVolume());
-    RDouble4D &gvgn = *(gridIn->GetFaceNormalVelocity());
+    RDouble4D &gxfn  = *(gridIn->GetFaceNormalX());
+    RDouble4D &gyfn  = *(gridIn->GetFaceNormalY());
+    RDouble4D &gzfn  = *(gridIn->GetFaceNormalZ());
+    RDouble3D &gvol  = *(gridIn->GetCellVolume());
+    RDouble4D &gvgn  = *(gridIn->GetFaceNormalVelocity());
     RDouble4D &garea = *(gridIn->GetFaceArea());
 
 	RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
@@ -559,8 +558,8 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
 
     RDouble *primitiveVars = new RDouble[nEquation];
     RDouble *temperature = new RDouble[nEquation];
-	RDouble *priml    = new RDouble[nEquation];
-	RDouble *primr    = new RDouble[nEquation];
+	RDouble *priml = new RDouble[nEquation];
+	RDouble *primr = new RDouble[nEquation];
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
 
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
@@ -628,16 +627,16 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
 					gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL, iSurface);
 					gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR, iSurface);
 
-                    xfn1 = gxfn(i, j, k, iSurface);
-                    yfn1 = gyfn(i, j, k, iSurface);
-                    zfn1 = gzfn(i, j, k, iSurface);
-                    vgn1 = gvgn(i, j, k, iSurface);
+                    xfn1  = gxfn (i, j, k, iSurface);
+                    yfn1  = gyfn (i, j, k, iSurface);
+                    zfn1  = gzfn (i, j, k, iSurface);
+                    vgn1  = gvgn (i, j, k, iSurface);
                     area1 = garea(i, j, k, iSurface);
 
-                    xfn2 = gxfn(iR, jR, kR, iSurface);
-                    yfn2 = gyfn(iR, jR, kR, iSurface);
-                    zfn2 = gzfn(iR, jR, kR, iSurface);
-                    vgn2 = gvgn(iR, jR, kR, iSurface);
+                    xfn2  = gxfn (iR, jR, kR, iSurface);
+                    yfn2  = gyfn (iR, jR, kR, iSurface);
+                    zfn2  = gzfn (iR, jR, kR, iSurface);
+                    vgn2  = gvgn (iR, jR, kR, iSurface);
                     area2 = garea(iR, jR, kR, iSurface);
 
                     //! Compute spectrum radius of inviscid flux.
@@ -650,8 +649,8 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
 					//! Compute the surface -1/2
 					for (int m = 0; m < nEquation; ++ m)
                     {
-                        priml[m]  =  primitiveVariables(iL, jL, kL, m);
-                        primr[m]  =  primitiveVariables(i, j, k, m);
+                        priml[m] = primitiveVariables(iL, jL, kL, m);
+                        primr[m] = primitiveVariables(i, j, k, m);
                     }
 
 					xfn1  = gxfn (i ,j ,k ,iSurface);
@@ -681,8 +680,8 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
 					//! Compute the surface +1/2
 					for (int m = 0; m < nEquation; ++ m)
                     {
-                        priml[m]  =  primitiveVariables(i, j, k, m);
-                        primr[m]  =  primitiveVariables(iR, jR, kR, m);
+                        priml[m] = primitiveVariables(i, j, k, m);
+                        primr[m] = primitiveVariables(iR, jR, kR, m);
                     }
 
 					xfn1  = gxfn (i, j, k, iSurface);
@@ -738,8 +737,8 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
         }
     }
 
-    delete []primitiveVars;
-    delete []temperature;
+    delete [] primitiveVars;
+    delete [] temperature;
     delete tempMatrix;
 	delete diagonalMatrixD;
 	delete inverseDiaMatrix;
@@ -747,8 +746,7 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
 	delete [] primr;
 }
 
-void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vgn, 
-                          RDouble gama, RDouble2D *tempMatrix)
+void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vgn, RDouble gama, RDouble2D *tempMatrix)
 {
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -762,8 +760,8 @@ void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDo
     using namespace IDX;
     //! Obtain the primitive variables.
     RDouble uVelocity, vVelocity, wVelocity, density, pressure, averageVelocity, rVelocity;
-    density = primitiveVars[IR];
-    pressure = primitiveVars[IP];
+    density   = primitiveVars[IR];
+    pressure  = primitiveVars[IP];
     uVelocity = primitiveVars[IU];
     vVelocity = primitiveVars[IV];
     wVelocity = primitiveVars[IW];
@@ -981,7 +979,7 @@ void GetEntropyAndCoefficients(int &RoeEntropyFixMethod, RDouble &RoeEntropyFixC
 }
 
 void ComputeViscousMatrix(RDouble *primitiveVars, RDouble *temperature, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vol, 
-                         RDouble vgn, RDouble gama, RDouble laminarViscosity, RDouble turbulentViscosity, RDouble2D *tempMatrix)
+                          RDouble vgn, RDouble gama, RDouble laminarViscosity, RDouble turbulentViscosity, RDouble2D *tempMatrix)
 {
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -996,8 +994,8 @@ void ComputeViscousMatrix(RDouble *primitiveVars, RDouble *temperature, RDouble 
     using namespace IDX;
     //! Obtain the primary variables.
     RDouble uVelocity, vVelocity, wVelocity, density, pressure, averageVelocity;
-    density = primitiveVars[IR];
-    pressure = primitiveVars[IP];
+    density   = primitiveVars[IR];
+    pressure  = primitiveVars[IP];
     uVelocity = primitiveVars[IU];
     vVelocity = primitiveVars[IV];
     wVelocity = primitiveVars[IW];
@@ -1058,7 +1056,7 @@ void ComputeViscousMatrix(RDouble *primitiveVars, RDouble *temperature, RDouble 
     viscousMatrix(2, 0) = -alpha * (vVelocity + 1.0/3.0 * averageVelocity * yfn);
     viscousMatrix(3, 0) = -alpha * (wVelocity + 1.0/3.0 * averageVelocity * zfn);
     viscousMatrix(4, 0) = -kcp * trTemperature / density + 0.5 * phi * squareVelocity
-        -2.0 * alpha * (squareVelocity + 1.0/3.0 * averageVelocity * averageVelocity);
+                          -2.0 * alpha * (squareVelocity + 1.0/3.0 * averageVelocity * averageVelocity);
 
     //! The second column.
     viscousMatrix(0, 1) = 0.0;
@@ -1119,9 +1117,9 @@ void ObtainInverseDiagonalMatrix(RDouble2D *diagonalMatrixD, int nEquation, RDou
 	int i, j, k;
 	RDouble s, t;
 
-	for ( i = 0; i < nEquation; i++)
+	for (i = 0; i < nEquation; i ++)
 	{
-		for ( j = 0; j < nEquation; j++)
+		for (j = 0; j < nEquation; j ++)
 		{
 			lMatrix2D(i, j) = 0.0;
 			uMatrix2D(i, j) = 0.0;
@@ -1131,46 +1129,46 @@ void ObtainInverseDiagonalMatrix(RDouble2D *diagonalMatrixD, int nEquation, RDou
 	}
 	
 	//! Calculate the diagonal of the l matrix.
-	for ( i = 0; i < nEquation; i++)
+	for (i = 0; i < nEquation; i ++)
 	{
 		lMatrix2D(i, i) = 1;
 	}
 
-	for ( i = 0; i < nEquation; i++)
+	for (i = 0; i < nEquation; i ++)
 	{
-		for ( j = i; j < nEquation; j++)
+		for (j = i; j < nEquation; j ++)
 		{
 			s = 0.0;
-			for ( k = 0; k < i; k++)
+			for (k = 0; k < i; k ++)
 			{
 				s += lMatrix2D(i, k) * uMatrix2D(k, j);
 			}
-			uMatrix2D(i, j) = dMatrix(i, j) - s;       //! Calculate u value by row.
+			uMatrix2D(i, j) = dMatrix(i, j) - s;    //! Calculate u value by row.
 		}
 
-		for ( j = i + 1; j < nEquation; j++)
+		for (j = i + 1; j < nEquation; j ++)
 		{
 			s = 0.0;
-			for ( k = 0; k < i; k++)
+			for (k = 0; k < i; k ++)
 			{
 				s += lMatrix2D(j, k) * uMatrix2D(k, i);
 			}
-			lMatrix2D(j, i) = (dMatrix(j ,i) - s) / uMatrix2D(i, i);   //! Calculate l value by column.
+			lMatrix2D(j, i) = (dMatrix(j ,i) - s) / uMatrix2D(i, i);    //! Calculate l value by column.
 		}
 	}
 
 	//! Calculate the inverse matrix of l in row order from top to bottom.
-	for ( i = 0; i < nEquation; i++)
+	for (i = 0; i < nEquation; i ++)
 	{
 		lInverseMatrix2D(i, i) = 1;
 	}
 
-	for ( i = 1; i < nEquation; i++)
+	for (i = 1; i < nEquation; i ++)
 	{
-		for ( j = 0; j < i; j++)
+		for (j = 0; j < i; j ++)
 		{
 			s = 0.0;
-			for ( k = 0; k < i; k++)
+			for (k = 0; k < i; k ++)
 			{
 				s += lMatrix2D(i, k) * lInverseMatrix2D(k, j);
 			}
@@ -1179,17 +1177,17 @@ void ObtainInverseDiagonalMatrix(RDouble2D *diagonalMatrixD, int nEquation, RDou
 	}
 
 	//! Calculate the inverse matrix of u in column order from bottom to top.
-	for ( i = 0; i < nEquation; i++)
+	for (i = 0; i < nEquation; i ++)
 	{
 		uInverseMatrix2D(i, i) = 1 / uMatrix2D(i, i);
 	}
 
-	for ( i = 1; i < nEquation; i++)
+	for (i = 1; i < nEquation; i ++)
 	{
-		for ( j = i - 1; j >= 0; j--)
+		for (j = i - 1; j >= 0; j --)
 		{
 			s = 0.0;
-			for ( k = j + 1; k <= i; k++)
+			for (k = j + 1; k <= i; k ++)
 			{
 				s += uMatrix2D(j, k) * uInverseMatrix2D(k, i);
 			}
@@ -1197,12 +1195,12 @@ void ObtainInverseDiagonalMatrix(RDouble2D *diagonalMatrixD, int nEquation, RDou
 		}
 	}
 
-	for ( i = 0; i < nEquation; i++)
+	for (i = 0; i < nEquation; i ++)
 	{
-		for ( j = 0; j < nEquation; j++)
+		for (j = 0; j < nEquation; j ++)
 		{
 			t = 0.0;
-			for ( k = 0; k < nEquation; k++)
+			for (k = 0; k < nEquation; k ++)
 			{
 				t += uInverseMatrix2D(i, k) * lInverseMatrix2D(k, j);
 			}

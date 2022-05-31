@@ -9,12 +9,12 @@ namespace PHSPACE
 //! To execute the forward sweep of the matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
 //! @param[out]: dqProxy is an array that store the difference values between the conservative variables at n and n+1 time step.
-void SolveMLUSGSForwardInHouse(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
 //! To execute the backward sweep of the matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
 //! @param[out]: dqProxy and dqStarProxy are arrays that store the difference values between the conservative variables at n and n+1 time step.
-void SolveMLUSGSBackwardInHouse(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
 //! Compute and save the diagonal matrix on grids that are used for matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
@@ -28,8 +28,7 @@ void ObtaindiagonalMatrix(StructGrid *gridIn);
 //! @param[in ]: vgn denotes the moment velocity located in the center of the current cell, and it is used for dynamic mesh.
 //! @param[in ]: gama denotes the specific heat ratio.
 //! @param[out]: tempMatrix is an matrix that stores the Jacobian matrix of the inviscid flux item.
-void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vgn, 
-                          RDouble gama, RDouble2D *tempMatrix);
+void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vgn, RDouble gama, RDouble2D *tempMatrix);
 
 //! Construct the roe matrix of the inviscid flux item.
 //! @param[in ]: priml is the array that stores the primitive variables of the left cell.
@@ -57,7 +56,7 @@ void GetEntropyAndCoefficients(int &RoeEntropyFixMethod, RDouble &RoeEntropyFixC
 //! @param[in ]: laminarViscosity and turbulentViscosity denote the laminar viscosity and turbulent viscosity, respectively.
 //! @param[out]: tempMatrix is an matrix that stores the Jacobian matrix of the viscous flux item.
 void ComputeViscousMatrix(RDouble *primitiveVars, RDouble *temperature, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vol, 
-                         RDouble vgn, RDouble gama, RDouble laminarViscosity, RDouble turbulentViscosity, RDouble2D *tempMatrix);
+                          RDouble vgn, RDouble gama, RDouble laminarViscosity, RDouble turbulentViscosity, RDouble2D *tempMatrix);
 
 //! Compute and save the inverse matrix of the diagonal matrix by LU decomposition.
 //! @param[in ]: diagonalMatrixD is the diagonal matrix used for the matrix LU-SGS method.

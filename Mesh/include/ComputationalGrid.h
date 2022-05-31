@@ -58,8 +58,8 @@ public:
 
     void SetMinBox(RDouble *boxIn) { this->pmin = boxIn; }
     void SetMaxBox(RDouble *boxIn) { this->pmax = boxIn; }
-    RDouble *GetMinBox() const { return this->pmin; }
-    RDouble *GetMaxBox() const { return this->pmax; }
+    RDouble * GetMinBox() const { return this->pmin; }
+    RDouble * GetMaxBox() const { return this->pmax; }
 
     void SetMinMaxDistance(RDouble &dismin, RDouble &dismax) { this->disMin = dismin; this->disMax = dismax; }
     void GetMinMaxDistance(RDouble &dismin, RDouble &dismax) { dismin = this->disMin; dismax = this->disMax; }
@@ -68,11 +68,11 @@ public:
     void SetY(RDouble *y) { this->y = y; }
     void SetZ(RDouble *z) { this->z = z; }
 
-    RDouble *GetX() const { return x; }
-    RDouble *GetY() const { return y; }
-    RDouble *GetZ() const { return z; }
+    RDouble * GetX() const { return x; }
+    RDouble * GetY() const { return y; }
+    RDouble * GetZ() const { return z; }
 
-    PHVectorInt2D &GetFaceNodeIndexContainer() { return this->faceNodeIndexContainer; }
+    PHVectorInt2D & GetFaceNodeIndexContainer() { return this->faceNodeIndexContainer; }
 
     //! Compress and decompress data, used to communicate grid information.
     void Encode(DataContainer *&dataContainer);
@@ -94,7 +94,7 @@ protected:
 
     //! Interface information of neighbor grid.
     vector< ZoneInterface * > neighborZoneInterfaces;
-    vector< ZoneInterface* > zoneInterfacesTopologyList;
+    vector< ZoneInterface * > zoneInterfacesTopologyList;
 
     //! current grid.
     int currentZoneID;
@@ -190,14 +190,14 @@ protected:
     void MatchInterfaceTopology();
 
 private:
-    Grid **GetGridContainer() { return gridContainer; };
-    Grid  *GetGrid(int iZone) { return gridContainer[iZone]; };
-    InterfaceLinkStructure *GetInterfaceLinkStructure() { return interfaceLinkStructure; };
-    vector< ZoneInterface* > &GetNeighborZoneInterfaces() { return neighborZoneInterfaces; };
+    Grid ** GetGridContainer() { return gridContainer; }
+    Grid  * GetGrid(int iZone) { return gridContainer[iZone]; }
+    InterfaceLinkStructure * GetInterfaceLinkStructure() { return interfaceLinkStructure; }
+    vector< ZoneInterface* > & GetNeighborZoneInterfaces() { return neighborZoneInterfaces; }
 
 private:
     Region *region;
-    Grid  **gridContainer;
+    Grid **gridContainer;
 
 };
 

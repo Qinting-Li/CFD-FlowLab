@@ -19370,13 +19370,13 @@ namespace PHSPACE
     void NSSolverStruct::SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
     {
         StructGrid *grid = StructGridCast(gridIn);
-        SolveMLUSGSForwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
+        SolveMLUSGSForward(grid, dqProxy, LUplusDQ, sweepNormal);
     }
 
     void NSSolverStruct::SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
     {
         StructGrid *grid = StructGridCast(gridIn);
-        SolveMLUSGSBackwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
+        SolveMLUSGSBackward(grid, dqProxy, LUplusDQ, sweepNormal);
     }
 
     void NSSolverStruct::SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq)
