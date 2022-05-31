@@ -94,9 +94,9 @@ namespace PHSPACE
         //! @param size 
         //! @param grid 
         //! @return param pointers
-        inline RDouble* ObjAllocateMemory(const std::string& name, const int size, const RDouble init = 0.0, Grid* grid = nullptr)
+        inline RDouble* ObjAllocateMemory(const std::string& name, const int size, const RDouble init = 0.0, Grid* grid = NULL)
         {
-            if (grid != nullptr)
+            if (grid != NULL)
             {
                 if (grid->GetDataPtr(name))
                 {
@@ -106,7 +106,7 @@ namespace PHSPACE
 
             RDouble* phi = new RDouble[size];
 
-            if (grid != nullptr)
+            if (grid != NULL)
             {
                 grid->UpdateDataPtr(name, phi);
             }

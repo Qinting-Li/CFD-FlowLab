@@ -30,8 +30,8 @@ namespace PHSPACE
         virtual ~PBConvection();
 
     public:
-		virtual inline void Discrt(UnstructGrid* grid, string phiName, string apName, string scName, RDouble* v = nullptr,
-                                   RDouble* apV = nullptr, RDouble* scV = nullptr, RDouble* w = nullptr, RDouble* apW = nullptr, RDouble* scW = nullptr){}
+		virtual inline void Discrt(UnstructGrid* grid, string phiName, string apName, string scName, RDouble* v = NULL,
+                                   RDouble* apV = NULL, RDouble* scV = NULL, RDouble* w = NULL, RDouble* apW = NULL, RDouble* scW = NULL){}
     };
 
 	DEFINE_PBOBJECT_FACTORY(PBConvection);

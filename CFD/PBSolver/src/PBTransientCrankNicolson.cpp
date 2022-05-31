@@ -50,7 +50,7 @@ namespace PHSPACE
 
 		RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
 
-        if (rhoOld == nullptr)
+        if (rhoOld == NULL)
 		{
 			for (int iCell = cellBegin; iCell < cellEnd; ++iCell)
 			{

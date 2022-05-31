@@ -95,7 +95,7 @@ namespace PHSPACE
 		{
 			RDouble* hOld = reinterpret_cast<RDouble*>(grid->GetDataPtr(ScalarName() + "Old"));
 			RDouble* hOldOld = reinterpret_cast<RDouble*>(grid->GetDataPtr(ScalarName() + "OldOld"));
-			if (hOldOld == nullptr)
+			if (hOldOld == NULL)
 			{
 				for (int iCell = 0; iCell < nTotal; ++iCell)
 				{

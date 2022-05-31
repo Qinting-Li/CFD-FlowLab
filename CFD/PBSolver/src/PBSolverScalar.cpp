@@ -21,7 +21,7 @@ namespace PHSPACE
 
     PBSolverScalar::~PBSolverScalar()
     {
-        if (iterSolv != nullptr)
+        if (iterSolv != NULL)
         {
             delete iterSolv;
         }

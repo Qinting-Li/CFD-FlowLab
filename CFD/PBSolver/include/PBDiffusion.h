@@ -29,8 +29,8 @@ namespace PHSPACE
 
     public:
 		virtual inline void Discrt(UnstructGrid* grid, string phiName, RDouble* diffCoe, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz, RDouble* ajLeft,
-			                       RDouble* ajRight, RDouble* scPhi, RDouble* dvdx = nullptr, RDouble* dvdy = nullptr, RDouble* dvdz = nullptr,
-                                   RDouble* scV = nullptr, RDouble* dwdx = nullptr, RDouble* dwdy = nullptr, RDouble* dwdz = nullptr, RDouble* scW = nullptr) {}
+			                       RDouble* ajRight, RDouble* scPhi, RDouble* dvdx = NULL, RDouble* dvdy = NULL, RDouble* dvdz = NULL,
+                                   RDouble* scV = NULL, RDouble* dwdx = NULL, RDouble* dwdy = NULL, RDouble* dwdz = NULL, RDouble* scW = NULL) {}
     };
 
     DEFINE_PBOBJECT_FACTORY(PBDiffusion);

@@ -43,7 +43,7 @@ namespace PHSPACE
 		RDouble* deltaL = reinterpret_cast<RDouble*>(grid->GetDataPtr("deltL"));
 		RDouble* deltaR = reinterpret_cast<RDouble*>(grid->GetDataPtr("deltR"));
 
-		if (scV == nullptr) 
+		if (scV == NULL) 
 		{
 			RDouble* sc = reinterpret_cast<RDouble*>(grid->GetDataPtr("sc"));
 			for (int iFace = 0; iFace < total; ++iFace)

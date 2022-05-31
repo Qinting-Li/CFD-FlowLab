@@ -29,7 +29,7 @@ namespace PHSPACE
 
 		virtual void AllocateMemory(UnstructGrid* grid, vector<string>& phiName, vector<RDouble>& initPhi);
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = nullptr, string rhoOldOldName = nullptr);
+		virtual void Discrt(UnstructGrid* grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
 
 		virtual void SaveOldTimeValue(UnstructGrid* grid, vector<string>& phiName);
 	};

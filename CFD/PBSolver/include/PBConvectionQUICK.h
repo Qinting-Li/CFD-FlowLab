@@ -31,8 +31,8 @@ namespace PHSPACE
 		//! @param[in]: phiName denotes the name of parameter. 
 		//! @param[out]: apName denotes the leading diagonal.
 		//! @param[out]: scName denotes the right-hand side. 
-		virtual void Discrt(UnstructGrid* grid, string phiName, string apName, string scName, RDouble* v = nullptr,
-			                RDouble* apV = nullptr, RDouble* scV = nullptr, RDouble* w = nullptr, RDouble* apW = nullptr, RDouble* scW = nullptr);
+		virtual void Discrt(UnstructGrid* grid, string phiName, string apName, string scName, RDouble* v = NULL,
+			                RDouble* apV = NULL, RDouble* scV = NULL, RDouble* w = NULL, RDouble* apW = NULL, RDouble* scW = NULL);
 	};
 
 	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvectionQUICK, CONVECTION_QUICK);

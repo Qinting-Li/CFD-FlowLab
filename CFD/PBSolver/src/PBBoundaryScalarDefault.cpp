@@ -6,8 +6,8 @@ namespace PHSPACE
 {
 	PBBoundaryScalarDefault::PBBoundaryScalarDefault(const string& name)
 		:PBBoundaryScalar(name),
-		convCalc(nullptr),
-		diffCalc(nullptr)
+		convCalc(NULL),
+		diffCalc(NULL)
 	{
 		convCalc = new PBBoundaryScalarConvection(name);
 		diffCalc = new PBBoundaryScalarDiffusion(name);
@@ -15,12 +15,12 @@ namespace PHSPACE
 
 	PBBoundaryScalarDefault::~PBBoundaryScalarDefault()
 	{
-		if (convCalc != nullptr)
+		if (convCalc != NULL)
 		{
 			delete convCalc;
 		}
 
-		if (diffCalc != nullptr)
+		if (diffCalc != NULL)
 		{
 			delete diffCalc;
 		}

@@ -2217,7 +2217,7 @@ bool Simulation::ContinueSolve()
         RDouble endTime = GlobalDataBase::GetDoubleParaFromDB("endTime");
         RDouble currentTime;
         GlobalDataBase::GetData("currentTime", &currentTime, PHDOUBLE, 1);
-        if (&dt == nullptr)
+        if (&dt == NULL)
         {
             dt = 0.0;
         }

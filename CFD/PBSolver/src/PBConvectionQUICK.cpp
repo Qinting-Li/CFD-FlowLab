@@ -43,7 +43,7 @@ namespace PHSPACE
 		RDouble* ey = reinterpret_cast<RDouble*>(grid->GetCellCenterY());
 		RDouble* ez = reinterpret_cast<RDouble*>(grid->GetCellCenterZ());
 
-		if (scV == nullptr)
+		if (scV == NULL)
 		{
 			RDouble* dphidx = reinterpret_cast<RDouble*>(grid->GetDataPtr("dudx"));
 			RDouble* dphidy = reinterpret_cast<RDouble*>(grid->GetDataPtr("dudy"));

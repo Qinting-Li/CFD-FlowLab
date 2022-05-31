@@ -75,7 +75,7 @@ namespace PHSPACE
 		{
 			RDouble* ap = reinterpret_cast<RDouble*>(grid->GetDataPtr("ap"));
 			RDouble* sc = reinterpret_cast<RDouble*>(grid->GetDataPtr("sc"));
-			if (rhoOld != nullptr && rhoOldOld != nullptr)
+			if (rhoOld != NULL && rhoOldOld != NULL)
 			{
 				for (int iCell = cellBegin; iCell < cellEnd; ++iCell)
 				{

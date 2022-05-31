@@ -38,7 +38,7 @@ namespace PHSPACE
 		RDouble* deltaL = reinterpret_cast<RDouble*>(grid->GetDataPtr("deltL"));
 		RDouble* deltaR = reinterpret_cast<RDouble*>(grid->GetDataPtr("deltR"));
 		
-		if (dvdx == nullptr)
+		if (dvdx == NULL)
 		{
 			UnstructGrid* grid = UnstructGridCast(GetGrid(0));
 			RDouble* cp;

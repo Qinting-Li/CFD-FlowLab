@@ -212,7 +212,7 @@ void MatrixMultiply(T1 **a, vector< T2 > &b, vector< T3 > &c, int m, int n)
 }
 
 template<typename T> 
-string Int2String(const T &t)
+string toString(const T &t)
 { 
     ostringstream oss;
     oss<<t;
