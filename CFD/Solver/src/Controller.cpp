@@ -435,7 +435,7 @@ void Controller::SolveIncompressibleSteadyField()
 
         CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
         const string solverName = solver->GetName();
-        if (solverName == std::to_string(iSolver) + "_" + "FLOW")
+        if (solverName == Int2String(iSolver) + "_" + "FLOW")
         {
             this->SolveFlowField(zoneID);
         }
