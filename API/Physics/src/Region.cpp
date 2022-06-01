@@ -228,7 +228,7 @@ LIB_EXPORT void Region::WriteFaceBoundaryName(Grid **grids, int nZones, const st
             UnstructBCSet *unstructBCSet = unstrGrid->GetUnstructBCSet();
             int nBCRegion = unstructBCSet->GetnBCRegion();
 
-            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
             {
                 UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
                 string bcName = bcRegion->GetBCName();
@@ -3232,7 +3232,7 @@ LIB_EXPORT void Region::ChangeBoundaryCondition()
 
             UnstructBCSet *unstructBCSet = unstructGrid->GetUnstructBCSet();
             int nBCRegion = unstructBCSet->GetnBCRegion();
-            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
             {
                 UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
              
