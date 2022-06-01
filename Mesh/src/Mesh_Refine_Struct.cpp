@@ -7,7 +7,7 @@ using namespace std;
 
 namespace PHSPACE
 {
-LIB_EXPORT Mesh_Refine_Struct::Mesh_Refine_Struct(const string & gridFileNameIn) :
+LIB_EXPORT Mesh_Refine_Struct::Mesh_Refine_Struct(const string &gridFileNameIn) :
     Mesh_Refine(gridFileNameIn)
 {
     OrdinaryGrid.resize(0);
@@ -21,7 +21,7 @@ LIB_EXPORT Mesh_Refine_Struct::~Mesh_Refine_Struct()
 void Mesh_Refine_Struct::AllocateMemory()
 {
     numberOfZones = PHMPI::GetNumberofLocalZones();
-    refinedGrids = new Grid*[numberOfZones];
+    refinedGrids = new Grid * [numberOfZones];
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {

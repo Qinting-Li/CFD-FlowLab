@@ -19,11 +19,11 @@ Mesh_Refine::~Mesh_Refine()
 {
     delete region;
 
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         delete refinedGrids[iZone];
     }
-    delete[]refinedGrids;
+    delete [] refinedGrids;
 }
 
 void Mesh_Refine::Run()
@@ -49,7 +49,7 @@ void Mesh_Refine::Run()
     GenerateAndDumpComputationalGrid();
 }
 
-void Mesh_Refine::SetRefineParameter(RefineParameter* refineParameterIn)
+void Mesh_Refine::SetRefineParameter(RefineParameter *refineParameterIn)
 {
     this->refineParameter = refineParameterIn;
 }
