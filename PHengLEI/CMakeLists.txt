@@ -44,6 +44,7 @@ opt(DOUBLE_PRECISION "Use double precision or not" ON)
 opt(SMARTARRAY "Use smart array more efficenet than origial array" ON)  # Use smart array or not.
 opt_build(SpecDiffHybSolver "Build Spectra-Difference Hybrid Solver or not" OFF) #Build Spectra-Difference Hybrid Solver or not.
 opt_build(DemoSolver "Build Solver Template or not" OFF)# Build Solver Template option.
+opt_build(PBSolver "Build Pressure Based Solver or not" ON)# Build PBSolver option.
 opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
@@ -88,6 +89,11 @@ endif()
 if(BUILD_DemoSolver)
   message(STATUS "BUILD_DemoSolver is turned on!")
   add_definitions(-DUSE_DEMOSOLVER)
+endif()
+
+if(BUILD_PBSolver)
+  message(STATUS "BUILD_PBSolver is turned on!")
+  add_definitions(-DUSE_PBSOLVER)
 endif()
 
 if(USE_OMP)
@@ -257,6 +263,9 @@ endif(BUILD_DemoSolver)
 if(BUILD_LBM)
 include_directories(${CFD_H_PATH}/LBMSolver/include)
 endif(BUILD_LBM)
+if(BUILD_PBSolver)
+include_directories(${CFD_H_PATH}/PBSolver/include)
+endif(BUILD_PBSolver)
 if(BUILD_CFD)
   message(STATUS "Build CFD!")
   add_subdirectory(../CFD ${EXEC_WORKING_DIR}/CFD)

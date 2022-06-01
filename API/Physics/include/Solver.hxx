@@ -8,6 +8,16 @@ inline int PHSolver::GetKey() const
     return key;
 }
 
+inline void PHSolver::SetName(string name)
+{
+    this->solverName = name;
+}
+
+inline string PHSolver::GetName() const
+{
+    return this->solverName;
+}
+
 inline void PHSolver::SetIndex(int index) 
 { 
     this->index = index; 
