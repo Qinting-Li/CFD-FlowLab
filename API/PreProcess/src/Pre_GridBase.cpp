@@ -1933,6 +1933,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
 
     cout << "  Boundary condition setting ......\n";
     //! Set the boundary conditions.
+    UnstructBCSet **bcrs = new UnstructBCSet * [nBoundFace];
     HyList<int> cgnsBCList;
     HyList<int> fantasyBCList;
 
@@ -1999,6 +2000,23 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
     }
     
     unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
+
+    for (cgsize_t iface = 0; iface < nBoundFace; ++ iface)
+    {
+        bcrs[iface] = new UnstructBCSet();
+        const string &bcName = (*bcFace)[iface]->GetBCName();
+        int cgnsBCType = (*bcFace)[iface]->GetBCType();
+        int fantasyBCType = factory_cgns->GetBaseBCType()->GetBCType(cgnsBCType);
+        bcrs[iface]->SetKey(fantasyBCType);
+        bcrs[iface]->SetBCName(bcName);
+        cgnsBCList.insert(cgnsBCType);
+        fantasyBCList.insert(fantasyBCType);
+
+        delete (*bcFace)[iface];
+    }
+    (*bcFace).clear();
+    grid->SetBCRecord(bcrs);
+
     cout << "After converting CGNS grid,\n";
     cout << "Number of Original Boundary Condition: " << cgnsBCList.size() << "\n";
     for (int iBC = 0; iBC < cgnsBCList.size(); ++ iBC)

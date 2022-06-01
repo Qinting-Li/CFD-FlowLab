@@ -846,10 +846,13 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     UnstructGrid *unstructuredGrid = currentGrid;
 
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
-    
-    /*UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
-    
-    delete unstructBCSet;*/
+   
+    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
+    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+    {
+        delete bcr[iFace];
+    }
+    delete []bcr;
 
     PHVectorInt1D &boundaryTypeVector    = boundaryTypeVectorList[currentZoneID];
     vector< string > &boundaryNameVector = boundaryNameVectorList[currentZoneID];
@@ -857,26 +860,20 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     int newNumberOfBoundaryFaces = static_cast<int>(boundaryTypeVector.size());
     unstructuredGrid->SetNBoundFace(newNumberOfBoundaryFaces);
 
-    /*UnstructBCSet **bcrNew = new UnstructBCSet *[newNumberOfBoundaryFaces];
-    for (int iFace = 0; iFace < newNumberOfBoundaryFaces; ++ iFace)
-    {
-        bcrNew[iFace] = new UnstructBCSet;
-    }
-
-    for (int iFace = 0; iFace < newNumberOfBoundaryFaces; ++ iFace)
-    {
-        bcrNew[iFace]->SetKey(boundaryTypeVector[iFace]);
-        bcrNew[iFace]->SetBCName(boundaryNameVector[iFace]);
-    }
-
-    unstructuredGrid->SetBCRecord(bcrNew);*/
-
+    UnstructBCSet **bcrNew = new UnstructBCSet *[newNumberOfBoundaryFaces];
+ 
     //! Create UnstructbcRegion.
     set<string> bcNameSet;
     for (int iFace = 0; iFace < newNumberOfBoundaryFaces; iFace++)
     {   
+        bcrNew[iFace] = new UnstructBCSet;
+        bcrNew[iFace]->SetKey(boundaryTypeVector[iFace]);
+        bcrNew[iFace]->SetBCName(boundaryNameVector[iFace]);
+
         bcNameSet.insert(boundaryNameVector[iFace]);
     }
+
+    unstructuredGrid->SetBCRecord(bcrNew);
 
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
 

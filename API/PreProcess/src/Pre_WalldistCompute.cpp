@@ -248,26 +248,18 @@ void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
     int **faceNodeIndex = grid->GetFace2NodeArray();
     int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
 
-    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
-
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    UnstructBCSet **bcr = grid->GetBCRecord();
+    
+    for (int iFace = 0; iFace < nBoundFace; ++iFace)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-        int bcType = bcRegion->GetBCType();
+        int bcType = bcr[iFace]->GetKey();
         if (IsWall(bcType))
         {
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
-            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+            int nNode = faceNodeNumber[iFace];
+            for (int iNode = 0; iNode < nNode; ++iNode)
             {
-                // iFace is the face number in the set of faceIndex.
-                int iFace = *iter;
-                int nNode = faceNodeNumber[iFace];
-                for (int iNode = 0; iNode < nNode; ++iNode)
-                {
-                    int nodeID = faceNodeIndex[iFace][iNode];
-                    wallDistNode[nodeID] = 0.0;
-                }
+                int nodeID = faceNodeIndex[iFace][iNode];
+                wallDistNode[nodeID] = 0.0;
             }
         }
     }
@@ -3563,35 +3555,26 @@ void Pre_WalldistCompute::PostWallDistanceByNodeMethod(UnstructGrid *grid)
     int *face2node = grid->GetFace2Node();
 
     int nBoundFace = grid->GetNBoundFace();
-    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     bool *nodeOnWall = new bool[nTotalNode];
     std::fill_n(nodeOnWall, nTotalNode, false);
 
     int nodeCount = 0;
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-        int bcType = bcRegion->GetBCType();
-
-        vector<int> *faceIndex = bcRegion->GetFaceIndex();
-        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        int bcType = bcr[iFace]->GetKey();
+        if (!(IsWall(bcType)))
         {
-            // iFace is the face number in the set of faceIndex.
-            int iFace = *iter;
-            if (!(IsWall(bcType)))
-            {
-                nodeCount = nodeCount + node_number_of_each_face[iFace];
-                continue;
-            }
+            nodeCount = nodeCount + node_number_of_each_face[iFace];
+            continue;
+        }
 
-            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
-            {
-                int nodeIndex = face2node[nodeCount];
-                nodeOnWall[nodeIndex] = true;
-                nodeCount++;
-            }
+        for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
+        {
+            int nodeIndex = face2node[nodeCount];
+            nodeOnWall[nodeIndex] = true;
+            nodeCount++;
         }
     }
 

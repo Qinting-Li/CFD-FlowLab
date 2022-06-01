@@ -1701,12 +1701,19 @@ void IO_HDF5Read::ReadUnstrBCName(hid_t loc_id, Grid *gridIn)
         ++ count;
     }
 
+    UnstructBCSet **bcr = new UnstructBCSet *[nBoundFace];
+
     //! Create UnstructbcRegion.
     set<string> bcNameSet;
     for (int iFace = 0; iFace < nBoundFace; iFace++)
     {   
+        bcr[iFace] = new UnstructBCSet();
+        bcr[iFace]->SetKey(BcType[iFace]);
+        bcr[iFace]->SetBCName(BCNameList[iFace]);
+
         bcNameSet.insert(BCNameList[iFace]);
     }
+    grid->SetBCRecord(bcr);
 
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
     

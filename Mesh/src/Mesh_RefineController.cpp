@@ -1278,8 +1278,12 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
     grid->SetNBoundFace(numberOfBoundaryFaces);
     grid->SetNTotalFace(numberOfFaces);
 
+    UnstructBCSet **bcr = new UnstructBCSet *[numberOfBoundaryFaces];
+    grid->SetBCRecord(bcr);
 
     set<string> bcNameSet;
+    uint_long iCount = 0;
+
     for (int iFace = 0; iFace < numberOfBoundaryFaces; iFace++)
     {  
         SimpleBC *bc = faceBoundaryCondition[iFace];
@@ -1287,7 +1291,19 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
         {
             TK_Exit::ExceptionExit("boundary Condition == 0 in generate unstruct grid!");
         }
+        if (bc->GetBCName() == "")
+        {
+            TK_Exit::ExceptionExit("bcName = null in generate unstruct grid!");
+        }
+
+        bcr[iCount] = new UnstructBCSet();
+        bcr[iCount]->SetKey(bc->GetBCType());
+        bcr[iCount]->SetBCName(bc->GetBCName());
+        bcr[iCount]->SetBoundaryCondition(bc);
+
         bcNameSet.insert(bc->GetBCName());
+
+        ++ iCount;
     }
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
 
@@ -1297,6 +1313,7 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
     int* bcRegionIDofBCFace = new int[numberOfBoundaryFaces];
     set<string>::iterator iter;
     uint_long count = 0;
+
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
         UnstructBC *unstructBC = new UnstructBC(count);
@@ -1318,31 +1335,6 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
         count++;
     }
     unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
-
-
-    /*UnstructBCSet **bcr = new UnstructBCSet *[numberOfBoundaryFaces];
-    grid->SetBCRecord(bcr);
-
-    int iCount = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
-    {
-        SimpleBC *bc = faceBoundaryCondition[iFace];
-        if (bc == 0)
-        {
-            TK_Exit::ExceptionExit("boundary Condition == 0 in generate unstruct grid!");
-        }
-        if (bc->GetBCName() == "")
-        {
-            TK_Exit::ExceptionExit("bcName = null in generate unstruct grid!");
-        }
-
-        bcr[iCount] = new UnstructBCSet();
-        bcr[iCount]->SetKey(bc->GetBCType());
-        bcr[iCount]->SetBCName(bc->GetBCName());
-        bcr[iCount]->SetBoundaryCondition(bc);
-
-        ++ iCount;
-    }*/
 
     ReorderFaceToNodeIndexes(grid);
     ReorderFaceToCellIndexes(grid);
