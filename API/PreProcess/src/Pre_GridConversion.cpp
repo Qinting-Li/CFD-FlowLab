@@ -55,14 +55,11 @@ void Pre_GridConversion::WriteFaceBoundaryName(const string &out_grid_file, Grid
         UnstructGrid *grid = UnstructGridCast(grids[0]);
         int nBoundFace = grid->GetNBoundFace();
 
-        UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-        int nBCRegion = unstructBCSet->GetnBCRegion();
-
-        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+        UnstructBCSet **bcr = grid->GetBCRecord();
+        for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
         {
-            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-            string bcName = bcRegion->GetBCName();
-            int bcType = bcRegion->GetBCType();
+            int bcType = bcr[iFace]->GetKey();
+            const string &bcName = bcr[iFace]->GetBCName();
             pair<int, string> bcNamePair(bcType, bcName);
             bcNamePairSet.insert(bcNamePair);
         }
@@ -855,13 +852,12 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         vector < int > linkmap;
 
         set< pair<int, string> > bcnameMap;
-        UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-        int nBCRegion = unstructBCSet->GetnBCRegion();
-        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+        UnstructBCSet **bcr = grid->GetBCRecord();
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-            string bcName = bcRegion->GetBCName();
-            int bcType = bcRegion->GetBCType();
+            int bcType = bcr[iFace]->GetKey();
+            string bcName = bcr[iFace]->GetBCName();
+
             bcnameMap.insert(pair<int, string>(bcType, bcName));
         }
 
@@ -1069,14 +1065,11 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
 
         set< pair<int, string> > bcnameMap;
 
-        UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-        int nBCRegion = unstructBCSet->GetnBCRegion();
-
-        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+        UnstructBCSet **bcr = grid->GetBCRecord();
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-            string bcName = bcRegion->GetBCName();
-            int bcType = bcRegion->GetBCType();
+            int bcType = bcr[iFace]->GetKey();
+            string bcName = bcr[iFace]->GetBCName();
 
             bcnameMap.insert(pair<int, string>(bcType, bcName));
         }

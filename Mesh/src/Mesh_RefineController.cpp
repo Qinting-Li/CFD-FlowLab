@@ -1281,9 +1281,11 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
     UnstructBCSet **bcr = new UnstructBCSet *[numberOfBoundaryFaces];
     grid->SetBCRecord(bcr);
 
-    int iCount = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
-    {
+    set<string> bcNameSet;
+    uint_long iCount = 0;
+
+    for (int iFace = 0; iFace < numberOfBoundaryFaces; iFace++)
+    {  
         SimpleBC *bc = faceBoundaryCondition[iFace];
         if (bc == 0)
         {
@@ -1299,8 +1301,40 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
         bcr[iCount]->SetBCName(bc->GetBCName());
         bcr[iCount]->SetBoundaryCondition(bc);
 
+        bcNameSet.insert(bc->GetBCName());
+
         ++ iCount;
     }
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+
+    grid->CreateUnstructBCSet(nBCRegionUnstruct);
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int* bcRegionIDofBCFace = new int[numberOfBoundaryFaces];
+    set<string>::iterator iter;
+    uint_long count = 0;
+
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSet->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < numberOfBoundaryFaces; iFace++)
+        {
+            SimpleBC *bc = faceBoundaryCondition[iFace];
+            if (bc->GetBCName() == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(bc->GetBCType());
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+
+        }
+        count++;
+    }
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
 
     ReorderFaceToNodeIndexes(grid);
     ReorderFaceToCellIndexes(grid);

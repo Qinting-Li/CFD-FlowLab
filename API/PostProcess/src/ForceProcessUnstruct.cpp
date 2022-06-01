@@ -200,13 +200,13 @@ void ForceProcessUnstruct::AirForceCoefParts(int iZone, int partID, int Coordina
 
     // get the bcRegion information of unstruct grid.
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int nBCRegion = unstructBCSet->GetnBCRegion();
 
 
     // cycle all bcregions and find the solid surface type of boundary.
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         string bcName = bcRegion->GetBCName();
         int bcType = bcRegion->GetBCType();
 
