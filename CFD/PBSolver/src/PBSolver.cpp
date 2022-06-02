@@ -11,215 +11,214 @@
 namespace PHSPACE
 {
 
-PBSolver::PBSolver(const string &name)
-    :PBObject(name)
-{
-
-}
-
-PBSolver::~PBSolver()
-{
-
-}
-
-void PBSolver::AllocateGlobalVar(Grid * grid)
-{
-    int nTotalNode = grid->GetNTotalNode();
-
-    if (grid->GetLevel() == 0)
+    PBSolver::PBSolver(const string &name):PBObject(name)
     {
-        int *nodeBCType = new int[nTotalNode];
-        PHSPACE::SetField(nodeBCType, 0, nTotalNode);
-        grid->UpdateDataPtr("nodeBCType", nodeBCType);
+
     }
-}
 
-void PBSolver::DeAllocateGlobalVar(Grid * grid)
-{
-    PrintToWindow("PBSolver::DeAllocateGlobalVar\n");
-}
+    PBSolver::~PBSolver()
+    {
 
-void PBSolver::ZeroResiduals(Grid * grid)
-{
-    PrintToWindow("PBSolver::ZeroResiduals\n");
-}
+    }
 
-void PBSolver::TimeStep(Grid * grid)
-{
-    PrintToWindow("PBSolver::TimeStep\n");
-}
+    void PBSolver::AllocateGlobalVar(Grid *grid)
+    {
+        int nTotalNode = grid->GetNTotalNode();
 
-void PBSolver::ComputeResidual(Grid *grid_in, FieldProxy *rhs_proxy)
-{
-    PrintToWindow("PBSolver::ComputeResidual\n");
-}
+        if (grid->GetLevel() == 0)
+        {
+            int *nodeBCType = new int[nTotalNode];
+            PHSPACE::SetField(nodeBCType, 0, nTotalNode);
+            grid->UpdateDataPtr("nodeBCType", nodeBCType);
+        }
+    }
 
-void PBSolver::SourceFlux(Grid *grid)
-{
-    PrintToWindow("PBSolver::SourceFlux\n");
-}
+    void PBSolver::DeAllocateGlobalVar(Grid *grid)
+    {
+        PrintToWindow("PBSolver::DeAllocateGlobalVar\n");
+    }
 
-void PBSolver::InviscidFlux(Grid *grid)
-{
-    PrintToWindow("PBSolver::InviscidFlux\n");
-}
+    void PBSolver::ZeroResiduals(Grid *grid)
+    {
+        PrintToWindow("PBSolver::ZeroResiduals\n");
+    }
 
-void PBSolver::ViscousFlux(Grid *grid)
-{
-    PrintToWindow("PBSolver::ViscousFlux\n");
-}
+    void PBSolver::TimeStep(Grid *grid)
+    {
+        PrintToWindow("PBSolver::TimeStep\n");
+    }
 
-void PBSolver::RungeKutta(Grid *grid, FieldProxy *rhs_proxy)
-{
-    PrintToWindow("PBSolver::RungeKutta\n");
-}
+    void PBSolver::ComputeResidual(Grid *grid_in, FieldProxy *rhs_proxy)
+    {
+        PrintToWindow("PBSolver::ComputeResidual\n");
+    }
 
-void PBSolver::Post()
-{
-    PrintToWindow("PBSolver::Post\n");
-}
+    void PBSolver::SourceFlux(Grid *grid)
+    {
+        PrintToWindow("PBSolver::SourceFlux\n");
+    }
 
-void PBSolver::PostSolve(Grid * grid, int stage, int level)
-{
-    PrintToWindow("PBSolver::PostSolve\n");
-}
+    void PBSolver::InviscidFlux(Grid *grid)
+    {
+        PrintToWindow("PBSolver::InviscidFlux\n");
+    }
 
-RDouble PBSolver::UnsteadyConvergence(Grid* grid)
-{
-	return 0;
-}
+    void PBSolver::ViscousFlux(Grid *grid)
+    {
+        PrintToWindow("PBSolver::ViscousFlux\n");
+    }
 
-void PBSolver::CommunicateInterfaceData(vector<string>& nameList)
-{
-	UploadInterfaceData(nameList);     
-	UpdateInterfaceData();             //!Including data exchange,CFDSolver
-	DownloadInterfaceData(nameList);
-}
+    void PBSolver::RungeKutta(Grid *grid, FieldProxy *rhs_proxy)
+    {
+        PrintToWindow("PBSolver::RungeKutta\n");
+    }
 
-void PBSolver::UploadInterfaceData(vector<string>& nameList)
-{
-	int zoneIDofThisSolver = GetZoneLocalID();
-	if (zoneIDofThisSolver != 0)
-	{
-		//! Very Important: only the first zone on a processor need to implement the task.
-		//! other wise, the tasks would be implemented several times.
-		return;
-	}
+    void PBSolver::Post()
+    {
+        PrintToWindow("PBSolver::Post\n");
+    }
 
-	using namespace PHMPI;
+    void PBSolver::PostSolve(Grid *grid, int stage, int level)
+    {
+        PrintToWindow("PBSolver::PostSolve\n");
+    }
 
-	int nZones = GetNumberofGlobalZones();
+    RDouble PBSolver::UnsteadyConvergence(Grid *grid)
+    {
+        return 0;
+    }
 
-	for (int iZone = 0; iZone < nZones; ++iZone)
-	{
-		int ZoneProcessorID = GetZoneProcessorIDSepMode(iZone);
-		int CurrentProcessorID = GetCurrentProcessorID();
+    void PBSolver::CommunicateInterfaceData(vector<string> &nameList)
+    {
+        UploadInterfaceData(nameList);     
+        UpdateInterfaceData();             //!Including data exchange,CFDSolver
+        DownloadInterfaceData(nameList);
+    }
 
-		if (CurrentProcessorID == ZoneProcessorID)
-		{
-			PBSolver* solver = static_cast <PBSolver*> (GlobalSolvers::GetSolver(iZone, GetIndex()));
-			solver->UploadInterfaceValue(nameList);
-		}
-	}
-}
+    void PBSolver::UploadInterfaceData(vector<string> &nameList)
+    {
+        int zoneIDofThisSolver = GetZoneLocalID();
+        if (zoneIDofThisSolver != 0)
+        {
+            //! Very Important: only the first zone on a processor need to implement the task.
+            //! other wise, the tasks would be implemented several times.
+            return;
+        }
 
-void PBSolver::DownloadInterfaceData(vector<string>& nameList)
-{
-	int zoneIDofThisSolver = GetZoneLocalID();
-	if (zoneIDofThisSolver != 0)
-	{
-		//! Very Important: only the first zone on a processor need to implement the task.
-		//! other wise, the tasks would be implemented several times.
-		return;
-	}
+        using namespace PHMPI;
 
-	using namespace PHMPI;
+        int nZones = GetNumberofGlobalZones();
 
-	int nZones = GetNumberofGlobalZones();
+        for (int iZone = 0; iZone < nZones; ++ iZone)
+        {
+            int ZoneProcessorID = GetZoneProcessorIDSepMode(iZone);
+            int CurrentProcessorID = GetCurrentProcessorID();
 
-	for (int iZone = 0; iZone < nZones; ++iZone)
-	{
-		int ZoneProcessorID = GetZoneProcessorIDSepMode(iZone);
-		int CurrentProcessorID = GetCurrentProcessorID();
+            if (CurrentProcessorID == ZoneProcessorID)
+            {
+                PBSolver *solver = static_cast <PBSolver *> (GlobalSolvers::GetSolver(iZone, GetIndex()));
+                solver->UploadInterfaceValue(nameList);
+            }
+        }
+    }
 
-		if (CurrentProcessorID == ZoneProcessorID)
-		{
-			PBSolver* solver = static_cast <PBSolver*> (GlobalSolvers::GetSolver(iZone, GetIndex()));
-			solver->DownloadInterfaceValue(nameList);
-		}
-	}
-}
+    void PBSolver::DownloadInterfaceData(vector<string> &nameList)
+    {
+        int zoneIDofThisSolver = GetZoneLocalID();
+        if (zoneIDofThisSolver != 0)
+        {
+            //! Very Important: only the first zone on a processor need to implement the task.
+            //! other wise, the tasks would be implemented several times.
+            return;
+        }
 
-void PBSolver::UploadInterfaceValue(vector<string>& nameList)
-{
-	UnstructGrid* grid = UnstructGridCast(GetGrid());
-	InterfaceInfo* iinfo = grid->GetInterfaceInfo();
-	if (iinfo == 0) return;
+        using namespace PHMPI;
 
-	for (int i = 0; i < nameList.size(); ++i)
-	{
-		PHSPACE::UploadInterfaceValue(grid, (RDouble*)grid->GetDataPtr(nameList[i]), nameList[i]);
-	}
-}
+        int nZones = GetNumberofGlobalZones();
 
-void PBSolver::DownloadInterfaceValue(vector<string>& nameList)
-{
-	UnstructGrid* grid = UnstructGridCast(GetGrid());
-	InterfaceInfo* iinfo = grid->GetInterfaceInfo();
-	if (iinfo == 0) return;
+        for (int iZone = 0; iZone < nZones; ++ iZone)
+        {
+            int ZoneProcessorID = GetZoneProcessorIDSepMode(iZone);
+            int CurrentProcessorID = GetCurrentProcessorID();
 
-	for (int i = 0; i < nameList.size(); ++i)
-	{
-		PHSPACE::DownloadInterfaceValue(grid, (RDouble*)grid->GetDataPtr(nameList[i]), nameList[i]);
-	}
-}
+            if (CurrentProcessorID == ZoneProcessorID)
+            {
+                PBSolver *solver = static_cast <PBSolver *> (GlobalSolvers::GetSolver(iZone, GetIndex()));
+                solver->DownloadInterfaceValue(nameList);
+            }
+        }
+    }
 
-void PBSolver::UpdateInterfaceData()
-{
-	int zoneIDofThisSolver = GetZoneLocalID();
-	if (zoneIDofThisSolver != 0)
-	{
-		//! Very Important: only the first zone on a processor need to implement the task.
-		//! other wise, the tasks would be implemented several times.
-		return;
-	}
+    void PBSolver::UploadInterfaceValue(vector<string> &nameList)
+    {
+        UnstructGrid *grid = UnstructGridCast(GetGrid());
+        InterfaceInfo *iinfo = grid->GetInterfaceInfo();
+        if (iinfo == 0) return;
 
-	using namespace PHMPI;
+        for (int i = 0; i < nameList.size(); ++ i)
+        {
+            PHSPACE::UploadInterfaceValue(grid, (RDouble *)grid->GetDataPtr(nameList[i]), nameList[i]);
+        }
+    }
 
-	for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++iLevel)
-	{
-		ActionKey* actkey = new ActionKey();
-		FillActionKey(actkey, UPDATE_INTERFACE_DATA, iLevel);
+    void PBSolver::DownloadInterfaceValue(vector<string> &nameList)
+    {
+        UnstructGrid *grid = UnstructGridCast(GetGrid());
+        InterfaceInfo *iinfo = grid->GetInterfaceInfo();
+        if (iinfo == 0) return;
 
-		//Task_ServerUpdateInterface *task = new Task_ServerUpdateInterface();
-		if (IsNeedNonBlockingCommunication(actkey))
-		{
-			MainTaskNonBlocking(actkey);
-		}
-		else
-		{
-			MainTaskBlocking(actkey);
-		}
-		delete actkey;
-	}
-}
+        for (int i = 0; i < nameList.size(); ++ i)
+        {
+            PHSPACE::DownloadInterfaceValue(grid, (RDouble *)grid->GetDataPtr(nameList[i]), nameList[i]);
+        }
+    }
 
-void PBSolver::CommunicationInterfaceData()
-{
-	if (PHMPI::IsParallelRun())
-	{
-		UploadOversetData();
-		UpdateOversetData();
-		DownloadOversetData();
-	}
-}
+    void PBSolver::UpdateInterfaceData()
+    {
+        int zoneIDofThisSolver = GetZoneLocalID();
+        if (zoneIDofThisSolver != 0)
+        {
+            //! Very Important: only the first zone on a processor need to implement the task.
+            //! other wise, the tasks would be implemented several times.
+            return;
+        }
 
-void PBSolver::FillActionKey(ActionKey* actkey, int action, int level)
-{
-	actkey->action = action;
-	actkey->solver = NS_EQUATION;
-	actkey->solverID = GetIndex();
-	actkey->kind = SOLVER_BASED;
-	actkey->level = level;
-}
+        using namespace PHMPI;
+
+        for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++ iLevel)
+        {
+            ActionKey *actkey = new ActionKey();
+            FillActionKey(actkey, UPDATE_INTERFACE_DATA, iLevel);
+
+            //Task_ServerUpdateInterface *task = new Task_ServerUpdateInterface();
+            if (IsNeedNonBlockingCommunication(actkey))
+            {
+                MainTaskNonBlocking(actkey);
+            }
+            else
+            {
+                MainTaskBlocking(actkey);
+            }
+            delete actkey;
+        }
+    }
+
+    void PBSolver::CommunicationInterfaceData()
+    {
+        if (PHMPI::IsParallelRun())
+        {
+            UploadOversetData();
+            UpdateOversetData();
+            DownloadOversetData();
+        }
+    }
+
+    void PBSolver::FillActionKey(ActionKey *actkey, int action, int level)
+    {
+        actkey->action = action;
+        actkey->solver = NS_EQUATION;
+        actkey->solverID = GetIndex();
+        actkey->kind = SOLVER_BASED;
+        actkey->level = level;
+    }
 }

@@ -22,18 +22,18 @@ namespace PHSPACE
 {
 #define SOURCE_ENERGY_DEFAULT SOURCE_ENERGY_DEFAULT
 
-	class PBSourceEnergyDefault : public PBSource
-	{
-	public:
-		PBSourceEnergyDefault(const string& name);
-		virtual ~PBSourceEnergyDefault();
+    class PBSourceEnergyDefault : public PBSource
+    {
+    public:
+        PBSourceEnergyDefault(const string &name);
+        virtual ~PBSourceEnergyDefault();
 
-		virtual void Discrt(UnstructGrid* grid, string& phiName);
+        virtual void Discrt(UnstructGrid *grid, string &phiName);
 
-	protected:
-		virtual void DiscrtProxy(UnstructGrid* grid);
-	};
+    protected:
+        virtual void DiscrtProxy(UnstructGrid *grid);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceEnergyDefault, SOURCE_ENERGY_DEFAULT);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceEnergyDefault, SOURCE_ENERGY_DEFAULT);
 }
 

@@ -22,17 +22,17 @@ namespace PHSPACE
 {
 #define SOURCE_FLOW_DEFAULT FLOW_DEFAULT
 
-	class PBSourceFlowDefault : public PBSource
-	{
-	public:
-		PBSourceFlowDefault(const string& name);
-		virtual ~PBSourceFlowDefault();
+    class PBSourceFlowDefault : public PBSource
+    {
+    public:
+        PBSourceFlowDefault(const string &name);
+        virtual ~PBSourceFlowDefault();
 
-		virtual void Discrt(UnstructGrid* grid, string phiName);
+        virtual void Discrt(UnstructGrid *grid, string phiName);
 
-	protected:
-		virtual void DiscrtProxy(UnstructGrid* grid);
-	};
+    protected:
+        virtual void DiscrtProxy(UnstructGrid *grid);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceFlowDefault, SOURCE_FLOW_DEFAULT);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceFlowDefault, SOURCE_FLOW_DEFAULT);
 }

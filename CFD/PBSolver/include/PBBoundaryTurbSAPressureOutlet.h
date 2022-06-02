@@ -23,17 +23,17 @@ namespace PHSPACE
 {
 #define TURB_SA_PRESSUREOUTLET TURB_SA_PRESSUREOUTLET 
 
-	class PBBoundaryTurbSAPressureOutlet : public PBBoundaryTurbDefault
-	{
-	public:
-		PBBoundaryTurbSAPressureOutlet(const string& name);
-		virtual ~PBBoundaryTurbSAPressureOutlet();
+    class PBBoundaryTurbSAPressureOutlet : public PBBoundaryTurbDefault
+    {
+    public:
+        PBBoundaryTurbSAPressureOutlet(const string &name);
+        virtual ~PBBoundaryTurbSAPressureOutlet();
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
-	};
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbSAPressureOutlet, TURB_SA_PRESSUREOUTLET);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbSAPressureOutlet, TURB_SA_PRESSUREOUTLET);
 } // PB_SPACE
 

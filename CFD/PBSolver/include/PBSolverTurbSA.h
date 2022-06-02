@@ -24,51 +24,51 @@ namespace PHSPACE
 {
 #define SOLVER_TURB_SA TURB_SA
 
-	class PBSolverTurbSA : public PBSolverScalar
-	{
-	public:
-		PBSolverTurbSA(const string& name);
-		virtual ~PBSolverTurbSA();
+    class PBSolverTurbSA : public PBSolverScalar
+    {
+    public:
+        PBSolverTurbSA(const string &name);
+        virtual ~PBSolverTurbSA();
 
-		virtual void InitMemory();
-		virtual void AllocateMemory();
-		virtual void ReinitField();
-		virtual void Discrt();
-		virtual void UpdateAfterIterloop();//! Updates the viscosity of the momentum equation
-		virtual void ComputePostVisualVariables(Post_Visual* postVisualization);
-		virtual void OutputResidual(ofstream& file, int flag);
+        virtual void InitMemory();
+        virtual void AllocateMemory();
+        virtual void ReinitField();
+        virtual void Discrt();
+        virtual void UpdateAfterIterloop();//! Updates the viscosity of the momentum equation
+        virtual void ComputePostVisualVariables(Post_Visual *postVisualization);
+        virtual void OutputResidual(ofstream &file, int flag);
 
-	protected:
-		virtual void CalcGenAndDesTerm(UnstructGrid* grid);
-		
-		virtual void CalcGraTerm(UnstructGrid* grid);
+    protected:
+        virtual void CalcGenAndDesTerm(UnstructGrid *grid);
+
+        virtual void CalcGraTerm(UnstructGrid *grid);
 
 
 
-	protected:
-		RDouble delatv;//! 2/3
-		RDouble Cb2;//! 0.622
-		RDouble Cv1;//! 7.1
-		RDouble Cb1;//! 0.1355
-		RDouble kappa;//! 0.4187
-		RDouble Cw2;//! 0.3
-		RDouble Cw3;//! 2
-		RDouble urfMu;//! Viscosity relaxation factor
-		RDouble* k;//! Kinematic viscosity
-		RDouble* kb;//! Kinematic viscosity on the wall
-		RDouble* visl;//! Laminar viscosity
-		RDouble* vist;//! Turbulent viscosity
-		RDouble* des;//! Reduced turbulence viscosity
-		RDouble* gra;//! Gradient term
-		RDouble* gen;//! Turbulent viscosity produces terms
-		RDouble* fv1;//! Viscous damping coefficient
-		RDouble* dkdx;//! The gradient of Kinematic viscosity
-		RDouble* dkdy;
-		RDouble* dkdz;
-		RDouble* WD;//! Wall distance
+    protected:
+        RDouble delatv;//! 2/3
+        RDouble Cb2;//! 0.622
+        RDouble Cv1;//! 7.1
+        RDouble Cb1;//! 0.1355
+        RDouble kappa;//! 0.4187
+        RDouble Cw2;//! 0.3
+        RDouble Cw3;//! 2
+        RDouble urfMu;//! Viscosity relaxation factor
+        RDouble *k;//! Kinematic viscosity
+        RDouble *kb;//! Kinematic viscosity on the wall
+        RDouble *visl;//! Laminar viscosity
+        RDouble *vist;//! Turbulent viscosity
+        RDouble *des;//! Reduced turbulence viscosity
+        RDouble *gra;//! Gradient term
+        RDouble *gen;//! Turbulent viscosity produces terms
+        RDouble *fv1;//! Viscous damping coefficient
+        RDouble *dkdx;//! The gradient of Kinematic viscosity
+        RDouble *dkdy;
+        RDouble *dkdz;
+        RDouble *WD;//! Wall distance
 
-	};
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverTurbSA, SOLVER_TURB_SA);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverTurbSA, SOLVER_TURB_SA);
 }
 

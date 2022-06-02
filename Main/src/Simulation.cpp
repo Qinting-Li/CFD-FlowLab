@@ -1810,11 +1810,6 @@ void Simulation::SolveSimulation()
         {
             continueSolve = false;
         }
-
-        if (isUnsteady == 0)
-        {
-            std::cout << "outIterStep: " << outIterStep << std::endl;
-        }
     }
 
     Post_WriteTecplot generateVisualFile;

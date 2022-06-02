@@ -25,30 +25,30 @@ namespace PHSPACE
 {
 #define SOLVER_TURB_KEPSILON TURB_KEPSILON
 
-	class PBSolverKEpsilon : public PBSolverScalar
-	{
-	public:
-		PBSolverKEpsilon(const std::string& name);
-		virtual ~PBSolverKEpsilon();
+    class PBSolverKEpsilon : public PBSolverScalar
+    {
+    public:
+        PBSolverKEpsilon(const std::string &name);
+        virtual ~PBSolverKEpsilon();
 
-		virtual void InitMemory();
-		virtual void ReinitField();
-		virtual void UpdateUnsteadyVariable(Grid* grid);
-		virtual void SolveKEquation(Region& region);
-		virtual void SolveEpsilonEquation(Region& region);
-		virtual void UpdateAfterIterloop();
-		virtual void ComputePostVisualVariables(Post_Visual* postVisualization);
-		virtual void InitIncompressibleResultFile(Grid* grid, string fileName);
-		virtual void DumpIncompressibleResultFile(Grid* grid, string fileName);
-		virtual void SolutionIsConverged(int iZone, bool* flag);
-		virtual void SetGeometry(PHGeometry* geometry) { this->geometry = geometry; }
+        virtual void InitMemory();
+        virtual void ReinitField();
+        virtual void UpdateUnsteadyVariable(Grid *grid);
+        virtual void SolveKEquation(Region &region);
+        virtual void SolveEpsilonEquation(Region &region);
+        virtual void UpdateAfterIterloop();
+        virtual void ComputePostVisualVariables(Post_Visual *postVisualization);
+        virtual void InitIncompressibleResultFile(Grid *grid, string fileName);
+        virtual void DumpIncompressibleResultFile(Grid *grid, string fileName);
+        virtual void SolutionIsConverged(int iZone, bool *flag);
+        virtual void SetGeometry(PHGeometry* geometry) { this->geometry = geometry; }
 
-	protected:
-		vector<PHSolver*> solverList;
-		CFDSolver* solverKEqn;
-		CFDSolver* solverEpsilonEqn;
-		PHGeometry* geometry;
-	};
+    protected:
+        vector<PHSolver *> solverList;
+        CFDSolver *solverKEqn;
+        CFDSolver *solverEpsilonEqn;
+        PHGeometry *geometry;
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverKEpsilon, SOLVER_TURB_KEPSILON);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverKEpsilon, SOLVER_TURB_KEPSILON);
 }

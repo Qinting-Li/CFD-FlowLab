@@ -24,7 +24,7 @@ namespace PHSPACE
     class PBSolverSpecies : public PBSolverScalar
     {
     public:
-        PBSolverSpecies(const std::string& name);
+        PBSolverSpecies(const std::string &name);
         ~PBSolverSpecies();
 
     public:
@@ -40,18 +40,18 @@ namespace PHSPACE
 
     protected:
         int isSolveTurb;
-        std::string* speciesName; /// 控制面板输出变量控制；
-        RDouble* speciesMolarMass; /// 各组分摩尔质量；
-        RDouble* speciesRho; /// 各组分密度；
-        RDouble* speciesMu; /// 各组分粘性系数；
+        std::string *speciesName; /// 控制面板输出变量控制；
+        RDouble *speciesMolarMass; /// 各组分摩尔质量；
+        RDouble *speciesRho; /// 各组分密度；
+        RDouble *speciesMu; /// 各组分粘性系数；
 
         RDouble dilute; /// 湍流开关，用于组分方程扩散系数的求解；
         RDouble sct; /// Schmidt数，用于求组分方程扩散系数；
         RDouble gasR; /// 理想气体常数;
         RDouble speciesThreshold;
         RDouble initMuSp;
-        RDouble* muSp;
-        RDouble* muSpb;
+        RDouble *muSp;
+        RDouble *muSpb;
 
     };
 

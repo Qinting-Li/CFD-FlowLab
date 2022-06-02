@@ -2,115 +2,114 @@
 
 namespace PHSPACE
 {
-	PBSolverKEpsilon::PBSolverKEpsilon(const string& name)
-		: PBSolverScalar(name)
-	{
-		
-	}
+    PBSolverKEpsilon::PBSolverKEpsilon(const string &name):PBSolverScalar(name)
+    {
 
-	PBSolverKEpsilon::~PBSolverKEpsilon()
-	{
+    }
 
-	}
+    PBSolverKEpsilon::~PBSolverKEpsilon()
+    {
 
-	void PBSolverKEpsilon::InitMemory()
-	{
-		geometry = GetGeometry();
-		vector<PHSolver*> solverList;
-		PHSolver* solver = PBSolverFactory::CreatePBSolver("TURB_K");
-		solverList.push_back(solver);
-		solver->SetGeometry(geometry);
-		solverKEqn = static_cast<CFDSolver*>(solver);
-		solver = PBSolverFactory::CreatePBSolver("TURB_EPSILON");
-		solverList.push_back(solver);
-		solver->SetGeometry(geometry);
-		solverEpsilonEqn = static_cast<CFDSolver*>(solver);
+    }
 
-		solverKEqn->InitMemory();
-		solverEpsilonEqn->InitMemory();
-	}
+    void PBSolverKEpsilon::InitMemory()
+    {
+        geometry = GetGeometry();
+        vector<PHSolver *> solverList;
+        PHSolver *solver = PBSolverFactory::CreatePBSolver("TURB_K");
+        solverList.push_back(solver);
+        solver->SetGeometry(geometry);
+        solverKEqn = static_cast<CFDSolver *>(solver);
+        solver = PBSolverFactory::CreatePBSolver("TURB_EPSILON");
+        solverList.push_back(solver);
+        solver->SetGeometry(geometry);
+        solverEpsilonEqn = static_cast<CFDSolver *>(solver);
 
-	void PBSolverKEpsilon::ReinitField()
-	{
-		solverKEqn->ReinitField();
-		solverEpsilonEqn->ReinitField();
-	}
+        solverKEqn->InitMemory();
+        solverEpsilonEqn->InitMemory();
+    }
 
-	void PBSolverKEpsilon::UpdateUnsteadyVariable(Grid* grid)
-	{
-		solverKEqn->UpdateUnsteadyVariable(grid);
-		solverEpsilonEqn->UpdateUnsteadyVariable(grid);
-	}
+    void PBSolverKEpsilon::ReinitField()
+    {
+        solverKEqn->ReinitField();
+        solverEpsilonEqn->ReinitField();
+    }
 
-	void PBSolverKEpsilon::SolveKEquation(Region& region)
-	{
-		solverKEqn->Discrt();
+    void PBSolverKEpsilon::UpdateUnsteadyVariable(Grid *grid)
+    {
+        solverKEqn->UpdateUnsteadyVariable(grid);
+        solverEpsilonEqn->UpdateUnsteadyVariable(grid);
+    }
 
-		solverKEqn->SolveScalarEquation(region);
+    void PBSolverKEpsilon::SolveKEquation(Region &region)
+    {
+        solverKEqn->Discrt();
 
-		solverKEqn->Update();
+        solverKEqn->SolveScalarEquation(region);
 
-		solverKEqn->UpdateBoundary();
+        solverKEqn->Update();
 
-		solverKEqn->UpdateProperties();
-	}
+        solverKEqn->UpdateBoundary();
 
-	void PBSolverKEpsilon::SolveEpsilonEquation(Region& region)
-	{
-		solverEpsilonEqn->Discrt();
+        solverKEqn->UpdateProperties();
+    }
 
-		solverEpsilonEqn->SolveScalarEquation(region);
+    void PBSolverKEpsilon::SolveEpsilonEquation(Region &region)
+    {
+        solverEpsilonEqn->Discrt();
 
-		solverEpsilonEqn->Update();
+        solverEpsilonEqn->SolveScalarEquation(region);
 
-		solverEpsilonEqn->UpdateBoundary();
+        solverEpsilonEqn->Update();
 
-		solverEpsilonEqn->UpdateProperties();
-	}
+        solverEpsilonEqn->UpdateBoundary();
 
-	void PBSolverKEpsilon::UpdateAfterIterloop()
-	{
-		solverKEqn->UpdateAfterIterloop();
+        solverEpsilonEqn->UpdateProperties();
+    }
 
-		solverEpsilonEqn->UpdateAfterIterloop();
-	}
+    void PBSolverKEpsilon::UpdateAfterIterloop()
+    {
+        solverKEqn->UpdateAfterIterloop();
 
-	void PBSolverKEpsilon::ComputePostVisualVariables(Post_Visual* postVisualization)
-	{
-		solverKEqn->ComputePostVisualVariables(postVisualization);
+        solverEpsilonEqn->UpdateAfterIterloop();
+    }
 
-		solverEpsilonEqn->ComputePostVisualVariables(postVisualization);
-	}
+    void PBSolverKEpsilon::ComputePostVisualVariables(Post_Visual *postVisualization)
+    {
+        solverKEqn->ComputePostVisualVariables(postVisualization);
 
-	void PBSolverKEpsilon::InitIncompressibleResultFile(Grid* grid, string fileName)
-	{
-		solverKEqn->InitIncompressibleResultFile(grid, fileName);
-		solverEpsilonEqn->InitIncompressibleResultFile(grid, fileName);
-	}
+        solverEpsilonEqn->ComputePostVisualVariables(postVisualization);
+    }
 
-	void PBSolverKEpsilon::DumpIncompressibleResultFile(Grid* grid, string fileName)
-	{
-		solverKEqn->DumpIncompressibleResultFile(grid, fileName);
-		solverEpsilonEqn->DumpIncompressibleResultFile(grid, fileName);
-	}
+    void PBSolverKEpsilon::InitIncompressibleResultFile(Grid *grid, string fileName)
+    {
+        solverKEqn->InitIncompressibleResultFile(grid, fileName);
+        solverEpsilonEqn->InitIncompressibleResultFile(grid, fileName);
+    }
 
-	void PBSolverKEpsilon::SolutionIsConverged(int iZone, bool* flag)
-	{
-		bool flagK = false;
-		bool flagEpsilon = false;
-		
-		solverKEqn->SolutionIsConverged(iZone, &flagK);
-		solverEpsilonEqn->SolutionIsConverged(iZone, &flagEpsilon);
-		
-		if (flagK && flagEpsilon)
-		{
-			*flag = true;
-		}
-		else
-		{
-			*flag = false;
-		}
-	}
+    void PBSolverKEpsilon::DumpIncompressibleResultFile(Grid *grid, string fileName)
+    {
+        solverKEqn->DumpIncompressibleResultFile(grid, fileName);
+        solverEpsilonEqn->DumpIncompressibleResultFile(grid, fileName);
+    }
 
-	DEFINE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverKEpsilon, SOLVER_TURB_KEPSILON);
+    void PBSolverKEpsilon::SolutionIsConverged(int iZone, bool *flag)
+    {
+        bool flagK = false;
+        bool flagEpsilon = false;
+
+        solverKEqn->SolutionIsConverged(iZone, &flagK);
+        solverEpsilonEqn->SolutionIsConverged(iZone, &flagEpsilon);
+
+        if (flagK && flagEpsilon)
+        {
+            *flag = true;
+        }
+        else
+        {
+            *flag = false;
+        }
+    }
+
+    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverKEpsilon, SOLVER_TURB_KEPSILON);
 }

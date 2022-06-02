@@ -21,18 +21,18 @@ namespace PHSPACE
 {
 #define TRANSIENT_IMPLICIT_EULER IMPLICIT_EULER
 
-	class PBTransientImplicitEuler : public PBTransient
-	{
-	public:
-		PBTransientImplicitEuler(const string& name);
-		virtual ~PBTransientImplicitEuler();
+    class PBTransientImplicitEuler : public PBTransient
+    {
+    public:
+        PBTransientImplicitEuler(const string &name);
+        virtual ~PBTransientImplicitEuler();
 
-		virtual void AllocateMemory(UnstructGrid* grid, vector<string>& phiName, vector<RDouble>& initPhi);
+        virtual void AllocateMemory(UnstructGrid *grid, vector<string> &phiName, vector<RDouble> &initPhi);
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
+        virtual void Discrt(UnstructGrid *grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
 
-		virtual void SaveOldTimeValue(UnstructGrid* grid, vector<string>& phiName);
-	};
+        virtual void SaveOldTimeValue(UnstructGrid *grid, vector<string> &phiName);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientImplicitEuler, TRANSIENT_IMPLICIT_EULER);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientImplicitEuler, TRANSIENT_IMPLICIT_EULER);
 }

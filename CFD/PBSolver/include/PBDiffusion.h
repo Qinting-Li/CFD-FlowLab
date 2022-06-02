@@ -20,17 +20,17 @@
 namespace PHSPACE
 {
 #define DIFFUSION_EMPTY EMPTY
-	class UnstructGrid;
+    class UnstructGrid;
     class PBDiffusion : public PBObject
     {
     public:
-		PBDiffusion(const string &name);
+        PBDiffusion(const string &name);
         virtual ~PBDiffusion();
 
     public:
-		virtual inline void Discrt(UnstructGrid* grid, string phiName, RDouble* diffCoe, RDouble* dphidx, RDouble* dphidy, RDouble* dphidz, RDouble* ajLeft,
-			                       RDouble* ajRight, RDouble* scPhi, RDouble* dvdx = NULL, RDouble* dvdy = NULL, RDouble* dvdz = NULL,
-                                   RDouble* scV = NULL, RDouble* dwdx = NULL, RDouble* dwdy = NULL, RDouble* dwdz = NULL, RDouble* scW = NULL) {}
+        virtual inline void Discrt(UnstructGrid *grid, string phiName, RDouble *diffCoe, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz, 
+            RDouble *ajLeft, RDouble *ajRight, RDouble *scPhi, RDouble *dvdx = NULL, RDouble *dvdy = NULL, RDouble *dvdz = NULL,
+            RDouble *scV = NULL, RDouble *dwdx = NULL, RDouble *dwdy = NULL, RDouble *dwdz = NULL, RDouble *scW = NULL) {}
     };
 
     DEFINE_PBOBJECT_FACTORY(PBDiffusion);

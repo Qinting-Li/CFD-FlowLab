@@ -21,19 +21,19 @@ namespace PHSPACE
 {
 #define ENERGY_EMPTY ENERGY_EMPTY 
 
-	class PBBoundaryEnergy : public PBBoundaryScalar
-	{
-	public:
-		PBBoundaryEnergy(const string& name);
-		virtual ~PBBoundaryEnergy();
+    class PBBoundaryEnergy : public PBBoundaryScalar
+    {
+    public:
+        PBBoundaryEnergy(const string &name);
+        virtual ~PBBoundaryEnergy();
 
-	public:
-		virtual void Init(string phiName) {};
+    public:
+        virtual void Init(string phiName) {};
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe) {};
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe) {};
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData) {};
-	};
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData) {};
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergy, ENERGY_EMPTY);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergy, ENERGY_EMPTY);
 }

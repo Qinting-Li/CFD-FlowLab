@@ -5,16 +5,15 @@
 
 namespace PHSPACE
 {
-	PBGrad::PBGrad(const string& name)
-		:PBObject(name)
-	{
+    PBGrad::PBGrad(const string &name):PBObject(name)
+    {
 
-	}
+    }
 
-	PBGrad::~PBGrad()
-	{
+    PBGrad::~PBGrad()
+    {
 
-	}
+    }
 
-	DEFINE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGrad, GRAD_EMPTY);
+    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGrad, GRAD_EMPTY);
 }
