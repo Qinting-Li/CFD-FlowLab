@@ -68,8 +68,8 @@ void ZoneInterface::Decode(DataContainer *&dataContainer)
     this->SetZoneIndex(zoneIndex);
 
     int dimension = 3;
-    RDouble *minBox = new RDouble [ dimension ];
-    RDouble *maxBox = new RDouble [ dimension ];
+    RDouble *minBox = new RDouble [dimension];
+    RDouble *maxBox = new RDouble [dimension];
     PHRead(dataContainer, minBox, dimension);
     PHRead(dataContainer, maxBox, dimension);
     PHRead(dataContainer, disMin);
@@ -80,9 +80,9 @@ void ZoneInterface::Decode(DataContainer *&dataContainer)
     int numberOfNodes;
     PHRead(dataContainer, numberOfNodes);
 
-    RDouble *x = new RDouble [ numberOfNodes ];
-    RDouble *y = new RDouble [ numberOfNodes ];
-    RDouble *z = new RDouble [ numberOfNodes ];
+    RDouble *x = new RDouble [numberOfNodes];
+    RDouble *y = new RDouble [numberOfNodes];
+    RDouble *z = new RDouble [numberOfNodes];
     PHRead(dataContainer, x, numberOfNodes);
     PHRead(dataContainer, y, numberOfNodes);
     PHRead(dataContainer, z, numberOfNodes);
@@ -162,7 +162,7 @@ void ComputationalGridProcess::CreateInterfaceLinkStructure()
         pmax[ 2 ] += maxdis;
     }
 
-    vector< ZoneInterface* > &neighborZoneInterfaces = this->GetNeighborZoneInterfaces();
+    vector< ZoneInterface * > &neighborZoneInterfaces = this->GetNeighborZoneInterfaces();
     int maxNumberOfNeighborZones = 0;
     for (std::size_t iZone = 0; iZone < neighborZoneInterfaces.size(); ++ iZone)
     {
@@ -280,7 +280,7 @@ void ComputationalGridProcess::GenerateLocalGlobalInterfaceMappingByNeighborZone
     InterfaceLinkStructure *interfaceLinkStructure = this->GetInterfaceLinkStructure();
 
     vector< ZoneInterface * > &neighborZoneInterfaces = this->GetNeighborZoneInterfaces();
-    ZoneInterface *zoneInterfacesTopology = neighborZoneInterfaces[ iZone ];
+    ZoneInterface *zoneInterfacesTopology = neighborZoneInterfaces[iZone];
     int zoneIndex = zoneInterfacesTopology->GetZoneIndex();
 
     interfaceLinkStructure->InitializeInterface(zoneInterfacesTopology);
@@ -293,7 +293,7 @@ void ComputationalGridProcess::GenerateLocalGlobalInterfaceMappingByNeighborZone
     
     uint_t numberOfInterfaces = zoneInterfacesTopology->GetNumberOfFaces();
 
-    if(numberOfInterfaces == 0) 
+    if (numberOfInterfaces == 0) 
     {
         return;
     }
@@ -311,7 +311,7 @@ void ComputationalGridProcess::GenerateLocalGlobalInterfaceMappingByNeighborZone
     PHVectorInt1D facePointIndexes;
     PHVectorInt1D faceNodeIndexes(maxNumberOfFaceNodes);
 
-    int iLocalInterfaceCount  = 0;
+    int iLocalInterfaceCount = 0;
     int pointCount = interfaceLinkStructure->GetNumberOfInterfacePoints();
 
     for (int iFace = 0; iFace < numberOfInterfaces; ++ iFace)
@@ -331,9 +331,9 @@ void ComputationalGridProcess::GenerateLocalGlobalInterfaceMappingByNeighborZone
         ++ iLocalInterfaceCount;
     }
 
-    delete []xList;
-    delete []yList;
-    delete []zList;
+    delete [] xList;
+    delete [] yList;
+    delete [] zList;
 }
 
 void ComputationalGridProcess::ReGenerateLocalGlobalInterfaceMapping()
@@ -367,7 +367,7 @@ void ComputationalGridProcess::ReGenerateLocalGlobalInterfaceMapping(InterfaceLi
         return;
     }
 
-    ModifyFaceNodesIndexes   (interfaceLinkStructure);
+    ModifyFaceNodesIndexes(interfaceLinkStructure);
     ModifyBoundaryInformation(interfaceLinkStructure);
 }
 
@@ -378,7 +378,7 @@ void ComputationalGridProcess::ModifyBoundaryInformation(InterfaceLinkStructure 
     FaceSearchingManager *faceSearchingManager = interfaceLinkStructure->GetFaceSearchingManager();
     
     PHVectorInt2D &globalChildFaceIndexes = faceSearchingManager->GetGlobalChildFaceIndexes();
-    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping   = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
+    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
 
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
     int localInterfaceIndex = 0;
@@ -444,7 +444,7 @@ void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStruc
 
     int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
 
-    PHVectorInt1D    &boundaryTypeVector = boundaryTypeVectorList[currentZoneID];
+    PHVectorInt1D &boundaryTypeVector = boundaryTypeVectorList[currentZoneID];
     vector< string > &boundaryNameVector = boundaryNameVectorList[currentZoneID];
 
     boundaryTypeVector.resize(0);
@@ -487,36 +487,36 @@ void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStruc
     DoFurtherWorkUsingBoundaryTypeVector(interfaceLinkStructure, newNumberOfInterfaces);
 }
 
-void ComputationalGridProcess::DoFurtherWorkUsingBoundaryTypeVector( InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces)
+void ComputationalGridProcess::DoFurtherWorkUsingBoundaryTypeVector(InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
-    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping    = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
+    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
     PHVectorInt1D &newLocalInterfaceIndexToGlobalInterfaceIndexMapping = this->newLocalInterfaceIndexToGlobalInterfaceIndexMappingList[currentZoneID];
 
     int zoneIndex = unstructuredGrid->GetZoneID();
-    localInterfaceIndexToGlobalInterfaceIndexMapping[ zoneIndex ] = newLocalInterfaceIndexToGlobalInterfaceIndexMapping;
+    localInterfaceIndexToGlobalInterfaceIndexMapping[zoneIndex] = newLocalInterfaceIndexToGlobalInterfaceIndexMapping;
 
     ProcessGlobalToLocalInterfaceTerm(interfaceLinkStructure, newNumberOfInterfaces);
 }
 
-void ComputationalGridProcess::ProcessGlobalToLocalInterfaceTerm( InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces)
+void ComputationalGridProcess::ProcessGlobalToLocalInterfaceTerm(InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
-    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping    = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
+    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
     PHVectorInt1D &newLocalInterfaceIndexToGlobalInterfaceIndexMapping = this->newLocalInterfaceIndexToGlobalInterfaceIndexMappingList[currentZoneID];
 
     PHVectorInt1D tmp = newLocalInterfaceIndexToGlobalInterfaceIndexMapping;
-    sort(tmp.begin(),  tmp.end());
+    sort(tmp.begin(), tmp.end());
 
     int zoneIndex = unstructuredGrid->GetZoneID();
-    localInterfaceIndexToGlobalInterfaceIndexMapping[ zoneIndex ] = newLocalInterfaceIndexToGlobalInterfaceIndexMapping;
+    localInterfaceIndexToGlobalInterfaceIndexMapping[zoneIndex] = newLocalInterfaceIndexToGlobalInterfaceIndexMapping;
 
     uint_t numberOfNewInterfaces = newLocalInterfaceIndexToGlobalInterfaceIndexMapping.size();
 
-    PHVectorInt2D &newGlobalInterfaceIndexToZoneIndexesMapping           = interfaceLinkStructure->GetNewGlobalInterfaceIndexToZoneIndexesMapping();
-    PHVectorInt2D &newGlobalInterfaceIndexToLocalInterfaceIndexesMapping = interfaceLinkStructure->GetNewGlobalInterfaceIndexToLocalInterfaceIndexesMapping ();
+    PHVectorInt2D &newGlobalInterfaceIndexToZoneIndexesMapping = interfaceLinkStructure->GetNewGlobalInterfaceIndexToZoneIndexesMapping();
+    PHVectorInt2D &newGlobalInterfaceIndexToLocalInterfaceIndexesMapping = interfaceLinkStructure->GetNewGlobalInterfaceIndexToLocalInterfaceIndexesMapping();
 
     for (int localInterfaceIndex = 0; localInterfaceIndex < numberOfNewInterfaces; ++ localInterfaceIndex)
     {
@@ -528,10 +528,10 @@ void ComputationalGridProcess::ProcessGlobalToLocalInterfaceTerm( InterfaceLinkS
         newGlobalInterfaceIndexToZoneIndexesMapping.resize(currentSize);
         newGlobalInterfaceIndexToLocalInterfaceIndexesMapping.resize(currentSize);
 
-        uint_t numberOfFaceZone = newGlobalInterfaceIndexToZoneIndexesMapping[ globalInterfaceIndex ].size();
+        uint_t numberOfFaceZone = newGlobalInterfaceIndexToZoneIndexesMapping[globalInterfaceIndex].size();
         if (numberOfFaceZone < 2)
         {
-            newGlobalInterfaceIndexToZoneIndexesMapping          [globalInterfaceIndex].push_back(zoneIndex);
+            newGlobalInterfaceIndexToZoneIndexesMapping[globalInterfaceIndex].push_back(zoneIndex);
             newGlobalInterfaceIndexToLocalInterfaceIndexesMapping[globalInterfaceIndex].push_back(localInterfaceIndex);
         }
     }
@@ -559,7 +559,7 @@ void ComputationalGridProcess::ModifyFaceNodesIndexes(InterfaceLinkStructure *in
 
     int innerFaceStartPosition = iCount;
 
-    SetBoundaryFaceNodeIndexVector  (interfaceLinkStructure);
+    SetBoundaryFaceNodeIndexVector(interfaceLinkStructure);
     SetNewFaceToCellIndexesContainer(interfaceLinkStructure);
 
     for (int iFace = numberOfBoundaryFaces; iFace < numberOfFaces; ++ iFace)
@@ -645,7 +645,7 @@ void ComputationalGridProcess::SetNewFaceToCellIndexesContainer(InterfaceLinkStr
     }
 }
 
-void ComputationalGridProcess::SetBoundaryFaceNodeIndexVector( InterfaceLinkStructure *interfaceLinkStructure)
+void ComputationalGridProcess::SetBoundaryFaceNodeIndexVector(InterfaceLinkStructure *interfaceLinkStructure)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
@@ -656,13 +656,13 @@ void ComputationalGridProcess::SetBoundaryFaceNodeIndexVector( InterfaceLinkStru
 
     PHVectorInt1D &newBoundaryLeftCellIndex = this->newBoundaryLeftCellIndexList[currentZoneID];
 
-    int *leftCellIndexContainer  = unstructuredGrid->GetLeftCellOfFace();
+    int *leftCellIndexContainer = unstructuredGrid->GetLeftCellOfFace();
 
-    FaceSearchingManager *faceSearchingManager = interfaceLinkStructure->GetFaceSearchingManager();
+    FaceSearchingManager *faceSearchingManager  = interfaceLinkStructure->GetFaceSearchingManager();
     PHVectorInt2D &relativeChildFaceNodeIndexes = faceSearchingManager->GetRelativeChildFaceNodeIndexes();
     PHVectorInt2D &globalChildFaceIndexes       = faceSearchingManager->GetGlobalChildFaceIndexes();
 
-    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping   = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
+    PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping = interfaceLinkStructure->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
 
     int zoneIndex = unstructuredGrid->GetZoneID();
 
@@ -791,8 +791,8 @@ void ComputationalGridProcess::UpdateOtherGridFaceTopologyTerm()
 
     int *leftCellIndexContainer  = unstructuredGrid->GetLeftCellOfFace();
     int *rightCellIndexContainer = unstructuredGrid->GetRightCellOfFace();
-    delete []leftCellIndexContainer;
-    delete []rightCellIndexContainer;
+    delete [] leftCellIndexContainer;
+    delete [] rightCellIndexContainer;
 
     PHVectorInt1D &newLeftCellIndexVector  = this->newLeftCellIndexVectorList [currentZoneID];
     PHVectorInt1D &newRightCellIndexVector = this->newRightCellIndexVectorList[currentZoneID];
@@ -813,8 +813,8 @@ void ComputationalGridProcess::UpdateOtherGridFaceTopologyTerm()
 
     int *faceNodeNumberContainer = unstructuredGrid->GetNodeNumberOfEachFace();
     int *faceNodeIndexContainer  = unstructuredGrid->GetFace2Node();
-    delete []faceNodeNumberContainer; faceNodeNumberContainer = NULL;
-    delete []faceNodeIndexContainer;  faceNodeIndexContainer = NULL;
+    delete [] faceNodeNumberContainer;    faceNodeNumberContainer = NULL;
+    delete [] faceNodeIndexContainer;     faceNodeIndexContainer  = NULL;
 
     PHVectorInt2D &faceNodeIndexVector = faceNodeIndexVectorList[currentZoneID];
     uint_t sizeOfFaceNodeIndexContainer = 0;
@@ -852,7 +852,7 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     {
         delete bcr[iFace];
     }
-    delete []bcr;
+    delete [] bcr;
 
     PHVectorInt1D &boundaryTypeVector    = boundaryTypeVectorList[currentZoneID];
     vector< string > &boundaryNameVector = boundaryNameVectorList[currentZoneID];
@@ -1025,7 +1025,7 @@ void ComputationalGridProcess::BuildZoneInterfacesTopology(UnstructGrid *unstruc
 
     int *faceNodeNumberContainer = unstructuredGrid->GetNodeNumberOfEachFace();
     int *faceNodeIndexContainer  = unstructuredGrid->GetFace2Node();
-    int numberOfBoundaryFaces  = unstructuredGrid->GetNBoundFace();
+    int numberOfBoundaryFaces = unstructuredGrid->GetNBoundFace();
 
     UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
     int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
@@ -1137,7 +1137,7 @@ void ComputationalGridProcess::SwapZoneInterfaceLengthToNeighborZones(vector<Cha
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
-        if(region->ZoneBelongToCurrentProcessor(iZone))
+        if (region->ZoneBelongToCurrentProcessor(iZone))
         {
             int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
             grid = this->GetGrid(localZoneIndex);
@@ -1156,7 +1156,7 @@ void ComputationalGridProcess::SwapZoneInterfaceLengthToNeighborZones(vector<Cha
             DataContainer *dataContainer = new DataContainer();
             if (PHMPI::GetCurrentProcessorID() == sendProcessorIndex)
             {
-                DataContainer *tempData = new DataContainer ();
+                DataContainer *tempData = new DataContainer();
                 this->CompressZoneInterfaceIntoDataContainer(tempData, iZone);
 
                 dataContainer->moveto_begin();
@@ -1186,7 +1186,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZones()
 {
     PHSPACE::WriteLogFile("Start Swapping Zone Interface Topology To Neighbor Zones!");
 
-    if(PHMPI::GetNumberOfProcessor() > 1)
+    if (PHMPI::GetNumberOfProcessor() > 1)
     {
         SwapZoneInterfaceTopologyToNeighborZonesNonBlocking();
     }
@@ -1204,7 +1204,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesBlocking(
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
-        if(region->ZoneBelongToCurrentProcessor(iZone))
+        if (region->ZoneBelongToCurrentProcessor(iZone))
         {
             int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
             grid = this->GetGrid(localZoneIndex);
@@ -1244,7 +1244,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
-        if(region->ZoneBelongToCurrentProcessor(iZone))
+        if (region->ZoneBelongToCurrentProcessor(iZone))
         {
             int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
             grid = this->GetGrid(localZoneIndex);
@@ -1260,19 +1260,19 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
             int sendProcessor    = PHMPI::GetZoneProcessorID(iZone);
             int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
 
-            if(currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
             {
                 continue;
             }
 
             DataContainer *receivedBuffer = 0;
             DataContainer *sendBuffer = 0;
-            if(currentProcessor == receiveProcessor)
+            if (currentProcessor == receiveProcessor)
             {
                 receivedBuffer = new DataContainer;
                 receivedDataBuffer[iZone].push_back(receivedBuffer);
             }
-            if(currentProcessor == sendProcessor)
+            if (currentProcessor == sendProcessor)
             {
                 sendBuffer = new DataContainer;
                 sendDataBuffer[iZone].push_back(sendBuffer);
@@ -1298,7 +1298,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
         }
     }
 
-    if(PHMPI::GetNumberOfProcessor() > 1)
+    if (PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
     }
@@ -1306,7 +1306,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Grid *grid = this->GetGrid(0);
-        if(region->ZoneBelongToCurrentProcessor(iZone))
+        if (region->ZoneBelongToCurrentProcessor(iZone))
         {
             int localZoneIndex = region->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
             grid = this->GetGrid(localZoneIndex);
@@ -1333,14 +1333,14 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
 
     for (std::size_t iDim = 0; iDim < receivedDataBuffer.size(); ++ iDim)
     {
-        for (std::size_t jDim = 0; jDim < receivedDataBuffer[ iDim ].size(); ++ jDim)
+        for (std::size_t jDim = 0; jDim < receivedDataBuffer[iDim].size(); ++ jDim)
         {
             delete receivedDataBuffer[iDim][jDim];
         }
     }
     for (std::size_t iDim = 0; iDim < sendDataBuffer.size(); ++ iDim)
     {
-        for (std::size_t jDim = 0; jDim < sendDataBuffer[ iDim ].size(); ++ jDim)
+        for (std::size_t jDim = 0; jDim < sendDataBuffer[iDim].size(); ++ jDim)
         {
             delete sendDataBuffer[iDim][jDim];
         }
@@ -1487,7 +1487,7 @@ int GetCoordinateIndex(DataStruct_AdtTree< int, RDouble > *adtTree, RDouble *coo
             cout << " impossible nodeList.size() = " << nodeList.size() << "\n";
             TK_Exit::PrintDebugInfoExit("");
         }
-        node       = nodeList[0];
+        node = nodeList[0];
         pointIndex = node->GetData();
         return 1;
     }

@@ -188,10 +188,10 @@ void DynamicGrid::StationalData2DynamicData()
     }
 
     //! Face info.
-    int *face2node            = grid->GetFace2Node();
-    int *nodeNumOfEaceFace    = grid->GetNodeNumberOfEachFace();
-    int *leftCellOfEachFace   = grid->GetLeftCellOfFace();
-    int *rightCellOfEachFace  = grid->GetRightCellOfFace();
+    int *face2node           = grid->GetFace2Node();
+    int *nodeNumOfEaceFace   = grid->GetNodeNumberOfEachFace();
+    int *leftCellOfEachFace  = grid->GetLeftCellOfFace();
+    int *rightCellOfEachFace = grid->GetRightCellOfFace();
     UnstructBCSet **bcr = grid->GetBCRecord();
 
     int count = 0;

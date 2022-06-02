@@ -21,8 +21,9 @@
 
 #ifdef USE_INHOUSE_VERSION
 #include "BLUSGS.h"
-#include "MatrixLUSGS.h"
 #endif
+
+#include "MatrixLUSGS.h"
 
 #ifdef USE_HYFLOW_CODE
 #include "RealGas.h"
@@ -11156,7 +11157,6 @@ namespace PHSPACE
 
 #define CFL3D_METHOD
 
-
         for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
         {
             int il1, jl1, kl1;
@@ -19365,19 +19365,19 @@ namespace PHSPACE
         SolveBLUSGSBackwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
 
     }
-
-	void NSSolverStruct::SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-	{
-		StructGrid *grid = StructGridCast(gridIn);
-		SolveMLUSGSForwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-	}
-	
-	void NSSolverStruct::SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
-	{
-		StructGrid *grid = StructGridCast(gridIn);
-		SolveMLUSGSBackwardInHouse(grid, dqProxy, LUplusDQ, sweepNormal);
-	}
 #endif
+
+    void NSSolverStruct::SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    {
+        StructGrid *grid = StructGridCast(gridIn);
+        SolveMLUSGSForward(grid, dqProxy, LUplusDQ, sweepNormal);
+    }
+
+    void NSSolverStruct::SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    {
+        StructGrid *grid = StructGridCast(gridIn);
+        SolveMLUSGSBackward(grid, dqProxy, LUplusDQ, sweepNormal);
+    }
 
     void NSSolverStruct::SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq)
     {
