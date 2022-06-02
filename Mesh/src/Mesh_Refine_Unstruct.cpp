@@ -23,7 +23,7 @@ Mesh_Refine_Unstruct::~Mesh_Refine_Unstruct()
     {
         delete gridRefineControllers[iZone];
     }
-    delete []gridRefineControllers;
+    delete [] gridRefineControllers;
 
 }
 
@@ -83,7 +83,7 @@ void Mesh_Refine_Unstruct::AllocateComputationalGrid()
 void Mesh_Refine_Unstruct::AllocateMemory()
 {
     numberOfZones = PHMPI::GetNumberofLocalZones();
-    gridRefineControllers = new Mesh_RefineController *[numberOfZones];
+    gridRefineControllers = new Mesh_RefineController * [numberOfZones];
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Mesh_RefineController *gridRefineController = new Mesh_RefineController();
@@ -142,7 +142,7 @@ void Mesh_Refine_Unstruct::ConstructMetrics(Grid *grid)
     PHVectorRDouble1D &faceNormalZ = faceTopo->GetFaceNormalZ();
 
     int nTotalFace = unstructuredGrid->GetNTotalFace();
-    faceArea.resize   (nTotalFace);
+    faceArea.resize(nTotalFace);
     faceNormalX.resize(nTotalFace);
     faceNormalY.resize(nTotalFace);
     faceNormalZ.resize(nTotalFace);
@@ -185,7 +185,7 @@ void Mesh_Refine_Unstruct::ConstructCellTopo(Grid *grid)
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        int nodeNumber = nodeNumberOfEachCell[ iCell ];
+        int nodeNumber = nodeNumberOfEachCell[iCell];
         int iCellType = GetCellType(dimension, nodeNumber);
         cellType[iCell] = iCellType;
     }
@@ -207,7 +207,7 @@ void Mesh_Refine_Unstruct::ConstructCellTopo(Grid *grid)
     }
 
     int anisoRefine = this->refineParameter->GetAnisoRefineType();
-    if(anisoRefine)
+    if (anisoRefine)
     {
         int *faceNumberOfEachCell = unstructuredGrid->GetFaceNumberOfEachCell();
         int **cell2Face = unstructuredGrid->GetCell2Face();
@@ -290,7 +290,7 @@ void Mesh_Refine_Unstruct::ConstructFaceTopo(Grid *grid)
     {
         int leftCell  = leftCellOfFace [iFace];
         int rightCell = rightCellOfFace[iFace];
-        if(rightCell >= nTotalCell)
+        if (rightCell >= nTotalCell)
         {
             rightCell = - rightCell;
         }
@@ -315,7 +315,7 @@ void Mesh_Refine_Unstruct::ConstructFaceTopo(Grid *grid)
         MultiIndex faceOfMultiIndex(nodeNumber, iFace);
         faceOfMultiIndex.SetData(&iFace2Node[0]);
         int id = faceTopo->FindFace(faceOfMultiIndex);
-        if(id == PHSPACE::INVALID_INDEX)
+        if (id == PHSPACE::INVALID_INDEX)
         {
             faceTopo->InsertFace(faceOfMultiIndex);
         }
@@ -341,16 +341,19 @@ void Mesh_Refine_Unstruct::ConstructFaceTopo(Grid *grid)
     {
         faceBoundaryCondition[iFace] = 0;
     }
+    UnstructBCSet *unstructBCSet = unstructuredGrid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    UnstructBCSet **bcr = unstructuredGrid->GetBCRecord();
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
+        UnstructBC *bcRegion = unstructBCSet ->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
         SimpleBC *iFaceBoundaryCondtion = new SimpleBC();
-        int boundaryType = bcr[iFace]->GetKey();
+        int boundaryType = bcRegion->GetBCType();
         iFaceBoundaryCondtion->SetBCType(boundaryType);
-        if(boundaryType != PHENGLEI::INTERFACE)
+        if (boundaryType != PHENGLEI::INTERFACE)
         {
-            string bcName = bcr[iFace]->GetBCName();
+            string bcName = bcRegion->GetBCName();
             iFaceBoundaryCondtion->SetBCName(bcName);
         }
         else
@@ -377,7 +380,7 @@ void Mesh_Refine_Unstruct::ConstructFaceTopo(Grid *grid)
     PHVectorInt2D &childrenFaceIndex = faceTopo->GetChildrenFaceIndex();
     childrenFaceIndex.resize(nTotalFace);
 
-    PHVectorInt1D& childrenToCompositeFaceIndex = faceTopo->GetChildrenToCompositeFaceIndex();
+    PHVectorInt1D &childrenToCompositeFaceIndex = faceTopo->GetChildrenToCompositeFaceIndex();
     childrenToCompositeFaceIndex.resize(nTotalFace);
 }
 
@@ -482,8 +485,8 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     int nZones = PHMPI::GetNumberofGlobalZones();
     vector< PH_Request > requestContainer;
-    vector< vector< DataContainer* > > receivedDataBuffer;
-    vector< vector< DataContainer* > > sendDataBuffer;
+    vector< vector< DataContainer * > > receivedDataBuffer;
+    vector< vector< DataContainer * > > sendDataBuffer;
     receivedDataBuffer.resize(nZones);
     sendDataBuffer.resize(nZones);
 
@@ -606,7 +609,7 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
         std::size_t numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
 
         int count = 0;
-        for (std::size_t iNeighbor = 0; iNeighbor < numberOfNeighbor; ++iNeighbor)
+        for (std::size_t iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
         {
             int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
 
@@ -703,7 +706,7 @@ void Mesh_Refine_Unstruct::PrepareDataStructure(int iZone)
 void Mesh_Refine_Unstruct::SetCellModifiedStatusToNoChange(int iZone)
 {
     Mesh_RefineController *currentController = gridRefineControllers[iZone];
-    Mesh_CellTopo* cellTopo = currentController->GetCellFactory();
+    Mesh_CellTopo *cellTopo = currentController->GetCellFactory();
 
     int numberOfTotal = cellTopo->GetNTotalCell() + currentController->GetNBoundaryFace();
 

@@ -30,6 +30,7 @@ class InterfaceDataProxy;
 class FieldProxy;
 class InterfaceInfo;
 class Param_CFDSolver;
+class Region;
 
 extern bool cfd_debug;
 
@@ -171,6 +172,8 @@ public:
     virtual RDouble UnsteadyConvergence(Grid *grid);
 
     virtual void UpdateUnsteadyFlow(Grid *grid);
+    virtual void UpdateUnsteadyVariable(Grid *grid);
+    virtual void UpdateDt();
 
     virtual int GetNPostSolve();
     virtual int GetNumberOfEquations();
@@ -178,6 +181,10 @@ public:
     virtual void PostSolve(Grid *grid, int stage, int level = 0);
 
     virtual void DumpResultFile(Grid *grid, int level = 0);
+
+    virtual void InitIncompressibleResultFile(Grid *grid, string fileName);
+
+    virtual void DumpIncompressibleResultFile(Grid *grid, string fileName);
 
     virtual void CheckResult(Grid *grid, int level = 0);
 
@@ -538,6 +545,37 @@ private:
     //! @param[in] actkey         the actkey store the information of the interpoint.
     //! @param[in] interpointDataProxy         a proxy to store the interpoint value.
     void TranslateInterpointData(InterpointInformation *interpointInformation, ActionKey *actkey, InterpointDataProxy * interpointDataProxy);
+
+public:
+    virtual void DiscrtMomentumEquations() {};
+    virtual void SolveMomentumEquations(Region &region) {};
+    virtual void UpdateVelocity() {};
+    virtual void DiscrtPressureCorrectionEquation() {};
+    virtual void SolvePressureCorrectionEquation(Region &region) {};
+    virtual void UpdatePressureAndVelocity() {};
+    virtual void UpdateProperties() {};
+
+public:
+    virtual void Discrt() {};
+    virtual void Update() {};
+    virtual void UpdateBoundary() {};
+    virtual bool SolutionIsConverged(int iZone) { return false; }
+    virtual void UpdateAfterIterloop() {};
+    virtual void SetOutputs(std::vector<std::string> &phiNameList) {};
+    virtual void InitMatrix() {};
+    virtual void CalcGrad() {};
+    virtual void CalcBoundaryConditions() {};
+    virtual void CalcTransientTerm() {};
+    virtual void CalcConvectionTerm() {};
+    virtual void CalcDiffusionTerm() {};
+    virtual void CalcSourceTerm() {};
+    virtual void SolveScalarEquation(Region &region) {};
+    virtual void SolveKEquation(Region &region) {};
+    virtual void SolveEpsilonEquation(Region &region) {};
+    virtual void PrimeEquations() {};
+    virtual void CalcRes() {};
+    virtual void Relax() {};
+    virtual void SolutionIsConverged(int iZone, bool* flag) {};
 
 protected:
     Post_Visual *postVisualization;

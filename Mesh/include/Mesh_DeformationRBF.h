@@ -28,8 +28,8 @@ namespace PHSPACE
 {
 
 typedef PHVector1D< Point3D > PointArray;
-typedef DataStruct_AdtTree<int, RDouble>  CPTree;
-typedef DataStruct_AdtNode<int, RDouble>  CPNode;
+typedef DataStruct_AdtTree<int, RDouble> CPTree;
+typedef DataStruct_AdtNode<int, RDouble> CPNode;
 
 //! @brief Mesh_DeformationRBF class achieve unstructured grid deform by RBF method.
 class Mesh_DeformationRBF : public Mesh_Deformation

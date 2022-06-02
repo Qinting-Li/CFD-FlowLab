@@ -1250,24 +1250,22 @@ void Pre_GridMirror::MirrorBCRegion()
         {
             UnstructGrid *grid_ordinary = UnstructGridCast(OrdinaryGrid[iZone]);
 
-            UnstructBCSet *unstructBCSet = grid_ordinary->GetUnstructBCSet();
-            int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
+            UnstructBCSet **bcr_ordinary = grid_ordinary->GetBCRecord();
             int nBoundFace = grid_ordinary->GetNBoundFace();
             PHWrite(gridinfo, &nBoundFace, 1);
-            
+
             int count = 0;
-            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+            for (int iFace = 0; iFace < nBoundFace; ++ iFace)
             {
-                UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-                int bcType = bcRegion->GetBCType();
-                if (bcType == PHENGLEI::INTERFACE || bcType == PHENGLEI::SYMMETRY)
+                if (bcr_ordinary[iFace]->GetKey() == PHENGLEI::INTERFACE)
                 {
-                    vector<int>* faceIndex = bcRegion->GetFaceIndex();
-                    for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
-                    {
-                        count ++;
-                    }
+                    count ++;
+                }
+
+                if (bcr_ordinary[iFace]->GetKey() == PHENGLEI::SYMMETRY)
+                {
+                    count ++;
                 }
             }
            
@@ -1313,74 +1311,66 @@ void Pre_GridMirror::MirrorBCRegion()
             count = 0;
             int iInterfae = 0;
 
-            for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+            for (int iFace = 0; iFace < nBoundFace; ++ iFace)
             {
-                UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-                int bcType = bcRegion->GetBCType();
+                int bctype = bcr_ordinary[iFace]->GetKey();
 
-                vector<int> *faceIndex = bcRegion->GetFaceIndex();
-                for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                if (bctype == PHENGLEI::INTERFACE)
                 {
-                    // iFace is the face number in the set of faceIndex.
-                    int iFace = *iter;
+                    PHWrite(gridinfo, &bctype, 1);
 
-                    if (bcType == PHENGLEI::INTERFACE)
-                    {
-                        PHWrite(gridinfo, &bcType, 1);
+                    int interFace2BoundaryFace = interFace2BoundaryFace_ordinary[iInterfae];
+                    int interFace2ZoneID       = interFace2ZoneID_ordinary[iInterfae];
+                    int interFace2InterFaceID  = interFace2InterFaceID_ordinary[iInterfae];
 
-                        int interFace2BoundaryFace = interFace2BoundaryFace_ordinary[iInterfae];
-                        int interFace2ZoneID       = interFace2ZoneID_ordinary[iInterfae];
-                        int interFace2InterFaceID  = interFace2InterFaceID_ordinary[iInterfae];
+                    PHWrite(gridinfo, &interFace2BoundaryFace, 1);
+                    PHWrite(gridinfo, &interFace2ZoneID, 1);
+                    PHWrite(gridinfo, &interFace2InterFaceID, 1);
 
-                        PHWrite(gridinfo, &interFace2BoundaryFace, 1);
-                        PHWrite(gridinfo, &interFace2ZoneID, 1);
-                        PHWrite(gridinfo, &interFace2InterFaceID, 1);
+                    interFace2ZoneID += numberOfOriginalBlocks;
 
-                        interFace2ZoneID += numberOfOriginalBlocks;
+                    PHWrite(gridinfo, &interFace2BoundaryFace, 1);
+                    PHWrite(gridinfo, &interFace2ZoneID, 1);
+                    PHWrite(gridinfo, &interFace2InterFaceID, 1);
 
-                        PHWrite(gridinfo, &interFace2BoundaryFace, 1);
-                        PHWrite(gridinfo, &interFace2ZoneID, 1);
-                        PHWrite(gridinfo, &interFace2InterFaceID, 1);
-
-                        iInterfae ++;
-                        count ++;
-                        continue;
-                    }
-
-                    if (bcType == PHENGLEI::SYMMETRY)
-                    {
-                        int Gridindex = grid_ordinary->GetGridID()->GetIndex();
-                        bcType = PHENGLEI::INTERFACE;
-                        PHWrite(gridinfo, &bcType, 1);
-
-                        int interFace2BoundaryFace = iFace;
-                        int interFace2ZoneID       = Gridindex + numberOfOriginalBlocks;
-                        int interFace2InterFaceID  = count;
-
-                        PHWrite(gridinfo, &interFace2BoundaryFace, 1);
-                        PHWrite(gridinfo, &interFace2ZoneID, 1);
-                        PHWrite(gridinfo, &interFace2InterFaceID, 1);
-
-                        interFace2ZoneID = Gridindex;
-                        PHWrite(gridinfo, &interFace2BoundaryFace, 1);
-                        PHWrite(gridinfo, &interFace2ZoneID, 1);
-                        PHWrite(gridinfo, &interFace2InterFaceID, 1);
-
-                        /*interFace2ZoneID[count] = Gridindex + numberOfOriginalBlocks;
-                        interFace2InterFaceID[count] = count;
-                        interFace2BoundaryFace[count] = iface;
-
-                        interFace2ZoneID_mir[count] = Gridindex;
-                        interFace2InterFaceID_mir[count] = count;
-                        interFace2BoundaryFace_mir[count] = iface;*/
-
-                        //iInterfae ++;
-                        count ++;
-                        continue;
-                    }
-
-                    PHWrite(gridinfo, &bcType, 1);
+                    iInterfae ++;
+                    count ++;
+                    continue;
                 }
+
+                if (bctype == PHENGLEI::SYMMETRY)
+                {
+                    int Gridindex = grid_ordinary->GetGridID()->GetIndex();
+                    bctype = PHENGLEI::INTERFACE;
+                    PHWrite(gridinfo, &bctype, 1);
+
+                    int interFace2BoundaryFace = iFace;
+                    int interFace2ZoneID       = Gridindex + numberOfOriginalBlocks;
+                    int interFace2InterFaceID  = count;
+
+                    PHWrite(gridinfo, &interFace2BoundaryFace, 1);
+                    PHWrite(gridinfo, &interFace2ZoneID, 1);
+                    PHWrite(gridinfo, &interFace2InterFaceID, 1);
+
+                    interFace2ZoneID = Gridindex;
+                    PHWrite(gridinfo, &interFace2BoundaryFace, 1);
+                    PHWrite(gridinfo, &interFace2ZoneID, 1);
+                    PHWrite(gridinfo, &interFace2InterFaceID, 1);
+
+                    /*interFace2ZoneID[count] = Gridindex + numberOfOriginalBlocks;
+                    interFace2InterFaceID[count] = count;
+                    interFace2BoundaryFace[count] = iFace;
+
+                    interFace2ZoneID_mir[count] = Gridindex;
+                    interFace2InterFaceID_mir[count] = count;
+                    interFace2BoundaryFace_mir[count] = iFace;*/
+
+                    //iInterfae ++;
+                    count ++;
+                    continue;
+                }
+
+                PHWrite(gridinfo, &bctype, 1);
             }
         }
     }

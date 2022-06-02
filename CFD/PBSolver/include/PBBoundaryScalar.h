@@ -1,0 +1,39 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file      PBBoundaryScalar.h
+//! @brief     Boundary Conditions.
+//! @author    Ming Pingjian, Sun Huawen.
+
+#pragma once
+
+#include "PBBoundary.h"
+
+namespace PHSPACE
+{
+#define SCALAR_EMPTY SCALAR_EMPTY 
+
+	class PBBoundaryScalar : public PBBoundary
+	{
+	public:
+		PBBoundaryScalar(const string& name);
+		virtual ~PBBoundaryScalar();
+
+	public:
+		virtual void Init(string phiName) {};
+
+		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe) {};
+
+		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
+	};
+
+	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalar, SCALAR_EMPTY);
+}

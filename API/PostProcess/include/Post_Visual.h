@@ -152,6 +152,7 @@ const int VISUAL_INCOMP_W              = 24;
 const int VISUAL_INCOMP_P              = 25;
 const int VISUAL_INCOMP_CP             = 26;
 const int VISUAL_INCOMP_T              = 27;
+const int VISUAL_INCOMP_ENTHALPY       = 70;
 const int VISUAL_INCOMP_DEN            = 28;
 const int VISUAL_INCOMP_VIS            = 29;
 const int VISUAL_KN                    = 30;

@@ -212,6 +212,16 @@ void CFDSolver::UpdateUnsteadyFlow(Grid *grid)
 
 }
 
+void CFDSolver::UpdateUnsteadyVariable(Grid *grid)
+{
+
+}
+
+void CFDSolver::UpdateDt()
+{
+
+}
+
 LIB_EXPORT Param_CFDSolver * CFDSolver::GetControlParameters() const
 {
     return controlParameters;
@@ -278,6 +288,16 @@ void CFDSolver::PostSolve(Grid *grid, int stage, int level)
 }
 
 void CFDSolver::DumpResultFile(Grid *grid, int level)
+{
+
+}
+
+void CFDSolver::InitIncompressibleResultFile(Grid *grid, string fileName)
+{
+
+}
+
+void CFDSolver::DumpIncompressibleResultFile(Grid *grid, string fileName)
 {
 
 }

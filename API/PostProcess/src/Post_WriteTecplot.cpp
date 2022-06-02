@@ -43,10 +43,22 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         GetNameExt(visualfile, fname, fext, ".");
 
         ActionKey *actkey = new ActionKey();
-        actkey->level = iLevel;
-        actkey->filename = AddDigitToFileName(fname, fext, ".", iLevel);
-        actkey->tecfilename = AddDigitToFileName(fname, fext, ".", iLevel);
-        actkey->VTKvisual = false;
+        int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+        if (compressible)
+        {
+            actkey->level = iLevel;
+            actkey->filename = AddDigitToFileName(fname, fext, ".", iLevel);
+            actkey->tecfilename = AddDigitToFileName(fname, fext, ".", iLevel);
+            actkey->VTKvisual = false;
+        }
+        else
+        {
+            int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+            actkey->level = iLevel;
+            actkey->filename = AddDigitToFileName(fname, fext, ".", outIterStep);
+            actkey->tecfilename = AddDigitToFileName(fname, fext, ".", outIterStep);
+            actkey->VTKvisual = false;
+        }
 
         if (flowType == AverageFlow)
         {
@@ -71,8 +83,17 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         if (isUnsteady)
         {
-            int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-            actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', outnstep);
+            int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+            if (compressible)
+            {
+                int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+                actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', outnstep);
+            }
+            else
+            {
+                double timestep = GlobalDataBase::GetDoubleParaFromDB("currentTime");
+                actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', timestep);
+            }
         }
         ServerWrite(actkey);
         PostWrite(actkey);

@@ -18,7 +18,7 @@
 #include "Limiter.h"
 #include "Jacobian.h"
 #include "TK_Log.h"
-
+#include "MatrixLUSGS.h"
 
 #include "Gas.h"
 #include "TK_Time.h"
@@ -10977,7 +10977,6 @@ namespace PHSPACE
 
 #define CFL3D_METHOD
 
-
         for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
         {
             int il1, jl1, kl1;
@@ -19023,6 +19022,18 @@ namespace PHSPACE
 
     }
 
+
+    void NSSolverStruct::SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    {
+        StructGrid *grid = StructGridCast(gridIn);
+        SolveMLUSGSForward(grid, dqProxy, LUplusDQ, sweepNormal);
+    }
+
+    void NSSolverStruct::SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+    {
+        StructGrid *grid = StructGridCast(gridIn);
+        SolveMLUSGSBackward(grid, dqProxy, LUplusDQ, sweepNormal);
+    }
 
     void NSSolverStruct::SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq)
     {

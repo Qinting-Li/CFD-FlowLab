@@ -44,12 +44,12 @@ opt(DOUBLE_PRECISION "Use double precision or not" ON)
 opt(SMARTARRAY "Use smart array more efficenet than origial array" ON)  # Use smart array or not.
 opt_build(SpecDiffHybSolver "Build Spectra-Difference Hybrid Solver or not" OFF) #Build Spectra-Difference Hybrid Solver or not.
 opt_build(DemoSolver "Build Solver Template or not" OFF)# Build Solver Template option.
+opt_build(PBSolver "Build Pressure Based Solver or not" ON)# Build PBSolver option.
 opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
 opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
-opt_build(MultiSpecies "Build MultiSpecies module or not" OFF) #Build MultiSpecies or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
 
 set(GPROF OFF)
@@ -85,6 +85,11 @@ if(BUILD_DemoSolver)
   add_definitions(-DUSE_DEMOSOLVER)
 endif()
 
+if(BUILD_PBSolver)
+  message(STATUS "BUILD_PBSolver is turned on!")
+  add_definitions(-DUSE_PBSOLVER)
+endif()
+
 if(USE_OMP)
   message(STATUS "USE_OMP is turned on!")
   add_definitions(-DUSE_OMP)
@@ -110,11 +115,6 @@ if(USE_ErrorDataDebug)
   add_definitions(-DUSE_ErrorDataDebug)
 endif(USE_ErrorDataDebug)
 
-
-if(BUILD_MultiSpecies)
-  message(STATUS "BUILD_MultiSpeciesis turned on!")
-  add_definitions(-DUSE_MULTISPECIES_CODE)
-endif(BUILD_MultiSpecies)
 
 if(WIN32)
 if(USE_Windows_X64)
@@ -218,6 +218,9 @@ if(BUILD_DemoSolver)
 include_directories(${CFD_H_PATH}/DemoSolver/include)
 endif(BUILD_DemoSolver)
 
+if(BUILD_PBSolver)
+include_directories(${CFD_H_PATH}/PBSolver/include)
+endif(BUILD_PBSolver)
 if(BUILD_CFD)
   message(STATUS "Build CFD!")
   add_subdirectory(../CFD ${EXEC_WORKING_DIR}/CFD)

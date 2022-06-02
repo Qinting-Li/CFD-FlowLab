@@ -44,7 +44,7 @@ private:
     void ConstructCellTopo(Grid *grid);
     void ConstructNodeTopo(Grid *grid);
     void ConstructFaceTopo(Grid *grid);
-    void ConstructMetrics(Grid *grid);
+    void ConstructMetrics (Grid *grid);
     void ConstructInterFaceTopo(Grid *grid);
 
     //! Set Refine property of each cell.
