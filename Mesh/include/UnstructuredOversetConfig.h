@@ -237,8 +237,8 @@ public:
     void Initialize(int iZone, int iBlock, int numberOfNodes);
 
     void SetNumberOfNodes(int numberOfNodesIn) { this->numberOfNodes = numberOfNodesIn; }
-    void SetZoneIndex    (int zoneIndex     ) { this->zoneIndex     = zoneIndex;       }
-    void SetBlockIndex   (int blockIndex    ) { this->blockIndex    = blockIndex;      }
+    void SetZoneIndex    (int zoneIndex      ) { this->zoneIndex     = zoneIndex;       }
+    void SetBlockIndex   (int blockIndex     ) { this->blockIndex    = blockIndex;      }
     
     int GetNumberOfNodes() { return numberOfNodes; }
     int GetZoneIndex    () { return zoneIndex;     }

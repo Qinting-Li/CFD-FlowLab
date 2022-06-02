@@ -43,7 +43,6 @@ private:
 
 private:
     vector<Grid *> OrdinaryGrid;
-
 };
 
 }

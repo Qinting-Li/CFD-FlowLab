@@ -61,12 +61,12 @@ public:
 
 public:
     //! Return cell, face and node information of grid.
-    Mesh_CellTopo    *GetCellFactory() { return this->cellTopo; };
-    Mesh_FaceTopo    *GetFaceFactory() { return this->faceTopo; };
-    Geo_PointFactory *GetNodeFactory() { return this->nodeTopo; };
+    Mesh_CellTopo    * GetCellFactory() { return this->cellTopo; }
+    Mesh_FaceTopo    * GetFaceFactory() { return this->faceTopo; }
+    Geo_PointFactory * GetNodeFactory() { return this->nodeTopo; }
 
     //! Set interface information of grid.
-    void SetInterfaceInformation(InterfaceInfo *interfaceInformationIn) { this->interfaceInformation = interfaceInformationIn; };
+    void SetInterfaceInformation(InterfaceInfo *interfaceInformationIn) { this->interfaceInformation = interfaceInformationIn; }
 
     //! Construct grid topo information, node to cell, cell to cell.
     void Initialize();
@@ -116,14 +116,14 @@ public:
     void GenerateEdgesWithMiddlePoints(int iCompositeFace);
 
     //! Set grid information.
-    void SetZoneIndex(int zoneIndexIn) { this->zoneIndex = zoneIndexIn; };
-    void SetNTotalNode(int nTotalNodeIn) { this->nTotalNode = nTotalNodeIn; };
+    void SetZoneIndex(int zoneIndexIn) { this->zoneIndex = zoneIndexIn; }
+    void SetNTotalNode(int nTotalNodeIn) { this->nTotalNode = nTotalNodeIn; }
     void SetNBoundaryFace(int nBoundaryFacesIn) { this->nBoundaryFace = nBoundaryFacesIn; }
     void SetOldNumberOfCell(int oldNumberOfCellIn) { this->oldNumberOfCell = oldNumberOfCellIn; }
     void SetRefineStatus(bool statusIn) { this->hasBeenRefined = statusIn; }
 
     //! Return grid information.
-    int GetNBoundaryFace() { return this->nBoundaryFace; };
+    int GetNBoundaryFace() { return this->nBoundaryFace; }
     int GetOldNumberOfCell() { return this->oldNumberOfCell; }
 
     //! Generate refined grid.
@@ -139,7 +139,6 @@ public:
     bool IsNeedInfectInterfaceIsotropicRefineType();
     void GetSourceCellIndex(int iFace, int &sourceIndex);
     void GetTargetIndex(int iFace, int &targetIndex);
-
 };
 
 }

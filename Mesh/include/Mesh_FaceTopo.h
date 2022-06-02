@@ -73,33 +73,33 @@ public:
     ~Mesh_FaceTopo();
 
 public:
-    PHVectorInt1D &GetFaceType() { return faceType; };
-    PHVectorInt1D &GetLeftCellIndex() { return leftCellIndex; };
-    PHVectorInt1D &GetRightCellIndex() { return rightCellIndex; };
-    PHVectorInt2D &GetFace2Node() { return face2Node; };
-    PHVectorInt2D &GetCompositeFace2Node() { return compositeFace2Node; }; 
-    PHVectorInt2D &GetIntermediateFace2Node() { return intermediateFace2Node; };
+    PHVectorInt1D & GetFaceType() { return faceType; }
+    PHVectorInt1D & GetLeftCellIndex() { return leftCellIndex; }
+    PHVectorInt1D & GetRightCellIndex() { return rightCellIndex; }
+    PHVectorInt2D & GetFace2Node() { return face2Node; }
+    PHVectorInt2D & GetCompositeFace2Node() { return compositeFace2Node; }
+    PHVectorInt2D & GetIntermediateFace2Node() { return intermediateFace2Node; }
 
-    PHVectorInt1D &GetParentFaceIndex() { return parentFaceIndex; };
-    PHVectorInt2D &GetChildrenFaceIndex() { return childrenFaceIndex; };
+    PHVectorInt1D & GetParentFaceIndex() { return parentFaceIndex; }
+    PHVectorInt2D & GetChildrenFaceIndex() { return childrenFaceIndex; }
 
-    PHVectorInt1D &GetComputationalToGlobalFaceIndex() { return computationalToGlobalFaceIndex; };
-    PHVectorInt1D &GetGlobalToComputationalFaceIndex() { return globalToComputationalFaceIndex; };
+    PHVectorInt1D & GetComputationalToGlobalFaceIndex() { return computationalToGlobalFaceIndex; }
+    PHVectorInt1D & GetGlobalToComputationalFaceIndex() { return globalToComputationalFaceIndex; }
 
-    PHVectorInt1D &GetCompositeFaceType() { return compositeFaceType; };
-    PHVectorInt1D &GetChildrenToCompositeFaceIndex() { return childrenToCompositeFaceIndex; }
-    PHVectorInt1D &GetCompositeToChildrenFaceIndex() { return compositeToChildrenFaceIndex; }
-    PHVectorInt1D &GetMiddleNodeOfEdge() { return middleNodeOfEdge; };
+    PHVectorInt1D & GetCompositeFaceType() { return compositeFaceType; }
+    PHVectorInt1D & GetChildrenToCompositeFaceIndex() { return childrenToCompositeFaceIndex; }
+    PHVectorInt1D & GetCompositeToChildrenFaceIndex() { return compositeToChildrenFaceIndex; }
+    PHVectorInt1D & GetMiddleNodeOfEdge() { return middleNodeOfEdge; }
 
-    PHVectorRDouble1D &GetFaceArea() { return faceArea; };
-    PHVectorRDouble1D &GetFaceNormalX() { return faceNormalX; }
-    PHVectorRDouble1D &GetFaceNormalY() { return faceNormalY; }
-    PHVectorRDouble1D &GetFaceNormalZ() { return faceNormalZ; }
+    PHVectorRDouble1D & GetFaceArea() { return faceArea; }
+    PHVectorRDouble1D & GetFaceNormalX() { return faceNormalX; }
+    PHVectorRDouble1D & GetFaceNormalY() { return faceNormalY; }
+    PHVectorRDouble1D & GetFaceNormalZ() { return faceNormalZ; }
 
     int GetNTotalCompositeFaces() { return static_cast<int>(compositeFace2Node.size()); }
 
-    set < MultiIndex > &GetFaceList() { return faceList;};
-    vector< SimpleBC * > &GetFaceBoundaryCondition() { return faceBoundaryCondition; };
+    set < MultiIndex > & GetFaceList() { return faceList; }
+    vector< SimpleBC * > & GetFaceBoundaryCondition() { return faceBoundaryCondition; }
 
     int GetNTotalFaces();
     int GetNBoundaryFaces();
