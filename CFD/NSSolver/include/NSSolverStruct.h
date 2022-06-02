@@ -189,6 +189,14 @@ private:
 
     void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    //! To execute the forward sweep of the Matrix LU-SGS method.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
+    void SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    //! To execute the backward sweep of the Matix LU-SGS method.
+    //! @param[in ]: gridIn denotes the current computational regions of the grids.
+    //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
+    void SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
     //! To determine the CFL number of the next iteration step.
     void DetermineCFLNumber(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqProxy1);
