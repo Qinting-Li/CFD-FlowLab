@@ -745,6 +745,8 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
     vector <int> bcTypeList;
     set<string> bcNameSet;
     count = 0;
+
+    UnstructBCSet **bcrs = new UnstructBCSet *[nBoundFace];
     vector< FluentFacePatch * > &face_patchs = GetFluentFacePatchS();
     for (std::size_t m = 0; m < face_patchs.size(); ++ m)
     {
@@ -761,9 +763,17 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
             bcTypeList.push_back(bc_type);
             bcNameList.push_back(bcNam);
             bcNameSet.insert(bcNameList[count]);
+
+            bcrs[count] = new UnstructBCSet();
+            bcrs[count]->SetKey(bc_type);
+            bcrs[count]->SetBCName(bcNam);
+
             ++ count;
         }
     }
+
+    grid->SetBCRecord(bcrs);
+
     int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
     grid->CreateUnstructBCSet(nBCRegionUnstruct);
 

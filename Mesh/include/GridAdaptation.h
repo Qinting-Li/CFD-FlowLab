@@ -42,22 +42,22 @@ protected:
     int numberOfNodes;
     int numberOfElements;
 public:
-    PHVectorInt1D & GetLeftElementIndexContainer () { return leftElementIndexContainer;  };
-    PHVectorInt1D & GetRightElementIndexContainer() { return rightElementIndexContainer; };
+    PHVectorInt1D & GetLeftElementIndexContainer () { return leftElementIndexContainer;  }
+    PHVectorInt1D & GetRightElementIndexContainer() { return rightElementIndexContainer; }
     PHVectorInt2D & GetFaceNodeIndexesContainer  () { return faceNodeIndexesContainer;   }
 public:
-    int  GetNumberOfFaces() { return numberOfFaces;   }
-    void SetNumberOfFaces(int numberOfFaces) { this->numberOfFaces = numberOfFaces;   }
+    int  GetNumberOfFaces() { return numberOfFaces; }
+    void SetNumberOfFaces(int numberOfFaces) { this->numberOfFaces = numberOfFaces; }
 
     int  GetNumberOfNodes() { return numberOfNodes; }
-    void SetNumberOfNodes(int numberOfNodes) { this->numberOfNodes = numberOfNodes;   }
+    void SetNumberOfNodes(int numberOfNodes) { this->numberOfNodes = numberOfNodes; }
 
     int  GetNumberOfElements() { return numberOfElements; }
     void SetNumberOfElements(int numberOfElements) { this->numberOfElements = numberOfElements; }
 public:
-    PHVector1D< set< int > > & GetNodeToElement   () { return nodeToElement;    };
-    PHVector1D< set< int > > & GetElementToNode   () { return elementToNode;    };
-    PHVector1D< set< int > > & GetElementToElement() { return elementToElement; };
+    PHVector1D< set< int > > & GetNodeToElement   () { return nodeToElement;    }
+    PHVector1D< set< int > > & GetElementToNode   () { return elementToNode;    }
+    PHVector1D< set< int > > & GetElementToElement() { return elementToElement; }
 };
 
 class AdaptivePropertySolver
@@ -66,11 +66,11 @@ public:
     AdaptivePropertySolver();
     ~AdaptivePropertySolver();
 protected:
-    ComputationalElementSolver * computationalElementSolver;
-    ZoneGridSolver * zoneGridSolver;
+    ComputationalElementSolver *computationalElementSolver;
+    ZoneGridSolver *zoneGridSolver;
 public:
-    ZoneGridSolver * GetZoneGridSolver() { return zoneGridSolver;       }
-    void               SetZoneGridSolver(ZoneGridSolver * zoneGridSolver) { this->zoneGridSolver = zoneGridSolver; }
+    ZoneGridSolver * GetZoneGridSolver() { return zoneGridSolver; }
+    void SetZoneGridSolver(ZoneGridSolver *zoneGridSolver) { this->zoneGridSolver = zoneGridSolver; }
     ComputationalElementSolver * GetComputationalElementSolver() { return computationalElementSolver; }
 public:
     void ReComputeAdaptionProperty();
@@ -84,12 +84,12 @@ protected:
     void ReComputeAdaptionPropertyWarp();
     bool ReComputeAdaptionPropertyEveryIteration();
 protected:
-    void MergeElement(int computationalElementIndex, bool & iterationFlag);
-    void SplitElement(int computationalElementIndex, bool & iterationFlag);
+    void MergeElement(int computationalElementIndex, bool &iterationFlag);
+    void SplitElement(int computationalElementIndex, bool &iterationFlag);
 
-    void CheckParentElementForMerge  (int computationalElementIndex, bool & iterationFlag);
-    void CheckChildElementForMerge   (int computationalElementIndex, bool & iterationFlag);
-    void CheckNeighborElementForMerge(int computationalElementIndex, bool & iterationFlag);
+    void CheckParentElementForMerge  (int computationalElementIndex, bool &iterationFlag);
+    void CheckChildElementForMerge   (int computationalElementIndex, bool &iterationFlag);
+    void CheckNeighborElementForMerge(int computationalElementIndex, bool &iterationFlag);
 
     void SetComputationalElementModifiedStatus(int computationalElementIndex, int status);
     int  GetComputationalElementModifiedStatus(int computationalElementIndex);

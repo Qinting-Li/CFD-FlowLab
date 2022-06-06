@@ -54,7 +54,6 @@ opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
 opt_build(TUTORIAL "Build Tutorial or not" OFF) #Build API tutorials or not.
 opt(INHOUSE_VERSION "Build In-house version or not" ON) #Build In-house version or not.
 opt_build(IncompressibleSolver "Build In-house version or not" OFF) #Build IncompressibleSolver or not.
-opt_build(MultiSpecies "Build MultiSpecies module or not" OFF) #Build MultiSpecies or not.
 opt(TecplotLib "Use tecplot lib to dump binary flow file" OFF) #Use tecplotlib or not.
 opt_build(LBM "Build LBM module or not" OFF) #Build LBM or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
@@ -143,11 +142,6 @@ if(BUILD_HyFLOW)
   message(STATUS "BUILD_HyFLOW is turned on!")
   add_definitions(-DUSE_HYFLOW_CODE)
 endif(BUILD_HyFLOW)
-
-if(BUILD_MultiSpecies)
-  message(STATUS "BUILD_MultiSpeciesis turned on!")
-  add_definitions(-DUSE_MULTISPECIES_CODE)
-endif(BUILD_MultiSpecies)
 
 if(USE_TecplotLib)
   message(STATUS "USE_TecplotLib is turned on!")

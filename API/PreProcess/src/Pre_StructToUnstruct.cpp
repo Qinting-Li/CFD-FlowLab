@@ -222,6 +222,7 @@ void Pre_StructToUnstruct::ConstructBCType()
 
         int nBoundFace = strGrid->GetNBoundFace();
         unsGrid->SetNBoundFace(nBoundFace);
+        UnstructBCSet **bcrs = new UnstructBCSet * [nBoundFace];
 
         int boundFaceIndex = 0;
         StructBCSet *structBCSet = strGrid->GetStructBCSet();
@@ -257,12 +258,17 @@ void Pre_StructToUnstruct::ConstructBCType()
                         vector<int>* faceIndex = unstructBC->GetFaceIndex();
                         faceIndex->push_back(boundFaceIndex);
 
+                        bcrs[boundFaceIndex] = new UnstructBCSet();
+                        bcrs[boundFaceIndex]->SetBCName(bcName);
+                        bcrs[boundFaceIndex]->SetKey(BCType);
+
                         boundFaceIndex ++;
                     }
                 }
             }
         }
         unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
+        unsGrid->SetBCRecord(bcrs);
     }
 }
 

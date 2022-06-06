@@ -102,11 +102,11 @@ void MBGridFactory::Register(UnstructGrid * grid)
     }
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
+    int nBCRegion = unstructBCSet->GetnBCRegion();
 
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
         int bcType = bcRegion->GetBCType();
 
         vector<int> *faceIndex = bcRegion->GetFaceIndex();

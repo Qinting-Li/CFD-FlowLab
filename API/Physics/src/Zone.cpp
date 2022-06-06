@@ -13,9 +13,7 @@
 #ifdef USE_HYFLOW_CODE
 #include "RealGas.h"
 #include "EquilibriumGas.h"
-#endif
-
-#ifdef USE_MULTISPECIES_CODE
+#else
 #include "MixedGas.h"
 #endif
 
@@ -259,9 +257,7 @@ void InitGlobalValuesSolver()
         {
             #ifdef USE_HYFLOW_CODE
             gas = new RealGas();
-            #endif
-
-            #ifdef USE_MULTISPECIES_CODE
+            #else
             gas = new MixedGas();
             #endif
         }
