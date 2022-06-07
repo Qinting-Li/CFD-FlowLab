@@ -23,22 +23,22 @@ namespace PHSPACE
 {
 #define TURB_EPSILON_WALL TURB_EPSILON_WALL
 
-	class PBBoundaryTurbEpsilonWall : public PBBoundaryScalar
-	{
-	public:
-		PBBoundaryTurbEpsilonWall(const string& name);
-		virtual ~PBBoundaryTurbEpsilonWall();
+    class PBBoundaryTurbEpsilonWall : public PBBoundaryScalar
+    {
+    public:
+        PBBoundaryTurbEpsilonWall(const string &name);
+        virtual ~PBBoundaryTurbEpsilonWall();
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-	protected:
-		RDouble cmu;
-		RDouble cmu25_;
-		RDouble cmu75_;
-		RDouble cappa_;
-		RDouble yptr_;
-	};
+    protected:
+        RDouble cmu;
+        RDouble cmu25_;
+        RDouble cmu75_;
+        RDouble cappa_;
+        RDouble yptr_;
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbEpsilonWall, TURB_EPSILON_WALL);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbEpsilonWall, TURB_EPSILON_WALL);
 } // PB_SPACE

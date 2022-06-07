@@ -5,14 +5,13 @@ using namespace std;
 
 namespace PHSPACE
 {
-	PBBoundaryFlow::PBBoundaryFlow(const string& name)
-		:PBBoundary(name)
-	{
+    PBBoundaryFlow::PBBoundaryFlow(const string &name):PBBoundary(name)
+    {
 
-	}
+    }
 
-	PBBoundaryFlow::~PBBoundaryFlow()
-	{
+    PBBoundaryFlow::~PBBoundaryFlow()
+    {
 
-	}
+    }
 }

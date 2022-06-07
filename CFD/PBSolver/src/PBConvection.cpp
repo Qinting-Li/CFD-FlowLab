@@ -2,16 +2,15 @@
 
 namespace PHSPACE
 {
-	PBConvection::PBConvection(const string& name)
-		:PBObject(name)
-	{
+    PBConvection::PBConvection(const string& name):PBObject(name)
+    {
 
-	}
+    }
 
-	PBConvection::~PBConvection()
-	{
+    PBConvection::~PBConvection()
+    {
 
-	}
+    }
 
-	DEFINE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvection, CONVECTION_EMPTY);
+    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvection, CONVECTION_EMPTY);
 }

@@ -19,20 +19,20 @@
 namespace PHSPACE
 {
 #define ITERSOLV_BiCGSTAB BiCGSTAB
-	
-	class PBIterSolvBiCGSTAB : public PBIterSolv
-	{
-	public:
-		PBIterSolvBiCGSTAB(const string& name);
-		~PBIterSolvBiCGSTAB();
 
-		virtual void Run(Region& region, vector<int>& zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
-			             string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
+    class PBIterSolvBiCGSTAB : public PBIterSolv
+    {
+    public:
+        PBIterSolvBiCGSTAB(const string &name);
+        ~PBIterSolvBiCGSTAB();
 
-	protected:
-		virtual void Calc(int nfaces, int ncells, int* leftCellOfFace, int* rightCellOfFace, RDouble* ap, RDouble* ajLeft, RDouble* ajRight, RDouble* sc,
-			              RDouble* rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
-	};
+        virtual void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
+            string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolvBiCGSTAB, ITERSOLV_BiCGSTAB);
+    protected:
+        virtual void Calc(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace, RDouble *ap, RDouble *ajLeft, RDouble *ajRight, RDouble *sc,
+            RDouble *rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
+    };
+
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolvBiCGSTAB, ITERSOLV_BiCGSTAB);
 }

@@ -35,18 +35,18 @@ public:
     ~PBSolver();
 
 public:
-    virtual void AllocateGlobalVar(Grid * grid);
+    virtual void AllocateGlobalVar(Grid *grid);
     virtual void DeAllocateGlobalVar(Grid *grid);
-    virtual void ZeroResiduals(Grid * grid);
-    virtual void TimeStep(Grid * grid);
+    virtual void ZeroResiduals(Grid *grid);
+    virtual void TimeStep(Grid *grid);
     virtual void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
     virtual void SourceFlux(Grid *grid);
     virtual void InviscidFlux(Grid *grid);
     virtual void ViscousFlux(Grid *grid);
     virtual void RungeKutta(Grid *grid, FieldProxy *rhs_proxy);
     virtual void Post();
-    virtual void PostSolve(Grid * grid, int stage, int level);
-    virtual RDouble UnsteadyConvergence(Grid* grid);
+    virtual void PostSolve(Grid *grid, int stage, int level);
+    virtual RDouble UnsteadyConvergence(Grid *grid);
 
 
     virtual void InitMemory() {};
@@ -55,8 +55,8 @@ public:
     virtual void ReinitField() = 0;
     virtual void UpdateBoundary() = 0;
     //virtual bool SolutionIsConverged() = 0;
-	virtual void OutputResidual(ofstream& file, int flag)=0;
-	
+    virtual void OutputResidual(ofstream &file, int flag)=0;
+
     inline void SetControllerName(string name) { this->controllerName = name; }
     inline std::string GetControllerName() { return this->controllerName; }
     inline void SetNSolvers(int nSolvers) { this->nSolvers = nSolvers; }
@@ -65,14 +65,14 @@ public:
     inline std::string GetPrintName() { return this->printName; }
 
 public: //! Extended parallel communication
-    virtual void CommunicateInterfaceData(vector<string>& nameList);
-    virtual void UploadInterfaceData(vector<string>& nameList);
-    virtual void DownloadInterfaceData(vector<string>& nameList);
-    virtual void UploadInterfaceValue(vector<string>& nameList);
-    virtual void DownloadInterfaceValue(vector<string>& nameList);
+    virtual void CommunicateInterfaceData(vector<string> &nameList);
+    virtual void UploadInterfaceData(vector<string> &nameList);
+    virtual void DownloadInterfaceData(vector<string> &nameList);
+    virtual void UploadInterfaceValue(vector<string> &nameList);
+    virtual void DownloadInterfaceValue(vector<string> &nameList);
     virtual void UpdateInterfaceData();
     virtual void CommunicationInterfaceData();
-    virtual void FillActionKey(ActionKey* actkey, int action, int level);
+    virtual void FillActionKey(ActionKey *actkey, int action, int level);
 
 private:
     std::string printName;            //! Screen output variable names

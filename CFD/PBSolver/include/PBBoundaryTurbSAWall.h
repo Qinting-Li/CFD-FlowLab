@@ -23,15 +23,15 @@ namespace PHSPACE
 {
 #define TURB_SA_WALL TURB_SA_WALL
 
-	class PBBoundaryTurbSAWall : public PBBoundaryScalarDiffusion
-	{
-	public:
-		PBBoundaryTurbSAWall(const string& name);
-		virtual ~PBBoundaryTurbSAWall();
+    class PBBoundaryTurbSAWall : public PBBoundaryScalarDiffusion
+    {
+    public:
+        PBBoundaryTurbSAWall(const string &name);
+        virtual ~PBBoundaryTurbSAWall();
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
-		
-	};
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbSAWall, TURB_SA_WALL);
+    };
+
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbSAWall, TURB_SA_WALL);
 } // PB_SPACE

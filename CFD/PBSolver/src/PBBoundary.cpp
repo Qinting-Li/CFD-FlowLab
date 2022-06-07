@@ -3,16 +3,15 @@
 
 namespace PHSPACE
 {
-	PBBoundary::PBBoundary(const string& name)
-		:PBObject(name)
-	{
+    PBBoundary::PBBoundary(const string &name):PBObject(name)
+    {
 
-	}
+    }
 
-	PBBoundary::~PBBoundary()
-	{
+    PBBoundary::~PBBoundary()
+    {
 
-	}
+    }
 
-	DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundary, BOUNDARY_EMPTY);
+    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundary, BOUNDARY_EMPTY);
 }
