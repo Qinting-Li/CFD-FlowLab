@@ -39,7 +39,7 @@ namespace PHSPACE
     class PBObject
     {
     public:
-        PBObject(const std::string& name) : name(name) {}
+        PBObject(const std::string &name) : name(name) {}
         virtual ~PBObject() {}
 
     public:
@@ -47,11 +47,11 @@ namespace PHSPACE
         //! @return name。
         inline const std::string& Name() { return name; }
 
-	protected:
-		const std::string name_; //!object name。
+    protected:
+        const std::string name_; //!object name。
 
         //! Get one string type data from database by name.
-        std::string ObjGetStrParaFromDB(const std::string& name, std::string defaultValue)
+        std::string ObjGetStrParaFromDB(const std::string &name, std::string defaultValue)
         {
             if (GlobalDataBase::GetDataPara()->IsExist(name, PHSTRING, 1))
             {
@@ -64,7 +64,7 @@ namespace PHSPACE
         }
 
         //! Get one integer type data from database by name.
-        int ObjGetIntParaFromDB(const std::string& name, int defaultValue)
+        int ObjGetIntParaFromDB(const std::string &name, int defaultValue)
         {
             if (GlobalDataBase::GetDataPara()->IsExist(name, PHINT, 1))
             {
@@ -77,7 +77,7 @@ namespace PHSPACE
         }
 
         //! Get one double type data from database by name.
-        double ObjGetDoubleParaFromDB(const std::string& name, double defaultValue)
+        double ObjGetDoubleParaFromDB(const std::string &name, double defaultValue)
         {
             if (GlobalDataBase::GetDataPara()->IsExist(name, PHDOUBLE, 1))
             {
@@ -89,12 +89,12 @@ namespace PHSPACE
             }
         }
 
-        //! @brief Allocate variable memory。
+        //! @brief Allocate variable memory.
         //! @param name 
         //! @param size 
         //! @param grid 
         //! @return param pointers
-        inline RDouble* ObjAllocateMemory(const std::string& name, const int size, const RDouble init = 0.0, Grid* grid = NULL)
+        inline RDouble *ObjAllocateMemory(const std::string &name, const int size, const RDouble init = 0.0, Grid *grid = NULL)
         {
             if (grid != NULL)
             {
@@ -104,14 +104,14 @@ namespace PHSPACE
                 }
             }
 
-            RDouble* phi = new RDouble[size];
+            RDouble *phi = new RDouble[size];
 
             if (grid != NULL)
             {
                 grid->UpdateDataPtr(name, phi);
             }
 
-            for (int i = 0; i < size; ++i)
+            for (int i = 0; i < size; ++ i)
             {
                 phi[i] = init;
             }
@@ -120,13 +120,13 @@ namespace PHSPACE
         }
 
     private:
-        std::string name; //! Object name。
+        std::string name; //! Object name.
     };
 
 #define DEFINE_PBOBJECT_FACTORY(ObjectTypeName) \
-	typedef ObjectTypeName *(* Creator##ObjectTypeName)(const std::string &name); \
-	typedef std::map<std::string, Creator##ObjectTypeName> CreatorRegistry##ObjectTypeName; \
-	class ObjectTypeName##Factory \
+    typedef ObjectTypeName *(* Creator##ObjectTypeName)(const std::string &name); \
+    typedef std::map<std::string, Creator##ObjectTypeName> CreatorRegistry##ObjectTypeName; \
+    class ObjectTypeName##Factory \
     { \
     public: \
         static CreatorRegistry##ObjectTypeName &Registry() \

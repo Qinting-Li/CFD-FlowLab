@@ -21,18 +21,18 @@ namespace PHSPACE
 {
 #define ENERGY_OUTLET ENERGY_OUTLET 
 
-	class PBBoundaryEnergyOutlet : public PBBoundaryEnergyDefault
-	{
-	public:
-		PBBoundaryEnergyOutlet(const string& name);
-		virtual ~PBBoundaryEnergyOutlet();
+    class PBBoundaryEnergyOutlet : public PBBoundaryEnergyDefault
+    {
+    public:
+        PBBoundaryEnergyOutlet(const string &name);
+        virtual ~PBBoundaryEnergyOutlet();
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-	};
+    };
 
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyOutlet, ENERGY_OUTLET);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyOutlet, ENERGY_OUTLET);
 }

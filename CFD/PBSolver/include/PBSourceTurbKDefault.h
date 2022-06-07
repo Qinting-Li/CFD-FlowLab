@@ -22,15 +22,15 @@ namespace PHSPACE
 {
 #define SOURCE_TURB_K_DEFAULT TURB_K_DEFAULT
 
-	class PBSourceTurbKDefault : public PBSource
-	{
-	public:
-		PBSourceTurbKDefault(const string& name);
-		virtual ~PBSourceTurbKDefault();
+    class PBSourceTurbKDefault : public PBSource
+    {
+    public:
+        PBSourceTurbKDefault(const string &name);
+        virtual ~PBSourceTurbKDefault();
 
-		virtual void InitMemory(UnstructGrid* grid, string phiName);
-		virtual void Discrt(UnstructGrid* grid, string phiName);
-	};
+        virtual void InitMemory(UnstructGrid *grid, string phiName);
+        virtual void Discrt(UnstructGrid *grid, string phiName);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceTurbKDefault, SOURCE_TURB_K_DEFAULT);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceTurbKDefault, SOURCE_TURB_K_DEFAULT);
 }

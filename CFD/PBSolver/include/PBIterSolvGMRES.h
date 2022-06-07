@@ -20,22 +20,22 @@ namespace PHSPACE
 {
 #define ITERSOLV_GMRES GMRES
 
-	class PBIterSolvGMRES : public PBIterSolv
-	{
-	public:
-		PBIterSolvGMRES(const string& name);
-		~PBIterSolvGMRES();
+    class PBIterSolvGMRES : public PBIterSolv
+    {
+    public:
+        PBIterSolvGMRES(const string &name);
+        ~PBIterSolvGMRES();
 
-		void GMRESUpdate(RDouble** H, RDouble* x, RDouble* beta, vector<RDouble*>& Q, int iteration, int ncells);
+        void GMRESUpdate(RDouble **H, RDouble *x, RDouble *beta, vector<RDouble *> &Q, int iteration, int ncells);
 
-		virtual void Run(Region& region, vector<int>& zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
-			             string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
+        virtual void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
+            string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
 
-	protected:
-		virtual void Calc(int nfaces, int ncells, int* leftCellOfFace, int* rightCellOfFace,
-			              RDouble* ap, RDouble* ajLeft, RDouble* ajRight, RDouble* sc,
-			              RDouble* rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
-	};
+    protected:
+        virtual void Calc(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace,
+            RDouble *ap, RDouble *ajLeft, RDouble *ajRight, RDouble *sc,
+            RDouble *rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolvGMRES, ITERSOLV_GMRES);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolvGMRES, ITERSOLV_GMRES);
 }

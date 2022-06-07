@@ -23,13 +23,13 @@ namespace PHSPACE
 {
 #define TURB_DEFAULT TURB_DEFAULT
 
-	class PBBoundaryTurbDefault : public PBBoundaryScalarDefault
-	{
-	public:
-		PBBoundaryTurbDefault(const string& name);
-		virtual ~PBBoundaryTurbDefault();
-	};
+    class PBBoundaryTurbDefault : public PBBoundaryScalarDefault
+    {
+    public:
+        PBBoundaryTurbDefault(const string &name);
+        virtual ~PBBoundaryTurbDefault();
+    };
 
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbDefault, TURB_DEFAULT);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbDefault, TURB_DEFAULT);
 } // PB_SPACE

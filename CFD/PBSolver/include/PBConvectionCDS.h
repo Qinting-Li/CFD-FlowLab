@@ -21,20 +21,20 @@ namespace PHSPACE
 {
 #define CONVECTION_CDS CDS
 
-	class PBConvectionCDS : public PBConvection
-	{
-	public:
-		PBConvectionCDS(const string& name);
-		virtual ~PBConvectionCDS();
+    class PBConvectionCDS : public PBConvection
+    {
+    public:
+        PBConvectionCDS(const string &name);
+        virtual ~PBConvectionCDS();
 
-		//! @brief Central difference scheme.
-		//! @param[in]: gridIn denotes the current computational regions of the grids.
-		//! @param[in]: phiName denotes the name of parameter. 
-		//! @param[out]: apName denotes the leading diagonal.
-		//! @param[out]: scName denotes the right-hand side. 
-		virtual void Discrt(UnstructGrid* grid, string phiName, string apName, string scName, RDouble* v = NULL,
-			                RDouble* apV = NULL, RDouble* scV = NULL, RDouble* w = NULL, RDouble* apW = NULL, RDouble* scW = NULL);
-	};
+        //! @brief Central difference scheme.
+        //! @param[in]: gridIn denotes the current computational regions of the grids.
+        //! @param[in]: phiName denotes the name of parameter. 
+        //! @param[out]: apName denotes the leading diagonal.
+        //! @param[out]: scName denotes the right-hand side. 
+        virtual void Discrt(UnstructGrid *grid, string phiName, string apName, string scName, RDouble *v = NULL,
+            RDouble *apV = NULL, RDouble *scV = NULL, RDouble *w = NULL, RDouble *apW = NULL, RDouble *scW = NULL);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvectionCDS, CONVECTION_CDS);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvectionCDS, CONVECTION_CDS);
 }

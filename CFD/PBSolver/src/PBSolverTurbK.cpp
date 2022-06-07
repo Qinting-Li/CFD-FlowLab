@@ -10,8 +10,7 @@ using namespace std;
 
 namespace PHSPACE
 {
-    PBSolverTurbK::PBSolverTurbK(const string &name)
-        :PBSolverScalar(name), prandtl(1.0), cmu(0.09), urfMu(1.0)
+    PBSolverTurbK::PBSolverTurbK(const string &name):PBSolverScalar(name), prandtl(1.0), cmu(0.09), urfMu(1.0)
     {
         urfMu = ObjGetDoubleParaFromDB("urfMu", 1.0);
     }
@@ -94,7 +93,7 @@ namespace PHSPACE
 
     void PBSolverTurbK::CalcGenTerm()
     {
-        //! Calculate the gradient of U, V and W;
+        //! Calculate the gradient of U, V and W.
         RDouble *u = reinterpret_cast<RDouble*>(grid->GetDataPtr("U"));
         RDouble *v = reinterpret_cast<RDouble*>(grid->GetDataPtr("V"));
         RDouble *w = reinterpret_cast<RDouble*>(grid->GetDataPtr("W"));
@@ -164,7 +163,7 @@ namespace PHSPACE
             diffCoe[iCell] = visl[iCell] + vist[iCell];
         }
 
-        //£¡correct £ºy+ÅÐ¶Ï
+        //! Correct:judge y+.
         for (int iFace = 0; iFace < grid->GetNBoundFace(); ++ iFace)
         {
             int le = grid->GetLeftCellOfFace()[iFace];

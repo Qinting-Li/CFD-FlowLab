@@ -18,15 +18,14 @@
 namespace PHSPACE
 {
 
-    PBSolverFlow::PBSolverFlow(const string &name)
-        :PBSolver(name)
+    PBSolverFlow::PBSolverFlow(const string &name):PBSolver(name)
     {
         phiNameList.push_back("U");
         phiNameList.push_back("V");
         phiNameList.push_back("W");
         phiNameList.push_back("P");
 
-        //£¡ Linear equations iterative solver configuration.
+        //! Linear equations iterative solver configuration.
         iterSolvU = PBIterSolvFactory::CreatePBIterSolv(GlobalDataBase::GetStrParaFromDB("iterSolvU"));
         iterSolvV = PBIterSolvFactory::CreatePBIterSolv(GlobalDataBase::GetStrParaFromDB("iterSolvV"));
         iterSolvW = PBIterSolvFactory::CreatePBIterSolv(GlobalDataBase::GetStrParaFromDB("iterSolvW"));
@@ -180,10 +179,10 @@ namespace PHSPACE
         resW = ObjGetDoubleParaFromDB("resW", 1e-3);
         resP = ObjGetDoubleParaFromDB("resP", 1e-3);
         bodyForceFlag = ObjGetIntParaFromDB("bodyForceFlag", 0);
-        dt = ObjGetDoubleParaFromDB("dt", 1.0),
-            grid = UnstructGridCast(GetGrid());
+        dt = ObjGetDoubleParaFromDB("dt", 1.0);
+        grid = UnstructGridCast(GetGrid());
 
-        //£¡ Boundary calculation object creation.
+        //! Boundary calculation object creation.
         UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
         int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -205,18 +204,18 @@ namespace PHSPACE
                 {
                     bcData->GetData("flowType", &flowType, PHSTRING, 1);
                 }
-                PBBoundary* bound = PBBoundaryFlowFactory::CreatePBBoundaryFlow(flowType);
+                PBBoundary *bound = PBBoundaryFlowFactory::CreatePBBoundaryFlow(flowType);
                 boundCalc.push_back(bound);
             }
         }
 
-        //£¡ Create a flow item calculation object.
+        //! Create a flow item calculation object.
         convCalc = PBConvectionFactory::CreatePBConvection(GlobalDataBase::GetStrParaFromDB("flowConvCalc"));
 
-        //£¡ Diffusion item calculation object creation.
+        //! Diffusion item calculation object creation.
         diffCalc = PBDiffusionFactory::CreatePBDiffusion(GlobalDataBase::GetStrParaFromDB("flowDiffCalc"));
 
-        //£¡ Source item calculation object creation.
+        //! Source item calculation object creation.
         int sourceCalcSize = GlobalDataBase::GetSizeOfData("flowSourceCalc");
         std::string *sourceCalcs = new std::string[sourceCalcSize];
         GlobalDataBase::GetData("flowSourceCalc", sourceCalcs, PHSTRING, sourceCalcSize);
@@ -229,7 +228,7 @@ namespace PHSPACE
 
         delete[] sourceCalcs;
 
-        //£¡ Transient term calculation object.
+        //! Transient term calculation object.
         if (!ObjGetIntParaFromDB("iunsteady", 0))
         {
             tranCalc = PBTransientFactory::CreatePBTransient("EMPTY");
@@ -395,7 +394,7 @@ namespace PHSPACE
         int nBoundFaces = grid->GetNBoundFace();
         int nTotalFaces = grid->GetNTotalFace();
 
-        //£¡ Internal unit surface circulation
+        //! Internal unit surface circulation
         for (int iFace = nBoundFaces; iFace < nTotalFaces; ++ iFace)
         {
             RDouble deltL = this->deltL[iFace];
@@ -530,7 +529,7 @@ namespace PHSPACE
         //! Calculate the residual.
         CalcVelocityRes();
 
-        //! Relax ap¡£
+        //! Relax ap.
         RelaxVelocity();
     }
 
@@ -571,7 +570,7 @@ namespace PHSPACE
             ajRight[iFace] = 0.0;
         }
 
-        //! Form ap¡¢aj and sc.
+        //! Form ap,aj and sc.
         PrimePressureEquations();
 
         //! Calculate the residual.
@@ -635,7 +634,7 @@ namespace PHSPACE
 
     void PBSolverFlow::ComputePostVisualVariables(Post_Visual *postVisualization)
     {
-        UnstructGrid* grid = UnstructGridCast(postVisualization->GetGrid());
+        UnstructGrid *grid = UnstructGridCast(postVisualization->GetGrid());
 
         RDouble *u = reinterpret_cast<RDouble *> (grid->GetDataPtr("U"));
         RDouble *v = reinterpret_cast<RDouble *> (grid->GetDataPtr("V"));
@@ -709,9 +708,9 @@ namespace PHSPACE
         }
     }
 
-    void PBSolverFlow::UpdatePhi(std::string phiName, int cellBegin, int cellEnd, RDouble *phic, RDouble *phi)
+    void PBSolverFlow::UpdatePhi(string phiName, int cellBegin, int cellEnd, RDouble *phic, RDouble *phi)
     {
-        for (int iCell = cellBegin; iCell < cellEnd; ++iCell)
+        for (int iCell = cellBegin; iCell < cellEnd; ++ iCell)
         {
             phi[iCell] += phic[iCell];
         }
@@ -825,10 +824,6 @@ namespace PHSPACE
                 dpdy[ic] += dbfdy[ic] / cv;
                 dpdz[ic] += dbfdz[ic] / cv;
             }
-
-            /*delete[] dbfdx;
-            delete[] dbfdy;
-            delete[] dbfdz;*/
         }
     }
 
@@ -1061,10 +1056,10 @@ namespace PHSPACE
 
         UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
         int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
-		int interfaceIndex = 0;
+        int interfaceIndex = 0;
 
-		for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
-		{
+        for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+        {
             UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
             int bcType = bcRegion->GetBCType();
 

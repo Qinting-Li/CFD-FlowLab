@@ -21,14 +21,14 @@ namespace PHSPACE
 {
 #define SCALAR_DIFFUSION SCALAR_DIFFUSION
 
-	class PBBoundaryScalarDiffusion : public PBBoundaryScalar
-	{
-	public:
-		PBBoundaryScalarDiffusion(const string& name);
-		virtual ~PBBoundaryScalarDiffusion();
+    class PBBoundaryScalarDiffusion : public PBBoundaryScalar
+    {
+    public:
+        PBBoundaryScalarDiffusion(const string &name);
+        virtual ~PBBoundaryScalarDiffusion();
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
-	};
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarDiffusion, SCALAR_DIFFUSION);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarDiffusion, SCALAR_DIFFUSION);
 }

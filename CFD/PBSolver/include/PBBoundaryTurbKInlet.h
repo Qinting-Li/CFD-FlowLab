@@ -23,16 +23,16 @@ namespace PHSPACE
 {
 #define TURB_K_INLET TURB_K_INLET 
 
-	class PBBoundaryTurbKInlet : public PBBoundaryTurbDefault
-	{
-	public:
-		PBBoundaryTurbKInlet(const string& name);
-		virtual ~PBBoundaryTurbKInlet();
+    class PBBoundaryTurbKInlet : public PBBoundaryTurbDefault
+    {
+    public:
+        PBBoundaryTurbKInlet(const string &name);
+        virtual ~PBBoundaryTurbKInlet();
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
-	};
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKInlet, TURB_K_INLET);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKInlet, TURB_K_INLET);
 } // PB_SPACE
