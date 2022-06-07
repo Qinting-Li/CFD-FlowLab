@@ -21,12 +21,12 @@ namespace PHSPACE
 {
 #define ENERGY_DEFAULT ENERGY_DEFAULT 
 
-	class PBBoundaryEnergyDefault : public PBBoundaryScalarDefault
-	{
-	public:
-		PBBoundaryEnergyDefault(const string& name);
-		virtual ~PBBoundaryEnergyDefault();
-	};
+    class PBBoundaryEnergyDefault : public PBBoundaryScalarDefault
+    {
+    public:
+        PBBoundaryEnergyDefault(const string &name);
+        virtual ~PBBoundaryEnergyDefault();
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyDefault, ENERGY_DEFAULT);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyDefault, ENERGY_DEFAULT);
 }

@@ -2,16 +2,15 @@
 
 namespace PHSPACE
 {
-	PBDiffusion::PBDiffusion(const string& name)
-		:PBObject(name)
-	{
+    PBDiffusion::PBDiffusion(const string &name):PBObject(name)
+    {
 
-	}
+    }
 
-	PBDiffusion::~PBDiffusion()
-	{
+    PBDiffusion::~PBDiffusion()
+    {
 
-	}
+    }
 
-	DEFINE_PBSOLVER_REGISTER_FUNCTION(PBDiffusion, PBDiffusion, DIFFUSION_EMPTY);
+    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBDiffusion, PBDiffusion, DIFFUSION_EMPTY);
 }

@@ -8,9 +8,7 @@
 
 namespace PHSPACE
 {
-    PBSolverScalar::PBSolverScalar(const string &name)
-        :PBSolver(name),
-        scalarName("phi")
+    PBSolverScalar::PBSolverScalar(const string &name):PBSolver(name),scalarName("phi")
     {
         iterSolv = PBIterSolvFactory::CreatePBIterSolv(ObjGetStrParaFromDB(Name() + "_IterSolv", "BiCGSTAB"));
         maxSweep = ObjGetIntParaFromDB(Name() + "_MaxSweep", 30);
@@ -225,16 +223,16 @@ namespace PHSPACE
         //! Source term calculation.
         CalcSourceTerm();
 
-        //！ Transient term calculation.
+        //! Transient term calculation.
         CalcTransientTerm();
 
-        //! Form ap and sc。
+        //! Form ap and sc.
         PrimeEquations();
 
         //! Calculate the residual.
         CalcRes();
 
-        //! Relax ap。
+        //! Relax ap.
         Relax();
     }
 
@@ -349,7 +347,7 @@ namespace PHSPACE
         }
     }
 
-    //！correct ：考虑差量对系数的影响
+    //! Correct;considering the influence of difference on coefficient.
     void PBSolverScalar::PrimeEquations()
     {
         for (int iFace = grid->GetNBoundFace(); iFace < grid->GetNTotalFace(); ++ iFace)

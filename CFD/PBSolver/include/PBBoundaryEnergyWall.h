@@ -21,18 +21,18 @@ namespace PHSPACE
 {
 #define ENERGY_WALL ENERGY_WALL
 
-	class PBBoundaryEnergyWall : public PBBoundaryScalarDefault
-	{
-	public:
-		PBBoundaryEnergyWall(const string& name);
-		virtual ~PBBoundaryEnergyWall();
+    class PBBoundaryEnergyWall : public PBBoundaryScalarDefault
+    {
+    public:
+        PBBoundaryEnergyWall(const string &name);
+        virtual ~PBBoundaryEnergyWall();
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-	};
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyWall, ENERGY_WALL);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyWall, ENERGY_WALL);
 }
 

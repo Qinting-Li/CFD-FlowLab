@@ -21,18 +21,18 @@ namespace PHSPACE
 {
 #define TRANSIENT_CRANK_NICOLSON CRANK_NICOLSON
 
-	class PBTransientCrankNicolson : public PBTransient
-	{
-	public:
-		PBTransientCrankNicolson(const string& name);
-		virtual ~PBTransientCrankNicolson();
+    class PBTransientCrankNicolson : public PBTransient
+    {
+    public:
+        PBTransientCrankNicolson(const string &name);
+        virtual ~PBTransientCrankNicolson();
 
-		virtual void AllocateMemory(UnstructGrid* grid, vector<string>& phiName, vector<RDouble>& initPhi);
+        virtual void AllocateMemory(UnstructGrid *grid, vector<string> &phiName, vector<RDouble> &initPhi);
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
-		 
-		virtual void SaveOldTimeValue(UnstructGrid* grid, vector<string>& phiName);
-	};
+        virtual void Discrt(UnstructGrid *grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientCrankNicolson, TRANSIENT_CRANK_NICOLSON);
+        virtual void SaveOldTimeValue(UnstructGrid *grid, vector<string> &phiName);
+    };
+
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientCrankNicolson, TRANSIENT_CRANK_NICOLSON);
 }

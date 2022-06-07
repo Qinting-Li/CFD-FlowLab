@@ -21,19 +21,19 @@ namespace PHSPACE
 {
 #define OUTPUT_EMPTY EMPTY
 
-	class Zone;
+    class Zone;
 
     class PBOutput : public PBObject
     {
     public:
-		PBOutput(const string& name);
+        PBOutput(const string &name);
         virtual ~PBOutput();
 
     public:
-		virtual void Run(Zone* zone, vector<string>& varNameList) {}
+        virtual void Run(Zone *zone, vector<string> &varNameList) {}
     };
 
-	DEFINE_PBOBJECT_FACTORY(PBOutput);
+    DEFINE_PBOBJECT_FACTORY(PBOutput);
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBOutput, PBOutput, OUTPUT_EMPTY);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBOutput, PBOutput, OUTPUT_EMPTY);
 }

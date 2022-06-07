@@ -4,16 +4,15 @@ using namespace std;
 
 namespace PHSPACE
 {
-	PBBoundaryEnergy::PBBoundaryEnergy(const string& name)
-		:PBBoundaryScalar(name)
-	{
-		
-	}
+    PBBoundaryEnergy::PBBoundaryEnergy(const string &name):PBBoundaryScalar(name)
+    {
 
-	PBBoundaryEnergy::~PBBoundaryEnergy()
-	{
+    }
 
-	}
+    PBBoundaryEnergy::~PBBoundaryEnergy()
+    {
 
-	DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergy, ENERGY_EMPTY);
+    }
+
+    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergy, ENERGY_EMPTY);
 }

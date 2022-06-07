@@ -23,7 +23,7 @@ namespace PHSPACE
 {
 #define BOUNDARY_EMPTY EMPTY
 
-	class Data_Param;
+    class Data_Param;
 
     class PBBoundary : public PBObject
     {
@@ -31,17 +31,17 @@ namespace PHSPACE
         PBBoundary(const string &name);
         virtual ~PBBoundary();
 
-	public:
-		virtual void Init(string phiName) {}
+    public:
+        virtual void Init(string phiName) {}
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe) {}
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe) {}
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData) {}
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData) {}
 
-		virtual void WallModification(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData) {}
+        virtual void WallModification(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData) {}
     };
 
-	DEFINE_PBOBJECT_FACTORY(PBBoundary);
+    DEFINE_PBOBJECT_FACTORY(PBBoundary);
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundary, BOUNDARY_EMPTY);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundary, BOUNDARY_EMPTY);
 }

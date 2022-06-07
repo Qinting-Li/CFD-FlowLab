@@ -21,19 +21,19 @@ namespace PHSPACE
 {
 #define SCALAR_EMPTY SCALAR_EMPTY 
 
-	class PBBoundaryScalar : public PBBoundary
-	{
-	public:
-		PBBoundaryScalar(const string& name);
-		virtual ~PBBoundaryScalar();
+    class PBBoundaryScalar : public PBBoundary
+    {
+    public:
+        PBBoundaryScalar(const string &name);
+        virtual ~PBBoundaryScalar();
 
-	public:
-		virtual void Init(string phiName) {};
+    public:
+        virtual void Init(string phiName) {};
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe) {};
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe) {};
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
-	};
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalar, SCALAR_EMPTY);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalar, SCALAR_EMPTY);
 }

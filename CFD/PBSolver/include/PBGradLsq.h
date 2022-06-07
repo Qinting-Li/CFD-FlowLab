@@ -21,14 +21,14 @@ namespace PHSPACE
 {
 #define GRAD_LSQ LSQ
 
-	class PBGradLsq : public PBGrad
-	{
-	public:
-		PBGradLsq(const string& name);
-		virtual ~PBGradLsq();
+    class PBGradLsq : public PBGrad
+    {
+    public:
+        PBGradLsq(const string &name);
+        virtual ~PBGradLsq();
 
-		virtual void Calc(UnstructGrid* grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
-	};
+        virtual void Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGradLsq, GRAD_LSQ);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGradLsq, GRAD_LSQ);
 }

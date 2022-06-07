@@ -24,7 +24,7 @@ namespace PHSPACE
     class PBSolverEnergy : public PBSolverScalar
     {
     public:
-        PBSolverEnergy(const string& name);
+        PBSolverEnergy(const string &name);
         ~PBSolverEnergy();
 
     public:
@@ -36,10 +36,10 @@ namespace PHSPACE
         virtual void Relax();
         virtual void Update();
         virtual void UpdateProperties();
-        virtual void SetOutputs(vector<string>& phiNameList);
+        virtual void SetOutputs(vector<string> &phiNameList);
         virtual bool SolutionIsConverged();
-        virtual void ComputePostVisualVariables(Post_Visual* postVisualization);
-        virtual void OutputResidual(ofstream& file, int flag);
+        virtual void ComputePostVisualVariables(Post_Visual *postVisualization);
+        virtual void OutputResidual(ofstream &file, int flag);
 
     protected:
         RDouble initT;
@@ -50,17 +50,17 @@ namespace PHSPACE
         RDouble initCPg;
         RDouble tMax;
         RDouble tMin;
-        RDouble* cpg;
-        RDouble* cpgb;
-        RDouble* k;
-        RDouble* kb;
-        RDouble* muT;
-        RDouble* muTb;
-        RDouble* h;
-        RDouble* hb;
-        RDouble* t;
-        RDouble* tb;
-        std::string* energyPrintName;
+        RDouble *cpg;
+        RDouble *cpgb;
+        RDouble *k;
+        RDouble *kb;
+        RDouble *muT;
+        RDouble *muTb;
+        RDouble *h;
+        RDouble *hb;
+        RDouble *t;
+        RDouble *tb;
+        std::string *energyPrintName;
     };
 
     DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverEnergy, SOLVER_ENERGY);

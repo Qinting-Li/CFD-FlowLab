@@ -23,20 +23,20 @@ namespace PHSPACE
 {
 #define TURB_EPSILON_INLET TURB_EPSILON_INLET 
 
-	class PBBoundaryTurbEpsilonInlet : public PBBoundaryTurbDefault
-	{
-	public:
-		PBBoundaryTurbEpsilonInlet (const string& name);
-		virtual ~PBBoundaryTurbEpsilonInlet ();
+    class PBBoundaryTurbEpsilonInlet : public PBBoundaryTurbDefault
+    {
+    public:
+        PBBoundaryTurbEpsilonInlet (const string &name);
+        virtual ~PBBoundaryTurbEpsilonInlet ();
 
-		virtual void Update(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData);
+        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-		virtual void Discrt(UnstructGrid* grid, string phiName, vector<int>* faceIndex, Data_Param* bcData, RDouble* diffCoe);
+        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-	protected:
-		RDouble cmu;
-	};
+    protected:
+        RDouble cmu;
+    };
 
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbEpsilonInlet, TURB_EPSILON_INLET);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbEpsilonInlet, TURB_EPSILON_INLET);
 } // PB_SPACE

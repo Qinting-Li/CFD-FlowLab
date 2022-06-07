@@ -23,18 +23,18 @@ namespace PHSPACE
 {
 #define SOURCE_ENERGY_DISSIPATION ENERGY_DISSIPATION
 
-	class PBSourceEnergyDissipation : public PBSource
-	{
-	public:
-		PBSourceEnergyDissipation(const string& name);
-		virtual ~PBSourceEnergyDissipation();
+    class PBSourceEnergyDissipation : public PBSource
+    {
+    public:
+        PBSourceEnergyDissipation(const string &name);
+        virtual ~PBSourceEnergyDissipation();
 
-		virtual void Discrt(UnstructGrid* grid, string phiName);
+        virtual void Discrt(UnstructGrid *grid, string phiName);
 
-	protected:
-		virtual void DiscrtProxy(UnstructGrid* grid);
-	};
+    protected:
+        virtual void DiscrtProxy(UnstructGrid *grid);
+    };
 
-	DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceEnergyDissipation, SOURCE_ENERGY_DISSIPATION);
+    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceEnergyDissipation, SOURCE_ENERGY_DISSIPATION);
 }
 
