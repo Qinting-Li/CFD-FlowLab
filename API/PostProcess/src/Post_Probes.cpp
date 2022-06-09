@@ -199,9 +199,9 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
             NecessaryVarForInterpolation(unstructGrid, iProbe, neighborCell, numerator,interpolationCellsID, true);
         }
 
-        for (int iface = 0; iface < faceNumberOfEachCell[probeCell]; ++ iface)
+        for (int iFace = 0; iFace < faceNumberOfEachCell[probeCell]; ++ iFace)
         {
-            int faceID = cell2face[probeCell][iface];
+            int faceID = cell2face[probeCell][iFace];
 
             if (faceID < nBoundFace)
             {
@@ -213,10 +213,10 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
         int nCells = interpolationCellsID.size();
         RDouble denominator = SUMMARY(numerator, nCells);
 
-        for (int icell = 0; icell < nCells; ++ icell)
+        for (int iCell = 0; iCell < nCells; ++ iCell)
         {
-            RDouble weightCoef = numerator[icell] / denominator;
-            int cellID = interpolationCellsID[icell];
+            RDouble weightCoef = numerator[iCell] / denominator;
+            int cellID = interpolationCellsID[iCell];
             q_probes[iProbe] += cellCenterData[cellID] * weightCoef;
         }
     }
@@ -257,10 +257,10 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble *c
         int nNodes = interpolationNodesID.size();
         RDouble denominator = SUMMARY(numerator, nNodes);
 
-        for (int inode = 0; inode < nNodes; ++ inode)
+        for (int iNode = 0; iNode < nNodes; ++ iNode)
         {
-            RDouble weightCoef = numerator[inode] / denominator;
-            int nodeID = interpolationNodesID[inode];
+            RDouble weightCoef = numerator[iNode] / denominator;
+            int nodeID = interpolationNodesID[iNode];
             q_probes[iProbe] += qn[nodeID] * weightCoef;
         }
     }
@@ -369,12 +369,12 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble4D 
         int nCells = interpolationCellsID.size();
         RDouble denominator = SUMMARY(numerator, nCells);
 
-        for (int icell = 0; icell < nCells; ++ icell)
+        for (int iCell = 0; iCell < nCells; ++ iCell)
         {
-            RDouble weightCoef = numerator[icell] / denominator;
-            int cellID_i = interpolationCellsID[icell][0];
-            int cellID_j = interpolationCellsID[icell][1];
-            int cellID_k = interpolationCellsID[icell][2];
+            RDouble weightCoef = numerator[iCell] / denominator;
+            int cellID_i = interpolationCellsID[iCell][0];
+            int cellID_j = interpolationCellsID[iCell][1];
+            int cellID_k = interpolationCellsID[iCell][2];
             q_probes[iProbe] += cellCenterData(cellID_i, cellID_j, cellID_k, index) * weightCoef;
         }
     }
@@ -437,12 +437,12 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
         int nNodes = interpolationNodesID.size();
         RDouble denominator = SUMMARY(numerator, nNodes);
 
-        for (int inode = 0; inode < nNodes; ++ inode)
+        for (int iNode = 0; iNode < nNodes; ++ iNode)
         {
-            RDouble weightCoef = numerator[inode] / denominator;
-            int nodeID_i = interpolationNodesID[inode][0];
-            int nodeID_j = interpolationNodesID[inode][1];
-            int nodeID_k = interpolationNodesID[inode][2];
+            RDouble weightCoef = numerator[iNode] / denominator;
+            int nodeID_i = interpolationNodesID[iNode][0];
+            int nodeID_j = interpolationNodesID[iNode][1];
+            int nodeID_k = interpolationNodesID[iNode][2];
             q_probes[iProbe] += (*qn)(nodeID_i, nodeID_j, nodeID_k, 0) * weightCoef;
         }
     }

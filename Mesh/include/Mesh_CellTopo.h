@@ -57,37 +57,37 @@ public:
     ~Mesh_CellTopo();
 
 public:
-    PHVectorInt1D &GetCellType() { return cellType; };
-    PHVectorInt1D &GetCellLevel(){ return cellLevel; };
-    PHVectorInt1D &GetRefineType() { return this->refineType; }
-    PHVectorInt1D &GetComputationalToGlobalCellIndex() { return computationalToGlobalCellIndex; };
-    PHVectorInt1D &GetGlobalToComputationalCellIndex() { return globalToComputationalCellIndex; };
-    PHVectorInt1D &GetParentCellIndex() { return parentCellIndex; };
-    PHVectorInt1D &GetComputationalCellModifiedStatus(){ return computationalCellModifiedStatus; };
-    PHVectorInt1D &GetCellModifiedStatus() { return cellModifiedStatus; };
-    PHVectorInt1D &GetCellComputationalStatus() { return cellComputationalStatus; };
+    PHVectorInt1D & GetCellType() { return cellType; }
+    PHVectorInt1D & GetCellLevel(){ return cellLevel; }
+    PHVectorInt1D & GetRefineType() { return this->refineType; }
+    PHVectorInt1D & GetComputationalToGlobalCellIndex() { return computationalToGlobalCellIndex; }
+    PHVectorInt1D & GetGlobalToComputationalCellIndex() { return globalToComputationalCellIndex; }
+    PHVectorInt1D & GetParentCellIndex() { return parentCellIndex; }
+    PHVectorInt1D & GetComputationalCellModifiedStatus(){ return computationalCellModifiedStatus; }
+    PHVectorInt1D & GetCellModifiedStatus() { return cellModifiedStatus; }
+    PHVectorInt1D & GetCellComputationalStatus() { return cellComputationalStatus; }
 
-    PHVectorInt2D &GetCell2Node() { return cell2Node; };
-    PHVectorInt2D &GetCell2Face() { return cell2Face; };
-    PHVectorInt1D &GetCell2Node(int cellIndex) { return cell2Node[cellIndex]; };
-    PHVectorInt1D &GetChildrenCellIndexe(int cellIndex) { return childrenCellIndexes[cellIndex]; };
+    PHVectorInt2D & GetCell2Node() { return cell2Node; }
+    PHVectorInt2D & GetCell2Face() { return cell2Face; }
+    PHVectorInt1D & GetCell2Node(int cellIndex) { return cell2Node[cellIndex]; }
+    PHVectorInt1D & GetChildrenCellIndexe(int cellIndex) { return childrenCellIndexes[cellIndex]; }
 
-    PHVector1D< set< int > > &GetNode2Cell() { return node2Cell; };
-    PHVector1D< set< int > > &GetCell2Cell() { return cell2Cell; };
+    PHVector1D< set< int > > & GetNode2Cell() { return node2Cell; }
+    PHVector1D< set< int > > & GetCell2Cell() { return cell2Cell; }
 
     int GetNTotalCell();
-    int GetCellType(int cellIndex) { return cellType[cellIndex]; };
-    int GetCellLevel(int cellIndex) { return cellLevel[cellIndex]; };
-    int GetRefineType(int cellIndex) { return refineType[cellIndex]; };
-    int GetCellComputationalStatus(int cellIndex) { return cellComputationalStatus[cellIndex]; };
-    int GetCellModifiedStatus(int cellIndex) { return cellModifiedStatus[cellIndex]; };
+    int GetCellType(int cellIndex) { return cellType[cellIndex]; }
+    int GetCellLevel(int cellIndex) { return cellLevel[cellIndex]; }
+    int GetRefineType(int cellIndex) { return refineType[cellIndex]; }
+    int GetCellComputationalStatus(int cellIndex) { return cellComputationalStatus[cellIndex]; }
+    int GetCellModifiedStatus(int cellIndex) { return cellModifiedStatus[cellIndex]; }
 
     void SetAllCellLevelToZero();
     void SetAllParentIndexToRootState();
     void SetCellType(int cellIndex, int cellTypeIn);
     void SetCellModifiedStatus(int cellIndex, int cellModifiedStatusIn);
     void SetComputationalStatusOfCell(int cellIndex, int computationalStatusOfCell);
-    void SetCell2Node(int cellIndex, PHVectorInt1D& cell2NodeIn);
+    void SetCell2Node(int cellIndex, PHVectorInt1D &cell2NodeIn);
     void SetParentCellIndex(int cellIndex, int parentCellIndexIn);
     void SetCellLevel(int cellIndex, int cellLevelIn);
 
@@ -97,7 +97,6 @@ public:
 
     //! Return if need split.
     bool ElementNeedSplit(int cellIndex);
-
 };
 
 const int SPLIT = 0;

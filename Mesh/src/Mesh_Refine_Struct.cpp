@@ -7,7 +7,7 @@ using namespace std;
 
 namespace PHSPACE
 {
-LIB_EXPORT Mesh_Refine_Struct::Mesh_Refine_Struct(const string & gridFileNameIn) :
+LIB_EXPORT Mesh_Refine_Struct::Mesh_Refine_Struct(const string &gridFileNameIn) :
     Mesh_Refine(gridFileNameIn)
 {
     OrdinaryGrid.resize(0);
@@ -21,7 +21,7 @@ LIB_EXPORT Mesh_Refine_Struct::~Mesh_Refine_Struct()
 void Mesh_Refine_Struct::AllocateMemory()
 {
     numberOfZones = PHMPI::GetNumberofLocalZones();
-    refinedGrids = new Grid*[numberOfZones];
+    refinedGrids = new Grid * [numberOfZones];
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
@@ -230,13 +230,13 @@ void Mesh_Refine_Struct::GenerateBCRegion()
         StructGrid *grid       = StructGridCast(OrdinaryGrid[iZone]);
         StructGrid *strGridNew = StructGridCast(refinedGrids[iZone]);
 
-        strGridNew->CopyCompositeBCRegion(grid->GetCompositeBCRegion());
-        CompositeStructBC *rhs = strGridNew->GetCompositeBCRegion();
+        strGridNew->CopyStructBCSet(grid->GetStructBCSet());
+        StructBCSet *rhs = strGridNew->GetStructBCSet();
 
         int numberOfBoundaryFaces = rhs->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < numberOfBoundaryFaces; ibcregion ++)
+        for (int iBCRegion = 0; iBCRegion < numberOfBoundaryFaces; iBCRegion ++)
         {
-            StructBC *bcregion = rhs->GetBCRegion(ibcregion);
+            StructBC *bcregion = rhs->GetBCRegion(iBCRegion);
 
             int bctype = bcregion->GetBCType();
 

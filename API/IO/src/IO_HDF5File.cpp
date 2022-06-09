@@ -244,15 +244,15 @@ RDouble * ReadDoubleOneRow(hid_t loc_id, const string &dataName)
     H5Dclose(dataset);
 
     RDouble *dataReturn = new RDouble[dataLength];
-    for (int idata = 0; idata < dataLength; ++ idata)
+    for (int iData = 0; iData < dataLength; ++ iData)
     {
-        dataReturn[idata] = static_cast<RDouble>(Data[idata]);
+        dataReturn[iData] = static_cast<RDouble>(Data[iData]);
     }
     delete [] Data;    Data = NULL;
     return dataReturn;
 }
 
-int *ReadIntOneRow(hid_t loc_id, const string &dataName)
+int * ReadIntOneRow(hid_t loc_id, const string &dataName)
 {
     hid_t dataset;
     hid_t datatype, dataspace, memspace;

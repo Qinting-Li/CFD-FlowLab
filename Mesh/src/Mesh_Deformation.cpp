@@ -179,8 +179,8 @@ void Mesh_Deformation::PostVisual(string visualFileName, int iStep)
 
                     for (int iNode = faceArray[iFace].nodeNumber; iNode < 4; ++ iNode)
                     {
-                        visualFile << localNodeIndex [face2node[0]] + 1;
-                        visualFile <<"    ";
+                        visualFile << localNodeIndex[face2node[0]] + 1;
+                        visualFile << "    ";
                     }
                     visualFile << endl;
                 }

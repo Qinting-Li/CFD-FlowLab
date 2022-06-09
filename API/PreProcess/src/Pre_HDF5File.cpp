@@ -353,11 +353,14 @@ void IO_HDF5Write::WriteFaceTopology(hid_t loc_id, Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     CreateAndWriteData(grpData, "nBoundFace", 1, 1, PHINT, &nBoundFace);
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int *tmpBcType = new int[nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        tmpBcType[iFace] = bcr[iFace]->GetKey();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        tmpBcType[iFace] = bcRegion->GetBCType();
     }
     CreateAndWriteData(grpData, "BcType", 1, nBoundFace, PHINT, tmpBcType);
 
@@ -378,9 +381,9 @@ void IO_HDF5Write::WriteCellTopology(hid_t loc_id, Grid *gridIn)
 
     int *cell2Node = grid->GetCell2Node();
     long long int nodeCount = 0;
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        nodeCount += nodeNumberOfEachCell[icell];
+        nodeCount += nodeNumberOfEachCell[iCell];
     }
     CreateAndWriteData(grpData, "cell2Node", 1, nodeCount, PHINT, cell2Node);
 
@@ -398,11 +401,15 @@ void IO_HDF5Write::WriteUnstrBCName(hid_t loc_id, Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     string *bcNameList = new string[nBoundFace];
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
     uint_long totalSize = 0;
-    for (int iFace = 0; iFace < nBoundFace; iFace ++)
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        const string &bcName = bcr[iFace]->GetBCName();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        const string &bcName = bcRegion->GetBCName();
         bcNameList[iFace] = bcName;
 
         totalSize += static_cast< uint_long > (bcName.size());
@@ -438,15 +445,15 @@ void IO_HDF5Write::WriteBCRegion(hid_t loc_id, Grid *gridIn)
     grpData = GetGroup(loc_id, "BCRegion");
 
     StructGrid *grid = StructGridCast(gridIn);
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
 
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    int nBCRegion = structBCSet->GetnBCRegion();
     CreateAndWriteData(grpData, "nBCRegion", 1, 1, PHINT, &nBCRegion);
 
     int nBCTotal = nBCRegion;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         bcType = bcregion->GetBCType();
         if (bcType == -1)
         {
@@ -456,10 +463,10 @@ void IO_HDF5Write::WriteBCRegion(hid_t loc_id, Grid *gridIn)
 
     int **BCInfor = NewPointer2<int>(nBCTotal, 9);
     int iBCinfo = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         int index = 0;
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         bcregion->GetIJKRegion(iMin, iMax, jMin, jMax, kMin, kMax);
         bcType = bcregion->GetBCType();
         sLr = bcregion->GetFaceLeftOrRightIndex();
@@ -522,14 +529,14 @@ void IO_HDF5Write::WriteStrBCName(hid_t loc_id, Grid *gridIn)
     boundaryName[73] = "POLE3";
 
     StructGrid *grid = StructGridCast(gridIn);
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
 
-    int nBCRegion = static_cast<int> (composite_bcregion->GetnBCRegion());
+    int nBCRegion = static_cast<int> (structBCSet->GetnBCRegion());
     string *bcNameList = new string[nBCRegion];
     uint_long totalSize = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
     {
-        StructBC *bcRegion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcRegion = structBCSet->GetBCRegion(iBCRegion);
 
         string bcName = bcRegion->GetBCName();
         int bctype = bcRegion->GetBCType();
@@ -542,7 +549,7 @@ void IO_HDF5Write::WriteStrBCName(hid_t loc_id, Grid *gridIn)
             else
             {
                 bcName = boundaryName[bctype];
-                if ((bctype >7) && (bctype <51))
+                if ((bctype > 7) && (bctype < 51))
                 {
                     bctype = 2;
                     bcRegion->SetBCType(bctype);
@@ -550,9 +557,9 @@ void IO_HDF5Write::WriteStrBCName(hid_t loc_id, Grid *gridIn)
             }
             bcRegion->SetBCName(bcName);
         }
-        bcNameList[ibcregion] = bcName;
+        bcNameList[iBCRegion] = bcName;
 
-        totalSize += static_cast< uint_long > (bcNameList[ibcregion].size());
+        totalSize += static_cast< uint_long > (bcNameList[iBCRegion].size());
         totalSize += 1;
     }
 
@@ -608,13 +615,13 @@ void IO_HDF5Write::WriteInterfaceInfo(hid_t loc_id, Grid *gridIn)
 void IO_HDF5Write::WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID)
 {
     StructGrid *grid = StructGridCast(gridIn);
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
 
     int nBCLnkTotal = 0;
-    int nBCRegion = composite_bcregion->GetnBCRegion();
-    for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+    int nBCRegion = structBCSet->GetnBCRegion();
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
         int bctype = structBC->GetBCType();
         string bcName = structBC->GetBCName();
@@ -634,9 +641,9 @@ void IO_HDF5Write::WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID)
 
     int **LnkInfor = NewPointer2<int>(nBCLnkTotal * 2, 7);
     int iLnkinfo = 0;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
     {
-        StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
         int bctype = structBC->GetBCType();
         string bcName = structBC->GetBCName();
@@ -1262,11 +1269,11 @@ void IO_HDF5Read::ReadInterfaceInfo(hid_t loc_id, Grid *gridIn)
         int *interFace2InterFaceIDTemp  = ReadIntOneRow(grpData, "interFace2InterFaceID");
         int *interFace2BoundaryFaceTemp = ReadIntOneRow(grpData, "interFace2BoundaryFace");
 
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
-            interFace2ZoneID[iface]       = interFace2ZoneIDTemp[iface];
-            interFace2InterFaceID[iface]  = interFace2InterFaceIDTemp[iface];
-            interFace2BoundaryFace[iface] = interFace2BoundaryFaceTemp[iface];
+            interFace2ZoneID[iFace]       = interFace2ZoneIDTemp[iFace];
+            interFace2InterFaceID[iFace]  = interFace2InterFaceIDTemp[iFace];
+            interFace2BoundaryFace[iFace] = interFace2BoundaryFaceTemp[iFace];
         }
 
         delete [] interFace2ZoneIDTemp;
@@ -1342,8 +1349,8 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
     grpData = OpenGroup(loc_id, "BCRegion");
 
     StructGrid *grid = StructGridCast(gridIn);
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     int **BCInfor = ReadIntTwoRow(grpData, "BCInfor");
 
@@ -1353,7 +1360,7 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         int index = 0;
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
 
         iMin   = BCInfor[iBCinfo][index++];
         iMax   = BCInfor[iBCinfo][index++];
@@ -1413,8 +1420,8 @@ void IO_HDF5Read::ReadLnkInfo(hid_t loc_id, Grid *gridIn)
     grpData = OpenGroup(loc_id, "LnkInfo");
 
     StructGrid *grid = StructGridCast(gridIn);
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     int **LnkInfor = ReadIntTwoRow(grpData, "LnkInfor");
 
@@ -1425,7 +1432,7 @@ void IO_HDF5Read::ReadLnkInfo(hid_t loc_id, Grid *gridIn)
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         int index = 0;
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
 
         int bctype = bcregion->GetBCType();
         if (bctype >= 0) continue;
@@ -1497,28 +1504,28 @@ void IO_HDF5Read::ReadStrBCName(hid_t loc_id, Grid *gridIn)
 
     grpData = OpenGroup(loc_id, "BCName");
     int gridIndex = grid->GetZoneID();
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
 
     char *BCName = ReadCharData(grpData, "BCName");
     string *BCNameList = new string[nBCRegion];
     uint_long count = 0;
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
         while (BCName[count] != '\0')
         {
-            BCNameList[ibcregion].push_back(BCName[count]);
+            BCNameList[iBCRegion].push_back(BCName[count]);
             ++ count;
         }
         ++ count;
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = new StructBC(gridIndex, ibcregion);
-        compositeBCRegion->SetBCRegion(ibcregion, bcregion);
+        StructBC *bcregion = new StructBC(gridIndex, iBCRegion);
+        structBCSet->SetBCRegion(iBCRegion, bcregion);
 
-        bcregion->SetBCName(BCNameList[ibcregion]);
+        bcregion->SetBCName(BCNameList[iBCRegion]);
     }
 
     delete [] BCNameList;
@@ -1644,17 +1651,7 @@ void IO_HDF5Read::ReadFaceTopology(hid_t loc_id, Grid *gridIn)
     ReadData(grpData, &nBoundFace, "nBoundFace");
     grid->SetNBoundFace(nBoundFace);
 
-    int *BcType = ReadIntOneRow(grpData, "BcType");
-    CompositeUnstructBC **bcr = new CompositeUnstructBC *[nBoundFace];
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-    {
-        bcr[iFace] = new CompositeUnstructBC();
-        bcr[iFace]->SetKey(BcType[iFace]);
-    }
-    grid->SetBCRecord(bcr);
-    delete [] BcType;
-
-    grid->SpecifyBC();
+    grid->SpecifyRightCellofBC();
 
     H5Gclose(grpData);
 }
@@ -1685,13 +1682,16 @@ void IO_HDF5Read::ReadUnstrBCName(hid_t loc_id, Grid *gridIn)
     grpData = OpenGroup(loc_id, "BCName");
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
-
     char *BCName = ReadCharData(grpData, "BCName");
 
-    int nBFaces = grid->GetNBoundFace();
-    string *BCNameList = new string[nBFaces];
+    grpData = OpenGroup(loc_id, "FaceTopology");
+    int *BcType = ReadIntOneRow(grpData, "BcType");
+
+    int nBoundFace = grid->GetNBoundFace();
+    string *BCNameList = new string[nBoundFace];
+   
     uint_long count = 0;
-    for (int iFace = 0; iFace < nBFaces; ++ iFace)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         while (BCName[count] != '\0')
         {
@@ -1701,12 +1701,49 @@ void IO_HDF5Read::ReadUnstrBCName(hid_t loc_id, Grid *gridIn)
         ++ count;
     }
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
-    for (int iFace = 0; iFace < nBFaces; ++ iFace)
-    {
-        bcr[iFace]->SetBCName(BCNameList[iFace]);
-    }
+    UnstructBCSet **bcr = new UnstructBCSet *[nBoundFace];
 
+    //! Create UnstructbcRegion.
+    set<string> bcNameSet;
+    for (int iFace = 0; iFace < nBoundFace; iFace++)
+    {   
+        bcr[iFace] = new UnstructBCSet();
+        bcr[iFace]->SetKey(BcType[iFace]);
+        bcr[iFace]->SetBCName(BCNameList[iFace]);
+
+        bcNameSet.insert(BCNameList[iFace]);
+    }
+    grid->SetBCRecord(bcr);
+
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+    
+    grid->CreateUnstructBCSet(nBCRegionUnstruct);
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int* bcRegionIDofBCFace = new int[nBoundFace];
+    set<string>::iterator iter;
+    count = 0;
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSet->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < nBoundFace; iFace++)
+        {
+            if (BCNameList[iFace] == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(BcType[iFace]);
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+           
+        }
+        count++;
+    }
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
+    delete [] BcType;
     delete [] BCNameList;
     delete [] BCName;
     H5Gclose(grpData);

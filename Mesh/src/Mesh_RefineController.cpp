@@ -58,10 +58,10 @@ void Mesh_RefineController::ConstructNode2Cell()
         {
             int nodeIndex = face2NodeArray[iFace][iNode];
 
-            node2Cell[nodeIndex].insert( leftCell );
+            node2Cell[nodeIndex].insert(leftCell);
             if (!PHSPACE::IsBoundaryFace(rightCell))
             {
-                node2Cell[nodeIndex].insert( rightCell );
+                node2Cell[nodeIndex].insert(rightCell);
             }
         }
     }
@@ -86,12 +86,12 @@ void Mesh_RefineController::ConstructCell2Cell()
             int nodeIndex = iCell2Node[iNode];;
             set< int > &iNode2Cell = node2Cell[nodeIndex];
 
-            for ( set< int >::iterator iterN = iNode2Cell.begin(); iterN != iNode2Cell.end(); ++ iterN )
+            for (set< int >::iterator iterN = iNode2Cell.begin(); iterN != iNode2Cell.end(); ++ iterN)
             {
                 int cellIndex = *iterN;
-                if ( cellIndex != iCell )
+                if (cellIndex != iCell)
                 {
-                    cell2Cell[iCell].insert( cellIndex );
+                    cell2Cell[iCell].insert(cellIndex);
                 }
             }
         }
@@ -144,7 +144,7 @@ void Mesh_RefineController::FixAnisoRefineType()
     PHVectorInt2D &face2Node = faceTopo->GetFace2Node();
     PHVectorInt1D &leftCellIndex = faceTopo->GetLeftCellIndex();
     PHVectorInt1D &rightCellIndex = faceTopo->GetRightCellIndex();
-    vector<SimpleBC* > &faceBoundaryCondition = faceTopo->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryCondition = faceTopo->GetFaceBoundaryCondition();
 
     deque<int> cellQueue;
 
@@ -441,7 +441,7 @@ void Mesh_RefineController::GenerateComputationalElementFaceInformationSecondPar
 
             edgeOfMultiIndex.SetData(&sortedEdgeNodeIndexes[0]);
 
-            int  edgeWithMiddlePointIndex = faceTopo->FindEdgeWithMiddleNode(edgeOfMultiIndex);
+            int edgeWithMiddlePointIndex = faceTopo->FindEdgeWithMiddleNode(edgeOfMultiIndex);
 
             if (edgeWithMiddlePointIndex == INVALID_INDEX) continue;
 
@@ -756,8 +756,8 @@ void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndexWithParent
     PHVectorInt1D &rightCellIndex  = faceTopo->GetRightCellIndex();
 
     PHVectorInt1D      &faceTypeForComputation              = computationalFaceTopo->GetFaceType();
-    vector<SimpleBC* > &faceBoundaryCondition               = faceTopo->GetFaceBoundaryCondition();
-    vector<SimpleBC* > &faceBoundaryConditionForComputation = computationalFaceTopo->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryCondition               = faceTopo->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryConditionForComputation = computationalFaceTopo->GetFaceBoundaryCondition();
 
     PHVectorInt1D &computationalToGlobalFaceIndex = computationalFaceTopo->GetComputationalToGlobalFaceIndex();
     PHVectorInt1D &globalToComputationalFaceIndex = faceTopo->GetGlobalToComputationalFaceIndex();
@@ -841,8 +841,8 @@ void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndexWithParent
                 return;
             }
         }
-        else if ((cellComputationalStatus[leftCell] == ON) &&
-                (cellComputationalStatus[rightCell] == HIDDEN))
+        else if ((cellComputationalStatus[leftCell]  == ON) &&
+                 (cellComputationalStatus[rightCell] == HIDDEN))
         {
             int leftParent  = leftCellIndex[parentFace];
             int rightParent = rightCellIndex[parentFace];
@@ -863,13 +863,13 @@ void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndexWithParent
                 return;
             }
         }
-        else if ((cellComputationalStatus[leftCell] == HIDDEN) &&
-                (cellComputationalStatus[rightCell] == HIDDEN))
+        else if ((cellComputationalStatus[leftCell]  == HIDDEN) &&
+                 (cellComputationalStatus[rightCell] == HIDDEN))
         {
             return;
         }
-        else if ((cellComputationalStatus[leftCell] == ON) &&
-                (cellComputationalStatus[rightCell] == ON))
+        else if ((cellComputationalStatus[leftCell]  == ON) &&
+                 (cellComputationalStatus[rightCell] == ON))
         {
             computationalToGlobalFaceIndex.push_back(iFace);
             globalToComputationalFaceIndex[iFace] = iComputationalFaceCount;
@@ -891,8 +891,8 @@ void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndexNoParentCa
     PHVectorInt1D &rightCellIndex = faceTopo->GetRightCellIndex();
 
     PHVectorInt1D      &faceTypeForComputation              = computationalFaceTopo->GetFaceType();
-    vector<SimpleBC* > &faceBoundaryCondition               = faceTopo->GetFaceBoundaryCondition();
-    vector<SimpleBC* > &faceBoundaryConditionForComputation = computationalFaceTopo->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryCondition               = faceTopo->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryConditionForComputation = computationalFaceTopo->GetFaceBoundaryCondition();
 
     PHVectorInt1D &computationalToGlobalFaceIndex = computationalFaceTopo->GetComputationalToGlobalFaceIndex();
     PHVectorInt1D &globalToComputationalFaceIndex = faceTopo->GetGlobalToComputationalFaceIndex();
@@ -1085,7 +1085,7 @@ void Mesh_RefineController::SplitElementFace(int cellIndex)
         int iFaceType = basicElement->GetElementPhysicsFaceType(iFace);
 
         vector< int > &relativeFace2Node = basicElement->GetElementPhysicsFace(iFace);
-        PHVectorInt1D &parentCell2Node   = cellTopo->GetCell2Node(cellIndex);
+        PHVectorInt1D &parentCell2Node = cellTopo->GetCell2Node(cellIndex);
 
         PHVectorInt1D iFace2Node;
         uint_t nodeNumber = relativeFace2Node.size();
@@ -1271,19 +1271,21 @@ void Mesh_RefineController::GenerateCellToNode(UnstructGrid *grid)
 
 void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *grid)
 {
-    vector<SimpleBC* > &faceBoundaryCondition = computationalFaceTopo->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryCondition = computationalFaceTopo->GetFaceBoundaryCondition();
 
     int numberOfFaces = computationalFaceTopo->GetNTotalFaces();
     int numberOfBoundaryFaces = faceBoundaryCondition.size();
     grid->SetNBoundFace(numberOfBoundaryFaces);
     grid->SetNTotalFace(numberOfFaces);
 
-    CompositeUnstructBC **bcr = new CompositeUnstructBC *[numberOfBoundaryFaces];
+    UnstructBCSet **bcr = new UnstructBCSet *[numberOfBoundaryFaces];
     grid->SetBCRecord(bcr);
 
-    int iCount = 0;
-    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
-    {
+    set<string> bcNameSet;
+    uint_long iCount = 0;
+
+    for (int iFace = 0; iFace < numberOfBoundaryFaces; iFace++)
+    {  
         SimpleBC *bc = faceBoundaryCondition[iFace];
         if (bc == 0)
         {
@@ -1294,13 +1296,45 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
             TK_Exit::ExceptionExit("bcName = null in generate unstruct grid!");
         }
 
-        bcr[iCount] = new CompositeUnstructBC();
+        bcr[iCount] = new UnstructBCSet();
         bcr[iCount]->SetKey(bc->GetBCType());
         bcr[iCount]->SetBCName(bc->GetBCName());
         bcr[iCount]->SetBoundaryCondition(bc);
 
+        bcNameSet.insert(bc->GetBCName());
+
         ++ iCount;
     }
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+
+    grid->CreateUnstructBCSet(nBCRegionUnstruct);
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int* bcRegionIDofBCFace = new int[numberOfBoundaryFaces];
+    set<string>::iterator iter;
+    uint_long count = 0;
+
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSet->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < numberOfBoundaryFaces; iFace++)
+        {
+            SimpleBC *bc = faceBoundaryCondition[iFace];
+            if (bc->GetBCName() == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(bc->GetBCType());
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+
+        }
+        count++;
+    }
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
 
     ReorderFaceToNodeIndexes(grid);
     ReorderFaceToCellIndexes(grid);
@@ -1428,7 +1462,7 @@ void Mesh_RefineController::CompressRefineType(DataContainer *dataContainer, int
 {
     if (!interfaceInformation) return;
 
-    PHVectorInt1D & refineType = cellTopo->GetRefineType();
+    PHVectorInt1D &refineType = cellTopo->GetRefineType();
 
     int iNeighborZone                            = interfaceInformation->FindIthNeighbor(neighborZoneIndex);
     int interfaceNumberBetweenTwoNeighboringZone = interfaceInformation->GetNIFaceOfNeighbor(iNeighborZone);
@@ -1445,7 +1479,7 @@ void Mesh_RefineController::CompressRefineType(DataContainer *dataContainer, int
         dataTemp[iLocalFace] = refineType[sourceCell];
     }
     PHWrite(dataContainer, dataTemp, interfaceNumberBetweenTwoNeighboringZone);
-    delete []dataTemp;
+    delete [] dataTemp;
 }
 
 void Mesh_RefineController::DecompressRefineType(DataContainer *dataContainer, int neighborZoneIndex)
@@ -1471,7 +1505,7 @@ void Mesh_RefineController::DecompressRefineType(DataContainer *dataContainer, i
         refineType[targetCell] = dataTemp[iLocalFace];
     }
 
-    delete []dataTemp;
+    delete [] dataTemp;
 }
 
 bool Mesh_RefineController::IsNeedInfectInterfaceIsotropicRefineType()
@@ -1485,7 +1519,7 @@ bool Mesh_RefineController::IsNeedInfectInterfaceIsotropicRefineType()
     PHVectorInt1D &faceType                   = faceTopo->GetFaceType();
     PHVectorInt1D &leftCellIndex              = faceTopo->GetLeftCellIndex();
     PHVectorInt1D &rightCellIndex             = faceTopo->GetRightCellIndex();
-    vector<SimpleBC* > &faceBoundaryCondition = faceTopo->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryCondition = faceTopo->GetFaceBoundaryCondition();
 
     bool doseInterfaceIsotropicRefineTypeExist = false;
 

@@ -33,16 +33,16 @@ private:
 private:
     void Scale(RDouble scaling);
     void buildLists();
-    void addShapeToLists(TopoDS_Shape & shape);
+    void addShapeToLists(TopoDS_Shape &shape);
     void projectionTest();
 
 public:
     OCCInterFace();
     ~OCCInterFace();
 
-    void loadIGES(const char * fileName, int geometryUnit);
-    void ComputeNearestPointOnGeometry(const gp_Pnt & pointIn, gp_Pnt & pointNearest, 
-        RDouble & projectDistance, bool & isProjected, RDouble * borderTolerancePercent);
+    void loadIGES(const char *fileName, int geometryUnit);
+    void ComputeNearestPointOnGeometry(const gp_Pnt &pointIn, gp_Pnt &pointNearest, 
+         RDouble &projectDistance, bool &isProjected, RDouble *borderTolerancePercent);
     void SetDimension(int dimIn) { this->dimension = dimIn; }
     TopTools_IndexedMapOfShape & GetFaceMap() { return this->faceMap; }
     void PrintIGESBox();

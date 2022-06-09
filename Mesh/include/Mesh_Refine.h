@@ -78,7 +78,7 @@ public:
 
 public:
     void Run();
-    void SetRefineParameter(RefineParameter* refineParameterIn);
+    void SetRefineParameter(RefineParameter *refineParameterIn);
 
 protected:
     //! Read original grid.
@@ -117,15 +117,7 @@ protected:
     RefineParameter *refineParameter;
 
     Region *region;
-    Grid  **refinedGrids;
+    Grid **refinedGrids;
 };
-
-
-
-
-
-
-
-
 
 }

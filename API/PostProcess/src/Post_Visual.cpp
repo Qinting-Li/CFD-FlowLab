@@ -123,6 +123,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_P  , "P" ));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_CP , "CP"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_T  , "T" ));
+        visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_ENTHALPY , "enthalpy"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_DEN, "DEN"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_VIS, "VIS"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_INCOMP_TE , "TE"));
@@ -1151,11 +1152,11 @@ void DumpToTecio::WriteGridFilm()
                     PHRead(cdata, left_cell_of_face, KMxOrNumFaces);
                     PHRead(cdata, right_cell_of_face, KMxOrNumFaces);
 
-                    for (INTEGER4 iface = 0; iface < KMxOrNumFaces; ++ iface)
+                    for (INTEGER4 iFace = 0; iFace < KMxOrNumFaces; ++ iFace)
                     {
-                        FaceLeftElems [iface] = left_cell_of_face [iface] + 1;
-                        FaceRightElems[iface] = right_cell_of_face[iface] + 1;
-                        //if (FaceRightElems[iface] > JMxOrNumElements || FaceRightElems[iface] < 0) FaceRightElems[iface] = 0;
+                        FaceLeftElems [iFace] = left_cell_of_face [iFace] + 1;
+                        FaceRightElems[iFace] = right_cell_of_face[iFace] + 1;
+                        //if (FaceRightElems[iFace] > JMxOrNumElements || FaceRightElems[iFace] < 0) FaceRightElems[iFace] = 0;
                     }
 
                     INTEGER4 FaceBndryConnectionCounts = 0;
@@ -1877,18 +1878,18 @@ void PHCutPlane::SortData(RDouble *value)
     using namespace PHSPACE;
     vector<DataStruct_Sort< RDouble> > value_list;
     DataStruct_Sort<RDouble> var;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        var.value = value[inode];
-        var.index = inode;
+        var.value = value[iNode];
+        var.index = iNode;
         value_list.push_back(var);
     }
     sort(value_list.begin(), value_list.end());
 
     vector<int> index_list;
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        index_list.push_back(value_list[inode].index);
+        index_list.push_back(value_list[iNode].index);
     }
 
     ReorderList(x, index_list);
@@ -1964,12 +1965,12 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
     int pcount  = 0;
     int index;
 
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[nodepos + j];
             coor_min = MIN(xyz[index], coor_min);
@@ -1978,17 +1979,17 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
 
         if (cut < coor_min - eps || cut > coor_max + eps)
         {
-            nodepos += node_number_of_each_face[iface];
+            nodepos += node_number_of_each_face[iFace];
             continue;
         }
 
         RDouble xl, yl, zl, xr, yr, zr, xm, ym, zm;
 
         int p1, p2;
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             p1 = face2node[nodepos + j];
-            p2 = face2node[nodepos + (j + 1) % node_number_of_each_face[iface]];
+            p2 = face2node[nodepos + (j + 1) % node_number_of_each_face[iFace]];
 
             for (int m = 0; m < nvar; ++ m)
             {
@@ -2135,7 +2136,7 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
             }
         }
 
-        nodepos += node_number_of_each_face[iface];
+        nodepos += node_number_of_each_face[iFace];
     }
 
     cutpl->neqn = nvar;
@@ -2150,18 +2151,18 @@ void CutPlane(UnstructGrid *grid, RDouble **node_var, int nvar, RDouble cut, PHC
     cutpl->y = new RDouble [cutpl->nTotalNode];
     cutpl->z = new RDouble [cutpl->nTotalNode];
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
-        cutpl->x[inode] = x_list[inode];
-        cutpl->y[inode] = y_list[inode];
-        cutpl->z[inode] = z_list[inode];
+        cutpl->x[iNode] = x_list[iNode];
+        cutpl->y[iNode] = y_list[iNode];
+        cutpl->z[iNode] = z_list[iNode];
     }
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
         for (int m = 0; m < nvar; ++ m)
         {
-            cutpl->data[m][inode] = var_list[inode][m];
+            cutpl->data[m][iNode] = var_list[iNode][m];
         }
     }
 }
@@ -2206,15 +2207,15 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
     }
 
     int nodepos = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        int cl = left_cell_of_face[iface];
-        int cr = right_cell_of_face[iface];
+        int cl = left_cell_of_face[iFace];
+        int cr = right_cell_of_face[iFace];
 
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[nodepos ++];
             coor_min = MIN(xyz[index], coor_min);
@@ -2227,7 +2228,7 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
         }
 
         cut_cell[cl] = true;
-        if(iface >= nBoundFace) cut_cell[cr] = true;
+        if (iFace >= nBoundFace) cut_cell[cr] = true;
     }
 
     vector<vector<RDouble> > var_list;
@@ -2262,18 +2263,18 @@ void CutPlaneCellCenter(UnstructGrid *grid, RDouble **q_var, int nvar, RDouble c
     cutpl->y = new RDouble [cutpl->nTotalNode];
     cutpl->z = new RDouble [cutpl->nTotalNode];
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
-        cutpl->x[inode] = x_list[inode];
-        cutpl->y[inode] = y_list[inode];
-        cutpl->z[inode] = z_list[inode];
+        cutpl->x[iNode] = x_list[iNode];
+        cutpl->y[iNode] = y_list[iNode];
+        cutpl->z[iNode] = z_list[iNode];
     }
 
-    for (int inode = 0; inode < cutpl->nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < cutpl->nTotalNode; ++ iNode)
     {
         for (int m = 0; m < nvar; ++ m)
         {
-            cutpl->data[m][inode] = var_list[inode][m];
+            cutpl->data[m][iNode] = var_list[iNode][m];
         }
     }
 
