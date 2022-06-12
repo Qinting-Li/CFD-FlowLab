@@ -5484,14 +5484,12 @@ void UnstructGrid::WriteGrid(VirtualFile *vfile)
     vfile->write(reinterpret_cast<char*>(&nBoundFace),sizeof(int));
 
     //! Write the boundary condition.
-    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
-
+    UnstructBCSet **bcr = this->GetBCRecord();
     int *tmpbctype = new int [nBoundFace];
+
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-        tmpbctype[iFace] = bcRegion->GetBCType();
+        tmpbctype[iFace] = bcr[iFace]->GetKey();
     }
     vfile->write(reinterpret_cast<char*>(tmpbctype), nBoundFace*sizeof(int));
     delete [] tmpbctype;
