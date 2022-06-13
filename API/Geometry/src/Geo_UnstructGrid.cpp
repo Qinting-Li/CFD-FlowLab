@@ -7332,6 +7332,7 @@ LIB_EXPORT void UnstructGrid::CoarseGrids(int maxLevel)
 
         agglomeratedGrid->SetFineGrid(this);
         agglomeratedGrid->SetLevel(this->GetLevel()+1);
+        agglomeratedGrid->SetBCRecord(this->GetBCRecord());
         agglomeratedGrid->SetUnstructBCSet(this->GetUnstructBCSet());
       
         if(preGrid != this)
