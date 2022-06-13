@@ -9288,12 +9288,10 @@ void UnstructGrid::ReSetBoundaryConditionByGlobalBC()
 
     int nBoundFace = this->GetNBoundFace();
 
-    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int nBCRegion = unstructBCSet->GetnBCRegion();
-    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    UnstructBCSet **bcr = this->GetBCRecord();
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC* bcRegion  = unstructBCSet->GetBCRegion(iBCRegion);
-        const string &bcName  = bcRegion->GetBCName();
+        const string &bcName = bcr[iFace]->GetBCName();
         SimpleBC *bc = 0;
         map<string, SimpleBC *>::iterator iter = globalBCMap.find(bcName);
 
@@ -9302,7 +9300,7 @@ void UnstructGrid::ReSetBoundaryConditionByGlobalBC()
             bc = iter->second;
         }
 
-        unstructBCSet->SetBoundaryCondition(bc);
+        bcr[iFace]->SetBoundaryCondition(bc);
     }
 }
 
