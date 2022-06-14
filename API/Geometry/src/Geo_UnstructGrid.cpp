@@ -4107,7 +4107,7 @@ void UnstructGrid::DecodeInterpointInfo(DataContainer *cdata)
 
 void UnstructGrid::DecodeBCFace(DataContainer * cdata)
 {
-    VirtualFile * virtualFile = new VirtualFile(cdata);
+    VirtualFile *virtualFile = new VirtualFile(cdata);
 
     virtualFile->BeginReadWork();
 
@@ -4121,10 +4121,10 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
     uint_long totalSize;
     PHRead(virtualFile, totalSize);
 
-    char * bcNameChar = new char [totalSize];
+    char *bcNameChar = new char[totalSize];
     PHRead(virtualFile, bcNameChar, static_cast<int>(totalSize));
-    
-    string * bcNameList = new string [numberOfBCFaces];
+
+    string *bcNameList = new string[numberOfBCFaces];
     uint_long count = 0;
     for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
     {
@@ -4140,23 +4140,51 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
     }
 
     PHRead(virtualFile, numberOfBCFaces);
-    int * bcTypeList = new int [numberOfBCFaces];
+    int *bcTypeList = new int[numberOfBCFaces];
     PHRead(virtualFile, bcTypeList, numberOfBCFaces);
-    
-    virtualFile->EndReadWork();
-    
-    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
-    for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
+    virtualFile->EndReadWork();
+
+    //! Create UnstructbcRegion.
+    set<string> bcNameSet;
+    UnstructBCSet **bcr = this->GetBCRecord();
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-        bcRegion->SetBCName(bcNameList[iFace]);
+        bcr[iFace]->SetBCName(bcNameList[iFace]);
+        bcNameSet.insert(bcNameList[iFace]);
     }
+
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+    this->CreateUnstructBCSet(nBCRegionUnstruct);
+
+    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = new int[nBoundFace];
+
+    set<string>::iterator iter;
+    count = 0;
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); ++ iter)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSet->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+        {
+            if (bcNameList[iFace] == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(bcTypeList[iFace]);
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+        }
+        count ++;
+    }
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
  
-    delete [] bcTypeList;
-    delete [] bcNameList;
-    delete [] bcNameChar;
+    delete []bcTypeList;
+    delete []bcNameList;
+    delete []bcNameChar;
     delete virtualFile;
 }
 
