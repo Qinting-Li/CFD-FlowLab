@@ -1601,18 +1601,8 @@ void Simulation::PostSolve()
     int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
     if (outIterStep % intervalStepPlot == 0)
     {
-        int dumpFlowOnOriginalGrid = 0;
-        GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
-        if (dumpFlowOnOriginalGrid)
-        {
-            Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
-            writeTecplotByOriginalGrid->Run();
-        }
-        else
-        {
-            Post_WriteTecplot generateVisualFile;
-            generateVisualFile.Run();
-        }
+        Post_WriteTecplot generateVisualFile;
+        generateVisualFile.Run();
     }
 
     if (!GlobalDataBase::IsExist("ifSetDataMonitor", PHINT, 1))

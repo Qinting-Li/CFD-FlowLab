@@ -1010,73 +1010,6 @@ void Region::InitVariableWallTemperature()
     }
 }
 
-void Region::InitOriginalGrid()
-{
-    int dumpFlowOnOriginalGrid = 0;
-    GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
-
-    if (!dumpFlowOnOriginalGrid)
-    {
-        return;
-    }
-
-    string originalGridFile = "";
-    GlobalDataBase::GetData("OriginalGridFile", &originalGridFile, PHSTRING, 1);
-
-    IO_ReadHDF5Grid *gridReader = new IO_ReadHDF5Grid(AddSymbolToFileName(originalGridFile, "_", 0));
-    gridReader->OpenFile();
-
-    int nZones = 0;
-    gridReader->GetNumberOfZones(nZones);
-    if (nZones == 0)
-    {
-        ostringstream errorMess;
-        errorMess << "  Error: This grid file is invalid, number of zone = 0 !" << endl;
-        TK_Exit::ExceptionExit(errorMess.str());
-    }
-
-    int *zoneIndex = new int[nZones];
-    gridReader->GetZoneIndex(zoneIndex);
-
-    int *zoneType = new int[nZones];
-    gridReader->GetZoneType(zoneType);
-
-    int *originalGridProc = new int[nZones];
-    Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
-    writeTecplotByOriginalGrid->SetOriginalGridProc(nZones, originalGridProc);
-
-    Grid **grids = new Grid*[nZones];
-
-    int myid = PHMPI::GetCurrentProcessorID();
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        Grid *singleGrid = 0;
-        if (myid == originalGridProc[iZone])
-        {
-            GridID *index = new GridID(zoneIndex[iZone]);
-            if (zoneType[iZone] = UNSTRUCTGRID)
-            {
-                singleGrid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-            }
-            else
-            {
-                singleGrid = CreateGridGeneral(STRUCTGRID, index, 0, GetDim());
-            }
-
-            gridReader->GetGridInfo(singleGrid);
-        }
-        grids[iZone] = singleGrid;
-    }
-    writeTecplotByOriginalGrid->SetOriginalGrid(grids);
-    writeTecplotByOriginalGrid->Initialize();
-
-    gridReader->CloseFile();
-    delete gridReader;
-    delete []zoneIndex;
-    delete []zoneType;
-    delete []originalGridProc;
-}
-
 LIB_EXPORT void Region::DataMonitor()
 {
     if (!GlobalDataBase::IsExist("ifSetDataMonitor", PHINT, 1))
@@ -3234,19 +3167,9 @@ LIB_EXPORT void Region::PostSimulation()
     return;
 #endif
     //! Temporarily, put it here. In the future, add to Post().
-    int dumpFlowOnOriginalGrid = 0;
-    GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
-    if (dumpFlowOnOriginalGrid)
-    {
-        Post_WriteTecplotByOriginalGrid *writeTecplotByOriginalGrid = GetWriteTecplotByOriginalGrid();
-        writeTecplotByOriginalGrid->Run();
-    }
-    else
-    {
-        Post_WriteTecplot generateVisualFile;
-        generateVisualFile.Run();
-    }
-
+    Post_WriteTecplot generateVisualFile;
+    generateVisualFile.Run();
+    //! end
 }
 
 LIB_EXPORT void Region::InitGeometry()
@@ -3269,8 +3192,6 @@ LIB_EXPORT void Region::InitGeometry()
     DataMonitor();
 
     InitVariableWallTemperature();
-
-    InitOriginalGrid();
 
     WriteLogFile("Monitoring probes ...");
 }

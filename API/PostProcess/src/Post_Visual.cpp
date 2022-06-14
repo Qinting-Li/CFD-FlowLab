@@ -571,11 +571,6 @@ LIB_EXPORT void Post_Visual::GetAllVisualNodeVarPtr(RDouble4D **qn)
     }
 }
 
-void Post_Visual::UpdateDataPtr(const string &name, void *data)
-{
-    visualVariablesPtr->UpdateDataPtr(name, data);
-}
-
 void Post_Visual::FreeAllVisualNodeVarPtr()
 {
     if (gridType == UNSTRUCTGRID)
@@ -916,17 +911,7 @@ void DumpToTecio::WriteGridFilm()
     }
     else
     {
-        int fileID;
-        int dumpFlowOnOriginalGrid = 0;
-        GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
-        if (dumpFlowOnOriginalGrid)
-        {
-            fileID = PHMPI::GetCurrentProcessorID();
-        }
-        else
-        {
-            fileID = PHMPI::GetFileIndexofCurrentProcessor();
-        }
+        int fileID = PHMPI::GetFileIndexofCurrentProcessor();
         string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
         oss0 << finalFileName;
     }
@@ -1416,17 +1401,7 @@ void DumpToTecplotASCII::WriteFlowFilm()
     }
     else
     {
-        int fileID;
-        int dumpFlowOnOriginalGrid = 0;
-        GlobalDataBase::GetData("dumpFlowOnOriginalGrid", &dumpFlowOnOriginalGrid, PHINT, 1);
-        if (dumpFlowOnOriginalGrid)
-        {
-            fileID = PHMPI::GetCurrentProcessorID();
-        }
-        else
-        {
-            fileID = PHMPI::GetFileIndexofCurrentProcessor();
-        }
+        int fileID = PHMPI::GetFileIndexofCurrentProcessor();
         string finalFileName = PHSPACE::AddSymbolToFileName(GetFilename(), '_', fileID);
         ossFileName << finalFileName;
     }
