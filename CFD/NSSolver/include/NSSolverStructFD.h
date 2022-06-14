@@ -133,8 +133,8 @@ private:
     void TimeStep(Grid *gridIn);
     void ReduceMaxTimeStep(Grid *gridIn, RDouble globalMinDt);
     void Diagonal(Grid *gridIn);
-    void SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    void SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void SolveLUSGSbyJacobiIteration(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqtmpProxy, RDouble &sweepNormal);
     void LUSGSInitializationStructHighOrder(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ);
     void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);

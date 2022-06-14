@@ -236,9 +236,9 @@ int PH_AllReduce(double *sendbuf, double *recvbuf, int count, PH_Op op)
     int errcode = 0;
     if (PHMPI::GetNumberOfProcessor() == 1)
     {
-        for (int idata = 0; idata < count; ++ idata)
+        for (int iData = 0; iData < count; ++ iData)
         {
-            recvbuf[idata] = sendbuf[idata];
+            recvbuf[iData] = sendbuf[iData];
         }
         return 1;
     }
@@ -266,9 +266,9 @@ int PH_AllReduce(int *sendbuf, int *recvbuf, int count, PH_Op op)
     int errcode = 0;
     if (PHMPI::GetNumberOfProcessor() == 1)
     {
-        for (int idata = 0; idata < count; ++ idata)
+        for (int iData = 0; iData < count; ++ iData)
         {
-            recvbuf[idata] = sendbuf[idata];
+            recvbuf[iData] = sendbuf[iData];
         }
         return 1;
     }
@@ -285,9 +285,9 @@ int PH_Allgather(int *sendbuf, int sendcount, int *recvbuf, int recvcount)
     int errcode = 0;
     if (PHMPI::GetNumberOfProcessor() == 1)
     {
-        for (int idata = 0; idata < sendcount; ++ idata)
+        for (int iData = 0; iData < sendcount; ++ iData)
         {
-            recvbuf[idata] = sendbuf[idata];
+            recvbuf[iData] = sendbuf[iData];
         }
         return 1;
     }

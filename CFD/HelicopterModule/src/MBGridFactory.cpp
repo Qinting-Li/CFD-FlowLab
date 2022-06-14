@@ -101,22 +101,31 @@ void MBGridFactory::Register(UnstructGrid * grid)
         physicalType[iFace] = MB_SPACE::NEUTRAL_TYPE;
     }
 
-    CompositeUnstructBC ** bcRecord = grid->GetBCRecord();
-    int numberOfBcFaces = grid->GetNBoundFace();
-    for (int iBcFace = 0; iBcFace < numberOfBcFaces; ++ iBcFace)
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegion = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        int type = bcRecord[iBcFace]->GetKey();
-        if (IsInternalFace(type))
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        int bcType = bcRegion->GetBCType();
+
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            physicalType[iBcFace] = MB_SPACE::INTERNAL_TYPE;
-        }
-        else if (IsExternalFace(type))
-        {
-            physicalType[iBcFace] = MB_SPACE::EXTERNAL_TYPE;
-        }
-        else
-        {
-            physicalType[iBcFace] = type;
+            // iFace is the face number in the set of faceIndex.
+            int iFace = *iter;
+            if (IsInternalFace(bcType))
+            {
+                physicalType[iFace] = MB_SPACE::INTERNAL_TYPE;
+            }
+            else if (IsExternalFace(bcType))
+            {
+                physicalType[iFace] = MB_SPACE::EXTERNAL_TYPE;
+            }
+            else
+            {
+                physicalType[iFace] = bcType;
+            }
         }
     }
 

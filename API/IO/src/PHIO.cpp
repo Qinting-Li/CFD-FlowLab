@@ -475,7 +475,9 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
     RDouble wallTemperature           = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
 
-    ModifyWindowTemperature(wallTemperature);
+    vector< RDouble > WallT;
+    vector< int > WallNumber;
+    ModifyWindowTemperature(wallTemperature, WallT, WallNumber);
 
     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     RDouble forceReferenceArea                 = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
@@ -515,18 +517,22 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
 
         if (metabolicWallTemperature == 0)
         {
-            if (wallTemperature < 0.0)
+            for(int i = 0; i < WallT.size(); ++i)
             {
-                PrintToWindow("  Wall Temperature         :    ", "Adiabatic Wall", "\n");
+                if (WallT[i] < 0.0)
+                {
+                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ",  "Adiabatic Wall", "\n");
+                }
+                else if(WallT[i] == 0.0)
+                {
+                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", "Radiation balance Wall", "\n");
+                }
+                else
+                {
+                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", WallT[i], "K", "\n");
+                }
             }
-            else if(wallTemperature == 0.0)
-            {
-                PrintToWindow("  Wall Temperature         :    ", "Radiation balance Wall", "\n");
-            }
-            else
-            {
-                PrintToWindow("  Wall Temperature         :    ", wallTemperature, "K", "\n");
-            }
+
         }
         PrintToWindow("  Dimensional Sound Speed  :    ", refSoundSpeed,               " m/s",    "\n");
         PrintToWindow("  Dimensional Velocity     :    ", refVelocity,               " m/s",      "\n");
@@ -542,12 +548,13 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     PrintToWindow("  Force Reference z        :    ", TorqueRefZ                        , "\n");
 }
 
-LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature)
+LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature, vector< RDouble > &WallT, vector< int > &WallNumber)
 {
     /*if(wallTemperature >= 0.0 )
     {
         return;
     }*/
+    int nWall = 0;
     GlobalBoundaryCondition::ReadGlobalBoundaryCondition();
     vector<SimpleBC *> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
     for (int iBC = 0; iBC < globalBCList->size(); ++ iBC)
@@ -569,8 +576,11 @@ LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature)
             else
             {
                 bcParamDB->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
-                GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+                //GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
             }
+            WallT.push_back(wallTemperature);
+            nWall ++;
+            WallNumber.push_back(nWall);
         }
     }
 }

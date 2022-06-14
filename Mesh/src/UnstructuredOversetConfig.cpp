@@ -277,16 +277,16 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
     gridIn->SetNBoundFace(nBoundFace);
 
     int *BcType = ReadIntOneRow(grpData, "BcType");
-    CompositeUnstructBC **bcr = new CompositeUnstructBC * [nBoundFace];
+    UnstructBCSet **bcr = new UnstructBCSet * [nBoundFace];
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        bcr[iFace] = new CompositeUnstructBC();
+        bcr[iFace] = new UnstructBCSet();
         bcr[iFace]->SetKey(BcType[iFace]);
     }
     gridIn->SetBCRecord(bcr);
     delete [] BcType;
 
-    gridIn->SpecifyBC();
+    gridIn->SpecifyRightCellofBC();
 
     H5Gclose(grpData);
 
@@ -312,11 +312,11 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
         int *interFace2InterFaceIDTemp = ReadIntOneRow(grpData, "interFace2InterFaceID");
         int *interFace2BoundaryFaceTemp = ReadIntOneRow(grpData, "interFace2BoundaryFace");
 
-        for (int iface = 0; iface < nIFace; ++ iface)
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
-            interFace2ZoneID[iface] = interFace2ZoneIDTemp[iface];
-            interFace2InterFaceID[iface] = interFace2InterFaceIDTemp[iface];
-            interFace2BoundaryFace[iface] = interFace2BoundaryFaceTemp[iface];
+            interFace2ZoneID[iFace] = interFace2ZoneIDTemp[iFace];
+            interFace2InterFaceID[iFace] = interFace2InterFaceIDTemp[iFace];
+            interFace2BoundaryFace[iFace] = interFace2BoundaryFaceTemp[iFace];
         }
 
         delete [] interFace2ZoneIDTemp;
@@ -3287,7 +3287,7 @@ void OversetAuxilaryGrid::CalCellWallDistance()
 
     walldistCompute->ComputeWallDistForNodesList(blockIndex, numberOfCells, x, y, z, &cellWallDistance[0]);
 
-    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
+    UnstructBCSet **boundaryConditionRecord = grid->GetBCRecord();
 
     int *leftCellIndexContainer = grid->GetLeftCellOfFace();
     int *rightCellIndexContainer = grid->GetRightCellOfFace();
@@ -3604,7 +3604,7 @@ void OversetConfig::SearchBoundary()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
+    UnstructBCSet **boundaryConditionRecord = grid->GetBCRecord();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
@@ -3625,35 +3625,35 @@ void OversetConfig::SearchBoundary()
 
         switch (boundaryType)
         {
-            case PHENGLEI::INTERFACE:
-                for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
-                {
-                    interfaceBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-                }
-                break;
-            case PHENGLEI::SOLID_SURFACE:
-                for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
-                {
-                    wallBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-                }
-                break;
-            case PHENGLEI::OVERSET:
-                for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
-                {
-                    oversetBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-                }
-                break;
-            case PHENGLEI::SYMMETRY:
-                for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
-                {
-                    symmetryBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-                }
-                break;
-            default:
-                for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
-                {
-                    physicalBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
-                }
+        case PHENGLEI::INTERFACE:
+            for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
+            {
+                interfaceBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+            }
+            break;
+        case PHENGLEI::SOLID_SURFACE:
+            for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
+            {
+                wallBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+            }
+            break;
+        case PHENGLEI::OVERSET:
+            for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
+            {
+                oversetBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+            }
+            break;
+        case PHENGLEI::SYMMETRY:
+            for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
+            {
+                symmetryBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+            }
+            break;
+        default:
+            for (int iNode = 0; iNode < numberOfNodesInFace; ++ iNode)
+            {
+                physicalBoundaryNodeSet.insert(faceNodeIndex[iFace][iNode]);
+            }
         }
     }
 
@@ -4647,7 +4647,7 @@ void OversetConfig::CharacterInterfaceToNode()
 {
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    CompositeUnstructBC **boundaryConditionRecord = grid->GetBCRecord();
+    UnstructBCSet **boundaryConditionRecord = grid->GetBCRecord();
 
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int *faceNodeIndex = grid->GetFace2Node();

@@ -256,9 +256,9 @@ void ScalarLUSolve(T **A, T *B, int N)
 template < typename T >
 void LUDCMPBlockDiag(MAT3D< T > *impmat, int len, int N)
 {
-    for (int cell = 0; cell < len; ++ cell)
+    for (int iCell = 0; iCell < len; ++ iCell)
     {
-        T **A = impmat->GetT2D(cell);
+        T **A = impmat->GetT2D(iCell);
         for (int j = 0; j < N; ++ j)
         {
             // Lower triangular matrix
@@ -438,17 +438,17 @@ void BlockLUSolve(T **DQ, T ***sub_matrix_A, T ***sub_matrix_B, T ***sub_matrix_
 
     //backward substitution for the block tri-diagonal system
     //loop over block rows
-    for (int cell = len - 2; cell >= 0; -- cell)
+    for (int iCell = len - 2; iCell >= 0; -- iCell)
     { ///-2
         //compute dq = dq- B dq[cell+1]
         for (int i = 0; i < N; ++ i)
         {
             for (int k = 0; k < N; ++ k)
             {
-                DQ[cell][i] -= sub_matrix_B[cell][i][k] * DQ[cell + 1][k];
+                DQ[iCell][i] -= sub_matrix_B[iCell][i][k] * DQ[iCell + 1][k];
             }
         }
-    } //end of jCell cell
+    }
 }
 
 }

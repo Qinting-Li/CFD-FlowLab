@@ -62,6 +62,9 @@ private:
     //! The index of the solver.
     int index;
 
+    //! The name of the solver.
+    string solverName;
+
     //! The geometry, which is grid actually, bind to the solver.
     PHGeometry *geometry;
 
@@ -76,8 +79,14 @@ public:
     //! Assign the solver index, the default index is '0' if without given.
     void SetIndex(int index = 0);
 
+    //! Assign the solver name, this function is for incompressible solver. 
+    void SetName(string name);
+
     //! Assign the geometry(grid) to the solver.
     void SetGeometry(PHGeometry *geometry);
+
+    //! Return the solver name,
+    inline string GetName() const;
 
     //! Return the solver index, 
     int  GetIndex() const;
@@ -95,11 +104,17 @@ public:
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitMemory() = 0;
 
+    //! Re-initialize the data, 
+    //! here it is a pure virtual function, it should be re-defined in the real solver.
+    virtual void ReinitField() {};
+
     virtual void ReleaseMemory() = 0;
 
     //! Initialize the flow, here it is a pure virtual function, 
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitFlow() = 0;
+
+    virtual void InitProtectedFlow() {};
 
     //! Interface data communications.    
     virtual void CommunicationInterfaceData() {};

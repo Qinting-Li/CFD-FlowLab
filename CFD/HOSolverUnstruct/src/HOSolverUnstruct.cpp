@@ -412,7 +412,7 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
     int       *left_cell_of_face   = grid->GetLeftCellOfFace();
     int       *right_cell_of_face  = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     int       nBoundFace = grid->GetNBoundFace();
     
@@ -1950,13 +1950,13 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
 
     int * cellIBlank = grid->GetBlankIndex();
 
-    for (int icell = 0; icell < nTotalCell; ++ icell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if(cellIBlank[ icell ] != 1) continue;
+        if(cellIBlank[ iCell ] != 1) continue;
 
         for (int m = 0; m < neqn; ++ m)
         {
-            RDouble res2 = res[icell][m][0] * res[icell][m][0];
+            RDouble res2 = res[iCell][m][0] * res[iCell][m][0];
             residualNormal[m] += res2;
 
             if (res2 > maxResLocal)
@@ -1965,9 +1965,9 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
 
                 maxResLocal = res2;
 
-                maxResCoorXLocal = xcc[icell];
-                maxResCoorYLocal = ycc[icell];
-                maxResCoorZLocal = zcc[icell];
+                maxResCoorXLocal = xcc[iCell];
+                maxResCoorYLocal = ycc[iCell];
+                maxResCoorZLocal = zcc[iCell];
 
                 maxResIndexMLocal = m;
             }
@@ -2037,7 +2037,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     RDouble *xfn = grid->GetFaceNormalX();
     RDouble *yfn = grid->GetFaceNormalY();
     RDouble *zfn = grid->GetFaceNormalZ();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int pLevel = parameters->pMultiGrid;
@@ -2511,7 +2511,7 @@ RDouble HOSolverUnstruct::ComputeCFL(int level)
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
-    RDouble cflEnd   = parameters->GetCFDEnd();
+    RDouble cflEnd   = parameters->GetCFLEnd();
 
     RDouble cfl = cflEnd;
     if (iterationStep < cflNstep)

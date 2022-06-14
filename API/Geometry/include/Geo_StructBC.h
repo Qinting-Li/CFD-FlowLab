@@ -202,23 +202,18 @@ private:
     int stam[3], rate[3];
 };
 
-//! @brief CompositeStructBC class defines the composites of StructBC informations.
+//! @brief StructBCSet class defines the composites of StructBC informations.
 //! In one zone (block), several StructBCs may be exist, so all StructBCs in one zone
-//! are defined as a 'CompositeStructBC'.
-class CompositeStructBC
+//! are defined as a 'StructBCSet'.
+class StructBCSet
 {
 private:
     //! Number of zone (block) index this BC in.
     int zoneID;
 
-    //! The BCRegions list in the current CompositeStructBC.
+    //! The BCRegions list in the current StructBCSet.
     vector<StructBC *> *bcRegions;
 
-    //! The number of boundary faces.
-    int nBoundFace;
-
-    //! The number of interface faces.
-    int nIFace;
 
     //! The I/J/K id of interface faces.
     int *iID, *jID, *kID;
@@ -230,17 +225,13 @@ private:
     string boundaryName[100];
 
 public:
-    CompositeStructBC(int zoneID = 0);
-    ~CompositeStructBC();
+    StructBCSet(int zoneID = 0);
+    ~StructBCSet();
 
 public:
     string GetBCName(int bcType) { return boundaryName[bcType]; }
-    void SetNBoundFace(int nBoundFace);
-    void SetNIFace(int nIFace);
-    int GetNBoundFace() const;
-    int GetNIFace() const;
 
-    void CopyCompositeBCRegion(CompositeStructBC *rightHandSide);
+    void CopyStructBCSet(StructBCSet *rightHandSide);
 
     StructBC * GetBCRegion(uint_t iBCRegion) const;
 
@@ -250,12 +241,12 @@ public:
 
     int GetnBCRegion() const;
 
-    void GetSourceIndexIJK(int iface, int ipos, int &i, int &j, int &k);
-    void GetSourceIndexIJK_Nsurf_LR(int iface, int ipos, int &i, int &j, int &k, int &nsruf, int &s_lr);
-    void GetTargetIndexIJK(int iface, int ipos, int &i, int &j, int &k);
+    void GetSourceIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
+    void GetSourceIndexIJK_Nsurf_LR(int iFace, int ipos, int &i, int &j, int &k, int &nsruf, int &s_lr);
+    void GetTargetIndexIJK(int iFace, int ipos, int &i, int &j, int &k);
 
-    void GetSourceIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
-    void GetTargetIndexIJK_fornodetransfer(int iface, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    void GetSourceIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
+    void GetTargetIndexIJK_fornodetransfer(int iFace, int &id, int &jd, int &kd, int &i_lr, int &j_lr, int &k_lr);
 
     void ProcessBCInfo();
     void SetLnkInfo();

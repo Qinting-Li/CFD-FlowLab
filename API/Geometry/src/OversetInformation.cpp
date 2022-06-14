@@ -559,16 +559,16 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
 
         dataContainerGlobal->write(dataContainerLocal);
         
-        for (int iProcessor = 0; iProcessor < numberOfprocessors; ++ iProcessor)
+        for (int iProc = 0; iProc < numberOfprocessors; ++ iProc)
         {
-            if(iProcessor == serverProcessor)
+            if (iProc == serverProcessor)
             {
                 continue;
             }
 
-            DataContainer * dataContainerRevc = new DataContainer();
+            DataContainer *dataContainerRevc = new DataContainer();
             
-            receive(dataContainerRevc, iProcessor, iProcessor);
+            receive(dataContainerRevc, iProc, iProc);
 
             dataContainerRevc->moveto_begin();
 
@@ -583,11 +583,11 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
     PHMPI::PH_BcastByServerSepMode(dataContainerGlobal);
     dataContainerGlobal->moveto_begin();
 
-    for (int iProcessor = 0; iProcessor < numberOfprocessors; ++ iProcessor)
+    for (int iProc = 0; iProc < numberOfprocessors; ++ iProc)
     {
         PHSPACE::PHRead(dataContainerGlobal, nZonesInThisProc);
         
-        for(int iZone = 0; iZone < nZonesInThisProc; ++ iZone)
+        for (int iZone = 0; iZone < nZonesInThisProc; ++ iZone)
         {
             int zoneIndex;
             int numberOfNeigibors;
@@ -595,12 +595,12 @@ void OversetTopologyManager::InitializeOversetInterfaceTopologyServerCollectAndB
             PHSPACE::PHRead(dataContainerGlobal, zoneIndex        );
             PHSPACE::PHRead(dataContainerGlobal, numberOfNeigibors);
             
-            if(numberOfNeigibors != 0)
+            if (numberOfNeigibors != 0)
             {
                 PHVectorInt1D neighborList;
                 neighborList.resize(numberOfNeigibors);
-                PHSPACE::PHRead(dataContainerGlobal, & neighborList[ 0 ], numberOfNeigibors);
-                oversetTopology[ zoneIndex ] = neighborList;
+                PHSPACE::PHRead(dataContainerGlobal, &neighborList[ 0 ], numberOfNeigibors);
+                oversetTopology[zoneIndex] = neighborList;
             }
         }
     }
@@ -785,11 +785,11 @@ void OversetInterplateCellManager::PostProcessReceivingOversetInformation()
 
     int totalNumberOfOversetInterplateCells = 0;
 
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        OversetInterplateCell * oversetInterplateCell = oversetInterplateCellContainer[ neighborIndex ];
+        OversetInterplateCell *oversetInterplateCell = oversetInterplateCellContainer[iNeighbor];
 
-        PHVectorInt1D & storageIndexContainer = oversetInterplateCell->GetStorageIndexContainer();
+        PHVectorInt1D &storageIndexContainer = oversetInterplateCell->GetStorageIndexContainer();
         uint_t numberOfOversetInterplateCells = oversetInterplateCell->GetNumberOfOversetInterplateCells();
 
         for (int iOversetInterplateCells = 0; iOversetInterplateCells < numberOfOversetInterplateCells; ++ iOversetInterplateCells)
@@ -919,11 +919,11 @@ void OversetDonorCellManager::PostProcessSendingOversetInformation()
     uint_t numberOfNeighbors = oversetDonorCellContainer.size();
 
     int totalNumberOfOversetDonorCells = 0;
-    for (int neighborIndex = 0; neighborIndex < numberOfNeighbors; ++ neighborIndex)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbors; ++ iNeighbor)
     {
-        OversetDonorCell * oversetDonorCell = oversetDonorCellContainer[ neighborIndex ];
+        OversetDonorCell *oversetDonorCell = oversetDonorCellContainer[iNeighbor];
 
-        PHVectorInt1D & storageIndexContainer = oversetDonorCell->GetStorageIndexContainer();
+        PHVectorInt1D &storageIndexContainer = oversetDonorCell->GetStorageIndexContainer();
         int numberOfOversetDonorCells = oversetDonorCell->GetNumberOfOversetDonorCells();
 
         for (int iOversetDonorCell = 0; iOversetDonorCell < numberOfOversetDonorCells; ++ iOversetDonorCell)

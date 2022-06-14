@@ -71,10 +71,30 @@ public:
     //! and the steady relaxation sub-iterations are nested inside the real physical time step.
     LIB_EXPORT void SolveUnsteadyField();
 
+    //! Steady simulation for incompressible situation
+    void SolveIncompressibleSteadyField();
+
+    //! If converged for incompressible situation
+    bool IsConverged(int iZone);
+
+    //! Reinit variable for incompressible situation 
+    void ReinitField(int iSolver);
     //! Update unsteady flow.
     //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
     void UpdateUnsteadyFlow(int iSolver, int level = 0);
 
+    //! Update unsteady variable for incompressible solvers.
+    //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
+    void UpdateUnsteadyVariable(int iSolver, int level = 0);
+
+    //! Init residual file.
+    void InitResultFile(string &fileName);
+
+    //! Output res to file.
+    void DumpResultFile(string &fileName);
+
+    //! For InCompressible Solvers
+    void UpdateDt(int iSolver, int level);
     //! Multi-Grid (MG) acceleration cycle control.
     //! All MG stages are defined in it, such as relaxation, restriction, prolongation, correction.
     void MultiGrid(int iSolver, int level = 0);
@@ -182,11 +202,14 @@ private:
 
     //! For New LUSGS with one sweep, Sub-routines of LUSGS method, which is divided into 4 steps.
     void LUSGS(int iSolver, int level);
+    void DualTimeStepsLUSGS(int iSolver, int level);
     void LUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
     void BLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
-    void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
-    void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+	void MLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
+    void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy);
+    void DetermineCFLNumber(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **dqProxy1);
 
     void CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy);
     void CommunicateGenericArray(int iSolver, int level);
@@ -212,6 +235,15 @@ private:
     
     //! Backward sweep in BLUSGS methods.
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+
+	//! Matix Lower-Upper Symmetric Gauss¨CSeidel Scheme for struct grid.
+    void MLUSGS(int iSolver, int level);
+
+    //! Forward sweep in MLUSGS methods.
+    void ForwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep);
+    
+    //! Backward sweep in MLUSGS methods.
+    void BackwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
     //! Line implicit Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
     void LineLUSGS(int iSolver, int level);
@@ -259,6 +291,18 @@ private:
     void RecoverResidual   (int iSolver, int level);
     bool CVGNorm(int iSolver, int level = 0);
     bool ISCoarsestGrid(int level);
+
+    //! For solving incompressible flow.
+    void SolveFlowField(int iZone);
+
+    //! For solving incompressible scalar equation.
+    void SolveScalarField(int iZone);
+
+    //! For solving incompressible turb equation.
+    void SolveTurbField(int iZone);
+
+    //! For solving incompressible energy equation.
+    void SolveEnergyField(int iZone);
 };
 
 class MultiGridFieldProxy

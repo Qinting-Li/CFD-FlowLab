@@ -87,10 +87,10 @@ typedef float RealData;
 class Gas
 {
 public:
-    Gas(){};
+    Gas();
     virtual ~Gas() {};
 public:
-
+    int wallMultiTemperature;
 public:
     virtual int GetSpeciesEquationNumber() const {return 0;}
     virtual int GetNitrogenIndex() const {return 0;}
@@ -126,6 +126,8 @@ public:
 
     virtual RDouble GetveTemperatureMinNonDimensional() const {return 0.0;}
     virtual RDouble GettrTemperatureMinNonDimensional() const {return 0.0;}
+
+    int GetwallMultiTemperature() const {return wallMultiTemperature;}
 public:
     virtual void AllocateWorkingSpace(){};
     virtual void DeAllocateWorkingSpace(){};

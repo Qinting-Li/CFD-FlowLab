@@ -892,7 +892,7 @@ void RoeDisDiff3D(RDouble *ql, RDouble *qr, RDouble *dQ, RDouble *nxyz, RDouble 
 {
     RDouble nx, ny, nz;
 
-    RDouble r,u,v,w,h,c,Vn,halfV2,c2,ratio,coef;
+    RDouble r,u,v,w,h,c,Vn, absVel,halfV2,c2,ratio,coef;
     RDouble rl,ul,vl,wl,pl,hl,v2l;
     RDouble rr,ur,vr,wr,pr,hr,v2r;
     RDouble z0,z1, X1, X2, b1, b2;
@@ -940,6 +940,7 @@ void RoeDisDiff3D(RDouble *ql, RDouble *qr, RDouble *dQ, RDouble *nxyz, RDouble 
     h = (hl + hr * ratio) * coef;
 
     halfV2 = half * (u * u + v * v + w * w);
+	absVel = sqrt(two * halfV2);
     Vn = nx * u + ny * v + nz * w;
 
     c2 = gamm1 * (h - halfV2);
@@ -950,7 +951,7 @@ void RoeDisDiff3D(RDouble *ql, RDouble *qr, RDouble *dQ, RDouble *nxyz, RDouble 
     eigv3 = ABS(Vn - c);
 
     //! Limit the eigen values.
-    Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, 0.0, 0.0, Vn, c, RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
+    Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, 0.0, 0.0, absVel, Vn, c, RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
 
     z0      = u  * dQ[IRU] + v  * dQ[IRV] + w  * dQ[IRW];
     z1      = nx * dQ[IRU] + ny * dQ[IRV] + nz * dQ[IRW];
@@ -1063,7 +1064,8 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
     RDouble *yfn  = gridIn->GetFaceNormalY();
     RDouble *zfn  = gridIn->GetFaceNormalZ();
 
-    CompositeUnstructBC **bcr = gridIn->GetBCRecord();
+    UnstructBCSet *unstructBCSet = gridIn->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     RDouble *gama = reinterpret_cast<RDouble *> (gridIn->GetDataPtr("gama"));
     RDouble **t   = reinterpret_cast<RDouble **> (gridIn->GetDataPtr("t"));
@@ -1087,6 +1089,8 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
     int le, re, bcType;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
         le = leftCellofFace[iFace];
         re = rightCellofFace[iFace];
 
@@ -1127,7 +1131,7 @@ void SetGhostDQLUSGSInHouse(UnstructGrid *gridIn, RDouble **dq, RDouble **q)
         wm = q[IW][re];
         pm = q[IP][re];
 
-        bcType = bcr[iFace]->GetKey();
+        int bcType = bcRegion->GetBCType();
 
         for (int m = 0; m < nl; ++ m)
         {
@@ -1976,7 +1980,7 @@ void RoeDispMatrix(UnstructGrid *gridIn, FaceProxy *faceProxy, MAT3D< RDouble > 
 
     RDouble t0 = refGama - 1.0;
 
-    RDouble r,u,v,w,h,Vn,c2,c,halfV2;  //! Roe average variables.
+    RDouble r,u,v,w,h,Vn,c2,c,halfV2,absVel;  //! Roe average variables.
     RDouble rl,ul,vl,wl,pl,hl;
     RDouble rr,ur,vr,wr,pr,hr;
     RDouble eigv1,eigv2,eigv3;
@@ -2021,6 +2025,7 @@ void RoeDispMatrix(UnstructGrid *gridIn, FaceProxy *faceProxy, MAT3D< RDouble > 
         w = (wl + wr * ratio) * coef;
         h = (hl + hr * ratio) * coef;
         halfV2 = half * (u * u + v * v + w * w);
+		absVel = sqrt(two * halfV2);
         Vn = nx * u + ny * v + nz * w;
 
         c2 = t0 * (h - halfV2);
@@ -2052,7 +2057,7 @@ void RoeDispMatrix(UnstructGrid *gridIn, FaceProxy *faceProxy, MAT3D< RDouble > 
             //! Limit the eigen values.
             //! Entropy correction, to limit the magnitude of the three eigenvalue.
             //! Warning: This function calling may affect the efficient!
-            Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, 0.0, 0.0, Vn, c, RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
+            Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, 0.0, 0.0, absVel, Vn, c, RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
 
             eigv1    *= half * S;
             eigv2    *= half * S;

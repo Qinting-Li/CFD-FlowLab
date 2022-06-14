@@ -182,7 +182,7 @@ public:
 
     void ComputeFaceWeight(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ComputeInviscidFlux(Grid *grid, FaceProxy *faceProxy, int localStart, int localEnd);
-    void SolutionFix(Grid *gridIn, RDouble *prim, int icell);
+    void SolutionFix(Grid *gridIn, RDouble *prim, int iCell);
 
     void UpdateFlowField(Grid *gridIn, FieldProxy *q_proxy, FieldProxy *dqProxy);
     void SetGhostDQLUSGS(Grid *gridIn, RDouble **dq, RDouble **q);
@@ -194,8 +194,8 @@ public:
     void CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
     void DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
     RDouble GetRad(RDouble *prim, RDouble *nxyz, RDouble gama);
-    void SolveLUSGSForward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    void SolveLUSGSBackward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void SolveLUSGSForward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void SolveLUSGSBackward(Grid *grid, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
 
 #ifdef USE_INHOUSE_VERSION
     //! Forward sweep in line implicit LUSGS time methods.

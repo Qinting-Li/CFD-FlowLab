@@ -40,9 +40,9 @@ void Mesh_CellTopo::SetAllParentIndexToRootState()
     int nTotalCell = GetNTotalCell();
 
     PHVectorInt1D &parentCellIndex = GetParentCellIndex();
-    parentCellIndex.resize( nTotalCell );
+    parentCellIndex.resize(nTotalCell);
 
-    SetField( parentCellIndex, PHSPACE::INVALID_INDEX, nTotalCell );
+    SetField(parentCellIndex, PHSPACE::INVALID_INDEX, nTotalCell);
 }
 
 void Mesh_CellTopo::SetCellType(int cellIndex, int cellTypeIn)
@@ -60,7 +60,7 @@ void Mesh_CellTopo::SetComputationalStatusOfCell(int cellIndex, int computationa
     this->cellComputationalStatus[cellIndex] = computationalStatusOfCell;
 }
 
-void Mesh_CellTopo::SetCell2Node(int cellIndex, PHVectorInt1D& cell2NodeIn)
+void Mesh_CellTopo::SetCell2Node(int cellIndex, PHVectorInt1D &cell2NodeIn)
 {
     this->cell2Node[cellIndex] = cell2NodeIn;
 }

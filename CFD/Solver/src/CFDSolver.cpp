@@ -5,6 +5,7 @@
 #include "Constants.h"
 #include "Residual.h"
 #include "Force.h"
+#include "AleForceManager.h"
 #include "Post_WriteTecplot.h"
 #include "Task_ServerUpdateInterface.h"
 #include "Task_ServerUpdateInterpoint.h"
@@ -14,6 +15,9 @@
 #include "PHIO.h"
 #include "TK_Exit.h"
 #include "TK_Log.h"
+#include <cstdio>
+#include <stdio.h>
+#include "TK_Time.h"
 
 #ifdef USE_TecplotLib
 #include "TECXXX.h"
@@ -110,6 +114,47 @@ void CFDSolver::InitFlow()
     InitDependentVariables();
 }
 
+void CFDSolver::InitProtectedFlow()
+{
+    int nstart = 0;
+
+    //! This method would be wrong when turbulent computational from laminar flow field.
+    //! But this situation breaks the law, so it is not considered.
+    bool readFlowFile = false;
+    if (JudgeIfProtectedRestart())
+    {
+        readFlowFile = true;
+
+        nstart = 1;
+        GlobalDataBase::UpdateData("nstart", &nstart, PHINT, 1);
+    }
+
+    if (!readFlowFile)
+    {
+        //int outerInterStep = 0;
+        //GlobalDataBase::UpdateData("outnstep", &outerInterStep, PHINT, 1);
+
+        nstart = 0;
+        GlobalDataBase::UpdateData("nstart", &nstart, PHINT, 1);
+
+        InitFlowAsRestart();
+    }
+    else
+    {
+        //! To read data in restart file for continual simulation.
+        ActionKey *actkeyReadRestartData = new ActionKey();
+        FillActionKey(actkeyReadRestartData, READ_RESTART, 0);
+        InitFlowAsReadingProtectedRestart(actkeyReadRestartData);
+        delete actkeyReadRestartData;
+    }
+
+    RDouble globalMinTimeStep = -LARGE;
+    GlobalDataBase::UpdateData("globalMinTimeStep", &globalMinTimeStep, PHDOUBLE, 1);
+
+    //! Compute gama, temperature, viscosity, and set boundary condition once.
+    InitDependentVariables();
+}
+
 void CFDSolver::InitCoarseGridsFlow ()
 {
 
@@ -126,6 +171,11 @@ bool CFDSolver::JudgeIfReadAverage()
 }
 
 bool CFDSolver::JudgeIfRestart()
+{
+    return false;
+}
+
+bool CFDSolver::JudgeIfProtectedRestart()
 {
     return false;
 }
@@ -165,6 +215,16 @@ RDouble CFDSolver::UnsteadyConvergence(Grid *grid)
 }
 
 void CFDSolver::UpdateUnsteadyFlow(Grid *grid)
+{
+
+}
+
+void CFDSolver::UpdateUnsteadyVariable(Grid *grid)
+{
+
+}
+
+void CFDSolver::UpdateDt()
 {
 
 }
@@ -239,7 +299,22 @@ void CFDSolver::DumpResultFile(Grid *grid, int level)
 
 }
 
+void CFDSolver::InitIncompressibleResultFile(Grid *grid, string fileName)
+{
+
+}
+
+void CFDSolver::DumpIncompressibleResultFile(Grid *grid, string fileName)
+{
+
+}
+
 void CFDSolver::CheckResult(Grid *grid, int level)
+{
+
+}
+
+void CFDSolver::DumpCFLNumber(Grid *grid, int level)
 {
 
 }
@@ -711,6 +786,11 @@ void CFDSolver::GetResidual(Grid *gridIn, RDouble &localMaxRes)
 
 }
 
+void CFDSolver::ObtainCFLNumber(Grid *gridIn, RDouble &globalMinCFL, RDouble &globalMaxCFL)
+{
+
+}
+
 void CFDSolver::GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange)
 {
 
@@ -1092,12 +1172,12 @@ void CFDSolver::RungeKutta(Grid *grid, FieldProxy *rhsProxy)
     delete resRK;    resRK = NULL;
 }
 
-void CFDSolver::SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void CFDSolver::SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
 
 }
 
-void CFDSolver::SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void CFDSolver::SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
 
 }
@@ -1108,6 +1188,16 @@ void CFDSolver::SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *
 }
 
 void CFDSolver::SolveBLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+{
+
+}
+
+void CFDSolver::SolveMatrixLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+{
+
+}
+
+void CFDSolver::SolveMatrixLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
 
 }
@@ -1127,6 +1217,10 @@ void CFDSolver::SolveLineLUSGSBackward(Grid* grid, FieldProxy* dqProxy, FieldPro
 
 }
 
+void CFDSolver::DetermineCFLNumber(Grid *grid, FieldProxy *dqProxy, FieldProxy *dqProxy1)
+{
+
+}
 
 //! Put correction on the coarse grid.
 void CFDSolver::PutCorrection(Grid *grid, FieldProxy *qProxy)
@@ -1267,7 +1361,7 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
     {
         string dataName = vectorName[iDim];
 
-        int iface;
+        int iFace;
         int nm = vectorDimension[iDim];
         RDouble **q = vectorData[iDim];
 
@@ -1279,10 +1373,10 @@ void CFDSolver::GetInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *actkey,
         int icount = 0;
         for (int jFaceOfNeighbor = 0; jFaceOfNeighbor < nIFaceOfNeighbor; ++ jFaceOfNeighbor)
         {
-            iface = faceIndexForSend[jFaceOfNeighbor];
+            iFace = faceIndexForSend[jFaceOfNeighbor];
             for (int m = 0; m < nm; ++ m)
             {
-                qtmp[icount ++] = q[m][iface];
+                qtmp[icount ++] = q[m][iFace];
             }
         }
         cdata->write(qtmp, nlen * sizeof(RDouble));
@@ -1359,7 +1453,7 @@ void CFDSolver::TranslateInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *a
     cData->moveto_begin();
     for (std::size_t iDim = 0; iDim < vectorDimension.size(); ++ iDim)
     {
-        int iface;
+        int iFace;
         int nm = vectorDimension[iDim];
         RDouble **q = vectorData[iDim];
 
@@ -1373,14 +1467,14 @@ void CFDSolver::TranslateInterfaceData(InterfaceInfo *iterfaceInfo, ActionKey *a
         int icount = 0;
         for (int jFaceOfNeighbor = 0; jFaceOfNeighbor < nIFaceOfNeighbor; ++ jFaceOfNeighbor)
         {
-            iface = faceIndexForRecv[jFaceOfNeighbor];
+            iFace = faceIndexForRecv[jFaceOfNeighbor];
 
             for (int m = 0; m < nm; ++ m)
             {
-                q[m][iface] = qTemp[icount ++];
+                q[m][iFace] = qTemp[icount ++];
             }
         }
-        delete []qTemp;
+        delete [] qTemp;
     }
 }
 
@@ -1771,6 +1865,48 @@ void CFDSolver::CheckResidual(ActionKey *actkey)
     GlobalDataBase::UpdateData("monitorResidual", &globalMaxResidual, PHDOUBLE, 1);
 }
 
+void CFDSolver::ObtainCFLNumber(ActionKey *actkey)
+{
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    int nCurrentProcessorID = GetCurrentProcessorID();
+    RDouble localMaxCFL = 0.0, localZoneCFLMax = 0.0, localMinCFL = LARGE, localZoneCFLMin = 0.0;
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneProcessorID = GetZoneProcessorID(iZone);
+        if (zoneProcessorID == nCurrentProcessorID)
+        {
+            CFDSolver *solver = static_cast <CFDSolver *> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
+            solver->ObtainCFLNumber(GetGrid(actkey->level), localZoneCFLMin, localZoneCFLMax);
+            if (localZoneCFLMin < localMinCFL)
+            {
+                localMinCFL = localZoneCFLMin;
+            }
+            if (localZoneCFLMax > localMaxCFL)
+            {
+                localMaxCFL = localZoneCFLMax;
+            }
+        }
+    }
+
+    RDouble globalMinCFL = localMinCFL;
+    RDouble globalMaxCFL = localMaxCFL;
+    int nProcessorNumber = GetNumberOfProcessor();
+    if (nProcessorNumber > 1)
+    {
+        //synchronization of communication.
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        //Communication.
+        MPI_Allreduce(&localMinCFL, &globalMinCFL, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+
+        MPI_Allreduce(&localMaxCFL, &globalMaxCFL, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+    }
+    GlobalDataBase::UpdateData("globalMinCFL", &globalMinCFL, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("globalMaxCFL", &globalMaxCFL, PHDOUBLE, 1);
+}
+
 void CFDSolver::ComputeSurfaceHeatingChange(ActionKey *actkey)
 {
     using namespace PHMPI;
@@ -1826,6 +1962,84 @@ void CFDSolver::DumpRestartData(ActionKey *actkey)
     using namespace PHMPI;
 
     actkey->filename = GetRestartFileName();
+    if (actkey->filename == "")
+    {
+        return;
+    }
+
+    if(PHMPI::IsParallelRun())
+    {
+        actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, "_", 0);
+    }
+
+    hid_t file;
+    file = CreateHDF5File(actkey->filename);
+    actkey->filepos = file;
+
+    CreateH5RestartFile(actkey);
+
+    int nZones = GetNumberofGlobalZones();
+    int currentProcessorID = GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int sendProcessID = GetZoneProcessorID(iZone);
+        if (currentProcessorID == sendProcessID)
+        {
+            CFDSolver *solver = static_cast <CFDSolver *> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
+            solver->DumpRestartH5(actkey);
+        }
+    }
+
+    H5Fclose(file);
+    actkey->filepos = 0;
+}
+
+void CFDSolver::DumpProtectData(ActionKey *actkey, int &RestartFile)
+{
+    int zoneIDofThisSolver = GetZoneLocalID();
+    if (zoneIDofThisSolver != 0) 
+    {
+        //! Very Important: only the first zone on a processor need to implement the task.
+        //! other wise, the tasks would be implemented several times.
+        return;
+    }
+
+    using namespace PHMPI;
+
+    string protectionFile0 = "./results/flow0.dat";
+    GlobalDataBase::GetData("protectionFile0", &protectionFile0, PHSTRING, 1);
+
+    string protectionFile1 = "./results/flow1.dat";
+    GlobalDataBase::GetData("protectionFile1", &protectionFile1, PHSTRING, 1);
+
+    if(PHMPI::IsParallelRun())
+    {
+        protectionFile0 = PHSPACE::AddSymbolToFileName(protectionFile0, "_", 0);
+        protectionFile1 = PHSPACE::AddSymbolToFileName(protectionFile1, "_", 0);
+    }
+
+    ifstream infile_0(protectionFile0.c_str(), ios::in);
+    if (infile_0)
+    {
+        RestartFile = 1;
+    }
+
+    ifstream infile_1(protectionFile1.c_str(), ios::in);
+    if (infile_1)
+    {
+        RestartFile = 0;
+    }
+
+    if(RestartFile == 0)
+    {
+        actkey->filename = protectionFile0;
+    }
+    else
+    {
+        actkey->filename = protectionFile1;
+    }
+
     if (actkey->filename == "")
     {
         return;
@@ -2016,6 +2230,98 @@ void CFDSolver::InitFlowAsReadingRestart(ActionKey *actkey)
     using namespace PHMPI;
 
     actkey->filename = GetRestartFileName();
+    if (actkey->filename == "")
+    {
+        return;
+    }
+
+    if(PHMPI::IsParallelRun())
+    {
+        actkey->filename = PHSPACE::AddSymbolToFileName(actkey->filename, "_", 0);
+    }
+
+    hid_t file;
+    file = OpenHDF5File(actkey->filename);
+    actkey->filepos = file;
+
+    int nZones = GetNumberofGlobalZones();
+    int currentProcessorID = GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int recvProcess = GetZoneProcessorID(iZone);
+
+        if (currentProcessorID == recvProcess)
+        {
+            CFDSolver *solver = static_cast <CFDSolver *> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
+            solver->ReadRestartH5(actkey);
+        }
+    }
+
+    H5Fclose(file);
+    actkey->filepos = 0;
+}
+
+void CFDSolver::InitFlowAsReadingProtectedRestart(ActionKey *actkey)
+{
+    int zoneIDofThisSolver = GetZoneLocalID();
+    if (zoneIDofThisSolver != 0)
+    {
+        //! Very Important: only the first zone on a processor need to implement the task.
+        //! other wise, the tasks would be implemented several times.
+        return;
+    }
+
+    using namespace PHMPI;
+    int RestartFile = 0;
+    string protectionFile0 = "./results/flow0.dat";
+    GlobalDataBase::GetData("protectionFile0", &protectionFile0, PHSTRING, 1);
+
+    string protectionFile1 = "./results/flow1.dat";
+    GlobalDataBase::GetData("protectionFile1", &protectionFile1, PHSTRING, 1);
+
+    if(PHMPI::IsParallelRun())
+    {
+        protectionFile0 = PHSPACE::AddSymbolToFileName(protectionFile0, "_", 0);
+        protectionFile1 = PHSPACE::AddSymbolToFileName(protectionFile1, "_", 0);
+    }
+
+    ifstream infile_0(protectionFile0.c_str(), ios::in);
+    if (infile_0)
+    {
+        RestartFile = 0;
+    }
+
+    ifstream infile_1(protectionFile1.c_str(), ios::in);
+    if (infile_1)
+    {
+        RestartFile = 1;
+    }
+
+    if(infile_0 && infile_1)     //如果flow0和flow1都存在，通过文件的最后修改时间判断，读取时间小的文件
+    {
+        RDouble TimeFile0, TimeFile1;
+        TIME_SPACE::GetFileModifiedTime(protectionFile0, TimeFile0);
+        TIME_SPACE::GetFileModifiedTime(protectionFile1, TimeFile1);
+        if(TimeFile0 < TimeFile1)
+        {
+            RestartFile = 0;
+        }
+        else if (TimeFile0 > TimeFile1)
+        {
+            RestartFile = 1;
+        }
+    }
+
+    if(RestartFile == 0)
+    {
+        actkey->filename = protectionFile0;
+    }
+    else
+    {
+        actkey->filename = protectionFile1;
+    }
+
     if (actkey->filename == "")
     {
         return;
@@ -2370,7 +2676,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
             data_count.resize(0);
             vector < RDouble *> vector_data;
             vector_data.resize(0);
-            for (int idata = 0; idata < dataNumber; ++ idata)
+            for (int iData = 0; iData < dataNumber; ++ iData)
             {
                 int idata_count = 0;
                 PHRead(cdata, idata_count);
@@ -2428,11 +2734,11 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                 }
                 if (coor_count % nWordOfLine != 0) wallAircoefFile << "\n";
 
-                for (int idata = 0; idata < dataNumber; ++ idata)
+                for (int iData = 0; iData < dataNumber; ++ iData)
                 {
                     for (int iNode = 0; iNode < coor_count; ++ iNode)
                     {
-                        wallAircoefFile << setw(wordWidth) << vector_data[idata][iNode];
+                        wallAircoefFile << setw(wordWidth) << vector_data[iData][iNode];
                         if ((iNode + 1) % nWordOfLine == 0) 
                         {
                             wallAircoefFile << "\n";
@@ -2440,7 +2746,7 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     }
                     if (coor_count % nWordOfLine != 0) wallAircoefFile << "\n";
 
-                    delete []vector_data[idata];
+                    delete [] vector_data[iData];
                 }
             }
             else
@@ -2462,16 +2768,16 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     wallAircoefFile << setw(wordWidth) << x[iNode]
                                     << setw(wordWidth) << y[iNode]
                                     << setw(wordWidth) << z[iNode];
-                    for (int idata = 0; idata < dataNumber; ++ idata)
+                    for (int iData = 0; iData < dataNumber; ++ iData)
                     {
-                        wallAircoefFile << setw(wordWidth) << vector_data[idata][iNode];
+                        wallAircoefFile << setw(wordWidth) << vector_data[iData][iNode];
                     }
                     wallAircoefFile << "\n";
                 }
 
-                for (int idata = 0; idata < dataNumber; ++ idata)
+                for (int iData = 0; iData < dataNumber; ++ iData)
                 {
-                    delete []vector_data[idata];
+                    delete [] vector_data[iData];
                 }
 
                 int count = 0;
@@ -2485,19 +2791,114 @@ void CFDSolver::WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *
                     wallAircoefFile << "\n";
                 }
 
-                delete []face2node;
+                delete [] face2node;
             }
 
-            delete []x;
-            delete []y;
-            delete []z;
+            delete [] x;
+            delete [] y;
+            delete [] z;
 
             PHRead(cdata, &TecioMission, 1);
         }
-
     }
 
     CloseFile(wallAircoefFile);
+}
+
+void CFDSolver::DumpHeatFlux(ActionKey *actkey)
+{
+    int zoneIDofThisSolver = GetZoneLocalID();
+    if (zoneIDofThisSolver != 0)
+    {
+        //! Very Important: only the first zone on a processor need to implement the task.
+        //! other wise, the tasks would be implemented several times.
+        return;
+    }
+
+    using namespace PHMPI;
+    string wall_heatfluxfile = "wall_heatflux.dat";
+    GlobalDataBase::GetData("wall_heatfluxfile", &wall_heatfluxfile, PHSTRING, 1);
+    if (wall_heatfluxfile == "")
+    {
+        return;
+    }
+
+    actkey->filename = wall_heatfluxfile;
+
+    ios_base::openmode openmode = ios_base::out|ios_base::app;
+    actkey->openmode = openmode;
+
+    int nZones = GetNumberofGlobalZones();
+    actkey->GetData()->moveto_begin();
+
+    RDouble *HeatFlux = new RDouble[3];
+    HeatFlux[0] = 0.0, HeatFlux[1] = 0.0, HeatFlux[2] = 0.0;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneProcessorID = GetZoneProcessorID(iZone);
+        int currentProcessorID = GetCurrentProcessorID();
+        if (currentProcessorID == zoneProcessorID)
+        {
+            //! If zone i belongs to the current process.
+            CFDSolver *solver = static_cast <CFDSolver *> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
+            solver->ComputeHeatFlux(actkey, HeatFlux);
+        }
+    }
+    int currentProcessorID = GetCurrentProcessorID();
+    if (currentProcessorID == server)
+    {
+        WriteHeatFluxASCII(actkey, HeatFlux); // Write data to file.
+    }
+    delete []HeatFlux;
+}
+
+void CFDSolver::WriteHeatFluxASCII(ActionKey *actkey, RDouble *HeatFlux)
+{
+    if (!actkey->IsNeedOpenFile())
+    {
+        return;
+    }
+
+    ParallelOpenFile(actkey);
+
+    std::ostringstream oss;
+    fstream &file = *(actkey->file);
+
+    //! To obtain the reference values.
+    Param_CFDSolver *parameters = GetControlParameters();
+    RDouble refMachNumber = parameters->GetRefMachNumber();
+    RDouble refDimensionalDensity = parameters->GetRefDimensionalDensity();
+    RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
+    RDouble refVelocity = refDimensionalSonicSpeed * refMachNumber;
+    RDouble refSquareVelocity = refVelocity * refVelocity;
+    RDouble refEnergy = refDimensionalDensity * refVelocity * refSquareVelocity;
+    RDouble refHeatFluxDimension = refEnergy * 0.001;
+    HeatFlux[0] = HeatFlux[0] * refHeatFluxDimension;
+    HeatFlux[1] = HeatFlux[1] * refHeatFluxDimension;
+
+    if (IfFileEmpty(file))
+    {
+        oss << "Title=\"The HeatFlux of Wall\"" << endl;
+        oss << "Variables=" << endl;
+        oss << "iter" << endl;
+        oss << "maxHeatFlux(kW/m^2)" << endl;
+        oss << "averageHeatFlux(kW/m^2)" << endl;
+    }
+
+    int iterationStep;
+    GlobalDataBase::GetData("outnstep", &iterationStep, PHINT, 1);
+    oss << setiosflags(ios::left);
+    oss << setiosflags(ios::scientific);
+    oss << setprecision(10);
+
+    oss << iterationStep << "    ";
+    oss << HeatFlux[0] << "    ";
+    oss << HeatFlux[1] << "    ";
+    oss << "\n";
+
+    WriteASCIIFile(file, oss.str());
+
+    ParallelCloseFile(actkey);
 }
 
 #ifdef USE_TecplotLib
@@ -2598,7 +2999,7 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
             data_count.resize(0);
             vector < RDouble *> vector_data;
             vector_data.resize(0);
-            for (int idata = 0; idata < dataNumber; ++ idata)
+            for (int iData = 0; iData < dataNumber; ++ iData)
             {
                 int idata_count = 0;
                 PHRead(cdata, idata_count);
@@ -2606,7 +3007,7 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
 
                 int iValueLocation = 0;
                 PHRead(cdata, iValueLocation);
-                ValueLocation[3 + idata] = iValueLocation;
+                ValueLocation[3 + iData] = iValueLocation;
 
                 RDouble *qq = new RDouble [idata_count];
                 PHRead(cdata, qq, idata_count);
@@ -2667,13 +3068,12 @@ void CFDSolver::WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> dat
             I = TECDAT112(&coor_count, y, &IsDouble);
             I = TECDAT112(&coor_count, z, &IsDouble);
 
-            for (int idata = 0; idata < dataNumber; ++ idata)
+            for (int iData = 0; iData < dataNumber; ++ iData)
             {
-                I = TECDAT112(&data_count[idata], vector_data[idata], &IsDouble);
+                I = TECDAT112(&data_count[iData], vector_data[iData], &IsDouble);
 
-                delete []vector_data[idata];
+                delete [] vector_data[iData];
             }
-
 
             if (gridTypeofLocalZone == UNSTRUCTGRID)
             {

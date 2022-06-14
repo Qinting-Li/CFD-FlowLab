@@ -174,8 +174,8 @@ namespace PHSPACE
         void prolhic_eric(Grid *fineGridIn, Grid *coarseGridIn, FieldProxy *workProxy);
         void PositiveUpdate(Grid *grid, FieldProxy *qProxy, FieldProxy *dqProxy);
 
-        void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-        void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+        void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+        void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
 
 #ifdef USE_INHOUSE_VERSION
         //! To execute the forward sweep of the block LU-SGS method.
@@ -298,6 +298,8 @@ namespace PHSPACE
 
         //! Write the surface information to the file.
         void WriteSurfaceInfo(ActionKey *actkey);
+
+        void ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux);
 
         //! To obtain the derivatives of the designate primary variable whose sequence number in the array is marked with the valued of nIndex.
         void GetDerivatives(int nIndex, int iSurface, int ndim, int nlr, int i, int j, int k, int ni,int nj, int nk, RDouble4D &q,

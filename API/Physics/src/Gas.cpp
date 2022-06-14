@@ -1,4 +1,6 @@
 #include "Gas.h"
+#include "GlobalDataBase.h"
+#include "Constants.h"
 
 namespace PHSPACE
 {
@@ -206,6 +208,15 @@ namespace GAS_SPACE
         }
         return true;
     }
+
+    Gas::Gas()
+    {
+        wallMultiTemperature = 0;
+        if (GlobalDataBase::IsExist("wallMultiTemperature", PHINT, 1))
+        {
+            wallMultiTemperature = GlobalDataBase::GetIntParaFromDB("wallMultiTemperature");
+        }
+    };
 
 }
 

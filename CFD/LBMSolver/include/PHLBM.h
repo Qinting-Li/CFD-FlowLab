@@ -24,7 +24,7 @@ namespace phlbm {
     inline bool GetData(const string &name, int *data, int size = 1) const
     {
       if(dblk.GetBCParamDataBase()->IsExist(name, PHSPACE::PHINT, size)) { 
-        dblk.GetData(name, (void*)data, PHSPACE::PHINT, size); 
+        dblk.GetParamData(name, (void*)data, PHSPACE::PHINT, size); 
         return true;
       }
       PHSPACE::WriteLogFile("Cannot get int data with name \""+name+".\"");
@@ -33,7 +33,7 @@ namespace phlbm {
     inline bool GetData(const string &name, double *data, int size = 1) const
     { 
       if(dblk.GetBCParamDataBase()->IsExist(name, PHSPACE::PHDOUBLE, size)) { 
-        dblk.GetData(name, (void*)data, PHSPACE::PHDOUBLE, size);
+        dblk.GetParamData(name, (void*)data, PHSPACE::PHDOUBLE, size);
         return true; 
       }
       PHSPACE::WriteLogFile("Cannot get double data with name \""+name+".\"");
@@ -42,7 +42,7 @@ namespace phlbm {
     inline bool GetData(const string &name, float *data, int size = 1) const
     {
       if(dblk.GetBCParamDataBase()->IsExist(name, PHSPACE::PHFLOAT, size)) { 
-        dblk.GetData(name, (void*)data, PHSPACE::PHFLOAT, size); 
+        dblk.GetParamData(name, (void*)data, PHSPACE::PHFLOAT, size); 
         return true;
       }
       PHSPACE::WriteLogFile("Cannot get float data with name \""+name+".\"");
@@ -51,7 +51,7 @@ namespace phlbm {
     inline bool GetData(const string &name, string *data, int size = 1) const
     {
       if(dblk.GetBCParamDataBase()->IsExist(name, PHSPACE::PHSTRING, size)) { 
-        dblk.GetData(name, (void*)data, PHSPACE::PHSTRING, size); 
+        dblk.GetParamData(name, (void*)data, PHSPACE::PHSTRING, size); 
         return true;
       }
       PHSPACE::WriteLogFile("Cannot get string data with name \""+name+".\"");
@@ -63,7 +63,7 @@ namespace phlbm {
   class BlockTextReader : private PHSPACE::GlobalBoundaryCondition {
     typedef PHSPACE::SimpleBC _phbc;
   public:
-    static inline size_t GetNumOfDataBlock() { return GetNumberofBC(); }
+    static inline size_t GetNumOfDataBlock() { return GetNumberOfBC(); }
     static inline NamedDataBlock GetDataBlock(const int &ib) { return NamedDataBlock(*GetBC(ib)); }
     static inline std::vector<NamedDataBlock> GetDataBlockVector() 
     { 

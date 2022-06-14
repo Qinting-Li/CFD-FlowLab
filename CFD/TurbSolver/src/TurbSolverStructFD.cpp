@@ -189,11 +189,11 @@ void TurbSolverStrFD::GetFaceVariableCorrectionAtPhysicalBoundary(Grid *gridIn, 
     RDouble4D & ql = qlProxy->GetField_STR();
     RDouble4D & qr = qrProxy->GetField_STR();
     
-    CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (!IsWall(BCType) || nsurf_bc != nsurf)
@@ -342,12 +342,12 @@ void TurbSolverStrFD::ObtainBoundaryValue(Grid *gridIn)
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int wallFunctionType = parameters->GetWallFunctionType();
 
-    CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (BCType < 0)
@@ -1919,7 +1919,7 @@ void TurbSolverStrFD::DecompressDQ(DataContainer *&dataContainer, FieldProxy *fi
     }
 }
 
-void TurbSolverStrFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void TurbSolverStrFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     StructGrid *grid = StructGridCast(gridIn);
 
@@ -1999,7 +1999,7 @@ void TurbSolverStrFD::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, Field
     delete []mat_abc;
 }
 
-void TurbSolverStrFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void TurbSolverStrFD::SolveLUSGSBackward(Grid *gridIn, FieldProxy * dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     StructGrid *grid = StructGridCast(gridIn);
 

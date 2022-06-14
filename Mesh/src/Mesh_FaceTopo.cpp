@@ -29,7 +29,7 @@ int Mesh_FaceTopo::GetNBoundaryFaces()
     int nTotalFaces = this->GetNTotalFaces();
     int nBoundaryFaces = 0;
 
-    for (int iFace = 0; iFace < nTotalFaces; ++iFace)
+    for (int iFace = 0; iFace < nTotalFaces; ++ iFace)
     {
         int rightCell = rightCellIndex[iFace];
         bool isBoundaryFace = (childrenFaceIndex[iFace].size() == 0);
@@ -87,7 +87,7 @@ int Mesh_FaceTopo::FindEdgeWithMiddleNode(MultiIndex edgeWithMiddleNode)
     return iter->id;
 }
 
-void Mesh_FaceTopo::InsertFace( MultiIndex face )
+void Mesh_FaceTopo::InsertFace(MultiIndex face)
 {
     faceList.insert(face);
 }
@@ -102,7 +102,7 @@ void Mesh_FaceTopo::InsertEdgeWithMiddleNode(MultiIndex edgeWithMiddleNode)
     edgesWithMiddleNode.insert(edgeWithMiddleNode);
 }
 
-int Mesh_FaceTopo::AddFace(PHVectorInt1D& face2NodeIn, int faceTypeIn, int parentFaceIndex)
+int Mesh_FaceTopo::AddFace(PHVectorInt1D &face2NodeIn, int faceTypeIn, int parentFaceIndex)
 {
     uint_t nodeNumber = face2NodeIn.size();
 
@@ -136,7 +136,7 @@ void Mesh_FaceTopo::ResizeFaceNumber(int faceNumber)
     faceBoundaryCondition.resize(faceNumber);
 }
 
-void Mesh_FaceTopo::SetDefaultFaceInformation(int faceIndex, int faceTypeIn, PHVectorInt1D& face2NodeIn, int parentFaceIndex)
+void Mesh_FaceTopo::SetDefaultFaceInformation(int faceIndex, int faceTypeIn, PHVectorInt1D &face2NodeIn, int parentFaceIndex)
 {
     this->leftCellIndex[faceIndex] = PHSPACE::INVALID_INDEX;
     this->rightCellIndex[faceIndex] = PHSPACE::INVALID_INDEX;
@@ -168,7 +168,7 @@ void Mesh_FaceTopo::ScanChildFace(PHVectorInt1D cell2Node, int cellType, int cel
         uint_t nodeNumber = relativeFace2Node.size();
         absoluteFace2Node.resize(nodeNumber);
 
-        for (int iNode = 0; iNode < nodeNumber; ++iNode)
+        for (int iNode = 0; iNode < nodeNumber; ++ iNode)
         {
             int relativeIndex = relativeFace2Node[iNode];
             int nodeIndex = cell2Node[relativeIndex];

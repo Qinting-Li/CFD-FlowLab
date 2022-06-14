@@ -149,6 +149,15 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
     int intervalStepPlot = parameters->GetIntervalStepPlot();
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
 
+    int sys_gridtype = 0;
+    GlobalDataBase::GetData("sys_gridtype", &sys_gridtype, PHINT, 1);
+
+    int nProtectData = 0;
+    if(GlobalDataBase::IsExist("nProtectData", PHINT, 1))
+    {
+        nProtectData = GlobalDataBase::GetIntParaFromDB("nProtectData");
+    }
+
     bool isSubIterationDump = true;
     int isUnsteady = parameters->GetIsUnsteady();
     if (isUnsteady)
@@ -168,11 +177,50 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
 
     if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
     {
-        //! To dump restart data for continual simulation.
-        ActionKey *actkeyDumpRestartData = new ActionKey();
-        FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
-        DumpRestartData(actkeyDumpRestartData);
-        delete actkeyDumpRestartData;
+        if(nProtectData ==0)
+        {
+            //! To dump restart data for continual simulation.
+            ActionKey *actkeyDumpRestartData = new ActionKey();
+            FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
+            DumpRestartData(actkeyDumpRestartData);
+            delete actkeyDumpRestartData;
+        }
+
+        else
+        {
+            int RestartFile = 0;
+            ActionKey *actkeyDumpRestartData = new ActionKey();
+            FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
+            DumpProtectData(actkeyDumpRestartData, RestartFile);
+            delete actkeyDumpRestartData;
+
+            if(outnstep > 1)
+            {
+                if(RestartFile == 0)
+                {
+                    string path = "./results/flow1.dat";
+                    remove(path.c_str());
+
+                    if(PHMPI::IsParallelRun())
+                    {
+                        string path = "./results/flow1_0.dat";
+                        remove(path.c_str());
+                    }
+                }
+
+                else if(RestartFile == 1)
+                {
+                    string path = "./results/flow0.dat";
+                    remove(path.c_str());
+
+                    if(PHMPI::IsParallelRun())
+                    {
+                        string path = "./results/flow0_0.dat";
+                        remove(path.c_str());
+                    }
+                }
+            }
+        }
     }
 
     if (outnstep % intervalStepPlot == 0 && isSubIterationDump)
@@ -230,6 +278,15 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                 FillActionKey(actkeyDumpSurfaceInfo, DUMP_SURFACE_INFO, 0);
                 DumpSurfaceInfo(actkeyDumpSurfaceInfo);
                 delete actkeyDumpSurfaceInfo;
+
+                if (sys_gridtype == STRUCTGRID)
+                {
+                    //! To dump surface max and average heat flux.
+                    ActionKey *actkeyDumpHeatFlux = new ActionKey();
+                    FillActionKey(actkeyDumpHeatFlux, DUMP_HEATFLUX, 0);
+                    DumpHeatFlux(actkeyDumpHeatFlux);
+                    delete actkeyDumpHeatFlux;
+                }
             }
         }
     }
@@ -339,8 +396,81 @@ void NSSolver::CheckResult(Grid *grid, int level)
     if (nCurrentProcessorID == 0 && (outnstep % interResStep == 0))
     {
         string keyVariable = GlobalDataBase::GetStrParaFromDB("keyVariable");
-        cout<<"The residual variation of "<<keyVariable<<" is: "<<monitorResidual<<endl;
+        ostringstream oss;
+        oss<<"The residual variation of "<<keyVariable<<" is: ";
+        oss << setiosflags(ios::left);
+        oss << setprecision(5);
+        oss << setiosflags(ios::scientific);
+        oss << setiosflags(ios::showpoint);
+        oss<<monitorResidual<<endl;
+        cout<<oss.str();
+        //cout<<"The residual variation of "<<keyVariable<<" is: "<<monitorResidual<<endl;
     }
+}
+
+void NSSolver::DumpCFLNumber(Grid *grid, int level)
+{
+    //! Obtain the CFL number.
+    ActionKey *actkeyObtainCFLNumber = new ActionKey();
+    FillActionKey(actkeyObtainCFLNumber, DUMP_RESIDUAL, level);
+    //! Obtain the minimum CFL number and maximum CFL number.
+    ObtainCFLNumber(actkeyObtainCFLNumber);
+
+    Param_NSSolver *parameters = GetControlParameters();
+    int interResStep = parameters->GetIntervalStepRes();
+    int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == 0 && (outnstep % interResStep == 0))
+    {
+        RDouble globalMinCFL = GlobalDataBase::GetDoubleParaFromDB("globalMinCFL");
+        RDouble globalMaxCFL = GlobalDataBase::GetDoubleParaFromDB("globalMaxCFL");
+
+        //! Dump to file.
+        string saveHeatRes = "./results/dumpCFL.plt";
+        if (GlobalDataBase::IsExist("saveHeatRes", PHSTRING, 1))
+        {
+            saveHeatRes = GlobalDataBase::GetStrParaFromDB("saveHeatRes");
+        }
+        actkeyObtainCFLNumber->filename = saveHeatRes;
+        if (actkeyObtainCFLNumber->filename == "")
+        {
+            return;
+        }
+        ios_base::openmode openmode = ios_base::out|ios_base::app;
+        actkeyObtainCFLNumber->openmode = openmode;
+        //Open file.
+        ParallelOpenFile(actkeyObtainCFLNumber);
+        fstream &file = *actkeyObtainCFLNumber->file;
+        std::ostringstream oss;
+        if (IfFileEmpty(file))
+        {
+            vector<string> title_tecplot;
+            title_tecplot.push_back("Title=\"The change of CFL number\"");
+            title_tecplot.push_back("Variables=");
+            title_tecplot.push_back("\"Iterations\"");
+            title_tecplot.push_back("\"globalMinCFL\"");
+            title_tecplot.push_back("\"globalMaxCFL\"");
+            for (std::size_t i = 0; i < title_tecplot.size(); ++ i)
+            {
+                oss << title_tecplot[i] << "\n";
+            }
+        }
+        oss << setiosflags(ios::left);
+        oss << setprecision(5);
+        //oss << setiosflags(ios::scientific);
+        oss << setiosflags(ios::showpoint);
+
+        oss << setw(7) << outnstep << "    ";
+        oss << globalMinCFL << "    "<<globalMaxCFL<<endl;
+
+        WriteASCIIFile(file, oss.str());
+
+        //Close file.
+        ParallelCloseFile(actkeyObtainCFLNumber);
+    }
+
+    delete actkeyObtainCFLNumber;
 }
 
 void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
@@ -358,7 +488,14 @@ void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
     if (nCurrentProcessorID == 0 && (outnstep % interResStep == 0))
     {
         RDouble monitorHeatingChange = GlobalDataBase::GetDoubleParaFromDB("monitorHeatingChange");
-        cout<<"The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
+        ostringstream oss1;
+        oss1 << setiosflags(ios::left);
+        oss1 << setprecision(5);
+        oss1 << setiosflags(ios::scientific);
+        oss1 << setiosflags(ios::showpoint);
+        oss1 << "The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
+        cout<<oss1.str();
+        //cout<<"The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
 
         //! Dump to file.
         string saveHeatRes = "./results/heatResidual.plt";
@@ -421,7 +558,7 @@ RDouble NSSolver::ComputeCFL()
 
     Param_NSSolver *parameters = GetControlParameters();
     //! Steady.
-    int nMGLevel = parameters->GetNMGLevel();        
+    int nMGLevel = parameters->GetNMGLevel();
     if (nMGLevel <= 1)
     {
         //! Finest grid.
@@ -435,7 +572,7 @@ RDouble NSSolver::ComputeCFL()
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
-    RDouble cflEnd   = parameters->GetCFDEnd();
+    RDouble cflEnd   = parameters->GetCFLEnd();
 
     RDouble cfl = cflStart + (cflEnd - cflStart) * MIN (iterationStep, cflNstep) / cflNstep;
 

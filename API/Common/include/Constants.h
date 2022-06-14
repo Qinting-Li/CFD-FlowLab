@@ -160,12 +160,14 @@ const int IREGAMA                = 2;
 const int BALDWIN_LOMAX          = 10;
 const int SPALART_ALLMARAS       = 11;
 const int KW_SST                 = 12;
+const int KEPSILON               = 13;
 
 const int MULTI_STAGE            = 1;
 const int LU_SGS                 = 4;
 const int Block_LU_SGS           = 5;
 const int JACOBIAN_ITERATION     = 6;
 const int Line_LU_SGS            = 7;
+const int Matrix_LU_SGS          = 8;
 
 const int OneRefineOneDeform     = 1;
 const int DeformAfterAllRefine   = 2;
