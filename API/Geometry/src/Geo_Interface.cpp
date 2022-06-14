@@ -240,9 +240,9 @@ int InterfaceInfo::ComputeNumberOfNeighbor(int *zoneflag)
     }
 
     //! Find out all the neighbors of current zone,and set their zoneflag to one.
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
-        zoneflag[interFace2ZoneID[iface]] = 1;
+        zoneflag[interFace2ZoneID[iFace]] = 1;
     }
 
     //! Compute the number of neighbor zones of the current zone,including itself.
@@ -290,12 +290,12 @@ void InterfaceInfo::ComputeFaceIndexForRecv(int ineighbor)
     InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
     int *faceIndexForRecv = interFacePatch->GetFaceIndexForRecv();
     int count = 0;
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
-        if (interFace2ZoneID[iface] == zone_id)
+        if (interFace2ZoneID[iFace] == zone_id)
         {
             //! It means that faceIndexForRecv is count locally based on the interfaces of current zone.
-            faceIndexForRecv[count] = iface;
+            faceIndexForRecv[count] = iFace;
             ++ count;
         }
     }
@@ -308,9 +308,9 @@ int InterfaceInfo::ComputeNIFaceOfNeighbor(int ineighbor)
     int zone_id = this->GetZoneIndexOfNeighbor(ineighbor);
     int nIFaceOfNeighbor = 0;
 
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
-        if (interFace2ZoneID[iface] == zone_id)
+        if (interFace2ZoneID[iFace] == zone_id)
         {
             ++ nIFaceOfNeighbor;
         }
@@ -339,20 +339,20 @@ void InterfaceInfo::InitNeighbors()
     FindNeighbors();
 
     int numberOfNeighbor = this->GetNumberOfNeighbor();
-    for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
     {
-        InitNeighbors(ineighbor);
+        InitNeighbors(iNeighbor);
     }
 }
 
 int InterfaceInfo::FindIthNeighbor(int zone)
 {
     int idx = -1;
-    for (int ineighbor = 0; ineighbor < numberOfNeighbor; ++ ineighbor)
+    for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
     {
-        if (zone == this->GetZoneIndexOfNeighbor(ineighbor))
+        if (zone == this->GetZoneIndexOfNeighbor(iNeighbor))
         {
-            idx = ineighbor;
+            idx = iNeighbor;
             break;
         }
     }
@@ -366,11 +366,11 @@ int * InterfaceInfo::ComputeFaceIndexForSend(int ineighbor)
     int zone_id = this->GetZoneIndexOfNeighbor(ineighbor);
 
     int count = 0;
-    for (int iface = 0; iface < nIFace; ++ iface)
+    for (int iFace = 0; iFace < nIFace; ++ iFace)
     {
-        if (interFace2ZoneID[iface] == zone_id)
+        if (interFace2ZoneID[iFace] == zone_id)
         {
-            faceIndexForSend[count] = interFace2InterFaceID[iface];
+            faceIndexForSend[count] = interFace2InterFaceID[iFace];
             ++ count;
         }
     }
@@ -383,11 +383,11 @@ void InterfaceInfo::FillFaceIndexForSend(int zone, int *faceIndexForSend_in)
     InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
     int *faceIndexForSend = interFacePatch->GetFaceIndexForSend();
     int faceNumberOfPatch = interFacePatch->GetNumberOfFace();
-    for (int iface = 0; iface < faceNumberOfPatch; ++ iface)
+    for (int iFace = 0; iFace < faceNumberOfPatch; ++ iFace)
     {
         //! Here we can make out that faceIndexForSend is corresponds to the neighbor zone.
         //! That is to say, it comes according to the corresponding sequence of corresponding neighbor zone.
-        faceIndexForSend[iface] = faceIndexForSend_in[iface];
+        faceIndexForSend[iFace] = faceIndexForSend_in[iFace];
     }
 }
 

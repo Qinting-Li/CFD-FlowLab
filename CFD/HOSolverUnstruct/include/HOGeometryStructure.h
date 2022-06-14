@@ -334,8 +334,8 @@ public:
     typedef Eigen::Matrix<RDouble, Eigen::Dynamic, Eigen::Dynamic> HighOrderMatrix;
 
     //! @Compute Coordinate of integration point  
-    //! @param[in]   nodenumber                               node number of icell
-    //! @param[in]   nodeID                                   node ID of icell
+    //! @param[in]   nodenumber                               node number of iCell
+    //! @param[in]   nodeID                                   node ID of iCell
     //! @param[in]   pointX                                   the coord_X of grid
     //! @param[in]   pointY                                   the coord_Y of grid
     //! @param[in]   pointZ                                   the coord_Z of grid

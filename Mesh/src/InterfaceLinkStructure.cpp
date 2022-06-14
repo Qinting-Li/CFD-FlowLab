@@ -37,7 +37,7 @@ void FaceSearchingManager::AddFace(const PHVectorInt1D &faceNodeIndexes)
     int faceIndex = static_cast<int>(referenceFacesArray.size());
     FaceSearching *faceSearching = new FaceSearching(faceNodeIndexes, faceIndex);
 
-    set< FaceSearching *, CompareFaceByMethod1 >::iterator iter = referenceFacesSet.find(faceSearching);
+    set<FaceSearching *, CompareFaceByMethod1>::iterator iter = referenceFacesSet.find(faceSearching);
 
     if (iter == referenceFacesSet.end())
     {
@@ -71,7 +71,7 @@ void FaceSearchingManager::ComputeNewFaceIndex()
     }
 }
 
-set< FaceSearching *, CompareFaceByMethod1 >::iterator FaceSearchingManager::FindFace(FaceSearching *faceSearching)
+set<FaceSearching *, CompareFaceByMethod1>::iterator FaceSearchingManager::FindFace(FaceSearching *faceSearching)
 {
     return referenceFacesSet.find(faceSearching);
 }
@@ -134,7 +134,7 @@ void FaceSearchingManager::SplitQuadrilateralToTriangle(FaceSearching *parentFac
         PHVectorInt1D &triangleIndexes = triangleIndexesContainer[i];
 
         FaceSearching *faceSearching = new FaceSearching(triangleIndexes);
-        set< FaceSearching *, CompareFaceByMethod1 >::iterator iter = FindFace(faceSearching);
+        set<FaceSearching *, CompareFaceByMethod1>::iterator iter = FindFace(faceSearching);
 
         if (iter != referenceFacesSet.end())
         {
@@ -165,7 +165,7 @@ InterfaceLinkStructure::~InterfaceLinkStructure()
 
 void InterfaceLinkStructure::CreateLinkInformation(PHVectorInt1D &facePointIndexes, int zoneIndex, int iLocalInterfaceCount)
 {
-    set < DataStruct_Sort< PHVectorInt1D > > &referenceInterfaceListForSearching  = this->GetReferenceInterfaceListForSearching();
+    set< DataStruct_Sort< PHVectorInt1D > > &referenceInterfaceListForSearching = this->GetReferenceInterfaceListForSearching();
     PHVectorInt2D &globalInterfaceIndexToZoneIndexesMapping           = this->GetGlobalInterfaceIndexToZoneIndexesMapping();
     PHVectorInt2D &globalInterfaceIndexToLocalInterfaceIndexesMapping = this->GetGlobalInterfaceIndexToLocalInterfaceIndexesMapping();
 
@@ -196,8 +196,8 @@ void InterfaceLinkStructure::CreateLinkInformation(PHVectorInt1D &facePointIndex
         PHVectorInt2D &localInterfaceIndexToGlobalInterfaceIndexMapping = this->GetLocalInterfaceIndexToGlobalInterfaceIndexMapping();
 
         int globalInterfaceIndex = iter->index;
-        localInterfaceIndexToGlobalInterfaceIndexMapping  [zoneIndex][iLocalInterfaceCount] = globalInterfaceIndex;
-        globalInterfaceIndexToZoneIndexesMapping          [globalInterfaceIndex].push_back(zoneIndex);
+        localInterfaceIndexToGlobalInterfaceIndexMapping[zoneIndex][iLocalInterfaceCount] = globalInterfaceIndex;
+        globalInterfaceIndexToZoneIndexesMapping[globalInterfaceIndex].push_back(zoneIndex);
         globalInterfaceIndexToLocalInterfaceIndexesMapping[globalInterfaceIndex].push_back(iLocalInterfaceCount);
         referenceInterfaceListForSearching.erase(iter);
     }
@@ -206,14 +206,14 @@ void InterfaceLinkStructure::CreateLinkInformation(PHVectorInt1D &facePointIndex
 void InterfaceLinkStructure::CreateLinkInformationBySet(PHVectorInt1D &facePointIndexes, int zoneIndex, int iLocalInterfaceCount)
 {
     set < DataStruct_Sort< set< int > > > &referenceInterfaceSetForSearching = this->GetReferenceInterfaceSetForSearching();
-    PHVectorInt2D &globalInterfaceIndexToZoneIndexesMapping               = this->GetGlobalInterfaceIndexToZoneIndexesMapping();
-    PHVectorInt2D &globalInterfaceIndexToLocalInterfaceIndexesMapping     = this->GetGlobalInterfaceIndexToLocalInterfaceIndexesMapping();
+    PHVectorInt2D &globalInterfaceIndexToZoneIndexesMapping = this->GetGlobalInterfaceIndexToZoneIndexesMapping();
+    PHVectorInt2D &globalInterfaceIndexToLocalInterfaceIndexesMapping = this->GetGlobalInterfaceIndexToLocalInterfaceIndexesMapping();
 
     int numberOfGlobalInterfaces = static_cast<int>(globalInterfaceIndexToZoneIndexesMapping.size());
 
     set< int > faceSet;
     uint_t facePointIndexesSize = facePointIndexes.size();
-    for(int iNode = 0; iNode < facePointIndexesSize; ++ iNode)
+    for (int iNode = 0; iNode < facePointIndexesSize; ++ iNode)
     {
         faceSet.insert(facePointIndexes[iNode]);
     }

@@ -223,7 +223,7 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
     PointSetType_t ptsetType = PointList;
 
     // Loop over the number of boundary conditions.
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         GridLocation_t igr = FaceCenter;
         cout << " Grid Location Name = " << GridLocationName[igr] << "\n";
@@ -237,7 +237,7 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
             cout << "\nGridLocation = Vertex means BC data refers to nodes, not elements\n";
         }
 
-        int bctype = bctype_array[ibcregion];
+        int bctype = bctype_array[iBCRegion];
         int nBCElem = 0;
         for (std::size_t i = 0; i < bctype_container.size(); ++ i)
         {
@@ -247,30 +247,29 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
             }
         }
 
-        base_cgns_nBCElem         [ibcregion] = nBCElem;
-        base_cgns_bc_conn_list    [ibcregion] = new int [nBCElem];
-        //base_cgns->bc_type        [ibcregion] = bocoType;
-        base_cgns_bc_elem_set_type[ibcregion] = ptsetType;
-        base_cgns_bc_grid_location[ibcregion] = igr;
+        base_cgns_nBCElem         [iBCRegion] = nBCElem;
+        base_cgns_bc_conn_list    [iBCRegion] = new int [nBCElem];
+        //base_cgns->bc_type        [iBCRegion] = bocoType;
+        base_cgns_bc_elem_set_type[iBCRegion] = ptsetType;
+        base_cgns_bc_grid_location[iBCRegion] = igr;
 
         cout << "PointSetType_t = " << ptsetType << "\n";
 
         if (nBCElem == 2)
         {
-            cout << base_cgns_bc_conn_list[ibcregion][0] << " " << base_cgns_bc_conn_list[ibcregion][1] << "\n";
+            cout << base_cgns_bc_conn_list[iBCRegion][0] << " " << base_cgns_bc_conn_list[iBCRegion][1] << "\n";
         }
         else
         {
             for (int j = 0; j < MIN(20, nBCElem); ++ j)
             {
-                cout << base_cgns_bc_conn_list[ibcregion][j] << " ";
+                cout << base_cgns_bc_conn_list[iBCRegion][j] << " ";
             }
             cout << "\n";
         }
     }
 
     delete [] bctype_array;
-
 }
 
 Gmesh::Gmesh()
@@ -546,7 +545,7 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
         {
             if (iNode % iskip == 0)
             {
-                cout << " inode = " << iNode << " nTotalNode = " << nTotalNode << "\n";
+                cout << " iNode = " << iNode << " nTotalNode = " << nTotalNode << "\n";
             }
             getline(file,line);
             line = FindNextWord(line,word,separator);

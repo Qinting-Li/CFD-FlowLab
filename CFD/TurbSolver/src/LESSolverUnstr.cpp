@@ -116,7 +116,7 @@ void LESSolverUnstr::Boundary(Grid *gridIn)
     RDouble  *nys  = grid->GetFaceNormalY();
     RDouble  *nzs  = grid->GetFaceNormalZ();
 
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    UnstructBCSet **bcRecord = grid->GetBCRecord();
     int numberOfBoundaryFace = grid->GetNBoundFace();
 
     Param_LESSolverUnstruct *parameters = GetControlParameters();
@@ -265,7 +265,7 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
     RDouble  *nys  = grid->GetFaceNormalY();
     RDouble  *nzs  = grid->GetFaceNormalZ();
 
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    UnstructBCSet **bcRecord = grid->GetBCRecord();
     int numberOfBoundaryFace = grid->GetNBoundFace();
 
     Param_LESSolverUnstruct *parameters = GetControlParameters();

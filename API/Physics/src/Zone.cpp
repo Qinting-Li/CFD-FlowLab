@@ -13,9 +13,7 @@
 #ifdef USE_HYFLOW_CODE
 #include "RealGas.h"
 #include "EquilibriumGas.h"
-#endif
-
-#ifdef USE_MULTISPECIES_CODE
+#else
 #include "MixedGas.h"
 #endif
 
@@ -39,9 +37,9 @@ Zone::Zone(int index)
 
 Zone::~Zone()
 {
-    for (std::size_t isolver = 0; isolver < solvers->size(); ++ isolver)
+    for (std::size_t iSolver = 0; iSolver < solvers->size(); ++ iSolver)
     {
-        delete (*solvers)[isolver];
+        delete (*solvers)[iSolver];
     }
     delete solvers;
 
@@ -259,9 +257,7 @@ void InitGlobalValuesSolver()
         {
             #ifdef USE_HYFLOW_CODE
             gas = new RealGas();
-            #endif
-
-            #ifdef USE_MULTISPECIES_CODE
+            #else
             gas = new MixedGas();
             #endif
         }

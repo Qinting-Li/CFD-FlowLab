@@ -30,9 +30,12 @@ private:
     //! The faceIndex set store the all face numbers in this boundary region.
     vector <int> * faceIndex;
 
+    int bcRegionID;
+
 public:
     vector <int> * GetFaceIndex() const { return this->faceIndex; }
     void SetFaceIndex(vector<int> *faceIndex) { this->faceIndex = faceIndex; }
+
 
 public:
     //! copy constructor function of this class.
@@ -42,11 +45,14 @@ public:
         SetBCType(bcRegionUnstruct.GetBCType());
         SetBCName(bcRegionUnstruct.GetBCName());
     }
+
     //! constructor function of this class.
-    UnstructBC()
+    UnstructBC(int bcRegionID)
     {
-        faceIndex = new vector<int>;
+        this->bcRegionID = bcRegionID;
+        this->faceIndex = new vector<int>;
     }
+
     //! destructor function of this class.
     ~UnstructBC()
     {
@@ -55,31 +61,69 @@ public:
     }
 };
 
-class CompositeUnstructBC
+class UnstructBCSet
 {
 private:
     int key;    //! The bc key, used to store an integer type.
     string bcName;
     SimpleBC * boundaryCondition;
-    UnstructBC * bcRegion;
+    
+    //! Number of zone (block) index this BC in.
+    int zoneID;
+    
+    //! The BCRegions list in the current UnstructBCSet.
+    vector<UnstructBC *> * bcRegions;
+
+    //! The bcRegions id of boundary condition faces.
+    int *bcRegionIDofBCFace;
+
 public:
     void SetKey(int key) { this->key = key; }
     int GetKey() const { return key; }    //! Return the key.
     const string & GetBCName() const { return this->bcName; }
     void SetBCName(const string &bcName) { this->bcName = bcName; }
-    void SetBCRegion(UnstructBC *bcRegionIn) { this->bcRegion = bcRegionIn; }
-    UnstructBC * GetBCRegion() const { return this->bcRegion; }
+    void SetBCRegion(uint_t iBCRegion, UnstructBC *unstructBC) { (*bcRegions)[iBCRegion] = unstructBC; }
+    
+    UnstructBC * GetBCRegion(uint_t iBCRegion) const{ return (*bcRegions)[iBCRegion];}
+
     SimpleBC * GetBoundaryCondition() const;
     void SetBoundaryCondition(SimpleBC *boundaryCondition) { this->boundaryCondition = boundaryCondition; }
+
+    void CreatenBCRegion(uint_t nBCRegion) {bcRegions = new vector<UnstructBC *>(nBCRegion);}
+    int GetnBCRegion() const {  return static_cast<int>(bcRegions->size()); }
+
+    void SetBCFaceInfo(int* bcRegionIDofBCFace) {this->bcRegionIDofBCFace = bcRegionIDofBCFace;}
+
+    //! Get the bcregion id by interfaceIndexContainerForReceive value.
+    int * GetBCFaceInfo() const {  return this->bcRegionIDofBCFace; }
+
 public:
-    CompositeUnstructBC(const CompositeUnstructBC &rhs)
+    UnstructBCSet(const UnstructBCSet &rhs)
     {
         key = rhs.key;
         bcName = rhs.GetBCName();
         this->boundaryCondition = rhs.GetBoundaryCondition();
     }
-    CompositeUnstructBC() { key = 0; boundaryCondition = 0; bcRegion = 0; }
-   ~CompositeUnstructBC() {}
+    //UnstructBCSet() { key = 0; boundaryCondition = 0; bcRegion = 0; }
+    UnstructBCSet(int zoneID = 0) { this->zoneID = zoneID; bcRegionIDofBCFace = NULL; key = 0; boundaryCondition = 0; bcRegions = 0; }
+  
+    ~UnstructBCSet()
+   {
+       if (bcRegions)
+	   {
+		   for (std::size_t i = 0; i < bcRegions->size(); ++i)
+		   {
+			   delete (*bcRegions)[i];
+		   }
+	   }
+       delete bcRegions;    bcRegions = NULL;
+
+       if (bcRegionIDofBCFace != NULL)
+       {
+           delete bcRegionIDofBCFace;
+           bcRegionIDofBCFace = NULL;
+       } 
+   }
 };
 
 }

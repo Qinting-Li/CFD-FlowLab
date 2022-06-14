@@ -39,6 +39,9 @@ public:
     //! Get the flag of the gas model.
     int GetChemicalFlag() const;
 
+    //! Get the set of WallMultiTemperature.
+    int GetWallMultiTemperature() const;
+
     //! Get the number of N-S equations without the species transport equations.
     int GetNSEquationNumber() const;
 
@@ -150,6 +153,10 @@ public:
 
     int GetSurfaceHeatingMonitor() const;
 
+    int GetInitialPressureSteps() const;
+
+    int GetLocalCFLFlag() const;
+
 private:
     int intervalStepForce;
 
@@ -163,6 +170,9 @@ private:
     int nLaminar;
     //! The flag of the gas model, 1 indicates the chemical non-equilibrium gas, 0 indicates the perfect gas.
     int nChemical;
+
+    int wallMultiTemperature;
+
     //! The flag of thermodynamic temperature model, 1, 2 and 3 denote one/two/three temperature model for chemical non-equilibrium gas.
     int nTemperatureModel;
 
@@ -258,6 +268,12 @@ private:
 
     //To utilize the monitor which exam the surface heating change during the iteration.
     int nSurfHeatMonitor;
+
+    //The steps to initialize the boundary variables with the rapid flowfield values.
+    int nInitPressureStep;
+
+    //Use local CFL number or not.
+    int isUseLocalCFL;
 };
 
 #include "Param_NSSolver.hxx"

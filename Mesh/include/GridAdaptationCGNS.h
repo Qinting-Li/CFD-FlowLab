@@ -31,7 +31,6 @@ typedef enum
     GENERALFACE
 } AdaptEnum;
 
-
 typedef enum
 {
     DENSITYGRADIENT,
@@ -66,29 +65,29 @@ public:
 private:
     int element_type;
     cgsize_t istart, iend;
-    cgsize_t * connection_list;
+    cgsize_t *connection_list;
     CGNSTraits::char_33 section_name;
     CGNSZone *zone;
     int sectionid;
     int ncoords;
 public:
-    void SetSectionIndex(int sectionid) { this->sectionid = sectionid; };
+    void SetSectionIndex(int sectionid) { this->sectionid = sectionid; }
     int  GetSectionIndex() const { return sectionid; }
 
-    void SetStart(cgsize_t istart) { this->istart = istart; };
-    void SetEnd  (cgsize_t iend ) { this->iend   = iend;   };
-    cgsize_t GetStart() const { return istart; };
-    cgsize_t GetEnd  () const { return iend;   };
+    void SetStart(cgsize_t istart) { this->istart = istart; }
+    void SetEnd  (cgsize_t iend ) { this->iend = iend; }
+    cgsize_t GetStart() const { return istart; }
+    cgsize_t GetEnd  () const { return iend; }
 
-    void SetElementType(int element_type) { this->element_type = element_type; };
-    int  GetElementType() const { return element_type; };
+    void SetElementType(int element_type) { this->element_type = element_type; }
+    int  GetElementType() const { return element_type; }
 
     void CreateConnectionList(int element_node_number);
     cgsize_t * GetConnectionList() const { return connection_list; }
 
     void ReadSection();
 public:
-    cgsize_t *GetElementIndex(cgsize_t ielem) const;
+    cgsize_t * GetElementIndex(cgsize_t ielem) const;
     void GetElementIndex(int ielement, vector<cgsize_t> &element_index);
     void SetElementTypeAndIndex(vector<int> &element_type, vector< vector<int> > &element_index);
     void Convert2InerDataStandard();
@@ -105,9 +104,9 @@ private:
     CGNSZone *zone;
 public:
     void Create(int nsections);
-    int GetNSection() const { return nsections; };
-    CGNSection *GetSection(int isection) const {  return sections[isection]; }
-    CGNSection *GetSectionByElementIndex(int ielement) const;
+    int GetNSection() const { return nsections; }
+    CGNSection * GetSection(int isection) const {  return sections[isection]; }
+    CGNSection * GetSectionByElementIndex(int ielement) const;
 public:
     void Convert2InerDataStandard();
 };
@@ -128,17 +127,17 @@ private:
     CGNSTraits::char_33 bcregion_name;
     CGNSZone *zone;
 public:
-    void SetBCType(int bc_type) { this->bc_type = bc_type; };
-    int  GetBCType() const { return bc_type; };
+    void SetBCType(int bc_type) { this->bc_type = bc_type; }
+    int  GetBCType() const { return bc_type; }
 
-    void SetBCPointSetType(int bc_point_set_type) { this->bc_point_set_type = bc_point_set_type; };
-    int  GetBCPointSetType() const { return bc_point_set_type; };
+    void SetBCPointSetType(int bc_point_set_type) { this->bc_point_set_type = bc_point_set_type; }
+    int  GetBCPointSetType() const { return bc_point_set_type; }
 
-    void SetBCElementNumber(int bc_element_number) { this->bc_element_number = bc_element_number; };
-    int  GetBCElementNumber() const { return bc_element_number; };
+    void SetBCElementNumber(int bc_element_number) { this->bc_element_number = bc_element_number; }
+    int  GetBCElementNumber() const { return bc_element_number; }
 
-    void SetBCGridLocation(int bc_grid_location) { this->bc_grid_location = bc_grid_location; };
-    int  GetBCGridLocation() const { return bc_grid_location; };
+    void SetBCGridLocation(int bc_grid_location) { this->bc_grid_location = bc_grid_location; }
+    int  GetBCGridLocation() const { return bc_grid_location; }
 
     void CreateConnectionList();
     cgsize_t * GetConnectionList() const { return bc_connection_list; }
@@ -153,9 +152,9 @@ public:
     void ProcessBCVertex(set<cgsize_t> &bc_vertex);
     void ProcessBCFace  (set<cgsize_t> &bc_vertex);
     void PrintConnectionList();
-    void SetStructuredGridBoundary(StructBC * bcregion);
+    void SetStructuredGridBoundary(StructBC *bcregion);
 public:
-    void ReadOrdinaryBoundaryRegion(int ibcregion);
+    void ReadOrdinaryBoundaryRegion(int iBCRegion);
     void Read1to1BoundaryRegion(int i1to1);
 };
 
@@ -170,7 +169,7 @@ private:
     CGNSZone *zone;
 public:
     void Create(int n_ordinary_bcregions, int n1to1);
-    int GetNBCRegion() const { return nbcregions; };
+    int GetNBCRegion() const { return nbcregions; }
 
     int GetN1to1BCRegion() const { return n1to1; }
     void SetN1to1BCRegion(int n1to1) { this->n1to1 = n1to1; }
@@ -178,8 +177,8 @@ public:
     int GetNOrdinaryBCRegion() const { return n_ordinary_bcregions; }
     void SetNOrdinaryBCRegion(int n_ordinary_bcregions) { this->n_ordinary_bcregions = n_ordinary_bcregions; }
 
-    CGNSBCRegion *GetBCRegion(int ibcregion) const {  return bcregions[ibcregion]; }
-    CGNSBCRegion *Get1to1BCRegion(int i1to1) const { return bcregions[n_ordinary_bcregions + i1to1]; }
+    CGNSBCRegion * GetBCRegion(int iBCRegion) const { return bcregions[iBCRegion]; }
+    CGNSBCRegion * Get1to1BCRegion(int i1to1) const { return bcregions[n_ordinary_bcregions + i1to1]; }
 public:
     void Convert2InerDataStandard();
 
@@ -191,28 +190,28 @@ public:
     CGNSZone();
     ~CGNSZone();
 private:
-    SimpleGrid        *grid;
-    CGNSectionProxy   *section_proxy;
+    SimpleGrid *grid;
+    CGNSectionProxy *section_proxy;
     CGNSBCRegionProxy *bcregion_proxy;
-    int nTotalNode,nTotalCell;
+    int nTotalNode, nTotalCell;
     ZoneType_t zone_type;
-    int fileid,baseid,zoneid;
+    int fileid, baseid, zoneid;
     int cell_dimension, phys_dimension;
-    cgsize_t irmin[3],irmax[3];
+    cgsize_t irmin[3], irmax[3];
     int cell_size[3];
     cgsize_t isize[3][3];
     CGNSTraits::char_33 zonename;
     CGNSTraits::char_33 coordname;
     int n1to1, n_ordinary_bcregions;
 public:
-    cgsize_t  * GetISize() { return isize[0]; };
-    cgsize_t  * GetIMin() { return irmin; };
-    cgsize_t  * GetIMax() { return irmax; };
+    cgsize_t * GetISize() { return isize[0]; }
+    cgsize_t * GetIMin() { return irmin; }
+    cgsize_t * GetIMax() { return irmax; }
     void SetDimension();
 
-    void SetFileIndex(int fileid) { this->fileid = fileid; };
-    void SetBaseIndex(int baseid) { this->baseid = baseid; };
-    void SetZoneID(int zoneid) { this->zoneid = zoneid; };
+    void SetFileIndex(int fileid) { this->fileid = fileid; }
+    void SetBaseIndex(int baseid) { this->baseid = baseid; }
+    void SetZoneID(int zoneid) { this->zoneid = zoneid; }
 
     int GetZoneID()  const { return zoneid; }
     int GetFileIndex()  const { return fileid; }
@@ -248,17 +247,17 @@ public:
     void Create();
     void CreateSections(int nsections);
     void CreateBCRegions(int n_ordinary_bcregions, int n1to1);
-    int GetNSection () const { return section_proxy->GetNSection();   };
-    int GetNBCRegion() const { return bcregion_proxy->GetNBCRegion(); };
+    int GetNSection() const { return section_proxy->GetNSection(); }
+    int GetNBCRegion() const { return bcregion_proxy->GetNBCRegion(); }
     int GetN1to1BCRegion() const { return n1to1; }
     int GetNOrdinaryBCRegion() const { return n_ordinary_bcregions; }
-    CGNSection   *GetSection (int isection) const {  return section_proxy->GetSection(isection); }
-    CGNSBCRegion *GetBCRegion(int ibcregion) const {  return bcregion_proxy->GetBCRegion(ibcregion); }
+    CGNSection   * GetSection (int isection) const { return section_proxy->GetSection(isection); }
+    CGNSBCRegion * GetBCRegion(int iBCRegion) const { return bcregion_proxy->GetBCRegion(iBCRegion); }
 
-    CGNSBCRegion *Get1to1BCRegion(int i1to1) const {  return bcregion_proxy->Get1to1BCRegion(i1to1); }
+    CGNSBCRegion * Get1to1BCRegion(int i1to1) const { return bcregion_proxy->Get1to1BCRegion(i1to1); }
 public:
-    SimpleGrid *GetSimpleGrid() const { return grid; };
-    CGNSectionProxy *GetSectionProxy() const { return section_proxy; }
+    SimpleGrid * GetSimpleGrid() const { return grid; }
+    CGNSectionProxy * GetSectionProxy() const { return section_proxy; }
     void SetElementTypeAndIndex(vector<int> &element_type, vector< vector<int> > &element_index);
     void Convert2InerDataStandard();
     void BuildPoints(PointOperation *point_operation);
@@ -275,7 +274,8 @@ private:
     int fileid, baseid;
     int istart, iend, nbndry, iparent_flag;
     int cellDim, physDim;
-    int nTotalNode, nTotalCell, nCoords, nSections;    int normalIndex, normListFlag, nDataSet;
+    int nTotalNode, nTotalCell, nCoords, nSections;
+    int normalIndex, normListFlag, nDataSet;
     CGNSTraits::char_33 zonename, sectionname;
     CGNSTraits::char_33 basename, coordname;
 private:
@@ -286,7 +286,7 @@ public:
     ~CGNSMultiZone();
 public:
     int GetNZones() const { return nzones; }
-    CGNSZone *GetZone(int iZone) const {  return zones[iZone]; };
+    CGNSZone * GetZone(int iZone) const {  return zones[iZone]; }
 public:
     void InitAllZones();
     void ReadGrid(const string &filename);
@@ -304,12 +304,12 @@ public:
     ~BasicFacet();
 public:
     // operator[]
-    int& operator[](int i)
+    int & operator[](int i)
     {
         return elems[i];
     }
 
-    const int& operator[](int i) const
+    const int & operator[](int i) const
     {
         return elems[i];
     }
@@ -367,7 +367,7 @@ public:
         }
     }
     PointOperation::point_type GetCenterPoint(vector<int> &elem, vector<int> &point_list);
-    PointOperation::point_type CirclePoint   (vector<int> &elem, vector<int> &point_list);
+    PointOperation::point_type CirclePoint(vector<int> &elem, vector<int> &point_list);
     void CheckBCPoint(vector<int> &elem, vector<int> &point_list, int index);
     void SetBoundaryPoint(set<cgsize_t> &bc_vertex, int bctype);
     bool PointWithBoundary(int index, int bctype);
@@ -418,20 +418,20 @@ public:
     void MarkElementBoundaryFace();
     void MarkAllCandidateBoundaryFace();
     bool CheckBCFace(set<cgsize_t> &bc_vertex, vector<int> &face_node);
-    int  GetRootFaceID(int iface);
+    int  GetRootFaceID(int iFace);
     int  GetNBoundFace() const;
-    int  GetFacePointNumber(int iface) { return static_cast<int>((*face_to_nodes)[iface].size()); }
+    int  GetFacePointNumber(int iFace) { return static_cast<int>((*face_to_nodes)[iFace].size()); }
     int  GetNTotalCell() const { return nTotalCell; }
     void SetNTotalCell(int nTotalCell) { this->nTotalCell = nTotalCell; }
 public: 
     void Normalize(vector< int > &element_all_to_local_map);
     void CreateUnstructGrid(UnstructGrid *grid);
     void ReorderElementFace();
-    void SwapElementFace(int iface, int jface);
+    void SwapElementFace(int iFace, int jFace);
     void FreeMemory();
     void PrintBoundaryFace();
     void AddChildBoundaryFace(vector<int> &face_node, int face_type, int bctype);
-    void SetFaceBoundary     (vector<int> &face_node, int face_type, int bctype);
+    void SetFaceBoundary(vector<int> &face_node, int face_type, int bctype);
 };
 
 class SuperElement
@@ -459,14 +459,14 @@ public:
     void SetElementType(uint_t ie, int new_elem_type);
     int  GetLevel(int ie) const;
 
-    vector<int> & GetElementIndex(int ie) { return elem_index[ie]; };
+    vector<int> & GetElementIndex(int ie) { return elem_index[ie]; }
 
     void SetElementIndex(uint_t ie, vector<int> &ptlist);
     void SetElementParent(uint_t ie, int parent);
     void SetElementLevel(uint_t ie, int level);
     void SetElementSplitProperty(uint_t ie, int split_property);
 
-    uint_t  GetElementNumber() const;
+    uint_t GetElementNumber() const;
     void ResizeElementNumber(uint_t n);
 public:
     void CreateFantasyGrid(Grid *grid, int grid_type);
@@ -525,7 +525,7 @@ public:
     int  GetGridType(int iZone) const;
     Grid * CreateBasicGrid(int iZone);
 private:
-    void CreateAllSingleGrid(Grid ** grids);
+    void CreateAllSingleGrid(Grid **grids);
 };
 
 /*PointOperation::point_type GetCenterPoint(vector<int> &elem, vector<int> &point_list);*/

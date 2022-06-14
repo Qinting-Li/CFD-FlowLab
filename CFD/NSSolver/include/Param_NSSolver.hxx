@@ -13,6 +13,11 @@ inline int Param_NSSolver::GetChemicalFlag() const
     return nChemical;
 }
 
+inline int Param_NSSolver::GetWallMultiTemperature() const
+{
+    return wallMultiTemperature;
+}
+
 inline int Param_NSSolver::GetNSEquationNumber() const
 {
     return nNSEquation;
@@ -239,5 +244,15 @@ inline int Param_NSSolver:: GetRapidFlowfieldMethod() const
 inline int Param_NSSolver::GetSurfaceHeatingMonitor() const
 {
     return nSurfHeatMonitor;
+}
+
+inline int Param_NSSolver::GetInitialPressureSteps() const
+{
+    return nInitPressureStep;
+}
+
+inline int Param_NSSolver::GetLocalCFLFlag() const
+{
+    return isUseLocalCFL;
 }
 

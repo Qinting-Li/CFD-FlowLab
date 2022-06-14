@@ -90,6 +90,9 @@ public:
     //! switch the compute method used for self-adaption calculation.
     void CheckResult(Grid *grid, int level = 0);
 
+    //! dump CFL number.
+    void DumpCFLNumber(Grid *grid, int level = 0);
+
     //! exam the surface heating change.
     void CheckSurfaceHeatingChange(Grid *grid, int level = 0);
 

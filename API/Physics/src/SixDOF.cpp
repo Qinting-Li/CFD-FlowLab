@@ -1,6 +1,7 @@
 #include "PHMpi.h"
 #include "SixDOF.h"
 #include "Force.h"
+#include "AleForceManager.h"
 #include "Zone.h"
 #include "GlobalDataBase.h"
 #include "GridType.h"

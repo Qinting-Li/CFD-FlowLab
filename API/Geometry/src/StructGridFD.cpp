@@ -2156,11 +2156,11 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
-    CompositeStructBC *compositeBCRegion = this->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRegion->GetnBCRegion();
+    StructBCSet *structBCSet = this->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = compositeBCRegion->GetBCRegion(iBCRegion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
         if (BCType < 0)
@@ -2591,7 +2591,7 @@ void StructGrid::ComputeMetricsWithBCforStructHighOrder3D()
                 }                
             }
         }
-        for (int bcindex = 0; bcindex <= 1; ++bcindex)
+        for (int bcindex = 0; bcindex <= 1; ++ bcindex)
         {
             int j = jbc[bcindex];
             for (int k = 1; k <= nk; ++ k)
@@ -3391,14 +3391,14 @@ void StructGrid::ComputeJacobianforStructHighOrder3D()
     delete &zfaceK;
 }
 
-void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3])
+void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3])
 {
     int is, js, ks;
-    fgrid->GetSourceIndexIJK(iface, layer, is, js, ks);
+    fgrid->GetSourceIndexIJK(iFace, layer, is, js, ks);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetSourceIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetSourceIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 
     int a[3];
     int b[3];
@@ -3506,14 +3506,14 @@ void StructGrid::GetNodeIJKfromSourceIndexghostofghost(StructGrid *fgrid, int if
     }
 }
 
-void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iface, int layer, int IJKofNodes[12][3])
+void StructGrid::GetNodeIJKfromTargetIndexghostofghost(StructGrid *fgrid, int iFace, int layer, int IJKofNodes[12][3])
 {
     int it, jt, kt;
-    fgrid->GetTargetIndexIJK(iface, layer, it, jt, kt);
+    fgrid->GetTargetIndexIJK(iFace, layer, it, jt, kt);
 
     int id, jd, kd;
     int i_lr, j_lr, k_lr;
-    fgrid->GetTargetIndexIJK_fornodetransfer(iface, id, jd, kd, i_lr, j_lr, k_lr);
+    fgrid->GetTargetIndexIJK_fornodetransfer(iFace, id, jd, kd, i_lr, j_lr, k_lr);
 
     int a[3];
     int b[3];
@@ -3886,15 +3886,15 @@ void StructGrid::UploadGridInfoOnlyforStructHighOrder_mission1(DataContainer *&d
         GetNodeIJKfromSourceIndex(finestGrid, iFace, 1, IJKofNodes1stLayer);
         GetNodeIJKfromSourceIndex(finestGrid, iFace, 2, IJKofNodes2ndLayer);
         
-        for (int nodeID = 0; nodeID < 4; ++nodeID)
+        for (int iNode = 0; iNode < 4; ++ iNode)
         {
-            PHWrite(dataContainer, xx(IJKofNodes1stLayer[nodeID][0], IJKofNodes1stLayer[nodeID][1], IJKofNodes1stLayer[nodeID][2]));
-            PHWrite(dataContainer, yy(IJKofNodes1stLayer[nodeID][0], IJKofNodes1stLayer[nodeID][1], IJKofNodes1stLayer[nodeID][2]));
-            PHWrite(dataContainer, zz(IJKofNodes1stLayer[nodeID][0], IJKofNodes1stLayer[nodeID][1], IJKofNodes1stLayer[nodeID][2]));
+            PHWrite(dataContainer, xx(IJKofNodes1stLayer[iNode][0], IJKofNodes1stLayer[iNode][1], IJKofNodes1stLayer[iNode][2]));
+            PHWrite(dataContainer, yy(IJKofNodes1stLayer[iNode][0], IJKofNodes1stLayer[iNode][1], IJKofNodes1stLayer[iNode][2]));
+            PHWrite(dataContainer, zz(IJKofNodes1stLayer[iNode][0], IJKofNodes1stLayer[iNode][1], IJKofNodes1stLayer[iNode][2]));
             
-            PHWrite(dataContainer, xx(IJKofNodes2ndLayer[nodeID][0], IJKofNodes2ndLayer[nodeID][1], IJKofNodes2ndLayer[nodeID][2]));
-            PHWrite(dataContainer, yy(IJKofNodes2ndLayer[nodeID][0], IJKofNodes2ndLayer[nodeID][1], IJKofNodes2ndLayer[nodeID][2]));
-            PHWrite(dataContainer, zz(IJKofNodes2ndLayer[nodeID][0], IJKofNodes2ndLayer[nodeID][1], IJKofNodes2ndLayer[nodeID][2]));
+            PHWrite(dataContainer, xx(IJKofNodes2ndLayer[iNode][0], IJKofNodes2ndLayer[iNode][1], IJKofNodes2ndLayer[iNode][2]));
+            PHWrite(dataContainer, yy(IJKofNodes2ndLayer[iNode][0], IJKofNodes2ndLayer[iNode][1], IJKofNodes2ndLayer[iNode][2]));
+            PHWrite(dataContainer, zz(IJKofNodes2ndLayer[iNode][0], IJKofNodes2ndLayer[iNode][1], IJKofNodes2ndLayer[iNode][2]));
         }
     }
 }

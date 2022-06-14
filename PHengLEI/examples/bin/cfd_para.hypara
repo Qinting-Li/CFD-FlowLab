@@ -1,4 +1,4 @@
-22//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
 //          P   P  H   H  E      NN   N  G      L      E       I          +
 //          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
@@ -304,6 +304,7 @@ int compressible = 1;
 // refMolecularWeight : the reference molecular weight of gas used for perfect gas. The unit is g/mol.
 // Generally, the gas is air. Sometimes, it is experiment gas, such as Nitrogen, Argon, and so on.
 
+int directionMethod = 0;
 double refMachNumber = 0.73;
 double attackd       = 2.79;
 double angleSlide    = 0.00;
@@ -499,6 +500,7 @@ double AusmpwPlusLimiter = 1.0;
 //               5 -- Block LU-SGS.
 //               6 -- Jacobian iteration.
 //               7 -- Line LU-SGS.
+//               8 -- Matrix LU-SGS.
 // iSimplifyViscousTerm: Simplify the computation of viscous term in the Block LU-SGS method. The default value assigns 1 that could speed up the computation.
 //                       Otherwise, the viscous Jacobian matrix Mv should be computed that will increase the memory and time in iteration of the BLUSGS method.
 // CFLStart: Started cfl number.
@@ -511,6 +513,10 @@ double AusmpwPlusLimiter = 1.0;
 // ifLocalTimeStep: Time step method.
 //               0 --Local.
 //               1 --Global.
+// isUseLocalCFL: use variable number of CFL or not.
+//               0 -- global unified CFL number.
+//               1 -- local CFL number.
+// isUsePreTwall: use the previous temperatures on wall. 1 indicates yes, and 0 indicates no.
 // visl_min: Minimum value of laminar viscosity coefficient.
 // turbCFLScale: Turbulence model cfl number factor.
 // codeOfAleModel: Arbitrary Lagrangian-Eulerian method.
@@ -543,9 +549,17 @@ double tol_sub_iter = 0.01;
 int    tscheme      = 4;
 int    iSimplifyViscousTerm = 1;
 int    ifLocalTimeStep = 0;
+int    isUseLocalCFL = 0;
+int    isUsePreTwall = 0;
 double CFLStart     = 0.01;
 double CFLEnd       = 10.0;
 int    CFLVaryStep  = 500;
+
+double pMaxForCFL = 0.2;
+double pMinForCFL = 0.1;
+double deltaMaxForCFL = 0.2;
+double magnifyFactorForCFL = 1.1;
+double reduceFactorForCFL = 0.5;
 
 double ktmax        = 1.0e10;
 
@@ -600,6 +614,9 @@ double lamda[] = [0.5, 1.0];
 // nIsComputeWallDist: Whether to compute the wall distance.  
 //                     0 -- Compute wall distance.
 //                     1 -- Not compute.
+// 
+// protectionFile0 and protectionFile1 : Two continuation file  of the data protection mechanism.
+// wall_heatfluxfile : The file to output the MaxHeatFlux of wall.
 
 int    numberOfGridGroups = 1;
 string gridfile           = "./grid/rae2822_hybrid2d__4.fts";
@@ -619,6 +636,10 @@ string turbfile           = "results/turb.dat";
 string visualfile         = "results/tecflow.plt";
 string wall_aircoefile    = "results/wall_aircoef.dat";
 string samplefile         = "results/sample.dat";
+
+string protectionFile0    = "results/flow0.dat";
+string protectionFile1    = "results/flow1.dat";
+string wall_heatfluxfile  = "results/wall_heatflux.dat";
 
 int nDumpSurfaceInfo      = 0;
 string wall_varfile       = "";
@@ -686,7 +707,7 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 // -heat flux of species diffusion term(Qs, 9), -heat flux of vibrational temperature term(Qv, 10), -heat flux of electron temperature term(Qe, 11),
 // -species mass fractions(Ns, 12), -x component of wall velocity(Vx, 13), -y component of wall velocity(Vy, 14), -z component of wall velocity(Vz, 15)
 // -slip translational-rotational temperature(Tts, 16), -slip vibrational temperature(Tvs, 17), -slip electron temperature(Tes, 18), -absolute wall velocity(Vs, 19)
-// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22)
+// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22), -Grid Reynolds number on wall(Re_w, 23)
 int nVisualVariables = 8;
 int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
 
@@ -836,8 +857,8 @@ int    monitorNegativeConstant = 0;
 // iapplication:
 //               0 -- gas model is fixed in the codes.
 //               1 -- gas model is imported from library files.
-// iCodeBranch:  iCodeBranch=0 indicates the generic Navier-Stokes solver, 
-//				 iCodeBranch>0 indicates the HyFlow self-adaptive solver.
+// isAdaptiveSolver:  isAdaptiveSolver=0 indicates the generic Navier-Stokes solver, 
+//				 isAdaptiveSolver>0 indicates the HyFlow self-adaptive solver.
 //               1 -- using HyFlow self-adaptive solver where the switch is controlled by the total iteration steps.
 //               2 -- using HyFlow self-adaptive solver where the switch is controlled by variation of the key residual.
 // nm: Equation number of the physics, but is out of commision now.
@@ -912,6 +933,8 @@ int    monitorNegativeConstant = 0;
 //             1 -- the gradient of variable is computed with the Green-Guass integral method.
 // nRapidFlowfield : initialize the flowfield using the rapid engineering method when it is greater than zero.
 // nSurfHeatMonitor : To exam the surface heating change or not. 0 is no, 1 is yes.
+// nInitPressureStep : the steps to initialize the boundary variables when the rapid method is used. 100 is the default value.
+// nDumpCFLNumber : 1 indicates dumping the CFL number to file, 0 denotes no dumping.
 // sigmaVelocity: the coordination coefficient of tangential momentum for computation of slip velocity. The value is in range of (0.0, 2.0].
 // sigmaTemperature: the heat coordination coefficient for computation of slip temperature. The value is in range of (0.0, 2.0].
 // sigmaMassFraction: the species coordination coefficient for computation of slip mass fractions. The value is in range of (0.0, 2.0].
@@ -990,8 +1013,8 @@ int    monitorNegativeConstant = 0;
 //            "Mars-Pa8" is for Park model of Mars gas, "Mars-Mc8" for McKenzie model of Mars gas.
 //            "Combustion-12" -- indicates the Combustion Chamber Gas Model which includes 12-species-20-reactions.
 //            "Gas-Mixture" -- indicates the process of mixing gas without reacting.
-//                             for struct solver mixing two speciesï¼ˆSpeciesA, SpeciesBï¼‰.
-//                             for unstruct solver mixing multi-speciesï¼ˆO2 NO CO CO2 H2 N2 Air CH4ï¼‰.
+//                             for struct solver mixing two species£¨SpeciesA, SpeciesB£©.
+//                             for unstruct solver mixing multi-species£¨O2 NO CO CO2 H2 N2 Air CH4£©.
 //            For self-definition model, the gasfile is used to indicate the file path of the new gas model.
 // speciesName: Used to list the names of each species, while each species name is separated by the symbol of comma.
 // initMassFraction: Used to list the initial mass fractions of species in accordance with the sequence of names in the parameter speciesName.
@@ -1015,11 +1038,14 @@ int    monitorNegativeConstant = 0;
 // thirdStepError  : the residual error of the third step iteration for the self-adaptive calculation.
 // useHyflowOutput : Used to change Window output for HyFLOW GUI.
 //                   0 -- PHengLEI
-//                   1 -- HyFLOW   
+//                   1 -- HyFLOW  
+//  nProtectData   : Use the continuation file data protection mechanism.
+//                   0 -- no
+//                   1 -- yes
 
 int dg_high_order = 0;
 int iapplication  = 0;
-int iCodeBranch   = 0;
+int isAdaptiveSolver = 0;
 int nm            = 5;
 int nEquilibriumGas = 0;
 int nPCWCycleStep = 3;
@@ -1033,6 +1059,7 @@ int nControlVariable = 1;
 double firstStepError  = 0.01;
 double secondStepError = 0.001;
 double thirdStepError  = 0.001;
+double predictCFLError = 0.1;
 
 double refGama    = 1.4;
 double prl        = 0.72;
@@ -1058,6 +1085,8 @@ int nTemperatureJump  = 0;
 int nSurfGradMethod = 0;
 int nRapidFlowfield = 0;
 int nSurfHeatMonitor = 0;
+int nInitPressureStep = 100;
+int nDumpCFLNumber = 0;
 
 double parkVDPower   = 0.6;
 double catalyticCoef = 0.0;
@@ -1097,7 +1126,9 @@ int    nInviscidFluxModify = 1;
 int    nQlLimitMethod = 2;
 int    nSpeciesForWallMethod = 1;
 int    nDensityForWallMethod = 0;
+int    wallMultiTemperature = 0;
 
+int    nProtectData = 0;
 int    useHyflowOutput = 0;
 int    nAblation   = 0;
 int    isInjection = 0;
@@ -1315,9 +1346,9 @@ int  RBDMethod_0                = 0;
 double amplitude_0              = 0.0;
 double reduceFrequency_0        = 0.0;
 //direction of rotation
-//         1 -- anticlockwise.
-//        -1 -- clockwise.
-int direction_0                 = 1;
+//         1 -- clockwise from the point of view along the positive x axis.
+//        -1 -- anticlockwise from the point of view along the positive x axis.
+int direction_0                 = -1;
 double rotateFrequency_0        = 0.0;
 //string uDFSixDofFileName_0    = "./Bin/UDFSixDof.Parameter";
 //additional force  (system axis)             fX        fY        fZ        

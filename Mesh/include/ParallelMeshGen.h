@@ -38,18 +38,18 @@ private:
     int numberOfZones;
     SuperElement **super_elements;
     CGNSMultiZone *cgns_multizone;
-    Region * region;
-    ZoneGridSolver ** zoneGridSolverContainer;
-    ZoneGridSolver * currentZoneGridSolver;
-    Grid ** fantasyGrids;
+    Region *region;
+    ZoneGridSolver **zoneGridSolverContainer;
+    ZoneGridSolver *currentZoneGridSolver;
+    Grid **fantasyGrids;
 
     PHVector2D < int > ZERO_VECTOR2D;
 
-    //ComputationalElementSolver * computationalElementSolver;
+    //ComputationalElementSolver *computationalElementSolver;
 
-//  PHAdaptiveFlowFieldSolver * currentAdaptiveFlowFieldSolver;
+//  PHAdaptiveFlowFieldSolver *currentAdaptiveFlowFieldSolver;
 //  vector< PHAdaptiveFlowFieldSolver * > adaptiveFlowFieldSolverVector;
-//  PHAdaptiveFlowFieldSolver * currentAdaptiveFlowFieldSolver;
+//  PHAdaptiveFlowFieldSolver *currentAdaptiveFlowFieldSolver;
 public:
     void ParallelGridGen();
     void ReadZoneGridFromFTS();
@@ -57,21 +57,21 @@ public:
     void ConstructZoneGridSolver();
     void VisulizationOriginalGrid();
     void RecoverZoneGridSolverFromFTS();
-    void RecoverZoneGridSolverFromFTS(Zone * zone);
-    void RecoverElements(Zone * zone);
-    void RecoverPoints(Zone * zone);
-    void RecoverFacess(Zone * zone);
-    void RecoverMetrics(Zone * zone);
-    void RecoverInterFaceInformation(Zone * zone);
+    void RecoverZoneGridSolverFromFTS(Zone *zone);
+    void RecoverElements(Zone *zone);
+    void RecoverPoints(Zone *zone);
+    void RecoverFacess(Zone *zone);
+    void RecoverMetrics(Zone *zone);
+    void RecoverInterFaceInformation(Zone *zone);
 
     void BroadcastNeighborZonesToEachProcessor();
     void BroadcastNeighborZonesToEachProcessorNew();
 
     Zone * GetZone(int iZone);
     bool ZoneBelongToCurrentProcessor(int zoneIndex);
-    PHVector1D < int > GetNeighborZones(ZoneGridSolver * zoneGridSolver);
-    void BroadcastToEachProcessor(const int zoneIndex, PHVector1D < int > & dataOfThisProcessor);
-    void AddOneZoneNeighborToAllZonesNeighbor(PHVector1D < int > & dataOfThisZone, int zoneIndex, int targetZoneIndex);
+    PHVector1D < int > GetNeighborZones(ZoneGridSolver *zoneGridSolver);
+    void BroadcastToEachProcessor(const int zoneIndex, PHVector1D < int > &dataOfThisProcessor);
+    void AddOneZoneNeighborToAllZonesNeighbor(PHVector1D < int > &dataOfThisZone, int zoneIndex, int targetZoneIndex);
     void InitialInterFaceInformation();
     void SwapNeighborsSendContent();
     PHVector1D < int > GetAllOtherZones(int zoneIndex);
@@ -84,8 +84,8 @@ public:
     void ReComputeAdaptionProperty();
 
     void AdaptGrid();
-    void AdaptGrid(ZoneGridSolver * zoneGridSolver);
-    void GridAdaptation(ZoneGridSolver * zoneGridSolver);
+    void AdaptGrid(ZoneGridSolver *zoneGridSolver);
+    void GridAdaptation(ZoneGridSolver *zoneGridSolver);
     void SplitAllElements();
     void ConstructBasicData();
     void GenerateElementIndexMapping();
@@ -99,9 +99,9 @@ public:
     int  GetGridType(int iZone) const;
     Grid * CreateBasicGrid(int iZone);
 
-    int GetElementTypeOfFTS(const int & dimension, const int & nodeNumberOfCell);
-    int GetFaceTypeOfFTS(const int & dimension, const int & nodeNumberOfCell);
-    void SetCurrentZoneGridSolver(ZoneGridSolver * currentZoneGridSolver) { this->currentZoneGridSolver = currentZoneGridSolver; }
+    int GetElementTypeOfFTS(const int &dimension, const int &nodeNumberOfCell);
+    int GetFaceTypeOfFTS(const int &dimension, const int &nodeNumberOfCell);
+    void SetCurrentZoneGridSolver(ZoneGridSolver *currentZoneGridSolver) { this->currentZoneGridSolver = currentZoneGridSolver; }
 
     void MeshQualityChecking();
 
@@ -109,31 +109,31 @@ public:
     void AllocateComputationalGrid();
     void GenerateComputationalGrid();
     void DumpComputationalGrid();
-    void DumpMultiZoneComputationalGrids(const string & fileName, Grid ** gridContainer, int nZones);
-    void DumpMultiZoneComputationalGridsCSMode(const string & fileName, Grid ** gridContainer, int nZones);
-    void DumpMultiZoneComputationalGridsP2PMode(const string & fileName, Grid ** gridContainer, int nZones);
-    void WriteFaceBC(const string &gridfileName, Grid ** gridContainer, int nZones);
-    void WriteCellToNode(const string & cellToNodeFileName);
+    void DumpMultiZoneComputationalGrids(const string &fileName, Grid **gridContainer, int nZones);
+    void DumpMultiZoneComputationalGridsCSMode(const string &fileName, Grid **gridContainer, int nZones);
+    void DumpMultiZoneComputationalGridsP2PMode(const string &fileName, Grid **gridContainer, int nZones);
+    void WriteFaceBC(const string &gridfileName, Grid **gridContainer, int nZones);
+    void WriteCellToNode(const string &cellToNodeFileName);
 
 private:
-    void CreateAllSingleGrid(Grid ** grids);
+    void CreateAllSingleGrid(Grid **grids);
     bool IfNeedProjection();
     void SetAdaptTropic();
 
     bool IsNeedInfectInterfaceIsotropicRefineType();
-    bool IsNeedInfectInterfaceIsotropicRefineType(ZoneGridSolver * zoneGridSolver);
+    bool IsNeedInfectInterfaceIsotropicRefineType(ZoneGridSolver *zoneGridSolver);
 
     void InitCellRefineType();
-    void InitCellRefineType(ZoneGridSolver * zoneGridSolver);
+    void InitCellRefineType(ZoneGridSolver *zoneGridSolver);
 
     void FixCellRefineType();
-    void FixCellRefineType(ZoneGridSolver * zoneGridSolver);
+    void FixCellRefineType(ZoneGridSolver *zoneGridSolver);
 
     void SwapInterfaceRefineType();
     void SwapInterfaceRefineType(int zoneIndex, int neighborZoneIndex, int sendProcessorIndex, int receiveProcessorIndex);
 
-    void CompressVector(DataContainer *& dataContainer, int globalZoneIndex, int neighborZoneIndex);
-    void DecompressVector(DataContainer *& dataContainer, int globalZoneIndex, int neighborZoneIndex);
+    void CompressVector(DataContainer *&dataContainer, int globalZoneIndex, int neighborZoneIndex);
+    void DecompressVector(DataContainer *&dataContainer, int globalZoneIndex, int neighborZoneIndex);
 
     void InitGlobalBoundaryCondition();
 
@@ -141,15 +141,15 @@ private:
     void PrepareCheckIsSolidWallPoint(vector< vector<bool> > *isSolidWallPoint, vector< vector<bool> > *needDeform);
     void PrepareCheckIsSymmetryPoint(vector< vector<bool> > *isSolidWallPoint);
     void PrepareBoundaryDeformedPoint(vector< vector<bool> > *isSolidWallPoint, PointVector *zoneProjectVector,
-        PointVector *boundaryDeformedPoints, PointVector *deformedVector);
+         PointVector *boundaryDeformedPoints, PointVector *deformedVector);
 
     void UpdatePointsCoordinates(PointVector *pointsCoord, vector< vector<bool> > *needDeform);
 };
 
-void CompressFixCellType(ZoneGridSolver * zoneGridSolver, DataContainer *& dataContainer, int neighborZoneIndex);
-void DecompressFixCellType(ZoneGridSolver * zoneGridSolver, DataContainer *& dataContainer, int neighborZoneIndex);
+void CompressFixCellType(ZoneGridSolver *zoneGridSolver, DataContainer *&dataContainer, int neighborZoneIndex);
+void DecompressFixCellType(ZoneGridSolver *zoneGridSolver, DataContainer *&dataContainer, int neighborZoneIndex);
 
-void CompressVectorIntoDataContainer(DataContainer *& dataContainer, PHVector1D < int > & data);
-void AnasysVectorFromDataContainer(DataContainer *& dataContainer, PHVector1D < int > & data);
+void CompressVectorIntoDataContainer(DataContainer *&dataContainer, PHVector1D < int > &data);
+void AnasysVectorFromDataContainer(DataContainer *&dataContainer, PHVector1D < int > &data);
 
 }

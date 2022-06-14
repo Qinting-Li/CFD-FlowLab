@@ -26,7 +26,7 @@ class Mesh_Repair
 {
 public:
     //! @param[in] originalGridIn   Original grid, with negative volume cells, which need to be repaired..\n
-    LIB_EXPORT Mesh_Repair(UnstructGrid * originalGridIn);
+    LIB_EXPORT Mesh_Repair(UnstructGrid *originalGridIn);
 
     LIB_EXPORT ~Mesh_Repair();
 
@@ -34,21 +34,21 @@ public:
     LIB_EXPORT void Repair();
 
     //! Return the agglomerated coarse grid.
-    LIB_EXPORT UnstructGrid * GetRepairedGrid() { return this->repairedGrid; };
+    LIB_EXPORT UnstructGrid * GetRepairedGrid() { return this->repairedGrid; }
 
 private:
     //! The original grid, with negative volume cells, which is need to be repaired.
-    UnstructGrid * originalGrid;
+    UnstructGrid *originalGrid;
 
     //! The repaired grid, which is valid for simulation.
-    UnstructGrid * repairedGrid;
+    UnstructGrid *repairedGrid;
     
 };
 
-int PickOutBadSkewnessFaces(UnstructGrid * grid, bool * isBadFace, bool * isBadCell);
+int PickOutBadSkewnessFaces(UnstructGrid *grid, bool *isBadFace, bool *isBadCell);
 
 //! Repair grid to make sure sutiable mesh quality.
-LIB_EXPORT Grid * RepairGrid(Grid * originalGridIn);   
+LIB_EXPORT Grid * RepairGrid(Grid *originalGridIn);
 
-LIB_EXPORT void RepairGrid(Zone * zone, ActionKey * actkey);
+LIB_EXPORT void RepairGrid(Zone *zone, ActionKey *actkey);
 }

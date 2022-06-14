@@ -128,7 +128,7 @@ LIB_EXPORT void Param_NSSolver::Init()
         densityMinFactor = GlobalDataBase::GetDoubleParaFromDB("densityMinFactor");
     }
 
-    isSelfAdaptionSolve = GlobalDataBase::GetIntParaFromDB("iCodeBranch");
+    isSelfAdaptionSolve = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
 
     nGradPrimtiveMethod = 0;
     if (GlobalDataBase::IsExist("nGradPrimtiveMethod", PHINT, 1) && nChemical == 1)
@@ -168,6 +168,27 @@ LIB_EXPORT void Param_NSSolver::Init()
     {
         nSurfHeatMonitor = GlobalDataBase::GetIntParaFromDB("nSurfHeatMonitor");
     }
+
+    wallMultiTemperature = 0;
+    if (GlobalDataBase::IsExist("wallMultiTemperature", PHINT, 1))
+    {
+        wallMultiTemperature = GlobalDataBase::GetIntParaFromDB("wallMultiTemperature");
+    }
+
+    //The steps to initialize the boundary variables with the rapid flowfield values.
+    nInitPressureStep = 100;
+    if (GlobalDataBase::IsExist("nInitPressureStep", PHINT, 1))
+    {
+        nInitPressureStep = GlobalDataBase::GetIntParaFromDB("nInitPressureStep");
+    }
+
+    //Use local CFL number or not.
+    isUseLocalCFL = 0;
+    if (GlobalDataBase::IsExist("isUseLocalCFL", PHINT, 1))
+    {
+        isUseLocalCFL = GlobalDataBase::GetIntParaFromDB("isUseLocalCFL");
+    }
+
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()

@@ -199,14 +199,16 @@ void ForceProcessUnstruct::AirForceCoefParts(int iZone, int partID, int Coordina
     using namespace IDX;
 
     // get the bcRegion information of unstruct grid.
-    UnstructBC **bcRegionUnstruct = grid->GetBCRegionUnstruct();
-    int nBCRegionUnstruct = grid->GetNBCRegionUnstruct();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegion = unstructBCSet->GetnBCRegion();
+
 
     // cycle all bcregions and find the solid surface type of boundary.
-    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        int bcType = bcRegionUnstruct[iBCRegionUnstruct]->GetBCType();
-        string bcName = bcRegionUnstruct[iBCRegionUnstruct]->GetBCName();
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
 
         // if the bc type is wall, calculate the wall coefficient.
         if(bcType == PHENGLEI::SOLID_SURFACE)
@@ -215,7 +217,7 @@ void ForceProcessUnstruct::AirForceCoefParts(int iZone, int partID, int Coordina
             {
                 continue;
             }
-            vector<int> *faceIndex = bcRegionUnstruct[iBCRegionUnstruct]->GetFaceIndex();
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
             int iFace, le, re;
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
             {

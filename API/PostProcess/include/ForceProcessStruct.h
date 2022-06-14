@@ -15,6 +15,7 @@
 
 #pragma once
 #include "Force.h"
+#include "AleForceManager.h"
 #include "Geo_Grid.h"
 #include "PostProcessData.h"
 #include "Constants.h"

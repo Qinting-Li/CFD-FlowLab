@@ -23,7 +23,7 @@ ComputationalFaceSolver::ComputationalFaceSolver()
     faceNodeIndexesContainer             = new PHVectorInt2D; //
     oldFaceNodeIndexesContainer          = new PHVectorInt2D; //
 
-    faceBoundaryCondition                = new vector<SimpleBC * >;
+    faceBoundaryCondition                = new vector<SimpleBC *>;
 
     numberOfElements                     = 0;
     numberOfFaces                        = 0;
@@ -48,18 +48,18 @@ ComputationalFaceSolver::~ComputationalFaceSolver()
     delete faceBoundaryCondition;
 }
 
-void ComputationalFaceSolver::GenerateGhostField(RFloat ** qField, RFloat ** ghostQField, int numberOfEquations)
+void ComputationalFaceSolver::GenerateGhostField(RFloat **qField, RFloat **ghostQField, int numberOfEquations)
 {
     int numberOfFaces = this->GetNumberOfFaces();
 
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
     int iBoundaryCount = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int leftElementIndex  = leftElementIndexContainer [ iFace ];
-        int rightElementIndex = rightElementIndexContainer[ iFace ];
+        int leftElementIndex  = leftElementIndexContainer [iFace];
+        int rightElementIndex = rightElementIndexContainer[iFace];
 
         if (rightElementIndex != PHSPACE::INVALID_INDEX)
         {
@@ -68,7 +68,7 @@ void ComputationalFaceSolver::GenerateGhostField(RFloat ** qField, RFloat ** gho
 
         for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
         {
-            ghostQField[ iEquation ][ iBoundaryCount ] = qField[ iEquation ][ leftElementIndex ];
+            ghostQField[iEquation][iBoundaryCount] = qField[iEquation][leftElementIndex];
         }
 
         iBoundaryCount ++;
@@ -85,7 +85,7 @@ void ComputationalFaceSolver::SetNumberOfFaces(int numberOfFaces)
     this->numberOfFaces = numberOfFaces;
 }
 
-int ComputationalFaceSolver::GetNumberOfBoundaryFaces()  const
+int ComputationalFaceSolver::GetNumberOfBoundaryFaces() const
 {
     return numberOfBoundaryFaces;
 }
@@ -95,7 +95,7 @@ void ComputationalFaceSolver::SetNumberOfBoundaryFaces(int numberOfBoundaryFaces
     this->numberOfBoundaryFaces = numberOfBoundaryFaces;
 }
 
-ElementFaceSolver::ElementFaceSolver(Geo_PointFactory * pointFactory)
+ElementFaceSolver::ElementFaceSolver(Geo_PointFactory *pointFactory)
 {
     elementPropertySolver             = NULL;
     this->pointFactory                = pointFactory;
@@ -119,7 +119,7 @@ ElementFaceSolver::ElementFaceSolver(Geo_PointFactory * pointFactory)
     middlePointOfEdgeIndexContainer    = new PHVectorInt1D;
     childFaceIndexContainer            = new PHVectorInt2D;
 
-    computationalFaceSolver         = new ComputationalFaceSolver();
+    computationalFaceSolver            = new ComputationalFaceSolver();
 }
 
 ElementFaceSolver::~ElementFaceSolver()
@@ -149,9 +149,9 @@ ElementFaceSolver::~ElementFaceSolver()
     delete computationalFaceSolver;
 }
 
-int ElementFaceSolver::FindFace(MultiIndex & face)
+int ElementFaceSolver::FindFace(MultiIndex &face)
 {
-    set < MultiIndex > & referenceFacesContainer = this->GetReferenceFacesContainer();
+    set < MultiIndex > &referenceFacesContainer = this->GetReferenceFacesContainer();
     set< MultiIndex >::iterator iter = referenceFacesContainer.find(face);
     if (iter == referenceFacesContainer.end())
     {
@@ -160,9 +160,9 @@ int ElementFaceSolver::FindFace(MultiIndex & face)
     return iter->id;
 }
 
-int ElementFaceSolver::FindCompositeFace(MultiIndex & compositeFace)
+int ElementFaceSolver::FindCompositeFace(MultiIndex &compositeFace)
 {
-    set< MultiIndex >  & compositeFacesContainer = GetCompositeFacesContainer();
+    set< MultiIndex > &compositeFacesContainer = GetCompositeFacesContainer();
     set< MultiIndex >::iterator iter = compositeFacesContainer.find(compositeFace);
     if (iter == compositeFacesContainer.end())
     {
@@ -171,7 +171,7 @@ int ElementFaceSolver::FindCompositeFace(MultiIndex & compositeFace)
     return iter->id;
 }
 
-int ElementFaceSolver::FindEdgeWithMiddlePoint(MultiIndex & edgeWithMiddlePoint)
+int ElementFaceSolver::FindEdgeWithMiddlePoint(MultiIndex &edgeWithMiddlePoint)
 {
     set< MultiIndex >::iterator iter = edgesWithMiddlePointsContainer->find(edgeWithMiddlePoint);
     if (iter == edgesWithMiddlePointsContainer->end())
@@ -181,7 +181,7 @@ int ElementFaceSolver::FindEdgeWithMiddlePoint(MultiIndex & edgeWithMiddlePoint)
     return iter->id;
 }
 
-int ElementFaceSolver::FindFace(PHVectorInt1D & faceNodeIndexes)
+int ElementFaceSolver::FindFace(PHVectorInt1D &faceNodeIndexes)
 {
     uint_t facePointNumber = faceNodeIndexes.size();
 
@@ -194,19 +194,19 @@ int ElementFaceSolver::FindFace(PHVectorInt1D & faceNodeIndexes)
     return FindFace(faceOfMultiIndex);
 }
 
-void ElementFaceSolver::InsertFace(MultiIndex & face)
+void ElementFaceSolver::InsertFace(MultiIndex &face)
 {
-    set < MultiIndex > & referenceFacesContainer = this->GetReferenceFacesContainer();
+    set < MultiIndex > &referenceFacesContainer = this->GetReferenceFacesContainer();
     referenceFacesContainer.insert(face);
 }
 
-void ElementFaceSolver::InsertCompositeFace(MultiIndex & compositeface)
+void ElementFaceSolver::InsertCompositeFace(MultiIndex &compositeface)
 {
-    set< MultiIndex > & compositeFacesContainer = GetCompositeFacesContainer();
+    set< MultiIndex > &compositeFacesContainer = GetCompositeFacesContainer();
     compositeFacesContainer.insert(compositeface);
 }
 
-void ElementFaceSolver::InsertEdgeWithMiddlePoint(MultiIndex & edgeWithMiddlePoint)
+void ElementFaceSolver::InsertEdgeWithMiddlePoint(MultiIndex &edgeWithMiddlePoint)
 {
     edgesWithMiddlePointsContainer->insert(edgeWithMiddlePoint);
 }
@@ -224,9 +224,9 @@ void ElementFaceSolver::ResizeFaceNumber(int nSize)
     childFaceIndexContainer ->resize(nSize);
 }
 
-void ElementFaceSolver::ScanNewElementFace(PHVectorInt1D & elementNodeIndexes, int elementType, int elementIndex)
+void ElementFaceSolver::ScanNewElementFace(PHVectorInt1D &elementNodeIndexes, int elementType, int elementIndex)
 {
-    BasicElement * basicElement = GetBasicElement(elementType);
+    BasicElement *basicElement = GetBasicElement(elementType);
 
     //compositeComputationalElement不应参与解析！！！
     //对于compositeComputationalElement查找的实际是子面!!!对复合类型特别注意实际查询面！！！
@@ -234,21 +234,21 @@ void ElementFaceSolver::ScanNewElementFace(PHVectorInt1D & elementNodeIndexes, i
        
     PHVectorInt1D absoluteFaceNodeIndexesContainer;
 
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    PHVectorInt2D & childFaceIndexContainer = GetChildFaceIndexContainer();
+    PHVectorInt2D &childFaceIndexContainer = GetChildFaceIndexContainer();
 
-    PHVectorInt1D & faceTypeContainer         = GetFaceTypeContainer();
-    PHVectorInt1D & faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
-    vector<SimpleBC * > & faceBoundaryCondition = GetFaceBoundaryCondition();
+    PHVectorInt1D &faceTypeContainer         = GetFaceTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
+    vector<SimpleBC * > &faceBoundaryCondition = GetFaceBoundaryCondition();
 
-    set < MultiIndex > & referenceFacesContainer = this->GetReferenceFacesContainer();
+    set < MultiIndex > &referenceFacesContainer = this->GetReferenceFacesContainer();
 
     for (int iFace = 0; iFace < numberOfFacesInSingleElement; ++ iFace)
     {
         //面当地->ComputationalElement当地编号
-        vector< int > & relativeFaceNodeIndexesContainer = basicElement->GetElementFace(iFace);
+        vector< int > &relativeFaceNodeIndexesContainer = basicElement->GetElementFace(iFace);
         int typeOfFaceElement = basicElement->GetFaceElementType(iFace);
          
         uint_t numberOfNodesInface = relativeFaceNodeIndexesContainer.size();
@@ -258,9 +258,9 @@ void ElementFaceSolver::ScanNewElementFace(PHVectorInt1D & elementNodeIndexes, i
         {
             //面当地->ComputationalElement当地->全局编号
             //建立了:面当地->全局编号
-            int relativeIndex = relativeFaceNodeIndexesContainer[ iNode ];
-            int nodeIndex     = elementNodeIndexes[ relativeIndex ];
-            absoluteFaceNodeIndexesContainer[ iNode ] = nodeIndex;
+            int relativeIndex = relativeFaceNodeIndexesContainer[iNode];
+            int nodeIndex     = elementNodeIndexes[relativeIndex];
+            absoluteFaceNodeIndexesContainer[iNode] = nodeIndex;
         }                                                              
 
         PHVectorInt1D sortedFaceNodeIndex = absoluteFaceNodeIndexesContainer; //面顶点排序用于对比
@@ -290,7 +290,7 @@ void ElementFaceSolver::ScanNewElementFace(PHVectorInt1D & elementNodeIndexes, i
             InsertFace(faceOfMultiIndex);
 
             //要求第一个寻找至面的ComputationalElement必须在面左边，从而满足右手法则
-            leftElementIndexContainer .push_back(elementIndex);
+            leftElementIndexContainer.push_back(elementIndex);
             rightElementIndexContainer.push_back(PHSPACE::INVALID_INDEX);
 
             faceBoundaryTypeContainer.push_back(0);
@@ -304,22 +304,22 @@ void ElementFaceSolver::ScanNewElementFace(PHVectorInt1D & elementNodeIndexes, i
         }
         else
         {
-            if (leftElementIndexContainer[ globalFaceIndex ] == PHSPACE::INVALID_INDEX)
+            if (leftElementIndexContainer[globalFaceIndex] == PHSPACE::INVALID_INDEX)
             {
                 //说明此面虽然存在，但是由于种种原因没有处理
-                leftElementIndexContainer[ globalFaceIndex ] = elementIndex; //例如分裂过程中新加入体单元面
+                leftElementIndexContainer[globalFaceIndex] = elementIndex; //例如分裂过程中新加入体单元面
             }
             else
             {
-                int rightElementIndex = rightElementIndexContainer[ globalFaceIndex ];
-                bool isBoundaryFace   = PHSPACE::IsBoundaryFace(rightElementIndex);  // Composite face
+                int rightElementIndex = rightElementIndexContainer[globalFaceIndex];
+                bool isBoundaryFace = PHSPACE::IsBoundaryFace(rightElementIndex);  // Composite face
 
                 if (isBoundaryFace)
                 {
-                    if (leftElementIndexContainer[ globalFaceIndex ] != elementIndex)
+                    if (leftElementIndexContainer[globalFaceIndex] != elementIndex)
                     {
                          //例如边界上简单面leftElementIndexContainer[ globalFaceIndex ] = elementIndex
-                        rightElementIndexContainer[ globalFaceIndex ] = elementIndex;
+                        rightElementIndexContainer[globalFaceIndex] = elementIndex;
                     }
                 }
             }
@@ -329,38 +329,38 @@ void ElementFaceSolver::ScanNewElementFace(PHVectorInt1D & elementNodeIndexes, i
 
 void ElementFaceSolver::AddFaceHierachical(int faceIndex, int parentFaceIndex)
 {
-    PHVectorInt1D & parentFaceIndexContainer = GetParentFaceIndexContainer();
-    parentFaceIndexContainer[ faceIndex ] = parentFaceIndex;
+    PHVectorInt1D &parentFaceIndexContainer = GetParentFaceIndexContainer();
+    parentFaceIndexContainer[faceIndex] = parentFaceIndex;
 
-    PHVectorInt2D & childFaceIndexContainer = GetChildFaceIndexContainer();
+    PHVectorInt2D &childFaceIndexContainer = GetChildFaceIndexContainer();
 
-    childFaceIndexContainer[ parentFaceIndex ].push_back(faceIndex); //建立了简单面（而不是复合面）与childFace的关系
+    childFaceIndexContainer[parentFaceIndex].push_back(faceIndex); //建立了简单面（而不是复合面）与childFace的关系
 }
 
-void ElementFaceSolver::SetDefaultFaceInformation(int faceIndex, int faceType, PHVectorInt1D & faceNodeIndexes, int parentFaceIndex)
+void ElementFaceSolver::SetDefaultFaceInformation(int faceIndex, int faceType, PHVectorInt1D &faceNodeIndexes, int parentFaceIndex)
 {  
     //新加入面则应加入所有默认设置,与ResolveElementFace处对应
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    leftElementIndexContainer [ faceIndex ] = PHSPACE::INVALID_INDEX; //单元编号暂不确定
-    rightElementIndexContainer[ faceIndex ] = PHSPACE::INVALID_INDEX;
+    leftElementIndexContainer [faceIndex] = PHSPACE::INVALID_INDEX; //单元编号暂不确定
+    rightElementIndexContainer[faceIndex] = PHSPACE::INVALID_INDEX;
 
-    PHVectorInt1D & faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
     vector<SimpleBC * > & faceBoundaryCondition = GetFaceBoundaryCondition();
-    faceBoundaryTypeContainer[ faceIndex ]    = faceBoundaryTypeContainer[ parentFaceIndex ];
+    faceBoundaryTypeContainer[faceIndex] = faceBoundaryTypeContainer[parentFaceIndex];
 
-    faceBoundaryCondition[faceIndex]          = faceBoundaryCondition[parentFaceIndex];
+    faceBoundaryCondition[faceIndex] = faceBoundaryCondition[parentFaceIndex];
 
-    PHVectorInt1D & faceTypeContainer = GetFaceTypeContainer();
+    PHVectorInt1D &faceTypeContainer = GetFaceTypeContainer();
     
-    faceTypeContainer[ faceIndex ] = faceType;  //Green
+    faceTypeContainer[faceIndex] = faceType;  //Green
 
-    PHVectorInt2D & faceNodeIndexesContainer = this->GetFaceNodeIndexesContainer();
-    faceNodeIndexesContainer[ faceIndex ] = faceNodeIndexes; //Green
+    PHVectorInt2D &faceNodeIndexesContainer = this->GetFaceNodeIndexesContainer();
+    faceNodeIndexesContainer[faceIndex] = faceNodeIndexes; //Green
 }
 
-int ElementFaceSolver::AddElementFace(PHVectorInt1D & faceNodeIndexes, int typeOfFaceElement, int parentFaceIndex)
+int ElementFaceSolver::AddElementFace(PHVectorInt1D &faceNodeIndexes, int typeOfFaceElement, int parentFaceIndex)
 {
     uint_t numberOfFaceNodes = faceNodeIndexes.size();
 
@@ -368,7 +368,7 @@ int ElementFaceSolver::AddElementFace(PHVectorInt1D & faceNodeIndexes, int typeO
     sort(sortedFaceNodeIndex.begin(), sortedFaceNodeIndex.end());
 
     MultiIndex faceOfMultiIndex(static_cast<int>(numberOfFaceNodes), GetNumberOfTotalFaces());
-    faceOfMultiIndex.SetData(& sortedFaceNodeIndex[ 0 ]);
+    faceOfMultiIndex.SetData(&sortedFaceNodeIndex[0]);
 
     int faceIndex = FindFace(faceOfMultiIndex);
     if (faceIndex == PHSPACE::INVALID_INDEX)
@@ -384,12 +384,12 @@ int ElementFaceSolver::AddElementFace(PHVectorInt1D & faceNodeIndexes, int typeO
     return faceIndex;
 }
 
-bool ElementFaceSolver::CheckBCFace(set< int > & bcVertex, PHVectorInt1D & faceNodeIndexContainer)
+bool ElementFaceSolver::CheckBCFace(set< int > &bcVertex, PHVectorInt1D &faceNodeIndexContainer)
 {
     uint_t size = faceNodeIndexContainer.size();
     for (int i = 0; i < size; ++ i) //要求所有点在边界上
     {
-        set< int >::iterator iter = bcVertex.find(faceNodeIndexContainer[ i ]);
+        set< int >::iterator iter = bcVertex.find(faceNodeIndexContainer[i]);
         if (iter == bcVertex.end())
         {
             return false;
@@ -398,13 +398,13 @@ bool ElementFaceSolver::CheckBCFace(set< int > & bcVertex, PHVectorInt1D & faceN
     return true;
 }
 
-void ElementFaceSolver::ScanNewElementBoundaryFace(set< int > & bcVertex, int boundaryConditionType, int numberOfElementOfThisBCType)
+void ElementFaceSolver::ScanNewElementBoundaryFace(set< int > &bcVertex, int boundaryConditionType, int numberOfElementOfThisBCType)
 {
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    PHVectorInt1D & faceBoundaryTypeContainer = this->GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainer = this->GetFaceBoundaryTypeContainer();
 
-    PHVectorInt2D & faceNodeIndexesContainer = this->GetFaceNodeIndexesContainer();
+    PHVectorInt2D &faceNodeIndexesContainer = this->GetFaceNodeIndexesContainer();
 
     int numberOfBoundaryFaces = 0;
 
@@ -413,20 +413,19 @@ void ElementFaceSolver::ScanNewElementBoundaryFace(set< int > & bcVertex, int bo
     for (int iFace = 0; iFace < numberOfTotalFaces; ++ iFace) //注意循环嵌套影响！！！
     {
         //所有面，初值为0，但随着边界域的循环，会在faceBoundaryType中加入boundaryConditionType
-        int originalBoundaryConditionType = faceBoundaryTypeContainer [ iFace ];
-        int rightComputationalElement     = rightElementIndexContainer[ iFace ];
+        int originalBoundaryConditionType = faceBoundaryTypeContainer [iFace];
+        int rightComputationalElement     = rightElementIndexContainer[iFace];
 
-        if ((rightComputationalElement     == PHSPACE::INVALID_INDEX) && 
-             (originalBoundaryConditionType == 0)) //边界面或interface
+        if ((rightComputationalElement == PHSPACE::INVALID_INDEX) && (originalBoundaryConditionType == 0)) //边界面或interface
         {
             // bcVertex，包含了所有边界条件为boundaryConditionType的边界面的点
             // iFace,    当前的面，需要确定其边界条件是否为boundaryConditionType
             // 算法：对于面iFace，如果其所有点均在bvVertex中，则其边界条件为boundaryConditionType。
-            if (CheckBCFace(bcVertex, faceNodeIndexesContainer[ iFace ])) //边界面，注意bcVertex不含interface!!!
+            if (CheckBCFace(bcVertex, faceNodeIndexesContainer[iFace])) //边界面，注意bcVertex不含interface!!!
             {
                 ++ numberOfBoundaryFaces;
 
-                faceBoundaryTypeContainer[ iFace ] = boundaryConditionType; //表示边界类型
+                faceBoundaryTypeContainer[iFace] = boundaryConditionType; //表示边界类型
             }
         }
     }
@@ -445,12 +444,12 @@ void ElementFaceSolver::ScanNewElementBoundaryFace(set< int > & bcVertex, int bo
 
 int ElementFaceSolver::GetRootFaceIndex(int iFace)
 {
-    PHVectorInt1D & parentFaceIndexContainer = GetParentFaceIndexContainer();
-    int parentFaceIndex = parentFaceIndexContainer[ iFace ];
+    PHVectorInt1D &parentFaceIndexContainer = GetParentFaceIndexContainer();
+    int parentFaceIndex = parentFaceIndexContainer[iFace];
     int nextParentFaceIndex = PHSPACE::INVALID_INDEX;
     if (parentFaceIndex != PHSPACE::INVALID_INDEX)
     {
-        nextParentFaceIndex = parentFaceIndexContainer[ parentFaceIndex ];
+        nextParentFaceIndex = parentFaceIndexContainer[parentFaceIndex];
         if (nextParentFaceIndex == PHSPACE::INVALID_INDEX)
         {
             return parentFaceIndex;
@@ -471,52 +470,52 @@ void ElementFaceSolver::MarkAllCandidateBoundaryFace()
     //重新解析时包括了悬空面
     int numberOfTotalFaces = this->GetNumberOfTotalFaces();
 
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    PHVectorInt1D & parentFaceIndexContainer = GetParentFaceIndexContainer();
+    PHVectorInt1D &parentFaceIndexContainer = GetParentFaceIndexContainer();
 
-    PHVectorInt1D & faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
 
-    PHVectorInt2D & childFaceIndexContainer = GetChildFaceIndexContainer();
+    PHVectorInt2D &childFaceIndexContainer = GetChildFaceIndexContainer();
 
     for (int iFace = 0; iFace < numberOfTotalFaces; ++ iFace)
     {
-        int rightElementIndexForComputation = rightElementIndexContainer[ iFace ];
+        int rightElementIndexForComputation = rightElementIndexContainer[iFace];
 
         if (rightElementIndexForComputation == PHSPACE::INVALID_INDEX)
         {
             //说明具有候选资格
-            if (childFaceIndexContainer[ iFace ].size() == 0)
+            if (childFaceIndexContainer[iFace].size() == 0)
             {
                 //说明无子面
-                int parentFaceIndex = parentFaceIndexContainer[ iFace ];
+                int parentFaceIndex = parentFaceIndexContainer[iFace];
                 //说明此单元面是简单物理面，应该已经mark  
                 if (parentFaceIndex == PHSPACE::INVALID_INDEX) continue;  
 
-                int boundaryConditionType = faceBoundaryTypeContainer[ parentFaceIndex ];
+                int boundaryConditionType = faceBoundaryTypeContainer[parentFaceIndex];
                 if (boundaryConditionType == 0)
                 {
                     //说明为内部边界
                     //这个地方可以去除，直接return，右单元不一定与parent相同
-                    rightElementIndexContainer[ iFace ] = rightElementIndexContainer[ parentFaceIndex ];
+                    rightElementIndexContainer[iFace] = rightElementIndexContainer[parentFaceIndex];
                 }
                 else
                 {
-                    faceBoundaryTypeContainer[ iFace ] = faceBoundaryTypeContainer[ parentFaceIndex ];
+                    faceBoundaryTypeContainer[iFace] = faceBoundaryTypeContainer[parentFaceIndex];
                 }
             }
         }
     }
 }
 
-void ElementFaceSolver::SetFaceBoundary(PHVectorInt1D & faceNodeIndexContainer, int faceType, int boundaryConditionType)
+void ElementFaceSolver::SetFaceBoundary(PHVectorInt1D &faceNodeIndexContainer, int faceType, int boundaryConditionType)
 {
     sort(faceNodeIndexContainer.begin(), faceNodeIndexContainer.end());
 
     MultiIndex faceOfMultiIndex(static_cast<int>(faceNodeIndexContainer.size()));
     faceOfMultiIndex.SetData(& faceNodeIndexContainer[ 0 ]);
 
-    PHVectorInt1D & faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainer = GetFaceBoundaryTypeContainer();
 
     int faceIndex = FindFace(faceOfMultiIndex);
     if (faceIndex == PHSPACE::INVALID_INDEX)
@@ -535,7 +534,7 @@ void ElementFaceSolver::SetFaceBoundary(PHVectorInt1D & faceNodeIndexContainer, 
     else
     {
         //face已经存在
-        faceBoundaryTypeContainer[ faceIndex ] = boundaryConditionType;
+        faceBoundaryTypeContainer[faceIndex] = boundaryConditionType;
     }
 }
 
@@ -544,7 +543,7 @@ int ElementFaceSolver::GetNumberOfFaces()
     int numberOfTotalFaces = this->GetNumberOfTotalFaces();
     int numberOfFaces = 0;
 
-    PHVectorInt2D & childFaceIndexContainer = GetChildFaceIndexContainer();
+    PHVectorInt2D &childFaceIndexContainer = GetChildFaceIndexContainer();
 
     for (int iFace = 0; iFace < numberOfTotalFaces; ++ iFace)
     {
@@ -561,16 +560,16 @@ int ElementFaceSolver::GetNumberOfBoundaryFaces()
     int numberOfTotalFaces = this->GetNumberOfTotalFaces();
     int numberOfBoundaryFaces = 0;
 
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    PHVectorInt2D & childFaceIndexContainer = GetChildFaceIndexContainer();
+    PHVectorInt2D &childFaceIndexContainer = GetChildFaceIndexContainer();
 
     for (int iFace = 0; iFace < numberOfTotalFaces; ++ iFace)
     {
         //在此之前先将悬空面清理
         //要求第一个寻找至面的ComputationalElement必须在面左边，悬空点的ComputationalElement必须在自身面左边，否则悬空面childface将计入边界
-        int rightElementIndexForComputation = rightElementIndexContainer[ iFace ];
-        bool isBoundaryFace = (childFaceIndexContainer[ iFace ].size() == 0);
+        int rightElementIndexForComputation = rightElementIndexContainer[iFace];
+        bool isBoundaryFace = (childFaceIndexContainer[iFace].size() == 0);
         isBoundaryFace = isBoundaryFace && PHSPACE::IsBoundaryFace(rightElementIndexForComputation);
         
         if (isBoundaryFace)
@@ -583,28 +582,28 @@ int ElementFaceSolver::GetNumberOfBoundaryFaces()
 
 void ElementFaceSolver::ProcessBoundaryFace(int iFaceForComputation)
 {
-    ElementPropertySolver * elementPropertySolver = this->GetElementPropertySolver();
+    ElementPropertySolver *elementPropertySolver = this->GetElementPropertySolver();
 
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
-    PHVectorInt1D & globalToComputationalElementIndexMapping = elementPropertySolver->GetGlobalToComputationalElementIndexMapping();
-    PHVectorInt1D & computationalToGlobalFaceIndexMapping    = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
-    PHVectorInt1D & elementComputationalStatusContainer      = elementPropertySolver->GetElementComputationalStatusContainer();
+    PHVectorInt1D &globalToComputationalElementIndexMapping = elementPropertySolver->GetGlobalToComputationalElementIndexMapping();
+    PHVectorInt1D &computationalToGlobalFaceIndexMapping    = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
+    PHVectorInt1D &elementComputationalStatusContainer      = elementPropertySolver->GetElementComputationalStatusContainer();
 
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    PHVectorInt1D & leftElementIndexContainerForComputation  = computationalFaceSolver->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainerForComputation = computationalFaceSolver->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainerForComputation  = computationalFaceSolver->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainerForComputation = computationalFaceSolver->GetRightElementIndexContainer();
 
     //为了保正网格或计算单元中face节点顺序与左右网格或计算单元保持右手法则，网格或计算单元需要继承基础参考单元的左右关系
-    int faceIndex = computationalToGlobalFaceIndexMapping[ iFaceForComputation ];
-    int leftElementIndex  = leftElementIndexContainer [ faceIndex ];
-    int rightElementIndex = rightElementIndexContainer[ faceIndex ];
+    int faceIndex = computationalToGlobalFaceIndexMapping[iFaceForComputation];
+    int leftElementIndex  = leftElementIndexContainer [faceIndex];
+    int rightElementIndex = rightElementIndexContainer[faceIndex];
 
     bool isRightElementExist = !PHSPACE::IsElementNotExist(rightElementIndex);
 
-    if (elementComputationalStatusContainer[ leftElementIndex ] == PHSPACE::HIDDEN)
+    if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN)
     {
         //此处左单元必须纳入计算
         //StopProgram(" ProcessBoundaryFace error computationalStatus of left Element ");
@@ -619,64 +618,64 @@ void ElementFaceSolver::ProcessBoundaryFace(int iFaceForComputation)
     }
     else
     {
-        int leftElementIndexForComputation = globalToComputationalElementIndexMapping[ leftElementIndex ];
+        int leftElementIndexForComputation = globalToComputationalElementIndexMapping[leftElementIndex];
         leftElementIndexContainerForComputation .push_back(leftElementIndexForComputation); 
-        rightElementIndexContainerForComputation.push_back(PHSPACE::INVALID_INDEX        );
+        rightElementIndexContainerForComputation.push_back(PHSPACE::INVALID_INDEX);
     }
 }
 
 void ElementFaceSolver::ProcessGereralFace(int iFaceForComputation)
 {
-    ElementPropertySolver * elementPropertySolver = this->GetElementPropertySolver();
+    ElementPropertySolver *elementPropertySolver = this->GetElementPropertySolver();
 
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
-    PHVectorInt1D & globalToComputationalElementIndexMapping = elementPropertySolver->GetGlobalToComputationalElementIndexMapping();
-    PHVectorInt1D & computationalToGlobalFaceIndexMapping    = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
+    PHVectorInt1D &globalToComputationalElementIndexMapping = elementPropertySolver->GetGlobalToComputationalElementIndexMapping();
+    PHVectorInt1D &computationalToGlobalFaceIndexMapping    = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
 
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    PHVectorInt1D & leftElementIndexContainerForComputation  = computationalFaceSolver->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainerForComputation = computationalFaceSolver->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainerForComputation  = computationalFaceSolver->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainerForComputation = computationalFaceSolver->GetRightElementIndexContainer();
 
     //为了保正网格或计算单元中face节点顺序与左右网格或计算单元保持右手法则，网格或计算单元需要继承基础参考单元的左右关系
-    int faceIndex = computationalToGlobalFaceIndexMapping[ iFaceForComputation ];
+    int faceIndex = computationalToGlobalFaceIndexMapping[iFaceForComputation];
 
-    int leftElementIndex  = leftElementIndexContainer [ faceIndex ];
-    int rightElementIndex = rightElementIndexContainer[ faceIndex ];
+    int leftElementIndex  = leftElementIndexContainer [faceIndex];
+    int rightElementIndex = rightElementIndexContainer[faceIndex];
 
-    int leftElementIndexForComputation  = globalToComputationalElementIndexMapping[ leftElementIndex  ];
-    int rightElementIndexForComputation = globalToComputationalElementIndexMapping[ rightElementIndex ];
+    int leftElementIndexForComputation  = globalToComputationalElementIndexMapping[leftElementIndex];
+    int rightElementIndexForComputation = globalToComputationalElementIndexMapping[rightElementIndex];
 
-    leftElementIndexContainerForComputation .push_back(leftElementIndexForComputation ); 
-    rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation); 
+    leftElementIndexContainerForComputation .push_back(leftElementIndexForComputation); 
+    rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation);
 }
 
 void ElementFaceSolver::ProcessHangingFace(int iFaceForComputation)
 {
-    ElementPropertySolver * elementPropertySolver = this->GetElementPropertySolver();
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ElementPropertySolver *elementPropertySolver = this->GetElementPropertySolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
-    PHVectorInt1D & globalToComputationalElementIndexMapping = elementPropertySolver->GetGlobalToComputationalElementIndexMapping();
-    PHVectorInt1D & computationalToGlobalFaceIndexMapping    = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
-    PHVectorInt1D & elementComputationalStatusContainer      = elementPropertySolver->GetElementComputationalStatusContainer();
+    PHVectorInt1D &globalToComputationalElementIndexMapping = elementPropertySolver->GetGlobalToComputationalElementIndexMapping();
+    PHVectorInt1D &computationalToGlobalFaceIndexMapping = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
+    PHVectorInt1D &elementComputationalStatusContainer = elementPropertySolver->GetElementComputationalStatusContainer();
 
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    PHVectorInt1D & leftElementIndexContainerForComputation  = computationalFaceSolver->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainerForComputation = computationalFaceSolver->GetRightElementIndexContainer();
+    PHVectorInt1D &leftElementIndexContainerForComputation  = computationalFaceSolver->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainerForComputation = computationalFaceSolver->GetRightElementIndexContainer();
 
-    PHVectorInt1D & parentFaceIndexContainer = GetParentFaceIndexContainer();
+    PHVectorInt1D &parentFaceIndexContainer = GetParentFaceIndexContainer();
 
     //为了保正网格或计算单元中face节点顺序与左右网格或计算单元保持右手法则，网格或计算单元需要继承基础参考单元的左右关系
-    int faceIndex = computationalToGlobalFaceIndexMapping[ iFaceForComputation ];
+    int faceIndex = computationalToGlobalFaceIndexMapping[iFaceForComputation];
 
-    int leftElementIndex  = leftElementIndexContainer [ faceIndex ];
-    int rightElementIndex = rightElementIndexContainer[ faceIndex ];
+    int leftElementIndex = leftElementIndexContainer[faceIndex];
+    int rightElementIndex = rightElementIndexContainer[faceIndex];
 
-    int parentFaceIndex  = parentFaceIndexContainer[ faceIndex ];
+    int parentFaceIndex = parentFaceIndexContainer[faceIndex];
 
     if (parentFaceIndex == PHSPACE::INVALID_INDEX)
     {
@@ -685,7 +684,7 @@ void ElementFaceSolver::ProcessHangingFace(int iFaceForComputation)
         TK_Exit::ExceptionExit(err);
     }
 
-    if (elementComputationalStatusContainer[ leftElementIndex ] == PHSPACE::HIDDEN)
+    if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN)
     {
         //左单元总存在，但可能被粗化引起悬空，因此左单元也需要处理
         if (rightElementIndex == PHSPACE::INVALID_INDEX)
@@ -696,25 +695,25 @@ void ElementFaceSolver::ProcessHangingFace(int iFaceForComputation)
         }
         else
         {
-            if (elementComputationalStatusContainer[ rightElementIndex ] == PHSPACE::HIDDEN)
+            if (elementComputationalStatusContainer[rightElementIndex] == PHSPACE::HIDDEN)
             {
                 //StopProgram(" ProcessHangingFace error rightElementStatus \n ");
                 string err = " Error: ProcessHangingFace error rightElementStatus ";
                 TK_Exit::ExceptionExit(err);
             }
 
-            int parentFaceIndex    = parentFaceIndexContainer  [ faceIndex    ];
-            int leftElementParent  = leftElementIndexContainer [ parentFaceIndex ];
-            int rightElementParent = rightElementIndexContainer[ parentFaceIndex ];
+            int parentFaceIndex    = parentFaceIndexContainer  [faceIndex];
+            int leftElementParent  = leftElementIndexContainer [parentFaceIndex];
+            int rightElementParent = rightElementIndexContainer[parentFaceIndex];
 
-            if (elementComputationalStatusContainer[ leftElementParent ] == PHSPACE::ON)
+            if (elementComputationalStatusContainer[leftElementParent] == PHSPACE::ON)
             {
-                int leftElementIndexForComputation =  globalToComputationalElementIndexMapping[ leftElementParent ];
+                int leftElementIndexForComputation = globalToComputationalElementIndexMapping[leftElementParent];
                 leftElementIndexContainerForComputation.push_back(leftElementIndexForComputation); 
             }
-            else if (elementComputationalStatusContainer[ rightElementParent ] == PHSPACE::ON)
+            else if (elementComputationalStatusContainer[rightElementParent] == PHSPACE::ON)
             {
-                int leftElementIndexForComputation =  globalToComputationalElementIndexMapping[ rightElementParent ];
+                int leftElementIndexForComputation = globalToComputationalElementIndexMapping[rightElementParent];
                 leftElementIndexContainerForComputation.push_back(leftElementIndexForComputation); 
             }
             else
@@ -724,30 +723,29 @@ void ElementFaceSolver::ProcessHangingFace(int iFaceForComputation)
                 TK_Exit::ExceptionExit(err);
             }
 
-            int rightElementIndexForComputation =  globalToComputationalElementIndexMapping[ rightElementIndex ];
-            rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation); 
-
+            int rightElementIndexForComputation = globalToComputationalElementIndexMapping[rightElementIndex];
+            rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation);
         }
     }
-    else if (elementComputationalStatusContainer[ leftElementIndex ] == PHSPACE::ON) 
+    else if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::ON)
     {
-        int leftElementIndexForComputation =  globalToComputationalElementIndexMapping[ leftElementIndex ];
+        int leftElementIndexForComputation = globalToComputationalElementIndexMapping[leftElementIndex];
         leftElementIndexContainerForComputation.push_back(leftElementIndexForComputation); 
 
         if (rightElementIndex == PHSPACE::INVALID_INDEX) //加密悬空
         {
-            int parentFaceIndex    = parentFaceIndexContainer  [ faceIndex       ];
-            int leftElementParent  = leftElementIndexContainer [ parentFaceIndex ];
-            int rightElementParent = rightElementIndexContainer[ parentFaceIndex ];
+            int parentFaceIndex    = parentFaceIndexContainer  [faceIndex];
+            int leftElementParent  = leftElementIndexContainer [parentFaceIndex];
+            int rightElementParent = rightElementIndexContainer[parentFaceIndex];
                     
-            if (elementComputationalStatusContainer[ leftElementParent ] == PHSPACE::ON)
+            if (elementComputationalStatusContainer[leftElementParent] == PHSPACE::ON)
             {
-                int rightElementIndexForComputation =  globalToComputationalElementIndexMapping[ leftElementParent ];
+                int rightElementIndexForComputation = globalToComputationalElementIndexMapping[leftElementParent];
                 rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation); 
             }
-            else if (elementComputationalStatusContainer[ rightElementParent ] == PHSPACE::ON)
+            else if (elementComputationalStatusContainer[rightElementParent] == PHSPACE::ON)
             {
-                int rightElementIndexForComputation =  globalToComputationalElementIndexMapping[ rightElementParent ];
+                int rightElementIndexForComputation = globalToComputationalElementIndexMapping[rightElementParent];
                 rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation); 
             }
             else
@@ -759,20 +757,20 @@ void ElementFaceSolver::ProcessHangingFace(int iFaceForComputation)
         }
         else 
         {
-            if (elementComputationalStatusContainer[ rightElementIndex ] == PHSPACE::HIDDEN) //右单元虽然存在，但被关闭，粗化悬空
+            if (elementComputationalStatusContainer[rightElementIndex] == PHSPACE::HIDDEN) //右单元虽然存在，但被关闭，粗化悬空
             {
-                int parentFaceIndex    = parentFaceIndexContainer  [ faceIndex       ];
-                int leftElementParent  = leftElementIndexContainer [ parentFaceIndex ];
-                int rightElementParent = rightElementIndexContainer[ parentFaceIndex ];
+                int parentFaceIndex    = parentFaceIndexContainer  [faceIndex];
+                int leftElementParent  = leftElementIndexContainer [parentFaceIndex];
+                int rightElementParent = rightElementIndexContainer[parentFaceIndex];
                         
-                if (elementComputationalStatusContainer[ leftElementParent ] == PHSPACE::ON)
+                if (elementComputationalStatusContainer[leftElementParent] == PHSPACE::ON)
                 {
-                    int rightElementIndexForComputation =  globalToComputationalElementIndexMapping[ leftElementParent ];
+                    int rightElementIndexForComputation = globalToComputationalElementIndexMapping[leftElementParent];
                     rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation); 
                 }
-                else if (elementComputationalStatusContainer[ rightElementParent ] == PHSPACE::ON)
+                else if (elementComputationalStatusContainer[rightElementParent] == PHSPACE::ON)
                 {
-                    int rightElementIndexForComputation =  globalToComputationalElementIndexMapping[ rightElementParent ];
+                    int rightElementIndexForComputation = globalToComputationalElementIndexMapping[rightElementParent];
                     rightElementIndexContainerForComputation.push_back(rightElementIndexForComputation); 
                 }
                 else
@@ -800,20 +798,20 @@ void ElementFaceSolver::ProcessHangingFace(int iFaceForComputation)
 
 void ElementFaceSolver::GenerateComputationalElementFaceInformationFirstPart()
 {
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
-    PHVectorInt1D & computationalToGlobalFaceIndexMapping              = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
-    PHVectorInt1D & faceTypeContainerForComputation                    = computationalFaceSolver->GetFaceTypeContainer();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
+    PHVectorInt1D &computationalToGlobalFaceIndexMapping = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
+    PHVectorInt1D &faceTypeContainerForComputation = computationalFaceSolver->GetFaceTypeContainer();
 
-    PHVectorInt2D & faceNodeIndexesContainer                           = this->GetFaceNodeIndexesContainer();
-    PHVectorInt2D & faceNodeIndexesContainerIntermediateForComputation = computationalFaceSolver->GetIntermediateFaceNodeIndexesContainer();
+    PHVectorInt2D &faceNodeIndexesContainer = this->GetFaceNodeIndexesContainer();
+    PHVectorInt2D &faceNodeIndexesContainerIntermediateForComputation = computationalFaceSolver->GetIntermediateFaceNodeIndexesContainer();
 
     int numberOfFacesForComputation = computationalFaceSolver->GetNumberOfFaces();
 
     for (int iFaceForComputation = 0; iFaceForComputation < numberOfFacesForComputation; ++ iFaceForComputation)
     {
         //为了保正网格或计算单元中face节点顺序与左右网格或计算单元保持右手法则，网格或计算单元需要继承基础参考单元的左右关系
-        int faceIndex = computationalToGlobalFaceIndexMapping[ iFaceForComputation ];
-        int faceType  = faceTypeContainerForComputation      [ iFaceForComputation ];
+        int faceIndex = computationalToGlobalFaceIndexMapping[iFaceForComputation];
+        int faceType  = faceTypeContainerForComputation      [iFaceForComputation];
 
         if (faceType == PHSPACE::BOUNDARYFACE)
         {
@@ -831,7 +829,7 @@ void ElementFaceSolver::GenerateComputationalElementFaceInformationFirstPart()
             ProcessHangingFace(iFaceForComputation);
         }
 
-        PHVectorInt1D & faceNodeIndexes = faceNodeIndexesContainer[ faceIndex ];
+        PHVectorInt1D &faceNodeIndexes = faceNodeIndexesContainer[faceIndex];
         //此处点编号仍然是体单元中编号，还需变换为ComputationalElement中编号
         faceNodeIndexesContainerIntermediateForComputation.push_back(faceNodeIndexes); 
     }
@@ -839,43 +837,43 @@ void ElementFaceSolver::GenerateComputationalElementFaceInformationFirstPart()
 
 void ElementFaceSolver::GenerateComputationalElementFaceInformationSecondPart()
 {
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
-    PHVectorInt1D & computationalToGlobalFaceIndexMapping    = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
-    PHVectorInt1D & faceTypeContainerForComputation = computationalFaceSolver->GetFaceTypeContainer();
-    PHVectorInt1D & parentFaceIndexContainer = GetParentFaceIndexContainer();
+    PHVectorInt1D &computationalToGlobalFaceIndexMapping = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
+    PHVectorInt1D &faceTypeContainerForComputation = computationalFaceSolver->GetFaceTypeContainer();
+    PHVectorInt1D &parentFaceIndexContainer = GetParentFaceIndexContainer();
 
     //建立具有悬空点的棱集合
-    PHVectorInt1D & simpleToCompositeFaceIndexMapping = GetSimpleToCompositeFaceIndexMapping();
+    PHVectorInt1D &simpleToCompositeFaceIndexMapping = GetSimpleToCompositeFaceIndexMapping();
 
     int numberOfFacesForComputation = computationalFaceSolver->GetNumberOfFaces();
 
     for (int iFaceForComputation = 0; iFaceForComputation < numberOfFacesForComputation; ++ iFaceForComputation)
     {
-        if (faceTypeContainerForComputation[ iFaceForComputation ] == PHSPACE::HANGINGFACE) //利用复合面对悬空点进一步处理
+        if (faceTypeContainerForComputation[iFaceForComputation] == PHSPACE::HANGINGFACE) //利用复合面对悬空点进一步处理
         {
-            int faceIndex    = computationalToGlobalFaceIndexMapping[ iFaceForComputation ];        
-            int faceParentID = parentFaceIndexContainer             [ faceIndex           ]; //找出上级单元
+            int faceIndex = computationalToGlobalFaceIndexMapping[iFaceForComputation];        
+            int faceParentID = parentFaceIndexContainer[faceIndex]; //找出上级单元
             
             if (faceParentID == PHSPACE::INVALID_INDEX)
             {
                 cout << "error Generate EdgesWithMiddlePoints \n";
             }
 
-            int iCompositeFace = simpleToCompositeFaceIndexMapping[ faceParentID ]; //找出上级单元对应的复合单元
+            int iCompositeFace = simpleToCompositeFaceIndexMapping[faceParentID]; //找出上级单元对应的复合单元
 
             GenerateEdgesWithMiddlePoints(iCompositeFace); //建立计算单元中具有中点的棱的集合
         }
     }
 
-    PHVectorInt2D & faceNodeIndexesContainerIntermediateForComputation = computationalFaceSolver->GetIntermediateFaceNodeIndexesContainer();
+    PHVectorInt2D &faceNodeIndexesContainerIntermediateForComputation = computationalFaceSolver->GetIntermediateFaceNodeIndexesContainer();
 
     for (int iFaceForComputation = 0; iFaceForComputation < numberOfFacesForComputation; ++ iFaceForComputation)
     {
         //对计算单元简单面相应所有棱进行搜索，存在中点则插入
-        PHVectorInt1D & middlePointOfEdgeIndexContainer = GetMiddlePointOfEdgeIndexContainer();
+        PHVectorInt1D &middlePointOfEdgeIndexContainer = GetMiddlePointOfEdgeIndexContainer();
         
-        PHVectorInt1D & faceNodesIndexes = faceNodeIndexesContainerIntermediateForComputation[ iFaceForComputation ];
+        PHVectorInt1D &faceNodesIndexes = faceNodeIndexesContainerIntermediateForComputation[iFaceForComputation];
         PHVectorInt1D faceNodesIndexesForComputation = faceNodesIndexes;
 
         uint_t faceNodeNumbersForComputation = faceNodesIndexes.size();
@@ -885,8 +883,8 @@ void ElementFaceSolver::GenerateComputationalElementFaceInformationSecondPart()
             int iNode0 = iNode;
             int iNode1 = (iNode + 1) % faceNodeNumbersForComputation;
 
-            int nodeIndex0 = faceNodesIndexes[ iNode0 ]; //点搜索必须对原简单面进行
-            int nodeIndex1 = faceNodesIndexes[ iNode1 ];
+            int nodeIndex0 = faceNodesIndexes[iNode0]; //点搜索必须对原简单面进行
+            int nodeIndex1 = faceNodesIndexes[iNode1];
 
             PHVectorInt1D edgeNodeIndexes;
             edgeNodeIndexes.push_back(nodeIndex0); //解析复合面中与简单面对应的棱
@@ -903,12 +901,12 @@ void ElementFaceSolver::GenerateComputationalElementFaceInformationSecondPart()
 
             edgeOfMultiIndex.SetData(& sortedEdgeNodeIndexes[ 0 ]); //实际是根据编号进行对比搜索
 
-            int  edgeWithMiddlePointIndex = FindEdgeWithMiddlePoint(edgeOfMultiIndex);
+            int edgeWithMiddlePointIndex = FindEdgeWithMiddlePoint(edgeOfMultiIndex);
 
             if (edgeWithMiddlePointIndex == PHSPACE::INVALID_INDEX) continue; //此棱没有中点
 
             //此棱有中点,则应向相应面中插入此点
-            int middlePointIndex = middlePointOfEdgeIndexContainer[ edgeWithMiddlePointIndex ];
+            int middlePointIndex = middlePointOfEdgeIndexContainer[edgeWithMiddlePointIndex];
 
             PHVectorInt1D::iterator iter = find(faceNodesIndexesForComputation.begin(), faceNodesIndexesForComputation.end(), nodeIndex1);
 
@@ -922,7 +920,7 @@ void ElementFaceSolver::GenerateComputationalElementFaceInformationSecondPart()
                 faceNodesIndexesForComputation.insert(iter, middlePointIndex); //向前插入
             }
         }
-        faceNodeIndexesContainerIntermediateForComputation[ iFaceForComputation ] = faceNodesIndexesForComputation; //最后对faceNodesIndexesForComputation进行重新设制增加点数
+        faceNodeIndexesContainerIntermediateForComputation[iFaceForComputation] = faceNodesIndexesForComputation; //最后对faceNodesIndexesForComputation进行重新设制增加点数
     }
 }
 
@@ -931,7 +929,7 @@ void ElementFaceSolver::GenerateComputationalElementFaceInformation()
     //cout << " GenerateComputationalElementFaceInformation begin \n";
 
     PHSPACE::WriteLogFile("Start GenerateComputationalElementFaceInformationFirstPart!");
-    GenerateComputationalElementFaceInformationFirstPart ();
+    GenerateComputationalElementFaceInformationFirstPart();
 
     PHSPACE::WriteLogFile("Start GenerateComputationalElementFaceInformationSecondPart!");
     GenerateComputationalElementFaceInformationSecondPart();
@@ -939,29 +937,29 @@ void ElementFaceSolver::GenerateComputationalElementFaceInformation()
     //cout << " GenerateComputationalElementFaceInformation complete \n";
 }
 
-void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingNoParentCase(int iFace, int & iComputationalFaceCount, int & iBoundaryFace)
+void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingNoParentCase(int iFace, int &iComputationalFaceCount, int &iBoundaryFace)
 {
-    ElementPropertySolver * elementPropertySolver = this->GetElementPropertySolver();
+    ElementPropertySolver *elementPropertySolver = this->GetElementPropertySolver();
 
-    PHVectorInt1D & elementComputationalStatusContainer = elementPropertySolver->GetElementComputationalStatusContainer();
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &elementComputationalStatusContainer = elementPropertySolver->GetElementComputationalStatusContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
 
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
-    PHVectorInt1D & faceTypeContainerForComputation         = computationalFaceSolver->GetFaceTypeContainer();
-    PHVectorInt1D & faceBoundaryTypeContainer               = GetFaceBoundaryTypeContainer();
-    PHVectorInt1D & faceBoundaryTypeContainerForComputation = computationalFaceSolver->GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceTypeContainerForComputation         = computationalFaceSolver->GetFaceTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainer               = GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainerForComputation = computationalFaceSolver->GetFaceBoundaryTypeContainer();
     
-    vector<SimpleBC * > & faceBoundaryCondition     = this->GetFaceBoundaryCondition();
-    vector<SimpleBC * > & faceBoundaryConditionForComputation = computationalFaceSolver->GetFaceBoundaryCondition();
+    vector<SimpleBC * > &faceBoundaryCondition = this->GetFaceBoundaryCondition();
+    vector<SimpleBC * > &faceBoundaryConditionForComputation = computationalFaceSolver->GetFaceBoundaryCondition();
     
-    PHVectorInt1D & computationalToGlobalFaceIndexMapping = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
-    PHVectorInt1D & globalToComputationalFaceIndexMapping = this->GetGlobalToComputationalFaceIndexMapping();
+    PHVectorInt1D &computationalToGlobalFaceIndexMapping = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
+    PHVectorInt1D &globalToComputationalFaceIndexMapping = this->GetGlobalToComputationalFaceIndexMapping();
 
     //由于只对体单元进行解析，leftElementIndexForComputation不会含面单元
-    int leftElementIndex  = leftElementIndexContainer [ iFace ];
-    int rightElementIndex = rightElementIndexContainer[ iFace ];
+    int leftElementIndex  = leftElementIndexContainer [iFace];
+    int rightElementIndex = rightElementIndexContainer[iFace];
 
     //首先区分有没有parentFaceIndex，第0层体单元的face和从复合体单元添加的子体单元之间的interface没有parentFaceIndex
     bool isLeftElementNotExist = PHSPACE::IsElementNotExist(leftElementIndex);
@@ -977,19 +975,19 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingNoPa
         if (isRightElementNotExist) 
         {
             //右单元不存在,必然是第0层单元的物理边界或interface，从复合体单元添加的子体单元之间的interface一定存在左右单元
-            if (elementComputationalStatusContainer[ leftElementIndex ] == PHSPACE::HIDDEN )
+            if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN)
             {
                 return;
             }
             else
             {
                 computationalToGlobalFaceIndexMapping.push_back(iFace);
-                globalToComputationalFaceIndexMapping[ iFace ] = iComputationalFaceCount;
+                globalToComputationalFaceIndexMapping[iFace] = iComputationalFaceCount;
 
-                faceBoundaryTypeContainerForComputation.push_back(faceBoundaryTypeContainer[ iFace ]);
+                faceBoundaryTypeContainerForComputation.push_back(faceBoundaryTypeContainer[iFace]);
 
-//              BoundaryCondition * bcTemp = faceBoundaryCondition[iFace];
-//              if(bcTemp == 0)
+//              BoundaryCondition *bcTemp = faceBoundaryCondition[iFace];
+//              if (bcTemp == 0)
 //              {
 //                  TK_Exit::ExceptionExit("bcTemp == 0");
 //              }
@@ -1005,8 +1003,8 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingNoPa
         }
         else //右单元存在
         {
-            if ( elementComputationalStatusContainer[ leftElementIndex  ] == PHSPACE::HIDDEN  || 
-                  elementComputationalStatusContainer[ rightElementIndex ] == PHSPACE::HIDDEN )
+            if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN || 
+                elementComputationalStatusContainer[rightElementIndex] == PHSPACE::HIDDEN)
             {
                 //悬空parentFace或左右单元都不纳入计算
                 //悬空时只对childface做记录
@@ -1015,7 +1013,7 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingNoPa
             else
             {
                 computationalToGlobalFaceIndexMapping.push_back(iFace);
-                globalToComputationalFaceIndexMapping[ iFace ] = iComputationalFaceCount;
+                globalToComputationalFaceIndexMapping[iFace] = iComputationalFaceCount;
 
                 faceTypeContainerForComputation.push_back(PHSPACE::GENERALFACE);
                 ++ iComputationalFaceCount;
@@ -1026,33 +1024,33 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingNoPa
     }
 }
 
-void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWithParentCase(int iFace, int & iComputationalFaceCount, int & iBoundaryFace)
+void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWithParentCase(int iFace, int &iComputationalFaceCount, int &iBoundaryFace)
 {
-    ElementPropertySolver * elementPropertySolver = this->GetElementPropertySolver();
+    ElementPropertySolver *elementPropertySolver = this->GetElementPropertySolver();
 
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
-    PHVectorInt1D & elementComputationalStatusContainer = elementPropertySolver->GetElementComputationalStatusContainer();
-    PHVectorInt1D & leftElementIndexContainer  = this->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = this->GetRightElementIndexContainer();
-    PHVectorInt1D & parentFaceIndexContainer   = this->GetParentFaceIndexContainer();
+    PHVectorInt1D &elementComputationalStatusContainer = elementPropertySolver->GetElementComputationalStatusContainer();
+    PHVectorInt1D &leftElementIndexContainer  = this->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = this->GetRightElementIndexContainer();
+    PHVectorInt1D &parentFaceIndexContainer   = this->GetParentFaceIndexContainer();
 
-    PHVectorInt1D & faceTypeContainerForComputation         = computationalFaceSolver->GetFaceTypeContainer();
-    PHVectorInt1D & faceBoundaryTypeContainer               = this->GetFaceBoundaryTypeContainer();
-    PHVectorInt1D & faceBoundaryTypeContainerForComputation = computationalFaceSolver->GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceTypeContainerForComputation         = computationalFaceSolver->GetFaceTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainer               = this->GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &faceBoundaryTypeContainerForComputation = computationalFaceSolver->GetFaceBoundaryTypeContainer();
     
-    vector<SimpleBC * > & faceBoundaryCondition     = this->GetFaceBoundaryCondition();
-    vector<SimpleBC * > & faceBoundaryConditionForComputation = computationalFaceSolver->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryCondition = this->GetFaceBoundaryCondition();
+    vector<SimpleBC *> &faceBoundaryConditionForComputation = computationalFaceSolver->GetFaceBoundaryCondition();
     
-    PHVectorInt1D & computationalToGlobalFaceIndexMapping = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
-    PHVectorInt1D & globalToComputationalFaceIndexMapping = this->GetGlobalToComputationalFaceIndexMapping();
+    PHVectorInt1D &computationalToGlobalFaceIndexMapping = computationalFaceSolver->GetComputationalToGlobalFaceIndexMapping();
+    PHVectorInt1D &globalToComputationalFaceIndexMapping = this->GetGlobalToComputationalFaceIndexMapping();
 
     //由于只对体单元进行解析，leftElementIndexForComputation不会含面单元
-    int leftElementIndex  = leftElementIndexContainer [ iFace ];
-    int rightElementIndex = rightElementIndexContainer[ iFace ];
+    int leftElementIndex  = leftElementIndexContainer [iFace];
+    int rightElementIndex = rightElementIndexContainer[iFace];
 
     //只作判断，不对leftElementIndexContainer、rightElementIndexContainer修改
-    int parentFaceIndex = parentFaceIndexContainer[ iFace ];
+    int parentFaceIndex = parentFaceIndexContainer[iFace];
 
     bool isLeftElementNotExist = PHSPACE::IsElementNotExist(leftElementIndex);
     if (isLeftElementNotExist)
@@ -1066,14 +1064,14 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
     //左单元存在
     if (isRightElementNotExist)  //右单元不存在
     {
-        int rightElementIndexOfParent = rightElementIndexContainer[ parentFaceIndex ];
+        int rightElementIndexOfParent = rightElementIndexContainer[parentFaceIndex];
 
         bool isBoundaryFaceOfParent = PHSPACE::IsBoundaryFace(rightElementIndexOfParent);
 
         if (isBoundaryFaceOfParent)
         {
             //边界,否则临近单元会相差两级
-            if (elementComputationalStatusContainer[ leftElementIndex ] == PHSPACE::HIDDEN)
+            if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN)
             {
                 //左单元不纳入计算,则此面不计 
                 return;
@@ -1081,15 +1079,15 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
             else
             {
                 computationalToGlobalFaceIndexMapping.push_back(iFace);
-                globalToComputationalFaceIndexMapping[ iFace ] = iComputationalFaceCount ;
+                globalToComputationalFaceIndexMapping[iFace] = iComputationalFaceCount;
 
-                faceBoundaryTypeContainerForComputation.push_back(faceBoundaryTypeContainer[ iFace ]);
-//              BoundaryCondition * bcTemp = faceBoundaryCondition[iFace];
-//              if(bcTemp == 0)
+                faceBoundaryTypeContainerForComputation.push_back(faceBoundaryTypeContainer[iFace]);
+//              BoundaryCondition *bcTemp = faceBoundaryCondition[iFace];
+//              if (bcTemp == 0)
 //              {
 //                  TK_Exit::ExceptionExit("bcTemp == 0");
 //              }
-                faceBoundaryConditionForComputation.push_back(faceBoundaryCondition[ iFace ]);
+                faceBoundaryConditionForComputation.push_back(faceBoundaryCondition[iFace]);
                 faceTypeContainerForComputation.push_back(PHSPACE::BOUNDARYFACE);
 
                 ++ iComputationalFaceCount;
@@ -1103,16 +1101,16 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
             //加密悬空子面
             //对于悬空点右单元在element解析过程中,始终不特殊处理,让统一解析过程自己处理，最后在转换为ComputationalElement时,仅对ComputationalElement的face的右单元进行处理
             //对于悬空点要求其parentFaceIndexContainer必须不是悬空点,否则临近单元会相差两级
-            if (elementComputationalStatusContainer[ leftElementIndex ] == PHSPACE::HIDDEN) //由于被粗化，同时可能被多次连续粗化
+            if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN) //由于被粗化，同时可能被多次连续粗化
             {
                 //左单元不纳入计算,则此面不计 
                 return;
             }
             //悬空子面的单元为左单元,若发生了粗化左单元会变为HIDDEN,悬空子面不能作为计算单元或网格中的面，所以需要对左单元判断 Green 20130703
-            else if (elementComputationalStatusContainer[ leftElementIndex ] == PHSPACE::ON)
+            else if (elementComputationalStatusContainer[leftElementIndex] == PHSPACE::ON)
             {
                 computationalToGlobalFaceIndexMapping.push_back(iFace);
-                globalToComputationalFaceIndexMapping[ iFace ] = iComputationalFaceCount;
+                globalToComputationalFaceIndexMapping[iFace] = iComputationalFaceCount;
 
                 faceTypeContainerForComputation.push_back(PHSPACE::HANGINGFACE);
                 ++ iComputationalFaceCount;
@@ -1124,15 +1122,15 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
     else
     {
         //右单元存在
-        if ( (elementComputationalStatusContainer[ leftElementIndex  ] == PHSPACE::HIDDEN)  && 
-              (elementComputationalStatusContainer[ rightElementIndex ] == PHSPACE::ON    ) )
+        if ((elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN) && 
+            (elementComputationalStatusContainer[rightElementIndex] == PHSPACE::ON))
         {
             //粗化悬空
-            int leftParent  = leftElementIndexContainer [ parentFaceIndex ];
-            int rightParent = rightElementIndexContainer[ parentFaceIndex ];
+            int leftParent  = leftElementIndexContainer [parentFaceIndex];
+            int rightParent = rightElementIndexContainer[parentFaceIndex];
 
-            if (elementComputationalStatusContainer[ leftParent  ] == PHSPACE::HIDDEN  && 
-                 elementComputationalStatusContainer[ rightParent ] == PHSPACE::HIDDEN  )
+            if (elementComputationalStatusContainer[leftParent] == PHSPACE::HIDDEN && 
+                elementComputationalStatusContainer[rightParent] == PHSPACE::HIDDEN)
             {
                 //没有上级时,此面必parentFaceIndexContainer
                 return;
@@ -1141,7 +1139,7 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
             {
                 //有上级时,此面必childFaceIndexContainer
                 computationalToGlobalFaceIndexMapping.push_back(iFace);
-                globalToComputationalFaceIndexMapping[ iFace ] = iComputationalFaceCount ;
+                globalToComputationalFaceIndexMapping[iFace] = iComputationalFaceCount;
 
                 faceTypeContainerForComputation.push_back(PHSPACE::HANGINGFACE);
 
@@ -1149,14 +1147,14 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
                 return;
             }
         }
-        else if ( (elementComputationalStatusContainer[ leftElementIndex  ] == PHSPACE::ON    )  &&  
-                   (elementComputationalStatusContainer[ rightElementIndex ] == PHSPACE::HIDDEN) )
+        else if ((elementComputationalStatusContainer[leftElementIndex] == PHSPACE::ON) && 
+                 (elementComputationalStatusContainer[rightElementIndex] == PHSPACE::HIDDEN))
         {
             //悬空
-            int leftParent  = leftElementIndexContainer[ parentFaceIndex ];
-            int rightParent = rightElementIndexContainer[ parentFaceIndex ];
-            if (elementComputationalStatusContainer[ leftParent  ] == PHSPACE::HIDDEN && 
-                 elementComputationalStatusContainer[ rightParent ] == PHSPACE::HIDDEN)
+            int leftParent  = leftElementIndexContainer[parentFaceIndex];
+            int rightParent = rightElementIndexContainer[parentFaceIndex];
+            if (elementComputationalStatusContainer[leftParent] == PHSPACE::HIDDEN && 
+                elementComputationalStatusContainer[rightParent] == PHSPACE::HIDDEN)
             {
                 //没有上级时,此面必parentFaceIndexContainer
                 return;
@@ -1165,7 +1163,7 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
             {
                 //有上级时,此面必childFaceIndexContainer
                 computationalToGlobalFaceIndexMapping.push_back(iFace);
-                globalToComputationalFaceIndexMapping[ iFace ] = iComputationalFaceCount ;
+                globalToComputationalFaceIndexMapping[iFace] = iComputationalFaceCount;
 
                 faceTypeContainerForComputation.push_back(PHSPACE::HANGINGFACE);
 
@@ -1174,18 +1172,18 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
                 return;
             }
         }
-        else if ( (elementComputationalStatusContainer[ leftElementIndex  ] == PHSPACE::HIDDEN)  && 
-                   (elementComputationalStatusContainer[ rightElementIndex ] == PHSPACE::HIDDEN) )
+        else if ((elementComputationalStatusContainer[leftElementIndex] == PHSPACE::HIDDEN) && 
+                 (elementComputationalStatusContainer[rightElementIndex] == PHSPACE::HIDDEN))
         {
             //面不存在
             return;
         }
-        else if ( (elementComputationalStatusContainer[ leftElementIndex  ] == PHSPACE::ON)  && 
-                   (elementComputationalStatusContainer[ rightElementIndex ] == PHSPACE::ON) )
+        else if ((elementComputationalStatusContainer[leftElementIndex] == PHSPACE::ON) && 
+                 (elementComputationalStatusContainer[rightElementIndex] == PHSPACE::ON))
         {
             //面存在
             computationalToGlobalFaceIndexMapping.push_back(iFace);
-            globalToComputationalFaceIndexMapping[ iFace ] = iComputationalFaceCount;
+            globalToComputationalFaceIndexMapping[iFace] = iComputationalFaceCount;
 
             faceTypeContainerForComputation.push_back(PHSPACE::GENERALFACE);
 
@@ -1196,15 +1194,15 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMappingWith
     }
 }
 
-void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMapping(int iFace, int & iComputationalFaceCount, int & iBoundaryFace)
+void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMapping(int iFace, int &iComputationalFaceCount, int &iBoundaryFace)
 {
-    PHVectorInt1D & parentFaceIndexContainer = GetParentFaceIndexContainer();
+    PHVectorInt1D &parentFaceIndexContainer = GetParentFaceIndexContainer();
 
-    int parentFaceIndex = parentFaceIndexContainer[ iFace ];
+    int parentFaceIndex = parentFaceIndexContainer[iFace];
 
     if (parentFaceIndex == PHSPACE::INVALID_INDEX)
     {
-        GenerateGlobalToComputationalElementFaceIndexMappingNoParentCase  (iFace, iComputationalFaceCount, iBoundaryFace);
+        GenerateGlobalToComputationalElementFaceIndexMappingNoParentCase(iFace, iComputationalFaceCount, iBoundaryFace);
     }
     else
     {
@@ -1216,8 +1214,8 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMapping()
 {
     //cout << " GenerateGlobalToComputationalElementFaceIndexMapping Begin \n";
 
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
-    PHVectorInt1D & globalToComputationalFaceIndexMapping = this->GetGlobalToComputationalFaceIndexMapping();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
+    PHVectorInt1D &globalToComputationalFaceIndexMapping = this->GetGlobalToComputationalFaceIndexMapping();
 
     int numberOfTotalFaces = this->GetNumberOfTotalFaces();
     globalToComputationalFaceIndexMapping.resize(numberOfTotalFaces);
@@ -1231,8 +1229,8 @@ void ElementFaceSolver::GenerateGlobalToComputationalElementFaceIndexMapping()
         GenerateGlobalToComputationalElementFaceIndexMapping(iFace, iComputationalFaceCount, iBoundaryFace);
     }
     
-    computationalFaceSolver->SetNumberOfFaces        (iComputationalFaceCount);
-    computationalFaceSolver->SetNumberOfBoundaryFaces(iBoundaryFace          );
+    computationalFaceSolver->SetNumberOfFaces(iComputationalFaceCount);
+    computationalFaceSolver->SetNumberOfBoundaryFaces(iBoundaryFace);
 
     //cout << " GenerateGlobalToComputationalElementFaceIndexMapping Complete \n";
 }
@@ -1242,25 +1240,25 @@ void ElementFaceSolver::GenerateComputationalFaceNodeIndex()
     //cout << " GenerateComputationalFaceNodeIndex begin \n";
 
     //将体单元中顶点编号转换为ComputationalElement中顶点编号，并与ComputationalElement中face编号对应
-    PHVectorInt1D & computationalToGlobalNodeIndexMapping = pointFactory->GetComputationalToGlobalNodeIndexMapping();  //通过指针修改私有成员!!!
-    PHVectorInt1D & globalToComputationalNodeIndexMapping = pointFactory->GetGlobalToComputationalNodeIndexMapping();
+    PHVectorInt1D &computationalToGlobalNodeIndexMapping = pointFactory->GetComputationalToGlobalNodeIndexMapping();  //通过指针修改私有成员!!!
+    PHVectorInt1D &globalToComputationalNodeIndexMapping = pointFactory->GetGlobalToComputationalNodeIndexMapping();
 
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
-    PHVectorInt2D & intermediateFaceNodeIndexesContainer  = computationalFaceSolver->GetIntermediateFaceNodeIndexesContainer();
-    PHVectorInt2D & computationalFaceNodeIndexesContainer = computationalFaceSolver->GetFaceNodeIndexesContainer();
-    PHVectorInt2D & faceNodeIndexesContainer              = this->GetFaceNodeIndexesContainer();
+    PHVectorInt2D &intermediateFaceNodeIndexesContainer  = computationalFaceSolver->GetIntermediateFaceNodeIndexesContainer();
+    PHVectorInt2D &computationalFaceNodeIndexesContainer = computationalFaceSolver->GetFaceNodeIndexesContainer();
+    PHVectorInt2D &faceNodeIndexesContainer              = this->GetFaceNodeIndexesContainer();
 
     int numberOfFacesForComputation = computationalFaceSolver->GetNumberOfFaces();
 
     set< int > computationalNodeIndexSet;
     for (int iFaceForComputation = 0; iFaceForComputation < numberOfFacesForComputation; ++ iFaceForComputation)
     {
-        PHVectorInt1D faceNodesIndexes = intermediateFaceNodeIndexesContainer[ iFaceForComputation ];  
+        PHVectorInt1D faceNodesIndexes = intermediateFaceNodeIndexesContainer[iFaceForComputation];  
         uint_t faceNodesIndexesSize = faceNodesIndexes.size();
         for (int iNode = 0; iNode < faceNodesIndexesSize; ++ iNode)
         {
-            int globalNodeIndex = faceNodesIndexes[ iNode ];
+            int globalNodeIndex = faceNodesIndexes[iNode];
             //找出需要的顶点集合,并按照大小排序
             computationalNodeIndexSet.insert(globalNodeIndex);
         }
@@ -1271,11 +1269,11 @@ void ElementFaceSolver::GenerateComputationalFaceNodeIndex()
     set< int > globalNodeIndexSet;
     for (int iFace = 0; iFace < numberOfTotalFaces; ++ iFace)
     {
-        PHVectorInt1D faceNodesIndexes = faceNodeIndexesContainer[ iFace ]; //Green20140901
+        PHVectorInt1D faceNodesIndexes = faceNodeIndexesContainer[iFace]; //Green20140901
         uint_t faceNodesIndexesSize = faceNodesIndexes.size();
         for (int iNode = 0; iNode < faceNodesIndexesSize; ++ iNode)
         {
-            int globalNodeIndex = faceNodesIndexes[ iNode ];
+            int globalNodeIndex = faceNodesIndexes[iNode];
             //找出需要的顶点集合,并按照大小排序
             globalNodeIndexSet.insert(globalNodeIndex);
         }
@@ -1285,30 +1283,30 @@ void ElementFaceSolver::GenerateComputationalFaceNodeIndex()
     uint_t numberOfNodes               = globalNodeIndexSet.size();
 
     computationalToGlobalNodeIndexMapping.resize(numberOfNodesForComputation);
-    globalToComputationalNodeIndexMapping.resize(numberOfNodes              );
+    globalToComputationalNodeIndexMapping.resize(numberOfNodes);
     SetField(globalToComputationalNodeIndexMapping, PHSPACE::INVALID_INDEX, static_cast<int>(numberOfNodes));
 
     int iNodeForComputation = 0; //ComputationalElement中顶点编号
     for (set< int >::iterator iter = computationalNodeIndexSet.begin(); iter != computationalNodeIndexSet.end(); ++ iter)
     {
         //重新整合编号
-        int nodeIndex = * iter;  //找出需要的顶点在体单元中的编号
+        int nodeIndex = *iter;  //找出需要的顶点在体单元中的编号
 
-        computationalToGlobalNodeIndexMapping[ iNodeForComputation ] = nodeIndex;
-        globalToComputationalNodeIndexMapping[ nodeIndex           ] = iNodeForComputation;
+        computationalToGlobalNodeIndexMapping[iNodeForComputation] = nodeIndex;
+        globalToComputationalNodeIndexMapping[nodeIndex] = iNodeForComputation;
         ++ iNodeForComputation;
     }
 
     for (int iFaceForComputation = 0; iFaceForComputation < numberOfFacesForComputation; ++ iFaceForComputation)
     {
         //建立ComputationalElement中face编号与ComputationalElement中顶点编号对应关系
-        PHVectorInt1D & faceNodeIndexArray = intermediateFaceNodeIndexesContainer[ iFaceForComputation ];
+        PHVectorInt1D &faceNodeIndexArray = intermediateFaceNodeIndexesContainer[iFaceForComputation];
         PHVectorInt1D faceNodeIndexArrayForComputation;
         uint_t numberOfNodesOfFace = faceNodeIndexArray.size();
         for (int iNode = 0; iNode < numberOfNodesOfFace; ++ iNode)
         {
-            int nodeIndex               = faceNodeIndexArray[ iNode ];
-            int nodeIndexForComputation = globalToComputationalNodeIndexMapping[ nodeIndex ];
+            int nodeIndex               = faceNodeIndexArray[iNode];
+            int nodeIndexForComputation = globalToComputationalNodeIndexMapping[nodeIndex];
             faceNodeIndexArrayForComputation.push_back(nodeIndexForComputation);
         }
         computationalFaceNodeIndexesContainer.push_back(faceNodeIndexArrayForComputation);
@@ -1319,14 +1317,14 @@ void ElementFaceSolver::GenerateComputationalFaceNodeIndex()
 
 void ElementFaceSolver::GenerateEdgesWithMiddlePoints(int iCompositeFace)
 {
-    PHVectorInt1D & compositeFaceTypeContainer          = GetCompositeFaceTypeContainer();
-    PHVectorInt2D & nodeIndexesOfCompositeFaceContainer = GetCompositeFaceNodeIndexesContainer();
+    PHVectorInt1D &compositeFaceTypeContainer = GetCompositeFaceTypeContainer();
+    PHVectorInt2D &nodeIndexesOfCompositeFaceContainer = GetCompositeFaceNodeIndexesContainer();
 
-    PHVectorInt1D & middlePointOfEdgeIndexContainer = GetMiddlePointOfEdgeIndexContainer(); 
+    PHVectorInt1D &middlePointOfEdgeIndexContainer = GetMiddlePointOfEdgeIndexContainer(); 
 
-    int compositeFaceType    = compositeFaceTypeContainer[ iCompositeFace ];
+    int compositeFaceType    = compositeFaceTypeContainer[iCompositeFace];
     int simpleFaceType       = GetSimpleElementType(compositeFaceType);
-    int simpleFaceNodeNumber = GetElementNodeNumbers(simpleFaceType  );
+    int simpleFaceNodeNumber = GetElementNodeNumbers(simpleFaceType);
 
     int edgeNodeNumber = 2;
     
@@ -1338,8 +1336,8 @@ void ElementFaceSolver::GenerateEdgesWithMiddlePoints(int iCompositeFace)
         int iNode1 = (iNode + 1) % simpleFaceNodeNumber;
 
         PHVectorInt1D edgeNodeIndexes;
-        edgeNodeIndexes.push_back(nodeIndexesOfCompositeFaceContainer[ iCompositeFace ][ iNode0 ]); //解析复合面中与简单面对应的棱
-        edgeNodeIndexes.push_back(nodeIndexesOfCompositeFaceContainer[ iCompositeFace ][ iNode1 ]);
+        edgeNodeIndexes.push_back(nodeIndexesOfCompositeFaceContainer[iCompositeFace][iNode0]); //解析复合面中与简单面对应的棱
+        edgeNodeIndexes.push_back(nodeIndexesOfCompositeFaceContainer[iCompositeFace][iNode1]);
 
         PHVectorInt1D sortedEdgeNodeIndexes = edgeNodeIndexes;
         sort(sortedEdgeNodeIndexes.begin(), sortedEdgeNodeIndexes.end());
@@ -1347,22 +1345,22 @@ void ElementFaceSolver::GenerateEdgesWithMiddlePoints(int iCompositeFace)
         int edgeWithMiddlePointIndexCandidate = GetNumberOfTotalEdgesWithMiddlePoints();
 
         MultiIndex edgeOfMultiIndex(edgeNodeNumber, edgeWithMiddlePointIndexCandidate);
-        edgeOfMultiIndex.SetData(& sortedEdgeNodeIndexes[ 0 ]);
+        edgeOfMultiIndex.SetData(&sortedEdgeNodeIndexes[0]);
 
-        int  edgeWithMiddlePointIndex = FindEdgeWithMiddlePoint(edgeOfMultiIndex);
+        int edgeWithMiddlePointIndex = FindEdgeWithMiddlePoint(edgeOfMultiIndex);
         if (edgeWithMiddlePointIndex == PHSPACE::INVALID_INDEX)
         {
             InsertEdgeWithMiddlePoint(edgeOfMultiIndex);
-            middlePointOfEdgeIndexContainer.push_back(nodeIndexesOfCompositeFaceContainer[ iCompositeFace ][ iMiddlePoint ]); //建立与简单面对应的棱的中点集合
+            middlePointOfEdgeIndexContainer.push_back(nodeIndexesOfCompositeFaceContainer[iCompositeFace][iMiddlePoint]); //建立与简单面对应的棱的中点集合
         }
     }
 }
 
-void ElementFaceSolver::DumpAdaptiveFaces(DataContainer * dataContainer)
+void ElementFaceSolver::DumpAdaptiveFaces(DataContainer *dataContainer)
 {
 }
 
-void ElementFaceSolver::WriteCompositeFacesContainer(DataContainer * dataContainer)
+void ElementFaceSolver::WriteCompositeFacesContainer(DataContainer *dataContainer)
 {
     //写复合面总数
     int numberOfTotalCompositeFaces = this->GetNumberOfTotalCompositeFaces();
@@ -1370,13 +1368,13 @@ void ElementFaceSolver::WriteCompositeFacesContainer(DataContainer * dataContain
 
     //写set< MultiIndex > 复合面集合
     int iCount = 0;
-    set < MultiIndex > & compositeFacesContainer = this->GetCompositeFacesContainer();
+    set < MultiIndex > &compositeFacesContainer = this->GetCompositeFacesContainer();
     for (set < MultiIndex >::iterator iter = compositeFacesContainer.begin(); iter != compositeFacesContainer.end(); ++ iter)
     {
-        MultiIndex compositeFaceOfMultiIndex     = * iter;
-        int          numberOfNodesOfCompositeFace  = compositeFaceOfMultiIndex.size;
-        int          compositeFaceID               = compositeFaceOfMultiIndex.id;
-        int         * sortedCompositeFaceNodeIndex = compositeFaceOfMultiIndex.data;
+        MultiIndex compositeFaceOfMultiIndex = *iter;
+        int numberOfNodesOfCompositeFace  = compositeFaceOfMultiIndex.size;
+        int compositeFaceID               = compositeFaceOfMultiIndex.id;
+        int *sortedCompositeFaceNodeIndex = compositeFaceOfMultiIndex.data;
 
         PHWrite(dataContainer, compositeFaceID);
         PHWrite(dataContainer, numberOfNodesOfCompositeFace);
@@ -1391,13 +1389,13 @@ void ElementFaceSolver::WriteCompositeFacesContainer(DataContainer * dataContain
     }
 }
 
-void ElementFaceSolver::WriteCompositeFaceToSimpleFaceContainer(DataContainer * dataContainer)
+void ElementFaceSolver::WriteCompositeFaceToSimpleFaceContainer(DataContainer *dataContainer)
 {
 }
 
-void ElementFaceSolver::GenerateComputationalUnstructuredGrid(UnstructGrid * grid)
+void ElementFaceSolver::GenerateComputationalUnstructuredGrid(UnstructGrid *grid)
 {
-    ComputationalFaceSolver * computationalFaceSolver = this->GetComputationalFaceSolver();
+    ComputationalFaceSolver *computationalFaceSolver = this->GetComputationalFaceSolver();
 
     int numberOfBoundaryFaces = computationalFaceSolver->GetNumberOfBoundaryFaces();
     int numberOfFaces         = computationalFaceSolver->GetNumberOfFaces();
@@ -1405,28 +1403,28 @@ void ElementFaceSolver::GenerateComputationalUnstructuredGrid(UnstructGrid * gri
     grid->SetNBoundFace(numberOfBoundaryFaces);
     grid->SetNTotalFace(numberOfFaces        );
 
-    PHVectorInt1D & faceBoundaryTypeContainer  = computationalFaceSolver->GetFaceBoundaryTypeContainer();
-    PHVectorInt1D & leftElementIndexContainer  = computationalFaceSolver->GetLeftElementIndexContainer ();
-    PHVectorInt1D & rightElementIndexContainer = computationalFaceSolver->GetRightElementIndexContainer();
-    PHVectorInt2D & faceNodeIndexesContainer   = computationalFaceSolver->GetFaceNodeIndexesContainer();
-    vector<SimpleBC * > & faceBoundaryCondition = computationalFaceSolver->GetFaceBoundaryCondition();
+    PHVectorInt1D &faceBoundaryTypeContainer  = computationalFaceSolver->GetFaceBoundaryTypeContainer();
+    PHVectorInt1D &leftElementIndexContainer  = computationalFaceSolver->GetLeftElementIndexContainer();
+    PHVectorInt1D &rightElementIndexContainer = computationalFaceSolver->GetRightElementIndexContainer();
+    PHVectorInt2D &faceNodeIndexesContainer   = computationalFaceSolver->GetFaceNodeIndexesContainer();
+    vector<SimpleBC *> &faceBoundaryCondition = computationalFaceSolver->GetFaceBoundaryCondition();
 
     int parallelAdapt = 1;//PHSPACE::GetParallelAdapt();
     if (parallelAdapt)
     {
         int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-        CompositeUnstructBC ** bcr = new CompositeUnstructBC * [ numberOfBoundaryFaces ];
+        UnstructBCSet **bcr = new UnstructBCSet * [numberOfBoundaryFaces];
         grid->SetBCRecord(bcr);
         
         int iCount = 0;
         for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
         {
-            bcr[ iCount ] = new CompositeUnstructBC();
-            int boundaryConditionType = faceBoundaryTypeContainer[ iFace ];
-            bcr[ iCount ]->SetKey(boundaryConditionType);
-            SimpleBC * bc = faceBoundaryCondition[iFace];
-            if(bc == 0)
+            bcr[iCount] = new UnstructBCSet();
+            int boundaryConditionType = faceBoundaryTypeContainer[iFace];
+            bcr[iCount]->SetKey(boundaryConditionType);
+            SimpleBC *bc = faceBoundaryCondition[iFace];
+            if (bc == 0)
             {
                 TK_Exit::ExceptionExit("boundary Condition == 0 in generate unstruct grid!");
             }
@@ -1434,8 +1432,8 @@ void ElementFaceSolver::GenerateComputationalUnstructuredGrid(UnstructGrid * gri
             {
                 TK_Exit::ExceptionExit("bcName = null in generate unstruct grid!");
             }
-            bcr[ iCount ]->SetBCName(bc->GetBCName());
-            bcr[ iCount ]->SetBoundaryCondition(bc);
+            bcr[iCount]->SetBCName(bc->GetBCName());
+            bcr[iCount]->SetBoundaryCondition(bc);
             ++ iCount;
         }
     }
@@ -1448,20 +1446,20 @@ void ElementFaceSolver::GenerateComputationalUnstructuredGrid(UnstructGrid * gri
     ReorderFaceToCellIndexes(grid, leftElementIndexContainer, rightElementIndexContainer);
 }
 
-void ElementFaceSolver::ReorderFaceToNodeIndexes(UnstructGrid * grid, PHVectorInt1D & leftElementIndexContainerIn, PHVectorInt1D & rightElementIndexContainerIn, PHVectorInt2D & faceNodeIndexesContainerIn)
+void ElementFaceSolver::ReorderFaceToNodeIndexes(UnstructGrid *grid, PHVectorInt1D &leftElementIndexContainerIn, PHVectorInt1D &rightElementIndexContainerIn, PHVectorInt2D &faceNodeIndexesContainerIn)
 {
-    int numberOfFaces         = grid->GetNTotalFace();
+    int numberOfFaces = grid->GetNTotalFace();
 
-    int * faceNodeNumberContainer = new int [ numberOfFaces ];
+    int *faceNodeNumberContainer = new int [numberOfFaces];
     int iCount = 0;
     //先处理边界
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int rightCellIndex = rightElementIndexContainerIn[ iFace ];
+        int rightCellIndex = rightElementIndexContainerIn[iFace];
         if (rightCellIndex == PHSPACE::INVALID_INDEX)
         {
             //边界面
-            faceNodeNumberContainer[ iCount ] = static_cast<int>(faceNodeIndexesContainerIn[ iFace ].size());
+            faceNodeNumberContainer[iCount] = static_cast<int>(faceNodeIndexesContainerIn[iFace].size());
             ++ iCount;
         }
     }
@@ -1469,11 +1467,11 @@ void ElementFaceSolver::ReorderFaceToNodeIndexes(UnstructGrid * grid, PHVectorIn
     //再处理内部面
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int rightCellIndex = rightElementIndexContainerIn[ iFace ];
+        int rightCellIndex = rightElementIndexContainerIn[iFace];
         if (rightCellIndex != PHSPACE::INVALID_INDEX)
         {
             //内部面
-            faceNodeNumberContainer[ iCount ] = static_cast<int>(faceNodeIndexesContainerIn[ iFace ].size());
+            faceNodeNumberContainer[iCount] = static_cast<int>(faceNodeIndexesContainerIn[iFace].size());
             ++ iCount;
         }
     }
@@ -1485,11 +1483,11 @@ void ElementFaceSolver::ReorderFaceToNodeIndexes(UnstructGrid * grid, PHVectorIn
 
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        faceToNodeSize += faceNodeNumberContainer[ iCount ];
+        faceToNodeSize += faceNodeNumberContainer[iCount];
         ++ iCount;
     }
 
-    int * faceNodeIndexContainer  = new int [ faceToNodeSize ];
+    int *faceNodeIndexContainer = new int [faceToNodeSize];
     grid->SetFace2Node(faceNodeIndexContainer);
 
     int iFaceToNodeCount = 0;
@@ -1497,15 +1495,15 @@ void ElementFaceSolver::ReorderFaceToNodeIndexes(UnstructGrid * grid, PHVectorIn
     //先处理边界
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int rightCellIndex = rightElementIndexContainerIn[ iFace ];
+        int rightCellIndex = rightElementIndexContainerIn[iFace];
         if (rightCellIndex == PHSPACE::INVALID_INDEX)
         {
-            PHVectorInt1D & faceNodeIndexes = faceNodeIndexesContainerIn[ iFace ];
+            PHVectorInt1D &faceNodeIndexes = faceNodeIndexesContainerIn[iFace];
             //边界面
             uint_t nodeNumber = faceNodeIndexes.size();
             for (int iNode = 0; iNode < nodeNumber; ++ iNode)
             {
-                faceNodeIndexContainer[ iFaceToNodeCount ] = faceNodeIndexes[ iNode ];
+                faceNodeIndexContainer[iFaceToNodeCount] = faceNodeIndexes[iNode];
                 ++ iFaceToNodeCount;
             }
         }
@@ -1514,45 +1512,43 @@ void ElementFaceSolver::ReorderFaceToNodeIndexes(UnstructGrid * grid, PHVectorIn
     //再处理内部面
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int rightCellIndex = rightElementIndexContainerIn[ iFace ];
+        int rightCellIndex = rightElementIndexContainerIn[iFace];
         if (rightCellIndex != PHSPACE::INVALID_INDEX)
         {
-            PHVectorInt1D & faceNodeIndexes = faceNodeIndexesContainerIn[ iFace ];
+            PHVectorInt1D &faceNodeIndexes = faceNodeIndexesContainerIn[iFace];
             //内部面
             uint_t nodeNumber = faceNodeIndexes.size();
             for (int iNode = 0; iNode < nodeNumber; ++ iNode)
             {
-                faceNodeIndexContainer[ iFaceToNodeCount ] = faceNodeIndexes[ iNode ];
+                faceNodeIndexContainer[iFaceToNodeCount] = faceNodeIndexes[iNode];
                 ++ iFaceToNodeCount;
             }
         }
     }
 }
 
-
-void ElementFaceSolver::ReorderFaceToCellIndexes(UnstructGrid * grid, PHVectorInt1D & leftElementIndexContainerIn, PHVectorInt1D & rightElementIndexContainerIn)
+void ElementFaceSolver::ReorderFaceToCellIndexes(UnstructGrid *grid, PHVectorInt1D &leftElementIndexContainerIn, PHVectorInt1D &rightElementIndexContainerIn)
 {
     int numberOfFaces         = grid->GetNTotalFace();
     int numberOfBoundaryFaces = grid->GetNBoundFace();
 
-    int * leftCellIndexContainer  = new int [ numberOfFaces ]; //悬空点,只计小面
-    int * rightCellIndexContainer = new int [ numberOfFaces ];
+    int *leftCellIndexContainer  = new int [numberOfFaces]; //悬空点,只计小面
+    int *rightCellIndexContainer = new int [numberOfFaces];
 
-    grid->SetLeftCellOfFace(leftCellIndexContainer );
+    grid->SetLeftCellOfFace(leftCellIndexContainer);
     grid->SetRightCellOfFace(rightCellIndexContainer);
 
     int iFaceCount = 0;
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int rightElementIndex = rightElementIndexContainerIn[ iFace ];
+        int rightElementIndex = rightElementIndexContainerIn[iFace];
         if (rightElementIndex == PHSPACE::INVALID_INDEX)
         {
-            leftCellIndexContainer [ iFaceCount ] = leftElementIndexContainerIn [ iFace ];
-            rightCellIndexContainer[ iFaceCount ] = rightElementIndexContainerIn[ iFace ];
+            leftCellIndexContainer [iFaceCount] = leftElementIndexContainerIn [iFace];
+            rightCellIndexContainer[iFaceCount] = rightElementIndexContainerIn[iFace];
             ++ iFaceCount;
         }
     }
-
 
     if (iFaceCount != numberOfBoundaryFaces)
     {
@@ -1561,16 +1557,15 @@ void ElementFaceSolver::ReorderFaceToCellIndexes(UnstructGrid * grid, PHVectorIn
 
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
-        int rightElementIndex = rightElementIndexContainerIn[ iFace ];
+        int rightElementIndex = rightElementIndexContainerIn[iFace];
         if (rightElementIndex != PHSPACE::INVALID_INDEX)
         {
-            leftCellIndexContainer [ iFaceCount ] = leftElementIndexContainerIn [ iFace ];
-            rightCellIndexContainer[ iFaceCount ] = rightElementIndexContainerIn[ iFace ];
+            leftCellIndexContainer [iFaceCount] = leftElementIndexContainerIn [iFace];
+            rightCellIndexContainer[iFaceCount] = rightElementIndexContainerIn[iFace];
             ++ iFaceCount;
         }
     }
 }
-
 
 ElementPropertySolver::ElementPropertySolver()
 {
@@ -1617,9 +1612,9 @@ void ElementPropertySolver::DumpElementToNode(VirtualFile *virtualFile)
     PHVectorInt1D &computationalToGlobalElementIndexMapping = elementPropertySolver->GetComputationalToGlobalElementIndexMapping();
     PHVectorInt1D &elementComputationalStatusContainer      = elementPropertySolver->GetElementComputationalStatusContainer();
     
-    int numberOfTotalElements         = elementPropertySolver->GetNumberOfTotalElements();
+    int numberOfTotalElements = elementPropertySolver->GetNumberOfTotalElements();
     int numberOfComputationalElements = numberOfTotalElements;
-    uint_t isComputationalElementsExist  = computationalToGlobalElementIndexMapping.size();
+    uint_t isComputationalElementsExist = computationalToGlobalElementIndexMapping.size();
     if (isComputationalElementsExist != 0)
     {
         // Adaptive grid.
@@ -1652,14 +1647,14 @@ void ElementPropertySolver::DumpElementToNode(VirtualFile *virtualFile)
 
 void ElementPropertySolver::SetElementType(int elementIndex, int elementType)
 {
-    PHVectorInt1D & elementTypeContainer = * this->elementTypeContainer;
-    elementTypeContainer[ elementIndex ] = elementType;
+    PHVectorInt1D &elementTypeContainer = * this->elementTypeContainer;
+    elementTypeContainer[elementIndex] = elementType;
 }
 
 int ElementPropertySolver::GetElementType(int elementIndex) const
 {
-    PHVectorInt1D & elementType = * this->elementTypeContainer;
-    return elementType[ elementIndex ];
+    PHVectorInt1D &elementType = * this->elementTypeContainer;
+    return elementType[elementIndex];
 }
 
 int ElementPropertySolver::GetNumberOfTotalElements() const
@@ -1667,9 +1662,9 @@ int ElementPropertySolver::GetNumberOfTotalElements() const
     return static_cast<int>(elementTypeContainer->size());
 }
 
-void ElementPropertySolver::SetSigleElementNodeIndexContainer(int elementIndex, PHVectorInt1D & elementNodeIndexes)
+void ElementPropertySolver::SetSigleElementNodeIndexContainer(int elementIndex, PHVectorInt1D &elementNodeIndexes)
 {
-    elementNodeIndexContainer[ elementIndex ] = elementNodeIndexes;
+    elementNodeIndexContainer[elementIndex] = elementNodeIndexes;
 }
 
 void ElementPropertySolver::SetAllElementsModifiedStatusToNoChange()
@@ -1678,7 +1673,7 @@ void ElementPropertySolver::SetAllElementsModifiedStatusToNoChange()
     //int numberOfTotalElements = this->GetNumberOfTotalElements();//注意区分解析单元与CGNS单元
     int numberOfTotalElements = this->GetNumberOfTotalElements() + this->GetNumberOfBoundaryFaces();
 
-    PHVectorInt1D & elementModifiedStatusContainer = GetElementModifiedStatusContainer();
+    PHVectorInt1D &elementModifiedStatusContainer = GetElementModifiedStatusContainer();
     elementModifiedStatusContainer.resize(numberOfTotalElements);
 
     SetField(elementModifiedStatusContainer, PHSPACE::NOCHANGE, numberOfTotalElements);
@@ -1689,7 +1684,7 @@ void ElementPropertySolver::SetAllElementsComputationalStatusToOnState()
     //当前单元数量,在加密或稀疏化的时候，网格单元数量可能会变化
     int numberOfTotalElements = this->GetNumberOfTotalElements();
 
-    PHVectorInt1D & elementComputationalStatusContainer = GetElementComputationalStatusContainer();
+    PHVectorInt1D &elementComputationalStatusContainer = GetElementComputationalStatusContainer();
     elementComputationalStatusContainer.resize(numberOfTotalElements);
 
     SetField(elementComputationalStatusContainer, PHSPACE::ON, numberOfTotalElements);
@@ -1701,7 +1696,7 @@ void ElementPropertySolver::SetAllElementsComputationalStatusToHiddenState()
     //int numberOfTotalElements = this->GetNumberOfTotalElements();
     int numberOfTotalElements = this->GetNumberOfTotalElements() + this->GetNumberOfBoundaryFaces();
 
-    PHVectorInt1D & elementComputationalStatusContainer = GetElementComputationalStatusContainer();
+    PHVectorInt1D &elementComputationalStatusContainer = GetElementComputationalStatusContainer();
     elementComputationalStatusContainer.resize(numberOfTotalElements);
 
     SetField(elementComputationalStatusContainer, PHSPACE::HIDDEN, numberOfTotalElements);
@@ -1711,7 +1706,7 @@ void ElementPropertySolver::SetAllElementsParentIndexToRootState()
 {
     //当前单元数量,在加密或稀疏化的时候，网格单元数量可能会变化
     int numberOfTotalElements = this->GetNumberOfTotalElements();
-    PHVectorInt1D & parentElementIndexContainer = GetParentElementIndexContainer();
+    PHVectorInt1D &parentElementIndexContainer = GetParentElementIndexContainer();
     parentElementIndexContainer.resize(numberOfTotalElements);
 
     SetField(parentElementIndexContainer, PHSPACE::INVALID_INDEX, numberOfTotalElements); //最外层
@@ -1722,13 +1717,13 @@ void ElementPropertySolver::SetAllElementsLevelToZero()
     //当前单元数量,在加密或稀疏化的时候，网格单元数量可能会变化
     int numberOfTotalElements = this->GetNumberOfTotalElements();
 
-    PHVectorInt1D & elementLevelContainer = GetElementLevelContainer();
+    PHVectorInt1D &elementLevelContainer = GetElementLevelContainer();
     elementLevelContainer.resize(numberOfTotalElements);
 
-    SetField(elementLevelContainer,  0, numberOfTotalElements); //最外层
+    SetField(elementLevelContainer, 0, numberOfTotalElements); //最外层
 }
 
-void ElementPropertySolver::SplitAllElements(Geo_PointFactory * pointFactory)
+void ElementPropertySolver::SplitAllElements(Geo_PointFactory *pointFactory)
 {
     //当前单元数量,在加密或稀疏化的时候，网格单元数量可能会变化
     int numberOfTotalElements = this->GetNumberOfTotalElements();
@@ -1739,7 +1734,7 @@ void ElementPropertySolver::SplitAllElements(Geo_PointFactory * pointFactory)
     }
 }
 
-void ElementPropertySolver::SplitElement(int elementIndex, Geo_PointFactory * pointFactory)
+void ElementPropertySolver::SplitElement(int elementIndex, Geo_PointFactory *pointFactory)
 {
     //实际上既然加密computationalElement的策略就是所有棱中点处和面心中点处都要加点
     //那么不如索性一次加入所有点，如果有变化，可以形成一定的策略
@@ -1757,27 +1752,27 @@ void ElementPropertySolver::SplitElement(int elementIndex, Geo_PointFactory * po
     //element refine
     //tri_3 -> tri_6
     int typeOfCompositeElement          = GetRefineElemType(elementType, (*refineType)[elementIndex]);
-    int numberOfNodesOfElement          = GetElementNodeNumbers(elementType         );
+    int numberOfNodesOfElement          = GetElementNodeNumbers(elementType);
     int numberOfNodesOfCompositeElement = GetElementNodeNumbers(typeOfCompositeElement);
 
     //将此单元的类型改为复合单元的类型
     SetElementType(elementIndex, typeOfCompositeElement);
     //将此单元的节点数增加到符合单元的节点数
-    elementNodeIndexContainer[ elementIndex ].resize(numberOfNodesOfCompositeElement);
+    elementNodeIndexContainer[elementIndex].resize(numberOfNodesOfCompositeElement);
 
     for (int iNode = numberOfNodesOfElement; iNode < numberOfNodesOfCompositeElement; ++ iNode)
     {
         //在顶点之后加入中点,注意点排列
         //找出所有相关点，如果为棱中点，则相关点为棱端点
         //如果为面，则相关点为四个角点甚至更多
-        vector< int > & relatedPointListForMiddlePointComputation = GetRelatedPointListForMiddlePointComputation(typeOfCompositeElement, iNode); //提取其中一个中点的顶点序列
+        vector< int > &relatedPointListForMiddlePointComputation = GetRelatedPointListForMiddlePointComputation(typeOfCompositeElement, iNode); //提取其中一个中点的顶点序列
 
-        Geo_PointFactory::point_type * centerPoint = pointFactory->GetCenterPoint(elementNodeIndexContainer[ elementIndex ], relatedPointListForMiddlePointComputation);
+        Geo_PointFactory::point_type *centerPoint = pointFactory->GetCenterPoint(elementNodeIndexContainer[elementIndex], relatedPointListForMiddlePointComputation);
         //如果中心点已经存在，即无论是棱中点还是面心，都只需找出此点在整体点列里面的序号
         //如果中心点不存在，依然要将此新点加入，并返回序号index
         bool isNodeExist;
         int index = pointFactory->AddPoint(centerPoint, isNodeExist);
-        elementNodeIndexContainer[ elementIndex ][ iNode ] = index; //向复合单元加入中点编号
+        elementNodeIndexContainer[elementIndex][iNode] = index; //向复合单元加入中点编号
         //pointFactory->CheckBoundaryPoint(elementNodeIndexContainer[ elementIndex ], relatedPointListForMiddlePointComputation, index);
     }
 
@@ -1785,18 +1780,18 @@ void ElementPropertySolver::SplitElement(int elementIndex, Geo_PointFactory * po
     SplitElementFace(elementIndex);
 }
 
-void ElementPropertySolver::AddChildElement(int parentElementIndex, Geo_PointFactory * pointFactory)
+void ElementPropertySolver::AddChildElement(int parentElementIndex, Geo_PointFactory *pointFactory)
 {
-    int parentElementType    = GetElementType   (parentElementIndex); //此处上级单元已改为复合类型
+    int parentElementType    = GetElementType (parentElementIndex); //此处上级单元已改为复合类型
     int levelOfParentElement = GetElementLevel(parentElementIndex); //上级单元级别
 
-    BasicElement * basicElement = GetBasicElement(parentElementType);
+    BasicElement *basicElement = GetBasicElement(parentElementType);
 
-    PHVectorInt1D & parentElementNodeIndex = GetElementNodeIndexes(parentElementIndex);
+    PHVectorInt1D &parentElementNodeIndex = GetElementNodeIndexes(parentElementIndex);
 
     // Judge the dividing method.
     bool usingDividingCase2 = false;
-    if(parentElementType == TETRA_10)
+    if (parentElementType == TETRA_10)
     {
         int node7  = parentElementNodeIndex[7-1];
         int node9  = parentElementNodeIndex[9-1];
@@ -1814,7 +1809,7 @@ void ElementPropertySolver::AddChildElement(int parentElementIndex, Geo_PointFac
         dz = pointFactory->GetPoint(node5).Z() - pointFactory->GetPoint(node10).Z();
         RDouble dist2 = dx * dx + dy * dy + dz * dz;
 
-        if(dist1 > dist2)
+        if (dist1 > dist2)
         {
             usingDividingCase2 = true;
         }
@@ -1829,13 +1824,13 @@ void ElementPropertySolver::AddChildElement(int parentElementIndex, Geo_PointFac
         //子单元的类型
         int childElementType = basicElement->GetChildElementType(iChildElement);
 
-        PHVectorInt1D & parentElementNodeIndex = GetElementNodeIndexes(parentElementIndex);
+        PHVectorInt1D &parentElementNodeIndex = GetElementNodeIndexes(parentElementIndex);
 
         //子单元相对于当前单元的下标 
         //按照子单元当地编号顺序存储对应的复合单元编号！！！
         //子单元编号与复合单元编号的对应关系！！！
         vector< int > childElementRelativeNodeIndex = basicElement->GetChildElementRelativeNodeIndex(iChildElement);
-        if(usingDividingCase2)
+        if (usingDividingCase2)
         {
             childElementRelativeNodeIndex = basicElement->GetChildElementRelativeNodeIndexCase2(iChildElement);
         }
@@ -1849,7 +1844,7 @@ void ElementPropertySolver::AddChildElement(int parentElementIndex, Geo_PointFac
         {
             //顶点子单元编号(iNode)->复合单元中的编号(relativeNodeIndexOfChildElement[ iNode ])->全局编号
             //即childElementNodeIndex建立了子单元（Element）编号(iNode)->全局编号，从而确定了顶点
-            childElementNodeIndex[ iNode ] = parentElementNodeIndex[ childElementRelativeNodeIndex[ iNode ] ];
+            childElementNodeIndex[iNode] = parentElementNodeIndex[childElementRelativeNodeIndex[iNode]];
         }                                                           
 
         //这里有一个很严重的问题，resize后可能会导致引用失效，切记切记!
@@ -1859,11 +1854,11 @@ void ElementPropertySolver::AddChildElement(int parentElementIndex, Geo_PointFac
 
 void ElementPropertySolver::ReactivateChildElement(int elementIndex)
 {
-    PHVectorInt1D & childrenElementsIndexes = GetChildrenElementsIndexes(elementIndex);
+    PHVectorInt1D &childrenElementsIndexes = GetChildrenElementsIndexes(elementIndex);
     uint_t childrenElementsIndexesSize = childrenElementsIndexes.size();
     for (int iChildElement = 0; iChildElement < childrenElementsIndexesSize; ++ iChildElement)
     {
-        int childElementIndex = childrenElementsIndexes[ iChildElement ];
+        int childElementIndex = childrenElementsIndexes[iChildElement];
 
         int childElementModifiedStatus = this->GetElementModifiedStatus(childElementIndex);
         if (childElementModifiedStatus != PHSPACE::NOCHANGE)
@@ -1875,25 +1870,25 @@ void ElementPropertySolver::ReactivateChildElement(int elementIndex)
     }
 }
 
-void ElementPropertySolver::AddElement(PHVectorInt1D & elementNodeIndexes, int elementType, int levelOfElement, int parentElementIndex)
+void ElementPropertySolver::AddElement(PHVectorInt1D &elementNodeIndexes, int elementType, int levelOfElement, int parentElementIndex)
 {
     int elementIndex = GetNumberOfTotalElements();
     ResizeElementNumber(elementIndex + 1);
 
     SetSigleElementNodeIndexContainer(elementIndex, elementNodeIndexes);
-    SetElementType                   (elementIndex, elementType     );
+    SetElementType                   (elementIndex, elementType);
     SetParentElementIndex            (elementIndex, parentElementIndex);
-    SetElementLevel                  (elementIndex, levelOfElement    ); 
+    SetElementLevel                  (elementIndex, levelOfElement);
 
     //Green对于新分裂添加单元暂时没有机会再分裂，需待下次自适应
     SetElementModifiedStatus(elementIndex, PHSPACE::NOCHANGE);
     //新分裂添加单元必须纳入下一次流场计算
     SetComputationalStatusOfElement(elementIndex, PHSPACE::ON);
 
-    PHVectorInt1D & childrenElementsIndexes = GetChildrenElementsIndexes(parentElementIndex);
+    PHVectorInt1D &childrenElementsIndexes = GetChildrenElementsIndexes(parentElementIndex);
     childrenElementsIndexes.push_back(elementIndex);
 
-    oldGlobalToComputationalElementIndexMapping[ elementIndex ] = PHSPACE::INVALID_INDEX;
+    oldGlobalToComputationalElementIndexMapping[elementIndex] = PHSPACE::INVALID_INDEX;
 }
 
 void ElementPropertySolver::ResizeElementNumber(int numberOfTotalElements)
@@ -1921,10 +1916,10 @@ void ElementPropertySolver::InitializeElementIndexAndState()
 void ElementPropertySolver::InitializeOldElementIndexMapping()
 {
     //初始计算ComputationalElement与Element等价
-    int numberOfTotalElements =  this->GetNumberOfTotalElements(); 
+    int numberOfTotalElements = this->GetNumberOfTotalElements(); 
 
-    PHVectorInt1D & oldComputationalToGlobalElementIndexMapping = this->GetOldComputationalToGlobalElementIndexMapping();
-    PHVectorInt1D & oldGlobalToComputationalElementIndexMapping = this->GetOldGlobalToComputationalElementIndexMapping();
+    PHVectorInt1D &oldComputationalToGlobalElementIndexMapping = this->GetOldComputationalToGlobalElementIndexMapping();
+    PHVectorInt1D &oldGlobalToComputationalElementIndexMapping = this->GetOldGlobalToComputationalElementIndexMapping();
 
     oldGlobalToComputationalElementIndexMapping.resize(numberOfTotalElements);
     oldComputationalToGlobalElementIndexMapping.resize(numberOfTotalElements);
@@ -1932,21 +1927,21 @@ void ElementPropertySolver::InitializeOldElementIndexMapping()
     for (int elementIndex = 0; elementIndex < numberOfTotalElements; ++ elementIndex)
     {
         int computationalElementIndex = elementIndex;
-        oldGlobalToComputationalElementIndexMapping[ elementIndex              ] = computationalElementIndex;
-        oldComputationalToGlobalElementIndexMapping[ computationalElementIndex ] = elementIndex;
+        oldGlobalToComputationalElementIndexMapping[elementIndex             ] = computationalElementIndex;
+        oldComputationalToGlobalElementIndexMapping[computationalElementIndex] = elementIndex;
     }
 }
 
 bool ElementPropertySolver::ElementNeedSplit(int elementIndex)
 {
-    PHVectorInt1D & elementModifiedStatusContainer = GetElementModifiedStatusContainer();
-    return elementModifiedStatusContainer[ elementIndex ] == PHSPACE::SPLIT;
+    PHVectorInt1D &elementModifiedStatusContainer = GetElementModifiedStatusContainer();
+    return elementModifiedStatusContainer[elementIndex] == PHSPACE::SPLIT;
 }
 
 bool ElementPropertySolver::ElementNeedMerge(int elementIndex)
 {
-    PHVectorInt1D & elementModifiedStatusContainer = GetElementModifiedStatusContainer();
-    return elementModifiedStatusContainer[ elementIndex ] == PHSPACE::MERGE_ELEMENT;
+    PHVectorInt1D &elementModifiedStatusContainer = GetElementModifiedStatusContainer();
+    return elementModifiedStatusContainer[elementIndex] == PHSPACE::MERGE_ELEMENT;
 }
 
 void ElementPropertySolver::MergeElements()
@@ -1973,11 +1968,11 @@ void ElementPropertySolver::MergeElements()
             TK_Exit::PrintDebugInfoExit("MergeElement error0 \n");
         }
 
-        PHVectorInt1D & childrenElementsIndexes = GetChildrenElementsIndexes(parentElementIndex);
+        PHVectorInt1D &childrenElementsIndexes = GetChildrenElementsIndexes(parentElementIndex);
         uint_t childrenElementsIndexesSize = childrenElementsIndexes.size();
         for (int iChildElement = 0; iChildElement < childrenElementsIndexesSize; ++ iChildElement)
         {
-            int childElementIndex = childrenElementsIndexes[ iChildElement ];
+            int childElementIndex = childrenElementsIndexes[iChildElement];
 
             int childElementaptionProperty = this->GetElementModifiedStatus(childElementIndex);
             if (childElementaptionProperty != PHSPACE::MERGE_ELEMENT)
@@ -1990,61 +1985,61 @@ void ElementPropertySolver::MergeElements()
 
 PHVectorInt1D & ElementPropertySolver::GetChildrenElementsIndexes(int elementIndex)
 {
-    PHVectorInt2D & childrenElementsIndexesContainer = this->GetChildrenElementsIndexesContainer();
-    return childrenElementsIndexesContainer[ elementIndex ];
+    PHVectorInt2D &childrenElementsIndexesContainer = this->GetChildrenElementsIndexesContainer();
+    return childrenElementsIndexesContainer[elementIndex];
 }
 
 void ElementPropertySolver::SetParentElementIndex(int elementIndex, int parentElementIndex)
 {
-    PHVectorInt1D & parentElementIndexContainer = GetParentElementIndexContainer(); 
-    parentElementIndexContainer[ elementIndex ] = parentElementIndex;
+    PHVectorInt1D &parentElementIndexContainer = GetParentElementIndexContainer(); 
+    parentElementIndexContainer[elementIndex] = parentElementIndex;
 }
 
-int  ElementPropertySolver::GetParentElementIndex(int elementIndex)
+int ElementPropertySolver::GetParentElementIndex(int elementIndex)
 {
-    PHVectorInt1D & parentElementIndexContainer = GetParentElementIndexContainer();
-    return parentElementIndexContainer[ elementIndex ];
+    PHVectorInt1D &parentElementIndexContainer = GetParentElementIndexContainer();
+    return parentElementIndexContainer[elementIndex];
 }
 
 void ElementPropertySolver::SetElementLevel(int elementIndex, int iLevel)
 {
-    PHVectorInt1D & elementLevelContainer = GetElementLevelContainer();
-    elementLevelContainer[ elementIndex ] = iLevel;
+    PHVectorInt1D &elementLevelContainer = GetElementLevelContainer();
+    elementLevelContainer[elementIndex] = iLevel;
 }
 
 int ElementPropertySolver::GetElementLevel(int elementIndex)
 {
-    PHVectorInt1D & elementLevelContainer = GetElementLevelContainer();
-    return elementLevelContainer[ elementIndex ];
+    PHVectorInt1D &elementLevelContainer = GetElementLevelContainer();
+    return elementLevelContainer[elementIndex];
 }
 
 void ElementPropertySolver::SetElementModifiedStatus(int elementIndex, int elementModifiedStatus)
 {
-    PHVectorInt1D & elementModifiedStatusContainer = GetElementModifiedStatusContainer();
-    elementModifiedStatusContainer[ elementIndex ]    = elementModifiedStatus;
+    PHVectorInt1D &elementModifiedStatusContainer = GetElementModifiedStatusContainer();
+    elementModifiedStatusContainer[elementIndex] = elementModifiedStatus;
 }
 
 int ElementPropertySolver::GetElementModifiedStatus(int elementIndex)
 {
-    PHVectorInt1D & elementModifiedStatusContainer = GetElementModifiedStatusContainer();
-    return elementModifiedStatusContainer[ elementIndex ];
+    PHVectorInt1D &elementModifiedStatusContainer = GetElementModifiedStatusContainer();
+    return elementModifiedStatusContainer[elementIndex];
 }
 
 void ElementPropertySolver::SetComputationalStatusOfElement(int elementIndex, int computationalStatusOfElement)
 {
-    PHVectorInt1D & elementComputationalStatusContainer = GetElementComputationalStatusContainer();
-    elementComputationalStatusContainer[ elementIndex ] = computationalStatusOfElement;
+    PHVectorInt1D &elementComputationalStatusContainer = GetElementComputationalStatusContainer();
+    elementComputationalStatusContainer[elementIndex] = computationalStatusOfElement;
 }
 
 int ElementPropertySolver::GetComputationalStatusOfElement(int elementIndex)
 {
-    PHVectorInt1D & elementComputationalStatusContainer = GetElementComputationalStatusContainer();
-    return elementComputationalStatusContainer[ elementIndex ];
+    PHVectorInt1D &elementComputationalStatusContainer = GetElementComputationalStatusContainer();
+    return elementComputationalStatusContainer[elementIndex];
 }
 
 void ElementPropertySolver::ScanAllElementsToReconstructFaceDataStructure(const bool hasBeenAdapted) //Green
 {
-    ElementFaceSolver * elementFaceSolver = this->GetElementFaceSolver();
+    ElementFaceSolver *elementFaceSolver = this->GetElementFaceSolver();
 
     //当前单元数量,在加密或稀疏化的时候，网格单元数量可能会变化
     int numberOfTotalElements = this->GetNumberOfTotalElements();
@@ -2069,7 +2064,7 @@ void ElementPropertySolver::ScanAllElementsToReconstructFaceDataStructure(const 
 
         //cout << "ScanAllElementsToReconstructFaceDataStructure elementIndex = " << elementIndex << " numberOfTotalElements = " << numberOfTotalElements << "\n";
 
-        elementFaceSolver->ScanNewElementFace(elementNodeIndexContainer[ elementIndex ], elementType, elementIndex);
+        elementFaceSolver->ScanNewElementFace(elementNodeIndexContainer[elementIndex], elementType, elementIndex);
     }
 
     PrintToWindow("  Total Element Number = ", numberOfTotalElements, "\n");
@@ -2078,16 +2073,16 @@ void ElementPropertySolver::ScanAllElementsToReconstructFaceDataStructure(const 
 
 void ElementPropertySolver::HideElement(int elementIndex)
 {
-    PHVectorInt1D & elementModifiedStatusContainer = * this->elementModifiedStatusContainer;
-    elementModifiedStatusContainer[ elementIndex ] = PHSPACE::HIDDEN;
+    PHVectorInt1D &elementModifiedStatusContainer = * this->elementModifiedStatusContainer;
+    elementModifiedStatusContainer[elementIndex] = PHSPACE::HIDDEN;
 }
 
 void ElementPropertySolver::SplitElementFace(int elementIndex)
 {
-    int elementType  = GetElementType(elementIndex);
+    int elementType = GetElementType(elementIndex);
 
     //获取当前单元类型
-    BasicElement * basicElement = GetBasicElement(elementType); //指复合体
+    BasicElement *basicElement = GetBasicElement(elementType); //指复合体
 
     //获取本单元物理面的个数
     //复合面个数，当前单元必须为复合体!!!
@@ -2098,17 +2093,17 @@ void ElementPropertySolver::SplitElementFace(int elementIndex)
     {
         int compositeFaceType = basicElement->GetElementPhysicsFaceType(iCompositeFace);
         //复合面节点在复合体编号
-        vector< int > & relativeFaceNodeIndexes  = basicElement->GetElementPhysicsFace(iCompositeFace);
-        PHVectorInt1D & parentElementNodeIndexes = GetElementNodeIndexes(elementIndex);
+        vector< int > &relativeFaceNodeIndexes  = basicElement->GetElementPhysicsFace(iCompositeFace);
+        PHVectorInt1D &parentElementNodeIndexes = GetElementNodeIndexes(elementIndex);
 
         PHVectorInt1D nodeIndexesOfCompositeFace;
-        nodeIndexesOfCompositeFace.resize( relativeFaceNodeIndexes.size());
+        nodeIndexesOfCompositeFace.resize(relativeFaceNodeIndexes.size());
         uint_t relativeFaceNodeIndexesSize = relativeFaceNodeIndexes.size();
         for (int iNode = 0; iNode < relativeFaceNodeIndexesSize; ++ iNode)
         {
             //复合面节点块（全局）编号
             //复合面编号-〉复合体编号-〉全局编号  即faceNodeIndexes建立了复合面编号-〉全局编号
-            nodeIndexesOfCompositeFace[ iNode ] = parentElementNodeIndexes[ relativeFaceNodeIndexes[ iNode ] ];
+            nodeIndexesOfCompositeFace[iNode] = parentElementNodeIndexes[relativeFaceNodeIndexes[iNode]];
         } 
 
         //对单个物理面进行子面的分裂,此处必须进行复合面解析，后面ResolveElementFace函数无法给出child关系
@@ -2116,12 +2111,12 @@ void ElementPropertySolver::SplitElementFace(int elementIndex)
     }
 }
 
-void ElementPropertySolver::SplitCompositeFace(PHVectorInt1D & nodeIndexesOfCompositeFace, int compositeFaceType)
+void ElementPropertySolver::SplitCompositeFace(PHVectorInt1D &nodeIndexesOfCompositeFace, int compositeFaceType)
 {
-    ElementFaceSolver * elementFaceSolver = this->GetElementFaceSolver();
+    ElementFaceSolver *elementFaceSolver = this->GetElementFaceSolver();
 
     //此处basicElement是面，不是体，
-    BasicElement * basicElement = GetBasicElement(compositeFaceType);   
+    BasicElement *basicElement = GetBasicElement(compositeFaceType);   
 
     //子单元数目，在这里实际上代表着子面的数目，因为基本单元实际上是面
     //复合面对应子面个数!!!
@@ -2136,11 +2131,11 @@ void ElementPropertySolver::SplitCompositeFace(PHVectorInt1D & nodeIndexesOfComp
     simpleFaceNodeIndexes.resize(simpleFaceNodeNumber);
     for (int iNode = 0; iNode < simpleFaceNodeNumber; ++ iNode)
     {
-        simpleFaceNodeIndexes[ iNode ] = nodeIndexesOfCompositeFace[ iNode ];
+        simpleFaceNodeIndexes[iNode] = nodeIndexesOfCompositeFace[iNode];
     }
 
     //此处建立复合面与其点全局编号对应关系集合，只要分裂产生了新复合面，则全部记录，且与原简单面一一对应
-    PHVectorInt2D & nodeIndexesOfCompositeFaceContainer = elementFaceSolver->GetCompositeFaceNodeIndexesContainer();
+    PHVectorInt2D &nodeIndexesOfCompositeFaceContainer = elementFaceSolver->GetCompositeFaceNodeIndexesContainer();
 
     PHVectorInt1D sortedCompositeFaceNodeIndex = nodeIndexesOfCompositeFace;
     sort(sortedCompositeFaceNodeIndex.begin(), sortedCompositeFaceNodeIndex.end());
@@ -2151,15 +2146,15 @@ void ElementPropertySolver::SplitCompositeFace(PHVectorInt1D & nodeIndexesOfComp
     MultiIndex compositeFaceOfMultiIndex(static_cast<int>(numberOfNodesOfCompositeFace), candidateCompositeFaceIndex);
     compositeFaceOfMultiIndex.SetData(& sortedCompositeFaceNodeIndex[ 0 ]);
 
-    PHVectorInt1D & simpleToCompositeFaceIndexMapping = elementFaceSolver->GetSimpleToCompositeFaceIndexMapping();
-    PHVectorInt1D & compositeToSimpleFaceIndexMapping = elementFaceSolver->GetCompositeToSimpleFaceIndexMapping();
+    PHVectorInt1D &simpleToCompositeFaceIndexMapping = elementFaceSolver->GetSimpleToCompositeFaceIndexMapping();
+    PHVectorInt1D &compositeToSimpleFaceIndexMapping = elementFaceSolver->GetCompositeToSimpleFaceIndexMapping();
 
     compositeToSimpleFaceIndexMapping.resize(candidateCompositeFaceIndex);
 
-    PHVectorInt1D & compositeFaceTypeContainer = elementFaceSolver->GetCompositeFaceTypeContainer();
+    PHVectorInt1D &compositeFaceTypeContainer = elementFaceSolver->GetCompositeFaceTypeContainer();
 
     int compositeFaceIndex = elementFaceSolver->FindCompositeFace(compositeFaceOfMultiIndex); //首先判断复合单元是否已存在
-    int parentFaceIndex    = elementFaceSolver->FindFace         (simpleFaceNodeIndexes    );
+    int parentFaceIndex = elementFaceSolver->FindFace(simpleFaceNodeIndexes);
 
     if (compositeFaceIndex == PHSPACE::INVALID_INDEX) //不存在则添加复合单元
     {
@@ -2172,8 +2167,8 @@ void ElementPropertySolver::SplitCompositeFace(PHVectorInt1D & nodeIndexesOfComp
 
         simpleToCompositeFaceIndexMapping.resize(newSize);
 
-        simpleToCompositeFaceIndexMapping[ parentFaceIndex             ] = candidateCompositeFaceIndex;
-        compositeToSimpleFaceIndexMapping[ candidateCompositeFaceIndex ] = parentFaceIndex;
+        simpleToCompositeFaceIndexMapping[parentFaceIndex            ] = candidateCompositeFaceIndex;
+        compositeToSimpleFaceIndexMapping[candidateCompositeFaceIndex] = parentFaceIndex;
 
         compositeFaceTypeContainer.push_back(compositeFaceType);
     }
@@ -2183,7 +2178,7 @@ void ElementPropertySolver::SplitCompositeFace(PHVectorInt1D & nodeIndexesOfComp
         int childFaceElementType = basicElement->GetChildElementType(iChildFace);
 
         //子单元相对于当前单元的下标
-        vector< int > & childFaceElementRelativeNodeIndex = basicElement->GetChildElementRelativeNodeIndex(iChildFace); 
+        vector< int > &childFaceElementRelativeNodeIndex = basicElement->GetChildElementRelativeNodeIndex(iChildFace); 
 
         //子单元节点数
         int childFaceElementNodeNumber = GetElementNodeNumbers(childFaceElementType);
@@ -2194,14 +2189,14 @@ void ElementPropertySolver::SplitCompositeFace(PHVectorInt1D & nodeIndexesOfComp
         {
             //子面编号-〉复合面编号-〉复合体编号-〉全局编号
             //子面编号-〉复合面编号-〉全局编号！！！  即childFaceNodeIndex建立了:子面编号-〉全局编号，确定了子面（新体单元对应简单面）
-            childFaceNodeIndexes[ iNode ] = nodeIndexesOfCompositeFace[ childFaceElementRelativeNodeIndex[ iNode ] ];
+            childFaceNodeIndexes[iNode] = nodeIndexesOfCompositeFace[childFaceElementRelativeNodeIndex[iNode]];
         }
         
         int childFaceIndex = elementFaceSolver->AddElementFace(childFaceNodeIndexes, childFaceElementType, parentFaceIndex);
     }
 }
 
-void ElementPropertySolver::GenerateCellToNode(UnstructGrid * grid)
+void ElementPropertySolver::GenerateCellToNode(UnstructGrid *grid)
 {
     ElementPropertySolver *elementPropertySolver = this;
     PHVectorInt2D &elementNodeIndexContainer = elementPropertySolver->GetElementNodeIndexContainer();
@@ -2209,9 +2204,9 @@ void ElementPropertySolver::GenerateCellToNode(UnstructGrid * grid)
     PHVectorInt1D &computationalToGlobalElementIndexMapping = elementPropertySolver->GetComputationalToGlobalElementIndexMapping();
     PHVectorInt1D &elementComputationalStatusContainer      = elementPropertySolver->GetElementComputationalStatusContainer();
 
-    int numberOfTotalElements         = elementPropertySolver->GetNumberOfTotalElements();
+    int numberOfTotalElements = elementPropertySolver->GetNumberOfTotalElements();
     int numberOfComputationalElements = numberOfTotalElements;
-    uint_t isComputationalElementsExist  = computationalToGlobalElementIndexMapping.size();
+    uint_t isComputationalElementsExist = computationalToGlobalElementIndexMapping.size();
     if (isComputationalElementsExist != 0)
     {
         // Adaptive grid.
@@ -2252,18 +2247,18 @@ void ElementPropertySolver::GenerateCellToNode(UnstructGrid * grid)
     }
     
 
-    int * cellNodeNumberContainer = new int [ numberOfComputationalElements ];
-    int * cellNodeIndexContainer  = new int [ countNode ];
+    int *cellNodeNumberContainer = new int [numberOfComputationalElements];
+    int *cellNodeIndexContainer  = new int [countNode];
 
     countNode = 0;
     for (int iCell = 0; iCell < numberOfComputationalElements; ++ iCell)
     {
-        int nodeNumber = static_cast<int>(cellToNode[ iCell ].size());
-        cellNodeNumberContainer[ iCell ] = nodeNumber;
+        int nodeNumber = static_cast<int>(cellToNode[iCell].size());
+        cellNodeNumberContainer[iCell] = nodeNumber;
 
         for (int iNode = 0; iNode < nodeNumber; ++ iNode)
         {
-            cellNodeIndexContainer[ countNode ++ ] = cellToNode[ iCell ][ iNode ];
+            cellNodeIndexContainer[countNode ++] = cellToNode[iCell][iNode];
         }
     }
 
