@@ -1,4 +1,4 @@
-#include "ChemicalModel.h"
+#include "ChemModel.h"
 #include "Pointer.h"
 #include "GlobalDataBase.h"
 #include "Constants.h"

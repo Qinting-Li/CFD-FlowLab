@@ -208,6 +208,7 @@ if(USE_OCC)
 endif(USE_OCC)
 
 # For OpenMP
+if(USE_OMP)
 find_package (OpenMP)
 if (OpenMP_FOUND)
 
@@ -237,11 +238,13 @@ else(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(WIN32)
 endif (OpenMP_FOUND)
+endif(USE_OMP)
 
 # For UGKS
 if(USE_INHOUSE_VERSION)
 if(WIN32)
 else(WIN32)
+    if(USE_OMP)
     FIND_PACKAGE(OpenMP REQUIRED)
     if(OPENMP_FOUND)
         message("OPENMP FOUND ${CMAKE_C_FLAGS} ${OpenMP_CXX_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
@@ -249,6 +252,7 @@ else(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
     endif(OPENMP_FOUND)
+    endif(USE_OMP)
 endif(WIN32)
 endif(USE_INHOUSE_VERSION)
 

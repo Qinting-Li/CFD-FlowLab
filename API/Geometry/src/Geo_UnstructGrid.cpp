@@ -4123,7 +4123,7 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
 
     char *bcNameChar = new char[totalSize];
     PHRead(virtualFile, bcNameChar, static_cast<int>(totalSize));
-
+    
     string *bcNameList = new string[numberOfBCFaces];
     uint_long count = 0;
     for (int iFace = 0; iFace < numberOfBCFaces; ++ iFace)
@@ -9462,6 +9462,7 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     DataStruct_Sort<int> fysort;
 
     UnstructBCSet **bcr = grid->GetBCRecord();
+
     face2nodelist.resize(0);
     linkmap.resize(0);
 

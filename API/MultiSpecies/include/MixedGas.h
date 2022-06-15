@@ -18,7 +18,7 @@
 #include "Gas.h"
 #include "Geo_StructGrid.h"
 #include "Geo_UnstructGrid.h"
-#include "ChemicalModel.h"
+#include "ChemModel.h"
 
 #include <string>
 using namespace std;

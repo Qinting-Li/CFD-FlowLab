@@ -6463,6 +6463,7 @@ namespace PHSPACE
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
             StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
+            Data_Param *bcParamDB = structBC->GetBCParamDataBase();
             int BCType = structBC->GetBCType();
 
             if (BCType < 0)
@@ -6485,14 +6486,23 @@ namespace PHSPACE
                 else
                 {
 #ifdef USE_HYFLOW_CODE
+                    RDouble catalyticCoef;
+                    if(bcParamDB->IsExist("catalyticCoef", PHDOUBLE, 1))
+                    {
+                        bcParamDB->GetData("catalyticCoef", &catalyticCoef, PHDOUBLE, 1);
+                    }
+                    else
+                    {
+                        catalyticCoef = GlobalDataBase::GetDoubleParaFromDB("catalyticCoef");
+                    }
                     //! Compute the temperature of wall.
-                    GAS_SPACE::ComputeSurfaceTemperature(grid, structBC, iWallBC);
+                    GAS_SPACE::ComputeSurfaceTemperature(grid, structBC, iWallBC, catalyticCoef);
 
                     //! Compute the mass fractions of species on wall.
-                    GAS_SPACE::ComputeSurfaceMassFraction(grid, structBC, iWallBC);
+                    GAS_SPACE::ComputeSurfaceMassFraction(grid, structBC, iWallBC, catalyticCoef);
 
                     //! Compute the slip variables on wall.
-                    GAS_SPACE::ComputeSurfaceSlipVariables(grid, structBC, iWallBC);
+                    GAS_SPACE::ComputeSurfaceSlipVariables(grid, structBC, iWallBC, catalyticCoef);
 #endif
 
                     if (wallTemperature < 0.0)
@@ -6500,7 +6510,7 @@ namespace PHSPACE
                         if (nChemical > 0)
                         {
 #ifdef USE_HYFLOW_CODE
-                            GAS_SPACE::ChemicalVisWallISO3D(grid, structBC, iWallBC);
+                            GAS_SPACE::ChemicalVisWallISO3D(grid, structBC, iWallBC, catalyticCoef);
 #endif
                         }
                         else    //! Viscous adiabatic wall condition.
@@ -6513,7 +6523,7 @@ namespace PHSPACE
                         if (nChemical > 0)
                         {
 #ifdef USE_HYFLOW_CODE
-                            GAS_SPACE::ChemicalVisWallISO3D(grid, structBC, iWallBC);
+                            GAS_SPACE::ChemicalVisWallISO3D(grid, structBC, iWallBC, catalyticCoef);
                             //GAS_SPACE::SetChemicalIsothermalWall(grid, StructBC);
 #endif
                         }
@@ -8371,7 +8381,7 @@ namespace PHSPACE
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
         RDouble dynamicPressure = refDimensionalDensity * velocity * velocity;
-        RDouble staticPressureCorf = parameters->GetStaticPressureRelaxCorf();
+        RDouble staticPressureRelaxCorf = parameters->GetStaticPressureRelaxCorf();
         staticPressure /= dynamicPressure;
 
         StructGrid *grid = StructGridCast(gridIn);
@@ -8408,7 +8418,7 @@ namespace PHSPACE
                         }
                         //
 #ifdef USE_HYFLOW_CODE
-                        GAS_SPACE::computeOutPressure(q(it, jt, kt, IP), staticPressure, staticPressureCorf);    //! used in injet , modeified  by dms.
+                        GAS_SPACE::computeOutPressure(q(it, jt, kt, IP), staticPressure, staticPressureRelaxCorf);    //! used in injet , modeified  by dms.
 #else
                         q(it, jt, kt, IP) = staticPressure;
 #endif

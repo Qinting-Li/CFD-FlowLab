@@ -576,7 +576,6 @@ void CombinGrid::MergeBCType()
             bcr_all[globalFaceID] = new UnstructBCSet();
             bcr_all[globalFaceID]->SetKey(bcr[iFace]->GetKey());
             bcr_all[globalFaceID]->SetBCName(bcr[iFace]->GetBCName());
-
         }
     }
 
@@ -657,7 +656,7 @@ void CombinGrid::MergeBCType()
     PHSPACE::SetField(interface2BoundaryFaceafterReorder, -1, nBFace_all);
 
     int interfaceID = 0;
-
+    
     for (int iFace = 0; iFace < nBFace_all; ++ iFace)
     {
         bcr_all2[iFace] = bcr_all[iFace];
@@ -668,6 +667,7 @@ void CombinGrid::MergeBCType()
             face2InterfaceafterReorder[iFace] = interfaceID ++;
         }
     }
+
     delete [] bcr_all;
 
     nIFace = interfaceID;

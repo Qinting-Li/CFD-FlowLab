@@ -308,6 +308,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
 
         //! Entropy correction, to limit the magnitude of the three eigenvalue.
         //! Warning: This function calling may affect the efficient!
+
         Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
 
         RDouble xi1 = 0.0, xi2 = 0.0, xi3 = 0.0, xi4 = 0.0;
@@ -575,6 +576,9 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
 
         //! Entropy correction, to limit the magnitude of the three eigenvalue.
         //! Warning: This function calling may affect the efficient!
+
+
+
         Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
 
         RDouble eigv1Term, eigv2Term, eigv3Term;
@@ -1560,6 +1564,7 @@ void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invScheme
     //! Compute the number of species.
     int nChemical = invSchemePara->GetNumberOfChemical();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
+    RDouble AusmpwPlusLimiter = invSchemePara->GetAusmpwPlusLimiter();
 
     RDouble **ql = invSchemePara->GetLeftQ();
     RDouble **qr = invSchemePara->GetRightQ();
@@ -1572,8 +1577,6 @@ void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invScheme
     RDouble **flux = invSchemePara->GetFlux();
     RDouble **tl = invSchemePara->GetLeftTemperature();
     RDouble **tr = invSchemePara->GetRightTemperature();
-
-    RDouble AusmpwPlusLimiter = GlobalDataBase::GetDoubleParaFromDB("AusmpwPlusLimiter");
 
     using namespace IDX;
     using namespace GAS_SPACE;
@@ -1640,13 +1643,37 @@ void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invScheme
         //    c12 = cs / max(abs(vnr), sqrt(cs));
         //}
 
-         RDouble c12 = half * (sqrt(gamal[iLen] * (pl / (rl + SMALL))) + sqrt(gamar[iLen] * (pr / (rr + SMALL))));
 
+        RDouble al = sqrt(gamal[iLen] * (pl / (rl + SMALL)));
+        RDouble ar = sqrt(gamar[iLen] * (pr / (rr + SMALL)));
 
-        RDouble ocm = 1.0 / c12;
+        RDouble ml = abs(vnl / al);
+        RDouble mr = abs(vnr / ar);
 
-        RDouble ml  =  vnl * ocm;
-        RDouble mr  =  vnr * ocm;
+        RDouble c12, ocm;
+
+        /*if( ( ml > 1.0 && mr < 1.0 ) || ( mr > 1.0 && ml < 1.0 ))
+        {
+            c12 = max(sqrt(abs(vnl * vnr)), min(al, ar));
+
+            if (vnl + vnr > 0.0)
+            {
+                c12 *= c12 / max(abs(vnl), c12);
+            }
+            else
+            {
+                c12 *= c12 / max(abs(vnr), c12);
+            }
+        }
+        else
+        {*/
+            c12 = half * (al + ar);
+        /*}*/
+
+        ocm = 1.0 / c12;
+
+        ml  =  vnl * ocm;
+        mr  =  vnr * ocm;
 
         RDouble fm4ml = FMmpn(ml, zero,  one);
         RDouble fm4mr = FMmpn(mr, zero, -one);

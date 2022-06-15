@@ -839,6 +839,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     RDouble entrFixCoefRight = parameters->GetRoeEntropyFixCoef2();
     RDouble refMachNumber = parameters->GetRefMachNumber();
 
+    RDouble AusmpwPlusLimiter = parameters->GetAusmpwPlusLimiter();
+
     //! Scalar parameters.
     invSchemePara->Setnm(nm);
     invSchemePara->SetNumberOfLaminar(nLaminar);
@@ -854,6 +856,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetLength(faceProxy->size());
     invSchemePara->SetIndexOfNitrogen(nNitrogenIndex);
     invSchemePara->SetIndexOfElectron(nElectronIndex);
+
+    invSchemePara->SetAusmpwPlusLimiter(AusmpwPlusLimiter);
 
     //! Pointer parameters.
     invSchemePara->SetLeftAndRightQ(faceProxy->GetQL(), faceProxy->GetQR());
