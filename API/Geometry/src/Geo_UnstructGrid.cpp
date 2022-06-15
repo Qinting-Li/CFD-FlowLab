@@ -4142,9 +4142,9 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
     PHRead(virtualFile, numberOfBCFaces);
     int *bcTypeList = new int[numberOfBCFaces];
     PHRead(virtualFile, bcTypeList, numberOfBCFaces);
-    
+
     virtualFile->EndReadWork();
-    
+
     //! Create UnstructbcRegion.
     set<string> bcNameSet;
     UnstructBCSet **bcr = this->GetBCRecord();
@@ -4158,7 +4158,7 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
     this->CreateUnstructBCSet(nBCRegionUnstruct);
 
     UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = new int [nBoundFace];
+    int *bcRegionIDofBCFace = new int[nBoundFace];
 
     set<string>::iterator iter;
     count = 0;
@@ -4182,9 +4182,9 @@ void UnstructGrid::DecodeBCFace(DataContainer * cdata)
     }
     unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
  
-    delete [] bcTypeList;
-    delete [] bcNameList;
-    delete [] bcNameChar;
+    delete []bcTypeList;
+    delete []bcNameList;
+    delete []bcNameChar;
     delete virtualFile;
 }
 
