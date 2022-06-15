@@ -9,7 +9,7 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      ChemicalModel.h
+//! @file      ChemModel.h
 //! @brief     Define chemical reactions.
 //! @author    Meng Liyuan, Li Peng.
 

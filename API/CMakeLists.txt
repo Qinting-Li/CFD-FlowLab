@@ -603,6 +603,24 @@ ${HyFLOW_CPP_PATH}/EquilibriumGas.cpp
 source_group(HyFLOW\\src FILES ${HyFLOW_CPP_LIST})
 list(APPEND API_HEAD_LIST ${HyFLOW_H_LIST})
 list(APPEND API_CPP_LIST ${HyFLOW_CPP_LIST})
+else(BUILD_HyFLOW)
+# set directory of MultiSpeciesGas.
+set(MultiSpecies_H_PATH MultiSpecies/include)
+set(MultiSpecies_H_LIST
+${MultiSpecies_H_PATH}/ChemModel.h
+${MultiSpecies_H_PATH}/MixedGas.h
+)
+source_group(MultiSpecies\\include FILES ${MultiSpecies_H_LIST}) 
+include_directories(${MultiSpecies_H_PATH})
+
+set(MultiSpecies_CPP_PATH MultiSpecies/src)
+set(MultiSpecies_CPP_LIST
+${MultiSpecies_CPP_PATH}/ChemModel.cpp
+${MultiSpecies_CPP_PATH}/MixedGas.cpp
+)
+source_group(MultiSpecies\\src FILES ${MultiSpecies_CPP_LIST})
+list(APPEND API_HEAD_LIST ${MultiSpecies_H_LIST})
+list(APPEND API_CPP_LIST ${MultiSpecies_CPP_LIST})
 endif(BUILD_HyFLOW)
 
 
@@ -624,24 +642,6 @@ source_group(PostProcess\\src FILES ${PostIdentidy_CPP_LIST})
 list(APPEND API_HEAD_LIST ${PostIdentidy_H_LIST})
 list(APPEND API_CPP_LIST ${PostIdentidy_CPP_LIST})
 endif(USE_INHOUSE_VERSION)
-
-# set directory of MultiSpeciesGas.
-set(MultiSpecies_H_PATH MultiSpecies/include)
-set(MultiSpecies_H_LIST
-${MultiSpecies_H_PATH}/ChemicalModel.h
-${MultiSpecies_H_PATH}/MixedGas.h
-)
-source_group(MultiSpecies\\include FILES ${MultiSpecies_H_LIST}) 
-include_directories(${MultiSpecies_H_PATH})
-
-set(MultiSpecies_CPP_PATH MultiSpecies/src)
-set(MultiSpecies_CPP_LIST
-${MultiSpecies_CPP_PATH}/ChemicalModel.cpp
-${MultiSpecies_CPP_PATH}/MixedGas.cpp
-)
-source_group(MultiSpecies\\src FILES ${MultiSpecies_CPP_LIST})
-list(APPEND API_HEAD_LIST ${MultiSpecies_H_LIST})
-list(APPEND API_CPP_LIST ${MultiSpecies_CPP_LIST})
 
 #21. adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
@@ -724,6 +724,7 @@ target_link_libraries(${API_TARGET_NAME} ${LINK_LIBRARY_LIST})
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 # For OpenMP
+if(USE_OMP)
 find_package (OpenMP)
 if (OpenMP_FOUND)
 
@@ -753,6 +754,7 @@ else(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(WIN32)
 endif (OpenMP_FOUND)
+endif (USE_OMP)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")

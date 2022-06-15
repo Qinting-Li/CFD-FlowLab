@@ -841,6 +841,7 @@ message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 
 # For OpenMP
+if(USE_OMP)
 find_package (OpenMP)
 if (OpenMP_FOUND)
 
@@ -870,6 +871,7 @@ else(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(WIN32)
 endif (OpenMP_FOUND)
+endif(USE_OMP)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")

@@ -102,6 +102,20 @@ LIB_EXPORT void Param_CFDSolver::Init()
     {
         fineCFL = GlobalDataBase::GetDoubleParaFromDB("fineCFL"); //fineCFL
     }
+
+    useHyflowSetting = 0;
+    if (GlobalDataBase::IsExist("useHyflowSetting", PHINT, 1))
+    {
+        useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
+    }
+
+    AusmpwPlusLimiter = 1.0;
+    if (GlobalDataBase::IsExist("AusmpwPlusLimiter", PHDOUBLE, 1))
+    {
+        AusmpwPlusLimiter = GlobalDataBase::GetDoubleParaFromDB("AusmpwPlusLimiter"); //reduceFactorForCFL
+    }
+
+
 }
 
 }

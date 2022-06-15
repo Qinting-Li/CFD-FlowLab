@@ -114,7 +114,7 @@ if(USE_OMP)
   message (STATUS "OpenMP_CXX_VERSION_MINOR  = ${OpenMP_CXX_VERSION_MINOR}")
   message (STATUS "OpenMP_CXX_VERSION  = ${OpenMP_CXX_VERSION}") 
   endif (OpenMP_FOUND)
-endif()
+endif(USE_OMP)
 
 if(USE_ErrorDataDebug)
   message(STATUS "USE_ErrorDataDebug is turned on!")

@@ -112,6 +112,9 @@ public:
     //! Get reference gama value.
     RDouble GetRefGama() const;
 
+    //! Hyflow.
+    int GetUseHyflowSetting() const;
+
     //! Get reference dimensional density.
     RDouble GetRefDimensionalPressure() const;
 
@@ -126,6 +129,9 @@ public:
 
     //! Get reference dimensional temperature.
     RDouble GetRefDimensionalTemperature() const;
+
+     //! Get AusmpwPlusLimiter.
+    RDouble GetAusmpwPlusLimiter() const;
 
     //! Get flag of starting from steady result.
     int GetIfStartFromSteadyResults() const;
@@ -180,12 +186,16 @@ private:
     RDouble refDimensionalTemperature;
     RDouble refDimensionalVelocity;
 
+    RDouble AusmpwPlusLimiter;
+
     int ifStartFromSteadyResults;
     int ifStaticsFlowField;
     int ifStaticsReynoldsStress;
     int statisticMethod;
     int intervalStepFlow;
     int ifLocalTimeStep;
+
+    int useHyflowSetting;
 
     RDouble TorqueRefX;
     RDouble TorqueRefY;

@@ -39,11 +39,11 @@ void ShowWelcomeTitle()
     using namespace PHMPI;
     PH_Barrier();
 
-    int useHyflowOutput = GlobalDataBase::GetIntParaFromDB("useHyflowOutput");
+    int useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
     int myid = GetCurrentProcessorID();
     if (myid == PHMPI::GetServerProcessorID())
     {
-        if (useHyflowOutput == 0)
+        if (useHyflowSetting == 0)
         {
             ostringstream oss;
             oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
