@@ -16,6 +16,7 @@
 #pragma once
 #include "Precision.h"
 #include "DataContainer.h"
+#include "Constants.h"
 #include <string>
 
 using namespace std;
@@ -25,7 +26,8 @@ namespace PHSPACE
 namespace GAS_SPACE
 {
 //! General gas constant,the unit is J/(Mol*K).
-const RDouble rjmk = 8.31434;
+//const RDouble rjmk = 8.31434;
+const RDouble rjmk = GeneralGasConstant;
 
 class FluidParameter
 {
@@ -165,6 +167,7 @@ public:
 
     //! Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used){}. However, only the T and p is useful.
     //! The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
+    virtual void SetAirInformationByExpData(int useHyflowSetting){};
     virtual void SetAirInformationByExpData(){};
 
     //! This function is mainly for the average density of the mixture in chemical reactions.
@@ -338,7 +341,7 @@ public:
     //! @param[in ]: gama is the specific heat ratio.
     //! @param[out]: enthalpy denotes the static enthalpy.
     //! @param[in ]: temperatures stores the translation-rotation temperature, vibration temperature and the electron temperature.
-    virtual void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble* temperatures){};
+    virtual void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble &gama, RDouble &enthalpy, RDouble* temperatures){};
 
     //! To obtain the total energy E = e + 1/2*V2.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables, gama is the specific heat ratio of the mixture gas.
@@ -1093,6 +1096,12 @@ public:
 
     virtual void  ComputeCvvesAndEvesForSpecies(RDouble tveTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional){};
     virtual void  ComputeCvvsAndEvsForSpecies(RDouble tvTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional){};
+
+    virtual void  ComputeTemperatureFromTotalTemperature(RDouble *massF, RDouble totalTemperature, RDouble mach, RDouble &Temperature, RDouble &gama, int Dimensional = 0){};
+    virtual void  ComputeGama(RDouble *massF, RDouble Temperature, RDouble &gama, int Dimensional = 0){};
+    virtual void  ComputeGamaAndHo(RDouble *massF, RDouble *Temperature, RDouble &gama, RDouble &H, int Dimensional = 0){};
+
+    virtual void  GetAirInfo_Modify(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a);
 };
 
 extern Gas *gas;

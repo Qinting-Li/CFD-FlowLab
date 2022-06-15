@@ -16,7 +16,7 @@ void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ,
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-	ObtaindiagonalMatrix(grid);
+	SolveDiagonalMatrix(grid);
 
     RDouble4D &dq = dqProxy->GetField_STR();
     RDouble4D &deltaFlux = LUplusDQ->GetField_STR();
@@ -26,9 +26,7 @@ void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ,
     RDouble4D &gzfn  = *(grid->GetFaceNormalZ());
     RDouble4D &gvgn  = *(grid->GetFaceNormalVelocity());
     RDouble4D &garea = *(grid->GetFaceArea());
-    RDouble3D &gvol  = *(grid->GetCellVolume());
-
-    int *cellTypeContainer = grid->GetCellTypeContainer();
+    /*RDouble3D &gvol  = *(grid->GetCellVolume());*/
 	
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -243,12 +241,12 @@ void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ,
         }
     }
 
-    delete [] dqNeighbor;
-    delete [] prim;
-    delete [] qNeighbor;
-    delete [] rhs0;
-	delete [] priml;
-	delete [] primr;
+    delete[] dqNeighbor;
+    delete[] prim;
+    delete[] qNeighbor;
+    delete[] rhs0;
+	delete[] priml;
+	delete[] primr;
 
     delete [] df;
 	delete [] deltaQ;
@@ -257,12 +255,12 @@ void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ,
 	delete tempMatrix;
 	delete jacobianMatrix;
 
-    delete [] qPrecondition;
-    delete [] dqCell;
-    delete [] temperature;
+    delete[] qPrecondition;
+    delete[] dqCell;
+    delete[] temperature;
 
-    delete [] dqOld;
-    delete [] Ux;
+    delete[] dqOld;
+    delete[] Ux;
 }
 
 void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
@@ -280,9 +278,7 @@ void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusD
     RDouble4D &gzfn  = *(grid->GetFaceNormalZ());
     RDouble4D &gvgn  = *(grid->GetFaceNormalVelocity());
     RDouble4D &garea = *(grid->GetFaceArea());
-    RDouble3D &gvol  = *(grid->GetCellVolume());
-
-    int *cellTypeContainer = grid->GetCellTypeContainer();
+    /*RDouble3D &gvol  = *(grid->GetCellVolume());*/
 
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -521,22 +517,22 @@ void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusD
     delete [] dqCell;
 }
 
-void ObtaindiagonalMatrix(StructGrid *gridIn)
+void SolveDiagonalMatrix(StructGrid *gridIn)
 {
     int iSimplifyViscousTerm = GlobalDataBase::GetIntParaFromDB("iSimplifyViscousTerm");
     //! Compute the number of equations.
     int nEquation = GlobalDataBase::GetIntParaFromDB("nl");
 
-    RDouble4D &inviscidSpectrumRadius = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("invSpectralRadius"));
-    RDouble4D &viscousSpectrumRadius = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("visSpectralRadius"));
-    RDouble4D &primitiveVariables = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("q"));
-    RDouble4D &primitiveTemperatures = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("t"));
-    RDouble3D &deltaTime = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("dt"));
-    RDouble3D &specificHeatRatio = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("gama"));
+    RDouble4D &invSpectrumRadius = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("invSpectralRadius"));
+    RDouble4D &visSpectrumRadius = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("visSpectralRadius"));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("q"));
+    RDouble4D &t = *reinterpret_cast<RDouble4D *> (gridIn->GetDataPtr("t"));
+    RDouble3D &dt = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("dt"));
+    RDouble3D &gamma = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("gama"));
 
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    RDouble3D &viscosityLaminar = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("visl"));
-    RDouble3D &viscosityTurbulence = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("vist"));
+    RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("visl"));
+    RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D *> (gridIn->GetDataPtr("vist"));
 
     RDouble4D &gxfn  = *(gridIn->GetFaceNormalX());
     RDouble4D &gyfn  = *(gridIn->GetFaceNormalY());
@@ -567,10 +563,10 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
 
     int nDim = GetDim();
     int iL, jL, kL, iR, jR, kR;
-    RDouble gama, laminarViscosity, turbulentViscosity, vol1, vol2;
+    RDouble gama, visLaminar, visTurbulence, vol1, vol2;
     RDouble xfn1, yfn1, zfn1, area1, vgn1;
     RDouble xfn2, yfn2, zfn2, area2, vgn2;
-    RDouble invSpectrumRadius, visSpectrumRadius;
+    RDouble rad_euler, rad_ns;
 
     //! To Compute diagonal matrix.
     for (int k = kCellStart; k <= kCellEnd; ++ k)
@@ -582,22 +578,22 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
                 //! Obtain the primitive variables.
                 for (int m = 0; m < nEquation; ++ m)
                 {
-                    primitiveVars[m] = primitiveVariables(i, j, k, m);
+                    primitiveVars[m] = q(i, j, k, m);
                 }
-                gama = specificHeatRatio(i, j, k);
+                gama = gamma(i, j, k);
                 if (viscousType > 0)
                 {
-                    laminarViscosity = viscosityLaminar(i, j, k);
-                    turbulentViscosity = viscosityTurbulence(i, j, k);
+                    visLaminar = viscousLaminar(i, j, k);
+                    visTurbulence = viscousTurbulence(i, j, k);
                 }
                 else
                 {
-                    laminarViscosity = 0.0;
-                    turbulentViscosity = 0.0;
+                    visLaminar = 0.0;
+                    visTurbulence = 0.0;
                 }
                 for (int m = 0; m < nTemperatureModel; ++ m)
                 {
-                    temperature[m] = primitiveTemperatures(i, j, k, m);
+                    temperature[m] = t(i, j, k, m);
                 }
 
                 // initialize.
@@ -614,56 +610,38 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
                 //! Compute the scalar coefficient of the diagonal matrix.
                 for (int m = 0; m < nEquation; ++ m)
                 {
-                    diagonalMatrix(i, j, k, m, m) = 1.0 / deltaTime(i, j, k) + 1.0 * gvol(i, j, k);
+                    diagonalMatrix(i, j, k, m, m) = 1.0 / dt(i, j, k) + 1.0 * gvol(i, j, k);
                 }
 
-                invSpectrumRadius = 0.0;
-                visSpectrumRadius = 0.0;
+                rad_euler = 0.0;
+                rad_ns = 0.0;
                 //! Construct the diagonal matrix called D.
                 for (int iSurface = 1; iSurface <= nDim; ++ iSurface)
                 {
                     int il1, jl1, kl1;
-                    GetNsurfIndex(iSurface, il1, jl1, kl1);
-					gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL, iSurface);
-					gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR, iSurface);
-
-                    xfn1  = gxfn (i, j, k, iSurface);
-                    yfn1  = gyfn (i, j, k, iSurface);
-                    zfn1  = gzfn (i, j, k, iSurface);
-                    vgn1  = gvgn (i, j, k, iSurface);
-                    area1 = garea(i, j, k, iSurface);
-
-                    xfn2  = gxfn (iR, jR, kR, iSurface);
-                    yfn2  = gyfn (iR, jR, kR, iSurface);
-                    zfn2  = gzfn (iR, jR, kR, iSurface);
-                    vgn2  = gvgn (iR, jR, kR, iSurface);
-                    area2 = garea(iR, jR, kR, iSurface);
+					gridIn->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
                     //! Compute spectrum radius of inviscid flux.
                     if (iSimplifyViscousTerm == 1)// Equivalent method to computing the spectrum radius.
                     {
-                        invSpectrumRadius += inviscidSpectrumRadius(i, j, k, iSurface - 1);
-                        visSpectrumRadius += viscousSpectrumRadius(i, j, k, iSurface - 1);
+                        rad_euler += invSpectrumRadius(i, j, k, iSurface - 1);
+                        rad_ns += visSpectrumRadius(i, j, k, iSurface - 1);
                     }
 
 					//! Compute the surface -1/2
+					gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL, iSurface);
+
 					for (int m = 0; m < nEquation; ++ m)
                     {
-                        priml[m] = primitiveVariables(iL, jL, kL, m);
-                        primr[m] = primitiveVariables(i, j, k, m);
+                        priml[m]  =  q(iL, jL, kL, m);
+                        primr[m]  =  q(i, j, k, m);
                     }
 
 					xfn1  = gxfn (i ,j ,k ,iSurface);
                     yfn1  = gyfn (i ,j ,k ,iSurface);
                     zfn1  = gzfn (i ,j ,k ,iSurface);
                     area1 = garea(i ,j ,k ,iSurface);
-                    vgn1  = gvgn (i ,j ,k ,iSurface);
-
-                    xfn2  = gxfn (iL ,jL ,kL ,iSurface);
-                    yfn2  = gyfn (iL ,jL ,kL ,iSurface);
-                    zfn2  = gzfn (iL ,jL ,kL ,iSurface);
-                    area2 = garea(iL ,jL ,kL ,iSurface);
-                    vgn2  = gvgn (iL ,jL ,kL ,iSurface);
+                    vgn1  = gvgn (i ,j ,k ,iSurface);             
 
 					RDouble rtemL = rtem(iL, jL, kL);
 					RDouble rtemR = rtem(i,  j,  k);
@@ -678,17 +656,13 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
 					}
 
 					//! Compute the surface +1/2
+					gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR, iSurface);
+
 					for (int m = 0; m < nEquation; ++ m)
                     {
-                        priml[m] = primitiveVariables(i, j, k, m);
-                        primr[m] = primitiveVariables(iR, jR, kR, m);
+                        priml[m]  =  q(i, j, k, m);
+                        primr[m]  =  q(iR, jR, kR, m);
                     }
-
-					xfn1  = gxfn (i, j, k, iSurface);
-                    yfn1  = gyfn (i, j, k, iSurface);
-                    zfn1  = gzfn (i, j, k, iSurface);
-                    area1 = garea(i, j, k, iSurface);
-                    vgn1  = gvgn (i, j, k, iSurface);
 
                     xfn2  = gxfn (iR, jR, kR, iSurface);
                     yfn2  = gyfn (iR, jR, kR, iSurface);
@@ -712,7 +686,7 @@ void ObtaindiagonalMatrix(StructGrid *gridIn)
                 //! Compute the summation of spectrum radius.
                 for (int m = 0; m < nEquation; ++ m)
                 {
-                    diagonalMatrix(i, j, k, m, m) += visSpectrumRadius;
+                    diagonalMatrix(i, j, k, m, m) += rad_ns;
                 }
 
 				for (int m = 0; m < nEquation; ++ m)
@@ -875,9 +849,9 @@ void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RD
 
     //! Entropy fix.
 	int RoeEntropyFixMethod = 2;
-	RDouble RoeEntropyFixCoef1, RoeEntropyFixCoef2;
+	RDouble RoeEntropyFixCoef1 = 0.0;
+	RDouble RoeEntropyFixCoef2 = 0.0;
 
-	GetEntropyAndCoefficients(RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
 	Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, rtemL, rtemR, absVel, Vn, c, RoeEntropyFixMethod, RoeEntropyFixCoef1, RoeEntropyFixCoef2);
 
     RDouble y0 = eigv1;
@@ -926,56 +900,6 @@ void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RD
             matrix(m, n) *= area;
         }
     }
-}
-
-void GetEntropyAndCoefficients(int &RoeEntropyFixMethod, RDouble &RoeEntropyFixCoef1, RDouble &RoeEntropyFixCoef2)
-{
-    RoeEntropyFixMethod = GlobalDataBase::GetIntParaFromDB("roeEntropyFixMethod");
-
-    RDouble entropyAcoustic = 0.01, entropyConvective = 0.01;
-    RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
-
-    RDouble roeEntropyScale = GlobalDataBase::GetDoubleParaFromDB("roeEntropyScale");
-    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
-    if (ifLowSpeedPrecon)
-    {
-        //! Incompressible, precondition.
-        entropyAcoustic = 1.0e-8;
-    }
-    else
-    {
-        //! Compressible.
-        RDouble x0, x1, y0, y1;
-        if (refMachNumber <= 0.6)
-        {
-            entropyAcoustic = 0.0001;
-        }
-        else if (refMachNumber <= 2.0)
-        {
-            x0 = 0.6;    x1 = 2.0;
-            y0 = 0.0001; y1 = 0.01;
-            entropyAcoustic = y0 * (refMachNumber - x1) / (x0 - x1) + y1 * (refMachNumber - x0) / (x1 - x0);
-        }
-        else if (refMachNumber <= 5.0)
-        {
-            x0 = 2.0;  x1 = 5.0;
-            y0 = 0.01; y1 = 0.5;
-            entropyAcoustic = y0 * (refMachNumber - x1) / (x0 - x1) + y1 * (refMachNumber - x0) / (x1 - x0);
-        }
-        else
-        {
-            entropyAcoustic = 1.0;
-        }  
-
-        //! Do not scale the entropy for incompressible precondition.
-        entropyAcoustic *= roeEntropyScale;
-    }
-
-    entropyConvective = entropyAcoustic;
-    //PrintToWindow("  Entropy fix coefficient for ROE scheme: ", entropyAcoustic, "\n");
-
-    RoeEntropyFixCoef1 = entropyAcoustic;
-    RoeEntropyFixCoef2 = entropyConvective;
 }
 
 void ComputeViscousMatrix(RDouble *primitiveVars, RDouble *temperature, RDouble xfn, RDouble yfn, RDouble zfn, RDouble area, RDouble vol, 

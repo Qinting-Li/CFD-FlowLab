@@ -129,7 +129,7 @@ void PerfectGas::GetSpecificHeatRatio(RDouble *prim, RDouble &gama)
     gama = referenceParameterDimensional.GetAverageSpecificHeatRatio();
 }
 
-void PerfectGas::ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble* temperatures)
+void PerfectGas::ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble &gama, RDouble &enthalpy, RDouble* temperatures)
 {
     using namespace IDX;
     enthalpy = (gama / (gama - one)) * (primitiveVariables[IP] / primitiveVariables[IR]);
@@ -342,7 +342,19 @@ void PerfectGas::InitReferenceParameter()
         referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
         referenceParameterDimensional.SetPressure(refDimensionalPressure);
 
-        SetAirInformationByExpData();
+        int useHyflowSetting = 0;
+        if (GlobalDataBase::IsExist("useHyflowSetting", PHINT, 1))useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
+
+        if(useHyflowSetting==1)
+        {
+            SetAirInformationByExpData(useHyflowSetting);
+        }
+        else
+        {
+            SetAirInformationByExpData();
+        }
+
+        
     }
     else if (inflowParaType == TEMPERATURE_DENSITY) //where temperature and density are fixed.
     {
@@ -412,7 +424,15 @@ void PerfectGas::SetAirInformationByDataBase()
     RDouble refDimensionalDensity;
     RDouble refDimensionalSonicSpeed;
 
-    GetAirInfo(height, refDimensionalTemperature, refDimensionalPressure, refDimensionalDensity, refDimensionalSonicSpeed);
+    int useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
+    if(useHyflowSetting == 1)
+    {
+        GetAirInfo_Modify(height, refDimensionalTemperature, refDimensionalPressure, refDimensionalDensity, refDimensionalSonicSpeed);
+    }
+    else
+    {
+        GetAirInfo(height, refDimensionalTemperature, refDimensionalPressure, refDimensionalDensity, refDimensionalSonicSpeed);
+    }
 
     referenceParameterDimensional.SetDensity(refDimensionalDensity);
     referenceParameterDimensional.SetPressure(refDimensionalPressure);
@@ -438,6 +458,64 @@ void PerfectGas::SetAirInformationByExpData()
 
     RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
     RDouble R = 287.053;
+
+    /*RDouble refMolecularWeight = GlobalDataBase::GetDoubleParaFromDB("refMolecularWeight");
+
+    int nGasModel = GlobalDataBase::GetIntParaFromDB("nGasModel");
+    int useHyflowSetting = 0;
+    if (GlobalDataBase::IsExist("useHyflowSetting", PHINT, 1))useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
+    if(useHyflowSetting == 1 && nGasModel == 0)
+    {
+        R = 1000.0 * GeneralGasConstant / refMolecularWeight;
+    }*/
+
+    RDouble mi   = refGama / (refGama - 1.0);
+    RDouble coef = 1.0 + (refGama - 1.0) * refMachNumber * refMachNumber / 2.0;
+
+    RDouble T, P, rho, c;
+    T = T0 / coef;
+    P = P0 / pow(coef, mi);
+    rho = P / R / T;
+    c = sqrt(refGama * R * T);
+
+    refDimensionalDensity = rho;
+    refDimensionalPressure = P;
+    refDimensionalTemperature = T;
+    refDimensionalSonicSpeed = c;
+
+    referenceParameterDimensional.SetDensity(refDimensionalDensity);
+    referenceParameterDimensional.SetPressure(refDimensionalPressure);
+    referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
+    referenceParameterDimensional.SetSoundVelocity(refDimensionalSonicSpeed);
+
+    GlobalDataBase::UpdateData("refDimensionalDensity", &refDimensionalDensity, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalPressure", &refDimensionalPressure, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalTemperature", &refDimensionalTemperature, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
+}
+
+void PerfectGas::SetAirInformationByExpData(int useHyflowSetting)
+{
+    RDouble refDimensionalTemperature;
+    RDouble refDimensionalPressure;
+    RDouble refDimensionalDensity;
+    RDouble refDimensionalSonicSpeed;
+
+    RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+    RDouble T0 = referenceParameterDimensional.GetTemperature();
+    RDouble P0 = referenceParameterDimensional.GetPressure();
+
+    RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
+    RDouble R = 287.053;
+
+    RDouble refMolecularWeight = GlobalDataBase::GetDoubleParaFromDB("refMolecularWeight");
+
+    int nGasModel = GlobalDataBase::GetIntParaFromDB("nGasModel");
+
+    if(useHyflowSetting == 1 && nGasModel == 0)
+    {
+        R = 1000.0 * GeneralGasConstant / refMolecularWeight;
+    }
 
     RDouble mi   = refGama / (refGama - 1.0);
     RDouble coef = 1.0 + (refGama - 1.0) * refMachNumber * refMachNumber / 2.0;
@@ -468,6 +546,18 @@ void PerfectGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &
 {//USSA 76 Model for atmosphere.
     RDouble h      = h1 * 1000.0;
     RDouble r      = 287.053;
+
+    //RDouble refMolecularWeight = GlobalDataBase::GetDoubleParaFromDB("refMolecularWeight");
+    //int useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
+    //int nGasModel = GlobalDataBase::GetIntParaFromDB("nGasModel");
+    //int useHyflowSetting = 0;
+    /*if (GlobalDataBase::IsExist("useHyflowSetting", PHINT, 1))useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
+
+    if(useHyflowSetting == 1 && nGasModel == 0)
+    {
+        r = 1000.0 * GeneralGasConstant / refMolecularWeight;
+    }
+*/
     RDouble g0     = 9.80665;
     RDouble rp     = 6.37111e6;
     RDouble g      = (rp/(rp+h))*(rp/(rp+h))*g0;
@@ -944,6 +1034,18 @@ void PerfectGas::ComputeReferenceMolecularInformation()
 {
     //!unit: kg/mol.
     RDouble refMolecularWeight = 28.9644;
+    int useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
+    if(GlobalDataBase::IsExist("refMolecularWeight", PHDOUBLE, 1) && useHyflowSetting ==1)
+    {
+        refMolecularWeight = GlobalDataBase::GetDoubleParaFromDB("refMolecularWeight");
+    }
+
+    molecularDiameter = 3.6e-10;
+    if (GlobalDataBase::IsExist("molecularDiameter", PHDOUBLE, 1) && useHyflowSetting ==1)
+    {
+        molecularDiameter = GlobalDataBase::GetDoubleParaFromDB("molecularDiameter");
+    }
+
     if (nGasModel == 1) //The Carbon dioxide.
     {
         refMolecularWeight = 44.01;
@@ -959,11 +1061,8 @@ void PerfectGas::ComputeReferenceMolecularInformation()
         refMolecularWeight = 28.01293;
         molecularDiameter = 4.110e-10; //!unit: m
     }
-    else
-    {
-        refMolecularWeight = 28.9644;
-        molecularDiameter = 3.6e-10; //!unit: m
-    }
+
+    
     GlobalDataBase::UpdateData("refMolecularWeight", &refMolecularWeight, PHDOUBLE, 1);
     RDouble reference_average_molecular_weight_dimensional = refMolecularWeight * 1.0e-3;
     referenceParameterDimensional.SetAverageMolecularWeight(reference_average_molecular_weight_dimensional);
