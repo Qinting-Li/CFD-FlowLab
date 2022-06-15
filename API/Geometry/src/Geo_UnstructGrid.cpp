@@ -7275,15 +7275,12 @@ LIB_EXPORT void UnstructGrid::WriteFaceBC(fstream & file)
     string * bcNameList = new string [nBoundFace];
 
     UnstructBCSet **bcr = this->GetBCRecord();
-    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    
     uint_long totalSize = 0;
     for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-
-        string bcName = bcRegion->GetBCName();
-        int bcType = bcRegion->GetBCType();
+        int bcType = bcr[iFace]->GetKey();
+        const string &bcName = bcr[iFace]->GetBCName();
 
         bcTypeList[iFace] = bcType;
         bcNameList[iFace] = bcName;
