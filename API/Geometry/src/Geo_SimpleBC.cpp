@@ -843,9 +843,11 @@ void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, 
     RDouble localDimensionalDensity, localDimensionalVelocity, localDimensionalPressure, localDimensionalSonicSpeed;
     int useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
     int nGasModel = GlobalDataBase::GetIntParaFromDB("nGasModel");
-    if(useHyflowSetting == 1 && nGasModel == 0)
+    if (useHyflowSetting == 1 && nGasModel == 0)
     {
+#ifdef USE_HYFLOW_CODE
         gas->GetAirInfo_Modify(height, localDimensionalTemperature, localDimensionalPressure, localDimensionalDensity, localDimensionalSonicSpeed);
+#endif
     }
     else
     {

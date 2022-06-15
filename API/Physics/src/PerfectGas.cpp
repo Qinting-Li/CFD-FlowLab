@@ -425,9 +425,11 @@ void PerfectGas::SetAirInformationByDataBase()
     RDouble refDimensionalSonicSpeed;
 
     int useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
-    if(useHyflowSetting == 1)
+    if (useHyflowSetting == 1)
     {
+#ifdef USE_HYFLOW_CODE
         GetAirInfo_Modify(height, refDimensionalTemperature, refDimensionalPressure, refDimensionalDensity, refDimensionalSonicSpeed);
+#endif
     }
     else
     {

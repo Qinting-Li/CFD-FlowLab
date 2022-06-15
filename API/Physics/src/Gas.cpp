@@ -228,6 +228,7 @@ namespace GAS_SPACE
         }
     };
 
+#ifdef USE_HYFLOW_CODE
 void Gas::GetAirInfo_Modify(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a)
 {
     //! USA 1976 Model for atmosphere.
@@ -342,6 +343,7 @@ void Gas::GetAirInfo_Modify(const RDouble &h1, RDouble &t, RDouble &p, RDouble &
     a   = sqrt(refGama * r * t);
     den = rho;
 }
+#endif
 
 }
 

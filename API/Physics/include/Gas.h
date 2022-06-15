@@ -1100,8 +1100,9 @@ public:
     virtual void  ComputeTemperatureFromTotalTemperature(RDouble *massF, RDouble totalTemperature, RDouble mach, RDouble &Temperature, RDouble &gama, int Dimensional = 0){};
     virtual void  ComputeGama(RDouble *massF, RDouble Temperature, RDouble &gama, int Dimensional = 0){};
     virtual void  ComputeGamaAndHo(RDouble *massF, RDouble *Temperature, RDouble &gama, RDouble &H, int Dimensional = 0){};
-
+#ifdef USE_HYFLOW_CODE
     virtual void  GetAirInfo_Modify(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a);
+#endif
 };
 
 extern Gas *gas;
