@@ -562,7 +562,7 @@ ${Common_CPP_LIST}
 # set directory of MultiSpeciesGas.
 set(MultiSpecies_H_PATH MultiSpecies/include)
 set(MultiSpecies_H_LIST
-${MultiSpecies_H_PATH}/ChemicalModel.h
+${MultiSpecies_H_PATH}/ChemModel.h
 ${MultiSpecies_H_PATH}/MixedGas.h
 )
 source_group(MultiSpecies\\include FILES ${MultiSpecies_H_LIST}) 
@@ -570,7 +570,7 @@ include_directories(${MultiSpecies_H_PATH})
 
 set(MultiSpecies_CPP_PATH MultiSpecies/src)
 set(MultiSpecies_CPP_LIST
-${MultiSpecies_CPP_PATH}/ChemicalModel.cpp
+${MultiSpecies_CPP_PATH}/ChemModel.cpp
 ${MultiSpecies_CPP_PATH}/MixedGas.cpp
 )
 source_group(MultiSpecies\\src FILES ${MultiSpecies_CPP_LIST})

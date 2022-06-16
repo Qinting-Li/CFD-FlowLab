@@ -7935,12 +7935,7 @@ namespace PHSPACE
             {
                 if (ifLowSpeedPrecon == 0)
                 {
-                     RDouble refGama= parameters->GetRefGama();
-                    int useHyflowSetting = parameters->GetUseHyflowSetting();
-                    if(bcParamDB->IsExist("refGama", PHDOUBLE, 1) && useHyflowSetting == 1)
-                    {
-                        bcParamDB->GetData("refGama", &refGama, PHDOUBLE, 1);
-                    }
+                    RDouble refGama= parameters->GetRefGama();
                     FarFieldRiemannInvariants(grid, structBC, refGama);
                 }
                 else
@@ -8213,7 +8208,6 @@ namespace PHSPACE
         int nSurface = structBC->GetFaceDirection() + 1;
 
         Param_NSSolverStruct *parameters = GetControlParameters();
-        int useHyflowSetting = parameters->GetUseHyflowSetting();
 
         int is1, js1, ks1, is2, js2, ks2;
         int it1, jt1, kt1, it2, jt2, kt2;
@@ -8253,26 +8247,6 @@ namespace PHSPACE
                         q(it1, jt1, kt1, m) = q(is1, js1, ks1, m);
                         q(it2, jt2, kt2, m) = q(it1, jt1, kt1, m);
                     }
-
-#ifdef USE_HYFLOW_CODE
-                    if(useHyflowSetting == 1)
-                    {
-                        if(leftOrRightIndex == -1)
-                        {
-                            normalComponetX = -faceNormalComponentX(is1, js1, ks1, nSurface);
-                            normalComponetY = -faceNormalComponentY(is1, js1, ks1, nSurface);
-                            normalComponetZ = -faceNormalComponentZ(is1, js1, ks1, nSurface);
-                        }
-                        else
-                        {
-                            normalComponetX = faceNormalComponentX(it1, jt1, kt1, nSurface);
-                            normalComponetY = faceNormalComponentY(it1, jt1, kt1, nSurface);
-                            normalComponetZ = faceNormalComponentZ(it1, jt1, kt1, nSurface);
-                        }
-                        GAS_SPACE::computeOutSpeed(q(it1, jt1, kt1, IU), q(it1, jt1, kt1, IV), q(it1, jt1, kt1, IW), normalComponetX, normalComponetY, normalComponetZ);   //! modeified  by dms.
-                        GAS_SPACE::computeOutSpeed(q(it2, jt2, kt2, IU), q(it2, jt2, kt2, IV), q(it2, jt2, kt2, IW), normalComponetX, normalComponetY, normalComponetZ);   //! modeified  by dms.
-                    }
-#endif
 
                     if (isWennScheme == 1)
                     {
@@ -9197,14 +9171,6 @@ namespace PHSPACE
         RDouble4D &zfn = *(grid->GetFaceNormalZ());
         RDouble4D &faceNormalVelocity = *(grid->GetFaceNormalVelocity());
 
-        //RDouble refGama= parameters->GetRefGama();
-        //int useHyflowSetting = parameters->GetUseHyflowSetting();
-        //if(bcParamDB->IsExist("refGama", PHDOUBLE, 1) && useHyflowSetting == 1)
-        //{
-        //    bcParamDB->GetData("refGama", &refGama, PHDOUBLE, 1);
-        //    //bcParamDB->GetData("localNonDimensionalTemperature", &localNonDimensionalTemperature, PHDOUBLE, 1);
-        //}
-        
 
         //! s_lr3d is used for calculating id, jd, kd, and the latters are further used for calculating in, jn, kn.
         //! in, jn, kn, iSurface and lr are used for calculating nx, ny, nz.
@@ -9552,15 +9518,10 @@ namespace PHSPACE
         RDouble4D &zfn = *(grid->GetFaceNormalZ());
 
         RDouble refGama= parameters->GetRefGama();
-        /*int useHyflowSetting = parameters->GetUseHyflowSetting();
-        if(bcParamDB->IsExist("refGama", PHDOUBLE, 1) && useHyflowSetting == 1)
-        {
-            bcParamDB->GetData("refGama", &refGama, PHDOUBLE, 1);
-            //bcParamDB->GetData("localNonDimensionalTemperature", &localNonDimensionalTemperature, PHDOUBLE, 1);
-        }*/
-
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble mach2 = refMachNumber * refMachNumber;
+
+
         //! in, jn, kn, iSurface and lr are used for calculating nx, ny, nz.
         int iSurface = structBC->GetFaceDirection() + 1;
         int lr = structBC->GetFaceLeftOrRightIndex();

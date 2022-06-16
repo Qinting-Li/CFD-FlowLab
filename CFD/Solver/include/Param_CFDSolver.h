@@ -112,9 +112,6 @@ public:
     //! Get reference gama value.
     RDouble GetRefGama() const;
 
-    //! Hyflow.
-    int GetUseHyflowSetting() const;
-
     //! Get reference dimensional density.
     RDouble GetRefDimensionalPressure() const;
 
@@ -194,8 +191,6 @@ private:
     int statisticMethod;
     int intervalStepFlow;
     int ifLocalTimeStep;
-
-    int useHyflowSetting;
 
     RDouble TorqueRefX;
     RDouble TorqueRefY;

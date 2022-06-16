@@ -549,7 +549,7 @@ void CombinGrid::MergeBCType()
             }
         }
     }
-  }
+  
 
     grid_all->SetNBoundFace(nBFace_all);
     UnstructBCSet **bcr_all = new UnstructBCSet * [nTFace_all];

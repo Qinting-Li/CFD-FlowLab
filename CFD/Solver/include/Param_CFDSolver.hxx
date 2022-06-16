@@ -149,10 +149,6 @@ inline RDouble Param_CFDSolver::GetRefGama() const
     return refGama;
 }
 
-inline int Param_CFDSolver::GetUseHyflowSetting() const
-{
-    return useHyflowSetting;
-}
 
 inline RDouble Param_CFDSolver::GetRefDimensionalPressure() const
 {

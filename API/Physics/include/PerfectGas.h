@@ -125,7 +125,6 @@ public:
 
     //!Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
     //!The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
-    void SetAirInformationByExpData(int useHyflowSetting);
     void SetAirInformationByExpData();
 
     void GetAirInfo(const RDouble &height, RDouble &temperature, RDouble &pressure, RDouble &density, RDouble &soundspeed);

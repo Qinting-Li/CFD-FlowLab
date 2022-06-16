@@ -519,20 +519,6 @@ void GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase()
             RDouble wallTemperature;
             RDouble catalyticCoef, staticPressureRelaxCorf;
 
-            /*if (!bcParamDB->IsExist("staticPressureRelaxCorf", PHDOUBLE, 1))
-            {
-                if(GlobalDataBase::GetIntParaFromDB("useHyflowSetting") == 1)
-                {
-                    staticPressureRelaxCorf = GlobalDataBase::GetDoubleParaFromDB("staticPressureRelaxCorf");
-                }
-                else
-                {
-                    staticPressureRelaxCorf = 1.0;
-                }
-                    
-                bcParamDB->UpdateData("staticPressureRelaxCorf", &staticPressureRelaxCorf, PHDOUBLE, 1);
-            }*/
-
             if (!bcParamDB->IsExist("catalyticCoef", PHDOUBLE, 1))
             {
                 catalyticCoef = GlobalDataBase::GetDoubleParaFromDB("catalyticCoef");
@@ -816,18 +802,8 @@ void GlobalBoundaryCondition::SetBCInitialValuesByHeight(Data_Param *bcParamDB, 
         height = GlobalDataBase::GetDoubleParaFromDB("height");
     }
     RDouble localDimensionalDensity, localDimensionalVelocity, localDimensionalPressure, localDimensionalSonicSpeed;
-    int useHyflowSetting = GlobalDataBase::GetIntParaFromDB("useHyflowSetting");
-    int nGasModel = GlobalDataBase::GetIntParaFromDB("nGasModel");
-    if (useHyflowSetting == 1 && nGasModel == 0)
-    {
-#ifdef USE_HYFLOW_CODE
-        gas->GetAirInfo_Modify(height, localDimensionalTemperature, localDimensionalPressure, localDimensionalDensity, localDimensionalSonicSpeed);
-#endif
-    }
-    else
-    {
-        gas->GetAirInfo(height, localDimensionalTemperature, localDimensionalPressure, localDimensionalDensity, localDimensionalSonicSpeed);
-    }
+    
+    gas->GetAirInfo(height, localDimensionalTemperature, localDimensionalPressure, localDimensionalDensity, localDimensionalSonicSpeed);
     
     localVibrationTemperature = localDimensionalTemperature;
 

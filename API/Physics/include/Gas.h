@@ -167,7 +167,6 @@ public:
 
     //! Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used){}. However, only the T and p is useful.
     //! The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
-    virtual void SetAirInformationByExpData(int useHyflowSetting){};
     virtual void SetAirInformationByExpData(){};
 
     //! This function is mainly for the average density of the mixture in chemical reactions.
@@ -1100,9 +1099,6 @@ public:
     virtual void  ComputeTemperatureFromTotalTemperature(RDouble *massF, RDouble totalTemperature, RDouble mach, RDouble &Temperature, RDouble &gama, int Dimensional = 0){};
     virtual void  ComputeGama(RDouble *massF, RDouble Temperature, RDouble &gama, int Dimensional = 0){};
     virtual void  ComputeGamaAndHo(RDouble *massF, RDouble *Temperature, RDouble &gama, RDouble &H, int Dimensional = 0){};
-#ifdef USE_HYFLOW_CODE
-    virtual void  GetAirInfo_Modify(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a);
-#endif
 };
 
 extern Gas *gas;
