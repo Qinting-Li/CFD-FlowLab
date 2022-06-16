@@ -58,6 +58,12 @@ public:
     //! Get inviscidSchemeName.
     string GetInviscidSchemeName() const;
 
+    //! Get iniSpeedCoef.
+    RDouble GetIniSpeedCoef() const;
+
+    //! Get parameter judge whether modify Wenn Scheme.
+    int GetWennSchemeFlag() const;
+
 private:
     RDouble MUSCLCoefXk;
     RDouble MUSCLCoefXb;
@@ -75,6 +81,10 @@ private:
     RDouble staticPressureRelaxCorf;
 
     string inviscidSchemeName;
+
+    RDouble iniSpeedCoef;
+
+    int isWennScheme;
 };
 
 #include "Param_NSSolverStruct.hxx"

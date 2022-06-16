@@ -17,7 +17,7 @@ int GlobalSolvers::GetNumberOfSolvers(int iZone)
 
 void GlobalSolvers::AddSolverToGlobal(int iZone, vector < PHSolver * > *solversList)
 {
-    if ( globalSolversList->size() == 0 )
+    if (globalSolversList->size() == 0)
     {
         int nZones = PHMPI::GetNumberofGlobalZones();
         globalSolversList->resize(nZones, 0);

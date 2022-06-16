@@ -14,7 +14,6 @@ string defaultParaFile = "./bin/cfd_para.hypara";
 //                 Grid repairing: repair the original grid in order to remove the negative volume cells.
 //            2 -- Wall distance computation for turb-solver.
 //            3 -- Grid partition.
-//            4 -- Knowledge repository / examples of PHengLEI-API.
 int ndim      = 2;
 int nparafile = 1;
 
@@ -37,8 +36,8 @@ string parafilename = "./bin/cfd_para_transonic.hypara";
 //int    nsimutask    = 1;
 //string parafilename = "./bin/grid_deform_para.hypara";
 
-//int    nsimutask    = 4;
-//string parafilename = "./bin/repository.hypara";
+//int    nsimutask    = 1;
+//string parafilename = "./bin/grid_refine_para.hypara";
 
 //int    nsimutask    = 5;
 //string parafilename = "./bin/overset_grid_view.hypara";
@@ -48,6 +47,9 @@ string parafilename = "./bin/cfd_para_transonic.hypara";
 
 //int    nsimutask    = 14;
 //string parafilename = "./bin/integrative_solver.hypara";
+
+//int    nsimutask    = 15;
+//string parafilename = "./bin/gridcheck_solver.hypara";
 
 //int    nsimutask    = 99;
 //string parafilename = "./bin/post_processing.hypara";

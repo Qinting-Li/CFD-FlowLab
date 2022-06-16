@@ -5,7 +5,13 @@
 #include "Param_NSSolver.h"
 #include "Math_BasisFunction.h"
 #include "PHIO.h"
+
+#ifdef USE_HYFLOW_CODE
+#include "RealGas.h"
+#else
 #include "Gas.h"
+#endif
+#include "TK_Log.h"
 
 using namespace std;
 
@@ -143,14 +149,23 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
     int intervalStepPlot = parameters->GetIntervalStepPlot();
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
 
+    int sys_gridtype = 0;
+    GlobalDataBase::GetData("sys_gridtype", &sys_gridtype, PHINT, 1);
+
+    int nProtectData = 0;
+    if(GlobalDataBase::IsExist("nProtectData", PHINT, 1))
+    {
+        nProtectData = GlobalDataBase::GetIntParaFromDB("nProtectData");
+    }
+
     bool isSubIterationDump = true;
     int isUnsteady = parameters->GetIsUnsteady();
-    if (isUnsteady != 0)
+    if (isUnsteady)
     {
         GlobalDataBase::GetData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
     }
 
-    if ( outnstep % intervalStepFlow == 0 && isSubIterationDump )
+    if (outnstep % intervalStepFlow == 0 && isSubIterationDump)
     {
         int dumpStandardModel = 0;
         GlobalDataBase::GetIntParaFromDB("dumpStandardModel");
@@ -162,11 +177,50 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
 
     if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
     {
-        //! To dump restart data for continual simulation.
-        ActionKey *actkeyDumpRestartData = new ActionKey();
-        FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
-        DumpRestartData(actkeyDumpRestartData);
-        delete actkeyDumpRestartData;
+        if(nProtectData ==0)
+        {
+            //! To dump restart data for continual simulation.
+            ActionKey *actkeyDumpRestartData = new ActionKey();
+            FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
+            DumpRestartData(actkeyDumpRestartData);
+            delete actkeyDumpRestartData;
+        }
+
+        else
+        {
+            int RestartFile = 0;
+            ActionKey *actkeyDumpRestartData = new ActionKey();
+            FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
+            DumpProtectData(actkeyDumpRestartData, RestartFile);
+            delete actkeyDumpRestartData;
+
+            if(outnstep > 1)
+            {
+                if(RestartFile == 0)
+                {
+                    string path = "./results/flow1.dat";
+                    remove(path.c_str());
+
+                    if(PHMPI::IsParallelRun())
+                    {
+                        string path = "./results/flow1_0.dat";
+                        remove(path.c_str());
+                    }
+                }
+
+                else if(RestartFile == 1)
+                {
+                    string path = "./results/flow0.dat";
+                    remove(path.c_str());
+
+                    if(PHMPI::IsParallelRun())
+                    {
+                        string path = "./results/flow0_0.dat";
+                        remove(path.c_str());
+                    }
+                }
+            }
+        }
     }
 
     if (outnstep % intervalStepPlot == 0 && isSubIterationDump)
@@ -224,9 +278,269 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                 FillActionKey(actkeyDumpSurfaceInfo, DUMP_SURFACE_INFO, 0);
                 DumpSurfaceInfo(actkeyDumpSurfaceInfo);
                 delete actkeyDumpSurfaceInfo;
+
+                if (sys_gridtype == STRUCTGRID)
+                {
+                    //! To dump surface max and average heat flux.
+                    ActionKey *actkeyDumpHeatFlux = new ActionKey();
+                    FillActionKey(actkeyDumpHeatFlux, DUMP_HEATFLUX, 0);
+                    DumpHeatFlux(actkeyDumpHeatFlux);
+                    delete actkeyDumpHeatFlux;
+                }
             }
         }
     }
+}
+
+void NSSolver::CheckResult(Grid *grid, int level)
+{
+    //! Compute the residual variation.
+    ActionKey *actkeyCheckResidual = new ActionKey();
+    FillActionKey(actkeyCheckResidual, DUMP_RESIDUAL, level);
+    CheckResidual(actkeyCheckResidual);
+    delete actkeyCheckResidual;
+
+    Param_NSSolver *parameters = GetControlParameters();
+    int nChemical = parameters->GetChemicalFlag();
+    int nTModel = parameters->GetTemperatureModel();
+    int iBranchCode = parameters->GetSelfAdaptionSolveFlag();
+    int interResStep = parameters->GetIntervalStepRes();
+    int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    int nCurrentStep = GlobalDataBase::GetIntParaFromDB("nCurrentStep");
+    int nMaxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
+    RDouble monitorResidual = GlobalDataBase::GetDoubleParaFromDB("monitorResidual");
+
+    int nPauseKey = 0;
+    bool isConvergent = false;
+    if (iBranchCode == 1)
+    {
+        int nIterFirstStep = 1000, nIterSecondStep = 2000, nIterThirdStep = 2000;
+        if (GlobalDataBase::IsExist("nIterFirstStep", PHINT, 1))
+        {
+            nIterFirstStep = GlobalDataBase::GetIntParaFromDB("nIterFirstStep");
+        }
+        if (GlobalDataBase::IsExist("nIterSecondStep", PHINT, 1))
+        {
+            nIterSecondStep = GlobalDataBase::GetIntParaFromDB("nIterSecondStep");
+        }
+        if (GlobalDataBase::IsExist("nIterThirdStep", PHINT, 1))
+        {
+            nIterThirdStep = GlobalDataBase::GetIntParaFromDB("nIterThirdStep");
+        }
+
+        int nIteration = nMaxSimuStep;
+        if (nCurrentStep == 1)
+        {
+            nIteration = nIterFirstStep;
+        }
+        else if (nCurrentStep == 2)
+        {
+            nIteration = nIterFirstStep + nIterSecondStep;
+        }
+        else if (nCurrentStep == 3)
+        {
+            nIteration = nIterFirstStep + nIterSecondStep + nIterThirdStep;
+        }
+
+        if (outnstep >= nIteration)
+        {
+            isConvergent = true;
+        }
+    }
+    else if (iBranchCode == 2)
+    {
+        RDouble firstStepError = 0.01, secondStepError = 0.001, thirdStepError = 0.001;
+        if (GlobalDataBase::IsExist("firstStepError", PHDOUBLE, 1))
+        {
+            firstStepError = GlobalDataBase::GetDoubleParaFromDB("firstStepError");
+        }
+        if (GlobalDataBase::IsExist("secondStepError", PHDOUBLE, 1))
+        {
+            secondStepError = GlobalDataBase::GetDoubleParaFromDB("secondStepError");
+        }
+        if (GlobalDataBase::IsExist("thirdStepError", PHDOUBLE, 1))
+        {
+            thirdStepError = GlobalDataBase::GetDoubleParaFromDB("thirdStepError");
+        }
+
+        if (nCurrentStep == 1)
+        {
+            if (monitorResidual <= firstStepError)
+            {
+                isConvergent = true;
+            }
+        }
+        else if (nCurrentStep == 2)
+        {
+            if (monitorResidual <= secondStepError)
+            {
+                isConvergent = true;
+            }
+        }
+        else if (nCurrentStep == 3)
+        {
+            if (monitorResidual <= thirdStepError)
+            {
+                isConvergent = true;
+            }
+        }
+    }
+
+    if (isConvergent)
+    {
+        nPauseKey = 1;
+        PHSPACE::GlobalDataBase::UpdateData("nPauseKey", &nPauseKey, PHINT, 1);
+    }
+
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == 0 && (outnstep % interResStep == 0))
+    {
+        string keyVariable = GlobalDataBase::GetStrParaFromDB("keyVariable");
+        ostringstream oss;
+        oss<<"The residual variation of "<<keyVariable<<" is: ";
+        oss << setiosflags(ios::left);
+        oss << setprecision(5);
+        oss << setiosflags(ios::scientific);
+        oss << setiosflags(ios::showpoint);
+        oss<<monitorResidual<<endl;
+        cout<<oss.str();
+        //cout<<"The residual variation of "<<keyVariable<<" is: "<<monitorResidual<<endl;
+    }
+}
+
+void NSSolver::DumpCFLNumber(Grid *grid, int level)
+{
+    //! Obtain the CFL number.
+    ActionKey *actkeyObtainCFLNumber = new ActionKey();
+    FillActionKey(actkeyObtainCFLNumber, DUMP_RESIDUAL, level);
+    //! Obtain the minimum CFL number and maximum CFL number.
+    ObtainCFLNumber(actkeyObtainCFLNumber);
+
+    Param_NSSolver *parameters = GetControlParameters();
+    int interResStep = parameters->GetIntervalStepRes();
+    int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == 0 && (outnstep % interResStep == 0))
+    {
+        RDouble globalMinCFL = GlobalDataBase::GetDoubleParaFromDB("globalMinCFL");
+        RDouble globalMaxCFL = GlobalDataBase::GetDoubleParaFromDB("globalMaxCFL");
+
+        //! Dump to file.
+        string saveHeatRes = "./results/dumpCFL.plt";
+        if (GlobalDataBase::IsExist("saveHeatRes", PHSTRING, 1))
+        {
+            saveHeatRes = GlobalDataBase::GetStrParaFromDB("saveHeatRes");
+        }
+        actkeyObtainCFLNumber->filename = saveHeatRes;
+        if (actkeyObtainCFLNumber->filename == "")
+        {
+            return;
+        }
+        ios_base::openmode openmode = ios_base::out|ios_base::app;
+        actkeyObtainCFLNumber->openmode = openmode;
+        //Open file.
+        ParallelOpenFile(actkeyObtainCFLNumber);
+        fstream &file = *actkeyObtainCFLNumber->file;
+        std::ostringstream oss;
+        if (IfFileEmpty(file))
+        {
+            vector<string> title_tecplot;
+            title_tecplot.push_back("Title=\"The change of CFL number\"");
+            title_tecplot.push_back("Variables=");
+            title_tecplot.push_back("\"Iterations\"");
+            title_tecplot.push_back("\"globalMinCFL\"");
+            title_tecplot.push_back("\"globalMaxCFL\"");
+            for (std::size_t i = 0; i < title_tecplot.size(); ++ i)
+            {
+                oss << title_tecplot[i] << "\n";
+            }
+        }
+        oss << setiosflags(ios::left);
+        oss << setprecision(5);
+        //oss << setiosflags(ios::scientific);
+        oss << setiosflags(ios::showpoint);
+
+        oss << setw(7) << outnstep << "    ";
+        oss << globalMinCFL << "    "<<globalMaxCFL<<endl;
+
+        WriteASCIIFile(file, oss.str());
+
+        //Close file.
+        ParallelCloseFile(actkeyObtainCFLNumber);
+    }
+
+    delete actkeyObtainCFLNumber;
+}
+
+void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
+{
+    //! Compute the surface heating change.
+    ActionKey *actkeyCheckHeatChange = new ActionKey();
+    FillActionKey(actkeyCheckHeatChange, DUMP_RESIDUAL, level);
+    ComputeSurfaceHeatingChange(actkeyCheckHeatChange);
+
+    Param_NSSolver *parameters = GetControlParameters();
+    int interResStep = parameters->GetIntervalStepRes();
+    int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+
+    int nCurrentProcessorID = PHMPI::GetCurrentProcessorID();
+    if (nCurrentProcessorID == 0 && (outnstep % interResStep == 0))
+    {
+        RDouble monitorHeatingChange = GlobalDataBase::GetDoubleParaFromDB("monitorHeatingChange");
+        ostringstream oss1;
+        oss1 << setiosflags(ios::left);
+        oss1 << setprecision(5);
+        oss1 << setiosflags(ios::scientific);
+        oss1 << setiosflags(ios::showpoint);
+        oss1 << "The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
+        cout<<oss1.str();
+        //cout<<"The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
+
+        //! Dump to file.
+        string saveHeatRes = "./results/heatResidual.plt";
+        if (GlobalDataBase::IsExist("saveHeatRes", PHSTRING, 1))
+        {
+            saveHeatRes = GlobalDataBase::GetStrParaFromDB("saveHeatRes");
+        }
+        actkeyCheckHeatChange->filename = saveHeatRes;
+        if (actkeyCheckHeatChange->filename == "")
+        {
+            return;
+        }
+        ios_base::openmode openmode = ios_base::out|ios_base::app;
+        actkeyCheckHeatChange->openmode = openmode;
+        //Open file.
+        ParallelOpenFile(actkeyCheckHeatChange);
+        fstream &file = *actkeyCheckHeatChange->file;
+        std::ostringstream oss;
+        if (IfFileEmpty(file))
+        {
+            vector<string> title_tecplot;
+            title_tecplot.push_back("Title=\"The Surface Heating Change\"");
+            title_tecplot.push_back("Variables=");
+            title_tecplot.push_back("\"Iterations\"");
+            title_tecplot.push_back("\"Heating Change\"");
+            for (std::size_t i = 0; i < title_tecplot.size(); ++ i)
+            {
+                oss << title_tecplot[i] << "\n";
+            }
+        }
+        oss << setiosflags(ios::left);
+        oss << setprecision(5);
+        oss << setiosflags(ios::scientific);
+        oss << setiosflags(ios::showpoint);
+
+        oss << setw(7) << outnstep << "    ";
+        oss << monitorHeatingChange <<endl;
+
+        WriteASCIIFile(file, oss.str());
+
+        //Close file.
+        ParallelCloseFile(actkeyCheckHeatChange);
+    }
+
+    delete actkeyCheckHeatChange;
 }
 
 void NSSolver::FillActionKey(ActionKey *actkey, int action, int level)
@@ -244,7 +558,7 @@ RDouble NSSolver::ComputeCFL()
 
     Param_NSSolver *parameters = GetControlParameters();
     //! Steady.
-    int nMGLevel = parameters->GetNMGLevel();        
+    int nMGLevel = parameters->GetNMGLevel();
     if (nMGLevel <= 1)
     {
         //! Finest grid.
@@ -258,9 +572,9 @@ RDouble NSSolver::ComputeCFL()
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
-    RDouble cflEnd   = parameters->GetCFDEnd();
+    RDouble cflEnd   = parameters->GetCFLEnd();
 
-    RDouble cfl = cflStart + ( cflEnd - cflStart ) * MIN ( iterationStep, cflNstep ) / cflNstep;
+    RDouble cfl = cflStart + (cflEnd - cflStart) * MIN (iterationStep, cflNstep) / cflNstep;
 
     return cfl;
 }
@@ -365,6 +679,10 @@ void NSSolver::InitDependentVariables()
         }
         else
         {
+            ComputeViscousCoefficient(fineGrid);
+            #ifdef USE_HYFLOW_CODE
+            GAS_SPACE::ComputeViscousLaminarCoefficient(StructGridCast(fineGrid));
+            #endif
         }
     }
 
@@ -396,6 +714,11 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     CFDSolver::RegisterInterfaceField("wallAircoefData", PHDOUBLE, dataNumber);
 }
 
+void NSSolver::ReleaseCFDSolverInterfaceField()
+{
+    CFDSolver::ReleaseInterfaceField();
+}
+
 void NSSolver::RegisterCFDSolverInterfaceFieldUnstruct()
 {
     Param_NSSolver *parameters = GetControlParameters();
@@ -403,24 +726,24 @@ void NSSolver::RegisterCFDSolverInterfaceFieldUnstruct()
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
 
-    int nEquation = nLaminar + nChemical;
+    int nEquation = GetNumberOfEquations();
 
-    CFDSolver::RegisterInterfaceField( "dqdx", PHDOUBLE, nEquation );
-    CFDSolver::RegisterInterfaceField( "dqdy", PHDOUBLE, nEquation );
-    CFDSolver::RegisterInterfaceField( "dqdz", PHDOUBLE, nEquation );
+    CFDSolver::RegisterInterfaceField("dqdx", PHDOUBLE, nEquation);
+    CFDSolver::RegisterInterfaceField("dqdy", PHDOUBLE, nEquation);
+    CFDSolver::RegisterInterfaceField("dqdz", PHDOUBLE, nEquation);
 
-    CFDSolver::RegisterInterfaceField( "limit", PHDOUBLE, nEquation );
+    CFDSolver::RegisterInterfaceField("limit", PHDOUBLE, nEquation);
 
     int ntmodel = parameters->GetTemperatureModel();
-    CFDSolver::RegisterInterfaceField( "dtdx", PHDOUBLE, ntmodel );
-    CFDSolver::RegisterInterfaceField( "dtdy", PHDOUBLE, ntmodel );
-    CFDSolver::RegisterInterfaceField( "dtdz", PHDOUBLE, ntmodel );
+    CFDSolver::RegisterInterfaceField("dtdx", PHDOUBLE, ntmodel);
+    CFDSolver::RegisterInterfaceField("dtdy", PHDOUBLE, ntmodel);
+    CFDSolver::RegisterInterfaceField("dtdz", PHDOUBLE, ntmodel);
 
     CFDSolver::RegisterInterfaceField("cellQ" , PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("cellCP", PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("cellCF", PHDOUBLE, 1);
 
-    CFDSolver::RegisterInterfaceField( "dq", PHDOUBLE, nEquation );
+    CFDSolver::RegisterInterfaceField("dq", PHDOUBLE, nEquation);
 }
 
 void NSSolver::RegisterCFDSolverInterpointField()
@@ -430,7 +753,7 @@ void NSSolver::RegisterCFDSolverInterpointField()
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     
-    int nEquation = nLaminar + nChemical;
+    int nEquation = GetNumberOfEquations();
 
     CFDSolver::RegisterInterpointField("qnode", PHDOUBLE, nEquation);
     
@@ -489,7 +812,7 @@ void NSSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *dataStore, Inte
     vectorData.push_back(q);
     
     RDouble **t = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("t"));
-
+    
     vectorDimension.push_back(nTemperatureModel);
     vectorData.push_back(t);
 }
@@ -507,6 +830,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     int nTemperatureModel = parameters->GetTemperatureModel();
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
     int nPrecondition = parameters->GetIfLowSpeedPrecon();
+    int nIdealState = parameters->GetIfIdealGasState();
     int nNitrogenIndex = parameters->GetIndexOfNitrogen();
     int nElectronIndex = parameters->GetIndexOfElectron();
 
@@ -515,6 +839,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     RDouble entrFixCoefRight = parameters->GetRoeEntropyFixCoef2();
     RDouble refMachNumber = parameters->GetRefMachNumber();
 
+    RDouble AusmpwPlusLimiter = parameters->GetAusmpwPlusLimiter();
+
     //! Scalar parameters.
     invSchemePara->Setnm(nm);
     invSchemePara->SetNumberOfLaminar(nLaminar);
@@ -522,6 +848,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetNumberOfTemperatureModel(nTemperatureModel);
     invSchemePara->SetNumberOfTotalEquation(nEquation);
     invSchemePara->SetIfPrecondition(nPrecondition);
+    invSchemePara->SetIfIdealState(nIdealState);
     invSchemePara->SetEntropyFixMethod(RoeEntropyFixMethod);
     invSchemePara->SetMachNumber(refMachNumber);
     invSchemePara->SetEntropyFixCoefficients(entrFixCoefLeft, entrFixCoefRight);
@@ -529,6 +856,8 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetLength(faceProxy->size());
     invSchemePara->SetIndexOfNitrogen(nNitrogenIndex);
     invSchemePara->SetIndexOfElectron(nElectronIndex);
+
+    invSchemePara->SetAusmpwPlusLimiter(AusmpwPlusLimiter);
 
     //! Pointer parameters.
     invSchemePara->SetLeftAndRightQ(faceProxy->GetQL(), faceProxy->GetQR());

@@ -1,0 +1,12 @@
+int gridtype    = 1; 
+int SymmetryFaceVector = 1;
+int gridobj= 6 ;
+int omit_no_bound_bc    = 0; 
+int axisup              = 1;
+#########################################################################
+#                           File path                                   #
+string from_gfile      = "./in/m6.fts";
+string out_gfile     = "./out/m6Mirror.fts";
+
+
+

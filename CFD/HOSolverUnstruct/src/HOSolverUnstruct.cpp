@@ -49,7 +49,7 @@ HOSolverUnstruct::~HOSolverUnstruct()
 
 LIB_EXPORT void HOSolverUnstruct::InitControlParameters()
 {
-    if( HODebug ) cout << "InitControlParameters: init. params, check params" << endl;
+    if(HODebug) cout << "InitControlParameters: init. params, check params" << endl;
 
     controlParameters = new HOSolverUnstructParam();
     controlParameters->Init();
@@ -57,7 +57,7 @@ LIB_EXPORT void HOSolverUnstruct::InitControlParameters()
 
 void HOSolverUnstruct::ReadParameter()
 {
-    if( HODebug ) cout << "ReadParameter" << endl;
+    if(HODebug) cout << "ReadParameter" << endl;
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     string uns_scheme_name = parameters->GetSpaceSecheme();
 
@@ -65,7 +65,7 @@ void HOSolverUnstruct::ReadParameter()
     GlobalDataBase::UpdateData("uns_scheme", &uns_scheme, PHINT, 1);
 }
 
-void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
+void HOSolverUnstruct::AllocateGlobalVar(Grid * gridIn)
 {
     CFDSolver::AllocateGlobalVar(gridIn);
     
@@ -73,7 +73,7 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
     int hLevel = grid->GetLevel();
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
 
-    if( hLevel == 0 ) highOrderGrids.resize( parameters->GetNMGLevel() );
+    if(hLevel == 0) highOrderGrids.resize(parameters->GetNMGLevel());
  
     int nTotalCell = grid->GetNTotalCell();
     //int nTotalFace = grid->GetNTotalFace();
@@ -90,20 +90,20 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
     GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int neqn = nl + nchem;
 
-    if( hLevel == 0 ) highOrderGrids.resize( parameters->GetNMGLevel() );
+    if(hLevel == 0) highOrderGrids.resize(parameters->GetNMGLevel());
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     //! @cell
     //std::vector< HighOrderCell > & highOrderCells = highOrderGrids[hLevel].highOrderCells;
-    highOrderGrid.CopyGeometryInfoToHighOrderCell( grid );
+    highOrderGrid.CopyGeometryInfoToHighOrderCell(grid);
   
     //! @face
     //std::vector< HighOrderFace > & highOrderFaces = highOrderGrids[hLevel].highOrderFaces;
-    highOrderGrid.CopyGeometryInfoToHighOrderFace( grid );
+    highOrderGrid.CopyGeometryInfoToHighOrderFace(grid);
 
     //! @node
     //std::vector< HighOrderNode > & highOrderNodes = highOrderGrids[hLevel].highOrderNodes;
-    highOrderGrid.CopyGeometryInfoToHighOrderNode( grid );
+    highOrderGrid.CopyGeometryInfoToHighOrderNode(grid);
 
     HighOrderGrid::CellSolType & highOrderCellsSol = highOrderGrid.highOrderCellsSol;
     HighOrderGrid::FaceSolType & highOrderFacesSol = highOrderGrid.highOrderFacesSol;
@@ -113,27 +113,27 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
     const int isUnsteady  = parameters->GetIsUnsteady();
     const int viscousType = parameters->GetViscousType();
 
-    if ( hLevel == 0 )
+    if (hLevel == 0)
     {
-        if ( pNLevels <= 0 )
+        if (pNLevels <= 0)
         {
             pNLevels = 1;
         }
 
-        if( ( pNLevels != (dgSolOrder + 1)) && ( pNLevels > 1 ) )
+        if((pNLevels != (dgSolOrder + 1)) && (pNLevels > 1))
         {
             cout<<" The P_multigrid of DG_parm is wrong, please checking  "<<endl;
         }
 
         //totalFaceGaussPoint
-        highOrderGrids[hLevel].totalFaceGaussPoint.resize( pNLevels );
-        highOrderCellsSol.resize( pNLevels );
-        highOrderFacesSol.resize( pNLevels );
+        highOrderGrids[hLevel].totalFaceGaussPoint.resize(pNLevels);
+        highOrderCellsSol.resize(pNLevels);
+        highOrderFacesSol.resize(pNLevels);
 
-        for( int img = 0; img < pNLevels; ++ img )
+        for(int img = 0; img < pNLevels; ++ img)
         {
-            highOrderGrid.InitHighOrderCellSol( grid, dgSolOrder, img, isUnsteady, viscousType );
-            highOrderGrid.InitHighOrderFaceSol( grid, dgSolOrder, img, isUnsteady, viscousType );
+            highOrderGrid.InitHighOrderCellSol(grid, dgSolOrder, img, isUnsteady, viscousType);
+            highOrderGrid.InitHighOrderFaceSol(grid, dgSolOrder, img, isUnsteady, viscousType);
         }
     }
     else
@@ -142,8 +142,8 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
         highOrderGrids[hLevel].totalFaceGaussPoint.resize(1);
         highOrderCellsSol.resize(1);
         highOrderFacesSol.resize(1);
-        highOrderGrid.InitHighOrderCellSol( grid, 0, 0, isUnsteady, viscousType );
-        highOrderGrid.InitHighOrderFaceSol( grid, 0, 0, isUnsteady, viscousType );
+        highOrderGrid.InitHighOrderCellSol(grid, 0, 0, isUnsteady, viscousType);
+        highOrderGrid.InitHighOrderFaceSol(grid, 0, 0, isUnsteady, viscousType);
     }    
 
     //	int ntmodel = parameters->GetNTemperatureModel();
@@ -153,20 +153,20 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
     //	grid->UpdateDataPtr("t"  , t);
 
     RDouble * dt  = new RDouble [ nTotal ];
-    grid->UpdateDataPtr("dt" , dt );
+    grid->UpdateDataPtr("dt" , dt);
 
     //	RDouble * gama  = new RDouble [ nTotal ];
     //	grid->UpdateDataPtr("gama", gama);
 
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
-    RDouble *** q   = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells );
-    RDouble *** res = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells );
+    RDouble *** q   = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells);
+    RDouble *** res = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells);
 
     delete [] dofsOfCells;
     
-    grid->UpdateDataPtr("q"  , q  );
+    grid->UpdateDataPtr("q"  , q );
     grid->UpdateDataPtr("res", res);
 
     if (grid->GetLevel() == 0)
@@ -177,20 +177,20 @@ void HOSolverUnstruct::AllocateGlobalVar( Grid * gridIn )
     }
 }
 
-void HOSolverUnstruct::DeAllocateGlobalVar( Grid * gridIn )
+void HOSolverUnstruct::DeAllocateGlobalVar(Grid * gridIn)
 {
-    if( HODebug )  cout << "DeAllocateGlobalVar" << endl;
+    if(HODebug)  cout << "DeAllocateGlobalVar" << endl;
 
-    RDouble *** q   = reinterpret_cast< RDouble *** > ( gridIn->GetDataPtr("q"  ) );
-    RDouble *** res = reinterpret_cast< RDouble *** > ( gridIn->GetDataPtr("res") );
+    RDouble *** q   = reinterpret_cast< RDouble *** > (gridIn->GetDataPtr("q" ));
+    RDouble *** res = reinterpret_cast< RDouble *** > (gridIn->GetDataPtr("res"));
 
-    DelPointer3(q  );
+    DelPointer3(q );
     DelPointer3(res);
 }
 
 void HOSolverUnstruct::RegisterCFDSolverInterfaceField()
 {
-    if( HODebug ) cout << "RegisterCFDSolverInterfaceField" << endl;
+    if(HODebug) cout << "RegisterCFDSolverInterfaceField" << endl;
 }
 
 void HOSolverUnstruct::InitMemory()
@@ -198,6 +198,11 @@ void HOSolverUnstruct::InitMemory()
     InitControlParameters();
     ReadParameter();
     AllocateGlobalVariables();
+}
+
+void HOSolverUnstruct::ReleaseMemory()
+{
+    DeAllocateGlobalVariables();
 }
 
 void HOSolverUnstruct::AllocateGlobalVariables()
@@ -218,7 +223,7 @@ bool HOSolverUnstruct::JudgeIfReadAverage()
 
     if (PHMPI::IsParallelRun())
     {
-        averageFlowFile = PHSPACE::AddSymbolToFileName( averageFlowFile, "_", 0 );
+        averageFlowFile = PHSPACE::AddSymbolToFileName(averageFlowFile, "_", 0);
     }
 
     bool restart_flag = false;
@@ -247,7 +252,7 @@ bool HOSolverUnstruct::JudgeIfRestart()
     bool restart_flag = false;
 
     ifstream infile(restartNSFile.c_str(), ios::in);
-    if ( infile )
+    if (infile)
     {
         restart_flag = true;
         infile.close();
@@ -297,13 +302,13 @@ void HOSolverUnstruct::InitFlow()
     GlobalDataBase::UpdateData("globalMinTimeStep",&globalMinTimeStep, PHDOUBLE, 1);
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if (isUnsteady != 0)
+    if (isUnsteady)
     {
         int ifStaticsFlowField = parameters->GetIfStaticsFlowField();
         int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
         bool isReadAverageFlow = ifStaticsFlowField && (outnstep >= startStatisticStep);
-        if ( isReadAverageFlow && readFlowFile && JudgeIfReadAverage())
+        if (isReadAverageFlow && readFlowFile && JudgeIfReadAverage())
         {
             //! To dump restart data for continual simulation.
             ActionKey *actkeyReadAverageFlow = new ActionKey();
@@ -341,8 +346,8 @@ void HOSolverUnstruct::InitFlowAsRestart()
     GlobalDataBase::GetData("nchem", &nchem, PHINT, 1);
     int neqn = nl + nchem;
 
-    RDouble *prim_inf = reinterpret_cast<RDouble *> ( GlobalDataBase::GetDataPtr("prim_inf"  ) );
-    RDouble refGama = GlobalDataBase::GetDoubleParaFromDB( "refGama" );
+    RDouble *prim_inf = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf" ));
+    RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
 
     vector < RDouble > conserValue(5,0.0);
 
@@ -363,13 +368,13 @@ void HOSolverUnstruct::InitFlowAsRestart()
     RDouble *** q = reinterpret_cast< RDouble *** > (grid->GetDataPtr("q"));
 
     int ndof = 0;
-    for ( int ieqn = 0; ieqn < neqn; ++ ieqn )
+    for (int ieqn = 0; ieqn < neqn; ++ ieqn)
     {
-        for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             ndof = highOrderGrids[hLevel].highOrderCellsSol[0][iCell].nDOFsSol;
 
-            for( int idof = 0; idof < ndof; ++ idof)
+            for(int idof = 0; idof < ndof; ++ idof)
             {
                 q[iCell][ieqn][idof] = highOrderGrids[hLevel].highOrderCellsSol[0][iCell].dofQ[ieqn][idof];
             }
@@ -378,7 +383,7 @@ void HOSolverUnstruct::InitFlowAsRestart()
 
     int isUnsteady = parameters->GetIsUnsteady();
 
-    if (isUnsteady == 0) return;
+    if (!isUnsteady) return;
     //for unsteady problem, the initial condition must be high order
     cout<<" the initial condition must be high order for unsteady problem------> InitFlowAsRestart()"<<endl;
 
@@ -392,7 +397,7 @@ void HOSolverUnstruct::InitDependentVariables()
     
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int viscousType = parameters->GetViscousType();
-    if ( viscousType > INVISCID )
+    if (viscousType > INVISCID)
     {
         CompViscousCoef(fgrid);
         InitViscousCoefTurb(fgrid);
@@ -401,13 +406,13 @@ void HOSolverUnstruct::InitDependentVariables()
 
 void HOSolverUnstruct::Boundary(Grid *gridIn)
 {
-    if( HODebug ) cout << "Boundary: set the ghost cell q£¬DG needs to implement the special BC accroding to the BC type." << endl;
+    if(HODebug) cout << "Boundary: set the ghost cell q£¬DG needs to implement the special BC accroding to the BC type." << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int       *left_cell_of_face   = grid->GetLeftCellOfFace();
     int       *right_cell_of_face  = grid->GetRightCellOfFace();
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     int       nBoundFace = grid->GetNBoundFace();
     
@@ -450,13 +455,13 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
     prims = new RDouble[nl+nchem];
     primt = new RDouble[nl+nchem];
 
-    RDouble *primInflow = reinterpret_cast< RDouble * >( GlobalDataBase::GetDataPtr("prim_inf") );
+    RDouble *primInflow = reinterpret_cast< RDouble * >(GlobalDataBase::GetDataPtr("prim_inf"));
     bool massFlow = false;
     RDouble massAlpha = 1.0;
     double massIn  = 1.0;
     double massOut = 1.0;
 
-    if ( massFlow )
+    if (massFlow)
     {
         //ComputeMassFlow(grid);
         GlobalDataBase::GetData("massIn", &massIn, PHDOUBLE, 1);
@@ -475,7 +480,7 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
 
     int isViscous = parameters->IsViscous();
 
-    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le = left_cell_of_face [ iFace ];
         re = right_cell_of_face[ iFace ];
@@ -483,7 +488,7 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
         HighOrderFaceSol & highOrderFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         numberGaussPoint = highOrderFaceSol.integNumberOfGaussPoint;
 
-        if ( bcType < 0 ) //interface
+        if (bcType < 0) //interface
         {
             continue;
         }
@@ -614,11 +619,11 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
             
             continue;
         }
-        else if ( bcType == FARFIELD )
+        else if (bcType == FARFIELD)
         {
-            if( ifLowSpeedPrecon == 0 )
+            if(ifLowSpeedPrecon == 0)
             {
-                for ( int iGausspoint = 0; iGausspoint < numberGaussPoint; ++ iGausspoint )
+                for (int iGausspoint = 0; iGausspoint < numberGaussPoint; ++ iGausspoint)
                 {
                     xNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][0];
                     yNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][1];
@@ -645,16 +650,16 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
                     conservationQ[1][rGausspoint] = primt[0] * primt[1];
                     conservationQ[2][rGausspoint] = primt[0] * primt[2];
                     conservationQ[3][rGausspoint] = primt[0] * primt[3];
-                    conservationQ[4][rGausspoint] = primt[4] / HO_GAMAM1 + 0.5 * primt[0] * ( pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2) );
+                    conservationQ[4][rGausspoint] = primt[4] / HO_GAMAM1 + 0.5 * primt[0] * (pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2));
                 }
             }
             else
             {
             }
         }
-        else if ( bcType == INFLOW )
+        else if (bcType == INFLOW)
         {
-            for ( int iGausspoint = 0; iGausspoint < numberGaussPoint; ++ iGausspoint )
+            for (int iGausspoint = 0; iGausspoint < numberGaussPoint; ++ iGausspoint)
             {
                 xNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][0];
                 yNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][1];
@@ -669,14 +674,14 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
                 conservationQ[1][rGausspoint] = primt[0] * primt[1];
                 conservationQ[2][rGausspoint] = primt[0] * primt[2];
                 conservationQ[3][rGausspoint] = primt[0] * primt[3];
-                conservationQ[4][rGausspoint] = primt[4] / HO_GAMAM1 + 0.5 * primt[0] * ( pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2) );
+                conservationQ[4][rGausspoint] = primt[4] / HO_GAMAM1 + 0.5 * primt[0] * (pow(primt[1],2) + pow(primt[2],2) + pow(primt[3],2));
             } 
 
             continue;
         }
         else if (bcType == OUTFLOW)
         { 
-            for ( int iGausspoint = 0; iGausspoint < numberGaussPoint; ++ iGausspoint )
+            for (int iGausspoint = 0; iGausspoint < numberGaussPoint; ++ iGausspoint)
             {
                 xNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][0];
                 yNormal = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].metricNormalsFace[iGausspoint][1];
@@ -738,11 +743,11 @@ void HOSolverUnstruct::CompViscousCoef(Grid *gridIn)
 
     RDouble R = parameters->GetR();
 
-    for ( int iCell = 0; iCell < nTotal; ++ iCell )
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
         //compute gauss point temperature of volume
         int numberGaussPoint = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].integNumberOfGaussPoint;
-        for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+        for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             RDouble conserValue[5];
             //Get conservation variable
@@ -752,17 +757,17 @@ void HOSolverUnstruct::CompViscousCoef(Grid *gridIn)
             conserValue[3] = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].q[3][iGaussPoint];
             conserValue[4] = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].q[4][iGaussPoint];
 
-            RDouble pre = ComputePressure( conserValue );
+            RDouble pre = ComputePressure(conserValue);
             RDouble T = pre / conserValue[0] / R;
-            highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].visl[iGaussPoint] = pow(T,1.5) * ( 1.0 + tsuth ) / ( T + tsuth );
+            highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].visl[iGaussPoint] = pow(T,1.5) * (1.0 + tsuth) / (T + tsuth);
         }
     }
 
-    for ( int iFace = 0; iFace < nTotalFace; ++ iFace )
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         //compute gauss point temperature of volume
         int numberGaussPoint = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].integNumberOfGaussPoint;
-        for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+        for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             RDouble conserValue[5];
             //Get conservation variable
@@ -772,17 +777,17 @@ void HOSolverUnstruct::CompViscousCoef(Grid *gridIn)
             conserValue[3] = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].q[3][iGaussPoint];
             conserValue[4] = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].q[4][iGaussPoint];
 
-            RDouble pre = ComputePressure( conserValue );
+            RDouble pre = ComputePressure(conserValue);
             RDouble T = pre / conserValue[0] / R;
 
-            highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].visl[iGaussPoint] = pow(T,1.5) * ( 1.0 + tsuth ) / ( T + tsuth );
+            highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].visl[iGaussPoint] = pow(T,1.5) * (1.0 + tsuth) / (T + tsuth);
         }
     }
 }
 
-void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
+void HOSolverUnstruct::ComputeGaussPointQ(Grid * gridIn)
 {
-    UnstructGrid * grid = UnstructGridCast( gridIn );
+    UnstructGrid * grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
@@ -793,7 +798,7 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
     int hLevel = grid->GetLevel();
     int pLevel = parameters->pMultiGrid;
 
-    if( pLevel == 1 )
+    if(pLevel == 1)
     {
         pLevel = 0;
     }
@@ -815,20 +820,20 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
 
     RDouble qTmp = 0.0, qLTmp, qRTmp;
 
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         //compute gauss point temperature of volume
         HighOrderCellSol & uHOCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell];
         numberGaussPoint = uHOCellSol.integNumberOfGaussPoint;
         ndof = uHOCellSol.nDOFsSol;        
-        for ( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint )
+        for (int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             //compute conservation variable
-            for ( int ieqn = 0; ieqn < nEquation; ++ ieqn )
+            for (int ieqn = 0; ieqn < nEquation; ++ ieqn)
             {
                 //uHOCellSol.q[ieqn][iGaussPoint] = 0.0;
                 qTmp = 0.0;
-                for ( int idof =0; idof < ndof; ++ idof )
+                for (int idof =0; idof < ndof; ++ idof)
                 {
                     qTmp += uHOCellSol.basisFuncCellIntegration[iGaussPoint][idof] * uHOCellSol.dofQ[ieqn][idof];
                 }
@@ -838,7 +843,7 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
         }
     }
 
-    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         HighOrderFaceSol & uHOFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         //compute gauss point temperature of face
@@ -846,11 +851,11 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
         leftCell = left_cell_of_face[iFace];
         HighOrderCellSol & uHOLeftCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][leftCell];
 
-        for ( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint )
+        for (int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             //compute conservation variable
             rGaussPoint = iGaussPoint + numberGaussPoint;
-            for ( int ieqn = 0; ieqn < nEquation; ++ ieqn )
+            for (int ieqn = 0; ieqn < nEquation; ++ ieqn)
             {
                 qLTmp = 0.0;
                 for(int idof =0; idof < ndof; ++ idof)
@@ -863,7 +868,7 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
         }
     }
     
-    for ( int iFace = nBoundFace; iFace < nTotalFace; ++ iFace )
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
         HighOrderFaceSol & uHOFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         //compute gauss point temperature of face
@@ -872,15 +877,15 @@ void HOSolverUnstruct::ComputeGaussPointQ( Grid * gridIn )
         rightCell = right_cell_of_face[iFace];
         HighOrderCellSol & uHOLeftCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][leftCell];
         HighOrderCellSol & uHORigtCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][rightCell];
-        for ( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint )
+        for (int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             //compute conservation variable
             rGaussPoint = iGaussPoint + numberGaussPoint;
-            for ( int ieqn = 0; ieqn < nEquation; ++ ieqn )
+            for (int ieqn = 0; ieqn < nEquation; ++ ieqn)
             {
                 qLTmp = 0.0;
                 qRTmp = 0.0;
-                for ( int idof =0; idof < ndof; ++ idof )
+                for (int idof =0; idof < ndof; ++ idof)
                 {
                     qLTmp += uHOFaceSol.leftBasisFuncFaceIntegration[iGaussPoint][idof] * uHOLeftCellSol.dofQ[ieqn][idof];
                     qRTmp += uHOFaceSol.rightBasisFuncFaceIntegration[iGaussPoint][idof] * uHORigtCellSol.dofQ[ieqn][idof];
@@ -921,7 +926,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
     int numberGaussPoint = 0; 
 
     const RDouble *weightCoeff;
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         //compute QAverage of volume
         HighOrderCellSol & uHOCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell];
@@ -934,7 +939,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
 
         weightCoeff = highOrderGrids[hLevel].standardCellElements[uHOCell.standardElementIndex].GetWtIntegration();
 
-        for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+        for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             //compute conservation variable
             for(int ieqn = 0; ieqn < nEquation; ++ ieqn)
@@ -950,7 +955,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
 
     if(isViscous == 1)
     {
-        for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             //compute QAverage of volume
             HighOrderCellSol & uHOCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell];
@@ -959,7 +964,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
             
             uHOCellSol.vislAverage = 0.0;
             weightCoeff   =   highOrderGrids[hLevel].standardCellElements[uHOCell.standardElementIndex].GetWtIntegration();
-            for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+            for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
             {
                 //compute conservation variable
                 uHOCellSol.vislAverage += weightCoeff[iGaussPoint] * uHOCellSol.visl[iGaussPoint] * uHOCellSol.JacDetCellIntegration[iGaussPoint];
@@ -969,7 +974,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
     }
     else if(isViscous > 1)
     {
-        for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             //compute QAverage of volume
             HighOrderCellSol & uHOCellSol = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell];
@@ -978,7 +983,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
 
             uHOCellSol.vistAverage = 0.0;
             weightCoeff = highOrderGrids[hLevel].standardCellElements[uHOCell.standardElementIndex].GetWtIntegration();
-            for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+            for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
             {
                 //compute conservation variable
                 uHOCellSol.vistAverage += weightCoeff[iGaussPoint] * uHOCellSol.vist[iGaussPoint] * uHOCellSol.JacDetCellIntegration[iGaussPoint];
@@ -1005,21 +1010,21 @@ void HOSolverUnstruct::InitViscousCoefTurb(Grid *gridIn)
     }
     int numberGaussPoint = 0;
 
-    for ( int iCell = 0; iCell < nTotal; ++ iCell )
+    for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
         //compute gauss point temperature of volume
         numberGaussPoint = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].integNumberOfGaussPoint;
-        for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+        for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].vist[iGaussPoint] = 0.0;
         }        
     }
 
-    for ( int iFace = 0; iFace < nTotalFace; ++ iFace )
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         //compute gauss point temperature of volume
         numberGaussPoint = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].integNumberOfGaussPoint;
-        for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+        for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace].vist[iGaussPoint] = 0.0;
         }        
@@ -1037,12 +1042,12 @@ void HOSolverUnstruct::CompGamaAndTField(Grid *gridIn)
 
 void HOSolverUnstruct::InitCoarseGridsFlow()
 {
-    if( HODebug ) cout << "InitCoarseGridsFlow: Restrict from fine to coarse grid for all q set ghost cell q" << endl;
+    if(HODebug) cout << "InitCoarseGridsFlow: Restrict from fine to coarse grid for all q set ghost cell q" << endl;
 
     Grid *fgrid = GetGrid(0);
 
     Grid * cgrid = fgrid->GetCoarseGrid();
-    while ( cgrid )
+    while (cgrid)
     {
         RestrictAllQ(fgrid, cgrid);
         Boundary(cgrid);
@@ -1055,7 +1060,7 @@ void HOSolverUnstruct::InitCoarseGridsFlow()
 //Restrict from fine to coarse grid for all q
 void HOSolverUnstruct::RestrictAllQ(Grid *fgrid, Grid *cgrid)
 {
-    if( HODebug ) cout << "RestrictAllQ: Restrict from fine to coarse grid for all q" << endl;
+    if(HODebug) cout << "RestrictAllQ: Restrict from fine to coarse grid for all q" << endl;
 }
 
 void HOSolverUnstruct::ActionReflect(ActionTag *acttag)
@@ -1070,9 +1075,9 @@ void HOSolverUnstruct::DownloadInterfaceData(ActionKey *actkey)
 {
 }
 
-void HOSolverUnstruct::ZeroResiduals( Grid * gridIn )
+void HOSolverUnstruct::ZeroResiduals(Grid * gridIn)
 {
-    if( HODebug ) cout << "ZeroResiduals:  \"res\" = 0" << endl;
+    if(HODebug) cout << "ZeroResiduals:  \"res\" = 0" << endl;
     
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int nTotalCell = grid->GetNTotalCell();
@@ -1094,13 +1099,13 @@ void HOSolverUnstruct::ZeroResiduals( Grid * gridIn )
 
     RDouble *** res = reinterpret_cast< RDouble *** > (grid->GetDataPtr("res"));
 
-    for ( int ieqn = 0; ieqn < neqn; ++ ieqn )
+    for (int ieqn = 0; ieqn < neqn; ++ ieqn)
     {
-        for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             ndof = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].nDOFsSol;
 
-            for( int idof = 0; idof < ndof; ++ idof)
+            for(int idof = 0; idof < ndof; ++ idof)
             {
                 highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].res[ieqn][idof] = 0.0;
 
@@ -1112,11 +1117,11 @@ void HOSolverUnstruct::ZeroResiduals( Grid * gridIn )
 
 FieldProxy * HOSolverUnstruct::GetResidualProxy(Grid *gridIn)
 {
-    if( HODebug ) cout << "GetResidualProxy: return proxy of \"res\"" << endl;
+    if(HODebug) cout << "GetResidualProxy: return proxy of \"res\"" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble ***res = reinterpret_cast< RDouble *** > ( grid->GetDataPtr("res") );
+    RDouble ***res = reinterpret_cast< RDouble *** > (grid->GetDataPtr("res"));
 
     FieldProxy *res_proxy = new FieldProxy();
 
@@ -1138,9 +1143,9 @@ FieldProxy * HOSolverUnstruct::CreateFieldProxy(Grid *gridIn)
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
     
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
-    RDouble *** field = NewPointer3<RDouble>(nTotalCell, nEquation, dofsOfCells );
+    RDouble *** field = NewPointer3<RDouble>(nTotalCell, nEquation, dofsOfCells);
 
     delete [] dofsOfCells;
 
@@ -1154,7 +1159,7 @@ FieldProxy * HOSolverUnstruct::CreateFieldProxy(Grid *gridIn)
 //Load flow variables stored in grid to q
 void HOSolverUnstruct::LoadQ(Grid *gridIn, FieldProxy *qProxy)
 {
-    if( HODebug ) cout << "LoadQ: qProxy = \"q\"" << endl;
+    if(HODebug) cout << "LoadQ: qProxy = \"q\"" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -1163,7 +1168,7 @@ void HOSolverUnstruct::LoadQ(Grid *gridIn, FieldProxy *qProxy)
     //int nTotal = nTotalCell + nBoundFace;
 
     RDouble ***qPro = qProxy->GetField_UHO();
-    RDouble ***qold = reinterpret_cast< RDouble *** > ( grid->GetDataPtr("q") );
+    RDouble ***qold = reinterpret_cast< RDouble *** > (grid->GetDataPtr("q"));
 
     int nl    = GlobalDataBase::GetIntParaFromDB("nl");
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
@@ -1172,7 +1177,7 @@ void HOSolverUnstruct::LoadQ(Grid *gridIn, FieldProxy *qProxy)
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
@@ -1190,7 +1195,7 @@ void HOSolverUnstruct::LoadQ(Grid *gridIn, FieldProxy *qProxy)
 
 void HOSolverUnstruct::Lhs(Grid *gridIn, FieldProxy *dqProxy, double coef)
 {
-    if( HODebug ) cout << "Lhs: dqProxy *= dt * coef" << endl;
+    if(HODebug) cout << "Lhs: dqProxy *= dt * coef" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -1202,12 +1207,12 @@ void HOSolverUnstruct::Lhs(Grid *gridIn, FieldProxy *dqProxy, double coef)
     int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
     int nEquation  = nl + nchem;
 
-    RDouble * dt = reinterpret_cast< RDouble * > ( grid->GetDataPtr("dt"  ) );
+    RDouble * dt = reinterpret_cast< RDouble * > (grid->GetDataPtr("dt" ));
 
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         for (int m = 0; m < nEquation; ++ m)
@@ -1224,7 +1229,7 @@ void HOSolverUnstruct::Lhs(Grid *gridIn, FieldProxy *dqProxy, double coef)
 
 void HOSolverUnstruct::StoreRhsByResidual(Grid *gridIn, FieldProxy *rhsProxy)
 {
-    if( HODebug ) cout << "StoreRhsByResidual:  rhsProxy = res" << endl;
+    if(HODebug) cout << "StoreRhsByResidual:  rhsProxy = res" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -1242,7 +1247,7 @@ void HOSolverUnstruct::StoreRhsByResidual(Grid *gridIn, FieldProxy *rhsProxy)
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
@@ -1258,7 +1263,7 @@ void HOSolverUnstruct::StoreRhsByResidual(Grid *gridIn, FieldProxy *rhsProxy)
     delete [] dofsOfCells;
 }
 
-void HOSolverUnstruct::TimeStep( Grid *gridIn )
+void HOSolverUnstruct::TimeStep(Grid *gridIn)
 {
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int pLevel     = parameters->pMultiGrid;
@@ -1274,17 +1279,17 @@ void HOSolverUnstruct::TimeStep( Grid *gridIn )
 
     int ifLocalTimeStep = parameters->GetIfLocalTimeStep();
 
-    if ( ifLocalTimeStep == 0 )
+    if (ifLocalTimeStep == 0)
     {
-        LocalTimeStep( gridIn );
+        LocalTimeStep(gridIn);
     }
-    else if ( ifLocalTimeStep == 1 )
+    else if (ifLocalTimeStep == 1)
     {
-        GlobalTimeStep( gridIn );
+        GlobalTimeStep(gridIn);
     }
     else
     {
-        LocalGlobalTimeStep( gridIn );
+        LocalGlobalTimeStep(gridIn);
     }
 
 }
@@ -1306,12 +1311,12 @@ void HOSolverUnstruct::ComputeMinTimeStep(Grid *gridIn, RDouble &minDt, RDouble 
 
 void HOSolverUnstruct::ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt)
 {
-    if( HODebug ) cout << "ReduceMaxTimeStep" << endl;
+    if(HODebug) cout << "ReduceMaxTimeStep" << endl;
 }
 
 void HOSolverUnstruct::LoadResiduals(Grid *gridIn, FieldProxy *rhsProxy)
 {
-    if( HODebug ) cout << "LoadResiduals  \"res\" = - rhsProxy" << endl;
+    if(HODebug) cout << "LoadResiduals  \"res\" = - rhsProxy" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -1345,52 +1350,52 @@ void HOSolverUnstruct::LoadResiduals(Grid *gridIn, FieldProxy *rhsProxy)
 }
 
 //Drive functions to calculate residuals for different orders and dimensions
-void HOSolverUnstruct::UpdateResiduals( Grid *grid )
+void HOSolverUnstruct::UpdateResiduals(Grid *grid)
 {
-    if( HODebug ) cout << "UpdateResiduals" << endl;
+    if(HODebug) cout << "UpdateResiduals" << endl;
 
-    ComputeGaussPointQ( grid );
+    ComputeGaussPointQ(grid);
     
-    ComputeQAverage( grid );
+    ComputeQAverage(grid);
 
-    Boundary( grid );
+    Boundary(grid);
 
-    //CompGamaAndTField( grid );
+    //CompGamaAndTField(grid);
 
-    RightHandSide( grid );
+    RightHandSide(grid);
 }
 
-void HOSolverUnstruct::RightHandSide( Grid *grid )
+void HOSolverUnstruct::RightHandSide(Grid *grid)
 {
-    if( HODebug ) cout << "RightHandSide" << endl;
+    if(HODebug) cout << "RightHandSide" << endl;
 
-    InviscidFlux( grid );
+    InviscidFlux(grid);
 
-    ViscousFlux( grid );
+    ViscousFlux(grid);
 
-    SourceFlux( grid );
+    SourceFlux(grid);
 
-    //ZeroResidualOfSpecialCells( grid ); //Added By Guo Yongheng 20160825
+    //ZeroResidualOfSpecialCells(grid); //Added By Guo Yongheng 20160825
     //delete simu_ts_RightHandSide;
 
-    ResDivideVol( grid );
+    ResDivideVol(grid);
 }
 
 // Drive individaul functions to calculate inviscid fluxes
-void HOSolverUnstruct::InviscidFlux( Grid * gridIn )
+void HOSolverUnstruct::InviscidFlux(Grid * gridIn)
 {
-    if( HODebug ) cout << "InviscidFlux" << endl;
+    if(HODebug) cout << "InviscidFlux" << endl;
 
     InviscidFluxForFace(gridIn);
 
     InviscidFluxForCell(gridIn);
 }
 
-void HOSolverUnstruct::ViscousFlux( Grid * gridIn )
+void HOSolverUnstruct::ViscousFlux(Grid * gridIn)
 {
 }
 
-void HOSolverUnstruct::SourceFlux( Grid * gridIn )
+void HOSolverUnstruct::SourceFlux(Grid * gridIn)
 {
 }
 
@@ -1436,7 +1441,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
         fluxRigtTotal[i] = &(fluxRigtTotal[i-1][maxDof]);
         primL[i]         = &(primL[i-1][highOrderGrids[hLevel].totalFaceGaussPoint[pLevel]]);
         primR[i]         = &(primR[i-1][highOrderGrids[hLevel].totalFaceGaussPoint[pLevel]]);
-        flux[i]          = &( flux[i-1][highOrderGrids[hLevel].totalFaceGaussPoint[pLevel]]);
+        flux[i]          = &(flux[i-1][highOrderGrids[hLevel].totalFaceGaussPoint[pLevel]]);
     }
 
     int numberGaussPoint = 0, rGaussPoint = 0, nLeftDof = 0, nRigtDof = 0, curGaussPoint = 0, offsetGaussPoint = 0;
@@ -1449,7 +1454,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
     RDouble * zNormal = new RDouble [highOrderGrids[hLevel].totalFaceGaussPoint[pLevel]];
 
     curGaussPoint = 0;
-    for ( int iFace = 0; iFace < nTotalFace; ++ iFace )
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
         HighOrderFaceSol & uHOFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         HighOrderFace & uHOFace       = highOrderGrids[hLevel].highOrderFaces[iFace];
@@ -1457,7 +1462,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
         offsetGaussPoint = uHOFaceSol.offsetGaussPoint;
         faceVTKType      = uHOFace.VTK_Type;
         
-        for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+        for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
         {
             //compute conservation variable
             curGaussPoint = offsetGaussPoint + iGaussPoint;
@@ -1469,7 +1474,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
             primL[4][curGaussPoint] = HO_GAMAM1 * (primL[4][curGaussPoint] - 0.5 * primL[0][curGaussPoint] * 
                 (pow(primL[1][curGaussPoint],2) + pow(primL[2][curGaussPoint],2) + pow(primL[3][curGaussPoint],2)));
 
-            if( primL[4][curGaussPoint] < 0 )
+            if(primL[4][curGaussPoint] < 0)
             {
                 cout<<"Negative Pressure of Face:  "<<iFace<<" P L =  "<<primL[4][curGaussPoint]<<endl;
             }
@@ -1483,7 +1488,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
             primR[4][curGaussPoint] = HO_GAMAM1 * (primR[4][curGaussPoint] - 0.5 * primR[0][curGaussPoint] * 
                 (pow(primR[1][curGaussPoint],2) + pow(primR[2][curGaussPoint],2) + pow(primR[3][curGaussPoint],2)));
 
-            if( primR[4][curGaussPoint]<0)
+            if(primR[4][curGaussPoint]<0)
             {
                 cout<<"Negative Pressure of Face:  "<<iFace<<" P R =  "<<primR[4][curGaussPoint]<<endl;
             }
@@ -1508,7 +1513,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
     }
 
     RDouble fluxTmp = 0.0;
-    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         HighOrderFaceSol & uHOFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         HighOrderFace & uHOFace       = highOrderGrids[hLevel].highOrderFaces[iFace];        
@@ -1525,7 +1530,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
             for(int idof = 0; idof < nLeftDof; ++ idof)
             {
                 fluxLeftTotal[ieqn][idof] = 0.0;
-                for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+                for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
                 {
                     curGaussPoint = offsetGaussPoint + iGaussPoint;
                     fluxTmp = flux[ieqn][curGaussPoint] * weightCoeff[iGaussPoint] * uHOFaceSol.JacDetFaceIntegration[iGaussPoint];
@@ -1541,7 +1546,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
         }
     }
 
-    for ( int iFace = nBoundFace; iFace < nTotalFace; ++ iFace )
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
     {
         HighOrderFaceSol & uHOFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         HighOrderFace & uHOFace       = highOrderGrids[hLevel].highOrderFaces[iFace];
@@ -1562,7 +1567,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
             for(int idof = 0; idof < nLeftDof; ++ idof)
             {
                 fluxLeftTotal[ieqn][idof] = 0.0;
-                for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+                for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
                 {
                     curGaussPoint = offsetGaussPoint + iGaussPoint;  
                     fluxTmp = flux[ieqn][curGaussPoint] * weightCoeff[iGaussPoint] * uHOFaceSol.JacDetFaceIntegration[iGaussPoint];
@@ -1576,7 +1581,7 @@ void HOSolverUnstruct::InviscidFluxForFace(Grid *gridIn)
             for(int idof = 0; idof < nRigtDof; ++ idof)
             {
                 fluxRigtTotal[ieqn][idof] = 0.0;
-                for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+                for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
                 {
                     curGaussPoint = offsetGaussPoint + iGaussPoint;
                     fluxTmp = flux[ieqn][curGaussPoint] * weightCoeff[iGaussPoint] * uHOFaceSol.JacDetFaceIntegration[iGaussPoint];
@@ -1646,7 +1651,7 @@ void HOSolverUnstruct::InviscidFluxForCell(Grid *grid_in)
             fluxTotal[2] = 0.0;
             fluxTotal[3] = 0.0;
             fluxTotal[4] = 0.0;
-            for( int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
+            for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
             {
                 gradFia[0] = uHOCellSol.dxBasisFuncCellIntegration[iGaussPoint][idof];
                 gradFia[1] = uHOCellSol.dyBasisFuncCellIntegration[iGaussPoint][idof];
@@ -1685,13 +1690,13 @@ void HOSolverUnstruct::InviscidFluxForCell(Grid *grid_in)
 
                 fluxTmp = weightCoeff[iGaussPoint] * uHOCellSol.JacDetCellIntegration[iGaussPoint];
 
-                for ( int ieqn = 0; ieqn < nEquation; ++ ieqn )
+                for (int ieqn = 0; ieqn < nEquation; ++ ieqn)
                 {
                     fluxTotal[ieqn] += fluxTmp * (gradFia[0] * flux[ieqn][0] + gradFia[1] * flux[ieqn][1] + gradFia[2] * flux[ieqn][2]);
                 }
             }
 
-            for ( int ieqn = 0; ieqn < nEquation; ++ ieqn )
+            for (int ieqn = 0; ieqn < nEquation; ++ ieqn)
             {
                 res[iCell][ieqn][idof] += fluxTotal[ieqn];
             }
@@ -1727,7 +1732,7 @@ void HOSolverUnstruct::ResDivideVol(Grid *grid_in)
         int ndof = uHOCellSol.nDOFsSol;
         for(int iDof = 0; iDof < ndof; ++ iDof)
         {
-            for ( int ieqn = 0; ieqn < nEquation; ++ ieqn )
+            for (int ieqn = 0; ieqn < nEquation; ++ ieqn)
             {
                 res[iCell][ieqn][iDof] /= uHOCell.volume;
             }
@@ -1735,7 +1740,7 @@ void HOSolverUnstruct::ResDivideVol(Grid *grid_in)
     }
 }
 
-void HOSolverUnstruct::ForwardLUSGS( Grid *grid_in )
+void HOSolverUnstruct::ForwardLUSGS(Grid *grid_in)
 {
 
 }
@@ -1747,7 +1752,7 @@ void HOSolverUnstruct::SolveLUSGS(Grid *gridIn, FieldProxy *dq_proxy)
 
 void HOSolverUnstruct::SolveLUSGS(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *rhsProxy, int sweeps, double epsilon)
 {
-    if( HODebug ) cout << "SolveLUSGS solve dq" << endl;
+    if(HODebug) cout << "SolveLUSGS solve dq" << endl;
 }
 
 //! Explicit multi-stage time marching method
@@ -1794,7 +1799,7 @@ void HOSolverUnstruct::RungeKutta(Grid *grid, FieldProxy *rhsProxy)
 
 void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *field1Proxy, FieldProxy *field2Proxy)
 {
-    if( HODebug ) cout << "FillField: field1Proxy = field2Proxy" << endl;
+    if(HODebug) cout << "FillField: field1Proxy = field2Proxy" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -1810,7 +1815,7 @@ void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *field1Proxy, FieldPro
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
@@ -1828,7 +1833,7 @@ void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *field1Proxy, FieldPro
 
 void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *fieldProxy, RDouble value)
 {
-    if( HODebug ) cout << "FillField: fieldProxy = value" << endl;
+    if(HODebug) cout << "FillField: fieldProxy = value" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -1843,7 +1848,7 @@ void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *fieldProxy, RDouble v
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
@@ -1861,7 +1866,7 @@ void HOSolverUnstruct::FillField(Grid *gridIn, FieldProxy *fieldProxy, RDouble v
 
 void HOSolverUnstruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
 {
-    if( HODebug ) cout << "UpdateFlowField solve dq" << endl;
+    if(HODebug) cout << "UpdateFlowField solve dq" << endl;
 
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -1873,7 +1878,7 @@ void HOSolverUnstruct::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldPr
         pLevel = 0;
     }
 
-    RDouble ***q = reinterpret_cast< RDouble *** > ( grid->GetDataPtr("q") );
+    RDouble ***q = reinterpret_cast< RDouble *** > (grid->GetDataPtr("q"));
 
     RDouble *** dq = dqProxy->GetField_UHO();
 
@@ -1912,7 +1917,7 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
     int level = actkey->level;
     UnstructGrid *grid = UnstructGridCast(GetGrid(level));
 
-    RDouble ***res = reinterpret_cast< RDouble *** > ( grid->GetDataPtr("res") );
+    RDouble ***res = reinterpret_cast< RDouble *** > (grid->GetDataPtr("res"));
 
     int nl = 5;
     GlobalDataBase::GetData("nl", &nl, PHINT, 1);
@@ -1930,7 +1935,7 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
     vector< RDouble > residualNormal(neqn);
 
     // Initialization.
-    for ( int m = 0; m < neqn; ++ m )
+    for (int m = 0; m < neqn; ++ m)
     {
         residualNormal[m] = 0.0;
     }
@@ -1945,13 +1950,13 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
 
     int * cellIBlank = grid->GetBlankIndex();
 
-    for ( int icell = 0; icell < nTotalCell; ++ icell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        if( cellIBlank[ icell ] != 1 ) continue;
+        if(cellIBlank[ iCell ] != 1) continue;
 
-        for ( int m = 0; m < neqn; ++ m )
+        for (int m = 0; m < neqn; ++ m)
         {
-            RDouble res2 = res[icell][m][0] * res[icell][m][0];
+            RDouble res2 = res[iCell][m][0] * res[iCell][m][0];
             residualNormal[m] += res2;
 
             if (res2 > maxResLocal)
@@ -1960,9 +1965,9 @@ void HOSolverUnstruct::GetResidual(ActionKey *actkey)
 
                 maxResLocal = res2;
 
-                maxResCoorXLocal = xcc[icell];
-                maxResCoorYLocal = ycc[icell];
-                maxResCoorZLocal = zcc[icell];
+                maxResCoorXLocal = xcc[iCell];
+                maxResCoorYLocal = ycc[iCell];
+                maxResCoorZLocal = zcc[iCell];
 
                 maxResIndexMLocal = m;
             }
@@ -1999,23 +2004,23 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 
     int hLevel = grid->GetLevel();
 
-    ComputeQAverage( grid );
+    ComputeQAverage(grid);
 
-    RDouble ** qToOut = NewPointer2<RDouble>( neqn, nTotal );
+    RDouble ** qToOut = NewPointer2<RDouble>(neqn, nTotal);
     
-    for ( int ieqn = 0; ieqn < neqn; ++ ieqn )
+    for (int ieqn = 0; ieqn < neqn; ++ ieqn)
     {
-        for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             qToOut[ieqn][iCell] = highOrderGrids[hLevel].highOrderCellsSol[0][iCell].qAverage[ieqn];
         }
     }
 
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         RDouble conserValue[5];
 
-        for ( int ieqn = 0; ieqn < neqn; ++ ieqn )
+        for (int ieqn = 0; ieqn < neqn; ++ ieqn)
         {
             conserValue[ieqn] = qToOut[ieqn][iCell];
         }
@@ -2024,7 +2029,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         qToOut[2][iCell] /= qToOut[0][iCell];
         qToOut[3][iCell] /= qToOut[0][iCell];
 
-        qToOut[4][iCell] = ComputePressure( conserValue );
+        qToOut[4][iCell] = ComputePressure(conserValue);
     }
 
     int *left_cell_of_face  = grid->GetLeftCellOfFace();
@@ -2032,7 +2037,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     RDouble *xfn = grid->GetFaceNormalX();
     RDouble *yfn = grid->GetFaceNormalY();
     RDouble *zfn = grid->GetFaceNormalZ();
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     HOSolverUnstructParam * parameters = dynamic_cast< HOSolverUnstructParam * > (controlParameters);
     int pLevel = parameters->pMultiGrid;
@@ -2063,7 +2068,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
     double massIn  = 1.0;
     double massOut = 1.0;
 
-    if ( massFlow )
+    if (massFlow)
     {
         //ComputeMassFlow(grid);
         GlobalDataBase::GetData("massIn", &massIn, PHDOUBLE, 1);
@@ -2081,7 +2086,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 
     int isViscous = parameters->IsViscous();
 
-    for ( int iFace = 0; iFace < nBoundFace; ++ iFace )
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         le = left_cell_of_face [ iFace ];
         re = right_cell_of_face[ iFace ];
@@ -2089,7 +2094,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         HighOrderFaceSol & highOrderFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         numberGaussPoint = highOrderFaceSol.integNumberOfGaussPoint;
 
-        if ( bcType < 0 ) //interface
+        if (bcType < 0) //interface
         {
             continue;
         }
@@ -2154,7 +2159,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
                 qToOut[IW][re] = - qToOut[IW][le] + two * ztn;
 
                 RDouble omav = one;
-                RDouble coefficientOfStateEquation = 1.0 / ( HO_GAMA * refMachNumber * refMachNumber );
+                RDouble coefficientOfStateEquation = 1.0 / (HO_GAMA * refMachNumber * refMachNumber);
 
                 RDouble tm = (1.0 / coefficientOfStateEquation) * qToOut[IP][le] / qToOut[IR][le];
 
@@ -2172,7 +2177,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
 
             continue;
         }
-        else if ( bcType == FARFIELD )
+        else if (bcType == FARFIELD)
         {
             using namespace IDX;
 
@@ -2182,7 +2187,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
             qToOut[IV][re] = qToOut[IV][le];
             qToOut[IW][re] = qToOut[IW][le];
         }
-        else if ( bcType == INFLOW )
+        else if (bcType == INFLOW)
         {
             qToOut[IR][re] = qToOut[IR][le];
             qToOut[IP][re] = qToOut[IP][le];
@@ -2244,10 +2249,10 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         postVisualization->UpdateVisualNodeVarPtr(varName, qToOut[IDX::IP]);
     }
 
-    DelPointer2( qToOut );
+    DelPointer2(qToOut);
 }
 
-void HOSolverUnstruct::PostSolve( Grid *gridIn, int stage, int level )
+void HOSolverUnstruct::PostSolve(Grid *gridIn, int stage, int level)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
     int hLevel = grid->GetLevel();
@@ -2256,7 +2261,7 @@ void HOSolverUnstruct::PostSolve( Grid *gridIn, int stage, int level )
     HighOrderGrid & highOrderGrid = highOrderGrids[hLevel];
 
     int * dofsOfCells = new int[nTotalCell];
-    highOrderGrid.GetNumberOfDOFs( nTotalCell, dofsOfCells );
+    highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
     delete [] dofsOfCells;
 
@@ -2425,15 +2430,15 @@ void HOSolverUnstruct::LocalTimeStep(Grid *gridIn)
     int nPolySol = 1;
 
     double dtMin = 1.0e40;
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         nPolySol  = highOrderGrids[hLevel].highOrderCellsSol[pLevel][iCell].nPolySol; //polynomial order
         nPolySol  = 2 * nPolySol + 1;
         dt[iCell] = cfl * volume[iCell] / invSpectrumRadius[iCell]/nPolySol;
-        dtMin = min( dtMin, dt[iCell] );
+        dtMin = min(dtMin, dt[iCell]);
     }
 
-    for ( int iCell = 0; iCell < nTotalCell; ++ iCell )
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         dt[iCell] = dtMin;
     }
@@ -2506,7 +2511,7 @@ RDouble HOSolverUnstruct::ComputeCFL(int level)
 
     int cflNstep    = parameters->GetCFLVaryStep();
     RDouble cflStart = parameters->GetCFLStart();
-    RDouble cflEnd   = parameters->GetCFDEnd();
+    RDouble cflEnd   = parameters->GetCFLEnd();
 
     RDouble cfl = cflEnd;
     if (iterationStep < cflNstep)

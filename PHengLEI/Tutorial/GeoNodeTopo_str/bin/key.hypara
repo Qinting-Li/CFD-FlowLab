@@ -1,0 +1,30 @@
+string title     = "PHengLEI Main Parameter Control File";
+
+// IMPORTANT NOTICE：DON NOT MODIFY THE FOWLLOWING LINE
+string defaultParaFile = "./bin/default.hypara";
+
+// ndim: Dimensional of the grid: 2 or 3.
+// nparafile: the number of the parameter file.
+// nsimutask: simulation task type.
+//    0 -- CFD Solver of NS or Turbulation.
+//    1 -- Grid generation: for special typical cases, such as cylinder, flat plate, etc.
+//         Grid conversion: from other format to HyperFLOW format (.fts).
+//         Grid reconstruction: such as grid adaptation.
+//         Grid merging: merge two blocks into one block.
+//         Grid repairing: repair the original grid in order to remove the negative volume cells.
+//    2 -- Wall distance computation for turb-solver.
+//    3 -- Grid partition.
+//    4 -- Knowledge repository / examples of PHengLEI-API.
+int  ndim  =  3;
+int  nparafile  =  1;
+int    nsimutask  =  0;
+string parafilename  =  "./bin/cfd_para.hypara";
+int nComponent               =  0;
+string componentDefineFile   =  "./in/m6.part";
+
+
+int     ifvfd                              =  0; 
+int    tscheme       = 4;
+int    nchem       = 0;
+int    precon       = 0;
+

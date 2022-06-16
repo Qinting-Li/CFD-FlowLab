@@ -41,7 +41,7 @@ private:
     //! Data_Param is usually used to store the parameters from *.hypara file, such as refReNumber, viscousName, limitVariables, et. al.
     static Data_Param *globalParam;
 
-    //! zonal data pointers.
+    //! Zonal data pointers.
     static Data_Field *globalField;
 public:
     //! Add or update a data(with name, type, size) to global database.
@@ -68,6 +68,8 @@ public:
     //! @param[in]  name    Source data's name.
     //! @param[in]  data    Pointer the Source data.
     static void UpdateDataPtr(const string &name, void *data);
+
+    static void DeleteDataPtr(const string &name);
 
     //! Obtain data's pointer(address) from global database by name.
     //! If the dataSet doesn't has a same name data, returns null.
@@ -134,5 +136,6 @@ private:
     static void SetDefaultParamInfo();
 };
 
+//! Get task type.
 LIB_EXPORT int GetTaskCode();
 }

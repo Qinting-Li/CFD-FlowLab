@@ -1,0 +1,13 @@
+// m_block_proc: Method of grid zone distribution among different processors.
+//         0 -- Each zone is distributed by grid partition. (default)
+//         1 -- Each zone is distributed randomly.
+//int m_block_proc =0 ;
+int gridobj= 1 ;
+int gridtype =0 ;
+#########################################################################
+#                           File path                                   #
+#########################################################################
+// from_gfile: path of original data file for grid convert from.
+// out_gfile:  path of target file for grid convert to, *.fts type of file usually.
+string from_gfile = "./in/circle.cgns";
+string out_gfile  = "./out/circle.fts";

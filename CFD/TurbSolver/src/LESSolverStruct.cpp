@@ -28,7 +28,7 @@ LESSolverStruct::~LESSolverStruct()
 
 void LESSolverStruct::AllocateGlobalVar(Grid *gridIn)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -139,7 +139,7 @@ void LESSolverStruct::AllocateGlobalVar(Grid *gridIn)
 
 void LESSolverStruct::DeAllocateGlobalVar(Grid *gridIn)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     StructGrid *grid = StructGridCast(gridIn);
 
     RDouble3D *cellLengthScale = reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cellLengthScale"));
@@ -400,7 +400,7 @@ void LESSolverStruct::UploadInterfaceValue(ActionKey *actkey)
     int level = actkey->level;
     StructGrid *grid = reinterpret_cast<StructGrid *> (GetGrid(level));
     InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
-    if (interfaceInfo == 0)
+    if (!interfaceInfo)
     {
         return;
     }
@@ -425,7 +425,7 @@ void LESSolverStruct::DownloadInterfaceValue(ActionKey *actkey)
     int level = actkey->level;
     StructGrid *grid = reinterpret_cast<StructGrid *> (GetGrid(level));
     InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
-    if (interfaceInfo == 0)
+    if (!interfaceInfo)
     {
         return;
     }
@@ -564,7 +564,7 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
 
     StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
     InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-    CompositeStructBC * composite_bcregion = finestGrid->GetCompositeBCRegion();
+    StructBCSet * structBCSet = finestGrid->GetStructBCSet();
     RDouble4D &rotNSgradValueX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueX"));
     RDouble4D &rotNSgradValueY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueY"));
     RDouble4D &rotNSgradValueZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("rotNSgradValueZ"));
@@ -592,11 +592,12 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
                 int it, jt, kt;
                 finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
                 finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                int *ibcregions = composite_bcregion->GetIFaceInfo();
-                int ibcregion = ibcregions[iFace];
-                StructBC * bcregion = composite_bcregion->GetBCRegion(ibcregion);
+                int *ibcregions = structBCSet->GetIFaceInfo();
+                int iBCRegion = ibcregions[iFace];
+                StructBC * bcregion = structBCSet->GetBCRegion(iBCRegion);
+
                 string bcName = bcregion->GetBCName();
-                if ( bcName == "Periodic_up" )
+                if (bcName == "Periodic_up")
                 {
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -604,7 +605,7 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
                         rotNSgradValueZ(it, jt, kt, m) = fieldRecvNSY(it, jt, kt, m) * sin(2*PI-rotationAngle) + fieldRecvNSZ(it, jt, kt, m) * cos(2*PI-rotationAngle);
                     }
                 }
-                else if( bcName == "Periodic_down" )
+                else if(bcName == "Periodic_down")
                 {
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -952,7 +953,7 @@ void LESSolverStruct::ComputeWallFunction(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
     
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int wallDampingFunctionType = parameters->GetWallDampingFunctionType();
 
     RDouble3D &wallFunction = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("wallFunction"));
@@ -1016,7 +1017,7 @@ void LESSolverStruct::WallFunctionofVanDriest(Grid *gridIn)
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
 
     const double kappa = 0.41;
@@ -1064,7 +1065,7 @@ void LESSolverStruct::WallFunctionofDXB(Grid *gridIn)
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble rgam = parameters->GetRgam();
 
@@ -1117,7 +1118,7 @@ void LESSolverStruct::WallFunctionofPiomelli(Grid *gridIn)
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
 
     const double kappa = 0.41;
@@ -1160,7 +1161,7 @@ void LESSolverStruct::GetDependentVariablesforStructHighOrder(Grid *gridIn)
 void LESSolverStruct::ComputeGradientCellCenter(Grid *gridIn)
 {
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FD_METHOD) return;
+    if (isFVMOrFDM == FD_METHOD) return;
 
     StructGrid *strgrid = StructGridCast(gridIn);
     int ni = strgrid->GetNI();
@@ -1499,7 +1500,7 @@ void LESSolverStruct::GetUVWTfaceproxy(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2 )
+                if((*DiffOrder)(localcellID) == 2 || (*DiffOrder)(localcellID - 1) == 2)
                 {
                     for (int m = 0; m <= 3; ++m)
                     {                    
@@ -1650,7 +1651,7 @@ void LESSolverStruct::GetdqdkxietactaCellCenter(Grid *gridIn, int nsurf)
             {
                 int localcellID = i * il1 + j * jl1 + k * kl1;
                 
-                if( (*DiffOrder)(localcellID) == 2 )
+                if((*DiffOrder)(localcellID) == 2)
                 {
                     for (int m = 0; m <= 3; ++ m)
                     {
@@ -1763,7 +1764,7 @@ void LESSolverStruct::ObtainViscosity(Grid *gridIn)
 
     ComputeWallFunction(grid);
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
 
     int iterationStep;
@@ -1823,11 +1824,11 @@ void LESSolverStruct::Smagorinsky(Grid *gridIn)
     RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
     RDouble3D &turbulentPrandtlNumber = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("turbulentPrandtlNumber"));
 
-    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
     RDouble4D &strainRateTensor = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
@@ -1924,7 +1925,7 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
     int njs1 = nj - 1;
     int nks1 = nk - 1;
 
-    RFloat4D & q    = * reinterpret_cast<RFloat4D *> (grid->GetDataPtr("q"  ));
+    RFloat4D & q    = * reinterpret_cast<RFloat4D *> (grid->GetDataPtr("q" ));
     RFloat3D & visl = * reinterpret_cast<RFloat3D *> (grid->GetDataPtr("visl"));
     RFloat3D & vist = * reinterpret_cast<RFloat3D *> (grid->GetDataPtr("vist"));
 
@@ -2233,21 +2234,21 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
                     (*tfu1)(i, j, k) = (*fu1)(i);
                     (*tfu2)(i, j, k) = (*fu2)(i);
                     (*tfu3)(i, j, k) = (*fu3)(i);
-                    //--- fill T( F(ui)F(uj) )
+                    //--- fill T(F(ui)F(uj))
                     (*tfuifuj11)(i, j, k) = (*fuifuj11)(i);
                     (*tfuifuj22)(i, j, k) = (*fuifuj22)(i);
                     (*tfuifuj33)(i, j, k) = (*fuifuj33)(i);
                     (*tfuifuj12)(i, j, k) = (*fuifuj12)(i);
                     (*tfuifuj13)(i, j, k) = (*fuifuj13)(i);
                     (*tfuifuj23)(i, j, k) = (*fuifuj23)(i);
-                    //--- get T( F(Sij) )
+                    //--- get T(F(Sij))
                     (*tfs11)(i, j, k) = (*fs11)(i);
                     (*tfs22)(i, j, k) = (*fs22)(i);
                     (*tfs33)(i, j, k) = (*fs33)(i);
                     (*tfs12)(i, j, k) = (*fs12)(i);
                     (*tfs13)(i, j, k) = (*fs13)(i);
                     (*tfs23)(i, j, k) = (*fs23)(i);
-                    //--- get T( F(|S|)F(Sij) )
+                    //--- get T(F(|S|)F(Sij))
                     (*tfsfs11)(i, j, k) = (*fsfs11)(i);
                     (*tfsfs22)(i, j, k) = (*fsfs22)(i);
                     (*tfsfs33)(i, j, k) = (*fsfs33)(i);
@@ -2378,21 +2379,21 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
                     (*tfu1)(i,j,k) = (*fu1)(j);
                     (*tfu2)(i,j,k) = (*fu2)(j);
                     (*tfu3)(i,j,k) = (*fu3)(j);
-                    //--- fill T( F(ui)F(uj) )
+                    //--- fill T(F(ui)F(uj))
                     (*tfuifuj11)(i,j,k) = (*fuifuj11)(j);
                     (*tfuifuj22)(i,j,k) = (*fuifuj22)(j);
                     (*tfuifuj33)(i,j,k) = (*fuifuj33)(j);
                     (*tfuifuj12)(i,j,k) = (*fuifuj12)(j);
                     (*tfuifuj13)(i,j,k) = (*fuifuj13)(j);
                     (*tfuifuj23)(i,j,k) = (*fuifuj23)(j);
-                    //--- get T( F(Sij) )
+                    //--- get T(F(Sij))
                     (*tfs11)(i,j,k) = (*fs11)(j);
                     (*tfs22)(i,j,k) = (*fs22)(j);
                     (*tfs33)(i,j,k) = (*fs33)(j);
                     (*tfs12)(i,j,k) = (*fs12)(j);
                     (*tfs13)(i,j,k) = (*fs13)(j);
                     (*tfs23)(i,j,k) = (*fs23)(j);
-                    //--- get T( F(|S|)F(Sij) )
+                    //--- get T(F(|S|)F(Sij))
                     (*tfsfs11)(i,j,k) = (*fsfs11)(j);
                     (*tfsfs22)(i,j,k) = (*fsfs22)(j);
                     (*tfsfs33)(i,j,k) = (*fsfs33)(j);
@@ -2524,21 +2525,21 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
                     (*tfu1)(i,j,k) = (*fu1)(k);
                     (*tfu2)(i,j,k) = (*fu2)(k);
                     (*tfu3)(i,j,k) = (*fu3)(k);
-                    //--- fill T( F(ui)F(uj) )
+                    //--- fill T(F(ui)F(uj))
                     (*tfuifuj11)(i,j,k) = (*fuifuj11)(k);
                     (*tfuifuj22)(i,j,k) = (*fuifuj22)(k);
                     (*tfuifuj33)(i,j,k) = (*fuifuj33)(k);
                     (*tfuifuj12)(i,j,k) = (*fuifuj12)(k);
                     (*tfuifuj13)(i,j,k) = (*fuifuj13)(k);
                     (*tfuifuj23)(i,j,k) = (*fuifuj23)(k);
-                    //--- get T( F(Sij) )
+                    //--- get T(F(Sij))
                     (*tfs11)(i,j,k) = (*fs11)(k);
                     (*tfs22)(i,j,k) = (*fs22)(k);
                     (*tfs33)(i,j,k) = (*fs33)(k);
                     (*tfs12)(i,j,k) = (*fs12)(k);
                     (*tfs13)(i,j,k) = (*fs13)(k);
                     (*tfs23)(i,j,k) = (*fs23)(k);
-                    //--- get T( F(|S|)F(Sij) )
+                    //--- get T(F(|S|)F(Sij))
                     (*tfsfs11)(i,j,k) = (*fsfs11)(k);
                     (*tfsfs22)(i,j,k) = (*fsfs22)(k);
                     (*tfsfs33)(i,j,k) = (*fsfs33)(k);
@@ -2558,21 +2559,21 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
         {
             for (int k = kst; k <= ked; ++ k)
             {
-                //--- Lij = T( F(ui)F(uj) ) - TF(ui)*TF(uj)
+                //--- Lij = T(F(ui)F(uj)) - TF(ui)*TF(uj)
                 rL11 = (*tfuifuj11)(i,j,k) - (*tfu1)(i,j,k) * (*tfu1)(i,j,k);
                 rL22 = (*tfuifuj22)(i,j,k) - (*tfu2)(i,j,k) * (*tfu2)(i,j,k);
                 rL33 = (*tfuifuj33)(i,j,k) - (*tfu3)(i,j,k) * (*tfu3)(i,j,k);
                 rL12 = (*tfuifuj12)(i,j,k) - (*tfu1)(i,j,k) * (*tfu2)(i,j,k);
                 rL13 = (*tfuifuj13)(i,j,k) - (*tfu1)(i,j,k) * (*tfu3)(i,j,k);
                 rL23 = (*tfuifuj23)(i,j,k) - (*tfu2)(i,j,k) * (*tfu3)(i,j,k);
-                //--- Mij = ( TF(Detla)/F(Delta) )^2*|TF(S)|*T( F(Sij) ) -  T( F(|S|)F(Sij) )
+                //--- Mij = (TF(Detla)/F(Delta))^2*|TF(S)|*T(F(Sij)) -  T(F(|S|)F(Sij))
                 //--- TF(|S|)
                 tfsijtfsij = (*tfs11)(i,j,k) * (*tfs11)(i,j,k) 
                            + (*tfs22)(i,j,k) * (*tfs22)(i,j,k)
                            + (*tfs33)(i,j,k) * (*tfs33)(i,j,k)
-                           + 2.0*(  (*tfs12)(i,j,k) * (*tfs12)(i,j,k)
+                           + 2.0*( (*tfs12)(i,j,k) * (*tfs12)(i,j,k)
                                   + (*tfs13)(i,j,k) * (*tfs13)(i,j,k)
-                                  + (*tfs23)(i,j,k) * (*tfs23)(i,j,k) );
+                                  + (*tfs23)(i,j,k) * (*tfs23)(i,j,k));
                 tfss = sqrt(2.0*tfsijtfsij);
 
                 rM11 = rfwr * rfwr * tfss * (*tfs11)(i,j,k) - (*tfsfs11)(i,j,k);
@@ -2583,10 +2584,10 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
                 rM23 = rfwr * rfwr * tfss * (*tfs23)(i,j,k) - (*tfsfs23)(i,j,k);
 
                 (*rLijMij)(i,j,k) = rL11*rM11 +rL22*rM22 +rL33*rM33
-                                  + 2.0*( rL12*rM12 +rL13*rM13 +rL23*rM23 );
+                                  + 2.0*(rL12*rM12 +rL13*rM13 +rL23*rM23);
 
                 (*rMijMij)(i,j,k) = rM11*rM11 +rM22*rM22 +rM33*rM33
-                                  + 2.0*( rM12*rM12 +rM13*rM13 +rM23*rM23 );
+                                  + 2.0*(rM12*rM12 +rM13*rM13 +rM23*rM23);
             }
         }
     }
@@ -2747,7 +2748,7 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
 
                 (*cdelta2)(i,j,k) = cr;
 
-                u1 = q(i,j,k,IU);    // q(j,k,i,2:4) = F( u(1:3) ) --- IMPLICIT Filter!!!!
+                u1 = q(i,j,k,IU);    // q(j,k,i,2:4) = F(u(1:3)) --- IMPLICIT Filter!!!!
                 u2 = q(i,j,k,IV);
                 u3 = q(i,j,k,IW);
 
@@ -3256,7 +3257,7 @@ void LESSolverStruct::DynamicSmagViscosityCompressibleFD(Grid *gridIn)
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
     RDouble4D &gradUVWTCellCenterX = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
     RDouble4D &gradUVWTCellCenterY = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
@@ -4349,7 +4350,7 @@ void LESSolverStruct::ComputeTestFilteredTemperatureFD(Grid *gridIn)
 
 void LESSolverStruct::ComputeStrainRateTensor(Grid *gridIn)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
     if(subgridScaleModel == 6)
     {
@@ -4910,7 +4911,7 @@ void LESSolverStruct::ComputeLeonardStress(Grid *gridIn)
     RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
 
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FV_METHOD)
+    if (isFVMOrFDM == FV_METHOD)
     {
         ComputeTestFilteredQ(grid);
     }
@@ -4919,7 +4920,7 @@ void LESSolverStruct::ComputeLeonardStress(Grid *gridIn)
         ComputeTestFilteredQFD(grid);
     }
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
 
     if (subgridScaleModel == 4)
@@ -4927,7 +4928,7 @@ void LESSolverStruct::ComputeLeonardStress(Grid *gridIn)
         testFilteredQ(I, J, K, 0) = 1.0;
     }
 
-    if(isFVMOrFDM == FV_METHOD)
+    if (isFVMOrFDM == FV_METHOD)
     {
         ComputeTestFilteredRhoUiUj(grid);
     }
@@ -4980,7 +4981,7 @@ void LESSolverStruct::ComputeModeledStress(Grid *gridIn)
     RDouble4D &betaIJ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("betaIJ"));
 
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FV_METHOD)
+    if (isFVMOrFDM == FV_METHOD)
     {
         ComputeTestFilteredAlphaIJ(grid);
     }
@@ -5317,7 +5318,7 @@ void LESSolverStruct::ComputeBetaIJ(Grid *gridIn)
     RDouble4D &betaIJ = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("betaIJ"));
     
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FV_METHOD)
+    if (isFVMOrFDM == FV_METHOD)
     {
         ComputeTestFilteredStrainRateTensor(grid);
     }
@@ -6150,7 +6151,7 @@ void LESSolverStruct::ComputeLeonardTemperatureTerm(Grid *gridIn)
     RDouble4D &testFilteredQ = * reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredQ"));
 
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FV_METHOD)
+    if (isFVMOrFDM == FV_METHOD)
     {
         ComputeTestFilteredRhoUT(grid);
 
@@ -6218,7 +6219,7 @@ void LESSolverStruct::ComputeModeledTemperatureTerm(Grid *gridIn)
     ComputeTestFilteredGradT(grid);
 
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FV_METHOD)
+    if (isFVMOrFDM == FV_METHOD)
     {
         ComputeTestFilteredRhoStrainRateMagnitudeGradT(grid);
     }
@@ -6472,7 +6473,7 @@ void LESSolverStruct::ComputeTestFilteredGradT(Grid *gridIn)
     RDouble4D &testFilteredGradT = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("testFilteredGradT"));
 
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FV_METHOD)
+    if (isFVMOrFDM == FV_METHOD)
     {
         ComputeGradT(grid);
     }
@@ -6536,7 +6537,7 @@ void LESSolverStruct::ComputeTestFilteredGradT(Grid *gridIn)
                 for (int i = ist; i <= ied; ++ i)
                 {
                     (*testFilteredVariableZ)(K) = testFilteredGradT(i, j, K, n);
-                    (*filteredVariableZ)(K) = testFilteredGradT(i, j, K, n);                
+                    (*filteredVariableZ)(K) = testFilteredGradT(i, j, K, n);
                     TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
                     testFilteredGradT(i, j, K, n) = (*testFilteredVariableZ)(K);
                 }
@@ -6650,7 +6651,7 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradT(Grid *gridI
                 for (int i = ist; i <= ied; ++ i)
                 {
                     (*testFilteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);
-                    (*filteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);                
+                    (*filteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);
                     TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
                     testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n) = (*testFilteredVariableZ)(K);
                 }
@@ -6764,7 +6765,7 @@ void LESSolverStruct::ComputeTestFilteredRhoStrainRateMagnitudeGradTFD(Grid *gri
                 for (int i = ist; i <= ied; ++ i)
                 {
                     (*testFilteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);
-                    (*filteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);                
+                    (*filteredVariableZ)(K) = testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n);
                     TestFilter(kst, ked, testFilteredVariableZ, filteredVariableZ);
                     testFilteredRhoStrainRateMagnitudeGradT(i, j, K, n) = (*testFilteredVariableZ)(K);
                 }
@@ -6797,7 +6798,7 @@ void LESSolverStruct::WALE(Grid *gridIn)
 
     RDouble refReNumber  = parameters->GetRefReNumber();
 
-    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
     RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
     RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
@@ -6833,7 +6834,7 @@ void LESSolverStruct::WALE(Grid *gridIn)
                 RDouble omega13 = strainRateTensor(i, j, k, 8);
                 RDouble omega23 = strainRateTensor(i, j, k, 9);
 
-                RDouble sij2  = s11 * s11 + s22 * s22 + s33 * s33 + 2.0 * (s12 * s12 + s13 * s13 + s23 * s23);                   
+                RDouble sij2  = s11 * s11 + s22 * s22 + s33 * s33 + 2.0 * (s12 * s12 + s13 * s13 + s23 * s23);
                 RDouble omegaij2 = 2.0 * (omega12 * omega12 + omega13 * omega13 + omega23 * omega23);
                 RDouble sij2SubOmegaij2 = 1.0/3.0 * (sij2 - omegaij2);
 
@@ -6878,7 +6879,7 @@ void LESSolverStruct::Sigma(Grid *gridIn)
 
     RDouble refReNumber  = parameters->GetRefReNumber();
 
-    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q" ));
+    RDouble4D &q = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
     RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
     RDouble3D &subgridScaleEnergy = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
@@ -6990,11 +6991,11 @@ void LESSolverStruct::ComputeDifferentialSigma(RDouble ** velocityGradTensor, RD
 
     RDouble alpha1 = t1 * t1 / 9.0 - t2 / 3.0;
     RDouble alpha2 = t1 * t1 * t1 / 27.0 - t1 * t2 / 6.0 + t3 / 2.0;
-    RDouble alpha3 = 1.0 /3.0 * acos( MAX( MIN(alpha2 / sqrt(alpha1 * alpha1 * alpha1), 1.0), -1.0 ) );
+    RDouble alpha3 = 1.0 /3.0 * acos(MAX(MIN(alpha2 / sqrt(alpha1 * alpha1 * alpha1), 1.0), -1.0));
 
-    RDouble sigma1 = sqrt( MAX(t1 / 3.0 + 2.0 * sqrt(alpha1) * cos(alpha3), 0.0) );
-    RDouble sigma2 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) + alpha3), 0.0) );
-    RDouble sigma3 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0) );
+    RDouble sigma1 = sqrt(MAX(t1 / 3.0 + 2.0 * sqrt(alpha1) * cos(alpha3), 0.0));
+    RDouble sigma2 = sqrt(MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) + alpha3), 0.0));
+    RDouble sigma3 = sqrt(MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0));
 
     differentialSigma = sigma3 * (sigma1 - sigma2) * (sigma2 - sigma3) / sigma1 / sigma1;
     differentialSigma = MAX(differentialSigma, 0.0);
@@ -7004,31 +7005,31 @@ void LESSolverStruct::ComputeDifferentialSigma(RDouble ** velocityGradTensor, RD
     AleModel::DestroyMatrix(gij2);
 }
 
-void LESSolverStruct::filter( const int & nn
+void LESSolverStruct::filter(const int & nn
                             , RFloat1D * fu1, RFloat1D * fu2, RFloat1D * fu3
                             , RFloat1D * fuifuj11, RFloat1D * fuifuj22, RFloat1D * fuifuj33, RFloat1D * fuifuj12, RFloat1D * fuifuj13, RFloat1D * fuifuj23
                             , RFloat1D * fs11    , RFloat1D * fs22    , RFloat1D * fs33    , RFloat1D * fs12    , RFloat1D * fs13    , RFloat1D * fs23    
-                            , RFloat1D * fsfs11  , RFloat1D * fsfs22  , RFloat1D * fsfs33  , RFloat1D * fsfs12  , RFloat1D * fsfs13  , RFloat1D * fsfs23 )
+                            , RFloat1D * fsfs11  , RFloat1D * fsfs22  , RFloat1D * fsfs33  , RFloat1D * fsfs12  , RFloat1D * fsfs13  , RFloat1D * fsfs23)
 {
     //--- get TF(ui)
     TestFilter(nn, fu1);
     TestFilter(nn, fu2);
     TestFilter(nn, fu3);
-    //--- get T( F(ui)F(uj) )
+    //--- get T(F(ui)F(uj))
     TestFilter(nn, fuifuj11);
     TestFilter(nn, fuifuj22);
     TestFilter(nn, fuifuj33);
     TestFilter(nn, fuifuj12);
     TestFilter(nn, fuifuj13);
     TestFilter(nn, fuifuj23);
-    //--- get T( F(Sij) )
+    //--- get T(F(Sij))
     TestFilter(nn, fs11);
     TestFilter(nn, fs22);
     TestFilter(nn, fs33);
     TestFilter(nn, fs12);
     TestFilter(nn, fs13);
     TestFilter(nn, fs23);
-    //--- get T( F(|S|)F(Sij) )
+    //--- get T(F(|S|)F(Sij))
     TestFilter(nn, fsfs11);
     TestFilter(nn, fsfs22);
     TestFilter(nn, fsfs33);
@@ -7044,7 +7045,7 @@ void LESSolverStruct::TestFilter(const int &nn, RFloat1D *fu)
     tfu = new RFloat1D(II, fortranArray);
     (* tfu) = 0.0;
 
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     int testFilterWidth = parameters->GetTestFilterWidth();
 
@@ -7072,7 +7073,7 @@ void LESSolverStruct::TestFilter(const int &nn, RFloat1D *fu)
 
 void LESSolverStruct::TestFilter(const int &n0, const int &nn, RDouble1D *&tf, RDouble1D *&f)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     int testFilterWidth = parameters->GetTestFilterWidth();
 
@@ -7094,7 +7095,7 @@ void LESSolverStruct::TestFilter(const int &n0, const int &nn, RDouble1D *&tf, R
 
 void LESSolverStruct::TestFilter(const int &n0, const int &nn, RDouble *tf, RDouble *f)
 {
-    Param_LESSolverStruct * parameters = GetControlParameters();
+    Param_LESSolverStruct *parameters = GetControlParameters();
 
     int testFilterWidth = parameters->GetTestFilterWidth();
 
@@ -7126,7 +7127,7 @@ void LESSolverStruct::GetDeltaBar(const int deltaFunctionType, const RDouble del
     }
     else
     {
-        TK_Exit::UnexpectedVarValue( "deltaFunctionType", deltaFunctionType);
+        TK_Exit::UnexpectedVarValue("deltaFunctionType", deltaFunctionType);
     }
 }
 
@@ -7162,17 +7163,17 @@ void LESSolverStruct::GetFilterWidthOfScotti(const RDouble deltai, const RDouble
 void LESSolverStruct::Boundary(Grid *gridIn)
 {
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if(isFVMOrFDM == FD_METHOD) return;
+    if (isFVMOrFDM == FD_METHOD) return;
 
     using namespace PHENGLEI;
     StructGrid *grid = StructGridCast(gridIn);
 
-    CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (BCType < 0)
@@ -7243,12 +7244,12 @@ void LESSolverStruct::ObtainBoundaryValue(Grid *gridIn)
     using namespace PHENGLEI;
     StructGrid *grid = StructGridCast(gridIn);
 
-    CompositeStructBC *compositeBCRregion = grid->GetCompositeBCRegion();
-    int nBCRegion = compositeBCRregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *structBC = compositeBCRregion->GetBCRegion(iBCRegion);
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
         if (BCType < 0)
@@ -7275,7 +7276,23 @@ void LESSolverStruct::ObtainBoundaryValue(Grid *gridIn)
         {
             InFlowBC(grid, structBC);
         }
+        else if (BCType == PRESSURE_INLET)
+        {
+            InFlowBC(grid, structBC);
+        }
+        else if (BCType == MASS_FLOW_INLET)
+        {
+            InFlowBC(grid, structBC);
+        }
         else if (BCType == OUTFLOW)
+        {
+            OutFlowBC(grid, structBC);
+        }
+        else if (BCType == PRESSURE_OUTLET)
+        {
+            OutFlowBC(grid, structBC);
+        }
+        else if (BCType == MASS_FLOW_OUTLET)
         {
             OutFlowBC(grid, structBC);
         }
@@ -7378,7 +7395,7 @@ void LESSolverStruct::FarFieldBC(Grid *gridIn, StructBC *structBC)
 
     using namespace IDX;
 
-    RDouble *primitiveVariablesInfinity = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf" ));
+    RDouble *primitiveVariablesInfinity = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
     RDouble rFarfield = primitiveVariablesInfinity[IR];
     RDouble uFarfield = primitiveVariablesInfinity[IU];
     RDouble vFarfield = primitiveVariablesInfinity[IV];

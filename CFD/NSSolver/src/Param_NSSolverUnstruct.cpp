@@ -35,6 +35,11 @@ LIB_EXPORT void Param_NSSolverUnstruct::Init()
 
     mgCorrectionLimit = GlobalDataBase::GetDoubleParaFromDB("mgCorrectionLimit");
 
+    catalyticCoef              = GlobalDataBase::GetDoubleParaFromDB("catalyticCoef");
+    chemicalSpectrumRadiusCoef = GlobalDataBase::GetDoubleParaFromDB("chemicalSpectrumRadiusCoef");
+    chemicalRelaxCorf          = GlobalDataBase::GetDoubleParaFromDB("chemicalRelaxCorf");
+    staticPressureRelaxCorf    = GlobalDataBase::GetDoubleParaFromDB("staticPressureRelaxCorf");
+
 }
 
 }

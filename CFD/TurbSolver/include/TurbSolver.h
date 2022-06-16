@@ -70,7 +70,7 @@ public:
     int GetNumberOfEquations();
 
     //! Compare the outnstep in the flowfield file between the NS and turbulence.
-    void CompareOutStepOfFlowfieldFile( int outnstepofNS, int outnstepofTurb ) const;
+    void CompareOutStepOfFlowfieldFile(int outnstepofNS, int outnstepofTurb) const;
 
     //! Get control paramters.
     LIB_EXPORT Param_TurbSolver *GetControlParameters();

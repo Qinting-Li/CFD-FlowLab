@@ -4,30 +4,30 @@ namespace PHSPACE
 {
 LIB_EXPORT Geo_FaceTopo_Unstruct::Geo_FaceTopo_Unstruct()
 {
-    left_cell_of_face  = nullptr;
-    right_cell_of_face = nullptr;
-    node_number_of_each_face = nullptr;
-    face2node = nullptr;
+    left_cell_of_face  = NULL;
+    right_cell_of_face = NULL;
+    node_number_of_each_face = NULL;
+    face2node = NULL;
 
-    face2nodeSubscript = nullptr;
-    face2nodeArray = nullptr;
+    face2nodeSubscript = NULL;
+    face2nodeArray = NULL;
 }
 
 LIB_EXPORT Geo_FaceTopo_Unstruct::~Geo_FaceTopo_Unstruct()
 {
-    delete [] left_cell_of_face;    left_cell_of_face  = nullptr;
-    delete [] right_cell_of_face;    right_cell_of_face = nullptr;
-    delete [] node_number_of_each_face;    node_number_of_each_face = nullptr;
-    delete [] face2node;    face2node = nullptr;
+    delete [] left_cell_of_face;    left_cell_of_face  = NULL;
+    delete [] right_cell_of_face;    right_cell_of_face = NULL;
+    delete [] node_number_of_each_face;    node_number_of_each_face = NULL;
+    delete [] face2node;    face2node = NULL;
 
-    if ( face2nodeSubscript != 0 )
+    if (face2nodeSubscript != 0)
     {
-        delete [] face2nodeSubscript;    face2nodeSubscript = nullptr;
+        delete [] face2nodeSubscript;    face2nodeSubscript = NULL;
     }
 
-    if ( face2nodeArray != 0 )
+    if (face2nodeArray != 0)
     {
-        delete [] face2nodeArray;    face2nodeArray = nullptr;
+        delete [] face2nodeArray;    face2nodeArray = NULL;
     }
 }
 

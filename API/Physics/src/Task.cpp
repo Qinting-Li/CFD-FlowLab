@@ -14,7 +14,6 @@ vector<Task *> * Task::ootasklist = new vector<Task *>;
 // const int Task::CREATE_GRID      = 1;
 // const int Task::CAL_WALL_DIST    = 2;
 // const int Task::PARTITION_GRID   = 3;
-// const int Task::REPOSITORY       = 4;
 // const int Task::OVERSETGRID_VIEW = 5;
 // const int Task::OVERSET_CONFIG   = 6;
 
@@ -49,12 +48,12 @@ void NOAction (ActionKey *actkey)
 
 void AddTasktoSimu(Task *task)
 {
-    Task::ootasklist->push_back( task );
+    Task::ootasklist->push_back(task);
 }
 
 void RunSimuTask(Task *task, bool run_now)
 {
-    if ( run_now )
+    if (run_now)
     {
         task->RunTask();
     }
@@ -70,7 +69,7 @@ RDouble MaxStoreValue()
 {
     RDouble value = store_value[0];
 
-    for ( size_t i = 0; i < store_value.size(); ++ i )
+    for (size_t i = 0; i < store_value.size(); ++ i)
     {
         value = MAX(store_value[i],value);
     }
@@ -81,7 +80,7 @@ void GlobalSolve()
 {
     uint_t taskNumber = Task::ootasklist->size();
 
-    for ( int iTask = 0; iTask < taskNumber; ++ iTask )
+    for (int iTask = 0; iTask < taskNumber; ++ iTask)
     {
         Task *task = (*Task::ootasklist)[iTask];
 
@@ -98,62 +97,61 @@ void ClearTaskList()
     Task::ootasklist->resize(0);
 }
 
-void GeneralAction(ActionKey *actkey, int izone)
+void GeneralAction(ActionKey *actkey, int iZone)
 {
     if (actkey->kind == SOLVER_BASED)
     {
-        PHSolver *solver = GlobalSolvers::GetSolver(izone, actkey->solverID);
+        PHSolver *solver = GlobalSolvers::GetSolver(iZone, actkey->solverID);
         solver->Action(actkey);
     }
     else
     {
-        Grid *grid = GetGrid(izone, actkey->level);
+        Grid *grid = GetGrid(iZone, actkey->level);
         grid->Action(actkey);
     }
 }
 
-
-void PH_Interface(ActionKey *actkey, int izone, int jzone)
+void PH_Interface(ActionKey *actkey, int iZone, int jZone)
 {
     using namespace PHMPI;
 
-    //! izone is the current zone, jzone is the target zone.
-    int send_proc = GetZoneProcessorIDSepMode(izone);
-    int recv_proc = GetZoneProcessorIDSepMode(jzone);
+    //! iZone is the current zone, jZone is the target zone.
+    int send_proc = GetZoneProcessorIDSepMode(iZone);
+    int recv_proc = GetZoneProcessorIDSepMode(jZone);
 
-    int tag = GetSendRecvTag(actkey, izone);
+    int tag = GetSendRecvTag(actkey, iZone);
     int myid = GetCurrentProcessorID();
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         //! If this process is a send process.
-        actkey->ipos = jzone;
-        GeneralAction(actkey, izone);
+        actkey->ipos = jZone;
+        GeneralAction(actkey, iZone);
     }
 
     
     PH_Trade(actkey, send_proc, recv_proc, tag);   
 
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
         //! If this process is a receive process,there are two situations:
         //! One is that this process is a receive process and also a send process.
         //! The other is that this process is a receive process not a send process.
         //! In both situation,the target zone data needs to be translate.
-        actkey->ipos = izone;
-        GeneralTranslateAction(actkey,jzone);
+        actkey->ipos = iZone;
+        GeneralTranslateAction(actkey, jZone);
     }
 }
 
-void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataContainer *receivedBuffer, int izone, int jzone, vector <PH_Request> &requestContainer)
+void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataContainer *receivedBuffer, int iZone, int jZone, vector <PH_Request> &requestContainer)
 {
     using namespace PHMPI;
 
     int currentProcessor  = GetCurrentProcessorID();
-    int sendProcessor     = GetZoneProcessorIDSepMode(izone);
-    int receiveProcessor  = GetZoneProcessorIDSepMode(jzone);
+    int sendProcessor     = GetZoneProcessorIDSepMode(iZone);
+    int receiveProcessor  = GetZoneProcessorIDSepMode(jZone);
 
-    int tag = GetSendRecvTag(actkey, izone);
+    int tag = GetSendRecvTag(actkey, iZone);
 
     //! Compress the send information into the actkey.
     if (currentProcessor == sendProcessor)
@@ -166,11 +164,11 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
             compressData = receivedBuffer;
         }
         //! Fill the send buffer by actkey.
-        actkey->SetData( compressData );
-        actkey->ipos = jzone;
-        GeneralAction(actkey, izone);
+        actkey->SetData(compressData);
+        actkey->ipos = jZone;
+        GeneralAction(actkey, iZone);
 
-        actkey->SetData( originalData );
+        actkey->SetData(originalData);
     }
 
     if (sendProcessor == receiveProcessor)
@@ -187,69 +185,69 @@ void PH_InterfaceNonBlocking(ActionKey *actkey, DataContainer *sendBuffer, DataC
     else if (currentProcessor == receiveProcessor)
     {
         //! Pre-calculating the data length of the received data.
-        CharVecSizeType nlen = PH_Interface_GetLength( actkey, izone, jzone );
+        CharVecSizeType nlen = PH_Interface_GetLength(actkey, iZone, jZone);
         //! Receive data from neighbors.
         receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
     }
 }
 
-void GeneralTranslateAction(ActionKey *actkey, int izone)
+void GeneralTranslateAction(ActionKey *actkey, int iZone)
 {
-    if ( actkey->kind == SOLVER_BASED )
+    if (actkey->kind == SOLVER_BASED)
     {
-        GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateAction(actkey);
+        GlobalSolvers::GetSolver(iZone, actkey->solverID)->TranslateAction(actkey);
     }
     else
     {
-        GetGrid(izone, actkey->level)->TranslateAction(actkey);
+        GetGrid(iZone, actkey->level)->TranslateAction(actkey);
     }
 }
 
-streamsize GeneralTranslateActionLength(ActionKey *actkey, int izone)
+streamsize GeneralTranslateActionLength(ActionKey *actkey, int iZone)
 {
-    if ( actkey->kind == SOLVER_BASED )
+    if (actkey->kind == SOLVER_BASED)
     {
-        return GlobalSolvers::GetSolver(izone, actkey->solverID)->TranslateActionLength(actkey);
+        return GlobalSolvers::GetSolver(iZone, actkey->solverID)->TranslateActionLength(actkey);
     }
     else
     {
-        return GetGrid(izone, actkey->level)->TranslateActionLength(actkey);
+        return GetGrid(iZone, actkey->level)->TranslateActionLength(actkey);
     }
 }
 
 
-CharVecSizeType PH_Interface_GetLength(ActionKey *actkey, int izone, int jzone)
+CharVecSizeType PH_Interface_GetLength(ActionKey *actkey, int iZone, int jZone)
 {
     using namespace PHMPI;
     CharVecSizeType nlen = 0;
 
-    int send_proc = GetZoneProcessorIDSepMode(izone);
-    int recv_proc = GetZoneProcessorIDSepMode(jzone);
+    int send_proc = GetZoneProcessorIDSepMode(iZone);
+    int recv_proc = GetZoneProcessorIDSepMode(jZone);
 
     int myid = GetCurrentProcessorID();
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         DataContainer *cdata = actkey->GetData();
         nlen = cdata->size();
     }
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
-        actkey->ipos = izone;
-        nlen = static_cast< CharVecSizeType >( GeneralTranslateActionLength(actkey, jzone) );
+        actkey->ipos = iZone;
+        nlen = static_cast< CharVecSizeType >(GeneralTranslateActionLength(actkey, jZone));
     }
     return nlen;
 }
 
 
-void PH_ReadPattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int izone)
+void PH_ReadPattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int iZone)
 {
     using namespace PHMPI;
 
     int myid = GetCurrentProcessorID();
-    int tag = GetSendRecvTag(actkey, izone);
+    int tag = GetSendRecvTag(actkey, iZone);
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         //! If this process is a send process.
         main_action(actkey);
@@ -257,32 +255,32 @@ void PH_ReadPattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, 
 
     PH_Trade(actkey, send_proc, recv_proc, tag);
 
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
         //! If this process is a receive process,there are two situations:
         //! One is that this process is a receive process and also a send process.
         //! The other is that this process is a receive process not a send process.
         //! In both situation,the target zone data needs to be translate.
-        GeneralAction(actkey, izone);
+        GeneralAction(actkey, iZone);
     }
 }
 
-void PH_WritePattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int izone)
+void PH_WritePattern(ActionKey *actkey, ActionKeyFUN main_action, int send_proc, int recv_proc, int iZone)
 {
     using namespace PHMPI;
 
     int myid = GetCurrentProcessorID();
-    int tag = GetSendRecvTag(actkey, izone);
+    int tag = GetSendRecvTag(actkey, iZone);
 
-    if ( myid == send_proc )
+    if (myid == send_proc)
     {
         //! If the process zone i belongs to is the current process.
-        GeneralAction(actkey, izone);
+        GeneralAction(actkey, iZone);
     }
 
     PH_Trade(actkey, send_proc, recv_proc, tag);
 
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
         //! If this process is server process.
         main_action(actkey);

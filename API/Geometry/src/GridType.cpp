@@ -7,13 +7,13 @@ namespace PHSPACE
 
 Grid * CreateGridGeneral(int gridtype, GridID *index, int level, int nDim)
 {
-    if ( gridtype == UNSTRUCTGRID )
+    if (gridtype == UNSTRUCTGRID)
     {
         Grid *grid = new UnstructGrid();
         grid->InitGrid(index,level,nDim,UNSTRUCTGRID);
         return grid;
     }
-    else if ( gridtype == STRUCTGRID )
+    else if (gridtype == STRUCTGRID)
     {
         Grid *grid = new StructGrid();
         grid->InitGrid(index,level,nDim,STRUCTGRID);
@@ -26,7 +26,7 @@ Grid * CreateGridGeneral(int gridtype, GridID *index, int level, int nDim)
 
 int GetSystemGridType(set<int> &grid_type)
 {
-    if ( grid_type.size() > 1 )
+    if (grid_type.size() > 1)
     {
         return MIXGRID;
     }

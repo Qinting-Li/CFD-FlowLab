@@ -32,7 +32,7 @@ void lmsmcoef(int lmsmflag, int outnstep, RDouble *outerdt, RDouble &xi, RDouble
     
     int order;
 
-    if ( lmsmflag == LMSM_IMPEUL )
+    if (lmsmflag == LMSM_IMPEUL)
     {
         //! FIRST ORDER SCHEME.
         //! Backward euler - A stable.
@@ -41,7 +41,7 @@ void lmsmcoef(int lmsmflag, int outnstep, RDouble *outerdt, RDouble &xi, RDouble
         xi    = zero;
         order = 1;
     }
-    else if ( lmsmflag == LMSM_IMPTRZ )
+    else if (lmsmflag == LMSM_IMPTRZ)
     {
         //! SECOND ORDER SCHEMES.
         //! One-step trapezoidal - A stable.
@@ -50,10 +50,10 @@ void lmsmcoef(int lmsmflag, int outnstep, RDouble *outerdt, RDouble &xi, RDouble
         order = 2;
         ordcoef(order,xi,theta,phi,outerdt,2);
     }
-    else if ( lmsmflag == LMSM_IMPBD2 )
+    else if (lmsmflag == LMSM_IMPBD2)
     {
         //! Backward differentiation - A stable.
-        if ( outnstep == 1 )
+        if (outnstep == 1)
         {
             theta = one;
             phi   = zero;
@@ -68,18 +68,18 @@ void lmsmcoef(int lmsmflag, int outnstep, RDouble *outerdt, RDouble &xi, RDouble
             ordcoef(order,xi,theta,phi,outerdt,2);
         }
     }
-    else if ( lmsmflag == LMSM_IMPTHR )
+    else if (lmsmflag == LMSM_IMPTHR)
     {
         //! THIRD ORDER SCHEMES / NOT YET IMPLEMENTED.
         //! Third-order implicit.
-        if ( outnstep == 1 )
+        if (outnstep == 1)
         {
             theta = one;
             phi   = zero;
             xi    = zero;
             order = 1;
         }
-        else if ( outnstep == 2 )
+        else if (outnstep == 2)
         {
             theta = one;
             phi   = zero;
@@ -93,24 +93,24 @@ void lmsmcoef(int lmsmflag, int outnstep, RDouble *outerdt, RDouble &xi, RDouble
             ordcoef(order,xi,theta,phi,outerdt,3);
         }
     }
-    else if ( lmsmflag == LMSM_IMPFOR )
+    else if (lmsmflag == LMSM_IMPFOR)
     {
         //! FOURTH ORDER SCHEME / NOT YET IMPLEMENTED.
         //! Milne's scheme.
-        if ( outnstep == 1 )
+        if (outnstep == 1)
         {
             theta = one;
             phi   = zero;
             xi    = zero;
         }
-        else if ( outnstep == 2 )
+        else if (outnstep == 2)
         {
             theta = one;
             phi   = zero;
             order = 2;
             ordcoef(order,xi,theta,phi,outerdt,2);
         }
-        else if ( outnstep == 3 )
+        else if (outnstep == 3)
         {
             phi   = zero;
             order = 3;
@@ -122,7 +122,7 @@ void lmsmcoef(int lmsmflag, int outnstep, RDouble *outerdt, RDouble &xi, RDouble
             ordcoef(order,xi,theta,phi,outerdt,1);
         }
     }
-    else if ( lmsmflag == LMSM_NODUAL )
+    else if (lmsmflag == LMSM_NODUAL)
     {
         //! No linear multi step method.
         xi    = - one;
@@ -137,57 +137,57 @@ void ordcoef(int order, RDouble &xi, RDouble &theta, RDouble &phi, RDouble *oute
     //! ensure the required precision of the time integration scheme.
     RDouble a;
     
-    a = outerdt[1] / ( outerdt[0] + SMALL );
+    a = outerdt[1] / (outerdt[0] + SMALL);
 
-    if ( order == 2 )
+    if (order == 2)
     {
-        if ( iact == 1 )
+        if (iact == 1)
         {
             //! xi,theta given.
-            phi   = ( half + half * xi * ( 1 + a ) - theta ) / ( a + SMALL );
+            phi   = (half + half * xi * (1 + a) - theta) / (a + SMALL);
         }
-        else if ( iact == 2 )
+        else if (iact == 2)
         {
             //! theta,phi given.
-            xi    = ( two * theta + two * a * phi - one ) / ( one + a );
+            xi    = (two * theta + two * a * phi - one) / (one + a);
         }
-        else if ( iact == 3 )
+        else if (iact == 3)
         {
             //! phi,xi given.
-            theta = half + half * xi * ( one + a ) - a * phi;
+            theta = half + half * xi * (one + a) - a * phi;
         }
     }
-    else if ( order == 3 )
+    else if (order == 3)
     {
-        if ( iact == 1 )
+        if (iact == 1)
         {
             //! xi given.
-            phi   = ( one + ( one + three * a + two * a * a ) * xi ) / 
-                    ( six * a * ( one + a ) + SMALL );
-            theta = half + half * ( one + a ) * xi - a * phi;
+            phi   = (one + (one + three * a + two * a * a) * xi) / 
+                    (six * a * (one + a) + SMALL);
+            theta = half + half * (one + a) * xi - a * phi;
         }
-        else if ( iact == 2 )
+        else if (iact == 2)
         {
             //! theta given.
-            phi = ( ( one + three * a + two * a * a ) * theta - a - a * a ) / 
-                  ( a * ( two + three * a + a * a ) + SMALL );
-            xi  = ( two * theta + two * a * phi - one ) / ( one + a );
+            phi = ((one + three * a + two * a * a) * theta - a - a * a) / 
+                  (a * (two + three * a + a * a) + SMALL);
+            xi  = (two * theta + two * a * phi - one) / (one + a);
         }
-        else if ( iact == 3 )
+        else if (iact == 3)
         {
             //! phi given.
-            xi    = ( - one + six * a * ( one + a ) * phi ) / 
-                    ( one + three * a + two * a * a );
-            theta = half + half * ( one + a ) * xi - a * phi;
+            xi    = (- one + six * a * (one + a) * phi) / 
+                    (one + three * a + two * a * a);
+            theta = half + half * (one + a) * xi - a * phi;
         }
     }
-    else if ( order == 4 )
+    else if (order == 4)
     {
-        if ( iact == 1 )
+        if (iact == 1)
         {
-            phi   = - half / ( one + a + a * a );
-            xi    = two * ( one + two * a ) / ( one + a );
-            theta = a * ( two + three * a ) * phi - a * ( one + a ) * xi;
+            phi   = - half / (one + a + a * a);
+            xi    = two * (one + two * a) / (one + a);
+            theta = a * (two + three * a) * phi - a * (one + a) * xi;
         }
     }
 }
@@ -235,30 +235,30 @@ void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord
     fac6 =         dt / (dt + dtold + SMALL);
     fac5 =        one - fac6;
     
-    if ( outnstep == 1 ) fac4 = 0.0;
+    if (outnstep == 1) fac4 = 0.0;
 
     //! This is the case of a predefined movement.
-    if ( ipdfm >= 1 && ipdfm <= 3 )
+    if (ipdfm >= 1 && ipdfm <= 3)
     {
         return;
     }
-    else if ( ipdfm == 4 )
+    else if (ipdfm == 4)
     {
         return;
     }
-    else if ( ipdfm == 5 )
+    else if (ipdfm == 5)
     {
         return;
     }
-    else if ( ipdfm == 6 )
+    else if (ipdfm == 6)
     {
         return;
     }
     
     //! Translation : a constant translation velocity is considered.
-    if ( itrans == 1 )
+    if (itrans == 1)
     {
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             coord0[m][0] = coord0[m][0] + coord0[m][1] * dt;
             coord0[m][2] = 0.0;
@@ -266,18 +266,18 @@ void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord
         }
     }
     //! Translation : the reference point coordinates are prescribed.
-    else if ( itrans == 2 )
+    else if (itrans == 2)
     {
         deftrans(coord,time,outerdt,ialepar,ralepar);
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             coord0[m][0] = coord[m][0];
             coord0[m][1] = fac1 * coord[m][0] + fac2 * coord[m][1] + fac3 * coord[m][2];
-            coord0[m][2] = fac4 * ( fac5 * coord[m][0] - coord[m][1] + fac6 * coord[m][2] );
+            coord0[m][2] = fac4 * (fac5 * coord[m][0] - coord[m][1] + fac6 * coord[m][2]);
         }
     }
     //! Translation : the movement is enforced in another way.
-    else if ( itrans == 3 )
+    else if (itrans == 3)
     {
         //! Not yet implemented!
         cout << "this option is not yet implemented\n";
@@ -285,9 +285,9 @@ void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord
     }
 
     //! Rotation : a constant angular velocity is considered.
-    if ( irotat == 1 )
+    if (irotat == 1)
     {
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             angle0[m][0] = angle0[m][0] + angle0[m][1] * dt;
             angle0[m][2] = 0.0;
@@ -295,18 +295,18 @@ void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord
         }
     }
     //! Rotation : the values of Euler's angles are analytically prescribed.
-    else if ( irotat == 2 )
+    else if (irotat == 2)
     {
         //defrotat(angle,time,outerdt,ialepar,ralepar);
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             angle0[m][0] = angle[m][0];
             angle0[m][1] = fac1 * angle[m][0] + fac2 * angle[m][1] + fac3 * angle[m][2];
-            angle0[m][2] = fac4 * ( fac5 * angle[m][0] - angle[m][1] + fac6 * angle[m][2] );
+            angle0[m][2] = fac4 * (fac5 * angle[m][0] - angle[m][1] + fac6 * angle[m][2]);
         }
     }
     //! Rotation : the movement is enforced in another way.
-    else if ( irotat == 3 )
+    else if (irotat == 3)
     {
         //! Not yet implemented!
         cout << "this option is not yet implemented\n";
@@ -372,27 +372,27 @@ void AleParameter::SetLMSMFlag()
     string outtimesc;
     GlobalDataBase::GetData("outtimesc", &outtimesc, PHSTRING, 1);
 
-    if ( outtimesc.substr(0,6) == "impeul" )
+    if (outtimesc.substr(0,6) == "impeul")
     {
         lmsmflag = LMSM_IMPEUL;
     }
-    else if ( outtimesc.substr(0,6) == "imptrz" )
+    else if (outtimesc.substr(0,6) == "imptrz")
     {
         lmsmflag = LMSM_IMPTRZ;
     }
-    else if ( outtimesc.substr(0,6) == "impbd2" )
+    else if (outtimesc.substr(0,6) == "impbd2")
     {
         lmsmflag = LMSM_IMPBD2;
     }
-    else if ( outtimesc.substr(0,6) == "impthr" )
+    else if (outtimesc.substr(0,6) == "impthr")
     {
         lmsmflag = LMSM_IMPTHR;
     }
-    else if ( outtimesc.substr(0,6) == "impfor" )
+    else if (outtimesc.substr(0,6) == "impfor")
     {
         lmsmflag = LMSM_IMPFOR;
     }
-    else if ( outtimesc.substr(0,6) == "nodual" )
+    else if (outtimesc.substr(0,6) == "nodual")
     {
         lmsmflag = LMSM_NODUAL;
     }
@@ -438,19 +438,19 @@ void AleModel::Allocate()
 
 void AleModel::Free()
 {
-    DestroyMatrix(trans_ref );
-    DestroyMatrix(xyz_ref   );
+    DestroyMatrix(trans_ref);
+    DestroyMatrix(xyz_ref  );
     DestroyMatrix(rotate_ref);
-    DestroyMatrix(angle_ref );
-    DestroyMatrix(matrix    );
+    DestroyMatrix(angle_ref);
+    DestroyMatrix(matrix   );
     delete param;
 }
 
 void AleModel::SetMatrix(RDouble ** matrix_x, RDouble ** matrix_y)
 {
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
-        for ( int j = 0; j < 3; ++ j )
+        for (int j = 0; j < 3; ++ j)
         {
             matrix_x[i][j] = matrix_y[i][j];
         }
@@ -459,9 +459,9 @@ void AleModel::SetMatrix(RDouble ** matrix_x, RDouble ** matrix_y)
 
 void AleModel::TransposeMatrix(RDouble ** matrix)
 {
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
-        for ( int j = 0; j < i; ++ j )
+        for (int j = 0; j < i; ++ j)
         {
             SWAP(matrix[i][j],matrix[j][i]);
         }
@@ -504,10 +504,10 @@ void AleModel::RotateTranslation()
 
     ComputeRelativeRotateMatrix();
     int level = 0;
-    for ( int izone = 0; izone < nZones; ++ izone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
-        if ( !grid ) continue;
+        Grid *grid = GetGrid(iZone, level);
+        if (!grid) continue;
         RotateTranslation(grid);
     }
 }
@@ -527,15 +527,15 @@ void AleModel::RotateTranslation(Grid *grid)
     RDouble yref_old = xyz_ref[1][1];
     RDouble zref_old = xyz_ref[1][2];
 
-    for ( int inode = 0; inode < nTotalNode; ++ inode )
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        RDouble dx = x[inode] - xref_old;
-        RDouble dy = y[inode] - yref_old;
-        RDouble dz = z[inode] - zref_old;
+        RDouble dx = x[iNode] - xref_old;
+        RDouble dy = y[iNode] - yref_old;
+        RDouble dz = z[iNode] - zref_old;
         
-        x[inode] = matrix[0][0] * dx + matrix[0][1] * dy + matrix[0][2] * dz + xref_new;
-        y[inode] = matrix[1][0] * dx + matrix[1][1] * dy + matrix[1][2] * dz + yref_new;
-        z[inode] = matrix[2][0] * dx + matrix[2][1] * dy + matrix[2][2] * dz + zref_new;
+        x[iNode] = matrix[0][0] * dx + matrix[0][1] * dy + matrix[0][2] * dz + xref_new;
+        y[iNode] = matrix[1][0] * dx + matrix[1][1] * dy + matrix[1][2] * dz + yref_new;
+        z[iNode] = matrix[2][0] * dx + matrix[2][1] * dy + matrix[2][2] * dz + zref_new;
     }
 }
 
@@ -546,12 +546,12 @@ void AleModel::EulerAngle()
 
 void AleModel::MatrixMultiply(RDouble **x, RDouble **y, RDouble **z)
 {
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
-        for ( int j = 0; j < 3; ++ j )
+        for (int j = 0; j < 3; ++ j)
         {
             z[i][j] = zero;
-            for ( int k = 0; k < 3; ++ k )
+            for (int k = 0; k < 3; ++ k)
             {
                 z[i][j] += x[i][k] * y[k][j];
             }
@@ -573,7 +573,7 @@ void AleModel::MatrixRotate(RDouble *angle, RDouble **matrix)
     MatrixRotateX(angle[2], matrix3);
 
     MatrixMultiply(matrix2, matrix1, matrix4);
-    MatrixMultiply(matrix3, matrix4, matrix );
+    MatrixMultiply(matrix3, matrix4, matrix);
 
     //! Free matrix1£¬matrix2£¬matrix3£¬matrix4.
     DestroyMatrix(matrix1);
@@ -645,10 +645,10 @@ void AleModel::UpdateGridInfo()
     int nZones = GetNumberofGlobalZones();
 
     int level = 0;
-    for ( int izone = 0; izone < nZones; ++ izone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
-        if ( !grid ) continue;
+        Grid *grid = GetGrid(iZone, level);
+        if (!grid) continue;
         grid->ComputeMinMaxBox();
         grid->ComputeMetrics();
     }
@@ -664,9 +664,9 @@ void AleModel::DynamicGrid()
 
 void AleModel::GenerateDynamicGrid()
 {
-    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if (codeOfAleModel == 1)
+    if (isAle)
     {
         //! Rigid body movement.
         CheckMovement();
@@ -690,10 +690,10 @@ void AleModel::BackUpOldGrid()
     int nZones = GetNumberofGlobalZones();
 
     int level = 0;
-    for ( int izone = 0; izone < nZones; ++ izone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
-        if ( !grid ) continue;
+        Grid *grid = GetGrid(iZone, level);
+        if (!grid) continue;
         grid->BackUpOldGrid();
     }
 }
@@ -704,10 +704,10 @@ void AleModel::ComputeGridVelocity()
     int nZones = GetNumberofGlobalZones();
 
     int level = 0;
-    for ( int izone = 0; izone < nZones; ++ izone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid *grid = GetGrid(izone,level);
-        if ( !grid ) continue;
+        Grid *grid = GetGrid(iZone, level);
+        if (!grid) continue;
 
         int nTotalNode = grid->GetNTotalNode();
         RDouble *xt = new RDouble[nTotalNode];
@@ -744,34 +744,34 @@ void AleModel::ReadDynamicGrid(fstream &file)
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
-    for ( int izone = 0; izone < nZones; ++ izone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        ReadGridCoordinate(file, izone);
+        ReadGridCoordinate(file, iZone);
     }
 }
 
-void AleModel::ReadGridCoordinate(fstream &file, int izone)
+void AleModel::ReadGridCoordinate(fstream &file, int iZone)
 {
     using namespace PHMPI;
 
     int send_proc = 0;
     int recv_proc = 0;
 
-    GetSendRecvProc(izone, send_proc, recv_proc);
+    GetSendRecvProc(iZone, send_proc, recv_proc);
 
     int myid = GetCurrentProcessorID();
 
     //! If the process neither sends nor receives, it will return.
-    if ( myid != send_proc && myid != recv_proc ) return;
+    if (myid != send_proc && myid != recv_proc) return;
 
     DataContainer *cdata = new DataContainer();
 
     //! Read grid file ,and send to the corresponding process.
     ReadAbstractData(file, cdata, send_proc, recv_proc);
 
-    if ( myid == recv_proc )
+    if (myid == recv_proc)
     {
-        Grid *grid = GetGrid(izone, 0);
+        Grid *grid = GetGrid(iZone, 0);
         grid->UpdateCoordinate(cdata);
     }
 
@@ -785,9 +785,9 @@ void AleModel::GridSurfaceVelocity(Grid *grid, RDouble *xt, RDouble *yt, RDouble
 
 void AleModel::GridVerticeVelocity(Grid *grid, RDouble *xt, RDouble *yt, RDouble *zt)
 {
-    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if (codeOfAleModel == 1)
+    if (isAle)
     {
         //! Rigid body movement.
         GridVerticeVelocityRigid(grid, xt, yt, zt);
@@ -816,11 +816,11 @@ void AleModel::GridVerticeVelocityGeneral(Grid *grid, RDouble *xt, RDouble *yt, 
     RDouble dtau;
     GlobalDataBase::GetData("dtau", &dtau, PHDOUBLE, 1);
 
-    for ( int inode = 0; inode < nTotalNode; ++ inode )
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        xt[inode] = ( x[inode] - xold[inode] ) / dtau;
-        yt[inode] = ( y[inode] - yold[inode] ) / dtau;
-        zt[inode] = ( z[inode] - zold[inode] ) / dtau;
+        xt[iNode] = (x[iNode] - xold[iNode]) / dtau;
+        yt[iNode] = (y[iNode] - yold[iNode]) / dtau;
+        zt[iNode] = (z[iNode] - zold[iNode]) / dtau;
     }
 }
 
@@ -848,11 +848,11 @@ void AleModel::GridVerticeVelocityRigid(Grid *grid, RDouble *xt, RDouble *yt, RD
     RDouble *vel   = CreateVector();
 
     //! Calculate the grid velocity with the formula dOM =dOP+Omega*PM.
-    for ( int inode = 0; inode < nTotalNode; ++ inode )
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        RDouble dx = x[inode] - xref_old;
-        RDouble dy = y[inode] - yref_old;
-        RDouble dz = z[inode] - zref_old;
+        RDouble dx = x[iNode] - xref_old;
+        RDouble dy = y[iNode] - yref_old;
+        RDouble dz = z[iNode] - zref_old;
 
         dr[0] = dx;
         dr[1] = dy;
@@ -860,17 +860,17 @@ void AleModel::GridVerticeVelocityRigid(Grid *grid, RDouble *xt, RDouble *yt, RD
 
         CrossMultiply(omega, dr, vel);
 
-        //xt[inode] = trans_ref[1][0] + vel[0];
-        //yt[inode] = trans_ref[1][1] + vel[1];
-        //zt[inode] = trans_ref[1][2] + vel[2];
-        xt[inode] = zero;
-        yt[inode] = zero;
-        zt[inode] = zero;
+        //xt[iNode] = trans_ref[1][0] + vel[0];
+        //yt[iNode] = trans_ref[1][1] + vel[1];
+        //zt[iNode] = trans_ref[1][2] + vel[2];
+        xt[iNode] = zero;
+        yt[iNode] = zero;
+        zt[iNode] = zero;
     }
 
-    DestroyVector(dr   );
+    DestroyVector(dr  );
     DestroyVector(omega);
-    DestroyVector(vel  );
+    DestroyVector(vel );
 }
 
 void AleModel::CheckMovement()
@@ -900,27 +900,27 @@ void AleModel::CheckMovement()
 
     RDouble dt = param->dtau;
     
-    if ( itrans == 1 )
+    if (itrans == 1)
     {
         //! Translation : a constant translation velocity is considered.
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             trans_ref[0][m] += trans_ref[1][m] * dt;
             trans_ref[2][m]  = zero;
         }
 
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             xyz_ref[2][m] = xyz_ref[1][m];
             xyz_ref[1][m] = xyz_ref[0][m];
             xyz_ref[0][m] = trans_ref[0][m];
         }
     }
-    else if ( itrans == 2 )
+    else if (itrans == 2)
     {
         //! Translation : the reference point coordinates are prescribed.
     }
-    else if ( itrans == 3 )
+    else if (itrans == 3)
     {
         //! Translation : the movement is enforced in another way.
         //! Not yet implemented!
@@ -929,15 +929,15 @@ void AleModel::CheckMovement()
     }
 
     //! Rotation : a constant angular velocity is considered.
-    if ( irotat == 1 )
+    if (irotat == 1)
     {
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             rotate_ref[0][m] = rotate_ref[0][m] + rotate_ref[1][m] * dt;
             rotate_ref[2][m] = 0.0;
         }
 
-        for ( int m = 0; m < 3; ++ m )
+        for (int m = 0; m < 3; ++ m)
         {
             angle_ref[2][m] = angle_ref[1][m];
             angle_ref[1][m] = angle_ref[0][m];
@@ -945,11 +945,11 @@ void AleModel::CheckMovement()
         }
     }
     //! Rotation : the values of Euler's angles are analytically prescribed.
-    else if ( irotat == 2 )
+    else if (irotat == 2)
     {
     }
     //! Rotation : the movement is enforced in another way.
-    else if ( irotat == 3 )
+    else if (irotat == 3)
     {
         //! Not yet implemented!
         cout << "this option is not yet implemented\n";
@@ -966,9 +966,9 @@ void AleModel::Init()
     param->Init();
 
     //! Return judgment isn't necessary here.
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
-        for ( int j = 0; j < 3; ++ j )
+        for (int j = 0; j < 3; ++ j)
         {
             xyz_ref   [i][j] = 0.0;
             trans_ref [i][j] = 0.0;
@@ -977,9 +977,9 @@ void AleModel::Init()
         }
     }
 
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
-        for ( int j = 0; j < 3; ++ j )
+        for (int j = 0; j < 3; ++ j)
         {
             xyz_ref   [i][j] = 0.0;
             trans_ref [i][j] = 0.0;
@@ -997,12 +997,12 @@ void AleModel::MoveGrid()
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
 
-    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
     int ialetype = 0;
     GlobalDataBase::GetData("ialetype", &ialetype, PHINT, 1);
 
-    if ((isUnsteady == 0) || (codeOfAleModel == 0)) return;
+    if (!isUnsteady || !isAle) return;
 
     if (ialetype == 2)
     {
@@ -1047,25 +1047,25 @@ void AleModel::MoveGrid()
     RDouble simutime;
     GlobalDataBase::GetData("simutime", &simutime, PHDOUBLE, 1);
 
-    int    * ialepar = reinterpret_cast< int    *  > ( GlobalDataBase::GetDataPtr("ialepar") );
-    RDouble * ralepar = reinterpret_cast< RDouble *  > ( GlobalDataBase::GetDataPtr("ralepar") );
-    RDouble * outerdt = reinterpret_cast< RDouble *  > ( GlobalDataBase::GetDataPtr("outerdt") );
-    RDouble **angle0  = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("angle0") );
-    RDouble **coord0  = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("coord0") );
-    RDouble **angle   = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("angle") );
-    RDouble **coord   = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("coord") );
-    RDouble **cforces = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("cforces") );
-    RDouble **cmoment = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("cmoment") );
-    RDouble **vforces = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("vforces") );
-    RDouble **vmoment = reinterpret_cast< RDouble ** > ( GlobalDataBase::GetDataPtr("vmoment") );
+    int    * ialepar = reinterpret_cast< int    *  > (GlobalDataBase::GetDataPtr("ialepar"));
+    RDouble * ralepar = reinterpret_cast< RDouble *  > (GlobalDataBase::GetDataPtr("ralepar"));
+    RDouble * outerdt = reinterpret_cast< RDouble *  > (GlobalDataBase::GetDataPtr("outerdt"));
+    RDouble **angle0  = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("angle0"));
+    RDouble **coord0  = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("coord0"));
+    RDouble **angle   = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("angle"));
+    RDouble **coord   = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("coord"));
+    RDouble **cforces = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("cforces"));
+    RDouble **cmoment = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("cmoment"));
+    RDouble **vforces = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("vforces"));
+    RDouble **vmoment = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("vmoment"));
 
-    if ( ialetype == 2 )
+    if (ialetype == 2)
     {
         //! Check how the movement is enforced.
         chckmovmt(ialepar,ralepar,angle0,coord0,angle,coord,
             outerdt,simutime,lmsmflag,outnstep,cforces,cmoment,vforces,vmoment);
     }
-    else if ( ialetype >= 3 )
+    else if (ialetype >= 3)
     {
         //! Check how the deformation is enforced.
         //! WARNING: chckdeform does nothing!
@@ -1076,7 +1076,7 @@ void AleModel::MoveGrid()
     RDouble *tcoord = new RDouble[3];
 
     //! Update position parameters by specifying their temporal increment.
-    for ( int m = 0; m < 3; ++ m )
+    for (int m = 0; m < 3; ++ m)
     {
         dangle[m] = angle[m][0] - angle[m][1];
         tcoord[m] = coord[m][0] - coord[m][1];
@@ -1086,7 +1086,7 @@ void AleModel::MoveGrid()
     delete [] tcoord;
 
     //! Update Euler's angles and the reference point position.
-    for ( int m = 0; m < 3; ++ m )
+    for (int m = 0; m < 3; ++ m)
     {
         angle[m][2] = angle[m][1];
         angle[m][1] = angle[m][0];
@@ -1117,7 +1117,7 @@ void AleModel::LinearMultiStepMethodsCoeffcient(AleParameter *param)
     
     //! xi, theta, phi, coefficients for the dual time stepping.
     
-    if ( param->lmsmflag == LMSM_IMPEUL )
+    if (param->lmsmflag == LMSM_IMPEUL)
     {
         //! FIRST ORDER SCHEME.
         //! Backward euler - A stable.
@@ -1126,7 +1126,7 @@ void AleModel::LinearMultiStepMethodsCoeffcient(AleParameter *param)
         param->xi    = zero;
         param->order = 1;
     }
-    else if ( param->lmsmflag == LMSM_IMPTRZ )
+    else if (param->lmsmflag == LMSM_IMPTRZ)
     {
         //! SECOND ORDER SCHEMES.
         //! One-step trapezoidal - A stable.
@@ -1135,10 +1135,10 @@ void AleModel::LinearMultiStepMethodsCoeffcient(AleParameter *param)
         param->xi    = zero;
         param->order = 2;
     }
-    else if ( param->lmsmflag == LMSM_IMPBD2 )
+    else if (param->lmsmflag == LMSM_IMPBD2)
     {
         //! Backward differentiation - A stable.
-        if ( param->outnstep == 1 )
+        if (param->outnstep == 1)
         {
             param->theta = one;
             param->phi   = zero;
@@ -1153,7 +1153,7 @@ void AleModel::LinearMultiStepMethodsCoeffcient(AleParameter *param)
             param->order = 2;
         }
     }
-    else if ( param->lmsmflag == LMSM_NODUAL )
+    else if (param->lmsmflag == LMSM_NODUAL)
     {
         //! No linear multi step method.
         param->theta =   one;
@@ -1198,9 +1198,9 @@ void AleModel::UnsteadyPreSolve()
     GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
 
     //! Pre-work for ALE.
-    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if (codeOfAleModel == 0) return;
+    if (!isAle) return;
 
     DynamicGrid();
 }

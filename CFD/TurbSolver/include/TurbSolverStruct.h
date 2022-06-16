@@ -386,8 +386,8 @@ private:
     void RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef);
 
     //! Implicit LU-SGS time integration method.
-    void SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    void SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    void SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    void SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
 
     //! To update the turbulent flow field variables for steady flow.
     //! q(n+1) = q(n)+dq.

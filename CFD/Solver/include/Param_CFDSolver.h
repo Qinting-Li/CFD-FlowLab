@@ -80,7 +80,15 @@ public:
     RDouble GetCFLStart() const;
 
     //! Get final CFL.
-    RDouble GetCFDEnd() const;
+    RDouble GetCFLEnd() const;
+
+    RDouble GetFineCFL() const;
+
+    RDouble GetPMax() const;
+    RDouble GetPMin() const;
+    RDouble GetDeltaMax() const;
+    RDouble GetMagnifyFactor() const;
+    RDouble GetReduceFactor() const;
 
     //! The number of step when cfl increase from CFLStart to CFLEnd.
     int GetCFLVaryStep() const;
@@ -104,6 +112,9 @@ public:
     //! Get reference gama value.
     RDouble GetRefGama() const;
 
+    //! Hyflow.
+    int GetUseHyflowSetting() const;
+
     //! Get reference dimensional density.
     RDouble GetRefDimensionalPressure() const;
 
@@ -118,6 +129,9 @@ public:
 
     //! Get reference dimensional temperature.
     RDouble GetRefDimensionalTemperature() const;
+
+     //! Get AusmpwPlusLimiter.
+    RDouble GetAusmpwPlusLimiter() const;
 
     //! Get flag of starting from steady result.
     int GetIfStartFromSteadyResults() const;
@@ -156,7 +170,9 @@ private:
 
     RDouble CFLStart;
     RDouble CFLEnd;
+    RDouble fineCFL;
     int CFLVaryStep;
+    RDouble pMax, pMin, deltaMax, magnifyFactor, reduceFactor;
 
     int nMGLevel;
 
@@ -170,6 +186,8 @@ private:
     RDouble refDimensionalTemperature;
     RDouble refDimensionalVelocity;
 
+    RDouble AusmpwPlusLimiter;
+
     int ifStartFromSteadyResults;
     int ifStaticsFlowField;
     int ifStaticsReynoldsStress;
@@ -177,11 +195,13 @@ private:
     int intervalStepFlow;
     int ifLocalTimeStep;
 
+    int useHyflowSetting;
+
     RDouble TorqueRefX;
     RDouble TorqueRefY;
     RDouble TorqueRefZ;
 
-    int isOverLapping;
+    int isOverset;
 
 };
 

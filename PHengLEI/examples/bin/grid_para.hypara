@@ -17,6 +17,7 @@
 //             6 -- Ustar, mgrid.in.
 //             7 -- Hybrid, include both of unstructured and structured grid, *.fts.
 //             8 -- GMSH, *.msh.
+//             9 -- Gridgen type of structured grid, *.dat/*.grd.
 int gridtype   = 0;
 int axisup     = 1;
 int from_gtype = 5;

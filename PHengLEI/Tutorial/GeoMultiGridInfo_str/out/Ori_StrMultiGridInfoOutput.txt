@@ -1,0 +1,16 @@
+Structured MultiGridInfo of Zone 0 is: 
+   The multigrid method step I is:  2
+   The multigrid method step J is:  2
+   The multigrid method step K is:  2
+Structured MultiGridInfo of Zone 1 is: 
+   The multigrid method step I is:  2
+   The multigrid method step J is:  2
+   The multigrid method step K is:  2
+Structured MultiGridInfo of Zone 2 is: 
+   The multigrid method step I is:  2
+   The multigrid method step J is:  2
+   The multigrid method step K is:  2
+Structured MultiGridInfo of Zone 3 is: 
+   The multigrid method step I is:  2
+   The multigrid method step J is:  2
+   The multigrid method step K is:  2

@@ -3,7 +3,7 @@
 #include "Precision.h"
 #include "Constants.h"
 #include "AleManager.h"
-#include "Force.h"
+#include "AleForceManager.h"
 #include "Solver.h"
 #include "Geometry.h"
 #include "SixDofManager.h"
@@ -18,6 +18,7 @@
 #include "IO_FileName.h"
 #include "IO_FileReader.h"
 #include "TK_Exit.h"
+#include "TK_Log.h"
 #include "Task_ServerUpdateInterface.h"
 #include "Geo_UnstructGrid.h"
 #include "Glb_Dimension.h"
@@ -29,13 +30,14 @@ AleManager * aleManager = NULL;
 
 void CreateAleManager()
 {
-    int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    if (IsUnsteady == 0)
+    int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    if (!isUnsteady)
     {
         return;
     }
-    int IsAleSimulation = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if( IsAleSimulation == 0 )
+
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (!isAle)
     {
         return;
     }
@@ -52,17 +54,22 @@ AleManager * GetAleManager()
 
 void FreeAleManager()
 {
-    if( aleManager )
+    int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (IsUnsteady  && isAle)
     {
-        delete aleManager;
-        aleManager = NULL;
+        if(aleManager)
+        {
+            delete aleManager;
+            aleManager = NULL;
+        }
     }
 }
 
 void SolveSingleInnerIterationStepForAleSolvers()
 {
-    int IsAleSimulation = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if (IsAleSimulation == 0)
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (!isAle)
     {
         return;
     }
@@ -81,16 +88,15 @@ void SolveSingleInnerIterationStepForAleSolvers()
         BackupAllZonesOldGrid();
     }
     //! if it is the first step of the inner step or implicit methods, update the mesh information.
-    if (innStep == 1 || IsImplicitAleMethod() )
+    if (innStep == 1 || IsImplicitAleMethod())
     {
         aleManager->Run();
 
-        //SetCurrentGridLevelIndex( 0 );
-        //DoMysteriousGridTask( "COMPUTE_METRICS" );
-        aleManager->ComputeMetrics();
+
         //ComputeMetrics();
-        aleManager->CommCellCenterData();
-        //CommunicateCellCenterData();
+        aleManager->ComputeMetrics();
+
+        aleManager->CommunicateCellCenterData();
 
         //! computing the faceNormalVelocityContainer. we do not compute the movement velocity for quasi steady questions.
         int methodOfDualTime = GlobalDataBase::GetIntParaFromDB("methodOfDualTime");
@@ -100,9 +106,9 @@ void SolveSingleInnerIterationStepForAleSolvers()
         }
 
         //! if it is the overset mesh, should dig the hole.
-        int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+        int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
         int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-        if (codeOfOversetGrid == 1 && outIterStep != 1)
+        if (isOverset && outIterStep > 1)
         {
             //! clear up the store memory before assembling.
             DeAllocateOversetStorage();
@@ -112,16 +118,15 @@ void SolveSingleInnerIterationStepForAleSolvers()
             InitializeOversetInterfaceTopology();
 
             //! the memory of the variables need to re open, when the overset mesh changes.
-            ReAllocateOversetStorage();
+            AllocateOversetStorage();
         }
-        
     }
 }
 
 void PostprocessAfterInnerIterationStepForAleSolvers()
 {
-    int IsAleSimulation = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if (IsAleSimulation == 0)
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    if (!isAle)
     {
         return;
     }
@@ -144,10 +149,10 @@ AleManager::AleManager()
 
 AleManager::~AleManager()
 {
-    if (aleForceManager     ) delete aleForceManager;
-    if (sixDofSolverManager ) delete sixDofSolverManager;
-    if (deformingManager    ) delete deformingManager;
-    if (movingMeshManager   ) delete movingMeshManager;
+    if (aleForceManager    ) delete aleForceManager;
+    if (sixDofSolverManager) delete sixDofSolverManager;
+    if (deformingManager   ) delete deformingManager;
+    if (movingMeshManager  ) delete movingMeshManager;
 }
 
 void AleManager::Initialize()
@@ -155,25 +160,27 @@ void AleManager::Initialize()
     Allocate();
 
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if(aleStartStrategy ==  1 )
+    if(aleStartStrategy ==  1)
     {
         Restart();
     }
 
-    if(aleStartStrategy == 0 )
+    if(aleStartStrategy == 0)
     {
         aleManager->Run();
 
         aleManager->ComputeMetrics();
 
-        aleManager->CommCellCenterData();
+        aleManager->CommunicateCellCenterData();
+    }
 
-        int codeOfOversetGrid = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-        if (codeOfOversetGrid == 1)
-        {
-            ResetAllZonesOversetGrid();
-            InitializeOversetInterfaceTopology();
-        }
+    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    if (isOverset)
+    {
+        ResetAllZonesOversetGrid();
+        InitializeOversetInterfaceTopology();
+        //! the memory of the variables need to re open, when the overset mesh changes.
+        AllocateOversetStorage();
     }
 }
 
@@ -185,17 +192,17 @@ void AleManager::ComputeMetrics()
     ActionKey* actkey = new ActionKey();
     actkey->action = COMPUTEMETRICS;
 
-    for (int izone = 0; izone < nZones; ++izone)
+    for (int iZone = 0; iZone < nZones; ++iZone)
     {
-        int send_proc = GetZoneProcessorIDSepMode(izone);
+        int send_proc = GetZoneProcessorIDSepMode(iZone);
         int recv_proc = GetServerSepMode();
 
-        int tag = GetSendRecvTag(GRID_BASED, 0, izone);
+        int tag = GetSendRecvTag(GRID_BASED, 0, iZone);
         int myid = PHMPI::GetCurrentProcessorID();
         if (myid == send_proc)
         {
             //! If the ProcessorID of i-th zone equal to the running ProcessorID, compute grid metrics.
-            Grid* grid = GetGrid(izone, 0);
+            Grid* grid = GetGrid(iZone, 0);
             grid->ComputeMetrics(actkey);
             if (grid->Type() == PHSPACE::STRUCTGRID)
             {
@@ -219,7 +226,7 @@ void AleManager::ComputeMetrics()
     delete actkey;    actkey = NULL;
 }
 
-void AleManager::CommCellCenterData()
+void AleManager::CommunicateCellCenterData()
 {
     using namespace PHMPI;
     int nMGLevel = GlobalDataBase::GetIntParaFromDB("nMGLevel");
@@ -245,10 +252,10 @@ void AleManager::CommCellCenterData()
 
 void AleManager::ComputeGridFaceVelocity()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    for (int iZone = 0; iZone < nZones; ++iZone)
     {
         Grid* grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
         if (!grid) continue;
@@ -266,11 +273,12 @@ void AleManager::Allocate()
     sixDofSolverManager     = new SixDofSolverManager   ;
     movingMeshManager       = new MovingMeshManager     ;
 
+    InitializeDimensionalReferenceTime();
     RDouble aleSimulationTime = 0.0;
     GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if(aleStartStrategy == 0 )
+    if(aleStartStrategy == 0)
     {
         RDouble physicalTime = 0.0;
         GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
@@ -302,12 +310,12 @@ void AleManager::Restart()
     }
 
     ios_base::openmode openMode = ios_base::in | ios_base::binary;
-    PHSPACE::OpenFile( aleFile, aleFileName, openMode );
+    PHSPACE::OpenFile(aleFile, aleFileName, openMode);
     currentAleFile = & aleFile;
-    SetIsReadAleFile( true );
+    SetIsReadAleFile(true);
 
     RDouble aleSimulationTime = 0.0;
-    PHRead( aleFile, aleSimulationTime);
+    PHRead(aleFile, aleSimulationTime);
     GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
     //! the mesh  need to transform to n time from 0 time, when restart the computing.
@@ -319,9 +327,18 @@ void AleManager::Restart()
     //! the mesh moves, it needs to recompute the mesh information.
     aleManager->ComputeMetrics();
 
-    aleManager->CommCellCenterData();
+    aleManager->CommunicateCellCenterData();
 
-    PHSPACE::CloseFile( aleFile );
+    PHSPACE::CloseFile(aleFile);
+}
+
+void AleManager::InitializeDimensionalReferenceTime()
+{
+    RDouble referenceVelocity = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("referenceVelocity");
+    RDouble referenceLength   = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("referenceLength");
+
+    RDouble dimensionalReferenceTime = referenceLength / referenceVelocity;
+    PHSPACE::GlobalDataBase::UpdateData("dimensionalReferenceTime", &dimensionalReferenceTime, PHDOUBLE, 1);
 }
 
 void AleManager::UpdateAleForce()
@@ -372,19 +389,19 @@ void AleManager::DumpRestart()
     int outerStep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int numberOfFieldSaveSteps = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
 
-    if( outerStep % numberOfFieldSaveSteps == 0 )
+    if(outerStep % numberOfFieldSaveSteps == 0)
     {
         string aleFileName = "./results/aleRestartFile.dat";
         ios_base::openmode openMode = ios_base::out | ios_base::binary;
-        PHSPACE::OpenFile( aleFile, aleFileName, openMode );
+        PHSPACE::OpenFile(aleFile, aleFileName, openMode);
 
         RDouble aleTime = GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
-        PHWrite( aleFile, aleTime );
+        PHWrite(aleFile, aleTime);
 
-        aleForceManager->DumpRestartAleForceOfBodyContainer( aleFile );
+        aleForceManager->DumpRestartAleForceOfBodyContainer(aleFile);
         deformingManager->DumpRestart(aleFile);
-        sixDofSolverManager->DumpRestart( aleFile );
+        sixDofSolverManager->DumpRestart(aleFile);
 
         PHSPACE::CloseFile(aleFile);
     }
@@ -392,57 +409,42 @@ void AleManager::DumpRestart()
 
 void BackupAllZonesOldGrid()
 {
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
+    int nZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for ( int iZone = 0; iZone < numberOfZones; ++ iZone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Grid* grid = GetGrid( iZone, gridLevelIndex );
-        if ( ! grid ) continue;
+        Grid* grid = GetGrid(iZone, gridLevelIndex);
+        if (! grid) continue;
         grid->BackUpOldGrid();
     }
 }
-
-void ComputeMetrics()
-{
-    int numberOfZones = PHMPI::GetNumberofGlobalZones();
-    ActionKey* actkey = new ActionKey();
-    actkey->action = COMPUTEMETRICS;
-
-    int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
-    {
-        Grid* grid = GetGrid(iZone, gridLevelIndex);
-        if (!grid) continue;
-        grid->ComputeMetrics(actkey);
-    }
-    delete actkey;    actkey = NULL;
-}
-
 
 void DeAllocateOversetStorage()
 {
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int numberOfZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < numberOfZones; ++iZone)
+        for (int iZone = 0; iZone < nZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
             if (iSolver == NS_SOLVER)
             {
-                int nNSEquation = GlobalDataBase::GetIntParaFromDB("nm");
+                int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
+                int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+                int nEquation = nLaminar + nChemical;
                 int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("q", nNSEquation, TWO_D);
+                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("q", nEquation, TWO_D);
                 InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("t", nTemperatureModel, TWO_D);
                 GreatDeAllocateOversetInterfaceVariables< PHNsTag >(grid);
             }
             else if(iSolver == TURB_SOLVER)
             {
                 int nEquation = GlobalDataBase::GetIntParaFromDB("n_turb");
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
+                InterfaceFieldNameProperty< PHTurbulentTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
                 GreatDeAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
             }
         }
@@ -450,33 +452,34 @@ void DeAllocateOversetStorage()
     }
 }
 
-void ReAllocateOversetStorage()
+void AllocateOversetStorage()
 {
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int numberOfZones = PHMPI::GetNumberofGlobalZones();
+        int nZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < numberOfZones; ++iZone)
+        for (int iZone = 0; iZone < nZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
             if (iSolver == NS_SOLVER)
             {
-                int nNSEquation = GlobalDataBase::GetIntParaFromDB("nm");
+                int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
+                int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+                int nEquation = nLaminar + nChemical;
                 int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("q", nNSEquation, TWO_D);
+                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("q", nEquation, TWO_D);
                 InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("t", nTemperatureModel, TWO_D);
                 GreatAllocateOversetInterfaceVariables< PHNsTag >(grid);
             }
             else if (iSolver == TURB_SOLVER)
             {
                 int nEquation = GlobalDataBase::GetIntParaFromDB("n_turb");
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
+                InterfaceFieldNameProperty< PHTurbulentTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
                 GreatAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
             }
         }
-
     }
 }
 
@@ -595,7 +598,7 @@ bool IsReadAleFile()
     return isReadAleFile;
 }
 
-void SetIsReadAleFile( bool isReadAleFileIn )
+void SetIsReadAleFile(bool isReadAleFileIn)
 {
     PHSPACE::isReadAleFile = isReadAleFileIn;
 }
@@ -607,10 +610,10 @@ fstream & GetCurrentAleFile()
 
 bool IsImplicitAleMethod()
 {
-    int keyMethod = PHSPACE::GlobalDataBase::GetIntParaFromDB( "methodForKineticEquation" );
+    int keyMethod = PHSPACE::GlobalDataBase::GetIntParaFromDB("methodForKineticEquation");
 
-    if ( keyMethod == KINETIC_SCHEME::ADMAS_BASHFORTH_FIRST_ORDER )   return false;
-    if ( keyMethod == KINETIC_SCHEME::ADMAS_BASHFORTH_SECOND_ORDER )  return false;
+    if (keyMethod == KINETIC_SCHEME::ADMAS_BASHFORTH_FIRST_ORDER)   return false;
+    if (keyMethod == KINETIC_SCHEME::ADMAS_BASHFORTH_SECOND_ORDER)  return false;
 
     return true;
 }
@@ -659,11 +662,11 @@ void GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, c
 
 RDouble GetAleTimeStep()
 {
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble physicalTimeStep         = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    RDouble gridScaleFactor          = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-    RDouble physicalTimeStep = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
-
-    RDouble aleTimeStep = physicalTimeStep * reynoldsReferenceLengthDimensional;
+    RDouble aleTimeStep = physicalTimeStep * dimensionalReferenceTime * gridScaleFactor;
 
     return aleTimeStep;
 }

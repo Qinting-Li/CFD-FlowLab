@@ -27,6 +27,10 @@
 #include "Geo_UnstructBC.h"
 #include "Geo_LineTopo_Unstruct.h"
 
+#ifdef USE_IncompressibleSolver
+#include "PHVector3.h"
+#endif
+
 namespace PHSPACE
 {
 class Connectivity
@@ -40,7 +44,7 @@ public:
     ~Connectivity();
 };
 
-class CompositeUnstructBC;
+class UnstructBCSet;
 class UnstructBC;
 class VirtualFile;
 class OversetConfig;
@@ -51,18 +55,12 @@ class UnstructGrid : public Grid
 private:
     //! The boundary condition list.\n
     //! Each face has a Boundary Condition Record.
-    CompositeUnstructBC ** bcr;
+    UnstructBCSet ** bcr;
 
-    //! The boundary condition list for each BC Region.\n
-    //! it is different with **bcr,bcr is for a single face and **bcRegionUnStruct is for some face
-    //! with a same bc name.
-    UnstructBC **bcRegionUnstruct;
-
-    //! The number of BC Region,i.e. the number of different BC names.
-    int nBCRegionUnstruct;
+    UnstructBCSet *unstructBCSet;
 
     //! The volume condition list, without using at the moment.\n
-    //CompositeUnstructBC **vcr;
+    //UnstructBCSet **vcr;
 
     //! Unstructured node topology information:\n
     //! Defines the node-face, node-cell, node-node \n
@@ -120,6 +118,9 @@ private:
     //! Wall distance: the nearest distance of a cell to the wall.
     RDouble  * walldist;
 
+    //! Wall distance: the nearest distance of a node to the wall.
+    RDouble * walldistNode;
+
     RDouble* normalDistanceC2C;
 
     //! the label for first layer cell of the wall boundary.
@@ -159,19 +160,27 @@ private:
 
 
 public:
+
+#ifdef USE_IncompressibleSolver
+    //! This is values for SIMPLE algorithm.
+    //! cellCenterVector container the three coordinates of the cells center. 
+    Vector3D *cellCenterVector;
+
+    //! faceNormalVector container the three units of the face normal directions. 
+    Vector3D *faceNormalVector;
+#endif
+
+public:
     LIB_EXPORT UnstructGrid();
     LIB_EXPORT ~UnstructGrid();
 
 public:
     GridManager * GetGridManager();
     //! Set the boundary condition records.
-    void SetBCRecord(CompositeUnstructBC **bcr);
+    void SetBCRecord(UnstructBCSet **bcr);
 
-    //! Set the boundary Region condition.
-    void SetBCRegionUnstruct(UnstructBC **bcr);
-
-    //! Set the boundary Region condition.
-    void SetNBCRegionUnstruct(int nBCRegionUnstruct);
+    //! Set the boundary condition region.
+    void SetUnstructBCSet(UnstructBCSet* unstructBCSet);
 
     //! Set the left cell list of each face.
     void SetLeftCellOfFace(int *left_cell_of_face_in);
@@ -218,19 +227,20 @@ public:
     void SetZoneProbesCellID(vector <int> zoneProbesCellID);
 
     //! Return the boundary condition records.
-    CompositeUnstructBC **GetBCRecord() const;
+    UnstructBCSet **GetBCRecord() const;
+    
+    //! Create composite boundary condition region (allocate memory for structBCSet).
+    LIB_EXPORT void CreateUnstructBCSet(int nBCRegion);
 
+    //! Return composite boundary condition region pointer (structBCSet).
+    UnstructBCSet * GetUnstructBCSet() const;
+   
     RDouble * GetNormalDistanceOfC2C() const;
 
-    //! Get the boundary Region condition.
-    UnstructBC ** GetBCRegionUnstruct();
 
     vector <int> & GetBoundaryConditionType();
 
     vector <int> & GetLocalToGlobalNodesMap();
-
-    //! Set the boundary Region condition.
-    int GetNBCRegionUnstruct() const;
 
     //! Get the left cell list of each face.
     int * GetLeftCellOfFace() const;
@@ -447,6 +457,9 @@ public:
     //! Return the wall distance: the nearest distance of a cell to the wall.
     RDouble * GetWallDist() const;
 
+    //! Return the wall distance: the nearest distance of a node to the wall.
+    RDouble* GetWallDistNode() const;
+
     //! Return the wall cell label for the first layer of wall boundary. 
     int * GetWallCellLabel();
 
@@ -498,8 +511,8 @@ public:
     //! Get the average volume.
     LIB_EXPORT RDouble GetAverageVolume();
 
-    void GetSourceIndex(int iface, int ipos, int &s);
-    void GetTargetIndex(int iface, int ipos, int &t);
+    void GetSourceIndex(int iFace, int ipos, int &s);
+    void GetTargetIndex(int iFace, int ipos, int &t);
 
     //! Return the global point number map to the interpoint for send.
     //! @param[in] ipoint : the interpoint number.
@@ -522,9 +535,9 @@ public:
     void SetGhostCell(RDouble **f, const int &nVariables);
     void SetGhostCell(RDouble *f, RDouble value);
 
-    void AllocateWalldist(ActionKey *actkey);
+    void AllocateWalldist();
 
-    void SpecifyBC();
+    void SpecifyRightCellofBC();
 
     //! Return the gradient computed by ggnode.
     //! @param[in] qnode : the flow value on the point.
@@ -532,6 +545,7 @@ public:
     void CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGNodeWeight(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
+    void CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *wfR, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellW(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
@@ -554,6 +568,9 @@ public:
 
     // calculate the normal distance between two neighbor cells.
     LIB_EXPORT void CalNormalDistanceOfC2C();
+    #ifdef USE_INHOUSE_VERSION
+    LIB_EXPORT void ReorderCellForLineLUSGS();
+    #endif
     void ReadGrid (fstream &file);
     void ReadGrid (VirtualFile *vfile);
     LIB_EXPORT void WriteGrid(fstream &file);
@@ -580,7 +597,7 @@ public:
 
     void DXDYDZ(RDouble *f, int ie, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
     void DXDYDZ(RDouble *f, int ie, int **cell2face, int *face_number_of_each_cell, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
-    void DXDYDZ_Face(RDouble *f, int iface, int nodepos, RDouble fl, RDouble fr, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
+    void DXDYDZ_Face(RDouble *f, int iFace, int nodepos, RDouble fl, RDouble fr, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
     void DXDYDZ_GG (RDouble *f, int ie, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
     void DXDYDZ_LSQ(RDouble *f, int ie, RDouble &dfdx, RDouble &dfdy, RDouble &dfdz);
 
@@ -663,6 +680,14 @@ private:
     void ComputeFaceCenterAreaNormal3DNew2(ActionKey *actkey);
     void ComputeCellCenterVol3DNew2(ActionKey *actkey);
 
+public:
+#ifdef USE_IncompressibleSolver
+    //! This is function for SIMPLE algorithm.
+    Vector3D * GetCellCenterVector() const;
+    Vector3D * GetFaceNormalVector() const;
+    void SetCellCenterVector(Vector3D *cellC);
+    void SetFaceNormalVector(Vector3D *faceN);
+#endif
 };
 
 #include "Geo_UnstructGrid.hxx"
@@ -682,7 +707,7 @@ void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVisual(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q);
 void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEquation);
-void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, int *n_count, int bctype_in, bool twoside);
+void FixBCNodeVar(UnstructGrid* grid, RDouble* q, RDouble* q_n, int* n_count, int bctype_in, bool twoside);
 void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count, int bctype_in, bool twoside);    // Bell 20121220 add
 void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 
@@ -765,4 +790,3 @@ void DumpSliceGrid(UnstructGrid *unstructGrid, int sliceAxis, RDouble slicePosit
 
 RDouble AspectRatio(RDouble dist, RDouble area, int nodeNumOfPerFace);
 }
-

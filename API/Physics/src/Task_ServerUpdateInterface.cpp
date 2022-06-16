@@ -1,6 +1,7 @@
 #include "Task_ServerUpdateInterface.h"
 #include "Task.h"
 #include "Geo_Grid.h"
+#include "TK_Log.h"
 
 namespace PHSPACE
 {
@@ -38,7 +39,6 @@ void MainTaskNonBlocking(ActionKey *actkey)
     // Each processor runs along the same order, which is from 0 to nZones.
     // Each simulation zone is looped over to judge if the communication is necessary.
     // Step 1: Compressing data into actkey and Communication.
-
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
@@ -71,7 +71,7 @@ void MainTaskNonBlocking(ActionKey *actkey)
             }
 
             // Swapping.
-            PH_InterfaceNonBlocking(actkey, sendBuffer, receivedBuffer, iZone, neighborZoneIndex, requestContainer );
+            PH_InterfaceNonBlocking(actkey, sendBuffer, receivedBuffer, iZone, neighborZoneIndex, requestContainer);
         }
     }
 

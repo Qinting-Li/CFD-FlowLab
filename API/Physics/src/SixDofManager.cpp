@@ -7,6 +7,7 @@
 #include "GlobalDataBase.h"
 #include "Constants.h"
 #include "Force.h"
+#include "AleForceManager.h"
 #include "PHIO.h"
 #include "IO_FileName.h"
 #include "IO_FileReader.h"
@@ -19,7 +20,7 @@ namespace PHSPACE
 
 RDouble ** MassCharacter::GetMomentOfInertiaTensor()
 {
-    RDouble ** momentOfInertiaTensor = PHSPACE::NewPointer2< RDouble > ( 3, 3 );
+    RDouble ** momentOfInertiaTensor = PHSPACE::NewPointer2< RDouble > (3, 3);
 
     momentOfInertiaTensor[ 0 ][ 0 ] =   momentOfInertiaTensorXX;
     momentOfInertiaTensor[ 0 ][ 1 ] = - momentOfInertiaTensorXY;
@@ -38,7 +39,7 @@ RDouble ** MassCharacter::GetMomentOfInertiaTensor()
 
 RDouble ** MassCharacter::GetInverseMomentOfInertiaTensor()
 {
-    RDouble ** inverseMomentOfInertiaTensor = PHSPACE::NewPointer2< RDouble > ( 3, 3 );
+    RDouble ** inverseMomentOfInertiaTensor = PHSPACE::NewPointer2< RDouble > (3, 3);
 
     RDouble d   =       momentOfInertiaTensorXX * momentOfInertiaTensorYY * momentOfInertiaTensorZZ -
                         momentOfInertiaTensorXX * momentOfInertiaTensorYZ * momentOfInertiaTensorYZ -
@@ -73,7 +74,7 @@ RDouble ** MassCharacter::GetInverseMomentOfInertiaTensor()
     return inverseMomentOfInertiaTensor;
 }
 
-MassCharacter::MassCharacter( RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ )
+MassCharacter::MassCharacter(RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ)
 {
     this->mass = mass;
     this->momentOfInertiaTensorXX  = momentOfInertiaTensorXX;
@@ -84,7 +85,7 @@ MassCharacter::MassCharacter( RDouble mass, RDouble momentOfInertiaTensorXX, RDo
     this->momentOfInertiaTensorYZ  = momentOfInertiaTensorYZ;
 }
 
-void MassCharacter::SetMassCharacter( RDouble mass, vector< RDouble > & massMatrix )
+void MassCharacter::SetMassCharacter(RDouble mass, vector< RDouble > & massMatrix)
 {
     this->mass = mass;
     this->momentOfInertiaTensorXX  = massMatrix[ 0 ];
@@ -95,7 +96,7 @@ void MassCharacter::SetMassCharacter( RDouble mass, vector< RDouble > & massMatr
     this->momentOfInertiaTensorYZ  = massMatrix[ 5 ];
 }
 
-void MassCharacter::SetMassCharacter( RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ )
+void MassCharacter::SetMassCharacter(RDouble mass, RDouble momentOfInertiaTensorXX, RDouble momentOfInertiaTensorYY, RDouble momentOfInertiaTensorZZ, RDouble momentOfInertiaTensorXY, RDouble momentOfInertiaTensorXZ, RDouble momentOfInertiaTensorYZ)
 {
     this->mass = mass;
     this->momentOfInertiaTensorXX  = momentOfInertiaTensorXX;
@@ -106,7 +107,7 @@ void MassCharacter::SetMassCharacter( RDouble mass, RDouble momentOfInertiaTenso
     this->momentOfInertiaTensorYZ  = momentOfInertiaTensorYZ;
 }
 
-void MassCharacter::GetMassCharacter( RDouble & mass, RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ,RDouble & momentOfInertiaTensorXY,RDouble & momentOfInertiaTensorXZ,RDouble & momentOfInertiaTensorYZ )
+void MassCharacter::GetMassCharacter(RDouble & mass, RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ,RDouble & momentOfInertiaTensorXY,RDouble & momentOfInertiaTensorXZ,RDouble & momentOfInertiaTensorYZ)
 {
     mass = this->mass;
     momentOfInertiaTensorXX  = this->momentOfInertiaTensorXX;
@@ -117,7 +118,7 @@ void MassCharacter::GetMassCharacter( RDouble & mass, RDouble & momentOfInertiaT
     momentOfInertiaTensorYZ  = this->momentOfInertiaTensorYZ;
 }
 
-void MassCharacter::GetMomentInertia( vector< RDouble > & momentOfInertia )
+void MassCharacter::GetMomentInertia(vector< RDouble > & momentOfInertia)
 {
     momentOfInertia[ 0 ]  = this->momentOfInertiaTensorXX;
     momentOfInertia[ 1 ]  = this->momentOfInertiaTensorYY;
@@ -127,7 +128,7 @@ void MassCharacter::GetMomentInertia( vector< RDouble > & momentOfInertia )
     momentOfInertia[ 5 ]  = this->momentOfInertiaTensorYZ;
 }
 
-void MassCharacter::GetMomentInertia( RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ, RDouble & momentOfInertiaTensorXY, RDouble & momentOfInertiaTensorXZ, RDouble & momentOfInertiaTensorYZ )
+void MassCharacter::GetMomentInertia(RDouble & momentOfInertiaTensorXX, RDouble & momentOfInertiaTensorYY, RDouble & momentOfInertiaTensorZZ, RDouble & momentOfInertiaTensorXY, RDouble & momentOfInertiaTensorXZ, RDouble & momentOfInertiaTensorYZ)
 {
     momentOfInertiaTensorXX  = this->momentOfInertiaTensorXX;
     momentOfInertiaTensorYY  = this->momentOfInertiaTensorYY;
@@ -155,10 +156,10 @@ SixDofParameter::SixDofParameter()
     angularVelocityY = 0.0;
     angularVelocityZ = 0.0; 
 
-    referenceLength = 1.0;
+    referenceLength   = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("referenceLength");
 }
 
-void SixDofParameter::GetNondimensionalMassCenter( RDouble & dimensionlessMassCenterX, RDouble & dimensionlessMassCenterY, RDouble & dimensionlessMassCenterZ )
+void SixDofParameter::GetNondimensionalMassCenter(RDouble & dimensionlessMassCenterX, RDouble & dimensionlessMassCenterY, RDouble & dimensionlessMassCenterZ)
 {
     dimensionlessMassCenterX = this->massCenterX / referenceLength;
     dimensionlessMassCenterY = this->massCenterY / referenceLength;
@@ -180,30 +181,30 @@ RDouble SixDofParameter::GetNondimensionalMassCenterZ()
     return this->massCenterZ / referenceLength;
 }
 
-void SixDofParameter::GetNondimensionalMassCenterVector( vector< RDouble > & nondimensionalMassCenterVector )
+void SixDofParameter::GetNondimensionalMassCenterVector(vector< RDouble > & nondimensionalMassCenterVector)
 {
     nondimensionalMassCenterVector[ 0 ] = this->massCenterX / referenceLength;
     nondimensionalMassCenterVector[ 1 ] = this->massCenterY / referenceLength;
     nondimensionalMassCenterVector[ 2 ] = this->massCenterZ / referenceLength;
 }
 
-void SixDofParameter::GetGeneralVariableContainer( vector< RDouble > & generalVariableContainer )
+void SixDofParameter::GetGeneralVariableContainer(vector< RDouble > & generalVariableContainer)
 {
-    this->GetMassCenter        ( generalVariableContainer[ 0 ], generalVariableContainer[ 1  ], generalVariableContainer[ 2  ] );
-    this->GetMassCenterVelocity( generalVariableContainer[ 3 ], generalVariableContainer[ 4  ], generalVariableContainer[ 5  ] );
-    this->GetEulerAngle        ( generalVariableContainer[ 6 ], generalVariableContainer[ 7  ], generalVariableContainer[ 8  ] );
-    this->GetAngularVelocity   ( generalVariableContainer[ 9 ], generalVariableContainer[ 10 ], generalVariableContainer[ 11 ] );
+    this->GetMassCenter        (generalVariableContainer[ 0 ], generalVariableContainer[ 1  ], generalVariableContainer[ 2  ]);
+    this->GetMassCenterVelocity(generalVariableContainer[ 3 ], generalVariableContainer[ 4  ], generalVariableContainer[ 5  ]);
+    this->GetEulerAngle        (generalVariableContainer[ 6 ], generalVariableContainer[ 7  ], generalVariableContainer[ 8  ]);
+    this->GetAngularVelocity   (generalVariableContainer[ 9 ], generalVariableContainer[ 10 ], generalVariableContainer[ 11 ]);
 }
 
-void SixDofParameter::SetGeneralVariableContainer( RDouble * generalVariableContainer )
+void SixDofParameter::SetGeneralVariableContainer(RDouble * generalVariableContainer)
 {
-    this->SetMassCenter        ( generalVariableContainer[ 0 ], generalVariableContainer[ 1  ], generalVariableContainer[ 2  ] );
-    this->SetMassCenterVelocity( generalVariableContainer[ 3 ], generalVariableContainer[ 4  ], generalVariableContainer[ 5  ] );
-    this->SetEulerAngle        ( generalVariableContainer[ 6 ], generalVariableContainer[ 7  ], generalVariableContainer[ 8  ] );
-    this->SetAngularVelocity   ( generalVariableContainer[ 9 ], generalVariableContainer[ 10 ], generalVariableContainer[ 11 ] );
+    this->SetMassCenter        (generalVariableContainer[ 0 ], generalVariableContainer[ 1  ], generalVariableContainer[ 2  ]);
+    this->SetMassCenterVelocity(generalVariableContainer[ 3 ], generalVariableContainer[ 4  ], generalVariableContainer[ 5  ]);
+    this->SetEulerAngle        (generalVariableContainer[ 6 ], generalVariableContainer[ 7  ], generalVariableContainer[ 8  ]);
+    this->SetAngularVelocity   (generalVariableContainer[ 9 ], generalVariableContainer[ 10 ], generalVariableContainer[ 11 ]);
 }
 
-void SixDofParameter::SetGeneralVariableContainer( vector< RDouble > & massCenter, vector< RDouble >& attitudeAngle, 
+void SixDofParameter::SetGeneralVariableContainer(vector< RDouble > & massCenter, vector< RDouble >& attitudeAngle, 
     vector< RDouble >& massCenterVelocity, vector< RDouble >& angularVelocity)
 {
     this->SetMassCenter        (massCenter        [0], massCenter        [1],         massCenter[2]);
@@ -212,21 +213,21 @@ void SixDofParameter::SetGeneralVariableContainer( vector< RDouble > & massCente
     this->SetAngularVelocity   (angularVelocity   [0], angularVelocity   [1],    angularVelocity[2]);
 }
 
-void SixDofParameter::UpdateEulerAngle( RDouble * eulerAngleVariationContainer )
+void SixDofParameter::UpdateEulerAngle(RDouble * eulerAngleVariationContainer)
 {
     eulerAngleGama  += eulerAngleVariationContainer[ 0 ];
     eulerAngleBeta  += eulerAngleVariationContainer[ 1 ];
     eulerAngleAlpha += eulerAngleVariationContainer[ 2 ];
 }
 
-void SixDofParameter::UpdateAngularVelocity( RDouble * angularVelocityVariationContainer )
+void SixDofParameter::UpdateAngularVelocity(RDouble * angularVelocityVariationContainer)
 {
     angularVelocityX += angularVelocityVariationContainer[ 0 ];
     angularVelocityY += angularVelocityVariationContainer[ 1 ];
     angularVelocityZ += angularVelocityVariationContainer[ 2 ];
 }
 
-SixDofSolver::SixDofSolver( SixDofSolverManager * sixDofSolverManager )
+SixDofSolver::SixDofSolver(SixDofSolverManager * sixDofSolverManager)
 {
     this->sixDofSolverManager = sixDofSolverManager;
 
@@ -255,7 +256,7 @@ void SixDofSolver::AllocateAllVariables()
 void SixDofSolver::DeallocateAllVariables()
 {
     int numberOfTimeLayers = this->GetNumberOfTimeLayers();
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
         delete sixDofParameterContainer[ iTimeLayer ];
         sixDofParameterContainer[iTimeLayer] = NULL;
@@ -268,11 +269,11 @@ void SixDofSolver::DeallocateAllVariables()
 void SixDofSolver::AllocateSixDofParameter()
 {
     int numberOfTimeLayers = 3;
-    SetNumberOfTimeLayers( numberOfTimeLayers );
+    SetNumberOfTimeLayers(numberOfTimeLayers);
 
-    sixDofParameterContainer.resize( numberOfTimeLayers );
+    sixDofParameterContainer.resize(numberOfTimeLayers);
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
         sixDofParameterContainer[ iTimeLayer ] = new SixDofParameter();
     }
@@ -287,11 +288,11 @@ void SixDofSolver::AllocateSixDofForceContainer()
 {
     int numberOfTimeLayers = this->GetNumberOfTimeLayers();
 
-    sixDofForceContainer.resize( numberOfTimeLayers );
+    sixDofForceContainer.resize(numberOfTimeLayers);
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        sixDofForceContainer[ iTimeLayer ].resize( 6 );
+        sixDofForceContainer[ iTimeLayer ].resize(6);
     }
 }
 
@@ -299,15 +300,15 @@ void SixDofSolver::InitializeMassCharacter()
 {
     MassCharacter * massCharacter = this->GetMassCharacter();
 
-    RDouble mass = GetRDoubleParameterFromDataBase( bodyIndex, "mass" );
+    RDouble mass = GetRDoubleParameterFromDataBase(bodyIndex, "mass");
 
     vector< RDouble > massMatrix;
-    GetRDoubleVectorFromDataBase( massMatrix, bodyIndex, "massMatrix", 6 );
+    GetRDoubleVectorFromDataBase(massMatrix, bodyIndex, "massMatrix", 6);
 
-    massCharacter->SetMassCharacter( mass, massMatrix );
+    massCharacter->SetMassCharacter(mass, massMatrix);
 }
 
-void SixDofSolver::Initialize( int bodyIndexIn )
+void SixDofSolver::Initialize(int bodyIndexIn)
 {
     this->bodyIndex = bodyIndexIn;
 
@@ -319,24 +320,24 @@ void SixDofSolver::Initialize( int bodyIndexIn )
 void SixDofSolver::Restart()
 {
     fstream & file = PHSPACE::GetCurrentAleFile();
-    this->InitializeSixDofByFiles( file );
+    this->InitializeSixDofByFiles(file);
 }
 
 void SixDofSolver::InitializeSixDofByParameter()
 {
     vector< RDouble > massCenter;
-    GetRDoubleVectorFromDataBase(massCenter, bodyIndex, "massCenter"  , 3 );
+    GetRDoubleVectorFromDataBase(massCenter, bodyIndex, "massCenter"  , 3);
 
     vector< RDouble > attitudeAngle;
     GetRDoubleVectorFromDataBase(attitudeAngle, bodyIndex, "attitudeAngle", 3);
 
     vector< RDouble > massCenterVelocity;
-    GetRDoubleVectorFromDataBase(massCenterVelocity, bodyIndex, "massCenterVelocity", 3 );
+    GetRDoubleVectorFromDataBase(massCenterVelocity, bodyIndex, "massCenterVelocity", 3);
 
     vector< RDouble > angularVelocity;
     GetRDoubleVectorFromDataBase(angularVelocity, bodyIndex, "angularVelocity", 3);
 
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB( "reynoldsReferenceLengthDimensional" );
+    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
 
     massCenter[ 0 ] /= reynoldsReferenceLengthDimensional;
     massCenter[ 1 ] /= reynoldsReferenceLengthDimensional;
@@ -350,22 +351,22 @@ void SixDofSolver::InitializeSixDofByParameter()
     angularVelocity[ 1 ] *= PI / 180;
     angularVelocity[ 2 ] *= PI / 180;
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
+        SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
         sixDofParameter->SetGeneralVariableContainer(massCenter, attitudeAngle, massCenterVelocity, angularVelocity);
     }
 }
 
-void SixDofSolver::InitializeSixDofByFiles( fstream & file )
+void SixDofSolver::InitializeSixDofByFiles(fstream & file)
 {
     const int numberOfEquations = 12;
     RDouble generalVariableContainer[ numberOfEquations ];
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        PHSPACE::PHRead( file, generalVariableContainer, numberOfEquations );
-        sixDofParameterContainer[ iTimeLayer ]->SetGeneralVariableContainer( generalVariableContainer );
+        PHSPACE::PHRead(file, generalVariableContainer, numberOfEquations);
+        sixDofParameterContainer[ iTimeLayer ]->SetGeneralVariableContainer(generalVariableContainer);
     }
 }
 
@@ -373,93 +374,100 @@ void SixDofSolver::Run()
 {
     ComputeSixDofForceTimeSequenceContainer();
 
-    int RBDMethod = PHSPACE::GetIntegerParameterFromDataBase( bodyIndex, "RBDMethod" );
+    int RBDMethod = PHSPACE::GetIntegerParameterFromDataBase(bodyIndex, "RBDMethod");
 
-    if ( RBDMethod == - 1 )//! given motion partten.
+    if (RBDMethod == - 1)//! given motion partten.
     {
         MovingByFile();
     }
-    else if ( RBDMethod == 0   )//! still.
+    else if (RBDMethod == 0  )//! still.
     {
         Stationary();
     }
-    else if ( RBDMethod == 1   )//! six DOF motion.
+    else if (RBDMethod == 1  )//! six DOF motion.
     {
         SolveSixDofEquation();
     }
-    else if ( RBDMethod == 2   )//! three DOF motion.
+    else if (RBDMethod == 2  )//! three DOF motion.
     {
         ModifyForceAndSixDofInformationForXYSymmetryCase();
         SolveSixDofEquation();
     }
-    else if ( RBDMethod == 11  )//! X-axis forced motion.
+    else if (RBDMethod == 11 )//! X-axis forced motion.
     {
         OscillatingInXDirection();
     }
-    else if ( RBDMethod == 12  )//! Y-axis forced motion.
+    else if (RBDMethod == 12 )//! Y-axis forced motion.
     {
         OscillatingInYDirection();
     }
-    else if ( RBDMethod == 13  )//! Z-axis forced motion.
+    else if (RBDMethod == 13 )//! Z-axis forced motion.
     {
-        TK_Exit::ExceptionExit( "There is no Z-axis forced motion in temporary." );
+        TK_Exit::ExceptionExit("There is no Z-axis forced motion in temporary.");
         //OscillatingInZDirection();
     }
-    else if ( RBDMethod == 14  )//! forced pitch motion.
+    else if (RBDMethod == 14 )//! forced pitch motion.
     {
         Pitching();
         //SolveSixDofEquation();
     }
-    else if ( RBDMethod == 15  )//! forced yaw motion.
+    else if (RBDMethod == 15 )//! forced yaw motion.
     {
         Yawing();
     }
-    else if ( RBDMethod == 16  )//! forced roll motion.
+    else if (RBDMethod == 16 )//! forced roll motion.
     {
         Rolling();
     }
-    else if ( RBDMethod == 21  )//! single DOF motion.
+    else if (RBDMethod == 21 )//! single DOF motion.
     {
-        TK_Exit::ExceptionExit( "There is no single DOF motion in temporary." );
-        //ModifyForceAndSixDofInformationForXDirectionOnly();
+        XDirectionOnly();
         //SolveSixDofEquation();
     }
-    else if ( RBDMethod == 22  )//! single DOF Y-axis motion
+    else if ( RBDMethod == 17  )//! Forced rotation along X periodically;
     {
-        TK_Exit::ExceptionExit( "There is no single DOF Y-axis motion in temporary." );
+        RotationInXDirection();
+    }
+    else if (RBDMethod == 19)//! Forced rotation along Z periodically;
+    {
+        RotationInZDirection();
+    }
+    else if (RBDMethod == 22 )//! single DOF Y-axis motion
+    {
+        TK_Exit::ExceptionExit("There is no single DOF Y-axis motion in temporary.");
         //ModifyForceAndSixDofInformationForYDirectionOnly();
         //SolveSixDofEquation();
     }
-    else if ( RBDMethod == 23  )//! single DOF Z-axis motion
+    else if (RBDMethod == 23 )//! single DOF Z-axis motion
     {
-        TK_Exit::ExceptionExit( "There is no single DOF Z-axis motion in temporary." );
+        TK_Exit::ExceptionExit("There is no single DOF Z-axis motion in temporary.");
         //ModifyForceAndSixDofInformationForZDirectionOnly();
         //SolveSixDofEquation();
     }
-    else if ( RBDMethod == 24  )//! single DOF pitch motion.
+    else if (RBDMethod == 24 )//! single DOF pitch motion.
     {
         ModifyForceAndSixDofInformationForPitchingOnly();
         SolveSixDofEquation();
     }
-    else if ( RBDMethod == 25  )//! single DOF yaw motion.
+    else if (RBDMethod == 25 )//! single DOF yaw motion.
     {
-        TK_Exit::ExceptionExit( "There is no single DOF yaw motion. in temporary." );
+        TK_Exit::ExceptionExit("There is no single DOF yaw motion. in temporary.");
         //ModifyForceAndSixDofInformationForYawingOnly();
         //SolveSixDofEquation();
     }
-    else if ( RBDMethod == 26  )//! single DOF roll motion.
+    else if (RBDMethod == 26 )//! single DOF roll motion.
     {
         ModifyForceAndSixDofInformationForRollingOnly();
         SolveSixDofEquation();
     }
-    else if ( RBDMethod == 31  )//! single DOF pitch and roll motion.
+    else if (RBDMethod == 31 )//! single DOF pitch and roll motion.
     {
         ModifyForceAndSixDofInformationForPitchingAndRollingOnly();
         SolveSixDofEquation();
     }
     else
     {
-        TK_Exit::ExceptionExit( "There is no this motion" );
+        TK_Exit::ExceptionExit("There is no this motion");
     }
 }
 
@@ -471,66 +479,66 @@ void SixDofSolver::Post()
 
 void SixDofSolver::UpdateUnsteadyTerm()
 {
-    SixDofParameter * sixDofParameter   = this->GetSixDofParameter( 0 );
-    SixDofParameter * sixDofParameterN  = this->GetSixDofParameter( 1 );
-    SixDofParameter * sixDofParameterN1 = this->GetSixDofParameter( 2 );
+    SixDofParameter * sixDofParameter   = this->GetSixDofParameter(0);
+    SixDofParameter * sixDofParameterN  = this->GetSixDofParameter(1);
+    SixDofParameter * sixDofParameterN1 = this->GetSixDofParameter(2);
 
-    ( * sixDofParameterN1 ) = ( * sixDofParameterN );
-    ( * sixDofParameterN  ) = ( * sixDofParameter  );
+    (* sixDofParameterN1) = (* sixDofParameterN);
+    (* sixDofParameterN ) = (* sixDofParameter );
 }
 
 void SixDofSolver::ComputeSixDofForceTimeSequenceContainer()
 {
     int numberOfTimeLayers = this->GetNumberOfTimeLayers();
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        vector< RDouble > & forceVector = this->GetForceVector( iTimeLayer );
-        this->GetDimensionalTotalForceAndMomentOfBody( forceVector, iTimeLayer );
+        vector< RDouble > & forceVector = this->GetForceVector(iTimeLayer);
+        this->GetDimensionalTotalForceAndMomentOfBody(forceVector, iTimeLayer);
     }
 }
 
-void SixDofSolver::GetDimensionalTotalForceAndMomentOfBody( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalTotalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
-    this->GetDimensionalAerodynamicForceAndMomentOfBody( dimensionalGeneralForceContainer, iTimeLayer );
-    this->GetDimensionalAdditionalForceAndMomentOfBody ( dimensionalGeneralForceContainer, iTimeLayer );
+    this->GetDimensionalAerodynamicForceAndMomentOfBody(dimensionalGeneralForceContainer, iTimeLayer);
+    this->GetDimensionalAdditionalForceAndMomentOfBody (dimensionalGeneralForceContainer, iTimeLayer);
 }
 
-void SixDofSolver::GetMassCenterAndEulerAngleContainer( vector< RDouble > & massCenterContainer, vector< RDouble > & eulerAngleContainer, int iTimeLayer )
+void SixDofSolver::GetMassCenterAndEulerAngleContainer(vector< RDouble > & massCenterContainer, vector< RDouble > & eulerAngleContainer, int iTimeLayer)
 {
-    SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
+    SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
 
-    sixDofParameter->GetMassCenter( massCenterContainer[ 0 ], massCenterContainer[ 1 ], massCenterContainer[ 2 ] );
-    sixDofParameter->GetEulerAngleContainer( eulerAngleContainer );
+    sixDofParameter->GetMassCenter(massCenterContainer[ 0 ], massCenterContainer[ 1 ], massCenterContainer[ 2 ]);
+    sixDofParameter->GetEulerAngleContainer(eulerAngleContainer);
 }
 
-void SixDofSolver::GetMomentAboutMassCenterInInertialFrame( vector< RDouble > & massCenterContainer, vector< RDouble > & totalForceVector, vector< RDouble > & momentVector, vector< RDouble > & momentAboutMassCenterInInertialFrame )
+void SixDofSolver::GetMomentAboutMassCenterInInertialFrame(vector< RDouble > & massCenterContainer, vector< RDouble > & totalForceVector, vector< RDouble > & momentVector, vector< RDouble > & momentAboutMassCenterInInertialFrame)
 {
     RDouble momentChange [ 3 ];
-    PHSPACE::CrossProduct( & massCenterContainer[ 0 ], & totalForceVector[ 0 ], momentChange );
+    PHSPACE::CrossProduct(& massCenterContainer[ 0 ], & totalForceVector[ 0 ], momentChange);
 
     momentAboutMassCenterInInertialFrame[ 0 ] = momentVector[ 0 ] - momentChange[ 0 ];
     momentAboutMassCenterInInertialFrame[ 1 ] = momentVector[ 1 ] - momentChange[ 1 ];
     momentAboutMassCenterInInertialFrame[ 2 ] = momentVector[ 2 ] - momentChange[ 2 ];
 }
 
-void SixDofSolver::GetDimensionalAerodynamicForceAndMomentOfBody( vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalAerodynamicForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer)
 {
-    vector< RDouble > massCenterContainer( 3 );
-    vector< RDouble > eulerAngleContainer( 3 );
+    vector< RDouble > massCenterContainer(3);
+    vector< RDouble > eulerAngleContainer(3);
 
-    this->GetMassCenterAndEulerAngleContainer( massCenterContainer, eulerAngleContainer, iTimeLayer );
+    this->GetMassCenterAndEulerAngleContainer(massCenterContainer, eulerAngleContainer, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicForce ( 3 );
-    vector< RDouble > dimensionalAerodynamicMoment( 3 );
+    vector< RDouble > dimensionalAerodynamicForce (3);
+    vector< RDouble > dimensionalAerodynamicMoment(3);
     
-    GetDimensionalAerodynamicForceAndMoment( dimensionalAerodynamicForce, dimensionalAerodynamicMoment, bodyIndex, iTimeLayer );
+    GetDimensionalAerodynamicForceAndMoment(dimensionalAerodynamicForce, dimensionalAerodynamicMoment, bodyIndex, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenter( 3 );
-    this->GetMomentAboutMassCenterInInertialFrame( massCenterContainer, dimensionalAerodynamicForce, dimensionalAerodynamicMoment, dimensionalAerodynamicMomentAboutMassCenter );
+    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenter(3);
+    this->GetMomentAboutMassCenterInInertialFrame(massCenterContainer, dimensionalAerodynamicForce, dimensionalAerodynamicMoment, dimensionalAerodynamicMomentAboutMassCenter);
 
-    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenterInBodyFrame( 3 );
-    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem( dimensionalAerodynamicMomentAboutMassCenter, eulerAngleContainer, dimensionalAerodynamicMomentAboutMassCenterInBodyFrame );
+    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenterInBodyFrame(3);
+    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAerodynamicMomentAboutMassCenter, eulerAngleContainer, dimensionalAerodynamicMomentAboutMassCenterInBodyFrame);
 
     dimensionalGeneralAerodynamicForceContainer[ 0 ] = dimensionalAerodynamicForce[ 0 ];
     dimensionalGeneralAerodynamicForceContainer[ 1 ] = dimensionalAerodynamicForce[ 1 ];
@@ -541,20 +549,20 @@ void SixDofSolver::GetDimensionalAerodynamicForceAndMomentOfBody( vector< RDoubl
     dimensionalGeneralAerodynamicForceContainer[ 5 ] = dimensionalAerodynamicMomentAboutMassCenterInBodyFrame[ 2 ];
 }
 
-void SixDofSolver::GetDimensionalAerodynamicForceAndMomentInerFrame( vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalAerodynamicForceAndMomentInerFrame(vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer)
 {
-    vector< RDouble > massCenterContainer( 3 );
-    vector< RDouble > eulerAngleContainer( 3 );
+    vector< RDouble > massCenterContainer(3);
+    vector< RDouble > eulerAngleContainer(3);
 
-    this->GetMassCenterAndEulerAngleContainer( massCenterContainer, eulerAngleContainer, iTimeLayer );
+    this->GetMassCenterAndEulerAngleContainer(massCenterContainer, eulerAngleContainer, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicForce ( 3 );
-    vector< RDouble > dimensionalAerodynamicMoment( 3 );
+    vector< RDouble > dimensionalAerodynamicForce (3);
+    vector< RDouble > dimensionalAerodynamicMoment(3);
     
-    GetDimensionalAerodynamicForceAndMoment( dimensionalAerodynamicForce, dimensionalAerodynamicMoment, bodyIndex, iTimeLayer );
+    GetDimensionalAerodynamicForceAndMoment(dimensionalAerodynamicForce, dimensionalAerodynamicMoment, bodyIndex, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenter( 3 );
-    this->GetMomentAboutMassCenterInInertialFrame( massCenterContainer, dimensionalAerodynamicForce, dimensionalAerodynamicMoment, dimensionalAerodynamicMomentAboutMassCenter );
+    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenter(3);
+    this->GetMomentAboutMassCenterInInertialFrame(massCenterContainer, dimensionalAerodynamicForce, dimensionalAerodynamicMoment, dimensionalAerodynamicMomentAboutMassCenter);
     
     dimensionalGeneralAerodynamicForceContainer[ 0 ] = dimensionalAerodynamicForce[ 0 ];
     dimensionalGeneralAerodynamicForceContainer[ 1 ] = dimensionalAerodynamicForce[ 1 ];
@@ -565,26 +573,26 @@ void SixDofSolver::GetDimensionalAerodynamicForceAndMomentInerFrame( vector< RDo
     dimensionalGeneralAerodynamicForceContainer[ 5 ] = dimensionalAerodynamicMomentAboutMassCenter[ 2 ];
 }
 
-void SixDofSolver::GetDimensionalAerodynamicForceAndMomentBodyFrame( vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalAerodynamicForceAndMomentBodyFrame(vector< RDouble > & dimensionalGeneralAerodynamicForceContainer, int iTimeLayer)
 {
-    vector< RDouble > massCenterContainer( 3 );
-    vector< RDouble > eulerAngleContainer( 3 );
+    vector< RDouble > massCenterContainer(3);
+    vector< RDouble > eulerAngleContainer(3);
 
-    this->GetMassCenterAndEulerAngleContainer( massCenterContainer, eulerAngleContainer, iTimeLayer );
+    this->GetMassCenterAndEulerAngleContainer(massCenterContainer, eulerAngleContainer, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicForce ( 3 );
-    vector< RDouble > dimensionalAerodynamicMoment( 3 );
+    vector< RDouble > dimensionalAerodynamicForce (3);
+    vector< RDouble > dimensionalAerodynamicMoment(3);
     
-    GetDimensionalAerodynamicForceAndMoment( dimensionalAerodynamicForce, dimensionalAerodynamicMoment, bodyIndex, iTimeLayer );
+    GetDimensionalAerodynamicForceAndMoment(dimensionalAerodynamicForce, dimensionalAerodynamicMoment, bodyIndex, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenter( 3 );
-    this->GetMomentAboutMassCenterInInertialFrame( massCenterContainer, dimensionalAerodynamicForce, dimensionalAerodynamicMoment, dimensionalAerodynamicMomentAboutMassCenter );
+    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenter(3);
+    this->GetMomentAboutMassCenterInInertialFrame(massCenterContainer, dimensionalAerodynamicForce, dimensionalAerodynamicMoment, dimensionalAerodynamicMomentAboutMassCenter);
     
-    vector< RDouble > dimensionalAerodynamicForceInBodyFrame( 3 );
-    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenterInBodyFrame( 3 );
+    vector< RDouble > dimensionalAerodynamicForceInBodyFrame(3);
+    vector< RDouble > dimensionalAerodynamicMomentAboutMassCenterInBodyFrame(3);
 
-    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem( dimensionalAerodynamicForce, eulerAngleContainer, dimensionalAerodynamicForceInBodyFrame );
-    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem( dimensionalAerodynamicMomentAboutMassCenter, eulerAngleContainer, dimensionalAerodynamicMomentAboutMassCenterInBodyFrame );
+    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAerodynamicForce, eulerAngleContainer, dimensionalAerodynamicForceInBodyFrame);
+    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAerodynamicMomentAboutMassCenter, eulerAngleContainer, dimensionalAerodynamicMomentAboutMassCenterInBodyFrame);
 
     dimensionalGeneralAerodynamicForceContainer[ 0 ] = dimensionalAerodynamicForceInBodyFrame[ 0 ];
     dimensionalGeneralAerodynamicForceContainer[ 1 ] = dimensionalAerodynamicForceInBodyFrame[ 1 ];
@@ -595,22 +603,22 @@ void SixDofSolver::GetDimensionalAerodynamicForceAndMomentBodyFrame( vector< RDo
     dimensionalGeneralAerodynamicForceContainer[ 5 ] = dimensionalAerodynamicMomentAboutMassCenterInBodyFrame[ 2 ];
 }
 
-void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyByParameter( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyByParameter(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
-    vector< RDouble > massCenterContainer( 3 );
-    vector< RDouble > eulerAngleContainer( 3 );
+    vector< RDouble > massCenterContainer(3);
+    vector< RDouble > eulerAngleContainer(3);
 
-    this->GetMassCenterAndEulerAngleContainer( massCenterContainer, eulerAngleContainer, iTimeLayer );
+    this->GetMassCenterAndEulerAngleContainer(massCenterContainer, eulerAngleContainer, iTimeLayer);
 
     vector< RDouble > dimensionalAerodynamicForce;
-    GetRDoubleVectorFromDataBase( dimensionalAerodynamicForce, bodyIndex, "addedForce"  , 3 );
+    GetRDoubleVectorFromDataBase(dimensionalAerodynamicForce, bodyIndex, "addedForce"  , 3);
 
     vector< RDouble > dimensionalAerodynamicMonent;
-    GetRDoubleVectorFromDataBase( dimensionalAerodynamicMonent, bodyIndex, "addedMoment" , 3 );
+    GetRDoubleVectorFromDataBase(dimensionalAerodynamicMonent, bodyIndex, "addedMoment" , 3);
 
-    vector< RDouble > dimensionalAerodynamicForceInInertialFrame( 3 );
+    vector< RDouble > dimensionalAerodynamicForceInInertialFrame(3);
 
-    PHSPACE::ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem( dimensionalAerodynamicForce, eulerAngleContainer, dimensionalAerodynamicForceInInertialFrame );
+    PHSPACE::ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem(dimensionalAerodynamicForce, eulerAngleContainer, dimensionalAerodynamicForceInInertialFrame);
 
     dimensionalGeneralForceContainer[ 0 ] += dimensionalAerodynamicForceInInertialFrame[ 0 ];
     dimensionalGeneralForceContainer[ 1 ] += dimensionalAerodynamicForceInInertialFrame[ 1 ];
@@ -620,18 +628,18 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyByParameter( vect
     dimensionalGeneralForceContainer[ 5 ] += dimensionalAerodynamicMonent[ 2 ];
 }
 
-void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyWingStore( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyWingStore(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
-    RDouble mass = GetRDoubleParameterFromDataBase ( bodyIndex, "mass" );
+    RDouble mass = GetRDoubleParameterFromDataBase (bodyIndex, "mass");
 
     RDouble gravity = 9.8;
 
     dimensionalGeneralForceContainer[ 1 ] -= gravity * mass;
     RDouble  timeOfNstep =  aleSimulationTime - GetAleTimeStep();
 
-    if( timeOfNstep < 0.053 )
+    if(timeOfNstep < 0.053)
     {
         //fy
         dimensionalGeneralForceContainer[ 1 ] -= 53341;
@@ -643,11 +651,11 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyWingStore( vector
     }
 }
 
-void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody611C7( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody611C7(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
-    RDouble mass = GetRDoubleParameterFromDataBase ( bodyIndex, "mass" );
+    RDouble mass = GetRDoubleParameterFromDataBase (bodyIndex, "mass");
 
     RDouble gravity = 9.8;
 
@@ -655,7 +663,7 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody611C7( vector< RD
     dimensionalGeneralForceContainer[ 1 ] -= gravity * mass;
     RDouble  timeOfNstep =  aleSimulationTime - GetAleTimeStep();
 
-    if( timeOfNstep < 0.07 )
+    if(timeOfNstep < 0.07)
     {
         //fy
         //dimensionalGeneralForceContainer[ 1 ] -= 7478;
@@ -668,15 +676,18 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody611C7( vector< RD
     }
 }
 
-void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer )
+void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
+    //GetDimensionalAdditionalForceAndMomentOfBodyByParameter(dimensionalGeneralForceContainer, iTimeLayer);
+
+	GetDimensionalAdditionalForceAndMomentOfBodyWingStore( dimensionalGeneralForceContainer, iTimeLayer );
 }
 
 void SixDofSolver::ReadSixDofParameterFromFile()
 {
-    string uDFSixDofFileName = GetStringParameterFromDataBase( bodyIndex, "uDFSixDofFileName" );
+    string uDFSixDofFileName = GetStringParameterFromDataBase(bodyIndex, "uDFSixDofFileName");
 
-    fstream infile( uDFSixDofFileName.c_str(), ios_base::in );
+    fstream infile(uDFSixDofFileName.c_str(), ios_base::in);
     
     string temp;
     int outerIterationSteps = GlobalDataBase::GetIntParaFromDB("outnstep");
@@ -684,16 +695,16 @@ void SixDofSolver::ReadSixDofParameterFromFile()
     RDouble MassCenterX, MassCenterY, MassCenterZ;
     RDouble EulerAngleAlpha, EulerAngleBeta, EulerAngleGama;
 
-    for ( int iLine = 0; iLine < outerIterationSteps - 1; ++ iLine )
+    for (int iLine = 0; iLine < outerIterationSteps - 1; ++ iLine)
     {
-        PHSPACE::ReadNextNonEmptyLine( infile, temp );
+        PHSPACE::ReadNextNonEmptyLine(infile, temp);
     }
 
     infile >> MassCenterX;
     infile >> MassCenterY;
     infile >> MassCenterZ;
 
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
         infile >> temp;
     }
@@ -702,26 +713,26 @@ void SixDofSolver::ReadSixDofParameterFromFile()
     infile >> EulerAngleBeta;
     infile >> EulerAngleGama;
 
-    for ( int i = 0; i < 3; ++ i )
+    for (int i = 0; i < 3; ++ i)
     {
         infile >> temp;
     }
 
-    SixDofParameter * sixDofParameter = this->GetSixDofParameter( 0 );
+    SixDofParameter * sixDofParameter = this->GetSixDofParameter(0);
 
-    sixDofParameter->SetMassCenterX( MassCenterX );
-    sixDofParameter->SetMassCenterY( MassCenterY );
-    sixDofParameter->SetMassCenterZ( MassCenterZ );
+    sixDofParameter->SetMassCenterX(MassCenterX);
+    sixDofParameter->SetMassCenterY(MassCenterY);
+    sixDofParameter->SetMassCenterZ(MassCenterZ);
     
-    sixDofParameter->SetEulerAngleAlpha( EulerAngleAlpha );
-    sixDofParameter->SetEulerAngleBeta ( EulerAngleBeta );
-    sixDofParameter->SetEulerAngleGama ( EulerAngleGama );
+    sixDofParameter->SetEulerAngleAlpha(EulerAngleAlpha);
+    sixDofParameter->SetEulerAngleBeta (EulerAngleBeta);
+    sixDofParameter->SetEulerAngleGama (EulerAngleGama);
 }
 
 void SixDofSolver::Stationary()
 {
-    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter( 0 );
-    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter( 1 );
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter(1);
 
     RDouble oldMassCenterX = sixDofParameter1->GetMassCenterX();
     RDouble oldMassCenterY = sixDofParameter1->GetMassCenterY();
@@ -731,13 +742,13 @@ void SixDofSolver::Stationary()
     RDouble oldEulerAngleBeta  = sixDofParameter1->GetEulerAngleBeta();
     RDouble oldEulerAngleGama  = sixDofParameter1->GetEulerAngleGama();
 
-    sixDofParameter0->SetMassCenterX( oldMassCenterX );
-    sixDofParameter0->SetMassCenterY( oldMassCenterY );
-    sixDofParameter0->SetMassCenterZ( oldMassCenterZ );
+    sixDofParameter0->SetMassCenterX(oldMassCenterX);
+    sixDofParameter0->SetMassCenterY(oldMassCenterY);
+    sixDofParameter0->SetMassCenterZ(oldMassCenterZ);
 
-    sixDofParameter0->SetEulerAngleAlpha( oldEulerAngleAlpha );
-    sixDofParameter0->SetEulerAngleBeta ( oldEulerAngleBeta );
-    sixDofParameter0->SetEulerAngleGama ( oldEulerAngleGama );
+    sixDofParameter0->SetEulerAngleAlpha(oldEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta (oldEulerAngleBeta);
+    sixDofParameter0->SetEulerAngleGama (oldEulerAngleGama);
 }
 
 void SixDofSolver::Rolling()
@@ -759,10 +770,12 @@ void SixDofSolver::Rolling()
     RDouble newAngularVelocityY = sixDofParameter0->GetAngularVelocityY();
     RDouble newAngularVelocityZ = sixDofParameter0->GetAngularVelocityZ();
 
-    RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase( bodyIndex, "amplitude" ) * PI / 180.0;
+    RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "amplitude") * PI / 180.0;
     RDouble aleReduceFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "reduceFrequency");
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
 
     RDouble beta = sin(2.0 * aleSimulationTime * aleReduceFrequency);
     beta = aleAmplitude * beta;
@@ -805,10 +818,12 @@ void SixDofSolver::Yawing()
     RDouble newAngularVelocityY = sixDofParameter0->GetAngularVelocityY();
     RDouble newAngularVelocityZ = sixDofParameter0->GetAngularVelocityZ();
 
-    RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase( bodyIndex, "amplitude" ) * PI / 180.0;
+    RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "amplitude") * PI / 180.0;
     RDouble aleReduceFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "reduceFrequency");
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
 
     RDouble gama = sin(2.0 * aleSimulationTime * aleReduceFrequency);
     gama = aleAmplitude * gama;
@@ -852,6 +867,8 @@ void SixDofSolver::Pitching()
     RDouble newAngularVelocityZ = sixDofParameter0->GetAngularVelocityZ();
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
 
     RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "amplitude") * PI / 180.0;
     RDouble aleReduceFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "reduceFrequency");
@@ -878,10 +895,106 @@ void SixDofSolver::Pitching()
     sixDofParameter0->SetAngularVelocityZ(newAngularVelocityZ);
 }
 
+void SixDofSolver::RotationInXDirection()
+{
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter(1);
+
+    RDouble oldEulerAngleAlpha = sixDofParameter1->GetEulerAngleAlpha();
+    RDouble oldEulerAngleBeta  = sixDofParameter1->GetEulerAngleBeta();
+
+    RDouble oldAngularVelocityX = sixDofParameter1->GetAngularVelocityX();
+    RDouble oldAngularVelocityY = sixDofParameter1->GetAngularVelocityY();
+
+    RDouble newEulerAngleAlpha = sixDofParameter0->GetEulerAngleAlpha();
+    RDouble newEulerAngleBeta  = sixDofParameter0->GetEulerAngleBeta();
+    RDouble newEulerAngleGama  = sixDofParameter0->GetEulerAngleGama();
+
+    RDouble newAngularVelocityX = sixDofParameter0->GetAngularVelocityX();
+    RDouble newAngularVelocityY = sixDofParameter0->GetAngularVelocityY();
+    RDouble newAngularVelocityZ = sixDofParameter0->GetAngularVelocityZ();
+
+    int aleDirection  = PHSPACE::GetIntegerParameterFromDataBase( bodyIndex, "direction" );
+    RDouble aleRotateFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "rotateFrequency");
+
+    RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
+
+    RDouble deltGama =  2.0 * PI * aleRotateFrequency * aleDirection;
+    RDouble gama = aleSimulationTime * deltGama;
+
+    RDouble angularVelocity = deltGama;
+
+    newEulerAngleAlpha = oldEulerAngleAlpha;
+    newEulerAngleBeta  = oldEulerAngleBeta;
+    newEulerAngleGama  = gama;
+
+    newAngularVelocityX = oldAngularVelocityX;
+    newAngularVelocityY = oldAngularVelocityY;
+    newAngularVelocityZ = angularVelocity;
+
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta (newEulerAngleBeta);
+    sixDofParameter0->SetEulerAngleGama (newEulerAngleGama);
+
+    sixDofParameter0->SetAngularVelocityX(newAngularVelocityX);
+    sixDofParameter0->SetAngularVelocityY(newAngularVelocityY);
+    sixDofParameter0->SetAngularVelocityZ(newAngularVelocityZ);
+}
+
+void SixDofSolver::RotationInZDirection()
+{
+    SixDofParameter* sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter* sixDofParameter1 = this->GetSixDofParameter(1);
+
+    RDouble oldEulerAngleBeta = sixDofParameter1->GetEulerAngleBeta();
+    RDouble oldEulerAngleGama = sixDofParameter1->GetEulerAngleGama();
+
+    RDouble oldAngularVelocityY = sixDofParameter1->GetAngularVelocityY();
+    RDouble oldAngularVelocityZ = sixDofParameter1->GetAngularVelocityZ();
+
+    RDouble newEulerAngleAlpha = sixDofParameter0->GetEulerAngleAlpha();
+    RDouble newEulerAngleBeta = sixDofParameter0->GetEulerAngleBeta();
+    RDouble newEulerAngleGama = sixDofParameter0->GetEulerAngleGama();
+
+    RDouble newAngularVelocityX = sixDofParameter0->GetAngularVelocityX();
+    RDouble newAngularVelocityY = sixDofParameter0->GetAngularVelocityY();
+    RDouble newAngularVelocityZ = sixDofParameter0->GetAngularVelocityZ();
+
+    RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
+
+    int aleDirection = PHSPACE::GetIntegerParameterFromDataBase(bodyIndex, "direction");
+    RDouble aleRotateFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "rotateFrequency");
+
+    RDouble deltAlpha =  2.0 * PI * aleRotateFrequency * aleDirection;
+    RDouble alpha = deltAlpha * aleSimulationTime; 
+
+    RDouble angularVelocity = deltAlpha;
+
+    newEulerAngleAlpha = alpha;
+    newEulerAngleBeta  = oldEulerAngleBeta;
+    newEulerAngleGama  = oldEulerAngleGama;
+
+    newAngularVelocityX = angularVelocity;
+    newAngularVelocityY = oldAngularVelocityY;
+    newAngularVelocityZ = oldAngularVelocityZ;
+
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta(newEulerAngleBeta);
+    sixDofParameter0->SetEulerAngleGama(newEulerAngleGama);
+
+    sixDofParameter0->SetAngularVelocityX(newAngularVelocityX);
+    sixDofParameter0->SetAngularVelocityY(newAngularVelocityY);
+    sixDofParameter0->SetAngularVelocityZ(newAngularVelocityZ);
+}
+
 void SixDofSolver::Rotation_Rudder_Test1()
 {
-    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter( 0 );
-    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter( 1 );
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter(1);
 
     RDouble oldMassCenterX     = sixDofParameter1->GetMassCenterX();
     RDouble oldMassCenterY     = sixDofParameter1->GetMassCenterY();
@@ -899,17 +1012,19 @@ void SixDofSolver::Rotation_Rudder_Test1()
     RDouble newEulerAngleGama  = sixDofParameter0->GetEulerAngleGama ();
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
 
     vector< RDouble >                   controlLawParameters;
-    GetRDoubleVectorFromDataBase(        controlLawParameters, 1, "controlLawParameters", 2 );
+    GetRDoubleVectorFromDataBase(       controlLawParameters, 1, "controlLawParameters", 2);
 
     RDouble maximumRudderAngle        = controlLawParameters[ 0 ] * PI / 180.0;
     RDouble imposedRudderRotationTime = controlLawParameters[ 1 ];
 
     RDouble rudderAngle = maximumRudderAngle * 0.5 * 
-                        ( 1.0 + cos( PI * ( aleSimulationTime / imposedRudderRotationTime  - 1.0 ) ) );
+                        (1.0 + cos(PI * (aleSimulationTime / imposedRudderRotationTime  - 1.0)));
     
-    if ( aleSimulationTime > imposedRudderRotationTime )
+    if (aleSimulationTime > imposedRudderRotationTime)
     {
         rudderAngle = maximumRudderAngle;
     }
@@ -924,19 +1039,19 @@ void SixDofSolver::Rotation_Rudder_Test1()
     newEulerAngleBeta  = oldEulerAngleBeta;
     newEulerAngleGama  = oldEulerAngleGama;
 
-    sixDofParameter0->SetMassCenterX( newMassCenterX );
-    sixDofParameter0->SetMassCenterY( newMassCenterY );
-    sixDofParameter0->SetMassCenterZ( newMassCenterZ );
+    sixDofParameter0->SetMassCenterX(newMassCenterX);
+    sixDofParameter0->SetMassCenterY(newMassCenterY);
+    sixDofParameter0->SetMassCenterZ(newMassCenterZ);
 
-    sixDofParameter0->SetEulerAngleAlpha( newEulerAngleAlpha );
-    sixDofParameter0->SetEulerAngleBeta ( newEulerAngleBeta  );
-    sixDofParameter0->SetEulerAngleGama ( newEulerAngleGama  );
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta (newEulerAngleBeta );
+    sixDofParameter0->SetEulerAngleGama (newEulerAngleGama );
 }
 
 void SixDofSolver::OscillatingInXDirection()
 {
-    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter( 0 );
-    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter( 1 );
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter(1);
 
     RDouble oldMassCenterX     = sixDofParameter1->GetMassCenterX();
     RDouble oldMassCenterY     = sixDofParameter1->GetMassCenterY();
@@ -954,13 +1069,16 @@ void SixDofSolver::OscillatingInXDirection()
     RDouble newEulerAngleBeta  = sixDofParameter0->GetEulerAngleBeta();
     RDouble newEulerAngleGama  = sixDofParameter0->GetEulerAngleGama();
 
-    RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase( bodyIndex, "amplitude" );
-    RDouble alePeriod    = PHSPACE::GetRDoubleParameterFromDataBase( bodyIndex, "period"    );
+    RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "amplitude");
+    RDouble alePeriod    = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "period"   );
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
     RDouble aleTimeStep      = PHSPACE::GetAleTimeStep();
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
+    aleTimeStep /= dimensionalReferenceTime;
 
-    RDouble ds = aleAmplitude * ( sin( 2.0 * PI * aleSimulationTime / alePeriod ) - sin( 2.0 * PI * ( ( aleSimulationTime - aleTimeStep ) / alePeriod ) ) );
+    RDouble ds = aleAmplitude * (sin(2.0 * PI * aleSimulationTime / alePeriod) - sin(2.0 * PI * ((aleSimulationTime - aleTimeStep) / alePeriod)));
 
     //ds = -1.0 * dimensionalAleTimeStep;
 
@@ -976,13 +1094,13 @@ void SixDofSolver::OscillatingInXDirection()
     newEulerAngleBeta  = oldEulerAngleBeta;
     newEulerAngleGama  = oldEulerAngleGama;
 
-    sixDofParameter0->SetMassCenterX( newMassCenterX );
-    sixDofParameter0->SetMassCenterY( newMassCenterY );
-    sixDofParameter0->SetMassCenterZ( newMassCenterZ );
+    sixDofParameter0->SetMassCenterX(newMassCenterX);
+    sixDofParameter0->SetMassCenterY(newMassCenterY);
+    sixDofParameter0->SetMassCenterZ(newMassCenterZ);
 
-    sixDofParameter0->SetEulerAngleAlpha( newEulerAngleAlpha );
-    sixDofParameter0->SetEulerAngleBeta ( newEulerAngleBeta  );
-    sixDofParameter0->SetEulerAngleGama ( newEulerAngleGama  );
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta (newEulerAngleBeta );
+    sixDofParameter0->SetEulerAngleGama (newEulerAngleGama );
 
     RDouble TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
     TorqueRefX += dx;
@@ -1012,6 +1130,9 @@ void SixDofSolver::OscillatingInYDirection()
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
     RDouble aleTimeStep = PHSPACE::GetAleTimeStep();
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleSimulationTime /= dimensionalReferenceTime;
+    aleTimeStep /= dimensionalReferenceTime;
 
     RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "amplitude") * PI / 180.0;
     RDouble aleReduceFrequency = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "reduceFrequency");
@@ -1048,34 +1169,84 @@ void SixDofSolver::OscillatingInYDirection()
     GlobalDataBase::UpdateData("TorqueRefY", &TorqueRefY, PHDOUBLE, 1);
 }
 
+void SixDofSolver::XDirectionOnly()
+{
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
+    SixDofParameter * sixDofParameter1 = this->GetSixDofParameter(1);
+
+    RDouble oldMassCenterX     = sixDofParameter1->GetMassCenterX();
+    RDouble oldMassCenterY     = sixDofParameter1->GetMassCenterY();
+    RDouble oldMassCenterZ     = sixDofParameter1->GetMassCenterZ();
+
+    RDouble oldEulerAngleAlpha = sixDofParameter1->GetEulerAngleAlpha();
+    RDouble oldEulerAngleBeta  = sixDofParameter1->GetEulerAngleBeta();
+    RDouble oldEulerAngleGama  = sixDofParameter1->GetEulerAngleGama();
+
+    RDouble newMassCenterX     = sixDofParameter0->GetMassCenterX();
+    RDouble newMassCenterY     = sixDofParameter0->GetMassCenterY();
+    RDouble newMassCenterZ     = sixDofParameter0->GetMassCenterZ();
+
+    RDouble newEulerAngleAlpha = sixDofParameter0->GetEulerAngleAlpha();
+    RDouble newEulerAngleBeta  = sixDofParameter0->GetEulerAngleBeta();
+    RDouble newEulerAngleGama  = sixDofParameter0->GetEulerAngleGama();
+
+    RDouble aleAmplitude = PHSPACE::GetRDoubleParameterFromDataBase(bodyIndex, "amplitude");
+
+    RDouble aleTimeStep      = PHSPACE::GetAleTimeStep();
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+    aleTimeStep /= dimensionalReferenceTime;
+
+    RDouble ds = aleAmplitude * aleTimeStep;
+
+    newMassCenterX     = oldMassCenterX + ds;
+    newMassCenterY     = oldMassCenterY;
+    newMassCenterZ     = oldMassCenterZ;
+
+    newEulerAngleAlpha = oldEulerAngleAlpha;
+    newEulerAngleBeta  = oldEulerAngleBeta;
+    newEulerAngleGama  = oldEulerAngleGama;
+
+    sixDofParameter0->SetMassCenterX(newMassCenterX);
+    sixDofParameter0->SetMassCenterY(newMassCenterY);
+    sixDofParameter0->SetMassCenterZ(newMassCenterZ);
+
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta (newEulerAngleBeta );
+    sixDofParameter0->SetEulerAngleGama (newEulerAngleGama );
+
+    RDouble TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
+    TorqueRefX += ds;
+    GlobalDataBase::UpdateData("TorqueRefX", &TorqueRefX, PHDOUBLE, 1);
+}
+
 void SixDofSolver::ModifyForceAndSixDofInformationForXYSymmetryCase()
 {
     int numberOfTimeLayers = this->GetNumberOfTimeLayers();
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        vector< RDouble > & forceVector = this->GetForceVector( iTimeLayer );
+        vector< RDouble > & forceVector = this->GetForceVector(iTimeLayer);
         forceVector[ 2 ] = 0;
         forceVector[ 3 ] = 0;
         forceVector[ 4 ] = 0;
     }
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
+        SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
 
         RDouble massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ;
         RDouble angularVelocityX, angularVelocityY, angularVelocityZ;
 
-        sixDofParameter->GetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->GetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->GetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->GetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
 
         massCenterVelocityZ = 0.0;
         angularVelocityX    = 0.0;
         angularVelocityY    = 0.0;
 
-        sixDofParameter->SetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->SetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->SetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->SetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
     }
 }
 
@@ -1083,9 +1254,9 @@ void SixDofSolver::ModifyForceAndSixDofInformationForPitchingOnly()
 {
     int numberOfTimeLayers = this->GetNumberOfTimeLayers();
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        vector< RDouble > & forceVector = this->GetForceVector( iTimeLayer );
+        vector< RDouble > & forceVector = this->GetForceVector(iTimeLayer);
         forceVector[ 0 ] = 0;
         forceVector[ 1 ] = 0;
         forceVector[ 2 ] = 0;
@@ -1093,15 +1264,15 @@ void SixDofSolver::ModifyForceAndSixDofInformationForPitchingOnly()
         forceVector[ 4 ] = 0;
     }
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
+        SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
 
         RDouble massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ;
         RDouble angularVelocityX, angularVelocityY, angularVelocityZ;
 
-        sixDofParameter->GetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->GetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->GetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->GetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
         
         massCenterVelocityX = 0.0;
         massCenterVelocityY = 0.0;
@@ -1109,8 +1280,8 @@ void SixDofSolver::ModifyForceAndSixDofInformationForPitchingOnly()
         angularVelocityX    = 0.0;
         angularVelocityY    = 0.0;
 
-        sixDofParameter->SetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->SetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->SetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->SetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
     }
 }
 
@@ -1118,9 +1289,9 @@ void SixDofSolver::ModifyForceAndSixDofInformationForRollingOnly()
 {
     int numberOfTimeLayers = this->GetNumberOfTimeLayers();
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        vector< RDouble > & forceVector = this->GetForceVector( iTimeLayer );
+        vector< RDouble > & forceVector = this->GetForceVector(iTimeLayer);
         forceVector[ 0 ] = 0;
         forceVector[ 1 ] = 0;
         forceVector[ 2 ] = 0;
@@ -1128,15 +1299,15 @@ void SixDofSolver::ModifyForceAndSixDofInformationForRollingOnly()
         forceVector[ 5 ] = 0;
     }
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
+        SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
 
         RDouble massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ;
         RDouble angularVelocityX, angularVelocityY, angularVelocityZ;
 
-        sixDofParameter->GetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->GetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->GetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->GetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
         
         massCenterVelocityX = 0.0;
         massCenterVelocityY = 0.0;
@@ -1144,8 +1315,8 @@ void SixDofSolver::ModifyForceAndSixDofInformationForRollingOnly()
         angularVelocityY    = 0.0;
         angularVelocityZ    = 0.0;
 
-        sixDofParameter->SetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->SetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->SetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->SetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
     }
 }
 
@@ -1153,60 +1324,60 @@ void SixDofSolver::ModifyForceAndSixDofInformationForPitchingAndRollingOnly()
 {
     int numberOfTimeLayers = this->GetNumberOfTimeLayers();
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        vector< RDouble > & forceVector = this->GetForceVector( iTimeLayer );
+        vector< RDouble > & forceVector = this->GetForceVector(iTimeLayer);
         forceVector[ 0 ] = 0;
         forceVector[ 1 ] = 0;
         forceVector[ 2 ] = 0;
         forceVector[ 4 ] = 0;
     }
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
+        SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
 
         RDouble massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ;
         RDouble angularVelocityX, angularVelocityY, angularVelocityZ;
 
-        sixDofParameter->GetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->GetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->GetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->GetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
         
         massCenterVelocityX = 0.0;
         massCenterVelocityY = 0.0;
         massCenterVelocityZ = 0.0;
         angularVelocityY    = 0.0;
 
-        sixDofParameter->SetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-        sixDofParameter->SetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+        sixDofParameter->SetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+        sixDofParameter->SetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
     }
 }
 
-void SixDofSolver::ComputeCurrentSixDofVariables( vector< vector< RDouble > > & qContainer, vector< vector< RDouble > > & fluxContainer, int numberOfEquations )
+void SixDofSolver::ComputeCurrentSixDofVariables(vector< vector< RDouble > > & qContainer, vector< vector< RDouble > > & fluxContainer, int numberOfEquations)
 {
-    this->ComputeCurrentSixDofVariables( PHSPACE::HeaderPointer( qContainer   [ 0 ] ), 
-                                         PHSPACE::HeaderPointer( qContainer   [ 1 ] ),
-                                         PHSPACE::HeaderPointer( qContainer   [ 2 ] ),
-                                         PHSPACE::HeaderPointer( fluxContainer[ 0 ] ),
-                                         PHSPACE::HeaderPointer( fluxContainer[ 1 ] ), 
-                                         PHSPACE::HeaderPointer( fluxContainer[ 2 ] ),
-                                         numberOfEquations );
+    this->ComputeCurrentSixDofVariables(PHSPACE::HeaderPointer(qContainer   [ 0 ]), 
+                                         PHSPACE::HeaderPointer(qContainer   [ 1 ]),
+                                         PHSPACE::HeaderPointer(qContainer   [ 2 ]),
+                                         PHSPACE::HeaderPointer(fluxContainer[ 0 ]),
+                                         PHSPACE::HeaderPointer(fluxContainer[ 1 ]), 
+                                         PHSPACE::HeaderPointer(fluxContainer[ 2 ]),
+                                         numberOfEquations);
 }
 
-void SixDofSolver::ComputeCurrentSixDofVariables( RDouble * q, RDouble * qN, RDouble * qN1, RDouble * fluxM, RDouble * fluxN, RDouble * fluxN1, int numberOfEquations )
+void SixDofSolver::ComputeCurrentSixDofVariables(RDouble * q, RDouble * qN, RDouble * qN1, RDouble * fluxM, RDouble * fluxN, RDouble * fluxN1, int numberOfEquations)
 {
     RDouble a, b, c, d, e;
-    RDouble relaxParameter = GlobalDataBase::GetDoubleParaFromDB( "relaxParameterOfKinetic" );
-    PHSPACE::GetSixDofCoefficients( a, b, c, d, e, relaxParameter );
+    RDouble relaxParameter = GlobalDataBase::GetDoubleParaFromDB("relaxParameterOfKinetic");
+    PHSPACE::GetSixDofCoefficients(a, b, c, d, e, relaxParameter);
 
-    RDouble coef1 = ( 1 - relaxParameter );
+    RDouble coef1 = (1 - relaxParameter);
     RDouble coef2 = relaxParameter * a;
     RDouble coef3 = relaxParameter * b;
     RDouble coef4 = relaxParameter * c;
     RDouble coef5 = relaxParameter * d;
     RDouble coef6 = relaxParameter * e;
 
-    for ( int iEquation = 0; iEquation < numberOfEquations; ++ iEquation )
+    for (int iEquation = 0; iEquation < numberOfEquations; ++ iEquation)
     {
         q[ iEquation ] = coef1 * q     [ iEquation ] + 
                          coef2 * qN    [ iEquation ] + 
@@ -1228,31 +1399,31 @@ void SixDofSolver::SolveSixDofEquation()
     AllocateVector(sixDofVariableContainer, numberOfTimeLayers, numberOfEquations);
     AllocateVector(sixDofFluxContainer    , numberOfTimeLayers, numberOfEquations);
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        vector< RDouble > & forceVector     = this->GetForceVector    ( iTimeLayer );
-        SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
+        vector< RDouble > & forceVector     = this->GetForceVector    (iTimeLayer);
+        SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
 
-        sixDofParameter->GetGeneralVariableContainer( sixDofVariableContainer[ iTimeLayer ] );
+        sixDofParameter->GetGeneralVariableContainer(sixDofVariableContainer[ iTimeLayer ]);
 
-        GetSixDofFlux( sixDofParameter, massCharacter, forceVector, sixDofFluxContainer[ iTimeLayer ] );
+        GetSixDofFlux(sixDofParameter, massCharacter, forceVector, sixDofFluxContainer[ iTimeLayer ]);
     }
 
-    ComputeCurrentSixDofVariables( sixDofVariableContainer, sixDofFluxContainer, numberOfEquations );
+    ComputeCurrentSixDofVariables(sixDofVariableContainer, sixDofFluxContainer, numberOfEquations);
 
-    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter( 0 );
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
 
-    sixDofParameter0->SetGeneralVariableContainer( & sixDofVariableContainer[ 0 ][ 0 ] );
+    sixDofParameter0->SetGeneralVariableContainer(& sixDofVariableContainer[ 0 ][ 0 ]);
 }
 
 void SixDofSolver::MovingByFile()
 {
-    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter( 0 );
+    SixDofParameter * sixDofParameter0 = this->GetSixDofParameter(0);
 
     int     outIterationStep = GlobalDataBase::GetIntParaFromDB("outnstep");
 
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if (aleStartStrategy == -1 )
+    if (aleStartStrategy == -1)
     {
         outIterationStep = 1;
     }
@@ -1272,9 +1443,9 @@ void SixDofSolver::MovingByFile()
     ios_base::openmode openMode = ios_base::in;
     fstream file;
 
-    PHSPACE::OpenFile( file, uDFSixDofFileName, openMode );
+    PHSPACE::OpenFile(file, uDFSixDofFileName, openMode);
 
-    for( int iStep = 0; iStep < outIterationStep; ++ iStep )
+    for(int iStep = 0; iStep < outIterationStep; ++ iStep)
     {
         file >> tmp;
         file >> newMassCenterX;
@@ -1289,31 +1460,30 @@ void SixDofSolver::MovingByFile()
     newEulerAngleBeta  *= PI / 180.0;
     newEulerAngleAlpha *= PI / 180.0;
 
-    sixDofParameter0->SetMassCenterX( newMassCenterX );
-    sixDofParameter0->SetMassCenterY( newMassCenterY );
-    sixDofParameter0->SetMassCenterZ( newMassCenterZ );
+    sixDofParameter0->SetMassCenterX(newMassCenterX);
+    sixDofParameter0->SetMassCenterY(newMassCenterY);
+    sixDofParameter0->SetMassCenterZ(newMassCenterZ);
 
-    sixDofParameter0->SetEulerAngleAlpha( newEulerAngleAlpha );
-    sixDofParameter0->SetEulerAngleBeta ( newEulerAngleBeta  );
-    sixDofParameter0->SetEulerAngleGama ( newEulerAngleGama  );
+    sixDofParameter0->SetEulerAngleAlpha(newEulerAngleAlpha);
+    sixDofParameter0->SetEulerAngleBeta (newEulerAngleBeta );
+    sixDofParameter0->SetEulerAngleGama (newEulerAngleGama );
 }
 
-void SixDofSolver::GetDimensionalAerodynamicForceAndMoment( vector< RDouble > & dimensionalAerodynamicForce, vector< RDouble > & dimensionalAerodynamicMoment, int bodyIndex, int iTimeLayer )
+void SixDofSolver::GetDimensionalAerodynamicForceAndMoment(vector< RDouble > & dimensionalAerodynamicForce, vector< RDouble > & dimensionalAerodynamicMoment, int bodyIndex, int iTimeLayer)
 {
     AleForceManager * aleForceManager = GetAleManager()->GetAleForceManager();
 
-    BasicAleForce * basicAleForce = aleForceManager->GetBasicAleForce( bodyIndex, iTimeLayer );
+    BasicAleForce * basicAleForce = aleForceManager->GetBasicAleForce(bodyIndex, iTimeLayer);
 
     RDouble dimensionalForceCoefficient  = aleForceManager->GetDimensionalForceCoefficient ();
     RDouble dimensionalMomentCoefficient = aleForceManager->GetDimensionalMomentCoefficient();
+    dimensionalAerodynamicForce [0] = basicAleForce->GetForceX() * dimensionalForceCoefficient;
+    dimensionalAerodynamicForce [1] = basicAleForce->GetForceY() * dimensionalForceCoefficient;
+    dimensionalAerodynamicForce [2] = basicAleForce->GetForceZ() * dimensionalForceCoefficient;
 
-    dimensionalAerodynamicForce [ 0 ] = basicAleForce->GetForceX()  * dimensionalForceCoefficient;
-    dimensionalAerodynamicForce [ 1 ] = basicAleForce->GetForceY()  * dimensionalForceCoefficient;
-    dimensionalAerodynamicForce [ 2 ] = basicAleForce->GetForceZ()  * dimensionalForceCoefficient;
-
-    dimensionalAerodynamicMoment[ 0 ] = basicAleForce->GetMomentX() * dimensionalMomentCoefficient;
-    dimensionalAerodynamicMoment[ 1 ] = basicAleForce->GetMomentY() * dimensionalMomentCoefficient;
-    dimensionalAerodynamicMoment[ 2 ] = basicAleForce->GetMomentZ() * dimensionalMomentCoefficient;
+    dimensionalAerodynamicMoment[0] = basicAleForce->GetMomentX() * dimensionalMomentCoefficient;
+    dimensionalAerodynamicMoment[1] = basicAleForce->GetMomentY() * dimensionalMomentCoefficient;
+    dimensionalAerodynamicMoment[2] = basicAleForce->GetMomentZ() * dimensionalMomentCoefficient;
 }
 
 void SixDofSolver::DumpSixDofSolverInformation()
@@ -1325,38 +1495,38 @@ void SixDofSolver::DumpSixDofSolverInformation()
 void SixDofSolver::DumpSixDofParameterInformation()
 {
     string fileName = GlobalDataBase::GetStrParaFromDB("sixDofFileName");
-    string sixDofFileName = PHSPACE::AddSymbolToFileName(fileName, bodyIndex + 1 );
+    string sixDofFileName = PHSPACE::AddSymbolToFileName(fileName, bodyIndex + 1);
 
     ios_base::openmode openMode = ios_base::out|ios_base::app;
 
     fstream file;
-    PHSPACE::OpenFile( file, sixDofFileName, openMode );
+    PHSPACE::OpenFile(file, sixDofFileName, openMode);
 
-    this->DumpSixDofParameterInformation( file );
+    this->DumpSixDofParameterInformation(file);
 
-    PHSPACE::CloseFile( file );
+    PHSPACE::CloseFile(file);
 }
 
 void SixDofSolver::DumpAleForceInformation()
 {
     string fileName = GlobalDataBase::GetStrParaFromDB("sixDofFileName");
-    string aleForceFileName = PHSPACE::AddSymbolToFileName(fileName, bodyIndex + 1 );
+    string aleForceFileName = PHSPACE::AddSymbolToFileName(fileName, bodyIndex + 1);
 
     ios_base::openmode openMode = ios_base::out|ios_base::app;
     fstream file;
 
-    string fileName1 = PHSPACE::AddSymbolToFileName( aleForceFileName, "_body" );
-    PHSPACE::OpenFile( file, fileName1, openMode );
-    this->DumpAleForceInformationBodyFrame( file );
-    PHSPACE::CloseFile( file );
+    string fileName1 = PHSPACE::AddSymbolToFileName(aleForceFileName, "_body");
+    PHSPACE::OpenFile(file, fileName1, openMode);
+    this->DumpAleForceInformationBodyFrame(file);
+    PHSPACE::CloseFile(file);
 
-    string fileName2 = PHSPACE::AddSymbolToFileName( aleForceFileName, "_iner" );
-    PHSPACE::OpenFile( file, fileName2, openMode );
-    this->DumpAleForceInformationInerFrame( file );
-    PHSPACE::CloseFile( file );
+    string fileName2 = PHSPACE::AddSymbolToFileName(aleForceFileName, "_iner");
+    PHSPACE::OpenFile(file, fileName2, openMode);
+    this->DumpAleForceInformationInerFrame(file);
+    PHSPACE::CloseFile(file);
 }
 
-void SixDofSolver::DumpSixDofParameterInformation( fstream & file )
+void SixDofSolver::DumpSixDofParameterInformation(fstream & file)
 {
     RDouble massCenterX, massCenterY, massCenterZ;
     RDouble massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ;
@@ -1364,20 +1534,20 @@ void SixDofSolver::DumpSixDofParameterInformation( fstream & file )
     RDouble angularVelocityX, angularVelocityY, angularVelocityZ;
 
     int iTimeLayer = 0;
-    SixDofParameter * sixDofParameter =  this->GetSixDofParameter( iTimeLayer );
+    SixDofParameter * sixDofParameter =  this->GetSixDofParameter(iTimeLayer);
 
-    sixDofParameter->GetMassCenter( massCenterX, massCenterY, massCenterZ );
-    sixDofParameter->GetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
-    sixDofParameter->GetEulerAngle( eulerAngleGama, eulerAngleBeta,eulerAngleAlpha );
-    sixDofParameter->GetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+    sixDofParameter->GetMassCenter(massCenterX, massCenterY, massCenterZ);
+    sixDofParameter->GetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
+    sixDofParameter->GetEulerAngle(eulerAngleGama, eulerAngleBeta,eulerAngleAlpha);
+    sixDofParameter->GetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
 
-    file << setiosflags( ios::left );
-    file << setiosflags( ios::scientific );
-    file << setprecision( 6 );
+    file << setiosflags(ios::left);
+    file << setiosflags(ios::scientific);
+    file << setprecision(6);
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
-    file << aleSimulationTime << "	";
+    file << aleSimulationTime << "\t";
 
     file << massCenterX << "\t";
     file << massCenterY << "\t";
@@ -1395,130 +1565,130 @@ void SixDofSolver::DumpSixDofParameterInformation( fstream & file )
     file << "\n";
 }
 
-void SixDofSolver::DumpAleForceInformationBodyFrame( fstream & file )
+void SixDofSolver::DumpAleForceInformationBodyFrame(fstream & file)
 {
     int numberOfAleForceComponents = 6;
-    vector< RDouble > aleForceContainer( numberOfAleForceComponents );
+    vector< RDouble > aleForceContainer(numberOfAleForceComponents);
 
-    this->GetDimensionalAerodynamicForceAndMomentBodyFrame( aleForceContainer, 0 );
+    this->GetDimensionalAerodynamicForceAndMomentBodyFrame(aleForceContainer, 0);
 
-    file << setiosflags( ios::left );
-    file << setiosflags( ios::scientific );
-    file << setprecision( 6 );
+    file << setiosflags(ios::left);
+    file << setiosflags(ios::scientific);
+    file << setprecision(6);
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
     file << aleSimulationTime << "\t";
 
-    for ( int iAleForceComponent = 0; iAleForceComponent < numberOfAleForceComponents; ++ iAleForceComponent )
+    for (int iAleForceComponent = 0; iAleForceComponent < numberOfAleForceComponents; ++ iAleForceComponent)
     {
         file << aleForceContainer[ iAleForceComponent ] << "\t";
     }
     file << "\n";
 }
 
-void SixDofSolver::DumpAleForceInformationInerFrame( fstream & file )
+void SixDofSolver::DumpAleForceInformationInerFrame(fstream & file)
 {
     int numberOfAleForceComponents = 6;
-    vector< RDouble > aleForceContainer( numberOfAleForceComponents );
+    vector< RDouble > aleForceContainer(numberOfAleForceComponents);
 
-    this->GetDimensionalAerodynamicForceAndMomentInerFrame( aleForceContainer, 0 );
+    this->GetDimensionalAerodynamicForceAndMomentInerFrame(aleForceContainer, 0);
 
-    file << setiosflags( ios::left );
-    file << setiosflags( ios::scientific );
-    file << setprecision( 6 );
+    file << setiosflags(ios::left);
+    file << setiosflags(ios::scientific);
+    file << setprecision(6);
 
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
     file << aleSimulationTime << "\t";
 
-    for ( int iAleForceComponent = 0; iAleForceComponent < numberOfAleForceComponents; ++ iAleForceComponent )
+    for (int iAleForceComponent = 0; iAleForceComponent < numberOfAleForceComponents; ++ iAleForceComponent)
     {
         file << aleForceContainer[ iAleForceComponent ] << "\t";
     }
     file << "\n";
 }
 
-void SixDofSolver::DumpRestartSixDofSolver( fstream & file )
+void SixDofSolver::DumpRestartSixDofSolver(fstream & file)
 {
     const int numberOfEquations = 12;
-    vector< RDouble >  generalVariableContainer( numberOfEquations );
+    vector< RDouble >  generalVariableContainer(numberOfEquations);
 
-    for ( int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer )
+    for (int iTimeLayer = 0; iTimeLayer < numberOfTimeLayers; ++ iTimeLayer)
     {
-        SixDofParameter * sixDofParameter = this->GetSixDofParameter( iTimeLayer );
-        sixDofParameter->GetGeneralVariableContainer( generalVariableContainer );
-        PHSPACE::PHWrite( file, generalVariableContainer, numberOfEquations );
+        SixDofParameter * sixDofParameter = this->GetSixDofParameter(iTimeLayer);
+        sixDofParameter->GetGeneralVariableContainer(generalVariableContainer);
+        PHSPACE::PHWrite(file, generalVariableContainer, numberOfEquations);
     }
 }
 
-void GetSixDofCoefficients( RDouble & a, RDouble & b, RDouble & c, RDouble & d, RDouble & e, RDouble & relaxParameter )
+void GetSixDofCoefficients(RDouble & a, RDouble & b, RDouble & c, RDouble & d, RDouble & e, RDouble & relaxParameter)
 {
-    int methodForKineticEquation = PHSPACE::GlobalDataBase::GetIntParaFromDB( "methodForKineticEquation" );
-    relaxParameter = PHSPACE::GlobalDataBase::GetDoubleParaFromDB( "relaxParameterOfKinetic" );
+    int methodForKineticEquation = PHSPACE::GlobalDataBase::GetIntParaFromDB("methodForKineticEquation");
+    relaxParameter = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("relaxParameterOfKinetic");
 
     RDouble aleTimeStep  = PHSPACE::GetAleTimeStep();
 
     RDouble thet = 0.0, xi = 0.0, phi = 0.0;
 
-    if (      methodForKineticEquation == KINETIC_SCHEME::ADMAS_BASHFORTH_FIRST_ORDER  )
+    if (     methodForKineticEquation == KINETIC_SCHEME::ADMAS_BASHFORTH_FIRST_ORDER )
     {
         thet = 0.0;
         xi   = 0.0;
         phi  = 0.0;
         relaxParameter = 1.0;
     }
-    else if ( methodForKineticEquation == KINETIC_SCHEME::ADMAS_BASHFORTH_SECOND_ORDER )
+    else if (methodForKineticEquation == KINETIC_SCHEME::ADMAS_BASHFORTH_SECOND_ORDER)
     {
         thet = 0.0;
         xi   = 0.0;
         phi  = 1.0 / 2.0;
         relaxParameter = 1.0;
     }
-    else if ( methodForKineticEquation == KINETIC_SCHEME::IMPLICIT_EULER_FIRST_ORDER  )
+    else if (methodForKineticEquation == KINETIC_SCHEME::IMPLICIT_EULER_FIRST_ORDER )
     {
         thet = 1.0;
         xi   = 0.0;
         phi  = 0.0;
     }
-    else if ( methodForKineticEquation == KINETIC_SCHEME::IMPLICIT_EULER_SECOND_ORDER  )
+    else if (methodForKineticEquation == KINETIC_SCHEME::IMPLICIT_EULER_SECOND_ORDER )
     {
         thet = 1.0;
         xi   = 1.0 / 2.0;
         phi  = 0.0;
     }
-    else if ( methodForKineticEquation == KINETIC_SCHEME::ADMAS_MOULTON_SECOND_ORDER  )
+    else if (methodForKineticEquation == KINETIC_SCHEME::ADMAS_MOULTON_SECOND_ORDER )
     {
         thet = 1.0 / 2.0;
         xi   = 0.0;
         phi  = 0.0;
     }
-    else if ( methodForKineticEquation == KINETIC_SCHEME::ADMAS_MOULTON_THIRD_ORDER )
+    else if (methodForKineticEquation == KINETIC_SCHEME::ADMAS_MOULTON_THIRD_ORDER)
     {
         thet = 5.0 / 12.0;
         xi   = 0.0;
         phi  = 1.0 / 12.0;
     }
 
-    a = aleTimeStep / ( 1.0 + xi ) * ( ( 1.0 + xi ) / aleTimeStep + xi / aleTimeStep );
-    b = aleTimeStep / ( 1.0 + xi ) * ( - xi / aleTimeStep );
-    c = aleTimeStep / ( 1.0 + xi ) * ( thet );
-    d = aleTimeStep / ( 1.0 + xi ) * ( 1.0 - thet + phi );
-    e = aleTimeStep / ( 1.0 + xi ) * ( - phi );
+    a = aleTimeStep / (1.0 + xi) * ((1.0 + xi) / aleTimeStep + xi / aleTimeStep);
+    b = aleTimeStep / (1.0 + xi) * (- xi / aleTimeStep);
+    c = aleTimeStep / (1.0 + xi) * (thet);
+    d = aleTimeStep / (1.0 + xi) * (1.0 - thet + phi);
+    e = aleTimeStep / (1.0 + xi) * (- phi);
 }
 
-void SixDofSolver::GetSixDofFlux( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux )
+void SixDofSolver::GetSixDofFlux(SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux)
 {
-    this->ComputeRightHandSideOfRigidBodyTranslationalMotionEquation  ( sixDofParameter, massCharacter, force, generalSixDofFlux );
-    this->ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation( sixDofParameter, massCharacter, force, generalSixDofFlux );
-    this->ComputeRightHandSideOfRigidBodyRotationalMotionEquation     ( sixDofParameter, massCharacter, force, generalSixDofFlux );
-    this->ComputeRightHandSideOfRigidBodyRotationalDynamicsEquation   ( sixDofParameter, massCharacter, force, generalSixDofFlux );
+    this->ComputeRightHandSideOfRigidBodyTranslationalMotionEquation  (sixDofParameter, massCharacter, force, generalSixDofFlux);
+    this->ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation(sixDofParameter, massCharacter, force, generalSixDofFlux);
+    this->ComputeRightHandSideOfRigidBodyRotationalMotionEquation     (sixDofParameter, massCharacter, force, generalSixDofFlux);
+    this->ComputeRightHandSideOfRigidBodyRotationalDynamicsEquation   (sixDofParameter, massCharacter, force, generalSixDofFlux);
 }
 
-void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalMotionEquation( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux )
+void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalMotionEquation(SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux)
 {
     RDouble massCenterVelocityX,  massCenterVelocityY, massCenterVelocityZ;
-    sixDofParameter->GetMassCenterVelocity( massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ );
+    sixDofParameter->GetMassCenterVelocity(massCenterVelocityX, massCenterVelocityY, massCenterVelocityZ);
 
     //location
     generalSixDofFlux[ 0 ] = massCenterVelocityX;
@@ -1526,7 +1696,7 @@ void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalMotionEquation( S
     generalSixDofFlux[ 2 ] = massCenterVelocityZ;
 }
 
-void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux )
+void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation(SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux)
 {
     RDouble forceX = force[ 0 ];
     RDouble forceY = force[ 1 ];
@@ -1540,56 +1710,54 @@ void SixDofSolver::ComputeRightHandSideOfRigidBodyTranslationalDynamicsEquation(
     generalSixDofFlux[ 5 ] = forcez / mass;
 }
 
-void SixDofSolver::ComputeRightHandSideOfRigidBodyRotationalMotionEquation( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux )
+void SixDofSolver::ComputeRightHandSideOfRigidBodyRotationalMotionEquation(SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux)
 {
     RDouble angularVelocityX, angularVelocityY, angularVelocityZ;
     RDouble eulerAngleAlpha, eulerAngleBeta, eulerAngleGama;
 
-    sixDofParameter->GetEulerAngle( eulerAngleGama, eulerAngleBeta, eulerAngleAlpha );
-    sixDofParameter->GetAngularVelocity( angularVelocityX, angularVelocityY, angularVelocityZ );
+    sixDofParameter->GetEulerAngle(eulerAngleGama, eulerAngleBeta, eulerAngleAlpha);
+    sixDofParameter->GetAngularVelocity(angularVelocityX, angularVelocityY, angularVelocityZ);
 
     //attitude
-    generalSixDofFlux[ 8 ] = angularVelocityY * sin( eulerAngleGama  )                          + angularVelocityZ * cos( eulerAngleGama  );
-    generalSixDofFlux[ 7 ] = angularVelocityY * cos( eulerAngleGama  ) / cos( eulerAngleAlpha ) - angularVelocityZ * sin( eulerAngleGama  ) / cos( eulerAngleAlpha );
-    generalSixDofFlux[ 6 ] = angularVelocityX - generalSixDofFlux[ 7 ] * sin( eulerAngleAlpha );
+    generalSixDofFlux[ 8 ] = angularVelocityY * sin(eulerAngleGama )                          + angularVelocityZ * cos(eulerAngleGama );
+    generalSixDofFlux[ 7 ] = angularVelocityY * cos(eulerAngleGama ) / cos(eulerAngleAlpha) - angularVelocityZ * sin(eulerAngleGama ) / cos(eulerAngleAlpha);
+    generalSixDofFlux[ 6 ] = angularVelocityX - generalSixDofFlux[ 7 ] * sin(eulerAngleAlpha);
 }
 
-void SixDofSolver::ComputeRightHandSideOfRigidBodyRotationalDynamicsEquation( SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux )
+void SixDofSolver::ComputeRightHandSideOfRigidBodyRotationalDynamicsEquation(SixDofParameter * sixDofParameter, MassCharacter * massCharacter, vector< RDouble > & force, vector< RDouble > & generalSixDofFlux)
 {
     RDouble ** momentOfInertiaTensor        = massCharacter->GetMomentOfInertiaTensor();
     RDouble ** inverseMomentOfInertiaTensor = massCharacter->GetInverseMomentOfInertiaTensor();
 
-    //rotation dRotation/dt
+    vector< RDouble > angularVelocityVector(3);
+    sixDofParameter->GetAngularVelocityContainer(angularVelocityVector);
 
-    vector< RDouble > angularVelocityVector( 3 );
-    sixDofParameter->GetAngularVelocityContainer( angularVelocityVector );
-
-    vector< RDouble > momentumMoment( 3 );
-    PHSPACE::MatrixMultiply( momentOfInertiaTensor, angularVelocityVector, momentumMoment, 3, 3 );
+    vector< RDouble > momentumMoment(3);
+    PHSPACE::MatrixMultiply(momentOfInertiaTensor, angularVelocityVector, momentumMoment, 3, 3);
 
     RDouble momentVector[ 3 ];
     momentVector[ 0 ] = force[ 3 ];
     momentVector[ 1 ] = force[ 4 ];
     momentVector[ 2 ] = force[ 5 ];
 
-    vector< RDouble > temp1( 3 );
-    PHSPACE::CrossProduct( angularVelocityVector, momentumMoment, temp1 );
+    vector< RDouble > temp1(3);
+    PHSPACE::CrossProduct(angularVelocityVector, momentumMoment, temp1);
 
-    vector< RDouble > temp2( 3 );
+    vector< RDouble > temp2(3);
     temp2[ 0 ] = momentVector[ 0 ] - temp1[ 0 ];
     temp2[ 1 ] = momentVector[ 1 ] - temp1[ 1 ];
     temp2[ 2 ] = momentVector[ 2 ] - temp1[ 2 ];
 
-    vector< RDouble > dRotationDtVector( 3 );
+    vector< RDouble > dRotationDtVector(3);
 
-    PHSPACE::MatrixMultiply( inverseMomentOfInertiaTensor, temp2, dRotationDtVector, 3, 3 );
+    PHSPACE::MatrixMultiply(inverseMomentOfInertiaTensor, temp2, dRotationDtVector, 3, 3);
 
     generalSixDofFlux[ 9  ] = dRotationDtVector[ 0 ];
     generalSixDofFlux[ 10 ] = dRotationDtVector[ 1 ];
     generalSixDofFlux[ 11 ] = dRotationDtVector[ 2 ];
 
-    PHSPACE::DelPointer2( momentOfInertiaTensor        );
-    PHSPACE::DelPointer2( inverseMomentOfInertiaTensor );
+    PHSPACE::DelPointer2(momentOfInertiaTensor       );
+    PHSPACE::DelPointer2(inverseMomentOfInertiaTensor);
 }
 
 SixDofSolverManager::SixDofSolverManager()
@@ -1600,9 +1768,9 @@ SixDofSolverManager::SixDofSolverManager()
 
 SixDofSolverManager::~SixDofSolverManager() 
 { 
-    if ( sixDofSolverContainer )
+    if (sixDofSolverContainer)
     {
-        for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+        for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
         {
             delete sixDofSolverContainer[ iMovingBody ];
             sixDofSolverContainer[iMovingBody] = NULL;
@@ -1614,20 +1782,20 @@ SixDofSolverManager::~SixDofSolverManager()
 
 void SixDofSolverManager::AllocateSixDofSolverContainer()
 {
-    numberOfMovingBodies = PHSPACE::GlobalDataBase::GetIntParaFromDB( "numberOfMovingBodies" );
+    numberOfMovingBodies = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
     sixDofSolverContainer = new SixDofSolver * [ numberOfMovingBodies ];
-    for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+    for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
-        int RBDMethod = PHSPACE::GetIntegerParameterFromDataBase( iMovingBody, "RBDMethod" );
+        int RBDMethod = PHSPACE::GetIntegerParameterFromDataBase(iMovingBody, "RBDMethod");
         
-        if ( RBDMethod <= 100 )
+        if (RBDMethod <= 100)
         {
-            sixDofSolverContainer[ iMovingBody ] = new SixDofSolver( this );
+            sixDofSolverContainer[ iMovingBody ] = new SixDofSolver(this);
         }
         else
         {
-            sixDofSolverContainer[ iMovingBody ] = new SixDofSolver( this );
+            sixDofSolverContainer[ iMovingBody ] = new SixDofSolver(this);
         }
     }
 }
@@ -1636,25 +1804,25 @@ void SixDofSolverManager::Initialize()
 {
     AllocateSixDofSolverContainer();
 
-    for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+    for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
-        sixDofSolverContainer[ iMovingBody ]->Initialize( iMovingBody );
+        sixDofSolverContainer[ iMovingBody ]->Initialize(iMovingBody);
     }
 }
 
 void SixDofSolverManager::Restart()
 {
-    for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+    for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
         sixDofSolverContainer[ iMovingBody ]->Restart();
     }
 }
 
-void SixDofSolverManager::DumpRestart( fstream & file )
+void SixDofSolverManager::DumpRestart(fstream & file)
 {
-    for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+    for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
-        sixDofSolverContainer[ iMovingBody ]->DumpRestartSixDofSolver( file );
+        sixDofSolverContainer[ iMovingBody ]->DumpRestartSixDofSolver(file);
     }
 }
 
@@ -1666,29 +1834,29 @@ void SixDofSolverManager::Run()
 
     vector< RDouble > sixDofVariableContainer;
 
-    sixDofVariableContainer.resize( 12 );
+    sixDofVariableContainer.resize(12);
 
-    for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+    for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
-        SixDofParameter * sixDofParameter   = sixDofSolverContainer[ iMovingBody ]->GetSixDofParameter( 0 );
+        SixDofParameter * sixDofParameter   = sixDofSolverContainer[ iMovingBody ]->GetSixDofParameter(0);
 
-        if( currentProcessor == serverProcessor )
+        if(currentProcessor == serverProcessor)
         {
             sixDofSolverContainer[ iMovingBody ]->Run();
-            sixDofParameter->GetGeneralVariableContainer( sixDofVariableContainer );
+            sixDofParameter->GetGeneralVariableContainer(sixDofVariableContainer);
         }
 
-        PHMPI::PH_Bcast( &sixDofVariableContainer[ 0 ], 12*sizeof(RDouble), serverProcessor );
+        PHMPI::PH_Bcast(&sixDofVariableContainer[ 0 ], 12*sizeof(RDouble), serverProcessor);
 
-        sixDofParameter->SetGeneralVariableContainer( &sixDofVariableContainer[ 0 ] );
+        sixDofParameter->SetGeneralVariableContainer(&sixDofVariableContainer[ 0 ]);
     }
 }
 
 void SixDofSolverManager::Post()
 {
-    for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+    for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
-        SixDofSolver * sixDofSolver = this->GetSixDofSolver( iMovingBody );
+        SixDofSolver * sixDofSolver = this->GetSixDofSolver(iMovingBody);
         sixDofSolver->UpdateUnsteadyTerm();
     }
     
@@ -1705,107 +1873,107 @@ void SixDofSolverManager::Dump()
         return;
     }
 
-    for ( int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody )
+    for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
-        SixDofSolver * sixDofSolver = this->GetSixDofSolver( iMovingBody );
+        SixDofSolver * sixDofSolver = this->GetSixDofSolver(iMovingBody);
         sixDofSolver->DumpSixDofSolverInformation();
     }
 }
 
-MassCharacter * SixDofSolverManager::GetMassCharacter( int bodyIndex )
+MassCharacter * SixDofSolverManager::GetMassCharacter(int bodyIndex)
 {
-    SixDofSolver * sixDofSolver = this->GetSixDofSolver( bodyIndex );
+    SixDofSolver * sixDofSolver = this->GetSixDofSolver(bodyIndex);
     return sixDofSolver->GetMassCharacter();
 }
 
-SixDofParameter * SixDofSolverManager::GetSixDofParameterN1( int bodyIndex )
+SixDofParameter * SixDofSolverManager::GetSixDofParameterN1(int bodyIndex)
 {
-    SixDofSolver * sixDofSolver = this->GetSixDofSolver( bodyIndex );
-    return sixDofSolver->GetSixDofParameter( 2 );
+    SixDofSolver * sixDofSolver = this->GetSixDofSolver(bodyIndex);
+    return sixDofSolver->GetSixDofParameter(2);
 }
 
-SixDofParameter * SixDofSolverManager::GetSixDofParameterN ( int bodyIndex )
+SixDofParameter * SixDofSolverManager::GetSixDofParameterN (int bodyIndex)
 {
-    SixDofSolver * sixDofSolver = this->GetSixDofSolver( bodyIndex );
-    return sixDofSolver->GetSixDofParameter( 1 );
+    SixDofSolver * sixDofSolver = this->GetSixDofSolver(bodyIndex);
+    return sixDofSolver->GetSixDofParameter(1);
 }
 
-SixDofParameter * SixDofSolverManager::GetSixDofParameter  ( int bodyIndex )
+SixDofParameter * SixDofSolverManager::GetSixDofParameter  (int bodyIndex)
 {
-    SixDofSolver * sixDofSolver = this->GetSixDofSolver( bodyIndex );
-    return sixDofSolver->GetSixDofParameter( 0 );
+    SixDofSolver * sixDofSolver = this->GetSixDofSolver(bodyIndex);
+    return sixDofSolver->GetSixDofParameter(0);
 }
 
-SixDofParameter * GetSixDofParameter( int bodyIndex )
+SixDofParameter * GetSixDofParameter(int bodyIndex)
 {
     SixDofSolverManager * sixDofSolverManager = GetAleManager()->GetSixDofSolverManager();
 
-    return sixDofSolverManager->GetSixDofParameter( bodyIndex );
+    return sixDofSolverManager->GetSixDofParameter(bodyIndex);
 }
 
-void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem( vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & massCenter, vector< RDouble > & vectorInBodyFrame )
+void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & massCenter, vector< RDouble > & vectorInBodyFrame)
 {
     vectorInBodyFrame[ 0 ] = vectorInInertialFrame[ 0 ] - massCenter[ 0 ];
     vectorInBodyFrame[ 1 ] = vectorInInertialFrame[ 1 ] - massCenter[ 1 ];
     vectorInBodyFrame[ 2 ] = vectorInInertialFrame[ 2 ] - massCenter[ 2 ];
 
-    PHSPACE::RotateAboutAxisY( vectorInBodyFrame, angleVector[ 1 ], vectorInBodyFrame );
-    PHSPACE::RotateAboutAxisZ( vectorInBodyFrame, angleVector[ 2 ], vectorInBodyFrame );
-    PHSPACE::RotateAboutAxisX( vectorInBodyFrame, angleVector[ 0 ], vectorInBodyFrame );
+    PHSPACE::RotateAboutAxisY(vectorInBodyFrame, angleVector[ 1 ], vectorInBodyFrame);
+    PHSPACE::RotateAboutAxisZ(vectorInBodyFrame, angleVector[ 2 ], vectorInBodyFrame);
+    PHSPACE::RotateAboutAxisX(vectorInBodyFrame, angleVector[ 0 ], vectorInBodyFrame);
 }
 
-void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem( vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & vectorInBodyFrame )
+void ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(vector< RDouble > & vectorInInertialFrame, vector< RDouble > & angleVector, vector< RDouble > & vectorInBodyFrame)
 {
-    PHSPACE::RotateAboutAxisY( vectorInInertialFrame, angleVector[ 1 ], vectorInBodyFrame );
-    PHSPACE::RotateAboutAxisZ( vectorInBodyFrame    , angleVector[ 2 ], vectorInBodyFrame );
-    PHSPACE::RotateAboutAxisX( vectorInBodyFrame    , angleVector[ 0 ], vectorInBodyFrame );
+    PHSPACE::RotateAboutAxisY(vectorInInertialFrame, angleVector[ 1 ], vectorInBodyFrame);
+    PHSPACE::RotateAboutAxisZ(vectorInBodyFrame    , angleVector[ 2 ], vectorInBodyFrame);
+    PHSPACE::RotateAboutAxisX(vectorInBodyFrame    , angleVector[ 0 ], vectorInBodyFrame);
 }
 
-void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem( vector< RDouble > & vectorInBodyFrame, vector< RDouble > & angleVector, vector< RDouble > & massCenter,  vector< RDouble > & vectorInInertialFrame )
+void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem(vector< RDouble > & vectorInBodyFrame, vector< RDouble > & angleVector, vector< RDouble > & massCenter,  vector< RDouble > & vectorInInertialFrame)
 {
-    PHSPACE::RotateAboutAxisX( vectorInBodyFrame    , - angleVector[ 0 ], vectorInInertialFrame );
-    PHSPACE::RotateAboutAxisZ( vectorInInertialFrame, - angleVector[ 2 ], vectorInInertialFrame );
-    PHSPACE::RotateAboutAxisY( vectorInInertialFrame, - angleVector[ 1 ], vectorInInertialFrame );
+    PHSPACE::RotateAboutAxisX(vectorInBodyFrame    , - angleVector[ 0 ], vectorInInertialFrame);
+    PHSPACE::RotateAboutAxisZ(vectorInInertialFrame, - angleVector[ 2 ], vectorInInertialFrame);
+    PHSPACE::RotateAboutAxisY(vectorInInertialFrame, - angleVector[ 1 ], vectorInInertialFrame);
 
     vectorInInertialFrame[ 0 ] += massCenter[ 0 ];
     vectorInInertialFrame[ 1 ] += massCenter[ 1 ];
     vectorInInertialFrame[ 2 ] += massCenter[ 2 ];
 }
 
-void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem( vector< RDouble > & vectorInBodyFrame, vector< RDouble > & angleVector, vector< RDouble > & vectorInInertialFrame )
+void ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem(vector< RDouble > & vectorInBodyFrame, vector< RDouble > & angleVector, vector< RDouble > & vectorInInertialFrame)
 {
-    PHSPACE::RotateAboutAxisX( vectorInBodyFrame    , - angleVector[ 0 ], vectorInInertialFrame );
-    PHSPACE::RotateAboutAxisZ( vectorInInertialFrame, - angleVector[ 2 ], vectorInInertialFrame );
-    PHSPACE::RotateAboutAxisY( vectorInInertialFrame, - angleVector[ 1 ], vectorInInertialFrame );
+    PHSPACE::RotateAboutAxisX(vectorInBodyFrame    , - angleVector[ 0 ], vectorInInertialFrame);
+    PHSPACE::RotateAboutAxisZ(vectorInInertialFrame, - angleVector[ 2 ], vectorInInertialFrame);
+    PHSPACE::RotateAboutAxisY(vectorInInertialFrame, - angleVector[ 1 ], vectorInInertialFrame);
 }
 
-void RotateAboutAxisX( vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut )
+void RotateAboutAxisX(vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut)
 {
     RDouble oldX = vectorIn[ 0 ];
     RDouble oldY = vectorIn[ 1 ];
     RDouble oldZ = vectorIn[ 2 ];
     vectorOut[ 0 ] = 1.0      * oldX + 0.0                * oldY + 0.0                * oldZ;
-    vectorOut[ 1 ] = 0.0      * oldX + cos( rotateAngle ) * oldY + sin( rotateAngle ) * oldZ;
-    vectorOut[ 2 ] = 0.0      * oldX - sin( rotateAngle ) * oldY + cos( rotateAngle ) * oldZ;
+    vectorOut[ 1 ] = 0.0      * oldX + cos(rotateAngle) * oldY + sin(rotateAngle) * oldZ;
+    vectorOut[ 2 ] = 0.0      * oldX - sin(rotateAngle) * oldY + cos(rotateAngle) * oldZ;
 }
 
-void RotateAboutAxisY( vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut )
+void RotateAboutAxisY(vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut)
 {
     RDouble oldX = vectorIn[ 0 ];
     RDouble oldY = vectorIn[ 1 ];
     RDouble oldZ = vectorIn[ 2 ];
-    vectorOut[ 0 ] = cos( rotateAngle ) * oldX + 0.0      * oldY - sin( rotateAngle ) * oldZ;
+    vectorOut[ 0 ] = cos(rotateAngle) * oldX + 0.0      * oldY - sin(rotateAngle) * oldZ;
     vectorOut[ 1 ] = 0.0                * oldX + 1.0      * oldY + 0.0                * oldZ;
-    vectorOut[ 2 ] = sin( rotateAngle ) * oldX + 0.0      * oldY + cos( rotateAngle ) * oldZ;
+    vectorOut[ 2 ] = sin(rotateAngle) * oldX + 0.0      * oldY + cos(rotateAngle) * oldZ;
 }
 
-void RotateAboutAxisZ( vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut )
+void RotateAboutAxisZ(vector< RDouble > & vectorIn, RDouble rotateAngle, vector< RDouble > & vectorOut)
 {
     RDouble oldX = vectorIn[ 0 ];
     RDouble oldY = vectorIn[ 1 ];
     RDouble oldZ = vectorIn[ 2 ];
-    vectorOut[ 0 ] =   cos( rotateAngle ) * oldX + sin( rotateAngle ) * oldY + 0.0      * oldZ;
-    vectorOut[ 1 ] = - sin( rotateAngle ) * oldX + cos( rotateAngle ) * oldY + 0.0      * oldZ;
+    vectorOut[ 0 ] =   cos(rotateAngle) * oldX + sin(rotateAngle) * oldY + 0.0      * oldZ;
+    vectorOut[ 1 ] = - sin(rotateAngle) * oldX + cos(rotateAngle) * oldY + 0.0      * oldZ;
     vectorOut[ 2 ] =   0.0                * oldX + 0.0                * oldY + 1.0      * oldZ;
 }
 

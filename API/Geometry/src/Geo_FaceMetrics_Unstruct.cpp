@@ -4,28 +4,28 @@ namespace PHSPACE
 {
 LIB_EXPORT Geo_FaceMetrics_Unstruct::Geo_FaceMetrics_Unstruct()
 {
-    xfc = nullptr;
-    yfc = nullptr;
-    zfc = nullptr;
+    xfc = NULL;
+    yfc = NULL;
+    zfc = NULL;
 
-    xfn = nullptr;
-    yfn = nullptr;
-    zfn = nullptr;
+    xfn = NULL;
+    yfn = NULL;
+    zfn = NULL;
 
-    area = nullptr;
+    area = NULL;
 }
 
 LIB_EXPORT Geo_FaceMetrics_Unstruct::~Geo_FaceMetrics_Unstruct()
 {
-    delete [] xfc;    xfc = nullptr;
-    delete [] yfc;    yfc = nullptr;
-    delete [] zfc;    zfc = nullptr;
+    delete [] xfc;    xfc = NULL;
+    delete [] yfc;    yfc = NULL;
+    delete [] zfc;    zfc = NULL;
 
-    delete [] xfn;    xfn = nullptr;
-    delete [] yfn;    yfn = nullptr;
-    delete [] zfn;    zfn = nullptr;
+    delete [] xfn;    xfn = NULL;
+    delete [] yfn;    yfn = NULL;
+    delete [] zfn;    zfn = NULL;
 
-    delete [] area;    area = nullptr;
+    delete [] area;    area = NULL;
 }
 
 }

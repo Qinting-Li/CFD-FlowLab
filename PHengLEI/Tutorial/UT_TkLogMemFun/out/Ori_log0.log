@@ -1,0 +1,11 @@
+OpenLogFile Test!
+WriteLogFile String Test!
+WriteLogFile ostringstream Test!
+
+WriteLogFile by string para
+WriteLogFile by ostringstream para
+
+template_function_3_para
+template_function_4 _para
+template_function_5 _para _XXX
+     100% wall distance completed ...

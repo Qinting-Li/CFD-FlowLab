@@ -68,7 +68,7 @@ void HOSimulation::Run()
 
     InitOversetGrid();
 
-    if( PHMPI::CurrentProcessorIsGridProcessor() )
+    if(PHMPI::CurrentProcessorIsGridProcessor())
     {
         return;
     }
@@ -96,7 +96,7 @@ void HOSimulation::SolveSimu()
 {
     WriteLogFile("In SolveSimu, Start iterating ...");
 
-    int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "outnstep" );
+    int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
     int maxSimuStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
 
     while (true)
@@ -105,7 +105,7 @@ void HOSimulation::SolveSimu()
 
         SolveOneOuterStep();
 
-        if (outnstep >= maxSimuStep && maxSimuStep > 0 ) break;
+        if (outnstep >= maxSimuStep && maxSimuStep > 0) break;
     }
 }
 
@@ -126,7 +126,7 @@ void HOSimulation::UpdateOuterIterationStep(int &outnstep)
     if (ifStaticsFlowField == 1)
     {
         int startStatisticStep = GlobalDataBase::GetIntParaFromDB("startStatisticStep");
-        if( outnstep >= startStatisticStep )
+        if(outnstep >= startStatisticStep)
         {
             int nStatisticalStep = GlobalDataBase::GetIntParaFromDB("nStatisticalStep");
             ++ nStatisticalStep;
@@ -197,15 +197,15 @@ void HOSimulation::ReadGeometry()
 {
     PHSPACE::TimeSpan testTime;
     ReadGrid();
-    testTime.ShowTimeSpanToLogfile("Grid Reading");
+    testTime.ShowTimeSpanToLogFile("Grid Reading");
 }
 
 void HOSimulation::InitializeSolvers()
 {
-    WriteLogFile( "Creating and initialization solvers start\n" );
+    WriteLogFile("Creating and initialization solvers start\n");
 
     int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
-    for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
         Controller * controller = new Controller(iSolver, this->region);
 
@@ -214,7 +214,7 @@ void HOSimulation::InitializeSolvers()
         delete controller;
     }
 
-    WriteLogFile( "Creating and initialization solvers over\n" );
+    WriteLogFile("Creating and initialization solvers over\n");
 }
 
 void HOSimulation::DefineAndCreateSolvers()
@@ -222,7 +222,7 @@ void HOSimulation::DefineAndCreateSolvers()
     InitGlobalValuesOfAllZones();
 
     int nZones = PHMPI::GetNumberofGlobalZones();
-    for ( int iZone = 0; iZone < nZones; ++ iZone )
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         PHSPACE::Zone * zone = this->region->GetZone(iZone);
         if (!zone) continue;
@@ -236,9 +236,9 @@ void HOSimulation::DefineAndCreateSolvers()
         PHGeometry *geometry = zone->GetGeometry();
 
         int gridType = geometry->GetGrid()->Type();
-        if ( gridType != UNSTRUCTGRID )
+        if (gridType != UNSTRUCTGRID)
         {
-            TK_Exit::ExceptionExit( "HOSolverUnstruct support unstr grid only!" );
+            TK_Exit::ExceptionExit("HOSolverUnstruct support unstr grid only!");
         }
 
         PHSolver *solver = new HOSolverUnstruct();
@@ -247,7 +247,7 @@ void HOSimulation::DefineAndCreateSolvers()
         int viscousType = LAMINAR;
         zone->GetData("viscousType",&viscousType, PHINT, 1);
 
-        if ( viscousType > LAMINAR )
+        if (viscousType > LAMINAR)
         {
             PHSolver *solver = new TurbSolverUnstr();
             solverList.push_back(solver);
@@ -291,7 +291,7 @@ void HOSimulation::MultiGridInitFlow()
     int nMGLevel = GlobalDataBase::GetIntParaFromDB("nMGLevel");
     if (nMGLevel <= 1) return;
 
-    int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "outnstep" );
+    int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
     if(outnstep > 0)
     {
 //      int newnstep = outnstep;
@@ -299,7 +299,7 @@ void HOSimulation::MultiGridInitFlow()
         return; //! Read from flow file.
     }
 
-    int mgInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB( "mgInitStep" );
+    int mgInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("mgInitStep");
     if(mgInitStep <= 0) return;
 
     int mgvist = GlobalDataBase::GetIntParaFromDB("mgvist");
@@ -322,16 +322,16 @@ void HOSimulation::MultiGridInitFlow()
         WriteLogFile(oss.str()); oss << endl;
         PrintToWindow(oss.str());
 
-        while ( levelStep < totalLevelStep )
+        while (levelStep < totalLevelStep)
         {
             ++ levelStep;
 
             UpdateOuterIterationStep(outnstep);
 
             //using namespace PHMPI;
-            for ( int isolver = 0; isolver < nSolver; ++ isolver )
+            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
             {
-                Controller * controller = new Controller(isolver, this->region);
+                Controller *controller = new Controller(iSolver, this->region);
                 controller->MultiGridInitFlow(level);
                 controller->PostSolve(level);
                 delete controller;
@@ -339,10 +339,10 @@ void HOSimulation::MultiGridInitFlow()
         }
 
         //! Interpolate from coarse grid to fine grid.
-        for ( int isolver = 0; isolver < nSolver; ++ isolver )
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
-            Controller * controller = new Controller(isolver, this->region);
-            controller->InterpolatFineGrid(isolver, level - 1);
+            Controller *controller = new Controller(iSolver, this->region);
+            controller->InterpolatFineGrid(iSolver, level - 1);
             delete controller;
         }
     }
@@ -364,10 +364,10 @@ void HOSimulation::SolveSteady()
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
 
-    for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
-        // isolver=1 or 2, is supposed as turbulence computing
-        if ( ( iSolver != NS_SOLVER ) && (outnstep % turbInterval != 0) )
+        //! iSolver = 1 or 2, is supposed as turbulence computing.
+        if ((iSolver != NS_SOLVER) && (outnstep % turbInterval != 0))
         {
             return;
         }
@@ -389,54 +389,54 @@ void HOSimulation::SolveSteadyField()
 
 void HOSimulation::SolveUnsteady()
 {
-    int     min_sub_iter = GlobalDataBase::GetIntParaFromDB( "min_sub_iter" );
-    int     max_sub_iter = GlobalDataBase::GetIntParaFromDB( "max_sub_iter" );
-    RDouble tol_sub_iter = GlobalDataBase::GetDoubleParaFromDB( "tol_sub_iter" );
+    int     min_sub_iter = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
+    int     max_sub_iter = GlobalDataBase::GetIntParaFromDB("max_sub_iter");
+    RDouble tol_sub_iter = GlobalDataBase::GetDoubleParaFromDB("tol_sub_iter");
 
     int innstep = 0;
     int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
 
     bool isSubIterationDump = false;
-    GlobalDataBase::UpdateData( "isSubIterationDump", &isSubIterationDump, PHBOOL, 1 );
+    GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
 
     bool isSubIterationConvergence = false;
-    while( !isSubIterationConvergence )
+    while(!isSubIterationConvergence)
     {
         innstep += 1;
-        GlobalDataBase::UpdateData( "innstep", &innstep, PHINT, 1 );
+        GlobalDataBase::UpdateData("innstep", &innstep, PHINT, 1);
 
         RDouble subIterationNormOneSolver     =  zero;
         RDouble maxSubIterationNormAllSolvers = -LARGE;
 
-        for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
+        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
-            Controller * controller = new Controller( iSolver, this->region );
+            Controller * controller = new Controller(iSolver, this->region);
 
             controller->SolveSteadyField();
 
             //! Here is in the sub-iteration, PostSolve is only for the CommunicationInterfaceData and dumps the "res.dat", which contains index of the sub-iteration residual.
             controller->PostSolve();
 
-            subIterationNormOneSolver     = controller->ComputeSubIterationNorm( iSolver, 0 );
-            maxSubIterationNormAllSolvers = MAX( maxSubIterationNormAllSolvers, subIterationNormOneSolver );
+            subIterationNormOneSolver     = controller->ComputeSubIterationNorm(iSolver, 0);
+            maxSubIterationNormAllSolvers = MAX(maxSubIterationNormAllSolvers, subIterationNormOneSolver);
 
             delete controller;
         }
 
-        PH_CompareMaxMin( maxSubIterationNormAllSolvers, 1 );
+        PH_CompareMaxMin(maxSubIterationNormAllSolvers, 1);
 
         //! Sub-iteration continue or not judgement.
-        isSubIterationConvergence = IsSubIterationConvergence( innstep, min_sub_iter, max_sub_iter, tol_sub_iter, maxSubIterationNormAllSolvers );
+        isSubIterationConvergence = IsSubIterationConvergence(innstep, min_sub_iter, max_sub_iter, tol_sub_iter, maxSubIterationNormAllSolvers);
     }
 
-    //Here is already ( innstep == max_sub_iter || isSubIterationConvergence ).
+    //Here is already (innstep == max_sub_iter || isSubIterationConvergence).
     isSubIterationDump = true;
-    GlobalDataBase::UpdateData( "isSubIterationDump", &isSubIterationDump, PHBOOL, 1 );
+    GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
 
     //! Update physical time step flowfield after sub-iteration convergence.
-    for ( int iSolver = 0; iSolver < nSolver; ++ iSolver )
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
-        Controller * controller = new Controller( iSolver, this->region );
+        Controller * controller = new Controller(iSolver, this->region);
 
         controller->UpdateUnsteadyFlow(iSolver, 0);
 
@@ -447,19 +447,19 @@ void HOSimulation::SolveUnsteady()
     }
 }
 
-bool HOSimulation::IsSubIterationConvergence( const int & innstep, const int & min_sub_iter, const int & max_sub_iter, const RDouble & tol_sub_iter, const RDouble & averageQuotientMaxInSolvers )
+bool HOSimulation::IsSubIterationConvergence(const int & innstep, const int & min_sub_iter, const int & max_sub_iter, const RDouble & tol_sub_iter, const RDouble & averageQuotientMaxInSolvers)
 {
     bool isSubIterationConvergence = false;
 
-    if ( innstep < min_sub_iter )
+    if (innstep < min_sub_iter)
     {
         isSubIterationConvergence = false;
     }
-    else if ( averageQuotientMaxInSolvers <= tol_sub_iter )
+    else if (averageQuotientMaxInSolvers <= tol_sub_iter)
     {
         isSubIterationConvergence = true;
     }
-    else if ( innstep >= max_sub_iter )
+    else if (innstep >= max_sub_iter)
     {
         isSubIterationConvergence = true;
     }

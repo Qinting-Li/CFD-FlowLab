@@ -150,6 +150,7 @@ private:    //! Communication of interface.
 
     void CommunicateNodeCharacterOnInterfaceBySKL(int key);
     void CommunicateNodeCharacterOnInterface();
+    void CommunicateCellIBlank();
 
 private:    //! Reconstruction of interpolation information.
     void ResetOversetInformation();

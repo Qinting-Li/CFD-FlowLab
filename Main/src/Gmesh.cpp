@@ -1,7 +1,7 @@
 #include "Gmesh.h"
 #include "TK_Parse.h"
 #include "Math_BasisFunction.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 using namespace std;
 
 #pragma warning (disable:913)
@@ -9,12 +9,12 @@ namespace PHSPACE
 {
 void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
 {
-    for ( int i = 0; i < nvertex; ++ i )
+    for (int i = 0; i < nvertex; ++ i)
     {
         node_cgns[i] = node[i];
     }
 
-    if ( etype == PYRA_14 )
+    if (etype == PYRA_14)
     {
         //金字塔
         node_cgns[6 ] = node[8 ];
@@ -23,13 +23,13 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
         node_cgns[9 ] = node[7 ];
         node_cgns[10] = node[9 ];
     }
-    else if ( etype == TETRA_10 )
+    else if (etype == TETRA_10)
     {
         //四面体
         node_cgns[8 ] = node[9 ];
         node_cgns[9 ] = node[8 ]; 
     }
-    else if ( etype == PENTA_15 )
+    else if (etype == PENTA_15)
     {
         //三棱柱
         node_cgns[7 ] = node[9 ];
@@ -38,7 +38,7 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
         node_cgns[13] = node[14];
         node_cgns[14] = node[13];
     }
-    else if ( etype == PENTA_18 )
+    else if (etype == PENTA_18)
     {
         //三棱柱
         node_cgns[7 ] = node[9 ];
@@ -49,7 +49,7 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
         node_cgns[16] = node[17];
         node_cgns[17] = node[16];
     }
-    else if ( etype == HEXA_20 )
+    else if (etype == HEXA_20)
     {
         //六面体
         node_cgns[9 ] = node[11];
@@ -61,7 +61,7 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
         node_cgns[18] = node[19];
         node_cgns[19] = node[17];
     }
-    else if ( etype == HEXA_27 )
+    else if (etype == HEXA_27)
     {
         //六面体
         node_cgns[9 ] = node[11];
@@ -82,6 +82,7 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
         ;
     }
 }
+
 GmeshElem::GmeshElem()
 {
     ntype      = 0;
@@ -96,7 +97,7 @@ GmeshElem::GmeshElem()
 GmeshElem::~GmeshElem()
 {
     //conn_list = new int * [ntype];
-    for ( int i = 0; i < ntype; ++ i )
+    for (int i = 0; i < ntype; ++ i)
     {
         delete [] conn_list[i];
     }
@@ -119,7 +120,7 @@ void GmeshElem::Create(int ntype)
 
 void CreateValueSet(vector<int> &value_container, set<int> &value_set)
 {
-    for ( std::size_t i = 0; i < value_container.size(); ++ i )
+    for (std::size_t i = 0; i < value_container.size(); ++ i)
     { 
         value_set.insert(value_container[i]);
     }
@@ -129,7 +130,7 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
 {
     //找出所有不同的单元类型
     set<int> elem_type_set;
-    for ( std::size_t i = 0; i < type_container.size(); ++ i )
+    for (std::size_t i = 0; i < type_container.size(); ++ i)
     { 
         int etype = type_container[i];
         elem_type_set.insert(etype);
@@ -141,14 +142,14 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
 
     Set2Array(elem_type_set, type);
 
-    for ( int m = 0; m < nSections; ++ m )
+    for (int m = 0; m < nSections; ++ m)
     {
         int nelem_this_type = 0;
-        for ( std::size_t i = 0; i < type_container.size(); ++ i )
+        for (std::size_t i = 0; i < type_container.size(); ++ i)
         {
             int etype     = type_container[i];
             int nelem_num = number_container[i];
-            if ( etype == type[m] )
+            if (etype == type[m])
             {
                 nelem_this_type += nelem_num;
             }
@@ -159,35 +160,35 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
     }
 
     nTotalCell = 0;
-    for ( int m = 0; m < nSections; ++ m )
+    for (int m = 0; m < nSections; ++ m)
     {
         nTotalCell += number[m];
     }
 
     istart[0] = 1;
-    for ( int m = 0; m < nSections; ++ m )
+    for (int m = 0; m < nSections; ++ m)
     {
         iend[m] = istart[m] + number[m] - 1;
-        if ( m < nSections - 1 )
+        if (m < nSections - 1)
         {
             istart[m+1] = iend[m] + 1;
         }
     }
 
-    for ( int m = 0; m < nSections; ++ m )
+    for (int m = 0; m < nSections; ++ m)
     {
         int icount = 0;
         int jcount = 0;
-        for ( std::size_t i = 0; i < type_container.size(); ++ i )
+        for (std::size_t i = 0; i < type_container.size(); ++ i)
         {
             int etype     = type_container[i];
             int nelem_num = number_container[i];
             int nvertex   = e_nvertex[ etype ];
             int ptmax     = nelem_num * nvertex;
 
-            if ( etype == type[m] )
+            if (etype == type[m])
             {
-                for ( int j = 0; j < ptmax; ++ j )
+                for (int j = 0; j < ptmax; ++ j)
                 {
                     conn_list[m][icount+j] = index_container[jcount+j];
                 }
@@ -222,54 +223,53 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
     PointSetType_t ptsetType = PointList;
 
     // Loop over the number of boundary conditions.
-    for ( int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion )
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         GridLocation_t igr = FaceCenter;
         cout << " Grid Location Name = " << GridLocationName[igr] << "\n";
 
-        if ( igr == FaceCenter )
+        if (igr == FaceCenter)
         {
             cout << "\nGridLocation = FaceCenter means BC data refers to elements, not nodes\n";
         }
-        else if ( igr == Vertex )
+        else if (igr == Vertex)
         {
             cout << "\nGridLocation = Vertex means BC data refers to nodes, not elements\n";
         }
 
-        int bctype = bctype_array[ibcregion];
+        int bctype = bctype_array[iBCRegion];
         int nBCElem = 0;
-        for ( std::size_t i = 0; i < bctype_container.size(); ++ i )
+        for (std::size_t i = 0; i < bctype_container.size(); ++ i)
         {
-            if ( bctype == bctype_container[i] )
+            if (bctype == bctype_container[i])
             {
                 ++ nBCElem;
             }
         }
 
-        base_cgns_nBCElem         [ibcregion] = nBCElem;
-        base_cgns_bc_conn_list    [ibcregion] = new int [nBCElem];
-        //base_cgns->bc_type        [ibcregion] = bocoType;
-        base_cgns_bc_elem_set_type[ibcregion] = ptsetType;
-        base_cgns_bc_grid_location[ibcregion] = igr;
+        base_cgns_nBCElem         [iBCRegion] = nBCElem;
+        base_cgns_bc_conn_list    [iBCRegion] = new int [nBCElem];
+        //base_cgns->bc_type        [iBCRegion] = bocoType;
+        base_cgns_bc_elem_set_type[iBCRegion] = ptsetType;
+        base_cgns_bc_grid_location[iBCRegion] = igr;
 
         cout << "PointSetType_t = " << ptsetType << "\n";
 
-        if ( nBCElem == 2 )
+        if (nBCElem == 2)
         {
-            cout << base_cgns_bc_conn_list[ibcregion][0] << " " << base_cgns_bc_conn_list[ibcregion][1] << "\n";
+            cout << base_cgns_bc_conn_list[iBCRegion][0] << " " << base_cgns_bc_conn_list[iBCRegion][1] << "\n";
         }
         else
         {
-            for ( int j = 0; j < MIN(20, nBCElem); ++ j )
+            for (int j = 0; j < MIN(20, nBCElem); ++ j)
             {
-                cout << base_cgns_bc_conn_list[ibcregion][j] << " ";
+                cout << base_cgns_bc_conn_list[iBCRegion][j] << " ";
             }
             cout << "\n";
         }
     }
 
     delete [] bctype_array;
-
 }
 
 Gmesh::Gmesh()
@@ -318,7 +318,7 @@ Gmesh::~Gmesh()
 
 void Gmesh::InitGmshNVertex()
 {
-    for ( int i = 0; i < NofValidElementTypesGmsh; ++ i )
+    for (int i = 0; i < NofValidElementTypesGmsh; ++ i)
     {
         gmesh_nvertex[i] = 1;
     }
@@ -434,7 +434,7 @@ void Gmesh::InitGmsh2CGNSMap()
 
 void Gmesh::InitCGNSNVertex()
 {
-    for ( int i = 0; i < NofValidElementTypes; ++ i )
+    for (int i = 0; i < NofValidElementTypes; ++ i)
     {
         cgns_nvertex[i] = 1;
     }
@@ -481,7 +481,7 @@ void Gmesh::ReadMeshFormat(fstream &file)
         getline(file,line);
         line = FindNextWord(line,word,separator);
         transform(word.begin(), word.end(), word.begin(), ToLower());
-    } while ( word != "meshformat" );
+    } while (word != "meshformat");
 
     getline(file,line);
 
@@ -509,7 +509,7 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
         getline(file,line);
         line = FindNextWord(line,word,separator);
         transform(word.begin(), word.end(), word.begin(), ToLower());
-    } while ( word != "nodes" );
+    } while (word != "nodes");
 
     getline(file,line);
 
@@ -518,19 +518,19 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
 
     int nBlocks = 1;
 
-    for ( int izone = 0; izone < nBlocks; ++ izone )
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        cout << " izone = " << izone << " nBlocks = " << nBlocks << "\n";
+        cout << " iZone = " << iZone << " nBlocks = " << nBlocks << "\n";
 
         RDouble *x = new RDouble[ nTotalNode ];
         RDouble *y = new RDouble[ nTotalNode ];
         RDouble *z = new RDouble[ nTotalNode ];
 
-        RawGrid *rawgrid = factory_cgns->GetRawGrid(izone);
+        RawGrid *rawgrid = factory_cgns->GetRawGrid(iZone);
 
-        rawgrid->SetX( x );
-        rawgrid->SetY( y );
-        rawgrid->SetZ( z );
+        rawgrid->SetX(x);
+        rawgrid->SetY(y);
+        rawgrid->SetZ(z);
 
         RDouble xmin,ymin,zmin,xmax,ymax,zmax;
         xmin = ymin = zmin =   LARGE;
@@ -541,32 +541,32 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
         int iskip = 500000;
         int index;
 
-        for ( int inode = 0; inode < nTotalNode; ++ inode )
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            if ( inode % iskip == 0 )
+            if (iNode % iskip == 0)
             {
-                cout << " inode = " << inode << " nTotalNode = " << nTotalNode << "\n";
+                cout << " iNode = " << iNode << " nTotalNode = " << nTotalNode << "\n";
             }
             getline(file,line);
             line = FindNextWord(line,word,separator);
             from_string< int >(index,word,std::dec);
 
             line = FindNextWord(line,word,separator);
-            from_string< RDouble >(x[inode],word,std::dec);
+            from_string< RDouble >(x[iNode],word,std::dec);
 
             line = FindNextWord(line,word,separator);
-            from_string< RDouble >(y[inode],word,std::dec);
+            from_string< RDouble >(y[iNode],word,std::dec);
 
             line = FindNextWord(line,word,separator);
-            from_string< RDouble >(z[inode],word,std::dec);
+            from_string< RDouble >(z[iNode],word,std::dec);
 
-            xmin = MIN( xmin, x[inode] );
-            ymin = MIN( ymin, y[inode] );
-            zmin = MIN( zmin, z[inode] );
+            xmin = MIN(xmin, x[iNode]);
+            ymin = MIN(ymin, y[iNode]);
+            zmin = MIN(zmin, z[iNode]);
 
-            xmax = MAX( xmax, x[inode] );
-            ymax = MAX( ymax, y[inode] );
-            zmax = MAX( zmax, z[inode] );
+            xmax = MAX(xmax, x[iNode]);
+            ymax = MAX(ymax, y[iNode]);
+            zmax = MAX(zmax, z[iNode]);
         }
 
         cout << setiosflags(ios::right);
@@ -658,7 +658,7 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
         getline(file,line);
         line = FindNextWord(line,word,separator);
         transform(word.begin(), word.end(), word.begin(), ToLower());
-    } while ( word != "elements" );
+    } while (word != "elements");
 
     getline(file,line);
 
@@ -685,7 +685,7 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
 
     GmeshElem *gmshelem = new GmeshElem();
 
-    for ( int i = 0; i < elements; ++ i )
+    for (int i = 0; i < elements; ++ i)
     {
         getline(file,line);
         line = FindNextWord(line,word,separator);
@@ -697,7 +697,7 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
         line = FindNextWord(line,word,separator);
         from_string< int >(number_of_tags,word,std::dec);
 
-        for ( int j = 0; j < number_of_tags; ++ j )
+        for (int j = 0; j < number_of_tags; ++ j)
         {
             line = FindNextWord(line,word,separator);
             from_string< int >(elem_tag[j],word,std::dec);
@@ -713,7 +713,7 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
         elem_number_container.push_back(1);
 
         int nodeindex;
-        for ( int j = 0; j < gesh_vnum; ++ j )
+        for (int j = 0; j < gesh_vnum; ++ j)
         {
             line = FindNextWord(line,word,separator);
             from_string< int >(nodeindex,word,std::dec);
@@ -721,7 +721,7 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
         }
 
         ElemReorderGmsh2CGNS(cgns_elem_type, node_gmsh, node_cgns, gesh_vnum);
-        for ( int j = 0; j < cgns_vnum; ++ j )
+        for (int j = 0; j < cgns_vnum; ++ j)
         {
             elem_index_container.push_back(node_cgns[j]);
         }

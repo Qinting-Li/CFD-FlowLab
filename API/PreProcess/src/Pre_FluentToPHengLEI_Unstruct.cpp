@@ -7,7 +7,7 @@
 #include "PHIO.h"
 #include "Constants.h"
 #include "TK_Parse.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 
 namespace PHSPACE
 {
@@ -41,16 +41,16 @@ void Pre_FluentToPHengLEI_Unstruct::Conversion()
 
     grids = new Grid * [nBlocks];
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        GridID *index = new GridID(izone);
+        GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-        grids[izone] = grid;
-        fluent_factory->Convert2UnsGrid(izone, UnstructGridCast(grid));
+        grids[iZone] = grid;
+        fluent_factory->Convert2UnsGrid(iZone, UnstructGridCast(grid));
     }
     delete fluent_factory;
-
 }
+
 void Pre_FluentToPHengLEI_Unstruct::ReadFluent(GridFormat_Fluent *&fluent_factory, int &nBlocks, const string &casefile)
 {
     fstream file;
@@ -322,7 +322,7 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentFace(GridFormat_Fluent *fluent_fac
     //! The order of the cell indices is important, and is determined by the right-hand rule: 
     //! if you curl the fingers of your right hand in the order of the nodes, your thumb will point toward c1.
 
-    //! If the face zone is of mixed type ( face-type = 0), 
+    //! If the face zone is of mixed type (face-type = 0), 
     //! each line of the section body will begin with a reference to the number of nodes that make up that particular face,
     //! and has the following format: 
     //! x n0 n1 ... nf c0 c1
@@ -458,26 +458,27 @@ void GridFormat_Fluent::BuildBCMap()
 {
     typedef pair <int, int> Int_Pair;
     using namespace PHSPACE;
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERIOR          , PHENGLEI::INTERIOR             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::WALL              , PHENGLEI::SOLID_SURFACE        ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_INLET    , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INLET_VENT        , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INTAKE_FAN        , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_OUTLET   , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::EXHAUST_FAN       , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTLET_VENT       , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::SYMMETRY          , PHENGLEI::SYMMETRY             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC_SHADOW   , PHENGLEI::PERIODIC             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_FAR_FIELD, PHENGLEI::FARFIELD             ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC          , PHENGLEI::PERIODIC             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERIOR          , PHENGLEI::INTERIOR            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::WALL              , PHENGLEI::SOLID_SURFACE       ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_INLET    , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INLET_VENT        , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INTAKE_FAN        , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::VELOCITY_INLET    , PHENGLEI::INFLOW));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_OUTLET   , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::EXHAUST_FAN       , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTLET_VENT       , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::SYMMETRY          , PHENGLEI::SYMMETRY            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC_SHADOW   , PHENGLEI::PERIODIC            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PRESSURE_FAR_FIELD, PHENGLEI::FARFIELD            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::PERIODIC          , PHENGLEI::PERIODIC            ));
     bcmap.insert(Int_Pair(FLUENT_SPACE::FAN               , PHENGLEI::NO_BOUNDARY_CONDITION));
     bcmap.insert(Int_Pair(FLUENT_SPACE::POROUS_JUMP       , PHENGLEI::NO_BOUNDARY_CONDITION));
     bcmap.insert(Int_Pair(FLUENT_SPACE::RADIATOR          , PHENGLEI::NO_BOUNDARY_CONDITION));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::MASS_FLOW_INLET   , PHENGLEI::INFLOW               ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERFACE         , PHENGLEI::OVERSET              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTFLOW           , PHENGLEI::OUTFLOW              ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::AXIS              , PHENGLEI::POLE                 ));
-    bcmap.insert(Int_Pair(FLUENT_SPACE::UNSPECIFIED       , PHENGLEI::GENERIC_1            ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::MASS_FLOW_INLET   , PHENGLEI::INFLOW              ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::INTERFACE         , PHENGLEI::OVERSET             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::OUTFLOW           , PHENGLEI::OUTFLOW             ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::AXIS              , PHENGLEI::POLE                ));
+    bcmap.insert(Int_Pair(FLUENT_SPACE::UNSPECIFIED       , PHENGLEI::GENERIC_1           ));
 
     int maxNumberOfBody = PHENGLEI::ENDNumberOfBodyOfHyperFLOW - PHENGLEI::StartNumberOfBodyOfHyperFLOW + 1;
     for (int iBody = 0; iBody < maxNumberOfBody; iBody ++)
@@ -733,16 +734,19 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
     RDouble *yy = rawgrid->GetY();
     RDouble *zz = rawgrid->GetZ();
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        x[inode] = xx[inode];
-        y[inode] = yy[inode];
-        z[inode] = zz[inode];
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
     }
 
-    CompositeUnstructBC **bcrs = new CompositeUnstructBC *[nBoundFace];
-
+    vector <string> bcNameList;
+    vector <int> bcTypeList;
+    set<string> bcNameSet;
     count = 0;
+
+    UnstructBCSet **bcrs = new UnstructBCSet *[nBoundFace];
     vector< FluentFacePatch * > &face_patchs = GetFluentFacePatchS();
     for (std::size_t m = 0; m < face_patchs.size(); ++ m)
     {
@@ -756,14 +760,48 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
         int nfsum = face_patchs[m]->GetNTotalFace();
         for (int i = 0; i < nfsum; ++ i)
         {
-            bcrs[count] = new CompositeUnstructBC();
+            bcTypeList.push_back(bc_type);
+            bcNameList.push_back(bcNam);
+            bcNameSet.insert(bcNameList[count]);
+
+            bcrs[count] = new UnstructBCSet();
             bcrs[count]->SetKey(bc_type);
             bcrs[count]->SetBCName(bcNam);
+
             ++ count;
         }
     }
 
     grid->SetBCRecord(bcrs);
+
+    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
+    grid->CreateUnstructBCSet(nBCRegionUnstruct);
+
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int* bcRegionIDofBCFace = new int[nBoundFace];
+    set<string>::iterator iter;
+    
+    count = 0;
+    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    {
+        UnstructBC *unstructBC = new UnstructBC(count);
+        unstructBCSet->SetBCRegion(count, unstructBC);
+        unstructBC->SetBCName(*iter);
+
+        for (int iFace = 0; iFace < nBoundFace; iFace++)
+        {
+            if (bcNameList[iFace] == unstructBC->GetBCName())
+            {
+                unstructBC->SetBCType(bcTypeList[iFace]);
+                bcRegionIDofBCFace[iFace] = count;
+                vector<int> *faceIndex = unstructBC->GetFaceIndex();
+                faceIndex->push_back(iFace);
+            }
+
+        }
+        count++;
+    }
+    unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
 
     int nTotalFace = GetNTotalFace();
     grid->SetNTotalFace(nTotalFace);
@@ -784,9 +822,9 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
     grid->SetNodeNumberOfEachFace(node_number_of_each_face);
 
     int face2node_size = 0;
-    for (int iface = 0; iface < nTotalFace; ++ iface)
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
     {
-        face2node_size += node_number_of_each_face[iface];
+        face2node_size += node_number_of_each_face[iFace];
     }
     int *face2node = new int[face2node_size];
     grid->SetFace2Node(face2node);
@@ -822,8 +860,18 @@ void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
 
         for (int i = 0; i < nfsum; ++ i)
         {
-            left_cell_of_face[fcount]  = left_cell_of_face_tmp[i];
-            right_cell_of_face[fcount] = right_cell_of_face_tmp[i];
+
+            if (left_cell_of_face_tmp[i] < 0)
+            {
+                left_cell_of_face[fcount] = right_cell_of_face_tmp[i];
+                right_cell_of_face[fcount] = left_cell_of_face_tmp[i];
+            }
+            else
+            {
+                left_cell_of_face[fcount] = left_cell_of_face_tmp[i];
+                right_cell_of_face[fcount] = right_cell_of_face_tmp[i];
+            }
+            
             fcount ++;
         }
     }

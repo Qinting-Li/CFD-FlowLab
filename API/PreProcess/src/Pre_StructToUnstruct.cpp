@@ -11,14 +11,14 @@ namespace PHSPACE
 Pre_StructToUnstruct::Pre_StructToUnstruct(Grid **structGridIn, int nZonesIn)
 {
     this->structGrid = structGridIn;
-    this->nZones = nZonesIn;
+    this->numberOfZones = nZonesIn;
 
     structToUnstruct = 0;
 }
 
 Pre_StructToUnstruct::~Pre_StructToUnstruct()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         delete structToUnstruct[iZone];
     }
@@ -38,7 +38,7 @@ void Pre_StructToUnstruct::Run()
 
 void Pre_StructToUnstruct::ConstructCellMapStrToUns()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid   *strGrid = StructGridCast  (structGrid[iZone]);
@@ -65,12 +65,12 @@ void Pre_StructToUnstruct::ConstructCellMapStrToUns()
         int nTotalCell = strGrid->GetNTotalCell();
 
         //! Gost cell.
-        CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = strGrid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
         int iBoundFace = 0;
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int BCType = structBC->GetBCType();
             string bcName = structBC->GetBCName();
 
@@ -134,7 +134,7 @@ void Pre_StructToUnstruct::ConstructCellMapStrToUns()
 
 void Pre_StructToUnstruct::CopyInterface()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         UnstructGrid *unsGrid = UnstructGridCast(structToUnstruct[iZone]);
@@ -145,15 +145,15 @@ void Pre_StructToUnstruct::CopyInterface()
     }
 }
 
-Grid **Pre_StructToUnstruct::GetUnsGrids()
+Grid **Pre_StructToUnstruct::GetUnstructGrids()
 {
     return this->structToUnstruct;
 }
 
 void Pre_StructToUnstruct::InitMemory()
 {
-    structToUnstruct = new Grid *[nZones];
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    structToUnstruct = new Grid *[numberOfZones];
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         int gridIndex = structGrid[iZone]->GetZoneID();
@@ -166,7 +166,7 @@ void Pre_StructToUnstruct::InitMemory()
 
 void Pre_StructToUnstruct::CopyIBlock()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         Grid *strGrid = structGrid[iZone];
@@ -178,7 +178,7 @@ void Pre_StructToUnstruct::CopyIBlock()
 
 void Pre_StructToUnstruct::CopyCoordinate()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid   *strGrid = StructGridCast  (structGrid[iZone]);
@@ -203,18 +203,18 @@ void Pre_StructToUnstruct::CopyCoordinate()
         RDouble *yy = strGrid->GetY();
         RDouble *zz = strGrid->GetZ();
 
-        for (int inode = 0; inode < nTotalNode; ++ inode)
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
         {
-            x[inode] = xx[inode];
-            y[inode] = yy[inode];
-            z[inode] = zz[inode];
+            x[iNode] = xx[iNode];
+            y[iNode] = yy[iNode];
+            z[iNode] = zz[iNode];
         }
     }
 }
 
 void Pre_StructToUnstruct::ConstructBCType()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid *strGrid = StructGridCast(structGrid[iZone]);
@@ -222,17 +222,29 @@ void Pre_StructToUnstruct::ConstructBCType()
 
         int nBoundFace = strGrid->GetNBoundFace();
         unsGrid->SetNBoundFace(nBoundFace);
-        CompositeUnstructBC **bcrs = new CompositeUnstructBC * [nBoundFace];
+        UnstructBCSet **bcrs = new UnstructBCSet * [nBoundFace];
 
         int boundFaceIndex = 0;
-        CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = strGrid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
+
+        int nBCRegionUnstruct = static_cast<int>(nBCRegion);
+        unsGrid->CreateUnstructBCSet(nBCRegionUnstruct);
+        UnstructBCSet *unstructBCSet = unsGrid->GetUnstructBCSet();
+        int* bcRegionIDofBCFace = new int[nBoundFace];
+
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int BCType = structBC->GetBCType();
             string bcName = structBC->GetBCName();
 
+            UnstructBC *unstructBC = new UnstructBC(iBCRegion);
+            unstructBCSet->SetBCRegion(iBCRegion, unstructBC);
+
+            unstructBC->SetBCType(BCType);
+            unstructBC->SetBCName(bcName);
+            vector<int> *faceIndex = unstructBC->GetFaceIndex();
             int ist, ied, jst, jed, kst, ked;
             structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
@@ -242,7 +254,11 @@ void Pre_StructToUnstruct::ConstructBCType()
                 {
                     for (int i = ist; i <= ied; ++ i)
                     {
-                        bcrs[boundFaceIndex] = new CompositeUnstructBC();
+                        bcRegionIDofBCFace[boundFaceIndex] = iBCRegion;
+                        vector<int>* faceIndex = unstructBC->GetFaceIndex();
+                        faceIndex->push_back(boundFaceIndex);
+
+                        bcrs[boundFaceIndex] = new UnstructBCSet();
                         bcrs[boundFaceIndex]->SetBCName(bcName);
                         bcrs[boundFaceIndex]->SetKey(BCType);
 
@@ -251,13 +267,14 @@ void Pre_StructToUnstruct::ConstructBCType()
                 }
             }
         }
+        unstructBCSet->SetBCFaceInfo(bcRegionIDofBCFace);
         unsGrid->SetBCRecord(bcrs);
     }
 }
 
 void Pre_StructToUnstruct::ConstructFaceTopo()
 {
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         if (structGrid[iZone]->Type() != STRUCTGRID) continue;
         StructGrid *strGrid = StructGridCast(structGrid[iZone]);
@@ -294,11 +311,11 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
         //! Boundary face
         int faceIndex = 0;
         int nodeCount = 0;
-        CompositeStructBC *compositeBCRegion = strGrid->GetCompositeBCRegion();
-        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        StructBCSet *structBCSet = strGrid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
-            StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int ist, ied, jst, jed, kst, ked;
             structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
@@ -397,17 +414,17 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                                 jNodeIndex1 = jWall;
                                 kNodeIndex1 = kWall;
 
-                                iNodeIndex2 = iWall + 1;
+                                iNodeIndex2 = iWall;
                                 jNodeIndex2 = jWall;
-                                kNodeIndex2 = kWall;
+                                kNodeIndex2 = kWall + 1;
 
                                 iNodeIndex3 = iWall + 1;
                                 jNodeIndex3 = jWall;
                                 kNodeIndex3 = kWall + 1;
 
-                                iNodeIndex4 = iWall;
+                                iNodeIndex4 = iWall + 1;
                                 jNodeIndex4 = jWall;
-                                kNodeIndex4 = kWall + 1;
+                                kNodeIndex4 = kWall;
                             }
                             else
                             {
@@ -434,10 +451,21 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex3 = GetNodeIndex(strGrid, iNodeIndex3, jNodeIndex3, kNodeIndex3);
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
-                            face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
-                            face2Node[nodeCount++] = nodeIndex4;
+                            if (leftOrRightIndex == 1)
+                            {
+                                face2Node[nodeCount++] = nodeIndex1;
+                                face2Node[nodeCount++] = nodeIndex2;
+                                face2Node[nodeCount++] = nodeIndex3;
+                                face2Node[nodeCount++] = nodeIndex4;
+                            }
+                            else
+                            {
+                                face2Node[nodeCount++] = nodeIndex1;
+                                face2Node[nodeCount++] = nodeIndex4;
+                                face2Node[nodeCount++] = nodeIndex3;
+                                face2Node[nodeCount++] = nodeIndex2;
+                            }
+
                         }
                         faceIndex ++;
                     }
@@ -539,9 +567,9 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
                             face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
                             face2Node[nodeCount++] = nodeIndex4;
+                            face2Node[nodeCount++] = nodeIndex3;
+                            face2Node[nodeCount++] = nodeIndex2;
 
                             int leftCellIndex  = GetCellIndex(strGrid, iCell    , jCell, kCell);
                             int rightCellIndex = GetCellIndex(strGrid, iCell + 1, jCell, kCell);
@@ -576,9 +604,9 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
                             face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
                             face2Node[nodeCount++] = nodeIndex4;
+                            face2Node[nodeCount++] = nodeIndex3;
+                            face2Node[nodeCount++] = nodeIndex2;
 
                             int leftCellIndex  = GetCellIndex(strGrid, iCell, jCell    , kCell);
                             int rightCellIndex = GetCellIndex(strGrid, iCell, jCell + 1, kCell);
@@ -595,16 +623,16 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             jNodeIndex1 = jCell;
                             kNodeIndex1 = kCell + 1;
 
-                            iNodeIndex2 = iCell + 1;
-                            jNodeIndex2 = jCell;
+                            iNodeIndex2 = iCell;
+                            jNodeIndex2 = jCell + 1;
                             kNodeIndex2 = kCell + 1;
 
                             iNodeIndex3 = iCell + 1;
                             jNodeIndex3 = jCell + 1;
                             kNodeIndex3 = kCell + 1;
 
-                            iNodeIndex4 = iCell;
-                            jNodeIndex4 = jCell + 1;
+                            iNodeIndex4 = iCell + 1;
+                            jNodeIndex4 = jCell;
                             kNodeIndex4 = kCell + 1;
 
                             nodeIndex1 = GetNodeIndex(strGrid, iNodeIndex1, jNodeIndex1, kNodeIndex1);
@@ -613,9 +641,9 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                             nodeIndex4 = GetNodeIndex(strGrid, iNodeIndex4, jNodeIndex4, kNodeIndex4);
 
                             face2Node[nodeCount++] = nodeIndex1;
-                            face2Node[nodeCount++] = nodeIndex2;
-                            face2Node[nodeCount++] = nodeIndex3;
                             face2Node[nodeCount++] = nodeIndex4;
+                            face2Node[nodeCount++] = nodeIndex3;
+                            face2Node[nodeCount++] = nodeIndex2;
 
                             int leftCellIndex  = GetCellIndex(strGrid, iCell, jCell, kCell);
                             int rightCellIndex = GetCellIndex(strGrid, iCell, jCell, kCell + 1);

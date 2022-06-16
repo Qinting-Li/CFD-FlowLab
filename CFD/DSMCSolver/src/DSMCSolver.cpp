@@ -1,0 +1,1602 @@
+#include "DSMCSolver.h"
+#include "DSMCMolecule.h"
+#include "DSMCConsts.h"
+#include "DSMCGrid.h"
+#include "DSMCSample.h"
+#include "DSMCIndex.h"
+#include "DSMCCollision.h"
+#include "TK_Parse.h"
+#include "TK_Time.h"
+#include "Region.h"
+#include <cmath>
+using namespace std;
+
+namespace PHSPACE
+{
+
+DSMC::DSMC()
+{
+    region = new Region();
+    testTime = new TimeSpan();
+    species = NULL;
+    SPM = NULL;
+
+    dsmcgrid = NULL;
+    molecule = NULL;
+    sample = NULL;
+    index = NULL;
+    collision = NULL;
+}
+
+DSMC::~DSMC()
+{
+    delete region; region = NULL;
+    delete testTime; testTime = NULL;
+    delete [] species;  species = NULL;
+    DelPointer3 (SPM) ; SPM = NULL;
+
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        delete dsmcgrid[iZone];
+        delete molecule[iZone];
+        delete sample[iZone];
+        delete index[iZone];
+        delete collision[iZone];
+    }
+    delete [] dsmcgrid; dsmcgrid = NULL;
+    delete [] molecule; molecule = NULL;
+    delete [] sample; sample = NULL;
+    delete [] index; index = NULL;
+    delete [] collision; collision = NULL;
+}
+
+void DSMC::Run()
+{
+    using namespace PHMPI;
+    double last_time[3];
+    TIME_SPACE::StartTime(last_time);
+    cout<<"Begin DSMC simulation"<<endl;
+
+    PreProcess();
+    PrintToWindow("PreProcess completed \n");
+    int maxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
+    int nsample = GlobalDataBase::GetIntParaFromDB("nsample");
+    int nout = GlobalDataBase::GetIntParaFromDB("nout");
+    int intervalStepFlow = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
+
+    for (int nstep = 0; nstep < maxSimuStep; ++ nstep)
+    {
+        PrintToWindow("nstep = ",nstep,"  ");
+        cout<<dsmcgrid[0]->GetnMolecule()<<endl;
+        if(nstep == nsample) 
+            InitSample();
+
+        MoleculeMove();
+
+        MoleculeIndex();
+
+        MoleculeCollision();
+
+        FieldSample();
+
+        if (nstep % nout == 0 || nstep == maxSimuStep)
+            PostProcess();
+
+        if (nstep % intervalStepFlow == 0 || nstep == maxSimuStep)
+            WriteResumeFiles();
+    }
+
+    //PrintToWindow("DeleteMemory \n");
+    //DeleteMemory();
+    //数字转字符串的方法，lijin，2019-2-25
+    //begin
+    //int num=1;
+    //RDouble a=123.33;
+    //stringstream filename;
+    //string filename2;
+    //filename<<a;
+    //filename>>filename2;
+    //cout<<"filename"<<filename2<<endl;
+    //end
+
+}
+void DSMC::PostProcess()
+{
+    RDouble SUMM[13];
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID));
+
+        int nTotalCell = grid->GetNTotalCell();
+        RDouble * cellVolume = grid->GetCellVolume();
+        RDouble *** CS = sample[iZone]->GetCS();
+        RDouble ** VAR = sample[iZone]->GetVAR();
+        RDouble *** VARSP = sample[iZone]->GetVARSP();
+        RDouble ** CSR = sample[iZone]->GetCSR();
+
+        int K;
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            RDouble A = FNUMI[iZone]/cellVolume[iCell]/NSMP;
+            for(K = 0; K < 13; ++K)
+                SUMM[K] = 0.0;
+            for(K = 0; K < 21; ++K)
+                VAR[K][iCell] = 0.0;
+
+            for(int isp = 0; isp < nSpecies; ++isp)
+            {
+                SUMM[0] += CS[0][iCell][isp];
+                SUMM[1] += CS[1][iCell][isp];
+                SUMM[2] += CS[1][iCell][isp]*species[isp].mass;
+                for(K = 1; K <= 3 ; ++K)
+                {
+                    SUMM[K+2] += CS[K+1][iCell][isp]*species[isp].mass;
+                    if(CS[1][iCell][isp] > 0.1)
+                    {
+                        VARSP[K+1][iCell][isp] = CS[K+4][iCell][isp]/CS[1][iCell][isp];
+                        VARSP[K+8][iCell][isp] = CS[K+1][iCell][isp]/CS[1][iCell][isp];
+                    }
+                }
+
+                SUMM[6] += (CS[5][iCell][isp] + CS[6][iCell][isp] + CS[7][iCell][isp])*species[isp].mass;
+
+                if(CS[1][iCell][isp] > 0.5)
+                    SUMM[7] += CS[5][iCell][isp] + CS[6][iCell][isp] + CS[7][iCell][isp];
+
+                if(species[isp].rotdof > 0)
+                {
+                    SUMM[8] += CSR[iCell][isp];
+                    SUMM[9] += CS[1][iCell][isp]*species[isp].rotdof;
+                }
+
+                SUMM[10] += CS[5][iCell][isp]*species[isp].mass;
+                SUMM[11] += CS[6][iCell][isp]*species[isp].mass;
+                SUMM[12] += CS[7][iCell][isp]*species[isp].mass;
+            }
+
+            for(int isp = 0; isp < nSpecies; ++isp)
+            {
+                VARSP[0][iCell][isp] = CS[1][iCell][isp];
+                VARSP[1][iCell][isp] = 0.0;
+                VARSP[6][iCell][isp] = 0.0;
+                VARSP[7][iCell][isp] = 0.0;
+                VARSP[8][iCell][isp] = 0.0;
+
+                if(SUMM[1] > 0.1)
+                {
+                    VARSP[1][iCell][isp] = CS[1][iCell][isp]*A;
+                    if(species[isp].rotdof > 0 &&  CS[1][iCell][isp] > 0.5)
+                        VARSP[6][iCell][isp] = (2.0/BOLTZ)*CSR[iCell][isp]/species[isp].rotdof/CS[1][iCell][isp];
+                }
+                VARSP[5][iCell][isp] = 0.0;
+                for(K = 1; K <= 3 ; ++K)
+                {
+                    VARSP[K+1][iCell][isp] = (species[isp].mass/BOLTZ)*(VARSP[K+1][iCell][isp]-VARSP[K+8][iCell][isp]*VARSP[K+8][iCell][isp]);
+                    VARSP[5][iCell][isp] += VARSP[K+1][iCell][isp];
+                }
+                VARSP[5][iCell][isp] /= 3.0;
+            }
+
+            VAR[1][iCell] = SUMM[1];
+            VAR[2][iCell] = SUMM[0];
+
+            if(SUMM[1] > 0.5)
+            {
+                VAR[3][iCell] = SUMM[1]*A;
+                VAR[4][iCell] = VAR[3][iCell]*SUMM[2]/SUMM[1];
+                VAR[5][iCell] = SUMM[3]/SUMM[2];
+                VAR[6][iCell] = SUMM[4]/SUMM[2];
+                VAR[7][iCell] = SUMM[5]/SUMM[2];
+                RDouble UU = VAR[5][iCell]*VAR[5][iCell] +  VAR[6][iCell]*VAR[6][iCell] + VAR[7][iCell]*VAR[7][iCell];
+                if(SUMM[1] >1) 
+                {
+                    VAR[8][iCell] = abs(SUMM[6] - SUMM[2]*UU)/(3.0*BOLTZ*SUMM[1]);
+                    VAR[19][iCell] = abs(SUMM[10] - SUMM[2]*VAR[5][iCell]*VAR[5][iCell])/(BOLTZ*SUMM[1]);
+                    VAR[20][iCell] = abs(SUMM[11] - SUMM[2]*VAR[6][iCell]*VAR[6][iCell])/(BOLTZ*SUMM[1]);
+                    VAR[21][iCell] = abs(SUMM[12] - SUMM[2]*VAR[7][iCell]*VAR[7][iCell])/(BOLTZ*SUMM[1]);
+                }
+                else
+                {
+                    VAR[8][iCell] = 1.0;
+                    VAR[19][iCell] = 1.0;
+                    VAR[20][iCell] = 1.0;
+                    VAR[21][iCell] = 1.0;
+                }
+
+                if(SUMM[9] > 0.01)
+                    VAR[9][iCell] = (2.0/BOLTZ)*SUMM[8]/SUMM[9];
+                else
+                    VAR[9][iCell] = 0.0;
+
+                VAR[10][iCell] = 0.0;
+
+                RDouble DOF = 3.0 + SUMM[9]/SUMM[1];
+
+                VAR[11][iCell] = (3*VAR[8][iCell]+SUMM[9]/SUMM[1]*VAR[9][iCell])/DOF;
+                VAR[18][iCell] = VAR[3][iCell]*BOLTZ*VAR[8][iCell]; 
+
+            }
+        }
+    }
+}
+
+void DSMC::FieldSample()
+{
+    NSMP += 1;
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    int nweight = Getnweight();
+    int MMVM = GetMMVM();
+    int MMRM = GlobalDataBase::GetIntParaFromDB("MMRM");
+    RDouble wfactor;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int nMolecule = dsmcgrid[iZone]->GetnMolecule();
+        int * moleculeLocation = molecule[iZone]->GetMoleculeLocation();
+        for (int imolecule = 0; imolecule < nMolecule; ++ imolecule)
+        {
+            int iCell = moleculeLocation[imolecule];
+            if (nweight == 0)
+            {
+                wfactor = 1.0;
+            }
+            else
+            {
+                wfactor = dsmcgrid[iZone]->GetCellWeight()[iCell];
+            }
+
+            int isp = molecule[iZone]->GetMoleculeSpecies()[imolecule];
+            sample[iZone]->GetCS()[0][iCell][isp] += 1.0;
+            sample[iZone]->GetCS()[1][iCell][isp] += wfactor;
+
+            for (int k = 0; k < 3; ++ k)
+            {
+                sample[iZone]->GetCS()[k+2][iCell][isp] += wfactor*molecule[iZone]->GetMoleculeVelocity()[k][imolecule]; 
+                sample[iZone]->GetCS()[k+5][iCell][isp] += wfactor*molecule[iZone]->GetMoleculeVelocity()[k][imolecule]*molecule[iZone]->GetMoleculeVelocity()[k][imolecule]; 
+            }
+
+            if (MMRM > 0)
+                sample[iZone]->GetCSR()[iCell][isp] += wfactor*molecule[iZone]->GetMoleculeRotationalEnergy()[imolecule];
+
+            if (MMVM > 0)
+                sample[iZone]->GetCSV()[0][iCell][isp] += wfactor*molecule[iZone]->GetMoleculeVibrationLevel()[imolecule]*BOLTZ*species[isp].vibtemp;
+        
+        }
+    }
+}
+void DSMC::PreProcess()
+{   
+    using namespace PHMPI;
+
+    ReadSpecies();    
+
+    //ZoneToCPU();
+
+    ReadGeometry();    
+
+    UpdateAllZonesPara();
+
+    InitGeometry();  
+
+    PrintToWindow("AllocateMemory \n");
+    AllocateMemory();
+
+    PrintToWindow("Calculating reference cell volume \n");
+    CalReferenceCellVolume();
+
+    int nZones = GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+
+        //PrintToWindow("Calculating cell weight for iZone=", iZone, " \n");
+        dsmcgrid[iZone]->CalCellWeight(grid,GetReferenceCellVolume());
+    }
+
+    PrintToWindow("Calculating time step \n");
+    CalTimeStep();
+
+    PrintToWindow("Calculating the ratio of real molecule number represented by a simulator \n");
+    CalRealtoSimRatio();
+
+    int nstart = GlobalDataBase::GetIntParaFromDB("nstart");
+
+    if(nstart == 0)
+    {
+        InitData();
+
+        MoleculeIndex();
+
+        InitSample();
+
+    }
+    else if(nstart == 1)
+    {
+        
+        ReadRestart();
+
+    }
+    else 
+    {
+        TK_Exit::UnexpectedVarValue("nstart = ",  nstart);
+    }
+
+    
+
+}
+
+void DSMC::ReadGeometry()
+{
+    using namespace PHMPI;
+
+    //TimeSpan * testTime = new TimeSpan();
+
+    region->ReadGrid();
+
+    region->UpdateAllZonesPara();
+
+    testTime->ShowTimeSpanToLogFile("Grid Reading");
+
+    int nZones = GetNumberofGlobalZones();
+    dsmcgrid = new DSMCUnstructGrid * [nZones];
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID));
+        dsmcgrid[iZone] = new DSMCUnstructGrid();
+
+        int nTotalNode = grid->GetNTotalNode();
+
+        RDouble *x = grid->GetX();
+        RDouble *y = grid->GetY();
+        RDouble *z = grid->GetZ();
+
+        RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+
+        for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+        {
+            x[iNode] *= gridScaleFactor;
+            y[iNode] *= gridScaleFactor;
+            z[iNode] *= gridScaleFactor;
+        }
+
+        grid->SetX(x);
+        grid->SetY(y);
+        grid->SetZ(z);
+
+        //int **cell2face  = grid->GetCell2Face();
+        //int * face_number_of_each_cell = grid->GetFaceNumberOfEachCell();
+
+        //for (int iFace = 0; iFace < face_number_of_each_cell[0]; ++ iFace)
+        //{
+        //  int face = cell2face[0][iFace];
+        //}
+
+        //int * cell2node = grid->GetCell2Node(); 
+
+        //RDouble * xfc = grid->GetFaceCenterX();
+        //RDouble * yfc = grid->GetFaceCenterY();
+        //RDouble * zfc = grid->GetFaceCenterZ();
+
+        //RDouble * xfn = grid->GetFaceNormalX();
+        //RDouble * yfn = grid->GetFaceNormalY();
+        //RDouble * zfn = grid->GetFaceNormalZ();
+
+        //RDouble * xcc = grid->GetCellCenterX();
+        //RDouble * ycc = grid->GetCellCenterY();
+        //RDouble * zcc = grid->GetCellCenterZ();
+        //
+        //
+        //RDouble * area = grid->GetFaceArea();
+
+        //int * node_number_of_each_face = grid->GetNodeNumberOfEachFace();
+
+        //int * face2node = grid->GetFace2Node();
+        //int * left_cell_of_face = grid->GetLeftCellOfFace();
+        //int * right_cell_of_face = grid->GetRightCellOfFace();
+
+        //UnstructBCSet **bcr = grid->GetBCRecord();
+        //ostringstream oss;
+        //for(int iFace = 0; iFace < nTotalFace; ++ iFace)
+        //{
+        //  int le = left_cell_of_face[iFace];
+        //  int re = right_cell_of_face[iFace];
+        //  oss<<le<<" "<<re<<endl;
+        //}
+        //oss<<"========================"<<endl;
+        //for(int iFace = 0; iFace < nBoundFace; ++ iFace)
+        //{
+        //  int le = left_cell_of_face[iFace];
+        //  int re = right_cell_of_face[iFace];
+        //  oss<<le<<" "<<re<<" "<<bcr[iFace]->GetKey()<<endl;
+        //
+        //}
+        //WriteLogFile(oss.str());
+        //cin.get();
+
+        dsmcgrid[iZone]->BoundaryCount(grid);
+
+    }
+}
+
+void DSMC::UpdateAllZonesPara()
+{
+    this->region->UpdateAllZonesPara();
+}
+
+void DSMC::InitGeometry()
+{
+    this->region->InitGeometry();
+}
+
+void DSMC::AllocateMemory()
+{
+    int nZones = PHMPI::GetNumberofGlobalZones();
+
+    molecule = new Molecule * [nZones];
+    sample = new Sample * [nZones];
+    index = new Index *[nZones];
+    collision = new Collision *[nZones];
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID));
+        int nTotalCell = grid->GetNTotalCell();
+
+        molecule[iZone] = new Molecule();
+        sample[iZone] = new Sample();
+        index[iZone] = new Index();
+        collision[iZone] = new Collision(nTotalCell);
+    }
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+
+        int nTotalCell = grid->GetNTotalCell();
+
+        index[iZone]->SetStartAddressOfMoleculeInCells(nTotalCell);
+        index[iZone]->SetNumberOfMoleculeInCells(nTotalCell);
+        index[iZone]->SetMoleculeNoInOrderOfCells(MaxMoleculeNumber);
+
+        sample[iZone]->SetCSR(nTotalCell,nSpecies);
+
+    }
+}
+
+void DSMC::DeleteMemory()
+{
+    int nZones = PHMPI::GetNumberofGlobalZones();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int * startAddressOfMoleculeInCells = index[iZone]->GetStartAddressOfMoleculeInCells();
+        int * numberOfMoleculeInCells = index[iZone]->GetNumberOfMoleculeInCells();
+        int * moleculeNoInOrderOfCells = index[iZone]->GetMoleculeNoInOrderOfCells();
+
+        delete [] startAddressOfMoleculeInCells ;
+        delete [] numberOfMoleculeInCells;
+        delete [] moleculeNoInOrderOfCells;
+    }
+}
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// 函数头部说明：                                                             
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Function:   例如：CalRealtoSimRatio()                      
+// AUTHOR(S):  Li Jin                                                          
+// PURPOSE:    计算一个模拟分子所代表的真实分子                                                  
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+void DSMC::CalRealtoSimRatio()
+{
+    using namespace PHMPI;
+
+    int nSpecies = GetnSpecies();
+    Species * species = this->species;
+
+    int nZones = GetNumberofGlobalZones();
+    FNUMI.resize (nZones);
+    DTMI.resize (nZones);
+    TIME.resize (nZones);
+    TIMI.resize (nZones);
+    Zone2CPU.resize(nZones);
+
+    int nsim = GlobalDataBase::GetIntParaFromDB("nsim");
+    RDouble inflowNumberDensity = GlobalDataBase::GetDoubleParaFromDB("inflowNumberDensity"); 
+
+    ostringstream oss;
+    oss << setiosflags(ios::right);
+    oss << setprecision(3);
+    //oss << setiosflags(ios::scientific);
+    oss << setiosflags(ios::showpoint);
+    int wordwidth = 4;
+    oss << "Simulators for each specie:" << endl;
+
+    for(int i = 0; i < nSpecies; ++i)
+    {
+        oss << setw(wordwidth) << species[i].id <<" " << nsim*species[i].percent << "\n";
+    }
+    WriteLogFile(oss.str());
+
+    RDouble weight = 1.0;
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        FNUMI[iZone] = inflowNumberDensity * GetReferenceCellVolume() / weight / nsim;
+    }
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        DTMI[iZone] = timeStep;
+    }
+}
+
+void DSMC::CPUtoZone()
+{
+    using namespace PHMPI;
+    
+    int nZones = GetNumberofGlobalZones();
+    int nCPU = GetNumberOfProcessor();
+
+    int nS,nS0,Mflag;
+    Mflag = 0;
+    for(int i = 0; i < nZones ; ++i)
+    {
+        int j = ZoneNo[i];
+        for(int n = 0; n < nCPU; ++n)
+        {
+            if(n < ZoneLeft)
+            {
+                nS = ZonePerCPU+1;
+                nS0 = n*nS;
+            }
+            else
+            {
+                nS = ZonePerCPU;
+                nS0= ZoneLeft*(nS+1)+(n-ZoneLeft)*nS;
+            }
+            if(i > nS0 && i <= nS0+nS) 
+            {
+                Mflag = j;
+                exit(0);
+            }
+        
+        }
+        //if(Mflag < 0) call Exit(-5201);
+        Zone2CPU[j] = Mflag;
+    }
+
+
+
+}
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// 函数头部说明：                                                              +
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Function:   例如：CalTimeStep(Molecule *& molecule)                         +
+// AUTHOR(S):  Li Jin                                                          +
+// PURPOSE:    计算时间步长                                                    +
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+void DSMC::CalTimeStep()
+{
+    int nSpecies = GetnSpecies();
+    Species * species = this->species;
+    
+    RDouble mixtureMass = 0.0;
+    for(int isp = 0; isp < nSpecies; isp++)
+    {
+        mixtureMass += species[isp].mass * species[isp].percent;
+    }
+
+    RDouble inflowDensity = GlobalDataBase::GetDoubleParaFromDB("inflowDensity");
+    RDouble inflowTemperature = GlobalDataBase::GetDoubleParaFromDB("inflowTemperature");
+    RDouble inflowVelocity = GlobalDataBase::GetDoubleParaFromDB("inflowVelocity");
+    RDouble inflowMachNumber = GlobalDataBase::GetDoubleParaFromDB("inflowMachNumber");
+
+    RDouble inflowNumberDensity = inflowDensity/mixtureMass;
+    GlobalDataBase::UpdateData("inflowNumberDensity", &inflowNumberDensity, PHDOUBLE, 1);
+
+    RDouble specificHeatRatioAtConstantVolume=0.0;
+    RDouble specificHeatRatioAtConstantPressure=0.0;
+    for(int isp = 0; isp < nSpecies; isp++)
+    {
+        specificHeatRatioAtConstantVolume += 0.5*(species[isp].rotdof + 3)*BOLTZ*inflowNumberDensity*species[isp].percent/inflowDensity;
+        specificHeatRatioAtConstantPressure += 0.5*(species[isp].rotdof + 5)*BOLTZ*inflowNumberDensity*species[isp].percent/inflowDensity;
+    }
+
+    RDouble specificHeatRatio = specificHeatRatioAtConstantPressure/specificHeatRatioAtConstantVolume;
+    RDouble gasConstant = BOLTZ/mixtureMass;
+
+    GlobalDataBase::UpdateData("specificHeatRatio", &specificHeatRatio, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("gasConstant", &gasConstant, PHDOUBLE, 1);
+    
+    RDouble inflowSonicSpeed = sqrt(specificHeatRatio*gasConstant*inflowTemperature);
+    GlobalDataBase::UpdateData("inflowSonicSpeed", &inflowSonicSpeed, PHDOUBLE, 1);
+
+    if(inflowVelocity < 0 && inflowMachNumber > 0) 
+    {
+        inflowVelocity = inflowSonicSpeed*inflowMachNumber;
+    }
+    else if(inflowVelocity > 0 && inflowMachNumber < 0)
+    {
+        inflowMachNumber = inflowVelocity/inflowSonicSpeed;
+    }
+
+    ostringstream oss;
+    oss<<"specificHeatRatio："<<specificHeatRatio<<endl;
+    oss<<"inflowSonicSpeed："<<inflowSonicSpeed<<endl;
+    oss<<"inflowVelocity："<<inflowVelocity<<endl;
+    oss<<"gasConstant："<<gasConstant<<endl;
+    oss<<"inflowNumberDensity："<<inflowNumberDensity<<endl;
+
+    SPM = NewPointer3<RDouble>(7, nSpecies,nSpecies);
+
+    for(int isp = 0; isp < nSpecies; isp++)
+    {
+        for(int jsp = 0; jsp < nSpecies; jsp++)
+        {
+            SPM[0][isp][jsp] = 0.25*PI*pow(species[isp].diam+species[jsp].diam,2);
+            SPM[1][isp][jsp] = 0.5*(species[isp].tref+species[jsp].tref);
+            SPM[2][isp][jsp] = 0.5*(species[isp].omega+species[jsp].omega);
+            SPM[3][isp][jsp] = 0.5*(species[isp].alpha+species[jsp].alpha);
+            SPM[4][isp][jsp] = species[isp].mass*species[jsp].mass/(species[isp].mass+species[jsp].mass);
+            SPM[5][isp][jsp] = gamma(static_cast <RDouble> (2.5-SPM[2][isp][jsp]));
+            if(species[isp].rotdof > 0 && species[jsp].rotdof > 0)
+            {
+                SPM[6][isp][jsp] = 0.5*(species[isp].rotc1 + species[jsp].rotc1);//转动碰撞数，目前是读入的是倒数，一般是5，现在读入的是0.2
+            }
+            else if(species[isp].rotdof > 0 && species[jsp].rotdof == 0)
+            {
+                SPM[6][isp][jsp] = species[isp].rotc1;
+            }
+            else if(species[isp].rotdof == 0 && species[jsp].rotdof > 0)
+            {
+                SPM[6][isp][jsp] = species[jsp].rotc1;
+            }
+        }
+    }
+
+    RDouble inflowMeanFreePath = 0.0;
+    RDouble inflowMeanCollisionTime = 0.0;
+    RDouble inflowMeanCollisionRate = 0.0;
+
+    for(int isp = 0; isp < nSpecies; isp++)
+    {
+        RDouble ipercent = species[isp].percent;
+        RDouble MeanCollisionRate = 0.0;
+        RDouble MeanFreePath = 0.0;
+
+        for(int jsp = 0; jsp < nSpecies; jsp++)
+        {
+            RDouble dref = sqrt(SPM[0][isp][jsp]/PI);
+            RDouble tref = SPM[1][isp][jsp];
+            RDouble omega = SPM[2][isp][jsp];
+            RDouble Mref = SPM[4][isp][jsp];
+            RDouble jpercent = species[jsp].percent;
+            RDouble nq = inflowNumberDensity*jpercent;
+            MeanCollisionRate += 2*sqrt(PI)*dref*dref*nq*pow(inflowTemperature/tref,1-omega)*sqrt(2*BOLTZ*tref/Mref);
+            MeanFreePath += PI*dref*dref*nq*pow(tref/inflowTemperature,omega-0.5)*sqrt(1+species[isp].mass/species[jsp].mass);
+        }
+        inflowMeanCollisionRate += MeanCollisionRate*ipercent;
+        inflowMeanFreePath += (1.0/MeanFreePath)*ipercent;
+    }
+    inflowMeanCollisionTime = 1.0/inflowMeanCollisionRate;
+
+    GlobalDataBase::UpdateData("inflowMeanFreePath", &inflowMeanFreePath, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("inflowMeanCollisionTime", &inflowMeanFreePath, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("inflowMeanCollisionRate", &inflowMeanFreePath, PHDOUBLE, 1);
+
+    RDouble forceReferenceLength = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
+    RDouble inflowKnudsenNumber = inflowMeanFreePath/forceReferenceLength;
+    GlobalDataBase::UpdateData("inflowKnudsenNumber", &inflowKnudsenNumber, PHDOUBLE, 1);
+
+    int nZones = PHMPI::GetNumberofGlobalZones();
+
+    RDouble timeStep = 1.0e10;
+    for(int iZone=0; iZone< nZones;iZone++)
+    {
+        //int iZone = ZoneNo[nZone];
+
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+
+        int nTotalCell = grid->GetNTotalCell();
+        RDouble * cellVolume = grid->GetCellVolume();
+
+        RDouble maxCellLength = 0.0;
+        RDouble minCellLength = 1.0e10;
+        RDouble aveCellLength = 0.0;
+
+        for(int iCell = 0; iCell < nTotalCell; iCell++)
+        {
+            RDouble cellLength = pow(cellVolume[iCell],1.0/3.0);
+            if(maxCellLength < cellLength)
+            {
+                maxCellLength = cellLength; 
+            }else if(minCellLength > cellLength)
+            {
+                minCellLength = cellLength; 
+            }
+            aveCellLength = aveCellLength + cellLength;
+        }
+        aveCellLength = aveCellLength/nTotalCell;
+        RDouble maxVelocity = inflowVelocity+1.0*sqrt(2.0*gasConstant*inflowTemperature);
+        timeStep = min(timeStep, static_cast <RDouble> (minCellLength/3.0/maxVelocity));
+    }
+
+    //RDouble ftmp_min;
+    //MPI_Barrier(MPI_COMM_WORLD);
+    //MPI_Allreduce(&ftmp, &ftmp_min, 1, MPI_DOUBLE_PRECISION, MPI_MIN, MPI_COMM_WORLD);
+
+    timeStep = 0.95*min(timeStep,inflowMeanCollisionTime);
+
+    oss << "Time step:"<<timeStep<<"\n"<<"inflowMeanCollisionTime:"<<inflowMeanCollisionTime<<endl;
+    WriteLogFile(oss.str());
+
+    this->timeStep = timeStep;
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// 函数头部说明：                                                             
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Function:   例如：ReadSpecies()                                             
+// AUTHOR(S):  Li Jin                                                         
+// PURPOSE:    读入DSMC计算所需组分参数信息                                    
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+void DSMC :: ReadSpecies()
+{
+    string filename = GlobalDataBase::GetStrParaFromDB("SpeciesData");
+    fstream file;
+    file.open(filename.c_str(),ios_base::in);
+    if (!file)
+    {
+        TK_Exit::FileOpenErrorExit(filename);
+    }
+
+    nSpecies = GlobalDataBase::GetIntParaFromDB("nSpecies");
+
+    species = new Species[nSpecies];
+
+    string line, word;
+    string seperator  = " =\t\r\n#$,;";
+
+    do
+    {
+        ReadNewLine(file, line);
+        if((line[0]) != '#') break;
+    }   while(true); 
+
+    for(int n = 0; n < nSpecies; n++)
+    {
+        line = FindNextWord(line,word,seperator);
+        species[n].id = word;
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].percent,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].molwt,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].mass,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< int >(species[n].rotdof,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].rotrel,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< int >(species[n].vibdof,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].vibrel,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].vibtemp,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].specwt,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].charge,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].diam,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].omega,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].tref,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].alpha,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].rotc1,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].rotc2,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].vibc1,word,std::dec);
+
+        line = FindNextWord(line,word,seperator);
+        from_string< RDouble >(species[n].vibc2,word,std::dec);
+
+        ReadNewLine(file, line);
+    }
+
+    file.close();
+
+}
+void DSMC::InitData()
+{
+    RDouble vstream[3];
+    RDouble xcell[4],ycell[4],zcell[4];
+
+    RDouble inflowVelocity = GlobalDataBase::GetDoubleParaFromDB("inflowVelocity");
+    RDouble attackd    = GlobalDataBase::GetDoubleParaFromDB("attackd");
+    RDouble angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
+
+    RDouble attack   = attackd   * PI / 180.0;
+    RDouble sideslip = angleSlide * PI / 180.0;
+
+    vstream[0] = inflowVelocity*cos(sideslip)*cos(attack);
+    vstream[1] = inflowVelocity*cos(sideslip)*sin(attack);
+    vstream[2] = inflowVelocity*sin(sideslip);
+
+
+    int ispecies,jspecies;
+    RDouble CCG1,CCG2;
+    RDouble inflowTemperature = GlobalDataBase::GetDoubleParaFromDB("inflowTemperature");
+    int nZones = PHMPI::GetNumberofGlobalZones();
+
+    for(ispecies = 0; ispecies < nSpecies; ++ ispecies)
+    {
+        for(jspecies = 0; ispecies < nSpecies; ++ ispecies)
+        {
+            for(int iZone = 0; iZone < nZones; ++ iZone)
+            {
+                int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+                UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+                int nTotalCell = grid->GetNTotalCell();  
+
+                RDouble ** CCG = collision[iZone]->GetCCG();
+
+                for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+                {
+                    CCG1 = SPM[0][0][0]*300.*sqrt(inflowTemperature/300.);
+                    CCG2 = myrand();
+                    CCG[0][iCell] = CCG1;
+                    CCG[1][iCell] = CCG2;
+                }
+            }
+        }
+    }
+
+
+    int initialtype   = GlobalDataBase::GetIntParaFromDB("initialtype");
+    nweight = GlobalDataBase::GetIntParaFromDB("nweight");
+    RDouble inflowNumberDensity = GlobalDataBase::GetDoubleParaFromDB("inflowNumberDensity"); 
+
+    Species * species = this->species;
+
+    int nMolecule;
+    if(initialtype > 0) 
+    {
+        for(int isp = 0; isp < nSpecies; ++isp)
+        {
+            if(species[isp].percent <= 1.e-20) continue; 
+            
+            RDouble remainder = 0.0;
+            RDouble mostProbableMolecularThermalSpeed = sqrt(2.0*BOLTZ*inflowTemperature/species[isp].mass);
+
+            for(int iZone = 0; iZone < nZones; ++iZone)
+            {
+                int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+                UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+
+                int nTotalCell = grid->GetNTotalCell();
+
+                RDouble * cellVolume = grid->GetCellVolume();
+                RDouble * cellWeight = dsmcgrid[iZone]->GetCellWeight();
+                int * cell2node = grid->GetCell2Node(); 
+
+                RDouble * x = grid->GetX();
+                RDouble * y = grid->GetY();
+                RDouble * z = grid->GetZ();
+
+                int * moleculeSpecies = molecule[iZone]->GetMoleculeSpecies();
+                int * moleculeLocation = molecule[iZone]->GetMoleculeLocation();
+                RDouble ** moleculePosition = molecule[iZone]->GetMoleculePosition();
+                RDouble ** moleculeVelocity = molecule[iZone]->GetMoleculeVelocity();
+                RDouble * moleculeRotationalEnergy = molecule[iZone]->GetMoleculeRotationalEnergy();
+                RDouble * moleculeVibrationalEnergy = molecule[iZone]->GetMoleculeVibrationalEnergy();
+                int * moleculeVibrationLevel = molecule[iZone]->GetMoleculeVibrationLevel();
+
+                RDouble Fnum = FNUMI[iZone];
+
+                if(isp == 0)
+                {
+                    nMolecule = 0;
+                } 
+                else
+                {
+                    nMolecule = dsmcgrid[iZone]->GetnMolecule();
+                }
+
+                for(int iCell = 0; iCell < nTotalCell; ++iCell)
+                {
+                    RDouble weight;
+                    if(nweight == 0)
+                    {
+                        weight = 1.0;
+                    } 
+                    else
+                    {
+                        weight = cellWeight[iCell];
+                    }
+
+                    RDouble numberofMolecule = inflowNumberDensity*cellVolume[iCell]*species[isp].percent/(Fnum*weight) + remainder;
+
+                    int integerNumberofMolecule;
+                    if (iZone == nZones-1 && iCell == nTotalCell-1)
+                    {
+                        integerNumberofMolecule = int(numberofMolecule);
+                    } 
+                    else
+                    {
+                        integerNumberofMolecule = int(numberofMolecule);
+                        remainder = numberofMolecule-integerNumberofMolecule;
+                    }
+
+                    if(integerNumberofMolecule > 0)
+                    {
+                        for(int iMolecule = 0; iMolecule < integerNumberofMolecule; ++ iMolecule)
+                        {
+                            if(nMolecule < MaxMoleculeNumber)
+                            {
+                                /*nMolecule += 1;*/
+
+                                moleculeSpecies[nMolecule] = isp;
+                                moleculeLocation[nMolecule] = iCell;
+
+                                for (int iNode = 0; iNode < 4; ++ iNode)
+                                {
+                                    xcell[iNode] = x[cell2node[iCell * 4 + iNode]];
+                                    ycell[iNode] = y[cell2node[iCell * 4 + iNode]];
+                                    zcell[iNode] = z[cell2node[iCell * 4 + iNode]];
+                                }
+
+                                RDouble ss1 = myrand();
+                                RDouble ss2 = sqrt(myrand());
+                                RDouble ss3 = pow(myrand(),1.0/3.0);
+
+                                RDouble xd = xcell[0] + ss1*(xcell[1] - xcell[0]);
+                                RDouble yd = ycell[0] + ss1*(ycell[1] - ycell[0]);
+                                RDouble zd = zcell[0] + ss1*(zcell[1] - zcell[0]);
+
+                                RDouble xe = xcell[2] + ss2*(xd - xcell[2]);
+                                RDouble ye = ycell[2] + ss2*(yd - ycell[2]);
+                                RDouble ze = zcell[2] + ss2*(zd - zcell[2]);
+
+                                moleculePosition[nMolecule][0] = xcell[3] +  ss3*(xe - xcell[3]);
+                                moleculePosition[nMolecule][1] = ycell[3] +  ss3*(ye - ycell[3]);
+                                moleculePosition[nMolecule][2] = zcell[3] +  ss3*(ze - zcell[3]);
+
+                                RDouble vn = mostProbableMolecularThermalSpeed * sqrt(-log(myrand()));
+                                RDouble vr = mostProbableMolecularThermalSpeed * sqrt(-log(myrand()));
+
+                                RDouble theta1 = 2*PI*myrand();
+                                RDouble theta2 = 2*PI*myrand();
+
+                                moleculeVelocity[nMolecule][0] = vstream[0] + vn*cos(theta1);
+                                moleculeVelocity[nMolecule][1] = vstream[1] + vr*cos(theta2);
+                                moleculeVelocity[nMolecule][2] = vstream[2] + vr*sin(theta2);
+
+                                moleculeRotationalEnergy[nMolecule] = molecule[iZone]->CalMoleculeRotationalEnergy(species[isp].rotdof,inflowTemperature);
+
+                                moleculeVibrationLevel[nMolecule] = static_cast <int> (-log(myrand())*inflowTemperature/species[isp].vibtemp);
+
+                                moleculeVibrationalEnergy[nMolecule] = moleculeVibrationLevel[nMolecule]*BOLTZ*species[isp].vibtemp;
+                                //molecule[iZone]->CalMoleculeVibrationalEnergy(species[isp].vibdof,inflowTemperature,species[isp].vibtemp);
+                                
+                                nMolecule += 1;
+                            }                    
+                        }
+                    }
+                }
+                
+                dsmcgrid[iZone]->SetnMolecule(nMolecule);
+            }
+        }  
+    }
+
+    //for(int iZone = 0; iZone < nZones; ++ iZone)
+    //{
+    //    cout << "iZone=" << iZone << ", nMolecule=" << dsmcgrid[iZone]->GetnMolecule() << endl;
+    //}
+}
+
+void DSMC::MoleculeIndex()
+{
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+        int nTotalCell = grid->GetNTotalCell();
+        
+        int * numberOfMoleculeInCells = index[iZone]->GetNumberOfMoleculeInCells();
+
+        for(int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            numberOfMoleculeInCells[iCell] = 0;
+        }
+    }
+
+    for (int iZone = 0; iZone < nZones; ++iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+        int nTotalCell = grid->GetNTotalCell();
+        
+        int nMolecule = dsmcgrid[iZone]->GetnMolecule();
+        int * moleculeLocation = molecule[iZone]->GetMoleculeLocation();
+
+        int * startAddressOfMoleculeInCells = index[iZone]->GetStartAddressOfMoleculeInCells();
+        int * numberOfMoleculeInCells = index[iZone]->GetNumberOfMoleculeInCells();
+        int * moleculeNoInOrderOfCells = index[iZone]->GetMoleculeNoInOrderOfCells();
+
+        for (int imolecule = 0; imolecule < nMolecule; ++ imolecule)
+        {
+            int iCell = moleculeLocation[imolecule];
+            numberOfMoleculeInCells[iCell] += 1;
+        }
+
+        int M = 0;
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            startAddressOfMoleculeInCells[iCell] = M;
+            M = M + numberOfMoleculeInCells[iCell];
+        }
+
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            numberOfMoleculeInCells[iCell] = 0;
+        }
+
+        for (int imolecule = 0; imolecule < nMolecule; ++ imolecule)
+        {
+            int iCell = moleculeLocation[imolecule];
+            numberOfMoleculeInCells[iCell] += 1;
+            moleculeNoInOrderOfCells[imolecule] = startAddressOfMoleculeInCells[iCell] + numberOfMoleculeInCells[iCell];
+        }
+    }
+}
+
+void DSMC::InitSample()
+{
+    NSMP = 0;
+    TIMI = TIME;
+
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    nSpecies = GlobalDataBase::GetIntParaFromDB("nSpecies");
+    MMVM = GlobalDataBase::GetIntParaFromDB("MMVM");
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+        int nTotalCell = grid->GetNTotalCell();
+
+        RDouble ** CSR = sample[iZone]->GetCSR();
+        RDouble *** CSV = sample[iZone]->GetCSV();
+        RDouble *** CS = sample[iZone]->GetCS();
+
+        for(int ispecies = 0; ispecies < nSpecies; ++ ispecies)
+        {
+            for(int iCell = 0; iCell < nTotalCell; ++ iCell)
+            {
+                CSR[iCell][ispecies] = 0.0;
+
+                if(MMVM > 0) 
+                {
+                    //for(int K = 0; K < ISPV[ispecies]; ++ K)
+                    for(int K = 0; K < 1; ++ K)
+                    {
+                        CSV[K][iCell][ispecies] = 0.0;
+                    }
+                }
+
+                for(int K = 0; K <=7; ++ K)
+                {
+                    CS[K][iCell][ispecies] = 0.0;
+                }
+            }
+        }
+    }
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        RDouble *** CSS1 = sample[iZone]->GetCSS1();
+        RDouble *** CSS2 = sample[iZone]->GetCSS2();
+
+        int nWallFace = dsmcgrid[iZone]->GetnWallFace();
+
+        if(nWallFace > 0) 
+        {
+            for(int ispecies = 0; ispecies < nSpecies; ++ ispecies)
+            {
+                for(int iFace = 0; iFace < nWallFace; ++ iFace)
+                {
+                    for(int K = 0; K< 8; ++ K)
+                    {
+                        CSS1[K][iFace][ispecies] = 0.0;
+                        CSS2[K][iFace][ispecies] = 0.0;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void DSMC::MoleculeCollision()
+{
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    int nweight = Getnweight();
+    RDouble weight,ASEL;
+    int NSEL,collision_pair_i,collision_pair_j;
+    RDouble RML,RMM,m1plusm2;
+
+    int MMVM = GetMMVM();
+
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+        UnstructGrid * grid = UnstructGridCast(GetGrid(zoneID));
+        int nTotalCell = grid->GetNTotalCell();
+
+        RDouble Fnum = FNUMI[iZone];
+        RDouble dtm = DTMI[iZone];
+
+        int * numberOfMoleculeInCells = index[iZone]->GetNumberOfMoleculeInCells();
+
+        //int * face_number_of_each_cell = grid->GetFaceNumberOfEachCell();
+        RDouble * cellWeight = dsmcgrid[iZone]->GetCellWeight();
+        RDouble * cellVolume = grid->GetCellVolume();
+        RDouble ** CCG = collision[iZone]->GetCCG();
+
+        for(int iCell = 0; iCell < nTotalCell; ++ iCell)
+        {
+            int IC2 = numberOfMoleculeInCells[iCell];
+
+            if(IC2 > 1) 
+            {
+                if(nweight == 0)
+                {
+                    weight = 1.0;
+                } 
+                else
+                {
+                    weight = cellWeight[iCell];
+                }
+                
+                ASEL = 0.5*IC2*(IC2-1)*Fnum*weight*CCG[0][iCell]*dtm/cellVolume[iCell] + CCG[1][iCell];
+                NSEL = static_cast<int>(ASEL);
+                CCG[1][iCell] = ASEL - NSEL;
+
+                RDouble ** CCG = collision[iZone]->GetCCG();
+                RDouble CVR = collision[iZone]->GetCVR();
+                vector<RDouble> VCM = collision[iZone]->GetVCM();   
+                int * moleculeSpecies = molecule[iZone]->GetMoleculeSpecies();
+                RDouble ** moleculeVelocity = molecule[iZone]->GetMoleculeVelocity();
+                int * moleculeVibrationLevel = molecule[iZone]->GetMoleculeVibrationLevel();
+
+                collision_pair_i = collision_pair_j = -1;
+                if(NSEL > 0)
+                {
+                    for(int iselect = 0; iselect < NSEL; ++ iselect)
+                    {
+                        SelectMolecule(iZone, iCell, collision_pair_i, collision_pair_j);
+
+                        if(CVR > CCG[0][iCell])
+                            CCG[0][iCell] = CVR;
+                        
+                        if(CVR/CCG[0][iCell] > myrand())
+                        {
+                            int isp = moleculeSpecies[collision_pair_i];
+                            int jsp = moleculeSpecies[collision_pair_j];
+                            if(isp<0 || jsp<0) 
+                            {
+                                cout<<isp<<" "<<jsp<<endl;
+                                cin.get();
+                            }
+                            RML = SPM[4][isp][jsp]/species[jsp].mass;
+                            RMM = SPM[4][isp][jsp]/species[isp].mass;
+                            m1plusm2 = species[isp].mass + species[jsp].mass;
+
+                            VCM[0] = RML*moleculeVelocity[0][collision_pair_i] + RMM*moleculeVelocity[0][collision_pair_j];
+                            VCM[1] = RML*moleculeVelocity[1][collision_pair_i] + RMM*moleculeVelocity[1][collision_pair_j];
+                            VCM[2] = RML*moleculeVelocity[2][collision_pair_i] + RMM*moleculeVelocity[2][collision_pair_j];
+
+
+                            preCollisionEtran = 0.5*SPM[4][isp][jsp]*collision[iZone]->GetVRR();
+                            preCollisionErot = 0.0;
+                            preCollisionEvib = 0.0;
+
+                            if(species[isp].rotdof > 0) 
+                                preCollisionErot += molecule[iZone]->GetMoleculeRotationalEnergy()[collision_pair_i];
+                            if(species[jsp].rotdof > 0) 
+                                preCollisionErot += molecule[iZone]->GetMoleculeRotationalEnergy()[collision_pair_j];
+
+                            if(MMVM > 0) 
+                            {
+                                if(species[isp].vibdof > 0) 
+                                    preCollisionEvib += moleculeVibrationLevel[collision_pair_i]*BOLTZ*species[isp].vibtemp;
+                                if(species[jsp].vibdof > 0) 
+                                    preCollisionEvib += moleculeVibrationLevel[collision_pair_j]*BOLTZ*species[jsp].vibtemp;
+                            }
+                            preCollisionEtotal = preCollisionEtran + preCollisionErot + preCollisionEvib;
+                            preCollisionEint =  preCollisionErot + preCollisionEvib;
+
+                            postCollisionEtotal = preCollisionEtotal;
+
+                            int reactFlag = 0;
+                            if(reactFlag == 1)
+                            {
+                            
+                            }
+                            else if(reactFlag == 0)
+                            {
+                                NonReactingEDisposal(iZone,collision_pair_i,collision_pair_j);
+
+                                TwobodyScattering(iZone,collision_pair_i,collision_pair_j,m1plusm2,reactFlag);                            
+                            }
+                        }
+                    }   
+                }
+            }     
+        }
+    }
+}
+
+void DSMC::TwobodyScattering(int iZone, int collision_pair_i, int collision_pair_j, RDouble m1plusm2, int & reactFlag)
+{
+    RDouble VCM[3],VRC[3],VRCP[3];
+
+    int isp = molecule[iZone]->GetMoleculeSpecies()[collision_pair_i];
+    int jsp = molecule[iZone]->GetMoleculeSpecies()[collision_pair_j];
+
+    RDouble RML = SPM[5][isp][jsp]/species[jsp].mass;
+    RDouble RMM = SPM[5][isp][jsp]/species[isp].mass;
+
+    RDouble m3plusm4 = species[isp].mass + species[jsp].mass;
+
+    RDouble wRatio = sqrt(m1plusm2/m3plusm4);
+
+    for(int K = 0; K < 3; ++K)
+    {
+        VCM[K] = collision[iZone]->GetVCM()[K];
+        VRC[K] = collision[iZone]->GetVRC()[K];
+    }
+
+    if(postCollisionEtran < 0)
+        postCollisionEtran = 1.0e-26;
+
+    RDouble VR = sqrt(2.0*postCollisionEtran/SPM[5][isp][jsp]);
+
+    RDouble A,B,C,D;
+    if(abs(SPM[4][isp][jsp]-1.0) < 1.0e-3)
+    {
+        B = 2*myrand()-1.0;
+        A = sqrt(1-B*B);
+        VRCP[0] = B*VR;
+        C = 2.0*PI*myrand();
+        VRCP[1] = A*cos(C)*VR;
+        VRCP[2] = A*sin(C)*VR;
+    }
+    else
+    {
+        B = 2.0*(pow(myrand(),SPM[4][isp][jsp])) - 1.0;
+        A = sqrt(1-B*B);
+        C = 2.0*PI*myrand();
+        D = sqrt(VRC[1]*VRC[1] + VRC[2]*VRC[2]);
+        if(D > 1.0e-6)
+        {
+            VRCP[0] = B*VRC[0] + A*sin(C)*D;
+            VRCP[1] = B*VRC[1] + A*(VR*VRC[2]*cos(C) - VRC[0]*VRC[1]*sin(C))/D;
+            VRCP[2] = B*VRC[2] + A*(VR*VRC[1]*cos(C) + VRC[0]*VRC[2]*sin(C))/D;
+        }
+        else
+        {
+            VRCP[0] = B*VRC[0];
+            VRCP[1] = A*cos(C)*VRC[0];
+            VRCP[2] = A*sin(C)*VRC[0];
+        }
+    
+    }
+    for(int K = 0; K < 3; ++ K)
+    {
+        molecule[iZone]->GetMoleculeVelocity()[K][collision_pair_i] = wRatio*VCM[K] + VRCP[K]*RMM;
+        molecule[iZone]->GetMoleculeVelocity()[K][collision_pair_j] = wRatio*VCM[K] - VRCP[K]*RML;
+    
+    }
+}
+void DSMC::NonReactingEDisposal(int iZone, int collision_pair_i, int collision_pair_j)
+{
+    RDouble E_Dispose = preCollisionEtran;
+
+    postCollisionErot = 0.0;
+    postCollisionEvib = 0.0;
+    postCollisionEint = 0.0;
+
+    Species * species = this->species;
+
+    int collision_pair_k;
+
+    for(int ksp = 1; ksp < 3; ++ ksp)
+    {
+        if(ksp == 1)
+            collision_pair_k = collision_pair_i;
+        else if(ksp == 2)
+            collision_pair_k = collision_pair_j;
+
+        int KS = molecule[iZone]->GetMoleculeSpecies()[collision_pair_i];
+
+        RDouble rotrel = species[KS].rotrel;
+        RDouble rotdof = species[KS].rotdof;
+        RDouble fraction ;
+        if(rotdof > 0)
+        {
+            if(rotrel > myrand()) 
+            {
+                E_Dispose += molecule[iZone]->GetMoleculeRotationalEnergy()[collision_pair_k];
+                if(rotdof == 2)
+                    fraction = 1.0-pow(myrand(),1.0/(2.5-species[KS].omega));
+                else 
+                    Larsen_Borgenakke(0.5*rotdof-1.0,1.5-species[KS].omega,fraction);
+            
+            molecule[iZone]->GetMoleculeRotationalEnergy()[collision_pair_k] = fraction*E_Dispose;
+            E_Dispose -= molecule[iZone]->GetMoleculeRotationalEnergy()[collision_pair_k];
+            }
+        }
+        postCollisionErot += molecule[iZone]->GetMoleculeRotationalEnergy()[collision_pair_k];
+
+        int MMVM = GetMMVM();
+        RDouble vibref = species[KS].vibrel;
+        RDouble vibdof = species[KS].vibdof;
+        if(MMVM > 0) 
+        {
+            if(vibref > myrand())
+            {
+                if(vibdof == 2) 
+                {
+                    RDouble Evib = molecule[iZone]->GetMoleculeVibrationLevel()[collision_pair_k]*BOLTZ*species[KS].vibtemp;
+                    E_Dispose += Evib;
+                    int MaxLev = static_cast<int> (E_Dispose/(BOLTZ*species[KS].vibtemp));
+                    RDouble prob = 0.0;
+                    while(prob < myrand())
+                    {
+                        int IV = static_cast<int> (myrand()*(MaxLev + 0.99999));
+                        molecule[iZone]->GetMoleculeVibrationLevel()[collision_pair_k] = IV;
+                        Evib = IV*BOLTZ*species[KS].vibtemp;
+                        if(Evib < E_Dispose)
+                            prob = pow(1-Evib/E_Dispose,1.5-species[KS].omega);
+
+                    }
+                    E_Dispose -= Evib;
+                }
+            }
+            postCollisionEvib += molecule[iZone]->GetMoleculeVibrationLevel()[collision_pair_k]*BOLTZ*species[KS].vibtemp;
+
+        }
+    }
+
+    postCollisionEint = postCollisionErot + postCollisionEvib;
+    postCollisionEtran = E_Dispose;
+    postCollisionEtotal = postCollisionEtran + postCollisionEint;
+
+}
+
+void DSMC::Larsen_Borgenakke(RDouble xma,RDouble xmb,RDouble & fraction)
+{
+    RDouble P;
+    while(1)
+    {
+        fraction = myrand();
+        if(xma < 1.0e-6 || xmb < 1.0e-6)
+        {
+            if(xma < 1.0e-6 && xmb < 1.0e-6) return;
+            if(xma < 1.0e-6) P = pow((1.0-fraction),xmb);
+            if(xmb < 1.0e-6) P = pow((1.0-fraction),xma);
+        }
+        else
+            P = pow(((xma+xmb)*fraction/xma),xma)*pow((xma+xmb)*(1-fraction)/xmb,xmb);
+
+        if(P > myrand()) 
+            exit(0);
+    }
+}
+
+void DSMC::SelectMolecule(int iZone, int iCell, int &collision_pair_i, int &collision_pair_j)
+{
+    int *startAddressOfMoleculeInCells = index[iZone]->GetStartAddressOfMoleculeInCells();
+    int *numberOfMoleculeInCells  = index[iZone]->GetNumberOfMoleculeInCells();
+    int *moleculeNoInOrderOfCells = index[iZone]->GetMoleculeNoInOrderOfCells();
+    
+    int k;
+    if (numberOfMoleculeInCells[iCell] == 2)
+    {
+        k = startAddressOfMoleculeInCells[iCell];
+        collision_pair_i = moleculeNoInOrderOfCells[k];
+        k = 1 + startAddressOfMoleculeInCells[iCell];
+        collision_pair_j = moleculeNoInOrderOfCells[k];
+
+    }
+    else
+    {
+        k = static_cast<int>(myrand()*numberOfMoleculeInCells[iCell] + startAddressOfMoleculeInCells[iCell] + 0);
+        collision_pair_i = moleculeNoInOrderOfCells[k];
+        collision_pair_j = collision_pair_i;
+
+        while(collision_pair_j == collision_pair_i)
+        {
+            k = static_cast<int>(myrand()*numberOfMoleculeInCells[iCell] + startAddressOfMoleculeInCells[iCell] + 0);
+            collision_pair_j = moleculeNoInOrderOfCells[k];
+        }
+    }
+
+    RDouble ** moleculeVelocity = molecule[iZone]->GetMoleculeVelocity();
+
+    vector<RDouble> VRC;
+    VRC.resize(3);
+
+    for(k = 0; k < 3; ++ k)
+    {
+        VRC[k] = moleculeVelocity[k][collision_pair_i] - moleculeVelocity[k][collision_pair_j];
+    }
+    collision[iZone]->SetVRC(VRC);
+
+    RDouble VRR = VRC[0]*VRC[0] + VRC[1]*VRC[1] + VRC[2]*VRC[2];
+    RDouble VR = sqrt(VRR);
+
+    int * moleculeSpecies = molecule[iZone]->GetMoleculeSpecies();
+
+    int isp = moleculeSpecies[collision_pair_i];
+    int jsp = moleculeSpecies[collision_pair_j];
+
+    if(isp<0 || jsp<0)
+    {
+        cout<<"lla--"<<isp<<" "<<jsp<<endl;
+        cout<<collision_pair_i<<" "<<collision_pair_i<<endl;
+        cin.get();
+    }
+
+    RDouble CVR = VR * SPM[0][isp][jsp]*pow(2.0*BOLTZ*SPM[1][isp][jsp]/(SPM[4][isp][jsp]*VRR), SPM[2][isp][jsp]-0.5)/ SPM[5][isp][jsp];
+
+    collision[iZone]->SetVRR(VRR);
+    collision[iZone]->SetVR(VR);
+    collision[iZone]->SetCVR(CVR);
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// 函数头部说明：                                                              +
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Function:   例如：RDouble gamma(RDouble X)                                    +
+// AUTHOR(S):  Li Jin                                                          +
+// PURPOSE:    计算伽马函数                                                    +
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+RDouble gamma(RDouble X)
+{
+    RDouble A,Y,GAM;
+    A = 1.0;
+    Y = X;
+    if(Y < 1.0)
+    {
+        A = A/Y;
+    }
+    else
+    {
+        Y = Y-1;
+        do 
+        {
+            A = A*Y;
+            Y = Y-1;
+        }while(Y>=1.0);
+    }
+    GAM = A*(1.-0.5748646*Y+0.9512363*pow(Y,2)-0.6998588*pow(Y,3)+ 0.4245549*pow(Y,4)-0.1010678*pow(Y,5));
+    return GAM;
+}
+
+RDouble gamma(int X)
+{
+    RDouble A,Y,GAM;
+    A = 1.0;
+    Y = X;
+    if(Y < 1.0)
+    {
+        A = A/Y;
+    }
+    else
+    {
+        Y = Y-1;
+        do 
+        {
+            A = A*Y;
+            Y = Y-1;
+        }while(Y>=1.0);
+    }
+    GAM = A*(1.-0.5748646*Y+0.9512363*pow(Y,2)-0.6998588*pow(Y,3)+ 0.4245549*pow(Y,4)-0.1010678*pow(Y,5));
+    return GAM;
+}
+
+
+
+
+
+void DSMC::ZoneToCPU()
+{
+    using namespace PHMPI;
+    int myid = GetCurrentProcessorID();
+    int nZones = GetNumberofGlobalZones();
+    int nCPU = GetNumberOfProcessor();
+
+    ZonePerCPU = nZones/nCPU;
+    ZoneLeft = nZones%nCPU;
+
+    if(ZoneLeft==0)
+    {
+        ZonePerCPU = ZonePerCPU - 1;
+        ZoneLeft  = nCPU;
+    }
+    int ZonePerCPU1,ZoneStart;
+    if(myid < ZoneLeft)
+    {
+        ZonePerCPU1 = ZonePerCPU+1;
+        ZoneStart = myid*ZonePerCPU1;
+    }
+    else
+    {
+        ZonePerCPU1 = ZonePerCPU;
+        ZoneStart = ZoneLeft*(ZonePerCPU+1)+(myid-ZoneLeft)*ZonePerCPU1;
+    }
+
+    int ZoneEnd = ZoneStart+ZonePerCPU1;
+
+    SetZoneStart(ZoneStart);
+    SetZoneEnd(ZoneEnd);
+
+    ZoneNo.resize (nZones);
+
+    for(int i=0;i<nZones;i++)
+    {
+        ZoneNo[i]=i;
+    }
+
+}
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// 函数头部说明：                                                              +
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Function:   例如：RDouble myrand()                                           +
+// AUTHOR(S):  Li Jin                                                          +
+// PURPOSE:    计算随机数                                                      +
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+RDouble myrand()
+{ 
+  return rand()/RDouble(RAND_MAX);
+}
+}
+

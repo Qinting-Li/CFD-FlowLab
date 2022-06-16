@@ -39,6 +39,9 @@ public:
     //! Get the flag of the gas model.
     int GetChemicalFlag() const;
 
+    //! Get the set of WallMultiTemperature.
+    int GetWallMultiTemperature() const;
+
     //! Get the number of N-S equations without the species transport equations.
     int GetNSEquationNumber() const;
 
@@ -50,6 +53,9 @@ public:
 
     //! Get if carry out precondition or not.
     int GetIfLowSpeedPrecon() const;
+
+    //! Get if ideal gas state .
+    int GetIfIdealGasState() const;
 
     //! Get attacked of angle.
     RDouble GetAoA() const;
@@ -123,12 +129,38 @@ public:
 
     int GetnEnergyRecycle() const;
 
+    int GetTransitionType() const;
+
     int GetnTurblenceForChemical() const;
 
     int GetnViscosityFluxSublevelModified() const;
 
+    RDouble  GetDensityMin() const;
+
+    RDouble  GetdensityMinFactor() const;
+
+    int GetSelfAdaptionSolveFlag() const;
+
+    int GetnGradPrimtiveMethod() const;
+
+    int GetnInviscidFluxModify() const;    
+
+    int GetnQlLimitMethod() const;
+
+    int GetSurfaceGradientMethod() const;
+
+    int GetRapidFlowfieldMethod() const;
+
+    int GetSurfaceHeatingMonitor() const;
+
+    int GetInitialPressureSteps() const;
+
+    int GetLocalCFLFlag() const;
+
 private:
     int intervalStepForce;
+
+    int transitionType;
 
     RDouble wallTemperature;
 
@@ -138,11 +170,17 @@ private:
     int nLaminar;
     //! The flag of the gas model, 1 indicates the chemical non-equilibrium gas, 0 indicates the perfect gas.
     int nChemical;
+
+    int wallMultiTemperature;
+
     //! The flag of thermodynamic temperature model, 1, 2 and 3 denote one/two/three temperature model for chemical non-equilibrium gas.
     int nTemperatureModel;
 
     //! For incompressible flow (mach < 0.3), using precondition method or not.
     int ifLowSpeedPrecon;
+
+    //! judge if ideal gas state or not.
+    int nIdealState;
 
     //! Angle of attacked.
     double AoA;
@@ -209,6 +247,33 @@ private:
     int nTurblenceForChemical;
 
     int nViscosityFluxSublevelModified;
+
+    RDouble densityMin;
+
+    RDouble densityMinFactor;
+
+    int nGradPrimtiveMethod;
+
+    int isSelfAdaptionSolve;
+
+    int nInviscidFluxModify;
+
+    int nQlLimitMethod;
+
+    //The method to compute the gradient of variable on surface.
+    int nSurfGradMethod;
+
+    //To utilize the rapid method that can directly obtain the initial flowfield in boundary layer.
+    int nRapidFlowfield;
+
+    //To utilize the monitor which exam the surface heating change during the iteration.
+    int nSurfHeatMonitor;
+
+    //The steps to initialize the boundary variables with the rapid flowfield values.
+    int nInitPressureStep;
+
+    //Use local CFL number or not.
+    int isUseLocalCFL;
 };
 
 #include "Param_NSSolver.hxx"

@@ -212,7 +212,7 @@ LIB_EXPORT void WriteBinaryFile(ActionKey *actkey)
 {
     /*DumpToTecio dumptotecio(actkey);
     dumptotecio.Run();
-    if( !actkey->file ) return;
+    if(!actkey->file) return;
     fstream &file = *(actkey->file);
     WriteASCIIFile(file, actkey->GetData());*/
 }
@@ -307,7 +307,7 @@ LIB_EXPORT void ReadControlParameters()
         ReadParamInfo();
     }
 
-    BroadCastInfo();
+    BroadcastInfo();
 }
 
 LIB_EXPORT void ReadKeyInfo()
@@ -362,7 +362,7 @@ LIB_EXPORT void ReadParamInfo(const string &filename)
     file.clear();
 }
 
-LIB_EXPORT void BroadCastInfo()
+LIB_EXPORT void BroadcastInfo()
 {
     using namespace PHMPI;
     int number_of_processor = GetNumberOfProcessor();
@@ -401,7 +401,7 @@ LIB_EXPORT void CompleteParamInfo()
         string walldistfile = ChangeExtensionOfFileName(origialGridFile, "wdt");
         GlobalDataBase::UpdateData("walldistfile", &walldistfile, PHSTRING, 1);
     }
-    else if (nsimutask == CREATE_GRID || nsimutask == CONVERT_PARTITION)
+    else if (nsimutask == CREATE_GRID)
     {
         string from_gfile = GlobalDataBase::GetStrParaFromDB("from_gfile");
         string bnd_file = ChangeExtensionOfFileName(from_gfile, "inp");
@@ -462,6 +462,7 @@ LIB_EXPORT void CompleteParamInfo()
 
 LIB_EXPORT void PrintInflowConditionToWindow(void)
 {
+
     int inflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
 
     RDouble refGama                   = GlobalDataBase::GetDoubleParaFromDB("refGama");
@@ -474,7 +475,9 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
     RDouble wallTemperature           = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
 
-    ModifyWindowTemperature(wallTemperature);
+    vector< RDouble > WallT;
+    vector< int > WallNumber;
+    ModifyWindowTemperature(wallTemperature, WallT, WallNumber);
 
     RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
     RDouble forceReferenceArea                 = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
@@ -506,7 +509,7 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
         }
         PrintToWindow("  Reynolds Number          :    ", refReNumber,               " 1/m",   "\n");
         PrintToWindow("  Dimensional Pressure     :    ", refDimensionalPressure,    " Pa",    "\n");
-        PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m3", "\n");
+        PrintToWindow("  Dimensional Density      :    ", refDimensionalDensity,     " kg/m^3", "\n");
         PrintToWindow("  Dimensional Temperature  :    ", refDimensionalTemperature, " K",     "\n");
 
         int metabolicWallTemperature = -1;
@@ -514,14 +517,22 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
 
         if (metabolicWallTemperature == 0)
         {
-            if (wallTemperature < 0.0)
+            for(int i = 0; i < WallT.size(); ++i)
             {
-                PrintToWindow("  Wall Temperature         :    ", "Adiabatic Wall", "\n");
+                if (WallT[i] < 0.0)
+                {
+                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ",  "Adiabatic Wall", "\n");
+                }
+                else if(WallT[i] == 0.0)
+                {
+                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", "Radiation balance Wall", "\n");
+                }
+                else
+                {
+                    PrintToWindow("  Temperature of Wall",WallNumber[i],"   :    ", WallT[i], "K", "\n");
+                }
             }
-            else
-            {
-                PrintToWindow("  Wall Temperature         :    ", wallTemperature, "K", "\n");
-            }
+
         }
         PrintToWindow("  Dimensional Sound Speed  :    ", refSoundSpeed,               " m/s",    "\n");
         PrintToWindow("  Dimensional Velocity     :    ", refVelocity,               " m/s",      "\n");
@@ -529,20 +540,21 @@ LIB_EXPORT void PrintInflowConditionToWindow(void)
     }
 
     PrintToWindow("Geometry Informations"           ,                                     "\n");
-    PrintToWindow("  Scale Factor             :    ", reynoldsReferenceLengthDimensional, "\n");
-    PrintToWindow("  Force Reference Area     :    ", forceReferenceArea                , "\n");
-    PrintToWindow("  Force Reference Length   :    ", forceReferenceLength              , "\n");
+    PrintToWindow("  Scale Factor             :    ", reynoldsReferenceLengthDimensional,  "\n");
+    PrintToWindow("  Force Reference Area     :    ", forceReferenceArea                ,   "m^2", "\n");
+    PrintToWindow("  Force Reference Length   :    ", forceReferenceLength              ,   "m", "\n");
     PrintToWindow("  Force Reference x        :    ", TorqueRefX                        , "\n");
     PrintToWindow("  Force Reference y        :    ", TorqueRefY                        , "\n");
     PrintToWindow("  Force Reference z        :    ", TorqueRefZ                        , "\n");
 }
 
-LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature)
+LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature, vector< RDouble > &WallT, vector< int > &WallNumber)
 {
-    if(wallTemperature >= 0.0 )
+    /*if(wallTemperature >= 0.0 )
     {
         return;
-    }
+    }*/
+    int nWall = 0;
     GlobalBoundaryCondition::ReadGlobalBoundaryCondition();
     vector<SimpleBC *> *globalBCList = GlobalBoundaryCondition::GetGlobalBoundaryConditionList();
     for (int iBC = 0; iBC < globalBCList->size(); ++ iBC)
@@ -564,8 +576,11 @@ LIB_EXPORT void ModifyWindowTemperature(RDouble &wallTemperature)
             else
             {
                 bcParamDB->GetData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
-                GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+                //GlobalDataBase::UpdateData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
             }
+            WallT.push_back(wallTemperature);
+            nWall ++;
+            WallNumber.push_back(nWall);
         }
     }
 }

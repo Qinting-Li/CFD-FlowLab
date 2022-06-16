@@ -32,7 +32,7 @@ private:
 
 public:
     //!
-    DataStruct_BinaryTree(int *startPointLabel, int numberOfZones, int numberOfPoints);
+    DataStruct_BinaryTree(int *startPointLabel, int nZones, int numberOfPoints);
 
     //!
     ~DataStruct_BinaryTree();
@@ -43,7 +43,7 @@ public:
 
 private:
     int ComputeZoneLabel(DataStuct_BinaryNode *binaryNode, int globalPointIndex);
-    void CopyOriginalVector(int *startPointLabel, int numberOfZones);
+    void CopyOriginalVector(int *startPointLabel, int nZones);
     DataStuct_BinaryNode * Create(DataStuct_BinaryNode *binaryNode, int leftLabel, int rightLabel);
     void Release(DataStuct_BinaryNode *binaryNode);
 };

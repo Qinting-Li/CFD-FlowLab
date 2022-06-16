@@ -10,6 +10,13 @@
 #include "MixGrid.h"
 #include "Solver.h"
 
+#ifdef USE_HYFLOW_CODE
+#include "RealGas.h"
+#include "EquilibriumGas.h"
+#else
+#include "MixedGas.h"
+#endif
+
 using namespace std;
 
 #pragma warning (disable:913)
@@ -30,9 +37,9 @@ Zone::Zone(int index)
 
 Zone::~Zone()
 {
-    for (std::size_t isolver = 0; isolver < solvers->size(); ++ isolver)
+    for (std::size_t iSolver = 0; iSolver < solvers->size(); ++ iSolver)
     {
-        delete (*solvers)[isolver];
+        delete (*solvers)[iSolver];
     }
     delete solvers;
 
@@ -59,9 +66,9 @@ void Zone::AddSolver(PHSolver *solver)
     GlobalSolvers::AddSolverToGlobal(this->GetIndex(), this->solvers);
 }
 
-void Zone::AddGridToGlobal(int izone)
+void Zone::AddGridToGlobal(int iZone)
 {
-    PHSPACE::AddGridToGlobal(izone, geom->GetVectorGrid());
+    PHSPACE::AddGridToGlobal(iZone, geom->GetVectorGrid());
 }
 
 void Zone::AddGrid(Grid *grid)
@@ -120,8 +127,8 @@ void Zone::CoarseGrids()
 
 void Zone::SetInterface(Grid *base_grid, Grid *cgrid)
 {
-    InterfaceInfo *iinfo = base_grid->GetInterfaceInfo();
-    cgrid->SetInterfaceInfo(iinfo);
+    InterfaceInfo *interfaceInfo = base_grid->GetInterfaceInfo();
+    cgrid->SetInterfaceInfo(interfaceInfo);
 }
 
 void Zone::ShowCoarseGrids()
@@ -150,10 +157,10 @@ void InitGlobalValuesOfAllZones()
 void InitGlobalValuesGrid()
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
     int maxale = GlobalDataBase::GetIntParaFromDB("maxale");
 
-    if ((isUnsteady == 0) || (codeOfAleModel == 0))
+    if (!isUnsteady || !isAle)
     {
         return;
     }
@@ -238,9 +245,21 @@ void InitGlobalValuesSolver()
         if (chemical == 0)
         {
             gas = new PerfectGas();
+            #ifdef USE_HYFLOW_CODE
+            int nEquilibriumGas = GlobalDataBase::GetIntParaFromDB("nEquilibriumGas");
+            if (nEquilibriumGas > 0)
+            {
+                eqGas = new EquilibriumGas(nEquilibriumGas);
+            }
+            #endif
         }
         else
         {
+            #ifdef USE_HYFLOW_CODE
+            gas = new RealGas();
+            #else
+            gas = new MixedGas();
+            #endif
         }
         gas->InitGlobalParameterOfNSEquation();
     }
@@ -260,6 +279,14 @@ void CleanGlobalValuesSolver()
         using namespace GAS_SPACE;
         delete gas;
         gas = 0;
+        #ifdef USE_HYFLOW_CODE
+        int nEquilibriumGas = GlobalDataBase::GetIntParaFromDB("nEquilibriumGas");
+        if (chemical == 0 && nEquilibriumGas > 0)
+        {
+            delete eqGas;
+            eqGas = 0;
+        }
+        #endif
     }
     else if (iapplication == 1)
     {

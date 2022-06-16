@@ -47,3 +47,23 @@ inline int Param_NSSolverUnstruct::GetLimiterType() const
 {
     return limiterType;
 }
+
+inline RDouble Param_NSSolverUnstruct::GetCatalyticCoef() const
+{
+    return catalyticCoef;
+}
+
+inline RDouble Param_NSSolverUnstruct::GetChemicalSpectrumRadiusCoef() const
+{
+    return chemicalSpectrumRadiusCoef;
+}
+
+inline RDouble Param_NSSolverUnstruct::GetChemicalRelaxCorf() const
+{
+    return chemicalRelaxCorf;
+}
+
+inline RDouble Param_NSSolverUnstruct::GetStaticPressureRelaxCorf() const
+{
+    return staticPressureRelaxCorf;
+}

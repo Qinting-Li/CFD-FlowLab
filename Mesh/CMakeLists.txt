@@ -39,6 +39,10 @@ if(USE_Windows_X64)
 endif(USE_Windows_X64)
 endif(WIN32)
 
+if(USE_INHOUSE_VERSION)
+  message(STATUS "USE_INHOUSE_VERSION is turned on!")
+  add_definitions(-DUSE_INHOUSE_VERSION)
+endif(USE_INHOUSE_VERSION)
 
 set(MESH_TARGET_NAME "PHMesh")
 set(LIBRARY_OUTPUT_PATH)
@@ -99,6 +103,11 @@ includeHeadFiles()
 set(HDF5_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
 
+if(USE_TecplotLib)
+set(TECIO_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
+include_directories("${TECIO_H_PATH}")
+endif(USE_TecplotLib)
+
 set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
@@ -115,53 +124,93 @@ set(OVERSET_H_PATH   include)
 set(OVERSET_H_LIST
 ${OVERSET_H_PATH}/UnstructuredOversetConfig.h
 ${OVERSET_H_PATH}/UnstructuredGridQuickSearch.h
+${OVERSET_H_PATH}/DynamicGrid.h
+${OVERSET_H_PATH}/Mesh_Deformation.h
+${OVERSET_H_PATH}/Mesh_DeformationRBF.h
+${OVERSET_H_PATH}/Mesh_DeformationSPRING.h
+${OVERSET_H_PATH}/ComputationalGrid.h
+${OVERSET_H_PATH}/InterfaceLinkStructure.h
+${OVERSET_H_PATH}/Mesh_CellTopo.h
+${OVERSET_H_PATH}/Mesh_FaceTopo.h
+${OVERSET_H_PATH}/Mesh_Refine.h
+${OVERSET_H_PATH}/Mesh_Refine_Struct.h
+${OVERSET_H_PATH}/Mesh_Refine_Unstruct.h
+${OVERSET_H_PATH}/Mesh_RefineController.h
 )
 source_group(include FILES ${OVERSET_H_LIST}) 
 include_directories(${OVERSET_H_PATH})
 
+if(USE_INHOUSE_VERSION)
     set(PMG_H_PATH  include)
     set(PMG_H_LIST
-        ${PMG_H_PATH}/DynamicGrid.h
-        ${PMG_H_PATH}/GridDeformation.h
-        ${PMG_H_PATH}/GridDeformationRBF.h
-        ${PMG_H_PATH}/GridDeformationSPRING.h
-    )
+        ${PMG_H_PATH}/GridAdaptation.h
+        ${PMG_H_PATH}/ElementFactory.h
+        ${PMG_H_PATH}/ZoneGridSolver.h
+        ${PMG_H_PATH}/ParallelMeshGen.h
+        ${PMG_H_PATH}/ParallelProjection.h
+        ${PMG_H_PATH}/OCCInterFace.h
+        ${PMG_H_PATH}/GridAdaptationCGNS.h
+        ${PMG_H_PATH}/Mesh_Repair.h
+   )
     source_group(include FILES ${PMG_H_LIST}) 
     include_directories(${PMG_H_PATH})
+endif(USE_INHOUSE_VERSION)
 
 # set directory <src>:
 set(OVERSET_CPP_PATH  src)
 set(OVERSET_CPP_LIST
 ${OVERSET_CPP_PATH}/UnstructuredOversetConfig.cpp
 ${OVERSET_CPP_PATH}/UnstructuredGridQuickSearch.cpp
+${OVERSET_CPP_PATH}/DynamicGrid.cpp
+${OVERSET_CPP_PATH}/Mesh_Deformation.cpp
+${OVERSET_CPP_PATH}/Mesh_DeformationRBF.cpp
+${OVERSET_CPP_PATH}/Mesh_DeformationSPRING.cpp
+${OVERSET_CPP_PATH}/ComputationalGrid.cpp
+${OVERSET_CPP_PATH}/InterfaceLinkStructure.cpp
+${OVERSET_CPP_PATH}/Mesh_CellTopo.cpp
+${OVERSET_CPP_PATH}/Mesh_FaceTopo.cpp
+${OVERSET_CPP_PATH}/Mesh_Refine.cpp
+${OVERSET_CPP_PATH}/Mesh_Refine_Struct.cpp
+${OVERSET_CPP_PATH}/Mesh_Refine_Unstruct.cpp
+${OVERSET_CPP_PATH}/Mesh_RefineController.cpp
 )
 source_group(src FILES ${OVERSET_CPP_LIST}) 
 include_directories(${OVERSET_CPP_PATH})
 
+if(USE_INHOUSE_VERSION)
     set(PMG_CPP_PATH  src)
     set(PMG_CPP_LIST
-        ${PMG_CPP_PATH}/DynamicGrid.cpp
-        ${PMG_CPP_PATH}/GridDeformation.cpp
-        ${PMG_CPP_PATH}/GridDeformationRBF.cpp
-        ${PMG_CPP_PATH}/GridDeformationSPRING.cpp
-    )
+        ${PMG_CPP_PATH}/GridAdaptation.cpp
+        ${PMG_CPP_PATH}/ElementFactory.cpp
+        ${PMG_CPP_PATH}/ZoneGridSolver.cpp
+        ${PMG_CPP_PATH}/ParallelMeshGen.cpp
+        ${PMG_CPP_PATH}/ParallelProjection.cpp
+        ${PMG_CPP_PATH}/OCCInterFace.cpp
+        ${PMG_CPP_PATH}/GridAdaptationCGNS.cpp
+        ${PMG_CPP_PATH}/Mesh_Repair.cpp
+   )
     source_group(src FILES ${PMG_CPP_LIST}) 
     include_directories(${PMG_CPP_PATH})
+endif(USE_INHOUSE_VERSION)
 
 # set header file list:
 set(HEAD_LIST
 ${EIGEN_H_PATH}
 ${OVERSET_H_LIST}
 )
-list(APPEND HEAD_LIST ${PMG_H_LIST})
 # add INHOUSE_VERSION_H_LIST
+if(USE_INHOUSE_VERSION)
+    list(APPEND HEAD_LIST ${PMG_H_LIST})
+endif(USE_INHOUSE_VERSION)
 
 # set source file list:
 set(CPP_LIST 
 ${OVERSET_CPP_LIST}
 )
-list(APPEND CPP_LIST ${PMG_CPP_LIST})
 # add INHOUSE_VERSION_CPP_LIST
+if(USE_INHOUSE_VERSION)
+    list(APPEND CPP_LIST ${PMG_CPP_LIST})
+endif(USE_INHOUSE_VERSION)
 
 # adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
@@ -226,26 +275,27 @@ list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME})
 target_link_libraries(${MESH_TARGET_NAME} ${LINK_LIBRARY_LIST})
 
 # For OpenMP
-find_package ( OpenMP )
-if ( OpenMP_FOUND )
+if(USE_OMP)
+find_package (OpenMP)
+if (OpenMP_FOUND)
 
 if(WIN32)
-target_include_directories ( ${MESH_TARGET_NAME}
+target_include_directories (${MESH_TARGET_NAME}
   PRIVATE
     ${OpenMP_CXX_INCLUDE_DIRS}
 )
 
-target_compile_options ( ${MESH_TARGET_NAME}
+target_compile_options (${MESH_TARGET_NAME}
   PRIVATE
     ${OpenMP_CXX_FLAGS}
 )
 
-target_compile_features ( ${MESH_TARGET_NAME}
+target_compile_features (${MESH_TARGET_NAME}
   PUBLIC
     cxx_std_14
 )
 
-target_link_libraries ( ${MESH_TARGET_NAME}
+target_link_libraries (${MESH_TARGET_NAME}
   PRIVATE
     ${OpenMP_CXX_LIBRARIES}
 )
@@ -255,7 +305,7 @@ else(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(WIN32)
 endif (OpenMP_FOUND)
+endif(USE_OMP)
 
 # exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
-

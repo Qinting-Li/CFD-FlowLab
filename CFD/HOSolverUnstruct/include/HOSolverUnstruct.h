@@ -70,6 +70,7 @@ public:
     //void InitFlowAsRestart();
 
     void InitMemory();
+    void ReleaseMemory();
     void AllocateGlobalVariables();
     void InitFlow();
 

@@ -245,7 +245,7 @@ void SolveLinearEquation(RDouble2D *dMatrix, RDouble *rhsMatrix, int nEquation, 
 
     //! Deallocate the memories.
     delete aMatrix;
-    delete [] B;    B = nullptr;
+    delete [] B;    B = NULL;
 }
 
 }

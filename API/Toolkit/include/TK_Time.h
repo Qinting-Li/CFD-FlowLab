@@ -15,8 +15,15 @@
 
 #pragma once
 #include "TK_Log.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 #ifndef WIN32
 #include <sys/time.h>
+#include <unistd.h>
+#endif
+
+#ifdef WIN32
+#define stat _stat
 #endif
 using namespace std;
 
@@ -53,6 +60,9 @@ LIB_EXPORT int WriStatTime(const char *title, double *last_time);
 //! Write starting CPU time, system time, wall time to pri_time.
 //! @param[in] pri_time    must be a vector of three element.
 LIB_EXPORT void StartTime(double *ptr_time);
+
+//! Get the last modification time of files.
+LIB_EXPORT void GetFileModifiedTime(string &fileName, RDouble &TimeFile);
 }
 
 #ifdef WIN32
@@ -80,7 +90,7 @@ public:
     //! Write the elapsed time to log file.
     //! @param[in] title    testing tag.
     //! -# default is null("").
-    void ShowTimeSpanToLogfile(const string &title = "");
+    void ShowTimeSpanToLogFile(const string &title = "");
 
 private:
     double last_time, now_time;
@@ -114,7 +124,7 @@ public:
     //! Write the elapsed time to log file.
     //! @param[in] title    testing tag.
     //! -# default is null("").
-    void ShowTimeSpanToLogfile(const string &title = "");
+    void ShowTimeSpanToLogFile(const string &title = "");
 
 private:
     struct timeval last_time, now_time;

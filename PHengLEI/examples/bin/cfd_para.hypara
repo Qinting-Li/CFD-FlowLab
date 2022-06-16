@@ -24,6 +24,7 @@
 //           4 -- Grid deformation, achieve unstructured grid deformation.
 //           5 -- Grid repairing, repair the original grid in order to remove the negative volume cells.
 //           6 -- Grid mirroring, mirror a symmetry grid to whole grid.
+//			 7 -- Grid type change, convert structured grid to unstructured grid.
 // multiblock: Multi-block grid or not, only for structured grid conversion.
 //             0 -- Not.
 //             1 -- Yes.
@@ -72,6 +73,7 @@ int omit_no_bound_bc = 0;
 //                      6 -- Ustar, mgrid.in.
 //                      7 -- Hybrid, include both of unstructured and structured grid, *.fts.
 //                      8 -- GMSH, *.msh.
+//                      9 -- Gridgen type of structured grid, *.dat/*.grd.
 // dumpOldGrid: If dump out the old grid file.
 //              0 -- Not. (default)
 //              1 -- Yes.
@@ -93,7 +95,6 @@ string out_gfile  = "./grid/flat_laminr_133_85_2d.fts";
 // ----------------- some advanced choices ------------------------------
 // iunsteady: The Grid is for unsteady simulation or not.
 int iunsteady = 0;
-int codeOfAleModel = 0;
 
 // fileformat: Ustar Grid file format.
 //             0 -- BINARY.
@@ -113,12 +114,10 @@ string holeFullFileName    = "./oversetGridView/holeFullFile.dat";
 string linkFileName        = "./oversetGridView/topology.dat";
 string zoneInverseFileName = "./oversetGridView/zoneInverseMapping.inp";
 
-// ----------------- Adaptive Mesh Refine -------------------------------
-// In this file, the original_grid_file is used of the partition part.
-// If use it dependently, abstract it here.
-string adapt_grid_file  = "./grid/sphere_mixed_adapt1.fts";
-string geometryFileName = "./grid/jsm.igs";
-
+// ----------------- Grid Refine Parameters -----------------------------
+// anisoRefine: If refine grid by anisoRefine type.
+//              0 -- Not. (default)
+//              1 -- Yes.
 // geometryUnit: Geometry unit.
 //               1 -- meter.
 //               2 -- millimeter.
@@ -128,14 +127,14 @@ string geometryFileName = "./grid/jsm.igs";
 //                1 -- JSM-C2-NPOFF case.
 //                2 -- CHNT.
 // projectOrgPoint: If the original wall points need to be projected or not.
-int geometryUnit = 1;
 int anisoRefine  = 0;
+int geometryUnit = 1;
 int isProject    = 0;
 int readDist     = 0;
 int isDeform     = 0;
-int exclusiveCase   = 0;    // 0: NON case; 1: JSM-C2-NPOFF case; 2: CHNT.
-int projectOrgPoint = 0;    // if project original wall points.
-
+int exclusiveCase   = 0;
+int projectOrgPoint = 0;
+string geometryFileName = "./grid/jsm.igs";
 
 // ----------------- Grid Deform Parameters -----------------------------
 // deformationMethod: Grid Deform.
@@ -192,8 +191,11 @@ double rotationAngle = 0.0;
 //            1 -- struct grid.
 //            2 -- refine structured grid.
 // maxproc: The number of partition zones that want to be divided into.
+// numberOfMultifile: The number of partition grid files that want to be dumped out.
+
 int pgridtype = 0;
 int maxproc   = 4;
+int numberOfMultifile = 1;
 
 // traceMark: Trace mark or not, only for structured grid partition.
 //            0 -- Not.
@@ -302,6 +304,7 @@ int compressible = 1;
 // refMolecularWeight : the reference molecular weight of gas used for perfect gas. The unit is g/mol.
 // Generally, the gas is air. Sometimes, it is experiment gas, such as Nitrogen, Argon, and so on.
 
+int directionMethod = 0;
 double refMachNumber = 0.73;
 double attackd       = 2.79;
 double angleSlide    = 0.00;
@@ -345,6 +348,7 @@ double wallTemperature = -1.0;
 
 double radiationCoef = 0.8;
 double gridScaleFactor = 1.0;
+double gridTranslationVector[] = [0.0, 0.0, 0.0];
 
 int numberOfAerodynamicForceComponents = 1;
 double forceReferenceLengthSpanWise = 1.0;    // unit of meter.
@@ -370,8 +374,11 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
 //                     -- "vanalbada", "vanleer", "minmod", "smooth", "minvan", "3rdsmooth", "3rd_minmod_smooth".
 //                     -- "nolim", no limiter.
 //                     -- "vanalbada_clz", clz supersonic version.
+//                     -- "weno3_js", "wenn3_prm211", "wenn3_zm", "wenn3_zes2", "wenn3_zes3"
+
 string inviscidSchemeName = "roe";
 string str_limiter_name   = "vanalbada";
+int isWennScheme = 0;
 
 #*******************************************************************
 #                         UnStruct Solver or Common                *
@@ -432,6 +439,7 @@ string str_limiter_name   = "vanalbada";
 //              3 -- Harten type, which is default used.
 // roeEntropyScale: Entropy fix (correction) coefficient scale, default is 1.0.
 //                  It is used to scale the default Roe entropy fix coefficients.
+// AusmpwPlusLimiter: A Limiter to make "function w" not change acutely in AusmpwPlus scheme, default is 1.0
 
 //int    viscousType    = 0;
 //string viscousName = "Euler";
@@ -462,6 +470,8 @@ double skewnessAngle = 60.0;
 int roeEntropyFixMethod = 3;
 double roeEntropyScale  = 1.0;
 
+double AusmpwPlusLimiter = 1.0;
+
 //-----------------------------------------------------------------------
 #                       Temporal Discretisation                         #
 //-----------------------------------------------------------------------
@@ -477,8 +487,8 @@ double roeEntropyScale  = 1.0;
 // statisticalTimePeriod: Used as time period of statistic analysis.
 //                        when the value is negative, time period is treated as infinite.
 // statisticMethod: Statistic reynolds stress method.
-                  0 --tau = <q^2> - <q>^2
-                  1 --tau = <u'u'>
+//               0 -- tau = <q^2> - <q>^2
+//               1 -- tau = <u'u'>
 // min_sub_iter: The min sub iteration of unsteady simulation.
 // max_sub_iter: The max sub iteration of unsteady simulation.
 // tol_sub_iter: The tolerance of sub iteration of unsteady simulation.
@@ -489,9 +499,8 @@ double roeEntropyScale  = 1.0;
 //               4 -- LU-SGS.
 //               5 -- Block LU-SGS.
 //               6 -- Jacobian iteration.
-//               7 -- Lower G-S iteration.
-//               8 -- Upper G-S iteration.
-//               9 -- Lower/Upper G-S iteration.
+//               7 -- Line LU-SGS.
+//               8 -- Matrix LU-SGS.
 // iSimplifyViscousTerm: Simplify the computation of viscous term in the Block LU-SGS method. The default value assigns 1 that could speed up the computation.
 //                       Otherwise, the viscous Jacobian matrix Mv should be computed that will increase the memory and time in iteration of the BLUSGS method.
 // CFLStart: Started cfl number.
@@ -504,6 +513,10 @@ double roeEntropyScale  = 1.0;
 // ifLocalTimeStep: Time step method.
 //               0 --Local.
 //               1 --Global.
+// isUseLocalCFL: use variable number of CFL or not.
+//               0 -- global unified CFL number.
+//               1 -- local CFL number.
+// isUsePreTwall: use the previous temperatures on wall. 1 indicates yes, and 0 indicates no.
 // visl_min: Minimum value of laminar viscosity coefficient.
 // turbCFLScale: Turbulence model cfl number factor.
 // codeOfAleModel: Arbitrary Lagrangian-Eulerian method.
@@ -536,9 +549,17 @@ double tol_sub_iter = 0.01;
 int    tscheme      = 4;
 int    iSimplifyViscousTerm = 1;
 int    ifLocalTimeStep = 0;
+int    isUseLocalCFL = 0;
+int    isUsePreTwall = 0;
 double CFLStart     = 0.01;
 double CFLEnd       = 10.0;
 int    CFLVaryStep  = 500;
+
+double pMaxForCFL = 0.2;
+double pMinForCFL = 0.1;
+double deltaMaxForCFL = 0.2;
+double magnifyFactorForCFL = 1.1;
+double reduceFactorForCFL = 0.5;
 
 double ktmax        = 1.0e10;
 
@@ -559,7 +580,7 @@ double dtau     = 0.001;
 int wallFunctionType = 0;
 
 int RKStage    = 2;
-double lamda[] = 0.5, 1.0;
+double lamda[] = [0.5, 1.0];
 
 //int RKStage    = 1;
 //double lamda[] = 1.0;
@@ -590,12 +611,20 @@ double lamda[] = 0.5, 1.0;
 // wall_aircoefile: The file path to save flowfield variables of wall, write data for every default steps.
 // nDumpSurfaceInfo = 0 the "wall_varfile" write the informations including heat flux.
 // nDumpSurfaceInfo = 1 the "wall_varfile" write the informations without heat flux.
+// nIsComputeWallDist: Whether to compute the wall distance.  
+//                     0 -- Compute wall distance.
+//                     1 -- Not compute.
+// 
+// protectionFile0 and protectionFile1 : Two continuation file  of the data protection mechanism.
+// wall_heatfluxfile : The file to output the MaxHeatFlux of wall.
 
 int    numberOfGridGroups = 1;
 string gridfile           = "./grid/rae2822_hybrid2d__4.fts";
 string wallTemperaturefile= "";
 
+int    nIsComputeWallDist = 0;
 int    walldistMethod     = 1;
+int    cellMethodOrNodeMethod = 0;
 
 string resSaveFile        = "results/res.dat";
 string turbresfile        = "results/turbres.dat";
@@ -607,6 +636,10 @@ string turbfile           = "results/turb.dat";
 string visualfile         = "results/tecflow.plt";
 string wall_aircoefile    = "results/wall_aircoef.dat";
 string samplefile         = "results/sample.dat";
+
+string protectionFile0    = "results/flow0.dat";
+string protectionFile1    = "results/flow1.dat";
+string wall_heatfluxfile  = "results/wall_heatflux.dat";
 
 int nDumpSurfaceInfo      = 0;
 string wall_varfile       = "";
@@ -659,7 +692,10 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 //                   -- modeledTKE(18), modeleddissipationrate(19), SSTF1(20), SSTF2(21), 
 //                   -- vibration temperature(Tv, 33), electron temperature(Te, 34), vibrational energy(Ev, 35), electric energy(Ee, 36),
 //                   -- number density of electron(Ne, 37), dimensioanl density(rho, 38), dimensioanl pressure(p, 39), dimensioanl temperature(T, 40),
-//                   -- gradientUx(41), gradientUy(42), gradientVx(43), gradientVy(44), iblank(81).
+//                   -- gradientUx(41), gradientUy(42), gradientVx(43), gradientVy(44), streamline_u(45), streamline_v(46), streamline_w(47),
+//                   -- transition intermittency(intermittency, 51), -transition momentum thickness reynolds(MomentumThicknessReynolds, 52),
+//                   -- overlap iblank(iblank, 81)
+
 //                   -- specific heat ratio(gama, 56)
 // Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
 // Variables order must from small to big.
@@ -671,10 +707,7 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 // -heat flux of species diffusion term(Qs, 9), -heat flux of vibrational temperature term(Qv, 10), -heat flux of electron temperature term(Qe, 11),
 // -species mass fractions(Ns, 12), -x component of wall velocity(Vx, 13), -y component of wall velocity(Vy, 14), -z component of wall velocity(Vz, 15)
 // -slip translational-rotational temperature(Tts, 16), -slip vibrational temperature(Tvs, 17), -slip electron temperature(Tes, 18), -absolute wall velocity(Vs, 19)
-// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22), -transition gamaeff(gamaeff, 48),
-// -transition intermittency(intermittency, 51), -transition momentum thickness reynolds(MomentumThicknessReynolds, 52),
-// -overlap iblank(iblank, 81)
-
+// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22), -Grid Reynolds number on wall(Re_w, 23)
 int nVisualVariables = 8;
 int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
 
@@ -702,7 +735,7 @@ int dumpStandardModel = 0;
 //                    1 -- Real cell where the probe is located.
 // nProbeVariables: Number of variables want to be dumped for probes monitered.
 // probeVariables : Variable types dumped, listed as following:
-//                  -- density(0), u(1), v(2), w(3), pressure(4), temperature(5).
+//                  -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6).
 // Important Warning: Array size of probeVariables MUST be equal to nProbeVariables!!!
 // probeVariables order must from small to big.
 // probeVariablesInterpolationMethod: Interpolation method used to compute the probe variables.
@@ -724,8 +757,8 @@ string probesDefineFile = "bin/probes_XYZ.dat";
 
 int searchCellsMethod = 0;
 
-int nProbeVariables  = 6;
-int probeVariables[] = [0, 1, 2, 3, 4, 5];
+int nProbeVariables  = 7;
+int probeVariables[] = [0, 1, 2, 3, 4, 5, 6];
 int probeVariablesInterpolationMethod  = 0;
 //-----------------------------------------------------------------------
 #                           Turbulence Parameter                        #
@@ -733,9 +766,13 @@ int probeVariablesInterpolationMethod  = 0;
 // turbInterval: Iteration number of turbulence.
 // kindOfTurbSource: Kinds of turbulent source.
 //                   0 -- Original.
-//                   1 -- Edwards.
-//                   2 -- new.
 // mod_turb_res: If modify the residuals for the cells next to the wall or not, default is 0.
+// transitionType:  transition model type
+//                   0 -- none.
+//                   2 -- gama-re-theta.
+// turbIntensity:  (valid while greater than 0.0 ) turbulent intensity of free stream(*100) in transition
+// freeturbIntensitySRModify: to use SR modify in free stream turbulent intensity decay or not
+
 
 int turbInterval     = 1;
 int turbOrderStruct  = 2;
@@ -749,7 +786,8 @@ int transitionType   = 0;
 double turbIntensity = -1.0;
 int freeturbIntensitySRModify = 0;
 double freeDecayXLocation = 0.0;
-int compressibleCorrection = 0;
+int compressibleCorrection  = 0;
+int prandtlNumberCorrection = 0;
 int transitionMaFix = 1;
 
 # maximum eddy viscosity (myt/my) max.
@@ -819,9 +857,10 @@ int    monitorNegativeConstant = 0;
 // iapplication:
 //               0 -- gas model is fixed in the codes.
 //               1 -- gas model is imported from library files.
-// iCodeBranch:
-//               0 -- The old code version is used for Navier-Stokes.
-//               1 -- A new code version is active for Navier-Stokes solver.
+// isAdaptiveSolver:  isAdaptiveSolver=0 indicates the generic Navier-Stokes solver, 
+//				 isAdaptiveSolver>0 indicates the HyFlow self-adaptive solver.
+//               1 -- using HyFlow self-adaptive solver where the switch is controlled by the total iteration steps.
+//               2 -- using HyFlow self-adaptive solver where the switch is controlled by variation of the key residual.
 // nm: Equation number of the physics, but is out of commision now.
 //               4 -- for 2D.
 //               5 -- for 3D.
@@ -835,7 +874,6 @@ int    monitorNegativeConstant = 0;
 //               0 -- not used  .
 //               1 -- used.
 // nDensityModify: The type of densitymodify. 
-
 //               0 -- not used.
 //               1 -- used.
 // nchem:
@@ -871,9 +909,13 @@ int    monitorNegativeConstant = 0;
 //               1 -- One-temperature model.
 //               2 -- Two-temperature model.
 //               3 -- Three-temperature model.
+// nIdealState: whether take all gas species as ideal gas for gas-mixture process.
+//               0 -- No.
+//               1 -- Yes.
 // nTEnergyModel: the method to computing temperature energy model.
 //               0 -- the energy term is computed using the conventional method.
-//               1 -- the energy term is computed using the curve fitting method.
+//               1 -- the energy term is computed using the polynomial fitting method.
+//               2 -- the energy term is computed using the piecewise polynomial fitting method.
 // parkVDPower: the power of translational-rotational temperature in the Park V-D(vibration-dissociation) coupling model.
 //              The value is in range of [0.0, 1.0], DPLR suggests 0.5, LAURA suggests 0.7, while 0.6 is given as default value.
 // catalyticCoef:
@@ -886,6 +928,13 @@ int    monitorNegativeConstant = 0;
 // nTemperatureJump : the method to calculate the temperature jump.
 //             0 -- calculated by the variables of heat conductivity and constant volume specific heat for each energy mode.
 //             1 -- the general method where the iteration is calculated with the translation-rotation temperature.
+// nSurfGradMethod : the method to compute the surface heating ratio.
+//             0 -- the gradient of variable is computed with the first-order difference method.
+//             1 -- the gradient of variable is computed with the Green-Guass integral method.
+// nRapidFlowfield : initialize the flowfield using the rapid engineering method when it is greater than zero.
+// nSurfHeatMonitor : To exam the surface heating change or not. 0 is no, 1 is yes.
+// nInitPressureStep : the steps to initialize the boundary variables when the rapid method is used. 100 is the default value.
+// nDumpCFLNumber : 1 indicates dumping the CFL number to file, 0 denotes no dumping.
 // sigmaVelocity: the coordination coefficient of tangential momentum for computation of slip velocity. The value is in range of (0.0, 2.0].
 // sigmaTemperature: the heat coordination coefficient for computation of slip temperature. The value is in range of (0.0, 2.0].
 // sigmaMassFraction: the species coordination coefficient for computation of slip mass fractions. The value is in range of (0.0, 2.0].
@@ -895,13 +944,17 @@ int    monitorNegativeConstant = 0;
 //             1.146 -- proposed for an additional "fictitious" velocity slip.
 
 // chemicalRelaxCorf:          The value is in range of [0.001, 1.0].
-// chemicalSpectrumRadiusCoef: The value is in range of [1.0, 3.0].
-// viscousSpectrumRadiusCoef : The value is in range of [1.0, 3.0].
-// inviscidSpectrumRadiusCoef: The value is in range of [1.0, 3.0].
+// spectrumRadiusCoef: 	       The value is in range of [0.0, 2.0].
 // staticPressureRelaxCorf:    The value is in range of [0.1, 1.0].
 // nIsChemicalFreeze : the flag to freeze the chemical reactions.
 //           0 -- not freeze, the chemical reaction sources will be calculated.
 //           1 -- freezes the chemical reactions, the chemical reaction sources will not be calculated.// veTemperatureMin:  The minimum of Tv and Te
+
+//maxViscous: the maximum of Viscous.
+//trTemperatureMin: the minimum value of trTemperature.
+//veTemperatureMin: the minimum value of veTemperature.
+//densityMin: the minimum value of density.
+//tAdjustmentFactor: magnification of temperature, this value is in range of (1.0, 10.0].
 // nDebug:  cout the Wrong place and abort
 //           0 -- not used.
 //           1 -- used.
@@ -914,9 +967,30 @@ int    monitorNegativeConstant = 0;
 // nViscosityFluxSublevelModified: Modified for ViscosityFlux on Sublevel grid
 //           0 -- not used.
 //           1 -- used.
+// nViscosityPeModified: Pe Modified for ViscosityCoef
+//           0 -- not used.
+//           1 -- used.
 // nChemcalSourceModified: Modified on ChemcalSource 
 //           0 -- not used.
 //           1 -- used.
+// nChemcalSourceEsMethod:  Modified on ChemcalSource 
+//           0 --  approximation algorithm 1 (Ori.)
+//           1 --  approximation algorithm 2 (New)
+
+// nMaxStepTemperature: the iterative steps of temperature.
+
+// veTemperatureMinModified:  Modified on the minimum of Tve for Cvvs
+//           0 --  not used
+//           1 --  used
+
+// nDiagonalModified:  Modified on Diagonal
+//           0 --  not used
+//           1 --  Ori.
+//           2 --  new
+
+//nGradPrimtiveMethod: 
+//           0 --  Ori.
+//           1 --  new
 // nAblation:
 //               0 -- The wall ablation is not computed.
 //               1 -- The wall ablation is computed.
@@ -924,9 +998,11 @@ int    monitorNegativeConstant = 0;
 //               0 -- The injection velocity of ablation wall is not computed.
 //               1 -- The injection velocity of ablation wall is computed.
 // nViscosityModel:
-
-//               0 -- Blottner fitting method.
-//               1 -- Gupta fitting method.
+//               0 -- Blottner fitting method(N89).
+//               1 -- Gupta fitting method(N90).
+// nContinueModel: The new continue model can switch different computation model.
+//               0 -- Not use the new continue model.
+//               1 -- use the new continue model.
 // nSutherland:
 //               0 -- stands for selecting the Blotter curve fits mode.
 //               1 -- stands for Sutherland relation.
@@ -936,20 +1012,54 @@ int    monitorNegativeConstant = 0;
 //            "DK" -- indicates the Dunn-Kang Model, three-Type Models are embeded in the library, namely, the 5-species-11-reactions, the 7-species-15-reactions, the 11-species-26-reactions.
 //            "Mars-Pa8" is for Park model of Mars gas, "Mars-Mc8" for McKenzie model of Mars gas.
 //            "Combustion-12" -- indicates the Combustion Chamber Gas Model which includes 12-species-20-reactions.
-//            "Gas-Mixture" -- indicates the process of mixing two species without reacting.
+//            "Gas-Mixture" -- indicates the process of mixing gas without reacting.
+//                             for struct solver mixing two species£¨SpeciesA, SpeciesB£©.
+//                             for unstruct solver mixing multi-species£¨O2 NO CO CO2 H2 N2 Air CH4£©.
 //            For self-definition model, the gasfile is used to indicate the file path of the new gas model.
 // speciesName: Used to list the names of each species, while each species name is separated by the symbol of comma.
 // initMassFraction: Used to list the initial mass fractions of species in accordance with the sequence of names in the parameter speciesName.
 // ifStartFromPerfectGasResults: The chemical reaction simulation is start from perfect gas flowfield or not, 0 is for no and else is for yes.
+// nIterFirstStep  : the maximum number of iteration in the first step for the self-adaptive calculation.
+// nIterSecondStep : the maximum number of iteration in the second step for the self-adaptive calculation.
+// nIterThirdStep  : the maximum number of iteration in the third step for the self-adaptive calculation.
+// nEnergyAssembly : the vibration energy is computed with combined method which includes the fitting method and the molecular kinetic theory.
+//                 0 -- no, 
+//                 1 -- yes.
+// nControlVariable: the variable to computing the residual error that determines the convergence is meet or not in the one-temperature model.
+//                 0 -- the density.
+//                 1 -- the translation temperature.
+//                 2 -- the vibration temperature.
+//                 3 -- the electron temperature.
+//                 4 -- the pressure.
+//                 5 -- the mass fraction of oxygen.
+//                 6 -- the mass fraction of nitrogen.
+// firstStepError  : the residual error of the first step iteration for the self-adaptive calculation.
+// secondStepError : the residual error of the second step iteration for the self-adaptive calculation.
+// thirdStepError  : the residual error of the third step iteration for the self-adaptive calculation.
+// useHyflowSetting : Setting for HyFLOW GUI.
+//                   0 -- PHengLEI
+//                   1 -- HyFLOW  
+//  nProtectData   : Use the continuation file data protection mechanism.
+//                   0 -- no
+//                   1 -- yes
 
 int dg_high_order = 0;
 int iapplication  = 0;
-int iCodeBranch   = 0;
+int isAdaptiveSolver = 0;
 int nm            = 5;
 int nEquilibriumGas = 0;
 int nPCWCycleStep = 3;
 int nRETCycleStep = 3;
 int nSLIPCycleStep= 3;
+int nIterFirstStep = 1000;
+int nIterSecondStep= 2000;
+int nIterThirdStep = 2000;
+int nEnergyAssembly = 0;
+int nControlVariable = 1;
+double firstStepError  = 0.01;
+double secondStepError = 0.001;
+double thirdStepError  = 0.001;
+double predictCFLError = 0.1;
 
 double refGama    = 1.4;
 double prl        = 0.72;
@@ -963,7 +1073,8 @@ int    nchemsrc   = 1;
 int    nchemrad   = 1;
 int    ntmodel    = 1;
 
-int nEnergyRecycle = 0;
+int nIdealState = 0;
+int nEnergyRecycle = 1;
 int nSlipBCModel   = 0;
 int nDensityModify = 1;
 int nTEnergyModel  = 0;
@@ -971,6 +1082,11 @@ int nMeanFreePathType = 0;
 int nIsChemicalFreeze = 0;
 int nIsSuperCatalytic = 1;
 int nTemperatureJump  = 0;
+int nSurfGradMethod = 0;
+int nRapidFlowfield = 0;
+int nSurfHeatMonitor = 0;
+int nInitPressureStep = 100;
+int nDumpCFLNumber = 0;
 
 double parkVDPower   = 0.6;
 double catalyticCoef = 0.0;
@@ -979,19 +1095,40 @@ double sigmaTemperature = 1.0;
 double sigmaMassFraction = 1.0;
 double velocitySlipCorrectConstant = 1.0;
 
-double chemicalRelaxCorf          = 1.0;
+double chemicalRelaxCorf        = 1.0;
 double chemicalSpectrumRadiusCoef = 1.0;
-double viscousSpectrumRadiusCoef  = 1.0;
-double inviscidSpectrumRadiusCoef = 1.0;
-double staticPressureRelaxCorf    = 1.0;
+double viscousSpectrumRadiusCoef  = 1.5;
+double inviscidSpectrumRadiusCoef = 1.5;
+double spectrumRadiusCoef 	= 0.5;
+double staticPressureRelaxCorf  = 0.2;
 
+double maxViscous = 10000.0;
+double trTemperatureMin = 10.0;
 double veTemperatureMin = 30.0;
-int    nDebug = 0;
-int    nSpeciesLimit = 0;
-int    nTurblenceForChemical = 0;
-int    nViscosityFluxSublevelModified = 0 ;
-int    nChemcalSourceModified = 0;
+double maxTemperature = 50000.0;
+double densityMin = 1.0e-8;
+double densityMinFactor = 0.1;
+double tAdjustmentFactor = 10.0;
+double iniSpeedCoef = 1.0;
 
+int    nDebug = 0;
+int    nSpeciesLimit = 1;
+int    nTurblenceForChemical = 0;
+int    nViscosityFluxSublevelModified = 1;
+int    nViscosityPeModified = 0;
+int    nChemcalSourceModified = 2;
+int    nChemcalSourceEsMethod = 1;
+int    nMaxStepTemperature  = 5;
+int    veTemperatureMinModified = 1;
+int    nDiagonalModified = 0;
+int    nGradPrimtiveMethod = 1;
+int    nInviscidFluxModify = 1;
+int    nQlLimitMethod = 2;
+int    nSpeciesForWallMethod = 1;
+int    nDensityForWallMethod = 0;
+
+int    nProtectData = 0;
+int    useHyflowSetting = 0;
 int    nAblation   = 0;
 int    isInjection = 0;
 int    nViscosityModel = 0;
@@ -1011,7 +1148,7 @@ string initMassFraction = "0.0, 0.233, 0.0, 0.0, 0.767";
 //string speciesName = "O, O2, NO, N, N2, C, CO, CO2";
 //string initMassFraction = "0.0015, 0.0429, 0.0, 0.0, 0.0, 0.0, 0.0777, 0.8779";
 
-//string gasfile    = "DK7";
+//string gasfile    = "Pa";
 //string speciesName = "O, O2, NO, N, NO+, C, C2, CO, CO2, CN, N2, e-";
 //string initMassFraction = "0.0, 0.233, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.767, 0.0";
 
@@ -1028,8 +1165,13 @@ double gamaSpeciesB = 1.3;
 double molecularWeightSpeciesA = 29.0;
 double molecularWeightSpeciesB = 30.0;
 
-int    nChemicalFlowStep = 0;
-int    ifStartFromPerfectGasResults = 0;
+//string gasfile = "Gas-Mixture";
+//string speciesName = "O2, N2";
+//string initMassFraction = "1.0, 0.0";
+
+int nContinueModel = 0;
+int nChemicalFlowStep = 0;
+int ifStartFromPerfectGasResults = 0;
 
 #########################################################################
 // Multi-Grid parameters.
@@ -1152,8 +1294,12 @@ int    outTecplotOverset           = 0;
 int     numberOfMovingBodies       = 2;
 
 // ----------------- ALE configuration ------------------------------
-int codeOfAleModel                = 1;
+int codeOfAleModel                = 0;
 int aleStartStrategy              = -1;
+
+double referenceLength            = 1.0;
+double referenceVelocity          = 1.0;
+double referenceDensity           = 1.0;
 
 int strategyForFaceNormalVelocity = 0; //0-By Sweeping volume; 1-By face center 1st; 2-By face center 2nd; 
 int strategyForGCLSource          = 0; //0-present; 1-Ahn;
@@ -1198,6 +1344,11 @@ double configPamameter_0[]     = 0.0      ,0.0      ,0.0      ,0.0      ,0.0    
 int  RBDMethod_0                = 0;
 double amplitude_0              = 0.0;
 double reduceFrequency_0        = 0.0;
+//direction of rotation
+//         1 -- clockwise from the point of view along the positive x axis.
+//        -1 -- anticlockwise from the point of view along the positive x axis.
+int direction_0                 = -1;
+double rotateFrequency_0        = 0.0;
 //string uDFSixDofFileName_0    = "./Bin/UDFSixDof.Parameter";
 //additional force  (system axis)             fX        fY        fZ        
 double addedForce_0[]           = 0.0      ,0.0      ,0.0       ;
@@ -1228,4 +1379,13 @@ int    integralOrder            = 4;
 #                             Old Parameter                             #
 #########################################################################
 int isPlotVolumeField = 0;
+
+
+#########################################################################
+#                         Incompressible Parameter                      #
+#########################################################################
+
+int isSolveEnergyEquation = 0;
+int isSolveTurbEquation = 0;
+int isSolveSpeciesEquation = 0;
 
