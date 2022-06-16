@@ -9,11 +9,8 @@
 #include "AleModel.h"
 #include "MixGrid.h"
 #include "Solver.h"
-
-
-#ifdef USE_MULTISPECIES_CODE
 #include "MixedGas.h"
-#endif
+
 
 using namespace std;
 
@@ -246,10 +243,7 @@ void InitGlobalValuesSolver()
         }
         else
         {
-
-            #ifdef USE_MULTISPECIES_CODE
             gas = new MixedGas();
-            #endif
         }
         gas->InitGlobalParameterOfNSEquation();
     }

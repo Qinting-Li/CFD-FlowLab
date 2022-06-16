@@ -50,7 +50,6 @@ opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
 opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
-opt_build(MultiSpecies "Build MultiSpecies module or not" OFF) #Build MultiSpecies or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
 
 set(GPROF OFF)
@@ -115,11 +114,6 @@ if(USE_ErrorDataDebug)
   message(STATUS "USE_ErrorDataDebug is turned on!")
   add_definitions(-DUSE_ErrorDataDebug)
 endif(USE_ErrorDataDebug)
-
-if(BUILD_MultiSpecies)
-  message(STATUS "BUILD_MultiSpeciesis turned on!")
-  add_definitions(-DUSE_MULTISPECIES_CODE)
-endif(BUILD_MultiSpecies)
 
 if(WIN32)
 if(USE_Windows_X64)
