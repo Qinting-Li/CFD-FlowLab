@@ -206,7 +206,7 @@ void CombinGrid::MergeInterface2All()
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         UnstructGrid *gridLocal = UnstructGridCast(grid_in[iZone]);
-  
+
         UnstructBCSet *unstructBCSet = gridLocal->GetUnstructBCSet();
         int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
@@ -522,7 +522,7 @@ void CombinGrid::MergeBCType()
         int nBoundFace = unstr->GetNBoundFace();
         int *face2all = GetFace2All(iZone);
 
-       UnstructBCSet *unstructBCSet = unstr->GetUnstructBCSet();
+        UnstructBCSet *unstructBCSet = unstr->GetUnstructBCSet();
         int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
@@ -539,21 +539,20 @@ void CombinGrid::MergeBCType()
 
                 if (bcRegion->GetBCType() == PHENGLEI::INTERFACE)
                 {
-                if (isFaceMerged[globalFaceID])
-                {
-                    //! The interface has been merged, it no longer be boundary face now.
-                    continue;
+                    if (isFaceMerged[globalFaceID])
+                    {
+                        //! The interface has been merged, it no longer be boundary face now.
+                        continue;
+                    }
                 }
+                ++ nBFace_all;
             }
-            ++ nBFace_all;
         }
     }
   }
 
     grid_all->SetNBoundFace(nBFace_all);
     UnstructBCSet **bcr_all = new UnstructBCSet * [nTFace_all];
-
-    set<string> bcNameSet;
 
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
@@ -578,9 +577,6 @@ void CombinGrid::MergeBCType()
             bcr_all[globalFaceID] = new UnstructBCSet();
             bcr_all[globalFaceID]->SetKey(bcr[iFace]->GetKey());
             bcr_all[globalFaceID]->SetBCName(bcr[iFace]->GetBCName());
-
-            bcNameSet.insert(bcr[iFace]->GetBCName());
-
         }
     }
 
@@ -662,41 +658,16 @@ void CombinGrid::MergeBCType()
 
     int interfaceID = 0;
     
-    int nBCRegionUnstruct = static_cast<int>(bcNameSet.size());
-
-    grid_all->CreateUnstructBCSet(nBCRegionUnstruct);
-
-    UnstructBCSet *unstructBCSetAll = grid_all->GetUnstructBCSet();
-    int* bcRegionIDofBCFaceAll = new int[nBFace_all];
-    set<string>::iterator iter;
-    int count = 0;
-    
-    for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
+    for (int iFace = 0; iFace < nBFace_all; ++ iFace)
     {
-        UnstructBC *unstructBCAll = new UnstructBC(count);
-        unstructBCSetAll->SetBCRegion(count, unstructBCAll);
-        unstructBCAll->SetBCName(*iter);
+        bcr_all2[iFace] = bcr_all[iFace];
 
-        for (int iFace = 0; iFace < nBFace_all; ++iFace)
+        if (bcr_all[iFace]->GetKey() == PHENGLEI::INTERFACE)
         {
-            bcr_all2[iFace] = bcr_all[iFace];
-
-            if (bcr_all[iFace]->GetBCName() == unstructBCAll->GetBCName())
-            {
-                unstructBCAll->SetBCType(bcr_all[iFace]->GetKey());
-                bcRegionIDofBCFaceAll[iFace] = count;
-                vector<int>* faceIndex = unstructBCAll->GetFaceIndex();
-                faceIndex->push_back(iFace);
-            }
-            if (bcr_all[iFace]->GetKey() == PHENGLEI::INTERFACE)
-            {
-                interface2BoundaryFaceafterReorder[interfaceID] = iFace;
-                face2InterfaceafterReorder[iFace] = interfaceID ++;
-            }
+            interface2BoundaryFaceafterReorder[interfaceID] = iFace;
+            face2InterfaceafterReorder[iFace] = interfaceID ++;
         }
-        count++;
     }
-    unstructBCSetAll->SetBCFaceInfo(bcRegionIDofBCFaceAll);
 
     delete [] bcr_all;
 

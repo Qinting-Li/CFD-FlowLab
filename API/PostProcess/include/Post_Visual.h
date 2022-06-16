@@ -93,6 +93,7 @@ public:
 
     Grid * GetGrid() const;
     int GetFlowType() { return this->flowType; }
+    void UpdateVisualNodeVarPtr(const string &name, void *data);
 
 private:
     //! Geometry information.
@@ -184,6 +185,7 @@ const int VISUAL_DIMENSIONAL_W         = 55;
 const int VISUAL_GAMA                  = 56;
 const int VISUAL_CFL1                  = 57;
 const int VISUAL_CFL2                  = 58;
+const int VISUAL_STREAMLINE_MACH       = 59;
 
 const int VISUAL_IBLANK                = 81;
 //const int VISUAL_O2                    = 15;

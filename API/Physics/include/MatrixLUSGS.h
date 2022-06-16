@@ -18,7 +18,7 @@ void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusD
 
 //! Compute and save the diagonal matrix on grids that are used for matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
-void ObtaindiagonalMatrix(StructGrid *gridIn);
+void SolveDiagonalMatrix(StructGrid *gridIn);
 
 //! Construct the Jacobian matrix of the inviscid flux item.
 //! @param[in ]: primitiveVars is the array that stores the primitive variables of the current cell.
@@ -39,11 +39,6 @@ void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDo
 //! @param[in ]: rtemL and rtemR are the parameters of Entropy fix, add by liujian 2019 From JCP ,1995, Lin H-C
 //! @param[out]: jacobianMatrix is an matrix that stores the Roe matrix of the inviscid flux item.
 void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RDouble zfn, RDouble gama, RDouble area, RDouble rtemL, RDouble rtemR, RDouble2D *jacobianMatrix);
-
-//! Notes: This function is same to the SetEntropyFixCoefficients, the two functions should be merged future.
-//! Compute the entropy fix coefficients by the inflow mach number.
-//! @param[in ]: type, '1' denotes the diagonal matrix. '2' denote the lower/upper sweep.
-void GetEntropyAndCoefficients(int &RoeEntropyFixMethod, RDouble &RoeEntropyFixCoef1, RDouble &RoeEntropyFixCoef2);
 
 //! Construct the Jacobian matrix of the viscous flux item.
 //! @param[in ]: primitiveVars is the array that stores the primitive variables of the current cell.

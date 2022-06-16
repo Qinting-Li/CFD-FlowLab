@@ -88,6 +88,7 @@ public:
 
     void GetQlQr  (Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void GetGamaLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+	void GetPressureFactorLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ReConstructFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
     void ZeroResiduals(Grid *gridIn);
     void SpectrumRadiusInviscid(Grid *grid);

@@ -68,7 +68,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_W                  , "w"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_PRESSURE           , "pressure"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_TEMPERATURE        , "temperature"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_MACH               , "streamline_mach"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_MACH               , "mach"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_VISCOSITY_LAMINAR  , "viscosityLaminar"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_VISCOSITY_TURBULENT, "viscosityTurbulence"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_VORTICITY_X        , "vorticity_x"));
@@ -100,6 +100,7 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_IBLANK             , "iblank"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_CFL1               , "localCFL"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_CFL2               , "minCFL"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_MACH    , "streamline_mach"));
 
     int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
     if (nsimutask == UGKS_SOLVER)
@@ -508,6 +509,11 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, Int3D &o
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 
+void Post_Visual::UpdateVisualNodeVarPtr(const string &name, void *data)
+{
+    visualVariablesPtr->UpdateDataPtr(name, data);
+}
+
 LIB_EXPORT void Post_Visual::GetAllVisualNodeVarPtr(RDouble **qn)
 {
     int varCount = 0;
@@ -738,15 +744,14 @@ void DumpToVTK::WriteVTKFilm()
 
     if (CharacteristicBoundary == false)
     {
-        int nChemical = nvarplot - nVisualVariables;
-        PHWrite(file, nChemical);
-
-        if (nChemical)
+        using namespace GAS_SPACE;
+        int numberOfSpecies = gas->GetNumberOfSpecies();
+        PHWrite(file, numberOfSpecies);
+        int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+        if (nChemical > 0)
         {
-            using namespace GAS_SPACE;
-
             string *varname = gas->GetNameOfSpecies();
-            for (int iChemical = 0; iChemical < nChemical; ++ iChemical)
+            for (int iChemical = 0; iChemical < numberOfSpecies; ++ iChemical)
             {
                 write_string(file, varname[iChemical]);
             }

@@ -3001,6 +3001,31 @@ void NSSolverUnstruct::GetGamaLR(Grid *gridIn, FaceProxy *faceProxy, int localSt
     }
 }
 
+void NSSolverUnstruct::GetPressureFactorLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd)
+{
+	UnstructGrid *grid = UnstructGridCast(gridIn);
+	int *leftCellofFace = grid->GetLeftCellOfFace();
+	int *rightCellofFace = grid->GetRightCellOfFace();
+
+	RDouble *rtem = reinterpret_cast <RDouble *> (grid->GetDataPtr("rtem"));
+
+	RDouble *lrtL = faceProxy->GetPressureCoefficientL();
+	RDouble *lrtR = faceProxy->GetPressureCoefficientR();
+
+	
+
+	for (int iFace = localStart; iFace < localEnd; ++iFace)
+	{
+		int le = leftCellofFace[iFace];
+		int re = rightCellofFace[iFace];
+		int jFace = iFace - localStart;
+
+		lrtL[jFace] = rtem[le];
+		lrtR[jFace] = rtem[re];
+	}
+
+}
+
 void NSSolverUnstruct::ZeroResiduals(Grid *gridIn)
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
@@ -4259,31 +4284,73 @@ void NSSolverUnstruct::CalPressureFactor(Grid *gridIn)
     int nTotalCell = grid->GetNTotalCell();
 
     int **cell2face = grid->GetCell2Face();
+	vector<int> * c2c = grid->GetCell2Cell();
     int *faceNumberOfEachCell = grid->GetFaceNumberOfEachCell();
 
     int *leftCellofFace = grid->GetLeftCellOfFace();
     int *rightCellofFace = grid->GetRightCellOfFace();
 
+	RDouble minPressureRatio = 1.3;
+	RDouble maxPressureRatio = 2.6;
+	RDouble pi = 3.141592653589;
+
+	int RoeEntropyFixMethod = this->GetControlParameters()->GetRoeEntropyFixMethod();
+
     RDouble **q   = reinterpret_cast <RDouble **> (grid->GetDataPtr("q"));
     RDouble *rtem = reinterpret_cast <RDouble *> (grid->GetDataPtr("rtem"));
 
-    for (int iCell = 0; iCell < nTotalCell; ++iCell)
-    {
-        RDouble LeftPressureOfCell = zero;
-        RDouble RightPressureOfCell = zero;
-        rtem[iCell] = zero;
-        for (int j = 0; j < faceNumberOfEachCell[iCell]; ++j)
-        {
-            int face = cell2face[iCell][j];
-            int le = leftCellofFace[face];
-            int re = rightCellofFace[face];
+	if (RoeEntropyFixMethod == 2)
+	{
+		for (int iCell = 0; iCell < nTotalCell; ++iCell)
+		{
+			RDouble LeftPressureOfCell = zero;
+			RDouble RightPressureOfCell = zero;
+			rtem[iCell] = zero;
+			for (int j = 0; j < faceNumberOfEachCell[iCell]; ++j)
+			{
+				int face = cell2face[iCell][j];
+				int le = leftCellofFace[face];
+				int re = rightCellofFace[face];
 
-            LeftPressureOfCell  += q[PHSPACE::IDX::IP][le];
-            RightPressureOfCell += q[PHSPACE::IDX::IP][re];
-        }
-        rtem[iCell] += ABS(RightPressureOfCell - LeftPressureOfCell) / ABS(RightPressureOfCell + LeftPressureOfCell);
-        rtem[iCell] /= static_cast <RDouble> (faceNumberOfEachCell[iCell]);
-    }
+				LeftPressureOfCell += q[PHSPACE::IDX::IP][le];
+				RightPressureOfCell += q[PHSPACE::IDX::IP][re];
+			}
+			rtem[iCell] += ABS(RightPressureOfCell - LeftPressureOfCell) / ABS(RightPressureOfCell + LeftPressureOfCell);
+			rtem[iCell] /= static_cast <RDouble> (faceNumberOfEachCell[iCell]);
+		}
+	}
+
+	if (RoeEntropyFixMethod == 6)
+	{	
+		for (int iCell = 0; iCell < nTotalCell; ++iCell)
+		{
+			int nNeighbor = c2c[iCell].size();
+
+			RDouble minPressure = q[IP][iCell];
+			RDouble maxPressure = q[IP][iCell];
+
+			for (int j = 0; j < nNeighbor; ++j)
+			{
+				int neighborCell = c2c[iCell][j];
+				if (q[IP][neighborCell] < minPressure)
+				{
+					minPressure = q[IP][neighborCell];
+				}
+				if (q[IP][neighborCell] > maxPressure)
+				{
+					maxPressure = q[IP][neighborCell];
+				}
+			}
+
+			RDouble pressureRatio = maxPressure / minPressure;
+			RDouble presFunc = min(one, max(zero, (maxPressureRatio - pressureRatio) / (maxPressureRatio - minPressureRatio)));
+			RDouble pressCosFunc = cos(presFunc*pi);
+			pressCosFunc = max(-1.0, min(pressCosFunc, one));
+
+			rtem[iCell] = half * (one - pressCosFunc);
+		}
+	}
+
     grid->SetGhostCellExceptInterface(rtem);
 }
 
@@ -5291,6 +5358,8 @@ void NSSolverUnstruct::GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, 
     GetQlQr(grid, faceProxy, localStart, localEnd);
 
     GetGamaLR(grid, faceProxy, localStart, localEnd);
+
+	GetPressureFactorLR(grid, faceProxy, localStart, localEnd);
 
     ReConstructFaceValue(grid, faceProxy, limiter, localStart, localEnd);
 

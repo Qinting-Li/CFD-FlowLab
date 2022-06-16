@@ -6288,6 +6288,61 @@ namespace PHSPACE
         return mach;
     }
 
+    RDouble4D *NSSolverStruct::CompMachNodeNumber(Grid* gridIn, Post_Visual *postVisualization)
+    {
+        StructGrid *grid = StructGridCast(gridIn);
+
+        int ni = grid->GetNI();
+        int nj = grid->GetNJ();
+        int nk = grid->GetNK();
+
+        Range I, J, K;
+        GetRange(ni, nj, nk, 0, 0, I, J, K);
+        Range M(0, 0);
+
+        RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+        RDouble3D &gama = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
+        //RDouble4D *r    = (RDouble4D*)postVisualization->GetVisualNodeVarPtr("density");
+        //RDouble4D *u    = (RDouble4D*)postVisualization->GetVisualNodeVarPtr("u");
+        //RDouble4D *v    = (RDouble4D*)postVisualization->GetVisualNodeVarPtr("v");
+        //RDouble4D *w    = (RDouble4D*)postVisualization->GetVisualNodeVarPtr("w");
+        //RDouble4D *p    = (RDouble4D*)postVisualization->GetVisualNodeVarPtr("pressure");
+        //RDouble4D *gama = (RDouble4D*)postVisualization->GetVisualNodeVarPtr("gama");
+
+        RDouble4D *mach = new RDouble4D(I, J, K, M, fortranArray);
+
+        int iNodeStart, iNodeEnd, jNodeStart, jNodeEnd, kNodeStart, kNodeEnd;
+        grid->GetNodeIterationIndex(iNodeStart, iNodeEnd, jNodeStart, jNodeEnd, kNodeStart, kNodeEnd);
+
+        int m = 0;
+        for (int k = kNodeStart; k <= kNodeEnd; ++k)
+        {
+            for (int j = jNodeStart; j <= jNodeEnd; ++j)
+            {
+                for (int i = iNodeStart; i <= iNodeEnd; ++i)
+                {
+                    RDouble rm = q(i, j, k, 0);//(*r)(i, j, k, 0);
+                    RDouble um = q(i, j, k, 1);//(*u)(i, j, k, 0);
+                    RDouble vm = q(i, j, k, 2);//(*v)(i, j, k, 0);
+                    RDouble wm = q(i, j, k, 3);//(*w)(i, j, k, 0);
+                    RDouble pm = q(i, j, k, 4);//(*p)(i, j, k, 0);
+                    RDouble c2 = abs((gama)(i, j, k) * pm / (rm + SMALL));//abs((*gama)(i, j, k, 0) * pm / (rm + SMALL));
+                    RDouble v2 = um * um + vm * vm + wm * wm;
+
+                    (*mach)(i, j, k, m) = sqrt(v2 / (c2 + SMALL));
+                }
+            }
+        }
+
+        if (!(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GAMA)))
+        {
+            RDouble4D *gama1 = (RDouble4D*)postVisualization->GetVisualNodeVarPtr("gama");
+            delete gama1;
+        }
+
+        return mach;
+    }
+
     RDouble4D *NSSolverStruct::CompMachNumber(Grid *gridIn)
     {
         StructGrid *grid = StructGridCast(gridIn);
@@ -7822,6 +7877,7 @@ namespace PHSPACE
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
             StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
+            Data_Param *bcParamDB = structBC->GetBCParamDataBase();
             int BCType = structBC->GetBCType();
 
             if (BCType < 0)
@@ -7879,7 +7935,13 @@ namespace PHSPACE
             {
                 if (ifLowSpeedPrecon == 0)
                 {
-                    FarFieldRiemannInvariants(grid, structBC);
+                     RDouble refGama= parameters->GetRefGama();
+                    int useHyflowSetting = parameters->GetUseHyflowSetting();
+                    if(bcParamDB->IsExist("refGama", PHDOUBLE, 1) && useHyflowSetting == 1)
+                    {
+                        bcParamDB->GetData("refGama", &refGama, PHDOUBLE, 1);
+                    }
+                    FarFieldRiemannInvariants(grid, structBC, refGama);
                 }
                 else
                 {
@@ -8143,10 +8205,19 @@ namespace PHSPACE
         int nj = grid->GetNJ();
         int nk = grid->GetNK();
 
+        RDouble4D &faceNormalComponentX = *(grid->GetFaceNormalX());
+        RDouble4D &faceNormalComponentY = *(grid->GetFaceNormalY());
+        RDouble4D &faceNormalComponentZ = *(grid->GetFaceNormalZ());
+        RDouble normalComponetX, normalComponetY, normalComponetZ;
+        int leftOrRightIndex = structBC->GetFaceLeftOrRightIndex();
+        int nSurface = structBC->GetFaceDirection() + 1;
+
+        Param_NSSolverStruct *parameters = GetControlParameters();
+        int useHyflowSetting = parameters->GetUseHyflowSetting();
+
         int is1, js1, ks1, is2, js2, ks2;
         int it1, jt1, kt1, it2, jt2, kt2;
 
-        Param_NSSolverStruct *parameters = GetControlParameters();
         int isWennScheme = parameters->GetWennSchemeFlag();
 
         int nEquation = GetNumberOfEquations();
@@ -8182,6 +8253,26 @@ namespace PHSPACE
                         q(it1, jt1, kt1, m) = q(is1, js1, ks1, m);
                         q(it2, jt2, kt2, m) = q(it1, jt1, kt1, m);
                     }
+
+#ifdef USE_HYFLOW_CODE
+                    if(useHyflowSetting == 1)
+                    {
+                        if(leftOrRightIndex == -1)
+                        {
+                            normalComponetX = -faceNormalComponentX(is1, js1, ks1, nSurface);
+                            normalComponetY = -faceNormalComponentY(is1, js1, ks1, nSurface);
+                            normalComponetZ = -faceNormalComponentZ(is1, js1, ks1, nSurface);
+                        }
+                        else
+                        {
+                            normalComponetX = faceNormalComponentX(it1, jt1, kt1, nSurface);
+                            normalComponetY = faceNormalComponentY(it1, jt1, kt1, nSurface);
+                            normalComponetZ = faceNormalComponentZ(it1, jt1, kt1, nSurface);
+                        }
+                        GAS_SPACE::computeOutSpeed(q(it1, jt1, kt1, IU), q(it1, jt1, kt1, IV), q(it1, jt1, kt1, IW), normalComponetX, normalComponetY, normalComponetZ);   //! modeified  by dms.
+                        GAS_SPACE::computeOutSpeed(q(it2, jt2, kt2, IU), q(it2, jt2, kt2, IV), q(it2, jt2, kt2, IW), normalComponetX, normalComponetY, normalComponetZ);   //! modeified  by dms.
+                    }
+#endif
 
                     if (isWennScheme == 1)
                     {
@@ -9081,7 +9172,7 @@ namespace PHSPACE
 
     //! He Xin. Numerical simulation and qualitative analysis investigation of the supersonic flows over sharp cones at high angle of attack[D].
     //! China Aerodynamics Research and Development Center graduate department, December 2002.
-    void NSSolverStruct::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC)
+    void NSSolverStruct::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC, RDouble refGama)
     {
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -9106,7 +9197,14 @@ namespace PHSPACE
         RDouble4D &zfn = *(grid->GetFaceNormalZ());
         RDouble4D &faceNormalVelocity = *(grid->GetFaceNormalVelocity());
 
-        RDouble refGama = parameters->GetRefGama();
+        //RDouble refGama= parameters->GetRefGama();
+        //int useHyflowSetting = parameters->GetUseHyflowSetting();
+        //if(bcParamDB->IsExist("refGama", PHDOUBLE, 1) && useHyflowSetting == 1)
+        //{
+        //    bcParamDB->GetData("refGama", &refGama, PHDOUBLE, 1);
+        //    //bcParamDB->GetData("localNonDimensionalTemperature", &localNonDimensionalTemperature, PHDOUBLE, 1);
+        //}
+        
 
         //! s_lr3d is used for calculating id, jd, kd, and the latters are further used for calculating in, jn, kn.
         //! in, jn, kn, iSurface and lr are used for calculating nx, ny, nz.
@@ -9453,7 +9551,14 @@ namespace PHSPACE
         RDouble4D &yfn = *(grid->GetFaceNormalY());
         RDouble4D &zfn = *(grid->GetFaceNormalZ());
 
-        RDouble refGama = parameters->GetRefGama();
+        RDouble refGama= parameters->GetRefGama();
+        /*int useHyflowSetting = parameters->GetUseHyflowSetting();
+        if(bcParamDB->IsExist("refGama", PHDOUBLE, 1) && useHyflowSetting == 1)
+        {
+            bcParamDB->GetData("refGama", &refGama, PHDOUBLE, 1);
+            //bcParamDB->GetData("localNonDimensionalTemperature", &localNonDimensionalTemperature, PHDOUBLE, 1);
+        }*/
+
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble mach2 = refMachNumber * refMachNumber;
         //! in, jn, kn, iSurface and lr are used for calculating nx, ny, nz.
@@ -9741,6 +9846,11 @@ namespace PHSPACE
         bcData->GetData("totalTemperature", &totalTemperature, PHDOUBLE, 1);
         bcData->GetData("direction_inlet", &direction_inlet, PHDOUBLE, 3);
 
+        RDouble refGama, localNonDimensionalTemperature;
+
+        bcData->GetData("refGama", &refGama, PHDOUBLE, 1);
+        bcData->GetData("localNonDimensionalTemperature", &localNonDimensionalTemperature, PHDOUBLE, 1);
+
         //! Dimensional.
         RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
         RDouble refMachNumber = parameters->GetRefMachNumber();
@@ -9748,22 +9858,22 @@ namespace PHSPACE
         RDouble refDimensionalSonicSpeed = parameters->GetRefDimensionalSonicSpeed();
         RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
         RDouble dynamic_pressure = refDimensionalDensity * velocity * velocity;
-        RDouble refGama = parameters->GetRefGama();
+        //RDouble refGama = parameters->GetRefGama();
         RDouble gama1 = refGama - 1;
 
-        int nChemical = parameters->GetChemicalFlag();
-        int numberOfSpecies = gas->GetNumberOfSpecies();
-        Thermo_Energy &Thermo_Energy_temparay = *gas->GetThermo_Energy_temparay();
-        int nNSEquation = parameters->GetNSEquationNumber();
+        //int nChemical = parameters->GetChemicalFlag();
+        //int numberOfSpecies = gas->GetNumberOfSpecies();
+        //Thermo_Energy &Thermo_Energy_temparay = *gas->GetThermo_Energy_temparay();
+        //int nNSEquation = parameters->GetNSEquationNumber();
         int nTemperatureModel = parameters->GetTemperatureModel();
-        RDouble initMassFraction[MAX_SPECIES_NUM] = {0};
+       // RDouble initMassFraction[MAX_SPECIES_NUM] = {0};
 
-        int mTT = parameters->GetmTT();
-        int mTV = parameters->GetmTV();
-        int mTE = parameters->GetmTE();
-        int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+        //int mTT = parameters->GetmTT();
+        //int mTV = parameters->GetmTV();
+        //int mTE = parameters->GetmTE();
+        //int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
 
-        if(nChemical > 0)
+        /*if(nChemical > 0)
         {
             if (bcData->IsExist("initMassFraction", PHDOUBLE, numberOfSpecies))
             {
@@ -9781,7 +9891,7 @@ namespace PHSPACE
                     initMassFraction[s] = speciesMass[s];
                 }
             }
-        }
+        }*/
 
         //! Nondimensionalization.
         totalPressure /= dynamic_pressure;
@@ -9825,32 +9935,32 @@ namespace PHSPACE
                     nys = lr * yfn(in, jn, kn, iSurface);
                     nzs = lr * zfn(in, jn, kn, iSurface);
 
-                    if(nChemical > 0)  //  for chemical  by dms
-                    {
-                        structBC->GetGhostCellIndex(i, j, k, it, jt, kt, 1);  //ghost
-                        if(outIterStep > 1)
-                        {
-                            gas->ComputeMixturegasThermalParameter(initMassFraction, t(it, jt, kt,mTT), t(it, jt, kt, mTT), t(it, jt, kt, mTT), 0);   //  equlibrim
-                        }
-                        else
-                        {
-                            gas->ComputeMixturegasThermalParameter(initMassFraction, totalTemperature, totalTemperature, totalTemperature, 0);   //  equlibrim
-                        }
-                        
-                        refGama = Thermo_Energy_temparay.gama;
-                        gama1 = refGama - 1;
-                        coefficientOfStateEquation = 1.0 / (refGama * refMachNumber * refMachNumber);
+                    //if(nChemical > 0)  //  for chemical  by dms
+                    //{
+                    //    structBC->GetGhostCellIndex(i, j, k, it, jt, kt, 1);  //ghost
+                    //    if(outIterStep > 1)
+                    //    {
+                    //        gas->ComputeMixturegasThermalParameter(initMassFraction, t(it, jt, kt,mTT), t(it, jt, kt, mTT), t(it, jt, kt, mTT), 0);   //  equlibrim
+                    //    }
+                    //    else
+                    //    {
+                    //        gas->ComputeMixturegasThermalParameter(initMassFraction, totalTemperature, totalTemperature, totalTemperature, 0);   //  equlibrim
+                    //    }
+                    //    
+                    //    refGama = Thermo_Energy_temparay.gama;
+                    //    gama1 = refGama - 1;
+                    //    coefficientOfStateEquation = 1.0 / (refGama * refMachNumber * refMachNumber);
 
-                        if(nTemperatureModel == 2)
-                        {
-                            primitiveVarFarfield[nEquation - 1] = Thermo_Energy_temparay.Ev + Thermo_Energy_temparay.Ee;
-                        }
-                        else if(nTemperatureModel == 3)
-                        {
-                            primitiveVarFarfield[nEquation - 1] = Thermo_Energy_temparay.Ee;
-                            primitiveVarFarfield[nEquation - 2] = Thermo_Energy_temparay.Ev;
-                        }
-                    }
+                    //    if(nTemperatureModel == 2)
+                    //    {
+                    //        primitiveVarFarfield[nEquation - 1] = Thermo_Energy_temparay.Ev + Thermo_Energy_temparay.Ee;
+                    //    }
+                    //    else if(nTemperatureModel == 3)
+                    //    {
+                    //        primitiveVarFarfield[nEquation - 1] = Thermo_Energy_temparay.Ee;
+                    //        primitiveVarFarfield[nEquation - 2] = Thermo_Energy_temparay.Ev;
+                    //    }
+                    //}
 
                     for (int layer = 1; layer <= 1; ++ layer)
                     {
@@ -10274,8 +10384,14 @@ namespace PHSPACE
         RDouble refMachNumber = parameters->GetRefMachNumber();
         RDouble velocity = refMachNumber * refDimensionalSonicSpeed;
         RDouble dynamicPressure = refDimensionalDensity * velocity * velocity;
-        RDouble staticPressureCorf = parameters->GetStaticPressureRelaxCorf();
+        
         staticPressure /= dynamicPressure;
+
+        RDouble staticPressureRelaxCorf = parameters->GetStaticPressureRelaxCorf();
+        if(bcData->IsExist("staticPressureRelaxCorf", PHDOUBLE, 1))
+        {
+            bcData->GetData("staticPressureRelaxCorf", &staticPressureRelaxCorf, PHDOUBLE, 1);
+        }
 
         StructGrid *grid = StructGridCast(gridIn);
         int ni = grid->GetNI();
@@ -17418,6 +17534,10 @@ namespace PHSPACE
             {
                 gas->GetTemperatureR(primitiveVarL, leftTemperature[0], leftTemperature[1], leftTemperature[2]);
                 gas->GetTemperatureR(primitiveVarR, rightTemperature[0], rightTemperature[1], rightTemperature[2]);
+
+               /* gas->ComputeGama(&primitiveVarL[IP+1], leftTemperature[0], gamal[ix]);
+                gas->ComputeGama(&primitiveVarR[IP+1], rightTemperature[0], gamar[ix]);*/
+
             }
             else if (nEnergyRecycle == 0)
             {
@@ -20553,9 +20673,9 @@ namespace PHSPACE
             postVisualization->UpdateVisualNodeVarPtr(varName, temperatures, IDX::ITT);
         }
 
-        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_STREAMLINE_MACH))
         {
-            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MACH);
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_STREAMLINE_MACH);
 
             int isOverset = parameters->GetIsOverLapping();
 
@@ -20890,7 +21010,8 @@ namespace PHSPACE
             }
         }
 
-        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GAMA))
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GAMA)
+         || postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
         {
             int ni = grid->GetNI();
             int nj = grid->GetNJ();
@@ -20990,6 +21111,14 @@ namespace PHSPACE
             }
             postVisualization->UpdateVisualNodeVarPtr(varName, *cfl, 0);
             delete cfl;
+        }
+
+        if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
+        {
+            string varName = postVisualization->GetVariableName(PHSPACE::VISUAL_MACH);
+            RDouble4D *mach = CompMachNodeNumber(grid, postVisualization);
+
+            postVisualization->UpdateVisualNodeVarPtr(varName, mach);
         }
     }
 

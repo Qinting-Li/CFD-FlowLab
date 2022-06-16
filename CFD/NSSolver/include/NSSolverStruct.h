@@ -189,7 +189,9 @@ private:
 
     void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
-    //! To execute the forward sweep of the Matrix LU-SGS method.
+
+
+	//! To execute the forward sweep of the Matrix LU-SGS method.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
     void SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
@@ -215,7 +217,7 @@ private:
     void SymmetryBC3D(Grid *gridIn, StructBC *structBC);
     void SingularAxisBC3D(Grid *gridIn, StructBC *structBC);
     void SingularAxisFullPlaneBC3D(Grid *gridIn, StructBC *structBC);
-    void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC);
+    void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC, RDouble refGama);
     void PreconFarfieldBC(Grid *gridIn, StructBC *structBC);
     void InFlowBC3D(Grid *gridIn, StructBC *structBC);
     void OutFlowBC3D(Grid *gridIn, StructBC *structBC);
@@ -336,6 +338,7 @@ private:
 
 public:
     RDouble4D *CompMachNumber(Grid *gridIn);
+    RDouble4D *CompMachNodeNumber(Grid* gridIn, Post_Visual *postVisualization);
     RDouble4D *ComputeMachNumberField(Grid *gridIn);
 
     void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble3D *&vorticity_x, RDouble3D *&vorticity_y, RDouble3D *&vorticity_z, RDouble3D *&vorticityMagnitude,  RDouble3D *&strain_rate, RDouble3D *&Q_criteria);
