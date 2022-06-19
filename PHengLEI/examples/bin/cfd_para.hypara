@@ -1039,7 +1039,7 @@ int    monitorNegativeConstant = 0;
 // firstStepError  : the residual error of the first step iteration for the self-adaptive calculation.
 // secondStepError : the residual error of the second step iteration for the self-adaptive calculation.
 // thirdStepError  : the residual error of the third step iteration for the self-adaptive calculation.
-// useHyflowOutput : Used to change Window output for HyFLOW GUI.
+// useHyflowSetting : Setting for HyFLOW GUI.
 //                   0 -- PHengLEI
 //                   1 -- HyFLOW  
 //  nProtectData   : Use the continuation file data protection mechanism.
@@ -1129,10 +1129,9 @@ int    nInviscidFluxModify = 1;
 int    nQlLimitMethod = 2;
 int    nSpeciesForWallMethod = 1;
 int    nDensityForWallMethod = 0;
-int    wallMultiTemperature = 0;
 
 int    nProtectData = 0;
-int    useHyflowOutput = 0;
+int    useHyflowSetting = 0;
 int    nAblation   = 0;
 int    isInjection = 0;
 int    nViscosityModel = 0;

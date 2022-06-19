@@ -161,7 +161,8 @@ namespace PHSPACE
         RDouble molarMassInverse = 1.0/0.03995;//! inverse of Ar's molar mass,unit is kg/mol.
         RDouble diameter = 4.17e-10;//! Ar's diameter,unit is m.
         RDouble mass = 6.63e-26;//! Ar's mass,unit is kg.
-        RDouble R = 8.31434;//! universal gas constant,unit is J/(Mol*K).
+        RDouble R = GeneralGasConstant;//! universal gas constant,unit is J/(Mol*K).
+        //RDouble R = 8.31434;//! universal gas constant,unit is J/(Mol*K).
         RDouble kBoltz = 1.380622e-23;//! Boltzmann constant£¬unit is J/(K).
         
         //RDouble attack   = attackd * PI / 180.0;

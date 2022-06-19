@@ -73,7 +73,7 @@ public:
     //! @param[in ]: gama is the specific heat ratio.
     //! @param[out]: enthalpy denotes the static enthalpy.
     //! @param[in ]: temperatures stores the translation-rotation temperature, vibration temperature and the electron temperature.
-    void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble* temperatures);
+    void ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble &gama, RDouble &enthalpy, RDouble* temperatures);
 
     //! This function is used for perfect gas and single temperature model.
     //! To compute the total enthalpy and the variable dh in the function MXDQ_STD(). dh=b2, b2 denotes the coefficient \n
@@ -125,6 +125,7 @@ public:
 
     //!Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
     //!The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
+    void SetAirInformationByExpData(int useHyflowSetting);
     void SetAirInformationByExpData();
 
     void GetAirInfo(const RDouble &height, RDouble &temperature, RDouble &pressure, RDouble &density, RDouble &soundspeed);
