@@ -2,15 +2,15 @@
 
 namespace PHSPACE
 {
-    PBBoundaryEnergyDefault::PBBoundaryEnergyDefault(const string &name):PBBoundaryScalarDefault(name)
-    {
+PBBoundaryEnergyDefault::PBBoundaryEnergyDefault(const string &name):PBBoundaryScalarDefault(name)
+{
 
-    }
+}
 
-    PBBoundaryEnergyDefault::~PBBoundaryEnergyDefault()
-    {
+PBBoundaryEnergyDefault::~PBBoundaryEnergyDefault()
+{
 
-    }
+}
 
-    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyDefault, ENERGY_DEFAULT);
+DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyDefault, ENERGY_DEFAULT);
 }

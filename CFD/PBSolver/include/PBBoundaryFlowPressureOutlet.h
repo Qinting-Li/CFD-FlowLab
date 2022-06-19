@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryFlowPressureOutlet.h
 //! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -21,20 +21,20 @@ namespace PHSPACE
 {
 #define FLOW_PRESSURE_OUTLET FLOW_PRESSURE_OUTLET
 
-    class PBBoundaryFlowPressureOutlet : public PBBoundaryFlow
-    {
-    public:
-        PBBoundaryFlowPressureOutlet(const string &name);
-        virtual ~PBBoundaryFlowPressureOutlet();
+class PBBoundaryFlowPressureOutlet : public PBBoundaryFlow
+{
+public:
+    PBBoundaryFlowPressureOutlet(const string &name);
+    virtual ~PBBoundaryFlowPressureOutlet();
 
-        virtual void CalcVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex);
+    void CalcVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex);
 
-        virtual void UpdatePressureBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+    void UpdatePressureBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void CalcPressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+    void CalcPressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void UpdateVelocityCorrectionBoundary(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
-    };
+    void UpdateVelocityCorrectionBoundary(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundaryFlow, PBBoundaryFlowPressureOutlet, FLOW_PRESSURE_OUTLET);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundaryFlow, PBBoundaryFlowPressureOutlet, FLOW_PRESSURE_OUTLET);
 }

@@ -370,6 +370,9 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
 //                     -- "vanleer", "steger", "hlle", "lax_f".
 //                     -- "roe", "modified_roe".
 //                     -- "ausm+", "ausm+w", "ausm+up", "ausmdv", "ausmpw", "ausmpw+".
+// isWennScheme: If using WENN Scheme of struct grid.
+//               0 -- NO. (default)
+//               1 -- Yes.
 // str_limiter_name: Limiter of struct grid.
 //                     -- "vanalbada", "vanleer", "minmod", "smooth", "minvan", "3rdsmooth", "3rd_minmod_smooth".
 //                     -- "nolim", no limiter.
@@ -377,8 +380,8 @@ double refMolecularWeight = 28.9644;          // unit of g/mol.
 //                     -- "weno3_js", "wenn3_prm211", "wenn3_zm", "wenn3_zes2", "wenn3_zes3"
 
 string inviscidSchemeName = "roe";
-string str_limiter_name   = "vanalbada";
 int isWennScheme = 0;
+string str_limiter_name   = "vanalbada";
 
 #*******************************************************************
 #                         UnStruct Solver or Common                *

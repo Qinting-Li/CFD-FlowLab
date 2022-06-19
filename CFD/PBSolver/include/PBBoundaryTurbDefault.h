@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryTurbDefault.h
 //! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -23,13 +23,13 @@ namespace PHSPACE
 {
 #define TURB_DEFAULT TURB_DEFAULT
 
-    class PBBoundaryTurbDefault : public PBBoundaryScalarDefault
-    {
-    public:
-        PBBoundaryTurbDefault(const string &name);
-        virtual ~PBBoundaryTurbDefault();
-    };
+class PBBoundaryTurbDefault : public PBBoundaryScalarDefault
+{
+public:
+    PBBoundaryTurbDefault(const string &name);
+    virtual ~PBBoundaryTurbDefault();
+};
 
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbDefault, TURB_DEFAULT);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbDefault, TURB_DEFAULT);
 } // PB_SPACE

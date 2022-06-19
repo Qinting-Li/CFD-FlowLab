@@ -5,15 +5,20 @@
 
 namespace PHSPACE
 {
-    PBGrad::PBGrad(const string &name):PBObject(name)
-    {
+PBGrad::PBGrad(const string &name):PBObject(name)
+{
 
-    }
+}
 
-    PBGrad::~PBGrad()
-    {
+PBGrad::~PBGrad()
+{
 
-    }
+}
 
-    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGrad, GRAD_EMPTY);
+void PBGrad::Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm)
+{
+
+}
+
+DEFINE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGrad, GRAD_EMPTY);
 }

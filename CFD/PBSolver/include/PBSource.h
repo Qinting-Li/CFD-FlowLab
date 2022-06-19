@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSource.h
 //! @brief     Discretization of the Source Term.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -22,21 +22,21 @@ namespace PHSPACE
 {
 #define SOURCE_EMPTY EMPTY
 
-    class PBSource : public PBObject
-    {
-    public:
-        PBSource(const string &name);
-        virtual ~PBSource();
+class PBSource : public PBObject
+{
+public:
+    PBSource(const string &name);
+    virtual ~PBSource();
 
-    public:
-        virtual void InitMemory(UnstructGrid *grid, string phiName) {}
+public:
+    virtual void InitMemory(UnstructGrid *grid, string phiName);
 
-        virtual void Discrt(UnstructGrid *grid, string phiName) {}
+    virtual void Discrt(UnstructGrid *grid, string phiName);
 
-        virtual void UpdateBodyForce(UnstructGrid *grid, string phiName) {}
-    };
+    virtual void UpdateBodyForce(UnstructGrid *grid, string phiName);
+};
 
-    DEFINE_PBOBJECT_FACTORY(PBSource);
+DEFINE_PBOBJECT_FACTORY(PBSource);
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSource, SOURCE_EMPTY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSource, SOURCE_EMPTY);
 }

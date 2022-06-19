@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBIterSolv.h
 //! @brief     Solving the System of Algebraic Equations.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
  
 #pragma once
 
@@ -25,33 +25,33 @@ namespace PHSPACE
 {
 #define ITERSOLV_EMPTY EMPTY
 
-    class PBPreconditioner;
+class PBPreconditioner;
 
-    class PBIterSolv : public PBObject
-    {
-    public:
-        PBIterSolv(const string &name);
-        virtual ~PBIterSolv();
+class PBIterSolv : public PBObject
+{
+public:
+    PBIterSolv(const string &name);
+    virtual ~PBIterSolv();
 
-    public:
-        virtual void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
-            string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4) {}
+public:
+    virtual void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
+        string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
 
-    protected:
-        void Matrix(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace, RDouble *ap,
-            RDouble *ajLeft, RDouble *ajRight, RDouble *p, RDouble *rs, string *phiName = NULL);
+protected:
+    void Matrix(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace, RDouble *ap,RDouble *ajLeft,
+        RDouble *ajRight, RDouble *p, RDouble *rs, string *phiName = NULL);
 
-        RDouble Dot(RDouble *b, RDouble *c, int rows);
+    RDouble Dot(RDouble *b, RDouble *c, int rows);
 
-        void Rotg(RDouble *X, RDouble *Y, RDouble *c, RDouble *s);
+    void Rotg(RDouble *X, RDouble *Y, RDouble *c, RDouble *s);
 
-        void Rot(RDouble *X, RDouble *Y, RDouble *c, RDouble *s);
+    void Rot(RDouble *X, RDouble *Y, RDouble *c, RDouble *s);
 
-        PBPreconditioner *preconditioner_;
-        UnstructGrid *grid;
-    };
+    PBPreconditioner *preconditioner_;
+    UnstructGrid *grid;
+};
 
-    DEFINE_PBOBJECT_FACTORY(PBIterSolv);
+DEFINE_PBOBJECT_FACTORY(PBIterSolv);
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolv, ITERSOLV_EMPTY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolv, ITERSOLV_EMPTY);
 }

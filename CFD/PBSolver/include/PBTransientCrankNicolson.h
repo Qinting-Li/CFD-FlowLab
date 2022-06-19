@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBTransientCrankNicolson.h
 //! @brief     CrankNicolson.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -21,18 +21,19 @@ namespace PHSPACE
 {
 #define TRANSIENT_CRANK_NICOLSON CRANK_NICOLSON
 
-    class PBTransientCrankNicolson : public PBTransient
-    {
-    public:
-        PBTransientCrankNicolson(const string &name);
-        virtual ~PBTransientCrankNicolson();
+class PBTransientCrankNicolson : public PBTransient
+{
+public:
+    PBTransientCrankNicolson(const string &name);
+    virtual ~PBTransientCrankNicolson();
 
-        virtual void AllocateMemory(UnstructGrid *grid, vector<string> &phiName, vector<RDouble> &initPhi);
+    void AllocateMemory(UnstructGrid *grid, vector<string> &phiName, vector<RDouble> &initPhi);
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
+    void Discrt(UnstructGrid *grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
 
-        virtual void SaveOldTimeValue(UnstructGrid *grid, vector<string> &phiName);
-    };
+    void SaveOldTimeValue(UnstructGrid *grid, vector<string> &phiName);
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientCrankNicolson, TRANSIENT_CRANK_NICOLSON);
+};
+
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientCrankNicolson, TRANSIENT_CRANK_NICOLSON);
 }

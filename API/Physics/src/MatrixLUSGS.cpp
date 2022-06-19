@@ -9,7 +9,7 @@ namespace PHSPACE
      using namespace GAS_SPACE;
 //! This is for Matrix LU-SGS according NSMB handbook in 1995 year.
 //! This is Matrix LU-SGS method.
-void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
@@ -265,7 +265,7 @@ void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ,
     delete [] Ux;
 }
 
-void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
+void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
