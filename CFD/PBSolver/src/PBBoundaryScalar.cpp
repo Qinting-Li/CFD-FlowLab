@@ -23,10 +23,10 @@ void PBBoundaryScalar::Discrt(UnstructGrid *grid, string phiName, vector<int> *f
 
 void PBBoundaryScalar::Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
     for (size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
         int iFacelocal = (*faceIndex)[iFace];

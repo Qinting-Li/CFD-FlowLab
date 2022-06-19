@@ -16,7 +16,7 @@ PBBoundaryTurbKPressureOutlet::~PBBoundaryTurbKPressureOutlet()
 
 void PBBoundaryTurbKPressureOutlet::Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
 
     RDouble *xfc = grid->GetFaceCenterX();
@@ -32,7 +32,7 @@ void PBBoundaryTurbKPressureOutlet::Update(UnstructGrid *grid, string phiName, v
     RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dphidx"));
     RDouble *dphidy = reinterpret_cast<RDouble *>(grid->GetDataPtr("dphidy"));
     RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dphidz"));
-    RDouble *phib = phi + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
     for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
         int iFacelocal = (*faceIndex)[iFace];
@@ -71,7 +71,7 @@ void PBBoundaryTurbKPressureOutlet::Update(UnstructGrid *grid, string phiName, v
 
 void PBBoundaryTurbKPressureOutlet::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
 
     RDouble *faceArea = grid->GetFaceArea();
@@ -86,8 +86,8 @@ void PBBoundaryTurbKPressureOutlet::Discrt(UnstructGrid *grid, string phiName, v
     RDouble *zcc = grid->GetCellCenterZ();
 
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
-    RDouble *diffCoeb = diffCoe + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
+    RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *apPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("ap"));
     RDouble *scPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("sc"));
     RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dphidx"));

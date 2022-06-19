@@ -15,11 +15,11 @@ PBBoundaryScalarConvection::~PBBoundaryScalarConvection()
 
 void PBBoundaryScalarConvection::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
-    RDouble *diffCoeb = diffCoe + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
+    RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *fluxb = reinterpret_cast<RDouble *>(grid->GetDataPtr("flux"));
     RDouble *apPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("ap"));
     RDouble *scPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("sc"));

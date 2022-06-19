@@ -251,51 +251,51 @@ void PBSolverFlow::AllocateMemory()
     }
 
     // Allocate variable memory
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int nBoundFaces = grid->GetNBoundFace();
-    unsigned int nTotal = nTotalCells + nBoundFaces;
+    unsigned int nTotal = nTotalCell + nBoundFaces;
     int nTotalInFaces = grid->GetNTotalFace() - nBoundFaces;
     this->nTotalInFaces = nTotalInFaces;
 
     // Variables registered on Grid
     u = ObjAllocateMemory("U", nTotal, initU, grid); // Boundary values come last
-    ub = u + nTotalCells;
+    ub = u + nTotalCell;
 
     v = ObjAllocateMemory("V", nTotal, initV, grid);
-    vb = v + nTotalCells;
+    vb = v + nTotalCell;
 
     w = ObjAllocateMemory("W", nTotal, initW, grid);
-    wb = w + nTotalCells;
+    wb = w + nTotalCell;
 
     p = ObjAllocateMemory("P", nTotal, initP, grid);
-    pb = p + nTotalCells;
+    pb = p + nTotalCell;
 
-    uc = ObjAllocateMemory("uc", nTotalCells, 0.0, grid);
+    uc = ObjAllocateMemory("uc", nTotalCell, 0.0, grid);
 
-    vc = ObjAllocateMemory("vc", nTotalCells, 0.0, grid);
+    vc = ObjAllocateMemory("vc", nTotalCell, 0.0, grid);
 
-    wc = ObjAllocateMemory("wc", nTotalCells, 0.0, grid);
+    wc = ObjAllocateMemory("wc", nTotalCell, 0.0, grid);
 
     pc = ObjAllocateMemory("pc", nTotal, 0.0, grid);
-    pcb = pc + nTotalCells;
+    pcb = pc + nTotalCell;
 
     uf = ObjAllocateMemory("Uf", grid->GetNTotalFace(), 0.0, grid);
 
-    apU = ObjAllocateMemory("apU", nTotalCells, 0.0, grid);
+    apU = ObjAllocateMemory("apU", nTotalCell, 0.0, grid);
 
-    apV = ObjAllocateMemory("apV", nTotalCells, 0.0, grid);
+    apV = ObjAllocateMemory("apV", nTotalCell, 0.0, grid);
 
-    apW = ObjAllocateMemory("apW", nTotalCells, 0.0, grid);
+    apW = ObjAllocateMemory("apW", nTotalCell, 0.0, grid);
 
-    ap = ObjAllocateMemory("ap", nTotalCells, 0.0, grid);
+    ap = ObjAllocateMemory("ap", nTotalCell, 0.0, grid);
 
-    scU = ObjAllocateMemory("scU", nTotalCells, 0.0, grid);
+    scU = ObjAllocateMemory("scU", nTotalCell, 0.0, grid);
 
-    scV = ObjAllocateMemory("scV", nTotalCells, 0.0, grid);
+    scV = ObjAllocateMemory("scV", nTotalCell, 0.0, grid);
 
-    scW = ObjAllocateMemory("scW", nTotalCells, 0.0, grid);
+    scW = ObjAllocateMemory("scW", nTotalCell, 0.0, grid);
 
-    sc = ObjAllocateMemory("sc", nTotalCells, 0.0, grid);
+    sc = ObjAllocateMemory("sc", nTotalCell, 0.0, grid);
 
     ajLeft = ObjAllocateMemory("ajLeft", nTotalInFaces, 0.0, grid);
 
@@ -306,11 +306,11 @@ void PBSolverFlow::AllocateMemory()
 
     if (bodyForceFlag == 1)
     {
-        bfU = ObjAllocateMemory("bfU", nTotalCells, 0.0, grid);
+        bfU = ObjAllocateMemory("bfU", nTotalCell, 0.0, grid);
 
-        bfV = ObjAllocateMemory("bfV", nTotalCells, 0.0, grid);
+        bfV = ObjAllocateMemory("bfV", nTotalCell, 0.0, grid);
 
-        bfW = ObjAllocateMemory("bfW", nTotalCells, 0.0, grid);
+        bfW = ObjAllocateMemory("bfW", nTotalCell, 0.0, grid);
     }
 
     dun = ObjAllocateMemory("dun", grid->GetNTotalFace(), 0.0, grid);
@@ -321,11 +321,11 @@ void PBSolverFlow::AllocateMemory()
 
     mu = ObjAllocateMemory("mu", nTotal, initMu, grid);
 
-    hu = ObjAllocateMemory("hu", nTotalCells, 0.0, grid);
+    hu = ObjAllocateMemory("hu", nTotalCell, 0.0, grid);
 
-    hv = ObjAllocateMemory("hv", nTotalCells, 0.0, grid);
+    hv = ObjAllocateMemory("hv", nTotalCell, 0.0, grid);
 
-    hw = ObjAllocateMemory("hw", nTotalCells, 0.0, grid);
+    hw = ObjAllocateMemory("hw", nTotalCell, 0.0, grid);
 
     dudx = ObjAllocateMemory("dudx", nTotal, 0.0, grid);
 
@@ -390,7 +390,7 @@ void PBSolverFlow::InitField()
 
 void PBSolverFlow::ReinitField()
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int nBoundFaces = grid->GetNBoundFace();
     int nTotalFaces = grid->GetNTotalFace();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
@@ -426,7 +426,7 @@ void PBSolverFlow::ReinitField()
 
     if (bodyForceFlag == 1)
     {
-        for (int iCell = 0; iCell < nTotalCells; ++ iCell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             bfU[iCell] = 0.0;
             bfV[iCell] = 0.0;
@@ -474,11 +474,11 @@ void PBSolverFlow::UpdateUnsteadyVariable(Grid *grid)
 
 void PBSolverFlow::DiscrtMomentumEquations()
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int nBoundFaces = grid->GetNBoundFace();
     int nTotalFaces = grid->GetNTotalFace();
 
-    for (int iCell = 0; iCell < nTotalCells; ++ iCell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         apU[iCell] = 0.0;
         apV[iCell] = 0.0;
@@ -499,7 +499,7 @@ void PBSolverFlow::DiscrtMomentumEquations()
 
     if (bodyForceFlag != 0)
     {
-        for (int iCell = 0; iCell < nTotalCells; ++ iCell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             bfU[iCell] = 0.0;
             bfV[iCell] = 0.0;
@@ -564,14 +564,14 @@ void PBSolverFlow::SolveMomentumEquations(Region &region)
 
 void PBSolverFlow::DiscrtPressureCorrectionEquation()
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int nBoundFaces = grid->GetNBoundFace();
     int nTotalFaces = grid->GetNTotalFace();
 
     //! The correlation coefficient is stored for the pressure correction equation.
     CoefPrepForPres();
 
-    for (int iCell = 0; iCell < nTotalCells; ++ iCell)
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
         ap[iCell] = 0.0;
         sc[iCell] = 0.0;
@@ -608,29 +608,29 @@ void PBSolverFlow::SolvePressureCorrectionEquation(Region &region)
 
 void PBSolverFlow::UpdateVelocity()
 {
-    int nTotalCells = grid->GetNTotalCell();
-    UpdatePhi("U", 0, nTotalCells, uc, u);
-    UpdatePhi("V", 0, nTotalCells, vc, v);
-    UpdatePhi("W", 0, nTotalCells, wc, w);
+    int nTotalCell = grid->GetNTotalCell();
+    UpdatePhi("U", 0, nTotalCell, uc, u);
+    UpdatePhi("V", 0, nTotalCell, vc, v);
+    UpdatePhi("W", 0, nTotalCell, wc, w);
 }
 
 void PBSolverFlow::UpdatePressureAndVelocity()
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     //! Solve the gradient of pressure correction.
     CalcPressureCorrectionGrad();
 
     //! Update pressure.
     if (ObjGetIntParaFromDB("refP", 0) == 1)
     {
-        for (int iCell = 0; iCell < nTotalCells; ++ iCell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             p[iCell] += urfP * (pc[iCell] - pc[0]);
         }
     }
     else
     {
-        for (int iCell = 0; iCell < nTotalCells; ++ iCell)
+        for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
             p[iCell] += urfP * pc[iCell];
         }

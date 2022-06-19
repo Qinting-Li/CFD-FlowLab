@@ -16,7 +16,7 @@ PBBoundaryEnergyInlet::~PBBoundaryEnergyInlet()
 
 void PBBoundaryEnergyInlet::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
 {
-    int nTotalCells =grid->GetNTotalCell();
+    int nTotalCell =grid->GetNTotalCell();
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
 
     RDouble *xfn  = grid->GetFaceNormalX();
@@ -33,8 +33,8 @@ void PBBoundaryEnergyInlet::Discrt(UnstructGrid *grid, string phiName, vector<in
     RDouble *zfc  = grid->GetFaceCenterZ();
 
     RDouble *phi= reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
-    RDouble *phib = phi +nTotalCells;
-    RDouble *diffCoeb = diffCoe + nTotalCells;
+    RDouble *phib = phi +nTotalCell;
+    RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
     RDouble *u = reinterpret_cast<RDouble *>(grid->GetDataPtr("U"));
     RDouble *v = reinterpret_cast<RDouble *>(grid->GetDataPtr("V"));
@@ -83,9 +83,9 @@ void PBBoundaryEnergyInlet::Discrt(UnstructGrid *grid, string phiName, vector<in
 
 void PBBoundaryEnergyInlet::Update(UnstructGrid *grid, std::string phiName,std::vector<int> *faceIndex, Data_Param *bcData)
 {
-    int nTotalCells =grid->GetNTotalCell() ;
+    int nTotalCell =grid->GetNTotalCell() ;
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
-    RDouble *phib = phi + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
     for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
         RDouble spBound;

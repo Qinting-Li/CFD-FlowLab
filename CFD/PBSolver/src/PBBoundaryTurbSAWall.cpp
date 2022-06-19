@@ -17,7 +17,7 @@ PBBoundaryTurbSAWall::~PBBoundaryTurbSAWall()
 
 void PBBoundaryTurbSAWall::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
 
     RDouble *faceArea = grid->GetFaceArea();
@@ -32,8 +32,8 @@ void PBBoundaryTurbSAWall::Discrt(UnstructGrid *grid, string phiName, vector<int
     RDouble *zcc = grid->GetCellCenterZ();
 
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
-    RDouble *diffCoeb = diffCoe + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
+    RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *visl = reinterpret_cast<RDouble *>(grid->GetDataPtr("visl"));
     RDouble *apPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("ap"));
     RDouble *scPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("sc"));

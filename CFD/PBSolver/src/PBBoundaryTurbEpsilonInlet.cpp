@@ -16,11 +16,11 @@ PBBoundaryTurbEpsilonInlet::~PBBoundaryTurbEpsilonInlet()
 
 void PBBoundaryTurbEpsilonInlet::Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     RDouble epsilonb = 0.0;
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("epsilon"));
-    RDouble *phib = phi + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
 
 
     for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
@@ -44,11 +44,11 @@ void PBBoundaryTurbEpsilonInlet::Update(UnstructGrid *grid, string phiName, vect
 
 void PBBoundaryTurbEpsilonInlet::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
-    RDouble *diffCoeb = diffCoe + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
+    RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *apPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("ap"));
     RDouble *scPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("sc"));
     RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dphidx"));

@@ -16,7 +16,7 @@ PBBoundaryScalarDiffusion::~PBBoundaryScalarDiffusion()
 
 void PBBoundaryScalarDiffusion::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
 
     RDouble *faceArea = grid->GetFaceArea();
@@ -31,8 +31,8 @@ void PBBoundaryScalarDiffusion::Discrt(UnstructGrid *grid, string phiName, vecto
     RDouble *zcc = grid->GetCellCenterZ();
 
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
-    RDouble *diffCoeb = diffCoe + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
+    RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *apPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("ap"));
     RDouble *scPhi = reinterpret_cast<RDouble *>(grid->GetDataPtr("sc"));
     RDouble *dphidx = reinterpret_cast<RDouble *>(grid->GetDataPtr("dphidx"));

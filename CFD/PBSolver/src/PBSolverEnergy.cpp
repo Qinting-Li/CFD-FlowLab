@@ -42,11 +42,11 @@ void PBSolverEnergy::AllocateMemory()
     tMin = ObjGetDoubleParaFromDB("tMin", 1.0);
     tMax = ObjGetDoubleParaFromDB("tMax", 5000.0);
 
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int nBoundFaces = grid->GetNBoundFace();
     int nTotalFaces = grid->GetNTotalFace();
     int nTotalInFaces = nTotalFaces - nBoundFaces;
-    unsigned int nTotal = nTotalCells + nBoundFaces;
+    unsigned int nTotal = nTotalCell + nBoundFaces;
     nTotalInFaces = nTotalInFaces;
 
     h = phi;
@@ -54,18 +54,18 @@ void PBSolverEnergy::AllocateMemory()
 
     initT = ObjGetDoubleParaFromDB("initT", 0.0);
     t = ObjAllocateMemory("T", nTotal, initT, grid);
-    tb = t + nTotalCells;
+    tb = t + nTotalCell;
 
     cpg = ObjAllocateMemory("cp", nTotal, initCPg, grid);
-    cpgb = cpg + nTotalCells;
+    cpgb = cpg + nTotalCell;
     grid->UpdateDataPtr("cpb", cpgb);
 
     k = ObjAllocateMemory("k", nTotal, initk, grid);
-    kb = k + nTotalCells;
+    kb = k + nTotalCell;
     grid->UpdateDataPtr("kb", kb);
 
     diffCoe = k;
-    diffCoeb = k + nTotalCells;
+    diffCoeb = k + nTotalCell;
 }
 
 void PBSolverEnergy::ReinitField()

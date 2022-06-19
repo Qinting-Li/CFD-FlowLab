@@ -17,13 +17,13 @@ PBBoundaryTurbEpsilonWall::~PBBoundaryTurbEpsilonWall()
 
 void PBBoundaryTurbEpsilonWall::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int nBoundFace = grid->GetNBoundFace();
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *faceNumberOfEachCell = grid->GetFaceNumberOfEachCell();
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
-    RDouble *diffCoeb = diffCoe + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
+    RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *wDist = reinterpret_cast<RDouble *>(grid->GetWallDist());
     RDouble *k = reinterpret_cast<RDouble *>(grid->GetDataPtr("kinetic"));
     RDouble *ajLeft = reinterpret_cast<RDouble *>(grid->GetDataPtr("ajLeft"));
@@ -85,10 +85,10 @@ void PBBoundaryTurbEpsilonWall::Discrt(UnstructGrid *grid, string phiName, vecto
 //£¡Correct:update epsilon.
 void PBBoundaryTurbEpsilonWall::Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData)
 {
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int *leftCellOfFace = grid->GetLeftCellOfFace();
     RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
-    RDouble *phib = phi + nTotalCells;
+    RDouble *phib = phi + nTotalCell;
     for (size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
         int iFacelocal = (*faceIndex)[iFace];

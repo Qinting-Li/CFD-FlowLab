@@ -56,8 +56,8 @@ void PBBoundaryFlowSolidSurface::CalcVelocityBoundaryCondition(UnstructGrid *gri
     RDouble *scV = reinterpret_cast<RDouble *>(grid->GetDataPtr("scV"));
     RDouble *scW = reinterpret_cast<RDouble *>(grid->GetDataPtr("scW"));
 
-    int nTotalCells = grid->GetNTotalCell();
-    RDouble *mub = mu + nTotalCells;
+    int nTotalCell = grid->GetNTotalCell();
+    RDouble *mub = mu + nTotalCell;
 
     for (size_t iFace = 0; iFace < faceIndex->size(); ++iFace)
     {

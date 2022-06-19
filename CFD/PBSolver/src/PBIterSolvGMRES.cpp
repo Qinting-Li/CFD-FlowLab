@@ -52,13 +52,15 @@ void PBIterSolvGMRES::Run(Region &region, vector<int> &zoneId, string varStr, st
         }
 
         UnstructGrid *grid = UnstructGridCast(zone->GetGeometry()->GetGrid());
-        int nTotalCells = grid->GetNTotalCell();
+        int nTotalCell = grid->GetNTotalCell();
         int nTotalFace = grid->GetNTotalFace();
         int nBoundFace = grid->GetNBoundFace();
         int nInteriorFace = nTotalFace - nBoundFace;
 
         int *leftCellOfFace = grid->GetLeftCellOfFace();
         int *rightCellOfFace = grid->GetRightCellOfFace();
+        int *leftCellOfFaceb = leftCellOfFace + nBoundFace;
+        int *rightCellOfFaceb = rightCellOfFace + nBoundFace;
 
         RDouble *apStr1 = reinterpret_cast<RDouble *>(grid->GetDataPtr(apStr));
         RDouble *ajUpperStr1 = reinterpret_cast<RDouble *>(grid->GetDataPtr(ajUpperStr));
@@ -66,10 +68,7 @@ void PBIterSolvGMRES::Run(Region &region, vector<int> &zoneId, string varStr, st
         RDouble *scStr1 = reinterpret_cast<RDouble *>(grid->GetDataPtr(scStr));
         RDouble *rsStr1 = reinterpret_cast<RDouble *>(grid->GetDataPtr(rsStr));
         //! For the time being, it is only for a single zone.
-        Calc(nInteriorFace, nTotalCells,
-            grid->GetLeftCellOfFace() + grid->GetNBoundFace(),
-            grid->GetRightCellOfFace() + grid->GetNBoundFace(),
-            apStr1, ajUpperStr1, ajLowerStr1, scStr1, rsStr1, varStr, maxSweep, tol);
+        Calc(nInteriorFace, nTotalCell, leftCellOfFaceb, rightCellOfFaceb, apStr1, ajUpperStr1, ajLowerStr1, scStr1, rsStr1, varStr, maxSweep, tol);
     }
 }
 

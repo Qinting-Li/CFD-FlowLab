@@ -111,40 +111,40 @@ void PBSolverScalar::AllocateMemory()
     this->gradCalc[ScalarName()] = gradCalc;
 
     //! Allocate variable memory.
-    int nTotalCells = grid->GetNTotalCell();
+    int nTotalCell = grid->GetNTotalCell();
     int nBoundFaces = grid->GetNBoundFace();
     int nTotalFaces = grid->GetNTotalFace();
     int nTotalInFaces = nTotalFaces - nBoundFaces;
     this->nTotalInFaces = nTotalInFaces;
-    unsigned int nTotal = nTotalCells + nBoundFaces;
+    unsigned int nTotal = nTotalCell + nBoundFaces;
     nTotalInFaces = nTotalInFaces;
 
     //! Variables registered on the grid.
     initPhi = ObjGetDoubleParaFromDB(ScalarName() + "InitValue", 0.0);
     phi = ObjAllocateMemory(ScalarName(), nTotal, initPhi, grid);
-    phib = phi + nTotalCells;
+    phib = phi + nTotalCell;
     grid->UpdateDataPtr(ScalarName() + "b", phib);
 
     initRho = ObjGetDoubleParaFromDB("initRho", 1.0);
     rho = ObjAllocateMemory("rho", nTotal, initRho, grid);
-    rhob = rho + nTotalCells;
+    rhob = rho + nTotalCell;
     rhof = ObjAllocateMemory("rhof", nTotalFaces, initRho, grid);
 
     initMu = ObjGetDoubleParaFromDB("initMu", 1.0);
     mu = ObjAllocateMemory("mu", nTotal, initMu, grid);
-    mub = mu + nTotalCells;
+    mub = mu + nTotalCell;
     diffCoe = ObjAllocateMemory("diffCoe", nTotal, initMu, grid);
-    diffCoeb = diffCoe + nTotalCells;
+    diffCoeb = diffCoe + nTotalCell;
 
     urf = ObjGetDoubleParaFromDB(ScalarName() + "Urf", 0.0);
     res = ObjGetDoubleParaFromDB(ScalarName() + "Res", 1e-2);
 
-    phic = ObjAllocateMemory(ScalarName() + "c", nTotalCells, 0.0, grid);
+    phic = ObjAllocateMemory(ScalarName() + "c", nTotalCell, 0.0, grid);
 
-    ap = ObjAllocateMemory("ap", nTotalCells, 0.0, grid);
+    ap = ObjAllocateMemory("ap", nTotalCell, 0.0, grid);
     ajLeft = ObjAllocateMemory("ajLeft", nTotalInFaces, 0.0, grid);
     ajRight = ObjAllocateMemory("ajRight", nTotalInFaces, 0.0, grid);
-    sc = ObjAllocateMemory("sc", nTotalCells, 0.0, grid);
+    sc = ObjAllocateMemory("sc", nTotalCell, 0.0, grid);
 
     flux = ObjAllocateMemory("flux", nTotalFaces, 0.0, grid);
     faceFlux = flux + grid->GetNBoundFace();
