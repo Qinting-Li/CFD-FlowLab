@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSourceEnergyDefault.h
 //! @brief     Energy.
-//! @author    Ming Pingjian, Sun Huawen, Huang Jin.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell.
 
 #pragma once
 
@@ -22,18 +22,18 @@ namespace PHSPACE
 {
 #define SOURCE_ENERGY_DEFAULT SOURCE_ENERGY_DEFAULT
 
-    class PBSourceEnergyDefault : public PBSource
-    {
-    public:
-        PBSourceEnergyDefault(const string &name);
-        virtual ~PBSourceEnergyDefault();
+class PBSourceEnergyDefault : public PBSource
+{
+public:
+    PBSourceEnergyDefault(const string &name);
+    virtual ~PBSourceEnergyDefault();
 
-        virtual void Discrt(UnstructGrid *grid, string &phiName);
+    void Discrt(UnstructGrid *grid, string &phiName);
 
-    protected:
-        virtual void DiscrtProxy(UnstructGrid *grid);
-    };
+protected:
+    void DiscrtProxy(UnstructGrid *grid);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceEnergyDefault, SOURCE_ENERGY_DEFAULT);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceEnergyDefault, SOURCE_ENERGY_DEFAULT);
 }
 

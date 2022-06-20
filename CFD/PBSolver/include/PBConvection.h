@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBConvection.h
 //! @brief     Discretization of the Convection Term.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
  
 #pragma once
 
@@ -21,20 +21,20 @@ namespace PHSPACE
 {
 #define CONVECTION_EMPTY EMPTY
 
-    class UnstructGrid;
+class UnstructGrid;
 
-    class PBConvection: public PBObject
-    {
-    public:
-        PBConvection(const string &name);
-        virtual ~PBConvection();
+class PBConvection: public PBObject
+{
+public:
+    PBConvection(const string &name);
+    virtual ~PBConvection();
 
-    public:
-        virtual inline void Discrt(UnstructGrid *grid, string phiName, string apName, string scName, RDouble *v = NULL,
-            RDouble *apV = NULL, RDouble *scV = NULL, RDouble *w = NULL, RDouble *apW = NULL, RDouble *scW = NULL){}
-    };
+public:
+    virtual void Discrt(UnstructGrid *grid, string phiName, string apName, string scName, RDouble *v = NULL,
+        RDouble *apV = NULL, RDouble *scV = NULL, RDouble *w = NULL, RDouble *apW = NULL, RDouble *scW = NULL);
+};
 
-    DEFINE_PBOBJECT_FACTORY(PBConvection);
+DEFINE_PBOBJECT_FACTORY(PBConvection);
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvection, CONVECTION_EMPTY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvection, CONVECTION_EMPTY);
 }

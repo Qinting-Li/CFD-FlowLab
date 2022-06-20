@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolverTurbEpsilon.h
 //! @brief     TurbEpsilon.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang, Huang Jin.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Huang Jin, Bell..
 
 #pragma once
 
@@ -24,21 +24,21 @@ namespace PHSPACE
 {
 #define SOLVER_TURB_EPSILON TURB_EPSILON
 
-    class PBSolverTurbEpsilon : public PBSolverScalar
-    {
-    public:
-        PBSolverTurbEpsilon(const string &name);
-        virtual ~PBSolverTurbEpsilon();
+class PBSolverTurbEpsilon : public PBSolverScalar
+{
+public:
+    PBSolverTurbEpsilon(const string &name);
+    virtual ~PBSolverTurbEpsilon();
 
-        virtual void InitMemory();
-        virtual void Discrt();
-        virtual void ComputePostVisualVariables(Post_Visual *postVisualization) {};
-        virtual void OutputResidual(ofstream &file, int flag);
+    void InitMemory();
+    void Discrt();
+    virtual void ComputePostVisualVariables(Post_Visual *postVisualization);
+    void OutputResidual(ofstream &file, int flag);
 
-    protected:
-        RDouble prandtl;//! the Prandtl number of Turbulent dissipation rate.
+protected:
+    RDouble prandtl;//! the Prandtl number of Turbulent dissipation rate.
 
-    };
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverTurbEpsilon, SOLVER_TURB_EPSILON);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverTurbEpsilon, SOLVER_TURB_EPSILON);
 }

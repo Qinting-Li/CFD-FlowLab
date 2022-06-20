@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryScalarConvection.h
 //! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -21,14 +21,14 @@ namespace PHSPACE
 {
 #define SCALAR_CONVECTION SCALAR_CONVECTION
 
-    class PBBoundaryScalarConvection : public PBBoundaryScalar
-    {
-    public:
-        PBBoundaryScalarConvection(const string &name);
-        virtual ~PBBoundaryScalarConvection();
+class PBBoundaryScalarConvection : public PBBoundaryScalar
+{
+public:
+    PBBoundaryScalarConvection(const string &name);
+    virtual ~PBBoundaryScalarConvection();
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
-    };
+    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarConvection, SCALAR_CONVECTION);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarConvection, SCALAR_CONVECTION);
 }

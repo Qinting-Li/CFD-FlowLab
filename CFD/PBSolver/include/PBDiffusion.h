@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBDiffusion.h
 //! @brief     The Diffusion Term.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
  
 #pragma once
 
@@ -20,20 +20,20 @@
 namespace PHSPACE
 {
 #define DIFFUSION_EMPTY EMPTY
-    class UnstructGrid;
-    class PBDiffusion : public PBObject
-    {
-    public:
-        PBDiffusion(const string &name);
-        virtual ~PBDiffusion();
+class UnstructGrid;
+class PBDiffusion : public PBObject
+{
+public:
+    PBDiffusion(const string &name);
+    virtual ~PBDiffusion();
 
-    public:
-        virtual inline void Discrt(UnstructGrid *grid, string phiName, RDouble *diffCoe, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz, 
-            RDouble *ajLeft, RDouble *ajRight, RDouble *scPhi, RDouble *dvdx = NULL, RDouble *dvdy = NULL, RDouble *dvdz = NULL,
-            RDouble *scV = NULL, RDouble *dwdx = NULL, RDouble *dwdy = NULL, RDouble *dwdz = NULL, RDouble *scW = NULL) {}
-    };
+public:
+    virtual void Discrt(UnstructGrid *grid, string phiName, RDouble *diffCoe, RDouble *dphidx, RDouble *dphidy, RDouble *dphidz,
+        RDouble *ajLeft, RDouble *ajRight, RDouble *scPhi, RDouble *dvdx = NULL, RDouble *dvdy = NULL, RDouble *dvdz = NULL,
+        RDouble *scV = NULL, RDouble *dwdx = NULL, RDouble *dwdy = NULL, RDouble *dwdz = NULL, RDouble *scW = NULL);
+};
 
-    DEFINE_PBOBJECT_FACTORY(PBDiffusion);
+DEFINE_PBOBJECT_FACTORY(PBDiffusion);
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBDiffusion, PBDiffusion, DIFFUSION_EMPTY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBDiffusion, PBDiffusion, DIFFUSION_EMPTY);
 }

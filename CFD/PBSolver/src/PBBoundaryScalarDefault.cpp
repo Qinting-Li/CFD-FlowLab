@@ -4,31 +4,31 @@
 
 namespace PHSPACE
 {
-    PBBoundaryScalarDefault::PBBoundaryScalarDefault(const string& name):PBBoundaryScalar(name), convCalc(NULL), diffCalc(NULL)
+PBBoundaryScalarDefault::PBBoundaryScalarDefault(const string &name):PBBoundaryScalar(name), convCalc(NULL), diffCalc(NULL)
+{
+    convCalc = new PBBoundaryScalarConvection(name);
+    diffCalc = new PBBoundaryScalarDiffusion(name);
+}
+
+PBBoundaryScalarDefault::~PBBoundaryScalarDefault()
+{
+    if (convCalc != NULL)
     {
-        convCalc = new PBBoundaryScalarConvection(name);
-        diffCalc = new PBBoundaryScalarDiffusion(name);
+        delete convCalc;
     }
 
-    PBBoundaryScalarDefault::~PBBoundaryScalarDefault()
+    if (diffCalc != NULL)
     {
-        if (convCalc != NULL)
-        {
-            delete convCalc;
-        }
-
-        if (diffCalc != NULL)
-        {
-            delete diffCalc;
-        }
+        delete diffCalc;
     }
+}
 
-    void PBBoundaryScalarDefault::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
-    {
-        convCalc->Discrt(grid, phiName,  faceIndex, bcData, diffCoe);
+void PBBoundaryScalarDefault::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
+{
+    convCalc->Discrt(grid, phiName, faceIndex, bcData, diffCoe);
 
-        diffCalc->Discrt(grid, phiName,  faceIndex, bcData, diffCoe);
-    }
+    diffCalc->Discrt(grid, phiName, faceIndex, bcData, diffCoe);
+}
 
-    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarDefault, SCALAR_DEFAULT);
+DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarDefault, SCALAR_DEFAULT);
 }

@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolverEnergy.h
 //! @brief     Energy.
-//! @author    Ming Pingjian, Sun Huawen, Huang Jin.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell..
 
 #pragma once
 
@@ -21,47 +21,47 @@ namespace PHSPACE
 {
 #define SOLVER_ENERGY ENERGY
 
-    class PBSolverEnergy : public PBSolverScalar
-    {
-    public:
-        PBSolverEnergy(const string &name);
-        ~PBSolverEnergy();
+class PBSolverEnergy : public PBSolverScalar
+{
+public:
+    PBSolverEnergy(const string &name);
+    ~PBSolverEnergy();
 
-    public:
-        virtual void InitMemory();
-        virtual void AllocateMemory();
-        virtual void ReinitField();
-        virtual void CalcDiffusionTerm();
-        virtual void PrimeEquations();
-        virtual void Relax();
-        virtual void Update();
-        virtual void UpdateProperties();
-        virtual void SetOutputs(vector<string> &phiNameList);
-        virtual bool SolutionIsConverged();
-        virtual void ComputePostVisualVariables(Post_Visual *postVisualization);
-        virtual void OutputResidual(ofstream &file, int flag);
+public:
+    void InitMemory();
+    void AllocateMemory();
+    void ReinitField();
+    void CalcDiffusionTerm();
+    void PrimeEquations();
+    void Relax();
+    void Update();
+    void UpdateProperties();
+    void SetOutputs(vector<string> &phiNameList);
+    bool SolutionIsConverged();
+    void ComputePostVisualVariables(Post_Visual *postVisualization);
+    void OutputResidual(ofstream &file, int flag);
 
-    protected:
-        RDouble initT;
-        RDouble initH;
-        RDouble urfT;
-        RDouble urfH;
-        RDouble initk;
-        RDouble initCPg;
-        RDouble tMax;
-        RDouble tMin;
-        RDouble *cpg;
-        RDouble *cpgb;
-        RDouble *k;
-        RDouble *kb;
-        RDouble *muT;
-        RDouble *muTb;
-        RDouble *h;
-        RDouble *hb;
-        RDouble *t;
-        RDouble *tb;
-        std::string *energyPrintName;
-    };
+protected:
+    RDouble initT;
+    RDouble initH;
+    RDouble urfT;
+    RDouble urfH;
+    RDouble initk;
+    RDouble initCPg;
+    RDouble tMax;
+    RDouble tMin;
+    RDouble *cpg;
+    RDouble *cpgb;
+    RDouble *k;
+    RDouble *kb;
+    RDouble *muT;
+    RDouble *muTb;
+    RDouble *h;
+    RDouble *hb;
+    RDouble *t;
+    RDouble *tb;
+    std::string *energyPrintName;
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverEnergy, SOLVER_ENERGY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverEnergy, SOLVER_ENERGY);
 }
