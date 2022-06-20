@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryTurbKPressureOutlet.h
 //! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -23,16 +23,16 @@ namespace PHSPACE
 {
 #define TURB_K_PRESSUREOUTLET TURB_K_PRESSUREOUTLET 
 
-    class PBBoundaryTurbKPressureOutlet : public PBBoundaryTurbDefault
-    {
-    public:
-        PBBoundaryTurbKPressureOutlet(const string &name);
-        virtual ~PBBoundaryTurbKPressureOutlet();
+class PBBoundaryTurbKPressureOutlet : public PBBoundaryTurbDefault
+{
+public:
+    PBBoundaryTurbKPressureOutlet(const string &name);
+    virtual ~PBBoundaryTurbKPressureOutlet();
 
-        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
+    void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
-    };
+    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKPressureOutlet, TURB_K_PRESSUREOUTLET);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKPressureOutlet, TURB_K_PRESSUREOUTLET);
 } // PB_SPACE

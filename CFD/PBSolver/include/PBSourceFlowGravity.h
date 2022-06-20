@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSourceFlowGravity.h
 //! @brief     Flow.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -21,24 +21,24 @@ namespace PHSPACE
 {
 #define SOURCE_FLOW_GRAVITY FLOW_GRAVITY
 
-    class PBSourceFlowGravity : public PBSource
-    {
-    public:
-        PBSourceFlowGravity(const string &name);
-        virtual ~PBSourceFlowGravity();
+class PBSourceFlowGravity : public PBSource
+{
+public:
+    PBSourceFlowGravity(const string &name);
+    virtual ~PBSourceFlowGravity();
 
-        virtual void InitMemory(UnstructGrid *grid, string phiName);
-        virtual void Discrt(UnstructGrid *grid, string phiName);
+    void InitMemory(UnstructGrid *grid, string phiName);
+    void Discrt(UnstructGrid *grid, string phiName);
 
-    protected:
-        virtual void InitProxy(UnstructGrid *grid);
+protected:
+    void InitProxy(UnstructGrid *grid);
 
-        virtual void DiscrtProxy(UnstructGrid *grid);
+    void DiscrtProxy(UnstructGrid *grid);
 
-        RDouble gx_;
-        RDouble gy_;
-        RDouble gz_;
-    };
+    RDouble gx_;
+    RDouble gy_;
+    RDouble gz_;
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceFlowGravity, SOURCE_FLOW_GRAVITY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceFlowGravity, SOURCE_FLOW_GRAVITY);
 }

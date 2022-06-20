@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBIterSolvGMRES.h
 //! @brief     Solving the System of Algebraic Equations.
-//! @author    Ming Pingjian, Sun Huawen, Huang Jin.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell.
  
 #pragma once
 #include "PBIterSolv.h"
@@ -28,14 +28,13 @@ namespace PHSPACE
 
         void GMRESUpdate(RDouble **H, RDouble *x, RDouble *beta, vector<RDouble *> &Q, int iteration, int ncells);
 
-        virtual void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
+        void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
             string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
 
     protected:
-        virtual void Calc(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace,
-            RDouble *ap, RDouble *ajLeft, RDouble *ajRight, RDouble *sc,
-            RDouble *rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
+        void Calc(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace,RDouble *ap, RDouble *ajLeft,
+            RDouble *ajRight, RDouble *sc,RDouble *rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
     };
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolvGMRES, ITERSOLV_GMRES);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolvGMRES, ITERSOLV_GMRES);
 }

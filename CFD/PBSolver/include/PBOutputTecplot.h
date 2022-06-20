@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBOutputTecplot.h
 //! @brief     Tecplot.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
  
 #pragma once
 
@@ -23,14 +23,14 @@ namespace PHSPACE
 {
 #define OUTPUT_TECPLOT TECPLOT
 
-    class PBOutputTecplot : public PBOutput
-    {
-    public:
-        PBOutputTecplot(const string &name);
-        virtual ~PBOutputTecplot();
+class PBOutputTecplot : public PBOutput
+{
+public:
+    PBOutputTecplot(const string &name);
+    virtual ~PBOutputTecplot();
 
-        virtual void Run(Zone *zone, vector<string> &varNameList);
-    };
+    void Run(Zone *zone, vector<string> &varNameList);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBOutput, PBOutputTecplot, OUTPUT_TECPLOT);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBOutput, PBOutputTecplot, OUTPUT_TECPLOT);
 }

@@ -4,15 +4,25 @@ using namespace std;
 
 namespace PHSPACE
 {
-    PBBoundaryTurb::PBBoundaryTurb(const string &name):PBBoundary(name)
-    {
+PBBoundaryTurb::PBBoundaryTurb(const string &name):PBBoundary(name)
+{
 
-    }
+}
 
-    PBBoundaryTurb::~PBBoundaryTurb()
-    {
+PBBoundaryTurb::~PBBoundaryTurb()
+{
 
-    }
+}
 
-    DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurb, TURB_EMPTY);
+void PBBoundaryTurb::Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe)
+{
+
+}
+
+void PBBoundaryTurb::Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData)
+{
+
+}
+
+DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurb, TURB_EMPTY);
 } // PB_SPACE

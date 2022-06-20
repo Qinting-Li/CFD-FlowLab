@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryFlow.h
 //! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -19,51 +19,51 @@
 
 namespace PHSPACE
 {
-    class Data_Param;
+class Data_Param;
 
-    class PBBoundaryFlow : public PBBoundary
-    {
-    public:
-        PBBoundaryFlow(const string &name);
-        virtual ~PBBoundaryFlow();
+class PBBoundaryFlow : public PBBoundary
+{
+public:
+    PBBoundaryFlow(const string &name);
+    virtual ~PBBoundaryFlow();
 
-        //! @brief Calculate the velocity boundary conditions.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
-        virtual void CalcVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex) {};
+    //! @brief Calculate the velocity boundary conditions.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
+    virtual void CalcVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex);
 
-        //! @brief Update the velocity boundary conditions.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
-        //! @param[in]: bcData denotes the information of boundaries.
-        virtual void UpdateVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData) {};
+    //! @brief Update the velocity boundary conditions.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
+    //! @param[in]: bcData denotes the information of boundaries.
+    virtual void UpdateVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        //! @brief Update the pressure boundary conditions.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
-        //! @param[in]: bcData denotes the information of boundaries.
-        virtual void UpdatePressureBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData) {};
+    //! @brief Update the pressure boundary conditions.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
+    //! @param[in]: bcData denotes the information of boundaries.
+    virtual void UpdatePressureBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        //! @brief Calculate the pressure boundary conditions.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
-        //! @param[in]: bcData denotes the information of boundaries.
-        virtual void CalcPressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData) {};
+    //! @brief Calculate the pressure boundary conditions.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
+    //! @param[in]: bcData denotes the information of boundaries.
+    virtual void CalcPressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
 
 
-        //! @brief Update the pressure correction boundary conditions.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
-        //! @param[in]: bcData denotes the information of boundaries.
-        virtual void UpdatePressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData) {};
+    //! @brief Update the pressure correction boundary conditions.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
+    //! @param[in]: bcData denotes the information of boundaries.
+    virtual void UpdatePressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        //! @brief Update the velocity correction boundary conditions.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
-        //! @param[in]: bcData denotes the information of boundaries.
-        virtual void UpdateVelocityCorrectionBoundary(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData) {};
-    };
+    //! @brief Update the velocity correction boundary conditions.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: faceIndex denotes the faceIndex set storing the all face numbers in this boundary region.
+    //! @param[in]: bcData denotes the information of boundaries.
+    virtual void UpdateVelocityCorrectionBoundary(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+};
 
-    DEFINE_PBOBJECT_FACTORY(PBBoundaryFlow);
+DEFINE_PBOBJECT_FACTORY(PBBoundaryFlow);
 }

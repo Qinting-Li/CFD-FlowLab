@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBGrad.h
 //! @brief     Compute Grad.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
  
 #pragma once
 
@@ -21,26 +21,26 @@ namespace PHSPACE
 {
 #define GRAD_EMPTY EMPTY
 
-    class UnstructGrid;
+class UnstructGrid;
 
-    class PBGrad : public PBObject
-    {
-    public:
-        PBGrad(const string &name);
-        virtual ~PBGrad();
+class PBGrad : public PBObject
+{
+public:
+    PBGrad(const string &name);
+    virtual ~PBGrad();
 
-    public:
-        virtual void Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false) {}
+public:
+    virtual void Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
 
-        void SetSolverID(int solverID) { this->solverID = solverID; }
-        int GetSolverID() { return this->solverID; }
+    void SetSolverID(int solverID) { this->solverID = solverID; }
+    int GetSolverID() { return this->solverID; }
 
-    protected:
-        UnstructGrid *grid;
-        int solverID;
-    };
+protected:
+    UnstructGrid *grid;
+    int solverID;
+};
 
-    DEFINE_PBOBJECT_FACTORY(PBGrad);
+DEFINE_PBOBJECT_FACTORY(PBGrad);
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGrad, GRAD_EMPTY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGrad, GRAD_EMPTY);
 }
