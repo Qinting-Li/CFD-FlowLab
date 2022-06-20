@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryTurb.h
 //! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -23,17 +23,17 @@ namespace PHSPACE
 {
 #define TURB_EMPTY TURB_EMPTY
 
-    class PBBoundaryTurb : public PBBoundary
-    {
-    public:
-        PBBoundaryTurb(const string &name);
-        virtual ~PBBoundaryTurb();
+class PBBoundaryTurb : public PBBoundary
+{
+public:
+    PBBoundaryTurb(const string &name);
+    virtual ~PBBoundaryTurb();
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe) {};
+    virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData) {};
-    };
+    virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
+};
 
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurb, TURB_EMPTY);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurb, TURB_EMPTY);
 } // PB_SPACE

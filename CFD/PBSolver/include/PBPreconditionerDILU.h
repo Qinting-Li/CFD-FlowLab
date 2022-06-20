@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBPreconditionerDILU.h
 //! @brief     PreconditionerDILU.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
  
 #pragma once
 #include "PBPreconditioner.h"
@@ -20,22 +20,22 @@ namespace PHSPACE
 {
 #define ITERSOLVPRECOND_DILU DILU
 
-    class PBPreconditionerDILU : public PBPreconditioner
-    {
-    public:
-        PBPreconditionerDILU(const string &name);
-        virtual ~PBPreconditionerDILU();
+class PBPreconditionerDILU : public PBPreconditioner
+{
+public:
+    PBPreconditionerDILU(const string &name);
+    virtual ~PBPreconditionerDILU();
 
-        virtual void Preconditioning(Region &region, vector<int> &zoneId, string &varStr, string &apStr, string &ajUpperStr,
-            string &ajLowerStr, string &aiiStr, string &scStr, string &rsStr);
+    void Preconditioning(Region &region, vector<int> &zoneId, string &varStr, string &apStr, string &ajUpperStr,
+        string &ajLowerStr, string &aiiStr, string &scStr, string &rsStr);
 
-    public:
-        virtual void PreconditioningProxy(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace,
-            RDouble *ap, RDouble *ajLeft, RDouble *ajRight, RDouble *rs, string *phiName = NULL);
+public:
+    void PreconditioningProxy(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace,
+        RDouble *ap, RDouble *ajLeft, RDouble *ajRight, RDouble *rs, string *phiName = NULL);
 
-        virtual void ForwardAndBackward(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace, RDouble *ap0,
-            RDouble *ajLeft, RDouble *ajRight, RDouble *p, RDouble *rs, string *phiName = NULL);
-    };
+    void ForwardAndBackward(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace, RDouble *ap0,
+        RDouble *ajLeft, RDouble *ajRight, RDouble *p, RDouble *rs, string *phiName = NULL);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBPreconditioner, PBPreconditionerDILU, ITERSOLVPRECOND_DILU);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBPreconditioner, PBPreconditionerDILU, ITERSOLVPRECOND_DILU);
 }

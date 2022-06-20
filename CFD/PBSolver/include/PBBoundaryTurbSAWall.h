@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryTurbSAWall.h
 //! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -23,15 +23,15 @@ namespace PHSPACE
 {
 #define TURB_SA_WALL TURB_SA_WALL
 
-    class PBBoundaryTurbSAWall : public PBBoundaryScalarDiffusion
-    {
-    public:
-        PBBoundaryTurbSAWall(const string &name);
-        virtual ~PBBoundaryTurbSAWall();
+class PBBoundaryTurbSAWall : public PBBoundaryScalarDiffusion
+{
+public:
+    PBBoundaryTurbSAWall(const string &name);
+    virtual ~PBBoundaryTurbSAWall();
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-    };
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbSAWall, TURB_SA_WALL);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbSAWall, TURB_SA_WALL);
 } // PB_SPACE

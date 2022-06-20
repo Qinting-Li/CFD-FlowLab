@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSourceTurbKDefault.h
 //! @brief     TurbK.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -22,15 +22,15 @@ namespace PHSPACE
 {
 #define SOURCE_TURB_K_DEFAULT TURB_K_DEFAULT
 
-    class PBSourceTurbKDefault : public PBSource
-    {
-    public:
-        PBSourceTurbKDefault(const string &name);
-        virtual ~PBSourceTurbKDefault();
+class PBSourceTurbKDefault : public PBSource
+{
+public:
+    PBSourceTurbKDefault(const string &name);
+    virtual ~PBSourceTurbKDefault();
 
-        virtual void InitMemory(UnstructGrid *grid, string phiName);
-        virtual void Discrt(UnstructGrid *grid, string phiName);
-    };
+    void InitMemory(UnstructGrid *grid, string phiName);
+    void Discrt(UnstructGrid *grid, string phiName);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceTurbKDefault, SOURCE_TURB_K_DEFAULT);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceTurbKDefault, SOURCE_TURB_K_DEFAULT);
 }

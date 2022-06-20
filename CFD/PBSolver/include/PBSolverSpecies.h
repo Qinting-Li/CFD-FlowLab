@@ -21,39 +21,39 @@ namespace PHSPACE
 {
 #define SOLVER_SPECIES SPECIES
 
-    class PBSolverSpecies : public PBSolverScalar
-    {
-    public:
-        PBSolverSpecies(const std::string &name);
-        ~PBSolverSpecies();
+class PBSolverSpecies : public PBSolverScalar
+{
+public:
+    PBSolverSpecies(const std::string &name);
+    ~PBSolverSpecies();
 
-    public:
-        virtual void Init();
-        virtual void AllocateMemory();
-        virtual void ReinitField();
-        virtual void UpdateDt();
-        virtual bool SolutionIsConverged();
+public:
+    void Init();
+    void AllocateMemory();
+    void ReinitField();
+    virtual void UpdateDt();
+    bool SolutionIsConverged();
 
-    public:
-        virtual void UpdateProperties();
-        virtual void UpdateAfterIterloop();
+public:
+    virtual void UpdateProperties();
+    void UpdateAfterIterloop();
 
-    protected:
-        int isSolveTurb;
-        std::string *speciesName; /// 控制面板输出变量控制；
-        RDouble *speciesMolarMass; /// 各组分摩尔质量；
-        RDouble *speciesRho; /// 各组分密度；
-        RDouble *speciesMu; /// 各组分粘性系数；
+protected:
+    int isSolveTurb;
+    std::string *speciesName; /// 控制面板输出变量控制；
+    RDouble *speciesMolarMass; /// 各组分摩尔质量；
+    RDouble *speciesRho; /// 各组分密度；
+    RDouble *speciesMu; /// 各组分粘性系数；
 
-        RDouble dilute; /// 湍流开关，用于组分方程扩散系数的求解；
-        RDouble sct; /// Schmidt数，用于求组分方程扩散系数；
-        RDouble gasR; /// 理想气体常数;
-        RDouble speciesThreshold;
-        RDouble initMuSp;
-        RDouble *muSp;
-        RDouble *muSpb;
+    RDouble dilute; /// 湍流开关，用于组分方程扩散系数的求解；
+    RDouble sct; /// Schmidt数，用于求组分方程扩散系数；
+    RDouble gasR; /// 理想气体常数;
+    RDouble speciesThreshold;
+    RDouble initMuSp;
+    RDouble *muSp;
+    RDouble *muSpb;
 
-    };
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverSpecies, SOLVER_SPECIES);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverSpecies, SOLVER_SPECIES);
 }

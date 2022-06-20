@@ -6,15 +6,15 @@
 namespace PHSPACE
 {
 
-//! To execute the forward sweep of the matrix LU-SGS method.
+//! To execute the forward sweep of the Matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
 //! @param[out]: dqProxy is an array that store the difference values between the conservative variables at n and n+1 time step.
-void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
-//! To execute the backward sweep of the matrix LU-SGS method.
+//! To execute the backward sweep of the Matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
 //! @param[out]: dqProxy and dqStarProxy are arrays that store the difference values between the conservative variables at n and n+1 time step.
-void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
 //! Compute and save the diagonal matrix on grids that are used for matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.

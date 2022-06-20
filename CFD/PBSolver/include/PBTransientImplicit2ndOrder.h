@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBTransientImplicit2ndOrder.h
 //! @brief     Implicit2ndOrder.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -21,18 +21,18 @@ namespace PHSPACE
 {
 #define TRANSIENT_IMPLICIT_2ND_ORDER IMPLICIT_2ND_ORDER
 
-    class PBTransientImplicit2ndOrder : public PBTransient
-    {
-    public:
-        PBTransientImplicit2ndOrder(const string &name);
-        virtual ~PBTransientImplicit2ndOrder();
+class PBTransientImplicit2ndOrder : public PBTransient
+{
+public:
+    PBTransientImplicit2ndOrder(const string &name);
+    virtual ~PBTransientImplicit2ndOrder();
 
-        virtual void AllocateMemory(UnstructGrid *grid, vector<string> &phiName, vector<RDouble> &initPhi);
+    void AllocateMemory(UnstructGrid *grid, vector<string> &phiName, vector<RDouble> &initPhi);
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
+    void Discrt(UnstructGrid *grid, string phiName, string phiOldName, string phiOldOldName, string rhoOldName = NULL, string rhoOldOldName = NULL);
 
-        virtual void SaveOldTimeValue(UnstructGrid *grid, vector<string> &phiName);
-    };
+    void SaveOldTimeValue(UnstructGrid *grid, vector<string> &phiName);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientImplicit2ndOrder, TRANSIENT_IMPLICIT_2ND_ORDER);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBTransient, PBTransientImplicit2ndOrder, TRANSIENT_IMPLICIT_2ND_ORDER);
 }

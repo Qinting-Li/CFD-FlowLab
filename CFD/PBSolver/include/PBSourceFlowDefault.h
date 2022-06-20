@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSourceFlowDefault.h
 //! @brief     Flow.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -22,17 +22,17 @@ namespace PHSPACE
 {
 #define SOURCE_FLOW_DEFAULT FLOW_DEFAULT
 
-    class PBSourceFlowDefault : public PBSource
-    {
-    public:
-        PBSourceFlowDefault(const string &name);
-        virtual ~PBSourceFlowDefault();
+class PBSourceFlowDefault : public PBSource
+{
+public:
+    PBSourceFlowDefault(const string &name);
+    virtual ~PBSourceFlowDefault();
 
-        virtual void Discrt(UnstructGrid *grid, string phiName);
+    void Discrt(UnstructGrid *grid, string phiName);
 
-    protected:
-        virtual void DiscrtProxy(UnstructGrid *grid);
-    };
+protected:
+    void DiscrtProxy(UnstructGrid *grid);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceFlowDefault, SOURCE_FLOW_DEFAULT);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSource, PBSourceFlowDefault, SOURCE_FLOW_DEFAULT);
 }
