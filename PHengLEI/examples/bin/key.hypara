@@ -22,7 +22,7 @@ int    nsimutask    = 0;
 string parafilename = "./bin/cfd_para_transonic.hypara";
 //string parafilename = "./bin/cfd_para_supersonic.hypara";
 //string parafilename = "./bin/cfd_para_hypersonic.hypara";
-//string parafilename = "./bin/incompressible.hypara";
+//string parafilename = "./bin/cfd_para_incompressible.hypara";
 
 //int    nsimutask    = 1;
 //string parafilename = "./bin/grid_para.hypara";
