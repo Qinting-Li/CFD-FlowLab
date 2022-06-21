@@ -68,7 +68,7 @@ void PBSolverFlow::TimeStep(Grid *grid)
     PrintToWindow("PBSolverFlow::TimeStep\n");
 }
 
-void PBSolverFlow::ComputeResidual(Grid *grid_in, FieldProxy *rhs_proxy)
+void PBSolverFlow::ComputeResidual(Grid *grid_in, FieldProxy *rhsProxy)
 {
     PrintToWindow("PBSolverFlow::ComputeResidual\n");
 }
@@ -88,7 +88,7 @@ void PBSolverFlow::ViscousFlux(Grid *grid)
     PrintToWindow("PBSolverFlow::ViscousFlux\n");
 }
 
-void PBSolverFlow::RungeKutta(Grid *grid, FieldProxy *rhs_proxy)
+void PBSolverFlow::RungeKutta(Grid *grid, FieldProxy *rhsProxy)
 {
     PrintToWindow("PBSolverFlow::RungeKutta\n");
 }

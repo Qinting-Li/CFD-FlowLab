@@ -5,7 +5,6 @@
 #include "Param_NSSolver.h"
 #include "Math_BasisFunction.h"
 #include "PHIO.h"
-
 #include "Gas.h"
 #include "TK_Log.h"
 
@@ -13,8 +12,8 @@ using namespace std;
 
 namespace PHSPACE
 {
-
 using namespace GAS_SPACE;
+
 NSSolver::NSSolver()
 {
 }
@@ -491,7 +490,6 @@ void NSSolver::CheckSurfaceHeatingChange(Grid *grid, int level)
         oss1 << setiosflags(ios::showpoint);
         oss1 << "The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
         cout<<oss1.str();
-        //cout<<"The maximum change of surface heating ratio is "<<monitorHeatingChange<<endl;
 
         //! Dump to file.
         string saveHeatRes = "./results/heatResidual.plt";

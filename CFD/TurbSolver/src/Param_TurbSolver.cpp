@@ -94,7 +94,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     RDouble SA_cv1;
 
-    //clz begin
+    //! clz begin
     SSTProductLimit = 10.0;    //! Refer to the version of 2003.
 
     turb_fbeta  = 1.0;

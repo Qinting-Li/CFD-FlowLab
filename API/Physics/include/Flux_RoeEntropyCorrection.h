@@ -25,7 +25,7 @@ namespace PHSPACE
 //!	   @param[in] absVel					   The absolute velocity on the face.\n
 //!    @param[in] RoeEntropyCorrectionMethod   The Roe entropy correction method.\n
 //!    @param[in] entropyCorrectionCoef        The Roe entropy correction coefficient.\n
-LIB_EXPORT void Flux_RoeEntropyCorrection(RDouble &eigv1, RDouble &eigv2, RDouble &eigv3, RDouble lrtL, RDouble lrtR, 
+LIB_EXPORT void Flux_RoeEntropyCorrection(RDouble &eigv1, RDouble &eigv2, RDouble &eigv3, RDouble pressureCoeffL, RDouble pressureCoeffR, 
 										  RDouble absVel, RDouble vn, RDouble cm, int RoeEntropyCorrectionMethod, RDouble acousticEigenLimit, RDouble convectEigenLimit);
 
 //! Harten type of entropy correction (fix).\n

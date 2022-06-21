@@ -9,8 +9,6 @@
 #include "PHIO.h"
 #include "TK_Log.h"
 #include "Pre_StructToUnstruct.h"
-
-
 #include "FieldViewIn.h"
 #include "GridView.h"
 #include "Pre_CGNSToPlot3D_Struct.h"
@@ -726,7 +724,6 @@ void CombineGrid()
 
     combinedGrid->RunCombinGrid();
 
-    //combinedGrid->DumpMergedGrid(outGridFile, combinedGrid->GetGridAll(), 1);
     DumpGrid(outGridFile, combinedGrid->GetGridAll(), 1);
     delete combinedGrid;    combinedGrid = NULL;
     delete region;    region = NULL;

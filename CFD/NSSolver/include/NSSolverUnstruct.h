@@ -54,9 +54,9 @@ public:
     void ReadRestartH5(ActionKey *actkey);
 
     void InitFlowAsRestart();
-    void LoadQ(Grid *gridIn, FieldProxy *q_proxy);
+    void LoadQ(Grid *gridIn, FieldProxy *qProxy);
     void RestrictDefect(Grid *fgrid_in, Grid *cgrid_in);
-    void PutCorrectionBack(Grid *gridIn, FieldProxy *q_proxy);
+    void PutCorrectionBack(Grid *gridIn, FieldProxy *qProxy);
 
     //! Prolongation operator, from coarse mesh to fine mesh.
     void CorrectFineGrid(Grid *fgrid_in, Grid *cgrid_in);
@@ -176,7 +176,7 @@ public:
     void ComputeInviscidFlux(Grid *grid, FaceProxy *faceProxy, int localStart, int localEnd);
     void SolutionFix(Grid *gridIn, RDouble *prim, int iCell);
 
-    void UpdateFlowField(Grid *gridIn, FieldProxy *q_proxy, FieldProxy *dqProxy);
+    void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy);
     void SetGhostDQLUSGS(Grid *gridIn, RDouble **dq, RDouble **q);
     void SetSymmBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq, RDouble **q);
     void SetWallBCGhostDQLUSGS(Grid *gridIn, UnstructBC *bcRegionUnstruct, RDouble **dq, RDouble **q);

@@ -752,7 +752,7 @@ void TurbSolverStrFD::ObtainBlending(Grid *gridIn)
 
     using namespace IDX;
 
-    //Compute maximum cross diffusion term across flowfield
+    //! Compute maximum cross diffusion term across flowfield
     RDouble cdkwmin = 1.0e-10;
 
     for (int k = kst; k <= ked; ++ k)
@@ -770,7 +770,7 @@ void TurbSolverStrFD::ObtainBlending(Grid *gridIn)
                 RDouble dist   = walldist(i, j, k);
                 RDouble dist2  = dist * dist;
 
-                //calculate cd_kw
+                //! Calculate cd_kw
                 RDouble crossDiff = 2.0 * rho * sigw2 * crss / (kw + SMALL);
 
                 //! Original Menter CD_kw calculation.
@@ -1065,7 +1065,6 @@ void TurbSolverStrFD::VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *st
                     RDouble distanceSquare = wallDistance * wallDistance;
 
                     RDouble omgi = 60.0 * laminarViscosity / (rhoInside * beta1 * distanceSquare * refReNumber * refReNumber);
-                    //RDouble omgo = utao / (0.126 * wallDistance * refReNumber);
                     RDouble omgo = 0.0;
                     RDouble kwWall = sqrt(omgi * omgi + omgo * omgo);
 
@@ -1149,7 +1148,6 @@ void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *struc
                 RDouble small = 1.0e-15;
                 RDouble uvw = max(vpt, small);
 
-                //RDouble uu = sqrt(up * up + vp * vp + wp * wp);
                 RDouble& uu = uvw;
 
                 RDouble wallDistance = wallDistant(is1, js1, ks1);
@@ -1175,27 +1173,25 @@ void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *struc
                 {
                     xnplus = paba12[0] + paba12[1] * rc + paba12[2] * rc * rc;
                 }
+
                 RDouble xnplussav = xnplus;
 
-                //if (xnplus >= Ylim)
+                //! Newton iteration to solve for nplus, assuming it is in log region:
+                for (int iter = 0; ; ++iter)
                 {
-                    //! Newton iteration to solve for nplus, assuming it is in log region:
-                    for (int iter = 0; ; ++iter)
+                    RDouble f = rc / xnplus - 2.44 * (log(xnplus)) - 5.2;
+                    RDouble dfdn = -rc / (xnplus * xnplus) - 2.44 / xnplus;
+                    RDouble delta = -f / dfdn;
+                    xnplus = fabs(xnplus + delta);
+                    if (iter > 10)
                     {
-                        RDouble f = rc / xnplus - 2.44 * (log(xnplus)) - 5.2;
-                        RDouble dfdn = -rc / (xnplus * xnplus) - 2.44 / xnplus;
-                        RDouble delta = -f / dfdn;
-                        xnplus = fabs(xnplus + delta);
-                        if (iter > 10)
-                        {
-                            //! Revert back to approx series soln if Newton iteration fails.
-                            xnplus = xnplussav;
-                            break;
-                        }
-                        else if (abs(delta) < 1.e-3)
-                        {
-                            break;
-                        }
+                        //! Revert back to approx series soln if Newton iteration fails.
+                        xnplus = xnplussav;
+                        break;
+                    }
+                    else if (abs(delta) < 1.e-3)
+                    {
+                        break;
                     }
                 }
 

@@ -535,7 +535,7 @@ void BlockRefine::DumpGrid(fstream &file, Grid *gridIn)
 {
     StructGrid *gridOld = StructGridCast(gridIn);
 
-    //ni,nj,nk are fine grid dimension
+    //! ni,nj,nk are fine grid dimension
     int ni = this->GetNI();
     int nj = this->GetNJ();
     int nk = this->GetNK();

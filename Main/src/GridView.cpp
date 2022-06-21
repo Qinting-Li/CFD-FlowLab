@@ -630,7 +630,6 @@ void BlockGroupManager::Run()
 
     SeparateGrid();
 
-    //OutputNewGrid();
     OutputNewSurfaceGrid();
 
     OutputNewBoundary();

@@ -39,10 +39,10 @@ private:
     Region *region;
 
     //! Flow field variables proxy, actually, it stores the fields on different grid levels in MG.
-    ZoneFieldProxy *q_proxy;
+    ZoneFieldProxy *qProxy;
 
     //! Right Hand Side (RHS) proxy, actually, it stores the RHS on different grid levels in MG.
-    ZoneFieldProxy *rhs_proxy;
+    ZoneFieldProxy *rhsProxy;
 
     //! Solver index.
     int solverID;

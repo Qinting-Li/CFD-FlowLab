@@ -41,7 +41,7 @@ void ShowWelcomeTitle()
 
     int myid = GetCurrentProcessorID();
     if (myid == PHMPI::GetServerProcessorID())
-    {     
+    {
         ostringstream oss;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
         oss << "$#                                                     #$" << endl;

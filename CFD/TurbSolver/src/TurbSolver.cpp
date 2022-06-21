@@ -199,14 +199,6 @@ void TurbSolver::RegisterCFDSolverOversetField()
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
     CFDSolver::RegisterOversetField("turb::q", PHDOUBLE, nTurbulenceEquation);
-
-    //CFDSolver::RegisterOversetField("turb::dqdx", PHDOUBLE, nTurbulenceEquation);
-    //CFDSolver::RegisterOversetField("turb::dqdy", PHDOUBLE, nTurbulenceEquation);
-    //CFDSolver::RegisterOversetField("turb::dqdz", PHDOUBLE, nTurbulenceEquation);
-    //
-    //CFDSolver::RegisterOversetField("turb::limit", PHDOUBLE, 1);
-    //
-    //CFDSolver::RegisterOversetField("turb::dq", PHDOUBLE, nTurbulenceEquation);
 }
 
 void TurbSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy)

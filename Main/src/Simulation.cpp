@@ -10,7 +10,6 @@
 #include "Geo_Sample.h"
 #include "UnstructuredOversetConfig.h"
 #include "HOSimulation.h"
-
 #include "OversetInformation.h"
 #include "SolversList.h"
 #include "PostProcess.h"
@@ -20,9 +19,9 @@
 #include "Post_WriteTecplot.h"
 #include "LESSolverStruct.h"
 #include "LESSolverUnstr.h"
-//! Incompressible Flow
+//! Pressure based solver for incompressible flow. 
 #include "PBS.h"
-//!
+
 
 #ifdef USE_SpecDiffHybSolver
 #include "SpecDiffHybSolver.h"
@@ -207,8 +206,8 @@ void Simulation::RunCFD()
     if (isAdaptiveSolver > 0)
     {
         GenerateWalldist();
-
-        SelfAdaptionRunCFD(); //! Run CFD using the adaptive method.
+        //! Run CFD using the adaptive method.
+        SelfAdaptionRunCFD();
         return;
     }
 
@@ -357,7 +356,7 @@ void Simulation::SelfAdaptionRunCFD()
     }
 }
 
-void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
+void Simulation::FirstStepRunCFD(bool isStart)
 {
     //! Record the serial number of current iteration step.
     int nCurrentStep = 1;
@@ -402,7 +401,7 @@ void Simulation::FirstStepRunCFD(bool isStart/* = true*/)
     RefreshSolvers();
 }
 
-void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
+void Simulation::SecondStepRunCFD(bool isStart)
 {
     //! Record the serial number of current iteration step.
     int nCurrentStep = 2;
@@ -439,7 +438,7 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
     {
         nKeyVariableIndex = 9;
     }
-    else if (nControlVariable > 6)  //! default.
+    else if (nControlVariable > 6)  //! Default.
     {
         nKeyVariableIndex = 1;      //! The index of the variable temperature.
     }
@@ -491,7 +490,7 @@ void Simulation::SecondStepRunCFD(bool isStart/* = false*/)
     RefreshSolvers();
 }
 
-void Simulation::ThirdStepRunCFD(bool isStart/* = false*/)
+void Simulation::ThirdStepRunCFD(bool isStart)
 {
     //! Record the serial number of current iteration step.
     int nCurrentStep = 3;
@@ -672,7 +671,7 @@ void Simulation::RunIntegrativeSolver()
         }
     }
 
-    //! fts file not exist, need convert grid.
+    //! Fts file not exist, need convert grid.
     if (!SerialFileExist(outGridName))
     {
         if (!partitionFtsExist)
@@ -1297,7 +1296,7 @@ void Simulation::InitializeSolvers()
         delete controller;
     }
 
-    //! For Incompressible Flow
+    //! For incompressible flow.
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
         Controller *controller = new Controller(iSolver, this->region);
@@ -1398,9 +1397,10 @@ void Simulation::DefineAndCreateSolvers()
             else
             {
 
-                //! Incompressible Flow
+                //! Incompressible flow
                 string flowSolver;
                 zone->GetData("FLOW", &flowSolver, PHSTRING, 1);
+
                 PHSolver *solver = new PBSolverFlow(flowSolver);
                 solverList.push_back(solver);
                 int solverIndex = solverList.size();
@@ -1411,7 +1411,7 @@ void Simulation::DefineAndCreateSolvers()
         }
         else
         {
-            //
+            //! To do
         }
 
         //! Second: turbulent equations solver.
@@ -1451,7 +1451,7 @@ void Simulation::DefineAndCreateSolvers()
             }
             else
             {
-                //! Incompressible Flow
+                //! Incompressible flow
                 if (viscousType == SPALART_ALLMARAS)
                 {
                     PHSolver *solver = new PBSolverTurbSA("TURB_SA");
@@ -1487,7 +1487,7 @@ void Simulation::DefineAndCreateSolvers()
             }
         }
 
-        //! Incompressible Flow
+        //! Incompressible flow
         int compressible = 1;
         zone->GetData("compressible", &compressible, PHINT, 1);
         if (!compressible)
@@ -1545,7 +1545,7 @@ void Simulation::PreSolve()
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (!compressible)
     {
-        string fileName = "residual.dat";
+        string fileName = "res.dat";
         int nSolver = Zone::GetNumberOfSolvers();
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
@@ -1577,11 +1577,11 @@ void Simulation::PostSolve()
         generateVisualFile.Run();
     }
 
-    //! Incompressible Flow
+    //! Incompressible flow
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (!compressible)
     {
-        string fileName = "residual.dat";
+        string fileName = "res.dat";
         int nSolver = Zone::GetNumberOfSolvers();
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
@@ -1661,7 +1661,7 @@ void Simulation::SolveSimulation()
 
     while (continueSolve)
     {
-        //! Incompressible Flow
+        //! Incompressible flow
         int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
 
@@ -1733,7 +1733,7 @@ void Simulation::PostSimulation()
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (compressible == 0)
     {
-        //! visual files will be added afterforwards for incompressible flow problems.
+        //! Visual files will be added afterforwards for incompressible flow problems.
         return;
     }
     this->region->PostSimulation();
@@ -1833,7 +1833,6 @@ void Simulation::MultiGridInitFlow()
 
             UpdateOuterIterationStep(outIterStep);
 
-            //using namespace PHMPI;
             for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
             {
                 Controller *controller = new Controller(iSolver, this->region);
@@ -1886,14 +1885,14 @@ void Simulation::SolveSteady()
     int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
 
-    //! Incompressible Flow
+    //! Incompressible flow
     int compressible = 1;
     GlobalDataBase::GetData("compressible", &compressible, PHINT, 1);
     if (compressible)
     {
         for (int iSolver = 0; iSolver < nSolver; ++iSolver)
         {
-        //! iSolver = 1 or 2, is supposed as turbulence computing.
+            //! iSolver = 1 or 2, is supposed as turbulence computing.
             if ((iSolver == TURB_SOLVER) && (outerIterStep % turbInterval != 0))
             {
                 return;
@@ -1910,7 +1909,7 @@ void Simulation::SolveSteady()
     }
     else
     {
-        //! Incompressible Flow
+        //! Incompressible flow
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
             Controller *controller = new Controller(iSolver, this->region);
@@ -1992,7 +1991,7 @@ void Simulation::SolveUnsteady()
     }
     else
     {
-        //! Incompressible Flow
+        //! Incompressible flow
         int innerIterStep = GlobalDataBase::GetIntParaFromDB("innerIter");
         int nSolver = Zone::GetNumberOfSolvers();
 
@@ -2103,7 +2102,7 @@ bool Simulation::ContinueSolve()
             }
         }
 
-        //! Incompressible Flow
+        //! Incompressible flow
         bool isContinueSolveByConverge = false;
         int nSolver = Zone::GetNumberOfSolvers();
         bool converged = false;

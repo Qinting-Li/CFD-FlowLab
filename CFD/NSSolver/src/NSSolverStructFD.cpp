@@ -214,7 +214,7 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
         RDouble refT = Twall / refTemperature;
         if (Twall <= EPSILON)
         {
-            refT = 1.0; //Radiation equilibrium temperature wall.
+            refT = 1.0; //! Radiation equilibrium temperature wall.
         }
 
         RDouble2D *temperatureWall = new RDouble2D(Range(0, nWallBC - 1), Range(0, nMaxSurfaceCell - 1), fortranArray);
@@ -271,9 +271,9 @@ void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell
         {
             continue;
         }
-        ++ nWall; //The number of surface regions.
+        ++ nWall; //! The number of surface regions.
 
-        //The following are surface boundary codes.
+        //! The following are surface boundary codes.
         int ist, ied, jst, jed, kst, ked;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
@@ -309,7 +309,7 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
         {
             continue;
         }
-        //The following are surface boundary codes.
+        //! The following are surface boundary codes.
         int ist, ied, jst, jed, kst, ked;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
@@ -345,11 +345,11 @@ void NSSolverStructFD::ComputeFirstLayerGridHeight(Grid *gridIn, RDouble2D *firs
                     #endif
 
                     (*firstLayerHeight)(indexOfWall, indexOfCell) = deltaHeight;
-                    ++ indexOfCell; //Next grid cell.
+                    ++ indexOfCell; //! Next grid cell.
                 }
             }
         }
-        ++ indexOfWall; //Next surface regions.
+        ++ indexOfWall; //! Next surface regions.
     }
 }
 
@@ -551,7 +551,7 @@ void NSSolverStructFD::ObtainPressureFactor(Grid *gridIn)
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
     RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("rtem"));
     
-    RDouble pressureSensorCoefficient = third;  // for 3-D
+    RDouble pressureSensorCoefficient = third;  //! For 3-D
 
     int istp = 1;
     int jstp = 1;
@@ -1126,7 +1126,7 @@ void NSSolverStructFD::ViscousIsotropicWall(Grid *gridIn, StructBC *structBC)
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
     
-    RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature; //! non-dimensional temperature.
+    RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature; //! Non-dimensional temperature.
     RDouble temperaturelimitation = 0.1 * temperatureWallNonDimensional;
 
     using namespace IDX;
@@ -1213,13 +1213,13 @@ void NSSolverStructFD::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structB
     RDouble poo = primitiveVarFarfield[IP];
          
     int nEquation = GetNumberOfEquations();
-    RDouble * prims;  //! the inner point.
-    RDouble * primt;  //! the ghost point.   
+    RDouble * prims;  //! Inner point.
+    RDouble * primt;  //! Ghost point.   
     prims = new RDouble [nEquation];
     primt = new RDouble [nEquation];
 
-    RDouble rin, uin, vin, win, pin, vnin, cinner, vein; //! inner    point variables.
-    RDouble rb , ub , vb , wb , pb , vnb , cb;           //! boundary point variables.
+    RDouble rin, uin, vin, win, pin, vnin, cinner, vein; //! Inner    point variables.
+    RDouble rb , ub , vb , wb , pb , vnb , cb;           //! Boundary point variables.
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -1503,7 +1503,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
 
     if(InterpolationType.substr(0, 4) == "test")
     {
-        //! non-uniform interpolation
+        //! Non-uniform interpolation
         RDouble3D &xcc = *grid->GetCellCenterX();
         RDouble3D &ycc = *grid->GetCellCenterY();
         RDouble3D &zcc = *grid->GetCellCenterZ();
@@ -1765,7 +1765,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
     }
     else
     {
-        //! uniform interpolation
+        //! Uniform interpolation
         RDouble Coef[30];
         
         Coef[0] =  1.0  / 16.0;
@@ -1881,11 +1881,6 @@ void NSSolverStructFD::InviscidFlux(Grid *gridIn)
         GetFaceInviscidFlux(grid, qlProxy, qrProxy, fluxProxy, nsurf);
         FluxDifference(grid, fluxProxy, nsurf);
     }
-
-    /*if (total_negative > 0)
-    {
-        std::cout<<"warning:    "<<total_negative<<std::endl;
-    }*/
 
     delete qlProxy;
     delete qrProxy;
@@ -5655,11 +5650,6 @@ void NSSolverStructFD::UpdateQlQrOnlyforMixGrid(Grid *gridIn)
         GetFaceVariableCorrectionAtPhysicalBoundary(grid, qlProxy, qrProxy, iSurface);
         GetFaceVariable_HDCS_otherlayerImplicit(grid, qlProxy, qrProxy, iSurface);
     }
-
-    /*if (total_negative > 0)
-    {
-        std::cout<<"warning:    "<<total_negative<<std::endl;
-    }*/
 
     delete qlProxy;
     delete qrProxy;

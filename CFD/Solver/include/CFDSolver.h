@@ -547,35 +547,35 @@ private:
     void TranslateInterpointData(InterpointInformation *interpointInformation, ActionKey *actkey, InterpointDataProxy * interpointDataProxy);
 
 public:
-    virtual void DiscrtMomentumEquations() {};
-    virtual void SolveMomentumEquations(Region &region) {};
-    virtual void UpdateVelocity() {};
-    virtual void DiscrtPressureCorrectionEquation() {};
-    virtual void SolvePressureCorrectionEquation(Region &region) {};
-    virtual void UpdatePressureAndVelocity() {};
-    virtual void UpdateProperties() {};
+    virtual void DiscrtMomentumEquations();
+    virtual void SolveMomentumEquations(Region &region);
+    virtual void UpdateVelocity();
+    virtual void DiscrtPressureCorrectionEquation();
+    virtual void SolvePressureCorrectionEquation(Region &region);
+    virtual void UpdatePressureAndVelocity();
+    virtual void UpdateProperties();
 
 public:
-    virtual void Discrt() {};
-    virtual void Update() {};
-    virtual void UpdateBoundary() {};
-    virtual bool SolutionIsConverged(int iZone) { return false; }
-    virtual void UpdateAfterIterloop() {};
-    virtual void SetOutputs(std::vector<std::string> &phiNameList) {};
-    virtual void InitMatrix() {};
-    virtual void CalcGrad() {};
-    virtual void CalcBoundaryConditions() {};
-    virtual void CalcTransientTerm() {};
-    virtual void CalcConvectionTerm() {};
-    virtual void CalcDiffusionTerm() {};
-    virtual void CalcSourceTerm() {};
-    virtual void SolveScalarEquation(Region &region) {};
-    virtual void SolveKEquation(Region &region) {};
-    virtual void SolveEpsilonEquation(Region &region) {};
-    virtual void PrimeEquations() {};
-    virtual void CalcRes() {};
-    virtual void Relax() {};
-    virtual void SolutionIsConverged(int iZone, bool* flag) {};
+    virtual void Discrt();
+    virtual void Update();
+    virtual void UpdateBoundary();
+    virtual bool SolutionIsConverged(int iZone);
+    virtual void UpdateAfterIterloop();
+    virtual void SetOutputs(std::vector<std::string> &phiNameList);
+    virtual void InitMatrix();
+    virtual void CalcGrad();
+    virtual void CalcBoundaryConditions();
+    virtual void CalcTransientTerm();
+    virtual void CalcConvectionTerm();
+    virtual void CalcDiffusionTerm();
+    virtual void CalcSourceTerm();
+    virtual void SolveScalarEquation(Region &region);
+    virtual void SolveKEquation(Region &region);
+    virtual void SolveEpsilonEquation(Region &region);
+    virtual void PrimeEquations();
+    virtual void CalcRes();
+    virtual void Relax();
+    virtual void SolutionIsConverged(int iZone, bool* flag);
 
 protected:
     Post_Visual *postVisualization;

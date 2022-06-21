@@ -15,7 +15,6 @@ int  LESSolver::nTurbEquations = 0;
 
 LESSolver::LESSolver()
 {
-    //InitParameter();
 }
 
 LESSolver::~LESSolver()
@@ -48,36 +47,7 @@ void LESSolver::FreeParameter()
 
 void LESSolver::InitParameter()
 {
-    /*
-    string sgsmodel;
-    GlobalDataBase::GetData("sgsmodel", &sgsmodel, PHSTRING, 1);
-    int isgsmodel = 0;
-    int nwtf = 0;
-    RDouble coef_testfilter[3];
-
-    if (sgsmodel.substr(0, 11) == "smagorinsky")
-    {
-        isgsmodel = 1;
-    }
-    else if (sgsmodel.substr(0, 18) == "dynamicsmagorinsky")
-    {
-        isgsmodel = 2;
-        coef_testfilter[0] = 0.16666667;
-        coef_testfilter[1] = 0.66666667;
-        coef_testfilter[2] = 0.16666667;
-        nwtf = 1;
-        GlobalDataBase::UpdateData("coef_testfilter" ,&coef_testfilter , PHDOUBLE, 3);
-        GlobalDataBase::UpdateData("nwtf" ,&nwtf , PHINT, 1);
-    }
-    else if (sgsmodel.substr(0, 4) == "wale")
-    {
-        isgsmodel = 3;
-    }
-
-    GlobalDataBase::UpdateData("isgsmodel", &isgsmodel , PHINT, 1);
-
-    return;
-    */
+ 
 }
 
 void LESSolver::Action(ActionKey *actkey)

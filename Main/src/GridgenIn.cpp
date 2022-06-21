@@ -14,9 +14,9 @@ namespace PHSPACE
 void ReadPlot3dGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
-    //fileformat : Grid file format.
-    //             1 --- ASCII
-    //             0 --- BINARY
+    //! Fileformat : Grid file format.
+    //!              1 --- ASCII
+    //!              0 --- BINARY
     fileFormat = CheckCoorFileIfASCII(gridgenFile);
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
@@ -34,9 +34,9 @@ void ReadPlot3dGrid(Grid **&structGrids, int &numberOfBlocks, const string &grid
 void ReadGridgenGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
-    //fileformat : Grid file format.
-    //             1 --- ASCII
-    //             0 --- BINARY
+    //! Fileformat : Grid file format.
+    //!              1 --- ASCII
+    //!              0 --- BINARY
     fileFormat = CheckCoorFileIfASCII(gridgenFile);
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
@@ -103,9 +103,6 @@ void ReadPlot3DCoorBinary(const string &coordinateFile, int &numberOfBlocks, Gri
         cout << setw(wordWidth) << nj;
         cout << setw(wordWidth) << nk;
         cout << "\n";
-        //cin.get();
-
-        //delete index;
     }
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
@@ -281,7 +278,7 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
 
     if (numberOfBlocks != inputNumberOfBlocks)
     {
-        TK_Exit::ExceptionExit("边界文件分块数与网格文件分块数不一致!\n");
+        TK_Exit::ExceptionExit("The number of blocks in boundary file is inconsistent with the number of blocks in grid file!\n");
     }
 
     int nDim = GetDim();
@@ -327,7 +324,7 @@ void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const strin
         int ndif = ABS(ni - grid->GetNI()) + ABS(nj - grid->GetNJ()) + ABS(nk - grid->GetNK()) ;
         if (ndif != 0)
         {
-            cout << "第" << iZone + 1 << "块边界条件文件里的维数与网格文件中的维数不一致!\n";
+            cout << "No." << iZone + 1 << "The number of IJK-Dimension in boundary file is inconsistent with the number of IJK-Dimension in grid file!\n";
         }
 
         line = FindNextWord(line, word, separator);

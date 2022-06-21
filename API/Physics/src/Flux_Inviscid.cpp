@@ -125,8 +125,8 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     RDouble **qR = invSchemePara->GetRightQ();
     RDouble *gamaL = invSchemePara->GetLeftGama();
     RDouble *gamaR = invSchemePara->GetRightGama();
-    RDouble *lrtL = face_proxy->GetPressureCoefficientL();
-    RDouble *lrtR = face_proxy->GetPressureCoefficientR();
+    RDouble *pressureCoeffL = face_proxy->GetPressureCoefficientL();
+    RDouble *pressureCoeffR = face_proxy->GetPressureCoefficientR();
     RDouble *xfn   = invSchemePara->GetFaceNormalX();
     RDouble *yfn   = invSchemePara->GetFaceNormalY();
     RDouble *zfn   = invSchemePara->GetFaceNormalZ();
@@ -305,7 +305,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         //! Entropy correction, to limit the magnitude of the three eigenvalue.
         //! Warning: This function calling may affect the efficient!
 
-        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
+        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, pressureCoeffL[iFace], pressureCoeffR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
 
         RDouble xi1 = 0.0, xi2 = 0.0, xi3 = 0.0, xi4 = 0.0;
         if (nPrecondition == 0) 
@@ -413,8 +413,8 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
     RDouble *vgn   = inviscidSchemePara->GetFaceVelocity();
     RDouble **flux = inviscidSchemePara->GetFlux();
 
-    RDouble *lrtL = faceProxy->GetPressureCoefficientL();
-    RDouble *lrtR = faceProxy->GetPressureCoefficientR();
+    RDouble *pressureCoeffL = faceProxy->GetPressureCoefficientL();
+    RDouble *pressureCoeffR = faceProxy->GetPressureCoefficientR();
     RDouble **tl = inviscidSchemePara->GetLeftTemperature();
     RDouble **tr = inviscidSchemePara->GetRightTemperature();
     RDouble mach2 = refMachNumber * refMachNumber;
@@ -575,7 +575,7 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
 
 
 
-        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
+        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, pressureCoeffL[iFace], pressureCoeffR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
 
         RDouble eigv1Term, eigv2Term, eigv3Term;
         RDouble oSoundSpeed2 = 1.0 / (cm * cm);

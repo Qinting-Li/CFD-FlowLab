@@ -174,7 +174,7 @@ void PBIterSolvGMRES::Calc(int nFaces, int nCells, int *leftCellOfFace, int *rig
             Q[iter + 1][i] = q[i];
         }
 
-        //! givens rotation for single rhs.
+        //! Givens rotation for single rhs.
         for (int j = 0; j < iter; j++)
         {
             Rot(&H[iter][j], &H[iter][j + 1], &givens[j][0], &givens[j][1]);
@@ -182,7 +182,7 @@ void PBIterSolvGMRES::Calc(int nFaces, int nCells, int *leftCellOfFace, int *rig
 
         Rotg(&H[iter][iter], &H[iter][iter + 1], &givens[iter][0], &givens[iter][1]);
 
-        //! givens rotation for residual vector.
+        //! Givens rotation for residual vector.
         Rot(&beta[iter], &beta[iter + 1], &givens[iter][0], &givens[iter][1]);
 
         res = abs(beta[iter + 1]);

@@ -39,11 +39,11 @@ public:
     void DeAllocateGlobalVar(Grid *grid);
     void ZeroResiduals(Grid *grid);
     void TimeStep(Grid *grid);
-    void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
+    void ComputeResidual(Grid *grid, FieldProxy *rhsProxy);
     void SourceFlux(Grid *grid);
     void InviscidFlux(Grid *grid);
     void ViscousFlux(Grid *grid);
-    void RungeKutta(Grid *grid, FieldProxy *rhs_proxy);
+    void RungeKutta(Grid *grid, FieldProxy *rhsProxy);
     void Post();
     void PostSolve(Grid *grid, int stage, int level);
     RDouble UnsteadyConvergence(Grid *grid);
