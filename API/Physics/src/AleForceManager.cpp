@@ -12,13 +12,14 @@
 #include "PHHeader.h"
 #include "PHMpi.h"
 #include "AleManager.h"
+#include "Solver.h"
 
 using namespace std;
 
 namespace PHSPACE
 {
 bool AerodynamicForceBody::initialize = false;
-vector< std::set< string > >  AerodynamicForceBody::bodys;
+vector< std::set< string > >  AerodynamicForceBody::bodies;
 
 AerodynamicForceBody::AerodynamicForceBody()
 {
@@ -33,34 +34,32 @@ void AerodynamicForceBody::Initialize()
     if (!AerodynamicForceBody::initialize)
     {
         int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
-        AerodynamicForceBody::bodys.resize(numberOfMovingBodies);
+        AerodynamicForceBody::bodies.resize(numberOfMovingBodies);
         SimpleBC *boundaryCondition = 0;
         int iMovingBody = 0;
-        int nTBC = GlobalBoundaryCondition::GetNumberOfBC();
-        for (int iBC = 0; iBC < nTBC; ++ iBC)
-        {
-            if (GlobalBoundaryCondition::IsSolidWallBC(iBC))
-            {
-                boundaryCondition = GlobalBoundaryCondition::GetBC(iBC);
-                string bodyName = boundaryCondition->GetBodyName();
-                AerodynamicForceBody::bodys[iMovingBody++].insert(bodyName);
-            }
-        }
 
+        set < string > *bodyList = GlobalBoundaryCondition::GetBodyNameList();
+        set < string >::iterator bodyListIter = bodyList->begin();
+        for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
+        {
+            string bodyName = *bodyListIter;
+            AerodynamicForceBody::bodies[iMovingBody].insert(bodyName);
+            bodyListIter ++;
+        }
         AerodynamicForceBody::initialize = true;
     }
 }
 
-bool AerodynamicForceBody::FaceInAerodynamicForceBodys(string bodyName, int aerodynamicForceBodyIndex)
+bool AerodynamicForceBody::FaceInAerodynamicForceBodies(string bodyName, int aerodynamicForceBodyIndex)
 {
     AerodynamicForceBody::Initialize();
-    set< string >::iterator iter = AerodynamicForceBody::bodys[aerodynamicForceBodyIndex].find(bodyName);
-    return iter != AerodynamicForceBody::bodys[aerodynamicForceBodyIndex].end();
+    set< string >::iterator iter = AerodynamicForceBody::bodies[aerodynamicForceBodyIndex].find(bodyName);
+    return iter != AerodynamicForceBody::bodies[aerodynamicForceBodyIndex].end();
 }
 
-bool FaceInAerodynamicForceBodys(string bodyName, int aerodynamicForceBodyIndex)
+bool FaceInAerodynamicForceBodies(string bodyName, int aerodynamicForceBodyIndex)
 {
-    return AerodynamicForceBody::FaceInAerodynamicForceBodys(bodyName, aerodynamicForceBodyIndex);
+    return AerodynamicForceBody::FaceInAerodynamicForceBodies(bodyName, aerodynamicForceBodyIndex);
 }
 
 AerodynamicForceManager aerodynamicForceManager;
@@ -71,16 +70,39 @@ void InitializeAerodynamicForce()
     aerodynamicForceManager->InitializeAerodynamicForceManager();
 }
 
+void ComputeAerodynamicForceForALE()
+{
+    ActionKey *actkeyComputeAirForceCoef = new ActionKey();
+    actkeyComputeAirForceCoef->action = COMPUTE_AERODYNAMIC_FORCE;
+
+    PHSPACE::InitializeAerodynamicForce();
+
+    using namespace PHMPI;
+    int nZones = GetNumberofGlobalZones();
+    actkeyComputeAirForceCoef->GetData()->moveto_begin();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int ZoneProcessorID = GetZoneProcessorID(iZone);
+        int currentProcessorID = GetCurrentProcessorID();
+
+        if (currentProcessorID == ZoneProcessorID)
+        {
+            //! If zone i belongs to the current process.
+            PHSolver *solver = static_cast <PHSolver *> (GlobalSolvers::GetSolver(iZone, actkeyComputeAirForceCoef->solverID));
+            solver->AirForceCoefBodies(actkeyComputeAirForceCoef);
+            PHSPACE::AddAerodynamicForce(actkeyComputeAirForceCoef);
+        }
+    }
+
+    //! Third: Collecting AirForceCoef on Each Zone to serve.
+    PHSPACE::CollectAerodynamicForceOfAllProcessors();
+
+}
+
 void AddAerodynamicForce(ActionKey *actionKey)
 {
     AerodynamicForceManager *aerodynamicForceManager = PHSPACE::GetAerodynamicForceManager();
     aerodynamicForceManager->AddAerodynamicForce(actionKey);
-}
-
-void DumpAerodynamicForceCoefficient(ActionKey *actionKey)
-{
-    AerodynamicForceManager *aerodynamicForceManager = PHSPACE::GetAerodynamicForceManager();
-    aerodynamicForceManager->DumpAerodynamicForceCoefficient(actionKey);
 }
 
 void CollectAerodynamicForceOfAllProcessors()
@@ -91,11 +113,11 @@ void CollectAerodynamicForceOfAllProcessors()
 
 BasicAerodynamicForce **CreateBasicAerodynamicForceContainer()
 {
-    int numberOfAerodynamicForceBodys = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+    int numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
-    BasicAerodynamicForce **basicAerodynamicForceContainer = new BasicAerodynamicForce * [numberOfAerodynamicForceBodys + 1];
+    BasicAerodynamicForce **basicAerodynamicForceContainer = new BasicAerodynamicForce * [numberOfAerodynamicForceBodies];
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         basicAerodynamicForceContainer[iMovingBody] = new BasicAerodynamicForce();
     }
@@ -105,11 +127,11 @@ BasicAerodynamicForce **CreateBasicAerodynamicForceContainer()
 
 vector< BasicAerodynamicForce * > *CreateBasicAerodynamicForceVector()
 {
-    int numberOfAerodynamicForceBodys = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+    int numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
-    vector< BasicAerodynamicForce * > *basicAerodynamicForceVector = new vector< BasicAerodynamicForce * >(numberOfAerodynamicForceBodys + 1);
+    vector< BasicAerodynamicForce * > *basicAerodynamicForceVector = new vector< BasicAerodynamicForce * >(numberOfAerodynamicForceBodies);
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         (*basicAerodynamicForceVector)[iMovingBody] = new BasicAerodynamicForce();
     }
@@ -119,9 +141,9 @@ vector< BasicAerodynamicForce * > *CreateBasicAerodynamicForceVector()
 
 void FreeBasicAerodynamicForceVector(vector<BasicAerodynamicForce *> *basicAerodynamicForceVector)
 {
-    int numberOfAerodynamicForceBodys = basicAerodynamicForceVector->size();
+    int numberOfAerodynamicForceBodies = basicAerodynamicForceVector->size();
 
-    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         delete (*basicAerodynamicForceVector)[iMovingBody];
     }
@@ -131,9 +153,9 @@ void FreeBasicAerodynamicForceVector(vector<BasicAerodynamicForce *> *basicAerod
 
 void FreeBasicAerodynamicForceContainer(BasicAerodynamicForce **basicAerodynamicForceContainer)
 {
-    int numberOfAerodynamicForceBodys = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+    int numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         delete basicAerodynamicForceContainer[iMovingBody];
     }
@@ -143,12 +165,12 @@ void FreeBasicAerodynamicForceContainer(BasicAerodynamicForce **basicAerodynamic
 
 void WriteAerodynamicForceToActionKey(ActionKey *actionKey, BasicAerodynamicForce **basicAerodynamicForceContainer)
 {
-    int numberOfAerodynamicForceBodys = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+    int numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
     DataContainer *dataContainer = actionKey->GetData();
     dataContainer->moveto_begin();
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         basicAerodynamicForceContainer[iMovingBody]->WriteAerodynamicForceToDataContainer(dataContainer);
     }
@@ -156,12 +178,12 @@ void WriteAerodynamicForceToActionKey(ActionKey *actionKey, BasicAerodynamicForc
 
 void WriteAerodynamicForceToActionKey(ActionKey *actionKey, vector< BasicAerodynamicForce * > *basicAerodynamicForceVector)
 {
-    int numberOfAerodynamicForceBodys = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+    int numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
     DataContainer *dataContainer = actionKey->GetData();
     dataContainer->moveto_begin();
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         (*basicAerodynamicForceVector)[iMovingBody]->WriteAerodynamicForceToDataContainer(dataContainer);
     }
@@ -365,7 +387,6 @@ void BasicAleForce::SetBasicAleForceByAerodynamicForce(AerodynamicForce *aerodyn
     forceX = aerodynamicForce->GetAerodynamicForceX();
     forceY = aerodynamicForce->GetAerodynamicForceY();
     forceZ = aerodynamicForce->GetAerodynamicForceZ();
-
     aerodynamicForce->GetMomentByOriginOfCoordinate(momentX, momentY, momentZ);
 }
 
@@ -786,23 +807,12 @@ void AerodynamicForce::DumpCoefficient(ActionKey *actionKey)
     PHSPACE::ParallelCloseFile(file);
 }
 
-void AerodynamicForce::DumpComponentCoefficient(ActionKey *actionKey, int iComponent)
+void AerodynamicForce::DumpComponentCoefficient(ActionKey *actionKey, int iBody)
 {
     using namespace PHMPI;
     int myID = GetCurrentProcessorID();
     int server = GetServerProcessorID();
     if (myID != server) return;
-
-    int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
-    for (int iPart = 0; iPart < nTotalBC; ++iPart)
-    {
-        SimpleBC *boundaryCondition = GlobalBoundaryCondition::GetBC(iPart);
-        string partName = boundaryCondition->GetBodyName();
-        if (FaceInAerodynamicForceBodys(partName, iComponent))
-        {
-            bodyName = partName;
-        }
-    }
 
     string totalForceFileName = actionKey->GetFileName();
     string partAircoefFileName = PHSPACE::AddSymbolToFileName(totalForceFileName, "_", bodyName);
@@ -1011,7 +1021,7 @@ void AerodynamicForce::CollectOfAllProcessors()
 AerodynamicForceManager::AerodynamicForceManager()
 {
     isAllocateMemory = false;
-    numberOfAerodynamicForceBodys = 0;
+    numberOfAerodynamicForceBodies = 0;
     bodyID = 0;
 }
 
@@ -1026,9 +1036,9 @@ void AerodynamicForceManager::AllocateMemory()
 
     isAllocateMemory = true;
 
-    aerodynamicForceContainer.resize(numberOfAerodynamicForceBodys + 1);
+    aerodynamicForceContainer.resize(numberOfAerodynamicForceBodies);
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         aerodynamicForceContainer[iMovingBody] = new AerodynamicForce();
     }
@@ -1038,252 +1048,15 @@ void AerodynamicForceManager::DeallocateMemory()
 {
     if (!isAllocateMemory) return;
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         delete aerodynamicForceContainer[iMovingBody];
     }
 }
 
-void AerodynamicForceManager::DumpAerodynamicForceCoefficient(ActionKey *actionKey)
-{
-    aerodynamicForceContainer[numberOfAerodynamicForceBodys]->DumpCoefficient(actionKey);
-
-    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodys; ++ iMovingBody)
-    {
-        aerodynamicForceContainer[iMovingBody]->DumpComponentCoefficient(actionKey, iMovingBody);
-    }
-
-    DumpAllForceData(actionKey);
-}
-
-void AerodynamicForceManager::DumpAllForceData(ActionKey *actkey)
-{
-    string fileName = actkey->filename;
-
-    string mainName, fileDir, extensionName;
-    string globalFileName, localFileName;
-    GetFileNameExtension(fileName, mainName, extensionName, ".");
-    GetFileNameExtension(mainName, fileDir, extensionName, "/");
-
-    ostringstream ossGlobalFileName, ossLocalFileName, ossGlobalData, ossLocalData;
-    ossGlobalFileName << fileDir << "/force_global.dat";
-    ossLocalFileName << fileDir << "/force_local.dat";
-    globalFileName = ossGlobalFileName.str();
-    localFileName = ossLocalFileName.str();
-
-    string gridFile = GlobalDataBase::GetStrParaFromDB("gridfile");
-    RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
-    RDouble attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    RDouble angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
-    RDouble refReNumber = GlobalDataBase::GetDoubleParaFromDB("refReNumber");
-    RDouble referenceArea = GlobalDataBase::GetDoubleParaFromDB("forceReferenceArea");
-    RDouble referenceLength = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
-    RDouble referenceSpainLength = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLengthSpanWise");
-    RDouble TorqueRefX = GlobalDataBase::GetDoubleParaFromDB("TorqueRefX");
-    RDouble TorqueRefY = GlobalDataBase::GetDoubleParaFromDB("TorqueRefY");
-    RDouble TorqueRefZ = GlobalDataBase::GetDoubleParaFromDB("TorqueRefZ");
-    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
-    RDouble wallTemperature = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
-    int outerIterationSteps = GlobalDataBase::GetIntParaFromDB("outnstep");
-
-    RDouble height = 0.0;
-    int inflowParaType = GlobalDataBase::GetIntParaFromDB("inflowParaType");
-    if (inflowParaType == 1)
-    {
-        height = GlobalDataBase::GetDoubleParaFromDB("height");
-    }
-
-    //! Write global force data file title
-    ossGlobalData << "#     MeshFile                     :       " << gridFile << endl;
-    if (inflowParaType == 1)
-    {
-        ossGlobalData << "#     Height                       :       " << height << "  km" << endl;
-    }
-
-    ossGlobalData << setiosflags(ios::scientific);
-    ossGlobalData << setprecision(6);
-    ossGlobalData << "#     Reynolds                     :       " << refReNumber / reynoldsReferenceLengthDimensional << "  1/m" << endl;
-    ossGlobalData << resetiosflags(ios::scientific);
-
-    ossGlobalData << "#     Mach                         :       " << refMachNumber << endl;
-    ossGlobalData << "#     Alpha                        :       " << attackd << "  degree" << endl;
-    ossGlobalData << "#     Beta                         :       " << angleSlide << "  degree" << endl;
-
-    if (wallTemperature < 0.0)
-    {
-        ossGlobalData << "#     Wall Temperature             :       " << "Adiabatic Wall" << endl;
-    }
-    else
-    {
-        ossGlobalData << "#     Wall Temperature             :       " << wallTemperature << "  K" << endl;
-    }
-
-    ossGlobalData << "#     gridScaleFactor              :       " << gridScaleFactor << endl;
-    ossGlobalData << "#     forceReferenceLength         :       " << referenceLength * reynoldsReferenceLengthDimensional << "  m" << endl;
-    ossGlobalData << "#     forceReferenceLengthSpanWise :       " << referenceSpainLength * reynoldsReferenceLengthDimensional << "  m" << endl;
-
-    if (GetDim() == THREE_D)
-    {
-        ossGlobalData << "#     forceReferenceArea           :       " << referenceArea * reynoldsReferenceLengthDimensional * reynoldsReferenceLengthDimensional << "  m2" << endl;
-    }
-    else
-    {
-        ossGlobalData << "#     forceReferenceArea           :       " << referenceArea * reynoldsReferenceLengthDimensional << "  m^2" << endl;
-    }
-
-    ossGlobalData << "#     TorqueRefX                   :       " << TorqueRefX * reynoldsReferenceLengthDimensional << endl;
-    ossGlobalData << "#     TorqueRefY                   :       " << TorqueRefY * reynoldsReferenceLengthDimensional << endl;
-    ossGlobalData << "#     TorqueRefZ                   :       " << TorqueRefZ * reynoldsReferenceLengthDimensional << endl;
-    ossGlobalData << "#     iter                         :       " << outerIterationSteps << endl << endl;
-    ossGlobalData << "#        CA             CN            CZ1           Cml             Cmn            Cm" << endl;
-    ossGlobalData << "#        CA_p           CN_p          CZ1_p         Cml_p           Cmn_p          Cm_p" << endl;
-    ossGlobalData << "#        CA_f           CN_f          CZ1_f         Cml_f           Cmn_f          Cm_f" << endl;
-
-    //! Write local force data file title
-    ossLocalData << "#     MeshFile             :       " << gridFile << endl;
-    if (inflowParaType == 1)
-    {
-        ossLocalData << "#     Height               :       " << height << "  km" << endl;
-    }
-
-    ossLocalData << setiosflags(ios::scientific);
-    ossLocalData << setprecision(6);
-    ossLocalData << "#     Reynolds             :       " << refReNumber / reynoldsReferenceLengthDimensional << "  1/m" << endl;
-    ossLocalData << resetiosflags(ios::scientific);
-
-    ossLocalData << "#     Mach                 :       " << refMachNumber << endl;
-    ossLocalData << "#     Alpha                :       " << attackd << "  degree" << endl;
-    ossLocalData << "#     Beta                 :       " << angleSlide << "  degree" << endl;
-
-    if (wallTemperature < 0.0)
-    {
-        ossLocalData << "#     Wall Temperature     :       " << "Adiabatic Wall" << endl;
-    }
-    else
-    {
-        ossLocalData << "#     Wall Temperature     :       " << wallTemperature << "  K" << endl;
-    }
-
-    ossLocalData << "#     gridScaleFactor      :       " << gridScaleFactor << endl;
-    ossLocalData << "#     iter                 :       " << outerIterationSteps << endl << endl;
-    ossLocalData << "#        CA             CN            CZ1           Cml             Cmn            Cm" << endl;
-    ossLocalData << "#        CA_p           CN_p          CZ1_p         Cml_p           Cmn_p          Cm_p" << endl;
-    ossLocalData << "#        CA_f           CN_f          CZ1_f         Cml_f           Cmn_f          Cm_f" << endl;
-    ossLocalData << "#        CMh" << endl;
-
-    string partName = "whole";
-    aerodynamicForceContainer[numberOfAerodynamicForceBodys]->DumpAllGlobalForceData(partName, numberOfAerodynamicForceBodys, ossGlobalData);
-
-    //! Write force data file
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
-    {
-
-        const string &bodyName = aerodynamicForceContainer[numberOfAerodynamicForceBodys]->GetBodyName();
-        partName = bodyName;
-
-        aerodynamicForceContainer[iMovingBody]->DumpAllGlobalForceData(partName, iMovingBody, ossGlobalData);
-        aerodynamicForceContainer[iMovingBody]->DumpAllLocalForceData(partName, iMovingBody, ossLocalData);
-
-        //! Write global force data file
-        fstream globalFile;
-        ParallelOpenFile(globalFile, globalFileName, ios_base::out | ios_base::trunc);
-        WriteASCIIFile(globalFile, ossGlobalData.str());
-        ParallelCloseFile(globalFile);
-
-        //! Write local force data file
-        fstream localFile;
-        ParallelOpenFile(localFile, localFileName, ios_base::out | ios_base::trunc);
-        WriteASCIIFile(localFile, ossLocalData.str());
-        ParallelCloseFile(localFile);
-    }
-}
-
-void AerodynamicForce::DumpAllLocalForceData(const string &partName, int partID, std::ostringstream &oss)
-{
-    RDouble reynoldsReferenceLengthDimensional = GlobalDataBase::GetDoubleParaFromDB("reynoldsReferenceLengthDimensional");
-
-    oss << resetiosflags(ios::scientific);
-
-    oss << endl;
-    oss << "*" << partName << endl;
-    oss << "#forceReferenceLength         :    " << referenceLength * reynoldsReferenceLengthDimensional << "  m" << endl;
-    oss << "#forceReferenceLengthSpanWise :    " << referenceSpainLength * reynoldsReferenceLengthDimensional << "  m" << endl;
-
-    if (GetDim() == THREE_D)
-    {
-        oss << "#forceReferenceArea           :    " << referenceArea * reynoldsReferenceLengthDimensional * reynoldsReferenceLengthDimensional << "  m2" << endl;
-    }
-    else
-    {
-        oss << "#forceReferenceArea           :    " << referenceArea * reynoldsReferenceLengthDimensional << "  m^2" << endl;
-    }
-
-    oss << "#TorqueRefX                   :    " << torqueRefX * reynoldsReferenceLengthDimensional << endl;
-    oss << "#TorqueRefY                   :    " << torqueRefY * reynoldsReferenceLengthDimensional << endl;
-    oss << "#TorqueRefZ                   :    " << torqueRefZ * reynoldsReferenceLengthDimensional << endl;
-
-    oss << setiosflags(ios::right);
-    oss << setiosflags(ios::scientific);
-    oss << setprecision(10);
-
-    oss << coefForceX << "	";
-    oss << coefForceY << "	";
-    oss << coefForceZ << "	";
-    oss << coefMomentX << "	";
-    oss << coefMomentY << "	";
-    oss << coefMomentZ << endl;
-
-    oss << coefForceXByPressure << "	";
-    oss << coefForceYByPressure << "	";
-    oss << coefForceZByPressure << "	";
-    oss << coefMomentXByPressure << "	";
-    oss << coefMomentYByPressure << "	";
-    oss << coefMomentZByPressure << endl;
-
-    oss << coefForceXByViscosity << "	";
-    oss << coefForceYByViscosity << "	";
-    oss << coefForceZByViscosity << "	";
-    oss << coefMomentXByViscosity << "	";
-    oss << coefMomentYByViscosity << "	";
-    oss << coefMomentZByViscosity << endl;
-}
-
-void AerodynamicForce::DumpAllGlobalForceData(const string &partName, int partID, std::ostringstream &oss)
-{
-    oss << setiosflags(ios::right);
-    oss << setiosflags(ios::scientific);
-    oss << setprecision(10);
-
-    oss << endl;
-    oss << "*" << partName << endl;
-
-    oss << coefForceX << "	";
-    oss << coefForceY << "	";
-    oss << coefForceZ << "	";
-    oss << coefMomentX << "	";
-    oss << coefMomentY << "	";
-    oss << coefMomentZ << endl;
-
-    oss << coefForceXByPressure << "	";
-    oss << coefForceYByPressure << "	";
-    oss << coefForceZByPressure << "	";
-    oss << coefMomentXByPressure << "	";
-    oss << coefMomentYByPressure << "	";
-    oss << coefMomentZByPressure << endl;
-
-    oss << coefForceXByViscosity << "	";
-    oss << coefForceYByViscosity << "	";
-    oss << coefForceZByViscosity << "	";
-    oss << coefMomentXByViscosity << "	";
-    oss << coefMomentYByViscosity << "	";
-    oss << coefMomentZByViscosity << endl;
-
-}
-
 void AerodynamicForceManager::InitializeAerodynamicForceManager()
 {
-    numberOfAerodynamicForceBodys = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+    numberOfAerodynamicForceBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
     this->AllocateMemory();
 
     RDouble angleOfAttackDenotedByRadian = GlobalDataBase::GetDoubleParaFromDB("attack");
@@ -1293,11 +1066,17 @@ void AerodynamicForceManager::InitializeAerodynamicForceManager()
     RDouble referenceLengthOfAerodynamicMoment = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLength");
     RDouble referenceSpainLengthOfAerodynamicMoment = GlobalDataBase::GetDoubleParaFromDB("forceReferenceLengthSpanWise");
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    set < string > *bodyList = GlobalBoundaryCondition::GetBodyNameList();
+    set < string >::iterator bodyListIter = bodyList->begin();
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         AerodynamicForce *aerodynamicForce = this->GetAerodynamicForce(iMovingBody);
         aerodynamicForce->Initialize(angleOfAttackDenotedByRadian, angleOfSideslipDenotedByRadian, referenceAreaOfAerodynamicForce,
             referenceLengthOfAerodynamicMoment, referenceSpainLengthOfAerodynamicMoment);
+
+        string bodyName = *bodyListIter;
+        aerodynamicForce->SetBodyName(bodyName);
+        bodyListIter ++;
     }
 }
 
@@ -1309,7 +1088,7 @@ void AerodynamicForceManager::ExtractForceDataFromActionKey(ActionKey *actionKey
     const int numberOfData = 18;
     RDouble bufferForSwap[numberOfData];
 
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         PHSPACE::PHRead(dataContainer, bufferForSwap, numberOfData);
         PHSPACE::PHWrite((*dataContainerArray)[iMovingBody], bufferForSwap, numberOfData);
@@ -1318,8 +1097,8 @@ void AerodynamicForceManager::ExtractForceDataFromActionKey(ActionKey *actionKey
 
 vector< DataContainer * > *AerodynamicForceManager::CreateDataContainerArray()
 {
-    vector< DataContainer * > *dataContainerArray = new vector< DataContainer * >(numberOfAerodynamicForceBodys + 1);
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    vector< DataContainer * > *dataContainerArray = new vector< DataContainer * >(numberOfAerodynamicForceBodies + 1);
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         (*dataContainerArray)[iMovingBody] = new DataContainer();
     }
@@ -1328,7 +1107,7 @@ vector< DataContainer * > *AerodynamicForceManager::CreateDataContainerArray()
 
 void AerodynamicForceManager::FreeDataContainerArray(vector< DataContainer * > *dataContainerArray)
 {
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         delete (*dataContainerArray)[iMovingBody];
     }
@@ -1341,18 +1120,17 @@ void AerodynamicForceManager::AddAerodynamicForce(ActionKey *actionKey)
 
     this->ExtractForceDataFromActionKey(actionKey, dataContainerArray);
 
-    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         DataContainer *dataContainer = (*dataContainerArray)[iMovingBody];
         aerodynamicForceContainer[iMovingBody]->Add(dataContainer);
-        aerodynamicForceContainer[numberOfAerodynamicForceBodys]->Add(dataContainer);
     }
     this->FreeDataContainerArray(dataContainerArray);
 }
 
 void AerodynamicForceManager::CollectAerodynamicForceOfAllProcessors()
 {
-    for (int iMovingBody = 0; iMovingBody <= numberOfAerodynamicForceBodys; ++ iMovingBody)
+    for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
         aerodynamicForceContainer[iMovingBody]->CollectOfAllProcessors();
     }

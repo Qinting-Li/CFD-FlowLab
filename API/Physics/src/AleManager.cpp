@@ -90,6 +90,7 @@ void SolveSingleInnerIterationStepForAleSolvers()
     //! if it is the first step of the inner step or implicit methods, update the mesh information.
     if (innStep == 1 || IsImplicitAleMethod())
     {
+        ComputeAerodynamicForceForALE();
         aleManager->Run();
 
 
@@ -252,10 +253,10 @@ void AleManager::CommunicateCellCenterData()
 
 void AleManager::ComputeGridFaceVelocity()
 {
-    int nZones = PHMPI::GetNumberofGlobalZones();
+    int numberOfZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < nZones; ++iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
         Grid* grid = PHSPACE::GetGrid(iZone, gridLevelIndex);
         if (!grid) continue;
@@ -355,6 +356,7 @@ void AleManager::Run()
     aleSimulationTime += aleTimeStep;
     GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
+    aleForceManager     ->Run();
     deformingManager    ->Run();
     sixDofSolverManager ->Run();
     movingMeshManager   ->Run();
@@ -409,10 +411,10 @@ void AleManager::DumpRestart()
 
 void BackupAllZonesOldGrid()
 {
-    int nZones = PHMPI::GetNumberofGlobalZones();
+    int numberOfZones = PHMPI::GetNumberofGlobalZones();
 
     int gridLevelIndex = 0;
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         Grid* grid = GetGrid(iZone, gridLevelIndex);
         if (! grid) continue;
@@ -425,9 +427,9 @@ void DeAllocateOversetStorage()
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int nZones = PHMPI::GetNumberofGlobalZones();
+        int numberOfZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < nZones; ++iZone)
+        for (int iZone = 0; iZone < numberOfZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
@@ -457,9 +459,9 @@ void AllocateOversetStorage()
     int nSolver = Zone::GetNumberOfSolvers();
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
-        int nZones = PHMPI::GetNumberofGlobalZones();
+        int numberOfZones = PHMPI::GetNumberofGlobalZones();
         int gridLevelIndex = 0;
-        for (int iZone = 0; iZone < nZones; ++iZone)
+        for (int iZone = 0; iZone < numberOfZones; ++iZone)
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;

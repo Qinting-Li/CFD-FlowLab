@@ -254,11 +254,11 @@ protected:
     void Pitching               ();
     void Yawing                 ();
     void Rolling                ();
-    
+    void XDirectionOnly         ();
+    void YDirectionOnly         ();
     void RotationInXDirection   ();
     void RotationInZDirection   ();
     
-    void XDirectionOnly         ();
     void ModifyForceAndSixDofInformationForPitchingOnly          ();
     void ModifyForceAndSixDofInformationForRollingOnly           ();
     void ModifyForceAndSixDofInformationForPitchingAndRollingOnly();
@@ -279,7 +279,8 @@ protected:
     void GetMassCenterAndEulerAngleContainer(vector< RDouble > & massCenterContainer, vector< RDouble > & eulerAngleContainer, int iTimeLayer);
     void GetMomentAboutMassCenterInInertialFrame(vector< RDouble > & massCenterContainer, vector< RDouble > & totalForceVector, vector< RDouble > & momentVector, vector< RDouble > & momentAboutMassCenterInInertialFrame);
     void GetDimensionalAdditionalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
-    void GetDimensionalAdditionalForceAndMomentOfBodyWingStore(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
+    void GetDimensionalAdditionalForceAndMomentOfBodyWingStore(vector< RDouble > & dimensionalForceContainer, vector< RDouble > & dimensionalMomentContainer, int iTimeLayer);
+    void GetDimensionalAdditionalForceAndMomentOfBodyWingStore( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer );
     void GetDimensionalAdditionalForceAndMomentOfBody611C7(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
     void GetDimensionalAdditionalForceAndMomentOfBodyByParameter(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
     void ComputeCurrentSixDofVariables(vector< vector< RDouble > > & qContainer, vector< vector< RDouble > > & fluxContainer, int numberOfEquations);

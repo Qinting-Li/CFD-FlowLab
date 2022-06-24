@@ -81,6 +81,8 @@ public:
     //! Compute the wall distance of nodes for overlap config.
     LIB_EXPORT void ComputeNodeDistance();
 
+    LIB_EXPORT void ComputeNodeDistanceInOtherBlock();
+
     LIB_EXPORT void ComputeWallDistForNodesList(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
 
     vector<WallStructure *> * GetWallstructureList();
@@ -138,6 +140,7 @@ private:
     void BuildWallStructTree();
     void BuildWallStructKDTree();
     void BuildWallStructKDTreeNode();
+    void BuildWallStructKDTreeNodeInOtherBlock();
 
     RDouble ComputeDistanceOfANodeToSegment(const RDouble xcc, const RDouble ycc, const RDouble zcc,
                                             const RDouble xStart, const RDouble yStart, const RDouble zStart,
@@ -153,10 +156,12 @@ private:
     void ComputeNodeDistanceByDirectMethod();
     void ComputeNodeDistanceByADTMethod();
     void ComputeNodeDistanceByKDTreeMethod();
+    void ComputeNodeDistanceByKDTreeMethodInOtherBlock();
     void ComputeNodeDistanceByDirectMethod(UnstructGrid *grid);
     void ComputeNodeDistanceForSphere(UnstructGrid *grid);
     void ComputeNodeDistanceByADTMethodForBlock(int iBlock);
     void ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock);
+    void ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock(int iBlock);
     void ComputeWallDistForNodesListByADT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByKDT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByDirectMethod(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);

@@ -2376,25 +2376,16 @@ void CFDSolver::DumpAirForceCoef(ActionKey *actkey)
     }
 
     actkey->filename = aircoeffile;
-    ios_base::openmode openmode = ios_base::out|ios_base::app;
+    ios_base::openmode openmode = ios_base::out | ios_base::app;
     actkey->openmode = openmode;
 
-    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-
     //! First: Initialize AirForceCoef: allocate array for AirForceCoef variables.
-    if (!isAle)
-    {
-        PHSPACE::InitForce(actkey);
-    }
-    else
-    {
-        PHSPACE::InitializeAerodynamicForce();
-    }
+    PHSPACE::InitForce(actkey);
 
     //! Second: Computing AirForceCoef on Each Zone.
     int nZones = GetNumberofGlobalZones();
     actkey->GetData()->moveto_begin();
-    for (int iZone = 0; iZone < nZones; ++ iZone)
+    for (int iZone = 0; iZone < nZones; ++iZone)
     {
         int ZoneProcessorID = GetZoneProcessorID(iZone);
         int currentProcessorID = GetCurrentProcessorID();
@@ -2402,37 +2393,19 @@ void CFDSolver::DumpAirForceCoef(ActionKey *actkey)
         if (currentProcessorID == ZoneProcessorID)
         {
             //! If zone i belongs to the current process.
-            CFDSolver *solver = static_cast <CFDSolver *> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
+            CFDSolver* solver = static_cast <CFDSolver*> (GlobalSolvers::GetSolver(iZone, actkey->solverID));
             solver->AirForceCoef(actkey);
-            if (isAle)
-            {
-                PHSPACE::AddAerodynamicForce(actkey);
-            }
         }
     }
 
     //! Third: Collecting AirForceCoef on Each Zone to serve.
-    if (!isAle)
-    {
-        PHSPACE::CollectionForce(actkey);
-    }
-    else
-    {
-        PHSPACE::CollectAerodynamicForceOfAllProcessors();
-    }
+    PHSPACE::CollectionForce(actkey);
 
     //! Forth: Output AirForceCoef to aircoeffile on serve.
     int currentProcessorID = GetCurrentProcessorID();
     if (currentProcessorID == server)
     {
-        if (!isAle)
-        {
-            PHSPACE::DumpForce(actkey);
-        }
-        else
-        {
-            PHSPACE::DumpAerodynamicForceCoefficient(actkey);
-        }
+        PHSPACE::DumpForce(actkey);
     }
 }
 
