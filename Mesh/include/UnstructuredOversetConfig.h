@@ -82,10 +82,18 @@ public:
     void OutPutOversetInformation();
     void OutPutOversetVisualizations(const string &name);
 public:
-    RDouble **GetMinBoxOfBlocks() { return this->pMinOfBlocks; }
-    RDouble **GetMaxBoxOfBlocks() { return this->pMaxOfBlocks; }
-    InterCells **GetZonesInterpolateCells() { return this->zonesInterpolateCells; }
-    ZoneSearchNodes **GetZonesSearchNodes() { return this->zonesSearchNodes; }
+    RDouble **GetMinBoxOfBlocks() {
+        return this->pMinOfBlocks;
+    }
+    RDouble **GetMaxBoxOfBlocks() {
+        return this->pMaxOfBlocks;
+    }
+    InterCells **GetZonesInterpolateCells() {
+        return this->zonesInterpolateCells;
+    }
+    ZoneSearchNodes **GetZonesSearchNodes() {
+        return this->zonesSearchNodes;
+    }
 
 private:    //! Initialize.
     void BuildNodesMinDistanceInThisBlocks(vector< RDouble > *&wallNodeCoordinateXIn,
@@ -168,9 +176,13 @@ private:    //! Output file.
     void OutGlobalNodes();
 
 public:
-    int GetNumberOfBlocks() { return numberOfBlocks; }
+    int GetNumberOfBlocks() {
+        return numberOfBlocks;
+    }
 
-    vector< UnstructGrid * > &GetInnerGrid() { return innerGrid; }
+    vector< UnstructGrid * > &GetInnerGrid() {
+        return innerGrid;
+    }
 };
 
 class ZoneSearchNodes
@@ -194,19 +206,39 @@ private:
 
 public:
 
-    void SetNumberOfNodes(int numberOfNodesIn) { this->numberOfNodes = numberOfNodesIn; }
-    void SetBlockIndex(int blockIndex) { this->blockIndex = blockIndex; }
+    void SetNumberOfNodes(int numberOfNodesIn) {
+        this->numberOfNodes = numberOfNodesIn;
+    }
+    void SetBlockIndex(int blockIndex) {
+        this->blockIndex = blockIndex;
+    }
 
-    int GetNumberOfNodes() { return numberOfNodes; }
-    int GetBlockIndex() { return blockIndex; }
+    int GetNumberOfNodes() {
+        return numberOfNodes;
+    }
+    int GetBlockIndex() {
+        return blockIndex;
+    }
 
-    RDouble *GetX() { return x; }
-    RDouble *GetY() { return y; }
-    RDouble *GetZ() { return z; }
-    RDouble *GetNodesMinDistanceInOtherBlock() { return nodesMinDistanceInOtherBlock; }
+    RDouble *GetX() {
+        return x;
+    }
+    RDouble *GetY() {
+        return y;
+    }
+    RDouble *GetZ() {
+        return z;
+    }
+    RDouble *GetNodesMinDistanceInOtherBlock() {
+        return nodesMinDistanceInOtherBlock;
+    }
 
-    RDouble *GetPMin() { return pMin; }
-    RDouble *GetPMax() { return pMax; }
+    RDouble *GetPMin() {
+        return pMin;
+    }
+    RDouble *GetPMax() {
+        return pMax;
+    }
 };
 
 class InterCells
@@ -230,29 +262,53 @@ private:
     RDouble *z;
 
 public:
-	void FreeUselessMemery();
+    void FreeUselessMemery();
 
-    int GetBlockIndex() { return blockIndex; }
+    int GetBlockIndex() {
+        return blockIndex;
+    }
 
-    int GetNumberOfInterCells() { return numberOfInterCells; }
+    int GetNumberOfInterCells() {
+        return numberOfInterCells;
+    }
 
-    int *GetDonorZoneIndex() { return donorZoneIndex; }
-    int *GetDonorCellIndex() { return donorCellIndex; }
+    int *GetDonorZoneIndex() {
+        return donorZoneIndex;
+    }
+    int *GetDonorCellIndex() {
+        return donorCellIndex;
+    }
 
-    RDouble *GetX() { return x; }
-    RDouble *GetY() { return y; }
-    RDouble *GetZ() { return z; }
-    RDouble *GetMinDist() { return cellMinDistance; }
-    int *GetKey() { return donorLevel; }
+    RDouble *GetX() {
+        return x;
+    }
+    RDouble *GetY() {
+        return y;
+    }
+    RDouble *GetZ() {
+        return z;
+    }
+    RDouble *GetMinDist() {
+        return cellMinDistance;
+    }
+    int *GetKey() {
+        return donorLevel;
+    }
 
-    void SetCellCenterX(RDouble *xIn) { this->x = xIn; }
-    void SetCellCenterY(RDouble *yIn) { this->y = yIn; }
-    void SetCellCenterZ(RDouble *zIn) { this->z = zIn; }
+    void SetCellCenterX(RDouble *xIn) {
+        this->x = xIn;
+    }
+    void SetCellCenterY(RDouble *yIn) {
+        this->y = yIn;
+    }
+    void SetCellCenterZ(RDouble *zIn) {
+        this->z = zIn;
+    }
 };
 
 class OversetConfig
 {
-    typedef void (OversetConfig:: *BuildInBlockCellsAndNodesMethod)(vector< GridKDTree * > &);
+    typedef void ( OversetConfig:: *BuildInBlockCellsAndNodesMethod )( vector< GridKDTree * > & );
 public:
     OversetConfig();
     ~OversetConfig();
@@ -320,7 +376,7 @@ public:
     void BuildBoundaryNodeList();
     void SetNodesMinDistanceInThisBlocksByWalldist();
     void SetNodesMinDistanceInOtherBlocks();
-    
+
 public:    //! Initialize.
     void Initialize(UnstructGrid *gridIn, int nZone, int iZone, int iBlock);
     void SetInitialValue();
@@ -413,27 +469,59 @@ public:    //! Check&Output.
     }
 
 public:
-    int *GetKeyActiveOfNodes() { return keyActiveOfNodes; }
+    int *GetKeyActiveOfNodes() {
+        return keyActiveOfNodes;
+    }
     int *GetKeyActiveOfCells();
-    int *GetKeyBufferOfCells() { return keyBufferOfCells; }
-    int *GetKeyBufferOfNodes() { return keyBufferOfNodes; }
-    int *GetKeySearchOfCells() { return keySearchOfCells; }
-    int *GetKeySearchOfNodes() { return keySearchOfNodes; }
+    int *GetKeyBufferOfCells() {
+        return keyBufferOfCells;
+    }
+    int *GetKeyBufferOfNodes() {
+        return keyBufferOfNodes;
+    }
+    int *GetKeySearchOfCells() {
+        return keySearchOfCells;
+    }
+    int *GetKeySearchOfNodes() {
+        return keySearchOfNodes;
+    }
 
-    vector< int > &GetInterfaceBoundaryNodeList() { return interfaceBoundaryNodeList; }
-    vector< int > &GetLocalToGlobalNodesIndex() { return localToGlobalNodesIndex; }
-    vector< int > &GetLocalToGlobalInterNodesIndex() { return localToGlobalInterNodesIndex; }
+    vector< int > &GetInterfaceBoundaryNodeList() {
+        return interfaceBoundaryNodeList;
+    }
+    vector< int > &GetLocalToGlobalNodesIndex() {
+        return localToGlobalNodesIndex;
+    }
+    vector< int > &GetLocalToGlobalInterNodesIndex() {
+        return localToGlobalInterNodesIndex;
+    }
 
-    RDouble *GetPMin() { return minBoxOfZone; }
-    RDouble *GetPMax() { return maxBoxOfZone; }
-    RDouble *GetNodeWalldistDistance() { return nodesMinDistanceInOtherBlock; }
-    int GetBlockIndex() { return blockIndex; }
-    int GetNumberOfInterCells() { return numberOfInterCells; }
+    RDouble *GetPMin() {
+        return minBoxOfZone;
+    }
+    RDouble *GetPMax() {
+        return maxBoxOfZone;
+    }
+    RDouble *GetNodeWalldistDistance() {
+        return nodesMinDistanceInOtherBlock;
+    }
+    int GetBlockIndex() {
+        return blockIndex;
+    }
+    int GetNumberOfInterCells() {
+        return numberOfInterCells;
+    }
     //vector< int > &GetInterCellIndex() { return interpolateCellList; }
-    vector< int > &GetInterpolateCellList() { return this->interpolateCellList; }
+    vector< int > &GetInterpolateCellList() {
+        return this->interpolateCellList;
+    }
 
-    OversetInformationProxy *GetOversetInformationProxy() { return oversetInformationProxy; }
-    UnstructGrid *GetGrid() { return grid; }
+    OversetInformationProxy *GetOversetInformationProxy() {
+        return oversetInformationProxy;
+    }
+    UnstructGrid *GetGrid() {
+        return grid;
+    }
 private:
     inline void OutPutValueName(fstream &file, const string &name)
     {

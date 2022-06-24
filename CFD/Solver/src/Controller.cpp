@@ -111,7 +111,6 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
         {
             solver->InitFlow();
         }
-
         else
         {
             solver->InitProtectedFlow();

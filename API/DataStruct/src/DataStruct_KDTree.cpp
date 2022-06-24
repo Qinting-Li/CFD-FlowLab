@@ -97,6 +97,7 @@ namespace PHSPACE
         if (rect)
         {
             rect->Free();
+            delete rect;
             rect = NULL;
         }
     }
@@ -361,7 +362,8 @@ namespace PHSPACE
 
         KDNearestI(kdTree->root, pos, &result, &distSQ, rect);
 
-        rect->Free();
+        //rect->Free();
+		delete rect;
 
         if (result)
         {

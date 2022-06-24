@@ -9924,17 +9924,17 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
 
 void UploadOversetValue(UnstructGrid *grid, RDouble **field, const string &name, int neqn)
 {
-    int    interpolationOrder          = 0;
-    if(GlobalDataBase::IsExist("oversetInterpolationOrder", PHINT, 1))
+    int  oversetInterpolationMethod = 0;
+    if(GlobalDataBase::IsExist("oversetInterpolationMethod", PHINT, 1))
     {
-        interpolationOrder = GlobalDataBase::GetIntParaFromDB("oversetInterpolationOrder");
+        oversetInterpolationMethod = GlobalDataBase::GetIntParaFromDB("oversetInterpolationMethod");
     }
 
-    if (interpolationOrder == 0)
+    if (oversetInterpolationMethod == 0)
     {
         UploadOversetValueDefault(grid, field, name, neqn);
     }
-    else if (interpolationOrder == 1)
+    else if (oversetInterpolationMethod == 1)
     {
         UploadOversetValueByWeight(grid, field, name, neqn);
     }

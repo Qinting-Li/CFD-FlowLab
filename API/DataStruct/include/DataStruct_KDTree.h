@@ -48,6 +48,18 @@ public:
         }
     };
 
+    ~DataStruct_KDHyperRect()
+    {
+        if (this->min)
+        {
+            delete [] this->min;
+        }
+        if (this->max)
+        {
+            delete [] this->max;
+        }
+    };
+
     void Free()
     {
         if (this->min)
