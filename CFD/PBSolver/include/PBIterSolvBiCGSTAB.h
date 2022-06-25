@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBIterSolvBiCGSTAB.h
-//! @brief     Solving the System of Algebraic Equations.
+//! @brief     Solving the System of Algebraic Equations in Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell.
  
 #pragma once

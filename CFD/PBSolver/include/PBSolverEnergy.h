@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolverEnergy.h
-//! @brief     Energy.
+//! @brief     Energy of Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell..
 
 #pragma once
@@ -30,7 +30,7 @@ public:
 public:
     void InitMemory();
     void AllocateMemory();
-    void ReinitField();
+    void IncompressibleInitial();
     void CalcDiffusionTerm();
     void PrimeEquations();
     void Relax();

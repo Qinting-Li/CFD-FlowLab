@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBS.h
-//! @brief     register all PBSolver Objects.
+//! @brief     Register all Pressure Based Solver (PBSolver) Objects.
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Huang Jin, Bell.
  
 #pragma once

@@ -388,7 +388,7 @@ void PBSolverFlow::InitField()
     tranCalc->AllocateMemory(grid, phiNameList, phiInitValueList);
 }
 
-void PBSolverFlow::ReinitField()
+void PBSolverFlow::IncompressibleInitial()
 {
     int nTotalCell = grid->GetNTotalCell();
     int nBoundFaces = grid->GetNBoundFace();

@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolverTurbK.h
-//! @brief     TurbSA.
+//! @brief     TurbSA of Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Huang Jin, Bell..
 
 #pragma once
@@ -32,7 +32,7 @@ public:
 
     void InitMemory();
     void AllocateMemory();
-    void ReinitField();
+    void IncompressibleInitial();
     void Discrt();
     void UpdateAfterIterloop();//! Updates the viscosity of the momentum equation
     void ComputePostVisualVariables(Post_Visual *postVisualization);

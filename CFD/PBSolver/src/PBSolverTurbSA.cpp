@@ -56,7 +56,7 @@ void PBSolverTurbSA::AllocateMemory()
     WD = ObjAllocateMemory("WD", nTotal, 0.0, grid);
 }
 //! The initialization of each solver depends on the associated variables of other solvers.
-void PBSolverTurbSA::ReinitField()
+void PBSolverTurbSA::IncompressibleInitial()
 {
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();
