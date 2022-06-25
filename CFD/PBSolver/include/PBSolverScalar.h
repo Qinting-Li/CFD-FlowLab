@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolverScalar.h
-//! @brief     Scalar.
+//! @brief     Scalar of Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
@@ -139,7 +139,7 @@ public:
     void InitMemory();
     void AllocateMemory();
     void InitField();
-    void ReinitField();
+    void IncompressibleInitial();
     void UpdateUnsteadyVariable(Grid *grid);
     bool SolutionIsConverged();
     virtual void OutputResidual(ofstream &file, int flag);

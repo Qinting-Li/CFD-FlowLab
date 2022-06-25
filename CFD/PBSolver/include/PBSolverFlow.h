@@ -182,7 +182,7 @@ public:
 public:
     void AllocateMemory();
     void InitField();
-    void ReinitField();
+    void IncompressibleInitial();
     void UpdateUnsteadyVariable(Grid *grid);
     void SolutionIsConverged(int iZone, bool *flag);
     void OutputResidual(ofstream &file, int flag);
