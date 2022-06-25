@@ -1587,7 +1587,6 @@ void CFDSolver::GetOversetInterfaceData(OversetInformationProxy *oversetInformat
 
     int numberOfCellForSend = oversetDataProxy->GetNumberOfCells(neighborIndex);
     int *cellIndexMapForSend = oversetDataProxy->GetCellStorageIndexMapping(neighborIndex);
-
     DataContainer *cdata = actkey->GetData();
     cdata->moveto_begin();
 

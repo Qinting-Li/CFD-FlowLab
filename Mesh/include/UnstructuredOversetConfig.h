@@ -65,6 +65,8 @@ private:    //! This part of data is used to complete the attribute communicatio
     vector< int > numberOfGlobalNodes;    //! Number of calculate points in the whole grid.
     vector< vector< int > > keyActiveOfGlobalInterNodes;    //! Property of points on the interface.
 
+    int *numberOfInterfaceNodesInBlocks;
+    int **keyOfInterfaceNodesInBlocks;
 private:    //! Smallest box of each Block is used to improve the query efficiency.
     RDouble **pMinOfBlocks;
     RDouble **pMaxOfBlocks;
@@ -75,6 +77,7 @@ public:
 
     void BuildNodesMinDistanceInOtherBlocks();
     void BuildNodesMinDistanceInOtherBlocks2();
+    void BuildLocalToGlobalInterfaceNodesMaps();
 
     void NodesOperator();
     void CellsOperator();
@@ -95,6 +98,10 @@ public:
         return this->zonesSearchNodes;
     }
 
+    int **GetKeyOfInterfaceNodesInBlocks() {
+        return this->keyOfInterfaceNodesInBlocks;
+    }
+
 private:    //! Initialize.
     void BuildNodesMinDistanceInThisBlocks(vector< RDouble > *&wallNodeCoordinateXIn,
         vector< RDouble > *&wallNodeCoordinateYIn,
@@ -104,7 +111,10 @@ private:    //! Initialize.
     void SetNodesMinDistanceInOtherBlocks();
 
     bool ReadInInnerGridH5(const string &fileName, UnstructGrid *gridIn);
+    void BuildLocalToGlobalInterfaceNodesMap(int iBlockIn, int *numberOfNodesInBlocksIn);
 
+    void GetGlobalInterfaceNodes();
+    void GetGlobalInterfaceNodes(int iBlock);
     void ComputeNodeWalldist();
     void ComputeNodeWalldistInOtherBlock();
     void ReComputeWallDistance();
@@ -157,7 +167,7 @@ private:    //! Communication of interface.
     void CharacterCellToNode();
     int  CharacterNodeToValidNodeByCell();
 
-    void CommunicateNodeCharacterOnInterfaceBySKL(int key);
+    void CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks();
     void CommunicateNodeCharacterOnInterface();
     void CommunicateCellIBlank();
 
@@ -332,6 +342,7 @@ public:    //! Improve efficiency of query.
 public:
     int numberOfInterCells;
 
+    int *localToGlobalInterfaceNodesMap;
     int *keyActiveOfNodes;
 
     vector< int > interpolateCellList;
@@ -432,9 +443,8 @@ public:    //! Communication.
     void CharacterCellToNode();
     void CharacterInterfaceToNode();
     int  CharacterNodeToValidNodeByCell();
-
-    void UpdateInterfaceNodeCharacter(vector< vector < int > > &keyActiveOfGlobalInterNodes, int key);
-    void DownInterfaceNodeCharacter(vector< vector< int > > &keyActiveOfGlobalInterNodes, int key);
+    void UpdateInterfaceNodeCharacter();
+    void DownInterfaceNodeCharacter();
 
 public:
     void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree1(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
@@ -469,57 +479,69 @@ public:    //! Check&Output.
     }
 
 public:
-    int *GetKeyActiveOfNodes() {
+    int *GetKeyActiveOfNodes()
+    {
         return keyActiveOfNodes;
     }
     int *GetKeyActiveOfCells();
-    int *GetKeyBufferOfCells() {
+    int *GetKeyBufferOfCells()
+    {
         return keyBufferOfCells;
     }
-    int *GetKeyBufferOfNodes() {
+    int *GetKeyBufferOfNodes()
+    {
         return keyBufferOfNodes;
     }
-    int *GetKeySearchOfCells() {
+    int *GetKeySearchOfCells()
+    {
         return keySearchOfCells;
     }
-    int *GetKeySearchOfNodes() {
+    int *GetKeySearchOfNodes()
+    {
         return keySearchOfNodes;
     }
 
-    vector< int > &GetInterfaceBoundaryNodeList() {
+    vector< int > &GetInterfaceBoundaryNodeList()
+    {
         return interfaceBoundaryNodeList;
     }
-    vector< int > &GetLocalToGlobalNodesIndex() {
-        return localToGlobalNodesIndex;
-    }
-    vector< int > &GetLocalToGlobalInterNodesIndex() {
-        return localToGlobalInterNodesIndex;
+
+    int *GetLocalToGlobalInterfaceNodesMap()
+    {
+        return localToGlobalInterfaceNodesMap;
     }
 
-    RDouble *GetPMin() {
+    RDouble *GetPMin()
+    {
         return minBoxOfZone;
     }
-    RDouble *GetPMax() {
+    RDouble *GetPMax()
+    {
         return maxBoxOfZone;
     }
-    RDouble *GetNodeWalldistDistance() {
+    RDouble *GetNodeWalldistDistance()
+    {
         return nodesMinDistanceInOtherBlock;
     }
     int GetBlockIndex() {
         return blockIndex;
     }
-    int GetNumberOfInterCells() {
+    int GetNumberOfInterCells()
+    {
         return numberOfInterCells;
     }
     //vector< int > &GetInterCellIndex() { return interpolateCellList; }
-    vector< int > &GetInterpolateCellList() {
+    vector< int > &GetInterpolateCellList()
+    {
         return this->interpolateCellList;
     }
 
-    OversetInformationProxy *GetOversetInformationProxy() {
+    OversetInformationProxy *GetOversetInformationProxy()
+    {
         return oversetInformationProxy;
     }
-    UnstructGrid *GetGrid() {
+    UnstructGrid *GetGrid()
+    {
         return grid;
     }
 private:

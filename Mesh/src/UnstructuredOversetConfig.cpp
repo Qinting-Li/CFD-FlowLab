@@ -84,6 +84,9 @@ OversetConfigFactoryMulti *GetOversetConfigFactoryMulti()
 
 OversetConfigFactoryMulti::OversetConfigFactoryMulti()
 {
+    numberOfInterfaceNodesInBlocks = NULL;
+    keyOfInterfaceNodesInBlocks = NULL;
+
     numberOfBlocks = 0;
     numberOfZones = 0;
 
@@ -100,6 +103,12 @@ OversetConfigFactoryMulti::OversetConfigFactoryMulti()
 
 OversetConfigFactoryMulti::~OversetConfigFactoryMulti()
 {
+    delete[] numberOfInterfaceNodesInBlocks;
+    numberOfInterfaceNodesInBlocks = NULL;
+
+    DelPointer2(keyOfInterfaceNodesInBlocks);
+    keyOfInterfaceNodesInBlocks = NULL;
+
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
@@ -169,12 +178,115 @@ void OversetConfigFactoryMulti::Initialize()
 
     ComputeNodeAndCellTopology();          //! Calculate the topological relationship of point to point and volume to point.
 
+    BuildLocalToGlobalInterfaceNodesMaps();
+
     ReadInInnerGrid();                     //! Read in the internal grid of the object to accurately estimate whether it is in the object.
 
     SetBufferRegionOnOversetBoundary();    //! Set buffer on the boundary of overset.
     //timeSpan->ShowTimeSpanToLogfile("OversetConfigFactoryMulti::Initialize");
     //delete timeSpan;
     OutPutOversetVisualizations("0_1_Initialize");
+}
+
+void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMaps()
+{
+    int *numberOfNodesInBlocksLocal = new int[numberOfBlocks];
+    int *numberOfNodesInBlocks = new int[numberOfBlocks];
+    SetField(numberOfNodesInBlocksLocal, 0, numberOfBlocks);
+    int currentProcessor = PHMPI::GetCurrentProcessorID();
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessor == processorIndex)
+        {
+            UnstructGrid *grid = oversetConfigMultiZone[iZone]->GetGrid();
+            numberOfNodesInBlocksLocal[grid->GetIBlock()] += grid->GetNTotalNode();
+        }
+    }
+    PH_AllReduce(numberOfNodesInBlocksLocal, numberOfNodesInBlocks, numberOfBlocks, MPI_SUM);
+    delete[] numberOfNodesInBlocksLocal;
+    numberOfNodesInBlocksLocal = NULL;
+
+    numberOfInterfaceNodesInBlocks = new int[numberOfBlocks];
+    SetField(numberOfInterfaceNodesInBlocks, 0, numberOfBlocks);
+    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
+    {
+        BuildLocalToGlobalInterfaceNodesMap(iBlock, numberOfNodesInBlocks);
+    }
+
+    delete[] numberOfNodesInBlocks;
+    numberOfNodesInBlocks = NULL;
+
+    keyOfInterfaceNodesInBlocks = NewPointer2< int >(numberOfBlocks, numberOfInterfaceNodesInBlocks);
+}
+
+void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMap(int iBlockIn, int *numberOfNodesInBlocksIn)
+{
+    int &numberOfNodesInThisBlock = numberOfNodesInBlocksIn[iBlockIn];
+
+    int *keyOfNodesInBlocks = new int[numberOfNodesInThisBlock];
+    int *keyOfNodesInBlocksGlobal = new int[numberOfNodesInThisBlock];
+    SetField(keyOfNodesInBlocks, 0, numberOfNodesInThisBlock);
+    SetField(keyOfNodesInBlocksGlobal, 0, numberOfNodesInThisBlock);
+
+    int currentProcessor = PHMPI::GetCurrentProcessorID();
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessor == processorIndex)
+        {
+            UnstructGrid *grid = oversetConfigMultiZone[iZone]->GetGrid();
+            int blockIndex = grid->GetIBlock();
+            if (blockIndex == iBlockIn)
+            {
+                vector< int > &localToGlobalNodesMap = grid->GetLocalToGlobalNodesMap();
+                vector< int > &interfaceBoundaryNodeList = oversetConfigMultiZone[iZone]->GetInterfaceBoundaryNodeList();
+                int             numberOfinterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+                for (int iNode = 0; iNode < numberOfinterfaceBoundaryNodes; ++ iNode)
+                {
+                    keyOfNodesInBlocks[localToGlobalNodesMap[interfaceBoundaryNodeList[iNode]]] = 1;
+                }
+            }
+        }
+    }
+
+    PH_AllReduce(keyOfNodesInBlocks, keyOfNodesInBlocksGlobal, numberOfNodesInThisBlock, MPI_MAX);
+
+    for (int iNode = 0; iNode < numberOfNodesInThisBlock; ++ iNode)
+    {
+        if (keyOfNodesInBlocksGlobal[iNode])
+        {
+            keyOfNodesInBlocks[iNode] = (numberOfInterfaceNodesInBlocks[iBlockIn]) ++;
+        }
+    }
+
+    delete[] keyOfNodesInBlocksGlobal;
+    keyOfNodesInBlocksGlobal = NULL;
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessor == processorIndex)
+        {
+            UnstructGrid *grid = oversetConfigMultiZone[iZone]->GetGrid();
+            int blockIndex = grid->GetIBlock();
+            if (blockIndex == iBlockIn)
+            {
+                vector< int > &localToGlobalNodesMap = grid->GetLocalToGlobalNodesMap();
+                int *localToGlobalInterfaceNodesMap = oversetConfigMultiZone[iZone]->GetLocalToGlobalInterfaceNodesMap();
+                vector< int > &interfaceBoundaryNodeList = oversetConfigMultiZone[iZone]->GetInterfaceBoundaryNodeList();
+                int             numberOfinterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+
+                for (int iNode = 0; iNode < numberOfinterfaceBoundaryNodes; ++ iNode)
+                {
+                    localToGlobalInterfaceNodesMap[iNode] = keyOfNodesInBlocks[localToGlobalNodesMap[interfaceBoundaryNodeList[iNode]]];
+                }
+            }
+        }
+    }
+
+    delete[] keyOfNodesInBlocks;
+    keyOfNodesInBlocks = NULL;
 }
 
 void OversetConfigFactoryMulti::BuildNodesMinDistanceInThisBlocks(vector< RDouble > *&wallNodeCoordinateXIn,
@@ -583,6 +695,72 @@ void OversetConfigFactoryMulti::ComputeNodeAndCellTopology()
     }
 }
 
+//! Get the overall globalInterfaceNodes according to the localToGlobalNodeList information of each zone.
+void OversetConfigFactoryMulti::GetGlobalInterfaceNodes()
+{
+    if (numberOfZones == numberOfBlocks)
+    {
+        return;
+    }
+
+    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
+    {
+        GetGlobalInterfaceNodes(iBlock);
+    }
+}
+
+void OversetConfigFactoryMulti::GetGlobalInterfaceNodes(int iBlock)
+{
+    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+
+    //! step1: Distinguish globalInterNodes.
+    vector< int > keyNodesGlobal;
+    vector< int > keyNodesGlobalAllProcessor;
+
+    int numberOfNodesInThisBlock = numberOfGlobalNodes[iBlock];
+
+    keyNodesGlobal.resize(numberOfNodesInThisBlock);
+    keyNodesGlobalAllProcessor.resize(numberOfNodesInThisBlock);
+
+    SetField(keyNodesGlobal, 0, numberOfNodesInThisBlock);
+    SetField(keyNodesGlobalAllProcessor, 0, numberOfNodesInThisBlock);
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int sendProcessorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
+        if (currentProcessorIndex == sendProcessorIndex)
+        {
+            oversetConfigMultiZone[iZone]->MarkGlobalInterfaceNodes(iBlock, keyNodesGlobal);
+        }
+    }
+
+    PH_AllreduceSepModeForVector(keyNodesGlobal, keyNodesGlobalAllProcessor, numberOfNodesInThisBlock, MPI_INT, MPI_MAX);
+
+    //! step2£ºkeyNodesGlobal becomes the number which points to the new sequence.
+    int numberOfGlobalInterfaceNodes = 0;
+    for (int iNode = 0; iNode < numberOfNodesInThisBlock; ++ iNode)
+    {
+        if (keyNodesGlobalAllProcessor[iNode] == 1)
+        {
+            keyNodesGlobal[iNode] = numberOfGlobalInterfaceNodes;
+            numberOfGlobalInterfaceNodes++;
+        }
+    }
+
+    //! step3£ºGet localToGlobalInterfaceNodes.
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int sendProcessorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
+        if (currentProcessorIndex == sendProcessorIndex)
+        {
+            oversetConfigMultiZone[iZone]->CalLocalToGlobalInterfaceNodes(iBlock, keyNodesGlobal);
+        }
+    }
+
+    keyActiveOfGlobalInterNodes[iBlock].resize(numberOfGlobalInterfaceNodes);
+    SetField(&keyActiveOfGlobalInterNodes[iBlock][0], 0, numberOfGlobalInterfaceNodes);
+}
+
 void OversetConfigFactoryMulti::OversetConfigMulti()
 {
     SetInitialValue();    //! Set initial value.
@@ -856,11 +1034,11 @@ void OversetConfigFactoryMulti::SetInitialValue()
         if (currentProcessor == processorIndex)
         {
             oversetConfigMultiZone[iZone]->SetInitialValue();
-            if (NULL != zonesInterpolateCells[iZone])
-            {
-                delete zonesInterpolateCells[iZone];
-                zonesInterpolateCells[iZone] = NULL;
-            }
+        }
+        if (NULL != zonesInterpolateCells[iZone])
+        {
+            delete zonesInterpolateCells[iZone];
+            zonesInterpolateCells[iZone] = NULL;
         }
     }
 }
@@ -1055,7 +1233,7 @@ void OversetConfigFactoryMulti::BuildZonesSearchNodes()
     int currentProcessor = PHMPI::GetCurrentProcessorID();
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
-        int processorIndex = PHMPI::GetZoneProcessorIDSepMode(iZone);
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         int *keySearchOfNodes = NULL;
         int   numberOfNodes = 0;
 
@@ -1073,7 +1251,7 @@ void OversetConfigFactoryMulti::BuildZonesSearchNodes()
             {
                 if (keySearchOfNodes[iNode])
                 {
-                    ++numberOfSearchNodes;
+                    ++ numberOfSearchNodes;
                 }
             }
         }
@@ -2040,18 +2218,10 @@ int OversetConfigFactoryMulti::CharacterNodeToValidNodeByCell()
         }
     }
 
-    if (GetReadInSklFileOrNot() == 1)
-    {
-        //! Accurate communication of point attributes through skl file.
-        CommunicateNodeCharacterOnInterfaceBySKL(0);
-    }
-    else
-    {
-        //! Transmission of point attributes through interface communication. InnerAndInitialInterNodes needs to be constrained.
-        CommunicateNodeCharacterOnInterface();
+    //! Transmission of point attributes through interface communication. InnerAndInitialInterNodes needs to be constrained.
+    CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks();
 
-        SetNegativeForInnerAndInitialInterNodes();
-    }
+    SetNegativeForInnerAndInitialInterNodes();
 
     return numberOfNewNodesAllZones;
 }
@@ -2069,65 +2239,8 @@ void OversetConfigFactoryMulti::CharacterCellToNode()
         }
     }
 
-    if (GetReadInSklFileOrNot() == 1)
-    {
-        //! Accurate communication of point attributes through skl file.
-        CommunicateNodeCharacterOnInterfaceBySKL(0);
-    }
-    else
-    {
-        //! Transmission of point attributes through interface communication.
-        CommunicateNodeCharacterOnInterface();
-    }
-}
-
-void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterfaceBySKL(int key)
-{
-    if (numberOfBlocks == numberOfZones)
-    {
-        return;
-    }
-
-    for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
-    {
-        int numberOfGlobalInterNodes = static_cast<int>( keyActiveOfGlobalInterNodes[iBlock].size() );
-        SetField(keyActiveOfGlobalInterNodes[iBlock], 0, numberOfGlobalInterNodes);
-    }
-
-    //! step1: Every zone update keyActiveOfGlobalNodes (Summary keyActiveOfNodes).
-    int currentProcessor = PHMPI::GetCurrentProcessorID();
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
-    {
-        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
-        if (currentProcessor == processorIndex)
-        {
-            oversetConfigMultiZone[iZone]->UpdateInterfaceNodeCharacter(keyActiveOfGlobalInterNodes, key);
-        }
-    }
-
-    //! step2: mpiAllreduce.
-    for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
-    {
-        vector< int > num;
-
-        int numberOfGlobalInterNodes = static_cast<int>( keyActiveOfGlobalInterNodes[iBlock].size() );
-
-        num.resize(numberOfGlobalInterNodes);
-
-        MPI_Allreduce(&keyActiveOfGlobalInterNodes[iBlock][0], &num[0], numberOfGlobalInterNodes, MPI_INT, PH_MAX, MPI_COMM_WORLD);
-
-        SetField(&keyActiveOfGlobalInterNodes[iBlock][0], &num[0], numberOfGlobalInterNodes);
-    }
-
-    //! step3: Assign the value of after mpiAllreduce to keyActiveOfNodes.
-    for (int iZone = 0; iZone < numberOfZones; ++iZone)
-    {
-        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
-        if (currentProcessor == processorIndex)
-        {
-            oversetConfigMultiZone[iZone]->DownInterfaceNodeCharacter(keyActiveOfGlobalInterNodes, key);
-        }
-    }
+    //! Transmission of point attributes through interface communication.
+    CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks();
 }
 
 void OversetConfigFactoryMulti::CommunicateCellIBlank()
@@ -2170,6 +2283,53 @@ void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterface()
         if (currentProcessor == processorIndex)
         {
             oversetConfigMultiZone[iZone]->CharacterInterfaceToNode();
+        }
+    }
+}
+
+void OversetConfigFactoryMulti::CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks()
+{
+    if (numberOfBlocks == numberOfZones)
+    {
+        return;
+    }
+
+    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
+    {
+        SetField(keyOfInterfaceNodesInBlocks[iBlock], 0, numberOfInterfaceNodesInBlocks[iBlock]);
+    }
+
+    //! step1: Every zone update keyActiveOfGlobalNodes (Summary keyActiveOfNodes).
+    int currentProcessor = PHMPI::GetCurrentProcessorID();
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessor == processorIndex)
+        {
+            oversetConfigMultiZone[iZone]->UpdateInterfaceNodeCharacter();
+        }
+    }
+
+    //! step2: mpiAllreduce.
+    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
+    {
+        int &numberOfInterfaceNodesInThisBlock = numberOfInterfaceNodesInBlocks[iBlock];
+        int *keyOfInterfaceNodesInThisBlockGlobal = new int[numberOfInterfaceNodesInThisBlock];
+
+        PH_AllReduce(keyOfInterfaceNodesInBlocks[iBlock], keyOfInterfaceNodesInThisBlockGlobal, numberOfInterfaceNodesInThisBlock, MPI_MAX);
+        SetField(keyOfInterfaceNodesInBlocks[iBlock], keyOfInterfaceNodesInThisBlockGlobal, numberOfInterfaceNodesInThisBlock);
+
+        delete[] keyOfInterfaceNodesInThisBlockGlobal;
+        keyOfInterfaceNodesInThisBlockGlobal = NULL;
+    }
+
+    //! step3: Assign the value of after mpiAllreduce to keyActiveOfNodes.
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+        if (currentProcessor == processorIndex)
+        {
+            oversetConfigMultiZone[iZone]->DownInterfaceNodeCharacter();
         }
     }
 }
@@ -2443,6 +2603,8 @@ OversetConfig::OversetConfig()
     nodesMinDistanceInThisBlock = NULL;
     nodesMinDistanceInOtherBlock = NULL;
 
+    localToGlobalInterfaceNodesMap = NULL;
+
     zoneIndex = 0;
 }
 
@@ -2613,6 +2775,11 @@ void OversetConfig::BuildBoundaryNodeList()
             physicalBoundaryNodeList.push_back(*iter);
         }
     }
+    if (NULL == localToGlobalInterfaceNodesMap)
+    {
+        localToGlobalInterfaceNodesMap = new int[interfaceBoundaryNodeList.size()];
+    }
+
 }
 
 void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree1(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
@@ -2749,7 +2916,7 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector<
     {
         donorCellIndex = -2;
 
-        if (!symetryOrNot || cellCenterZ[iCell] > EPSILON)
+        if (!symetryOrNot || cellCenterZ[iCell] > -EPSILON)
         {
             donorCellIndex = -1;
 
@@ -3000,6 +3167,11 @@ OversetConfig::~OversetConfig()
         nodesMinDistanceInThisBlock = NULL;
     }
 
+    if (localToGlobalInterfaceNodesMap != NULL)
+    {
+        delete[] localToGlobalInterfaceNodesMap;
+        localToGlobalInterfaceNodesMap = NULL;
+    }
 }
 
 void OversetConfig::Initialize(UnstructGrid *gridIn,
@@ -3024,10 +3196,8 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
     keyBufferOfCells = new int[numberOfCells];
 
     keySearchOfNodes = new int[numberOfNodes];
-    SetField(keySearchOfNodes, 1, numberOfNodes);
 
     keySearchOfCells = new int[numberOfCells];
-    SetField(keySearchOfCells, 1, numberOfCells);
 
     nodesMinDistanceInOtherBlock = new RDouble[numberOfNodes];
     SetField(nodesMinDistanceInOtherBlock, LARGE, numberOfNodes);
@@ -3036,7 +3206,6 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
     SetField(nodesMinDistanceInThisBlock, LARGE, numberOfNodes);
 
     keyBasicActiveNodes = new int[numberOfNodes];
-    SetField(keyBasicActiveNodes, 0, numberOfNodes);
 
     keyInBlockNodes = new int[numberOfNodes];
     SetField(keyInBlockNodes, 0, numberOfNodes);
@@ -3045,6 +3214,11 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
 void OversetConfig::SetInitialValue()
 {
     interpolateCellList.resize(0);
+
+    int numberOfNodes = grid->GetNTotalNode();
+    int numberOfCells = grid->GetNTotalCell();
+
+    SetField(nodesMinDistanceInOtherBlock, LARGE, numberOfNodes);
 }
 
 //! Calculate the minimum box according to the cell.
@@ -3199,6 +3373,7 @@ void OversetConfig::ComputeNodeAndCellTopology()
 void OversetConfig::CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn)
 {
     int numberOfNodes = grid->GetNTotalNode();
+    SetField(nodesMinDistanceInOtherBlock, LARGE, numberOfNodes);
 
     int iSearchNode = 0;
 
@@ -3207,10 +3382,6 @@ void OversetConfig::CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn)
         if (keySearchOfNodes[iNode])
         {
             nodesMinDistanceInOtherBlock[iNode] = nodesMinDistanceInOtherBlockIn[iSearchNode++];
-        }
-        else
-        {
-            nodesMinDistanceInOtherBlock[iNode] = LARGE;
         }
     }
 }
@@ -3745,7 +3916,7 @@ void OversetConfig::CharacterInterfaceToNode()
             {
                 int nodeIndex = faceNodeIndex[iCount];
                 keyActiveOfNodes[nodeIndex] = 1;
-                iCount++;
+                //iCount++;
             }
         }
         else
@@ -3868,14 +4039,14 @@ void OversetConfig::CheckInterpolateRelationship(int iBlockIn,
                 break;
             case -2:
                 ++numberOfNegativeCellsInThisBlock_2In;
-                //cout << "WARNING:" << endl;
-                //cout << "DonorLevel  = " << donorLevelOfThisCell << endl;
-                //cout << "Interpolate = " << zoneIndex << "->" << interpolateCellList[iCell] << endl;
-                //cout << "Donor       = " << donorZoneIndex[iCell] << "->" << donorCellIndex[iCell] << endl;
-                //cout << "Postion     = " << setprecision(8) << setw(12)
-                //    << interpolateCellCenterX[iCell] << " "
-                //    << interpolateCellCenterY[iCell] << " "
-                //    << interpolateCellCenterZ[iCell] << endl;
+                cout << "WARNING:" << endl;
+                cout << "DonorLevel  = " << donorLevelOfThisCell << endl;
+                cout << "Interpolate = " << zoneIndex << "->" << interpolateCellList[iCell] << endl;
+                cout << "Donor       = " << donorZoneIndex[iCell] << "->" << donorCellIndex[iCell] << endl;
+                cout << "Postion     = " << setprecision(8) << setw(12)
+                    << interpolateCellCenterX[iCell] << " "
+                    << interpolateCellCenterY[iCell] << " "
+                    << interpolateCellCenterZ[iCell] << endl;
                 break;
             case -1:
                 ++numberOfNegativeCellsInThisBlock_1In;
@@ -3885,52 +4056,29 @@ void OversetConfig::CheckInterpolateRelationship(int iBlockIn,
     }
 }
 
-void OversetConfig::DownInterfaceNodeCharacter(vector< vector< int > > &keyActiveOfGlobalInterNodes, int key)
+void OversetConfig::DownInterfaceNodeCharacter()
 {
-    vector< int > &localToGlobalInterNodesIndex = this->localToGlobalInterNodesIndex;
-    vector< int > &localInterNodesList = this->interfaceBoundaryNodeList;
-    int *keyActiveOfNodes = this->GetKeyActiveOfNodes();
-    int blockIndex = this->blockIndex;
+    int    blockIndex = grid->GetIBlock();
+    int **keyOfInterfaceNodesInBlocks = GetOversetConfigFactoryMulti()->GetKeyOfInterfaceNodesInBlocks();
 
-    for (unsigned iNode = 0; iNode < localInterNodesList.size(); ++iNode)
+    int numberOfInterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+    for (int iNode = 0; iNode < numberOfInterfaceBoundaryNodes; ++ iNode)
     {
-        int localNodesIndex = localInterNodesList[iNode];
-        int globalNodesIndex = localToGlobalInterNodesIndex[iNode];
-
-        int numGlobal = keyActiveOfGlobalInterNodes[blockIndex][globalNodesIndex];
-
-        if (key == 1)
-        {
-            keyInBlockNodes[localNodesIndex] = numGlobal;
-        }
-        else if (key == 0)
-        {
-            keyActiveOfNodes[localNodesIndex] = numGlobal;
-        }
+        keyActiveOfNodes[interfaceBoundaryNodeList[iNode]] =
+            keyOfInterfaceNodesInBlocks[blockIndex][localToGlobalInterfaceNodesMap[iNode]];
     }
 }
 
-void OversetConfig::UpdateInterfaceNodeCharacter(vector< vector< int > > &keyActiveOfGlobalInterNodes, int key)
+void OversetConfig::UpdateInterfaceNodeCharacter()
 {
-    for (unsigned iNode = 0; iNode < interfaceBoundaryNodeList.size(); ++iNode)
+    int    blockIndex = grid->GetIBlock();
+    int **keyOfInterfaceNodesInBlocks = GetOversetConfigFactoryMulti()->GetKeyOfInterfaceNodesInBlocks();
+
+    int numberOfInterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+    for (int iNode = 0; iNode < numberOfInterfaceBoundaryNodes; ++ iNode)
     {
-        int localNodesIndex = interfaceBoundaryNodeList[iNode];
-        int globalNodesIndex = localToGlobalInterNodesIndex[iNode];
-
-        int numGlobal = keyActiveOfGlobalInterNodes[blockIndex][globalNodesIndex];
-
-        int numLocalZone;
-
-        if (key == 1)
-        {
-            numLocalZone = keyInBlockNodes[localNodesIndex];
-        }
-        else
-        {
-            numLocalZone = keyActiveOfNodes[localNodesIndex];
-        }
-
-        keyActiveOfGlobalInterNodes[blockIndex][globalNodesIndex] = MAX(numGlobal, numLocalZone);
+        int &valueGlobal = keyOfInterfaceNodesInBlocks[blockIndex][localToGlobalInterfaceNodesMap[iNode]];
+        valueGlobal = MAX(valueGlobal, keyActiveOfNodes[interfaceBoundaryNodeList[iNode]]);
     }
 }
 
