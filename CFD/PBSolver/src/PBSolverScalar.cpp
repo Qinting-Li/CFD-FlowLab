@@ -168,7 +168,7 @@ void PBSolverScalar::InitField()
     tranCalc->AllocateMemory(grid, phiNameList, phiInitValueList);
 }
 
-void PBSolverScalar::ReinitField()
+void PBSolverScalar::IncompressibleInitial()
 {
     UpdateBoundary();
 }

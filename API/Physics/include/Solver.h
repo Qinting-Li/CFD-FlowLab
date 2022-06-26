@@ -106,7 +106,7 @@ public:
 
     //! Re-initialize the data, 
     //! here it is a pure virtual function, it should be re-defined in the real solver.
-    virtual void ReinitField() {};
+    virtual void IncompressibleInitial() {};
 
     virtual void ReleaseMemory() = 0;
 

@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolverTurbEpsilon.h
-//! @brief     TurbEpsilon.
+//! @brief     TurbEpsilon of Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Huang Jin, Bell..
 
 #pragma once

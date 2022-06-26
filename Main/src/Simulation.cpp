@@ -1376,16 +1376,6 @@ void Simulation::InitializeSolvers()
         delete controller;
     }
 
-    //! For Incompressible Flow
-    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-    {
-        Controller *controller = new Controller(iSolver, this->region);
-
-        controller->ReinitField(iSolver);
-
-        delete controller;
-    }
-
     WriteLogFile("Creating and initialization solvers over \n");
 }
 
@@ -1650,7 +1640,7 @@ void Simulation::PreSolve()
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (!compressible)
     {
-        string fileName = "residual.dat";
+        string fileName = "res.dat";
         int nSolver = Zone::GetNumberOfSolvers();
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
@@ -1686,7 +1676,7 @@ void Simulation::PostSolve()
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (!compressible)
     {
-        string fileName = "residual.dat";
+        string fileName = "res.dat";
         int nSolver = Zone::GetNumberOfSolvers();
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {

@@ -52,7 +52,7 @@ public:
     virtual void InitMemory();
     virtual void AllocateMemory() = 0;
     virtual void InitField() = 0;
-    virtual void ReinitField() = 0;
+    virtual void IncompressibleInitial() = 0;
     virtual void UpdateBoundary() = 0;
     //virtual bool SolutionIsConverged() = 0;
     virtual void OutputResidual(ofstream &file, int flag)=0;
