@@ -1322,8 +1322,11 @@ void Simulation::InitOversetGrid()
             delete timeSpan;
         }
 
-        InitializeOversetInterfaceTopology();
-
+        int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+        if (!isAle)
+        {
+            InitializeOversetInterfaceTopology();
+        }
         WriteLogFile("Initialize oversetInterface topology \n");
     }
 }

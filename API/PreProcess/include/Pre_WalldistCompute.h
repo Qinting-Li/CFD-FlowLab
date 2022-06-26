@@ -160,8 +160,8 @@ private:
     void ComputeNodeDistanceByDirectMethod(UnstructGrid *grid);
     void ComputeNodeDistanceForSphere(UnstructGrid *grid);
     void ComputeNodeDistanceByADTMethodForBlock(int iBlock);
-    void ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock);
-    void ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock(int iBlock);
+    void ComputeNodeDistanceByKDTreeMethodForBlock();
+    void ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock();
     void ComputeWallDistForNodesListByADT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByKDT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByDirectMethod(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);

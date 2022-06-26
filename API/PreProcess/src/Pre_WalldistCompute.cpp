@@ -4681,11 +4681,7 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethod()
 
     int nBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
-    for (int iBlock = 0; iBlock < nBlocks; ++ iBlock)
-    {
-        PrintToWindow("\nComputing Wall dist for Grid Group: ", iBlock, " By KDTree Method\n");
-        ComputeNodeDistanceByKDTreeMethodForBlock(iBlock);
-    }
+    ComputeNodeDistanceByKDTreeMethodForBlock();
 
     timeSpan->ShowTimeSpanToLogFile("Compute Node Distance By KDTree Method");
     delete timeSpan;
@@ -4713,15 +4709,10 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodInOtherBlock()
         SetField(&nodeWallDistanceInOtherBlock[0], LARGE, numberOfNodes);
     }
 
-    int numberOfBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
-
-    for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
-    {
-        ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock(iBlock);
-    }
+    ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock();
 }
 
-void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
+void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock()
 {
     using namespace PHMPI;
 
@@ -4729,10 +4720,14 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
 
     int nLocalZones = GetNumberofLocalZones();
 
-    this->presentBlock = iBlock;
-
-    //while (!IsNodeWalldistComputOver())
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
+        int iBlock = grid->GetIBlock();
+        this->presentBlock = iBlock;
+
         if (!wallNodeKDTree)
         {
             wallNodeKDTree = CreatKDTree(nDim);
@@ -4743,40 +4738,30 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
         oss << "  iBlock = " << iBlock << " nTWallFace = " << nTWallFace;
         WriteLogFile(oss);
 
-        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+
+        vector<RDouble> &nodeWalldist = grid->GetNodeWallDist();
+
+        int nTotalNode = grid->GetNTotalNode();
+
+        //! if nTWallFace = 0, this must be the main back ground block
+        if (nTWallFace == 0)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+            RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
+            RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
 
-            UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
-            if (grid->GetIBlock()!= presentBlock)
-            {
-                continue;
-            }
+            SetField(nodeWalldist, dist / gridScaleFactor, nTotalNode);
 
-            vector<RDouble> &nodeWalldist = grid->GetNodeWallDist();
-
-            int nTotalNode = grid->GetNTotalNode();
-
-            //! if nTWallFace = 0, this must be the main back ground block
-            if (nTWallFace == 0)
-            {
-                RDouble dist = GlobalDataBase::GetDoubleParaFromDB("walldistMainZone");
-                RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
-            
-                SetField(nodeWalldist, dist / gridScaleFactor, nTotalNode);
-            
-                continue;
-            }
-
-            RDouble *x = grid->GetX();
-            RDouble *y = grid->GetY();
-            RDouble *z = grid->GetZ();
-
-            PrintToWindow("  Wall distance computing for zone: ", iZone, "\n");
-            WriteLogFile("  Wall distance computing for zone: ", iZone);
-
-            ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
+            continue;
         }
+
+        RDouble *x = grid->GetX();
+        RDouble *y = grid->GetY();
+        RDouble *z = grid->GetZ();
+
+        PrintToWindow("  Wall distance computing for zone: ", iZone, "\n");
+        WriteLogFile("  Wall distance computing for zone: ", iZone);
+
+        ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
 
         if (wallNodeKDTree)
         {
@@ -4786,44 +4771,34 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock)
     }
 }
 
-void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock(int iBlock)
+void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock()
 {
     using namespace PHMPI;
 
     int nDim = 3;
 
     int nLocalZones = GetNumberofLocalZones();
+    int nBlocks = GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
-    this->presentBlock = iBlock;
-
-    //while (!IsNodeWalldistComputOver())
+    for (int izone = 0; izone < nLocalZones; ++ izone)
     {
-        if (!wallNodeKDTree)
-        {
-            wallNodeKDTree = CreatKDTree(nDim);
-        }
+        int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+
+        UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
+        presentBlock = grid->GetIBlock();
+
+        wallNodeKDTree = CreatKDTree(nDim);
         BuildWallStructKDTreeNodeInOtherBlock();
 
-        for (int izone = 0; izone < nLocalZones; ++ izone)
-        {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
+        vector<RDouble> &nodeWalldist = grid->GetNodeWallDistInOtherBlock();
 
-            UnstructGrid *grid = UnstructGridCast(GetGrid(zoneID, this->level));
-            if (grid->GetIBlock() != presentBlock)
-            {
-                continue;
-            }
+        int nTotalNode = grid->GetNTotalNode();
 
-            vector<RDouble> &nodeWalldist = grid->GetNodeWallDistInOtherBlock();
+        RDouble *x = grid->GetX();
+        RDouble *y = grid->GetY();
+        RDouble *z = grid->GetZ();
 
-            int nTotalNode = grid->GetNTotalNode();
-
-            RDouble *x = grid->GetX();
-            RDouble *y = grid->GetY();
-            RDouble *z = grid->GetZ();
-
-            ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
-        }
+        ComputeNodeWallDist3DByKDTreeMethod(nTotalNode, x, y, z, &nodeWalldist[0]);
 
         if (wallNodeKDTree)
         {

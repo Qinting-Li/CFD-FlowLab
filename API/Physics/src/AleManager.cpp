@@ -108,8 +108,7 @@ void SolveSingleInnerIterationStepForAleSolvers()
 
         //! if it is the overset mesh, should dig the hole.
         int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-        int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-        if (isOverset && outIterStep > 1)
+        if (isOverset)
         {
             //! clear up the store memory before assembling.
             DeAllocateOversetStorage();
@@ -178,7 +177,7 @@ void AleManager::Initialize()
     int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
     if (isOverset)
     {
-        ResetAllZonesOversetGrid();
+        //ResetAllZonesOversetGrid();
         InitializeOversetInterfaceTopology();
         //! the memory of the variables need to re open, when the overset mesh changes.
         AllocateOversetStorage();
