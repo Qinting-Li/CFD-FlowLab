@@ -1275,7 +1275,7 @@ int  allReduceStep = 1;
 //             1 -- set the acceptor cell value by distance weight of donor cell value.
 
 int    codeOfOversetGrid           = 0;
-int    oversetInterpolationMethod  = 1;
+int    oversetInterpolationMethod  = 0;
 int    readOversetFileOrNot        = 0;
 int    symetryOrNot                = 0;
 int    readInAuxiliaryInnerGrid    = 0;
