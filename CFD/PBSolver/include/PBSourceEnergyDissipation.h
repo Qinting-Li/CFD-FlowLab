@@ -11,7 +11,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSourceEnergyDissipation.h
-//! @brief     Energy.
+//! @brief     Energy of Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell.
 
 #pragma once

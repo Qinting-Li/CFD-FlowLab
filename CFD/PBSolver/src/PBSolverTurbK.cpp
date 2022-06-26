@@ -44,7 +44,7 @@ void PBSolverTurbK::AllocateMemory()
     gen = ObjAllocateMemory("gen", nTotal, 0.0, grid);
 }
 
-void PBSolverTurbK::ReinitField()
+void PBSolverTurbK::IncompressibleInitial()
 {
     int nTotalCell = grid->GetNTotalCell();
     int nTotalFace = grid->GetNTotalFace();

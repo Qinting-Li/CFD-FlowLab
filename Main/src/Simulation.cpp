@@ -1296,16 +1296,6 @@ void Simulation::InitializeSolvers()
         delete controller;
     }
 
-    //! For incompressible flow.
-    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-    {
-        Controller *controller = new Controller(iSolver, this->region);
-
-        controller->ReinitField(iSolver);
-
-        delete controller;
-    }
-
     WriteLogFile("Creating and initialization solvers over \n");
 }
 
