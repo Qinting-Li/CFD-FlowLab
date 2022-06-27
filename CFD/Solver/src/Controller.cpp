@@ -107,7 +107,7 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
 
         PHSolver *solver = GetCFDSolver(zoneID, iSolver);
 
-        if(nProtectData == 0)
+        if (nProtectData == 0)
         {
             solver->InitFlow();
         }
@@ -165,8 +165,26 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (compressible)
     {
-    ComputeNodeBCType();
-}
+        ComputeNodeBCType();
+    }
+    else
+    {
+        //! Initialize memory for Incompressible flow.
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+        {
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+            Zone *zone = GetZone(zoneID);
+            if (!zone)
+            {
+                continue;
+            }
+
+            PHSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+            solver->IncompressibleInitial();
+        }
+    }
 }
 
 void Controller::CleanUp(int iSolver)
@@ -189,29 +207,6 @@ void Controller::CleanUp(int iSolver)
         PHSolver *solver = GetCFDSolver(zoneID, iSolver);
 
         solver->ReleaseMemory();
-    }
-}
-
-void Controller::ReinitField(int iSolver)
-{
-    using namespace PHMPI;
-    int nLocalZones = GetNumberofLocalZones();
-
-    int level = 0;
-    //! First: Initialize memory.
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        PHSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->ReinitField();
     }
 }
 
@@ -748,7 +743,7 @@ void Controller::Relaxation(int iSolver, int level)
 
         TimeStep(iSolver, level);
 
-        MLUSGS(iSolver, level);
+        MatrixLUSGS(iSolver, level);
     }
     else
     {
@@ -1672,7 +1667,7 @@ void Controller::BLUSGSInitialization(int iSolver, int level, int nSweep, FieldP
     }
 }
 
-void Controller::MLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ)
+void Controller::MatrixLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ)
 {
     int nLocalZones = PHMPI::GetNumberofLocalZones();
 
@@ -3406,7 +3401,7 @@ void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProx
     delete []zoneNormal;    zoneNormal = NULL;
 }
 
-void Controller::MLUSGS(int iSolver, int level)
+void Controller::MatrixLUSGS(int iSolver, int level)
 {
     //! If the solver is Turb Solver, it will take the LUSGS methods.
     if (iSolver == TURB_SOLVER)
@@ -3425,18 +3420,18 @@ void Controller::MLUSGS(int iSolver, int level)
     //! L*Dq or U*Dq, which is equal to DeltaFlux between beighbors.
     FieldProxy **LUplusDQ= new FieldProxy *[nLocalZones];
 
-    MLUSGSInitialization(iSolver, level, nLUSGSSweeps, dqProxy, LUplusDQ);
+    MatrixLUSGSInitialization(iSolver, level, nLUSGSSweeps, dqProxy, LUplusDQ);
 
     RDouble sweepNormalInit, sweepEpsilon = 1.1, globleNormal;
     
     for (int iSweep = 0; iSweep < nLUSGSSweeps; ++ iSweep)
     {
         RDouble sweepNormal = 0.0;
-        ForwardSweepMLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal,iSweep);
+        ForwardSweepMatrixLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal,iSweep);
 
 		CommunicationDQ(iSolver, level, dqProxy);
 
-        BackwardSweepMLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal);		
+        BackwardSweepMatrixLUSGS(iSolver, level, dqProxy, LUplusDQ, sweepNormal);		
 
         if (nLUSGSSweeps > 1)
         {
@@ -3475,7 +3470,7 @@ void Controller::MLUSGS(int iSolver, int level)
     delete []LUplusDQ;
 }
 
-void Controller::ForwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep)
+void Controller::ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -3514,7 +3509,7 @@ void Controller::ForwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy
     delete []zoneNormal;
 }
 
-void Controller::BackwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
+void Controller::BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();

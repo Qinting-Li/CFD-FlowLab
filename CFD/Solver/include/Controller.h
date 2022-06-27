@@ -77,8 +77,6 @@ public:
     //! If converged for incompressible situation
     bool IsConverged(int iZone);
 
-    //! Reinit variable for incompressible situation 
-    void ReinitField(int iSolver);
     //! Update unsteady flow.
     //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
     void UpdateUnsteadyFlow(int iSolver, int level = 0);
@@ -205,7 +203,7 @@ private:
     void DualTimeStepsLUSGS(int iSolver, int level);
     void LUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
     void BLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
-	void MLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
+	void MatrixLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
     void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy);
@@ -237,13 +235,13 @@ private:
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
 	//! Matix Lower-Upper Symmetric Gauss¨CSeidel Scheme for struct grid.
-    void MLUSGS(int iSolver, int level);
+    void MatrixLUSGS(int iSolver, int level);
 
-    //! Forward sweep in MLUSGS methods.
-    void ForwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep);
+    //! Forward sweep in MatrixLUSGS methods.
+    void ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal , int &iSweep);
     
-    //! Backward sweep in MLUSGS methods.
-    void BackwardSweepMLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
+    //! Backward sweep in MatrixLUSGS methods.
+    void BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
     //! Line implicit Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
     void LineLUSGS(int iSolver, int level);

@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBGradLsq.h
-//! @brief     Lsq.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @brief     Lsq of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
  
 #pragma once
 
@@ -21,14 +21,14 @@ namespace PHSPACE
 {
 #define GRAD_LSQ LSQ
 
-    class PBGradLsq : public PBGrad
-    {
-    public:
-        PBGradLsq(const string &name);
-        virtual ~PBGradLsq();
+class PBGradLsq : public PBGrad
+{
+public:
+    PBGradLsq(const string &name);
+    virtual ~PBGradLsq();
 
-        virtual void Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
-    };
+    void Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGradLsq, GRAD_LSQ);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGradLsq, GRAD_LSQ);
 }

@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBIterSolvBiCGSTAB.h
-//! @brief     Solving the System of Algebraic Equations.
-//! @author    Ming Pingjian, Sun Huawen, Huang Jin.
+//! @brief     Solving the System of Algebraic Equations in Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell.
  
 #pragma once
 #include "PBIterSolv.h"
@@ -20,18 +20,18 @@ namespace PHSPACE
 {
 #define ITERSOLV_BiCGSTAB BiCGSTAB
 
-    class PBIterSolvBiCGSTAB : public PBIterSolv
-    {
-    public:
-        PBIterSolvBiCGSTAB(const string &name);
-        ~PBIterSolvBiCGSTAB();
+class PBIterSolvBiCGSTAB : public PBIterSolv
+{
+public:
+    PBIterSolvBiCGSTAB(const string &name);
+    ~PBIterSolvBiCGSTAB();
 
-        virtual void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,
-            string ajbUpperStr, string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
+    void Run(Region &region, vector<int> &zoneIdList, string varStr, string apStr, string ajUpperStr, string ajLowerStr,string ajbUpperStr,
+        string ajbLowerStr, string scStr, string rsStr, int maxSweep = 50, RDouble tol = 1e-4);
 
-    protected:
-        virtual void Calc(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace, RDouble *ap, RDouble *ajLeft, RDouble *ajRight, RDouble *sc,
-            RDouble *rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
+protected:
+    void Calc(int nFaces, int nCells, int *leftCellOfFace, int *rightCellOfFace, RDouble *ap, RDouble *ajLeft, RDouble *ajRight, RDouble *sc,
+        RDouble *rs, string varStr, int maxSweep = 50, RDouble tol = 1e-4);
     };
 
     DECLARE_PBSOLVER_REGISTER_FUNCTION(PBIterSolv, PBIterSolvBiCGSTAB, ITERSOLV_BiCGSTAB);

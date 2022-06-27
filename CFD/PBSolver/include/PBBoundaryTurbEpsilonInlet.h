@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryTurbEpsilonInlet.h
-//! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @brief     Boundary Conditions of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -23,20 +23,20 @@ namespace PHSPACE
 {
 #define TURB_EPSILON_INLET TURB_EPSILON_INLET 
 
-    class PBBoundaryTurbEpsilonInlet : public PBBoundaryTurbDefault
-    {
-    public:
-        PBBoundaryTurbEpsilonInlet (const string &name);
-        virtual ~PBBoundaryTurbEpsilonInlet ();
+class PBBoundaryTurbEpsilonInlet : public PBBoundaryTurbDefault
+{
+public:
+    PBBoundaryTurbEpsilonInlet (const string &name);
+    virtual ~PBBoundaryTurbEpsilonInlet ();
 
-        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
+    void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-    protected:
-        RDouble cmu;
-    };
+protected:
+    RDouble cmu;
+};
 
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbEpsilonInlet, TURB_EPSILON_INLET);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbEpsilonInlet, TURB_EPSILON_INLET);
 } // PB_SPACE

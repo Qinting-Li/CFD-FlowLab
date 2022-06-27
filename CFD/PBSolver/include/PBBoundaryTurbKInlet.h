@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryTurbKInlet.h
-//! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @brief     Boundary Conditions of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -23,16 +23,16 @@ namespace PHSPACE
 {
 #define TURB_K_INLET TURB_K_INLET 
 
-    class PBBoundaryTurbKInlet : public PBBoundaryTurbDefault
-    {
-    public:
-        PBBoundaryTurbKInlet(const string &name);
-        virtual ~PBBoundaryTurbKInlet();
+class PBBoundaryTurbKInlet : public PBBoundaryTurbDefault
+{
+public:
+    PBBoundaryTurbKInlet(const string &name);
+    virtual ~PBBoundaryTurbKInlet();
 
-        virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
+    void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
-    };
+    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKInlet, TURB_K_INLET);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKInlet, TURB_K_INLET);
 } // PB_SPACE

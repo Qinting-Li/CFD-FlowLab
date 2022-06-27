@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBConvectionQUICK.h
-//! @brief     QUICK.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @brief     QUICK of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 #include "PBConvection.h"
@@ -20,20 +20,20 @@ namespace PHSPACE
 {
 #define CONVECTION_QUICK QUICK
 
-    class PBConvectionQUICK : public PBConvection
-    {
-    public:
-        PBConvectionQUICK(const string &name);
-        virtual ~PBConvectionQUICK();
+class PBConvectionQUICK : public PBConvection
+{
+public:
+    PBConvectionQUICK(const string &name);
+    virtual ~PBConvectionQUICK();
 
-        //! @brief QUICK scheme.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: phiName denotes the name of parameter. 
-        //! @param[out]: apName denotes the leading diagonal.
-        //! @param[out]: scName denotes the right-hand side. 
-        virtual void Discrt(UnstructGrid *grid, string phiName, string apName, string scName, RDouble *v = NULL,
-            RDouble *apV = NULL, RDouble *scV = NULL, RDouble *w = NULL, RDouble *apW = NULL, RDouble *scW = NULL);
-    };
+    //! @brief QUICK scheme.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: phiName denotes the name of parameter. 
+    //! @param[out]: apName denotes the leading diagonal.
+    //! @param[out]: scName denotes the right-hand side. 
+    void Discrt(UnstructGrid *grid, string phiName, string apName, string scName, RDouble *v = NULL,RDouble *apV = NULL,
+        RDouble *scV = NULL, RDouble *w = NULL, RDouble *apW = NULL, RDouble *scW = NULL);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvectionQUICK, CONVECTION_QUICK);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvectionQUICK, CONVECTION_QUICK);
 };

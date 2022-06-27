@@ -10934,7 +10934,6 @@ void NSSolverUnstruct::PressureInletBCRiemannRegion(Grid *gridIn, UnstructBC *bc
 
     // get the number of equations.
     Param_NSSolverUnstruct *parameters = GetControlParameters();
-    RDouble *primitiveVarFarfield = parameters->GetPrimitiveVarFarfield();
     int nLaminar  = parameters->GetLaminarNumber();
     int nChemical = parameters->GetChemicalFlag();
     int nTemperatureModel = parameters->GetTemperatureModel();
@@ -10951,7 +10950,10 @@ void NSSolverUnstruct::PressureInletBCRiemannRegion(Grid *gridIn, UnstructBC *bc
     bcData->GetData("totalPressure", &totalPressure, PHDOUBLE, 1);
     bcData->GetData("totalTemperature", &totalTemperature, PHDOUBLE, 1);
     bcData->GetData("direction_inlet", direction_inlet, PHDOUBLE, 3);
-    
+
+    RDouble *primitiveVarFarfield = new RDouble [nEquation];
+    bcData->GetData("primitiveVarFarfield", primitiveVarFarfield, PHDOUBLE, nEquation);
+
     //! Dimensional.
     RDouble refDimensionalTemperature = parameters->GetRefDimensionalTemperature();
     RDouble refMachNumber = parameters->GetRefMachNumber();

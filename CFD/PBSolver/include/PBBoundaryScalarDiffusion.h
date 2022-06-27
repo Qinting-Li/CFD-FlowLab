@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryScalarDiffusion.h
-//! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @brief     Boundary Conditions of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -21,14 +21,14 @@ namespace PHSPACE
 {
 #define SCALAR_DIFFUSION SCALAR_DIFFUSION
 
-    class PBBoundaryScalarDiffusion : public PBBoundaryScalar
-    {
-    public:
-        PBBoundaryScalarDiffusion(const string &name);
-        virtual ~PBBoundaryScalarDiffusion();
+class PBBoundaryScalarDiffusion : public PBBoundaryScalar
+{
+public:
+    PBBoundaryScalarDiffusion(const string &name);
+    virtual ~PBBoundaryScalarDiffusion();
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
-    };
+    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarDiffusion, SCALAR_DIFFUSION);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryScalarDiffusion, SCALAR_DIFFUSION);
 }

@@ -10,9 +10,9 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBGradGauss.h
-//! @brief     Gauss.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
- 
+//! @brief     Gauss of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
+
 #pragma once
 
 #include "PBGrad.h"
@@ -21,14 +21,14 @@ namespace PHSPACE
 {
 #define GRAD_GAUSS GAUSS
 
-    class PBGradGauss : public PBGrad
-    {
-    public:
-        PBGradGauss(const string &name);
-        virtual ~PBGradGauss();
+class PBGradGauss : public PBGrad
+{
+public:
+    PBGradGauss(const string &name);
+    virtual ~PBGradGauss();
 
-        virtual void Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
-    };
+    void Calc(UnstructGrid *grid, string phiName, string dphidxName, string dphidyName, string dphidzName, bool isComm = false);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGradGauss, GRAD_GAUSS);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBGrad, PBGradGauss, GRAD_GAUSS);
 }

@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryFlowSolidSurface.h
-//! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @brief     Boundary Conditions of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -21,24 +21,24 @@ namespace PHSPACE
 {
 #define FLOW_SOLID_SURFACE FLOW_SOLID_SURFACE
 
-    class PBBoundaryFlowSolidSurface : public PBBoundaryFlow
-    {
-    public:
-        PBBoundaryFlowSolidSurface(const string &name);
-        virtual ~PBBoundaryFlowSolidSurface();
+class PBBoundaryFlowSolidSurface : public PBBoundaryFlow
+{
+public:
+    PBBoundaryFlowSolidSurface(const string &name);
+    virtual ~PBBoundaryFlowSolidSurface();
 
-        virtual void CalcVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex);
+    void CalcVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex);
 
-        virtual void UpdateVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+    void UpdateVelocityBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void UpdatePressureBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+    void UpdatePressureBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void CalcPressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData) {};
+    virtual void CalcPressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void UpdatePressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+    void UpdatePressureCorrectionBoundaryCondition(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void UpdateVelocityCorrectionBoundary(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData) {};
-    };
+    virtual void UpdateVelocityCorrectionBoundary(UnstructGrid *grid, vector<int> *faceIndex, Data_Param *bcData);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundaryFlow, PBBoundaryFlowSolidSurface, FLOW_SOLID_SURFACE);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundaryFlow, PBBoundaryFlowSolidSurface, FLOW_SOLID_SURFACE);
 }

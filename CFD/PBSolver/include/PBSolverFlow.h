@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolverFlow.h
 //! @brief     Pressure Based flow solver.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell..
 
 #pragma once
 
@@ -23,13 +23,13 @@
 
 namespace PHSPACE
 {
-    class PBGrad;
-	class PBBoundary;
-	class PBTransient;
-	class PBConvection;
-	class PBDiffusion;
-	class PBSource;
-	class UnstructGrid;
+class PBGrad;
+class PBBoundary;
+class PBTransient;
+class PBConvection;
+class PBDiffusion;
+class PBSource;
+class UnstructGrid;
 
 #define SOLVER_FLOW FLOW
 
@@ -164,45 +164,45 @@ public:
     PBSolverFlow(const string &name);
     ~PBSolverFlow();
 public:
-    virtual void AllocateGlobalVar(Grid *grid);
-    virtual void DeAllocateGlobalVar(Grid *grid);
-    virtual void ZeroResiduals(Grid *grid);
-    virtual void TimeStep(Grid *grid);
-    virtual void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
-    virtual void SourceFlux(Grid *grid);
-    virtual void InviscidFlux(Grid *grid);
-    virtual void ViscousFlux(Grid *grid);
-    virtual void RungeKutta(Grid *grid, FieldProxy *rhs_proxy);
-    virtual void Post();
-    virtual void PostSolve(Grid *grid, int stage, int level);
-    virtual void InitIncompressibleResultFile(Grid *grid, string fileName);
-    virtual void DumpIncompressibleResultFile(Grid *grid, string fileName);
-    virtual RDouble UnsteadyConvergence(Grid *grid);
+    void AllocateGlobalVar(Grid *grid);
+    void DeAllocateGlobalVar(Grid *grid);
+    void ZeroResiduals(Grid *grid);
+    void TimeStep(Grid *grid);
+    void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
+    void SourceFlux(Grid *grid);
+    void InviscidFlux(Grid *grid);
+    void ViscousFlux(Grid *grid);
+    void RungeKutta(Grid *grid, FieldProxy *rhs_proxy);
+    void Post();
+    void PostSolve(Grid *grid, int stage, int level);
+    void InitIncompressibleResultFile(Grid *grid, string fileName);
+    void DumpIncompressibleResultFile(Grid *grid, string fileName);
+    RDouble UnsteadyConvergence(Grid *grid);
 
 public:
-    virtual void AllocateMemory();
-    virtual void InitField();
-    virtual void ReinitField();
-    virtual void UpdateUnsteadyVariable(Grid *grid);
-    virtual void SolutionIsConverged(int iZone, bool *flag);
-    virtual void OutputResidual(ofstream &file, int flag);
+    void AllocateMemory();
+    void InitField();
+    void IncompressibleInitial();
+    void UpdateUnsteadyVariable(Grid *grid);
+    void SolutionIsConverged(int iZone, bool *flag);
+    void OutputResidual(ofstream &file, int flag);
 
-    virtual void InitMemory();
+    void InitMemory();
 
 public:
     void UpdatePhi(string phiName, int cellBegin, int cellEnd, RDouble *phic, RDouble *phi);
 
 public:
-    virtual void DiscrtMomentumEquations();
-    virtual void SolveMomentumEquations(Region &region);
-    virtual void DiscrtPressureCorrectionEquation();
-    virtual void SolvePressureCorrectionEquation(Region &region);
-    virtual void UpdateVelocity();
-    virtual void UpdatePressureAndVelocity();
-    virtual void UpdateBoundary();
-    virtual void ComputePostVisualVariables(Post_Visual *postVisualization);
-    virtual void ComputePostProbesVariables(Post_Probes *postProbesVar);
-    virtual void UpdateProperties();
+    void DiscrtMomentumEquations();
+    void SolveMomentumEquations(Region &region);
+    void DiscrtPressureCorrectionEquation();
+    void SolvePressureCorrectionEquation(Region &region);
+    void UpdateVelocity();
+    void UpdatePressureAndVelocity();
+    void UpdateBoundary();
+    void ComputePostVisualVariables(Post_Visual *postVisualization);
+    void ComputePostProbesVariables(Post_Probes *postProbesVar);
+    void UpdateProperties();
 
 protected: //!SIMPLEC
     void UpdateBoundaryPressureAndVelocity();

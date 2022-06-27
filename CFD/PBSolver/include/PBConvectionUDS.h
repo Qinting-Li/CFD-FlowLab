@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBConvectionUDS.h
-//! @brief     UDS.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @brief     UDS of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -20,20 +20,20 @@
 namespace PHSPACE
 {
 #define CONVECTION_UPWIND UPWIND
-    class PBConvectionUDS : public PBConvection
-    {
-    public:
-        PBConvectionUDS(const string &name);
-        virtual ~PBConvectionUDS();
+class PBConvectionUDS : public PBConvection
+{
+public:
+    PBConvectionUDS(const string &name);
+    virtual ~PBConvectionUDS();
 
-        //! @brief Upwind scheme.
-        //! @param[in]: gridIn denotes the current computational regions of the grids.
-        //! @param[in]: phiName denotes the name of parameter. 
-        //! @param[out]: apName denotes the leading diagonal.
-        //! @param[out]: scName denotes the right-hand side. 
-        virtual void Discrt(UnstructGrid *grid, string phiName, string apName, string scName, RDouble *v = NULL,
-            RDouble *apV = NULL, RDouble *scV = NULL, RDouble *w = NULL, RDouble *apW = NULL, RDouble *scW = NULL);
-    };
+    //! @brief Upwind scheme.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    //! @param[in]: phiName denotes the name of parameter. 
+    //! @param[out]: apName denotes the leading diagonal.
+    //! @param[out]: scName denotes the right-hand side. 
+    void Discrt(UnstructGrid *grid, string phiName, string apName, string scName, RDouble *v = NULL,RDouble *apV = NULL,
+        RDouble *scV = NULL, RDouble *w = NULL, RDouble *apW = NULL, RDouble *scW = NULL);
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvectionUDS, CONVECTION_UPWIND);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBConvection, PBConvectionUDS, CONVECTION_UPWIND);
 }

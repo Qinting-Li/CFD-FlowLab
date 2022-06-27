@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryTurbKWall.h
-//! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Song Yang.
+//! @brief     Boundary Conditions of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 
 #pragma once
 
@@ -23,24 +23,24 @@ namespace PHSPACE
 {
 #define TURB_K_WALL TURB_K_WALL
 
-    class PBBoundaryTurbKWall : public PBBoundaryScalarDiffusion
-    {
-    public:
-        PBBoundaryTurbKWall(const string &name);
-        virtual ~PBBoundaryTurbKWall();
+class PBBoundaryTurbKWall : public PBBoundaryScalarDiffusion
+{
+public:
+    PBBoundaryTurbKWall(const string &name);
+    virtual ~PBBoundaryTurbKWall();
 
-        virtual void WallModification(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
+    void WallModification(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-        virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
 
-    protected:
-        RDouble cmu_;
-        RDouble cmu25_;
-        RDouble cmu75_;
-        RDouble yptr_;
-        RDouble elog_;
-        RDouble cappa_;
-    };
+protected:
+    RDouble cmu_;
+    RDouble cmu25_;
+    RDouble cmu75_;
+    RDouble yptr_;
+    RDouble elog_;
+    RDouble cappa_;
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKWall, TURB_K_WALL);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbKWall, TURB_K_WALL);
 } // PB_SPACE

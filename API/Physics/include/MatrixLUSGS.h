@@ -1,3 +1,18 @@
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//          PPPPP  H   H  EEEEE  N    N  GGGGG  L      EEEEE  III         +
+//          P   P  H   H  E      NN   N  G      L      E       I          +
+//          PPPPP  HHHHH  EEEEE  N N  N  G  GG  L      EEEEE   I          +
+//          P      H   H  E      N  N N  G   G  L      E       I          +
+//          P      H   H  EEEEE  N    N  GGGGG  LLLLL  EEEEE  III         +
+//------------------------------------------------------------------------+
+//          Platform for Hybrid Engineering Simulation of Flows           +
+//          China Aerodynamics Research and Development Center            +
+//                     (C) Copyright, Since 2010                          +
+//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//! @file      MatrixLUSGS.h
+//! @brief     Implicit iterative method for Linearized N-S equations based on exact Jacobian matrix.
+//! @author    LiuJian, Yang Yufeng.
+
 #include "Geo_StructGrid.h"
 #include "FieldProxy.h"
 #include "FaceProxy.h"
@@ -6,15 +21,15 @@
 namespace PHSPACE
 {
 
-//! To execute the forward sweep of the matrix LU-SGS method.
+//! To execute the forward sweep of the Matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
 //! @param[out]: dqProxy is an array that store the difference values between the conservative variables at n and n+1 time step.
-void SolveMLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
-//! To execute the backward sweep of the matrix LU-SGS method.
+//! To execute the backward sweep of the Matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.
 //! @param[out]: dqProxy and dqStarProxy are arrays that store the difference values between the conservative variables at n and n+1 time step.
-void SolveMLUSGSBackward(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
 //! Compute and save the diagonal matrix on grids that are used for matrix LU-SGS method.
 //! @param[in ]: gridIn denotes the current computational regions of the grids.

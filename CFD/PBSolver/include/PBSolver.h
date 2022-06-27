@@ -11,7 +11,7 @@
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSolver.h
 //! @brief     Pressure Based solver.
-//! @author    Ming Pingjian, Sun Huawen.
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
 
 #pragma once
 
@@ -35,48 +35,48 @@ public:
     ~PBSolver();
 
 public:
-    virtual void AllocateGlobalVar(Grid *grid);
-    virtual void DeAllocateGlobalVar(Grid *grid);
-    virtual void ZeroResiduals(Grid *grid);
-    virtual void TimeStep(Grid *grid);
-    virtual void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
-    virtual void SourceFlux(Grid *grid);
-    virtual void InviscidFlux(Grid *grid);
-    virtual void ViscousFlux(Grid *grid);
-    virtual void RungeKutta(Grid *grid, FieldProxy *rhs_proxy);
-    virtual void Post();
-    virtual void PostSolve(Grid *grid, int stage, int level);
-    virtual RDouble UnsteadyConvergence(Grid *grid);
+    void AllocateGlobalVar(Grid *grid);
+    void DeAllocateGlobalVar(Grid *grid);
+    void ZeroResiduals(Grid *grid);
+    void TimeStep(Grid *grid);
+    void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
+    void SourceFlux(Grid *grid);
+    void InviscidFlux(Grid *grid);
+    void ViscousFlux(Grid *grid);
+    void RungeKutta(Grid *grid, FieldProxy *rhs_proxy);
+    void Post();
+    void PostSolve(Grid *grid, int stage, int level);
+    RDouble UnsteadyConvergence(Grid *grid);
 
 
-    virtual void InitMemory() {};
+    virtual void InitMemory();
     virtual void AllocateMemory() = 0;
     virtual void InitField() = 0;
-    virtual void ReinitField() = 0;
+    virtual void IncompressibleInitial() = 0;
     virtual void UpdateBoundary() = 0;
     //virtual bool SolutionIsConverged() = 0;
     virtual void OutputResidual(ofstream &file, int flag)=0;
 
     inline void SetControllerName(string name) { this->controllerName = name; }
-    inline std::string GetControllerName() { return this->controllerName; }
+    inline string GetControllerName() { return this->controllerName; }
     inline void SetNSolvers(int nSolvers) { this->nSolvers = nSolvers; }
     inline int GetNSolvers() { return this->nSolvers; }
     inline void SetPrintName(string name) { this->printName = name; }
-    inline std::string GetPrintName() { return this->printName; }
+    inline string GetPrintName() { return this->printName; }
 
 public: //! Extended parallel communication
-    virtual void CommunicateInterfaceData(vector<string> &nameList);
-    virtual void UploadInterfaceData(vector<string> &nameList);
-    virtual void DownloadInterfaceData(vector<string> &nameList);
-    virtual void UploadInterfaceValue(vector<string> &nameList);
-    virtual void DownloadInterfaceValue(vector<string> &nameList);
-    virtual void UpdateInterfaceData();
-    virtual void CommunicationInterfaceData();
-    virtual void FillActionKey(ActionKey *actkey, int action, int level);
+    void CommunicateInterfaceData(vector<string> &nameList);
+    void UploadInterfaceData(vector<string> &nameList);
+    void DownloadInterfaceData(vector<string> &nameList);
+    void UploadInterfaceValue(vector<string> &nameList);
+    void DownloadInterfaceValue(vector<string> &nameList);
+    void UpdateInterfaceData();
+    void CommunicationInterfaceData();
+    void FillActionKey(ActionKey *actkey, int action, int level);
 
 private:
-    std::string printName;            //! Screen output variable names
-    std::string controllerName;       //! Name of controllers
+    string printName;            //! Screen output variable names
+    string controllerName;       //! Name of controllers
     int nSolvers;                     //! Number of solvers
 };
 

@@ -10,8 +10,8 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBBoundaryEnergyDefault.h
-//! @brief     Boundary Conditions.
-//! @author    Ming Pingjian, Sun Huawen, Huang Jin.
+//! @brief     Boundary Condition of Pressure Based Solver (PBSolver).
+//! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Huang Jin, Bell.
 
 #pragma once
 
@@ -21,12 +21,12 @@ namespace PHSPACE
 {
 #define ENERGY_DEFAULT ENERGY_DEFAULT 
 
-    class PBBoundaryEnergyDefault : public PBBoundaryScalarDefault
-    {
-    public:
-        PBBoundaryEnergyDefault(const string &name);
-        virtual ~PBBoundaryEnergyDefault();
-    };
+class PBBoundaryEnergyDefault : public PBBoundaryScalarDefault
+{
+public:
+    PBBoundaryEnergyDefault(const string &name);
+    virtual ~PBBoundaryEnergyDefault();
+};
 
-    DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyDefault, ENERGY_DEFAULT);
+DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryEnergyDefault, ENERGY_DEFAULT);
 }

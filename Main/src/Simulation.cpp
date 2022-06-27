@@ -234,9 +234,9 @@ void Simulation::RunCFD()
         return;
     }
 
-    //the flag of solver, the adaptive method sets value great than zero.
+    //! The flag of solver, the adaptive method sets value great than zero.
     int isAdaptiveSolver = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
-    //solving the NS equations using the automated process from the perfect gas to the thermochemical nonequilibrium gas.
+    //! Solving the NS equations using the automated process from the perfect gas to the thermochemical nonequilibrium gas.
     if (isAdaptiveSolver > 0)
     {
         GenerateWalldist();
@@ -1371,16 +1371,6 @@ void Simulation::InitializeSolvers()
         delete controller;
     }
 
-    //! For Incompressible Flow
-    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-    {
-        Controller *controller = new Controller(iSolver, this->region);
-
-        controller->ReinitField(iSolver);
-
-        delete controller;
-    }
-
     WriteLogFile("Creating and initialization solvers over \n");
 }
 
@@ -1501,7 +1491,7 @@ void Simulation::DefineAndCreateSolvers()
                 //! Incompressible Flow
                 string flowSolver;
                 zone->GetData("FLOW", &flowSolver, PHSTRING, 1);
-                PHSolver *solver = PBSolverFactory::CreatePBSolver(flowSolver);
+                PHSolver *solver = new PBSolverFlow(flowSolver);
                 solverList.push_back(solver);
                 int solverIndex = solverList.size();
                 solver->SetName(toString(solverIndex - 1) + "_" + flowSolver);
@@ -1554,13 +1544,13 @@ void Simulation::DefineAndCreateSolvers()
                 //! Incompressible Flow
                 if (viscousType == SPALART_ALLMARAS)
                 {
-                    PHSolver *solver = PBSolverFactory::CreatePBSolver("TURB_SA");
+                    PHSolver *solver = new PBSolverTurbSA("TURB_SA");
                     solverList.push_back(solver);
                     solver->SetName("TURB");
                 }
                 else if (viscousType == KEPSILON)
                 {
-                    PHSolver *solver = PBSolverFactory::CreatePBSolver("TURB_KEPSILON");
+                    PHSolver *solver = new PBSolverKEpsilon("TURB_KEPSILON");
                     solverList.push_back(solver);
                     solver->SetName("TURB");
                     solver->SetGeometry(geometry);
@@ -1596,7 +1586,7 @@ void Simulation::DefineAndCreateSolvers()
             zone->GetData("energyType", &energyType, PHINT, 1);
             if (energyType)
             {
-                PHSolver *solver = PBSolverFactory::CreatePBSolver("ENERGY");
+                PHSolver *solver = new PBSolverEnergy("ENERGY");
                 solverList.push_back(solver);
                 solver->SetName("ENERGY");
             }
@@ -1645,7 +1635,7 @@ void Simulation::PreSolve()
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (!compressible)
     {
-        string fileName = "residual.txt";
+        string fileName = "res.dat";
         int nSolver = Zone::GetNumberOfSolvers();
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
@@ -1664,12 +1654,6 @@ void Simulation::PreSolve()
 
 void Simulation::PostSolve()
 {
-    //int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    //if (compressible == 0)
-    //{
-    //    return;
-    //}
-
     using namespace PHMPI;
 
     //! Dump tecflow file.
@@ -1687,7 +1671,7 @@ void Simulation::PostSolve()
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (!compressible)
     {
-        string fileName = "residual.txt";
+        string fileName = "res.dat";
         int nSolver = Zone::GetNumberOfSolvers();
         for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
         {
@@ -1722,13 +1706,6 @@ void Simulation::PostSolve()
 
 void Simulation::MainSolve()
 {
-    //int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    //if (compressible == 0)
-    //{
-    //    SolveIncomFlow();
-    //    return;
-    //}
-
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (!isUnsteady)
     {
@@ -1814,7 +1791,7 @@ void Simulation::SelfAdaptionSolve()
         PrintToWindow("Wait is over,start iteration ... \n");
     }
 
-    //Set the flag to pause the numerical iteration.
+    //! Set the flag to pause the numerical iteration.
     RDouble monitorResidual = 0.0;
     PHSPACE::GlobalDataBase::UpdateData("monitorResidual", &monitorResidual, PHDOUBLE, 1);
     int nPauseKey = 0;
@@ -1846,7 +1823,7 @@ void Simulation::PostSimulation()
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (compressible == 0)
     {
-        // visual files will be added afterforwards for incompressible flow problems.
+        //! visual files will be added afterforwards for incompressible flow problems.
         return;
     }
     this->region->PostSimulation();
