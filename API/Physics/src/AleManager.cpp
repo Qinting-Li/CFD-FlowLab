@@ -165,6 +165,7 @@ void AleManager::Initialize()
         Restart();
     }
 
+    aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
     if(aleStartStrategy == 0)
     {
         aleManager->Run();

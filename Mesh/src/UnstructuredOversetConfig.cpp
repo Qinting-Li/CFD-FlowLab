@@ -2921,7 +2921,7 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector<
     {
         donorCellIndex = -2;
 
-        if (!symetryOrNot || cellCenterZ[iCell] > -EPSILON)
+        if (!symetryOrNot || cellCenterZ[iCell] > EPSILON)
         {
             donorCellIndex = -1;
 
@@ -4066,7 +4066,7 @@ void OversetConfig::DownInterfaceNodeCharacter()
     for (int iNode = 0; iNode < numberOfInterfaceBoundaryNodes; ++ iNode)
     {
         keyActiveOfNodes[interfaceBoundaryNodeList[iNode]] =
-            MAX(keyActiveOfNodes[interfaceBoundaryNodeList[iNode]], keyOfInterfaceNodesInBlocks[blockIndex][localToGlobalInterfaceNodesMap[iNode]]);
+            keyOfInterfaceNodesInBlocks[blockIndex][localToGlobalInterfaceNodesMap[iNode]];
     }
 }
 
