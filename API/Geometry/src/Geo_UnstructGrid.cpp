@@ -9897,7 +9897,7 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
 
             for(int iNode = 0; iNode < nodeNumberOfEachCell[ cellIndex ]; ++ iNode)
             {
-                int nodeIndex = cell2Node[cellIndex][iNode];
+                int &nodeIndex = cell2Node[cellIndex][iNode];
 
                 RDouble dx = x - xNode[nodeIndex];
                 RDouble dy = y - yNode[nodeIndex];

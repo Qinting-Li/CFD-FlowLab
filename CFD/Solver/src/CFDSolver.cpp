@@ -3366,6 +3366,7 @@ void CFDSolver::UpdateOversetData()
                 PH_Interface(actkey, iZone, oversetNeighborZoneIndex);
             }
         }
+        delete actkey;
     }
 }
 
