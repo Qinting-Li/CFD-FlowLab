@@ -41,7 +41,10 @@ void PBSolverTurbK::AllocateMemory()
 
     visl = ObjAllocateMemory("visl", nTotal, 0.0, grid);
     vist = ObjAllocateMemory("vist", nTotal, 0.0, grid);
+    vistb = vist + nTotalCell;
     gen = ObjAllocateMemory("gen", nTotal, 0.0, grid);
+    tauWall = ObjAllocateMemory("tauWall", nTotalCell, 0.0, grid);
+    yplus = ObjAllocateMemory("yplus", nTotal, 0.0, grid);
 }
 
 void PBSolverTurbK::IncompressibleInitial()
@@ -66,7 +69,7 @@ void PBSolverTurbK::IncompressibleInitial()
     {
         int le = leftCellOfFace[iFace];
 
-        mu[le] = visl[le];
+        vistb[iFace] = vist[le];
         mub[iFace] = mu[le];
 
     }
@@ -84,19 +87,19 @@ void PBSolverTurbK::Discrt()
 
     CalcGenTerm();
 
+    UpdateWallGen();
+
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        mu[iCell] = visl[iCell] + vist[iCell] / prandtl;
+        diffCoe[iCell] = visl[iCell] + vist[iCell] / prandtl;
     }
-
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int iCell = leftCellOfFace[iFace];
-        mub[iFace] = visl[iCell] + vist[iFace] / prandtl;
+        int le = leftCellOfFace[iFace];
+        mub[iFace] = mu[le];
+        vistb[iFace] = vist[le];
+        diffCoeb[iFace] = visl[le] + vistb[iFace] / prandtl;
     }
-
-    diffCoe = mu;
-    diffCoeb = mub;
     PBSolverScalar::Discrt();
 }
 
@@ -119,6 +122,7 @@ void PBSolverTurbK::CalcGenTerm()
     RDouble *dwdz = reinterpret_cast<RDouble*>(grid->GetDataPtr("dwdz"));
     RDouble *vist = reinterpret_cast<RDouble*>(grid->GetDataPtr("vist"));
     RDouble *gen = reinterpret_cast<RDouble*>(grid->GetDataPtr("gen"));
+    RDouble* yplus = reinterpret_cast<RDouble*>(grid->GetDataPtr("yplus"));
 
     PBGrad *gradCalc = PBGradFactory::CreatePBGrad(ObjGetStrParaFromDB(gradCalcConfigName, "GAUSS"));
     gradCalc->Calc(grid, "U", "dudx", "dudy", "dudz");
@@ -136,11 +140,33 @@ void PBSolverTurbK::CalcGenTerm()
         RDouble _dwdx = dwdx[iCell];
         RDouble _dwdy = dwdy[iCell];
         RDouble _dwdz = dwdz[iCell];
+        RDouble divv = _dudx + _dvdy + _dwdz;
 
         gen[iCell] = vist[iCell] * (2.0 * (pow(_dudx, 2) + pow(_dvdy, 2) + pow(_dwdz, 2)) +
             pow((_dvdx + _dudy), 2) + pow((_dwdx + _dudz), 2) + pow((_dwdy + _dvdz), 2));
 
         gen[iCell] = MAX(gen[iCell], 0.0);
+    }
+
+}
+
+void PBSolverTurbK::UpdateAfterIterloop()
+{
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotalFace = grid->GetNTotalFace();
+    int nBoundFace = grid->GetNBoundFace();
+    int *leftCellOfFace = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+
+    RDouble *mu = reinterpret_cast<RDouble *>(grid->GetDataPtr("mu"));
+    RDouble *mub = mu + nTotalCell;
+    RDouble *vistb = vist + nTotalCell;
+
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        RDouble vistold = vist[iCell];
+        vist[iCell] = vistold + (rho[iCell] * cmu * k[iCell] * k[iCell] / epsilon[iCell] - vistold) * urfMu;
+        mu[iCell] = visl[iCell] + vist[iCell];
     }
 
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
@@ -152,41 +178,7 @@ void PBSolverTurbK::CalcGenTerm()
         int bcType = bcRegion->GetBCType();
         vector<int> *faceIndex = bcRegion->GetFaceIndex();
         Data_Param *bcData = bcRegion->GetBCParamDataBase();
-
-        if (bcType < 0)
-        {
-            continue;
-        }
-
-        static_cast<PBBoundaryScalar *>(boundCalc[iBCRegionUnstruct])->WallModification(grid, "gen", faceIndex, bcData);
-    }
-}
-
-void PBSolverTurbK::UpdateAfterIterloop()
-{
-    int nTotalCell = grid->GetNTotalCell();
-    int nTotalFace = grid->GetNTotalFace();
-    int nBoundFace = grid->GetNBoundFace();
-    int *leftCellOfFace = grid->GetLeftCellOfFace();
-    int *rightCellOfFace = grid->GetRightCellOfFace();
-
-    RDouble *vistb = vist + nTotalCell;
-
-    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
-    {
-        RDouble vistold = vist[iCell];
-        vist[iCell] = vistold + (rho[iCell] * cmu * k[iCell] * k[iCell] / epsilon[iCell] - vistold) * urfMu;
-        diffCoe[iCell] = visl[iCell] + vist[iCell];
-    }
-
-    //! Correct:judge y+.
-    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
-    {
-        int le = leftCellOfFace[iFace];
-        int re = rightCellOfFace[iFace];
-
-        vistb[iFace] = vist[le];
-        diffCoeb[iFace] = visl[le] + vistb[iFace];
+        static_cast<PBBoundary*>(boundCalc[iBCRegionUnstruct])->UpdateVistb(grid, ScalarName(),faceIndex, bcData);
     }
 }
 
@@ -199,10 +191,15 @@ void PBSolverTurbK::ComputePostVisualVariables(Post_Visual *postVisualization)
     RDouble *visl = reinterpret_cast<RDouble *> (grid->GetDataPtr("visl"));
     RDouble *vist = reinterpret_cast<RDouble *> (grid->GetDataPtr("vist"));
     RDouble *gen = reinterpret_cast<RDouble *> (grid->GetDataPtr("gen"));
+    RDouble *yplus = reinterpret_cast<RDouble *>(grid->GetDataPtr("yplus"));
+    RDouble *wDist = reinterpret_cast<RDouble *>(grid->GetWallDist());
 
     postVisualization->UpdateVisualNodeVarPtr("VIS", vist);
     postVisualization->UpdateVisualNodeVarPtr("TE", k);
     postVisualization->UpdateVisualNodeVarPtr("ED", e);
+    postVisualization->UpdateVisualNodeVarPtr("GENK", gen);
+    postVisualization->UpdateVisualNodeVarPtr("YPLUS", yplus);
+    postVisualization->UpdateVisualNodeVarPtr("WD", wDist);
 }
 
 void PBSolverTurbK::OutputResidual(ofstream &file, int flag)
@@ -227,6 +224,48 @@ void PBSolverTurbK::OutputResidual(ofstream &file, int flag)
         file << teResNow << '\t';
     }
 }
+void PBSolverTurbK::UpdateWallGen()
+{
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
+    for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+        int bcType = bcRegion->GetBCType();
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        Data_Param *bcData = bcRegion->GetBCParamDataBase();
+
+        static_cast<PBBoundaryScalar*>(boundCalc[iBCRegionUnstruct])->WallModification(grid, "gen", faceIndex, bcData);
+    }
+}
+
+RDouble PBSolverTurbK::CacluteWallDistance(UnstructGrid *grid,int ic, int iFace)
+{
+    RDouble *xfn = grid->GetFaceNormalX();
+    RDouble *yfn = grid->GetFaceNormalY();
+    RDouble *zfn = grid->GetFaceNormalZ();
+    RDouble *xfc = grid->GetFaceCenterX();
+    RDouble *yfc = grid->GetFaceCenterY();
+    RDouble *zfc = grid->GetFaceCenterZ();
+    RDouble *xcc = grid->GetCellCenterX();
+    RDouble *ycc = grid->GetCellCenterY();
+    RDouble *zcc = grid->GetCellCenterZ();
+
+    RDouble faceNormalX = xfn[iFace];
+    RDouble faceNormalY = yfn[iFace];
+    RDouble faceNormalZ = zfn[iFace];
+    RDouble faceCenterX = xfc[iFace];
+    RDouble faceCenterY = yfc[iFace];
+    RDouble faceCenterZ = zfc[iFace];
+    RDouble cellCenterX = xcc[ic];
+    RDouble cellCenterY = ycc[ic];
+    RDouble cellCenterZ = zcc[ic];
+    RDouble dx = (faceCenterX - cellCenterX) * faceNormalX;
+    RDouble dy = (faceCenterY - cellCenterY) * faceNormalY;
+    RDouble dz = (faceCenterZ - cellCenterZ) * faceNormalZ;
+    RDouble wdist = sqrt(pow(dx,2) + pow(dy, 2) + pow(dz, 2));
+    return wdist;
+}
 DEFINE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverTurbK, SOLVER_TURB_K);
 }

@@ -167,23 +167,28 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     {
         ComputeNodeBCType();
     }
-    else
+}
+
+void Controller::IncompressibleInitial(int iSolver)
+{
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    int level = 0;
+    //! First: Initialize memory.
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
     {
-        //! Initialize memory for Incompressible flow.
-        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone* zone = GetZone(zoneID);
+        if (!zone)
         {
-            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-            Zone *zone = GetZone(zoneID);
-            if (!zone)
-            {
-                continue;
-            }
-
-            PHSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-            solver->IncompressibleInitial();
+            continue;
         }
+
+        PHSolver* solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->IncompressibleInitial();
     }
 }
 

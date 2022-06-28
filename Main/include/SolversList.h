@@ -30,8 +30,9 @@
 #include "INCompSolverStruct.h"       //! Structured incompressible solver, only basic capability of 2D.
 #include "INCompSolverUnstruct.h"     //! Unstructured incompressible solver, in developing however.
 #endif
-
+#ifdef USE_PBSOLVER
 #include "PBSolver.h"                 //! Incompressible Flow solver.
+#endif
 
 #ifdef USE_INHOUSE_VERSION
 #include "UGKSSimulation.h"           //! UGKS solver, only basic capability of 2D.
