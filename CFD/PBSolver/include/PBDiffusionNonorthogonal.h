@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBDiffusionNonorthogonal.h
-//! @brief     The Diffusion Term.
+//! @brief     The Diffusion Term of Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Bell.
  
 #pragma once

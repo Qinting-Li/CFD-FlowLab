@@ -22,6 +22,7 @@ Grid::Grid()
     zoneProbesLineID.resize(0);
     zoneProbesSurfaceID.resize(0);
     zoneProbesCoordinates.resize(0);
+    oversetInformationProxy = NULL;
 }
 
 LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)

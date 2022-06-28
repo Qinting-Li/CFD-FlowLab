@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      PBSourceTurbSADefault.h
-//! @brief     TurbK.
+//! @brief     TurbK of Pressure Based Solver (PBSolver).
 //! @author    Wan Yunbo, Ming Pingjian, Meng Liyuan, Sun Huawen, Song Yang, Bell.
 #pragma once
 

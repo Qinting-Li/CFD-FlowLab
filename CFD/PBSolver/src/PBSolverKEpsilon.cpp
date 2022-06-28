@@ -29,10 +29,10 @@ void PBSolverKEpsilon::InitMemory()
     solverEpsilonEqn->InitMemory();
 }
 
-void PBSolverKEpsilon::ReinitField()
+void PBSolverKEpsilon::IncompressibleInitial()
 {
-    solverKEqn->ReinitField();
-    solverEpsilonEqn->ReinitField();
+    solverKEqn->IncompressibleInitial();
+    solverEpsilonEqn->IncompressibleInitial();
 }
 
 void PBSolverKEpsilon::UpdateUnsteadyVariable(Grid *grid)

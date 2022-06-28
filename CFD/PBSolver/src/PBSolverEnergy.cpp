@@ -68,7 +68,7 @@ void PBSolverEnergy::AllocateMemory()
     diffCoeb = k + nTotalCell;
 }
 
-void PBSolverEnergy::ReinitField()
+void PBSolverEnergy::IncompressibleInitial()
 {
     UpdateBoundary();
 

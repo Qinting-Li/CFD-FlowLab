@@ -2981,35 +2981,28 @@ namespace PHSPACE
         GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
     }
 
-    void NSSolverStruct::AirForceCoef(ActionKey *actkey)
+void NSSolverStruct::AirForceCoef(ActionKey *actkey)
+{
+    const int ALL_PART = -1;
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    AirForceCoefParts(actkey, ALL_PART);
+
+    int coordinate = LocalCoordinate;
+    uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
+    for (int iPart = 0; iPart < nTotalBC; ++iPart)
     {
-        const int ALL_PART = -1;
-        int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-        if (!isAle)
+        if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
         {
-            AirForceCoefParts(actkey, ALL_PART);
-
-            int coordinate = LocalCoordinate;
-            uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
-            for (int iPart = 0; iPart < nTotalBC; ++ iPart)
-            {
-                if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
-                {
-                    continue;
-                }
-
-                //! Compute local part force.
-                AirForceCoefParts(actkey, iPart, coordinate);
-
-                //! Compute global part force.
-                AirForceCoefParts(actkey, iPart);
-            }
+            continue;
         }
-        else
-        {
-            AirForceCoefComponents(actkey, ALL_PART);
-        }
+
+        //! Compute local part force.
+        AirForceCoefParts(actkey, iPart, coordinate);
+
+        //! Compute global part force.
+        AirForceCoefParts(actkey, iPart);
     }
+}
 
 
     void NSSolverStruct::AirForceCoefParts(ActionKey *actkey, int partID, int coordinate)
@@ -3288,7 +3281,7 @@ namespace PHSPACE
         aerodynamicForceData->write(&hingeMoment, sizeof(RDouble));
     }
 
-    void NSSolverStruct::AirForceCoefComponents(ActionKey *actkey, int partID, int coordinate)
+    void NSSolverStruct::AirForceCoefBodies(ActionKey *actkey)
     {
         int level = actkey->level;
         StructGrid *grid = StructGridCast(GetGrid(level));
@@ -3355,180 +3348,167 @@ namespace PHSPACE
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-        int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
+        int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
         vector< BasicAerodynamicForce * > *basicAerodynamicForceVector = CreateBasicAerodynamicForceVector();
 
         StructBCSet *structBCSet = grid->GetStructBCSet();
         int nBCRegion = structBCSet->GetnBCRegion();
-        int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
-
-        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        for (int iBody = 0; iBody < numberOfMovingBodies; ++ iBody)
         {
-            StructBC *bcRegion = structBCSet->GetBCRegion(iBCRegion);
-            int BCType = bcRegion->GetBCType();
-            string bcName = bcRegion->GetBCName();
-
-            int ist, ied, jst, jed, kst, ked;
-            bcRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
-
-            bool isNeedComputeAirForce = (BCType == PHENGLEI::SOLID_SURFACE || BCType == PHENGLEI::ABLATION_SURFACE);
-            if (!isNeedComputeAirForce)
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
             {
-                continue;
-            }
+                StructBC *bcRegion = structBCSet->GetBCRegion(iBCRegion);
+                int BCType = bcRegion->GetBCType();
 
-            int *faceDirection = bcRegion->GetFaceDirectionIndex();
-            int nSurface = bcRegion->GetFaceDirection() + 1;
-            int leftOrRightIndex = bcRegion->GetFaceLeftOrRightIndex();
+                int ist, ied, jst, jed, kst, ked;
+                bcRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-            int iWall, jWall, kWall;
-            int iCellGhostLayer, jCellGhostLayer, kCellGhostLayer;
-
-            RDouble dfx, dfy, dfz, dpx, dpy, dpz;
-
-            for (int k = kst; k <= ked; ++ k)
-            {
-                for (int j = jst; j <= jed; ++ j)
+                bool isNeedComputeAirForce = (BCType == PHENGLEI::SOLID_SURFACE || BCType == PHENGLEI::ABLATION_SURFACE);
+                if (!isNeedComputeAirForce)
                 {
-                    for (int i = ist; i <= ied; ++ i)
+                    continue;
+                }
+
+                string bodyName = bcRegion->GetBodyName();
+                if (FaceInAerodynamicForceBodies(bodyName, iBody))
+                {
+                    int *faceDirection = bcRegion->GetFaceDirectionIndex();
+                    int nSurface = bcRegion->GetFaceDirection() + 1;
+                    int leftOrRightIndex = bcRegion->GetFaceLeftOrRightIndex();
+
+                    int iWall, jWall, kWall;
+                    int iCellGhostLayer, jCellGhostLayer, kCellGhostLayer;
+
+                    RDouble dfx, dfy, dfz, dpx, dpy, dpz;
+
+                    for (int k = kst; k <= ked; ++ k)
                     {
-                        BasicAerodynamicForce aerodynamicForceGlobal;
-                        for (int iPart = 0; iPart < nTotalBC; ++ iPart)
+                        for (int j = jst; j <= jed; ++ j)
                         {
-                            boundaryCondition = GlobalBoundaryCondition::GetBC(iPart);
-                            string partName = boundaryCondition->GetBCName();
-                            if (partName != bcName)
+                            for (int i = ist; i <= ied; ++i)
                             {
-                                continue;
-                            }
-                            for (int iComponent = 0; iComponent < numberOfAerodynamicForceComponents; ++ iComponent)
-                            {
-                                if (FaceInAerodynamicForceComponents(bcName, iComponent))
+                                BasicAerodynamicForce aerodynamicForceGlobal;
+                                aerodynamicForceGlobal.SetMomentReferencePoint(TorqueRefXGlobal, TorqueRefYGlobal, TorqueRefZGlobal);
+                                //! i, j, k - is first face index near SOLID_SURFACE.
+                                bcRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+
+                                //! The index of  first ghost cell layer near SOLID_SURFACE.
+                                bcRegion->GetGhostCellIndex(i, j, k, iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, 1);
+
+                                //! The surface direction of SOLID_SURFACE.
+                                RDouble nx = leftOrRightIndex * xfv(iWall, jWall, kWall, nSurface);
+                                RDouble ny = leftOrRightIndex * yfv(iWall, jWall, kWall, nSurface);
+                                RDouble nz = leftOrRightIndex * zfv(iWall, jWall, kWall, nSurface);
+
+                                RDouble pCellfirstLayer = primitiveVars(i, j, k, IP);
+
+                                RDouble pressureWall = pCellfirstLayer;
+                                RDouble pressureCoef = two * (pressureWall - pressureFarfield);
+
+                                dpx = nx * pressureCoef;
+                                dpy = ny * pressureCoef;
+                                dpz = nz * pressureCoef;
+
+                                if (isUnsteady && isAle)
                                 {
-                                    aerodynamicForceGlobal.SetMomentReferencePoint(TorqueRefXGlobal, TorqueRefYGlobal, TorqueRefZGlobal);
-                                    //! i, j, k - is first face index near SOLID_SURFACE.
-                                    bcRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
+                                    RDouble rhoWall = half * (primitiveVars(i, j, k, IR) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IR));
+                                    RDouble uWall = half * (primitiveVars(i, j, k, IU) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IU));
+                                    RDouble vWall = half * (primitiveVars(i, j, k, IV) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IV));
+                                    RDouble wWall = half * (primitiveVars(i, j, k, IW) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IW));
 
-                                    //! The index of  first ghost cell layer near SOLID_SURFACE.
-                                    bcRegion->GetGhostCellIndex(i, j, k, iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, 1);
+                                    RDouble uGrid = faceVelocityX(iWall, jWall, kWall, nSurface);
+                                    RDouble vGrid = faceVelocityY(iWall, jWall, kWall, nSurface);
+                                    RDouble wGrid = faceVelocityZ(iWall, jWall, kWall, nSurface);
 
-                                    //! The surface direction of SOLID_SURFACE.
-                                    RDouble nx = leftOrRightIndex * xfv(iWall, jWall, kWall, nSurface);
-                                    RDouble ny = leftOrRightIndex * yfv(iWall, jWall, kWall, nSurface);
-                                    RDouble nz = leftOrRightIndex * zfv(iWall, jWall, kWall, nSurface);
+                                    RDouble gridVelocity = 2.0 * (uGrid * nx + vGrid * ny + wGrid * nz);
 
-                                    RDouble pCellfirstLayer = primitiveVars(i, j, k, IP);
-
-                                    RDouble pressureWall = pCellfirstLayer;
-                                    RDouble pressureCoef = two * (pressureWall - pressureFarfield);
-
-                                    dpx = nx * pressureCoef;
-                                    dpy = ny * pressureCoef;
-                                    dpz = nz * pressureCoef;
-
-                                    if (isUnsteady && isAle)
-                                    {
-                                        RDouble rhoWall = half * (primitiveVars(i, j, k, IR) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IR));
-                                        RDouble uWall = half * (primitiveVars(i, j, k, IU) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IU));
-                                        RDouble vWall = half * (primitiveVars(i, j, k, IV) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IV));
-                                        RDouble wWall = half * (primitiveVars(i, j, k, IW) + primitiveVars(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, IW));
-
-                                        RDouble uGrid = faceVelocityX(iWall, jWall, kWall, nSurface);
-                                        RDouble vGrid = faceVelocityY(iWall, jWall, kWall, nSurface);
-                                        RDouble wGrid = faceVelocityZ(iWall, jWall, kWall, nSurface);
-
-                                        RDouble gridVelocity = 2.0 * (uGrid * nx + vGrid * ny + wGrid * nz);
-
-                                        dpx += rhoWall * uWall * gridVelocity;
-                                        dpy += rhoWall * vWall * gridVelocity;
-                                        dpz += rhoWall * wWall * gridVelocity;
-                                    }
-
-                                    aerodynamicForceGlobal.SetPressureAerodynamicForce(dpx, dpy, dpz);
-
-                                    dfx = dpx;
-                                    dfy = dpy;
-                                    dfz = dpz;
-
-                                    RDouble xc, yc, zc;
-                                    grid->FaceCoor(iWall, jWall, kWall, nSurface, xc, yc, zc);
-
-                                    aerodynamicForceGlobal.SetPressureAerodynamicMoment(xc, yc, zc);
-
-                                    RDouble dudx = 0.0, dudy = 0.0, dudz = 0.0;
-                                    RDouble dvdx = 0.0, dvdy = 0.0, dvdz = 0.0;
-                                    RDouble dwdx = 0.0, dwdy = 0.0, dwdz = 0.0;
-                                    RDouble visLaminar = 0.0, visTurbulence = 0.0;
-                                    if (viscousType > INVISCID)
-                                    {
-                                        Geometry3D *geometry3D = new Geometry3D;
-
-                                        if (nSurface == 1)
-                                        {
-                                            //! Get i-th face vector on the wall surface.
-                                            Get_GEO_I(i, j, k, iWall, iWall, ndim, geometry3D, xfv, yfv, zfv, vol);
-                                            //! Get derivative to the wall in i-direction of u,v,w.
-                                            DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
-                                            DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
-                                            DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
-                                            visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(iCellGhostLayer, j, k));
-                                            visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(iCellGhostLayer, j, k));
-                                        }
-                                        else if (nSurface == 2)
-                                        {
-                                            //! Get j-th face vector on the wall surface.
-                                            Get_GEO_J(i, j, k, jWall, jWall, ndim, geometry3D, xfv, yfv, zfv, vol);
-                                            //! Get derivative to the wall in j-direction of u,v,w.
-                                            DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
-                                            DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
-                                            DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
-                                            visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, jCellGhostLayer, k));
-                                            visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, jCellGhostLayer, k));
-                                        }
-                                        else
-                                        {
-                                            //! Get k-th face vector on the wall surface.
-                                            Get_GEO_K(i, j, k, kWall, kWall, ndim, geometry3D, xfv, yfv, zfv, vol);
-                                            //! Get derivative to the wall in k-direction of u,v,w.
-                                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
-                                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
-                                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
-                                            visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, j, kCellGhostLayer));
-                                            visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, j, kCellGhostLayer));
-                                        }
-
-                                        //! It is unnecessary to consider because the turbulence viscosity coefficient is 0.
-                                        //visTurbulence = 0.0;
-                                        RDouble viscousCoef = visLaminar + visTurbulence;
-
-                                        RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
-
-                                        //! Stress components.
-                                        RDouble txx = viscousCoef * (two * dudx - divv2p3);
-                                        RDouble tyy = viscousCoef * (two * dvdy - divv2p3);
-                                        RDouble tzz = viscousCoef * (two * dwdz - divv2p3);
-                                        RDouble txy = viscousCoef * (dudy + dvdx);
-                                        RDouble txz = viscousCoef * (dudz + dwdx);
-                                        RDouble tyz = viscousCoef * (dvdz + dwdy);
-
-                                        RDouble fvsx = -two * (nx * txx + ny * txy + nz * txz) * oRefReNumber;
-                                        RDouble fvsy = -two * (nx * txy + ny * tyy + nz * tyz) * oRefReNumber;
-                                        RDouble fvsz = -two * (nx * txz + ny * tyz + nz * tzz) * oRefReNumber;
-
-                                        aerodynamicForceGlobal.SetViscousAerodynamicForce(fvsx, fvsy, fvsz);
-
-                                        aerodynamicForceGlobal.SetViscousAerodynamicMoment(xc, yc, zc);
-
-                                        delete geometry3D;
-                                    }
-                                    aerodynamicForceGlobal.ComputeResultantAerodynamicForce();
-
-                                    aerodynamicForceGlobal.ComputeResultantAerodynamicMoment();
-
-                                    (*basicAerodynamicForceVector)[iComponent]->AddAerodynamicForce(&aerodynamicForceGlobal);
-
-                                    (*basicAerodynamicForceVector)[numberOfAerodynamicForceComponents]->AddAerodynamicForce(&aerodynamicForceGlobal);
+                                    dpx += rhoWall * uWall * gridVelocity;
+                                    dpy += rhoWall * vWall * gridVelocity;
+                                    dpz += rhoWall * wWall * gridVelocity;
                                 }
+
+                                aerodynamicForceGlobal.SetPressureAerodynamicForce(dpx, dpy, dpz);
+
+                                dfx = dpx;
+                                dfy = dpy;
+                                dfz = dpz;
+
+                                RDouble xc, yc, zc;
+                                grid->FaceCoor(iWall, jWall, kWall, nSurface, xc, yc, zc);
+
+                                aerodynamicForceGlobal.SetPressureAerodynamicMoment(xc, yc, zc);
+
+                                RDouble dudx = 0.0, dudy = 0.0, dudz = 0.0;
+                                RDouble dvdx = 0.0, dvdy = 0.0, dvdz = 0.0;
+                                RDouble dwdx = 0.0, dwdy = 0.0, dwdz = 0.0;
+                                RDouble visLaminar = 0.0, visTurbulence = 0.0;
+                                if (viscousType > INVISCID)
+                                {
+                                    Geometry3D* geometry3D = new Geometry3D;
+
+                                    if (nSurface == 1)
+                                    {
+                                        //! Get i-th face vector on the wall surface.
+                                        Get_GEO_I(i, j, k, iWall, iWall, ndim, geometry3D, xfv, yfv, zfv, vol);
+                                        //! Get derivative to the wall in i-direction of u,v,w.
+                                        DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                                        DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                                        DXDYDZ_I(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                                        visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(iCellGhostLayer, j, k));
+                                        visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(iCellGhostLayer, j, k));
+                                    }
+                                    else if (nSurface == 2)
+                                    {
+                                        //! Get j-th face vector on the wall surface.
+                                        Get_GEO_J(i, j, k, jWall, jWall, ndim, geometry3D, xfv, yfv, zfv, vol);
+                                        //! Get derivative to the wall in j-direction of u,v,w.
+                                        DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                                        DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                                        DXDYDZ_J(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                                        visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, jCellGhostLayer, k));
+                                        visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, jCellGhostLayer, k));
+                                    }
+                                    else
+                                    {
+                                        //! Get k-th face vector on the wall surface.
+                                        Get_GEO_K(i, j, k, kWall, kWall, ndim, geometry3D, xfv, yfv, zfv, vol);
+                                        //! Get derivative to the wall in k-direction of u,v,w.
+                                        DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
+                                        DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                                        DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                                        visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, j, kCellGhostLayer));
+                                        visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, j, kCellGhostLayer));
+                                    }
+
+                                    //! It is unnecessary to consider because the turbulence viscosity coefficient is 0.
+                                    //visTurbulence = 0.0;
+                                    RDouble viscousCoef = visLaminar + visTurbulence;
+
+                                    RDouble divv2p3 = two3rd * (dudx + dvdy + dwdz);
+
+                                    //! Stress components.
+                                    RDouble txx = viscousCoef * (two * dudx - divv2p3);
+                                    RDouble tyy = viscousCoef * (two * dvdy - divv2p3);
+                                    RDouble tzz = viscousCoef * (two * dwdz - divv2p3);
+                                    RDouble txy = viscousCoef * (dudy + dvdx);
+                                    RDouble txz = viscousCoef * (dudz + dwdx);
+                                    RDouble tyz = viscousCoef * (dvdz + dwdy);
+
+                                    RDouble fvsx = -two * (nx * txx + ny * txy + nz * txz) * oRefReNumber;
+                                    RDouble fvsy = -two * (nx * txy + ny * tyy + nz * tyz) * oRefReNumber;
+                                    RDouble fvsz = -two * (nx * txz + ny * tyz + nz * tzz) * oRefReNumber;
+
+                                    aerodynamicForceGlobal.SetViscousAerodynamicForce(fvsx, fvsy, fvsz);
+
+                                    aerodynamicForceGlobal.SetViscousAerodynamicMoment(xc, yc, zc);
+
+                                    delete geometry3D;
+                                }
+                                aerodynamicForceGlobal.ComputeResultantAerodynamicForce();
+
+                                aerodynamicForceGlobal.ComputeResultantAerodynamicMoment();
+
+                                (*basicAerodynamicForceVector)[iBody]->AddAerodynamicForce(&aerodynamicForceGlobal);
                             }
                         }
                     }

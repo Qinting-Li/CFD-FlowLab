@@ -124,7 +124,7 @@ public:
     ~MovingMeshManager();
 
 public:
-    int numberOfBodys;
+    int numberOfBodies;
     int numberOfZones;
 
     OriginalMovingMesh ** originalMovingMeshes;

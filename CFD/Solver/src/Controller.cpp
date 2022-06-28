@@ -107,11 +107,10 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
 
         PHSolver *solver = GetCFDSolver(zoneID, iSolver);
 
-        if(nProtectData == 0)
+        if (nProtectData == 0)
         {
             solver->InitFlow();
         }
-
         else
         {
             solver->InitProtectedFlow();
@@ -166,8 +165,26 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (compressible)
     {
-    ComputeNodeBCType();
-}
+        ComputeNodeBCType();
+    }
+    else
+    {
+        //! Initialize memory for Incompressible flow.
+        for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+        {
+            int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+            Zone *zone = GetZone(zoneID);
+            if (!zone)
+            {
+                continue;
+            }
+
+            PHSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+            solver->IncompressibleInitial();
+        }
+    }
 }
 
 void Controller::CleanUp(int iSolver)
@@ -190,29 +207,6 @@ void Controller::CleanUp(int iSolver)
         PHSolver *solver = GetCFDSolver(zoneID, iSolver);
 
         solver->ReleaseMemory();
-    }
-}
-
-void Controller::ReinitField(int iSolver)
-{
-    using namespace PHMPI;
-    int nLocalZones = GetNumberofLocalZones();
-
-    int level = 0;
-    //! First: Initialize memory.
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        PHSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->ReinitField();
     }
 }
 
