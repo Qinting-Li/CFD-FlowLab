@@ -9,8 +9,10 @@
 #include "Geo_StructGrid.h"
 #include "GridType.h"
 #include "Region.h"
+#include "PHIO.h"
 #include "IO_FileName.h"
 #include "IO_FileReader.h"
+#include "UnstructuredOversetConfig.h"
 
 namespace PHSPACE
 {
@@ -293,7 +295,7 @@ MovingMeshManager * movingMeshManager = NULL;
 
 MovingMeshManager::MovingMeshManager()
 {
-    numberOfBodys        = 0;
+    numberOfBodies        = 0;
     numberOfZones        = 0;
 
     originalMovingMeshes = NULL;
@@ -328,7 +330,7 @@ MovingMeshManager::~MovingMeshManager()
 
 void MovingMeshManager::Initialize()
 {
-    numberOfBodys = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+    numberOfBodies = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
     numberOfZones = PHMPI::GetNumberofGlobalZones();
 
     originalMovingMeshes = new OriginalMovingMesh * [ numberOfZones ];
@@ -367,6 +369,27 @@ void MovingMeshManager::Initialize()
         if (currentProcessorIndex == processorIndex)
         {
             originalMovingMeshes[ iZone ]->PreProcess();
+        }
+    }
+
+    //innerGrid
+    if (GetOversetConfigFactoryMulti() != 0 && GetReadInAuxiliaryInnerGrid() == 1)
+    {
+        vector< UnstructGrid * > &innerGrids = GetOversetConfigFactoryMulti()->GetInnerGrid();
+
+        for (int iBody = 0; iBody < numberOfBodies; ++ iBody)
+        {
+            if (innerGrids[iBody] != 0)
+            {
+                UnstructGrid *innerGrid = innerGrids[iBody];
+
+                OriginalMovingMesh *movingMesh = new OriginalMovingMesh();
+
+                movingMesh->Initialize(innerGrid, iBody);
+                movingMesh->PreProcess();
+
+                innerMovingMesh.push_back(movingMesh);
+            }
         }
     }
 }

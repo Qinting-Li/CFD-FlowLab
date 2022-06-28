@@ -31,14 +31,14 @@ public:
     AerodynamicForceBody();
     ~AerodynamicForceBody();
 protected:
-    static vector< std::set< string > > bodys;
+    static vector< std::set< string > > bodies;
     static bool initialize;
 public:
     static void Initialize();
-    static bool FaceInAerodynamicForceBodys(string bodyName, int aerodynamicForceBodyIndex);
+    static bool FaceInAerodynamicForceBodies(string bodyName, int aerodynamicForceBodyIndex);
 };
 
-bool FaceInAerodynamicForceBodys(string bodyName, int aerodynamicForceBodyIndex);
+bool FaceInAerodynamicForceBodies(string bodyName, int aerodynamicForceBodyIndex);
 
 class BasicAerodynamicForce
 {
@@ -252,7 +252,7 @@ public:
 void InitializeAerodynamicForce();
 void AddAerodynamicForce(ActionKey *actionKey);
 void CollectAerodynamicForceOfAllProcessors();
-
+void ComputeAerodynamicForceForALE();
 void DumpAerodynamicForceCoefficient(ActionKey *actionKey);
 
 void WriteAerodynamicForceToActionKey(ActionKey *actionKey, BasicAerodynamicForce **basicAerodynamicForceContainer);
@@ -270,7 +270,7 @@ public:
     AerodynamicForceManager();
     ~AerodynamicForceManager();
 protected:
-    size_t numberOfAerodynamicForceBodys;
+    size_t numberOfAerodynamicForceBodies;
     vector<AerodynamicForce *> aerodynamicForceContainer;
     bool isAllocateMemory;
 
@@ -286,14 +286,14 @@ public:
 
     void DumpAerodynamicForceCoefficient(ActionKey *actionKey);
 
-    void SetNumberOfAerodynamicForces(int numberOfAerodynamicForceBodys) { this->numberOfAerodynamicForceBodys = numberOfAerodynamicForceBodys; }
+    void SetNumberOfAerodynamicForces(int numberOfAerodynamicForceBodies) { this->numberOfAerodynamicForceBodies = numberOfAerodynamicForceBodies; }
 
     //! Dump all force data in forcefile.
     void DumpAllForceData(ActionKey *actkey);
 
 public:
     AerodynamicForce *GetAerodynamicForce(int bodyIndex) { return aerodynamicForceContainer[bodyIndex]; }
-    AerodynamicForce *GetAerodynamicForce() { return aerodynamicForceContainer[numberOfAerodynamicForceBodys]; }
+    AerodynamicForce *GetAerodynamicForce() { return aerodynamicForceContainer[numberOfAerodynamicForceBodies]; }
 protected:
     void ExtractForceDataFromActionKey(ActionKey *actionKey, vector< DataContainer * > *superContainerArray);
     vector< DataContainer * > *CreateDataContainerArray();
