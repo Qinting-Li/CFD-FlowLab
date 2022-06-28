@@ -74,7 +74,7 @@ private:    //! Smallest box of each Block is used to improve the query efficien
 public:
     void Initialize();
     void OversetConfigMulti();
-
+    void FreeKeyBasicActiveNodes();
     void BuildNodesMinDistanceInOtherBlocks();
     void BuildNodesMinDistanceInOtherBlocks2();
     void BuildLocalToGlobalInterfaceNodesMaps();
@@ -209,7 +209,7 @@ private:
     RDouble *y;
     RDouble *z;
 
-    RDouble *nodesMinDistanceInOtherBlock;
+    RDouble *nodesMinDistanceToOtherBlock;
 
     RDouble *pMin;
     RDouble *pMax;
@@ -239,8 +239,8 @@ public:
     RDouble *GetZ() {
         return z;
     }
-    RDouble *GetNodesMinDistanceInOtherBlock() {
-        return nodesMinDistanceInOtherBlock;
+    RDouble *GetNodesMinDistanceToOtherBlock() {
+        return nodesMinDistanceToOtherBlock;
     }
 
     RDouble *GetPMin() {
@@ -391,7 +391,8 @@ public:
 public:    //! Initialize.
     void Initialize(UnstructGrid *gridIn, int nZone, int iZone, int iBlock);
     void SetInitialValue();
-
+    void FreeKeyBasicActiveNode();
+    void FreeKeyInBlockNodes();
     void SetInitialValueForBufferRigion();
     void SetKeyBufferByKeyActive();
 
@@ -409,7 +410,6 @@ public:    //! Core operations: points.
     void SetNegativeForInnerAndInitialInterNodes();
     void SetNodeCharacterOnPhysicalBoundary();
     void FillTheRemainingNodes();
-    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
 
 public:    //! Core operations: globalNodes.
     void BuildMinMaxBoxOfZone();
@@ -447,12 +447,7 @@ public:    //! Communication.
     void DownInterfaceNodeCharacter();
 
 public:
-    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree1(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
-    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree2(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
-    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
-    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree4(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
-    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree5(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
-    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree6(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
 
 public:    //! Check&Output.
     void OutPutOversetVisualization(const string &name);

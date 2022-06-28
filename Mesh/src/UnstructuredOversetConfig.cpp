@@ -143,13 +143,13 @@ void OversetConfigFactoryMulti::Initialize()
     numberOfBlocks = PHSPACE::GlobalDataBase::GetIntParaFromDB("numberOfGridGroups");
 
     numberOfZones = PHMPI::GetNumberofGlobalZones();
-    oversetConfigMultiZone = new OversetConfig * [this->numberOfZones];
+    oversetConfigMultiZone = new OversetConfig * [numberOfZones];
 
     //vector< RDouble > *wallNodeCoordinateX = new vector< RDouble >[this->numberOfZones];
     //vector< RDouble > *wallNodeCoordinateY = new vector< RDouble >[this->numberOfZones];
     //vector< RDouble > *wallNodeCoordinateZ = new vector< RDouble >[this->numberOfZones];
-    zonesSearchNodes = new ZoneSearchNodes * [this->numberOfZones];
-    zonesInterpolateCells = new InterCells * [this->numberOfZones];
+    zonesSearchNodes = new ZoneSearchNodes * [numberOfZones];
+    zonesInterpolateCells = new InterCells * [numberOfZones];
     for (int iZone = 0; iZone < this->numberOfZones; ++iZone)
     {
         oversetConfigMultiZone[iZone] = NULL;
@@ -871,8 +871,6 @@ void OversetConfigFactoryMulti::NodesOperator()
 {
     BuildNodesMinDistanceInOtherBlocks();
 
-    SpecifyInitialInterNodesByDistance();
-
     if (GetReadInAuxiliaryInnerGrid() == 1)
     {
         SpecifyCellsInBodyByAuxiliaryInnerGrid();
@@ -881,6 +879,8 @@ void OversetConfigFactoryMulti::NodesOperator()
     {
         SpecifySpecicalCellsInteractWithWallBoundary();
     }
+
+    SpecifyInitialInterNodesByDistance();
 
     FillTheActiveRegion();          //! Physical boundary advancement.
 
@@ -981,15 +981,15 @@ void OversetConfigFactoryMulti::AllReduceNodesMinDistanceInOtherBlock()
     {
         ZoneSearchNodes *&zoneSearchNodes = zonesSearchNodes[iZone];
         int numberOfNodes = zoneSearchNodes->GetNumberOfNodes();
-        RDouble *nodesMinDistanceInOtherBlock = zoneSearchNodes->GetNodesMinDistanceInOtherBlock();
+        RDouble *nodesMinDistanceToOtherBlock = zoneSearchNodes->GetNodesMinDistanceToOtherBlock();
 
         if (numberOfNodes)
         {
             RDouble *nodesMinDistanceInOtherBlockGlobal = new RDouble[numberOfNodes];
 
-            PH_AllReduce(nodesMinDistanceInOtherBlock, nodesMinDistanceInOtherBlockGlobal, numberOfNodes, PH_MIN);
+            PH_AllReduce(nodesMinDistanceToOtherBlock, nodesMinDistanceInOtherBlockGlobal, numberOfNodes, PH_MIN);
 
-            SetField(nodesMinDistanceInOtherBlock, nodesMinDistanceInOtherBlockGlobal, numberOfNodes);
+            SetField(nodesMinDistanceToOtherBlock, nodesMinDistanceInOtherBlockGlobal, numberOfNodes);
 
             delete[] nodesMinDistanceInOtherBlockGlobal;
             nodesMinDistanceInOtherBlockGlobal = NULL;
@@ -1006,8 +1006,8 @@ void OversetConfigFactoryMulti::SetNodesMinDistanceInOtherBlockByZonesNodes()
         ZoneSearchNodes *&zoneSearchNodes = zonesSearchNodes[iZone];
         if (currentProcessorIndex == processorIndex)
         {
-            RDouble *nodesMinDistanceInOtherBlock = zoneSearchNodes->GetNodesMinDistanceInOtherBlock();
-            oversetConfigMultiZone[iZone]->CopyMinDist(nodesMinDistanceInOtherBlock);
+            RDouble *nodesMinDistanceToOtherBlock = zoneSearchNodes->GetNodesMinDistanceToOtherBlock();
+            oversetConfigMultiZone[iZone]->CopyMinDist(nodesMinDistanceToOtherBlock);
         }
         delete zonesSearchNodes[iZone];
         zonesSearchNodes[iZone] = NULL;
@@ -1372,6 +1372,7 @@ void OversetConfigFactoryMulti::FillTheActiveRegion()
     } while (numberOfNewNodesPresentCycle > 0);
     //timeSpan->ShowTimeSpanToLogfile("FillTheActiveRegion");
     //delete timeSpan;
+    FreeKeyBasicActiveNodes();
 
     OutPutOversetVisualizations("1_4_BuildActiveRegion");
 }
@@ -1398,6 +1399,7 @@ void OversetConfigFactoryMulti::SetNegativeForBufferRegion()
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
         {
+            oversetConfigMultiZone[iZone]->FreeKeyInBlockNodes();
             oversetConfigMultiZone[iZone]->SetNegativeForBufferRegion();
         }
     }
@@ -2042,6 +2044,21 @@ void OversetConfigFactoryMulti::OutPutOversetVisualizations(const string &name)
     }
 }
 
+void OversetConfigFactoryMulti::FreeKeyBasicActiveNodes()
+{
+    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
+
+    for (int iZone = 0; iZone < numberOfZones; ++iZone)
+    {
+        int processorIndex = PHMPI::GetZoneProcessorID(iZone);
+
+        if (currentProcessorIndex == processorIndex)
+        {
+            oversetConfigMultiZone[iZone]->FreeKeyBasicActiveNode();
+        }
+    }
+}
+
 void OversetConfigFactoryMulti::OutPutOversetFiles()
 {
     OutPutBoundaryCells();
@@ -2462,9 +2479,9 @@ ZoneSearchNodes::ZoneSearchNodes(int numberOfSearchNodesIn,
         y = new RDouble[numberOfNodes];
         z = new RDouble[numberOfNodes];
 
-        nodesMinDistanceInOtherBlock = new RDouble[numberOfNodes];
+        nodesMinDistanceToOtherBlock = new RDouble[numberOfNodes];
 
-        SetField(nodesMinDistanceInOtherBlock, LARGE, numberOfNodes);
+        SetField(nodesMinDistanceToOtherBlock, LARGE, numberOfNodes);
     }
 }
 
@@ -2475,12 +2492,12 @@ ZoneSearchNodes ::~ZoneSearchNodes()
         delete[]x;
         delete[]y;
         delete[]z;
-        delete[]nodesMinDistanceInOtherBlock;
+        delete[]nodesMinDistanceToOtherBlock;
 
         x = NULL;
         y = NULL;
         z = NULL;
-        nodesMinDistanceInOtherBlock = NULL;
+        nodesMinDistanceToOtherBlock = NULL;
     }
 
     delete[]pMin;
@@ -2566,31 +2583,6 @@ void InterCells::FreeUselessMemery()
 
 OversetConfig::OversetConfig()
 {
-    int halfFieldDirection = 3;
-    switch (halfFieldDirection)
-    {
-    case 1:
-        buildInBlockCellsAndNodesMethod = &OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree1;
-        break;
-    case 2:
-        buildInBlockCellsAndNodesMethod = &OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree2;
-        break;
-    case 3:
-        buildInBlockCellsAndNodesMethod = &OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3;
-        break;
-    case 4:
-        buildInBlockCellsAndNodesMethod = &OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree4;
-        break;
-    case 5:
-        buildInBlockCellsAndNodesMethod = &OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree5;
-        break;
-    case 6:
-        buildInBlockCellsAndNodesMethod = &OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree6;
-        break;
-    default:
-        exit(-1);
-    }
-
     gridKDTree = NULL;
 
     minBoxOfZone = NULL;
@@ -2787,117 +2779,7 @@ void OversetConfig::BuildBoundaryNodeList()
 
 }
 
-void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree1(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
-{
-    RDouble *nodeCoordinate = new RDouble[THREE_D];
-
-    int blockIndex = grid->GetIBlock();
-
-    int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
-    int numberOfBlocks = GetOversetConfigFactoryMulti()->GetNumberOfBlocks();
-
-    RDouble *cellCenterX = grid->GetCellCenterX();
-    RDouble *cellCenterY = grid->GetCellCenterY();
-    RDouble *cellCenterZ = grid->GetCellCenterZ();
-
-    int *cellNodeNumber = grid->GetCellNumberOfEachNode();
-    int **cellNodeIndex = grid->GetCell2NodeArray();
-
-    int donorCellIndex;
-    int symetryOrNot = GetSymetryOrNot();
-    for (int iCell = 0; iCell < numberOfCells; ++iCell)
-    {
-        donorCellIndex = -2;
-
-        if (!symetryOrNot || cellCenterX[iCell] > EPSILON)
-        {
-            donorCellIndex = -1;
-
-            nodeCoordinate[0] = cellCenterX[iCell];
-            nodeCoordinate[1] = cellCenterY[iCell];
-            nodeCoordinate[2] = cellCenterZ[iCell];
-
-            for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
-            {
-                if (blockIndex != iBlock)
-                {
-                    donorCellIndex = innerAuxiliaryGridKDTreesIn[iBlock]->SearchNodeInKDTree(nodeCoordinate);
-                }
-            }
-        }
-
-        if (donorCellIndex != -1)
-        {
-            int &numberOfNodesInCell = cellNodeNumber[iCell];
-            for (int iNode = 0; iNode < numberOfNodesInCell; ++iNode)
-            {
-                keyInBlockNodes[cellNodeIndex[iCell][iNode]] = 1;
-            }
-        }
-    }
-
-    delete[] nodeCoordinate;
-    nodeCoordinate = NULL;
-}
-
-void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree2(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
-{
-    if (NULL == grid) return;
-
-    RDouble *nodeCoordinate = new RDouble[THREE_D];
-
-    int blockIndex = grid->GetIBlock();
-
-    int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
-    int numberOfBlocks = GetOversetConfigFactoryMulti()->GetNumberOfBlocks();
-
-    RDouble *cellCenterX = grid->GetCellCenterX();
-    RDouble *cellCenterY = grid->GetCellCenterY();
-    RDouble *cellCenterZ = grid->GetCellCenterZ();
-
-    int *cellNodeNumber = grid->GetCellNumberOfEachNode();
-    int **cellNodeIndex = grid->GetCell2NodeArray();
-
-    int donorCellIndex;
-    int symetryOrNot = GetSymetryOrNot();
-    for (int iCell = 0; iCell < numberOfCells; ++iCell)
-    {
-        donorCellIndex = -2;
-
-        if (!symetryOrNot || cellCenterY[iCell] > EPSILON)
-        {
-            donorCellIndex = -1;
-
-            nodeCoordinate[0] = cellCenterX[iCell];
-            nodeCoordinate[1] = cellCenterY[iCell];
-            nodeCoordinate[2] = cellCenterZ[iCell];
-
-            for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
-            {
-                if (blockIndex != iBlock)
-                {
-                    donorCellIndex = innerAuxiliaryGridKDTreesIn[iBlock]->SearchNodeInKDTree(nodeCoordinate);
-                }
-            }
-        }
-
-        if (donorCellIndex != -1)
-        {
-            int &numberOfNodesInCell = cellNodeNumber[iCell];
-            for (int iNode = 0; iNode < numberOfNodesInCell; ++iNode)
-            {
-                keyInBlockNodes[cellNodeIndex[iCell][iNode]] = 1;
-            }
-        }
-    }
-
-    delete[] nodeCoordinate;
-    nodeCoordinate = NULL;
-}
-
-void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
+void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
 {
     RDouble *nodeCoordinate = new RDouble[THREE_D];
 
@@ -2913,7 +2795,10 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector<
 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
     int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
+
+    keyInBlockNodes = new int[numberOfNodes];
     SetField(keyInBlockNodes, 0, numberOfNodes);
+
     double tolerance = GetToleranceForOversetBox();
     int donorCellIndex;
     int symetryOrNot = GetSymetryOrNot();
@@ -2954,217 +2839,16 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector<
     nodeCoordinate = NULL;
 }
 
-void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree4(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
-{
-    RDouble *nodeCoordinate = new RDouble[THREE_D];
-
-    int blockIndex = grid->GetIBlock();
-
-    int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
-    int numberOfBlocks = GetOversetConfigFactoryMulti()->GetNumberOfBlocks();
-
-    RDouble *cellCenterX = grid->GetCellCenterX();
-    RDouble *cellCenterY = grid->GetCellCenterY();
-    RDouble *cellCenterZ = grid->GetCellCenterZ();
-
-    int *cellNodeNumber = grid->GetCellNumberOfEachNode();
-    int **cellNodeIndex = grid->GetCell2NodeArray();
-
-    int donorCellIndex;
-    int symetryOrNot = GetSymetryOrNot();
-    for (int iCell = 0; iCell < numberOfCells; ++iCell)
-    {
-        donorCellIndex = -2;
-
-        if (!symetryOrNot || cellCenterX[iCell] < EPSILON)
-        {
-            donorCellIndex = -1;
-
-            nodeCoordinate[0] = cellCenterX[iCell];
-            nodeCoordinate[1] = cellCenterY[iCell];
-            nodeCoordinate[2] = cellCenterZ[iCell];
-
-            for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
-            {
-                if (blockIndex != iBlock)
-                {
-                    donorCellIndex = innerAuxiliaryGridKDTreesIn[iBlock]->SearchNodeInKDTree(nodeCoordinate);
-                }
-            }
-        }
-
-        if (donorCellIndex != -1)
-        {
-            int &numberOfNodesInCell = cellNodeNumber[iCell];
-            for (int iNode = 0; iNode < numberOfNodesInCell; ++iNode)
-            {
-                keyInBlockNodes[cellNodeIndex[iCell][iNode]] = 1;
-            }
-        }
-    }
-
-    delete[] nodeCoordinate;
-    nodeCoordinate = NULL;
-}
-
-void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree5(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
-{
-    RDouble *nodeCoordinate = new RDouble[THREE_D];
-
-    int blockIndex = grid->GetIBlock();
-
-    int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
-    int numberOfBlocks = GetOversetConfigFactoryMulti()->GetNumberOfBlocks();
-
-    RDouble *cellCenterX = grid->GetCellCenterX();
-    RDouble *cellCenterY = grid->GetCellCenterY();
-    RDouble *cellCenterZ = grid->GetCellCenterZ();
-
-    int *cellNodeNumber = grid->GetCellNumberOfEachNode();
-    int **cellNodeIndex = grid->GetCell2NodeArray();
-
-    int donorCellIndex;
-    int symetryOrNot = GetSymetryOrNot();
-    for (int iCell = 0; iCell < numberOfCells; ++iCell)
-    {
-        donorCellIndex = -2;
-
-        if (!symetryOrNot || cellCenterY[iCell] < EPSILON)
-        {
-            donorCellIndex = -1;
-
-            nodeCoordinate[0] = cellCenterX[iCell];
-            nodeCoordinate[1] = cellCenterY[iCell];
-            nodeCoordinate[2] = cellCenterZ[iCell];
-
-            for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
-            {
-                if (blockIndex != iBlock)
-                {
-                    donorCellIndex = innerAuxiliaryGridKDTreesIn[iBlock]->SearchNodeInKDTree(nodeCoordinate);
-                }
-            }
-        }
-
-        if (donorCellIndex != -1)
-        {
-            int &numberOfNodesInCell = cellNodeNumber[iCell];
-            for (int iNode = 0; iNode < numberOfNodesInCell; ++iNode)
-            {
-                keyInBlockNodes[cellNodeIndex[iCell][iNode]] = 1;
-            }
-        }
-    }
-
-    delete[] nodeCoordinate;
-    nodeCoordinate = NULL;
-}
-
-void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree6(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
-{
-    RDouble *nodeCoordinate = new RDouble[THREE_D];
-
-    int blockIndex = grid->GetIBlock();
-
-    int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
-    int numberOfBlocks = GetOversetConfigFactoryMulti()->GetNumberOfBlocks();
-
-    RDouble *cellCenterX = grid->GetCellCenterX();
-    RDouble *cellCenterY = grid->GetCellCenterY();
-    RDouble *cellCenterZ = grid->GetCellCenterZ();
-
-    int *cellNodeNumber = grid->GetCellNumberOfEachNode();
-    int **cellNodeIndex = grid->GetCell2NodeArray();
-
-    int donorCellIndex;
-    int symetryOrNot = GetSymetryOrNot();
-    for (int iCell = 0; iCell < numberOfCells; ++iCell)
-    {
-        donorCellIndex = -2;
-
-        if (!symetryOrNot || cellCenterZ[iCell] < EPSILON)
-        {
-            donorCellIndex = -1;
-
-            nodeCoordinate[0] = cellCenterX[iCell];
-            nodeCoordinate[1] = cellCenterY[iCell];
-            nodeCoordinate[2] = cellCenterZ[iCell];
-
-            for (int iBlock = 0; iBlock < numberOfBlocks; ++iBlock)
-            {
-                if (blockIndex != iBlock)
-                {
-                    donorCellIndex = innerAuxiliaryGridKDTreesIn[iBlock]->SearchNodeInKDTree(nodeCoordinate);
-                }
-            }
-        }
-
-        if (donorCellIndex != -1)
-        {
-            int &numberOfNodesInCell = cellNodeNumber[iCell];
-            for (int iNode = 0; iNode < numberOfNodesInCell; ++iNode)
-            {
-                keyInBlockNodes[cellNodeIndex[iCell][iNode]] = 1;
-            }
-        }
-    }
-
-    delete[] nodeCoordinate;
-    nodeCoordinate = NULL;
-}
-
 OversetConfig::~OversetConfig()
 {
-    if (keyActiveOfNodes != NULL)
-    {
-        delete[] keyActiveOfNodes;
-        keyActiveOfNodes = NULL;
-    }
+    delete[] keyActiveOfNodes;
+    keyActiveOfNodes = NULL;
 
-    if (keyBufferOfNodes != NULL)
-    {
-        delete[] keyBufferOfNodes;
-        keyBufferOfNodes = NULL;
-    }
+    delete[] keyBufferOfNodes;
+    keyBufferOfNodes = NULL;
 
-    if (keySearchOfNodes != NULL)
-    {
-        delete[] keySearchOfNodes;
-        keySearchOfNodes = NULL;
-    }
-
-    if (keyBufferOfCells != NULL)
-    {
-        delete[] keyBufferOfCells;
-        keyBufferOfCells = NULL;
-    }
-
-    if (keySearchOfCells != NULL)
-    {
-        delete[] keySearchOfCells;
-        keySearchOfCells = NULL;
-    }
-
-    if (keyInBlockNodes != NULL)
-    {
-        delete[] keyInBlockNodes;
-        keyInBlockNodes = NULL;
-    }
-
-    if (keyBasicActiveNodes != NULL)
-    {
-        delete[] keyBasicActiveNodes;
-        keyBasicActiveNodes = NULL;
-    }
-
-    if (nodesMinDistanceInOtherBlock != NULL)
-    {
-        delete[] nodesMinDistanceInOtherBlock;
-        nodesMinDistanceInOtherBlock = NULL;
-    }
+    delete[] keyBufferOfCells;
+    keyBufferOfCells = NULL;
 
     if (nodesMinDistanceInThisBlock != NULL)
     {
@@ -3177,6 +2861,18 @@ OversetConfig::~OversetConfig()
         delete[] localToGlobalInterfaceNodesMap;
         localToGlobalInterfaceNodesMap = NULL;
     }
+}
+
+void OversetConfig::FreeKeyBasicActiveNode()
+{
+    delete[] keyBasicActiveNodes;
+    keyBasicActiveNodes = NULL;
+}
+
+void OversetConfig::FreeKeyInBlockNodes()
+{
+    delete[] keyInBlockNodes;
+    keyInBlockNodes = NULL;
 }
 
 void OversetConfig::Initialize(UnstructGrid *gridIn,
@@ -3196,24 +2892,8 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
     keyActiveOfNodes = new int[numberOfNodes];
     SetField(keyActiveOfNodes, 0, numberOfNodes);
 
-    keyBufferOfNodes = new int[numberOfNodes];
-
-    keyBufferOfCells = new int[numberOfCells];
-
-    keySearchOfNodes = new int[numberOfNodes];
-
-    keySearchOfCells = new int[numberOfCells];
-
-    nodesMinDistanceInOtherBlock = new RDouble[numberOfNodes];
-    SetField(nodesMinDistanceInOtherBlock, LARGE, numberOfNodes);
-
     nodesMinDistanceInThisBlock = new RDouble[numberOfNodes];
     SetField(nodesMinDistanceInThisBlock, LARGE, numberOfNodes);
-
-    keyBasicActiveNodes = new int[numberOfNodes];
-
-    keyInBlockNodes = new int[numberOfNodes];
-    SetField(keyInBlockNodes, 0, numberOfNodes);
 }
 
 void OversetConfig::SetInitialValue()
@@ -3328,32 +3008,12 @@ void OversetConfig::SetNodesMinDistanceInThisBlocksByWalldist()
 
     SetField(nodesMinDistanceInThisBlock, &nodeWalldist[0], numberOfNodes);
 }
-//
-//void OversetConfig::SetNodesMinDistanceInOtherBlocks()
-//{
-//    int numberOfNodes = grid->GetNTotalNode();
-//
-//    int numberOfSearchNodes = 0;
-//    vector<RDouble> &nodeWalldistInOtherBlocks = grid->GetNodeWallDistInOtherBlock();
-//
-//    for (int iNode = 0; iNode < numberOfNodes; ++iNode)
-//    {
-//        if (keySearchOfNodes[iNode] == 1)
-//        {
-//            nodesMinDistanceInOtherBlock[iNode] = nodeWalldistInOtherBlocks[iNode];
-//            numberOfSearchNodes++;
-//        }
-//        else
-//        {
-//            nodesMinDistanceInOtherBlock[iNode] = LARGE;
-//        }
-//    }
-//}
 
 void OversetConfig::SetNodesMinDistanceInOtherBlocks()
 {
     int numberOfNodes = grid->GetNTotalNode();
     vector<RDouble> &nodeWalldistInOtherBlocks = grid->GetNodeWallDistInOtherBlock();
+    nodesMinDistanceInOtherBlock = new RDouble[numberOfNodes];
     SetField(nodesMinDistanceInOtherBlock, &nodeWalldistInOtherBlocks[0], numberOfNodes);
 }
 
@@ -3363,6 +3023,8 @@ void OversetConfig::SetKeyBufferByKeyActive()
     //! keyBuffer is determined by keyActiveOfCells array.
     int numberOfNodes = grid->GetNTotalNode();
     int numberOfCells = grid->GetNTotalCell();
+    keyBufferOfNodes = new int[numberOfNodes];
+    keyBufferOfCells = new int[numberOfCells];
 
     int *keyActiveOfCells = this->GetKeyActiveOfCells();
 
@@ -3379,6 +3041,7 @@ void OversetConfig::ComputeNodeAndCellTopology()
 void OversetConfig::CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn)
 {
     int numberOfNodes = grid->GetNTotalNode();
+    nodesMinDistanceInOtherBlock = new RDouble[numberOfNodes];
     SetField(nodesMinDistanceInOtherBlock, LARGE, numberOfNodes);
 
     int iSearchNode = 0;
@@ -3390,6 +3053,9 @@ void OversetConfig::CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn)
             nodesMinDistanceInOtherBlock[iNode] = nodesMinDistanceInOtherBlockIn[iSearchNode++];
         }
     }
+
+    delete[] keySearchOfNodes;
+    keySearchOfNodes = NULL;
 }
 
 void OversetConfig::BuildMinMaxBoxOfZone()
@@ -3423,13 +3089,10 @@ void OversetConfig::BuildMinMaxBoxOfZone()
 
 void OversetConfig::BuildKDTreeByMinMaxBoxOfZone()
 {
-    if (gridKDTree)
-    {
-        delete gridKDTree;
-        gridKDTree = NULL;
-    }
     gridKDTree = new GridKDTree(grid, keySearchOfCells, minBoxOfZone, maxBoxOfZone);
 
+    delete[] keySearchOfCells;
+    keySearchOfCells = NULL;
 }
 
 RDouble OversetConfig::ComputeDistanceInDonorZone(RDouble *nodeCoordinateIn, int donorCell)
@@ -3475,6 +3138,7 @@ void OversetConfig::SpecifyInitialInterNodesByDistance()
 {
     int numberOfNodes = grid->GetNTotalNode();
 
+    keyBasicActiveNodes = new int[numberOfNodes];
     SetField(keyBasicActiveNodes, 0, numberOfNodes);
 
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
@@ -3484,6 +3148,9 @@ void OversetConfig::SpecifyInitialInterNodesByDistance()
             keyBasicActiveNodes[iNode] = 1;
         }
     }
+
+    delete[] nodesMinDistanceInOtherBlock;
+    nodesMinDistanceInOtherBlock = NULL;
 }
 
 //! Any two points of an cell pass through the physical plane, the cell is a boundary cell.
@@ -3495,7 +3162,9 @@ void OversetConfig::SpecifySpecicalCellsInteractWithWallBoundary()
 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
     int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
+
     int *innerCellOrNot = new int[numberOfCells];
+    keyInBlockNodes = new int[numberOfNodes];
 
     SetField(innerCellOrNot, 0, numberOfCells);
     SetField(keyInBlockNodes, 0, numberOfNodes);
@@ -3585,10 +3254,6 @@ void OversetConfig::SetNegativeForInnerAndInitialInterNodes()
         }
     }
 }
-void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn)
-{
-    ( this->*buildInBlockCellsAndNodesMethod )( innerAuxiliaryGridKDTreesIn );
-}
 
 void OversetConfig::SetNodeCharacterOnPhysicalBoundary()
 {
@@ -3662,10 +3327,12 @@ void OversetConfig::SetActivePropertyForSearchRegion()
 
 void OversetConfig::SetSearchRegionByActiveProperty()
 {
-    //! Because communicate_cell_iblank is the direct communication keyActiveOfCells.
-    //! keyBuffer is determined by keyActiveOfCells array.
+    //! keySearch is determined by keyActive array.
     int numberOfNodes = grid->GetNTotalNode();
     int numberOfCells = grid->GetNTotalCell();
+
+    keySearchOfNodes = new int[numberOfNodes];
+    keySearchOfCells = new int[numberOfCells];
 
     int *keyActiveOfCells = this->GetKeyActiveOfCells();
 
@@ -3721,11 +3388,11 @@ void OversetConfig::SearchZonesSearchNodesInKDTree()
                 RDouble *searchNodeCoordinateY = zoneSearchNodes->GetY();
                 RDouble *searchNodeCoordinateZ = zoneSearchNodes->GetZ();
 
-                RDouble *nodesMinDistanceInOtherBlock = zoneSearchNodes->GetNodesMinDistanceInOtherBlock();
+                RDouble *nodesMinDistanceToOtherBlock = zoneSearchNodes->GetNodesMinDistanceToOtherBlock();
 
                 for (int iNode = 0; iNode < numberOfSearchNodes; ++iNode)
                 {
-                    RDouble &nodesMinDistanceInOtherBlockOfThisNode = nodesMinDistanceInOtherBlock[iNode];
+                    RDouble &nodesMinDistanceInOtherBlockOfThisNode = nodesMinDistanceToOtherBlock[iNode];
 
                     nodeCoordinate[0] = searchNodeCoordinateX[iNode];
                     nodeCoordinate[1] = searchNodeCoordinateY[iNode];
