@@ -2799,14 +2799,13 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< 
     keyInBlockNodes = new int[numberOfNodes];
     SetField(keyInBlockNodes, 0, numberOfNodes);
 
-    double tolerance = GetToleranceForOversetBox();
     int donorCellIndex;
     int symetryOrNot = GetSymetryOrNot();
     for (int iCell = 0; iCell < numberOfCells; ++iCell)
     {
         donorCellIndex = -2;
 
-        if (!symetryOrNot || cellCenterZ[iCell] > -tolerance)
+        if (!symetryOrNot || cellCenterZ[iCell] > 0.0)
         {
             donorCellIndex = -1;
 
