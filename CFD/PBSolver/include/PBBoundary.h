@@ -39,6 +39,8 @@ public:
     virtual void Update(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
     virtual void WallModification(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
+
+    virtual void UpdateVistb(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 };
 
 DEFINE_PBOBJECT_FACTORY(PBBoundary);

@@ -54,12 +54,18 @@ void PBConvectionSUDS::Discrt(UnstructGrid *grid, string phiName, string apName,
         {
             int le = leftCellOfFace[iFace];
             int re = rightCellOfFace[iFace];
+            if (flux[iFace] < 0)
+            {
+                RDouble temp = le;
+                le = re;
+                re = le;
+            }
             RDouble dx = ex[re] - ex[le];
             RDouble dy = ey[re] - ey[le];
             RDouble dz = ez[re] - ez[le];
             RDouble cphi = phi[re] - 2 * (dphidx[le] * dx + dphidy[le] * dy + dphidz[le] * dz);
             RDouble cphi_r = (phi[le] - cphi) / (phi[re] - phi[le] + SMALL);
-            RDouble a12 = MAX(flux[iFace],0.0)*(0.5 * cphi_r) * (phi[le] - phi[re]) - MAX(-flux[iFace],0.0)*(0.5 * cphi_r)* (phi[re] - phi[le]);
+            RDouble a12 = flux[iFace] * (0.5 * cphi_r) * (phi[le] - phi[re]);
             sc[le] += a12;
             sc[re] -= a12;
         }
@@ -83,6 +89,12 @@ void PBConvectionSUDS::Discrt(UnstructGrid *grid, string phiName, string apName,
         {
             int le = leftCellOfFace[iFace];
             int re = rightCellOfFace[iFace];
+            if (flux[iFace] < 0)
+            {
+                RDouble temp = le;
+                le = re;
+                re = le;
+            }
             RDouble dx = ex[re] - ex[le];
             RDouble dy = ey[re] - ey[le];
             RDouble dz = ez[re] - ez[le];
@@ -93,15 +105,15 @@ void PBConvectionSUDS::Discrt(UnstructGrid *grid, string phiName, string apName,
             RDouble cw = w[re] - 2 * (dwdx[le] * dx + dwdy[le] * dy + dwdz[le] * dz);
             RDouble cw_r = (w[le] - cw) / (w[re] - w[le] + SMALL);
 
-            RDouble a12 = MAX(flux[iFace], 0.0) * (0.5 * cphi_r) * (phi[le] - phi[re]) - MAX(-flux[iFace], 0.0) * (0.5 * cphi_r) * (phi[re] - phi[le]);
+            RDouble a12 = flux[iFace] * (0.5 * cphi_r) * (phi[le] - phi[re]); 
             sc[le] += a12;
             sc[re] -= a12;
 
-            a12 = MAX(flux[iFace], 0.0) * (0.5 * cv_r) * (v[le] - v[re]) - MAX(-flux[iFace], 0.0) * (0.5*cv_r) * (v[re] - v[le]);
+            a12 = flux[iFace] * (0.5 * cv_r) * (v[le] - v[re]);
             scV[le] += a12;
             scV[re] -= a12;
 
-            a12 = MAX(flux[iFace], 0.0) * (0.5 * cw_r) *(w[le] - w[re]) - MAX(-flux[iFace], 0.0) * (0.5*cw_r) * (w[re] - w[le]);
+            a12 = flux[iFace] * (0.5 * cw_r) * (w[le] - w[re]);
             scW[le] += a12;
             scW[re] -= a12;
         }

@@ -77,6 +77,8 @@ public:
     //! If converged for incompressible situation
     bool IsConverged(int iZone);
 
+    //! Reinit variable for incompressible situation 
+    void IncompressibleInitial(int iSolver);
     //! Update unsteady flow.
     //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
     void UpdateUnsteadyFlow(int iSolver, int level = 0);
