@@ -407,14 +407,14 @@ void GlobalBoundaryCondition::BuildBodyMap()
         }
 
         bool isSetBodyName = boundaryCondition->CheckParamData("bodyName");
+        string bodyName = "body";
         if (isSetBodyName)
         {
-            string bodyName;
-            boundaryCondition->GetParamData("bodyName",   &bodyName, PHSTRING, 1);
-            pair<int,string> bodyNamePair(iBC ,bodyName);
-            bodyNameSet.insert(bodyNamePair);
-            bodyList->insert(bodyName);
+            boundaryCondition->GetBCParamDataBase()->GetData("bodyName", &bodyName, PHSTRING, 1);
         }
+        pair<int,string> bodyNamePair(iBC ,bodyName);
+        bodyNameSet.insert(bodyNamePair);
+        bodyList->insert(bodyName);
     }
 
     set < pair<int, string> >::iterator bodyNameSetIter;
@@ -2278,6 +2278,10 @@ void GlobalBoundaryCondition::ParseBCFromFile(fstream &file)
                 if (bcParamDataBase->CheckDataExist("bodyName"))
                 {
                     bcParamDataBase->GetData("bodyName", &bodyName, PHSTRING, 1);
+                }
+                else
+                {
+                    bcParamDataBase->UpdateData("bodyName", &bodyName, PHSTRING, 1);
                 }
 
                 boundaryCondition->SetBodyName(bodyName);

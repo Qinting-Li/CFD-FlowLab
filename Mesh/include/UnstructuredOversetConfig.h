@@ -14,18 +14,17 @@
 //! @author    Chang Xinhua, He Kun.
 #pragma once
 #include "PHMpi.h"
+#include "OversetKDTree.h"
 using namespace std;
 
 namespace PHSPACE
 {
 class OversetConfigFactoryMulti;
-class OversetAuxilaryGrid;
 class OversetInformationProxy;
 class UnstructGrid;
 class OversetConfig;
 class InterCells;
-class ZoneNodes;
-class MRADTSearch;
+class ZoneSearchNodes;
 class Pre_WalldistCompute;
 class TimeSpan;
 
@@ -41,6 +40,8 @@ void OutUnstructOversetGridConfig();
 
 void FreeUnstructOversetGridConfig();
 
+OversetConfigFactoryMulti *GetOversetConfigFactoryMulti();
+
 class OversetConfigFactoryMulti    //! Call OversetConfig as a whole, and complete the information communication between each zone.
 {
 public:
@@ -51,72 +52,94 @@ private:
     int numberOfBlocks;    //! Number of overlapping grids.
     int numberOfZones;     //! Total number of partitions in the grid.
     OversetConfig **oversetConfigMultiZone;    //! Corresponding to each grid partition.
-
+    int geometricDimension;
 private:
-    ZoneNodes  **globalZoneNodes;     //! Set of all calculate points.
-    InterCells **globalInterCells;    //! Set of all interpolation cells.
+    ZoneSearchNodes **zonesSearchNodes;     //! Set of all calculate points.
+    InterCells **zonesInterpolateCells;    //! Set of all interpolation cells.
     TimeSpan *testTime;
 
 private:
-    vector< OversetAuxilaryGrid * > outerAuxilaryGrid;
     vector< UnstructGrid * > innerGrid;
 
 private:    //! This part of data is used to complete the attribute communication of the points on the interface.
     vector< int > numberOfGlobalNodes;    //! Number of calculate points in the whole grid.
     vector< vector< int > > keyActiveOfGlobalInterNodes;    //! Property of points on the interface.
 
+    int *numberOfInterfaceNodesInBlocks;
+    int **keyOfInterfaceNodesInBlocks;
 private:    //! Smallest box of each Block is used to improve the query efficiency.
-    vector< vector< RDouble > > pMinOfBlocks;
-    vector< vector< RDouble > > pMaxOfBlocks;
-
-private:
-    Pre_WalldistCompute *wallDistCompute;
-    bool AdtMethodOrNod;
+    RDouble **pMinOfBlocks;
+    RDouble **pMaxOfBlocks;
 
 public:
     void Initialize();
     void OversetConfigMulti();
 
-    void CalMinDistByGlobalNodes();
-    void CalMinDistByAuxiliaryOuterGrid();
+    void BuildNodesMinDistanceInOtherBlocks();
+    void BuildNodesMinDistanceInOtherBlocks2();
+    void BuildLocalToGlobalInterfaceNodesMaps();
 
     void NodesOperator();
     void CellsOperator();
     void OutPutOversetFiles();
     void OutPutOversetInformation();
+    void OutPutOversetVisualizations(const string &name);
+public:
+    RDouble **GetMinBoxOfBlocks() {
+        return this->pMinOfBlocks;
+    }
+    RDouble **GetMaxBoxOfBlocks() {
+        return this->pMaxOfBlocks;
+    }
+    InterCells **GetZonesInterpolateCells() {
+        return this->zonesInterpolateCells;
+    }
+    ZoneSearchNodes **GetZonesSearchNodes() {
+        return this->zonesSearchNodes;
+    }
+
+    int **GetKeyOfInterfaceNodesInBlocks() {
+        return this->keyOfInterfaceNodesInBlocks;
+    }
 
 private:    //! Initialize.
-    void InitializeGlobalValue();
-    void SearchPhysicalAndInterfaceBoundary();
-    void ReadInSklFiles();
+    void BuildNodesMinDistanceInThisBlocks(vector< RDouble > *&wallNodeCoordinateXIn,
+        vector< RDouble > *&wallNodeCoordinateYIn,
+        vector< RDouble > *&wallNodeCoordinateZIn);
     void ReadInInnerGrid();
+    void SetNodesMinDistanceInThisBlocksByWalldist();
+    void SetNodesMinDistanceInOtherBlocks();
 
     bool ReadInInnerGridH5(const string &fileName, UnstructGrid *gridIn);
+    void BuildLocalToGlobalInterfaceNodesMap(int iBlockIn, int *numberOfNodesInBlocksIn);
 
-    void ReadInOuterGrid();
     void GetGlobalInterfaceNodes();
     void GetGlobalInterfaceNodes(int iBlock);
     void ComputeNodeWalldist();
-
+    void ComputeNodeWalldistInOtherBlock();
     void ReComputeWallDistance();
     void ComputeNodeAndCellTopology();
 
 private:    //! Core process: points.
     void SetInitialValue();
-    void BuildADTStructureAndMinBoxForSearch();
-    void BuildADTStructure();
     void CalMinBoxForSearch();
     void SetBufferRegionOnOversetBoundary();
-    void SetSearchRegionGlobal();
-    void CalMinMaxBoxOfBlocks();
-    void CreatGlobalNodesByFile();
-    void WriteGlobalNodes();
-    void ReadGlobalNodes();
-    void CreatGlobalNodes();
-    void CreatGlobalNodes_Old();
-    void SpecifyTheDonorCellAndMinDistanceOfGlobalNodes();
+    void BuildKDTreesBySearchRegions();
+    void BuildNodesMinDistanceInOtherBlocksByKDTrees();
+    void SetActivePropertyForSearchRegions();
+    void SetSearchRegionByActivePropertys();
+    void BuildMinMaxBoxOfZoneBySearchRegions();
+    void BuildKDTreeByMinMaxBoxOfZones();
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTrees(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+
+    void BuildMinMaxBoxOfBlocks();
+
+    void BuildZonesSearchNodes();
+    void SearchZonesSearchNodesInKDTrees();
+    void AllReduceNodesMinDistanceInOtherBlock();
+    void SetNodesMinDistanceInOtherBlockByZonesNodes();
+
     void SpecifyInitialInterNodesByDistance();
-    void SpecifyNodesCharacterByDistanceAndInnerNodesCheck();
     void SpecifySpecicalCellsInteractWithWallBoundary();
     void SpecifyCellsInBodyByAuxiliaryInnerGrid();
     void FillTheActiveRegion();
@@ -129,17 +152,13 @@ private:    //! Core process: cells.
     void FindActiveCells();
     void FindInterCells();
     void CreatGlobalInterCells();
-    void CreatGlobalInterCellsServerCollectAndBcast();
-    void CreatGlobalInterCellsServerCollectAndBcastNonBlocking();
-    void CreatGlobalInterCellsServerCollect();
-    void InitializeInterCellByDataContainer(DataContainer *dataContainerRecv);
-    void CreatGlobalInterCellsServerBcast();
-    void CreatGlobalInterCells_Old();
-    void FindDonorZoneAndDonorCell();
-    void SelectDonorZoneAndDonorCell();
+    void AllReduceZonesInterpolateCells();
+private:    //! Core process: cells.
+    void BuildInterpolateRelationships();
+    void FindInterpolateRelationships();
 
 private:    //! Check.
-    bool CheckDonorZoneAndDonorCell();
+    void CheckInterpolateRelationships();
     bool CheckDonorZoneAndDonorCellServer();
     void PrintCellInformation();
 
@@ -148,7 +167,7 @@ private:    //! Communication of interface.
     void CharacterCellToNode();
     int  CharacterNodeToValidNodeByCell();
 
-    void CommunicateNodeCharacterOnInterfaceBySKL(int key);
+    void CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks();
     void CommunicateNodeCharacterOnInterface();
     void CommunicateCellIBlank();
 
@@ -167,141 +186,139 @@ private:    //! Output file.
     void OutGlobalNodes();
 
 public:
-    int GetNumberOfBlocks() { return numberOfBlocks; }
+    int GetNumberOfBlocks() {
+        return numberOfBlocks;
+    }
 
-    vector< OversetAuxilaryGrid * > & GetOuterAuxilaryGrid() { return outerAuxilaryGrid; }
-
-    vector< UnstructGrid * > & GetInnerGrid() { return innerGrid; }
-
-    Pre_WalldistCompute * GetWallDistCompute() { return wallDistCompute; }
+    vector< UnstructGrid * > &GetInnerGrid() {
+        return innerGrid;
+    }
 };
 
-class OversetAuxilaryGrid
+class ZoneSearchNodes
 {
 public:
-    OversetAuxilaryGrid();
-    ~OversetAuxilaryGrid();
-
-public:
-    int blockIndex;
-
-    UnstructGrid *grid;
-    vector < RDouble > nodeWallDistance;
-    vector < RDouble > cellWallDistance;
-    vector < RDouble > wallDistanceGradientX;
-    vector < RDouble > wallDistanceGradientY;
-    vector < RDouble > wallDistanceGradientZ;
-    MRADTSearch *adtSearch;
-    Pre_WalldistCompute *walldistCompute;
-
-public:
-    void Initialize(UnstructGrid *gridIn, int iBlock, Pre_WalldistCompute *walldistComputeIn);
-    void CalNodeWallDistance();
-    void CalCellWallDistance();
-    RDouble SearchAndCalMinDistByIDW(RDouble xc, RDouble yc, RDouble zc);
-    RDouble SearchAndCalMinDistByVolumeCoordinate(RDouble xc, RDouble yc, RDouble zc);
-    RDouble SearchAndCalMinDistByGradient(RDouble xc, RDouble yc, RDouble zc);
-    void BuildADT();
-    void CalMetrics();
-    void CalGradientOfWallDistanceGGCell();
-    void CalGradientOfWallDistanceGGNode();
-    void CalGradientOfWallDistanceLSQ();
-
-public:
-    UnstructGrid * GetGrid() { return this->grid; }
-    vector< RDouble > & GetNodeDistance() { return nodeWallDistance; }
-    MRADTSearch * GetAdtSearch() { return adtSearch; }
-};
-
-class ZoneNodes 
-{
-public:
-    ZoneNodes ();
-    ~ZoneNodes ();
+    ZoneSearchNodes(int numberOfSearchNodesIn, int blockIndexIn);
+    ~ZoneSearchNodes();
 
 private:
     int numberOfNodes;
-    int zoneIndex;
     int blockIndex;
 
-    vector< RDouble > x;
-    vector< RDouble > y;
-    vector< RDouble > z;
+    RDouble *x;
+    RDouble *y;
+    RDouble *z;
 
-    vector< RDouble > minDist;
+    RDouble *nodesMinDistanceInOtherBlock;
 
-    vector< RDouble > pMin;
-    vector< RDouble > pMax;
+    RDouble *pMin;
+    RDouble *pMax;
 
 public:
-    void Initialize(int iZone, int iBlock, int numberOfNodes);
 
-    void SetNumberOfNodes(int numberOfNodesIn) { this->numberOfNodes = numberOfNodesIn; }
-    void SetZoneIndex    (int zoneIndex      ) { this->zoneIndex     = zoneIndex;       }
-    void SetBlockIndex   (int blockIndex     ) { this->blockIndex    = blockIndex;      }
-    
-    int GetNumberOfNodes() { return numberOfNodes; }
-    int GetZoneIndex    () { return zoneIndex;     }
-    int GetBlockIndex   () { return blockIndex;    }
+    void SetNumberOfNodes(int numberOfNodesIn) {
+        this->numberOfNodes = numberOfNodesIn;
+    }
+    void SetBlockIndex(int blockIndex) {
+        this->blockIndex = blockIndex;
+    }
 
-    vector< RDouble > & GetX() { return x; }
-    vector< RDouble > & GetY() { return y; }
-    vector< RDouble > & GetZ() { return z; }
-    vector< RDouble > & GetMinDist() { return minDist; }
+    int GetNumberOfNodes() {
+        return numberOfNodes;
+    }
+    int GetBlockIndex() {
+        return blockIndex;
+    }
 
-    vector< RDouble > & GetPMin() { return pMin; }
-    vector< RDouble > & GetPMax() { return pMax; }
+    RDouble *GetX() {
+        return x;
+    }
+    RDouble *GetY() {
+        return y;
+    }
+    RDouble *GetZ() {
+        return z;
+    }
+    RDouble *GetNodesMinDistanceInOtherBlock() {
+        return nodesMinDistanceInOtherBlock;
+    }
+
+    RDouble *GetPMin() {
+        return pMin;
+    }
+    RDouble *GetPMax() {
+        return pMax;
+    }
 };
 
 class InterCells
 {
 public:
-    InterCells();
+    InterCells(int numberOfInterpolateCellsIn, int blockIndexIn);
     ~InterCells();
 
 private:
     int numberOfInterCells;
-    int zoneIndex;
     int blockIndex;
 
-    vector< int > donorZoneIndex;
-    vector< int > donorCellIndex;
-    vector< int > interCellIndex;
+    int *donorZoneIndex;
+    int *donorCellIndex;
 
-    vector< int > key;
+    int *donorLevel;
+    RDouble *cellMinDistance;
 
-    vector< RDouble > minDist;
-
-    vector< RDouble > x;
-    vector< RDouble > y;
-    vector< RDouble > z;
+    RDouble *x;
+    RDouble *y;
+    RDouble *z;
 
 public:
-    void Initialize(int iZone, int iBlock, int numberOfInterCells);
+    void FreeUselessMemery();
 
-    int GetZoneIndex()  { return zoneIndex;  }
-    int GetBlockIndex() { return blockIndex; }
+    int GetBlockIndex() {
+        return blockIndex;
+    }
 
-    int GetNumberOfInterCells() { return numberOfInterCells; }
+    int GetNumberOfInterCells() {
+        return numberOfInterCells;
+    }
 
-    vector< int > & GetDonorZoneIndex() { return donorZoneIndex; }
-    vector< int > & GetDonorCellIndex() { return donorCellIndex; }
-    vector< int > & GetInterCellIndex() { return interCellIndex; }
+    int *GetDonorZoneIndex() {
+        return donorZoneIndex;
+    }
+    int *GetDonorCellIndex() {
+        return donorCellIndex;
+    }
 
-    vector< RDouble > & GetX(){ return x; }
-    vector< RDouble > & GetY(){ return y; }
-    vector< RDouble > & GetZ(){ return z; }
-    vector< RDouble > & GetMinDist() { return minDist; }
-    vector< int > & GetKey() { return key; }
+    RDouble *GetX() {
+        return x;
+    }
+    RDouble *GetY() {
+        return y;
+    }
+    RDouble *GetZ() {
+        return z;
+    }
+    RDouble *GetMinDist() {
+        return cellMinDistance;
+    }
+    int *GetKey() {
+        return donorLevel;
+    }
 
-    void SetInterCellIndex(vector< int > interCellIndexIn) { this->interCellIndex = interCellIndexIn; }
-    void SetCellCenterX   (vector< RDouble > xIn)          { this->x = xIn; }
-    void SetCellCenterY   (vector< RDouble > yIn)          { this->y = yIn; }
-    void SetCellCenterZ   (vector< RDouble > zIn)          { this->z = zIn; }
+    void SetCellCenterX(RDouble *xIn) {
+        this->x = xIn;
+    }
+    void SetCellCenterY(RDouble *yIn) {
+        this->y = yIn;
+    }
+    void SetCellCenterZ(RDouble *zIn) {
+        this->z = zIn;
+    }
 };
 
 class OversetConfig
 {
+    typedef void ( OversetConfig:: *BuildInBlockCellsAndNodesMethod )( vector< GridKDTree * > & );
 public:
     OversetConfig();
     ~OversetConfig();
@@ -310,93 +327,109 @@ public:    //! Necessary global information.
     int numberOfZones;
     int blockIndex;
     int zoneIndex;
+    int geometricDimension;
 
     UnstructGrid *grid;
-    ZoneNodes   **globalZoneNodes;
-    InterCells  **globalInterCells;
-    OversetInformationProxy   *oversetInformationProxy;    //! Information of interpolation calculated.
-    OversetConfigFactoryMulti *oversetConfigFactoryMulti;
+
+    OversetInformationProxy *oversetInformationProxy;    //! Information of interpolation calculated.
+    BuildInBlockCellsAndNodesMethod buildInBlockCellsAndNodesMethod;
 
 public:    //! Improve efficiency of query.
-    MRADTSearch *aDTSearch;
-    vector< RDouble > pMin;
-    vector< RDouble > pMax;
+    GridKDTree *gridKDTree;
+    RDouble *minBoxOfZone;
+    RDouble *maxBoxOfZone;
 
-    vector< RDouble > minDist;
 public:
     int numberOfInterCells;
 
-    vector< int > keyActiveOfNodes;
-    vector< int > interCellIndex;
+    int *localToGlobalInterfaceNodesMap;
+    int *keyActiveOfNodes;
 
-    vector< int > keyBufferOfNodes;
-    vector< int > keyBufferOfCells;
+    vector< int > interpolateCellList;
 
-    vector< int > keySearchOfNodes;    //! keySearch = 1£ºcells and points used for query.
-    vector< int > keySearchOfCells;    //! keySearch = 0£ºpoints in the non overlapping areas (For example, point in the far field).
+    int *keyBufferOfNodes;
 
-    bool *initialInterNodeOrNot;
-    bool *innerCellsOrNot;
-    bool *innerNodesOrNot;
+    int *keyBufferOfCells;
+
+    int *keySearchOfNodes;    //! keySearch = 1£ºcells and points used for query.
+
+    int *keySearchOfCells;    //! keySearch = 0£ºpoints in the non overlapping areas (For example, point in the far field).
+
+    int *keyBasicActiveNodes;
+
+    //!the mark of the node which is inside of the body of other block
+    //!0 - outside
+    //!1 - inside
+    int *keyInBlockNodes;
+
+    RDouble *nodesMinDistanceInThisBlock;
+
+    RDouble *nodesMinDistanceInOtherBlock;
 
 public:
     vector< RDouble > nodeWalldistDistance;
 
 public:    //! Boundary condition.
-    vector< int > interfaceBoundaryNodesList;
-    vector< int > physicalBoundaryNodesList;
-    vector< int > innerBoundaryNodesList;
+    vector< int > interfaceBoundaryNodeList;
+    vector< int > physicalBoundaryNodeList;
+    vector< int > innerBoundaryNodeList;
 
     vector< int > localToGlobalInterNodesIndex;    //! From local interNode to global interNode.
     vector< int > localToGlobalNodesIndex;         //! From local interNode to global Node.
+public:
+    void BuildBoundaryNodeList(vector< RDouble > &wallNodeCoordinateXIn,
+        vector< RDouble > &wallNodeCoordinateYIn,
+        vector< RDouble > &wallNodeCoordinateZIn);
+    void BuildNodesMinDistanceInThisBlock(vector< RDouble > *wallNodeCoordinateXInBlocksIn,
+        vector< RDouble > *wallNodeCoordinateYInBlocksIn,
+        vector< RDouble > *wallNodeCoordinateZInBlocksIn);
+
+    void BuildBoundaryNodeList();
+    void SetNodesMinDistanceInThisBlocksByWalldist();
+    void SetNodesMinDistanceInOtherBlocks();
 
 public:    //! Initialize.
-    void Initialize(OversetConfigFactoryMulti *oversetConfigFactoryMulti, UnstructGrid *gridIn, int nZone, int iZone, int iBlock, ZoneNodes **globalZoneNodesIn, InterCells **globalInterCellsIn);
-    void Allocate();
+    void Initialize(UnstructGrid *gridIn, int nZone, int iZone, int iBlock);
     void SetInitialValue();
-    void BuildADTStructure();
-    void CalculateMinBox();
-    void SearchPhysicalAndInterfaceBoundary();
-    void SearchBoundary();
-    //void SearchInterfaceBoundary();
+
     void SetInitialValueForBufferRigion();
     void SetKeyBufferByKeyActive();
 
 public:    //! Core operations: points.
     void ComputeNodeAndCellTopology();
-    void CopyMinDist();
-    void CalMinDistanceByAuxilaryGrid(vector< OversetAuxilaryGrid * > &auxilaryGrid);
+    void CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn);
+    void BuildKDTreeByMinMaxBoxOfZone();
+    void SearchZonesSearchNodesInKDTree();
 
-    void SearchDonorCellAndComputeDistanceForGlobalNodes(int &numberOfSearchNodes, RDouble &time);
-    bool TheTargetZoneOverLapWithMe(ZoneNodes *zoneNodes);
-    RDouble SearchDonorCellAndComputeDistance(RDouble x, RDouble y, RDouble z);
-    int  SearchDonorCell(RDouble xc, RDouble yc, RDouble zc);
-    void SearchDonorCell(RDouble xc, RDouble yc, RDouble zc, int &donorCell);
-    RDouble ComputeDistanceInDonorZone(int donorCell, RDouble xc, RDouble yc, RDouble RDouble);
+    RDouble ComputeDistanceInDonorZone(RDouble *nodeCoordinateIn, int donorCell);
     void SpecifyInitialInterNodesByDistance();
-    void SpecifyNodesCharacterByDistanceAndInnerNodesCheck();
-    void SpecifyCellsInBody(vector< MRADTSearch * > &adtSearchArray);
     void SpecifySpecicalCellsInteractWithWallBoundary();
     void SetNegativeForBufferRegion();
     void SetNegativeForInnerNodes();
     void SetNegativeForInnerAndInitialInterNodes();
     void SetNodeCharacterOnPhysicalBoundary();
     void FillTheRemainingNodes();
-    
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+
 public:    //! Core operations: globalNodes.
-    void CreatGlobalNodes(DataContainer *dataContainer);
+    void BuildMinMaxBoxOfZone();
 
 public:    //! Core operations: points.
-    void SetSearchRegionGlobal(vector< vector< RDouble > > &pMinOfBlocks, vector< vector< RDouble > > &pMaxOfBlocks);
-    void SetKeySearchByKeyActive();
+    void SetActivePropertyForSearchRegion();
+    void SetSearchRegionByActiveProperty();
+    void BuildMinMaxBoxOfZoneBySearchRegion();
 
 public:    //! Core operations: cells.
     void FindActiveCells();
-    int  FindInterCells();
-    void CalInterCellInformation(vector< int > &index, vector< RDouble > &x, vector< RDouble > &y, vector< RDouble > &z);
-    void FindInterCellsForTowOrderScheme();
-    void FindDonorZoneAndDonorCell();
-    int  FindDonorZoneAndDonorCellOfInterCell(int &donorCell, RDouble xc, RDouble yc, RDouble zc);
+    void FindInterCells();
+    int  FindDonorCell(RDouble *nodeCoordinateIn);
+    void FindInterpolateRelationship();
+    void CheckInterpolateRelationship(int iBlockIn,
+        InterCells *zoneInterpolateCellsIn,
+        int &numberOfInterpolateCellsInThisBlockIn,
+        int &numberOfNegativeCellsInThisBlock_1In,
+        int &numberOfNegativeCellsInThisBlock_2In,
+        int &numberOfNegativeCellsInThisBlock_3In);
 
 public:    //! Reconstruction of interpolation information.
     void InitializeOversetInformation();
@@ -410,11 +443,23 @@ public:    //! Communication.
     void CharacterCellToNode();
     void CharacterInterfaceToNode();
     int  CharacterNodeToValidNodeByCell();
+    void UpdateInterfaceNodeCharacter();
+    void DownInterfaceNodeCharacter();
 
-    void UpdateInterfaceNodeCharacter(vector< vector < int > > &keyActiveOfGlobalInterNodes, int key);
-    void DownInterfaceNodeCharacter(vector< vector< int > > &keyActiveOfGlobalInterNodes, int key);
+public:
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree1(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree2(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree4(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree5(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
+    void BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree6(vector< GridKDTree * > &innerAuxiliaryGridKDTreesIn);
 
 public:    //! Check&Output.
+    void OutPutOversetVisualization(const string &name);
+    void OutPutOversetVisualizationHeader(fstream &file);
+    void OutPutOversetVisualizationCell(fstream &file);
+    void OutPutOversetVisualizationPoint(fstream &file);
+    void OutPutOversetVisualizationTail(fstream &file);
     void ShowGrid();
     void ShowBoundaryCells();
     void PrintGridByOverSetConditionPoint(fstream &file, int key);
@@ -423,31 +468,149 @@ public:    //! Check&Output.
     void OutKeyActive();
     void OutputLocalNodeWalldistance();
 
+    inline bool IfZoneSearchNodesIntersectionWithThisZone(RDouble *minBoxOfZoneSearchNodesIn, RDouble *maxBoxOfZoneSearchNodesIn)
+    {
+        for (int iDimension = 0; iDimension < geometricDimension; ++ iDimension)
+        {
+            if (maxBoxOfZoneSearchNodesIn[iDimension] < minBoxOfZone[iDimension]) return false;
+            if (minBoxOfZoneSearchNodesIn[iDimension] > maxBoxOfZone[iDimension]) return false;
+        }
+        return true;
+    }
+
 public:
-    vector< int > & GetKeyActiveOfNodes() { return keyActiveOfNodes; }
-    int           * GetKeyActiveOfCells();
-    vector< int > & GetKeyBufferOfCells() { return keyBufferOfCells; }
-    vector< int > & GetKeyBufferOfNodes() { return keyBufferOfNodes; }
-    vector< int > & GetKeySearchOfCells() { return keySearchOfCells; }
-    vector< int > & GetKeySearchOfNodes() { return keySearchOfNodes; }
+    int *GetKeyActiveOfNodes()
+    {
+        return keyActiveOfNodes;
+    }
+    int *GetKeyActiveOfCells();
+    int *GetKeyBufferOfCells()
+    {
+        return keyBufferOfCells;
+    }
+    int *GetKeyBufferOfNodes()
+    {
+        return keyBufferOfNodes;
+    }
+    int *GetKeySearchOfCells()
+    {
+        return keySearchOfCells;
+    }
+    int *GetKeySearchOfNodes()
+    {
+        return keySearchOfNodes;
+    }
 
-    vector< int > & GetInterNodesList()               { return interfaceBoundaryNodesList; }
-    vector< int > & GetLocalToGlobalNodesIndex()      { return localToGlobalNodesIndex; }
-    vector< int > & GetLocalToGlobalInterNodesIndex() { return localToGlobalInterNodesIndex; }
+    vector< int > &GetInterfaceBoundaryNodeList()
+    {
+        return interfaceBoundaryNodeList;
+    }
 
-    vector< RDouble > & GetPMin()                 { return pMin; }
-    vector< RDouble > & GetPMax()                 { return pMax; }
-    vector< RDouble > & GetNodeWalldistDistance() { return nodeWalldistDistance; }
+    int *GetLocalToGlobalInterfaceNodesMap()
+    {
+        return localToGlobalInterfaceNodesMap;
+    }
 
-    int GetBlockIndex()         { return blockIndex; }
-    int GetNumberOfInterCells() { return numberOfInterCells; }
-    vector< int > & GetInterCellIndex() { return interCellIndex; }
+    RDouble *GetPMin()
+    {
+        return minBoxOfZone;
+    }
+    RDouble *GetPMax()
+    {
+        return maxBoxOfZone;
+    }
+    RDouble *GetNodeWalldistDistance()
+    {
+        return nodesMinDistanceInOtherBlock;
+    }
+    int GetBlockIndex() {
+        return blockIndex;
+    }
+    int GetNumberOfInterCells()
+    {
+        return numberOfInterCells;
+    }
+    //vector< int > &GetInterCellIndex() { return interpolateCellList; }
+    vector< int > &GetInterpolateCellList()
+    {
+        return this->interpolateCellList;
+    }
 
-    OversetInformationProxy * GetOversetInformationProxy() { return oversetInformationProxy; }
-    UnstructGrid * GetGrid() { return grid; }
+    OversetInformationProxy *GetOversetInformationProxy()
+    {
+        return oversetInformationProxy;
+    }
+    UnstructGrid *GetGrid()
+    {
+        return grid;
+    }
+private:
+    inline void OutPutValueName(fstream &file, const string &name)
+    {
+        file << "# " << name << endl;
+    }
+
+    inline void OutPutNullValue(fstream &file, int length)
+    {
+        int numberOfWordsInEachLine = 5;
+        int iPrint = 0;
+        for (int iValue = 0; iValue < length; ++ iValue)
+        {
+            file << 0 << " ";
+            ++ iPrint;
+            if (iPrint % numberOfWordsInEachLine == 0) file << endl;
+        }
+        if (iPrint % numberOfWordsInEachLine != 0) file << endl;
+        file << endl;
+    }
+
+    inline void OutPutVectorValue(fstream &file, int length, vector< int > &value)
+    {
+        bool *valueFull = new bool[length];
+        SetField(valueFull, false, length);
+        int numberOfValue = value.size();
+        for (int iValue = 0; iValue < numberOfValue; ++ iValue)
+        {
+            valueFull[value[iValue]] = true;
+        }
+
+        int numberOfWordsInEachLine = 5;
+        int iPrint = 0;
+        for (int iValue = 0; iValue < length; ++ iValue)
+        {
+            file << valueFull[iValue] << " ";
+            ++ iPrint;
+            if (iPrint % numberOfWordsInEachLine == 0) file << endl;
+        }
+        if (iPrint % numberOfWordsInEachLine != 0) file << endl;
+        file << endl;
+
+        delete[] valueFull;
+    }
+
+    template < typename T >
+    inline void OutPutPointerValue(fstream &file, int length, T *value)
+    {
+        if (NULL == value)
+        {
+            OutPutNullValue(file, length);
+        }
+        else
+        {
+            int numberOfWordsInEachLine = 5;
+            int iPrint = 0;
+            for (int iValue = 0; iValue < length; ++ iValue)
+            {
+                file << value[iValue] << " ";
+                ++ iPrint;
+                if (iPrint % numberOfWordsInEachLine == 0) file << endl;
+            }
+            if (iPrint % numberOfWordsInEachLine != 0) file << endl;
+            file << endl;
+        }
+    }
 };
 
-RDouble GetToleranceForOversetSearch();
 RDouble GetToleranceForOversetBox();
 int GetTwoOrderInterpolationOrNot();
 int GetKeyEnlargeOfNodes();
@@ -455,6 +618,7 @@ int GetReadInAuxiliaryInnerGrid();
 int GetReadInAuxiliaryOuterGrid();
 int GetReadInSklFileOrNot();
 int GetSymetryOrNot();
+int GetIfOutPutOversetVisualization();
 
 template< typename T >
 void PH_AllreduceSepModeForVector(vector< T > &sendingBuffer, vector< T > &receivingBuffer, int numberOfElements, MPI_Datatype mpiDataType, PH_Op op);

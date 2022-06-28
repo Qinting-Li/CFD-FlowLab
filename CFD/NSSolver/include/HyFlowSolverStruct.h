@@ -287,7 +287,7 @@ namespace PHSPACE
 
     private:
         void AirForceCoefParts(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
-        void AirForceCoefComponents(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
+        void AirForceCoefBodies(ActionKey *actkey);
 
         //! Write the variables of Cp, Cf, Qw, y+ etc. on surface to the file.
         void CpDistriCoef(ActionKey *actkey);

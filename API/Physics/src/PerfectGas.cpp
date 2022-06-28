@@ -1115,17 +1115,25 @@ void PerfectGas::ComputeOtherProperParameterForGrid()
     if (isUnsteady == 1)
     {
         PrintToWindow("Unsteady Informations" , "\n");
-
+        RDouble reference_velocity_dimensional = referenceParameterDimensional.GetVelocity();
+        RDouble unit = reynoldsReferenceLengthDimensional / reference_velocity_dimensional;
+        RDouble physicalTimeStepDimensional = 0.0;
+        RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+        if (GlobalDataBase::IsExist("physicalTimeStepDimensional", PHDOUBLE, 1))
+        {
+            physicalTimeStepDimensional = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStepDimensional");
+            if (physicalTimeStepDimensional >= 0.0)
+            {
+                physicalTimeStep = physicalTimeStepDimensional / unit;
+            }
+        }
+        physicalTimeStepDimensional = physicalTimeStep * unit;
         //! The non-dimensional physical time step based on grid scale.
-        RDouble physicalTimeStep               = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
         physicalTimeStep /= reynoldsReferenceLengthDimensional;
         GlobalDataBase::UpdateData("physicalTimeStep", &physicalTimeStep, PHDOUBLE, 1);
 
-        RDouble reference_velocity_dimensional = referenceParameterDimensional.GetVelocity();
-        RDouble unit = reynoldsReferenceLengthDimensional / reference_velocity_dimensional;
-        RDouble physicalTimeStep_dimensional = physicalTimeStep * unit;
 
-        PrintToWindow("  Physical Time Step       :    ", physicalTimeStep_dimensional , "s", "\n");
+        PrintToWindow("  Physical Time Step       :    ", physicalTimeStepDimensional , "s", "\n");
     }
 }
 

@@ -92,7 +92,7 @@ public:
     int  GetIndex() const;
 
     //! Return the geometry(grid).
-    PHGeometry * GetGeometry();
+    PHGeometry *GetGeometry();
     
     //!
     void SetKey(int key);
@@ -145,6 +145,7 @@ public:
     virtual void PrepareInterfaceData(Grid *grid, Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy){};
     virtual void ComputePostVisualVariables(Post_Visual * postVisualization) = 0;
     virtual void ComputePostProbesVariables(Post_Probes * postProbesVar){};
+    virtual void AirForceCoefBodies(ActionKey *actkey){};
 };
 #include "Solver.hxx"
 
@@ -160,7 +161,7 @@ public:
     //! Return the 'solverID'-th solver on 'zoneID'-th zone from global solvers list.
     //! @param[in] zoneID    The global zone index.
     //! @param[in] solverID  The solver index on the zone of 'zoneID'.
-    static PHSolver * GetSolver(int zoneID, int solverID = 0);
+    static PHSolver *GetSolver(int zoneID, int solverID = 0);
 
     //! Return the total number of solvers on the zone of 'iZone'.
     //! @param[in] iZone    The zone index that you want to know the number of solvers.
