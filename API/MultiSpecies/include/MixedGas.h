@@ -1230,19 +1230,6 @@ public:
 
     RDouble ComputeMolecularWeight(RDouble *prim);
 
-    //! Compute chemical energy of species stored in the variable of qx, qy and qz. The variable of fvis stores\n
-    //! the mass diffusion flux namely ro*Ds * (dfsdx * nx + dfsdy * ny + dfsdz * nz).
-    //! The function is the optimized format of the previous function, added by LiPeng on April 12, 2019.
-    //! @param[in ]: primitiveVars is an array of saving the primitive variables.
-    //! @param[in ]: dfsdx, dfsdy, dfsdz are arrays of saving the partial derivatives of the mass fractions.
-    //! @param[in ]: transRotationTemperature, vibrationTemperatuare and electronTemperature denote the temperatures of translation-rotation mode, vibration mode and electron mode, respectively.
-    //! @param[in ]: viscosityLaminar and viscosityTurbulence are the laminar viscosity and turbulent viscosity, respectively.
-    //! @param[in ]: nx, ny and nz are the components of the normal vector on the face.
-    //! @param[out]: qx, qy and qz are chemical energy of species in each coordinates.
-    //! @param[out]: speciesFluxes is array of saving the mass diffusion flux namely ro*Ds * (dfsdx * nx + dfsdy * ny + dfsdz * nz).
-    void ComputeSpeciesMassDiffusionFlux(RDouble *primitiveVars, RDouble *dfsdx, RDouble *dfsdy, RDouble *dfsdz, RDouble transRotationTemperature, RDouble vibrationTemperatuare, RDouble electronTemperature,
-        RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble nx, RDouble ny, RDouble nz, RDouble &qx, RDouble &qy, RDouble &qz, RDouble *speciesFluxes);
-
     //! To compute heat conductivity of mixture gas using Eucken formula and Wassilewa relation.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
     //! @param[in ]: transRotationTemperature is the non-dimensional value of translation-rotation temperature of the mixture gas.
@@ -1376,8 +1363,6 @@ public:
     //! @param[out]: speciesBeta indicates the partial derivatives of pressure vs. species density(dp/d(rho * ci)).
     void ComputePressureDerivatives(RDouble *primitiveVars, RDouble *temperatures, RDouble &alpha, RDouble &beta, RDouble &eta, RDouble *speciesBeta);
 
-    void ModifyVibrationEnergy(char *filepath);
-
     void ComputeSpecificHeatByFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel = true);
     void ComputeEnthalpyByFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel = true);
 
@@ -1389,8 +1374,6 @@ public:
 void ChemCompressData(DataContainer *&cdata);
 
 void ChemDecompressData(DataContainer *cdata);
-
-void computeOutPressure(RDouble &Pressure, RDouble &staticPressure,  RDouble &staticPressureRelaxCorf);
 
 }
 
