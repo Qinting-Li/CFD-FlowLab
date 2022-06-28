@@ -25,7 +25,8 @@
 #include "TurbSolverUnstr.h"          //! Unstructured turbulent solver.
 #include "TurbSolverStructFD.h"       //! Structured FD turbulent solver.
 
-
+#ifdef USE_PBSOLVER
+#endif
 
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"

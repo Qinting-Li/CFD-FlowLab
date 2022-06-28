@@ -2821,36 +2821,26 @@ void NSSolverStruct::ReadRestart(ActionKey* actkey)
         }
     }
 
-    GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
-}
-
-void NSSolverStruct::AirForceCoef(ActionKey* actkey)
+void NSSolverStruct::AirForceCoef(ActionKey *actkey)
 {
     const int ALL_PART = -1;
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-    if (!isAle)
-    {
-        AirForceCoefParts(actkey, ALL_PART);
+    AirForceCoefParts(actkey, ALL_PART);
 
-        int coordinate = LocalCoordinate;
-        uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
-        for (int iPart = 0; iPart < nTotalBC; ++iPart)
+    int coordinate = LocalCoordinate;
+    uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
+    for (int iPart = 0; iPart < nTotalBC; ++iPart)
+    {
+        if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
         {
-            if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
-            {
-                continue;
-            }
-
-            //! Compute local part force.
-            AirForceCoefParts(actkey, iPart, coordinate);
-
-            //! Compute global part force.
-            AirForceCoefParts(actkey, iPart);
+            continue;
         }
-    }
-    else
-    {
-        AirForceCoefComponents(actkey, ALL_PART);
+
+        //! Compute local part force.
+        AirForceCoefParts(actkey, iPart, coordinate);
+
+        //! Compute global part force.
+        AirForceCoefParts(actkey, iPart);
     }
 }
 
@@ -3131,10 +3121,10 @@ void NSSolverStruct::AirForceCoefParts(ActionKey* actkey, int partID, int coordi
     aerodynamicForceData->write(&hingeMoment, sizeof(RDouble));
 }
 
-void NSSolverStruct::AirForceCoefComponents(ActionKey* actkey, int partID, int coordinate)
-{
-    int level = actkey->level;
-    StructGrid* grid = StructGridCast(GetGrid(level));
+    void NSSolverStruct::AirForceCoefBodies(ActionKey *actkey)
+    {
+        int level = actkey->level;
+        StructGrid *grid = StructGridCast(GetGrid(level));
 
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
@@ -3196,56 +3186,46 @@ void NSSolverStruct::AirForceCoefComponents(ActionKey* actkey, int partID, int c
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
-    vector< BasicAerodynamicForce* >* basicAerodynamicForceVector = CreateBasicAerodynamicForceVector();
+        int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
+        vector< BasicAerodynamicForce * > *basicAerodynamicForceVector = CreateBasicAerodynamicForceVector();
 
-    StructBCSet* structBCSet = grid->GetStructBCSet();
-    int nBCRegion = structBCSet->GetnBCRegion();
-    int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
-
-    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
-    {
-        StructBC* bcRegion = structBCSet->GetBCRegion(iBCRegion);
-        int BCType = bcRegion->GetBCType();
-        string bcName = bcRegion->GetBCName();
-
-        int ist, ied, jst, jed, kst, ked;
-        bcRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
-
-        bool isNeedComputeAirForce = (BCType == PHENGLEI::SOLID_SURFACE || BCType == PHENGLEI::ABLATION_SURFACE);
-        if (!isNeedComputeAirForce)
+        StructBCSet *structBCSet = grid->GetStructBCSet();
+        int nBCRegion = structBCSet->GetnBCRegion();
+        for (int iBody = 0; iBody < numberOfMovingBodies; ++ iBody)
         {
-            continue;
-        }
-
-        int* faceDirection = bcRegion->GetFaceDirectionIndex();
-        int nSurface = bcRegion->GetFaceDirection() + 1;
-        int leftOrRightIndex = bcRegion->GetFaceLeftOrRightIndex();
-
-        int iWall, jWall, kWall;
-        int iCellGhostLayer, jCellGhostLayer, kCellGhostLayer;
-
-        RDouble dfx, dfy, dfz, dpx, dpy, dpz;
-
-        for (int k = kst; k <= ked; ++k)
-        {
-            for (int j = jst; j <= jed; ++j)
+            for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
             {
-                for (int i = ist; i <= ied; ++i)
+                StructBC *bcRegion = structBCSet->GetBCRegion(iBCRegion);
+                int BCType = bcRegion->GetBCType();
+
+                int ist, ied, jst, jed, kst, ked;
+                bcRegion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+                bool isNeedComputeAirForce = (BCType == PHENGLEI::SOLID_SURFACE || BCType == PHENGLEI::ABLATION_SURFACE);
+                if (!isNeedComputeAirForce)
                 {
-                    BasicAerodynamicForce aerodynamicForceGlobal;
-                    for (int iPart = 0; iPart < nTotalBC; ++iPart)
+                    continue;
+                }
+
+                string bodyName = bcRegion->GetBodyName();
+                if (FaceInAerodynamicForceBodies(bodyName, iBody))
+                {
+                    int *faceDirection = bcRegion->GetFaceDirectionIndex();
+                    int nSurface = bcRegion->GetFaceDirection() + 1;
+                    int leftOrRightIndex = bcRegion->GetFaceLeftOrRightIndex();
+
+                    int iWall, jWall, kWall;
+                    int iCellGhostLayer, jCellGhostLayer, kCellGhostLayer;
+
+                    RDouble dfx, dfy, dfz, dpx, dpy, dpz;
+
+                    for (int k = kst; k <= ked; ++ k)
                     {
-                        boundaryCondition = GlobalBoundaryCondition::GetBC(iPart);
-                        string partName = boundaryCondition->GetBCName();
-                        if (partName != bcName)
+                        for (int j = jst; j <= jed; ++ j)
                         {
-                            continue;
-                        }
-                        for (int iComponent = 0; iComponent < numberOfAerodynamicForceComponents; ++iComponent)
-                        {
-                            if (FaceInAerodynamicForceComponents(bcName, iComponent))
+                            for (int i = ist; i <= ied; ++i)
                             {
+                                BasicAerodynamicForce aerodynamicForceGlobal;
                                 aerodynamicForceGlobal.SetMomentReferencePoint(TorqueRefXGlobal, TorqueRefYGlobal, TorqueRefZGlobal);
                                 //! i, j, k - is first face index near SOLID_SURFACE.
                                 bcRegion->GetBoundaryFaceIndex(i, j, k, iWall, jWall, kWall);
@@ -3366,9 +3346,7 @@ void NSSolverStruct::AirForceCoefComponents(ActionKey* actkey, int partID, int c
 
                                 aerodynamicForceGlobal.ComputeResultantAerodynamicMoment();
 
-                                (*basicAerodynamicForceVector)[iComponent]->AddAerodynamicForce(&aerodynamicForceGlobal);
-
-                                (*basicAerodynamicForceVector)[numberOfAerodynamicForceComponents]->AddAerodynamicForce(&aerodynamicForceGlobal);
+                                (*basicAerodynamicForceVector)[iBody]->AddAerodynamicForce(&aerodynamicForceGlobal);
                             }
                         }
                     }

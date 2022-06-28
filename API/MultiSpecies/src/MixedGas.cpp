@@ -1402,7 +1402,7 @@ RDouble MixedGas::ComputeReferenceTotalEnthalpy()
     }
     else
     {
-        staticEnthalpy = this->ComputeMixedGasEnthalpy(1.0, initVibrationTemperature, initVibrationTemperature, initMassFraction);
+        
     }
     totalEnthalpy = (staticEnthalpy + 0.5) * velocity * velocity;
 
@@ -1773,118 +1773,11 @@ void MixedGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, 
     }
     else if (ntmodel == 2)
     {
-        RDouble &tveTemperature = temperature[mTV], Eve = prim[nl + 1];
-        nCount = 0;
-        while (nCount < nMaxStepTemperature)
-        {
-            nCount++;
-            ComputeMixtureCvveAndEve(massFractions, tveTemperature, gasMixtureCv, gasMixtureEnergy);
-            TkLimit = (gasMixtureEnergy - Eve) / max(gasMixtureCv, SMALL);
-            if (TkLimit > 0.9 * tveTemperature)
-            {
-                TkLimit = 0.9 * tveTemperature;
-            }
-            else if (TkLimit < -9.0 * tveTemperature)
-            {
-                TkLimit = -9.0 * tveTemperature;
-            }
-            tveTemperature = MAX(tveTemperature - TkLimit, veTemperatureMinNonDimensional);
 
-            if (fabs(TkLimit / tveTemperature) <= precisionTemperature)
-            {
-                break;
-            }
-        }
-
-        RDouble Etr = internalEnergy - Eve, &trTemperature = temperature[mTT];
-        ComputeMixtureCvtrAndEtr(massFractions, trTemperature, gasMixtureCv, gasMixtureEnergy);
-
-        TkLimit = (gasMixtureEnergy - Etr) / gasMixtureCv;
-        if (TkLimit > 0.9 * trTemperature)
-        {
-            TkLimit = 0.9 * trTemperature;
-        }
-        else if (TkLimit < -9.0 * trTemperature)
-        {
-            TkLimit = -9.0 * trTemperature;
-        }
-
-        trTemperature = MAX(trTemperature - TkLimit, trTemperatureMinNonDimensional);
-
-        trTemperature = MAX(trTemperature, SMALL);
-        pressure = density * gasConstant * (trTemperature * (massReciprocal - ceDivideMe) + tveTemperature * ceDivideMe);
     }
     else
     {
-        RDouble &teTemperature = temperature[mTE], Ee = prim[nl + 2];
-        nCount = 0;
-        while (nCount < nMaxStepTemperature)
-        {
-            nCount++;
-            //Tk1 = teTemperature;
-            ComputeMixtureCveAndEe(massFractions, teTemperature, gasMixtureCv, gasMixtureEnergy);
 
-            TkLimit = (gasMixtureEnergy - Ee) / max(gasMixtureCv, SMALL);
-
-            if (TkLimit > 0.9 * teTemperature)
-            {
-                TkLimit = 0.9 * teTemperature;
-            }
-            else if (TkLimit < -9.0 * teTemperature)
-            {
-                TkLimit = -9.0 * teTemperature;
-            }
-            teTemperature = MAX(teTemperature - TkLimit, veTemperatureMinNonDimensional);
-
-            if (fabs(TkLimit / teTemperature) <= precisionTemperature)
-            {
-                break;
-            }
-        }
-        //teTemperature = MAX(teTemperature, veTemperatureMinNonDimensional);
-
-        RDouble &tvTemperature = temperature[mTV], Ev = prim[nl + 1];
-        nCount = 0;
-        while (nCount < nMaxStepTemperature)
-        {
-            nCount++;
-
-            ComputeMixtureCvvAndEv(massFractions, tvTemperature, gasMixtureCv, gasMixtureEnergy);
-
-            TkLimit = (gasMixtureEnergy - Ev) / max(gasMixtureCv, SMALL);
-
-            if (TkLimit > 0.9 * tvTemperature)
-            {
-                TkLimit = 0.9 * tvTemperature;
-            }
-            else if (TkLimit < -9.0 * tvTemperature)
-            {
-                TkLimit = -9.0 * tvTemperature;
-            }
-            tvTemperature = MAX(tvTemperature - TkLimit, veTemperatureMinNonDimensional);
-
-            if (fabs(TkLimit / tvTemperature) <= precisionTemperature)
-            {
-                break;
-            }
-        }
-        //tvTemperature = MAX(tvTemperature, veTemperatureMinNonDimensional);
-
-        RDouble Etr = internalEnergy - Ev - Ee, &trTemperature = temperature[mTT];
-        ComputeMixtureCvtrAndEtr(massFractions, trTemperature, gasMixtureCv, gasMixtureEnergy);
-
-        TkLimit = (gasMixtureEnergy - Etr) / gasMixtureCv;
-        if (TkLimit > 0.9 * trTemperature)
-        {
-            TkLimit = 0.9 * trTemperature;
-        }
-        else if (TkLimit < -9.0 * trTemperature)
-        {
-            TkLimit = -9.0 * trTemperature;
-        }
-
-        trTemperature = MAX(trTemperature - TkLimit, trTemperatureMinNonDimensional);
-        pressure = density * gasConstant * (trTemperature * (massReciprocal - ceDivideMe) + teTemperature * ceDivideMe);
     }
 }
 
@@ -1949,8 +1842,7 @@ void MixedGas::GetSpecificHeatRatio(RDouble *prim, RDouble &gama)
         RDouble M = this->GetMixedGasMolecularWeight(massFractions);
         if (ntmodel >= 2)     //! Two-Temperature and Three-Temperature model.
         {
-            cv = this->GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-            cp = cv + R/M;
+
         }
         else                 //! The default setting is One-Temperature model.
         {
@@ -1984,8 +1876,7 @@ void MixedGas::GetSpecificHeatRatioAndTemperatute(RDouble *primitiveVariables, R
         //! The NormalizePrimitive() function has been used in the function of GetTemperature().
         if (ntmodel >= 2)        //! Two-Temperature and Three-Temperature model.
         {
-            cv = this->GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-            cp = cv + gasConstant / mass;
+
         }
         else                    //! The default setting is One-Temperature model.
         {
@@ -2154,34 +2045,7 @@ void MixedGas::ComputeReferenceViscosityDimensionalChemical()
 
     if (ntmodel > 1)    //! Multi-Temperature Model.
     {
-        int nType = 0;     //! 0 for Blottnner curve fit method, 1 for Lennard-Jones method.
-        //Obtain the partition function values.
-        RDouble *MolecularWeight = this->molecularProperty->GetMolecularWeight();
 
-        if (nType == 0)
-        {
-            //! Employ Blottnner curve fit method to compute viscosity.
-            ComputeSpeciesDimensionalViscosityWithCurveFitMethod(reference_tempereature, reference_tempereature, speciesViscosity);
-        }
-        else
-        {
-            //! The reference electron pressure.
-            RDouble Pe = 0.0;
-            int nIndex = this->nElectronIndex;
-            if (nIndex >= 0)
-            {
-                Pe = 1.0 * mass_fraction_reference[nIndex] * GetUniversalGasConstant() * reference_tempereature / MolecularWeight[nIndex];
-            }
-
-            //! Employ Lennard-Jones method to compute viscosity.
-            ComputeSpeciesDimensionalViscosityWithLennardJonesMethod(reference_tempereature, Pe, speciesViscosity);
-        }
-
-        //! Obtain the partition function values.
-        this->GetPartitionFunctionValues(speciesViscosity, MolecularWeight, moleFractions, speciesWeight);
-
-        //! Compute the viscosity of the mixed gas.
-        reference_viscosity_dimensional = GetMixedGasViscosityWithWilkeFormula(moleFractions, speciesViscosity, speciesWeight);
     }
     else         //! The default model: one-temperature model.
     { 
@@ -2250,14 +2114,7 @@ void MixedGas::ComputeReferenceSpecificHeatRatioWithChemical()
 
     if (ntmodel > 1)       //! multi-temperature model.
     {
-        RDouble cvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(mass_fraction_reference);
-        //RDouble cvv = this->GetMixedGasDimensionalVibrationSpecificHeatAtConstantVolume(reference_temperature, mass_fraction_reference);
-        //RDouble cve = this->GetMixedGasDimensionalElectronSpecificHeatAtConstantVolume(reference_temperature, mass_fraction_reference);
 
-        RDouble cv = cvtr;
-        RDouble Mref = referenceParameterDimensional.GetAverageMolecularWeight();
-        RDouble cp = cv + rjmk / Mref;
-        refGama = cp / cv;
     }
     else                  //! one-temperature model.
     {
@@ -2902,13 +2759,11 @@ void MixedGas::InitCommonParameter()
     mTT = 0;
     if (ntmodel == 3)
     {
-        mTV = 1;
-        mTE = 2;
+
     }
     else if (ntmodel == 2)
     {
-        mTV = 1;
-        mTE = 1;
+
     }
     else
     {
@@ -2938,15 +2793,11 @@ void MixedGas::InitOtherParameter()
     int nIndexTE = 0;
     if (ntmodel == 2)
     {
-        nIndexTT = 0;
-        nIndexTV = 1;
-        nIndexTE = 1;
+
     }
     else if (ntmodel == 3)
     {
-        nIndexTT = 0;
-        nIndexTV = 1;
-        nIndexTE = 2;
+
     }
     else
     {
@@ -3042,25 +2893,9 @@ void MixedGas::ComputeReferencePrimitive()
     RDouble ref_vib_energy = 0.0, ref_ele_energy = 0.0;
     if (nchem == 1)
     {
-        //ModifyVibrationEnergy("./test.plt");
         if (ntmodel > 1)
         {
-            RDouble *massFraction = molecularProperty->GetInitialMassFraction();
-            RDouble ce_div_me = 0.0;
-            RDouble Mr = GetMixedGasMolecularWeightReciprocalWithoutElectron(massFraction, ce_div_me);
-            RDouble Pe = reference_density * reference_temperature * coefficientOfStateEquation * ce_div_me;
 
-            reference_pressure = reference_density * reference_temperature * coefficientOfStateEquation * Mr + Pe;
-            RDouble Tvib = reference_temperature;
-            if (GlobalDataBase::IsExist("freestream_vibration_temperature", PHDOUBLE, 1))
-            {
-                Tvib = GlobalDataBase::GetDoubleParaFromDB("freestream_vibration_temperature");
-                Tvib = Tvib / referenceParameterDimensional.GetTemperature();
-            }
-
-            //! Compute the vibration energy and electron energy.
-            ref_vib_energy = this->GetMixedGasVibrationEnergy(Tvib, massFraction);    //! Tve=Tv=Te=Tinf.
-            ref_ele_energy = this->GetMixedGasElectronEnergy(Tvib, massFraction);     //! Tve=Tv=Te=Tinf.
         }
         else       //! One-temperature model.
         {
@@ -3101,12 +2936,11 @@ void MixedGas::ComputeReferencePrimitive()
         //! Set the vibration energy and electron energy.
         if (ntmodel == 2)    //! Tve = Tv = Te = Tinf.
         {
-            prim_inf[nl + nchem] = ref_vib_energy + ref_ele_energy;
+
         }
         else if (ntmodel == 3)
         {
-            prim_inf[nl + nchem] = ref_vib_energy;
-            prim_inf[nl + nchem + 1] = ref_ele_energy;
+
         }
 
         RDouble *catalyticMassFraction = new RDouble[numberOfSpecies];
@@ -3628,28 +3462,10 @@ void MixedGas::ComputeSpeciesEnthalpyDimensional(RDouble temperature, RDouble *s
 
 void MixedGas::ComputeSpeciesEnergy(RDouble temperature, RDouble *speciesEnergy)
 {
-    //! Obtain the dimensional values of species energies.
-    this->ComputeSpeciesEnergyDimensional(temperature, speciesEnergy);
-
-    //! Change to the non-dimensional values.
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        speciesEnergy[s] = speciesEnergy[s] / referenceEnergy;
-    }
 }
 
 void MixedGas::ComputeSpeciesEnergyDimensional(RDouble temperature, RDouble *speciesEnergy)
 {
-    RDouble gasConstant = rjmk;
-    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-
-    RDouble speciesEnthalpy[MAX_SPECIES_NUM];
-    ComputeSpeciesEnthalpyDimensional(temperature, speciesEnthalpy);
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        speciesEnergy[s] = speciesEnthalpy[s] - gasConstant * temperature * referenceTemperature / speciesMass[s];
-    }
 }
 
 void MixedGas::ComputeMixtureByMassFraction(RDouble *massFraction, RDouble *mixtureOfSpecies, RDouble &mixture)
@@ -3722,15 +3538,6 @@ void MixedGas::ComputeMixtureByWilkeFormula(RDouble *moleFractionOfSpecies, RDou
 
 void MixedGas::ComputeTemperature(RDouble *primitiveVariables, RDouble &temperature)
 {
-    //! To compute the non-dimensional temperature of the mixture gas in accordance with primitive variables.
-    using namespace IDX;
-    RDouble massReciprocal, density, pressure;
-    NormalizePrimitive(primitiveVariables);
-    ComputeMolecularWeightReciprocal(primitiveVariables, massReciprocal);
-    density  = primitiveVariables[IR];
-    pressure = primitiveVariables[IP];
-    
-    temperature = pressure / (density * coefficientOfStateEquation * massReciprocal);
 }
 
 void MixedGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
@@ -3765,30 +3572,11 @@ void MixedGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotatio
         }    
         else if (ntmodel == 2)      //! Two-Temperature model.
         {
-            RDouble Eve = primitiveVariables[nl + nchem];
-            Tk = vibrationTemperature;
-            RDouble Tve = ComputeVibrationAndElectronTemperature(massFractions, Eve, Tk);
 
-            //! Compute pressure of electron.
-            electronPressure = density * gasConstant * Tve * ceDivideMe;
-            
-            transRotationTemperature = (pressure - electronPressure) / (density * gasConstant * massReciprocal);
-            vibrationTemperature = Tve;
         }
         else  //! Three-Temperature model.
         {
-            RDouble Ev = primitiveVariables[nl + nchem];
-            RDouble Ee = primitiveVariables[nl + nchem + 1];
-            Tk = vibrationTemperature;
-            RDouble Tv = this->ComputeVibrationTemperature(massFractions, Ev, Tk);
-            Tk = electronTemperature;
-            RDouble Te = this->ComputeElectronTemperature(massFractions, Ee, Tk);
-            //! Compute pressure of electron.
-            electronPressure = density * gasConstant * Te * ceDivideMe;
-            
-            transRotationTemperature = (pressure - electronPressure) / (density * gasConstant * massReciprocal);
-            vibrationTemperature = Tv;
-            electronTemperature = Te;
+
         }
     }
 }
@@ -3823,89 +3611,11 @@ void MixedGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotati
     }
     else if (ntmodel == 2)
     {
-        RDouble &tveTemperature = vibrationTemperature, Eve = primitiveVariables[nl + nchem];
-        nCount = 0;
-        while (nCount < nMaxStepTemperature)
-        {
-            nCount++;
-            //Tk1 = tveTemperature;
-            ComputeMixtureCvveAndEve(massFractions, tveTemperature, gasMixtureCv, gasMixtureEnergy);
-            TkLimit = (gasMixtureEnergy - Eve) / max(gasMixtureCv, SMALL);
 
-            if (TkLimit > 0.9 * tveTemperature)
-            {
-                TkLimit = 0.9 * tveTemperature;
-            }
-            else if (TkLimit < -9.0 * tveTemperature)
-            {
-                TkLimit = -9.0 * tveTemperature;
-            }
-            tveTemperature = MAX(tveTemperature - TkLimit, veTemperatureMinNonDimensional);
-
-            if (fabs(TkLimit / tveTemperature) <= precisionTemperature)
-            {
-                break;
-            }
-        }
-
-        transRotationTemperature = (pressure - density * gasConstant * vibrationTemperature * ceDivideMe) / (density * gasConstant * massReciprocal);
-        transRotationTemperature = MAX(transRotationTemperature, SMALL);
     }
     else
     {
-        RDouble &teTemperature = electronTemperature, Ee = primitiveVariables[nl + 2];
-        nCount = 0;
-        while (nCount < nMaxStepTemperature)
-        {
-            nCount++;
-            ComputeMixtureCveAndEe(massFractions, teTemperature, gasMixtureCv, gasMixtureEnergy);
 
-            TkLimit = (gasMixtureEnergy - Ee) / max(gasMixtureCv, SMALL);
-            if (TkLimit > 0.9 * teTemperature)
-            {
-                TkLimit = 0.9 * teTemperature;
-            }
-            else if (TkLimit < -9.0 * teTemperature)
-            {
-                TkLimit = -9.0 * teTemperature;
-            }
-            teTemperature = MAX(teTemperature - TkLimit, veTemperatureMinNonDimensional);
-
-            if (fabs(TkLimit / teTemperature) <= precisionTemperature)
-            {
-                break;
-            }
-        }
-        //teTemperature = MAX(teTemperature, veTemperatureMinNonDimensional);
-
-        RDouble &tvTemperature = vibrationTemperature, Ev = primitiveVariables[nl + 1];
-        nCount = 0;
-        while (nCount < nMaxStepTemperature)
-        {
-            nCount++;
-            ComputeMixtureCvvAndEv(massFractions, tvTemperature, gasMixtureCv, gasMixtureEnergy);
-
-            TkLimit = (gasMixtureEnergy - Ev) / max(gasMixtureCv, SMALL);
-
-            if (TkLimit > 0.9 * tvTemperature)
-            {
-                TkLimit = 0.9 * tvTemperature;
-            }
-            else if (TkLimit < -9.0 * tvTemperature)
-            {
-                TkLimit = -9.0 * tvTemperature;
-            }
-            tvTemperature = MAX(tvTemperature - TkLimit, veTemperatureMinNonDimensional);
-
-            if (fabs(TkLimit / tvTemperature) <= precisionTemperature)
-            {
-                break;
-            }
-        }
-        //tvTemperature = MAX(tvTemperature, veTemperatureMinNonDimensional);
-
-        transRotationTemperature = (pressure - density * gasConstant * electronTemperature * ceDivideMe) / (density * gasConstant * massReciprocal);
-        transRotationTemperature = MAX(transRotationTemperature, SMALL);
     }
 
     return;
@@ -3913,29 +3623,11 @@ void MixedGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotati
     RDouble electronPressure;
     if (ntmodel == 2)      //! Two-Temperature model.
     {
-        RDouble Tve = MAX(primitiveVariables[nl + nchem], 30.0/referenceTemperature);
-        primitiveVariables[nl + nchem] = GetMixedGasVibrationEnergy(Tve, massFractions) + GetMixedGasElectronEnergy(Tve, massFractions);
 
-        //! Compute pressure of electron.
-        electronPressure = density * gasConstant * Tve * ceDivideMe;
-            
-        transRotationTemperature = (pressure - electronPressure) / (density * gasConstant * massReciprocal);
-        vibrationTemperature = Tve;
     }
     else  //! Three-Temperature model.
     {
-        RDouble Tv = primitiveVariables[nl + nchem];
-        primitiveVariables[nl + nchem] = GetMixedGasVibrationEnergy(Tv, massFractions);
 
-        RDouble Te = primitiveVariables[nl + nchem + 1];
-        primitiveVariables[nl + nchem + 1] = GetMixedGasElectronEnergy(Te, massFractions);
-
-        //! Compute pressure of electron.
-        electronPressure = density * gasConstant * Te * ceDivideMe;
-    
-        transRotationTemperature = (pressure - electronPressure) / (density * gasConstant * massReciprocal);
-        vibrationTemperature = Tv;
-        electronTemperature = Te;
     }
 }
 
@@ -3959,17 +3651,6 @@ string * MixedGas::GetNameOfSpecies() const
 
 void MixedGas::GetElectronMolecularWeightAndMassFraction(RDouble *massFraction, RDouble &ce, RDouble &Me)
 {
-    RDouble Mref = referenceParameterDimensional.GetAverageMolecularWeight();
-    //! Initialize.
-    ce = 0.0;
-    Me = 5.486e-7;      //! Unit: kg/mol.
-    Me = Me / Mref;
-    if (nElectronIndex >= 0)
-    {
-        RDouble *Ms = GetMolecularWeight();
-        ce = massFraction[nElectronIndex];
-        Me = Ms[nElectronIndex];
-    }
 }
 
 void MixedGas::GetPressure(RDouble *primitiveVars, RDouble gama, RDouble internalEnergy, RDouble temperature, RDouble &pressure)
@@ -3997,25 +3678,11 @@ void MixedGas::GetPressure(RDouble *primitiveVars, RDouble gama, RDouble interna
     Tk = temperature;
     if (ntmodel == 2)     //! Two-Temperature model.
     {
-        RDouble vibrationElectronEnergy = primitiveVars[nl + nchem];
-        RDouble vibrationElectronTemperature = this->ComputeVibrationAndElectronTemperature(massFractions, vibrationElectronEnergy, Tk);
 
-        transRotationEnergy = specificInternalEnergy - vibrationElectronEnergy;
-        transRotationTemperature = this->ComputeTranslationAndRotationTemperature(massFractions, transRotationEnergy);
-        electronPressure = density * vibrationElectronTemperature * gasConstant * ceDivideMe;
-
-        pressure = density * transRotationTemperature * gasConstant * massReciprocal + electronPressure;
     }
     else if (ntmodel == 3)     //! Three-Temperature model.
     {
-        RDouble electronEnergy = primitiveVars[nl + nchem + 1];
-        RDouble electronTemperature = this->ComputeElectronTemperature(massFractions, electronEnergy, Tk);
 
-        transRotationEnergy = specificInternalEnergy - primitiveVars[nl + nchem] - electronEnergy;
-        transRotationTemperature = this->ComputeTranslationAndRotationTemperature(massFractions, transRotationEnergy);
-        electronPressure = density * electronTemperature * gasConstant * ceDivideMe;
-
-        pressure = density * transRotationTemperature * gasConstant * massReciprocal + electronPressure;
     }
     else       //! The default is One-Temperature model.
     {
@@ -4043,42 +3710,11 @@ void MixedGas::GetTemperatureAndPressure(RDouble *primitiveVars, RDouble interna
     
     if (ntmodel == 2)     //! Two-Temperature model.
     {
-        Tk = temperature[ITV];
-        RDouble vibrationElectronEnergy = primitiveVars[nl + nchem];
-        RDouble vibrationElectronTemperature = this->ComputeVibrationAndElectronTemperature(massFractions, vibrationElectronEnergy, Tk);
 
-        transRotationEnergy = specificInternalEnergy - vibrationElectronEnergy;
-        transRotationTemperature = this->ComputeTranslationAndRotationTemperature(massFractions, transRotationEnergy);
-        electronPressure = density * vibrationElectronTemperature * gasConstant * ceDivideMe;
-
-        pressure = density * transRotationTemperature * gasConstant * massReciprocal + electronPressure;
-
-        //Save the temperature of the next time-advancing step.
-        temperature[ITT] = transRotationTemperature;
-        temperature[ITV] = vibrationElectronTemperature;
-        temperature[ITE] = temperature[ITV];
     }
     else if (ntmodel == 3)     //! Three-Temperature model.
     {
-        Tk = temperature[ITE];
-        RDouble electronEnergy = primitiveVars[nl + nchem + 1];
-        RDouble electronTemperature = this->ComputeElectronTemperature(massFractions, electronEnergy, Tk);
 
-        transRotationEnergy = specificInternalEnergy - primitiveVars[nl + nchem] - electronEnergy;
-        transRotationTemperature = this->ComputeTranslationAndRotationTemperature(massFractions, transRotationEnergy);
-        electronPressure = density * electronTemperature * gasConstant * ceDivideMe;
-
-        pressure = density * transRotationTemperature * gasConstant * massReciprocal + electronPressure;
-
-        //Compute the vibrational temperature.
-        RDouble vibrationEnergy = primitiveVars[nl + nchem];
-        Tk = temperature[ITV];
-        RDouble vibrationTemperature = this->ComputeVibrationTemperature(massFractions, vibrationEnergy, Tk);
-
-        //Save the temperature of the next time-advancing step.
-        temperature[ITT] = transRotationTemperature;
-        temperature[ITV] = vibrationTemperature;
-        temperature[ITE] = electronTemperature;
     }
     else       //! The default is One-Temperature model.
     {
@@ -4232,29 +3868,6 @@ void MixedGas::ComputeSpeciesEnthalpy(RDouble temperature, RDouble *speciesCv, R
 
 void MixedGas::ComputeSpeciesConstantPressureSpecificHeatByEuckenFormula(RDouble *cpSpecies)
 {
-    RDouble *molecularWeightDimensional = molecularProperty->GetMolecularWeightDimensional();
-
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-
-    RDouble dimension = referenceVelocity * referenceVelocity / referenceTemperature;
-
-    for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-    {
-        workSpecies[ispecies] = 1.0;
-    }
-
-    workSpecies[0] = 0.0;
-    workSpecies[3] = 0.0;
-    workSpecies[5] = 0.0;
-
-    for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-    {
-        cpSpecies[ispecies] = (2.5 * 1.5 + workSpecies[ispecies])
-                            * (rjmk / molecularWeightDimensional[ispecies]) / dimension;
-    }
-
-    return;
 }
 
 void MixedGas::ComputeEnthalpyByPrimitive(RDouble *primitiveVariables, RDouble gama, RDouble &enthalpy, RDouble *temperatures)
@@ -4304,36 +3917,7 @@ void MixedGas::ComputeInternalEnergy(RDouble *primitiveVariables, RDouble gama, 
         }
         else      //! Multi-temperature model.
         {
-            for (int i = 0; i < this->numberOfSpecies; ++ i)
-            {
-                massFractions[i] = primitiveVariables[nm + i];
-            }
 
-            RDouble gasConstant = GetUniversalGasConstant();
-            //! To obtain the static enthalpy of the mixed gas.
-            RDouble electronPressure = 0.0, Ttr = 0.0, ceDivideMe = 0.0;
-            massReciprocal = GetMixedGasMolecularWeightReciprocalWithoutElectron(massFractions, ceDivideMe);
-
-            if (ntmodel == 2)      //! Two-Temperature Model.
-            {
-                electronPressure = density * gasConstant * vibrationTemperature * ceDivideMe;
-                //! To obtain the translation-rotation temperature where the pressure is known.
-                Ttr = (pressure - electronPressure) / (density * gasConstant * massReciprocal);
-                //! Compute the static enthalpy.
-                staticEnthalpy = ComputeMixedGasEnthalpy(Ttr, vibrationTemperature, vibrationTemperature, massFractions);
-            }
-            else if (ntmodel == 3)  //! Three-Temperature Model.
-            {
-                electronPressure = density * gasConstant * electronTemperature * ceDivideMe;
-                //! To obtain the translation-rotation temperature where the pressure is known.
-                Ttr = (pressure - electronPressure) / (density * gasConstant * massReciprocal);
-                
-                //! Compute the static enthalpy.
-                staticEnthalpy = ComputeMixedGasEnthalpy(Ttr, vibrationTemperature, electronTemperature, massFractions);
-            }
-
-            //! Compute the total internal energy.
-            totalEnergy = staticEnthalpy - pressure / density + half * squareVelocity;
         }
     }
 }
@@ -4539,21 +4123,7 @@ void MixedGas::ComputeTransportCoefficients(RDouble *primitiveVariables, RDouble
 
     if (ntmodel > 1) //Multi-temperature model.
     {
-        ComputeSpeciesViscosityWithCurveFitMethod(temperature[ITT], temperature[ITE], speciesViscosity);
 
-        GetPartitionFunctionValues(speciesViscosity, speciesMass, moleFractions, speciesWeight);
-
-        // Compute heat conductivity.
-        ComputeSpeciesTranslationAndRotationHeatConductivity(speciesViscosity, speciesConductivity);
-        ComputeMixtureByWilkeFormula(moleFractions, speciesConductivity, speciesWeight, heatConductivity[ITT]);
-
-        ComputeVibrationSpecificHeatAtConstantVolume(temperature[ITV], speciesCv);
-        ComputeSpeciesVibrationHeatConductivity(speciesViscosity, speciesCv, speciesConductivity);
-        ComputeMixtureByWilkeFormula(moleFractions, speciesConductivity, speciesWeight, heatConductivity[ITV]);
-
-        ComputeElectronSpecificHeatAtConstantVolume(temperature[ITE], speciesCv);
-        ComputeSpeciesElectronHeatConductivity(speciesViscosity, speciesCv, speciesConductivity);
-        ComputeMixtureByWilkeFormula(moleFractions, speciesConductivity, speciesWeight, heatConductivity[ITE]);
     }
     else//One-temperature model.
     {
@@ -4685,18 +4255,11 @@ void MixedGas::ComputeTransportCoefficientsR(RDouble *massFractions, RDouble *te
     heatConductivity[ITE] = 0.0;
     if (ntmodel == 2)
     {
-        for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-        {
-            heatConductivity[ITV] += speciesConductivity[ispecies] * (speciesCvvs[ispecies] + speciesCves[ispecies]);
-        }
+
     }
     else if (ntmodel == 3)
     {
-        for (int ispecies = 0; ispecies < numberOfSpecies; ++ ispecies)
-        {
-            heatConductivity[ITV] += speciesConductivity[ispecies] * speciesCvvs[ispecies];
-            heatConductivity[ITE] += speciesConductivity[ispecies] * speciesCves[ispecies];
-        }
+
     }
 }
 
@@ -4713,23 +4276,7 @@ void MixedGas::ComputeViscosity(RDouble density, RDouble *massFractionOfSpecies,
 
         if (ntmodel > 1)     //! Multi-temperature model.
         {
-            RDouble electronPressure = 0.0;
-            int nType = 0;    //! 0 for Blottner curve fit method, 1 for Lennard-Jones method.
-            if (nType == 1)
-            {
-                double electronMassFraction = 0.0;
-                if (nElectronIndex >= 0)
-                {
-                    electronMassFraction = massFractionOfSpecies[nElectronIndex];
-                }
-                RDouble gasConstant = GetUniversalGasConstant();
-                electronPressure = (density * electronTemperature * gasConstant) * (electronMassFraction / electronMass);
-                ComputeSpeciesViscosityWithLennardJonesMethod(transRotationTemperature, electronPressure, speciesViscosity);
-            }
-            else
-            {
-                ComputeSpeciesViscosityWithCurveFitMethod(transRotationTemperature, electronTemperature, speciesViscosity);
-            }
+
         }
         else     //! One-temperature model.
         {
@@ -4811,604 +4358,43 @@ void MixedGas::GetPartitionFunctionValues(RDouble *target, RDouble *speciesMass,
 
 void MixedGas::ChemicalSource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, int iCell)
 {
-    using namespace IDX;
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-
-    //! The dimensional value of control temperature of chemical reaction.
-    //RDouble dimensionalDensity, forwardReactionTemperature, backwardReactionTemperature;
-    //RDouble forwardReactionItem, backwardReactionItem, collisionItem;
-    //RDouble densityPerMass, fSum;
-
-    //! The variables is used for dimensionless processing. referenceSpeciesEquation denotes the reference values of source items \n
-    //! in the species transport equations, while referenceEnergyEquation is the reference values of source items for the energy equations.
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-
-    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-
-    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-
-    int *reactionType = stoichiometricEquation->GetChemicalReactionType();
-    bool *isCollisionFlag = stoichiometricEquation->GetCollisionReactionFlag();
-
-    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-
-    RDouble *formationRates = new RDouble [numberOfReaction];     //! Formation rates of chemical reactions.
-    RDouble *forwardRates   = new RDouble [numberOfReaction];     //! Equilibrium constant of forward reaction.
-    RDouble *backwardRates  = new RDouble [numberOfReaction];     //! Equilibrium constant of backward reaction.
-
-    RDouble trsTemperature, vibTemperature, Tf[6], Tb[6];
-    trsTemperature = MAX(temperatures[ITT][iCell] * referenceTemperature, SMALL);
-    vibTemperature = trsTemperature;
-    if (ntmodel > 1)
-    {
-        vibTemperature = MAX(temperatures[ITV][iCell] * referenceTemperature, SMALL);
-    }
-    //the control temperature of dissociation reaction, e.g. AB = A + B.
-    Tf[0] = pow(trsTemperature, parkVDPower) * pow(vibTemperature, 1.0 - parkVDPower);
-    Tb[0] = trsTemperature;
-    //the control temperature of electron collision dissociation reaction, e.g. AB + e- = A + B + e-.
-    Tf[1] = vibTemperature;
-    Tb[1] = sqrt(trsTemperature * vibTemperature);
-    //the control temperature of neutral exchange reaction, e.g. AB + C = A + BC.
-    Tf[2] = trsTemperature;
-    Tb[2] = trsTemperature;
-    //the control temperature of charge exchange reaction, e.g. AB+ + C = A+ + BC.
-    Tf[3] = trsTemperature;
-    Tb[3] = trsTemperature;
-    //the control temperature of recombination ionization reaction, e.g. A + B = AB+ + e-.
-    Tf[4] = trsTemperature;
-    Tb[4] = Tb[1];
-    //the control temperature of electron collision ionization reaction, e.g. A + e- = A+ + 2e-.
-    Tf[5] = vibTemperature;
-    Tb[5] = vibTemperature;
-
-    //! The control temperature of front reaction.
-    RDouble forwardReactionTemperature = Tf[0];
-    //! The control temperature of back reaction. it is temperature of translation and rotation.
-    RDouble backwardReactionTemperature = Tb[0];
-    RDouble dimensionalDensity = primitiveVariables[IR][iCell] * referenceDensity;
-    for (int iReaction = 0; iReaction < numberOfReaction; ++ iReaction)
-    {
-        RDouble forwardReactionItem = 1.0;
-        RDouble backwardReactionItem = 1.0;
-        RDouble collisionItem = 0.0;
-        int nType = reactionType[iReaction]; //Get the type of chemical reaction.
-        forwardReactionTemperature = Tf[nType];
-        backwardReactionTemperature = Tb[nType];
-
-        for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
-        {
-            RDouble densityPerMass = dimensionalDensity * primitiveVariables[nm + iSpecies][iCell] * speciesMassReciprocal[iSpecies];
-
-            for (int i = 0; i < forwardStoichNumber[iReaction][iSpecies]; ++ i)
-            {
-                forwardReactionItem *= densityPerMass;
-            }
-            for (int i = 0; i < backwardStoichNumber[iReaction][iSpecies]; ++ i)
-            {
-                backwardReactionItem *= densityPerMass;
-            }
-            //forwardReactionItem *= pow(densityPerMass, forwardStoichNumber[iReaction][iSpecies]);
-            //backwardReactionItem *= pow(densityPerMass, backwardStoichNumber[iReaction][iSpecies]);
-            //! The collision efficiency of species ispecies in the ireaction reaction.
-            collisionItem = collisionItem + densityPerMass * thirdBodyStoichNumber[iReaction][iSpecies]; 
-        }
-
-        if (!isCollisionFlag[iReaction])
-        {
-            collisionItem = 1.0;
-        }
-
-        //! Compute equilibrium constant of the front reaction.
-        forwardRates[iReaction] = forwardRateCoefA[iReaction] * pow(forwardReactionTemperature, forwardRateCoefB[iReaction]) * exp(-forwardRateCoefC[iReaction] / forwardReactionTemperature);
-        //! Compute equilibrium constant of the reverse reaction.
-        backwardRates[iReaction] = backwardRateCoefA[iReaction] * pow(backwardReactionTemperature, backwardRateCoefB[iReaction]) * exp(-backwardRateCoefC[iReaction] / backwardReactionTemperature);
-        //! Formation rate of the ireaction reaction.
-        formationRates[iReaction] = (forwardRates[iReaction] * forwardReactionItem - backwardRates[iReaction] * backwardReactionItem) * collisionItem;
-    }
-
-    for (int iSpecies = 0; iSpecies < numberOfSpecies; ++ iSpecies)
-    {
-        RDouble fSum = 0.0;
-        for (int iReaction = 0; iReaction < numberOfReaction; ++ iReaction)
-        {
-            fSum += formationRates[iReaction] * (backwardStoichNumber[iReaction][iSpecies] - forwardStoichNumber[iReaction][iSpecies]);
-        }
-        //! Compute the source terms of the specified species.
-        chemicalSourceTerms[iSpecies][iCell] = speciesMass[iSpecies] * fSum * cellVolume[iCell] * referenceSpeciesEquation;
-    }
-
-    delete [] formationRates;
-    delete [] forwardRates;
-    delete [] backwardRates;
 }
 
 void MixedGas::EnergySource(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble **energySourceTerms, int nCellNumber)
 {
-    using namespace IDX;
-    int nEquation = nl + ntmodel;
-    RDouble temperature[3];
-    //! The following variable is used to store the source items of species transport equations.
-    RDouble *omega = new RDouble[numberOfSpecies];
-    RDouble *primitiveVars = new RDouble[nEquation];
-
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceSpeciesEquation / pow(referenceVelocity, 2);
-
-    //! Compute source term of energy equations.
-    RDouble vibrationSource = 0.0, electronSource = 0.0;
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        //! Obtain the temperature.
-        for (int it = 0; it < ntmodel; ++ it)
-        {
-            temperature[it] = temperatures[it][iCell];
-        }
-        if (ntmodel == 1)
-        {
-            temperature[ITV] = temperature[ITT];
-            temperature[ITE] = temperature[ITT];
-        }
-        else if (ntmodel == 2)
-        {
-            temperature[ITE] = temperature[ITV];
-        }
-
-        //! Obtain the primary variables.
-        for (int s = 0; s < nEquation; ++ s)
-        {
-            primitiveVars[s] = primitiveVariables[s][iCell];
-        }
-        //! Translate the chemical source term to the dimensional value.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            omega[s] = chemicalSourceTerms[s][iCell] / (cellVolume[iCell] * referenceSpeciesEquation);
-        }
-
-        //! Compute source term of the vibration energy equation, and the variables in prim are non-dimensional value.
-        if (ntmodel == 2)
-        {
-            vibrationSource = ComputeVibrationAndElectronEnergySourceTerm(primitiveVars, omega, temperature);
-            energySourceTerms[0][iCell] = referenceEnergyEquation * vibrationSource * cellVolume[iCell];
-        }
-        else if (ntmodel == 3)
-        {
-            vibrationSource = ComputeVibrationEnergySourceTerm(primitiveVars, omega, temperature);
-            electronSource  = ComputeElectronEnergySourceTerm(primitiveVars, omega, temperature);
-            energySourceTerms[0][iCell] = referenceEnergyEquation * vibrationSource * cellVolume[iCell];
-            energySourceTerms[1][iCell] = referenceEnergyEquation * electronSource * cellVolume[iCell];
-        }
-    }
-
-    delete [] omega;
-    delete [] primitiveVars;
 }
 
 RDouble MixedGas::ComputeVibrationAndElectronEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
 {
-    using namespace IDX;
-    //! Obtain the reference values.
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSquareVelocity = referenceVelocity * referenceVelocity;
-    //! Obtain the dimensional value of temperature.
-    RDouble Ttr = temperature[ITT] * referenceTemperature;
-    RDouble Tve = temperature[ITV] * referenceTemperature;
-    RDouble density = primitiveVariables[IR] * referenceDensity;
-    RDouble pressure = primitiveVariables[IP] * referenceDensity * referenceSquareVelocity;
-
-    RDouble *massFraction = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    RDouble *collisionArea = new RDouble[numberOfSpecies];
-    //! To obtain the mass fraction of species.
-    for (int i = 0; i < numberOfSpecies; ++ i)
-    {
-        massFraction[i] = primitiveVariables[nm + i];
-    }
-    //! Compute the vibration energy.
-    this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-    //! Compute the vibration energy computed by translation-rotation temperature.
-    this->ComputeDimensionalVibrationEnergy(temperature[ITT], vibrationEnergyStar1);
-    //! Compute the electron energy.
-    this->ComputeDimensionalElectronEnergy(temperature[ITV], electronEnergy);
-
-    //! nTypes denotes the types of species which is used to identiy the electron, monatom and polyatom.
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    //! Obtain the molecular weights of species.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    //! Compute the relaxation time of translation and vibration.
-    GetTranslationAndVibrationRelaxationTime(thermodynamicProperties, massFraction, speciesMass, Ttr, pressure, density, transVibrationTime);
-
-    //! Compute the electron pressure.
-    RDouble gasConstant = rjmk;
-    RDouble electronPressure = 0.0, electronDensity = 0.0, Ne = 0.0;
-    if (this->nElectronIndex >= 0)
-    {
-        electronDensity = density * massFraction[nElectronIndex];     //! Density of electron.
-        //! Compute the number density of electron.
-        Ne = AVOGADRO_CONSTANT * electronDensity / speciesMass[nElectronIndex];
-        //! Compute the pressure of electron.
-        electronPressure = electronDensity * Tve * gasConstant / speciesMass[nElectronIndex];
-    }
-    //! Compute the effective collision cross-sectional areas of each heavy species.
-    GetEffectiveCollisionCrossSectionalArea(thermodynamicProperties, Tve, Ne, collisionArea);
-
-    //! Compute source term of energy term.
-    RDouble vibrationOmega = 0.0, fes = 0.0, Ns = 0.0, coef = 0.0, speciesDensity = 0.0;
-    RDouble heatVelocity = sqrt(8 * gasConstant * Tve / (PI * this->electronMassDimension));
-    coef = 3.0 * gasConstant * electronDensity * (Ttr - Tve);
-
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)   //! Ignore electron.
-    {
-        speciesDensity = density * massFraction[s];
-        Ns = AVOGADRO_CONSTANT * speciesDensity / speciesMass[s];    //! Number density of species.
-        fes = Ns * collisionArea[s] * heatVelocity;       //! Frequency of collision.
-
-        //! Compute exchange term of translation-electron energy.
-        vibrationOmega += coef * fes / speciesMass[s];
-
-        if (thermodynamicProperties[s].nType < 2)      //! Ignore mono-atom species.
-        {
-            continue;
-        }
-
-        //! Compute exchange term of translation-vibration energy.
-        vibrationOmega += speciesDensity * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-
-        //! Compute couple term of chemical reaction and vibration-electron energy.
-        vibrationOmega += omega[s] * (vibrationEnergy[s] + electronEnergy[s]);
-    }
-
-    delete [] massFraction;
-    delete [] electronEnergy;
-    delete [] vibrationEnergy;
-    delete [] vibrationEnergyStar1;
-    delete [] transVibrationTime;
-    delete [] collisionArea;
-    return vibrationOmega;       //! Return the source item of vibration energy equation.
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeVibrationEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
 {
-    using namespace IDX;
-    //! Obtain the reference values.
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSquareVelocity = referenceVelocity * referenceVelocity;
-    RDouble Ttr = temperature[ITT] * referenceTemperature;
-    RDouble Tv  = temperature[ITV] * referenceTemperature;
-    RDouble Te  = temperature[ITE] * referenceTemperature;
-    RDouble density = primitiveVariables[IR] * referenceDensity;
-    RDouble pressure = primitiveVariables[IP] * referenceDensity * referenceSquareVelocity;
-
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *energyStar1 = new RDouble[numberOfSpecies];
-    RDouble *energyStar2 = new RDouble[numberOfSpecies];
-
-    RDouble *massFraction = new RDouble[numberOfSpecies];
-    RDouble *tvs = new RDouble[numberOfSpecies];
-    RDouble *tes = new RDouble[numberOfSpecies];
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFraction[s] = primitiveVariables[nm + s];
-    }
-
-    //! Compute the vibration energy. This is non-dimensional value.
-    this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-    //! The vibration energies computed by translation-rotation temperature and electron temperature, respectively.
-    this->ComputeDimensionalVibrationEnergy(temperature[ITT], energyStar1);
-    this->ComputeDimensionalVibrationEnergy(temperature[ITE], energyStar2);
-
-    //! nTypes denotes the types of species which is used to identity the electron, monoatom and polyatom.
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    //! Obtain the molecular weights of species.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-
-    //! Compute the relaxation time of translation and vibration.
-    GetTranslationAndVibrationRelaxationTime(thermodynamicProperties, massFraction, speciesMass, Ttr, pressure, density, tvs);
-
-    //! Compute the electron pressure.
-    RDouble gasConstant = rjmk;
-    RDouble electronPressure = 0.0, electronDensity = 0.0;
-    if (this->nElectronIndex >= 0)
-    {
-        electronDensity = density * massFraction[nElectronIndex];
-        electronPressure = electronDensity * gasConstant * Te / speciesMass[nElectronIndex];
-    }
-    //! Compute the relaxation time of electron and vibration.
-    GetElectronAndVibrationRelaxationTime(thermodynamicProperties, electronPressure, Te, tes);
-
-    RDouble vibrationOmega = 0.0;
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-    {
-        if (thermodynamicProperties[s].nType < 2)
-        {
-            continue;
-        }
-        //! The transport item of translation and vibration energy.
-        vibrationOmega += density * massFraction[s] * (energyStar1[s] - vibrationEnergy[s]) / tvs[s];
-
-        //! The coupling term of chemical reaction and vibration energy.
-        vibrationOmega += omega[s] * vibrationEnergy[s];
-    }
-    //! The transport item of vibration and electron energy.Only consider the electric-vibrational effects of Nitrogen.
-    if (nNitrogenIndex >= 0)
-    {
-        vibrationOmega += density * massFraction[nNitrogenIndex] * (energyStar2[nNitrogenIndex] - vibrationEnergy[nNitrogenIndex]) / tes[nNitrogenIndex];
-    }
-
-    delete [] tvs;
-    delete [] tes;
-    delete [] energyStar1;
-    delete [] energyStar2;
-    delete [] vibrationEnergy;
-    delete [] massFraction;
-    return vibrationOmega;     //! Return the source item of vibration energy equation.
+    return 0.0;
 }
 
 void MixedGas::GetTranslationAndVibrationRelaxationTime(Thermo_Param *thermodynamicProperties, RDouble *massFraction,
                                                         RDouble *speciesMass, RDouble temperature, RDouble pressure, RDouble density, RDouble *tvs)
 {
-    RDouble tvsMW, tvsP;
-    RDouble NA = AVOGADRO_CONSTANT;      //! Avogadro constant(mol-1).
-    RDouble P0 = STANDARD_PRESSURE;      //! The standard pressure (Pa).
-
-    RDouble nSum = 0.0;
-    RDouble *particle = new RDouble[numberOfSpecies];
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        //! Compute number density of particle.
-        particle[i] = density * massFraction[i] * NA / speciesMass[i];
-        if (thermodynamicProperties[i].nType > 0)
-        {
-            nSum += particle[i];
-        }
-    }
-
-    RDouble coefAsi, coefBsi, coefMsi;
-    for (int s = 0; s < this->numberOfSpecies; ++ s)
-    {
-        if (thermodynamicProperties[s].nType < 1)
-        {
-            tvs[s] = 1.0e-30;
-            continue;
-        }
-
-        RDouble fSum = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        {
-            if (thermodynamicProperties[i].nType < 1)
-            {
-                continue;
-            }
-            coefMsi = 1000.0 * (speciesMass[i] * speciesMass[s]) / (speciesMass[i] + speciesMass[s]);
-            coefAsi = 1.16e-3 * sqrt(coefMsi) * pow(thermodynamicProperties[s].Tvs.Tv[0], 4.0 / 3.0);
-            coefBsi = 1.50e-2 * sqrt(sqrt(static_cast<float>(coefMsi)));
-            fSum += particle[i] * exp(coefAsi * (pow(temperature, -1.0 / 3.0) - coefBsi) - 18.42);
-        }
-        tvsMW = (P0 / pressure) * (fSum / nSum);
-        tvsP = particle[s] * 3.0e-21 * pow(50000.0 / temperature, 2) * sqrt(8.0 * rjmk * temperature / (PI * speciesMass[s]));
-        tvsP = 1.0 / tvsP;
-
-        tvs[s] = tvsMW + tvsP;
-    }
-
-    delete [] particle;
 }
 
 void MixedGas::GetTranslationAndVibrationRelaxationTimeR(Thermo_Param *thermodynamicProperties, RDouble *massFraction,
                                                         RDouble *speciesMass, RDouble temperature, RDouble pressure, RDouble density, RDouble *tvs)
 {
-    RDouble tvsMW, tvsP;
-    RDouble NA = AVOGADRO_CONSTANT;      //! Avogadro constant(mol-1).
-    RDouble P0 = STANDARD_PRESSURE;      //! The standard pressure (Pa).
-
-    RDouble nSum = 0.0;
-    RDouble *particle = speciesConductivity;   //be carefull
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        //! Compute number density of particle.
-        particle[i] = density * massFraction[i] * NA / speciesMass[i];
-        if (thermodynamicProperties[i].nType > 0)
-        {
-            nSum += particle[i];
-        }
-    }
-
-    RDouble coefAsi, coefBsi, coefMsi;
-    for (int s = 0; s < this->numberOfSpecies; ++ s)
-    {
-        if (thermodynamicProperties[s].nType < 1)
-        {
-            tvs[s] = 1.0e-30;
-            continue;
-        }
-
-        RDouble fSum = 0.0;
-        for (int i = 0; i < this->numberOfSpecies; ++ i)
-        {
-            if (thermodynamicProperties[i].nType < 1)
-            {
-                continue;
-            }
-            coefMsi = 1000.0 * (speciesMass[i] * speciesMass[s]) / (speciesMass[i] + speciesMass[s]);
-            coefAsi = 1.16e-3 * sqrt(static_cast<RealData>(coefMsi)) * pow(static_cast<RealData>(thermodynamicProperties[s].Tvs.Tv[0]), static_cast<RealData>(4.0 / 3.0));
-            coefBsi = 1.50e-2 * sqrt(sqrt(static_cast<RealData>(coefMsi)));
-            fSum += particle[i] * exp(static_cast<RealData>(coefAsi * (pow(static_cast<RealData>(temperature), static_cast<RealData>(-1.0 / 3.0)) - coefBsi) - 18.42));
-        }
-        tvsMW = (P0 / pressure) * (fSum / nSum);
-        tvsP = 50000.0 / temperature;
-        tvsP = particle[s] * 3.0e-21 * tvsP* tvsP * sqrt(static_cast<RealData>(8.0 * rjmk * temperature / (PI * speciesMass[s])));
-        tvsP = 1.0 / tvsP;
-
-        tvs[s] = tvsMW + tvsP;
-    }
 }
 
 void MixedGas::GetElectronAndVibrationRelaxationTime(Thermo_Param *thermodynamicProperties, RDouble electronPressure, RDouble electronTemperature, RDouble *tes)
 {
-    if (nNitrogenIndex < 0)
-    {
-        return;
-    }
-    //! Only consider the electric-vibrational effects of Nitrogen.
-    RDouble kB = BOLTZMANN_CONSTANT;      //! Boltzmann constant.
-    RDouble ce = ELECTRIC_QUANTITY;       //! The electric quantity.
-
-    //! Compute the vibration excitation coefficient.
-    RDouble fx = kB * electronTemperature / ce;
-    //! Obtain the vibration excitation coefficient.
-    RDouble kevj, kevj10 = 0.0;
-
-    RDouble *av = this->CurveFits->GetNitrogenVibrationalExcitationRateA();
-    RDouble *bv = this->CurveFits->GetNitrogenVibrationalExcitationRateB();
-    RDouble *cv = this->CurveFits->GetNitrogenVibrationalExcitationRateC();
-
-    for (int i = 0; i < 10; ++ i)
-    {
-        kevj = 1.0e-15 * av[i] * pow(fx, -1.5) * exp(bv[i] / fx + cv[i]);
-        kevj10 += kevj * pow(static_cast <RDouble> (i + 1), 2);
-    }
-
-    //! Compute the electric-vibrational effects of Nitrogen.
-    tes[nNitrogenIndex] = kB * electronTemperature / (electronPressure + SMALL);
-    tes[nNitrogenIndex] /= 0.5 * kevj10 * (1.0 - exp(-thermodynamicProperties[nNitrogenIndex].Tvs.Tv[0] / electronTemperature));
 }
 
 RDouble MixedGas::ComputeElectronEnergySourceTerm(RDouble *primitiveVariables, RDouble *omega, RDouble *temperature)
 {
-    using namespace IDX;
-    //! Obtain the reference values.
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSquareVelocity = referenceVelocity * referenceVelocity;
-    RDouble Ttr = temperature[ITT] * referenceTemperature;
-    RDouble Tv  = temperature[ITV] * referenceTemperature;
-    RDouble Te  = temperature[ITE] * referenceTemperature;
-    RDouble density = primitiveVariables[IR] * referenceDensity;
-    RDouble pressure = primitiveVariables[IP] * referenceDensity * referenceSquareVelocity;
-
-    RDouble *energyStar2 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *massFraction = new RDouble[numberOfSpecies];
-    RDouble *tes = new RDouble[numberOfSpecies];
-    RDouble *sigma = new RDouble[numberOfSpecies];
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFraction[s] = primitiveVariables[nm + s];
-    }
-
-    //! Obtain the vibration energy computed by the electron temperature.
-    this->ComputeDimensionalVibrationEnergy(temperature[ITE], energyStar2);
-    //! Compute the vibration and electron energy. Both are the non-dimensional value.
-    this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-    //! Compute the electron energy.
-    this->ComputeDimensionalElectronEnergy(temperature[ITE], electronEnergy);
-
-    //! nTypes denotes the types of species which is used to identiy the electron, monatom and polyatom.
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-
-    // Compute the electron pressure.
-    RDouble gasConstant = rjmk;
-    RDouble electronPressure = 0.0, Ne = 0.0, electronDensity = 0.0;
-    if (this->nElectronIndex >= 0)
-    {
-        electronDensity = density * massFraction[nElectronIndex];
-        //! Compute the number density of electron.
-        Ne = AVOGADRO_CONSTANT * electronDensity / speciesMass[nElectronIndex];
-        //! Compute the pressure of electron.
-        electronPressure = electronDensity * Te * gasConstant / speciesMass[nElectronIndex];
-    }
-
-    //! Compute the relaxation time of electron and vibration.
-    GetElectronAndVibrationRelaxationTime(thermodynamicProperties, electronPressure, Te, tes);
-    //! Compute the effective collision cross-sectional areas of each heavy species.
-    GetEffectiveCollisionCrossSectionalArea(thermodynamicProperties, Te, Ne, sigma);
-
-    RDouble electronOmega = 0.0, fes = 0.0, Ns = 0.0, speciesDensity = 0.0;
-    RDouble heatVelocity = sqrt(8.0 * gasConstant * Te / (PI * this->electronMassDimension));
-    RDouble coef = 3.0 * electronDensity * gasConstant * (Ttr - Te);
-
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-    {
-        speciesDensity = density * massFraction[s];
-        //! Compute the number density of the current species.
-        Ns = AVOGADRO_CONSTANT * speciesDensity / speciesMass[s];
-        //! Compute the frequence of effective collision between the electron and s-th heavy particle.
-        fes = Ns * sigma[s] * heatVelocity; //frequency of collision.
-
-        //! Compute the exchange term of translation and electron energy.
-        electronOmega += coef * fes / speciesMass[s];
-
-        //! Compute the couple term of chemical reaction and electron energy.
-        electronOmega += omega[s] * electronEnergy[s];
-    }
-    //! The transport item of vibration and electron energy.Only consider the electric-vibrational effects of Nitrogen.
-    if (nNitrogenIndex >= 0)
-    {
-        electronOmega -= density * massFraction[nNitrogenIndex] * (energyStar2[nNitrogenIndex] - vibrationEnergy[nNitrogenIndex]) / tes[nNitrogenIndex];
-    }
-    delete [] energyStar2;
-    delete [] vibrationEnergy;
-    delete [] electronEnergy;
-    delete [] massFraction;
-    delete [] tes;
-    delete [] sigma;
-    return electronOmega;     //! Return the source item of electron energy equation.
+    return 0.0;
 }
 
 void MixedGas::GetEffectiveCollisionCrossSectionalArea(Thermo_Param *thermodynamicProperties, RDouble electronTemperature, RDouble electronNumberDensity, RDouble *sigma)
 {
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    RDouble ce = ELECTRIC_QUANTITY;       //! Obtain the electric quantity.
-    RDouble kB = BOLTZMANN_CONSTANT;      //! Obtain the Boltzmann constant. 1 J/K = 1 C*V/K.
-    RDouble eps = VACUUM_PERMITTIVITY;    //! Obtain the permittivity of vacuum.
-
-    RDouble *aes = CurveFits->GetEffectiveCollisionCrossSectionalAreaCurveFitsA();
-    RDouble *bes = CurveFits->GetEffectiveCollisionCrossSectionalAreaCurveFitsB();
-    RDouble *ces = CurveFits->GetEffectiveCollisionCrossSectionalAreaCurveFitsC();
-    RDouble T1 = electronTemperature;
-    RDouble T2 = T1 * T1;
-
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)    //! Ignore the electron.
-    {
-        if (ionType[s] == 0)        //! The neutral particle.
-        {
-            sigma[s] = aes[s] + bes[s] * T1 + ces[s] * T2;
-        }
-
-        if (ionType[s] > 0)      //! The positive particle or ion.
-        {
-            RDouble tmp = (ce * ce) / (eps * kB * electronTemperature);
-            //! Compute the scattering factor of 90-degree angle.
-            RDouble b0 = ionType[s] * tmp / (12.0 * PI);
-            //! Compute the radius of Debye.
-            RDouble rD = sqrt(1.0 / tmp / (electronNumberDensity + SMALL));
-
-            sigma[s] = (8.0 * PI / 3.0) * (b0 * b0) * log(1.0 + pow(rD / b0, 2));
-        }
-    }
 }
 
 void MixedGas::ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RDouble **srs, int iCell)
@@ -5590,2860 +4576,74 @@ void MixedGas::ChemicalSpectrumRadius(RDouble **q, RDouble **t, RDouble *vol, RD
 
 void MixedGas::ComputeChemicalSourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-
-    //! For source term in species transport equation.
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble reference1 = referenceDensity * referenceSpeciesEquation;
-    RDouble reference2 = referenceVelocity * reynoldsReferenceLengthDimensional;
-
-    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-
-    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-
-    //! Record the coefficients in the chemical reactions.
-    RDouble *forwardRates = new RDouble [numberOfReaction];
-    RDouble *backwardRates = new RDouble [numberOfReaction];
-    RDouble *collisionRates = new RDouble [numberOfReaction];
-    RDouble *energy = new RDouble [numberOfSpecies];
-    RDouble *massFraction = new RDouble [numberOfSpecies];
-    RDouble *densityMassFraction = new RDouble [numberOfSpecies];
-    int nEquation = this->nm + this->numberOfSpecies + this->ntmodel - 1;
-    RDouble **partialValues = NewPointer2 <RDouble> (numberOfReaction, nEquation);
-
-    //! The dimensional value of control temperature of chemical reaction.
-    RDouble forwardReactionTemperature, backwardReactionTemperature;
-    RDouble densityPerMass, density, mixGasCv, kf, kb, forwardEnergy, backwardEnergy;
-    RDouble gamaj = 0.0, Drf = 0.0, Drb = 0.0, phir = 0.0, theta[3] = {0.0}, coefA = 0.0;
-    int electronIndex = numberOfSpecies - 1; // The index of electron in the array of species.
-    if (nElectronIndex >= 0)
-    {
-        electronIndex = nElectronIndex;
-    }
-
-    //! Compute the elements of Jacobian matrix.
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        //! The control temperature of front reaction.
-        forwardReactionTemperature = MAX(temperatures[ITT][iCell] * referenceTemperature, SMALL);
-        //! The control temperature of back reaction. it is temperature of translation and rotation.
-        backwardReactionTemperature = forwardReactionTemperature;
-        if (ntmodel > 1)
-        {
-            forwardReactionTemperature = pow(forwardReactionTemperature, 0.6) * pow(temperatures[ITV][iCell] * referenceTemperature, 0.4);
-        }
-
-        density = primitiveVariables[IR][iCell] * referenceDensity;
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFraction[s] = primitiveVariables[nm + s][iCell];
-            densityMassFraction[s] = MAX(SMALL, density * massFraction[s]);
-        }
-
-        if (ntmodel == 1)      //! One-Temperature Model.
-        {
-            //! Compute the specific heat at constant volume of each species.
-            this->ComputeSpeciesConstantVolumeSpecificHeatDimensional(temperatures[ITT][iCell], energy);
-            this->ComputeMixtureByMassFraction(massFraction, energy, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-            {
-                energy[s] = energy[s] * forwardReactionTemperature;
-            }
-        }
-        else         //! Multi-Temperature Model.
-        {
-            // Compute the specific heat at constant volume of each species.
-            this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(energy);
-            this->ComputeMixtureByMassFraction(massFraction, energy, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-            {
-                energy[s] = energy[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
-            }
-        }
-        forwardEnergy = density * mixGasCv * forwardReactionTemperature;
-        backwardEnergy = density * mixGasCv * backwardReactionTemperature;
-
-        for (int r = 0; r < numberOfReaction; ++ r)
-        {
-            forwardRates[r] = 1.0;
-            backwardRates[r] = 1.0;
-            collisionRates[r] = 0.0;
-            for (int s = 0; s < numberOfSpecies; ++ s)
-            {
-                densityPerMass = densityMassFraction[s] * speciesMassReciprocal[s];
-                for (int i = 0; i < forwardStoichNumber[r][s]; ++ i)
-                {
-                    forwardRates[r] *= densityPerMass;
-                }
-                for (int i = 0; i < backwardStoichNumber[r][s]; ++ i)
-                {
-                    backwardRates[r] *= densityPerMass;
-                }
-                collisionRates[r] += densityPerMass * thirdBodyStoichNumber[r][s];
-            }
-            if (fabs(collisionRates[r]) < SMALL) // RCr
-            {
-                collisionRates[r] = 1.0;
-            }
-
-            //! Compute equilibrium constant of the front reaction.
-            kf = forwardRateCoefA[r] * pow(forwardReactionTemperature, forwardRateCoefB[r]) * exp(-forwardRateCoefC[r] / forwardReactionTemperature);
-            //! Compute equilibrium constant of the reverse reaction.
-            kb = backwardRateCoefA[r] * pow(backwardReactionTemperature, backwardRateCoefB[r]) * exp(-backwardRateCoefC[r] / backwardReactionTemperature);
-            forwardRates[r] = kf * forwardRates[r];     //! RAr.
-            backwardRates[r] = kb * backwardRates[r];   //! RBr.
-
-            Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
-            Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
-
-            //! Compute the partial derivatives to each species.
-            for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-            {
-                //! One-Temperature Model.
-                coefA = ionType[s] * speciesMassReciprocal[s] * this->electronMassDimension;
-                gamaj = energy[nLastSpeciesIndex] - energy[s] + coefA * (energy[nLastSpeciesIndex] - energy[electronIndex]);
-
-                theta[0]  = forwardStoichNumber[r][s] / densityMassFraction[s] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-                theta[0] += coefA * (forwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-                theta[0] += Drf * gamaj;
-                theta[0]  = forwardRates[r] * theta[0];
-
-                theta[1]  = backwardStoichNumber[r][s] / densityMassFraction[s] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-                theta[1] += coefA * (backwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-                theta[1] += Drb * gamaj;
-                theta[1]  = backwardRates[r] * theta[1];
-
-                theta[2]  = thirdBodyStoichNumber[r][s] * speciesMassReciprocal[s] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex];
-                theta[2] += coefA * (thirdBodyStoichNumber[r][electronIndex] * speciesMassReciprocal[electronIndex] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex]);
-
-                //! Compute the partial derivatives to the species j.
-                partialValues[r][nm + s] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-            }
-            //! Compute the partial derivative to vibration and electron energy.
-            for (int it = 1; it < ntmodel; ++ it)
-            {
-                phir = (Drf * forwardRates[r] - Drb * backwardRates[r]) * collisionRates[r]; // (dRr / dEv).
-                partialValues[r][nl + it] = -phir;
-            }
-        }
-
-        //! Compute the chemical source term.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            chemicalSourceTerms[s][iCell] = 0.0;
-            for (int r = 0; r < numberOfReaction; ++ r)
-            {
-                chemicalSourceTerms[s][iCell] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * (forwardRates[r] - backwardRates[r]) * collisionRates[r];
-            }
-            chemicalSourceTerms[s][iCell] *= referenceSpeciesEquation * speciesMass[s] * cellVolume[iCell];
-        }
-
-        //! Construct elements of the Jacobian matrix of the chemical source term.
-        for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-        {
-            sourceDerivatives[s][nm + s][iCell] = 0.0;
-            for (int r = 0; r < numberOfReaction; ++ r)
-            {
-                sourceDerivatives[s][nm + s][iCell] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nm + s]; // (dRr / dcs).
-            }
-            sourceDerivatives[s][nm + s][iCell] *= reference1 * speciesMass[s] * cellVolume[iCell];// Translate to the nondimensional values.
-        }
-        for (int it = 1; it < ntmodel; ++ it)      //! Compute the partial derivatives of species source term to the vibration energy.
-        {
-            for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-            {
-                sourceDerivatives[s][nl + it][iCell] = 0.0;
-                for (int r = 0; r < numberOfReaction; ++ r)
-                {
-                    sourceDerivatives[s][nl + it][iCell] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nl + it]; // (dRr / dEv).
-                }
-                sourceDerivatives[s][nl + it][iCell] *= reference2 * speciesMass[s] * cellVolume[iCell];
-            }
-        }
-    }
-
-    delete [] energy;
-    delete [] forwardRates;
-    delete [] backwardRates;
-    delete [] collisionRates;
-    delete [] massFraction;
-    delete [] densityMassFraction;
-    DelPointer2(partialValues);
 }
 
 void MixedGas::ComputeChemicalSourceJacobian(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
 {
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-
-    //! For source term in species transport equation.
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble reference1 = referenceDensity * referenceSpeciesEquation;
-    RDouble reference2 = referenceVelocity * reynoldsReferenceLengthDimensional;
-
-    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-
-    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-
-    //! Record the coefficients in the chemical reactions.
-    RDouble *forwardRates = new RDouble [numberOfReaction];
-    RDouble *backwardRates = new RDouble [numberOfReaction];
-    RDouble *collisionRates = new RDouble [numberOfReaction];
-    RDouble *energy = new RDouble [numberOfSpecies];
-    RDouble *densityMassFraction = new RDouble [numberOfSpecies];
-    int nEquation = this->nm + this->numberOfSpecies + this->ntmodel - 1;
-    RDouble **partialValues = NewPointer2 <RDouble> (numberOfReaction, nEquation);
-
-    //! The dimensional value of control temperature of chemical reaction;
-    RDouble forwardReactionTemperature, backwardReactionTemperature;
-    RDouble densityPerMass, density, mixGasCv, kf, kb, forwardEnergy, backwardEnergy;
-    RDouble gamaj = 0.0, Drf = 0.0, Drb = 0.0, phir = 0.0, theta[3] = {0.0}, coefA = 0.0;
-    int electronIndex = numberOfSpecies - 1; // The index of electron in the array of species.
-    if (nElectronIndex >= 0)
-    {
-        electronIndex = nElectronIndex;
-    }
-
-    //! Compute the elements of Jacobian matrix.
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-
-    //! The control temperature of front reaction.
-    forwardReactionTemperature = MAX(temperatures[ITT] * referenceTemperature, SMALL);
-    //! The control temperature of back reaction. it is temperature of translation and rotation.
-    backwardReactionTemperature = forwardReactionTemperature;
-    if (ntmodel > 1)
-    {
-        forwardReactionTemperature = pow(forwardReactionTemperature, 0.6) * pow(temperatures[ITV] * referenceTemperature, 0.4);
-    }
-
-    density = primitiveVariables[IR] * referenceDensity;
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFractions[s] = primitiveVariables[nm + s];
-        densityMassFraction[s] = MAX(SMALL, density * massFractions[s]);
-    }
-
-    if (ntmodel == 1)      //! One-Temperature Model.
-    {
-        //! Compute the specific heat at constant volume of each species.
-        this->ComputeSpeciesConstantVolumeSpecificHeatDimensional(temperatures[ITT], energy);
-        this->ComputeMixtureByMassFraction(massFractions, energy, mixGasCv);
-        for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-        {
-            energy[s] = energy[s] * forwardReactionTemperature;
-        }
-    }
-    else         //! Multi-Temperature Model.
-    {
-        // Compute the specific heat at constant volume of each species.
-        this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(energy);
-        this->ComputeMixtureByMassFraction(massFractions, energy, mixGasCv);
-        for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-        {
-            energy[s] = energy[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
-        }
-    }
-    forwardEnergy = density * mixGasCv * forwardReactionTemperature;
-    backwardEnergy = density * mixGasCv * backwardReactionTemperature;
-
-    for (int r = 0; r < numberOfReaction; ++ r)
-    {
-        forwardRates[r] = 1.0;
-        backwardRates[r] = 1.0;
-        collisionRates[r] = 0.0;
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            densityPerMass = densityMassFraction[s] * speciesMassReciprocal[s];
-            for (int i = 0; i < forwardStoichNumber[r][s]; ++ i)
-            {
-                forwardRates[r] *= densityPerMass;
-            }
-            for (int i = 0; i < backwardStoichNumber[r][s]; ++ i)
-            {
-                backwardRates[r] *= densityPerMass;
-            }
-            collisionRates[r] += densityPerMass * thirdBodyStoichNumber[r][s];
-        }
-        if (fabs(collisionRates[r]) < SMALL) // RCr
-        {
-            collisionRates[r] = 1.0;
-        }
-
-        //! Compute equilibrium constant of the front reaction.
-        kf = forwardRateCoefA[r] * pow(forwardReactionTemperature, forwardRateCoefB[r]) * exp(-forwardRateCoefC[r] / forwardReactionTemperature);
-        //! Compute equilibrium constant of the reverse reaction.
-        kb = backwardRateCoefA[r] * pow(backwardReactionTemperature, backwardRateCoefB[r]) * exp(-backwardRateCoefC[r] / backwardReactionTemperature);
-        forwardRates[r] = kf * forwardRates[r];     //! RAr.
-        backwardRates[r] = kb * backwardRates[r];   //! RBr.
-
-        Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
-        Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
-
-        //! Compute the partial derivatives to each species, (dRr / dCs).
-        for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-        {
-            //! One-Temperature Model.
-            coefA = ionType[s] * speciesMassReciprocal[s] * this->electronMassDimension;
-            gamaj = energy[nLastSpeciesIndex] - energy[s] + coefA * (energy[nLastSpeciesIndex] - energy[electronIndex]);
-
-            theta[0]  = forwardStoichNumber[r][s] / densityMassFraction[s] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-            theta[0] += coefA * (forwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-            theta[0] += Drf * gamaj;
-            theta[0]  = forwardRates[r] * theta[0];
-
-            theta[1]  = backwardStoichNumber[r][s] / densityMassFraction[s] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-            theta[1] += coefA * (backwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-            theta[1] += Drb * gamaj;
-            theta[1]  = backwardRates[r] * theta[1];
-
-            theta[2]  = thirdBodyStoichNumber[r][s] * speciesMassReciprocal[s] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex];
-            theta[2] += coefA * (thirdBodyStoichNumber[r][electronIndex] * speciesMassReciprocal[electronIndex] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex]);
-
-            //! Compute the partial derivatives to the species j. (dRr / dCs).
-            partialValues[r][nm + s] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-        }
-
-        //! Compute the partial derivative to vibration and electron energy.
-        for (int it = 1; it < ntmodel; ++ it)
-        {
-            phir = (Drf * forwardRates[r] - Drb * backwardRates[r]) * collisionRates[r]; // (dRr / dEv).
-            partialValues[r][nl + it] = -phir;
-        }
-    }
-
-    //! Compute the chemical source term.
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        chemicalSourceTerms[s] = 0.0;
-        for (int r = 0; r < numberOfReaction; ++ r)
-        {
-            chemicalSourceTerms[s] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * (forwardRates[r] - backwardRates[r]) * collisionRates[r];
-        }
-        chemicalSourceTerms[s] *= referenceSpeciesEquation * speciesMass[s] * cellVolume;
-    }
-
-    //! Construct elements of the Jacobian matrix of the chemical source term.
-    for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-    {
-        sourceDerivatives[s][s] = 0.0;
-        for (int r = 0; r < numberOfReaction; ++ r)
-        {
-            sourceDerivatives[s][s] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nm + s]; // (dRr / dcs).
-        }
-        sourceDerivatives[s][s] *= reference1 * speciesMass[s] * cellVolume;// Translate to the nondimensional values.
-    }
-
-    for (int it = 1; it < ntmodel; ++ it)      //! Compute the partial derivatives of species source term to the vibration energy.
-    {
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            sourceDerivatives[s][numberOfSpecies + it - 1] = 0.0;
-            for (int r = 0; r < numberOfReaction; ++ r)
-            {
-                sourceDerivatives[s][numberOfSpecies + it - 1] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nl + it]; // (dRr / dEv).
-            }
-            sourceDerivatives[s][numberOfSpecies + it - 1] *= reference2 * speciesMass[s] * cellVolume;
-        }
-    }
-
-    delete [] energy;
-    delete [] forwardRates;
-    delete [] backwardRates;
-    delete [] collisionRates;
-    delete [] densityMassFraction;
-    DelPointer2(partialValues);
 }
 
 void MixedGas::ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
-    if (nIsChemicalFreeze > 0)
-    {
-        for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-        {
-            for (int s = 0; s < numberOfSpecies; ++ s)
-            {
-                chemicalSourceTerms[s][iCell] = 0.0;
-                sourceDerivatives[s][s][iCell] = 0.0;
-            }
-        }
-        return;
-    }
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-
-    //! For source term in species transport equation.
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble reference1 = referenceDensity * referenceSpeciesEquation;
-    RDouble reference2 = referenceVelocity * reynoldsReferenceLengthDimensional;
-
-    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-
-    int *reactionType = stoichiometricEquation->GetChemicalReactionType();
-    bool *isCollisionFlag = stoichiometricEquation->GetCollisionReactionFlag();
-
-    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-
-    //! Record the coefficients in the chemical reactions.
-    RDouble *forwardRates = new RDouble [numberOfReaction];
-    RDouble *backwardRates = new RDouble [numberOfReaction];
-    RDouble *collisionRates = new RDouble [numberOfReaction];
-    RDouble *specificHeatCv = new RDouble [numberOfSpecies];
-    RDouble *energy = new RDouble [numberOfSpecies];
-    RDouble *densityMassFraction = new RDouble [numberOfSpecies];
-    int nEquation = this->nm + this->numberOfSpecies + this->ntmodel - 1;
-    RDouble **partialValues = NewPointer2 <RDouble> (numberOfReaction, nEquation);
-    //RDouble primVars[MAX_SPECIES_NUM], speciesCvtr[MAX_SPECIES_NUM], speciesCvv[MAX_SPECIES_NUM], totalCvtr, totalCvv;
-    //RDouble speciesEtr[MAX_SPECIES_NUM], speciesEv[MAX_SPECIES_NUM], speciesH[MAX_SPECIES_NUM], totalEtr, totalEv, totalH0;
-    //The power of the translational temperature in Park model.
-    RDouble Tc1[6] = {parkVDPower, 0.0, 1.0, 1.0, 1.0, 0.0}; //for the forward reaction.
-    RDouble Tc2[6] = {1.0, 0.5, 1.0, 1.0, 0.5, 0.0}; //for the backward reaction.
-
-    //! The dimensional value of control temperature of chemical reaction;
-    RDouble forwardReactionTemperature, backwardReactionTemperature, Tf[6], Tb[6], trsTemperature, vibTemperature;
-    RDouble densityPerMass, density, mixGasCv, kf, kb, forwardEnergy, backwardEnergy;
-    RDouble gamaj = 0.0, Drf = 0.0, Drb = 0.0, phir = 0.0, theta[3] = {0.0}, coefA = 0.0;
-    int electronIndex = numberOfSpecies - 1; // The index of electron in the array of species.
-    if (nElectronIndex >= 0)
-    {
-        electronIndex = nElectronIndex;
-    }
-
-    //! Compute the elements of Jacobian matrix.
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        //Obtain the dimensional temperature.
-        trsTemperature = MAX(temperatures[ITT][iCell] * referenceTemperature, SMALL);
-        vibTemperature = trsTemperature;
-        if (ntmodel > 1)
-        {
-            vibTemperature = MAX(temperatures[ITV][iCell] * referenceTemperature, SMALL);
-        }
-        //the control temperature of dissociation reaction, e.g. AB = A + B.
-        Tf[0] = pow(trsTemperature, parkVDPower) * pow(vibTemperature, 1.0 - parkVDPower);
-        Tb[0] = trsTemperature;
-        //the control temperature of electron collision dissociation reaction, e.g. AB + e- = A + B + e-.
-        Tf[1] = vibTemperature;
-        Tb[1] = pow(trsTemperature, 0.5) * pow(vibTemperature, 0.5);
-        //the control temperature of neutral exchange reaction, e.g. AB + C = A + BC.
-        Tf[2] = trsTemperature;
-        Tb[2] = trsTemperature;
-        //the control temperature of charge exchange reaction, e.g. AB+ + C = A+ + BC.
-        Tf[3] = trsTemperature;
-        Tb[3] = trsTemperature;
-        //the control temperature of recombination ionization reaction, e.g. A + B = AB+ + e-.
-        Tf[4] = trsTemperature;
-        Tb[4] = Tb[1];
-        //the control temperature of electron collision ionization reaction, e.g. A + e- = A+ + 2e-.
-        Tf[5] = vibTemperature;
-        Tb[5] = vibTemperature;
-
-        //! The control temperature of front reaction.
-        forwardReactionTemperature = Tf[0];
-        //! The control temperature of back reaction. it is temperature of translation and rotation.
-        backwardReactionTemperature = Tb[0];
-        density = primitiveVariables[IR][iCell] * referenceDensity;
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFractions[s] = primitiveVariables[nm + s][iCell];
-            densityMassFraction[s] = MAX(SMALL, density * massFractions[s]);
-        }
-
-        if (ntmodel == 1)      //! One-Temperature Model.
-        {
-            //! Compute the specific heat at constant volume of each species.
-            this->ComputeSpeciesConstantVolumeSpecificHeatDimensional(temperatures[ITT][iCell], specificHeatCv);
-            //this->ComputeSpeciesEnergy(temperatures[ITT][iCell], energy);
-            this->ComputeMixtureByMassFraction(massFractions, specificHeatCv, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-            {
-                energy[s] = specificHeatCv[s] * forwardReactionTemperature;
-            }
-        }
-        else         //! Multi-Temperature Model.
-        {
-            // Compute the specific heat at constant volume of each species.
-            this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(specificHeatCv);
-            this->ComputeMixtureByMassFraction(massFractions, specificHeatCv, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++s)     //! Compute internal energy of each species.
-            {
-                energy[s] = specificHeatCv[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
-                //energy[s] = specificHeatCv[s] * trsTemperature + thermodynamicProperties[s].hs0; //this is correct.
-            }
-        }
-
-        forwardEnergy = density * mixGasCv * forwardReactionTemperature;
-        backwardEnergy = density * mixGasCv * backwardReactionTemperature;
-
-        for (int r = 0; r < numberOfReaction; ++ r)
-        {
-            forwardRates[r] = 1.0;
-            backwardRates[r] = 1.0;
-            collisionRates[r] = 0.0;
-            int nType = reactionType[r]; //The type of chemical reaction.
-            forwardReactionTemperature = Tf[nType];
-            backwardReactionTemperature = Tb[nType];
-            for (int s = 0; s < numberOfSpecies; ++ s)
-            {
-                densityPerMass = density * massFractions[s] * speciesMassReciprocal[s];
-                for (int i = 0; i < forwardStoichNumber[r][s]; ++ i)
-                {
-                    forwardRates[r] *= densityPerMass;
-                }
-                for (int i = 0; i < backwardStoichNumber[r][s]; ++ i)
-                {
-                    backwardRates[r] *= densityPerMass;
-                }
-                collisionRates[r] += densityPerMass * thirdBodyStoichNumber[r][s];
-            }
-            if (!isCollisionFlag[r]) // RCr
-            {
-                collisionRates[r] = 1.0;
-            }
-
-            //! Compute equilibrium constant of the front reaction.
-            kf = forwardRateCoefA[r] * pow(forwardReactionTemperature, forwardRateCoefB[r]) * exp(-forwardRateCoefC[r] / forwardReactionTemperature);
-            //! Compute equilibrium constant of the reverse reaction.
-            kb = backwardRateCoefA[r] * pow(backwardReactionTemperature, backwardRateCoefB[r]) * exp(-backwardRateCoefC[r] / backwardReactionTemperature);
-            forwardRates[r] = kf * forwardRates[r];     //! RAr.
-            backwardRates[r] = kb * backwardRates[r];   //! RBr.
-
-            //Compute the partial derivative coefficient of the reaction temperature to the vibrational energy, namely dT / d(rho * Ev);
-            Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
-            Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
-
-            //! Compute the partial derivatives to each species, (dRr / dCs).
-            for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-            {
-                //! One-Temperature Model.
-                coefA = ionType[s] * speciesMassReciprocal[s] * this->electronMassDimension;
-                gamaj = energy[nLastSpeciesIndex] - energy[s] + coefA * (energy[nLastSpeciesIndex] - energy[electronIndex]);
-
-                theta[0]  = forwardStoichNumber[r][s] / densityMassFraction[s] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-                theta[0] += coefA * (forwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-                theta[0] += Drf * gamaj;
-                theta[0]  = forwardRates[r] * theta[0];
-
-                theta[1]  = backwardStoichNumber[r][s] / densityMassFraction[s] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-                theta[1] += coefA * (backwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-                theta[1] += Drb * gamaj;
-                theta[1]  = backwardRates[r] * theta[1];
-
-                theta[2]  = thirdBodyStoichNumber[r][s] * speciesMassReciprocal[s] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex];
-                theta[2] += coefA * (thirdBodyStoichNumber[r][electronIndex] * speciesMassReciprocal[electronIndex] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex]);
-
-                //! Compute the partial derivatives to the species j. (dRr / dCs).
-                partialValues[r][nm + s] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-            }
-
-            //! Compute the partial derivative to vibration and electron energy.
-            for (int it = 1; it < ntmodel; ++ it)
-            {
-                phir = (Drf * forwardRates[r] - Drb * backwardRates[r]) * collisionRates[r]; // (dRr / dEv).
-                partialValues[r][nl + it] = -phir;
-            }
-        }
-
-        RDouble fSum = 0.0;
-        //! Compute the chemical source term.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            fSum = 0.0;
-            for (int r = 0; r < numberOfReaction; ++ r)
-            {
-                fSum += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * (forwardRates[r] - backwardRates[r]) * collisionRates[r];
-            }
-            chemicalSourceTerms[s][iCell] = referenceSpeciesEquation * speciesMass[s] * fSum * cellVolume[iCell];
-        }
-
-        //! Construct elements of the Jacobian matrix of the chemical source term.
-        for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-        {
-            fSum = 0.0;
-            for (int r = 0; r < numberOfReaction; ++ r)
-            {
-                fSum += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nm + s]; // (dRr / dcs).
-            }
-            sourceDerivatives[s][s][iCell] = reference1 * speciesMass[s] * fSum * cellVolume[iCell];// Translate to the nondimensional values.  //?
-        }
-
-        for (int it = 1; it < ntmodel; ++ it)      //! Compute the partial derivatives of species source term to the vibration energy.
-        {
-            for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-            {
-                fSum = 0.0;
-                for (int r = 0; r < numberOfReaction; ++ r)
-                {
-                    fSum += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nl + it]; // (dRr / dEv).
-                }
-                sourceDerivatives[s][numberOfSpecies + it - 1][iCell] = reference2 * speciesMass[s] * fSum * cellVolume[iCell];               //?
-            }
-        }
-
-        //Inside of the loop.
-    }
-
-    delete [] energy;
-    delete [] specificHeatCv;
-    delete [] forwardRates;
-    delete [] backwardRates;
-    delete [] collisionRates;
-    delete [] densityMassFraction;
-    DelPointer2(partialValues);
 }
 
 void MixedGas::ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesEs, RDouble4D &speciesCvs, RDouble3D &totalCv, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
 {
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-
-    //! For source term in species transport equation.
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble reference1 = referenceDensity * referenceSpeciesEquation;
-    RDouble reference2 = referenceVelocity * reynoldsReferenceLengthDimensional;
-
-    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-
-    int *reactionType = stoichiometricEquation->GetChemicalReactionType();
-    bool *isCollisionFlag = stoichiometricEquation->GetCollisionReactionFlag();
-
-    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-
-    int nEquation = this->nm + this->numberOfSpecies + this->ntmodel - 1;
-
-    //! Record the coefficients in the chemical reactions.
-    RDouble *forwardRates = Thermo_Energy_temparay.forwardRates;
-    RDouble *backwardRates = Thermo_Energy_temparay.backwardRates;
-    RDouble *collisionRates = Thermo_Energy_temparay.collisionRates;
-    RDouble *specificHeatCv = Thermo_Energy_temparay.Cvs;
-    RDouble *energy = Thermo_Energy_temparay.Es;
-    RDouble *densityMassFraction = Thermo_Energy_temparay.Cvvs;
-    RDouble **partialValues =  Thermo_Energy_temparay.partialValues;
-    RDouble **partialValues2 =  Thermo_Energy_temparay.partialValues2;
-
-    //The power of the translational temperature in Park model.
-    RDouble Tc1[6] = {parkVDPower, 0.0, 1.0, 1.0, 1.0, 0.0}; //for the forward reaction.
-    RDouble Tc2[6] = {1.0, 0.5, 1.0, 1.0, 0.5, 0.0}; //for the backward reaction.
-
-    //! The dimensional value of control temperature of chemical reaction;
-    RDouble forwardReactionTemperature, backwardReactionTemperature, Tf[6], Tb[6], trsTemperature, vibTemperature;
-    RDouble densityPerMass, density, mixGasCv, kf, kb, forwardEnergy, backwardEnergy;
-    RDouble gamaj = 0.0, Drf = 0.0, Drb = 0.0, phir = 0.0, theta[3] = {0.0}, coefA = 0.0;
-    int electronIndex = numberOfSpecies - 1; // The index of electron in the array of species.
-    if (nElectronIndex >= 0)
-    {
-        electronIndex = nElectronIndex;
-    }
-
-    //! Compute the elements of Jacobian matrix.
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-
-    int ist, ied, jst, jed, kst, ked;
-
-    ist = Inzone[0];
-    ied = Inzone[1];
-    jst = Inzone[2];
-    jed = Inzone[3];
-    kst = Inzone[4];
-    ked = Inzone[5];
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                trsTemperature = MAX(temperatures(i, j, k, ITT) * referenceTemperature, SMALL);
-                vibTemperature = trsTemperature;
-                if (ntmodel > 1)
-                {
-                    vibTemperature = MAX(temperatures(i, j, k, ITV)  * referenceTemperature, SMALL);
-                }
-                //! The control temperature of dissociation reaction, e.g. AB = A + B.
-                Tf[0] = pow(static_cast<RealData>(trsTemperature), static_cast<RealData>(parkVDPower)) * pow(static_cast<RealData>(vibTemperature), static_cast<RealData>(1.0 - parkVDPower));
-                Tb[0] = trsTemperature;
-                //! The control temperature of electron collision dissociation reaction, e.g. AB + e- = A + B + e-.
-                Tf[1] = vibTemperature;
-                Tb[1] = sqrt(static_cast<RealData>(trsTemperature * vibTemperature));
-                //! The control temperature of neutral exchange reaction, e.g. AB + C = A + BC.
-                Tf[2] = trsTemperature;
-                Tb[2] = trsTemperature;
-                //! The control temperature of charge exchange reaction, e.g. AB+ + C = A+ + BC.
-                Tf[3] = trsTemperature;
-                Tb[3] = trsTemperature;
-                //! The control temperature of recombination ionization reaction, e.g. A + B = AB+ + e-.
-                Tf[4] = trsTemperature;
-                Tb[4] = Tb[1];
-                //! The control temperature of electron collision ionization reaction, e.g. A + e- = A+ + 2e-.
-                Tf[5] = vibTemperature;
-                Tb[5] = vibTemperature;
-
-                //! The control temperature of front reaction.
-                forwardReactionTemperature = Tf[0];
-                //! The control temperature of back reaction. it is temperature of translation and rotation.
-                backwardReactionTemperature = Tb[0];
-                density = primitiveVariables(i, j, k, IR) * referenceDensity;
-                for (int s = 0; s < numberOfSpecies; ++ s)
-                {
-                    massFractions[s] = primitiveVariables(i, j, k, nm + s);
-                    densityMassFraction[s] = MAX(SMALL, density * massFractions[s]);
-
-                    specificHeatCv[s] = speciesCvs(i, j, k, s) / referenceSpecificHeat;
-                }
-                mixGasCv = totalCv(i, j, k) / referenceSpecificHeat;
-
-
-                if (nChemcalSourceEsMethod==0)
-                {
-                    if (ntmodel == 1)      //! One-Temperature Model.
-                    {
-                        for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-                        {
-                            energy[s] = specificHeatCv[s] * forwardReactionTemperature;
-                        }
-                    }
-                    else         //! Multi-Temperature Model.
-                    {
-                        for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-                        {
-                            energy[s] = specificHeatCv[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
-                        }
-                    }
-                }
-                else
-                {
-                    for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-                    {
-                            energy[s] = speciesEs(i, j, k, s) * referenceEnergy;
-                    }
-                }
-                
-                forwardEnergy = density * mixGasCv * forwardReactionTemperature;
-                backwardEnergy = density * mixGasCv * backwardReactionTemperature;
-
-                for (int r = 0; r < numberOfReaction; ++ r)
-                {
-                    forwardRates[r] = 1.0;
-                    backwardRates[r] = 1.0;
-                    collisionRates[r] = 0.0;
-                    int nType = reactionType[r]; //The type of chemical reaction.
-                    forwardReactionTemperature = Tf[nType];
-                    backwardReactionTemperature = Tb[nType];
-                    for (int s = 0; s < numberOfSpecies; ++ s)
-                    {
-                        densityPerMass = density * massFractions[s] * speciesMassReciprocal[s];
-                        for (int i = 0; i < forwardStoichNumber[r][s]; ++ i)
-                        {
-                            forwardRates[r] *= densityPerMass;
-                        }
-                        for (int i = 0; i < backwardStoichNumber[r][s]; ++ i)
-                        {
-                            backwardRates[r] *= densityPerMass;
-                        }
-                        collisionRates[r] += densityPerMass * thirdBodyStoichNumber[r][s];
-                    }
-                    if (!isCollisionFlag[r]) // RCr
-                    {
-                        collisionRates[r] = 1.0;
-                    }
-
-                    //! Compute equilibrium constant of the front reaction.
-                    //kf =forwardRateCoefA[r]  * pow(static_cast<RealData>(forwardReactionTemperature),  static_cast<RealData>(forwardRateCoefB[r]))  * exp(static_cast<RealData>(-forwardRateCoefC[r] / forwardReactionTemperature));
-                    //! Compute equilibrium constant of the reverse reaction.
-                    //kb =backwardRateCoefA[r] * pow(static_cast<RealData>(backwardReactionTemperature), static_cast<RealData>(backwardRateCoefB[r])) * exp(static_cast<RealData>(-backwardRateCoefC[r] / backwardReactionTemperature));
-                    kf = min(lnMaximum, log(static_cast<RealData>(forwardRateCoefA[r]))  + forwardRateCoefB[r]  * log(static_cast<RealData>(forwardReactionTemperature))  - forwardRateCoefC[r]  / forwardReactionTemperature);
-                    kb = min(lnMaximum, log(static_cast<RealData>(backwardRateCoefA[r])) + backwardRateCoefB[r] * log(static_cast<RealData>(backwardReactionTemperature)) - backwardRateCoefC[r] / backwardReactionTemperature);
-
-                    kf = exp(static_cast<RealData>(kf));
-                    kb = exp(static_cast<RealData>(kb));
-
-                    forwardRates[r] = kf * forwardRates[r];     //! RAr.
-                    backwardRates[r] = kb * backwardRates[r];   //! RBr.
-
-                    Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / forwardEnergy;
-                    Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / backwardEnergy;
-
-
-                    //! Compute the partial derivatives to each species, (dRr / dCs).
-                    for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-                    {
-                        //! One-Temperature Model.
-                        coefA = ionType[s] * speciesMassReciprocal[s] * this->electronMassDimension;
-                        gamaj = energy[nLastSpeciesIndex] - energy[s] + coefA * (energy[nLastSpeciesIndex] - energy[electronIndex]);
-
-                        theta[0]  = forwardStoichNumber[r][s] / densityMassFraction[s] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-                        theta[0] += coefA * (forwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - forwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-                        //theta[0] += Drf * gamaj;
-                        theta[0]  = forwardRates[r] * theta[0];
-
-                        theta[1]  = backwardStoichNumber[r][s] / densityMassFraction[s] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex];
-                        theta[1] += coefA * (backwardStoichNumber[r][electronIndex] / densityMassFraction[electronIndex] - backwardStoichNumber[r][nLastSpeciesIndex] / densityMassFraction[nLastSpeciesIndex]);
-                        //theta[1] += Drb * gamaj;
-                        theta[1]  = backwardRates[r] * theta[1];
-
-                        theta[2]  = thirdBodyStoichNumber[r][s] * speciesMassReciprocal[s] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex];
-                        theta[2] += coefA * (thirdBodyStoichNumber[r][electronIndex] * speciesMassReciprocal[electronIndex] - thirdBodyStoichNumber[r][nLastSpeciesIndex] * speciesMassReciprocal[nLastSpeciesIndex]);
-
-                        //! Compute the partial derivatives to the species j. (dRr / dCs).
-                        partialValues[r][nm + s] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-                        partialValues2[r][nm + s] = (forwardRates[r] * Drf - backwardRates[r] * Drb)* gamaj * collisionRates[r];
-                    }
-
-                    //! Compute the partial derivative to vibration and electron energy.
-                    for (int it = 1; it < ntmodel; ++ it)
-                    {
-                        phir = (Drf * forwardRates[r] - Drb * backwardRates[r]) * collisionRates[r]; // (dRr / dEv).
-                        partialValues[r][nl + it] = -phir;
-                    }
-                }
-
-                RDouble fSum = 0.0, fSum1 = 0.0;
-                //! Compute the chemical source term.
-                for (int s = 0; s < numberOfSpecies; ++ s)
-                {
-                    fSum = 0.0;
-                    for (int r = 0; r < numberOfReaction; ++ r)
-                    {
-                        fSum += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * (forwardRates[r] - backwardRates[r]) * collisionRates[r];
-                    }
-                    chemicalSourceTerms(i, j, k, s) = referenceSpeciesEquation * speciesMass[s] * fSum * cellVolume(i, j, k);
-                }
-
-                //! Construct elements of the Jacobian matrix of the chemical source term.
-                for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-                {
-                    fSum = 0.0;
-                    for (int r = 0; r < numberOfReaction; ++ r)
-                    {
-                        fSum += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nm + s]; // (dRr / dcs).
-                    }
-
-                    fSum1 = 0.0;
-                    for (int r = 0; r < numberOfReaction; ++ r)
-                    {
-                        fSum1 += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues2[r][nm + s]; // (dRr / dcs).
-                    }
-                   //
-                    if (nChemcalSourceModified == 0)
-                    {
-                        fSum = MIN(0.0, fSum + fSum1);
-                    }
-                    else if (nChemcalSourceModified == 1)
-                    {
-                        fSum = MIN(0.0, fSum) + MIN(0.0, fSum1);
-                    }
-                    else
-                    {
-                        fSum = -abs(fSum) - abs(fSum1);
-                    }
-                    sourceDerivatives(i, j, k, s, s) = reference1 * speciesMass[s] * fSum * cellVolume(i, j, k);// Translate to the nondimensional values.  //?
-                }
-
-                for (int it = 1; it < ntmodel; ++ it)      //! Compute the partial derivatives of species source term to the vibration energy.
-                {
-                    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-                    {
-                        fSum = 0.0;
-                        for (int r = 0; r < numberOfReaction; ++ r)
-                        {
-                            fSum += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][nl + it]; // (dRr / dEv).
-                        }
-                        sourceDerivatives(i, j, k, s, numberOfSpecies + it - 1) = reference2 * speciesMass[s] * fSum * cellVolume(i, j, k);               //?
-                    }
-                }
-
-        //Inside of the loop.
-            }
-        }
-    }
-
 }
 
 void MixedGas::ComputeChemicalSourceDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
-    //! The function is used for chemical reaction without electron.
-
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-
-    //! The dimensional value of control temperature of chemical reaction.
-    RDouble forwardReactionTemperature, backwardReactionTemperature;
-    RDouble densityPerMass, density, mixGasCv, squareVelocity;
-
-    //! For source term in species transport equation.
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble reference1 = referenceDensity * referenceSpeciesEquation;
-
-    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-
-    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-
-    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-
-    //! Record the coefficients in the chemical reactions.
-    RDouble *forwardRates = new RDouble [numberOfReaction];
-    RDouble *backwardRates = new RDouble [numberOfReaction];
-    RDouble *collisionRates = new RDouble [numberOfReaction];
-    RDouble *energy = new RDouble [numberOfSpecies];
-    RDouble *massFraction = new RDouble [numberOfSpecies];
-    RDouble *densityMassFraction = new RDouble [numberOfSpecies];
-    int nEquation = this->nm + this->numberOfSpecies + this->ntmodel - 1;
-    RDouble **partialValues = NewPointer2 <RDouble> (numberOfReaction, nEquation);
-
-    //! Compute the elements of Jacobian matrix.
-    RDouble alpha = 0.0, gamaj = 0.0, Drf = 0.0, Drb = 0.0, phir = 0.0, theta[3] = {0.0};
-    RDouble uVelocity, vVelocity, wVelocity;
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        //! The control temperature of front reaction.
-        forwardReactionTemperature = MAX(temperatures[ITT][iCell] * referenceTemperature, SMALL);
-        //! The control temperature of back reaction. it is temperature of translation and rotation.
-        backwardReactionTemperature = forwardReactionTemperature;
-
-        density = primitiveVariables[IR][iCell] * referenceDensity;
-        uVelocity = primitiveVariables[IU][iCell] * referenceVelocity;
-        vVelocity = primitiveVariables[IV][iCell] * referenceVelocity;
-        wVelocity = primitiveVariables[IW][iCell] * referenceVelocity;
-        squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
-
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFraction[s] = primitiveVariables[nm + s][iCell];
-            densityMassFraction[s] = MAX(SMALL, density * massFraction[s]);
-        }
-
-        if (ntmodel == 1)     //! One-Temperature Model.
-        {
-            //! Compute the specific heat at constant volume of each species.
-            this->ComputeSpeciesConstantVolumeSpecificHeatDimensional(temperatures[ITT][iCell], energy);
-            this->ComputeMixtureByMassFraction(massFraction, energy, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-            {
-                energy[s] *= forwardReactionTemperature;
-            }
-        }
-        else     //! Multi-Temperature Model.
-        {
-            //! Compute the specific heat at constant volume of each species.
-            this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(energy);
-            this->ComputeMixtureByMassFraction(massFraction, energy, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute internal energy of each species.
-            {
-                energy[s] = energy[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
-            }
-        }
-
-        for (int r = 0; r < numberOfReaction; ++ r)
-        {
-            //! Compute equilibrium constant of the front reaction.
-            RDouble kf = forwardRateCoefA[r] * pow(forwardReactionTemperature, forwardRateCoefB[r]) * exp(-forwardRateCoefC[r] / forwardReactionTemperature);
-            //! Compute equilibrium constant of the reverse reaction.
-            RDouble kb = backwardRateCoefA[r] * pow(backwardReactionTemperature, backwardRateCoefB[r]) * exp(-backwardRateCoefC[r] / backwardReactionTemperature);
-            
-            Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / (forwardReactionTemperature * density * mixGasCv);
-            Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / (backwardReactionTemperature * density * mixGasCv);
-
-            //! Initialize.
-            forwardRates[r] = 1.0;
-            backwardRates[r] = 1.0;
-            collisionRates[r] = 0.0;
-            for (int s = 0; s < numberOfSpecies; ++ s)
-            {
-                densityPerMass = densityMassFraction[s] * speciesMassReciprocal[s];
-                for (int i = 0; i < forwardStoichNumber[r][s]; ++ i)
-                {
-                    forwardRates[r] *= densityPerMass;
-                }
-                for (int i = 0; i < backwardStoichNumber[r][s]; ++ i)
-                {
-                    backwardRates[r] *= densityPerMass;
-                }
-                collisionRates[r] += densityPerMass * thirdBodyStoichNumber[r][s];
-            }
-
-            if (fabs(collisionRates[r]) < SMALL)     //! RCr.
-            {
-                collisionRates[r] = 1.0;
-            }
-            forwardRates[r] *= kf;    //! RAr.
-            backwardRates[r] *= kb;   //! RBr.
-
-            //! Compute the partial derivatives to density.
-            alpha = 0.5 * squareVelocity - energy[numberOfSpecies - 1];
-            theta[0] = forwardRates[r] * (forwardStoichNumber[r][numberOfSpecies - 1] / densityMassFraction[numberOfSpecies - 1] + Drf * alpha);
-            theta[1] = backwardRates[r] * (backwardStoichNumber[r][numberOfSpecies - 1] / densityMassFraction[numberOfSpecies - 1] + Drb * alpha);
-            theta[2] = thirdBodyStoichNumber[r][numberOfSpecies - 1] * speciesMassReciprocal[numberOfSpecies - 1];
-
-            //! Compute the partial derivatives to density.
-            partialValues[r][IR] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-
-            //! Compute the partial derivatives to rho*U, rho*V, rho*W and rho*E.
-            phir = (Drf * forwardRates[r] - Drb * backwardRates[r]) * collisionRates[r];
-            partialValues[r][IU] = - phir * uVelocity;
-            partialValues[r][IV] = - phir * vVelocity;
-            partialValues[r][IW] = - phir * wVelocity;
-            partialValues[r][IP] = phir;
-
-            //! Compute the partial derivatives to each species.
-            for (int s = 0; s < numberOfSpecies - 1; ++ s)
-            {
-                gamaj = energy[numberOfSpecies - 1] - energy[s];
-                theta[0] = forwardRates[r] * (forwardStoichNumber[r][s] / densityMassFraction[s] - forwardStoichNumber[r][numberOfSpecies - 1] / densityMassFraction[numberOfSpecies - 1] + Drf * gamaj);
-                theta[1] = backwardRates[r] * (backwardStoichNumber[r][s] / densityMassFraction[s] - backwardStoichNumber[r][numberOfSpecies - 1] / densityMassFraction[numberOfSpecies - 1] + Drb * gamaj);
-                theta[2] = thirdBodyStoichNumber[r][s] * speciesMassReciprocal[s] - thirdBodyStoichNumber[r][numberOfSpecies - 1] * speciesMassReciprocal[numberOfSpecies - 1];
-                //! Compute the partial derivatives to the species j.
-                partialValues[r][nm + s] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-            }
-            //! Compute the partial derivative to vibration and electron energy.
-            for (int i = 1; i < ntmodel; ++ i)
-            {
-                partialValues[r][nl + i] = -phir;
-            }
-        }
-        //! Compute the chemical source term.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            chemicalSourceTerms[s][iCell] = 0.0;
-            for (int r = 0; r < numberOfReaction; ++ r)
-            {
-                chemicalSourceTerms[s][iCell] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * (forwardRates[r] - backwardRates[r]) * collisionRates[r];
-            }
-            chemicalSourceTerms[s][iCell] *= referenceSpeciesEquation * cellVolume[iCell] * speciesMass[s];
-            //chemicalSourceTerms[s][iCell] *= speciesMass[s];
-        }
-
-        //! Construct elements of the Jacobian matrix of the chemical source term.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            //! Compute partial derivatives to species mass fraction.
-            for (int j = 0; j < nEquation; ++ j)
-            {
-                sourceDerivatives[s][j][iCell] = 0.0;
-                for (int r = 0; r < numberOfReaction; ++ r)
-                {
-                    sourceDerivatives[s][j][iCell] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][j];
-                }
-                sourceDerivatives[s][j][iCell] *= reference1 * cellVolume[iCell] * speciesMass[s];
-                }
-            //! Translate to the non-dimensional values.
-            sourceDerivatives[s][IU][iCell] *= referenceVelocity;
-            sourceDerivatives[s][IV][iCell] *= referenceVelocity;
-            sourceDerivatives[s][IW][iCell] *= referenceVelocity;
-            sourceDerivatives[s][IP][iCell] *= referenceVelocity * referenceVelocity;
-            for (int i = 1; i < ntmodel; ++ i)
-            {
-                sourceDerivatives[s][nl + i][iCell] *= referenceVelocity * referenceVelocity;
-            }
-        }
-    }
-
-    delete [] energy;
-    delete [] forwardRates;
-    delete [] backwardRates;
-    delete [] collisionRates;
-    delete [] massFraction;
-    delete [] densityMassFraction;
-    DelPointer2(partialValues);
 }
 
 void MixedGas::ComputeChemicalSourceDerivatives2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
-    //! The function is used for chemical reaction including electron.
-
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-
-    //! The dimensional value of control temperature of chemical reaction.
-    RDouble forwardReactionTemperature, backwardReactionTemperature;
-    RDouble densityPerMass, density, squareVelocity, mixGasCv = 0.0;
-
-    //! For source term in species transport equation.
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble reference1 = referenceDensity * referenceSpeciesEquation;
-
-    RDouble *forwardRateCoefA = reactionRate->GetForwardReactionRateCoefficientA();
-    RDouble *forwardRateCoefB = reactionRate->GetForwardReactionRateCoefficientB();
-    RDouble *forwardRateCoefC = reactionRate->GetForwardReactionRateCoefficientC();
-
-    RDouble *backwardRateCoefA = reactionRate->GetBackwardReactionRateCoefficientA();
-    RDouble *backwardRateCoefB = reactionRate->GetBackwardReactionRateCoefficientB();
-    RDouble *backwardRateCoefC = reactionRate->GetBackwardReactionRateCoefficientC();
-
-    int **forwardStoichNumber = stoichiometricEquation->GetForwardReactionStoichiometricCoefficient();
-    int **backwardStoichNumber = stoichiometricEquation->GetBackwardReactionStoichiometricCoefficient();
-    RDouble **thirdBodyStoichNumber = stoichiometricEquation->GetReactionStoichiometricThirdBodyCoefficient();
-
-    //! Record the coefficients in the chemical reactions.
-    RDouble *forwardRates = new RDouble [numberOfReaction];
-    RDouble *backwardRates = new RDouble [numberOfReaction];
-    RDouble *collisionRates = new RDouble [numberOfReaction];
-    RDouble *energy = new RDouble [numberOfSpecies];
-    RDouble *massFraction = new RDouble [numberOfSpecies];
-    RDouble *densityMassFraction = new RDouble [numberOfSpecies];
-    int nEquation = this->nm + this->numberOfSpecies + this->ntmodel - 1;
-    RDouble **partialValues = NewPointer2 <RDouble> (numberOfReaction, nEquation);
-
-    //! Compute the elements of Jacobian matrix.
-    RDouble coefA = 0.0, Drf = 0.0, Drb = 0.0, phir = 0.0, alpha = 0.0, gamaj = 0.0;
-    RDouble uVelocity, vVelocity, wVelocity, theta[3] = {0.0};
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        //! The control temperature of front reaction.
-        forwardReactionTemperature = MAX(temperatures[ITT][iCell] * referenceTemperature, SMALL);
-        //! The control temperature of back reaction. it is temperature of translation and rotation.
-        backwardReactionTemperature = forwardReactionTemperature;
-
-        density = primitiveVariables[IR ][iCell] * referenceDensity;
-        uVelocity = primitiveVariables[IU][iCell] * referenceVelocity;
-        vVelocity = primitiveVariables[IV][iCell] * referenceVelocity;
-        wVelocity = primitiveVariables[IW][iCell] * referenceVelocity;
-        squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
-
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFraction[s] = primitiveVariables[nm + s][iCell];
-            densityMassFraction[s] = MAX(SMALL, density * massFraction[s]);
-        }
-
-        if (ntmodel == 1)     //! One-Temperature Model.
-        {
-            //! Compute specific heat at constant volume of each species.
-            ComputeSpeciesConstantVolumeSpecificHeatDimensional(temperatures[ITT][iCell], energy);
-            ComputeMixtureByMassFraction(massFraction, energy, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++ s)     //! Compute energy of each species.
-            {
-                energy[s] *= forwardReactionTemperature;
-            }
-        }
-        else       //! Multi-Temperature Model.
-        {
-            //! Compute specific heat at constant volume of each species.
-            ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(energy);
-            ComputeMixtureByMassFraction(massFraction, energy, mixGasCv);
-            for (int s = 0; s < numberOfSpecies; ++ s) // Compute energy of each species.
-            {
-                energy[s] = energy[s] * forwardReactionTemperature + thermodynamicProperties[s].hs0;
-            }
-        }
-
-        for (int r = 0; r < numberOfReaction; ++ r)
-        {
-            //! Compute equilibrium constant of the front reaction.
-            RDouble kf = forwardRateCoefA[r] * pow(forwardReactionTemperature, forwardRateCoefB[r]) * exp(-forwardRateCoefC[r] / forwardReactionTemperature);
-            //! Compute equilibrium constant of the reverse reaction.
-            RDouble kb = backwardRateCoefA[r] * pow(backwardReactionTemperature, backwardRateCoefB[r]) * exp(-backwardRateCoefC[r] / backwardReactionTemperature);
-
-            Drf = (forwardRateCoefB[r] + forwardRateCoefC[r] / forwardReactionTemperature) / (forwardReactionTemperature * density * mixGasCv);
-            Drb = (backwardRateCoefB[r] + backwardRateCoefC[r] / backwardReactionTemperature) / (backwardReactionTemperature * density * mixGasCv);
-
-            //! Initialize.
-            forwardRates[r] = 1.0;
-            backwardRates[r] = 1.0;
-            collisionRates[r] = 0.0;
-            for (int s = 0; s < numberOfSpecies; ++ s)
-            {
-                densityPerMass = densityMassFraction[s] * speciesMassReciprocal[s];
-                for (int i = 0; i < forwardStoichNumber[r][s]; ++ i)
-                {
-                    forwardRates[r] *= densityPerMass;
-                }
-                for (int i = 0; i < backwardStoichNumber[r][s]; ++ i)
-                {
-                    backwardRates[r] *= densityPerMass;
-                }
-                collisionRates[r] += densityPerMass * thirdBodyStoichNumber[r][s];
-            }
-
-            if (fabs(collisionRates[r]) < SMALL)    //! RCr.
-            {
-                collisionRates[r] = 1.0;
-            }
-            forwardRates[r] *= kf;    //! RAr.
-            backwardRates[r] *= kb;   //! RBr.
-
-            //! Compute the partial derivatives to density.
-            alpha = 0.5 * squareVelocity - energy[numberOfSpecies - 2];
-            theta[0] = forwardRates[r] * (forwardStoichNumber[r][numberOfSpecies - 2] / densityMassFraction[numberOfSpecies - 2] + Drf * alpha);
-            theta[1] = backwardRates[r] * (backwardStoichNumber[r][numberOfSpecies - 2] / densityMassFraction[numberOfSpecies - 2] + Drb * alpha);
-            theta[2] = thirdBodyStoichNumber[r][numberOfSpecies - 1] * speciesMassReciprocal[numberOfSpecies - 1];
-            theta[2]+= thirdBodyStoichNumber[r][numberOfSpecies - 2] * speciesMassReciprocal[numberOfSpecies - 2];
-
-            //! Compute the partial derivatives to density.
-            partialValues[r][IR] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-            //! Compute the partial derivatives to rho*U, rho*V, rho*W and rho*E.
-            phir = (Drf * forwardRates[r] - Drb * backwardRates[r]) * collisionRates[r];
-            partialValues[r][IU] = - phir * uVelocity;
-            partialValues[r][IV] = - phir * vVelocity;
-            partialValues[r][IW] = - phir * wVelocity;
-            partialValues[r][IP] = phir;
-
-            //! Compute the partial derivatives to each species.
-            for (int s = 0; s < numberOfSpecies - 2; ++ s)
-            {
-                coefA = ionType[s] * speciesMassReciprocal[s] / speciesMassReciprocal[numberOfSpecies - 1];
-                gamaj = energy[numberOfSpecies - 2] - energy[s] + coefA * (energy[numberOfSpecies - 2] - energy[numberOfSpecies - 1]);
-
-                theta[0]  = forwardStoichNumber[r][s] / densityMassFraction[s] - forwardStoichNumber[r][numberOfSpecies - 2] / densityMassFraction[numberOfSpecies - 2];
-                theta[0] += coefA * (forwardStoichNumber[r][numberOfSpecies - 1] / densityMassFraction[numberOfSpecies - 1] - forwardStoichNumber[r][numberOfSpecies - 2] / densityMassFraction[numberOfSpecies - 2]);
-                theta[0] += Drf * gamaj;
-                theta[0]  = forwardRates[r] * theta[0];
-
-                theta[1]  = backwardStoichNumber[r][s] / densityMassFraction[s] - backwardStoichNumber[r][numberOfSpecies - 2] / densityMassFraction[numberOfSpecies - 2];
-                theta[1] += coefA * (backwardStoichNumber[r][numberOfSpecies - 1] / densityMassFraction[numberOfSpecies - 1] - backwardStoichNumber[r][numberOfSpecies - 2] / densityMassFraction[numberOfSpecies - 2]);
-                theta[1] += Drb * gamaj;
-                theta[1]  = backwardRates[r] * theta[1];
-
-                theta[2]  = thirdBodyStoichNumber[r][s] * speciesMassReciprocal[s] - thirdBodyStoichNumber[r][numberOfSpecies - 2] * speciesMassReciprocal[numberOfSpecies - 2];
-                theta[2] += coefA * (thirdBodyStoichNumber[r][numberOfSpecies - 1] * speciesMassReciprocal[numberOfSpecies - 1] - thirdBodyStoichNumber[r][numberOfSpecies - 2] * speciesMassReciprocal[numberOfSpecies - 2]);
-
-                partialValues[r][nm + s] = (theta[0] - theta[1]) * collisionRates[r] + (forwardRates[r] - backwardRates[r]) * theta[2];
-            }
-            //! Compute the partial derivative to vibration and electron energy.
-            for (int i = 1; i < ntmodel; ++ i)
-            {
-                partialValues[r][nl + i] = - phir;
-            }
-        }
-        //! Compute the chemical source term.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            chemicalSourceTerms[s][iCell] = 0.0;
-            for (int r = 0; r < numberOfReaction; ++ r)
-            {
-                chemicalSourceTerms[s][iCell] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * (forwardRates[r] - backwardRates[r]) * collisionRates[r];
-            }
-            chemicalSourceTerms[s][iCell] *= referenceSpeciesEquation * cellVolume[iCell] * speciesMass[s];
-            //chemicalSourceTerms[s][iCell] *= speciesMass[s];
-        }
-
-        //! Construct elements of the Jacobian matrix of the chemical source term.
-        for (int s = 0; s < numberOfSpecies - 1; ++ s)
-        {
-            //! Compute partial derivatives to species mass fraction.
-            for (int j = 0; j < nEquation; ++ j)
-            {
-                sourceDerivatives[s][j][iCell] = 0.0;
-                for (int r = 0; r < numberOfReaction; ++ r)
-                {
-                    sourceDerivatives[s][j][iCell] += (backwardStoichNumber[r][s] - forwardStoichNumber[r][s]) * partialValues[r][j];
-                }
-                sourceDerivatives[s][j][iCell] *= reference1 * cellVolume[iCell] * speciesMass[s];
-            }
-            //! Translate to the non-dimensional values.
-            sourceDerivatives[s][IU][iCell] *= referenceVelocity;
-            sourceDerivatives[s][IV][iCell] *= referenceVelocity;
-            sourceDerivatives[s][IW][iCell] *= referenceVelocity;
-            sourceDerivatives[s][IP][iCell] *= referenceVelocity * referenceVelocity;
-            for (int i = 1; i < ntmodel; ++ i)
-            {
-                sourceDerivatives[s][nl + i][iCell] *= referenceVelocity * referenceVelocity;
-            }
-        }
-    }
-
-    delete [] energy;
-    delete [] forwardRates;
-    delete [] backwardRates;
-    delete [] collisionRates;
-    delete [] massFraction;
-    delete [] densityMassFraction;
-    DelPointer2(partialValues);
 }
 
 void MixedGas::ComputeEnergySourceDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                                RDouble ***chemicalSourceDerivatives, RDouble ***energySourceDerivatives, int nCellNumber)
 {
-    //! The function is used for two-temperature model.
 
-    using namespace IDX;     //! The following variables is dimensional values.
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceOmega = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / pow(referenceVelocity, 3);
-
-    RDouble *Omegas = new RDouble[numberOfSpecies];
-    int nEquation = nm + numberOfSpecies + ntmodel - 1;
-    RDouble **omegaDerivatives = NewPointer2 <RDouble> (numberOfSpecies, nEquation);
-    RDouble **energyDerivatives = NewPointer2 <RDouble> (ntmodel - 1, nEquation);
-    RDouble *massFraction = new RDouble[numberOfSpecies];
-    RDouble *speciesCvtr = new RDouble[numberOfSpecies];
-    RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    RDouble *speciesCve = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar2 = new RDouble[numberOfSpecies];
-    RDouble *speciesTransRotationEnergy = new RDouble[numberOfSpecies];
-    RDouble *speciesVibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *speciesElectronEnergy = new RDouble[numberOfSpecies];
-    RDouble *speciesVibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *speciesVibrationEnergyStar2 = new RDouble[numberOfSpecies];
-    RDouble *speciesVibrationTime = new RDouble[numberOfSpecies];
-    RDouble *speciesElectronTime = new RDouble[numberOfSpecies];
-
-    //! Compute the partial derivatives.
-    RDouble mixGasCvtr, mixGasCvv, mixGasCve, transRotationTemperature, vibrationTemperature, electronTemperature;
-    RDouble coefA = 0.0, energy = 0.0, energyj = 0.0, electronPressure = 0.0;
-    RDouble gasConstant = this->GetUniversalGasConstant();
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        //! Obtain the primitive variables.
-        RDouble density = primitiveVariables[IR][iCell] * referenceDensity;
-        RDouble uVelocity = primitiveVariables[IU][iCell] * referenceVelocity;
-        RDouble vVelocity = primitiveVariables[IV][iCell] * referenceVelocity;
-        RDouble wVelocity = primitiveVariables[IW][iCell] * referenceVelocity;
-        RDouble pressure  = primitiveVariables[IP][iCell] * referenceDensity * referenceVelocity * referenceVelocity;
-        RDouble squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
-
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            //! Obtain the chemical source terms.
-            Omegas[s] = chemicalSourceTerms[s][iCell] / (referenceSpeciesEquation * cellVolume[iCell]);
-            //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-            for (int i = 0; i < nEquation; ++ i)
-            {
-                omegaDerivatives[s][i] = chemicalSourceDerivatives[s][i][iCell] / (referenceOmega * cellVolume[iCell]);
-            }
-            omegaDerivatives[s][IU] /= referenceVelocity;
-            omegaDerivatives[s][IV] /= referenceVelocity;
-            omegaDerivatives[s][IW] /= referenceVelocity;
-            omegaDerivatives[s][IP] /= referenceVelocity * referenceVelocity;
-            for (int i = 1; i < ntmodel; ++ i)
-            {
-                omegaDerivatives[s][nl + i] /= referenceVelocity * referenceVelocity;
-            }
-        }
-
-        //! Obtain the mass fraction of species.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFraction[s] = primitiveVariables[nm + s][iCell];
-        }
-        //! Obtain the temperature of two-temperature model.
-        transRotationTemperature = temperatures[ITT][iCell];
-        vibrationTemperature = temperatures[ITV][iCell];
-        electronTemperature = vibrationTemperature;
-
-        //! Compute specific heat at constant volume.
-        this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCvtr);
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(vibrationTemperature, speciesCvv);
-        this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(electronTemperature, speciesCve);
-        this->ComputeMixtureByMassFraction(massFraction, speciesCvtr, mixGasCvtr);
-        this->ComputeMixtureByMassFraction(massFraction, speciesCvv, mixGasCvv);
-        this->ComputeMixtureByMassFraction(massFraction, speciesCve, mixGasCve);
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(transRotationTemperature, speciesCvvStar1);
-
-        //! Compute the energies of species.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            speciesTransRotationEnergy[s] = speciesCvtr[s] * transRotationTemperature * referenceTemperature + thermoProperty[s].hs0;
-        }
-        this->ComputeDimensionalVibrationEnergy(vibrationTemperature, speciesVibrationEnergy);
-        this->ComputeDimensionalElectronEnergy(electronTemperature, speciesElectronEnergy);
-        //! Compute the vibration energy by the translation-rotation temperature.
-        this->ComputeDimensionalVibrationEnergy(transRotationTemperature, speciesVibrationEnergyStar1);
-
-        //! Compute the relaxation time.of translation-vibration mode.
-        this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFraction, speciesMass, transRotationTemperature * referenceTemperature,
-                                                       pressure, density, speciesVibrationTime);
-        RDouble part1 = 0.0, part2 = 0.0, part3 = 0.0;
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            if (thermoProperty[s].nType < 2)
-            {
-                continue;
-            }
-            part1 += massFraction[s] * speciesCvvStar1[s] / speciesVibrationTime[s];
-            part2 += Omegas[s] * (speciesCvv[s] + speciesCve[s]);
-            part3 += massFraction[s] * speciesCvv[s] / speciesVibrationTime[s];
-        }
-        part1 /= mixGasCvtr;
-        part2 /= density * (mixGasCvv + mixGasCve) + SMALL;
-        part3 /= mixGasCvv + mixGasCve + SMALL;
-
-        //! Compute the partial derivatives of c-ve term.
-        for (int i = 0; i < nEquation; ++ i)
-        {
-            energyDerivatives[0][i] = 0.0;
-            for (int s = 0; s < numberOfSpecies; ++ s)
-            {
-                if (thermoProperty[s].nType < 2)
-                {
-                    continue;
-                }
-                energyDerivatives[0][i] += omegaDerivatives[s][i] * (speciesVibrationEnergy[s] + speciesElectronEnergy[s]);
-            }
-        }
-
-        //! Compute the partial derivatives of t-v term.
-        if (this->nElectronIndex < 0)      //! No electron.
-        {
-            //! Partial derivative to density.
-            energy = 0.5 * squareVelocity - speciesTransRotationEnergy[numberOfSpecies - 1];
-            RDouble temp = (speciesVibrationEnergyStar1[numberOfSpecies - 1] - speciesVibrationEnergy[numberOfSpecies - 1]) / speciesVibrationTime[numberOfSpecies - 1];
-            energyDerivatives[0][IR] += energy * part1 + temp;
-            //! Partial derivative to density * velocity.
-            energyDerivatives[0][IU] -= uVelocity * part1;
-            energyDerivatives[0][IV] -= vVelocity * part1;
-            energyDerivatives[0][IW] -= wVelocity * part1;
-            energyDerivatives[0][IP] += part1;
-            //! Partial derivative to density * species.
-            for (int s = 0; s < numberOfSpecies - 1; ++ s)
-            {
-                energyj = speciesTransRotationEnergy[numberOfSpecies - 1] - speciesTransRotationEnergy[s];
-                energyDerivatives[0][nm + s] += energyj * part1;
-                energyDerivatives[0][nm + s] += (speciesVibrationEnergyStar1[s] - speciesVibrationEnergy[s]) / speciesVibrationTime[s] - temp;
-            }
-            //! Partial derivative to vibration energy.
-            energyDerivatives[0][nl + 1] += part2 - part1 - part3;
-        }
-        else        //! The species including the electron.
-        {
-            //! Compute the vibration energy by the electron temperature.
-            this->ComputeDimensionalVibrationEnergy(electronTemperature, speciesVibrationEnergyStar2);
-
-            //! Compute the relaxation time of electron-vibration mode.
-            electronPressure = density * massFraction[numberOfSpecies - 1] * gasConstant * speciesMassReciprocal[numberOfSpecies - 1] * electronTemperature * referenceTemperature;
-            this->GetElectronAndVibrationRelaxationTime(thermoProperty, electronPressure, electronTemperature * referenceTemperature, speciesElectronTime);
-        }
-
-        //! To obtain the non-dimensional values.
-        for (int j = 0; j < nEquation; ++ j)
-        {
-            energySourceDerivatives[0][j][iCell] = reference1 * energyDerivatives[0][j] * cellVolume[iCell];
-        }
-        energySourceDerivatives[0][IU][iCell] *= referenceVelocity;
-        energySourceDerivatives[0][IV][iCell] *= referenceVelocity;
-        energySourceDerivatives[0][IW][iCell] *= referenceVelocity;
-        energySourceDerivatives[0][IP][iCell] *= referenceVelocity * referenceVelocity;
-        energySourceDerivatives[0][nl + 1][iCell] *= referenceVelocity * referenceVelocity;
-    }
-
-    delete [] Omegas;
-    delete [] massFraction;
-    delete [] speciesCvtr;
-    delete [] speciesCvv;
-    delete [] speciesCve;
-    delete [] speciesCvvStar1;
-    delete [] speciesCvvStar2;
-    delete [] speciesTransRotationEnergy;
-    delete [] speciesVibrationEnergy;
-    delete [] speciesElectronEnergy;
-    delete [] speciesVibrationEnergyStar1;
-    delete [] speciesVibrationEnergyStar2;
-    delete [] speciesVibrationTime;
-    delete [] speciesElectronTime;
-    DelPointer2(omegaDerivatives);
-    DelPointer2(energyDerivatives);
 }
 
 void MixedGas::ComputeEnergySourceDiagonalDerivatives1(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                                        RDouble ***chemicalSourceDerivatives, RDouble **energySourceDerivatives, int nCellNumber)
 {
-    //! The function is used for two-temperature model.
-
-    using namespace IDX;    //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / pow(referenceVelocity, 2);
-
-    RDouble *massFraction = new RDouble[numberOfSpecies];
-    RDouble *Omegas = new RDouble[numberOfSpecies];
-    RDouble *sigma = new RDouble[numberOfSpecies];
-    RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    RDouble *speciesCve = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    RDouble **OmegaDerivative = NewPointer2 <RDouble> (numberOfSpecies, ntmodel - 1);
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble mixGasCvtr, mixGasCvv, mixGasCve, mixGasCvve;
-    RDouble temperature[3], Ttr = 0.0, Tve = 0.0, vibrationOmega = 0.0;
-    RDouble gasConstant = rjmk, density = 0.0, pressure = 0.0;
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        density = primitiveVariables[IR][iCell] * referenceDensity;
-        pressure = primitiveVariables[IP][iCell] * referenceDensity * referenceVelocity * referenceVelocity;
-
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-            Omegas[s] = chemicalSourceTerms[s][iCell] / (referenceSpeciesEquation * cellVolume[iCell]);
-            for (int it = 1; it < ntmodel; ++ it)
-            {
-                OmegaDerivative[s][it - 1] = chemicalSourceDerivatives[s][nl + it][iCell] / (referenceEnergyEquation * cellVolume[iCell]);
-            }
-        }
-        //! Obtain the mass fraction of species.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFraction[s] = primitiveVariables[nm + s][iCell];
-        }
-        //! Obtain the temperature.
-        for (int it = 0; it < ntmodel; ++ it)
-        {
-            temperature[it] = temperatures[it][iCell];
-        }
-        temperature[ITE] = temperature[ITV];
-        Ttr = temperature[ITT] * referenceTemperature;
-        Tve = temperature[ITV] * referenceTemperature;
-
-        //! Compute the specific heat at constant volume.
-        mixGasCvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITV], speciesCvv);
-        this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(temperature[ITE], speciesCve);
-        this->ComputeMixtureByMassFraction(massFraction, speciesCvv, mixGasCvv);
-        this->ComputeMixtureByMassFraction(massFraction, speciesCve, mixGasCve);
-        mixGasCvve = mixGasCvv + mixGasCve;
-
-        //! Compute vibration energy by translation-rotation temperature.
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITT], speciesCvvStar1);
-        //! Compute vibration energy and electron energy.
-        this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-        this->ComputeDimensionalElectronEnergy(temperature[ITE], electronEnergy);
-        this->ComputeDimensionalVibrationEnergy(temperature[ITT], vibrationEnergyStar1);
-
-        //! Compute the relaxation time.of translation-vibration mode.
-        this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFraction, speciesMass, Ttr, pressure, density, transVibrationTime);
-
-        RDouble part1 = 0.0, part2 = 0.0, part3 = 0.0, part4 = 0.0;
-        vibrationOmega = 0.0;
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            if (thermoProperty[s].nType < 2)
-            {
-                continue;
-            }
-
-            part1 += massFraction[s] * speciesCvvStar1[s] / transVibrationTime[s];
-            part2 += massFraction[s] * speciesCvv[s] / transVibrationTime[s];
-            part3 += Omegas[s] * (speciesCvv[s] + speciesCve[s]);
-            part4 += OmegaDerivative[s][0] * (vibrationEnergy[s] + electronEnergy[s]);
-
-            //! Compute the source term of vibration energy equation.
-            vibrationOmega += density * massFraction[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-            vibrationOmega += Omegas[s] * (vibrationEnergy[s] + electronEnergy[s]);
-        }
-        part1 = part1 / mixGasCvtr;
-        part2 = part2 / mixGasCvve;
-        part3 = part3 / (density * mixGasCvve);
-        //! Compute derivatives.
-        energySourceDerivatives[0][iCell] = - part1 - part2 + part3 + part4;
-
-        if (this->nElectronIndex >= 0) //species including electron.
-        {
-            //! Compute the number density of electron.
-            RDouble electronDensity = density * massFraction[nElectronIndex];
-            RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-            this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Tve, Ne, sigma);
-
-            RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-            //! The heat motion velocity of electron.
-            RDouble heatVelocity = sqrt(8.0 * gasConstant * Tve * speciesMassReciprocal[nElectronIndex] / PI);
-            for (int s = 0; s <= nLastSpeciesIndex; ++ s)
-            {
-                speciesDensity = density * massFraction[s];
-                Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-                fes = Ns * sigma[s] * heatVelocity;
-                Fe += fes * speciesMassReciprocal[s];
-            }
-            //! Compute the source term of vibration energy equation.
-            vibrationOmega += 3.0 * electronDensity * gasConstant * (Ttr - Tve);
-
-            RDouble mixGasEv = 0.0, mixGasEe = 0.0, mixGasEve;
-            this->ComputeMixtureByMassFraction(massFraction, vibrationEnergy, mixGasEv);
-            this->ComputeMixtureByMassFraction(massFraction, electronEnergy , mixGasEe);
-            mixGasEve = mixGasEv + mixGasEe;
-            energySourceDerivatives[0][iCell] -= 3.0 * massFraction[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCvve + (Tve - Ttr) / (2.0 * mixGasEve));
-        }
-        energySourceDerivatives[0][iCell] *= reference1 * cellVolume[iCell];
-        //! The source term of vibration energy equation.
-        chemicalSourceTerms[numberOfSpecies][iCell] = reference2 * vibrationOmega * cellVolume[iCell];
-    }
-
-    delete [] Omegas;
-    delete [] sigma;
-    delete [] massFraction;
-    delete [] speciesCvv;
-    delete [] speciesCve;
-    delete [] speciesCvvStar1;
-    delete [] vibrationEnergy;
-    delete [] electronEnergy;
-    delete [] vibrationEnergyStar1;
-    delete [] transVibrationTime;
-    DelPointer2(OmegaDerivative);
+ 
 }
 
 void MixedGas::ComputeEnergySourceDiagonalDerivatives2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                                        RDouble ***chemicalSourceDerivatives, RDouble **energySourceDerivatives, int nCellNumber)
 {
-    //! The function is used for three-temperature model.
 
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / pow(referenceVelocity, 2);
-
-    RDouble *massFraction = new RDouble[numberOfSpecies];
-    RDouble *Omegas = new RDouble[numberOfSpecies];
-    RDouble *sigma = new RDouble[numberOfSpecies];
-    RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    RDouble *speciesCve = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar2 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar2 = new RDouble[numberOfSpecies];
-    RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    RDouble *transElectronTime = new RDouble[numberOfSpecies];
-    RDouble **OmegaDerivative = NewPointer2 <RDouble> (numberOfSpecies, ntmodel - 1);
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble gasConstant = rjmk, mixGasCvtr, mixGasCvv, mixGasCve;
-    RDouble temperature[3], Ttr = 0.0, Te = 0.0, electronPressure = 0.0, electronDensity = 0.0;
-    RDouble vibrationOmega = 0.0, electronOmega = 0.0;
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        RDouble density = primitiveVariables[IR][iCell] * referenceDensity;
-        RDouble pressure = primitiveVariables[IP][iCell] * referenceDensity * referenceVelocity * referenceVelocity;
-
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-            Omegas[s] = chemicalSourceTerms[s][iCell] / (referenceSpeciesEquation * cellVolume[iCell]);
-            for (int it = 1; it < ntmodel; ++ it)
-            {
-                OmegaDerivative[s][it - 1] = chemicalSourceDerivatives[s][nl + it][iCell] / (referenceEnergyEquation * cellVolume[iCell]);
-            }
-        }
-        //! Obtain the mass fraction of species.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFraction[s] = primitiveVariables[nm + s][iCell];
-        }
-        //! Obtain the temperature.
-        for (int it = 0; it < ntmodel; ++ it)
-        {
-            temperature[it] = temperatures[it][iCell];
-        }
-        Ttr = temperature[ITT] * referenceTemperature;
-        Te  = temperature[ITE] * referenceTemperature;
-
-        //! Compute the specific heat at constant volume.
-        mixGasCvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITV], speciesCvv);
-        this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(temperature[ITE], speciesCve);
-        this->ComputeMixtureByMassFraction(massFraction, speciesCvv, mixGasCvv);
-        this->ComputeMixtureByMassFraction(massFraction, speciesCve, mixGasCve);
-
-        //! Compute vibration energy by translation-rotation temperature.
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITT], speciesCvvStar1);
-        //! Compute vibration energy by electron temperature.
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITE], speciesCvvStar2);
-
-        //! Compute vibration energy and electron energy.
-        this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-        this->ComputeDimensionalElectronEnergy(temperature[ITE], electronEnergy);
-        this->ComputeDimensionalVibrationEnergy(temperature[ITT], vibrationEnergyStar1);
-        this->ComputeDimensionalVibrationEnergy(temperature[ITE], vibrationEnergyStar2);
-
-        //! Compute the relaxation time.of translation-vibration mode.
-        this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFraction, speciesMass, Ttr, pressure, density, transVibrationTime);
-        if (this->nElectronIndex >= 0)
-        {
-            electronDensity = density * massFraction[this->nElectronIndex];
-            electronPressure = electronDensity * gasConstant * speciesMassReciprocal[this->nElectronIndex] * Te;
-        }
-        //! Compute the relaxation time.of electron-vibration mode.
-        this->GetElectronAndVibrationRelaxationTime(thermoProperty, electronPressure, Te, transElectronTime);
-
-        RDouble partv1 = 0.0, partv2 = 0.0, partv3 = 0.0, partv4 = 0.0;
-        RDouble parte1 = 0.0, parte2 = 0.0, parte3 = 0.0;
-        vibrationOmega = 0.0;
-        electronOmega  = 0.0;
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            parte1 += Omegas[s] * speciesCve[s];
-            parte2 += OmegaDerivative[s][1] * electronEnergy[s];
-            //! Compute source term of electron energy equation.
-            electronOmega += Omegas[s] * electronEnergy[s];
-
-            if (thermoProperty[s].nType < 2)
-            {
-                continue;
-            }
-            partv1 += massFraction[s] * speciesCvvStar1[s] / transVibrationTime[s];
-            partv2 += massFraction[s] * speciesCvv[s] / transVibrationTime[s];
-            partv3 += Omegas[s] * speciesCvv[s];
-            partv4 += OmegaDerivative[s][0] * vibrationEnergy[s];
-
-            //! Compute source term of vibration energy equation.
-            vibrationOmega += density * massFraction[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-            vibrationOmega += Omegas[s] * vibrationEnergy[s];
-        }
-        if (nNitrogenIndex >= 0)
-        {
-            partv2 += massFraction[nNitrogenIndex] * speciesCvv[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-            parte3 += massFraction[nNitrogenIndex] * speciesCvvStar2[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-            //! Compute source term.
-            RDouble temp = density * massFraction[nNitrogenIndex] * (vibrationEnergyStar2[nNitrogenIndex] - vibrationEnergy[nNitrogenIndex]) / transElectronTime[nNitrogenIndex];
-            vibrationOmega += temp;
-            electronOmega -= temp;
-        }
-
-        partv1 = partv1 / mixGasCvtr;
-        partv2 = partv2 / mixGasCvv;
-        partv3 = partv3 / (density * mixGasCvv);
-        parte1 = parte1 / (density * mixGasCve);
-        parte3 = parte3 / mixGasCve;
-
-        //! Compute derivatives.
-        energySourceDerivatives[0][iCell] = partv3 + partv4 - partv1 - partv2;
-        energySourceDerivatives[1][iCell] = parte1 + parte2 - parte3;
-
-        if (this->nElectronIndex >= 0)     //! Species including electron.
-        {
-            //! Compute the number density of electron.
-            RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-            this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Te, Ne, sigma);
-
-            RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-            RDouble heatVelocity = sqrt(8.0 * gasConstant * Te * speciesMassReciprocal[nElectronIndex] / PI);
-            for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-            {
-                speciesDensity = density * massFraction[s];
-                Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-                fes = Ns * sigma[s] * heatVelocity;
-                Fe += fes * speciesMassReciprocal[s];
-            }
-            //! Compute source term of electron energy equation.
-            electronOmega += 3.0 * electronDensity * gasConstant * (Ttr - Te) * Fe;
-
-            RDouble mixGasEe = 0.0;
-            this->ComputeMixtureByMassFraction(massFraction, electronEnergy , mixGasEe);
-            energySourceDerivatives[1][iCell] -= 3.0 * massFraction[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCve + (Te - Ttr) / (2.0 * mixGasEe));
-        }
-        energySourceDerivatives[0][iCell] *= reference1 * cellVolume[iCell];
-        energySourceDerivatives[1][iCell] *= reference1 * cellVolume[iCell];
-
-        //! The source terms of vibration energy equation and electron energy equation.
-        chemicalSourceTerms[numberOfSpecies][iCell] = reference2 * vibrationOmega * cellVolume[iCell];
-        chemicalSourceTerms[numberOfSpecies + 1][iCell] = reference2 * electronOmega * cellVolume[iCell];
-    }
-
-    delete [] Omegas;
-    delete [] sigma;
-    delete [] massFraction;
-    delete [] speciesCvv;
-    delete [] speciesCve;
-    delete [] speciesCvvStar1;
-    delete [] speciesCvvStar2;
-    delete [] vibrationEnergy;
-    delete [] electronEnergy;
-    delete [] vibrationEnergyStar1;
-    delete [] vibrationEnergyStar2;
-    delete [] transVibrationTime;
-    delete [] transElectronTime;
-    DelPointer2(OmegaDerivative);
 }
 
 void MixedGas::ComputeEnergySourceJacobianT2(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
 {
-    using namespace IDX;    //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / pow(referenceVelocity, 2);
-
-    RDouble *Omegas = new RDouble[numberOfSpecies];
-    RDouble *sigma = new RDouble[numberOfSpecies];
-    RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    RDouble *speciesCve = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    RDouble **OmegaDerivative = NewPointer2 <RDouble> (numberOfSpecies, ntmodel - 1);
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble mixGasCvtr, mixGasCvv, mixGasCve, mixGasCvve;
-    RDouble Ttr = 0.0, Tve = 0.0, vibrationOmega = 0.0;
-    RDouble gasConstant = rjmk, density = 0.0, pressure = 0.0;
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    density = primitiveVariables[IR] * referenceDensity;
-    pressure = primitiveVariables[IP] * referenceDensity * referenceVelocity * referenceVelocity;
-
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-    {
-        //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-        Omegas[s] = chemicalSourceTerms[s] / (referenceSpeciesEquation * cellVolume);
-        for (int it = 1; it < ntmodel; ++ it)
-        {
-            OmegaDerivative[s][it - 1] = sourceDerivatives[s][numberOfSpecies + it - 1] / (referenceEnergyEquation * cellVolume);
-        }
-    }
-    //! Obtain the mass fraction of species.
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFractions[s] = primitiveVariables[nm + s];
-    }
-    Ttr = temperatures[ITT] * referenceTemperature;
-    Tve = temperatures[ITV] * referenceTemperature;
-
-    //! Compute the specific heat at constant volume.
-    mixGasCvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-    this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperatures[ITV], speciesCvv);
-    this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(temperatures[ITE], speciesCve);
-    this->ComputeMixtureByMassFraction(massFractions, speciesCvv, mixGasCvv);
-    this->ComputeMixtureByMassFraction(massFractions, speciesCve, mixGasCve);
-    mixGasCvve = mixGasCvv + mixGasCve;
-
-    //! Compute vibration energy by translation-rotation temperature.
-    this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperatures[ITT], speciesCvvStar1);
-    //! Compute vibration energy and electron energy.
-    this->ComputeDimensionalVibrationEnergy(temperatures[ITV], vibrationEnergy);
-    this->ComputeDimensionalElectronEnergy(temperatures[ITE], electronEnergy);
-    this->ComputeDimensionalVibrationEnergy(temperatures[ITT], vibrationEnergyStar1);
-
-    //! Compute the relaxation time.of translation-vibration mode.
-    this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFractions, speciesMass, Ttr, pressure, density, transVibrationTime);
-
-    RDouble part1 = 0.0, part2 = 0.0, part3 = 0.0, part4 = 0.0;
-    vibrationOmega = 0.0;
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-    {
-        if (thermoProperty[s].nType < 2)
-        {
-            continue;
-        }
-
-        part1 += massFractions[s] * speciesCvvStar1[s] / transVibrationTime[s];
-        part2 += massFractions[s] * speciesCvv[s] / transVibrationTime[s];
-        part3 += Omegas[s] * (speciesCvv[s] + speciesCve[s]);
-        part4 += OmegaDerivative[s][0] * (vibrationEnergy[s] + electronEnergy[s]);
-
-        //! Compute the source term of vibration energy equation.
-        vibrationOmega += density * massFractions[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-        vibrationOmega += Omegas[s] * (vibrationEnergy[s] + electronEnergy[s]);
-    }
-    part1 = part1 / mixGasCvtr;
-    part2 = part2 / mixGasCvve;
-    part3 = part3 / (density * mixGasCvve);
-    //! Compute derivatives.
-    sourceDerivatives[numberOfSpecies][numberOfSpecies] = - part1 - part2 + part3 + part4;
-
-    if (this->nElectronIndex >= 0) //species including electron.
-    {
-        //! Compute the number density of electron.
-        RDouble electronDensity = density * massFractions[nElectronIndex];
-        RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-        this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Tve, Ne, sigma);
-
-        RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-        //! The heat motion velocity of electron.
-        RDouble heatVelocity = sqrt(8.0 * gasConstant * Tve * speciesMassReciprocal[nElectronIndex] / PI);
-        for (int s = 0; s <= nLastSpeciesIndex; ++ s)
-        {
-            speciesDensity = density * massFractions[s];
-            Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-            fes = Ns * sigma[s] * heatVelocity;
-            Fe += fes * speciesMassReciprocal[s];
-        }
-        //! Compute the source term of vibration energy equation.
-        vibrationOmega += 3.0 * electronDensity * gasConstant * (Ttr - Tve);
-
-        RDouble mixGasEv = 0.0, mixGasEe = 0.0, mixGasEve;
-        this->ComputeMixtureByMassFraction(massFractions, vibrationEnergy, mixGasEv);
-        this->ComputeMixtureByMassFraction(massFractions, electronEnergy , mixGasEe);
-        mixGasEve = mixGasEv + mixGasEe;
-        sourceDerivatives[numberOfSpecies][numberOfSpecies] -= 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCvve + (Tve - Ttr) / (2.0 * mixGasEve));
-    }
-    sourceDerivatives[numberOfSpecies][numberOfSpecies] *= reference1 * cellVolume;
-    //! The source term of vibration energy equation.
-    chemicalSourceTerms[numberOfSpecies] = reference2 * vibrationOmega * cellVolume;
-
-    delete [] Omegas;
-    delete [] sigma;
-    delete [] speciesCvv;
-    delete [] speciesCve;
-    delete [] speciesCvvStar1;
-    delete [] vibrationEnergy;
-    delete [] electronEnergy;
-    delete [] vibrationEnergyStar1;
-    delete [] transVibrationTime;
-    DelPointer2(OmegaDerivative);
+ 
 }
 
 void MixedGas::ComputeEnergySourceJacobianT3(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives)
 {
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / pow(referenceVelocity, 2);
 
-    RDouble *Omegas = new RDouble[numberOfSpecies];
-    RDouble *sigma = new RDouble[numberOfSpecies];
-    RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    RDouble *speciesCve = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar2 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar2 = new RDouble[numberOfSpecies];
-    RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    RDouble *transElectronTime = new RDouble[numberOfSpecies];
-    RDouble **OmegaDerivative = NewPointer2 <RDouble> (numberOfSpecies, ntmodel - 1);
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble gasConstant = rjmk, mixGasCvtr, mixGasCvv, mixGasCve;
-    RDouble Ttr = 0.0, Te = 0.0, electronPressure = 0.0, electronDensity = 0.0;
-    RDouble vibrationOmega = 0.0, electronOmega = 0.0;
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    RDouble density = primitiveVariables[IR] * referenceDensity;
-    RDouble pressure = primitiveVariables[IP] * referenceDensity * referenceVelocity * referenceVelocity;
-
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-    {
-        //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-        Omegas[s] = chemicalSourceTerms[s] / (referenceSpeciesEquation * cellVolume);
-        for (int it = 1; it < ntmodel; ++ it)
-        {
-            OmegaDerivative[s][it - 1] = sourceDerivatives[s][numberOfSpecies + it - 1] / (referenceEnergyEquation * cellVolume);
-        }
-    }
-    //! Obtain the mass fraction of species.
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFractions[s] = primitiveVariables[nm + s];
-    }
-    Ttr = temperatures[ITT] * referenceTemperature;
-    Te  = temperatures[ITE] * referenceTemperature;
-
-    //! Compute the specific heat at constant volume.
-    mixGasCvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-    this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperatures[ITV], speciesCvv);
-    this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(temperatures[ITE], speciesCve);
-    this->ComputeMixtureByMassFraction(massFractions, speciesCvv, mixGasCvv);
-    this->ComputeMixtureByMassFraction(massFractions, speciesCve, mixGasCve);
-
-    //! Compute vibration energy by translation-rotation temperature.
-    this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperatures[ITT], speciesCvvStar1);
-    //! Compute vibration energy by electron temperature.
-    this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperatures[ITE], speciesCvvStar2);
-
-    //! Compute vibration energy and electron energy.
-    this->ComputeDimensionalVibrationEnergy(temperatures[ITV], vibrationEnergy);
-    this->ComputeDimensionalElectronEnergy(temperatures[ITE], electronEnergy);
-    this->ComputeDimensionalVibrationEnergy(temperatures[ITT], vibrationEnergyStar1);
-    this->ComputeDimensionalVibrationEnergy(temperatures[ITE], vibrationEnergyStar2);
-
-    //! Compute the relaxation time.of translation-vibration mode.
-    this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFractions, speciesMass, Ttr, pressure, density, transVibrationTime);
-    if (this->nElectronIndex >= 0)
-    {
-        electronDensity = density * massFractions[this->nElectronIndex];
-        electronPressure = electronDensity * gasConstant * speciesMassReciprocal[this->nElectronIndex] * Te;
-    }
-    //! Compute the relaxation time.of electron-vibration mode.
-    this->GetElectronAndVibrationRelaxationTime(thermoProperty, electronPressure, Te, transElectronTime);
-
-    RDouble partv1 = 0.0, partv2 = 0.0, partv3 = 0.0, partv4 = 0.0;
-    RDouble parte1 = 0.0, parte2 = 0.0, parte3 = 0.0;
-    vibrationOmega = 0.0;
-    electronOmega  = 0.0;
-    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-    {
-        parte1 += Omegas[s] * speciesCve[s];
-        parte2 += OmegaDerivative[s][1] * electronEnergy[s];
-        //! Compute source term of electron energy equation.
-        electronOmega += Omegas[s] * electronEnergy[s];
-
-        if (thermoProperty[s].nType < 2)
-        {
-            continue;
-        }
-        partv1 += massFractions[s] * speciesCvvStar1[s] / transVibrationTime[s];
-        partv2 += massFractions[s] * speciesCvv[s] / transVibrationTime[s];
-        partv3 += Omegas[s] * speciesCvv[s];
-        partv4 += OmegaDerivative[s][0] * vibrationEnergy[s];
-
-        //! Compute source term of vibration energy equation.
-        vibrationOmega += density * massFractions[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-        vibrationOmega += Omegas[s] * vibrationEnergy[s];
-    }
-    if (nNitrogenIndex >= 0)
-    {
-        partv2 += massFractions[nNitrogenIndex] * speciesCvv[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-        parte3 += massFractions[nNitrogenIndex] * speciesCvvStar2[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-        //! Compute source term.
-        RDouble temp = density * massFractions[nNitrogenIndex] * (vibrationEnergyStar2[nNitrogenIndex] - vibrationEnergy[nNitrogenIndex]) / transElectronTime[nNitrogenIndex];
-        vibrationOmega += temp;
-        electronOmega -= temp;
-    }
-
-    partv1 = partv1 / mixGasCvtr;
-    partv2 = partv2 / mixGasCvv;
-    partv3 = partv3 / (density * mixGasCvv);
-    parte1 = parte1 / (density * mixGasCve);
-    parte3 = parte3 / mixGasCve;
-
-    //! Compute derivatives.
-    sourceDerivatives[numberOfSpecies][numberOfSpecies] = partv3 + partv4 - partv1 - partv2;
-    sourceDerivatives[numberOfSpecies + 1][numberOfSpecies + 1] = parte1 + parte2 - parte3;
-
-    if (this->nElectronIndex >= 0)     //! Species including electron.
-    {
-        //! Compute the number density of electron.
-        RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-        this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Te, Ne, sigma);
-
-        RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-        RDouble heatVelocity = sqrt(8.0 * gasConstant * Te * speciesMassReciprocal[nElectronIndex] / PI);
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            speciesDensity = density * massFractions[s];
-            Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-            fes = Ns * sigma[s] * heatVelocity;
-            Fe += fes * speciesMassReciprocal[s];
-        }
-        //! Compute source term of electron energy equation.
-        electronOmega += 3.0 * electronDensity * gasConstant * (Ttr - Te) * Fe;
-
-        RDouble mixGasEe = 0.0;
-        this->ComputeMixtureByMassFraction(massFractions, electronEnergy , mixGasEe);
-        sourceDerivatives[numberOfSpecies + 1][numberOfSpecies + 1] -= 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCve + (Te - Ttr) / (2.0 * mixGasEe));
-    }
-    sourceDerivatives[numberOfSpecies][numberOfSpecies] *= reference1 * cellVolume;
-    sourceDerivatives[numberOfSpecies + 1][numberOfSpecies + 1] *= reference1 * cellVolume;
-
-    //! The source terms of vibration energy equation and electron energy equation.
-    chemicalSourceTerms[numberOfSpecies] = reference2 * vibrationOmega * cellVolume;
-    chemicalSourceTerms[numberOfSpecies + 1] = reference2 * electronOmega * cellVolume;
-
-    delete [] Omegas;
-    delete [] sigma;
-    delete [] speciesCvv;
-    delete [] speciesCve;
-    delete [] speciesCvvStar1;
-    delete [] speciesCvvStar2;
-    delete [] vibrationEnergy;
-    delete [] electronEnergy;
-    delete [] vibrationEnergyStar1;
-    delete [] vibrationEnergyStar2;
-    delete [] transVibrationTime;
-    delete [] transElectronTime;
-    DelPointer2(OmegaDerivative);
 }
 
 void MixedGas::ComputeEnergySourceAndJacobianT2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
-    using namespace IDX;    //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble squareVelocity = referenceVelocity * referenceVelocity;
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / squareVelocity;
 
-    RDouble *Omegas = new RDouble[numberOfSpecies];
-    RDouble *sigma = new RDouble[numberOfSpecies];
-    RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    RDouble *speciesCve = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    RDouble **OmegaDerivative = NewPointer2 <RDouble> (numberOfSpecies, ntmodel - 1);
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble mixGasCvtr, mixGasCvv, mixGasCve, mixGasCvve;
-    RDouble Ttr = 0.0, Tve = 0.0, vibrationOmega = 0.0, temperature[3];
-    RDouble gasConstant = rjmk, density = 0.0, pressure = 0.0;
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        density = primitiveVariables[IR][iCell] * referenceDensity;
-        pressure = primitiveVariables[IP][iCell] * referenceDensity * squareVelocity;
-
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-            Omegas[s] = chemicalSourceTerms[s][iCell] / (referenceSpeciesEquation * cellVolume[iCell]);
-            for (int it = 1; it < ntmodel; ++ it)
-            {
-                OmegaDerivative[s][it - 1] = sourceDerivatives[s][numberOfSpecies + it - 1][iCell] / (referenceEnergyEquation * cellVolume[iCell]);
-            }
-        }
-        //! Obtain the mass fraction of species.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFractions[s] = primitiveVariables[nm + s][iCell];
-        }
-        for (int it = 0; it < 3; ++ it)
-        {
-            temperature[it] = temperatures[it][iCell];
-        }
-        Ttr = temperature[ITT] * referenceTemperature;
-        Tve = temperature[ITV] * referenceTemperature;
-
-        //! Compute the specific heat at constant volume.
-        mixGasCvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITV], speciesCvv);
-        this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(temperature[ITE], speciesCve);
-        this->ComputeMixtureByMassFraction(massFractions, speciesCvv, mixGasCvv);
-        this->ComputeMixtureByMassFraction(massFractions, speciesCve, mixGasCve);
-        mixGasCvve = mixGasCvv + mixGasCve;
-
-        //! Compute vibration energy by translation-rotation temperature.
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITT], speciesCvvStar1);
-        //! Compute vibration energy and electron energy.
-        this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-        this->ComputeDimensionalElectronEnergy(temperature[ITE], electronEnergy);
-        this->ComputeDimensionalVibrationEnergy(temperature[ITT], vibrationEnergyStar1);
-
-        //! Compute the relaxation time.of translation-vibration mode.
-        this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFractions, speciesMass, Ttr, pressure, density, transVibrationTime);
-
-        RDouble part1 = 0.0, part2 = 0.0, part3 = 0.0, part4 = 0.0;
-        vibrationOmega = 0.0;
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            if (thermoProperty[s].nType < 2)
-            {
-                continue;
-            }
-
-            part1 += massFractions[s] * speciesCvvStar1[s] / transVibrationTime[s];
-            part2 += massFractions[s] * speciesCvv[s] / transVibrationTime[s];
-            part3 += Omegas[s] * (speciesCvv[s] + speciesCve[s]);
-            part4 += OmegaDerivative[s][0] * (vibrationEnergy[s] + electronEnergy[s]);
-
-            //! Compute the source term of vibration energy equation.
-            vibrationOmega += density * massFractions[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-            vibrationOmega += Omegas[s] * (vibrationEnergy[s] + electronEnergy[s]);
-        }
-        part1 = part1 / mixGasCvtr;
-        part2 = part2 / mixGasCvve;
-        part3 = part3 / (density * mixGasCvve);
-        //! Compute derivatives.
-        RDouble vibrationJacobian = - part1 - part2 + part3 + part4;
-
-        if (this->nElectronIndex >= 0) //species including electron.
-        {
-            //! Compute the number density of electron.
-            RDouble electronDensity = density * massFractions[nElectronIndex];
-            RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-            this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Tve, Ne, sigma);
-
-            RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-            //! The heat motion velocity of electron.
-            RDouble heatVelocity = sqrt(8.0 * gasConstant * Tve * speciesMassReciprocal[nElectronIndex] / PI);
-            for (int s = 0; s <= nLastSpeciesIndex; ++ s)
-            {
-                speciesDensity = density * massFractions[s];
-                Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-                fes = Ns * sigma[s] * heatVelocity;
-                Fe += fes * speciesMassReciprocal[s];
-            }
-            //! Compute the source term of vibration energy equation.
-            vibrationOmega += 3.0 * electronDensity * Fe * gasConstant * (Ttr - Tve);
-
-            if (nTEnergyModel >= 1)
-            {
-                vibrationJacobian += (1.5 * massFractions[nElectronIndex] * gasConstant * Fe / mixGasCvve) * (Ttr / Tve - 1.0);
-                vibrationJacobian -= 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCvve);
-            }
-            else
-            {
-                RDouble mixGasEv = 0.0, mixGasEe = 0.0, mixGasEve;
-                this->ComputeMixtureByMassFraction(massFractions, vibrationEnergy, mixGasEv);
-                this->ComputeMixtureByMassFraction(massFractions, electronEnergy , mixGasEe);
-                mixGasEve = mixGasEv + mixGasEe;
-                vibrationJacobian -= 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCvve + (Tve - Ttr) / (2.0 * mixGasEve));
-            }
-        }
-        sourceDerivatives[numberOfSpecies][numberOfSpecies][iCell] = reference1 * vibrationJacobian * cellVolume[iCell];
-        //! The source term of vibration energy equation.
-        chemicalSourceTerms[numberOfSpecies][iCell] = reference2 * vibrationOmega * cellVolume[iCell];
-
-        // Inside of the loop.
-    }
-
-    delete [] Omegas;
-    delete [] sigma;
-    delete [] speciesCvv;
-    delete [] speciesCve;
-    delete [] speciesCvvStar1;
-    delete [] vibrationEnergy;
-    delete [] electronEnergy;
-    delete [] vibrationEnergyStar1;
-    delete [] transVibrationTime;
-    DelPointer2(OmegaDerivative);
 }
 
 void MixedGas::ComputeEnergySourceAndJacobianT2D3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
 {                                              
-    using namespace IDX;    //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble squareVelocity = referenceVelocity * referenceVelocity;
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / squareVelocity;
 
-    RDouble *Omegas = Thermo_Energy_temparay.Cps;;
-    RDouble *sigma = Thermo_Energy_temparay.Cvs;
-    RDouble *speciesCvv = Thermo_Energy_temparay.Cvvs;
-    RDouble *speciesCve = Thermo_Energy_temparay.Cves;
-    RDouble *speciesCvvStar1 = Thermo_Energy_temparay.Cvtrs;
-    RDouble *vibrationEnergy = Thermo_Energy_temparay.Etrs;
-    RDouble *electronEnergy = Thermo_Energy_temparay.Evs;
-    RDouble *vibrationEnergyStar1 = Thermo_Energy_temparay.Ees;
-    RDouble *transVibrationTime = Thermo_Energy_temparay.Es;
-    RDouble **OmegaDerivative = Thermo_Energy_temparay.OmegaDerivative;
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble mixGasCvtr, mixGasCvv, mixGasCve, mixGasCvve;
-    RDouble Ttr = 0.0, Tve = 0.0, vibrationOmega = 0.0, temperature[3];
-    RDouble gasConstant = rjmk, density = 0.0, pressure = 0.0;
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    int ist, ied, jst, jed, kst, ked;
-
-    ist = Inzone[0];
-    ied = Inzone[1];
-    jst = Inzone[2];
-    jed = Inzone[3];
-    kst = Inzone[4];
-    ked = Inzone[5];
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                density = primitiveVariables(i, j, k, IR) * referenceDensity;
-                pressure = primitiveVariables(i, j, k, IP) * referenceDensity * squareVelocity;
-
-                for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-                {
-                    //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-                    Omegas[s] = chemicalSourceTerms(i, j, k, s) / (referenceSpeciesEquation * cellVolume(i, j, k));
-                    for (int it = 1; it < ntmodel; ++ it)
-                    {
-                        OmegaDerivative[s][it - 1] = sourceDerivatives(i, j, k, s, numberOfSpecies + it - 1) / (referenceEnergyEquation * cellVolume(i, j, k));
-                    }
-                }
-                //! Obtain the mass fraction of species.
-                for (int s = 0; s < numberOfSpecies; ++ s)
-                {
-                    massFractions[s] = primitiveVariables(i, j, k, nm + s);
-                    speciesCvv[s] = speciesCvvs(i, j, k, s) / referenceSpecificHeat;
-                    speciesCve[s] = speciesCves(i, j, k, s) / referenceSpecificHeat;
-
-                    vibrationEnergy[s] = speciesEvs(i, j, k, s) * referenceEnergy;
-                    electronEnergy[s]  = speciesEes(i, j, k, s) * referenceEnergy;
-                }
-                mixGasCvtr = totalCvtr(i, j, k) / referenceSpecificHeat;
-                mixGasCvv  = totalCvv(i, j, k)  / referenceSpecificHeat;
-                mixGasCve  = totalCve(i, j, k)  / referenceSpecificHeat;
-
-                temperature[ITT] = temperatures(i, j, k, ITT);
-                temperature[ITV] = temperatures(i, j, k, ITV);
-                temperature[ITE] = temperature[ITV];
-
-                Ttr = temperature[ITT] * referenceTemperature;
-                Tve = temperature[ITV] * referenceTemperature; 
-
-                mixGasCvve = mixGasCvv + mixGasCve;    
-
-                //! Compute vibration energy by translation-rotation temperature.
-                //this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITT], speciesCvvStar1);
-                //this->ComputeDimensionalVibrationEnergy(temperature[ITT], vibrationEnergyStar1);
-
-                ComputeCvvsAndEvsForSpecies(temperature[ITT] * referenceTemperature, speciesCvvStar1, vibrationEnergyStar1, 1);
-
-                //! Compute the relaxation time.of translation-vibration mode.
-                //this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFractions, speciesMass, Ttr, pressure, density, transVibrationTime);
-                GetTranslationAndVibrationRelaxationTimeR(thermoProperty, massFractions, speciesMass, Ttr, pressure, density, transVibrationTime);
-
-                RDouble part1 = 0.0, part2 = 0.0, part3 = 0.0, part4 = 0.0, part5 = 0.0, part6 = 0.0;
-                vibrationOmega = 0.0;
-                for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-                {
-                    if (thermoProperty[s].nType < 2)
-                    {
-                        continue;
-                    }
-
-                    part1 += massFractions[s] * speciesCvvStar1[s] / transVibrationTime[s];
-                    part2 += massFractions[s] * speciesCvv[s] / transVibrationTime[s];
-                    part3 += Omegas[s] * (speciesCvv[s] + speciesCve[s]);
-                    part4 += OmegaDerivative[s][0] * (vibrationEnergy[s] + electronEnergy[s]);
-
-                    //! Compute the source term of vibration energy equation.
-                    vibrationOmega += density * massFractions[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-                    vibrationOmega += Omegas[s] * (vibrationEnergy[s] + electronEnergy[s]);
-                }
-                part1 = part1 / mixGasCvtr;
-                part2 = part2 / mixGasCvve;
-                part3 = part3 / (density * mixGasCvve);
-                //! Compute derivatives.
-               
-                if (this->nElectronIndex >= 0) //species including electron.
-                {
-                    //! Compute the number density of electron.
-                    RDouble electronDensity = density * massFractions[nElectronIndex];
-                    RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-                    this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Tve, Ne, sigma);
-
-                    RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-                    //! The heat motion velocity of electron.
-                    RDouble heatVelocity = sqrt(8.0 * gasConstant * Tve * speciesMassReciprocal[nElectronIndex] / PI);
-                    for (int s = 0; s <= nLastSpeciesIndex; ++ s)
-                    {
-                        speciesDensity = density * massFractions[s];
-                        Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-                        fes = Ns * sigma[s] * heatVelocity;
-                        Fe += fes * speciesMassReciprocal[s];
-                    }
-                    //! Compute the source term of vibration energy equation.
-                    vibrationOmega += 3.0 * electronDensity * Fe * gasConstant * (Ttr - Tve);
-
-                    if (nTEnergyModel >= 1 || nChemcalSourceModified > 0)
-                    {
-                        part5 = (1.5 * massFractions[nElectronIndex] * gasConstant * Fe / mixGasCvve) * (Ttr / Tve - 1.0);
-                        part6 = 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCvve);
-                    }
-                    else
-                    {
-                        RDouble mixGasEv = 0.0, mixGasEe = 0.0, mixGasEve;
-                        this->ComputeMixtureByMassFraction(massFractions, vibrationEnergy, mixGasEv);
-                        this->ComputeMixtureByMassFraction(massFractions, electronEnergy , mixGasEe);
-                        mixGasEve = mixGasEv + mixGasEe;
-                        //vibrationJacobian -= 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCvve + (Tve - Ttr) / (2.0 * mixGasEve));
-                        //part5 = 0.0;
-                        part6 = 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCvve + (Tve - Ttr) / (2.0 * mixGasEve));
-                    }
-                }
-
-                 RDouble vibrationJacobian;
-                if (nChemcalSourceModified == 0)
-                {
-                    vibrationJacobian = - part1 - part2 - part6 + part3 + part4 + part5;
-                }
-                else if (nChemcalSourceModified == 1)
-                {
-                    vibrationJacobian = - part1 - part2 - part6 + min(0.0, part3) + min(0.0, part4) + min(0.0, part5);
-                }
-                else
-                {
-                    vibrationJacobian = - abs(part1) - abs(part2) - abs(part6) -abs(part3) - abs(part4) - abs(part5);
-                }
-                sourceDerivatives(i, j, k, numberOfSpecies, numberOfSpecies) = reference1 * vibrationJacobian * cellVolume(i, j, k);
-                //! The source term of vibration energy equation.
-                chemicalSourceTerms(i, j, k, numberOfSpecies) = reference2 * vibrationOmega * cellVolume(i, j, k);
-            }
-        }
-        // Inside of the loop.
-    }
 }
 
 void MixedGas::ComputeEnergySourceAndJacobianT3(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber)
 {
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble squareVelocity = referenceVelocity * referenceVelocity;
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / squareVelocity;
 
-    RDouble *Omegas = new RDouble[numberOfSpecies];
-    RDouble *sigma = new RDouble[numberOfSpecies];
-    RDouble *speciesCvv = new RDouble[numberOfSpecies];
-    RDouble *speciesCve = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar1 = new RDouble[numberOfSpecies];
-    RDouble *speciesCvvStar2 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergy = new RDouble[numberOfSpecies];
-    RDouble *electronEnergy = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar1 = new RDouble[numberOfSpecies];
-    RDouble *vibrationEnergyStar2 = new RDouble[numberOfSpecies];
-    RDouble *transVibrationTime = new RDouble[numberOfSpecies];
-    RDouble *transElectronTime = new RDouble[numberOfSpecies];
-    RDouble **OmegaDerivative = NewPointer2 <RDouble> (numberOfSpecies, ntmodel - 1);
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble gasConstant = rjmk, mixGasCvtr, mixGasCvv, mixGasCve;
-    RDouble Ttr = 0.0, Te = 0.0, electronPressure = 0.0, electronDensity = 0.0;
-    RDouble vibrationOmega = 0.0, electronOmega = 0.0, temperature[3];
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    for (int iCell = 0; iCell < nCellNumber; ++ iCell)
-    {
-        RDouble density = primitiveVariables[IR][iCell] * referenceDensity;
-        RDouble pressure = primitiveVariables[IP][iCell] * referenceDensity * squareVelocity;
-
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-            Omegas[s] = chemicalSourceTerms[s][iCell] / (referenceSpeciesEquation * cellVolume[iCell]);
-            for (int it = 1; it < ntmodel; ++ it)
-            {
-                OmegaDerivative[s][it - 1] = sourceDerivatives[s][numberOfSpecies + it - 1][iCell] / (referenceEnergyEquation * cellVolume[iCell]);
-            }
-        }
-        //! Obtain the mass fraction of species.
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            massFractions[s] = primitiveVariables[nm + s][iCell];
-        }
-        for (int it = 0; it < 3; ++ it)
-        {
-            temperature[it] = temperatures[it][iCell];
-        }
-        Ttr = temperature[ITT] * referenceTemperature;
-        Te  = temperature[ITE] * referenceTemperature;
-
-        //! Compute the specific heat at constant volume.
-        mixGasCvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITV], speciesCvv);
-        this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(temperature[ITE], speciesCve);
-        this->ComputeMixtureByMassFraction(massFractions, speciesCvv, mixGasCvv);
-        this->ComputeMixtureByMassFraction(massFractions, speciesCve, mixGasCve);
-
-        //! Compute vibration energy by translation-rotation temperature.
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITT], speciesCvvStar1);
-        //! Compute vibration energy by electron temperature.
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITE], speciesCvvStar2);
-
-        //! Compute vibration energy and electron energy.
-        this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-        this->ComputeDimensionalElectronEnergy(temperature[ITE], electronEnergy);
-        this->ComputeDimensionalVibrationEnergy(temperature[ITT], vibrationEnergyStar1);
-        this->ComputeDimensionalVibrationEnergy(temperature[ITE], vibrationEnergyStar2);
-
-        //! Compute the relaxation time.of translation-vibration mode.
-        this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFractions, speciesMass, Ttr, pressure, density, transVibrationTime);
-        if (this->nElectronIndex >= 0)
-        {
-            electronDensity = density * massFractions[this->nElectronIndex];
-            electronPressure = electronDensity * gasConstant * speciesMassReciprocal[this->nElectronIndex] * Te;
-        }
-        //! Compute the relaxation time.of electron-vibration mode.
-        this->GetElectronAndVibrationRelaxationTime(thermoProperty, electronPressure, Te, transElectronTime);
-
-        RDouble partv1 = 0.0, partv2 = 0.0, partv3 = 0.0, partv4 = 0.0;
-        RDouble parte1 = 0.0, parte2 = 0.0, parte3 = 0.0;
-        vibrationOmega = 0.0;
-        electronOmega  = 0.0;
-        for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-        {
-            parte1 += Omegas[s] * speciesCve[s];
-            parte2 += OmegaDerivative[s][1] * electronEnergy[s];
-            //! Compute source term of electron energy equation.
-            electronOmega += Omegas[s] * electronEnergy[s];
-
-            if (thermoProperty[s].nType < 2)
-            {
-                continue;
-            }
-            partv1 += massFractions[s] * speciesCvvStar1[s] / transVibrationTime[s];
-            partv2 += massFractions[s] * speciesCvv[s] / transVibrationTime[s];
-            partv3 += Omegas[s] * speciesCvv[s];
-            partv4 += OmegaDerivative[s][0] * vibrationEnergy[s];
-
-            //! Compute source term of vibration energy equation.
-            vibrationOmega += density * massFractions[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-            vibrationOmega += Omegas[s] * vibrationEnergy[s];
-        }
-        if (nNitrogenIndex >= 0)
-        {
-            partv2 += massFractions[nNitrogenIndex] * speciesCvv[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-            parte3 += massFractions[nNitrogenIndex] * speciesCvvStar2[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-            //! Compute source term.
-            RDouble temp = density * massFractions[nNitrogenIndex] * (vibrationEnergyStar2[nNitrogenIndex] - vibrationEnergy[nNitrogenIndex]) / transElectronTime[nNitrogenIndex];
-            vibrationOmega += temp;
-            electronOmega -= temp;
-        }
-
-        partv1 = partv1 / mixGasCvtr;
-        partv2 = partv2 / mixGasCvv;
-        partv3 = partv3 / (density * mixGasCvv);
-        parte1 = parte1 / (density * mixGasCve);
-        parte3 = parte3 / mixGasCve;
-
-        //! Compute derivatives.
-        RDouble vibrationJacobian = partv3 + partv4 - partv1 - partv2;
-        RDouble electronJacobian  = parte1 + parte2 - parte3;
-
-        if (this->nElectronIndex >= 0)     //! Species including electron.
-        {
-            //! Compute the number density of electron.
-            RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-            this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Te, Ne, sigma);
-
-            RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-            RDouble heatVelocity = sqrt(8.0 * gasConstant * Te * speciesMassReciprocal[nElectronIndex] / PI);
-            for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-            {
-                speciesDensity = density * massFractions[s];
-                Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-                fes = Ns * sigma[s] * heatVelocity;
-                Fe += fes * speciesMassReciprocal[s];
-            }
-            //! Compute source term of electron energy equation.
-            electronOmega += 3.0 * electronDensity * Fe * gasConstant * (Ttr - Te) * Fe;
-
-            RDouble mixGasEe = 0.0;
-            this->ComputeMixtureByMassFraction(massFractions, electronEnergy , mixGasEe);
-            electronJacobian -= 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCve + (Te - Ttr) / (2.0 * mixGasEe));
-        }
-        sourceDerivatives[numberOfSpecies][numberOfSpecies][iCell] = reference1 * vibrationJacobian * cellVolume[iCell];
-        sourceDerivatives[numberOfSpecies + 1][numberOfSpecies + 1][iCell] = reference1 * electronJacobian * cellVolume[iCell];
-
-        //! The source terms of vibration energy equation and electron energy equation.
-        chemicalSourceTerms[numberOfSpecies][iCell] = reference2 * vibrationOmega * cellVolume[iCell];
-        chemicalSourceTerms[numberOfSpecies + 1][iCell] = reference2 * electronOmega * cellVolume[iCell];
-
-        //Inside of the loop.
-    }
-
-    delete [] Omegas;
-    delete [] sigma;
-    delete [] speciesCvv;
-    delete [] speciesCve;
-    delete [] speciesCvvStar1;
-    delete [] speciesCvvStar2;
-    delete [] vibrationEnergy;
-    delete [] electronEnergy;
-    delete [] vibrationEnergyStar1;
-    delete [] vibrationEnergyStar2;
-    delete [] transVibrationTime;
-    delete [] transElectronTime;
-    DelPointer2(OmegaDerivative);
 }
 
 void MixedGas::ComputeEnergySourceAndJacobianT3D3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives)
 {
-    using namespace IDX;     //! The following variables is dimensional values.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocalDimensional();
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble referenceVelocity = this->referenceParameterDimensional.GetVelocity();
-    RDouble referenceDensity = this->referenceParameterDimensional.GetDensity();
-    RDouble squareVelocity = referenceVelocity * referenceVelocity;
-    RDouble referenceSpeciesEquation = reynoldsReferenceLengthDimensional / (referenceDensity * referenceVelocity);
-    RDouble referenceEnergyEquation = referenceVelocity * reynoldsReferenceLengthDimensional;
-    RDouble reference1 = reynoldsReferenceLengthDimensional / referenceVelocity;
-    RDouble reference2 = referenceSpeciesEquation / squareVelocity;
-
-    RDouble *Omegas = Thermo_Energy_temparay.Cps;
-    RDouble *sigma = Thermo_Energy_temparay.Cvs;
-    RDouble *speciesCvv = Thermo_Energy_temparay.Cvvs;
-    RDouble *speciesCve = Thermo_Energy_temparay.Cves;
-    RDouble *speciesCvvStar1 = Thermo_Energy_temparay.Cvtrs;
-    RDouble *speciesCvvStar2 = Thermo_Energy_temparay.Rms;
-    RDouble *vibrationEnergy = Thermo_Energy_temparay.Etrs;
-    RDouble *electronEnergy = Thermo_Energy_temparay.Evs;
-    RDouble *vibrationEnergyStar1 = Thermo_Energy_temparay.Ees;
-    RDouble *vibrationEnergyStar2 = Thermo_Energy_temparay.Hs;
-    RDouble *transVibrationTime = Thermo_Energy_temparay.Es;
-    RDouble *transElectronTime = workSpecies;
-    RDouble **OmegaDerivative = Thermo_Energy_temparay.OmegaDerivative;
-
-    //! Compute the partial derivatives in the main diagonal position.
-    RDouble gasConstant = rjmk, mixGasCvtr, mixGasCvv, mixGasCve;
-    RDouble Ttr = 0.0, Te = 0.0, electronPressure = 0.0, electronDensity = 0.0;
-    RDouble vibrationOmega = 0.0, electronOmega = 0.0, temperature[3];
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    Thermo_Param *thermoProperty = molecularProperty->GetThermodynamicProperties();
-
-    int ist, ied, jst, jed, kst, ked;
-    ist = Inzone[0];
-    ied = Inzone[1];
-    jst = Inzone[2];
-    jed = Inzone[3];
-    kst = Inzone[4];
-    ked = Inzone[5];
-
-    for (int k = kst; k <= ked; ++ k)
-    {
-        for (int j = jst; j <= jed; ++ j)
-        {
-            for (int i = ist; i <= ied; ++ i)
-            {
-                RDouble density = primitiveVariables(i, j, k, IR) * referenceDensity;
-                RDouble pressure = primitiveVariables(i, j, k, IP) * referenceDensity * squareVelocity;
-
-                for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-                {
-                    //! Obtain the partial derivatives of chemical source to the vibration and electron energy.
-                    Omegas[s] = chemicalSourceTerms(i, j, k, s) / (referenceSpeciesEquation * cellVolume(i, j, k));
-                    for (int it = 1; it < ntmodel; ++ it)
-                    {
-                        OmegaDerivative[s][it - 1] = sourceDerivatives(i, j, k, s, numberOfSpecies + it - 1) / (referenceEnergyEquation * cellVolume(i, j, k));
-                    }
-                }
-                //! Obtain the mass fraction of species.
-                for (int s = 0; s < numberOfSpecies; ++ s)
-                {
-                    massFractions[s] = primitiveVariables(i, j, k, nm + s);
-                    speciesCvv[s] = speciesCvvs(i, j, k, s) / referenceSpecificHeat;
-                    speciesCve[s] = speciesCves(i, j, k, s) / referenceSpecificHeat;
-
-                    vibrationEnergy[s] = speciesEvs(i, j, k, s) * referenceEnergy;
-                    electronEnergy[s]  = speciesEes(i, j, k, s) * referenceEnergy;
-                }
-                mixGasCvtr = totalCvtr(i, j, k) / referenceSpecificHeat;
-                mixGasCvv  = totalCvv(i, j, k)  / referenceSpecificHeat;
-                mixGasCve  = totalCve(i, j, k)  / referenceSpecificHeat;
-
-                for (int it = 0; it < 3; ++ it)
-                {
-                    temperature[it] = temperatures(i, j, k, it);
-                }
-                Ttr = temperature[ITT] * referenceTemperature;
-                Te  = temperature[ITE] * referenceTemperature;
-
-                //! Compute the specific heat at constant volume.
-                /*mixGasCvtr = this->GetMixedGasDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-                this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITV], speciesCvv);
-                this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(temperature[ITE], speciesCve);
-                this->ComputeMixtureByMassFraction(massFractions, speciesCvv, mixGasCvv);
-                this->ComputeMixtureByMassFraction(massFractions, speciesCve, mixGasCve);*/
-
-                //! Compute vibration energy by translation-rotation temperature.
-                this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITT], speciesCvvStar1);
-                //! Compute vibration energy by electron temperature.
-                this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(temperature[ITE], speciesCvvStar2);
-
-                //! Compute vibration energy and electron energy.
-                /*this->ComputeDimensionalVibrationEnergy(temperature[ITV], vibrationEnergy);
-                this->ComputeDimensionalElectronEnergy(temperature[ITE], electronEnergy);*/
-                this->ComputeDimensionalVibrationEnergy(temperature[ITT], vibrationEnergyStar1);
-                this->ComputeDimensionalVibrationEnergy(temperature[ITE], vibrationEnergyStar2);
-
-                //! Compute the relaxation time.of translation-vibration mode.
-                this->GetTranslationAndVibrationRelaxationTime(thermoProperty, massFractions, speciesMass, Ttr, pressure, density, transVibrationTime);
-                if (this->nElectronIndex >= 0)
-                {
-                    electronDensity = density * massFractions[this->nElectronIndex];
-                    electronPressure = electronDensity * gasConstant * speciesMassReciprocal[this->nElectronIndex] * Te;
-                }
-                //! Compute the relaxation time.of electron-vibration mode.
-                this->GetElectronAndVibrationRelaxationTime(thermoProperty, electronPressure, Te, transElectronTime);
-
-                RDouble partv1 = 0.0, partv2 = 0.0, partv3 = 0.0, partv4 = 0.0;
-                RDouble parte1 = 0.0, parte2 = 0.0, parte3 = 0.0;
-                vibrationOmega = 0.0;
-                electronOmega  = 0.0;
-                for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-                {
-                    parte1 += Omegas[s] * speciesCve[s];
-                    parte2 += OmegaDerivative[s][1] * electronEnergy[s];
-                    //! Compute source term of electron energy equation.
-                    electronOmega += Omegas[s] * electronEnergy[s];
-
-                    if (thermoProperty[s].nType < 2)
-                    {
-                        continue;
-                    }
-                    partv1 += massFractions[s] * speciesCvvStar1[s] / transVibrationTime[s];
-                    partv2 += massFractions[s] * speciesCvv[s] / transVibrationTime[s];
-                    partv3 += Omegas[s] * speciesCvv[s];
-                    partv4 += OmegaDerivative[s][0] * vibrationEnergy[s];
-
-                    //! Compute source term of vibration energy equation.
-                    vibrationOmega += density * massFractions[s] * (vibrationEnergyStar1[s] - vibrationEnergy[s]) / transVibrationTime[s];
-                    vibrationOmega += Omegas[s] * vibrationEnergy[s];
-                }
-                if (nNitrogenIndex >= 0)
-                {
-                    partv2 += massFractions[nNitrogenIndex] * speciesCvv[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-                    parte3 += massFractions[nNitrogenIndex] * speciesCvvStar2[nNitrogenIndex] / transElectronTime[nNitrogenIndex];
-                    //! Compute source term.
-                    RDouble temp = density * massFractions[nNitrogenIndex] * (vibrationEnergyStar2[nNitrogenIndex] - vibrationEnergy[nNitrogenIndex]) / transElectronTime[nNitrogenIndex];
-                    vibrationOmega += temp;
-                    electronOmega -= temp;
-                }
-
-                partv1 = partv1 / mixGasCvtr;
-                partv2 = partv2 / mixGasCvv;
-                partv3 = partv3 / (density * mixGasCvv);
-                parte1 = parte1 / (density * mixGasCve);
-                parte3 = parte3 / mixGasCve;
-
-                //! Compute derivatives.
-                RDouble vibrationJacobian = partv3 + partv4 - partv1 - partv2;
-                RDouble electronJacobian  = parte1 + parte2 - parte3;
-
-                if (this->nElectronIndex >= 0)     //! Species including electron.
-                {
-                    //! Compute the number density of electron.
-                    RDouble Ne = AVOGADRO_CONSTANT * electronDensity * speciesMassReciprocal[nElectronIndex];
-                    this->GetEffectiveCollisionCrossSectionalArea(thermoProperty, Te, Ne, sigma);
-
-                    RDouble Fe = 0.0, Ns = 0.0, fes = 0.0, speciesDensity = 0.0;
-                    RDouble heatVelocity = sqrt(8.0 * gasConstant * Te * speciesMassReciprocal[nElectronIndex] / PI);
-                    for (int s = 0; s <= this->nLastSpeciesIndex; ++ s)
-                    {
-                        speciesDensity = density * massFractions[s];
-                        Ns = AVOGADRO_CONSTANT * speciesDensity * speciesMassReciprocal[s];
-                        fes = Ns * sigma[s] * heatVelocity;
-                        Fe += fes * speciesMassReciprocal[s];
-                    }
-                    //! Compute source term of electron energy equation.
-                    electronOmega += 3.0 * electronDensity * Fe * gasConstant * (Ttr - Te) * Fe;
-
-                    RDouble mixGasEe = 0.0;
-                    this->ComputeMixtureByMassFraction(massFractions, electronEnergy , mixGasEe);
-                    electronJacobian -= 3.0 * massFractions[nElectronIndex] * gasConstant * Fe * (1.0 / mixGasCvtr + 1.0 / mixGasCve + (Te - Ttr) / (2.0 * mixGasEe));
-                }
-                sourceDerivatives(i, j, k, numberOfSpecies, numberOfSpecies) = reference1 * vibrationJacobian * cellVolume(i, j, k);
-                sourceDerivatives(i, j, k, numberOfSpecies + 1, numberOfSpecies + 1)  = reference1 * electronJacobian * cellVolume(i, j, k);
-
-                //! The source terms of vibration energy equation and electron energy equation.
-                chemicalSourceTerms(i, j, k, numberOfSpecies) = reference2 * vibrationOmega * cellVolume(i, j, k);
-                chemicalSourceTerms(i, j, k, numberOfSpecies + 1) = reference2 * electronOmega * cellVolume(i, j, k);
-
-                //Inside of the loop.
-            }
-        }
-    }
+ 
 }
 
 void MixedGas::GetLinearlyAveragedPolynomialCoefficients(int nSpecies, RDouble temperature, RDouble *polynomialCoef)
@@ -8685,92 +4885,10 @@ void MixedGas::GetLinearlyAveragedPolynomialCoefficientsT2(RDouble temperature, 
 
 void MixedGas::GetLinearlyAveragedPolynomialCoefficientsIndex(RDouble temperature, RDouble &coef, int &nIndex1, int &nIndex2)
 {
-    //int nIndex1, nIndex2;      //! Record the index of temperature range.
-    RDouble coef1 = 1.0, coef2 = 0.0;      //! The coefficients for linear polynomial on the temperature boundary.
-    RDouble T = temperature;   //! temperature is the dimensional value.
-
-    //! Select the temperature range and compute the coefficients.
-    if (T > 15500.0)
-    {
-        if (T > 25500.0)     //! Range: (25500, 30000).
-        {
-            nIndex1 = 4;
-            nIndex2 = 0;
-            coef = -1.0;
-        }
-        else if (T <= 24500.0)     //! Range: (15500, 24500).
-        {
-            nIndex1 = 3;
-            nIndex2 = 0;
-            coef = -1.0;
-        }
-        else     //! Range: (24500, 25500).
-        {
-            coef = 0.001 * (T - 24500.0);
-            nIndex1 = 3;
-            nIndex2 = 4;
-        }
-    }
-    else if (T > 6500.0)
-    {
-        nIndex1 = 2;
-        nIndex2 = 3;
-        if (T <= 14500.0)     //! Range: (6500, 14500).
-        {
-            coef = -1.0;
-        }
-        else      //! Range: (14500, 15500).
-        {
-            coef = 0.001 * (T - 14500.0);
-        }
-    }
-    else if (T > 1200.0)
-    {
-        nIndex1 = 1;
-        nIndex2 = 2;
-        if (T <= 5500.0)     //! Range: (1200, 5500).
-        {
-            coef = -1.0;
-        }
-        else      //! Range: (5500, 6500).
-        {
-            coef = 0.001 * (T - 5500.0);
-        }
-    }
-    else
-    {
-        nIndex1 = 0;
-        nIndex2 = 1;
-        if (T <= 800.0)      //! Range: (0, 800).
-        {
-            coef = -1.0;
-        }
-        else      //! Range: (800, 1200).
-        {
-            coef = (T - 800.0) / 400.0;
-        }
-    }
 }
 
 void MixedGas::GetLinearlyAveragedPolynomialCoefficientsByIndex(int nSpecies, RDouble *polynomialCoef, RDouble coef, int nIndex1, int nIndex2)
 {
-    RDouble *a = this->thermodynamicManager->GetPolynomialCoefficient(nSpecies, nIndex1);
-    int n = thermodynamicManager->GetNumberofPolynomialCoefficient();
-    if (coef < 0)
-    {
-        for (int i = 0; i < n; ++ i)
-        {
-            polynomialCoef[i] = a[i];
-        }
-    }
-    else
-    {
-        RDouble *b = this->thermodynamicManager->GetPolynomialCoefficient(nSpecies, nIndex2);
-        for (int i = 0; i < n; ++ i)
-        {
-            polynomialCoef[i] = (1.0 - coef) * a[i] + coef * b[i];
-        }
-    }
 }
 
 void MixedGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a)
@@ -9420,14 +5538,6 @@ void MixedGas::ComputeTranslationAndRotationEnergy(RDouble transRotationTemperat
 
 void MixedGas::ComputeVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *speciesVibrationCv)
 {
-    //! The dimensional value of vibration specific heat at constant volume.
-    ComputeDimensionalVibrationSpecificHeatAtConstantVolume(vibrationTemperature, speciesVibrationCv);
-
-    //! Get non-dimensional values.
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        speciesVibrationCv[i] *= referenceSpecificHeat;
-    }
 }
 
 void MixedGas::ComputeDimensionalVibrationSpecificHeatAtConstantVolume(RDouble vibrationTemperature, RDouble *speciesVibrationCv)
@@ -9562,14 +5672,6 @@ void MixedGas::ComputeVibrationEnergy(RDouble vibrationTemperature, RDouble *spe
 
 void MixedGas::ComputeElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *speciesElectronCv)
 {
-    //! The dimensional value of electron specific heat at constant volume.
-    ComputeDimensionalElectronSpecificHeatAtConstantVolume(electronTemperature, speciesElectronCv);
-
-    //! Translate to the non-dimensional values.
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        speciesElectronCv[i] *= referenceSpecificHeat;
-    }
 }
 
 void MixedGas::ComputeDimensionalElectronSpecificHeatAtConstantVolume(RDouble electronTemperature, RDouble *speciesElectronCv)
@@ -9857,446 +5959,48 @@ RDouble MixedGas::ComputeMixedGasEnthalpy(RDouble *primitiveVars, RDouble *tempe
      }
     else
     {
-        staticEnthalpy = this->ComputeMixedGasEnthalpy(temperatures[ITT], temperatures[ITV], temperatures[ITE], massFractions);
     }
     return staticEnthalpy;
 }
 
 RDouble MixedGas::GetTotalFormationEnthalpy(RDouble *massFraction)
 {
-    //! To obtain the thermodynamic properties of species.
-    Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
-
-    //! To record the total enthalpy of formation.
-    RDouble formationEnthalpy = 0.0;
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        formationEnthalpy += massFraction[i] * thermodynamicProperties[i].hs0;
-    }
-    return (formationEnthalpy / referenceEnergy);
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeTranslationAndRotationTemperatureByPrimitiveVariables(RDouble *primitiveVariables, RDouble electronPressure/* = 0.0*/)
 {
-    using namespace IDX;
-    RDouble density = primitiveVariables[IR];
-    RDouble pressure = primitiveVariables[IP];
-    RDouble gasConstant = GetUniversalGasConstant();
-
-    //! To obtain the molecular weight of species.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeight();
-    //! To obtain the thermodynamic properties of species.
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
-    RDouble massReciprocal = 0.0;// To record the average molecular weight.
-    for (int i = 0; i <= nLastSpeciesIndex; ++ i)
-    {
-        massReciprocal += primitiveVariables[nm + i] / speciesMass[i];
-    }
-
-    //! Compute the translation-rotation temperature.
-    RDouble transRotationTemperature = (pressure - electronPressure) / (density * gasConstant * massReciprocal);
-    return transRotationTemperature;
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeTranslationAndRotationTemperature(RDouble *massFraction, RDouble transRotationEnergy)
 {
-    RDouble transRotationCv = GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-    RDouble formationEnthalpy = GetTotalFormationEnthalpy(massFraction);
-
-    return (transRotationEnergy - formationEnthalpy) / transRotationCv;
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeVibrationTemperature(RDouble *massFraction, RDouble vibrationEnergy, RDouble initTemperature/* = 0.0*/)
 {
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
-    RDouble ft1, ft2, Tk = 0.0, Tk1 = 0.0, precision = 1.0e-12;
-
-    int nCount = 0, nMaxStep = 500;
-    //! To determine the region where the root exists.
-    if (initTemperature <= 0.0)
-    {
-        e1 = GetMixedGasVibrationEnergy(T1, massFraction);
-        e2 = GetMixedGasVibrationEnergy(T2, massFraction);
-        if (vibrationEnergy <= e1)
-        {
-            return T1;
-        }
-        else if (vibrationEnergy >= e2)
-        {
-            return T2;
-        }
-
-        //! To determine the region where the root exists.
-        ft1 = e1 - vibrationEnergy;
-        RDouble deltaT = 3000.0 / referenceTemperature;
-        while (nCount <= 10)
-        {
-            nCount ++;
-            T2 = nCount * deltaT;
-            ft2 = GetMixedGasVibrationEnergy(T2, massFraction) - vibrationEnergy;
-            if (fabs(ft2) <= precision)
-            {
-                return T2;
-            }
-            else if (ft1 * ft2 < 0.0)
-            {
-                break;      //! Find the region where the root exists.
-            }
-            T1 = T2;
-            ft1 = ft2;
-        }
-        if (nCount > 10)     //! Failed to find the region, set the minimum temperature.
-        {
-            return T2;
-        }
-        Tk = (T1 + T2) / 2.0;
-    }
-    else
-    {
-        nMaxStep = 5;
-        Tk = initTemperature;
-    }
-
-    //! To compute the vibration temperature using the Newton iteration method.
-    nCount = 0;
-    RDouble vibrationCv = 0.0, deltaEnergy = 0.0;
-    while (nCount < nMaxStep)
-    {
-        nCount++;
-        vibrationCv = GetMixedGasVibrationSpecificHeatAtConstantVolume(Tk, massFraction);
-        deltaEnergy = GetMixedGasVibrationEnergy(Tk, massFraction) - vibrationEnergy;
-        Tk1 = Tk - deltaEnergy / (vibrationCv + SMALL);
-        if (fabs(Tk1 - Tk) <= precision)
-        {
-            break;
-        }
-        Tk = Tk1;
-    }
-    //printf("Number of iteration is %d\n", nCount);
-    return Tk1;
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeElectronTemperature(RDouble *massFraction, RDouble electronEnergy, RDouble initTemperature)
 {
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
-    RDouble ft1, ft2, Tk = 0.0, Tk1 = 0.0, precision = 1.0e-12;
-
-    //! To determine the region where the root exists.
-    int nCount = 0, nMaxStep = 500;
-    if (initTemperature <= 0.0)
-    {
-        e1 = GetMixedGasElectronEnergy(T1, massFraction);
-        e2 = GetMixedGasElectronEnergy(T2, massFraction);
-        if (electronEnergy <= e1)
-        {
-            return T1;
-        }
-        else if (electronEnergy >= e2)
-        {
-            return T2;
-        }
-
-        //! To determine the region where the root exists.
-        ft1 = e1 - electronEnergy;
-        RDouble deltaT = 3000.0 / referenceTemperature;
-        while (nCount <= 10)
-        {
-            nCount ++;
-            T2 = nCount * deltaT;
-            ft2 = GetMixedGasElectronEnergy(T2, massFraction) - electronEnergy;
-            if (fabs(ft2) <= precision)
-            {
-                return T2;
-            }
-            else if (ft1 * ft2 < 0.0)
-            {
-                break;      //! Find the region where the root exists.
-            }
-            T1 = T2;
-            ft1 = ft2;
-        }
-        if (nCount > 10)     //! Failed to find the region, set the minimum temperature.
-        {
-            return T2;
-        }
-        Tk = (T1 + T2) / 2.0;
-    }
-    else
-    {
-        nMaxStep = 5;
-        Tk = initTemperature;
-    }
-
-    //! To compute the electron temperature using the Newton iteration method.
-    nCount = 0;
-    RDouble electronCv = 0.0, deltaEnergy = 0.0;
-    while (nCount < nMaxStep)
-    {
-        nCount++;
-        electronCv = GetMixedGasElectronSpecificHeatAtConstantVolume(Tk, massFraction);
-        deltaEnergy = GetMixedGasElectronEnergy(Tk, massFraction) - electronEnergy;
-        Tk1 = Tk - deltaEnergy / (electronCv + SMALL);
-        if (fabs(Tk1 - Tk) <= precision)
-        {
-            break;
-        }
-        Tk = Tk1;
-    }
-    //printf("Number of iteration is %d\n", nCount);
-    return Tk1;
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeVibrationAndElectronTemperature(RDouble *massFraction, RDouble vibrationElectronEnergy, RDouble initTemperature)
 {
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
-    RDouble ft1, ft2, Tk = 0.0, Tk1 = 0.0, precision = 1.0e-12;
-    RDouble tvmin = 0.0 / referenceTemperature;
-
-    //! To determine the region where the root exists.
-    int nCount = 0, nMaxStep = 500;
-    if (initTemperature <= 0.0)
-    {
-        e1 = GetMixedGasVibrationEnergy(T1, massFraction) + GetMixedGasElectronEnergy(T1, massFraction);
-        e2 = GetMixedGasVibrationEnergy(T2, massFraction) + GetMixedGasElectronEnergy(T2, massFraction);
-
-        if (vibrationElectronEnergy <= e1)
-        {
-            return T1;
-        }
-        else if (vibrationElectronEnergy >= e2)
-        {
-            return T2;
-        }
-
-        //! To determine the region where the root exists.
-        ft1 = e1 - vibrationElectronEnergy;
-        RDouble deltaT = 3000.0 / referenceTemperature;
-        while (nCount <= 10)
-        {
-            nCount ++;
-            T2 = nCount * deltaT;
-            ft2 = GetMixedGasVibrationEnergy(T2, massFraction) + GetMixedGasElectronEnergy(T2, massFraction) - vibrationElectronEnergy;
-
-            if (fabs(ft2) <= precision)
-            {
-                return T2;
-            }
-            else if (ft1 * ft2 < 0.0)
-            {
-                break;     //! Find the region where the root exists.
-            }
-            T1 = T2;
-            ft1 = ft2;
-        }
-        if (nCount > 10)     //! Failed to find the region, set the minimum temperature.
-        {
-            return T2;
-        }
-        Tk = (T1 + T2) / 2.0;
-    }
-    else
-    {
-      //  nMaxStep = 100;
-        nMaxStep = 5;
-        Tk = initTemperature;
-    }
-
-    //! To compute the vibration-electron temperature using the Newton iteration method.
-    nCount = 0;
-    RDouble vibrationElectronCv = 0.0, deltaEnergy = 0.0;
-
-    while (nCount < nMaxStep)
-    {
-        nCount++;
-        vibrationElectronCv = GetMixedGasVibrationSpecificHeatAtConstantVolume(MAX(Tk, tvmin), massFraction);
-        vibrationElectronCv += GetMixedGasElectronSpecificHeatAtConstantVolume(MAX(Tk, tvmin), massFraction);
-
-        /*vibrationElectronCv = GetMixedGasVibrationSpecificHeatAtConstantVolume(Tk, massFraction);
-        vibrationElectronCv += GetMixedGasElectronSpecificHeatAtConstantVolume(Tk, massFraction);*/
-
-        deltaEnergy = GetMixedGasVibrationEnergy(Tk, massFraction) + GetMixedGasElectronEnergy(Tk, massFraction) - vibrationElectronEnergy;
-
-        RDouble TkLimit = deltaEnergy / (vibrationElectronCv + SMALL);
-        if (TkLimit > 0.9 * Tk)
-        {
-            TkLimit = 0.9 * Tk;
-        }
-        else if (TkLimit < -10.0 * Tk)
-        {
-            TkLimit = -10.0 * Tk;
-        }
-        Tk1 = Tk - TkLimit;
-
-        if (fabs(TkLimit) <= precision)
-        {
-            break;
-        }
-        /*else if ( nCount > 5  && fabs(TkLimit) <= 1.0e-3 )
-        {
-            break;
-        }*/
-        
-        Tk = Tk1;               
-    }
-
-    return Tk1;
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeOneTemperatureModelTemperature(RDouble *massFraction, RDouble internalEnergy)
 {
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble e1 = 0.0, e2 = 0.0, T1 = 100.0 / referenceTemperature, T2 = 30000.0 / referenceTemperature;
-    RDouble ft1, ft2, precision = 1.0e-12;
-    e1 = GetMixedGasVibrationEnergy(T1, massFraction) + GetMixedGasElectronEnergy(T1, massFraction);
-    e2 = GetMixedGasVibrationEnergy(T2, massFraction) + GetMixedGasElectronEnergy(T2, massFraction);
-    e1 += GetMixedGasTranslationAndRotationEnergy(T1, massFraction);
-    e2 += GetMixedGasTranslationAndRotationEnergy(T2, massFraction);
-    if (internalEnergy <= e1)
-    {
-        return T1;
-    }
-    else if (internalEnergy >= e2)
-    {
-        return T2;
-    }
-
-    //! To determine the region where the root exists.
-    ft1 = e1 - internalEnergy;
-    RDouble deltaT = 3000.0 / referenceTemperature;
-    int nCount = 0, nMaxStep = 500;
-    while (nCount <= 10)
-    {
-        nCount ++;
-        T2 = nCount * deltaT;
-        ft2 = GetMixedGasVibrationEnergy(T2, massFraction) + GetMixedGasElectronEnergy(T2, massFraction);
-        ft2 += GetMixedGasTranslationAndRotationEnergy(T2, massFraction) - internalEnergy;
-        if (fabs(ft2) <= precision)
-        {
-            return T2;
-        }
-        else if (ft1 * ft2 < 0.0)
-        {
-            break;      //! Find the region where the root exists.
-        }
-        T1 = T2;
-        ft1 = ft2;
-    }
-    if (nCount > 10)     //! Failed to find the region, set the minimum temperature.
-    {
-        return T2;
-    }
-
-    //! To compute the vibration-electron temperature using the Newton iteration method.
-    nCount = 0;
-    RDouble Tk = (T1 + T2) / 2.0, Tk1 = 0.0, gasMixtureCv = 0.0, deltaEnergy = 0.0;
-    while (nCount < nMaxStep)
-    {
-        nCount++;
-        gasMixtureCv = GetMixedGasVibrationSpecificHeatAtConstantVolume(Tk, massFraction);
-        gasMixtureCv += GetMixedGasElectronSpecificHeatAtConstantVolume(Tk, massFraction);
-        gasMixtureCv += GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-
-        deltaEnergy = GetMixedGasVibrationEnergy(Tk, massFraction) + GetMixedGasElectronEnergy(Tk, massFraction);
-        deltaEnergy += GetMixedGasTranslationAndRotationEnergy(Tk, massFraction) - internalEnergy;
-        Tk1 = Tk - deltaEnergy / gasMixtureCv;
-        if (fabs(Tk1 - Tk) <= precision)
-        {
-            break;
-        }
-        Tk = Tk1;
-    }
-    //printf("Number of iteration is %d\n", nCount);
-    return Tk1;
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeNonequilibrumTemperatureViaBisectionMethod(RDouble *massFraction, RDouble internalEnergy)
 {
-    RDouble gasConstant = this->GetUniversalGasConstant();
-    RDouble mass = this->GetMixedGasMolecularWeight(massFraction);
-
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
-    RDouble gasR = gasConstant / mass;
-    RDouble Tm, T1, T2, e1, e2, ftm, ft1, ft2, precision = 1.0e-12;
-    T1 = 100.0 / referenceTemperature;
-    T2 = 30000.0 / referenceTemperature;
-    e1 = GetMixtureGasEnthalpy(massFraction, T1) - gasR * T1;
-    e2 = GetMixtureGasEnthalpy(massFraction, T2) - gasR * T2;
-    if (internalEnergy <= e1)
-    {
-        return T1;
-    }
-    else if (internalEnergy >= e2)
-    {
-        return T2;
-    }
-
-    //! To determine the region where the root exists.
-    ft1 = e1 - internalEnergy;
-    RDouble deltaT = 3000.0 / referenceTemperature;
-    int nCount = 0, nMaxStep = 500;
-    while (nCount <= 10)
-    {
-        nCount ++;
-        T2 = nCount * deltaT;
-        ft2 = GetMixtureGasEnthalpy(massFraction, T2) - gasR * T2 - internalEnergy;
-        if (fabs(ft2) <= precision)
-        {
-            return T2;
-        }
-        else if (ft1 * ft2 < 0.0)
-        {
-            break;      //! Find the region where the root exists.
-        }
-        T1 = T2;
-        ft1 = ft2;
-    }
-    if (nCount > 10)     //! Failed to find the region, set the minimum temperature.
-    {
-        return T2;
-    }
-
-    //! To compute the vibration temperature using the bisection method.
-    nCount = 0;
-    while (nCount < nMaxStep)
-    {
-        nCount++;
-        if (nCount >= nMaxStep)
-        {
-            break;
-        }
-
-        Tm = 0.5 * (T1 + T2);
-        ftm = GetMixtureGasEnthalpy(massFraction, Tm) - gasR * Tm - internalEnergy;
-        if (fabs(ftm) <= precision)     //! The root is found.
-        {
-            break;
-        }
-
-        if (ft1 * ftm < 0.0)
-        {
-            T2 = Tm;
-            ft2 = ftm;
-        }
-        if (ft2 * ftm < 0.0)
-        {
-            T1 = Tm;
-            ft1 = ftm;
-        }
-        if (fabs(T1 - T2) <= precision)    //! The root approaches to T1 or T2.
-        {
-            Tm = T1;
-            break;
-        }
-    }
-
-    if (nCount >= nMaxStep)
-    {
-        Tm = 0.5 * (T1 + T2);
-    }
-    return Tm;
+    return 0.0;
 }
 
 RDouble MixedGas::ComputeNonequilibrumTemperature(RDouble *massFraction, RDouble internalEnergy, RDouble initTemperature)
@@ -10397,287 +6101,37 @@ RDouble MixedGas::GetElectronPressure(RDouble *primitiveVariables, RDouble elect
 
 void MixedGas::ComputeSpeciesTranslationAndRotationHeatConductivity(RDouble *viscosity, RDouble *conductivity)
 {
-    //! nTypes denotes the types of species which is used to identity the electron, monoatom and polyatom.
-    Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
-    RDouble gasConstant = GetUniversalGasConstant();
-    RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
 
-    RDouble *cvts = new RDouble[this->numberOfSpecies];
-    RDouble *cvrs = new RDouble[this->numberOfSpecies];
-
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        //! Compute translation specific heat at constant volume.
-        cvts[i] = 1.5 * gasConstant / speciesMass[i];
-
-        //! Compute rotation specific heat at constant volume.
-        if (thermodynamicProperties[i].nType >= 2)     //! Polyatom species.
-        {
-            cvrs[i] = gasConstant / speciesMass[i]; 
-        }
-        else     //! Monoatom species or electron.
-        {
-            cvrs[i] = 0.0;
-        }
-
-        //! Compute translation-rotation heat conductivity of species.
-        conductivity[i] = viscosity[i] * (2.5 * cvts[i] + cvrs[i]);
-    }
-
-    delete [] cvts;
-    delete [] cvrs;
 }
 
 void MixedGas::ComputeSpeciesVibrationHeatConductivity(RDouble *viscosity, RDouble *speciesVibrationCv, RDouble *conductivity)
 {
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        conductivity[i] = viscosity[i] * speciesVibrationCv[i];
-    }
+
 }
 
 void MixedGas::ComputeSpeciesElectronHeatConductivity(RDouble *viscosity, RDouble *speciesElectronCv, RDouble *conductivity)
 {
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        conductivity[i] = viscosity[i] * speciesElectronCv[i];
-    }
+
 }
 
 RDouble MixedGas::GetMixedGasTranslationAndRotationHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
 {
-    RDouble *viscosity = new RDouble[this->numberOfSpecies];
-    RDouble *conductivity = new RDouble[this->numberOfSpecies];
-    RDouble *massFraction = new RDouble[this->numberOfSpecies];
-    RDouble *moleFraction = new RDouble[this->numberOfSpecies];
-    RDouble *phi = new RDouble[this->numberOfSpecies];
-
-    //! Obtain the molecular weight of each species.
-    RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
-    for (int s = 0; s < this->numberOfSpecies; ++ s)
-    {
-        massFraction[s] = primitiveVariables[nm + s];
-    }
-    //! Obtain the mole fraction of each species.
-    this->ComputeMoleFractionByMassFraction(massFraction, moleFraction);
-
-    //! Compute viscosity of species.
-    int nType = 0;      //! 0 for Blottnner curve fit method, 1 for Lennard-Johns method.
-    if (nType == 0)
-    {
-        ComputeSpeciesViscosityWithCurveFitMethod(transRotationTemperature, electronTemperature, viscosity);
-    }
-    else
-    {
-        RDouble electronPressure = primitiveVariables[IDX::IP];
-        RDouble gasConstant = GetUniversalGasConstant();
-        if (nElectronIndex >= 0)
-        {
-            electronPressure = primitiveVariables[IDX::IR] * electronTemperature * gasConstant * massFraction[nElectronIndex] / speciesMass[nElectronIndex];
-        }
-
-        ComputeSpeciesViscosityWithLennardJonesMethod(transRotationTemperature, electronPressure, viscosity);
-    }
-
-    //! Compute the translation-rotation heat conductivity.
-    ComputeSpeciesTranslationAndRotationHeatConductivity(viscosity, conductivity);
-
-    //! Obtain the partition function.
-    GetPartitionFunctionValues(viscosity, speciesMass, moleFraction, phi);
-
-    RDouble lambda = GetMixedGasHeatConductivityWithWilkeFormula(moleFraction, conductivity, phi);
-
-    delete [] viscosity;
-    delete [] conductivity;
-    delete [] massFraction;
-    delete [] moleFraction;
-    delete [] phi;
-    //! Return the heat conductivity of translation and rotation.
-    return lambda;
+    return 0.0;
 }
 
 RDouble MixedGas::GetMixedGasVibrationHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature)
 {
-    RDouble *viscosity = new RDouble[this->numberOfSpecies];
-    RDouble *speciesVibrationCv = new RDouble[this->numberOfSpecies];
-    RDouble *conductivity = new RDouble[this->numberOfSpecies];
-    RDouble *massFraction = new RDouble[this->numberOfSpecies];
-    RDouble *moleFraction = new RDouble[this->numberOfSpecies];
-    RDouble *phi = new RDouble[this->numberOfSpecies];
-
-    //! Obtain the molecular weight of each species.
-    RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        massFraction[i] = primitiveVariables[nm + i];
-    }
-    //! Obtain the mole fraction of each species.
-    this->ComputeMoleFractionByMassFraction(massFraction, moleFraction);
-
-    //! Compute viscosity of species.
-    int nType = 0;     //! 0 for Blottnner curve fit method, 1 for Lennard-Johns method.
-    if (nType == 0)
-    {
-        ComputeSpeciesViscosityWithCurveFitMethod(transRotationTemperature, electronTemperature, viscosity);
-    }
-    else
-    {
-        RDouble electronPressure = primitiveVariables[IDX::IP];
-        RDouble gasConstant = GetUniversalGasConstant();
-        if (nElectronIndex >= 0)
-        {
-            electronPressure = primitiveVariables[IDX::IR] * electronTemperature * gasConstant * massFraction[nElectronIndex] / speciesMass[nElectronIndex];
-        }
-
-        ComputeSpeciesViscosityWithLennardJonesMethod(transRotationTemperature, electronPressure, viscosity);
-    }
-
-    //! Compute vibration specific heat at constant volume.
-    ComputeVibrationSpecificHeatAtConstantVolume(vibrationTemperature, speciesVibrationCv);
-
-    //! Compute the vibration heat conductivity.
-    ComputeSpeciesVibrationHeatConductivity(viscosity, speciesVibrationCv, conductivity);
-
-    //! Obtain the partition function.
-    GetPartitionFunctionValues(viscosity, speciesMass, moleFraction, phi);
-
-    RDouble lambda = GetMixedGasHeatConductivityWithWilkeFormula(moleFraction, conductivity, phi);
-
-    delete [] viscosity;
-    delete [] speciesVibrationCv;
-    delete [] conductivity;
-    delete [] massFraction;
-    delete [] moleFraction;
-    delete [] phi;
-    //! Return the heat conductivity of vibration.
-    return lambda;
+    return 0.0;
 }
 
 RDouble MixedGas::GetMixedGasElectronHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
 {
-    RDouble *viscosity = new RDouble[this->numberOfSpecies];
-    RDouble *speciesElectronCv = new RDouble[this->numberOfSpecies];
-    RDouble *conductivity = new RDouble[this->numberOfSpecies];
-    RDouble *massFraction = new RDouble[this->numberOfSpecies];
-    RDouble *moleFraction = new RDouble[this->numberOfSpecies];
-    RDouble *phi = new RDouble[this->numberOfSpecies];
-
-    //! Obtain the molecular weight of each species.
-    RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
-    for (int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        massFraction[i] = primitiveVariables[nm + i];
-    }
-    //! Obtain the mole fraction of each species.
-    this->ComputeMoleFractionByMassFraction(massFraction, moleFraction);
-
-    //! Compute viscosity of species.
-    int nType = 0;      //! 0 for Blottnner curve fit method, 1 for Lennard-Johns method.
-    if (nType == 0)
-    {
-        ComputeSpeciesViscosityWithCurveFitMethod(transRotationTemperature, electronTemperature, viscosity);
-    }
-    else
-    {
-        RDouble electronPressure = primitiveVariables[IDX::IP];
-        RDouble gasConstant = GetUniversalGasConstant();
-        if (nElectronIndex >= 0)
-        {
-            electronPressure = primitiveVariables[IDX::IR] * electronTemperature * gasConstant * massFraction[nElectronIndex] / speciesMass[nElectronIndex];
-        }
-
-        ComputeSpeciesViscosityWithLennardJonesMethod(transRotationTemperature, electronPressure, viscosity);
-    }
-
-    //! Compute vibration specific heat at constant volume.
-    ComputeElectronSpecificHeatAtConstantVolume(electronTemperature, speciesElectronCv);
-
-    //! Compute the electron heat conductivity.
-    ComputeSpeciesElectronHeatConductivity(viscosity, speciesElectronCv, conductivity);
-
-    //! Obtain the partition function.
-    GetPartitionFunctionValues(viscosity, speciesMass, moleFraction, phi);
-
-    RDouble lambda = GetMixedGasHeatConductivityWithWilkeFormula(moleFraction, conductivity, phi);
-
-    delete [] viscosity;
-    delete [] speciesElectronCv;
-    delete [] conductivity;
-    delete [] massFraction;
-    delete [] moleFraction;
-    delete [] phi;
-    //! Return the heat conductivity of vibration.
-    return lambda;
+    return 0.0;
 }
 
 void MixedGas::ComputeMixedGasTranslationVibrationElectronHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature, RDouble &transRotationConductivity, RDouble &vibrationConductivity, RDouble &electronConductivity)
 {
-    RDouble *viscosity = new RDouble[this->numberOfSpecies];
-    RDouble *conductivity = new RDouble[this->numberOfSpecies];
-    RDouble *massFraction = new RDouble[this->numberOfSpecies];
-    RDouble *moleFraction = new RDouble[this->numberOfSpecies];
-    RDouble *phi = new RDouble[this->numberOfSpecies];
-    RDouble *speciesVibrationCv = new RDouble[this->numberOfSpecies];
-    RDouble *speciesElectronCv = new RDouble[this->numberOfSpecies];
 
-    //! Obtain the molecular weight of each species.
-    RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
-    for (int s = 0; s < this->numberOfSpecies; ++ s)
-    {
-        massFraction[s] = primitiveVariables[nm + s];
-    }
-    //! Obtain the mole fraction of each species.
-    this->ComputeMoleFractionByMassFraction(massFraction, moleFraction);
-
-    //! Compute viscosity of species.
-    int nType = 0;     //! 0 for Blottnner curve fit method, 1 for Lennard-Johns method.
-    if (nType == 0)
-    {
-        ComputeSpeciesViscosityWithCurveFitMethod(transRotationTemperature, electronTemperature, viscosity);
-    }
-    else
-    {
-        RDouble electronPressure = primitiveVariables[IDX::IP];
-        RDouble gasConstant = GetUniversalGasConstant();
-        if (nElectronIndex >= 0)
-        {
-            electronPressure = primitiveVariables[IDX::IR] * electronTemperature * gasConstant * massFraction[nElectronIndex] / speciesMass[nElectronIndex];
-        }
-
-        ComputeSpeciesViscosityWithLennardJonesMethod(transRotationTemperature, electronPressure, viscosity);
-    }
-
-    //! Compute the translation-rotation heat conductivity.
-    ComputeSpeciesTranslationAndRotationHeatConductivity(viscosity, conductivity);
-
-    //! Obtain the partition function.
-    GetPartitionFunctionValues(viscosity, speciesMass, moleFraction, phi);
-
-    transRotationConductivity = GetMixedGasHeatConductivityWithWilkeFormula(moleFraction, conductivity, phi);
-
-    //! Compute vibration specific heat at constant volume.
-    ComputeVibrationSpecificHeatAtConstantVolume(vibrationTemperature, speciesVibrationCv);
-
-    //! Compute the vibration heat conductivity.
-    ComputeSpeciesVibrationHeatConductivity(viscosity, speciesVibrationCv, conductivity);
-
-    vibrationConductivity = GetMixedGasHeatConductivityWithWilkeFormula(moleFraction, conductivity, phi);
-
-    //! Compute vibration specific heat at constant volume.
-    ComputeElectronSpecificHeatAtConstantVolume(electronTemperature, speciesElectronCv);
-
-    //! Compute the electron heat conductivity.
-    ComputeSpeciesElectronHeatConductivity(viscosity, speciesElectronCv, conductivity);
-
-    electronConductivity = GetMixedGasHeatConductivityWithWilkeFormula(moleFraction, conductivity, phi);
-    
-    delete [] viscosity;
-    delete [] conductivity;
-    delete [] massFraction;
-    delete [] moleFraction;
-    delete [] phi;
-    delete [] speciesVibrationCv;
-    delete [] speciesElectronCv;
 }
 
 RDouble MixedGas::GetMixedGasHeatConductivityWithWilkeFormula(RDouble *moleFraction, RDouble *conductivity, RDouble *phi)
@@ -10889,207 +6343,34 @@ void MixedGas::ComputeSpeciesMassDiffusionCoefficient(RDouble *massFraction, RDo
 
 RDouble MixedGas::GetMassDiffusionCoefficientWithCLNModel(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble electronTemperature)
 {
-    RDouble *massFraction = new RDouble[this->numberOfSpecies]();
-    //! Obtain the mass fractions of species.
-    for(int i = 0; i < this->numberOfSpecies; ++ i)
-    {
-        massFraction[i] = primitiveVariables[nm + i];
-    }
-
-    RDouble gasConstant = this->GetUniversalGasConstant();
-    RDouble mixedMass = this->GetMixedGasMolecularWeight(massFraction);
-    RDouble transRotationCv = GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-    RDouble transRotationCp = transRotationCv + gasConstant / mixedMass;
-    RDouble lewisNumber = 1.4;     //! The default value of Lewis number.
-    RDouble mixedConductivity = GetMixedGasTranslationAndRotationHeatConductivity(primitiveVariables, transRotationTemperature, electronTemperature);
-    delete [] massFraction;    massFraction = NULL;
-
-    //! Return the equivalent mass diffusion coefficients.
-    return (mixedConductivity * lewisNumber / transRotationCp);
+    return 0.0;
 }
 
 void MixedGas::GetElectronPressurePartialDerivatives(RDouble *primitiveVars, RDouble electronTemperature, RDouble &gama, RDouble *speciesGama)
 {
-    if (nElectronIndex < 0)
-    {
-        gama = 0.0;
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            speciesGama[s] = 0.0;
-        }
-        return;
-    }
 
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        //! Initialization.
-        massFractions[s] = primitiveVars[nm + s];
-    }
-
-    //! Compute the specific heat at constant volume.
-    RDouble mixGasCv = 0.0;
-    if (ntmodel == 2)
-    {
-        mixGasCv = GetMixedGasVibrationSpecificHeatAtConstantVolume(electronTemperature, massFractions);
-        mixGasCv += GetMixedGasElectronSpecificHeatAtConstantVolume(electronTemperature, massFractions);
-    }
-    else if (ntmodel == 3)
-    {
-        mixGasCv = GetMixedGasElectronSpecificHeatAtConstantVolume(electronTemperature, massFractions);
-    }
-    RDouble gasConstant = GetUniversalGasConstant();
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocal();
-
-    //! Compute partial derivative of electron pressure to the vibration or electron energy.
-    gama = gasConstant * massFractions[nElectronIndex] * speciesMassReciprocal[nElectronIndex] / (mixGasCv + SMALL);
-
-    //! Compute partial derivatives of electron pressure to the species density.
-    for (int s = 0; s < nLastSpeciesIndex; ++ s)
-    {
-        speciesGama[s] = gasConstant * electronTemperature * ionType[s] * speciesMassReciprocal[s];
-    }
 }
 
 void MixedGas::GetPressurePartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                              RDouble &alpha, RDouble &beta, RDouble *speciesBeta)
 {
-    //! Initialization.
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFractions[s] = primitiveVars[nm + s];
-    }
-    RDouble gasConstant = GetUniversalGasConstant();
-    RDouble mixGasMass = this->GetMixedGasMolecularWeight(massFractions);
-    RDouble transRotationCv = GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFractions);
-    //! Compute the partial derivative of pressure to internal energy.
-    alpha = gasConstant / (mixGasMass * transRotationCv);
-
-    //! Compute translation-rotation energies of species.
-    ComputeTranslationAndRotationEnergy(transRotationTemperature, speciesEnergyTr);
-
-    //! Compute the energy terms.
-    using namespace IDX;
-    RDouble uVelocity = primitiveVars[IU];
-    RDouble vVelocity = primitiveVars[IV];
-    RDouble wVelocity = primitiveVars[IW];
-    RDouble squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
-
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocal();
-
-    //! Compute the coefficient called beta.
-    RDouble energy = 0.5 * squareVelocity - speciesEnergyTr[nLastSpeciesIndex];
-    beta = alpha * energy + gasConstant * transRotationTemperature * speciesMassReciprocal[nLastSpeciesIndex];
-
-    //! Compute the other coefficients saved in the array of speciesBeta.
-    RDouble coefA = 0.0, speciesEnergy = 0.0;
-    speciesBeta[nLastSpeciesIndex] = 0.0;
-    for (int s = 0; s < nLastSpeciesIndex; ++ s)
-    {
-        coefA = ionType[s] * speciesMassReciprocal[s] * electronMass;
-        speciesEnergy = (1.0 + coefA) * speciesEnergyTr[nLastSpeciesIndex] - speciesEnergyTr[s];
-
-        speciesBeta[s]  = alpha * speciesEnergy;
-        speciesBeta[s] += gasConstant * transRotationTemperature * (speciesMassReciprocal[s] - speciesMassReciprocal[nLastSpeciesIndex]);
-        speciesBeta[s] += coefA * gasConstant * (electronTemperature / electronMass - transRotationTemperature * speciesMassReciprocal[nLastSpeciesIndex]);
-    }
 }
 
 void MixedGas::GetMultiTemperatureModelPartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                                           RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama)
 {
-    //! Compute partial derivatives of electron pressure to conservative variables.
-    this->GetElectronPressurePartialDerivatives(primitiveVars, electronTemperature, gama, speciesGama);
-    //! Compute partial derivatives of pressure to conservative variables.
-    this->GetPressurePartialDerivatives(primitiveVars, transRotationTemperature, electronTemperature, alpha, beta, speciesBeta);
 }
 
 void MixedGas::GetMultiTemperatureModelPartialDerivativesR(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
                                                            RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama,
                                                            RDouble squareVelocity, RDouble *speciesEtrs, RDouble totalCvtr, RDouble totalCvv, RDouble totalCve)
 {
-    //! Compute partial derivatives of electron pressure to conservative variables.
-    //this->GetElectronPressurePartialDerivatives(primitiveVars, electronTemperature, gama, speciesGama);
 
-    RDouble gasConstant = GetUniversalGasConstant();
-    int *ionType = molecularProperty->GetIonTypeOfSpecies();
-    RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocal();
-
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        //! Initialization.
-        massFractions[s] = primitiveVars[nm + s];
-    }
-
-    if (nElectronIndex < 0)
-    {
-        gama = 0.0;
-        for (int s = 0; s < numberOfSpecies; ++ s)
-        {
-            speciesGama[s] = 0.0;
-        }
-    }    
-    else
-    {
-        RDouble mixGasCv = 0.0;
-        if (ntmodel == 2)
-        {
-            mixGasCv = totalCvv + totalCve;
-        }
-        else if (ntmodel == 3)
-        {
-            mixGasCv = totalCve;
-        }
-        //! Compute partial derivative of electron pressure to the vibration or electron energy.
-        gama = gasConstant * massFractions[nElectronIndex] * speciesMassReciprocal[nElectronIndex] / (mixGasCv + SMALL);
-
-        //! Compute partial derivatives of electron pressure to the species density.
-        for (int s = 0; s < nLastSpeciesIndex; ++ s)
-        {
-            speciesGama[s] = gasConstant * electronTemperature * ionType[s] * speciesMassReciprocal[s];
-        }
-    }
-
-    RDouble mixGasMass = 0.0;
-    for (int i = 0; i < numberOfSpecies; ++ i)
-    {
-        mixGasMass += massFractions[i] * speciesMassReciprocal[i];
-    }
-
-    //! Compute the partial derivative of pressure to internal energy.
-    alpha = gasConstant * mixGasMass / totalCvtr; 
-    beta = alpha * (0.5 * squareVelocity - speciesEtrs[nLastSpeciesIndex]) + gasConstant * transRotationTemperature * speciesMassReciprocal[nLastSpeciesIndex];
-
-    //! Compute the other coefficients saved in the array of speciesBeta.
-    RDouble coefA, speciesEnergy;
-    for (int s = 0; s < nLastSpeciesIndex; ++ s)
-    {
-        coefA = ionType[s] * speciesMassReciprocal[s] * electronMass;
-        speciesEnergy = (1.0 + coefA) * speciesEtrs[nLastSpeciesIndex] - speciesEtrs[s];
-
-        speciesBeta[s]  = alpha * speciesEnergy;
-        speciesBeta[s] += gasConstant * transRotationTemperature * (speciesMassReciprocal[s] - speciesMassReciprocal[nLastSpeciesIndex]);
-        speciesBeta[s] += coefA * gasConstant * (electronTemperature / electronMass - transRotationTemperature * speciesMassReciprocal[nLastSpeciesIndex]);
-    }
-    speciesBeta[nLastSpeciesIndex] = 0.0;
 }
 
 RDouble MixedGas::ComputePressureDerivativeToTotalDensity(RDouble *primitiveVars)
 {
-    RDouble *massFraction = new RDouble[numberOfSpecies];
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFraction[s] = primitiveVars[nm + s];
-    }
-    RDouble gasConstant = GetUniversalGasConstant();
-    RDouble mixGasMass = this->GetMixedGasMolecularWeight(massFraction);
-    RDouble transRotationCv = GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-    //! Compute the partial derivative of pressure to internal energy.
-    RDouble alpha = gasConstant / (mixGasMass * transRotationCv);
-
-    delete [] massFraction;
-    return alpha;
+    return 0.0;
 }
 
 RDouble MixedGas::GetMixedGasEnthalpy(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature)
@@ -11119,94 +6400,7 @@ RDouble MixedGas::ComputeMolecularWeightReciprocal(RDouble *prim)
 
 RDouble MixedGas::ComputeMolecularWeight(RDouble *prim)
 {
-    RDouble omav = 1.0;
-    ComputeMolecularWeightReciprocal(prim, omav);
-    return (1.0 / omav);
-}
-
-void MixedGas::ComputeSpeciesMassDiffusionFlux(RDouble *primitiveVars, RDouble *dfsdx, RDouble *dfsdy, RDouble *dfsdz, RDouble transRotationTemperature, RDouble vibrationTemperatuare, RDouble electronTemperature,
-                                               RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble nx, RDouble ny, RDouble nz, RDouble &qx, RDouble &qy, RDouble &qz, RDouble *speciesFluxes)
-{
-    int nm = GetNSEquationNumber();
-    int nTemperatureModel = GetTemperatureModel();
-    int nSpecies = GetNumberOfSpecies();
-
-    //! Allocate the memory space.
-    RDouble *massFraction = new RDouble[nSpecies];
-    RDouble *moleFraction = new RDouble[nSpecies];
-    RDouble *speciesEnthalpy = new RDouble[nSpecies];
-    //! It equals to the density multiplies the mass diffusion coefficient of the species, namely, rho * Ds.
-    RDouble *speciesDiffusionCoef = new RDouble[nSpecies];
-    RDouble *speciesVibrationEnergy = new RDouble[nSpecies];
-    RDouble *speciesElectronEnergy = new RDouble[nSpecies];
-    for (int s = 0; s < nSpecies; ++ s)
-    {
-        massFraction[s] = primitiveVars[nm + s];
-    }
-
-    //! Obtain the mole fraction of each species.
-    ComputeMoleFractionByMassFraction(massFraction, moleFraction);
-
-    //! Compute the mass diffusion coefficient of each species.
-    ComputeSpeciesMassDiffusionCoefficient(massFraction, viscosityLaminar, viscosityTurbulence, speciesDiffusionCoef);
-
-    //! Obtain the enthalpy of each species.
-    GetEverySpeciesEnthalpy(transRotationTemperature, vibrationTemperatuare, electronTemperature, speciesEnthalpy);
-
-    //! Compute the mass diffusion energies of the species, namely, rho * Ds * hs * dfsdn.
-    RDouble diffusionCoef = 0.0;
-    for (int s = 0; s < nSpecies; ++ s)
-    {
-        diffusionCoef = speciesDiffusionCoef[s] * speciesEnthalpy[s];
-        qx += diffusionCoef * dfsdx[s];
-        qy += diffusionCoef * dfsdy[s];
-        qz += diffusionCoef * dfsdz[s];
-    }
-
-    RDouble vibrationEnergy[3] = {0.0, 0.0, 0.0};
-    RDouble electronEnergy[3] = {0.0, 0.0, 0.0};
-    RDouble peDivideDensity = GetElectronPressure(primitiveVars, electronTemperature) / MAX(primitiveVars[0], SMALL);
-
-    if (nTemperatureModel > 1)
-    {
-        ComputeVibrationEnergy(vibrationTemperatuare, speciesVibrationEnergy);
-        ComputeElectronEnergy(electronTemperature, speciesElectronEnergy);
-        for (int s = 0; s < nSpecies; ++ s)
-        {
-            diffusionCoef = speciesDiffusionCoef[s] * speciesVibrationEnergy[s];
-            vibrationEnergy[0] += diffusionCoef * dfsdx[s];
-            vibrationEnergy[1] += diffusionCoef * dfsdy[s];
-            vibrationEnergy[2] += diffusionCoef * dfsdz[s];
-
-            diffusionCoef = speciesDiffusionCoef[s] * (speciesElectronEnergy[s] + peDivideDensity);
-            electronEnergy[0] += diffusionCoef * dfsdx[s];
-            electronEnergy[1] += diffusionCoef * dfsdy[s];
-            electronEnergy[2] += diffusionCoef * dfsdz[s];
-        }
-
-        if (nTemperatureModel == 2)
-        {
-            speciesFluxes[nm + nSpecies] = nx * (vibrationEnergy[0] + electronEnergy[0]) + ny * (vibrationEnergy[1] + electronEnergy[1]) + nz * (vibrationEnergy[2] + electronEnergy[2]);
-        }
-        else
-        {
-            speciesFluxes[nm + nSpecies] = nx * vibrationEnergy[0] + ny * vibrationEnergy[1] + nz * vibrationEnergy[2];
-            speciesFluxes[nm + nSpecies + 1] = nx * electronEnergy[0] + ny * electronEnergy[1] + nz * electronEnergy[2];
-        }
-    }
-
-    //! Compute the mass diffusion flux of each species.
-    for (int s = 0; s < nSpecies; ++ s)
-    {
-        speciesFluxes[nm + s] = speciesDiffusionCoef[s] * (nx * dfsdx[s] + ny * dfsdy[s] + nz * dfsdz[s]);
-    }
-
-    delete [] massFraction;
-    delete [] moleFraction;
-    delete [] speciesEnthalpy;
-    delete [] speciesDiffusionCoef;
-    delete [] speciesVibrationEnergy;
-    delete [] speciesElectronEnergy;
+    return 0.0;
 }
 
 void MixedGas::ComputeMixtureGasHeatConductivity(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature,
@@ -11215,7 +6409,6 @@ void MixedGas::ComputeMixtureGasHeatConductivity(RDouble *primitiveVariables, RD
     //int nTemperatureModel = GetTemperatureModel();
     if (ntmodel > 1)
     {
-        ComputeMixedGasTranslationVibrationElectronHeatConductivity(primitiveVariables, transRotationTemperature, vibrationTemperature, electronTemperature, transRotationConductivity, vibrationConductivity, electronConductivity);
     }
     else     //! One-temperature model.
     {
@@ -11229,76 +6422,22 @@ void MixedGas::ComputeMixtureGasHeatConductivity(RDouble *primitiveVariables, RD
 void MixedGas::ComputeMixtureGasSpecificHeatAtConstantVolume(RDouble *primitiveVariables, RDouble transRotationTemperature, RDouble vibrationTemperature, RDouble electronTemperature,
                                                              RDouble &cvtr, RDouble &cvv, RDouble &cve)
 {
-    RDouble speciesMassFraction[MAX_SPECIES_NUM];
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        speciesMassFraction[s] = primitiveVariables[nm + s];
-    }
-    if (ntmodel > 1)
-    {
-        cvtr = this->GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(speciesMassFraction);
-        cvv  = this->GetMixedGasVibrationSpecificHeatAtConstantVolume(vibrationTemperature, speciesMassFraction);
-        cve  = this->GetMixedGasElectronSpecificHeatAtConstantVolume(electronTemperature, speciesMassFraction);
-    }
-    else
-    {
-        this->ComputeConstantVolumeSpecificHeatByMassFraction(speciesMassFraction, transRotationTemperature, cvtr);
-        cvv = 0.0;
-        cve = 0.0;
-    }
+
 }
 
 void MixedGas::ComputeEnergySourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                               RDouble ***chemicalSourceDerivatives, RDouble ***energySourceDerivatives, int nCellNumber)
 {
-    int nTemperatureModel = GetTemperatureModel();
-    if (nTemperatureModel == 2)
-    {
-        ComputeEnergySourceDerivatives1(primitiveVariables, temperatures, cellVolume, chemicalSourceTerms, chemicalSourceDerivatives, energySourceDerivatives, nCellNumber);
-    }
-    else if (nTemperatureModel == 3)
-    {
-        //ComputeEnergySourceDerivatives1(primitiveVariables, temperatures, cellVolume, chemicalSourceTerms,
-        //                                      chemicalSourceDerivatives, energySourceDerivatives, nCellNumber);
-    }
 }
 
 void MixedGas::ComputeEnergySourceDiagonalDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms,
                                                       RDouble ***chemicalSourceDerivatives, RDouble **energySourceDerivatives, int nCellNumber)
 {
-    //! Compute the partial derivative of energy source to the vibration and electron energy in the main diagonal position.
-    int nTemperatureModel = GetTemperatureModel();
-    if (nTemperatureModel == 2)
-    {
-        ComputeEnergySourceDiagonalDerivatives1(primitiveVariables, temperatures, cellVolume, chemicalSourceTerms, chemicalSourceDerivatives,
-                                                energySourceDerivatives, nCellNumber);
-    }
-    else if (nTemperatureModel == 3)
-    {
-        ComputeEnergySourceDiagonalDerivatives2(primitiveVariables, temperatures, cellVolume, chemicalSourceTerms, chemicalSourceDerivatives,
-                                                energySourceDerivatives, nCellNumber);
-    }
 }
 
 RDouble MixedGas::GetMaximumSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscosityLaminar, RDouble viscosityTurbulence)
 {
-    //! The function returns the maximum mass diffusion coefficient called (1 - Cs)/(1- Xs) * (mul/Scl + mut/Sct).
-    RDouble maxDiffusionCoef = 0.0;
-    if (numberOfSpecies < 1)
-    {
-        return maxDiffusionCoef;
-    }
-
-    //! Compute the mass diffusion coefficient of each species.
-    GetSpeciesMassDiffusionCoef(primitiveVars, viscosityLaminar, viscosityTurbulence, workSpecies);
-
-    //! Obtain the maximum value of Ds.
-    for (int i = 0; i < nLastSpeciesIndex; ++ i)
-    {
-        maxDiffusionCoef = MAX(maxDiffusionCoef, workSpecies[i]);
-    }
-
-    return maxDiffusionCoef;     //! Returned value.
+    return 0.0;     //! Returned value.
 }
 
 void MixedGas::GetSpeciesMassDiffusionCoef(RDouble *primitiveVars, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble *speciesDiffusionCoef)
@@ -11390,7 +6529,6 @@ void MixedGas::GetEverySpeciesEnthalpy(RDouble trTemperature, RDouble vTemperatu
 {
     if (ntmodel > 1)      //! Multi-temperature model.
     {
-        ComputeSpeciesEnthalpy(trTemperature, vTemperature, eTemperature, hs);
     }
     else      //! Single temperature model.
     {
@@ -11448,14 +6586,7 @@ RDouble MixedGas::GetMixedGasElectronEnergy(RDouble *prim, RDouble Te)
 
 RDouble MixedGas::GetMixedGasTransAndRotatSpecHeatAtConstVolume(RDouble *prim)
 {
-    RDouble massFraction[MAX_SPECIES_NUM];
-    for (int i = 0; i < numberOfSpecies; i ++)
-    {
-        massFraction[i] = prim[nm + i];
-    }
-
-    RDouble cvtr = GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-    return cvtr;
+    return 0.0;
 }
 
 RDouble MixedGas::GetMixedGasVibrationSpecificHeatAtConstantVolume(RDouble *prim, RDouble Tv)
@@ -11484,206 +6615,20 @@ RDouble MixedGas::GetMixedGasElectronSpecificHeatAtConstantVolume(RDouble *prim,
 
 RDouble MixedGas::ComputeFrozenSoundSpeed(RDouble *primitiveVars)
 {
-    int nm = GetNSEquationNumber();
-    int nChemical = GetChemicalType();
-    int numberOfSpecies = GetNumberOfSpecies();
-    RDouble massFraction[MAX_SPECIES_NUM];
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        massFraction[s] = primitiveVars[nm + s];
-    }
-
-    RDouble gasConstant = GetUniversalGasConstant();
-    //! Obtain the specific heat at constant volume of translation and rotation mode.
-    RDouble transRotationCv = GetMixedGasTranslationAndRotationSpecificHeatAtConstantVolume(massFraction);
-
-    //! Compute the coefficient namely alpha.
-    RDouble massReciprocal = 0.0, ceDivideMe = 0.0;
-    massReciprocal = GetMixedGasMolecularWeightReciprocalWithoutElectron(massFraction, ceDivideMe);
-    RDouble alpha = gasConstant * massReciprocal / transRotationCv;
-
-    //! To compute the frozen sound speed.
-    RDouble soundSpeed = sqrt((alpha + 1.0) * primitiveVars[IDX::IP] / primitiveVars[IDX::IR]);
-    return soundSpeed;
+    return 0.0;
 }
 
 void MixedGas::ComputeSpecificHeat(RDouble *primitiveVars, RDouble *temperatures, RDouble *spciesCvtr, RDouble *spciesCvv, RDouble &totalCvtr, RDouble &totalCvv)
 {
-    RDouble modifyCoef = 1.5;
-    RDouble gasConstant = GetUniversalGasConstant();
-    RDouble *speciesMass = molecularProperty->GetMolecularWeight();
 
-    //! Compute the translational-rotational specific heat of species.
-    this->ComputeTranslationAndRotationSpecificHeatAtConstantVolume(spciesCvtr);
-
-    //! Compute the vibrational specific heat of species.
-    this->ComputeSpeciesConstantVolumeSpecificHeat(temperatures[IDX::ITV], spciesCvv);
-
-    //! Compute the total specific heat of mixture gas.
-    totalCvtr = 0.0;
-    totalCvv = 0.0;
-    for (int s = 0; s < numberOfSpecies; ++ s)
-    {
-        totalCvtr += primitiveVars[nm + s] * spciesCvtr[s];
-
-        spciesCvv[s] = modifyCoef * spciesCvv[s] - spciesCvtr[s] + (modifyCoef - 1.0) * gasConstant / speciesMass[s];
-        totalCvv += primitiveVars[nm + s] * spciesCvv[s];
-    }
 }
 
 void MixedGas::ComputeEnergy(RDouble *primitiveVars, RDouble *temperatures, RDouble *spciesEtr, RDouble *spciesEv, RDouble *spciesEnthalpy, RDouble &totalEtr, RDouble &totalEv, RDouble &totalEnthalpy)
 {
-    RDouble modifyCoef = 1.5;
-    RDouble speciesCvtr[MAX_SPECIES_NUM];
-    //! Obtain the translation-rotation specific heat at constant volume.
-    ComputeTranslationAndRotationSpecificHeatAtConstantVolume(speciesCvtr);
-
-    //! Obtain the thermodynamic properties of species.
-    Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
-    //! Compute the translational-rotational energies of species.
-    for (int s = 0; s < this->numberOfSpecies; ++ s)
-    {
-        spciesEtr[s]  = speciesCvtr[s] * temperatures[IDX::ITT];
-        spciesEtr[s] += thermodynamicProperties[s].hs0 / referenceEnergy;
-    }
-
-    RDouble gasConstant = this->GetUniversalGasConstant();// dimensional universal gas constant.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeight();
-
-    //! Compute the enthalpies of species.
-    this->ComputeSpeciesEnthalpy(temperatures[IDX::ITV], spciesEnthalpy);
-
-    //! Compute the vibrational energies of species.
-    totalEtr = 0.0;
-    totalEv = 0.0;
-    totalEnthalpy = 0.0;
-    for (int s = 0; s < this->numberOfSpecies; ++ s)
-    {
-        spciesEv[s] = modifyCoef * spciesEnthalpy[s] - gasConstant * temperatures[IDX::ITV] / speciesMass[s];
-        spciesEv[s] = spciesEv[s] - speciesCvtr[s] * temperatures[IDX::ITV];
-        spciesEv[s] = spciesEv[s] - thermodynamicProperties[s].hs0 / referenceEnergy;
-
-        spciesEnthalpy[s] = spciesEtr[s] + spciesEv[s] + gasConstant * temperatures[IDX::ITT] / speciesMass[s];
-
-        totalEtr += primitiveVars[nm + s] * spciesEtr[s];
-        totalEv  += primitiveVars[nm + s] * spciesEv [s];
-        totalEnthalpy += primitiveVars[nm + s] * spciesEnthalpy[s];
-    }
 }
 
 void MixedGas::ComputePressureDerivatives(RDouble *primitiveVars, RDouble *temperatures, RDouble &alpha, RDouble &beta, RDouble &eta, RDouble *speciesBeta)
 {
-    using namespace IDX;
-    RDouble sigma1 = 0.0, sigma2 = 0.0;
-    //! Obtain the thermodynamic properties of species.
-    Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
-    int *speciesCharge = this->molecularProperty->GetIonTypeOfSpecies();
-    RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
-    RDouble tmp = speciesCharge[nLastSpeciesIndex] * this->electronMass / speciesMass[nLastSpeciesIndex];
-    RDouble squareVelocity = primitiveVars[IU] * primitiveVars[IU] + primitiveVars[IV] * primitiveVars[IV] + primitiveVars[IW] * primitiveVars[IW];
-    sigma1 = 1.0 / (1.0 + tmp);
-    sigma2 = tmp * sigma1;
-
-    RDouble electronMassFraction = 0.0, electronEv = 0.0;
-    if (this->nElectronIndex >= 0)
-    {
-        electronMassFraction = speciesMass[this->nElectronIndex];
-    }
-
-    RDouble gasConstant = this->GetUniversalGasConstant();
-    RDouble totalRMass = this->ComputeMolecularWeightReciprocal(primitiveVars);
-    RDouble speciesCvtr[MAX_SPECIES_NUM], speciesCvv[MAX_SPECIES_NUM], totalCvtr, totalCvv;
-    this->ComputeSpecificHeat(primitiveVars, temperatures, speciesCvtr, speciesCvv, totalCvtr, totalCvv);
-    alpha = (gasConstant / totalCvtr) * (totalRMass - electronMassFraction / this->electronMass);
-    eta   = (gasConstant / totalCvv)  * (electronMassFraction / this->electronMass);
-
-    RDouble speciesEtr[MAX_SPECIES_NUM], speciesEv[MAX_SPECIES_NUM], speciesHs[MAX_SPECIES_NUM];
-    RDouble totalEtr, totalEv, totalH;
-    this->ComputeEnergy(primitiveVars, temperatures, speciesEtr, speciesEv, speciesHs, totalEtr, totalEv, totalH);
-    if (this->nElectronIndex >= 0)
-    {
-        electronEv = speciesEv[this->nElectronIndex];
-    }
-    tmp = sigma1 * temperatures[ITT] / speciesMass[nLastSpeciesIndex] + sigma2 * temperatures[ITV] / this->electronMass;
-    beta = alpha * (0.5 * squareVelocity - sigma1 * speciesEtr[nLastSpeciesIndex]) + gasConstant * tmp;
-    beta -= eta * (sigma1 * speciesEv[nLastSpeciesIndex] + sigma2 * electronEv);
-
-    for (int j = 0; j < nLastSpeciesIndex; ++ j)
-    {
-        tmp = speciesCharge[j] * this->electronMass / speciesMass[j];
-        speciesBeta[j]  = alpha * (sigma1 * (1.0 + tmp) * speciesEtr[nLastSpeciesIndex] - speciesEtr[j]);
-        speciesBeta[j] += eta * (sigma1 * speciesEv[nLastSpeciesIndex] + sigma2 * electronEv - speciesEv[j]);
-        speciesBeta[j] += eta * sigma1 * tmp * (speciesEv[nLastSpeciesIndex] - electronEv);
-        speciesBeta[j] += gasConstant * temperatures[ITT] * (1.0 / speciesMass[j] - sigma1 * (1.0 + tmp) / speciesMass[nLastSpeciesIndex]);
-        speciesBeta[j] += (sigma1 * tmp - sigma2) * gasConstant * temperatures[ITV] / this->electronMass;
-    }
-    speciesBeta[nLastSpeciesIndex] = 0.0;
-    if (this->nElectronIndex >= 0)
-    {
-        speciesBeta[nElectronIndex] = 0.0;
-    }
-}
-
-void MixedGas::ModifyVibrationEnergy(char *filepath)
-{
-    FILE *pfile = fopen(filepath, "wb");
-
-    RDouble Tv = 0.0, Ttr = 0.0;
-    RDouble deltaTv = 100.0, tmp1 = 0.0, eps = 0.0, delta_eps = 0.0, hiTv = 0.0, cpTv = 0.0, cvvTv = 0.0;
-
-    RDouble speciesCvtr[MAX_SPECIES_NUM], spciesEtr[MAX_SPECIES_NUM], spciesEnthalpy[MAX_SPECIES_NUM], spciesEv[MAX_SPECIES_NUM];
-    RDouble speciesEv1[MAX_SPECIES_NUM], speciesEe[MAX_SPECIES_NUM], speciesCvv[MAX_SPECIES_NUM], speciesCve[MAX_SPECIES_NUM];
-    //! Obtain the thermodynamic properties of species.
-    Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
-    //! Obtain the translation-rotation specific heat at constant volume.
-    this->ComputeDimensionalTranslationAndRotationSpecificHeatAtConstantVolume(speciesCvtr);
-
-    RDouble gasConstant = rjmk;// dimensional universal gas constant.
-    RDouble *speciesMass = molecularProperty->GetMolecularWeightDimensional();
-    RDouble refTemperature = referenceParameterDimensional.GetTemperature();
-
-    while (Tv <= 30000.0)
-    {
-        Ttr = Tv;
-        //! Compute the translational-rotational energies of species.
-        for (int s = 0; s < this->numberOfSpecies; ++ s)
-        {
-            spciesEtr[s] = speciesCvtr[s] * Ttr + thermodynamicProperties[s].hs0;
-        }
-
-        //! Compute the enthalpies of species.
-        this->ComputeSpeciesEnthalpyDimensional(Tv / refTemperature, spciesEnthalpy);
-
-        this->ComputeDimensionalVibrationEnergy(Tv / refTemperature, speciesEv1);
-        this->ComputeDimensionalElectronEnergy(Tv / refTemperature, speciesEe);
-        this->ComputeDimensionalVibrationSpecificHeatAtConstantVolume(Tv / refTemperature, speciesCvv);
-        this->ComputeDimensionalElectronSpecificHeatAtConstantVolume(Tv / refTemperature, speciesCve);
-
-        //! Compute the vibrational energies of species.
-        fprintf(pfile, "%f", Tv);
-        for (int s = 0; s < this->numberOfSpecies; ++ s)
-        {
-            tmp1 = gasConstant * Tv / speciesMass[s] + speciesCvtr[s] * Tv + thermodynamicProperties[s].hs0;
-            spciesEv[s] = spciesEnthalpy[s] - tmp1;
-            speciesEv1[s] += speciesEe[s];
-
-            delta_eps = speciesEv1[s] - spciesEv[s];
-            hiTv = speciesEv1[s] + tmp1;
-            eps = hiTv / spciesEnthalpy[s];
-
-            cvvTv = speciesCvv[s] + speciesCve[s];
-            cpTv = cvvTv + gasConstant / speciesMass[s] + speciesCvtr[s];
-            //fprintf(pfile, " %.6e %.6e %.6e", delta_eps, eps, hiTv);
-            //fprintf(pfile, " %.8e %.8e %.8e", cvvTv, cpTv, hiTv);
-            fprintf(pfile, " %.8e", cvvTv);
-            //fprintf(pfile, " %.8e", speciesEv1[s]);
-        }
-        fprintf(pfile, "\r\n");
-
-        Tv += deltaTv;
-    }
-
-    fclose(pfile);
 }
 
 void MixedGas::ComputeSpecificHeatByFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel/* = true*/)
@@ -11876,11 +6821,6 @@ void ChemCompressData(DataContainer *&cdata)
 void ChemDecompressData(DataContainer *cdata)
 {
     gas->DecompressData(cdata);
-}
-
-void computeOutPressure(RDouble &Pressure, RDouble &staticPressure, RDouble &staticPressureRelaxCorf)
-{
-    Pressure= MAX(staticPressureRelaxCorf * staticPressure + (1.0 - staticPressureRelaxCorf) * Pressure, staticPressure);
 }
 
 void MixedGas::SetMaximumSpecies(RDouble *fs)

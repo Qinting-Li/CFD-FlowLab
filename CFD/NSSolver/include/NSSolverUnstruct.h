@@ -192,7 +192,7 @@ public:
 
     void AirForceCoef(ActionKey *actkey);
     void AirForceCoefParts(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
-    void AirForceCoefComponents(ActionKey *actkey, int partID, int Coordinate = GlobalCoordinate);
+    void AirForceCoefBodies(ActionKey *actkey);
     void CpDistriCoef(ActionKey *actkey);
     void GetResidual(ActionKey *actkey);
 

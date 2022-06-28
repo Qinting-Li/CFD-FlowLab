@@ -146,6 +146,7 @@ private:
 
     vector< RDouble > nodeWalldistDistance;
 
+    vector< RDouble > nodeWalldistDistanceInOtherBlock;
     OversetConfig * oversetConfig;
 
     //! Average volume of all mesh.
@@ -456,6 +457,7 @@ public:
 
     vector< RDouble > & GetNodeWallDist();
 
+    vector< RDouble > & GetNodeWallDistInOtherBlock();
     //! Computes and returns the number of faces on the solid wall.
     int GetNumberOfWallCell();
 
@@ -561,6 +563,8 @@ public:
     void ReadGrid (VirtualFile *vfile);
     LIB_EXPORT void WriteGrid(fstream &file);
     void WriteGrid(VirtualFile *vfile);
+
+    void Output(const string &fileName);
 
     void Decode(DataContainer *cdata, int flag);
 

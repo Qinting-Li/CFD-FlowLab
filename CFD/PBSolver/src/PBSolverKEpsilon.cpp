@@ -20,7 +20,7 @@ void PBSolverKEpsilon::InitMemory()
     solverList.push_back(solver);
     solver->SetGeometry(geometry);
     solverKEqn = static_cast<CFDSolver *>(solver);
-    solver = new PBSolverKEpsilon("TURB_EPSILON");
+    solver = new PBSolverTurbEpsilon("TURB_EPSILON");
     solverList.push_back(solver);
     solver->SetGeometry(geometry);
     solverEpsilonEqn = static_cast<CFDSolver *>(solver);

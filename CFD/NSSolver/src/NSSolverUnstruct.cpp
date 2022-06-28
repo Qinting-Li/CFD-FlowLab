@@ -6956,9 +6956,9 @@ void NSSolverUnstruct::AirForceCoef(ActionKey *actkey)
 
     int Coordinate = LocalCoordinate;
     uint_t nTBC = GlobalBoundaryCondition::GetNumberOfBC();
-    for (int iPart = 0; iPart < nTBC; ++ iPart)
+    for (int iPart = 0; iPart < nTBC; ++iPart)
     {
-        if(!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
+        if (!GlobalBoundaryCondition::IsSolidWallBC(iPart)) continue;
 
         //! Compute local part force.
         AirForceCoefParts(actkey, iPart, Coordinate);
@@ -7234,7 +7234,7 @@ void NSSolverUnstruct::AirForceCoefParts(ActionKey *actkey, int partID, int Coor
     cdata->write(&hingeMoment, sizeof(RDouble));
 }
 
-void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int Coordinate)
+void NSSolverUnstruct::AirForceCoefBodies(ActionKey *actkey)
 {
     int level = actkey->level;
 
@@ -7320,130 +7320,117 @@ void NSSolverUnstruct::AirForceCoefComponents(ActionKey *actkey, int partID, int
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int nBCRegion = unstructBCSet->GetnBCRegion();
 
-    int nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
+    int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
 
-    int numberOfAerodynamicForceComponents = GlobalDataBase::GetIntParaFromDB("numberOfAerodynamicForceComponents");
-
-    vector< BasicAerodynamicForce* >* basicAerodynamicForceVector = CreateBasicAerodynamicForceVector();
+    vector< BasicAerodynamicForce * > *basicAerodynamicForceVector = CreateBasicAerodynamicForceVector();
 
     //! Cycle all bcregions and find the solid surface type of boundary.
-    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    for (int iBody = 0; iBody < numberOfMovingBodies; ++ iBody)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-        int bcType = bcRegion->GetBCType();
-        string bcName = bcRegion->GetBCName();
-
-        BasicAerodynamicForce tmpBasicAerodynamicForce;
-        // if the bc type is wall, calculate the wall coefficient.
-        if (bcType == PHENGLEI::SOLID_SURFACE)
+        for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegion; ++ iBCRegionUnstruct)
         {
-            for (int iPart = 0; iPart < nTotalBC; ++iPart)
+            UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
+            int bcType = bcRegion->GetBCType();
+
+            BasicAerodynamicForce tmpBasicAerodynamicForce;
+            // if the bc type is wall, calculate the wall coefficient.
+            if (bcType == PHENGLEI::SOLID_SURFACE)
             {
-                boundaryCondition = GlobalBoundaryCondition::GetBC(iPart);
-                string partName = boundaryCondition->GetBCName();
-                if (partName != bcName)
+                string bodyName = bcRegion->GetBodyName();
+                if (FaceInAerodynamicForceBodies(bodyName, iBody))
                 {
-                    continue;
-                }
-                for (int iComponents = 0; iComponents < numberOfAerodynamicForceComponents; ++iComponents)
-                {
-                    if (FaceInAerodynamicForceComponents(bcName, iComponents))
+                    tmpBasicAerodynamicForce.SetMomentReferencePoint(TorqueRefXGlobal, TorqueRefYGlobal, TorqueRefZGlobal);
+
+                    vector<int> *faceIndex = bcRegion->GetFaceIndex();
+                    int iFace, le, re;
+                    for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); ++iter)
                     {
-                        tmpBasicAerodynamicForce.SetMomentReferencePoint(TorqueRefXGlobal, TorqueRefYGlobal, TorqueRefZGlobal);
+                        iFace = *iter;
+                        le = leftCellofFace[iFace];
+                        re = rightCellofFace[iFace];
 
-                        vector<int>* faceIndex = bcRegion->GetFaceIndex();
-                        int iFace, le, re;
-                        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+                        nx = xfn[iFace] * area[iFace];
+                        ny = yfn[iFace] * area[iFace];
+                        nz = zfn[iFace] * area[iFace];
+
+                        dx = xfc[iFace] - xcc[le];
+                        dy = yfc[iFace] - ycc[le];
+                        dz = zfc[iFace] - zcc[le];
+
+                        //pressure drag
+                        pw = q[IP][le];
+                        cp = two * (pw - poo);
+
+                        dpx = nx * cp;
+                        dpy = ny * cp;
+                        dpz = nz * cp;
+
+                        tmpBasicAerodynamicForce.SetPressureAerodynamicForce(dpx, dpy, dpz);
+
+                        dfx = dpx;
+                        dfy = dpy;
+                        dfz = dpz;
+
+                        xc = xfc[iFace];
+                        yc = yfc[iFace];
+                        zc = zfc[iFace];
+
+                        tmpBasicAerodynamicForce.SetPressureAerodynamicMoment(xc, yc, zc);
+
+                        if (viscousType > INVISCID)
                         {
-                            iFace = *iter;
-                            le = leftCellofFace[iFace];
-                            re = rightCellofFace[iFace];
+                            dudx = gradPrimtiveVarX[IU][le];
+                            dudy = gradPrimtiveVarY[IU][le];
+                            dudz = gradPrimtiveVarZ[IU][le];
 
-                            nx = xfn[iFace] * area[iFace];
-                            ny = yfn[iFace] * area[iFace];
-                            nz = zfn[iFace] * area[iFace];
+                            dvdx = gradPrimtiveVarX[IV][le];
+                            dvdy = gradPrimtiveVarY[IV][le];
+                            dvdz = gradPrimtiveVarZ[IV][le];
 
-                            dx = xfc[iFace] - xcc[le];
-                            dy = yfc[iFace] - ycc[le];
-                            dz = zfc[iFace] - zcc[le];
+                            dwdx = gradPrimtiveVarX[IW][le];
+                            dwdy = gradPrimtiveVarY[IW][le];
+                            dwdz = gradPrimtiveVarZ[IW][le];
 
-                            //! Pressure drag
-                            pw = q[IP][le];
-                            cp = two * (pw - poo);
+                            //! Gradient correction.
+                            dx = xcc[re] - xcc[le];
+                            dy = ycc[re] - ycc[le];
+                            dz = zcc[re] - zcc[le];
+                            ods = 1.0 / sqrt(dx * dx + dy * dy + dz * dz);
+                            dx = dx * ods;
+                            dy = dy * ods;
+                            dz = dz * ods;
 
-                            dpx = nx * cp;
-                            dpy = ny * cp;
-                            dpz = nz * cp;
+                            CorrectGradient(q[IU][le], q[IU][re], dudx, dudy, dudz, dx, dy, dz, ods);
+                            CorrectGradient(q[IV][le], q[IV][re], dvdx, dvdy, dvdz, dx, dy, dz, ods);
+                            CorrectGradient(q[IW][le], q[IW][re], dwdx, dwdy, dwdz, dx, dy, dz, ods);
 
-                            tmpBasicAerodynamicForce.SetPressureAerodynamicForce(dpx, dpy, dpz);
+                            //! It is unnecessary to consider because the turbulence viscosity coefficient is 0.
+                            vis = visl[le];
 
-                            dfx = dpx;
-                            dfy = dpy;
-                            dfz = dpz;
+                            const RDouble c23 = 2.0 / 3.0;
+                            txx = vis * c23 * (2.0 * dudx - dvdy - dwdz);
+                            tyy = vis * c23 * (2.0 * dvdy - dwdz - dudx);
+                            tzz = vis * c23 * (2.0 * dwdz - dudx - dvdy);
+                            txy = vis * (dudy + dvdx);
+                            txz = vis * (dudz + dwdx);
+                            tyz = vis * (dvdz + dwdy);
+                            tyx = txy;
+                            tzx = txz;
+                            tzy = tyz;
 
-                            xc = xfc[iFace];
-                            yc = yfc[iFace];
-                            zc = zfc[iFace];
+                            fvsx = -two * (nx * txx + ny * tyx + nz * tzx) * oRefReNumber;
+                            fvsy = -two * (nx * txy + ny * tyy + nz * tzy) * oRefReNumber;
+                            fvsz = -two * (nx * txz + ny * tyz + nz * tzz) * oRefReNumber;
 
-                            tmpBasicAerodynamicForce.SetPressureAerodynamicMoment(xc, yc, zc);
+                            tmpBasicAerodynamicForce.SetViscousAerodynamicForce(fvsx, fvsy, fvsz);
 
-                            if (viscousType > INVISCID)
-                            {
-                                dudx = gradPrimtiveVarX[IU][le];
-                                dudy = gradPrimtiveVarY[IU][le];
-                                dudz = gradPrimtiveVarZ[IU][le];
-
-                                dvdx = gradPrimtiveVarX[IV][le];
-                                dvdy = gradPrimtiveVarY[IV][le];
-                                dvdz = gradPrimtiveVarZ[IV][le];
-
-                                dwdx = gradPrimtiveVarX[IW][le];
-                                dwdy = gradPrimtiveVarY[IW][le];
-                                dwdz = gradPrimtiveVarZ[IW][le];
-
-                                //! Gradient correction.
-                                dx = xcc[re] - xcc[le];
-                                dy = ycc[re] - ycc[le];
-                                dz = zcc[re] - zcc[le];
-                                ods = 1.0 / sqrt(dx * dx + dy * dy + dz * dz);
-                                dx = dx * ods;
-                                dy = dy * ods;
-                                dz = dz * ods;
-
-                                CorrectGradient(q[IU][le], q[IU][re], dudx, dudy, dudz, dx, dy, dz, ods);
-                                CorrectGradient(q[IV][le], q[IV][re], dvdx, dvdy, dvdz, dx, dy, dz, ods);
-                                CorrectGradient(q[IW][le], q[IW][re], dwdx, dwdy, dwdz, dx, dy, dz, ods);
-
-                                //! It is unnecessary to consider because the turbulence viscosity coefficient is 0.
-                                vis = visl[le];
-
-                                const RDouble c23 = 2.0 / 3.0;
-                                txx = vis * c23 * (2.0 * dudx - dvdy - dwdz);
-                                tyy = vis * c23 * (2.0 * dvdy - dwdz - dudx);
-                                tzz = vis * c23 * (2.0 * dwdz - dudx - dvdy);
-                                txy = vis * (dudy + dvdx);
-                                txz = vis * (dudz + dwdx);
-                                tyz = vis * (dvdz + dwdy);
-                                tyx = txy;
-                                tzx = txz;
-                                tzy = tyz;
-
-                                fvsx = -two * (nx * txx + ny * tyx + nz * tzx) * oRefReNumber;
-                                fvsy = -two * (nx * txy + ny * tyy + nz * tzy) * oRefReNumber;
-                                fvsz = -two * (nx * txz + ny * tyz + nz * tzz) * oRefReNumber;
-
-                                tmpBasicAerodynamicForce.SetViscousAerodynamicForce(fvsx, fvsy, fvsz);
-
-                                tmpBasicAerodynamicForce.SetViscousAerodynamicMoment(xc, yc, zc);
-                            }
-                            tmpBasicAerodynamicForce.ComputeResultantAerodynamicForce();
-
-                            tmpBasicAerodynamicForce.ComputeResultantAerodynamicMoment();
-
-                            (*basicAerodynamicForceVector)[iComponents]->AddAerodynamicForce(&tmpBasicAerodynamicForce);
+                            tmpBasicAerodynamicForce.SetViscousAerodynamicMoment(xc, yc, zc);
                         }
-                        (*basicAerodynamicForceVector)[numberOfAerodynamicForceComponents]->AddAerodynamicForce(&tmpBasicAerodynamicForce);
+                        tmpBasicAerodynamicForce.ComputeResultantAerodynamicForce();
 
+                        tmpBasicAerodynamicForce.ComputeResultantAerodynamicMoment();
+
+                        (*basicAerodynamicForceVector)[iBody]->AddAerodynamicForce(&tmpBasicAerodynamicForce);
                     }
                 }
             }

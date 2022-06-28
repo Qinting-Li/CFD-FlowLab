@@ -871,17 +871,10 @@ namespace Reorder
         while(numSortCur > 0)
         {
             printf("nLevel = %d, numSortCur = %d\n", nLevel, numSortCur);
-            //printf("Before AscendingCellIDSortCurByDegree\n");
-            //TestCellIDSortCurDegree(numSortCur, cellIDSortCur, nFaceOfEachCell);
+         
             AscendingCellIDSortCurByDegree(numSortCur, nFaceOfEachCell, cellIDSortCur);	
-            //printf("After AscendingCellIDSortCurByDegree\n");
-            //TestCellIDSortCurDegree(numSortCur, cellIDSortCur, nFaceOfEachCell);
-            //printf("Before ReOrderLevelCur, numVertex = %d\n", numVertex);
-            //ReOrderLevelCur(numSortCur, cellIDSortCur, numVertex, reorderCell);
             ReOrderLevelCur(numSortCur, cellIDSortCur, numVertex, newCell);
-            //printf("After ReOrderLevelCur, numVertex = %d\n", numVertex);
 
-            //GetNextLevelForReOrder(numSortCur, cellIDSortCur, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortNext, cellIDSortNext);
             GetNextLevel(numSortCur, cellIDSortCur, nFaceOfEachCell, cell2Cell, offsetCell2Face, reorderCell, numSortNext, cellIDSortNext);
 
             ResetCellSort(numSortCur, cellIDSortCur);
@@ -898,9 +891,9 @@ namespace Reorder
         {
             newCell[iCell] = nTotalCell - 1 - newCell[iCell];
         }
-        //check rules for cell index
+        //! Check rules for cell index
         CheckNewCell(nTotalCell, newCell);
-        //reflectCell is a reverse reflect from newCell to 
+
         int *reflectCell = new int[nTotalCell];
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
@@ -918,12 +911,12 @@ namespace Reorder
         }
 
         SetOffSetCell2Face(nTotalCell, nNewFaceOfEachCell, newOffsetCell2Face);
-        //define new leftCellOfFace and rightCellOfFace
-        //define new cell2Cell and cell2Face
+        //! Define new leftCellOfFace and rightCellOfFace
+        //! Define new cell2Cell and cell2Face
         printf("Before create of newCell2Cell, nTotalCellFaces = %d\n", nTotalCellFaces);
-        //int * NewCell2Face = new int[nTotalCellFaces];
         int *newCell2Cell = new int[nTotalCellFaces];
-        //set newCell2Cell
+        
+        //! Set newCell2Cell
         for (int cellID = 0; cellID < nTotalCell; ++ cellID)
         {
             int reflectCellID = reflectCell[cellID];
@@ -939,33 +932,32 @@ namespace Reorder
             for (int iCell = 0; iCell < numCellCellsNew; ++ iCell)
             {
                 int newCellID = newCell[cell2Cell[offsetOld+iCell]];
-                //newCell2Cell[offsetNew+iCell] = cell2Cell[offsetOld+iCell];
                 newCell2Cell[offsetNew+iCell] = newCellID;
             }
         }
-        //set new cell2Cell
-        //SetCell2Cell(nTotalCell, Newface_number_of_each_cell, NewoffsetCell2Face, NewCell2Face, Newleft_cell_of_face, Newright_cell_of_face, newCell2Cell);
     
-        //check newCell2Cell
+        //! Check newCell2Cell
         CheckCell2Cell(nTotalCell, nNewFaceOfEachCell, newOffsetCell2Face, newCell2Cell);
-        //calculate bandwidth again
-            
+        
+        //! Calculate bandwidth again    
         ComputeBandwidth(nTotalCell, nNewFaceOfEachCell, newOffsetCell2Face, newCell2Cell);
-        //According to cell reorder, Update face_number_of_each_face by swap
-        //Input: face_nuber_of_each_cell and reflectCell
+        
+        //! According to cell reorder, Update face_number_of_each_face by swap
+        //! Input: face_nuber_of_each_cell and reflectCell
         SwapFaceNumberOfEachFace(nTotalCell, nFaceOfEachCell, reflectCell, newCell, nNewFaceOfEachCell);
-        //Update leftCellOfFace and rightCellOfFace
+        
+        //! Update leftCellOfFace and rightCellOfFace
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            //for leftCellOfFace
+            //! For leftCellOfFace
             int oldCellID = leftCellOfFace[iFace];
-            //not bounday faces, treatment is requierd
+            //! Not bounday faces, treatment is requierd
             if (oldCellID != -1)
             {
                 int NewCellID = newCell[oldCellID];
                 leftCellOfFace[iFace] = NewCellID;
             }
-            //for rightCellOfFace
+            //! For rightCellOfFace
             oldCellID = rightCellOfFace[iFace];
             if (oldCellID != -1)
             {
@@ -974,14 +966,14 @@ namespace Reorder
 
             }
         }
-        //update cell2Node and nNodeOfEachCell by swap method
+        //! Update cell2Node and nNodeOfEachCell by swap method
         vector< vector<cgsize_t> > &cell2Node = *gconn->GetCell2Node();
         vector<int> &nNodeOfEachCell = *gconn->GetNodeNumberOfEachCell();
-        int *orgCell = new int[nTotalCell];//Contianer index and old cellID reflection
-        int *swapCell = new int[nTotalCell]; //Old cellID and container index reflection
+        int *orgCell = new int[nTotalCell];//! Contianer index and old cellID reflection
+        int *swapCell = new int[nTotalCell]; //! Old cellID and container index reflection
         for (int cellID = 0; cellID < nTotalCell; ++ cellID)
         {
-            //Before swap, orgCell is equal to swapCell
+            //! Before swap, orgCell is equal to swapCell
             orgCell[cellID] = cellID; 
             swapCell[cellID] = cellID;
         }
@@ -992,19 +984,19 @@ namespace Reorder
             int targetID = reflectCell[cellID];
             int currentID = orgCell[cellID];
             int swapID = swapCell[targetID];
-            //update correspondings of cellID and swapID for nNodeOfEachCell
+            //! Update correspondings of cellID and swapID for nNodeOfEachCell
             int tempNodeNumber = nNodeOfEachCell[swapID];
 
             nNodeOfEachCell[swapID] = nNodeOfEachCell[cellID];
             nNodeOfEachCell[cellID] = tempNodeNumber;
-            //update correspondings of cellID and swapID for cell2Node
+            //! Update correspondings of cellID and swapID for cell2Node
             vector<cgsize_t> tempCell = cell2Node[swapID];
             cell2Node[swapID] = cell2Node[cellID];
             cell2Node[cellID] = tempCell;
-            //update correspondings of cellID and swapID for orgCell
+            //! Update correspondings of cellID and swapID for orgCell
             orgCell[cellID] = targetID;
             orgCell[swapID] = currentID;
-            //update correspondings of targerID and currentID for swapID
+            //! Update correspondings of targerID and currentID for swapID
             swapCell[targetID] = cellID;
             swapCell[currentID] = swapID;
         }
@@ -1019,7 +1011,7 @@ namespace Reorder
         for (int iCell = 0; iCell < numCellCells; ++ iCell)
         {
             int cellID = cell2Cell[offset + iCell];
-            //cellID is not in the root level structure
+            //! cellID is not in the root level structure
             if (reorderCell[cellID] == -1)
             {
                 cellIDSortCur[numSortCur] = cellID;
@@ -1101,13 +1093,11 @@ namespace Reorder
     {
         numSortCur = 0;
         int numCellCells = nFaceOfEachCell[rStart];
-        //printf("numCellCells = %d of cellID = %d\n", numCellCells, rStart);
         int offset = offsetCell2Cell[rStart];
+       
         for (int iCell = 0; iCell < numCellCells; ++ iCell)
         {
             int cellID = cell2Cell[offset + iCell];
-            //printf("iCell = %d, cellID = %d\n", iCell, cellID);
-            //cellID is not in the root level structure
             if (reorderCell[cellID] == -1)
             {
                 cellIDSortCur[numSortCur] = cellID;
@@ -1119,7 +1109,7 @@ namespace Reorder
     void AscendingCellIDSortCurByDegree(const int numSortCur, const int *nFaceOfEachCell, int *cellIDSortCur)
     {
         int numVertexInSort = numSortCur;
-        //At least 2 vertices for sort
+        //! At least 2 vertices for sort
         while(numVertexInSort > 1)
         {
             for (int iSort=0; iSort < numVertexInSort-1; ++ iSort)
@@ -1130,7 +1120,7 @@ namespace Reorder
                 int degreeNext = nFaceOfEachCell[cellIDNext];
                 if (degree > degreeNext)
                 {
-                    //exchange vertex order
+                    //! Exchange vertex order
                     cellIDSortCur[iSort] = cellIDNext;		
                     cellIDSortCur[iSort+1] = cellID;
                 }
@@ -1141,18 +1131,18 @@ namespace Reorder
 
     void TestCellIDSortCurDegree(const int numSortCur, const int *cellIDSortCur, const int *nFaceOfEachCell)
     {
-        //Test Ascending order of vertex 0
+        //! Test Ascending order of vertex 0
         for (int iSort = 0; iSort < numSortCur; ++ iSort)
         {
             printf("iSort = %d, cellID = %d, degree = %d\n", iSort, cellIDSortCur[iSort], nFaceOfEachCell[cellIDSortCur[iSort]]);
         }
     }
 
-    //check cell2Cell, to see some rules:
-    //rule1 one cell's neighbor cells should not contain itself.
-    //rule2 0<= one cell's neighbor cells < nTotalCell
-    //rule3 one cell's neighbor cells should be different.
-    //It should be noted that for O type grid, break 3 may be broken.
+    //! Check cell2Cell, to see some rules:
+    //! rule1 one cell's neighbor cells should not contain itself.
+    //! rule2 0<= one cell's neighbor cells < nTotalCell
+    //! rule3 one cell's neighbor cells should be different.
+    //! It should be noted that for O type grid, break 3 may be broken.
     void CheckCell2Cell(const int nTotalCell, const int *nFaceOfEachCell, const int *offsetCell2Cell, const int *cell2Cell)
     {
         printf("Check cell2Cell...\n");
@@ -1165,15 +1155,15 @@ namespace Reorder
             for (int iCell = 0; iCell < numCellCells; ++ iCell)
             {
                 int cellCellID = cell2Cell[offset + iCell];
-                //check rule 1
+                //! Check rule 1
                 if (cellID == cellCellID) printf("rule 1 breaks in cellID %d in %d\n", cellID, iCell);
-                //check rule 2
+                //! Check rule 2
                 if ((cellCellID < 0)||(cellCellID >= nTotalCell)) printf("rule 2 breaks in cellID %d in %d for %d\n", cellID, iCell, cellCellID);
             }
 
-            //check rule 3
+            //! Check rule 3
             int numComp = numCellCells;
-            //At least two cells in cell2Cell	
+            //! At least two cells in cell2Cell	
             while (numComp > 1)
             {
                 for (int jCell = 0; jCell < numComp-1; ++ jCell)
@@ -1193,8 +1183,7 @@ namespace Reorder
         for (int iSort = 0; iSort < numSortCur; ++ iSort)
         {
             int cellID = cellIDSortCur[iSort];
-            //Avoid the same cell index in cellIDSortCur on the condition of O type grid
-            //if (reorderCell[cellID] == -1){
+            //! Avoid the same cell index in cellIDSortCur on the condition of O type grid
             if (newCell[cellID] == -1)
             {
                 numVertex ++;
@@ -1225,9 +1214,9 @@ namespace Reorder
             }
         }
     }
-    //check rules for cell index
-    //rule1 0 <= newCell < nTotalCell
-    //rule2 cell index should be different
+    //! Check rules for cell index
+    //! rule1 0 <= newCell < nTotalCell
+    //! rule2 cell index should be different
     void CheckNewCell(const int nTotalCell, const int * newCell)
     {
         printf("Check newCell ...\n");
@@ -1249,13 +1238,13 @@ namespace Reorder
 
         delete []numCells;    numCells = NULL;
     }
-    //compute nFaceOfEachCell and nTotalCellFaces
-    //It should be noted that boundary faces are not considered here.
+    //! Compute nFaceOfEachCell and nTotalCellFaces
+    //! It should be noted that boundary faces are not considered here.
     void SetFaceNumberOfEachCell(const int nTotalFace, const int nTotalCell, const int *leftCellOfFace, const int *rightCellOfFace, int *nFaceOfEachCell, int &nTotalCellFaces)
     {
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            //for leftCellOfFace
+            //! For leftCellOfFace
             int cellLabelLeft = leftCellOfFace[iFace];
 
             if ((cellLabelLeft < 0)||(cellLabelLeft >= nTotalCell)) 
@@ -1264,8 +1253,8 @@ namespace Reorder
                 exit(1);
             }
             int cellLabelRight = rightCellOfFace[iFace];
-            //Boundary faces are not considered. In fact, on boundary face, cellLabelLeft is cell itself. cellLabelRight is -1, which is not necessary stored in cell2Cell.
-            if (cellLabelRight == -1) continue; //boundy face's right neighbor
+            //! Boundary faces are not considered. In fact, on boundary face, cellLabelLeft is cell itself. cellLabelRight is -1, which is not necessary stored in cell2Cell.
+            if (cellLabelRight == -1) continue; //! Boundy face's right neighbor
 
             if ((cellLabelRight < 0) || (cellLabelRight >= nTotalCell))
             {
@@ -1278,7 +1267,7 @@ namespace Reorder
             nTotalCellFaces ++;
         }		
     }
-    //set offsetCell2Face by nFaceOfEachCell
+    //! Set offsetCell2Face by nFaceOfEachCell
     void SetOffSetCell2Face(const int nTotalCell, const int *nFaceOfEachCell, int *offsetCell2Face)
     {
         offsetCell2Face[0] = 0;
@@ -1287,13 +1276,13 @@ namespace Reorder
             offsetCell2Face[iCell] = offsetCell2Face[iCell-1] + nFaceOfEachCell[iCell-1];
         }
     }
-    //set cell2Face by leftCellOfFace, rightCellOfFace, offsetCell2Face
-    //It should be noted that boundary faces are not considered here.
+    //! Set cell2Face by leftCellOfFace, rightCellOfFace, offsetCell2Face
+    //! It should be noted that boundary faces are not considered here.
     void SetCell2Face(const int nTotalFace, const int nTotalCell, const int *leftCellOfFace, const int *rightCellOfFace, int *offsetCell2Face, int *cell2Face)
     {
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            //for leftCellOfFace
+            //! For leftCellOfFace
             int cellLabelLeft = leftCellOfFace[iFace];
             if ((cellLabelLeft < 0)||(cellLabelLeft >= nTotalCell)) 
             {
@@ -1302,8 +1291,8 @@ namespace Reorder
             }
 
             int cellLabelRight = rightCellOfFace[iFace];
-            //boundary face is not considered.
-            if (cellLabelRight == -1) continue; //boundy face's right neighbor
+            //! Boundary face is not considered.
+            if (cellLabelRight == -1) continue; //! Boundy face's right neighbor
 
             if ((cellLabelRight < 0) || (cellLabelRight >= nTotalCell))
             {
@@ -1312,7 +1301,7 @@ namespace Reorder
             }
             int cell2faceOffset = offsetCell2Face[cellLabelLeft];
             cell2Face[cell2faceOffset] = iFace;
-            //offsetCell2Face update for the next set of face
+            //! OffsetCell2Face update for the next set of face
             offsetCell2Face[cellLabelLeft] ++;
             cell2faceOffset = offsetCell2Face[cellLabelRight];
             cell2Face[cell2faceOffset] = iFace;
@@ -1320,7 +1309,7 @@ namespace Reorder
         }		
     }
 
-    //set cell2Cell
+    //! Set cell2Cell
     void SetCell2Cell(const int nTotalCell, const int *nFaceOfEachCell, const int *offsetCell2Face, const int *cell2Face, const int *leftCellOfFace, const int *rightCellOfFace, int *cell2Cell){
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
@@ -1341,7 +1330,7 @@ namespace Reorder
 
                 cellLabel = rightCellOfFace[faceID];
 
-                if (cellLabel == -1) continue; //boundy face's right neighbor
+                if (cellLabel == -1) continue; //! Boundy face's right neighbor
                 if ((cellLabel < 0) || (cellLabel >= nTotalCell))
                 {
                     printf("Error: cellLabel = %d\n", cellLabel);
@@ -1354,7 +1343,7 @@ namespace Reorder
         }
     }
 
-    //compute bandwidth of each cell
+    //! Compute bandwidth of each cell
     void ComputeBandwidth(const int nTotalCell, const int *nFaceOfEachCell, const int *offsetCell2Face, const int *cell2Cell)
     {
         int *bandwidthOfEachCell = new int[nTotalCell];		
@@ -1363,54 +1352,23 @@ namespace Reorder
             int sizeCellFace = nFaceOfEachCell[iCell];
             int offsetCellFace = offsetCell2Face[iCell];
 
-            //The max band between iCell and neighbor cells
+            //!The max band between iCell and neighbor cells
             int maxLocalBand = 0;
             for (int iFace = 0; iFace < sizeCellFace; ++ iFace)
             {
                 int cellID = cell2Cell[offsetCellFace+iFace];
                 int bandDiff = abs(iCell - cellID);
                 if (bandDiff > maxLocalBand) maxLocalBand = bandDiff;
-                //test begin
-                    //if (iCell == 0) printf("offsetCellFace = %d, iFace = %d, cellID = %d, bandDiff = %d\n", offsetCellFace, iFace, cellID, bandDiff);
-                //test end
             }
             bandwidthOfEachCell[iCell] = maxLocalBand;
         }
-        //statistics of bandwidthOfEachCell
-        int maxGlobalBand = 0; //maximum bandwidth
-        int maxCellID = 0; //cellID of maximum bandwidth
-        /*
-        int bandDist[33]; //distribution of bandwidth from 1 to 32 and more
-        for (int i = 0; i < 33; i++){
-            bandDist[i] = 0;
-        }
-
-        for (int iCell = 0; iCell < nTotalCell; iCell++){
-            int bandCell = bandwidthOfEachCell[iCell];
-            if (bandCell <= 0) {
-                printf("Error: bandwidth<=0 on cell %d, bandwidth=%d\n", iCell, bandCell);
-                exit(1);
-            }
-            if (bandCell > maxGlobalBand) {
-                maxGlobalBand = bandCell;
-                maxCellID = iCell;
-            }
-            if (bandCell > 32) bandDist[32]++;
-            else bandDist[bandCell-1]++;
-        }
-        
-        printf("maxGlobalBand = %d on cellID %d\n", maxGlobalBand, maxCellID);
-        int nTotalDist = 0;
-        for (int i = 0; i < 33; i++){
-            nTotalDist += bandDist[i];
-            printf("bandDist %d: %d in nTotalCells\n", i+1, bandDist[i]);
-        }
-        */
+        //! Statistics of bandwidthOfEachCell
+        int maxGlobalBand = 0; //! Maximum bandwidth
+        int maxCellID = 0; //! CellID of maximum bandwidth
         int level = 20;
-        //int gapLevel = nTotalCell/level;
         int gapLevel = 6000/level;
         printf("gapLevel = %d\n", gapLevel);
-        int bandDist[20]; //distribution of bandwidth from 1 to 32 and more
+        int bandDist[20] = {0}; //! Distribution of bandwidth from 1 to 32 and more
         for (int i = 0; i < level; ++ i)
         {
             bandDist[i] = 0;
@@ -1451,111 +1409,69 @@ namespace Reorder
         delete []bandwidthOfEachCell;   bandwidthOfEachCell = NULL;		
     }
 
-    //Update face_number_of_each_face by swap method
-    //Intput: nTotalCell, face_number_of_each_face, reflectCell
-    //Output:nSwapFaceOfEachCell
-    //The function is used to provide a swap method to update a cell related varible
-    //after cell reorder. In the future, cell2Node can be update by the method
+    //! Update face_number_of_each_face by swap method
+    //! Intput: nTotalCell, face_number_of_each_face, reflectCell
+    //! Output:nSwapFaceOfEachCell
+    //! The function is used to provide a swap method to update a cell related varible
+    //! After cell reorder. In the future, cell2Node can be update by the method
     void SwapFaceNumberOfEachFace(const int nTotalCell, const int *nFaceOfEachCell, const int *reflectCell, const int *newCell, const int *nNewFaceOfEachCell)
     {
-        //try swap method
+        //! Try swap method
         int *nSwapFaceOfEachCell = new int[nTotalCell];
-        //It should be notes that orgCell and swapCell are updated during swap
-        //Finally, orgCell should be equal to reflectCell and swapCell should be equal to newCell. 
-        int *orgCell = new int[nTotalCell];//Contianer index and old cellID reflection
-        int *swapCell = new int[nTotalCell]; //Old cellID and container index reflection
+        //!It should be notes that orgCell and swapCell are updated during swap
+        //! Finally, orgCell should be equal to reflectCell and swapCell should be equal to newCell. 
+        int *orgCell = new int[nTotalCell];//! Contianer index and old cellID reflection
+        int *swapCell = new int[nTotalCell]; //! Old cellID and container index reflection
         for (int cellID = 0; cellID < nTotalCell; ++ cellID)
         {
             nSwapFaceOfEachCell[cellID] = nFaceOfEachCell[cellID];
-            //Before swap, orgCell is equal to swapCell
+            //! Before swap, orgCell is equal to swapCell
             orgCell[cellID] = cellID; 
             swapCell[cellID] = cellID;
         }
-/*
-        //set nSwapFaceOfEachCell by swap method with newCell
-        //The method fails due to inifinte loop by while 
-        for (int cellID = 0; cellID < nTotalCell; cellID++)
-        {
-            //just for test
-                printf("For loop, cellID = %d\n", cellID);
-                int level = 0;
-            //test end
-            //if (orgCell[cellID] == newCell[cellID]) continue;
-            if (orgCell[cellID] == reflectCell[cellID]) continue;
-            //It should be noted that on the condition of orgCell[cellID] != newCell[cellID], it must be obtained that orgCell[cellID] = cellID
-            //int newCellID = newCell[cellID];
-            int newCellID = reflectCell[cellID];
-            int currentID = orgCell[cellID];
-            //just for test
-                printf("level %d, newCellID = %d\n", level, newCellID);
-            //test end
-            while (currentID != newCellID)
-            {
-                //swap face number  of currentID and newCellID in nSwapFaceOfEachCell
-                int temp = nSwapFaceOfEachCell[currentID];
-                nSwapFaceOfEachCell[currentID] = nSwapFaceOfEachCell[newCellID];
-                nSwapFaceOfEachCell[newCellID] = temp;
-                //swap orgCell
-                orgCell[currentID] = newCellID;
-                orgCell[newCellID] = currentID;
-                
-                //reset currentID by newCellID
-                //currentID = newCell[currentID];
-                currentID = newCellID;
-                //reset newCellID
-                //newCellID = newCell[currentID];
-                newCellID = reflectCell[currentID];
-                //just for test
-                    level++;
-                    printf("cellID = %d, level %d, currentID = %d, newCellID = %d\n", cellID, level, currentID, newCellID);
-                //test end
-                
-            }
-        }
-*/
-        //After swap, orgCell should be equal to reflectCell
-        //After swap, swapCell should be equal to newCell
+        //! After swap, orgCell should be equal to reflectCell
+        //!After swap, swapCell should be equal to newCell
         for (int cellID = 0; cellID < nTotalCell; ++ cellID)
         {
-            //In one container, the corresponding old cellID is the same
-            //in orgCell and reflectCell. It means that no swap is required.
+            //! In one container, the corresponding old cellID is the same
+            //! In orgCell and reflectCell. It means that no swap is required.
             if (orgCell[cellID] == reflectCell[cellID]) continue;
-            //targetID is the target of orgCell[cellID]
-            //swapID is the container index corresponds to targetID
-            //currentID is the real value of orgCell[cellID]
-            //Obviously, orgCell[cellID] and orgCell[swapID] should be swap.
-            //After swap, swapCell should be updated. swapCell[targetID] 
-            //should be cellID. and swapCell[currentID] should be swapID.
-            //In fact, Swap[targerID] and Swap[currentID] is also swap.
+            //! targetID is the target of orgCell[cellID]
+            //! swapID is the container index corresponds to targetID
+            //! currentID is the real value of orgCell[cellID]
+            //! Obviously, orgCell[cellID] and orgCell[swapID] should be swap.
+            //! After swap, swapCell should be updated. swapCell[targetID] 
+            //! should be cellID. and swapCell[currentID] should be swapID.
+            //! In fact, Swap[targerID] and Swap[currentID] is also swap.
             int targetID = reflectCell[cellID];
             int swapID = swapCell[targetID];
             int currentID = orgCell[cellID];
             if (swapCell[currentID] != cellID)
             {
-                //It means that something wrong in  swap of orgCell and swapCell
+                //! It means that something wrong in  swap of orgCell and swapCell
                 printf("Error: Old cellID %d is not in the containerID %d\n", currentID, cellID);
                 printf("Old cellID %d is in the containerID %d\n", currentID, swapCell[currentID]);
                 printf("Container %d owns old cellID %d\n", cellID, orgCell[cellID]);
                 exit(1);
             }
-            //swap nFaceOfEachCell of cellID and swapID
+            //! swap nFaceOfEachCell of cellID and swapID
             int temp = nSwapFaceOfEachCell[swapID];
             nSwapFaceOfEachCell[swapID] = nSwapFaceOfEachCell[cellID];
             nSwapFaceOfEachCell[cellID] = temp;
-            //swap orgCell of cellID and swapID
+            //! swap orgCell of cellID and swapID
             orgCell[cellID] = targetID;
             orgCell[swapID] = currentID;
-            //swap swapID of targerID and currentID
+            //! swap swapID of targerID and currentID
             swapCell[targetID] = cellID;
             swapCell[currentID] = swapID;
         }
-        //check results
+        //! Check results
         CheckSwapFaceNumber(nTotalCell, orgCell, swapCell, reflectCell, newCell, nSwapFaceOfEachCell, nNewFaceOfEachCell);
 
         
     }
 
-    //check results
+    //! Check results
     void CheckSwapFaceNumber(const int nTotalCell, const int *orgCell, const int *swapCell, const int *reflectCell, const int *newCell, const int *nSwapFaceOfEachCell, const int *nNewFaceOfEachCell)
     {
         printf("Checking swap method for update nFaceOfEachCell just by itself...\n");
@@ -1573,7 +1489,7 @@ namespace Reorder
             }
         }
     }
-    //Reorder cell label from nBoundFace to nTotalFace just with the order of faces in cell2Face
+    //! Reorder cell label from nBoundFace to nTotalFace just with the order of faces in cell2Face
     void CellReorderByCell2FaceOrder(const int nTotalCell, const int nTotalFace, const int *offsetCell2Face, const int *nFaceOfEachCell, const int *cell2Face, const int nBoundFace, int labelFace, int *newFaces)
     {
         for (int cellID = 0; cellID < nTotalCell; ++ cellID)
@@ -1583,7 +1499,7 @@ namespace Reorder
             for (int iFace = 0; iFace < numFaces; ++ iFace)
             {
                 int faceID = cell2Face[offset+iFace];
-                //do not consider boundary faces
+                //! Do not consider boundary faces
                 if (faceID < nBoundFace) 
                 {
                     printf("Error: faceID %d on cellID %d, iFace %d is boundary face\n", faceID, cellID, iFace);
@@ -1591,7 +1507,7 @@ namespace Reorder
                 }
                 if (faceID >= nBoundFace)
                 {
-                    //faceID does not have label yet.
+                    //! faceID does not have label yet.
                     if (newFaces[faceID] == -1) 
                     {
                         labelFace ++;
@@ -1607,13 +1523,12 @@ namespace Reorder
             exit(1);
         }
     }
-    //metric for computing leftCellOfFace and rightCellOfFace for GPU 
+    //! Metric for computing leftCellOfFace and rightCellOfFace for GPU 
     void MetricLeftRightCellOfFace(const int nTotalFace, const int nBoundFace, const int *leftCellOfFace, const int *rightCellOfFace)
     {
-        int *diffCount = new int[129]; //0~127, 128 for larger
-        //left part
-        //int segAddress = 0;
-        //start from nBoundFace, boundary faces are not considered
+        int *diffCount = new int[129]; //! 0~127, 128 for larger
+        //! Left part
+        //! Start from nBoundFace, boundary faces are not considered
         int segAddress = nBoundFace;
         for (int i = 0; i < 129; ++ i)
         {
@@ -1627,7 +1542,6 @@ namespace Reorder
                 for (int offset = 0; offset < 32; ++ offset)
                 {
                     int le = leftCellOfFace[segAddress];
-                    //printf("segAddress = %d, le = %d\n", segAddress, le);
                     if (le < localMin) localMin = le;
                     if (le > localMax) localMax = le;
                     segAddress++;
@@ -1635,25 +1549,20 @@ namespace Reorder
                 int diff = localMax - localMin;
                 if (diff > 128) diffCount[128] ++;
                 else diffCount[diff] ++;
-                //printf("localMax = %d, localMin = %d, diff = %d\n", localMax, localMin, diff);
-
             }
-            //compute metric elements
+            //! Compute metric elements
             int totalNum = 0;
             for (int i = 0; i < 129; ++ i)
             {
                 totalNum += diffCount[i];
-                //printf(" diffCount[%d] = %d\n", i, diffCount[i]);
             }
             for (int i = 0; i < 129; ++ i)
             {
                 double percent = double(diffCount[i])/totalNum;
                 printf("i = %d, percent = %f\n", i, percent);
             }
-            //printf("totalNum = %d, nTotalFace = %d\n", totalNum, nTotalFace);
 
-            //right part
-            //segAddress = 0;
+            //! Right part
             segAddress = nBoundFace;
 
             for (int i = 0; i < 129; ++ i)
@@ -1667,7 +1576,6 @@ namespace Reorder
                 for (int offset = 0; offset < 32; offset++)
                 {
                     int re = rightCellOfFace[segAddress];
-                    //printf("segAddress = %d, le = %d\n", segAddress, le);
                     if (re < localMin) localMin = re;
                     if (re > localMax) localMax = re;
                     segAddress++;
@@ -1675,15 +1583,13 @@ namespace Reorder
                 int diff = localMax - localMin;
                 if (diff > 128) diffCount[128] ++;
                 else diffCount[diff] ++;
-                //printf("localMax = %d, localMin = %d, diff = %d\n", localMax, localMin, diff);
 
             }
-            //test
+            //! Test
             totalNum = 0;
             for (int i = 0; i < 129; ++ i)
             {
                 totalNum += diffCount[i];
-                //printf(" diffCount[%d] = %d\n", i, diffCount[i]);
             }
             for (int i = 0; i < 129; ++ i)
             {
@@ -1693,7 +1599,7 @@ namespace Reorder
             delete []diffCount;   diffCount = NULL;
         
     }
-    //a caller for MetricLeftRightCellOfFace
+    //!A caller for MetricLeftRightCellOfFace
     void CallMetricLeftRightCellOfFace(Base_Grid_Conn *gconn)
     {
         printf("Program is running in CallMetricLeftRightCellOfFace\n");
@@ -1709,7 +1615,6 @@ namespace Reorder
             oldRightCellOfFace[iFace] = rightCellOfFace[iFace];
         }
 
-        //call MetricLeftRightCellOfFace
         MetricLeftRightCellOfFace(nTotalFace, nBoundFace, oldLeftCellOfFace, oldRightCellOfFace);
 
     }

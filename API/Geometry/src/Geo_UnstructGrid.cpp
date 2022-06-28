@@ -1010,7 +1010,7 @@ void UnstructGrid::ComputeNode2CellArray()
 
     nodeTopology->SetNode2CellArray(node2CellArray);
 
-    printf("Get Node2CellArray, well down!");
+    cout<<"Get Node2CellArray, well down!"<<endl;
 }
 
 void UnstructGrid::GetSourceIndex(int iFace,int ipos, int &s)
@@ -8862,7 +8862,7 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
 
             for(int iNode = 0; iNode < nodeNumberOfEachCell[ cellIndex ]; ++ iNode)
             {
-                int nodeIndex = cell2Node[cellIndex][iNode];
+                int &nodeIndex = cell2Node[cellIndex][iNode];
 
                 RDouble dx = x - xNode[nodeIndex];
                 RDouble dy = y - yNode[nodeIndex];
@@ -8889,17 +8889,17 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
 
 void UploadOversetValue(UnstructGrid *grid, RDouble **field, const string &name, int neqn)
 {
-    int    interpolationOrder          = 0;
-    if(GlobalDataBase::IsExist("oversetInterpolationOrder", PHINT, 1))
+    int  oversetInterpolationMethod = 0;
+    if(GlobalDataBase::IsExist("oversetInterpolationMethod", PHINT, 1))
     {
-        interpolationOrder = GlobalDataBase::GetIntParaFromDB("oversetInterpolationOrder");
+        oversetInterpolationMethod = GlobalDataBase::GetIntParaFromDB("oversetInterpolationMethod");
     }
 
-    if (interpolationOrder == 0)
+    if (oversetInterpolationMethod == 0)
     {
         UploadOversetValueDefault(grid, field, name, neqn);
     }
-    else if (interpolationOrder == 1)
+    else if (oversetInterpolationMethod == 1)
     {
         UploadOversetValueByWeight(grid, field, name, neqn);
     }
@@ -10159,6 +10159,11 @@ vector< RDouble > & UnstructGrid::GetNodeWallDist()
     return nodeWalldistDistance;
 }
 
+vector< RDouble > & UnstructGrid::GetNodeWallDistInOtherBlock()
+{
+    return nodeWalldistDistanceInOtherBlock;
+}
+
 LIB_EXPORT void UnstructGrid::RegisterOversetField(const string & name, const int type, const int dimesion)
 {
     //! Field for send
@@ -10208,6 +10213,127 @@ LIB_EXPORT RDouble UnstructGrid::GetAverageVolume()
         exit(0);
     }
     return averageVolume;
+}
+
+void UnstructGrid::Output(const string & fileName)
+{
+    RDouble * x = this->GetX();
+    RDouble * y = this->GetY();
+    RDouble * z = this->GetZ();
+
+    int numberOfBoundaryFaces = this->GetNBoundFace();
+    int numberOfFaces         = this->GetNTotalFace();
+
+    int *faceNodeNumberContainer = this->GetNodeNumberOfEachFace();
+
+    PHVectorString1D titleOfTecplot;
+    titleOfTecplot.push_back("title=\"Unstructured Grid\"");
+    titleOfTecplot.push_back("variables=");
+    titleOfTecplot.push_back("\"x\"");
+    titleOfTecplot.push_back("\"y\"");
+    titleOfTecplot.push_back("\"z\"");
+
+
+    int iCount = 0;
+    for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
+    {
+        iCount += faceNodeNumberContainer[ iFace ];
+    }
+
+    using namespace PHENGLEI;
+    PHVectorInt2D faceToNodeList(numberOfBoundaryFaces);
+    PHVectorInt1D linkMap;
+    set< int > bcList;
+
+    UnstructBCSet **bcr = this->GetBCRecord();
+
+    bool doseNeedDump = false;
+    for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+    {
+        int boundaryConditionType = bcr[iFace]->GetKey();
+        bcList.insert(boundaryConditionType);
+        if (boundaryConditionType == PHENGLEI::SOLID_SURFACE || boundaryConditionType == PHENGLEI::SYMMETRY
+            || boundaryConditionType == PHENGLEI::INFLOW || boundaryConditionType == PHENGLEI::OUTFLOW)
+        {
+            doseNeedDump = true;
+        }
+    }
+
+    if (PHMPI::GetNumberofGlobalZones() >= 256)
+    {
+        doseNeedDump = false;
+        for (int iFace = 0; iFace < numberOfBoundaryFaces; ++ iFace)
+        {
+            int boundaryConditionType = bcr[iFace]->GetKey();
+            if(boundaryConditionType == PHENGLEI::SOLID_SURFACE)
+            {
+                doseNeedDump = true;
+                break;
+            }
+        }
+    }
+
+    if (!doseNeedDump)
+    {
+        return;
+    }
+
+    fstream file;
+    PHSPACE::OpenFile(file, fileName, ios_base::out);
+
+    for (size_t i = 0; i < titleOfTecplot.size(); ++ i)
+    {
+        file << titleOfTecplot[ i ] << "\n";
+    }
+
+    for (set< int >::iterator iter = bcList.begin(); iter != bcList.end(); ++ iter)
+    {
+        if (* iter < 0 ) continue;
+        if (* iter != PHENGLEI::SOLID_SURFACE && * iter != PHENGLEI::SYMMETRY 
+            && * iter != PHENGLEI::OUTFLOW && * iter != PHENGLEI::INFLOW) continue;
+
+        faceToNodeList.resize(0);
+        linkMap.resize(0);
+
+        GetFaceToNodeList(this, * iter, linkMap, faceToNodeList);
+        ostringstream osZone;
+        osZone << "\"" << this->GetGridID()->GetIndex()<< "BC=" << * iter << "\" ";
+        string zoneTitle = osZone.str();
+
+        file << "zone T = " << zoneTitle << " N = " << linkMap.size() << "  E = " << faceToNodeList.size()  << " f = FEPOINT, ET = QUADRILATERAL\n";
+        int wordWidth = 20;
+        for (std::size_t i = 0; i < linkMap.size(); ++ i)
+        {
+            int it = linkMap[ i ];
+            file << setiosflags(ios::left);
+            file << setiosflags(ios::scientific);
+            file << setprecision(10);
+            file << setw(wordWidth) << x[ it ]
+                << setw(wordWidth) << y[ it ]
+                << setw(wordWidth) << z[ it ];
+            file << "\n";
+        }
+
+        for (std::size_t i = 0; i < faceToNodeList.size(); ++ i)
+        {
+            //! Number of vertices on the cell face.
+            uint_t np     = faceToNodeList[ i ].size();
+            int index0 = faceToNodeList[ i ][ 0 ];
+            for (uint_t ip = 0; ip < np; ++ ip)
+            {
+                file << faceToNodeList[ i ][ ip ] + 1;
+                if (ip != np - 1) file << " ";
+            }
+
+            for (uint_t ip = np; ip < 4; ++ ip)
+            {
+                file << " " << index0 + 1;
+            }
+            file << "\n";
+        }
+    }
+
+    PHSPACE::CloseFile(file);
 }
 
 RDouble AspectRatio(RDouble dist, RDouble area, int nodeNumOfPerFace)

@@ -114,7 +114,7 @@ include_directories(${EIGEN_H_PATH})
 set(OVERSET_H_PATH   include)
 set(OVERSET_H_LIST
 ${OVERSET_H_PATH}/UnstructuredOversetConfig.h
-${OVERSET_H_PATH}/UnstructuredGridQuickSearch.h
+${OVERSET_H_PATH}/OversetKDTree.h
 ${OVERSET_H_PATH}/DynamicGrid.h
 ${OVERSET_H_PATH}/Mesh_Deformation.h
 ${OVERSET_H_PATH}/Mesh_DeformationRBF.h
@@ -136,7 +136,7 @@ include_directories(${OVERSET_H_PATH})
 set(OVERSET_CPP_PATH  src)
 set(OVERSET_CPP_LIST
 ${OVERSET_CPP_PATH}/UnstructuredOversetConfig.cpp
-${OVERSET_CPP_PATH}/UnstructuredGridQuickSearch.cpp
+${OVERSET_CPP_PATH}/OversetKDTree.cpp
 ${OVERSET_CPP_PATH}/DynamicGrid.cpp
 ${OVERSET_CPP_PATH}/Mesh_Deformation.cpp
 ${OVERSET_CPP_PATH}/Mesh_DeformationRBF.cpp
