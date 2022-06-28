@@ -536,6 +536,7 @@ double AusmpwPlusLimiter = 1.0;
 
 int    iunsteady        = 0;
 double physicalTimeStep = 0.01;
+double physicalTimeStepDimensional = -0.001;
 int    ifStartFromSteadyResults = 0;
 int    ifStaticsFlowField = 0;
 int    ifStaticsReynoldsStress = 0;
@@ -1280,7 +1281,7 @@ int    codeOfOversetGrid           = 0;
 int    oversetInterpolationMethod  = 0;
 int    readOversetFileOrNot        = 0;
 int    symetryOrNot                = 0;
-int    readInAuxiliaryInnerGrid    = 1;
+int    readInAuxiliaryInnerGrid    = 0;
 int    readInAuxiliaryOuterGrid    = 0;
 int    readInSklFileOrNot          = 0;
 string auxiliaryInnerGrid0         = "./grid/aux-upper.fts";
@@ -1293,6 +1294,7 @@ double toleranceForOversetBox      = 1.0e-3;
 int    twoOrderInterpolationOrNot  = 0;
 int    keyEnlargeOfActiveNodes     = 0;
 int    outTecplotOverset           = 0;
+int    outPutOversetVisualization  = 0;
 
 int     numberOfMovingBodies       = 2;
 

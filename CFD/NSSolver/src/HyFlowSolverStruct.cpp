@@ -2606,33 +2606,25 @@ namespace PHSPACE
         GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
     }
 
-    void HyFlowSolverStruct::AirForceCoef(ActionKey *actkey)
+    void HyFlowSolverStruct::AirForceCoef(ActionKey* actkey)
     {
         const int ALL_PART = -1;
-        int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-        if (!isAle)
-        {
-            AirForceCoefParts(actkey, ALL_PART);
+        AirForceCoefParts(actkey, ALL_PART);
 
-            int coordinate = LocalCoordinate;
-            uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
-            for (int iPart = 0; iPart < nTotalBC; ++ iPart)
+        int coordinate = LocalCoordinate;
+        uint_t nTotalBC = GlobalBoundaryCondition::GetNumberOfBC();
+        for (int iPart = 0; iPart < nTotalBC; ++iPart)
+        {
+            if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
             {
-                if ((!GlobalBoundaryCondition::IsSolidWallBC(iPart)) && ((GlobalBoundaryCondition::GetBC(iPart)->GetBCType() != PHENGLEI::ABLATION_SURFACE)))
-                {
-                    continue;
-                }
-
-                //! Compute local part force.
-                AirForceCoefParts(actkey, iPart, coordinate);
-
-                //! Compute global part force.
-                AirForceCoefParts(actkey, iPart);
+                continue;
             }
-        }
-        else
-        {
-            AirForceCoefComponents(actkey, ALL_PART);
+
+            //! Compute local part force.
+            AirForceCoefParts(actkey, iPart, coordinate);
+
+            //! Compute global part force.
+            AirForceCoefParts(actkey, iPart);
         }
     }
 
@@ -2912,7 +2904,7 @@ namespace PHSPACE
         aerodynamicForceData->write(&hingeMoment, sizeof(RDouble));
     }
 
-    void HyFlowSolverStruct::AirForceCoefComponents(ActionKey *actkey, int partID, int coordinate)
+    void HyFlowSolverStruct::AirForceCoefBodies(ActionKey *actkey)
     {
         int level = actkey->level;
         StructGrid *grid = StructGridCast(GetGrid(level));

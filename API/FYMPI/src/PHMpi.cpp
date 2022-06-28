@@ -1406,6 +1406,10 @@ bool IsNeedNonBlockingCommunication(const ActionKey *actkey)
     {
         return true;
     }
+    if (actkey->action == COMMCELLIBLANK)
+    {
+        return true;
+    }
     if (actkey->action == UPDATE_INTERPOINT_DATA)
     {
         return true;

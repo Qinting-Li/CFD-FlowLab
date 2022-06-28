@@ -1285,9 +1285,9 @@ void Simulation::InitOversetGrid()
     //! Read overset information files or config.
 
     int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    //int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
 
-    if (!isOverset || isAle)
+    if (!isOverset)
     {
         return;
     }
@@ -1323,23 +1323,18 @@ void Simulation::InitOversetGrid()
             delete timeSpan;
         }
 
-        InitializeOversetInterfaceTopology();
-
+        int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+        if (!isAle)
+        {
+            InitializeOversetInterfaceTopology();
+        }
         WriteLogFile("Initialize oversetInterface topology \n");
     }
 }
 
 void Simulation::OversetGridConfig()
 {
-    OversetConfigFactoryMulti *oversetConfigFactory = new OversetConfigFactoryMulti();
-
-    oversetConfigFactory->Initialize();
-
-    oversetConfigFactory->OversetConfigMulti();
-
-    oversetConfigFactory->OutPutOversetInformation();
-
-    delete oversetConfigFactory;
+   ReConfigUnstructOversetGrid();
 }
 
 void Simulation::ReadGeometry()
