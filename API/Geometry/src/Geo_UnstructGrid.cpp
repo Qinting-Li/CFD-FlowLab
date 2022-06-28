@@ -1010,7 +1010,7 @@ void UnstructGrid::ComputeNode2CellArray()
 
     nodeTopology->SetNode2CellArray(node2CellArray);
 
-    printf("Get Node2CellArray, well down!");
+    cout<<"Get Node2CellArray, well down!"<<endl;
 }
 
 void UnstructGrid::GetSourceIndex(int iFace,int ipos, int &s)
