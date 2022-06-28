@@ -2914,14 +2914,14 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree3(vector<
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
     int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
     SetField(keyInBlockNodes, 0, numberOfNodes);
-
+    double tolerance = GetToleranceForOversetBox();
     int donorCellIndex;
     int symetryOrNot = GetSymetryOrNot();
     for (int iCell = 0; iCell < numberOfCells; ++iCell)
     {
         donorCellIndex = -2;
 
-        if (!symetryOrNot || cellCenterZ[iCell] > EPSILON)
+        if (!symetryOrNot || cellCenterZ[iCell] > -tolerance)
         {
             donorCellIndex = -1;
 
