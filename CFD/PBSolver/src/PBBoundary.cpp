@@ -33,5 +33,10 @@ void PBBoundary::WallModification(UnstructGrid *grid, string phiName, vector<int
 
 }
 
+void PBBoundary::UpdateVistb(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData)
+{
+
+}
+
 DEFINE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundary, BOUNDARY_EMPTY);
 }

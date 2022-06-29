@@ -27,8 +27,9 @@
 #include "LESSolverStruct.h"
 #include "LESSolverUnstr.h"
 //! Incompressible Flow
+#ifdef USE_PBSOLVER
 #include "PBS.h"
-//!
+#endif
 
 #ifdef USE_SpecDiffHybSolver
 #include "SpecDiffHybSolver.h"
@@ -1371,6 +1372,16 @@ void Simulation::InitializeSolvers()
         delete controller;
     }
 
+    //! For Incompressible Flow
+    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+    {
+        Controller *controller = new Controller(iSolver, this->region);
+
+        controller->IncompressibleInitial(iSolver);
+
+        delete controller;
+    }
+
     WriteLogFile("Creating and initialization solvers over \n");
 }
 
@@ -1488,6 +1499,7 @@ void Simulation::DefineAndCreateSolvers()
                 }
 #endif
 
+#ifdef USE_PBSOLVER
                 //! Incompressible Flow
                 string flowSolver;
                 zone->GetData("FLOW", &flowSolver, PHSTRING, 1);
@@ -1495,7 +1507,7 @@ void Simulation::DefineAndCreateSolvers()
                 solverList.push_back(solver);
                 int solverIndex = solverList.size();
                 solver->SetName(toString(solverIndex - 1) + "_" + flowSolver);
-
+#endif
 
             }
         }
@@ -1541,6 +1553,7 @@ void Simulation::DefineAndCreateSolvers()
             }
             else
             {
+#ifdef USE_PBSOLVER
                 //! Incompressible Flow
                 if (viscousType == SPALART_ALLMARAS)
                 {
@@ -1555,6 +1568,7 @@ void Simulation::DefineAndCreateSolvers()
                     solver->SetName("TURB");
                     solver->SetGeometry(geometry);
                 }
+#endif
             }
         }
 
@@ -1584,12 +1598,14 @@ void Simulation::DefineAndCreateSolvers()
         {
             int energyType;
             zone->GetData("energyType", &energyType, PHINT, 1);
+#ifdef USE_PBSOLVER
             if (energyType)
             {
                 PHSolver *solver = new PBSolverEnergy("ENERGY");
                 solverList.push_back(solver);
                 solver->SetName("ENERGY");
             }
+#endif
         }
 #endif
 

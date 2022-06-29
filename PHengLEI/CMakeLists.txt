@@ -44,7 +44,7 @@ opt(DOUBLE_PRECISION "Use double precision or not" ON)
 opt(SMARTARRAY "Use smart array more efficenet than origial array" ON)  # Use smart array or not.
 opt_build(SpecDiffHybSolver "Build Spectra-Difference Hybrid Solver or not" OFF) #Build Spectra-Difference Hybrid Solver or not.
 opt_build(DemoSolver "Build Solver Template or not" OFF)# Build Solver Template option.
-opt_build(PBSolver "Build Pressure Based Solver or not" ON)# Build PBSolver option.
+opt_build(PBSolver "Build Pressure Based Solver or not" OFF)# Build PBSolver option.
 opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
@@ -290,6 +290,25 @@ endif(WIN32)
 
 #look for CMakeLists.txt in subdirectory <codes> and build an executable target:
 add_subdirectory(../Main ${EXEC_WORKING_DIR})
+
+if(BUILD_PBSolver)
+  if(WIN32)
+    if(USE_Windows_X64)
+    add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}/Dll1.dll"
+    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/Dll1.dll 
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/fmpich2.dll  
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/libifcoremd.dll 
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/libmmd.dll 
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR})
+    add_custom_target(dll_file DEPENDS "${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}/Dll1.dll")
+    add_dependencies(${PROJECT_NAME} dll_file)
+    endif(USE_Windows_X64)
+  endif(WIN32)
+endif(BUILD_PBSolver)
 
 if(BUILD_TUTORIAL)
   #ADD_SUBDIRECTORY(Tutorial/CGNSConversion            ${EXEC_WORKING_DIR}/Tutorial/CGNSConversion          )

@@ -31,7 +31,9 @@ public:
 
     void WallModification(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
-    void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+    virtual void Discrt(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData, RDouble *diffCoe);
+
+    void UpdateVistb(UnstructGrid *grid, string phiName, vector<int> *faceIndex, Data_Param *bcData);
 
 protected:
     RDouble cmu_;

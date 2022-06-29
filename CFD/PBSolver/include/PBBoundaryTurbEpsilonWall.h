@@ -38,6 +38,8 @@ protected:
     RDouble cmu75_;
     RDouble cappa_;
     RDouble yptr_;
+    RDouble yvstar_;
+    RDouble cl_;
 };
 
 DECLARE_PBSOLVER_REGISTER_FUNCTION(PBBoundary, PBBoundaryTurbEpsilonWall, TURB_EPSILON_WALL);

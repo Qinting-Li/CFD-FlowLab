@@ -32,7 +32,7 @@ void PBBoundaryEnergyOutlet::Discrt(UnstructGrid *grid, string phiName, vector<i
     RDouble *yfc  = grid->GetFaceCenterY();
     RDouble *zfc  = grid->GetFaceCenterZ();
 
-    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr("T"));
+    RDouble *phi = reinterpret_cast<RDouble *>(grid->GetDataPtr(phiName));
     RDouble *phib = phi + nTotalCell;
     RDouble *diffCoeb = diffCoe + nTotalCell;
     RDouble *cp = reinterpret_cast<RDouble *>(grid->GetDataPtr("cp"));
@@ -46,7 +46,7 @@ void PBBoundaryEnergyOutlet::Discrt(UnstructGrid *grid, string phiName, vector<i
     RDouble *dphidz = reinterpret_cast<RDouble *>(grid->GetDataPtr("dphidz"));
     RDouble *fluxb = reinterpret_cast<RDouble *>(grid->GetDataPtr("flux"));
 
-    for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+    for (int iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
         int iFacelocal = (*faceIndex)[iFace]; //! The boundary element serial number is arranged in front of the element face.
         int le = leftCellOfFace[iFacelocal];
@@ -68,15 +68,14 @@ void PBBoundaryEnergyOutlet::Discrt(UnstructGrid *grid, string phiName, vector<i
         RDouble ay = diffCoebValue * fany - dy * area2;
         RDouble az = diffCoebValue * fanz - dz * area2;
 
-        apPhi[le] += area2 / cp[le];
+        apPhi[le] += area2;
         scPhi[le] += area2 * phib[iFacelocal] + dphidx[le] * ax + dphidy[le] * ay + dphidz[le] * az;
 
-        RDouble usq = (u[le] * u[le] + v[le] * v[le] + w[le] * w[le]) / 2;
-        scPhi[le] += area2 * usq / cp[le];
-
-        RDouble fluxbValue = -MIN(fluxb[iFacelocal], 0);
-
-        scPhi[le] += fluxbValue * phib[iFacelocal];
+        if (fluxb[iFacelocal] < 0)
+        {
+            apPhi[le] -= fluxb[iFacelocal];
+            scPhi[le] -= fluxb[iFacelocal] * phib[iFacelocal];
+        }
     }
 }
 
@@ -89,7 +88,7 @@ void PBBoundaryEnergyOutlet::Update(UnstructGrid *grid, std::string phiName,std:
     RDouble *flux_ = reinterpret_cast<RDouble *>(grid->GetDataPtr("flux"));
 
 
-    for (std::size_t iFace = 0; iFace < faceIndex->size(); ++ iFace)
+    for (int iFace = 0; iFace < faceIndex->size(); ++ iFace)
     {
         RDouble spBound;
 
@@ -107,7 +106,7 @@ void PBBoundaryEnergyOutlet::Update(UnstructGrid *grid, std::string phiName,std:
                 }
                 else
                 {
-                    std::cout << " Please assign a value " << std::endl;
+                    cout << " Please assign a value " << endl;
                 }
             }
         }

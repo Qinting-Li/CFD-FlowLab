@@ -40,18 +40,24 @@ public:
 
 protected:
     void CalcGenTerm();
+    void UpdateWallGen();
+    RDouble CacluteWallDistance(UnstructGrid *grid, int ic, int iFace);
 
 protected:
+    RDouble* tauWall;
     RDouble cmu; 
     RDouble prandtl;//! the Prandtl number of Turbulent kinetic energy
     RDouble urfMu; //! Viscosity relaxation factor
+    RDouble yptr_;
     RDouble *k;//! Turbulent kinetic energy
     RDouble *kb;//! Turbulent kinetic energy
     RDouble *epsilon;//! Turbulent dissipation rate
     RDouble *epsilonb;//! Turbulent dissipation rate on wall
     RDouble *visl;//! Laminar viscosity
     RDouble *vist;//! Turbulent viscosity
-    RDouble *gen;//! Turbulent kinetic energy generation term
+    RDouble* vistb;
+    RDouble *gen;//! Turbulent kinetic energy generation term.
+    RDouble* yplus;
 };
 
 DECLARE_PBSOLVER_REGISTER_FUNCTION(PBSolver, PBSolverTurbK, SOLVER_TURB_K);
