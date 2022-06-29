@@ -1399,7 +1399,6 @@ void OversetConfigFactoryMulti::SetNegativeForBufferRegion()
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (currentProcessorIndex == processorIndex)
         {
-            oversetConfigMultiZone[iZone]->FreeKeyInBlockNodes();
             oversetConfigMultiZone[iZone]->SetNegativeForBufferRegion();
         }
     }
@@ -2796,7 +2795,6 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
     int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
 
-    keyInBlockNodes = new int[numberOfNodes];
     SetField(keyInBlockNodes, 0, numberOfNodes);
 
     int donorCellIndex;
@@ -2848,6 +2846,8 @@ OversetConfig::~OversetConfig()
 
     delete[] keyBufferOfCells;
     keyBufferOfCells = NULL;
+    
+    FreeKeyInBlockNodes();
 
     if (nodesMinDistanceInThisBlock != NULL)
     {
@@ -2893,6 +2893,8 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
 
     nodesMinDistanceInThisBlock = new RDouble[numberOfNodes];
     SetField(nodesMinDistanceInThisBlock, LARGE, numberOfNodes);
+
+    keyInBlockNodes = new int[numberOfNodes];
 }
 
 void OversetConfig::SetInitialValue()
@@ -3163,7 +3165,6 @@ void OversetConfig::SpecifySpecicalCellsInteractWithWallBoundary()
     int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
 
     int *innerCellOrNot = new int[numberOfCells];
-    keyInBlockNodes = new int[numberOfNodes];
 
     SetField(innerCellOrNot, 0, numberOfCells);
     SetField(keyInBlockNodes, 0, numberOfNodes);
