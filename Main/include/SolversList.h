@@ -26,6 +26,7 @@
 #include "TurbSolverStructFD.h"       //! Structured FD turbulent solver.
 
 #ifdef USE_PBSOLVER
+#include "PBS.h"                     //! Pressure based solver for incompressible flow. 
 #endif
 
 #ifdef USE_DEMOSOLVER

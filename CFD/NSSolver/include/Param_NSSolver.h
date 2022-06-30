@@ -237,8 +237,8 @@ private:
 
     int nDebug;
 
-    //nTEnergyModel=0 indicates the energy terms are computed using the conventional method.
-    //nTEnergyModel=1 indicates the energy terms are computed using the curve-fitting method.
+    //! nTEnergyModel=0 indicates the energy terms are computed using the conventional method.
+    //! nTEnergyModel=1 indicates the energy terms are computed using the curve-fitting method.
     int nTEnergyModel;
 
     int mTT, mTV, mTE;
@@ -260,19 +260,21 @@ private:
 
     int nQlLimitMethod;
 
-    //The method to compute the gradient of variable on surface.
+    //! The method to compute the gradient of variable on surface.
     int nSurfGradMethod;
 
-    //To utilize the rapid method that can directly obtain the initial flowfield in boundary layer.
+    //! To utilize the rapid method that can directly obtain the initial flowfield in boundary layer.
     int nRapidFlowfield;
 
-    //To utilize the monitor which exam the surface heating change during the iteration.
+    //! To utilize the monitor which exam the surface heating change during the iteration.
     int nSurfHeatMonitor;
 
-    //The steps to initialize the boundary variables with the rapid flowfield values.
+    //! The steps to initialize the boundary variables with the rapid flowfield values.
     int nInitPressureStep;
 
-    //Use local CFL number or not.
+    //£¡Use local CFL number or not.
+    //!   -# 0: Global unified CFL number.\n
+    //!   -# 1: Local CFL number.
     int isUseLocalCFL;
 };
 

@@ -625,9 +625,7 @@ void NSSolverStruct::DeAllocateGlobalVar(Grid* gridIn)
         q0 = reinterpret_cast <RDouble4D*> (grid->GetDataPtr("q0"));
         delete q0; q0 = 0;
     }
-    else if (isUseLocalCFL >= 3)
-    {
-    }
+
     RDouble3D* deltPressure = reinterpret_cast <RDouble3D*> (grid->GetDataPtr("deltPressure"));
     Int3D* iterCFL = reinterpret_cast <Int3D*> (grid->GetDataPtr("iterCFL"));
     RDouble3D* minCFL = reinterpret_cast <RDouble3D*> (grid->GetDataPtr("minCFL"));
@@ -11760,10 +11758,6 @@ void NSSolverStruct::UpdateFlowField(Grid* gridIn, FieldProxy* qProxy, FieldProx
                     gas->Primitive2ConservativeR(prim, gama, temperature[ITV], temperature[ITE], (*totalEnergy)(i, j, k), qtry);
                 }
 
-
-                if (isUseLocalCFL == 6)
-                {
-                }
                 if (nDensityModify == 1)
                 {
                     if (dq(i, j, k, 0) > 0.0)
@@ -11867,18 +11861,6 @@ void NSSolverStruct::UpdateFlowField(Grid* gridIn, FieldProxy* qProxy, FieldProx
                         cfl = nCFLEnd;
                     }
                     localCFL(i, j, k) = cfl;
-                }
-                else if (isUseLocalCFL == 3)
-                {
-                }
-                else if (isUseLocalCFL == 4)
-                {
-                }
-                else if (isUseLocalCFL == 5)
-                {
-                }
-                else if (isUseLocalCFL == 7)
-                {
                 }
 
 
