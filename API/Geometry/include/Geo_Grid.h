@@ -70,7 +70,7 @@ protected:
     int nIFace;
 
     //! Interface topology information of interface faces.
-    InterfaceInfo *iinfo;
+    InterfaceInfo *interfaceInfo;
 
     //! Interpoint topology information of interface points.
     InterpointInformation *interpointInformation;
@@ -155,7 +155,7 @@ public:
     void SetNIFace(int nIFace);
 
     //! Assign the pointer to the interface topology information of interface faces.
-    void SetInterfaceInfo(InterfaceInfo *iinfo);
+    void SetInterfaceInfo(InterfaceInfo *interfaceInfo);
 
     //! Assign the pointer to the interface topology information of interface faces.
     void SetInterfaceFields(InterfaceFields *interfaceFields){this->interfaceFields = interfaceFields;};
@@ -318,6 +318,8 @@ public:
     //! -# 2: 2-D array.
     //! -# n: n-D array.
     LIB_EXPORT void RegisterInterfaceField(const string &name, const int type, const int dimesion, const int solverID);
+
+    LIB_EXPORT void ReleaseInterfaceField();
 
     //! Register an interpoint field (variable) into buffer which is loaded on grid, used in parallel communication.
     //! The interpoint field variable buffer is set to be ZERO.
@@ -510,8 +512,10 @@ public:
     virtual void ReSetBoundaryConditionByGlobalBC() {};
     virtual void InitVariableWallTemperature() {};
     //! Allocate memory for walldist.
-    virtual void AllocateWalldist(ActionKey* actkey) = 0;
+    virtual void AllocateWalldist() = 0;
     virtual void GetBcNamePair(set< pair<int, string> > &bcNamePairSet) = 0;
+
+    virtual int  GetOrdinaryGridIndex() { return -1; };
 
 protected:
     virtual void AllocateMetrics(ActionKey *actkey) = 0;
@@ -524,7 +528,7 @@ protected:
 void CheckGrid(Grid **grids, int nBlocks);
 
 //!
-LIB_EXPORT void Create_Link_Info(VInt &pindex, int izone, int iface, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link);
+LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iFace, uint_t &fcount, set< DataStruct_Sort< VInt > > &face_list, VVInt &zoneid, VVInt &faceid, LinkStruct *link);
 //!
 LIB_EXPORT void GetFaceCoorList(VInt &index, int nlist, RDouble *xlist, RDouble *ylist, RDouble *zlist, RDouble *x, RDouble *y, RDouble *z);
 //!

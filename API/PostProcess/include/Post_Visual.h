@@ -93,6 +93,7 @@ public:
 
     Grid * GetGrid() const;
     int GetFlowType() { return this->flowType; }
+    void UpdateVisualNodeVarPtr(const string &name, void *data);
 
 private:
     //! Geometry information.
@@ -152,6 +153,7 @@ const int VISUAL_INCOMP_W              = 24;
 const int VISUAL_INCOMP_P              = 25;
 const int VISUAL_INCOMP_CP             = 26;
 const int VISUAL_INCOMP_T              = 27;
+const int VISUAL_INCOMP_ENTHALPY       = 70;
 const int VISUAL_INCOMP_DEN            = 28;
 const int VISUAL_INCOMP_VIS            = 29;
 const int VISUAL_KN                    = 30;
@@ -169,6 +171,9 @@ const int VISUAL_GRADIENT_UX           = 41;
 const int VISUAL_GRADIENT_UY           = 42;
 const int VISUAL_GRADIENT_VX           = 43;
 const int VISUAL_GRADIENT_VY           = 44;
+const int VISUAL_STREAMLINE_U          = 45;
+const int VISUAL_STREAMLINE_V          = 46;
+const int VISUAL_STREAMLINE_W          = 47;
 const int VISUAL_TRANSITION_GAMAEFF    = 48;
 const int VISUAL_TRANSITION_RESCF      = 49;
 const int VISUAL_WALL_DIST             = 50;
@@ -178,12 +183,33 @@ const int VISUAL_DIMENSIONAL_U         = 53;
 const int VISUAL_DIMENSIONAL_V         = 54;
 const int VISUAL_DIMENSIONAL_W         = 55;
 const int VISUAL_GAMA                  = 56;
+const int VISUAL_CFL1                  = 57;
+const int VISUAL_CFL2                  = 58;
+const int VISUAL_STREAMLINE_MACH       = 59;
 
 const int VISUAL_IBLANK                = 81;
 //const int VISUAL_O2                    = 15;
 //const int VISUAL_NO                    = 16;
 //const int VISUAL_N                     = 17;
 //const int VISUAL_N2                    = 18;
+
+const int VISUAL_PB_U              = 1000;
+const int VISUAL_PB_V              = 1001;
+const int VISUAL_PB_W              = 1002;
+const int VISUAL_PB_Pressure       = 1003;
+const int VISUAL_PB_Density        = 1004;
+const int VISUAL_PB_Temperature    = 1005;
+const int VISUAL_PB_TurbK          = 1006;
+const int VISUAL_PB_TurbOMEGA      = 1007;
+const int VISUAL_PB_TurbEPSILON    = 1008;
+const int VISUAL_PB_Oxygen         = 1009;
+const int VISUAL_PB_Nitrogen       = 1010;
+const int VISUAL_PB_CarbonDioxide  = 1011;
+const int VISUAL_PB_Methane        = 1012;
+const int VISUAL_PB_Visl           = 1013;
+const int VISUAL_PB_Vist           = 1014;
+const int VISUAL_PB_Gen            = 1015;
+
 const int VISUAL_TAU_XX = 90;
 const int VISUAL_TAU_YY = 91;
 const int VISUAL_TAU_ZZ = 92;
@@ -216,6 +242,7 @@ const int VISUAL_WALL_VS       = 19;
 const int VISUAL_WALL_ST       = 20;
 const int VISUAL_WALL_CH       = 21;
 const int VISUAL_SLIP_DTS      = 22;
+const int VISUAL_WALL_RE       = 23;
 //! The code number must be less than VISUAL_SPECIES_START.
 
 class Post_VisualWall

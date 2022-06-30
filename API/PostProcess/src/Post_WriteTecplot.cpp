@@ -43,10 +43,22 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         GetNameExt(visualfile, fname, fext, ".");
 
         ActionKey *actkey = new ActionKey();
-        actkey->level = iLevel;
-        actkey->filename = AddDigitToFileName(fname, fext, ".", iLevel);
-        actkey->tecfilename = AddDigitToFileName(fname, fext, ".", iLevel);
-        actkey->VTKvisual = false;
+        int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+        if (compressible)
+        {
+            actkey->level = iLevel;
+            actkey->filename = AddDigitToFileName(fname, fext, ".", iLevel);
+            actkey->tecfilename = AddDigitToFileName(fname, fext, ".", iLevel);
+            actkey->VTKvisual = false;
+        }
+        else
+        {
+            int outIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+            actkey->level = iLevel;
+            actkey->filename = AddDigitToFileName(fname, fext, ".", outIterStep);
+            actkey->tecfilename = AddDigitToFileName(fname, fext, ".", outIterStep);
+            actkey->VTKvisual = false;
+        }
 
         if (flowType == AverageFlow)
         {
@@ -69,10 +81,19 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         }
 
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-        if (isUnsteady != 0)
+        if (isUnsteady)
         {
-            int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-            actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', outnstep);
+            int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+            if (compressible)
+            {
+                int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+                actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', outnstep);
+            }
+            else
+            {
+                double timestep = GlobalDataBase::GetDoubleParaFromDB("currentTime");
+                actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', timestep);
+            }
         }
         ServerWrite(actkey);
         PostWrite(actkey);
@@ -90,7 +111,7 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
     int recv_proc;
     int myid;
 
-    for (int izone =  0; izone < nZones; ++ izone)
+    for (int iZone =  0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkey->GetData();
         cdata->moveto_begin();
@@ -98,24 +119,25 @@ void Post_WriteTecplot::ServerWrite(ActionKey *actkey)
         DataContainer *tecdata = actkey->GetTecData();
         tecdata->moveto_begin();
 
-        int send_proc = GetZoneProcessorID(izone);
-        recv_proc = GetServerProcessorID();
+        int send_proc = GetZoneProcessorID(iZone);
+        //recv_proc = GetServerProcessorID();
+        recv_proc = GetZoneFileID(iZone);
 
         myid = GetCurrentProcessorID();
-        int tag = GetSendRecvTag(actkey, izone);
+        int tag = GetSendRecvTag(actkey, iZone);
 
         if (myid == send_proc)
         {
-            Grid *grid = GetGrid(izone, actkey->level);
+            Grid *grid = GetGrid(iZone, actkey->level);
             int nVisualVariables = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
             int visualVariables[100];
             GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
             Post_Visual *postVisualization = new Post_Visual(nVisualVariables, visualVariables, grid, flowType);
 
-            int Nsolver = GlobalSolvers::GetNumberOfSolvers(izone);
-            for (int isolver = 0; isolver < Nsolver; ++ isolver)
+            int Nsolver = GlobalSolvers::GetNumberOfSolvers(iZone);
+            for (int iSolver = 0; iSolver < Nsolver; ++ iSolver)
             {
-                GlobalSolvers::GetSolver(izone, isolver)->ComputePostVisualVariables(postVisualization);
+                GlobalSolvers::GetSolver(iZone, iSolver)->ComputePostVisualVariables(postVisualization);
             }
             
             StoreVisualizationVar(actkey, postVisualization);
@@ -170,11 +192,11 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
             int type = grid->Type();
             PHWrite(actkey->GetData(), &type, 1);
             
-            BoundaryVTKVisualization(grid, actkey, qn, nvarplot);
+            BoundaryVTKVisualization(grid, actkey, qn, nVisualVariables);
 
             if (WantVisualField(grid))
             {
-                FieldVisualization(grid, actkey, qn, nvarplot);
+                FieldVisualization(grid, actkey, qn, nVisualVariables);
             }
 
             int TecioMission = TEC_SPACE::Writecomplete;
@@ -301,14 +323,12 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
         if (visualfileType == 0)
         {
+                ostringstream WarningInfo;
+                WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
+                PrintToWindow(WarningInfo);
 
-            ostringstream WarningInfo;
-            WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
-            PrintToWindow(WarningInfo);
-
-            DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
-            dumpToTecplotASCII.Run();
-
+                DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
+                dumpToTecplotASCII.Run();
         }
         else if (visualfileType == 1)
         {
@@ -321,14 +341,14 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
         }
     }
 
-    for (unsigned int izone = 0; izone < vtkdatalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
     {
-        delete vtkdatalist[izone];
+        delete vtkdatalist[iZone];
     }
 
-    for (unsigned int izone = 0; izone < datalist.size(); ++ izone)
+    for (unsigned int iZone = 0; iZone < datalist.size(); ++ iZone)
     {
-        delete datalist[izone];
+        delete datalist[iZone];
     }
 }
 
@@ -386,27 +406,32 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     vector<int> linkmap;
 
     set<pair<int, string> > bcnameMap;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int nodeCount = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iface]->GetKey();
-        string bcname = bcr[iface]->GetBCName();
-        bcnameMap.insert(pair<int, string>(bctype, bcname));
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
+        bcnameMap.insert(pair<int, string>(bcType, bcName));
 
         for (int m = 0; m < nvarplot; ++ m)
         {
             RDouble value = 0.0;
-            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
             {
                 int nodeIndex = face2node[nodeCount + iNode];
                 value += qn[m][nodeIndex];
             }
 
-            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
+            qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
         }
 
-        nodeCount += node_number_of_each_face[iface];
+        nodeCount += node_number_of_each_face[iFace];
     }
 
     int TecioMission;
@@ -543,27 +568,32 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
 
     set<pair<int, string> > bcnameMap;
 
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
     int nodeCount = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int bctype = bcr[iface]->GetKey();
-        string bcname = bcr[iface]->GetBCName();
-        bcnameMap.insert(pair<int, string>(bctype, bcname));
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        string bcName = bcRegion->GetBCName();
+        int bcType = bcRegion->GetBCType();
+
+        bcnameMap.insert(pair<int, string>(bcType, bcName));
 
         for (int m = 0; m < nvarplot; ++ m)
         {
             RDouble value = 0.0;
-            for (int iNode = 0; iNode < node_number_of_each_face[iface]; ++ iNode)
+            for (int iNode = 0; iNode < node_number_of_each_face[iFace]; ++ iNode)
             {
                 int nodeIndex = face2node[nodeCount + iNode];
                 value += qn[m][nodeIndex];
             }
 
-            qFaceCenter[m][iface] = value / node_number_of_each_face[iface];
+            qFaceCenter[m][iFace] = value / node_number_of_each_face[iFace];
         }
 
-        nodeCount += node_number_of_each_face[iface];
+        nodeCount += node_number_of_each_face[iFace];
     }
 
     int TecioMission;
@@ -704,14 +734,14 @@ void Post_WriteTecplot::BoundaryVisualization(Grid *grid_in, ActionKey *actkey, 
     RDouble3D &yy = * grid->GetStructY();
     RDouble3D &zz = * grid->GetStructZ();
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     int TecioMission;
 
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
@@ -852,13 +882,13 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
     RDouble3D &yy = * grid->GetStructY();
     RDouble3D &zz = * grid->GetStructZ();
     
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     int TecioMission;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
 
@@ -1011,15 +1041,15 @@ void Post_WriteTecplot::BoundaryVTKVisualization(Grid *grid_in, ActionKey *actke
 
                     if (nsurf == 1)
                     {
-                        p1 = newindex(i, j , k ) + 1;
-                        p2 = newindex(i, jl, k ) + 1;
+                        p1 = newindex(i, j , k) + 1;
+                        p2 = newindex(i, jl, k) + 1;
                         p3 = newindex(i, jl, kl) + 1;
                         p4 = newindex(i, j , kl) + 1;
                     }
                     else if (nsurf == 2)
                     {
-                        p1 = newindex(i , j, k ) + 1;
-                        p2 = newindex(il, j, k ) + 1;
+                        p1 = newindex(i , j, k) + 1;
+                        p2 = newindex(il, j, k) + 1;
                         p3 = newindex(il, j, kl) + 1;
                         p4 = newindex(i , j, kl) + 1;
                     }
@@ -1106,9 +1136,9 @@ void Post_WriteTecplot::FieldVisualizationForVTK(Grid *grid_in, ActionKey *actke
         int isClockWise = false;
         while (! isClockWise)
         {
-            for (int iface = 1; iface < nFaceOfCell; ++ iface)
+            for (int iFace = 1; iFace < nFaceOfCell; ++ iFace)
             {
-                int face  = cell2face[iCell][iface];
+                int face  = cell2face[iCell][iFace];
                 int node1 = face2node[2 * face];
                 int node2 = face2node[2 * face + 1];
 
@@ -1292,8 +1322,8 @@ void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDo
             {
                 cell2node[ncount++] = i     + (j - 1) * ni;
                 cell2node[ncount++] = i + 1 + (j - 1) * ni;
-                cell2node[ncount++] = i + 1 + (j    ) * ni;
-                cell2node[ncount++] = i     + (j    ) * ni;
+                cell2node[ncount++] = i + 1 + (j   ) * ni;
+                cell2node[ncount++] = i     + (j   ) * ni;
             }
         }
 
@@ -1609,21 +1639,25 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
     }
 
     int ncount = 0;
-    CompositeUnstructBC **bcr = grid->GetBCRecord();
-    for (int iface = 0; iface < nBoundFace; ++ iface)
-    {
-        int bctype = bcr[iface]->GetKey();
 
-        if (bctype != PHENGLEI::SOLID_SURFACE)
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+        int bcType = bcRegion->GetBCType();
+
+        if (bcType != PHENGLEI::SOLID_SURFACE)
         {
-            ncount += node_number_of_each_face[iface];
+            ncount += node_number_of_each_face[iFace];
             continue;
         }
 
         RDouble coor_min =   LARGE;
         RDouble coor_max = - LARGE;
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
             int index = face2node[ncount + j];
             coor_min = MIN(xyz[index], coor_min);
@@ -1632,14 +1666,14 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
 
         if ((coor_min - slice) * (coor_max - slice) > 0.0)
         {
-            ncount += node_number_of_each_face[iface];
+            ncount += node_number_of_each_face[iFace];
             continue;
         }
 
-        for (int j = 0; j < node_number_of_each_face[iface]; ++ j)
+        for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
         {
-            int Node_index0 = face2node[ncount + j % node_number_of_each_face[iface]];
-            int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iface]];
+            int Node_index0 = face2node[ncount + j % node_number_of_each_face[iFace]];
+            int Node_index1 = face2node[ncount + (j + 1) % node_number_of_each_face[iFace]];
 
             if ((xyz[Node_index0] - slice) * (xyz[Node_index1] - slice) > 0.0) continue;
 
@@ -1700,7 +1734,7 @@ void Post_WriteTecplot::SliceVisualization(Grid *grid_in, ActionKey *actkey, RDo
             }
         }
 
-        ncount += node_number_of_each_face[iface];
+        ncount += node_number_of_each_face[iFace];
     }
 
     int NumPts = static_cast<int>(xx.size());

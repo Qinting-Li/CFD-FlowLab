@@ -26,6 +26,7 @@ namespace PHSPACE
 
     RDouble FlengthGivenByLangtry(RDouble localTransitiononsetReynoldsOnMomentumThickness);
     RDouble FlengthCaliBrated(RDouble localTransitiononsetReynoldsOnMomentumThickness);
+    RDouble FlengthUnstrCaliBrated(RDouble localTransitiononsetReynoldsOnMomentumThickness);
 
     RDouble HighReynoldsCorrectionOfFlength(RDouble ReynoldsNumberBasedOnDissipation, RDouble Flengthori);
 
@@ -34,6 +35,7 @@ namespace PHSPACE
     RDouble TransitionOnsetFunction(RDouble Rev, RDouble Rectac, RDouble RT);
     RDouble TransitionOnsetMomentumThicknessReynolds(RDouble Rectabar);
     RDouble TransitionOnsetMomentumThicknessReynoldsCaliBrated(RDouble Rectabar);
+    RDouble TransitionOnsetMomentumThicknessReynoldsUnstrCaliBrated(RDouble Rectabar);    
     RDouble SeparationCorrectionOfIntermittency(RDouble gmori, RDouble Rev, RDouble Rectac, RDouble RT, RDouble Fctat, RDouble s1, RDouble refMaNumber);
     RDouble TurbulenceIntensity(RDouble velocity, RDouble kineticEnergy);
     RDouble ControlFunctionFturb(RDouble RT);

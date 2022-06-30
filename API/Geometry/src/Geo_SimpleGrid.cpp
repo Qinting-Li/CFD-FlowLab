@@ -9,9 +9,9 @@ namespace PHSPACE
 
 SimpleGrid::SimpleGrid()
 {
-    x = nullptr;
-    y = nullptr;
-    z = nullptr;
+    x = NULL;
+    y = NULL;
+    z = NULL;
 
     pmin = new RDouble [3];
     pmax = new RDouble [3];
@@ -28,6 +28,7 @@ SimpleGrid::SimpleGrid()
 
     this->minEdgeLength = -1.0;
     this->maxEdgeLength = -1.0;
+    this->materialType  = 0.0;
 
     nTotalNode = 0;
 }
@@ -123,15 +124,15 @@ LIB_EXPORT void SimpleGrid::ComputeMinMaxBox()
     xmin = ymin = zmin =   LARGE;
     xmax = ymax = zmax = - LARGE;
 
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        xmin = MIN(xmin, x[inode]);
-        ymin = MIN(ymin, y[inode]);
-        zmin = MIN(zmin, z[inode]);
+        xmin = MIN(xmin, x[iNode]);
+        ymin = MIN(ymin, y[iNode]);
+        zmin = MIN(zmin, z[iNode]);
 
-        xmax = MAX(xmax, x[inode]);
-        ymax = MAX(ymax, y[inode]);
-        zmax = MAX(zmax, z[inode]);
+        xmax = MAX(xmax, x[iNode]);
+        ymax = MAX(ymax, y[iNode]);
+        zmax = MAX(zmax, z[iNode]);
     }
 
     RDouble *pmin = this->GetMinBox();

@@ -1,6 +1,6 @@
 #include "Pre_FieldViewToPHengLEI_Unstruct.h"
 #include "Math_BasisFunction.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 #include "Geo_UnstructBC.h"
 #include "PHIO.h"
 #include "Glb_Dimension.h"
@@ -44,18 +44,18 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadGrid()
 
     factory_cgns = new CGNSFactory(nBlocks);
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        factory_cgns->GetCGNSBase(izone)->SetBCName(bctype_name_list);
+        factory_cgns->GetCGNSBase(iZone)->SetBCName(bctype_name_list);
 
-        cout << " izone = " << izone << " nBlocks = " << nBlocks << "\n";
+        cout << " iZone = " << iZone << " nBlocks = " << nBlocks << "\n";
         GetFieldViewNTNode(file, nversion, nTotalNode);
 
         RDouble *x = new RDouble[nTotalNode];
         RDouble *y = new RDouble[nTotalNode];
         RDouble *z = new RDouble[nTotalNode];
 
-        RawGrid *rawgrid = factory_cgns->GetRawGrid(izone);
+        RawGrid *rawgrid = factory_cgns->GetRawGrid(iZone);
 
         rawgrid->SetX(x);
         rawgrid->SetY(y);
@@ -85,7 +85,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadGrid()
 
         GetFieldViewMainCell(file, nversion, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list);
 
-        MergeFieldViewCell(factory_cgns, izone, nBoundFace, nTotalNode, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list,
+        MergeFieldViewCell(factory_cgns, iZone, nBoundFace, nTotalNode, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list,
             nBC_Sections, bc_elem_type, bc_istart, bc_iend, bc_elem_conn_list, nBCRegions, bc_conn_list, nBCElem, bc_type);
     }
 
@@ -114,7 +114,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewVersion(fstream &file, int &n
     do
     { 
         getline(file, line);
-    } while (line == "");
+    }while (line == "");
 
     nversion = FIELDVIEW_2_4;
 
@@ -319,31 +319,31 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCTypeTable(int nBCType, int 
     map <string, int> fieldview_bcmap;
     if (nversion == FIELDVIEW_3_0)
     {
-        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE            ));
+        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE           ));
         fieldview_bcmap.insert(pair<string, int>("no boundary condition", GRIDGEN_SPACE::NO_BOUNDARY_CONDITION));
-        fieldview_bcmap.insert(pair<string, int>("solid surface"        , GRIDGEN_SPACE::SOLID_SURFACE        ));
-        fieldview_bcmap.insert(pair<string, int>("symmetry"             , GRIDGEN_SPACE::SYMMETRY             ));
-        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD             ));
-        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW               ));
-        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW              ));
-        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                 ));
-        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3            ));
+        fieldview_bcmap.insert(pair<string, int>("solid surface"        , GRIDGEN_SPACE::SOLID_SURFACE       ));
+        fieldview_bcmap.insert(pair<string, int>("symmetry"             , GRIDGEN_SPACE::SYMMETRY            ));
+        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD            ));
+        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW              ));
+        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW             ));
+        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                ));
+        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3           ));
     }
     else if (nversion == FIELDVIEW_2_4)
     {
-        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE            ));
+        fieldview_bcmap.insert(pair<string, int>("interface"            , GRIDGEN_SPACE::INTERFACE           ));
         fieldview_bcmap.insert(pair<string, int>("no boundary condition", GRIDGEN_SPACE::NO_BOUNDARY_CONDITION));
-        fieldview_bcmap.insert(pair<string, int>("wall"                 , GRIDGEN_SPACE::SOLID_SURFACE        ));
-        fieldview_bcmap.insert(pair<string, int>("symmetry plane"       , GRIDGEN_SPACE::SYMMETRY             ));
-        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD             ));
-        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW               ));
-        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW              ));
-        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                 ));
-        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2            ));
-        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3            ));
+        fieldview_bcmap.insert(pair<string, int>("wall"                 , GRIDGEN_SPACE::SOLID_SURFACE       ));
+        fieldview_bcmap.insert(pair<string, int>("symmetry plane"       , GRIDGEN_SPACE::SYMMETRY            ));
+        fieldview_bcmap.insert(pair<string, int>("farfield"             , GRIDGEN_SPACE::FARFIELD            ));
+        fieldview_bcmap.insert(pair<string, int>("inflow"               , GRIDGEN_SPACE::INFLOW              ));
+        fieldview_bcmap.insert(pair<string, int>("outflow"              , GRIDGEN_SPACE::OUTFLOW             ));
+        fieldview_bcmap.insert(pair<string, int>("pole"                 , GRIDGEN_SPACE::POLE                ));
+        fieldview_bcmap.insert(pair<string, int>("generic #1"           , GRIDGEN_SPACE::GENERIC_1           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #2"           , GRIDGEN_SPACE::GENERIC_2           ));
+        fieldview_bcmap.insert(pair<string, int>("generic #3"           , GRIDGEN_SPACE::GENERIC_3           ));
     }
 
     int maxNumberOFBC = static_cast<int>(fieldview_bcmap.size());
@@ -376,15 +376,15 @@ void Pre_FieldViewToPHengLEI_Unstruct::Gridgen2CGNSBCTypeTable(int nBCType, int 
     typedef pair <int, int> Int_Pair;
     map<int, int>::const_iterator iter;
 
-    bcmap.insert(Int_Pair(PHENGLEI::NO_BOUNDARY_CONDITION , BCTypeNull       ));
+    bcmap.insert(Int_Pair(PHENGLEI::NO_BOUNDARY_CONDITION , BCTypeNull      ));
     bcmap.insert(Int_Pair(PHENGLEI::INTERFACE             , BCTypeUserDefined));
-    bcmap.insert(Int_Pair(PHENGLEI::EXTRAPOLATION         , BCExtrapolate    ));
-    bcmap.insert(Int_Pair(PHENGLEI::SOLID_SURFACE         , BCWall           ));
-    bcmap.insert(Int_Pair(PHENGLEI::SYMMETRY              , BCSymmetryPlane  ));
-    bcmap.insert(Int_Pair(PHENGLEI::INFLOW                , BCInflow         ));
-    bcmap.insert(Int_Pair(PHENGLEI::OUTFLOW               , BCOutflow        ));
-    bcmap.insert(Int_Pair(PHENGLEI::POLE                  , BCDegenerateLine ));
-    bcmap.insert(Int_Pair(PHENGLEI::FARFIELD              , BCFarfield       ));
+    bcmap.insert(Int_Pair(PHENGLEI::EXTRAPOLATION         , BCExtrapolate   ));
+    bcmap.insert(Int_Pair(PHENGLEI::SOLID_SURFACE         , BCWall          ));
+    bcmap.insert(Int_Pair(PHENGLEI::SYMMETRY              , BCSymmetryPlane ));
+    bcmap.insert(Int_Pair(PHENGLEI::INFLOW                , BCInflow        ));
+    bcmap.insert(Int_Pair(PHENGLEI::OUTFLOW               , BCOutflow       ));
+    bcmap.insert(Int_Pair(PHENGLEI::POLE                  , BCDegenerateLine));
+    bcmap.insert(Int_Pair(PHENGLEI::FARFIELD              , BCFarfield      ));
     bcmap.insert(Int_Pair(PHENGLEI::GENERIC_1             , BCTypeUserDefined));
     bcmap.insert(Int_Pair(PHENGLEI::GENERIC_2             , BCTypeUserDefined));
     bcmap.insert(Int_Pair(PHENGLEI::GENERIC_3             , BCTypeUserDefined));
@@ -425,29 +425,29 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadFieldViewCoor(fstream &file, int nver
     cout << " Grid coordinates reading ... \n";
 
     int iskip = MAX(nTotalNode / 10, 1);
-    for (int inode = 0; inode < nTotalNode; ++ inode)
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        if (inode > 0 && inode % iskip == 0)
+        if (iNode > 0 && iNode % iskip == 0)
         {
-            cout << "     " << (int)((inode * 1.0) / nTotalNode * 100 + 1) << "% nodes read ..." << endl;
+            cout << "     " << (int)((iNode * 1.0) / nTotalNode * 100 + 1) << "% nodes read ..." << endl;
         }
         getline(file, line);
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(x[inode], word, std::dec);
+        from_string< RDouble >(x[iNode], word, std::dec);
 
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(y[inode], word, std::dec);
+        from_string< RDouble >(y[iNode], word, std::dec);
 
         line = FindNextWord(line, word, separator);
-        from_string< RDouble >(z[inode], word, std::dec);
+        from_string< RDouble >(z[iNode], word, std::dec);
 
-        xmin = MIN(xmin, x[inode]);
-        ymin = MIN(ymin, y[inode]);
-        zmin = MIN(zmin, z[inode]);
+        xmin = MIN(xmin, x[iNode]);
+        ymin = MIN(ymin, y[iNode]);
+        zmin = MIN(zmin, z[iNode]);
 
-        xmax = MAX(xmax, x[inode]);
-        ymax = MAX(ymax, y[inode]);
-        zmax = MAX(zmax, z[inode]);
+        xmax = MAX(xmax, x[iNode]);
+        ymax = MAX(ymax, y[iNode]);
+        zmax = MAX(zmax, z[iNode]);
     }
 
     cout << setiosflags(ios::right);
@@ -483,7 +483,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     cgsize_t *ref_conn_list = new cgsize_t[nBoundFace * max_face_node];
 
     int nodepos = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         getline(file, line);
 
@@ -491,7 +491,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
         line = FindNextWord(line, word, separator);
         from_string< int >(bctype_index, word, std::dec);
 
-        cell_bctype[iface] = bctype_list[bctype_index-1];
+        cell_bctype[iFace] = bctype_list[bctype_index-1];
 
         //! The nodes number of each boundary face.
         int nNode;
@@ -499,22 +499,22 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
         line = FindNextWord(line, word, separator);
         from_string< int >(nNode, word, std::dec);
 
-        cell_type[iface] = node2Type[nNode];
+        cell_type[iFace] = node2Type[nNode];
 
-        for (int inode = 0; inode < nNode; ++ inode)
+        for (int iNode = 0; iNode < nNode; ++ iNode)
         {
             line = FindNextWord(line, word, separator);
             from_string< cgsize_t >(nodeIndex, word, std::dec);
-            ref_conn_list[nodepos+inode] = nodeIndex;
+            ref_conn_list[nodepos+iNode] = nodeIndex;
         }
         nodepos += max_face_node;
     }
 
     set<int> bctype_temp;
     vector<int> bctype_set;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        int type = cell_bctype[iface];
+        int type = cell_bctype[iFace];
         set<int> :: const_iterator iter;
         iter = bctype_temp.find(type);
         if (iter == bctype_temp.end())
@@ -536,28 +536,28 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
         bc_type[icount++] = *iter;
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         int icount = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_bctype[iface] == bc_type[ibcregion])
+            if (cell_bctype[iFace] == bc_type[iBCRegion])
             {
                 icount ++;
             }
         }
-        nBCElem[ibcregion] = icount;
-        bc_conn_list[ibcregion] = new cgsize_t [nBCElem[ibcregion]];
+        nBCElem[iBCRegion] = icount;
+        bc_conn_list[iBCRegion] = new cgsize_t [nBCElem[iBCRegion]];
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
         int icount = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_bctype[iface] == bc_type[ibcregion])
+            if (cell_bctype[iFace] == bc_type[iBCRegion])
             {
-                bc_conn_list[ibcregion][icount ++] = iface;
+                bc_conn_list[iBCRegion][icount ++] = iFace;
             }
         }
     }
@@ -565,13 +565,13 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     nTri    = 0;
     nQuad   = 0;
     nOthers = 0;
-    for (int iface = 0; iface < nBoundFace; ++ iface)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (cell_type[iface] == TRI_3)
+        if (cell_type[iFace] == TRI_3)
         {
             nTri ++;
         }
-        else if (cell_type[iface] == QUAD_4)
+        else if (cell_type[iFace] == QUAD_4)
         {
             nQuad ++;
         }
@@ -588,8 +588,8 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     }
 
     nBC_Sections = 0;
-    if (nTri   ) nBC_Sections ++;
-    if (nQuad  ) nBC_Sections ++;
+    if (nTri  ) nBC_Sections ++;
+    if (nQuad ) nBC_Sections ++;
     if (nOthers) nBC_Sections ++;
 
     int *elem_pt = new int[NofValidElementTypes];
@@ -648,11 +648,11 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     {
         nodepos = 0;
         int bc_cell_pos = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_type[iface] == elem_type[m])
+            if (cell_type[iFace] == elem_type[m])
             {
-                ptnum = elem_pt[ elem_type[m] ];
+                ptnum = elem_pt[elem_type[m]];
                 for (int j = 0; j < ptnum; ++ j)
                 {
                     conn_list[m][bc_cell_pos+j] = ref_conn_list[nodepos+j];
@@ -671,25 +671,25 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     for (int m = 0; m < nBC_Sections; ++ m)
     {
         int icount = 0;
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            if (cell_type[iface] == elem_type[m])
+            if (cell_type[iFace] == elem_type[m])
             {
-                sec_bc[iface] = m;
-                sec_pos[iface] = icount;
+                sec_bc[iFace] = m;
+                sec_pos[iFace] = icount;
                 icount ++;
             }
         }
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        for (int i = 0; i < nBCElem[ibcregion]; ++ i)
+        for (int i = 0; i < nBCElem[iBCRegion]; ++ i)
         {
-            uint_t idx = bc_conn_list[ibcregion][i];
+            uint_t idx = bc_conn_list[iBCRegion][i];
             int m_sec = sec_bc [idx];
             int m_pos = sec_pos[idx];
-            bc_conn_list[ibcregion][i] = istart[m_sec] + m_pos;
+            bc_conn_list[iBCRegion][i] = istart[m_sec] + m_pos;
         }
     }
 
@@ -890,13 +890,13 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewMainCell(fstream &file, int n
     delete [] elem_pt;
 }
 
-void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_cgns, int izone, int nBoundFace, int nTotalNode, int nTotalCell, 
+void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_cgns, int iZone, int nBoundFace, int nTotalNode, int nTotalCell, 
                         int nElem_Sections, int *elem_type, int *elem_istart, int *elem_iend, cgsize_t **elem_conn_list,
                         int nBC_Sections, int *bc_elem_type, int *bc_istart, int *bc_iend, cgsize_t **bc_elem_conn_list,
                         int nBCRegions, cgsize_t **bc_conn_list, int *nBCElem, int *bc_type)
 {
-    CGNSBase *base_cgns = factory_cgns->GetCGNSBase(izone);
-    Base_Grid_Conn *gconn = factory_cgns->GetBaseGridConnection(izone);
+    CGNSBase *base_cgns = factory_cgns->GetCGNSBase(iZone);
+    Base_Grid_Conn *gconn = factory_cgns->GetBaseGridConnection(iZone);
 
     cout << "Merging cell..............................\n";
     cout << "nElem_Sections = " << nElem_Sections << " nBC_Sections = " << nBC_Sections << "\n";
@@ -944,18 +944,18 @@ void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_c
     }
 
     //! It seems to be something wrong in this place, and needs to be checked. Eric£º201101030.
-    //for ( int m = 0; m < nElem_Sections; ++ m )
+    //for (int m = 0; m < nElem_Sections; ++ m)
     for (int m = 0; m < nBC_Sections; ++ m)
     {
         base_cgns_conn_list[nElem_Sections+m] = bc_elem_conn_list[m];
     }
 
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        base_cgns_bc_conn_list[ibcregion] = bc_conn_list[ibcregion];
-        for (int j = 0; j < nBCElem[ibcregion]; ++ j)
+        base_cgns_bc_conn_list[iBCRegion] = bc_conn_list[iBCRegion];
+        for (int j = 0; j < nBCElem[iBCRegion]; ++ j)
         {
-            base_cgns_bc_conn_list[ibcregion][j] += nTotalCell;
+            base_cgns_bc_conn_list[iBCRegion][j] += nTotalCell;
         }
     }
 
@@ -964,10 +964,10 @@ void Pre_FieldViewToPHengLEI_Unstruct::MergeFieldViewCell(CGNSFactory *factory_c
     int *base_cgns_bc_grid_location = base_cgns->GetBoundaryGridLocation();
 
     base_cgns->SetBCType(bc_type);
-    for (int ibcregion = 0; ibcregion < nBCRegions; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        base_cgns_bc_elem_set_type[ibcregion] = ElementList;
-        base_cgns_bc_grid_location[ibcregion] = CellCenter;
+        base_cgns_bc_elem_set_type[iBCRegion] = ElementList;
+        base_cgns_bc_grid_location[iBCRegion] = CellCenter;
     }
 
     for (int m = 0; m < nElem_Sections; ++ m)
@@ -1042,15 +1042,15 @@ void Pre_FieldViewToPHengLEI_Unstruct::Conversion()
     if (nDim != THREE_D)
     {
         cout << "Error: Only 3D mesh is supported by FiledView !" << endl;
-        exit( 0 );
+        exit(0);
     }
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        GridID *index = new GridID(izone);
+        GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
-        grids[izone] = grid;
-        CGNS2UnsGrid(factory_cgns, izone, UnstructGridCast(grid));
+        grids[iZone] = grid;
+        CGNS2UnsGrid(factory_cgns, iZone, UnstructGridCast(grid));
     }
 
     delete factory_cgns;

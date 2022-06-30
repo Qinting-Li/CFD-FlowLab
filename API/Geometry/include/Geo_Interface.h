@@ -18,6 +18,7 @@
 #include <vector>
 #include "LIB_Macro.h"
 #include "Data_ParamFieldSuite.h"
+#include "GlobalDataBase.h"
 
 namespace PHSPACE
 {
@@ -27,7 +28,16 @@ inline int GetNumberOfGhostCellLayers()
     //! however, it will lead to RESTART file (flow.dat/turb.dat)
     //! different with the previous, using 2 layers temporary.
     //! the bellowing judge should be used in future.
-    return 2;
+    int nLayers = 2;
+
+    //! Add one layer ghost cell for high order method.
+    int isWennScheme = PHSPACE::GlobalDataBase::GetIntParaFromDB("isWennScheme");
+    if (isWennScheme == 1)
+    {
+        nLayers = 3;
+    }
+
+    return nLayers;
 
     //! The bellowing judge should be used in future.
     //const int UNSTRUCTGRID = 0;
@@ -234,6 +244,8 @@ public:
 
     void RegisterField(const string &name, const int type, const int dimesion, const int solverID);
 
+    void RemoveAllField();
+
     void FreeInterfaceVar();
 
     template< typename T >
@@ -245,6 +257,7 @@ public:
 private:
     void AllocateInterfaceVar(const string &name, const int type, const int dimesion, Data_ParamFieldSuite *datastore);
     void FreeInterfaceVar(Data_ParamFieldSuite *datastore);
+    void RemoveInterfaceVar(const string &name);
 };
 
 class InterfaceDataProxy

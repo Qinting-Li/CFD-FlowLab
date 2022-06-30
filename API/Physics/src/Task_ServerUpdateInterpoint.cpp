@@ -21,13 +21,13 @@ void TaskServerUpdateInterpoint::MainTaskBlocking(ActionKey *actkey)
     //using namespace PHMPI;
     //int nZones = GetNumberofGlobalZones();
 
-    //for ( int iZone = 0; iZone < nZones; ++ iZone )
+    //for (int iZone = 0; iZone < nZones; ++ iZone)
     //{
-    //    ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor( iZone );
+    //    ZoneNeighbor *zoneNeighbor = zoneConnectivity->GetZoneNeighbor(iZone);
 
     //    std::size_t numberOfNeighbor = zoneNeighbor->GetNumberOfNeighbor();
 
-    //    for ( std::size_t iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor )
+    //    for (std::size_t iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
     //    {
     //        int neighborZoneIndex = zoneNeighbor->GetZoneIndexOfNeighbor(iNeighbor);
 
@@ -112,7 +112,7 @@ void TaskServerUpdateInterpoint::MainTaskNonBlocking(ActionKey *actkey)
             {
                 DataContainer *originalData = actkey->GetData();
 
-                actkey->SetData( receivedDataBuffer[iZone][count]);
+                actkey->SetData(receivedDataBuffer[iZone][count]);
                 actkey->ipos = iZone;
                 GeneralTranslateAction(actkey,neighborZoneIndexForPoint);
 

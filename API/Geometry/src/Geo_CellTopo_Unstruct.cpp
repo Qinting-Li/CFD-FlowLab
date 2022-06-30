@@ -5,15 +5,15 @@ namespace PHSPACE
 {
 LIB_EXPORT Geo_CellTopo_Unstruct::Geo_CellTopo_Unstruct()
 {
-    face_number_of_each_cell = nullptr;
-    cell2face = nullptr;
+    face_number_of_each_cell = NULL;
+    cell2face = NULL;
 
-    number_of_neighbor_cell = nullptr;
-    cell2cell = nullptr;
+    number_of_neighbor_cell = NULL;
+    cell2cell = NULL;
 
-    node_number_of_each_cell = nullptr;
-    cell2node = nullptr;
-    cell2nodeArray = nullptr;
+    node_number_of_each_cell = NULL;
+    cell2node = NULL;
+    cell2nodeArray = NULL;
 }
 
 LIB_EXPORT Geo_CellTopo_Unstruct::~Geo_CellTopo_Unstruct()
@@ -27,7 +27,7 @@ LIB_EXPORT Geo_CellTopo_Unstruct::~Geo_CellTopo_Unstruct()
     delete [] number_of_neighbor_cell;
     delete [] cell2cell;
 
-    if ( node_number_of_each_cell ) delete [] node_number_of_each_cell;
+    if (node_number_of_each_cell) delete [] node_number_of_each_cell;
 }
 
 }

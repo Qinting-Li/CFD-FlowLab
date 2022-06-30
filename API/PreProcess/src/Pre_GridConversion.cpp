@@ -27,9 +27,9 @@ LIB_EXPORT Pre_GridConversion::~Pre_GridConversion()
 
 LIB_EXPORT void Pre_GridConversion::Clear()
 {
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        delete grids[izone];
+        delete grids[iZone];
     }
     delete [] grids;
 }
@@ -55,7 +55,7 @@ void Pre_GridConversion::WriteFaceBoundaryName(const string &out_grid_file, Grid
         UnstructGrid *grid = UnstructGridCast(grids[0]);
         int nBoundFace = grid->GetNBoundFace();
 
-        CompositeUnstructBC **bcr = grid->GetBCRecord();
+        UnstructBCSet **bcr = grid->GetBCRecord();
         for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
         {
             int bcType = bcr[iFace]->GetKey();
@@ -97,9 +97,9 @@ void Pre_GridConversion::WriteCellToNode(const string &targetGridFileName, Grid 
 
         int nPoints;
         int count = 0;
-        for (int icell = 0; icell < nTotalCell; icell ++)
+        for (int iCell = 0; iCell < nTotalCell; iCell ++)
         {
-            nPoints = node_number_of_each_cell[icell];
+            nPoints = node_number_of_each_cell[iCell];
             PHWrite(virtualFile, nPoints);
 
             for (int jPoint = 0; jPoint < nPoints; ++ jPoint)
@@ -137,7 +137,7 @@ void Pre_GridConversion::WriteFaceBC(const string &out_grid_file, Grid **grids_i
         grid->WriteFaceBC(file);
     }
 
-    PHSPACE::CloseFile( file );
+    PHSPACE::CloseFile(file);
 }
 
 LIB_EXPORT void DumpGrid(const string &gridFileName, Grid **grids, int nBlocks)
@@ -160,7 +160,7 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
 
     using namespace PHMPI;
 
-    SetNumberofGlobalZones(nBlocks);
+    SetNumberOfGlobalZones(nBlocks);
 
     int nZones = GetNumberofGlobalZones();
 
@@ -173,18 +173,18 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
     int *block_type     = GetZoneGridType();
     int *block_proc_inp = GetZoneProcessorID_INP();
 
-    for (int izone = 0; izone < nZones; ++ izone)
+    for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        block_proc[izone] = izone;
-        block_idx [izone] = izone;
-        block_type[izone] = grids[izone]->Type();
+        block_proc[iZone] = iZone;
+        block_idx [iZone] = iZone;
+        block_type[iZone] = grids[iZone]->Type();
     }
 
     if (block_proc_inp)
     {
-        for (int izone = 0; izone < nZones; ++ izone)
+        for (int iZone = 0; iZone < nZones; ++ iZone)
         {
-            SetZoneProcessorID(izone, block_proc_inp[izone]);
+            SetZoneProcessorID(iZone, block_proc_inp[iZone]);
         }
     }
 
@@ -201,12 +201,12 @@ LIB_EXPORT void DumpOldGrid(const string &gridFileName, Grid **grids, int nBlock
         file.write(reinterpret_cast<char*>(block_proc), nZones*sizeof(int));
     }
 
-    file.write(reinterpret_cast<char*>(block_idx ), nZones*sizeof(int));
+    file.write(reinterpret_cast<char*>(block_idx), nZones*sizeof(int));
     file.write(reinterpret_cast<char*>(block_type), nZones*sizeof(int));
 
-    for (int izone = 0; izone < nBlocks; ++ izone)
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        grids[izone]->WriteGrid(file);
+        grids[iZone]->WriteGrid(file);
     }
 
     file.close();
@@ -255,10 +255,10 @@ void GetGridsMinMaxDS(Grid **grids, int nBlocks, RDouble &mindis, RDouble &maxdi
 
 void MatchInterface(Grid *grid, LinkStruct *link)
 {
-    InterfaceInfo *iinfo = grid->GetInterfaceInfo();
-    if (iinfo == 0) return;
+    InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+    if (!interfaceInfo) return;
 
-    int nIFace    = iinfo->GetNIFace();
+    int nIFace    = interfaceInfo->GetNIFace();
     int zoneIndex = grid->GetZoneID();
     int npeoridic = 0;
 
@@ -266,8 +266,8 @@ void MatchInterface(Grid *grid, LinkStruct *link)
     VVInt &faceid  = link->GetFaceID();
     VVInt &facemap = link->GetFaceMap();
 
-    int *interFace2ZoneID      = iinfo->GetInterFace2ZoneID();
-    int *interFace2InterFaceID = iinfo->GetInterFace2InterFaceID();
+    int *interFace2ZoneID      = interfaceInfo->GetInterFace2ZoneID();
+    int *interFace2InterFaceID = interfaceInfo->GetInterFace2InterFaceID();
 
     for (int iiface = 0; iiface < nIFace; ++ iiface)
     {
@@ -289,12 +289,12 @@ void MatchInterface(Grid *grid, LinkStruct *link)
 
         for (std::size_t m = 0; m < zoneid[ipos].size(); ++ m)
         {
-            int izone = zoneid[ipos][m];
-            int iface = faceid[ipos][m];
-            if ((izone != zoneIndex) || (iface != iiface))
+            int iZone = zoneid[ipos][m];
+            int iFace = faceid[ipos][m];
+            if ((iZone != zoneIndex) || (iFace != iiface))
             {
-                interFace2ZoneID[iiface]      = izone;
-                interFace2InterFaceID[iiface] = iface;
+                interFace2ZoneID[iiface]      = iZone;
+                interFace2InterFaceID[iiface] = iFace;
                 find_flag = true;
                 break;
             }
@@ -391,12 +391,12 @@ void DumpCharacteristicBoundary(const string &gridFileName, Grid **grids, int nB
     vector < DataContainer * > datalist;
     datalist.resize(0);
 
-    for (int izone =  0; izone < nBlocks; ++ izone)
+    for (int iZone =  0; iZone < nBlocks; ++ iZone)
     {
         DataContainer *data = new DataContainer();
         data->moveto_begin();
 
-        Grid *grid = grids[izone];
+        Grid *grid = grids[iZone];
         grid->AllocateOversetGrid();
         ComputeCharacteristicBoundary(grid, data);
 
@@ -429,11 +429,11 @@ void DumpBCNameInfo(const set< pair<int, string> > &bcNamePairSet, const string 
     PHSPACE::OpenSerialFile(file, BCNameFileName, ios_base::out);
 
     file << "# Boundary Face Information of Grid " << gridFileName << endl;
-    file << "# nBoundaryConditons : number of global boundary conditions." << endl;
+    file << "# nBoundaryConditions: number of global boundary conditions." << endl;
     file << "# bcName             : Boundary Condition Name." << endl;
     file << "# bcType(in PHengLEI): Boundary Condition Type." << endl;
     file << endl;
-    file << "int nBoundaryConditons = " << bcNamePairSet.size() << ";" << endl;
+    file << "int nBoundaryConditions = " << bcNamePairSet.size() << ";" << endl;
 
     set< pair<int, string> >::iterator iter;
     for (iter = bcNamePairSet.begin(); iter != bcNamePairSet.end(); ++ iter)
@@ -477,7 +477,7 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
     }
 
     //file << "# Boundary Face Information of Grid " << gridFileName << endl;
-    file << "# nBoundaryConditons : Number of global boundary conditions." << endl;
+    file << "# nBoundaryConditions: Number of global boundary conditions." << endl;
     file << "# bcName             : Boundary condition name." << endl;
     file << "# bcType(in PHengLEI): Boundary condition type." << endl;
     file << endl;
@@ -506,7 +506,7 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
     file << "# For more information, see examples/bin/boundary_condition.hypara file!!!" << endl;
     file << endl;
 
-    file << "int nBoundaryConditons = " << bcNamePairSet.size() << ";" << endl;
+    file << "int nBoundaryConditions = " << bcNamePairSet.size() << ";" << endl;
 
     set< pair<int, string> >::iterator iter;
     for (iter = bcNamePairSet.begin(); iter != bcNamePairSet.end(); ++ iter)
@@ -527,7 +527,6 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet)
     file << endl;
 
     file << "# 'bcType' is defined as following:" << endl;
-    file << "#    99: PERIODIC                  " << endl;
     file << "#    -2: WAKE                      " << endl;
     file << "#    -1: INTERFACE                 " << endl;
     file << "#    0 : NO_BOUNDARY_CONDITION     " << endl;
@@ -583,13 +582,13 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
     RDouble3D &yy = * grid->GetStructY();
     RDouble3D &zz = * grid->GetStructZ();
 
-    CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
-    int nBCRegion = composite_bcregion->GetnBCRegion();
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
 
     int TecioMission;
-    for (int ibcregion = 0; ibcregion < nBCRegion; ++ ibcregion)
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
     {
-        StructBC *bcregion = composite_bcregion->GetBCRegion(ibcregion);
+        StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
         if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
@@ -636,7 +635,7 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
         Range K(kst, ked);
 
         if (nDim != THREE_D)
-        //if ( nk == 1 ) 
+        //if (nk == 1) 
         {
             K.setRange(1, 1);
             kst = 1;
@@ -663,7 +662,7 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
         int nTotalNode = count;
         int nTotalCell = 1;
 
-        //for ( int m = 0; m < nDim; ++ m )
+        //for (int m = 0; m < nDim; ++ m)
         for (int m = 0; m < 3; ++ m)
         {
             nTotalCell *= (bcregion->GetEndPoint(m) - bcregion->GetStartPoint(m) + 1);
@@ -726,15 +725,15 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
 
                     if (nsurf == 1)
                     {
-                        p1 = newindex(i, j , k ) + 1;
-                        p2 = newindex(i, jl, k ) + 1;
+                        p1 = newindex(i, j , k) + 1;
+                        p2 = newindex(i, jl, k) + 1;
                         p3 = newindex(i, jl, kl) + 1;
                         p4 = newindex(i, j , kl) + 1;
                     }
                     else if (nsurf == 2)
                     {
-                        p1 = newindex(i , j, k ) + 1;
-                        p2 = newindex(il, j, k ) + 1;
+                        p1 = newindex(i , j, k) + 1;
+                        p2 = newindex(il, j, k) + 1;
                         p3 = newindex(il, j, kl) + 1;
                         p4 = newindex(i , j, kl) + 1;
                     }
@@ -816,8 +815,8 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
             {
                 cell2node[ncount++] = i     + (j - 1) * ni;
                 cell2node[ncount++] = i + 1 + (j - 1) * ni;
-                cell2node[ncount++] = i + 1 + (j    ) * ni;
-                cell2node[ncount++] = i     + (j    ) * ni;
+                cell2node[ncount++] = i + 1 + (j   ) * ni;
+                cell2node[ncount++] = i     + (j   ) * ni;
             }
         }
 
@@ -853,14 +852,13 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         vector < int > linkmap;
 
         set< pair<int, string> > bcnameMap;
-
-        CompositeUnstructBC **bcr = grid->GetBCRecord();
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        UnstructBCSet **bcr = grid->GetBCRecord();
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            int bctype = bcr[iface]->GetKey();
-            string bcname = bcr[iface]->GetBCName();
+            int bcType = bcr[iFace]->GetKey();
+            string bcName = bcr[iFace]->GetBCName();
 
-            bcnameMap.insert(pair<int, string>(bctype, bcname));
+            bcnameMap.insert(pair<int, string>(bcType, bcName));
         }
 
         set< pair<int, string> >::iterator iter;
@@ -972,9 +970,9 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
             bool isClockWise = false;
             while (!isClockWise)
             {
-                for (int iface = 1; iface < nFaceOfCell; ++ iface)
+                for (int iFace = 1; iFace < nFaceOfCell; ++ iFace)
                 {
-                    int face  = cell2face[iCell][iface];
+                    int face  = cell2face[iCell][iFace];
                     int node1 = face2node[2 * face];
                     int node2 = face2node[2 * face + 1];
 
@@ -1067,13 +1065,13 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
 
         set< pair<int, string> > bcnameMap;
 
-        CompositeUnstructBC **bcr = grid->GetBCRecord();
-        for (int iface = 0; iface < nBoundFace; ++ iface)
+        UnstructBCSet **bcr = grid->GetBCRecord();
+        for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
-            int bctype = bcr[iface]->GetKey();
-            string bcname = bcr[iface]->GetBCName();
+            int bcType = bcr[iFace]->GetKey();
+            string bcName = bcr[iFace]->GetBCName();
 
-            bcnameMap.insert(pair<int, string>(bctype, bcname));
+            bcnameMap.insert(pair<int, string>(bcType, bcName));
         }
 
         int TecioMission;

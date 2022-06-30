@@ -197,11 +197,12 @@ if(USE_OCC)
 endif(USE_OCC)
 
 # For OpenMP
-find_package ( OpenMP )
-if ( OpenMP_FOUND )
+if(USE_OMP)
+find_package (OpenMP)
+if (OpenMP_FOUND)
 
 if(WIN32)
-target_include_directories ( ${API_TARGET_NAME}
+target_include_directories (${API_TARGET_NAME}
     PRIVATE
         ${OpenMP_CXX_INCLUDE_DIRS}
 )
@@ -211,12 +212,12 @@ target_compile_options (${API_TARGET_NAME}
         ${OpenMP_CXX_FLAGS}
 )
 
-target_compile_features ( ${API_TARGET_NAME}
+target_compile_features (${API_TARGET_NAME}
     PUBLIC 
         cxx_std_14
 )
 
-target_link_libraries ( ${API_TARGET_NAME}
+target_link_libraries (${API_TARGET_NAME}
     PRIVATE 
         ${OpenMP_CXX_LIBRARIES}
 )
@@ -226,6 +227,7 @@ else(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(WIN32)
 endif (OpenMP_FOUND)
+endif(USE_OMP)
 
 # For UGKS
 

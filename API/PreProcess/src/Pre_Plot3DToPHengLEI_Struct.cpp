@@ -1,7 +1,7 @@
 #include "Pre_Plot3DToPHengLEI_Struct.h"
 #include "TK_Exit.h"
 #include "Glb_Dimension.h"
-#include "GridTranslator.h"
+#include "Pre_GridTranslator.h"
 #include "TK_Parse.h"
 #include "TK_Log.h"
 
@@ -24,7 +24,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGrid()
     //fileformat : Grid file format.
     //             1 --- ASCII
     //             0 --- BINARY
-    fileFormat = CheckGridgenFileIfASCII();
+    fileFormat = CheckPlot3DFileIfASCII();
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
     if (fileFormat == 1)
@@ -47,7 +47,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGrid()
     ReadGridgenBC();
 }
 
-int Pre_Plot3DToPHengLEI_Struct::CheckGridgenFileIfASCII()
+int Pre_Plot3DToPHengLEI_Struct::CheckPlot3DFileIfASCII()
 {
     fstream file;
     file.open(gridFileName.c_str(), ios_base::in|ios_base::binary);
@@ -305,7 +305,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
 
     if (numberOfBlocks != nBlocks)
     {
-        TK_Exit::ExceptionExit("边界文件分块数与网格文件分块数不一致!\n");
+        TK_Exit::ExceptionExit("Block in the boundary file do not match that in the grid file ! \n");
     }
 
     int nDim = GetDim();
@@ -329,7 +329,6 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
     boundaryName[71] = "POLE1";
     boundaryName[72] = "POLE2";
     boundaryName[73] = "POLE3";
-    boundaryName[99] = "PERIODIC";
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
@@ -352,7 +351,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
         int ndif = ABS(ni - grid->GetNI()) + ABS(nj - grid->GetNJ()) + ABS(nk - grid->GetNK());
         if (ndif != 0)
         {
-            cout << "第" << iZone + 1 << "块边界条件文件里的维数与网格文件中的维数不一致!\n";
+            cout << "Dimensions of zone " << iZone + 1 << " in the boundary file do not match those in the grid file ! \n";
         }
 
         line = FindNextWord(line, word, separator);
@@ -375,7 +374,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
         from_string <int> (numberOfBCRegion, word, std::dec);
 
         grid->CreateCompositeBCRegion(numberOfBCRegion);
-        CompositeStructBC *compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
         for (int iBCRegion = 0; iBCRegion < numberOfBCRegion; ++ iBCRegion)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;
@@ -407,7 +406,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
             from_string <int> (BCType, word, std::dec);
 
             StructBC *BCRegions = new StructBC(iZone, iBCRegion);
-            compositeBCRegion->SetBCRegion(iBCRegion, BCRegions);
+            structBCSet->SetBCRegion(iBCRegion, BCRegions);
             BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
             BCRegions->SetBCType(BCType);
 
@@ -502,19 +501,19 @@ void Pre_Plot3DToPHengLEI_Struct::CheckMeshMultigrid()
     int km, NN;
     int km_grid = 1024;
 
-    for (int izone = 0; izone < nBlocks; izone ++)
+    for (int iZone = 0; iZone < nBlocks; iZone ++)
     {
-        StructGrid *grid = StructGridCast(grids[izone]);
+        StructGrid *grid = StructGridCast(grids[iZone]);
 
-        CompositeStructBC *composite_bcregion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
 
-        int nBCRegion = composite_bcregion->GetnBCRegion();
-        for (int ibcregion = 0; ibcregion < nBCRegion; ibcregion ++)
+        int nBCRegion = structBCSet->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; iBCRegion ++)
         {
             km = 1;
             NN = 2;
 
-            StructBC *structBC = composite_bcregion->GetBCRegion(ibcregion);
+            StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
             int *s_st = structBC->GetStartPoint();
             int *s_ed = structBC->GetEndPoint();
 

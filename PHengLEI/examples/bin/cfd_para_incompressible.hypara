@@ -1,0 +1,209 @@
+#########################################################################
+#                     General Control Parameter                         #
+#########################################################################
+// gridfile: The partitioned Grid file path, using relative path,
+//           which is relative to the working directory.
+// maxSimuStep: The max simulation step, don't care simulation is restart or not.
+// intervalStepFlow: The step intervals for flow variables file 'flow.dat' saved.
+// intervalStepPlot: The step intervals for tecplot visual file 'tecflow.dat' saved.
+// intervalStepRes: The step intervals for residual 'res.dat' saved.
+// gridScaleFactor: The customizable unit of the grid, default value is 1.0 for meter.Common dimensions like:
+//                    1 dm = 0.1  m.
+//                    1 cm = 0.01 m.
+//                    1 mm = 0.001m.
+//                    1 inch             = 0.0254m.
+//                    1 foot = 12 inches = 0.3048m.
+//                    1 yard = 3  feet   = 0.9144m.
+// compressible: An indicator that distinguishes density base from pressure base. 0-incompressible, 1-compressible
+// isUnsteady: An indicator that distinguishes unsteady problem from steady problem. 0-steady, 1-unsteady
+// startTime: The initial time of the unsteady simulation.
+// endTime: The end time of the unsteady simulation. 
+// dt: The time interval of the unsteady simulation.
+// innerIter: The number of step for current time.
+// OutputTimeStep: The interval step of output for unsteady simulation.
+int isAdaptiveSolver=0；
+int nIsComputeWallDist = 0;
+string gridfile = "./grid/run.fts";
+int maxSimuStep       = 10000;
+int intervalStepFlow  = 2000;
+int intervalStepPlot  = 1000;
+int intervalStepRes   = 10;
+
+double gridScaleFactor = 1.0;
+
+int compressible = 0;
+int iunsteady = 0;
+double startTime =0.0;
+double endTime = 20.0;
+double dt =0.1;
+int innerIter =10;
+int OutputTimeStep = 5;
+
+#########################################################################
+#                              Post-Processing                          #
+#########################################################################
+//nVisualVariables: Number of variables want to be dumped for tecplot visualization.
+// visualVariables : Variable types dumped, listed as following:
+//                   -- U(22), V(23), W(24), P(25), CP(26), T(27), DEN(28), VIS(29), TE(31), ED(32), enthalpy(70)
+// Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
+// Variables order must from small to big.
+
+int nVisualVariables = 6;
+int visualVariables[] = [22, 23, 24, 25, 27, 70];
+#########################################################################
+#                               Flow Parameter                          #
+#########################################################################
+string FLOW[] = "FLOW";
+
+// Initial value of variables or constant
+double initRho = 1.1405;
+double initMu = 1.7894e-5;
+double initU = 0;
+double initV = 0;
+double initW = 0;
+double initP = 0;
+
+// Relaxing factor
+double urfU = 0.7;
+double urfV = 0.7;
+double urfW = 0.7;
+double urfP = 0.3;
+double urfFlux = 0.0;
+
+// Tolerance for governing equations
+double resU = 1e-6;
+double resV = 1e-6;
+double resW = 1e-5;
+double resP = 1e-5;
+
+// Solver for solving linear system
+// : CGS/GMRES/BiCGSTAB/AMG
+string iterSolvU = "BiCGSTAB";
+string iterSolvV = "BiCGSTAB";
+string iterSolvW = "BiCGSTAB";
+string iterSolvP = "GMRES";
+
+// Max Iter for solving linear system 
+int maxSweepU = 30;
+int maxSweepV = 30;
+int maxSweepW = 30;
+int maxSweepP = 30;
+
+// Tolerance for solving linear system 
+double iterSolvTolU = 1e-3;
+double iterSolvTolV = 1e-3;
+double iterSolvTolW = 1e-3;
+double iterSolvTolP = 1e-2;
+
+// Gradient Calculation
+// : GAUSS/LSQ
+string UGradCalc = "GAUSS";
+string VGradCalc = "GAUSS";
+string WGradCalc = "GAUSS";
+string PGradCalc = "GAUSS";
+
+// Convection scheme
+// : UPWIND/CDS/QUICK/SUDS
+string flowConvCalc = "UPWIND";
+
+// Diffusion scheme(central difference)
+// : NON_ORTHOGONAL
+string flowDiffCalc = "NON_ORTHOGONAL";
+
+// Transient scheme
+// : CRANK_NICOLSON/IMPLICIT_2ND_ORDER/IMPLICIT_EULER
+string flowTranCalc = "IMPLICIT_EULER";
+
+// Source for flow
+// : FLOW_DEFAULT/FLOW_GRAVITY
+//string flowSourceCalc[] = "FLOW_DEFAULT";
+
+string flowSourceCalc[] = "FLOW_DEFAULT  FLOW_GRAVITY";
+int bodyForceFlag = 1;
+double gravityX = 0.0;
+double gravityY = -9.81;
+double gravityZ = 0.0;
+int isBoussinesq = 1;
+double thermalExpansion = 3.44827e-3;
+double refT = 290;
+
+#########################################################################
+#                           Turbulence Parameter                        #
+#########################################################################
+//int viscousType = 13;  //SPALART_ALLMARAS = 11, KEPSILON = 13
+
+//turb SA
+string TURB_SA[] = ["TURB_SA"];
+string TURB_SA_SCALAR_NAME[] = ["kinetic"];
+double urfMu = 1.0;
+
+double kineticInitValue = 1.0;
+string kineticConvCalc = "UPWIND";
+string kineticDiffCalc = "NON_ORTHOGONAL";
+string kineticSourceCalc[] = "TURB_SA_DEFAULT";
+double kineticUrf = 1.0;
+double kineticRes = 1e-6;
+
+string turbIterSolv    = "BiCGSTAB";
+int    turbMaxSweep    = 30;
+double turbIterSolvTol = 1e-12;
+
+
+//turb KEPSILON
+string TURB_K_EPSILON[] = ["TURB_K","TURB_EPSILON"];
+string TURB_K_EPSILON_SCALAR_NAME[] = ["kinetic", "epsilon"];
+
+string TURB_K[] = ["TURB_K"];
+string TURB_K_SCALAR_NAME[] = ["kinetic"];
+string TURB_EPSILON[] = ["TURB_EPSILON"];
+string TURB_EPSILON_SCALAR_NAME[] = ["epsilon"];
+double urfMu = 1.0;
+
+// turb k
+double kineticInitValue = 1.0;
+string kineticConvCalc = "UPWIND";
+string kineticDiffCalc = "NON_ORTHOGONAL";
+string kineticSourceCalc[] = "TURB_K_DEFAULT";
+double kineticUrf = 1.0;
+double kineticRes = 1e-6;
+
+// turb epsilon
+double epsilonInitValue = 1.0;
+string epsilonConvCalc = "UPWIND";
+string epsilonDiffCalc = "NON_ORTHOGONAL";
+string epsilonSourceCalc[] = "TURB_EPSILON_DEFAULT";
+double epsilonUrf = 1.0;
+double epsilonRes = 1e-6;
+
+#########################################################################
+#                              Energy Parameter                         #
+#########################################################################
+// energyType: The energy solver switch. 0-off, 1-on
+// ENERGY[]: Solver binding for factory mode.
+// ENERGY_SCALAR_NAME[]: The name of variable to be solved in energy equation.
+// energyPrintName[]: The output on the screen during the solution.
+int energyType = 1;
+string ENERGY[] = ["ENERGY"];
+string ENERGY_SCALAR_NAME[] = "enthalpy";
+string energyPrintName[]    = ["H"];
+
+// Initial value of variables or constant
+double initT   = 295;
+double initK   = 0.0242;
+double initCPg = 1006.43;
+double urfT    = 0.2;
+double urfH    = 0.2;
+double enthalpyInitValue = 0.21;    
+
+// Discrete schemes
+string energyConvCalc     = "UPWIND";               
+string energyDiffCalc     = "NON_ORTHOGONAL";       
+string energySourceCalc[] = ["EMPTY"];              
+string energyGradCalc     = "GAUSS";                
+string energyTranCalc     = "IMPLICIT_EULER";       
+
+// Set for solving linear equations
+string enthalpyIterSolv    = "BiCGSTAB";
+int    enthalpyMaxSweep    = 30;
+double enthalpyIterSolvTol = 1e-12;
+double enthalpyRes         = 1e-6;

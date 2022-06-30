@@ -30,6 +30,7 @@ class InterfaceDataProxy;
 class FieldProxy;
 class InterfaceInfo;
 class Param_CFDSolver;
+class Region;
 
 extern bool cfd_debug;
 
@@ -52,9 +53,11 @@ public:
     //! -# 1 :  1-D array.
     //! -# 2 :  2-D array.
     //! -# n :  n-D array.
-    LIB_EXPORT void RegisterInterfaceField( const string &name, const int type, const int dimesion );
+    LIB_EXPORT void RegisterInterfaceField(const string &name, const int type, const int dimesion);
     LIB_EXPORT void RegisterInterpointField(const string & name, const int type, const int dimesion);
-    LIB_EXPORT void RegisterOversetField( const string &name, const int type, const int dimesion );
+    LIB_EXPORT void RegisterOversetField(const string &name, const int type, const int dimesion);
+
+    LIB_EXPORT void ReleaseInterfaceField();
 
     void SetPostVisualization(Post_Visual *postVisualization_in);
 
@@ -69,8 +72,6 @@ public:
 
     //! Compute pressure factor for entrop fix (Method 2 in Structure solver).
     virtual void CalPressureFactor(Grid *grid) {};
-
-    virtual void GetHeatTransferCoeff(Grid *grid) {};
 
     //! Compute gradient of primitivevariables & temperature for viscous flux computation.
     virtual void ComputeGradient(Grid *grid);
@@ -124,16 +125,23 @@ public:
     virtual void RungeKutta(Grid *grid, FieldProxy *rhsProxy);
 
     //! Implicit LU-SGS time integration method.
-    virtual void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
-    virtual void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+    virtual void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
+    virtual void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
    
     //! Implicit Block LU-SGS time integration method.
-    virtual void SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);    
+    virtual void SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
     virtual void SolveBLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
+
+	//! Implicit Matrix LU-SGS time integration method.
+    virtual void SolveMatrixLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);    
+    virtual void SolveMatrixLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
     //! Implicit Line LU-SGS time integration method.
     virtual void SolveLineLUSGSForward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
     virtual void SolveLineLUSGSBackward(Grid* grid, FieldProxy* dqProxy, FieldProxy* LUplusDQ, RDouble& sweepNormal);
+
+    //! To determine the CFL number of the next iteration step.
+    virtual void DetermineCFLNumber(Grid *grid, FieldProxy *dqProxy, FieldProxy *dqProxy1);
 
     //! Line implicit LU-SGS time integration method.
     virtual void LineLUSGS(Grid* grid, int level);
@@ -164,6 +172,8 @@ public:
     virtual RDouble UnsteadyConvergence(Grid *grid);
 
     virtual void UpdateUnsteadyFlow(Grid *grid);
+    virtual void UpdateUnsteadyVariable(Grid *grid);
+    virtual void UpdateDt();
 
     virtual int GetNPostSolve();
     virtual int GetNumberOfEquations();
@@ -171,6 +181,16 @@ public:
     virtual void PostSolve(Grid *grid, int stage, int level = 0);
 
     virtual void DumpResultFile(Grid *grid, int level = 0);
+
+    virtual void InitIncompressibleResultFile(Grid *grid, string fileName);
+
+    virtual void DumpIncompressibleResultFile(Grid *grid, string fileName);
+
+    virtual void CheckResult(Grid *grid, int level = 0);
+
+    virtual void DumpCFLNumber(Grid *grid, int level = 0);
+
+    virtual void CheckSurfaceHeatingChange(Grid *grid, int level = 0);
 
     virtual void ZeroResiduals(Grid *grid);
 
@@ -219,6 +239,16 @@ public:
 
     virtual void GetResidual(ActionKey *actkey);
 
+    virtual void GetResidual(ActionKey *actkey, RDouble &localMaxRes);
+
+    virtual void GetResidual(Grid *gridIn, RDouble &localMaxRes);
+
+    //! Obtain the CFL number.
+    virtual void ObtainCFLNumber(Grid *gridIn, RDouble &globalMinCFL, RDouble &globalMaxCFL);
+
+    //! Compute the surface heating change and obtain the maximum change of the surface heating ratio.
+    virtual void GetSurfaceHeatingChange(ActionKey *actkey, RDouble &localMaxHeatChange);
+
     //! Prepare post visualization variables, store it in to grid's postVisualization database.
     LIB_EXPORT virtual void ComputePostVisualVariables(Post_Visual *postVisualization) {};
     //! Prepare monitored probes variables for post-processing , store it into postProbesVar database.
@@ -253,10 +283,18 @@ public:
     virtual void AirForceCoef(ActionKey *actkey){};
     virtual void CpDistriCoef(ActionKey *actkey){};
 
+    virtual void ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux){};
+
     //! Interpoint data communications.
     virtual void CommunicationInterpointData();
 
     virtual void DumpResidual(ActionKey *actkey);
+
+    virtual void CheckResidual(ActionKey *actkey);
+
+    virtual void ObtainCFLNumber(ActionKey *actkey);
+
+    virtual void ComputeSurfaceHeatingChange(ActionKey *actkey);
 
     //! Get the file name for Residual dumping.
     virtual const string GetResidualFileName();
@@ -271,13 +309,18 @@ public:
     virtual const string GetFlowTecFileName();
 
     virtual void DumpRestartData(ActionKey *actkey);
+    virtual void DumpProtectData(ActionKey *actkey, int &RestartFile);
     void CreateH5RestartFile(ActionKey *actkey);
 
     virtual void InitMemory();
+    virtual void ReleaseMemory();
+
     //! Initialize the flow by two ways:\n
     //! 1. InitFlowAsRestart\n
     //! 2. InitFlowAsReadingRestart.
     virtual void InitFlow();
+
+    virtual void InitProtectedFlow();
 
     //! Initialize flow by inflow condition, or set the flow variables to be zero.
     virtual void InitFlowAsRestart();
@@ -287,6 +330,8 @@ public:
     //! for turbulent solver, the turbulent variables are store in turb.dat.
     virtual void InitFlowAsReadingRestart();
     virtual void InitFlowAsReadingRestart(ActionKey *actkey);
+
+    virtual void InitFlowAsReadingProtectedRestart(ActionKey *actkey);
 
     //! To output Average Flow for visualization by tecplot format.
     virtual void TecOutAverageFlow(ActionKey *actkey);
@@ -298,6 +343,8 @@ public:
     virtual void DumpCpDistri(ActionKey *actkey);
     virtual void DumpSurfaceInfo(ActionKey *actkey);
     void WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *> datalist);
+    virtual void DumpHeatFlux(ActionKey *actkey);
+    void WriteHeatFluxASCII(ActionKey *actkey, RDouble *HeatFlux);
 
     //! Export the required variables on surface to file, such as the temperature, mass fraction etc.
     virtual void ExportSurfaceVariables(ActionKey *actkey) {}; //added by Li Peng
@@ -309,26 +356,26 @@ public:
     //! 1. Upload Interface Data. \n
     //! 2. Update Interface Data. \n
     //! 3. Download Interface Data.
-    virtual void UploadInterfaceData();
-    virtual void UpdateInterfaceData();
-    virtual void DownloadInterfaceData();
+    void UploadInterfaceData();
+    void UpdateInterfaceData();
+    void DownloadInterfaceData();
 
     //! Interpoint information exchange controller process. A complete process include three steps: \n
     //! 1. Upload Interpoint Data. \n
     //! 2. Update Interpoint Data. \n
     //! 3. Download Interpoint Data.
-    virtual void UploadInterpointData();
-    virtual void UpdateInterpointData();
-    virtual void DownloadInterpointData();
+    void UploadInterpointData();
+    void UpdateInterpointData();
+    void DownloadInterpointData();
     void CommunicationInterpointWeight();
 
     //! Overset information exchange controller process, including 3 steps: \n
     //! 1. Upload Overset Data. \n
     //! 2. Update Overset Data. \n
     //! 3. Download Overset Data.
-    virtual void UploadOversetData();
-    virtual void UpdateOversetData();
-    virtual void DownloadOversetData();
+    void UploadOversetData();
+    void UpdateOversetData();
+    void DownloadOversetData();
 
     virtual void DumpRestart(ActionKey *actkey);
     virtual void ReadRestart(ActionKey *actkey);
@@ -336,18 +383,17 @@ public:
     virtual void DumpRestartH5(ActionKey *actkey);
     virtual void ReadRestartH5(ActionKey *actkey);
 
-
     virtual void FillField(Grid *grid, FieldProxy *fieldProxy, RDouble value);
     virtual void FillField(Grid *grid, FieldProxy *field1Proxy, FieldProxy *field2Proxy);
+
+    void Solve();
 
 protected:
     int GetZoneLocalID();
 
-    Grid *GetGrid(int level = 0);
+    Grid * GetGrid(int level = 0);
 
     uint_t GetNumberOfMultiGrid();
-
-    void Solve();
 
     void Action(ActionKey *actkey);
 
@@ -359,6 +405,8 @@ protected:
 
     virtual bool JudgeIfReadAverage();
     virtual bool JudgeIfRestart();
+
+    virtual bool JudgeIfProtectedRestart();
 
     virtual void InitCoarseGridsFlow();
 
@@ -465,7 +513,7 @@ protected:
     virtual void FreeGradientProxy(Grid *grid) {};
 
 private:
-    void RegisterInterfaceField( Grid *grid, const string &name, const int type, const int dimesion );
+    void RegisterInterfaceField(Grid *grid, const string &name, const int type, const int dimesion);
 
     //! register the interpoint value field for translating.
     //! @param[in] grid         the mesh in the computing.
@@ -498,6 +546,37 @@ private:
     //! @param[in] interpointDataProxy         a proxy to store the interpoint value.
     void TranslateInterpointData(InterpointInformation *interpointInformation, ActionKey *actkey, InterpointDataProxy * interpointDataProxy);
 
+public:
+    virtual void DiscrtMomentumEquations();
+    virtual void SolveMomentumEquations(Region &region);
+    virtual void UpdateVelocity();
+    virtual void DiscrtPressureCorrectionEquation();
+    virtual void SolvePressureCorrectionEquation(Region &region);
+    virtual void UpdatePressureAndVelocity();
+    virtual void UpdateProperties();
+
+public:
+    virtual void Discrt();
+    virtual void Update();
+    virtual void UpdateBoundary();
+    virtual bool SolutionIsConverged(int iZone);
+    virtual void UpdateAfterIterloop();
+    virtual void SetOutputs(std::vector<std::string> &phiNameList);
+    virtual void InitMatrix();
+    virtual void CalcGrad();
+    virtual void CalcBoundaryConditions();
+    virtual void CalcTransientTerm();
+    virtual void CalcConvectionTerm();
+    virtual void CalcDiffusionTerm();
+    virtual void CalcSourceTerm();
+    virtual void SolveScalarEquation(Region &region);
+    virtual void SolveKEquation(Region &region);
+    virtual void SolveEpsilonEquation(Region &region);
+    virtual void PrimeEquations();
+    virtual void CalcRes();
+    virtual void Relax();
+    virtual void SolutionIsConverged(int iZone, bool* flag);
+
 protected:
     Post_Visual *postVisualization;
 
@@ -510,9 +589,7 @@ protected:
 
 void UpdateInterfaceData();
 
-const int GlobalCoordinate = 0;
-const int LocalCoordinate = 1;
-
 #include "CFDSolver.hxx"
 
 }
+

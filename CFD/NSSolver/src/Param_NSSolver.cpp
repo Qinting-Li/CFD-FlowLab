@@ -20,12 +20,14 @@ LIB_EXPORT void Param_NSSolver::Init()
 {
     Param_CFDSolver::Init();
     intervalStepForce   = GlobalDataBase::GetIntParaFromDB("intervalStepForce");
-
     wallTemperature     = GlobalDataBase::GetDoubleParaFromDB("wallTemperature");
     AoA                 = GlobalDataBase::GetDoubleParaFromDB("attackd");
     angleSlide          = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
 
+    transitionType      = GlobalDataBase::GetIntParaFromDB("transitionType");
+
     ifLowSpeedPrecon    = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+    nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
 
     roeEntropyFixMethod = GlobalDataBase::GetIntParaFromDB("roeEntropyFixMethod");
     roeEntropyScale     = GlobalDataBase::GetDoubleParaFromDB("roeEntropyScale");
@@ -112,6 +114,81 @@ LIB_EXPORT void Param_NSSolver::Init()
         mTV = 0;
         mTE = 0;
     }
+
+    densityMin = 1.0e-8;
+    if (GlobalDataBase::IsExist("densityMin", PHDOUBLE, 1))
+    {
+        densityMin = GlobalDataBase::GetDoubleParaFromDB("densityMin");
+    }
+    densityMin /= GetRefDimensionalDensity();
+
+    densityMinFactor = SMALL;
+    if (GlobalDataBase::IsExist("densityMinFactor", PHDOUBLE, 1) && nChemical == 1)
+    {
+        densityMinFactor = GlobalDataBase::GetDoubleParaFromDB("densityMinFactor");
+    }
+
+    isSelfAdaptionSolve = GlobalDataBase::GetIntParaFromDB("isAdaptiveSolver");
+
+    nGradPrimtiveMethod = 0;
+    if (GlobalDataBase::IsExist("nGradPrimtiveMethod", PHINT, 1) && nChemical == 1)
+    {
+        nGradPrimtiveMethod = GlobalDataBase::GetIntParaFromDB("nGradPrimtiveMethod");
+    }
+
+    nInviscidFluxModify = 0;
+    if (GlobalDataBase::IsExist("nInviscidFluxModify", PHINT, 1))
+    {
+        nInviscidFluxModify = nChemical * GlobalDataBase::GetIntParaFromDB("nInviscidFluxModify");  //化学反应
+    }
+
+    nQlLimitMethod = 0;
+    if (GlobalDataBase::IsExist("nQlLimitMethod", PHINT, 1))
+    {
+        nQlLimitMethod = GlobalDataBase::GetIntParaFromDB("nQlLimitMethod");  //ql、qr
+    }
+
+    //! The method to compute the gradient of variable on surface.
+    nSurfGradMethod = 0;
+    if (GlobalDataBase::IsExist("nSurfGradMethod", PHINT, 1))
+    {
+        nSurfGradMethod = GlobalDataBase::GetIntParaFromDB("nSurfGradMethod");
+    }
+
+    //! To utilize the rapid method that can directly obtain the initial flowfield in boundary layer.
+    nRapidFlowfield = 0;
+    if (GlobalDataBase::IsExist("nRapidFlowfield", PHINT, 1))
+    {
+        nRapidFlowfield = GlobalDataBase::GetIntParaFromDB("nRapidFlowfield");
+    }
+
+    //! To utilize the monitor which exam the surface heating change during the iteration.
+    nSurfHeatMonitor = 0;
+    if (GlobalDataBase::IsExist("nSurfHeatMonitor", PHINT, 1))
+    {
+        nSurfHeatMonitor = GlobalDataBase::GetIntParaFromDB("nSurfHeatMonitor");
+    }
+
+    wallMultiTemperature = 0;
+    if (GlobalDataBase::IsExist("wallMultiTemperature", PHINT, 1))
+    {
+        wallMultiTemperature = GlobalDataBase::GetIntParaFromDB("wallMultiTemperature");
+    }
+
+    //! The steps to initialize the boundary variables with the rapid flowfield values.
+    nInitPressureStep = 100;
+    if (GlobalDataBase::IsExist("nInitPressureStep", PHINT, 1))
+    {
+        nInitPressureStep = GlobalDataBase::GetIntParaFromDB("nInitPressureStep");
+    }
+
+    //! Use local CFL number or not.
+    isUseLocalCFL = 0;
+    if (GlobalDataBase::IsExist("isUseLocalCFL", PHINT, 1))
+    {
+        isUseLocalCFL = GlobalDataBase::GetIntParaFromDB("isUseLocalCFL");
+    }
+
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()

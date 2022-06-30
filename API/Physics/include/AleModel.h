@@ -32,7 +32,7 @@ class Grid;
 class AleParameter
 {
 public:
-    int isUnsteady, codeOfAleModel;
+    int isUnsteady, isAle;
     int order;
     //! Linear Multi Step Methods flag.
     int lmsmflag; 
@@ -110,7 +110,7 @@ public:
     static void BackUpOldGrid();
     static void ReadDynamicGrid();
     static void ReadDynamicGrid(fstream &file);
-    static void ReadGridCoordinate(fstream &file, int izone);
+    static void ReadGridCoordinate(fstream &file, int iZone);
     static void ComputeGridVelocity();
     static void UpdateGridInfo();
     static void RotateTranslation();

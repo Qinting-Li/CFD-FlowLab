@@ -63,9 +63,39 @@ inline RDouble Param_CFDSolver::GetCFLStart() const
     return CFLStart;
 }
 
-inline RDouble Param_CFDSolver::GetCFDEnd() const
+inline RDouble Param_CFDSolver::GetPMax() const
+{
+    return pMax;
+}
+
+inline RDouble Param_CFDSolver::GetPMin() const
+{
+    return pMin;
+}
+
+inline RDouble Param_CFDSolver::GetDeltaMax() const
+{
+    return deltaMax;
+}
+
+inline RDouble Param_CFDSolver::GetMagnifyFactor() const
+{
+    return magnifyFactor;
+}
+
+inline RDouble Param_CFDSolver::GetReduceFactor() const
+{
+    return reduceFactor;
+}
+
+inline RDouble Param_CFDSolver::GetCFLEnd() const
 {
     return CFLEnd;
+}
+
+inline RDouble Param_CFDSolver::GetFineCFL() const
+{
+    return fineCFL;
 }
 
 inline int Param_CFDSolver::GetCFLVaryStep() const
@@ -119,6 +149,7 @@ inline RDouble Param_CFDSolver::GetRefGama() const
     return refGama;
 }
 
+
 inline RDouble Param_CFDSolver::GetRefDimensionalPressure() const
 {
     return refDimensionalPressure;
@@ -144,6 +175,11 @@ inline RDouble Param_CFDSolver::GetRefDimensionalTemperature() const
     return refDimensionalTemperature;
 }
 
+inline RDouble Param_CFDSolver::GetAusmpwPlusLimiter() const
+{
+    return AusmpwPlusLimiter;
+}
+
 inline int Param_CFDSolver::GetIfStartFromSteadyResults() const
 {
     return ifStartFromSteadyResults;
@@ -166,6 +202,8 @@ inline int Param_CFDSolver::GetStatisticMethod() const
 
 inline int Param_CFDSolver::GetIsOverLapping() const
 {
-    return isOverLapping;
+    return isOverset;
 }
+
+
 

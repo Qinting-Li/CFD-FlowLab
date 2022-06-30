@@ -53,6 +53,18 @@ public:
     int GetLimiterType() const;
 
     void SetLimiterType(int type){this->limiterType = type;}
+
+    //! Get catalyticCoef.
+    RDouble GetCatalyticCoef() const;
+
+    //! Get ChemicalSpectrumRadiusCoef.
+    RDouble GetChemicalSpectrumRadiusCoef() const;
+
+    //! Get chemicalRelaxCorf.
+    RDouble GetChemicalRelaxCorf() const;
+
+    //! Get staticPressureRelaxCorf.
+    RDouble GetStaticPressureRelaxCorf() const;
      
 private:
     string uns_scheme_name;
@@ -74,6 +86,14 @@ private:
     RDouble mgCorrectionLimit;
 
     int limiterType;
+
+    RDouble catalyticCoef;
+
+    RDouble chemicalSpectrumRadiusCoef;
+
+    RDouble chemicalRelaxCorf;
+
+    RDouble staticPressureRelaxCorf;
 };
 
 #include "Param_NSSolverUnstruct.hxx"

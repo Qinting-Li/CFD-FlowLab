@@ -53,6 +53,11 @@ if(BUILD_SpecDiffHybSolver)
   add_definitions(-DUSE_SpecDiffHybSolver)
 endif()
 
+if(BUILD_PBSolver)
+  message(STATUS "BUILD_PBSolver is turned on!")
+  add_definitions(-DUSE_PBSOLVER)
+endif()
+
 #1. output message:
 message(STATUS "") 
 message(STATUS "--- Enter subdirectory <CFD>, Start to call ${CMAKE_CURRENT_LIST_FILE} ---") 
@@ -245,7 +250,6 @@ ${HOSOLVERUNSTRUCT_CPP_PATH}/HOStandardElement.cpp
 source_group(HOSolverUnstruct\\src FILES ${HOSOLVERUNSTRUCT_CPP_LIST})
 
 
-
 # set directory of SpecDiffHybSolver:
 if(BUILD_SpecDiffHybSolver)
 set(SpecDiffHybSolver_H_PATH SpecDiffHybSolver/include)
@@ -313,6 +317,148 @@ ${DEMOSOLVER_CPP_PATH}/Param_DemoSolver.cpp
 source_group(DemoSolver\\src FILES ${DEMOSOLVER_CPP_LIST})
 endif(BUILD_DEMOSOLVER)
 
+# set directory of PBSolver:
+if(BUILD_PBSolver)
+set(PBSOLVER_H_PATH PBSolver/include)
+set(PBSOLVER_H_LIST
+${PBSOLVER_H_PATH}/PBBoundary.h
+${PBSOLVER_H_PATH}/PBBoundaryFlow.h
+${PBSOLVER_H_PATH}/PBBoundaryFlowPressureOutlet.h
+${PBSOLVER_H_PATH}/PBBoundaryFlowSolidSurface.h
+${PBSOLVER_H_PATH}/PBBoundaryFlowVelocityInlet.h
+${PBSOLVER_H_PATH}/PBBoundaryScalar.h
+${PBSOLVER_H_PATH}/PBBoundaryScalarConvection.h
+${PBSOLVER_H_PATH}/PBBoundaryScalarDefault.h
+${PBSOLVER_H_PATH}/PBBoundaryScalarDiffusion.h
+${PBSOLVER_H_PATH}/PBBoundaryEnergy.h
+${PBSOLVER_H_PATH}/PBBoundaryEnergyDefault.h
+${PBSOLVER_H_PATH}/PBBoundaryEnergyInlet.h
+${PBSOLVER_H_PATH}/PBBoundaryEnergyOutlet.h
+${PBSOLVER_H_PATH}/PBBoundaryEnergyWall.h
+${PBSOLVER_H_PATH}/PBBoundaryTurb.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbDefault.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbEpsilonInlet.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbEpsilonPressureOutlet.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbEpsilonWall.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbKInlet.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbKPressureOutlet.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbKWall.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbSAWall.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbSAInlet.h
+${PBSOLVER_H_PATH}/PBBoundaryTurbSAPressureOutlet.h
+${PBSOLVER_H_PATH}/PBConvection.h
+${PBSOLVER_H_PATH}/PBConvectionCDS.h
+${PBSOLVER_H_PATH}/PBConvectionQUICK.h
+${PBSOLVER_H_PATH}/PBConvectionUDS.h
+${PBSOLVER_H_PATH}/PBConvectionSUDS.h
+${PBSOLVER_H_PATH}/PBDiffusion.h
+${PBSOLVER_H_PATH}/PBDiffusionNonorthogonal.h
+${PBSOLVER_H_PATH}/PBGrad.h
+${PBSOLVER_H_PATH}/PBGradGauss.h
+${PBSOLVER_H_PATH}/PBGradLsq.h
+${PBSOLVER_H_PATH}/PBIterSolv.h
+${PBSOLVER_H_PATH}/PBIterSolvBiCGSTAB.h
+${PBSOLVER_H_PATH}/PBIterSolvGMRES.h
+${PBSOLVER_H_PATH}/PBIterSolvAMG.h
+${PBSOLVER_H_PATH}/PBObject.h
+${PBSOLVER_H_PATH}/PBOutput.h
+${PBSOLVER_H_PATH}/PBOutputTecplot.h
+${PBSOLVER_H_PATH}/PBPreconditioner.h
+${PBSOLVER_H_PATH}/PBPreconditionerDILU.h
+${PBSOLVER_H_PATH}/PBS.h
+${PBSOLVER_H_PATH}/PBSolver.h
+${PBSOLVER_H_PATH}/PBSolverFlow.h
+${PBSOLVER_H_PATH}/PBSolverScalar.h
+${PBSOLVER_H_PATH}/PBSolverEnergy.h
+${PBSOLVER_H_PATH}/PBSolverTurbK.h
+${PBSOLVER_H_PATH}/PBSolverKEpsilon.h
+${PBSOLVER_H_PATH}/PBSolverTurbSA.h
+${PBSOLVER_H_PATH}/PBSolverTurbEpsilon.h
+${PBSOLVER_H_PATH}/PBSource.h
+${PBSOLVER_H_PATH}/PBSourceFlowDefault.h
+${PBSOLVER_H_PATH}/PBSourceFlowGravity.h
+${PBSOLVER_H_PATH}/PBSourceEnergyDefault.h
+${PBSOLVER_H_PATH}/PBSourceEnergyDissipation.h
+${PBSOLVER_H_PATH}/PBSourceTurbEpsilonDefault.h
+${PBSOLVER_H_PATH}/PBSourceTurbKDefault.h
+${PBSOLVER_H_PATH}/PBSourceTurbSADefault.h
+${PBSOLVER_H_PATH}/PBTransient.h
+${PBSOLVER_H_PATH}/PBTransientCrankNicolson.h
+${PBSOLVER_H_PATH}/PBTransientImplicit2ndOrder.h
+${PBSOLVER_H_PATH}/PBTransientImplicitEuler.h
+)
+source_group(PBSolver\\include FILES ${PBSOLVER_H_LIST})
+include_directories(${PBSOLVER_H_PATH})
+
+set(PBSOLVER_CPP_PATH PBSolver/src)
+set(PBSOLVER_CPP_LIST
+${PBSOLVER_CPP_PATH}/PBBoundary.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryFlow.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryFlowPressureOutlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryFlowSolidSurface.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryFlowVelocityInlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryScalar.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryScalarConvection.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryScalarDefault.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryScalarDiffusion.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryEnergy.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryEnergyDefault.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryEnergyInlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryEnergyOutlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryEnergyWall.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurb.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbDefault.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbEpsilonInlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbEpsilonPressureOutlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbEpsilonWall.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbSAWall.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbSAInlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbSAPressureOutlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbKInlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbKPressureOutlet.cpp
+${PBSOLVER_CPP_PATH}/PBBoundaryTurbKWall.cpp
+${PBSOLVER_CPP_PATH}/PBConvection.cpp
+${PBSOLVER_CPP_PATH}/PBConvectionCDS.cpp
+${PBSOLVER_CPP_PATH}/PBConvectionQUICK.cpp
+${PBSOLVER_CPP_PATH}/PBConvectionUDS.cpp
+${PBSOLVER_CPP_PATH}/PBConvectionSUDS.cpp
+${PBSOLVER_CPP_PATH}/PBDiffusion.cpp
+${PBSOLVER_CPP_PATH}/PBDiffusionNonorthogonal.cpp
+${PBSOLVER_CPP_PATH}/PBGrad.cpp
+${PBSOLVER_CPP_PATH}/PBGradGauss.cpp
+${PBSOLVER_CPP_PATH}/PBGradLsq.cpp
+${PBSOLVER_CPP_PATH}/PBIterSolv.cpp
+${PBSOLVER_CPP_PATH}/PBIterSolvBiCGSTAB.cpp
+${PBSOLVER_CPP_PATH}/PBIterSolvGMRES.cpp
+${PBSOLVER_CPP_PATH}/PBIterSolvAMG.cpp
+${PBSOLVER_CPP_PATH}/PBOutput.cpp
+${PBSOLVER_CPP_PATH}/PBOutputTecplot.cpp
+${PBSOLVER_CPP_PATH}/PBPreconditioner.cpp
+${PBSOLVER_CPP_PATH}/PBPreconditionerDILU.cpp
+${PBSOLVER_CPP_PATH}/PBSolver.cpp
+${PBSOLVER_CPP_PATH}/PBSolverFlow.cpp
+${PBSOLVER_CPP_PATH}/PBSolverScalar.cpp
+${PBSOLVER_CPP_PATH}/PBSolverEnergy.cpp
+${PBSOLVER_CPP_PATH}/PBSolverTurbEpsilon.cpp
+${PBSOLVER_CPP_PATH}/PBSolverTurbK.cpp
+${PBSOLVER_CPP_PATH}/PBSolverKEpsilon.cpp
+${PBSOLVER_CPP_PATH}/PBSolverTurbSA.cpp
+${PBSOLVER_CPP_PATH}/PBSource.cpp
+${PBSOLVER_CPP_PATH}/PBSourceFlowDefault.cpp
+${PBSOLVER_CPP_PATH}/PBSourceFlowGravity.cpp
+${PBSOLVER_CPP_PATH}/PBSourceEnergyDefault.cpp
+${PBSOLVER_CPP_PATH}/PBSourceEnergyDissipation.cpp
+${PBSOLVER_CPP_PATH}/PBSourceTurbEpsilonDefault.cpp
+${PBSOLVER_CPP_PATH}/PBSourceTurbKDefault.cpp
+${PBSOLVER_CPP_PATH}/PBSourceTurbSADefault.cpp
+${PBSOLVER_CPP_PATH}/PBTransient.cpp
+${PBSOLVER_CPP_PATH}/PBTransientCrankNicolson.cpp
+${PBSOLVER_CPP_PATH}/PBTransientImplicit2ndOrder.cpp
+${PBSOLVER_CPP_PATH}/PBTransientImplicitEuler.cpp
+)
+source_group(PBSolver\\src FILES ${PBSOLVER_CPP_LIST})
+endif(BUILD_PBSolver)
+
 #20.1 set header file list
 set(CFD_HEAD_LIST 
 ${SOLVER_H_LIST}
@@ -321,6 +467,7 @@ ${TurbSOLVER_H_LIST}
 ${SpecDiffHybSolver_H_LIST}
 ${HOSOLVERUNSTRUCT_H_LIST}
 ${DEMOSOLVER_H_LIST}
+${PBSOLVER_H_LIST}
 )
 
 # add INHOUSE_VERSION_H_LIST
@@ -330,14 +477,14 @@ if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_HEAD_LIST ${SpecDiffHybSolver_H_LIST})
 endif()
 
-# add IncompressibleSolver_H_LIST
-if(BUILD_IncompressibleSolver)
-list(APPEND CFD_HEAD_LIST ${IncompressibleSolver_H_LIST} )
-endif(BUILD_IncompressibleSolver)
-
 # add DEMOSOLVER_H_LIST
 if(BUILD_DEMOSOLVER)
 list(APPEND CFD_HEAD_LIST ${DEMOSOLVER_H_LIST})
+endif()
+
+# add PBSOLVER_H_LIST
+if(BUILD_PBSolver)
+list(APPEND CFD_HEAD_LIST ${PBSOLVER_H_LIST})
 endif()
 
 #20.2 set source file list:
@@ -348,7 +495,7 @@ ${TurbSOLVER_CPP_LIST}
 ${SpecDiffHybSolver_CPP_LIST}
 ${HOSOLVERUNSTRUCT_CPP_LIST}
 ${DEMOSOLVER_CPP_LIST}
-
+${PBSOLVER_CPP_LIST}
 )
 # add INHOUSE_VERSION_CPP_LIST
 
@@ -357,15 +504,16 @@ if(BUILD_SpecDiffHybSolver)
 list(APPEND CFD_CPP_LIST ${SpecDiffHybSolver_CPP_LIST})
 endif()
 
-# add IncompressibleSolver_CPP_LIST
-if(BUILD_IncompressibleSolver)
-list(APPEND CFD_CPP_LIST ${IncompressibleSolver_CPP_LIST} )
-endif(BUILD_IncompressibleSolver)
-
 # add DEMOSOLVER_CPP_LIST
 if(BUILD_DEMOSOLVER)
 list(APPEND CFD_CPP_LIST ${DEMOSOLVER_CPP_LIST})
 endif()
+
+# add PBSOLVER_CPP_LIST
+if(BUILD_PBSolver)
+list(APPEND CFD_CPP_LIST ${PBSOLVER_CPP_LIST})
+endif()
+
 #21. adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
 
@@ -434,7 +582,6 @@ endif()
 set(API_TARGET_NAME "PHAPI")
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5)
 
-
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST msmpi)
 endif(WIN32)
@@ -449,26 +596,27 @@ message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 
 # For OpenMP
-find_package ( OpenMP )
-if ( OpenMP_FOUND )
+if(USE_OMP)
+find_package (OpenMP)
+if (OpenMP_FOUND)
 
 if(WIN32)
-target_include_directories ( ${CFD_TARGET_NAME}
+target_include_directories (${CFD_TARGET_NAME}
     PRIVATE
         ${OpenMP_CXX_INCLUDE_DIRS}
 )
 
-target_compile_options ( ${CFD_TARGET_NAME}
+target_compile_options (${CFD_TARGET_NAME}
     PRIVATE
         ${OpenMP_CXX_FLAGS}
 )
 
-target_compile_features ( ${CFD_TARGET_NAME}
+target_compile_features (${CFD_TARGET_NAME}
     PUBLIC 
         cxx_std_14
 )
 
-target_link_libraries ( ${CFD_TARGET_NAME}
+target_link_libraries (${CFD_TARGET_NAME}
     PRIVATE 
         ${OpenMP_CXX_LIBRARIES}
 )
@@ -478,6 +626,7 @@ else(WIN32)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif(WIN32)
 endif (OpenMP_FOUND)
+endif(USE_OMP)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")

@@ -31,17 +31,17 @@ protected:
     int numberOfParameters;
     vector< RDouble > parameters;
 public:
-    DeformingParameter & operator = ( const DeformingParameter & rhs );
-    bool operator == ( const DeformingParameter & rhs );
+    DeformingParameter & operator = (const DeformingParameter & rhs);
+    bool operator == (const DeformingParameter & rhs);
 public:
-    void SetNumberOfParameters( int numberOfParameters ) { this->numberOfParameters = numberOfParameters; };
+    void SetNumberOfParameters(int numberOfParameters) { this->numberOfParameters = numberOfParameters; };
     int  GetNumberOfParameters() { return numberOfParameters; };
 
     vector< RDouble > & GetParameters()   { return parameters; };
-    void SetParameters(PHVectorRDouble1D& parameterVector );
+    void SetParameters(PHVectorRDouble1D& parameterVector);
 };
 
-DeformingParameter * GetDeformingParameter( int bodyIndex );
+DeformingParameter * GetDeformingParameter(int bodyIndex);
 
 class DeformingSolverManager
 {
@@ -55,7 +55,7 @@ public:
     void Run();
     void Post();
     void Dump();
-    void DumpRestart( fstream & file );
+    void DumpRestart(fstream & file);
 };
 
 }

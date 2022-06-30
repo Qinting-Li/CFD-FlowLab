@@ -13,16 +13,17 @@ void Task_WriteBinaryTecplot::PostTask(ActionKey *actkey)
     using namespace PHMPI;
     int myid = GetCurrentProcessorID();
 
-    if ( actkey->VTKvisual == true && myid == server )
+    if (actkey->VTKvisual == true && myid == server)
     {
         ActionKeyFUN post_action = this->GetPostAction();
         post_action(actkey);
     }
 
-    if ( datalist.size() > 0 )
+    if (datalist.size() > 0)
     {
         ActionKeyFUN post_action = this->GetPostAction();
         post_action(actkey);
+
     }
 }
 
@@ -49,19 +50,19 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
     int recv_proc;
     int myid;
 
-    if ( actkey->VTKvisual == true )
+    if (actkey->VTKvisual == true)
     {
-        if ( ! PHMPI::IsParallelRun() )
+        if (! PHMPI::IsParallelRun())
         {
             ParallelOpenFile(actkey);
         }
         else
         {
-            ParallelOpenFile2( actkey );
+            ParallelOpenFile2(actkey);
         }
     }
 
-    for ( int izone =  0; izone < nZones; ++ izone )
+    for (int iZone =  0; iZone < nZones; ++ iZone)
     {
         DataContainer *cdata = actkey->GetData();
         cdata->moveto_begin();
@@ -69,28 +70,28 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
         DataContainer *tecdata = actkey->GetTecData();
         tecdata->moveto_begin();
 
-        int send_proc = GetZoneProcessorID(izone);
-        recv_proc = GetZoneFileID(izone);
+        int send_proc = GetZoneProcessorID(iZone);
+        recv_proc = GetZoneFileID(iZone);
 
         myid = GetCurrentProcessorID();
-        int tag = GetSendRecvTag(actkey, izone);
+        int tag = GetSendRecvTag(actkey, iZone);
 
-        if ( myid == send_proc )
+        if (myid == send_proc)
         {
-            GeneralAction(actkey, izone);
+            GeneralAction(actkey, iZone);
         }
         
         PH_Trade(actkey, send_proc, recv_proc, tag);
 
         if(myid == recv_proc)
         {
-            if ( actkey->VTKvisual == true )
+            if (actkey->VTKvisual == true)
             {
                 WriteASCIIFile(actkey);
             }
 
             datalist.push_back(tecdata);
-            DataContainer * cdata1 = new DataContainer();
+            DataContainer *cdata1 = new DataContainer();
             actkey->SetTecData(cdata1);
         }
     }
@@ -102,3 +103,4 @@ void Task_WriteBinaryTecplot::ServerWrite(ActionKey *actkey)
 }
 
 }
+

@@ -6,12 +6,12 @@ namespace PHSPACE
 
 PHGeometry::PHGeometry(vector < Grid * > *grids)
 {
-    this->grids  = grids;
+    this->grids = grids;
 }
 
 PHGeometry::~PHGeometry()
 {
-    for ( std::size_t i = 0; i < grids->size(); ++ i )
+    for (std::size_t i = 0; i < grids->size(); ++ i)
     {
         delete (*grids)[i];
     }
@@ -25,7 +25,7 @@ Grid * PHGeometry::GetGrid(int level)
 
 void PHGeometry::AddGrid(Grid *grid)
 {
-    this->grids->push_back( grid );
+    this->grids->push_back(grid);
 }
 
 vector < Grid * > * PHGeometry::GetVectorGrid()

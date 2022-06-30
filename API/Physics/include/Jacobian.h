@@ -24,9 +24,9 @@ void MXDQ_STD(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area
 
 void MXDQ_STD(RDouble *prim, RDouble *gykb, RDouble *dq, RDouble *df, RDouble gama, int nm, int nl, RDouble radius, int ipn);
 
-void ComputePreconMatrix( int sign, RDouble **GG, RDouble *prim, RDouble tm, RDouble gama );
+void ComputePreconMatrix(int sign, RDouble **GG, RDouble *prim, RDouble tm, RDouble gama);
 void PreconMatrixDF(RDouble *df, RDouble **GG, int nm);
-void PreconMatrixRes(RDouble **dq, RDouble **GG, int nm, int icell );
+void PreconMatrixRes(RDouble **dq, RDouble **GG, int nm, int iCell);
 
 //! The fuction computes the formula (M +- R) * dQ, where M and R denote the Jacobian matrix and spectrum radius of inviscid flux,respectively.
 //! @param[in ]: primitiveVars is the array that stores the primitive variables of the current cell.

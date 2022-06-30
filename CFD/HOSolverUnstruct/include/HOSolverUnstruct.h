@@ -15,14 +15,12 @@
 
 #pragma once
 #include <vector>
-
 #include "CFDSolver.h"
 #include "HODefine.h"
 #include "HOGeometryStructure.h"
 #include "HOStandardElement.h"
 
 using namespace HOUnstruct;
-//using namespace std;
 
 namespace PHSPACE
 {
@@ -31,11 +29,10 @@ class ActionTag;
 class Grid;
 class FaceProxy;
 
-//HighOrderSolverUnsruct solver
+//! HighOrderSolverUnsruct solver
 class HOSolverUnstruct : public CFDSolver
 {
 private:
-    //[hlevel]
     std::vector< HighOrderGrid > highOrderGrids;
 
 public:
@@ -70,6 +67,7 @@ public:
     //void InitFlowAsRestart();
 
     void InitMemory();
+    void ReleaseMemory();
     void AllocateGlobalVariables();
     void InitFlow();
 
@@ -108,9 +106,9 @@ public:
     FieldProxy * GetResidualProxy(Grid *gridIn);
 
     virtual FieldProxy * CreateFieldProxy(Grid *gridIn);
-    virtual void StoreRhsByResidual(Grid *gridIn, FieldProxy *rhs_proxy);
+    virtual void StoreRhsByResidual(Grid *gridIn, FieldProxy *rhsProxy);
 
-    void LoadQ(Grid *gridIn, FieldProxy *q_proxy);
+    void LoadQ(Grid *gridIn, FieldProxy *qProxy);
     void Lhs(Grid *gridIn, FieldProxy *dqProxy, double coef);
 
     //! Compute local time step "dt".
@@ -121,16 +119,16 @@ public:
 
     //! Integrate one time step
     //! Including ComputeResidual and time integration(e.g. ForwardLUSGS).
-    //void ForwardStep(Grid *grid, FieldProxy *rhs_proxy);
+    //void ForwardStep(Grid *grid, FieldProxy *rhsProxy);
 
     //! Compute residuals.
     //! For NS Solver as example, will call some other virutal functions:
     //! LoadResidual, UpdateResidual
     //! UpdateResidual includes Boundary, RightHandSide
     //! RightHandSide includes InviscidFlux, ViscousFlux, SourceFlux
-    //void ComputeResidual(Grid *grid, FieldProxy *rhs_proxy);
+    //void ComputeResidual(Grid *grid, FieldProxy *rhsProxy);
 
-    virtual void LoadResiduals(Grid *gridIn, FieldProxy *rhs_proxy);
+    virtual void LoadResiduals(Grid *gridIn, FieldProxy *rhsProxy);
     virtual void UpdateResiduals(Grid *gridIn);
     virtual void RightHandSide(Grid *gridIn);
 
@@ -160,11 +158,11 @@ public:
 
     //! sweeps > 1.
     virtual void FillField(Grid *gridIn, FieldProxy *field_proxy, RDouble value);
-    virtual void SolveLUSGS(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *rhs_proxy, int sweeps, double epsilon);
+    virtual void SolveLUSGS(Grid *gridIn, FieldProxy *dq_proxy, FieldProxy *rhsProxy, int sweeps, double epsilon);
 
-    virtual void UpdateFlowField(Grid *gridIn, FieldProxy *q_proxy, FieldProxy *dq_proxy);
+    virtual void UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dq_proxy);
 
-    virtual void RecoverResidual(Grid *gridIn, FieldProxy *rhs_proxy);
+    virtual void RecoverResidual(Grid *gridIn, FieldProxy *rhsProxy);
 
     //! After one time step inner integration, do some post solve work
     //! e.g CommunicationInterfaceData, dump restart file, dump aerodynamic coefficient et, al.

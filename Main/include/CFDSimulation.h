@@ -17,7 +17,10 @@
 
 namespace PHSPACE
 {
+//! Entrance of PHengLEI.
 void RunPHengLEI();
+
+//! Show welcome information.
 void ShowWelcomeTitle();
 
 //! After reading control parameters from files, a preliminary self-check will be carried out to avoid the easy-neglected mistakes.
@@ -25,5 +28,4 @@ static void ControlParametersPreliminarySelfCheck();
 
 //! According to the functions of PHengLEI, the control parameters self-check process includes six parts listed as follows.
 static void ParametersSelfCheckForCFD();
-
 }

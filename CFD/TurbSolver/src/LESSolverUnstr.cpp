@@ -105,153 +105,7 @@ void LESSolverUnstr::ComputeCellLengthScale(Grid *gridIn)
 
 void LESSolverUnstr::Boundary(Grid *gridIn)
 {
-    /*
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-
-    int *leftCellOfFace  = grid->GetLeftCellOfFace();
-    int *rightCellOfFace = grid->GetRightCellOfFace();
-    RDouble *wallDistance = grid->GetWallDist();
-
-    RDouble  *nxs  = grid->GetFaceNormalX();
-    RDouble  *nys  = grid->GetFaceNormalY();
-    RDouble  *nzs  = grid->GetFaceNormalZ();
-
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
-    int numberOfBoundaryFace = grid->GetNBoundFace();
-
-    Param_LESSolverUnstruct *parameters = GetControlParameters();
-    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
-    RDouble *gamma = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
-    RDouble *viscousLaminar = reinterpret_cast<RDouble  *> (grid->GetDataPtr("visl"));
-    RDouble *viscousTurbulence = reinterpret_cast<RDouble  *> (grid->GetDataPtr("vist"));
-
-    RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
-
-    RDouble refReNumber = parameters->GetRefReNumber();
-    RDouble refGama = parameters->GetRefGama();
-
-    using namespace IDX;
-    using namespace PHENGLEI;
-
-    RDouble *primitiveVariableInflow = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-    RDouble roo = primitiveVariableInflow[IR];
-    RDouble uoo = primitiveVariableInflow[IU];
-    RDouble voo = primitiveVariableInflow[IV];
-    RDouble woo = primitiveVariableInflow[IW];
-    RDouble poo = primitiveVariableInflow[IP];
-
-    RDouble gamm1 = refGama - 1.0;
-
-    int count = 0;
-
-    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
-    {
-        int le = leftCellOfFace [iFace];
-        int re = rightCellOfFace[iFace];
-        int bcType = bcRecord[iFace]->GetKey();
-
-        if (bcType < 0)
-        {
-            //! This statement is very important, and related to the way this part is written.
-            continue;
-        }
-        else if (bcType == EXTRAPOLATION)
-        {
-            viscousTurbulence[re] = viscousTurbulence[le];
-        }
-        else if (IsWall(bcType))
-        {
-            viscousTurbulence[re] = -viscousTurbulence[le];
-        }
-        else if (bcType == SYMMETRY)
-        {
-            viscousTurbulence[re] = viscousTurbulence[le];
-        }
-        else if (bcType == FARFIELD)
-        {
-            RDouble rin,uin,vin,win,pin;
-            RDouble vno,vni,vei,coo,cin;
-            RDouble riemp,riemm,cb,vnb;
-
-            rin = q[IR][le];
-            uin = q[IU][le];
-            vin = q[IV][le];
-            win = q[IW][le];
-            pin = q[IP][le];
-
-            vno = nxs[iFace] * uoo + nys[iFace] * voo + nzs[iFace] * woo;
-            vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win;
-            vei = sqrt(uin * uin + vin * vin + win * win);
-
-            RDouble gama = gamma[le];
-
-            coo = sqrt(ABS(refGama * poo / roo));
-            cin = sqrt(ABS(gama  * pin / rin));
-
-            //! supersonic
-            if (vei > cin)
-            {
-                if (vni >= 0.0)
-                {
-                    //! exit
-                    viscousTurbulence[re] = viscousTurbulence[le];
-                }
-                else
-                {
-                    //! inlet
-                    viscousTurbulence[re] = freeStreamViscosity;
-                }
-                continue;
-            }
-
-            //! subsonic
-            riemp = vni + 2.0 * cin / (gama  - 1.0);
-            riemm = vno - 2.0 * coo / (refGama - 1.0);
-            vnb   = half   * (riemp + riemm);
-            cb    = fourth * (riemp - riemm) * gama;
-
-            if (vnb >= 0.0)
-            {
-                //! exit
-                viscousTurbulence[re] = viscousTurbulence[le];
-            }
-            else
-            {
-                //! inlet
-                viscousTurbulence[re] = freeStreamViscosity;
-            }
-
-        }
-        else if (bcType == INFLOW)
-        {
-            viscousTurbulence[re] = freeStreamViscosity;
-        }
-        else if (bcType == PRESSURE_INLET)
-        {
-            viscousTurbulence[re] = freeStreamViscosity;
-        }
-        else if (bcType == MASS_FLOW_INLET)
-        {
-            viscousTurbulence[re] = freeStreamViscosity;
-        }
-        else if (bcType == OUTFLOW)
-        {
-            viscousTurbulence[re] = viscousTurbulence[le];
-        }
-        else if (bcType == PRESSURE_OUTLET)
-        {
-            viscousTurbulence[re] = viscousTurbulence[le];
-        }
-        else if (bcType == MASS_FLOW_OUTLET)
-        {
-            viscousTurbulence[re] = viscousTurbulence[le];
-        }
-        else
-        {
-            viscousTurbulence[re] = viscousTurbulence[le];
-        }
-    }
-    */
+ 
 }
 
 void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
@@ -265,7 +119,7 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
     RDouble  *nys  = grid->GetFaceNormalY();
     RDouble  *nzs  = grid->GetFaceNormalZ();
 
-    CompositeUnstructBC **bcRecord = grid->GetBCRecord();
+    UnstructBCSet **bcRecord = grid->GetBCRecord();
     int numberOfBoundaryFace = grid->GetNBoundFace();
 
     Param_LESSolverUnstruct *parameters = GetControlParameters();
@@ -335,25 +189,25 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
             coo = sqrt(ABS(refGama * poo / roo));
             cin = sqrt(ABS(gama  * pin / rin));
 
-            //! supersonic
+            //! Supersonic
             if (vei > cin)
             {
                 if (vni >= 0.0)
                 {
-                    //! exit
+                    //! Exit
                     viscousTurbulence[re] = viscousTurbulence[le];
                     subgridScaleEnergy[re] = subgridScaleEnergy[le];
                 }
                 else
                 {
-                    //! inlet
+                    //! Inlet
                     viscousTurbulence[re] = freeStreamViscosity;
                     subgridScaleEnergy[re] = 0.0;
                 }
                 continue;
             }
 
-            //! subsonic
+            //! Subsonic
             riemp = vni + 2.0 * cin / (gama  - 1.0);
             riemm = vno - 2.0 * coo / (refGama - 1.0);
             vnb   = half   * (riemp + riemm);
@@ -361,13 +215,13 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
 
             if (vnb >= 0.0)
             {
-                //! exit
+                //! Exit
                 viscousTurbulence[re] = viscousTurbulence[le];
                 subgridScaleEnergy[re] = subgridScaleEnergy[le];
             }
             else
             {
-                //! inlet
+                //! Inlet
                 viscousTurbulence[re] = freeStreamViscosity;
                 subgridScaleEnergy[re] = 0.0;
             }
@@ -444,7 +298,6 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
         if (gradientName == "ggnode" || gradientName == "ggnodelaplacian")
         {
             gridUnstruct->CompGradientGGNode_NEW(q[m], qnode[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
-            //gridUnstruct->CompGradientGGNode(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else if (gradientName == "ggcell")
         {
@@ -495,7 +348,6 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
         if (gradientName == "ggnode" || gradientName == "ggnodelaplacian")
         {
             gridUnstruct->CompGradientGGNode_NEW(t[m], tnode[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
-            //gridUnstruct->CompGradientGGNode(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else if (gradientName == "ggcell")
         {
@@ -536,29 +388,6 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
 
 void LESSolverUnstr::ComputeViscousCoeff(Grid *gridIn)
 {
-    /*
-    UnstructGrid *grid = UnstructGridCast(gridIn);
-
-    ComputeStrainRateTensor(grid);
-
-    ComputeWallFunction(grid);
-
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
-    int subgridScaleModel = parameters->GetSubgridScaleModel();
-
-    if (subgridScaleModel == 1)
-    {
-        Smagorinsky(grid);
-    }
-    else if (subgridScaleModel == 3)
-    {
-        WALE(grid);
-    }
-    else
-    {
-        TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
-    }
-    */
 }
 
 void LESSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)
@@ -578,7 +407,7 @@ void LESSolverUnstr::ObtainViscosity(Grid *gridIn)
 
     ComputeWallFunction(grid);
 
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
 
     if (subgridScaleModel == 1)
@@ -614,7 +443,7 @@ void LESSolverUnstr::Smagorinsky(Grid *gridIn)
     RDouble *viscousTurbulence = reinterpret_cast<RDouble * > (grid->GetDataPtr("vist"));
     RDouble *subgridScaleEnergy = reinterpret_cast<RDouble * > (grid->GetDataPtr("subgridScaleEnergy"));
 
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
@@ -659,7 +488,7 @@ void LESSolverUnstr::WALE(Grid *gridIn)
     RDouble *viscousTurbulence = reinterpret_cast<RDouble * > (grid->GetDataPtr("vist"));
     RDouble *subgridScaleEnergy = reinterpret_cast<RDouble * > (grid->GetDataPtr("subgridScaleEnergy"));
 
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
@@ -713,7 +542,7 @@ void LESSolverUnstr::WALE(Grid *gridIn)
 
         RDouble mut = (waleConstant * deltaBar * dampingFunction) * (waleConstant * deltaBar * dampingFunction) * rho * ss * refReNumber;
         mut = MIN(eddyViscosityLimit, mut);
-        RDouble kSGS = 2.0 * iConstant /rho * (mut /deltaBar) * (mut /deltaBar) / refReNumber;  //!divide by one refReNumber here, and divide by another refReNumber in the Viscousflux.
+        RDouble kSGS = 2.0 * iConstant /rho * (mut /deltaBar) * (mut /deltaBar) / refReNumber;  //! Divide by one refReNumber here, and divide by another refReNumber in the Viscousflux.
 
         viscousTurbulence[iCell] = mut;
         subgridScaleEnergy[iCell] = kSGS;
@@ -761,7 +590,7 @@ void LESSolverUnstr::Sigma(Grid *gridIn)
     RDouble *dwdy = gradientPrimtiveVariableY[3];
     RDouble *dwdz = gradientPrimtiveVariableZ[3];
 
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
 
     RDouble eddyViscosityLimit = parameters->GetEddyViscosityLimit();
 
@@ -848,11 +677,11 @@ void LESSolverUnstr::ComputeDifferentialSigma(RDouble ** velocityGradTensor, RDo
 
     RDouble alpha1 = t1 * t1 / 9.0 - t2 / 3.0;
     RDouble alpha2 = t1 * t1 * t1 / 27.0 - t1 * t2 / 6.0 + t3 / 2.0;
-    RDouble alpha3 = 1.0 /3.0 * acos( MAX( MIN(alpha2 / sqrt(alpha1 * alpha1 * alpha1), 1.0), -1.0 ) );
+    RDouble alpha3 = 1.0 /3.0 * acos(MAX(MIN(alpha2 / sqrt(alpha1 * alpha1 * alpha1), 1.0), -1.0));
 
-    RDouble sigma1 = sqrt( MAX(t1 / 3.0 + 2.0 * sqrt(alpha1) * cos(alpha3), 0.0) );
-    RDouble sigma2 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) + alpha3), 0.0) );
-    RDouble sigma3 = sqrt( MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0) );
+    RDouble sigma1 = sqrt(MAX(t1 / 3.0 + 2.0 * sqrt(alpha1) * cos(alpha3), 0.0));
+    RDouble sigma2 = sqrt(MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) + alpha3), 0.0));
+    RDouble sigma3 = sqrt(MAX(t1 / 3.0 - 2.0 * sqrt(alpha1) * cos(acos(0.5) - alpha3), 0.0));
 
     differentialSigma = sigma3 * (sigma1 - sigma2) * (sigma2 - sigma3) / sigma1 / sigma1;
     differentialSigma = MAX(differentialSigma, 0.0);
@@ -864,7 +693,7 @@ void LESSolverUnstr::ComputeDifferentialSigma(RDouble ** velocityGradTensor, RDo
 
 void LESSolverUnstr::ComputeStrainRateTensor(Grid *gridIn)
 {
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
     int subgridScaleModel = parameters->GetSubgridScaleModel();
     if(subgridScaleModel == 6)
     {
@@ -932,7 +761,7 @@ void LESSolverUnstr::ComputeWallFunction(Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
     
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
     int wallDampingFunctionType = parameters->GetWallDampingFunctionType();
 
     RDouble *wallFunction = reinterpret_cast<RDouble * > (grid->GetDataPtr("wallFunction"));
@@ -972,7 +801,7 @@ void LESSolverUnstr::WallFunctionofVanDriest(Grid *gridIn)
 
     RDouble **strainRateTensor = reinterpret_cast<RDouble **> (grid->GetDataPtr("strainRateTensor"));
 
-    Param_LESSolverUnstruct * parameters = GetControlParameters();
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
 
     const double kappa = 0.41;
@@ -1051,7 +880,7 @@ FieldProxy * LESSolverUnstr::GetFieldProxy(Grid *gridIn, const string &field_nam
 {
     UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble ** field = reinterpret_cast< RDouble ** > ( grid->GetDataPtr(field_name) );
+    RDouble ** field = reinterpret_cast< RDouble ** > (grid->GetDataPtr(field_name));
 
     FieldProxy * field_proxy = new FieldProxy();
 

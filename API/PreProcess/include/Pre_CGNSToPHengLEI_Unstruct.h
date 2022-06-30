@@ -15,7 +15,7 @@
 
 #pragma once
 #include "Pre_GridConversion.h"
-#include "GridBase.h"
+#include "Pre_GridBase.h"
 using namespace std;
 
 namespace PHSPACE

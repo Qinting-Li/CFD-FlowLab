@@ -46,6 +46,7 @@ private:
     void WriteGridCoordinates(hid_t loc_id, Grid *gridIn);
     void WriteInterfaceInfo(hid_t loc_id, Grid *gridIn);
     void WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID);
+ //   void WritePartitionInfo(hid_t loc_id, Grid *gridIn, int gridID);
 
     void WriteStructGrid(hid_t loc_id, Grid *gridIn);
     void WriteBCRegion(hid_t loc_id, Grid *gridIn);
@@ -91,7 +92,7 @@ private:
 
     void ReadVersionInfo(hid_t loc_id);
     void ReadTotalInfoOld(hid_t loc_id);
-    void ReadNumberOfZonesOld(hid_t loc_id);
+    void ReadNumberOfZonesOld(hid_t loc_id);    //! Useless.
     void ReadEachGridOld(hid_t loc_id);
 
     void ReadTotalInfo();
@@ -106,6 +107,7 @@ private:
     void ReadLnkInfo(hid_t loc_id, Grid *gridIn);
     void ReadLnk(hid_t loc_id, int iZone);
     void ReadStrBCName(hid_t loc_id, Grid *gridIn);
+ //   void ReadPartitionInfo(hid_t loc_id, Grid *gridIn);
 
     void ReadUnstructGrid(hid_t loc_id, int iZone);
     void ReadFaceTopology(hid_t loc_id, Grid *gridIn);
@@ -113,8 +115,8 @@ private:
     void ReadUnstrBCName(hid_t loc_id, Grid *gridIn);
     void ReadInterpointInfo(hid_t loc_id, Grid *gridIn);
 
-    void SetNZones(int nZonesIn) { this->nZones = nZonesIn; }
-    int GetNZones() const { return nZones; }
+    void SetNZones(int nZonesIn) { this->numberOfZones = nZonesIn; }
+    int GetNZones() const { return numberOfZones; }
 
     void RedistributeZonesIfNeed();
     bool IsZoneLayoutInitialized();
@@ -153,7 +155,7 @@ private:
     vector < vector<string> > localGridNameList;
 
     //! The total number of global zones.
-    int nZones;
+    int numberOfZones;
 
     //! Number of zones in each .fts file.
     VVInt nZonesList;

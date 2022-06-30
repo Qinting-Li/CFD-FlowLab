@@ -19,6 +19,6 @@ using namespace std;
 namespace PHSPACE
 {
 //! To translate the grid from fieldview format to fts.
-void FieldView2Fantasy();
+void FieldView2PHengLEI();
 }
 

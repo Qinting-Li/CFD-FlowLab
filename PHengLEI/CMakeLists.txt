@@ -24,7 +24,6 @@ if(WIN32)
 else()
   SET(CMAKE_C_COMPILER gcc)
   SET(THIRD_PARTY_COMPILER_FLAG "Unix")
-  add_compile_options(-std=c++14)
 endif()
 include(${PROJECT_SOURCE_DIR}/../PHengLEI/PHMacro.cmake)
 #set cmake environment:
@@ -45,6 +44,7 @@ opt(DOUBLE_PRECISION "Use double precision or not" ON)
 opt(SMARTARRAY "Use smart array more efficenet than origial array" ON)  # Use smart array or not.
 opt_build(SpecDiffHybSolver "Build Spectra-Difference Hybrid Solver or not" OFF) #Build Spectra-Difference Hybrid Solver or not.
 opt_build(DemoSolver "Build Solver Template or not" OFF)# Build Solver Template option.
+opt_build(PBSolver "Build Pressure Based Solver or not" OFF)# Build PBSolver option.
 opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
@@ -85,31 +85,35 @@ if(BUILD_DemoSolver)
   add_definitions(-DUSE_DEMOSOLVER)
 endif()
 
+if(BUILD_PBSolver)
+  message(STATUS "BUILD_PBSolver is turned on!")
+  add_definitions(-DUSE_PBSOLVER)
+endif()
+
 if(USE_OMP)
   message(STATUS "USE_OMP is turned on!")
   add_definitions(-DUSE_OMP)
-  find_package ( OpenMP )
-  if ( OpenMP_FOUND )
-  message ( STATUS "OpenMP_VERSION = ${OpenMP_VERSION}" )
-  message ( STATUS "OpenMP_FOUND    = ${OpenMP_FOUND}" )
-  message ( STATUS "OpenMP_CXX_FOUND  = ${OpenMP_CXX_FOUND}" )
-  message ( STATUS "OpenMP_CXX_FLAGS  = ${OpenMP_CXX_FLAGS}" )
-  message ( STATUS "OpenMP_CXX_INCLUDE_DIRS  = ${OpenMP_CXX_INCLUDE_DIRS}" )
-  message ( STATUS "OpenMP_CXX_LIB_NAMES  = ${OpenMP_CXX_LIB_NAMES}" )
-  message ( STATUS "OpenMP_CXX_LIBRARIES  = ${OpenMP_CXX_LIBRARIES}" )
-  message ( STATUS "OpenMP_LIBRARY  = ${OpenMP_LIBRARY}" )
-  message ( STATUS "OpenMP_CXX_SPEC_DATE  = ${OpenMP_CXX_SPEC_DATE}" )
-  message ( STATUS "OpenMP_CXX_VERSION_MAJOR  = ${OpenMP_CXX_VERSION_MAJOR}" )
-  message ( STATUS "OpenMP_CXX_VERSION_MINOR  = ${OpenMP_CXX_VERSION_MINOR}" )
-  message ( STATUS "OpenMP_CXX_VERSION  = ${OpenMP_CXX_VERSION}" ) 
+  find_package (OpenMP)
+  if (OpenMP_FOUND)
+  message (STATUS "OpenMP_VERSION = ${OpenMP_VERSION}")
+  message (STATUS "OpenMP_FOUND    = ${OpenMP_FOUND}")
+  message (STATUS "OpenMP_CXX_FOUND  = ${OpenMP_CXX_FOUND}")
+  message (STATUS "OpenMP_CXX_FLAGS  = ${OpenMP_CXX_FLAGS}")
+  message (STATUS "OpenMP_CXX_INCLUDE_DIRS  = ${OpenMP_CXX_INCLUDE_DIRS}")
+  message (STATUS "OpenMP_CXX_LIB_NAMES  = ${OpenMP_CXX_LIB_NAMES}")
+  message (STATUS "OpenMP_CXX_LIBRARIES  = ${OpenMP_CXX_LIBRARIES}")
+  message (STATUS "OpenMP_LIBRARY  = ${OpenMP_LIBRARY}")
+  message (STATUS "OpenMP_CXX_SPEC_DATE  = ${OpenMP_CXX_SPEC_DATE}")
+  message (STATUS "OpenMP_CXX_VERSION_MAJOR  = ${OpenMP_CXX_VERSION_MAJOR}")
+  message (STATUS "OpenMP_CXX_VERSION_MINOR  = ${OpenMP_CXX_VERSION_MINOR}")
+  message (STATUS "OpenMP_CXX_VERSION  = ${OpenMP_CXX_VERSION}") 
   endif (OpenMP_FOUND)
-endif()
+endif(USE_OMP)
 
 if(USE_ErrorDataDebug)
   message(STATUS "USE_ErrorDataDebug is turned on!")
   add_definitions(-DUSE_ErrorDataDebug)
 endif(USE_ErrorDataDebug)
-
 
 if(WIN32)
 if(USE_Windows_X64)
@@ -133,7 +137,6 @@ set(GMSH_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/Gmsh/include)
 include_directories("${GMSH_H_PATH}")
 set(PARMETIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/parmetis/include)
 include_directories("${PARMETIS_H_PATH}")
-
 set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
@@ -205,12 +208,18 @@ include_directories(${CFD_H_PATH}/Solver/include)
 include_directories(${CFD_H_PATH}/TurbSolver/include)
 include_directories(${CFD_H_PATH}/PostProcess/include)
 include_directories(${CFD_H_PATH}/HOSolverUnstruct/include)
+
 if(BUILD_SpecDiffHybSolver)
 include_directories(${CFD_H_PATH}/SpecDiffHybSolver/include)
 endif(BUILD_SpecDiffHybSolver)
+
 if(BUILD_DemoSolver)
 include_directories(${CFD_H_PATH}/DemoSolver/include)
 endif(BUILD_DemoSolver)
+
+if(BUILD_PBSolver)
+include_directories(${CFD_H_PATH}/PBSolver/include)
+endif(BUILD_PBSolver)
 if(BUILD_CFD)
   message(STATUS "Build CFD!")
   add_subdirectory(../CFD ${EXEC_WORKING_DIR}/CFD)
@@ -236,6 +245,24 @@ endif(WIN32)
 #look for CMakeLists.txt in subdirectory <codes> and build an executable target:
 add_subdirectory(../Main ${EXEC_WORKING_DIR})
 
+if(BUILD_PBSolver)
+  if(WIN32)
+    if(USE_Windows_X64)
+    add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}/Dll1.dll"
+    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/Dll1.dll 
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/fmpich2.dll  
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/libifcoremd.dll 
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/libmmd.dll 
+        ${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR})
+    add_custom_target(dll_file DEPENDS "${CMAKE_BINARY_DIR}/${EXEC_WORKING_DIR}/${DLL_WORKING_DIR}/Dll1.dll")
+    add_dependencies(${PROJECT_NAME} dll_file)
+    endif(USE_Windows_X64)
+  endif(WIN32)
+endif(BUILD_PBSolver)
 #exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
 message(STATUS "Finished build project ${PROJECT_NAME}!")

@@ -60,7 +60,9 @@ typedef enum
     VISUALIZATION_AVERAGE_FLOW,
     DUMP_SURFACE_INFO,
     DUMP_PROBES_FLOW,
-    VISUALIZATION_AVERAGE_ReynoldsStress
+    VISUALIZATION_AVERAGE_ReynoldsStress,
+    DUMP_HEATFLUX,
+    COMPUTE_AERODYNAMIC_FORCE
 }ActionEnum;
 const int NofValidAction = 41;
 extern const char * ActionName[NofValidAction];

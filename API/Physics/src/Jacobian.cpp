@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "Math_BasisFunction.h"
 #include "GlobalDataBase.h"
+
 #include "Gas.h"
 
 using namespace std;
@@ -701,29 +702,29 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RD
     vm = q[IV];
     wm = q[IW];
     pm = q[IP];
-    cm = sqrt( gama * pm / rm );
+    cm = sqrt(gama * pm / rm);
 
     mx = rm * um;
     my = rm * vm;
     mz = rm * wm;
-    em = pm / gamm1 + half * rm * ( um * um + vm * vm + wm * wm );
+    em = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
 
     //! Normal velocity and Eigenvalues.
     vn = nxs * um + nys * vm + nzs * wm - vgn;
     v2 = um * um + vm * vm + wm * wm;
 
     RDouble c2  = cm * cm;
-    RDouble beta = MIN( MAX( v2 / c2,3.0 * mach2 ),1.0 );
-    RDouble vnew  = half * vn * ( 1 + beta );
-    RDouble cnew  = half * sqrt( ( ( beta - 1 ) * vn ) * ( ( beta - 1 ) * vn ) + 4 * beta * c2 );
-    eig   = ( ABS( vnew ) +  cnew  );
+    RDouble beta = MIN(MAX(v2 / c2,3.0 * mach2),1.0);
+    RDouble vnew  = half * vn * (1 + beta);
+    RDouble cnew  = half * sqrt(((beta - 1) * vn) * ((beta - 1) * vn) + 4 * beta * c2);
+    eig   = (ABS(vnew) +  cnew );
 
     //! Need to find out the fluxes on level n.
-    df[IR ] = - ( rm * vn );
-    df[IRU] = - ( rm * um * vn + nxs * pm );
-    df[IRV] = - ( rm * vm * vn + nys * pm );
-    df[IRW] = - ( rm * wm * vn + nzs * pm );
-    df[IRE] = - ( ( em + pm ) * vn + vgn * pm );
+    df[IR ] = - (rm * vn);
+    df[IRU] = - (rm * um * vn + nxs * pm);
+    df[IRV] = - (rm * vm * vn + nys * pm);
+    df[IRW] = - (rm * wm * vn + nzs * pm);
+    df[IRE] = - ((em + pm) * vn + vgn * pm);
 
     //! Conservative variable on level n+1.
     rm += dq[IR ];
@@ -738,28 +739,28 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RD
 
     vn  = nxs * um + nys * vm + nzs * wm - vgn;
 
-    pm = gamm1 * ( em - half * rm * ( um * um + vm * vm + wm * wm ) );
+    pm = gamm1 * (em - half * rm * (um * um + vm * vm + wm * wm));
     rm = ABS(rm);
     pm = ABS(pm);
 
     //! Now the flux difference due to dq.
-    df[IR ] += ( rm * vn );
-    df[IRU] += ( rm * um * vn + nxs * pm );
-    df[IRV] += ( rm * vm * vn + nys * pm );
-    df[IRW] += ( rm * wm * vn + nzs * pm );
-    df[IRE] += ( ( em + pm ) * vn + vgn * pm );
+    df[IR ] += (rm * vn);
+    df[IRU] += (rm * um * vn + nxs * pm);
+    df[IRV] += (rm * vm * vn + nys * pm);
+    df[IRW] += (rm * wm * vn + nzs * pm);
+    df[IRE] += ((em + pm) * vn + vgn * pm);
 
     PreconMatrixDF(df, MG, nm);
 
     //! Subtract eigenvalue terms from the flux difference.
 
-    for ( int m = 0; m < nm; ++ m )
+    for (int m = 0; m < nm; ++ m)
     {
         df[m] -= eig * dq[m];
     }
 
     //! Divide by 2 out of necessity.
-    for ( int m = 0; m < nm; ++ m )
+    for (int m = 0; m < nm; ++ m)
     {
         df[m] *= half * ns;
     }
@@ -930,3 +931,4 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble nxs, RDouble nys, RDoub
 }
 
 }
+

@@ -9,6 +9,8 @@
 #include "AleModel.h"
 #include "MixGrid.h"
 #include "Solver.h"
+#include "MixedGas.h"
+
 
 using namespace std;
 
@@ -30,9 +32,9 @@ Zone::Zone(int index)
 
 Zone::~Zone()
 {
-    for (std::size_t isolver = 0; isolver < solvers->size(); ++ isolver)
+    for (std::size_t iSolver = 0; iSolver < solvers->size(); ++ iSolver)
     {
-        delete (*solvers)[isolver];
+        delete (*solvers)[iSolver];
     }
     delete solvers;
 
@@ -59,9 +61,9 @@ void Zone::AddSolver(PHSolver *solver)
     GlobalSolvers::AddSolverToGlobal(this->GetIndex(), this->solvers);
 }
 
-void Zone::AddGridToGlobal(int izone)
+void Zone::AddGridToGlobal(int iZone)
 {
-    PHSPACE::AddGridToGlobal(izone, geom->GetVectorGrid());
+    PHSPACE::AddGridToGlobal(iZone, geom->GetVectorGrid());
 }
 
 void Zone::AddGrid(Grid *grid)
@@ -120,8 +122,8 @@ void Zone::CoarseGrids()
 
 void Zone::SetInterface(Grid *base_grid, Grid *cgrid)
 {
-    InterfaceInfo *iinfo = base_grid->GetInterfaceInfo();
-    cgrid->SetInterfaceInfo(iinfo);
+    InterfaceInfo *interfaceInfo = base_grid->GetInterfaceInfo();
+    cgrid->SetInterfaceInfo(interfaceInfo);
 }
 
 void Zone::ShowCoarseGrids()
@@ -150,10 +152,10 @@ void InitGlobalValuesOfAllZones()
 void InitGlobalValuesGrid()
 {
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-    int codeOfAleModel = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+    int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
     int maxale = GlobalDataBase::GetIntParaFromDB("maxale");
 
-    if ((isUnsteady == 0) || (codeOfAleModel == 0))
+    if (!isUnsteady || !isAle)
     {
         return;
     }
@@ -241,6 +243,7 @@ void InitGlobalValuesSolver()
         }
         else
         {
+            gas = new MixedGas();
         }
         gas->InitGlobalParameterOfNSEquation();
     }

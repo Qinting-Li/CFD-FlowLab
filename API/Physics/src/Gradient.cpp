@@ -150,7 +150,7 @@ void Gradient::Allocate()
         Range J(-1,nj+1);
         Range K(-1,nk+1);
         Range M(0,nTotalVariable-1);
-        if ( nk == 1 ) K.setRange(1,1);
+        if (nk == 1) K.setRange(1,1);
 
         dqdx = new FieldProxy();
         dqdy = new FieldProxy();
@@ -167,9 +167,9 @@ void Gradient::Allocate()
 
 void Gradient::FreeMemory()
 {
-    if (dqdx) delete dqdx; dqdx = nullptr;
-    if (dqdy) delete dqdy; dqdy = nullptr;
-    if (dqdz) delete dqdz; dqdz = nullptr;
+    if (dqdx) delete dqdx; dqdx = NULL;
+    if (dqdy) delete dqdy; dqdy = NULL;
+    if (dqdz) delete dqdz; dqdz = NULL;
 }
 
 LIB_EXPORT int Gradient::GetNumberOfTotalVariable()
@@ -211,7 +211,7 @@ void GradientCellCenter::Allocate()
         Range J(-1,nj+1);
         Range K(-1,nk+1);
         Range M(0,nTotalVariable-1);
-        if ( nk == 1 ) K.setRange(1,1);
+        if (nk == 1) K.setRange(1,1);
 
         dqdx = new FieldProxy();
         dqdy = new FieldProxy();
@@ -228,9 +228,9 @@ void GradientCellCenter::Allocate()
 
 void GradientCellCenter::FreeMemory()
 {
-    if (dqdx) delete dqdx; dqdx = nullptr;
-    if (dqdy) delete dqdy; dqdy = nullptr;
-    if (dqdz) delete dqdz; dqdz = nullptr;
+    if (dqdx) delete dqdx; dqdx = NULL;
+    if (dqdy) delete dqdy; dqdy = NULL;
+    if (dqdz) delete dqdz; dqdz = NULL;
 }
 
 LIB_EXPORT void GradientCellCenter::Calculate()
@@ -259,7 +259,7 @@ void GradientCellCenter::GradCenter()
     RDouble4D &xfv = *(strgrid->GetFaceVectorX());
     RDouble4D &yfv = *(strgrid->GetFaceVectorY());
     RDouble4D &zfv = *(strgrid->GetFaceVectorZ());
-    RDouble3D &vol = *(strgrid->GetCellVolume() );
+    RDouble3D &vol = *(strgrid->GetCellVolume());
 
     int ndim = GetDim();
 
@@ -272,7 +272,7 @@ void GradientCellCenter::GradCenter()
     dqdy_4d = 0.0;
     dqdz_4d = 0.0;
 
-    for ( int nsurf = 1; nsurf <= ndim; ++ nsurf )
+    for (int nsurf = 1; nsurf <= ndim; ++ nsurf)
     {
         int il1,jl1,kl1;
         GetNsurfIndex(nsurf, il1, jl1, kl1);
@@ -284,17 +284,17 @@ void GradientCellCenter::GradCenter()
         int kst = 1;
         int ked = nk-1+kl1;
 
-        if ( ndim == TWO_D ) ked = 1;
+        if (ndim == TWO_D) ked = 1;
 
         int il,jl,kl;
                 
-        for ( int m = 0; m <= nTotalVariable-1; ++ m )
+        for (int m = 0; m <= nTotalVariable-1; ++ m)
         {
-            for ( int k = kst; k <= ked; ++ k )
+            for (int k = kst; k <= ked; ++ k)
             {
-                for ( int j = jst; j <= jed; ++ j )
+                for (int j = jst; j <= jed; ++ j)
                 {
-                    for ( int i = ist; i <= ied; ++ i )
+                    for (int i = ist; i <= ied; ++ i)
                     {
                         il = i - il1;
                         jl = j - jl1;
@@ -326,15 +326,15 @@ void GradientCellCenter::GradCenter()
     int ked = nk-1;
 
 
-    if ( ndim == TWO_D ) ked = 1;
+    if (ndim == TWO_D) ked = 1;
 
-    for ( int m = 0; m <= nTotalVariable-1; ++ m )
+    for (int m = 0; m <= nTotalVariable-1; ++ m)
     {
-        for ( int k = kst; k <= ked; ++ k )
+        for (int k = kst; k <= ked; ++ k)
         {
-            for ( int j = jst; j <= jed; ++ j )
+            for (int j = jst; j <= jed; ++ j)
             {
-                for ( int i = ist; i <= ied; ++ i )
+                for (int i = ist; i <= ied; ++ i)
                 {
                     RDouble oov = half / vol(i,j,k);
                     dqdx_4d(i,j,k,m) *= oov;

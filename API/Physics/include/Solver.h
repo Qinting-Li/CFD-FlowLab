@@ -51,10 +51,10 @@ class InterpointDataProxy;
 
 //! @brief The base class of all other solvers. Although different types of solver are create,
 //!        they are all handled in the form of 'Solver' during simulation, this let them look same.
-//!        The inherit order is: Solver->NSSolver->NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.\n
-//!                                    ->TurbSolver->TurbSolverStr/TurbSolverUnstr.\n
-//!                                    ->INCompSolver->INCompSolverStruct/INCompSolverUnstruct.\n
-//!                                    ->UGKSSimulation, and other solvers.\n
+//!        The inherit order is: Solver->NSSolver->NSSolverStructFV/NSSolverStructFD/NSSolverUnstruct.
+//!                                    ->TurbSolver->TurbSolverStr/TurbSolverUnstr.
+//!                                    ->INCompSolver->INCompSolverStruct/INCompSolverUnstruct.
+//!                                    ->UGKSSimulation, and other solvers.
 //!        Note that, each zone can load several different solvers.
 class PHSolver
 {
@@ -62,9 +62,13 @@ private:
     //! The index of the solver.
     int index;
 
+    //! The name of the solver.
+    string solverName;
+
     //! The geometry, which is grid actually, bind to the solver.
     PHGeometry *geometry;
 
+    //!
     int key; 
 
 public:
@@ -75,8 +79,14 @@ public:
     //! Assign the solver index, the default index is '0' if without given.
     void SetIndex(int index = 0);
 
+    //! Assign the solver name, this function is for incompressible solver. 
+    void SetName(string name);
+
     //! Assign the geometry(grid) to the solver.
     void SetGeometry(PHGeometry *geometry);
+
+    //! Return the solver name,
+    inline string GetName() const;
 
     //! Return the solver index, 
     int  GetIndex() const;
@@ -84,16 +94,27 @@ public:
     //! Return the geometry(grid).
     PHGeometry *GetGeometry();
     
+    //!
     void SetKey(int key);
+
+    //!
     int  GetKey() const;
     
     //! Initialize the data, 
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitMemory() = 0;
 
+    //! Re-initialize the data, 
+    //! here it is a pure virtual function, it should be re-defined in the real solver.
+    virtual void IncompressibleInitial() {};
+
+    virtual void ReleaseMemory() = 0;
+
     //! Initialize the flow, here it is a pure virtual function, 
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitFlow() = 0;
+
+    virtual void InitProtectedFlow() {};
 
     //! Interface data communications.    
     virtual void CommunicationInterfaceData() {};
@@ -124,9 +145,9 @@ public:
     virtual void PrepareInterfaceData(Grid *grid, Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy){};
     virtual void ComputePostVisualVariables(Post_Visual * postVisualization) = 0;
     virtual void ComputePostProbesVariables(Post_Probes * postProbesVar){};
+    virtual void AirForceCoefBodies(ActionKey *actkey){};
 };
 #include "Solver.hxx"
-
 
 //! @brief GlobalSolvers stores the global solver list on each zone.
 class GlobalSolvers

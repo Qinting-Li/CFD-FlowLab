@@ -37,11 +37,11 @@ public:
     LIB_EXPORT  HoleGrid();
     LIB_EXPORT ~HoleGrid();
 
-    void SetZoneStart      ( int iZone );
-    void SetZoneEnd        ( int iZone );
-    void SetZoneAttached   ( int iZone );
-    void SetNumberOfSurface( int nSurf );
-    void SetNumberOfPoints ( int np    );
+    void SetZoneStart      (int iZone);
+    void SetZoneEnd        (int iZone);
+    void SetZoneAttached   (int iZone);
+    void SetNumberOfSurface(int nSurf);
+    void SetNumberOfPoints (int np   );
     
     int GetZoneStart      ();
     int GetZoneEnd        ();
@@ -62,16 +62,16 @@ public:
     LIB_EXPORT void DigHoles();
     LIB_EXPORT void GenerateSurfaceSpace();
     LIB_EXPORT void GeneratePointSpace();
-    LIB_EXPORT int GetCellColor( RDouble x, RDouble y, RDouble z, RDouble far );
+    LIB_EXPORT int GetCellColor(RDouble x, RDouble y, RDouble z, RDouble far);
 private:
     void GenerateCapsualSpace();
-    void ProbeBorderCell( int iType, int jType );
+    void ProbeBorderCell(int iType, int jType);
     void MeasureBoxAndCapsual();
     void ProbeCellsInHole();
-    void CopyNodeCoordinate( vector< vector< RDouble > > & r, vector< vector< RDouble > > & s, vector< int > & node );
-    void ProduceCasing( vector< vector< RDouble > > & nodeCoordinate, int i );
-    void Radial_Triangle_Intersect( vector< RDouble > & pst, vector< RDouble > & ped, vector< RDouble > & xqd, vector< RDouble > & yqd, vector< RDouble > & zqd, vector< RDouble > & pp_ist, int & pCounter );
-    void GaussElimination( vector< vector< RDouble > > & a, vector< RDouble > & b, int n, vector< RDouble > & x, int & flag );
+    void CopyNodeCoordinate(vector< vector< RDouble > > & r, vector< vector< RDouble > > & s, vector< int > & node);
+    void ProduceCasing(vector< vector< RDouble > > & nodeCoordinate, int i);
+    void Radial_Triangle_Intersect(vector< RDouble > & pst, vector< RDouble > & ped, vector< RDouble > & xqd, vector< RDouble > & yqd, vector< RDouble > & zqd, vector< RDouble > & pp_ist, int & pCounter);
+    void GaussElimination(vector< vector< RDouble > > & a, vector< RDouble > & b, int n, vector< RDouble > & x, int & flag);
 private:
     vector< vector< RDouble > > phy;
 };
@@ -107,13 +107,13 @@ public:
     LIB_EXPORT  BackgroundTree ();
     LIB_EXPORT ~BackgroundTree ();
 
-    LIB_EXPORT void Generate( int zone_st, int zone_ed );
-    LIB_EXPORT void SetUnitCellParameter( int iUnitCell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz );
-    LIB_EXPORT void SearchNodes( OversetCellCollector  * oversetCellCollector, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement );
-    LIB_EXPORT void ProbeNearestPoint( RDouble xx, RDouble yy, RDouble zz, RDouble & distance, int & index );
+    LIB_EXPORT void Generate(int zone_st, int zone_ed);
+    LIB_EXPORT void SetUnitCellParameter(int iUnitCell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz);
+    LIB_EXPORT void SearchNodes(OversetCellCollector  * oversetCellCollector, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement);
+    LIB_EXPORT void ProbeNearestPoint(RDouble xx, RDouble yy, RDouble zz, RDouble & distance, int & index);
 
-    void SetZoneViewRange( int st, int ed );
-    void SetUnitCellLocation( int iUnitCell, int iZone, int iCore, int jCore, int kCore );
+    void SetZoneViewRange(int st, int ed);
+    void SetUnitCellLocation(int iUnitCell, int iZone, int iCore, int jCore, int kCore);
     bool IsEmpty();
 private:
     void ComputeNumberOfUnitCells();
@@ -122,20 +122,20 @@ private:
     void InitFruitLevelAndInheritMapping();
     void ComputeRootSpaceParameter();
     void AppendNewFruit();
-    void AppendNewFruit( int iUnitCell );
+    void AppendNewFruit(int iUnitCell);
         
-    void SearchNodes( RDouble xx, RDouble yy, RDouble zz, int n );
-    void ComputeLocalCoordinateByNewtonMethod( RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & ss, vector< int > & node );
+    void SearchNodes(RDouble xx, RDouble yy, RDouble zz, int n);
+    void ComputeLocalCoordinateByNewtonMethod(RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & ss, vector< int > & node);
 
-    bool UnitCellCapsuleBelongsToNewNode( vector< RDouble > & capsule, vector< RDouble > & inf_plane, vector< RDouble > & sup_plane );
-    bool PointBelongsToUnitCellCapsule( RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & capsule );
-    bool PointBelongsToNewNode( RDouble xx, RDouble yy, RDouble zz, int kNode );
+    bool UnitCellCapsuleBelongsToNewNode(vector< RDouble > & capsule, vector< RDouble > & inf_plane, vector< RDouble > & sup_plane);
+    bool PointBelongsToUnitCellCapsule(RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & capsule);
+    bool PointBelongsToNewNode(RDouble xx, RDouble yy, RDouble zz, int kNode);
 
-    void ProduceNewLeftNode ( int kNode, vector< RDouble > & inf_left,  vector< RDouble > & sup_left  );
-    void ProduceNewRightNode( int kNode, vector< RDouble > & inf_right, vector< RDouble > & sup_right );
+    void ProduceNewLeftNode (int kNode, vector< RDouble > & inf_left,  vector< RDouble > & sup_left );
+    void ProduceNewRightNode(int kNode, vector< RDouble > & inf_right, vector< RDouble > & sup_right);
 
-    void AppendNewLeftNode ( int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node );
-    void AppendNewRightNode( int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node );
+    void AppendNewLeftNode (int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node);
+    void AppendNewRightNode(int iUnitCell, int kNode, vector< RDouble > & inf_new_node, vector< RDouble > & sup_new_node);
 };
 
 class OversetCellCollector 
@@ -154,16 +154,16 @@ public:
     LIB_EXPORT  OversetCellCollector ();
     LIB_EXPORT ~OversetCellCollector ();
 
-    LIB_EXPORT void RunGeometricAnalysis( int zone_st, int zone_ed );
-    LIB_EXPORT void SearchOptimalUnitCell( BackgroundTree  * backgroundTree );
+    LIB_EXPORT void RunGeometricAnalysis(int zone_st, int zone_ed);
+    LIB_EXPORT void SearchOptimalUnitCell(BackgroundTree  * backgroundTree);
     LIB_EXPORT void ResizeSourceIndexContainer();
-    LIB_EXPORT void InsertOversetParameter( vector< int > * zoneContainer, vector< int > * cellContainer );
-    LIB_EXPORT void InsertServiceParameter( vector< RDouble > * ksai, vector< int > * waiter );
-    LIB_EXPORT void CollectOversetCells( int iZone, vector< int > & cell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz );
-    LIB_EXPORT void SetNearestPointParameter( int ip, int iElement, RDouble distance, int index );
-    LIB_EXPORT void SetOptimalPointParameter( int ip, int iElement, vector< RDouble > & ss, vector< int > & node );
+    LIB_EXPORT void InsertOversetParameter(vector< int > * zoneContainer, vector< int > * cellContainer);
+    LIB_EXPORT void InsertServiceParameter(vector< RDouble > * ksai, vector< int > * waiter);
+    LIB_EXPORT void CollectOversetCells(int iZone, vector< int > & cell, vector< RDouble > & xx, vector< RDouble > & yy, vector< RDouble > & zz);
+    LIB_EXPORT void SetNearestPointParameter(int ip, int iElement, RDouble distance, int index);
+    LIB_EXPORT void SetOptimalPointParameter(int ip, int iElement, vector< RDouble > & ss, vector< int > & node);
     
-    void SetZoneViewRange( int st, int ed );
+    void SetZoneViewRange(int st, int ed);
     
 private:
     void GenerateTargetSpace();
@@ -171,7 +171,7 @@ private:
     void BcastOversetCells();
     void GenerateServiceSpace();
     void SetVirtualPointParameter();
-    void ProbeNearestPoint( BackgroundTree  * backgroundTree, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement );
+    void ProbeNearestPoint(BackgroundTree  * backgroundTree, RDouble xx, RDouble yy, RDouble zz, int ip, int iElement);
 };
 
 class OversetStructGrid
@@ -202,18 +202,18 @@ public:
     LIB_EXPORT void InitFieldNew();
     LIB_EXPORT void InitField();
 
-    LIB_EXPORT void CommunicateOversetField( int iSolver );
-    LIB_EXPORT void CorrectOversetField( int iSolver );
+    LIB_EXPORT void CommunicateOversetField(int iSolver);
+    LIB_EXPORT void CorrectOversetField(int iSolver);
 
-    int GetZoneInverseIndex( int i_view );
+    int GetZoneInverseIndex(int i_view);
 private:
     void ReadBasicParameter();
     void ProbeOversetCells();
     void GenerateSourceAndTargetSpace();
     void ProbeRelativeOversetLocation();
     void FillNodeIndexContainer();
-    void InsertOversetAndServiceParameter( OversetCellCollector  * oversetCellCollector );
-    void LinearInsertValue( int numberOfEquations, vector< RDouble > & backdrop, RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & newCellValue );
+    void InsertOversetAndServiceParameter(OversetCellCollector  * oversetCellCollector);
+    void LinearInsertValue(int numberOfEquations, vector< RDouble > & backdrop, RDouble xx, RDouble yy, RDouble zz, vector< RDouble > & newCellValue);
 };
 
 #include "OversetGridFactory.hxx"
@@ -223,14 +223,14 @@ int GetCodeOfTurbulenceModel();
 
 LIB_EXPORT void GenerateStructGridTable();
 LIB_EXPORT void DeleteStructGridTable();
-LIB_EXPORT StructGrid * GetStructGrid( int i );
+LIB_EXPORT StructGrid * GetStructGrid(int i);
 
 LIB_EXPORT OversetStructGrid * GetOversetStructGrid();
 LIB_EXPORT void CreateOversetStructGrid();
 LIB_EXPORT void DeleteOversetStructGrid();
 
-LIB_EXPORT int GetZoneInverseIndex( int i_view );
+LIB_EXPORT int GetZoneInverseIndex(int i_view);
 
-LIB_EXPORT void ComputePhysicalCoordinate( vector< vector< RDouble > > & frame, RDouble x, RDouble y, RDouble z, vector< RDouble > & r );
+LIB_EXPORT void ComputePhysicalCoordinate(vector< vector< RDouble > > & frame, RDouble x, RDouble y, RDouble z, vector< RDouble > & r);
 
 }

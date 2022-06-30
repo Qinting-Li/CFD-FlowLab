@@ -43,12 +43,18 @@ class Pre_WalldistCompute
     static const int FAST_METHOD       = 1;
     static const int SUPER_FAST_METHOD = 2;
     static const int KDTREE_METHOD     = 3;
+
+    static const int CELL_METHOD = 0;
+    static const int NODE_METHOD = 1;
+
 private:
     //! Wall distance computing method.
     //! -# 0: fast but not accurate enough.
     //! -# 1: accurate but not fast enough.
     //! -# 3: k-dimension method.
     int walldistComputeMethod;
+
+    int cellMethodOrNodeMethod;
 
     //! Grid level in multi-grid method.
     //! 0 represents the default initial finest computational mesh.
@@ -75,6 +81,8 @@ public:
     //! Compute the wall distance of nodes for overlap config.
     LIB_EXPORT void ComputeNodeDistance();
 
+    LIB_EXPORT void ComputeNodeDistanceInOtherBlock();
+
     LIB_EXPORT void ComputeWallDistForNodesList(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
 
     vector<WallStructure *> * GetWallstructureList();
@@ -91,11 +99,13 @@ private:
 
     void CheckWallDistance();
     void CheckWallDistance(UnstructGrid *grid);
+    void CheckWallDistanceByNodeMethod(UnstructGrid *grid);
 
     void PostWallDistance();
     void PostWallDistance(Grid *grid);
     void PostWallDistance(StructGrid *grid);
     void PostWallDistance(UnstructGrid *grid);
+    void PostWallDistanceByNodeMethod(UnstructGrid *grid);
 
     bool IsWalldistComputOver();
     bool IsWalldistComputOver(Grid *grid);
@@ -112,7 +122,9 @@ private:
     void ComputeWallDistance(UnstructGrid *grid);
     void ComputeWallDist2DByBinarySearching(UnstructGrid *grid);
     void ComputeWallDist3DByProjectingAccurate(UnstructGrid *grid);
+    void ComputeWallDist3DByProjectingAccurateAndNodeMethod(UnstructGrid *grid);
     void ComputeWallDist3DByProjectingFast(UnstructGrid *grid);
+    void ComputeWallDist3DByProjectingFastAndNodeMethod(UnstructGrid *grid);
     void ComputeWallDist3DByProjectingFast(StructGrid *grid);
     void ComputeNodeWallDist3DByProjectingFast(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist);
     void ComputeNodeWallDist3DByKDTreeMethod(int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *nodeWalldist);
@@ -128,7 +140,8 @@ private:
     void BuildWallStructTree();
     void BuildWallStructKDTree();
     void BuildWallStructKDTreeNode();
-    
+    void BuildWallStructKDTreeNodeInOtherBlock();
+
     RDouble ComputeDistanceOfANodeToSegment(const RDouble xcc, const RDouble ycc, const RDouble zcc,
                                             const RDouble xStart, const RDouble yStart, const RDouble zStart,
                                             const RDouble xMid, const RDouble yMid, const RDouble zMid,
@@ -143,10 +156,12 @@ private:
     void ComputeNodeDistanceByDirectMethod();
     void ComputeNodeDistanceByADTMethod();
     void ComputeNodeDistanceByKDTreeMethod();
+    void ComputeNodeDistanceByKDTreeMethodInOtherBlock();
     void ComputeNodeDistanceByDirectMethod(UnstructGrid *grid);
     void ComputeNodeDistanceForSphere(UnstructGrid *grid);
     void ComputeNodeDistanceByADTMethodForBlock(int iBlock);
-    void ComputeNodeDistanceByKDTreeMethodForBlock(int iBlock);    
+    void ComputeNodeDistanceByKDTreeMethodForBlock();
+    void ComputeNodeDistanceByKDTreeMethodForBlockInOtherBlock();
     void ComputeWallDistForNodesListByADT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByKDT(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
     void ComputeWallDistForNodesListByDirectMethod(int blockIndex, int nTotalNode, RDouble *x, RDouble *y, RDouble *z, RDouble *dist);
@@ -277,6 +292,31 @@ private:
     //! Vector type of face to node data structure.
     vector<vector<int> > face2node;
 };
+
+//! Process of generate wall distance.
+void GenerateWalldist();
+
+//!
+void AllocateWalldist();
+
+//! Compute wall distance.
+void ComputeWalldist();
+
+//! Write wall distance.
+void WriteWalldist();
+
+//!
+void GhostWalldist();
+
+//!
+void WalldistStatics();
+
+//! Dump out the wall distance to file.
+void DumpWalldistToFile(ActionKey *actkey, int iZone);
+
+
+//! If read wall distance file or not.
+bool IsReadWalldist();
 
 #include "Pre_WalldistCompute.hxx"
 

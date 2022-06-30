@@ -11,39 +11,53 @@
 #pragma warning (disable:913)
 namespace PHSPACE
 {
-void ReadGridgen(Grid **& structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
+void ReadPlot3dGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
-    //fileformat : Grid file format.
-    //             1 --- ASCII
-    //             0 --- BINARY
-    fileFormat = CheckGridgenFileIfASCII(gridgenFile);
+    //! Fileformat : Grid file format.
+    //!              1 --- ASCII
+    //!              0 --- BINARY
+    fileFormat = CheckCoorFileIfASCII(gridgenFile);
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
     if (fileFormat == 1)
     {
-        int isPlot3D = 1;
-        isPlot3D = CheckGridgenCoorASCIIFileType(gridgenFile);
-        if (isPlot3D)
-        {
-            ReadGridgenCoorASCIIPlot3D(gridgenFile, numberOfBlocks, structGrids);
-        }
-        else
-        {
-            ReadGridgenCoorASCIIGridgen(gridgenFile, numberOfBlocks, structGrids);
-        }
+        ReadPlot3DCoorASCII(gridgenFile, numberOfBlocks, structGrids);
     }
-    else if(fileFormat == 0)
+    else if (fileFormat == 0)
     {
-        ReadGridgenCoor(gridgenFile, numberOfBlocks, structGrids);
+        ReadPlot3DCoorBinary(gridgenFile, numberOfBlocks, structGrids);
     }
-    ReadGridgenBC(structGrids, numberOfBlocks, BCFile);
+    ReadBoundaryFile(structGrids, numberOfBlocks, BCFile);
 }
 
-void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+void ReadGridgenGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
+{
+    int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
+    //! Fileformat : Grid file format.
+    //!              1 --- ASCII
+    //!              0 --- BINARY
+    fileFormat = CheckCoorFileIfASCII(gridgenFile);
+    GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
+
+    if (fileFormat == 1)
+    {
+        ReadGridgenCoorASCII(gridgenFile, numberOfBlocks, structGrids);
+    }
+    else
+    {
+        ostringstream oss;
+        oss << "  Error: this situation has not been considered, for file type = BINARY, when from_gtype = Gridgen." << endl;
+        TK_Exit::ExceptionExit(oss.str());
+    }
+
+    ReadBoundaryFile(structGrids, numberOfBlocks, BCFile);
+}
+
+void ReadPlot3DCoorBinary(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
-    file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
+    file.open(coordinateFile.c_str(), ios_base::in|ios_base::binary);
     if (!file)
     {
         TK_Exit::FileOpenErrorExit(coordinateFile);
@@ -89,9 +103,6 @@ void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&
         cout << setw(wordWidth) << nj;
         cout << setw(wordWidth) << nk;
         cout << "\n";
-        //cin.get();
-
-        //delete index;
     }
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
@@ -103,7 +114,7 @@ void ReadGridgenCoor(const string &coordinateFile, int &numberOfBlocks, Grid **&
     file.clear();
 }
 
-void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+void ReadGridgenCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
     file.open(coordinateFile.c_str(),ios_base::in);
@@ -116,7 +127,7 @@ void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBloc
     structGrids = new Grid *[numberOfBlocks];
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
-        int ni,nj,nk;
+        int ni, nj, nk;
         file >> ni;
         file >> nj;
         file >> nk;
@@ -157,10 +168,10 @@ void ReadGridgenCoorASCIIGridgen(const string &coordinateFile, int &numberOfBloc
     file.clear();
 }
 
-int CheckGridgenFileIfASCII(const string &coordinateFile)
+int CheckCoorFileIfASCII(const string &coordinateFile)
 {
     fstream file;
-    file.open(coordinateFile.c_str(),ios_base::in|ios_base::binary);
+    file.open(coordinateFile.c_str(), ios_base::in|ios_base::binary);
     if (!file)
     {
         TK_Exit::FileOpenErrorExit(coordinateFile);
@@ -174,7 +185,7 @@ int CheckGridgenFileIfASCII(const string &coordinateFile)
     file.close();
     file.clear();
 
-    if(numberOfBlocks <= static_cast <int> (1e8) )
+    if(numberOfBlocks <= static_cast <int> (1e8))
     {
         return 0;
     }
@@ -184,40 +195,7 @@ int CheckGridgenFileIfASCII(const string &coordinateFile)
     }
 }
 
-int  CheckGridgenCoorASCIIFileType(const string &coordinateFile)
-{
-    fstream file;
-    file.open(coordinateFile.c_str(),ios_base::in);
-    if (!file)
-    {
-        TK_Exit::FileOpenErrorExit(coordinateFile);
-    }
-
-    int numberOfBlocks = 0;
-    file >> numberOfBlocks;
-
-    int isPlot3D = 1;
-    for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
-    {
-        int ni, nj, nk;
-        file >> ni;
-        file >> nj;
-        file >> nk;
-
-        if (ni < 0 || nj < 0 || nk < 0)
-        {
-            isPlot3D = 0;
-            break;
-        }
-    }
-
-    file.close();
-    file.clear();
-
-    return isPlot3D;
-}
-
-void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
+void ReadPlot3DCoorASCII(const string &coordinateFile, int &numberOfBlocks, Grid **&structGrids)
 {
     fstream file;
     file.open(coordinateFile.c_str(), ios_base::in);
@@ -230,7 +208,7 @@ void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlock
     structGrids = new Grid *[numberOfBlocks];
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
-        int ni,nj,nk;
+        int ni, nj, nk;
         file >> ni;
         file >> nj;
         file >> nk;
@@ -274,16 +252,16 @@ void ReadGridgenCoorASCIIPlot3D(const string &coordinateFile, int &numberOfBlock
     file.clear();
 }
 
-void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &BCFile)
+void ReadBoundaryFile(Grid **&structGrids, int &inputNumberOfBlocks, const string &BCFile)
 {
     fstream file;
-    file.open(BCFile.c_str(),ios_base::in);
+    file.open(BCFile.c_str(), ios_base::in);
     if(!file)
     {
         TK_Exit::FileOpenErrorExit(BCFile);
     }
 
-    string line,word;
+    string line, word;
     string separator = " =\t\r\n#$,;";
 
     ReadNewLine(file, line);
@@ -300,7 +278,7 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
 
     if (numberOfBlocks != inputNumberOfBlocks)
     {
-        TK_Exit::ExceptionExit("边界文件分块数与网格文件分块数不一致!\n");
+        TK_Exit::ExceptionExit("The number of blocks in boundary file is inconsistent with the number of blocks in grid file!\n");
     }
 
     int nDim = GetDim();
@@ -313,18 +291,17 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
     int *blockProcessorINP = GetZoneProcessorID_INP();
 
     string boundaryName[100] = {"NO_BOUNDARY_CONDITION", "EXTRAPOLATION", "SOLID_SURFACE", "SYMMETRY", 
-                            "FARFIELD", "INFLOW", "OUTFLOW", "POLE", "Wall_8", "Wall_9", "Wall_10", "Wall_11", 
-                            "Wall_12", "Wall_13", "Wall_14", "Wall_15", "Wall_16", "Wall_17", "Wall_18", "Wall_19",
-                            "Wall_20", "Wall_21", "Wall_22", "Wall_23", "Wall_24", "Wall_25", "Wall_26", "Wall_27", 
-                            "Wall_28", "Wall_29", "Wall_30", "Wall_31", "Wall_32", "Wall_33", "Wall_34", "Wall_35",
-                            "Wall_36", "Wall_37", "Wall_38", "Wall_39", "Wall_40", "Wall_41", "Wall_42", "Wall_43",
-                            "Wall_44", "Wall_45", "Wall_46", "Wall_47", "Wall_48", "Wall_49", "Wall_50"};
+                                "FARFIELD", "INFLOW", "OUTFLOW", "POLE", "Wall_8", "Wall_9", "Wall_10", "Wall_11", 
+                                "Wall_12", "Wall_13", "Wall_14", "Wall_15", "Wall_16", "Wall_17", "Wall_18", "Wall_19",
+                                "Wall_20", "Wall_21", "Wall_22", "Wall_23", "Wall_24", "Wall_25", "Wall_26", "Wall_27", 
+                                "Wall_28", "Wall_29", "Wall_30", "Wall_31", "Wall_32", "Wall_33", "Wall_34", "Wall_35",
+                                "Wall_36", "Wall_37", "Wall_38", "Wall_39", "Wall_40", "Wall_41", "Wall_42", "Wall_43",
+                                "Wall_44", "Wall_45", "Wall_46", "Wall_47", "Wall_48", "Wall_49", "Wall_50"};
     boundaryName[52] = "PRESSURE_INLET";
     boundaryName[62] = "PRESSURE_OUTLET";
     boundaryName[71] = "POLE1";
     boundaryName[72] = "POLE2";
     boundaryName[73] = "POLE3";
-    boundaryName[99] = "PERIODIC";
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)
     {
@@ -347,11 +324,10 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
         int ndif = ABS(ni - grid->GetNI()) + ABS(nj - grid->GetNJ()) + ABS(nk - grid->GetNK()) ;
         if (ndif != 0)
         {
-            cout << "第" << iZone + 1 << "块边界条件文件里的维数与网格文件中的维数不一致!\n";
+            cout << "No." << iZone + 1 << "The number of IJK-Dimension in boundary file is inconsistent with the number of IJK-Dimension in grid file!\n";
         }
 
         line = FindNextWord(line, word, separator);
-
 
         if (word == "proc")
         {
@@ -371,7 +347,7 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
         from_string <int> (numberOfBCRegion, word, std::dec);
 
         grid->CreateCompositeBCRegion(numberOfBCRegion);
-        CompositeStructBC * compositeBCRegion = grid->GetCompositeBCRegion();
+        StructBCSet *structBCSet = grid->GetStructBCSet();
         for (int iBCRegion = 0; iBCRegion < numberOfBCRegion; ++ iBCRegion)
         {
             int imin, imax, jmin, jmax, kmin, kmax, BCType;
@@ -403,7 +379,7 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
             from_string <int> (BCType, word, std::dec);
 
             StructBC *BCRegions = new StructBC(iZone, iBCRegion);
-            compositeBCRegion->SetBCRegion(iBCRegion, BCRegions);
+            structBCSet->SetBCRegion(iBCRegion, BCRegions);
             BCRegions->SetIJKRegion(imin, imax, jmin, jmax, kmin, kmax);
             BCRegions->SetBCType(BCType);
 
@@ -418,7 +394,7 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
                 else
                 {
                     bcName = boundaryName[BCType];
-                    if ((BCType >7) && (BCType <51))
+                    if ((BCType > 7) && (BCType < 51))
                     {
                         BCType = 2;
                         BCRegions->SetBCType(BCType);
@@ -471,9 +447,9 @@ void ReadGridgenBC(Grid **&structGrids, int &inputNumberOfBlocks, const string &
         }
     }
 
-    if(!blockProcessFlag)
+    if (!blockProcessFlag)
     {
-        delete []blockProcessorINP;
+        delete [] blockProcessorINP;
         SetZoneProcessID_INP(0);
     }
 
