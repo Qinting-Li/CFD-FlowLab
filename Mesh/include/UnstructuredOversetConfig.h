@@ -9,9 +9,9 @@
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//! @file      UnstructuredOversetConfig.cpp
+//! @file      UnstructuredOversetConfig.h
 //! @brief     Unstructured grid overset configuration.
-//! @author    Chang Xinhua, He Kun.
+//! @author    Chang Xinhua, He Kun, Zhang Laiping.
 #pragma once
 #include "PHMpi.h"
 #include "OversetKDTree.h"

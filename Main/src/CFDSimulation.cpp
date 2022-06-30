@@ -187,7 +187,7 @@ void ParametersSelfCheckForCFD()
             TK_Exit::ExceptionExit(oss);
         }
     }
-    //! Judge if use wenn scheme.
+    //! Judge if use wenn scheme, provided by Li Qin.
     int isWennScheme = 0;
     string str_limiter_name = GlobalDataBase::GetStrParaFromDB("str_limiter_name");
     if (str_limiter_name == "weno3_js"
