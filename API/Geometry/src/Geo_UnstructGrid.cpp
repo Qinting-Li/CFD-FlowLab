@@ -8426,7 +8426,8 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     set< DataStruct_Sort<int> >::iterator ifind;
     DataStruct_Sort<int> fysort;
 
-    UnstructBCSet **bcr = grid->GetBCRecord();
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     face2nodelist.resize(0);
     linkmap.resize(0);
@@ -8437,13 +8438,15 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        if (bcType != bcr[iFace]->GetKey())
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
+
+        if (bcType != bcRegion->GetBCType())
         {
             nodepos += node_number_of_each_face[iFace];
             continue;
         }
 
-        if (bcr[iFace]->GetBCName() != bcName)
+        if (bcRegion->GetBCName() != bcName)
         {
             nodepos += node_number_of_each_face[iFace];
             continue;
