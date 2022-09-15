@@ -11,8 +11,8 @@
 &ensp;&ensp;&ensp;&ensp;风雷软件更多动态和Demo请登录以下网址查看：
 
 - 官网地址: http://www.cardc.cn/nnw/software/phenglei
-- 代码库地址：https://forge.osredm.com/p68217053/PHengLEI
-- 算例库地址：https://forge.osredm.com/p68217053/PHengLEI-TestCases
+- 代码库地址：https://forge.osredm.com/PHengLEI/PHengLEI
+- 算例库地址：https://forge.osredm.com/PHengLEI/PHengLEI-TestCases
 - 代码参考文档地址：http://116.63.141.248:8088
 - 论坛（常见问题、算例展示、技术分享）地址：https://osredm.com/forums/theme/38
 
@@ -37,8 +37,8 @@
 
 1. 环境准备，安装git，官网地址：https://git-scm.com/;
 2. 点击右上角Fork按钮；
-3. Fork完成后，将生成并跳转到新的仓库，复制新仓库版本库地址，如https://git.osredm.com/p68217053/PHengLEI.git;
-4. 在本地选择一个目录，右键打开git bash，输入命令进行代码克隆，如git clone https://git.osredm.com/p68217053/PHengLEI.git;
+3. Fork完成后，将生成并跳转到新的仓库，复制新仓库版本库地址，如https://git.osredm.com/PHengLEI/PHengLEI.git;
+4. 在本地选择一个目录，右键打开git bash，输入命令进行代码克隆，如git clone https://git.osredm.com/PHengLEI/PHengLEI.git;
 5. 输入用户名和密码，其中用户名是指上面命令中p开头的用户名，比如p68217053；
 6. 项目克隆完成后，进入项目目录，默认分支为master分支，可通过命令切换到ActiveBranch分支，如git checkout ActiveBranch;
 7. 切换到开发分支后，可输入git log查看日志，确认当前版本。
