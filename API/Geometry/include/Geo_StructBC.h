@@ -290,7 +290,7 @@ void GhostCell2D(PHArray<T, 2> &w, int ni, int nj)
         w(ni+1, j) = w(ni, j);
     }
 
-    for (int i = - 1; i <= ni + 1; ++ i)
+    for (int i = -1; i <= ni + 1; ++ i)
     {
         w(i, -1 ) = w(i, 0);
         w(i, nj+1) = w(i, nj);
@@ -396,11 +396,13 @@ void GhostCell3D(PHArray<T, 4> &w, int ni, int nj, int nk, int nm)
                     w(0 , j, k, m) = w(1   , j, k, m);
                     w(ni, j, k, m) = w(ni-1, j, k, m);
                 }
+
                 for (int i = 0; i <= ni; ++ i)
                 {
                     w(i, 0 , k, m) = w(i, 1   , k, m);
                     w(i, nj, k, m) = w(i, nj-1, k, m);
                 }
+
                 //! Initialize volume in second row of ghost cells.
                 for (int j = 0; j <= nj; ++ j)
                 {

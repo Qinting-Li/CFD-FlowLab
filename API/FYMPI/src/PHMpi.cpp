@@ -100,7 +100,6 @@ void Initialization()
     int argc = 0;
     char ***argv = 0;
 
-    //int err = MPI_Init(0,0);
     PH_Init(argc, argv);
     PH_Rank(myID);
 
@@ -109,7 +108,7 @@ void Initialization()
     SetNumberOfProcessor(numberOfProcessor);
     PHMPI::BuildProcessorTree();
     string proc_name;
-    PH_Get_processor_name(proc_name);
+    PH_GetProcessorName(proc_name);
 
     ostringstream oss;
     oss << "Process " << myID << " numberOfProcessor = " << numberOfProcessor << " name = " << proc_name << endl;
@@ -383,6 +382,30 @@ LIB_EXPORT int GetLocalZoneIDToGlobalZoneID(int localZoneID)
 
     return (*localZoneIDToGlobalZoneID)[localZoneID];
 }
+
+LIB_EXPORT int GetGlobalZoneIDToLocalZoneID(int globalZoneIndex)
+{
+    int localZoneIndex = -1;
+
+    int numberOfZones = PHMPI::GetNumberofLocalZones();
+
+    for (int iZone = 0; iZone < numberOfZones; ++ iZone)
+    {
+        if (GetLocalZoneIDToGlobalZoneID(iZone) == globalZoneIndex)
+        {
+            localZoneIndex = iZone;
+            break;
+        }
+    }
+
+    if (localZoneIndex == -1)
+    {
+        cout << "Error: Could not find out the local zone index !" << endl;
+    }
+
+    return localZoneIndex;
+}
+
 
 int GetNumberOfProcStructUsed()
 {
@@ -1406,10 +1429,10 @@ bool IsNeedNonBlockingCommunication(const ActionKey *actkey)
     {
         return true;
     }
-    if (actkey->action == COMMCELLIBLANK)
+   /* if (actkey->action == COMMCELLIBLANK)
     {
         return true;
-    }
+    }*/
     if (actkey->action == UPDATE_INTERPOINT_DATA)
     {
         return true;
@@ -1892,13 +1915,13 @@ void PH_CompareMaxMin(RDouble &local_data, int flag)
     RDouble global_data = 0.0;
     if (flag == MAX)
     {
-        MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        //PH_AllreduceSepMode(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MAX);
+        MPI_Allreduce(&local_data, &global_data, 1, PH_MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        //PH_AllreduceSepMode(&local_data, &global_data, 1, PH_MPI_DOUBLE, MPI_MAX);
     }
     else if (flag == MIN)
     {
-        MPI_Allreduce(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
-        //PH_AllreduceSepMode(&local_data, &global_data, 1, MPI_DOUBLE, MPI_MIN);
+        MPI_Allreduce(&local_data, &global_data, 1, PH_MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        //PH_AllreduceSepMode(&local_data, &global_data, 1, PH_MPI_DOUBLE, MPI_MIN);
     }
     local_data = global_data;
 #endif

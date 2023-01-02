@@ -18,7 +18,7 @@ LIB_EXPORT void Data_Field::UpdateDataPtr(const string &name, void *data)
     pair<set < Data_IndexData > ::iterator, bool> ret = dataSet->insert(Data_IndexData(name, data));
     if (!ret.second)
     {
-        cout << "Warning!!! UpdateDataPtr False: " << name << endl;
+        cout << "    Warning: UpdateDataPtr false, inserted repeatedly: " << name << " !!!" << endl;
     }
 }
 

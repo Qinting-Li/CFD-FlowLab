@@ -139,9 +139,9 @@ void LESSolver::CompareOutStepOfFlowfieldFile(int outnstepofNS, int outnstepofTu
 //! Get the file name for Residual dumping.
 const string LESSolver::GetRestartFileName()
 {
-    string turbfile = "turbres.dat";
-    GlobalDataBase::GetData("turbfile", &turbfile, PHSTRING, 1);
-    return turbfile;
+    string turbFile = "turbres.dat";
+    GlobalDataBase::GetData("turbFile", &turbFile, PHSTRING, 1);
+    return turbFile;
 }
 
 LIB_EXPORT Param_LESSolver *LESSolver::GetControlParameters()

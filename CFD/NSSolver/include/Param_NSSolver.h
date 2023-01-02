@@ -54,8 +54,17 @@ public:
     //! Get if carry out precondition or not.
     int GetIfLowSpeedPrecon() const;
 
+    //! Get coefficient K for preconditioned reference Mach number.
+    RDouble GetPreconCoefficient() const;
+
+    //! Get precondition method for Farfield Boundary Condition.
+    int GetPreconFarFieldBCMethod() const;
+
     //! Get if ideal gas state .
     int GetIfIdealGasState() const;
+
+    //! Get Reference imensional velocity .
+    RDouble GetReferenceDimensionalVelocity() const;
 
     //! Get attacked of angle.
     RDouble GetAoA() const;
@@ -157,6 +166,8 @@ public:
 
     int GetLocalCFLFlag() const;
 
+    RDouble GetCharacteristicLength() const;
+
 private:
     int intervalStepForce;
 
@@ -179,8 +190,17 @@ private:
     //! For incompressible flow (mach < 0.3), using precondition method or not.
     int ifLowSpeedPrecon;
 
+    //! Coefficient K for preconditioned reference Mach number.
+    RDouble kPreconCoeff;
+
+    //! For incompressible flow (mach < 0.3), choose precondition method for Farfield Boundary Condition.
+    int preconFarfieldBCMethod;
+
     //! judge if ideal gas state or not.
     int nIdealState;
+
+    //! Reference dimensional velocity.
+    RDouble refDimensionalVelocity;
 
     //! Angle of attacked.
     double AoA;
@@ -276,6 +296,8 @@ private:
     //!   -# 0: Global unified CFL number.\n
     //!   -# 1: Local CFL number.
     int isUseLocalCFL;
+
+    RDouble knLength; //the characteristic length for computation of Knudsen number.
 };
 
 #include "Param_NSSolver.hxx"

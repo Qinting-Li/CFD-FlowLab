@@ -25,9 +25,14 @@
 #include "TurbSolverUnstr.h"          //! Unstructured turbulent solver.
 #include "TurbSolverStructFD.h"       //! Structured FD turbulent solver.
 
+#include "TransitionSolver.h"               //! Base transition solver.
+#include "TransitionSolverStruct.h"         //! Structured transition solver.
+#include "TransitionSolverUnstr.h"          //! Unstructured transition solver.
+
 #ifdef USE_PBSOLVER
-#include "PBS.h"                     //! Pressure based solver for incompressible flow. 
+#include "PBS.h"                      //! Pressure based solver for incompressible flow. 
 #endif
+
 
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"

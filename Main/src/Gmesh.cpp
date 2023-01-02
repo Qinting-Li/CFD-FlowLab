@@ -31,7 +31,7 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
     }
     else if (etype == PENTA_15)
     {
-        //! triangularPrism
+        //! TriangularPrism
         node_cgns[7 ] = node[9 ];
         node_cgns[8 ] = node[7 ];
         node_cgns[9 ] = node[8 ];
@@ -40,7 +40,7 @@ void ElemReorderGmsh2CGNS(int etype, int *node, int *node_cgns, int nvertex)
     }
     else if (etype == PENTA_18)
     {
-        //! triangularPrism
+        //! TriangularPrism
         node_cgns[7 ] = node[9 ];
         node_cgns[8 ] = node[7 ];
         node_cgns[9 ] = node[8 ];
@@ -96,6 +96,7 @@ GmeshElem::GmeshElem()
 
 GmeshElem::~GmeshElem()
 {
+    //conn_list = new int * [ntype];
     for (int i = 0; i < ntype; ++ i)
     {
         delete [] conn_list[i];
@@ -127,6 +128,7 @@ void CreateValueSet(vector<int> &value_container, set<int> &value_set)
 
 void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_container, vector<int> &number_container, vector<int> &index_container, vector<int> &bctype_container, int *e_nvertex)
 {
+    //找出所有不同的单元类型
     set<int> elem_type_set;
     for (std::size_t i = 0; i < type_container.size(); ++ i)
     { 
@@ -196,9 +198,11 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
         }
     }
 
+    //找出所有不同的边界类型
     set<int> bc_type_set;
     CreateValueSet(bctype_container, bc_type_set);
 
+    //删除内边界
     bc_type_set.erase(0);
 
     //! Determine the number of boundary conditions for this zone.
@@ -245,6 +249,7 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
 
         base_cgns_nBCElem         [iBCRegion] = nBCElem;
         base_cgns_bc_conn_list    [iBCRegion] = new int [nBCElem];
+        //base_cgns->bc_type        [iBCRegion] = bocoType;
         base_cgns_bc_elem_set_type[iBCRegion] = ptsetType;
         base_cgns_bc_grid_location[iBCRegion] = igr;
 
@@ -269,6 +274,7 @@ void GmeshElem::TreatElements(CGNSFactory *factory_cgns, vector<int> &type_conta
 
 Gmesh::Gmesh()
 {
+    //vector<string> keyword;
     keyword.push_back("MeshFormat");
     keyword.push_back("Nodes");
     keyword.push_back("$Elements");
@@ -574,6 +580,75 @@ void Gmesh::ReadNodes(fstream &file, CGNSFactory *factory_cgns)
     }
 }
 
+//$MeshFormat
+//2.2 0 8
+//$EndMeshFormat
+//$Nodes
+//6 six mesh nodes:
+//1 0.0 0.0 0.0 node #1: coordinates (0.0, 0.0, 0.0)
+//2 1.0 0.0 0.0 node #2: coordinates (1.0, 0.0, 0.0)
+//3 1.0 1.0 0.0 etc.
+//4 0.0 1.0 0.0
+//5 2.0 0.0 0.0
+//6 2.0 1.0 0.0
+//$EndNodes
+//$Elements
+//2 two elements:
+//1 3 2 99 2 1 2 3 4 quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4
+//2 3 2 99 2 2 5 6 3 quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3
+//$EndElements
+//$NodeData
+//1 one string tag:
+//"A scalar view" the name of the view ("A scalar view")
+//1 one real tag:
+//0.0 the time value (0.0)
+//3 three integer tags:
+//0 the time step (0; time steps always start at 0)
+//1 1-component (scalar) field
+//6 six associated nodal values
+//1 0.0 value associated with node #1 (0.0)
+//2 0.1 value associated with node #2 (0.1)
+//3 0.2 etc.
+//4 0.0
+//5 0.2
+//6 0.4
+//$EndNodeData
+
+//2 two elements:
+//1 3 2 99 2 1 2 3 4 quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4
+//2 3 2 99 2 2 5 6 3 quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3
+
+//elm-number
+//is the number (index) of the n-th element in the mesh; elm-number must be a
+//postive (non-zero) integer. Note that the elm-numbers do not necessarily have
+//to form a dense nor an ordered sequence.
+//elm-type
+//number-of-tags
+//gives the number of integer tags that follow for the n-th element. By default,
+//the first tag is the number of the physical entity to which the element belongs;
+//the second is the number of the elementary geometrical entity to which the
+//element belongs; the third is the number of mesh partitions to which the element
+//belongs, followed by the partition ids (negative partition ids indicate ghost
+//cells). A zero tag is equivalent to no tag.
+
+//number-of-elements
+//elm-number elm-type number-of-tags < tag > ... node-number-list
+
+//quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4
+//#1 : 3-node triangle.type 
+//elm-number elm-type number-of-tags physical    elementary 
+//1           2          2            0          2
+//1 2 2 0 2 1 2 3 
+//2 2 2 0 2 2 4 3 
+//3 2 2 0 2 5 6 7  
+//
+//35 27 2 1 0 25 17 26 27 28
+//36 27 2 1 0 17 18 29 30 31
+//37 27 2 1 0 18 19 32 33 34
+//38 27 2 1 0 19 11 35 36 37
+//39 27 2 1 0 11 12 38 39 40
+//40 27 2 1 0 12 23 41 42 43 
+
 void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
 {
     string line,word;
@@ -587,6 +662,7 @@ void Gmesh::ReadElements(fstream &file, CGNSFactory *factory_cgns)
 
     getline(file,line);
 
+    //所有单元，包括边界单元
     int elements = 0;
 
     line = FindNextWord(line,word,separator);

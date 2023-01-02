@@ -34,20 +34,20 @@ public:
 
 public:
     Geo_Face();
-    Geo_Face(const int & le, const int & re, const int & id, int maxFaceID = 102400);
-    Geo_Face(const Geo_Face & rhs);
-    Geo_Face & operator = (const Geo_Face & rhs);
+    Geo_Face(const int &le, const int &re, const int &id, int maxFaceID = 102400);
+    Geo_Face(const Geo_Face &rhs);
+    Geo_Face & operator = (const Geo_Face &rhs);
     ~Geo_Face();
 
 public:
     //! Get face id.
     int GetID() const { return faceID; }
-    void SetID(const int & id) { this->faceID = id; }
+    void SetID(const int &id) { this->faceID = id; }
 
     int hash_key() const;
 
     bool operator < (const Geo_Face &rhs) const;
-    friend bool operator == (const Geo_Face & face1, const Geo_Face & face2)
+    friend bool operator == (const Geo_Face &face1, const Geo_Face &face2)
     {
         if (&face1 == &face2) return true;
 

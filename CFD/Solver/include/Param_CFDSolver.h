@@ -144,6 +144,10 @@ public:
 
     int GetIsOverLapping() const;
 
+    RDouble GetSkewnessAngle() const;
+    //! Get parameter judge whether modify Wenn Scheme.
+    int GetWennSchemeFlag() const;
+
 private:
     string restartNSFile;
     string resSaveFile;
@@ -197,7 +201,9 @@ private:
     RDouble TorqueRefZ;
 
     int isOverset;
+    int isWennScheme;
 
+    RDouble skewnessAngle;
 };
 
 #include "Param_CFDSolver.hxx"

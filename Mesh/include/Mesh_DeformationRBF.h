@@ -70,7 +70,7 @@ public:
     ~Mesh_DeformationRBF();
 
     void SetNumberOfReferenceCP(int numberOfReferenceCPIn);
-    void SetInfluencePara(int influenceParaIn);
+    void SetInfluencePara(RDouble influenceParaIn);
 
 private:
     void TransformGrid();
@@ -87,6 +87,6 @@ RDouble Wendland  (RDouble distance, RDouble radius);
 RDouble WendlandC0(RDouble distance, RDouble radius);
 RDouble WendlandC2(RDouble distance, RDouble radius);
 RDouble WendlandC4(RDouble distance, RDouble radius);
-void MatrixInverse(vector< vector< RDouble > > &maxtrix, const int size);
+//void MatrixInverse(vector< vector< RDouble > > &maxtrix, const int size);
 
 }

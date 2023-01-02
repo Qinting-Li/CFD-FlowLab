@@ -63,6 +63,7 @@ private:
 protected:
     void WriteFaceBC(const string &out_grid_file, Grid **grids_in);
     void WriteFaceBoundaryName(const string &out_grid_file, Grid **grids_in);
+    void WriteVolumeName(const string &out_grid_file, Grid **grids_in);
     void WriteCellToNode(const string &targetGridFileName, Grid **grids_in);
 };
 
@@ -94,6 +95,9 @@ void DumpBoundaryInfo(const set< pair<int, string> > &bcNamePairSet);
 
 void WriteBCNameInfo(const string &gridFileName, Grid **grids_in, int nBlocks);
 void DumpBCNameInfo(const set< pair<int, string> > &bcNamePairSet, const string &gridFileName);
+
+void DumpVCNameFile(const set< pair<int, string> > &vcNamePairSet, const string &gridFileName);
+void DumpVolumeConditionFile(const set< pair<int, string> > &vcNamePairSet);
 
 void ComputeCharacteristicBoundary(Grid *grid_in, DataContainer *data);
 void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data);

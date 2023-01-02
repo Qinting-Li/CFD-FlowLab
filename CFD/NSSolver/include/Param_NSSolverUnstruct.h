@@ -40,8 +40,6 @@ public:
 
     int GetLimitVariables() const;
 
-    RDouble GetSkewnessAngle() const;
-
     int GetSliceAxis() const;
 
     RDouble GetSlicePostion() const;
@@ -74,8 +72,6 @@ private:
     int limitVector;
 
     int limitVariables;
-
-    RDouble skewnessAngle;
 
     int sliceAxis;
 

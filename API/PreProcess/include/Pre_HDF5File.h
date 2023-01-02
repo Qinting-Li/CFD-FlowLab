@@ -47,6 +47,7 @@ private:
     void WriteInterfaceInfo(hid_t loc_id, Grid *gridIn);
     void WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID);
  //   void WritePartitionInfo(hid_t loc_id, Grid *gridIn, int gridID);
+    void WriteVolumeCondition(hid_t loc_id, Grid *gridIn);
 
     void WriteStructGrid(hid_t loc_id, Grid *gridIn);
     void WriteBCRegion(hid_t loc_id, Grid *gridIn);
@@ -101,6 +102,7 @@ private:
 
     void ReadGridCoordinates(hid_t loc_id, Grid *gridIn);
     void ReadInterfaceInfo(hid_t loc_id, Grid *gridIn);
+    void ReadVolumeCondition(hid_t loc_id, Grid *gridIn);
 
     void ReadStructGrid(hid_t loc_id, int iZone);
     void ReadBCRegion(hid_t loc_id, Grid *gridIn);

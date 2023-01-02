@@ -14,9 +14,9 @@ namespace PHSPACE
 void ReadPlot3dGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
-    //! Fileformat : Grid file format.
-    //!              1 --- ASCII
-    //!              0 --- BINARY
+    //! Fileformat: Grid file format.
+    //!             1 --- ASCII
+    //!             0 --- BINARY
     fileFormat = CheckCoorFileIfASCII(gridgenFile);
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
@@ -34,9 +34,9 @@ void ReadPlot3dGrid(Grid **&structGrids, int &numberOfBlocks, const string &grid
 void ReadGridgenGrid(Grid **&structGrids, int &numberOfBlocks, const string &gridgenFile, const string &BCFile)
 {
     int fileFormat = GlobalDataBase::GetIntParaFromDB("fileformat");
-    //! Fileformat : Grid file format.
-    //!              1 --- ASCII
-    //!              0 --- BINARY
+    //! Fileformat: Grid file format.
+    //!             1 --- ASCII
+    //!             0 --- BINARY
     fileFormat = CheckCoorFileIfASCII(gridgenFile);
     GlobalDataBase::UpdateData("fileformat", &fileFormat, PHINT, 1);
 
@@ -103,6 +103,9 @@ void ReadPlot3DCoorBinary(const string &coordinateFile, int &numberOfBlocks, Gri
         cout << setw(wordWidth) << nj;
         cout << setw(wordWidth) << nk;
         cout << "\n";
+        //cin.get();
+
+        //delete index;
     }
 
     for (int iZone = 0; iZone < numberOfBlocks; ++ iZone)

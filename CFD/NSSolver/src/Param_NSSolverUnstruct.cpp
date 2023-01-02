@@ -25,8 +25,6 @@ LIB_EXPORT void Param_NSSolverUnstruct::Init()
 
     limitVariables = GlobalDataBase::GetIntParaFromDB("limitVariables");
 
-    skewnessAngle = GlobalDataBase::GetDoubleParaFromDB("skewnessAngle");
-
     sliceAxis = GlobalDataBase::GetIntParaFromDB("sliceAxis");
 
     slicePostion = GlobalDataBase::GetDoubleParaFromDB("slicePostion");

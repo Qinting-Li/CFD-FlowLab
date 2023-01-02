@@ -35,6 +35,7 @@ FaceProxy::FaceProxy()
 
     ns_facevar   = 0;
     turb_facevar = 0;
+    transition_facevar = 0;
     geom_proxy   = 0;
 
     next = 0;
@@ -65,6 +66,7 @@ FaceProxy::~FaceProxy()
 
     delete ns_facevar;
     delete turb_facevar;
+    delete transition_facevar;
     delete geom_proxy;
 }
 
@@ -167,6 +169,17 @@ void FaceProxy::SetTurbFaceValue(TurbFaceValue *facevar)
     turb_facevar = facevar;
 }
 
+TransitionFaceValue * FaceProxy::GetTransitionFaceValue()
+{
+    return transition_facevar;
+}
+
+void FaceProxy::SetTransitionFaceValue(TransitionFaceValue *facevar)
+{
+    if (transition_facevar) delete transition_facevar;
+    transition_facevar = facevar;
+}
+
 GeomProxy * FaceProxy::GetGeomProxy()
 {
     return geom_proxy;
@@ -221,6 +234,24 @@ TurbFaceValue::TurbFaceValue(int neqn, int nlen)
 }
 
 TurbFaceValue::~TurbFaceValue()
+{
+    delete [] mul;    mul = NULL;
+    delete [] mut;    mut = NULL;
+
+    DelPointer2(mlt);
+    DelPointer2(prim);
+}
+
+TransitionFaceValue::TransitionFaceValue(int neqn, int nlen)
+{
+    mul = new RDouble[nlen];
+    mut = new RDouble[nlen];
+
+    mlt  = NewPointer2<RDouble>(neqn, nlen);
+    prim = NewPointer2<RDouble>(neqn, nlen);
+}
+
+TransitionFaceValue::~TransitionFaceValue()
 {
     delete [] mul;    mul = NULL;
     delete [] mut;    mut = NULL;

@@ -46,7 +46,7 @@ inline void Grid::SetNBoundFace(int nBoundFace)
 
 inline int Grid::GetNTotalFace() const
 {
-    return nTotalFace; 
+    return nTotalFace;
 }
 
 inline int Grid::GetNTotalCell() const
@@ -108,6 +108,11 @@ inline int Grid::GetZoneLocalID() const
     return index->GetLocalIndex();
 }
 
+inline SimpleVC * Grid::GetVolumeConditionIn()
+{
+    return this->volumeCondition;
+}
+
 inline void Grid::SetInterfaceInfo(InterfaceInfo *interfaceInfo)
 {
     if (!interfaceInfo) return;
@@ -115,7 +120,7 @@ inline void Grid::SetInterfaceInfo(InterfaceInfo *interfaceInfo)
     delete this->interfaceInfo;
     this->interfaceInfo = interfaceInfo;
 
-    delete interfaceFields;
+    if (interfaceFields) delete interfaceFields;    
     interfaceFields = new InterfaceFields(interfaceInfo);
 }
 
@@ -301,6 +306,15 @@ inline vector<vector<RDouble> > Grid::GetZoneProbesCoordinates() const
 inline void Grid::SetZoneProbesCoordinates(vector<vector<RDouble> > &zoneProbesCoordinatesIn)
 {
     this->zoneProbesCoordinates = zoneProbesCoordinatesIn;
+}
+
+inline void Grid::SetVolumeCondition(SimpleVC *volumeConditionIn)
+{
+    if (volumeCondition)
+    {
+        delete volumeCondition;
+    }
+    this->volumeCondition = volumeConditionIn;
 }
 
 inline void Grid::SetFileIndex(int fileIndex)

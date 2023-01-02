@@ -113,51 +113,6 @@ inline RDouble Param_TurbSolver::GetKW_sigmaK2() const
     return KW_sigmaK2;
 }
 
-inline RDouble Param_TurbSolver::GetTransition_ca1() const
-{
-    return transition_ca1;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_ca2() const
-{
-    return transition_ca2;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_ce1() const
-{
-    return transition_ce1;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_ce2() const
-{
-    return transition_ce2;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_dct() const
-{
-    return transition_dct;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_df() const
-{
-    return transition_df;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_cct() const
-{
-    return transition_cct;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_s1() const
-{
-    return transition_s1;
-}
-
-inline RDouble Param_TurbSolver::GetTransition_ccf() const
-{
-    return transition_ccf;
-}
-
 inline RDouble Param_TurbSolver::GetFreeStreamViscosity() const
 {
     return freeStreamViscosity;
@@ -176,4 +131,9 @@ inline int Param_TurbSolver::GetKindOfTurbSource() const
 inline int Param_TurbSolver::GetWennSchemeFlag() const
 {
     return isWennScheme;
+}
+
+inline int Param_TurbSolver::UsingConservativeForm() const
+{
+    return rhoFlag;
 }

@@ -41,6 +41,31 @@ LIB_EXPORT void Pre_GridConversion::Run()
     Conversion();
 }
 
+void Pre_GridConversion::WriteVolumeName(const string &out_grid_file, Grid **grids_in)
+{
+    int hasVolumeCondition = GlobalDataBase::GetIntParaFromDB("hasVolumeCondition");
+    if (!hasVolumeCondition)
+    {
+        return;
+    }
+
+    PrintToWindow("    Writing volume name to .vcname file ....\n");
+
+    set< pair<int, string> > vcNamePairSet;
+    for (int iZone = 0; iZone < nBlocks; ++ iZone)
+    {
+        SimpleVC *volumeCondition = grids_in[iZone]->GetVolumeConditionIn();
+
+        int vcType = volumeCondition->GetVCType();
+        string vcName = volumeCondition->GetVCName();
+        pair<int, string> vcNamePair(vcType, vcName);
+        vcNamePairSet.insert(vcNamePair);
+    }
+
+    DumpVCNameFile(vcNamePairSet, out_grid_file);
+    DumpVolumeConditionFile(vcNamePairSet);
+}
+
 void Pre_GridConversion::WriteFaceBoundaryName(const string &out_grid_file, Grid **grids_in)
 {
     PrintToWindow("    Writing face boundary name to .bcname file ....\n");
@@ -52,13 +77,18 @@ void Pre_GridConversion::WriteFaceBoundaryName(const string &out_grid_file, Grid
     //int nBlocks = 1;
     for (int iZone = 0; iZone < nBlocks; ++ iZone)
     {
-        UnstructGrid *grid = UnstructGridCast(grids[0]);
+        UnstructGrid *grid = UnstructGridCast(grids[iZone]);
         int nBoundFace = grid->GetNBoundFace();
 
         UnstructBCSet **bcr = grid->GetBCRecord();
         for (cgsize_t iFace = 0; iFace < nBoundFace; iFace ++)
         {
             int bcType = bcr[iFace]->GetKey();
+            if (bcType == PHENGLEI::INTERFACE)
+            {
+                continue;
+            }
+
             const string &bcName = bcr[iFace]->GetBCName();
             pair<int, string> bcNamePair(bcType, bcName);
             bcNamePairSet.insert(bcNamePair);
@@ -449,6 +479,59 @@ void DumpBCNameInfo(const set< pair<int, string> > &bcNamePairSet, const string 
         file << "  int bcType = " << bcType << ";" << endl;
         file << "}" << endl;
     }
+    PHSPACE::CloseFile(file);
+}
+
+void DumpVCNameFile(const set< pair<int, string> > &vcNamePairSet, const string &gridFileName)
+{
+    fstream file;
+    string VCNameFileName = ChangeExtensionOfFileName(gridFileName, "vcname");
+    PHSPACE::OpenSerialFile(file, VCNameFileName, ios_base::out);
+
+    file << "# Volume Condition Information of Grid " << gridFileName << endl;
+    file << "# nVolumeConditions: number of global volume conditions." << endl;
+    file << "# vcName             : Volume Condition Name." << endl;
+    file << "# vcType(in PHengLEI): Volume Condition Type." << endl;
+    file << endl;
+    file << "int nVolumeConditions = " << vcNamePairSet.size() << ";" << endl;
+
+    set< pair<int, string> >::iterator iter;
+    for (iter = vcNamePairSet.begin(); iter != vcNamePairSet.end(); ++ iter)
+    {
+        int vcType    = (*iter).first;
+        string vcName = (*iter).second;
+        file << "string vcName = \"" << vcName << "\";" << endl;
+        file << "{" << endl;
+        file << "  int vcType = " << vcType << ";" << endl;
+        file << "}" << endl;
+    }
+
+    PHSPACE::CloseFile(file);
+}
+
+void DumpVolumeConditionFile(const set< pair<int, string> > &vcNamePairSet)
+{
+    fstream file;
+    string VCFileName = "./bin/volume_condition.hypara";
+    PHSPACE::OpenFile(file, VCFileName, ios_base::out);
+
+    file << "# nVolumeConditions: number of global volume conditions." << endl;
+    file << "# vcName             : Volume Condition Name." << endl;
+    file << "# vcType(in PHengLEI): Volume Condition Type." << endl;
+    file << endl;
+    file << "int nVolumeConditions = " << vcNamePairSet.size() << ";" << endl;
+
+    set< pair<int, string> >::iterator iter;
+    for (iter = vcNamePairSet.begin(); iter != vcNamePairSet.end(); ++ iter)
+    {
+        int vcType    = (*iter).first;
+        string vcName = (*iter).second;
+        file << "string vcName = \"" << vcName << "\";" << endl;
+        file << "{" << endl;
+        file << "  int vcType = " << vcType << ";" << endl;
+        file << "}" << endl;
+    }
+
     PHSPACE::CloseFile(file);
 }
 

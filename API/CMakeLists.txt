@@ -72,8 +72,8 @@ endif()
 
 #3. set environment for MPICH and 3rdParty lib directory:
 if(WIN32)
-  set(MSMPI_HOME_DIRECTORY "C:/Program Files (x86)/Microsoft SDKs/MPI" CACHE PATH "path to installed MPICH")
   include_directories("${MSMPI_HOME_DIRECTORY}/Include")
+  link_directories("${MSMPI_HOME_DIRECTORY}/lib")
   if(CMAKE_CL_64)
     link_directories("${MSMPI_HOME_DIRECTORY}/Lib/x64")
     set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64")
@@ -106,6 +106,9 @@ include_directories("${MEITIS_H_PATH}")
 
 set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
 include_directories("${CGNS_H_PATH}")
+
+set(MGRID_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
+include_directories("${MGRID_H_PATH}")
 
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
 #set(API_H_DIR ${PROJECT_SOURCE_DIR}/3rdparty)
@@ -304,6 +307,7 @@ ${Geometry_H_PATH}/GeomProxy.h
 ${Geometry_H_PATH}/FieldProxy.h
 ${Geometry_H_PATH}/GeneralFieldProxy.h
 ${Geometry_H_PATH}/FaceProxy.h
+${Geometry_H_PATH}/Geo_SimpleVC.h
 )
 source_group(Geometry\\include FILES ${Geometry_H_LIST})
 include_directories(${Geometry_H_PATH})
@@ -353,6 +357,7 @@ ${Geometry_CPP_PATH}/GeomProxy.cpp
 ${Geometry_CPP_PATH}/FieldProxy.cpp
 ${Geometry_CPP_PATH}/GeneralFieldProxy.cpp
 ${Geometry_CPP_PATH}/FaceProxy.cpp
+${Geometry_CPP_PATH}/Geo_SimpleVC.cpp
 )
 source_group(Geometry\\src FILES ${Geometry_CPP_LIST})
 
@@ -587,7 +592,7 @@ if(USE_OCC)
   message(STATUS "Using OpenCasCade ...... ")
   set(OCC_LIBS_REQUIRED
       # subset of DataExchange
-      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKSTL TKXSBase
       # ModelingAlgorithms
       TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
       TKTopAlgo TKGeomAlgo
@@ -598,7 +603,7 @@ if(USE_OCC)
       TKMath TKernel)
   
   # Set the path of the OCC library.
-  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/3rdparty/occ690-vc11-bit32-release)
+  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/3rdparty/occ730-vc11-bit64-release)
   set(OCC_LIB_PATH ${3RDPARTY_LIB_PATH} CACHE PATH "path to OpenCasCade library.")
   message(STATUS "Path to OpenCasCade library: " ${OCC_LIB_PATH})
   
@@ -644,10 +649,14 @@ endif()
 
 # link API library:
 
-list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5)
+if(WIN32)
+  list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5 mgrid IMlib)
+else(WIN32)
+  list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5 mgrid)
+endif(WIN32)
 
 if(WIN32)
-  list(APPEND LINK_LIBRARY_LIST msmpi)
+  list(APPEND LINK_LIBRARY_LIST ${mpiname})
 endif(WIN32)
 
 target_link_libraries(${API_TARGET_NAME} ${LINK_LIBRARY_LIST})

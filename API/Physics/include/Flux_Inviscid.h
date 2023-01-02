@@ -76,6 +76,7 @@ private:
     int nNitrogenIndex;
     int nElectronIndex;
     int nIdealState;
+    int kPrec;
 
     RDouble AusmpwPlusLimiter;
 
@@ -99,6 +100,7 @@ public:
     void Setnm(const int nm) {this->nm = nm;}
     void SetIfPrecondition(const int nPrecondition) {this->nPrecondition = nPrecondition;}
     void SetIfIdealState(const int nIdealState) { this->nIdealState = nIdealState; }
+    void SetPreconCoefficient(const int kPrec) { this->kPrec = kPrec; }
     void SetNumberOfChemical(const int nChemical) {this->nChemical = nChemical;}
     void SetNumberOfTemperatureModel(const int nTemperatureModel) {this->nTemperatureModel = nTemperatureModel;}
     void SetNumberOfTotalEquation(const int nEquation) {this->nEquation = nEquation;}
@@ -131,6 +133,7 @@ public:
     int GetEntropyFixMethod() {return this->nEntrFix;}
     int GetIfPrecondition() {return this->nPrecondition;}
     int GetIfIdealState() { return this->nIdealState; }
+    int GetPreconCoefficient() { return this->kPrec; }
 
     RDouble GetAusmpwPlusLimiter() {return this->AusmpwPlusLimiter;}
 

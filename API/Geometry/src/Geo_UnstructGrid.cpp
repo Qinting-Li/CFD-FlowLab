@@ -127,13 +127,8 @@ LIB_EXPORT UnstructGrid::~UnstructGrid()
 
     delete cell2cell_connectivity;
 
-    delete [] walldist;
-
-    if (walldistNode != NULL)
-    {
-        delete []walldistNode;
-        walldistNode = NULL;
-    }
+    DelPointer(walldist);
+    DelPointer(walldistNode);
 
     delete [] lamdax;
     delete [] lamday;
@@ -251,7 +246,7 @@ LIB_EXPORT int ** UnstructGrid::GetFace2NodeArray()
     return faceTopology->GetFace2NodeArray();
 }
 
-LIB_EXPORT int * UnstructGrid::GetFace2NodeSubscript()
+LIB_EXPORT long long int * UnstructGrid::GetFace2NodeSubscript()
 {
     if (!faceTopology->GetFace2NodeSubscript())
     {
@@ -410,7 +405,7 @@ void UnstructGrid::ComputeFace2NodeSubscript()
     int numberOfFaces = GetNTotalFace();
 
     int *  nodeNumberOfEachFace = faceTopology->GetNodeNumberOfEachFace();
-    int *  face2NodeSubscript   = faceTopology->GetFace2NodeSubscript();
+    long long int *  face2NodeSubscript   = faceTopology->GetFace2NodeSubscript();
 
     //! Considering that it is often used as follows.
     //for (iFace = 0; iFace < nTotalFace; ++iFace){
@@ -418,7 +413,7 @@ void UnstructGrid::ComputeFace2NodeSubscript()
     //}
     //! So we set the array length is numberOfFaces + 1.
 
-    face2NodeSubscript = new int[numberOfFaces + 1]; 
+    face2NodeSubscript = new long long int[numberOfFaces + 1]; 
 
     face2NodeSubscript[0] = 0;
     for (int iFace = 1; iFace <= numberOfFaces; ++ iFace)
@@ -925,7 +920,7 @@ LIB_EXPORT void UnstructGrid::ReSpecifyBC()
 //Get node to cell information(cxh, 2012.12.12)
 void UnstructGrid::ComputeNode2Cell()
 {
-    int i,j,node,ip,le,re,count;
+    int i,j,node,ip,le,re;
     int nTotalNode = this->GetNTotalNode();
     int nTotalFace = this->GetNTotalFace();
     int *leftCellOfFace  = this->GetLeftCellOfFace();
@@ -959,14 +954,15 @@ void UnstructGrid::ComputeNode2Cell()
     }
 
     //change date from linkbase to array
-    count=0;
-    for (i = 0; i < nTotalNode; ++ i)
+    long long int count;
+    count = 0;
+    for(i = 0; i < nTotalNode; ++ i)
     {
         count = count + nCPN[ i ];
     }
     int * n2c = new int [count];
 
-    count=0;
+    count = 0;
     for (i = 0; i < nTotalNode; ++ i)
     {
         for (link = nc[ i ]; link != NULL; link = link->next)
@@ -1287,13 +1283,13 @@ void UnstructGrid::CalcLaplacianWeitht()
         }
     }
         
-    if (knode == NULL) knode = new int [ nTotalNode ];
-    for (iNode = 0; iNode < nTotalNode; ++ iNode) knode[ iNode ] = 0;
+    if (knode == NULL) knode = new int [nTotalNode];
+    for (iNode = 0; iNode < nTotalNode; ++ iNode) knode[iNode] = 0;
 
-    count=0;
+    count = 0;
     for (iNode = 0; iNode < nTotalNode; ++ iNode)
     {
-        for (j = 0; j < nCPN[ iNode ]; ++ j)
+        for (j = 0; j < nCPN[iNode]; ++ j)
         {
             iCell = n2c[ count++ ];
             weight = 1 + lamdax[ iNode ] * (xcc[ iCell ] - xp[ iNode ]) + lamday[ iNode ] * (ycc[ iCell ] - yp[ iNode ]) + lamdaz[ iNode ] * (zcc[ iCell ] - zp[ iNode ]);
@@ -1394,13 +1390,14 @@ void UnstructGrid::ComputeCell2CellConnectivity()
 
 LIB_EXPORT RDouble UnstructGrid::SkewnessSummary(ActionKey *actkey)
 {
-    int      angleC[18];
+    int     angleC[18];
     RDouble dotp1,x1,y1,z1,dis1,dotp2,x2,y2,z2,dis2,angle;
-    RDouble minAng  = 180.0;
+    RDouble minAng = straightAngle;
     RDouble maxAng  = 0.0;
     RDouble area_scale = TINY;
+    RDouble criticalAngle = 89.9;
 
-    int le,re;
+    int le, re;
 
     for (int i = 0; i < 18; ++ i)
     {
@@ -1442,22 +1439,30 @@ LIB_EXPORT RDouble UnstructGrid::SkewnessSummary(ActionKey *actkey)
         z1 = zfc[iFace] - zcc[le];
         dis1  = sqrt(x1*x1 + y1*y1 + z1*z1);
         dotp1 = (nxs[iFace] * x1 + nys[iFace] * y1 + nzs[iFace] * z1) / (dis1 + TINY);
-        if (dotp1 >  1.0) dotp1 =   1.0;
-        if (dotp1 < -1.0) dotp1 = - 1.0;
+        if (dotp1 >  one) dotp1 =   one;
+        if (dotp1 < -one) dotp1 = - one;
 
         x2 = xcc[re] - xfc[iFace];
         y2 = ycc[re] - yfc[iFace];
         z2 = zcc[re] - zfc[iFace];
         dis2  = sqrt(x2*x2 + y2*y2 + z2*z2);
         dotp2 = (nxs[iFace] * x2 + nys[iFace] * y2 + nzs[iFace] * z2) / (dis2 + TINY);      
-        if (dotp2 >  1.0) dotp2 =   1.0;
-        if (dotp2 < -1.0) dotp2 = - 1.0;
+        if (dotp2 >  one) dotp2 =   one;
+        if (dotp2 < -one) dotp2 = - one;
 
-        angle  = MIN(asin(dotp1), asin(dotp2)) * 180.0 / PI;
+        angle = MIN(asin(dotp1), asin(dotp2)) * straightAngle / PI;
 
 #ifdef QUALYTY_DEBUG
-        if (angle < 0.0) 
+        if (le == 8516 && re == 8517)
         {
+            PrintToWindow("\nle, re ", le, re);
+            PrintToWindow("\nx1, y1, z1 ", x1, y1, z1);
+            PrintToWindow("\nxfc[iFace] ", xfc[iFace], yfc[iFace], zfc[iFace]);
+            PrintToWindow("\nxcc[le] ", xcc[le], ycc[le], zcc[le]);
+            PrintToWindow("\nnxs[iFace] ", nxs[iFace], nys[iFace], nzs[iFace]);
+            PrintToWindow("\ndis1, dotp1, asin(dotp1) ", dis1, dotp1, asin(dotp1) * straightAngle / PI);
+            PrintToWindow("\nx2, y2, z2 ", x2, y2, z2);
+            PrintToWindow("\ndis2, dotp2, asin(dotp2) ", dis2, dotp2, asin(dotp2) * straightAngle / PI);
             negativeCell[le] = 1;
             negativeCell[re] = 1;
             nNegativeCell += 2;
@@ -1467,10 +1472,10 @@ LIB_EXPORT RDouble UnstructGrid::SkewnessSummary(ActionKey *actkey)
         minAng = MIN(minAng, angle);
         maxAng = MAX(maxAng, angle);
 
-        if (angle >  89.9) angle =  89.9;
-        if (angle < -89.9) angle = -89.9;
-        if (angle < 0) angle -= 10;
-        angleC[static_cast<int>(angle/10) + 9] ++;
+        if (angle > criticalAngle) angle = criticalAngle;
+        if (angle < -criticalAngle) angle = -criticalAngle;
+        if (angle < 0) angle -= ten;
+        angleC[static_cast<int>(angle / ten) + 9] ++;
     }
 
     int nodepos = 0;
@@ -1487,20 +1492,20 @@ LIB_EXPORT RDouble UnstructGrid::SkewnessSummary(ActionKey *actkey)
         z1 = zfc[iFace] - zcc[le];
         dis1  = sqrt(x1 * x1 + y1 * y1 + z1 * z1);
         dotp1 = (nxs[iFace] * x1 + nys[iFace] * y1 + nzs[iFace] * z1) / (dis1 + TINY);
-        if (dotp1 >  1.0) dotp1 =   1.0;
-        if (dotp1 < -1.0) dotp1 = - 1.0;
+        if (dotp1 >  one) dotp1 =   one;
+        if (dotp1 < -one) dotp1 = - one;
 
-        angle  = asin(dotp1) * 180.0 / PI; 
+        angle = asin(dotp1) * straightAngle / PI;
 
         nodepos += node_number_of_each_face[iFace];
 
         minAng = MIN(minAng, angle);
         maxAng = MAX(maxAng, angle);
 
-        if (angle >  89.9) angle =  89.9;
-        if (angle < -89.9) angle = -89.9;
-        if (angle < 0) angle -= 10;
-        angleC[static_cast<int>(angle/10) + 9] ++;
+        if (angle > criticalAngle) angle = criticalAngle;
+        if (angle < -criticalAngle) angle = -criticalAngle;
+        if (angle < zero) angle -= 10;
+        angleC[static_cast<int>(angle / 10) + 9] ++;
     }
     int total = 0;
     for (int i = 0; i < 18; ++ i)
@@ -1618,7 +1623,7 @@ void UnstructGrid::FaceWeight(RDouble *deltL, RDouble *deltR, int localStart, in
         // Left
         RDouble delta1 = DISTANCE(dxL, dyL, dzL);
         RDouble delta2 = DISTANCE(dxR, dyR, dzR);
-        RDouble delta = 1.0 / (delta1 + delta2 + SMALL);
+        RDouble delta = one / (delta1 + delta2 + SMALL);
 
         int jFace = iFace - localStart;
         deltL[jFace] = delta2 * delta;
@@ -1997,9 +2002,9 @@ void UnstructGrid::InitVariableWallTemperature()
         PHRead(file, zCoor);
         PHRead(file, tWall);
 
-        RDouble coordX = (double)xCoor;
-        RDouble coordY = (double)yCoor;
-        RDouble coordZ = (double)zCoor;
+        RDouble coordX = static_cast<RDouble>(xCoor);
+        RDouble coordY = static_cast<RDouble>(yCoor);
+        RDouble coordZ = static_cast<RDouble>(zCoor);
 
         if (coordX < pmin[0] || coordX > pmax[0]) continue;
         if (coordY < pmin[1] || coordY > pmax[1]) continue;
@@ -2009,7 +2014,7 @@ void UnstructGrid::InitVariableWallTemperature()
         currentData.push_back(coordX);
         currentData.push_back(coordY);
         currentData.push_back(coordZ);
-        currentData.push_back((double)tWall);
+        currentData.push_back(static_cast<RDouble>(tWall));
 
         dataInCurrentGrid.push_back(currentData);
     }
@@ -2030,7 +2035,7 @@ void UnstructGrid::InitVariableWallTemperature()
     RDouble *zCoor    = this->GetZ();
     RDouble *faceArea = this->GetFaceArea();
 
-    int *nodePosi  = this->GetFace2NodeSubscript();
+    long long int *nodePosi  = this->GetFace2NodeSubscript();
     int *face2node = this->GetFace2Node();
 
     UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
@@ -2238,7 +2243,7 @@ void UnstructGrid::CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *d
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {
-        RDouble ovol = 1.0 / vol[iCell];
+        RDouble ovol = one / vol[iCell];
         dqdx0[iCell] *= ovol;
         dqdy0[iCell] *= ovol;
         dqdz0[iCell] *= ovol;
@@ -2326,7 +2331,7 @@ void UnstructGrid::CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *d
 
     for (int iCell = 0; iCell < nTotalCell; ++ iCell)
     {       
-        RDouble ovol = 1.0 / vol[iCell];
+        RDouble ovol = one / vol[iCell];
         dqdx[iCell] *= ovol;
         dqdy[iCell] *= ovol;
         dqdz[iCell] *= ovol;
@@ -2406,6 +2411,16 @@ void UnstructGrid::CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, 
         dqdx[iCell] *= ovol;
         dqdy[iCell] *= ovol;
         dqdz[iCell] *= ovol;
+    }
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int le = leftCellofFace [iFace];
+        int re = rightCellofFace[iFace];
+
+        dqdx[re] = dqdx[le];
+        dqdy[re] = dqdy[le];
+        dqdz[re] = dqdz[le];
     }
 }
 
@@ -2612,7 +2627,7 @@ void UnstructGrid::CompGradientGGCellW(RDouble *q, RDouble *dqdx, RDouble *dqdy,
 
         delt1  = sqrt(dxl * dxl + dyl * dyl + dzl * dzl);
         delt2  = sqrt(dxr * dxr + dyr * dyr + dzr * dzr);
-        delta  = 1.0 / (delt1 + delt2 + SMALL);
+        delta  = one / (delt1 + delt2 + SMALL);
         cl    = delt2 * delta;
         cr    = delt1 * delta;
 
@@ -2707,7 +2722,7 @@ void UnstructGrid::CompFaceGradientGauss2D(RDouble *q, RDouble *qn, RDouble *dqd
         dz = zcc[re] - zcc[le];
 
         dh = dx * xfn[iFace] + dy * yfn[iFace] + dz * zfn[iFace];
-        ovol = 1.0 / (half * area[iFace] * dh);
+        ovol = one / (half * area[iFace] * dh);
 
         dqdx[iFace] = 0.0;
         dqdy[iFace] = 0.0;
@@ -2928,7 +2943,7 @@ void UnstructGrid::ComputeWeight()
         dy       = (ycc[re] - ycc[le]) * fMark[iFace];
         dz       = (zcc[re] - zcc[le]) * fMark[iFace];
 
-        ods = 1.0 / (dx * dx + dy * dy + dz * dz + SMALL);
+        ods = one / (dx * dx + dy * dy + dz * dz + SMALL);
 
         txx      = ods * dx * dx;
         tyy      = ods * dy * dy;
@@ -2955,7 +2970,7 @@ void UnstructGrid::ComputeWeight()
         dy       = (ycc[re] - ycc[le]) * fMark[iFace];
         dz       = (zcc[re] - zcc[le]) * fMark[iFace];
 
-        ods = 1.0 / (dx * dx + dy * dy + dz * dz + SMALL);
+        ods = one / (dx * dx + dy * dy + dz * dz + SMALL);
 
         txx      = ods * dx * dx;
         tyy      = ods * dy * dy;
@@ -3011,7 +3026,7 @@ void UnstructGrid::ComputeWeight()
             }
             else
             {
-                odelt = 1.0 / delt;
+                odelt = one / delt;
                 ixx[iCell] = (tyy * tzz - tyz * tyz) * odelt;
                 iyy[iCell] = (txx * tzz - txz * txz) * odelt;
                 izz[iCell] = (txx * tyy - txy * txy) * odelt;
@@ -3042,7 +3057,7 @@ void UnstructGrid::ComputeWeight()
             }
             else
             {
-                odelt = 1.0 / delt;
+                odelt = one / delt;
 
                 ixx[iCell] = (  tyy) * odelt;
                 iyy[iCell] = (  txx) * odelt;
@@ -3057,7 +3072,7 @@ void UnstructGrid::ComputeWeight()
 
 LIB_EXPORT void UnstructGrid::ComputeNodeBCType()
 {
-    int *face2NodeSubscript = this->GetFace2NodeSubscript();
+    long long int *face2NodeSubscript = this->GetFace2NodeSubscript();
     int *face2node = this->GetFace2Node();
 
     int *nodeBCType = reinterpret_cast <int *> (this->GetDataPtr("nodeBCType"));
@@ -3342,7 +3357,7 @@ void UnstructGrid::CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *d
         int le = left_cell_of_face[ iFace ];
         int re = iFace + nTotalCell;
 
-        double qFace = 0.0;
+        RDouble qFace = 0.0;
         UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
         int bcType = bcRegion->GetBCType();
        
@@ -3374,7 +3389,7 @@ void UnstructGrid::CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *d
         int le = left_cell_of_face [ iFace ];
         int re = right_cell_of_face[ iFace ];
 
-        double qFace = 0.0;
+        RDouble qFace = 0.0;
         for (int jNode = 0; jNode < node_number_of_each_face[iFace]; ++ jNode)
         {
             int index = face2nodeArray[iFace][jNode];
@@ -3721,8 +3736,7 @@ streamsize UnstructGrid::TranslateCellIBlankLength(ActionKey *actkey)
 
 LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallPoints)
 {
-    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    UnstructBCSet **bcr = this->GetBCRecord();
 
     int nBoundFace = this->GetNBoundFace();
     int nTotalNode = this->GetNTotalNode();
@@ -3737,8 +3751,7 @@ LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallP
     int nodepos = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-        int bcType = bcRegion->GetBCType();
+        int bcType = bcr[iFace]->GetKey();
         if (IsWall(bcType))
         {
             for (int j = 0; j < node_number_of_each_face[iFace]; ++ j)
@@ -3763,26 +3776,21 @@ LIB_EXPORT void UnstructGrid::FindOutWallPoints(bool * isWallPoint, int & nWallP
 
 LIB_EXPORT void UnstructGrid::FindOutWallFaces(bool * isWallFace, int & nWallFaces)
 {
-    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int nBCRegion = unstructBCSet->GetnBCRegion();
-    
+    UnstructBCSet **bcr = this->GetBCRecord();
+    int nBoundFace = this->GetNBoundFace();
+
     nWallFaces = 0;
 
     //! Compute the number of the wall faces.
-    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-        int bcType = bcRegion->GetBCType();
-        if (IsWall(bcType))
+        isWallFace[iFace] = false;
+
+        int bctype = bcr[iFace]->GetKey();
+        if (IsWall(bctype))
         {
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
-            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
-            {
-                // iFace is the face number in the set of faceIndex.
-                int iFace = *iter;
-                isWallFace[iFace] = true;
-                ++ nWallFaces;
-            }
+            isWallFace[iFace] = true;
+            ++ nWallFaces;
         }
     }
 }
@@ -4000,7 +4008,7 @@ void UnstructGrid::DecodeWallDist(DataContainer * cdata)
 
     int nTotalCell = this->GetNTotalCell();
     
-    RDouble * walldist = GetWallDist();
+    RDouble *walldist = GetWallDist();
 
     PHRead(virtualFile, walldist, nTotalCell);
 
@@ -4212,6 +4220,11 @@ LIB_EXPORT void UnstructGrid::AllocateOversetGrid()
     int nBoundFace = this->GetNBoundFace();
     int nTotal = nTotalCell + nBoundFace;     //! interior cells + ghost cells.
 
+    if ((this->iBlank))
+    {
+        delete iBlank;
+        iBlank = NULL;
+    }
     this->iBlank = new int[nTotal];
 
     int *iBlank = this->iBlank;
@@ -4335,12 +4348,7 @@ void UnstructGrid::ReadGrid(VirtualFile *vfile)
     vfile->read(reinterpret_cast<char*>(y),nTotalNode * sizeof(RDouble));
     vfile->read(reinterpret_cast<char*>(z),nTotalNode * sizeof(RDouble));
 
-    int axisup = 1;
-    PHSPACE::GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
-    if (axisup == 2)
-    {
-        TurnZAxis2YAxis();
-    }
+    RotateAboutAxis();
 
     ComputeMinMaxBox();
 
@@ -4441,12 +4449,7 @@ void UnstructGrid::WriteGrid(VirtualFile *vfile)
     RDouble * y = this->GetY();
     RDouble * z = this->GetZ();
 
-     int axisup = 1;
-     PHSPACE::GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
-     if (axisup == 2)
-     {
-         TurnZAxis2YAxis();
-     }
+    RotateAboutAxis();
 
     vfile->write(reinterpret_cast<char*>(x),nTotalNode * sizeof(RDouble));
     vfile->write(reinterpret_cast<char*>(y),nTotalNode * sizeof(RDouble));
@@ -4869,7 +4872,7 @@ void UnstructGrid::ComputeFaceNormal2D()
         zfn[iFace]  = 0.0;
 
         area[iFace] = sqrt(xfn[iFace] * xfn[iFace] + yfn[iFace] * yfn[iFace] + zfn[iFace] * zfn[iFace]);
-        oarea   = 1.0 / (area[iFace] + SMALL);
+        oarea   = one / (area[iFace] + SMALL);
         xfn[iFace] *= oarea;
         yfn[iFace] *= oarea;
         zfn[iFace] *= oarea;
@@ -4911,7 +4914,7 @@ void UnstructGrid::ComputeFaceCenter3D(ActionKey *actkey)
             z0 += z[ index ];
         }
 
-        RDouble coef = 1.0 / node_number_of_each_face[iFace];
+        RDouble coef = one / node_number_of_each_face[iFace];
 
         x0 *= coef;
         y0 *= coef;
@@ -6297,6 +6300,10 @@ LIB_EXPORT void UnstructGrid::CoarseGrids(int maxLevel)
         return;
     }
 
+    const int MY_METHOD       = 1;
+    const int MGRIDGEN_METHOD = 2;
+    int coarseMethod = MGRIDGEN_METHOD;
+
     int nTotalCell = this->GetNTotalCell();
 
     UnstructGrid * coarseGrid = 0;
@@ -6313,7 +6320,16 @@ LIB_EXPORT void UnstructGrid::CoarseGrids(int maxLevel)
         WriteLogFile("Coarse time:", iDim);
 
         Mesh_Agglomeration * meshAgglomeration = new Mesh_Agglomeration(preGrid, level);
-        meshAgglomeration->CoarsenGridOnce();
+        if(coarseMethod == MGRIDGEN_METHOD)
+        {
+            meshAgglomeration->CoarsenGridOncebyMGridgen();
+        }
+        else
+        {
+            meshAgglomeration->CoarsenGridOnce();
+        }
+        
+        
         UnstructGrid * agglomeratedGrid = meshAgglomeration->GetCoarseGrid();
         delete meshAgglomeration;
 
@@ -6324,7 +6340,8 @@ LIB_EXPORT void UnstructGrid::CoarseGrids(int maxLevel)
         agglomeratedGrid->SetLevel(this->GetLevel()+1);
         agglomeratedGrid->SetBCRecord(this->GetBCRecord());
         agglomeratedGrid->SetUnstructBCSet(this->GetUnstructBCSet());
-      
+        agglomeratedGrid->SetVolumeCondition(this->GetVolumeConditionIn());
+
         if(preGrid != this)
         {
             int *pre_cell2coarsegridcell = preGrid->GetCell2CoarseGridCell();
@@ -6348,8 +6365,9 @@ LIB_EXPORT void UnstructGrid::CoarseGrids(int maxLevel)
             delete tempGrid;
         }
 
-        if(isCoarsenLimit)
+        if(isCoarsenLimit || coarseMethod == MGRIDGEN_METHOD)
         {
+             //! MGridgen lib will controll the ratio automatically.
             break;
         }
     }
@@ -6745,7 +6763,7 @@ void SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarpl
     for(int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
         //if(keyActiveOfCells[ iCell ] == -1)
-        if(keyActiveOfCells[ iCell ] == 1)
+        if (keyActiveOfCells[iCell] == 1)
         {
             cellList[ iCell ] = numberOfCellsInZone;
 
@@ -8023,6 +8041,7 @@ void UnstructGrid::CompareMaxMinValue(RDouble &local_data, int flag)
 
 void UnstructGrid::ChangeBCType(int from_bctype, int to_bctype)
 {
+    UnstructBCSet **bcr = this->GetBCRecord();
     UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
     int nBCRegion = unstructBCSet->GetnBCRegion();
 
@@ -8033,6 +8052,15 @@ void UnstructGrid::ChangeBCType(int from_bctype, int to_bctype)
         if (bcType == from_bctype)
         {
             bcRegion->SetBCType(to_bctype);
+            bcRegion->SetBCName("INTERFACE");
+
+            vector<int> *faceIndex = bcRegion->GetFaceIndex();
+            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter ++)
+            {
+                int faceIndex = *iter;
+                bcr[faceIndex]->SetKey(to_bctype);
+                bcr[faceIndex]->SetBCName("INTERFACE");
+            }
         }
     }
 }
@@ -8232,21 +8260,17 @@ void UnstructGrid::CalCNNCF()
 
 int UnstructGrid::GetNumberOfWallCell()
 {
-    UnstructBCSet *unstructBCSet = this->GetUnstructBCSet();
-    int nBCRegion = unstructBCSet->GetnBCRegion();
-    int nsolid_surface = 0;
+    UnstructBCSet **bcr = this->GetBCRecord();
 
-    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    int nBoundFace = this->GetNBoundFace();
+
+    int nsolid_surface = 0;
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC* bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
-        int bcType = bcRegion->GetBCType();
-        if (IsWall(bcType))
+        int bctype = bcr[iFace]->GetKey();
+        if (IsWall(bctype))
         {
-            vector<int>* faceIndex = bcRegion->GetFaceIndex();
-            for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
-            {
-                ++ nsolid_surface;
-            }
+            ++ nsolid_surface;
         }
     }
 
@@ -8426,8 +8450,7 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
     set< DataStruct_Sort<int> >::iterator ifind;
     DataStruct_Sort<int> fysort;
 
-    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
-    int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
+    UnstructBCSet **bcr = grid->GetBCRecord();
 
     face2nodelist.resize(0);
     linkmap.resize(0);
@@ -8438,15 +8461,13 @@ void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &l
 
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
-        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(bcRegionIDofBCFace[iFace]);
-
-        if (bcType != bcRegion->GetBCType())
+        if (bcType != bcr[iFace]->GetKey())
         {
             nodepos += node_number_of_each_face[iFace];
             continue;
         }
 
-        if (bcRegion->GetBCName() != bcName)
+        if (bcr[iFace]->GetBCName() != bcName)
         {
             nodepos += node_number_of_each_face[iFace];
             continue;
@@ -8605,8 +8626,8 @@ void SetLimitBoundary(Grid *grid_in, RDouble *limit)
                 int le = leftCellOfFace [iFace];
                 int re = rightCellOfFace[iFace];
 
-                limit[le] = 0.0;
-                limit[re] = 0.0;
+                limit[le] = zero;
+                limit[re] = zero;
             }
         }
     }
@@ -8643,6 +8664,12 @@ void UploadInterfaceValue(UnstructGrid *grid, RDouble **f, const string &name, i
         Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast< RDouble ** > (sendData->GetDataPtr(name));
+        if(!fg)
+        {
+            ostringstream oss;
+            oss << "    Error: Parallel interface variable has not been register, name: " << name;
+            TK_Exit::ExceptionExit(oss.str());
+        }
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int sourceCell;
@@ -8669,6 +8696,12 @@ void UploadInterfaceValue(UnstructGrid *grid, RDouble *f, const string &name)
         Data_ParamFieldSuite *sendData = interfaceInfo->GetSendDataStorage(iGhost);
 
         RDouble **fg = reinterpret_cast <RDouble **> (sendData->GetDataPtr(name));
+        if(!fg)
+        {
+            ostringstream oss;
+            oss << "    Error: Parallel interface variable has not been register, name: " << name;
+            TK_Exit::ExceptionExit(oss.str());
+        }
         for (int iFace = 0; iFace < nIFace; ++ iFace)
         {
             int sourceCell;
@@ -8786,11 +8819,11 @@ void UploadOversetValueDefault(UnstructGrid *grid, RDouble **field, const string
 
     if (field == 0) return;
     
-    OversetDataProxy * oversetDataProxy = oversetInformationProxy->GetOversetDataProxyForSend();
+    OversetDataProxy *oversetDataProxy = oversetInformationProxy->GetOversetDataProxyForSend();
 
-    Data_ParamFieldSuite * dataStorage = oversetDataProxy->GetDataStorage();
+    Data_ParamFieldSuite *dataStorage = oversetDataProxy->GetDataStorage();
 
-    RDouble ** fieldStorage = reinterpret_cast< RDouble ** > (dataStorage->GetDataPtr(name));
+    RDouble **fieldStorage = reinterpret_cast< RDouble ** > (dataStorage->GetDataPtr(name));
 
     int numberOfNeighbors = oversetDataProxy->GetNumberOfNeighbors();
 
@@ -8860,7 +8893,7 @@ void UploadOversetValueByWeight(UnstructGrid *grid, RDouble **field, const strin
             RDouble y = interCellCenterY[iCell];
             RDouble z = interCellCenterZ[iCell];
 
-            SetField(nodeValue, 0.0, numberOfEquations);
+            SetField(nodeValue, zero, numberOfEquations);
             RDouble weight = 0.0;
 
             for(int iNode = 0; iNode < nodeNumberOfEachCell[ cellIndex ]; ++ iNode)
@@ -9768,7 +9801,7 @@ void DumpSliceGrid(UnstructGrid *unstructGrid, int sliceAxis, RDouble slicePosit
     else 
         coord = unstructGrid->GetZ();
 
-    int *face2NodeSubscript = unstructGrid->GetFace2NodeSubscript();
+    long long int *face2NodeSubscript = unstructGrid->GetFace2NodeSubscript();
     int ip;
 
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
@@ -10374,6 +10407,143 @@ RDouble AspectRatio(RDouble dist, RDouble area, int nodeNumOfPerFace)
 
     return length / (dist + TINY);
 }
+
+void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy)
+{   
+    int  nTotalCell = grid->GetNTotalCell();
+    vector<int> *c2c = grid->GetCell2Cell();
+
+    xadj[0]   = 0;
+    int count = 0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        xadj[iCell+1] = xadj[iCell] + c2c[iCell].size();
+        for (std::size_t j = 0; j < c2c[iCell].size(); ++ j)
+        {
+            adjncy[count ++] = c2c[iCell][j];
+        }
+    }
 }
+
+void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, int *neighborCell, idx_t *vtxdist)
+{   
+    int nTotalCell = grid->GetNTotalCell();
+    int nBoundFace = grid->GetNBoundFace();
+    int nTotalFace = grid->GetNTotalFace();
+    
+    int *left_cell_of_face = grid->GetLeftCellOfFace();
+    int *right_cell_of_face = grid->GetRightCellOfFace();
+
+    idx_t startGlobalIndex = 0;
+
+    // First: compute the cell-to-cell connectivity relationship, include interface.
+    set<idx_t> *c2c = new set<idx_t>[nTotalCell];
+    idx_t le, re;
+
+    // If boundary is an INTERFACE
+    if (vtxdist && neighborCell)
+    {
+        //! Parallel
+        int nIFace = grid->GetNIFace();
+        InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+        int *interFace2ZoneID = interfaceInfo->GetInterFace2ZoneID();
+        int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+
+        for (int iFace = 0; iFace < nIFace; ++ iFace)
+        {
+            int neighborZone = interFace2ZoneID[iFace];
+            int bcFace = interFace2BoundaryFace[iFace];
+            le = left_cell_of_face[bcFace];
+            re = neighborCell[iFace];
+            re += vtxdist[neighborZone];
+            c2c[le].insert(re);
+        }
+
+        int myid = PHMPI::GetCurrentProcessorID();
+        startGlobalIndex = vtxdist[myid];
+    }
+
+    // Interior faces
+    for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+    {
+        le = left_cell_of_face [iFace];
+        re = right_cell_of_face[iFace];
+
+        c2c[le].insert(re + startGlobalIndex);
+        c2c[re].insert(le + startGlobalIndex);
+    }
+
+    // Second: compute the xadj and adjncy.
+    xadj[0]   = 0;
+    int count = 0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        xadj[iCell+1] = xadj[iCell] + c2c[iCell].size();
+        for (set<idx_t>::iterator iter = c2c[iCell].begin(); iter != c2c[iCell].end(); ++ iter)
+        {
+            adjncy[count ++] = (*iter);
+        }
+    }
+
+    // Free memory.
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        c2c[iCell].clear();
+    }
+    delete []c2c;
+}
+
+
+void Get_Xadj_Adjncy_Weight(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, RDouble *adjncyWeight)
+{   
+    int  nTotalCell = grid->GetNTotalCell();
+    int ** cell2face = grid->GetCell2Face();
+    int *  nFaceCell = grid->GetFaceNumberOfEachCell();
+
+    int * leftCellOfFace  = grid->GetLeftCellOfFace();
+    int * rightCellOfFace = grid->GetRightCellOfFace();
+
+    RDouble *area = grid->GetFaceArea();
+
+    int count = 0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        int nNeighbor = xadj[iCell + 1] - xadj[iCell];
+
+        
+        for (int j = 0; j < nNeighbor; ++ j)
+        {
+            int neighborCell = adjncy[count];
+
+            RDouble weightArea = -1.0;
+            int nFace = nFaceCell[iCell];
+            for (int iNeighFace = 0; iNeighFace < nFace; ++ iNeighFace)
+            {
+                int neighFace = cell2face[iCell][iNeighFace];
+
+                int le = leftCellOfFace[neighFace];
+                int re = rightCellOfFace[neighFace];
+
+                if( (le == iCell && re == neighborCell) ||
+                    (le == neighborCell && re == iCell) )
+                {
+                    weightArea = area[neighFace];
+                    break;
+                }
+            } // neighbor face.
+
+            if(weightArea < 0.0)
+            {
+                TK_Exit::PrintDebugInfoExit("Error: can not find the patched face!");
+            }
+
+            adjncyWeight[count] = weightArea;
+            count ++;
+        }// neighbor cell
+    }
+}
+
+}
+
 
 

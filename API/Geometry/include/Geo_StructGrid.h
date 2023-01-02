@@ -29,8 +29,8 @@
 namespace PHSPACE
 {
 class HoleGrid;
-class BackgroundTree ;
-class OversetCellCollector ;
+class BackgroundTree;
+class OversetCellCollector;
 class UnstructGrid;
 
 class VirtualFile;
@@ -76,6 +76,8 @@ private:
     //! If the cell is the firse cell near wall.
     Int3D *wallCellLabel;
 
+    Int3D *cellBoundaryType;
+
     //! Boundary information.
     //! 1: Number of boundary face (nBoundFace).
     //! 2: Number of interface face (nIFace).
@@ -116,13 +118,13 @@ public:
 
     void InitIBlank3D();
 
-    Int3D *GetIBlank3D();
+    Int3D * GetIBlank3D();
 
     void CopyIBlank3D(int *iBlank);
     void SetIBlank(int *iBlank);
 
-    UnstructGrid *GetUnstrGrid(){return this->gridUnstr;};
-    void SetUnstrGrid(UnstructGrid *gridIn){this->gridUnstr = gridIn;};
+    UnstructGrid * GetUnstrGrid() { return this->gridUnstr; }
+    void SetUnstrGrid(UnstructGrid *gridIn) { this->gridUnstr = gridIn; }
     //! 
     void DecodeWallDist(DataContainer *cdata);
 
@@ -162,7 +164,7 @@ public:
     RDouble4D * GetFaceVectorZ() const;
 
     //! Return the cell volume (vol) pointer.
-    RDouble3D * GetCellVolume()  const;
+    RDouble3D * GetCellVolume() const;
 
     //! 
     RDouble3D * GetCellLengthX() const;
@@ -518,6 +520,8 @@ public:
     void DumpWallFaceCenter(ActionKey *actkey);
     void GetCellIBlank(ActionKey *actkey);
     void TranslateCellIBlank(ActionKey *actkey);
+    void ComputeCellBoundaryType();
+    Int3D *GetCellBoundaryType();
 
  //   void SetOrdinaryGridIndex(int ordinaryGridIndexIn);
  //   void SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn);
@@ -541,7 +545,7 @@ private:
     void ComputeMetricsStructHighOrder3D(ActionKey *actkey);
     void ComputeMetricsStructHighOrder2D_HDCS(ActionKey *actkey);
     void ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey);
-    void GhostMetricsStructHighOrder2D(ActionKey *actkey);    
+    void GhostMetricsStructHighOrder2D(ActionKey *actkey);
     void GhostMetricsStructHighOrder3D(ActionKey *actkey);
 
     //! @brief grid difference operator for a whole line.
@@ -622,12 +626,14 @@ extern int mide[3][3];
 
 StructGrid * StructGridCast(Grid *grid_in);
 
-void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn);
-
 void GetRange(int ni, int nj, int nk, int startShift, int endShift, Range &I, Range &J, Range &K);
 void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, int kst, int ked);
 
 //! Used by Post_Visual class.
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool isVelocityForPostVisual = false);
 void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble3D &q);
+
+void ModifyWallTemperature(const string& name, Grid *grid_in, RDouble4D &qn);
+void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, RDouble4D &cellCenterData, int index, int bcType);
+void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, RDouble3D &cellCenterData, int bcType);
 }

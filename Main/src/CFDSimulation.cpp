@@ -6,6 +6,8 @@
 #include "PHIO.h"
 #include "TK_Log.h"
 #include "Residual.h"
+#include "Post_Visual.h"
+
 
 using namespace std;
 
@@ -14,7 +16,9 @@ namespace PHSPACE
 void RunPHengLEI()
 {
     //! Initialize global variables and MPI.
+
     PHMPI::Initialization();
+
 
     //! Read control parameters and do self-checking.
     ReadControlParameters();
@@ -22,7 +26,7 @@ void RunPHengLEI()
     ShowWelcomeTitle();
 
     CompleteParamInfo();
-
+       
     ControlParametersPreliminarySelfCheck();
 
     //! Start CFD simulation.
@@ -42,6 +46,7 @@ void ShowWelcomeTitle()
     int myid = GetCurrentProcessorID();
     if (myid == PHMPI::GetServerProcessorID())
     {
+       
         ostringstream oss;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
         oss << "$#                                                     #$" << endl;
@@ -58,10 +63,12 @@ void ShowWelcomeTitle()
         oss << "$#       Computational Aerodynamics Institute          #$" << endl;
         oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
         oss << "$#            (C) Copyright, Since 2010                #$" << endl;
+        oss << "$#                  PHengLEI 2212                      #$" << endl;
         oss << "$#                                                     #$" << endl;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
         cout << oss.str();
+        
     }
 }
 
@@ -78,7 +85,7 @@ void ParametersSelfCheckForCFD()
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
 
     int flowInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("flowInitStep");
-    int maxSimuStep  = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
+    int maxSimuStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("maxSimuStep");
     if (flowInitStep > maxSimuStep || isUnsteady)
     {
         //! If the maximum simulation step is small than the initialization step,
@@ -88,67 +95,58 @@ void ParametersSelfCheckForCFD()
     }
 
     int visualVariablesSize = GlobalDataBase::GetSizeOfData("visualVariables");
-    int nVisualVariables    = visualVariablesSize;
+    int nVisualVariables = visualVariablesSize;
     GlobalDataBase::UpdateData("nVisualVariables", &nVisualVariables, PHINT, 1);
 
-    int *visualVariables = new int [nVisualVariables];
+    int *visualVariables = new int[nVisualVariables];
     GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables);
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
-    if (viscousType == INVISCID)
+    for (int i = 0; i < nVisualVariables; ++ i)
     {
-        for (int i = 0; i < nVisualVariables; ++ i)
+        if (visualVariables[i] >= VISUAL_VISCOSITY_LAMINAR && visualVariables[i] < VISUAL_CP)
         {
-            if (visualVariables[i] == 7 || visualVariables[i] == 8 || visualVariables[i] == 9 || visualVariables[i] == 10)
+            if (viscousType == INVISCID)
             {
                 ostringstream oss;
                 oss << "The array \"visualVariables\" is error. The euler solver cannot export the data related to viscosity." << endl;
                 TK_Exit::ExceptionExit(oss);
             }
         }
-    }
-    else if (viscousType == LAMINAR && iLES == NOLES_SOLVER)
-    {
-        for (int i = 0; i < nVisualVariables; ++ i)
+
+        if (visualVariables[i] == VISUAL_VISCOSITY_TURBULENT)
         {
-            if (visualVariables[i] == 8)
+            if (viscousType == LAMINAR && iLES == NOLES_SOLVER)
             {
                 ostringstream oss;
                 oss << "The array \"visualVariables\" is error. The laminar solver cannot export the data related to turbulence." << endl;
                 TK_Exit::ExceptionExit(oss);
             }
         }
-    }
-    else if (viscousType == ONE_EQU)
-    {
-        for (int i = 0; i < nVisualVariables; ++ i)
+
+        if (visualVariables[i] == VISUAL_INTERMITTENCY || visualVariables[i] == VISUAL_MOMENTUMTHICKREYNOLDS)
         {
-            if (visualVariables[i] == 35 || visualVariables[i] == 36)
+            if (viscousType == ONE_EQU)
             {
                 ostringstream oss;
                 oss << "The array \"visualVariables\" is error. The solver cannot export the transition data with SA model." << endl;
                 TK_Exit::ExceptionExit(oss);
             }
-        }
-    }
-    else if (viscousType == TWO_EQU)
-    {
-        int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
-        for (int i = 0; i < nVisualVariables; ++ i)
-        {
-            if (transitionType /= IREGAMA)
+            else if (viscousType == TWO_EQU)
             {
-                if (visualVariables[i] == 35 || visualVariables[i] == 36)
+                int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
+                if (transitionType != IREGAMA)
                 {
                     ostringstream oss;
-                    oss << "The array \"visualVariables\" is error. The solver cannot export the transition data without transition type." << endl;
+                    oss << "transitionType = " << transitionType << endl;
+                    oss << "The array \"visualVariables\" is error. The solver cannot export the transition data with transition type Not Equal 2." << endl;
                     TK_Exit::ExceptionExit(oss);
                 }
             }
         }
     }
 
-    delete [] visualVariables;
+    delete[] visualVariables;
 
     if (isUnsteady)
     {
@@ -183,7 +181,7 @@ void ParametersSelfCheckForCFD()
             ostringstream oss;
             oss << "Error: if BLU is used, ROE scheme must be selected!" << endl;
             PrintToWindow(oss.str());
-            WriteLogFile (oss.str());
+            WriteLogFile(oss.str());
             TK_Exit::ExceptionExit(oss);
         }
     }
@@ -224,6 +222,8 @@ void ControlParametersPreliminarySelfCheck()
             break;
         case INTEGRATIVE_SOLVER:
             ParametersSelfCheckForCFD();
+            break;
+        case GRIDER_SOLVER:
             break;
         case POST_PROCESSING:
             break;

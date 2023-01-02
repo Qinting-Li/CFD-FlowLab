@@ -13,8 +13,6 @@
 //! @brief     Hash table.
 //! @author    Dr. Wang, Bell.
 
-#ifndef _HASH_H
-#define _HASH_H
 //
 // James's hash table (RDouble hashing)
 // class T cannot be int
@@ -57,39 +55,38 @@ namespace GRIDER_SPACE
 //typedef unsigned int CAulong;
 typedef            int CAulong;
 
+CAulong gethashkey(const Point3D &p);
+CAulong gethashkey(const Point3D *p);
 
-CAulong gethashkey(const Point3D& p);
-CAulong gethashkey(const Point3D* p);
+CAulong gethashkey(const Geo_Face &face);
+CAulong gethashkey(const Geo_Face *face);
 
-CAulong gethashkey(const Geo_Face& face);
-CAulong gethashkey(const Geo_Face* face);
+bool equal_hash(const Point3D &p1, const Point3D &p2);
+bool equal_hash(const Point3D *p1, const Point3D *p2);
 
-bool equal_hash(const Point3D& p1, const Point3D& p2);
-bool equal_hash(const Point3D* p1, const Point3D* p2);
-
-bool equal_hash(const Geo_Face& face1, const Geo_Face& face2);
-bool equal_hash(const Geo_Face* face1, const Geo_Face* face2);
-
+bool equal_hash(const Geo_Face &face1, const Geo_Face &face2);
+bool equal_hash(const Geo_Face *face1, const Geo_Face *face2);
 
 template <class T>
 class Hash {
 public:
-    Hash(CAulong n=HASH_INIT_SIZE) 
+    Hash(CAulong n = HASH_INIT_SIZE)
     {
         data_size  = 0;
-        hash_table = 0; hash_size = n/2;      // because it is doubled in resize
+        hash_table = 0;
+        hash_size  = n/2;    // because it is doubled in resize
         hash_deque = new deque<T>; resize();
     }
-    ~Hash() { delete []hash_table; delete hash_deque; }
+    ~Hash() { delete [] hash_table; delete hash_deque; }
 
-    int     insert(const T& p);
-    int     insert(const T& p, bool& isExist);
-    int     search(const T& p);
-    int     erase(const T& p);
+    int insert(const T &p);
+    int insert(const T &p, bool &isExist);
+    int search(const T &p);
+    int erase (const T &p);
 
-    T&      operator[](const T& p) { return ((*hash_deque)[insert(p)-1]); }
-    T&      operator[](CAulong i) const { return ((*hash_deque)[i]); }
-    T&      operator[](CAulong i)  { return ((*hash_deque)[i]); }
+    T & operator[](const T &p) { return ((*hash_deque)[insert(p)-1]); }
+    T & operator[](CAulong i) const { return ((*hash_deque)[i]); }
+    T & operator[](CAulong i)  { return ((*hash_deque)[i]); }
 
     //CAulong size() const { return ((*hash_deque).size()); }    //! It is not suitable for deleting case.
     CAulong size() const { return data_size; }
@@ -98,18 +95,18 @@ public:
 
     void    clear() 
     {
-        delete []hash_table; hash_table = NULL; hash_size = HASH_INIT_SIZE;
-        (*hash_deque).clear(); 
-        delete hash_deque;  
+        delete [] hash_table; hash_table = NULL; hash_size = HASH_INIT_SIZE;
+        (*hash_deque).clear();
+        delete hash_deque;
         hash_deque = new deque<T>;
         resize();
     }
-    CAulong probes() const { return i_prob; };
+    CAulong probes() const { return i_prob; }
     void info();
 
-    Hash(const Hash<T>& H) {                    //! Assignment constructor.
-        register CAulong i; CAulong sz=H.size();
-        for (i=0; i<sz; i++)
+    Hash(const Hash<T> &H) {                    //! Assignment constructor.
+        register CAulong i; CAulong sz = H.size();
+        for (i = 0; i < sz; i ++)
             (*this).insert((*(H.hash_deque))[i]);
     }
 
@@ -120,19 +117,19 @@ public:
     //             (*this).insert((*(H.hash_deque))[i]);
     //         return (*this);
     //     }    
-    Hash<T>& operator=(const Hash<T>& H) {      //! Assign operator.
+    Hash<T> &operator = (const Hash<T> &H) {      //! Assign operator.
         clear();
         hash_size = H.hash_size;
         delete [] hash_table;
         hash_table = new CAulong[hash_size];
-        register CAulong i; CAulong sz=H.size();
+        register CAulong i; CAulong sz = H.size();
 
-        for (i=0; i<hash_size; i++) hash_table[i] = H.hash_table[i];
+        for (i = 0; i < hash_size; i ++) hash_table[i] = H.hash_table[i];
 
-        for (i=0; i<sz; i++)
+        for (i = 0; i < sz; i ++)
             hash_deque->push_back(H[i]);
         return (*this);
-    }    
+    }
 private:
     CAulong   data_size;
     CAulong   hash_size;
@@ -153,8 +150,8 @@ void Hash<T>::resize()
 {
     register CAulong ii, jj, kk;
 
-    o_size=static_cast<CAulong>((*hash_deque).size());
-    bool* isDeleted = new bool [o_size];
+    o_size = static_cast<CAulong>((*hash_deque).size());
+    bool *isDeleted = new bool [o_size];
     for (int i = 0; i < o_size; ++ i) isDeleted[i] = false;
 
     //! Mark out which elements have been deleted.
@@ -180,7 +177,7 @@ void Hash<T>::resize()
 
     //! Resize the hash size, multiply by two.
     hash_table = new CAulong[hash_size*=2];
-    for (ii=0; ii<hash_size; ii++) hash_table[ii] = 0;
+    for (ii = 0; ii < hash_size; ii ++) hash_table[ii] = 0;
 
     //************************************************
     //! Erase the deleted element from hash_deque.
@@ -213,7 +210,7 @@ void Hash<T>::resize()
     if (numberOfElement != iStart)
     {
         ostringstream oss;
-        oss<<"Error: numberOfElement != iStart "<<numberOfElement<<"!="<<iStart<<endl;
+        oss << "Error: numberOfElement != iStart " << numberOfElement << "!=" << iStart << endl;
         TK_Exit::ExceptionExit(oss);
     }
 
@@ -229,13 +226,13 @@ void Hash<T>::resize()
 
     //! Re-build the image: hash_table --> hash_deque.
     o_size = static_cast<CAulong>(hash_deque->size());
-    for (jj=0; jj<o_size; jj++) 
+    for (jj = 0; jj < o_size; jj ++)
     {
-        key=gethashkey((*hash_deque)[jj]);
-        hash1=key%hash_size;
-        hash2=key%(hash_size-1)|1;
-        kk=0;
-        while(hash_table[ii=((hash1+kk++*hash2)%hash_size)] != NIL);
+        key = gethashkey((*hash_deque)[jj]);
+        hash1 = key % hash_size;
+        hash2 = key % (hash_size-1) | 1;
+        kk = 0;
+        while (hash_table[ii=((hash1+kk++*hash2)%hash_size)] != NIL);
 
         hash_table[ii] = jj+1;
     }
@@ -247,7 +244,7 @@ void Hash<T>::resize()
 This function is used when some data could be erased !!!
 */
 template <class T>
-int Hash<T>::insert(const T& p, bool& isExist)
+int Hash<T>::insert(const T& p, bool &isExist)
 {
     int index = search(p);
     if (!index)
@@ -271,17 +268,17 @@ E.g. when Type == Point3D, key is the computed from (x, y, z),
 The point index is the same, when the coordinates is same for different points.
 */
 template <class T>
-int Hash<T>::insert(const T& p)
+int Hash<T>::insert(const T &p)
 {
-    key=gethashkey(p);
-    hash1=key%hash_size;
-    hash2=key%(hash_size-1)|1;
+    key = gethashkey(p);
+    hash1 = key % hash_size;
+    hash2 = key % (hash_size-1) | 1;
     register CAulong ii;
 
     // ii=(hash1+i_prob*hash2)%hash_size --> Double Hashing.
-    for(i_prob=0; i_prob<hash_size; i_prob++) 
+    for (i_prob = 0; i_prob < hash_size; i_prob ++)
     {
-        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL) 
+        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL)
         {
             // Insert
             (*hash_deque).push_back(p);    // empty slot, insert
@@ -290,7 +287,7 @@ int Hash<T>::insert(const T& p)
             ++ data_size;
             return (o_size);
         }
-        else if (hash_table[ii] < NIL) 
+        else if (hash_table[ii] < NIL)
         {
             //****************************************************************************
             //!!This is only used when insert(p, isExist) is used!!!!!
@@ -306,7 +303,7 @@ int Hash<T>::insert(const T& p)
             ++ data_size;
             return position;
         }
-        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p)) 
+        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p))
         {
             return (hash_table[ii]);    //! Already exist.
         }
@@ -316,28 +313,28 @@ int Hash<T>::insert(const T& p)
 }
 
 template <class T>
-int Hash<T>::erase(const T& p)
+int Hash<T>::erase(const T &p)
 {
-    key=gethashkey(p);
-    hash1=key%hash_size;
-    hash2=key%(hash_size-1)|1;
+    key = gethashkey(p);
+    hash1 = key % hash_size;
+    hash2 = key % (hash_size-1) | 1;
     register CAulong ii;
 
     // ii=(hash1+i_prob*hash2)%hash_size --> Double Hashing.
-    for(i_prob=0; i_prob<hash_size; i_prob++) 
+    for (i_prob = 0; i_prob < hash_size; i_prob ++)
     {
-        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL) 
+        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL)
         {
             //! Data not here, do not need to erase.
             return 0;
         } 
-        else if (hash_table[ii] < NIL) 
+        else if (hash_table[ii] < NIL)
         {
             //! Deleted position, continue.
             //! Because element may be exist at the position after 'ii'.
             continue;
         }
-        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p)) 
+        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p))
         {
             /*
             T end = (*hash_deque).back();
@@ -379,27 +376,27 @@ int Hash<T>::erase(const T& p)
 }
 
 template <class T>
-int Hash<T>::search(const T& p)
+int Hash<T>::search(const T &p)
 {
-    key=gethashkey(p);
-    hash1=key%hash_size;
-    hash2=key%(hash_size-1)|1;
+    key = gethashkey(p);
+    hash1 = key % hash_size;
+    hash2 = key % (hash_size-1) | 1;
     register CAulong ii;
 
     // ii=(hash1+i_prob*hash2)%hash_size --> Double Hashing.
-    for(i_prob=0; i_prob<hash_size; i_prob++) 
+    for (i_prob = 0; i_prob < hash_size; i_prob ++)
     {
-        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL) 
+        if (hash_table[ii=((hash1+i_prob*hash2)%hash_size)] == NIL)
         {
             return (0);    //! Does not exist.
         }
-        else if (hash_table[ii] < NIL) 
+        else if (hash_table[ii] < NIL)
         {
             //! Deleted position, continue.
             //! Because element may be exist at the position after 'ii'.
             continue;
         }
-        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p)) 
+        else if (equal_hash((*hash_deque)[hash_table[ii]-1], p))
         {
             return (hash_table[ii]);    //! Found.
         }
@@ -414,9 +411,9 @@ void Hash<T>::info()
     if (size() == 0) return;
 
     T data;
-    CAulong maxp=0, avp=0, p;
+    CAulong maxp = 0, avp = 0, p;
 
-    for (CAulong i=0; i<size(); i ++)
+    for (CAulong i = 0; i < size(); i ++)
     {
         data = (*this)[i];
         search(data);
@@ -430,4 +427,4 @@ void Hash<T>::info()
 typedef Hash<Point3D *> PointHash;
 typedef Hash<Geo_Face *> FaceHash;
 }
-#endif
+

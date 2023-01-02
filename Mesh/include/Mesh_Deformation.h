@@ -80,7 +80,7 @@ public:
     void SetDeformParameter(DeformParameter *deformParameterIn);
 
     virtual void SetNumberOfReferenceCP(int numberOfReferenceCPIn) {};
-    virtual void SetInfluencePara(int influenceParaIn) {};
+    virtual void SetInfluencePara(RDouble influenceParaIn) {};
 
 private:
     //! Transform stationalGrid to deformedGrid.

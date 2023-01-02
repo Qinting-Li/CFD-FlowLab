@@ -18,11 +18,6 @@ inline int Param_NSSolverUnstruct::GetLimitVariables() const
     return limitVariables;
 }
 
-inline RDouble  Param_NSSolverUnstruct::GetSkewnessAngle() const
-{
-    return skewnessAngle;
-}
-
 inline int Param_NSSolverUnstruct::GetSliceAxis() const
 {
     return sliceAxis;

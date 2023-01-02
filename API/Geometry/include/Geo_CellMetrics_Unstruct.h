@@ -13,6 +13,7 @@
 //! @brief     It defines the cell metrics of the unstructured grid,
 //!            such as the cell center and cell volume.
 //! @author    Bell, He Xin.
+
 #pragma once
 #include "LIB_Macro.h"
 #include "Precision.h"
@@ -25,38 +26,38 @@ class Geo_CellMetrics_Unstruct
 {
 private:
     //! Cell center data, including ghost cells.
-    RDouble * xcc, * ycc, * zcc;
+    RDouble *xcc, *ycc, *zcc;
 
     //! Cell volume data, excluding ghosts.
-    RDouble * vol; 
+    RDouble *vol; 
 
     //! Used for DES simulation ONLY: largest local grid length, distance of neighbor cell centers.
-    RDouble * largestLocalGridLength;
+    RDouble *largestLocalGridLength;
 
     //! Used for DES simulation ONLY: sub-grid length.
-    RDouble * subgridLength;
+    RDouble *subgridLength;
 public:
     LIB_EXPORT Geo_CellMetrics_Unstruct();
     LIB_EXPORT ~Geo_CellMetrics_Unstruct();
 
 public:
     //! Assign the given pointer to the X Cell center data.
-    void SetCellCenterX(RDouble * xcc);
+    void SetCellCenterX(RDouble *xcc);
 
     //! Assign the given pointer to the Y Cell center data.
-    void SetCellCenterY(RDouble * ycc);
+    void SetCellCenterY(RDouble *ycc);
 
     //! Assign the given pointer to the Z Cell center data.
-    void SetCellCenterZ(RDouble * zcc);
+    void SetCellCenterZ(RDouble *zcc);
 
     //! Assign the given pointer to the Cell volume data.
-    void SetCellVolume(RDouble * vol);
+    void SetCellVolume(RDouble *vol);
 
     //! Assign the largest local grid spacing.
-    void SetLargestLocalGridLength(RDouble * length);
+    void SetLargestLocalGridLength(RDouble *length);
 
     //! Assign the sub-grid length, used for DES simulation ONLY.
-    void SetSubgridLength(RDouble * length);
+    void SetSubgridLength(RDouble *length);
 
     //! Return the X pointer of cell center.
     RDouble * GetCellCenterX() const;

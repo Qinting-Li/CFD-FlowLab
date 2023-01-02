@@ -1022,7 +1022,7 @@ void ComputeViscousMatrix(RDouble *primitiveVars, RDouble *temperature, RDouble 
 
 void ObtainInverseDiagonalMatrix(RDouble2D *diagonalMatrixD, int nEquation, RDouble2D *inverseDiaMatrix)
 {
-	Range II(0, 4);
+	Range II(0, nEquation - 1);
 	RDouble2D *lMatrix = new RDouble2D(II, II, fortranArray);
 	RDouble2D &lMatrix2D = *reinterpret_cast<RDouble2D *> (lMatrix);
 

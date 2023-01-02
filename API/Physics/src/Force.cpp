@@ -279,7 +279,7 @@ void Force::CollectionForce(DataContainer *data_in)
     int nLocalZones = PHMPI::GetNumberofLocalZones();
 
     int nTotalVarDim = nForceVar * numberofTotalPart;
-    RDouble *localForceVar = new RDouble[nTotalVarDim];
+    double *localForceVar = new double[nTotalVarDim];
     PHSPACE::SetField(localForceVar, 0.0, nTotalVarDim);
 
     int nTBC = static_cast<int>(GlobalBoundaryCondition::GetNumberOfBC());
@@ -320,25 +320,25 @@ void Force::CollectionForce(DataContainer *data_in)
 
             data_in->read(&hingeMoment, sizeof(RDouble));
 
-            localForceVar[varCount ++] += dCA_f;
-            localForceVar[varCount ++] += dCA_p;
-            localForceVar[varCount ++] += dCN_f;
-            localForceVar[varCount ++] += dCN_p;
-            localForceVar[varCount ++] += dCZ_f;
-            localForceVar[varCount ++] += dCZ_p;
+            localForceVar[varCount ++] += static_cast<double>(dCA_f);
+            localForceVar[varCount ++] += static_cast<double>(dCA_p);
+            localForceVar[varCount ++] += static_cast<double>(dCN_f);
+            localForceVar[varCount ++] += static_cast<double>(dCN_p);
+            localForceVar[varCount ++] += static_cast<double>(dCZ_f);
+            localForceVar[varCount ++] += static_cast<double>(dCZ_p);
 
-            localForceVar[varCount ++] += dcpx;
-            localForceVar[varCount ++] += dcpy;
-            localForceVar[varCount ++] += dcpz;
+            localForceVar[varCount ++] += static_cast<double>(dcpx);
+            localForceVar[varCount ++] += static_cast<double>(dcpy);
+            localForceVar[varCount ++] += static_cast<double>(dcpz);
 
-            localForceVar[varCount ++] += dCl_f;
-            localForceVar[varCount ++] += dCl_p;
-            localForceVar[varCount ++] += dCn_f;
-            localForceVar[varCount ++] += dCn_p;
-            localForceVar[varCount ++] += dCm_f;
-            localForceVar[varCount ++] += dCm_p;
+            localForceVar[varCount ++] += static_cast<double>(dCl_f);
+            localForceVar[varCount ++] += static_cast<double>(dCl_p);
+            localForceVar[varCount ++] += static_cast<double>(dCn_f);
+            localForceVar[varCount ++] += static_cast<double>(dCn_p);
+            localForceVar[varCount ++] += static_cast<double>(dCm_f);
+            localForceVar[varCount ++] += static_cast<double>(dCm_p);
 
-            localForceVar[varCount ++] += hingeMoment;
+            localForceVar[varCount ++] += static_cast<double>(hingeMoment);
 
             //! Because of global and local part force, when (iPart > ALL_SOLID_WALL), read second.
             if (iPart > ALL_SOLID_WALL)
@@ -363,25 +363,25 @@ void Force::CollectionForce(DataContainer *data_in)
 
                 data_in->read(&hingeMoment, sizeof(RDouble));
 
-                localForceVar[varCount ++] += dCA_f;
-                localForceVar[varCount ++] += dCA_p;
-                localForceVar[varCount ++] += dCN_f;
-                localForceVar[varCount ++] += dCN_p;
-                localForceVar[varCount ++] += dCZ_f;
-                localForceVar[varCount ++] += dCZ_p;
+                localForceVar[varCount ++] += static_cast<double>(dCA_f);
+                localForceVar[varCount ++] += static_cast<double>(dCA_p);
+                localForceVar[varCount ++] += static_cast<double>(dCN_f);
+                localForceVar[varCount ++] += static_cast<double>(dCN_p);
+                localForceVar[varCount ++] += static_cast<double>(dCZ_f);
+                localForceVar[varCount ++] += static_cast<double>(dCZ_p);
 
-                localForceVar[varCount ++] += dcpx;
-                localForceVar[varCount ++] += dcpy;
-                localForceVar[varCount ++] += dcpz;
+                localForceVar[varCount ++] += static_cast<double>(dcpx);
+                localForceVar[varCount ++] += static_cast<double>(dcpy);
+                localForceVar[varCount ++] += static_cast<double>(dcpz);
 
-                localForceVar[varCount ++] += dCl_f;
-                localForceVar[varCount ++] += dCl_p;
-                localForceVar[varCount ++] += dCn_f;
-                localForceVar[varCount ++] += dCn_p;
-                localForceVar[varCount ++] += dCm_f;
-                localForceVar[varCount ++] += dCm_p;
+                localForceVar[varCount ++] += static_cast<double>(dCl_f);
+                localForceVar[varCount ++] += static_cast<double>(dCl_p);
+                localForceVar[varCount ++] += static_cast<double>(dCn_f);
+                localForceVar[varCount ++] += static_cast<double>(dCn_p);
+                localForceVar[varCount ++] += static_cast<double>(dCm_f);
+                localForceVar[varCount ++] += static_cast<double>(dCm_p);
 
-                localForceVar[varCount ++] += hingeMoment;
+                localForceVar[varCount ++] += static_cast<double>(hingeMoment);
             }
         }
     }
@@ -390,7 +390,7 @@ void Force::CollectionForce(DataContainer *data_in)
     int myid = PHMPI::GetCurrentProcessorID();
     int server = PHMPI::GetServerProcessorID();
 
-    RDouble *globalForceVar = new RDouble[nTotalVarDim];
+    double *globalForceVar = new double[nTotalVarDim];
     if (PHMPI::GetNumberOfProcessor() > 1)
     {
         PH_AllreduceSepMode(localForceVar, globalForceVar, nTotalVarDim, MPI_DOUBLE, PH_SUM);
@@ -408,25 +408,25 @@ void Force::CollectionForce(DataContainer *data_in)
         int varCount = 0;
         for (int iPart = 0; iPart < numberofTotalPart; ++ iPart)
         {
-            CA_f[iPart] = globalForceVar[varCount ++];
-            CA_p[iPart] = globalForceVar[varCount ++];
-            CN_f[iPart] = globalForceVar[varCount ++];
-            CN_p[iPart] = globalForceVar[varCount ++];
-            CZ_f[iPart] = globalForceVar[varCount ++];
-            CZ_p[iPart] = globalForceVar[varCount ++];
+            CA_f[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            CA_p[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            CN_f[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            CN_p[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            CZ_f[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            CZ_p[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
 
-            cpx[iPart] = globalForceVar[varCount ++];
-            cpy[iPart] = globalForceVar[varCount ++];
-            cpz[iPart] = globalForceVar[varCount ++];
+            cpx[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            cpy[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            cpz[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
 
-            Cl_f[iPart] = globalForceVar[varCount ++];
-            Cl_p[iPart] = globalForceVar[varCount ++];
-            Cn_f[iPart] = globalForceVar[varCount ++];
-            Cn_p[iPart] = globalForceVar[varCount ++];
-            Cm_f[iPart] = globalForceVar[varCount ++];
-            Cm_p[iPart] = globalForceVar[varCount ++];
+            Cl_f[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            Cl_p[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            Cn_f[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            Cn_p[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            Cm_f[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
+            Cm_p[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
 
-            hingeMoment[iPart] = globalForceVar[varCount ++];
+            hingeMoment[iPart] = static_cast<RDouble>(globalForceVar[varCount ++]);
         }
     }
 

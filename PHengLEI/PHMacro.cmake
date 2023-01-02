@@ -97,4 +97,7 @@ include_directories("${MEITIS_H_PATH}")
 
 set(CGNS_H_PATH      ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
 include_directories("${CGNS_H_PATH}")
+
+set(MGRID_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
+include_directories("${MGRID_H_PATH}")
 endmacro(include3rpartyHeadFiles)

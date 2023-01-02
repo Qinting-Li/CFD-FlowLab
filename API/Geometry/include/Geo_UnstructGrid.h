@@ -26,6 +26,11 @@
 #include "Geo_LSQWeight_Unstruct.h"
 #include "Geo_UnstructBC.h"
 #include "Geo_LineTopo_Unstruct.h"
+#ifdef USE_WINDOWS_X64
+#include "metis64.h"
+#else
+#include "metis.h"
+#endif
 
 
 namespace PHSPACE
@@ -52,7 +57,7 @@ class UnstructGrid : public Grid
 private:
     //! The boundary condition list.\n
     //! Each face has a Boundary Condition Record.
-    UnstructBCSet ** bcr;
+    UnstructBCSet **bcr;
 
     UnstructBCSet *unstructBCSet;
 
@@ -63,72 +68,72 @@ private:
     //! Defines the node-face, node-cell, node-node \n
     //! connected relationship of unstructured grid.
     //! 1: cells index list of each node.
-    Geo_NodeTopo_Unstruct * nodeTopology;
+    Geo_NodeTopo_Unstruct *nodeTopology;
 
     //! Unstructured face topology information:\n
     //! Defines the face-node connected relationship of unstructured grid.\n
     //! 1: right and left cell of each face.\n
     //! 2: nodes list of each face.
-    Geo_FaceTopo_Unstruct * faceTopology;
+    Geo_FaceTopo_Unstruct *faceTopology;
 
-    Geo_LineTopo_Unstruct * lineTopology;
+    Geo_LineTopo_Unstruct *lineTopology;
 
     //! Unstructured cell topology information:\n
     //! Defines the cell-face, cell-node connected relationship of unstructured grid.\n
     //! 1: faces of each cell.\n
     //! 2: nodes of each cell.\n
     //! 3: neighbor cells of each cell.
-    Geo_CellTopo_Unstruct * cellTopology;
+    Geo_CellTopo_Unstruct *cellTopology;
 
     //! Unstructured face metrics information:\n
     //! Defines the face metrics of unstructured grid.\n
     //! 1: face center.\n
     //! 2: face normal.\n
     //! 3: face area.
-    Geo_FaceMetrics_Unstruct * faceMetrics;
+    Geo_FaceMetrics_Unstruct *faceMetrics;
 
     //! Unstructured cell metrics information:\n
     //! Defines the cell metrics of unstructured grid.\n
     //! 1: cell center.\n
     //! 2: cell volume.
-    Geo_CellMetrics_Unstruct * cellMetrics;
+    Geo_CellMetrics_Unstruct *cellMetrics;
 
     //! Unstructured dynamic grid metrics information:\n
     //! Defines dynamic mesh metrics of unstructured grid.\n
     //! 1: face normal velocity.\n
     //! 2: face velocity.
-    Geo_DynamicGridMetrics_Unstruct * dynamicGridMetrics;
+    Geo_DynamicGridMetrics_Unstruct *dynamicGridMetrics;
 
     //! Least Square Weight of unstructured grid.\n
-    Geo_LSQWeight_Unstruct * leastSquareWeights;
+    Geo_LSQWeight_Unstruct *leastSquareWeights;
 
     //! Connection of cell index to coarse cell index.\n
     //! For multi-grid method, the original finest grid is coarsen,
     //! so, each cell belongs to a coarse cell on the coarse level.
-    int * cell2coarsegridcell;
+    int *cell2coarsegridcell;
 
     //! There are two cells for each cell face.\n
     //! fc2cL: the order of the right cell on the neighbor cell list.
     //! fc2cR: the order of the left  cell on the neighbor cell list.
-    int * fc2cL, * fc2cR;
+    int *fc2cL, *fc2cR;
 
     //! Wall distance: the nearest distance of a cell to the wall.
-    RDouble  * walldist;
+    RDouble *walldist;
 
     //! Wall distance: the nearest distance of a node to the wall.
-    RDouble * walldistNode;
+    RDouble *walldistNode;
 
-    RDouble* normalDistanceC2C;
+    RDouble *normalDistanceC2C;
 
     //! the label for first layer cell of the wall boundary.
-    int * wallCellLabel;
+    int *wallCellLabel;
 
     //! Cell to cell connectivity, used in over-set unstructured grid ONLY.
     Connectivity *cell2cell_connectivity;
 
     //! Some special variables for Laplacian-ggnode reconstruction
-    RDouble    * lamdax, * lamday, * lamdaz; 
-    int        * knode;
+    RDouble *lamdax, *lamday, *lamdaz;
+    int *knode;
 
     //! A lable to judge if the cell is in the over-set zone.\n
     //! For over-set grid method only.
@@ -147,7 +152,7 @@ private:
     vector< RDouble > nodeWalldistDistance;
 
     vector< RDouble > nodeWalldistDistanceInOtherBlock;
-    OversetConfig * oversetConfig;
+    OversetConfig *oversetConfig;
 
     //! Average volume of all mesh.
     RDouble averageVolume;
@@ -185,7 +190,7 @@ public:
     void SetFace2Node(int *face2node);
 
     //! Set each face's starting subscript in the face2node array.
-    void SetFace2NodeSubscript(int *face2nodeSubscript);
+    void SetFace2NodeSubscript(long long int *face2nodeSubscript);
 
     //! Set the Connection of cell index to coarse cell index.
     void SetCell2CoarseGridCell(int *cell2coarsegridcell);
@@ -194,16 +199,16 @@ public:
     void SetLI_nLine(int nLine);
 
     //! set the number of cells in all lines.
-    void SetLI_nCellsInLine(int* nCellsInLines);
+    void SetLI_nCellsInLine(int *nCellsInLines);
 
     //! set the cell No. of all lines.
-    void SetLI_CellOfLine(int** CellOfLine);
+    void SetLI_CellOfLine(int **CellOfLine);
 
     //! set the face No. of all lines.
-    void SetLI_FaceOfLine(int** FaceOfLine);
+    void SetLI_FaceOfLine(int **FaceOfLine);
 
     //! set the line No. of all cells.
-    void SetLI_LineOfCell(int* LineOfCell);
+    void SetLI_LineOfCell(int *LineOfCell);
 
     //! Set the order of the right cell on the neighbor cell list.
     void Setfc2cL(int *fc2cL);
@@ -217,7 +222,7 @@ public:
     void SetZoneProbesCellID(vector <int> zoneProbesCellID);
 
     //! Return the boundary condition records.
-    UnstructBCSet **GetBCRecord() const;
+    UnstructBCSet ** GetBCRecord() const;
     
     //! Create composite boundary condition region (allocate memory for structBCSet).
     LIB_EXPORT void CreateUnstructBCSet(int nBCRegion);
@@ -327,7 +332,7 @@ public:
     LIB_EXPORT int ** GetFace2NodeArray();
 
     //! Get each face's starting subscript in the face2node array.
-    LIB_EXPORT int * GetFace2NodeSubscript();
+    LIB_EXPORT long long int * GetFace2NodeSubscript();
 
     //! get the number of lines.
     int GetLI_nLine() const;
@@ -388,10 +393,10 @@ public:
     void computeBoundaryPointLabel();
 
     //! Set the cell to node: node index of each cell.
-    void SetCell2Node(int * cell2node);
+    void SetCell2Node(int *cell2node);
 
     //! Set the number of nodes in each cell.
-    void SetNodeNumberOfEachCell(int * node_number_of_each_cell);
+    void SetNodeNumberOfEachCell(int *node_number_of_each_cell);
 
     //! Get the number of nodes in each cell.
     int * GetNodeNumberOfEachCell() const;
@@ -474,13 +479,13 @@ public:
 
     int * Getknode() const; 
 
-    RDouble *GetVolume(int istep = 0) const;
+    RDouble * GetVolume(int istep = 0) const;
 
     //! Find out the points that lie on the solid wall.
-    LIB_EXPORT void FindOutWallPoints(bool * isWallPoint, int & nWallPoints);
+    LIB_EXPORT void FindOutWallPoints(bool *isWallPoint, int &nWallPoints);
 
     //! Find out the faces that lie on the solid wall.
-    LIB_EXPORT void FindOutWallFaces(bool * isWallFace, int & nWallFaces);
+    LIB_EXPORT void FindOutWallFaces(bool *isWallFace, int &nWallFaces);
 
     //! Static the mesh skewness.\n
     //! Skewness, 0 represents bad mesh quality; 1 represents satisfactory quality.
@@ -488,13 +493,13 @@ public:
     LIB_EXPORT RDouble SkewnessSummary(ActionKey *actkey = 0);
 
     //! Write face boundary condition to file stream.
-    LIB_EXPORT void WriteFaceBC(fstream & file);
+    LIB_EXPORT void WriteFaceBC(fstream &file);
 
     //! Allocate iBlank for unstructured grid.
     LIB_EXPORT void AllocateOversetGrid();
 
     //! Allocate overset storage for donor cells and inter cells.
-    LIB_EXPORT void RegisterOversetField(const string & name, const int type, const int dimesion);
+    LIB_EXPORT void RegisterOversetField(const string &name, const int type, const int dimesion);
 
     //! Set the average volume.
     void SetAverageVolume(RDouble Rin);
@@ -559,8 +564,8 @@ public:
 
     // calculate the normal distance between two neighbor cells.
     LIB_EXPORT void CalNormalDistanceOfC2C();
-    void ReadGrid (fstream &file);
-    void ReadGrid (VirtualFile *vfile);
+    void ReadGrid(fstream &file);
+    void ReadGrid(VirtualFile *vfile);
     LIB_EXPORT void WriteGrid(fstream &file);
     void WriteGrid(VirtualFile *vfile);
 
@@ -572,13 +577,13 @@ public:
     void ReviseNeighborZoneIndex(int zoneStart);
 
     void DecodeOversetGrid(DataContainer *cdata);
-    void DecodeCellNode(DataContainer * cdata);
+    void DecodeCellNode(DataContainer *cdata);
 
     //! Return the interpoint information from the DataContainer.
     void DecodeInterpointInfo(DataContainer *cdata);
 
-    void DecodeWallDist(DataContainer * cdata);
-    void DecodeBCFace(DataContainer * cdata);
+    void DecodeWallDist(DataContainer *cdata);
+    void DecodeBCFace(DataContainer *cdata);
     void Encode(DataContainer *cdata, int flag);
     void EncodeGrid(DataContainer *cdata);
     void EncodeOversetGrid(DataContainer *cdata);
@@ -594,7 +599,7 @@ public:
     void ComputeMetrics(ActionKey *actkey = 0);
 
     LIB_EXPORT void CoarseGrids(int maxLevel);
-    void BuildGridLink(LinkStruct * link);
+    void BuildGridLink(LinkStruct *link);
     void CalCNNCF();
     void ChangeBCType(int from_bctype, int to_bctype);
     void CompareMaxMinValue(RDouble &local_data, int flag);
@@ -677,21 +682,21 @@ public:
 
 void CoarseGridConnectUNMergeFace(UnstructGrid *fgrid, UnstructGrid *cgrid);
 
-int PickOutBadSkewnessFaces(UnstructGrid * grid, bool * isBadFace = 0, bool * isBadCell = 0);
+int PickOutBadSkewnessFaces(UnstructGrid *grid, bool *isBadFace = 0, bool *isBadCell = 0);
 
 void FieldVisualization(Grid *grid_in, std::ostringstream &oss, vector<string> &title, RDouble **qn, int nl);
 void FieldVisualizationForVTK(Grid *grid_in, std::ostringstream &oss, vector<string> &title, RDouble **qn, int nl);
 void SaveDataForTecio_bac(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nl);
 void SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nl);
 
-void CompNodeVarWeight(UnstructGrid *grid, RDouble *q_n, RDouble *q);    // Bell 20121220 add
+void CompNodeVarWeight(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVar(UnstructGrid *grid, RDouble *q_n, RDouble *q, bool isVelocityForPostVisual = false);
 void CompNodeVar_new(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVisual(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 void CompNodeVarForVelocity(UnstructGrid *grid, RDouble *qNode, RDouble *q);
 void ComputeNodeVariable(UnstructGrid *grid, RDouble **q_n, RDouble **q, int nEquation);
 void FixBCNodeVar(UnstructGrid* grid, RDouble* q, RDouble* q_n, int* n_count, int bctype_in, bool twoside);
-void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count, int bctype_in, bool twoside);    // Bell 20121220 add
+void FixBCNodeVar(UnstructGrid *grid, RDouble *q, RDouble *q_n, RDouble *n_count, int bctype_in, bool twoside);
 void CompNodeVarLimit(UnstructGrid *grid, RDouble *q_n, RDouble *q);
 
 void GetFace2NodeList(UnstructGrid *grid, pair<int, string> iter, vector<int> &linkmap, vector < vector < int > > &face2nodelist);
@@ -707,7 +712,7 @@ void MinMaxDiffINF(Grid *grid_in, int ig, RDouble *dmin, RDouble *dmax, RDouble 
 //! -# 1 :  1-D array.
 //! -# 2 :  2-D array.
 //! -# n :  n-D array.
-void CommunicateInterfaceValue(UnstructGrid * grid, RDouble ** variable, const string & variableName, int variableDimension);
+void CommunicateInterfaceValue(UnstructGrid *grid, RDouble **variable, const string &variableName, int variableDimension);
 void CommunicateInterfaceValue(UnstructGrid *grid, RDouble *variable, const string &variableName);
 
 //! Communicate the interpoint variables at the interface between different zones.
@@ -759,7 +764,7 @@ void SetLimitBoundary(Grid *grid_in, RDouble *limit);
 void addn2c(int ie, int ip, int *nCPN, struct linkbase **nc);
 UnstructGrid * UnstructGridCast(Grid *grid_in);
 
-LIB_EXPORT void ConstructFace2Node(int * nPointPerFace, int * nodesOfPerFace, uint_t nFaces, vector< vector<int> > & face2node);
+LIB_EXPORT void ConstructFace2Node(int *nPointPerFace, int *nodesOfPerFace, uint_t nFaces, vector< vector<int> > &face2node);
 
 void VisualizationMesh2D(UnstructGrid *grid, const string &fileName);
 void VisualizationMesh3D(UnstructGrid *grid, const string &fileName);
@@ -772,6 +777,15 @@ void ExtractSubGridFromGrid(UnstructGrid *grid, UnstructGrid *grid_Slice, int *i
 void DumpSliceGrid(UnstructGrid *unstructGrid, int sliceAxis, RDouble slicePosition, string fileName);
 
 RDouble AspectRatio(RDouble dist, RDouble area, int nodeNumOfPerFace);
+
+void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy);
+
+//! @param[in] neighborCell local cell ID in the neighbor zone.
+//! @param[in] vtxdist start cell ID of each zone from the global view.
+void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, int *neighborCell, idx_t *vtxdist);
+
+void Get_Xadj_Adjncy_Weight(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, RDouble *adjncyWeight);
+
 }
 
 

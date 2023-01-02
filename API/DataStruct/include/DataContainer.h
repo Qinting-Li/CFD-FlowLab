@@ -70,7 +70,6 @@ public:
     //! return the number of vector *data 
     ContainerSizeType element_size();
 
-
     //!read DataContainer vector<char> * data,and receive it by void *data.
     //!@param[in ]: *data , target object.
     //!@param[in ]: size
@@ -142,7 +141,7 @@ public:
     //!invoking DataChar::read function
     //! @param[in ]:   *data :  target object.\n
     //! @param[in ]:
-    void static_read (void *data, CharVecSizeType size);
+    void static_read(void *data, CharVecSizeType size);
 
     //!invoking DataChar::write function
     //! @param[in ]: *data :source object.\n
@@ -168,7 +167,7 @@ public:
 
     //!
     streamsize get_remainder(streamsize position) 
-        const { return position%max_unit_size; }
+        const { return position % max_unit_size; }
 
     //!
     int get_element_index(streamsize position) 
@@ -206,7 +205,7 @@ public:
     CharVecSizeType size();
 
     //! invoking function memcpy
-    //! @param[in ]:   *data : target object.\n     
+    //! @param[in ]:   *data : target object.\n
     //! @param[in ]:        
     void read(void *data, CharVecSizeType size);
 

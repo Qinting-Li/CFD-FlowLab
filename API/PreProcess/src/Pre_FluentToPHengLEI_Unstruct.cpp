@@ -426,6 +426,9 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentCell(int first_index, int last_ind
 
     int type;
 
+    int num2 = 0;
+    int num6 = 0;
+
     int i = first_index;
     do
     {
@@ -437,10 +440,16 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentCell(int first_index, int last_ind
         {
             from_string< int >(type, word, std::hex);
             line = FindNextWord(line, word, separator);
+
+            if (type == 2) num2++;
+            if (type == 6) num6++;
+
             ++ i;
             if (word == "") break;
         } while (true);
     } while (i <= last_index);
+
+    int iiii = 0;
 }
 
 GridFormat_Fluent::GridFormat_Fluent()

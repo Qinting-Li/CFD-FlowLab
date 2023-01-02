@@ -45,7 +45,7 @@ inline RDouble3D * Geo_NodeTopo_Struct::GetStructZ() const
 
 inline void Geo_NodeTopo_Struct::DeallocateAll()
 {
-    if (structx) { delete structx; structx = 0; }
-    if (structy) { delete structy; structy = 0; }
-    if (structz) { delete structz; structz = 0; }
+    if (structx) { delete structx;    structx = 0; }
+    if (structy) { delete structy;    structy = 0; }
+    if (structz) { delete structz;    structz = 0; }
 }

@@ -48,6 +48,7 @@ extern VVInt zone_over_link;
 
 typedef void (*DATA_COMPRESS)(DataContainer *&cdata);
 typedef void (*DATA_DECOMPRESS)(DataContainer *cdata);
+
 //! PHengLEI solver initialization.
 void Initialization();
 
@@ -165,6 +166,9 @@ LIB_EXPORT int GetZoneDistributionMethod();
 
 //! Return the global zone index of local zone index = localZoneID.
 LIB_EXPORT int GetLocalZoneIDToGlobalZoneID(int localZoneID);
+
+//! Return the local zone index of global zone index = localZoneID.
+LIB_EXPORT int GetGlobalZoneIDToLocalZoneID(int globalZoneID);
 
 //! Special functions for HYBRID solver.
 int GetNumberOfProcStructUsed();

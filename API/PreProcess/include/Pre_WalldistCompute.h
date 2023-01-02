@@ -308,6 +308,9 @@ void WriteWalldist();
 //!
 void GhostWalldist();
 
+void CompMaxBoundaryLayerWalldist();
+bool IsBoundaryLayerExist();
+
 //!
 void WalldistStatics();
 

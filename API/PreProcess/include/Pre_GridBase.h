@@ -151,6 +151,7 @@ private:
     cgsize_t nTotalNode, nTotalCell, nBoundFace;
     int nSections, nBCRegions;
     string *boundaryName;
+    string  volumeName;
     cgsize_t *istart, *iend;
     cgsize_t *ElementDataSize;
     int *elem_type;
@@ -161,9 +162,16 @@ private:
     int *bc_type;
     int *bc_elem_set_type, *bc_grid_location;
     cgsize_t **bc_conn_list;
+    int vcType;
 public:
     string * GetBCName() const { return boundaryName; }
     void SetBCName(string *nameIn) { boundaryName = nameIn; }
+
+    string GetVCName() { return volumeName; }
+    void SetVCName(string nameIn) { volumeName = nameIn; }
+
+    int  GetVCType() { return vcType; }
+    void SetVCType(int vcTypeIn) { vcType = vcTypeIn; }
 
     cgsize_t ** GetBoundaryElementConnectionList() const { return bc_conn_list; }
     void SetBoundaryElementConnectionList(cgsize_t **bc_conn_list) { this->bc_conn_list = bc_conn_list; }

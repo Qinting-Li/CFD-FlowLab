@@ -25,6 +25,7 @@
 #include "Data_Param.h"
 #include "FieldProxy.h"
 #include "OversetInformation.h"
+#include "Geo_SimpleVC.h"
 
 namespace PHSPACE
 {
@@ -131,6 +132,8 @@ protected:
     //! The grid file index current grid belong, only used in multi-file grid convert.
     int fileIndexCurrentGridBelong;
 
+    SimpleVC *volumeCondition;
+
 private:
     //! 
     int own_database;
@@ -158,7 +161,7 @@ public:
     void SetInterfaceInfo(InterfaceInfo *interfaceInfo);
 
     //! Assign the pointer to the interface topology information of interface faces.
-    void SetInterfaceFields(InterfaceFields *interfaceFields){this->interfaceFields = interfaceFields;};
+    void SetInterfaceFields(InterfaceFields *interfaceFields) { this->interfaceFields = interfaceFields; }
 
     //! Assign the pointer to the interpoint topology information of interface points.
     //! @param[in] interpointInformation    an object of class InterpointInformation.
@@ -199,6 +202,9 @@ public:
 
     //! Assign the probes coordinates of each zone grid.
     void SetZoneProbesCoordinates(vector<vector<RDouble> > &zoneProbesCoordinatesIn);
+
+    void SetVolumeCondition(SimpleVC *volumeConditionIn);
+    SimpleVC *GetVolumeConditionIn();
 
     //! Return the grid dimension.
     int GetDim() const;
@@ -321,6 +327,8 @@ public:
 
     LIB_EXPORT void ReleaseInterfaceField();
 
+    LIB_EXPORT void ReleaseInterfaceField(string varName);
+    
     //! Register an interpoint field (variable) into buffer which is loaded on grid, used in parallel communication.
     //! The interpoint field variable buffer is set to be ZERO.
     //! @param[in] name    variable name of the interface field that need to be communicated.
@@ -355,7 +363,7 @@ public:
     LIB_EXPORT void ComputeGDVel(RDouble *xt, RDouble *yt, RDouble *zt, RDouble **angle0, RDouble **coord0);
     
     //! Turn the Y axis to be up, if the original Z axis is up.
-    LIB_EXPORT void TurnZAxis2YAxis();
+    LIB_EXPORT void RotateAboutAxis();
 
     //! Read grid from file.
     LIB_EXPORT virtual void ReadGrid(fstream &file) = 0;
@@ -514,6 +522,7 @@ public:
     //! Allocate memory for walldist.
     virtual void AllocateWalldist() = 0;
     virtual void GetBcNamePair(set< pair<int, string> > &bcNamePairSet) = 0;
+    virtual void ComputeCellBoundaryType();
 
     virtual int  GetOrdinaryGridIndex() { return -1; };
 
@@ -533,13 +542,19 @@ LIB_EXPORT void Create_Link_Info(VInt &pindex, int iZone, int iFace, uint_t &fco
 LIB_EXPORT void GetFaceCoorList(VInt &index, int nlist, RDouble *xlist, RDouble *ylist, RDouble *zlist, RDouble *x, RDouble *y, RDouble *z);
 //!
 LIB_EXPORT void GetFaceCoorList(int il, int jl, int kl, int ir, int jr, int kr, int ijk[4][3], int nlist,
-                     RDouble *xlist, RDouble *ylist, RDouble *zlist, RDouble3D &x, RDouble3D &y, RDouble3D &z);
+                                RDouble *xlist, RDouble *ylist, RDouble *zlist, RDouble3D &x, RDouble3D &y, RDouble3D &z);
 //!
-LIB_EXPORT void GetCoorIndexList(DataStruct_AdtTree<int,RDouble> *adt_tree, RDouble &diff_tolerance, int &pcount, RDouble *xlist, RDouble *ylist, RDouble *zlist, int nlist, vector<int> &pindex);
+LIB_EXPORT void GetCoorIndexList(DataStruct_AdtTree<int, RDouble> *adt_tree, RDouble &diff_tolerance, int &pcount, RDouble *xlist, RDouble *ylist, RDouble *zlist, int nlist, vector<int> &pindex);
 //!
-LIB_EXPORT int  GetCoorIndex(DataStruct_AdtTree<int,RDouble> *adt_tree, RDouble *coor, RDouble *minwin, RDouble *maxwin, int &count, int &index);
+LIB_EXPORT int  GetCoorIndex(DataStruct_AdtTree<int, RDouble> *adt_tree, RDouble *coor, RDouble *minwin, RDouble *maxwin, int &count, int &index);
 //!
 LIB_EXPORT void ShiftMinMaxBox(RDouble *pmin, RDouble *pmax, RDouble tol);
+
+//! Get cell type on the basis of node number.
+int GetCellType(int dimension, int nodeNumberOfCell);
+
+//! Get face type on the basis of node number.
+int GetFaceType(int dimension, int nodeNumberOfFace);
 
 //! Some special functions for HYBRID solver.
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

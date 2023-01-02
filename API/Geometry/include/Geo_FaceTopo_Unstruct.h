@@ -40,10 +40,10 @@ private:
 
     //! The face2node is a 1D array which record every face's node index.
     //! face2nodeSubscript records each face's starting subcript of the face2node array.
-    int *face2nodeSubscript;
+    long long int *face2nodeSubscript;
 
     //! Face to node: node index of each face.
-    int **face2nodeArray;   
+    int **face2nodeArray;
 
 public:
     LIB_EXPORT Geo_FaceTopo_Unstruct();
@@ -62,8 +62,8 @@ public:
     //! Set the face to node, node index of each face.
     void SetFace2Node(int *face2node);
 
-    //! Set each face's starting subcript in the face2node array.
-    void SetFace2NodeSubscript(int *face2nodeSubscript);
+    //! Set each face's starting subscript in the face2node array.
+    void SetFace2NodeSubscript(long long int *face2nodeSubscript);
 
     //!
     void SetFace2NodeArray(int **face2NodeArrayIn);
@@ -80,12 +80,11 @@ public:
     //! Get the face to node, node index of each face.
     int * GetFace2Node() const;
 
-    //! Get each face's starting subcript in the face2node array.
-    int * GetFace2NodeSubscript() const;
+    //! Get each face's starting subscript in the face2node array.
+    long long int * GetFace2NodeSubscript() const;
 
     //! Get the face to node, node index of each face.
     int ** GetFace2NodeArray() const;
-    
 };
 
 #include "Geo_FaceTopo_Unstruct.hxx"

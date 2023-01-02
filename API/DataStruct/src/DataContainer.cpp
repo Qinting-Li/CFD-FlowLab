@@ -31,7 +31,7 @@ void DataChar::moveto(CharVecSizeType pos)
         oss << "Out of Range: pos " << pos << endl;
 
         //PHMPI::FreeBlockData();
-        cout << oss.str() << endl;  
+        cout << oss.str() << endl;
         exit(0);
     }
 }
@@ -55,7 +55,7 @@ char * DataChar::begin()
 
 char * DataChar::data_pointer()
 { 
-    //! should consider that  the size = 0;
+    //! should consider that the size = 0;
     if (this->size() == 0) return 0;
     return &((*data)[pos]);
 }
@@ -192,7 +192,7 @@ void DataContainer::forward_position(ContainerSizeType size)
     pos += size;
 }
 
-void DataContainer::write (DataContainer *dataContainer)
+void DataContainer::write(DataContainer *dataContainer)
 {
     dataContainer->moveto_begin();
     CharVecSizeType length = dataContainer->size();
@@ -217,14 +217,14 @@ void DataContainer::read(void *data, CharVecSizeType size)
 
     if (remain_size >= size)
     {
-        //! if the sub data legth is not small than 'size', it can read directly.
+        //! if the sub data length is not small than 'size', it can read directly.
         getcurr()->read(data, size);
         forward_position(size);
     }
     else
     {
         //! read the data by segmentation.
-        //! first read the remained data int this superchar.
+        //! first read the remained data int this DataChar.
         getcurr()->read(data, remain_size);
         forward_position(remain_size);
 
@@ -248,7 +248,7 @@ void DataContainer::write(void *data, CharVecSizeType size)
         getcurr()->write(data, size);
         forward_position(size);
     }
-    else 
+    else
     {
         //! write the data by segmentation.
         //! write some data for the rest space.
@@ -257,7 +257,7 @@ void DataContainer::write(void *data, CharVecSizeType size)
         forward_position(remain_size);
 
         void *new_data = move_pointer(data, remain_size);
-        CharVecSizeType  new_size = size - remain_size;
+        CharVecSizeType new_size = size - remain_size;
 
         //! repeat this function for the rest data that has node been written.
         write(new_data, new_size);
@@ -372,7 +372,7 @@ void DataContainer::secure_relative_space(CharVecSizeType size)
 void DataContainer::secure_absolute_space(CharVecSizeType need_size)
 {
     //! if the space is enough, then it does not need to resize.
-    //! it may cause some questions of these chars,if we do not resize£¬there may be some extra chars not been cleared in the memory.
+    //! it may cause some questions of these chars, if we do not resize£¬there may be some extra chars not been cleared in the memory.
     //if (need_size <= size()) return;
 
     resize(need_size);
@@ -450,7 +450,7 @@ void DataContainer::append(void *data, CharVecSizeType size)
     CharVecSizeType need_size = this->size() + size;
     secure_absolute_space(need_size);
 
-    getcurr()->write(data,size);
+    getcurr()->write(data, size);
 }
 
 void DataContainer::destroy(DataChar *iter)

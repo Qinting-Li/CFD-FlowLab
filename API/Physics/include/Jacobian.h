@@ -24,11 +24,7 @@ void MXDQ_STD(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area
 
 void MXDQ_STD(RDouble *prim, RDouble *gykb, RDouble *dq, RDouble *df, RDouble gama, int nm, int nl, RDouble radius, int ipn);
 
-void ComputePreconMatrix(int sign, RDouble **GG, RDouble *prim, RDouble tm, RDouble gama);
-void PreconMatrixDF(RDouble *df, RDouble **GG, int nm);
-void PreconMatrixRes(RDouble **dq, RDouble **GG, int nm, int iCell);
-
-//! The fuction computes the formula (M +- R) * dQ, where M and R denote the Jacobian matrix and spectrum radius of inviscid flux,respectively.
+//! The function computes the formula (M +- R) * dQ, where M and R denote the Jacobian matrix and spectrum radius of inviscid flux,respectively.
 //! @param[in ]: primitiveVars is the array that stores the primitive variables of the current cell.
 //! @param[in ]: temperature is the array that stores the temperature values of the current cell.
 //! @param[in ]: nx, ny and nz are components of the average normal vector located in the center of the current cell.
@@ -49,11 +45,14 @@ void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDo
 void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area, RDouble vol, RDouble visl, RDouble vist, RDouble gama, 
                   RDouble *dq, RDouble *f, int nm, int nl, RDouble radius, int ipn);
 
-//! this is for unstructgrid solver. 
-void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RDouble gama, RDouble *df, int nm);
+//!The functions for low speed precondition.
+//!Compute conservative precondition matrix.
+//!The function computes flux,respectively,\n
+void ComputeConservativePreconMatrix(int sign, RDouble **MG, RDouble *prim, RDouble gama, RDouble preconCoeff, int nm, int neqn);
+void ConservativePreconMatrixVariables(RDouble *field, RDouble *preconMatrix, int neqn);
 
-//! this is for structgrid solver. 
-void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *gykb, RDouble **MG, RDouble tm, RDouble gama, RDouble *df, int nm, int ipn);
-void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble nxs, RDouble nys, RDouble nzs, RDouble area, RDouble vgn, RDouble **MG, RDouble gama, RDouble *df, int nm, int ipn);
+void MatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble gama, RDouble *df, int nm, int neqn, int ipn);
+void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RDouble gama, RDouble *df, int nm);
+void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconMatrix, RDouble gama, RDouble preconCoeff, RDouble *df, int nm, int neqn, int ipn);
 
 }

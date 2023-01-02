@@ -74,6 +74,7 @@ LIB_EXPORT void Param_CFDSolver::Init()
     GlobalDataBase::GetData("upperPlotFieldBox", &upperPlotFieldBox, PHDOUBLE, 3);
 
     isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+    isWennScheme = GlobalDataBase::GetIntParaFromDB("isWennScheme");
 
     pMax = 0.5, pMin = 0.2, deltaMax = 0.5, magnifyFactor = 2.0;
     if (GlobalDataBase::IsExist("pMaxForCFL", PHDOUBLE, 1))
@@ -108,7 +109,7 @@ LIB_EXPORT void Param_CFDSolver::Init()
         AusmpwPlusLimiter = GlobalDataBase::GetDoubleParaFromDB("AusmpwPlusLimiter"); //reduceFactorForCFL
     }
 
-
+    skewnessAngle = GlobalDataBase::GetDoubleParaFromDB("skewnessAngle");
 }
 
 }

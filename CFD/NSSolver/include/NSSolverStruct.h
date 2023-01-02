@@ -35,6 +35,7 @@ public:
     int ist, ied, jst, jed, kst, ked;
     int nsurf;
     int nsize;
+  //  int surfaceSize; //  Size of  surface
 };
 
 class NSSolverStruct : public NSSolver
@@ -87,8 +88,8 @@ private:
     void LocalGlobalTimeStep(Grid *gridIn);
     void SpectrumRadius(Grid *grid);
     void SpectrumRadiusInviscid(Grid *gridIn);
-    void PreconSpectrumRadiusInviscid(Grid *gridIn);
     void SpectrumRadiusViscous(Grid *gridIn);
+    void ConservativePreconMatrix(Grid *gridIn);
 
     void Diagonal(Grid *gridIn);    //! Source linear.
 
@@ -101,6 +102,7 @@ private:
     void ViscousFlux(Grid *gridIn);
     void DualTimeSource(Grid *gridIn);
 
+
     //! Compute the chemical source terms.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ChemicalSource(Grid *gridIn);  //! Source.
@@ -111,6 +113,7 @@ private:
     
     void ComputeViscousCoeff(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
+    void ComputePreconditionCoefficient(Grid *gridIn);
 
     void ComputeGamaAndTemperature(Grid *gridIn);                 //Gama ¡¢Temperature
     void RungeKuttaResidual(Grid *gridIn, FieldProxy *dqProxy, RDouble coef);
@@ -191,7 +194,7 @@ private:
     void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
 
 
-	//! To execute the forward sweep of the Matrix LU-SGS method.
+    //! To execute the forward sweep of the Matrix LU-SGS method.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
     void SolveMatrixLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
@@ -218,7 +221,6 @@ private:
     void SingularAxisBC3D(Grid *gridIn, StructBC *structBC);
     void SingularAxisFullPlaneBC3D(Grid *gridIn, StructBC *structBC);
     void FarFieldRiemannInvariants(Grid *gridIn, StructBC *structBC, RDouble refGama);
-    void PreconFarfieldBC(Grid *gridIn, StructBC *structBC);
     void InFlowBC3D(Grid *gridIn, StructBC *structBC);
     void OutFlowBC3D(Grid *gridIn, StructBC *structBC);
     void PressureInletBCRiemann(Grid *gridIn, StructBC *structBC);
@@ -347,7 +349,12 @@ public:
     //! Compute the dimensional variables for density, pressure, temperature and the number density of electron.
     RDouble4D* ComputeDimensionalElectron(Grid *gridIn);
 
+    //! Compute the mean free path and the Knudsen number.
+    RDouble4D* ComputeKnudsenNumber(Grid *gridIn);
+
     RDouble4D* ComputeDimensionalVariables(Grid *gridIn);
+
+    RDouble4D *ComputePrimitiveVariablesWithMoleFraction(Grid *gridIn);
 
 public:
     void VisualizationVariables(Grid *gridIn, FieldProxy *workProxy, const string &filename);

@@ -52,6 +52,16 @@ public:
     ~TurbFaceValue();
 };
 
+class TransitionFaceValue
+{
+public:
+    RDouble **prim, **mlt;
+    RDouble *mul, *mut;
+public:
+    TransitionFaceValue(int neqn, int nlen);
+    ~TransitionFaceValue();
+};
+
 class FaceProxy
 {
 public:
@@ -65,6 +75,7 @@ private:
     RDouble *lrtl, *lrtr;    //! Pressure factor.
     NSFaceValue   *ns_facevar;
     TurbFaceValue *turb_facevar;
+    TransitionFaceValue *transition_facevar;
     GeomProxy     *geom_proxy;
     int nlen, nsize, neqn;
     FaceProxy *next;
@@ -72,7 +83,7 @@ public:
     FaceProxy();
     ~FaceProxy();
 public:
-    FaceProxy *GetNext() { return next; }
+    FaceProxy * GetNext() { return next; }
     void SetNext(FaceProxy *next) { this->next = next; }
 public:
     void Create(int nsize, int neqn);
@@ -113,6 +124,9 @@ public:
 
     TurbFaceValue * GetTurbFaceValue();
     void SetTurbFaceValue(TurbFaceValue *facevar);
+
+    TransitionFaceValue * GetTransitionFaceValue();
+    void SetTransitionFaceValue(TransitionFaceValue *facevar);
 };
 
 //! Check whether the density and pressure are positive.

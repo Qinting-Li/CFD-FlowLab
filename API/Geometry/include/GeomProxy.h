@@ -23,10 +23,10 @@ class GeomProxy
 {
 public:
     // type definitions
-    typedef RDouble              value_type;
-    typedef RDouble*             iterator;
-    typedef const RDouble*       const_iterator;
-    typedef RDouble&             reference;
+    typedef RDouble value_type;
+    typedef RDouble *iterator;
+    typedef const RDouble *const_iterator;
+    typedef RDouble &reference;
 private:
     iterator xfn, yfn, zfn, vgn, area;
 public:

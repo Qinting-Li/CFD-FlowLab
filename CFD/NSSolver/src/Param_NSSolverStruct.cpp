@@ -27,7 +27,6 @@ LIB_EXPORT void Param_NSSolverStruct::Init()
     chemicalRelaxCorf          = GlobalDataBase::GetDoubleParaFromDB("chemicalRelaxCorf");
     staticPressureRelaxCorf    = GlobalDataBase::GetDoubleParaFromDB("staticPressureRelaxCorf");
     inviscidSchemeName         = GlobalDataBase::GetStrParaFromDB("inviscidSchemeName");
-    isWennScheme               = GlobalDataBase::GetIntParaFromDB("isWennScheme");
 
     if (GetChemicalFlag()==0)
     {

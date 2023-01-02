@@ -250,7 +250,7 @@ void Pre_WalldistCompute::InitWallDistance(UnstructGrid *grid)
     PHSPACE::SetField(wallDistNode, LARGE, nTotalNode);
 
     int **faceNodeIndex = grid->GetFace2NodeArray();
-    int * faceNodeNumber = grid->GetNodeNumberOfEachFace();
+    int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
 
     UnstructBCSet **bcr = grid->GetBCRecord();
     
@@ -763,7 +763,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFastAndNodeMethod(Unstruc
                 wallFaceTree->FindNodesInRegion(pmin, pmax, nList, boxMax + 1);
 
                 uint_t nNearWallFace = nList.size();
-                if ((nNearWallFace > boxMin&& nNearWallFace <= boxMax))
+                if ((nNearWallFace > boxMin && nNearWallFace <= boxMax))
                 {
 
                     for (int iWall = 0; iWall < nNearWallFace; ++iWall)
@@ -796,7 +796,7 @@ void Pre_WalldistCompute::ComputeWallDist3DByProjectingFastAndNodeMethod(Unstruc
 
                         RDouble wdst;
                         wdst = ComputeDistanceOfANodeToAFace(nodeCoord, faceCenter, faceNormal, face2node, x, y, z);
-                        if (wallDistNode[iNode] > wdst&& wdst < 1.0e30)
+                        if (wallDistNode[iNode] > wdst && wdst < 1.0e30)
                         {
                             wallDistNode[iNode] = wdst;
                             isFoundNearestFace = true;
@@ -1706,7 +1706,7 @@ void Pre_WalldistCompute::BuildWallStructKDTreeNodeInOtherBlock()
 void Pre_WalldistCompute::ComputeWallDistanceKDTree(StructGrid *grid)
 {
     RDouble3D &walldist = *grid->GetWallDist();
-    RDouble *xyzCellCenter = new RDouble [3];
+    RDouble *xyzCellCenter = new RDouble[3];
 
     int count = 0;
 
@@ -1716,6 +1716,7 @@ void Pre_WalldistCompute::ComputeWallDistanceKDTree(StructGrid *grid)
     cout.setf(ios::fixed);
     cout.precision(0);
     if (myid == 0)
+
     {
         cout << "  Wall distance computing for zone " << grid->GetZoneID() << ": \n";
     }
@@ -1743,7 +1744,7 @@ void Pre_WalldistCompute::ComputeWallDistanceKDTree(StructGrid *grid)
             }
         }
     }
-    delete [] xyzCellCenter;    xyzCellCenter = NULL;
+    delete[] xyzCellCenter;    xyzCellCenter = NULL;
 }
 
 //! New method: communicate with each processor, after compress all zones of each processor.
@@ -4735,7 +4736,6 @@ void Pre_WalldistCompute::ComputeNodeDistanceByKDTreeMethodForBlock()
         oss << "  iBlock = " << iBlock << " nTWallFace = " << nTWallFace;
         WriteLogFile(oss);
 
-
         vector<RDouble> &nodeWalldist = grid->GetNodeWallDist();
 
         int nTotalNode = grid->GetNTotalNode();
@@ -5099,7 +5099,7 @@ vector<WallStructure *> * Pre_WalldistCompute::GetWallstructureList()
 
 void GenerateWalldist()
 {
-    if (GetTaskCode() == DSMC_SOLVER || GetTaskCode() == UGKS_SOLVER || GetTaskCode() == HO_SOLVER) return;
+    if ( GetTaskCode() == HO_SOLVER) return;
     
     if (PHMPI::CurrentProcessorIsGridProcessor())
     {
@@ -5136,6 +5136,111 @@ void GenerateWalldist()
 
         WalldistStatics();
     }
+
+    if (viscousType != INVISCID)
+    {
+        CompMaxBoundaryLayerWalldist();
+    }
+}
+
+void CompMaxBoundaryLayerWalldist()
+{
+    RDouble globalMaxBoundaryLayerWalldist = -1.0;
+    if (!IsBoundaryLayerExist())
+    {
+        GlobalDataBase::UpdateData("maxBoundaryLayerWalldist", &globalMaxBoundaryLayerWalldist, PHDOUBLE, 1);
+        return;
+    }
+
+    int dimension = GetDim();
+    RDouble maxBoundaryLayerWalldist = - LARGE;
+
+    int myid   = PHMPI::GetCurrentProcessorID();
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int procID = PHMPI::GetZoneProcessorID(iZone);
+        if (myid == procID)
+        {
+            Grid *grid0 = GetGrid(iZone, 0);
+            if (grid0->Type() == STRUCTGRID)
+            {
+                continue;
+            }
+
+            UnstructGrid *grid = UnstructGridCast(grid0);
+            int nTotalCell = grid->GetNTotalCell();
+            int *nodeNumOfEachCell = grid->GetNodeNumberOfEachCell();
+            RDouble *allWallDist = grid->GetWallDist();
+
+            for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+            {
+                int nodeNum = nodeNumOfEachCell[iCell];
+                int cellType = GetCellType(dimension, nodeNum);
+                if ((dimension == THREE_D && (cellType == TETRA_4 || cellType == PYRA_5))
+                 || (dimension == TWO_D   && cellType == TRI_3))
+                {
+                    continue;
+                }
+
+                RDouble dist = allWallDist[iCell];
+                if (dist > maxBoundaryLayerWalldist)
+                {
+                    maxBoundaryLayerWalldist = dist;
+                }
+            }
+        }
+    }
+
+    PH_AllReduce(&maxBoundaryLayerWalldist, &globalMaxBoundaryLayerWalldist, 1, MPI_MAX);
+    GlobalDataBase::UpdateData("maxBoundaryLayerWalldist", &globalMaxBoundaryLayerWalldist, PHDOUBLE, 1);
+}
+
+bool IsBoundaryLayerExist()
+{
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    int myid   = PHMPI::GetCurrentProcessorID();
+    int dimension = GetDim();
+
+    set < int > cellTypeSet;
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int procID = PHMPI::GetZoneProcessorID(iZone);
+        if (myid == procID)
+        {
+            Grid *grid0 = GetGrid(iZone, 0);
+            if (grid0->Type() == STRUCTGRID)
+            {
+                continue;
+            }
+
+            UnstructGrid *grid = UnstructGridCast(grid0);
+            int nTotalCell = grid->GetNTotalCell();
+            int *nodeNumOfEachCell = grid->GetNodeNumberOfEachCell();
+
+            for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+            {
+                int nodeNum = nodeNumOfEachCell[iCell];
+                int cellType = GetCellType(dimension, nodeNum);
+                if (cellType == -1)
+                {
+                    return false;
+                }
+                cellTypeSet.insert(cellType);
+            }
+        }
+    }
+
+    int localCellTypeSize = cellTypeSet.size();
+    int globalCellTypeSize = 0;
+    PH_AllReduce(&localCellTypeSize, &globalCellTypeSize, 1, MPI_MAX);
+
+    if (globalCellTypeSize > 1)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 bool IsReadWalldist()
@@ -5267,7 +5372,12 @@ void DumpWalldistToFile(ActionKey *actkey, int iZone)
     oss << "Grid-" << iZone;
     string dataName = oss.str();
 
-    CreateAndWriteData(actkey->filepos, dataName, 1, nTotalCell, PHDOUBLE, walldist);
+    double *wdt = new double[nTotalCell];
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        wdt[iCell] = static_cast<double>(walldist[iCell]);
+    }
+    CreateAndWriteData(actkey->filepos, dataName, 1, nTotalCell, PHDOUBLE, wdt);
 
     /*test
     ostringstream oss2;
@@ -5282,6 +5392,7 @@ void DumpWalldistToFile(ActionKey *actkey, int iZone)
     //*/
 
     delete [] walldist;
+    delete [] wdt;
 }
 
 void WalldistStatics()

@@ -15,7 +15,6 @@
 
 #pragma once
 #include <sstream>
-
 using namespace std;
 
 namespace PHSPACE
@@ -78,5 +77,9 @@ string AddSymbolToFileName(const string &fileName, const T1 &v1, const T2 &v2, c
     oss << mainName << v1 << v2 << v3 << "." << extensionName;
     return oss.str();
 }
+
+string GetProcessPath();
+
+string GetCurrentWorkDir();
 
 }

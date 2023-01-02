@@ -7,11 +7,13 @@
 #include "Geo_Interpoint.h"
 #include "LinkStruct.h"
 #include "TK_Exit.h"
+#include "TK_Log.h"
 #include "OversetInformation.h"
 #include "PHIO.h"
+#include "cgnslib.h"
+#include "Glb_Dimension.h"
 
 using namespace std;
-
 namespace PHSPACE
 {
 
@@ -23,6 +25,7 @@ Grid::Grid()
     zoneProbesSurfaceID.resize(0);
     zoneProbesCoordinates.resize(0);
     oversetInformationProxy = NULL;
+    volumeCondition = NULL;
 }
 
 LIB_EXPORT void Grid::InitGrid(GridID *index, int level, int dim, int type)
@@ -68,13 +71,18 @@ Grid::~Grid()
     //    FreeInterfaceField();
     //}
 
-    if (!interfaceFields){delete interfaceFields;    interfaceFields = NULL;};
+    if (interfaceFields){delete interfaceFields;    interfaceFields = NULL;};
     delete interpointFields;    interpointFields = NULL;
 
     delete oversetInformationProxy;    oversetInformationProxy = NULL;
 
-    if (!interfaceInfo){delete interfaceInfo;    interfaceInfo = NULL;};
+    if (interfaceInfo){delete interfaceInfo;    interfaceInfo = NULL;};
     delete interpointInformation;    interpointInformation = NULL;
+
+    if (IsFinestGrid())
+    {
+        if (volumeCondition) { delete volumeCondition; volumeCondition = NULL; };
+    }
 
     zoneProbesGlobalID.clear();
     zoneProbesLineID.clear();
@@ -230,8 +238,15 @@ LIB_EXPORT void Grid::ComputeGDVel(RDouble *xt, RDouble *yt, RDouble *zt, RDoubl
     }
 }
 
-LIB_EXPORT void Grid::TurnZAxis2YAxis()
+LIB_EXPORT void Grid::RotateAboutAxis()
 {
+    int nAxisRotateTimes = 0;
+    PHSPACE::GlobalDataBase::GetData("nAxisRotateTimes", &nAxisRotateTimes, PHINT, 1);
+    if(nAxisRotateTimes < 1)
+    {
+        return;
+    }
+
     //! Turn the Y axis to be up, if the original Z axis is up.
     int nTotalNode = this->GetNTotalNode();
 
@@ -240,13 +255,64 @@ LIB_EXPORT void Grid::TurnZAxis2YAxis()
     y = this->GetY();
     z = this->GetZ();
 
-    RDouble tmp;
-    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+    //! The axis rotating order.
+    int *axisRotateOrder = new int [nAxisRotateTimes];
+    GlobalDataBase::GetData("axisRotateOrder", axisRotateOrder, PHINT, nAxisRotateTimes);
+
+    //! The axis rotating angles (degree), which are corresponding to the axis rotating order.
+    RDouble *axisRotateAngles = new RDouble [nAxisRotateTimes];
+    GlobalDataBase::GetData("axisRotateAngles", axisRotateAngles, PHDOUBLE, nAxisRotateTimes);
+
+    const int AXIS_X = 1;
+    const int AXIS_Y = 2;
+    const int AXIS_Z = 3;
+    for (int iRotate = 0; iRotate < nAxisRotateTimes; ++ iRotate)
     {
-        tmp      = y[iNode];
-        y[iNode] = z[iNode];
-        z[iNode] = - tmp;
+        int rotateAxis = axisRotateOrder[iRotate];
+        RDouble rotateAngle = axisRotateAngles[iRotate] * PI / 180.0;
+
+        RDouble cosinTheta = cos(rotateAngle);
+        RDouble sinTheta   = sin(rotateAngle);
+        if(rotateAxis == AXIS_X)
+        {            
+            for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+            {
+                RDouble oldX = x[iNode];
+                RDouble oldY = y[iNode];
+                RDouble oldZ = z[iNode];
+                y[iNode] = cosinTheta * oldY + sinTheta   * oldZ;
+                z[iNode] = -sinTheta  * oldY + cosinTheta * oldZ;
+            }
+        }
+        else if(rotateAxis == AXIS_Y)
+        {
+            for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+            {
+                RDouble oldX = x[iNode];
+                RDouble oldY = y[iNode];
+                RDouble oldZ = z[iNode];
+                x[iNode] = cosinTheta * oldX + sinTheta   * oldZ;
+                z[iNode] = -sinTheta  * oldX + cosinTheta * oldZ;
+            }
+        }
+        else if(rotateAxis == AXIS_Z)
+        {
+            for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+            {
+                RDouble oldX = x[iNode];
+                RDouble oldY = y[iNode];
+                RDouble oldZ = z[iNode];
+                x[iNode] = cosinTheta * oldX + sinTheta   * oldY;
+                y[iNode] = -sinTheta  * oldX + cosinTheta * oldY;
+            }
+        }
+        else
+        {
+            TK_Exit::ExceptionExit("Error axis rotating!");
+        }
     }
+    delete []axisRotateOrder;
+    delete []axisRotateAngles;
 
     RDouble xmin, ymin, zmin, xmax, ymax, zmax;
     xmin = ymin = zmin =   LARGE;
@@ -264,7 +330,7 @@ LIB_EXPORT void Grid::TurnZAxis2YAxis()
     }
 
     ostringstream oss;
-    oss << "After turning Z axis up coordinate to Y axis up coordinate\n";
+    oss << "After axis turning \n";
 
     oss << setiosflags(ios::right);
     oss << setprecision(8);
@@ -293,6 +359,14 @@ LIB_EXPORT void Grid::ReleaseInterfaceField()
     if (interfaceFields)
     {
         interfaceFields->RemoveAllField();
+    }
+}
+
+LIB_EXPORT void Grid::ReleaseInterfaceField(string varName)
+{
+    if (interfaceFields)
+    {
+        interfaceFields->RemoveAnVariable(varName);
     }
 }
 
@@ -361,6 +435,11 @@ LIB_EXPORT void Grid::GridValidityCheck()
 
 void Grid::RotateTranslation()
 {
+}
+
+void Grid::ComputeCellBoundaryType()
+{
+
 }
 
 void CheckGrid(Grid **grids, int nBlocks)
@@ -437,6 +516,92 @@ void CheckGrid(Grid **grids, int nBlocks)
             }
         }
     }
+}
+
+int GetCellType(int dimension, int nodeNumberOfCell)
+{
+    int cellType = -1;
+    if (dimension == TWO_D)
+    {
+        switch (nodeNumberOfCell)
+        {
+        case 3:
+            cellType = TRI_3;
+            break;
+        case 4:
+            cellType = QUAD_4;
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch (nodeNumberOfCell)
+        {
+        case 4:
+            cellType = TETRA_4;
+            break;
+        case 5:
+            cellType = PYRA_5;
+            break;
+        case 6:
+            cellType = PENTA_6;
+            break;
+        case 8:
+            cellType = HEXA_8;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (cellType == -1)
+    {
+        PrintToWindow("This cell type is not supported!\n");
+    }
+
+    return cellType;
+}
+
+int GetFaceType(int dimension, int nodeNumberOfFace)
+{
+    int faceType = -1;
+    if (dimension == TWO_D)
+    {
+        switch (nodeNumberOfFace)
+        {
+        case 2:
+            faceType = BAR_2;
+            break;
+        case 3:
+            faceType = BAR_3;
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch (nodeNumberOfFace)
+        {
+        case 3:
+            faceType = TRI_3;
+            break;
+        case 4:
+            faceType = QUAD_4;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (faceType == -1)
+    {
+        TK_Exit::PrintDebugInfoExit("This face type is not supported!");
+    }
+
+    return faceType;
 }
 
 bool IsConvertGridToMixGrid()

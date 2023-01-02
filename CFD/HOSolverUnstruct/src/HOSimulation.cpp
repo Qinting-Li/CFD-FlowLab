@@ -3,6 +3,7 @@
 #include "PHHeader.h"
 #include "Region.h"
 #include "Zone.h"
+//#include "AleModel.h"
 #include "Glb_Dimension.h"
 #include "Constants.h"
 #include "TK_Log.h"
@@ -10,6 +11,7 @@
 #include "TK_Exit.h"
 #include "TK_Time.h"
 #include "Geo_SimpleBC.h"
+//#include "UnstructuredOversetConfig.h"
 #include "OversetInformation.h"
 #include "Post_WriteTecplot.h"
 #include "Task.h"
@@ -31,6 +33,7 @@ using namespace PHSPACE;
 HOSimulation::HOSimulation(int dimension)
 {
     using namespace PHMPI;
+    //InitFantasyMPI();
 
     SetDim(dimension);
 
@@ -115,6 +118,8 @@ void HOSimulation::UpdateOuterIterationStep(int &outnstep)
     newnstep ++;
     GlobalDataBase::UpdateData("newnstep", &newnstep, PHINT, 1);
 
+    //int isUnsteady = 0;
+    //GlobalDataBase::GetData("iunsteady", &isUnsteady, PHINT, 1);
     if (isUnsteady == HO_STEADY) return;
 
     int ifStaticsFlowField = GlobalDataBase::GetIntParaFromDB("ifStaticsFlowField");
@@ -132,6 +137,8 @@ void HOSimulation::UpdateOuterIterationStep(int &outnstep)
 
 void HOSimulation::SolveOneOuterStep()
 {
+    //PreSolve();
+
     MainSolve();
 
     PostSolve();
@@ -150,6 +157,8 @@ void HOSimulation::PostSolve()
 
 void HOSimulation::MainSolve()
 {
+    //int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
+
     if (isUnsteady == HO_STEADY)
     {
         SolveSteady();
@@ -162,6 +171,7 @@ void HOSimulation::MainSolve()
 
 void HOSimulation::PostSimu()
 {
+    //this->region->PostSimu();
 }
 
 void HOSimulation::ComputeWallDistance()
@@ -256,6 +266,7 @@ void HOSimulation::DefineAndCreateSolvers()
 
 void HOSimulation::PreSolve()
 {
+    //FYAleModel::UnsteadyPreSolve();
 }
 
 void HOSimulation::ReadGrid()
@@ -283,6 +294,8 @@ void HOSimulation::MultiGridInitFlow()
     int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
     if(outnstep > 0)
     {
+//      int newnstep = outnstep;
+//      GlobalDataBase::UpdateData("newnstep",&newnstep, PHINT, 1);
         return; //! Read from flow file.
     }
 
@@ -315,6 +328,7 @@ void HOSimulation::MultiGridInitFlow()
 
             UpdateOuterIterationStep(outnstep);
 
+            //using namespace PHMPI;
             for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
             {
                 Controller *controller = new Controller(iSolver, this->region);
@@ -346,7 +360,7 @@ void HOSimulation::MultiGridInitFlow()
 void HOSimulation::SolveSteady()
 {
     int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
-    //! Get iteration number
+    //! Get iteration number.
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
 
@@ -370,6 +384,7 @@ void HOSimulation::SolveSteady()
 
 void HOSimulation::SolveSteadyField()
 {
+    //MultiGrid(0);
 }
 
 void HOSimulation::SolveUnsteady()

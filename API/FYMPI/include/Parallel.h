@@ -46,7 +46,7 @@ void PH_Rank(int &rank);
 void PH_Size(int &size);
 void PH_Finalize();
 
-void PH_Get_processor_name(string &proc_name);
+void PH_GetProcessorName(string &proc_name);
 
 //! Non-blocking standard send process of MPICH.
 //! @param[in] data    address of the send buffer.
@@ -93,12 +93,12 @@ int PH_Wait(int count, PH_Request *array_of_requests);
 //! @param[in] recvbuf    address of the receive buffer.
 //! @param[in] count      number of communication objects to be reduced.
 //! @param[in] op         reduction operation handle.
-int PH_AllReduce(void *sendbuf, void *recvbuf, int count, PH_Op op);
+int PH_AllReduce(void   *sendbuf, void   *recvbuf, int count, PH_Op op);
 int PH_AllReduce(double *sendbuf, double *recvbuf, int count, PH_Op op);
-int PH_AllReduce(float *sendbuf, float *recvbuf, int count, PH_Op op);
-int PH_AllReduce(int *sendbuf, int *recvbuf, int count, PH_Op op);
+int PH_AllReduce(float  *sendbuf, float  *recvbuf, int count, PH_Op op);
+int PH_AllReduce(int    *sendbuf, int    *recvbuf, int count, PH_Op op);
 
-int PH_Allgather(int *sendbuf, int sendcount, int *recvbuf, int recvcount);
+int PH_AllGather(int *sendbuf, int sendcount, int *recvbuf, int recvcount);
 
 //int PH_Reduce(void *sendbuf, void *recvbuf, int count, PH_Op op, int root);
 int PH_Barrier();
@@ -107,10 +107,10 @@ int PH_Barrier();
 int PH_Gatherv(void *sendBuffer, int sendCount, void *receiveBuffer, int *receiveCount, int *displs, int root);
 
 //!
-void send(int to, int tag);
-void send(int to, vector<PH_Request> &requestContainer, int tag);
-void receive(int from, int tag);
-void receive(int from, vector<PH_Request> &requestContainer, int tag);
+void send(DataChar *dataChar, int to, int tag);
+void send(DataChar *dataChar, int to, vector<PH_Request> &requestContainer, int tag);
+void receive(DataChar *dataChar, int from, int tag);
+void receive(DataChar *dataChar, int from, vector<PH_Request> &requestContainer, int tag);
 
 //!
 void send(DataContainer *dataContainer, int to, int tag);

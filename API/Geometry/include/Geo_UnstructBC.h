@@ -28,7 +28,7 @@ class UnstructBC : public SimpleBC
 {
 private:
     //! The faceIndex set store the all face numbers in this boundary region.
-    vector <int> * faceIndex;
+    vector <int> *faceIndex;
 
     int bcRegionID;
 
@@ -66,13 +66,13 @@ class UnstructBCSet
 private:
     int key;    //! The bc key, used to store an integer type.
     string bcName;
-    SimpleBC * boundaryCondition;
+    SimpleBC *boundaryCondition;
     
     //! Number of zone (block) index this BC in.
     int zoneID;
     
     //! The BCRegions list in the current UnstructBCSet.
-    vector<UnstructBC *> * bcRegions;
+    vector<UnstructBC *> *bcRegions;
 
     //! The bcRegions id of boundary condition faces.
     int *bcRegionIDofBCFace;

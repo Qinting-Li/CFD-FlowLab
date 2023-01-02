@@ -12,17 +12,19 @@ if(WIN32)
     SET(THIRD_PARTY_COMPILER_FLAG "libvs12")
     add_definitions(-DVS12)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 12 2013")
-    SET(THIRD_PARTY_COMPILER_FLAG "libvs12")
-    add_definitions(-DVS12)
+    SET(THIRD_PARTY_COMPILER_FLAG "libvs13")
+    add_definitions(-DVS13)
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 14 2015")
     SET(THIRD_PARTY_COMPILER_FLAG "libvs19")
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 15 2017")
     SET(THIRD_PARTY_COMPILER_FLAG "libvs19")
   elseif(CMAKE_GENERATOR MATCHES "Visual Studio 16 2019")
     SET(THIRD_PARTY_COMPILER_FLAG "libvs19")
+  elseif(CMAKE_GENERATOR MATCHES "Visual Studio 17 2022")
+    SET(THIRD_PARTY_COMPILER_FLAG "libvs22")
   endif()
+
 else()
-  SET(CMAKE_C_COMPILER gcc)
   SET(THIRD_PARTY_COMPILER_FLAG "Unix")
 endif()
 include(${PROJECT_SOURCE_DIR}/../PHengLEI/PHMacro.cmake)
@@ -49,8 +51,20 @@ opt(OMP "Use OpenMP or not" OFF) # Use OPenMP or not.
 opt(Windows_X64 "Compile PHengLEI X64 on Windows platform" ON)  ###
 opt_build(API "Build PHengLEI framework or not" ON) #Build API or not.
 opt_build(MESH "Build Mesh module or not" ON) #Build Mesh or not.
+opt_build(Grid "Build Grid module or not" OFF) #Build Grid or not.
 opt_build(CFD "Build CFD module or not" ON) #Build CFD or not.
 opt(ErrorDataDebug "Build error data debug or not" OFF)
+opt_build(INTELMPI "Build INTELMPI module or not" OFF) 
+
+if(BUILD_INTELMPI)
+  set(mpiname impi)
+  set(MSMPI_HOME_DIRECTORY "C:/Program Files (x86)/Intel/IMPI/intel64")
+else(BUILD_INTELMPI)
+  set(mpiname msmpi)
+  set(MSMPI_HOME_DIRECTORY "C:/Program Files (x86)/Microsoft SDKs/MPI")
+endif()
+
+message(STATUS "\n\nThis current MSMPI_HOME_DIRECTORY is ${MSMPI_HOME_DIRECTORY}.")
 
 set(GPROF OFF)
  if (GPROF)
@@ -85,6 +99,11 @@ if(BUILD_DemoSolver)
   add_definitions(-DUSE_DEMOSOLVER)
 endif()
 
+if(BUILD_Grid)
+  message(STATUS "BUILD_Grid is turned on!")
+  add_definitions(-DUSE_GRID)
+endif()
+
 if(BUILD_PBSolver)
   message(STATUS "BUILD_PBSolver is turned on!")
   add_definitions(-DUSE_PBSOLVER)
@@ -115,6 +134,7 @@ if(USE_ErrorDataDebug)
   add_definitions(-DUSE_ErrorDataDebug)
 endif(USE_ErrorDataDebug)
 
+
 if(WIN32)
 if(USE_Windows_X64)
   message(STATUS "USE_Windows_X64 is turned on!")
@@ -141,6 +161,10 @@ set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
 include_directories("${CGNS_H_PATH}")
+set(HYPRE_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/hypre/include)
+include_directories("${HYPRE_H_PATH}")
+set(MGRID_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
+include_directories("${MGRID_H_PATH}")
 
 if(WIN32)
 if(USE_Windows_X64)
@@ -189,6 +213,7 @@ else(BUILD_MESH)
   link_directories("${LIB_MESH_EXPORT_PATH}")  
 endif(BUILD_MESH)
 
+# Add subdirectory or link library PHGrid.
 
 # Add subdirectory or link library PHCFD.
 set(CFD_TARGET_NAME "PHCFD")
@@ -208,15 +233,12 @@ include_directories(${CFD_H_PATH}/Solver/include)
 include_directories(${CFD_H_PATH}/TurbSolver/include)
 include_directories(${CFD_H_PATH}/PostProcess/include)
 include_directories(${CFD_H_PATH}/HOSolverUnstruct/include)
-
 if(BUILD_SpecDiffHybSolver)
 include_directories(${CFD_H_PATH}/SpecDiffHybSolver/include)
 endif(BUILD_SpecDiffHybSolver)
-
 if(BUILD_DemoSolver)
 include_directories(${CFD_H_PATH}/DemoSolver/include)
 endif(BUILD_DemoSolver)
-
 if(BUILD_PBSolver)
 include_directories(${CFD_H_PATH}/PBSolver/include)
 endif(BUILD_PBSolver)
@@ -266,5 +288,4 @@ endif(BUILD_PBSolver)
 #exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
 message(STATUS "Finished build project ${PROJECT_NAME}!")
-
 

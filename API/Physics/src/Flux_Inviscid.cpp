@@ -117,6 +117,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     int nChemical = invSchemePara->GetNumberOfChemical();
     int nPrecondition = invSchemePara->GetIfPrecondition();
     int nIdealState = invSchemePara->GetIfIdealState();
+    int kPrec = invSchemePara->GetPreconCoefficient();
 
     RDouble refMachNumber = invSchemePara->GetMachNumber();
     RDouble entrFixCoefLeft = invSchemePara->GetLeftEntropyFixCoefficient();
@@ -258,7 +259,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         //! Sound speed: gama * pRoeAverage / rRoeAverage.
         RDouble cm = sqrt(ABS(c2));
 
-        RDouble Ur2 = 0, cnew2 = 0, cnew = 0, vnew = 0, beta = 0, alpha = 0;
+        RDouble Ur2 = 0, cnew2 = 0, cnew = 0, vnew = 0, preconCoeff = 0, alpha = 0;
         RDouble eigv1 = 0, eigv2 = 0, eigv3 = 0;
         eigv1 = ABS(vn);
         if (nPrecondition == 0)
@@ -268,9 +269,9 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         }
         else
         {
-            beta = MIN(MAX(vSquareRoeAverage / c2, three * mach2), one);
-            vnew  = half * vn * (one + beta);
-            cnew  = half * sqrt(((beta - one) * vn) * ((beta - one) * vn) + four * beta * c2);
+            preconCoeff = MIN(MAX(vSquareRoeAverage / c2, kPrec * mach2), one);
+            vnew  = half * vn * (one + preconCoeff);
+            cnew  = half * sqrt(((preconCoeff - one) * vn) * ((preconCoeff - one) * vn) + four * preconCoeff * c2);
             cnew2  = cnew * cnew;
             eigv2 = ABS(vnew + cnew);
             eigv3 = ABS(vnew - cnew);
@@ -304,8 +305,15 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
 
         //! Entropy correction, to limit the magnitude of the three eigenvalue.
         //! Warning: This function calling may affect the efficient!
-
+        if(nPrecondition == 0)
+        {
         Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, pressureCoeffL[iFace], pressureCoeffR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
+        }
+        else
+        {
+            Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, pressureCoeffL[iFace], pressureCoeffR[iFace], absVel, vnew, cnew, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
+        }
+        
 
         RDouble xi1 = 0.0, xi2 = 0.0, xi3 = 0.0, xi4 = 0.0;
         if (nPrecondition == 0) 
@@ -317,7 +325,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         {
             xi1 = (two * eigv1 - eigv2 - eigv3) / (two * cnew2);
             xi2 = (eigv2 - eigv3)/(two * cnew);
-            alpha = half * (one - beta);
+            alpha = half * (one - preconCoeff);
             xi3 = two * alpha * eigv1 / cnew2;
             xi4 =  alpha * vn * xi2 / cnew2;
         }
@@ -331,7 +339,7 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
         }
         else
         {
-            Ur2  = beta * c2;
+            Ur2  = preconCoeff * c2;
             c2dc = cnew2 * dc;
         }
 
@@ -387,6 +395,277 @@ void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter 
     delete []dq;    dq = NULL;
 }
 
+//void Roe_Scheme_ConservativeForm(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePara)
+//{
+//    const RDouble LITTLE = 1.0E-10;
+//    int nTemperatureModel = invSchemePara->GetNumberOfTemperatureModel();
+//    int nEquation = invSchemePara->GetNumberOfTotalEquation();
+//    int nLaminar = invSchemePara->GetNumberOfLaminar();
+//    int nLength = invSchemePara->GetLength();
+//    int nm = invSchemePara->Getnm();
+//    int RoeEntropyFixMethod = invSchemePara->GetEntropyFixMethod();
+//    int nChemical = invSchemePara->GetNumberOfChemical();
+//    int nPrecondition = invSchemePara->GetIfPrecondition();
+//    int nIdealState = invSchemePara->GetIfIdealState();
+//    int kPrec = invSchemePara->GetPreconCoefficient();
+//
+//    RDouble refMachNumber = invSchemePara->GetMachNumber();
+//    RDouble entrFixCoefLeft = invSchemePara->GetLeftEntropyFixCoefficient();
+//    RDouble entrFixCoefRight = invSchemePara->GetRightEntropyFixCoefficient();
+//    RDouble **qL = invSchemePara->GetLeftQ();
+//    RDouble **qR = invSchemePara->GetRightQ();
+//    RDouble *gamaL = invSchemePara->GetLeftGama();
+//    RDouble *gamaR = invSchemePara->GetRightGama();
+//    RDouble *lrtL = face_proxy->GetPressureCoefficientL();
+//    RDouble *lrtR = face_proxy->GetPressureCoefficientR();
+//    RDouble *xfn   = invSchemePara->GetFaceNormalX();
+//    RDouble *yfn   = invSchemePara->GetFaceNormalY();
+//    RDouble *zfn   = invSchemePara->GetFaceNormalZ();
+//    RDouble *vgn   = invSchemePara->GetFaceVelocity();
+//    RDouble **flux = invSchemePara->GetFlux();
+//    RDouble **tl = invSchemePara->GetLeftTemperature();
+//    RDouble **tr = invSchemePara->GetRightTemperature();
+//    RDouble mach2 = refMachNumber * refMachNumber;
+//
+//    using namespace IDX;
+//    using namespace GAS_SPACE;
+//
+//    RDouble *prim       = new RDouble[nEquation]();
+//    RDouble *qConserveL = new RDouble[nEquation]();
+//    RDouble *qConserveR = new RDouble[nEquation]();
+//    RDouble *dq         = new RDouble[nEquation]();
+//
+//    RDouble *primL = new RDouble[nEquation]();
+//    RDouble *primR = new RDouble[nEquation]();
+//    RDouble temperaturesL[3] = {0}, temperaturesR[3] = {0};
+//
+//    for (int iFace = 0; iFace < nLength; ++ iFace)
+//    {
+//        for (int iEqn = 0; iEqn < nEquation; ++ iEqn)
+//        {
+//            primL[iEqn] = qL[iEqn][iFace];
+//            primR[iEqn] = qR[iEqn][iFace];
+//        }
+//
+//        RDouble &rL = primL[IR];
+//        RDouble &uL = primL[IU];
+//        RDouble &vL = primL[IV];
+//        RDouble &wL = primL[IW];
+//        RDouble &pL = primL[IP];
+//
+//        RDouble &rR = primR[IR];
+//        RDouble &uR = primR[IU];
+//        RDouble &vR = primR[IV];
+//        RDouble &wR = primR[IW];
+//        RDouble &pR = primR[IP];
+//
+//        RDouble xsn = xfn[iFace];
+//        RDouble ysn = yfn[iFace];
+//        RDouble zsn = zfn[iFace];
+//        RDouble vb  = vgn[iFace];
+//        RDouble gmL = gamaL[iFace];
+//        RDouble gmR = gamaR[iFace];
+//
+//        rL = MAX(rL, LITTLE);
+//        rR = MAX(rR, LITTLE);
+//        pL = MAX(pL, LITTLE);
+//        pR = MAX(pR, LITTLE);
+//
+//        RDouble vSquareL = uL * uL + vL * vL + wL * wL;
+//        RDouble vSquareR = uR * uR + vR * vR + wR * wR;
+//
+//        RDouble hint_L = (gmL / (gmL - one)) * (pL / rL);
+//        RDouble hint_R = (gmR / (gmR - one)) * (pR / rR);
+//        RDouble peL = 0.0, peR = 0.0;
+//
+//        if (nChemical != 0 && nIdealState == 0)
+//        {
+//            for (int i = 0; i < 3; ++ i)
+//            {
+//                temperaturesL[i] = tl[i][iFace];
+//                temperaturesR[i] = tr[i][iFace];
+//            }
+//            gas->ComputeEnthalpyByPrimitive(primL, gmL, hint_L, temperaturesL);
+//            gas->ComputeEnthalpyByPrimitive(primR, gmR, hint_R, temperaturesR);
+//
+//            if (nTemperatureModel > 1)
+//            {
+//                peL = gas->GetElectronPressure(primL, temperaturesL[ITE]);
+//                peR = gas->GetElectronPressure(primR, temperaturesR[ITE]);
+//            }
+//        }
+//        RDouble hL = hint_L + half * vSquareL;
+//        RDouble hR = hint_R + half * vSquareR;
+//
+//        RDouble vnL  = xsn * uL  + ysn * vL  + zsn * wL  - vb;
+//        RDouble vnR  = xsn * uR  + ysn * vR  + zsn * wR  - vb;
+//        RDouble rvnL = rL * vnL;
+//        RDouble rvnR = rR * vnR;
+//
+//        //! The first part of Roe scheme: F(QL, QR) = 0.5 * [ F(QL) + F(QR) ].
+//        flux[IR ][iFace] =  half * (rvnL                        + rvnR                     );
+//        flux[IRU][iFace] =  half * (rvnL * uL + xfn[iFace] * pL + rvnR * uR + xfn[iFace] * pR);
+//        flux[IRV][iFace] =  half * (rvnL * vL + yfn[iFace] * pL + rvnR * vR + yfn[iFace] * pR);
+//        flux[IRW][iFace] =  half * (rvnL * wL + zfn[iFace] * pL + rvnR * wR + zfn[iFace] * pR);
+//        flux[IRE][iFace] =  half * (rvnL * hL + vgn[iFace] * pL + rvnR * hR + vgn[iFace] * pR);
+//
+//        //! The following loop is useless.
+//        for (int iLaminar = nm; iLaminar < nLaminar; ++ iLaminar)
+//        {
+//            flux[iLaminar][iFace] = half * (primL[iLaminar] * rvnL + primR[iLaminar] * rvnR);
+//        }
+//
+//        for (int it = 1; it < nTemperatureModel; ++ it)
+//        {
+//            flux[nLaminar + it][iFace] = half * (primL[nLaminar + it] * rvnL + primR[nLaminar + it] * rvnR);
+//        }
+//        if (nChemical == 1)
+//        {
+//            flux[nLaminar + nTemperatureModel - 1][iFace] += half * (peL * (vnL + vgn[iFace]) + peR * (vnR + vgn[iFace]));
+//        }
+//
+//        RDouble ratio = sqrt(rR / rL);
+//        RDouble roeAverageCoef  = one / (one + ratio);
+//
+//        RDouble rRoeAverage = sqrt(rL * rR);
+//        RDouble uRoeAverage = (uL + uR * ratio) * roeAverageCoef;
+//        RDouble vRoeAverage = (vL + vR * ratio) * roeAverageCoef;
+//        RDouble wRoeAverage = (wL + wR * ratio) * roeAverageCoef;
+//        RDouble pRoeAverage = (pL + pR * ratio) * roeAverageCoef;
+//
+//        RDouble gama = (gmL + gmR * ratio) * roeAverageCoef;
+//        RDouble gamm1 = gama - one;
+//
+//        RDouble vSquareRoeAverage = uRoeAverage * uRoeAverage + vRoeAverage * vRoeAverage + wRoeAverage * wRoeAverage;
+//        RDouble absVel = sqrt(vSquareRoeAverage);
+//        RDouble hRoeAverage = gama / gamm1 * pRoeAverage / rRoeAverage + half * vSquareRoeAverage;
+//
+//        RDouble vn = xsn * uRoeAverage + ysn * vRoeAverage + zsn * wRoeAverage - vb;
+//        RDouble theta = vn + vb;
+//
+//        //! c2: square of sound speed.             
+//        RDouble c2 = gamm1 * (hRoeAverage - half * vSquareRoeAverage);
+//
+//        //! Sound speed: gama * pRoeAverage / rRoeAverage.
+//        RDouble cm = sqrt(ABS(c2));
+//
+//        RDouble Ur2 = 0, vntemp = 0, c2temp = 0, preconCoeff = 0, alpha = 0;
+//        RDouble eigv1 = 0, eigv2 = 0, eigv3 = 0;
+//        eigv1 = ABS(vn);
+//        if (nPrecondition == 1)
+//        {
+//            vntemp = vn;
+//            c2temp = c2;
+//            preconCoeff = MIN(MAX(vSquareRoeAverage / c2, kPrec * mach2), one);
+//            vn  = half * vn * (one + preconCoeff);
+//            cm  = half * sqrt(((preconCoeff - one) * vn) * ((preconCoeff - one) * vn) + four * preconCoeff * c2);
+//            c2  = cm * cm;
+//        }
+//        eigv2 = ABS(vn + cm);
+//        eigv3 = ABS(vn - cm);
+//
+//        RDouble EL = (one / (gmL - one)) * (pL / rL) + half * vSquareL;
+//        RDouble ER = (one / (gmR - one)) * (pR / rR) + half * vSquareR;
+//
+//        //! The jump between left and right conservative variables.
+//        dq[IR]  = rR - rL;
+//        dq[IRU] = rR * uR - rL * uL;
+//        dq[IRV] = rR * vR - rL * vL;
+//        dq[IRW] = rR * wR - rL * wL;
+//        dq[IRE] = rR * ER - rL * EL; 
+//
+//        if (nChemical != 0)
+//        {
+//            if (nTemperatureModel > 1)
+//            {
+//                gas->GetTemperature(primL, temperaturesL[ITT], temperaturesL[ITV], temperaturesL[ITE]);
+//                gas->GetTemperature(primR, temperaturesR[ITT], temperaturesR[ITV], temperaturesR[ITE]);
+//            }
+//            gas->Primitive2Conservative(primL, gmL, temperaturesL[ITV], temperaturesL[ITE], qConserveL);
+//            gas->Primitive2Conservative(primR, gmR, temperaturesR[ITV], temperaturesR[ITE], qConserveR);
+//        }
+//
+//        for (int iLaminar = nm; iLaminar < nEquation; ++ iLaminar)
+//        {
+//            dq[iLaminar] = qConserveR[iLaminar] - qConserveL[iLaminar];
+//        }
+//
+//        //! Entropy correction, to limit the magnitude of the three eigenvalue.
+//        //! Warning: This function calling may affect the efficient!
+//        Flux_RoeEntropyCorrection(eigv1, eigv2, eigv3, lrtL[iFace], lrtR[iFace], absVel, vn, cm, RoeEntropyFixMethod, entrFixCoefLeft, entrFixCoefRight);
+//
+//
+//        RDouble xi1 = 0.0, xi2 = 0.0, xi3 = 0.0, xi4 = 0.0;
+//        xi1 = (two * eigv1 - eigv2 - eigv3) / (two * c2);
+//        xi2 = (eigv2 - eigv3)/(two * cm);
+//
+//        if (nPrecondition == 1) 
+//        {
+//            alpha = half * (one - preconCoeff);
+//            xi3 = two * alpha * eigv1 / c2;
+//            xi4 =  alpha * vntemp * xi2 / c2;
+//        }
+//
+//        RDouble dc = theta * dq[IR] - xsn * dq[IRU] - ysn * dq[IRV] - zsn * dq[IRW];
+//
+//        RDouble c2dc = c2 * dc;
+//        if (nPrecondition == 1)
+//        {
+//            Ur2  = preconCoeff * c2temp;
+//        }
+//
+//        RDouble dh = - gamm1 * (uRoeAverage * dq[IRU] + vRoeAverage * dq[IRV] + wRoeAverage * dq[IRW] - dq[IRE]) + half * gamm1 * vSquareRoeAverage * dq[IR];
+//
+//        if (nChemical != 0)
+//        {
+//            gas->ComputeDHAndTotalEnthalpy(prim, gama, dq, dh, hRoeAverage);
+//        }
+//
+//        if (nPrecondition == 0)
+//        {
+//            flux[IR ][iFace] -= half * (eigv1 * dq[IR ]                 -               dh  * xi1               -               dc  * xi2);
+//            flux[IRU][iFace] -= half * (eigv1 * dq[IRU] + (xsn   * c2dc - uRoeAverage * dh) * xi1 + (xsn   * dh - uRoeAverage * dc) * xi2);
+//            flux[IRV][iFace] -= half * (eigv1 * dq[IRV] + (ysn   * c2dc - vRoeAverage * dh) * xi1 + (ysn   * dh - vRoeAverage * dc) * xi2);
+//            flux[IRW][iFace] -= half * (eigv1 * dq[IRW] + (zsn   * c2dc - wRoeAverage * dh) * xi1 + (zsn   * dh - wRoeAverage * dc) * xi2);
+//            flux[IRE][iFace] -= half * (eigv1 * dq[IRE] + (theta * c2dc - hRoeAverage * dh) * xi1 + (theta * dh - hRoeAverage * dc) * xi2);
+//
+//            for (int iLaminar = nm; iLaminar < nLaminar; ++ iLaminar)
+//            {
+//                prim[iLaminar] = half * (primL[iLaminar] + primR[iLaminar]);
+//                flux[iLaminar][iFace] -= half * (eigv1 * dq[iLaminar] - prim[iLaminar] * (dh * xi1 + dc * xi2));
+//            }
+//        }
+//        else
+//        {
+//            flux[IR ][iFace] -= half * (eigv1 * dq[IR ]                 -               dh * c2 / Ur2  * xi1               -               dc  * xi2 +               dh * c2 / Ur2 * xi3 -                                dh * c2 / Ur2  * xi4);
+//            flux[IRU][iFace] -= half * (eigv1 * dq[IRU] + (xsn   * c2dc - uRoeAverage * dh * c2 / Ur2) * xi1 + (xsn   * dh - uRoeAverage * dc) * xi2 + uRoeAverage * dh * c2 / Ur2 * xi3 - (xsn    * c2dc + uRoeAverage * dh * c2 / Ur2) * xi4);
+//            flux[IRV][iFace] -= half * (eigv1 * dq[IRV] + (ysn   * c2dc - vRoeAverage * dh * c2 / Ur2) * xi1 + (ysn   * dh - vRoeAverage * dc) * xi2 + vRoeAverage * dh * c2 / Ur2 * xi3 - (ysn    * c2dc + vRoeAverage * dh * c2 / Ur2) * xi4);
+//            flux[IRW][iFace] -= half * (eigv1 * dq[IRW] + (zsn   * c2dc - wRoeAverage * dh * c2 / Ur2) * xi1 + (zsn   * dh - wRoeAverage * dc) * xi2 + wRoeAverage * dh * c2 / Ur2 * xi3 - (zsn    * c2dc + wRoeAverage * dh * c2 / Ur2) * xi4);
+//            flux[IRE][iFace] -= half * (eigv1 * dq[IRE] + (theta * c2dc - hRoeAverage * dh * c2 / Ur2) * xi1 + (theta * dh - hRoeAverage * dc) * xi2 + hRoeAverage * dh * c2 / Ur2 * xi3 - (theta * c2dc + hRoeAverage * dh * c2 / Ur2) * xi4);
+//
+//            for (int iLaminar = nm; iLaminar < nLaminar; ++ iLaminar)
+//            {
+//                prim[iLaminar] = half * (primL[iLaminar] + primR[iLaminar]);
+//                flux[iLaminar][iFace] -= half * (eigv1 * dq[iLaminar] - prim[iLaminar] * (dh * c2 / Ur2 * (xi1 - xi3 + xi4) + dc * xi2));
+//            }
+//            //! Compute vibration-electron energy term.
+//            for (int it = 1; it < nTemperatureModel; ++ it)
+//            {
+//                prim[nLaminar + it] = half * (primL[nLaminar + it] + primR[nLaminar + it]);
+//                flux[nLaminar + it][iFace] -= half * (eigv1 * dq[nLaminar + it] - prim[nLaminar + it] * (dh * c2 / Ur2 * (xi1 - xi3 + xi4) + dc * xi2));
+//            }
+//        }
+//
+//    }
+//
+//    delete []prim;    prim = NULL;
+//    delete []primL;    primL = NULL;
+//    delete []primR;    primR = NULL;
+//    delete []qConserveL;    qConserveL = NULL;
+//    delete []qConserveR;    qConserveR = NULL;
+//    delete []dq;    dq = NULL;
+//}
+
 void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inviscidSchemePara)
 {
     const RDouble LITTLE = 1.0E-10;
@@ -398,6 +677,7 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
     int RoeEntropyFixMethod = inviscidSchemePara->GetEntropyFixMethod();
     int nChemical = inviscidSchemePara->GetNumberOfChemical();
     int nPrecondition = inviscidSchemePara->GetIfPrecondition();
+    int kPrec = inviscidSchemePara->GetPreconCoefficient();
 
     RDouble refMachNumber = inviscidSchemePara->GetMachNumber();
     RDouble entrFixCoefLeft = inviscidSchemePara->GetLeftEntropyFixCoefficient();
@@ -539,23 +819,18 @@ void Roe_Scheme_PrimitiveForm(FaceProxy *faceProxy, InviscidSchemeParameter *inv
         //! Sound speed: gama * pRoeAverage / rRoeAverage.
         RDouble cm = sqrt(ABS(c2));
 
-        RDouble cnew2, cnew, vnew, beta;
+        RDouble prconCoeff;
         RDouble eigv1, eigv2, eigv3;
         eigv1 = ABS(vn);
-        if (nPrecondition == 0)
+        if (nPrecondition == 1)
         {
-            eigv2 = ABS(vn + cm);
-            eigv3 = ABS(vn - cm);
+            prconCoeff = MIN(MAX(vSquareRoeAverage / c2, three * mach2), 1.0);
+            vn = half * vn * (1.0 + prconCoeff);
+            cm = half * sqrt(((1.0 - prconCoeff) * vn) * ((1.0 - prconCoeff) * vn) + 4.0 * prconCoeff * c2);
+            c2 = cm * cm;
         }
-        else
-        {
-            beta = MIN(MAX(vSquareRoeAverage / c2, three * mach2), one);
-            vnew  = half * vn * (one + beta);
-            cnew  = half * sqrt(((beta - one) * vn) * ((beta - one) * vn) + four * beta * c2);
-            cnew2  = cnew * cnew;
-            eigv2 = ABS(vnew + cnew);
-            eigv3 = ABS(vnew - cnew);
-        }
+        eigv2 = ABS(vn + cm);
+        eigv3 = ABS(vn - cm);
 
         //! The jump between left and right primitive variables.
         dq[IR] = rR - rL;
@@ -882,6 +1157,7 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
     int nPrecondition = invSchemePara->GetIfPrecondition();
     int nIdealState = invSchemePara->GetIfIdealState();
     int nElectronIndex = invSchemePara->GetIndexOfElectron();
+    int kPrec = invSchemePara->GetPreconCoefficient();
 
     RDouble **ql = invSchemePara->GetLeftQ();
     RDouble **qr = invSchemePara->GetRightQ();
@@ -972,14 +1248,13 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
         RDouble cl    = sqrt(ABS(c2l));
         RDouble machl = vnl / cl;
         RDouble mach2l = machl * machl;
+        RDouble Mr2l =sqrt(MIN(MAX(mach2l, kPrec * mach2), 1.0));
 
         RDouble c2r   = gmR * pr / rr;
         RDouble cr    = sqrt(ABS(c2r));
         RDouble machr = vnr / cr;
         RDouble mach2r = machr * machr;
-
-        RDouble mach2m=MAX(mach2l,mach2r);
-        RDouble coef =sqrt(MIN(MAX(mach2m, 3.0 * mach2), 1.0));
+        RDouble Mr2r =sqrt(MIN(MAX(mach2r, kPrec * mach2), 1.0));
 
         RDouble fel = 0.0, fer = 0.0;
         if (machl > one)
@@ -1017,12 +1292,11 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
                 RDouble fmass = 0.25 * rl * cl * (machl * machl + 1.0);
                 RDouble tmp0  = - vnl / gmL;
                 RDouble tmp1  = rl * cl / gmL;
-                fl[IR ] = half * rvnl + coef *  fmass;
-                fl[IRU] = half * (rvnl * ul + xsn * pl) + coef * (fmass * (ul + xsn * tmp0) + ul * tmp1);
-                fl[IRV] = half * (rvnl * vl + ysn * pl) + coef * (fmass * (vl + ysn * tmp0) + vl * tmp1);
-                fl[IRW] = half * (rvnl * wl + zsn * pl) + coef * (fmass * (wl + zsn * tmp0) + wl * tmp1);
-                fl[IRE] = half * (rvnl * hl + vb  * pl) + coef * (fmass * (hl + vb  * tmp0) + hl * tmp1);
-                fel = half * peL * (vnl + vb) + coef * (fmass * (peL / rl + vb  * tmp0) + peL / rl * tmp1);
+                fl[IR ] = half * rvnl + Mr2l *  fmass;
+                fl[IRU] = half * (rvnl * ul + xsn * pl) + Mr2l * (fmass * (ul + xsn * tmp0) + ul * tmp1);
+                fl[IRV] = half * (rvnl * vl + ysn * pl) + Mr2l * (fmass * (vl + ysn * tmp0) + vl * tmp1);
+                fl[IRW] = half * (rvnl * wl + zsn * pl) + Mr2l * (fmass * (wl + zsn * tmp0) + wl * tmp1);
+                fl[IRE] = half * (rvnl * hl + vb  * pl) + Mr2l * (fmass * (hl + vb  * tmp0) );
             }
         }
 
@@ -1067,12 +1341,11 @@ void Vanleer_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invSchemePar
                 RDouble fmass = 0.25 * rr * cr * (machr * machr + 1.0);
                 RDouble tmp0  = - vnr / gmR;
                 RDouble tmp1  = rr * cr / gmR;
-                fr[IR ] = half * rvnr  - coef *  fmass;
-                fr[IRU] = half * (rvnr * ur + xsn * pr) - coef * (fmass * (ur + xsn * tmp0) + ur * tmp1);
-                fr[IRV] = half * (rvnr * vr + ysn * pr) - coef * (fmass * (vr + ysn * tmp0) + vr * tmp1);
-                fr[IRW] = half * (rvnr * wr + zsn * pr) - coef * (fmass * (wr + zsn * tmp0) + wr * tmp1);
-                fr[IRE] = half * (rvnr * hr + vb  * pr) - coef * (fmass * (hr + vb  * tmp0) + hr * tmp1);
-                fer = half * peR * (vnr + vb) - coef * (fmass * (peR / rr + vb  * tmp0) + peR / rr * tmp1);
+                fr[IR ] = half * rvnr  - Mr2r *  fmass;
+                fr[IRU] = half * (rvnr * ur + xsn * pr) - Mr2r * (fmass * (ur + xsn * tmp0) + ur * tmp1);
+                fr[IRV] = half * (rvnr * vr + ysn * pr) - Mr2r * (fmass * (vr + ysn * tmp0) + vr * tmp1);
+                fr[IRW] = half * (rvnr * wr + zsn * pr) - Mr2r * (fmass * (wr + zsn * tmp0) + wr * tmp1);
+                fr[IRE] = half * (rvnr * hr + vb  * pr) - Mr2r * (fmass * (hr + vb  * tmp0));
             }
         }
 
@@ -1623,8 +1896,7 @@ void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invScheme
         RDouble hl  = hint_l + half * v2l;
         RDouble hr  = hint_r + half * v2r;
 
-        RDouble vnl  = xfn[iLen] * ul + yfn[iLen] * vl + zfn[iLen] * wl - vgn[iLen];
-        RDouble vnr  = xfn[iLen] * ur + yfn[iLen] * vr + zfn[iLen] * wr - vgn[iLen];
+
 
         //RDouble gama2l = (gamal[iLen] - 1.0)/(gamal[iLen] + 1.0);
         //RDouble gama2r = (gamar[iLen] - 1.0)/(gamar[iLen] + 1.0);
@@ -1643,12 +1915,17 @@ void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invScheme
         RDouble al = sqrt(gamal[iLen] * (pl / (rl + SMALL)));
         RDouble ar = sqrt(gamar[iLen] * (pr / (rr + SMALL)));
 
-        RDouble ml = abs(vnl / al);
-        RDouble mr = abs(vnr / ar);
+        
+        RDouble vnl= xfn[iLen] * ul + yfn[iLen] * vl + zfn[iLen] * wl - vgn[iLen];
+        RDouble vnr= xfn[iLen] * ur + yfn[iLen] * vr + zfn[iLen] * wr - vgn[iLen];
+        RDouble ml= abs(vnl / al);
+        RDouble mr= abs(vnr / ar);
+
+        RDouble minplr = MIN(pl / (pr + SMALL), pr / (pl + SMALL));
 
         RDouble c12, ocm;
 
-        /*if( ( ml > 1.0 && mr < 1.0 ) || ( mr > 1.0 && ml < 1.0 ))
+        /*if( minplr < 0.5 && (( ml > 1.0 && mr < 1.0 ) || ( mr > 1.0 && ml < 1.0 )) )
         {
             c12 = max(sqrt(abs(vnl * vnr)), min(al, ar));
 
@@ -1664,7 +1941,98 @@ void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invScheme
         else
         {*/
             c12 = half * (al + ar);
-        /*}*/
+        //}
+
+        //if( minplr < 0.5)
+        //{
+        //    RDouble du = ur - ul;
+        //    RDouble dv = vr - vl;
+        //    RDouble dw = wr - wl;
+        //    
+        //    c12 = max(sqrt(du * du + dv * dv + dw * dw), SMALL);
+        //    if(xfn[iLen] * du + yfn[iLen] * du + zfn[iLen] * du < 0.0)
+        //    {
+        //        c12 = -c12;
+        //        du /= c12;
+        //        dv /= c12;
+        //        dw /= c12;
+        //    }
+        //    else
+        //    {
+        //        du /= c12;
+        //        dv /= c12;
+        //        dw /= c12;
+        //    }
+
+        //    vnl  = du * ul + dv * vl + dw * wl - vgn[iLen];
+        //    vnr  = du * ur + dv * vr + dw * wr - vgn[iLen];
+
+        //    ml = abs(vnl / al);
+        //    mr = abs(vnr / ar);
+
+        //    if(( ml > 1.0 && mr < 1.0 ) || ( mr > 1.0 && ml < 1.0 ))
+        //    {
+        //        c12 = max(sqrt(abs(vnl * vnr)), min(al, ar));
+        //        if (vnl + vnr > 0.0)
+        //        {
+        //            c12 *= c12 / max(abs(vnl), c12);
+        //        }
+        //        else
+        //        {
+        //            c12 *= c12 / max(abs(vnr), c12);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        c12 = half * (al + ar);
+        //    }
+        //}
+        //else
+        //{
+        //    c12 = half * (al + ar);
+        //}
+
+        //vnl  = xfn[iLen] * ul + yfn[iLen] * vl + zfn[iLen] * wl - vgn[iLen];
+        //vnr  = xfn[iLen] * ur + yfn[iLen] * vr + zfn[iLen] * wr - vgn[iLen];
+
+
+       // RDouble du = ur - ul;
+       // RDouble dv = vr - vl;
+       // RDouble dw = wr - wl;
+       // c12 = max(sqrt(du * du + dv * dv + dw * dw), SMALL);
+       // if(xfn[iLen] * du + yfn[iLen] * du + zfn[iLen] * du < 0.0)
+       // {
+       //     c12 = -c12;
+       // }
+       // du /= c12;
+       // dv /= c12;
+       // dw /= c12;
+       // 
+       // vnl  = du * ul + dv * vl + dw * wl - vgn[iLen];
+       // vnr  = du * ur + dv * vr + dw * wr - vgn[iLen];
+
+       // ml = abs(vnl / al);
+       // mr = abs(vnr / ar);
+
+       //if(( ml > 1.0 && mr < 1.0 ) || ( mr > 1.0 && ml < 1.0 ))
+       // {
+       //     c12 = max(sqrt(abs(vnl * vnr)), min(al, ar));
+       //     if (vnl + vnr > 0.0)
+       //     {
+       //         c12 *= c12 / max(abs(vnl), c12);
+       //     }
+       //     else
+       //     {
+       //         c12 *= c12 / max(abs(vnr), c12);
+       //     }
+       // }
+       // else
+       // {
+       //     c12 = half * (al + ar);
+       // }
+
+       // vnl  = xfn[iLen] * ul + yfn[iLen] * vl + zfn[iLen] * wl - vgn[iLen];
+       // vnr  = xfn[iLen] * ur + yfn[iLen] * vr + zfn[iLen] * wr - vgn[iLen];
 
         ocm = 1.0 / c12;
 
@@ -1681,7 +2049,7 @@ void AusmpwPlus_Scheme(FaceProxy *face_proxy, InviscidSchemeParameter *invScheme
         RDouble p12  = fp5ml * pl + fp5mr * pr;
         RDouble pe12 = fp5ml * peL + fp5mr * peR;
 
-        RDouble minplr = MIN(pl / (pr + SMALL), pr / (pl + SMALL));
+        
         RDouble fw     = one - minplr * minplr * minplr * AusmpwPlusLimiter;
 
         RDouble op12 = one / (p12 + SMALL);

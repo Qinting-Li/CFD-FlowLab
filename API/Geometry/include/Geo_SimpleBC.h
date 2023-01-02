@@ -27,6 +27,7 @@ namespace PHENGLEI
 {
     //! the 1000 for periodic is default output of the User Defined for CGNS.
     const int PERIODIC              = 1000;
+    const int USER_DEFINED          = -3;
     const int WAKE                  = -2;
     const int INTERFACE             = -1;
     const int NO_BOUNDARY_CONDITION = 0;
@@ -312,8 +313,6 @@ public:
 
     //! Read global boundary conditions.
     static void ReadGlobalBoundaryCondition();
-
-    static void ReadLBMPara();
 
     static void SetGlobalBCByGlobalDataBase();
 

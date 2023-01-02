@@ -1,6 +1,13 @@
 #include "IO_FileName.h"
 #include "TK_Exit.h"
 #include "TK_Parse.h"
+#ifdef USE_WINDOWS_X64
+#include <direct.h>
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+#define BUF_SIZE 4096
 
 namespace PHSPACE
 {
@@ -97,6 +104,46 @@ int ExtractNumberOfPartFromFileName(const string &source)
     int numberParts = -1;
     from_string<int>(numberParts, number, std::dec);
     return numberParts;
+}
+
+string GetProcessPath()
+{
+#ifdef USE_WINDOWS_X64
+    char szFilePath[MAX_PATH];
+    GetModuleFileNameA(NULL, szFilePath, MAX_PATH);
+    std::string strFilePath(szFilePath);
+    strFilePath = strFilePath.substr(0, strFilePath.find_last_of("\\"));
+    strFilePath = strFilePath.substr(0, strFilePath.find_last_of("\\"));
+    return strFilePath;
+#else
+    char abs_path[BUF_SIZE];
+    int cnt = readlink("/proc/self/exe", abs_path, BUF_SIZE);
+    if (cnt < 0 || cnt >= BUF_SIZE)
+    {
+        return NULL;
+    }
+
+    for (int i = cnt; i >= 0; --i)
+    {
+        if (abs_path[i] == '/')
+        {
+            abs_path[i] = '\0';
+            break;
+        }
+    }
+    return string(abs_path);
+#endif
+}
+string GetCurrentWorkDir()
+{
+    char buf_ptr[BUF_SIZE];
+    char *ptr;
+    ptr = getcwd(buf_ptr, BUF_SIZE);
+    if (ptr == NULL)
+    {
+        return NULL;
+    }
+    return string(ptr);
 }
 
 }

@@ -1,97 +1,97 @@
-inline void Geo_FaceMetrics_Unstruct::SetFaceCenterX(RDouble * xfc)
+inline void Geo_FaceMetrics_Unstruct::SetFaceCenterX(RDouble *xfc)
 {
-	if(this->xfc && this->xfc != xfc)
-	{
-		delete [] this->xfc;
-	}
-	this->xfc = xfc;
+    if (this->xfc && this->xfc != xfc)
+    {
+        delete [] this->xfc;
+    }
+    this->xfc = xfc;
 }
 
-inline void Geo_FaceMetrics_Unstruct::SetFaceCenterY(RDouble * yfc)
+inline void Geo_FaceMetrics_Unstruct::SetFaceCenterY(RDouble *yfc)
 {
-	if(this->yfc && this->yfc != yfc)
-	{
-		delete [] this->yfc;
-	}
-	this->yfc = yfc;
+    if (this->yfc && this->yfc != yfc)
+    {
+        delete [] this->yfc;
+    }
+    this->yfc = yfc;
 }
 
-inline void Geo_FaceMetrics_Unstruct::SetFaceCenterZ(RDouble * zfc)
+inline void Geo_FaceMetrics_Unstruct::SetFaceCenterZ(RDouble *zfc)
 {
-	if(this->zfc && this->zfc != zfc)
-	{
-		delete [] this->zfc;
-	}
-	this->zfc = zfc;
+    if (this->zfc && this->zfc != zfc)
+    {
+        delete [] this->zfc;
+    }
+    this->zfc = zfc;
 }
 
-inline void Geo_FaceMetrics_Unstruct::SetFaceNormalX(RDouble * xfn)
+inline void Geo_FaceMetrics_Unstruct::SetFaceNormalX(RDouble *xfn)
 {
-	if(this->xfn && this->xfn != xfn)
-	{
-		delete [] this->xfn;
-	}
-	this->xfn = xfn;
+    if (this->xfn && this->xfn != xfn)
+    {
+        delete [] this->xfn;
+    }
+    this->xfn = xfn;
 }
 
-inline void Geo_FaceMetrics_Unstruct::SetFaceNormalY(RDouble * yfn)
+inline void Geo_FaceMetrics_Unstruct::SetFaceNormalY(RDouble *yfn)
 {
-	if(this->yfn && this->yfn != yfn)
-	{
-		delete [] this->yfn;
-	}
-	this->yfn = yfn;
+    if (this->yfn && this->yfn != yfn)
+    {
+        delete [] this->yfn;
+    }
+    this->yfn = yfn;
 }
 
-inline void Geo_FaceMetrics_Unstruct::SetFaceNormalZ(RDouble * zfn)
+inline void Geo_FaceMetrics_Unstruct::SetFaceNormalZ(RDouble *zfn)
 {
-	if(this->zfn && this->zfn != zfn)
-	{
-		delete [] this->zfn;
-	}
-	this->zfn = zfn;
+    if (this->zfn && this->zfn != zfn)
+    {
+        delete [] this->zfn;
+    }
+    this->zfn = zfn;
 }
 
-inline void Geo_FaceMetrics_Unstruct::SetFaceArea(RDouble * area)
+inline void Geo_FaceMetrics_Unstruct::SetFaceArea(RDouble *area)
 {
-	if(this->area && this->area != area)
-	{
-		delete [] this->area;
-	}
-	this->area = area;
+    if (this->area && this->area != area)
+    {
+        delete [] this->area;
+    }
+    this->area = area;
 }
 
 inline RDouble * Geo_FaceMetrics_Unstruct::GetFaceCenterX() const
 {
-	return this->xfc;
+    return this->xfc;
 }
 
 inline RDouble * Geo_FaceMetrics_Unstruct::GetFaceCenterY() const
 {
-	return this->yfc;
+    return this->yfc;
 }
 
 inline RDouble * Geo_FaceMetrics_Unstruct::GetFaceCenterZ() const
 {
-	return this->zfc;
+    return this->zfc;
 }
 
 inline RDouble * Geo_FaceMetrics_Unstruct::GetFaceNormalX() const
 {
-	return this->xfn;
+    return this->xfn;
 }
 
 inline RDouble * Geo_FaceMetrics_Unstruct::GetFaceNormalY() const
 {
-	return this->yfn;
+    return this->yfn;
 }
 
 inline RDouble * Geo_FaceMetrics_Unstruct::GetFaceNormalZ() const
 {
-	return this->zfn;
+    return this->zfn;
 }
 
 inline RDouble * Geo_FaceMetrics_Unstruct::GetFaceArea() const
 {
-	return this->area;
+    return this->area;
 }

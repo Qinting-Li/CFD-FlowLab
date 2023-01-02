@@ -42,12 +42,12 @@ protected:
     PointHash pointList;
     PHVector1D < point_type > pointArray;
 
-    PHVectorInt1D * computationalToGlobalNodeIndexMapping; //
-    PHVectorInt1D * globalToComputationalNodeIndexMapping; //
+    PHVectorInt1D * computationalToGlobalNodeIndexMapping;
+    PHVectorInt1D * globalToComputationalNodeIndexMapping;
 
     PHVector1D < set< int > > pointBoundaryConditionType;
 
-    int  oldNumberOfComputationalNodes;
+    int oldNumberOfComputationalNodes;
 
     RDouble minDistance;
 
@@ -74,10 +74,10 @@ public:
     point_type & GetPoint(int id) { return pointArray[id]; }
 
     //!
-    PHVectorInt1D & GetComputationalToGlobalNodeIndexMapping(){ return * computationalToGlobalNodeIndexMapping; }
+    PHVectorInt1D & GetComputationalToGlobalNodeIndexMapping(){ return *computationalToGlobalNodeIndexMapping; }
 
     //!
-    PHVectorInt1D & GetGlobalToComputationalNodeIndexMapping(){ return * globalToComputationalNodeIndexMapping; }
+    PHVectorInt1D & GetGlobalToComputationalNodeIndexMapping(){ return *globalToComputationalNodeIndexMapping; }
 
     //!
     void SetPoint(int id, point_type &point) { pointArray[id] = point; }
@@ -89,19 +89,19 @@ public:
     void AddPointDirectly(point_type &point, int boundaryConditionType = 0);
 
     //!
-    int  AddPoint(point_type *&point, bool &isNodeExist);
+    int AddPoint(point_type *&point, bool &isNodeExist);
 
     //!
-    int  AddPointTest(point_type &point, int iNode, int numberOfNodes);
+    int AddPointTest(point_type &point, int iNode, int numberOfNodes);
 
     //!
-    PointHash & GetPointList (){ return pointList; }
+    PointHash & GetPointList() { return pointList; }
 
     //!
-    PHVector1D < point_type > & GetPointArray(){ return pointArray; }
+    PHVector1D < point_type > & GetPointArray() { return pointArray; }
 
     //!
-    uint_t GetNumberOfComputationalNodes() { return (*computationalToGlobalNodeIndexMapping).size(); }  //! Green.
+    uint_t GetNumberOfComputationalNodes() { return (*computationalToGlobalNodeIndexMapping).size(); }    //! Green.
 
     //!
     uint_t GetNumberOfPoints() { return pointArray.size(); }
@@ -126,7 +126,6 @@ public:
 
     //!
     int GetOldNumberOfComputationalNodes();
-public:
 };
 
 Geo_PointFactory::point_type GetCenterPoint(PHVectorInt1D &element, PHVectorInt1D &pointList);

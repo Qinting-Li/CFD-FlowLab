@@ -45,15 +45,15 @@ inline RDouble5D * Geo_FaceMetrics_Struct::GetFaceNormal_FD() const
 
 inline void Geo_FaceMetrics_Struct::DeallocateAll()
 {
-    if (xfn) { delete xfn; xfn = 0; }
-    if (yfn) { delete yfn; yfn = 0; }
-    if (zfn) { delete zfn; zfn = 0; }
-    if (area) { delete area; area = 0; }
+    if (xfn)  { delete xfn;      xfn = 0; }
+    if (yfn)  { delete yfn;      yfn = 0; }
+    if (zfn)  { delete zfn;      zfn = 0; }
+    if (area) { delete area;    area = 0; }
 
-    if (xFaceVector) { delete xFaceVector; xFaceVector = 0; }
-    if (yFaceVector) { delete yFaceVector; yFaceVector = 0; }
-    if (zFaceVector) { delete zFaceVector; zFaceVector = 0; }
+    if (xFaceVector) { delete xFaceVector;    xFaceVector = 0; }
+    if (yFaceVector) { delete yFaceVector;    yFaceVector = 0; }
+    if (zFaceVector) { delete zFaceVector;    zFaceVector = 0; }
 
-    if (xyzFaceVector_FD) { delete xyzFaceVector_FD; xyzFaceVector_FD = 0; }
-    if (xyzFaceNormal_FD) { delete xyzFaceNormal_FD; xyzFaceNormal_FD = 0; }
+    if (xyzFaceVector_FD) { delete xyzFaceVector_FD;    xyzFaceVector_FD = 0; }
+    if (xyzFaceNormal_FD) { delete xyzFaceNormal_FD;    xyzFaceNormal_FD = 0; }
 }

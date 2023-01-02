@@ -94,7 +94,12 @@ void Post_ProbesWrite::StoreProbesVarariables(ActionKey *actkey, Post_Probes *po
     Grid *grid_in = postProbesVar->GetGrid();
 
     int nProbeVariables = postProbesVar->GetNumberofProbeVariables();
-
+    int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
+    if (nchem)
+    {
+        int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+        nProbeVariables = nProbeVariables + 2 * numberOfSpecies;
+    }
     RDouble **q_probes = new RDouble *[nProbeVariables];
     postProbesVar->GetAllProbesVarPtr(q_probes);
 

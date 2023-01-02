@@ -92,9 +92,9 @@ public:
     void ReConstructFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
     void ZeroResiduals(Grid *gridIn);
     void SpectrumRadiusInviscid(Grid *grid);
-    void PreconInvSpectrumRadius(Grid *gridIn);
     void SpectrumRadiusViscous(Grid *grid);
     void SpectrumRadiusChemical(Grid *grid);
+    void ConservativePreconMatrix(Grid *gridIn);
     void Diagonal(Grid *gridIn);
     void ComputeMinTimeStep(Grid *grid, RDouble & minDt, RDouble & maxDt);
     void ReduceMaxTimeStep(Grid *grid, RDouble globalMinDt);
@@ -124,6 +124,7 @@ public:
     RDouble * CompSoundSpeed(Grid *gridIn);
     RDouble * CompMachNumber(Grid *gridIn);
     RDouble** ComputeDimensionalVariables(Grid *gridIn);
+    RDouble** ComputePrimitiveVariablesWithMoleFraction(Grid *gridIn);
 
     RDouble * ComputeVorticitybyQCriteria(Grid *gridIn);
     void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble * vorticity_x, RDouble * vorticity_y, RDouble * vorticity_z, RDouble * vorticityMagnitude,  RDouble * strain_rate,  RDouble * Q_criteria);
@@ -156,12 +157,16 @@ public:
     void GetHeatTransferCoeff(Grid *gridIn);
 
     void FreeGradientProxy(Grid *grid);
+
+    void DumpLeakageInformation(Grid *grid);
+
     void InviscidFlux  (Grid *gridIn);
     void ViscousFlux   (Grid *gridIn);
     void ChemicalSource(Grid *gridIn);
     void DualTimeSource(Grid *gridIn);
     void StoreHistoricalResidual(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
+    void ComputePreconditionCoefficient(Grid *grid);
     RDouble UnsteadyConvergence(Grid *gridIn);
 
     //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
@@ -171,7 +176,8 @@ public:
     void GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
     void GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
-
+    void ModifyVisflux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+    
     void ComputeFaceWeight(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ComputeInviscidFlux(Grid *grid, FaceProxy *faceProxy, int localStart, int localEnd);
     void SolutionFix(Grid *gridIn, RDouble *prim, int iCell);
@@ -283,11 +289,6 @@ public:
     //! @param[in] gridIn              an unstruct grid pointer.
     //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
     void FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
-    
-    //! Farfield  boundary condition for one Region of a bounday with Precon for subsonic flows.
-    //! @param[in] gridIn              an unstruct grid pointer.
-    //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
-    void PreconFarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);   
     
     //! Inflow boundary condition for one Region of a bounday.
     //! @param[in] gridIn              an unstruct grid pointer.

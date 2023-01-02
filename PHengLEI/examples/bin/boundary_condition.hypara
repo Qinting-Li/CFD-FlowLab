@@ -159,6 +159,16 @@ string bcName = "Inflow6";
   double primW = 0.0;
   double primPressure = 8.76743560;
 }
+string bcName = "Inflow10";
+{
+  int bcType = 5;
+  int inflowParaType = 10; 
+  int nTrajectoryVariables = 5;
+  double time[] = [0.0, 1.00E-02, 2.00E-02, 3.00E-02, 8.00E-02];
+  double pressure[] = [1271186,1505084,1733333,1967231,2574576];
+  double velocity[] = [1075,1075,1075,1075,1075];
+  double temperature[] = [3454,3454,3454,3454,3454];
+}
 # If the boundary condition type is PRESSURE_INLET, then the parameters should be set as follows:
 string bcName = "PressureInlet";
 {

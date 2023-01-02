@@ -22,24 +22,24 @@ inline void Geo_DynamicGridMetrics_Unstruct::SetCellVolumeOld(RDouble *voln)
     this->voln = voln;
 }
 
-inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityX() const 
-{ 
-    return xfv; 
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityX() const
+{
+    return xfv;
 }
 
-inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityY() const 
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityY() const
 {
-    return yfv; 
+    return yfv;
 }
 
-inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityZ() const 
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceVelocityZ() const
 {
-    return zfv;  
+    return zfv;
 }
 
-inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceNormalVelocity() const 
+inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetFaceNormalVelocity() const
 {
-    return vgn; 
+    return vgn;
 }
 
 inline RDouble * Geo_DynamicGridMetrics_Unstruct::GetCellVolumeOld() const

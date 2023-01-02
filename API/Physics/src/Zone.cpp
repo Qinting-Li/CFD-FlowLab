@@ -9,8 +9,10 @@
 #include "AleModel.h"
 #include "MixGrid.h"
 #include "Solver.h"
-#include "MixedGas.h"
+#include "Glb_Dimension.h"
+#include "GridType.h"
 
+#include "MixedGas.h"
 
 using namespace std;
 
@@ -117,6 +119,9 @@ void Zone::CoarseGrids()
     {
         Grid *grid = geom->GetGrid(iLevel);
         grid->AllocateOversetGrid();
+//        ostringstream oss;
+//        oss << "level" << iLevel << ".plt";
+//        VisualizationMesh2D( UnstructGridCast(grid), oss.str() );
     }
 }
 
@@ -128,9 +133,29 @@ void Zone::SetInterface(Grid *base_grid, Grid *cgrid)
 
 void Zone::ShowCoarseGrids()
 {
-    for (std::size_t g = 1; g < geom->GetNumberOfMultiGrid(); ++ g)
+/*
+    for (int iLevel = 1; iLevel < geom->GetNumberOfMultiGrid(); ++ iLevel)
     {
+        Grid *grid = geom->GetGrid(iLevel);
+
+        if(grid->Type() == PHSPACE::UNSTRUCTGRID)
+        {
+            std::ostringstream oss;
+            oss << "./results/grid" << this->GetIndex() << "_" << "level_" << iLevel << ".plt";
+
+            if(PHSPACE::GetDim() == TWO_D)
+            {
+                VisualizationMesh2D(UnstructGridCast(grid), oss.str().c_str());
+            }
+            else
+            {
+                //! Warning: the bc mesh of coarse grid is same to the fine grid.
+                //! Only visualize the eigen faces.
+                VisualizationEigenMeshofCoarseGrid3D(UnstructGridCast(grid), oss.str().c_str());
+            }
+        }
     }
+*/
 }
 
 void Zone::UpdateAllData()

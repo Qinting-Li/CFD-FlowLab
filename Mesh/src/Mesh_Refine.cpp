@@ -86,7 +86,6 @@ int RefineParameter::GetAnisoRefineType()
 {
     return this->anisoRefine;
 }
-
 }
 
 

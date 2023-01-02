@@ -27,7 +27,10 @@ LIB_EXPORT void Param_NSSolver::Init()
     transitionType      = GlobalDataBase::GetIntParaFromDB("transitionType");
 
     ifLowSpeedPrecon    = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+    kPreconCoeff    = GlobalDataBase::GetDoubleParaFromDB("Kprec");
     nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
+    preconFarfieldBCMethod    = GlobalDataBase::GetIntParaFromDB("preconFarfieldBCMethod");
+    refDimensionalVelocity = GlobalDataBase::GetDoubleParaFromDB("refDimensionalVelocity");
 
     roeEntropyFixMethod = GlobalDataBase::GetIntParaFromDB("roeEntropyFixMethod");
     roeEntropyScale     = GlobalDataBase::GetDoubleParaFromDB("roeEntropyScale");
@@ -189,12 +192,19 @@ LIB_EXPORT void Param_NSSolver::Init()
         isUseLocalCFL = GlobalDataBase::GetIntParaFromDB("isUseLocalCFL");
     }
 
+    //the reference length for computation of Knudsen number.
+    knLength = 1.0;
+    if (GlobalDataBase::IsExist("knudsenLength", PHDOUBLE, 1))
+    {
+        knLength = GlobalDataBase::GetDoubleParaFromDB("knudsenLength");
+    }
+
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()
 {
     RDouble entropyAcoustic = 0.01, entropyConvective = 0.01;
-    double referenceMachNumber = this->GetRefMachNumber();
+    RDouble referenceMachNumber = this->GetRefMachNumber();
 
     int ifLowSpeedPrecon = this->GetIfLowSpeedPrecon();
     if (ifLowSpeedPrecon)

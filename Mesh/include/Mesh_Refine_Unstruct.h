@@ -75,12 +75,6 @@ private:
     void GenerateComputationalGrid();
     void GenerateGlobalInterfaceLink();
 
-    //! Get cell type on the basis of node number.
-    int GetCellType(int dimension, int nodeNumberOfCell);
-
-    //! Get face type on the basis of node number.
-    int GetFaceType(int dimension, int nodeNumberOfFace);
-
 private:
     Mesh_RefineController **gridRefineControllers;
 

@@ -137,6 +137,202 @@ void FantasyWriteToGrd(const string &cel_file, Grid **grids, int nBlocks)
     CloseFile(Gridgenfile);
 }
 
+void FantasyWriteToFluent(const string &gridFileName, Grid **grids, int nBlocks)
+{
+    using namespace FLUENT_SPACE;
+
+    fstream outfile;
+    OpenFile(outfile, gridFileName, ios::out);
+
+    string headerInformation = "Grid convert from fts file";
+    outfile << "(" << FLUENT_HEADER << " " << headerInformation << ")" << endl;
+    outfile << endl;
+
+    //! Dimension
+    int dimension = GetDim();
+    outfile << "(" << FLUENT_COMMENT << " \"Dimension : " << dimension << "\")" << endl;
+    outfile << "(" << FLUENT_DIMENSIONS << " " << Dec2Hex(dimension) << ")" << endl;
+    outfile << endl;
+
+    UnstructGrid *grid = UnstructGridCast(grids[0]);
+    int zoneID   = 0;
+
+    //! Total nodes information.
+    int nTNode = grid->GetNTotalNode();
+    int firstIndexOfNode = 1;
+    int lastIndexOfNode = nTNode - (1 - firstIndexOfNode);
+
+    int nodeType = 0;
+    outfile << "(" << FLUENT_COMMENT << " \"Number of Nodes : " << nTNode << "\")" << endl;
+    outfile << "(" << FLUENT_NODES << " " << "(" << Dec2Hex(zoneID) << " " 
+            << Dec2Hex(firstIndexOfNode) << " " << Dec2Hex(lastIndexOfNode) << " " << Dec2Hex(nodeType) << " " << Dec2Hex(dimension) << ")" << ")"<< endl;
+    outfile << endl;
+
+    //! Total faces information.
+    int nTFace = grid->GetNTotalFace();
+    int nBFace = grid->GetNBoundFace();
+    int numberOfInteriorFace = nTFace - nBFace;
+    int firstIndexOfFace = 1;
+    int lastIndexOfFace  = nTFace - (1 - firstIndexOfFace);
+
+    int faceType = 0;
+    outfile << "(" << FLUENT_COMMENT << " \"Total Number of Faces : " << nTFace << "\")" << endl;
+    outfile << "(" << FLUENT_COMMENT << " \"       Boundary Faces : " << nBFace << "\")" << endl;
+    outfile << "(" << FLUENT_COMMENT << " \"       Interior Faces : " << numberOfInteriorFace << "\")" << endl;
+    outfile << "(" << FLUENT_FACES << " " << "(" << Dec2Hex(zoneID) << " " 
+            << Dec2Hex(firstIndexOfFace) << " " << Dec2Hex(lastIndexOfFace) << " " << Dec2Hex(faceType) << ")" << ")"<< endl;
+    outfile << endl;
+
+
+    //! Total cells information.
+    int nTCell = grid->GetNTotalCell();
+    int firstIndexOfCell = 1;
+    int lastIndexOfCell  = nTCell - (1 - firstIndexOfCell);
+
+    int elmentType = 0;
+    outfile << "(" << FLUENT_COMMENT << " \"Total Number of Cells : " << nTCell << "\")" << endl;
+    outfile << "(" << FLUENT_CELLS << " " << "(" << Dec2Hex(zoneID) << " " 
+            << Dec2Hex(firstIndexOfCell) << " " << Dec2Hex(lastIndexOfCell) << " " << Dec2Hex(elmentType) << ")" << ")"<< endl;
+    outfile << endl;
+
+
+    //! Nodes coor.
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+
+    ++ zoneID;
+    nodeType = 1;
+    outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID << " Number of Nodes : " << nTNode << "\")" << endl;
+    outfile << "(" << FLUENT_NODES << " " << "(" << Dec2Hex(zoneID) << " " 
+        << Dec2Hex(firstIndexOfNode) << " " << Dec2Hex(lastIndexOfNode) << " " << Dec2Hex(nodeType) << " " << Dec2Hex(dimension) << ")" << "("<< endl;
+    outfile.setf(ios::scientific);
+    outfile.precision(15);
+    for (int iNode = 0; iNode < nTNode; ++ iNode)
+    {
+        if (dimension == 2)
+        {
+            outfile << "  " << x[iNode] << "   " << y[iNode] << endl;
+        }else
+        {
+            outfile << "  " << x[iNode] << "   " << y[iNode] << "   " << z[iNode] << endl;
+        }
+    }
+    outfile << "))" << endl;
+    outfile << endl;
+
+    // Body of Cells.
+    ++ zoneID;
+    int type   = 1;
+    elmentType = 1;
+    PrintToWindow("Warning: consider polyhedral here when elmentType !=0 \n");
+    outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID
+            << " " << nTCell << " cells "
+            << firstIndexOfCell << ".." << lastIndexOfCell <<"\")" << endl;
+
+    outfile << "(" << FLUENT_CELLS << " " << "(" << Dec2Hex(zoneID) << " " 
+            << Dec2Hex(firstIndexOfCell) << " " << Dec2Hex(lastIndexOfCell) << " " << Dec2Hex(type) << " " << Dec2Hex(elmentType) << ")" << ")"<< endl;
+    outfile << "(" << FLUENT_C45 << " " << "(" << zoneID << " fluid unspecified)())" << endl;
+    outfile << endl;
+
+    //! Face information.
+    int *face2node         = grid->GetFace2Node();
+    long long int *nodePosi= grid->GetFace2NodeSubscript();
+    int *leftCellofFace    = grid->GetLeftCellOfFace();
+    int *rightCellofFace   = grid->GetRightCellOfFace();
+    int *nodeNumOfEachFace = grid->GetNodeNumberOfEachFace();
+
+    map <int, int> bctypeMap;
+    bctypeMap.insert(pair<int, int>(PHENGLEI::INTERIOR      , FLUENT_SPACE::INTERIOR          ));
+    bctypeMap.insert(pair<int, int>(PHENGLEI::SOLID_SURFACE , FLUENT_SPACE::WALL              ));
+    bctypeMap.insert(pair<int, int>(PHENGLEI::SYMMETRY      , FLUENT_SPACE::SYMMETRY          ));
+    bctypeMap.insert(pair<int, int>(PHENGLEI::FARFIELD      , FLUENT_SPACE::PRESSURE_FAR_FIELD));
+    bctypeMap.insert(pair<int, int>(PHENGLEI::INFLOW        , FLUENT_SPACE::VELOCITY_INLET    ));
+    bctypeMap.insert(pair<int, int>(PHENGLEI::OUTFLOW       , FLUENT_SPACE::OUTFLOW           ));
+
+    map <int, string> bcNameMap;
+    bcNameMap.insert(pair<int, string>(PHENGLEI::INTERIOR      , "interior"          ));
+    bcNameMap.insert(pair<int, string>(PHENGLEI::SOLID_SURFACE , "wall"              ));
+    bcNameMap.insert(pair<int, string>(PHENGLEI::SYMMETRY      , "symmetry"          ));
+    bcNameMap.insert(pair<int, string>(PHENGLEI::FARFIELD      , "pressure-far-field"));
+    bcNameMap.insert(pair<int, string>(PHENGLEI::INFLOW        , "velocity-inlet"    ));
+    bcNameMap.insert(pair<int, string>(PHENGLEI::OUTFLOW       , "outflow"           ));
+
+    int firstIndex = firstIndexOfFace;
+    int lastIndex = numberOfInteriorFace;
+
+    //! Interior face.
+    ++ zoneID;
+    outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID 
+            <<" " << numberOfInteriorFace << " faces " 
+            << firstIndex << ".." << lastIndex << ", " << "Interior" << "\")" << endl;
+
+    outfile << "(" << FLUENT_FACES << " " << "(" << Dec2Hex(zoneID) << " " 
+            << Dec2Hex(firstIndex) << " " << Dec2Hex(lastIndex) << " " << Dec2Hex(FLUENT_SPACE::INTERIOR) << " "<< Dec2Hex(faceType) << ")" << "("<< endl;
+
+    for (int iFace = nBFace; iFace < nTFace; ++ iFace)
+    {
+        outfile << Dec2Hex(nodeNumOfEachFace[iFace]) << " ";
+
+        long long int firstNodePosi = nodePosi[iFace];
+        for (int iNode = 0; iNode < nodeNumOfEachFace[iFace]; ++ iNode)
+        {
+            outfile << Dec2Hex(face2node[firstNodePosi++] + 1) << " ";
+        }
+
+        outfile << Dec2Hex(leftCellofFace[iFace] + 1) << " " << Dec2Hex(rightCellofFace[iFace] + 1) << endl;
+    }
+
+    outfile << "))" << endl;
+    outfile << "(" << FLUENT_C45 << " " << "(" << zoneID << " " << bcNameMap[PHENGLEI::INTERIOR] << " " << "interior-unspecified)())" << endl;
+
+    //! Boundary face.
+    UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+    int nBCRegion = unstructBCSet->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        ++ zoneID;
+        UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegion);
+        int bcType = bcRegion->GetBCType();
+        vector<int> *faceIndex = bcRegion->GetFaceIndex();
+        string bcName = bcRegion->GetBCName();
+
+        int faceNum = faceIndex->size();
+        firstIndex = lastIndex + 1;
+        lastIndex = firstIndex + faceNum - 1;
+
+        outfile << endl;
+        outfile << "(" << FLUENT_COMMENT << " \"Zone " << zoneID 
+                <<" " << faceNum << " faces " 
+                << firstIndex << ".." << lastIndex << ", " << bcName << "\")" << endl;
+
+        outfile << "(" << FLUENT_FACES << " " << "(" << Dec2Hex(zoneID) << " " 
+            << Dec2Hex(firstIndex) << " " << Dec2Hex(lastIndex) << " " << Dec2Hex(bctypeMap[bcType]) << " "<< Dec2Hex(faceType) << ")" << "("<< endl;
+
+        int rightCell = 0;
+        for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
+        {
+            int faceIndex = *iter;
+
+            outfile << Dec2Hex(nodeNumOfEachFace[faceIndex]) << " ";
+
+            long long int firstNodePosi = nodePosi[faceIndex];
+            for (int iNode = 0; iNode < nodeNumOfEachFace[faceIndex]; ++ iNode)
+            {
+                outfile << Dec2Hex(face2node[firstNodePosi++] + 1) << " ";
+            }
+
+            outfile << Dec2Hex(leftCellofFace[faceIndex] + 1) << " " << rightCell << endl;
+        }
+
+        outfile << "))" << endl;
+        outfile << "(" << FLUENT_C45 << " " << "(" << zoneID << " " << bcNameMap[bcType] << " " << bcName << ")())" << endl;
+    }
+
+    CloseFile(outfile);
+}
+
 void ReProcessBCInfo(Grid **grids, int nBlocks)
 {
     for (int iBlock = 0; iBlock < nBlocks; iBlock ++)

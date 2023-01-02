@@ -26,7 +26,7 @@ class Mesh_Agglomeration
 public:
     //! @param[in] fineGridIn     The pre-fine grid, which is need to be coarsen.\n
     //! @param[in] fineGridLevel  The level of the fineGrid.   
-    LIB_EXPORT Mesh_Agglomeration(UnstructGrid * fineGridIn, int fineGridLevelIn);
+    LIB_EXPORT Mesh_Agglomeration(UnstructGrid *fineGridIn, int fineGridLevelIn);
 
     LIB_EXPORT ~Mesh_Agglomeration();
 
@@ -34,24 +34,26 @@ public:
     //! since the coarse grid quality is guaranteed.
     LIB_EXPORT void CoarsenGridOnce();
 
+    LIB_EXPORT void CoarsenGridOncebyMGridgen();
+
     //! Coarse the fine grid, fast but not robust, this function is NOT recommended.
     LIB_EXPORT void CoarsenGridOnceWithoutSkewnessLimit();
 
     //! Return the agglomerated coarse grid.
-    LIB_EXPORT UnstructGrid * GetCoarseGrid() { return this->coarseGrid; };
+    LIB_EXPORT UnstructGrid * GetCoarseGrid() { return this->coarseGrid; }
 
 private:
     //! The pre-fine grid, which is need to be coarsen.
-    UnstructGrid * fineGrid;
+    UnstructGrid *fineGrid;
 
     //! The coarse grid, which is agglomerated from fineGrid.
-    UnstructGrid * coarseGrid;
+    UnstructGrid *coarseGrid;
 
     //! The level of the fineGrid.
     int fineGridLevel;
 
 private:
-    void AspectRatioModifyBySkewness(RDouble *ratio, RDouble * xcc, RDouble * ycc, RDouble * zcc, const RDouble & limitAngle);
+    void AspectRatioModifyBySkewness(RDouble *ratio, RDouble *xcc, RDouble *ycc, RDouble *zcc, const RDouble &limitAngle);
 };
 
 }

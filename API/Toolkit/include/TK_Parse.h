@@ -143,5 +143,6 @@ string FindNextWord(string &source, string &word, const string &separator);
 string FindNextWord(string &source, const string &separator);
 void GetNameExt(const string &fullname, string &fname, string &fext, const string &sep);
 void ReadNewLine(fstream &file, string &line);
+string Dec2Hex(int data_in);
 
 }

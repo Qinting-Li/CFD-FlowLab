@@ -77,6 +77,7 @@ endif()
 if(WIN32)
   set(MSMPI_HOME_DIRECTORY "C:/Program Files (x86)/Microsoft SDKs/MPI" CACHE PATH "path to installed MPICH")
   include_directories("${MSMPI_HOME_DIRECTORY}/Include")
+  link_directories("${MSMPI_HOME_DIRECTORY}/lib")
   if(USE_Windows_X64)
     link_directories("${MSMPI_HOME_DIRECTORY}/Lib/x64")
     set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64")
@@ -103,12 +104,14 @@ set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
 include_directories("${CGNS_H_PATH}")
-set(EIGEN_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/eigen)
-include_directories("${EIGEN_PATH}")
+# set(EIGEN_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/eigen)
+# include_directories("${EIGEN_PATH}")
+set(MGRID_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
+include_directories("${MGRID_H_PATH}")
 
 # set current directory:
-set(EIGEN_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty)
-include_directories(${EIGEN_H_PATH})
+# set(EIGEN_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty)
+# include_directories(${EIGEN_H_PATH})
 
 # set subdirectory <include>:
 set(OVERSET_H_PATH   include)
@@ -156,16 +159,13 @@ include_directories(${OVERSET_CPP_PATH})
 
 # set header file list:
 set(HEAD_LIST
-${EIGEN_H_PATH}
 ${OVERSET_H_LIST}
 )
-# add INHOUSE_VERSION_H_LIST
 
 # set source file list:
 set(CPP_LIST 
 ${OVERSET_CPP_LIST}
 )
-# add INHOUSE_VERSION_CPP_LIST
 
 # adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
@@ -176,7 +176,7 @@ if(USE_OCC)
   message(STATUS "Using OpenCasCade ...... ")
   set(OCC_LIBS_REQUIRED
       # subset of DataExchange
-      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKSTL TKXSBase
       # ModelingAlgorithms
       TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
       TKTopAlgo TKGeomAlgo
@@ -187,7 +187,7 @@ if(USE_OCC)
       TKMath TKernel)
   
   # Set the path of the OCC library.
-  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/occ690-vc11-bit32-release)
+  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/occ730-vc11-bit64-release)
   set(OCC_LIB_PATH ${3RDPARTY_LIB_PATH} CACHE PATH "path to OpenCasCade library.")
   message(STATUS "Path to OpenCasCade library: " ${OCC_LIB_PATH})
   

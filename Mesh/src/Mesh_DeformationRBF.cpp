@@ -5,13 +5,14 @@
 #include "GeometryUnit.h"
 #include "TK_Log.h"
 #include "Geo_Element.h"
-#include "Eigen/Eigen"
+//#include "Eigen/Eigen"
+#include "MatrixLUSGS.h"
 
-using namespace Eigen;
+//using namespace Eigen;
 
 namespace PHSPACE
 {
-typedef Matrix< RDouble, Dynamic, Dynamic > RBFMatrix;
+//typedef Matrix< RDouble, Dynamic, Dynamic > RBFMatrix;
 
 Mesh_DeformationRBF::Mesh_DeformationRBF(int nZonesIn, Grid **stationalGridIn) : 
     Mesh_Deformation(nZonesIn, stationalGridIn)
@@ -39,7 +40,7 @@ void Mesh_DeformationRBF::SetNumberOfReferenceCP(int numberOfReferenceCPIn)
     this->numberOfReferenceCP = numberOfReferenceCPIn;
 }
 
-void Mesh_DeformationRBF::SetInfluencePara(int influenceParaIn)
+void Mesh_DeformationRBF::SetInfluencePara(RDouble influenceParaIn)
 {
     this->influencePara = influenceParaIn;
 }
@@ -639,12 +640,18 @@ void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, P
     DYNode *nodeArray = grid->GetNodeArray();
     int numberOfRealCP = referenceCP.size();
 
-    vector< vector< RDouble > > controlMatrix;
+    Range M(0, numberOfRealCP - 1);
+    RDouble2D *controlMatrix = new RDouble2D(M, M, fortranArray);
+    RDouble2D &controlMatrix2D = *reinterpret_cast<RDouble2D *> (controlMatrix);
+    RDouble2D *inverseMatrix = new RDouble2D(M, M, fortranArray);
+	RDouble2D &inverseMatrix2D = *reinterpret_cast<RDouble2D *> (inverseMatrix);
+
+    /*vector< vector< RDouble > > controlMatrix;
     controlMatrix.resize(numberOfRealCP);
     for (int iPoint = 0; iPoint < numberOfRealCP; ++ iPoint)
     {
         controlMatrix[iPoint].resize(numberOfRealCP);
-    }
+    }*/
 
     // Compute the influence Radius.
     RDouble maxProjectDist = PHSPACE::SMALL;
@@ -678,11 +685,13 @@ void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, P
                 TK_Exit::ExceptionExit(oss.str());
             }
 
-            controlMatrix[iPoint][jPoint] = Wendland(distance, influenceRadius);
+            controlMatrix2D(iPoint, jPoint) = Wendland(distance, influenceRadius);
+            //controlMatrix[iPoint][jPoint] = Wendland(distance, influenceRadius);
         }
     }
 
-    MatrixInverse(controlMatrix, numberOfRealCP);
+    //MatrixInverse(controlMatrix, numberOfRealCP);
+    ObtainInverseDiagonalMatrix(controlMatrix, numberOfRealCP, inverseMatrix);
 
     // Compute Coefficient Vector.
     PHVectorRDouble1D coefficientX(numberOfRealCP);
@@ -703,9 +712,9 @@ void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, P
             RDouble dy = controlPointVectors[CPIndex].Y();
             RDouble dz = controlPointVectors[CPIndex].Z();
 
-            coefficientX[iPoint] += controlMatrix[iPoint][jPoint] * dx;
-            coefficientY[iPoint] += controlMatrix[iPoint][jPoint] * dy;
-            coefficientZ[iPoint] += controlMatrix[iPoint][jPoint] * dz;
+            coefficientX[iPoint] += inverseMatrix2D(iPoint, jPoint) * dx;
+            coefficientY[iPoint] += inverseMatrix2D(iPoint, jPoint) * dy;
+            coefficientZ[iPoint] += inverseMatrix2D(iPoint, jPoint) * dz;
         }
     }
 
@@ -740,6 +749,9 @@ void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, P
     nodeArray[nodeIndex].xnew = xNew;
     nodeArray[nodeIndex].ynew = yNew;
     nodeArray[nodeIndex].znew = zNew;
+
+    delete controlMatrix;
+    delete inverseMatrix;
 }
 
 RDouble Wendland(RDouble distance, RDouble radius)
@@ -787,27 +799,27 @@ RDouble WendlandC4(RDouble distance, RDouble radius)
     }
 }
 
-void MatrixInverse(vector< vector< RDouble > > &maxtrix, const int size)
-{
-    RBFMatrix maxtrixOfEigenForm(size, size);
-
-    for (int i = 0; i < size; ++ i)
-    {
-        for (int j = 0; j < size; ++ j)
-        {
-            maxtrixOfEigenForm(i, j) = maxtrix[i][j];
-        }
-    }
-
-    RBFMatrix inversedMatrixOfEigenForm = maxtrixOfEigenForm.inverse();
-
-    for (int i = 0; i < size; ++ i)
-    {
-        for (int j = 0; j < size; ++ j)
-        {
-            maxtrix[i][j] = inversedMatrixOfEigenForm(i, j);
-        }
-    }
-}
+//void MatrixInverse(vector< vector< RDouble > > &maxtrix, const int size)
+//{
+//    RBFMatrix maxtrixOfEigenForm(size, size);
+//
+//    for (int i = 0; i < size; ++ i)
+//    {
+//        for (int j = 0; j < size; ++ j)
+//        {
+//            maxtrixOfEigenForm(i, j) = maxtrix[i][j];
+//        }
+//    }
+//
+//    RBFMatrix inversedMatrixOfEigenForm = maxtrixOfEigenForm.inverse();
+//
+//    for (int i = 0; i < size; ++ i)
+//    {
+//        for (int j = 0; j < size; ++ j)
+//        {
+//            maxtrix[i][j] = inversedMatrixOfEigenForm(i, j);
+//        }
+//    }
+//}
 
 }

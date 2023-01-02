@@ -5,7 +5,7 @@ using namespace std;
 namespace PHSPACE
 {
 RDouble ReynoldsNumberBasedOnStrainRate(RDouble density, RDouble distanceToWall, RDouble viscosity,
-        RDouble strainrate, RDouble reynoldsNumberInflow)
+    RDouble strainrate, RDouble reynoldsNumberInflow)
 {
     return density * distanceToWall * distanceToWall * strainrate * reynoldsNumberInflow / viscosity;
 };
@@ -21,7 +21,7 @@ RDouble ReynoldsNumberBasedOnScf(RDouble heightCrossFlow, RDouble velocity, RDou
 {
     RDouble heightCF = 4.0e-6;
     RDouble thetat = 1.0;
-    RDouble deltHeight = heightCrossFlow * (1.0 + MIN((viscosityTurbulence / viscosityLaminar), 0.4));
+    RDouble deltHeight  = heightCrossFlow * (1.0 + MIN((viscosityTurbulence / viscosityLaminar), 0.4));
     RDouble dHPos = MAX(0.1066 - deltHeight, 0.0);
     RDouble dHNeg = MAX((deltHeight - 0.1066), 0.0);
     RDouble fDHPos = dHPos * (6200.0 + 50000.0 * dHPos);
@@ -31,11 +31,14 @@ RDouble ReynoldsNumberBasedOnScf(RDouble heightCrossFlow, RDouble velocity, RDou
     for (int iter = 0; iter < maxIter; ++iter)
     {
         RDouble reynoldsSCFa = reynoldsNumberInflow * thetat * density * (velocity / 0.82) / viscosityLaminar;
+        //RDouble reynoldsSCFb = -14.7 * log(heightCF / thetat) + 296.77 + functionDeltah1 - functionDeltah2;
         RDouble reynoldsSCFb = -35.088 * log(heightCF / thetat) + 319.51 + fDHPos - fDHNeg;
         if (ABS((reynoldsSCFa - reynoldsSCFb) / reynoldsSCFa) <= 1.0e-6)
         {
             break;
         }
+        //thetat = (viscosityLaminar / (reynoldsNumberInflow * density * (velocity / 0.82)))
+        //    * (-14.7 * log(heightCF / thetat) + 296.77 + functionDeltah1 - functionDeltah2);
         thetat = (viscosityLaminar / (reynoldsNumberInflow * density * (velocity / 0.82)))
             * (-35.088 * log(heightCF / thetat) + 319.51 + fDHPos - fDHNeg);
     }
@@ -46,6 +49,7 @@ RDouble ReynoldsNumberBasedOnScf(RDouble heightCrossFlow, RDouble velocity, RDou
 RDouble TimeScaleInSourceTerm(RDouble density, RDouble velocity, RDouble viscosityLaminar, RDouble viscosityTurbulence, RDouble reynoldsNumberInflow)
 {
     RDouble timeScale = 500.0 * viscosityLaminar / (density * velocity * velocity * reynoldsNumberInflow);
+    //timeScale = MIN(timeScale, density*gridLength/(viscosityLaminar + viscosityTurbulence));
     return timeScale;
 };
 
@@ -90,7 +94,7 @@ RDouble FlengthCaliBrated(RDouble Rectabar)
     }
     else if (Rectabar < 360.0)
     {
-        Flength = 20.09 + Rectabar * (0.2749 - Rectabar * (0.001379 - 1.567e-006 * Rectabar));
+        Flength = 20.09 + Rectabar * (0.2749 - Rectabar * (0.001379 -  1.567e-006 * Rectabar));
     }
     else if (Rectabar < 687.0)
     {
@@ -124,7 +128,7 @@ RDouble FlengthUnstrCaliBrated(RDouble Rectabar)
     }
     else if (Rectabar < 360.0)
     {
-        Flength = 27.49 + Rectabar * (0.1838 - Rectabar * (0.001071 - 1.249e-006 * Rectabar));
+        Flength = 27.49 + Rectabar * (0.1838 - Rectabar * (0.001071 -  1.249e-006 * Rectabar));
     }
     else if (Rectabar < 694.0)
     {
@@ -178,7 +182,7 @@ RDouble TransitionOnsetMomentumThicknessReynolds(RDouble Rectabar)
     }
     else
     {
-        return -3.96035 + Rectabar * (1.0120656 - Rectabar * (8.6823e-4 - Rectabar * (6.96506e-7 - 1.74105e-10 * Rectabar)));
+        return - 3.96035 + Rectabar * (1.0120656 - Rectabar * (8.6823e-4 - Rectabar * (6.96506e-7 - 1.74105e-10 * Rectabar)));
     }
 };
 
@@ -257,7 +261,7 @@ RDouble ControlFunctionFturb(RDouble RT)
     return exp(-pow(RT / 4.0, 4.0));
 }
 
-void CorrectionOfBlendingFunctionInSST(RDouble density, RDouble distance, RDouble viscosity, RDouble kineticEnergy, RDouble reynoldsInflow, RDouble& F1)
+void CorrectionOfBlendingFunctionInSST(RDouble density, RDouble distance, RDouble viscosity, RDouble kineticEnergy, RDouble reynoldsInflow, RDouble &F1)
 {
     RDouble ry = reynoldsInflow * density * distance * sqrt(kineticEnergy) / viscosity;
     RDouble F3 = exp(-pow(ry / 120.0, 8.0));
@@ -325,7 +329,7 @@ RDouble AccelerationAlongStreamline(RDouble u, RDouble v, RDouble w,
 }
 
 void BlendingFunctionOfFctat(RDouble gm, RDouble Rew, RDouble Rectabar, RDouble vorticity, RDouble viscosity, RDouble density,
-    RDouble absu, RDouble distance, RDouble reynoldsInflow, RDouble ce2, RDouble& Fctat, RDouble& Fctatcf)
+    RDouble absu, RDouble distance, RDouble reynoldsInflow, RDouble ce2, RDouble &Fctat, RDouble &Fctatcf)
 {
     RDouble ctaBL = Rectabar * viscosity / reynoldsInflow / MAX(density * absu, SMALL);
 

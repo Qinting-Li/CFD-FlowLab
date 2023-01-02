@@ -315,7 +315,8 @@ void CGNS2UnstructGrid()
     //! Construct block connection and dump out to file.
     ConstructGlobalInterfaceLink(grids, numberOfBlocks);
 
-    if (numberOfBlocks > 1)
+    int hasVolumeCondition = GlobalDataBase::GetIntParaFromDB("hasVolumeCondition");
+    if ((numberOfBlocks > 1) && (!hasVolumeCondition))
     {
         cout << "\n";
         cout << "Blocks > 1, Start to Combine Grids" << endl;
@@ -518,6 +519,50 @@ void CGNSGridProcess()
     }
 }
 
+void Fantasy2Fluent()
+{
+    string fromGridFile = GlobalDataBase::GetStrParaFromDB("from_gfile");
+    GlobalDataBase::UpdateData("gridfile", &fromGridFile, PHSTRING, 1);
+
+    string outGridFile = GlobalDataBase::GetStrParaFromDB("out_gfile");
+
+    using namespace PHMPI;
+
+    Region *region = new Region();
+    region->ReadGrid();
+
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    Grid **grids = new Grid * [nZones];
+
+    for (int iZone = 0; iZone < nZones; iZone ++)
+    {
+        grids[iZone] = GetGrid(iZone, 0);
+    }
+
+    if (nZones > 1)
+    {
+        cout << "\n";
+        cout << "Blocks > 1, Start to Combine Grids" << endl;
+        CombinGrid *combinedGrid = new CombinGrid(0, grids, nZones);
+        combinedGrid->RunCombinGrid();
+
+        Grid **gridMerged = combinedGrid->GetGridAll();
+
+        FantasyWriteToFluent(outGridFile, gridMerged, 1);
+
+        delete gridMerged[0];
+        delete []gridMerged;
+        delete combinedGrid;
+    }
+    else
+    {
+        FantasyWriteToFluent(outGridFile, grids, 1);
+    }
+
+    delete []grids;
+    delete region;
+}
+
 void FantasyGridProcess()
 {
     int toGridType = GlobalDataBase::GetIntParaFromDB("to_gtype");
@@ -534,6 +579,11 @@ void FantasyGridProcess()
     {
         FantasyOld2New();
     }
+    else if (toGridType == FLUENT_TYPE)
+    {
+        Fantasy2Fluent();
+    }
+
 }
 
 void MixedGridProcess()

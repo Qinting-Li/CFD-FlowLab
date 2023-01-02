@@ -106,10 +106,10 @@ void PerfectGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim,
     }
 
     oDensity  = 1.0 / density;
-    um   = q[IU] * oDensity;
-    vm   = q[IV] * oDensity;
-    wm   = q[IW] * oDensity;
-    internalEnergy  = q[IP] - half * density * (um * um + vm * vm + wm * wm);
+    um   = q[IRU] * oDensity;
+    vm   = q[IRV] * oDensity;
+    wm   = q[IRW] * oDensity;
+    internalEnergy  = q[IRE] - half * density * (um * um + vm * vm + wm * wm);
 
     prim[IR] = density;
     prim[IU] = um;
@@ -281,6 +281,32 @@ void PerfectGas::InitCommonParameter()
     reynoldsReferenceLengthDimensional = gridScaleFactor;
 
     GlobalDataBase::UpdateData("reynoldsReferenceLengthDimensional", &reynoldsReferenceLengthDimensional, PHDOUBLE, 1);
+
+    RDouble prl = GlobalDataBase::GetDoubleParaFromDB("prl");
+    RDouble prt = GlobalDataBase::GetDoubleParaFromDB("prt");
+    RDouble gamma = GlobalDataBase::GetDoubleParaFromDB("refGama");
+
+    if (this->nGasModel == 2) //The Argon gas.
+    {
+        //Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
+        gamma = 5.0 / 3.0;
+        GlobalDataBase::UpdateData("refGama", &gamma, PHDOUBLE, 1);
+        prl = 4.0 * gamma / (9.0 * gamma - 5.0);
+        GlobalDataBase::UpdateData("prl", &prl, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("refGama", &gamma, PHDOUBLE, 1);
+    }
+    else if (this->nGasModel == 3) //The Nitrogen gas.
+    {
+        gamma = 1.4;
+        prl = 4.0 * gamma / (9.0 * gamma - 5.0);
+        GlobalDataBase::UpdateData("prl", &prl, PHDOUBLE, 1);
+        GlobalDataBase::UpdateData("refGama", &gamma, PHDOUBLE, 1);
+    }
+
+    RDouble oprl = 1.0 / prl;
+    GlobalDataBase::UpdateData("oprl", &oprl, PHDOUBLE, 1);
+    RDouble oprt = 1.0 / prt;
+    GlobalDataBase::UpdateData("oprt", &oprt, PHDOUBLE, 1);
 }
 
 void PerfectGas::InitOtherParameter()
@@ -378,29 +404,6 @@ void PerfectGas::InitReferenceParameter()
     {
         TK_Exit::UnexpectedVarValue("inflowParaType", inflowParaType);
     }
-
-    RDouble prl = GlobalDataBase::GetDoubleParaFromDB("prl");
-    RDouble prt = GlobalDataBase::GetDoubleParaFromDB("prt");
-    RDouble gamma = 1.4;
-    if (this->nGasModel == 2) //The Argon gas.
-    {
-        //Referred to the "2008-Lofthouse-Nonequilibrium Hypersonic Aerothermodynamics Using the Direct Simulation Monte Carlo And Navier-Stokes Models".
-        gamma = 5.0 / 3.0;
-        GlobalDataBase::UpdateData("refGama", &gamma, PHDOUBLE, 1);
-        prl = 4.0 * gamma / (9.0 * gamma - 5.0);
-        GlobalDataBase::UpdateData("prl", &prl, PHDOUBLE, 1);
-    }
-    else if (this->nGasModel == 3) //The Nitrogen gas.
-    {
-        gamma = 1.4;
-        prl = 4.0 * gamma / (9.0 * gamma - 5.0);
-        GlobalDataBase::UpdateData("prl", &prl, PHDOUBLE, 1);
-    }
-
-    RDouble oprl = 1.0 / prl;
-    GlobalDataBase::UpdateData("oprl", &oprl, PHDOUBLE, 1);
-    RDouble oprt = 1.0 / prt;
-    GlobalDataBase::UpdateData("oprt", &oprt, PHDOUBLE, 1);
 }
 
 void PerfectGas::SetAirInformationByDataBase()
@@ -412,7 +415,9 @@ void PerfectGas::SetAirInformationByDataBase()
     RDouble refDimensionalDensity;
     RDouble refDimensionalSonicSpeed;
 
+   
     GetAirInfo(height, refDimensionalTemperature, refDimensionalPressure, refDimensionalDensity, refDimensionalSonicSpeed);
+    
 
     referenceParameterDimensional.SetDensity(refDimensionalDensity);
     referenceParameterDimensional.SetPressure(refDimensionalPressure);
@@ -437,7 +442,14 @@ void PerfectGas::SetAirInformationByExpData()
     RDouble P0 = referenceParameterDimensional.GetPressure();
 
     RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
+    RDouble refMolecularWeight = GlobalDataBase::GetDoubleParaFromDB("refMolecularWeight");
+    int nGasModel = GlobalDataBase::GetIntParaFromDB("nGasModel");
+
     RDouble R = 287.053;
+    if(nGasModel > 0)
+    {
+        R = 1000.0 * GeneralGasConstant / refMolecularWeight;
+    }
 
     RDouble mi   = refGama / (refGama - 1.0);
     RDouble coef = 1.0 + (refGama - 1.0) * refMachNumber * refMachNumber / 2.0;
@@ -740,15 +752,6 @@ void PerfectGas::ComputeReferencePrimitive()
     reference_pressure = coefficientOfStateEquation * 
     reference_density * reference_temperature / massoo_ref;
 
-    /*RDouble attackd = GlobalDataBase::GetDoubleParaFromDB("attackd");
-    RDouble angleSlide = GlobalDataBase::GetDoubleParaFromDB("angleSlide");
-
-    RDouble attack   = attackd * PI / 180.0;
-    RDouble sideslip = angleSlide * PI / 180.0;
-
-    GlobalDataBase::UpdateData("attack", &attack, PHDOUBLE, 1);
-    GlobalDataBase::UpdateData("sideslip", &sideslip, PHDOUBLE, 1);*/
-
     using namespace IDX;
     int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
     RDouble *prim_inf = new RDouble[nLaminar];
@@ -948,6 +951,7 @@ void PerfectGas::ComputeReferenceMolecularInformation()
     RDouble refMolecularWeight = 28.9644;
 
     molecularDiameter = 3.6e-10;
+   
 
     if (nGasModel == 1) //The Carbon dioxide.
     {
@@ -1029,10 +1033,10 @@ void PerfectGas::ComputeOtherProperParameterForGrid()
             }
         }
         physicalTimeStepDimensional = physicalTimeStep * unit;
+        GlobalDataBase::UpdateData("physicalTimeStepDimensional", &physicalTimeStepDimensional, PHDOUBLE, 1);
         //! The non-dimensional physical time step based on grid scale.
         physicalTimeStep /= reynoldsReferenceLengthDimensional;
         GlobalDataBase::UpdateData("physicalTimeStep", &physicalTimeStep, PHDOUBLE, 1);
-
 
         PrintToWindow("  Physical Time Step       :    ", physicalTimeStepDimensional , "s", "\n");
     }
@@ -1058,3 +1062,4 @@ RDouble PerfectGas::ComputeReferenceTotalEnthalpy()
 }
 
 }
+

@@ -47,8 +47,3 @@ inline RDouble Param_NSSolverStruct::GetIniSpeedCoef() const
 {
     return iniSpeedCoef;
 }
-
-inline int Param_NSSolverStruct::GetWennSchemeFlag() const
-{
-    return isWennScheme;
-}

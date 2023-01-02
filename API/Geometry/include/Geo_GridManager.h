@@ -30,52 +30,52 @@ public:
     GridManager(UnstructGrid *unstructGrid);
     ~GridManager();
 protected:
-    UnstructGrid * unstructGrid;
+    UnstructGrid *unstructGrid;
 
-    RDouble * cellCenterX;    // cell center data, including ghosts;
-    RDouble * cellCenterY;    // cell center data, including ghosts;
-    RDouble * cellCenterZ;    // cell center data, including ghosts;
-    RDouble * faceNormalX;    // face unit normal;
-    RDouble * faceNormalY;    // face unit normal;
-    RDouble * faceNormalZ;    // face unit normal;
-    RDouble * oldFaceNormalX; // n-1 grid face unit normal; 
-    RDouble * oldFaceNormalY; // n-1 grid face unit normal; 
-    RDouble * oldFaceNormalZ; // n-1 grid face unit normal; 
-    RDouble * oldFaceArea;
-    RDouble * cellVolume;     // face faceAreaContainer, cell cellVolume excluding ghosts;
-    RDouble * faceCenterX;    // face center data;
-    RDouble * faceCenterY;    // face center data;
-    RDouble * faceCenterZ;    // face center data;
-    RDouble * faceArea;       // face faceAreaContainer;
+    RDouble *cellCenterX;    // cell center data, including ghosts;
+    RDouble *cellCenterY;    // cell center data, including ghosts;
+    RDouble *cellCenterZ;    // cell center data, including ghosts;
+    RDouble *faceNormalX;    // face unit normal;
+    RDouble *faceNormalY;    // face unit normal;
+    RDouble *faceNormalZ;    // face unit normal;
+    RDouble *oldFaceNormalX; // n-1 grid face unit normal; 
+    RDouble *oldFaceNormalY; // n-1 grid face unit normal; 
+    RDouble *oldFaceNormalZ; // n-1 grid face unit normal; 
+    RDouble *oldFaceArea;
+    RDouble *cellVolume;     // face faceAreaContainer, cell cellVolume excluding ghosts;
+    RDouble *faceCenterX;    // face center data;
+    RDouble *faceCenterY;    // face center data;
+    RDouble *faceCenterZ;    // face center data;
+    RDouble *faceArea;       // face faceAreaContainer;
 
-    RDouble * oldFaceCenterX; // old face center data;
-    RDouble * oldFaceCenterY; // old face center data;
-    RDouble * oldFaceCenterZ; // old face center data;
+    RDouble *oldFaceCenterX; // old face center data;
+    RDouble *oldFaceCenterY; // old face center data;
+    RDouble *oldFaceCenterZ; // old face center data;
 
-    RDouble * cellVolumeN1;   // cell cellVolume
-    RDouble * cellVolumeN2;   // cell cellVolume
+    RDouble *cellVolumeN1;   // cell cellVolume
+    RDouble *cellVolumeN2;   // cell cellVolume
 protected:
-    RDouble * faceNormalVelocity;
-    RDouble * faceVelocityX;
-    RDouble * faceVelocityY;
-    RDouble * faceVelocityZ;
+    RDouble *faceNormalVelocity;
+    RDouble *faceVelocityX;
+    RDouble *faceVelocityY;
+    RDouble *faceVelocityZ;
 
-    RDouble * oldFaceNormalVelocity;
-    RDouble * oldFaceVelocityX;
-    RDouble * oldFaceVelocityY;
-    RDouble * oldFaceVelocityZ;
+    RDouble *oldFaceNormalVelocity;
+    RDouble *oldFaceVelocityX;
+    RDouble *oldFaceVelocityY;
+    RDouble *oldFaceVelocityZ;
 
-    RDouble * newFaceNormalVelocity;
-    RDouble * newFaceVelocityX;
-    RDouble * newFaceVelocityY;
-    RDouble * newFaceVelocityZ;
+    RDouble *newFaceNormalVelocity;
+    RDouble *newFaceVelocityX;
+    RDouble *newFaceVelocityY;
+    RDouble *newFaceVelocityZ;
 protected:
-    int * blankIndex;
+    int *blankIndex;
 protected:
-    int * localToGlobalNodeIndexMapping;
-    RDouble * globalCoordinateNew;
+    int *localToGlobalNodeIndexMapping;
+    RDouble *globalCoordinateNew;
 public:
-    int * GetLocalToGlobalNodeIndexMapping() { return localToGlobalNodeIndexMapping; };
+    int * GetLocalToGlobalNodeIndexMapping() { return localToGlobalNodeIndexMapping; }
     RDouble * GetGlobalCoordinateNew() { return globalCoordinateNew; }
 
     void UpdateGridCoordinateByReadingFile                      (int targetZone);
@@ -126,10 +126,12 @@ public:
     RDouble * GetNewFaceNormalVelocity() { return newFaceNormalVelocity; }
 public:
     void ComputeMassCharacterOfObject();
-    void AllocateMetrics   ();
+    void AllocateMetrics();
+    void DeAllocateMetrics();
     void AllocateALEMetrics();
+    void DeAllocateALEMetrics();
     void BackUpOldGrid();
-    void ComputeMetrics(ActionKey* actkey);
+    void ComputeMetrics(ActionKey *actkey);
     void ComputeGridFaceVelocity();
     void ComputeGridFaceVelocityDirectly();
     void ComputeGridFaceVelocitySatisfyingGCL();
@@ -141,11 +143,11 @@ protected:
     void ClosureCheck(RDouble *faceNormalX, RDouble *faceArea);
     void ComputeFaceNormal2D();
     void ComputeFaceCenter2D();
-    void ComputeCellCenterVol2D(ActionKey* actkey);
+    void ComputeCellCenterVol2D(ActionKey *actkey);
 
     void ComputeFaceNormal3D();
     void ComputeFaceCenter3D();
-    void ComputeCellCenterVol3D(ActionKey* actkey);
+    void ComputeCellCenterVol3D(ActionKey *actkey);
 
     void ComputeFaceNormal3DNew();
     void ComputeFaceCenter3DNew();
@@ -156,9 +158,9 @@ public:
     void ReadNewCoordinate();
     void UpdateGridNode();
 public:
-    void InitializeMovingGrids          ();
+    void InitializeMovingGrids();
     void InitializeOldFaceNormalVelocity();
-    void InitializeOldCellVolume        ();
+    void InitializeOldCellVolume();
 public:
     void ReadMovingGrid();
 

@@ -427,12 +427,8 @@ bool OversetConfigFactoryMulti::ReadInInnerGridH5(const string &fileName, Unstru
     gridIn->SetY(CoordinateY);
     gridIn->SetZ(CoordinateZ);
 
-    int axisup = 1;
-    PHSPACE::GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
-    if (axisup == 2)
-    {
-        gridIn->TurnZAxis2YAxis();
-    }
+    gridIn->RotateAboutAxis();
+
     gridIn->ComputeMinMaxBox();
 
     H5Gclose(grpData);

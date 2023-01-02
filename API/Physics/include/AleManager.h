@@ -72,6 +72,8 @@ int      GetIntegerParameterFromDataBase(int bodyIndex, const string& parameterN
 RDouble  GetRDoubleParameterFromDataBase(int bodyIndex, const string& parameterName);
 string   GetStringParameterFromDataBase(int bodyIndex, const string& parameterName);
 
+RDouble  GetRDoubleParameterFromDataBaseIfExist(int bodyIndex, const string& parameterName, RDouble defaultValve);
+
 int*     GetIntegerArrayFromDataBase(const string& nameOfIntegerArray, int numberOfElements);
 void     GetRDoubleVectorFromDataBase(vector< RDouble >& parameter, int bodyIndex, const string& parameterName, int numberOfElements);
 

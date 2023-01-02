@@ -516,6 +516,22 @@ void InterfaceFields::RemoveAllField()
     solverIndex.clear();
 }
 
+void InterfaceFields::RemoveAnVariable(string varName)
+{
+    RemoveInterfaceVar(varName);
+
+    int varIndex = find(variableNames.begin(), variableNames.end(), varName) - variableNames.begin();
+    vector< string >::iterator varNameIndexBegin = variableNames.begin();
+    vector< int >::iterator varTypeIndexBegin = variableTypes.begin();
+    vector< int >::iterator varDimIndexBegin = variableDimensions.begin();
+    vector< int >::iterator varSolverIndexBegin = solverIndex.begin();
+
+    variableNames.erase(varNameIndexBegin + varIndex);
+    variableTypes.erase(varTypeIndexBegin + varIndex);
+    variableDimensions.erase(varDimIndexBegin + varIndex);
+    solverIndex.erase(varSolverIndexBegin + varIndex);
+}
+
 void InterfaceFields::FreeInterfaceVar()
 {
     for (int iGhost = GetNumberOfGhostCellLayers() - 1; iGhost >= 0; -- iGhost)

@@ -227,6 +227,7 @@ private:
     void SetNGrids();
     void ComputeMetrics(int level = 0);
     void InitMovingGrids(int level = 0);
+    void InitCellBoundaryType(int level = 0);
 
     //! Global grid information static, for structured and unstructured.
     void GlobalGridStatic(int level = 0);
@@ -234,6 +235,8 @@ private:
     void ComputeGlobalCellSize(int level = 0);
     //! Compute global total number of cells and total volume for vencat limiter of type 2 && 3.
     void ComputeGlobalGridSize(int level = 0);
+    void buildGlobalCellsArrary(int level = 0);
+  
     //! MixGrid
     void ComputeGlobalGridCellSize(int level = 0);
 

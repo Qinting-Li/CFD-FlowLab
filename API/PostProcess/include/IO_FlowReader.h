@@ -46,13 +46,19 @@ private:
     void ReadTurbFileStr(hid_t loc_id, Grid *gridIn);
     void ReadTurbFileUnStr(hid_t loc_id, Grid *gridIn);
 
+    void ReadTransitionFile();
+    void ReadTransitionFileStr(hid_t loc_id, Grid *gridIn);
+    void ReadTransitionFileUnStr(hid_t loc_id, Grid *gridIn);
+
 private:
     string restartNSFile;
-    string turbfile;
+    string turbFile;
+    string transitionFile;
 
     int nEquation;
     int nTurbulenceEquation;
     int nTemperatureModel;
+    int nTransitionEquation;
 };
 
 }

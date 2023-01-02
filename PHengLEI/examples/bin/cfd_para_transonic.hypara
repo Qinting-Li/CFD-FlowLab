@@ -146,7 +146,7 @@ int iunsteady = 0;
 
 double CFLEnd = 30.0;
 
-int nLUSGSSweeps = 1;
+int nLUSGSSweeps = 3;
 
 #########################################################################
 #                       Multi-Grid parameters                           #

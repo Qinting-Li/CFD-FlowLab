@@ -101,12 +101,10 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
     visualVariablesMap.insert(pair<int, string>(VISUAL_CFL1               , "localCFL"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_CFL2               , "minCFL"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_STREAMLINE_MACH    , "streamline_mach"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_KNUDSEN_NUMBER     , "knudsen_number"));
 
     int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
-    if (nsimutask == UGKS_SOLVER)
-    {
-        visualVariablesMap.insert(pair<int, string>(VISUAL_KN, "Kn"));
-    }
+    
     int compressible = 1;
     compressible = GlobalDataBase::GetIntParaFromDB("compressible");
     if (compressible == 0)
@@ -141,12 +139,6 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Vist          , "viscosityTurbulence"));
         visualVariablesMap.insert(pair<int, string>(VISUAL_PB_Gen           , "GenEnergy"));
     }
-
-    /*visualVariablesMap.insert(pair<int, string>(VISUAL_O, "O"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_O2, "O2"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_NO, "NO"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_N , "N"));
-    visualVariablesMap.insert(pair<int, string>(VISUAL_N2, "N2"));*/
 
     visualVariablesMap.insert(pair<int, string>(VISUAL_DIMENSIONAL_DENSITY,     "density_Dim"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_DIMENSIONAL_U      ,     "u_Dim"));
@@ -187,6 +179,17 @@ LIB_EXPORT Post_Visual::Post_Visual(int nVisualVariables_in, int *visualVariable
         ++ nCount;
     }
     nVisualVariables = nCount;
+    GlobalDataBase::UpdateData("nVisualVariables", &nVisualVariables, PHINT, 1);
+    
+    int *visualVariablesData = new int[nVisualVariables];
+    set<int>::iterator varIter = visualVariables.begin();
+    for (int iVar = 0; iVar < nVisualVariables; ++ iVar)
+    {
+        visualVariablesData[iVar] = *varIter;
+        varIter ++;
+    }
+    GlobalDataBase::UpdateData("visualVariables", visualVariablesData, PHINT, nVisualVariables);
+    delete []visualVariablesData;
 }
 
 LIB_EXPORT Post_Visual::~Post_Visual()
@@ -225,7 +228,14 @@ LIB_EXPORT void Post_Visual::GetASCIITecplotHeader(vector<string> &title_tecplot
         string *varname = gas->GetNameOfSpecies();
         for (int m = nm; m < neqn; ++ m)
         {
-            string species_name = "\"" + varname[m-nm] + "\"";
+            string varName = "massfraction-" + varname[m-nm];
+            string species_name = "\"" + varName + "\"";
+            oss << ", " << species_name;
+        }
+        for (int m = nm; m < neqn; ++ m)
+        {
+            string varName = "molefraction-" + varname[m-nm];
+            string species_name = "\"" + varName + "\"";
             oss << ", " << species_name;
         }
     }
@@ -264,7 +274,13 @@ LIB_EXPORT void Post_Visual::GetBinaryTecplotHeader(vector<string> &title_tecplo
         for (int m = nm; m < neqn; ++ m)
         {
             //string species_name = "\"" + varname[m-nm] + "\"";
-            oss << " " << varname[m-nm];
+            string species_name = "massfraction-" + varname[m-nm];
+            oss << " " << species_name;
+        }
+        for (int m = nm; m < neqn; ++ m)
+        {
+            string species_name = "molefraction-" + varname[m-nm];
+            oss << ", " << species_name;
         }
     }
 
@@ -337,10 +353,13 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble4
 
     CompNodeVar(grid_str, *qn, 0, cellCenterData, index, isVelocityForPostVisual);
 
-    if (name == "temperature")
+    int isWennScheme = GlobalDataBase::GetIntParaFromDB("isWennScheme");
+    if (!isVelocityForPostVisual && isWennScheme == 0)
     {
-        ModifyWallTemperature(grid_str, *qn);
+        ModifyBoundaryNodeValue(name, grid_str, *qn, cellCenterData, index, PHENGLEI::SOLID_SURFACE);
     }
+
+    ModifyWallTemperature(name, grid_str, *qn);
 
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
@@ -366,6 +385,7 @@ LIB_EXPORT void Post_Visual::UpdateVisualNodeVarPtr(const string &name, RDouble3
 
     RDouble4D *qn = new RDouble4D(I, J, K, M, fortranArray);
     CompNodeVar(grid_str, *qn, 0, cellCenterData);
+    ModifyBoundaryNodeValue(name, grid_str, *qn, cellCenterData, PHENGLEI::SOLID_SURFACE);
     visualVariablesPtr->UpdateDataPtr(name, qn);
 }
 
@@ -538,7 +558,12 @@ LIB_EXPORT void Post_Visual::GetAllVisualNodeVarPtr(RDouble **qn)
         string *varname = gas->GetNameOfSpecies();
         for (int m = nm; m < neqn; ++ m)
         {
-            string varName = varname[m-nm];
+            string varName = "massfraction-" + varname[m-nm];
+            qn[varCount++] = (RDouble *)GetVisualNodeVarPtr(varName);
+        }
+        for (int m = nm; m < neqn; ++ m)
+        {
+            string varName = "molefraction-" + varname[m-nm];
             qn[varCount++] = (RDouble *)GetVisualNodeVarPtr(varName);
         }
     }
@@ -568,7 +593,12 @@ LIB_EXPORT void Post_Visual::GetAllVisualNodeVarPtr(RDouble4D **qn)
         string *varname = gas->GetNameOfSpecies();
         for (int m = nm; m < neqn; ++ m)
         {
-            string varName = varname[m-nm];
+            string varName = "massfraction-" + varname[m-nm];
+            qn[varCount++] = (RDouble4D *)GetVisualNodeVarPtr(varName);
+        }
+        for (int m = nm; m < neqn; ++ m)
+        {
+            string varName = "molefraction-" + varname[m-nm];
             qn[varCount++] = (RDouble4D *)GetVisualNodeVarPtr(varName);
         }
     }
@@ -578,6 +608,7 @@ void Post_Visual::FreeAllVisualNodeVarPtr()
 {
     if (gridType == UNSTRUCTGRID)
     {
+        if (visualVariables.size() == 0) return;
         for (set<int>::iterator varIter = visualVariables.begin(); varIter != visualVariables.end(); ++ varIter)
         {
             int variableType = *varIter;
@@ -603,7 +634,16 @@ void Post_Visual::FreeAllVisualNodeVarPtr()
             string *varname = gas->GetNameOfSpecies();
             for (int m = nm; m < neqn; ++ m)
             {
-                string varName = varname[m-nm];
+                string varName = "massfraction-" + varname[m-nm];
+                RDouble *qn = (RDouble *)GetVisualNodeVarPtr(varName);
+                if (qn)
+                {
+                    delete [] qn;
+                }
+            }
+            for (int m = nm; m < neqn; ++ m)
+            {
+                string varName = "molefraction-" + varname[m-nm];
                 RDouble *qn = (RDouble *)GetVisualNodeVarPtr(varName);
                 if (qn)
                 {
@@ -614,6 +654,7 @@ void Post_Visual::FreeAllVisualNodeVarPtr()
     }
     else if (gridType == STRUCTGRID)
     {
+        if (visualVariables.size() == 0) return;
         for (set<int>::iterator varIter = visualVariables.begin(); varIter != visualVariables.end(); ++ varIter)
         {
             int variableType = *varIter;
@@ -639,7 +680,16 @@ void Post_Visual::FreeAllVisualNodeVarPtr()
             string *varname = gas->GetNameOfSpecies();
             for (int m = nm; m < neqn; ++ m)
             {
-                string varName = varname[m-nm];
+                string varName = "massfraction-" + varname[m-nm];
+                RDouble4D *qn = (RDouble4D *)GetVisualNodeVarPtr(varName);
+                if (qn)
+                {
+                    delete qn;
+                }
+            }
+            for (int m = nm; m < neqn; ++ m)
+            {
+                string varName = "molefraction-" + varname[m-nm];
                 RDouble4D *qn = (RDouble4D *)GetVisualNodeVarPtr(varName);
                 if (qn)
                 {
@@ -702,7 +752,7 @@ void DumpToVTK::InitVariables()
         int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         int neqn  = nl + nchem;
 
-        nvarplot = nvarplot + (neqn - nm);
+        nvarplot = nvarplot + 2 * (neqn - nm);
     }
 
     SetNvarplot(nvarplot);
@@ -753,7 +803,13 @@ void DumpToVTK::WriteVTKFilm()
             string *varname = gas->GetNameOfSpecies();
             for (int iChemical = 0; iChemical < numberOfSpecies; ++ iChemical)
             {
-                write_string(file, varname[iChemical]);
+                string varName = "massfraction-" + varname[iChemical];
+                write_string(file, varName);
+            }
+            for (int iChemical = 0; iChemical < numberOfSpecies; ++ iChemical)
+            {
+                string varName = "molefraction-" + varname[iChemical];
+                write_string(file, varName);
             }
         }
     }
@@ -860,11 +916,67 @@ void DumpToVTK::WriteVTKFilm()
                 }
             }
 
-            int *face2node = new int [JMxOrNumElements * 4];
-            PHRead(cdata, face2node, JMxOrNumElements * 4);
-            PHWrite(file, face2node, JMxOrNumElements * 4);
-            delete [] face2node;
-            
+            if (TecioMission == TEC_SPACE::WriteBlock && dimension == THREE_D)
+            {
+                int nTotalFace = 0;
+                PHRead(cdata, &nTotalFace, 1);
+                PHWrite(file, nTotalFace);
+
+                int *nodeNumberOfEachCell = new int[JMxOrNumElements];
+                PHRead(cdata, nodeNumberOfEachCell, JMxOrNumElements);
+                PHWrite(file, nodeNumberOfEachCell, JMxOrNumElements);
+
+                int count = 0;
+                for (int iCell = 0; iCell < JMxOrNumElements; ++ iCell)
+                {
+                    count += nodeNumberOfEachCell[iCell];
+                }
+                int *cell2Node = new int[count];
+                PHRead(cdata, cell2Node, count);
+                PHWrite(file, cell2Node, count);
+
+                int *faceNumberOfEachCell = new int[JMxOrNumElements];
+                PHRead(cdata, faceNumberOfEachCell, JMxOrNumElements);
+                PHWrite(file, faceNumberOfEachCell, JMxOrNumElements);
+
+                count = 0;
+                for (int iCell = 0; iCell < JMxOrNumElements; ++ iCell)
+                {
+                    count += faceNumberOfEachCell[iCell];
+                }
+                int *cell2Face = new int[count];
+                PHRead(cdata, cell2Face, count);
+                PHWrite(file, cell2Face, count);
+
+                int *nodeNumberOfEachFace = new int[nTotalFace];
+                PHRead(cdata, nodeNumberOfEachFace, nTotalFace);
+                PHWrite(file, nodeNumberOfEachFace, nTotalFace);
+
+                count = 0;
+                for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+                {
+                    count += nodeNumberOfEachFace[iFace];
+                }
+
+                int *face2Node = new int[count];
+                PHRead(cdata, face2Node, count);
+                PHWrite(file, face2Node, count);
+
+                delete []nodeNumberOfEachCell;
+                delete []cell2Node;
+                delete []faceNumberOfEachCell;
+                delete []cell2Face;
+                delete []nodeNumberOfEachFace;
+                delete []face2Node;
+            }
+            else
+            {
+                int *face2node = new int [JMxOrNumElements * 4];
+                PHRead(cdata, face2node, JMxOrNumElements * 4);
+                PHWrite(file, face2node, JMxOrNumElements * 4);
+                delete [] face2node;
+            }
+
             PHRead(cdata, &TecioMission, 1);
             PHWrite(file, TecioMission);
         }
@@ -914,7 +1026,7 @@ void DumpToTecplotASCII::InitVariables()
         int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         int neqn  = nl + nchem;
 
-        nvarplot = nvarplot + (neqn - nm);
+        nvarplot = nvarplot + 2 * (neqn - nm);
     }
 
     SetNvarplot(nvarplot);
@@ -1845,6 +1957,7 @@ LIB_EXPORT Post_VisualWall::Post_VisualWall(int nVisualNumber, int *visualVariab
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_ST, "St"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_CH, "Ch"));
     visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_RE, "Re_w"));
+    visualVariablesMap.insert(pair<int, string>(VISUAL_WALL_KN, "Kn_wall"));
 
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     if (nChemical > 0)
@@ -1878,6 +1991,7 @@ LIB_EXPORT Post_VisualWall::Post_VisualWall(int nVisualNumber, int *visualVariab
         ++ nVisualVariables;
     }
 
+    GlobalDataBase::UpdateData("nVisualWallVariables", &nVisualVariables, PHINT, 1);
     visualVariables = NULL;
     if (nVisualVariables > 0)
     {
@@ -1886,7 +2000,9 @@ LIB_EXPORT Post_VisualWall::Post_VisualWall(int nVisualNumber, int *visualVariab
         {
             visualVariables[iVar] = tempVariablesType[iVar];
         }
+        GlobalDataBase::UpdateData("visualWallVariables", visualVariables, PHINT, nVisualVariables);
     }
+
 }
 
 LIB_EXPORT Post_VisualWall::~Post_VisualWall()

@@ -45,7 +45,7 @@ void PH_Finalize()
 #endif
 }
 
-void PH_Get_processor_name(string &proc_name)
+void PH_GetProcessorName(string &proc_name)
 {
 #ifdef PH_PARALLEL
     char processor_name[MPI_MAX_PROCESSOR_NAME];
@@ -177,6 +177,7 @@ int PH_Receive(void *data, int size, int from, int tag, PH_Request *request)
     
     return errcode;
 }
+
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Function    :   int PH_Wait(PH_Request *request)                                                                                                   +
 // Author      :   Xu QingXin, 2013.02.16, Modified 2013.02.16.                                                                                       +
@@ -280,7 +281,7 @@ int PH_AllReduce(int *sendbuf, int *recvbuf, int count, PH_Op op)
     return errcode;
 }
 
-int PH_Allgather(int *sendbuf, int sendcount, int *recvbuf, int recvcount)
+int PH_AllGather(int *sendbuf, int sendcount, int *recvbuf, int recvcount)
 {
     int errcode = 0;
     if (PHMPI::GetNumberOfProcessor() == 1)

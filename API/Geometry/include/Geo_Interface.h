@@ -85,10 +85,10 @@ public:
     ~InterfacePatch();
 
 public:
-    int *GetFaceIndexForRecv() const;
+    int * GetFaceIndexForRecv() const;
     void SetFaceIndexForRecv(int *faceIndexForRecv);
 
-    int *GetFaceIndexForSend() const;
+    int * GetFaceIndexForSend() const;
     void SetFaceIndexForSend(int *faceIndexForSend);
 
     int  GetNumberOfFace() const;
@@ -246,6 +246,8 @@ public:
 
     void RemoveAllField();
 
+    void RemoveAnVariable(string varName);
+    
     void FreeInterfaceVar();
 
     template< typename T >

@@ -765,7 +765,7 @@ void BaseBCType::Init()
 {
     using namespace PHSPACE;
 
-    bctypemap.insert(pair<int, int>(BCTypeUserDefined, PHENGLEI::OVERSET             ));
+    bctypemap.insert(pair<int, int>(BCTypeUserDefined, PHENGLEI::USER_DEFINED        ));
     bctypemap.insert(pair<int, int>(BCSymmetryPlane  , PHENGLEI::SYMMETRY            ));
     bctypemap.insert(pair<int, int>(BCInflow         , PHENGLEI::INFLOW              ));
     bctypemap.insert(pair<int, int>(BCOutflow        , PHENGLEI::OUTFLOW             ));
@@ -778,7 +778,7 @@ void BaseBCType::Init()
     bctypemap.insert(pair<int, int>(BCFarfield       , PHENGLEI::FARFIELD            ));
     bctypemap.insert(pair<int, int>(BCGeneral        , PHENGLEI::GENERIC_1           ));
 
-    fts2cgns.insert(pair<int, int>(PHENGLEI::OVERSET              , BCTypeUserDefined));
+    fts2cgns.insert(pair<int, int>(PHENGLEI::USER_DEFINED         , BCTypeUserDefined));
     fts2cgns.insert(pair<int, int>(PHENGLEI::SYMMETRY             , BCSymmetryPlane ));
     fts2cgns.insert(pair<int, int>(PHENGLEI::INFLOW               , BCInflow        ));
     fts2cgns.insert(pair<int, int>(PHENGLEI::OUTFLOW              , BCOutflow       ));
@@ -896,6 +896,7 @@ CGNSBase::CGNSBase()
     iend             = 0;
     conn_list        = 0;
     nBCElem          = 0;
+    vcType           = 0;
     bc_type          = 0;
     bc_conn_list     = 0;
     boundaryName     = 0;
@@ -2125,6 +2126,13 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
         }
     }
     gconn->FreeCell2Node();
+
+    SimpleVC *volumeCondition = new SimpleVC();
+    string vcName = cgnsGrid->GetVCName();
+    volumeCondition->SetVCName(vcName);
+    int vcType = cgnsGrid->GetVCType();
+    volumeCondition->SetVCType(vcType);
+    grid->SetVolumeCondition(volumeCondition);
 }
 
 }

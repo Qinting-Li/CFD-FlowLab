@@ -15,6 +15,7 @@ IO_FlowReader::IO_FlowReader(Region *region_in)
     this->nEquation           = 0;
     this->nTemperatureModel   = 0;
     this->nTurbulenceEquation = 0;
+    this->nTransitionEquation = 0;
 }
 
 IO_FlowReader::~IO_FlowReader()
@@ -27,6 +28,7 @@ void IO_FlowReader::Run()
     Init();
     ReadFlowFile();
     ReadTurbFile();
+    ReadTransitionFile();
 }
 
 void IO_FlowReader::Init()
@@ -34,7 +36,8 @@ void IO_FlowReader::Init()
     using namespace PHMPI;
 
     restartNSFile = GlobalDataBase::GetStrParaFromDB("restartNSFile");
-    turbfile = GlobalDataBase::GetStrParaFromDB("turbfile");
+    turbFile = GlobalDataBase::GetStrParaFromDB("turbFile");
+    transitionFile = GlobalDataBase::GetStrParaFromDB("transitionFile");
 
     int nChemical           = GlobalDataBase::GetIntParaFromDB("nchem");
     int nNSEquation         = GlobalDataBase::GetIntParaFromDB("nm");
@@ -50,7 +53,10 @@ void IO_FlowReader::Init()
     {
         this->nTurbulenceEquation = 2;
         int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
-        this->nTurbulenceEquation += transitionType;
+        if (transitionType > 0)
+        {
+            this->nTransitionEquation = transitionType;
+        }
     }
 
     int nLocalZones = GetNumberofLocalZones();
@@ -103,6 +109,13 @@ void IO_FlowReader::InitMemoryStruct(Grid *gridIn)
         RDouble4D *q_turb = new RDouble4D(I, J, K, Mturb, fortranArray);
         grid->UpdateDataPtr("q_turb", q_turb);
     }
+
+    if (nTransitionEquation > 0)
+    {
+        Range Mturb(0, nTransitionEquation - 1);
+        RDouble4D *qTransition = new RDouble4D(I, J, K, Mturb, fortranArray);
+        grid->UpdateDataPtr("q_transition", qTransition);
+    }
 }
 
 void IO_FlowReader::InitMemoryUnstruct(Grid *gridIn)
@@ -127,6 +140,12 @@ void IO_FlowReader::InitMemoryUnstruct(Grid *gridIn)
     {
         RDouble **qTurbulence = NewPointer2<RDouble>(nTurbulenceEquation, nTotal);
         grid->UpdateDataPtr("q_turb", qTurbulence);
+    }
+
+    if (nTransitionEquation > 0)
+    {
+        RDouble **qTransition = NewPointer2<RDouble>(nTransitionEquation, nTotal);
+        grid->UpdateDataPtr("q_transition", qTransition);
     }
 }
 
@@ -211,7 +230,7 @@ void IO_FlowReader::ReadTurbFile()
     }
 
     hid_t file;
-    file = OpenHDF5File(turbfile);
+    file = OpenHDF5File(turbFile);
 
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -271,6 +290,76 @@ void IO_FlowReader::ReadTurbFileUnStr(hid_t loc_id, Grid *gridIn)
 
     grploc = OpenGroup(loc_id, grpName);
     ReadData(grploc, qTurbulence[0], "q_turb");
+
+    H5Gclose(grploc);
+}
+
+void IO_FlowReader::ReadTransitionFile()
+{
+    if (!nTransitionEquation)
+    {
+        return;
+    }
+
+    hid_t file;
+    file = OpenHDF5File(transitionFile);
+
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Grid *grid = GetGrid(zoneID);
+        int gridType = grid->Type();
+        if (gridType == STRUCTGRID)
+        {
+            ReadTransitionFileStr(file, grid);
+        }
+        else
+        {
+            ReadTransitionFileUnStr(file, grid);
+        }
+    }
+
+    H5Fclose(file);
+}
+
+void IO_FlowReader::ReadTransitionFileStr(hid_t loc_id, Grid *gridIn)
+{
+    StructGrid *strGrid = StructGridCast(gridIn);
+    int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
+    strGrid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, TWO_GHOST_LAYER);
+
+    RDouble4D &qTransition = *reinterpret_cast<RDouble4D *> (strGrid->GetDataPtr("q_transition"));
+
+    hid_t grploc;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
+
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, &qTransition(iCellStart, jCellStart, kCellStart, 0), "q_transition");
+
+    H5Gclose(grploc);
+}
+
+void IO_FlowReader::ReadTransitionFileUnStr(hid_t loc_id, Grid *gridIn)
+{
+    RDouble **qTransition     = reinterpret_cast<RDouble **> (gridIn->GetDataPtr("q_transition"));
+
+    hid_t grploc;
+    string grpName;
+
+    ostringstream oss;
+    oss << "Group" << gridIn->GetZoneID();
+    grpName = oss.str();
+
+    grploc = OpenGroup(loc_id, grpName);
+    ReadData(grploc, qTransition[0], "q_transition");
 
     H5Gclose(grploc);
 }

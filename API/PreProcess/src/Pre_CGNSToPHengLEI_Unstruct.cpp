@@ -52,6 +52,9 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
         TK_Exit::ExceptionExit(cg_get_error());
     }
 
+    int hasVolumeCondition = 0;
+    GlobalDataBase::UpdateData("hasVolumeCondition", &hasVolumeCondition, PHINT, 1);
+
     //! Determine the of bases in the grid.
     cg_nbases(fileid, &baseid);
 
@@ -90,6 +93,56 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
     factory_cgns = new CGNSFactory(nBlocks);
     for (int iZone = 1; iZone <= nBlocks; ++ iZone)
     {
+        CGNSBase *base_cgns = factory_cgns->GetCGNSBase(iZone-1);
+
+        cg_goto(fileid, baseid, "Zone_t", iZone, "end");
+        char_33 volumeName;
+        cg_famname_read(volumeName);
+        base_cgns->SetVCName(volumeName);
+        if ((strcmp(volumeName, "Unspecified") != 0) && (strcmp(volumeName, "") != 0))
+        {
+            hasVolumeCondition = 1;
+            GlobalDataBase::UpdateData("hasVolumeCondition", &hasVolumeCondition, PHINT, 1);
+        }
+
+        int vcType = PHENGLEI::UNDEFINED;
+        if (nFamilies > 0)
+        {
+            for (int iFam = 1; iFam <= nFamilies; ++ iFam)
+            {
+                if (strcmp(volumeName, FamilyName[iFam-1]) == 0)
+                {
+                    char_33 name;
+                    char *desc;
+                    cg_goto(fileid, baseid, "Family_t", iFam, "end");
+
+                    int nDesc;
+                    cg_ndescriptors (&nDesc);
+                    for (int iDesc = 1; iDesc <= nDesc; iDesc++)
+                    {
+                        cg_descriptor_read (iDesc, name, &desc);
+
+                        if (strcmp(name, "FamVC_TypeName") == 0)
+                        {
+                            if (strcmp(desc, "Fluid") == 0)
+                            {
+                                vcType = PHENGLEI::FLUID;
+                                break;
+                            }
+                            else if (strcmp(desc, "Solid") == 0)
+                            {
+                                vcType = PHENGLEI::SOLID;
+                                break;
+                            }
+                        }
+                    }
+
+                    delete []desc;
+                }
+            }
+        }
+        base_cgns->SetVCType(vcType);
+
         //! Check the zone type.
         cg_zone_type(fileid, baseid, iZone, &zoneType);
 
@@ -103,8 +156,6 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
 
         nTotalNode = isize[0][0];
         nTotalCell = isize[1][0];
-
-        CGNSBase *base_cgns = factory_cgns->GetCGNSBase(iZone-1);
 
         base_cgns->SetNTotalNode(nTotalNode);
         base_cgns->SetNTotalCell(nTotalCell);
@@ -352,6 +403,7 @@ void Pre_CGNSToPHengLEI_Unstruct::Conversion()
 LIB_EXPORT void Pre_CGNSToPHengLEI_Unstruct::WriteAdditionalInformation(const string &targetGridFileName, Grid **grids_in)
 {
     WriteFaceBoundaryName(targetGridFileName, grids_in);
+    WriteVolumeName(targetGridFileName, grids_in);
 
     int dumpOldGrid = GlobalDataBase::GetIntParaFromDB("dumpOldGrid");
     if (dumpOldGrid)

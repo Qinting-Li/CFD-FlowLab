@@ -71,6 +71,12 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
     DataType_t normDataType;
     int ier = 0;
 
+    int omitRepeatInterface = 1;
+    if (GlobalDataBase::IsExist("omitRepeatInterface", PHINT, 1))
+    {
+        omitRepeatInterface = GlobalDataBase::GetIntParaFromDB("omitRepeatInterface");
+    }
+
     string &cgnsfile = gridFileName;
     cout << "    CGNS file name: " << cgnsfile << "\n";
 
@@ -230,7 +236,10 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
         if (CellDim == 3 && n1to1 > 2)
         {
             //! CGNS Grid with more than 2 interfaces.
-            nInterfaceBCRegions = n1to1 - mark/2;
+            if (omitRepeatInterface == 1)
+            {
+                nInterfaceBCRegions = n1to1 - mark/2;
+            }
         }
         base_cgns->SetN1to1(nInterfaceBCRegions);
 
@@ -392,12 +401,15 @@ void Pre_CGNSToPlot3D_Struct::ReadCGNSGrid()
                     }
                 }
 
-                if (lab2 == iZone)
+                if (omitRepeatInterface == 1)
                 {
-                    string connectname1 = connectname[one21-1];
-                    if (strcmp(connectname1.substr(0,14).c_str(), "1to1InterfaceB") == 0 && CellDim == 3)
+                    if (lab2 == iZone)
                     {
-                        continue;
+                        string connectname1 = connectname[one21-1];
+                        if (strcmp(connectname1.substr(0,14).c_str(), "1to1InterfaceB") == 0 && CellDim == 3)
+                        {
+                            continue;
+                        }
                     }
                 }
 

@@ -26,13 +26,13 @@ class Geo_DynamicGridMetrics_Unstruct
 {
 private:
     //! Cell volume of the last time step.
-    RDouble * voln;
+    RDouble *voln;
 
     //! Face normal velocity.
-    RDouble * vgn;
+    RDouble *vgn;
 
     //! face velocity.
-    RDouble * xfv, * yfv, * zfv;
+    RDouble *xfv, *yfv, *zfv;
 
 public:
     LIB_EXPORT Geo_DynamicGridMetrics_Unstruct();
@@ -40,19 +40,19 @@ public:
 
 public:
     //! Assign the given pointer to the X face velocity.
-    void SetFaceVelocityX(RDouble * xfv);
+    void SetFaceVelocityX(RDouble *xfv);
 
     //! Assign the given pointer to the Y face velocity.
-    void SetFaceVelocityY(RDouble * yfv);
+    void SetFaceVelocityY(RDouble *yfv);
 
     //! Assign the given pointer to the Z face velocity.
-    void SetFaceVelocityZ(RDouble * zfv);
+    void SetFaceVelocityZ(RDouble *zfv);
     
     //! Assign the given pointer to the face normal velocity.
-    void SetFaceNormalVelocity(RDouble * vgn);
+    void SetFaceNormalVelocity(RDouble *vgn);
 
     //! Assign the given pointer to the Cell volume of the last time step.
-    void SetCellVolumeOld(RDouble * voln);
+    void SetCellVolumeOld(RDouble *voln);
 
     //! Return the X face velocity pointer.
     RDouble * GetFaceVelocityX() const;

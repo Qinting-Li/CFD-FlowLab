@@ -615,22 +615,44 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyByParameter(vecto
 
     this->GetMassCenterAndEulerAngleContainer(massCenterContainer, eulerAngleContainer, iTimeLayer);
 
-    vector< RDouble > dimensionalAerodynamicForce;
-    GetRDoubleVectorFromDataBase(dimensionalAerodynamicForce, bodyIndex, "addedForce"  , 3);
+    vector< RDouble > dimensionalAerodynamicForce(3);
+    vector< RDouble > dimensionalAerodynamicMonent(3);
 
-    vector< RDouble > dimensionalAerodynamicMonent;
-    GetRDoubleVectorFromDataBase(dimensionalAerodynamicMonent, bodyIndex, "addedMoment" , 3);
+    for (int iDim = 0; iDim < 3; ++ iDim)
+    {
+        dimensionalAerodynamicForce[iDim] = zero;
+        dimensionalAerodynamicMonent[iDim] = zero;
+    }
 
-    vector< RDouble > dimensionalAerodynamicForceInInertialFrame(3);
+    RDouble aleTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+    RDouble timeOfNstep = aleTime - GetAleTimeStep();
 
-    PHSPACE::ConvertVectorFromBodyCoordinateSystemToInertialCoordinateSystem(dimensionalAerodynamicForce, eulerAngleContainer, dimensionalAerodynamicForceInInertialFrame);
+    RDouble addedForceTime = GetRDoubleParameterFromDataBaseIfExist(bodyIndex, "addedForceTime", zero);
 
-    dimensionalGeneralForceContainer[ 0 ] += dimensionalAerodynamicForceInInertialFrame[ 0 ];
-    dimensionalGeneralForceContainer[ 1 ] += dimensionalAerodynamicForceInInertialFrame[ 1 ];
-    dimensionalGeneralForceContainer[ 2 ] += dimensionalAerodynamicForceInInertialFrame[ 2 ];
-    dimensionalGeneralForceContainer[ 3 ] += dimensionalAerodynamicMonent[ 0 ];
-    dimensionalGeneralForceContainer[ 4 ] += dimensionalAerodynamicMonent[ 1 ];
-    dimensionalGeneralForceContainer[ 5 ] += dimensionalAerodynamicMonent[ 2 ];
+    if (timeOfNstep < addedForceTime)
+    {
+        GetRDoubleVectorFromDataBase(dimensionalAerodynamicForce, bodyIndex, "addedForce"  , 3);
+
+        GetRDoubleVectorFromDataBase(dimensionalAerodynamicMonent, bodyIndex, "addedMoment" , 3);
+    }
+
+    RDouble mass = GetRDoubleParameterFromDataBase(bodyIndex, "mass");
+    RDouble gravity = GetRDoubleParameterFromDataBaseIfExist(bodyIndex, "gravity", 0.0);
+
+    dimensionalAerodynamicForce[1] -= gravity * mass;
+
+    vector< RDouble > dimensionalAerodynamicForceInBodyFrame(3);
+    vector< RDouble > dimensionalAerodynamicMomentInBodyFrame(3);
+
+    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAerodynamicForce, eulerAngleContainer, dimensionalAerodynamicForceInBodyFrame);
+    PHSPACE::ConvertVectorFromInertialCoordinateSystemToBodyCoordinateSystem(dimensionalAerodynamicMonent, eulerAngleContainer, dimensionalAerodynamicMomentInBodyFrame);
+
+    dimensionalGeneralForceContainer[ 0 ] += dimensionalAerodynamicForceInBodyFrame[ 0 ];
+    dimensionalGeneralForceContainer[ 1 ] += dimensionalAerodynamicForceInBodyFrame[ 1 ];
+    dimensionalGeneralForceContainer[ 2 ] += dimensionalAerodynamicForceInBodyFrame[ 2 ];
+    dimensionalGeneralForceContainer[ 3 ] += dimensionalAerodynamicMomentInBodyFrame[ 0 ];
+    dimensionalGeneralForceContainer[ 4 ] += dimensionalAerodynamicMomentInBodyFrame[ 1 ];
+    dimensionalGeneralForceContainer[ 5 ] += dimensionalAerodynamicMomentInBodyFrame[ 2 ];
 }
 
 void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyWingStore(vector< RDouble > & dimensionalForceContainer, vector< RDouble > & dimensionalMomentContainer, int iTimeLayer)
@@ -678,7 +700,6 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBodyWingStore( vector
 
     }
 }
-
 void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody611C7(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
     RDouble aleSimulationTime = PHSPACE::GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
@@ -706,7 +727,7 @@ void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody611C7(vector< RDo
 
 void SixDofSolver::GetDimensionalAdditionalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer)
 {
-    //GetDimensionalAdditionalForceAndMomentOfBodyWingStore(dimensionalGeneralForceContainer, iTimeLayer);
+    GetDimensionalAdditionalForceAndMomentOfBodyByParameter(dimensionalGeneralForceContainer, iTimeLayer);
 }
 
 void SixDofSolver::ReadSixDofParameterFromFile()

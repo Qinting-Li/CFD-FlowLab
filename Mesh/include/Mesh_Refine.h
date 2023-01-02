@@ -29,7 +29,6 @@ private:
 public:
     void SetAnisoRefineType(int anisoRefineIn);
     int GetAnisoRefineType();
-
 };
 
 //! @brief Mesh_Refine achieve grid refine.

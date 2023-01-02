@@ -142,7 +142,12 @@ const int PROBE_W           = 3;
 const int PROBE_PRESSURE    = 4;
 const int PROBE_TEMPERATURE = 5;
 const int PROBE_MACH        = 6;
-
+const int PROBE_DIMENSIONAL_DENSITY     = 7;
+const int PROBE_DIMENSIONAL_U           = 8;
+const int PROBE_DIMENSIONAL_V           = 9;
+const int PROBE_DIMENSIONAL_W           = 10;
+const int PROBE_DIMENSIONAL_PRESSURE    = 11;
+const int PROBE_DIMENSIONAL_TEMPERATURE = 12;
 #include "Post_Probes.hxx"
 
 class DumpToFileASCII

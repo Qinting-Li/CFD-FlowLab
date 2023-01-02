@@ -76,7 +76,7 @@ LIB_EXPORT StructGrid::StructGrid()
     iBlank3D = NULL;
     gridUnstr = NULL;
     wallCellLabel = NULL;
-
+    cellBoundaryType = NULL;
     structBCSet = NULL;
     oversetGridTopology = NULL;
 
@@ -121,6 +121,7 @@ LIB_EXPORT StructGrid::~StructGrid()
     if (multigridInfo) { delete multigridInfo; multigridInfo = NULL; }
     if (dynamicGridMetrics) { delete dynamicGridMetrics; dynamicGridMetrics = NULL; }
     if (gridUnstr) { delete gridUnstr; gridUnstr = NULL; }
+    if (cellBoundaryType) { delete cellBoundaryType; cellBoundaryType = NULL; }
     if (oversetGridTopology) { delete oversetGridTopology; oversetGridTopology = NULL; }
     delete walldist;
     delete structBCSet;
@@ -655,6 +656,815 @@ void StructGrid::AllocateMetricsALE(ActionKey *actkey)
     dynamicGridMetrics->SetFaceVelocityY(faceVelocityY);
     dynamicGridMetrics->SetFaceVelocityZ(faceVelocityZ);
     dynamicGridMetrics->SetCellVolumeOld(voln);
+}
+
+void ModifyWallTemperature(const string& name, Grid *grid_in, RDouble4D &qn)
+{
+    if ((name != "temperature") && (name != "temperature_Dim"))
+    {
+        return;
+    }
+
+    if (GetDim() == TWO_D)
+    {
+        return;
+    }
+
+    StructGrid *grid = StructGridCast(grid_in);
+
+    StructBCSet *structBCSet = grid->GetStructBCSet();
+    int nBCRegion = structBCSet->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
+
+        if (!(IsWall(BCType)))
+        {
+            continue;
+        }
+
+        RDouble wallTemperature;
+        structBC->GetParamData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
+
+        bool wallTempArrayExist = false;
+        RDouble3D* wallTempArray = NULL;
+        if (structBC->CheckFieldData("wallTempArray"))
+        {
+            wallTempArrayExist = true;
+            wallTempArray = reinterpret_cast <RDouble3D*> (structBC->GetFieldDataPtr("wallTempArray"));
+        }
+
+        if ((wallTemperature < 0.0) && (!wallTempArrayExist))
+        {
+            continue;
+        }
+
+        if (name == "temperature")
+        {
+            RDouble refDimensionalTemperature = GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
+            wallTemperature = wallTemperature / refDimensionalTemperature;
+        }
+
+        int *s_st = structBC->GetStartPoint();
+        int *s_ed = structBC->GetEndPoint();
+        int *s_lr3d = structBC->GetFaceDirectionIndex();
+
+        int nodeIndexStart[3];
+        int nodeIndexEnd[3];
+
+        for (int iDim = 0; iDim < 3; ++ iDim)
+        {
+            nodeIndexStart[iDim] = s_st[iDim];
+            nodeIndexEnd  [iDim] = s_ed[iDim];
+        }
+
+        for (int m = 0; m < GetDim(); ++m)
+        {
+            if (structBC->GetFaceDirection() == m)
+            {
+                if (s_st[m] > 1 || s_lr3d[m] == 1)
+                {
+                    nodeIndexStart[m] += 1;
+                    nodeIndexEnd[m] += 1;
+                }
+            }
+            else
+            {
+                nodeIndexEnd[m] += 1;
+            }
+        }
+
+        if (!wallTempArrayExist)
+        {
+            for (int kNode = nodeIndexStart[2]; kNode <= nodeIndexEnd[2]; ++kNode)
+            {
+                for (int jNode = nodeIndexStart[1]; jNode <= nodeIndexEnd[1]; ++jNode)
+                {
+                    for (int iNode = nodeIndexStart[0]; iNode <= nodeIndexEnd[0]; ++iNode)
+                    {
+                        qn(iNode, jNode, kNode, 0) = wallTemperature;
+                    }
+                }
+            }
+        }
+        else
+        {
+            int nSurface = structBC->GetFaceDirection() + 1;
+
+            int id, jd, kd;
+            GetBCFaceIDX(s_lr3d, id, jd, kd);
+
+            for (int kNode = nodeIndexStart[2]; kNode <= nodeIndexEnd[2]; ++kNode)
+            {
+                for (int jNode = nodeIndexStart[1]; jNode <= nodeIndexEnd[1]; ++jNode)
+                {
+                    for (int iNode = nodeIndexStart[0]; iNode <= nodeIndexEnd[0]; ++iNode)
+                    {
+                        int iLeftCell, iRightCell, jLeftCell, jRightCell, kLeftCell, kRightCell;
+
+                        if (iNode == nodeIndexStart[0])
+                        {
+                            iLeftCell = iNode;
+                        }
+                        else
+                        {
+                            iLeftCell = iNode - 1;
+                        }
+
+                        if (iNode == nodeIndexEnd[0])
+                        {
+                            iRightCell = iNode - 1;
+                        }
+                        else
+                        {
+                            iRightCell = iNode;
+                        }
+
+                        if (nSurface == 1)
+                        {
+                            iLeftCell = iNode - id;
+                            iRightCell = iNode - id;
+                        }
+
+                        if (jNode == nodeIndexStart[1])
+                        {
+                            jLeftCell = jNode;
+                        }
+                        else
+                        {
+                            jLeftCell = jNode - 1;
+                        }
+
+                        if (jNode == nodeIndexEnd[1])
+                        {
+                            jRightCell = jNode - 1;
+                        }
+                        else
+                        {
+                            jRightCell = jNode;
+                        }
+
+                        if (nSurface == 2)
+                        {
+                            jLeftCell = jNode - jd;
+                            jRightCell = jNode - jd;
+                        }
+
+                        if (GetDim() == THREE_D)
+                        {
+                            if (kNode == nodeIndexStart[2])
+                            {
+                                kLeftCell = kNode;
+                            }
+                            else
+                            {
+                                kLeftCell = kNode - 1;
+                            }
+
+                            if (kNode == nodeIndexEnd[2])
+                            {
+                                kRightCell = kNode - 1;
+                            }
+                            else
+                            {
+                                kRightCell = kNode;
+                            }
+
+                            if (nSurface == 3)
+                            {
+                                kLeftCell = kNode - kd;
+                                kRightCell = kNode - kd;
+                            }
+                        }
+                        else
+                        {
+                            kLeftCell = 1;
+                            kRightCell = 1;
+                        }
+
+                        qn(iNode, jNode, kNode, 0) = eighth * ((*wallTempArray)(iLeftCell, jLeftCell, kLeftCell) + (*wallTempArray)(iLeftCell, jRightCell, kLeftCell) +
+                            (*wallTempArray)(iLeftCell , jLeftCell, kRightCell) + (*wallTempArray)(iLeftCell , jRightCell, kRightCell) +
+                            (*wallTempArray)(iRightCell, jLeftCell, kLeftCell ) + (*wallTempArray)(iRightCell, jRightCell, kLeftCell ) +
+                            (*wallTempArray)(iRightCell, jLeftCell, kRightCell) + (*wallTempArray)(iRightCell, jRightCell, kRightCell));
+                    }
+                }
+            }
+        }
+
+        /*for (int m = 0; m < GetDim(); ++ m)
+        {
+            if (structBC->GetFaceDirection() == m)
+            {
+                if (s_st[m] > 1 || s_lr3d[m] == 1)
+                {
+                    nodeIndexStart[m] += 1;
+                    nodeIndexEnd  [m] += 1;
+                }
+            }
+            else
+            {
+                nodeIndexEnd[m] += 1;
+            }
+        }
+
+        int ist = nodeIndexStart[0];
+        int ied = nodeIndexEnd  [0];
+
+        int jst = nodeIndexStart[1];
+        int jed = nodeIndexEnd  [1];
+
+        int kst = nodeIndexStart[2];
+        int ked = nodeIndexEnd  [2];
+
+        int nsurf = structBC->GetFaceDirection();
+        if (nsurf == 0)
+        {
+            for (int iNode = jst; iNode <= jed; ++ iNode)
+            {
+                qn(ist, iNode, kst, 0) = qn(ist, iNode, kst + 1, 0);
+                qn(ist, iNode, ked, 0) = qn(ist, iNode, ked - 1, 0);
+            }
+
+            for (int iNode = kst; iNode <= ked; ++ iNode)
+            {
+                qn(ist, jst, iNode, 0) = qn(ist, jst + 1, iNode, 0);
+                qn(ist, jed, iNode, 0) = qn(ist, jed - 1, iNode, 0);
+            }
+
+            qn(ist, jst, kst, 0) = qn(ist, jst + 1, kst + 1, 0);
+            qn(ist, jed, kst, 0) = qn(ist, jed - 1, kst + 1, 0);
+            qn(ist, jst, ked, 0) = qn(ist, jst + 1, ked - 1, 0);
+            qn(ist, jed, ked, 0) = qn(ist, jed - 1, ked - 1, 0);
+        }
+
+        if (nsurf == 1)
+        {
+            for (int iNode = ist; iNode <= ied; ++ iNode)
+            {
+                qn(iNode, jst, kst, 0) = qn(iNode, jst, kst + 1, 0);
+                qn(iNode, jst, ked, 0) = qn(iNode, jst, ked - 1, 0);
+            }
+
+            for (int iNode = kst; iNode <= ked; ++ iNode)
+            {
+                qn(ist, jst, iNode, 0) = qn(ist + 1, jst, iNode, 0);
+                qn(ied, jst, iNode, 0) = qn(ied - 1, jst, iNode, 0);
+            }
+
+            qn(ist, jst, kst, 0) = qn(ist + 1, jst, kst + 1, 0);
+            qn(ied, jst, kst, 0) = qn(ied - 1, jst, kst + 1, 0);
+            qn(ist, jst, ked, 0) = qn(ist + 1, jst, ked - 1, 0);
+            qn(ied, jst, ked, 0) = qn(ied - 1, jst, ked - 1, 0);
+        }
+
+        if (nsurf == 2)
+        {
+            for (int iNode = ist; iNode <= ied; ++ iNode)
+            {
+                qn(iNode, jst, kst, 0) = qn(iNode, jst + 1, kst, 0);
+                qn(iNode, jed, kst, 0) = qn(iNode, jed - 1, kst, 0);
+            }
+
+            for (int iNode = jst; iNode <= jed; ++ iNode)
+            {
+                qn(ist, iNode, kst, 0) = qn(ist + 1, iNode, kst, 0);
+                qn(ied, iNode, kst, 0) = qn(ied - 1, iNode, kst, 0);
+            }
+
+            qn(ist, jst, kst, 0) = qn(ist + 1, jst + 1, kst, 0);
+            qn(ied, jst, kst, 0) = qn(ied - 1, jst + 1, kst, 0);
+            qn(ist, jed, kst, 0) = qn(ist + 1, jed - 1, kst, 0);
+            qn(ied, jed, kst, 0) = qn(ied - 1, jed - 1, kst, 0);
+        }*/
+    }
+}
+
+void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, RDouble3D &cellCenterData, int bcType)
+{
+    StructGrid* grid_str = StructGridCast(grid_in);
+    int ni = grid_str->GetNI();
+    int nj = grid_str->GetNJ();
+    int nk = grid_str->GetNK();
+
+    Range I(-1, ni + 1);
+    Range J(-1, nj + 1);
+    Range K(-1, nk + 1);
+    if (nk == 1) K.setRange(1, 1);
+
+    RDouble3D* faceData = new RDouble3D(I, J, K, fortranArray);
+    string faceDataName = name + "_face";
+
+    StructBCSet *compositeBCRegion = grid_str->GetStructBCSet();
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+    {
+        StructBC* structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
+        if (BCType != bcType)
+        {
+            continue;
+        }
+
+        int ist = 0, ied = 0, jst = 0, jed = 0, kst = 0, ked = 0;
+        structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+        int* s_lr3d = structBC->GetFaceDirectionIndex();
+
+        for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    int iCellGhostLayer = 0;
+                    int jCellGhostLayer = 0;
+                    int kCellGhostLayer = 0;
+
+                    structBC->GetGhostCellIndex(i, j, k, iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, ONE_GHOST_LAYER);
+
+                    (*faceData)(i, j, k) = half * (cellCenterData(i, j, k) + cellCenterData(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer));
+                }
+            }
+        }
+    }
+
+    GhostCell3D(*faceData, ni, nj, nk);
+    CommunicateInterfaceValue(grid_str, faceData, faceDataName);
+
+    Int3D& cellType = *grid_str->GetCellBoundaryType();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+    {
+        StructBC* structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
+        if (BCType != bcType)
+        {
+            continue;
+        }
+
+        int ist, ied, jst, jed, kst, ked;
+        structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+        int s_nd = structBC->GetFaceDirection();
+        if (s_nd == 0)
+        {
+            ked++;
+            jed++;
+        }
+        else if (s_nd == 1)
+        {
+            ied++;
+            ked++;
+        }
+        else
+        {
+            ied++;
+            jed++;
+        }
+
+        if (GetDim() == TWO_D)
+        {
+            ked = 1;
+        }
+
+        int* s_lr3d = structBC->GetFaceDirectionIndex();
+        int nSurface = structBC->GetFaceDirection() + 1;
+        int id, jd, kd;
+        GetBCFaceIDX(s_lr3d, id, jd, kd);
+
+        kst += kd;
+        ked += kd;
+        jst += jd;
+        jed += jd;
+        ist += id;
+        ied += id;
+
+        for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    int iIndex = i - id;
+                    int jIndex = j - jd;
+                    int kIndex = k - kd;
+                    if (i == ied && nSurface != 1) iIndex = i - 1;
+                    if (j == jed && nSurface != 2) jIndex = j - 1;
+                    if (k == ked && nSurface != 3) kIndex = k - 1;
+                    if (GetDim() == TWO_D) kIndex = 1;
+
+                    int iLeftCell, iRightCell, jLeftCell, jRightCell, kLeftCell, kRightCell;
+                    if ((i == ist) && (cellType(i - 1, jIndex, kIndex) != BCType))
+                    {
+                        iLeftCell = i;
+                    }
+                    else
+                    {
+                        iLeftCell = i - 1;
+                    }
+
+                    if (i == ied && cellType(i, jIndex, kIndex) != BCType)
+                    {
+                        iRightCell = i - 1;
+                    }
+                    else
+                    {
+                        iRightCell = i;
+                    }
+
+                    if (nSurface == 1)
+                    {
+                        iLeftCell = i - id;
+                        iRightCell = i - id;
+                    }
+
+                    if (j == jst && cellType(iIndex, j - 1, kIndex) != BCType)
+                    {
+                        jLeftCell = j;
+                    }
+                    else
+                    {
+                        jLeftCell = j - 1;
+                    }
+
+                    if (j == jed && cellType(iIndex, j, kIndex) != BCType)
+                    {
+                        jRightCell = j - 1;
+                    }
+                    else
+                    {
+                        jRightCell = j;
+                    }
+
+                    if (nSurface == 2)
+                    {
+                        jLeftCell = j - jd;
+                        jRightCell = j - jd;
+                    }
+
+                    if (GetDim() == 3)
+                    {
+                        if (k == kst && cellType(iIndex, jIndex, k - 1) != BCType)
+                        {
+                            kLeftCell = k;
+                        }
+                        else
+                        {
+                            kLeftCell = k - 1;
+                        }
+
+                        if (k == ked && cellType(iIndex, jIndex, k) != BCType)
+                        {
+                            kRightCell = k - 1;
+                        }
+                        else
+                        {
+                            kRightCell = k;
+                        }
+
+                        if (nSurface == 3)
+                        {
+                            kLeftCell = k - kd;
+                            kRightCell = k - kd;
+                        }
+                    }
+                    else
+                    {
+                        kLeftCell = 1;
+                        kRightCell = 1;
+                    }
+
+                    qn(i, j, k, 0) = eighth * ((*faceData)(iLeftCell, jLeftCell, kLeftCell) + (*faceData)(iLeftCell, jRightCell, kLeftCell) +
+                        (*faceData)(iLeftCell, jLeftCell, kRightCell) + (*faceData)(iLeftCell, jRightCell, kRightCell) +
+                        (*faceData)(iRightCell, jLeftCell, kLeftCell) + (*faceData)(iRightCell, jRightCell, kLeftCell) +
+                        (*faceData)(iRightCell, jLeftCell, kRightCell) + (*faceData)(iRightCell, jRightCell, kRightCell));
+                }
+            }
+        }
+    }
+
+    delete faceData;
+}
+
+void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, RDouble4D &cellCenterData, int index, int bcType)
+{
+    StructGrid *grid_str = StructGridCast(grid_in);
+    int ni = grid_str->GetNI();
+    int nj = grid_str->GetNJ();
+    int nk = grid_str->GetNK();
+
+    Range I(-1, ni + 1);
+    Range J(-1, nj + 1);
+    Range K(-1, nk + 1);
+    if (nk == 1) K.setRange(1, 1);
+
+    RDouble3D *faceData = new RDouble3D(I, J, K, fortranArray);
+    string faceDataName = name + "_face";
+
+    StructBCSet *compositeBCRegion = grid_str->GetStructBCSet();
+    int nBCRegion = compositeBCRegion->GetnBCRegion();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        StructBC *structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
+        if (BCType != bcType)
+        {
+            continue;
+        }
+
+        int ist = 0, ied = 0, jst = 0, jed = 0, kst = 0, ked = 0;
+        structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+        int* s_lr3d = structBC->GetFaceDirectionIndex();
+
+        for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    int iCellGhostLayer = 0;
+                    int jCellGhostLayer = 0;
+                    int kCellGhostLayer = 0;
+
+                    structBC->GetGhostCellIndex(i, j, k, iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, ONE_GHOST_LAYER);
+
+                    (*faceData)(i, j, k) = half * (cellCenterData(i, j, k, index) + cellCenterData(iCellGhostLayer, jCellGhostLayer, kCellGhostLayer, index));
+                }
+            }
+        }
+    }
+
+    GhostCell3D(*faceData, ni, nj, nk);
+    CommunicateInterfaceValue(grid_str, faceData, faceDataName);
+
+    Int3D &cellType = *grid_str->GetCellBoundaryType();
+
+    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+    {
+        StructBC* structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+        int BCType = structBC->GetBCType();
+        if (BCType != bcType)
+        {
+            continue;
+        }
+
+        int ist, ied, jst, jed, kst, ked;
+        structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+
+        int s_nd = structBC->GetFaceDirection();
+        if (s_nd == 0)
+        {
+            ked ++;
+            jed ++;
+        }
+        else if (s_nd == 1)
+        {
+            ied ++;
+            ked ++;
+        }
+        else
+        {
+            ied ++;
+            jed ++;
+        }
+
+        if (GetDim() == TWO_D)
+        {
+            ked = 1;
+        }
+
+        int *s_lr3d = structBC->GetFaceDirectionIndex();
+        int nSurface = structBC->GetFaceDirection() + 1;
+        int id, jd, kd;
+        GetBCFaceIDX(s_lr3d, id, jd, kd);
+
+        kst += kd;
+        ked += kd;
+        jst += jd;
+        jed += jd;
+        ist += id;
+        ied += id;
+
+        for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    int iIndex = i - id;
+                    int jIndex = j - jd;
+                    int kIndex = k - kd;
+                    if (i == ied && nSurface != 1) iIndex = i - 1;
+                    if (j == jed && nSurface != 2) jIndex = j - 1;
+                    if (k == ked && nSurface != 3) kIndex = k - 1;
+                    if (GetDim() == TWO_D) kIndex = 1;
+
+                    int iLeftCell, iRightCell, jLeftCell, jRightCell, kLeftCell, kRightCell;
+                    if ((i == ist) && (cellType(i - 1, jIndex, kIndex) != BCType))
+                    {
+                        iLeftCell = i;
+                    }
+                    else
+                    {
+                        iLeftCell = i - 1;
+                    }
+
+                    if (i == ied && cellType(i, jIndex, kIndex) != BCType)
+                    {
+                        iRightCell = i - 1;
+                    }
+                    else
+                    {
+                        iRightCell = i;
+                    }
+
+                    if (nSurface == 1)
+                    {
+                        iLeftCell = i - id;
+                        iRightCell = i - id;
+                    }
+
+                    if (j == jst && cellType(iIndex, j - 1, kIndex) != BCType)
+                    {
+                        jLeftCell = j;
+                    }
+                    else
+                    {
+                        jLeftCell = j - 1;
+                    }
+
+                    if (j == jed && cellType(iIndex, j, kIndex) != BCType)
+                    {
+                        jRightCell = j - 1;
+                    }
+                    else
+                    {
+                        jRightCell = j;
+                    }
+
+                    if (nSurface == 2)
+                    {
+                        jLeftCell = j - jd;
+                        jRightCell = j - jd;
+                    }
+
+                    if (GetDim() == 3)
+                    {
+                        if (k == kst && cellType(iIndex, jIndex, k - 1) != BCType)
+                        {
+                            kLeftCell = k;
+                        }
+                        else
+                        {
+                            kLeftCell = k - 1;
+                        }
+
+                        if (k == ked && cellType(iIndex, jIndex, k) != BCType)
+                        {
+                            kRightCell = k - 1;
+                        }
+                        else
+                        {
+                            kRightCell = k;
+                        }
+
+                        if (nSurface == 3)
+                        {
+                            kLeftCell = k - kd;
+                            kRightCell = k - kd;
+                        }
+                    }
+                    else
+                    {
+                        kLeftCell = 1;
+                        kRightCell = 1;
+                    }
+
+                    qn(i, j, k, 0) = eighth * ((*faceData)(iLeftCell, jLeftCell, kLeftCell) + (*faceData)(iLeftCell, jRightCell, kLeftCell) +
+                        (*faceData)(iLeftCell, jLeftCell, kRightCell) + (*faceData)(iLeftCell, jRightCell, kRightCell) +
+                        (*faceData)(iRightCell, jLeftCell, kLeftCell) + (*faceData)(iRightCell, jRightCell, kLeftCell) +
+                        (*faceData)(iRightCell, jLeftCell, kRightCell) + (*faceData)(iRightCell, jRightCell, kRightCell));
+                }
+            }
+        }
+    }
+
+    delete faceData;
+}
+
+void StructGrid::ComputeCellBoundaryType()
+{
+    if (cellBoundaryType == NULL)
+    {
+        int ni = this->GetNI();
+        int nj = this->GetNJ();
+        int nk = this->GetNK();
+
+        Range I, J, K;
+        GetRange(ni, nj, nk, -2, 1, I, J, K);
+        cellBoundaryType = new Int3D(I, J, K, fortranArray);
+        Int3D &cellType = *this->cellBoundaryType;
+
+        cellType(I, J, K) = 0;
+
+        StructBCSet *compositeBCRegion = this->GetStructBCSet();
+        int nBCRegion = compositeBCRegion->GetnBCRegion();
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
+        {
+            StructBC* structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            int BCType = structBC->GetBCType();
+
+            if (BCType == PHENGLEI::INTERFACE
+             || BCType == PHENGLEI::SOLID_SURFACE
+             || BCType == PHENGLEI::ABLATION_SURFACE
+             || BCType == PHENGLEI::SYMMETRY)
+            {
+                continue;
+            }
+
+            int is, js, ks;
+            int iStart, iEnd, jStart, jEnd, kStart, kEnd;
+            structBC->GetIJKRegion(iStart, iEnd, jStart, jEnd, kStart, kEnd);
+
+            for (int k = kStart; k <= kEnd; ++k)
+            {
+                for (int j = jStart; j <= jEnd; ++j)
+                {
+                    for (int i = iStart; i <= iEnd; ++i)
+                    {
+                        //! First cell index inside flowfield.
+                        structBC->GetInsideCellIndex(i, j, k, is, js, ks, 1);
+                        RestrictIndex(is, js, ks, ni - 1, nj - 1, nk - 1);
+
+                        cellType(is, js, ks) = BCType;
+                    }
+                }
+            }
+        }
+
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+        {
+            StructBC* structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            int BCType = structBC->GetBCType();
+
+            if (BCType != PHENGLEI::SYMMETRY)
+            {
+                continue;
+            }
+
+            int is, js, ks;
+            int iStart, iEnd, jStart, jEnd, kStart, kEnd;
+            structBC->GetIJKRegion(iStart, iEnd, jStart, jEnd, kStart, kEnd);
+
+            for (int k = kStart; k <= kEnd; ++k)
+            {
+                for (int j = jStart; j <= jEnd; ++j)
+                {
+                    for (int i = iStart; i <= iEnd; ++i)
+                    {
+                        //! First cell index inside flowfield.
+                        structBC->GetInsideCellIndex(i, j, k, is, js, ks, 1);
+                        RestrictIndex(is, js, ks, ni - 1, nj - 1, nk - 1);
+
+                        cellType(is, js, ks) = BCType;
+                    }
+                }
+            }
+        }
+
+        for (int iBCRegion = 0; iBCRegion < nBCRegion; ++iBCRegion)
+        {
+            StructBC* structBC = compositeBCRegion->GetBCRegion(iBCRegion);
+            int BCType = structBC->GetBCType();
+
+            if ((BCType != PHENGLEI::SOLID_SURFACE) && (BCType != PHENGLEI::ABLATION_SURFACE))
+            {
+                continue;
+            }
+
+            int is, js, ks;
+            int iStart, iEnd, jStart, jEnd, kStart, kEnd;
+            structBC->GetIJKRegion(iStart, iEnd, jStart, jEnd, kStart, kEnd);
+
+            for (int k = kStart; k <= kEnd; ++k)
+            {
+                for (int j = jStart; j <= jEnd; ++j)
+                {
+                    for (int i = iStart; i <= iEnd; ++i)
+                    {
+                        //! First cell index inside flowfield.
+                        structBC->GetInsideCellIndex(i, j, k, is, js, ks, 1);
+                        RestrictIndex(is, js, ks, ni - 1, nj - 1, nk - 1);
+
+                        cellType(is, js, ks) = BCType;
+                    }
+                }
+            }
+        }
+    }
 }
 
 LIB_EXPORT void StructGrid::ComputeMetrics(ActionKey *actkey)
@@ -2008,6 +2818,7 @@ LIB_EXPORT void StructGrid::CoarseGrids(int nlmax)
     }
 
     cgrid->SetBCFaceInfo();
+    cgrid->SetVolumeCondition(this->GetVolumeConditionIn());
 
     this->SetCoarseGrid(cgrid);
     cgrid->SetFineGrid(this);
@@ -2236,12 +3047,7 @@ void StructGrid::ReadGrid(VirtualFile *vfile)
     vfile->read(reinterpret_cast<char*>(y), nTotalNode * sizeof(RDouble));
     vfile->read(reinterpret_cast<char*>(z), nTotalNode * sizeof(RDouble));
 
-    int axisup = 1;
-    PHSPACE::GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
-    if (axisup == 2)
-    {
-        TurnZAxis2YAxis();
-    }
+    RotateAboutAxis();
 
     ComputeMinMaxBox();
     SetArrayLayout();
@@ -2314,12 +3120,7 @@ void StructGrid::WriteGrid(VirtualFile *vfile)
 
     int nTotalNode = this->GetNTotalNode();
 
-    int axisup = 1;
-    GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
-    if (axisup == 2)
-    {
-        TurnZAxis2YAxis();
-    }
+    RotateAboutAxis();
 
     vfile->write(reinterpret_cast<char*>(x), nTotalNode * sizeof(RDouble));
     vfile->write(reinterpret_cast<char*>(y), nTotalNode * sizeof(RDouble));
@@ -2931,6 +3732,8 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
+    Int3D &cellType = *this->GetCellBoundaryType();
+
     int ineighbor = fiinfo->FindIthNeighbor(actkey->ipos);
     int *faceIndexForSend = fiinfo->GetFaceIndexForSend(ineighbor);
     int nIFaceOfNeighbor = fiinfo->GetNIFaceOfNeighbor(ineighbor);
@@ -2940,6 +3743,7 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
 
     int iFace, is, js, ks;
     bool ifCommunicateNodeLocation = CommunicateNodeLocation();
+    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
         iFace = faceIndexForSend[iLocalFace];
@@ -2952,6 +3756,16 @@ void StructGrid::GetCellCenter(ActionKey *actkey)
         cdata->write(&vol(is, js, ks), sizeof(RDouble));
 
         if (!ifCommunicateNodeLocation)
+        {
+            continue;
+        }
+
+        if (level == 0)
+        {
+            cdata->write(&cellType(is, js, ks), sizeof(int));
+        }
+
+        if (nChemical != 0)
         {
             continue;
         }
@@ -2997,6 +3811,8 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
     RDouble3D &yy = * this->GetStructY();
     RDouble3D &zz = * this->GetStructZ();
 
+    Int3D &cellType = *this->GetCellBoundaryType();
+
     InterfaceInfo *fiinfo = fgrid->GetInterfaceInfo();
     int ineighbor = fiinfo->FindIthNeighbor(actkey->ipos);
     int nIFaceOfNeighbor = fiinfo->GetNIFaceOfNeighbor(ineighbor);
@@ -3008,6 +3824,7 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
     cdata->moveto_begin();
 
     bool ifCommunicateNodeLocation = CommunicateNodeLocation();
+    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     for (int iLocalFace = 0; iLocalFace < nIFaceOfNeighbor; ++ iLocalFace)
     {
         iFace = faceIndexForRecv[iLocalFace];
@@ -3044,6 +3861,19 @@ void StructGrid::TranslateCellCenter(ActionKey *actkey)
         {
             continue;
         }
+
+        if (level == 0)
+        {
+            int iCellType = -1;
+            PHRead(cdata, iCellType);
+            cellType(it, jt, kt) = iCellType;
+        }
+
+        if (nChemical != 0)
+        {
+            continue;
+        }
+
         RDouble Data_1st_Layer[4][3] = {0.0};
         RDouble Data_2nd_Layer[4][3] = {0.0};
 
@@ -3200,13 +4030,12 @@ bool StructGrid::CommunicateNodeLocation()
         Rwithghost = false;
         return Rwithghost;
     }
-
-    int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
-    if (nChemical != 0)
-    {
-        Rwithghost = false;
-        return Rwithghost;
-    }
+    //int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
+    //if (nChemical != 0)
+    //{
+    //    Rwithghost = false;
+    //    return Rwithghost;
+    //}
 
     int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
     if (ifLowSpeedPrecon != 0)
@@ -6958,137 +7787,6 @@ void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble3D &q)
                 qn(i, j, k, m) = eighth * (q(il, jl, kl) + q(il, j, kl) + q(i, jl, kl) + q(i, j, kl) +
                                            q(il, jl, k) + q(il, j, k) + q(i, jl, k) + q(i, j, k));
             }
-        }
-    }
-}
-
-void ModifyWallTemperature(Grid *grid_in, RDouble4D &qn)
-{
-    if (GetDim() == TWO_D)
-    {
-        return;
-    }
-
-    StructGrid *grid = StructGridCast(grid_in);
-
-    StructBCSet *structBCSet = grid->GetStructBCSet();
-    int nBCRegion = structBCSet->GetnBCRegion();
-
-    for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
-    {
-        StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
-        int BCType = structBC->GetBCType();
-
-        if (!(IsWall(BCType)))
-        {
-            continue;
-        }
-
-        RDouble wallTemperature;
-        structBC->GetParamData("wallTemperature", &wallTemperature, PHDOUBLE, 1);
-
-        if (wallTemperature < 0.0)
-        {
-            continue;
-        }
-
-        int *s_st = structBC->GetStartPoint();
-        int *s_ed = structBC->GetEndPoint();
-        int *s_lr3d = structBC->GetFaceDirectionIndex();
-
-        int nodeIndexStart[3];
-        int nodeIndexEnd[3];
-
-        for (int iDim = 0; iDim < 3; ++ iDim)
-        {
-            nodeIndexStart[iDim] = s_st[iDim];
-            nodeIndexEnd  [iDim] = s_ed[iDim];
-        }
-
-        for (int m = 0; m < GetDim(); ++ m)
-        {
-            if (structBC->GetFaceDirection() == m)
-            {
-                if (s_st[m] > 1 || s_lr3d[m] == 1)
-                {
-                    nodeIndexStart[m] += 1;
-                    nodeIndexEnd  [m] += 1;
-                }
-            }
-            else
-            {
-                nodeIndexEnd[m] += 1;
-            }
-        }
-
-        int ist = nodeIndexStart[0];
-        int ied = nodeIndexEnd  [0];
-
-        int jst = nodeIndexStart[1];
-        int jed = nodeIndexEnd  [1];
-
-        int kst = nodeIndexStart[2];
-        int ked = nodeIndexEnd  [2];
-
-        int nsurf = structBC->GetFaceDirection();
-        if (nsurf == 0)
-        {
-            for (int iNode = jst; iNode <= jed; ++ iNode)
-            {
-                qn(ist, iNode, kst, 0) = qn(ist, iNode, kst + 1, 0);
-                qn(ist, iNode, ked, 0) = qn(ist, iNode, ked - 1, 0);
-            }
-
-            for (int iNode = kst; iNode <= ked; ++ iNode)
-            {
-                qn(ist, jst, iNode, 0) = qn(ist, jst + 1, iNode, 0);
-                qn(ist, jed, iNode, 0) = qn(ist, jed - 1, iNode, 0);
-            }
-
-            qn(ist, jst, kst, 0) = qn(ist, jst + 1, kst + 1, 0);
-            qn(ist, jed, kst, 0) = qn(ist, jed - 1, kst + 1, 0);
-            qn(ist, jst, ked, 0) = qn(ist, jst + 1, ked - 1, 0);
-            qn(ist, jed, ked, 0) = qn(ist, jed - 1, ked - 1, 0);
-        }
-
-        if (nsurf == 1)
-        {
-            for (int iNode = ist; iNode <= ied; ++ iNode)
-            {
-                qn(iNode, jst, kst, 0) = qn(iNode, jst, kst + 1, 0);
-                qn(iNode, jst, ked, 0) = qn(iNode, jst, ked - 1, 0);
-            }
-
-            for (int iNode = kst; iNode <= ked; ++ iNode)
-            {
-                qn(ist, jst, iNode, 0) = qn(ist + 1, jst, iNode, 0);
-                qn(ied, jst, iNode, 0) = qn(ied - 1, jst, iNode, 0);
-            }
-
-            qn(ist, jst, kst, 0) = qn(ist + 1, jst, kst + 1, 0);
-            qn(ied, jst, kst, 0) = qn(ied - 1, jst, kst + 1, 0);
-            qn(ist, jst, ked, 0) = qn(ist + 1, jst, ked - 1, 0);
-            qn(ied, jst, ked, 0) = qn(ied - 1, jst, ked - 1, 0);
-        }
-
-        if (nsurf == 2)
-        {
-            for (int iNode = ist; iNode <= ied; ++ iNode)
-            {
-                qn(iNode, jst, kst, 0) = qn(iNode, jst + 1, kst, 0);
-                qn(iNode, jed, kst, 0) = qn(iNode, jed - 1, kst, 0);
-            }
-
-            for (int iNode = jst; iNode <= jed; ++ iNode)
-            {
-                qn(ist, iNode, kst, 0) = qn(ist + 1, iNode, kst, 0);
-                qn(ied, iNode, kst, 0) = qn(ied - 1, iNode, kst, 0);
-            }
-
-            qn(ist, jst, kst, 0) = qn(ist + 1, jst + 1, kst, 0);
-            qn(ied, jst, kst, 0) = qn(ied - 1, jst + 1, kst, 0);
-            qn(ist, jed, kst, 0) = qn(ist + 1, jed - 1, kst, 0);
-            qn(ied, jed, kst, 0) = qn(ied - 1, jed - 1, kst, 0);
         }
     }
 }

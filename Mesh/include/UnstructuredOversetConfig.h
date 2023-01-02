@@ -12,6 +12,7 @@
 //! @file      UnstructuredOversetConfig.h
 //! @brief     Unstructured grid overset configuration.
 //! @author    Chang Xinhua, He Kun, Zhang Laiping.
+
 #pragma once
 #include "PHMpi.h"
 #include "OversetKDTree.h"

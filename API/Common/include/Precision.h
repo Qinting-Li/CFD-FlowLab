@@ -15,13 +15,10 @@
 
 #pragma once
 #include<stdio.h>
+#include<mpi.h>
 
 namespace PHSPACE
 {
-#ifndef PH_DOUBLE_PREC
-#define PH_DOUBLE_PREC
-#endif
-
 #ifdef PH_DOUBLE_PREC
     typedef double RDouble;
     typedef double RFloat;
@@ -30,13 +27,18 @@ namespace PHSPACE
     const RDouble SMALL = 1.0e-40;
     const RDouble TINY  = 1.0e-40;
     const RDouble EPSILON = 1.0e-12;
+
+    #define PH_MPI_DOUBLE MPI_DOUBLE
 #else
     typedef float RDouble;
     typedef float RFloat;
 
-    const RDouble LARGE = 1.0e40f;
-    const RDouble SMALL = 1.0e-40f;
-    const RDouble TINY  = 1.0e-40f;
+    const RDouble LARGE = 1.0e36f;
+    const RDouble SMALL = 1.0e-36f;
+    const RDouble TINY  = 1.0e-36f;
+    const RDouble EPSILON = 1.0e-8f;
+
+    #define PH_MPI_DOUBLE MPI_FLOAT
 #endif
 
 typedef size_t uint_t;

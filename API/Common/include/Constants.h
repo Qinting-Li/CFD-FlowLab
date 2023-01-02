@@ -32,14 +32,12 @@ const int REPOSITORY          = 4;  //! Useless.
 const int OVERSETGRID_VIEW    = 5;
 const int OVERSET_CONFIG      = 6;
 const int CONVERT_PARTITION   = 7;  //! Useless.
-const int DSMC_SOLVER         = 8;
-const int HELICOPTER          = 9;
-const int UGKS_SOLVER         = 10;
 const int HO_SOLVER           = 12;
-const int LBM_SOLVER          = 13;
 
 const int INTEGRATIVE_SOLVER  = 14;
 const int GRIDCHECK_SOLVER    = 15;
+
+const int GRIDER_SOLVER       = 16;
 
 const int SPECDIFFHYB_SOLVER  = 51;
 const int SPEC_SOLVER         = 52;
@@ -89,11 +87,13 @@ const RDouble nineteen        = 19.0;
 const RDouble twenty          = 20.0;
 
 const RDouble PI              = 3.141592653589793;
+const RDouble straightAngle   = 180.0;
 
 const int SEGCTION_LENGTH     = 10240;
 
 const int NS_EQUATION         = 1;
 const int TURBULENCE          = 2;
+const int TRANSITION          = 3;
 
 const int NONDIMENSIONCONDITION = 0;
 const int FLIGHTCONDITION       = 1;
@@ -229,8 +229,8 @@ const int ISA  = 0;
 const int IKE  = 0;
 const int IKW  = 1;
 
-const int IGAMA = 2;
-const int IRECT = 3;
+const int IGAMA = 0;
+const int IRECT = 1;
 
 const int ITT  = 0;
 const int ITV  = 1;
@@ -298,6 +298,24 @@ typedef enum
     SIMPLEC    = 3,
     PISO       = 4
 }InCom_method;
+
+typedef enum  
+{
+    GaussSeidel = 0,
+    GMRES       = 1,
+    Bicgstab    = 2,
+    AMG         = 3,
+    PCG         = 4,
+    FlexGMRES   = 5
+}LinearSolverID;
+
+typedef enum  
+{
+    iNone    = 0,
+    iILU     = 1,
+    iAMG     = 2,
+    iEuclid  = 3
+}PrecondTypeID;
 
 typedef enum
 {

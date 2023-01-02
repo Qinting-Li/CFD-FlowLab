@@ -2,7 +2,7 @@
 
 # 风雷软件（PHengLEI2206.v10111）
 
-备注：当前为master分支，更多新功能请切换到ActiveBranch分支。
+备注：主分支为master分支，更稳定，更多新功能请切换到ActiveBranch分支。
 
 ## 1.软件简介
 

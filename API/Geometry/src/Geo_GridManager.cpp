@@ -81,6 +81,10 @@ GridManager::GridManager(UnstructGrid* unstructGridIn)
 
 GridManager::~GridManager()
 {
+    DeAllocateMetrics();
+
+    DeAllocateALEMetrics();
+
     delete [] localToGlobalNodeIndexMapping;    localToGlobalNodeIndexMapping = NULL;
 }
 
@@ -106,14 +110,36 @@ RDouble *GridManager::GetCellVolume(int iStep)
 
 void GridManager::AllocateMetrics()
 {
-    int numberOfFaces         = this->unstructGrid->GetNTotalFace();
+    int numberOfFaces = this->unstructGrid->GetNTotalFace();
 
-    if (oldFaceNormalX == 0) oldFaceNormalX = new RDouble[numberOfFaces];
-    if (oldFaceNormalY == 0) oldFaceNormalY = new RDouble[numberOfFaces];
-    if (oldFaceNormalZ == 0) oldFaceNormalZ = new RDouble [numberOfFaces];
+    if (IsNotAllocated(oldFaceNormalX))
+    {
+        oldFaceNormalX = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(oldFaceNormalY))
+    {
+        oldFaceNormalY = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(oldFaceNormalZ))
+    {
+        oldFaceNormalZ = new RDouble[numberOfFaces];
+    }
+}
 
-    //if (faceArea == 0) faceArea = new RDouble[numberOfFaces];
-    //if (cellVolume == 0) cellVolume = new RDouble[numberOfTotalCells];
+void GridManager::DeAllocateMetrics()
+{
+    if (oldFaceNormalX)
+    {
+        delete[]oldFaceNormalX;
+    }
+    if (oldFaceNormalY)
+    {
+        delete[]oldFaceNormalY;
+    }
+    if (oldFaceNormalZ)
+    {
+        delete[]oldFaceNormalZ;
+    }
 }
 
 void GridManager::AllocateALEMetrics()
@@ -127,18 +153,94 @@ void GridManager::AllocateALEMetrics()
     //if (faceNormalVelocity == 0) faceNormalVelocity = new RDouble[numberOfFaces];
 
     //Open up the meory for cellVolumeN1Container\cellVolumeN2Container\oldFaceNormalVelocity only when the unsteady moving meshes conditions.
-    if (cellVolumeN1 == 0) cellVolumeN1 = new RDouble[numberOfTotalCells];
-    if (cellVolumeN2 == 0) cellVolumeN2 = new RDouble [numberOfTotalCells];
+    if (IsNotAllocated(cellVolumeN1))
+    {
+        cellVolumeN1 = new RDouble[numberOfTotalCells];
+    }
+    if (IsNotAllocated(cellVolumeN2))
+    {
+        cellVolumeN2 = new RDouble[numberOfTotalCells];
+    }
 
-    if (oldFaceVelocityX == 0) oldFaceVelocityX = new RDouble[numberOfFaces];
-    if (oldFaceVelocityY == 0) oldFaceVelocityY = new RDouble[numberOfFaces];
-    if (oldFaceVelocityZ == 0) oldFaceVelocityZ = new RDouble [numberOfFaces];
-    if (oldFaceNormalVelocity == 0) oldFaceNormalVelocity = new RDouble[numberOfFaces];
+    if (IsNotAllocated(oldFaceVelocityX))
+    {
+        oldFaceVelocityX = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(oldFaceVelocityY))
+    {
+        oldFaceVelocityY = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(oldFaceVelocityZ))
+    {
+        oldFaceVelocityZ = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(oldFaceNormalVelocity))
+    {
+        oldFaceNormalVelocity = new RDouble[numberOfFaces];
+    }
 
-    if (newFaceVelocityX == 0) newFaceVelocityX = new RDouble[numberOfFaces];
-    if (newFaceVelocityY == 0) newFaceVelocityY = new RDouble[numberOfFaces];
-    if (newFaceVelocityZ == 0) newFaceVelocityZ = new RDouble [numberOfFaces];
-    if (newFaceNormalVelocity == 0) newFaceNormalVelocity = new RDouble[numberOfFaces];
+    if (IsNotAllocated(newFaceVelocityX))
+    {
+        newFaceVelocityX = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(newFaceVelocityY))
+    {
+        newFaceVelocityY = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(newFaceVelocityZ))
+    {
+        newFaceVelocityZ = new RDouble[numberOfFaces];
+    }
+    if (IsNotAllocated(newFaceNormalVelocity))
+    {
+        newFaceNormalVelocity = new RDouble[numberOfFaces];
+    }
+}
+
+void GridManager::DeAllocateALEMetrics()
+{
+    if (cellVolumeN1)
+    {
+        delete[]cellVolumeN1;
+    }
+    if (cellVolumeN2)
+    {
+        delete[]cellVolumeN2;
+    }
+
+    if (oldFaceVelocityX)
+    {
+        delete[]oldFaceVelocityX;
+    }
+    if (oldFaceVelocityY)
+    {
+        delete[]oldFaceVelocityY;
+    }
+    if (oldFaceVelocityZ)
+    {
+        delete[]oldFaceVelocityZ;
+    }
+    if (oldFaceNormalVelocity)
+    {
+        delete[]oldFaceNormalVelocity;
+    }
+
+    if (newFaceVelocityX)
+    {
+        delete[]newFaceVelocityX;
+    }
+    if (newFaceVelocityY)
+    {
+        delete[]newFaceVelocityY;
+    }
+    if (newFaceVelocityZ)
+    {
+        delete[]newFaceVelocityZ;
+    }
+    if (newFaceNormalVelocity)
+    {
+        delete[]newFaceNormalVelocity;
+    }
 }
 
 void GridManager::ComputeMetrics(ActionKey* actkey)

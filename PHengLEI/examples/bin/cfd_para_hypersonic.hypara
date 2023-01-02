@@ -79,6 +79,7 @@ double forceReferenceArea = 1.0;              // unit of meter^2.
 double TorqueRefX = 0.0;                      // unit of meter. 
 double TorqueRefY = 0.0;                      // unit of meter.
 double TorqueRefZ = 0.0;                      // unit of meter.
+double knudsenLength = 1.0;		              // unit of meter.
 
 #########################################################################
 #                       Physical models                                 #
@@ -185,6 +186,7 @@ int plotFieldType = 0;
 //                   -- modeledTKE(18), modeleddissipationrate(19), SSTF1(20), SSTF2(21),
 //                   -- vibration temperature(Tv, 33), electron temperature(Te, 34), vibrational energy(Ev, 35), electric energy(Ee, 36),
 //                   -- number density of electron(Ne, 37), dimensioanl density(rho, 38), dimensioanl pressure(p, 39), dimensioanl temperature(T, 40).
+//                   -- Knudsen number(kn, 60)
 // Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
 // Variables order must from small to big.
 
@@ -199,7 +201,7 @@ int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
 // -heat flux of species diffusion term(Qs, 9), -heat flux of vibrational temperature term(Qv, 10), -heat flux of electron temperature term(Qe, 11),
 // -species mass fractions(Ns, 12), -x component of wall velocity(Vx, 13), -y component of wall velocity(Vy, 14), -z component of wall velocity(Vz, 15)
 // -slip translational-rotational temperature(Tts, 16), -slip vibrational temperature(Tvs, 17), -slip electron temperature(Tes, 18), -absolute wall velocity(Vs, 19)
-// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22), 
+// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22), -Grid Reynolds number on wall(Re_w, 23) , -Knudsen number(Kn_wall, 24)
 
 int nVisualWallVariables = 9;
 int visualWallVariables[] = [0, 1, 2, 3, 4, 5, 9, 10, 11];

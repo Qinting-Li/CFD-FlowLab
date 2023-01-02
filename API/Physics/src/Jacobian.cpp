@@ -153,173 +153,119 @@ void MXDQ_STD(RDouble *prim, RDouble *gykb, RDouble *dq, RDouble *f, RDouble gam
     }
 }
 
-void ComputePreconMatrix(int sign, RDouble **GG, RDouble *prim, RDouble tm, RDouble gama)
+void ComputeConservativePreconMatrix(int sign, RDouble **MG, RDouble *prim, RDouble gama, RDouble preconCoeff, int nm, int neqn)
 {
     using namespace IDX;
     using namespace GAS_SPACE;
 
-    RDouble rm, um, vm, wm, pm, Hm, mach2, v2, c2, rhot, Cp, beta, beta_new, Ep, theta, psi, gama1;    
-    RDouble refMachNumber;
-    GlobalDataBase::GetData("refMachNumber", &refMachNumber, PHDOUBLE, 1);
+    RDouble rm, um, vm, wm, pm, Hm, v2, c2, psi, gama1;
+
+    for (int i = 0; i < neqn; ++ i)
+    {
+        for (int j = 0; j < neqn; ++ j)
+        {
+            MG[i][j] = 0.0;
+        }
+    }
+
+    rm = prim[IR];
+    um = prim[IU];
+    vm = prim[IV];
+    wm = prim[IW];
+    pm = prim[IP];
+
+    gama1 = gama - 1.0;
+    c2 = gama * pm / rm;
+    v2 = um * um + vm * vm + wm * wm;
+
+    Hm = gama / gama1 * pm / rm + 0.5 * v2;
+
 
     switch(sign) 
     {
-    case 0:  // precondition matrix 
 
-        mach2 = refMachNumber * refMachNumber;
-        gama1 = gama - 1.0;
-        rm = prim[IR];
-        um = prim[IU];
-        vm = prim[IV];
-        wm = prim[IW];
-        pm = prim[IP];
+    case -1: // M * T-
 
-        c2 = gama * pm / rm;
-        v2 = um * um + vm * vm + wm * wm;
-
-        beta = MIN(MAX(v2 / c2, 3.0 * mach2),1.0);
-        Hm = gama / gama1 * pm / rm + 0.5 * v2;
-
-        rhot = -rm / tm;
-        Cp = 1.0/ (gama1 * mach2);
-        beta_new = beta / (1 + gama1 * beta);
-        Ep = 1/ (beta_new * c2);
-        theta = mach2 / (Ep * tm);
-
-        GG[IR][0] = theta;
-        GG[IR][1] = 0.0;
-        GG[IR][2] = 0.0;
-        GG[IR][3] = 0.0;
-        GG[IR][4] = rhot;
-
-        GG[IU][0] = um * theta;
-        GG[IU][1] = rm;
-        GG[IU][2] = 0.0;
-        GG[IU][3] = 0.0;
-        GG[IU][4] = um * rhot;
-
-        GG[IV][0] = vm * theta;
-        GG[IV][1] = 0.0;
-        GG[IV][2] = rm;
-        GG[IV][3] = 0.0;
-        GG[IV][4] = vm * rhot;
-
-        GG[IW][0] = wm * theta;
-        GG[IW][1] = 0.0;
-        GG[IW][2] = 0.0;
-        GG[IW][3] = rm;
-        GG[IW][4] = wm * rhot;
-
-        GG[IP][0] = Hm * theta - 1.0;
-        GG[IP][1] = um * rm;
-        GG[IP][2] = vm * rm;
-        GG[IP][3] = wm * rm;
-        GG[IP][4] = Hm * rhot + rm * Cp;
-
+        psi  = (preconCoeff - 1.0) * gama1 / c2;
         break;
 
-    case 1: // M * inverse precondition matrix
+    case 1: // T * M-
 
-        mach2 = refMachNumber * refMachNumber;
-        gama1 = gama - 1.0;
-        rm = prim[IR];
-        um = prim[IU];
-        vm = prim[IV];
-        wm = prim[IW];
-        pm = prim[IP];
+        psi  = (1.0 - preconCoeff) / preconCoeff * gama1 / c2 ;
+        break;
+    }
 
-        c2 = gama * pm / rm;
-        v2 = um * um + vm * vm + wm * wm;
-        beta = MIN(MAX(v2 / c2, 3.0 * mach2), 1.0);
-        Hm = gama / gama1 * pm / rm + 0.5 * v2;
-        psi  = (beta - 1.0) * gama1 * mach2 / tm;
+    MG[IR][0] = 1.0 + 0.5 * v2 * psi;
+    MG[IR][1] = - um * psi;
+    MG[IR][2] = - vm * psi;
+    MG[IR][3] = - wm * psi;
+    MG[IR][4] = psi;
 
-        GG[IR][0] = 1.0 + 0.5 * v2 * psi;
-        GG[IR][1] = - um * psi;
-        GG[IR][2] = - vm * psi;
-        GG[IR][3] = - wm * psi;
-        GG[IR][4] = psi;
+    MG[IRU][0] = 0.5 * um * v2 * psi;
+    MG[IRU][1] = 1.0 - um * um * psi;
+    MG[IRU][2] = -um * vm * psi;
+    MG[IRU][3] = -um * wm * psi;
+    MG[IRU][4] = um * psi;
 
-        GG[IRU][0] = 0.5 * um * v2 * psi;
-        GG[IRU][1] = 1.0 - um * um * psi;
-        GG[IRU][2] = -um * vm * psi;
-        GG[IRU][3] = -um * wm * psi;
-        GG[IRU][4] = um * psi;
+    MG[IRV][0] = 0.5 * vm * v2 * psi;
+    MG[IRV][1] = -vm * um * psi;
+    MG[IRV][2] = 1.0 - vm * vm * psi;
+    MG[IRV][3] = -vm * wm * psi;
+    MG[IRV][4] = vm * psi;
 
-        GG[IRV][0] = 0.5 * vm * v2 * psi;
-        GG[IRV][1] = -vm * um * psi;
-        GG[IRV][2] = 1.0 - vm * vm * psi;
-        GG[IRV][3] = -vm * wm * psi;
-        GG[IRV][4] = vm * psi;
+    MG[IRW][0] = 0.5 * wm * v2 * psi;
+    MG[IRW][1] = -wm * um * psi;
+    MG[IRW][2] = -wm * vm * psi;
+    MG[IRW][3] = 1.0 - wm * wm * psi;
+    MG[IRW][4] = wm * psi;
 
-        GG[IRW][0] = 0.5 * wm * v2 * psi;
-        GG[IRW][1] = -wm * um * psi;
-        GG[IRW][2] = -wm * vm * psi;
-        GG[IRW][3] = 1.0 - wm * wm * psi;
-        GG[IRW][4] = wm * psi;
+    MG[IRE][0] = 0.5 * Hm * v2 * psi;
+    MG[IRE][1] = - um * Hm * psi;
+    MG[IRE][2] = - vm * Hm * psi;
+    MG[IRE][3] = - wm * Hm * psi;
+    MG[IRE][4] = 1.0 + Hm * psi;
 
-        GG[IRE][0] = 0.5 * Hm * v2 * psi;
-        GG[IRE][1] = - um * Hm * psi;
-        GG[IRE][2] = - vm * Hm * psi;
-        GG[IRE][3] = - wm * Hm * psi;
-        GG[IRE][4] = 1.0 + Hm * psi;
-
+    for (int i = nm; i < neqn; ++ i)
+    {
+        for (int j = 0; j < neqn; ++ j)
+        {
+            MG[i][j] = prim[i] * MG[IR][j];
+            if(j == i)
+            {
+                MG[i][j] = 1.0;
+            }
+        }
     }
 
 }
 
-void PreconMatrixDF(RDouble *df, RDouble **GG, int nm)
+void ConservativePreconMatrixVariables(RDouble *field, RDouble *preconMatrix, int neqn)
 {
     using namespace IDX;
 
-    RDouble * df_trans = new RDouble [nm];
+    RDouble *field_tmp = new RDouble [neqn];
 
-    for (int m = 0; m < nm; ++ m)
+    for (int m = 0; m < neqn; ++ m)
     {
-        df_trans[m]  = 0;
+        field_tmp[m]  = 0;
     }
 
-    for (int m = 0; m < nm; ++ m)
+    for (int i = 0; i < neqn; ++ i)
     {
-        df_trans[IR]  += df[m] * GG[IR][m];
-        df_trans[IRU] += df[m] * GG[IRU][m];
-        df_trans[IRV] += df[m] * GG[IRV][m];
-        df_trans[IRW] += df[m] * GG[IRW][m];
-        df_trans[IRE] += df[m] * GG[IRE][m];
+        for (int j = 0; j < neqn; ++ j)
+        {
+            int index = i * neqn + j;
+
+            field_tmp[i] += field[j] * preconMatrix[index];
+        }
     }
 
-    for (int m = 0; m < nm; ++ m)
+    for (int m = 0; m < neqn; ++ m)
     {
-        df[m] = df_trans[m];
+        field[m] = field_tmp[m];
     }
 
-    delete []df_trans;
-}
-
-void PreconMatrixRes(RDouble **dq, RDouble **GG, int nm, int iCell)
-{
-    using namespace IDX;
-    RDouble * dqTrans = new RDouble[nm];
-    for (int m = 0; m < nm; ++ m)
-    {
-        dqTrans[m]  = 0;
-    }
-
-    for (int m = 0; m < nm; ++ m)
-    {
-        dqTrans[IR] += dq[m][iCell] * GG[IR ][m];
-        dqTrans[IU] += dq[m][iCell] * GG[IRU][m];
-        dqTrans[IV] += dq[m][iCell] * GG[IRV][m];
-        dqTrans[IW] += dq[m][iCell] * GG[IRW][m];
-        dqTrans[IP] += dq[m][iCell] * GG[IRE][m];
-    }
-
-    for (int m = 0; m < nm; ++ m)
-    {
-        dq[m][iCell] = dqTrans[m];
-    }
-
-    delete []dqTrans;
+    delete []field_tmp;
 }
 
 void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
@@ -679,13 +625,13 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
     delete []theta_s;    theta_s = NULL;
 }
 
-void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RDouble gama, RDouble *df, int nm)
+void MatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble gama, RDouble *df, int nm, int neqn, int ipn)
 {
     using namespace IDX;
+    RDouble *Qtmp = new RDouble[neqn];
 
     RDouble gamm1 = gama - 1.0;
     RDouble nxs = 0.0, nys = 0.0, nzs = 0.0, vgn = 0.0, ns = 0.0;
-    RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
 
     nxs = nxyz[0];
     nys = nxyz[1];
@@ -693,241 +639,200 @@ void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RD
     ns  = nxyz[3];
     vgn = nxyz[4];
 
-    RDouble rm,um,vm,wm,pm,em,cm,vn,v2,eig;
-    RDouble mx,my,mz;
+    RDouble rm,um,vm,wm,pm,vn,eig;
 
-    RDouble mach2 = refMachNumber * refMachNumber;
     rm = q[IR];
     um = q[IU];
     vm = q[IV];
     wm = q[IW];
     pm = q[IP];
-    cm = sqrt(gama * pm / rm);
 
-    mx = rm * um;
-    my = rm * vm;
-    mz = rm * wm;
-    em = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
+    Qtmp[IR]  = rm ;
+    Qtmp[IRU] = rm * um;
+    Qtmp[IRV] = rm * vm;
+    Qtmp[IRW] = rm * wm;
+    Qtmp[IRE] = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
+
+    for (int m = nm; m < neqn; ++ m)
+    {
+        Qtmp[m] = q[IR] * q[m];
+    }
 
     //! Normal velocity and Eigenvalues.
     vn = nxs * um + nys * vm + nzs * wm - vgn;
-    v2 = um * um + vm * vm + wm * wm;
-
-    RDouble c2  = cm * cm;
-    RDouble beta = MIN(MAX(v2 / c2,3.0 * mach2),1.0);
-    RDouble vnew  = half * vn * (1 + beta);
-    RDouble cnew  = half * sqrt(((beta - 1) * vn) * ((beta - 1) * vn) + 4 * beta * c2);
-    eig   = (ABS(vnew) +  cnew );
+    eig   = ABS( vn ) + sqrt( gama * pm / rm );
 
     //! Need to find out the fluxes on level n.
-    df[IR ] = - (rm * vn);
-    df[IRU] = - (rm * um * vn + nxs * pm);
-    df[IRV] = - (rm * vm * vn + nys * pm);
-    df[IRW] = - (rm * wm * vn + nzs * pm);
-    df[IRE] = - ((em + pm) * vn + vgn * pm);
+    df[IR ] = - (Qtmp[IR] * vn);
+    df[IRU] = - (Qtmp[IRU] * vn + nxs * pm);
+    df[IRV] = - (Qtmp[IRV] * vn + nys * pm);
+    df[IRW] = - (Qtmp[IRW] * vn + nzs * pm);
+    df[IRE] = - ((Qtmp[IRE] + pm) * vn + vgn * pm);
+
+    for (int m = nm; m < neqn; ++ m)
+    {
+        df[m] -= ( Qtmp[m] * vn );
+    }
 
     //! Conservative variable on level n+1.
-    rm += dq[IR ];
-    mx += dq[IRU];
-    my += dq[IRV];
-    mz += dq[IRW];
-    em += dq[IRE];
+    Qtmp[IR]  += dq[IR ];
+    Qtmp[IRU] += dq[IRU];
+    Qtmp[IRV] += dq[IRV];
+    Qtmp[IRW] += dq[IRW];
+    Qtmp[IRE] += dq[IRE];
 
-    um  = mx / rm;
-    vm  = my / rm;
-    wm  = mz / rm;
+    for (int m = nm; m < neqn; ++ m)
+    {
+        Qtmp[m] += dq[m];
+    }
 
-    vn  = nxs * um + nys * vm + nzs * wm - vgn;
+    rm = Qtmp[IR];
+    um = Qtmp[IRU] / rm;
+    vm = Qtmp[IRV] / rm;
+    wm = Qtmp[IRW] / rm;
+    pm = gamm1 * (Qtmp[IRE] - half * rm * (um * um + vm * vm + wm * wm));
 
-    pm = gamm1 * (em - half * rm * (um * um + vm * vm + wm * wm));
     rm = ABS(rm);
     pm = ABS(pm);
 
-    //! Now the flux difference due to dq.
-    df[IR ] += (rm * vn);
-    df[IRU] += (rm * um * vn + nxs * pm);
-    df[IRV] += (rm * vm * vn + nys * pm);
-    df[IRW] += (rm * wm * vn + nzs * pm);
-    df[IRE] += ((em + pm) * vn + vgn * pm);
+    vn  = nxs * um + nys * vm + nzs * wm - vgn;
 
-    PreconMatrixDF(df, MG, nm);
+    //! Now the flux difference due to dq.
+    df[IR ] += (Qtmp[IR] * vn);
+    df[IRU] += (Qtmp[IRU] * vn + nxs * pm);
+    df[IRV] += (Qtmp[IRV] * vn + nys * pm);
+    df[IRW] += (Qtmp[IRW] * vn + nzs * pm);
+    df[IRE] += ((Qtmp[IRE] + pm) * vn + vgn * pm);
+
+    for (int m = nm; m < neqn; ++ m)
+    {
+        df[m] += ( Qtmp[m] * vn );
+    }
 
     //! Subtract eigenvalue terms from the flux difference.
-
-    for (int m = 0; m < nm; ++ m)
+    for (int m = 0; m < neqn; ++ m)
     {
-        df[m] -= eig * dq[m];
+        //df[m] -= eig * dq[m];
+        df[m] += ipn * eig * dq[m];
     }
 
     //! Divide by 2 out of necessity.
-    for (int m = 0; m < nm; ++ m)
+    for (int m = 0; m < neqn; ++ m)
     {
         df[m] *= half * ns;
     }
+
+    delete []Qtmp;
 }
 
-void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *gykb,  RDouble **MG, RDouble tm, RDouble gama, RDouble *df, int nm, int ipn)
+void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconMatrix, RDouble gama, RDouble preconCoeff, RDouble *df, int nm, int neqn, int ipn)
 {
     using namespace IDX;
+    RDouble *Qtmp = new RDouble[neqn];
 
     RDouble gamm1 = gama - 1.0;
-    RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+    RDouble nxs = 0.0, nys = 0.0, nzs = 0.0, vgn = 0.0, ns = 0.0;
 
-    RDouble rm,um,vm,wm,pm,em,cm,vn,v2,eig;
-    RDouble mx,my,mz;
+    nxs = nxyz[0];
+    nys = nxyz[1];
+    nzs = nxyz[2];
+    ns  = nxyz[3];
+    vgn = nxyz[4];
 
-    RDouble mach2 = refMachNumber * refMachNumber;
+    RDouble rm,um,vm,wm,pm,vn,v2,c2;
+
     rm = q[IR];
     um = q[IU];
     vm = q[IV];
     wm = q[IW];
     pm = q[IP];
-    cm = sqrt(gama * pm / rm);
 
-    mx = rm * um;
-    my = rm * vm;
-    mz = rm * wm;
-    em = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
+    Qtmp[IR]  = rm ;
+    Qtmp[IRU] = rm * um;
+    Qtmp[IRV] = rm * vm;
+    Qtmp[IRW] = rm * wm;
+    Qtmp[IRE] = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
 
-    //! Normal velocity and Eigenvalues.
-    vn = gykb[0] * um + gykb[1] * vm + gykb[2] * wm - gykb[4];
-    v2 = um * um + vm * vm + wm * wm;
-
-    RDouble c2  = cm * cm;
-    RDouble beta = MIN(MAX(v2 / c2,3.0 * mach2),1.0);
-    //RDouble beta = MIN(MAX(v2 / c2, mach2),1.0);
-    RDouble vnew  = half * vn * (1 + beta);
-    RDouble cnew  = half * sqrt(((beta - 1) * vn) * ((beta - 1) * vn) + 4 * beta * c2);
-    eig   = (ABS(vnew) +  cnew);
-
-    //! Need to find out the fluxes on leverl n.
-    df[IR] = - (rm * vn);
-    df[IRU] = - (rm * um * vn + gykb[0] * pm);
-    df[IRV] = - (rm * vm * vn + gykb[1] * pm);
-    df[IRW] = - (rm * wm * vn + gykb[2] * pm);
-    df[IRE] = - ((em + pm) * vn + gykb[4] * pm);
-
-    //! Conservative variable on level n+1.
-    rm += dq[IR];
-    mx += dq[IRU];
-    my += dq[IRV];
-    mz += dq[IRW];
-    em += dq[IRE];
-
-
-    um  = mx / rm;
-    vm  = my / rm;
-    wm  = mz / rm;
-
-    vn  = gykb[0] * um + gykb[1] * vm + gykb[2] * wm - gykb[4];
-
-    pm = gamm1 * (em - half * rm * (um * um + vm * vm + wm * wm));
-    rm = ABS(rm);
-    pm = ABS(pm);
-
-    //! Now the flux difference due to dq.
-    df[IR] += (rm * vn);
-    df[IRU] += (rm * um * vn + gykb[0] * pm);
-    df[IRV] += (rm * vm * vn + gykb[1] * pm);
-    df[IRW] += (rm * wm * vn + gykb[2] * pm);
-    df[IRE] += ((em + pm) * vn + gykb[4] * pm);
-
-    ComputePreconMatrix(1, MG, q, tm, gama);
-    PreconMatrixDF(df, MG, nm);
-
-    //! Subtract eigenvalue terms from the flux difference.
-
-    for (int m = 0; m < nm; ++ m)
+    for (int m = nm; m < neqn; ++ m)
     {
-        df[m] += ipn * eig * dq[m];
+        Qtmp[m] = q[IR] * q[m];
     }
-
-    //! Divide by 2 out of necessity.
-    for (int m = 0; m < nm; ++ m)
-    {
-        df[m] *= half * gykb[3];
-    }
-}
-
-void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble nxs, RDouble nys, RDouble nzs, RDouble area, RDouble vgn, RDouble **MG, RDouble gama, RDouble *df, int nm, int ipn)
-{
-    using namespace IDX;
-
-    RDouble gamm1 = gama - 1.0;
-    RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
-
-    RDouble rm,um,vm,wm,pm,em,cm,vn,v2,eig;
-    RDouble mx,my,mz;
-
-    RDouble mach2 = refMachNumber * refMachNumber;
-    rm = q[IR];
-    um = q[IU];
-    vm = q[IV];
-    wm = q[IW];
-    pm = q[IP];
-    cm = sqrt(gama * pm / rm);
-
-    mx = rm * um;
-    my = rm * vm;
-    mz = rm * wm;
-    em = pm / gamm1 + half * rm * (um * um + vm * vm + wm * wm);
 
     //! Normal velocity and Eigenvalues.
     vn = nxs * um + nys * vm + nzs * wm - vgn;
     v2 = um * um + vm * vm + wm * wm;
+    c2  = gama * pm / rm;
 
-    RDouble c2  = cm * cm;
-    RDouble beta = MIN(MAX(v2 / c2,3.0 * mach2),1.0);
-    RDouble vnew  = half * vn * (1 + beta);
-    RDouble cnew  = half * sqrt(((beta - 1) * vn) * ((beta - 1) * vn) + 4 * beta * c2);
-    eig   = (ABS(vnew) +  cnew);
+    RDouble vnew,cnew,eig;
+
+    vnew  = half * vn * (1.0 + preconCoeff);
+    cnew  = half * sqrt(((1.0 - preconCoeff) * vn) * ((1.0 - preconCoeff) * vn) + 4.0 * preconCoeff * c2);
+    eig   = (ABS(vnew) +  cnew );
 
     //! Need to find out the fluxes on level n.
-    df[IR] = - (rm * vn);
-    df[IRU] = - (rm * um * vn + nxs * pm);
-    df[IRV] = - (rm * vm * vn + nys * pm);
-    df[IRW] = - (rm * wm * vn + nzs * pm);
-    df[IRE] = - ((em + pm) * vn + vgn * pm);
+    df[IR ] = - (Qtmp[IR] * vn);
+    df[IRU] = - (Qtmp[IRU] * vn + nxs * pm);
+    df[IRV] = - (Qtmp[IRV] * vn + nys * pm);
+    df[IRW] = - (Qtmp[IRW] * vn + nzs * pm);
+    df[IRE] = - ((Qtmp[IRE] + pm) * vn + vgn * pm);
+
+    for (int m = nm; m < neqn; ++ m)
+    {
+        df[m] -= ( Qtmp[m] * vn );
+    }
 
     //! Conservative variable on level n+1.
-    rm += dq[IR];
-    mx += dq[IRU];
-    my += dq[IRV];
-    mz += dq[IRW];
-    em += dq[IRE];
+    Qtmp[IR]  += dq[IR ];
+    Qtmp[IRU] += dq[IRU];
+    Qtmp[IRV] += dq[IRV];
+    Qtmp[IRW] += dq[IRW];
+    Qtmp[IRE] += dq[IRE];
 
+    for (int m = nm; m < neqn; ++ m)
+    {
+        Qtmp[m] += dq[m];
+    }
 
-    um  = mx / rm;
-    vm  = my / rm;
-    wm  = mz / rm;
+    rm = Qtmp[IR];
+    um = Qtmp[IRU] / rm;
+    vm = Qtmp[IRV] / rm;
+    wm = Qtmp[IRW] / rm;
+    pm = gamm1 * (Qtmp[IRE] - half * rm * (um * um + vm * vm + wm * wm));
 
-    vn  = nxs * um + nys * vm + nzs * wm - vgn;
-
-    pm = gamm1 * (em - half * rm * (um * um + vm * vm + wm * wm));
     rm = ABS(rm);
     pm = ABS(pm);
 
-    //! Now the flux difference due to dq.
-    df[IR] += (rm * vn);
-    df[IRU] += (rm * um * vn + nxs * pm);
-    df[IRV] += (rm * vm * vn + nys * pm);
-    df[IRW] += (rm * wm * vn + nzs * pm);
-    df[IRE] += ((em + pm) * vn + vgn * pm);
+    vn  = nxs * um + nys * vm + nzs * wm - vgn;
 
-    PreconMatrixDF(df, MG, nm);
+    //! Now the flux difference due to dq.
+    df[IR ] += (Qtmp[IR] * vn);
+    df[IRU] += (Qtmp[IRU] * vn + nxs * pm);
+    df[IRV] += (Qtmp[IRV] * vn + nys * pm);
+    df[IRW] += (Qtmp[IRW] * vn + nzs * pm);
+    df[IRE] += ((Qtmp[IRE] + pm) * vn + vgn * pm);
+
+    for (int m = nm; m < neqn; ++ m)
+    {
+        df[m] += ( Qtmp[m] * vn );
+    }
+
+    ConservativePreconMatrixVariables(df, preconMatrix, neqn);
 
     //! Subtract eigenvalue terms from the flux difference.
 
-    for (int m = 0; m < nm; ++ m)
+    for (int m = 0; m < neqn; ++ m)
     {
+        //df[m] -= eig * dq[m];
         df[m] += ipn * eig * dq[m];
     }
 
     //! Divide by 2 out of necessity.
-    for (int m = 0; m < nm; ++ m)
+    for (int m = 0; m < neqn; ++ m)
     {
-        df[m] *= half * area;
+        df[m] *= half * ns;
     }
+
+    delete []Qtmp;
 }
 
 }

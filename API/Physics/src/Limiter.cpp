@@ -1145,15 +1145,15 @@ void Limiter::VencatLimiter7(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     //! The following 'eps' is the eps^2 actually in the mathematic formation.
     //! And the 'venkatCoeff' is the coefficient of 'K' in the mathematic formation.
     int dimension = GetDim();
-    RDouble n = 3.0;
+    RDouble n = three;
     RDouble *epsCell = new RDouble[nTotalCell];
     RDouble eps_tmp = venkatCoeff * venkatCoeff * venkatCoeff;
-    eps_tmp *= 1.0/pow(pow(averageVolume, 1.0/dimension), n);
+    eps_tmp *= one/pow(pow(averageVolume, one/dimension), n);
 
     for (int iCell = 0; iCell < nTotalCell; ++iCell)
     {
         epsCell[iCell]  = eps_tmp * q[iCell] * q[iCell];
-        epsCell[iCell] *= pow(pow(volume[iCell], 1.0/dimension), n);
+        epsCell[iCell] *= pow(pow(volume[iCell], one/dimension), n);
     }
     //! The following loop is to calculate the limiter coefficient of each cell on the boundary face.
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)

@@ -99,16 +99,16 @@ public:
     //! To search the cell nearest to the probe.
     void SearchNearestCell(Grid *grid);
     //! To search the cell nearest to the probe for structured grid.
-    void SearchNearestCell(StructGrid * grid);
+    void SearchNearestCell(StructGrid *grid);
     //! To search the cell nearest to the probe for unstructured grid.
-    void SearchNearestCell(UnstructGrid * grid);
+    void SearchNearestCell(UnstructGrid *grid);
 
     //! To search the real cell where the probe is located.
     void SearchRealCell(Grid *grid, bool &flag);
     //! To search the real cell where the probe is located for structured grid.
-    void SearchRealCell(StructGrid * grid, bool &flag);
+    void SearchRealCell(StructGrid *grid, bool &flag);
     //! To search the real cell where the probe is located for unstructured grid.
-    void SearchRealCell(UnstructGrid * grid, bool &flag);
+    void SearchRealCell(UnstructGrid *grid, bool &flag);
 
     //! To dump the probe cell information of the each probe for structured grid.
     void WriteStructProbeCellInfo(fstream &file);
@@ -124,7 +124,6 @@ public:
     void DecompressStructProbeCellInfo(DataContainer *cdata);
     //! Decompress DataContainer's probe cell information into each ProbeData for unstructured grid.
     void DecompressUnstructProbeCellInfo(DataContainer *cdata);
-
 };
 
 class SampleLocationInfo
@@ -219,7 +218,7 @@ private:
 };
 
 //! Check if the probe in Min-Max box.
-bool CheckIfProbeInMinMaxBox(RDouble coordX,RDouble coordY,RDouble coordZ,RDouble *pmin,RDouble *pmax);
+bool CheckIfProbeInMinMaxBox(RDouble coordX, RDouble coordY, RDouble coordZ, RDouble *pmin, RDouble *pmax);
 
 //! To dump the probes cells information file title.
 void WriteProbesCellInfoHeader(fstream &file);

@@ -39,18 +39,18 @@ private:
     VVInt facemap;
     RDouble tol;
     vector< RDouble > x, y, z;
-    set< Geo_Point< RDouble >  > point_set;
+    set< Geo_Point< RDouble > > point_set;
 public:
-    AdtTree &GetCoordinateTree() { return coor_tree; }
-    set < DataStruct_Sort< VInt > > &GetFaceList() { return facelist; }
-    VVInt &GetZoneID() { return zoneid; };
-    VVInt &GetFaceID() { return faceid; };
-    VVInt &GetFaceMap() { return facemap; };
+    AdtTree & GetCoordinateTree() { return coor_tree; }
+    set < DataStruct_Sort< VInt > > & GetFaceList() { return facelist; }
+    VVInt & GetZoneID() { return zoneid; }
+    VVInt & GetFaceID() { return faceid; }
+    VVInt & GetFaceMap() { return facemap; }
     RDouble GetTolerance() const { return tol; }
-    vector< RDouble > &GetX() { return x; };
-    vector< RDouble > &GetY() { return y; };
-    vector< RDouble > &GetZ() { return z; };
-    set< Geo_Point< RDouble >  > &GetPointSet() { return point_set; }
+    vector< RDouble > & GetX() { return x; }
+    vector< RDouble > & GetY() { return y; }
+    vector< RDouble > & GetZ() { return z; }
+    set< Geo_Point< RDouble >  > & GetPointSet() { return point_set; }
 public:
     LinkStruct(RDouble *pmin, RDouble *pmax, RDouble tol, int nblocks) : coor_tree(3, pmin, pmax)
     {

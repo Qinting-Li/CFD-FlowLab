@@ -33,6 +33,11 @@ inline RDouble3D * StructGrid::GetWallDist() const
     return walldist;
 }
 
+inline Int3D *StructGrid::GetCellBoundaryType()
+{
+    return cellBoundaryType;
+}
+
 inline RDouble3D * StructGrid::GetCellCenterX() const
 {
     return cellMetrics->GetCellCenterX();

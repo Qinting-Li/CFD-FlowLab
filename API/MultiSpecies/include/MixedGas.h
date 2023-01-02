@@ -308,6 +308,7 @@ private:
     int nIsSuperCatalytic;
     int nChemcalSourceModified;
     int nChemcalSourceEsMethod;
+    int nDensityForWallMethod;
 
     RDouble electronMass;
     RDouble electronMassDimension;
@@ -351,6 +352,7 @@ public:
     int GetnEnergyRecycle() const { return nEnergyRecycle; }
     int GetnChemcalSourceModified() const { return nChemcalSourceModified; }
     int GetGasModelType() { return this->nGasModel; }
+    int GetnDensityForWallMethod() const { return nDensityForWallMethod; }
 private:
     RDouble *moleFractions;
     RDouble *massFractions;
@@ -394,6 +396,7 @@ private:
     void ComputeReferenceViscosityDimensional();
     void ComputeReferenceGasInformation();
     void ComputeReferenceSoundVelocity();
+    void ComputeReferenceInitMassFractionInformation();
     void ComputeReferenceMolecularInformation();
     void ComputeReferenceMolecularInformationWithChemical();
     void ComputeReferenceMolecularInformationWithoutChemical();
@@ -559,6 +562,9 @@ public:
 
     void ComputeMixtureByWilkeFormula(RDouble *moleFractionOfSpecies, RDouble *mixtureOfSpecies, RDouble *phiOfSpecies, RDouble &mixture);
 
+    //! To obtain the mass fraction of each species according to other fraction of each species.
+    //! @param[in ]: fractionOfSpecies is an array of saving the fraction of each specie,such as mole fraction,volume fraction.
+    void MassFractionConversion(RDouble *fractionOfSpecies);
     //! To obtain the mole fraction of each species according to the mass fraction of each species.
     //! @param[in ]: massFractionOfSpecies is an array of saving the mass fraction of each species.
     //! @param[out]: moleFractionOfSpecies is an array of saving the mole fraction of each species.
@@ -1368,6 +1374,7 @@ public:
 
     void ComputeSpecificHeatByPolynomialFitMethod(RDouble temperature, RDouble *cvSpecies, bool isVibrationModel = true);
     void ComputeEnthalpyByPolynomialFitMethod(RDouble temperature, RDouble *hSpecies, bool isVibrationModel = true);
+    void ComputeTemperatureFromTotalTemperature(RDouble *massF, RDouble totalTemperature, RDouble mach, RDouble &Temperature, RDouble &gama, int Dimensional = 0);
 
 };
 

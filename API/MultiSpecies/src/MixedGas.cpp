@@ -1597,37 +1597,10 @@ void MixedGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, R
     prim[IW] = wm;
 
     if (nchem == 1)
-    {  
-        if (nSpeciesLimit==1)
+    {
+        for (int m = nm; m < nl; ++m)
         {
-            fmin=1.0;
-            for (int m = nm; m < nl; ++ m)
-            {       
-                mci = m-nm;
-                deltC = q[m] * oDensity - prim[m];
-                massFractions[mci] = deltC;
-
-                if (prim[m] + deltC < 0)
-                {
-                    fcs = MIN(MAX(prim[m], 0.1) / (SMALL - deltC), 1.0);
-                    fmin = MIN(fmin, fcs);
-                }
-            }
-
-            for (int m = nm; m < nl; ++ m)
-            {
-                mci = m-nm;
-                massFractions[mci] = prim[m] + fmin * massFractions[mci];
-                prim[m] = MIN(maximumSpecies[mci], MAX(SMALL, (1.0 - chemicalRelaxCorf) * prim[m] + chemicalRelaxCorf * massFractions[mci]));
-            }
-        //SetMaximumSpecies
-        }
-        else
-        {
-            for (int m = nm; m < nl; ++ m)
-            {
-                prim[m] =MIN(static_cast<RDouble>(one), MAX(SMALL, (1.0-chemicalRelaxCorf) * prim[m] + chemicalRelaxCorf * q[m] * oDensity));
-            }
+            prim[m] = MIN(static_cast<RDouble>(one), MAX(SMALL, q[m] * oDensity));
         }
         NormalizePrimitive(prim);
     }
@@ -1682,37 +1655,11 @@ void MixedGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, 
     squareVelocity = um * um + vm * vm + wm * wm;
     internalEnergy = q[IRE] * oDensity - half * squareVelocity;
 
-    if (nSpeciesLimit == 1)
+    for (int m = nm; m < nl; ++ m)
     {
-        fmin = 1.0;
-        for (int m = nm; m < nl; ++ m)
-        {       
-            mci = m-nm;
-            deltC = q[m] * oDensity - prim[m];
-            massFractions[mci] = deltC;
-        
-            if (prim[m] + deltC < 0)
-            {
-                fcs = MIN(MAX(prim[m], 0.1) / (SMALL - deltC), 1.0);
-                fmin = MIN(fmin, fcs);
-            }
-        }
-             
-        for (int m = nm; m < nl; ++ m)
-        {
-            mci = m-nm;
-            massFractions[mci] = prim[m] + fmin * massFractions[mci];
-            prim[m] = MIN(maximumSpecies[mci], MAX(SMALL, (1.0 - chemicalRelaxCorf) * prim[m] + chemicalRelaxCorf * massFractions[mci]));
-        }
-            //SetMaximumSpecies
+        prim[m] = MIN(static_cast<RDouble>(one), MAX(SMALL, q[m] * oDensity));
     }
-    else
-    {
-        for (int m = nm; m < nl; ++ m)
-        {
-            prim[m] = MIN(static_cast<RDouble>(one), MAX(SMALL, (1.0-chemicalRelaxCorf) * prim[m] + chemicalRelaxCorf * q[m] * oDensity));
-        }
-    }
+
     NormalizePrimitive(prim);
 
     for (int i = 1; i < ntmodel; ++ i)    //! multi-temperature model.
@@ -2253,6 +2200,14 @@ void MixedGas::ComputeReferenceSoundVelocity()
     GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
 }
 
+void MixedGas::ComputeReferenceInitMassFractionInformation()
+{
+    RDouble *mass_fraction_reference = this->molecularProperty->GetInitialMassFraction();
+
+    MassFractionConversion(mass_fraction_reference);
+
+}
+
 void MixedGas::ComputeReferenceMolecularInformation()
 {
     if (nchem > 0)
@@ -2405,15 +2360,25 @@ void MixedGas::ComputeOtherProperParameterForGrid()
     if (isUnsteady == 1)
     {
         PrintToWindow("Unsteady Informations" , "\n");
-
-        RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
         RDouble reference_velocity_dimensional = referenceParameterDimensional.GetVelocity();
-
         RDouble unit = reynoldsReferenceLengthDimensional / reference_velocity_dimensional;
+        RDouble physicalTimeStepDimensional = 0.0;
+        RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
+        if (GlobalDataBase::IsExist("physicalTimeStepDimensional", PHDOUBLE, 1))
+        {
+            physicalTimeStepDimensional = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStepDimensional");
+            if (physicalTimeStepDimensional >= 0.0)
+            {
+                physicalTimeStep = physicalTimeStepDimensional / unit;
+            }
+        }
+        physicalTimeStepDimensional = physicalTimeStep * unit;
+        GlobalDataBase::UpdateData("physicalTimeStepDimensional", &physicalTimeStepDimensional, PHDOUBLE, 1);
+        //! The non-dimensional physical time step based on grid scale.
+        physicalTimeStep /= reynoldsReferenceLengthDimensional;
+        GlobalDataBase::UpdateData("physicalTimeStep", &physicalTimeStep, PHDOUBLE, 1);
 
-        RDouble physicalTimeStep_dimensional = physicalTimeStep * unit;
-
-        PrintToWindow("  Physical Time Step       :    ", physicalTimeStep_dimensional , "s", "\n");
+        PrintToWindow("  Physical Time Step       :    ", physicalTimeStepDimensional , "s", "\n");
     }
 }
 
@@ -2727,6 +2692,12 @@ void MixedGas::InitCommonParameter()
         trTemperatureMin = GlobalDataBase::GetDoubleParaFromDB("trTemperatureMin");
     }
 
+    nDensityForWallMethod = 0;
+    if (GlobalDataBase::IsExist("nDensityForWallMethod", PHINT, 1))
+    {
+        nDensityForWallMethod = GlobalDataBase::GetIntParaFromDB("nDensityForWallMethod");
+    }
+
     if (GlobalDataBase::IsExist("nIsChemicalFreeze", PHINT, 1))
     {
         nIsChemicalFreeze = GlobalDataBase::GetIntParaFromDB("nIsChemicalFreeze");
@@ -2812,6 +2783,9 @@ void MixedGas::InitOtherParameter()
 
 void MixedGas::ComputeReferenceParameter()
 {
+    //! Convert to mass fraction, if the initial setting is other fractions convert other type fractions.
+    ComputeReferenceInitMassFractionInformation();
+
     //! The first two variables is temperature independent, 
     //! depend on molecular weight and mass fraction of species if chemical reactions exist.
     ComputeReferenceMolecularInformation();
@@ -3486,6 +3460,30 @@ void MixedGas::ComputeMixtureByPrimitive(RDouble *prim, RDouble *mixtureOfSpecie
     }
 }
 
+void MixedGas::MassFractionConversion(RDouble *fractionOfSpecies)
+{
+    int nFraction = GlobalDataBase::GetIntParaFromDB("nFraction");
+
+    if (nFraction == 1)
+    {
+        RDouble *molecularWeightDimensional  = molecularProperty->GetMolecularWeightDimensional();
+
+        RDouble wiSum = 0.0;
+
+        for (int ispecies = 0; ispecies < numberOfSpecies; ++ispecies)
+        {
+            wiSum += fractionOfSpecies[ispecies] * molecularWeightDimensional[ispecies];
+        }
+
+        RDouble owiSum = 1.0 / wiSum;
+
+        for (int ispecies = 0; ispecies < numberOfSpecies; ++ispecies)
+        {
+            fractionOfSpecies[ispecies] = fractionOfSpecies[ispecies] * molecularWeightDimensional[ispecies] * owiSum;
+        }
+    }
+}
+
 void MixedGas::ComputeMoleFractionByMassFraction(RDouble *massFractionOfSpecies, RDouble *moleFractionOfSpecies)
 {
     RDouble *oMolecularWeight = molecularProperty->GetMolecularWeightReciprocal();     //! The reciprocal value of mass fraction.
@@ -3732,32 +3730,14 @@ void MixedGas::GetTemperatureAndPressure(RDouble *primitiveVars, RDouble interna
 void MixedGas::NormalizePrimitive(RDouble *primitiveVariables)
 {
     RDouble fSum = 0.0;
-    //! Obtain the index of electron.
-    if (this->nElectronIndex < 0)      //! No electron.
+    for (int s = 0; s < this->numberOfSpecies - 1; ++s)
     {
-        for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-        {
-            fSum += primitiveVariables[nm + s];
-        }
+        fSum += primitiveVariables[nm + s];
+    }
 
-        //! Compute mass fraction of the last species.
-        primitiveVariables[nm + nLastSpeciesIndex] = MAX(0.0, 1.0 - fSum);
-        fSum += primitiveVariables[nm + nLastSpeciesIndex];
-    }
-    else       //! The electron exists. the ions must neutralize.
-    {
-        int *ionType = molecularProperty->GetIonTypeOfSpecies();
-        RDouble *speciesMassReciprocal = molecularProperty->GetMolecularWeightReciprocal();
-        primitiveVariables[nm + nElectronIndex] = 0.0;    //! Electron.
-        for (int s = 0; s < this->nLastSpeciesIndex; ++ s)
-        {
-            primitiveVariables[nm + nElectronIndex] += ionType[s] * speciesMassReciprocal[s] * primitiveVariables[nm + s];
-            fSum += primitiveVariables[nm + s];
-        }
-        primitiveVariables[nm + nElectronIndex] /= speciesMassReciprocal[nElectronIndex];
-        primitiveVariables[nm + nLastSpeciesIndex] = MAX(1.0 - primitiveVariables[nm + nElectronIndex] - fSum, 0.0);
-        fSum += primitiveVariables[nm + nElectronIndex] + primitiveVariables[nm + nLastSpeciesIndex];
-    }
+    //! Compute mass fraction of the last species.
+    primitiveVariables[nm + numberOfSpecies - 1] = MAX(0.0, 1.0 - fSum);
+    fSum += primitiveVariables[nm + numberOfSpecies - 1];
 
     //! Normalize the mass fractions.
     for (int s = 0; s < this->numberOfSpecies; ++ s)
@@ -6810,6 +6790,37 @@ void MixedGas::ComputeEnthalpyByPolynomialFitMethod(RDouble temperature, RDouble
             hs = polynomialCoefT2[ispecies][0] + polynomialCoefT2[ispecies][1] * T1 + polynomialCoefT2[ispecies][2] * T2 + polynomialCoefT2[ispecies][3] * T3 + polynomialCoefT2[ispecies][4] * T4 + polynomialCoefT2[ispecies][5] * T5;
             hSpecies[ispecies] = hs * gasConstant / speciesMass[ispecies];
         }
+    }
+}
+
+void MixedGas::ComputeTemperatureFromTotalTemperature(RDouble *massF, RDouble totalTemperature, RDouble mach, RDouble &Temperature, RDouble &gama, int Dimensional)
+{
+    RDouble Tmin = 10.0;
+    RDouble Tmax = 50000.0;
+    RDouble mach2 = mach * mach;
+    RDouble totalTemperatureLocal;
+    RDouble referenceTemperature = referenceParameterDimensional.GetTemperature();
+    if (Dimensional == 0)
+    {
+        Tmin = 10.0 / referenceTemperature;
+        Tmax = 50000.0 / referenceTemperature;
+    }
+    int count = 0;
+    while (count < 100)
+    {
+        Temperature = 0.5 * (Tmin + Tmax);
+        ComputeGama(massF, Temperature, gama, Dimensional);
+        totalTemperatureLocal = Temperature * (1.0 + 0.5 * (gama - 1.0) * mach2);
+        if(ABS(totalTemperatureLocal - totalTemperature) / totalTemperature < 1.0e-8) return;
+        if (totalTemperatureLocal > totalTemperature)
+        {
+            Tmax = Temperature;
+        }
+        else
+        {
+            Tmin = Temperature;
+        }
+        count++;
     }
 }
 

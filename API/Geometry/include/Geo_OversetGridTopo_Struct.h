@@ -57,7 +57,7 @@ public:
 
     void SetNumberOfCores(int numberOfCores);
 
-    void SetCellContainer(int *iBlank){this -> iBlank = iBlank;};
+    void SetCellContainer(int *iBlank) { this -> iBlank = iBlank; }
 
     void SetZoneStartPointLabel(int zoneStartPointLabel);
 

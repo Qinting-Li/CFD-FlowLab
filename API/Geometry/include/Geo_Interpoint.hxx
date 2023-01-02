@@ -1,4 +1,4 @@
-inline int *InterpointPatch::GetPointIndexForReceive() const
+inline int * InterpointPatch::GetPointIndexForReceive() const
 {
     return pointIndexForReceive; 
 }
@@ -8,7 +8,7 @@ inline void InterpointPatch::SetPointIndexForReceive(int *pointIndexForReceive)
     this->pointIndexForReceive = pointIndexForReceive; 
 }
 
-inline int *InterpointPatch::GetPointIndexForSend() const
+inline int * InterpointPatch::GetPointIndexForSend() const
 {
     return pointIndexForSend;
 }
@@ -18,7 +18,7 @@ inline void InterpointPatch::SetPointIndexForSend(int *pointIndexForSend)
     this->pointIndexForSend = pointIndexForSend; 
 }
 
-inline int  InterpointPatch::GetNumberOfPoint() const
+inline int InterpointPatch::GetNumberOfPoint() const
 {
     return pointNumberOfPatch;
 }
@@ -28,7 +28,7 @@ inline void InterpointPatch::SetNumberOfPoint(int pointNumberOfPatch)
     this->pointNumberOfPatch = pointNumberOfPatch;
 }
 
-inline int  InterpointPatch::GetZoneIndexOfNeighbor() const 
+inline int InterpointPatch::GetZoneIndexOfNeighbor() const 
 { 
     return zoneIndexOfNeighbor; 
 }
@@ -38,7 +38,7 @@ inline void InterpointPatch::SetZoneIndexOfNeighbor(int zoneIndexOfNeighbor)
     this->zoneIndexOfNeighbor = zoneIndexOfNeighbor; 
 }
 
-inline int  InterpointPatch::GetZoneID() const 
+inline int InterpointPatch::GetZoneID() const 
 { 
     return zoneID; 
 }
@@ -63,41 +63,41 @@ inline int InterpointInformation::GetNumberOfNeighbor() const
     return numberOfNeighbor;
 }
 
-inline InterpointPatch **InterpointInformation::GetInterpointPatch() const
+inline InterpointPatch ** InterpointInformation::GetInterpointPatch() const
 {
     return interPointPatch;
 }
 
-inline InterpointPatch *InterpointInformation::GetInterpointPatch(int iNeighbor) const
+inline InterpointPatch * InterpointInformation::GetInterpointPatch(int iNeighbor) const
 {
     return interPointPatch[iNeighbor];
 }
 
-inline int *InterpointInformation::GetInterPoint2ZoneID() const 
+inline int * InterpointInformation::GetInterPoint2ZoneID() const 
 { 
     return interPoint2ZoneID; 
 }
 
-inline int *InterpointInformation::GetInterPoint2InterPointID() const 
+inline int * InterpointInformation::GetInterPoint2InterPointID() const 
 { 
     return interPoint2InterPointID;
 }
 
-inline int *InterpointInformation::GetInterPoint2GlobalPoint() const 
+inline int * InterpointInformation::GetInterPoint2GlobalPoint() const 
 {
     return interPoint2GlobalPoint;
 }
 
-inline int *InterpointInformation::GetCellNumberOfInterPoint() const 
+inline int * InterpointInformation::GetCellNumberOfInterPoint() const 
 {
     return cellNumberOfInterPoint;
 }
 
-inline int *InterpointInformation::GetTotalZonesOfInterPoint() const 
+inline int * InterpointInformation::GetTotalZonesOfInterPoint() const 
 {
     return totalZonesOfInterPoint;
 }
-inline int *InterpointInformation::GetLabelOfInterPoint() const
+inline int * InterpointInformation::GetLabelOfInterPoint() const
 {
     return labelOfInterPoint;
 }
@@ -107,7 +107,7 @@ inline void InterpointInformation::SetIsNeighborInterpointFound(bool *data)
     this->isNeighborInterpointFound = data;
 }
 
-inline bool *InterpointInformation::GetIsNeighborInterpointFound()
+inline bool * InterpointInformation::GetIsNeighborInterpointFound()
 {
     return isNeighborInterpointFound;
 }
@@ -118,24 +118,24 @@ inline int InterpointInformation::GetZoneIndexOfNeighbor(int iNeighbor) const
     return interPointPatch->GetZoneIndexOfNeighbor();
 }
 
-inline int *InterpointInformation::GetPointIndexForReceive(int iNeighbor) const
+inline int * InterpointInformation::GetPointIndexForReceive(int iNeighbor) const
 {
     InterpointPatch *interPointPatch = this->GetInterpointPatch(iNeighbor);
     return interPointPatch->GetPointIndexForReceive();
 }
 
-inline int *InterpointInformation::GetPointIndexForSend(int iNeighbor) const
+inline int * InterpointInformation::GetPointIndexForSend(int iNeighbor) const
 { 
     InterpointPatch *interPointPatch = this->GetInterpointPatch(iNeighbor);
     return interPointPatch->GetPointIndexForSend();
 }
 
-inline Data_ParamFieldSuite *InterpointInformation::GetSendDataStorage(int iStore) const 
+inline Data_ParamFieldSuite * InterpointInformation::GetSendDataStorage(int iStore) const
 { 
     return &dataForSend[iStore]; 
 }
 
-inline Data_ParamFieldSuite *InterpointInformation::GetReceiveDataStorage(int iStore) const 
+inline Data_ParamFieldSuite * InterpointInformation::GetReceiveDataStorage(int iStore) const
 { 
     return &dataForReceive[iStore];
 }
@@ -156,7 +156,7 @@ inline int InterpointFields::GetDimension(const int iData)
     return variableDimensions[iData];
 }
 
-inline string &InterpointFields::GetName(const int iData)
+inline string & InterpointFields::GetName(const int iData)
 {
     return variableNames[iData];
 }

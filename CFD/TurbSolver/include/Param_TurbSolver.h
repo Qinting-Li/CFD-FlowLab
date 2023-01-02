@@ -76,24 +76,6 @@ public:
 
     RDouble GetKW_sigmaK2() const;
 
-    RDouble GetTransition_ca1() const;
-
-    RDouble GetTransition_ca2() const;
-
-    RDouble GetTransition_ce1() const;
-
-    RDouble GetTransition_ce2() const;
-
-    RDouble GetTransition_dct() const;
-
-    RDouble GetTransition_df() const;
-
-    RDouble GetTransition_cct() const;
-
-    RDouble GetTransition_s1() const;
-
-    RDouble GetTransition_ccf() const;
-
     RDouble GetFreeStreamViscosity() const;
 
     RDouble * GetFreeStreamTurbVar() const;
@@ -102,6 +84,10 @@ public:
 
     int GetWennSchemeFlag() const;
 
+    //! Return using original ( = 0 ) or conservative variables ( = 1 )\n.
+    //! 0: original form.\n
+    //! 1: conservative form.\n
+    int UsingConservativeForm() const;
 private:
 
     RDouble turbCFLScale;
@@ -149,16 +135,6 @@ private:
 
     RDouble KW_sigmaK2;
 
-    RDouble transition_ca1;
-    RDouble transition_ce1;
-    RDouble transition_ca2;
-    RDouble transition_ce2;
-    RDouble transition_dct;
-    RDouble transition_df;
-    RDouble transition_cct;
-    RDouble transition_s1;
-    RDouble transition_ccf;
-
     RDouble turbulenceIntensity;
 
     RDouble freeStreamViscosity;
@@ -167,6 +143,11 @@ private:
 
     int kindOfTurbSource;
     int isWennScheme;
+
+    //! Used to compatible both original ( = 0 ) and conservative variables ( = 1 )\n.
+    //! 0: original form.\n
+    //! 1: conservative form.\n
+    int rhoFlag;
 };
 
 #include "Param_TurbSolver.hxx"

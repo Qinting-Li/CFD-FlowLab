@@ -23,13 +23,13 @@ class Geo_LSQWeight_Unstruct
 {
 private:
 
-    RDouble * iwt;
+    RDouble *iwt;
 
-    RDouble * ixx, * iyy, * izz;
+    RDouble *ixx, *iyy, *izz;
 
-    RDouble * ixy,* ixz,* iyz;
+    RDouble *ixy, *ixz, *iyz;
 
-    char * fMark;
+    char *fMark;
 public:
     LIB_EXPORT Geo_LSQWeight_Unstruct();
     LIB_EXPORT ~Geo_LSQWeight_Unstruct();
@@ -81,7 +81,7 @@ public:
     char * GetFaceMark() const;
 
     //! Set the face mark.
-    void   SetFaceMark(char *fMark);
+    void SetFaceMark(char *fMark);
 };
 
 #include "Geo_LSQWeight_Unstruct.hxx"

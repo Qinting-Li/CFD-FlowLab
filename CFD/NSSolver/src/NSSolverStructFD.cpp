@@ -1126,7 +1126,7 @@ void NSSolverStructFD::ViscousIsotropicWall(Grid *gridIn, StructBC *structBC)
 
     RDouble4D &q = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
     
-    RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature; //! Non-dimensional temperature.
+    RDouble temperatureWallNonDimensional = wallTemperature / refDimensionalTemperature; //! non-dimensional temperature.
     RDouble temperaturelimitation = 0.1 * temperatureWallNonDimensional;
 
     using namespace IDX;
@@ -1213,13 +1213,13 @@ void NSSolverStructFD::FarFieldRiemannInvariants(Grid *gridIn, StructBC *structB
     RDouble poo = primitiveVarFarfield[IP];
          
     int nEquation = GetNumberOfEquations();
-    RDouble * prims;  //! Inner point.
-    RDouble * primt;  //! Ghost point.   
+    RDouble *prims;  //! Inner point.
+    RDouble *primt;  //! Ghost point.
     prims = new RDouble [nEquation];
     primt = new RDouble [nEquation];
 
-    RDouble rin, uin, vin, win, pin, vnin, cinner, vein; //! Inner    point variables.
-    RDouble rb , ub , vb , wb , pb , vnb , cb;           //! Boundary point variables.
+    RDouble rin, uin, vin, win, pin, vnin, cinner, vein; //! inner    point variables.
+    RDouble rb , ub , vb , wb , pb , vnb , cb;           //! boundary point variables.
 
     for (int k = kst; k <= ked; ++ k)
     {
@@ -1503,7 +1503,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
 
     if(InterpolationType.substr(0, 4) == "test")
     {
-        //! Non-uniform interpolation
+        //! non-uniform interpolation
         RDouble3D &xcc = *grid->GetCellCenterX();
         RDouble3D &ycc = *grid->GetCellCenterY();
         RDouble3D &zcc = *grid->GetCellCenterZ();
@@ -1765,7 +1765,7 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
     }
     else
     {
-        //! Uniform interpolation
+        //! uniform interpolation
         RDouble Coef[30];
         
         Coef[0] =  1.0  / 16.0;
@@ -1881,6 +1881,11 @@ void NSSolverStructFD::InviscidFlux(Grid *gridIn)
         GetFaceInviscidFlux(grid, qlProxy, qrProxy, fluxProxy, nsurf);
         FluxDifference(grid, fluxProxy, nsurf);
     }
+
+    /*if (total_negative > 0)
+    {
+        std::cout<<"warning:    "<<total_negative<<std::endl;
+    }*/
 
     delete qlProxy;
     delete qrProxy;
@@ -5650,6 +5655,11 @@ void NSSolverStructFD::UpdateQlQrOnlyforMixGrid(Grid *gridIn)
         GetFaceVariableCorrectionAtPhysicalBoundary(grid, qlProxy, qrProxy, iSurface);
         GetFaceVariable_HDCS_otherlayerImplicit(grid, qlProxy, qrProxy, iSurface);
     }
+
+    /*if (total_negative > 0)
+    {
+        std::cout<<"warning:    "<<total_negative<<std::endl;
+    }*/
 
     delete qlProxy;
     delete qrProxy;

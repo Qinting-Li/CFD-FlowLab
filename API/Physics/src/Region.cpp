@@ -2092,8 +2092,6 @@ void Region::SwapNeighborsSendContentForPoint()
 
 LIB_EXPORT void Region::MultiGridSetup()
 {
-    if (GetTaskCode() == DSMC_SOLVER) return;
-
     CheckMeshMultigridByFTS();
 
     CoarseGrids();
@@ -2106,6 +2104,8 @@ LIB_EXPORT void Region::InitGrids()
     SetNGrids();
 
     ComputeMetrics();
+
+    InitCellBoundaryType();
 }
 
 void Region::DumpWallFaceCenter()
@@ -2285,6 +2285,28 @@ void Region::ShowCoarseGrids()
     }
 }
 
+void Region::InitCellBoundaryType(int level)
+{
+    if (level != 0)
+    {
+        return;
+    }
+
+    using namespace PHMPI;
+
+    int nZones = GetNumberofGlobalZones();
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int send_proc = GetZoneProcessorIDSepMode(iZone);
+        int myid = PHMPI::GetCurrentProcessorID();
+        if (myid == send_proc)
+        {
+            Grid* grid = GetGrid(iZone);
+            grid->ComputeCellBoundaryType();
+        }
+    }
+}
+
 void Region::ComputeMetrics(int level)
 {
     using namespace PHMPI;
@@ -2334,6 +2356,11 @@ void Region::GlobalGridStatic(int level)
     else if (sys_gridtype == UNSTRUCTGRID)
     {
         ComputeGlobalGridSize(level);
+        int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+        if (compressible != 1)
+        {
+            buildGlobalCellsArrary(level);
+        }
     }
     else if (sys_gridtype == MIXGRID)
     {
@@ -2482,6 +2509,45 @@ void Region::ComputeGlobalGridSize(int level)
     }
 }
 
+void Region::buildGlobalCellsArrary(int level)
+{
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    int* cellNumbersOfEachZone = new int[nZones];
+    for (int iZone = 0; iZone < nZones; ++iZone)
+    {
+        cellNumbersOfEachZone[iZone] = 0;
+    }
+
+    for (int iZone = 0; iZone < nZones; ++iZone)
+    {
+        if (STRUCTGRID == PHMPI::GetZoneGridType(iZone))
+        {
+            continue;
+        }
+        Zone* zone = GetZone(iZone);
+        if (!zone) continue;
+        UnstructGrid* grid = UnstructGridCast(GetGrid(iZone, 0));
+        int nTotalCell = grid->GetNTotalCell();
+        cellNumbersOfEachZone[iZone] = nTotalCell;
+    }
+    int* cellNumbersOfEachZoneGlobal = new int[nZones];
+    PH_AllReduce(cellNumbersOfEachZone, cellNumbersOfEachZoneGlobal, nZones, MPI_SUM);
+
+    int * globalCellNoOfGlobalZones = new int[nZones + 1];
+    globalCellNoOfGlobalZones[0] = 0;
+    int cellCount = 0;
+    for (int iZone = 0; iZone < nZones; ++iZone)
+    {
+        cellCount += cellNumbersOfEachZoneGlobal[iZone];
+        globalCellNoOfGlobalZones[iZone + 1] = cellCount;
+    }
+
+    GlobalDataBase::UpdateDataPtr("globalCellNoOfGlobalZones", globalCellNoOfGlobalZones);
+
+    delete[] cellNumbersOfEachZone;
+    delete[] cellNumbersOfEachZoneGlobal;
+}
+
 void Region::ComputeGlobalGridCellSize(int level)
 {
     RDouble TotalNodes_unstr = 0.0;
@@ -2606,7 +2672,6 @@ void Region::InitMovingGrids(int level)
     int nsimutask = GlobalDataBase::GetIntParaFromDB("nsimutask");
 
     if (nsimutask == CAL_WALL_DIST) return;
-    if (GetTaskCode() == DSMC_SOLVER) return;
 
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
 

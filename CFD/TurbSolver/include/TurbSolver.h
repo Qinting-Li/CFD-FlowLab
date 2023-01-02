@@ -93,4 +93,23 @@ const int RANS  = 0;
 const int DES   = 1;
 const int DDES  = 2;
 const int IDDES = 3;
+
+//! Return the modified positive preserved working variable, if the SA nue is negative.
+//! @param[in] nueNegative     the input original negative nue.
+//! @param[in] viscousLaminar  the input original laminar viscous.
+//! @param[in] rho             the input original density.
+//! Allmaras S R, 2012.
+inline RDouble PositiveSA(RDouble &nueNegative, RDouble &viscousLaminar, RDouble &rho)
+{
+    if(nueNegative < 0.0)
+    {
+        RDouble xsi = nueNegative / (viscousLaminar / rho);
+        RDouble xsi3 = xsi * xsi * xsi;
+        return nueNegative * (16.0 + xsi3) / (16.0 - xsi3); 
+    }
+    else
+    {
+        return nueNegative; 
+    }    
+}
 }

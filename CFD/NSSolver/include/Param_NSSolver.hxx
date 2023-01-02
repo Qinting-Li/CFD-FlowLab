@@ -35,12 +35,27 @@ inline int Param_NSSolver::GetTemperatureModel() const
 
 inline int Param_NSSolver::GetIfLowSpeedPrecon() const
 {
-	return ifLowSpeedPrecon;
+    return ifLowSpeedPrecon;
+}
+
+inline RDouble Param_NSSolver::GetPreconCoefficient() const
+{
+    return kPreconCoeff;
+}
+
+inline int Param_NSSolver::GetPreconFarFieldBCMethod() const
+{
+    return preconFarfieldBCMethod;
 }
 
 inline int Param_NSSolver::GetIfIdealGasState() const
 {
     return nIdealState;
+}
+
+inline RDouble Param_NSSolver::GetReferenceDimensionalVelocity() const
+{
+    return refDimensionalVelocity;
 }
 
 inline RDouble Param_NSSolver::GetAoA() const
@@ -254,5 +269,10 @@ inline int Param_NSSolver::GetInitialPressureSteps() const
 inline int Param_NSSolver::GetLocalCFLFlag() const
 {
     return isUseLocalCFL;
+}
+
+inline RDouble Param_NSSolver::GetCharacteristicLength() const
+{
+    return knLength;
 }
 

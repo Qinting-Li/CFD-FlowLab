@@ -58,6 +58,7 @@ public:
     LIB_EXPORT void RegisterOversetField(const string &name, const int type, const int dimesion);
 
     LIB_EXPORT void ReleaseInterfaceField();
+    LIB_EXPORT void ReleaseInterfaceField(string varName);
 
     void SetPostVisualization(Post_Visual *postVisualization_in);
 
@@ -87,6 +88,12 @@ public:
     virtual void UpdateInviscidfluxOnlyforMixGrid(Grid *grid){};
     virtual void UpdateViscousfluxOnlyforMixGrid(Grid *grid){};
     virtual void LoadGlobalfacefluxtoResOnlyforMixGrid(Grid *grid){};
+
+    //! Low-speed Precondition Coefficient.
+    virtual void ComputePreconditionCoefficient(Grid *grid);
+
+    //! Low-speed Conservative Precondition Matrix.
+    virtual void ConservativePreconMatrix(Grid *grid);
 
     //! Inviscid flux.
     virtual void InviscidFlux(Grid *grid);
@@ -163,6 +170,10 @@ public:
     //! @param[in] grid         the mesh in the computing.
     virtual void ComputeQTurbNodeValue(Grid *grid) {};
 
+    //! Compute the node value of the the interpoint for transition flow.
+    //! @param[in] grid         the mesh in the computing.
+    virtual void ComputeQTransitionNodeValue(Grid *grid) {};
+
     //! Modify the node value of the the interpoint for turbulent flow.
     //! @param[in] grid         the mesh in the computing.
     virtual void ModifyQTurbNodeValue(Grid *grid) {};
@@ -191,6 +202,8 @@ public:
     virtual void DumpCFLNumber(Grid *grid, int level = 0);
 
     virtual void CheckSurfaceHeatingChange(Grid *grid, int level = 0);
+
+    virtual void DumpLeakageInformation(Grid *grid);
 
     virtual void ZeroResiduals(Grid *grid);
 
@@ -262,6 +275,9 @@ public:
 
     virtual void CompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
     virtual void DecompressDQ(DataContainer *&dataContainer, FieldProxy *fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
+    
+    virtual void CompressAnInterfaceVar(DataContainer *&dataContainer, RDouble **fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
+    virtual void DecompressAnInterfaceVar(DataContainer *&dataContainer, RDouble **fieldProxy, Grid *grid, const int &zoneIndex, const int &neighborZoneIndex, const int &neqn);
 
     virtual void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn) {};
     virtual void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn) {};
@@ -310,6 +326,8 @@ public:
 
     virtual void DumpRestartData(ActionKey *actkey);
     virtual void DumpProtectData(ActionKey *actkey, int &RestartFile);
+    virtual void DumpTurbProtectData(ActionKey *actkey, int &RestartFile);
+    virtual void DumpTransitionProtectData(ActionKey *actkey, int &RestartFile);
     void CreateH5RestartFile(ActionKey *actkey);
 
     virtual void InitMemory();
@@ -350,7 +368,8 @@ public:
     virtual void ExportSurfaceVariables(ActionKey *actkey) {}; //added by Li Peng
 
     //! Interface data communications.
-    virtual void CommunicationInterfaceData();
+    void CommunicationInterfaceData();
+    void CommunicationInterfaceData(int iLevel);
 
     //! Interface information exchange controller process. A complete process include three steps: \n
     //! 1. Upload Interface Data. \n
@@ -359,6 +378,10 @@ public:
     void UploadInterfaceData();
     void UpdateInterfaceData();
     void DownloadInterfaceData();
+
+    void UploadInterfaceData(int iLevel);
+    void UpdateInterfaceData(int iLevel);
+    void DownloadInterfaceData(int iLevel);
 
     //! Interpoint information exchange controller process. A complete process include three steps: \n
     //! 1. Upload Interpoint Data. \n

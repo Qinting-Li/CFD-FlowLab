@@ -11,6 +11,8 @@
 #include "Geo_Face.h"
 #include "GRHash.h"
 #include "Geo_FaceTopo_Unstruct.h"
+#include "mgridgen.h"
+#include "Glb_Dimension.h"
 
 namespace PHSPACE{
 LIB_EXPORT Mesh_Agglomeration::Mesh_Agglomeration(UnstructGrid * fineGridIn, int fineGridLevelIn)
@@ -248,6 +250,111 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnce()
     coarseGrid->SetY(y);
     coarseGrid->SetZ(z);
 }
+
+LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOncebyMGridgen()
+{
+    int nTotalFace = fineGrid->GetNTotalFace();
+    int nBoundFace = fineGrid->GetNBoundFace();
+    int nTotalCell = fineGrid->GetNTotalCell();
+    int *left_cell_of_face = fineGrid->GetLeftCellOfFace();
+
+    RDouble * vol = fineGrid->GetCellVolume();
+    RDouble * area= fineGrid->GetFaceArea();
+
+    //! bcArea: BC face area of each cell.
+    RDouble *bcArea = new RDouble [nTotalCell];
+    PHSPACE::SetField(bcArea, 0.0, nTotalCell);
+
+    for (int iFace = 0; iFace < nBoundFace; ++ iFace)
+    {
+        int le = left_cell_of_face[iFace];
+        bcArea[le] += area[iFace];
+    }
+
+    // now merging
+    const int NON_COARSED = -1;
+    int *cell2coarsegridcell = new int[ nTotalCell ];
+    fineGrid->SetCell2CoarseGridCell(cell2coarsegridcell);
+    PHSPACE::SetField(cell2coarsegridcell, NON_COARSED, nTotalCell);
+    
+    //! From the view of graph theory, each face connection is defined by two neighbor cells.
+    //! so, number of connection equal to the two times of interior faces.
+    int nConnection = 2 * (nTotalFace - nBoundFace);
+
+    //! Adjacent connection of cells, using CSR format which is same to METIS. 
+    idx_t *xadj   = new idx_t[nTotalCell + 1];
+    idx_t *adjncy = new idx_t[nConnection];
+    Get_Xadj_Adjncy(fineGrid, xadj, adjncy, 0, 0);
+
+    RDouble *adjncywgt = new RDouble [nConnection];
+    Get_Xadj_Adjncy_Weight(fineGrid, xadj, adjncy, adjncywgt);
+
+    //! Convert the metis type to mgrid type.
+    idxtype *xadjNew   = new idxtype[nTotalCell + 1];
+    idxtype *adjncyNew = new idxtype[nConnection];
+    for (int iCell = 0; iCell < nTotalCell + 1; ++ iCell)
+    {
+        xadjNew[iCell] = static_cast<idxtype>(xadj[iCell]);
+    }
+    for (int iFace = 0; iFace < nConnection; ++ iFace)
+    {
+        adjncyNew[iFace] = static_cast<idxtype>(adjncy[iFace]);
+    }
+    delete []xadj;
+    delete []adjncy;
+
+    int nDim = PHSPACE::GetDim();
+    int minCoarseCellNumber = 1;
+    int maxCoarseCellNumber = 6;
+    if(nDim == PHSPACE::THREE_D)
+    {
+        minCoarseCellNumber = 4;
+        maxCoarseCellNumber = 10;
+    }
+
+    int options[4] = {4, 6, 0, nDim};
+    int nmove, nparts;
+    MGridGen(nTotalCell, xadjNew, vol, bcArea, adjncyNew, adjncywgt, minCoarseCellNumber, maxCoarseCellNumber,
+        options, &nmove, &nparts, cell2coarsegridcell);
+
+    //! For better grid quality in parallel,
+    //! ParMGridgen should be used in future, then, the parMetis should be followed.
+    //! For now, the serial version of mgridgen is used even in parallel.
+
+    delete []xadjNew;
+    delete []adjncyNew;   
+    delete []adjncywgt; 
+    delete []bcArea;
+
+    //! Now, construct the basic geometry information of coarse grid.
+    int cnTCell = nparts;
+
+    coarseGrid = new UnstructGrid();
+    coarseGrid->InitGrid(new GridID(*fineGrid->GetGridID()), fineGridLevel + 1, fineGrid->GetDim(), UNSTRUCTGRID);
+
+    coarseGrid->SetNTotalCell(cnTCell);
+    int nTotalNode = fineGrid->GetNTotalNode();
+    coarseGrid->SetNTotalNode(nTotalNode);
+    RDouble *x, *y, *z;
+    RDouble * xx = fineGrid->GetX();
+    RDouble * yy = fineGrid->GetY();
+    RDouble * zz = fineGrid->GetZ();
+
+    x = new RDouble[ nTotalNode ];
+    y = new RDouble[ nTotalNode ];
+    z = new RDouble[ nTotalNode ];
+
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+    {
+        x[iNode] = xx[iNode];
+        y[iNode] = yy[iNode];
+        z[iNode] = zz[iNode];
+    }
+    coarseGrid->SetX(x);
+    coarseGrid->SetY(y);
+    coarseGrid->SetZ(z);
+}
+
 
 //global agglomeration method used to coarsen the grid to generate cell2coarsegridcell only
 LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()

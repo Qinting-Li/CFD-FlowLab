@@ -273,7 +273,7 @@ void OversetInformationProxy::FreeOversetCellContainer(PHVector1D < OversetCell 
     uint_t numberOfElements = oversetCellContainer->size();
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        delete ( * oversetCellContainer )[iElement];
+        delete (* oversetCellContainer)[iElement];
     }
     delete oversetCellContainer;
 }
@@ -298,7 +298,7 @@ void OversetInformationProxy::GetCellIndexContainer(int donorZoneIndexIn, PHVect
     uint_t numberOfElements = oversetCellContainer->size();
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        OversetCell *oversetCell = ( * oversetCellContainer )[iElement];
+        OversetCell *oversetCell = (* oversetCellContainer)[iElement];
         int cellIndex = oversetCell->GetCellIndex();
         int donorZoneIndex = oversetCell->GetDonorZoneIndex();
 
@@ -326,7 +326,7 @@ void OversetInformationProxy::GetDonorCellIndexContainer(int donorZoneIndexIn, P
     uint_t numberOfElements = oversetCellContainer->size();
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        OversetCell *oversetCell = ( * oversetCellContainer )[iElement];
+        OversetCell *oversetCell = (* oversetCellContainer)[iElement];
         int cellIndex = oversetCell->GetCellIndex();
         int donorCellIndex = oversetCell->GetDonorCellIndex();
         int donorZoneIndex = oversetCell->GetDonorZoneIndex();
@@ -371,7 +371,7 @@ void OversetInformationProxy::GenerateNeighborZoneIndexSet(set< int > &neighborZ
     uint_t numberOfElements = oversetCellContainer->size();
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
-        OversetCell *oversetCell = ( * oversetCellContainer )[iElement];
+        OversetCell *oversetCell = (* oversetCellContainer)[iElement];
         int donorZoneIndex = oversetCell->GetDonorZoneIndex();
         neighborZoneIndexSet.insert(donorZoneIndex);
     }
@@ -398,8 +398,7 @@ OversetTopologyManager *GetOversetTopologyManager()
 void InitializeOversetInterfaceTopology()
 {
     OversetTopologyManager *oversetTopologyManager = PHSPACE::GetOversetTopologyManager();
-    //oversetTopologyManager->InitializeOversetInterfaceTopology();
-    oversetTopologyManager->InitializeOversetInterfaceTopologyServerCollectAndBcast();
+    oversetTopologyManager->InitializeOversetInterfaceTopology();
 }
 
 OversetTopologyManager::OversetTopologyManager()
@@ -462,9 +461,6 @@ void OversetTopologyManager::InitializeOversetInterfaceTopology()
         if (oversetInformationProxy == 0) continue;
 
         OversetDataProxy *oversetDataProxy = oversetInformationProxy->GetOversetDataProxyForSend();
-        //OversetDataProxy * oversetDataProxy1 = oversetInformationProxy->GetOversetDataProxyForReceive();
-
-        //PHVectorInt1D neighborZoneIndexArray1 = oversetDataProxy1->GetNeighborZoneIndexArray();
 
         PHVectorInt1D neighborZoneIndexArray = oversetDataProxy->GetNeighborZoneIndexArray();
 
@@ -475,15 +471,15 @@ void OversetTopologyManager::InitializeOversetInterfaceTopology()
     {
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
 
-        int numberOfNeighbors = static_cast<int>( oversetTopology[iZone].size() );
+        int numberOfNeighbors = static_cast<int>(oversetTopology[iZone].size());
 
-        PHMPI::PH_Bcast(& numberOfNeighbors, sizeof(int), processorIndex);
+        PHMPI::PH_Bcast(&numberOfNeighbors, sizeof(int), processorIndex);
 
         oversetTopology[iZone].resize(numberOfNeighbors);
 
         if (numberOfNeighbors <= 0) continue;
 
-        PHMPI::PH_Bcast(& oversetTopology[iZone][0], numberOfNeighbors * sizeof(int), processorIndex);
+        PHMPI::PH_Bcast(&oversetTopology[iZone][0], numberOfNeighbors * sizeof(int), processorIndex);
     }
 }
 

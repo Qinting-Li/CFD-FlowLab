@@ -106,6 +106,8 @@ private:
     //! Initialize global boundary condition.
     void InitGlobalBoundaryCondition();
 
+    void InitGlobalVolumeCondition();
+
     //! Initialize each solver on each zone.
     void InitializeSolvers();
 

@@ -1,4 +1,4 @@
-inline int  StructBC::GetRegionBlock() const
+inline int StructBC::GetRegionBlock() const
 {
     return nbs;
 }

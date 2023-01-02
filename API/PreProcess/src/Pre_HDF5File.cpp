@@ -134,7 +134,7 @@ void IO_HDF5Write::CreateTotalInfo()
     int myid  = PHMPI::GetCurrentProcessorID();
 
     nPartOfEachProcessor = new int[nProc]();
-    PH_Allgather(&nBlocksLocal, 1, nPartOfEachProcessor, 1);
+    PH_AllGather(&nBlocksLocal, 1, nPartOfEachProcessor, 1);
 
     block_proc = new int[nBlocksLocal]();
     block_idx  = new int[nBlocksLocal]();
@@ -233,6 +233,8 @@ void IO_HDF5Write::WriteUnstructGrid(hid_t loc_id, Grid *gridIn, int iZone)
 
     WriteInterpointInfo(grpData, gridIn);
 
+    WriteVolumeCondition(grpData, gridIn);
+
     H5Gclose(grpData);
 }
 
@@ -295,6 +297,7 @@ void IO_HDF5Write::WriteStructGrid(hid_t loc_id, Grid *gridIn)
     WriteStrBCName(grpData, gridIn);
     WriteLnkInfo(grpData, gridIn, gridID);
  //   WritePartitionInfo(grpData, gridIn, gridID);
+    WriteVolumeCondition(grpData, gridIn);
 
     H5Gclose(grpData);
 }
@@ -310,12 +313,7 @@ void IO_HDF5Write::WriteGridCoordinates(hid_t loc_id, Grid *gridIn)
     RDouble *z = gridIn->GetZ();
     int nTotalNode = gridIn->GetNTotalNode();
 
-    int axisup = 1;
-    GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
-    if (axisup == 2)
-    {
-        gridIn->TurnZAxis2YAxis();
-    }
+    gridIn->RotateAboutAxis();
 
     CreateAndWriteData(grpData, "CoordinateX", 1, nTotalNode, PHDOUBLE, x);
     CreateAndWriteData(grpData, "CoordinateY", 1, nTotalNode, PHDOUBLE, y);
@@ -576,6 +574,36 @@ void IO_HDF5Write::WriteStrBCName(hid_t loc_id, Grid *gridIn)
 
     delete [] bcNameChar;
     delete [] bcNameList;
+    H5Gclose(grpData);
+}
+
+void IO_HDF5Write::WriteVolumeCondition(hid_t loc_id, Grid *gridIn)
+{
+    SimpleVC *volumeCondition = gridIn->GetVolumeConditionIn();
+    if (!volumeCondition)
+    {
+        return;
+    }
+
+    hid_t grpData;
+    grpData = GetGroup(loc_id, "VolumeCondition");
+
+    string vcName = volumeCondition->GetVCName();
+    uint_long nameSize = vcName.size() + 1;
+
+    char *vcNameChar = new char[nameSize];
+    for (unsigned int iChar = 0; iChar < nameSize - 1; ++ iChar)
+    {
+        vcNameChar[iChar] = vcName[iChar];
+    }
+    vcNameChar[nameSize - 1] = '\0';
+
+    CreateAndWriteData(grpData, "VCName", 1, nameSize, PHSTRING, vcNameChar);
+    delete []vcNameChar;
+
+    int vcType = volumeCondition->GetVCType();
+    CreateAndWriteData(grpData, "VCType", 1, 1, PHINT, &vcType);
+
     H5Gclose(grpData);
 }
 
@@ -882,11 +910,17 @@ void IO_HDF5Read::ReadWallDist()
                 grid->InitWallDist();
 
                 int nTotalCell = grid->GetNTotalCell();
-                RDouble *walldist = new RDouble[nTotalCell];
+                double *walldist = new double[nTotalCell];
                 ReadData(file, walldist, dataName);
 
-                grid->ReadWalldist(walldist);
+                RDouble *wdt = new RDouble[nTotalCell];
+                for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+                {
+                    wdt[iCell] = static_cast<RDouble>(walldist[iCell]);
+                }
+                grid->ReadWalldist(wdt);
                 delete [] walldist;
+                delete [] wdt;
             }
 
             H5Fclose(file);
@@ -1227,12 +1261,7 @@ void IO_HDF5Read::ReadGridCoordinates(hid_t loc_id, Grid *gridIn)
     gridIn->SetY(CoordinateY);
     gridIn->SetZ(CoordinateZ);
 
-    int axisup = 1;
-    PHSPACE::GlobalDataBase::GetData("axisup", &axisup, PHINT, 1);
-    if (axisup == 2)
-    {
-        gridIn->TurnZAxis2YAxis();
-    }
+    gridIn->RotateAboutAxis();
 
     gridIn->ComputeMinMaxBox();
 
@@ -1280,6 +1309,31 @@ void IO_HDF5Read::ReadInterfaceInfo(hid_t loc_id, Grid *gridIn)
     H5Gclose(grpData);
 }
 
+void IO_HDF5Read::ReadVolumeCondition(hid_t loc_id, Grid *gridIn)
+{
+    bool dataExist = CheckDataExist(loc_id, "VolumeCondition");
+    if (!dataExist)
+    {
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(loc_id, "VolumeCondition");
+    char *VCName = ReadCharData(grpData, "VCName");
+
+    SimpleVC *volumeCondition = new SimpleVC();
+
+    int vcType = -1;
+    ReadData(grpData, &vcType, "VCType");
+    volumeCondition->SetVCType(vcType);
+
+    volumeCondition->SetVCName(VCName);
+    gridIn->SetVolumeCondition(volumeCondition);
+
+    delete []VCName;
+    H5Gclose(grpData);
+}
+
 void IO_HDF5Read::ReadStructGrid(hid_t loc_id, int iZone)
 {
     PrintToWindow("Reading Structured Grid Of Zone ", iZone, "...\n");
@@ -1312,6 +1366,7 @@ void IO_HDF5Read::ReadStructGrid(hid_t loc_id, int iZone)
     ReadBCRegion(grpData, grid);
 //    ReadPartitionInfo(grpData, grid);
     ReadInterfaceInfo(grpData, grid);
+    ReadVolumeCondition(grpData, grid);
 
     grid->ReviseNeighborZoneIndex(zoneStart);
     AddGrid(grid);
@@ -1593,6 +1648,7 @@ void IO_HDF5Read::ReadUnstructGrid(hid_t loc_id, int iZone)
     ReadCellTopology(grpData, grid);
     ReadUnstrBCName(grpData, grid);
     ReadInterpointInfo(grpData, grid);
+    ReadVolumeCondition(grpData, grid);
 
     grid->SetIBlock(presentGridGroup);
     grid->ReviseNeighborZoneIndex(zoneStart);
@@ -1646,6 +1702,7 @@ void IO_HDF5Read::ReadFaceTopology(hid_t loc_id, Grid *gridIn)
     int nBoundFace = 0;
     ReadData(grpData, &nBoundFace, "nBoundFace");
     grid->SetNBoundFace(nBoundFace);
+    PrintToWindow("  Number of BC Faces : ", nBoundFace, "\n" );
 
     grid->SpecifyRightCellofBC();
 

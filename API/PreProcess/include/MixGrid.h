@@ -51,6 +51,8 @@ void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks);
 void FantasyWriteToGrd(const string &cel_file, Grid **grids, int nBlocks);
 void FantasyWriteToInp(const string &bnd_file, Grid **grids, int nBlocks);
 
+void FantasyWriteToFluent(const string &gridFileName, Grid **grids, int nBlocks);
+
 void ReadUstarGrid(const string &gridfile, UnstructGrid *grid);
 void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid);
 

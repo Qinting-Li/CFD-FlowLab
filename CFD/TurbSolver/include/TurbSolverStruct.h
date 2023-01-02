@@ -235,6 +235,10 @@ public:
     bool JudgeIfRestart();
     bool JudgeIfReadAverage();
 
+    bool JudgeIfProtectedRestart();
+
+    void InitFlowAsReadingProtectedRestart(ActionKey *actkey);
+
     //! To write the flow data to restart file by original "fts" form for continue to simulation.
     //! @param[in ]: actkey contains the control information.
     void DumpRestart(ActionKey *actkey);

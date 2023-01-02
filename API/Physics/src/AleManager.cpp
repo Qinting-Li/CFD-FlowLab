@@ -449,6 +449,12 @@ void DeAllocateOversetStorage()
                 InterfaceFieldNameProperty< PHTurbulentTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
                 GreatDeAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
             }
+            else if(iSolver == TRANSITION_SOLVER)
+            {
+                int nEquation = GlobalDataBase::GetIntParaFromDB("n_transition");
+                InterfaceFieldNameProperty< PHTransitionTag >::AddFieldNameProperty("transition::q", nEquation, TWO_D);
+                GreatDeAllocateOversetInterfaceVariables< PHTransitionTag >(grid);
+            }
         }
 
     }
@@ -480,6 +486,12 @@ void AllocateOversetStorage()
                 int nEquation = GlobalDataBase::GetIntParaFromDB("n_turb");
                 InterfaceFieldNameProperty< PHTurbulentTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
                 GreatAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
+            }
+            else if (iSolver == TRANSITION_SOLVER)
+            {
+                int nEquation = GlobalDataBase::GetIntParaFromDB("n_transition");
+                InterfaceFieldNameProperty< PHTransitionTag >::AddFieldNameProperty("transition::q", nEquation, TWO_D);
+                GreatAllocateOversetInterfaceVariables< PHTransitionTag >(grid);
             }
         }
     }
@@ -637,6 +649,18 @@ RDouble GetRDoubleParameterFromDataBase(int bodyIndex, const string& parameterNa
     ostringstream oss;
     oss << parameterName << "_" << bodyIndex;
     return PHSPACE::GlobalDataBase::GetDoubleParaFromDB(oss.str());
+}
+
+RDouble GetRDoubleParameterFromDataBaseIfExist(int bodyIndex, const string& parameterName, RDouble defaultValue)
+{
+    RDouble value = defaultValue;
+    ostringstream oss;
+    oss << parameterName << "_" << bodyIndex;
+    if (GlobalDataBase::IsExist(oss.str(), PHDOUBLE, 1))
+    {
+        value = PHSPACE::GlobalDataBase::GetDoubleParaFromDB(oss.str());
+    }
+    return value;
 }
 
 string GetStringParameterFromDataBase(int bodyIndex, const string& parameterName)

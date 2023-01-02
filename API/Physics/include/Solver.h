@@ -24,7 +24,8 @@ namespace PHSPACE
 typedef enum
 {
     NS_SOLVER,
-    TURB_SOLVER
+    TURB_SOLVER,
+    TRANSITION_SOLVER
 }solverEnum;
 
 class PHNsTag
@@ -37,6 +38,12 @@ class PHTurbulentTag
 {
 public:
     static int GetID() { return TURB_SOLVER; }
+};
+
+class PHTransitionTag
+{
+public:
+    static int GetID() { return TRANSITION_SOLVER; }
 };
 
 class ActionKey;

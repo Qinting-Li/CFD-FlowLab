@@ -211,6 +211,8 @@ private:
     void UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy);
     void DetermineCFLNumber(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **dqProxy1);
 
+    void CommunicationInterfaceData(int iSolver, int level);
+    void CommunicationInterfaceDataOneLevel(int iSolver, int level);
     void CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy);
     void CommunicateGenericArray(int iSolver, int level);
     void CommunicateGradientArray(int iSolver, int level);

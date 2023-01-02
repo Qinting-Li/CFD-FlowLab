@@ -10,7 +10,7 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      GeometryUnit.h 
-//! @brief     It defines the hybrid grid structures, for arbitrary mixed cells.  
+//! @brief     It defines the hybrid grid structures, for arbitrary mixed cells.
 //! @author    Bell, Baka.
 
 #pragma once

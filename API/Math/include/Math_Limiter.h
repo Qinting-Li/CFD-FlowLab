@@ -46,7 +46,7 @@ inline RDouble NOLIMITER(const RDouble &x, const RDouble &y)
 inline RDouble MINMOD(const RDouble &x, const RDouble &y)
 {
     const RDouble one = 1.0;
-    return 0.5 * (SIGN(one, x) + SIGN(one, y)) * MIN(ABS(x), ABS(y));
+    return half * (SIGN(one, x) + SIGN(one, y)) * MIN(ABS(x), ABS(y));
 }
 
 //! VANLEER.
@@ -69,13 +69,13 @@ inline RDouble MIX_MINMOD_VANLEER(const RDouble &x, const RDouble &y)
     const RDouble one = 1.0;
     RDouble z, z2, z3, xy2, absx, absy, min_van;
 
-    z = 0.5 * (SIGN(one, x) + SIGN(one, y));
+    z = half * (SIGN(one, x) + SIGN(one, y));
     absx = abs(x);
     absy = abs(y);
     xy2 = (x + x) * y;
     z2 = xy2 / (x * x + y * y + eps);
     z3 = xy2 / (absx + absy + eps);
-    min_van = z * ((1.0 - z2) * min(absx , absy) + z2 * z3);
+    min_van = z * ((one - z2) * min(absx , absy) + z2 * z3);
 /*
     if (ABS(z) < eps)
     {

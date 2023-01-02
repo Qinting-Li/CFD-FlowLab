@@ -52,7 +52,6 @@ if(BUILD_SpecDiffHybSolver)
   message(STATUS "BUILD_SpecDiffHybSolver is turned on!")
   add_definitions(-DUSE_SpecDiffHybSolver)
 endif()
-
 if(BUILD_PBSolver)
   message(STATUS "BUILD_PBSolver is turned on!")
   add_definitions(-DUSE_PBSOLVER)
@@ -98,8 +97,8 @@ endif()
 
 #3. set environment for MPICH and 3rdParty lib directory:
 if(WIN32)
-  set(MSMPI_HOME_DIRECTORY "C:/Program Files (x86)/Microsoft SDKs/MPI" CACHE PATH "path to installed MPICH")
   include_directories("${MSMPI_HOME_DIRECTORY}/Include")
+  link_directories("${MSMPI_HOME_DIRECTORY}/lib")
   if(USE_Windows_X64)
     link_directories("${MSMPI_HOME_DIRECTORY}/Lib/x64")
     set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64")
@@ -122,10 +121,15 @@ includeHeadFiles()
 set(HDF5_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
 
+
 set(MEITIS_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
 set(CGNS_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/cgns/include)
 include_directories("${CGNS_H_PATH}")
+set(MGRID_H_PATH    ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/mgrid/include)
+include_directories("${MGRID_H_PATH}")
+set(HYPRE_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/hypre/include)
+include_directories("${HYPRE_H_PATH}")
 #set(API_H_DIR ${PROJECT_SOURCE_DIR}/3rdparty)
 
 #5. set current directory:
@@ -181,13 +185,17 @@ set(TurbSOLVER_H_PATH        TurbSolver/include)
 set(TurbSOLVER_H_LIST
 ${TurbSOLVER_H_PATH}/TurbSolver.h
 ${TurbSOLVER_H_PATH}/TurbSolverStruct.h
+${TurbSOLVER_H_PATH}/TransitionSolver.h
+${TurbSOLVER_H_PATH}/TransitionSolverStruct.h
 ${TurbSOLVER_H_PATH}/TurbSolverUnstr.h
+${TurbSOLVER_H_PATH}/TransitionSolverUnstr.h
 ${TurbSOLVER_H_PATH}/Transition.h
 ${TurbSOLVER_H_PATH}/LESSolver.h
 ${TurbSOLVER_H_PATH}/LESSolverStruct.h
 ${TurbSOLVER_H_PATH}/LESSolverUnstr.h
 ${TurbSOLVER_H_PATH}/TurbSolverStructFD.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolver.h
+${TurbSOLVER_H_PATH}/Param_TransitionSolver.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolverStruct.h
 ${TurbSOLVER_H_PATH}/Param_TurbSolverUnstruct.h
 ${TurbSOLVER_H_PATH}/Param_LESSolver.h
@@ -200,14 +208,18 @@ include_directories(${TurbSOLVER_H_PATH})
 set(TurbSOLVER_CPP_PATH      TurbSolver/src)
 set(TurbSOLVER_CPP_LIST
 ${TurbSOLVER_CPP_PATH}/TurbSolver.cpp
+${TurbSOLVER_CPP_PATH}/TransitionSolver.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverStruct.cpp
+${TurbSOLVER_CPP_PATH}/TransitionSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverStructFD.cpp
 ${TurbSOLVER_CPP_PATH}/TurbSolverUnstr.cpp
+${TurbSOLVER_CPP_PATH}/TransitionSolverUnstr.cpp
 ${TurbSOLVER_CPP_PATH}/Transition.cpp
 ${TurbSOLVER_CPP_PATH}/LESSolver.cpp
 ${TurbSOLVER_CPP_PATH}/LESSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/LESSolverUnstr.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolver.cpp
+${TurbSOLVER_CPP_PATH}/Param_TransitionSolver.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolverStruct.cpp
 ${TurbSOLVER_CPP_PATH}/Param_TurbSolverUnstruct.cpp
 ${TurbSOLVER_CPP_PATH}/Param_LESSolver.cpp
@@ -248,6 +260,9 @@ ${HOSOLVERUNSTRUCT_CPP_PATH}/HOSolverUnstructParam.cpp
 ${HOSOLVERUNSTRUCT_CPP_PATH}/HOStandardElement.cpp
 )
 source_group(HOSolverUnstruct\\src FILES ${HOSOLVERUNSTRUCT_CPP_LIST})
+
+# Build In-house version:
+
 
 
 # set directory of SpecDiffHybSolver:
@@ -470,7 +485,6 @@ ${DEMOSOLVER_H_LIST}
 ${PBSOLVER_H_LIST}
 )
 
-# add INHOUSE_VERSION_H_LIST
 
 # add SpecDiffHybSolver_H_LIST
 if(BUILD_SpecDiffHybSolver)
@@ -497,7 +511,6 @@ ${HOSOLVERUNSTRUCT_CPP_LIST}
 ${DEMOSOLVER_CPP_LIST}
 ${PBSOLVER_CPP_LIST}
 )
-# add INHOUSE_VERSION_CPP_LIST
 
 # add SpecDiffHybSolver_CPP_LIST
 if(BUILD_SpecDiffHybSolver)
@@ -523,7 +536,7 @@ if(USE_OCC)
   message(STATUS "Using OpenCasCade ...... ")
   set(OCC_LIBS_REQUIRED
       # subset of DataExchange
-      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKSTL TKXSBase
       # ModelingAlgorithms
       TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
       TKTopAlgo TKGeomAlgo
@@ -534,7 +547,7 @@ if(USE_OCC)
       TKMath TKernel)
   
   # Set the path of the OCC library.
-  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/3rdparty/occ690-vc11-bit32-release)
+  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/3rdparty/occ730-vc11-bit64-release)
   set(OCC_LIB_PATH ${3RDPARTY_LIB_PATH} CACHE PATH "path to OpenCasCade library.")
   message(STATUS "Path to OpenCasCade library: " ${OCC_LIB_PATH})
   
@@ -582,8 +595,11 @@ endif()
 set(API_TARGET_NAME "PHAPI")
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME} metis parmetis cgns hdf5)
 
+
+
+
 if(WIN32)
-  list(APPEND LINK_LIBRARY_LIST msmpi)
+  list(APPEND LINK_LIBRARY_LIST ${mpiname})
 endif(WIN32)
 
 if(BUILD_SpecDiffHybSolver)
@@ -630,4 +646,7 @@ endif(USE_OMP)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
+
+
+
 

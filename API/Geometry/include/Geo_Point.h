@@ -25,14 +25,14 @@ class Geo_Point
 public:
     typedef Geo_Point<T> point_type;
 private:
-    T x,y,z;
+    T x, y, z;
     int id;
     RDouble tolerance;
 public:
     Geo_Point();
     Geo_Point(const T &x, const T &y, const T &z, int id = 0);
-    Geo_Point(const point_type & rhs);
-    Geo_Point & operator = (const point_type & rhs);
+    Geo_Point(const point_type &rhs);
+    Geo_Point & operator = (const point_type &rhs);
     ~Geo_Point();
 public:
     T X() const { return x; }
@@ -42,10 +42,10 @@ public:
 
     void SetTolerance(RDouble dataIn) { this->tolerance = dataIn; }
 
-    void SetX(const T &x){ this->x  = x;  }
-    void SetY(const T &y){ this->y  = y;  }
-    void SetZ(const T &z){ this->z  = z;  }
-    void SetID(int id)   { this->id = id; }
+    void SetX(const T &x) { this->x  = x;  }
+    void SetY(const T &y) { this->y  = y;  }
+    void SetZ(const T &z) { this->z  = z;  }
+    void SetID(int id)    { this->id = id; }
 
     int hash_key() const;
 public:

@@ -1,15 +1,15 @@
 inline void Geo_CellMetrics_Struct::DeallocateAll()
 {
-    if (xcc) { delete xcc; xcc = 0; }
-    if (ycc) { delete ycc; ycc = 0; }
-    if (zcc) { delete zcc; zcc = 0; }
-    if (vol) { delete vol; vol = 0; }
+    if (xcc) { delete xcc;    xcc = 0; }
+    if (ycc) { delete ycc;    ycc = 0; }
+    if (zcc) { delete zcc;    zcc = 0; }
+    if (vol) { delete vol;    vol = 0; }
 
-    if (xlen) { delete xlen; xlen = 0; }
-    if (ylen) { delete ylen; ylen = 0; }
-    if (zlen) { delete zlen; zlen = 0; }
+    if (xlen) { delete xlen;    xlen = 0; }
+    if (ylen) { delete ylen;    ylen = 0; }
+    if (zlen) { delete zlen;    zlen = 0; }
 
-    if (jacobian) { delete jacobian; jacobian = 0; }
+    if (jacobian) { delete jacobian;    jacobian = 0; }
 }
 
 inline RDouble3D * Geo_CellMetrics_Struct::GetCellVolume() const

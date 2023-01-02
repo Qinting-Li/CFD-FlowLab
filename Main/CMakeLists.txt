@@ -46,8 +46,8 @@ endif(WIN32)
 
 #3. set environment for MPICH and 3rdParty lib directory:
 if(WIN32)
-  set(MSMPI_HOME_DIRECTORY "C:/Program Files (x86)/Microsoft SDKs/MPI" CACHE PATH "path to installed MPICH")
   include_directories("${MSMPI_HOME_DIRECTORY}/Include")
+  link_directories("${MSMPI_HOME_DIRECTORY}/lib")
   if(USE_Windows_X64)
     link_directories("${MSMPI_HOME_DIRECTORY}/Lib/x64")
     set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64")
@@ -121,7 +121,7 @@ if(USE_OCC)
   message(STATUS "Using OpenCasCade ...... ")
   set(OCC_LIBS_REQUIRED
       # subset of DataExchange
-      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKSTL TKXSBase
       # ModelingAlgorithms
       TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
       TKTopAlgo TKGeomAlgo
@@ -132,7 +132,7 @@ if(USE_OCC)
       TKMath TKernel)
   
   # Set the path of the OCC library.
-  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/3rdparty/occ690-vc11-bit32-release)
+  set(3RDPARTY_LIB_PATH ${PROJECT_SOURCE_DIR}/3rdparty/occ730-vc11-bit64-release)
   set(OCC_LIB_PATH ${3RDPARTY_LIB_PATH} CACHE PATH "path to OpenCasCade library.")
   message(STATUS "Path to OpenCasCade library: " ${OCC_LIB_PATH})
   
@@ -174,20 +174,29 @@ endif(WIN32)
 set(API_TARGET_NAME "PHAPI")
 set(MESH_TARGET_NAME "PHMesh")
 set(CFD_TARGET_NAME "PHCFD")
+set(Grider_TARGET_NAME "PHGrider")
 
 message(STATUS "Linking ${MESH_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${MESH_TARGET_NAME})
-  
+
+if(BUILD_Grid)
+  message(STATUS "Linking ${Grider_TARGET_NAME} ...")
+  list(APPEND LINK_LIBRARY_LIST ${Grider_TARGET_NAME})
+endif(BUILD_Grid)
+
 message(STATUS "Linking ${CFD_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${CFD_TARGET_NAME})
 
+
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME})
+
 
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
 
 #23. link a target to given libraries:
 target_link_libraries(${EXECUTABLE_TARGET_NAME} ${LINK_LIBRARY_LIST})
+
 
 # Some pre-definitions that occ need.
 if(USE_OCC)
@@ -233,4 +242,6 @@ endif(USE_OMP)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
+
+
 

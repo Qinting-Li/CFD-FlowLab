@@ -147,6 +147,7 @@ public:
     virtual void ComputeReferenceViscosityDimensional(){};
     virtual void ComputeReferenceGasInformation(){};
     virtual void ComputeReferenceSoundVelocity(){};
+    virtual void ComputeReferenceInitMassFractionInformation(){};
     virtual void ComputeReferenceMolecularInformation(){};
     virtual void ComputeReferenceMolecularInformationWithChemical(){};
     virtual void ComputeReferenceMolecularInformationWithoutChemical(){};
@@ -300,6 +301,9 @@ public:
 
     virtual void ComputeMixtureByWilkeFormula(RDouble *moleFractionOfSpecies, RDouble *mixtureOfSpecies, RDouble *phiOfSpecies, RDouble &mixture){};
 
+    //! To obtain the mass fraction of each species according to other fraction of each species.
+    //! @param[in ]: fractionOfSpecies is an array of saving the fraction of each specie,such as mole fraction,volume fraction.
+    virtual void MassFractionConversion(RDouble *fractionOfSpecies){};
     //! To obtain the mole fraction of each species according to the mass fraction of each species.
     //! @param[in ]: massFractionOfSpecies is an array of saving the mass fraction of each species.
     //! @param[out]: moleFractionOfSpecies is an array of saving the mole fraction of each species.

@@ -205,5 +205,14 @@ inline int Param_CFDSolver::GetIsOverLapping() const
     return isOverset;
 }
 
+inline RDouble Param_CFDSolver::GetSkewnessAngle() const
+{
+    return skewnessAngle;
+}
+
+inline int Param_CFDSolver::GetWennSchemeFlag() const
+{
+    return isWennScheme;
+}
 
 

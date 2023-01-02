@@ -8,6 +8,7 @@
 //          Platform for Hybrid Engineering Simulation of Flows           +
 //          China Aerodynamics Research and Development Center            +
 //                     (C) Copyright, Since 2010                          +
+//                         PHengLEI 2212                                  +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ###########################################################################
 #                       Default parameters for Grid conversion            #
@@ -50,16 +51,21 @@ int SymmetryFaceVector  = 1;
 int gridReorder         = 0;
 int faceReorderMethod   = 0;
 
-// axisup: Type of Cartisien coordinates system, used in grid conversion.
-//         1 -- Y upward. (default)
-//         2 -- Z upward.
-int axisup = 1;
+// nAxisRotateTimes: number of axis rotating times, zero (default) meaning without rotating.
+// axisRotateOrder : axis rotating order.
+//         1 -- X-axis.
+//         2 -- Y-axis.
+//         3 -- Z-axis.
+// axisRotateAngles: axis rotating angles (degree), which are corresponding to the axis rotating order. 
+int nAxisRotateTimes     = 0;
+int axisRotateOrder[]    = [1, 2, 3];
+double axisRotateAngles[]= [0.0, 0.0, 0.0]; 
 
 // omit_no_bound_bc: What's boundary condition for the type of "no_boundary_condition".
 //                   0 -- Interface. (default)
 //                   1 -- Physical boundary condition, used in Hybrid solver.
 int omit_no_bound_bc = 0;
-
+int omitRepeatInterface = 1;
 //-----------------------------------------------------------------------
 #                           Grid data type                              #
 //-----------------------------------------------------------------------
@@ -253,9 +259,6 @@ int numberOfMultigrid = 1;
 // intervalStepSample: The step intervals for monitored probes variables file 'sample.dat' saved.
 // intervalStepForce: The step intervals for aerodynamics coefficients file 'aircoef.dat' saved.
 // intervalStepRes: The step intervals for residual file 'res.dat' saved.
-// ifLowSpeedPrecon: Precondition process to accelerate convergence for low speed flow.
-//                   0 -- no precondition process. (default, mach > 0.3)
-//                   1 -- carry out precondition process. (mach number <= 0.3)
 
 int maxSimuStep       = 20000;
 
@@ -264,13 +267,24 @@ int intervalStepPlot  = 1000;
 int intervalStepSample = 1000;
 int intervalStepForce = 100;
 int intervalStepRes   = 10;
-int ifLowSpeedPrecon  = 0;
+
 
 // compressible:
 //               0 -- incompressible flow.
 //               1 -- compressible flow. (default)
 int compressible = 1;
 
+// ifLowSpeedPrecon: Precondition process to accelerate convergence for low speed flow.
+//                   0 -- no precondition process. (default, mach > 0.3)
+//                   1 -- carry out precondition process. (mach number <= 0.3)
+// Kprec: The coefficient K for the cut-off velocity.
+//        1.0~3.0 is suggested. (default, 3.0)
+// preconFarfieldBCMethod: The precondition method for farfield boundary condition.
+//                         0 -- precondition far-field boundary based on riemann invariants. 
+//                         1 -- Turkel's simplified far-field boundary condition.
+int ifLowSpeedPrecon  = 0;
+double Kprec = 3.0;
+int preconFarfieldBCMethod  = 1;
 //-----------------------------------------------------------------------
 #                           CFD Control Parameter                       #
 //-----------------------------------------------------------------------
@@ -357,6 +371,7 @@ double forceReferenceArea = 1.0;              // unit of meter^2.
 double TorqueRefX = 0.0;                      // unit of meter. 
 double TorqueRefY = 0.0;                      // unit of meter.
 double TorqueRefZ = 0.0;                      // unit of meter.
+double knudsenLength = 1.0;		              // unit of meter.
 double refMolecularWeight = 28.9644;          // unit of g/mol.
 
 //-----------------------------------------------------------------------
@@ -575,7 +590,7 @@ int    order        = 2;
 
 double visl_min = 0.01;
 double turbCFLScale = 1.0;
-double csrv     = 2.0;
+double csrv     = 1.0;
 double timemax  = 1.0e10;
 double dtsave   = -1.0;
 int    maxale   = 10;
@@ -632,10 +647,12 @@ int    cellMethodOrNodeMethod = 0;
 
 string resSaveFile        = "results/res.dat";
 string turbresfile        = "results/turbres.dat";
+string transitionResFile  = "results/transitionRes.dat";
 string aircoeffile        = "results/aircoef.dat";
 
 string restartNSFile      = "results/flow.dat";
 string turbfile           = "results/turb.dat";
+string transitionFile     = "results/transition.dat";
 
 string visualfile         = "results/tecflow.plt";
 string wall_aircoefile    = "results/wall_aircoef.dat";
@@ -645,10 +662,14 @@ string protectionFile0    = "results/flow0.dat";
 string protectionFile1    = "results/flow1.dat";
 string wall_heatfluxfile  = "results/wall_heatflux.dat";
 
+string protectionTurbFile0    = "results/turb0.dat";
+string protectionTurbFile1    = "results/turb1.dat";
+
+string protectionTransitionFile0    = "results/transition0.dat";
+string protectionTransitionFile1    = "results/transition1.dat";
+
 int nDumpSurfaceInfo      = 0;
 string wall_varfile       = "";
-
-string jetDefineFile      = "bin/jet.hypara";
 
 string sixDofFileName     = "results/sixDofInfo.dat";
 string derivativeFileName = "results/identify.dat";
@@ -700,7 +721,7 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 //                   -- transition intermittency(intermittency, 51), -transition momentum thickness reynolds(MomentumThicknessReynolds, 52),
 //                   -- overlap iblank(iblank, 81)
 
-//                   -- specific heat ratio(gama, 56)
+//                   -- specific heat ratio(gama, 56), Knudsen number(kn, 60)
 // Important Warning: Array size of visualVariables MUST be equal to nVisualVariables!!!
 // Variables order must from small to big.
 //-----------the optional parameters list for the wall boundary condition----------------
@@ -711,7 +732,7 @@ double upperPlotFieldBox[] = [1.0 1.0 1.0];
 // -heat flux of species diffusion term(Qs, 9), -heat flux of vibrational temperature term(Qv, 10), -heat flux of electron temperature term(Qe, 11),
 // -species mass fractions(Ns, 12), -x component of wall velocity(Vx, 13), -y component of wall velocity(Vy, 14), -z component of wall velocity(Vz, 15)
 // -slip translational-rotational temperature(Tts, 16), -slip vibrational temperature(Tvs, 17), -slip electron temperature(Tes, 18), -absolute wall velocity(Vs, 19)
-// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22), -Grid Reynolds number on wall(Re_w, 23)
+// -Stanton number(St, 20), -coefficient of heat rate(Ch, 21), -temperature jump(deltaT, 22), -Grid Reynolds number on wall(Re_w, 23), -Knudsen number(Kn_wall, 24)
 int nVisualVariables = 8;
 int visualVariables[] = [0, 1, 2, 3, 4, 5, 6, 15];
 
@@ -739,7 +760,9 @@ int dumpStandardModel = 0;
 //                    1 -- Real cell where the probe is located.
 // nProbeVariables: Number of variables want to be dumped for probes monitered.
 // probeVariables : Variable types dumped, listed as following:
-//                  -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6).
+//                  -- density(0), u(1), v(2), w(3), pressure(4), temperature(5), mach(6)
+//                  -- dimensioanl_density(7), dimensioanl_u(8), dimensioanl_v(9), 
+//                  -- dimensioanl_w(10), dimensioanl_pressure(11), dimensioanl_temperature(12)
 // Important Warning: Array size of probeVariables MUST be equal to nProbeVariables!!!
 // probeVariables order must from small to big.
 // probeVariablesInterpolationMethod: Interpolation method used to compute the probe variables.
@@ -1046,7 +1069,13 @@ int    monitorNegativeConstant = 0;
 //  nProtectData   : Use the continuation file data protection mechanism.
 //                   0 -- no
 //                   1 -- yes
+//  nTvChange     : Judge whether the Tv equals Ttr.
+//                   0 -- yes
+//                   1 -- no
 
+// nFraction: the initial fractions type of species. 
+//           0 -- mass fraction.
+//           1 -- mole fraction.
 int dg_high_order = 0;
 int iapplication  = 0;
 int isAdaptiveSolver = 0;
@@ -1137,6 +1166,7 @@ int    nAblation   = 0;
 int    isInjection = 0;
 int    nViscosityModel = 0;
 int    nMarsModel = 0;
+int    nTvChange = 0;
 string gasfile    = "DK5";
 //string gasfile    = "./chemical/Dunn-Kang_air5s11r.dat";
 string speciesName = "O, O2, NO, N, N2";
@@ -1173,10 +1203,15 @@ double molecularWeightSpeciesB = 30.0;
 //string speciesName = "O2, N2";
 //string initMassFraction = "1.0, 0.0";
 
+int nFraction   = 0;
 int nContinueModel = 0;
 int nChemicalFlowStep = 0;
 int ifStartFromPerfectGasResults = 0;
 
+int nLeakageMonitor = 0;
+double totalLeakageVolume = 1000.0;
+double monitorThresholdValue = 0.05;
+double sprayFactor = 0.0;
 #########################################################################
 // Multi-Grid parameters.
 // nMGLevel: The number of level of Multi-Grid.
@@ -1273,9 +1308,29 @@ int  allReduceStep = 1;
 // codeOfOversetGrid: Overlapping(overset) grid or not.
 //             0 -- NON-overlapping grid.
 //             1 -- Overlapping grid.
-// oversetInterpolationMethod: the method of overset interpolation while field simulation
+// oversetInterpolationMethod: the method of overset interpolation while field simulation.
 //             0 -- set the acceptor cell value by donor cell value.
 //             1 -- set the acceptor cell value by distance weight of donor cell value.
+// readOversetFileOrNo: Whether to read overset-file(.ovs) that has been generated.
+//             0 -- no.
+//             1 -- yes.
+// symetryOrNot: If there exist symetryplanes(XY plane, the coordinate of Z direction is 0) in 
+                 the current overset grid(only for three dimension).
+//             0 -- no.
+//             1 -- yes.
+// readInAuxiliaryInnerGrid: Whether to read auxiliary inner grid
+//             0 -- no.
+//             1 -- yes.
+// walldistMainZone: The initial value of background grid which does not exist wall boundary condition.
+// toleranceForOversetSearch: The tolerance of overset searching zone to judge whether the obtained node is in the current computing cell.
+// toleranceForOversetBox: The tolerance of building the minimum box of computing cells in the overlapping region.
+// twoOrderInterpolationOrNot: The number of interpolated cell layers in the overlapping boundary.
+//             0 -- one layer.
+//             1 -- two layers.
+// keyEnlargeOfActiveNodes: The number of enlarged overset-boundary layers in the buffer region.
+// outTecplotOverset: Whether to dump out the flowfield data after the progress of overset configure.
+//             0 -- no.
+//             1 -- yes.
 
 int    codeOfOversetGrid           = 0;
 int    oversetInterpolationMethod  = 0;
@@ -1321,6 +1376,8 @@ int    numberOfMovingBodies = 1;
 ##############################    body0    ##############################
 //mass of parts
 double mass_0                  = 1.0;
+//gravity of parts(along negative direction in Y-axis, eg. 9.8)
+double gravity_0                  = 0.0;
 //mass matrix of parts               Ixx       Iyy       Izz       Ixy       Ixz       Iyz
 double massMatrix_0[]          = 1e-7,     1e-6,     1e-6,     0.0,      0.0,      0.0;
 //initial six DOF position information of parts.    xc        yc        zc
@@ -1355,9 +1412,11 @@ double reduceFrequency_0        = 0.0;
 int direction_0                 = -1;
 double rotateFrequency_0        = 0.0;
 //string uDFSixDofFileName_0    = "./Bin/UDFSixDof.Parameter";
-//additional force  (system axis)             fX        fY        fZ        
+//dimensional physical time for additional force(s)
+double addedForceTime_0[]       = 0.0;
+//additional force(inertia system)             fX        fY        fZ        
 double addedForce_0[]           = 0.0      ,0.0      ,0.0       ;
-//additional moment of Force  (system axis)             mX        mY        mZ        
+//additional moment(inertia system)             mX        mY        mZ        
 double addedMoment_0[]          = 0.0      ,0.0      ,0.0       ;
 //the deformation method of the parts.
 int    morphing_0               = 0;

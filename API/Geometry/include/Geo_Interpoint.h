@@ -58,7 +58,7 @@ public:
 public:
     //! Get the interpoint index in the target zone.
     //! @param[out] pointIndexForReceive      interpoint index for receiving in current zone.
-    int *GetPointIndexForReceive() const;
+    int * GetPointIndexForReceive() const;
 
     //! Set the interpoint index in the target zone.
     //! @param[in] pointIndexForReceive      interpoint index for receiving in current zone.
@@ -66,7 +66,7 @@ public:
 
     //! Get the interpoint number in the target zone.
     //! @param[out] pointIndexForSend      interpoint index for sending in current zone.
-    int *GetPointIndexForSend() const;
+    int * GetPointIndexForSend() const;
 
     //! Set the interpoint number in the target zone.
     //! @param[in] pointIndexForSend      interpoint index for sending in current zone.
@@ -159,27 +159,27 @@ public:
 
     //! Get the number of interpoints.
     //! @param[out] interPoint2ZoneID      Neighbor zone index of the interpoint.
-    int *GetInterPoint2ZoneID() const;
+    int * GetInterPoint2ZoneID() const;
 
     //! Get interpoint index in neighbor zone.
     //! @param[out] interPoint2InterPointID      interpoint index in neighbor zone.
-    int *GetInterPoint2InterPointID() const;
+    int * GetInterPoint2InterPointID() const;
 
     //! Get global point index in current zone.
     //! @param[out] interPoint2GlobalPoint       Global point index in current zone.
-    int *GetInterPoint2GlobalPoint() const;
+    int * GetInterPoint2GlobalPoint() const;
 
     //! Get the total cell numbers of the interpoint.
     //! @param[out] cellNumberOfInterPoint      total cell numbers of the interpoint.
-    int *GetCellNumberOfInterPoint() const;
+    int * GetCellNumberOfInterPoint() const;
 
     //! Get the total zones of the interpoint.
     //! @param[out] totalZonesOfInterPoint       Total zones of the interpoint.
-    int *GetTotalZonesOfInterPoint() const;
+    int * GetTotalZonesOfInterPoint() const;
 
     //! Get the label of the interpoint.
     //! @param[out] labelOfInterPoint          Label of the interpoint.
-    int *GetLabelOfInterPoint() const;
+    int * GetLabelOfInterPoint() const;
 
     //! Get the neighbor zone index of iNeighbor, iNeighbor among in [0, numberOfNeighbor].
     //! @param[in] iNeighbor            the i-th neighbor for interpoint of this zone.
@@ -189,22 +189,22 @@ public:
     //! Get the point index of iNeighbor for receiving.
     //! @param[in] iNeighbor            the i-th neighbor for interpoint of this zone.
     //! @param[out]           the point index of iNeighbor for receiving.
-    int *GetPointIndexForReceive(int iNeighbor) const;
+    int * GetPointIndexForReceive(int iNeighbor) const;
 
     //! Get the point index of iNeighbor for sending.
     //! @param[in] iNeighbor            the i-th neighbor for interpoint of this zone.
     //! @param[out]           the point index of iNeighbor for sending.
-    int *GetPointIndexForSend(int iNeighbor) const;
+    int * GetPointIndexForSend(int iNeighbor) const;
 
     //! Get the send data storage of the i-th data.
     //! @param[in] istore         the ID the sending data storage.
     //! @param[out]dataForSend[istore]     the send data storage of the i-th data.
-    Data_ParamFieldSuite *GetSendDataStorage(int istore) const;
+    Data_ParamFieldSuite * GetSendDataStorage(int istore) const;
 
     //! Get the receive data storage of the i-th data.
     //! @param[in] istore         the ID the receiving data storage.
     //! @param[out] dataForSend[istore]     the receive data storage of the i-th data.
-    Data_ParamFieldSuite *GetReceiveDataStorage(int istore) const;
+    Data_ParamFieldSuite * GetReceiveDataStorage(int istore) const;
 
     //! Set the number of interpoints.
     //! @param[in] numberOfInterpoints           Number of interpoints.
@@ -230,7 +230,7 @@ public:
     //! Compute the point index of iNeighbor for sending.
     //! @param[in] iNeighbor            the i-th neighbor for interpoint of this zone.
     //! @param[out]           the point index of iNeighbor for sending.
-    int *ComputePointIndexForSend(int iNeighbor);
+    int * ComputePointIndexForSend(int iNeighbor);
 
     //! Fill the point index of iNeighbor for sending to zone.
     //! @param[in] zone            the zone Index for sending to.
@@ -239,12 +239,12 @@ public:
 
     //! Get the number of patched-interpoint.
     //! @param[out] interPointPatch        the number of patched-interpoint.
-    InterpointPatch **GetInterpointPatch() const;
+    InterpointPatch ** GetInterpointPatch() const;
 
     //! Get the patched-interpoint of the ith neighbor zone.
     //! @param[in] iNeighbor        the i-th neighbor zone.
     //! @param[out] interPointPatch        the patched-interpoint of the i-th neighbor zone.
-    InterpointPatch *GetInterpointPatch(int iNeighbor) const;
+    InterpointPatch * GetInterpointPatch(int iNeighbor) const;
 
     //! Find the neighbor zone for interpoint.
     void FindNeighbors();
@@ -289,7 +289,7 @@ public:
 
     //! Get the neighbor of this interpoint found or not.
     //! @param[out] isNeighborInterpointFound         Is the neighbor interpoint has been found.
-    bool *GetIsNeighborInterpointFound();
+    bool * GetIsNeighborInterpointFound();
 
 private:
     //! Is the neighbor interpoint has been found.
@@ -340,7 +340,7 @@ public:
     //! Get the name  of the i-th data.
     //! @param[in]iData         data index.
     //! @param[out]         the name  of the i-th data.
-    string &GetName(const int iData);
+    string & GetName(const int iData);
 
     //! Get the solver index  of the i-th data.
     //! @param[in]iData         data index.
@@ -362,14 +362,14 @@ public:
     //! @param[in] IDOfGhostLayer         the ID of ghost layers..
     //! @param[out]              the sending variable.
     template<typename T>
-    T **GetSendVariable(const string &name, const int IDOfGhostLayer);
+    T ** GetSendVariable(const string &name, const int IDOfGhostLayer);
 
     //! Get the sending variable according to the name and the ghost layers.
     //! @param[in] name         data fields name.
     //! @param[in] IDOfGhostLayer         the ID of ghost layers..
     //! @param[out]              the receiving variable.
     template<typename T>
-    T **GetReceiveVariable(const string &name, const int IDOfGhostLayer);
+    T ** GetReceiveVariable(const string &name, const int IDOfGhostLayer);
 
 private:
 
@@ -403,11 +403,11 @@ public:
 public:
     //! Get the vector of the interpoint data.
     //! @param[out] vdata      vector of the interpoint data.
-    vector<RDouble **> &GetVectorData();
+    vector<RDouble **> & GetVectorData();
 
     //! Get the vector of the interpoint data dimension.
     //! @param[out] vdim      the vector of the interpoint data dimension.
-    vector<int> &GetVectorDimension();
+    vector<int> & GetVectorDimension();
 };
 
 #include "Geo_Interpoint.hxx"

@@ -44,11 +44,11 @@ LIB_EXPORT void Pre_GridMirror::Run()
     cout << "  from_gfile	: " << gridFileName << endl;
     cout << "  out_gfile	: " << out_gfile << endl << endl;
 
+    GlobalDataBase::UpdateData("gridfile", &gridFileName, PHSTRING, 1);
     GlobalDataBase::GetData("gridtype", &gridtype, PHINT, 1);
 
     Region *region = new Region();
-
-    region->ReadOrdinaryGrid(gridFileName);
+    region->ReadGrid();
 
     numberOfOriginalBlocks = PHMPI::GetNumberofGlobalZones();
     for (int iZone = 0; iZone < numberOfOriginalBlocks; ++ iZone)
@@ -195,7 +195,8 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
             Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, Dimension);
             grids[Gridindex] = grid;
 
-            Grid *Mirror = CreateGridGeneral(UNSTRUCTGRID, index, 0, Dimension);
+            GridID *mirrorIndex = new GridID(Gridindex + numberOfOriginalBlocks);
+            Grid *Mirror = CreateGridGeneral(UNSTRUCTGRID, mirrorIndex, 0, Dimension);
             grids[Gridindex + numberOfOriginalBlocks] = Mirror;
 
             int nTotalNodes, nTotalFace, nTotalCells;
@@ -344,13 +345,17 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
             for (int iFace = 0; iFace < nBoundFace; ++ iFace)
             {
                 int bctype;
+                string bcName;
                 PHRead(cdata, &bctype, 1);
+                cdata->read_string(bcName);
 
                 bcrs[iFace] = new UnstructBCSet();
                 bcrs[iFace]->SetKey(bctype);
+                bcrs[iFace]->SetBCName(bcName);
 
                 bcrs_mir[iFace] = new UnstructBCSet();
                 bcrs_mir[iFace]->SetKey(bctype);
+                bcrs_mir[iFace]->SetBCName(bcName);
 
                 if (bctype == PHENGLEI::INTERFACE)
                 {
@@ -380,7 +385,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
         delete cdata;
     }
 
-    fstream file;
+    /*fstream file;
     file.open("results/mirror.log", ios_base::out|ios_base::trunc);
 
     ostringstream oss;
@@ -473,7 +478,7 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
 
     file << oss.str();
     file.close();
-    file.clear();
+    file.clear();*/
 
     //ConstructGlobalInterfaceLink(grids, numberOfZones);
     DumpGrid(out_gfile, grids, numberOfZones);
@@ -1314,10 +1319,12 @@ void Pre_GridMirror::MirrorBCRegion()
             for (int iFace = 0; iFace < nBoundFace; ++ iFace)
             {
                 int bctype = bcr_ordinary[iFace]->GetKey();
+                string bcName = bcr_ordinary[iFace]->GetBCName();
 
                 if (bctype == PHENGLEI::INTERFACE)
                 {
                     PHWrite(gridinfo, &bctype, 1);
+                    gridinfo->write_string(bcName);
 
                     int interFace2BoundaryFace = interFace2BoundaryFace_ordinary[iInterfae];
                     int interFace2ZoneID       = interFace2ZoneID_ordinary[iInterfae];
@@ -1342,7 +1349,9 @@ void Pre_GridMirror::MirrorBCRegion()
                 {
                     int Gridindex = grid_ordinary->GetGridID()->GetIndex();
                     bctype = PHENGLEI::INTERFACE;
+                    bcName = "Interface";
                     PHWrite(gridinfo, &bctype, 1);
+                    gridinfo->write_string(bcName);
 
                     int interFace2BoundaryFace = iFace;
                     int interFace2ZoneID       = Gridindex + numberOfOriginalBlocks;
@@ -1371,6 +1380,7 @@ void Pre_GridMirror::MirrorBCRegion()
                 }
 
                 PHWrite(gridinfo, &bctype, 1);
+                gridinfo->write_string(bcName);
             }
         }
     }

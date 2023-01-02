@@ -438,11 +438,17 @@ LIB_EXPORT void CompleteParamInfo()
     else if (ViscousType == 4)
     {
         nTurbulenceEquation = 2;
-        int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
-        nTurbulenceEquation += transitionType;
     }
 
     GlobalDataBase::UpdateData("n_turb", &nTurbulenceEquation, PHINT, 1);
+
+    int transitionType = GlobalDataBase::GetIntParaFromDB("transitionType");
+    int nTransitionEquation = 0;
+    if (transitionType == 2)
+    {
+        nTransitionEquation = 2;
+    }
+    GlobalDataBase::UpdateData("n_transition", &nTransitionEquation, PHINT, 1);
 
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");

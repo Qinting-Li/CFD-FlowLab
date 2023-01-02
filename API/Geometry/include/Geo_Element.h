@@ -49,11 +49,11 @@ public:
     //!
     uint_t GetElementPhysicsFaceNumber() const { return composite_face_list.size(); }
     //! Get the element type.
-    int GetElementType() const { return elem_type; };
+    int GetElementType() const { return elem_type; }
     //! Get the node number of element.
     int GetElementNodeNumber(int elem_type);
     //! Get the refine element type.
-    int GetRefineElemType(int elem_type, const bool & anisotropicAdapt);
+    int GetRefineElemType(int elem_type, const bool &anisotropicAdapt);
     //! Get the simple element type.
     int GetSimpleElemType(int elem_type);
     //! Whether the type is basic element or not.
@@ -77,8 +77,8 @@ public:
     //! Get the type of child element.
     int GetChildElementType(int i) { return child_element_type[i]; }
     //! Get the relative node index of child element.
-    vector< int > & GetChildElementRelativeNodeIndex(int iChildElement) { return child_element_index[ iChildElement ]; }
-    vector< int > & GetChildElementRelativeNodeIndexCase2(int iChildElement) { return child_element_index_case2[ iChildElement ]; }
+    vector< int > & GetChildElementRelativeNodeIndex(int iChildElement) { return child_element_index[iChildElement]; }
+    vector< int > & GetChildElementRelativeNodeIndexCase2(int iChildElement) { return child_element_index_case2[iChildElement]; }
 };
 
 class ElementProxy
@@ -126,7 +126,7 @@ public:
     void InitConstants();
 };
 
-const int INVALID_INDEX = - 1;
+const int INVALID_INDEX = -1;
 const int PENTA_12      = NofValidElementTypes;
 const int QUAD_6        = NofValidElementTypes+1;
 //! Get the refine element type.

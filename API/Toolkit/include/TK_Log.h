@@ -37,6 +37,11 @@ void CloseLogFile(fstream &file);
 void WriteLogFile(const string &data);
 
 //! Output information to log file.
+//! @param[in] data    string data.
+//! @param[in] writeEachProcessor    whether write each processor.
+void WriteLogFile(const string &data, bool writeEachProcessor);
+
+//! Output information to log file.
 //! @param[in] oss    information string stream.
 //! @param[in] writeEachProcessor    whether write each processor.
 void WriteLogFile(const ostringstream &oss, bool writeEachProcessor = false);

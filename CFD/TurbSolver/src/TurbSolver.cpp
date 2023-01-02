@@ -139,13 +139,58 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
         GlobalDataBase::GetData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
     }
 
+    int nProtectData = 0;
+    if(GlobalDataBase::IsExist("nProtectData", PHINT, 1))
+    {
+        nProtectData = GlobalDataBase::GetIntParaFromDB("nProtectData");
+    }
+
     if (outnstep % intervalStepFlow == 0 && level == 0 && isSubIterationDump)
     {
-        //! To dump restart data for continual simulation.
-        ActionKey *actkeyDumpRestartData = new ActionKey();
-        FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
-        DumpRestartData(actkeyDumpRestartData);
-        delete actkeyDumpRestartData;
+
+        if(nProtectData ==0)
+        {
+            //! To dump restart data for continual simulation.
+            ActionKey *actkeyDumpRestartData = new ActionKey();
+            FillActionKey(actkeyDumpRestartData, DUMP_RESTART, 0);
+            DumpRestartData(actkeyDumpRestartData);
+            delete actkeyDumpRestartData;
+        }
+        else
+        {
+            int RestartFile = 0;
+            ActionKey *actkeyDumpRestartData = new ActionKey();
+            FillActionKey(actkeyDumpRestartData, DUMP_RESTART, level);
+            DumpTurbProtectData(actkeyDumpRestartData, RestartFile);
+            delete actkeyDumpRestartData;
+        
+            if(outnstep > 1)
+            {
+                if(RestartFile == 0)
+                {
+                    string path = "./results/turb1.dat";
+                    remove(path.c_str());
+
+                    if(PHMPI::IsParallelRun())
+                    {
+                        string path = "./results/turb1_0.dat";
+                        remove(path.c_str());
+                    }
+                }
+
+                else if(RestartFile == 1)
+                {
+                    string path = "./results/turb0.dat";
+                    remove(path.c_str());
+
+                    if(PHMPI::IsParallelRun())
+                    {
+                        string path = "./results/turb0_0.dat";
+                        remove(path.c_str());
+                    }
+                }
+            }
+        }
     }
 
     int intervalStepRes = GlobalDataBase::GetIntParaFromDB("intervalStepRes");
@@ -292,17 +337,17 @@ void TurbSolver::CompareOutStepOfFlowfieldFile(int outnstepofNS, int outnstepofT
 //! Get the file name for Residual dumping.
 const string TurbSolver::GetResidualFileName()
 {
-    string turbresfile = "turbres.dat";
-    GlobalDataBase::GetData("turbresfile", &turbresfile, PHSTRING, 1);
-    return turbresfile;
+    string turbresFile = "turbres.dat";
+    GlobalDataBase::GetData("turbresfile", &turbresFile, PHSTRING, 1);
+    return turbresFile;
 }
 
-//! Get the file name for Residual dumping.
+//! Get the file name for relay calculation.
 const string TurbSolver::GetRestartFileName()
 {
-    string turbfile = "turbres.dat";
-    GlobalDataBase::GetData("turbfile", &turbfile, PHSTRING, 1);
-    return turbfile;
+    string turbFile = "turb.dat";
+    GlobalDataBase::GetData("turbfile", &turbFile, PHSTRING, 1);
+    return turbFile;
 }
 
 LIB_EXPORT Param_TurbSolver *TurbSolver::GetControlParameters()

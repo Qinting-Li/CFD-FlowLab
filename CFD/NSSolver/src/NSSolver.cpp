@@ -65,6 +65,15 @@ void NSSolver::TimeStep(Grid *grid)
 
 void NSSolver::UpdateResiduals(Grid *grid)
 {
+    Param_NSSolver *parameters = GetControlParameters();
+
+    int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
+    if (ifLowSpeedPrecon == 1)
+    {
+        ComputePreconditionCoefficient(grid);
+        ConservativePreconMatrix(grid);
+    }
+
     InviscidFlux(grid);
 
     ViscousFlux(grid);
@@ -282,6 +291,23 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
                     DumpHeatFlux(actkeyDumpHeatFlux);
                     delete actkeyDumpHeatFlux;
                 }
+            }
+        }
+        if ((outnstep + 1) % intervalStepForce == 0 && isSubIterationDump)
+        {
+            if (level == 0)
+            {
+                //! To dump wall airforce coefficient data.
+                ActionKey *actkeyDumpWallAircoef = new ActionKey();
+                FillActionKey(actkeyDumpWallAircoef, DUMP_CP_DISTRI, 0);
+                DumpCpDistri(actkeyDumpWallAircoef);
+                delete actkeyDumpWallAircoef;
+
+                //! To dump surface information data.
+                ActionKey *actkeyDumpSurfaceInfo = new ActionKey();
+                FillActionKey(actkeyDumpSurfaceInfo, DUMP_SURFACE_INFO, 0);
+                DumpSurfaceInfo(actkeyDumpSurfaceInfo);
+                delete actkeyDumpSurfaceInfo;
             }
         }
     }
@@ -654,6 +680,8 @@ void NSSolver::InitDependentVariables()
 {
     Grid *fineGrid = GetGrid();
 
+    Param_NSSolver *parameters = GetControlParameters();
+
     //! These variables are need for boundary condition.
     ComputeGamaAndTemperature(fineGrid);
 
@@ -662,7 +690,6 @@ void NSSolver::InitDependentVariables()
     //! After boundary condition, the gama and temperature would be changed.
     ComputeGamaAndTemperature(fineGrid);
 
-    Param_NSSolver *parameters = GetControlParameters();
     int isViscous = parameters->IsViscous();
     if (isViscous)
     {
@@ -703,6 +730,81 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     }
     CFDSolver::RegisterInterfaceField("wallCell", PHDOUBLE, 1);
     CFDSolver::RegisterInterfaceField("wallAircoefData", PHDOUBLE, dataNumber);
+
+    int nVisualVariables_in = GlobalDataBase::GetIntParaFromDB("nVisualVariables");
+    int visualVariables[100];
+    GlobalDataBase::GetData("visualVariables", visualVariables, PHINT, nVisualVariables_in);
+    Post_Visual* postVisualization = new Post_Visual(nVisualVariables_in, visualVariables);
+    set<int>::iterator varIter;
+    set<int> visualVariablesID = postVisualization->GetVisualVariables();
+    for (varIter = visualVariablesID.begin(); varIter != visualVariablesID.end(); ++ varIter)
+    {
+        int varTemp = *varIter;
+        string varName = postVisualization->GetVariableName(varTemp);
+        varName = varName + "_face";
+        CFDSolver::RegisterInterfaceField(varName, PHDOUBLE, 1);
+    }
+
+    if (postVisualization->IsNeedVisualization(PHSPACE::VISUAL_MACH))
+    {
+        if (!(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_DENSITY)))
+        {
+            CFDSolver::RegisterInterfaceField("density_face", PHDOUBLE, 1);
+        }
+        
+        if (!(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_U)))
+        {
+            CFDSolver::RegisterInterfaceField("u_face", PHDOUBLE, 1);
+        }
+
+        if (!(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_V)))
+        {
+            CFDSolver::RegisterInterfaceField("v_face", PHDOUBLE, 1);
+        }
+
+        if (!(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_W)))
+        {
+            CFDSolver::RegisterInterfaceField("w_face", PHDOUBLE, 1);
+        }
+
+        if (!(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_PRESSURE)))
+        {
+            CFDSolver::RegisterInterfaceField("pressure_face", PHDOUBLE, 1);
+        }
+
+        if (!(postVisualization->IsNeedVisualization(PHSPACE::VISUAL_GAMA)))
+        {
+            CFDSolver::RegisterInterfaceField("gama_face", PHDOUBLE, 1);
+        }
+    }
+
+    CFDSolver::RegisterInterfaceField("density_Average_face" , PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("u_Average_face"       , PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("v_Average_face"       , PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("w_Average_face"       , PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("pressure_Average_face", PHDOUBLE, 1);
+
+    CFDSolver::RegisterInterfaceField("tau_xx_face", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("tau_yy_face", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("tau_zz_face", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("tau_xy_face", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("tau_xz_face", PHDOUBLE, 1);
+    CFDSolver::RegisterInterfaceField("tau_yz_face", PHDOUBLE, 1);
+
+    int nChemical = parameters->GetChemicalFlag();
+    if (nChemical > 0)
+    {
+        using namespace GAS_SPACE;
+        string* varname = gas->GetNameOfSpecies();
+        for (int m = 0; m < numberOfSpecies; ++m)
+        {
+            string varName = varname[m];
+
+            varName = varName + "_face";
+            CFDSolver::RegisterInterfaceField(varName, PHDOUBLE, 1);
+        }
+    }
+    delete postVisualization;
 }
 
 void NSSolver::ReleaseCFDSolverInterfaceField()
@@ -824,6 +926,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     int nIdealState = parameters->GetIfIdealGasState();
     int nNitrogenIndex = parameters->GetIndexOfNitrogen();
     int nElectronIndex = parameters->GetIndexOfElectron();
+    int kPrec = parameters->GetPreconCoefficient();
 
     int RoeEntropyFixMethod  = parameters->GetRoeEntropyFixMethod();
     RDouble entrFixCoefLeft  = parameters->GetRoeEntropyFixCoef1();
@@ -840,6 +943,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     invSchemePara->SetNumberOfTotalEquation(nEquation);
     invSchemePara->SetIfPrecondition(nPrecondition);
     invSchemePara->SetIfIdealState(nIdealState);
+    invSchemePara->SetPreconCoefficient(kPrec);
     invSchemePara->SetEntropyFixMethod(RoeEntropyFixMethod);
     invSchemePara->SetMachNumber(refMachNumber);
     invSchemePara->SetEntropyFixCoefficients(entrFixCoefLeft, entrFixCoefRight);

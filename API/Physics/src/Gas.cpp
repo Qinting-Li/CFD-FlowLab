@@ -1,3 +1,4 @@
+#include <cmath>
 #include "Gas.h"
 #include "GlobalDataBase.h"
 #include "Constants.h"
@@ -219,6 +220,8 @@ namespace GAS_SPACE
             wallMultiTemperature = GlobalDataBase::GetIntParaFromDB("wallMultiTemperature");
         }
     };
+
+
 }
 
 }

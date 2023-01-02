@@ -31,23 +31,23 @@ T * HeaderPointer(vector< T > &field)
 }
 
 template < typename T >
-T * NewPointer(int nlen)
+T * NewPointer(int length)
 {
-    T *variable = new T [nlen];
+    T *data = new T [length];
     
-    return variable;
+    return data;
 }
 
 template < typename T >
-T ** NewPointer2(int nm, int nlen)
+T ** NewPointer2(int fistDim, int secondDim)
 {
-    T **vv = new T * [nm];
-    vv[0] = new T[nm * nlen];
-    for (int m = 1; m < nm; ++ m)
+    T **data = new T * [fistDim];
+    data[0] = new T[fistDim * secondDim];
+    for (int m = 1; m < fistDim; ++ m)
     {
-        vv[m] = &vv[m-1][nlen];
+        data[m] = &data[m-1][secondDim];
     }
-    return vv;
+    return data;
 }
 
 template < typename T >
@@ -70,32 +70,32 @@ T ** NewPointer2(int nm, int *nlen)
 }
 
 template < typename T >
-T *** NewPointer3(int ni, int nj, int nk)
+T *** NewPointer3(int fistDim, int secondDim, int thirdDim)
 {
-    T *** v3 = new T ** [ni];
-    v3[0]    = new T *  [ni * nj];
-    v3[0][0] = new T    [ni * nj * nk];
+    T *** data = new T ** [fistDim];
+    data[0]    = new T *  [fistDim * secondDim];
+    data[0][0] = new T    [fistDim * secondDim * thirdDim];
 
-    for (int i = 1; i < ni; ++ i)
+    for (int i = 1; i < fistDim; ++ i)
     {
-        v3[i] = &v3[i-1][nj];
+        data[i] = &data[i-1][secondDim];
     }
 
-    for (int j = 1; j < nj; ++ j)
+    for (int j = 1; j < secondDim; ++ j)
     {
-        v3[0][j] = &v3[0][j-1][nk];
+        data[0][j] = &data[0][j-1][thirdDim];
     }
 
-    for (int i = 1; i < ni; ++ i)
+    for (int i = 1; i < fistDim; ++ i)
     {
-        v3[i][0] = &v3[i-1][nj-1][nk];
-        for (int j = 1; j < nj; ++ j)
+        data[i][0] = &data[i-1][secondDim-1][thirdDim];
+        for (int j = 1; j < secondDim; ++ j)
         {
-            v3[i][j] = &v3[i][j-1][nk];
+            data[i][j] = &data[i][j-1][thirdDim];
         }
     }
 
-    return v3;
+    return data;
 }
 
 template < typename T >
@@ -154,11 +154,11 @@ void DelPointer(T *&v)
 }
 
 template < typename T >
-void DelPointer2(T **v)
+void DelPointer2(T **Data)
 {
-    if (!v) return;
-    delete [] v[0];    v[0] = NULL;
-    delete [] v;       v = NULL;
+    if (!Data) return;
+    delete [] Data[0];    Data[0] = NULL;
+    delete [] Data;       Data = NULL;
 }
 
 

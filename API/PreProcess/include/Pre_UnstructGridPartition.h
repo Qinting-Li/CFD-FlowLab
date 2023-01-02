@@ -17,11 +17,7 @@
 #include "Geo_UnstructGrid.h"
 #include "TK_Exit.h"
 #ifdef USE_WINDOWS_X64
-#ifdef VS12
 #include "parmetis64.h"
-#else
-#include "parmetis.h"
-#endif
 #else
 #include "parmetis.h"
 #endif
@@ -110,8 +106,6 @@ private:
     int GetMaxProcessorIndexInThisZone();
     idx_t * CreatePartitionSerial(UnstructGrid *grid, int maxProcessor);
     idx_t * CreatePartitionParallel(UnstructGrid *grid, int maxProcessor, idx_t *vtxdist);
-    void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy);
-    void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, int *neighborCell, idx_t *vtxdist);
     void MetisGrid(idx_t nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part);
     void ParMetisGrid(int nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part, idx_t *vtxdist);
     void ConvertPartNumberToGlobal(idx_t *part, int nTotalCell);
@@ -152,6 +146,7 @@ private:
     void SetCoorPart(UnstructGrid *gridpart);
     void SetLinkPart(int iZone, UnstructGrid *gridpart);
     void SetWallDist(UnstructGrid *gridpart);
+    void SetVolumeCondition(UnstructGrid *gridpart);
 
     void SetNodeNumberOfEachFaceAndFace2Node(UnstructGrid *gridpart);
     void SetFace2CellAndBC(int iZone, UnstructGrid *gridpart);

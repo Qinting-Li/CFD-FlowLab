@@ -43,13 +43,16 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         GetNameExt(visualfile, fname, fext, ".");
 
         ActionKey *actkey = new ActionKey();
+#ifdef USE_PBSOLVER
         int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
         if (compressible)
         {
+#endif
             actkey->level = iLevel;
             actkey->filename = AddDigitToFileName(fname, fext, ".", iLevel);
             actkey->tecfilename = AddDigitToFileName(fname, fext, ".", iLevel);
             actkey->VTKvisual = false;
+#ifdef USE_PBSOLVER
         }
         else
         {
@@ -59,6 +62,7 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
             actkey->tecfilename = AddDigitToFileName(fname, fext, ".", outIterStep);
             actkey->VTKvisual = false;
         }
+#endif
 
         if (flowType == AverageFlow)
         {
@@ -83,18 +87,23 @@ LIB_EXPORT void Post_WriteTecplot::Run(bool visualAllLevel)
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         if (isUnsteady)
         {
+#ifdef USE_PBSOLVER
             int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
             if (compressible)
             {
+#endif
                 int outnstep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
                 actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', outnstep);
             }
+#ifdef USE_PBSOLVER
             else
             {
+
                 double timestep = GlobalDataBase::GetDoubleParaFromDB("currentTime");
                 actkey->tecfilename = PHSPACE::AddSymbolToFileName(actkey->tecfilename, '_', timestep);
             }
         }
+#endif
         ServerWrite(actkey);
         PostWrite(actkey);
         delete actkey;
@@ -175,7 +184,7 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
         if (nchem)
         {
             int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
-            nVisualVariables = nVisualVariables + numberOfSpecies;
+            nVisualVariables = nVisualVariables + 2 * numberOfSpecies;
         }
 
         RDouble **qn = new RDouble *[nVisualVariables];
@@ -246,7 +255,7 @@ void Post_WriteTecplot::StoreVisualizationVar(ActionKey *actkey, Post_Visual *po
         if (nchem)
         {
             int numberOfSpecies = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
-            nVisualVariables = nVisualVariables + numberOfSpecies;
+            nVisualVariables = nVisualVariables + 2 * numberOfSpecies;
         }
 
         RDouble4D **qn = new RDouble4D *[nVisualVariables];
@@ -309,26 +318,17 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
     using namespace PHMPI;
     int myid = GetCurrentProcessorID();
 
-    if (actkey->VTKvisual == true && myid == server)
-    {
-        bool CharacteristicBoundary = false;
-        DumpToVTK DumpToVTK(vtkdatalist, actkey->filename, CharacteristicBoundary, this->flowType);
-        DumpToVTK.Run();
-
-        WriteSentinelFile(actkey);
-    }
-
     if (datalist.size() > 0)
     {
         int visualfileType = GlobalDataBase::GetIntParaFromDB("visualfileType");
         if (visualfileType == 0)
         {
-                ostringstream WarningInfo;
-                WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
-                PrintToWindow(WarningInfo);
+            ostringstream WarningInfo;
+            WarningInfo << "Warning : visualfileType = 0 is not right, dump flow data into ASCII file! \n";
+            PrintToWindow(WarningInfo);
 
-                DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
-                dumpToTecplotASCII.Run();
+            DumpToTecplotASCII dumpToTecplotASCII(datalist, actkey->tecfilename, this->flowType);
+            dumpToTecplotASCII.Run();
         }
         else if (visualfileType == 1)
         {
@@ -339,6 +339,15 @@ void Post_WriteTecplot::PostWrite(ActionKey *actkey)
         {
             TK_Exit::UnexpectedVarValue("visualfileType = ", visualfileType);
         }
+    }
+
+    if (actkey->VTKvisual == true && myid == server)
+    {
+        bool CharacteristicBoundary = false;
+        DumpToVTK DumpToVTK(vtkdatalist, actkey->filename, CharacteristicBoundary, this->flowType);
+        DumpToVTK.Run();
+
+        WriteSentinelFile(actkey);
     }
 
     for (unsigned int iZone = 0; iZone < vtkdatalist.size(); ++ iZone)
@@ -1228,6 +1237,64 @@ void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDo
         FieldVisualizationForVTK(grid_in, actkey, qn, nvarplot);
         return;
     }
+
+    int TecioMission = TEC_SPACE::WriteBlock;
+    DataContainer *cdata = actkey->GetData();
+    PHWrite(cdata, &TecioMission, 1);
+
+    UnstructGrid *grid = UnstructGridCast(grid_in);
+    int nTotalNode = grid->GetNTotalNode();
+    int nTotalCell = grid->GetNTotalCell();
+    int nTotalFace = grid->GetNTotalFace();
+
+    RDouble *x = grid->GetX();
+    RDouble *y = grid->GetY();
+    RDouble *z = grid->GetZ();
+    int *nodeNumberOfEachCell = grid->GetNodeNumberOfEachCell();
+    int *cell2Node = grid->GetCell2Node();
+
+    PHWrite(cdata, &nTotalNode, 1);
+    PHWrite(cdata, &nTotalCell, 1);
+
+    PHWrite(cdata, x, nTotalNode);
+    PHWrite(cdata, y, nTotalNode);
+    PHWrite(cdata, z, nTotalNode);
+
+    for (int m = 0; m < nvarplot; ++ m)
+    {
+        RDouble *qq = qn[m];
+        PHWrite(cdata, qq, nTotalNode);
+    }
+
+    PHWrite(cdata, &nTotalFace, 1);
+
+    int count = 0;
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        count += nodeNumberOfEachCell[iCell];
+    }
+    PHWrite(cdata, nodeNumberOfEachCell, nTotalCell);
+    PHWrite(cdata, cell2Node           , count);
+
+    int *faceNumberOfEachCell = grid->GetFaceNumberOfEachCell();
+    int **cell2Face = grid->GetCell2Face();
+
+    PHWrite(cdata, faceNumberOfEachCell, nTotalCell);
+    for (int iCell = 0; iCell < nTotalCell; ++ iCell)
+    {
+        PHWrite(cdata, cell2Face[iCell], faceNumberOfEachCell[iCell]);
+    }
+
+    int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
+    int *face2Node = grid->GetFace2Node();
+
+    count = 0;
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    {
+        count += nodeNumberOfEachFace[iFace];
+    }
+    PHWrite(cdata, nodeNumberOfEachFace, nTotalFace);
+    PHWrite(cdata, face2Node, count);
 }
 
 void Post_WriteTecplot::FieldVisualization(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nvarplot)
@@ -1591,7 +1658,6 @@ void Post_WriteTecplot::SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDoub
                 }
             }
         }
-
         PHWrite(cdata, qq, nTotalNode);
         delete [] qq;
         count = 0;
