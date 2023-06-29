@@ -50,6 +50,7 @@ public:
         pos = new RDouble[dir];
         left  = NULL;
         right = NULL;
+        data = NULL;
     };
 
     //! Constructor, set with coordinates and data.
@@ -64,6 +65,7 @@ public:
 
         left  = NULL;
         right = NULL;
+        data = NULL;
     };
 
     //! Constructor, set with another node.

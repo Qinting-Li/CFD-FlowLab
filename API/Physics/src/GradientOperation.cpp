@@ -264,7 +264,7 @@ void Get_SPM_J(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenG
     greenGeo3D->ovol = two / (vol(i,j,k) + vol(i,jm,k));
 }
 
-void Get_SPM_K(int i, int j, int k, int js, int ks, int ndim, GreenGeo3D *greenGeo3D, RDouble4D &xfn, RDouble4D &yfn, RDouble4D &zfn, RDouble4D &area, RDouble3D &vol)
+void Get_SPM_K(int i, int j, int k, int js, int ks, GreenGeo3D *greenGeo3D, RDouble4D &xfn, RDouble4D &yfn, RDouble4D &zfn, RDouble4D &area, RDouble3D &vol)
 {
     int ip,im,jp,jm,kp,km;
 
@@ -779,7 +779,7 @@ void Get_GEO_J(int i, int j, int k, int jm, int jp, int ndim, Geometry3D *geomet
     geometry3D->vjacob = two / (vol(i,jm,k) + vol(i,jp,k));
 }
 
-void Get_GEO_K(int i, int j, int k, int km, int kp, int ndim, Geometry3D *geometry3D, RDouble4D &xfv, RDouble4D &yfv, RDouble4D &zfv, RDouble3D &vol)
+void Get_GEO_K(int i, int j, int k, int km, int kp, Geometry3D *geometry3D, RDouble4D &xfv, RDouble4D &yfv, RDouble4D &zfv, RDouble3D &vol)
 {
 
     geometry3D->kx = fourth * (xfv(i,j,km,1) + xfv(i+1,j,km,1) + xfv(i,j,kp,1) + xfv(i+1,j,kp,1));
@@ -867,7 +867,7 @@ void DXDYDZ_J(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,R
 }
 
 
-void DXDYDZ_K(RDouble4D & f,Geometry3D * g,int i,int j,int k,int ndim,int npos,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz,int lr)
+void DXDYDZ_K(RDouble4D & f,Geometry3D * g,int i,int j,int k,int npos,RDouble &dfdx,RDouble &dfdy,RDouble &dfdz,int lr)
 {
     int im,jm,km,ip,jp,kp;
     RDouble fkc,fet,fct;

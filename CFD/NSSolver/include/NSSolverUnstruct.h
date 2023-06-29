@@ -43,6 +43,13 @@ public:
     void AllocateGlobalVar(Grid *gridIn);
     void DeAllocateGlobalVar(Grid *gridIn);
 
+#ifdef USE_GMRESSOLVER
+    // GMRESCSR
+    void FindNeighborOfRoot(int root, int& neighbor, int nTotalFace, int nBoundFace, int* leftCellofFace, int* rightCellofFace, vector<int>& AI, vector<int>& AJ, int counter);
+    void AllocateJacobianMatrix4GMRES(Grid *gridIn);
+    void AllocateJacobianMatrix4GMRES_Neighbor(Grid *gridIn);
+#endif
+
     //! Judge if the flow field variables file already exists in NS solver.
     bool JudgeIfRestart();
     bool JudgeIfReadAverage();
@@ -73,9 +80,11 @@ public:
     void LoadResiduals(Grid *gridIn, FieldProxy *rhsProxy);   
 
     void Boundary(Grid *gridIn);
+    void CalculateBoundaryData();
     void ComputeMassFlow(Grid *gridIn);
     void ComputeMassInFlow(Grid *gridIn, UnstructBC *bcRegionUnstruct);
     void ComputeMassOutFlow(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
     void ComputeGamaAndTemperature(Grid *gridIn);
 
     //! Compute the node value in the flow.
@@ -86,9 +95,13 @@ public:
     //! @param[in] gridIn         the mesh in the computing.
     void ModifyNodeValue(Grid *gridIn);
 
+    void CompNodeVarForGGNodeLaplacian(Grid *gridIn);
+
     void GetQlQr  (Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void GetGamaLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
-	void GetPressureFactorLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+    void GetPressureFactorLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+    void GetTimeCoefficientLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+    void GetPreconCoefficientLR(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ReConstructFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
     void ZeroResiduals(Grid *gridIn);
     void SpectrumRadiusInviscid(Grid *grid);
@@ -132,6 +145,7 @@ public:
     RDouble * ComputeCpAverage(Grid *gridIn);
 
     void ComputeGradient(Grid *grid);
+    void ComputeLimiter(Grid *grid);
     void ComputelimiterOnlyForMixGrid(Grid *grid);
     void InitiallimiterOnlyForMixGrid(Grid *grid);
     void InitialInviscidfaceproxyOnlyForMixGrid(Grid *grid);
@@ -163,6 +177,7 @@ public:
     void InviscidFlux  (Grid *gridIn);
     void ViscousFlux   (Grid *gridIn);
     void ChemicalSource(Grid *gridIn);
+    void gravitySource(Grid *gridIn);
     void DualTimeSource(Grid *gridIn);
     void StoreHistoricalResidual(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
@@ -175,9 +190,39 @@ public:
     void Turb_Sengy(Grid *gridIn);
     void GetInviscidFaceValue(Grid *gridIn, FaceProxy *faceProxy, Limiter * limiter, int localStart, int localEnd);
     void GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+ 
     void ComputeVisflux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ModifyVisflux(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
-    
+
+    #ifdef USE_GMRESSOLVER
+    // GMRESVis
+    void ComputeVisflux_FD(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+    void ComputeVisflux_GMRES(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
+    // GMRESVis GMRESVisFD
+    void Cal_GMRES_Visflux(RDouble* fL, RDouble* fR, RDouble* primitiveVariableFace, RDouble* dqdxL,
+                           RDouble* dqdyL, RDouble* dqdzL, RDouble* dqdxR, RDouble* dqdyR, RDouble* dqdzR, int iFace,
+                           int jFace, RDouble* flux, Grid *gridIn, FaceProxy *faceProxy);
+    // GMRESAD
+    template <typename T>
+    void Cal_GMRES_Visflux_AD(T* fL, T* fR, T* dqdxL,
+                           T* dqdyL, T* dqdzL, T* dqdxR, T* dqdyR, T* dqdzR, int iFace,
+                           int jFace, T* flux, Grid *gridIn, FaceProxy *faceProxy, Param_NSSolverUnstruct *parameters);
+
+    // GMRESCoupled
+    template <typename T>
+    void Cal_GMRES_Visflux_AD_Coupled(T* fL, T* fR, T fLturb, T fRturb, T* dqdxL,
+                                    T* dqdyL, T* dqdzL, T* dqdxR, T* dqdyR, T* dqdzR, int iFace,
+                                    int jFace, T* flux, Grid *gridIn, FaceProxy *faceProxy, Param_NSSolverUnstruct *parameters);
+
+
+    //! GMRES solver -- a linear system solver
+    //! This method can be referenced "Sen Zhang, Boqian Wang, et al. Implementation of a Newton-Krylov Algorithm in the Open-source Solver PHengLEI[C]."
+    //! GPPS Hong Kong , October 17-19, 2023.
+    void GMRESSolver(Grid *gridIn, FieldProxy *dqProxy);
+    void GMRESSolverRow(Grid *gridIn, FieldProxy *dqProxy);
+    void GMRESSolverSingle(Grid *gridIn, FieldProxy *dqProxy);
+#endif
+
     void ComputeFaceWeight(Grid *gridIn, FaceProxy *faceProxy, int localStart, int localEnd);
     void ComputeInviscidFlux(Grid *grid, FaceProxy *faceProxy, int localStart, int localEnd);
     void SolutionFix(Grid *gridIn, RDouble *prim, int iCell);
@@ -274,7 +319,61 @@ public:
     //! @param[in] gridIn              an unstruct grid pointer.
     //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
     void SymmetryBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+#ifdef USE_GMRESSOLVER
+    // GMRESBoundary
+    //! GMRES Symmetry boundary condition for one Region of a bounday.
+    //! @param[in] gridIn              an unstruct grid pointer.
+    //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
+    // GMRESAD GMRESBoundary perturbation about the primitive variables with AD
+    void GMRES_SymmetryBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstr);
+
+    // GMRESPV GMRESBoundary perturbation about the primitive variables with FD
+    void GMRES_SymmetryBCRegion_FD(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+    // GMRESBoundary perturbation about the conservative variables
+    void GMRES_SymmetryBCRegion_CV(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+    void Cal_GMRES_SymmetryBCRegion(Grid *gridIn, RDouble *PrimL, RDouble *PrimR, const int &iFace);  
+
+     // GMRESVis GMRESBoundary GMRESAD
+    //! Viscous Adiabatic wall boundary condition for one Region of a bounday.
+    //! @param[in] gridIn              an unstruct grid pointer.
+    //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
+    // GMRESBoundary perturbation about the primitive variables with AD
+    void GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+    // GMRESBoundary perturbation about the primitive variables with FD
+    void GMRES_ViscousAdiabaticWallBCRegion_FD(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+    void Cal_GMRES_ViscousAdiabaticWallBCRegion(Grid *gridIn, RDouble *PrimL, RDouble *PrimR, int iFace, RDouble uwall, RDouble vwall, RDouble wwall);
+
+    //! Viscous Isotropic wall boundary condition for one Region of a bounday. 
+    //! for GMRES  GMRES3D
+    //! @param[in] gridIn              an unstruct grid pointer.
+    //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
+    void GMRES_ViscousIsotropicWallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+    // GMRESBoundary
+    //! GMRES Farfield boundary condition for one Region of a bounday.
+    //! @param[in] gridIn              an unstruct grid pointer.
+    //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
+    // GMRESBoundary GMRESAD
+    void GMRES_FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstrct);
+
+    // GMRESPV GMRESBoundary
+    void GMRES_FarfieldBCRegion_FD(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
     
+    // GMRESBoundary using the conservative variables
+    void GMRES_FarfieldBCRegion_CV(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
+
+    // GMRESBoundary
+    //! Calculate GMRES Farfield boundary condition for one Region of a bounday.
+    //! @param[in] gridIn              an unstruct grid pointer.
+    //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
+    template <typename T>
+    void Cal_GMRES_FarfieldBCRegion(T* qL,T* qR,int le, int iFace, Grid *gridIn, UnstructBC *bcRegionUnstruct);
+#endif 
+
     //! Viscous Adiabatic wall boundary condition for one Region of a bounday.
     //! @param[in] gridIn              an unstruct grid pointer.
     //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
@@ -288,7 +387,7 @@ public:
     //! Farfield boundary condition for one Region of a bounday.
     //! @param[in] gridIn              an unstruct grid pointer.
     //! @param[in] bcRegionUnstruct    an object of some BCRegionUnstruct class, contain the information of this BC.
-    void FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
+    void FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
     
     //! Inflow boundary condition for one Region of a bounday.
     //! @param[in] gridIn              an unstruct grid pointer.
@@ -309,7 +408,7 @@ public:
     void calculateBCArea(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
 
     //calculate the mass flux ratio of all mass outlet BC regions with the same BC name.
-    void calculateMassFluxRatio(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
+    void CalculateMassFluxRatio();
 
     // mass flow in boundary condition.
     void MassFlowInletBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct); 
@@ -321,7 +420,7 @@ private:
     void RegisterCFDSolverInterfaceField();
     //! Register the interpoint field in the NS unstructured solver.
     void RegisterCFDSolverInterpointField();
-    void RegisterCFDSolverOversetField();
+    void RegisterOversetField();
     RDouble P0Wall(RDouble p1, RDouble gama, RDouble mach);
     RDouble R0Wall(RDouble r1, RDouble gama, RDouble mach);
     Limiter * CreateLimiter(Grid *gridIn);

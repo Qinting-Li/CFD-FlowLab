@@ -16,8 +16,10 @@
 #pragma once
 #include <cstddef>
 #include <vector>
+#include <cmath>
 #include "DataStruct_Array.h"
 #include "Pointer.h"
+#include "Constants.h"
 using namespace std;
 
 namespace PHSPACE
@@ -183,6 +185,36 @@ T DotProduct(T *a, T *b, int n)
         sum += a[i] * b[i];
     }
     return sum;
+}
+
+// Compute the dot product of two vectors with length n
+template < typename T >
+T GetNorm(T *a, int n)
+{
+    T sum = 0.0;
+    for (int i = 0; i < n; ++ i)
+    {
+        sum += a[i] * a[i];
+    }
+    return sqrt(sum);
+}
+
+template < typename T >
+T GetAngleOfTwoVector(T* x, T* y, int n)
+{
+    RDouble cosnum = DotProduct(x, y, n)/GetNorm(x, n)/GetNorm(y, n);
+    if (cosnum > 1.0)
+    {
+        return 0;
+    }
+    else if(cosnum < -1.0)
+    {
+        return PI;
+    }
+    else
+    {
+        return acos(cosnum);
+    }
 }
 
 template < typename T >

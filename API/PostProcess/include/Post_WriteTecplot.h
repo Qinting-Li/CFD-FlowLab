@@ -10,76 +10,42 @@
 //                     (C) Copyright, Since 2010                          +
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //! @file      Post_WriteTecplot.h
-//! @brief     Write flow field into post visual file.
+//! @brief     Write flow field into tecplot file.
 //! @author    Xu Gang.
 
 #pragma once
-#include "LIB_Macro.h"
-#include "TypeDefine.h"
+#include "Post_WriteVisualFile.h"
 
 namespace PHSPACE
 {
-class ActionKey;
-class Grid;
-class DataContainer;
-class Post_Visual;
 
-class Post_WriteTecplot
+//! @brief Post_WriteTecplot class realize tecpolt visual file output function.\n
+class Post_WriteTecplot : public Post_WriteVisualFile
 {
 public:
-    LIB_EXPORT Post_WriteTecplot(int flowType = 0);
-    LIB_EXPORT ~Post_WriteTecplot();
-
-public:
-    LIB_EXPORT void Run(bool visualAllLevel = false);
+    Post_WriteTecplot();
+    ~Post_WriteTecplot();
 
 private:
-    vector<DataContainer *> datalist;
-    vector<DataContainer *> vtkdatalist;
+    void Initialize();
 
-    int flowType;
+    //! Collect visual data for tecplot visual file.
+    void StoreVisualizationData();
+    void StoreVisualizationData(int zoneIndex, DataContainer *cdata);
+    void StoreStrBoundaryVisualData(int zoneIndex, DataContainer *cdata);
+    void StoreStrFieldVisualData(int zoneIndex, DataContainer *cdata);
+    void StoreUnsBoundaryVisualData(int zoneIndex, DataContainer *cdata);
+    void StoreUnsFieldVisualData(int zoneIndex, DataContainer *cdata);
+
+    //! Dump data into visual file.
+    void WriteFile();
+
+    //! Clear data.
+    void ClearFieldData();
 
 private:
-    void ServerWrite(ActionKey *actkey);
+    vector<DataContainer *> visualDataList;
 
-    //! Store the visualization variables.
-    void StoreVisualizationVar(ActionKey *actkey, Post_Visual *postVisulaization);
-
-    void PostWrite(ActionKey *actkey);
-
-    //!
-    void BoundaryVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
-
-    //!
-    void BoundaryVTKVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
-
-    //!
-    void BoundaryVisualization(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nvarplot);
-
-    //!
-    void BoundaryVTKVisualization(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nvarplot);
-
-    //!
-    void SliceVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
-
-    bool WantVisualField(Grid *grid);
-
-    //!
-    void FieldVisualization(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
-
-    //!
-    void FieldVisualizationForVTK(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
-
-    //!
-    void FieldVisualization(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nvarplot);
-
-    //!
-    void SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble **qn, int nvarplot);
-
-    //!
-    void SaveDataForTecio(Grid *grid_in, ActionKey *actkey, RDouble4D **qn, int nl);
-
-    void Clear();
 };
 
 }

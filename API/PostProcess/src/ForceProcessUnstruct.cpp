@@ -423,7 +423,6 @@ void ForceProcessUnstruct::ComputeGamaAndTemperature(Grid *gridIn)
 
     using namespace IDX;
 
-    RDouble omav = one;
     RDouble coefficientOfStateEquation = GlobalDataBase::GetDoubleParaFromDB("coefficientOfStateEquation");
 
     for (int iCell = 0; iCell < nTotal; ++ iCell)

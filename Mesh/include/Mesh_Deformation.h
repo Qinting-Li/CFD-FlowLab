@@ -20,7 +20,7 @@
 
 #pragma once
 #include "DynamicGrid.h"
-
+#pragma warning(disable:4100)
 namespace PHSPACE
 {
 
@@ -71,7 +71,7 @@ public:
     //! @param[in] nZonesIn         Number of grid.
     //! @param[in] stationalGridIn  Original grid.
     Mesh_Deformation(int nZonesIn, Grid **stationalGridIn);
-    ~Mesh_Deformation();
+    virtual ~Mesh_Deformation();
 
 public:
     void Run();

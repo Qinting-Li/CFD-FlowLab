@@ -2,6 +2,8 @@
 #include "Geo_Interpoint.h"
 #include "Geo_UnstructGrid.h"
 #include "PHMpi.h"
+#pragma warning(disable:4100)
+
 using namespace std;
 
 namespace PHSPACE
@@ -154,7 +156,7 @@ GridID::~GridID()
 OversetInfo::OversetInfo()
 {
     cellIndexForTransfer = 0;
-    Data_ParamFieldSuite *dataStorageForTransfer = new Data_ParamFieldSuite();
+    dataStorageForTransfer = new Data_ParamFieldSuite();
 }
 
 OversetInfo::~OversetInfo()
@@ -170,7 +172,7 @@ void OversetInfo::AllocateData()
     this->SetCellIndexForTransfer(cellIndexForTransfer);
 }
 
-void OversetInfo::Encode(DataContainer *cdata)
+void OversetInfo::Encode()
 {
     ;
 }
@@ -209,7 +211,7 @@ void CompositeOversetInfo::Encode(DataContainer *cdata)
     for (int iZone = 0; iZone < numberOfZone; ++ iZone)
     {
         OversetInfo *oversetInfo = GetOversetInfo(iZone);
-        oversetInfo->Encode(cdata);
+        oversetInfo->Encode();
     }
 }
 

@@ -13,7 +13,7 @@
 #include "Geo_SimpleBC.h"
 //#include "UnstructuredOversetConfig.h"
 #include "OversetInformation.h"
-#include "Post_WriteTecplot.h"
+#include "Post_WriteVisualFile.h"
 #include "Task.h"
 #include "PostProcess.h"
 #include "TK_Exit.h"
@@ -150,8 +150,7 @@ void HOSimulation::PostSolve()
     int outnstep  = GlobalDataBase::GetIntParaFromDB("outnstep");
     if (outnstep % intervalStepPlot == 0)
     {
-        Post_WriteTecplot generateVisualFile;
-        generateVisualFile.Run();
+        WriteVisualFile();
     }
 }
 
@@ -204,7 +203,7 @@ void HOSimulation::InitializeSolvers()
 {
     WriteLogFile("Creating and initialization solvers start\n");
 
-    int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
         Controller * controller = new Controller(iSolver, this->region);
@@ -221,6 +220,7 @@ void HOSimulation::DefineAndCreateSolvers()
 {
     InitGlobalValuesOfAllZones();
 
+    int maxNumOfSolver = 0;
     int nZones = PHMPI::GetNumberofGlobalZones();
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
@@ -242,6 +242,8 @@ void HOSimulation::DefineAndCreateSolvers()
         }
 
         PHSolver *solver = new HOSolverUnstruct();
+        solver->SetName("HOSolverUnstruct");
+        solver->SetKey(DENSITY_BASED_SOLVER);
         solverList.push_back(solver);
 
         int viscousType = LAMINAR;
@@ -249,19 +251,28 @@ void HOSimulation::DefineAndCreateSolvers()
 
         if (viscousType > LAMINAR)
         {
-            PHSolver *solver = new TurbSolverUnstr();
-            solverList.push_back(solver);
+            PHSolver *solverT = new TurbSolverUnstr();
+            solverT->SetName("TurbSolverUnstr");
+            solverT->SetKey(DENSITY_BASED_SOLVER);
+            solverList.push_back(solverT);
         }
 
         for (std::size_t iSolver = 0; iSolver < solverList.size(); ++ iSolver)
         {
-            PHSolver *solver = solverList[iSolver];
+            PHSolver *solveri = solverList[iSolver];
 
-            solver->SetGeometry(geometry);
-            solver->SetIndex(static_cast<int> (iSolver));
-            zone->AddSolver(solver);
+            solveri->SetGeometry(geometry);
+            solveri->SetIndex(static_cast<int> (iSolver));
+            zone->AddSolver(solveri);
+        }
+
+        if (maxNumOfSolver < solverList.size())
+        {
+            maxNumOfSolver = solverList.size();
         }
     }
+
+    GlobalDataBase::UpdateData("maxNumOfSolver", &maxNumOfSolver, PHINT, 1);
 }
 
 void HOSimulation::PreSolve()
@@ -306,7 +317,7 @@ void HOSimulation::MultiGridInitFlow()
     int nSolver = 1;    //! Consider NS solver only.
     if (mgvist) 
     {
-        nSolver = PHSPACE::Zone::GetNumberOfSolvers();    //! Consider TurbSolver.
+        nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     }
 
     int isInMGIniting = 1;
@@ -359,7 +370,7 @@ void HOSimulation::MultiGridInitFlow()
 
 void HOSimulation::SolveSteady()
 {
-    int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     //! Get iteration number.
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
@@ -394,7 +405,7 @@ void HOSimulation::SolveUnsteady()
     RDouble tol_sub_iter = GlobalDataBase::GetDoubleParaFromDB("tol_sub_iter");
 
     int innstep = 0;
-    int nSolver = PHSPACE::Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
 
     bool isSubIterationDump = false;
     GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);

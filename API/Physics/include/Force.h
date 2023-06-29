@@ -66,7 +66,7 @@ public:
     void CollectionForce(DataContainer *data_in);
     void CompForce();
     void DumpForce(int outnstep,std::ostringstream &oss);
-    void DumpPartForce(int outnstep, int partID, const string &partName, std::ostringstream &oss);
+    void DumpPartForce(int outnstep, int partID, std::ostringstream &oss);
     void DumpForce(ActionKey *actkey, int outnstep);
     void DumpData(DataContainer *data);
 
@@ -84,7 +84,7 @@ private:
     bool isPartExist;
 };
 
-void InitForce(ActionKey *actkey);
+void InitForce();
 void CollectionForce(ActionKey *actkey);
 void DumpForce(ActionKey *actkey);
 

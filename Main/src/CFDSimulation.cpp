@@ -8,7 +8,6 @@
 #include "Residual.h"
 #include "Post_Visual.h"
 
-
 using namespace std;
 
 namespace PHSPACE
@@ -18,7 +17,6 @@ void RunPHengLEI()
     //! Initialize global variables and MPI.
 
     PHMPI::Initialization();
-
 
     //! Read control parameters and do self-checking.
     ReadControlParameters();
@@ -46,7 +44,6 @@ void ShowWelcomeTitle()
     int myid = GetCurrentProcessorID();
     if (myid == PHMPI::GetServerProcessorID())
     {
-       
         ostringstream oss;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
         oss << "$#                                                     #$" << endl;
@@ -63,12 +60,11 @@ void ShowWelcomeTitle()
         oss << "$#       Computational Aerodynamics Institute          #$" << endl;
         oss << "$#  China Aerodynamics Research and Development Center #$" << endl;
         oss << "$#            (C) Copyright, Since 2010                #$" << endl;
-        oss << "$#                  PHengLEI 2212                      #$" << endl;
+        oss << "$#                  PHengLEI 2306                      #$" << endl;
         oss << "$#                                                     #$" << endl;
         oss << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
         cout << oss.str();
-        
     }
 }
 
@@ -223,14 +219,20 @@ void ControlParametersPreliminarySelfCheck()
         case INTEGRATIVE_SOLVER:
             ParametersSelfCheckForCFD();
             break;
-        case GRIDER_SOLVER:
-            break;
         case POST_PROCESSING:
             break;
         case SPECDIFFHYB_SOLVER:
             break;
         case SPEC_SOLVER:
             break;
+ #ifdef USE_LBMSolverMPI
+        case LBM_SOLVER_MPI:
+            break;
+        #endif
+        #ifdef USE_LBMSolverOMP
+        case LBM_SOLVER_OMP:
+            break;
+        #endif
         default:
             TK_Exit::UnexpectedVarValue("taskType = ", taskType);
             break;

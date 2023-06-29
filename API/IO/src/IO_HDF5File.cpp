@@ -391,9 +391,9 @@ char *ReadCharData(hid_t loc_id, const string &dataName)
 int GetObjNumber(hid_t loc_id)
 {
     H5G_info_t grp_info;
-    herr_t error = H5Gget_info(loc_id, &grp_info);
+    H5Gget_info(loc_id, &grp_info);
 
-    return grp_info.nlinks;
+    return static_cast<int>(grp_info.nlinks);
 }
 
 void GetObjNameList(hid_t loc_id, string *objNameList)

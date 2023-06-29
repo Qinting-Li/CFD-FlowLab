@@ -124,7 +124,7 @@ LIB_EXPORT void Pre_BcFace_Struct::ErectVertexMapping(int geometricDimension)
 
 LIB_EXPORT void Pre_BcFace_Struct::Normalize(int geometricDimension)
 {
-    if (boundaryType < 0)
+    if ((IsInterface(boundaryType)))
     {
         ErectVertexMapping(geometricDimension);
     }
@@ -154,7 +154,7 @@ LIB_EXPORT void Pre_BcFace_Struct::OutputBoundaryInformation(StructBC *bcregion,
     int imin, imax, jmin, jmax, kmin, kmax, nbt;
     vector< int > s_st(nodeStart), s_ed(nodeEnd);
     
-    if (boundaryType < 0)
+    if (IsInterface(boundaryType))
     {
         int patch = axisLabel[1];
         s_st[patch] = - abs(s_st[patch]);
@@ -174,7 +174,7 @@ LIB_EXPORT void Pre_BcFace_Struct::OutputBoundaryInformation(StructBC *bcregion,
     bcregion->SetBCType(boundaryType);
     bcregion->SetBCName(bcName);
 
-    if (boundaryType < 0)
+    if (IsInterface(boundaryType))
     {
         bcregion->SetBCName("Connection");
 
@@ -213,7 +213,7 @@ LIB_EXPORT void Pre_BcFace_Struct::OutputBoundaryInformation(fstream &file, int 
 
     vector< int > s_st(nodeStart), s_ed(nodeEnd);
 
-    if (boundaryType < 0)
+    if (IsInterface(boundaryType))
     {
         int patch = axisLabel[1];
         s_st[patch] = - abs(s_st[patch]);
@@ -241,7 +241,7 @@ LIB_EXPORT void Pre_BcFace_Struct::OutputBoundaryInformation(fstream &file, int 
     }
     file << setw(width) << boundaryType << "\n";
 
-    if (boundaryType < 0)
+    if (IsInterface(boundaryType))
     {
         vector< int > t_st(3), t_ed(3);
         CalculateVertexIndexOnTargetBlock(next->GetFrameOfAxes(), nodeStart, t_st);
@@ -672,7 +672,7 @@ bool Pre_Block_Struct::PatchChild(Pre_BcFace_Struct *boundaryFace, vector< int >
 
 void Pre_Block_Struct::PatchSplit(Pre_BcFace_Struct *boundaryFace, Pre_BcFace_Struct *overlapBoundaryFace, int geometricDimension)
 {
-    if (overlapBoundaryFace->GetBoundaryType() >= 0) return;
+    if (!IsInterface(overlapBoundaryFace->GetBoundaryType())) return;
 
     Pre_Patch_Struct *simplePatch = new Pre_Patch_Struct();
     overlapBoundaryFace->SetNext(simplePatch);

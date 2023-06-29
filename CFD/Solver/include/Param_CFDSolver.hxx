@@ -58,6 +58,11 @@ inline int Param_CFDSolver::GetIntervalStepPlot() const
     return intervalStepPlot;
 }
 
+inline int Param_CFDSolver::GetIsCodeOfAleModel() const
+{
+    return isAle;
+}
+
 inline RDouble Param_CFDSolver::GetCFLStart() const
 {
     return CFLStart;
@@ -149,7 +154,6 @@ inline RDouble Param_CFDSolver::GetRefGama() const
     return refGama;
 }
 
-
 inline RDouble Param_CFDSolver::GetRefDimensionalPressure() const
 {
     return refDimensionalPressure;
@@ -178,6 +182,11 @@ inline RDouble Param_CFDSolver::GetRefDimensionalTemperature() const
 inline RDouble Param_CFDSolver::GetAusmpwPlusLimiter() const
 {
     return AusmpwPlusLimiter;
+}
+
+inline RDouble Param_CFDSolver::GetTrTemperatureMinNonDim() const
+{
+    return trTemperatureMinNonDim;
 }
 
 inline int Param_CFDSolver::GetIfStartFromSteadyResults() const
@@ -209,10 +218,46 @@ inline RDouble Param_CFDSolver::GetSkewnessAngle() const
 {
     return skewnessAngle;
 }
+inline int Param_CFDSolver::GetnDiagonalModifiedTurb() const
+{
+    return nDiagonalModifiedTurb;
+}
 
 inline int Param_CFDSolver::GetWennSchemeFlag() const
 {
     return isWennScheme;
 }
+inline int Param_CFDSolver::GetIfLowSpeedPrecon() const
+{
+    return ifLowSpeedPrecon;
+}
+
+inline int Param_CFDSolver::GetnNumberOfSpeedStep() const
+{
+    return nNumberOfSpeedStep;
+}
+inline int *Param_CFDSolver::GetSpeedVaryStep() const
+{
+    return speedVaryStep;
+}
+inline RDouble *Param_CFDSolver::GetSpeedVaryCoef() const
+{
+    return speedVaryCoef;
+}
+inline int Param_CFDSolver::GetnNumberOfCFLStep() const
+{
+    return nNumberOfCFLStep;
+}
+inline int *Param_CFDSolver::GetCFLVaryMultiStep() const
+{
+    return CFLVaryMultiStep;
+}
+inline RDouble *Param_CFDSolver::GetCFLVaryCoef() const
+{
+    return CFLVaryCoef;
+}
+
+
+
 
 

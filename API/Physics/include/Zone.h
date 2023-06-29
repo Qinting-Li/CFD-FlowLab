@@ -49,16 +49,17 @@ private:
     //! Zonal data pointers.
     Data_Field *zField;
 
+    //! Number of solvers on this zone.
+    int nsolver;
+
 public:
     Zone(int index);
     ~Zone();
-private:
-    static int nsolver;
 
 public:
     int GetIndex(void) { return index; }
-    static int GetNumberOfSolvers() { return nsolver; }
-    static void SetNSolver(int n) { nsolver = n; }
+    int GetNumberOfSolvers() { return nsolver; }
+    void SetNSolver(int n) { nsolver = n; }
     void ComputeWeight();
     void CoarseGrids();
     void ShowCoarseGrids();
@@ -94,6 +95,8 @@ public:
 
     void SetInterface(Grid *base_grid, Grid *cgrid);
 };
+
+extern vector <Zone *> *GlobalZones;
 
 void InitGlobalValuesOfAllZones();
 

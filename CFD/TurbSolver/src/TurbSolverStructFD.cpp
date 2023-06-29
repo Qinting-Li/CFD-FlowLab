@@ -350,7 +350,7 @@ void TurbSolverStrFD::ObtainBoundaryValue(Grid *gridIn)
         StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
-        if (BCType < 0)
+        if (IsInterface(BCType))
         {
             continue;
         }
@@ -1065,6 +1065,7 @@ void TurbSolverStrFD::VisWallWithWallFunctionStandard(Grid* gridIn, StructBC *st
                     RDouble distanceSquare = wallDistance * wallDistance;
 
                     RDouble omgi = 60.0 * laminarViscosity / (rhoInside * beta1 * distanceSquare * refReNumber * refReNumber);
+                    //RDouble omgo = utao / (0.126 * wallDistance * refReNumber);
                     RDouble omgo = 0.0;
                     RDouble kwWall = sqrt(omgi * omgi + omgo * omgo);
 
@@ -1148,6 +1149,7 @@ void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *struc
                 RDouble small = 1.0e-15;
                 RDouble uvw = max(vpt, small);
 
+                //RDouble uu = sqrt(up * up + vp * vp + wp * wp);
                 RDouble& uu = uvw;
 
                 RDouble wallDistance = wallDistant(is1, js1, ks1);
@@ -1173,25 +1175,27 @@ void TurbSolverStrFD::VisWallWithWallFunctionPAB3D(Grid* gridIn, StructBC *struc
                 {
                     xnplus = paba12[0] + paba12[1] * rc + paba12[2] * rc * rc;
                 }
-
                 RDouble xnplussav = xnplus;
 
-                //! Newton iteration to solve for nplus, assuming it is in log region:
-                for (int iter = 0; ; ++iter)
+                //if (xnplus >= Ylim)
                 {
-                    RDouble f = rc / xnplus - 2.44 * (log(xnplus)) - 5.2;
-                    RDouble dfdn = -rc / (xnplus * xnplus) - 2.44 / xnplus;
-                    RDouble delta = -f / dfdn;
-                    xnplus = fabs(xnplus + delta);
-                    if (iter > 10)
+                    //! Newton iteration to solve for nplus, assuming it is in log region:
+                    for (int iter = 0; ; ++iter)
                     {
-                        //! Revert back to approx series soln if Newton iteration fails.
-                        xnplus = xnplussav;
-                        break;
-                    }
-                    else if (abs(delta) < 1.e-3)
-                    {
-                        break;
+                        RDouble f = rc / xnplus - 2.44 * (log(xnplus)) - 5.2;
+                        RDouble dfdn = -rc / (xnplus * xnplus) - 2.44 / xnplus;
+                        RDouble delta = -f / dfdn;
+                        xnplus = fabs(xnplus + delta);
+                        if (iter > 10)
+                        {
+                            //! Revert back to approx series soln if Newton iteration fails.
+                            xnplus = xnplussav;
+                            break;
+                        }
+                        else if (abs(delta) < 1.e-3)
+                        {
+                            break;
+                        }
                     }
                 }
 
@@ -1353,9 +1357,9 @@ void TurbSolverStrFD::FarFieldBC(Grid *gridIn, StructBC *structBC)
                 RDouble gama = gamma(is1, js1, ks1);
 
                 RDouble coo = sqrt(ABS(refGama * pFarfield / rFarfield));
-                RDouble cin = sqrt(ABS(gama  * pin / rin));
+                RDouble cIN = sqrt(ABS(gama  * pin / rin));
 
-                if (vei > cin)
+                if (vei > cIN)
                 {
                     if (vni >= 0.0)
                     {
@@ -1380,7 +1384,7 @@ void TurbSolverStrFD::FarFieldBC(Grid *gridIn, StructBC *structBC)
                     continue;
                 }
 
-                RDouble riemp = vni + 2.0 * cin / (gama  - 1.0);
+                RDouble riemp = vni + 2.0 * cIN / (gama  - 1.0);
                 RDouble riemm = vno - 2.0 * coo / (refGama - 1.0);
                 RDouble vnb = half * (riemp + riemm);
 

@@ -84,9 +84,18 @@ if(WIN32)
 else(WIN32)
   set(CMAKE_CXX_COMPILER  mpicxx)
   set(CMAKE_C_COMPILER    mpicc)
-  set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  if(${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR} MATCHES "Linux-x86_64")
+    if(USE_INTEL_COMPILER)
+      set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel")
+      message(STATUS "USE_INTEL_COMPILER is turned on!")
+    else(USE_INTEL_COMPILER)
+      set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc")
+      message(STATUS "USE_INTEL_COMPILER is turned off!")
+    endif()
+  else(${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR} MATCHES "Linux-aarch64")
+    set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  endif()
 endif(WIN32)
-
 
 set(MESH_H_PATH   ${PROJECT_SOURCE_DIR}/../Mesh/include)
 include_directories(${MESH_H_PATH})
@@ -97,6 +106,11 @@ link_directories("${THIRDPARTY_LIB_DIR}")
 
 set(HDF5_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
+
+if(USE_TecplotLib)
+set(TECIO_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
+include_directories("${TECIO_H_PATH}")
+endif(USE_TecplotLib)
 
 set(PARMETIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/parmetis/include)
 include_directories("${PARMETIS_H_PATH}")
@@ -395,6 +409,11 @@ ${Physics_H_PATH}/Jacobian.h
 ${Physics_H_PATH}/Gradient.h
 ${Physics_H_PATH}/MatrixLUSGS.h
 )
+
+if(BUILD_IncomSolver)
+list(APPEND Physics_H_LIST ${Physics_H_PATH}/IncomGas.h)
+endif(BUILD_IncomSolver)
+
 source_group(Physics\\include FILES ${Physics_H_LIST}) 
 include_directories(${Physics_H_PATH})
 
@@ -430,6 +449,11 @@ ${Physics_CPP_PATH}/Gradient.cpp
 ${Physics_CPP_PATH}/Gas.cpp
 ${Physics_CPP_PATH}/MatrixLUSGS.cpp
 )
+
+if(BUILD_IncomSolver)
+list(APPEND Physics_CPP_LIST ${Physics_CPP_PATH}/IncomGas.cpp)
+endif(BUILD_IncomSolver)
+
 source_group(Physics\\src FILES ${Physics_CPP_LIST})
 
 # set directory of PreProcess:
@@ -441,6 +465,7 @@ ${PreProcess_H_PATH}/Pre_WalldistCompute.h
 ${PreProcess_H_PATH}/Pre_GridConversion.h
 ${PreProcess_H_PATH}/Pre_FieldViewToPHengLEI_Unstruct.h
 ${PreProcess_H_PATH}/Pre_CGNSToPHengLEI_Unstruct.h
+${PreProcess_H_PATH}/Pre_CGNSConversion_Struct.h
 ${PreProcess_H_PATH}/Pre_CGNSToPlot3D_Struct.h
 ${PreProcess_H_PATH}/Pre_CGNSToPHengLEI_Struct.h
 ${PreProcess_H_PATH}/Pre_Plot3DToPHengLEI_Struct.h
@@ -466,6 +491,7 @@ ${PreProcess_CPP_PATH}/Pre_WalldistCompute.cpp
 ${PreProcess_CPP_PATH}/Pre_GridConversion.cpp
 ${PreProcess_CPP_PATH}/Pre_FieldViewToPHengLEI_Unstruct.cpp
 ${PreProcess_CPP_PATH}/Pre_CGNSToPHengLEI_Unstruct.cpp
+${PreProcess_CPP_PATH}/Pre_CGNSConversion_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_CGNSToPlot3D_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_CGNSToPHengLEI_Struct.cpp
 ${PreProcess_CPP_PATH}/Pre_Plot3DToPHengLEI_Struct.cpp
@@ -486,7 +512,9 @@ source_group(PreProcess\\src FILES ${PreProcess_CPP_LIST})
 set(PostProcess_H_PATH PostProcess/include)
 set(PostProcess_H_LIST
 ${PostProcess_H_PATH}/Post_Visual.h
+${PostProcess_H_PATH}/Post_WriteVisualFile.h
 ${PostProcess_H_PATH}/Post_WriteTecplot.h
+${PostProcess_H_PATH}/Post_WriteEnsight.h
 ${PostProcess_H_PATH}/Post_ForceMoment.h
 ${PostProcess_H_PATH}/PostProcess.h
 ${PostProcess_H_PATH}/IO_FlowReader.h
@@ -502,7 +530,9 @@ include_directories(${PostProcess_H_PATH})
 set(PostProcess_CPP_PATH PostProcess/src)
 set(PostProcess_CPP_LIST
 ${PostProcess_CPP_PATH}/Post_Visual.cpp
+${PostProcess_CPP_PATH}/Post_WriteVisualFile.cpp
 ${PostProcess_CPP_PATH}/Post_WriteTecplot.cpp
+${PostProcess_CPP_PATH}/Post_WriteEnsight.cpp
 ${PostProcess_CPP_PATH}/Post_ForceMoment.cpp
 ${PostProcess_CPP_PATH}/PostProcess.cpp
 ${PostProcess_CPP_PATH}/IO_FlowReader.cpp
@@ -562,7 +592,6 @@ ${PreProcess_CPP_LIST}
 ${PostProcess_CPP_LIST}
 ${Common_CPP_LIST}
 )
-
 
 # set directory of MultiSpeciesGas.
 set(MultiSpecies_H_PATH MultiSpecies/include)
@@ -655,9 +684,20 @@ else(WIN32)
   list(APPEND LINK_LIBRARY_LIST metis parmetis cgns hdf5 mgrid)
 endif(WIN32)
 
+if(USE_TecplotLib)
+  list(APPEND LINK_LIBRARY_LIST tecio)
+endif(USE_TecplotLib)
+
 if(WIN32)
   list(APPEND LINK_LIBRARY_LIST ${mpiname})
 endif(WIN32)
+
+if(BUILD_GMRESSolver)
+  # sacado library
+  list(APPEND LINK_LIBRARY_LIST ${Sacado_LIBRARIES})
+  # PETSc library
+  list(APPEND LINK_LIBRARY_LIST ${PETSC_Libraries})
+endif()
 
 target_link_libraries(${API_TARGET_NAME} ${LINK_LIBRARY_LIST})
 

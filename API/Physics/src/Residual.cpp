@@ -13,9 +13,9 @@ namespace PHSPACE
 ResidualGlobal *residual = new ResidualGlobal();
 MaxResidual *maxResidual = new MaxResidual();
 
-void InitResidual(ActionKey *actkey)
+void InitResidual()
 {
-    residual->InitResidual(actkey);
+    residual->InitResidual();
 }
 
 void CollectResidual(ActionKey *actkey)
@@ -86,7 +86,7 @@ ResidualGlobal::~ResidualGlobal()
 
 }
 
-void ResidualGlobal::InitResidual(ActionKey *actkey)
+void ResidualGlobal::InitResidual()
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -180,7 +180,7 @@ void ResidualGlobal::ComputeResidualNorm(RDouble *localNorm)
     }
 }
 
-void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes, int level)
+void ResidualGlobal::PrepareFormatedResidual(int outnstep, string &formatRes)
 {
     ostringstream oss;
 
@@ -284,7 +284,7 @@ void ResidualGlobal::PrintResidualtoWindow(int outnstep, string &formatRes)
     cout << oss.str();
 }
 
-void ResidualGlobal::OutResResidualNorm(fstream &file, string &formatRes, std::ostringstream &oss, int outnstep)
+void ResidualGlobal::OutResResidualNorm(fstream &file, string &formatRes, std::ostringstream &oss)
 {
     if (IfFileEmpty(file))
     {
@@ -339,7 +339,7 @@ void ResidualGlobal::FreeMemory()
 void ResidualGlobal::DumpResidual(ActionKey *actkey, int outnstep)
 {
     string formatRes;
-    PrepareFormatedResidual(outnstep, formatRes, actkey->level);
+    PrepareFormatedResidual(outnstep, formatRes);
 
     PrintResidualtoWindow(outnstep, formatRes);
 
@@ -352,7 +352,7 @@ void ResidualGlobal::DumpResidual(ActionKey *actkey, int outnstep)
 
     fstream &file = *actkey->file;
     std::ostringstream oss;
-    OutResResidualNorm(file, formatRes, oss, outnstep);
+    OutResResidualNorm(file, formatRes, oss);
     WriteASCIIFile(file, oss.str());
     ParallelCloseFile(actkey);
 
@@ -525,7 +525,7 @@ void InitMaxResidual()
     maxResidual->Init();
 }
 
-void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **residual, int nEquation)
+void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **dq, int nEquation)
 {
     int nTotalCell = grid->GetNTotalCell();
 
@@ -567,7 +567,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
 
         for (int iEquation = 0; iEquation < nEquation; ++ iEquation)
         {
-            RDouble dResm = residual[iEquation][iCell] * gridScaleUnit;
+            RDouble dResm = dq[iEquation][iCell] * gridScaleUnit;
             RDouble res2 = dResm * dResm;
             residualNormal[iEquation] += res2;
             if(isErrorData(residualNormal[iEquation]))
@@ -611,7 +611,7 @@ void ComputeResidualonGrid(UnstructGrid *grid, ActionKey *actkey, RDouble **resi
     PHWrite(cData, residualNormal, nEquation);
 }
 
-void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &residual, int nEquation)
+void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &dq, int nEquation)
 {
     RDouble *residualNormal = new RDouble[nEquation];
 
@@ -661,7 +661,7 @@ void ComputeResidualonGrid(StructGrid *grid, ActionKey *actkey, RDouble4D &resid
             {
                 for (int m = mst; m <= med; ++ m)
                 {
-                    RDouble dResm = residual(i, j, k, m) * gridScaleUnit;
+                    RDouble dResm = dq(i, j, k, m) * gridScaleUnit;
                     RDouble res2 = dResm * dResm;
                     residualNormal[m] += res2;
                     if(isErrorData(residualNormal[m]))

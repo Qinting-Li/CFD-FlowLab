@@ -33,6 +33,7 @@ if(USE_DOUBLE_PRECISION)
   message(STATUS "USE_DOUBLE_PRECISION is turned on!")
   add_definitions(-DPH_DOUBLE_PREC)
 endif()
+
 if(USE_SMARTARRAY)
   message(STATUS "USE_SMARTARRAY is turned on!")
   add_definitions(-DUSE_SMARTARRAY)
@@ -58,8 +59,17 @@ if(WIN32)
 else(WIN32)
   set(CMAKE_CXX_COMPILER  mpicxx)
   set(CMAKE_C_COMPILER    mpicc)
-  
-  set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  if(${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR} MATCHES "Linux-x86_64")
+    if(USE_INTEL_COMPILER)
+      set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel")
+      message(STATUS "USE_INTEL_COMPILER is turned on!")
+    else(USE_INTEL_COMPILER)
+      set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc")
+      message(STATUS "USE_INTEL_COMPILER is turned off!")
+    endif()
+  else(${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR} MATCHES "Linux-aarch64")
+    set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  endif()
 endif(WIN32)
 # specify directory in which the linker will look for libraries for myself libraries:
 message(STATUS "The 3rdparty path is: ${THIRDPARTY_LIB_DIR}.") 
@@ -163,9 +173,9 @@ endif(USE_OCC)
 # Building Executable Program.
 message(STATUS "Building Executable Program ${EXECUTABLE_TARGET_NAME} ...")
 add_executable(${EXECUTABLE_TARGET_NAME} ${CPP_LIST} ${HEAD_LIST})  
-if(WIN32) 
+ if(WIN32) 
     set_target_properties(${EXECUTABLE_TARGET_NAME} PROPERTIES COMPILE_FLAGS "/MP")
-endif(WIN32)
+ endif(WIN32)
 # Collect the linraries to be linked.
 # link the API/MESH etc. libraries, no matter build them or not.
 # Important: the top library should be list firstly!!!
@@ -179,24 +189,33 @@ set(Grider_TARGET_NAME "PHGrider")
 message(STATUS "Linking ${MESH_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${MESH_TARGET_NAME})
 
-if(BUILD_Grid)
-  message(STATUS "Linking ${Grider_TARGET_NAME} ...")
-  list(APPEND LINK_LIBRARY_LIST ${Grider_TARGET_NAME})
-endif(BUILD_Grid)
-
 message(STATUS "Linking ${CFD_TARGET_NAME} ...")
 list(APPEND LINK_LIBRARY_LIST ${CFD_TARGET_NAME})
 
-
 list(APPEND LINK_LIBRARY_LIST ${API_TARGET_NAME})
-
 
 message(STATUS "Link library list: ${LINK_LIBRARY_LIST}.")
 
+if(BUILD_GMRESSolver)
+  #for Sacado
+  list(APPEND LINK_LIBRARY_LIST ${Sacado_LIBRARIES})
+  #for PETSc
+  list(APPEND LINK_LIBRARY_LIST ${PETSC_Libraries})
 
+  list(APPEND LINK_LIBRARY_LIST ${CMAKE_DL_LIBS})
+endif()
 #23. link a target to given libraries:
 target_link_libraries(${EXECUTABLE_TARGET_NAME} ${LINK_LIBRARY_LIST})
 
+if(USE_TecplotLib)
+  if(WIN32)
+    if(USE_Windows_X64)
+      add_custom_command(TARGET ${EXECUTABLE_TARGET_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x64/tecio.dll" $<TARGET_FILE_DIR:${EXECUTABLE_TARGET_NAME}>)
+    else(USE_Windows_X64) 
+      add_custom_command(TARGET ${EXECUTABLE_TARGET_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/3rdparty/${THIRD_PARTY_COMPILER_FLAG}/win-x86/tecio.dll" $<TARGET_FILE_DIR:${EXECUTABLE_TARGET_NAME}>)
+    endif(USE_Windows_X64)
+  endif(WIN32)
+endif(USE_TecplotLib)
 
 # Some pre-definitions that occ need.
 if(USE_OCC)
@@ -242,6 +261,4 @@ endif(USE_OMP)
 
 #24. exit:
 message(STATUS "--- Exit ${CMAKE_CURRENT_LIST_FILE}! ---")
-
-
 

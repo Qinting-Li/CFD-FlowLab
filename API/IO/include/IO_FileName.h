@@ -37,6 +37,9 @@ void GetFileNameExtension(const string &fullName, string &mainName, string &exte
 //! Change the file name's extension.
 string ChangeExtensionOfFileName(const string &fileName, const string &newExtension);
 
+//! Change the file's main name.
+string ChangeFileMainName(const string &fileName, const string &newMainName);
+
 int ExtractNumberOfPartFromFileName(const string &source);
 
 template < typename T >

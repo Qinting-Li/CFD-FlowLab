@@ -58,7 +58,7 @@ class ToLower
 public:
     char operator()(char val)
     {
-        return tolower(val);
+        return static_cast<char>(tolower(val));
     }
 };
 
@@ -133,6 +133,7 @@ void ToLowerCase(string &word);
 void ToUpperCase(string &word);
 void TrimBlanks(string &source);
 void SkipLines(fstream &file, int nline);
+void SkipWords(string &line, int nword);
 bool IsEmptyLine(const string &line);
 void ReadNextNonEmptyLine(fstream &file, string &line);
 string FindNextWord(const string &source, string &word, const string &separator);

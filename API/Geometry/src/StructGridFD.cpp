@@ -43,7 +43,7 @@ void StructGrid::ComputeMetricsStructHighOrder2D(ActionKey *actkey)
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
     if(highordersolvername.substr(0, 4) == "HDCS")
     {
-        ComputeMetricsStructHighOrder2D_HDCS(actkey);
+        ComputeMetricsStructHighOrder2D_HDCS();
         return;
     }
     int ni = this->GetNI();
@@ -377,7 +377,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D(ActionKey *actkey)
     string highordersolvername = GlobalDataBase::GetStrParaFromDB("str_highorder_solver");
     if(highordersolvername.substr(0, 4) == "HDCS")
     {
-        ComputeMetricsStructHighOrder3D_HDCS(actkey);
+        ComputeMetricsStructHighOrder3D_HDCS();
         return;
     }
     int ni = this->GetNI();
@@ -1042,7 +1042,7 @@ void StructGrid::GridDelta(const Range &NP, const Range &NI, RDouble2D *lineData
 
 }
 
-void StructGrid::ComputeMetricsStructHighOrder2D_HDCS(ActionKey *actkey)
+void StructGrid::ComputeMetricsStructHighOrder2D_HDCS()
 {
     RDouble4D &xfn  = *(this->GetFaceNormalX());
     RDouble4D &yfn  = *(this->GetFaceNormalY());
@@ -1229,7 +1229,7 @@ void StructGrid::ComputeMetricsStructHighOrder2D_HDCS(ActionKey *actkey)
     delete &yfaceJ;
 }
 
-void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
+void StructGrid::ComputeMetricsStructHighOrder3D_HDCS()
 {
     RDouble4D &xfn  = *(this->GetFaceNormalX());
     RDouble4D &yfn  = *(this->GetFaceNormalY());
@@ -1987,7 +1987,7 @@ void StructGrid::ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey)
     ComputeCellCenter();
 }
 
-void StructGrid::GhostMetricsStructHighOrder2D(ActionKey *actkey)
+void StructGrid::GhostMetricsStructHighOrder2D()
 {
     int ni = this->GetNI();
     int nj = this->GetNJ();
@@ -2043,7 +2043,7 @@ void StructGrid::GhostMetricsStructHighOrder2D(ActionKey *actkey)
     }    
 }
 
-void StructGrid::GhostMetricsStructHighOrder3D(ActionKey *actkey)
+void StructGrid::GhostMetricsStructHighOrder3D()
 {
     int ni = this->GetNI();
     int nj = this->GetNJ();
@@ -2163,7 +2163,7 @@ void StructGrid::InitialDiffOrderforStructHighOrder()
         StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
-        if (BCType < 0)
+        if (IsInterface(BCType))
         {
             continue;
         }

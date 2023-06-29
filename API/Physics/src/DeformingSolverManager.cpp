@@ -60,7 +60,7 @@ void DeformingParameter::SetParameters(PHVectorRDouble1D& parameterVector)
 {
     //delete [] parameters;
 
-    numberOfParameters = parameterVector.size();
+    numberOfParameters = static_cast<int>(parameterVector.size());
     parameters.resize(numberOfParameters);
 
     for (int iParameter = 0; iParameter < numberOfParameters; ++ iParameter)
@@ -69,7 +69,7 @@ void DeformingParameter::SetParameters(PHVectorRDouble1D& parameterVector)
     }
 }
 
-DeformingParameter * GetDeformingParameter(int bodyIndex)
+DeformingParameter * GetDeformingParameter()
 {
     DeformingParameter * tmp = new DeformingParameter;
 
@@ -96,7 +96,7 @@ void DeformingSolverManager::Restart()
 
 }
 
-void DeformingSolverManager::DumpRestart(fstream & file)
+void DeformingSolverManager::DumpRestart()
 {
 
 }

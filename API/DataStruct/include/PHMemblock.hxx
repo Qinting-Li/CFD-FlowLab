@@ -66,12 +66,9 @@ inline void MemoryBlock<P_type>::allocate(size_t length)
         data_ = reinterpret_cast<T_type *>(reinterpret_cast<char *>(dataBlockAddress_) + shift);
 
         // Use placement new to construct types with nontrival ctors
-        if (!NumericTypeTraits<T_type>::hasTrivialCtor)
+        for (std::size_t i = 0; i < length; ++ i)
         {
-            for (std::size_t i = 0; i < length; ++ i)
-            {
-                new(&data_[i]) T_type;
-            }
+            new(&data_[i]) T_type;
         }
     }
 }

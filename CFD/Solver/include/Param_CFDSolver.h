@@ -76,6 +76,9 @@ public:
     //! Get interval steps of dumping flow field.
     int GetIntervalStepPlot() const;
 
+    //! Get if using ALE method.
+    int GetIsCodeOfAleModel() const;
+
     //! Get CFL when computing start.
     RDouble GetCFLStart() const;
 
@@ -130,6 +133,8 @@ public:
      //! Get AusmpwPlusLimiter.
     RDouble GetAusmpwPlusLimiter() const;
 
+    //! Get trTemperatureMin
+    RDouble GetTrTemperatureMinNonDim() const;
     //! Get flag of starting from steady result.
     int GetIfStartFromSteadyResults() const;
 
@@ -147,6 +152,19 @@ public:
     RDouble GetSkewnessAngle() const;
     //! Get parameter judge whether modify Wenn Scheme.
     int GetWennSchemeFlag() const;
+
+    int GetnDiagonalModifiedTurb() const;
+
+    //! Get if carry out precondition or not.
+    int GetIfLowSpeedPrecon() const;
+
+    int GetnNumberOfSpeedStep() const;
+    int *GetSpeedVaryStep() const;
+    RDouble *GetSpeedVaryCoef() const;
+
+    int GetnNumberOfCFLStep() const;
+    int *GetCFLVaryMultiStep() const;
+    RDouble *GetCFLVaryCoef() const;
 
 private:
     string restartNSFile;
@@ -169,11 +187,21 @@ private:
     int intervalStepRes;
     int intervalStepPlot;
 
+    int isAle;
+
     RDouble CFLStart;
     RDouble CFLEnd;
     RDouble fineCFL;
     int CFLVaryStep;
     RDouble pMax, pMin, deltaMax, magnifyFactor, reduceFactor;
+
+    int nNumberOfSpeedStep;
+    int *speedVaryStep;
+    RDouble *speedVaryCoef;
+
+    int nNumberOfCFLStep;
+    int *CFLVaryMultiStep;
+    RDouble *CFLVaryCoef;
 
     int nMGLevel;
 
@@ -188,6 +216,8 @@ private:
     RDouble refDimensionalVelocity;
 
     RDouble AusmpwPlusLimiter;
+
+    RDouble trTemperatureMinNonDim;
 
     int ifStartFromSteadyResults;
     int ifStaticsFlowField;
@@ -204,6 +234,11 @@ private:
     int isWennScheme;
 
     RDouble skewnessAngle;
+
+    int nDiagonalModifiedTurb;
+
+    //! For incompressible flow (mach < 0.3), using precondition method or not.
+    int ifLowSpeedPrecon;
 };
 
 #include "Param_CFDSolver.hxx"

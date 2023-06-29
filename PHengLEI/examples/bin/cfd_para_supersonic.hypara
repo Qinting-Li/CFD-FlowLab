@@ -83,16 +83,16 @@ double TorqueRefZ = 0.0;                      // unit of meter.
 //          2 -- DDES.
 //          3 -- IDDES.
 
-//int    viscousType    = 0;
+//int    viscousType = 0;
 //string viscousName = "Euler";
 
-//int    viscousType    = 1;
+//int    viscousType = 1;
 //string viscousName = "laminar";
 
-//int    viscousType    = 3;
+//int    viscousType = 3;
 //string viscousName = "1eq-sa";
 
-int    viscousType    = 4;
+int    viscousType = 4;
 string viscousName = "2eq-kw-menter-sst";
 
 int DESType = 0;

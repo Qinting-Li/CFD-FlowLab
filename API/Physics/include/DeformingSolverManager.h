@@ -41,7 +41,7 @@ public:
     void SetParameters(PHVectorRDouble1D& parameterVector);
 };
 
-DeformingParameter * GetDeformingParameter(int bodyIndex);
+DeformingParameter * GetDeformingParameter();
 
 class DeformingSolverManager
 {
@@ -55,7 +55,7 @@ public:
     void Run();
     void Post();
     void Dump();
-    void DumpRestart(fstream & file);
+    void DumpRestart();
 };
 
 }

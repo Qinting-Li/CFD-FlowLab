@@ -219,8 +219,141 @@ namespace GAS_SPACE
         {
             wallMultiTemperature = GlobalDataBase::GetIntParaFromDB("wallMultiTemperature");
         }
-    };
 
+        nDiagonalModified = 0;
+       
+        nDiagonalModifiedTurb = 0;
+        
+        trTemperatureMinNonDim = 10.0 ;
+        if (GlobalDataBase::IsExist("trTemperatureMin", PHDOUBLE, 1))
+        {
+            trTemperatureMinNonDim = GlobalDataBase::GetDoubleParaFromDB("trTemperatureMin") ;
+        }
+        trTemperatureMinNonDim /= GlobalDataBase::GetDoubleParaFromDB("refDimensionalTemperature");
+    }
+
+
+
+Thermo_Energy_Data::Thermo_Energy_Data(int numberOfSpecies)
+{
+    Cps = new RDouble[numberOfSpecies];
+    Cvs = new RDouble[numberOfSpecies];
+    Cvtrs = new RDouble[numberOfSpecies];
+    Cvvs = new RDouble[numberOfSpecies];
+    Cves = new RDouble[numberOfSpecies];
+
+    Hs = new RDouble[numberOfSpecies];
+    Es = new RDouble[numberOfSpecies];
+    Etrs = new RDouble[numberOfSpecies];
+    Evs = new RDouble[numberOfSpecies];
+    Ees = new RDouble[numberOfSpecies];
+    Rms = new RDouble[numberOfSpecies];
+}
+
+Thermo_Energy_Data::Thermo_Energy_Data()
+{
+    Cps = NULL;
+    Cvs = NULL;
+    Cvtrs = NULL;
+    Cvvs = NULL;
+    Cves = NULL;
+
+    Hs = NULL;
+    Es = NULL;
+    Etrs = NULL;
+    Evs = NULL;
+    Ees = NULL;
+    Rms = NULL;
+}
+
+Thermo_Energy_Data::~Thermo_Energy_Data()
+{
+    if (Cps != NULL) delete[]Cps;
+    if (Cvs != NULL) delete[]Cvs;
+    if (Cvtrs != NULL) delete[]Cvtrs;
+    if (Cvvs != NULL) delete[]Cvvs;
+    if (Cves != NULL) delete[]Cves;
+
+    if (Hs != NULL) delete[]Hs;
+    if (Es != NULL) delete[]Es;
+    if (Etrs != NULL) delete[]Etrs;
+    if (Evs != NULL) delete[]Evs;
+    if (Ees != NULL) delete[]Ees;
+    if (Rms != NULL) delete[]Rms;
+}
+
+void Thermo_Energy_Data::Init(int numberOfSpecies, int ntmodel)
+{
+    Cps = new RDouble[numberOfSpecies];
+    Cvs = new RDouble[numberOfSpecies];
+    Cvtrs = new RDouble[numberOfSpecies];
+    Cvvs = new RDouble[numberOfSpecies];
+    Cves = new RDouble[numberOfSpecies];
+
+    Hs = new RDouble[numberOfSpecies];
+    Es = new RDouble[numberOfSpecies];
+    Etrs = new RDouble[numberOfSpecies];
+    Evs = new RDouble[numberOfSpecies];
+    Ees = new RDouble[numberOfSpecies];
+    Rms = new RDouble[numberOfSpecies];
+}
+
+void Thermo_Energy_Data::freeData()
+{
+    if (Cps != NULL) delete[]Cps;
+    if (Cvs != NULL) delete[]Cvs;
+    if (Cvtrs != NULL) delete[]Cvtrs;
+    if (Cvvs != NULL) delete[]Cvvs;
+    if (Cves != NULL) delete[]Cves;
+
+    if (Hs != NULL) delete[]Hs;
+    if (Es != NULL) delete[]Es;
+    if (Etrs != NULL) delete[]Etrs;
+    if (Evs != NULL) delete[]Evs;
+    if (Ees != NULL) delete[]Ees;
+    if (Rms != NULL) delete[]Rms;
+}
+
+
+Thermo_Energy_DB ::Thermo_Energy_DB(int imin, int imax ,int jmin, int jmax, int kmin, int kmax, int numberSpecies, int ntmodel)
+{
+    ni = imax - imin + 1;
+    nj = jmax - jmin + 1;
+    nk = kmax - kmin + 1;
+
+    istart = imin;
+    jstart = jmin;
+    kstart = kmin;
+
+    nmax = ni * nj * nk;
+    numberOfSpecies = numberSpecies;
+
+    Data = new Thermo_Energy_Data[nmax];
+    for (int m = 0; m < nmax; ++ m)
+    {
+        Data[m].Init(numberOfSpecies, ntmodel);
+    }
+}
+
+Thermo_Energy_DB ::~Thermo_Energy_DB()
+{
+    if (Data != NULL)
+    {
+        if(numberOfSpecies > 0)
+        {
+            for (int m = 0; m < nmax; ++ m)
+            {
+                Data[m].freeData();
+            }
+        }
+        delete[]Data;
+    }
+}
+
+Thermo_Energy_Data * Thermo_Energy_DB ::GetThermo_Energy_Data(int i, int j ,int k)
+{
+    return  &Data[((k - kstart) * nj + (j - jstart)) * ni + i];
+}
 
 }
 

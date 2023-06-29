@@ -18,7 +18,7 @@
 #pragma once
 #include "LIB_Macro.h"
 #include "Precision.h"
-
+#include <vector>
 namespace PHSPACE
 {
 class Zone;
@@ -57,8 +57,6 @@ public:
 
     LIB_EXPORT void CleanUp(int iSolver);
     
-    LIB_EXPORT void SolveIncomFlow();
-
     //! Steady simulation by implementing multi-grid cycle.
     //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right
     //! reason why this class is named as 'Controller'.
@@ -66,35 +64,28 @@ public:
     //! Zero residual --> go into Multi-Grid cycle, if single level grid used, go to Relaxation directly.
     LIB_EXPORT void SolveSteadyField();
 
+    //! Steady simulation by implementing multi-grid cycle.
+    //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right
+    //! reason why this class is named as 'Controller'.
+    //! The standard simulation order is:
+    //! Zero residual --> go into Multi-Grid cycle, if single level grid used, go to Relaxation directly.
+    LIB_EXPORT void SolveIncomSteadyField(int iSolver, int level = 0);
+
+    //! Steady simulation by implementing multi-grid cycle.
+    //! Each solver simulation will be controlled by this multi-grid cycle, and this is the right
+    //! reason why this class is named as 'Controller'.
+    //! The standard simulation order is:
+    //! Zero residual --> go into Multi-Grid cycle, if single level grid used, go to Relaxation directly.
+    LIB_EXPORT void SolveHyrbridDBPBSteadyField(int iSolver, int level = 0);
+
     //! Unsteady simulation using Dual Time Step method.
     //! In which, the steady simulation process is used as the virtual dual time step (or sub-iteration),
     //! and the steady relaxation sub-iterations are nested inside the real physical time step.
     LIB_EXPORT void SolveUnsteadyField();
 
-    //! Steady simulation for incompressible situation
-    void SolveIncompressibleSteadyField();
-
-    //! If converged for incompressible situation
-    bool IsConverged(int iZone);
-
-    //! Reinit variable for incompressible situation 
-    void IncompressibleInitial(int iSolver);
     //! Update unsteady flow.
     //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
     void UpdateUnsteadyFlow(int iSolver, int level = 0);
-
-    //! Update unsteady variable for incompressible solvers.
-    //! The the flow field of n+1 physical time step is updated by using the last sub-iteration results.
-    void UpdateUnsteadyVariable(int iSolver, int level = 0);
-
-    //! Init residual file.
-    void InitResultFile(string &fileName);
-
-    //! Output res to file.
-    void DumpResultFile(string &fileName);
-
-    //! For InCompressible Solvers
-    void UpdateDt(int iSolver, int level);
     //! Multi-Grid (MG) acceleration cycle control.
     //! All MG stages are defined in it, such as relaxation, restriction, prolongation, correction.
     void MultiGrid(int iSolver, int level = 0);
@@ -163,6 +154,8 @@ public:
     //! Compute gradient for viscous flux computation.
     void ComputeGradient(int iSolver, int level);
 
+    void ComputeLimiter(int iSolver, int level);
+
     //! Compute node bctype.
     void ComputeNodeBCType();
     void CommunicationNodeBCType();
@@ -187,7 +180,7 @@ private:
     int  GetSolverIndex();
 
     //! Get the number of post-processing which is need for each solver.
-    int  GetNPostSolve(int iSolver, int level);
+    int  GetNPostSolve(int iSolver);
 
     //! Get flow field on multi-grid of 'level' of iSolver-th solver.
     FieldProxy **GetQProxy  (int level);
@@ -200,23 +193,34 @@ private:
 
     CFDSolver * GetCFDSolver(int iZone, int iSolver);
 
+#ifdef USE_GMRESSOLVER
+public:
+    //! GMRES solver -- a linear system solver
+    //! This method can be referenced "Sen Zhang, Boqian Wang, et al. Implementation of a Newton-Krylov Algorithm in the Open-source Solver PHengLEI[C]."
+    //! GPPS Hong Kong , October 17-19, 2023.
+    void GMRESSolver(int iSolver, int level);
+    void GMRESSolver_Coupled(int level);  // GMRESCoupled
+    void GMRESSolver_backupversion(int iSolver, int level);
+    void GMRESForZone(RDouble **dRdq, std::vector<int>& AI, std::vector<int>& AJ, RDouble **res, FieldProxy *dqProxy, const int& nTotalcells, const int& nEquations);  //GMRESSparse GMRESCSR
+#endif
+
+private:
     //! For New LUSGS with one sweep, Sub-routines of LUSGS method, which is divided into 4 steps.
     void LUSGS(int iSolver, int level);
     void DualTimeStepsLUSGS(int iSolver, int level);
     void LUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
     void BLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
-	void MatrixLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
+    void MatrixLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
     void ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy);
     void DetermineCFLNumber(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **dqProxy1);
 
-    void CommunicationInterfaceData(int iSolver, int level);
+    void CommunicationInterfaceData(int iSolver);
     void CommunicationInterfaceDataOneLevel(int iSolver, int level);
     void CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy);
     void CommunicateGenericArray(int iSolver, int level);
     void CommunicateGradientArray(int iSolver, int level);
-    void CommunicateSpecificArray(int iSolver, int level, string arrayName, int nEquation);
     void CommunicateGradientandLimitOnlyForMixGrid();
     void CommunicateQlQrOnlyforMixGrid();
     void CommunicateFacefluxOnlyforMixGrid();
@@ -229,7 +233,7 @@ private:
     //! @param[in ]: level denotes the serial number of the layer where the variables are compute in the multigrid method.
     //void BLUSGS(int iSolver, int level);
 
-    //! Block Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
+    //! Block Lower-Upper Symmetric Gaussï¿½CSeidel Scheme for unstruct grid.
     void BLUSGS(int iSolver, int level);
 
     //! Forward sweep in BLUSGS methods.
@@ -238,7 +242,7 @@ private:
     //! Backward sweep in BLUSGS methods.
     void BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
-	//! Matix Lower-Upper Symmetric Gauss¨CSeidel Scheme for struct grid.
+    //! Matix Lower-Upper Symmetric Gaussï¿½CSeidel Scheme for struct grid.
     void MatrixLUSGS(int iSolver, int level);
 
     //! Forward sweep in MatrixLUSGS methods.
@@ -247,7 +251,7 @@ private:
     //! Backward sweep in MatrixLUSGS methods.
     void BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dqProxy, FieldProxy **LUplusDQ, RDouble &sweepNormal);
 
-    //! Line implicit Lower-Upper Symmetric Gauss¨CSeidel Scheme for unstruct grid.
+    //! Line implicit Lower-Upper Symmetric Gaussï¿½CSeidel Scheme for unstruct grid.
     void LineLUSGS(int iSolver, int level);
 
     void LineLUSGSInitialization(int iSolver, int level, int nSweep, FieldProxy **dqProxy, FieldProxy **LUplusDQ);
@@ -285,26 +289,17 @@ private:
     void CorrectFineGrid(int iSolver, int level);
 
     void CreateQProxy   (int iSolver, int level);
-    void DestroyQProxy  (int iSolver, int level);
+    void DestroyQProxy  (int level);
     void CreateRHSProxy (int iSolver, int level);
-    void DestroyRHSProxy(int iSolver, int level);
+    void DestroyRHSProxy(int level);
 
     void StoreRhsByResidual(int iSolver, int level);
     void RecoverResidual   (int iSolver, int level);
     bool CVGNorm(int iSolver, int level = 0);
     bool ISCoarsestGrid(int level);
 
-    //! For solving incompressible flow.
-    void SolveFlowField(int iZone);
-
-    //! For solving incompressible scalar equation.
-    void SolveScalarField(int iZone);
-
-    //! For solving incompressible turb equation.
-    void SolveTurbField(int iZone);
-
-    //! For solving incompressible energy equation.
-    void SolveEnergyField(int iZone);
+    bool JudgeIfCalTheZoneForDensityBasedMethod(int zoneID, int iSolver);
+    bool JudgeIfCalTheZoneForPressureBasedMethod(int zoneID, int iSolver);
 };
 
 class MultiGridFieldProxy

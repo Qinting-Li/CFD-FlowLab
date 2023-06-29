@@ -4,6 +4,9 @@
 #include "Math_BasisFunction.h"
 #include "Task.h"
 #include "TK_Log.h"
+#ifdef USE_GMRESSOLVER
+#include "petscksp.h"
+#endif
 using namespace std;
 
 namespace PHSPACE
@@ -46,8 +49,8 @@ LIB_EXPORT void Controller::InitCoarseGridsFlow(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -130,8 +133,8 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -150,8 +153,8 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-        Zone *zone = GetZone(zoneID);
-        if (!zone) continue;
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone) continue;
 
         for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); iLevel ++)
         {
@@ -163,7 +166,7 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     }
 
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible)
+    if (COMPRESSIBLE == compressible)
     {
         ComputeNodeBCType();
     }
@@ -174,42 +177,18 @@ LIB_EXPORT void Controller::Initialize(int iSolver)
     //UpdateIndependentField(iSolver, level);
 }
 
-void Controller::IncompressibleInitial(int iSolver)
-{
-    using namespace PHMPI;
-    int nLocalZones = GetNumberofLocalZones();
-
-    int level = 0;
-    //! First: Initialize memory.
-    for (int iZone = 0; iZone < nLocalZones; ++iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone* zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        PHSolver* solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->IncompressibleInitial();
-    }
-}
-
 void Controller::CleanUp(int iSolver)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
 
-    int level = 0;
     //! First: Initialize memory.
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -354,40 +333,47 @@ void Controller::CommunicationNodeBCType()
     }
 }
 
-LIB_EXPORT void Controller::SolveIncomFlow()
-{
-    using namespace PHMPI;
-    int nLocalZones = GetNumberofLocalZones();
-    int iSolver = this->GetSolverIndex();
-#ifdef USE_OMP
-#pragma omp parallel for
-#endif
-    for (int iZone = 0; iZone < nLocalZones; ++iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-        
-        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->Solve();
-    }
-
-}
-
 LIB_EXPORT void Controller::SolveSteadyField()
 {
     int iSolver = this->GetSolverIndex();
+    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+    if (COMPRESSIBLE == compressible)
+    {
+        //! Zero the residuals of the finest grid.
+        ZeroResiduals(iSolver);
 
-    //! Zero the residuals of the finest grid.
+        MultiGrid(iSolver);
+    }
+    else if (INCOMPRESSIBLE == compressible)
+    {
+        SolveIncomSteadyField(iSolver);
+    }
+}
+
+LIB_EXPORT void Controller::SolveIncomSteadyField(int iSolver, int level)
+{
+    int nLocalZones  = PHMPI::GetNumberofLocalZones();
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        bool ifCalTheZone = JudgeIfCalTheZoneForPressureBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
+        {
+            continue;
+        }
+
+        CFDSolver* solver = GetCFDSolver(zoneID, iSolver);
+
+        solver->SolveIncomSteadyField();
+    }
+}
+
+LIB_EXPORT void Controller::SolveHyrbridDBPBSteadyField(int iSolver, int level)
+{
     ZeroResiduals(iSolver);
-
     MultiGrid(iSolver);
-
+    SolveIncomSteadyField(iSolver);
 }
 
 LIB_EXPORT void Controller::SolveUnsteadyField()
@@ -410,103 +396,6 @@ LIB_EXPORT void Controller::SolveUnsteadyField()
 
         PHSolver *solver = GetCFDSolver(0, iSolver);
         solver->CommunicationInterpointData();
-    }
-}
-
-//! Incompressible Flow
-void Controller::SolveIncompressibleSteadyField()
-{
-    using namespace PHMPI;
-
-    int iSolver = this->GetSolverIndex();
-    int nLocalZones = GetNumberofLocalZones();
-
-#ifdef USE_OMP
-#pragma omp parallel for
-#endif
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(zoneID, 0);
-
-
-        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-        const string solverName = solver->GetName();
-        if (solverName == toString(iSolver) + "_" + "FLOW")
-        {
-            this->SolveFlowField(zoneID);
-        }
-        else if (solverName == "TURB")
-        {
-            this->SolveTurbField(zoneID);
-        }
-        else if (solverName == "ENERGY")
-        {
-            this->SolveEnergyField(zoneID);
-        }
-    }
-}
-
-void Controller::InitResultFile(string &fileName)
-{
-    using namespace PHMPI;
-
-    int iSolver = this->GetSolverIndex();
-    int nLocalZones = GetNumberofLocalZones();
-
-#ifdef USE_OMP
-#pragma omp parallel for
-#endif
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(zoneID, 0);
-
-        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->InitIncompressibleResultFile(grid, fileName);
-    }
-}
-
-void Controller::DumpResultFile(string &fileName)
-{
-    using namespace PHMPI;
-
-    int iSolver = this->GetSolverIndex();
-    int nLocalZones = GetNumberofLocalZones();
-
-#ifdef USE_OMP
-#pragma omp parallel for
-#endif
-    for (int iZone = 0; iZone < nLocalZones; ++ iZone)
-    {
-        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(zoneID, 0);
-
-        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
-
-        solver->DumpIncompressibleResultFile(grid, fileName);
     }
 }
 
@@ -550,7 +439,7 @@ void Controller::MultiGrid(int iSolver, int level)
         //! Defect.
         //! The followings corresponding to nsmb d = RL-1(wsav) - restr(RL(w)-f).
         //! in which (*res) = - (*rhs) correspond to - f
-        //! Note that the value of res is on fine grid, rhs ought be f£¬and this should be checked.
+        //! Note that the value of res is on fine grid, rhs ought be fï¿½ï¿½and this should be checked.
         //! Here should be ni and nj,rather than cni and cnj!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         InitResidual(iSolver, level);
 
@@ -602,14 +491,14 @@ void Controller::MultiGrid(int iSolver, int level)
         //! The following function actually recover the value of q on coarse grid.
         PutCorrectionBack(iSolver, cLevel);
         //! Delete the temporary variables of QProxy.
-        DestroyQProxy(iSolver, cLevel);
+        DestroyQProxy(cLevel);
     }
     //! Put RHS back into its places.
     //! Here, we just recover the initial value of res.
     RecoverResidual(iSolver, level);
 
     //! Delete the temporary variables of rhsProxy.
-    DestroyRHSProxy(iSolver, level);
+    DestroyRHSProxy(level);
 }
 
 void Controller::UpdateUnsteadyFlow(int iSolver, int level)
@@ -632,46 +521,6 @@ void Controller::UpdateUnsteadyFlow(int iSolver, int level)
     }
 }
 
-void Controller::UpdateUnsteadyVariable(int iSolver, int level)
-{
-    using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
-
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(iZone, level);
-        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
-
-        solver->UpdateUnsteadyVariable(grid);
-    }
-}
-
-void Controller::UpdateDt(int iSolver, int level)
-{
-    using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
-
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(iZone, level);
-        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
-
-        solver->UpdateDt();
-    }
-}
-
 void Controller::Relaxation(int iSolver, int level)
 {
     using namespace PHSPACE;
@@ -688,28 +537,43 @@ void Controller::Relaxation(int iSolver, int level)
     }
 
     int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
+ 
     if (tscheme == LU_SGS || level != 0)
     {
         //! LU-SGS implicit time integration method.
-        //if(!runOriginalSingleSweep)
+        LoadResiduals(iSolver, level);
+
+        UpdateResiduals(iSolver, level);
+
+        SpectrumRadius(iSolver, level);
+
+        TimeStep(iSolver, level);
+
+        if (isUseLocalCFL == 1)
         {
-            LoadResiduals(iSolver, level);
-
-            UpdateResiduals(iSolver, level);
-
-            SpectrumRadius(iSolver, level);
-
-            TimeStep(iSolver, level);
-
-            if (isUseLocalCFL == 1)
-            {
-                DualTimeStepsLUSGS(iSolver, level);
-            }
-            else
-            {
-                LUSGS(iSolver, level);
-            }
+            DualTimeStepsLUSGS(iSolver, level);
         }
+        else
+        {
+            LUSGS(iSolver, level);
+        }
+        
+    }
+    else if (tscheme == GMRES)
+    {
+        //! Generalized Minimal Residual method added by Sen Zhang, Boqian Wang, et al. 
+        LoadResiduals(iSolver, level);
+
+        UpdateResiduals(iSolver, level);
+
+        SpectrumRadius(iSolver, level);
+
+        TimeStep(iSolver, level);
+
+#ifdef USE_GMRESSOLVER
+        GMRESSolver(iSolver, level);
+#endif       
+
     }
     else if (tscheme == MULTI_STAGE)
     {
@@ -724,30 +588,6 @@ void Controller::Relaxation(int iSolver, int level)
         TimeStep(iSolver, level);
 
         RungeKutta(iSolver, level);
-    }
-    else if (tscheme == Block_LU_SGS)
-    {
-        LoadResiduals(iSolver, level);
-
-        UpdateResiduals(iSolver, level);
-
-        SpectrumRadius(iSolver, level);
-
-        TimeStep(iSolver, level);
-
-        BLUSGS(iSolver, level);
-    }
-    else if (tscheme == Line_LU_SGS)
-    {
-        LoadResiduals(iSolver, level);
-
-        UpdateResiduals(iSolver, level);
-
-        SpectrumRadius(iSolver, level);
-
-        TimeStep(iSolver, level);
-
-        LineLUSGS(iSolver, level);
     }
 	else if (tscheme == Matrix_LU_SGS)
     {
@@ -801,8 +641,8 @@ void Controller::TimeStep(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -841,8 +681,8 @@ RDouble Controller::ComputeMinTimeStep(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -889,8 +729,8 @@ void Controller::ReduceMaxTimeStep(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -914,8 +754,8 @@ void Controller::Diagonal(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -943,8 +783,8 @@ void Controller::SpectrumRadius(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -968,8 +808,8 @@ void Controller::ZeroResiduals(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -997,13 +837,34 @@ void Controller::UpdateResiduals(int iSolver, int level)
     }
 
     using namespace PHMPI;
+   
+#ifdef USE_GMRESSOLVER
+    // GMRESCoupled
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    if( viscousType == ONE_EQU && iSolver == NS_SOLVER )
+    {
+        SetBoundaryValueOfField(NS_SOLVER, level);
+        SetBoundaryValueOfField(TURB_SOLVER, level);
 
-    //! Turn off the following two functions, 
-    //! when gradient pre-computing for turbulent solver is used.
+        UpdateIndependentField(NS_SOLVER, level);
+        UpdateIndependentField(TURB_SOLVER, level);
+
+        SetBoundaryValueOfField(TURB_SOLVER, level);
+        
+    }
+    else if ( viscousType == INVISCID || viscousType == LAMINAR || viscousType == TWO_EQU )
+    {
+        SetBoundaryValueOfField(iSolver, level);
+
+        UpdateIndependentField(iSolver, level);
+    }
+
+#else 
     SetBoundaryValueOfField(iSolver, level);
-
+     
     UpdateIndependentField(iSolver, level);
-
+#endif
+    
     int nLocalZones = GetNumberofLocalZones();
 
 #ifdef USE_OMP
@@ -1013,8 +874,8 @@ void Controller::UpdateResiduals(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1043,8 +904,8 @@ void Controller::UpdateResidualsOnlyforMixGrid(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1063,8 +924,8 @@ void Controller::UpdateResidualsOnlyforMixGrid(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1086,8 +947,8 @@ void Controller::UpdateResidualsOnlyforMixGrid(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
         
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1103,8 +964,8 @@ void Controller::UpdateResidualsOnlyforMixGrid(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1130,8 +991,8 @@ void Controller::LoadResiduals(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1162,8 +1023,8 @@ void Controller::PressureFactor(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1174,7 +1035,7 @@ void Controller::PressureFactor(int iSolver, int level)
         solver->CalPressureFactor(grid);
     }
 
-    CommunicateSpecificArray(iSolver, level, "rtem", 0);
+    CommunicateSpecificArray(level, "rtem", 0);
 }
 
 void Controller::ComputeGradient(int iSolver, int level)
@@ -1182,7 +1043,7 @@ void Controller::ComputeGradient(int iSolver, int level)
     int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     int isFVMOrFDM = GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
-    if ((viscousType == INVISCID && STRUCTGRID == systemGridType))
+    if (viscousType == INVISCID && STRUCTGRID == systemGridType)
     {
         return;
     }
@@ -1197,8 +1058,8 @@ void Controller::ComputeGradient(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1232,6 +1093,39 @@ void Controller::ComputeGradient(int iSolver, int level)
     CommunicateGradientArray(iSolver, level);
 }
 
+void Controller::ComputeLimiter(int iSolver, int level)
+{
+    int systemGridType = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    if (UNSTRUCTGRID != systemGridType || NS_SOLVER != iSolver)
+    {
+        return;
+    }
+
+    using namespace PHMPI;
+    int nLocalZones = GetNumberofLocalZones();
+
+#ifdef USE_OMP
+#pragma omp parallel for
+#endif
+    for (int iZone = 0; iZone < nLocalZones; ++iZone)
+    {
+        int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
+
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+        solver->ComputeLimiter(grid);
+    }
+
+    int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
+    CommunicateSpecificArray(level, "limit2D", nLaminar);
+}
+
 void Controller::ComputeGamaAndTField(int iSolver, int level)
 {
     if (NS_SOLVER != iSolver)
@@ -1249,8 +1143,8 @@ void Controller::ComputeGamaAndTField(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1279,8 +1173,8 @@ void Controller::ComputeViscousCoeff(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1310,8 +1204,8 @@ void Controller::ComputeBlendFunctionSST(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1322,7 +1216,7 @@ void Controller::ComputeBlendFunctionSST(int iSolver, int level)
         solver->Crossing(grid);
         solver->Blending(grid);
     }
-    CommunicateSpecificArray(iSolver, level, "blend", 0);
+    CommunicateSpecificArray(level, "blend", 0);
 }
 
 void Controller::SetBoundaryValueOfField(int iSolver, int level)
@@ -1337,8 +1231,8 @@ void Controller::SetBoundaryValueOfField(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1418,8 +1312,8 @@ void Controller::GetIndependentVariablesforStructHighOrder(int iSolver, int leve
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1443,8 +1337,8 @@ void Controller::GetDependentVariablesforStructHighOrder(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1490,8 +1384,8 @@ void Controller::CreatqProxyfor3rdRK(int iSolver, int level, FieldProxy **q0Prox
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1524,8 +1418,8 @@ void Controller::Stagefor3rdRK(int iSolver, int level, FieldProxy **q0Proxy, int
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1582,6 +1476,8 @@ void Controller::UpdateIndependentField(int iSolver, int level)
 
     this->ComputeGradient(iSolver, level);
 
+    this->ComputeLimiter(iSolver, level);
+
     this->ComputeBlendFunctionSST(iSolver, level);
 }
 
@@ -1598,8 +1494,8 @@ void Controller::LUSGSInitialization(int iSolver, int level, int nSweep, FieldPr
     {
         int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1651,8 +1547,8 @@ void Controller::BLUSGSInitialization(int iSolver, int level, int nSweep, FieldP
     {
         int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1696,8 +1592,8 @@ void Controller::MatrixLUSGSInitialization(int iSolver, int level, int nSweep, F
     {
         int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -1977,8 +1873,8 @@ void Controller::ForwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fiel
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -2011,8 +1907,8 @@ void Controller::BackwardSweep(int iSolver, int level, FieldProxy **dqProxy, Fie
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -2045,8 +1941,8 @@ void Controller::UpdateFlowField(int iSolver, int level, FieldProxy **dqProxy)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -2084,8 +1980,8 @@ void Controller::DetermineCFLNumber(int iSolver, int level, FieldProxy **dqProxy
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -2729,11 +2625,11 @@ void Controller::CommunicateFacefluxOnlyforMixGrid()
 
 void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
 {
-    //if (iSolver != NS_SOLVER)
-    //{
-    //    //! Only consider the communication of NS-Solver.
-    //    //return;
-    //}
+    if (iSolver != NS_SOLVER)
+    {
+        //! Only consider the communication of NS-Solver.
+        return;
+    }
 
     int swapDq = GlobalDataBase::GetIntParaFromDB("swapDq");
     if (swapDq == 0)
@@ -2784,11 +2680,11 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
                 sendDataBuffer[iZone][iNeighbor] = sendBuffer;
 
                 int localZoneID = region->GetProcessGlobalZoneIndexToLocalZoneIndex(iZone);
-                CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
 
                 //! Compress the send information into the actkey.
                 Grid *grid = PHSPACE::GetGrid(iZone, level);
-                solver->CompressDQ(sendBuffer, dqProxy[localZoneID], grid, iZone, neighborZone, nEquation);
+                solver1->CompressDQ(sendBuffer, dqProxy[localZoneID], grid, iZone, neighborZone, nEquation);
             }
         }
     }
@@ -2901,200 +2797,12 @@ void Controller::CommunicationDQ(int iSolver, int level, FieldProxy **dqProxy)
 
                 //! Decompress the interface data from data-container.
                 int localZoneID = region->GetProcessGlobalZoneIndexToLocalZoneIndex(neighborZone);
-                CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
+                CFDSolver *solver2 = GetCFDSolver(neighborZone, iSolver);
 
                 Grid *grid = PHSPACE::GetGrid(neighborZone, level);
-                solver->DecompressDQ(receiveData, dqProxy[localZoneID], grid, neighborZone, iZone, nEquation);
+                solver2->DecompressDQ(receiveData, dqProxy[localZoneID], grid, neighborZone, iZone, nEquation);
 
                 ++ count;
-            }
-        }
-    }
-
-    //! Step4: Free the buffers.
-    for (int iDim = 0; iDim < receivedDataBuffer.size(); ++ iDim)
-    {
-        for (int jDim = 0; jDim < receivedDataBuffer[iDim].size(); ++ jDim)
-        {
-            delete receivedDataBuffer[iDim][jDim];
-        }
-    }
-    receivedDataBuffer.clear();
-    for (int iDim = 0; iDim < sendDataBuffer.size(); ++ iDim)
-    {
-        for (int jDim = 0; jDim < sendDataBuffer[iDim].size(); ++ jDim)
-        {
-            delete sendDataBuffer[iDim][jDim];
-        }
-    }
-    sendDataBuffer.clear();
-    requestContainer.clear();
-}
-
-void Controller::CommunicateSpecificArray(int iSolver, int level, string arrayName, int nEquation)
-{
-    int currentProcessor = PHMPI::GetCurrentProcessorID();
-    int nZones = PHMPI::GetNumberofGlobalZones();
-    vector <PH_Request > requestContainer;
-    vector <vector <DataContainer *> > receivedDataBuffer;
-    vector <vector <DataContainer *> > sendDataBuffer;
-    receivedDataBuffer.resize(nZones);
-    sendDataBuffer.resize(nZones);
-
-    //! Step 0: Compressing data firstly.
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
-
-        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
-        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
-        if (currentProcessor == sendProcessor)
-        {
-            sendDataBuffer[iZone].resize(numberOfNeighbor);
-        }
-
-        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
-        {
-            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
-
-            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
-
-            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
-            {
-                continue;
-            }
-
-            //! Allocate and compress the buffers for sending.
-            DataContainer *sendBuffer = 0;
-            if (currentProcessor == sendProcessor)
-            {
-                sendBuffer = new DataContainer;
-                sendDataBuffer[iZone][iNeighbor] = sendBuffer;
-
-                //CFDSolver *solver = GetCFDSolver(iZone, iSolver);
-                CFDSolver *solver = GetCFDSolver(iZone, iSolver);
-                //! Compress the send information into the actkey.
-                Grid *grid = PHSPACE::GetGrid(iZone, level);
-
-                solver->CompressSpecificArrayToInterface(sendBuffer, arrayName, grid, neighborZone, nEquation);
-            }
-        }
-    }
-
-    //! Step 1: Communication.
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
-        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
-
-        //! Communicating.
-        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
-        {
-            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
-
-            int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
-            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
-
-            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
-            {
-                continue;
-            }
-
-            //! Allocate the buffers for sending and receiving.
-            DataContainer *receivedBuffer = 0;
-            DataContainer *sendBuffer = 0;
-            if (currentProcessor == receiveProcessor)
-            {
-                receivedBuffer = new DataContainer;
-                receivedDataBuffer[iZone].push_back(receivedBuffer);
-            }
-            if (currentProcessor == sendProcessor)
-            {
-                sendBuffer = sendDataBuffer[iZone][iNeighbor];
-            }
-
-            int tag = iZone;
-
-            //! Communication.
-            if (currentProcessor == sendProcessor)
-            {
-                if (sendProcessor != receiveProcessor)
-                {
-                    streamsize nlen = sendBuffer->size();
-
-                    //! Send the data to neighbors.
-                    send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
-                }
-            }
-            if (currentProcessor == receiveProcessor)
-            {
-                //! Get the neighbor order: which order that 'iZone' on neighbors of neighborZone.
-                int neighborOrer = -1;
-                ZoneNeighbor *globalNeighborZonesTemp = zoneConnectivity->GetZoneNeighbor(neighborZone);
-                int numberOfNeighborTemp = globalNeighborZonesTemp->GetNumberOfNeighbor();
-
-                for (int neighborID = 0; neighborID < numberOfNeighborTemp; ++ neighborID)
-                {
-                    int neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(neighborID);
-                    if (neighborZoneTemp == iZone)
-                    {
-                        neighborOrer = neighborID;
-                        break;
-                    }
-                }
-
-                ASSERT(neighborOrer != -1);
-
-                if (sendProcessor != receiveProcessor)
-                {
-                    //! The data length of the received data is same to the length that send to the neighbor.
-                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
-
-                    //! Receive data from neighbors.
-                    receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
-                }
-                else
-                {
-                    SWAP(receivedDataBuffer[iZone].back(), sendDataBuffer[iZone][iNeighbor]);
-                }
-            }
-        }
-    }
-
-    //! Step2: MPI waiting for Non-blocking communications.
-    if (PHMPI::GetNumberOfProcessor() > 1)
-    {
-        PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
-    }
-
-    //! Step3: Translate the data container.
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
-        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
-
-        int count = 0;
-        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
-        {
-            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
-
-            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
-
-            if (currentProcessor == receiveProcessor)
-            {
-                DataContainer *receiveData = receivedDataBuffer[iZone][count];
-
-                //! Because get into here when currentProcessor==receiveProcessor,
-                //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
-
-                //! Decompress the interface data from data-container.
-                //CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
-                CFDSolver *solver = GetCFDSolver(neighborZone, iSolver);
-
-                Grid *grid = PHSPACE::GetGrid(neighborZone, level);
-                solver->DecompressArrayFromInterface(receiveData, arrayName, grid, iZone, nEquation);
-
-                ++count;
             }
         }
     }
@@ -3128,20 +2836,20 @@ void Controller::CommunicateGenericArray(int iSolver, int level)
     if (iSolver == NS_SOLVER)
     {
         int nEquation = solver->GetNumberOfEquations();
-        CommunicateSpecificArray(iSolver, level, "q", nEquation);
+        CommunicateSpecificArray(level, "q", nEquation);
 
         int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-        CommunicateSpecificArray(iSolver, level, "t", nTemperatureModel);
+        CommunicateSpecificArray(level, "t", nTemperatureModel);
     }
     else if (iSolver == TURB_SOLVER)
     {
         int nEquation = solver->GetNumberOfEquations();
-        CommunicateSpecificArray(iSolver, level, "q_turb", nEquation);
+        CommunicateSpecificArray(level, "q_turb", nEquation);
     }
     else if (iSolver == TRANSITION_SOLVER)
     {
         int nEquation = solver->GetNumberOfEquations();
-        CommunicateSpecificArray(iSolver, level, "q_transition", nEquation);
+        CommunicateSpecificArray(level, "q_transition", nEquation);
     }
 }
 
@@ -3172,15 +2880,15 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             int nSpeciesNumber = nLaminar + nChemical - nNSEquation;
 
             int nTotalVariable = nTemperatureModel + 3;
-            CommunicateSpecificArray(iSolver, level, "gradUVWTCellCenterX", nTotalVariable);
-            CommunicateSpecificArray(iSolver, level, "gradUVWTCellCenterY", nTotalVariable);
-            CommunicateSpecificArray(iSolver, level, "gradUVWTCellCenterZ", nTotalVariable);
+            CommunicateSpecificArray(level, "gradUVWTCellCenterX", nTotalVariable);
+            CommunicateSpecificArray(level, "gradUVWTCellCenterY", nTotalVariable);
+            CommunicateSpecificArray(level, "gradUVWTCellCenterZ", nTotalVariable);
 
             if (nChemical > 0 && nSpeciesNumber > 0)
             {
-                CommunicateSpecificArray(iSolver, level, "dcdx", nSpeciesNumber);
-                CommunicateSpecificArray(iSolver, level, "dcdy", nSpeciesNumber);
-                CommunicateSpecificArray(iSolver, level, "dcdz", nSpeciesNumber);
+                CommunicateSpecificArray(level, "dcdx", nSpeciesNumber);
+                CommunicateSpecificArray(level, "dcdy", nSpeciesNumber);
+                CommunicateSpecificArray(level, "dcdz", nSpeciesNumber);
             }
             if(periodicType == 2)
             {
@@ -3199,9 +2907,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                         }
                         if (currentProcessor == sendProcessor)
                         {
-                            CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                            CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
                             Grid *grid = PHSPACE::GetGrid(iZone, level);
-                            solver->RotateVectorFromInterface(grid, iZone, nTotalVariable);
+                            solver1->RotateVectorFromInterface(grid, iZone, nTotalVariable);
                         }
                     }
                 }
@@ -3210,9 +2918,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
         else if (iSolver == TURB_SOLVER && iLES == NOLES_SOLVER)
         {
             int nEquation = solver->GetNumberOfEquations();
-            CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterX", nEquation);
-            CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterY", nEquation);
-            CommunicateSpecificArray(iSolver, level, "gradTurbulenceCellCenterZ", nEquation);
+            CommunicateSpecificArray(level, "gradTurbulenceCellCenterX", nEquation);
+            CommunicateSpecificArray(level, "gradTurbulenceCellCenterY", nEquation);
+            CommunicateSpecificArray(level, "gradTurbulenceCellCenterZ", nEquation);
             if(periodicType == 2)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
@@ -3230,9 +2938,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                         }
                         if (currentProcessor == sendProcessor)
                         {
-                            CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                            CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
                             Grid *grid = PHSPACE::GetGrid(iZone, level);
-                            solver->RotateVectorFromInterface(grid, iZone, nEquation);
+                            solver1->RotateVectorFromInterface(grid, iZone, nEquation);
                         }
                     }
                 }
@@ -3241,9 +2949,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
         else if (iSolver == TRANSITION_SOLVER)
         {
             int nEquation = solver->GetNumberOfEquations();
-            CommunicateSpecificArray(iSolver, level, "gradTransitionCellCenterX", nEquation);
-            CommunicateSpecificArray(iSolver, level, "gradTransitionCellCenterY", nEquation);
-            CommunicateSpecificArray(iSolver, level, "gradTransitionCellCenterZ", nEquation);
+            CommunicateSpecificArray(level, "gradTransitionCellCenterX", nEquation);
+            CommunicateSpecificArray(level, "gradTransitionCellCenterY", nEquation);
+            CommunicateSpecificArray(level, "gradTransitionCellCenterZ", nEquation);
             if(periodicType == 2)
             {
                 for (int iZone = 0; iZone < nZones; ++ iZone)
@@ -3261,9 +2969,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                         }
                         if (currentProcessor == sendProcessor)
                         {
-                            CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                            CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
                             Grid *grid = PHSPACE::GetGrid(iZone, level);
-                            solver->RotateVectorFromInterface(grid, iZone, nEquation);
+                            solver1->RotateVectorFromInterface(grid, iZone, nEquation);
                         }
                     }
                 }
@@ -3275,9 +2983,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
             int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
             int nTotalVariable = nTemperatureModel + 3;
 
-            CommunicateSpecificArray(0, level, "gradUVWTCellCenterX", nTotalVariable);
-            CommunicateSpecificArray(0, level, "gradUVWTCellCenterY", nTotalVariable);
-            CommunicateSpecificArray(0, level, "gradUVWTCellCenterZ", nTotalVariable);
+            CommunicateSpecificArray(level, "gradUVWTCellCenterX", nTotalVariable);
+            CommunicateSpecificArray(level, "gradUVWTCellCenterY", nTotalVariable);
+            CommunicateSpecificArray(level, "gradUVWTCellCenterZ", nTotalVariable);
 
             if(periodicType == 2)
             {
@@ -3296,9 +3004,9 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
                         }
                         if (currentProcessor == sendProcessor)
                         {
-                            CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+                            CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
                             Grid *grid = PHSPACE::GetGrid(iZone, level);
-                            solver->RotateVectorFromInterface(grid, iZone, nTotalVariable);
+                            solver1->RotateVectorFromInterface(grid, iZone, nTotalVariable);
                         }
                     }
                 }
@@ -3315,9 +3023,39 @@ void Controller::CommunicateGradientArray(int iSolver, int level)
         {
         }
     }
+    if (systemGridType == UNSTRUCTGRID)
+    {
+        if (iSolver == NS_SOLVER)
+        {
+            //! NSSolver, GradientCommunication for struct high order has been done at another place, with another function.
+            int nNSEquation = GlobalDataBase::GetIntParaFromDB("nm");
+            int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
+            CommunicateSpecificArray(level, "gradPrimtiveVarX", nNSEquation);
+            CommunicateSpecificArray(level, "gradPrimtiveVarY", nNSEquation);
+            CommunicateSpecificArray(level, "gradPrimtiveVarZ", nNSEquation);
+    
+            CommunicateSpecificArray(level, "gradTemperatureX", nTemperatureModel);
+            CommunicateSpecificArray(level, "gradTemperatureY", nTemperatureModel);
+            CommunicateSpecificArray(level, "gradTemperatureZ", nTemperatureModel);
+        }
+        else if (iSolver == TURB_SOLVER && iLES == NOLES_SOLVER)
+        {
+            int nEquation = solver->GetNumberOfEquations();
+            CommunicateSpecificArray(level, "gradTurbulenceX", nEquation);
+            CommunicateSpecificArray(level, "gradTurbulenceY", nEquation);
+            CommunicateSpecificArray(level, "gradTurbulenceZ", nEquation);
+        }
+        else if (iSolver == TRANSITION_SOLVER)
+        {
+            int nEquation = solver->GetNumberOfEquations();
+            CommunicateSpecificArray(level, "gradTransitionX", nEquation);
+            CommunicateSpecificArray(level, "gradTransitionY", nEquation);
+            CommunicateSpecificArray(level, "gradTransitionZ", nEquation);
+        }
+    }
 }
 
-void Controller::CommunicationInterfaceData(int iSolver, int level)
+void Controller::CommunicationInterfaceData(int iSolver)
 {
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
@@ -3325,13 +3063,12 @@ void Controller::CommunicationInterfaceData(int iSolver, int level)
     //! Face Communication.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
 
-        Grid *grid = GetGrid(iZone,level);
         CFDSolver *solver = GetCFDSolver(iZone, iSolver);
 
         solver->CommunicationInterfaceData();
@@ -3346,13 +3083,12 @@ void Controller::CommunicationInterfaceDataOneLevel(int iSolver, int level)
     //! Face Communication.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
 
-        Grid *grid = GetGrid(iZone,level);
         CFDSolver *solver = GetCFDSolver(iZone, iSolver);
 
         solver->CommunicationInterfaceData(level);
@@ -3440,8 +3176,8 @@ void Controller::ForwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProxy
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3478,8 +3214,8 @@ void Controller::BackwardSweepBLUSGS(int iSolver, int level, FieldProxy **dqProx
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3519,7 +3255,7 @@ void Controller::MatrixLUSGS(int iSolver, int level)
 
     MatrixLUSGSInitialization(iSolver, level, nLUSGSSweeps, dqProxy, LUplusDQ);
 
-    RDouble sweepNormalInit, sweepEpsilon = 1.1, globleNormal;
+    RDouble sweepNormalInit = 1.0, sweepEpsilon = 1.1, globleNormal;
     
     for (int iSweep = 0; iSweep < nLUSGSSweeps; ++ iSweep)
     {
@@ -3580,8 +3316,8 @@ void Controller::ForwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **dq
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3618,8 +3354,8 @@ void Controller::BackwardSweepMatrixLUSGS(int iSolver, int level, FieldProxy **d
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(izone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3718,8 +3454,8 @@ void Controller::LineLUSGSInitialization(int iSolver, int level, int nSweep, Fie
     {
         int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone* zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3765,8 +3501,8 @@ void Controller::ForwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqPr
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone* zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3803,8 +3539,8 @@ void Controller::BackwardSweepLineLUSGS(int iSolver, int level, FieldProxy** dqP
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone* zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3835,8 +3571,8 @@ void Controller::RestrictAllQ(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3864,8 +3600,8 @@ void Controller::RestrictDefect(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3886,8 +3622,8 @@ void Controller::PutCorrection(int iSolver, int level)
     FieldProxy **qProxy = GetQProxy(level);
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3907,8 +3643,8 @@ void Controller::PutCorrectionBack(int iSolver, int level)
     FieldProxy **qProxy = GetQProxy(level);
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3932,8 +3668,8 @@ void Controller::CorrectFineGrid(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -3955,6 +3691,950 @@ CFDSolver * Controller::GetCFDSolver(int iZone, int iSolver)
     return static_cast<CFDSolver *>(GlobalSolvers::GetSolver(iZone, iSolver));
 }
 
+#ifdef USE_GMRESSOLVER
+//! For GMRES -- Boqian Wang
+void Controller::GMRESSolver(int iSolver, int level)
+{
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+
+    FieldProxy **dqProxy = new FieldProxy *[nLocalZones];
+
+    for (int iZone = 0; iZone < nLocalZones; iZone++)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if(!zone)
+        {
+            continue;
+        }
+
+        Grid *grid = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        dqProxy[iZone] = solver->CreateFieldProxy(grid);
+        solver->FillField(grid, dqProxy[iZone], zero);  // difference of conservative variables, init by zero
+        solver->GMRESSolver(grid, dqProxy[iZone]);
+    }
+
+    // GMRESWholeJacobian
+    UpdateFlowField(iSolver, level, dqProxy);
+
+    for (int iLocalZone = 0; iLocalZone < nLocalZones; iLocalZone++)
+    {
+        delete dqProxy[iLocalZone];
+    }
+    delete []dqProxy;
+}
+
+//! GMRES Coupled for NS and Turb
+void Controller::GMRESSolver_Coupled(int level)
+{
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+    int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
+    if( tscheme != GMRES )
+    {
+        return;
+    }
+
+    FieldProxy **dqProxyNS      = new FieldProxy *[nLocalZones];
+    FieldProxy **dqProxyTurb    = new FieldProxy *[nLocalZones];
+
+    for (int iZone = 0; iZone < nLocalZones; iZone++)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if(!zone)
+        {
+            continue;
+        }
+
+        Grid *grid0 = GetGrid(zoneID, level);
+
+        CFDSolver *solverNS     = GetCFDSolver(zoneID, 0);
+        CFDSolver *solverTurb   = GetCFDSolver(zoneID, 1);
+
+        dqProxyNS[iZone] = solverNS->CreateFieldProxy(grid0);
+        solverNS->FillField(grid0, dqProxyNS[iZone], zero);  // difference of conservative variables, init by zero
+
+        dqProxyTurb[iZone] = solverTurb->CreateFieldProxy(grid0);
+        solverTurb->FillField(grid0, dqProxyTurb[iZone], zero);  // difference of turbulence variables, init by zero
+        
+
+        UnstructGrid* grid = static_cast<UnstructGrid *>(grid0);
+        
+        RDouble **dRdq                  = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq"));
+        RDouble **dRdq_turb             = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq_turb"));
+        RDouble **res                   = reinterpret_cast<RDouble **>(grid->GetDataPtr("res"));
+        RDouble **res_turb              = reinterpret_cast<RDouble **>(grid->GetDataPtr("res_turb"));
+        RDouble** dRdqCoupledTerm       = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm"));
+        RDouble** dRdqCoupledTerm_turb  = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm_turb"));
+
+        RDouble **dDdP      = reinterpret_cast<RDouble**>(grid->GetDataPtr("dDdP"));
+
+        // RDouble **dRdqCoupledTerm = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdqCoupledTerm"));
+
+        int nTotalCells         = grid->GetNTotalCell();
+        int nBoundFace          = grid->GetNBoundFace();
+        int nEquations          = solverNS->GetNumberOfEquations(); 
+        int nTurbulenceEquation = solverTurb->GetNumberOfEquations();
+        
+        RDouble* vol = grid->GetCellVolume();
+        RDouble* dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
+        vector<int> AI = grid->GetJacobianAI4GMRES();  // GMRESSparse GMRESCSR
+        vector<int> AJ = grid->GetJacobianAJ4GMRES();  // GMRESSparse GMRESCSR
+
+        // GMRESCSR
+        for (int icell = 0; icell < nTotalCells; icell++)
+        {
+            vector<int>::iterator result = find(AJ.begin() + AI[icell], AJ.begin() + AI[icell + 1], icell); // find qcell
+            int index = distance(AJ.begin(), result);
+            
+            int indexNS = index*nEquations;
+            for (int iequ = 0; iequ < nEquations; iequ++)
+            {
+                 dRdq[iequ][indexNS + iequ] += 1.0 / dt[icell];
+            }
+
+            int indexTurb = index*nTurbulenceEquation;
+            for (int iequ = 0; iequ < nTurbulenceEquation; iequ++)
+            {
+                 dRdq_turb[iequ][indexTurb + iequ] += 1.0 / dt[icell];
+            }
+        }
+
+        // GMRESJac1st
+        vector<int> AI1st = grid->GetJacobianAI1st4GMRES(); 
+        vector<int> AJ1st = grid->GetJacobianAJ1st4GMRES();
+        RDouble **dRdq1st = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq1st"));
+        int JacOrder    = grid->GetJacobianOrder();
+
+        // GMRESCoupled1st
+        RDouble** dRdqCoupledTerm1st        = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm1st"));
+        RDouble** dRdqCoupledTerm_turb1st   = reinterpret_cast <RDouble**> (grid->GetDataPtr("dRdqCoupledTerm_turb1st"));
+        RDouble** dRdq_turb1st              = reinterpret_cast<RDouble**> (grid->GetDataPtr("dRdq_turb1st"));       
+
+        if (JacOrder == 2)
+        {
+            int jmax1st = AI1st[nTotalCells + nBoundFace];
+            int rcell1st = 0;
+            int rcell2nd = 0;
+            int j1st = 0;
+            do
+            {
+                for (j1st = AI1st[rcell1st]; j1st < AI1st[rcell1st + 1]; j1st++)
+                {
+                    int col1st = AJ1st[j1st];
+                    vector<int>::iterator result = find(AJ.begin() + AI[rcell2nd], AJ.begin() + AI[rcell2nd + 1], col1st); // find qcell
+                    int index = distance(AJ.begin(), result);
+
+                    int indexNS     = index*nTurbulenceEquation;
+                    int indexNS1st  = j1st*nTurbulenceEquation;
+                    for (int iequI = 0; iequI < nEquations; iequI++)
+                    {
+                        dRdqCoupledTerm1st[iequI][indexNS1st] = dRdqCoupledTerm[iequI][indexNS];
+                    }
+                    dRdq_turb1st[0][indexNS1st] = dRdq_turb[0][indexNS];
+
+                    int indexTurb           = index*nEquations;
+                    int indexTurb1st        = j1st*nEquations;
+                    for (int iequI = 0; iequI < nEquations; iequI++)
+                    {
+                        dRdqCoupledTerm_turb1st[0][indexTurb1st+iequI] = dRdqCoupledTerm_turb[0][indexTurb+iequI];
+                    }
+                }
+                rcell1st++;
+                rcell2nd++;
+
+            } while (j1st < jmax1st);
+            
+
+            for (int icell = 0; icell < nTotalCells; icell++)
+            {
+                vector<int>::iterator result = find(AJ1st.begin() + AI1st[icell], AJ1st.begin() + AI1st[icell + 1], icell); // find qcell
+                int index = distance(AJ1st.begin(), result);
+                if (result == AJ1st.begin() + AI1st[icell + 1])
+                {
+                    printf("\nrcell %d cannot find qcell %d from \n", icell, icell);
+                    for (int i = AI[icell]; i < AI[icell + 1]; i++)
+                    {
+                        printf("%d ", AJ1st[i]);
+                    }
+                    printf("\n");
+                    TK_Exit::ExceptionExit("Sparse matrix index is wrong");
+                }
+
+                int indexNS = index*nEquations;
+                for (int iequ = 0; iequ < nEquations; iequ++)
+                {
+                     dRdq1st[iequ][indexNS + iequ] += 1.0 / dt[icell];
+                }
+
+                int indexTurb = index*nTurbulenceEquation;
+                for (int iequ = 0; iequ < nTurbulenceEquation; iequ++)
+                {
+                     dRdq_turb1st[iequ][indexTurb + iequ] += 1.0 / dt[icell];
+                }
+            }
+        }
+      
+        // entry to PETSc for NS equations\n
+        Vec x, b;
+        Mat A;
+        Mat APC; // GMRESJac1st
+        KSP ksp;                        // define solver
+        PC pc;                          // define matrix
+        PetscInt nTotalSize;            // dimension size of matrix and vector
+        PetscInt nLevels = 3;           // define number of levels used by preconditioner ILU
+        PetscInt MaxStepsRestart = 500;  // define maximum steps required by [restart]
+        PetscInt MaxSteps = 500;        // define maximum steps
+        PetscReal rTolerance = 1.e-1;   // define tolerance of relative error // -1
+        PetscReal dropTolerance = 1.e5; // define tolerance of drop error
+
+        int blockSize = nEquations + nTurbulenceEquation;
+       
+        int globalTotalCells;
+        globalTotalCells = (int)GlobalDataBase::GetDoubleParaFromDB("GlobalTotalCells");
+        int nInterfaceCells;
+        InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+        int globalCellIndexShift = grid->GetGlobalCellIndexShift();
+        if (interfaceInfo != nullptr)
+        {
+            nInterfaceCells = interfaceInfo->GetNIFace();
+        }
+        nTotalSize = blockSize * globalTotalCells;
+
+        // initialize PETSc
+        PetscInitialize(PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL);
+
+        // create vectors;
+        VecCreateMPI(PETSC_COMM_WORLD, nTotalCells * blockSize, nTotalSize, &x);
+        PetscObjectSetName((PetscObject)x, "solution");
+        VecSetUp(x);
+        VecDuplicate(x, &b);
+
+        // create matrix
+        // GMRESCSR
+        PetscInt nnz[nTotalCells];
+        for (int icell = 0; icell < nTotalCells; icell++)
+        {
+            int count = 0;
+            for (int j = AI[icell]; j < AI[icell + 1]; j++)
+            {
+                if(AJ[j] < nTotalCells)
+                {
+                    count++;
+                }
+            }
+            nnz[icell] = count;
+        }
+        MatCreate(PETSC_COMM_WORLD, &A);
+        MatSetSizes(A, nTotalCells * blockSize, nTotalCells * blockSize,  nTotalSize, nTotalSize);
+        MatSetType(A, MATMPIBAIJ);
+        MatSetBlockSize(A, blockSize);
+        MatMPIBAIJSetPreallocation(A, blockSize, PETSC_DEFAULT, nnz, 20, PETSC_NULL);
+        PetscInt firstRow = globalTotalCells * blockSize;
+        PetscInt lastOneMoreRow = (globalTotalCells + nTotalCells) * blockSize;
+        MatGetOwnershipRange(A, &firstRow, &lastOneMoreRow);
+        MatSetUp(A);
+        MatZeroEntries(A);
+
+        MatCreate(PETSC_COMM_WORLD, &APC);
+        MatSetSizes(APC, nTotalCells * blockSize, nTotalCells * blockSize, nTotalSize, nTotalSize);
+        MatSetType(APC, MATMPIBAIJ);
+        MatSetBlockSize(APC, blockSize);
+
+        // GMRESJac1st
+        if( JacOrder == 2)
+        {
+            PetscInt nnz1st[nTotalCells];
+            for (int icell = 0; icell < nTotalCells; icell++)
+            {
+                int count = 0;
+                for (int j = AI1st[icell]; j < AI1st[icell + 1]; j++)
+                {
+                    if(AJ1st[j] < nTotalCells)
+                    {
+                        count++;
+                    }
+                }
+                nnz1st[icell] = count;
+            }
+            MatMPIBAIJSetPreallocation(APC, blockSize, PETSC_DEFAULT, nnz1st, 0, PETSC_NULL);
+        }
+        else
+        {
+            MatMPIBAIJSetPreallocation(APC, blockSize, PETSC_DEFAULT, nnz, 0, PETSC_NULL);
+        }
+        MatGetOwnershipRange(APC, &firstRow, &lastOneMoreRow);
+        MatSetUp(APC);
+        MatZeroEntries(APC);
+
+        // ----------------
+        // |   A       |B |
+        // |           |  |
+        // |           |  |
+        // |           |  |
+        // ----------------
+        // | C         |D |
+        // ----------------
+        // improved approach to assemble matrix CSR
+        PetscInt petsccol[nEquations];
+        PetscInt petscrow;
+        int jmax = AI[nTotalCells];
+        int rcell = 0;
+        int j = AI[rcell];
+        do
+        {
+            int rowidx = (rcell + globalCellIndexShift) * blockSize;
+            for (j = AI[rcell]; j < AI[rcell + 1]; j++)
+            {
+                int qcell = AJ[j]; // get qcell (colume index of matrix)
+                // start to insert values: limited to dimension of nTotalSize
+                if(qcell < nTotalCells)
+                {
+                    int colidx = (qcell + globalCellIndexShift) * blockSize;
+
+                    for (int irow = 0; irow < nEquations; irow++)
+                    {
+                        petscrow = rowidx + irow;
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = colidx + n;
+                        }
+                        MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][j * nEquations], ADD_VALUES);  // part A
+                        
+                        PetscInt colidxturb =  colidx + nEquations;
+                        MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm[irow][j*nTurbulenceEquation], ADD_VALUES);    // part B
+                    }
+
+                    petscrow = rowidx + nEquations;
+                    
+                    for (int n = 0; n < nEquations; n++)
+                    {
+                        petsccol[n] = colidx + n;
+                    }
+
+                    MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb[0][j * nEquations], ADD_VALUES);  // part C
+                        
+                    PetscInt colidxturb =  colidx + nEquations;
+                    MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdq_turb[0][j*nTurbulenceEquation], ADD_VALUES);   // part D
+
+                }
+            }
+            rcell++; // update rcell, go to the next row index of matrix
+        } while (j < jmax);
+
+        //! consider the second order template for 2nd order jacobian matrix for domain decomposition strategy
+        if (interfaceInfo != nullptr && JacOrder == 2)
+        {
+            vector<int> *neighborCells = grid->GMRESGetNeighborCells();
+            rcell = nTotalCells;
+            jmax = AI[nTotalCells + nBoundFace];
+            j = AI[rcell];
+            do
+            {
+                int rowidx = interfaceInfo->MatchedGlobalNeighborCellIndex(rcell) * blockSize;
+                if (rowidx >= 0) //! rcell is the ghost cell, rowidx >=0 means this cell locates on the interface boundary
+                {
+                    int leftcell = interfaceInfo->MatchedLocalPhysicalCellIndex(rcell); // return its corresponding physical cell index
+                    int colidx = (leftcell + globalCellIndexShift) * blockSize;
+                    vector<int>::iterator result = find(AJ.begin() + AI[rcell], AJ.begin() + AI[rcell + 1], leftcell); // find leftcell
+                    int index = distance(AJ.begin(), result);
+
+                    for (int irow = 0; irow < nEquations; irow++)
+                    {
+                        petscrow = rowidx + irow;
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = colidx + n;
+                        }
+                        MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][index * nEquations], ADD_VALUES); // part A
+
+                        PetscInt colidxturb = colidx + nEquations;
+                        MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm[irow][index * nTurbulenceEquation], ADD_VALUES); // part B
+                    }
+
+                    petscrow = rowidx + nEquations;
+                    for (int  n = 0; n < nEquations; n++)
+                    {
+                        petsccol[n] = colidx + n;
+                    }
+                    MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb[0][index * nEquations], ADD_VALUES); // part C
+                    PetscInt colidxturb = colidx + nEquations;
+                    MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdq_turb[0][index * nTurbulenceEquation], ADD_VALUES); // part D
+
+                    // obtain the list of the neighbor physical cell for the left cell
+                    for (int id = 0; id < neighborCells[leftcell].size(); id++)
+                    {
+                        int neighborIndex = neighborCells[leftcell][id];
+                        if (neighborIndex >= nTotalCells)
+                        {
+                            continue;
+                        }
+
+                        int colidx = (neighborIndex + globalCellIndexShift) * blockSize;
+                        vector<int>::iterator result = find(AJ.begin() + AI[rcell], AJ.begin() + AI[rcell + 1], neighborIndex); // find neighborIndex
+                        int index = distance(AJ.begin(), result);
+
+                        for (int irow = 0; irow < nEquations; irow++)
+                        {
+                            petscrow = rowidx + irow;
+                            for (int n = 0; n < nEquations; n++)
+                            {
+                                petsccol[n] = colidx + n;
+                            }
+                            MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][index * nEquations], ADD_VALUES); // part A
+                            PetscInt colidxturb = colidx + nEquations;
+                            MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm[irow][index * nTurbulenceEquation], ADD_VALUES); // part B
+                        }
+
+                        petscrow = rowidx + nEquations;
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = colidx + n;
+                        }
+                        MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb[0][index * nEquations], ADD_VALUES); // part C
+                        PetscInt colidxturb = colidx + nEquations;
+                        MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdq_turb[0][index * nTurbulenceEquation], ADD_VALUES); // part D
+                    }
+
+                    //! obtain the R_physical/q_ghost caused by the neighbor cell at interface bc
+                    result = find(AJ.begin() + AI[leftcell], AJ.begin() + AI[leftcell + 1], rcell); // find rcell
+                    index = distance(AJ.begin(), result);
+                    for (int irow = 0; irow < nEquations; irow++)
+                    {
+                        petscrow = (leftcell + globalCellIndexShift) * blockSize + irow;
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = rowidx + n;
+                        }
+                        MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][index * nEquations], ADD_VALUES); // part A
+                        PetscInt colidxturb = rowidx + nEquations;
+                        MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm[irow][index * nTurbulenceEquation], ADD_VALUES); // part B
+                    }
+
+                    petscrow = (leftcell + globalCellIndexShift) * blockSize + nEquations;
+                    for (int n = 0; n < nEquations; n++)
+                    {
+                        petsccol[n] = rowidx + n;
+                    }
+                    MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb[0][index * nEquations], ADD_VALUES); // part C
+                    colidxturb = rowidx + nEquations;
+                    MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdq_turb[0][index * nTurbulenceEquation], ADD_VALUES); // part D
+
+                    //! obtain the list of the neighbor physical cell for the left cell
+                    for (int id = 0; id < neighborCells[leftcell].size(); id++)
+                    {
+                        int neighborIndex = neighborCells[leftcell][id];
+                        if (neighborIndex >= nTotalCells)
+                        {
+                            continue;
+                        }
+                        vector<int>::iterator result = find(AJ.begin() + AI[neighborIndex], AJ.begin() + AI[neighborIndex + 1], rcell);
+                        int index = distance(AJ.begin(), result);
+                        
+                        for (int irow = 0; irow < nEquations; irow++)
+                        {
+                            petscrow = (neighborIndex + globalCellIndexShift) * blockSize + irow;
+                            for (int n = 0; n < nEquations; n++)
+                            {
+                                petsccol[n] = rowidx + n;
+                            }
+                            MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][index * nEquations], ADD_VALUES); // part A
+
+                            PetscInt colidxturb = rowidx + nEquations;
+                            MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm[irow][index * nTurbulenceEquation], ADD_VALUES); // part B
+                        }
+
+                        petscrow = (neighborIndex + globalCellIndexShift) * blockSize + nEquations;
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = rowidx + n;
+                        }
+                        MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb[0][index * nEquations], ADD_VALUES); // part C
+                        PetscInt colidxturb = rowidx + nEquations;
+                        MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdq_turb[0][index * nTurbulenceEquation], ADD_VALUES); // part D
+                    }
+                }
+                rcell++;
+            } while (rcell < nTotalCells + nBoundFace);
+        }
+        else if (interfaceInfo != nullptr && JacOrder != 2)
+        {
+            vector<int> *neighborCells = grid->GMRESGetNeighborCells();
+            rcell = nTotalCells;
+            jmax = AI[nTotalCells + nBoundFace];
+            j = AI[rcell];
+            do
+            {
+                int rowidx = interfaceInfo->MatchedGlobalNeighborCellIndex(rcell);
+                if (rowidx >= 0) 
+                {
+                    int leftcell = interfaceInfo->MatchedLocalPhysicalCellIndex(rcell); // return its corresponding physical cell index
+                    int colidx = (leftcell + globalCellIndexShift) * blockSize;
+                    vector<int>::iterator result = find(AJ.begin() + AI[rcell], AJ.begin() + AI[rcell + 1], leftcell);
+                    int index = distance(AJ.begin(), result);
+
+                    rowidx *= blockSize;
+                    for (int irow = 0; irow < nEquations; irow++)
+                    {
+                        petscrow = rowidx + irow;
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = colidx + n;
+                        }
+                        MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][index * nEquations], ADD_VALUES); // part A
+                        PetscInt colidxturb = colidx + nEquations;
+                        MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm[irow][index * nTurbulenceEquation], ADD_VALUES); // part B
+                    }
+
+                    petscrow = rowidx + nEquations;
+                    for (int n = 0; n < nEquations; n++)
+                    {
+                        petsccol[n] = colidx + n;
+                    }
+                    MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb[0][index * nEquations], ADD_VALUES); // part C
+                    PetscInt colidxturb = colidx + nEquations;
+                    MatSetValues(A, 1, &petscrow, 1, &colidxturb, &dRdq_turb[0][index * nTurbulenceEquation], ADD_VALUES); // part D
+                }
+                rcell++;
+            } while (rcell < nTotalCells + nBoundFace);
+        }
+
+        if (JacOrder == 2)
+        {
+            int jmax = AI1st[nTotalCells];
+            int rcell = 0;
+            int j = AI1st[rcell];
+            do
+            {
+                int rowidx = (rcell + globalCellIndexShift) * blockSize;
+                for (int j = AI1st[rcell]; j < AI1st[rcell + 1]; j++)
+                {
+                    int qcell = AJ1st[j]; // get qcell (colume index of matrix)
+                    // start to insert values: limited to dimension of nTotalSize
+                    if (qcell < nTotalCells)
+                    {
+                        int colidx = (qcell + globalCellIndexShift) * blockSize;
+                        for (int irow = 0; irow < nEquations; irow++)
+                        {
+                            petscrow = rowidx + irow;
+                            for (int n = 0; n < nEquations; n++)
+                            {
+                                petsccol[n] = colidx + n;
+                            }
+                            MatSetValues(APC, 1, &petscrow, nEquations, petsccol, &dRdq1st[irow][j * nEquations], INSERT_VALUES); // part A
+                            PetscInt colidxturb = colidx + nEquations;
+                            MatSetValues(APC, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm1st[irow][j * nTurbulenceEquation], INSERT_VALUES); // part B
+                        }
+
+                        petscrow = rowidx + nEquations;
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = colidx + n;
+                        }
+                        MatSetValues(APC, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb1st[0][j * nEquations], INSERT_VALUES); // part C
+                        PetscInt colidxturb = colidx + nEquations;
+                        MatSetValues(APC, 1, &petscrow, 1, &colidxturb, &dRdq_turb1st[0][j * nTurbulenceEquation], INSERT_VALUES); // part D
+                    }
+                }
+                rcell++;
+            } while (rcell < nTotalCells);
+        }
+        else
+        {
+            int jmax = AI[nTotalCells];
+            int rcell = 0;
+            int j = AI[rcell];
+            do
+            {
+                int rowidx = (rcell + globalCellIndexShift) * blockSize;
+                for (j = AI[rcell]; j < AI[rcell + 1]; j++)
+                {
+                    int qcell = AJ[j]; // get qcell (colume index of matrix)
+                    // start to insert values: limited to dimension of nTotalSize
+                    if(qcell < nTotalCells)
+                    {
+                        int colidx = (qcell + globalCellIndexShift) * blockSize;
+
+                        for (int irow = 0; irow < nEquations; irow++)
+                        {
+                            petscrow = rowidx + irow;
+                            for (int n = 0; n < nEquations; n++)
+                            {
+                                petsccol[n] = colidx + n;
+                            }
+                            MatSetValues(APC, 1, &petscrow, nEquations, petsccol, &dRdq[irow][j * nEquations], INSERT_VALUES);  // part A
+
+                            PetscInt colidxturb =  colidx + nEquations;
+                            MatSetValues(APC, 1, &petscrow, 1, &colidxturb, &dRdqCoupledTerm[irow][j*nTurbulenceEquation], INSERT_VALUES);    // part B
+                        }
+
+                        petscrow = rowidx + nEquations;
+                    
+                        for (int n = 0; n < nEquations; n++)
+                        {
+                            petsccol[n] = colidx + n;
+                        }
+
+                        MatSetValues(APC, 1, &petscrow, nEquations, petsccol, &dRdqCoupledTerm_turb[0][j * nEquations], INSERT_VALUES);  // part C
+
+                        PetscInt colidxturb =  colidx + nEquations;
+                        MatSetValues(APC, 1, &petscrow, 1, &colidxturb, &dRdq_turb[0][j*nTurbulenceEquation], INSERT_VALUES);   // part D
+                    
+                    }
+                }
+                rcell++; // update rcell, go to the next row index of matrix
+            } while (rcell < nTotalCells);
+        }
+        MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
+        MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
+        MatAssemblyBegin(APC, MAT_FINAL_ASSEMBLY);
+        MatAssemblyEnd(APC, MAT_FINAL_ASSEMBLY);
+
+        // assemble vector
+        VecSet(b, zero);
+        for (PetscInt icell = 0; icell < nTotalCells; icell++)
+        {
+            for (PetscInt iequ = 0; iequ < nEquations; iequ++)
+            {
+                PetscInt isize = (icell + globalCellIndexShift) * blockSize + iequ;
+                VecSetValues(b, 1, &isize, &res[iequ][icell], ADD_VALUES);
+            }
+
+            PetscInt isize = (icell + globalCellIndexShift) * blockSize + nEquations;
+            VecSetValues(b, 1, &isize, &res_turb[0][icell], ADD_VALUES);
+        }
+
+        VecAssemblyBegin(b);
+        VecAssemblyEnd(b);
+
+        // define solver
+        KSPCreate(PETSC_COMM_WORLD, &ksp);
+        KSPSetType(ksp, KSPGMRES);
+        KSPSetOperators(ksp, A, APC);
+
+        KSPSetPCSide(ksp, PC_RIGHT);
+        KSPSetUp(ksp);
+        KSPGetPC(ksp, &pc);
+        PCSetType(pc, PCBJACOBI);
+
+        // set sub-ksp and sub-pc
+        KSP *subksp;
+        PC subpc;
+        int localTotalSize = nTotalCells * blockSize;
+        PCBJacobiSetLocalBlocks(pc, 1, &localTotalSize);
+
+        int nLocal = 1;
+        int firstLocal = grid->GetZoneID();
+        PCBJacobiGetSubKSP(pc, &nLocal, &firstLocal, &subksp);
+        KSPGetPC(subksp[0], &subpc);
+        PCSetType(subpc, PCILU);
+        PCFactorSetLevels(subpc, nLevels);
+        KSPGMRESSetRestart(ksp, MaxStepsRestart);
+       
+        KSPGMRESSetOrthogonalization(ksp, KSPGMRESModifiedGramSchmidtOrthogonalization);
+        KSPSetTolerances(ksp, rTolerance, 1.e-20, dropTolerance, MaxSteps);
+
+        // solution
+        KSPSolve(ksp, b, x);
+
+        //! GMRESResidual
+        RDouble **dqNS      = dqProxyNS[iZone]->GetField_UNS();
+        RDouble **dqTurb    = dqProxyTurb[iZone]->GetField_UNS();
+
+        // convert x to dqProxy
+        for (PetscInt icell = 0; icell < nTotalCells; icell++)
+        {
+            for (PetscInt iequ = 0; iequ < nEquations; iequ++)
+            {
+                PetscInt isize = (icell + globalCellIndexShift) * blockSize + iequ;
+                PetscReal value;
+                VecGetValues(x, 1, &isize, &dqNS[iequ][icell]);
+            }
+
+            PetscInt isize = (icell + globalCellIndexShift) * blockSize + nEquations;
+            VecGetValues(x, 1, &isize, &dqTurb[0][icell]);
+        }
+
+        // free work space
+        VecDestroy(&x);
+        VecDestroy(&b);
+        MatDestroy(&A);
+        MatDestroy(&APC);
+        KSPDestroy(&ksp);
+        PetscFinalize();
+    
+        
+    }
+    
+    // GMRESWholeJacobian
+    UpdateFlowField(0, level, dqProxyNS);
+    UpdateFlowField(1, level, dqProxyTurb);
+
+
+    for (int iLocalZone = 0; iLocalZone < nLocalZones; iLocalZone++)
+    {
+        delete dqProxyNS[iLocalZone];
+        delete dqProxyTurb[iLocalZone];
+    }
+    delete []dqProxyNS;
+    delete []dqProxyTurb;
+}
+
+//! For GMRES -- Boqian Wang
+void Controller::GMRESSolver_backupversion(int iSolver, int level)
+{
+    int nLocalZones = PHMPI::GetNumberofLocalZones();
+
+    FieldProxy **dqProxy = new FieldProxy *[nLocalZones];
+
+    for (int iZone = 0; iZone < nLocalZones; iZone++)
+    {
+        int zoneID = PHMPI::GetLocalZoneIDToGlobalZoneID(iZone);
+
+        Zone *zone = GetZone(zoneID);
+        if(!zone)
+        {
+            continue;
+        }
+
+        Grid *gridin = GetGrid(zoneID, level);
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+
+        UnstructGrid* grid = static_cast<UnstructGrid *>(gridin);
+        //! Memory allocating
+        RDouble **dRdq = reinterpret_cast<RDouble**>(grid->GetDataPtr("dRdq"));
+        RDouble **dDdP = reinterpret_cast<RDouble**>(grid->GetDataPtr("dDdP"));
+        
+        int nTotalCells = grid->GetNTotalCell();
+        int nBoundFace = grid->GetNBoundFace();
+        int nEquations = solver->GetNumberOfEquations(); 
+        
+        RDouble **res = reinterpret_cast<RDouble **>(grid->GetDataPtr("res"));
+        dqProxy[iZone] = solver->CreateFieldProxy(grid);
+        solver->FillField(grid, dqProxy[iZone], zero);  // difference of conservative variables, init by zero
+        UnstructGrid* gridunstr = UnstructGridCast(grid);
+        RDouble* vol = gridunstr->GetCellVolume();
+        RDouble* dt = reinterpret_cast<RDouble*> (grid->GetDataPtr("dt"));
+        vector<int> AI = gridunstr->GetJacobianAI4GMRES();  // GMRESSparse GMRESCSR
+        vector<int> AJ = gridunstr->GetJacobianAJ4GMRES();  // GMRESSparse GMRESCSR
+
+        // Output res  GMRESWholeJacobian
+        string Outputfilename4 = "./results/res1.dat";
+        ofstream file4(Outputfilename4.c_str(), ios::trunc);
+            
+        for (int i = 0; i < nTotalCells; i++)
+        {
+            for (int j = 0; j < nEquations; j++)
+            {
+               file4 << res[j][i] << " ";
+            }
+            file4 << "\n";
+        }
+        file4.close();
+
+
+    
+        printf("adding diagoal...\n");
+
+        
+        // GMRESCSR
+        for (int icell = 0; icell < nTotalCells; icell++)
+        {
+            vector<int>::iterator result = find(AJ.begin() + AI[icell], AJ.begin() + AI[icell + 1], icell); // find qcell
+            int index = distance(AJ.begin(), result);
+            index *= nEquations;
+            for (int iequ = 0; iequ < nEquations; iequ++)
+            {
+                dRdq[iequ][index + iequ] += 1.0 / dt[icell];
+            }
+        }
+
+        printf("entry to PETSc\n");
+        
+        
+        // Output dRdq
+        string Outputfilename = "./results/nolim_dRdq.dat";
+        ofstream file(Outputfilename.c_str(), ios::trunc);
+        int total = nTotalCells + nBoundFace;
+        int TotalSize = AI[total]*nEquations;
+            
+        for (int i = 0; i < nEquations; i++)
+        {
+            for (int j = 0; j < TotalSize; j++)
+            {
+               file << dRdq[i][j] << " ";
+            }
+            file << "\n";
+        }
+        file.close();
+
+       
+        // GMRESCSR
+        GMRESForZone(dRdq, AI, AJ, res, dqProxy[iZone], nTotalCells, nEquations);
+    }
+    
+    // GMRESWholeJacobian
+    UpdateFlowField(iSolver, level, dqProxy);
+
+    for (int iLocalZone = 0; iLocalZone < nLocalZones; iLocalZone++)
+    {
+        delete dqProxy[iLocalZone];
+    }
+    delete []dqProxy;
+    
+}
+
+/// @brief A GMRES solver with PETSc to solve dq for each zone [Ax = b]
+/// @param dRdq       Jacobin matrix (A)
+/// @param res         residual (b)
+/// @param dqProxy     difference of conservative variables (x)
+/// @param nTotalCells the real size of the matrix
+/// @param nEquations  the number of equations
+void Controller::GMRESForZone(RDouble **dRdq, vector<int>& AI, vector<int>& AJ, RDouble **res, FieldProxy *dqProxy, const int& nTotalcells, const int& nEquations)
+{
+   
+    const RDouble LITTLE = 1.0E-14;
+    Vec x, b;
+    Mat A;
+    KSP ksp;                        // define solver
+    PC pc;                          // define matrix
+    PetscInt nTotalSize;            // dimension size of matrix and vector
+    PetscInt nLevels = 3;           // define number of levels used by preconditioner ILU
+    PetscInt MaxStepsRestart = 10;  // define maximum steps required by [restart]
+    PetscInt MaxSteps = 100;          // define maximum steps
+    PetscReal rTolerance = 1.e-3;  // define tolerance of relative error // -1
+    PetscReal dropTolerance = 1.e5; // define tolerance of drop error
+
+    nTotalSize = nEquations * nTotalcells;
+
+    // initialize PETSc
+    //PetscFunctionBeginUser;
+    PetscInitialize(PETSC_NULL, PETSC_NULL, PETSC_NULL, PETSC_NULL);
+
+    // create vectors;
+    VecCreate(PETSC_COMM_SELF, &x);
+    PetscObjectSetName((PetscObject)x, "solution");
+    VecSetSizes(x, PETSC_DECIDE, nTotalSize);
+    VecSetUp(x);
+    VecDuplicate(x, &b);
+
+    // create matrix
+    // GMRESCSR
+    PetscInt nnz[nTotalcells];
+    for (int icell = 0; icell < nTotalcells; icell++)
+    {
+        int count = 0;
+        for (int j = AI[icell]; j < AI[icell + 1]; j++)
+        {
+            if(AJ[j] < nTotalcells)
+            {
+                count++;
+            }
+        }
+        //count *= nEquations;
+        /* for (int n = 0; n < nEquations; n++)
+        {
+            nnz[icell * nEquations + n] = count;
+        } */
+        nnz[icell] = count;
+    }
+    MatCreate(PETSC_COMM_SELF, &A);
+    MatSetSizes(A, PETSC_DECIDE, PETSC_DECIDE, nTotalSize, nTotalSize);
+    MatSetType(A, MATBAIJ);
+    MatSetBlockSize(A, nEquations);
+    MatSeqBAIJSetPreallocation(A, nEquations, PETSC_DEFAULT, nnz);
+    MatSetUp(A);
+
+    // improved approach to assemble matrix CSR
+    PetscInt petsccol[nEquations];
+    PetscInt petscrow;
+    int jmax = AI[nTotalcells];
+    int rcell = 0;
+    int j = AI[rcell];
+    do
+    {
+        int rowidx = rcell * nEquations;
+        for (j = AI[rcell]; j < AI[rcell + 1]; j++)
+        {
+            int qcell = AJ[j]; // get qcell (colume index of matrix)
+            // start to insert values: limited to dimension of nTotalSize
+            if(qcell < nTotalcells)
+            {
+                int colidx = qcell * nEquations;
+
+                for (int irow = 0; irow < nEquations; irow++)
+                {
+                    petscrow = rowidx + irow;
+                   
+                    for (int n = 0; n < nEquations; n++)
+                    {
+                        petsccol[n] = colidx + n;
+                    }
+                    MatSetValues(A, 1, &petscrow, nEquations, petsccol, &dRdq[irow][j * nEquations], INSERT_VALUES);
+                }
+            }
+        }
+        rcell++; // update rcell, go to the next row index of matrix
+    } while (j < jmax);
+    MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
+    MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
+    printf("Finish assemabling matrix...\n");
+
+    // assemble vector
+    VecSet(b, zero);
+    for (PetscInt icell = 0; icell < nTotalcells; icell++)
+    {
+        for (PetscInt iequ = 0; iequ < nEquations; iequ++)
+        {
+            PetscInt isize = icell * nEquations + iequ;
+            VecSetValues(b, 1, &isize, &res[iequ][icell], ADD_VALUES);
+        }
+    }
+    VecAssemblyBegin(b);
+    VecAssemblyEnd(b);
+    printf("Finish assemabling vector...\n");
+
+    // define solver
+    KSPCreate(PETSC_COMM_SELF, &ksp);
+    KSPSetType(ksp, KSPGMRES);
+    KSPSetOperators(ksp, A, A);
+    KSPGetPC(ksp, &pc);
+    PCSetType(pc, PCILU);
+    PCFactorSetLevels(pc, nLevels);
+    KSPGMRESSetRestart(ksp, MaxStepsRestart);
+    KSPGMRESSetOrthogonalization(ksp, KSPGMRESClassicalGramSchmidtOrthogonalization);
+    KSPGMRESSetCGSRefinementType(ksp, KSP_GMRES_CGS_REFINE_ALWAYS);
+    KSPSetTolerances(ksp, rTolerance, 1.e-20, dropTolerance, MaxSteps);
+    KSPMonitorSet(ksp, MyKSPMonitor, NULL, 0);
+    // solution
+    KSPSolve(ksp, b, x);
+
+    // convert x to dqProxy
+    RDouble **dq = dqProxy->GetField_UNS();
+    for (PetscInt icell = 0; icell < nTotalcells; icell++)
+    {
+        for (PetscInt iequ = 0; iequ < nEquations; iequ++)
+        {
+            PetscInt isize = icell * nEquations + iequ;
+            PetscReal value;
+            VecGetValues(x, 1, &isize, &dq[iequ][icell]);
+        }
+    }
+
+    // free work space
+    VecDestroy(&x);
+    VecDestroy(&b);
+    MatDestroy(&A);
+    KSPDestroy(&ksp);
+    PetscFinalize();
+    return;
+}
+#endif
+
 bool Controller::CVGNorm(int iSolver, int level)
 {
     int innstep = 0;
@@ -3975,8 +4655,8 @@ bool Controller::CVGNorm(int iSolver, int level)
     RDouble cvgmax = zero, cvg;
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4010,8 +4690,8 @@ RDouble Controller::ComputeSubIterationNorm(int iSolver, int level)
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4029,15 +4709,15 @@ RDouble Controller::ComputeSubIterationNorm(int iSolver, int level)
     return maxSubIterationNorm;
 }
 
-int Controller::GetNPostSolve(int iSolver, int level)
+int Controller::GetNPostSolve(int iSolver)
 {
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4055,15 +4735,15 @@ void Controller::PostSolve(int level)
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
     int iSolver = this->GetSolverIndex();
-    int nPostSolve = GetNPostSolve(iSolver, level);
+    int nPostSolve = GetNPostSolve(iSolver);
 
     //! Face Communication.
     for (int n = 0; n < nPostSolve; ++ n)
     {
         for (int iZone = 0; iZone < nZones; ++ iZone)
         {
-            Zone *zone = GetZone(iZone);
-            if (!zone)
+            bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+            if (!ifCalTheZone)
             {
                 continue;
             }
@@ -4093,6 +4773,17 @@ void Controller::PostSolve(int level)
     if (isAdaptiveSolver > 0)
     {
         solver->CheckResult(grid, level);
+    }
+
+    //To exam the residual of key variable.
+    int isUseHybridMethod = 0;
+    if (GlobalDataBase::IsExist("isUseHybridMethod", PHINT, 1))
+    {
+        isUseHybridMethod = GlobalDataBase::GetIntParaFromDB("isUseHybridMethod");
+    }
+    if (isUseHybridMethod > 0)
+    {
+        solver->CheckResiduals(grid, level);
     }
 
     //! Dump the surface heating change.
@@ -4131,35 +4822,35 @@ void Controller::PostSolve(int level)
     //! Node communication: part1.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
 
-        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+        CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
         for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++ iLevel)
         {
-            Grid *grid = GetGrid(iZone, iLevel);
-            solver->ComputeNodeValue(grid);
-            solver->ComputeQTurbNodeValue(grid);
+            Grid *grid1 = GetGrid(iZone, iLevel);
+            solver1->ComputeNodeValue(grid1);
+            solver1->ComputeQTurbNodeValue(grid1);
         }
     }
 
     //! Node communication: part2.
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
-        Grid *grid = GetGrid(iZone,level);
-        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
-        InterpointInformation *inpterPointInfor = grid->GetInterpointInfo();
+        Grid *grid1 = GetGrid(iZone,level);
+        CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
+        InterpointInformation *inpterPointInfor = grid1->GetInterpointInfo();
         if (inpterPointInfor)
         {
-            solver->CommunicationInterpointData();
+            solver1->CommunicationInterpointData();
         }
     }
 
@@ -4172,12 +4863,12 @@ void Controller::PostSolve(int level)
             continue;
         }
 
-        CFDSolver *solver = GetCFDSolver(iZone, iSolver);
+        CFDSolver *solver1 = GetCFDSolver(iZone, iSolver);
         for (int iLevel = 0; iLevel < GetNumberOfMultiGrid(); ++ iLevel)
         {
-            Grid *grid = GetGrid(iZone, iLevel);
-            solver->ModifyNodeValue(grid);
-            solver->ModifyQTurbNodeValue(grid);
+            Grid *grid1 = GetGrid(iZone, iLevel);
+            solver1->ModifyNodeValue(grid1);
+            solver1->ModifyQTurbNodeValue(grid1);
         }
     }
 }
@@ -4190,8 +4881,8 @@ void Controller::FillField(int iSolver, int level, FieldProxy **targetProxy, Fie
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4212,8 +4903,8 @@ void Controller::RungeKutta(int iSolver, int level)
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4233,8 +4924,8 @@ void Controller::InitResidual(int iSolver, int level)
     FieldProxy **rightHandSideProxy = GetRHSProxy(level);
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4254,8 +4945,8 @@ void Controller::CreateQProxy(int iSolver, int level)
     FieldProxy **qProxy = GetQProxy(level);
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4267,7 +4958,7 @@ void Controller::CreateQProxy(int iSolver, int level)
     }
 }
 
-void Controller::DestroyQProxy(int iSolver, int level)
+void Controller::DestroyQProxy(int level)
 {
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
@@ -4275,8 +4966,8 @@ void Controller::DestroyQProxy(int iSolver, int level)
     FieldProxy **qProxy = GetQProxy(level);
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, 0);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4299,8 +4990,8 @@ void Controller::CreateRHSProxy(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4312,7 +5003,7 @@ void Controller::CreateRHSProxy(int iSolver, int level)
     }
 }
 
-void Controller::DestroyRHSProxy(int iSolver, int level)
+void Controller::DestroyRHSProxy(int level)
 {
     using namespace PHMPI;
     int nLocalZones = GetNumberofLocalZones();
@@ -4325,8 +5016,8 @@ void Controller::DestroyRHSProxy(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, 0);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4350,8 +5041,8 @@ void Controller::StoreRhsByResidual(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4376,8 +5067,8 @@ void Controller::RecoverResidual(int iSolver, int level)
     {
         int zoneID = GetLocalZoneIDToGlobalZoneID(iZone);
 
-        Zone *zone = GetZone(zoneID);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(zoneID, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4388,6 +5079,49 @@ void Controller::RecoverResidual(int iSolver, int level)
         solver->RecoverResidual(grid,rightHandSideProxy[zoneID]);
     }
 }
+
+bool Controller::JudgeIfCalTheZoneForDensityBasedMethod(int zoneID, int iSolver)
+{
+    using namespace PHMPI;
+    Zone* zone = GetZone(zoneID);
+    bool  IfCalTheZone = true;
+    if (!zone)
+    {
+        IfCalTheZone = false;
+    }
+    else
+    {
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+        int solverType = solver->GetKey();
+        if (PRESSURE_BASED_SOLVER == solverType)
+        {
+            IfCalTheZone = false;
+        }
+    }
+    return IfCalTheZone;
+}
+
+bool Controller::JudgeIfCalTheZoneForPressureBasedMethod(int zoneID, int iSolver)
+{
+    using namespace PHMPI;
+    Zone* zone = GetZone(zoneID);
+    bool  IfCalTheZone = true;
+    if (!zone)
+    {
+        IfCalTheZone = false;
+    }
+    else
+    {
+        CFDSolver *solver = GetCFDSolver(zoneID, iSolver);
+        int solverType = solver->GetKey();
+        if (DENSITY_BASED_SOLVER == solverType)
+        {
+            IfCalTheZone = false;
+        }
+    }
+    return IfCalTheZone;
+}
+
 
 FieldProxy **Controller::GetQProxy(int level)
 {
@@ -4407,8 +5141,8 @@ void Controller::LoadQ(int iSolver, int level)
     FieldProxy **qProxy = GetQProxy(level);
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4427,8 +5161,8 @@ bool Controller::ISCoarsestGrid(int level)
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, 0);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4453,8 +5187,8 @@ LIB_EXPORT void Controller::InterpolatFineGrid(int iSolver, int level)
 
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
+        bool ifCalTheZone = JudgeIfCalTheZoneForDensityBasedMethod(iZone, iSolver);
+        if (!ifCalTheZone)
         {
             continue;
         }
@@ -4483,96 +5217,7 @@ LIB_EXPORT void Controller::MultiGridInitFlow(int level)
     Relaxation(iSolver, level);
 
     //! Recover the residual.
-    DestroyRHSProxy(iSolver, level);
-}
-
-//! Incompressible Flow
-void Controller::SolveFlowField(int iZone)
-{
-
-    //! Discret momentum equation.
-    CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
-    solver->DiscrtMomentumEquations();
-    solver->SolveMomentumEquations(*this->region);
-
-    //! Update the velocity and form the coefficient of pressure equation.
-    solver->UpdateVelocity();
-    solver->DiscrtPressureCorrectionEquation();
-    solver->SolvePressureCorrectionEquation(*this->region);
-
-    //! Update the pressure and velocity.
-    solver->UpdatePressureAndVelocity();
-
-    //! Update the properties.
-    solver->UpdateProperties();
-}
-
-//! Incompressible Flow
-void Controller::SolveScalarField(int iZone)
-{
-    CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
-
-    solver->Discrt();
-
-    solver->SolveScalarEquation(*this->region);
-
-    solver->Update();
-
-    solver->UpdateBoundary();
-
-    solver->UpdateProperties();
-
-    solver->UpdateAfterIterloop();
-}
-
-//! Incompressible Flow
-void Controller::SolveTurbField(int iZone)
-{
-    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
-    if (viscousType == SPALART_ALLMARAS)
-    {
-        SolveScalarField(iZone);
-    }
-    else if (viscousType == KEPSILON)
-    {
-        CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
-
-        solver->SolveKEquation(*this->region);
-
-        solver->SolveEpsilonEquation(*this->region);
-
-        solver->UpdateAfterIterloop();
-    }
-}
-
-//! Incompressible Flow
-void Controller::SolveEnergyField(int iZone)
-{
-    SolveScalarField(iZone);
-}
-
-bool Controller::IsConverged(int iZone)
-{
-    using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
-    bool isConverged;
-
-    for (int iZone = 0; iZone < nZones; ++ iZone)
-    {
-        Zone *zone = GetZone(iZone);
-        if (!zone)
-        {
-            continue;
-        }
-
-        Grid *grid = GetGrid(iZone, 0);
-
-        CFDSolver *solver = GetCFDSolver(iZone, this->solverID);
-
-        solver->SolutionIsConverged(iZone, &isConverged);
-    }
-
-    return isConverged;
+    DestroyRHSProxy(level);
 }
 
 MultiGridFieldProxy::MultiGridFieldProxy(int iSolver, int level, int nZone)

@@ -36,7 +36,7 @@ void Mesh_RefineController::Initialize()
 
 void Mesh_RefineController::ConstructNode2Cell()
 {
-    int nTotalNode = nodeTopo->GetNumberOfPoints();
+    int nTotalNode = static_cast<int>(nodeTopo->GetNumberOfPoints());
     this->SetNTotalNode(nTotalNode);
 
     PHVector1D < set< int > > &node2Cell = cellTopo->GetNode2Cell();
@@ -80,7 +80,7 @@ void Mesh_RefineController::ConstructCell2Cell()
     {
         PHVectorInt1D &iCell2Node = cell2Node[iCell];
 
-        int nodeNumber = iCell2Node.size();
+        int nodeNumber = static_cast<int>(iCell2Node.size());
         for (int iNode = 0; iNode < nodeNumber; ++ iNode)
         {
             int nodeIndex = iCell2Node[iNode];;
@@ -136,12 +136,10 @@ void Mesh_RefineController::FixAnisoRefineType()
     int nBoundFace = faceTopo->GetNBoundaryFaces();
     int nTotalFace = faceTopo->GetNTotalFaces();
 
-    PHVectorInt1D &cellType = cellTopo->GetCellType();
     PHVectorInt2D &cell2Face = cellTopo->GetCell2Face();
     PHVectorInt1D &refineType = cellTopo->GetRefineType();
 
     PHVectorInt1D &faceType = faceTopo->GetFaceType();
-    PHVectorInt2D &face2Node = faceTopo->GetFace2Node();
     PHVectorInt1D &leftCellIndex = faceTopo->GetLeftCellIndex();
     PHVectorInt1D &rightCellIndex = faceTopo->GetRightCellIndex();
     vector<SimpleBC *> &faceBoundaryCondition = faceTopo->GetFaceBoundaryCondition();
@@ -748,7 +746,6 @@ void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndex(int iFace
 
 void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndexWithParentCase(int iFace, int &iComputationalFaceCount, int &iBoundaryFace)
 {
-    PHVectorInt1D &parenCellIndex          = cellTopo->GetParentCellIndex();
     PHVectorInt1D &cellComputationalStatus = cellTopo->GetCellComputationalStatus();
 
     PHVectorInt1D &parentFaceIndex = faceTopo->GetParentFaceIndex();
@@ -761,8 +758,6 @@ void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndexWithParent
 
     PHVectorInt1D &computationalToGlobalFaceIndex = computationalFaceTopo->GetComputationalToGlobalFaceIndex();
     PHVectorInt1D &globalToComputationalFaceIndex = faceTopo->GetGlobalToComputationalFaceIndex();
-
-    int oldNumberOfCell = this->GetOldNumberOfCell();
 
     int leftCell   = leftCellIndex[iFace];
     int rightCell  = rightCellIndex[iFace];
@@ -896,8 +891,6 @@ void Mesh_RefineController::GenerateGlobalToComputationalCellFaceIndexNoParentCa
 
     PHVectorInt1D &computationalToGlobalFaceIndex = computationalFaceTopo->GetComputationalToGlobalFaceIndex();
     PHVectorInt1D &globalToComputationalFaceIndex = faceTopo->GetGlobalToComputationalFaceIndex();
-
-    int oldNumberOfCell = this->GetOldNumberOfCell();
 
     int leftCell  = leftCellIndex [iFace];
     int rightCell = rightCellIndex[iFace];
@@ -1164,7 +1157,7 @@ void Mesh_RefineController::SplitFace(PHVectorInt1D &iCompositeFace2Node, int iC
             childFace2Node[iNode] = iCompositeFace2Node[childFaceElementRelativeNodeIndex[iNode]];
         }
 
-        int childFaceIndex = faceTopo->AddFace(childFace2Node, childFaceType, parentFaceIndex);
+        faceTopo->AddFace(childFace2Node, childFaceType, parentFaceIndex);
     }
 }
 
@@ -1176,7 +1169,7 @@ void Mesh_RefineController::GenerateComputationalGrid(Grid *gridIn)
     grid->SetZoneID(globalZoneIndex);
 
     PHVectorInt1D &computationalToGlobalCellIndex = cellTopo->GetComputationalToGlobalCellIndex();
-    int numberOfComputationalElements = computationalToGlobalCellIndex.size();
+    int numberOfComputationalElements = static_cast<int>(computationalToGlobalCellIndex.size());
     int numberOfNodes = static_cast<int>(nodeTopo->GetNumberOfComputationalNodes());
 
     PrintToWindow("  nTCell of Computational: ", numberOfComputationalElements, "\n");
@@ -1274,7 +1267,7 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
     vector<SimpleBC *> &faceBoundaryCondition = computationalFaceTopo->GetFaceBoundaryCondition();
 
     int numberOfFaces = computationalFaceTopo->GetNTotalFaces();
-    int numberOfBoundaryFaces = faceBoundaryCondition.size();
+    int numberOfBoundaryFaces = static_cast<int>(faceBoundaryCondition.size());
     grid->SetNBoundFace(numberOfBoundaryFaces);
     grid->SetNTotalFace(numberOfFaces);
 
@@ -1312,7 +1305,7 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
     UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
     int* bcRegionIDofBCFace = new int[numberOfBoundaryFaces];
     set<string>::iterator iter;
-    uint_long count = 0;
+    int count = 0;
 
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
@@ -1343,7 +1336,6 @@ void Mesh_RefineController::GenerateComputationalUnstructuredGrid(UnstructGrid *
 void Mesh_RefineController::ReorderFaceToNodeIndexes(UnstructGrid *grid)
 {
     int numberOfFaces = grid->GetNTotalFace();
-    int numberOfBoundaryFaces = grid->GetNBoundFace();
 
     PHVectorInt1D &rightCellIndex = computationalFaceTopo->GetRightCellIndex();
     PHVectorInt2D &face2Node      = computationalFaceTopo->GetFace2Node();
@@ -1511,11 +1503,9 @@ void Mesh_RefineController::DecompressRefineType(DataContainer *dataContainer, i
 bool Mesh_RefineController::IsNeedInfectInterfaceIsotropicRefineType()
 {
     int nTotalCell            = cellTopo->GetNTotalCell();
-    PHVectorInt1D &cellType   = cellTopo->GetCellType();
     PHVectorInt1D &refineType = cellTopo->GetRefineType();
 
     int nBoundFace                            = faceTopo->GetNBoundaryFaces();
-    int nTotalFace                            = faceTopo->GetNTotalFaces();
     PHVectorInt1D &faceType                   = faceTopo->GetFaceType();
     PHVectorInt1D &leftCellIndex              = faceTopo->GetLeftCellIndex();
     PHVectorInt1D &rightCellIndex             = faceTopo->GetRightCellIndex();

@@ -21,6 +21,12 @@ FaceProxy::FaceProxy()
     qr   = 0;
     flux = 0;
 
+    qlc  = 0; // GMRESPassQC
+    qrc  = 0; // GMRESPassQC
+
+    qlsign = 0; // GMRESnolim GMRESSign
+    qrsign = 0; // GMRESnolim
+
     tl   = 0;
     tr   = 0;
 
@@ -33,6 +39,12 @@ FaceProxy::FaceProxy()
     lrtl  = 0;
     lrtr  = 0;
 
+    tcl  = 0;
+    tcr  = 0;
+
+    pcl  = 0;
+    pcr  = 0;
+
     ns_facevar   = 0;
     turb_facevar = 0;
     transition_facevar = 0;
@@ -42,6 +54,14 @@ FaceProxy::FaceProxy()
     nlen = 0;
     nsize= 0;
     neqn = 0;
+
+    leftcellindexofFace     = 0;//GMRES
+    rightcellindexofFace    = 0;
+
+    dRdq = 0; // GMRES
+    dDdP  = 0; // GMRESBoundary
+    dRdq1st = 0; //GMRESJac1st
+    JacOrder = 1; // GMRESJac1st
 }
 
 FaceProxy::~FaceProxy()
@@ -51,6 +71,9 @@ FaceProxy::~FaceProxy()
     DelPointer2(ql);
     DelPointer2(qr);
     DelPointer2(flux);
+
+    DelPointer2(qlc); //GMRESPassQC
+    DelPointer2(qrc); //GMRESPassQC
 
     DelPointer2(tl);
     DelPointer2(tr);
@@ -63,6 +86,19 @@ FaceProxy::~FaceProxy()
 
     delete [] lrtl;    lrtl = NULL;
     delete [] lrtr;    lrtr = NULL;
+
+    delete[] leftcellindexofFace; leftcellindexofFace = NULL;    // GMRES
+    delete[] rightcellindexofFace; rightcellindexofFace = NULL;
+
+    
+    delete[] qlsign;    qlsign = NULL; // GMRESnolim GMRESSign
+    delete[] qrsign;    qrsign = NULL; // GMRESnolim
+   
+    delete [] tcl;    tcl = NULL;
+    delete [] tcr;    tcr = NULL;
+
+    delete [] pcl;    tcl = NULL;
+    delete [] pcr;    tcr = NULL;
 
     delete ns_facevar;
     delete turb_facevar;
@@ -79,6 +115,9 @@ void FaceProxy::Create(int nsize, int neqn)
     qr   = NewPointer2<RDouble>(neqn, nsize);
     flux = NewPointer2<RDouble>(neqn, nsize);
 
+    qlc  = NewPointer2<RDouble>(neqn,nsize); // GMRESPassQC
+    qrc  = NewPointer2<RDouble>(neqn,nsize); // GMRESPassQC
+
     gamal = new RDouble[nsize];
     gamar = new RDouble[nsize];
 
@@ -87,6 +126,18 @@ void FaceProxy::Create(int nsize, int neqn)
 
     lrtl  = new RDouble[nsize];
     lrtr  = new RDouble[nsize];
+
+    leftcellindexofFace     = new int[nsize]; //GMRES
+    rightcellindexofFace    = new int[nsize];
+
+    qlsign                  = new int[nsize]; //    GMRESnolim GMRESSign
+    qrsign                  = new int[nsize]; //    GMRESnolim GMRESSign
+   
+    tcl  = new RDouble[nsize];
+    tcr  = new RDouble[nsize];
+
+    pcl  = new RDouble[nsize];
+    pcr  = new RDouble[nsize];
 
     tl = NewPointer2<RDouble>(3, nsize);
     tr = NewPointer2<RDouble>(3, nsize);
@@ -102,10 +153,81 @@ FaceProxy::value_type FaceProxy::GetQR()
     return qr;
 }
 
+// GMRESPassQC
+FaceProxy::value_type FaceProxy::GetQLC()
+{
+    return qlc;
+}
+
+FaceProxy::value_type FaceProxy::GetQRC()
+{
+    return qrc;
+}
+
+
 FaceProxy::value_type FaceProxy::GetFlux()
 {
     return flux;
 }
+
+// GMRES
+int* FaceProxy::GetLeftCellIndexOfFace()
+{
+    return leftcellindexofFace;
+}
+
+int* FaceProxy::GetRightCellIndexOfFace()
+{
+    return rightcellindexofFace;
+}
+
+// GMRESnolim GMRESSign
+int* FaceProxy::GetQLSign()
+{
+    return qlsign;
+}
+
+int* FaceProxy::GetQRSign()
+{
+    return qrsign;
+}
+
+// GMRES
+RDouble** FaceProxy::GetJacobianMatrix()
+{
+    return dRdq;
+}
+
+void FaceProxy::SetJacobianMatrix(RDouble** dRdqfromGrid)
+{
+    if(dRdq) DelPointer2(dRdq);
+    dRdq = dRdqfromGrid;
+}
+
+// GMRESJac1st
+RDouble** FaceProxy::GetJacobianMatrix1st()
+{
+    return dRdq1st;
+}
+
+void FaceProxy::SetJacobianMatrix1st(RDouble** dRdq1stfromGrid)
+{
+    if(dRdq1st) DelPointer2(dRdq1st);
+    dRdq1st = dRdq1stfromGrid;
+}
+
+// GMRESBoundary
+RDouble ** FaceProxy::GetdDdPMatrix() 
+{
+    return dDdP;
+}
+
+void FaceProxy::SetdDdPMatrix(RDouble** dDdPfromGrid)
+{
+    if(dDdP) DelPointer2(dDdP);
+    dDdP = dDdPfromGrid;
+}
+
 
 RDouble * FaceProxy::GetGamaL()
 {
@@ -135,6 +257,26 @@ RDouble * FaceProxy::GetPressureCoefficientL()
 RDouble * FaceProxy::GetPressureCoefficientR()
 {
     return lrtr;
+}
+
+RDouble * FaceProxy::GetTimeCoefficientL()
+{
+    return tcl;
+}
+
+RDouble * FaceProxy::GetTimeCoefficientR()
+{
+    return tcr;
+}
+
+RDouble * FaceProxy::GetPreconCoefficientL()
+{
+    return pcl;
+}
+
+RDouble * FaceProxy::GetPreconCoefficientR()
+{
+    return pcr;
 }
 
 RDouble * FaceProxy::GetWeightL()

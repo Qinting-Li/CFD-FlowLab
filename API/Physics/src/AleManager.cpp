@@ -87,12 +87,20 @@ void SolveSingleInnerIterationStepForAleSolvers()
     {
         BackupAllZonesOldGrid();
     }
+    if (innStep == 1)
+    {
+        RDouble aleSimulationTime = GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
+        RDouble aleTimeStep = GetAleTimeStep();
+
+        aleSimulationTime += aleTimeStep;
+        GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
+    }
     //! if it is the first step of the inner step or implicit methods, update the mesh information.
     if (innStep == 1 || IsImplicitAleMethod())
     {
         ComputeAerodynamicForceForALE();
-        aleManager->Run();
 
+        aleManager->Run();
 
         //ComputeMetrics();
         aleManager->ComputeMetrics();
@@ -105,7 +113,10 @@ void SolveSingleInnerIterationStepForAleSolvers()
         {
             aleManager->ComputeGridFaceVelocity();
         }
+    }
 
+    if (innStep == 1)
+    {
         //! if it is the overset mesh, should dig the hole.
         int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
         if (isOverset)
@@ -157,6 +168,8 @@ AleManager::~AleManager()
 
 void AleManager::Initialize()
 {
+    SychonizeAleTime();
+
     Allocate();
 
     int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
@@ -166,23 +179,26 @@ void AleManager::Initialize()
     }
 
     aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if(aleStartStrategy == 0)
+    if(aleStartStrategy == -1)
     {
         aleManager->Run();
 
         aleManager->ComputeMetrics();
 
         aleManager->CommunicateCellCenterData();
+
+        int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
+        if (isOverset)
+        {
+            ResetAllZonesOversetGrid();
+
+            InitializeOversetInterfaceTopology();
+            //! the memory of the variables need to re open, when the overset mesh changes.
+            AllocateOversetStorage();
+        }
     }
 
-    int isOverset = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    if (isOverset)
-    {
-        //ResetAllZonesOversetGrid();
-        InitializeOversetInterfaceTopology();
-        //! the memory of the variables need to re open, when the overset mesh changes.
-        AllocateOversetStorage();
-    }
+    Dump();
 }
 
 void AleManager::ComputeMetrics()
@@ -274,22 +290,8 @@ void AleManager::Allocate()
     sixDofSolverManager     = new SixDofSolverManager   ;
     movingMeshManager       = new MovingMeshManager     ;
 
-    InitializeDimensionalReferenceTime();
     RDouble aleSimulationTime = 0.0;
     GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
-
-    int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
-    if(aleStartStrategy == 0)
-    {
-        RDouble physicalTime = 0.0;
-        GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
-
-        int outnstep = 0;
-        GlobalDataBase::UpdateData("outnstep", &outnstep, PHINT, 1);
-
-        int innstep = 0;
-        GlobalDataBase::UpdateData("innstep", &innstep, PHINT, 1);
-    }
 
     aleForceManager     ->Initialize();
     deformingManager    ->Initialize();
@@ -310,13 +312,14 @@ void AleManager::Restart()
         return;
     }
 
-    ios_base::openmode openMode = ios_base::in | ios_base::binary;
+    ios_base::openmode openMode = ios_base::in;
     PHSPACE::OpenFile(aleFile, aleFileName, openMode);
     currentAleFile = & aleFile;
     SetIsReadAleFile(true);
 
     RDouble aleSimulationTime = 0.0;
-    PHRead(aleFile, aleSimulationTime);
+    //PHRead(aleFile, aleSimulationTime);
+    aleFile >> aleSimulationTime;
     GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
 
     //! the mesh  need to transform to n time from 0 time, when restart the computing.
@@ -324,6 +327,8 @@ void AleManager::Restart()
     deformingManager      ->Restart();
     sixDofSolverManager   ->Restart();
     movingMeshManager     ->Run();
+    sixDofSolverManager   ->ResetMassCenter();
+    movingMeshManager     ->Restart();
 
     //! the mesh moves, it needs to recompute the mesh information.
     aleManager->ComputeMetrics();
@@ -342,6 +347,29 @@ void AleManager::InitializeDimensionalReferenceTime()
     PHSPACE::GlobalDataBase::UpdateData("dimensionalReferenceTime", &dimensionalReferenceTime, PHDOUBLE, 1);
 }
 
+void AleManager::SychonizeAleTime()
+{
+    RDouble aleSimulationTime = 0.0;
+    PHSPACE::GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
+
+    int aleStartStrategy = GlobalDataBase::GetIntParaFromDB("aleStartStrategy");
+    if(aleStartStrategy == 0)
+    {
+        int outIterStep = 0;
+        PHSPACE::GlobalDataBase::UpdateData("outnstep", &outIterStep, PHINT, 1);
+        int innerIterStep = 0;
+        PHSPACE::GlobalDataBase::UpdateData("innstep", &innerIterStep, PHINT, 1);
+    }
+
+    InitializeDimensionalReferenceTime();
+
+    RDouble dimensionalReferenceTime = GlobalDataBase::GetDoubleParaFromDB("dimensionalReferenceTime");
+
+    RDouble physicalTime = aleSimulationTime / dimensionalReferenceTime;
+
+    GlobalDataBase::UpdateData("physicalTime", &physicalTime, PHDOUBLE, 1);
+}
+
 void AleManager::UpdateAleForce()
 {
     //! update the aerodynamic force after the iterations to prevent get the wrong energy consumption when restarting.
@@ -350,13 +378,6 @@ void AleManager::UpdateAleForce()
 
 void AleManager::Run()
 {
-    RDouble aleSimulationTime = GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
-    RDouble aleTimeStep = GetAleTimeStep();
-
-    aleSimulationTime += aleTimeStep;
-    GlobalDataBase::UpdateData("aleSimulationTime", &aleSimulationTime, PHDOUBLE, 1);
-
-    aleForceManager     ->Run();
     deformingManager    ->Run();
     sixDofSolverManager ->Run();
     movingMeshManager   ->Run();
@@ -390,19 +411,21 @@ void AleManager::DumpRestart()
 
     int outerStep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int numberOfFieldSaveSteps = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
+    int maxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
 
-    if(outerStep % numberOfFieldSaveSteps == 0)
+    if(outerStep % numberOfFieldSaveSteps == 0 || outerStep == maxSimuStep)
     {
         string aleFileName = "./results/aleRestartFile.dat";
-        ios_base::openmode openMode = ios_base::out | ios_base::binary;
+        ios_base::openmode openMode = ios_base::out;
         PHSPACE::OpenFile(aleFile, aleFileName, openMode);
 
         RDouble aleTime = GlobalDataBase::GetDoubleParaFromDB("aleSimulationTime");
 
-        PHWrite(aleFile, aleTime);
+        aleFile << aleTime << "\n";
+        //PHWrite(aleFile, aleTime);
 
         aleForceManager->DumpRestartAleForceOfBodyContainer(aleFile);
-        deformingManager->DumpRestart(aleFile);
+        deformingManager->DumpRestart();
         sixDofSolverManager->DumpRestart(aleFile);
 
         PHSPACE::CloseFile(aleFile);
@@ -424,7 +447,7 @@ void BackupAllZonesOldGrid()
 
 void DeAllocateOversetStorage()
 {
-    int nSolver = Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
         int numberOfZones = PHMPI::GetNumberofGlobalZones();
@@ -433,36 +456,15 @@ void DeAllocateOversetStorage()
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
-            if (iSolver == NS_SOLVER)
-            {
-                int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
-                int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
-                int nEquation = nLaminar + nChemical;
-                int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("q", nEquation, TWO_D);
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("t", nTemperatureModel, TWO_D);
-                GreatDeAllocateOversetInterfaceVariables< PHNsTag >(grid);
-            }
-            else if(iSolver == TURB_SOLVER)
-            {
-                int nEquation = GlobalDataBase::GetIntParaFromDB("n_turb");
-                InterfaceFieldNameProperty< PHTurbulentTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
-                GreatDeAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
-            }
-            else if(iSolver == TRANSITION_SOLVER)
-            {
-                int nEquation = GlobalDataBase::GetIntParaFromDB("n_transition");
-                InterfaceFieldNameProperty< PHTransitionTag >::AddFieldNameProperty("transition::q", nEquation, TWO_D);
-                GreatDeAllocateOversetInterfaceVariables< PHTransitionTag >(grid);
-            }
+            PHSolver *solver = GlobalSolvers::GetSolver(iZone, iSolver);
+            solver->DeAllocateOversetInterfaceVar(grid);
         }
-
     }
 }
 
 void AllocateOversetStorage()
 {
-    int nSolver = Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     for (int iSolver = 0; iSolver < nSolver; ++iSolver)
     {
         int numberOfZones = PHMPI::GetNumberofGlobalZones();
@@ -471,138 +473,10 @@ void AllocateOversetStorage()
         {
             Grid* grid = GetGrid(iZone, gridLevelIndex);
             if (!grid) continue;
-            if (iSolver == NS_SOLVER)
-            {
-                int nLaminar = GlobalDataBase::GetIntParaFromDB("nl");
-                int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
-                int nEquation = nLaminar + nChemical;
-                int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("q", nEquation, TWO_D);
-                InterfaceFieldNameProperty< PHNsTag >::AddFieldNameProperty("t", nTemperatureModel, TWO_D);
-                GreatAllocateOversetInterfaceVariables< PHNsTag >(grid);
-            }
-            else if (iSolver == TURB_SOLVER)
-            {
-                int nEquation = GlobalDataBase::GetIntParaFromDB("n_turb");
-                InterfaceFieldNameProperty< PHTurbulentTag >::AddFieldNameProperty("turb::q", nEquation, TWO_D);
-                GreatAllocateOversetInterfaceVariables< PHTurbulentTag >(grid);
-            }
-            else if (iSolver == TRANSITION_SOLVER)
-            {
-                int nEquation = GlobalDataBase::GetIntParaFromDB("n_transition");
-                InterfaceFieldNameProperty< PHTransitionTag >::AddFieldNameProperty("transition::q", nEquation, TWO_D);
-                GreatAllocateOversetInterfaceVariables< PHTransitionTag >(grid);
-            }
+            PHSolver *solver = GlobalSolvers::GetSolver(iZone, iSolver);
+            solver->RegisterOversetField();
         }
     }
-}
-
-template< typename T >
-void InterfaceFieldNameProperty< T >::AllocateInterfaceVariables(int numberOfInterfaces, Data_ParamFieldSuite* dataStorage)
-{
-    if (numberOfInterfaces <= 0) return;
-
-    for (std::map< string, AllocateParameter >::iterator iter = InterfaceFieldNameProperty< T >::fieldNameParameterData.begin(); iter != InterfaceFieldNameProperty< T >::fieldNameParameterData.end(); ++iter)
-    {
-        int numberOfEquations = iter->second.GetNumberOfEquations();
-
-        RDouble** field = NewPointer2< RDouble >(numberOfEquations, numberOfInterfaces);
-        ZeroField(field, numberOfEquations, numberOfInterfaces);
-        dataStorage->UpdateDataPtr(iter->first, field);
-    }
-}
-
-template< typename T >
-void InterfaceFieldNameProperty< T >::DeAllocateInterfaceVariables(Data_ParamFieldSuite* dataStorage)
-{
-    for (std::map< string, AllocateParameter >::iterator iter = InterfaceFieldNameProperty< T >::fieldNameParameterData.begin(); iter != InterfaceFieldNameProperty< T >::fieldNameParameterData.end(); ++iter)
-    {
-        RDouble** q = reinterpret_cast <RDouble**> (dataStorage->GetDataPtr(iter->first));
-        DelPointer2(q);
-    }
-}
-
-template< typename T >
-std::map< string, AllocateParameter > InterfaceFieldNameProperty< T >::fieldNameParameterData;
-
-template< typename T >
-InterfaceFieldNameProperty< T >::InterfaceFieldNameProperty()
-{
-}
-
-template< typename T >
-InterfaceFieldNameProperty< T >::~InterfaceFieldNameProperty()
-{
-}
-
-template< typename T >
-void InterfaceFieldNameProperty< T >::AddFieldNameProperty(const string& fieldName, int numberOfEquations)
-{
-    AllocateParameter allocateParameter;
-    allocateParameter.SetNumberOfEquations(numberOfEquations);
-    allocateParameter.SetDimensions(TWO_D);
-
-    InterfaceFieldNameProperty< T >::fieldNameParameterData[fieldName] = allocateParameter;
-}
-
-template< typename T >
-void InterfaceFieldNameProperty< T >::AddFieldNameProperty(const string& fieldName, int numberOfEquations, int dimensions)
-{
-    AllocateParameter allocateParameter;
-    allocateParameter.SetNumberOfEquations(numberOfEquations);
-    allocateParameter.SetDimensions(dimensions);
-
-    InterfaceFieldNameProperty< T >::fieldNameParameterData[fieldName] = allocateParameter;
-}
-
-template< typename T >
-int InterfaceFieldNameProperty< T >::GetNumberOfEquations(const string& fieldName)
-{
-    std::map< string, AllocateParameter >::iterator iter;
-    iter = InterfaceFieldNameProperty< T >::fieldNameParameterData.find(fieldName);
-    if (iter != InterfaceFieldNameProperty< T >::fieldNameParameterData.end())
-    {
-        return iter->second.GetNumberOfEquations();
-    }
-    return -1;
-}
-
-template< typename T >
-int InterfaceFieldNameProperty< T >::GetNumberOfDimensions(const string& fieldName)
-{
-    std::map< string, AllocateParameter >::iterator iter;
-    iter = InterfaceFieldNameProperty< T >::fieldNameParameterData.find(fieldName);
-    if (iter != SuperFieldNameProperty< T >::fieldNameParameterData.end())
-    {
-        return iter->second.GetDimensions();
-    }
-    return -1;
-}
-
-template< typename T >
-void GreatAllocateOversetInterfaceVariables(Grid* gridIn)
-{
-    OversetInformationProxy* oversetInformationProxy = UnstructGridCast(gridIn)->GetOversetInformationProxy();
-    if (!oversetInformationProxy) return;
-
-    OversetDonorCellManager* oversetDonorCellManager = oversetInformationProxy->GetOversetDonorCellManager();
-    OversetInterplateCellManager* oversetInterplateCellManager = oversetInformationProxy->GetOversetInterplateCellManager();
-
-    InterfaceFieldNameProperty< T >::AllocateInterfaceVariables(oversetDonorCellManager->GetTotalNumberOfOversetDonorCells(), oversetDonorCellManager->GetDataStorage());
-    InterfaceFieldNameProperty< T >::AllocateInterfaceVariables(oversetInterplateCellManager->GetTotalNumberOfOversetInterplateCells(), oversetInterplateCellManager->GetDataStorage());
-}
-
-template< typename T >
-void GreatDeAllocateOversetInterfaceVariables(Grid* gridIn)
-{
-    OversetInformationProxy* oversetInformationProxy = UnstructGridCast(gridIn)->GetOversetInformationProxy();
-    if (!oversetInformationProxy) return;
-
-    OversetDonorCellManager* oversetDonorCellManager = oversetInformationProxy->GetOversetDonorCellManager();
-    OversetInterplateCellManager* oversetInterplateCellManager = oversetInformationProxy->GetOversetInterplateCellManager();
-
-    InterfaceFieldNameProperty< T >::DeAllocateInterfaceVariables(oversetDonorCellManager->GetDataStorage());
-    InterfaceFieldNameProperty< T >::DeAllocateInterfaceVariables(oversetInterplateCellManager->GetDataStorage());
 }
 
 bool isReadAleFile = false;
@@ -644,6 +518,18 @@ int GetIntegerParameterFromDataBase(int bodyIndex, const string& parameterName)
     return PHSPACE::GlobalDataBase::GetIntParaFromDB(oss.str());
 }
 
+int GetIntegerParameterFromDataBaseIfExist(int bodyIndex, const string& parameterName, int defaultValue)
+{
+    int value = defaultValue;
+    ostringstream oss;
+    oss << parameterName << "_" << bodyIndex;
+    if (GlobalDataBase::IsExist(oss.str(), PHINT, 1))
+    {
+        value = PHSPACE::GlobalDataBase::GetIntParaFromDB(oss.str());
+    }
+    return value;
+}
+
 RDouble GetRDoubleParameterFromDataBase(int bodyIndex, const string& parameterName)
 {
     ostringstream oss;
@@ -651,7 +537,7 @@ RDouble GetRDoubleParameterFromDataBase(int bodyIndex, const string& parameterNa
     return PHSPACE::GlobalDataBase::GetDoubleParaFromDB(oss.str());
 }
 
-RDouble GetRDoubleParameterFromDataBaseIfExist(int bodyIndex, const string& parameterName, RDouble defaultValue)
+RDouble GetRDoubleParameterFromDataBaseIfExist(int bodyIndex, const string &parameterName, RDouble defaultValue)
 {
     RDouble value = defaultValue;
     ostringstream oss;

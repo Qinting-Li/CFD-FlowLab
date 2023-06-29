@@ -335,7 +335,7 @@ void ReadGridgenBC(fstream &file, DataContainer *cDdata)
 
             cDdata->write(&BCType, sizeOfIntType);
 
-            if (BCType < 0)
+            if (IsInterface(BCType))
             {
                 int nbt;
                 ReadNewLine(file, line);
@@ -615,7 +615,7 @@ void BlockBCPatchRefine::RefineBC()
 void BlockBCPatchRefine::SetContent(const int &BCType, const int &imin, const int &imax, 
                                       const int &jmin, const int &jmax, const int &kmin, const int &kmax)
 {
-    this->nb    = nb;
+    this->nb    = BCType;
 
     this->st[0] = imin;
     this->ed[0] = imax;
@@ -688,7 +688,7 @@ void GridRefine::Init(DataContainer *cDdata)
 
             BCRefined->SetContent(BCType, imin, imax, jmin, jmax, kmin, kmax);
 
-            if (BCType < 0)
+            if (IsInterface(BCType))
             {
                 int indexOfTargetBoundary;
                 cDdata->read(&imin, sizeOfIntType);
@@ -814,7 +814,7 @@ void GridRefine::DumpLayout(DataContainer *cDdata)
 
             file << setw(wordwidth) << BCType << "\n";
 
-            if (BCType < 0)
+            if (IsInterface(BCType))
             {
                 int nbt;
                 cDdata->read(&imin, sizeOfIntType);
@@ -905,7 +905,7 @@ void GridRefine::RefineStructGrid()
 
     delete cDdata;
 }
-
+#pragma warning(disable:4100)
 void RefineStructGrid(const string &coordinateFile, const string &layoutFile)
 {
     GridRefine *gridToRefine = new GridRefine;
@@ -914,7 +914,7 @@ void RefineStructGrid(const string &coordinateFile, const string &layoutFile)
 
     delete gridToRefine;
 }
-
+#pragma warning(default:4100)
 int in_set(int *a, int n, int value)
 {
     for (int i = 0; i < n; ++ i)

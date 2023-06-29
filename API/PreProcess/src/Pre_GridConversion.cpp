@@ -373,7 +373,7 @@ void ConstructGlobalInterfaceLink(Grid **grids, int nBlocks)
             //! Consider the periodic boundary as the interface.
             if (PHSPACE::GlobalDataBase::GetIntParaFromDB("periodicType") != 0)
             {
-                grids[nb]->ChangeBCType(PHENGLEI::PERIODIC, PHENGLEI::INTERFACE);
+                grids[nb]->ChangeBCType(PHENGLEI::USER_DEFINED, PHENGLEI::INTERFACE);
             }
         }
     }
@@ -647,7 +647,7 @@ void ComputeCharacteristicBoundary(Grid *grid_in, DataContainer *data)
         ComputeCharacteristicBoundaryStr(grid_in, data);
     }
 
-    int TecioMission = TEC_SPACE::Writecomplete;
+    int TecioMission = Writecomplete;
     PHWrite(data, &TecioMission, 1);
 }
 
@@ -674,9 +674,9 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
         StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int bctype = bcregion->GetBCType();
 
-        if (bctype == PHENGLEI::INTERFACE || bctype < 0) continue;
+        if (IsInterface(bctype)) continue;
 
-        TecioMission = TEC_SPACE::WriteBoundary;
+        TecioMission = WriteBoundary;
         PHWrite(data, &TecioMission, 1);
 
         PHWrite(data, &bctype, 1);
@@ -853,7 +853,7 @@ void ComputeCharacteristicBoundaryStr(Grid *grid_in, DataContainer *data)
         int nTotalCell = grid->GetNTotalCell();
         int nTotalNode = grid->GetNTotalNode();
 
-        TecioMission = TEC_SPACE::WriteBlock;
+        TecioMission = WriteBlock;
         PHWrite(data, &TecioMission, 1);
 
         PHWrite(data, &nTotalNode, 1);
@@ -916,8 +916,6 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
     {
         int TecioMission;
 
-        UnstructGrid *grid = UnstructGridCast(grid_in);
-
         int nTotalNode = grid_in->GetNTotalNode();
         int nTotalCell = grid_in->GetNTotalCell();
         int nBoundFace = grid_in->GetNBoundFace();
@@ -949,7 +947,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         {
             if ((*iter).first == PHENGLEI::INTERFACE || (*iter).first < 0) continue;
 
-            TecioMission = TEC_SPACE::WriteBoundary;
+            TecioMission = WriteBoundary;
             PHWrite(data, &TecioMission, 1);
 
             int BCtype = (*iter).first;
@@ -1089,7 +1087,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
             }
         }
 
-        TecioMission = TEC_SPACE::WriteBlock;
+        TecioMission = WriteBlock;
         PHWrite(data, &TecioMission, 1);
         
         PHWrite(data, &nTotalNode, 1);
@@ -1163,7 +1161,7 @@ void ComputeCharacteristicBoundaryUns(Grid *grid_in, DataContainer *data)
         {
             if ((*iter).first == PHENGLEI::INTERFACE || (*iter).first < 0) continue;
 
-            TecioMission = TEC_SPACE::WriteBoundary;
+            TecioMission = WriteBoundary;
             PHWrite(data, &TecioMission, 1);
 
             int BCtype = (*iter).first;

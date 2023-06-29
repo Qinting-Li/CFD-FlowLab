@@ -80,7 +80,8 @@ private:
 
     //! Register the interpoint field in the turbulent solver.
     void RegisterCFDSolverInterpointField();
-    void RegisterCFDSolverOversetField();
+    void RegisterOversetField();
+    void DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore);
     void InitCoarseGridsFlow ();
 
     //! Prepare overset interface data for communication.

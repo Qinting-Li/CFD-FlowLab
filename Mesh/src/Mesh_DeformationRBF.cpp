@@ -573,7 +573,7 @@ void Mesh_DeformationRBF::MatchControlPoints()
                 //rotateNodeIndex.push_back(rotateNodeIndexCurrent);
                 if (rotateNodeIndexCurrent == nodeIndex)
                 {
-                    rotateNodeIndexCurrent = controlPointCoordinates.size() - 1;
+                    rotateNodeIndexCurrent = static_cast<int>(controlPointCoordinates.size()) - 1;
                 }
 
 
@@ -593,7 +593,7 @@ void Mesh_DeformationRBF::MatchControlPoints()
         delete [] nodeMark;
     }
 
-    nControlPoints = controlPointCoordinates.size();
+    nControlPoints = static_cast<int>(controlPointCoordinates.size());
     controlPointVectors.resize(nControlPoints);
 }
 
@@ -638,7 +638,7 @@ void Mesh_DeformationRBF::PostTreat()
 void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, PHVectorInt1D &referenceCP)
 {
     DYNode *nodeArray = grid->GetNodeArray();
-    int numberOfRealCP = referenceCP.size();
+    int numberOfRealCP = static_cast<int>(referenceCP.size());
 
     Range M(0, numberOfRealCP - 1);
     RDouble2D *controlMatrix = new RDouble2D(M, M, fortranArray);
@@ -657,10 +657,10 @@ void Mesh_DeformationRBF::RBFDeformingKernel(DynamicGrid *grid, int nodeIndex, P
     RDouble maxProjectDist = PHSPACE::SMALL;
     for (int iPoint = 0; iPoint < numberOfRealCP; ++ iPoint)
     {
-        int nodeIndex = referenceCP[iPoint];
-        RDouble dx = controlPointVectors[nodeIndex].X();
-        RDouble dy = controlPointVectors[nodeIndex].Y();
-        RDouble dz = controlPointVectors[nodeIndex].Z();
+        int nodeIndexTmp = referenceCP[iPoint];
+        RDouble dx = controlPointVectors[nodeIndexTmp].X();
+        RDouble dy = controlPointVectors[nodeIndexTmp].Y();
+        RDouble dz = controlPointVectors[nodeIndexTmp].Z();
         RDouble dist = DISTANCE(dx, dy, dz);
         maxProjectDist = MAX(maxProjectDist, dist);
     }

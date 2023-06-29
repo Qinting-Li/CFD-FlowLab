@@ -49,26 +49,26 @@ private:
     void GridMirror();
 
     //! Mirror the structured grid.
-    void MirrorGridStr(int iZone, StructGrid *grid_in);
+    void MirrorGridStr(StructGrid *grid_in);
 
     //! Mirror the boundary condition region.
     void MirrorBCRegion();
 
     //! Mirror the unstructured grid.
-    void MirrorGridUnstr(int iZone, UnstructGrid *grid_in);
+    void MirrorGridUnstr(UnstructGrid *grid_in);
 
     //! Mirror the coordinates of unstructured grid.
-    void MirrorCoordinate(int iZone, UnstructGrid *grid_in);
+    void MirrorCoordinate(UnstructGrid *grid_in);
 
     //! Mirror the node number of each face of unstructured grid.
-    void MirrorNodeNumberOfEachFace(int iZone, UnstructGrid *grid_in);
+    void MirrorNodeNumberOfEachFace(UnstructGrid *grid_in);
 
-    void MirrorFace2Node(int iZone, UnstructGrid *grid_in);
+    void MirrorFace2Node(UnstructGrid *grid_in);
 
     //! Mirror the cell of each face of unstructured grid.
-    void MirrorCellOfFace(int iZone, UnstructGrid *grid_in);
+    void MirrorCellOfFace(UnstructGrid *grid_in);
 
-    void MirrorCell2Node(int iZone, UnstructGrid *grid_in);
+    void MirrorCell2Node(UnstructGrid *grid_in);
 
     void TradeGridInfo();
     void DumpStrGrid(string out_gfile);

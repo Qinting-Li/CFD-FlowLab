@@ -16,6 +16,8 @@ RDouble MonomialBasis(const PHSPACE::RDouble * refCoord, unsigned int i)
     const RDouble et = refCoord[1];
     const RDouble zt = refCoord[2];
 
+    //(i < ((order)+1)*((order)+2)*((order)+3)/6);
+
     // monomials. since they are hierarchic we only need one case block.
     switch (i)
     {
@@ -295,6 +297,20 @@ void TestBasisFunction()
         }
         std::cout << std::endl;
     }
+
+    /*/ out
+    monomial basis function:
+    1 0.1 0.2 0.3 0.01 0.02 0.04 0.03 0.06 0.09
+    monomial basis function grad:0
+    0 1 0 0 0.2 0.2 0 0.3 0 0
+    monomial basis function grad:1
+    0 0 1 0 0 0.1 0.4 0 0.3 0
+    monomial basis function grad:2
+    0 0 0 1 0 0 0 0.1 0.2 0.6
+    */
+
+    //char c;
+    //cin.get(c);
 }
 
 }

@@ -24,22 +24,6 @@ void MXDQ_STD(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area
 
 void MXDQ_STD(RDouble *prim, RDouble *gykb, RDouble *dq, RDouble *df, RDouble gama, int nm, int nl, RDouble radius, int ipn);
 
-//! The function computes the formula (M +- R) * dQ, where M and R denote the Jacobian matrix and spectrum radius of inviscid flux,respectively.
-//! @param[in ]: primitiveVars is the array that stores the primitive variables of the current cell.
-//! @param[in ]: temperature is the array that stores the temperature values of the current cell.
-//! @param[in ]: nx, ny and nz are components of the average normal vector located in the center of the current cell.
-//! @param[in ]: faceArea denotes the avarage area located in the center of the current cell.
-//! @param[in ]: moveVelocity denotes the movement velocity located in the center of the current cell, and it is used for dynamic mesh.
-//! @param[in ]: deltaQ is the increment of conservative vector.
-//! @param[out]: flux is the inviscid flux that equals to the Jacobian matrix multiplies the difference values of the conservative variables.
-//! @param[in ]: radius denotes the spectrum radius of invsicid Jacobian matrix.
-//! @param[in ]: iSign denotes the computation symbol, -1 denotes M substracts R, 1 denotes M plus R.
-void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
-                  RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign,int nElectronIndex);
-void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
-                  RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign, int nElectronIndex,
-                  RDouble *speciesCvs, RDouble *speciesEtrs, RDouble totalH,  RDouble totalCv, RDouble totalCvtr, RDouble totalCvv, RDouble totalCve);
-
 //!The fuction computes the formula (Mv +- Rv) * dQ, Mv and Rv denote the Jacobian matrix and spectrum radius of viscous flux,respectively,\n
 //!dQ is the increment of conservative vector.
 void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble area, RDouble vol, RDouble visl, RDouble vist, RDouble gama, 
@@ -50,9 +34,10 @@ void MVXDQ_STD_LP(RDouble *prim, RDouble nxs, RDouble nys, RDouble nzs, RDouble 
 //!The function computes flux,respectively,\n
 void ComputeConservativePreconMatrix(int sign, RDouble **MG, RDouble *prim, RDouble gama, RDouble preconCoeff, int nm, int neqn);
 void ConservativePreconMatrixVariables(RDouble *field, RDouble *preconMatrix, int neqn);
+void ConservativePreconMatrixVariables(RDouble *field, RDouble *preconMatrix, RDouble timeCoeff, int neqn);
 
 void MatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble gama, RDouble *df, int nm, int neqn, int ipn);
 void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble **MG, RDouble gama, RDouble *df, int nm);
 void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconMatrix, RDouble gama, RDouble preconCoeff, RDouble *df, int nm, int neqn, int ipn);
-
+void PreconMatrixFreeDF(RDouble *q, RDouble *dq, RDouble *nxyz, RDouble *preconMatrix, RDouble gama, RDouble preconCoeff, RDouble timeCoeff, RDouble *df, int nm, int neqn, int ipn);
 }

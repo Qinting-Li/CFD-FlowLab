@@ -33,7 +33,7 @@ PATH_MPIEXEC         = $(shell which mpiexec)
 # Path for 3rdparty.
 PARMETISBUILDDIR     = build/$(systype)-$(cputype)
 LIB_SOURCE_DIR       = 3rdparty
-LIB_BINARY_DIR       = $(LIB_SOURCE_DIR)/$(systype)-$(cputype)
+LIB_BINARY_DIR       = $(LIB_SOURCE_DIR)/liblinux/$(systype)-$(cputype)
 LIB_HDF5_INCLUDE_DIR = $(LIB_SOURCE_DIR)/HDF5/include
 
 define run-config

@@ -42,8 +42,6 @@ void TransitionSolverStr::AllocateGlobalVar(Grid *gridIn)
         return;
     }
 
-    int transitionType = parameters->GetTransitionType();
-
     StructGrid *grid = StructGridCast(gridIn);
     int ni = grid->GetNI();
     int nj = grid->GetNJ();
@@ -134,8 +132,6 @@ void TransitionSolverStr::DeAllocateGlobalVar(Grid *gridIn)
     {
         return;
     }
-
-    int transitionType = parameters->GetTransitionType();
 
     StructGrid *grid = StructGridCast(gridIn);
 
@@ -409,7 +405,6 @@ void TransitionSolverStr::DumpRestartH5(ActionKey *actkey)
 
     Range M(0, nTransitionEquation - 1);
     int mst = M.first();
-    int med = M.last();
 
     RDouble4D &qTransition = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_transition"));
 
@@ -469,7 +464,6 @@ void TransitionSolverStr::ReadRestartH5(ActionKey *actkey)
 
     Range M(0, nTransitionEquation - 1);
     int mst = M.first();
-    int med = M.last();
 
     RDouble4D &qTransition = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_transition"));
 
@@ -1186,22 +1180,12 @@ void TransitionSolverStr::SourceFluxTwoEquation(Grid *gridIn)
 
     RDouble3D &walldist = *grid->GetWallDist();
 
-    RDouble3D &xc = *(grid->GetCellCenterX());
-    RDouble4D &xfn = *(grid->GetFaceNormalX());
-    RDouble4D &yfn = *(grid->GetFaceNormalY());
-    RDouble4D &zfn = *(grid->GetFaceNormalZ());
-    RDouble4D &area = *(grid->GetFaceArea());
     RDouble3D &vol = *(grid->GetCellVolume());
 
     Param_TransitionSolver *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
-    RDouble oRefReNumber = parameters->GetoRefReNumber();
     RDouble refMaNumber = parameters->GetRefMachNumber();
-    RDouble refVelocity = parameters->GetRefDimensionalVelocity();
     string viscousName = parameters->GetViscousName();
-
-    const RDouble cdes_ke = 0.61, cdes_kw = 0.78;
-    RDouble cdes = 0.0, dxyz = 0.0, desdxyz = 0.0, cdissk = 0.0, cdissw = 0.0, tmp = 0.0, lkw = 0.0;
 
     //! To determine if compressible correction used or not.
     int isCC = 0;
@@ -1231,17 +1215,12 @@ void TransitionSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     {
         compressibleFix = 1.0;
     }
-    const RDouble a1 = 1.0, a2 = 0.4, a3 = 0.2, mt02 = 0.25 * 0.25;
-    RDouble mt2 = 0.0, sonicSpeedSQR = 0.0, f2mt2 = 0.0, a1f2mt2 = 0.0, pdbar = 0.0, prodk_cc = 0.0, prodw_cc = 0.0, dissk_cc = 0.0, dissw_cc = 0.0;
-    RDouble3D &gama = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("gama"));
 
-    RDouble cblend = 0.0, pressure = 0.0, density = 0.0, ke = 0.0, kw = 0.0;
-    RDouble sij2 = 0.0, divv = 0.0, prodk = 0.0, dissk = 0.0, prodw = 0.0, dissw = 0.0, cdkww = 0.0, crss = 0.0, mut = 0.0;
-    RDouble srck = 0.0, srcw = 0.0, volume = 0.0;
+    RDouble pressure = 0.0, density = 0.0, ke = 0.0, kw = 0.0;
+    RDouble sij2 = 0.0, divv = 0.0, mut = 0.0;
+    RDouble volume = 0.0;
     RDouble dudx0 = 0.0, dudy0 = 0.0, dudz0 = 0.0, dvdx0 = 0.0, dvdy0 = 0.0, dvdz0 = 0.0, dwdx0 = 0.0, dwdy0 = 0.0, dwdz0 = 0.0;
     RDouble s11 = 0.0, s22 = 0.0, s33 = 0.0, s12 = 0.0, s13 = 0.0, s23 = 0.0, w12 = 0.0, w13 = 0.0, w23 = 0.0;
-    RDouble vort2 = 0.0;
-    RDouble cprodk = 0.0, cprodw = 0.0, ccdkww = 0.0, source_dk_neg = 0.0, source_dw_neg = 0.0;
 
     Range II, JJ, KK;
     GetRange(ni, nj, nk, -2, 1, II, JJ, KK);
@@ -1255,13 +1234,6 @@ void TransitionSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
 
-    RDouble SpSdlimit = MIN(1.0 + 0.00075 * refMaNumber * refMaNumber * refMaNumber * refMaNumber, 1.2);
-
-    RDouble *primitiveVariablesInfinity = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
-    RDouble rFarfield = primitiveVariablesInfinity[IR];
-    RDouble uFarfield = primitiveVariablesInfinity[IU];
-    RDouble pFarfield = primitiveVariablesInfinity[IP];
-
     RDouble ca1 = parameters->Getca1();
     RDouble ca2 = parameters->Getca2();
     RDouble ce1 = parameters->Getce1();
@@ -1270,10 +1242,6 @@ void TransitionSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     RDouble  s1 = parameters->Gets1();
     RDouble ccf = parameters->Getccf();
 
-    RDouble3D &cross = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("cross"));
-    RDouble3D &blend = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("blend"));
-
-    RDouble3D &SpSdRatio = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SpSdRatio"));
     RDouble3D &gamaeff = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("gamaeff"));
     RDouble3D &rescf = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("rescf"));
 
@@ -1437,6 +1405,14 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
     RDouble oRefReNumber = parameters->GetoRefReNumber();
 
     RDouble csrv = GlobalDataBase::GetDoubleParaFromDB("csrv");
+    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
+
+    RDouble3D *preconCoefficient = NULL;
+
+    if (ifLowSpeedPrecon != 0)
+    {
+        preconCoefficient = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
+    }
 
     matrixTransitionLeft = 0.0;
     matrixTransitionRight = 0.0;
@@ -1485,7 +1461,6 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
         int il1, jl1, kl1;
         grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-        int ist, ied, jst, jed, kst, ked;
         grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
 
         for (int k = kst; k <= ked; ++k)
@@ -1495,7 +1470,7 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     RDouble nx0 = faceVectorX(i, j, k, iSurface);
                     RDouble ny0 = faceVectorY(i, j, k, iSurface);
@@ -1516,6 +1491,11 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
                     RDouble vl = qLaminar(i, j, k, IV);
                     RDouble wl = qLaminar(i, j, k, IW);
                     RDouble Vn = ul * nx + vl * ny + wl * nz - vgn;
+                    if (ifLowSpeedPrecon != 0)
+                    {
+                        RDouble preconCoeff = (*preconCoefficient)(i, j, k);
+                        Vn = half * Vn * (1.0 + preconCoeff);
+                    }
                     RDouble absVn = ABS(Vn);
 
                     for (int m = M.first(); m <= M.last(); ++m)
@@ -1533,8 +1513,6 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
         }
     }
 
-    int transitionType = parameters->GetTransitionType();
-
     RDouble dct = parameters->Getdct();
     RDouble df = parameters->Getdf();
 
@@ -1544,12 +1522,11 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
         int il1, jl1, kl1;
         grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-        int ist, ied, jst, jed, kst, ked;
         grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
 
-        Range M(0, nTransitionEquation - 1);
-        int mst = M.first();
-        int med = M.last();
+        Range M1(0, nTransitionEquation - 1);
+        int mst1 = M1.first();
+        int med1 = M1.last();
 
         for (int k = kst; k <= ked; ++k)
         {
@@ -1558,7 +1535,7 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     RDouble rho = qLaminar(i, j, k, IR);
                     RDouble muLaminar = viscousLaminar(i, j, k);
@@ -1585,7 +1562,7 @@ void TransitionSolverStr::Diagonal(Grid *gridIn)
                     work[IGAMA] = (muLaminar + muTransition / df) / rho * ns2 * oVolume * oRefReNumber;
                     work[IRECT] = (muLaminar + muTransition) * dct / rho * ns2 * oVolume * oRefReNumber;
 
-                    for (int m = mst; m <= med; ++m)
+                    for (int m = mst1; m <= med1; ++m)
                     {
                         RDouble &specTransition = spectrumTransition(i, j, k, m);
                         specTransition += work[m];
@@ -1965,7 +1942,7 @@ void TransitionSolverStr::NNDFlux(Grid *gridIn, FieldProxy *qLeftProxy, FieldPro
             for (int i = ist; i <= ied; ++i)
             {
                 int il, jl, kl;
-                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                 RDouble xfn = faceNormalX(il, jl, kl, iSurface);
                 RDouble yfn = faceNormalY(il, jl, kl, iSurface);
@@ -2034,7 +2011,7 @@ void TransitionSolverStr::LoadFlux(Grid *gridIn, FieldProxy *fluxProxy, int iSur
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
                     residualTransition(i, j, k, m) -= (flux(il, jl, kl, m) - flux(i, j, k, m));
                 }
             }
@@ -2094,7 +2071,7 @@ void TransitionSolverStr::ComputeGradientCellCenter(Grid *gridIn)
                     for (int i = ist; i <= ied; ++i)
                     {
                         int il, jl, kl;
-                        strgrid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                        strgrid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                         RDouble phis = qTransition(i, j, k, m) + qTransition(il, jl, kl, m);
 
@@ -2151,118 +2128,6 @@ void TransitionSolverStr::ComputeGradientCellCenter(Grid *gridIn)
     }
 }
 
-void TransitionSolverStr::CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
-{
-    StructGrid *grid = StructGridCast(gridIn);
-    int level = grid->GetLevel();
-    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-    if (!interfaceInformation)
-    {
-        return;
-    }
-
-    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
-    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-
-    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
-
-    dataContainer->moveto_begin();
-
-    if (0 == nEquation)
-    {
-        RDouble3D &fieldSend = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForSend[iLocalFace];
-                int is, js, ks;
-                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
-                finestGrid->RemapMultigridIJK(level, is, js, ks);
-                PHWrite(dataContainer, fieldSend(is, js, ks));
-            }
-        }
-    }
-    else
-    {
-        RDouble4D &fieldSend = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForSend[iLocalFace];
-                int is, js, ks;
-                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
-                finestGrid->RemapMultigridIJK(level, is, js, ks);
-                for (int m = 0; m < nEquation; ++m)
-                {
-                    PHWrite(dataContainer, fieldSend(is, js, ks, m));
-                }
-            }
-        }
-    }
-}
-
-void TransitionSolverStr::DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
-{
-    StructGrid *grid = StructGridCast(gridIn);
-    int level = grid->GetLevel();
-    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-    if (!interfaceInformation)
-    {
-        return;
-    }
-
-    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
-    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-
-    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
-
-    dataContainer->moveto_begin();
-
-    if (0 == nEquation)
-    {
-        RDouble3D &fieldRecv = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForReceive[iLocalFace];
-                int it, jt, kt;
-                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
-                finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                PHRead(dataContainer, fieldRecv(it, jt, kt));
-            }
-        }
-    }
-    else
-    {
-        RDouble4D &fieldRecv = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForReceive[iLocalFace];
-                int it, jt, kt;
-                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
-                finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                for (int m = 0; m < nEquation; ++m)
-                {
-                    PHRead(dataContainer, fieldRecv(it, jt, kt, m));
-                }
-            }
-        }
-    }
-}
-
 void TransitionSolverStr::RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -2292,7 +2157,6 @@ void TransitionSolverStr::RotateVectorFromInterface(Grid *gridIn, const int &nei
     rotationAngle = rotationAngle * PI / 180;
     if (nEquation > 0)
     {
-        RDouble4D &fieldRecvTransitionX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTransitionCellCenterX"));
         RDouble4D &fieldRecvTransitionY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTransitionCellCenterY"));
         RDouble4D &fieldRecvTransitionZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTransitionCellCenterZ"));
 
@@ -2445,7 +2309,7 @@ void TransitionSolverStr::GetGradientAtFace_CorrectionAtPhysicalBoundary(Grid *g
         int ist, ied, jst, jed, kst, ked;
         bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-        if (BCType < 0 || nsurf_bc != iSurface) // inner P TO P BC in the current direction
+        if (IsInterface(BCType) || nsurf_bc != iSurface) // inner P TO P BC in the current direction
         {
             continue;
         }
@@ -2603,8 +2467,6 @@ void TransitionSolverStr::CompVisFlux(Grid *gridIn, FieldProxy *fluxProxy, int i
 
     using namespace IDX;
 
-    int transitionType = parameters->GetTransitionType();
-
     RDouble dct = parameters->Getdct();
     RDouble df = parameters->Getdf();
 
@@ -2615,7 +2477,7 @@ void TransitionSolverStr::CompVisFlux(Grid *gridIn, FieldProxy *fluxProxy, int i
             for (int i = ist; i <= ied; ++i)
             {
                 int il, jl, kl;
-                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                 RDouble nxs = faceNormalX(il, jl, kl, iSurface);
                 RDouble nys = faceNormalY(il, jl, kl, iSurface);
@@ -2697,8 +2559,6 @@ void TransitionSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, F
 {
     StructGrid *grid = StructGridCast(gridIn);
 
-    int *iBlank = grid->GetCellTypeContainer();
-
     RDouble4D &dqTransition = dqProxy->GetField_STR();
     RDouble4D &deltaFlux = LUplusDQ->GetField_STR();
 
@@ -2765,7 +2625,7 @@ void TransitionSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, F
                     int il, jl, kl, il1, jl1, kl1;
                     grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-                    grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     for (int m = mst; m <= med; ++m)
                     {
@@ -2814,8 +2674,6 @@ void TransitionSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, F
 void TransitionSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     StructGrid *grid = StructGridCast(gridIn);
-
-    int *iBlank = grid->GetCellTypeContainer();
 
     RDouble4D &dqTransition = dqProxy->GetField_STR();
     RDouble4D &deltaFlux = LUplusDQ->GetField_STR();
@@ -2876,7 +2734,7 @@ void TransitionSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, 
                     int il, jl, kl, il1, jl1, kl1;
                     grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     for (int m = mst; m <= med; ++m)
                     {
@@ -2928,11 +2786,9 @@ void TransitionSolverStr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, Fiel
 
     RDouble4D &qTransition = qProxy->GetField_STR();
     RDouble4D &dqTransition = dqProxy->GetField_STR();
-    RDouble3D &xc = *(grid->GetCellCenterX());
 
     Param_TransitionSolver *parameters = GetControlParameters();
     int nTransitionEquation = parameters->GetNTransitionEquation();
-    int viscousType = parameters->GetViscousType();
 
     RDouble4D &qpmv = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
 
@@ -2942,7 +2798,6 @@ void TransitionSolverStr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, Fiel
     Range M(0, nTransitionEquation - 1);
 
     using namespace IDX;
-    RDouble ke, kw, dke, dkw, rho;
 
     for (int k = kst; k <= ked; ++k)
     {
@@ -2950,7 +2805,7 @@ void TransitionSolverStr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, Fiel
         {
             for (int i = ist; i <= ied; ++i)
             {
-                rho = qpmv(i, j, k, IR);
+                RDouble rho = qpmv(i, j, k, IR);
                 RDouble &kgama = qTransition(i, j, k, IGAMA);
                 RDouble &krect = qTransition(i, j, k, IRECT);
 
@@ -2973,8 +2828,6 @@ void TransitionSolverStr::Boundary(Grid *gridIn)
     using namespace PHENGLEI;
     StructGrid *grid = StructGridCast(gridIn);
 
-    Param_TransitionSolver *parameters = GetControlParameters();
-
     StructBCSet *StructBCSet = grid->GetStructBCSet();
     int nBCRegion = StructBCSet->GetnBCRegion();
 
@@ -2983,7 +2836,7 @@ void TransitionSolverStr::Boundary(Grid *gridIn)
         StructBC *structBC = StructBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
-        if (BCType < 0)
+        if (IsInterface(BCType))
         {
             continue;
         }
@@ -3184,21 +3037,10 @@ void TransitionSolverStr::VisWall(Grid *gridIn, StructBC *structBC)
     int nj = grid->GetNJ();
     int nk = grid->GetNK();
 
-    Param_TransitionSolver *parameters = GetControlParameters();
-
-    RDouble4D &qLaminar = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
     RDouble4D &qTransition = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_transition"));
-    RDouble3D &viscousLaminars = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
-    RDouble3D &viscousTransition = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
-
-    RDouble3D &wallDistant = *StructGridCast(grid)->GetWallDist();
-
-    RDouble refReNumber = parameters->GetRefReNumber();
 
     int ist, ied, jst, jed, kst, ked;
     structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
-
-    const RDouble beta1 = 0.075;
 
     using namespace IDX;
 
@@ -3314,9 +3156,9 @@ void TransitionSolverStr::FarFieldBC(Grid *gridIn, StructBC *structBC)
                 RDouble gama = gamma(is1, js1, ks1);
 
                 RDouble coo = sqrt(ABS(refGama * pFarfield / rFarfield));
-                RDouble cin = sqrt(ABS(gama * pin / rin));
+                RDouble cIN = sqrt(ABS(gama * pin / rin));
 
-                if (vei > cin)
+                if (vei > cIN)
                 {
                     if (vni >= 0.0)
                     {
@@ -3337,7 +3179,7 @@ void TransitionSolverStr::FarFieldBC(Grid *gridIn, StructBC *structBC)
                     continue;
                 }
 
-                RDouble riemp = vni + 2.0 * cin / (gama - 1.0);
+                RDouble riemp = vni + 2.0 * cIN / (gama - 1.0);
                 RDouble riemm = vno - 2.0 * coo / (refGama - 1.0);
                 RDouble vnb = half * (riemp + riemm);
 

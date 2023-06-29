@@ -340,9 +340,13 @@ public:
 
     static void SetBCInitialValuesByMachNumberTemperaturePressure(Data_Param *bcParamDB, RDouble *primitiveVar);
 
+    static void SetBCInitialValuesByWRFData(Data_Param *bcParamDB, RDouble *primitiveVar);
+
     static void SetBCInitialValuesByPrimitive(Data_Param *bcParamDB, RDouble *primitiveVar);
 
     static void SetBCInitialValuesByMolecularWeightGama(Data_Param *bcParamDB, RDouble *primitiveVar);
+
+    static void InitMassFlowBoundary();
 private:
     static void ParseBCFromFile(fstream &file);
     static void BuildBodyMap();

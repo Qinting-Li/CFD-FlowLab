@@ -28,7 +28,7 @@ LIB_EXPORT void Param_NSSolverStruct::Init()
     staticPressureRelaxCorf    = GlobalDataBase::GetDoubleParaFromDB("staticPressureRelaxCorf");
     inviscidSchemeName         = GlobalDataBase::GetStrParaFromDB("inviscidSchemeName");
 
-    if (GetChemicalFlag()==0)
+    if(GetChemicalFlag()== 0)
     {
         chemicalSpectrumRadiusCoef = 1.0;
         viscousSpectrumRadiusCoef  = 1.0;
@@ -40,6 +40,11 @@ LIB_EXPORT void Param_NSSolverStruct::Init()
     if (GlobalDataBase::IsExist("iniSpeedCoef", PHDOUBLE, 1))
     {
         iniSpeedCoef = GlobalDataBase::GetDoubleParaFromDB("iniSpeedCoef");
+    }
+    iniSpeedMode = 0;
+    if(GlobalDataBase::GetIntParaFromDB("nIsComputeWallDist")== 0 && GlobalDataBase::IsExist("iniSpeedMode", PHINT, 1))
+    {
+        iniSpeedMode = GlobalDataBase::GetIntParaFromDB("iniSpeedMode");
     }
 }
 

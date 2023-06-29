@@ -1425,8 +1425,8 @@ void HighOrderStandardElementBase::GaussLegendrePoints1D(vector<RDouble> & GLPoi
     //case 12: 
     //case 13: nIntegrationPoint =   7; break;
     //default:
-    //	//notation MPI
-    //	cout << "Error : HighOrderStandardElementBase has wrong integrationOrder " << endl;
+    //notation MPI
+    //cout << "Error : HighOrderStandardElementBase has wrong integrationOrder " << endl;
     //}
 
   /*--- Set the pointers to the data arrays of the variables just allocated, such
@@ -1600,8 +1600,6 @@ void TestOrthogoMatrix()
 
     HighOrderMatrix taylorBasisMassMatrix(degreeOfFreedom, degreeOfFreedom);
     taylorBasisMassMatrix.setConstant(0.0);
-
-    //const RDouble refCoord[3] =	{ 0.1, 0.2, 0.3 };
 
     const RDouble * xi = elem.GetXiIntegrationCoor();
     const RDouble * et = elem.GetEtIntegrationCoor();
@@ -1841,7 +1839,7 @@ void HighOrderStandardCell::DataStandardTetrahedron(void)
 
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
-            ShapeFunctionOfTetrGrad(CoordIntegrationOfStand, dShapeFun);
+            ShapeFunctionOfTetrGrad(dShapeFun);
             for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFunctionAtIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];
@@ -2267,7 +2265,7 @@ void HighOrderStandardFace::DataStandardTriangle(void)
 
             //! @get the grad of shape Function At Integration
             int curDofOfShape = 0;
-            ShapeFunctionOfTriGrad(CoordIntegrationOfStand, dShapeFun);
+            ShapeFunctionOfTriGrad(dShapeFun);
             for(int iDofShapeFunction = 0; iDofShapeFunction < dofOfShapeFunction; ++ iDofShapeFunction)
             {
                 dXiShapeFuncFaceIntegration[iGaussPoint][iDofShapeFunction] = dShapeFun[curDofOfShape++];

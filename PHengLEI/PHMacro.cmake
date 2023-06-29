@@ -75,6 +75,8 @@ set(Common_H_PATH   ${PROJECT_SOURCE_DIR}/../API/Common/include)
 include_directories(${Common_H_PATH})
 set(HyFLOW_H_PATH   ${PROJECT_SOURCE_DIR}/../HyFLOW/include)
 include_directories(${HyFLOW_H_PATH})
+set(MultiSpecies_H_PATH   ${PROJECT_SOURCE_DIR}/../API/MultiSpecies/include)
+include_directories(${MultiSpecies_H_PATH})
 endmacro(includeHeadFiles)
 
 

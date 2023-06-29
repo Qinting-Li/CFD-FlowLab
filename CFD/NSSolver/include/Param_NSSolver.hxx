@@ -28,14 +28,14 @@ inline int Param_NSSolver::GetLaminarNumber() const
     return nLaminar;
 }
 
+inline int Param_NSSolver::GetnEquation() const
+{
+    return nEquation;
+}
+
 inline int Param_NSSolver::GetTemperatureModel() const
 {
     return nTemperatureModel;
-}
-
-inline int Param_NSSolver::GetIfLowSpeedPrecon() const
-{
-    return ifLowSpeedPrecon;
 }
 
 inline RDouble Param_NSSolver::GetPreconCoefficient() const
@@ -276,3 +276,7 @@ inline RDouble Param_NSSolver::GetCharacteristicLength() const
     return knLength;
 }
 
+inline int Param_NSSolver::GetNonequilibriumConditionFlag() const
+{
+    return isUseNoneqCond;
+}

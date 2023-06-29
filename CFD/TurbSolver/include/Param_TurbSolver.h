@@ -82,6 +82,8 @@ public:
 
     int GetKindOfTurbSource() const;
 
+    RDouble GetInviscidSpectrumRadiusCoef() const;
+
     int GetWennSchemeFlag() const;
 
     //! Return using original ( = 0 ) or conservative variables ( = 1 )\n.
@@ -148,6 +150,8 @@ private:
     //! 0: original form.\n
     //! 1: conservative form.\n
     int rhoFlag;
+
+    RDouble inviscidSpectrumRadiusCoef;
 };
 
 #include "Param_TurbSolver.hxx"

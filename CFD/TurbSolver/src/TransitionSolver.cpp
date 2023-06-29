@@ -168,8 +168,8 @@ void TransitionSolver::DumpResultFile(Grid *grid, int level)
 
                     if(PHMPI::IsParallelRun())
                     {
-                        string path = "./results/transition1_0.dat";
-                        remove(path.c_str());
+                        string path1 = "./results/transition1_0.dat";
+                        remove(path1.c_str());
                     }
                 }
 
@@ -180,8 +180,8 @@ void TransitionSolver::DumpResultFile(Grid *grid, int level)
 
                     if(PHMPI::IsParallelRun())
                     {
-                        string path = "./results/transition0_0.dat";
-                        remove(path.c_str());
+                        string path2 = "./results/transition0_0.dat";
+                        remove(path2.c_str());
                     }
                 }
             }
@@ -230,20 +230,18 @@ void TransitionSolver::RegisterCFDSolverInterpointField()
     CFDSolver::RegisterInterpointField("qTransitionNode", PHDOUBLE, nTransitionEquation);
 }
 
-void TransitionSolver::RegisterCFDSolverOversetField()
+void TransitionSolver::RegisterOversetField()
 {
     Param_TransitionSolver *parameters = GetControlParameters();
     int nTransitionEquation = parameters->GetNTransitionEquation();
 
     CFDSolver::RegisterOversetField("transition::q", PHDOUBLE, nTransitionEquation);
+}
 
-    //CFDSolver::RegisterOversetField("transition::dqdx", PHDOUBLE, nTransitionEquation);
-    //CFDSolver::RegisterOversetField("transition::dqdy", PHDOUBLE, nTransitionEquation);
-    //CFDSolver::RegisterOversetField("transition::dqdz", PHDOUBLE, nTransitionEquation);
-    //
-    //CFDSolver::RegisterOversetField("transition::limit", PHDOUBLE, 1);
-    //
-    //CFDSolver::RegisterOversetField("transition::dq", PHDOUBLE, nTransitionEquation);
+void TransitionSolver::DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore)
+{
+    RDouble **q = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("transition::q"));
+    DelPointer2(q);
 }
 
 void TransitionSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy)

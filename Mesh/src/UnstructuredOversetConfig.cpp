@@ -241,7 +241,7 @@ void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMap(int iBlockIn
             {
                 vector< int > &localToGlobalNodesMap = grid->GetLocalToGlobalNodesMap();
                 vector< int > &interfaceBoundaryNodeList = oversetConfigMultiZone[iZone]->GetInterfaceBoundaryNodeList();
-                int             numberOfinterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+                int             numberOfinterfaceBoundaryNodes = static_cast<int>(interfaceBoundaryNodeList.size());
                 for (int iNode = 0; iNode < numberOfinterfaceBoundaryNodes; ++ iNode)
                 {
                     keyOfNodesInBlocks[localToGlobalNodesMap[interfaceBoundaryNodeList[iNode]]] = 1;
@@ -275,7 +275,7 @@ void OversetConfigFactoryMulti::BuildLocalToGlobalInterfaceNodesMap(int iBlockIn
                 vector< int > &localToGlobalNodesMap = grid->GetLocalToGlobalNodesMap();
                 int *localToGlobalInterfaceNodesMap = oversetConfigMultiZone[iZone]->GetLocalToGlobalInterfaceNodesMap();
                 vector< int > &interfaceBoundaryNodeList = oversetConfigMultiZone[iZone]->GetInterfaceBoundaryNodeList();
-                int             numberOfinterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+                int             numberOfinterfaceBoundaryNodes = static_cast<int>(interfaceBoundaryNodeList.size());
 
                 for (int iNode = 0; iNode < numberOfinterfaceBoundaryNodes; ++ iNode)
                 {
@@ -306,7 +306,7 @@ void OversetConfigFactoryMulti::BuildNodesMinDistanceInThisBlocks(vector< RDoubl
         if (currentProcessor == processorIndex)
         {
             blockIndexOfThisZone = oversetConfigMultiZone[iZone]->GetGrid()->GetIBlock();
-            numberOfWallNodesInThisZones = wallNodeCoordinateXIn[iZone].size();
+            numberOfWallNodesInThisZones = static_cast<int>(wallNodeCoordinateXIn[iZone].size());
         }
         PHMPI::PH_Bcast(&numberOfWallNodesInThisZones, sizeof(int), processorIndex);
 
@@ -827,11 +827,13 @@ void OversetConfigFactoryMulti::InterFaceBoundaryOptimize()
     {
         CharacterNodeToCell();
         CharacterCellToNode();
+        //SetNegativeForInnerAndInitialInterNodes();
         SetNegativeForInnerNodes();
     }
 
     //! Points in buffer are set to inactive.
     SetNegativeForBufferRegion();
+
     //timeSpan->ShowTimeSpanToLogfile("InterFaceBoundaryOptimize");
     //delete timeSpan;
     OutPutOversetVisualizations("1_5_InterFaceBoundaryOptimize");
@@ -972,7 +974,6 @@ void OversetConfigFactoryMulti::SearchZonesSearchNodesInKDTrees()
 
 void OversetConfigFactoryMulti::AllReduceNodesMinDistanceInOtherBlock()
 {
-    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
         ZoneSearchNodes *&zoneSearchNodes = zonesSearchNodes[iZone];
@@ -1098,7 +1099,8 @@ void OversetConfigFactoryMulti::BuildKDTreesBySearchRegions()
     SetActivePropertyForSearchRegions();
 
     //! Why the value is 2 (Ensure that searchRegion covers all blocks except this block).
-    for (int i = 0; i < 2; ++i)
+
+    for (int i = 0; i < 2; ++ i)
     {
         CharacterNodeToCell();
 
@@ -1348,14 +1350,10 @@ void OversetConfigFactoryMulti::SpecifySpecicalCellsInteractWithWallBoundary()
 
 void OversetConfigFactoryMulti::FillTheActiveRegion()
 {
-    //TimeSpan *timeSpan = new TimeSpan();
     int numberOfNewNodesPresentCycle = 0;
     int sum = 0;
-    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
-    int server = PHMPI::GetServerSepMode();
 
     SetNodeCharacterOnPhysicalBoundary();
-
     do
     {
         numberOfNewNodesPresentCycle = CharacterNodeToValidNodeByCell();
@@ -1363,11 +1361,9 @@ void OversetConfigFactoryMulti::FillTheActiveRegion()
         //! mpi_reduce.
         PH_AllReduce(&numberOfNewNodesPresentCycle, &sum, 1, PH_SUM);
         numberOfNewNodesPresentCycle = sum;
-        //PrintToWindow("numberOfNewNodesPresentCycle = ", numberOfNewNodesPresentCycle, "\n");
 
     } while (numberOfNewNodesPresentCycle > 0);
-    //timeSpan->ShowTimeSpanToLogfile("FillTheActiveRegion");
-    //delete timeSpan;
+
     FreeKeyBasicActiveNodes();
 
     OutPutOversetVisualizations("1_4_BuildActiveRegion");
@@ -1425,7 +1421,6 @@ void OversetConfig::FindInterpolateRelationship()
 {
     RDouble *nodeCoordinate = new RDouble[THREE_D];
     int *keyActiveOfCells = this->GetKeyActiveOfCells();
-    RDouble eps = GlobalDataBase::GetDoubleParaFromDB("toleranceForOversetBox");
 
     int blockIndex = grid->GetIBlock();
     int zoneIndex = grid->GetZoneID();
@@ -1524,7 +1519,7 @@ void OversetConfigFactoryMulti::CreatGlobalInterCells()
         if (currentProcessorIndex == zoneProcessorIndexOfThisZone)
         {
             blockIndex = oversetConfigMultiZone[iZone]->GetGrid()->GetIBlock();
-            numberOfInterpolateCells = ( oversetConfigMultiZone[iZone]->GetInterpolateCellList() ).size();
+            numberOfInterpolateCells = static_cast<int>( ( oversetConfigMultiZone[iZone]->GetInterpolateCellList() ).size() );
         }
 
         PHMPI::PH_Bcast(&blockIndex, sizeof(int), zoneProcessorIndexOfThisZone);
@@ -1571,7 +1566,6 @@ void OversetConfigFactoryMulti::CreatGlobalInterCells()
 
 void OversetConfigFactoryMulti::AllReduceZonesInterpolateCells()
 {
-    int currentProcessorIndex = PHMPI::GetCurrentProcessorID();
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
         InterCells *zoneInterpolateCells = zonesInterpolateCells[iZone];
@@ -1635,12 +1629,6 @@ void OversetConfigFactoryMulti::AllReduceZonesInterpolateCells()
             donorZoneIndexGlobal = NULL;
             donorCellIndexGlobal = NULL;
         }
-        //int processorIndex = PHMPI::GetZoneProcessorID(iZone);
-        //if (currentProcessorIndex != processorIndex)
-        //{
-        //    delete zoneInterpolateCells;
-        //    zoneInterpolateCells = NULL;
-        //}
     }
 }
 
@@ -1674,7 +1662,6 @@ void OversetConfigFactoryMulti::FindInterCells()
 
     for (int iZone = 0; iZone < numberOfZones; ++iZone)
     {
-        int num = 0;
         int processorIndex = PHMPI::GetZoneProcessorID(iZone);
         if (processorIndex == currentProcessorIndex)
         {
@@ -2283,11 +2270,6 @@ void OversetConfigFactoryMulti::CommunicateCellIBlank()
 //! Through the communication of virtual cell information in interface, realize the indirect communication of point attributes.
 void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterface()
 {
-    if (numberOfBlocks == numberOfZones)
-    {
-        return;
-    }
-
     int currentProcessor = PHMPI::GetCurrentProcessorID();
 
     //! step1: Communication cell properties.
@@ -2306,11 +2288,6 @@ void OversetConfigFactoryMulti::CommunicateNodeCharacterOnInterface()
 
 void OversetConfigFactoryMulti::CommunicateNodePropertyByKeyOfInterfaceNodesInBlocks()
 {
-    if (numberOfBlocks == numberOfZones)
-    {
-        return;
-    }
-
     for (int iBlock = 0; iBlock < numberOfBlocks; ++ iBlock)
     {
         SetField(keyOfInterfaceNodesInBlocks[iBlock], 0, numberOfInterfaceNodesInBlocks[iBlock]);
@@ -2484,10 +2461,10 @@ ZoneSearchNodes ::~ZoneSearchNodes()
 {
     if (numberOfNodes)
     {
-        delete[]x;
-        delete[]y;
-        delete[]z;
-        delete[]nodesMinDistanceToOtherBlock;
+        delete [] x;
+        delete [] y;
+        delete [] z;
+        delete [] nodesMinDistanceToOtherBlock;
 
         x = NULL;
         y = NULL;
@@ -2495,8 +2472,8 @@ ZoneSearchNodes ::~ZoneSearchNodes()
         nodesMinDistanceToOtherBlock = NULL;
     }
 
-    delete[]pMin;
-    delete[]pMax;
+    delete [] pMin;
+    delete [] pMax;
 
     pMax = NULL;
     pMin = NULL;
@@ -2695,7 +2672,8 @@ void OversetConfig::BuildBoundaryNodeList()
     int *faceNodeNumber = grid->GetNodeNumberOfEachFace();
     int **faceNodeIndex = grid->GetFace2NodeArray();
 
-    UnstructBCSet **unstructBCSet = grid->GetBCRecord();
+    UnstructBCSet **bcr = grid->GetBCRecord();
+    //int *bcRegionIDofBCFace = unstructBCSet->GetBCFaceInfo();
 
     set< int > interfaceBoundaryNodeSet;
     set< int > wallBoundaryNodeSet;
@@ -2705,7 +2683,8 @@ void OversetConfig::BuildBoundaryNodeList()
 
     for (int iFace = 0; iFace < numberOfBoundaryElements; ++iFace)
     {
-        int boundaryConditionOfThisFace = unstructBCSet[iFace]->GetKey();
+        //UnstructBC *bcRegion = bcr[iFace];
+        int boundaryConditionOfThisFace = bcr[iFace]->GetKey();
         int &numberOfNodesInThisFace = faceNodeNumber[iFace];
 
         switch (boundaryConditionOfThisFace)
@@ -2799,7 +2778,7 @@ void OversetConfig::BuildInBlockCellsAndNodesByInnerAuxiliaryGridKDTree(vector< 
     {
         donorCellIndex = -2;
 
-        if (!symetryOrNot || cellCenterZ[iCell] > 0.0)
+        if (!symetryOrNot || cellCenterZ[iCell] > 1.0e-5)
         {
             donorCellIndex = -1;
 
@@ -2881,8 +2860,6 @@ void OversetConfig::Initialize(UnstructGrid *gridIn,
     oversetInformationProxy = NULL;
 
     int numberOfNodes = grid->GetNTotalNode();
-    int numberOfCells = grid->GetNTotalCell();
-    int numberOfTotalCells = numberOfCells + grid->GetNBoundFace();
 
     keyActiveOfNodes = new int[numberOfNodes];
     SetField(keyActiveOfNodes, 0, numberOfNodes);
@@ -2955,7 +2932,7 @@ void OversetConfig::SetInitialValueForBufferRigion()
     SetField(keyActiveOfNodes, 0, numberOfNodes);
     SetField(keyActiveOfCells, 0, numberOfCells);
 
-    int numberOfInnerBoundaryNodes = innerBoundaryNodeList.size();
+    int numberOfInnerBoundaryNodes = static_cast<int>(innerBoundaryNodeList.size());
     for (int iNode = 0; iNode < numberOfInnerBoundaryNodes; ++iNode)
     {
         keyActiveOfNodes[innerBoundaryNodeList[iNode]] = 1;
@@ -2968,7 +2945,7 @@ void OversetConfig::BuildNodesMinDistanceInThisBlock(vector< RDouble > *wallNode
 {
     int blockIndex = grid->GetIBlock();
     int numberOfNodes = grid->GetNTotalNode();
-    int numberOfWallNodesInBlock = wallNodeCoordinateXInBlocksIn[blockIndex].size();
+    int numberOfWallNodesInBlock = static_cast<int>(wallNodeCoordinateXInBlocksIn[blockIndex].size());
 
     nodesMinDistanceInThisBlock = new RDouble[numberOfNodes];
 
@@ -3031,8 +3008,8 @@ void OversetConfig::SetKeyBufferByKeyActive()
 
 void OversetConfig::ComputeNodeAndCellTopology()
 {
-    int **cellNodeIndexContainer = grid->GetCell2NodeArray();
-    int **cellFaceIndexContainer = grid->GetCell2Face();
+    grid->GetCell2NodeArray();
+    grid->GetCell2Face();
 }
 
 void OversetConfig::CopyMinDist(RDouble *nodesMinDistanceInOtherBlockIn)
@@ -3075,7 +3052,7 @@ void OversetConfig::BuildMinMaxBoxOfZone()
     {
         RDouble &minInThisDimension = minBoxOfZone[iDimension];
         RDouble &maxInThisDimension = maxBoxOfZone[iDimension];
-        for (int iNode = 0; iNode < numberOfNodes; ++iNode)
+        for (int iNode = 0; iNode < numberOfNodes; ++ iNode)
         {
             RDouble &nodeCoordinateInThisDimension = nodeCoordinate[iDimension][iNode];
             minInThisDimension = MIN(minInThisDimension, nodeCoordinateInThisDimension);
@@ -3140,7 +3117,7 @@ void OversetConfig::SpecifyInitialInterNodesByDistance()
 
     for (int iNode = 0; iNode < numberOfNodes; ++iNode)
     {
-        if (nodesMinDistanceInOtherBlock[iNode] >= nodesMinDistanceInThisBlock[iNode])
+        if (nodesMinDistanceInOtherBlock[iNode] > nodesMinDistanceInThisBlock[iNode])
         {
             keyBasicActiveNodes[iNode] = 1;
         }
@@ -3261,7 +3238,7 @@ void OversetConfig::SetNodeCharacterOnPhysicalBoundary()
     SetField(keyActiveOfNodes, 0, numberOfNodes);
     SetField(keyActiveOfCells, 0, numberOfCells);
 
-    int numberOfPhysicalBoundaryNodes = physicalBoundaryNodeList.size();
+    int numberOfPhysicalBoundaryNodes = static_cast<int>(physicalBoundaryNodeList.size());
     for (int iNode = 0; iNode < numberOfPhysicalBoundaryNodes; ++iNode)
     {
         keyActiveOfNodes[physicalBoundaryNodeList[iNode]] = 1;
@@ -3428,7 +3405,7 @@ void OversetConfig::FindInterCells()
 
     for (int iCell = 0; iCell < numberOfCells; ++iCell)
     {
-        if (!keyActiveOfCells[iCell])
+        if (keyActiveOfCells[iCell] == 0)
         {
             int numberOfNodeInCell = cellNodeNumberContainer[iCell];
             for (int iNode = 0; iNode < numberOfNodeInCell; ++iNode)
@@ -3496,7 +3473,7 @@ void OversetConfig::MarkGlobalInterfaceNodes(int iBlock, vector< int > &keyNodes
 {
     if (blockIndex != iBlock) return;
 
-    int numberOfInterNodes = interfaceBoundaryNodeList.size();
+    int numberOfInterNodes = static_cast<int>(interfaceBoundaryNodeList.size());
     for (int iNode = 0; iNode < numberOfInterNodes; ++iNode)
     {
         int localNodeIndex = interfaceBoundaryNodeList[iNode];
@@ -3509,7 +3486,7 @@ void OversetConfig::CalLocalToGlobalInterfaceNodes(int iBlock, vector< int > &ke
 {
     if (blockIndex != iBlock) return;
 
-    int numberOfInterNodes = interfaceBoundaryNodeList.size();
+    int numberOfInterNodes = static_cast<int>(interfaceBoundaryNodeList.size());
     localToGlobalInterNodesIndex.resize(numberOfInterNodes);
 
     for (int iNode = 0; iNode < numberOfInterNodes; ++iNode)
@@ -3600,7 +3577,6 @@ void OversetConfig::CharacterCellToNode()
     int *keyActiveOfCells = this->GetKeyActiveOfCells();
 
     int numberOfCells = grid->GetNTotalCell();
-    int numberOfNodes = grid->GetNTotalNode();
 
     int **cellNodeIndexContainer = grid->GetCell2NodeArray();
     int *cellNodeNumberContainer = grid->GetNodeNumberOfEachCell();
@@ -3650,7 +3626,7 @@ int OversetConfig::CharacterNodeToValidNodeByCell()
         {
             for (int iNode = 0; iNode < cellNodeNumber; ++iNode)
             {
-                int nodeIndex = cellNodeIndexContainer[iCell][iNode];
+                int &nodeIndex = cellNodeIndexContainer[iCell][iNode];
                 if (keyBasicActiveNodes[nodeIndex] && !keyInBlockNodes[nodeIndex] && !keyActiveOfNodes[nodeIndex])
                 {
                     keyActiveOfNodes[nodeIndex] = 1;
@@ -3692,25 +3668,25 @@ void OversetConfig::CheckInterpolateRelationship(int iBlockIn,
             {
             case -3:
                 ++numberOfNegativeCellsInThisBlock_3In;
-                cout << "ERROR:" << endl;
+                /*cout << "ERROR:" << endl;
                 cout << "DonorLevel  = " << donorLevelOfThisCell << endl;
                 cout << "Interpolate = " << zoneIndex << " -> " << interpolateCellList[iCell] << endl;
                 cout << "Donor       = " << donorZoneIndex[iCell] << " -> " << donorCellIndex[iCell] << endl;
                 cout << "Postion     = " << setprecision(8) << setw(12)
                     << interpolateCellCenterX[iCell] << " "
                     << interpolateCellCenterY[iCell] << " "
-                    << interpolateCellCenterZ[iCell] << endl;
+                    << interpolateCellCenterZ[iCell] << endl;*/
                 break;
             case -2:
                 ++numberOfNegativeCellsInThisBlock_2In;
-                cout << "WARNING:" << endl;
+              /*  cout << "WARNING:" << endl;
                 cout << "DonorLevel  = " << donorLevelOfThisCell << endl;
                 cout << "Interpolate = " << zoneIndex << "->" << interpolateCellList[iCell] << endl;
                 cout << "Donor       = " << donorZoneIndex[iCell] << "->" << donorCellIndex[iCell] << endl;
                 cout << "Postion     = " << setprecision(8) << setw(12)
                     << interpolateCellCenterX[iCell] << " "
                     << interpolateCellCenterY[iCell] << " "
-                    << interpolateCellCenterZ[iCell] << endl;
+                    << interpolateCellCenterZ[iCell] << endl;*/
                 break;
             case -1:
                 ++numberOfNegativeCellsInThisBlock_1In;
@@ -3725,7 +3701,7 @@ void OversetConfig::DownInterfaceNodeCharacter()
     int    blockIndex = grid->GetIBlock();
     int **keyOfInterfaceNodesInBlocks = GetOversetConfigFactoryMulti()->GetKeyOfInterfaceNodesInBlocks();
 
-    int numberOfInterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+    int numberOfInterfaceBoundaryNodes = static_cast<int>(interfaceBoundaryNodeList.size());
     for (int iNode = 0; iNode < numberOfInterfaceBoundaryNodes; ++ iNode)
     {
         keyActiveOfNodes[interfaceBoundaryNodeList[iNode]] =
@@ -3738,7 +3714,7 @@ void OversetConfig::UpdateInterfaceNodeCharacter()
     int blockIndex = grid->GetIBlock();
     int **keyOfInterfaceNodesInBlocks = GetOversetConfigFactoryMulti()->GetKeyOfInterfaceNodesInBlocks();
 
-    int numberOfInterfaceBoundaryNodes = interfaceBoundaryNodeList.size();
+    int numberOfInterfaceBoundaryNodes = static_cast<int>(interfaceBoundaryNodeList.size());
     for (int iNode = 0; iNode < numberOfInterfaceBoundaryNodes; ++ iNode)
     {
         int &valueGlobal = keyOfInterfaceNodesInBlocks[blockIndex][localToGlobalInterfaceNodesMap[iNode]];

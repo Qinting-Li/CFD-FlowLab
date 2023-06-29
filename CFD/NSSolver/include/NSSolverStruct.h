@@ -66,6 +66,8 @@ private:
     bool JudgeIfProtectedRestart();
 
     void InitFlowAsRestart();
+    void InitialSetPartialParameter(StructGrid *grid, bool flowTag = true);
+
     void InitGrad(Grid *gridIn);
     void InitCGrid(Grid *fineGridIn, Grid *coarseGridIn);
     void ZeroResiduals(Grid *grid);
@@ -92,9 +94,14 @@ private:
     void ConservativePreconMatrix(Grid *gridIn);
 
     void Diagonal(Grid *gridIn);    //! Source linear.
+    //Compute the local time scale.
+    void ComputeTimeScale(Grid *gridIn);
+    //Compute the local time scale of flow.
+    void ComputeFlowTimeScale(Grid *gridIn);
 
     //! Set the boundary conditions.
     void Boundary(Grid *grid);
+    void CalculateBoundaryData();
     void CalPressureFactor(Grid *gridIn);
     void GetHeatTransferCoeff(Grid *gridIn);
     void InviscidFlux(Grid *gridIn);
@@ -102,15 +109,17 @@ private:
     void ViscousFlux(Grid *gridIn);
     void DualTimeSource(Grid *gridIn);
 
-
     //! Compute the chemical source terms.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
     void ChemicalSource(Grid *gridIn);  //! Source.
-    //Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
+    
+    void gravitySource(Grid* gridIn) {};  //! Source.
+                                        
+    //! Compute the distance between the center of the grid cell on the first layer and the center of the surface cell.
     void ComputeFirstLayerGridHeight(Grid *gridIn);
     void UpdateUnsteadyFlow(Grid *gridIn);
     RDouble UnsteadyConvergence(Grid *gridIn);
-    
+
     void ComputeViscousCoeff(Grid *gridIn);
     void ComputeViscousCoefficientWithoutChemical(Grid *gridIn);
     void ComputePreconditionCoefficient(Grid *gridIn);
@@ -163,10 +172,8 @@ private:
     void ReconGrad(Grid *gridIn, int iSurface);
 
     void RegisterCFDSolverInterfaceField();
-    void RegisterCFDSolverOversetField();
+    void RegisterOversetField();
     void ReleaseCFDSolverInterfaceField();
-    void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
-    void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *grid, const int &neighborZoneIndex, const int &neqn);
     void RotateVectorFromInterface(Grid *grid, const int &neighborZoneIndex, const int &neqn);
 
     void CompressGradientandLimitToInterfaceOnlyForMixGrid(DataContainer *&dataContainer, Grid *grid, const int &neighborZoneIndex);
@@ -193,6 +200,9 @@ private:
     void SolveLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
     void SolveLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep = false);
 
+    //! To determine the CFL number of the next iteration step.
+    void DetermineCFLNumber(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqProxy1);
+
 
     //! To execute the forward sweep of the Matrix LU-SGS method.
     //! @param[in ]: gridIn denotes the current computational regions of the grids.
@@ -203,17 +213,13 @@ private:
     //! @param[out]: dqProxy is an array that stores the difference values between the conservative variables at n and n+1 time step.
     void SolveMatrixLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
-    //! To determine the CFL number of the next iteration step.
-    void DetermineCFLNumber(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *dqProxy1);
-
-
     void SetGhostDQLUSGS(Grid *gridIn, RDouble4D &dq);
 
     //calculate the total area of all BC regions with the same BC name.
     void calculateBCArea(Grid *gridIn, StructBC *structBC);
 
     //calculate the mass flux ratio of all mass outlet BC regions with the same BC name.
-    void calculateMassFluxRatio(Grid *gridIn, StructBC *structBC);
+    void CalculateMassFluxRatio();
 
     void ViscousAdiabaticWall(Grid *gridIn, StructBC *structBC);
     void ViscousIsotropicWall(Grid *gridIn, StructBC *structBC, int iWallBC);
@@ -228,6 +234,9 @@ private:
 
     //! Get the primitiveVar of Inflow BC by Interrpolate from trajectory data.
     void SetBCInitialValuesByInterpolation(StructBC *structBC, RDouble *primitiveVar);
+
+    //! Modify primitiveVar of Inflow BC by SpeedCoef.
+    void SetBCInitialValuesBySpeedCoef(int nNumberOfSpeedStep, RDouble *primitiveVar);
 
     //! Mass flow in boundary condition.
     void MassFlowInletBC(Grid *gridIn, StructBC *structBC);
@@ -339,22 +348,22 @@ private:
     void ComputeHeatFlux(ActionKey *actkey, RDouble *HeatFlux);
 
 public:
-    RDouble4D *CompMachNumber(Grid *gridIn);
-    RDouble4D *CompMachNodeNumber(Grid* gridIn, Post_Visual *postVisualization);
-    RDouble4D *ComputeMachNumberField(Grid *gridIn);
+    RDouble4D * CompMachNumber(Grid *gridIn);
+    RDouble4D * CompMachNodeNumber(Grid* gridIn, Post_Visual *postVisualization);
+    RDouble4D * ComputeMachNumberField(Grid *gridIn);
 
     void ComputeVorticitybyQCriteria(Grid *gridIn, RDouble3D *&vorticity_x, RDouble3D *&vorticity_y, RDouble3D *&vorticity_z, RDouble3D *&vorticityMagnitude,  RDouble3D *&strain_rate, RDouble3D *&Q_criteria);
     void ComputeCp(Grid *gridIn, RDouble4D *&cp);
 
     //! Compute the dimensional variables for density, pressure, temperature and the number density of electron.
-    RDouble4D* ComputeDimensionalElectron(Grid *gridIn);
+    RDouble4D * ComputeDimensionalElectron(Grid *gridIn);
 
-    //! Compute the mean free path and the Knudsen number.
-    RDouble4D* ComputeKnudsenNumber(Grid *gridIn);
+    RDouble4D * ComputeDimensionalVariables(Grid *gridIn);
 
-    RDouble4D* ComputeDimensionalVariables(Grid *gridIn);
+    RDouble4D * ComputePrimitiveVariablesWithMoleFraction(Grid *gridIn);
 
-    RDouble4D *ComputePrimitiveVariablesWithMoleFraction(Grid *gridIn);
+    //! Compute the non-equilibrium number, such as the Damkohler number, Vibrational non-equilibrium number, etc.
+    RDouble4D * ComputeNonequiliriumNumber(Grid *gridIn);
 
 public:
     void VisualizationVariables(Grid *gridIn, FieldProxy *workProxy, const string &filename);

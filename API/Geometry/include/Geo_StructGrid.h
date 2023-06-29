@@ -70,6 +70,11 @@ private:
     //! Distance to wall
     RDouble3D *walldist;
 
+    //! Normal direction of the wall face nearest to a cell.
+    RDouble3D *nearestwallfacenormalx;
+    RDouble3D *nearestwallfacenormaly;
+    RDouble3D *nearestwallfacenormalz;
+
     //! overset iblank
     Int3D *iBlank3D;
 
@@ -96,9 +101,11 @@ private:
 
     UnstructGrid *gridUnstr;
 
- //   //! Ordinary grid information.
- //   int ordinaryGridIndex;
- //   int ordinaryDimStartIndex[3], ordinaryDimEndIndex[3];
+    //! Ordinary grid information.
+    int ordinaryGridIndex;
+    int ordinaryDimStartIndex[3], ordinaryDimEndIndex[3];
+
+    RDouble partialCFL;
 
 public:
     LIB_EXPORT StructGrid();
@@ -110,6 +117,15 @@ public:
 
     //! Return the wall distance (walldist) pointer.
     RDouble3D * GetWallDist() const;
+
+    //! Return the nearest wall face normal x pointer.
+    RDouble3D * GetNearestWallFaceNormalX() const;
+
+    //! Return the nearest wall face normal y pointer.
+    RDouble3D * GetNearestWallFaceNormalY() const;
+
+    //! Return the nearest wall face normal z pointer.
+    RDouble3D * GetNearestWallFaceNormalZ() const;
 
     //! Return the wall cell label for the first layer of wall boundary.
     Int3D * GetWallCellLabel();
@@ -239,14 +255,14 @@ public:
     //! Return the face iteration index, for example: if nSurface = 1, then iFaceStart = 0, iFaceEnd = ni-1.
     void GetFaceIterationIndex(int &iFaceStart, int &iFaceEnd, int &jFaceStart, int &jFaceEnd, int &kFaceStart, int &kFaceEnd, int iSurface);
 
-	//! Get the face index.
-	void GetNsurfIndex(int &il1, int &jl1, int &kl1, int iDimension);
+    //! Get the face index.
+    void GetNsurfIndex(int &il1, int &jl1, int &kl1, int iDimension);
 
-	//! Get the left cell list of each face.
-	void GetLeftCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ile, int &jle, int &kle, int iDimension);
+    //! Get the left cell list of each face.
+    void GetLeftCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ile, int &jle, int &kle);
 
-	//! Get the right cell list of each face.
-	void GetRightCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ire, int &jre, int &kre, int iDimension);
+    //! Get the right cell list of each face.
+    void GetRightCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ire, int &jre, int &kre);
 
     //! Assign the node dimension of I, J, K direction to si, sj ,sk.
     void GetND(int &si, int &sj, int &sk) const;
@@ -460,8 +476,9 @@ public:
 
     //! Write face boundary condition to file stream.
     LIB_EXPORT void WriteFaceBC(fstream &file);
-
+#pragma warning(disable:4100)
     LIB_EXPORT RDouble SkewnessSummary(ActionKey *actkey = 0) { return 1.0; }
+#pragma warning(default:4100)
     
     void GetLocalIndex(int gp, int &ip, int &jp, int &kp) const;
     void GetLocalCenter(int gp, int &ip, int &jp, int &kp) const;
@@ -523,12 +540,20 @@ public:
     void ComputeCellBoundaryType();
     Int3D *GetCellBoundaryType();
 
- //   void SetOrdinaryGridIndex(int ordinaryGridIndexIn);
- //   void SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn);
- //   void SetOrdinaryDimEndIndex  (int *ordinaryDimEndIndexIn);
- //   int  GetOrdinaryGridIndex();
- //   int *GetOrdinaryDimStartIndex();
- //   int *GetOrdinaryDimEndIndex();
+    void SetOrdinaryGridIndex(int ordinaryGridIndexIn);
+    void SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn);
+    void SetOrdinaryDimEndIndex  (int *ordinaryDimEndIndexIn);
+    int  GetOrdinaryGridIndex();    
+    int *GetOrdinaryDimStartIndex();
+    int *GetOrdinaryDimEndIndex();
+    void GetOrdinaryNodeIndex(int iIndexIn, int jIndexIn,int kIndexIn,int &iOrdinaryIndexOut,int &jOrdinaryIndexOut,int &kOrdinaryIndexOut);
+    void GetOrdinaryCellIndex(int iIndexIn, int jIndexIn,int kIndexIn,int &iOrdinaryIndexOut,int &jOrdinaryIndexOut,int &kOrdinaryIndexOut);
+
+    RDouble  GetPartialCFL();
+    void SetPartialCFL(RDouble PartialCFL){ partialCFL = PartialCFL;}
+
+    void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &neqn);
+    void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &neqn);
 
 private:
     void ReadXYZ(fstream &file, RDouble3D &coor, int ist, int ied, int jst, int jed, int kst, int ked);
@@ -543,10 +568,10 @@ private:
     void AllocateMetricsStructHighOrder(ActionKey *actkey);
     void ComputeMetricsStructHighOrder2D(ActionKey *actkey);
     void ComputeMetricsStructHighOrder3D(ActionKey *actkey);
-    void ComputeMetricsStructHighOrder2D_HDCS(ActionKey *actkey);
-    void ComputeMetricsStructHighOrder3D_HDCS(ActionKey *actkey);
-    void GhostMetricsStructHighOrder2D(ActionKey *actkey);
-    void GhostMetricsStructHighOrder3D(ActionKey *actkey);
+    void ComputeMetricsStructHighOrder2D_HDCS();
+    void ComputeMetricsStructHighOrder3D_HDCS();
+    void GhostMetricsStructHighOrder2D();
+    void GhostMetricsStructHighOrder3D();
 
     //! @brief grid difference operator for a whole line.
     void GridDelta(const Range &NP, const Range &NI, RDouble2D *LineData1, RDouble2D *LineData2);
@@ -559,6 +584,9 @@ private:
     void DecodeGrid(DataContainer *cdata);
     void DumpWalldist(ActionKey *actkey);
     void ReadWalldist(RDouble *wallDistIn);
+    void ReadNearestwallfacenormalx(RDouble* nearestwallfaceNormalxIn);
+    void ReadNearestwallfacenormaly(RDouble* nearestwallfaceNormalyIn);
+    void ReadNearestwallfacenormalz(RDouble* nearestwallfaceNormalzIn);
     void GetCellCenter(ActionKey *actkey);
     void TranslateCellCenter(ActionKey *actkey);
     bool CommunicateNodeLocation();
@@ -614,8 +642,8 @@ void MinMaxDiffINF(StructGrid *grid, int ig, RDouble *dmin, RDouble *dmax, RDoub
 void BarthLimiterINF (StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int m);
 void VencatLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int m);
 
-void EncodeIJK(int &index, int i, int j, int k, int ni, int nj, int nk);
-void DecodeIJK(int index, int &i, int &j, int &k, int ni, int nj, int nk);
+void EncodeIJK(int &index, int i, int j, int k, int ni, int nj);
+void DecodeIJK(int index, int &i, int &j, int &k, int ni, int nj);
 
 void GetIJKRegion(const Range &I, const Range &J, const Range &K, int &ist, int &ied, int &jst, int &jed, int &kst, int &ked);
 void GetNsurfIndex(int nsurf, int &i, int &j, int &k);

@@ -50,6 +50,19 @@ public:
     //! @param[out]: indicates the conservative variables.
     void Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q);
 
+#ifdef USE_GMRESSOLVER
+    // GMRESPV 
+    // the derivative of primitive variables w.r.t conservative variables
+    void dPrimitive2dConservative(RDouble *prim, RDouble gama, RDouble** dqdcv);
+
+    // GMRESVis
+    // the derivative of primitive variables w.r.t conservative variables
+    void dGradient2dPrimitive(RDouble *prim, int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol,int nPara = 6);
+    
+    // GMRESnolim
+    void dGradient2dPrimitive4limiter(int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol);
+#endif
+
     //! To obtain the total energy E = e + 1/2*V2.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables, gama is the specific heat ratio of the mixture gas.
     //! @param[in ]: vibrationTemperature is non-dimensional value of vibration temperature.
@@ -125,9 +138,17 @@ public:
 
     //!Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used). However, only the T and p is useful. 
     //!The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
+    void SetAirInformationByExpData(int useSetting);
     void SetAirInformationByExpData();
 
     void GetAirInfo(const RDouble &height, RDouble &temperature, RDouble &pressure, RDouble &density, RDouble &soundspeed);
+
+    void SetAirInformationByWRFDataBase();
+    void ReadAirInfo(string &filepath, RDouble &longitude, RDouble &latitude, RDouble &temperature, RDouble &pressure, RDouble &density, RDouble &angle, RDouble &velocity, RDouble &soundspeed);
+    void ReadWRFSingleData(string &filepath, string &varname,int &fileindex, RDouble &longitude, RDouble &latitude, vector< RDouble > & variable);
+    void ReadWRFDoubleData(string &filepath, string &varname,int &fileindex, RDouble &longitude, RDouble &latitude, vector< RDouble > & variable1, vector< RDouble > & variable2);
+    RDouble ComputeVariablesAverage(vector< RDouble > & variable);
+
 
     void ComputeReferenceParameter();
 
@@ -172,5 +193,5 @@ public:
 };
 
 }
-
+bool CheckIfLocationInMinMaxBox(RDouble longitude,RDouble latitude,RDouble a,RDouble b,RDouble c,RDouble d);
 }

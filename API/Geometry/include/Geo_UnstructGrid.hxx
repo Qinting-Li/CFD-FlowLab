@@ -318,6 +318,21 @@ inline RDouble *UnstructGrid::GetWallDist() const
     return walldist;
 }
 
+inline RDouble *UnstructGrid::GetNearestWallFaceNormalX() const
+{
+    return nearestwallfacenormalx;
+}
+
+inline RDouble *UnstructGrid::GetNearestWallFaceNormalY() const
+{
+    return nearestwallfacenormaly;
+}
+
+inline RDouble *UnstructGrid::GetNearestWallFaceNormalZ() const
+{
+    return nearestwallfacenormalz;
+}
+
 inline RDouble * UnstructGrid::GetWallDistNode() const
 {
     return walldistNode;
@@ -401,5 +416,59 @@ inline int * UnstructGrid::GetLI_LineOfCell() const
     return this->lineTopology->GetLI_LineOfCell();
 }
 
+#ifdef USE_INCOMSOLVER
 
+inline Vector3D *UnstructGrid::GetCellCenterVector() const
+{
+    return cellCenterVector;
+}
+
+inline Vector3D *UnstructGrid::GetFaceNormalVector() const
+{
+    return faceNormalVector;
+}
+
+inline int *UnstructGrid::GetLocalCell2GlobalMap() const
+{
+    return localCell2GlobalMap;
+}
+
+inline int *UnstructGrid::GetLocalCell2LocalMap() const
+
+{
+    return localCell2LocalMap;
+}
+
+
+inline void UnstructGrid::SetLocalCell2GlobalMap(int *localCell2GlobalMap)
+{
+    this->localCell2GlobalMap = localCell2GlobalMap;
+}
+
+inline void UnstructGrid::SetLocalCell2LocalMap(int *localCell2LocalMap)
+{
+    this->localCell2LocalMap = localCell2LocalMap;
+}
+
+inline void UnstructGrid::SetCell2ZoneIDMap(int *cell2ZoneIDMap)
+{
+    this->cell2ZoneIDMap = cell2ZoneIDMap;
+}
+
+inline int* UnstructGrid::GetCell2ZoneIDMap() const
+{
+    return cell2ZoneIDMap;
+}
+
+inline void UnstructGrid::SetCellCenterVector(Vector3D *cellC)
+{
+    cellCenterVector = cellC;
+}
+
+inline void UnstructGrid::SetFaceNormalVector(Vector3D *faceN)
+{
+    faceNormalVector = faceN;
+}
+
+#endif
 

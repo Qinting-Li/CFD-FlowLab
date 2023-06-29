@@ -21,7 +21,7 @@ using namespace std;
 namespace PHSPACE
 {
 //! Residual Initialize, called when task action.
-void InitResidual(ActionKey *actkey);
+void InitResidual();
 
 //! Residual collection, called when task action.
 void CollectResidual(ActionKey *actkey);
@@ -55,7 +55,7 @@ public:
 
 public:
     //! Residual Initialize globally.
-    void InitResidual(ActionKey *actkey);
+    void InitResidual();
 
     //! Residual collection globally.
     void CollectResidual(ActionKey *actkey);
@@ -65,9 +65,9 @@ public:
 
 private:
     void ComputeResidualNorm(RDouble *localNorm);
-    void PrepareFormatedResidual(int outnstep, string &formatRes, int level);
+    void PrepareFormatedResidual(int outnstep, string &formatRes);
     void PrintResidualtoWindow(int outnstep, string &formatRes);
-    void OutResResidualNorm(fstream &file, string &formatRes, std::ostringstream &oss, int outnstep);
+    void OutResResidualNorm(fstream &file, string &formatRes, std::ostringstream &oss);
     void FreeMemory();
 };
 

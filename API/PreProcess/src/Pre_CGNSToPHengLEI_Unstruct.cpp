@@ -6,6 +6,9 @@
 #include "Glb_Dimension.h"
 #include "TK_Exit.h"
 using namespace std;
+#pragma warning(disable:6385)
+#pragma warning(disable:26812)
+#pragma warning(disable:4701)
 
 namespace PHSPACE
 {
@@ -62,7 +65,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
     cg_nfamilies(fileid, baseid, &nFamilies);
 
     typedef char char_33[33];
-    char_33 *FamilyName;
+    char_33 *FamilyName=NULL;
     char_33 FamBCName;
 
     BCType_t *FamilyBCType = new BCType_t [nFamilies];
@@ -113,7 +116,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
                 if (strcmp(volumeName, FamilyName[iFam-1]) == 0)
                 {
                     char_33 name;
-                    char *desc;
+                    char *desc=NULL;
                     cg_goto(fileid, baseid, "Family_t", iFam, "end");
 
                     int nDesc;
@@ -256,7 +259,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
             cgsize_t nelem = iend - istart + 1;
             if (etype != MIXED)
             {
-                int ptnum = base_elem_elem_pt[etype];
+                int ptnum = static_cast<int>(base_elem_elem_pt[etype]);
                 elementdatasize = ptnum * nelem;
             }
             base_cgns_conn_list[iSection - 1] = new cgsize_t [elementdatasize];
@@ -275,7 +278,7 @@ void Pre_CGNSToPHengLEI_Unstruct::ReadGrid()
                 int index = 0;
                 for (; iNode < elementdatasize;)
                 {
-                    int ptnum = base_elem_elem_pt[base_cgns_conn_list[iSection - 1][iNode]];
+                    int ptnum = static_cast<int>(base_elem_elem_pt[base_cgns_conn_list[iSection - 1][iNode]]);
                     base_cgns_mixed_conn_list[iSection - 1][index] = iNode;
 
                     iNode = iNode + ptnum + 1;

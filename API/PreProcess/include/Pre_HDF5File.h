@@ -45,19 +45,20 @@ private:
     void WriteTotalInfo(hid_t loc_id);
     void WriteGridCoordinates(hid_t loc_id, Grid *gridIn);
     void WriteInterfaceInfo(hid_t loc_id, Grid *gridIn);
-    void WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID);
- //   void WritePartitionInfo(hid_t loc_id, Grid *gridIn, int gridID);
+    void WriteLnkInfo(hid_t loc_id, Grid *gridIn);
     void WriteVolumeCondition(hid_t loc_id, Grid *gridIn);
 
     void WriteStructGrid(hid_t loc_id, Grid *gridIn);
     void WriteBCRegion(hid_t loc_id, Grid *gridIn);
     void WriteStrBCName(hid_t loc_id, Grid *gridIn);
+    void WriteStrPartitionInfo(hid_t loc_id, Grid *gridIn);
 
     void WriteUnstructGrid(hid_t loc_id, Grid *gridIn, int iZone);
     void WriteFaceTopology(hid_t loc_id, Grid *gridIn);
     void WriteCellTopology(hid_t loc_id, Grid *gridIn);
     void WriteUnstrBCName(hid_t loc_id, Grid *gridIn);
     void WriteInterpointInfo(hid_t loc_id, Grid *gridIn);
+    void WriteUnstrPartitionInfo(hid_t loc_id, Grid *gridIn);
 
 private:
     //! The grids int current processor
@@ -109,13 +110,14 @@ private:
     void ReadLnkInfo(hid_t loc_id, Grid *gridIn);
     void ReadLnk(hid_t loc_id, int iZone);
     void ReadStrBCName(hid_t loc_id, Grid *gridIn);
- //   void ReadPartitionInfo(hid_t loc_id, Grid *gridIn);
+    void ReadStrPartitionInfo(hid_t loc_id, Grid *gridIn);
 
     void ReadUnstructGrid(hid_t loc_id, int iZone);
     void ReadFaceTopology(hid_t loc_id, Grid *gridIn);
     void ReadCellTopology(hid_t loc_id, Grid *gridIn);
     void ReadUnstrBCName(hid_t loc_id, Grid *gridIn);
     void ReadInterpointInfo(hid_t loc_id, Grid *gridIn);
+    void ReadUnstrPartitionInfo(hid_t loc_id, Grid *gridIn);
 
     void SetNZones(int nZonesIn) { this->numberOfZones = nZonesIn; }
     int GetNZones() const { return numberOfZones; }

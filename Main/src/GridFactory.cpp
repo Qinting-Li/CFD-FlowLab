@@ -9,6 +9,8 @@
 #include "PHIO.h"
 #include "TK_Log.h"
 #include "Pre_StructToUnstruct.h"
+
+
 #include "FieldViewIn.h"
 #include "GridView.h"
 #include "Pre_CGNSToPlot3D_Struct.h"
@@ -548,7 +550,7 @@ void Fantasy2Fluent()
 
         Grid **gridMerged = combinedGrid->GetGridAll();
 
-        FantasyWriteToFluent(outGridFile, gridMerged, 1);
+        FantasyWriteToFluent(outGridFile, gridMerged);
 
         delete gridMerged[0];
         delete []gridMerged;
@@ -556,7 +558,7 @@ void Fantasy2Fluent()
     }
     else
     {
-        FantasyWriteToFluent(outGridFile, grids, 1);
+        FantasyWriteToFluent(outGridFile, grids);
     }
 
     delete []grids;
@@ -660,7 +662,7 @@ void MultiGridConvert()
         delete [] grids;
     }
 
-    WriteBoundaryInfo(&totalGrids[0], totalGrids.size());
+    WriteBoundaryInfo(&totalGrids[0], static_cast<int>(totalGrids.size()));
 
     for (int iZone = 0; iZone < totalGrids.size(); ++ iZone)
     {
@@ -774,6 +776,7 @@ void CombineGrid()
 
     combinedGrid->RunCombinGrid();
 
+    //combinedGrid->DumpMergedGrid(outGridFile, combinedGrid->GetGridAll(), 1);
     DumpGrid(outGridFile, combinedGrid->GetGridAll(), 1);
     delete combinedGrid;    combinedGrid = NULL;
     delete region;    region = NULL;
@@ -840,7 +843,7 @@ void GridgenToMIX()
         Grid *grid;
         if (iZone % 2 != 0)
         {
-            Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
+            grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
             grids[iZone] = grid;
             StrGridToUnsGrid(StructGridCast(structgrids[iZone]), UnstructGridCast(grid));
         }

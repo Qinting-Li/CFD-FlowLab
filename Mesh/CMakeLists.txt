@@ -88,8 +88,17 @@ if(WIN32)
 else(WIN32)
   set(CMAKE_CXX_COMPILER  mpicxx)
   set(CMAKE_C_COMPILER    mpicc)
-  
-  set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  if(${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR} MATCHES "Linux-x86_64")
+    if(USE_INTEL_COMPILER)
+      set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/intel")
+      message(STATUS "USE_INTEL_COMPILER is turned on!")
+    else(USE_INTEL_COMPILER)
+      set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}/gcc")
+      message(STATUS "USE_INTEL_COMPILER is turned off!")
+    endif()
+  else(${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR} MATCHES "Linux-aarch64")
+    set(THIRDPARTY_LIB_DIR "${PROJECT_SOURCE_DIR}/3rdparty/liblinux/${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  endif()
 endif(WIN32)
 # specify directory in which the linker will look for libraries for myself libraries:
 message(STATUS "The 3rdparty path is: ${THIRDPARTY_LIB_DIR}.") 
@@ -99,6 +108,11 @@ includeHeadFiles()
 
 set(HDF5_H_PATH   ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/HDF5/include)
 include_directories("${HDF5_H_PATH}")
+
+if(USE_TecplotLib)
+set(TECIO_H_PATH  ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/TECIO/include)
+include_directories("${TECIO_H_PATH}")
+endif(USE_TecplotLib)
 
 set(MEITIS_H_PATH ${PROJECT_SOURCE_DIR}/../PHengLEI/3rdparty/metis/include)
 include_directories("${MEITIS_H_PATH}")
@@ -161,12 +175,10 @@ include_directories(${OVERSET_CPP_PATH})
 set(HEAD_LIST
 ${OVERSET_H_LIST}
 )
-
 # set source file list:
 set(CPP_LIST 
 ${OVERSET_CPP_LIST}
 )
-
 # adds flags to the compiler command line for sources in the current directory and below:
 add_definitions(-DPH_PARALLEL -DPH_CGNS)
 

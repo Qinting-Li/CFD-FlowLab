@@ -61,7 +61,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadGrid()
         rawgrid->SetY(y);
         rawgrid->SetZ(z);
 
-        ReadFieldViewCoor(file, nversion, nTotalNode, x, y, z);
+        ReadFieldViewCoor(file, nTotalNode, x, y, z);
         GetFieldViewNBFace(file, nversion, nBoundFace);
 
         int nBC_Sections, nBCRegions;
@@ -73,7 +73,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadGrid()
         int *nBCElem;
         int *bc_type;
 
-        GetFieldViewBCCell(file, nversion, nBoundFace, nBCType, bctype_list, 
+        GetFieldViewBCCell(file, nBoundFace, bctype_list, 
             nBC_Sections, bc_elem_type, bc_istart, bc_iend, bc_elem_conn_list,
             nBCRegions, bc_conn_list, nBCElem, bc_type);
 
@@ -83,7 +83,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadGrid()
         int *elem_istart, *elem_iend;
         cgsize_t **elem_conn_list;
 
-        GetFieldViewMainCell(file, nversion, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list);
+        GetFieldViewMainCell(file, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list);
 
         MergeFieldViewCell(factory_cgns, iZone, nBoundFace, nTotalNode, nTotalCell, nElem_Sections, elem_type, elem_istart, elem_iend, elem_conn_list,
             nBC_Sections, bc_elem_type, bc_istart, bc_iend, bc_elem_conn_list, nBCRegions, bc_conn_list, nBCElem, bc_type);
@@ -413,7 +413,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::Gridgen2CGNSBCTypeTable(int nBCType, int 
     }
 }
 
-void Pre_FieldViewToPHengLEI_Unstruct::ReadFieldViewCoor(fstream &file, int nversion, int nTotalNode, RDouble *x, RDouble *y, RDouble *z)
+void Pre_FieldViewToPHengLEI_Unstruct::ReadFieldViewCoor(fstream &file, int nTotalNode, RDouble *x, RDouble *y, RDouble *z)
 {
     string line,word;
     string separator = " =\t\r\n#$,;";
@@ -460,7 +460,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::ReadFieldViewCoor(fstream &file, int nver
     cout << " zmin = " << setw(wordwidth) << zmin << " zmax = " << setw(wordwidth) << zmax << "\n";
 }
 
-void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nversion, int nBoundFace, int nBCType, int *bctype_list, 
+void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nBoundFace, int *bctype_list, 
                         int &nBC_Sections, int *&elem_type, int *&istart, int *&iend, cgsize_t **&conn_list,
                         int &nBCRegions, cgsize_t **&bc_conn_list,
                         int *&nBCElem, int *&bc_type)
@@ -538,7 +538,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
 
     for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        int icount = 0;
+        icount = 0;
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
             if (cell_bctype[iFace] == bc_type[iBCRegion])
@@ -552,7 +552,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
 
     for (int iBCRegion = 0; iBCRegion < nBCRegions; ++ iBCRegion)
     {
-        int icount = 0;
+        icount = 0;
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
             if (cell_bctype[iFace] == bc_type[iBCRegion])
@@ -639,7 +639,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     for (int m = 0; m < nBC_Sections; ++ m)
     {
         int etype = elem_type[m];
-        int ptnum = elem_pt[etype];
+        ptnum = elem_pt[etype];
         int nelem = iend[m] - istart[m] + 1;
         conn_list[m] = new cgsize_t [nelem*ptnum];
     }
@@ -670,7 +670,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
 
     for (int m = 0; m < nBC_Sections; ++ m)
     {
-        int icount = 0;
+        icount = 0;
         for (int iFace = 0; iFace < nBoundFace; ++ iFace)
         {
             if (cell_type[iFace] == elem_type[m])
@@ -701,7 +701,7 @@ void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewBCCell(fstream &file, int nve
     delete [] elem_pt;
 }
 
-void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewMainCell(fstream &file, int nversion, int &nTotalCell, int &nSections, int *&elem_type,
+void Pre_FieldViewToPHengLEI_Unstruct::GetFieldViewMainCell(fstream &file, int &nTotalCell, int &nSections, int *&elem_type,
                           int *&istart, int *&iend, cgsize_t **&conn_list)
 {
     string line, word;

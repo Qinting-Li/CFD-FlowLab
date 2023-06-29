@@ -217,17 +217,17 @@ LIB_EXPORT void WriteBinaryFile(ActionKey *actkey)
     WriteASCIIFile(file, actkey->GetData());*/
 }
 
-LIB_EXPORT void WriteSentinelFile(ActionKey *actkey)
+LIB_EXPORT void WriteSentinelFile()
 {
     fstream sentinelfile;
     string sentinelfilename = "results/sentinel";
     sentinelfile.open(sentinelfilename.c_str(),ios::in);
     if (!sentinelfile)
     {
-        fstream sentinelfile;
-        sentinelfile.open(sentinelfilename.c_str(), ios_base::out|ios_base::trunc);
-        sentinelfile.close();
-        sentinelfile.clear();
+        fstream sentinelfile1;
+        sentinelfile1.open(sentinelfilename.c_str(), ios_base::out|ios_base::trunc);
+        sentinelfile1.close();
+        sentinelfile1.clear();
     }
     else
     {
@@ -370,19 +370,19 @@ LIB_EXPORT void BroadcastInfo()
 
     PrintToWindow("Control parameters broad casting by server ...\n");
 
-    int server = GetServerProcessorID();
+    int serverTmp = GetServerProcessorID();
     int myid = GetCurrentProcessorID();
 
     DataContainer *cdata = new DataContainer();
 
-    if (myid == server)
+    if (myid == serverTmp)
     {
         PHSPACE::GlobalDataBase::CompressData(cdata);
     }
 
     PH_BcastByServer(cdata);
 
-    if (myid != server)
+    if (myid != serverTmp)
     {
         PHSPACE::GlobalDataBase::DecompressData(cdata);
     }

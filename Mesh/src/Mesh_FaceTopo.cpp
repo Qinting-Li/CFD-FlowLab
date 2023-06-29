@@ -185,10 +185,10 @@ void Mesh_FaceTopo::ScanChildFace(PHVectorInt1D cell2Node, int cellType, int cel
         if (globalFaceIndex == INVALID_INDEX)
         {
             uint_t globalFaceNumber = faceList.size();
-            uint_t faceNumber = leftCellIndex.size();
-            if (globalFaceNumber != faceNumber)
+            uint_t faceNumber1 = leftCellIndex.size();
+            if (globalFaceNumber != faceNumber1)
             {
-                cout << "globalFaceNumber != faceNumber " << globalFaceNumber << " " << faceNumber << "\n";
+                cout << "globalFaceNumber != faceNumber " << globalFaceNumber << " " << faceNumber1 << "\n";
                 TK_Exit::PrintDebugInfoExit("");
             }
 

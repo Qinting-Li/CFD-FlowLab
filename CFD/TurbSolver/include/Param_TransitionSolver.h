@@ -22,7 +22,6 @@ namespace PHSPACE
 class Param_TransitionSolver : public Param_CFDSolver
 {
 public:
-    LIB_EXPORT Param_TransitionSolver();
 
     LIB_EXPORT ~Param_TransitionSolver();
 

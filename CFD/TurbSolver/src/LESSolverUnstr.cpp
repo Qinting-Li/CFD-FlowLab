@@ -105,7 +105,153 @@ void LESSolverUnstr::ComputeCellLengthScale(Grid *gridIn)
 
 void LESSolverUnstr::Boundary(Grid *gridIn)
 {
+    /*
+    UnstructGrid *grid = UnstructGridCast(gridIn);
 
+    int *leftCellOfFace  = grid->GetLeftCellOfFace();
+    int *rightCellOfFace = grid->GetRightCellOfFace();
+    RDouble *wallDistance = grid->GetWallDist();
+
+    RDouble  *nxs  = grid->GetFaceNormalX();
+    RDouble  *nys  = grid->GetFaceNormalY();
+    RDouble  *nzs  = grid->GetFaceNormalZ();
+
+    UnstructBCSet **bcRecord = grid->GetBCRecord();
+    int numberOfBoundaryFace = grid->GetNBoundFace();
+
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
+    RDouble **q      = reinterpret_cast<RDouble **> (grid->GetDataPtr("q"));
+    RDouble *gamma = reinterpret_cast<RDouble *> (grid->GetDataPtr("gama"));
+    RDouble *viscousLaminar = reinterpret_cast<RDouble  *> (grid->GetDataPtr("visl"));
+    RDouble *viscousTurbulence = reinterpret_cast<RDouble  *> (grid->GetDataPtr("vist"));
+
+    RDouble freeStreamViscosity = parameters->GetFreeStreamViscosity();
+
+    RDouble refReNumber = parameters->GetRefReNumber();
+    RDouble refGama = parameters->GetRefGama();
+
+    using namespace IDX;
+    using namespace PHENGLEI;
+
+    RDouble *primitiveVariableInflow = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble roo = primitiveVariableInflow[IR];
+    RDouble uoo = primitiveVariableInflow[IU];
+    RDouble voo = primitiveVariableInflow[IV];
+    RDouble woo = primitiveVariableInflow[IW];
+    RDouble poo = primitiveVariableInflow[IP];
+
+    RDouble gamm1 = refGama - 1.0;
+
+    int count = 0;
+
+    for (int iFace = 0; iFace < numberOfBoundaryFace; ++ iFace)
+    {
+        int le = leftCellOfFace [iFace];
+        int re = rightCellOfFace[iFace];
+        int bcType = bcRecord[iFace]->GetKey();
+
+        if (IsInterface(bcType))
+        {
+            //! This statement is very important, and related to the way this part is written.
+            continue;
+        }
+        else if (bcType == EXTRAPOLATION)
+        {
+            viscousTurbulence[re] = viscousTurbulence[le];
+        }
+        else if (IsWall(bcType))
+        {
+            viscousTurbulence[re] = -viscousTurbulence[le];
+        }
+        else if (bcType == SYMMETRY)
+        {
+            viscousTurbulence[re] = viscousTurbulence[le];
+        }
+        else if (bcType == FARFIELD)
+        {
+            RDouble rin,uin,vin,win,pin;
+            RDouble vno,vni,vei,coo,cin;
+            RDouble riemp,riemm,cb,vnb;
+
+            rin = q[IR][le];
+            uin = q[IU][le];
+            vin = q[IV][le];
+            win = q[IW][le];
+            pin = q[IP][le];
+
+            vno = nxs[iFace] * uoo + nys[iFace] * voo + nzs[iFace] * woo;
+            vni = nxs[iFace] * uin + nys[iFace] * vin + nzs[iFace] * win;
+            vei = sqrt(uin * uin + vin * vin + win * win);
+
+            RDouble gama = gamma[le];
+
+            coo = sqrt(ABS(refGama * poo / roo));
+            cin = sqrt(ABS(gama  * pin / rin));
+
+            //! supersonic
+            if (vei > cin)
+            {
+                if (vni >= 0.0)
+                {
+                    //! exit
+                    viscousTurbulence[re] = viscousTurbulence[le];
+                }
+                else
+                {
+                    //! inlet
+                    viscousTurbulence[re] = freeStreamViscosity;
+                }
+                continue;
+            }
+
+            //! subsonic
+            riemp = vni + 2.0 * cin / (gama  - 1.0);
+            riemm = vno - 2.0 * coo / (refGama - 1.0);
+            vnb   = half   * (riemp + riemm);
+            cb    = fourth * (riemp - riemm) * gama;
+
+            if (vnb >= 0.0)
+            {
+                //! exit
+                viscousTurbulence[re] = viscousTurbulence[le];
+            }
+            else
+            {
+                //! inlet
+                viscousTurbulence[re] = freeStreamViscosity;
+            }
+
+        }
+        else if (bcType == INFLOW)
+        {
+            viscousTurbulence[re] = freeStreamViscosity;
+        }
+        else if (bcType == PRESSURE_INLET)
+        {
+            viscousTurbulence[re] = freeStreamViscosity;
+        }
+        else if (bcType == MASS_FLOW_INLET)
+        {
+            viscousTurbulence[re] = freeStreamViscosity;
+        }
+        else if (bcType == OUTFLOW)
+        {
+            viscousTurbulence[re] = viscousTurbulence[le];
+        }
+        else if (bcType == PRESSURE_OUTLET)
+        {
+            viscousTurbulence[re] = viscousTurbulence[le];
+        }
+        else if (bcType == MASS_FLOW_OUTLET)
+        {
+            viscousTurbulence[re] = viscousTurbulence[le];
+        }
+        else
+        {
+            viscousTurbulence[re] = viscousTurbulence[le];
+        }
+    }
+    */
 }
 
 void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
@@ -148,7 +294,7 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
         int re = rightCellOfFace[iFace];
         int bcType = bcRecord[iFace]->GetKey();
 
-        if (bcType < 0)
+        if (IsInterface(bcType))
         {
             //! This statement is very important, and related to the way this part is written.
             continue;
@@ -171,7 +317,7 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
         else if (bcType == FARFIELD)
         {
             RDouble rin,uin,vin,win,pin;
-            RDouble vno,vni,vei,coo,cin;
+            RDouble vno,vni,vei,coo,cIN;
             RDouble riemp,riemm,cb,vnb;
 
             rin = q[IR][le];
@@ -187,41 +333,41 @@ void LESSolverUnstr::ObtainBoundaryValue(Grid *gridIn)
             RDouble gama = gamma[le];
 
             coo = sqrt(ABS(refGama * poo / roo));
-            cin = sqrt(ABS(gama  * pin / rin));
+            cIN = sqrt(ABS(gama  * pin / rin));
 
-            //! Supersonic
-            if (vei > cin)
+            //! supersonic
+            if (vei > cIN)
             {
                 if (vni >= 0.0)
                 {
-                    //! Exit
+                    //! exit
                     viscousTurbulence[re] = viscousTurbulence[le];
                     subgridScaleEnergy[re] = subgridScaleEnergy[le];
                 }
                 else
                 {
-                    //! Inlet
+                    //! inlet
                     viscousTurbulence[re] = freeStreamViscosity;
                     subgridScaleEnergy[re] = 0.0;
                 }
                 continue;
             }
 
-            //! Subsonic
-            riemp = vni + 2.0 * cin / (gama  - 1.0);
+            //! subsonic
+            riemp = vni + 2.0 * cIN / (gama  - 1.0);
             riemm = vno - 2.0 * coo / (refGama - 1.0);
             vnb   = half   * (riemp + riemm);
             cb    = fourth * (riemp - riemm) * gama;
 
             if (vnb >= 0.0)
             {
-                //! Exit
+                //! exit
                 viscousTurbulence[re] = viscousTurbulence[le];
                 subgridScaleEnergy[re] = subgridScaleEnergy[le];
             }
             else
             {
-                //! Inlet
+                //! inlet
                 viscousTurbulence[re] = freeStreamViscosity;
                 subgridScaleEnergy[re] = 0.0;
             }
@@ -298,6 +444,7 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
         if (gradientName == "ggnode" || gradientName == "ggnodelaplacian")
         {
             gridUnstruct->CompGradientGGNode_NEW(q[m], qnode[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
+            //gridUnstruct->CompGradientGGNode(q[m], gradPrimtiveVarX[m], gradPrimtiveVarY[m], gradPrimtiveVarZ[m]);
         }
         else if (gradientName == "ggcell")
         {
@@ -348,6 +495,7 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
         if (gradientName == "ggnode" || gradientName == "ggnodelaplacian")
         {
             gridUnstruct->CompGradientGGNode_NEW(t[m], tnode[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
+            //gridUnstruct->CompGradientGGNode(t[m], gradTemperatureX[m], gradTemperatureY[m], gradTemperatureZ[m]);
         }
         else if (gradientName == "ggcell")
         {
@@ -388,6 +536,29 @@ void LESSolverUnstr::GetGradientField(Grid *gridIn)
 
 void LESSolverUnstr::ComputeViscousCoeff(Grid *gridIn)
 {
+    /*
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+
+    ComputeStrainRateTensor(grid);
+
+    ComputeWallFunction(grid);
+
+    Param_LESSolverUnstruct *parameters = GetControlParameters();
+    int subgridScaleModel = parameters->GetSubgridScaleModel();
+
+    if (subgridScaleModel == 1)
+    {
+        Smagorinsky(grid);
+    }
+    else if (subgridScaleModel == 3)
+    {
+        WALE(grid);
+    }
+    else
+    {
+        TK_Exit::UnexpectedVarValue("subgridScaleModel", subgridScaleModel);
+    }
+    */
 }
 
 void LESSolverUnstr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy *dqProxy)

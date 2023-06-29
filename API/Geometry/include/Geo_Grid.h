@@ -349,7 +349,7 @@ public:
     //! after a rotation by 'dangle' and a translation by 'tcoord'.
     //! @param[in]  coord0    Original coordinates.
     //! @param[out] xyzref    New coordinates, after rotation and translation.
-    LIB_EXPORT void RotTransVel(RDouble *xyzref, RDouble *dangle, RDouble *tcoord, RDouble **angle0, RDouble **coord0);
+    LIB_EXPORT void RotTransVel(RDouble *xyzref, RDouble *dangle, RDouble *tcoord, RDouble **coord0);
 
     //! This subroutine calculates the grid velocity at the cell vertexes.
     //! Compute the components of the rotation vector.
@@ -468,6 +468,11 @@ public:
     //! 
     virtual void ReadWalldist(RDouble *wallDistIn) = 0;
 
+    //!
+    virtual void ReadNearestwallfacenormalx(RDouble *nearestwallfaceNormalxIn) = 0;
+    virtual void ReadNearestwallfacenormaly(RDouble *nearestwallfaceNormalyIn) = 0;
+    virtual void ReadNearestwallfacenormalz(RDouble *nearestwallfaceNormalzIn) = 0;
+
     //! 
     virtual void DumpWalldist(ActionKey *actkey) = 0;
 
@@ -526,6 +531,27 @@ public:
 
     virtual int  GetOrdinaryGridIndex() { return -1; };
 
+    virtual RDouble  GetPartialCFL() { return -1.0; };
+
+#pragma warning(disable:4100)
+    virtual void SetPartialCFL(RDouble PartialCFL){ 
+#pragma warning(default:4100) 
+    };
+
+    //! To compress the specified array to the the DataContainer which will be sent by parallel communication .
+    //! @param[out]: dataContainer denotes the compress database which will be sent.
+    //! @param[in ]: fieldName denotes the name of flow field to communicate.
+    //! @param[in ]: neighborZoneIndex denotes the grid index of target zone.
+    //! @param[in ]: nEquation denotes the number of variable to send.
+    virtual void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &nEquation) = 0;
+
+    //! To decompress the specified array from the the DataContainer received from parallel communication.
+    //! @param[in ]: dataContainer denotes the compress database which was received.
+    //! @param[in ]: fieldName denotes the name of flow field to communicate.
+    //! @param[in ]: neighborZoneIndex denotes the grid index of source zone.
+    //! @param[in ]: nEquation denotes the number of received variable.
+    virtual void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &nEquation) = 0;
+
 protected:
     virtual void AllocateMetrics(ActionKey *actkey) = 0;
     void FreeInterfaceField();
@@ -560,6 +586,8 @@ int GetFaceType(int dimension, int nodeNumberOfFace);
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //! Special functions for HYBRID solver.
 bool IsConvertGridToMixGrid();
+
+LIB_EXPORT void CommunicateSpecificArray(int level, string arrayName, int nEquation);
 
 extern ZoneConnectivity *zoneConnectivity;
 extern ZoneConnectivityForPoint *zoneConnectivityForPoint;

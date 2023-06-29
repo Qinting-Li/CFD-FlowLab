@@ -289,12 +289,12 @@ void Pre_GridMirror::DumpUnstrGrid(string out_gfile)
                 int num;
                 PHRead(cdata, &num, 1);
 
-                int *cell2node = new int [num];
+                int *cell2nodeA = new int [num];
                 int *cell2node_mir = new int [num];
-                UnstructGridCast(grid)->SetCell2Node(cell2node);
+                UnstructGridCast(grid)->SetCell2Node(cell2nodeA);
                 UnstructGridCast(Mirror)->SetCell2Node(cell2node_mir);
 
-                PHRead(cdata, cell2node, num);
+                PHRead(cdata, cell2nodeA, num);
                 PHRead(cdata, cell2node_mir, num);
             }
         }
@@ -664,7 +664,7 @@ void Pre_GridMirror::ReadLnkFile(const string &fileName_in)
             StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
-            if (bctype >= 0) continue;
+            if ((!IsInterface(bctype))) continue;
 
             int imin, imax, jmin, jmax, kmin, kmax, nbt;
 
@@ -909,30 +909,30 @@ void Pre_GridMirror::GridMirror()
         if (gridtype == STRUCTGRID)
         {
             StructGrid *grid = StructGridCast(OrdinaryGrid[iZone]);
-            MirrorGridStr(iZone, grid);
+            MirrorGridStr(grid);
         }
         else
         {
             UnstructGrid *grid = UnstructGridCast(OrdinaryGrid[iZone]);
-            MirrorGridUnstr(iZone, grid);
+            MirrorGridUnstr(grid);
         }
     }
 }
 
-void Pre_GridMirror::MirrorGridUnstr(int iZone, UnstructGrid *grid_in)
+void Pre_GridMirror::MirrorGridUnstr(UnstructGrid *grid_in)
 {
     int Gridindex = grid_in->GetGridID()->GetIndex();
     PHWrite(gridinfo, &Gridindex, 1);
 
-    MirrorCoordinate(iZone, grid_in);
-    MirrorNodeNumberOfEachFace(iZone, grid_in);
-    MirrorFace2Node(iZone, grid_in);
-    MirrorCellOfFace(iZone, grid_in);
-    MirrorCell2Node(iZone, grid_in);
+    MirrorCoordinate(grid_in);
+    MirrorNodeNumberOfEachFace(grid_in);
+    MirrorFace2Node(grid_in);
+    MirrorCellOfFace(grid_in);
+    MirrorCell2Node(grid_in);
     //mirrorindex ++;
 }
 
-void Pre_GridMirror::MirrorCell2Node(int iZone, UnstructGrid *grid_in)
+void Pre_GridMirror::MirrorCell2Node(UnstructGrid *grid_in)
 {
     int nTotalCells = grid_in->GetNTotalCell();
 
@@ -964,7 +964,7 @@ void Pre_GridMirror::MirrorCell2Node(int iZone, UnstructGrid *grid_in)
     PHWrite(gridinfo, cell2node_ordinary, num);
 }
 
-void Pre_GridMirror::MirrorCellOfFace(int iZone, UnstructGrid *grid_in)
+void Pre_GridMirror::MirrorCellOfFace(UnstructGrid *grid_in)
 {
     int nTotalFace = grid_in->GetNTotalFace();
     int nBoundFace = grid_in->GetNBoundFace();
@@ -983,7 +983,7 @@ void Pre_GridMirror::MirrorCellOfFace(int iZone, UnstructGrid *grid_in)
     PHWrite(gridinfo, right_cell_of_face_ordinary, nTotalFace);
 }
 
-void Pre_GridMirror::MirrorFace2Node(int iZone, UnstructGrid *grid_in)
+void Pre_GridMirror::MirrorFace2Node(UnstructGrid *grid_in)
 {
     int nTotalFace = grid_in->GetNTotalFace();
     int *node_number_of_each_face_ordinary = grid_in->GetNodeNumberOfEachFace();
@@ -1016,7 +1016,7 @@ void Pre_GridMirror::MirrorFace2Node(int iZone, UnstructGrid *grid_in)
     delete [] face2node_mir;
 }
 
-void Pre_GridMirror::MirrorNodeNumberOfEachFace(int iZone, UnstructGrid *grid_in)
+void Pre_GridMirror::MirrorNodeNumberOfEachFace(UnstructGrid *grid_in)
 {
     int nTotalFace = grid_in->GetNTotalFace();
     int *node_number_of_each_face_ordinary = grid_in->GetNodeNumberOfEachFace();
@@ -1025,7 +1025,7 @@ void Pre_GridMirror::MirrorNodeNumberOfEachFace(int iZone, UnstructGrid *grid_in
     PHWrite(gridinfo, node_number_of_each_face_ordinary, nTotalFace);
 }
 
-void Pre_GridMirror::MirrorCoordinate(int iZone, UnstructGrid *grid_in)
+void Pre_GridMirror::MirrorCoordinate(UnstructGrid *grid_in)
 {
     int nTotalNode = grid_in->GetNTotalNode();
     int nTotalFace = grid_in->GetNTotalFace();
@@ -1083,7 +1083,7 @@ void Pre_GridMirror::MirrorCoordinate(int iZone, UnstructGrid *grid_in)
     Mirror->ComputeMinMaxBox();*/
 }
 
-void Pre_GridMirror::MirrorGridStr(int iZone, StructGrid *grid_in)
+void Pre_GridMirror::MirrorGridStr(StructGrid *grid_in)
 {
     int Gridindex = grid_in->GetGridID()->GetIndex();
     PHWrite(gridinfo, &Gridindex, 1);
@@ -1230,7 +1230,7 @@ void Pre_GridMirror::MirrorBCRegion()
                 PHWrite(gridinfo, s_st_mir, 3);
                 PHWrite(gridinfo, s_ed_mir, 3);*/
 
-                /*if (bctype < 0)
+                /*if (IsInterface(bctype))
                 {
                     int *t_sd = bcregion->GetTargetStart();
                     int *t_ed = bcregion->GetTargetEnd();

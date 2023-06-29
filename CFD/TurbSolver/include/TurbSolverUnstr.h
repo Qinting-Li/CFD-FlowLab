@@ -64,10 +64,18 @@ public:
     
     //! Wall Boundary condition.
     void WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+
+#ifdef USE_GMRESSOLVER
+    //! GMRESturb Wall Boundary condition.
+    void GMRES_WallBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
     
+     //! GMRESturb Farfield Boundary condition.
+    void GMRES_FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
+#endif
+
     //! Farfield Boundary condition.
     void FarfieldBCRegion(Grid *gridIn, UnstructBC *bcRegionUnstruct);
-    
+
     //! Residuals are set to zero
     void ZeroResiduals(Grid *gridIn);
 
@@ -205,6 +213,12 @@ public:
 
     //! Source term of one equation turbulence model with many variants.
     void SourceFluxOneEquationOriginal(Grid *gridIn);
+ 
+ #ifdef USE_GMRESSOLVER
+    //! GMRESturb
+    void GMRES_SourceFluxOneEquationOriginal(Grid *gridIn);
+#endif
+
     void SourceFluxOneEquationOriginalCFL3D(Grid *gridIn);
     //void SourceFluxOneEquationEdwards(Grid *gridIn);
     //void SourceFluxOneEquationNew1(Grid *gridIn);
@@ -212,7 +226,16 @@ public:
 
     //! Get face value for viscous flux of computation.
     void GetVisFaceValue(Grid *gridIn, FaceProxy *faceProxy, int nst, int ned);
-    
+  
+#ifdef USE_GMRESSOLVER
+    //! GMRESCoupled
+    template <typename T>
+    void GMRES_GetVisFaceValue(UnstructBCSet *unstructBCSet, int iFace, int nBoundFace, int nTurbulenceEquation, RDouble KW_sigma,  T rhol, T rhor, T pressurel, T pressurer, T *turbQl, T *turbQr, T& mul, T& mlt, T& viscousLaminarl, T& viscousLaminarr);
+   
+    //! GMRESturb
+    void GMRES_ComputeVisflux (Grid *gridIn, FaceProxy *faceProxy, int nst, int ned);
+ #endif
+
     //! Compute viscous flux of turbulent equations.
     void ComputeVisflux (Grid *gridIn, FaceProxy *faceProxy, int nst, int ned);
     
@@ -275,7 +298,21 @@ public:
     
     //! Inviscid flux scheme for turbulence model equation.
     void NNDFlux(Grid *gridIn, FaceProxy *faceProxy, int nst, int ned);
-    
+
+#ifdef USE_GMRESSOLVER
+    //! GMRESturb
+    void GMRES_NNDFlux(Grid *gridIn, FaceProxy *FaceProxy, int nst, int ned);
+
+    //! GMRESCoupled fix left and right variables of turbulence model and NS equations, required for GMRES by AD
+    template <typename T>
+    void FixBoundaryQlQr(UnstructBCSet *unstructBCSet, int iFace, int nTurbulenceEquation, int nEquation, T *primQl, T *primQr, T *turbQl, T *turbQr);
+
+    //! GMRES solver -- a linear system solver
+    //! This method can be referenced "Sen Zhang, Boqian Wang, et al. Implementation of a Newton-Krylov Algorithm in the Open-source Solver PHengLEI[C]."
+    //! GPPS Hong Kong , October 17-19, 2023.
+    void GMRESSolver(Grid *gridIn, FieldProxy *dqProxy);
+#endif
+
     //! Get left and right variables of turbulence model and NS equation.
     void GetQlQr(Grid *gridIn, FaceProxy *faceProxy, int nst, int ned);
 

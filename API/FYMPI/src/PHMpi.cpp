@@ -103,15 +103,15 @@ void Initialization()
     PH_Init(argc, argv);
     PH_Rank(myID);
 
-    int numberOfProcessor;
-    PH_Size(numberOfProcessor);
-    SetNumberOfProcessor(numberOfProcessor);
+    int numberOfProcessorTmp;
+    PH_Size(numberOfProcessorTmp);
+    SetNumberOfProcessor(numberOfProcessorTmp);
     PHMPI::BuildProcessorTree();
     string proc_name;
     PH_GetProcessorName(proc_name);
 
     ostringstream oss;
-    oss << "Process " << myID << " numberOfProcessor = " << numberOfProcessor << " name = " << proc_name << endl;
+    oss << "Process " << myID << " numberOfProcessor = " << numberOfProcessorTmp << " name = " << proc_name << endl;
 
     if (GetCurrentProcessorID() == server)
     {
@@ -216,10 +216,10 @@ void BuildProcessorTree()
         processorTree->AddNode(node);
     }
 
-    int numberOfGridProcessor  = GetNumberOfGridProcessor();
-    int numberOfTotalProcessor = numberOfGridProcessor + numberOfOriginalProcessor;
+    int numberOfGridProcessorTmp  = GetNumberOfGridProcessor();
+    int numberOfTotalProcessor = numberOfGridProcessorTmp + numberOfOriginalProcessor;
 
-    if (numberOfGridProcessor == 0)
+    if (numberOfGridProcessorTmp == 0)
     {
         processorTreeForAllProcessor  = processorTree;
         processorTreeForGridProcessor = processorTree;
@@ -240,10 +240,10 @@ void BuildProcessorTree()
 
     //! processorTreeForGridProcessor.
     start = 0;
-    end = numberOfGridProcessor;
+    end = numberOfGridProcessorTmp;
     processorTreeForGridProcessor = new PHProcessorTree(dim, &start, &end);
 
-    for (int iProc = 0; iProc < numberOfGridProcessor; ++ iProc)
+    for (int iProc = 0; iProc < numberOfGridProcessorTmp; ++ iProc)
     {
         RDouble coord = static_cast<RDouble>(iProc);
         int item = iProc + numberOfOriginalProcessor;
@@ -412,24 +412,24 @@ int GetNumberOfProcStructUsed()
     return numberOfProcessorStructgridUsed;
 }
 
-void CreateZoneProcessorID(int nZones)
+void CreateZoneProcessorID(int nZonesTmp)
 {
     if (block_proc)
     {
         delete [] block_proc;
         //cout << "  Warning: block_proc array has been created, it would be deleted here !\n";
     }
-    block_proc = new int [nZones];
+    block_proc = new int [nZonesTmp];
 
     if (block_proc_grid)
     {
         delete [] block_proc_grid;
         //cout << "  Warning: block_proc array has been created, it would be deleted here !\n";
     }
-    block_proc_grid = new int [nZones];
+    block_proc_grid = new int [nZonesTmp];
 }
 
-void CreatetZoneProcessorID_INP(int nZones)
+void CreatetZoneProcessorID_INP(int nZonesTmp)
 {
     if (block_proc_inp)
     {
@@ -437,20 +437,20 @@ void CreatetZoneProcessorID_INP(int nZones)
         //cout << "  Warning: block_proc_inp array has been created, it would be deleted here !\n";
     }
 
-    block_proc_inp = new int [nZones];
+    block_proc_inp = new int [nZonesTmp];
 }
 
-void CreateZoneGridID(int nZones)
+void CreateZoneGridID(int nZonesTmp)
 {
     if (block_idx)
     {
         delete [] block_idx;
         //cout << "  Warning: block_idx array has been created, it would be deleted here !\n";
     }
-    block_idx = new int [nZones];
+    block_idx = new int [nZonesTmp];
 }
 
-void CreateZoneGridType(int nZones)
+void CreateZoneGridType(int nZonesTmp)
 {
     if (block_type)
     {
@@ -458,10 +458,10 @@ void CreateZoneGridType(int nZones)
         //cout << "  Warning: block_type array has been created, it would be deleted here !\n";
     }
 
-    block_type = new int [nZones];
+    block_type = new int [nZonesTmp];
 }
 
-void CreateZoneFileID(int nZones)
+void CreateZoneFileID(int nZonesTmp)
 {
     if (block_file)
     {
@@ -469,27 +469,27 @@ void CreateZoneFileID(int nZones)
         //cout << "  Warning: block_file array has been created, it would be deleted here !\n";
     }
 
-    block_file = new int [nZones];
+    block_file = new int [nZonesTmp];
 }
 
-void CreateZoneProcessorIDDump(int nZones)
+void CreateZoneProcessorIDDump(int nZonesTmp)
 {
     if (block_proc_dump)
     {
         delete [] block_proc_dump;
         //cout << "Warning: CreateZoneProcessorIDDumphas been created, it would be deleted here !\n";
     }
-    block_proc_dump = new int [nZones];
+    block_proc_dump = new int [nZonesTmp];
 }
 
-void CreateZoneGroupID(int nZones)
+void CreateZoneGroupID(int nZonesTmp)
 {
     if (block_group)
     {
         delete [] block_group;
         //cout << "Warning: CreateZoneGroupID has been created, it would be deleted here !\n";
     }
-    block_group = new int [nZones];
+    block_group = new int [nZonesTmp];
 }
 
 void FreeBlockData()
@@ -543,11 +543,11 @@ void FreeBlockData()
     localZoneIDToGlobalZoneID = NULL;
 }
 
-void CreateZoneStartPointContainer(int nZones)
+void CreateZoneStartPointContainer(int nZonesTmp)
 {
     using namespace PHMPI;
 
-    zoneStartPointContainer = new int [nZones];
+    zoneStartPointContainer = new int [nZonesTmp];
 }
 
 int *GetZoneStartPointContainer()
@@ -561,11 +561,11 @@ void DeleteZoneStartPointContainer()
     zoneStartPointContainer = NULL;
 }
 
-void CreateZoneStartCenterContainer(int nZones)
+void CreateZoneStartCenterContainer(int nZonesTmp)
 {
     using namespace PHMPI;
 
-    zoneStartCenterContainer = new int [nZones];
+    zoneStartCenterContainer = new int [nZonesTmp];
 }
 
 int * GetZoneStartCenterContainer()
@@ -579,9 +579,9 @@ void DeleteZoneStartCenterContainer()
     zoneStartCenterContainer = NULL;
 }
 
-void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int nZones, int numberOfPoints)
+void GenerateGlobalBinaryTree(int *zoneStartPointContainerTmp, int nZonesTmp, int numberOfPoints)
 {
-    binaryTree = new DataStruct_BinaryTree(zoneStartPointContainer, nZones, numberOfPoints);
+    binaryTree = new DataStruct_BinaryTree(zoneStartPointContainerTmp, nZonesTmp, numberOfPoints);
     return;
 }
 
@@ -768,25 +768,25 @@ void PH_Read_Bcast(fstream &file, void *data, int size, int proc)
 void PH_BcastToClinet(void *data, int size, int proc, int key, int tag)
 {
     int numberOfOriginalProcessor = GetNumberOfProcessor();
-    int numberOfGridProcessor     = GetNumberOfGridProcessor();
+    int numberOfGridProcessorTmp     = GetNumberOfGridProcessor();
 
-    int numberOfProcessor = numberOfOriginalProcessor;
+    int numberOfProcessorTmp = numberOfOriginalProcessor;
     int startProcessor = 0;
 
     //! 0: to original processors; 1: to grid processors; 2: to all processors.
     if (key == 0)
     {
-        numberOfProcessor = numberOfOriginalProcessor;
+        numberOfProcessorTmp = numberOfOriginalProcessor;
         startProcessor = 0;
     }
     else if (key == 1)
     {
-        numberOfProcessor = numberOfOriginalProcessor + numberOfGridProcessor;
+        numberOfProcessorTmp = numberOfOriginalProcessor + numberOfGridProcessorTmp;
         startProcessor = numberOfOriginalProcessor;
     }
     else if (key == 2)
     {
-        numberOfProcessor = numberOfOriginalProcessor + numberOfGridProcessor;
+        numberOfProcessorTmp = numberOfOriginalProcessor + numberOfGridProcessorTmp;
         startProcessor = 0;
     }
 
@@ -804,7 +804,7 @@ void PH_BcastToClinet(void *data, int size, int proc, int key, int tag)
 
     if (myID == proc)
     {
-        for (int i = startProcessor; i < numberOfProcessor; ++ i)
+        for (int i = startProcessor; i < numberOfProcessorTmp; ++ i)
         {
             if (i == proc) continue;
             PHSPACE::PH_Send(data, size, i, tag);
@@ -848,8 +848,8 @@ void PH_Bcast(void *data, int size, int proc, int tag)
 {
     if (myID == proc)
     {
-        int numberOfProcessor = GetNumberOfProcessor();
-        for (int i = 0; i < numberOfProcessor; ++ i)
+        int numberOfProcessorTmp = GetNumberOfProcessor();
+        for (int i = 0; i < numberOfProcessorTmp; ++ i)
         {
             if (i == proc)
             {
@@ -868,8 +868,8 @@ void PH_Bcast(DataContainer *cdata, int proc, int tag)
 {
     if (myID == proc)
     {
-        int numberOfProcessor = GetNumberOfProcessor();
-        for (int i = 0; i < numberOfProcessor; ++ i)
+        int numberOfProcessorTmp = GetNumberOfProcessor();
+        for (int i = 0; i < numberOfProcessorTmp; ++ i)
         {
             if (i == proc)
             {
@@ -1207,23 +1207,23 @@ void PH_BcastNonBlocking(DataContainer *&cdata, int bcastProcessor, int tag)
     vector<PH_Request> requestContainer;
 
     int sendProcessor = bcastProcessor;
-    int myID = GetCurrentProcessorID();
-    int numberOfProcessor = GetNumberOfProcessor();
+    int myIDTmp = GetCurrentProcessorID();
+    int numberOfProcessorTmp = GetNumberOfProcessor();
 
     CharVecSizeType dataLength;
-    if (myID == bcastProcessor)
+    if (myIDTmp == bcastProcessor)
     {
         dataLength = cdata->size();
     }
     PH_BcastNonBlocking(&dataLength, 1, bcastProcessor, 0);
 
-    if (myID == bcastProcessor)
+    if (myIDTmp == bcastProcessor)
     {
-        sendDataBuffer.reserve(numberOfProcessor);
-        requestContainer.reserve(numberOfProcessor);
+        sendDataBuffer.reserve(numberOfProcessorTmp);
+        requestContainer.reserve(numberOfProcessorTmp);
 
         //! Step 1: Server sending.
-        for (int iProc = 0; iProc < numberOfProcessor; ++ iProc)
+        for (int iProc = 0; iProc < numberOfProcessorTmp; ++ iProc)
         {
             if (iProc == bcastProcessor)
             {
@@ -1256,7 +1256,7 @@ void PH_BcastNonBlocking(DataContainer *&cdata, int bcastProcessor, int tag)
     }
 
     //! Step3: Translating.
-    if (myID != bcastProcessor)
+    if (myIDTmp != bcastProcessor)
     {
         if (cdata) delete cdata;
 
@@ -1313,8 +1313,8 @@ void PH_BcastString(string &cs, int processor, int tag)
 {
     if (myID == processor)
     {
-        int numberOfProcessor = GetNumberOfProcessor();
-        for (int i = 0; i < numberOfProcessor; ++ i)
+        int numberOfProcessorTmp = GetNumberOfProcessor();
+        for (int i = 0; i < numberOfProcessorTmp; ++ i)
         {
             if (i == processor)
             {
@@ -1340,8 +1340,8 @@ void PH_CollectString(string &cs, int processor, int tag)
     else
     {
         //! myID == proc, all information is received and handled by proc process.
-        int numberOfProcessor = GetNumberOfProcessor();
-        for (int i = 0; i < numberOfProcessor; ++ i)
+        int numberOfProcessorTmp = GetNumberOfProcessor();
+        for (int i = 0; i < numberOfProcessorTmp; ++ i)
         {
             if (i != processor)
             {
@@ -1429,10 +1429,10 @@ bool IsNeedNonBlockingCommunication(const ActionKey *actkey)
     {
         return true;
     }
-   /* if (actkey->action == COMMCELLIBLANK)
-    {
-        return true;
-    }*/
+    //if (actkey->action == COMMCELLIBLANK)
+    //{
+    //    return true;
+    //}
     if (actkey->action == UPDATE_INTERPOINT_DATA)
     {
         return true;
@@ -1458,11 +1458,11 @@ void DataCharToString(DataContainer *cdata, string &str)
 int GetSendRecvTag(ActionKey *actkey, int iZone)
 {
     using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
+    int nZonesTmp = GetNumberofGlobalZones();
 
     int tag = 0;
 
-    if (nZones <= 0)
+    if (nZonesTmp <= 0)
     {
         //! It is easy to make mistakes here.
         //! nZones is not assigned here.
@@ -1473,11 +1473,11 @@ int GetSendRecvTag(ActionKey *actkey, int iZone)
 
     if (actkey->kind == SOLVER_BASED)
     {
-        tag = iZone + actkey->solverID * nZones;
+        tag = iZone + actkey->solverID * nZonesTmp;
     }
     else
     {
-        tag = iZone + actkey->level * nZones;
+        tag = iZone + actkey->level * nZonesTmp;
     }
 
     return tag;
@@ -1486,11 +1486,11 @@ int GetSendRecvTag(ActionKey *actkey, int iZone)
 int GetSendRecvTag(int tagKind, int index, int iZone)
 {
     using namespace PHMPI;
-    int nZones = GetNumberofGlobalZones();
+    int nZonesTmp = GetNumberofGlobalZones();
 
     int tag = 0;
 
-    if (nZones <= 0)
+    if (nZonesTmp <= 0)
     {
         //! It is easy to make mistakes here.
         //! nZones is not assigned here.
@@ -1499,7 +1499,7 @@ int GetSendRecvTag(int tagKind, int index, int iZone)
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    tag = iZone + index * nZones;
+    tag = iZone + index * nZonesTmp;
 
     return tag;
 }
@@ -1509,19 +1509,19 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
     using namespace PHMPI;
 
 #ifdef PH_PARALLEL
-    int numberOfGridProcessor = GetNumberOfGridProcessor();
+    int numberOfGridProcessorTmp = GetNumberOfGridProcessor();
 
     //ostringstream oss;
     //oss << "sendingBuffer = " << sendingBuffer[ 0 ] << endl;
     //WriteLogFile(oss.str());
 
-    if (numberOfGridProcessor == 0)
+    if (numberOfGridProcessorTmp == 0)
     {
         MPI_Allreduce(sendingBuffer, receivingBuffer, numberOfElements, mpiDataType, op, MPI_COMM_WORLD);
         return;
     }
 
-    int server = PHMPI::GetServerSepMode();
+    int serverTmp = PHMPI::GetServerSepMode();
 
     int numberOfOriginalProcessor = GetNumberOfProcessor();
 
@@ -1531,10 +1531,10 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
     if (CurrentProcessorIsGridProcessor())
     {
         startProcessor = numberOfOriginalProcessor;
-        endProcessor = numberOfGridProcessor + numberOfOriginalProcessor;
+        endProcessor = numberOfGridProcessorTmp + numberOfOriginalProcessor;
     }
 
-    int myID = GetCurrentProcessorID();
+    int myIDTmp = GetCurrentProcessorID();
 
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
@@ -1543,19 +1543,19 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
 
     for (int iProc = startProcessor; iProc < endProcessor; ++ iProc)
     {
-        if (iProc == server)
+        if (iProc == serverTmp)
         {
             continue;
         }
 
         int tag = iProc;
 
-        if (myID == iProc)
+        if (myIDTmp == iProc)
         {
-            PH_SmartSend(sendingBuffer, numberOfElements, server, tag);
+            PH_SmartSend(sendingBuffer, numberOfElements, serverTmp, tag);
         }
 
-        if (myID == server)
+        if (myIDTmp == serverTmp)
         {
             int *tmpBuffer = new int[numberOfElements];
 
@@ -1593,7 +1593,7 @@ void PH_AllreduceSepMode(int *sendingBuffer, int *receivingBuffer, int numberOfE
 
     cdata = new DataContainer;
 
-    if (myID == server)
+    if (myIDTmp == serverTmp)
     {
         cdata->write(receivingBuffer, numberOfElements * sizeof(int));
     }
@@ -1618,19 +1618,19 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
     using namespace PHMPI;
 
 #ifdef PH_PARALLEL
-    int numberOfGridProcessor = GetNumberOfGridProcessor();
+    int numberOfGridProcessorTmp = GetNumberOfGridProcessor();
 
     //ostringstream oss;
     //oss << "sendingBuffer = " << sendingBuffer[0] << endl;
     //WriteLogFile(oss.str());
 
-    if (numberOfGridProcessor == 0)
+    if (numberOfGridProcessorTmp == 0)
     {
         MPI_Allreduce(sendingBuffer, receivingBuffer, numberOfElements, mpiDataType, op, MPI_COMM_WORLD);
         return;
     }
 
-    int server = PHMPI::GetServerSepMode();
+    int serverTmp = PHMPI::GetServerSepMode();
 
     int numberOfOriginalProcessor = GetNumberOfProcessor();
 
@@ -1640,10 +1640,10 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
     if (CurrentProcessorIsGridProcessor())
     {
         startProcessor = numberOfOriginalProcessor;
-        endProcessor = numberOfGridProcessor + numberOfOriginalProcessor;
+        endProcessor = numberOfGridProcessorTmp + numberOfOriginalProcessor;
     }
 
-    int myID = GetCurrentProcessorID();
+    int myIDTmp = GetCurrentProcessorID();
 
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
@@ -1652,19 +1652,19 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
 
     for (int iProc = startProcessor; iProc < endProcessor; ++ iProc)
     {
-        if (iProc == server)
+        if (iProc == serverTmp)
         {
             continue;
         }
 
         int tag = iProc;
 
-        if (myID == iProc)
+        if (myIDTmp == iProc)
         {
-            PH_SmartSend(sendingBuffer, numberOfElements, server, tag);
+            PH_SmartSend(sendingBuffer, numberOfElements, serverTmp, tag);
         }
 
-        if (myID == server)
+        if (myIDTmp == serverTmp)
         {
             float *tmpBuffer = new float [numberOfElements];
 
@@ -1702,7 +1702,7 @@ void PH_AllreduceSepMode(float *sendingBuffer, float *receivingBuffer, int numbe
 
     cdata = new DataContainer;
 
-    if (myID == server)
+    if (myIDTmp == serverTmp)
     {
         cdata->write(receivingBuffer, numberOfElements * sizeof(int));
     }
@@ -1727,19 +1727,19 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
     using namespace PHMPI;
 
 #ifdef PH_PARALLEL
-    int numberOfGridProcessor = GetNumberOfGridProcessor();
+    int numberOfGridProcessorTmp = GetNumberOfGridProcessor();
 
     //ostringstream oss;
     //oss << "sendingBuffer = " << sendingBuffer[0] << endl;
     //WriteLogFile(oss.str());
 
-    if (numberOfGridProcessor == 0)
+    if (numberOfGridProcessorTmp == 0)
     {
         MPI_Allreduce(sendingBuffer, receivingBuffer, numberOfElements, mpiDataType, op, MPI_COMM_WORLD);
         return;
     }
 
-    int server = PHMPI::GetServerSepMode();
+    int serverTmp = PHMPI::GetServerSepMode();
 
     int numberOfOriginalProcessor = GetNumberOfProcessor();
 
@@ -1749,10 +1749,10 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
     if (CurrentProcessorIsGridProcessor())
     {
         startProcessor = numberOfOriginalProcessor;
-        endProcessor = numberOfGridProcessor + numberOfOriginalProcessor;
+        endProcessor = numberOfGridProcessorTmp + numberOfOriginalProcessor;
     }
 
-    int myID = GetCurrentProcessorID();
+    int myIDTmp = GetCurrentProcessorID();
 
     for (int iElement = 0; iElement < numberOfElements; ++ iElement)
     {
@@ -1761,19 +1761,19 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
 
     for (int iProc = startProcessor; iProc < endProcessor; ++ iProc)
     {
-        if (iProc == server)
+        if (iProc == serverTmp)
         {
             continue;
         }
 
         int tag = iProc;
 
-        if (myID == iProc)
+        if (myIDTmp == iProc)
         {
-            PH_SmartSend(sendingBuffer, numberOfElements, server, tag);
+            PH_SmartSend(sendingBuffer, numberOfElements, serverTmp, tag);
         }
 
-        if (myID == server)
+        if (myIDTmp == serverTmp)
         {
             double *tmpBuffer = new double[numberOfElements];
 
@@ -1811,7 +1811,7 @@ void PH_AllreduceSepMode(double *sendingBuffer, double *receivingBuffer, int num
 
     cdata = new DataContainer;
 
-    if (myID == server)
+    if (myIDTmp == serverTmp)
     {
         cdata->write(receivingBuffer, numberOfElements * sizeof(double));
     }

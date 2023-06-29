@@ -73,7 +73,7 @@ void FaceNormal3D(RDouble *r1, RDouble *r2, RDouble *r3, RDouble *r4, RDouble *f
     const RDouble half = 0.5;
     for (int i = 0; i < 3; ++ i)
     {
-        faceNormal[i] = half * (p1[i] + p2[i]);
+        faceNormal[i] = half * (p1[i] + p2[i]) + SMALL;
     }
 }
 
@@ -87,7 +87,7 @@ void NormalizeVector(RDouble *vecIn, RDouble *vecOut, int nDim)
     vecOut[nDim] = sqrt(s);
 
     const RDouble one = 1.0;
-    RDouble os = one / (vecOut[nDim] + SMALL);
+    RDouble os = one / vecOut[nDim];
 
     for (int i = 0; i < nDim; ++ i)
     {

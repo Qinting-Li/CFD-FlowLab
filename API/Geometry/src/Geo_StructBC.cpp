@@ -145,7 +145,7 @@ void StructBC::ComputeRelativeParameters()
     return;
 }
 
-void StructBC::ProbeExternalOverlapCells(int *iBlank, int nci, int ncj, int nck, int &counter)
+void StructBC::ProbeExternalOverlapCells(int *iBlank, int nci, int ncj, int &counter)
 {
     vector <int> mst(3), med(3);
     for (int m = 0; m < 3; ++ m)

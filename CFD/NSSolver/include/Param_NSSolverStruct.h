@@ -61,6 +61,9 @@ public:
     //! Get iniSpeedCoef.
     RDouble GetIniSpeedCoef() const;
 
+    //! Get iniSpeedMode.
+    int GetIniSpeedMode() const;
+
 private:
     RDouble MUSCLCoefXk;
     RDouble MUSCLCoefXb;
@@ -81,6 +84,7 @@ private:
 
     RDouble iniSpeedCoef;
 
+    int iniSpeedMode;
 };
 
 #include "Param_NSSolverStruct.hxx"

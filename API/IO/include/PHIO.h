@@ -121,8 +121,7 @@ LIB_EXPORT void WriteASCIIFile(ActionKey *actkey);
 LIB_EXPORT void WriteBinaryFile(ActionKey *actkey);
 
 //! Write sentinel file needed by GUI.
-//! @param[in] actkey    an action key.
-LIB_EXPORT void WriteSentinelFile(ActionKey *actkey);
+LIB_EXPORT void WriteSentinelFile();
 
 //! Output to screen from datacontainer.
 //! @param[in] cdata    the datacontainer.

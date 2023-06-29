@@ -550,8 +550,6 @@ LIB_EXPORT void Mesh_Agglomeration::CoarsenGridOnceWithoutSkewnessLimit()
 
 void Mesh_Agglomeration::AspectRatioModifyBySkewness(RDouble *ratio, RDouble * xcc, RDouble * ycc, RDouble * zcc, const RDouble & limitAngle)
 {
-    const RDouble PI = 3.141592653589793;
-
     int nTotalFace = fineGrid->GetNTotalFace();
     int nBoundFace = fineGrid->GetNBoundFace();
     int *left_cell_of_face = fineGrid->GetLeftCellOfFace();

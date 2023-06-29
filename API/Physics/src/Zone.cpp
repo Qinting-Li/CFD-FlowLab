@@ -12,6 +12,10 @@
 #include "Glb_Dimension.h"
 #include "GridType.h"
 
+#ifdef USE_INCOMSOLVER
+#include "IncomGas.h"
+#endif
+
 #include "MixedGas.h"
 
 using namespace std;
@@ -19,8 +23,7 @@ using namespace std;
 #pragma warning (disable:913)
 namespace PHSPACE
 {
-
-int Zone::nsolver = 0;
+vector <Zone *> *GlobalZones;
 
 Zone::Zone(int index)
 {
@@ -30,6 +33,8 @@ Zone::Zone(int index)
 
     zPara  = new Data_Param();
     zField = new Data_Field();
+
+    nsolver = 0;
 }
 
 Zone::~Zone()
@@ -262,13 +267,23 @@ void InitGlobalValuesSolver()
     if (iapplication == 0)
     {
         using namespace GAS_SPACE;
-        if (chemical == 0)
+        int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
+        if (compressible == INCOMPRESSIBLE)
         {
-            gas = new PerfectGas();
+#ifdef USE_INCOMSOLVER
+            gas = new IncomGas();            
+#endif
         }
         else
         {
-            gas = new MixedGas();
+            if (chemical == 0)
+            {
+                gas = new PerfectGas();
+            }
+            else
+            {
+                gas = new MixedGas();
+            }
         }
         gas->InitGlobalParameterOfNSEquation();
     }
@@ -281,7 +296,6 @@ void InitGlobalValuesSolver()
 void CleanGlobalValuesSolver()
 {
     int iapplication = GlobalDataBase::GetIntParaFromDB("iapplication");
-    int chemical = GlobalDataBase::GetIntParaFromDB("nchem");
 
     if (iapplication == 0)
     {

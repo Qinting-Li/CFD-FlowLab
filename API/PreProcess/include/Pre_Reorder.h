@@ -103,11 +103,11 @@ namespace Reorder
     //! Output:nSwapFaceOfEachCell
     //! The function is used to provide a swap method to update a cell related varible
     //! After cell reorder. In the future, cell2node can be update by the method
-    void SwapFaceNumberOfEachFace(const int nTotalCell, const int *nFaceOfEachCell, const int *reflectCell, const int *newCell, const int *nNewFaceOfEachCell);
+    void SwapFaceNumberOfEachFace(const int nTotalCell, const int *nFaceOfEachCell, const int *reflectCell, const int *nNewFaceOfEachCell);
     
     //! Check swap method for face_number_of_each_face
     //! After swap, OrgCell=reflectCell, SwapCell=newCell, nSwapFaceOfEachCell=nNewFaceOfEachCell
-    void CheckSwapFaceNumber(const int nTotalCell, const int *orgCell, const int *swapCell, const int *reflectCell, const int *newCell, const int *nSwapFaceOfEachCell, const int *nNewFaceOfEachCell);
+    void CheckSwapFaceNumber(const int nTotalCell, const int *orgCell, const int *reflectCell, const int *nSwapFaceOfEachCell, const int *nNewFaceOfEachCell);
     
     //! Reorder cell label from nBoundFace to nTotalFace just with the order of faces in cell2face
     void CellReorderByCell2FaceOrder(const int nTotalCell, const int nTotalFace, const int *offsetCell2Face, const int *nFaceOfEachCell, const int *cell2Face, const int nBoundFace, int labelFace, int *newFaces);

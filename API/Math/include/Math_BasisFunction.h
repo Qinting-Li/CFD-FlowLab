@@ -73,6 +73,13 @@ inline T POWER3(const T &a)
     return a * a * a;
 }
 
+//! Return the nearest round number value of the input value.
+template < typename T >
+inline T ROUND(const T &a)
+{
+    return (a > 0.0) ? floor(a + 0.5):ceil(a - 0.5);
+}
+
 //! Return the square distance of the three input values.
 template < typename T >
 inline T SQR(const T &a, const T &b, const T &c)

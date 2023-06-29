@@ -11,8 +11,8 @@ DYNode::DYNode()
 
 DYNode::~DYNode()
 {
-    delete []node2node;
-    delete []node2nodeK;
+    delete [] node2node;
+    delete [] node2nodeK;
 }
 
 DYFace::DYFace()
@@ -21,7 +21,7 @@ DYFace::DYFace()
 }
 DYFace::~DYFace()
 {
-    delete []face2node;
+    delete [] face2node;
 }
 
 DYCell::DYCell()

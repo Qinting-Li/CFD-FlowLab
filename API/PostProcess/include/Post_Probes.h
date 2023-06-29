@@ -148,6 +148,12 @@ const int PROBE_DIMENSIONAL_V           = 9;
 const int PROBE_DIMENSIONAL_W           = 10;
 const int PROBE_DIMENSIONAL_PRESSURE    = 11;
 const int PROBE_DIMENSIONAL_TEMPERATURE = 12;
+const int PROBE_VELOCITY_MAGNITUDE      = 13;
+const int PROBE_VISCOSITY_LAMINAR     = 14;
+const int PROBE_VISCOSITY_TURBULENT   = 15;
+const int PROBE_MODELED_TKE           = 16;
+const int PROBE_MODELED_DISSIPATION   = 17;
+
 #include "Post_Probes.hxx"
 
 class DumpToFileASCII

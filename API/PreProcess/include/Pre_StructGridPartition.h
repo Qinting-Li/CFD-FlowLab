@@ -77,7 +77,7 @@ private:
     void DumpMarkInfo();
 
     void SetWallDist();
-    void WriteGridWallDist(StructGrid *grid, StructGrid *Ordinary_grid, vector<int> &nst, vector<int> &ned);
+    void WriteGridWallDist(StructGrid *grid, StructGrid *Ordinary_grid, vector<int> &nst);
     void WriteWalldist(const string &out_grid_file, Grid **grids_in);
     void WriteWalldist(ActionKey *actkey, StructGrid *grid);
 

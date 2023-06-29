@@ -15,7 +15,7 @@
 #include "HOStandardElement.h"
 
 #include <vector>
-
+#pragma warning(disable:4100)
 namespace HOUnstruct
 {
 
@@ -355,7 +355,7 @@ public:
     void TestOrthogonalBasisFunction(const RDouble *weight);
 
     void ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatrix & orthogonalizationMatrix, int iGaussPoint, 
-        RDouble lenScaleOfCell, RDouble iXcc, RDouble iYcc, RDouble iZcc);
+        RDouble lenScaleOfCell);
 
     RDouble * GetOrthogonalizedMatrix()
     {
@@ -417,7 +417,7 @@ public:
     //! @param[in]   dgSolOrder                the accuracy of DG solution
     //! @param[in]   pMultiGrid                pmultigrid number
     //! @param[out]                            initialize HighOrderFaceSol and build HighOrderStandardFace
-    void InitHighOrderFaceSol(UnstructGrid *grid, int dgSolOrder, int pMultiGrid, int isUnsteady, int viscousType);
+    void InitHighOrderFaceSol(UnstructGrid *grid, int pMultiGrid, int viscousType);
     void InitDofOfCell(UnstructGrid *grid, vector < RDouble > & conserValue, int nequ);
     void InitDofOfCellUnsteady(UnstructGrid * grid, vector < RDouble > & conserValue, int nequ);
     void InitValueOfFace(const UnstructGrid * grid, const vector < RDouble > & conserValue, int nequ);

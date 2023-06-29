@@ -397,8 +397,8 @@ OversetTopologyManager *GetOversetTopologyManager()
 
 void InitializeOversetInterfaceTopology()
 {
-    OversetTopologyManager *oversetTopologyManager = PHSPACE::GetOversetTopologyManager();
-    oversetTopologyManager->InitializeOversetInterfaceTopology();
+    OversetTopologyManager *oversetTopologyManagerTmp = PHSPACE::GetOversetTopologyManager();
+    oversetTopologyManagerTmp->InitializeOversetInterfaceTopology();
 }
 
 OversetTopologyManager::OversetTopologyManager()
@@ -980,15 +980,15 @@ void OversetDonorCellManager::AddOversetDonorCell(OversetDonorCell *oversetDonor
 
 uint_t GetNumberOfOversetNeighbors(int zoneIndex)
 {
-    OversetTopologyManager *oversetTopologyManager = PHSPACE::GetOversetTopologyManager();
-    uint_t numberOfOversetNeighbors = oversetTopologyManager->GetNumberOfOversetNeighbors(zoneIndex);
+    OversetTopologyManager *oversetTopologyManagerTmp = PHSPACE::GetOversetTopologyManager();
+    uint_t numberOfOversetNeighbors = oversetTopologyManagerTmp->GetNumberOfOversetNeighbors(zoneIndex);
     return numberOfOversetNeighbors;
 }
 
 int GetNeighborOversetZoneIndex(int zoneIndex, int iNeighbor)
 {
-    OversetTopologyManager *oversetTopologyManager = PHSPACE::GetOversetTopologyManager();
-    int neighborOversetZoneIndex = oversetTopologyManager->GetNeighborOversetZoneIndex(zoneIndex, iNeighbor);
+    OversetTopologyManager *oversetTopologyManagerTmp = PHSPACE::GetOversetTopologyManager();
+    int neighborOversetZoneIndex = oversetTopologyManagerTmp->GetNeighborOversetZoneIndex(zoneIndex, iNeighbor);
     return neighborOversetZoneIndex;
 }
 

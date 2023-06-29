@@ -128,9 +128,9 @@ public:
     static void GetOuterSrc();
 };
 
-void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord0, RDouble **angle, RDouble **coord,RDouble *outerdt, RDouble &time, 
-               int lmsmflag, int outnstep, RDouble **cforces, RDouble **cmoment, RDouble **vforces, RDouble **vmoment);
-void deftrans(RDouble **coord, RDouble time, RDouble *outerdt, int *ialepar, RDouble *ralepar);
+void chckmovmt(int *ialepar, RDouble **angle0, RDouble **coord0, RDouble **angle, RDouble **coord,RDouble *outerdt, 
+               int lmsmflag, int outnstep);
+//void deftrans(RDouble **coord, RDouble time, RDouble *outerdt, int *ialepar, RDouble *ralepar);
 void chckdeform();
 
 }

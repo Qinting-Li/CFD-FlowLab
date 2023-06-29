@@ -90,7 +90,7 @@ private:
     * \brief Function in the original implementation of John Burkardt to compute
     the integration points of the Gauss-Jacobi quadrature rule.
     */
-    void scqf(int nt, RDouble t[], int mlt[], RDouble wts[], int nwts, int ndx[],
+    void scqf(int nt, RDouble t[], int mlt[], RDouble wts[], int ndx[],
         RDouble swts[], RDouble st[], int kind, RDouble alpha,
         RDouble beta, RDouble a, RDouble b);
 

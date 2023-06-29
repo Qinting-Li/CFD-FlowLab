@@ -20,9 +20,13 @@
 #include "Post_Visual.h"
 #include "Post_Probes.h"
 #include "IO_HDF5File.h"
-
+#pragma warning(disable:4100)
+#ifdef USE_GMRESSOLVER
+#include "petscksp.h"
+#endif
 namespace PHSPACE
 {
+// #define GMRESWholeJacobian
 class ActionKey;
 class ActionTag;
 class Grid;
@@ -76,6 +80,7 @@ public:
 
     //! Compute gradient of primitivevariables & temperature for viscous flux computation.
     virtual void ComputeGradient(Grid *grid);
+    virtual void ComputeLimiter(Grid *grid);
     virtual void ComputeGradientCellCenter(Grid *grid);
     virtual void ComputeGradientCellCenterForLES(Grid *grid);
     virtual void ComputeGradientCellCenterOfruvwptOnlyForMixGrid(Grid *grid){};
@@ -118,6 +123,13 @@ public:
     //! Time step computation.
     virtual void TimeStep(Grid *grid);
 
+#ifdef USE_GMRESSOLVER
+    //! GMRES solver -- a linear system solver
+    //! This method can be referenced "Sen Zhang, Boqian Wang, et al. Implementation of a Newton-Krylov Algorithm in the Open-source Solver PHengLEI[C]."
+    //! GPPS Hong Kong , October 17-19, 2023.
+    virtual void GMRESSolver(Grid *gridIn, FieldProxy *dqProxy);
+#endif
+
     //! Compute the inviscous/viscous/chemical spectrum radius.
     //! The results stored in array invSpectralRadius and visSpectralRadius and srs.
     virtual void SpectrumRadius(Grid *grid){};
@@ -139,7 +151,7 @@ public:
     virtual void SolveBLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
     virtual void SolveBLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
-	//! Implicit Matrix LU-SGS time integration method.
+    //! Implicit Matrix LU-SGS time integration method.
     virtual void SolveMatrixLUSGSForward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);    
     virtual void SolveMatrixLUSGSBackward(Grid *grid, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal);
 
@@ -193,11 +205,9 @@ public:
 
     virtual void DumpResultFile(Grid *grid, int level = 0);
 
-    virtual void InitIncompressibleResultFile(Grid *grid, string fileName);
-
-    virtual void DumpIncompressibleResultFile(Grid *grid, string fileName);
-
     virtual void CheckResult(Grid *grid, int level = 0);
+
+    virtual void CheckResiduals(Grid *grid, int level = 0);
 
     virtual void DumpCFLNumber(Grid *grid, int level = 0);
 
@@ -243,6 +253,8 @@ public:
     virtual void LoadResiduals(Grid *grid, FieldProxy *rhsProxy);
 
     virtual void Boundary(Grid *grid);
+
+    virtual void CalculateBoundaryData();
 
     virtual void GetIndependentVariablesforStructHighOrder(Grid *grid){};
 
@@ -328,7 +340,7 @@ public:
     virtual void DumpProtectData(ActionKey *actkey, int &RestartFile);
     virtual void DumpTurbProtectData(ActionKey *actkey, int &RestartFile);
     virtual void DumpTransitionProtectData(ActionKey *actkey, int &RestartFile);
-    void CreateH5RestartFile(ActionKey *actkey);
+    virtual void CreateH5RestartFile(ActionKey *actkey);
 
     virtual void InitMemory();
     virtual void ReleaseMemory();
@@ -363,6 +375,9 @@ public:
     void WriteWallAircoefASCII(ActionKey *actkey, vector <DataContainer *> datalist);
     virtual void DumpHeatFlux(ActionKey *actkey);
     void WriteHeatFluxASCII(ActionKey *actkey, RDouble *HeatFlux);
+    #ifdef USE_TecplotLib
+        void WriteWallAircoef(ActionKey *actkey, vector <DataContainer *> datalist);
+    #endif
 
     //! Export the required variables on surface to file, such as the temperature, mass fraction etc.
     virtual void ExportSurfaceVariables(ActionKey *actkey) {}; //added by Li Peng
@@ -452,13 +467,10 @@ protected:
     virtual void AllocateGlobalVar(Grid *grid);
     virtual void DeAllocateGlobalVar(Grid *grid);
 
-    void AllocateOversetInterfaceVar  (Grid *grid);
     void DeAllocateOversetInterfaceVar(Grid *grid);
 
-    void AllocateOversetInterfaceVar  (OversetInfoProxy *oversetInfoProxy);
     void DeAllocateOversetInterfaceVar(OversetInfoProxy *oversetInfoProxy);
 
-    virtual void AllocateOversetInterfaceVar(int nIOversetFace, Data_ParamFieldSuite *dataStore);
     virtual void DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore);
 
     virtual void GetInterfaceData  (ActionKey *actkey);
@@ -522,7 +534,7 @@ protected:
 
     virtual void DumpInterfaceInfoBell();
     virtual void RegisterCFDSolverInterfaceField();
-    virtual void RegisterCFDSolverOversetField();
+    void RegisterOversetField();
 
     //! Register the interpoint field in the CFD solver.
     virtual void RegisterCFDSolverInterpointField();
@@ -570,35 +582,7 @@ private:
     void TranslateInterpointData(InterpointInformation *interpointInformation, ActionKey *actkey, InterpointDataProxy * interpointDataProxy);
 
 public:
-    virtual void DiscrtMomentumEquations();
-    virtual void SolveMomentumEquations(Region &region);
-    virtual void UpdateVelocity();
-    virtual void DiscrtPressureCorrectionEquation();
-    virtual void SolvePressureCorrectionEquation(Region &region);
-    virtual void UpdatePressureAndVelocity();
-    virtual void UpdateProperties();
-
-public:
-    virtual void Discrt();
-    virtual void Update();
-    virtual void UpdateBoundary();
-    virtual bool SolutionIsConverged(int iZone);
-    virtual void UpdateAfterIterloop();
-    virtual void SetOutputs(std::vector<std::string> &phiNameList);
-    virtual void InitMatrix();
-    virtual void CalcGrad();
-    virtual void CalcBoundaryConditions();
-    virtual void CalcTransientTerm();
-    virtual void CalcConvectionTerm();
-    virtual void CalcDiffusionTerm();
-    virtual void CalcSourceTerm();
-    virtual void SolveScalarEquation(Region &region);
-    virtual void SolveKEquation(Region &region);
-    virtual void SolveEpsilonEquation(Region &region);
-    virtual void PrimeEquations();
-    virtual void CalcRes();
-    virtual void Relax();
-    virtual void SolutionIsConverged(int iZone, bool* flag);
+    virtual void SolveIncomSteadyField() {};
 
 protected:
     Post_Visual *postVisualization;
@@ -614,5 +598,8 @@ void UpdateInterfaceData();
 
 #include "CFDSolver.hxx"
 
-}
+#ifdef USE_GMRESSOLVER
+PetscErrorCode MyKSPMonitor(KSP ksp, PetscInt n, PetscReal rnorm, void *dummy);
+#endif
 
+}

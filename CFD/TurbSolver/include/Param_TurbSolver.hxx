@@ -137,3 +137,7 @@ inline int Param_TurbSolver::UsingConservativeForm() const
 {
     return rhoFlag;
 }
+inline RDouble Param_TurbSolver::GetInviscidSpectrumRadiusCoef() const
+{
+    return inviscidSpectrumRadiusCoef;
+}

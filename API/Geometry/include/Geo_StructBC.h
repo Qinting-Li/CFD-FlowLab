@@ -178,7 +178,7 @@ public:
     void ComputeRelativeParameters();
     int * GetStam();
     int * GetRate();
-    void ProbeExternalOverlapCells(int *iBlank, int nci, int ncj, int nck, int &counter);
+    void ProbeExternalOverlapCells(int *iBlank, int nci, int ncj, int &counter);
 
     //! Return the i/j/k range in the current source zone, it is rarely used.
     void GetNormalizeIJKRegion(int &ist, int &ied, int &jst, int &jed, int &kst, int &ked);

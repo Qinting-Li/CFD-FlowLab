@@ -29,13 +29,6 @@
 #include "TransitionSolverStruct.h"         //! Structured transition solver.
 #include "TransitionSolverUnstr.h"          //! Unstructured transition solver.
 
-#ifdef USE_PBSOLVER
-#include "PBS.h"                      //! Pressure based solver for incompressible flow. 
-#endif
-
-
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"
 #endif
-
-

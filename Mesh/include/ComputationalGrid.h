@@ -137,10 +137,10 @@ protected:
     void SwapZoneInterfaceTopologyToNeighborZones();
     void SwapZoneInterfaceTopologyToNeighborZonesNonBlocking();
     void SwapZoneInterfaceTopologyToNeighborZonesBlocking();
-    void SwapInterfaceTopologyBetweenTwoNeighboringZone(int zoneIndex, int neighborZoneIndex, int sendProcessorIndex, int receiveProcessorIndex);
+    void SwapInterfaceTopologyBetweenTwoNeighboringZone(int zoneIndex, int sendProcessorIndex, int receiveProcessorIndex);
     void CompressZoneInterfaceIntoDataContainer(DataContainer *&dataContainer, int globalZoneIndex);
-    void AnasysZoneInterfaceFromDataContainer(DataContainer *&dataContainer, int globalZoneIndex);
-    void DecodeZoneInterfacesTopology(DataContainer *&dataContainer, int globalZoneIndex);
+    void AnasysZoneInterfaceFromDataContainer(DataContainer *&dataContainer);
+    void DecodeZoneInterfacesTopology(DataContainer *&dataContainer);
 
     //! Get the length of neighbors.
     void SwapZoneInterfaceLengthToNeighborZones(vector<CharVecSizeType> &neighborLength);
@@ -149,8 +149,8 @@ protected:
     void CreateInterfaceLinkStructure();
 
     //! Get neighbor grid coordinates information.
-    void GetNeighborZoneBoundingBox   (Grid **gridContainer, int nZones, RDouble *pmin, RDouble *pmax);
-    void GetNeighborZoneMinMaxDistance(Grid **gridContainer, int nZones, RDouble &mindis, RDouble &maxdis);
+    void GetNeighborZoneBoundingBox   (RDouble *pmin, RDouble *pmax);
+    void GetNeighborZoneMinMaxDistance(RDouble &mindis, RDouble &maxdis);
 
     //! Covert NO_BOUNDARY_CONDITION to INTERFACE.
     void PreprocessBoundaryCondition();
@@ -161,7 +161,7 @@ protected:
     void GenerateLocalGlobalInterfaceMappingByNeighborZones(int iZone);
 
     //! Build interface information for each grid.
-    void CreateInterfaceInformation(int iZone);
+    void CreateInterfaceInformation();
     void CreateLocalInterfaceToBoundaryFaceIndexesMapping();
 
     //! Reconstruct interface topology, only used to QUAD_4 face.
@@ -174,9 +174,9 @@ protected:
     void ModifyBoundaryInformation            (InterfaceLinkStructure *interfaceLinkStructure);
     void SetBoundaryFaceNodeIndexVector       (InterfaceLinkStructure *interfaceLinkStructure);
     void SetNewFaceToCellIndexesContainer     (InterfaceLinkStructure *interfaceLinkStructure);
-    void ResetNumberOfBoundaryCondition       (InterfaceLinkStructure *interfaceLinkStructure, PHVectorInt1D &numberOfChildFacesOfInterface, uint_t newNumberOfInterfaces);
-    void ProcessGlobalToLocalInterfaceTerm    (InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces);
-    void DoFurtherWorkUsingBoundaryTypeVector (InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces);
+    void ResetNumberOfBoundaryCondition       (InterfaceLinkStructure *interfaceLinkStructure, PHVectorInt1D &numberOfChildFacesOfInterface);
+    void ProcessGlobalToLocalInterfaceTerm    (InterfaceLinkStructure *interfaceLinkStructure);
+    void DoFurtherWorkUsingBoundaryTypeVector (InterfaceLinkStructure *interfaceLinkStructure);
     void ReGenerateLocalGlobalInterfaceMapping(InterfaceLinkStructure *interfaceLinkStructure);
 
     //! Update interface information after reconstruct face topology.

@@ -40,6 +40,10 @@ LIB_EXPORT void Param_TurbSolver::Init()
 
     wallFunctionType = GlobalDataBase::GetIntParaFromDB("wallFunctionType");
 
+    int originaltscheme = GlobalDataBase::GetIntParaFromDB("OriginalTscheme");
+
+    inviscidSpectrumRadiusCoef = 1.0;
+  
     SST_a1 = 0.31;
 
     freeStreamViscosity = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
@@ -100,7 +104,7 @@ LIB_EXPORT void Param_TurbSolver::Init()
     turb_fbeta  = 1.0;
     turb_fbetas = 1.0;
     SST_betaStar = 0.09;
-    //! In fact£¬turb_cmu should be 0.09£¬but it is necessary because turb_cmu is generally absorbed.
+    //! In fact, turb_cmu should be 0.09, but it is necessary because turb_cmu is generally absorbed.
     turb_cmu = 1.0;
 
     rhoFlag = 1;    // original (= 0) or conservative (= 1) variable.
@@ -111,8 +115,16 @@ LIB_EXPORT void Param_TurbSolver::Init()
         KW_sigma  = 2.0/3.0;
 
         SA_cv1_cube = SA_cv1 * SA_cv1 * SA_cv1;
-
-        rhoFlag = 1;    // using conservative var in SA model.
+        GlobalDataBase::UpdateData("SA_cv1_cube", &SA_cv1_cube, PHDOUBLE, 1);  // GMRESCoupled
+        
+        if(originaltscheme == GMRES)
+        {
+            rhoFlag = 1;   
+        }
+        else
+        {
+            rhoFlag = 0; // using conservative var in SA model.
+        }
     }
     else if (viscousName.substr(0,6) == "2eq-kw")
     {
@@ -239,14 +251,14 @@ LIB_EXPORT void Param_TurbSolver::Init()
     //! This code should be check for structured grid.
     if (viscousType == ONE_EQU)
     {
-        RDouble muoo = GlobalDataBase::GetDoubleParaFromDB("muoo");
-        freeStreamTurbVar[ISA] = muoo / (reference_density_farfield * turb_cmu + SMALL);
+        RDouble muoo1 = GlobalDataBase::GetDoubleParaFromDB("muoo");
+        freeStreamTurbVar[ISA] = muoo1 / (reference_density_farfield * turb_cmu + SMALL);
     }
     else if (viscousType == TWO_EQU)
     {
-        RDouble kwoo = GlobalDataBase::GetDoubleParaFromDB("kwoo") / refReNumber;
+        RDouble kwoo1 = GlobalDataBase::GetDoubleParaFromDB("kwoo") / refReNumber;
         RDouble mutoo = 0.01;
-        RDouble keoo = mutoo * kwoo / (turb_cmu * reference_density_farfield);
+        RDouble keoo = mutoo * kwoo1 / (turb_cmu * reference_density_farfield);
 
         if (transitionType == IREGAMA)
         {
@@ -255,11 +267,11 @@ LIB_EXPORT void Param_TurbSolver::Init()
             if (turbulenceIntensity >= SMALL)
             {
                 keoo = 1.5 * (0.01 * turbulenceIntensity) * (0.01 * turbulenceIntensity);
-                kwoo = keoo * (turb_cmu * reference_density_farfield) / mutoo;
+                kwoo1 = keoo * (turb_cmu * reference_density_farfield) / mutoo;
             }
         }
         freeStreamTurbVar[IKE] = keoo;
-        freeStreamTurbVar[IKW] = kwoo;
+        freeStreamTurbVar[IKW] = kwoo1;
     }
 
     kindOfTurbSource = GlobalDataBase::GetIntParaFromDB("kindOfTurbSource");

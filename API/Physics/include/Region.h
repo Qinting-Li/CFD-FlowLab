@@ -236,7 +236,13 @@ private:
     //! Compute global total number of cells and total volume for vencat limiter of type 2 && 3.
     void ComputeGlobalGridSize(int level = 0);
     void buildGlobalCellsArrary(int level = 0);
-  
+
+#ifdef USE_GMRESSOLVER
+    //! GMRESParallel
+    //! get shift of cells in the local zone with respect to the global mesh for GMRES
+    void GetCurrentShiftCellSizeToGlobalSize(int level = 0);
+ #endif   
+ 
     //! MixGrid
     void ComputeGlobalGridCellSize(int level = 0);
 

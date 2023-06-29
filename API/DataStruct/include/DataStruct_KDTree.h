@@ -116,6 +116,7 @@ public:
         dim  = 0;
         root = NULL;
         rect = NULL;
+        destr = NULL;
     };
 
     DataStruct_KDTree(int dim)
@@ -123,6 +124,7 @@ public:
         this->dim = dim;
         root = NULL;
         rect = new KDHyperRect(dim);
+        destr = NULL;
     };
 
     void Free();

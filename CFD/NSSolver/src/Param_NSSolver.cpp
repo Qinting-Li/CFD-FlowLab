@@ -26,7 +26,6 @@ LIB_EXPORT void Param_NSSolver::Init()
 
     transitionType      = GlobalDataBase::GetIntParaFromDB("transitionType");
 
-    ifLowSpeedPrecon    = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
     kPreconCoeff    = GlobalDataBase::GetDoubleParaFromDB("Kprec");
     nIdealState = GlobalDataBase::GetIntParaFromDB("nIdealState");
     preconFarfieldBCMethod    = GlobalDataBase::GetIntParaFromDB("preconFarfieldBCMethod");
@@ -40,6 +39,8 @@ LIB_EXPORT void Param_NSSolver::Init()
     nChemical           = GlobalDataBase::GetIntParaFromDB("nchem");
     nTemperatureModel   = GlobalDataBase::GetIntParaFromDB("ntmodel");
     numberOfSpecies     = GlobalDataBase::GetIntParaFromDB("numberOfSpecies");
+
+    nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
     nDensityModify      = GlobalDataBase::GetIntParaFromDB("nDensityModify");
     nDebug              = GlobalDataBase::GetIntParaFromDB("nDebug");
@@ -142,7 +143,7 @@ LIB_EXPORT void Param_NSSolver::Init()
     nInviscidFluxModify = 0;
     if (GlobalDataBase::IsExist("nInviscidFluxModify", PHINT, 1))
     {
-        nInviscidFluxModify = nChemical * GlobalDataBase::GetIntParaFromDB("nInviscidFluxModify");  //化学反应
+        nInviscidFluxModify = nChemical * GlobalDataBase::GetIntParaFromDB("nInviscidFluxModify");  //Chemical only
     }
 
     nQlLimitMethod = 0;
@@ -199,6 +200,12 @@ LIB_EXPORT void Param_NSSolver::Init()
         knLength = GlobalDataBase::GetDoubleParaFromDB("knudsenLength");
     }
 
+    //the flag of using the non-equilibrium condition.
+    isUseNoneqCond = 0;
+    if (GlobalDataBase::IsExist("isUseNoneqCond", PHINT, 1))
+    {
+        isUseNoneqCond = GlobalDataBase::GetIntParaFromDB("isUseNoneqCond");
+    }
 }
 
 void Param_NSSolver::SetEntropyFixCoefficients()

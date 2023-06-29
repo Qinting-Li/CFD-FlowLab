@@ -7,6 +7,8 @@
 #include "Glb_Dimension.h"
 #include "TK_Log.h"
 #include "Math_BasisFunction.h"
+#include "IO_FileName.h"
+#include "TK_Parse.h"
 
 namespace PHSPACE
 {
@@ -64,6 +66,220 @@ PerfectGas::~PerfectGas()
     refReNumber /= reynoldsReferenceLengthDimensional;
     GlobalDataBase::UpdateData("refReNumber", &refReNumber, PHDOUBLE, 1);
 }
+#ifdef USE_GMRESSOLVER
+// GMRESPV
+void PerfectGas::dPrimitive2dConservative(RDouble *prim, RDouble gama, RDouble** dqdcv)
+{
+    using namespace IDX;
+
+    RDouble& r     = prim[IR];
+    RDouble& u     = prim[IU];
+    RDouble& v     = prim[IV];
+    RDouble& w     = prim[IW];
+    RDouble& p     = prim[IP];
+
+    dqdcv[IR][IR] = 1.0;
+    dqdcv[IU][IR] = -1.0*u/r;
+    dqdcv[IV][IR] = -1.0*v/r;
+    dqdcv[IW][IR] = -1.0*w/r;
+    dqdcv[IP][IR] = 0.5*(gama-1.0)*(u*u + v*v + w*w);
+
+    dqdcv[IU][IU] = 1.0/r;
+    dqdcv[IP][IU] = -1.0*(gama-1)*u;
+
+    dqdcv[IV][IV] = 1.0/r;
+    dqdcv[IP][IV] = -1.0*(gama-1)*v;
+
+    dqdcv[IW][IW] = 1.0/r;
+    dqdcv[IP][IW] = -1.0*(gama-1)*w;
+
+    dqdcv[IP][IP] = gama-1;
+
+
+}
+
+// GMRESVis
+// the derivative of primitive variables w.r.t conservative variables
+void PerfectGas::dGradient2dPrimitive(RDouble *prim, int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol, int nPara)
+{
+    using namespace IDX;
+    RDouble& r     = prim[IR];
+    RDouble& p     = prim[IP];
+
+    if(direction == 'x')
+    {
+        dgraddq[IR][IR] = sign*0.5/vol*ns*nxs;
+        dgraddq[IU][IR] = 0;
+        dgraddq[IV][IR] = 0;
+        dgraddq[IW][IR] = 0;
+        dgraddq[IP][IR] = 0;
+
+        dgraddq[IR][IU] = 0;
+        dgraddq[IU][IU] = sign*0.5/vol*ns*nxs;
+        dgraddq[IV][IU] = 0;
+        dgraddq[IW][IU] = 0;
+        dgraddq[IP][IU] = 0;
+
+        dgraddq[IR][IV] = 0;
+        dgraddq[IU][IV] = 0;
+        dgraddq[IV][IV] = sign*0.5/vol*ns*nxs;
+        dgraddq[IW][IV] = 0;
+        dgraddq[IP][IV] = 0;
+
+        dgraddq[IR][IW] = 0;
+        dgraddq[IU][IW] = 0;
+        dgraddq[IV][IW] = 0;
+        dgraddq[IW][IW] = sign*0.5/vol*ns*nxs;
+        dgraddq[IP][IW] = 0;
+
+        dgraddq[IR][IP] = 0;
+        dgraddq[IU][IP] = 0;
+        dgraddq[IV][IP] = 0;
+        dgraddq[IW][IP] = 0;
+        dgraddq[IP][IP] = sign*0.5/vol*ns*nxs;
+
+        if( nPara == 6)
+        {
+            dgraddq[IP+1][IR] = sign*0.5/vol*ns*nxs*(-1.0*p/(coefficientOfStateEquation*r*r));
+            dgraddq[IP+1][IU] = 0;
+            dgraddq[IP+1][IV] = 0;
+            dgraddq[IP+1][IW] = 0;
+            dgraddq[IP+1][IP] = sign*0.5/vol*ns*nxs*1.0/(coefficientOfStateEquation*r);
+        }
+    }
+    else if(direction == 'y')
+    {
+        dgraddq[IR][IR] = sign*0.5/vol*ns*nys;
+        dgraddq[IU][IR] = 0;
+        dgraddq[IV][IR] = 0;
+        dgraddq[IW][IR] = 0;
+        dgraddq[IP][IR] = 0;
+
+        dgraddq[IR][IU] = 0;
+        dgraddq[IU][IU] = sign*0.5/vol*ns*nys;
+        dgraddq[IV][IU] = 0;
+        dgraddq[IW][IU] = 0;
+        dgraddq[IP][IU] = 0;
+
+        dgraddq[IR][IV] = 0;
+        dgraddq[IU][IV] = 0;
+        dgraddq[IV][IV] = sign*0.5/vol*ns*nys;
+        dgraddq[IW][IV] = 0;
+        dgraddq[IP][IV] = 0;
+
+        dgraddq[IR][IW] = 0;
+        dgraddq[IU][IW] = 0;
+        dgraddq[IV][IW] = 0;
+        dgraddq[IW][IW] = sign*0.5/vol*ns*nys;
+        dgraddq[IP][IW] = 0;
+
+        dgraddq[IR][IP] = 0;
+        dgraddq[IU][IP] = 0;
+        dgraddq[IV][IP] = 0;
+        dgraddq[IW][IP] = 0;
+        dgraddq[IP][IP] = sign*0.5/vol*ns*nys;
+
+
+        if( nPara == 6)
+        {
+            dgraddq[IP+1][IR] = sign*0.5/vol*ns*nys*(-1.0*p/(coefficientOfStateEquation*r*r));
+            dgraddq[IP+1][IU] = 0;
+            dgraddq[IP+1][IV] = 0;
+            dgraddq[IP+1][IW] = 0;
+            dgraddq[IP+1][IP] = sign*0.5/vol*ns*nys*1.0/(coefficientOfStateEquation*r);
+        }
+
+    }
+    else if(direction == 'z')
+    {
+        dgraddq[IR][IR] = sign*0.5/vol*ns*nzs;
+        dgraddq[IU][IR] = 0;
+        dgraddq[IV][IR] = 0;
+        dgraddq[IW][IR] = 0;
+        dgraddq[IP][IR] = 0;
+
+        dgraddq[IR][IU] = 0;
+        dgraddq[IU][IU] = sign*0.5/vol*ns*nzs;
+        dgraddq[IV][IU] = 0;
+        dgraddq[IW][IU] = 0;
+        dgraddq[IP][IU] = 0;
+
+        dgraddq[IR][IV] = 0;
+        dgraddq[IU][IV] = 0;
+        dgraddq[IV][IV] = sign*0.5/vol*ns*nzs;
+        dgraddq[IW][IV] = 0;
+        dgraddq[IP][IV] = 0;
+
+        dgraddq[IR][IW] = 0;
+        dgraddq[IU][IW] = 0;
+        dgraddq[IV][IW] = 0;
+        dgraddq[IW][IW] = sign*0.5/vol*ns*nzs;
+        dgraddq[IP][IW] = 0;
+
+        dgraddq[IR][IP] = 0;
+        dgraddq[IU][IP] = 0;
+        dgraddq[IV][IP] = 0;
+        dgraddq[IW][IP] = 0;
+        dgraddq[IP][IP] = sign*0.5/vol*ns*nzs;
+
+        if( nPara == 6)
+        {
+            dgraddq[IP+1][IR] = sign*0.5/vol*ns*nzs*(-1.0*p/(coefficientOfStateEquation*r*r));
+            dgraddq[IP+1][IU] = 0;
+            dgraddq[IP+1][IV] = 0;
+            dgraddq[IP+1][IW] = 0;
+            dgraddq[IP+1][IP] = sign*0.5/vol*ns*nzs*1.0/(coefficientOfStateEquation*r);
+            
+        }
+    }
+
+}
+
+// GMRESnolim
+void PerfectGas::dGradient2dPrimitive4limiter(int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol)
+{
+    using namespace IDX;
+
+    if(direction == 'x')
+    {
+        dgraddq[IR][IR] = sign*0.5/vol*ns*nxs;
+       
+        dgraddq[IU][IU] = sign*0.5/vol*ns*nxs;
+        
+        dgraddq[IV][IV] = sign*0.5/vol*ns*nxs;
+     
+        dgraddq[IW][IW] = sign*0.5/vol*ns*nxs;
+    
+        dgraddq[IP][IP] = sign*0.5/vol*ns*nxs;
+    }
+    else if(direction == 'y')
+    {
+        dgraddq[IR][IR] = sign*0.5/vol*ns*nys;
+  
+        dgraddq[IU][IU] = sign*0.5/vol*ns*nys;
+     
+        dgraddq[IV][IV] = sign*0.5/vol*ns*nys;
+
+        dgraddq[IW][IW] = sign*0.5/vol*ns*nys;
+
+        dgraddq[IP][IP] = sign*0.5/vol*ns*nys;
+
+    }
+    else if(direction == 'z')
+    {
+        dgraddq[IR][IR] = sign*0.5/vol*ns*nzs;
+  
+        dgraddq[IU][IU] = sign*0.5/vol*ns*nzs;
+       
+        dgraddq[IV][IV] = sign*0.5/vol*ns*nzs;
+        
+        dgraddq[IW][IW] = sign*0.5/vol*ns*nzs;
+        
+        dgraddq[IP][IP] = sign*0.5/vol*ns*nzs;
+    }
+
+}  
+#endif
 
 void PerfectGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q)
 {
@@ -149,7 +365,7 @@ void PerfectGas::ComputeTotalEnthalpyAndDH(RDouble *primitiveVariables, RDouble 
     RDouble &density = primitiveVariables[IR];
     RDouble &pressure = primitiveVariables[IP];
 
-    // c1 is product coefficient of the variable dq[IR]£¬gama1 = gama-1¡£
+    // c1 is product coefficient of the variable dq[IR], gama1 = gama-1.
     RDouble squareVelocity, c1, gama1;
     squareVelocity = um * um + vm * vm + wm * wm;
     gama1 = gama - 1.0;
@@ -240,13 +456,11 @@ void PerfectGas::InitGlobalParameterOfNSEquation()
 
     InitOtherParameter();
 
-    //! Read parameters from file of "boundary_condition.hypara". Notice that the five reference variables for the component aerodynamic coefficients integration should be updated with "reynoldsReferenceLengthDimensional".
-    GlobalBoundaryCondition::ReadGlobalBoundaryCondition();
-
     GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase();
 
-    GlobalBoundaryCondition::SetBCDataBaseByGlobalBC();
+    GlobalBoundaryCondition::InitMassFlowBoundary();
 
+    GlobalBoundaryCondition::SetBCDataBaseByGlobalBC();
 }
 
 void PerfectGas::InitNumberOfSpecies()
@@ -400,6 +614,10 @@ void PerfectGas::InitReferenceParameter()
         referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
         referenceParameterDimensional.SetPressure(refDimensionalPressure);
     }
+    else if (inflowParaType == WEATHERCONDITION)
+    {
+        SetAirInformationByWRFDataBase();
+    }
     else
     {
         TK_Exit::UnexpectedVarValue("inflowParaType", inflowParaType);
@@ -410,15 +628,13 @@ void PerfectGas::SetAirInformationByDataBase()
 {
     RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
 
-    RDouble refDimensionalTemperature;
-    RDouble refDimensionalPressure;
-    RDouble refDimensionalDensity;
-    RDouble refDimensionalSonicSpeed;
+    RDouble refDimensionalTemperature = 1.0;
+    RDouble refDimensionalPressure = 1.0;
+    RDouble refDimensionalDensity = 1.0;
+    RDouble refDimensionalSonicSpeed=1.0;
 
-   
     GetAirInfo(height, refDimensionalTemperature, refDimensionalPressure, refDimensionalDensity, refDimensionalSonicSpeed);
     
-
     referenceParameterDimensional.SetDensity(refDimensionalDensity);
     referenceParameterDimensional.SetPressure(refDimensionalPressure);
     referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
@@ -476,12 +692,52 @@ void PerfectGas::SetAirInformationByExpData()
     GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
 }
 
+void PerfectGas::SetAirInformationByExpData(int useSetting)
+{
+    RDouble refDimensionalTemperature;
+    RDouble refDimensionalPressure;
+    RDouble refDimensionalDensity;
+    RDouble refDimensionalSonicSpeed;
+
+    RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
+    RDouble T0 = referenceParameterDimensional.GetTemperature();
+    RDouble P0 = referenceParameterDimensional.GetPressure();
+
+    RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
+    RDouble refMolecularWeight = GlobalDataBase::GetDoubleParaFromDB("refMolecularWeight");
+    int nGasModel = GlobalDataBase::GetIntParaFromDB("nGasModel");
+
+    RDouble R = 287.053;
+    RDouble mi   = refGama / (refGama - 1.0);
+    RDouble coef = 1.0 + (refGama - 1.0) * refMachNumber * refMachNumber / 2.0;
+
+    RDouble T, P, rho, c;
+    T = T0 / coef;
+    P = P0 / pow(coef, mi);
+    rho = P / R / T;
+    c = sqrt(refGama * R * T);
+
+    refDimensionalDensity = rho;
+    refDimensionalPressure = P;
+    refDimensionalTemperature = T;
+    refDimensionalSonicSpeed = c;
+
+    referenceParameterDimensional.SetDensity(refDimensionalDensity);
+    referenceParameterDimensional.SetPressure(refDimensionalPressure);
+    referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
+    referenceParameterDimensional.SetSoundVelocity(refDimensionalSonicSpeed);
+
+    GlobalDataBase::UpdateData("refDimensionalDensity", &refDimensionalDensity, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalPressure", &refDimensionalPressure, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalTemperature", &refDimensionalTemperature, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
+}
+
 void PerfectGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &den, RDouble &a)
 {
     //USSA 76 Model for atmosphere.
     RDouble h      = h1 * 1000.0;
     RDouble r      = 287.053;
-
     RDouble g0     = 9.80665;
     RDouble rp     = 6.37111e6;
     RDouble g      = (rp/(rp+h))*(rp/(rp+h))*g0;
@@ -549,8 +805,6 @@ void PerfectGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &
     RDouble p600   = 3.4475e-9;
     RDouble rho600 = 1.1367e-13;
     RDouble t700   = 1507.60;
-    RDouble p700   = 1.1908e-9;
-    RDouble rho700 = 1.5270e-13;
 
     RDouble rho = 0.0;
 
@@ -709,6 +963,266 @@ void PerfectGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &
     den = rho;
 }
 
+//! Set air parameter information through weather database.
+void PerfectGas::SetAirInformationByWRFDataBase()
+{
+    RDouble angleSlide =0.0;
+
+    RDouble refDimensionalTemperature;
+    RDouble refDimensionalPressure;
+    RDouble refDimensionalDensity;
+    RDouble refDimensionalVelocity;
+    RDouble angle;
+    RDouble refDimensionalSonicSpeed;
+
+    string filePath = GlobalDataBase::GetStrParaFromDB("weatherDataFilePath");
+    RDouble longitude = GlobalDataBase::GetDoubleParaFromDB("longitude");
+    RDouble latitude =  GlobalDataBase::GetDoubleParaFromDB("latitude");
+
+    //! Read air parameter information from weather data file.
+    ReadAirInfo(filePath, longitude, latitude, refDimensionalTemperature, refDimensionalPressure, refDimensionalDensity, angle, refDimensionalVelocity, refDimensionalSonicSpeed);
+
+    referenceParameterDimensional.SetDensity(refDimensionalDensity);
+    referenceParameterDimensional.SetPressure(refDimensionalPressure);
+    referenceParameterDimensional.SetTemperature(refDimensionalTemperature);
+    referenceParameterDimensional.SetVelocity(refDimensionalVelocity);
+    referenceParameterDimensional.SetSoundVelocity(refDimensionalSonicSpeed);
+
+    GlobalDataBase::UpdateData("refDimensionalDensity", &refDimensionalDensity, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalPressure", &refDimensionalPressure, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalTemperature", &refDimensionalTemperature, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("refDimensionalSonicSpeed", &refDimensionalSonicSpeed, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("attackd", &angle, PHDOUBLE, 1);
+    GlobalDataBase::UpdateData("angleSlide", &angleSlide, PHDOUBLE, 1);
+}
+
+void PerfectGas::ReadAirInfo(string &filepath, RDouble &lon, RDouble &lat, RDouble &t, RDouble &p, RDouble &den, RDouble &g, RDouble &v, RDouble &a)
+{
+    RDouble r      = 287.053;
+    RDouble t0     = 273.15;
+    RDouble p0     = 1.01325e5;
+    RDouble rho0   = 1.292;
+
+    vector <RDouble> pressure;
+    vector <RDouble> temperature;
+    vector <RDouble> angle;
+    vector <RDouble> velocity;
+
+    string var1 = "P";
+    string var2 = "T";
+    string var3 = "WIND";
+
+    int nfile = 10;
+    int heightInternal = 10;
+    int fileid = 0;
+
+    for (int ifile = 0; ifile < nfile; ++ ifile)
+    {
+        fileid = (ifile + 1) * heightInternal;
+        ReadWRFSingleData(filepath, var1, fileid, lon, lat, pressure);
+        ReadWRFSingleData(filepath, var2, fileid, lon, lat, temperature);
+        ReadWRFDoubleData(filepath, var3, fileid, lon, lat, angle, velocity);
+    }
+
+    RDouble pp = ComputeVariablesAverage(pressure);
+    RDouble tt = ComputeVariablesAverage(temperature);
+    RDouble gg = ComputeVariablesAverage(angle);
+    RDouble vv = ComputeVariablesAverage(velocity);
+
+    p = pp * 100.0;
+    t = t0 + tt;
+    //g = 90 + gg;
+    g = 270 - gg;
+    v = vv;
+    a = sqrt(1.4*r*t);
+    den = p * rho0 * t0 / ( p0 * t);
+}
+
+//! Reading a kind of variable from one file.
+void PerfectGas::ReadWRFSingleData(string &filepath, string &varname,int &fileindex, RDouble &longitude, RDouble &latitude, vector< RDouble > & variable)
+{
+    fstream file;
+    string relativeFilename = "15120108.dat";
+    relativeFilename = PHSPACE::AddSymbolToFileName(relativeFilename, '_', varname);
+    relativeFilename = PHSPACE::AddSymbolToFileName(relativeFilename, '_', fileindex);
+    string filename = filepath + relativeFilename;
+    file.open(filename.c_str(), ios_base::in);
+
+    string line, word;
+    string separator  = " =\t\r\n#$,;\"'";
+
+    RDouble longitudeInterval, latitudeInterval, longitude1, longitude2, latitude1, latitude2;
+    int longitudeVertices, latitudeVertices, timeSeries;
+    int nlongitudeVertice,nlatitudeVertice;
+
+    SkipLines(file, 1);
+
+    getline(file, line);
+
+    SkipWords(line,5);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (longitudeInterval, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (latitudeInterval, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (longitude1, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (longitude2, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (latitude1, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (latitude2, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <int> (longitudeVertices, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <int> (latitudeVertices, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <int> (timeSeries, word, std::dec);
+
+    bool LocationInMinMaxBox = CheckIfLocationInMinMaxBox(longitude, latitude, longitude1, longitude2, latitude1, latitude2);
+
+    if(!LocationInMinMaxBox)
+    {
+        PrintToWindow("Geographic scope read from meteorological data : ","\n");
+        PrintToWindow("Longitude range : ", longitude1, "--", longitude2, "\n");
+        PrintToWindow("Latitude range : ", latitude1, "--", latitude2, "\n");
+        TK_Exit::ExceptionExit("Error: the longitude or latitude you set is not within the specified range, please check and reset!!!\n", true);
+    }
+    else
+    {
+        RDouble longitudeRatio = (longitude - longitude1)/longitudeInterval + one;
+        nlongitudeVertice = static_cast<int>(ROUND(longitudeRatio));
+        RDouble latitudeRatio = (latitude - latitude1)/latitudeInterval + one;
+        nlatitudeVertice = static_cast<int>(ROUND(latitudeRatio));
+
+        int time  = 12;
+        int nline = nlatitudeVertice + (time - 1) * latitudeVertices - 1;
+        SkipLines(file, nline);
+
+        getline(file, line);
+
+        int nword = nlongitudeVertice - 1;
+        SkipWords(line, nword);
+
+        line = FindNextWord(line, word, separator);
+        RDouble dataIn;
+        from_string<RDouble>(dataIn, word, std::dec);
+        variable.push_back(dataIn);
+
+        file.close();
+        file.clear();
+    }
+}
+
+//! Reading several kinds of variable from one file.
+void PerfectGas::ReadWRFDoubleData(string &filepath, string &varname,int &fileindex, RDouble &longitude, RDouble &latitude, vector< RDouble > & variable1, vector< RDouble > & variable2)
+{
+    fstream file;
+    string relativeFilename = "15120108.dat";
+    relativeFilename = PHSPACE::AddSymbolToFileName(relativeFilename, '_', varname);
+    relativeFilename = PHSPACE::AddSymbolToFileName(relativeFilename, '_', fileindex);
+    string filename = filepath + relativeFilename;
+    file.open(filename.c_str(), ios_base::in);
+
+    string line, word;
+    string separator  = " =\t\r\n#$,;\"'";
+
+    RDouble longitudeInterval, latitudeInterval, longitude1, longitude2, latitude1, latitude2;
+    int longitudeVertices, latitudeVertices, timeSeries;
+    int nlongitudeVertice,nlatitudeVertice;
+
+    SkipLines(file, 1);
+
+    getline(file, line);
+
+    SkipWords(line,5);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (longitudeInterval, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (latitudeInterval, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (longitude1, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (longitude2, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (latitude1, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <RDouble> (latitude2, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <int> (longitudeVertices, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <int> (latitudeVertices, word, std::dec);
+
+    line = FindNextWord(line, word, separator);
+    from_string <int> (timeSeries, word, std::dec);
+
+    bool LocationInMinMaxBox = CheckIfLocationInMinMaxBox(longitude, latitude, longitude1, longitude2, latitude1, latitude2);
+
+    if(!LocationInMinMaxBox)
+    {
+        PrintToWindow("Geographic scope read from meteorological data : ","\n");
+        PrintToWindow("Longitude range : ", longitude1, "--", longitude2, "\n");
+        PrintToWindow("Latitude range : ", latitude1, "--", latitude2, "\n");
+        TK_Exit::ExceptionExit("Error: the longitude or latitude is not within the specified range!!!\n", true);
+    }
+    else
+    {
+        RDouble longitudeRatio = (longitude - longitude1)/longitudeInterval + 1.5;
+        nlongitudeVertice = static_cast<int>(longitudeRatio);
+        RDouble latitudeRatio = (latitude - latitude1)/latitudeInterval + 1.5;
+        nlatitudeVertice = static_cast<int>(latitudeRatio);
+
+        int time  = 12;
+        int nline = nlatitudeVertice + (time - 1) * latitudeVertices - 1;
+        SkipLines(file, nline);
+
+        getline(file, line);
+
+        int nword = 2 * (nlongitudeVertice - 1);
+        SkipWords(line, nword);
+
+        RDouble dataIn;
+        line = FindNextWord(line, word, separator);
+        from_string<RDouble>(dataIn, word, std::dec);
+        variable1.push_back(dataIn);
+
+        line = FindNextWord(line, word, separator);
+        from_string<RDouble>(dataIn, word, std::dec);
+        variable2.push_back(dataIn);
+
+        file.close();
+        file.clear();
+    }
+
+}
+
+RDouble PerfectGas::ComputeVariablesAverage(vector< RDouble > & variable)
+{
+    RDouble vv = 0.0;
+    for ( int m = 0; m < variable.size(); ++ m )
+    {
+        vv += variable[m] / variable.size();
+    }
+    return vv;
+}
+
 void PerfectGas::ComputeReferenceParameter()
 {
     //!The first two variables is temperature independent, 
@@ -791,7 +1305,7 @@ void PerfectGas::ComputeReferenceGasInformation()
 
         ComputeReferenceReynoldsNumber();
     }
-    else if (inflowParaType == TEMPERATURE_PRESSURE || inflowParaType == MACH_TEMP_PRE)
+    else if (inflowParaType == TEMPERATURE_PRESSURE || inflowParaType == MACH_TEMP_PRE || inflowParaType == WEATHERCONDITION)
     {
         NormalizeAirInformation();
         ComputeReferenceReynoldsNumber();
@@ -858,7 +1372,7 @@ void PerfectGas::ComputeCoefficientOfStateEquation()
     RDouble gama0 = referenceParameterDimensional.GetAverageSpecificHeatRatio();
     RDouble refMachNumber = referenceParameterDimensional.GetMachNumber();
 
-    //! The variable is the non-dimensional value of 8.314/M£¬M denotes the non-dimensioanl molecular weight of the mixture gas.
+    //! The variable is the non-dimensional value of 8.314/Mï¿½ï¿½M denotes the non-dimensioanl molecular weight of the mixture gas.
     coefficientOfStateEquation = 1.0 / (gama0 * refMachNumber * refMachNumber); //! universal gas constant.
     GlobalDataBase::UpdateData("coefficientOfStateEquation", &coefficientOfStateEquation, PHDOUBLE, 1);
 }
@@ -872,6 +1386,14 @@ void PerfectGas::ComputeReferenceVelocity()
     if (inflowParaType == TEMPERATURE_DENSITY || inflowParaType == TEMPERATURE_PRESSURE)
     {
         RDouble refDimensionalVelocity = referenceParameterDimensional.GetVelocity();
+        RDouble refMachNumber = refDimensionalVelocity / refDimensionalSonicSpeed;
+        referenceParameterDimensional.SetMachNumber(refMachNumber);
+        GlobalDataBase::UpdateData("refMachNumber", &refMachNumber, PHDOUBLE, 1);
+    }
+    else if (inflowParaType == WEATHERCONDITION)
+    {
+        RDouble refDimensionalVelocity = referenceParameterDimensional.GetVelocity();
+        GlobalDataBase::UpdateData("refDimensionalVelocity", &refDimensionalVelocity, PHDOUBLE, 1);
         RDouble refMachNumber = refDimensionalVelocity / refDimensionalSonicSpeed;
         referenceParameterDimensional.SetMachNumber(refMachNumber);
         GlobalDataBase::UpdateData("refMachNumber", &refMachNumber, PHDOUBLE, 1);
@@ -951,7 +1473,6 @@ void PerfectGas::ComputeReferenceMolecularInformation()
     RDouble refMolecularWeight = 28.9644;
 
     molecularDiameter = 3.6e-10;
-   
 
     if (nGasModel == 1) //The Carbon dioxide.
     {
@@ -1021,7 +1542,7 @@ void PerfectGas::ComputeOtherProperParameterForGrid()
     {
         PrintToWindow("Unsteady Informations" , "\n");
         RDouble reference_velocity_dimensional = referenceParameterDimensional.GetVelocity();
-        RDouble unit = reynoldsReferenceLengthDimensional / reference_velocity_dimensional;
+        RDouble unit = 1.0 / reference_velocity_dimensional;
         RDouble physicalTimeStepDimensional = 0.0;
         RDouble physicalTimeStep = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStep");
         if (GlobalDataBase::IsExist("physicalTimeStepDimensional", PHDOUBLE, 1))
@@ -1061,5 +1582,11 @@ RDouble PerfectGas::ComputeReferenceTotalEnthalpy()
 
 }
 
+//! Check if the longitude and latitude are within the specified range in the weather data file
+bool CheckIfLocationInMinMaxBox(RDouble longitude,RDouble latitude,RDouble a,RDouble b,RDouble c,RDouble d)
+{
+    if ( longitude < MIN(a, b) || longitude > MAX(a, b) ) return false;
+    if ( latitude < MIN(c, d) || latitude > MAX(c, d) ) return false;
+    return true;
 }
-
+}

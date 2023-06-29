@@ -22,6 +22,10 @@
 using namespace std;
 
 #pragma warning (disable:913)
+#pragma warning (disable:4100)
+#pragma warning (disable:26451)
+#pragma warning(disable:6386)
+#pragma warning(disable:6385)
 namespace PHSPACE
 {
 int mide[3][3];
@@ -73,6 +77,9 @@ LIB_EXPORT StructGrid::StructGrid()
     multigridInfo = NULL;
     dynamicGridMetrics = NULL;
     walldist = NULL;
+    nearestwallfacenormalx = NULL;
+    nearestwallfacenormaly = NULL;
+    nearestwallfacenormalz = NULL;
     iBlank3D = NULL;
     gridUnstr = NULL;
     wallCellLabel = NULL;
@@ -80,9 +87,16 @@ LIB_EXPORT StructGrid::StructGrid()
     structBCSet = NULL;
     oversetGridTopology = NULL;
 
+    DiscretePrecisionKXI = NULL;
+    DiscretePrecisionETA = NULL;
+    DiscretePrecisionCTA = NULL;
+
     zoneProbesCellNI.resize(0);
     zoneProbesCellNJ.resize(0);
     zoneProbesCellNK.resize(0);
+
+    partialCFL = GlobalDataBase::GetDoubleParaFromDB("CFLEnd");
+
 
  //   ordinaryGridIndex = -1;
  //   for (int iDim = 0; iDim < THREE_D; ++ iDim)
@@ -90,6 +104,12 @@ LIB_EXPORT StructGrid::StructGrid()
  //       ordinaryDimStartIndex[iDim] = 0;
  //       ordinaryDimEndIndex  [iDim] = 0;
  //   }
+    ordinaryGridIndex = -1;
+    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+    {
+        ordinaryDimStartIndex[iDim] = 0;
+        ordinaryDimEndIndex  [iDim] = 0;
+    }
 }
 
 LIB_EXPORT void StructGrid::InitGrid(GridID *index, int level, int dim, int type)
@@ -124,7 +144,28 @@ LIB_EXPORT StructGrid::~StructGrid()
     if (cellBoundaryType) { delete cellBoundaryType; cellBoundaryType = NULL; }
     if (oversetGridTopology) { delete oversetGridTopology; oversetGridTopology = NULL; }
     delete walldist;
+    if (nearestwallfacenormalx != NULL)
+    {
+        delete nearestwallfacenormalx;
+        nearestwallfacenormalx = NULL;
+    }
+
+    if (nearestwallfacenormaly != NULL)
+    {
+        delete nearestwallfacenormaly;
+        nearestwallfacenormaly = NULL;
+    }
+
+    if (nearestwallfacenormalz != NULL)
+    {
+        delete nearestwallfacenormalz;
+        nearestwallfacenormalz = NULL;
+    }
     delete structBCSet;
+
+    if (DiscretePrecisionKXI) { delete DiscretePrecisionKXI; DiscretePrecisionKXI = NULL; }
+    if (DiscretePrecisionETA) { delete DiscretePrecisionETA; DiscretePrecisionETA = NULL; }
+    if (DiscretePrecisionCTA) { delete DiscretePrecisionCTA; DiscretePrecisionCTA = NULL; }
 
     zoneProbesCellNI.clear();
     zoneProbesCellNJ.clear();
@@ -333,6 +374,9 @@ LIB_EXPORT void StructGrid::AllocateWalldist()
     GetRange(ni, nj, nk, -2, 1, I, J, K);
 
     walldist = new RDouble3D(I, J, K, fortranArray);
+    nearestwallfacenormalx = new RDouble3D(I, J, K, fortranArray);
+    nearestwallfacenormaly = new RDouble3D(I, J, K, fortranArray);
+    nearestwallfacenormalz = new RDouble3D(I, J, K, fortranArray);
 }
 
 void StructGrid::ReadWalldist(RDouble *wallDistIn)
@@ -356,6 +400,68 @@ void StructGrid::ReadWalldist(RDouble *wallDistIn)
     }
 }
 
+void StructGrid::ReadNearestwallfacenormalx(RDouble* nearestwallfaceNormalxIn)
+{
+    RDouble3D& nearestwallfacenormalx = *this->GetNearestWallFaceNormalX();
+
+    int ist, ied, jst, jed, kst, ked;
+    this->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    int count = 0;
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                nearestwallfacenormalx(i, j, k) = nearestwallfaceNormalxIn[count];
+                count++;
+            }
+        }
+    }
+}
+
+void StructGrid::ReadNearestwallfacenormaly(RDouble* nearestwallfaceNormalyIn)
+{
+    RDouble3D& nearestwallfacenormaly = *this->GetNearestWallFaceNormalY();
+
+    int ist, ied, jst, jed, kst, ked;
+    this->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    int count = 0;
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                nearestwallfacenormaly(i, j, k) = nearestwallfaceNormalyIn[count];
+                count++;
+            }
+        }
+    }
+}
+
+void StructGrid::ReadNearestwallfacenormalz(RDouble* nearestwallfaceNormalzIn)
+{
+    RDouble3D& nearestwallfacenormalz = *this->GetNearestWallFaceNormalZ();
+
+    int ist, ied, jst, jed, kst, ked;
+    this->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+    int count = 0;
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                nearestwallfacenormalz(i, j, k) = nearestwallfaceNormalzIn[count];
+                count++;
+            }
+        }
+    }
+}
 LIB_EXPORT void StructGrid::WriteFaceBC(fstream &file)
 {
     VirtualFile *virtualFile = new VirtualFile(&file);
@@ -439,6 +545,9 @@ void StructGrid::DumpWalldist(ActionKey *actkey)
     cdata->moveto_begin();
 
     RDouble3D &walldist = * this->GetWallDist();
+    RDouble3D &nearestwallfacenormalx = * this->GetNearestWallFaceNormalX();
+    RDouble3D &nearestwallfacenormaly = * this->GetNearestWallFaceNormalY();
+    RDouble3D &nearestwallfacenormalz = * this->GetNearestWallFaceNormalZ();
 
     int ist, ied, jst, jed, kst, ked;
     this->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
@@ -452,6 +561,39 @@ void StructGrid::DumpWalldist(ActionKey *actkey)
             for (int i = ist; i <= ied; ++ i)
             {
                 cdata->write(&walldist(i, j, k), sizeof(RDouble));
+            }
+        }
+    }
+
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                cdata->write(&nearestwallfacenormalx(i, j, k), sizeof(RDouble));
+            }
+        }
+    }
+
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                cdata->write(&nearestwallfacenormaly(i, j, k), sizeof(RDouble));
+            }
+        }
+    }
+
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                cdata->write(&nearestwallfacenormalz(i, j, k), sizeof(RDouble));
             }
         }
     }
@@ -696,7 +838,7 @@ void ModifyWallTemperature(const string& name, Grid *grid_in, RDouble4D &qn)
             wallTempArray = reinterpret_cast <RDouble3D*> (structBC->GetFieldDataPtr("wallTempArray"));
         }
 
-        if ((wallTemperature < 0.0) && (!wallTempArrayExist))
+        if ((wallTemperature <= 0.0) && (!wallTempArrayExist))
         {
             continue;
         }
@@ -970,7 +1112,6 @@ void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, R
 
         int ist = 0, ied = 0, jst = 0, jed = 0, kst = 0, ked = 0;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
-        int* s_lr3d = structBC->GetFaceDirectionIndex();
 
         for (int k = kst; k <= ked; ++k)
         {
@@ -1177,7 +1318,6 @@ void ModifyBoundaryNodeValue(const string &name, Grid *grid_in, RDouble4D &qn, R
 
         int ist = 0, ied = 0, jst = 0, jed = 0, kst = 0, ked = 0;
         structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
-        int* s_lr3d = structBC->GetFaceDirectionIndex();
 
         for (int k = kst; k <= ked; ++k)
         {
@@ -1467,6 +1607,116 @@ void StructGrid::ComputeCellBoundaryType()
     }
 }
 
+void StructGrid::CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &nEquation)
+{
+    int level = this->GetLevel();
+    InterfaceInfo *interfaceInformation = this->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(this->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    if (0 == nEquation)
+    {
+        RDouble3D &fieldSend = *reinterpret_cast <RDouble3D *> (this->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForSend[iLocalFace];
+                int is, js, ks;
+                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
+                finestGrid->RemapMultigridIJK(level, is, js, ks);
+                PHWrite(dataContainer, fieldSend(is, js, ks));
+            }
+        }
+    }
+    else
+    {
+        RDouble4D &fieldSend = *reinterpret_cast <RDouble4D *> (this->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForSend[iLocalFace];
+                int is, js, ks;
+                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
+                finestGrid->RemapMultigridIJK(level, is, js, ks);
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    PHWrite(dataContainer, fieldSend(is, js, ks, m));
+                }
+            }
+        }
+    }
+}
+
+void StructGrid::DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &nEquation)
+{
+    int level = this->GetLevel();
+    InterfaceInfo *interfaceInformation = this->GetInterfaceInfo();
+    if (!interfaceInformation)
+    {
+        return;
+    }
+
+    StructGrid *finestGrid = StructGridCast(this->GetFinestGrid());
+    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
+
+    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
+    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
+    int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
+
+    dataContainer->moveto_begin();
+
+    if (0 == nEquation)
+    {
+        RDouble3D &fieldRecv = *reinterpret_cast <RDouble3D *> (this->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int it, jt, kt;
+                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+                finestGrid->RemapMultigridIJK(level, it, jt, kt);
+                PHRead(dataContainer, fieldRecv(it, jt, kt));
+            }
+        }
+    }
+    else
+    {
+        RDouble4D &fieldRecv = *reinterpret_cast <RDouble4D *> (this->GetDataPtr(fieldName));
+
+        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
+        {
+            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
+            {
+                int iFace = interfaceIndexContainerForReceive[iLocalFace];
+                int it, jt, kt;
+                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
+                finestGrid->RemapMultigridIJK(level, it, jt, kt);
+                for (int m = 0; m < nEquation; ++ m)
+                {
+                    PHRead(dataContainer, fieldRecv(it, jt, kt, m));
+                }
+            }
+        }
+    }
+}
+
 LIB_EXPORT void StructGrid::ComputeMetrics(ActionKey *actkey)
 {
     int isFVMOrFDM = PHSPACE::GlobalDataBase::GetIntParaFromDB("isFVMOrFDM");
@@ -1477,12 +1727,12 @@ LIB_EXPORT void StructGrid::ComputeMetrics(ActionKey *actkey)
         if (GetDim() == TWO_D)
         {
             ComputeMetricsStructHighOrder2D(actkey);
-            GhostMetricsStructHighOrder2D(actkey);
+            GhostMetricsStructHighOrder2D();
         }
         else
         {
             ComputeMetricsStructHighOrder3D(actkey);
-            GhostMetricsStructHighOrder3D(actkey);
+            GhostMetricsStructHighOrder3D();
         }
     }
     else
@@ -1591,7 +1841,7 @@ void StructGrid::ComputeMetrics3D(ActionKey *actkey)
                 vv = sixth * (ABS(v1) + ABS(v2) + ABS(v3) + ABS(v4) + ABS(v5) + ABS(v6));
 
                 (*vol)(i, j, k) = vv;
-                if (vv <= 0.0)
+                if (vv <= SMALL)
                 {
                     oss << " vol < 0 " << zIndex << " " << i << " " << j << " " << k << vv << "\n";
                 }
@@ -1939,7 +2189,7 @@ void StructGrid::ComputeMetrics2D(ActionKey *actkey)
                 vvol = - vvol;
                 vol(i, j, k) = vvol;
                 ++ negativecell;
-                oss << " Warning: negative cell occur : " << "(i, j, k) = " << i << " " << j << " " << k << endl;
+                oss << "  Warning: negative volume cell index (i, j, k) " << i << " " << j << " " << k << " !\n";
                 if (PHMPI::GetCurrentProcessorID() == PHMPI::GetServerProcessorID())
                 {
                     PrintToWindow(oss);
@@ -4018,7 +4268,7 @@ bool StructGrid::CommunicateNodeLocation()
     }
 
     int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible != 1)
+    if (compressible != COMPRESSIBLE)
     {
         Rwithghost = false;
         return Rwithghost;
@@ -4972,6 +5222,9 @@ void StructGrid::InitWallDist()
     if (nk == 1) K.setRange(1,1);
 
     walldist = new RDouble3D(I, J, K, fortranArray);
+    nearestwallfacenormalx = new RDouble3D(I, J, K, fortranArray);
+    nearestwallfacenormaly = new RDouble3D(I, J, K, fortranArray);
+    nearestwallfacenormalz = new RDouble3D(I, J, K, fortranArray);
 }
 
 void StructGrid::InitIBlank3D()
@@ -5377,7 +5630,6 @@ LIB_EXPORT void StructGrid::ProbeExternalOverlapCells(int &counter)
     using namespace PHENGLEI;
     int ni = GetNI();
     int nj = GetNJ();
-    int nk = GetNK();
     int *iBlank = GetCellTypeContainer();
     int nBcRegions = structBCSet->GetnBCRegion();
     for (int i = 0; i < nBcRegions; ++ i)
@@ -5388,7 +5640,7 @@ LIB_EXPORT void StructGrid::ProbeExternalOverlapCells(int &counter)
 
         if (bcType != EXTERNAL_BC) continue;
 
-        bcRegion->ProbeExternalOverlapCells(iBlank, ni - 1, nj - 1, nk - 1, counter);
+        bcRegion->ProbeExternalOverlapCells(iBlank, ni - 1, nj - 1, counter);
     }
 
     return;
@@ -5436,7 +5688,6 @@ LIB_EXPORT void StructGrid::ProbeBorderCell(int iType, int jType, vector< int > 
     using namespace PHMPI;
     int ni = GetNI();
     int nj = GetNJ();
-    int nk = GetNK();
 
     int *iLinkPointLabel = GetILinkPointLabel();
     int *jLinkPointLabel = GetJLinkPointLabel();
@@ -5671,7 +5922,6 @@ LIB_EXPORT void StructGrid::ColorOverlapCell(int gp, int type)
     int *iBlank = GetCellTypeContainer();
     int ni = GetNI();
     int nj = GetNJ();
-    int nk = GetNK();
     int mm = ni * nj;
     int ms = gp - zoneStartPointLabel;
     int kPoint = ms / mm;
@@ -5854,7 +6104,6 @@ LIB_EXPORT void StructGrid::BuildGridLink(LinkStruct *link)
         }
     }
 
-    uint_t nface = facelist.size();
     cout << "iface = " << iFace << "\n";
 }
 
@@ -6328,7 +6577,7 @@ void StructGrid::GhostCell3DExceptInterface(RDouble3D &TargetArray3D)
     {
         StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         //int BCType = structBC->GetBCType();
-        //if (BCType == PHENGLEI::INTERFACE || BCType < 0)
+        //if (IsInterface(BCType))
         //{
         //    continue;
         //}
@@ -6376,7 +6625,7 @@ void StructGrid::GhostCell3DExceptInterface(RDouble4D &TargetArray4D, const int 
     {
         StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         //int BCType = structBC->GetBCType();
-        //if (BCType == PHENGLEI::INTERFACE || BCType < 0)
+        //if (IsInterface(BCType))
         //{
         //    continue;
         //}
@@ -6682,7 +6931,6 @@ void UploadOversetValue(StructGrid *grid, RDouble4D *field, const string &name, 
 
     int ni = fgrid->GetNI();
     int nj = fgrid->GetNJ();
-    int nk = fgrid->GetNK();
 
     Data_ParamFieldSuite * dataStorage = oversetDataProxy->GetDataStorage();
 
@@ -6701,7 +6949,7 @@ void UploadOversetValue(StructGrid *grid, RDouble4D *field, const string &name, 
             int cellIndex = cellIndexContainer[iCell];
             int i, j, k;
 
-            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1, nk-1);
+            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1);
 
             for (int iEquation = 0; iEquation < neqn; ++ iEquation)
             {
@@ -6719,7 +6967,6 @@ void UploadOversetValue(StructGrid *grid, RDouble3D *field, const string &name)
 
     int ni = fgrid->GetNI();
     int nj = fgrid->GetNJ();
-    int nk = fgrid->GetNK();
 
     Data_ParamFieldSuite * dataStorage = oversetDataProxy->GetDataStorage();
 
@@ -6739,7 +6986,7 @@ void UploadOversetValue(StructGrid *grid, RDouble3D *field, const string &name)
             int cellIndex = cellIndexContainer[iCell];
             int i, j, k;
 
-            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1, nk-1);
+            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1);
 
             fieldStorage[ iEquation ][ storageAddress ] = (*field)(i, j, k);
         }
@@ -6752,11 +6999,8 @@ void DownloadOversetValue(StructGrid *grid, RDouble4D *field, const string &name
     StructGrid *fgrid = StructGridCast(grid->GetFinestGrid());
     OversetInformationProxy * oversetInformationProxy = grid->GetUnstrGrid()->GetOversetInformationProxy();
 
-    int gridLevelIndex = grid->GetLevel();
-
     int ni = fgrid->GetNI();
     int nj = fgrid->GetNJ();
-    int nk = fgrid->GetNK();
 
     OversetDataProxy * oversetDataProxy = oversetInformationProxy->GetOversetDataProxyForReceive();
 
@@ -6778,7 +7022,7 @@ void DownloadOversetValue(StructGrid *grid, RDouble4D *field, const string &name
             int cellIndex      = cellIndexContainer     [ iCell ];
             int i, j, k;
 
-            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1, nk-1);
+            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1);
 
             for (int iEquation = 0; iEquation < neqn; ++ iEquation)
             {
@@ -6794,11 +7038,8 @@ void DownloadOversetValue(StructGrid *grid, RDouble3D *field, const string &name
     StructGrid *fgrid = StructGridCast(grid->GetFinestGrid());
     OversetInformationProxy * oversetInformationProxy = grid->GetUnstrGrid()->GetOversetInformationProxy();
 
-    int gridLevelIndex = grid->GetLevel();
-
     int ni = fgrid->GetNI();
     int nj = fgrid->GetNJ();
-    int nk = fgrid->GetNK();
 
     OversetDataProxy * oversetDataProxy = oversetInformationProxy->GetOversetDataProxyForReceive();
 
@@ -6820,7 +7061,7 @@ void DownloadOversetValue(StructGrid *grid, RDouble3D *field, const string &name
             int cellIndex      = cellIndexContainer     [ iCell ];
             int i, j, k;
 
-            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1, nk-1);
+            DecodeIJK(cellIndex, i, j, k, ni-1, nj-1);
 
             (*field)(i, j, k) = fieldStorage[ iEquation ][ storageAddress ];
         }
@@ -7138,12 +7379,12 @@ void VencatLimiterINF(StructGrid *grid, int ig, RDouble *limit, RDouble4D *q, RD
     delete [] dmax;
 }
 
-void EncodeIJK(int &index, int i, int j, int k, int ni, int nj, int nk)
+void EncodeIJK(int &index, int i, int j, int k, int ni, int nj)
 {
     index = (i - 1) + (j - 1) * ni + (k - 1) * (ni * nj);
 }
 
-void DecodeIJK(int index, int &i, int &j, int &k, int ni, int nj, int nk)
+void DecodeIJK(int index, int &i, int &j, int &k, int ni, int nj)
 {
     k = index / (ni * nj) + 1;
     index -= (k - 1) * ni * nj;
@@ -7191,41 +7432,70 @@ void GetRange(Range &I, Range &J, Range &K, int ist, int ied, int jst, int jed, 
     return;
 }
 
-//void StructGrid::SetOrdinaryGridIndex(int ordinaryGridIndexIn)
-//{
-//    this->ordinaryGridIndex = ordinaryGridIndexIn;
-//}
-//
-//void StructGrid::SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn)
-//{
-//    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-//    {
-//        this->ordinaryDimStartIndex[iDim] = ordinaryDimStartIndexIn[iDim];
-//    }
-//}
-//
-//void StructGrid::SetOrdinaryDimEndIndex(int *ordinaryDimEndIndexIn)
-//{
-//    for (int iDim = 0; iDim < THREE_D; ++ iDim)
-//    {
-//        this->ordinaryDimEndIndex[iDim] = ordinaryDimEndIndexIn[iDim];
-//    }
-//}
-//
-//int StructGrid::GetOrdinaryGridIndex()
-//{
-//    return this->ordinaryGridIndex;
-//}
-//
-//int *StructGrid::GetOrdinaryDimStartIndex()
-//{
-//    return ordinaryDimStartIndex;
-//}
-//
-//int *StructGrid::GetOrdinaryDimEndIndex()
-//{
-//    return ordinaryDimEndIndex;
-//}
+void StructGrid::SetOrdinaryGridIndex(int ordinaryGridIndexIn)
+{
+    this->ordinaryGridIndex = ordinaryGridIndexIn;
+}
+
+void StructGrid::SetOrdinaryDimStartIndex(int *ordinaryDimStartIndexIn)
+{
+    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+    {
+        this->ordinaryDimStartIndex[iDim] = ordinaryDimStartIndexIn[iDim];
+    }
+}
+
+void StructGrid::SetOrdinaryDimEndIndex(int *ordinaryDimEndIndexIn)
+{
+    for (int iDim = 0; iDim < THREE_D; ++ iDim)
+    {
+        this->ordinaryDimEndIndex[iDim] = ordinaryDimEndIndexIn[iDim];
+    }
+}
+
+int StructGrid::GetOrdinaryGridIndex()
+{
+    return this->ordinaryGridIndex;
+}
+
+RDouble StructGrid::GetPartialCFL()
+{
+    return this->partialCFL;
+}
+
+int *StructGrid::GetOrdinaryDimStartIndex()
+{
+    return ordinaryDimStartIndex;
+}
+
+int *StructGrid::GetOrdinaryDimEndIndex()
+{
+    return ordinaryDimEndIndex;
+}
+
+void StructGrid::GetOrdinaryNodeIndex(int iIndexIn, int jIndexIn,int kIndexIn,int &iOrdinaryIndexOut,int &jOrdinaryIndexOut,int &kOrdinaryIndexOut)
+{
+    int ii, jj, kk;
+    ii = ordinaryDimStartIndex[0] - 1;
+    jj = ordinaryDimStartIndex[0] - 1;
+    kk = ordinaryDimStartIndex[0] - 1;
+
+    iOrdinaryIndexOut = ii + iIndexIn;
+    jOrdinaryIndexOut = ii + jIndexIn;
+    kOrdinaryIndexOut = ii + kIndexIn;
+}
+
+void StructGrid::GetOrdinaryCellIndex(int iIndexIn, int jIndexIn,int kIndexIn,int &iOrdinaryIndexOut,int &jOrdinaryIndexOut,int &kOrdinaryIndexOut)
+{
+    int ii, jj, kk;
+    ii = ordinaryDimStartIndex[0] - 1;
+    jj = ordinaryDimStartIndex[0] - 1;
+    kk = ordinaryDimStartIndex[0] - 1;
+
+    iOrdinaryIndexOut = ii + iIndexIn;
+    jOrdinaryIndexOut = ii + jIndexIn;
+    kOrdinaryIndexOut = ii + kIndexIn;
+}
 
 void StructGrid::GetLocalIndex(int gp, int &ip, int &jp, int &kp) const
 {
@@ -7455,7 +7725,7 @@ void StructGrid::InitVariableWallTemperature()
 
     CloseFile(file);
 
-    int dataNumberInCurrentGrid = dataInCurrentGrid.size();
+    int dataNumberInCurrentGrid = static_cast<int>(dataInCurrentGrid.size());
     if (dataNumberInCurrentGrid == 0)
     {
         return;
@@ -7728,7 +7998,6 @@ void CompNodeVar(Grid *grid_in, RDouble4D &qn, int m, RDouble4D &q, int n, bool 
                 {
                     bcregion->GetBoundaryFaceIndex(i, j, k, iNode, jNode, kNode);
 
-                    int il, jl, kl;
                     il = iNode + il1;
                     jl = jNode + jl1;
                     kl = kNode + kl1;

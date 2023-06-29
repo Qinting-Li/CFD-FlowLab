@@ -615,20 +615,20 @@ LIB_EXPORT void Stainer::ReadHoleData()
     using namespace PHMPI;
     if(! PHSPACE::GetCodeOfDigHoles()) return;
 
-    int server = GetServerProcessorID();
+    int serverTmp = GetServerProcessorID();
     fstream file;
     string fileName = GlobalDataBase::GetStrParaFromDB("holeFullFileName");
     ParallelOpenFile(file, fileName, ios_base::in|ios_base::binary);
 
-    PH_Read_Bcast(file, & numberOfHoles, sizeof(int), server);
+    PH_Read_Bcast(file, & numberOfHoles, sizeof(int), serverTmp);
     holeGridContainer = new vector< HoleGrid* >(numberOfHoles, NULL);
 
     vector< int > holeZoneStart(numberOfHoles), holeZoneEnd(numberOfHoles), holeZoneAttached(numberOfHoles), numberOfHoleSurfaces(numberOfHoles), numberOfHolePoints(numberOfHoles);
-    PH_Read_Bcast(file, & holeZoneStart[0],        numberOfHoles * sizeof(int), server);
-    PH_Read_Bcast(file, & holeZoneEnd[0],          numberOfHoles * sizeof(int), server);
-    PH_Read_Bcast(file, & holeZoneAttached[0],     numberOfHoles * sizeof(int), server);
-    PH_Read_Bcast(file, & numberOfHoleSurfaces[0], numberOfHoles * sizeof(int), server);
-    PH_Read_Bcast(file, & numberOfHolePoints[0],   numberOfHoles * sizeof(int), server);
+    PH_Read_Bcast(file, & holeZoneStart[0],        numberOfHoles * sizeof(int), serverTmp);
+    PH_Read_Bcast(file, & holeZoneEnd[0],          numberOfHoles * sizeof(int), serverTmp);
+    PH_Read_Bcast(file, & holeZoneAttached[0],     numberOfHoles * sizeof(int), serverTmp);
+    PH_Read_Bcast(file, & numberOfHoleSurfaces[0], numberOfHoles * sizeof(int), serverTmp);
+    PH_Read_Bcast(file, & numberOfHolePoints[0],   numberOfHoles * sizeof(int), serverTmp);
 
     for (int iHole = 0; iHole < numberOfHoles; ++ iHole)
     {
@@ -640,14 +640,14 @@ LIB_EXPORT void Stainer::ReadHoleData()
         holeGrid->SetNumberOfPoints (numberOfHolePoints[iHole]  );
 
         holeGrid->GenerateSurfaceSpace();
-        PH_Read_Bcast(file, holeGrid->GetNSI(), numberOfHoleSurfaces[iHole] * sizeof(int), server);
-        PH_Read_Bcast(file, holeGrid->GetNSJ(), numberOfHoleSurfaces[iHole] * sizeof(int), server);
-        PH_Read_Bcast(file, holeGrid->GetNSP(), numberOfHoleSurfaces[iHole] * sizeof(int), server);
+        PH_Read_Bcast(file, holeGrid->GetNSI(), numberOfHoleSurfaces[iHole] * sizeof(int), serverTmp);
+        PH_Read_Bcast(file, holeGrid->GetNSJ(), numberOfHoleSurfaces[iHole] * sizeof(int), serverTmp);
+        PH_Read_Bcast(file, holeGrid->GetNSP(), numberOfHoleSurfaces[iHole] * sizeof(int), serverTmp);
 
         holeGrid->GeneratePointSpace();
-        PH_Read_Bcast(file, holeGrid->GetX(), numberOfHolePoints[iHole] * sizeof(RDouble), server);
-        PH_Read_Bcast(file, holeGrid->GetY(), numberOfHolePoints[iHole] * sizeof(RDouble), server);
-        PH_Read_Bcast(file, holeGrid->GetZ(), numberOfHolePoints[iHole] * sizeof(RDouble), server);
+        PH_Read_Bcast(file, holeGrid->GetX(), numberOfHolePoints[iHole] * sizeof(RDouble), serverTmp);
+        PH_Read_Bcast(file, holeGrid->GetY(), numberOfHolePoints[iHole] * sizeof(RDouble), serverTmp);
+        PH_Read_Bcast(file, holeGrid->GetZ(), numberOfHolePoints[iHole] * sizeof(RDouble), serverTmp);
 
         (* holeGridContainer)[iHole] = holeGrid;
     }
@@ -1752,19 +1752,19 @@ LIB_EXPORT void OversetStructGrid::RunGeometricAnalysis()
 void OversetStructGrid::ReadBasicParameter()
 {
     using namespace PHMPI;
-    int server = PHMPI::GetServerProcessorID();
+    int serverTmp = PHMPI::GetServerProcessorID();
     int thisip = PHMPI::GetCurrentProcessorID();
 
     fstream file0;
     string fileName0 = PHSPACE::GlobalDataBase::GetStrParaFromDB("masterFileName");
     ParallelOpenFile(file0, fileName0, ios_base::in);
-    if (thisip == server) file0 >> searchTimes;
-    PH_Bcast(& searchTimes, sizeof(int), server);
+    if (thisip == serverTmp) file0 >> searchTimes;
+    PH_Bcast(& searchTimes, sizeof(int), serverTmp);
 
     sourceZoneStart.resize(searchTimes); sourceZoneEnd.resize(searchTimes);
     targetZoneStart.resize(searchTimes); targetZoneEnd.resize(searchTimes);
 
-    if(thisip == server)
+    if(thisip == serverTmp)
     {
         for(int iSearch = 0; iSearch < searchTimes; ++iSearch)
         {
@@ -1772,10 +1772,10 @@ void OversetStructGrid::ReadBasicParameter()
         }
     }
 
-    PH_Bcast(& sourceZoneStart[0], searchTimes * sizeof(int), server);
-    PH_Bcast(& sourceZoneEnd[0],   searchTimes * sizeof(int), server);
-    PH_Bcast(& targetZoneStart[0], searchTimes * sizeof(int), server);
-    PH_Bcast(& targetZoneEnd[0],   searchTimes * sizeof(int), server);
+    PH_Bcast(& sourceZoneStart[0], searchTimes * sizeof(int), serverTmp);
+    PH_Bcast(& sourceZoneEnd[0],   searchTimes * sizeof(int), serverTmp);
+    PH_Bcast(& targetZoneStart[0], searchTimes * sizeof(int), serverTmp);
+    PH_Bcast(& targetZoneEnd[0],   searchTimes * sizeof(int), serverTmp);
     ParallelCloseFile(file0);
 
     int nZones = PHMPI::GetNumberofGlobalZones();
@@ -1784,7 +1784,7 @@ void OversetStructGrid::ReadBasicParameter()
     fstream file1;
     string fileName1 = PHSPACE::GlobalDataBase::GetStrParaFromDB("zoneInverseFileName");
     ParallelOpenFile(file1, fileName1, ios_base::in|ios_base::binary);
-    PH_Read_Bcast(file1, & zoneInverseIndex[0], nZones * sizeof(int), server);
+    PH_Read_Bcast(file1, & zoneInverseIndex[0], nZones * sizeof(int), serverTmp);
     ParallelCloseFile(file1);
 
     return;

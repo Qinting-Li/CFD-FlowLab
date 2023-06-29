@@ -14,6 +14,11 @@ LIB_EXPORT Geo_CellTopo_Unstruct::Geo_CellTopo_Unstruct()
     node_number_of_each_cell = NULL;
     cell2node = NULL;
     cell2nodeArray = NULL;
+
+    // GMRESVis
+    neighborCells   = NULL;
+    neighborFaces   = NULL;
+    neighborLR      = NULL;
 }
 
 LIB_EXPORT Geo_CellTopo_Unstruct::~Geo_CellTopo_Unstruct()
@@ -28,6 +33,11 @@ LIB_EXPORT Geo_CellTopo_Unstruct::~Geo_CellTopo_Unstruct()
     delete [] cell2cell;
 
     if (node_number_of_each_cell) delete [] node_number_of_each_cell;
+
+    // GMRESVis
+    delete [] neighborCells;
+    delete [] neighborFaces;
+    delete [] neighborLR;
 }
 
 }

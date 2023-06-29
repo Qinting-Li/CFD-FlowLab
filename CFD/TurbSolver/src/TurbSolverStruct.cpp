@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include "TK_Time.h"
 
-
 using namespace std;
 
 namespace PHSPACE
@@ -75,10 +74,12 @@ void TurbSolverStr::AllocateGlobalVar(Grid *gridIn)
     RDouble4D *qTurbulence = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *residualTurbulence = new RDouble4D(I, J, K, M, fortranArray);
     RDouble4D *spectrumTurbulence = new RDouble4D(I, J, K, M, fortranArray);
+    RDouble4D *spectrumTurbulence0 = new RDouble4D(I, J, K, M, fortranArray);
 
     grid->UpdateDataPtr("q_turb", qTurbulence);    //! Unknown variable of turbulent model.
     grid->UpdateDataPtr("res_turb", residualTurbulence);    //! Residual or right-hand side.
     grid->UpdateDataPtr("spec_turb", spectrumTurbulence);    //! Spectral radius of turbulent model.
+    grid->UpdateDataPtr("spec_turb0", spectrumTurbulence0);    //! Spectral radius of turbulent model.
 
     RDouble4D *gradTurbulenceX = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
     RDouble4D *gradTurbulenceY = new RDouble4D(IFACE, JFACE, KFACE, M, fortranArray);
@@ -178,10 +179,12 @@ void TurbSolverStr::DeAllocateGlobalVar(Grid *gridIn)
     RDouble4D *qTurbulence = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
     RDouble4D *residualTurbulence = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("res_turb"));
     RDouble4D *spectrumTurbulence = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("spec_turb"));
+    RDouble4D *spectrumTurbulence0 = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("spec_turb0"));
 
     delete qTurbulence;
     delete residualTurbulence;
     delete spectrumTurbulence;
+    delete spectrumTurbulence0;
 
     RDouble4D *gradTurbulenceX = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradTurbulenceX"));
     RDouble4D *gradTurbulenceY = reinterpret_cast<RDouble4D *> (grid->GetDataPtr("gradTurbulenceY"));
@@ -589,7 +592,6 @@ void TurbSolverStr::DumpRestartH5(ActionKey *actkey)
 
     Range M(0, nTurbulenceEquation - 1);
     int mst = M.first();
-    int med = M.last();
 
     RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
     RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
@@ -664,7 +666,6 @@ void TurbSolverStr::ReadRestartH5(ActionKey *actkey)
 
     Range M(0, nTurbulenceEquation - 1);
     int mst = M.first();
-    int med = M.last();
 
     RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
     RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
@@ -2034,7 +2035,6 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     int nk = grid->GetNK();
 
     RDouble4D &qPrimitive = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
     RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
     RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
     RDouble4D &spectrumTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("spec_turb"));
@@ -2043,20 +2043,13 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     RDouble3D *lengthScale = this->GetLengthScaleSST();
     RDouble3D *SSTLength = this->GetSSTLength();
 
-    RDouble3D &walldist = *grid->GetWallDist();
-
     RDouble3D &xc = *(grid->GetCellCenterX());
-    RDouble4D &xfn = *(grid->GetFaceNormalX());
-    RDouble4D &yfn = *(grid->GetFaceNormalY());
-    RDouble4D &zfn = *(grid->GetFaceNormalZ());
-    RDouble4D &area = *(grid->GetFaceArea());
     RDouble3D &vol = *(grid->GetCellVolume());
 
     Param_TurbSolverStruct *parameters = GetControlParameters();
     RDouble refReNumber = parameters->GetRefReNumber();
     RDouble oRefReNumber = parameters->GetoRefReNumber();
     RDouble refMaNumber = parameters->GetRefMachNumber();
-    RDouble refVelocity = parameters->GetRefDimensionalVelocity();
     string viscousName = parameters->GetViscousName();
 
     int neasm = GlobalDataBase::GetIntParaFromDB("neasm");
@@ -2066,8 +2059,7 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
     int isdes = 0;
     isdes = parameters->GetDESType();
 
-    const RDouble cdes_ke = 0.61, cdes_kw = 0.78;
-    RDouble cdes = 0.0, dxyz = 0.0, desdxyz = 0.0, cdissk = 0.0, cdissw = 0.0, tmp = 0.0, lkw = 0.0;
+    RDouble cdissk = 0.0, cdissw = 0.0;
 
     //! To determine if compressible correction used or not.
     int isCC = 0;
@@ -2119,12 +2111,7 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
 
     int transitionType = parameters->GetTransitionType();
 
-    RDouble *primitiveVariablesInfinity = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
     RDouble *freeStreamTurbVar = parameters->GetFreeStreamTurbVar();
-    RDouble rFarfield = primitiveVariablesInfinity[IR];
-    RDouble uFarfield = primitiveVariablesInfinity[IU];
-    RDouble pFarfield = primitiveVariablesInfinity[IP];
-    RDouble freeStreamViscosity = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
 
     //! K-OMEGA MODELS
     if (viscousName.substr(0, 6) == "2eq-kw")
@@ -2150,7 +2137,6 @@ void TurbSolverStr::SourceFluxTwoEquation(Grid *gridIn)
 
             RDouble3D &SpSdRatio = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("SpSdRatio"));
             RDouble3D &gamaeff = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("gamaeff"));
-            RDouble3D &rescf = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("rescf"));
 
             for (int k = kst; k <= ked; ++k)
             {
@@ -2333,6 +2319,7 @@ void TurbSolverStr::SpectrumRadiusOfOneEquation(Grid *gridIn)
     RDouble4D &faceNormalVelocity = *(grid->GetFaceNormalVelocity());
 
     RDouble4D &spectrumTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("spec_turb"));
+    RDouble4D &spectrumTurbulence0 = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("spec_turb0"));
     RDouble4D &qLaminar = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
     RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
     RDouble4D &qTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q_turb"));
@@ -2341,6 +2328,15 @@ void TurbSolverStr::SpectrumRadiusOfOneEquation(Grid *gridIn)
     RDouble5D &matrixTurbLeft = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("mat_turbl"));
     RDouble5D &matrixTurbRight = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("mat_turbr"));
     Param_TurbSolverStruct *parameters = GetControlParameters();
+    int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
+    RDouble3D *timeCoefficientInverse = NULL;
+    RDouble3D *preconCoefficient = NULL;
+
+    if (ifLowSpeedPrecon != 0)
+    {
+        timeCoefficientInverse = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
+        preconCoefficient = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
+    }
 
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
     RDouble turbCFLScale = parameters->GetTurbCFLScale();
@@ -2375,7 +2371,7 @@ void TurbSolverStr::SpectrumRadiusOfOneEquation(Grid *gridIn)
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     //!left face of i-cell
                     RDouble nx0 = faceVectorX(i, j, k, iSurface);
@@ -2399,6 +2395,12 @@ void TurbSolverStr::SpectrumRadiusOfOneEquation(Grid *gridIn)
                     RDouble vl = qLaminar(i, j, k, IV);
                     RDouble wl = qLaminar(i, j, k, IW);
                     RDouble Vn = ul * nx + vl * ny + wl * nz - vgn;
+                    if(ifLowSpeedPrecon != 0)
+                    {
+                        RDouble timeCoeff = (*timeCoefficientInverse)(i, j, k);
+                        RDouble preconCoeff = (*preconCoefficient)(i, j, k);
+                        Vn = half * timeCoeff * Vn * (1.0 + preconCoeff);
+                    }
                     RDouble absVn = ABS(Vn);
 
                     spectrumTurbulence(i, j, k, ISA) += absVn;
@@ -2427,6 +2429,33 @@ void TurbSolverStr::SpectrumRadiusOfOneEquation(Grid *gridIn)
     int ist, ied, jst, jed, kst, ked;
     grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
 
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                spectrumTurbulence0(i, j, k, ISA) = spectrumTurbulence(i, j, k, ISA);
+            }
+        }
+    }
+    GhostCell3D(spectrumTurbulence0, ni, nj, nk, nTurbulenceEquation);
+    
+
+
+
+    for (int k = kst; k <= ked; ++k)
+    {
+        for (int j = jst; j <= jed; ++j)
+        {
+            for (int i = ist; i <= ied; ++i)
+            {
+                spectrumTurbulence0(i, j, k, ISA) = spectrumTurbulence(i, j, k, ISA);
+            }
+        }
+    }
+    GhostCell3D(spectrumTurbulence0, ni, nj, nk, nTurbulenceEquation);
+    
     RDouble dualTimeSpectrumC1 = zero;
     RDouble dualTimeSpectrumC2 = one;
 
@@ -2449,6 +2478,7 @@ void TurbSolverStr::SpectrumRadiusOfOneEquation(Grid *gridIn)
             {
                 RDouble &specTub = spectrumTurbulence(i, j, k, ISA);
                 specTub += dualTimeSpectrumC1 * volume(i, j, k) + dualTimeSpectrumC2 / (turbCFLScale * dt(i, j, k) + SMALL);
+                spectrumTurbulence0(i, j, k, ISA) = specTub;
             }
         }
     }
@@ -2470,6 +2500,7 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
     RDouble4D &faceNormalVelocity = *(grid->GetFaceNormalVelocity());
 
     RDouble4D &spectrumTurbulence = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("spec_turb"));
+    RDouble4D &spectrumTurbulence0 = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("spec_turb0"));
     RDouble4D &qLaminar = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr("q"));
     RDouble3D &viscousLaminar = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("visl"));
     RDouble3D &viscousTurbulence = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
@@ -2490,6 +2521,17 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
     RDouble oRefReNumber = parameters->GetoRefReNumber();
 
     RDouble csrv = GlobalDataBase::GetDoubleParaFromDB("csrv");
+    int nDiagonalModifiedTurb = parameters->GetnDiagonalModifiedTurb();
+
+    int ifLowSpeedPrecon = parameters->GetIfLowSpeedPrecon();
+    RDouble3D *timeCoefficientInverse = NULL;
+    RDouble3D *preconCoefficient = NULL;
+
+    if (ifLowSpeedPrecon != 0)
+    {
+        timeCoefficientInverse = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("timeCoefficientInverse"));
+        preconCoefficient = reinterpret_cast< RDouble3D *> (grid->GetDataPtr("preconCoefficient"));
+    }
 
     matrixTurbLeft = 0.0;
     matrixTurbRight = 0.0;
@@ -2510,19 +2552,22 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
         dualTimeSpectrumC2 = dualTimeCoefficient[6];
     }
 
-    for (int k = kst; k <= ked; ++k)
+    if(nDiagonalModifiedTurb == 0)
     {
-        for (int j = jst; j <= jed; ++j)
+        for (int k = kst; k <= ked; ++k)
         {
-            for (int i = ist; i <= ied; ++i)
+            for (int j = jst; j <= jed; ++j)
             {
-                RDouble volumeCell = volume(i, j, k);
-                RDouble dtCell = dt(i, j, k);
-                RDouble specTurbDelta = dualTimeSpectrumC1 * volumeCell + dualTimeSpectrumC2 / (turbCFLScale * dtCell + SMALL);
-                for (int m = mst; m <= med; ++m)
+                for (int i = ist; i <= ied; ++i)
                 {
-                    RDouble &specTur = spectrumTurbulence(i, j, k, m);
-                    specTur += specTurbDelta;
+                    RDouble volumeCell = volume(i, j, k);
+                    RDouble dtCell = dt(i, j, k);
+                    RDouble specTurbDelta = dualTimeSpectrumC1 * volumeCell + dualTimeSpectrumC2 / (turbCFLScale * dtCell + SMALL);
+                    for (int m = mst; m <= med; ++m)
+                    {
+                        RDouble &specTur = spectrumTurbulence(i, j, k, m);
+                        specTur += specTurbDelta;
+                    }
                 }
             }
         }
@@ -2538,7 +2583,6 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
         int il1, jl1, kl1;
         grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-        int ist, ied, jst, jed, kst, ked;
         grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
 
         for (int k = kst; k <= ked; ++k)
@@ -2548,7 +2592,7 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     RDouble nx0 = faceVectorX(i, j, k, iSurface);
                     RDouble ny0 = faceVectorY(i, j, k, iSurface);
@@ -2569,6 +2613,12 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
                     RDouble vl = qLaminar(i, j, k, IV);
                     RDouble wl = qLaminar(i, j, k, IW);
                     RDouble Vn = ul * nx + vl * ny + wl * nz - vgn;
+                    if (ifLowSpeedPrecon != 0)
+                    {
+                        RDouble timeCoeff = (*timeCoefficientInverse)(i, j, k);
+                        RDouble preconCoeff = (*preconCoefficient)(i, j, k);
+                        Vn = half * timeCoeff * Vn * (1.0 + preconCoeff);
+                    }
                     RDouble absVn = ABS(Vn);
 
                     for (int m = M.first(); m <= M.last(); ++m)
@@ -2601,12 +2651,7 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
             int il1, jl1, kl1;
             grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-            int ist, ied, jst, jed, kst, ked;
             grid->GetFaceIterationIndex(ist, ied, jst, jed, kst, ked, iSurface);
-
-            Range M(0, nTurbulenceEquation - 1);
-            int mst = M.first();
-            int med = M.last();
 
             for (int k = kst; k <= ked; ++k)
             {
@@ -2615,7 +2660,7 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
                     for (int i = ist; i <= ied; ++i)
                     {
                         int il, jl, kl;
-                        grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                        grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                         RDouble rho = qLaminar(i, j, k, IR);
                         RDouble muLaminar = viscousLaminar(i, j, k);
@@ -2660,6 +2705,49 @@ void TurbSolverStr::SpectrumRadiusOfTwoEquation(Grid *gridIn)
                 }
             }
         }
+    }
+    if(nDiagonalModifiedTurb != 0)
+    {
+        int ni = grid->GetNI();
+        int nj = grid->GetNJ();
+        int nk = grid->GetNK();
+        grid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked);
+
+         for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    for (int m = mst; m <= med; ++m)
+                    {
+                        spectrumTurbulence0(i, j, k, m) = spectrumTurbulence(i, j, k, m);
+                    }
+                }
+            }
+        }
+        GhostCell3D(spectrumTurbulence0, ni, nj, nk, nTurbulenceEquation);
+    
+
+        for (int k = kst; k <= ked; ++k)
+        {
+            for (int j = jst; j <= jed; ++j)
+            {
+                for (int i = ist; i <= ied; ++i)
+                {
+                    RDouble volumeCell = volume(i, j, k);
+                    RDouble dtCell = dt(i, j, k);
+                    RDouble specTurbDelta = dualTimeSpectrumC1 * volumeCell + dualTimeSpectrumC2 / (turbCFLScale * dtCell + SMALL);
+                    for (int m = mst; m <= med; ++m)
+                    {
+                        RDouble &specTur = spectrumTurbulence(i, j, k, m);
+                        specTur += specTurbDelta;
+                    }
+                }
+            }
+        }
+
+        GhostCell3D(spectrumTurbulence, ni, nj, nk, nTurbulenceEquation);
     }
 }
 
@@ -3039,7 +3127,7 @@ void TurbSolverStr::NNDFlux(Grid *gridIn, FieldProxy *qLeftProxy, FieldProxy *qR
             for (int i = ist; i <= ied; ++i)
             {
                 int il, jl, kl;
-                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                 RDouble xfn = faceNormalX(il, jl, kl, iSurface);
                 RDouble yfn = faceNormalY(il, jl, kl, iSurface);
@@ -3108,7 +3196,7 @@ void TurbSolverStr::LoadFlux(Grid *gridIn, FieldProxy *fluxProxy, int iSurface)
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     RDouble &resTurb = residualTurbulence(i, j, k, m);
                     RDouble &fluxLeft = flux(il, jl, kl, m);
@@ -3172,7 +3260,7 @@ void TurbSolverStr::ComputeGradientCellCenter(Grid *gridIn)
                     for (int i = ist; i <= ied; ++i)
                     {
                         int il, jl, kl;
-                        strgrid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                        strgrid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                         RDouble phis = qTurbulence(i, j, k, m) + qTurbulence(il, jl, kl, m);
 
@@ -3229,118 +3317,6 @@ void TurbSolverStr::ComputeGradientCellCenter(Grid *gridIn)
     }
 }
 
-void TurbSolverStr::CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
-{
-    StructGrid *grid = StructGridCast(gridIn);
-    int level = grid->GetLevel();
-    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-    if (!interfaceInformation)
-    {
-        return;
-    }
-
-    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
-    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-
-    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForSend = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
-
-    dataContainer->moveto_begin();
-
-    if (0 == nEquation)
-    {
-        RDouble3D &fieldSend = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForSend[iLocalFace];
-                int is, js, ks;
-                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
-                finestGrid->RemapMultigridIJK(level, is, js, ks);
-                PHWrite(dataContainer, fieldSend(is, js, ks));
-            }
-        }
-    }
-    else
-    {
-        RDouble4D &fieldSend = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForSend[iLocalFace];
-                int is, js, ks;
-                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
-                finestGrid->RemapMultigridIJK(level, is, js, ks);
-                for (int m = 0; m < nEquation; ++m)
-                {
-                    PHWrite(dataContainer, fieldSend(is, js, ks, m));
-                }
-            }
-        }
-    }
-}
-
-void TurbSolverStr::DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
-{
-    StructGrid *grid = StructGridCast(gridIn);
-    int level = grid->GetLevel();
-    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-    if (!interfaceInformation)
-    {
-        return;
-    }
-
-    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
-    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-
-    int iNeighborZone = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForReceive = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
-
-    dataContainer->moveto_begin();
-
-    if (0 == nEquation)
-    {
-        RDouble3D &fieldRecv = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForReceive[iLocalFace];
-                int it, jt, kt;
-                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
-                finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                PHRead(dataContainer, fieldRecv(it, jt, kt));
-            }
-        }
-    }
-    else
-    {
-        RDouble4D &fieldRecv = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; --iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForReceive[iLocalFace];
-                int it, jt, kt;
-                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
-                finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                for (int m = 0; m < nEquation; ++m)
-                {
-                    PHRead(dataContainer, fieldRecv(it, jt, kt, m));
-                }
-            }
-        }
-    }
-}
-
 void TurbSolverStr::RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -3370,7 +3346,6 @@ void TurbSolverStr::RotateVectorFromInterface(Grid *gridIn, const int &neighborZ
     rotationAngle = rotationAngle * PI / 180;
     if (nEquation > 0)
     {
-        RDouble4D &fieldRecvTurbX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterX"));
         RDouble4D &fieldRecvTurbY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterY"));
         RDouble4D &fieldRecvTurbZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradTurbulenceCellCenterZ"));
 
@@ -3523,7 +3498,7 @@ void TurbSolverStr::GetGradientAtFace_CorrectionAtPhysicalBoundary(Grid *gridIn,
         int ist, ied, jst, jed, kst, ked;
         bcregion->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
-        if (BCType < 0 || nsurf_bc != iSurface) //! Inner P TO P BC in the current direction
+        if (IsInterface(BCType) || nsurf_bc != iSurface) //! Inner P TO P BC in the current direction
         {
             continue;
         }
@@ -3707,7 +3682,7 @@ void TurbSolverStr::CompVisFluxOneEquation(Grid *gridIn, FieldProxy *fluxProxy, 
             for (int i = ist; i <= ied; ++i)
             {
                 int il, jl, kl;
-                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                 RDouble nxs = faceNormalX(il, jl, kl, iSurface);
                 RDouble nys = faceNormalY(il, jl, kl, iSurface);
@@ -3773,8 +3748,6 @@ void TurbSolverStr::CompVisFluxTwoEquation(Grid *gridIn, FieldProxy *fluxProxy, 
 
     using namespace IDX;
 
-    int transitionType = parameters->GetTransitionType();
-
     if (viscousName.substr(0, 13) == "2eq-kw-menter" || viscousName.substr(0, 12) == "easm-kw-2005")
     {
         RDouble3D &blend = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("blend"));
@@ -3791,7 +3764,7 @@ void TurbSolverStr::CompVisFluxTwoEquation(Grid *gridIn, FieldProxy *fluxProxy, 
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     RDouble nxs = faceNormalX(il, jl, kl, iSurface);
                     RDouble nys = faceNormalY(il, jl, kl, iSurface);
@@ -3842,7 +3815,7 @@ void TurbSolverStr::CompVisFluxTwoEquation(Grid *gridIn, FieldProxy *fluxProxy, 
                 for (int i = ist; i <= ied; ++i)
                 {
                     int il, jl, kl;
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     RDouble nxs = faceNormalX(il, jl, kl, iSurface);
                     RDouble nys = faceNormalY(il, jl, kl, iSurface);
@@ -3924,8 +3897,6 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
 {
     StructGrid *grid = StructGridCast(gridIn);
 
-    int *iBlank = grid->GetCellTypeContainer();
-
     RDouble4D &dqTurbulence = dqProxy->GetField_STR();
     RDouble4D &deltaFlux = LUplusDQ->GetField_STR();
 
@@ -3992,7 +3963,7 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
                     int il, jl, kl, il1, jl1, kl1;
                     grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-                    grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
                     
                     for (int m = mst; m <= med; ++m)
                     {
@@ -4041,8 +4012,6 @@ void TurbSolverStr::SolveLUSGSForward(Grid *gridIn, FieldProxy *dqProxy, FieldPr
 void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal, bool iAdvanceStep)
 {
     StructGrid *grid = StructGridCast(gridIn);
-
-    int *iBlank = grid->GetCellTypeContainer();
 
     RDouble4D &dqTurbulence = dqProxy->GetField_STR();
     RDouble4D &deltaFlux = LUplusDQ->GetField_STR();
@@ -4103,7 +4072,7 @@ void TurbSolverStr::SolveLUSGSBackward(Grid *gridIn, FieldProxy *dqProxy, FieldP
                     int il, jl, kl, il1, jl1, kl1;
                     grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     for (int m = mst; m <= med; ++m)
                     {
@@ -4155,7 +4124,6 @@ void TurbSolverStr::UpdateFlowField(Grid *gridIn, FieldProxy *qProxy, FieldProxy
 
     RDouble4D &qTurbulence = qProxy->GetField_STR();
     RDouble4D &dqTurbulence = dqProxy->GetField_STR();
-    RDouble3D &xc = *(grid->GetCellCenterX());
 
     Param_TurbSolverStruct *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
@@ -4402,7 +4370,7 @@ void TurbSolverStr::Boundary(Grid *gridIn)
         StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
-        if (BCType < 0)
+        if (IsInterface(BCType))
         {
             continue;
         }
@@ -4785,7 +4753,7 @@ void TurbSolverStr::VisWallWithWallFunctionStandard(Grid *gridIn, StructBC *stru
                 RDouble yPlus = refReNumber * wallDistance * densityWall * utao / laminarViscosity;
                 RDouble epslon = 1.0;
                 RDouble viscousTurbulenceWall;
-                RDouble tempturePlus;
+                RDouble tempturePlus=1.0;
                 int iter = 0;
                 while (epslon > 0.001 && ++iter < 10)
                 {
@@ -5093,9 +5061,9 @@ void TurbSolverStr::FarFieldBC(Grid *gridIn, StructBC *structBC)
                 RDouble gama = gamma(is1, js1, ks1);
 
                 RDouble coo = sqrt(ABS(refGama * pFarfield / rFarfield));
-                RDouble cin = sqrt(ABS(gama * pin / rin));
+                RDouble cIN = sqrt(ABS(gama * pin / rin));
 
-                if (vei > cin)
+                if (vei > cIN)
                 {
                     if (vni >= 0.0)
                     {
@@ -5120,7 +5088,7 @@ void TurbSolverStr::FarFieldBC(Grid *gridIn, StructBC *structBC)
                     continue;
                 }
 
-                RDouble riemp = vni + 2.0 * cin / (gama - 1.0);
+                RDouble riemp = vni + 2.0 * cIN / (gama - 1.0);
                 RDouble riemm = vno - 2.0 * coo / (refGama - 1.0);
                 RDouble vnb = half * (riemp + riemm);
 

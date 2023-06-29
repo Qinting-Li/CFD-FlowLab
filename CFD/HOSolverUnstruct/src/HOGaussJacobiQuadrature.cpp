@@ -8,9 +8,12 @@
 /*----------------------------------------------------------------------------------*/
 namespace HOUnstruct
 {
-
+//****************************************************************************80
+//
+//  gongxq note:tgamma needs to be update
+//*****************************************************************************
 double tgamma(double x)
-{
+{//x>0
     if(x > 2 && x<= 3)
     {
         const double c0 =  0.0000677106;
@@ -244,7 +247,7 @@ void CGaussJacobiQuadrature::cgqf(int nt, int kind, RDouble alpha, RDouble beta,
     {
         ndx[i] = i + 1;
     }
-    scqf(nt, t, mlt, wts, nt, ndx, wts, t, kind, alpha, beta, a, b);
+    scqf(nt, t, mlt, wts, ndx, wts, t, kind, alpha, beta, a, b);
 
     delete [] mlt;
     delete [] ndx;
@@ -856,7 +859,7 @@ RDouble CGaussJacobiQuadrature::r8_sign(RDouble x)
 //****************************************************************************80
 
 void CGaussJacobiQuadrature::scqf(int nt, RDouble t[], int mlt[], RDouble wts[],
-                                  int nwts, int ndx[], RDouble swts[], RDouble st[],
+                                  int ndx[], RDouble swts[], RDouble st[],
                                   int kind, RDouble alpha, RDouble beta, RDouble a, 
                                   RDouble b)
 //****************************************************************************80

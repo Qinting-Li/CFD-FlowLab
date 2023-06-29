@@ -21,7 +21,7 @@ void ShapeFunctionOfTri(const RDouble * refCoord, RDouble * ret)
     ret[2] = et;
 }
 
-void ShapeFunctionOfTriGrad(const RDouble * refCoord, RDouble * ret)
+void ShapeFunctionOfTriGrad(RDouble * ret)
 {
     ret[0] = -1.0;
     ret[1] = -1.0;
@@ -74,7 +74,7 @@ void ShapeFunctionOfTetr(const RDouble * refCoord, RDouble * ret)
     ret[3] =                 zt;
 }
 
-void ShapeFunctionOfTetrGrad(const RDouble * refCoord, RDouble * ret)
+void ShapeFunctionOfTetrGrad(RDouble * ret)
 {
     ret[ 0] = -1.0;
     ret[ 1] = -1.0;

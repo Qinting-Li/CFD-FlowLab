@@ -172,7 +172,7 @@ void Mesh_DeformationSPRING::Deforming()
             DYNode *nodeArray = grid->GetNodeArray();
             int nTotalNode = grid->GetNTotalNode();
 
-            RDouble norm, norm1;
+            RDouble norm, norm1=1.0;
             RDouble normx, normy, normz;
             RDouble dxn, dyn, dzn;
             RDouble rn;

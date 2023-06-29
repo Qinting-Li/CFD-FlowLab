@@ -13,8 +13,6 @@ namespace TIME_SPACE
 
 LIB_EXPORT double GetWallTime()
 {
-    int ErrCode = 0;
-
     static time_t first_time[2];
 
     static int count = 1;
@@ -27,7 +25,7 @@ LIB_EXPORT double GetWallTime()
 
 #ifndef WIN32
     struct timeval va1;
-
+    int ErrCode = 0;
     ErrCode = gettimeofday(&va1, (struct timezone *)0);
 
     now_time[0] = va1.tv_sec;
@@ -140,15 +138,15 @@ LIB_EXPORT int WriStatTime()
 
     double cpu_time, sys_time, wall_time;
 
-    double *time_array = new double[2]();
+    double *time_array1 = new double[2]();
 
-    ErrCode = GetCPUTime(time_array);
+    ErrCode = GetCPUTime(time_array1);
     wall_time = GetWallTime();
 
-    cpu_time = time_array[CPUTimeIndex];
-    sys_time = time_array[SYSTimeIndex];
+    cpu_time = time_array1[CPUTimeIndex];
+    sys_time = time_array1[SYSTimeIndex];
 
-    delete [] time_array;
+    delete [] time_array1;
 
     string cs;
     ostringstream oss;
@@ -248,7 +246,7 @@ LIB_EXPORT int WriStatTime()
         cout << cs << endl;
     }
 
-    oss.flags();
+    (void)oss.flags();
 
     WriteLogFile(cs);
 
@@ -294,7 +292,7 @@ LIB_EXPORT int WriStatTime(const char *title, double *last_time)
     oss << title << " Time Statistics: SYS = " << sys_time
         << ", CPU=" << cpu_time << ", Wall = " << wall_time;
     cs = oss.str();
-    oss.flags();
+    (void)oss.flags();
 
     WriteLogFile(cs);
 
@@ -320,7 +318,7 @@ LIB_EXPORT void GetFileModifiedTime(string &fileName, RDouble &TimeFile)
     struct stat result;
     if (stat(filename.c_str(), &result) == 0 )
     {
-        RDouble mod_time = result.st_mtime;
+        RDouble mod_time = static_cast<RDouble>(result.st_mtime);
         TimeFile = mod_time;
     }
 }

@@ -39,17 +39,8 @@ string parafilename = "./bin/cfd_para_transonic.hypara";
 //int    nsimutask    = 1;
 //string parafilename = "./bin/grid_refine_para.hypara";
 
-//int    nsimutask    = 5;
-//string parafilename = "./bin/overset_grid_view.hypara";
-
-//int    nsimutask    = 13;
-//string parafilename = "./bin/lbm_para.hypara";
-
 //int    nsimutask    = 14;
 //string parafilename = "./bin/integrative_solver.hypara";
-
-//int    nsimutask    = 15;
-//string parafilename = "./bin/gridcheck_solver.hypara";
 
 //int    nsimutask    = 99;
 //string parafilename = "./bin/post_processing.hypara";

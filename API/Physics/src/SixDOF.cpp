@@ -565,10 +565,10 @@ PHMatrix< RDouble > PHRigidBodyMovement::CalculateGridCellFaceVelocity(Grid* gri
 
     PHSuperMatrix & eulerAngleRate = * this->eulerAngleRate;
 
-    for (int i = 1; i <= 3; ++ i)
+    for (int ii = 1; ii <= 3; ++ii)
     {
-        xyzc(i) = (xyzc(i) - (* massCenterOfAircraft)(i)) / lengthRef;
-        currentAngelRate(i) = eulerAngleRate(i, 1);
+        xyzc(ii) = (xyzc(ii) - (* massCenterOfAircraft)(ii)) / lengthRef;
+        currentAngelRate(ii) = eulerAngleRate(ii, 1);
     }
     return CrossProductVector(currentAngelRate, xyzc);
 }

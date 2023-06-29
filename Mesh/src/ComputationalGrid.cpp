@@ -151,8 +151,8 @@ void ComputationalGridProcess::CreateInterfaceLinkStructure()
 {
     RDouble mindis, maxdis, pmin[3], pmax[3];
 
-    GetNeighborZoneBoundingBox(gridContainer, numberOfZones, pmin, pmax);
-    GetNeighborZoneMinMaxDistance(gridContainer, numberOfZones, mindis, maxdis);
+    GetNeighborZoneBoundingBox(pmin, pmax);
+    GetNeighborZoneMinMaxDistance(mindis, maxdis);
 
     PrintToWindow(" mindis = ", mindis, "\n");
 
@@ -204,7 +204,7 @@ void ComputationalGridProcess::GenerateLocalGlobalInterfaceMappingByNeighborZone
         currentZoneID = iZone;
         currentGrid   = grid;
 
-        this->CreateInterfaceInformation(iZone);
+        this->CreateInterfaceInformation();
     }
 
     uint_t numberOfNeighborZone = this->neighborZoneInterfaces.size();
@@ -214,7 +214,7 @@ void ComputationalGridProcess::GenerateLocalGlobalInterfaceMappingByNeighborZone
     }
 }
 
-void ComputationalGridProcess::CreateInterfaceInformation(int iZone)
+void ComputationalGridProcess::CreateInterfaceInformation()
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
@@ -432,10 +432,10 @@ void ComputationalGridProcess::ModifyBoundaryInformation(InterfaceLinkStructure 
         }
     }
 
-    ResetNumberOfBoundaryCondition(interfaceLinkStructure, numberOfChildFacesOfInterface, newNumberOfInterfaces);
+    ResetNumberOfBoundaryCondition(interfaceLinkStructure, numberOfChildFacesOfInterface);
 }
 
-void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStructure *interfaceLinkStructure, PHVectorInt1D &numberOfChildFacesOfInterface, uint_t newNumberOfInterfaces)
+void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStructure *interfaceLinkStructure, PHVectorInt1D &numberOfChildFacesOfInterface)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
@@ -484,10 +484,10 @@ void ComputationalGridProcess::ResetNumberOfBoundaryCondition(InterfaceLinkStruc
         }
     }
 
-    DoFurtherWorkUsingBoundaryTypeVector(interfaceLinkStructure, newNumberOfInterfaces);
+    DoFurtherWorkUsingBoundaryTypeVector(interfaceLinkStructure);
 }
 
-void ComputationalGridProcess::DoFurtherWorkUsingBoundaryTypeVector(InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces)
+void ComputationalGridProcess::DoFurtherWorkUsingBoundaryTypeVector(InterfaceLinkStructure *interfaceLinkStructure)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
@@ -497,10 +497,10 @@ void ComputationalGridProcess::DoFurtherWorkUsingBoundaryTypeVector(InterfaceLin
     int zoneIndex = unstructuredGrid->GetZoneID();
     localInterfaceIndexToGlobalInterfaceIndexMapping[zoneIndex] = newLocalInterfaceIndexToGlobalInterfaceIndexMapping;
 
-    ProcessGlobalToLocalInterfaceTerm(interfaceLinkStructure, newNumberOfInterfaces);
+    ProcessGlobalToLocalInterfaceTerm(interfaceLinkStructure);
 }
 
-void ComputationalGridProcess::ProcessGlobalToLocalInterfaceTerm(InterfaceLinkStructure *interfaceLinkStructure, uint_t newNumberOfInterfaces)
+void ComputationalGridProcess::ProcessGlobalToLocalInterfaceTerm(InterfaceLinkStructure *interfaceLinkStructure)
 {
     UnstructGrid *unstructuredGrid = currentGrid;
 
@@ -882,7 +882,7 @@ void ComputationalGridProcess::UpdateOtherBoundaryTopologyTerm()
     UnstructBCSet *unstructBCSetNew = unstructuredGrid->GetUnstructBCSet();
     int* bcRegionIDofBCFace = new int[newNumberOfBoundaryFaces];
     set<string>::iterator iter;
-    uint_long count = 0;
+    int count = 0;
     for (iter = bcNameSet.begin(); iter != bcNameSet.end(); iter++)
     {
         UnstructBC *unstructBC = new UnstructBC(count);
@@ -930,7 +930,7 @@ void ComputationalGridProcess::ReconstructInterfaceTopology()
     interfaceLinkStructure->ReconstructInterfaceTopology();
 }
 
-void ComputationalGridProcess::GetNeighborZoneBoundingBox(Grid **gridContainer, int nZones, RDouble *pmin, RDouble *pmax)
+void ComputationalGridProcess::GetNeighborZoneBoundingBox(RDouble *pmin, RDouble *pmax)
 {
     pmin[0] = LARGE;
     pmin[1] = LARGE;
@@ -958,7 +958,7 @@ void ComputationalGridProcess::GetNeighborZoneBoundingBox(Grid **gridContainer, 
     }
 }
 
-void ComputationalGridProcess::GetNeighborZoneMinMaxDistance(Grid **gridContainer, int nZones, RDouble &mindis, RDouble &maxdis)
+void ComputationalGridProcess::GetNeighborZoneMinMaxDistance(RDouble &mindis, RDouble &maxdis)
 {
     mindis =   LARGE;
     maxdis = - LARGE;
@@ -1220,7 +1220,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesBlocking(
             int sendProcessorIndex    = PHMPI::GetZoneProcessorID(iZone);
             int receiveProcessorIndex = PHMPI::GetZoneProcessorID(neighborZone);
 
-            this->SwapInterfaceTopologyBetweenTwoNeighboringZone(iZone, neighborZone, sendProcessorIndex, receiveProcessorIndex);
+            this->SwapInterfaceTopologyBetweenTwoNeighboringZone(iZone, sendProcessorIndex, receiveProcessorIndex);
         }
     }
 }
@@ -1324,7 +1324,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
             if (currentProcessor == receiveProcessor)
             {
                 DataContainer *receiveData = receivedDataBuffer[iZone][count];
-                this->AnasysZoneInterfaceFromDataContainer(receiveData, iZone);
+                this->AnasysZoneInterfaceFromDataContainer(receiveData);
 
                 ++ count;
             }
@@ -1349,7 +1349,7 @@ void ComputationalGridProcess::SwapZoneInterfaceTopologyToNeighborZonesNonBlocki
     PH_Barrier();
 }
 
-void ComputationalGridProcess::SwapInterfaceTopologyBetweenTwoNeighboringZone(int zoneIndex, int neighborZoneIndex, int sendProcessorIndex, int receiveProcessorIndex)
+void ComputationalGridProcess::SwapInterfaceTopologyBetweenTwoNeighboringZone(int zoneIndex, int sendProcessorIndex, int receiveProcessorIndex)
 {
     DataContainer *dataContainer = new DataContainer();
 
@@ -1362,7 +1362,7 @@ void ComputationalGridProcess::SwapInterfaceTopologyBetweenTwoNeighboringZone(in
 
     if (PHMPI::GetCurrentProcessorID() == receiveProcessorIndex)
     {
-        this->AnasysZoneInterfaceFromDataContainer(dataContainer, zoneIndex);
+        this->AnasysZoneInterfaceFromDataContainer(dataContainer);
     }
 
     delete dataContainer;
@@ -1375,12 +1375,12 @@ void ComputationalGridProcess::CompressZoneInterfaceIntoDataContainer(DataContai
     zoneInterface->Encode(dataContainer);
 }
 
-void ComputationalGridProcess::AnasysZoneInterfaceFromDataContainer(DataContainer *&dataContainer, int globalZoneIndex)
+void ComputationalGridProcess::AnasysZoneInterfaceFromDataContainer(DataContainer *&dataContainer)
 {
-    this->DecodeZoneInterfacesTopology(dataContainer, globalZoneIndex);
+    this->DecodeZoneInterfacesTopology(dataContainer);
 }
 
-void ComputationalGridProcess::DecodeZoneInterfacesTopology(DataContainer *&dataContainer, int globalZoneIndex)
+void ComputationalGridProcess::DecodeZoneInterfacesTopology(DataContainer *&dataContainer)
 {
     ZoneInterface *zoneInterfacesTopology = new ZoneInterface();
     zoneInterfacesTopology->Decode(dataContainer);

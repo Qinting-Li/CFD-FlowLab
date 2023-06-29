@@ -44,6 +44,8 @@ public:
         SetBCParamDataBase(bcRegionUnstruct.GetBCParamDataBase());
         SetBCType(bcRegionUnstruct.GetBCType());
         SetBCName(bcRegionUnstruct.GetBCName());
+        this->bcRegionID = 0;
+        this->faceIndex = NULL;
     }
 
     //! constructor function of this class.

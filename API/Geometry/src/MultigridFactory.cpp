@@ -368,14 +368,14 @@ void MultigridManager::GridExtend()
 
 void MultigridManager::ComputeCellCenter()
 {
-    const RDouble SMALL = -1.e9, EIGHTH = 0.125;
+    const RDouble SMALLTmp = -1.e9, EIGHTH = 0.125;
     int np0, np1, np2, np3, np4, np5, np6, np7;
 
     for(int iCenter = 0; iCenter < globalCenterNumber; ++ iCenter)
     {
-        cellCenterX[ iCenter ] = SMALL;
-        cellCenterY[ iCenter ] = SMALL;
-        cellCenterZ[ iCenter ] = SMALL;
+        cellCenterX[ iCenter ] = SMALLTmp;
+        cellCenterY[ iCenter ] = SMALLTmp;
+        cellCenterZ[ iCenter ] = SMALLTmp;
     }
 
     for(int iBlock = 0; iBlock < globalBlockNumber; ++ iBlock)
@@ -1272,7 +1272,7 @@ void MultigridManager::ReadGridCoordinate()
         RDouble *z = OrdinaryGrid[iBlock]->GetZ();
 
         int localPointNumber = OrdinaryGrid[iBlock]->GetNTotalNode();
-        for(int pCounter = 0; pCounter < localPointNumber; ++ pCounter)
+        for(pCounter = 0; pCounter < localPointNumber; ++ pCounter)
         {
             int globalPointLabel = startPointLabel[iBlock] + pCounter;
             coordinateX[globalPointLabel] = x[pCounter];
@@ -1894,14 +1894,6 @@ void MultigridManager::OutputNewHoleGrid()
     fstream file(holeFullFileName.c_str(), ios_base::out|ios_base::binary);
 
     file.write((char*)&numberOfHoles, sizeof(int));
-
-    for(int iHole = 0; iHole < numberOfHoles; ++iHole)
-    {
-        HoleGrid* holeGrid = holeGridList[iHole];
-        int zone_st = holeGrid->GetZoneStart();
-        int zone_ed = holeGrid->GetZoneEnd();
-        int zone_at = holeGrid->GetZoneAttached();
-    }
 
     file.close();
     file.clear();

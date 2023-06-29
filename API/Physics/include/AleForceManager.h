@@ -208,7 +208,7 @@ public:
         RDouble referenceSpainLengthOfAerodynamicMoment);
     void Add(DataContainer *dataContainer);
     void DumpCoefficient(ActionKey *actionKey);
-    void DumpComponentCoefficient(ActionKey *actionKey, int iComponent);
+    void DumpComponentCoefficient(ActionKey *actionKey);
     void DumpCoefficient(fstream &file);
     void ComputeCoefficient();
 

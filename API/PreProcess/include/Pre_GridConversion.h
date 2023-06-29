@@ -37,7 +37,7 @@ public:
     //! @param[in] Grid file name of original grid that need to be converted.
     LIB_EXPORT Pre_GridConversion(const string &gridFileName);
 
-    LIB_EXPORT ~Pre_GridConversion();
+    LIB_EXPORT virtual ~Pre_GridConversion();
 
 public:
     //! Run to convert field view grid.

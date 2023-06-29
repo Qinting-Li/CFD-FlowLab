@@ -251,11 +251,11 @@ void ForceProcessStruct::AirForceCoefParts(int iZone, int partID, int Coordinate
                         else
                         {
                             //! Get k-th face vector on the wall surface.
-                            Get_GEO_K(i, j, k, kWall, kWall, ndim, geometry3D, xfv, yfv, zfv, vol);
+                            Get_GEO_K(i, j, k, kWall, kWall, geometry3D, xfv, yfv, zfv, vol);
                             //! Get derivative to the wall in k-direction of u,v,w.
-                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IU, dudx, dudy, dudz, leftOrRightIndex);
-                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
-                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, ndim, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
+                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, IU, dudx, dudy, dudz, leftOrRightIndex);
+                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, IV, dvdx, dvdy, dvdz, leftOrRightIndex);
+                            DXDYDZ_K(primitiveVars, geometry3D, i, j, k, IW, dwdx, dwdy, dwdz, leftOrRightIndex);
                             visLaminar = half * (viscousLaminar(i, j, k) + viscousLaminar(i, j, kCellGhostLayer));
                             visTurbulence = half * (viscousTurbulence(i, j, k) + viscousTurbulence(i, j, kCellGhostLayer));
                         }

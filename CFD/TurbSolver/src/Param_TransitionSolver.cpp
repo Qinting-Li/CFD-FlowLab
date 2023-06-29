@@ -2,14 +2,10 @@
 #include "Transition.h"
 #include "GlobalDataBase.h"
 #include "Constants.h"
+#pragma warning(disable:6386)
 
 namespace PHSPACE
 {
-
-LIB_EXPORT Param_TransitionSolver::Param_TransitionSolver()
-{
-
-}
 
 LIB_EXPORT Param_TransitionSolver::~Param_TransitionSolver()
 {
@@ -33,7 +29,7 @@ LIB_EXPORT void Param_TransitionSolver::Init()
     freeStreamViscosity = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
 
     using namespace IDX;
-    RDouble *prim_inf = reinterpret_cast<RDouble *> (GlobalDataBase::GetDataPtr("prim_inf"));
+    RDouble* prim_inf = reinterpret_cast<RDouble*>(GlobalDataBase::GetDataPtr("prim_inf"));
     RDouble reference_density_farfield = prim_inf[IR];
 
     string viscousName;
@@ -42,8 +38,7 @@ LIB_EXPORT void Param_TransitionSolver::Init()
     RDouble refReNumber = 1.0e5;
     GlobalDataBase::GetData("refReNumber", &refReNumber, PHDOUBLE, 1);
 
-    RDouble turb_cmu = 1.0;
-
+    RDouble turb_cmu=1.0;
     if (transitionType == IREGAMA)
     {
         ce1 = 1.0;
@@ -64,13 +59,14 @@ LIB_EXPORT void Param_TransitionSolver::Init()
     freeStreamTransitionVar[IGAMA] = 1.0;
 
     RDouble mutoo = GlobalDataBase::GetDoubleParaFromDB("freeStreamViscosity");
+    RDouble kwoo = GlobalDataBase::GetDoubleParaFromDB("kwoo") / refReNumber;
+    RDouble keoo = mutoo * kwoo / (turb_cmu * reference_density_farfield);
+
     turbulenceIntensity = GlobalDataBase::GetDoubleParaFromDB("turbIntensity");
 
-    RDouble keoo;
     if (turbulenceIntensity >= SMALL)
     {
         keoo = 1.5 * (0.01 * turbulenceIntensity) * (0.01 * turbulenceIntensity);
-        RDouble kwoo = keoo * (turb_cmu * reference_density_farfield) / mutoo;
     }
 
     TUoo = TurbulenceIntensity(1.0, keoo);

@@ -11,6 +11,7 @@
 #include "Geo_SimpleVC.h"
 #include "UnstructuredOversetConfig.h"
 #include "HOSimulation.h"
+#include "Post_ProbesWrite.h"
 
 #include "OversetInformation.h"
 #include "SolversList.h"
@@ -18,23 +19,24 @@
 #include "Glb_Dimension.h"
 #include "Zone.h"
 #include "Pre_WalldistCompute.h"
-#include "Post_WriteTecplot.h"
+#include "Post_WriteVisualFile.h"
 #include "LESSolverStruct.h"
 #include "LESSolverUnstr.h"
-//! Pressure based solver for incompressible flow. 
-#ifdef USE_PBSOLVER
-#include "PBS.h"
+#ifdef USE_INCOMSOLVER
+#include "IncomUnstructSolver.h"
 #endif
-
 #ifdef USE_SpecDiffHybSolver
 #include "SpecDiffHybSolver.h"
 #include "SpecSolver.h"
 #endif
-
-#include "Post_ProbesWrite.h"
-
 #ifdef USE_DEMOSOLVER
 #include "DemoSolver.h"
+#endif
+#ifdef USE_LBMSolverMPI
+#include "LBMSolverMPI.hpp"
+#endif
+#ifdef USE_LBMSolverOMP
+#include "LBMSolverOMP.hpp"
 #endif
 using namespace std;
 
@@ -104,6 +106,16 @@ void Simulation::Start()
     case POST_PROCESSING:
         RunPostProcessing();
         break;
+    #ifdef USE_LBMSolverMPI
+    case LBM_SOLVER_MPI:
+        RunLBMSolverMPI();
+        break;
+    #endif
+    #ifdef USE_LBMSolverOMP
+    case LBM_SOLVER_OMP:
+        RunLBMSolverOMP();
+        break;
+    #endif
     default:
         TK_Exit::UnexpectedVarValue("taskType = ", taskType);
         break;
@@ -1248,11 +1260,11 @@ void Simulation::InitOversetGrid()
             delete timeSpan;
         }
 
-        int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
-        if (!isAle)
-        {
-            InitializeOversetInterfaceTopology();
-        }
+        //int isAle = PHSPACE::GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+        //if (!isAle)
+        //{
+        InitializeOversetInterfaceTopology();
+        //}
         WriteLogFile("Initialize oversetInterface topology \n");
     }
 }
@@ -1285,9 +1297,7 @@ void Simulation::InitializeSolvers()
 {
     WriteLogFile("Creating and initialization solvers start \n");
 
-    CreateAleManager();
-
-    int nSolver = Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
         Controller *controller = new Controller(iSolver, this->region);
@@ -1297,17 +1307,7 @@ void Simulation::InitializeSolvers()
         delete controller;
     }
 
-#ifdef USE_PBSOLVER
-    //! For Incompressible Flow
-    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-    {
-        Controller *controller = new Controller(iSolver, this->region);
-
-        controller->IncompressibleInitial(iSolver);
-
-        delete controller;
-    }
-#endif
+    CreateAleManager();
 
     WriteLogFile("Creating and initialization solvers over \n");
 }
@@ -1316,7 +1316,7 @@ void Simulation::RefreshSolvers()
 {
     FreeAleManager();
 
-    int nSolver = Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
     {
         Controller *controller = new Controller(iSolver, this->region);
@@ -1336,7 +1336,7 @@ void Simulation::DefineAndCreateSolvers()
     Region *region = this->region;
 
     int nZones = PHMPI::GetNumberofGlobalZones();
-
+    int maxNumOfSolver = 0;
     for (int iZone = 0; iZone < nZones; ++ iZone)
     {
         Zone *zone = region->GetZone(iZone);
@@ -1350,6 +1350,8 @@ void Simulation::DefineAndCreateSolvers()
 
 #ifdef USE_DEMOSOLVER
         PHSolver *solver = new DemoSolver();
+        solver->SetName("DemoSolver");
+        solver->SetKey(DENSITY_BASED_SOLVER);
         solverList.push_back(solver);
 #else
 
@@ -1364,16 +1366,18 @@ void Simulation::DefineAndCreateSolvers()
         {
             int gridType = geometry->GetGrid()->Type();
 
-            int compressible = 1;
+            int compressible = COMPRESSIBLE;
             zone->GetData("compressible", &compressible, PHINT, 1);
 
-            if (compressible)
+            if (compressible == COMPRESSIBLE)
             {
                 //! Add compressible solvers.
                 if (gridType == UNSTRUCTGRID)
                 {
                     //! Add unstructured NS solver.
                     PHSolver *solver = new NSSolverUnstruct();
+                    solver->SetName("NSSolverUnstruct");
+                    solver->SetKey(DENSITY_BASED_SOLVER);
                     solverList.push_back(solver);
                 }
                 else if (gridType == STRUCTGRID)
@@ -1387,30 +1391,28 @@ void Simulation::DefineAndCreateSolvers()
                     if (isFVMOrFDM == FV_METHOD) //! Add structured FV NS solver.
                     {
                         PHSolver *solver = new NSSolverStructFV();
+                        solver->SetName("NSSolverStructFV");
+                        solver->SetKey(DENSITY_BASED_SOLVER);
                         solverList.push_back(solver);
                     }
                     else //! Add structured FD NS solver.
                     {
                         PHSolver *solver = new NSSolverStructFD();
+                        solver->SetName("NSSolverStructFD");
+                        solver->SetKey(DENSITY_BASED_SOLVER);
                         solverList.push_back(solver);
                     }
                 }
             }
-            else
+#ifdef USE_INCOMSOLVER
+            else if (compressible == INCOMPRESSIBLE)
             {
-
-#ifdef USE_PBSOLVER
-                //! Incompressible Flow
-                string flowSolver;
-                zone->GetData("FLOW", &flowSolver, PHSTRING, 1);
-
-                PHSolver *solver = new PBSolverFlow(flowSolver);
+                PHSolver *solver = new IncomUnstructSolver();
+                solver->SetName("IncomUnstructSolver");
+                solver->SetKey(PRESSURE_BASED_SOLVER);
                 solverList.push_back(solver);
-                int solverIndex = solverList.size();
-                solver->SetName(toString(solverIndex - 1) + "_" + flowSolver);
-#endif
-
             }
+#endif
         }
         else
         {
@@ -1422,7 +1424,7 @@ void Simulation::DefineAndCreateSolvers()
         zone->GetData("viscousType", &viscousType, PHINT, 1);
         if (viscousType > LAMINAR)
         {
-            int compressible = 1;
+            int compressible = COMPRESSIBLE;
             zone->GetData("compressible", &compressible, PHINT, 1);
             if (compressible)
             {
@@ -1431,6 +1433,8 @@ void Simulation::DefineAndCreateSolvers()
                 {
                     //! Add unstructured turbulent solver.
                     PHSolver *solver = new TurbSolverUnstr();
+                    solver->SetName("TurbSolverUnstr");
+                    solver->SetKey(DENSITY_BASED_SOLVER);
                     solverList.push_back(solver);
                 }
                 else if (gridType == STRUCTGRID)
@@ -1442,34 +1446,22 @@ void Simulation::DefineAndCreateSolvers()
                     {
                         //! Add structured turbulent solver.
                         PHSolver *solver = new TurbSolverStr();
+                        solver->SetName("TurbSolverStr");
+                        solver->SetKey(DENSITY_BASED_SOLVER);
                         solverList.push_back(solver);
                     }
                     else
                     {
                         //! Add structured FD turbulent solver.
                         PHSolver *solver = new TurbSolverStrFD();
+                        solver->SetName("TurbSolverStrFD");
+                        solver->SetKey(DENSITY_BASED_SOLVER);
                         solverList.push_back(solver);
                     }
                 }
             }
             else
             {
-#ifdef USE_PBSOLVER
-                //! Incompressible Flow
-                if (viscousType == SPALART_ALLMARAS)
-                {
-                    PHSolver *solver = new PBSolverTurbSA("TURB_SA");
-                    solverList.push_back(solver);
-                    solver->SetName("TURB");
-                }
-                else if (viscousType == KEPSILON)
-                {
-                    PHSolver *solver = new PBSolverKEpsilon("TURB_KEPSILON");
-                    solverList.push_back(solver);
-                    solver->SetName("TURB");
-                    solver->SetGeometry(geometry);
-                }
-#endif
             }
         }
 
@@ -1484,6 +1476,8 @@ void Simulation::DefineAndCreateSolvers()
                 {
                     //! Add unstructured turbulent solver.
                     PHSolver *solver = new TransitionSolverUnstr();
+                    solver->SetName("TransitionSolverUnstr");
+                    solver->SetKey(DENSITY_BASED_SOLVER);
                     solverList.push_back(solver);
                 }
                 else if (gridType == STRUCTGRID)
@@ -1495,28 +1489,14 @@ void Simulation::DefineAndCreateSolvers()
                     {
                         //! Add structured turbulent solver.
                         PHSolver *solver = new TransitionSolverStr();
+                        solver->SetName("TransitionSolverStr");
+                        solver->SetKey(DENSITY_BASED_SOLVER);
                         solverList.push_back(solver);
                     }
                 }
             }
             else
             {
-#ifdef USE_PBSOLVER
-                //! Incompressible Flow
-                if (viscousType == SPALART_ALLMARAS)
-                {
-                    PHSolver *solver = new PBSolverTurbSA("TURB_SA");
-                    solverList.push_back(solver);
-                    solver->SetName("TURB");
-                }
-                else if (viscousType == KEPSILON)
-                {
-                    PHSolver *solver = new PBSolverKEpsilon("TURB_KEPSILON");
-                    solverList.push_back(solver);
-                    solver->SetName("TURB");
-                    solver->SetGeometry(geometry);
-                }
-#endif
             }
         }
 
@@ -1529,32 +1509,18 @@ void Simulation::DefineAndCreateSolvers()
             {
                 //! Add unstructured LES solver.
                 PHSolver *solver = new LESSolverUnstr();
+                solver->SetName("LESSolverUnstr");
+                solver->SetKey(DENSITY_BASED_SOLVER);
                 solverList.push_back(solver);
             }
             else if (gridType == STRUCTGRID)
             {
                 //! Add structured LES solver.
                 PHSolver *solver = new LESSolverStruct();
+                solver->SetName("LESSolverStruct");
+                solver->SetKey(DENSITY_BASED_SOLVER);
                 solverList.push_back(solver);
             }
-        }
-
-        //! Incompressible Flow
-        int compressible = 1;
-        zone->GetData("compressible", &compressible, PHINT, 1);
-        if (!compressible)
-        {
-#ifdef USE_PBSOLVER
-            int energyType;
-            zone->GetData("energyType", &energyType, PHINT, 1);
-
-            if (energyType)
-            {
-                PHSolver *solver = new PBSolverEnergy("ENERGY");
-                solverList.push_back(solver);
-                solver->SetName("ENERGY");
-            }
-#endif
         }
 #endif
 
@@ -1567,14 +1533,43 @@ void Simulation::DefineAndCreateSolvers()
             solver->SetIndex(static_cast<int> (iSolver));
             zone->AddSolver(solver);
         }
+
+        if (maxNumOfSolver < solverList.size())
+        {
+            maxNumOfSolver = solverList.size();
+        }
     } //! iZone
+    GlobalDataBase::UpdateData("maxNumOfSolver", &maxNumOfSolver, PHINT, 1);
 }
 
 void Simulation::PreSolve()
 {
     int isInIniting = GlobalDataBase::GetIntParaFromDB("isInIniting");
+    int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+    int flowInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("flowInitStep");
     if (isInIniting == 1)
     {
+#ifdef USE_GMRESSOLVER
+        // GMRES Init by LU_SGS
+        int flowInitMethod = GlobalDataBase::GetIntParaFromDB("flowInitMethod");
+        int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
+        if( 3 == flowInitMethod )
+        {
+            int originaltscheme = GlobalDataBase::GetIntParaFromDB("OriginalTscheme");
+ 
+            if (originaltscheme == GMRES && outIterStep <= flowInitStep)
+            {
+                tscheme = LU_SGS;
+                GlobalDataBase::UpdateData("tscheme", &tscheme, PHINT, 1);
+            }
+
+            if (originaltscheme == GMRES && outIterStep > flowInitStep)
+            {
+                tscheme = GMRES;
+                GlobalDataBase::UpdateData("tscheme", &tscheme, PHINT, 1);
+            }
+        }
+#endif
         int nMGLevel = GlobalDataBase::GetIntParaFromDB("nMGLevel");
         if (nMGLevel > 1)
         {
@@ -1585,8 +1580,6 @@ void Simulation::PreSolve()
         else
         {
             //! For single grid case, check if in the state of initialization.
-            int outIterStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
-            int flowInitStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("flowInitStep");
             if ((flowInitStep > 0 && outIterStep > flowInitStep) || flowInitStep == 0)
             {
                 isInIniting = 0;
@@ -1597,26 +1590,6 @@ void Simulation::PreSolve()
         }
     }
 
-#ifdef USE_PBSOLVER
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (!compressible)
-    {
-        string fileName = "res.dat";
-        int nSolver = Zone::GetNumberOfSolvers();
-        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-        {
-            Controller *controller = new Controller(iSolver, this->region);
-
-            controller->InitResultFile(fileName);
-
-            delete controller;
-        }
-
-        string outputFileName = string("results/") + fileName;
-        ofstream file(outputFileName.c_str(), ios::app);
-        file << '\n';
-    }
-#endif
 }
 
 void Simulation::PostSolve()
@@ -1630,31 +1603,8 @@ void Simulation::PostSolve()
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (outIterStep == 1 || outIterStep % intervalStepPlot == 0 || ((outIterStep + 1) % intervalStepPlot == 0 && !isUnsteady))
     {
-        Post_WriteTecplot generateVisualFile;
-        generateVisualFile.Run();
+        WriteVisualFile();
     }
-
-#ifdef USE_PBSOLVER
-    //! Incompressible Flow
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (!compressible)
-    {
-        string fileName = "res.dat";
-        int nSolver = Zone::GetNumberOfSolvers();
-        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-        {
-            Controller *controller = new Controller(iSolver, this->region);
-
-            controller->DumpResultFile(fileName);
-
-            delete controller;
-        }
-
-        string outputFileName = string("results/") + fileName;
-        ofstream file(outputFileName.c_str(), ios::app);
-        file << '\n';
-    }
-#endif
 
     if (!GlobalDataBase::IsExist("ifSetDataMonitor", PHINT, 1))
     {
@@ -1675,13 +1625,6 @@ void Simulation::PostSolve()
 
 void Simulation::MainSolve()
 {
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible == 0)
-    {
-        SolveIncomFlow();
-        return;
-    }
-
     int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     if (!isUnsteady)
     {
@@ -1727,17 +1670,6 @@ void Simulation::SolveSimulation()
 
     while (continueSolve)
     {
-#ifdef USE_PBSOLVER
-        //! Incompressible Flow
-        int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-        int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
-
-        if (!compressible)
-        {
-            continueSolve = ContinueSolve();
-        }
-#endif
-
         UpdateOuterIterationStep(outIterStep);
 
         SolveOneOuterStep();
@@ -1748,10 +1680,6 @@ void Simulation::SolveSimulation()
         }
     }
 
-#ifdef USE_PBSOLVER
-    Post_WriteTecplot generateVisualFile;
-    generateVisualFile.Run();
-#endif
 }
 
 void Simulation::SelfAdaptionSolve()
@@ -1789,9 +1717,9 @@ void Simulation::SelfAdaptionSolve()
 
         SolveOneOuterStep();
 
-        int nPauseKey = PHSPACE::GlobalDataBase::GetIntParaFromDB("nPauseKey");
+        int nPauseKey1 = PHSPACE::GlobalDataBase::GetIntParaFromDB("nPauseKey");
 
-        if ((outIterStep >= maxSimuStep && maxSimuStep > 0) || nPauseKey == 1)
+        if ((outIterStep >= maxSimuStep && maxSimuStep > 0) || nPauseKey1 == 1)
         {
             continueSolve = false;
         }
@@ -1800,18 +1728,14 @@ void Simulation::SelfAdaptionSolve()
 
 void Simulation::PostSimulation()
 {
-    int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-    if (compressible == 0)
-    {
-        //! visual files will be added afterforwards for incompressible flow problems.
-        return;
-    }
     this->region->PostSimulation();
 
     int IsUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
     int isAle = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
     if (IsUnsteady && isAle)
     {
+        //PostprocessAfterInnerIterationStepForAleSolvers();
+
         FreeAleManager();
     }
 
@@ -1851,6 +1775,18 @@ void Simulation::UpdateOuterIterationStep(int &outIterStep)
             GlobalDataBase::UpdateData("nStatisticalStep", &nStatisticalStep, PHINT, 1);
         }
     }
+#ifdef USE_GMRESSOLVER
+    int flowInitMethod = GlobalDataBase::GetIntParaFromDB("flowInitMethod");
+
+    if( 3 == flowInitMethod )
+    {
+        int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
+        if ( newIterStep == 1 )
+        {
+            GlobalDataBase::UpdateData("OriginalTscheme", &tscheme, PHINT, 1);
+}
+    }
+#endif
 }
 
 void Simulation::UpdateAllZonesPara()
@@ -1938,46 +1874,25 @@ void Simulation::MultiGridInitFlow()
     WriteLogFile("End init flow by coarse grid ...");
 }
 
-void Simulation::SolveIncomFlow()
-{
-    int nSolver = Zone::GetNumberOfSolvers();
-    //! Get iteration number.
-    int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
-    for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-    {
-        Controller *controller = new Controller(iSolver, this->region);
-
-        controller->SolveIncomFlow();
-
-        controller->PostSolve();
-
-        delete controller;
-    }
-}
-
 void Simulation::SolveSteady()
 {
-    int nSolver = Zone::GetNumberOfSolvers();
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
     //! Get iteration number.
     int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
     int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
+    int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
 
-#ifdef USE_PBSOLVER
-    //! Incompressible Flow
-    int compressible = 1;
-    GlobalDataBase::GetData("compressible", &compressible, PHINT, 1);
-    if (compressible)
+    if (tscheme != GMRES)
     {
-#endif
         for (int iSolver = 0; iSolver < nSolver; ++iSolver)
         {
-        //! iSolver = 1 or 2, is supposed as turbulence computing.
+            //! iSolver = 1 or 2, is supposed as turbulence computing.
             if ((iSolver != NS_SOLVER) && (outerIterStep % turbInterval != 0))
             {
                 return;
             }
 
-            Controller *controller = new Controller(iSolver, this->region);
+            Controller* controller = new Controller(iSolver, this->region);
 
             controller->SolveSteadyField();
 
@@ -1985,39 +1900,77 @@ void Simulation::SolveSteady()
 
             delete controller;
         }
-#ifdef USE_PBSOLVER
     }
     else
     {
+        //! NS and turbulence are coupled for calculation by GMRES.
+        SolveSteadyByGMRES();
+    }
 
-        //! Incompressible Flow
-        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
+}
+void Simulation::SolveSteadyByGMRES()
+{
+    int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
+    //! Get iteration number.
+    int outerIterStep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    int turbInterval = GlobalDataBase::GetIntParaFromDB("turbInterval");
+  
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+
+    if (viscousType == ONE_EQU)
+    {
+        Controller *controllerNS = new Controller(NS_SOLVER, this->region);
+        Controller *controllerTurb = new Controller(TURB_SOLVER, this->region);
+
+        controllerNS->SolveSteadyField();
+        controllerTurb->SolveSteadyField();
+
+#ifdef USE_GMRESSOLVER
+        controllerNS->GMRESSolver_Coupled(0);
+#endif
+        controllerNS->PostSolve();
+        controllerTurb->PostSolve();
+
+        delete controllerNS;
+        delete controllerTurb;
+    }
+    else if (viscousType == INVISCID || viscousType == LAMINAR)
+    {
+        Controller *controller = new Controller(NS_SOLVER, this->region);
+
+        controller->SolveSteadyField();
+
+        controller->PostSolve();
+
+        delete controller;
+    }
+    else if (viscousType == TWO_EQU) //TWO_EQU turbulence are coupled will be done in the future.
+    {
+        for (int iSolver = 0; iSolver < nSolver; ++iSolver)
         {
+            //! iSolver = 1 or 2, is supposed as turbulence computing.
+            if ((iSolver == TURB_SOLVER) && (outerIterStep % turbInterval != 0))
+            {
+                return;
+            }
             Controller *controller = new Controller(iSolver, this->region);
-
-            controller->SolveIncompressibleSteadyField();
+          
+            controller->SolveSteadyField();
+            controller->PostSolve();
 
             delete controller;
         }
     }
-#endif
-}
 
+}
 void Simulation::SolveUnsteady()
 {
-#ifdef USE_PBSOLVER
-    int compressible = 1;
-
-    GlobalDataBase::GetData("compressible", &compressible, PHINT, 1);
-    if (compressible)
-    {
-#endif
         int minSubItertation = GlobalDataBase::GetIntParaFromDB("min_sub_iter");
         int maxSubItertation = GlobalDataBase::GetIntParaFromDB("max_sub_iter");
         RDouble toltalSubItertation = GlobalDataBase::GetDoubleParaFromDB("tol_sub_iter");
 
         int innerIterStep = 0;
-        int nSolver = Zone::GetNumberOfSolvers();
+        int nSolver = GlobalDataBase::GetIntParaFromDB("maxNumOfSolver");
 
         bool isSubIterationDump = false;
         GlobalDataBase::UpdateData("isSubIterationDump", &isSubIterationDump, PHBOOL, 1);
@@ -2073,59 +2026,6 @@ void Simulation::SolveUnsteady()
             delete controller;
         }
     }
-#ifdef USE_PBSOLVER
-    else
-    {
-
-        //! Incompressible Flow
-        int innerIterStep = GlobalDataBase::GetIntParaFromDB("innerIter");
-        int nSolver = Zone::GetNumberOfSolvers();
-
-        //! Parameter for unsteady simulation
-        RDouble CurrentTime = GlobalDataBase::GetDoubleParaFromDB("currentTime");
-        RDouble detat = GlobalDataBase::GetDoubleParaFromDB("dt");
-        int CurrentTimeStep = (int)((CurrentTime / detat) + 0.5);
-        int OutputTimeStep = GlobalDataBase::GetIntParaFromDB("OutputTimeStep");
-        RDouble endtime = GlobalDataBase::GetDoubleParaFromDB("endTime");
-
-        for (int innerIter = 0; innerIter < innerIterStep; ++ innerIter)
-        {
-            std::cout << "innerIterStep= " << innerIter << endl;
-            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-            {
-                Controller *controller = new Controller(iSolver, this->region);
-
-                controller->SolveIncompressibleSteadyField();
-
-                delete controller;
-            }
-            std::cout << endl;
-        }
-
-        //! Here is in the sub-iteration, PostSolve is only for the CommunicationInterfaceData and dumps the "res.dat", which contains index of the sub-iteration residual.
-        if (CurrentTimeStep % OutputTimeStep == 0 || endtime == CurrentTime)
-        {
-            for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-            {
-                Controller *controller = new Controller(iSolver, this->region);
-
-                controller->PostSolve();
-
-                delete controller;
-            }
-        }
-
-        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-        {
-            Controller *controller = new Controller(iSolver, this->region);
-
-            controller->UpdateUnsteadyVariable(iSolver, 0);
-
-            delete controller;
-        }
-    }
-}
-#endif
 
 bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers)
 {
@@ -2151,115 +2051,6 @@ bool Simulation::IsSubIterationConvergence(const int &innerIterStep, const int &
     return isSubIterationConvergence;
 }
 
-bool Simulation::ContinueSolve()
-{
-    bool continueSolve = true;
-
-#ifdef USE_PBSOLVER
-    if (GlobalDataBase::GetIntParaFromDB("iunsteady"))
-    {
-        int timeStepNow;
-        GlobalDataBase::GetData("timeStepNow", &timeStepNow, PHINT, 1);
-        timeStepNow++;
-        GlobalDataBase::UpdateData("timeStepNow", &timeStepNow, PHINT, 1);
-
-        RDouble dt = GlobalDataBase::GetDoubleParaFromDB("dt");
-        RDouble endTime = GlobalDataBase::GetDoubleParaFromDB("endTime");
-        RDouble currentTime;
-        GlobalDataBase::GetData("currentTime", &currentTime, PHDOUBLE, 1);
-        if (&dt == NULL)
-        {
-            dt = 0.0;
-        }
-
-        if (endTime - currentTime < dt && endTime - currentTime > 1e-10)
-        {
-            dt = endTime - currentTime;
-
-            GlobalDataBase::UpdateData("dt", &dt, PHDOUBLE, 1);
-
-            currentTime += dt;
-        }
-        else
-        {
-            currentTime += dt;
-
-            if (endTime < currentTime)
-            {
-                continueSolve = false;
-            }
-        }
-
-        //! Incompressible Flow
-        bool isContinueSolveByConverge = false;
-        int nSolver = Zone::GetNumberOfSolvers();
-        bool converged = false;
-
-        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-        {
-            Controller *controller = new Controller(iSolver, this->region);
-
-            converged = controller->IsConverged(iSolver);
-
-            delete controller;
-
-            if (converged == false)
-            {
-                isContinueSolveByConverge = true;
-                break;
-            }
-            else
-            {
-                isContinueSolveByConverge = false;
-            }
-        }
-
-        if (continueSolve && isContinueSolveByConverge)
-        {
-            continueSolve = true;
-        }
-        else
-        {
-            continueSolve = false;
-        }
-
-        if (continueSolve)
-        {
-            GlobalDataBase::UpdateData("outnstep", &timeStepNow, PHINT, 1);
-            GlobalDataBase::UpdateData("currentTime", &currentTime, PHDOUBLE, 1);
-
-            std::cout << "\nTIME = " << currentTime << ", DT = " << dt << ", TIMESTEP = " << timeStepNow << std::endl;
-        }
-    }
-    else
-    {
-        int nSolver = Zone::GetNumberOfSolvers();
-        bool converged = false;
-
-        for (int iSolver = 0; iSolver < nSolver; ++ iSolver)
-        {
-            Controller *controller = new Controller(iSolver, this->region);
-
-            converged = controller->IsConverged(iSolver);
-
-            delete controller;
-
-            if (converged == false)
-            {
-                continueSolve = true;
-                break;
-            }
-            else
-            {
-                continueSolve = false;
-            }
-        }
-    }
-#endif
-    return(continueSolve);
-}
 
 }
-
-
 

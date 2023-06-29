@@ -15,7 +15,7 @@
 
 #pragma once
 #include "LIB_Macro.h"
-#include "Pre_GridConversion.h"
+#include "Pre_CGNSConversion_Struct.h"
 #include "cgnslib.h"
 
 using namespace std;
@@ -24,25 +24,20 @@ namespace PHSPACE
 {
 class CGNS_Str_Data;
 
-class Pre_CGNSToPHengLEI_Struct : public Pre_GridConversion
+class Pre_CGNSToPHengLEI_Struct : public Pre_CGNSConversion_Struct
 {
 public:
     LIB_EXPORT Pre_CGNSToPHengLEI_Struct(const string &gridFileName);
     LIB_EXPORT ~Pre_CGNSToPHengLEI_Struct();
 
 private:
-    void ReadGrid();
     void Conversion();
 
 private:
     void SetCoordinate();
     void SetBCInfo();
     void CheckMeshMultigrid();
-    void tram(int *a, int *b, int *v, int nCoords);
-    int del(int x, int y);
 
-private:
-    CGNS_Str_Data *Str_CGNS_Data;
 };
 
 }

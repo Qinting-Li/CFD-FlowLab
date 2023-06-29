@@ -9,7 +9,8 @@
 #include "AleModel.h"
 #include "NSSolverStructFD.h"
 #include "IO_FileName.h"
-
+#pragma warning(disable:6385)
+#pragma warning(disable:26451)
 using namespace std;
 
 namespace PHSPACE
@@ -216,7 +217,7 @@ LIB_EXPORT Param_LESSolverStruct * LESSolverStruct::GetControlParameters()
 bool LESSolverStruct::JudgeIfRestart()
 {
     string turbFile = ".\results\turb.dat";
-    GlobalDataBase::GetData("turbFile", &turbFile, PHSTRING, 1);
+    GlobalDataBase::GetData("turbfile", &turbFile, PHSTRING, 1);
 
     if (PHMPI::IsParallelRun())
     {
@@ -239,7 +240,7 @@ bool LESSolverStruct::JudgeIfRestart()
 bool LESSolverStruct::JudgeIfReadAverage()
 {
     string turbFile = ".\results\turb.dat";
-    GlobalDataBase::GetData("turbFile", &turbFile, PHSTRING, 1);
+    GlobalDataBase::GetData("turbfile", &turbFile, PHSTRING, 1);
     string averageTurbFile = AddSymbolToFileName(turbFile, "_", "Average");
 
     if (PHMPI::IsParallelRun())
@@ -289,8 +290,6 @@ void LESSolverStruct::DumpRestartH5(ActionKey *actkey)
     int ist, ied, jst, jed, kst, ked;
     strGrid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
 
-    Param_LESSolverStruct *parameters = GetControlParameters();
-
     RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
 
     hid_t grploc;
@@ -318,8 +317,6 @@ void LESSolverStruct::ReadRestartH5(ActionKey *actkey)
 
     int ist, ied, jst, jed, kst, ked;
     strGrid->GetCellIterationIndex(ist, ied, jst, jed, kst, ked, 2);
-
-    Param_LESSolverStruct *parameters = GetControlParameters();
 
     RDouble3D &viscousTurbulent = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr("vist"));
 
@@ -440,118 +437,6 @@ void LESSolverStruct::DownloadInterfaceValue(ActionKey *actkey)
     PHSPACE::DownloadInterfaceValue(grid, turbulentPrandtlNumber, "turbulentPrandtlNumber");
 }
 
-void LESSolverStruct::CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
-{
-    StructGrid *grid = StructGridCast(gridIn);
-    int level = grid->GetLevel();
-    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-    if (!interfaceInformation)
-    {
-        return;
-    }
-
-    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
-    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-
-    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForSend          = finestInterfaceInfo->GetFaceIndexForSend(iNeighborZone);
-
-    dataContainer->moveto_begin();
-
-    if (0 == nEquation)
-    {
-        RDouble3D &fieldSend = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForSend[iLocalFace];
-                int is, js, ks;
-                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
-                finestGrid->RemapMultigridIJK(level, is, js, ks);
-                PHWrite(dataContainer, fieldSend(is, js, ks));
-            }
-        }
-    }
-    else
-    {
-        RDouble4D &fieldSend = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForSend[iLocalFace];
-                int is, js, ks;
-                finestGrid->GetSourceIndexIJK(iFace, iGhostLayer + 1, is, js, ks);
-                finestGrid->RemapMultigridIJK(level, is, js, ks);
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    PHWrite(dataContainer, fieldSend(is, js, ks, m));
-                }
-            }
-        }
-    }
-}
-
-void LESSolverStruct::DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
-{
-    StructGrid *grid = StructGridCast(gridIn);
-    int level = grid->GetLevel();
-    InterfaceInfo *interfaceInformation = grid->GetInterfaceInfo();
-    if (!interfaceInformation)
-    {
-        return;
-    }
-
-    StructGrid *finestGrid = StructGridCast(grid->GetFinestGrid());
-    InterfaceInfo *finestInterfaceInfo = finestGrid->GetInterfaceInfo();
-
-    int iNeighborZone                            = finestInterfaceInfo->FindIthNeighbor(neighborZoneIndex);
-    int interfaceNumberBetweenTwoNeighboringZone = finestInterfaceInfo->GetNIFaceOfNeighbor(iNeighborZone);
-    int *interfaceIndexContainerForReceive       = finestInterfaceInfo->GetFaceIndexForRecv(iNeighborZone);
-
-    dataContainer->moveto_begin();
-
-    if (0 == nEquation)
-    {
-        RDouble3D &fieldRecv = *reinterpret_cast<RDouble3D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForReceive[iLocalFace];
-                int it, jt, kt;
-                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
-                finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                PHRead(dataContainer, fieldRecv(it, jt, kt));
-            }
-        }
-    }
-    else
-    {
-        RDouble4D &fieldRecv = *reinterpret_cast<RDouble4D *> (grid->GetDataPtr(fieldName));
-
-        for (int iGhostLayer = GetNumberOfGhostCellLayers() - 1; iGhostLayer >= 0; -- iGhostLayer)
-        {
-            for (int iLocalFace = 0; iLocalFace < interfaceNumberBetweenTwoNeighboringZone; ++ iLocalFace)
-            {
-                int iFace = interfaceIndexContainerForReceive[iLocalFace];
-                int it, jt, kt;
-                finestGrid->GetTargetIndexIJK(iFace, iGhostLayer + 1, it, jt, kt);
-                finestGrid->RemapMultigridIJK(level, it, jt, kt);
-                for (int m = 0; m < nEquation; ++ m)
-                {
-                    PHRead(dataContainer, fieldRecv(it, jt, kt, m));
-                }
-            }
-        }
-    }
-}
-
 void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation)
 {
     StructGrid *grid = StructGridCast(gridIn);
@@ -580,7 +465,6 @@ void LESSolverStruct::RotateVectorFromInterface(Grid *gridIn, const int &neighbo
     rotationAngle = rotationAngle*PI/180;
     if(nEquation > 0)
     {
-        RDouble4D &fieldRecvNSX = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
         RDouble4D &fieldRecvNSY = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
         RDouble4D &fieldRecvNSZ = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
 
@@ -2621,8 +2505,8 @@ void LESSolverStruct::DynamicSmagViscosity(Grid *grid_in)
                             }
                         }
                     }
-                    (*rLijMijavg)(i,j,k) = rLMavg/nnavg;
-                    (*rMijMijavg)(i,j,k) = rMMavg/nnavg;
+                    (*rLijMijavg)(i,j,k) = rLMavg/(static_cast<RDouble>(nnavg)+EPSILON);
+                    (*rMijMijavg)(i,j,k) = rMMavg/(static_cast<RDouble>(nnavg) + EPSILON);
                 }
             }
         }
@@ -7165,7 +7049,7 @@ void LESSolverStruct::Boundary(Grid *gridIn)
         StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
-        if (BCType < 0)
+        if (IsInterface(BCType))
         {
             continue;
         }
@@ -7241,7 +7125,7 @@ void LESSolverStruct::ObtainBoundaryValue(Grid *gridIn)
         StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
-        if (BCType < 0)
+        if (IsInterface(BCType))
         {
             continue;
         }
@@ -7443,9 +7327,9 @@ void LESSolverStruct::FarFieldBC(Grid *gridIn, StructBC *structBC)
                 RDouble gama = gamma(is1, js1, ks1);
 
                 RDouble coo = sqrt(ABS(refGama * pFarfield / rFarfield));
-                RDouble cin = sqrt(ABS(gama  * pin / rin));
+                RDouble cIN = sqrt(ABS(gama  * pin / rin));
 
-                if (vei > cin)
+                if (vei > cIN)
                 {
                     if (vni >= 0.0)
                     {
@@ -7466,7 +7350,7 @@ void LESSolverStruct::FarFieldBC(Grid *gridIn, StructBC *structBC)
                     continue;
                 }
 
-                RDouble riemp = vni + 2.0 * cin / (gama  - 1.0);
+                RDouble riemp = vni + 2.0 * cIN / (gama  - 1.0);
                 RDouble riemm = vno - 2.0 * coo / (refGama - 1.0);
                 RDouble vnb = half * (riemp + riemm);
 

@@ -25,8 +25,13 @@ LIB_EXPORT Post_Probes::Post_Probes(int nProbeVariables_in, int *probeVariables_
     probesVariablesMap.insert(pair<int, string>(PROBE_DIMENSIONAL_U      ,     "u_Dim"));
     probesVariablesMap.insert(pair<int, string>(PROBE_DIMENSIONAL_V      ,     "v_Dim"));
     probesVariablesMap.insert(pair<int, string>(PROBE_DIMENSIONAL_W      ,     "w_Dim"));
+    probesVariablesMap.insert(pair<int, string>(PROBE_VELOCITY_MAGNITUDE ,     "Vmag_Dim"));
     probesVariablesMap.insert(pair<int, string>(PROBE_DIMENSIONAL_PRESSURE,    "pressure_Dim"));
     probesVariablesMap.insert(pair<int, string>(PROBE_DIMENSIONAL_TEMPERATURE, "temperature_Dim"));
+    probesVariablesMap.insert(pair<int, string>(PROBE_VISCOSITY_LAMINAR  , "viscosityLaminar"));
+    probesVariablesMap.insert(pair<int, string>(PROBE_VISCOSITY_TURBULENT, "viscosityTurbulence"));
+    probesVariablesMap.insert(pair<int, string>(PROBE_MODELED_TKE        , "modeledTKE"));
+    probesVariablesMap.insert(pair<int, string>(PROBE_MODELED_DISSIPATION, "modeleddissipationrate"));
 
     nProbeVariables = nProbeVariables_in;
     int nCount = 0;
@@ -112,7 +117,6 @@ LIB_EXPORT void Post_Probes::GetProbesASCIIFileHeader(vector<string> &title_tecp
         using namespace GAS_SPACE;
         int nm    = GlobalDataBase::GetIntParaFromDB("nm");
         int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-        int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         int neqn  = nl + nchem;
 
         string *varname = gas->GetNameOfSpecies();
@@ -237,7 +241,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
         int probeCell = probesCellID[iProbe];
         NecessaryVarForInterpolation(unstructGrid, iProbe, probeCell, numerator,interpolationCellsID, true);
 
-        int nNeighbor = cell2Cell[probeCell].size();
+        int nNeighbor = static_cast<int>(cell2Cell[probeCell].size());
         for (int iNeighbor = 0; iNeighbor < nNeighbor; ++ iNeighbor)
         {
             int neighborCell = cell2Cell[probeCell][iNeighbor];
@@ -255,7 +259,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble *c
             }
         }
 
-        int nCells = interpolationCellsID.size();
+        int nCells = static_cast<int>(interpolationCellsID.size());
         RDouble denominator = SUMMARY(numerator, nCells);
 
         for (int iCell = 0; iCell < nCells; ++ iCell)
@@ -299,7 +303,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble *c
             NecessaryVarForInterpolation(unstructGrid, iProbe, node, numerator, interpolationNodesID, false);
         }
 
-        int nNodes = interpolationNodesID.size();
+        int nNodes = static_cast<int>(interpolationNodesID.size());
         RDouble denominator = SUMMARY(numerator, nNodes);
 
         for (int iNode = 0; iNode < nNodes; ++ iNode)
@@ -411,7 +415,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM2(const string &name, RDouble4D 
             NecessaryVarForInterpolation(structGrid, iProbe, ir, jr, kr, numerator, interpolationCellsID, true);
         }
 
-        int nCells = interpolationCellsID.size();
+        int nCells = static_cast<int>(interpolationCellsID.size());
         RDouble denominator = SUMMARY(numerator, nCells);
 
         for (int iCell = 0; iCell < nCells; ++ iCell)
@@ -479,7 +483,7 @@ LIB_EXPORT void Post_Probes::UpdateProbesVarPtrM3(const string &name, RDouble4D 
             }
         }
 
-        int nNodes = interpolationNodesID.size();
+        int nNodes = static_cast<int>(interpolationNodesID.size());
         RDouble denominator = SUMMARY(numerator, nNodes);
 
         for (int iNode = 0; iNode < nNodes; ++ iNode)
@@ -580,7 +584,6 @@ LIB_EXPORT void Post_Probes::GetAllProbesVarPtr(RDouble **q_probes)
 
         int nm    = GlobalDataBase::GetIntParaFromDB("nm");
         int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-        int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         int neqn  = nl + nchem;
 
         string *varname = gas->GetNameOfSpecies();
@@ -646,7 +649,6 @@ void DumpToFileASCII::InitProbesVariables()
 
         int nm    = GlobalDataBase::GetIntParaFromDB("nm");
         int nl    = GlobalDataBase::GetIntParaFromDB("nl");
-        int nchem = GlobalDataBase::GetIntParaFromDB("nchem");
         int neqn  = nl + nchem;
 
         nVariablesToDump = nVariablesToDump + 2 * (neqn - nm);
@@ -1180,9 +1182,9 @@ void DumpToFileASCII::WriteProbesFlowFile(int outerStep)
         int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
         if (isUnsteady)
         {
-            int outerStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+            int outerStep1 = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
             RDouble physicalTimeStepDimensional = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStepDimensional");
-            RDouble real_time = physicalTimeStepDimensional * outerStep;
+            RDouble real_time = physicalTimeStepDimensional * outerStep1;
             probesFlowFile << setw(wordWidth) << real_time << endl;
         }
         else
@@ -1309,9 +1311,9 @@ void DumpToFileASCII::WriteLinesFlowFile(int outerStep)
             int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
             if (isUnsteady)
             {
-                int outerStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+                int outerStep1 = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
                 RDouble physicalTimeStepDimensional = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStepDimensional");
-                RDouble real_time = physicalTimeStepDimensional * outerStep;
+                RDouble real_time = physicalTimeStepDimensional * outerStep1;
                 linesFlowFile << setw(wordWidth) << real_time << endl;
             }
             else
@@ -1445,9 +1447,9 @@ void DumpToFileASCII::WriteSurfacesFlowFile(int outerStep)
             int isUnsteady = GlobalDataBase::GetIntParaFromDB("iunsteady");
             if (isUnsteady)
             {
-                int outerStep = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
+                int outerStep1 = PHSPACE::GlobalDataBase::GetIntParaFromDB("outnstep");
                 RDouble physicalTimeStepDimensional = GlobalDataBase::GetDoubleParaFromDB("physicalTimeStepDimensional");
-                RDouble real_time = physicalTimeStepDimensional * outerStep;
+                RDouble real_time = physicalTimeStepDimensional * outerStep1;
                 surfacesFlowFile << setw(wordWidth) << real_time << endl;
             }
             else

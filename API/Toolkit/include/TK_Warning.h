@@ -12,7 +12,7 @@
 //! @file      TK_Warning.h
 //! @brief     Write or print different warning information.
 //! @author    Zhang Jian.
-
+//#include <vld.h>
 #pragma once
 #include "TK_Log.h"
 #include "LIB_Macro.h"

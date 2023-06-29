@@ -18,6 +18,8 @@
 #include "DataContainer.h"
 #include "Constants.h"
 #include <string>
+#include "Geo_UnstructGrid.h"
+#pragma warning(disable:4100)
 
 using namespace std;
 
@@ -86,6 +88,35 @@ typedef struct{
 
 typedef float RealData;
 
+class Thermo_Energy_Data
+{
+    RDouble H, E, Etr, Ev, Ee, gama, Cv, Cp, Cvtr, Cvv, Cve, Rm, Rme;
+    RDouble *Cps, *Cvs, *Cvtrs, *Cvvs, *Cves;
+    RDouble *Hs, *Es, *Etrs, *Evs, *Ees, *Rms;
+
+    public:
+    Thermo_Energy_Data(int numberOfSpecies);
+    Thermo_Energy_Data();
+    ~Thermo_Energy_Data();
+    void Init(int numberOfSpecies, int ntmodel);
+    void freeData();
+};
+
+class Thermo_Energy_DB
+{
+    Thermo_Energy_Data *Data;
+    int nmax;
+    int ni, nj, nk;
+    int istart, jstart, kstart;
+    int numberOfSpecies;
+    public:
+    Thermo_Energy_DB(int imin, int imax ,int jmin, int jmax, int kmin, int kmax, int numberSpecies, int ntmodel);
+    ~Thermo_Energy_DB();
+
+    Thermo_Energy_Data * GetThermo_Energy_Data(int i, int j ,int k);
+
+};
+
 class Gas
 {
 public:
@@ -93,6 +124,9 @@ public:
     virtual ~Gas() {};
 public:
     int wallMultiTemperature;
+    int nDiagonalModified;
+    int nDiagonalModifiedTurb;
+    RDouble trTemperatureMinNonDim;
 public:
     virtual int GetSpeciesEquationNumber() const {return 0;}
     virtual int GetNitrogenIndex() const {return 0;}
@@ -113,7 +147,8 @@ public:
     virtual RDouble ComputeReferenceTotalEnthalpy() {return 0.0;};
     virtual RDouble GetMolecularDiameter() {return 3.6e-10;};
     virtual int GetGasModelType() {return 0;};
-    virtual int GetnDiagonalModified() const {return 0;}
+    int GetnDiagonalModified() const {return nDiagonalModified;};
+    int GetnDiagonalModifiedTurb() const {return nDiagonalModifiedTurb;};
     virtual int GetnSpeciesForWallMethod() const {return 0;}
     virtual int GetnDensityForWallMethod() const {return 0;}
 public:
@@ -128,6 +163,11 @@ public:
 
     virtual RDouble GetveTemperatureMinNonDimensional() const {return 0.0;}
     virtual RDouble GettrTemperatureMinNonDimensional() const {return 0.0;}
+
+    virtual void SetNonequilibriumCondition(int nMask){}
+    virtual void SetFrozenCondition(RDouble err){}
+    virtual int GetNonequilibriumCondition() const {return 0;}
+    virtual RDouble GetFrozenCondition() const {return 1.0e-5;}
 
     int GetwallMultiTemperature() const {return wallMultiTemperature;}
 public:
@@ -168,6 +208,7 @@ public:
 
     //! Obtain the T, p, rho and c by the T0, P0, Ma (Rg=287.053, gamma=1.4 are used){}. However, only the T and p is useful.
     //! The other two variables will be recomputed to be compatible with the condition of chemical reactions existing.
+    virtual void SetAirInformationByExpData(int useSetting){};
     virtual void SetAirInformationByExpData(){};
 
     //! This function is mainly for the average density of the mixture in chemical reactions.
@@ -321,7 +362,6 @@ public:
     //! @param[out]: electronTemperature is the non-dimensional value of electron temperature.
     virtual void GetTemperature(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature){};
     virtual void GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature,int m =0){};
-    virtual void GetTemperatureR2(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature){};
 
     //! To obtain the mass fraction of the last species with the label ns-1.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
@@ -379,7 +419,7 @@ public:
     //! @param[out]: viscosity is the non-dimensional viscosity of the mixture gas [N*s/m2].
     virtual void ComputeViscosityByPrimitive(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &electronTemperature, RDouble &suthTemperature, RDouble &viscosity){};
 
-    //£¡To Compute the viscosity, heat conductivity and mass diffusion coefficient.
+    //! To Compute the viscosity, heat conductivity and mass diffusion coefficient.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
     //! @param[in ]: temperature is the array of temperature for each temperature model.
     //! @param[out]: viscosity is the non-dimensional viscosity of the mixture gas.
@@ -469,8 +509,9 @@ public:
     //! Compute chemical source term and its Jacobian.
     virtual void ComputeChemicalSourceDerivatives(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
     virtual void ComputeChemicalSourceJacobian(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives){};
-    virtual void ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
+    virtual void ComputeChemicalSourceAndJacobian(RDouble **primitiveVariables, RDouble **temperatures, RDouble *damkohlerNumber, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
     virtual void ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesEs, RDouble4D &speciesCvs, RDouble3D &totalCv, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
+    virtual void ComputeChemicalSourceAndJacobianD3(int *Inzone, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &noneqNumber, RDouble4D &deltaQ, RDouble4D &speciesEs, RDouble4D &speciesCvs, RDouble3D &totalCv, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
     //! Compute the partial derivatives of source terms of chemical reaction equations without electron.
     //! @param[in ]: primitiveVariables stores the primitive variables of the specified control cells.
     //! @param[in ]: temperatures stores the temperature values of the specified control cells.
@@ -532,6 +573,20 @@ public:
     //! @param[out]: indicates the conservative variables.
     virtual void Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble *q){};
     virtual void Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, RDouble Te, RDouble staticE, RDouble *q){};
+    virtual void Primitive2ConservativeR2(RDouble *prim, RDouble Ttr, RDouble Tv, RDouble Te, RDouble *q){};
+
+#ifdef USE_GMRESSOLVER
+    // GMRESPV 
+    // the derivative of primitive variables w.r.t conservative variables
+    virtual void dPrimitive2dConservative(RDouble *prim, RDouble gama, RDouble** dqdcv){};
+
+    // GMRESVis
+    // the derivative of primitive variables w.r.t conservative variables
+    virtual void dGradient2dPrimitive(RDouble *prim, int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol,int nPara = 6){};
+    
+    // GMRESnolim
+    virtual void dGradient2dPrimitive4limiter(int sign, RDouble** dgraddq, char direction, RDouble nxs, RDouble nys, RDouble nzs, RDouble ns, RDouble vol){};
+#endif
 
     //The conservative variables are transfered to the primitive variables.
     //! @param[in ]: q indicates the conservative variables.
@@ -542,7 +597,7 @@ public:
     //it denotes the temperature of the next time-advancing step as output parameter.
     virtual void Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature){};
     virtual void Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature){};
-    virtual void LimitTemperature(RDouble &Temperature, RDouble &Delta, RDouble &Minimum){};
+    virtual void LimitTemperature(RDouble &Temperature, RDouble Delta, RDouble Minimum){};
 
     virtual void GetSpecificHeatRatio(RDouble *prim, RDouble &gama){};
 
@@ -556,7 +611,7 @@ public:
 
     virtual void ComputeDensityDiffusionAndKCP(RDouble temperature, RDouble *primface, RDouble mul, RDouble mut, RDouble *rho_ds_face, RDouble *hintSpeciesOfFace, RDouble &kcp){};
     virtual void GetAirInfo(const RDouble &height, RDouble &temperature, RDouble &pressure, RDouble &density, RDouble &soundspeed){};
-
+    virtual void ReadAirInfo(string &filePath, RDouble &longitude, RDouble &latitude, RDouble &temperature, RDouble &pressure, RDouble &density, RDouble &angle, RDouble &velocity, RDouble &soundspeed){};
     //! To obtain the coefficients of computing the M*dQ in the function MXDQ_STD_LP(), added by LiPeng on Jan. 10, 2019.
     //! @param[in ]: primitiveVars is the array that stores the primitive variables of the current cell.
     //! @param[out]: alpha, beta and speciesBeta are referred to the formula (A.5) in the appendix A of the PHengLEI Theory manual.
@@ -906,7 +961,7 @@ public:     //! The function library of multi-temperature model.
     //! @param[out]: alpha is the partial derivative of pressure to total energy.
     //! @param[out]: beta is the partial derivative of pressure to total density.
     //! @param[out]: gama is the partial derivative of electron pressure to vibration-electron enegy.
-    //! @param[out]: speciesBeta¡¢speciesGama are the partial derivatives of pressure and electron pressure to species density.
+    //! @param[out]: speciesBetaï¿½ï¿½speciesGama are the partial derivatives of pressure and electron pressure to species density.
     virtual void GetMultiTemperatureModelPartialDerivatives(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
         RDouble &alpha, RDouble &beta, RDouble &gama, RDouble *speciesBeta, RDouble *speciesGama){};
     virtual void GetMultiTemperatureModelPartialDerivativesR(RDouble *primitiveVars, RDouble transRotationTemperature, RDouble electronTemperature,
@@ -981,11 +1036,11 @@ public:     //! The function library of multi-temperature model.
     virtual void ComputeEnergySourceJacobianT2(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives){};
     virtual void ComputeEnergySourceJacobianT3(RDouble *primitiveVariables, RDouble *temperatures, RDouble cellVolume, RDouble *chemicalSourceTerms, RDouble **sourceDerivatives){};
 
-    virtual void ComputeEnergySourceAndJacobianT2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
-    virtual void ComputeEnergySourceAndJacobianT3(RDouble **primitiveVariables, RDouble **temperatures, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
+    virtual void ComputeEnergySourceAndJacobianT2(RDouble **primitiveVariables, RDouble **temperatures, RDouble *vibNoneqNumber, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
+    virtual void ComputeEnergySourceAndJacobianT3(RDouble **primitiveVariables, RDouble **temperatures, RDouble *vibNoneqNumber, RDouble *cellVolume, RDouble **chemicalSourceTerms, RDouble ***sourceDerivatives, int nCellNumber){};
 
-    virtual void ComputeEnergySourceAndJacobianT2D3(int *nCell, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
-    virtual void ComputeEnergySourceAndJacobianT3D3(int *nCell, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
+    virtual void ComputeEnergySourceAndJacobianT2D3(int *nCell, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &vibNoneqNumber, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
+    virtual void ComputeEnergySourceAndJacobianT3D3(int *nCell, RDouble4D &primitiveVariables, RDouble4D &temperatures, RDouble4D &vibNoneqNumber, RDouble4D &speciesCvvs, RDouble4D &speciesCves, RDouble4D &speciesEvs, RDouble4D &speciesEes, RDouble3D &totalCvtr, RDouble3D &totalCvv, RDouble3D &totalCve, RDouble3D &cellVolume, RDouble4D &chemicalSourceTerms, RDouble5D &sourceDerivatives){};
 
     //! To obtain the maximum mass diffusion coefficient among the species. added by LiPeng in Jan. 2019.
     //! @param[in ]: primitiveVars is an array of saving the primitive variables.
@@ -1097,12 +1152,65 @@ public:
     virtual void  ComputeMixtureCvvAndEv(RDouble *massF, RDouble tvTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};
     virtual void  ComputeMixtureCveAndEe(RDouble *massF, RDouble teTemperature, RDouble &gasMixtureCv, RDouble &gasMixtureEnergy){};
 
+    virtual void ComputeMixtureEv(RDouble *massF, RDouble tvTemperature, RDouble &gasMixtureEnergy){};
+    virtual void ComputeMixtureEe(RDouble *massF, RDouble teTemperature, RDouble &gasMixtureEnergy){};
+
     virtual void  ComputeCvvesAndEvesForSpecies(RDouble tveTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional){};
     virtual void  ComputeCvvsAndEvsForSpecies(RDouble tvTemperature, RDouble *gasCvs, RDouble *gasEnergys, int Dimensional){};
 
     virtual void  ComputeTemperatureFromTotalTemperature(RDouble *massF, RDouble totalTemperature, RDouble mach, RDouble &Temperature, RDouble &gama, int Dimensional = 0){};
     virtual void  ComputeGama(RDouble *massF, RDouble Temperature, RDouble &gama, int Dimensional = 0){};
     virtual void  ComputeGamaAndHo(RDouble *massF, RDouble *Temperature, RDouble &gama, RDouble &H, int Dimensional = 0){};
+
+    //! For Incompressible Solver
+    virtual void InitParameter() {};
+    virtual void InitParameterForMu() {};
+    virtual void InitParameterForK() {};
+    virtual void InitParameterForMassdiff() {};
+    virtual void SetGasName(string speciesNameIncom) {};
+    virtual void SetGasMolarMass(string gasMolarMass) {};
+    virtual void SetGasRho(string gasRho) {};
+    virtual void SetGasMu(string gasMu) {};
+    virtual void SetGasCp(string gasCp) {};
+    virtual void SetGasK(string gasK) {};
+    virtual string*  GetGasName() { return gasNameList; }
+    virtual RDouble* GetGasMolarMass() { return gasMolarMassList; }
+    virtual RDouble* GetGasRho() { return gasRhoList; }
+    virtual RDouble* GetGasMu() { return gasMuList; }
+    virtual RDouble* GetGasCp() { return gasCpList; }
+    virtual RDouble* GetGasK() { return gasKList; }
+    virtual void UpdateRg(UnstructGrid* grid, RDouble* Rg) {};
+    virtual void UpdateRho(UnstructGrid* grid, RDouble* rho) {};
+    virtual void UpdateMu(UnstructGrid* grid, RDouble* mu) {};
+    virtual void UpdateCp(UnstructGrid* grid, RDouble* cp) {};
+    virtual void UpdateK(UnstructGrid* grid, RDouble* k) {};
+    virtual void UpdateMassDiff(UnstructGrid* grid, int iGas, RDouble* massdiff) {};
+    protected:
+
+        //! SutherLand
+        //RDouble C1;
+        //RDouble C2;
+        //RDouble refT;
+        //RDouble S;
+        //RDouble mu0;
+
+        //! Ideal gas mixing law for Mu
+        RDouble** phiij;
+
+        //! Calculation of mass diffusion coefficient
+        //! massDiffConstantDiluteApprox
+        //RDouble sct;
+        RDouble* dilute;
+
+        //RDouble refP;
+        //RDouble gasR;
+
+        string* gasNameList;
+        RDouble* gasMolarMassList;
+        RDouble* gasRhoList;
+        RDouble* gasMuList;
+        RDouble* gasCpList;
+        RDouble* gasKList;
 };
 
 extern Gas *gas;
@@ -1131,3 +1239,4 @@ bool IsEqualGasModel(Int1D *speciesOrder1, Int1D *speciesOrder2);
 }
 
 }
+

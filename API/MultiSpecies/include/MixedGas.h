@@ -638,7 +638,7 @@ public:
     //! @param[out]: viscosity is the non-dimensional viscosity of the mixture gas [N*s/m2].
     void ComputeViscosityByPrimitive(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &electronTemperature, RDouble &suthTemperature, RDouble &viscosity);
 
-    //£¡To Compute the viscosity, heat conductivity and mass diffusion coefficient.
+    //! To Compute the viscosity, heat conductivity and mass diffusion coefficient.
     //! @param[in ]: primitiveVariables is an array of saving the primitive variables.
     //! @param[in ]: temperature is the array of temperature for each temperature model.
     //! @param[out]: viscosity is the non-dimensional viscosity of the mixture gas.
@@ -1382,6 +1382,21 @@ void ChemCompressData(DataContainer *&cdata);
 
 void ChemDecompressData(DataContainer *cdata);
 
+//! The function computes the formula (M +- R) * dQ, where M and R denote the Jacobian matrix and spectrum radius of inviscid flux,respectively.
+//! @param[in ]: primitiveVars is the array that stores the primitive variables of the current cell.
+//! @param[in ]: temperature is the array that stores the temperature values of the current cell.
+//! @param[in ]: nx, ny and nz are components of the average normal vector located in the center of the current cell.
+//! @param[in ]: faceArea denotes the avarage area located in the center of the current cell.
+//! @param[in ]: moveVelocity denotes the movement velocity located in the center of the current cell, and it is used for dynamic mesh.
+//! @param[in ]: deltaQ is the increment of conservative vector.
+//! @param[out]: flux is the inviscid flux that equals to the Jacobian matrix multiplies the difference values of the conservative variables.
+//! @param[in ]: radius denotes the spectrum radius of invsicid Jacobian matrix.
+//! @param[in ]: iSign denotes the computation symbol, -1 denotes M substracts R, 1 denotes M plus R.
+void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
+                  RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign,int nElectronIndex);
+void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
+                   RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign, int nElectronIndex,
+                   RDouble *speciesCvs, RDouble *speciesEtrs, RDouble totalH,  RDouble totalCv, RDouble totalCvtr, RDouble totalCvv, RDouble totalCve);
 }
 
 }

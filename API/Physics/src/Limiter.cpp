@@ -19,7 +19,7 @@ LIB_EXPORT Limiter::Limiter(UnstructGrid * gridin, RDouble ** q, int nVariable, 
     limit = new Data2D<RDouble>();
 
     limitModel     = 0;
-    limitVecctor   = 0;
+    limitVector   = 0;
     limiterTypeID  = 1;
 
     int nTotalCell = grid->GetNTotalCell();
@@ -64,19 +64,10 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
     const int LIMIT_BY_RHO_P    = 0;
     const int LIMIT_BY_EACH_VAR = 1;
 
-    RDouble **limit2D = 0;
-    if (limitVecctor == SCALAR_LIMITER)
-    {
-        limit2D = new RDouble *[1];
-    }
-    else if (limitVecctor == VECTOR_LIMITER)
-    {
-        limit2D = new RDouble *[nLimiterVariables];
-    }
     RDouble *limit = 0;
     if (limiterTypeID == ILMT_BARTH)
     {
-        if(limitVecctor == SCALAR_LIMITER)
+        if(limitVector == SCALAR_LIMITER)
         {
             //! Each variables has the same limiter value.
             limit = this->GetLimiter(0);
@@ -93,7 +84,7 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
                 }
             }
         }
-        else if(limitVecctor == VECTOR_LIMITER)
+        else if(limitVector == VECTOR_LIMITER)
         {
             //! Limiter value of each variable is computed by itself.
             for (int iVariable = 0; iVariable < nLimiterVariables; ++ iVariable)
@@ -105,7 +96,7 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
     }
     else if (limiterTypeID == ILMT_VENCAT)
     {
-        if (limitVecctor == SCALAR_LIMITER)
+        if (limitVector == SCALAR_LIMITER)
         {
             //! The limiter values of each variable are same.
             limit = this->GetLimiter(0);
@@ -122,7 +113,7 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
                 }
             }
         } 
-        else if(limitVecctor == VECTOR_LIMITER)
+        else if(limitVector == VECTOR_LIMITER)
         {
             //! The limiter values of each variable are different.
             for (int m = 0; m < nLimiterVariables; ++ m)
@@ -138,36 +129,19 @@ LIB_EXPORT void Limiter::Calculation(Grid *gridIn)
     }
 
     //! Set limiter at boundary.
-    if (limitVecctor == SCALAR_LIMITER)
+    if (limitVector == SCALAR_LIMITER)
     {
         limit = this->GetLimiter(0);
-        limit2D[0] = limit;
         SetLimitBoundary(gridUnstruct, limit);
     }
-    else if(limitVecctor == VECTOR_LIMITER)
+    else if(limitVector == VECTOR_LIMITER)
     {
         for (int m = 0; m < nLimiterVariables; ++ m)
         {
             limit = this->GetLimiter(m);
-            limit2D[m] = limit;
             SetLimitBoundary(gridUnstruct, limit);
         }
     }
-
-    //! Warning: when limitVecctor == VECTOR_LIMITER, the following limit2D should be
-    //! point to different limiter vector!!! This word need to be more consideration.
-    //RDouble *limit2D[1];
-    //limit2D[0] = limit;
-
-    if (limitVecctor == SCALAR_LIMITER)
-    {
-        PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, 1);
-    }
-    else if(limitVecctor == VECTOR_LIMITER)
-    {
-        PHSPACE::CommunicateInterfaceValue(gridUnstruct, limit2D, limiterVarName, nLimiterVariables);
-    }
-    delete [] limit2D;    limit2D = NULL;
 }
 
 LIB_EXPORT void Limiter::InitLimitData()
@@ -1085,7 +1059,7 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     int nodeno;
     for (int iCell = 0; iCell < nTotal; ++ iCell)
     {
-        for (int j = 0; j < npc[iCell]; ++ j)
+        for (j = 0; j < npc[iCell]; ++ j)
         {
             nodeno = c2n[count ++];
             dqmax  = qmax[nodeno] - q[iCell];
@@ -1113,9 +1087,10 @@ void Limiter::VencatLimiter6(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble 
     delete [] qmax;    qmax = NULL;
     delete [] qmin;    qmin = NULL;
 }
-
+#pragma warning(disable:4100)
 void Limiter::VencatLimiter7(RDouble *limit, RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int iVariable)
 {
+#pragma warning(default:4100)
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
     int nTotalCell = grid->GetNTotalCell();

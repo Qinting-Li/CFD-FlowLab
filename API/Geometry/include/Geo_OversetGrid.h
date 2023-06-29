@@ -17,7 +17,7 @@
 #include "Geo_Grid.h"
 #include "Geo_Interface.h"
 #include "Geo_Interpoint.h"
-
+#pragma warning (disable:4100)
 // Composite Overlapping Meshes for the Solution of Partial Differential Equations
 // G.CHESSGIRE AND W. D. HENSHAW
 // JOURNAL OF COMPUTATIONAL PHYSICS 90, 1-64(1990)

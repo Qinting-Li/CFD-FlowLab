@@ -656,11 +656,6 @@ void IO_GridReader::RedistributeZonesIfNeed(int startZoneIndex)
     int * block_proc_grid = gridGroup->GetBlockProcGrid();
     int * block_proc_dump = gridGroup->GetBlockProcDump();
 
-    //! zoneDistributionMethod: zone block distribution method.\n
-    //! -# 0 : each zone is assigned to the one that defined in grid partition procedure.\n
-    //! -# 1 : random assigned for each zone or by some else ways.
-    const int DETERMIN_BY_PARTITION = 0;
-    const int REDISTRIBUTION        = 1;
     int zoneDistributionMethod;
     int maxproc = block_proc[0];
     
@@ -725,7 +720,7 @@ void IO_GridReader::RedistributeZonesIfNeed(int startZoneIndex)
                 //! For structured + unstructured = mix grid,move the specified process of  unstructured grid partition backward.
                 if (block_type[0] == PHSPACE::STRUCTGRID)
                 {
-                    int maxproc = block_proc[0];
+                    maxproc = block_proc[0];
                     for (int iZone = 0; iZone < nZones; ++ iZone)
                     {
                         if(block_proc[iZone] > maxproc)
@@ -1005,13 +1000,13 @@ LIB_EXPORT void IO_GridReader::ReadWallDistByCSMode()
             this->gridGroup = this->gridGroups[iFile];
         }
 
-        string gridFileName = gridGroupNameList[ iFile ];
+        string gridFileNamei = gridGroupNameList[ iFile ];
 
-        string cellToNodeFileName = ChangeExtensionOfFileName(gridFileName, "wdt");
+        string cellToNodeFileName = ChangeExtensionOfFileName(gridFileNamei, "wdt");
 
-        fstream file;
+        fstream file1;
 
-        OpenSerialFile(file, cellToNodeFileName, ios_base::in|ios_base::binary);
+        OpenSerialFile(file1, cellToNodeFileName, ios_base::in|ios_base::binary);
 
         int nZones = this->numberOfZones[iFile];
 
@@ -1024,7 +1019,7 @@ LIB_EXPORT void IO_GridReader::ReadWallDistByCSMode()
 
             DataContainer * WallDistData = new DataContainer();
 
-            ReadCompressedData(file, WallDistData, send_proc, recv_proc);
+            ReadCompressedData(file1, WallDistData, send_proc, recv_proc);
 
             DecompressDataToWallDist(WallDistData, iZone);
 
@@ -1033,7 +1028,7 @@ LIB_EXPORT void IO_GridReader::ReadWallDistByCSMode()
 
         zoneStart += nZones;
 
-        Close(file);
+        Close(file1);
     }
 }
 

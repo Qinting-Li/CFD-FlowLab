@@ -41,7 +41,6 @@ void Mesh_Deformation::Run()
 
 void Mesh_Deformation::SetNodeAttribute(DynamicGrid *grid)
 {
-    int nTotalFace = grid->GetNTotalFace();
     int nTotalNode = grid->GetNTotalNode();
     int nBoundFace = grid->GetNBoundFace();
 
@@ -99,7 +98,6 @@ void Mesh_Deformation::PostVisual(string visualFileName, int iStep)
 
         int nTotalNode = grid->GetNTotalNode();
         int nTotalFace = grid->GetNTotalFace();
-        int nBoundFace = grid->GetNBoundFace();
         int nTotalCell = grid->GetNTotalCell();
 
         DYNode *nodeArray = grid->GetNodeArray();

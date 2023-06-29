@@ -10,7 +10,7 @@ LIB_EXPORT inline void Limiter::SetLimiterModel(int limit_mode)
 
 LIB_EXPORT inline void Limiter::SetLimiterVector(int limit_vec) 
 { 
-	this->limitVecctor = limit_vec;
+	this->limitVector = limit_vec;
 }
 
 LIB_EXPORT inline void Limiter::SetVencatLimiterType(int ivencat) 

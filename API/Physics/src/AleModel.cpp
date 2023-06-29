@@ -192,8 +192,8 @@ void ordcoef(int order, RDouble &xi, RDouble &theta, RDouble &phi, RDouble *oute
     }
 }
 
-void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord0, RDouble **angle, RDouble **coord,RDouble *outerdt, RDouble &time, 
-               int lmsmflag, int outnstep, RDouble **cforces, RDouble **cmoment, RDouble **vforces, RDouble **vmoment)
+void chckmovmt(int *ialepar, RDouble **angle0, RDouble **coord0, RDouble **angle, RDouble **coord,RDouble *outerdt, 
+               int lmsmflag, int outnstep)
 {
     //! time      = current time for unsteady calculations.
     //! outerdt   = dt for the time step of the outer loop.
@@ -268,7 +268,7 @@ void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord
     //! Translation : the reference point coordinates are prescribed.
     else if (itrans == 2)
     {
-        deftrans(coord,time,outerdt,ialepar,ralepar);
+        //deftrans(coord,time,outerdt,ialepar,ralepar);
         for (int m = 0; m < 3; ++ m)
         {
             coord0[m][0] = coord[m][0];
@@ -314,16 +314,16 @@ void chckmovmt(int *ialepar, RDouble *ralepar, RDouble **angle0, RDouble **coord
     }
 }
 
-void deftrans(RDouble **coord, RDouble time, RDouble *outerdt, int *ialepar, RDouble *ralepar)
-{
-    //! This routine enables to write the reference position coordinates
-    //! (coord(.,1)) as a function of time or outerdt.
-    
-    //! coord(1,1) = ....
-    //! coord(2,1) = ....
-    //! coord(3,1) = ....
-    return;
-}
+//void deftrans(RDouble **coord, RDouble time, RDouble *outerdt, int *ialepar, RDouble *ralepar)
+//{
+//    //! This routine enables to write the reference position coordinates
+//    //! (coord(.,1)) as a function of time or outerdt.
+//    
+//    //! coord(1,1) = ....
+//    //! coord(2,1) = ....
+//    //! coord(3,1) = ....
+//    return;
+//}
 
 void chckdeform()
 {
@@ -1044,26 +1044,18 @@ void AleModel::MoveGrid()
     int outnstep = 1;
     GlobalDataBase::GetData("outnstep", &outnstep, PHINT, 1);
 
-    RDouble simutime;
-    GlobalDataBase::GetData("simutime", &simutime, PHDOUBLE, 1);
-
     int    * ialepar = reinterpret_cast< int    *  > (GlobalDataBase::GetDataPtr("ialepar"));
-    RDouble * ralepar = reinterpret_cast< RDouble *  > (GlobalDataBase::GetDataPtr("ralepar"));
     RDouble * outerdt = reinterpret_cast< RDouble *  > (GlobalDataBase::GetDataPtr("outerdt"));
     RDouble **angle0  = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("angle0"));
     RDouble **coord0  = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("coord0"));
     RDouble **angle   = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("angle"));
     RDouble **coord   = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("coord"));
-    RDouble **cforces = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("cforces"));
-    RDouble **cmoment = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("cmoment"));
-    RDouble **vforces = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("vforces"));
-    RDouble **vmoment = reinterpret_cast< RDouble ** > (GlobalDataBase::GetDataPtr("vmoment"));
 
     if (ialetype == 2)
     {
         //! Check how the movement is enforced.
-        chckmovmt(ialepar,ralepar,angle0,coord0,angle,coord,
-            outerdt,simutime,lmsmflag,outnstep,cforces,cmoment,vforces,vmoment);
+        chckmovmt(ialepar,angle0,coord0,angle,coord,
+            outerdt,lmsmflag,outnstep);
     }
     else if (ialetype >= 3)
     {

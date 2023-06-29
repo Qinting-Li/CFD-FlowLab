@@ -233,6 +233,8 @@ void IO_HDF5Write::WriteUnstructGrid(hid_t loc_id, Grid *gridIn, int iZone)
 
     WriteInterpointInfo(grpData, gridIn);
 
+    WriteUnstrPartitionInfo(grpData, gridIn);
+
     WriteVolumeCondition(grpData, gridIn);
 
     H5Gclose(grpData);
@@ -295,8 +297,8 @@ void IO_HDF5Write::WriteStructGrid(hid_t loc_id, Grid *gridIn)
     WriteBCRegion(grpData, gridIn);
     WriteInterfaceInfo(grpData, gridIn);
     WriteStrBCName(grpData, gridIn);
-    WriteLnkInfo(grpData, gridIn, gridID);
- //   WritePartitionInfo(grpData, gridIn, gridID);
+    WriteLnkInfo(grpData, gridIn);
+    WriteStrPartitionInfo(grpData, gridIn);
     WriteVolumeCondition(grpData, gridIn);
 
     H5Gclose(grpData);
@@ -332,7 +334,6 @@ void IO_HDF5Write::WriteFaceTopology(hid_t loc_id, Grid *gridIn)
 
     int nTotalFace = grid->GetNTotalFace();
     int *nodeNumberOfEachFace = grid->GetNodeNumberOfEachFace();
-    CreateAndWriteData(grpData, "nodeNumberOfEachFace", 1, nTotalFace, PHINT, nodeNumberOfEachFace);
 
     long long int faceCount = 0;
     for (int iFace = 0; iFace < nTotalFace; ++ iFace)
@@ -341,12 +342,32 @@ void IO_HDF5Write::WriteFaceTopology(hid_t loc_id, Grid *gridIn)
     }
 
     int *face2Node = grid->GetFace2Node();
-    CreateAndWriteData(grpData, "face2Node", 1, faceCount, PHINT, face2Node);
-
     int *leftCellOfFace  = grid->GetLeftCellOfFace();
     int *rightCellOfFace = grid->GetRightCellOfFace();
-    CreateAndWriteData(grpData, "leftCellOfFace" , 1, nTotalFace, PHINT, leftCellOfFace);
-    CreateAndWriteData(grpData, "rightCellOfFace", 1, nTotalFace, PHINT, rightCellOfFace);
+
+    int *nodePosi = new int[nTotalFace + 1];
+    int nodeSum = 0;
+    nodePosi[0] = 0;
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    {
+        nodeSum += nodeNumberOfEachFace[iFace];
+        nodePosi[iFace+1] = nodeSum;
+    }
+
+    for (int iFace = 0; iFace < nTotalFace; ++ iFace)
+    {
+        if (leftCellOfFace[iFace] < 0)
+        {
+            std::reverse(face2Node + nodePosi[iFace], face2Node + nodePosi[iFace+1]);
+            SWAP(leftCellOfFace[iFace], rightCellOfFace[iFace]);
+        }
+    }
+    delete []nodePosi;
+
+    CreateAndWriteData(grpData, "nodeNumberOfEachFace", 1, nTotalFace, PHINT, nodeNumberOfEachFace);
+    CreateAndWriteData(grpData, "face2Node"           , 1, faceCount , PHINT, face2Node);
+    CreateAndWriteData(grpData, "leftCellOfFace"      , 1, nTotalFace, PHINT, leftCellOfFace);
+    CreateAndWriteData(grpData, "rightCellOfFace"     , 1, nTotalFace, PHINT, rightCellOfFace);
 
     int nBoundFace = grid->GetNBoundFace();
     CreateAndWriteData(grpData, "nBoundFace", 1, 1, PHINT, &nBoundFace);
@@ -636,7 +657,7 @@ void IO_HDF5Write::WriteInterfaceInfo(hid_t loc_id, Grid *gridIn)
     H5Gclose(grpData);
 }
 
-void IO_HDF5Write::WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID)
+void IO_HDF5Write::WriteLnkInfo(hid_t loc_id, Grid *gridIn)
 {
     StructGrid *grid = StructGridCast(gridIn);
     StructBCSet *structBCSet = grid->GetStructBCSet();
@@ -671,7 +692,7 @@ void IO_HDF5Write::WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID)
 
         int bctype = structBC->GetBCType();
         string bcName = structBC->GetBCName();
-        if (bctype >= 0 || bcName == "Periodic_up" || bcName == "Periodic_down") continue;
+        if (!IsInterface(bctype) || bcName == "Periodic_up" || bcName == "Periodic_down") continue;
 
         int index = 0;
         int icount = 0;
@@ -706,28 +727,56 @@ void IO_HDF5Write::WriteLnkInfo(hid_t loc_id, Grid *gridIn, int gridID)
     H5Gclose(grpData);
 }
 
-//void IO_HDF5Write::WritePartitionInfo(hid_t loc_id, Grid *gridIn, int gridID)
-//{
-//    StructGrid *grid = StructGridCast(gridIn);
-//
-//    int ordinaryGridIndex = grid->GetOrdinaryGridIndex();
-//    if (ordinaryGridIndex == -1)
-//    {
-//        return;
-//    }
-//
-//    hid_t grpData;
-//    grpData = GetGroup(loc_id, "PartitionInfo");
-//
-//    int *ordinaryDimStartIndex = grid->GetOrdinaryDimStartIndex();
-//    int *ordinaryDimEndIndex   = grid->GetOrdinaryDimEndIndex();
-//
-//    CreateAndWriteData(grpData, "OrdinaryGrid"    , 1, 1, PHINT, &ordinaryGridIndex);
-//    CreateAndWriteData(grpData, "OrdinaryDimStart", 1, 3, PHINT, ordinaryDimStartIndex);
-//    CreateAndWriteData(grpData, "OrdinaryDimEnd"  , 1, 3, PHINT, ordinaryDimEndIndex  );
-//
-//    H5Gclose(grpData);
-//}
+void IO_HDF5Write::WriteStrPartitionInfo(hid_t loc_id, Grid *gridIn)
+{
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ordinaryGridIndex = grid->GetOrdinaryGridIndex();
+    if (ordinaryGridIndex == -1)
+    {
+        return;
+    }
+
+    hid_t grpData;
+    grpData = GetGroup(loc_id, "PartitionInfo");
+
+    int *ordinaryDimStartIndex = grid->GetOrdinaryDimStartIndex();
+    int *ordinaryDimEndIndex   = grid->GetOrdinaryDimEndIndex();
+
+    CreateAndWriteData(grpData, "OrdinaryGrid"    , 1, 1, PHINT, &ordinaryGridIndex);
+    CreateAndWriteData(grpData, "OrdinaryDimStart", 1, 3, PHINT, ordinaryDimStartIndex);
+    CreateAndWriteData(grpData, "OrdinaryDimEnd"  , 1, 3, PHINT, ordinaryDimEndIndex  );
+
+    H5Gclose(grpData);
+}
+
+void IO_HDF5Write::WriteUnstrPartitionInfo(hid_t loc_id, Grid *gridIn)
+{
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+
+    int ordinaryGridIndex = grid->GetOrdinaryGridIndex();
+    if (ordinaryGridIndex == -1)
+    {
+        return;
+    }
+
+    hid_t grpData;
+    grpData = GetGroup(loc_id, "PartitionInfo");
+
+    int nTotalNode = grid->GetNTotalNode();
+    int nTotalFace = grid->GetNTotalFace();
+    int nTotalCell = grid->GetNTotalCell();
+    int *ordinaryNodeIndex = grid->GetOrdinaryNodeIndex();
+    int *ordinaryFaceIndex = grid->GetOrdinaryFaceIndex();
+    int *ordinaryCellIndex = grid->GetOrdinaryCellIndex();
+
+    CreateAndWriteData(grpData, "OrdinaryGrid"     , 1, 1         , PHINT, &ordinaryGridIndex);
+    CreateAndWriteData(grpData, "OrdinaryNodeIndex", 1, nTotalNode, PHINT, ordinaryNodeIndex);
+    CreateAndWriteData(grpData, "OrdinaryFaceIndex", 1, nTotalFace, PHINT, ordinaryFaceIndex);
+    CreateAndWriteData(grpData, "OrdinaryCellIndex", 1, nTotalCell, PHINT, ordinaryCellIndex);
+
+    H5Gclose(grpData);
+}
 
 IO_HDF5Read::IO_HDF5Read(PHVectorString1D &gridNameListIn, Region *region_in)
 {
@@ -919,6 +968,53 @@ void IO_HDF5Read::ReadWallDist()
                     wdt[iCell] = static_cast<RDouble>(walldist[iCell]);
                 }
                 grid->ReadWalldist(wdt);
+
+                string nearestwallfacenormalxname = dataName + "_nwfnx";
+                string nearestwallfacenormalyname = dataName + "_nwfny";
+                string nearestwallfacenormalzname = dataName + "_nwfnz";
+                if (CheckDataExist(file, nearestwallfacenormalxname))
+                {
+                    double* nwfnx = new double[nTotalCell];
+                    ReadData(file, nwfnx, nearestwallfacenormalxname);
+
+                    RDouble* nearestwallfacenormalx = new RDouble[nTotalCell];
+                    for (int iCell = 0; iCell < nTotalCell; ++iCell)
+                    {
+                        nearestwallfacenormalx[iCell] = static_cast<RDouble>(nwfnx[iCell]);
+                        //cout << nearestwallfacenormalx[iCell] << endl;
+                    }
+
+                    double* nwfny = new double[nTotalCell];
+                    ReadData(file, nwfny, nearestwallfacenormalyname);
+
+                    RDouble* nearestwallfacenormaly = new RDouble[nTotalCell];
+                    for (int iCell = 0; iCell < nTotalCell; ++iCell)
+                    {
+                        nearestwallfacenormaly[iCell] = static_cast<RDouble>(nwfny[iCell]);
+                    }
+
+                    double* nwfnz = new double[nTotalCell];
+                    ReadData(file, nwfnz, nearestwallfacenormalzname);
+
+                    RDouble* nearestwallfacenormalz = new RDouble[nTotalCell];
+                    for (int iCell = 0; iCell < nTotalCell; ++iCell)
+                    {
+                        nearestwallfacenormalz[iCell] = static_cast<RDouble>(nwfnz[iCell]);
+                    }
+
+                    grid->ReadNearestwallfacenormalx(nearestwallfacenormalx);
+                    grid->ReadNearestwallfacenormaly(nearestwallfacenormaly);
+                    grid->ReadNearestwallfacenormalz(nearestwallfacenormalz);
+
+                    delete[]nearestwallfacenormalx;
+                    delete[]nearestwallfacenormaly;
+                    delete[]nearestwallfacenormalz;
+
+                    delete[]nwfnx;
+                    delete[]nwfny;
+                    delete[]nwfnz;
+                }
+
                 delete [] walldist;
                 delete [] wdt;
             }
@@ -1364,7 +1460,7 @@ void IO_HDF5Read::ReadStructGrid(hid_t loc_id, int iZone)
 
     ReadStrBCName(grpData, grid);
     ReadBCRegion(grpData, grid);
-//    ReadPartitionInfo(grpData, grid);
+    ReadStrPartitionInfo(grpData, grid);
     ReadInterfaceInfo(grpData, grid);
     ReadVolumeCondition(grpData, grid);
 
@@ -1429,7 +1525,7 @@ void IO_HDF5Read::ReadBCRegion(hid_t loc_id, Grid *gridIn)
         {
             if (bcregion->GetBCName() == "Periodic_up"|| bcregion->GetBCName() == "Periodic_down")
             {
-                bcType = PHENGLEI::PERIODIC;
+                bcType = PHENGLEI::USER_DEFINED;
                 iBCinfo ++;
             }
         }
@@ -1486,7 +1582,7 @@ void IO_HDF5Read::ReadLnkInfo(hid_t loc_id, Grid *gridIn)
         StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
 
         int bctype = bcregion->GetBCType();
-        if (bctype >= 0) continue;
+        if ((!IsInterface(bctype))) continue;
 
         iMin = LnkInfor[iLnkinfo][index++];
         iMax = LnkInfor[iLnkinfo][index++];
@@ -1584,35 +1680,76 @@ void IO_HDF5Read::ReadStrBCName(hid_t loc_id, Grid *gridIn)
     H5Gclose(grpData);
 }
 
-//void IO_HDF5Read::ReadPartitionInfo(hid_t loc_id, Grid *gridIn)
-//{
-//    bool dataExist = CheckDataExist(loc_id, "PartitionInfo");
-//    if (!dataExist)
-//    {
-//        return;
-//    }
-//
-//    hid_t grpData;
-//    grpData = OpenGroup(loc_id, "PartitionInfo");
-//    StructGrid *grid = StructGridCast(gridIn);
-//
-//    int ordinaryGridIndex = -1;
-//    int *ordinaryDimStartIndex = new int[3];
-//    int *ordinaryDimEndIndex   = new int[3];
-//
-//    ReadData(grpData, &ordinaryGridIndex   , "OrdinaryGrid");
-//    ReadData(grpData, ordinaryDimStartIndex, "OrdinaryDimStart");
-//    ReadData(grpData, ordinaryDimEndIndex  , "OrdinaryDimEnd");
-//
-//    grid->SetOrdinaryGridIndex(ordinaryGridIndex);
-//    grid->SetOrdinaryDimStartIndex(ordinaryDimStartIndex);
-//    grid->SetOrdinaryDimEndIndex(ordinaryDimEndIndex);
-//
-//    delete []ordinaryDimStartIndex;
-//    delete []ordinaryDimEndIndex;
-//
-//    H5Gclose(grpData);
-//}
+void IO_HDF5Read::ReadStrPartitionInfo(hid_t loc_id, Grid *gridIn)
+{
+    bool dataExist = CheckDataExist(loc_id, "PartitionInfo");
+    if (!dataExist)
+    {
+        StructGrid *grid = StructGridCast(gridIn);
+        int ni    = grid->GetNI();
+        int nj    = grid->GetNJ();
+        int nk    = grid->GetNK();
+        int iZone = grid->GetZoneID();
+
+        int ordinaryDimStartIndex[3], ordinaryDimEndIndex[3];
+        ordinaryDimStartIndex[0] = 1; ordinaryDimEndIndex[0] = ni;
+        ordinaryDimStartIndex[1] = 1; ordinaryDimEndIndex[1] = nj;
+        ordinaryDimStartIndex[2] = 1; ordinaryDimEndIndex[2] = nk;
+
+        grid->SetOrdinaryGridIndex(iZone);
+        grid->SetOrdinaryDimStartIndex(&ordinaryDimStartIndex[0]);
+        grid->SetOrdinaryDimEndIndex(&ordinaryDimEndIndex[0]);
+
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(loc_id, "PartitionInfo");
+    StructGrid *grid = StructGridCast(gridIn);
+
+    int ordinaryGridIndex = -1;
+    int *ordinaryDimStartIndex = new int[3];
+    int *ordinaryDimEndIndex   = new int[3];
+
+    ReadData(grpData, &ordinaryGridIndex   , "OrdinaryGrid");
+    ReadData(grpData, ordinaryDimStartIndex, "OrdinaryDimStart");
+    ReadData(grpData, ordinaryDimEndIndex  , "OrdinaryDimEnd");
+
+    grid->SetOrdinaryGridIndex(ordinaryGridIndex);
+    grid->SetOrdinaryDimStartIndex(ordinaryDimStartIndex);
+    grid->SetOrdinaryDimEndIndex(ordinaryDimEndIndex);
+
+    delete []ordinaryDimStartIndex;
+    delete []ordinaryDimEndIndex;
+
+    H5Gclose(grpData);
+}
+
+void IO_HDF5Read::ReadUnstrPartitionInfo(hid_t loc_id, Grid *gridIn)
+{
+    bool dataExist = CheckDataExist(loc_id, "PartitionInfo");
+    if (!dataExist)
+    {
+        return;
+    }
+
+    hid_t grpData;
+    grpData = OpenGroup(loc_id, "PartitionInfo");
+    UnstructGrid *grid = UnstructGridCast(gridIn);
+
+    int ordinaryGridIndex = -1;
+    ReadData(grpData, &ordinaryGridIndex, "OrdinaryGrid");
+    grid->SetOrdinaryGridIndex(ordinaryGridIndex);
+
+    int *ordinaryNodeIndex  = ReadIntOneRow(grpData, "OrdinaryNodeIndex");
+    int *ordinaryFaceIndex  = ReadIntOneRow(grpData, "OrdinaryFaceIndex");
+    int *ordinaryCellIndex  = ReadIntOneRow(grpData, "OrdinaryCellIndex");
+    grid->SetOrdinaryNodeIndex(ordinaryNodeIndex);
+    grid->SetOrdinaryFaceIndex(ordinaryFaceIndex);
+    grid->SetOrdinaryCellIndex(ordinaryCellIndex);
+
+    H5Gclose(grpData);
+}
 
 void IO_HDF5Read::ReadUnstructGrid(hid_t loc_id, int iZone)
 {
@@ -1648,6 +1785,7 @@ void IO_HDF5Read::ReadUnstructGrid(hid_t loc_id, int iZone)
     ReadCellTopology(grpData, grid);
     ReadUnstrBCName(grpData, grid);
     ReadInterpointInfo(grpData, grid);
+    ReadUnstrPartitionInfo(grpData, grid);
     ReadVolumeCondition(grpData, grid);
 
     grid->SetIBlock(presentGridGroup);
@@ -1743,7 +1881,7 @@ void IO_HDF5Read::ReadUnstrBCName(hid_t loc_id, Grid *gridIn)
     int nBoundFace = grid->GetNBoundFace();
     string *BCNameList = new string[nBoundFace];
    
-    uint_long count = 0;
+    int count = 0;
     for (int iFace = 0; iFace < nBoundFace; ++ iFace)
     {
         while (BCName[count] != '\0')
@@ -1874,8 +2012,6 @@ void IO_HDF5Read::RedistributeZonesIfNeed()
     int *blockProcGrid = GetBlockProcGrid();
     int *blockProcDump = GetBlockProcDump();
 
-    const int DETERMIN_BY_PARTITION = 0;
-    const int REDISTRIBUTION        = 1;
     int zoneDistributionMethod = 0;
     int maxProc = blockProc[0];
 

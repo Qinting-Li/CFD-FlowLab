@@ -45,5 +45,4 @@ namespace PHSPACE
             xyzFaceNormal_FD = new RDouble5D(DA, I, J, K, D, fortranArray);
         }
     }
-
 }

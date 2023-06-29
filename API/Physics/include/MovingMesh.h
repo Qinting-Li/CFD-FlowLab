@@ -77,7 +77,7 @@ public:
     void SetInitCoordinate(Grid* grid     );
     void CalInitCoordinate(SixDofParameter    * sixDof   );
 
-    void Deforming        (DeformingParameter * deforming);
+    void Deforming        ();
     void RigidMoving      (SixDofParameter    * sixDof   );
     void UpdateGrid       ();
 };

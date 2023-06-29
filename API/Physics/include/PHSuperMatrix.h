@@ -187,50 +187,50 @@ PHMatrix<T> BaseMatrixOfRotate(const T & angle, string const & axisLabel)
 
     T cosine = cos(angle);
     T sine   = sin(angle);
-    T one    = static_cast< T >(1);
-    T zero   = static_cast< T >(0);
+    T oneTmp    = static_cast< T >(1);
+    T zeroTmp   = static_cast< T >(0);
 
     if (axisLabel == "x" || axisLabel == "X")
     {
-        matrix(1, 1) = one;
-        matrix(1, 2) = zero;
-        matrix(1, 3) = zero;
+        matrix(1, 1) = oneTmp;
+        matrix(1, 2) = zeroTmp;
+        matrix(1, 3) = zeroTmp;
 
-        matrix(2, 1) = zero;
+        matrix(2, 1) = zeroTmp;
         matrix(2, 2) = cosine;
         matrix(2, 3) = sine;
 
-        matrix(3, 1) = zero;
+        matrix(3, 1) = zeroTmp;
         matrix(3, 2) =-sine;
         matrix(3, 3) = cosine;
     } 
     else if (axisLabel == "y" || axisLabel == "Y")
     {
         matrix(1, 1) = cosine;
-        matrix(1, 2) = zero;
+        matrix(1, 2) = zeroTmp;
         matrix(1, 3) =-sine;
 
-        matrix(2, 1) = zero;
-        matrix(2, 2) = one;
-        matrix(2, 3) = zero;
+        matrix(2, 1) = zeroTmp;
+        matrix(2, 2) = oneTmp;
+        matrix(2, 3) = zeroTmp;
 
         matrix(3, 1) = sine;
-        matrix(3, 2) = zero;
+        matrix(3, 2) = zeroTmp;
         matrix(3, 3) = cosine;
     }
     else if (axisLabel == "z" || axisLabel == "Z")
     {
         matrix(1, 1) = cosine;
         matrix(1, 2) = sine;
-        matrix(1, 3) = zero;
+        matrix(1, 3) = zeroTmp;
 
         matrix(2, 1) =-sine;
         matrix(2, 2) = cosine;
-        matrix(2, 3) = zero;
+        matrix(2, 3) = zeroTmp;
 
-        matrix(3, 1) = zero;
-        matrix(3, 2) = zero;
-        matrix(3, 3) = one;
+        matrix(3, 1) = zeroTmp;
+        matrix(3, 2) = zeroTmp;
+        matrix(3, 3) = oneTmp;
     }
     else
     {
@@ -248,8 +248,8 @@ PHMatrix<T> AngleRateTransformMatrixBodyToGlobal(PHMatrix<T> & eulerangle, strin
     T pitchangle  = eulerangle(1);
     T rollangle   = eulerangle(3);
 
-    T one    = static_cast< T >(1);
-    T zero   = static_cast< T >(0);
+    T oneTmp    = static_cast< T >(1);
+    T zeroTmp   = static_cast< T >(0);
 
     if (rotateorder == "y-z-x" || rotateorder == "Y-Z-X" || rotateorder == "2-3-1")
     {
@@ -264,15 +264,15 @@ PHMatrix<T> AngleRateTransformMatrixBodyToGlobal(PHMatrix<T> & eulerangle, strin
             T cosineofrollangle = cos(rollangle);
             T sineofrollangle   = sin(rollangle);
 
-            matrix(1, 1) = zero;
+            matrix(1, 1) = zeroTmp;
             matrix(1, 2) = sineofrollangle;
             matrix(1, 3) = cosineofrollangle;
 
-            matrix(2, 1) = zero;
+            matrix(2, 1) = zeroTmp;
             matrix(2, 2) = cosineofrollangle / cosineofpitchangle;
             matrix(2, 3) =-sineofrollangle / cosineofpitchangle;
 
-            matrix(3, 1) = one;
+            matrix(3, 1) = oneTmp;
             matrix(3, 2) =-cosineofrollangle * sineofpitchangle / cosineofpitchangle;
             matrix(3, 3) = sineofrollangle * sineofpitchangle / cosineofpitchangle;
         }

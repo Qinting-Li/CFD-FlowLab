@@ -106,7 +106,7 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
     using namespace IDX;
     int neqn = nl + nchem;
 
-    RDouble rin,uin,vin,win,pin,cin,vni;
+    RDouble rin,uin,vin,win,pin,cIN,vni;
     RDouble roo,uoo,voo,woo,poo,coo,vno;
     RDouble lam1,lam2,lam3,gamm1,vei;
     RDouble vtx ,vty ,vtz ,entr ;
@@ -131,18 +131,18 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
     vni = nxs * uin + nys * vin + nzs * win - vgn;
 
     coo = sqrt(ABS(gama0 * poo / roo));
-    cin = sqrt(ABS(gama  * pin / rin));
+    cIN = sqrt(ABS(gama  * pin / rin));
 
     gamm1 = gama - one;
 
     lam1  = vni;
-    lam2  = vni - cin;
-    lam3  = vni + cin;
+    lam2  = vni - cIN;
+    lam3  = vni + cIN;
 
     vei = sqrt(uin * uin + vin * vin + win * win);
 
     //supersonic flows.
-    if (vei > cin)
+    if (vei > cIN)
     {
         if (vni >= 0.0)
         {
@@ -162,7 +162,7 @@ void FarfieldBC(RDouble *prims, RDouble *primInflow, RDouble *primt, RDouble gam
     }
 
     //! if can reach here, it must be the subsonic flow.
-    riemp = vni + 2.0 * cin / gamm1;
+    riemp = vni + 2.0 * cIN / gamm1;
     riemm = vno - 2.0 * coo / gamm1;
     vnb =  half * (riemp + riemm);
     cb  =  0.25 * (riemp - riemm) * gamm1;

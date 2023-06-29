@@ -16,7 +16,7 @@
 #pragma once
 
 #include "PHOps.h"
-
+#pragma warning (disable:4100)
 namespace PHSPACE
 {
 

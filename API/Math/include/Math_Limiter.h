@@ -35,7 +35,7 @@ inline bool CheckLimit(const RDouble &value, const RDouble &v_min, const RDouble
 //! NOLIMITER.
 //! @param[in]: x
 //! @param[in]: y
-inline RDouble NOLIMITER(const RDouble &x, const RDouble &y)
+inline RDouble NOLIMITER(const RDouble &x)
 {
     return x;
 }
@@ -45,7 +45,6 @@ inline RDouble NOLIMITER(const RDouble &x, const RDouble &y)
 //! @param[in]: y
 inline RDouble MINMOD(const RDouble &x, const RDouble &y)
 {
-    const RDouble one = 1.0;
     return half * (SIGN(one, x) + SIGN(one, y)) * MIN(ABS(x), ABS(y));
 }
 
@@ -55,7 +54,6 @@ inline RDouble MINMOD(const RDouble &x, const RDouble &y)
 inline RDouble VANLEER(const RDouble &x, const RDouble &y)
 {
     const RDouble eps = 1.0e-12;
-    const RDouble one = 1.0;
 
     return (SIGN(one, x) + SIGN(one, y)) * x * y / (ABS(x + y) + eps);
 }
@@ -66,7 +64,6 @@ inline RDouble VANLEER(const RDouble &x, const RDouble &y)
 inline RDouble MIX_MINMOD_VANLEER(const RDouble &x, const RDouble &y)
 {
     const RDouble eps = 1.0e-15;
-    const RDouble one = 1.0;
     RDouble z, z2, z3, xy2, absx, absy, min_van;
 
     z = half * (SIGN(one, x) + SIGN(one, y));
@@ -106,7 +103,6 @@ inline RDouble VANALBADA(const RDouble &x, const RDouble &y)
     //cd = 1.0 / (cx + cy);
     //return (cx * y + cy * x) * cd;
     const RDouble eps = 1.0e-6;
-    const RDouble one = 1.0;
 //    RDouble cx, cy, cd;
 //    cx = x * x + eps;
 //    cy = y * y + eps;
@@ -120,7 +116,6 @@ inline RDouble VANALBADA(const RDouble &x, const RDouble &y)
 inline RDouble VANALBADACLZ(const RDouble &x, const RDouble &y)
 {
     const RDouble eps = 1.0e-6;
-    const RDouble one = 1.0;
     RDouble cx, cy, cd;
     cx = x * x + eps;
     cy = y * y + eps;
@@ -166,7 +161,6 @@ inline RDouble THIRD_ORDER_SMOOTH(const RDouble &x, const RDouble &y)
 inline RDouble THIRD_ORDER_MINMOD_SMOOTH(const RDouble &x, const RDouble &y)
 {
     const RDouble eps2 = 1.0e-6;
-    const RDouble one = 1.0;
     RDouble Smooth1 = x * (y * y + 2.0 * eps2) +  y * (2.0 * x * x + eps2);
     RDouble Smooth2 = 2.0 * x * x - x * y + 2.0 * y * y + 3.0 * eps2;
     RDouble Smooth = 0.5 * (SIGN(one, x) + SIGN(one, y)) * Smooth1 / Smooth2;

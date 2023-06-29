@@ -61,7 +61,7 @@ namespace Reorder
         cgsize_t nTotalFace = gconn->GetNTotalFace();
         cgsize_t nBoundFace = gconn->GetNBoundFace();
         cgsize_t nTotalCell = gconn->GetNTotalCell();
-        printf("nTotalFace = %d, nBoundFace = %d, nTotalCell = %d\n", nTotalFace, nBoundFace, nTotalCell);
+        printf("nTotalFace = %d, nBoundFace = %d, nTotalCell = %d\n", static_cast<int>(nTotalFace), static_cast<int>(nBoundFace), static_cast<int>(nTotalCell));
         //How to get leftCellOfFace and rightCellOfFace is from FYGridBase.cpp
         vector<cgsize_t> &leftCellOfFace  = *gconn->GetLeftCellOfFace();
         vector<cgsize_t> &rightCellOfFace = *gconn->GetRightCellOfFace();
@@ -89,7 +89,7 @@ namespace Reorder
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
             //for leftCellOfFace
-            int cellLabelLeft = leftCellOfFace[iFace];
+            int cellLabelLeft = static_cast<int>(leftCellOfFace[iFace]);
             if ((cellLabelLeft < 0) || (cellLabelLeft >= nTotalCell))
             {
                 printf("Error: cellLabelLeft = %d\n", cellLabelLeft);
@@ -98,7 +98,7 @@ namespace Reorder
             //nFaceOfEachCell[cellLabel]++;
             //nTotalCellFaces++;
             //for rightCellOfFace
-            int cellLabelRight = rightCellOfFace[iFace];
+            int cellLabelRight = static_cast<int>(rightCellOfFace[iFace]);
             if (cellLabelRight == -1) continue; //boundy face's right neighbor
 
             if ((cellLabelRight < 0) || (cellLabelRight >= nTotalCell)) 
@@ -128,7 +128,7 @@ namespace Reorder
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
             //for leftCellOfFace
-            int cellLabelLeft = leftCellOfFace[iFace];
+            int cellLabelLeft = static_cast<int>(leftCellOfFace[iFace]);
             if ((cellLabelLeft < 0) || (cellLabelLeft >= nTotalCell))
             {
                 printf("Error: cellLabelLeft = %d\n", cellLabelLeft);
@@ -139,7 +139,7 @@ namespace Reorder
             //offsetCell2Face update for the next set of face
             //offsetCell2Face[cellLabel]++;
             //for rightCellOfFace
-            int cellLabelRight = rightCellOfFace[iFace];
+            int cellLabelRight = static_cast<int>(rightCellOfFace[iFace]);
             if (cellLabelRight == -1) continue; //boundy face's right neighbor
 
             if ((cellLabelRight < 0) || (cellLabelRight >= nTotalCell))
@@ -157,14 +157,14 @@ namespace Reorder
         }		
 
         //reset offsetCell2Face
-        printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", nTotalCell-1, offsetCell2Face[nTotalCell-1], nTotalCellFaces);
+        printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell-1), offsetCell2Face[nTotalCell-1], nTotalCellFaces);
         offsetCell2Face[0] = 0;
         for (int iCell = 1; iCell < nTotalCell; ++ iCell)
         {
             //offsetCell2Face[iCell] = nFaceOfEachCell[iCell - 1];
             offsetCell2Face[iCell] = offsetCell2Face[iCell-1] + nFaceOfEachCell[iCell-1];
         }
-        printf("After reset offsetCell2Face[%d]=%d, nFaceOfEachCell[%d] = %d, nTotalCellFaces = %d\n", nTotalCell-1, offsetCell2Face[nTotalCell-1], nTotalCell-1, nFaceOfEachCell[nTotalCell-1], nTotalCellFaces);
+        printf("After reset offsetCell2Face[%d]=%d, nFaceOfEachCell[%d] = %d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell-1), offsetCell2Face[nTotalCell-1], static_cast<int>(nTotalCell-1), nFaceOfEachCell[nTotalCell-1], nTotalCellFaces);
         //set cell2Cell
         //test begin
             //printf("rightCellOfFace[%d]=%d\n", 23221, rightCellOfFace[23221]);
@@ -176,7 +176,7 @@ namespace Reorder
             for (int iFace = 0; iFace < sizeCellFace; ++ iFace)
             {
                 int faceID = cell2Face[offsetCellFace + iFace];
-                int cellLabel = leftCellOfFace[faceID];
+                int cellLabel = static_cast<int>(leftCellOfFace[faceID]);
                 if ((cellLabel < 0) || (cellLabel >= nTotalCell)) 
                 {
                     printf("Error: cellLabel = %d\n", cellLabel);
@@ -189,7 +189,7 @@ namespace Reorder
 
                 if (cellLabel != iCell) cell2Cell[offsetCellFace + iFace] = cellLabel;
 
-                cellLabel = rightCellOfFace[faceID];
+                cellLabel = static_cast<int>(rightCellOfFace[faceID]);
                 //test begin
                     //if (iCell == 0) printf("On the right, faceID = %d, cellLabel = %d\n", faceID, cellLabel);
                 //test end
@@ -206,7 +206,7 @@ namespace Reorder
         }
 
         //set bandwidthOfEachCell
-        ComputeBandwidth(nTotalCell, nFaceOfEachCell, offsetCell2Face, cell2Cell);
+        ComputeBandwidth(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face, cell2Cell);
         /*
         for (int iCell = 0; iCell < nTotalCell; iCell++)
         {
@@ -270,7 +270,7 @@ namespace Reorder
         cgsize_t nTotalFace = gconn->GetNTotalFace();
         cgsize_t nBoundFace = gconn->GetNBoundFace();
         cgsize_t nTotalCell = gconn->GetNTotalCell();
-        printf("nTotalFace = %d, nBoundFace = %d, nTotalCell = %d\n", nTotalFace, nBoundFace, nTotalCell);
+        printf("nTotalFace = %d, nBoundFace = %d, nTotalCell = %d\n", static_cast<int>(nTotalFace), static_cast<int>(nBoundFace), static_cast<int>(nTotalCell));
 
         vector<cgsize_t> &leftCellOfFace  = *gconn->GetLeftCellOfFace();
         vector<cgsize_t> &rightCellOfFace = *gconn->GetRightCellOfFace();
@@ -279,8 +279,8 @@ namespace Reorder
         
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            oldLeftCellOfFace[iFace] = leftCellOfFace[iFace];
-            oldRightCellOfFace[iFace] = rightCellOfFace[iFace];
+            oldLeftCellOfFace[iFace] = static_cast<int>(leftCellOfFace[iFace]);
+            oldRightCellOfFace[iFace] = static_cast<int>(rightCellOfFace[iFace]);
         }
         int *cell2Face;
         int *leftRightCellFaces;//corresponding to cell2Face, leftRightCellFaces record the cell is the left or right cell of one face. 
@@ -299,7 +299,7 @@ namespace Reorder
         }
         //set nFaceOfEachCell and nTotalCellFaces
         printf("set nFaceOfEachCell and nTotalCellFaces\n");
-        SetFaceNumberOfEachCell(nTotalFace, nTotalCell, oldLeftCellOfFace, oldRightCellOfFace, nFaceOfEachCell, nTotalCellFaces);
+        SetFaceNumberOfEachCell(static_cast<int>(nTotalFace), static_cast<int>(nTotalCell), oldLeftCellOfFace, oldRightCellOfFace, nFaceOfEachCell, nTotalCellFaces);
         //set the size of cell2Cell and cell2Face
         printf("Before create of cell2Cell nTotalCellFaces = %d\n", nTotalCellFaces);
         cell2Face = new int[nTotalCellFaces];
@@ -307,15 +307,15 @@ namespace Reorder
         //cell2Cell = new int[nTotalCellFaces];
 
         //set offsetCell2Face
-        SetOffSetCell2Face(nTotalCell, nFaceOfEachCell, offsetCell2Face);
+        SetOffSetCell2Face(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face);
         //set cell2Face
-        SetCell2Face(nTotalFace, nTotalCell, oldLeftCellOfFace, oldRightCellOfFace, offsetCell2Face, cell2Face);
+        SetCell2Face(static_cast<int>(nTotalFace), static_cast<int>(nTotalCell), oldLeftCellOfFace, oldRightCellOfFace, offsetCell2Face, cell2Face);
         //reset offsetCell2Face
-        printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", nTotalCell-1, offsetCell2Face[nTotalCell-1], nTotalCellFaces);
+        printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell-1), offsetCell2Face[nTotalCell-1], nTotalCellFaces);
         //offsetCell2Face is modified due to update of cell2Face
         //set offsetCell2Face again
-        SetOffSetCell2Face(nTotalCell, nFaceOfEachCell, offsetCell2Face);
-        printf("After reset offsetCell2Face[%d]=%d, nFaceOfEachCell[%d] = %d, nTotalCellFaces = %d\n", nTotalCell-1, offsetCell2Face[nTotalCell-1], nTotalCell-1, nFaceOfEachCell[nTotalCell-1], nTotalCellFaces);
+        SetOffSetCell2Face(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face);
+        printf("After reset offsetCell2Face[%d]=%d, nFaceOfEachCell[%d] = %d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell-1), offsetCell2Face[nTotalCell-1], static_cast<int>(nTotalCell-1), nFaceOfEachCell[nTotalCell-1], nTotalCellFaces);
         //check cell2Face
         //rule 1: nBoundFace-1<cell2Face<nTotalFace
         //rule 2: in cell2Face, every value owns at least 1 item.
@@ -335,10 +335,10 @@ namespace Reorder
                 //rule 1
                 if ((faceID < nBoundFace) || (faceID > nTotalFace))
                 {
-                    printf("Error: faceID %d on cellID %d and iFace %d is outside of nBoundFace %d and nTotalFace-1 %d\n", faceID, cellID, iFace, nBoundFace, nTotalFace-1);
+                    printf("Error: faceID %d on cellID %d and iFace %d is outside of nBoundFace %d and nTotalFace-1 %d\n", faceID, cellID, iFace, static_cast<int>(nBoundFace), static_cast<int>(nTotalFace-1));
                     exit(1);
                 }
-                int remains = faceID - nBoundFace;
+                int remains = faceID - static_cast<int>(nBoundFace);
                 faceIDRecord[remains]++;
             }
         }
@@ -348,7 +348,7 @@ namespace Reorder
             //rule 2
             if (numFaces < 1) 
             {
-                printf("Error: the number of faceID %d is %d\n", iFace+nBoundFace, numFaces);
+                printf("Error: the number of faceID %d is %d\n", iFace+ static_cast<int>(nBoundFace), numFaces);
                 exit(1);
             }
         }
@@ -365,7 +365,7 @@ namespace Reorder
                 int faceID = cell2Face[offset+iFace];
                 if (oldLeftCellOfFace[faceID] == -1)
                 {
-                    printf("Error: on faceID, leftCellOfFace is -1\n", faceID);
+                    printf("Error: on faceID=%d, leftCellOfFace is -1\n", faceID);
                     exit(1);
                 }
                 if (oldRightCellOfFace[faceID] == -1) numBoundaryFaces ++;
@@ -386,7 +386,7 @@ namespace Reorder
         //Reorder faceID from nBoundFace to nTotalFace
         int *newFaces = new int[nTotalFace]; //Old faceID and containerID
         //set the initial value of labelFace as nBoundFace-1
-        int labelFace = nBoundFace-1;
+        int labelFace = static_cast<int>(nBoundFace)-1;
         //Initialize newFaces by -1, which means not changed.
         for (int faceID = 0; faceID < nTotalFace; ++ faceID)
         {
@@ -442,7 +442,7 @@ namespace Reorder
                 }
             }
             printf("BSFCELLFACEORG: Reorder cell labels ...\n");
-            CellReorderByCell2FaceOrder(nTotalCell, nTotalFace, offsetCell2Face, nFaceOfEachCell, cell2Face, nBoundFace, labelFace, newFaces);
+            CellReorderByCell2FaceOrder(static_cast<int>(nTotalCell), static_cast<int>(nTotalFace), offsetCell2Face, nFaceOfEachCell, cell2Face, static_cast<int>(nBoundFace), labelFace, newFaces);
         }else if (faceReorderMethod == 1)
         {
             //It is quite similar as BSFCELLFACEORG. Firstly, cell2Face is reorded with old faceID with leftCellOfFace in ascending order. Then, set those faceID from nBoundFace to nTotalFace
@@ -491,7 +491,7 @@ namespace Reorder
                 }
             }
             //Reorder cell label by faces in cell2Face
-            CellReorderByCell2FaceOrder(nTotalCell, nTotalFace, offsetCell2Face, nFaceOfEachCell, cell2Face, nBoundFace, labelFace, newFaces);
+            CellReorderByCell2FaceOrder(static_cast<int>(nTotalCell), static_cast<int>(nTotalFace), offsetCell2Face, nFaceOfEachCell, cell2Face, static_cast<int>(nBoundFace), labelFace, newFaces);
         }else if (faceReorderMethod == 2)
         {
             //It is quite similar as BSFCELLFACEORG. Firstly, cell2Face is reorded with old faceID with rightCellOfFace in ascending order. Then, set those faceID from nBoundFace to nTotalFace
@@ -542,7 +542,7 @@ namespace Reorder
                 }
             }
             //Reorder cell label by faces in cell2Face
-            CellReorderByCell2FaceOrder(nTotalCell, nTotalFace, offsetCell2Face, nFaceOfEachCell, cell2Face, nBoundFace, labelFace, newFaces);
+            CellReorderByCell2FaceOrder(static_cast<int>(nTotalCell), static_cast<int>(nTotalFace), offsetCell2Face, nFaceOfEachCell, cell2Face, static_cast<int>(nBoundFace), labelFace, newFaces);
         }
 
         //check reorder results
@@ -563,16 +563,16 @@ namespace Reorder
         {
             recordFaceID[iFace] = 0;
         }
-        for (int iFace = nBoundFace; iFace < nTotalFace-nBoundFace; ++ iFace)
+        for (int iFace = static_cast<int>(nBoundFace); iFace < nTotalFace-nBoundFace; ++ iFace)
         {
             int faceID = newFaces[iFace];
             //rule 2
             if ((faceID < nBoundFace) || (faceID>(nTotalFace-1)))
             {
-                printf("Error in rule 2: on iFace %d of newFaces, faceID = %d is outside of nBoundFace %d and nTotalFace - 1 %d\n", iFace, faceID, nBoundFace, nTotalFace-1);
+                printf("Error in rule 2: on iFace %d of newFaces, faceID = %d is outside of nBoundFace %d and nTotalFace - 1 %d\n", iFace, faceID, static_cast<int>(nBoundFace), static_cast<int>(nTotalFace-1));
                 exit(1);
             }
-            int remains = (nTotalFace-1) - faceID;
+            int remains = (static_cast<int>(nTotalFace)-1) - faceID;
             recordFaceID[remains] ++;
         }
         //rule 3
@@ -580,7 +580,7 @@ namespace Reorder
         {
             if (recordFaceID[iFace] > 1) 
             {
-                printf("Error: more than two faces own the same faceID %d\n", nTotalFace - 1 - iFace);
+                printf("Error: more than two faces own the same faceID %d\n", static_cast<int>(nTotalFace) - 1 - iFace);
                 exit(1);
             }
         }
@@ -616,7 +616,7 @@ namespace Reorder
         {
             recordFaceID[iFace] = 0;
         }
-        for (int iFace = nBoundFace; iFace < nTotalFace; ++ iFace)
+        for (int iFace = static_cast<int>(nBoundFace); iFace < nTotalFace; ++ iFace)
         {
             int oldFaceID = reflectFaces[iFace];
             if ((oldFaceID < nBoundFace)||(oldFaceID > nTotalFace))
@@ -625,7 +625,7 @@ namespace Reorder
                 printf("Error: on containerID %d, oldFaceID %d is outside nBoundFace and nTotalFace\n", iFace, oldFaceID);
                 exit(1);
             }
-            int remains = oldFaceID - nBoundFace;
+            int remains = oldFaceID - static_cast<int>(nBoundFace);
             recordFaceID[remains] ++;
         }
         for (int iFace = 0; iFace < nTotalFace-nBoundFace; ++ iFace)
@@ -633,7 +633,7 @@ namespace Reorder
             if (recordFaceID[iFace] != 1) 
             {
                 //rule 3
-                printf("Error: on iFace %d, face number %d is not 1\n", iFace+nBoundFace, recordFaceID[iFace]);
+                printf("Error: on iFace %d, face number %d is not 1\n", iFace+ static_cast<int>(nBoundFace), recordFaceID[iFace]);
                 exit(1);
             }
         }
@@ -666,11 +666,11 @@ namespace Reorder
             face2Node[swapID] = face2Node[faceID];
             face2Node[faceID] = tempFace;
             //update leftCellOfFace on faceID and swapID
-            int tempCell = leftCellOfFace[swapID];
+            int tempCell = static_cast<int>(leftCellOfFace[swapID]);
             leftCellOfFace[swapID] = leftCellOfFace[faceID];
             leftCellOfFace[faceID] = tempCell;
             //update rightCellOfFace on faceID and swapID
-            tempCell = rightCellOfFace[swapID];
+            tempCell = static_cast<int>(rightCellOfFace[swapID]);
             rightCellOfFace[swapID] = rightCellOfFace[faceID];
             rightCellOfFace[faceID] = tempCell;
             //update orgFace on faceID and swapID
@@ -705,7 +705,7 @@ namespace Reorder
         cgsize_t nTotalFace = gconn->GetNTotalFace();
         cgsize_t nBoundFace = gconn->GetNBoundFace();
         cgsize_t nTotalCell = gconn->GetNTotalCell();
-        printf("nTotalFace = %d, nBoundFace = %d, nTotalCell = %d\n", nTotalFace, nBoundFace, nTotalCell);
+        printf("nTotalFace = %d, nBoundFace = %d, nTotalCell = %d\n", static_cast<int>(nTotalFace), static_cast<int>(nBoundFace), static_cast<int>(nTotalCell));
 
         vector<cgsize_t> &leftCellOfFace  = *gconn->GetLeftCellOfFace();
         vector<cgsize_t> &rightCellOfFace = *gconn->GetRightCellOfFace();
@@ -714,8 +714,8 @@ namespace Reorder
         
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            oldLeftCellOfFace[iFace] = leftCellOfFace[iFace];
-            oldRightCellOfFace[iFace] = rightCellOfFace[iFace];
+            oldLeftCellOfFace[iFace] = static_cast<int>(leftCellOfFace[iFace]);
+            oldRightCellOfFace[iFace] = static_cast<int>(rightCellOfFace[iFace]);
         }
 
         int *cell2Face;
@@ -734,7 +734,7 @@ namespace Reorder
 
         //set nFaceOfEachCell and nTotalCellFaces
         printf("set nFaceOfEachCell and nTotalCellFaces\n");
-        SetFaceNumberOfEachCell(nTotalFace, nTotalCell, oldLeftCellOfFace, oldRightCellOfFace, nFaceOfEachCell, nTotalCellFaces);
+        SetFaceNumberOfEachCell(static_cast<int>(nTotalFace), static_cast<int>(nTotalCell), oldLeftCellOfFace, oldRightCellOfFace, nFaceOfEachCell, nTotalCellFaces);
         
         //set the size of cell2Cell and cell2Face
         printf("Before create of cell2Cell nTotalCellFaces = %d\n", nTotalCellFaces);
@@ -742,29 +742,29 @@ namespace Reorder
         cell2Cell = new int[nTotalCellFaces];
 
         //set offsetCell2Face
-        SetOffSetCell2Face(nTotalCell, nFaceOfEachCell, offsetCell2Face);
+        SetOffSetCell2Face(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face);
         
         //set cell2Face
-        SetCell2Face(nTotalFace, nTotalCell, oldLeftCellOfFace, oldRightCellOfFace, offsetCell2Face, cell2Face);
+        SetCell2Face(static_cast<int>(nTotalFace), static_cast<int>(nTotalCell), oldLeftCellOfFace, oldRightCellOfFace, offsetCell2Face, cell2Face);
         
         //reset offsetCell2Face
-        printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", nTotalCell-1, offsetCell2Face[nTotalCell-1], nTotalCellFaces);
+        printf("Before reset offsetCell2Face[%d]=%d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell)-1, offsetCell2Face[nTotalCell-1], nTotalCellFaces);
         
         //offsetCell2Face is modified due to update of cell2Face
         //set offsetCell2Face again
-        SetOffSetCell2Face(nTotalCell, nFaceOfEachCell, offsetCell2Face);
+        SetOffSetCell2Face(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face);
         
-        printf("After reset offsetCell2Face[%d]=%d, nFaceOfEachCell[%d] = %d, nTotalCellFaces = %d\n", nTotalCell-1, offsetCell2Face[nTotalCell-1], nTotalCell-1, nFaceOfEachCell[nTotalCell-1], nTotalCellFaces);
+        printf("After reset offsetCell2Face[%d]=%d, nFaceOfEachCell[%d] = %d, nTotalCellFaces = %d\n", static_cast<int>(nTotalCell)-1, offsetCell2Face[nTotalCell-1], static_cast<int>(nTotalCell)-1, nFaceOfEachCell[nTotalCell-1], nTotalCellFaces);
 
         //set cell2Cell
-        SetCell2Cell(nTotalCell, nFaceOfEachCell, offsetCell2Face, cell2Face, oldLeftCellOfFace, oldRightCellOfFace, cell2Cell);
+        SetCell2Cell(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face, cell2Face, oldLeftCellOfFace, oldRightCellOfFace, cell2Cell);
         
         //check cell2Cell, to see some rules:
         //rule 1 one cell's neighbor cells should not contain itself.
         //rule 2 0<= one cell's neighbor cells < nTotalCell
         //rule 3 one cell's neighbor cells should be different.
         //It should be noted that for O type grid, break 3 may be broken.
-        CheckCell2Cell(nTotalCell, nFaceOfEachCell, offsetCell2Face, cell2Cell);
+        CheckCell2Cell(static_cast<int>(nTotalCell), nFaceOfEachCell, offsetCell2Face, cell2Cell);
         //By above process, cell2Cell is established, which stores one cell's neighbour cells' labels. offsetCell2Face can be used by access of cell2Cell. nFaceOfEachCell stores face number owned by one cell, which can also be used for neighbour cell number owned by one cell. Boundary faces are not considered in both cell2Cell, offsetCell2Face and nFaceOfEachCell.
         //For reording cell index, cell2Cell with offsetCell2Face can supply cell connection information. nFaceOfEachCell can supply degree of cell. 
         int maxDegree = 0;
@@ -781,7 +781,7 @@ namespace Reorder
         //It may be very large, not just maxDegree*maxDegree
         //int maxSizeLevel = 5000; //maximum number of one level
         //The worst condition
-        int maxSizeLevel = nTotalCell; //maximum number of one level
+        int maxSizeLevel = static_cast<int>(nTotalCell); //maximum number of one level
         int *cellIDSortCur = new int[maxSizeLevel];
         int numSortCur = 0;
         int *cellIDSortNext = new int[maxSizeLevel];
@@ -884,15 +884,15 @@ namespace Reorder
 
         }
         printf("Finish cell reorder by RCM scheme...\n");
-        printf("nToatalCell = %d, numVertex = %d\n", nTotalCell, numVertex);
+        printf("nToatalCell = %d, numVertex = %d\n", static_cast<int>(nTotalCell), numVertex);
         //reverse newCell
         //Not sure
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
         {
-            newCell[iCell] = nTotalCell - 1 - newCell[iCell];
+            newCell[iCell] = static_cast<int>(nTotalCell) - 1 - newCell[iCell];
         }
         //! Check rules for cell index
-        CheckNewCell(nTotalCell, newCell);
+        CheckNewCell(static_cast<int>(nTotalCell), newCell);
 
         int *reflectCell = new int[nTotalCell];
         for (int iCell = 0; iCell < nTotalCell; ++ iCell)
@@ -910,7 +910,7 @@ namespace Reorder
             nNewFaceOfEachCell[cellID] = nFaceOfEachCell[reflectCellID];
         }
 
-        SetOffSetCell2Face(nTotalCell, nNewFaceOfEachCell, newOffsetCell2Face);
+        SetOffSetCell2Face(static_cast<int>(nTotalCell), nNewFaceOfEachCell, newOffsetCell2Face);
         //! Define new leftCellOfFace and rightCellOfFace
         //! Define new cell2Cell and cell2Face
         printf("Before create of newCell2Cell, nTotalCellFaces = %d\n", nTotalCellFaces);
@@ -937,20 +937,20 @@ namespace Reorder
         }
     
         //! Check newCell2Cell
-        CheckCell2Cell(nTotalCell, nNewFaceOfEachCell, newOffsetCell2Face, newCell2Cell);
+        CheckCell2Cell(static_cast<int>(nTotalCell), nNewFaceOfEachCell, newOffsetCell2Face, newCell2Cell);
         
         //! Calculate bandwidth again    
-        ComputeBandwidth(nTotalCell, nNewFaceOfEachCell, newOffsetCell2Face, newCell2Cell);
+        ComputeBandwidth(static_cast<int>(nTotalCell), nNewFaceOfEachCell, newOffsetCell2Face, newCell2Cell);
         
         //! According to cell reorder, Update face_number_of_each_face by swap
         //! Input: face_nuber_of_each_cell and reflectCell
-        SwapFaceNumberOfEachFace(nTotalCell, nFaceOfEachCell, reflectCell, newCell, nNewFaceOfEachCell);
+        SwapFaceNumberOfEachFace(static_cast<int>(nTotalCell), nFaceOfEachCell, reflectCell, nNewFaceOfEachCell);
         
         //! Update leftCellOfFace and rightCellOfFace
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
             //! For leftCellOfFace
-            int oldCellID = leftCellOfFace[iFace];
+            int oldCellID = static_cast<int>(leftCellOfFace[iFace]);
             //! Not bounday faces, treatment is requierd
             if (oldCellID != -1)
             {
@@ -958,7 +958,7 @@ namespace Reorder
                 leftCellOfFace[iFace] = NewCellID;
             }
             //! For rightCellOfFace
-            oldCellID = rightCellOfFace[iFace];
+            oldCellID = static_cast<int>(rightCellOfFace[iFace]);
             if (oldCellID != -1)
             {
                 int NewCellID = newCell[oldCellID];
@@ -1387,7 +1387,7 @@ namespace Reorder
                 maxGlobalBand = bandCell;
                 maxCellID = iCell;
             }
-            int ratio = floor(bandCell/gapLevel);
+            int ratio = static_cast<int>(floor(bandCell/gapLevel));
             if (ratio < 0) 
             {
                 printf("Error: ratio = %d, iCell = %d, bandCell = %d, gapLevel=%d\n", ratio, iCell, bandCell, gapLevel);
@@ -1414,7 +1414,7 @@ namespace Reorder
     //! Output:nSwapFaceOfEachCell
     //! The function is used to provide a swap method to update a cell related varible
     //! After cell reorder. In the future, cell2Node can be update by the method
-    void SwapFaceNumberOfEachFace(const int nTotalCell, const int *nFaceOfEachCell, const int *reflectCell, const int *newCell, const int *nNewFaceOfEachCell)
+    void SwapFaceNumberOfEachFace(const int nTotalCell, const int *nFaceOfEachCell, const int *reflectCell, const int *nNewFaceOfEachCell)
     {
         //! Try swap method
         int *nSwapFaceOfEachCell = new int[nTotalCell];
@@ -1466,13 +1466,13 @@ namespace Reorder
             swapCell[currentID] = swapID;
         }
         //! Check results
-        CheckSwapFaceNumber(nTotalCell, orgCell, swapCell, reflectCell, newCell, nSwapFaceOfEachCell, nNewFaceOfEachCell);
+        CheckSwapFaceNumber(nTotalCell, orgCell, reflectCell, nSwapFaceOfEachCell, nNewFaceOfEachCell);
 
         
     }
 
     //! Check results
-    void CheckSwapFaceNumber(const int nTotalCell, const int *orgCell, const int *swapCell, const int *reflectCell, const int *newCell, const int *nSwapFaceOfEachCell, const int *nNewFaceOfEachCell)
+    void CheckSwapFaceNumber(const int nTotalCell, const int *orgCell, const int *reflectCell, const int *nSwapFaceOfEachCell, const int *nNewFaceOfEachCell)
     {
         printf("Checking swap method for update nFaceOfEachCell just by itself...\n");
         for (int cellID = 0; cellID < nTotalCell; ++ cellID)
@@ -1611,11 +1611,11 @@ namespace Reorder
         int *oldRightCellOfFace = new int[nTotalFace];
         for (int iFace = 0; iFace < nTotalFace; ++ iFace)
         {
-            oldLeftCellOfFace[iFace] = leftCellOfFace[iFace];
-            oldRightCellOfFace[iFace] = rightCellOfFace[iFace];
+            oldLeftCellOfFace[iFace] = static_cast<int>(leftCellOfFace[iFace]);
+            oldRightCellOfFace[iFace] = static_cast<int>(rightCellOfFace[iFace]);
         }
 
-        MetricLeftRightCellOfFace(nTotalFace, nBoundFace, oldLeftCellOfFace, oldRightCellOfFace);
+        MetricLeftRightCellOfFace(static_cast<int>(nTotalFace), static_cast<int>(nBoundFace), oldLeftCellOfFace, oldRightCellOfFace);
 
     }
 

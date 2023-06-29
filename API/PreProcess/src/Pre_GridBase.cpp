@@ -1203,7 +1203,7 @@ void CGNSBase::GetBCFace(BaseElement *base_elem, cgsize_t iCell, int &facept_num
 
     if (etype != MIXED)
     {
-        facept_num = base_elem_elem_pt[etype];
+        facept_num = static_cast<int>(base_elem_elem_pt[etype]);
         GetElem(conn_list[isection], iabscell - istart[isection], facept_num, bcface);
     }
     else
@@ -1211,7 +1211,7 @@ void CGNSBase::GetBCFace(BaseElement *base_elem, cgsize_t iCell, int &facept_num
         int iNode;
         iNode = static_cast<int>(mixed_conn_index[isection][iabscell - istart[isection]]);
         etype = static_cast<ElementType_t>(conn_list[isection][iNode] + 1);
-        facept_num = base_elem_elem_pt[etype];
+        facept_num = static_cast<int>(base_elem_elem_pt[etype]);
         GetBCFaceMixed(conn_list[isection], iabscell - istart[isection], isection, bcface);
     }
 }
@@ -1238,7 +1238,7 @@ void CGNSBase::GetElem(BaseElement *base_elem, cgsize_t iCell, int &etype, cgsiz
     }
     else
     {
-        elempt_num = base_elem_elem_pt[etype];
+        elempt_num = static_cast<int>(base_elem_elem_pt[etype]);
         GetElem(conn_list[isection], iCell - istart[isection], elempt_num, elem);
     }
 }
@@ -1349,7 +1349,7 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)
 
         if (etype != MIXED)
         {
-            int nPoints = base_elem_elem_pt[etype];
+            int nPoints = static_cast<int>(base_elem_elem_pt[etype]);
 
             int count = 0;
             for (cgsize_t iCell = base_cgns_istart[sec]; iCell <= base_cgns_iend[sec]; ++ iCell)
@@ -1388,7 +1388,7 @@ void CGNSBase::ComputeCellToNode(Base_Grid_Conn *gconn, BaseElement *base_elem)
                     break;
                 }
 
-                int nPoints = base_elem_elem_pt[conn_list[sec][count] + 1];
+                int nPoints = static_cast<int>(base_elem_elem_pt[conn_list[sec][count] + 1]);
                 count ++;
 
                 //node_number_of_each_cell->push_back(nPoints);
@@ -1471,7 +1471,7 @@ void CGNSBase::ComputeElemFace(Base_Grid_Conn *gconn, BaseElement *base_elem)
             }
             else
             {
-                int ptnum = base_elem_elem_pt[etype];
+                int ptnum = static_cast<int>(base_elem_elem_pt[etype]);
                 GetElem(conn_list[iSection], iCell - istart[iSection], ptnum, elem);
             }
 
@@ -1635,7 +1635,7 @@ void CGNSBase::GetFace(BaseElement *base_elem, cgsize_t iCell, int &facept_num, 
     GetISection(iCell, isection);
     ElementType_t etype = static_cast<ElementType_t>(elem_type[isection]);
     cgsize_t *base_elem_elem_pt = base_elem->GetElementPoint();
-    facept_num = base_elem_elem_pt[etype];
+    facept_num = static_cast<int>(base_elem_elem_pt[etype]);
     GetElem(conn_list[isection], iabscell - istart[isection], facept_num, bcface);
 }
 
@@ -1927,10 +1927,26 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
         y[iNode] = yy[iNode];
         z[iNode] = zz[iNode];
     }
-
     delete [] xx;
     delete [] yy;
     delete [] zz;
+
+    RDouble gridScaleFactor = GlobalDataBase::GetDoubleParaFromDB("gridScaleFactor");
+    RDouble *gridTranslationVector = new RDouble[3]();
+    if (GlobalDataBase::IsExist("gridTranslationVector", PHDOUBLE, 3))
+    {
+        GlobalDataBase::GetData("gridTranslationVector", gridTranslationVector, PHDOUBLE, 3);
+    }
+
+    for (int iNode = 0; iNode < nTotalNode; ++ iNode)
+    {
+        x[iNode] *= gridScaleFactor;
+        x[iNode] += gridTranslationVector[0];
+        y[iNode] *= gridScaleFactor;
+        y[iNode] += gridTranslationVector[1];
+        z[iNode] *= gridScaleFactor;
+        z[iNode] += gridTranslationVector[2];
+    }
 
     cout << "  Boundary condition setting ......\n";
     //! Set the boundary conditions.
@@ -1995,7 +2011,7 @@ void CGNS2UnsGrid(CGNSFactory *factory_cgns, int iZone, UnstructGrid *grid)
                 unstructBC->SetBCType(fantasyBCType);
                 bcRegionIDofBCFace[iFace] = iBCRegionUnstruct;
                 vector<int> *faceIndex = unstructBC->GetFaceIndex();
-                faceIndex->push_back(iFace);
+                faceIndex->push_back(static_cast<int>(iFace));
             }
         }
     }

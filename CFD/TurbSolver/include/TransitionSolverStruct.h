@@ -122,22 +122,6 @@ public:
     //! @param[in ]: iSurface denotes the direction index of the grid faces, where 1 indicates the I-direction, 2 for J-direction, and 3 is K-direction.
     void GetGradientAtFace_CorrectionAtPhysicalBoundary(Grid *gridIn, int iSurface);
 
-    //! To compress the specified array to the the DataContainer which will be sent by parallel communication .
-    //! @param[out]: dataContainer denotes the compress database which will be sent.
-    //! @param[in ]: fieldName denotes the name of flow field to communicate.
-    //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: neighborZoneIndex denotes the grid index of target zone.
-    //! @param[in ]: nEquation denotes the number of variable to send.
-    void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);
-
-    //! To decompress the specified array from the the DataContainer received from parallel communication.
-    //! @param[in ]: dataContainer denotes the compress database which was received.
-    //! @param[in ]: fieldName denotes the name of flow field to communicate.
-    //! @param[in ]: gridIn denotes the current computational regions of the grids.
-    //! @param[in ]: neighborZoneIndex denotes the grid index of source zone.
-    //! @param[in ]: nEquation denotes the number of received variable.
-    void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);
-    
     void RotateVectorFromInterface(Grid *gridIn, const int &neighborZoneIndex, const int &nEquation);//zhangyong
 
     //! Interface: to put the boundary data to DataContainer for parallel communication.

@@ -137,7 +137,7 @@ void FantasyWriteToGrd(const string &cel_file, Grid **grids, int nBlocks)
     CloseFile(Gridgenfile);
 }
 
-void FantasyWriteToFluent(const string &gridFileName, Grid **grids, int nBlocks)
+void FantasyWriteToFluent(const string &gridFileName, Grid **grids)
 {
     using namespace FLUENT_SPACE;
 
@@ -298,7 +298,7 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids, int nBlocks)
         vector<int> *faceIndex = bcRegion->GetFaceIndex();
         string bcName = bcRegion->GetBCName();
 
-        int faceNum = faceIndex->size();
+        int faceNum = static_cast<int>(faceIndex->size());
         firstIndex = lastIndex + 1;
         lastIndex = firstIndex + faceNum - 1;
 
@@ -313,17 +313,17 @@ void FantasyWriteToFluent(const string &gridFileName, Grid **grids, int nBlocks)
         int rightCell = 0;
         for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
         {
-            int faceIndex = *iter;
+            int faceIndex1 = *iter;
 
-            outfile << Dec2Hex(nodeNumOfEachFace[faceIndex]) << " ";
+            outfile << Dec2Hex(nodeNumOfEachFace[faceIndex1]) << " ";
 
-            long long int firstNodePosi = nodePosi[faceIndex];
-            for (int iNode = 0; iNode < nodeNumOfEachFace[faceIndex]; ++ iNode)
+            long long int firstNodePosi = nodePosi[faceIndex1];
+            for (int iNode = 0; iNode < nodeNumOfEachFace[faceIndex1]; ++ iNode)
             {
                 outfile << Dec2Hex(face2node[firstNodePosi++] + 1) << " ";
             }
 
-            outfile << Dec2Hex(leftCellofFace[faceIndex] + 1) << " " << rightCell << endl;
+            outfile << Dec2Hex(leftCellofFace[faceIndex1] + 1) << " " << rightCell << endl;
         }
 
         outfile << "))" << endl;
@@ -372,7 +372,7 @@ void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks)
     string LnkFileName = ChangeExtensionOfFileName(fileName_in, "link");
     if (!SerialFileExist(LnkFileName))
     {
-        TK_Exit::ExceptionExit("缺少link文件");
+        TK_Exit::ExceptionExit("缂哄皯link鏂囦欢");
         return;
     }
 
@@ -397,7 +397,7 @@ void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks)
             StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
-            if (bctype >= 0) continue;
+            if ((!IsInterface(bctype))) continue;
 
             int imin, imax, jmin, jmax, kmin, kmax, nbt;
 
@@ -479,7 +479,7 @@ void WriteLnkFile (const string &gridFileName, Grid **grids_in, int nBlocks)
             StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
-            if (bctype >= 0) continue;
+            if ((!IsInterface(bctype))) continue;
 
             int dimension = GetDim();
             int *lnkInfo = structBC->GetInkInfo();
@@ -685,9 +685,9 @@ void Fantasy2Ustar2D()
     file.read(reinterpret_cast<char*>(&nTotalFace), sizeint);
     file.read(reinterpret_cast<char*>(&nTotalCell), sizeint);
 
-    cout << "the total numbers of nodes     ：" << nTotalNode;
-    cout << "the total numbers of faces   ：" << nTotalFace;
-    cout << "the total numbers of cells     ：" << nTotalCell << "\n";
+    cout << "the total numbers of nodes     :" << nTotalNode;
+    cout << "the total numbers of faces   :" << nTotalFace;
+    cout << "the total numbers of cells     :" << nTotalCell << "\n";
 
     RDouble *x, *y, *z;
     RDouble xmin, ymin, xmax, ymax;
@@ -861,9 +861,9 @@ void Fantasy2Ustar3D()
     file.read(reinterpret_cast<char*>(&nTotalFace), sizeint);
     file.read(reinterpret_cast<char*>(&nTotalCell), sizeint);
 
-    cout << "the total numbers of nodes     ：" << nTotalNode;
-    cout << "the total numbers of faces   ：" << nTotalFace;
-    cout << "the total numbers of cells     ：" << nTotalCell << "\n";
+    cout << "the total numbers of nodes     :" << nTotalNode;
+    cout << "the total numbers of faces   :" << nTotalFace;
+    cout << "the total numbers of cells     :" << nTotalCell << "\n";
 
     RDouble *x, *y, *z;
     RDouble xmin, ymin, xmax, ymax;
@@ -1109,7 +1109,7 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
 {
     const int BINARY = 0;
     const int ASCII  = 1;
-
+    
     int fileformat = 0;
     GlobalDataBase::GetData("fileformat", &fileformat, PHINT, 1);
 
@@ -1168,17 +1168,17 @@ void ReadUstarGrid(const string &gridfile, UnstructGrid *grid)
     {
         line = FindNextWord(line, word, separator);
         from_string< int >(nBoundFace, word, std::dec);
-        cout << " the numbers of total nodes ："   << nTotalNode;
-        cout << " the numbers of total faces ：" << nTotalFace;
-        cout << " the numbers of total cells ："   << nTotalCell << "\n";
-        cout << " the numbers of boundary faces ："   << nBoundFace << "\n";
+        cout << " the numbers of total nodes :"   << nTotalNode;
+        cout << " the numbers of total faces :" << nTotalFace;
+        cout << " the numbers of total cells :"   << nTotalCell << "\n";
+        cout << " the numbers of boundary faces :"   << nBoundFace << "\n";
 
     }
     else
     {
-        cout << " the numbers of total nodes ："   << nTotalNode;
-        cout << " the numbers of total faces ：" << nTotalFace;
-        cout << " the numbers of total cells ："   << nTotalCell << "\n";
+        cout << " the numbers of total nodes :"   << nTotalNode;
+        cout << " the numbers of total faces :" << nTotalFace;
+        cout << " the numbers of total cells :"   << nTotalCell << "\n";
     }
 
     grid->SetNTotalNode(nTotalNode);
@@ -1367,7 +1367,7 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
 {
     if (GetDim() == TWO_D)
     {
-        TK_Exit::ExceptionExit("暂时没考虑2D的二进制ustar文件读入 ... \n");
+        TK_Exit::ExceptionExit("鏆傛椂娌¤�冭檻2D鐨勪簩杩涘埗ustar鏂囦欢璇诲叆 ... \n");
     }
 
     ifstream infile;
@@ -1396,9 +1396,9 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
     }
     else
     {
-        cout << " the total numbers of nodes ："   << nTotalNode;
-        cout << " the total numbers of faces ：" << nTotalFace;
-        cout << " the total numbers of cells ："   << nTotalCell << "\n";
+        cout << " the total numbers of nodes :"   << nTotalNode;
+        cout << " the total numbers of faces :" << nTotalFace;
+        cout << " the total numbers of cells :"   << nTotalCell << "\n";
     }
 
     grid->SetNTotalNode(nTotalNode);
@@ -1520,7 +1520,7 @@ void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid)
 
     nBoundFace = nBFaceReal;
 
-    cout << "设置边界条件......\n";
+    cout << "璁剧疆杈圭晫鏉′欢......\n";
     grid->SetNBoundFace(nBoundFace);
 
     cout << "nBoundFace = " << nBoundFace << "\n";
@@ -1614,6 +1614,7 @@ void GetUnsIndex(StructGrid *grid, DataStruct_AdtTree<int, RDouble> *adtTree, in
 
 void SetUnstructBC
 (
+#pragma warning(disable:4100)
     int ist,
     int ied,
     int jst,
@@ -1624,6 +1625,7 @@ void SetUnstructBC
     cgsize_t *conn_list,
     int &start_pos,
     Int3D &unsindex
+#pragma warning(default:4100)
 )
 {
     cout << "ist,ied,jst,jed,kst,ked = " << ist << " " << ied << " " << jst << " " << jed << " " << kst << " " << ked << "\n";
@@ -1847,7 +1849,7 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
     for (int sec = 1; sec <= nSections; ++ sec)
     {
         int nelem = iend[sec-1] - istart[sec-1] + 1;
-        int ptnum = base_elem_elem_pt[etype[sec-1]];
+        int ptnum = static_cast<int>(base_elem_elem_pt[etype[sec-1]]);
         base_cgns_conn_list[sec-1] = new cgsize_t[ptnum * nelem];
     }
 
@@ -1870,7 +1872,7 @@ void FillSection(Grid **grids, int nBlocks, CGNSBase *base_cgns, BaseElement *ba
 
         if (nDim == TWO_D) kl1 = 0;
 
-        int numpt = base_elem_elem_pt[etype[0]];
+        int numpt = static_cast<int>(base_elem_elem_pt[etype[0]]);
         for (int k = kst; k <= ked; ++ k)
         {
             for (int j = jst; j <= jed; ++ j)

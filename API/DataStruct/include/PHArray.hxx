@@ -618,7 +618,8 @@ void PHArray<T, N>::setupStorage(int lastRankInitialized, T *data, preexistingMe
 template<typename T, int N>
 void PHArray<T, N>::computeStrides()
 {
-    if (N > 1)
+    int Ntmp = N;
+    if (Ntmp > 1)
     {
         int stride = 1;
 
@@ -626,7 +627,7 @@ void PHArray<T, N>::computeStrides()
         // compile-time computation of strides through constant folding.
         bool allAscending = storage_.allRanksStoredAscending();
 
-        for (int n = 0; n < N; ++ n)
+        for (int n = 0; n < Ntmp; ++ n)
         {
             int strideSign = +1;
 

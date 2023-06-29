@@ -25,6 +25,7 @@
 #include "Geo_DynamicGridMetrics_Unstruct.h"
 #include "Geo_LSQWeight_Unstruct.h"
 #include "Geo_UnstructBC.h"
+#include "Geo_Element.h"
 #include "Geo_LineTopo_Unstruct.h"
 #ifdef USE_WINDOWS_X64
 #include "metis64.h"
@@ -32,6 +33,9 @@
 #include "metis.h"
 #endif
 
+#ifdef USE_INCOMSOLVER
+#include "PHVector3.h"
+#endif
 
 namespace PHSPACE
 {
@@ -120,6 +124,11 @@ private:
     //! Wall distance: the nearest distance of a cell to the wall.
     RDouble *walldist;
 
+    //! Nearest wall face normal: the normal direction of the wall face nearest to a cell .
+    RDouble *nearestwallfacenormalx;
+    RDouble *nearestwallfacenormaly;
+    RDouble *nearestwallfacenormalz;
+
     //! Wall distance: the nearest distance of a node to the wall.
     RDouble *walldistNode;
 
@@ -160,10 +169,51 @@ private:
     GridManager *gridManager;
     //! Probes' cell index of current zone grid.
     vector <int> zoneProbesCellID;
+    
+    // GMRES CSR format Jacobian matrix, AI and AJ GMRESCSR
+    vector<int> JacobianAI;
+    vector<int> JacobianAJ;
+   
+    //! GMRESParallel
+    vector<int> JacobianAK;
+   
+    // GMRESJac1st CSR format Jacobian matrix, AI and AJ, this is for 1storder-Jacobian precond
+    vector<int> JacobianAI1st;
+    vector<int> JacobianAJ1st;
+    int JacOrder;
 
+    //! GMRESParallel
+    int globalCellIndexShift;
+
+    int blockSizeOfJacobianMatrix; //! GMRESCoupled
+
+    // GMRES2ndCorrection
+    vector<int> BCLeftCells;
+    vector<int> BCRightCells;
+    vector<int> BCFaces;
 
 public:
 
+#ifdef USE_INCOMSOLVER
+    //! This is values for SIMPLE algorithm.
+    //! cellCenterVector container the three coordinates of the cells center. 
+    Vector3D *cellCenterVector;
+
+    //! faceNormalVector container the three units of the face normal directions. 
+    Vector3D *faceNormalVector;
+
+    int* localCell2GlobalMap;
+
+    int* localCell2LocalMap;
+    int* cell2ZoneIDMap;
+
+#endif
+
+    //! Ordinary grid information.
+    int ordinaryGridIndex;
+    int *ordinaryNodeIndex;
+    int *ordinaryFaceIndex;
+    int *ordinaryCellIndex;
 
 public:
     LIB_EXPORT UnstructGrid();
@@ -197,6 +247,78 @@ public:
 
     //! set the number of lines.
     void SetLI_nLine(int nLine);
+
+#ifdef USE_GMRESSOLVER
+    //! GMRESCoupled set the block size of Jacobian Matrix
+    void SetBlockSizeOfJacobianMatrix(int blockSizeOfJacobianMatrix) { this->blockSizeOfJacobianMatrix = blockSizeOfJacobianMatrix; }
+
+    //! GMRESCoupled get the block size of Jacobian Matrix
+    int GetBlockSizeOfJacobianMatrix() const { return this->blockSizeOfJacobianMatrix; }
+
+    //! GMRES set the CSR format Jacobian matrix AI
+    void SetJacobianAI4GMRES(vector<int> JacobianAI) { this->JacobianAI = JacobianAI; }
+
+    //! GMRES set the CSR format Jacobian matrix AJ
+    void SetJacobianAJ4GMRES(vector<int> JacobianAJ) { this->JacobianAJ = JacobianAJ; }
+
+    //! GMRES set the CSR format Jacobian matrix AK
+    //! GMRESParallel
+    void SetJacobianAK4GMRES(vector<int> JacobianAK) { this->JacobianAK = JacobianAK; }
+
+    //! GMRES get the CSR format Jacobian matrix AI
+    vector<int> GetJacobianAI4GMRES() const { return this->JacobianAI; }
+
+    //! GMRES get the CSR format Jacobian matrix AJ
+    vector<int> GetJacobianAJ4GMRES() const { return this->JacobianAJ; }
+
+    //! GMRES get the CSR format Jacobian matrix AK
+    //! GMRESParallel
+    vector<int> GetJacobianAK4GMRES() const { return this->JacobianAK; }
+
+    //! GMRESJac1st set the CSR format Jacobian matrix AI1st
+    void SetJacobianAI1st4GMRES(vector<int> JacobianAI1st) { this->JacobianAI1st = JacobianAI1st; }
+
+    //! GMRESJac1st set the CSR format Jacobian matrix AJ1st
+    void SetJacobianAJ1st4GMRES(vector<int> JacobianAJ1st) { this->JacobianAJ1st = JacobianAJ1st; }
+
+    //! GMRESJac1st set the JacobianOrder
+    void SetJacobianOrder(int JacOrder) {this->JacOrder = JacOrder;}
+
+    //! GMRESJac1st get the CSR format Jacobian matrix AI
+    vector<int> GetJacobianAI1st4GMRES() const { return this->JacobianAI1st; }
+
+    //! GMRESJac1st get the CSR format Jacobian matrix AJ
+    vector<int> GetJacobianAJ1st4GMRES() const { return this->JacobianAJ1st; }
+
+    //! GMRESJac1st get the JacobianOrder
+    int GetJacobianOrder() {return this->JacOrder;}
+
+    //! GMRESParallel
+    //! set cell index shift
+    void SetGlobalCellIndexShift(int shift) { this->globalCellIndexShift = shift; }
+
+    //! get cell index shift
+    int GetGlobalCellIndexShift() const { return this->globalCellIndexShift; }
+
+    // GMRES2ndCorrection
+    // ! GMRES set the left cells at the boundary face
+    void SetBCLeftCells(vector<int> BCLeftCells) { this->BCLeftCells = BCLeftCells; }
+
+    // ! GMRES set the right cells at the boundary face
+    void SetBCRightCells(vector<int> BCRightCells) { this->BCRightCells = BCRightCells; }
+
+    // ! GMRES set the boundary faces
+    void SetBCFaces(vector<int> BCFaces) { this->BCFaces = BCFaces; }
+
+    // ! GMRES get the left cells at the boundary face
+    vector<int> GetBCLeftCells() { return this->BCLeftCells; }
+
+    // ! GMRES get the right cells at the boundary face
+    vector<int> GetBCRightCells() { return this->BCRightCells; }
+
+    // ! GMRES get the boundary faces
+    vector<int> GetBCFaces() { return this->BCFaces; }
+#endif
 
     //! set the number of cells in all lines.
     void SetLI_nCellsInLine(int *nCellsInLines);
@@ -358,6 +480,23 @@ public:
     //! Get the Cell to cell: neighbor cell index of each cell.
     LIB_EXPORT vector<int> * GetCell2Cell();
 
+#ifdef USE_GMRESSOLVER
+   // GMRESVis
+    //! Get the neighbor cell index of each cell.
+    LIB_EXPORT vector<int> * GMRESGetNeighborCells();
+
+    // GMRESVis
+    //! Get the neighbor face index of each cell.
+    LIB_EXPORT vector<int> * GMRESGetNeighborFaces();
+
+    // GMRESVis
+    //! Judge left or right.
+    LIB_EXPORT vector<int> * GMRESGetNeighborLR();
+
+    // GMRESVis
+    void ComputeNeighborinfo();
+#endif
+
     //! Get the cell to cell connectivity, used in over-set unstructured grid ONLY.
     LIB_EXPORT Connectivity * GetCell2CellConnectivity();
 
@@ -452,6 +591,15 @@ public:
     //! Return the wall distance: the nearest distance of a cell to the wall.
     RDouble * GetWallDist() const;
 
+    //! Return the nearest wall face normal x: the normal x of the wall face nearest to a cell.
+    RDouble * GetNearestWallFaceNormalX() const;
+
+    //! Return the nearest wall face normal y: the normal y of the wall face nearest to a cell.
+    RDouble * GetNearestWallFaceNormalY() const;
+
+    //! Return the nearest wall face normal z: the normal z of the wall face nearest to a cell.
+    RDouble * GetNearestWallFaceNormalZ() const;
+
     //! Return the wall distance: the nearest distance of a node to the wall.
     RDouble* GetWallDistNode() const;
 
@@ -540,8 +688,8 @@ public:
     //! @param[out] dqdx/dqdy/dqdz :the gradient value in three direction.
     void CompGradientGGNode_NEW(RDouble *q, RDouble *qnode, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGNodeWeight(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
-    void CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
-    void CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *wfR, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
+    void CompGradientGGCell(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz, int setting = 0);
+    void CompGradientGGCell2(RDouble *q, RDouble *wfL, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGModified2(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellNew(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
     void CompGradientGGCellW(RDouble *q, RDouble *dqdx, RDouble *dqdy, RDouble *dqdz);
@@ -625,11 +773,26 @@ public:
     void TranslateCellIBlank(ActionKey *actkey);
     streamsize TranslateCellIBlankLength(ActionKey *actkey);
 
-private:
+    void SetOrdinaryGridIndex(int ordinaryGridIndexIn);
+    void SetOrdinaryNodeIndex(int *ordinaryNodeIndexIn);
+    void SetOrdinaryFaceIndex(int *ordinaryFaceIndexIn);
+    void SetOrdinaryCellIndex(int *ordinaryCellIndexIn);
+    int  GetOrdinaryGridIndex();
+    int *GetOrdinaryNodeIndex();
+    int *GetOrdinaryFaceIndex();
+    int *GetOrdinaryCellIndex();
+
+    void CompressSpecificArrayToInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &neqn);
+    void DecompressArrayFromInterface(DataContainer *&dataContainer, const string &fieldName, const int &neighborZoneIndex, const int &neqn);
+
     int  CompNIFace();
-    void ComputeCell2Face();
-    void ComputeCell2Node();
+
+private:
+    bool ComputeCellNodeTopo();
     void ComputeCell2NodeArray();
+    void ComputeCell2Node();
+    void ComputeCell2Node(set<int> *&cell2node_set);
+    void ComputeCell2Face();
     void ComputeFace2NodeArray();
     void ComputeFace2NodeSubscript();
     void ComputeNumberOfNeighborCell();
@@ -637,13 +800,15 @@ private:
     void ComputeCell2CellConnectivity();
     void ComputeNode2Cell();
     void ComputeNode2CellArray();
-    void ComputeCell2Node(set<int> *&cell2node_set);
 
     void ComputeLargestLocalGridLength();
     void ComputeSubgridLength();
 
     void DumpWalldist(ActionKey *actkey);
     void ReadWalldist(RDouble *wallDistIn);
+    void ReadNearestwallfacenormalx(RDouble* nearestwallfaceNormalxIn);
+    void ReadNearestwallfacenormaly(RDouble* nearestwallfaceNormalyIn);
+    void ReadNearestwallfacenormalz(RDouble* nearestwallfaceNormalzIn);
 
     void GetCellCenter(ActionKey *actkey);
     void TranslateCellCenter(ActionKey *actkey);
@@ -675,7 +840,81 @@ private:
     void ComputeFaceCenterAreaNormal3DNew2(ActionKey *actkey);
     void ComputeCellCenterVol3DNew2(ActionKey *actkey);
 
+    /**
+     * @brief  calcu cell face type and face node of every cell
+     * @param  icel: cell index
+     * @param  cell_vtx_edge: face node of two dimension
+     * @param  cell_vtx_tria: face node of tria when three dimension
+     * @param  cell_vtx_quad: face node of quad when three dimension
+     * @return ElementType: element type of cell
+     */
+    ElementType CellFaceVertex(int icel, int *cell_vtx_edge, int *cell_vtx_tria, int *cell_vtx_quad);
+
+    /**
+     * @brief  hexa cell node
+     * @param  cell_vtx_quad: quad face node
+     * @param  cell_vtx_hexa: hexa face node container
+     * @return int: return symbol
+     */
+    int nodal_from_cel_hexa(const int *cell_vtx_quad, int *cell_vtx_hexa);
+
+    /**
+     * @brief  prism cell node 
+     * @param  cell_vtx_tria: tria face node
+     * @param  cell_vtx_quad: quad face node
+     * @param  cell_vtx_prism: prism face node container
+     * @return int: return symbol
+     */
+    int nodal_from_cel_prism(const int *cell_vtx_tria, const int *cell_vtx_quad, int *cell_vtx_prism);
+
+    /**
+     * @brief  pyram cell node
+     * @param  cell_vtx_tria: tria face node
+     * @param  cell_vtx_quad: quad face node
+     * @param  cell_vtx_pyram: pyram face node container
+     * @return int: return symbol
+     */
+    int nodal_from_cel_pyram(const int *cell_vtx_tria, const int *cell_vtx_quad, int *cell_vtx_pyram);
+
+    /**
+     * @brief  tetra cell node
+     * @param  cell_vtx_tria: tria face node
+     * @param  cell_vtx_tetra: tetra face node container
+     * @return int: return symbol
+     */
+    int nodal_from_cel_tetra(const int *cell_vtx_tria, int *cell_vtx_tetra);
+
+    /**
+     * @brief  quad face node
+     * @param  cell_vtx_edge: face node of two dimension
+     * @param  cell_vtx_quad: quad face node container
+     * @return int: return symbol
+     */
+    int nodal_from_face_quad(const int *cell_vtx_edge, int *cell_vtx_quad);
+
+    /**
+     * @brief  tria face node
+     * @param  cell_vtx_edge: face node of two dimension
+     * @param  cell_vtx_tria: tria face node container
+     * @return int: return symbol
+     */
+    int nodal_from_face_tria(const int *cell_vtx_edge, int *cell_vtx_tria);
+
 public:
+#ifdef USE_INCOMSOLVER
+    //! This is function for SIMPLE algorithm.
+    Vector3D * GetCellCenterVector() const;
+    Vector3D * GetFaceNormalVector() const;
+    void SetCellCenterVector(Vector3D *cellC);
+    void SetFaceNormalVector(Vector3D* faceN);
+    void SetLocalCell2GlobalMap(int* localCell2GlobalMap);
+    void SetLocalCell2LocalMap(int* localCell2LocalMap);
+    void SetCell2ZoneIDMap(int *cell2ZoneIDMap);
+    int *GetLocalCell2GlobalMap() const;
+    int *GetLocalCell2LocalMap() const;
+    int *GetCell2ZoneIDMap() const; 
+   
+#endif
 };
 
 #include "Geo_UnstructGrid.hxx"
@@ -787,5 +1026,4 @@ void Get_Xadj_Adjncy(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, int *neighb
 void Get_Xadj_Adjncy_Weight(UnstructGrid *grid, idx_t *xadj, idx_t *adjncy, RDouble *adjncyWeight);
 
 }
-
 

@@ -222,7 +222,7 @@ void DynamicGrid::StationalData2DynamicData()
     }
 
     //! Find the index of the rotate point of second segment.
-    double secondSegmentRotatePostionX, secondSegmentRotatePostionY, secondSegmentRotatePostionZ;
+    double secondSegmentRotatePostionX = 0.0, secondSegmentRotatePostionY = 0.0, secondSegmentRotatePostionZ = 0.0;
     int *secondSegment = new int[nTotalNode];
     SetField(secondSegment, 0, nTotalNode);
     this->secondSegment = secondSegment;
@@ -245,10 +245,10 @@ void DynamicGrid::StationalData2DynamicData()
             continue;
         }
 
-        int *face2node = faceArray[iFace].face2node;
+        int *face2nodeFaceA = faceArray[iFace].face2node;
         for (int iNode = 0; iNode < faceArray[iFace].nodeNumber; ++ iNode)
         {
-            int nodeIndex = face2node[iNode];
+            int nodeIndex = face2nodeFaceA[iNode];
             secondSegment[nodeIndex] = 1;
         }
 
@@ -258,7 +258,7 @@ void DynamicGrid::StationalData2DynamicData()
     }
 
     rotateNodeIndex = -1;
-    double minDist = 1000;
+    double minDist = 1000.0;
     for (int iNode = 0; iNode < nTotalNode; ++ iNode)
     {
         if (secondSegment[iNode] != 1)

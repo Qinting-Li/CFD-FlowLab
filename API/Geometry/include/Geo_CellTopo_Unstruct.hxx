@@ -63,6 +63,36 @@ inline void Geo_CellTopo_Unstruct::SetCell2Cell(vector<int> *cell2cell)
     this->cell2cell = cell2cell;
 }
 
+// GMRESVis
+inline void Geo_CellTopo_Unstruct::GMRESSetNeighborCells(vector<int> * neighborCells)
+{
+	if(this->neighborCells && this->neighborCells != neighborCells)
+	{
+		delete this->neighborCells;
+	}
+	this->neighborCells = neighborCells;
+}
+
+// GMRESVis
+inline void Geo_CellTopo_Unstruct::GMRESSetNeighborFaces(vector<int> * neighborFaces)
+{
+	if(this->neighborFaces && this->neighborFaces != neighborFaces)
+	{
+		delete this->neighborFaces;
+	}
+	this->neighborFaces = neighborFaces;
+}
+
+// GMRESVis
+inline void Geo_CellTopo_Unstruct::GMRESSetNeighborLR(vector<int> * neighborLR)
+{
+	if(this->neighborLR && this->neighborLR != neighborLR)
+	{
+		delete this->neighborLR;
+	}
+	this->neighborLR = neighborLR;
+}
+
 inline int * Geo_CellTopo_Unstruct::GetFaceNumberOfEachCell() 
 {
     return face_number_of_each_cell;
@@ -96,4 +126,22 @@ inline int * Geo_CellTopo_Unstruct::GetNumberOfNeighborCell()
 inline vector<int> * Geo_CellTopo_Unstruct::GetCell2Cell()
 {
     return cell2cell;
+}
+
+// GMRESVis
+inline vector<int> * Geo_CellTopo_Unstruct::GMRESGetNeighborCells()
+{
+	return neighborCells;
+}
+
+// GMRESVis
+inline vector<int> * Geo_CellTopo_Unstruct::GMRESGetNeighborFaces()
+{
+	return neighborFaces;
+}
+
+// GMRESVis
+inline vector<int> * Geo_CellTopo_Unstruct::GMRESGetNeighborLR()
+{
+	return neighborLR;
 }

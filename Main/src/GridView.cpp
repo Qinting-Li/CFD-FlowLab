@@ -218,7 +218,6 @@ void BoundaryCluster::OutputHoleSurfaceGrid(ofstream &outFile, BasalGrid *basalG
 {
     int ni = basalGrid->GetIDimension();
     int nj = basalGrid->GetJDimension();
-    int nk = basalGrid->GetKDimension();
 
     RDouble *x = basalGrid->GetX();
     RDouble *y = basalGrid->GetY();
@@ -630,6 +629,7 @@ void BlockGroupManager::Run()
 
     SeparateGrid();
 
+    //OutputNewGrid();
     OutputNewSurfaceGrid();
 
     OutputNewBoundary();

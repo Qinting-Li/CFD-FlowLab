@@ -548,7 +548,7 @@ void ChemicalReactions::GenerateMarsPark8S12RData(int *reactionCoef, RDouble *co
     reactionType[4][0] = 1;
 
     int nMarsModel = GlobalDataBase::GetIntParaFromDB("nMarsModel");
-    if (nMarsModel = 0)
+    if (0 == nMarsModel)
     {
         //! O, O2, NO, N, N2, C, CO, CO2.
         int stoichData[192] = {
@@ -1501,7 +1501,6 @@ void ChemicalReactions::GenerateCombustionGas12S20RData(int *reactionCoef, RDoub
 
 void ChemicalReactions::GenerateGasMixture2S1RData(int *reactionCoef, RDouble *collisionCoef, RDouble *rateCoef)
 {
-    int typeOfReaction[1] = {0};
 
     reactionType[0][0] = 0;
     reactionType[0][1] = 2;
@@ -1784,7 +1783,7 @@ void ChemicalReactions::CreateChemicalReactionModel(vector<string> &namelist, Ch
 {
     if (this->nSpecies <= 0 || this->nReaction <= 0)
         return;
-    int nTargetSpecies = namelist.size();
+    int nTargetSpecies = static_cast<int>(namelist.size());
     if (nTargetSpecies <= 0)
         return;
     //Record the new index of the source species in the new model.
@@ -1871,7 +1870,7 @@ void ChemicalReactions::CreateChemicalReactionModel(vector<string> &namelist, Ch
 
 int SearchSpeciesInNameList(string strName, vector<string> &namelist)
 {
-    int num = namelist.size();
+    int num = static_cast<int>(namelist.size());
     for (int s = 0; s < num; ++ s)
     {
         if (namelist[s] == strName)
@@ -2492,7 +2491,7 @@ void ChemkinFitData::CreateChemkinFitData(vector<string> &namelist, ChemkinFitDa
 {
     if (this->nSpecies <= 0)
         return;
-    int nTargetSpecies = namelist.size();
+    int nTargetSpecies = static_cast<int>(namelist.size());
     if (nTargetSpecies <= 0)
         return;
 
@@ -2652,7 +2651,7 @@ void TransportFitData::GenerateFullCurveFittingData()
         0.0000,  0.0000, -2.0000,  24.3602,
         0.0000,  0.0000, -2.0000,  24.3602,
         0.0000,  0.0000, -2.0000,  24.3602,
-        0.0000,  0.0000, -2.0000,  24.3602,  //£¡ H\H2\OH\H2O
+        0.0000,  0.0000, -2.0000,  24.3602,  //! H\H2\OH\H2O
         0.0000,  0.0000, -2.0000,  24.3602,
         0.0000,  0.0000, -2.0000,  24.3602,
         0.0000,  0.0000, -2.0000,  24.3602,
@@ -2697,7 +2696,7 @@ void TransportFitData::GenerateFullCurveFittingData()
             0.0000000,   0.0000000,  -0.0257200,   1.0400000,   -13.8600000,
             0.0000000,   0.0000000,  -0.0324200,   1.1430000,   -14.1700000,
             0.0000000,   0.0000000,  -0.0577200,   1.5430000,   -15.7600000,
-            0.0000000,   0.0000000,   0.1138,   -1.0251,   -7.0904,  //£¡ H\H2\OH\H2O
+            0.0000000,   0.0000000,   0.1138,   -1.0251,   -7.0904,  //! H\H2\OH\H2O
             0.0000000,   0.0000000,   0.1029,   -0.8896,   -7.2273,
             0.0000000,   0.0000000,  -0.00421,   0.713,    -12.44,
             0.0000000,   0.0000000,  -0.097,     2.29,     -19.1,
@@ -2751,7 +2750,7 @@ void TransportFitData::GenerateFullCurveFittingData()
             0.0,   0.0,  -0.02572,   1.0400,  -13.8600,
             0.0,   0.0,  -0.03242,   1.1430,  -14.1700,
             0.0,   0.0,  -0.05772,   1.5430,  -15.7600,
-            0.0,   0.0,   0.1138,   -1.0251,  -7.0904,  //£¡ H\H2\OH\H2O
+            0.0,   0.0,   0.1138,   -1.0251,  -7.0904,  //! H\H2\OH\H2O
             0.0,   0.0,   0.1029,   -0.8896,  -7.2273,
             0.0,   0.0,  -0.00421,   0.713,   -12.44,
             0.0,   0.0,  -0.097,     2.29,    -19.1,
@@ -2790,7 +2789,7 @@ void TransportFitData::CreateTransportFitData(vector<string> &namelist, Transpor
 {
     if (this->nSpecies <= 0)
         return;
-    int nTargetSpecies = namelist.size();
+    int nTargetSpecies = static_cast<int>(namelist.size());
     if (nTargetSpecies <= 0)
         return;
 
@@ -3029,7 +3028,7 @@ void AtmosphereData::CreateAtmosphereData(vector<string> &namelist, AtmosphereDa
 {
     if (this->nSpecies <= 0)
         return;
-    int nTargetSpecies = namelist.size();
+    int nTargetSpecies = static_cast<int>(namelist.size());
     if (nTargetSpecies <= 0)
         return;
 

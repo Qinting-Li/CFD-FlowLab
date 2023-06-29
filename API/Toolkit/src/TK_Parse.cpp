@@ -147,7 +147,7 @@ void ToUpperCase(string &word)
 
 void TrimBlanks(string &source)
 {
-    string::size_type firstindex, nextindex, npos = string::npos;
+    string::size_type firstindex, nextindex;
     firstindex = source.find_first_not_of(" ");
     nextindex  = source.find_last_not_of(" ");
 
@@ -161,6 +161,16 @@ void SkipLines(fstream &file, int nline)
     {
         getline(file, line);
         if (file.eof()) return;
+    }
+}
+
+void SkipWords(string &line, int nword)
+{
+    string word;
+    string separator  = " =\t\r\n#$,;\"'";
+    for (int i = 0; i < nword; ++ i)
+    {
+        line = FindNextWord(line, word, separator);
     }
 }
 
@@ -228,8 +238,6 @@ string FindNextWord(const string &source, string &word, const string &separator)
 
 bool IsArrayParameter(const string &lineOfName)
 {
-    const int npos = -1;
-
     if (lineOfName.find_first_of("[") == string::npos)
     {
         return false;

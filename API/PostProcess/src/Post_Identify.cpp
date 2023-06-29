@@ -103,7 +103,7 @@ namespace PHSPACE
         }
 
         RDouble period = PI;
-        nLineOneCycle = period / (reduceFrequency * physicalTimeStep);
+        nLineOneCycle = static_cast<int>(period / (reduceFrequency * physicalTimeStep));
         if (nDataLine < nLineOneCycle)
         {
             TK_Exit::ExceptionExit("Error: The data number is less than one cycle! \n");
@@ -187,7 +187,7 @@ namespace PHSPACE
     void Identify::getIntegrand(int iVar, RDouble *f)
     {
         RDouble fSum = 0.0;
-        for (int iLine = nLinestart; iLine <= nLineEnd; ++ iLine)
+        for (int iLine = static_cast<int>(nLinestart); iLine <= nLineEnd; ++ iLine)
         {
             fSum += aeroForce[iLine][iVar];
         }
@@ -243,7 +243,7 @@ namespace PHSPACE
         RDouble *f2= new RDouble[nLineEnd - nLinestart + 1]();
 
         RDouble ddt = nwStep * physicalTimeStep;
-        int nMiddle = (nLineEnd - nLinestart) / 2;
+        int nMiddle = static_cast<int>((nLineEnd - nLinestart)) / 2;
 
         for (int m = 0; m < nMiddle; ++ m)
         {
@@ -262,7 +262,7 @@ namespace PHSPACE
             f2[j] = 2.0 * f[j] * cos(kt);
         }
 
-        for (int m = 0; m <= nLineEnd - nLinestart; m += nLineEnd - nLinestart)
+        for (int m = 0; m <= nLineEnd - nLinestart; m += static_cast<int>(nLineEnd - nLinestart))
         {
             int n = int(aeroForce[m + nLinestart][0]) + nbeg;
             RDouble kt = 2.0 * n * reduceFrequency * physicalTimeStep;

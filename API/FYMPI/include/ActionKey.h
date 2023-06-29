@@ -15,7 +15,6 @@
 
 #pragma once
 #include "DataContainer.h"
-
 using namespace std;
 
 namespace PHSPACE
@@ -122,3 +121,4 @@ void SetCurrentActionKey(ActionKey *ActionKeyIn);
 ActionKey * GetCurrentActionKey();
 
 }
+

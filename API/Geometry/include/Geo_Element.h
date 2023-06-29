@@ -159,4 +159,19 @@ bool IsElementNotExist(const int &rightCellIndex);
 //! Get the number of basic element.
 int GetNumberOfBasicElement();
 
+typedef enum
+{
+
+    TYPE_EDGE,            /* Edge */
+    TYPE_FACE_TRIA,       /* Triangle */
+    TYPE_FACE_QUAD,       /* Quadrangle */
+    TYPE_FACE_POLY,       /* Simple Polygon */
+    TYPE_CELL_TETRA,      /* Tetrahedron */
+    TYPE_CELL_PYRAM,      /* Pyramid */
+    TYPE_CELL_PRISM,      /* Prism (pentahedron) */
+    TYPE_CELL_HEXA,       /* Hexahedron (brick) */
+    TYPE_CELL_POLY,       /* Simple Polyhedron (convex or quasi-convex) */
+    TYPE_N_ELEMENT_TYPES, /* Number of element types */
+    TYPE_NOT_CONSIDERED
+} ElementType;
 }

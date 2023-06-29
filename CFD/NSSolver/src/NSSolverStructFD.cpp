@@ -246,11 +246,243 @@ void NSSolverStructFD::AllocateGlobalVar(Grid *gridIn)
 
 void NSSolverStructFD::DeAllocateGlobalVar(Grid *gridIn)
 {
-    RDouble4D *q_FD = reinterpret_cast <RDouble4D *> (gridIn->GetDataPtr("q_FD"));
-    RDouble4D *t_FD = reinterpret_cast <RDouble4D *> (gridIn->GetDataPtr("t_FD"));
-    
-    delete q_FD;
-    delete t_FD;
+    StructGrid *grid = StructGridCast(gridIn);
+
+    RDouble4D *q = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
+    RDouble4D *q_FD = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_FD"));
+    RDouble4D *residual = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
+    RDouble3D *dt = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
+    RDouble3D *gama = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
+    RDouble4D *t = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
+    RDouble4D *t_FD = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t_FD"));
+    RDouble4D *visSpectralRadius = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
+    RDouble4D *invSpectralRadius = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
+    RDouble4D *diagonal = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
+    RDouble3D *rtem = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("rtem"));
+
+    delete q; q = 0;
+    delete q_FD; q_FD = 0;
+    delete residual; residual = 0;
+    delete dt; dt = 0;
+    delete gama; gama = 0;
+    delete t; t = 0;
+    delete t_FD; t_FD = 0;
+    delete visSpectralRadius; visSpectralRadius = 0;
+    delete invSpectralRadius; invSpectralRadius = 0;
+    delete diagonal; diagonal = 0;
+    delete rtem; rtem = 0;
+    //Remove data pointer.
+    grid->DeleteDataPtr("q");
+    grid->DeleteDataPtr("q_FD");
+    grid->DeleteDataPtr("res");
+    grid->DeleteDataPtr("dt");
+    grid->DeleteDataPtr("gama");
+    grid->DeleteDataPtr("t");
+    grid->DeleteDataPtr("t_FD");
+    grid->DeleteDataPtr("visSpectralRadius");
+    grid->DeleteDataPtr("invSpectralRadius");
+    grid->DeleteDataPtr("diagonal");
+    grid->DeleteDataPtr("rtem");
+
+    RDouble4D *ql1 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql1"));
+    RDouble4D *qr1 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr1"));
+    RDouble4D *ql2 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql2"));
+    RDouble4D *qr2 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr2"));
+    RDouble4D *ql3 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("ql3"));
+    RDouble4D *qr3 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qr3"));
+
+    delete ql1; ql1 = 0;
+    delete qr1; qr1 = 0;
+    delete ql2; ql2 = 0;
+    delete qr2; qr2 = 0;
+    delete ql3; ql3 = 0;
+    delete qr3; qr3 = 0;
+    grid->DeleteDataPtr("ql1");
+    grid->DeleteDataPtr("qr1");
+    grid->DeleteDataPtr("ql2");
+    grid->DeleteDataPtr("qr2");
+    grid->DeleteDataPtr("ql3");
+    grid->DeleteDataPtr("qr3");
+
+    RDouble4D *faceInviscidfluxI = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxI"));
+    RDouble4D *faceInviscidfluxJ = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxJ"));
+    RDouble4D *faceInviscidfluxK = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceInviscidfluxK"));
+
+    delete faceInviscidfluxI; faceInviscidfluxI = 0;
+    delete faceInviscidfluxJ; faceInviscidfluxJ = 0;
+    delete faceInviscidfluxK; faceInviscidfluxK = 0;
+    grid->DeleteDataPtr("faceInviscidfluxI");
+    grid->DeleteDataPtr("faceInviscidfluxJ");
+    grid->DeleteDataPtr("faceInviscidfluxK");
+
+    Param_NSSolverStruct *parameters = GetControlParameters();
+    int isUnsteady = parameters->GetIsUnsteady();
+    if (isUnsteady)
+    {
+        RDouble4D *q_unsteady_n1 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_unsteady_n1"));
+        RDouble4D *q_unsteady_n2 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q_unsteady_n2"));
+        RDouble4D *res_unsteady_n1 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_n1"));
+        RDouble4D *res_unsteady_n2 = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_n2"));
+        RDouble4D *res_unsteady_tmp = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res_unsteady_tmp"));
+
+        delete q_unsteady_n1; q_unsteady_n1 = 0;
+        delete q_unsteady_n2; q_unsteady_n2 = 0;
+        delete res_unsteady_n1; res_unsteady_n1 = 0;
+        delete res_unsteady_n2; res_unsteady_n2 = 0;
+        delete res_unsteady_tmp; res_unsteady_tmp = 0;
+        grid->DeleteDataPtr("q_unsteady_n1");
+        grid->DeleteDataPtr("q_unsteady_n2");
+        grid->DeleteDataPtr("res_unsteady_n1");
+        grid->DeleteDataPtr("res_unsteady_n2");
+        grid->DeleteDataPtr("res_unsteady_tmp");
+
+        RDouble4D *qAverage = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("qAverage"));
+        RDouble4D *tauAverage = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("tauAverage"));
+
+        delete qAverage; qAverage = 0;
+        delete tauAverage; tauAverage = 0;
+        delete res_unsteady_n1; res_unsteady_n1 = 0;
+        grid->DeleteDataPtr("qAverage");
+        grid->DeleteDataPtr("tauAverage");
+        grid->DeleteDataPtr("q2Average");
+    }
+
+    int viscousType = parameters->GetViscousType();
+    if (viscousType)
+    {
+        RDouble3D *viscousLaminar = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("visl"));
+        RDouble3D *viscousTurbulence = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("vist"));
+        RDouble4D *faceViscousfluxI = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxI"));
+        RDouble4D *faceViscousfluxJ = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxJ"));
+        RDouble4D *faceViscousfluxK = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("faceViscousfluxK"));
+
+        delete viscousLaminar; viscousLaminar = 0;
+        delete viscousTurbulence; viscousTurbulence = 0;
+        delete faceViscousfluxI; faceViscousfluxI = 0;
+        delete faceViscousfluxJ; faceViscousfluxJ = 0;
+        delete faceViscousfluxK; faceViscousfluxK = 0;
+        grid->DeleteDataPtr("visl");
+        grid->DeleteDataPtr("vist");
+        grid->DeleteDataPtr("faceViscousfluxI");
+        grid->DeleteDataPtr("faceViscousfluxJ");
+        grid->DeleteDataPtr("faceViscousfluxK");
+    }
+
+    int iLES = GlobalDataBase::GetIntParaFromDB("iLES");
+    if (iLES)
+    {
+        RDouble3D *subgridScaleEnergy = reinterpret_cast <RDouble3D *> (grid->GetDataPtr("subgridScaleEnergy"));
+
+        delete subgridScaleEnergy; subgridScaleEnergy = 0;
+        grid->DeleteDataPtr("subgridScaleEnergy");
+    }
+
+    RDouble4D *dqdkxi = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdkxi"));
+    RDouble4D *dqdeta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdeta"));
+    RDouble4D *dqdcta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdcta"));
+
+    delete dqdkxi; dqdkxi = 0;
+    delete dqdeta; dqdeta = 0;
+    delete dqdcta; dqdcta = 0;
+    grid->DeleteDataPtr("dqdkxi");
+    grid->DeleteDataPtr("dqdeta");
+    grid->DeleteDataPtr("dqdcta");
+
+    RDouble4D *dqdx = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterX"));
+    RDouble4D *dqdy = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterY"));
+    RDouble4D *dqdz = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("gradUVWTCellCenterZ"));
+
+    delete dqdx; dqdx = 0;
+    delete dqdy; dqdy = 0;
+    delete dqdz; dqdz = 0;
+    grid->DeleteDataPtr("gradUVWTCellCenterX");
+    grid->DeleteDataPtr("gradUVWTCellCenterY");
+    grid->DeleteDataPtr("gradUVWTCellCenterZ");
+
+    if (gradient_method.substr(0, 10) == "chain_rule")
+    {
+        RDouble4D *dqdxnokxi = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdxnokxi"));
+        RDouble4D *dqdynokxi = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdynokxi"));
+        RDouble4D *dqdznokxi = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdznokxi"));
+
+        delete dqdxnokxi; dqdxnokxi = 0;
+        delete dqdynokxi; dqdynokxi = 0;
+        delete dqdznokxi; dqdznokxi = 0;
+        grid->DeleteDataPtr("dqdxnokxi");
+        grid->DeleteDataPtr("dqdynokxi");
+        grid->DeleteDataPtr("dqdznokxi");
+        
+        RDouble4D *dqdxnoeta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdxnoeta"));
+        RDouble4D *dqdynoeta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdynoeta"));
+        RDouble4D *dqdznoeta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdznoeta"));
+
+        delete dqdxnoeta; dqdxnoeta = 0;
+        delete dqdynoeta; dqdynoeta = 0;
+        delete dqdznoeta; dqdznoeta = 0;
+        grid->DeleteDataPtr("dqdxnoeta");
+        grid->DeleteDataPtr("dqdynoeta");
+        grid->DeleteDataPtr("dqdznoeta");
+
+        RDouble4D *dqdxnocta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdxnocta"));
+        RDouble4D *dqdynocta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdynocta"));
+        RDouble4D *dqdznocta = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdznocta"));
+
+        delete dqdxnocta; dqdxnocta = 0;
+        delete dqdynocta; dqdynocta = 0;
+        delete dqdznocta; dqdznocta = 0;
+        grid->DeleteDataPtr("dqdxnocta");
+        grid->DeleteDataPtr("dqdynocta");
+        grid->DeleteDataPtr("dqdznocta");
+    }
+
+    int systemgridtype = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
+    if (MIXGRID == systemgridtype)
+    {
+        RDouble4D *dqdx_cc_ruvwpt = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdx_cc_ruvwpt"));
+        RDouble4D *dqdy_cc_ruvwpt = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdy_cc_ruvwpt"));
+        RDouble4D *dqdz_cc_ruvwpt = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("dqdz_cc_ruvwpt"));
+
+        delete dqdx_cc_ruvwpt; dqdx_cc_ruvwpt = 0;
+        delete dqdy_cc_ruvwpt; dqdy_cc_ruvwpt = 0;
+        delete dqdz_cc_ruvwpt; dqdz_cc_ruvwpt = 0;
+        grid->DeleteDataPtr("dqdx_cc_ruvwpt");
+        grid->DeleteDataPtr("dqdy_cc_ruvwpt");
+        grid->DeleteDataPtr("dqdz_cc_ruvwpt");
+    }
+
+    GetSurfaceCellNumber(gridIn, nWallBC, nMaxSurfaceCell);
+    if (nWallBC > 0)
+    {
+        RDouble2D *firstLayerHeight = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("firstLayerHeight"));
+        RDouble2D *temperatureWall = reinterpret_cast <RDouble2D *> (grid->GetDataPtr("surfaceTemperature"));
+
+        delete firstLayerHeight; firstLayerHeight = 0;
+        delete temperatureWall; temperatureWall = 0;
+        grid->DeleteDataPtr("firstLayerHeight");
+        grid->DeleteDataPtr("surfaceTemperature");
+    }
+
+    Int1D *speciesOrder = reinterpret_cast <Int1D *> (grid->GetDataPtr("speciesOrder"));
+    RDouble4D *heatTransferCoeff = reinterpret_cast <RDouble4D *> (grid->GetDataPtr("heatTransferCoeff"));
+
+    delete speciesOrder; speciesOrder = 0;
+    delete heatTransferCoeff; heatTransferCoeff = 0;
+    grid->DeleteDataPtr("speciesOrder");
+    grid->DeleteDataPtr("heatTransferCoeff");
+
+    delete UVWTproxy; UVWTproxy = 0;
+    delete UVWTfaceIproxy; UVWTfaceIproxy = 0;
+    delete UVWTfaceJproxy; UVWTfaceJproxy = 0;
+    delete UVWTfaceKproxy; UVWTfaceKproxy = 0;
+
+    delete dqdxFaceProxy; dqdxFaceProxy = 0;
+    delete dqdyFaceProxy; dqdyFaceProxy = 0;
+    delete dqdzFaceProxy; dqdzFaceProxy = 0;
+
+    if (solvername.substr(0, 4) == "HDCS")
+    {
+        delete CellfluxProxy; CellfluxProxy = 0;
+    }
 }
 
 void NSSolverStructFD::GetSurfaceCellNumber(Grid *gridIn, int &nWall, int &nCell)
@@ -873,7 +1105,7 @@ void NSSolverStructFD::ObtainBoundaryValue(Grid *gridIn)
         StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
         int BCType = structBC->GetBCType();
 
-        if (BCType < 0)
+        if (IsInterface(BCType))
         {
             continue;
         }        
@@ -1548,7 +1780,6 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
                         RDouble Lengthbase = LengthPlate_L[2];
                         RDouble LL = LengthPlate_L[0] / Lengthbase;
                         RDouble L  = LengthPlate_L[1] / Lengthbase;
-                        RDouble R  = LengthPlate_L[2] / Lengthbase;
                         RDouble RR = LengthPlate_L[3] / Lengthbase;
 
                         RDouble weight[3];
@@ -1666,7 +1897,6 @@ void NSSolverStructFD::SetWeightedInterpolationCoef(Grid *gridIn)
                         RDouble Lengthbase = LengthPlate_R[2];
                         RDouble LL = LengthPlate_R[0] / Lengthbase;
                         RDouble L  = LengthPlate_R[1] / Lengthbase;
-                        RDouble R  = LengthPlate_R[2] / Lengthbase;
                         RDouble RR = LengthPlate_R[3] / Lengthbase;
                         
                         RDouble weight[3];
@@ -4324,7 +4554,7 @@ void NSSolverStructFD::GetGradientAtFaceCorrectionAtPhysicalBoundary(Grid *gridi
         StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
         int BCType = bcregion->GetBCType();
         int nsurf_bc = bcregion->GetFaceDirection() + 1;
-        if (BCType < 0 || nsurf_bc != iSurface)
+        if (IsInterface(BCType) || nsurf_bc != iSurface)
         {
             continue;
         }

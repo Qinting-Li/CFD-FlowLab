@@ -511,10 +511,6 @@ bool GridKDTree::InCellCheck3D(RDouble *nodeCoordinateIn, int rootIndexIn, int &
     RDouble *nodeCoordinateY = grid->GetY();
     RDouble *nodeCoordinateZ = grid->GetZ();
 
-    RDouble *faceNaromalX = grid->GetFaceNormalX();
-    RDouble *faceNaromalY = grid->GetFaceNormalY();
-    RDouble *faceNaromalZ = grid->GetFaceNormalZ();
-
     int &cellIndex = searchCellIndex[rootIndexIn];
     int &numberOfFacesInCell = cellFaceNumber[cellIndex];
 
@@ -554,79 +550,6 @@ bool GridKDTree::InCellCheck3D(RDouble *nodeCoordinateIn, int rootIndexIn, int &
             }
         }
     }
-
-    //bool inside = true;
-    //for (int iFace = 0; iFace < numberOfFacesInCell; ++ iFace)
-    //{
-    //    int &faceIndex = cellFaceIndex[cellIndex][iFace];
-
-    //    RDouble &thisFaceCenterX = faceCenterX[faceIndex];
-    //    RDouble &thisFaceCenterY = faceCenterY[faceIndex];
-    //    RDouble &thisFaceCenterZ = faceCenterZ[faceIndex];
-
-    //    RDouble &thisFaceNaromalX = faceNaromalX[faceIndex];
-    //    RDouble &thisFaceNaromalY = faceNaromalY[faceIndex];
-    //    RDouble &thisFaceNaromalZ = faceNaromalZ[faceIndex];
-
-    //    RDouble dx = thisFaceCenterX - nodeCoordinateIn[0];
-    //    RDouble dy = thisFaceCenterY - nodeCoordinateIn[1];
-    //    RDouble dz = thisFaceCenterZ - nodeCoordinateIn[2];
-
-    //    RDouble dir = thisFaceNaromalX * dx + thisFaceNaromalY * dy + thisFaceNaromalZ * dz;
-    //    if (dir < - eps)
-    //    {
-    //        inside = false;
-    //        break;
-    //    }
-    //}
-
-    //if (inside)
-    //{
-    //    donorCellIndexIn = cellIndex;
-    //    return true;
-    //}
-
-    //Postion     =  19.04606409 -5.24375317 12.86842684
-
-    //if (abs(thisCellCenterX-19.04606409) < 1.0e-5 && abs(thisCellCenterY+5.24375317) < 1.0e-5 && abs(thisCellCenterZ-12.86842684) < 1.0e-5)
-    //{
-    //    cout << cellIndex << "   " << rootIndexIn << "   " << donorCellIndexIn << endl;
-    //}
-
-    //for (int iFace = 0; iFace < numberOfFacesInCell; ++ iFace)
-    //{
-    //    int &faceIndex = cellFaceIndex[cellIndex][iFace];
-    //    int &faceNodesNumber = faceNodeNumber[faceIndex];
-
-    //    for (int iNode = 0; iNode < faceNodesNumber; ++ iNode)
-    //    {
-    //        int nodeIndex1 = faceNodeIndex[faceIndex][iNode];
-    //        int nodeIndex2 = faceNodeIndex[faceIndex][(iNode + 1) % faceNodesNumber];
-    //        int nodeIndex3 = faceNodeIndex[faceIndex][(iNode + 2) % faceNodesNumber];
-
-    //        RDouble &nodeCoordinateX1 = nodeCoordinateX[nodeIndex1];
-    //        RDouble &nodeCoordinateY1 = nodeCoordinateY[nodeIndex1];
-    //        RDouble &nodeCoordinateZ1 = nodeCoordinateZ[nodeIndex1];
-    //        RDouble &nodeCoordinateX2 = nodeCoordinateX[nodeIndex2];
-    //        RDouble &nodeCoordinateY2 = nodeCoordinateY[nodeIndex2];
-    //        RDouble &nodeCoordinateZ2 = nodeCoordinateZ[nodeIndex2];
-    //        RDouble &nodeCoordinateX3 = nodeCoordinateX[nodeIndex3];
-    //        RDouble &nodeCoordinateY3 = nodeCoordinateY[nodeIndex3];
-    //        RDouble &nodeCoordinateZ3 = nodeCoordinateZ[nodeIndex3];
-
-    //        if (In4PointsCell(nodeCoordinateX1, nodeCoordinateY1, nodeCoordinateZ1,
-    //            nodeCoordinateX2, nodeCoordinateY2, nodeCoordinateZ2,
-    //            nodeCoordinateX3, nodeCoordinateY3, nodeCoordinateZ3,
-    //            thisCellCenterX, thisCellCenterY, thisCellCenterZ,
-    //            nodeCoordinateIn, eps))
-    //        {
-    //            donorCellIndexIn = cellIndex;
-    //            return true;
-    //        }
-    //    }
-    //}
-
-
     return false;
 }
 

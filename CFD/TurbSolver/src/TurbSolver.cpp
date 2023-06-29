@@ -47,10 +47,10 @@ void TurbSolver::InitDependentVariables()
 {
     Grid *fineGrid = GetGrid(0);
     //! Don't be used for STRUCTGRID because of turb viscosity being stored.
-    if (fineGrid->Type() != STRUCTGRID)
-    {
-        ComputeViscousCoeff(fineGrid);
-    }
+    //if (fineGrid->Type() != STRUCTGRID)
+    //{
+    //    ComputeViscousCoeff(fineGrid);
+    //}
 
     ComputeQTurbNodeValue(fineGrid);
 }
@@ -173,8 +173,8 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
 
                     if(PHMPI::IsParallelRun())
                     {
-                        string path = "./results/turb1_0.dat";
-                        remove(path.c_str());
+                        string path1 = "./results/turb1_0.dat";
+                        remove(path1.c_str());
                     }
                 }
 
@@ -185,8 +185,8 @@ void TurbSolver::DumpResultFile(Grid *grid, int level)
 
                     if(PHMPI::IsParallelRun())
                     {
-                        string path = "./results/turb0_0.dat";
-                        remove(path.c_str());
+                        string path2 = "./results/turb0_0.dat";
+                        remove(path2.c_str());
                     }
                 }
             }
@@ -238,12 +238,18 @@ void TurbSolver::RegisterCFDSolverInterpointField()
     CFDSolver::RegisterInterpointField("qTurbNode", PHDOUBLE, nTurbulenceEquation);
 }
 
-void TurbSolver::RegisterCFDSolverOversetField()
+void TurbSolver::RegisterOversetField()
 {
     Param_TurbSolver *parameters = GetControlParameters();
     int nTurbulenceEquation = parameters->GetNTurbulenceEquation();
 
     CFDSolver::RegisterOversetField("turb::q", PHDOUBLE, nTurbulenceEquation);
+}
+
+void TurbSolver::DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore)
+{
+    RDouble **q = reinterpret_cast <RDouble **> (dataStore->GetDataPtr("turb::q"));
+    DelPointer2(q);
 }
 
 void TurbSolver::PrepareOversetInterfaceData(Data_ParamFieldSuite *datastore, InterfaceDataProxy *interfaceDataProxy)

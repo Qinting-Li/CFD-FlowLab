@@ -79,7 +79,7 @@ public:
     RDouble * GetGlobalCoordinateNew() { return globalCoordinateNew; }
 
     void UpdateGridCoordinateByReadingFile                      (int targetZone);
-    void ComputeLocalToGlobalNodeIndexMappingDirectly           (int targetZone);
+    void ComputeLocalToGlobalNodeIndexMappingDirectly           ();
     void ComputeLocalToGlobalNodeIndexMappingByReadingLayoutFile(int targetZone);
 public:
     int * GetBlankIndex() { return blankIndex; }

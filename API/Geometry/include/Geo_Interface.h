@@ -74,6 +74,15 @@ private:
     //! Interface number in the TARGET zone, using in sending.
     int *faceIndexForSend;
 
+    //! GMRESParallel cell index in the local zone
+    int *cellIndexOfLocal;
+
+    //! GMRESParallel ghost cell index in the local zone
+    int *cellIndexOfLocalGhost;
+
+    //! GMRESParallel cell index in the neighbor zone
+    int *cellIndexOfNeighbor;
+
 private:
     Data_ParamFieldSuite *dataStorageSend;
     Data_ParamFieldSuite *dataStorageRecv;
@@ -96,6 +105,16 @@ public:
 
     int  GetZoneIndexOfNeighbor() const;
     void SetZoneIndexOfNeighbor(int zoneIndexOfNeighbor);
+
+    //! GMRESParallel
+    int *GetCellIndexOfLocal() const;
+    void SetCellIndexOfLocal(int *cellIndexLocal);
+
+    int *GetCellIndexOfLocalGhost() const;
+    void SetCellIndexOfLocalGhost(int *cellIndexLocalGhost);
+
+    int *GetCellIndexOfNeighbor() const;
+    void SetCellIndexOfNeighbor(int *cellIndexNeighbor);
 
     int GetZoneID() const;
 
@@ -142,6 +161,13 @@ private:
     Data_ParamFieldSuite *drecv;
 
     vector <InterfacePatch *> interFacePatch;
+
+    //! GMRESParallel global cell index of the ghost cell for interface bc
+    int *globalNeighborCellIndex;
+
+    int *localInterfaceCellIndex;
+
+    int *localInterfacePhysicalCellIndex;
 
 public:
     InterfaceInfo();
@@ -201,6 +227,25 @@ public:
 
     void SetIsNeighborInterfaceFound(bool *data);
     bool * GetIsNeighborInterfaceFound();
+
+    //! GMRESParallel
+    int *GetCellIndexOfNeighbor(int ineighbor) const;
+
+    int *GetGlobalNeighborCellIndex() const;
+
+    void SetGlobalNeighborCellIndex(int *globalNeighborCellIndex);
+
+    int *GetLocalInterfaceCellIndex() const;
+
+    void SetLocalInterfaceCellIndex(int *localInterfaceCellIndex);
+
+    int *GetLocalInterfacePhysicalCellIndex() const;
+
+    void SetLocalInterfacePhysicalCellIndex(int *localInterfacePhysicalCellIndex);
+
+    int MatchedGlobalNeighborCellIndex(int cell);
+
+    int MatchedLocalPhysicalCellIndex(int cell);
 
 private:
     //! Is the neighbor interface has been found.

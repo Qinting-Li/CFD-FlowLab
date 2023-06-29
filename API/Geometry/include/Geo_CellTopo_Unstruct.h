@@ -46,6 +46,10 @@ private:
 
     //! Cell to cell: neighbor cell index of each cell.
     vector<int> *cell2cell;
+    // GMRESVis
+    vector<int> * neighborCells;
+    vector<int> * neighborFaces;
+    vector<int> * neighborLR;
 
 public:
     LIB_EXPORT Geo_CellTopo_Unstruct();
@@ -72,6 +76,11 @@ public:
 
     //! Set the cell to cell: neighbor cell index of each cell.
     void SetCell2Cell(vector<int> *cell2cell);
+    
+    // GMRESVis
+    void GMRESSetNeighborCells(vector<int> * neighborCells);
+    void GMRESSetNeighborFaces(vector<int> * neighborFaces);
+    void GMRESSetNeighborLR(vector<int> * neighborLR);
 
     //! Get the number of faces per cell.
     int * GetFaceNumberOfEachCell();
@@ -93,6 +102,11 @@ public:
 
     //! Get the cell to cell: neighbor cell index of each cell.
     vector<int> * GetCell2Cell();
+    
+    // GMRESVis
+    vector<int> * GMRESGetNeighborCells();
+    vector<int> * GMRESGetNeighborFaces();
+    vector<int> * GMRESGetNeighborLR();
 };
 
 #include "Geo_CellTopo_Unstruct.hxx"

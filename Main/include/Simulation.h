@@ -49,7 +49,6 @@ private:
     //! Need convert process or not.
     void IsNeedConvert();
 
-
     //! The work flow to convert, partition and compute.
     void RunIntegrativeSolver();
 
@@ -133,10 +132,10 @@ private:
     void PostSolve();
 
     //!
-    void SolveIncomFlow();
+    void SolveSteady();
 
     //!
-    void SolveSteady();
+    void SolveSteadyByGMRES();
 
     //!
     void SolveUnsteady();
@@ -144,8 +143,6 @@ private:
     //!
     bool IsSubIterationConvergence(const int &innerIterStep, const int &minSubIteration, const int &maxSubIteration, const RDouble &tolalSubIteration, const RDouble &averageQuotientMaxInSolvers);
 
-    //! for incompressible
-    bool ContinueSolve();
 };
 }
 

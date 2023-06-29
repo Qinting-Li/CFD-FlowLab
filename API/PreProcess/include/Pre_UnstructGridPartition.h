@@ -107,18 +107,18 @@ private:
     idx_t * CreatePartitionSerial(UnstructGrid *grid, int maxProcessor);
     idx_t * CreatePartitionParallel(UnstructGrid *grid, int maxProcessor, idx_t *vtxdist);
     void MetisGrid(idx_t nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part);
-    void ParMetisGrid(int nTotalCell, idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part, idx_t *vtxdist);
+    void ParMetisGrid(idx_t *xadj, idx_t *adjncy, idx_t nparts, idx_t *part, idx_t *vtxdist);
     void ConvertPartNumberToGlobal(idx_t *part, int nTotalCell);
     void CommunicateNeiborCell(int *neighborCell);
     void SwapInterface(int *neighborCell, int iZone, int jZone);
     bool FindMatchPart(UnstructGrid *grid, int izone_t, int iface_t, int ie_t, int *interface_interfaceid_t);
-    void ReconInterfaces(Grid **grids, int iZone, int maxProcessor);
+    void ReconInterfaces(Grid **grids, int iZone);
     void BuildInterfaceLink(Grid **grids, int maxProcessor);
 
     void FillnTCellofEachZone(int *&nTCellOfZones);
 
     void DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks);
-    void DumpSerialPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks);
+    void DumpSerialPartitionGrid(const string &gridFileName, Grid **grids);
     void DumpParallelPartitionGrid(const string &gridFileName, Grid **grids, int nBlocks, int *block_index_in);
 
     //! Compute the processor index that each cell belongs to.
@@ -130,11 +130,11 @@ private:
     void FreeLocal2All();
     void CreateLocal2All(int iZone, UnstructGrid *gridpart);
 
-    void ComputeNodeMark(int iZone, UnstructGrid *gridpart);
+    void ComputeNodeMark(UnstructGrid *gridpart);
     void ComputeFaceMark(int iZone, UnstructGrid *gridpart);
 
-    int * GetNode2All(int iZone, UnstructGrid *gridpart);
-    int * GetFace2All(int iZone, UnstructGrid *gridpart);
+    int * GetNode2All(UnstructGrid *gridpart);
+    int * GetFace2All(UnstructGrid *gridpart);
     int * GetCell2All(int iZone, UnstructGrid *gridpart);
 
     //! Compute the point to zone ID.
@@ -146,6 +146,7 @@ private:
     void SetCoorPart(UnstructGrid *gridpart);
     void SetLinkPart(int iZone, UnstructGrid *gridpart);
     void SetWallDist(UnstructGrid *gridpart);
+    void SetPartitionInfo(UnstructGrid *gridpart);
     void SetVolumeCondition(UnstructGrid *gridpart);
 
     void SetNodeNumberOfEachFaceAndFace2Node(UnstructGrid *gridpart);

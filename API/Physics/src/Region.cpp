@@ -5,7 +5,7 @@
 #include "Pre_WalldistCompute.h"
 #include "Geo_Sample.h"
 #include "Task_ServerUpdateInterface.h"
-#include "Post_WriteTecplot.h"
+#include "Post_WriteVisualFile.h"
 #include "TK_Warning.h"
 #include "OversetInformation.h"
 #include "UnstructuredOversetConfig.h"
@@ -27,6 +27,7 @@ namespace PHSPACE
 LIB_EXPORT Region::Region()
 {
     zoneContainer = new vector <Zone *>;
+    GlobalZones = new vector <Zone *>;
     numberOfZoneInLocalProcess = 0;
 }
 
@@ -35,9 +36,11 @@ LIB_EXPORT Region::~Region()
     for (std::size_t iZone = 0; iZone < zoneContainer->size(); ++ iZone)
     {
         delete (*zoneContainer)[iZone];    (*zoneContainer)[iZone] = NULL;
+        (*GlobalZones)[iZone] = NULL;
     }
 
     delete zoneContainer;    zoneContainer = NULL;
+    delete GlobalZones;    GlobalZones = NULL;
 
     DeleteLabelContainer();
 }
@@ -70,8 +73,10 @@ LIB_EXPORT void Region::ReadGrid()
         GlobalDataBase::UpdateData("isOldGrid", &isOldGrid, PHINT, 1);
     }
 
+    //! Read parameters from file of "boundary_condition.hypara". Notice that the five reference variables for the component aerodynamic coefficients integration should be updated with "reynoldsReferenceLengthDimensional".
+    GlobalBoundaryCondition::ReadGlobalBoundaryCondition();
+
     int isOverset = GlobalDataBase::GetIntParaFromDB("codeOfOversetGrid");
-    int systemGridType = GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     if (isOverset)
     {
         AddUnStructInfoToStructGrid();
@@ -170,6 +175,7 @@ LIB_EXPORT int Region::GetProcessGlobalZoneIndexToLocalZoneIndex(int globalZoneI
 void Region::AddZone(Zone *zone)
 {
     zoneContainer->push_back(zone);
+    GlobalZones->push_back(zone);
     if (zone)
     {
         int globalIndex = static_cast<int>(zoneContainer->size()) - 1;
@@ -552,7 +558,6 @@ void Region::DeleteLabelContainer()
 
 LIB_EXPORT void Region::ReadOversetGrid()
 {
-    int sys_gridtype = PHSPACE::GlobalDataBase::GetIntParaFromDB("sys_gridtype");
     ReadUnstructuredOversetGrid();
 }
 
@@ -893,7 +898,7 @@ LIB_EXPORT void Region::ReviseInterZoneIndexForOverSetGrids(int iZone)
 
     if (currentProcessorIndex != receiveProcessorIndex) return;
 
-    //! 将读入的data解码为网格数据
+    //! Decode the read-in data to grid data.
     Grid *grid = PHSPACE::GetGrid(iZone, 0);
 
     InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
@@ -1027,8 +1032,6 @@ LIB_EXPORT void Region::DataMonitor()
 
 LIB_EXPORT void Region::SetupMultiBlockRelationship()
 {
-    //if (GetTaskCode() == DSMC_SOLVER) return;
-
     MultiBlocksInterface();
 
     MultiBlocksInterpoint();
@@ -1259,7 +1262,7 @@ void Region::ServerCollectionNeighborInfor()
 {
     using namespace PHMPI;
     int nZones = GetNumberofGlobalZones();
-    int server = GetServerProcessorID();
+    int serverTmp = GetServerProcessorID();
     int myid   = GetCurrentProcessorID();
     int number_of_processor = GetNumberOfProcessor();
 
@@ -1306,10 +1309,10 @@ void Region::ServerCollectionNeighborInfor()
     }
 
     //! Send the data-container to server.
-    if (myid != server)
+    if (myid != serverTmp)
     {
         int tag = myid;
-        send(cdata, server, tag);
+        send(cdata, serverTmp, tag);
     }
     else
     {
@@ -1357,12 +1360,12 @@ void Region::ServerBcastNeighborInfor()
 
     int tag = 0;
     int nZones = GetNumberofGlobalZones();
-    int server = GetServerProcessorID();
+    int serverTmp = GetServerProcessorID();
     int myid   = GetCurrentProcessorID();
 
     DataContainer *cdata = new DataContainer();
 
-    if (myid == server)
+    if (myid == serverTmp)
     {
         cdata->moveto_begin();
 
@@ -1382,7 +1385,7 @@ void Region::ServerBcastNeighborInfor()
 
     PH_BcastByServerToClinet(cdata, 2, tag);
 
-    if (myid != server)
+    if (myid != serverTmp)
     {
         cdata->moveto_begin();
 
@@ -2125,9 +2128,9 @@ void Region::DumpWallFaceCenter()
     actkeyDumpFaceCenter->openmode = openmode;
 
     int currentProcessorID = GetCurrentProcessorID();
-    int server = GetServerSepMode();
+    int serverTmp = GetServerSepMode();
  
-    if (currentProcessorID == server)
+    if (currentProcessorID == serverTmp)
     {
         ParallelOpenFile(actkeyDumpFaceCenter);
     }
@@ -2163,7 +2166,7 @@ void Region::DumpWallFaceCenter()
         }
     }
 
-    if (currentProcessorID == server)
+    if (currentProcessorID == serverTmp)
     {
         ParallelCloseFile(actkeyDumpFaceCenter);
     }
@@ -2356,8 +2359,17 @@ void Region::GlobalGridStatic(int level)
     else if (sys_gridtype == UNSTRUCTGRID)
     {
         ComputeGlobalGridSize(level);
+
+#ifdef USE_GMRESSOLVER
+        int originaltscheme = GlobalDataBase::GetIntParaFromDB("OriginalTscheme");
+        if (originaltscheme == GMRES)
+        {
+            GetCurrentShiftCellSizeToGlobalSize(level);  // GMRESParallel
+        }
+#endif
+
         int compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-        if (compressible != 1)
+        if (compressible != COMPRESSIBLE)
         {
             buildGlobalCellsArrary(level);
         }
@@ -2508,7 +2520,331 @@ void Region::ComputeGlobalGridSize(int level)
         }
     }
 }
+#ifdef USE_GMRESSOLVER
+//! GMRESParallel
+void Region::GetCurrentShiftCellSizeToGlobalSize(int level)
+{
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    int nMGLevel = 1;
+    GlobalDataBase::GetData("nMGLevel", &nMGLevel, PHINT, 1);
 
+    RDouble *TotalCells = new RDouble[nZones];
+    int *ShiftCellIndex = new int[nZones];
+
+    for (int iLevel = 0; iLevel < nMGLevel; iLevel++)
+    {
+        for (int iZone = 0; iZone < nZones; iZone++)
+        {
+            TotalCells[iZone] = -1;
+        }
+
+        for (int iZone = 0; iZone < nZones; iZone++)
+        {
+            if (STRUCTGRID == PHMPI::GetZoneGridType(iZone))
+            {
+                continue;
+            }
+            Zone *zone = GetZone(iZone);
+            if (!zone) continue;
+            UnstructGrid *grid = UnstructGridCast(GetGrid(iZone, iLevel));
+
+            int nTotalCell = grid->GetNTotalCell();
+            TotalCells[iZone] += nTotalCell * 1.0;
+        }
+
+        if (PHMPI::GetNumberOfProcessor() > 1)
+        {
+            for (int iZone = 0; iZone < nZones; iZone++)
+            {
+                RDouble targetTotalCell = -1;
+                PH_AllReduce(&TotalCells[iZone], &targetTotalCell, 1, PH_MAX);
+                TotalCells[iZone] = targetTotalCell;
+            }
+        }
+
+       //! determine whether the information is assigned
+       for (int iZone = 0; iZone < nZones; iZone++)
+       {
+            if (STRUCTGRID == PHMPI::GetZoneGridType(iZone))
+            {
+                continue;
+            }
+            Zone *zone = GetZone(iZone);
+            if (!zone) continue;
+
+            if(TotalCells[iZone] < 0.0)
+                TK_Exit::ExceptionExit("Global mesh information loading incorrectly");
+       }
+
+       //! get the shift cell index
+       for (int iZone = 0; iZone < nZones; iZone++)
+       {
+            if (STRUCTGRID == PHMPI::GetZoneGridType(iZone))
+            {
+                continue;
+            }
+
+            int globalCellIDShift = 0;
+            for (int zone = 0; zone < iZone; zone++)
+            {
+                globalCellIDShift += (int)TotalCells[zone];
+            }
+            globalCellIDShift += iZone;
+            ShiftCellIndex[iZone] = globalCellIDShift;
+            // printf("The number of cells in zone %d is %d\n", iZone, grid->GetNTotalCell());
+            // printf("The shift cell index to global in zone %d is %d\n", iZone, globalCellIDShift);
+       }
+    }
+
+    PH_Barrier();
+
+    GlobalDataBase::UpdateDataPtr("shiftCellIndexToGlobal", ShiftCellIndex);
+
+    delete[] TotalCells; TotalCells = NULL;
+
+    //! get the local cell index
+    for (int iLevel = 0; iLevel < nMGLevel; iLevel++)
+    {
+       for (int iZone = 0; iZone < nZones; iZone++)
+       {
+            if (STRUCTGRID == PHMPI::GetZoneGridType(iZone))
+            {
+                continue;
+            }
+            Zone *zone = GetZone(iZone);
+            if (!zone)
+            {
+                continue;
+            }
+
+            UnstructGrid *grid = UnstructGridCast(GetGrid(iZone, iLevel));
+            InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+            if(!interfaceInfo) 
+            {
+                continue;
+            }
+
+            int nNeighbor = interfaceInfo->GetNumberOfNeighbor();
+            int *leftCellOfFace = grid->GetLeftCellOfFace();
+            int *rightCellOfFace = grid->GetRightCellOfFace();
+            for (int ineighbor = 0; ineighbor < nNeighbor; ineighbor++)
+            {
+                InterfacePatch *interFacePatch = interfaceInfo->GetInterfacePatch(ineighbor);
+
+                int *faceID4Recv = interfaceInfo->GetFaceIndexForRecv(ineighbor);
+                int zoneID = interfaceInfo->GetZoneIndexOfNeighbor(ineighbor);
+                int nFace = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
+
+                int *cellIndexOfLocal = interFacePatch->GetCellIndexOfLocal();
+                int *cellIndexOfLocalGhost = interFacePatch->GetCellIndexOfLocalGhost();
+                int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+
+                for (int face = 0; face < nFace; face++)
+                {
+                    int realface = interFace2BoundaryFace[faceID4Recv[face]];
+                    cellIndexOfLocal[face] = leftCellOfFace[realface];
+                    cellIndexOfLocalGhost[face] = rightCellOfFace[realface];
+                }
+            }
+       }
+    }
+
+    int* shiftCellID = reinterpret_cast<int *>(GlobalDataBase::GetDataPtr("shiftCellIndexToGlobal"));
+
+    //! get the neighbor cell index
+    for (int iLevel = 0; iLevel < nMGLevel; iLevel++)
+    {
+        int count = 0;
+        for (int iZone = 0; iZone < nZones; iZone++)
+        {
+            if(STRUCTGRID ==PHMPI::GetZoneGridType(iZone))
+            {
+                continue;
+            }
+            Zone *zone = GetZone(iZone);
+            if(!zone) continue;
+
+            UnstructGrid *grid = UnstructGridCast(GetGrid(iZone, iLevel));
+            InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+            if(!interfaceInfo) 
+            {
+                continue;
+            }
+            int nNeighbor = interfaceInfo->GetNumberOfNeighbor();
+            for (int ineighbor = 0; ineighbor < nNeighbor; ineighbor++)
+            {
+                InterfacePatch *interFacePatch = interfaceInfo->GetInterfacePatch(ineighbor);
+
+                int zoneID = interfaceInfo->GetZoneIndexOfNeighbor(ineighbor);
+                int targetRank = PHMPI::GetZoneProcessorID(zoneID);
+
+                if(targetRank != PHMPI::GetCurrentProcessorID())
+                {
+                    count++;
+                }
+            }
+        }
+        MPI_Request *request = new MPI_Request[count * 2];
+        MPI_Status *status = new MPI_Status[count * 2];
+
+        int icount = 0;
+        for (int iZone = 0; iZone < nZones; iZone++)
+        {
+            if (STRUCTGRID == PHMPI::GetZoneGridType(iZone))
+            {
+                continue;
+            }
+            Zone *zone = GetZone(iZone);
+            if (!zone)
+            {
+                continue;
+            }
+
+            UnstructGrid *grid = UnstructGridCast(GetGrid(iZone, iLevel));
+            InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+            if(!interfaceInfo) 
+            {
+                continue;
+            }
+
+            int nIFace = interfaceInfo->GetNIFace();
+            int *neighbor = interfaceInfo->GetInterFace2ZoneID();
+            int nNeighbor = interfaceInfo->GetNumberOfNeighbor();
+            int* leftCellOfFace = grid->GetLeftCellOfFace();
+            int *rightCellOfFace = grid->GetRightCellOfFace();
+            for (int ineighbor = 0; ineighbor < nNeighbor; ineighbor++)
+            {
+                InterfacePatch *interFacePatch = interfaceInfo->GetInterfacePatch(ineighbor);
+
+                int zoneID = interfaceInfo->GetZoneIndexOfNeighbor(ineighbor);
+                int nFace = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
+
+                int *cellIndexOfLocal = interFacePatch->GetCellIndexOfLocal();
+                int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+
+                // data communication
+                int targetRank = PHMPI::GetZoneProcessorID(zoneID);
+                if (targetRank == PHMPI::GetCurrentProcessorID())
+                {
+                    UnstructGrid *gridTarget = UnstructGridCast(GetGrid(zoneID, iLevel));
+                    InterfaceInfo *interfaceInfoTarget = gridTarget->GetInterfaceInfo();
+                    int matchedNeighbor = interfaceInfoTarget->FindIthNeighbor(iZone);
+                    InterfacePatch *interFacePatchTarget = interfaceInfoTarget->GetInterfacePatch(matchedNeighbor);
+                    int matchednFace = interFacePatchTarget->GetNumberOfFace();
+                    if(matchednFace != nFace)
+                    {
+                        printf("!idea: %d, matched: %d\n", nFace, matchednFace);
+                        TK_Exit::ExceptionExit("Unmatched connectivy informatiion");
+                    }
+                    int *cellIndexTarget = interFacePatchTarget->GetCellIndexOfLocal();
+                    interFacePatch->SetCellIndexOfNeighbor(cellIndexTarget);
+                }
+                else // not in one processor
+                {
+                    int *cellIndexOfNeighbor = new int[nFace];
+                    MPI_Isend(cellIndexOfLocal, nFace, MPI_INT, targetRank, iZone, MPI_COMM_WORLD, &request[icount]);
+                    MPI_Irecv(cellIndexOfNeighbor, nFace, MPI_INT, targetRank, zoneID, MPI_COMM_WORLD, &request[icount + 1]);
+                    interFacePatch->SetCellIndexOfNeighbor(cellIndexOfNeighbor);
+                    icount += 2;
+                }
+            }
+        }
+
+        MPI_Waitall(count * 2, request, status);
+        delete[] request;
+        request = NULL;
+        delete[] status;
+        status = NULL;
+
+        for (int iZone = 0; iZone < nZones; iZone++)
+        {
+            if (STRUCTGRID == PHMPI::GetZoneGridType(iZone))
+            {
+                continue;
+            }
+            Zone *zone = GetZone(iZone);
+            if (!zone)
+            {
+                continue;
+            }
+
+            UnstructGrid *grid = UnstructGridCast(GetGrid(iZone, iLevel));
+            grid->SetGlobalCellIndexShift(shiftCellID[iZone]);
+            InterfaceInfo *interfaceInfo = grid->GetInterfaceInfo();
+            if(!interfaceInfo) 
+            {
+                continue;
+            }
+
+            int nIFace = interfaceInfo->GetNIFace();
+            int nNeighbor = interfaceInfo->GetNumberOfNeighbor();
+            int* rightCellOfFace = grid->GetLeftCellOfFace();
+            int *globalNeighborCellIndex = new int[nIFace];
+            int *localInterfaceCellIndex = new int[nIFace];
+            int *localInterfacePhysicalCellIndex = new int[nIFace];
+            int *interFace2BoundaryFace = interfaceInfo->GetInterFace2BoundaryFace();
+            int iFace = 0;
+
+            for (int ineighbor = 0; ineighbor < nNeighbor; ineighbor++)
+            {
+                InterfacePatch *interFacePatch = interfaceInfo->GetInterfacePatch(ineighbor);
+
+                int zoneID = interfaceInfo->GetZoneIndexOfNeighbor(ineighbor);
+                int nFace = interfaceInfo->GetNIFaceOfNeighbor(ineighbor);
+
+                int *cellIndexOfLocal = interFacePatch->GetCellIndexOfLocal();
+                int *cellIndexOfNeighbor = interFacePatch->GetCellIndexOfNeighbor();
+                int *cellIndexOfLocalGhost = interFacePatch->GetCellIndexOfLocalGhost();
+
+                for (int n = 0; n < nFace; n++)
+                {
+                    globalNeighborCellIndex[iFace] = cellIndexOfNeighbor[n] +shiftCellID[zoneID];
+                    localInterfaceCellIndex[iFace] = cellIndexOfLocalGhost[n];
+                    localInterfacePhysicalCellIndex[iFace] = cellIndexOfLocal[n];
+                    // int realFace = interFace2BoundaryFace[iFace];
+                    // localInterfaceCellIndex[iFace] = leftCellOfFace[realFace];
+                    // printf("!local zone %d, neighbor zone %d, face ID %d, target cell %d, local cell %d, shiftcell %d\n", iZone, zoneID, realFace, cellIndexOfNeighbor[n], localInterfaceCellIndex[iFace], globalNeighborCellIndex[iFace]);
+                    iFace++;
+                }
+            }
+
+            // UnstructBCSet *unstructBCSet = grid->GetUnstructBCSet();
+            // int nBCRegion = unstructBCSet->GetnBCRegion();
+            // iFace = 0;
+            // for (int ibc = 0; ibc < nBCRegion; ibc++)
+            // {
+            //     UnstructBC *bcRegion = unstructBCSet->GetBCRegion(ibc);
+            //     int bcType = bcRegion->GetBCType();
+            //     if(IsInterface(bcType))
+            //     {
+            //         vector<int> * face = bcRegion->GetFaceIndex();
+            //         for (vector<int>::iterator iter = face->begin(); iter < face->end(); iter++)
+            //         {
+            //             localInterfaceCellIndex[iFace] = rightCellOfFace[*iter];
+            //             // printf("!local zone %d, face ID %d, local cell %d, shiftcell %d\n", iZone,  *iter, localInterfaceCellIndex[iFace], globalNeighborCellIndex[iFace]);
+            //             iFace++;
+            //         }
+            //     }
+            // }
+
+            interfaceInfo->SetGlobalNeighborCellIndex(globalNeighborCellIndex);
+            interfaceInfo->SetLocalInterfaceCellIndex(localInterfaceCellIndex);
+            interfaceInfo->SetLocalInterfacePhysicalCellIndex(localInterfacePhysicalCellIndex);
+            // if(iZone == 0)
+            // {
+            //     for (int iter = 0; iter < nIFace; iter++)
+            //     {
+            //         printf("!left cell %d matched cell %d\n", localInterfaceCellIndex[iter] + 1, globalNeighborCellIndex[iter] + 1);
+            //     }
+            // }
+        }
+    }
+
+    PH_Barrier();
+
+    // TK_Exit::ExceptionExit("This is the debug information\n");
+}
+#endif
 void Region::buildGlobalCellsArrary(int level)
 {
     int nZones = PHMPI::GetNumberofGlobalZones();
@@ -2799,7 +3135,7 @@ void Region::ComputeMetrics_BC()
     if (systemGridType != 1) Rwithghost = false; 
     if (isOverset) Rwithghost = false;
     if (nMGLevel != 1) Rwithghost = false;
-    if (compressible != 1) Rwithghost = false;
+    if (compressible != COMPRESSIBLE) Rwithghost = false;
     if (isUnsteady) Rwithghost = false;
     if (nChemical != 0) Rwithghost = false;
     if (ifLowSpeedPrecon != 0) Rwithghost = false;
@@ -3232,8 +3568,7 @@ LIB_EXPORT void Region::PostSimulation()
     return;
 #endif
     //! Temporarily, put it here. In the future, add to Post().
-    Post_WriteTecplot generateVisualFile;
-    generateVisualFile.Run();
+    WriteVisualFile();
     //! end
 }
 
@@ -3404,7 +3739,6 @@ void Region::GridValidityCheck()
     RDouble maxBox[3] = {-LARGE, -LARGE, -LARGE};
 
     int nLocalZones = PHMPI::GetNumberofLocalZones();
-    int myid = PHMPI::GetCurrentProcessorID();
 
     //! Check OpenMP threads information firstly.
 #ifdef USE_OMP
@@ -3412,12 +3746,13 @@ void Region::GridValidityCheck()
 
     if (systemGridType== MIXGRID || systemGridType== STRUCTGRID)
     {
-        TK_Exit::ExceptionExit("The USE_OMP is only for UNSTRUCTGRID !\n");
+        TK_Exit::ExceptionExit("The USE_OMP is only for UNSTRUCTGRID!\n");
     }
 #ifdef WIN32
     omp_set_num_threads(4);
 #endif
 #pragma omp parallel for
+    int myid = PHMPI::GetCurrentProcessorID();
 
     for (int iZone = 0; iZone < nLocalZones; ++ iZone)
     {

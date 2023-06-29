@@ -1,6 +1,6 @@
 #include "Task_ServerUpdateInterpoint.h"
 #include "Geo_Grid.h"
-
+#pragma warning(disable:4100)
 namespace PHSPACE
 {
 TaskServerUpdateInterpoint::TaskServerUpdateInterpoint() {}

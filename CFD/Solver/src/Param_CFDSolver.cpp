@@ -7,12 +7,18 @@ namespace PHSPACE
 
 LIB_EXPORT Param_CFDSolver::Param_CFDSolver()
 {
-
+    speedVaryStep = NULL;
+    speedVaryCoef = NULL;
+    CFLVaryMultiStep = NULL;
+    CFLVaryCoef = NULL;
 }
 
 LIB_EXPORT Param_CFDSolver::~Param_CFDSolver()
 {
-
+    if (speedVaryStep != NULL) { delete speedVaryStep; speedVaryStep = NULL; }
+    if (speedVaryCoef != NULL) { delete speedVaryCoef; speedVaryCoef = NULL; }
+    if (CFLVaryMultiStep != NULL) { delete CFLVaryMultiStep; CFLVaryMultiStep = NULL; }
+    if (CFLVaryCoef != NULL) { delete CFLVaryCoef; CFLVaryCoef = NULL; }
 }
 
 LIB_EXPORT void Param_CFDSolver::Init()
@@ -30,7 +36,10 @@ LIB_EXPORT void Param_CFDSolver::Init()
     intervalStepPlot         = GlobalDataBase::GetIntParaFromDB("intervalStepPlot");
     intervalStepFlow         = GlobalDataBase::GetIntParaFromDB("intervalStepFlow");
 
+    isAle                    = GlobalDataBase::GetIntParaFromDB("codeOfAleModel");
+
     ifLocalTimeStep          = GlobalDataBase::GetIntParaFromDB("ifLocalTimeStep");
+    ifLowSpeedPrecon         = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
 
     CFLVaryStep              = GlobalDataBase::GetIntParaFromDB("CFLVaryStep");
     nLUSGSSweeps             = GlobalDataBase::GetIntParaFromDB("nLUSGSSweeps");
@@ -103,6 +112,7 @@ LIB_EXPORT void Param_CFDSolver::Init()
     {
         fineCFL = GlobalDataBase::GetDoubleParaFromDB("fineCFL"); //fineCFL
     }
+
     AusmpwPlusLimiter = 1.0;
     if (GlobalDataBase::IsExist("AusmpwPlusLimiter", PHDOUBLE, 1))
     {
@@ -110,6 +120,76 @@ LIB_EXPORT void Param_CFDSolver::Init()
     }
 
     skewnessAngle = GlobalDataBase::GetDoubleParaFromDB("skewnessAngle");
+
+    nDiagonalModifiedTurb = 0;
+
+    trTemperatureMinNonDim = 10.0 ;
+    if (GlobalDataBase::IsExist("trTemperatureMin", PHDOUBLE, 1))
+    {
+        trTemperatureMinNonDim = GlobalDataBase::GetDoubleParaFromDB("trTemperatureMin") ;
+    }
+    trTemperatureMinNonDim /= refDimensionalTemperature;
+
+//////////////////////////////////////////////////////////////////////
+    nNumberOfSpeedStep = 0;
+    if (GlobalDataBase::IsExist("nNumberOfSpeedStep", PHINT, 1))
+    {
+        nNumberOfSpeedStep = GlobalDataBase::GetIntParaFromDB("nNumberOfSpeedStep");
+    }
+    if (nNumberOfSpeedStep > 0)
+    {
+        speedVaryStep = new int[nNumberOfSpeedStep];
+        speedVaryCoef = new RDouble[nNumberOfSpeedStep];
+
+        if (GlobalDataBase::IsExist("speedVaryStep", PHINT, nNumberOfSpeedStep))
+        {
+            GlobalDataBase::GetData("speedVaryStep", &speedVaryStep[0], PHINT, nNumberOfSpeedStep);
+        }
+        else
+        {
+            nNumberOfSpeedStep = 0;
+        }
+
+        if (GlobalDataBase::IsExist("speedVaryCoef", PHDOUBLE, nNumberOfSpeedStep))
+        {
+            GlobalDataBase::GetData("speedVaryCoef", &speedVaryCoef[0], PHDOUBLE, nNumberOfSpeedStep);
+        }
+        else
+        {
+            nNumberOfSpeedStep = 0;
+        }
+    }
+
+//////////////////////////////////////////////////////////////////////
+    nNumberOfCFLStep = 0;
+    if (GlobalDataBase::IsExist("nNumberOfCFLStep", PHINT, 1))
+    {
+        nNumberOfCFLStep = GlobalDataBase::GetIntParaFromDB("nNumberOfCFLStep");
+    }
+
+    if (nNumberOfCFLStep > 0)
+    {
+        CFLVaryMultiStep = new int[nNumberOfCFLStep];
+        CFLVaryCoef = new RDouble[nNumberOfCFLStep];
+
+        if (GlobalDataBase::IsExist("CFLVaryMultiStep", PHINT, nNumberOfCFLStep))
+        {
+            GlobalDataBase::GetData("CFLVaryMultiStep", &CFLVaryMultiStep[0], PHINT, nNumberOfCFLStep);
+        }
+        else
+        {
+            nNumberOfCFLStep = 0;
+        }
+
+        if (GlobalDataBase::IsExist("CFLVaryCoef", PHDOUBLE, nNumberOfCFLStep))
+        {
+            GlobalDataBase::GetData("CFLVaryCoef", &CFLVaryCoef[0], PHDOUBLE, nNumberOfCFLStep);
+        }
+        else
+        {
+            nNumberOfCFLStep = 0;
+        }
+    }
 }
 
 }

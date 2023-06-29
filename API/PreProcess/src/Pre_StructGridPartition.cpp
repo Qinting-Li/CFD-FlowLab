@@ -358,11 +358,11 @@ void Pre_StrGridPartition::SetWallDist()
 
         StructGrid *Ordinary_grid = StructGridCast(OrdinaryGrid[iBasic]);
 
-        WriteGridWallDist(grid, Ordinary_grid, nst, ned);
+        WriteGridWallDist(grid, Ordinary_grid, nst);
 
-//        grid->SetOrdinaryGridIndex(iBasic);
-//        grid->SetOrdinaryDimStartIndex(&nst[0]);
-//        grid->SetOrdinaryDimEndIndex(&ned[0]);
+        grid->SetOrdinaryGridIndex(iBasic);
+        grid->SetOrdinaryDimStartIndex(&nst[0]);
+        grid->SetOrdinaryDimEndIndex(&ned[0]);
     }
 
 //    if (partitionWallDist)
@@ -371,7 +371,7 @@ void Pre_StrGridPartition::SetWallDist()
 //    }
 }
 
-void Pre_StrGridPartition::WriteGridWallDist(StructGrid *grid, StructGrid *Ordinary_grid, vector< int > &nst, vector< int > &ned)
+void Pre_StrGridPartition::WriteGridWallDist(StructGrid *grid, StructGrid *Ordinary_grid, vector< int > &nst)
 {
     if (!Ordinary_grid->GetWallDist()) return;
 
@@ -696,7 +696,7 @@ void Pre_StrGridPartition::OutputProcessorInformation()
         << 100. * (static_cast<RDouble>(mincellsize * numberOfProcessors) / totalcellsize - 1.) << "%)\n"
         << " Maximum Cell Size = " << maxcellsize << "("
         << 100. * (static_cast<RDouble>(maxcellsize * numberOfProcessors) / totalcellsize - 1.) << "%)\n";
-    oss.flags();
+    (void)oss.flags();
 
     cs = oss.str();
     cout << cs << endl;
@@ -1107,7 +1107,7 @@ void Pre_StrGridPartition::ReadLnkFile(const string &fileName_in)
             StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
 
             int bctype = structBC->GetBCType();
-            if (bctype >= 0) continue;
+            if ((!IsInterface(bctype))) continue;
 
             int imin, imax, jmin, jmax, kmin, kmax, nbt;
 
@@ -1218,7 +1218,7 @@ void Pre_StrGridPartition::ReadLnkInfor(const string &fileName_in)
             StructBC *bcregion = structBCSet->GetBCRegion(iBCRegion);
 
             int bctype = bcregion->GetBCType();
-            if (bctype >= 0) continue;
+            if (!IsInterface(bctype)) continue;
 
             iMin = LnkInfor[iLnkinfo][index++];
             iMax = LnkInfor[iLnkinfo][index++];
@@ -1328,7 +1328,7 @@ void Pre_StrGridPartition::ReadBoundaryData()
             boundaryFace->SetRegion(nst, ned);
             boundaryFace->SetDirection(bcdirection);
 
-            if (bctype < 0)
+            if (IsInterface(bctype))
             {
                 int *t_sd = structBC->GetTargetStart();
                 int *t_ed = structBC->GetTargetEnd();

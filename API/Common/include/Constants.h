@@ -21,6 +21,9 @@ namespace PHSPACE
 const int SOLVER_BASED        = 0;
 const int GRID_BASED          = 1;
 
+const int DENSITY_BASED_SOLVER = 0;
+const int PRESSURE_BASED_SOLVER = 1;
+
 const int FV_METHOD           = 0;
 const int FD_METHOD           = 1;
 
@@ -31,13 +34,16 @@ const int PARTITION_GRID      = 3;
 const int REPOSITORY          = 4;  //! Useless.
 const int OVERSETGRID_VIEW    = 5;
 const int OVERSET_CONFIG      = 6;
-const int CONVERT_PARTITION   = 7;  //! Useless.
+const int CONVERT_PARTITION   = 7;
+const int DSMC_SOLVER         = 8;  //! Useless.
+const int HELICOPTER          = 9;  //! Useless.
+const int UGKS_SOLVER         = 10; //! Useless.
 const int HO_SOLVER           = 12;
-
+const int LBM_SOLVER_MPI      = 13;
+const int LBM_SOLVER_OMP      = 17;
 const int INTEGRATIVE_SOLVER  = 14;
 const int GRIDCHECK_SOLVER    = 15;
-
-const int GRIDER_SOLVER       = 16;
+const int GRID_SOLVER         = 16;
 
 const int SPECDIFFHYB_SOLVER  = 51;
 const int SPEC_SOLVER         = 52;
@@ -102,6 +108,7 @@ const int SUBSONICBCCONDITION   = 3;    //! Useless.
 const int TEMPERATURE_DENSITY   = 4;
 const int TEMPERATURE_PRESSURE  = 5;
 const int MACH_TEMP_PRE         = 6;
+const int WEATHERCONDITION      = 7;
 const int PRIMITIVE_VARIABLES   = 9;
 const int TRAJECTORY            = 10;
 
@@ -126,6 +133,8 @@ const int ISCHEME_AUSMPW         = 11;
 const int ISCHEME_Rotate         = 12;
 const int ISCHEME_ROE_MODIFIED   = 13;
 const int ISCHEME_AUSMPW_PLUS    = 14;
+const int ISCHEME_GMRES_ROE      = 15; // GMRES modified Roe scheme for assembling Jacobian matrix using FD
+const int ISCHEME_GMRES_Steger   = 16; // GMRES modified Steger scheme  GMRES3D
 
 const int FIRST_ORDER            = 1;
 const int SECOND_ORDER           = 2;
@@ -162,12 +171,16 @@ const int SPALART_ALLMARAS       = 11;
 const int KW_SST                 = 12;
 const int KEPSILON               = 13;
 
+const int INCOMPRESSIBLE         = 0;
+const int COMPRESSIBLE           = 1;
+
 const int MULTI_STAGE            = 1;
 const int LU_SGS                 = 4;
 const int Block_LU_SGS           = 5;
 const int JACOBIAN_ITERATION     = 6;
 const int Line_LU_SGS            = 7;
 const int Matrix_LU_SGS          = 8;
+const int GMRES                  = 9;  
 
 const int OneRefineOneDeform     = 1;
 const int DeformAfterAllRefine   = 2;
@@ -244,16 +257,25 @@ const int S_IP = 3;
 const int S_IR = 4;
 const int S_ITEMP  = 5;
 const int S_ITURBK = 6;
-const int S_IOMEGA = 7;
+const int S_IEPSILON  = 7;
 
-const int S_IEPSILON  = 8;
-const int S_IEDDYVISC = 0;
+const int S_IOMEGA = 8;
+const int S_ISA = 9;
+const int S_IEDDYVISC = 10;
 
-const int S_IOxygen        = 9;
-const int S_INitrogen      = 10;
-const int S_ICarbonDioxide = 11;
-const int S_IMethane       = 12;
-const int S_IH             = 13;
+const int S_IAIR            = 15;
+const int S_IH2             = 16;
+const int S_IH2_l           = 17;
+const int S_INH3_l          = 18;
+const int S_ICH4            = 19;
+const int S_IC2H4           = 20;
+const int S_IC3H8           = 21;
+const int S_ING             = 22;
+const int S_ILNG            = 23;
+const int S_IH2S            = 24;
+const int S_ICl2            = 25;
+const int S_INH3            = 26;
+const int S_IC2H6           = 27;
 
 const int MOMX_EQ    = 0;
 const int MOMY_EQ    = 1;
@@ -299,22 +321,59 @@ typedef enum
     PISO       = 4
 }InCom_method;
 
+typedef enum
+{
+    HYPRELib = 0,
+    UNAPLib  = 1,
+    YHAMGLib = 2
+}mathLibName;
+
 typedef enum  
 {
-    GaussSeidel = 0,
-    GMRES       = 1,
-    Bicgstab    = 2,
-    AMG         = 3,
-    PCG         = 4,
-    FlexGMRES   = 5
+    GaussSeidelMethod = 0,
+    GMRESMethod       = 1,
+    BicgstabMethod    = 2,
+    AMGMethod         = 3,
+    PCGMethod         = 4,
+    FlexGMRESMethod   = 5,
+    LGMRESMethod      = 6,
+    COGMRESMethod     = 7,
+    CGNRMethod        = 8,
+    MGRMethod         = 9,
+    ILUMethod         = 10,
+    AMGDDMethod       = 11,
+    HybridMethod       = 12,
+    PipeBicgstabMethod = 13,
+    PipeCGMethod = 14,
+    PipeGMRESMethod = 15
 }LinearSolverID;
 
 typedef enum  
 {
-    iNone    = 0,
-    iILU     = 1,
-    iAMG     = 2,
-    iEuclid  = 3
+    L1Res = 1,
+    L2Res    = 2,
+    LinfRes  = 3,
+}ResidualID;
+
+typedef enum
+{
+    iNone = 0,
+    iILU = 1,
+    iAMG = 2,
+    iEuclid = 3,
+    DiagScale = 4,
+    PILUT = 5,
+    GSMG = 6,
+    ParaSails = 7,
+    LduDiag = 8,
+    LduDIC = 9,
+    LduDILU = 10,
+    LduBJacobi = 11,
+    iBJILU =   12,
+    iBJSOR =   13,
+    iJacobi =  14,
+    iSOR    =  15,
+    iAMGDD = 16
 }PrecondTypeID;
 
 typedef enum
@@ -352,6 +411,21 @@ typedef enum
     iSSTWallF   = 4
 }Model;
 
+typedef enum
+{
+    WriteBoundary,
+    WriteBlock,
+    Writecomplete
+} plotFieldType;
+
+typedef enum
+{
+    Tecplot_Binary,
+    Tecplot_ASCII,
+    Ensight_Binary,
+    Ensight_ASCII
+} VisualfileType;
+
 namespace TEC_SPACE
 {
 const int ORDERED         = 0;
@@ -362,10 +436,6 @@ const int FETETRAHEDRON   = 4;
 const int FEBRICK         = 5;
 const int FEPOLYGON       = 6;
 const int FEPOLYHEDRON    = 7;
-
-const int WriteBoundary   = 0;
-const int WriteBlock      = 1;
-const int Writecomplete   = 2;
 
 const int BoundaryVisual  = 0;
 const int FieldVisual     = 1;

@@ -40,8 +40,6 @@ typedef void (*CREATE_SINGLE_GRID)(Grid *comm_grid);
 
 void SetBcRegion(StructGrid *grid, VInt &imin, VInt &imax, VInt &jmin, VInt &jmax, VInt &kmin, VInt &kmax, VInt &bctype);
 
-using namespace PHSPACE;
-
 void Fantasy2Ustar();
 void Fantasy2Ustar2D();
 void Fantasy2Ustar3D();
@@ -51,7 +49,7 @@ void ReadLnkFile(const string &fileName_in, Grid **grids, int nBlocks);
 void FantasyWriteToGrd(const string &cel_file, Grid **grids, int nBlocks);
 void FantasyWriteToInp(const string &bnd_file, Grid **grids, int nBlocks);
 
-void FantasyWriteToFluent(const string &gridFileName, Grid **grids, int nBlocks);
+void FantasyWriteToFluent(const string &gridFileName, Grid **grids);
 
 void ReadUstarGrid(const string &gridfile, UnstructGrid *grid);
 void ReadUstarGrid3D_Binary(const string &gridfile, UnstructGrid *grid);

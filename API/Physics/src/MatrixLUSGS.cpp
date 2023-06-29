@@ -12,9 +12,6 @@ namespace PHSPACE
 void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy *LUplusDQ, RDouble &sweepNormal)
 {
     StructGrid *grid = StructGridCast(gridIn);
-    int ni = grid->GetNI();
-    int nj = grid->GetNJ();
-    int nk = grid->GetNK();
 
 	SolveDiagonalMatrix(grid);
 
@@ -32,10 +29,6 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
     int nChemical = GlobalDataBase::GetIntParaFromDB("nchem");
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
-
-    RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
-
-    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
 
     RDouble *dqNeighbor = new RDouble[nEquation];
     RDouble *prim   = new RDouble[nEquation];
@@ -60,13 +53,9 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
 	RDouble2D *jacobianMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &jacobianMatrix2D = *reinterpret_cast<RDouble2D *> (jacobianMatrix);
 
-    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
-    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
     RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
     RDouble4D &q  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &t  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
-    RDouble3D &dt = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
     RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 	RDouble5D &diagonalMatrix = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("diagonalMatrix"));
 	RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
@@ -74,7 +63,7 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
     grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, NON_GHOST);
 
-    bool viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     RDouble3D viscousLaminar, viscousTurbulence;
     if (viscousType > 0)
     {
@@ -129,7 +118,7 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
                     int il1, jl1, kl1, il, jl, kl;
 					grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-					grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+					grid->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -158,8 +147,6 @@ void SolveMatrixLUSGSForwardSweep(Grid *gridIn, FieldProxy *dqProxy, FieldProxy 
                     RDouble zfn  = half * (zfn1  + zfn2);
                     RDouble area = half * (area1 + area2);
                     RDouble vgn  = half * (vgn1  + vgn2);
-
-                    RDouble &rad = invSpectralRadius(il, jl, kl, iSurface - 1);
 
                     RDouble gama = gamma(il, jl, kl);
 
@@ -285,9 +272,6 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
     int nTemperatureModel = GlobalDataBase::GetIntParaFromDB("ntmodel");
     int nEquation = nLaminar + nChemical + nTemperatureModel - 1;
 
-    RDouble refGama = GlobalDataBase::GetDoubleParaFromDB("refGama");
-    int ifLowSpeedPrecon = GlobalDataBase::GetIntParaFromDB("ifLowSpeedPrecon");
-
     RDouble *dqNeighbor = new RDouble[nEquation];
     RDouble *prim = new RDouble[nEquation];
     RDouble *qNeighbor = new RDouble[nEquation];
@@ -312,13 +296,9 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
 	RDouble2D *jacobianMatrix = new RDouble2D(M, M, fortranArray);
     RDouble2D &jacobianMatrix2D = *reinterpret_cast<RDouble2D *> (jacobianMatrix);
 
-    RDouble4D &invSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("invSpectralRadius"));
-    RDouble4D &diagonal = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("diagonal"));
     RDouble4D &res = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("res"));
     RDouble4D &visSpectralRadius = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("visSpectralRadius"));
     RDouble4D &q  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("q"));
-    RDouble4D &t  = *reinterpret_cast <RDouble4D *> (grid->GetDataPtr("t"));
-    RDouble3D &dt = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("dt"));
     RDouble3D &gamma = *reinterpret_cast <RDouble3D *> (grid->GetDataPtr("gama"));
 	RDouble5D &diagonalMatrix = *reinterpret_cast<RDouble5D *> (grid->GetDataPtr("diagonalMatrix"));
 	RDouble3D &rtem = *reinterpret_cast <RDouble3D *> (gridIn->GetDataPtr("rtem"));
@@ -330,7 +310,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
     int iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd;
     grid->GetCellIterationIndex(iCellStart, iCellEnd, jCellStart, jCellEnd, kCellStart, kCellEnd, NON_GHOST);
 
-    bool viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
+    int viscousType = GlobalDataBase::GetIntParaFromDB("viscousType");
     RDouble3D viscousLaminar, viscousTurbulence;
     if (viscousType > 0)
     {
@@ -381,7 +361,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
                     int il1, jl1, kl1, il, jl, kl;
 					grid->GetNsurfIndex(il1, jl1, kl1, iSurface);
 
-                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl, iSurface);
+                    grid->GetRightCellOfFace(i, j, k, il1, jl1, kl1, il, jl, kl);
 
                     for (int m = 0; m < nEquation; ++ m)
                     {
@@ -412,10 +392,7 @@ void SolveMatrixLUSGSBackwardSweep(Grid *gridIn, FieldProxy *dq_proxy, FieldProx
                     RDouble area = half * (area1 + area2);
                     RDouble vgn  = half * (vgn1  + vgn2);
 
-                    RDouble &rad = invSpectralRadius(il, jl, kl, iSurface - 1);
-
                     RDouble gama = gamma(il, jl, kl);
-                    RDouble tm = t(il, jl, kl, 0);
 
 					ComputeInviscidMatrix(prim, xfn, yfn, zfn, area, vgn, gama, tempMatrix);
 
@@ -563,7 +540,7 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
 
     int nDim = GetDim();
     int iL, jL, kL, iR, jR, kR;
-    RDouble gama, visLaminar, visTurbulence, vol1, vol2;
+    RDouble gama, visLaminar, visTurbulence;
     RDouble xfn1, yfn1, zfn1, area1, vgn1;
     RDouble xfn2, yfn2, zfn2, area2, vgn2;
     RDouble rad_euler, rad_ns;
@@ -605,8 +582,6 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                     }
                 }
 				
-				RDouble vol = gvol(i, j, k);
-
                 //! Compute the scalar coefficient of the diagonal matrix.
                 for (int m = 0; m < nEquation; ++ m)
                 {
@@ -629,7 +604,7 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
                     }
 
 					//! Compute the surface -1/2
-					gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL, iSurface);
+					gridIn->GetLeftCellOfFace(i, j, k, il1, jl1, kl1, iL, jL, kL);
 
 					for (int m = 0; m < nEquation; ++ m)
                     {
@@ -656,7 +631,7 @@ void SolveDiagonalMatrix(StructGrid *gridIn)
 					}
 
 					//! Compute the surface +1/2
-					gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR, iSurface);
+					gridIn->GetRightCellOfFace(i, j, k, il1, jl1, kl1, iR, jR, kR);
 
 					for (int m = 0; m < nEquation; ++ m)
                     {
@@ -744,7 +719,7 @@ void ComputeInviscidMatrix(RDouble *primitiveVars, RDouble xfn, RDouble yfn, RDo
     rVelocity = averageVelocity - vgn;
 
     //! To compute the total enthalpy.
-    RDouble squareVelocity, totalEnthalpy;
+    RDouble squareVelocity, totalEnthalpy=0.0;
     squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
     if (nChemical == 0)
     {
@@ -831,7 +806,6 @@ void SolveRoeMatrix(RDouble *priml, RDouble *primr, RDouble xfn, RDouble yfn, RD
     RDouble ratio = sqrt(rr / rl);
     RDouble coef = 1.0 / (1.0 + ratio);
 
-    RDouble r = sqrt(rl * rr);
     RDouble u = (ul + ur * ratio) * coef;
     RDouble v = (vl + vr * ratio) * coef;
     RDouble w = (wl + wr * ratio) * coef;

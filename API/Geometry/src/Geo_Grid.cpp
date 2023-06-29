@@ -66,10 +66,10 @@ Grid::~Grid()
 
     delete oldGrid;    oldGrid = NULL;
 
-    //if (IsFinestGrid())
-    //{
-    //    FreeInterfaceField();
-    //}
+    if (IsFinestGrid())
+    {
+        FreeInterfaceField();
+    }
 
     if (interfaceFields){delete interfaceFields;    interfaceFields = NULL;};
     delete interpointFields;    interpointFields = NULL;
@@ -132,7 +132,7 @@ void Grid::GridVerticeVelocity(RDouble *xt, RDouble *yt, RDouble *zt)
     }
 }
 
-LIB_EXPORT void Grid::RotTransVel(RDouble *xyzref, RDouble *dangle, RDouble *tcoord, RDouble **angle0, RDouble **coord0)
+LIB_EXPORT void Grid::RotTransVel(RDouble *xyzref, RDouble *dangle, RDouble *tcoord, RDouble **coord0)
 {
     //! This subroutine calculates the new set of coordinates after a rotation and a translation.
 
@@ -277,7 +277,6 @@ LIB_EXPORT void Grid::RotateAboutAxis()
         {            
             for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
-                RDouble oldX = x[iNode];
                 RDouble oldY = y[iNode];
                 RDouble oldZ = z[iNode];
                 y[iNode] = cosinTheta * oldY + sinTheta   * oldZ;
@@ -289,7 +288,6 @@ LIB_EXPORT void Grid::RotateAboutAxis()
             for (int iNode = 0; iNode < nTotalNode; ++ iNode)
             {
                 RDouble oldX = x[iNode];
-                RDouble oldY = y[iNode];
                 RDouble oldZ = z[iNode];
                 x[iNode] = cosinTheta * oldX + sinTheta   * oldZ;
                 z[iNode] = -sinTheta  * oldX + cosinTheta * oldZ;
@@ -301,7 +299,6 @@ LIB_EXPORT void Grid::RotateAboutAxis()
             {
                 RDouble oldX = x[iNode];
                 RDouble oldY = y[iNode];
-                RDouble oldZ = z[iNode];
                 x[iNode] = cosinTheta * oldX + sinTheta   * oldY;
                 y[iNode] = -sinTheta  * oldX + cosinTheta * oldY;
             }
@@ -379,11 +376,11 @@ LIB_EXPORT void Grid::RegisterInterpointField(const string &name, const int type
 
     interpointFields->RegisterField(name, type, dimesion, solverID);
 }
-
+#pragma warning(disable:4100)
 LIB_EXPORT void Grid::RegisterOversetField(const string &name, const int type, const int dimesion)
 {
 }
-
+#pragma warning(default:4100)
 void Grid::FreeInterfaceField()
 {
     if (!interfaceFields) return;
@@ -745,6 +742,188 @@ LIB_EXPORT void ShiftMinMaxBox(RDouble *pmin, RDouble *pmax, RDouble tol)
     pmax[0] += tol;
     pmax[1] += tol;
     pmax[2] += tol;
+}
+
+LIB_EXPORT void CommunicateSpecificArray(int level, string arrayName, int nEquation)
+{
+    int currentProcessor = PHMPI::GetCurrentProcessorID();
+    int nZones = PHMPI::GetNumberofGlobalZones();
+    vector <PH_Request > requestContainer;
+    vector <vector <DataContainer *> > receivedDataBuffer;
+    vector <vector <DataContainer *> > sendDataBuffer;
+    receivedDataBuffer.resize(nZones);
+    sendDataBuffer.resize(nZones);
+
+    //! Step 0: Compressing data firstly.
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+        if (currentProcessor == sendProcessor)
+        {
+            sendDataBuffer[iZone].resize(numberOfNeighbor);
+        }
+
+        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+        {
+            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+
+            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+
+            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+            {
+                continue;
+            }
+
+            //! Allocate and compress the buffers for sending.
+            DataContainer *sendBuffer = 0;
+            if (currentProcessor == sendProcessor)
+            {
+                sendBuffer = new DataContainer;
+                sendDataBuffer[iZone][iNeighbor] = sendBuffer;
+
+                //! Compress the send information into the actkey.
+                Grid *grid = PHSPACE::GetGrid(iZone, level);
+                grid->CompressSpecificArrayToInterface(sendBuffer, arrayName, neighborZone, nEquation);
+            }
+        }
+    }
+
+    //! Step 1: Communication.
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+
+        //! Communicating.
+        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+        {
+            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+
+            int sendProcessor = PHMPI::GetZoneProcessorID(iZone);
+            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+
+            if (currentProcessor != sendProcessor && currentProcessor != receiveProcessor)
+            {
+                continue;
+            }
+
+            //! Allocate the buffers for sending and receiving.
+            DataContainer *receivedBuffer = 0;
+            DataContainer *sendBuffer = 0;
+            if (currentProcessor == receiveProcessor)
+            {
+                receivedBuffer = new DataContainer;
+                receivedDataBuffer[iZone].push_back(receivedBuffer);
+            }
+            if (currentProcessor == sendProcessor)
+            {
+                sendBuffer = sendDataBuffer[iZone][iNeighbor];
+            }
+
+            int tag = iZone;
+
+            //! Communication.
+            if (currentProcessor == sendProcessor)
+            {
+                if (sendProcessor != receiveProcessor)
+                {
+                    streamsize nlen = sendBuffer->size();
+
+                    //! Send the data to neighbors.
+                    send(sendBuffer, receiveProcessor, nlen, requestContainer, tag);
+                }
+            }
+            if (currentProcessor == receiveProcessor)
+            {
+                //! Get the neighbor order: which order that 'iZone' on neighbors of neighborZone.
+                int neighborOrer = -1;
+                ZoneNeighbor *globalNeighborZonesTemp = zoneConnectivity->GetZoneNeighbor(neighborZone);
+                int numberOfNeighborTemp = globalNeighborZonesTemp->GetNumberOfNeighbor();
+
+                for (int neighborID = 0; neighborID < numberOfNeighborTemp; ++ neighborID)
+                {
+                    int neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(neighborID);
+                    if (neighborZoneTemp == iZone)
+                    {
+                        neighborOrer = neighborID;
+                        break;
+                    }
+                }
+
+                ASSERT(neighborOrer != -1);
+
+                if (sendProcessor != receiveProcessor)
+                {
+                    //! The data length of the received data is same to the length that send to the neighbor.
+                    CharVecSizeType nlen = sendDataBuffer[neighborZone][neighborOrer]->size();
+
+                    //! Receive data from neighbors.
+                    receive(receivedBuffer, sendProcessor, nlen, requestContainer, tag);
+                }
+                else
+                {
+                    SWAP(receivedDataBuffer[iZone].back(), sendDataBuffer[iZone][iNeighbor]);
+                }
+            }
+        }
+    }
+
+    //! Step2: MPI waiting for Non-blocking communications.
+    if (PHMPI::GetNumberOfProcessor() > 1)
+    {
+        PH_Wait(static_cast<int>(requestContainer.size()), &(requestContainer[0]));
+    }
+
+    //! Step3: Translate the data container.
+    for (int iZone = 0; iZone < nZones; ++ iZone)
+    {
+        ZoneNeighbor *globalNeighborZones = zoneConnectivity->GetZoneNeighbor(iZone);
+        int numberOfNeighbor = globalNeighborZones->GetNumberOfNeighbor();
+
+        int count = 0;
+        for (int iNeighbor = 0; iNeighbor < numberOfNeighbor; ++ iNeighbor)
+        {
+            int neighborZone = globalNeighborZones->GetZoneIndexOfNeighbor(iNeighbor);
+
+            int receiveProcessor = PHMPI::GetZoneProcessorID(neighborZone);
+
+            if (currentProcessor == receiveProcessor)
+            {
+                DataContainer *receiveData = receivedDataBuffer[iZone][count];
+
+                //! Because get into here when currentProcessor==receiveProcessor,
+                //! so, use zoneGridSolver of neighborZone, this zone is on the current processor!
+
+                //! Decompress the interface data from data-container.
+                Grid *grid = PHSPACE::GetGrid(neighborZone, level);
+                grid->DecompressArrayFromInterface(receiveData, arrayName, iZone, nEquation);
+
+                ++count;
+            }
+        }
+    }
+
+    //! Step4: Free the buffers.
+    for (int iDim = 0; iDim < receivedDataBuffer.size(); ++ iDim)
+    {
+        for (int jDim = 0; jDim < receivedDataBuffer[iDim].size(); ++ jDim)
+        {
+            delete receivedDataBuffer[iDim][jDim];
+        }
+    }
+    receivedDataBuffer.clear();
+    for (int iDim = 0; iDim < sendDataBuffer.size(); ++ iDim)
+    {
+        for (int jDim = 0; jDim < sendDataBuffer[iDim].size(); ++ jDim)
+        {
+            delete sendDataBuffer[iDim][jDim];
+        }
+    }
+    sendDataBuffer.clear();
+    requestContainer.clear();
 }
 
 }

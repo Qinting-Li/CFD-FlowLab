@@ -1,6 +1,6 @@
 <div align=left><img src="PHengLEI\Documents/PHengLEI-LOGO.png" style="zoom: 15%;"/><br>
 
-# 风雷软件（PHengLEI2206.v10111）
+# 风雷软件（PHengLEI2306.v889）
 
 备注：主分支为master分支，更稳定，更多新功能请切换到ActiveBranch分支。
 
@@ -13,7 +13,6 @@
 - 官网地址: http://www.cardc.cn/nnw/software/phenglei
 - 代码库地址：https://forge.osredm.com/PHengLEI/PHengLEI
 - 算例库地址：https://forge.osredm.com/PHengLEI/PHengLEI-TestCases
-- 代码参考文档地址：http://116.63.141.248:8088
 - 论坛（常见问题、算例展示、技术分享）地址：https://osredm.com/forums/theme/38
 
 &ensp;&ensp;&ensp;&ensp;风雷软件用户录制视频教程地址：

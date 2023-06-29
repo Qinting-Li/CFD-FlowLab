@@ -35,8 +35,6 @@ void AerodynamicForceBody::Initialize()
     {
         int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
         AerodynamicForceBody::bodies.resize(numberOfMovingBodies);
-        SimpleBC *boundaryCondition = 0;
-        int iMovingBody = 0;
 
         set < string > *bodyList = GlobalBoundaryCondition::GetBodyNameList();
         set < string >::iterator bodyListIter = bodyList->begin();
@@ -66,8 +64,8 @@ AerodynamicForceManager aerodynamicForceManager;
 
 void InitializeAerodynamicForce()
 {
-    AerodynamicForceManager *aerodynamicForceManager = PHSPACE::GetAerodynamicForceManager();
-    aerodynamicForceManager->InitializeAerodynamicForceManager();
+    AerodynamicForceManager *aerodynamicForceManager1 = PHSPACE::GetAerodynamicForceManager();
+    aerodynamicForceManager1->InitializeAerodynamicForceManager();
 }
 
 void ComputeAerodynamicForceForALE()
@@ -96,19 +94,18 @@ void ComputeAerodynamicForceForALE()
 
     //! Third: Collecting AirForceCoef on Each Zone to serve.
     PHSPACE::CollectAerodynamicForceOfAllProcessors();
-
 }
 
 void AddAerodynamicForce(ActionKey *actionKey)
 {
-    AerodynamicForceManager *aerodynamicForceManager = PHSPACE::GetAerodynamicForceManager();
-    aerodynamicForceManager->AddAerodynamicForce(actionKey);
+    AerodynamicForceManager *aerodynamicForceManager2 = PHSPACE::GetAerodynamicForceManager();
+    aerodynamicForceManager2->AddAerodynamicForce(actionKey);
 }
 
 void CollectAerodynamicForceOfAllProcessors()
 {
-    AerodynamicForceManager *aerodynamicForceManager = PHSPACE::GetAerodynamicForceManager();
-    aerodynamicForceManager->CollectAerodynamicForceOfAllProcessors();
+    AerodynamicForceManager *aerodynamicForceManager3 = PHSPACE::GetAerodynamicForceManager();
+    aerodynamicForceManager3->CollectAerodynamicForceOfAllProcessors();
 }
 
 BasicAerodynamicForce **CreateBasicAerodynamicForceContainer()
@@ -141,7 +138,7 @@ vector< BasicAerodynamicForce * > *CreateBasicAerodynamicForceVector()
 
 void FreeBasicAerodynamicForceVector(vector<BasicAerodynamicForce *> *basicAerodynamicForceVector)
 {
-    int numberOfAerodynamicForceBodies = basicAerodynamicForceVector->size();
+    int numberOfAerodynamicForceBodies = static_cast<int>(basicAerodynamicForceVector->size());
 
     for (int iMovingBody = 0; iMovingBody < numberOfAerodynamicForceBodies; ++ iMovingBody)
     {
@@ -160,7 +157,7 @@ void FreeBasicAerodynamicForceContainer(BasicAerodynamicForce **basicAerodynamic
         delete basicAerodynamicForceContainer[iMovingBody];
     }
 
-    delete[] basicAerodynamicForceContainer;
+    delete [] basicAerodynamicForceContainer;
 }
 
 void WriteAerodynamicForceToActionKey(ActionKey *actionKey, BasicAerodynamicForce **basicAerodynamicForceContainer)
@@ -380,6 +377,8 @@ void BasicAleForce::ZeroBasicAleForce()
     momentX = 0.0;
     momentY = 0.0;
     momentZ = 0.0;
+
+    powerConsumption = 0.0;
 }
 
 void BasicAleForce::SetBasicAleForceByAerodynamicForce(AerodynamicForce *aerodynamicForce)
@@ -397,28 +396,36 @@ void BasicAleForce::ReadBasicAleForceFromBasicAleForce(BasicAleForce *basicAleFo
 
 void BasicAleForce::ReadBasicAleForceFromFile(fstream &file)
 {
-    PHSPACE::PHRead(file, forceX);
-    PHSPACE::PHRead(file, forceY);
-    PHSPACE::PHRead(file, forceZ);
-
-    PHSPACE::PHRead(file, momentX);
-    PHSPACE::PHRead(file, momentY);
-    PHSPACE::PHRead(file, momentZ);
-
-    PHSPACE::PHRead(file, powerConsumption);
+    //PHSPACE::PHRead(file, forceX);
+    //PHSPACE::PHRead(file, forceY);
+    //PHSPACE::PHRead(file, forceZ);
+    //
+    //PHSPACE::PHRead(file, momentX);
+    //PHSPACE::PHRead(file, momentY);
+    //PHSPACE::PHRead(file, momentZ);
+    //
+    //PHSPACE::PHRead(file, powerConsumption);
+    file >> forceX >> forceY >> forceZ;
+    file >> momentX >> momentY >> momentZ;
+    file >> powerConsumption;
 }
 
 void BasicAleForce::WriteBasicAleForceToFile(fstream &file)
 {
-    PHSPACE::PHWrite(file, forceX);
-    PHSPACE::PHWrite(file, forceY);
-    PHSPACE::PHWrite(file, forceZ);
+    //PHSPACE::PHWrite(file, forceX);
+    //PHSPACE::PHWrite(file, forceY);
+    //PHSPACE::PHWrite(file, forceZ);
+    //
+    //PHSPACE::PHWrite(file, momentX);
+    //PHSPACE::PHWrite(file, momentY);
+    //PHSPACE::PHWrite(file, momentZ);
+    //
+    //PHSPACE::PHWrite(file, powerConsumption);
+    file << forceX << "   " << forceY << "   " << forceZ << "\n";
+    
+    file << momentX << "   " << momentY << "   " << momentZ << "\n";
 
-    PHSPACE::PHWrite(file, momentX);
-    PHSPACE::PHWrite(file, momentY);
-    PHSPACE::PHWrite(file, momentZ);
-
-    PHSPACE::PHWrite(file, powerConsumption);
+    file << powerConsumption << "\n";
 }
 
 AleForceOfBody::AleForceOfBody()
@@ -600,11 +607,17 @@ void AleForceManager::InitializeAleForceOfBodyContainer()
 
 void AleForceManager::ReadAleForceOfBodyContainer()
 {
+
     for (int iMovingBody = 0; iMovingBody < numberOfMovingBodies; ++ iMovingBody)
     {
         AleForceOfBody *aleForceOfBody = this->GetAleForceOfBody(iMovingBody);
-
         aleForceOfBody->ReadAleForceOfBodyContainer();
+
+        int resetMassCenter = GetIntegerParameterFromDataBaseIfExist(iMovingBody, "resetMassCenter", 0);
+        if (resetMassCenter == 1)
+        {
+            aleForceOfBody->InitializeAleForceOfBodyContainer();
+        }
     }
 }
 
@@ -795,8 +808,8 @@ void AerodynamicForce::DumpCoefficient(ActionKey *actionKey)
 {
     using namespace PHMPI;
     int myID = GetCurrentProcessorID();
-    int server = GetServerProcessorID();
-    if (myID != server) return;
+    int serverTmp = GetServerProcessorID();
+    if (myID != serverTmp) return;
 
     PHSPACE::ParallelOpenFile(actionKey);
 
@@ -807,12 +820,12 @@ void AerodynamicForce::DumpCoefficient(ActionKey *actionKey)
     PHSPACE::ParallelCloseFile(file);
 }
 
-void AerodynamicForce::DumpComponentCoefficient(ActionKey *actionKey, int iBody)
+void AerodynamicForce::DumpComponentCoefficient(ActionKey *actionKey)
 {
     using namespace PHMPI;
     int myID = GetCurrentProcessorID();
-    int server = GetServerProcessorID();
-    if (myID != server) return;
+    int serverTmp = GetServerProcessorID();
+    if (myID != serverTmp) return;
 
     string totalForceFileName = actionKey->GetFileName();
     string partAircoefFileName = PHSPACE::AddSymbolToFileName(totalForceFileName, "_", bodyName);

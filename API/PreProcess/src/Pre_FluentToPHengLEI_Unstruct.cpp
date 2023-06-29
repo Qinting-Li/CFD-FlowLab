@@ -46,7 +46,7 @@ void Pre_FluentToPHengLEI_Unstruct::Conversion()
         GridID *index = new GridID(iZone);
         Grid *grid = CreateGridGeneral(UNSTRUCTGRID, index, 0, GetDim());
         grids[iZone] = grid;
-        fluent_factory->Convert2UnsGrid(iZone, UnstructGridCast(grid));
+        fluent_factory->Convert2UnsGrid(UnstructGridCast(grid));
     }
     delete fluent_factory;
 }
@@ -449,7 +449,6 @@ void Pre_FluentToPHengLEI_Unstruct::ReadFluentCell(int first_index, int last_ind
         } while (true);
     } while (i <= last_index);
 
-    int iiii = 0;
 }
 
 GridFormat_Fluent::GridFormat_Fluent()
@@ -720,7 +719,7 @@ void GridFormat_Fluent::DumpSelfDefinePartInformation()
     outfile.clear();
 }
 
-void GridFormat_Fluent::Convert2UnsGrid(int nb, UnstructGrid *grid)
+void GridFormat_Fluent::Convert2UnsGrid(UnstructGrid *grid)
 {
     int fcount, count;
     RawGrid *rawgrid = GetRawGrid();

@@ -42,17 +42,17 @@ public:
     //! Get the set of WallMultiTemperature.
     int GetWallMultiTemperature() const;
 
-    //! Get the number of N-S equations without the species transport equations.
+    //! Get the number of N-S equations without the species transport equations and Tv-Te.
     int GetNSEquationNumber() const;
 
-    //! Get the number of the equations including the species transport equations.
+    //! Get the number of the equations including the species transport equations,but without Tv-Te.
     int GetLaminarNumber() const;
+
+    //! Get the number of N-S equations for all.
+    int GetnEquation() const;
 
     //! Get the flag of thermodynamic temperature model.
     int GetTemperatureModel() const;
-
-    //! Get if carry out precondition or not.
-    int GetIfLowSpeedPrecon() const;
 
     //! Get coefficient K for preconditioned reference Mach number.
     RDouble GetPreconCoefficient() const;
@@ -63,7 +63,7 @@ public:
     //! Get if ideal gas state .
     int GetIfIdealGasState() const;
 
-    //! Get Reference imensional velocity .
+    //! Get Reference dimensional velocity .
     RDouble GetReferenceDimensionalVelocity() const;
 
     //! Get attacked of angle.
@@ -168,6 +168,10 @@ public:
 
     RDouble GetCharacteristicLength() const;
 
+    int GetNonequilibriumConditionFlag() const;
+
+    void SetNonequilibriumConditionFlag(int nUseNoneqCond) {isUseNoneqCond = nUseNoneqCond;}
+
 private:
     int intervalStepForce;
 
@@ -182,13 +186,12 @@ private:
     //! The flag of the gas model, 1 indicates the chemical non-equilibrium gas, 0 indicates the perfect gas.
     int nChemical;
 
+    int nEquation;
+
     int wallMultiTemperature;
 
     //! The flag of thermodynamic temperature model, 1, 2 and 3 denote one/two/three temperature model for chemical non-equilibrium gas.
     int nTemperatureModel;
-
-    //! For incompressible flow (mach < 0.3), using precondition method or not.
-    int ifLowSpeedPrecon;
 
     //! Coefficient K for preconditioned reference Mach number.
     RDouble kPreconCoeff;
@@ -292,12 +295,13 @@ private:
     //! The steps to initialize the boundary variables with the rapid flowfield values.
     int nInitPressureStep;
 
-    //£¡Use local CFL number or not.
+    //! Use local CFL number or not.
     //!   -# 0: Global unified CFL number.\n
     //!   -# 1: Local CFL number.
     int isUseLocalCFL;
 
     RDouble knLength; //the characteristic length for computation of Knudsen number.
+    int isUseNoneqCond; //Use the non-equilibrium condition or not.
 };
 
 #include "Param_NSSolver.hxx"

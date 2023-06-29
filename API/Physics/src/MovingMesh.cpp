@@ -88,7 +88,7 @@ void SimpleMovingMesh::CalInitCoordinate(SixDofParameter * sixDof)
     }
 }
 
-void SimpleMovingMesh::Deforming(DeformingParameter * deforming)
+void SimpleMovingMesh::Deforming()
 {
     //! do not consider the mesh deformation in temporary.
     for(int iNode = 0; iNode < numberOfNodes; ++ iNode)
@@ -251,11 +251,16 @@ void OriginalMovingMesh::Restart()
 {
     int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
     if (bodyIndex >= numberOfMovingBodies) return;
+    int resetMassCenter = GetIntegerParameterFromDataBaseIfExist(bodyIndex, "resetMassCenter", 0);
+    if (resetMassCenter == 1)
+    {
+        PreProcess();
+    }
 
-    presentDeforming = PHSPACE::GetDeformingParameter(bodyIndex);
+    presentDeforming = PHSPACE::GetDeformingParameter();
     presentSixdof    = PHSPACE::GetSixDofParameter   (bodyIndex);
 
-    movingMesh->Deforming  (presentDeforming);
+    movingMesh->Deforming  ();
     movingMesh->RigidMoving(presentSixdof   );
 
     if(fartherIndex != -1)
@@ -274,10 +279,10 @@ void OriginalMovingMesh::Run()
     int numberOfMovingBodies = GlobalDataBase::GetIntParaFromDB("numberOfMovingBodies");
     if (bodyIndex >= numberOfMovingBodies) return;
 
-    presentDeforming = PHSPACE::GetDeformingParameter(bodyIndex);
+    presentDeforming = PHSPACE::GetDeformingParameter();
     presentSixdof    = PHSPACE::GetSixDofParameter   (bodyIndex);
 
-    movingMesh->Deforming  (presentDeforming);
+    movingMesh->Deforming  ();
     movingMesh->RigidMoving(presentSixdof   );
 
     if(fartherIndex != -1)

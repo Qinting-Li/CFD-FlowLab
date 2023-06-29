@@ -1265,8 +1265,6 @@ void SampleLocationInfo::UpdateProbesGlobalPara()
         int nSurface = GetNumberToMonitor();
         GlobalDataBase::UpdateData("nSurface", &nSurface, PHINT, 1);
 
-        vector <int> np = GetProbesNumber();
-
         int *nProbesOfSurface = new int [nSurface];
 
         for (int iSurf = 0; iSurf < nSurface; ++ iSurf)
@@ -1283,7 +1281,7 @@ void SampleLocationInfo::UpdateProbesGlobalPara()
 void SampleLocationInfo::ServerCollectionProbesData()
 {
     int searchCellsMethod = GlobalDataBase::GetIntParaFromDB("searchCellsMethod");
-    int server = GetServerProcessorID();
+    int serverTmp = GetServerProcessorID();
     int myid   = GetCurrentProcessorID();
     int numberOfProcessor = GetNumberOfProcessor();
     DataContainer *cdata = new DataContainer();
@@ -1332,10 +1330,10 @@ void SampleLocationInfo::ServerCollectionProbesData()
         PHWrite(cdata, distance);
     }
 
-    if (myid != server)
+    if (myid != serverTmp)
     {
         int tag = myid;
-        send(cdata, server, tag);
+        send(cdata, serverTmp, tag);
         delete cdata;
     }
     else
@@ -1344,7 +1342,7 @@ void SampleLocationInfo::ServerCollectionProbesData()
         {
             int tag = iProc;
 
-            if (server != iProc)
+            if (serverTmp != iProc)
             {
                 if (cdata != NULL)
                 {
@@ -1519,19 +1517,19 @@ void SampleLocationInfo::CheckInvalidProbesData()
 void SampleLocationInfo::BroadcastProbesData()
 {
 
-    int server = GetServerProcessorID();
+    int serverTmp = GetServerProcessorID();
     int myid   = GetCurrentProcessorID();
 
     DataContainer *cdata = new DataContainer();
 
-    if (myid == server)
+    if (myid == serverTmp)
     {
         CompressProbesData(cdata);
     }
 
-    PH_Bcast(cdata, server);
+    PH_Bcast(cdata, serverTmp);
 
-    if (myid != server)
+    if (myid != serverTmp)
     {
         DecompressProbesData(cdata);
     }

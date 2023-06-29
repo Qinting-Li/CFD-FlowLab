@@ -90,6 +90,8 @@ public:
     //! switch the compute method used for self-adaption calculation.
     void CheckResult(Grid *grid, int level = 0);
 
+    void CheckResiduals(Grid *grid, int level = 0);
+
     //! dump CFL number.
     void DumpCFLNumber(Grid *grid, int level = 0);
 
@@ -105,7 +107,6 @@ public:
     virtual void GetResidual(ActionKey *actkey);
     
     //! The following three functions are used in overset grid, consider more latter.
-    void AllocateOversetInterfaceVar(int nIOversetFace, Data_ParamFieldSuite *dataStore);
     void DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore);    
     void PrepareOversetInterfaceData(Data_ParamFieldSuite *dataStore, InterfaceDataProxy *interfaceDataProxy);
 
@@ -113,7 +114,7 @@ public:
 
 protected:
     //! Compute CFL number at each iteration.
-    RDouble ComputeCFL();
+    RDouble ComputeCFL(RDouble partialCFL = -1.0);
 
     //! Source flux, such as chemical source, unsteady source, volume force, etc.
     void SourceFlux(Grid *grid);
@@ -121,6 +122,10 @@ protected:
     //! Source flux: Compute the chemical source terms.
     //! @param[in]: gridIn denotes the current computational regions of the grids.
     virtual void ChemicalSource(Grid *grid) = 0;
+
+    //! Source flux: Compute the gravity source terms.
+    //! @param[in]: gridIn denotes the current computational regions of the grids.
+    virtual void gravitySource(Grid *grid) = 0;
 
     //! Source flux: compute the unsteady dual time source.
     virtual void DualTimeSource(Grid *grid) = 0;
@@ -140,7 +145,7 @@ protected:
     //! The unstructured part.
     virtual void RegisterCFDSolverInterfaceFieldUnstruct();
 
-    virtual void RegisterCFDSolverOversetField();
+    void RegisterOversetField();
 
     //! Register the interpoint field in the NS solver.
     virtual void RegisterCFDSolverInterpointField();

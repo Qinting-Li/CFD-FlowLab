@@ -2,6 +2,7 @@
 #include "DataStruct_KDTree.h"
 #include <cstring>
 #include <cmath>
+#include <new>
 using namespace std;
 
 #define SQ(x) ((x)*(x))
@@ -18,12 +19,15 @@ namespace PHSPACE
         }
 
         rect->dim = dim;
-        if (!(rect->min = new RDouble[dim]))
+        rect->min = new(std::nothrow) RDouble[dim];
+        if (rect->min == NULL)
         {
             delete rect;
             return NULL;
         }
-        if (!(rect->max = new RDouble[dim]))
+
+        rect->max = new(std::nothrow) RDouble[dim];
+        if (rect->max == NULL)
         {
             delete rect->min;
             delete rect;
@@ -131,13 +135,17 @@ namespace PHSPACE
 
         if (!*nptr)
         {
-            if (!(node = new KDNode(dir)))
-            {
+            try {
+                node = new KDNode(dir);
+            }
+            catch (bad_alloc) {
                 return -1;
             }
-            if (!(node->pos = new RDouble[dim]))
+
+            node->pos = new(std::nothrow) RDouble[dim];
+            if ( node->pos == NULL )
             {
-                delete [] node;
+                delete node;
                 return -1;
             }
 
@@ -335,19 +343,26 @@ namespace PHSPACE
         }
 
         // Allocate result set
-        if (!(rset = new KDRes))
-        {
+        try {
+            rset = new KDRes;
+        }
+        catch (bad_alloc) {
             return NULL;
         }
-        if (!(rset->rlist = new KDResNode))
-        {
+
+        try {
+            rset->rlist = new KDResNode;
+        }
+        catch (bad_alloc) {
             delete rset;
             return NULL;
         }
+
         rset->rlist->next = NULL;
         rset->kdTree = kdTree;
 
-        if (!(rect = DuplicateHyperRect(kdTree->rect)))
+        rect = DuplicateHyperRect(kdTree->rect);
+        if (rect == NULL)
         {
             FreeKDRes(rset);
             return NULL;
@@ -413,8 +428,11 @@ namespace PHSPACE
         {
             return NULL;
         }
-        if (!(rset->rlist = new KDResNode))
-        {
+
+        try {
+            rset->rlist = new KDResNode;
+        }
+        catch (bad_alloc) {
             delete rset;
             return NULL;
         }

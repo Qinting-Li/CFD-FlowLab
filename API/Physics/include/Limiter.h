@@ -72,7 +72,7 @@ private:
     //! Scalar or vector limiter:\n
     //! -# 0: Each variable use the same limiter coefficient.\n
     //! -# 1: Each variable use the respective limiter coefficients.
-    int limitVecctor;
+    int limitVector;
 
     //! Vencat limiter type.\n
     //! -# 0: The modification of Dr. Wang, AIAA-96-2091. Independent of grid scale.

@@ -7,6 +7,10 @@
 #include "Geo_SimpleBC.h"
 #include "TK_Log.h"
 #include "PHIO.h"
+#pragma warning(disable:6386)
+#pragma warning(disable:4100)
+#pragma warning(disable:4701)
+#pragma warning(disable:26451)
 
 namespace PHSPACE
 {
@@ -42,7 +46,6 @@ void ThermodynamicFunction::ReadPolynomialCoefficient(fstream &file)
 {
     string line, word;
     string separator  = " =\t\r\n#$,;\"'";
-    string::size_type npos = string::npos;
 
     for (int i_interval = 0; i_interval < number_of_temperature_interval; ++ i_interval)
     {
@@ -174,7 +177,6 @@ void ThermodynamicManager::Read(fstream &file)
 {
     string line, word;
     string separator = " =\t\r\n#$,;\"'";
-    string::size_type npos = string::npos;
 
     //! Read the number of thermodynamic temperature polynomial coefficients of species.
     SkipLines(file, 3);
@@ -419,7 +421,6 @@ void ReactionRate::Read(fstream &file)
 {
     string line, word;
     string separator = " =\t\r\n#$,;\"'";
-    string::size_type npos = string::npos;
 
     if (numberOfReaction <= 0) return;
 
@@ -526,7 +527,6 @@ void StoichiometricEquation::Read(fstream &file)
 {
     string line, word;
     string separator = " =\t\r\n#$,;\"'";
-    string::size_type npos = string::npos;
 
     if (numberOfReaction <= 0) return;
 
@@ -909,7 +909,6 @@ void CurveFitsMethod::Read(fstream &file)
 {
     string line, word;
     string separator = " =\t\r\n#$,;\"'";
-    string::size_type npos = string::npos;
 
     //! Obtain the curve fit coefficients of Gupta and Blottner methods for computing the viscosities of species.
     SkipLines(file, 2);
@@ -1161,7 +1160,6 @@ void MolecularProperty::Read(fstream &file)
 {
     string line, word;
     string separator = " =\t\r\n#$,;\"'";
-    string::size_type npos = string::npos;
 
     SkipLines(file, 3);
     //! Obtain the name of species.
@@ -1514,7 +1512,6 @@ void MixedGas::Primitive2Conservative(RDouble *prim, RDouble gama, RDouble Tv, R
     RDouble &um = prim[IU];
     RDouble &vm = prim[IV];
     RDouble &wm = prim[IW];
-    RDouble &pressure = prim[IP];
     
     //! Obtain the mass fraction of the last species whose label in the collection is ns-1.
     if (nchem == 1)
@@ -1553,7 +1550,6 @@ void MixedGas::Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, 
     RDouble &um = prim[IU];
     RDouble &vm = prim[IV];
     RDouble &wm = prim[IW];
-    RDouble &pressure = prim[IP];
 
     RDouble squareVelocity;
     squareVelocity = um * um + vm * vm + wm * wm;
@@ -1574,8 +1570,7 @@ void MixedGas::Primitive2ConservativeR(RDouble *prim, RDouble gama, RDouble Tv, 
 void MixedGas::Conservative2Primitive(RDouble *q, RDouble gama, RDouble *prim, RDouble *temperature)
 {
     using namespace IDX;
-    RDouble density, oDensity, um, vm, wm, pressure, totalInternalEnergy, squareVelocity, internalEnergy, deltC, fcs, fmin;
-    int mci;
+    RDouble density, oDensity, um, vm, wm, pressure, totalInternalEnergy, squareVelocity, internalEnergy;
     density = q[IR];
     if (density <= zero)
     {
@@ -1635,10 +1630,10 @@ void MixedGas::Conservative2PrimitiveR(RDouble *q, RDouble gama, RDouble *prim, 
     RDouble gasConstant = this->GetUniversalGasConstant();
     RDouble *speciesMass = molecularProperty->GetMolecularWeight();
 
-    RDouble oDensity, squareVelocity, internalEnergy, deltC, fcs, fmin;
+    RDouble oDensity, squareVelocity, internalEnergy;
     RDouble massReciprocal, ceDivideMe;
     RDouble gasMixtureCv, gasMixtureEnergy, TkLimit;
-    int mci, nCount;
+    int nCount;
 
     RDouble &density = prim[IR];
     RDouble &um = prim[IU];
@@ -2586,7 +2581,6 @@ void MixedGas::InitReferenceParameter()
     else if (inflowParaType == FLIGHTCONDITION)
     {
         RDouble refMachNumber = GlobalDataBase::GetDoubleParaFromDB("refMachNumber");
-        RDouble height = GlobalDataBase::GetDoubleParaFromDB("height");
 
         referenceParameterDimensional.SetMachNumber(refMachNumber);
 
@@ -2835,6 +2829,8 @@ void MixedGas::InitGlobalParameterOfNSEquation()
 
     GlobalBoundaryCondition::SetGlobalBCByGlobalDataBase();
 
+    GlobalBoundaryCondition::InitMassFlowBoundary();
+
     GlobalBoundaryCondition::SetBCDataBaseByGlobalBC();
 }
 
@@ -2863,8 +2859,6 @@ void MixedGas::ComputeReferencePrimitive()
     veTemperatureMinNonDimensional = veTemperatureMin / refTemperature;
     trTemperatureMinNonDimensional = trTemperatureMin / refTemperature;
 
-    RDouble refTv = reference_temperature;
-    RDouble ref_vib_energy = 0.0, ref_ele_energy = 0.0;
     if (nchem == 1)
     {
         if (ntmodel > 1)
@@ -2972,7 +2966,6 @@ void MixedGas::ReadGasModel(fstream &file)
 {
     string line, word;
     string separator = " =\t\r\n#$,;\"'";
-    string::size_type npos = string::npos;
 
     SkipLines(file, 2);
 
@@ -3541,7 +3534,7 @@ void MixedGas::ComputeTemperature(RDouble *primitiveVariables, RDouble &temperat
 void MixedGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
 {
     using namespace IDX;
-    RDouble density, pressure, gasConstant, Tk = 0.0;
+    RDouble density, pressure, gasConstant;
     density = primitiveVariables[IR];
     pressure = primitiveVariables[IP];
     gasConstant = GetUniversalGasConstant();;
@@ -3563,7 +3556,6 @@ void MixedGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotatio
         RDouble massReciprocal = 0.0, ceDivideMe = 0.0;
         massReciprocal = GetMixedGasMolecularWeightReciprocalWithoutElectron(massFractions, ceDivideMe);
 
-        RDouble electronPressure;
         if (ntmodel == 1) //! The default setting is One-Temperature model.
         {
             transRotationTemperature = pressure / (density * gasConstant * (massReciprocal + ceDivideMe));
@@ -3582,7 +3574,6 @@ void MixedGas::GetTemperature(RDouble *primitiveVariables, RDouble &transRotatio
 void MixedGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotationTemperature, RDouble &vibrationTemperature, RDouble &electronTemperature)
 {
     using namespace IDX;
-    RDouble referenceTemperature = this->referenceParameterDimensional.GetTemperature();
     RDouble density, pressure, gasConstant;
     density = primitiveVariables[IR];
     pressure = primitiveVariables[IP];
@@ -3599,10 +3590,6 @@ void MixedGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotati
     RDouble massReciprocal = 0.0, ceDivideMe = 0.0;
     massReciprocal = GetMixedGasMolecularWeightReciprocalWithoutElectron(massFractions, ceDivideMe);
 
-    int nMaxStepTemperature = 5;
-    int nCount;
-    RDouble gasMixtureCv, TkLimit, gasMixtureEnergy, precisionTemperature = 1.0e-2;
-
     if (ntmodel == 1)
     {
         transRotationTemperature = pressure / (density * gasConstant * (massReciprocal + ceDivideMe));
@@ -3617,16 +3604,6 @@ void MixedGas::GetTemperatureR(RDouble *primitiveVariables, RDouble &transRotati
     }
 
     return;
-
-    RDouble electronPressure;
-    if (ntmodel == 2)      //! Two-Temperature model.
-    {
-
-    }
-    else  //! Three-Temperature model.
-    {
-
-    }
 }
 
 RDouble MixedGas::GetTemperatureMin()
@@ -3671,7 +3648,7 @@ void MixedGas::GetPressure(RDouble *primitiveVars, RDouble gama, RDouble interna
         massFractions[i] = primitiveVars[nm + i];
     }
 
-    RDouble transRotationEnergy, transRotationTemperature, electronPressure, massReciprocal, ceDivideMe, Tk;
+    RDouble transRotationTemperature, massReciprocal, ceDivideMe, Tk;
     massReciprocal = GetMixedGasMolecularWeightReciprocalWithoutElectron(massFractions, ceDivideMe);
     Tk = temperature;
     if (ntmodel == 2)     //! Two-Temperature model.
@@ -3703,7 +3680,7 @@ void MixedGas::GetTemperatureAndPressure(RDouble *primitiveVars, RDouble interna
         massFractions[i] = primitiveVars[nm + i];
     }
 
-    RDouble transRotationEnergy, transRotationTemperature, electronPressure, massReciprocal, ceDivideMe, Tk;
+    RDouble transRotationTemperature, massReciprocal, ceDivideMe, Tk;
     massReciprocal = GetMixedGasMolecularWeightReciprocalWithoutElectron(massFractions, ceDivideMe);
     
     if (ntmodel == 2)     //! Two-Temperature model.
@@ -4943,8 +4920,6 @@ void MixedGas::GetAirInfo(const RDouble &h1, RDouble &t, RDouble &p, RDouble &de
     RDouble p600   = 3.4475e-9;
     RDouble rho600 = 1.1367e-13;
     RDouble t700   = 1507.60;
-    RDouble p700   = 1.1908e-9;
-    RDouble rho700 = 1.5270e-13;
 
     RDouble rho = 0.0;
 
@@ -5441,13 +5416,13 @@ bool MixedGas::FindChemicalElement(string species_name, char element_name, int &
 
             if (element_name == 'N' && species_name[i + 1] == 'a')  //Na
             {
-                coef = 0.0;
+                coef = 0;
                 bflag = false;   //这个地方没考虑Na的氮化物
             }
 
             if (element_name == 'S' && species_name[i + 1] == 'i')  //Si
             {
-                coef = 0.0;     //
+                coef = 0;     //
                 bflag = false;   //这个地方没考虑Si的硫化物
             }
         }
@@ -5791,7 +5766,6 @@ void MixedGas::ComputeSpeciesEnthalpy(RDouble transRotationTemperature, RDouble 
 
     RDouble gasConstant = GetUniversalGasConstant();
     RDouble *speciesMass = molecularProperty->GetMolecularWeight();
-    Thermo_Param *thermodynamicProperties = molecularProperty->GetThermodynamicProperties();
     if (this->nElectronIndex >= 0)
     {
         //! Electron.
@@ -6063,7 +6037,6 @@ RDouble MixedGas::GetElectronPressure(RDouble *primitiveVariables, RDouble elect
     RDouble gasConstant = this->GetUniversalGasConstant();
     //RDouble referenceMass = referenceParameterDimensional.GetAverageMolecularWeight();
     //! To obtain the molecular weight of species.
-    RDouble *speciesMass = this->molecularProperty->GetMolecularWeight();
 
     //! Search the index of the electron.
     RDouble electronMassFraction = 0.0;
@@ -6071,7 +6044,6 @@ RDouble MixedGas::GetElectronPressure(RDouble *primitiveVariables, RDouble elect
     if (nElectronIndex >= 0)
     {
         electronMassFraction = primitiveVariables[nm + nElectronIndex];
-        //electronMass = speciesMass[nElectronIndex];
     }
 
     //! Compute electron pressure.
@@ -6146,7 +6118,6 @@ void MixedGas::ComputeSpeciesDimensionalViscosityWithCurveFitMethod(RDouble tran
     dimensionalTransRotationTemperature = transRotationTemperature * referenceTemperature;
     dimensionalElectronTemperature = electronTemperature * referenceTemperature;
     //! nTypes denotes the types of species which is used to identity the electron, monoatom and polyatom.
-    Thermo_Param *thermodynamicProperties = this->molecularProperty->GetThermodynamicProperties();
 
     //! Obtain the coefficients of the curve fitting.
     RDouble *coefA = CurveFits->GetBlotterCurveFittingCoefficientA();
@@ -6881,6 +6852,267 @@ void MixedGas::SetMaximumSpecies(RDouble *fs)
         }
     }
     delete [] xs;    xs = NULL;
+}
+
+void ChemicalMXDQ(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
+                  RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign, int nElectronIndex)
+{
+    using namespace IDX;
+    using namespace GAS_SPACE;
+    // The number of species.
+    int nSpecies = nLaminar - nNSEquation + 1;
+    RDouble alpha = 0.0, beta = 0.0, gama = 0.0, *speciesBeta;
+    speciesBeta = new RDouble[nSpecies];
+
+    RDouble uVelocity = primitiveVars[IU];
+    RDouble vVelocity = primitiveVars[IV];
+    RDouble wVelocity = primitiveVars[IW];
+    RDouble squareVelocity, absoluteVelocity, relativeVelocity;
+
+    // The absolute velocity.
+    absoluteVelocity = nx * uVelocity + ny * vVelocity + nz * wVelocity;
+    // The relative velocity.
+    relativeVelocity = absoluteVelocity - moveVelocity;
+    // Compute squared velocity.
+    squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
+
+    // Obtain the temperatures.
+    RDouble transRotationTemperature = temperature[ITT];
+    RDouble vibrationTemperature = transRotationTemperature;
+    RDouble electronTemperature = transRotationTemperature;
+    if (nTemperatureModel > 1)
+    {
+        vibrationTemperature = temperature[ITV];
+        electronTemperature = vibrationTemperature;
+        if (nTemperatureModel == 3)
+        {
+            electronTemperature = temperature[ITE];
+        }
+    }
+
+    // Compute the total enthalpy.
+    RDouble totalEnthalpy = gas->GetMixedGasEnthalpy(primitiveVars, transRotationTemperature, vibrationTemperature, electronTemperature);
+    totalEnthalpy += 0.5 * squareVelocity;
+
+    // Compute the coefficient b1 and b2 (see formula A.5 in PHengLEI Theory manual).
+    RDouble b1 = nx * deltaQ[IRU] + ny * deltaQ[IRV] + nz * deltaQ[IRW] - absoluteVelocity * deltaQ[IR];
+    RDouble dh = uVelocity * deltaQ[IRU] + vVelocity * deltaQ[IRV] + wVelocity * deltaQ[IRW] - deltaQ[IRE];
+    RDouble b2 = 0.0, b3 = 0.0, electronPressure = 0.0;
+
+    if (nTemperatureModel == 1)
+    {
+        // Compute the coefficients in the chemical reaction.
+        gas->ComputeCoefficientInMXDQ(primitiveVars, alpha, beta, speciesBeta);
+
+        b2 = beta * deltaQ[IR] - alpha * dh;
+        for (int s = 0; s < nSpecies - 1; ++ s)
+        {
+            b2 += speciesBeta[s] * deltaQ[nNSEquation + s];
+        }
+    }
+    else // Multi-temperature model.
+    {
+        // Compute the pressure of electron.
+        electronPressure = gas->GetElectronPressure(primitiveVars, electronTemperature);
+        RDouble *speciesGama = new RDouble[nSpecies];
+
+        // Compute partial derivatives of pressure and electron pressure to conservative variables.
+        gas->GetMultiTemperatureModelPartialDerivatives(primitiveVars, transRotationTemperature, electronTemperature,
+            alpha, beta, gama, speciesBeta, speciesGama);
+
+        if (nTemperatureModel == 2)
+        {
+            dh += deltaQ[nLaminar + 1];
+            b2 += gama * deltaQ[nLaminar + 1];
+            b3 += gama * deltaQ[nLaminar + 1];
+        }
+        else if (nTemperatureModel == 3)
+        {
+            b2 += gama * deltaQ[nLaminar + 1];
+            b3 += gama * deltaQ[nLaminar + 2];
+            dh += deltaQ[nLaminar + 1] + deltaQ[nLaminar + 2];
+        }
+        b2 += beta * deltaQ[IR] - alpha * dh;
+
+        for (int iSpices = 0; iSpices < nSpecies - 1; ++ iSpices)
+        {
+            b2 += speciesBeta[iSpices] * deltaQ[nNSEquation + iSpices];
+            b3 += speciesGama[iSpices] * deltaQ[nNSEquation + iSpices];
+        }
+
+        delete []speciesGama;
+    }
+
+    // Comoute the fluxes called M*dQ.
+    flux[IR ] = relativeVelocity * deltaQ[IR ] + b1;
+    flux[IRU] = relativeVelocity * deltaQ[IRU] + b1 * uVelocity     + b2 * nx;
+    flux[IRV] = relativeVelocity * deltaQ[IRV] + b1 * vVelocity     + b2 * ny;
+    flux[IRW] = relativeVelocity * deltaQ[IRW] + b1 * wVelocity     + b2 * nz;
+    flux[IRE] = relativeVelocity * deltaQ[IRE] + b1 * totalEnthalpy + b2 * absoluteVelocity;
+    for (int m = nNSEquation; m < nLaminar; ++ m)
+    {
+        flux[m] = relativeVelocity * deltaQ[m] + b1 * primitiveVars[m];
+    }
+
+    // Modify the fluxes of multi-temperature model.
+    if (nTemperatureModel == 2) 
+    {
+        flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * (primitiveVars[nLaminar + 1] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
+    }
+    else if (nTemperatureModel == 3)
+    {
+        flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * primitiveVars[nLaminar + 1];
+        flux[nLaminar + 2] = relativeVelocity * deltaQ[nLaminar + 2] + b1 * (primitiveVars[nLaminar + 2] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
+    }
+
+    // To add rM * dQ that is the product of the invscid spectrum radius rM and increment dQ.
+    RDouble spectrumRadiusTerm = iSign * radius / faceArea;
+    for (int m = 0; m < nLaminar; ++ m)
+    {
+        flux[m] += spectrumRadiusTerm * deltaQ[m];
+        flux[m] *= 0.5 * faceArea;
+    }
+
+    flux[nLaminar] = 0.0;
+    if (nElectronIndex >= 0)
+    {
+        flux[nLaminar - 1] = 0.0;
+    }
+
+    // Modify the fluxes of vibration and electron energy terms.
+    for (int m = 0; m < nTemperatureModel - 1; ++ m)
+    {
+        flux[nLaminar + 1 + m] += spectrumRadiusTerm * deltaQ[nLaminar + 1 + m];
+        flux[nLaminar + 1 + m] *= 0.5 * faceArea;
+    }
+    delete []speciesBeta;
+}
+
+void ChemicalMXDQR(RDouble *primitiveVars, RDouble *temperature, RDouble nx, RDouble ny, RDouble nz, RDouble faceArea, RDouble moveVelocity,
+                   RDouble *deltaQ, RDouble *flux, int nNSEquation, int nLaminar, int nTemperatureModel, RDouble radius, int iSign, int nElectronIndex,
+                   RDouble *speciesCvs, RDouble *speciesEtrs, RDouble totalH,  RDouble totalCv, RDouble totalCvtr, RDouble totalCvv, RDouble totalCve)
+{
+    using namespace IDX;
+    using namespace GAS_SPACE;
+    // The number of species.
+    int nSpecies = nLaminar - nNSEquation + 1;
+    //  int nElectronIndex = GlobalDataBase::GetIntParaFromDB("nElectronIndex");
+    RDouble alpha = 0.0, beta = 0.0, gama = 0.0, *speciesBeta;
+
+    int mTT = gas->GetmTT();
+    int mTE = gas->GetmTE();
+    Thermo_Energy  *Thermo_Energy_temparay = gas->GetThermo_Energy_temparay();
+    speciesBeta = Thermo_Energy_temparay->Rms;  //be careful. by dms
+
+    RDouble uVelocity = primitiveVars[IU];
+    RDouble vVelocity = primitiveVars[IV];
+    RDouble wVelocity = primitiveVars[IW];
+    RDouble squareVelocity, absoluteVelocity, relativeVelocity;
+
+    // The absolute velocity.
+    absoluteVelocity = nx * uVelocity + ny * vVelocity + nz * wVelocity;
+    // The relative velocity.
+    relativeVelocity = absoluteVelocity - moveVelocity;
+    // Compute squared velocity.
+    squareVelocity = uVelocity * uVelocity + vVelocity * vVelocity + wVelocity * wVelocity;
+
+    // Obtain the temperatures.
+    RDouble transRotationTemperature = temperature[mTT];
+    RDouble electronTemperature = temperature[mTE];
+
+    // Compute the total enthalpy.
+    RDouble totalEnthalpy = totalH + 0.5 * squareVelocity;
+
+    // Compute the coefficient b1 and b2 (see formula A.5 in PHengLEI Theory manual).
+    RDouble b1 = nx * deltaQ[IRU] + ny * deltaQ[IRV] + nz * deltaQ[IRW] - absoluteVelocity * deltaQ[IR];
+    RDouble dh = uVelocity * deltaQ[IRU] + vVelocity * deltaQ[IRV] + wVelocity * deltaQ[IRW] - deltaQ[IRE];
+    RDouble b2 = 0.0, b3 = 0.0, electronPressure = 0.0;
+
+    if (nTemperatureModel == 1)
+    {
+        // Compute the coefficients in the chemical reaction.
+        //gas->ComputeCoefficientInMXDQ(primitiveVars, alpha, beta, speciesBeta);
+        gas->ComputeCoefficientInMXDQR(primitiveVars, transRotationTemperature, squareVelocity, speciesCvs, totalCv, alpha, beta, speciesBeta);
+
+        b2 = beta * deltaQ[IR] - alpha * dh;
+        for (int s = 0; s < nSpecies - 1; ++ s)
+        {
+            b2 += speciesBeta[s] * deltaQ[nNSEquation + s];
+        }
+    }
+    else // Multi-temperature model.
+    {
+        // Compute the pressure of electron.
+        electronPressure = gas->GetElectronPressure(primitiveVars, electronTemperature);
+        RDouble *speciesGama = Thermo_Energy_temparay->Ees;  //be careful. by dms
+
+
+        gas->GetMultiTemperatureModelPartialDerivativesR(primitiveVars, transRotationTemperature, electronTemperature,alpha, beta, gama, speciesBeta, speciesGama,
+            squareVelocity, speciesEtrs, totalCvtr, totalCvv, totalCve);
+
+        if (nTemperatureModel == 2)
+        {
+            dh += deltaQ[nLaminar + 1];
+            b2 += gama * deltaQ[nLaminar + 1];
+            b3 += gama * deltaQ[nLaminar + 1];
+        }
+        else if (nTemperatureModel == 3)
+        {
+            b2 += gama * deltaQ[nLaminar + 1];
+            b3 += gama * deltaQ[nLaminar + 2];
+            dh += deltaQ[nLaminar + 1] + deltaQ[nLaminar + 2];
+        }
+        b2 += beta * deltaQ[IR] - alpha * dh;
+
+        for (int iSpices = 0; iSpices < nSpecies - 1; ++ iSpices)
+        {
+            b2 += speciesBeta[iSpices] * deltaQ[nNSEquation + iSpices];
+            b3 += speciesGama[iSpices] * deltaQ[nNSEquation + iSpices];
+        }
+    }
+
+    // Comoute the fluxes called M*dQ.
+    flux[IR ] = relativeVelocity * deltaQ[IR ] + b1;
+    flux[IRU] = relativeVelocity * deltaQ[IRU] + b1 * uVelocity     + b2 * nx;
+    flux[IRV] = relativeVelocity * deltaQ[IRV] + b1 * vVelocity     + b2 * ny;
+    flux[IRW] = relativeVelocity * deltaQ[IRW] + b1 * wVelocity     + b2 * nz;
+    flux[IRE] = relativeVelocity * deltaQ[IRE] + b1 * totalEnthalpy + b2 * absoluteVelocity;
+    for (int m = nNSEquation; m < nLaminar; ++ m)
+    {
+        flux[m] = relativeVelocity * deltaQ[m] + b1 * primitiveVars[m];
+    }
+
+    // Modify the fluxes of multi-temperature model.
+    if (nTemperatureModel == 2) 
+    {
+        flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * (primitiveVars[nLaminar + 1] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
+    }
+    else if (nTemperatureModel == 3)
+    {
+        flux[nLaminar + 1] = relativeVelocity * deltaQ[nLaminar + 1] + b1 * primitiveVars[nLaminar + 1];
+        flux[nLaminar + 2] = relativeVelocity * deltaQ[nLaminar + 2] + b1 * (primitiveVars[nLaminar + 2] + electronPressure / primitiveVars[IR]) + b3 * absoluteVelocity;
+    }
+
+    // To add rM * dQ that is the product of the invscid spectrum radius rM and increment dQ.
+    RDouble spectrumRadiusTerm = iSign * radius / faceArea;
+    for (int m = 0; m < nLaminar; ++ m)
+    {
+        flux[m] += spectrumRadiusTerm * deltaQ[m];
+        flux[m] *= 0.5 * faceArea;
+    }
+
+    flux[nLaminar] = 0.0;
+    if (nElectronIndex >= 0)
+    {
+        flux[nLaminar - 1] = 0.0;
+    }
+
+    // Modify the fluxes of vibration and electron energy terms.
+    for (int m = 0; m < nTemperatureModel - 1; ++ m)
+    {
+        flux[nLaminar + 1 + m] += spectrumRadiusTerm * deltaQ[nLaminar + 1 + m];
+        flux[nLaminar + 1 + m] *= 0.5 * faceArea;
+    }
 }
 
 }

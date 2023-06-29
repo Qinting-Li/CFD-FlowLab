@@ -112,7 +112,7 @@ private:    //! Initialize.
     void SetNodesMinDistanceInOtherBlocks();
 
     bool ReadInInnerGridH5(const string &fileName, UnstructGrid *gridIn);
-    void BuildLocalToGlobalInterfaceNodesMap(int iBlockIn, int *numberOfNodesInBlocksIn);
+    void BuildLocalToGlobalInterfaceNodesMap(int iBlockIn, int* numberOfNodesInBlocksIn);
 
     void GetGlobalInterfaceNodes();
     void GetGlobalInterfaceNodes(int iBlock);
@@ -564,7 +564,7 @@ private:
     {
         bool *valueFull = new bool[length];
         SetField(valueFull, false, length);
-        int numberOfValue = value.size();
+        int numberOfValue = static_cast<int>(value.size());
         for (int iValue = 0; iValue < numberOfValue; ++ iValue)
         {
             valueFull[value[iValue]] = true;

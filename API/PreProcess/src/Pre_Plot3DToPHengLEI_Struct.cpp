@@ -434,7 +434,7 @@ void Pre_Plot3DToPHengLEI_Struct::ReadGridgenBC()
                 BCRegions->SetBCName(bcName);
             }
 
-            if (BCType < 0)
+            if (IsInterface(BCType))
             {
                 int nbt, originalBlockIndex;
                 ReadNewLine(file, line);

@@ -67,15 +67,15 @@ private:
     void GetFieldViewNBFace(fstream &file, int nversion, int &nBoundFace);
 
     //! Read the coordinates of Field view grid.
-    void ReadFieldViewCoor(fstream &file, int nversion, int nTotalNode, RDouble *x, RDouble *y, RDouble *z);
+    void ReadFieldViewCoor(fstream &file, int nTotalNode, RDouble *x, RDouble *y, RDouble *z);
 
     //!
-    void GetFieldViewBCCell(fstream &file, int nversion, int nBoundFace, int nBCType, int *bctype_list,
+    void GetFieldViewBCCell(fstream &file, int nBoundFace, int *bctype_list,
                             int &nBC_Sections, int *&elem_type, int *&istart, int *&iend, cgsize_t **&conn_list,
                             int &nBCRegions, cgsize_t **&bc_conn_list, int *&nBCElem, int *&bc_type);
 
     //!
-    void GetFieldViewMainCell(fstream &file, int nversion, int &nTotalCell, int &nSections, int *&elem_type,
+    void GetFieldViewMainCell(fstream &file, int &nTotalCell, int &nSections, int *&elem_type,
                               int *&istart, int *&iend, cgsize_t **&conn_list);
 
     //!

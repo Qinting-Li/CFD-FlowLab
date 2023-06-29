@@ -15,12 +15,14 @@
 
 #pragma once
 #include <vector>
+
 #include "CFDSolver.h"
 #include "HODefine.h"
 #include "HOGeometryStructure.h"
 #include "HOStandardElement.h"
 
 using namespace HOUnstruct;
+//using namespace std;
 
 namespace PHSPACE
 {
@@ -33,6 +35,7 @@ class FaceProxy;
 class HOSolverUnstruct : public CFDSolver
 {
 private:
+    //[hlevel]
     std::vector< HighOrderGrid > highOrderGrids;
 
 public:

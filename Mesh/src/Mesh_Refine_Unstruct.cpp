@@ -249,7 +249,7 @@ void Mesh_Refine_Unstruct::ConstructNodeTopo(Grid *grid)
         Point3D *point = new Point3D(x[iPoint], y[iPoint], z[iPoint], iPoint);
 
         bool isNodeExist;
-        int pointIndex = nodeTopo->AddPoint(point, isNodeExist);
+        nodeTopo->AddPoint(point, isNodeExist);
     }
 
     int oldNumberOfComputationalNodes = nTotalNode;
@@ -571,12 +571,12 @@ void Mesh_Refine_Unstruct::SwapInterfaceRefineType()
                 ZoneNeighbor *globalNeighborZonesTemp = zoneConnectivity->GetZoneNeighbor(neighborZone);
                 std::size_t numberOfNeighborTemp = globalNeighborZonesTemp->GetNumberOfNeighbor();
 
-                for (std::size_t iNeighbor = 0; iNeighbor < numberOfNeighborTemp; ++ iNeighbor)
+                for (std::size_t iNeighbor1 = 0; iNeighbor1 < numberOfNeighborTemp; ++ iNeighbor1)
                 {
-                    uint_t neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(iNeighbor);
+                    uint_t neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(iNeighbor1);
                     if (neighborZoneTemp == iZone)
                     {
-                        neighborOrer = static_cast<int>(iNeighbor);
+                        neighborOrer = static_cast<int>(iNeighbor1);
                         break;
                     }
                 }

@@ -224,7 +224,7 @@ void HighOrderCellSol::TestOrthogonalBasisFunction(const RDouble *weight)
 }
 
 void HighOrderCellSol::ComputeGradOfBasisFunctionIntegrationPoint(HighOrderMatrix & orthogonalizationMatrix, int iGaussPoint, 
-    RDouble lenScaleOfCell, RDouble iXcc, RDouble iYcc, RDouble iZcc)
+    RDouble lenScaleOfCell)
 {
     //dxBasisFuncCellIntegration;
     RDouble oneDLenScal = 1.0/lenScaleOfCell;
@@ -528,13 +528,13 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
     {
         highOrderCells[iCell].ID = iCell;
 
-        highOrderCells[iCell].nFaces = pFaceNumberOfCells[iCell];
+        highOrderCells[iCell].nFaces = static_cast<unsigned short>(pFaceNumberOfCells[iCell]);
         for (int ilocalface = 0; ilocalface < highOrderCells[iCell].nFaces; ++ ilocalface)
         {
             highOrderCells[iCell].faceIDs.push_back(ppFacesOfCells[iCell][ilocalface]);
         }
 
-        highOrderCells[iCell].nNodes = pNodeNumberOfCell[iCell];
+        highOrderCells[iCell].nNodes = static_cast<unsigned short>(pNodeNumberOfCell[iCell]);
         for (int ilocalnode = 0; ilocalnode < highOrderCells[iCell].nNodes; ++ ilocalnode)
         {
             //highOrderCells[iCell].nodeIDsGrid.push_back(ppNodesOfCells[iCell][ilocalnode]);
@@ -612,7 +612,7 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderCell(UnstructGrid * grid)
             le = left_cell_of_face [ iFace ];
             re = right_cell_of_face[ iFace ];
             // if is parallel BC, we should get the physical cell 
-            if (bcType < 0) //interface
+            if (IsInterface(bcType)) //interface
             {
                 continue;
             }
@@ -678,7 +678,7 @@ void HighOrderGrid::CopyGeometryInfoToHighOrderFace(UnstructGrid *grid)
             highOrderFaces[iFace].VTK_Type = QUADRILATERAL;
         }
 
-        highOrderFaces[iFace].nDOFsGrid = highOrderFaces[iFace].nNodes;
+        highOrderFaces[iFace].nDOFsGrid = static_cast<unsigned short>(highOrderFaces[iFace].nNodes);
         highOrderFaces[iFace].cellID0 = grid->GetLeftCellOfFace()[iFace];
         highOrderFaces[iFace].cellID1 = grid->GetRightCellOfFace()[iFace];
 
@@ -759,8 +759,8 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
 
     highOrderCellsSol[pMultiGridLevel].resize(nTotal);
 
-    unsigned short int nDim = grid->GetDim();
-    unsigned short int neqn = 5;
+    int nDim = grid->GetDim();
+    int neqn = 5;
 
     if(nDim == 3)
     {
@@ -771,7 +771,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
     {
 
         highOrderCellsSol[pMultiGridLevel][iCell].ID = iCell;
-        highOrderCellsSol[pMultiGridLevel][iCell].nPolySol = dgSolOrder - pMultiGridLevel; //polynomial order
+        highOrderCellsSol[pMultiGridLevel][iCell].nPolySol = static_cast<unsigned short>(dgSolOrder - pMultiGridLevel); //polynomial order
         // the volume integation accuracy
         accuracyOfVolumeIntegration = 2 * highOrderCellsSol[pMultiGridLevel][iCell].nPolySol + 2;
         // unsigned short iCellVTKType = 
@@ -795,12 +795,12 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
         }
         //! highOrderCellsSol[pMultiGrid][iCell].nPolySol = dgSolOrder - pMultiGrid;
         pMultiGridOrder = highOrderCellsSol[pMultiGridLevel][iCell].nPolySol;
-        highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol = ((pMultiGridOrder + 1) * (pMultiGridOrder + 2) * (pMultiGridOrder + 3)) / 6;
+        highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol = static_cast<unsigned short>(((pMultiGridOrder + 1) * (pMultiGridOrder + 2) * (pMultiGridOrder + 3)) / 6);
         highOrderCellsSol[pMultiGridLevel][iCell].offsetDOFsSolLocal = positionOfDof;
 
         positionOfDof += highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol;
 
-        highOrderCellsSol[pMultiGridLevel][iCell].integNumberOfGaussPoint = standardCellElements[iStandElemIndex].GetNumberOfIntegrationPoint();
+        highOrderCellsSol[pMultiGridLevel][iCell].integNumberOfGaussPoint = static_cast<unsigned short>(standardCellElements[iStandElemIndex].GetNumberOfIntegrationPoint());
         integNumberOfGauss = highOrderCellsSol[pMultiGridLevel][iCell].integNumberOfGaussPoint;
         const unsigned long * nodeID = highOrderCells[iCell].GetnodeIDsGrid();
 
@@ -903,7 +903,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
             highOrderCellsSol[pMultiGridLevel][iCell].dyBasisFuncCellIntegration[iGaussPoint].resize(degreeOfFreedom);
             highOrderCellsSol[pMultiGridLevel][iCell].dzBasisFuncCellIntegration[iGaussPoint].resize(degreeOfFreedom);
 
-            highOrderCellsSol[pMultiGridLevel][iCell].ComputeGradOfBasisFunctionIntegrationPoint(orthogonalizationMatrix, iGaussPoint, lenScaleOfCell, Xcc[iCell], Ycc[iCell], Zcc[iCell]);
+            highOrderCellsSol[pMultiGridLevel][iCell].ComputeGradOfBasisFunctionIntegrationPoint(orthogonalizationMatrix, iGaussPoint, lenScaleOfCell);
         }
         
         //7:compute new basis function for volume gauss point,the new basis function is orthogonal
@@ -929,11 +929,11 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
     for (int iCell = nTotalCell; iCell < nTotal; ++ iCell)
     {
         highOrderCellsSol[pMultiGridLevel][iCell].ID = iCell;
-        highOrderCellsSol[pMultiGridLevel][iCell].nPolySol = dgSolOrder - pMultiGridLevel; //polynomial order
+        highOrderCellsSol[pMultiGridLevel][iCell].nPolySol = static_cast<unsigned short>(dgSolOrder - pMultiGridLevel); //polynomial order
 
         //! highOrderCellsSol[pMultiGrid][iCell].nPolySol = dgSolOrder - pMultiGrid;
         pMultiGridOrder = highOrderCellsSol[pMultiGridLevel][iCell].nPolySol;
-        highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol = ((pMultiGridOrder + 1) * (pMultiGridOrder + 2) * (pMultiGridOrder + 3)) / 6;
+        highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol = static_cast<unsigned short>(((pMultiGridOrder + 1) * (pMultiGridOrder + 2) * (pMultiGridOrder + 3)) / 6);
         highOrderCellsSol[pMultiGridLevel][iCell].offsetDOFsSolLocal = positionOfDof;
         positionOfDof += highOrderCellsSol[pMultiGridLevel][iCell].nDOFsSol;
 
@@ -959,7 +959,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
             if(iCellVTKType == standardCellElements[iStandElemIndex].GetVTK_Type()  && 
                 nPolyGrid   == standardCellElements[iStandElemIndex].GetNpoly())
             {
-                highOrderCells[iCell].standardElementIndex = iStandElemIndex;
+                highOrderCells[iCell].standardElementIndex = static_cast<unsigned short>(iStandElemIndex);
             }
         }
     }
@@ -1000,7 +1000,7 @@ void HighOrderGrid::InitHighOrderCellSol(UnstructGrid *grid_in, int dgSolOrder, 
 //! @param[in]   dgSolOrder                the accuracy of DG solution
 //! @param[in]   pMultiGrid                pmultigrid number
 //! @param[out]                            initialize HighOrderfaceSol and build HighOrderStandardface
-void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, int pMultiGrid, int isUnsteady, int viscousType)
+void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int pMultiGrid, int viscousType)
 {     
     int nTotalFace = grid->GetNTotalFace();
     int nBoundFace = grid->GetNBoundFace();
@@ -1031,8 +1031,8 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
     RDouble lenScaleOfLeftCell = 0.0, lenScaleOfRightCell = 0.0;
     RDouble *leftOrthMatrix, *rightOrthMatrix; 
     positionOfDof = 0;
-    unsigned short int nDim = grid->GetDim();
-    unsigned short int neqn = 5;
+    int nDim = grid->GetDim();
+    int neqn = 5;
     unsigned long pTotalGaussPoint = 0;
 
     if(nDim == 3)
@@ -1055,8 +1055,8 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
                 int iFace = *iter;
                 highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
 
-                leftCell  = leftCellOfFace[iFace];
-                rightCell = rightCellOfFace[iFace]; 
+                leftCell  = static_cast<unsigned short>(leftCellOfFace[iFace]);
+                rightCell = static_cast<unsigned short>(rightCellOfFace[iFace]);
                 highOrderFacesSol[pMultiGrid][iFace].offsetGaussPoint = pTotalGaussPoint;
 
                 nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
@@ -1071,7 +1071,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
                 iFaceVTKType = highOrderFaces[iFace].VTK_Type;
 
                 // get nodes of face
-                nFaceNodes = highOrderFaces[iFace].nNodes;
+                nFaceNodes = static_cast<unsigned short>(highOrderFaces[iFace].nNodes);
 
                 //! Determine the VTK type
                 for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex) 
@@ -1085,7 +1085,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
                 if(iStandElemIndex == standardFaceElements.size())
                     standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
 
-                highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint();
+                highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = static_cast<unsigned short>(standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint());
                 integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
                 pTotalGaussPoint += integNumberOfGauss;
                 //apply memory to save coord of integration
@@ -1149,8 +1149,8 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
 
                 highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
 
-                leftCell  = leftCellOfFace[iFace];
-                rightCell = rightCellOfFace[iFace]; 
+                leftCell  = static_cast<unsigned short>(leftCellOfFace[iFace]);
+                rightCell = static_cast<unsigned short>(rightCellOfFace[iFace]);
                 highOrderFacesSol[pMultiGrid][iFace].offsetGaussPoint = pTotalGaussPoint;
 
 
@@ -1165,7 +1165,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
                 iFaceVTKType = highOrderFaces[iFace].VTK_Type;
 
                 // get nodes of face
-                nFaceNodes = highOrderFaces[iFace].nNodes;
+                nFaceNodes = static_cast<unsigned short>(highOrderFaces[iFace].nNodes);
 
                 //! Determine the VTK type
                 for (iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++ iStandElemIndex)
@@ -1179,7 +1179,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
                 if(iStandElemIndex == standardFaceElements.size())
                     standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
 
-                highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint();
+                highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = static_cast<unsigned short>(standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint());
                 integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
                 pTotalGaussPoint += integNumberOfGauss;
                 //apply memory to save coord of integration
@@ -1241,8 +1241,8 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
     {
         highOrderFacesSol[pMultiGrid][iFace].globalID = iFace;
 
-        leftCell  = leftCellOfFace[iFace];
-        rightCell = rightCellOfFace[iFace];
+        leftCell  = static_cast<unsigned short>(leftCellOfFace[iFace]);
+        rightCell = static_cast<unsigned short>(rightCellOfFace[iFace]);
 
         nPloyOfLeftCell  = highOrderCellsSol[pMultiGrid][leftCell].nPolySol;
         nPloyOfRightCell = highOrderCellsSol[pMultiGrid][rightCell].nPolySol;
@@ -1256,7 +1256,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
         iFaceVTKType = highOrderFaces[iFace].VTK_Type;
 
         // get nodes of face
-        nFaceNodes = highOrderFaces[iFace].nNodes;
+        nFaceNodes = static_cast<unsigned short>(highOrderFaces[iFace].nNodes);
 
         //! Determine the VTK type
         for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex)
@@ -1270,7 +1270,7 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
         if(iStandElemIndex == standardFaceElements.size())
             standardFaceElements.push_back(HighOrderStandardFace (iFaceVTKType, nFaceNodes, accuracyOfIntigration));
 
-        highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint();
+        highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint = static_cast<unsigned short>(standardFaceElements[iStandElemIndex].GetNumberOfIntegrationPoint());
         integNumberOfGauss = highOrderFacesSol[pMultiGrid][iFace].integNumberOfGaussPoint;
         highOrderFacesSol[pMultiGrid][iFace].offsetGaussPoint = pTotalGaussPoint;
         pTotalGaussPoint += integNumberOfGauss;
@@ -1331,12 +1331,12 @@ void HighOrderGrid::InitHighOrderFaceSol(UnstructGrid * grid, int dgSolOrder, in
         //! Determine the standardElementType, pMultiGrid
         iFaceVTKType = highOrderFaces[iFace].VTK_Type;
         int nPolyGrid = highOrderFaces[iFace].nPolyGrid;
-        for(int iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex)
+        for(iStandElemIndex = 0; iStandElemIndex < standardFaceElements.size(); ++iStandElemIndex)
         {
             if(iFaceVTKType == standardFaceElements[iStandElemIndex].GetVTK_Type() && 
                 nPolyGrid   == standardFaceElements[iStandElemIndex].GetNpoly())
             {
-                highOrderFaces[iFace].standardElementIndex = iStandElemIndex;
+                highOrderFaces[iFace].standardElementIndex = static_cast<unsigned short>(iStandElemIndex);
             }
         } 
         if(pMultiGrid == 0)

@@ -210,7 +210,6 @@ void CombinGrid::MergeInterface2All()
         UnstructBCSet *unstructBCSet = gridLocal->GetUnstructBCSet();
         int nBCRegionUnstruct = unstructBCSet->GetnBCRegion();
 
-        int nBLocalFace = gridLocal->GetNBoundFace();
         int *face2all = GetFace2All(iZone);
 
         int nMergedInterfaces = 0;
@@ -519,7 +518,6 @@ void CombinGrid::MergeBCType()
     for (int iZone = 0; iZone < numberOfZones; ++ iZone)
     {
         UnstructGrid *unstr = UnstructGridCast(grid_in[iZone]);
-        int nBoundFace = unstr->GetNBoundFace();
         int *face2all = GetFace2All(iZone);
 
         UnstructBCSet *unstructBCSet = unstr->GetUnstructBCSet();
@@ -528,7 +526,6 @@ void CombinGrid::MergeBCType()
         for (int iBCRegionUnstruct = 0; iBCRegionUnstruct < nBCRegionUnstruct; iBCRegionUnstruct++)
         {
             UnstructBC *bcRegion = unstructBCSet->GetBCRegion(iBCRegionUnstruct);
-            int bcType = bcRegion->GetBCType();
 
             vector<int> *faceIndex = bcRegion->GetFaceIndex();
             for (vector<int>::iterator iter = faceIndex->begin(); iter != faceIndex->end(); iter++)
@@ -549,7 +546,6 @@ void CombinGrid::MergeBCType()
             }
         }
     }
-  
 
     grid_all->SetNBoundFace(nBFace_all);
     UnstructBCSet **bcr_all = new UnstructBCSet * [nTFace_all];
@@ -1091,12 +1087,12 @@ void CombinGrid::SwapInterfaceData()
                 ZoneNeighbor *globalNeighborZonesTemp = zoneConnectivity->GetZoneNeighbor(neighborZone);
                 int numberOfNeighborTemp = globalNeighborZonesTemp->GetNumberOfNeighbor();
 
-                for (int iNeighbor = 0; iNeighbor < numberOfNeighborTemp; ++ iNeighbor)
+                for (int iNeighbor1 = 0; iNeighbor1 < numberOfNeighborTemp; ++ iNeighbor1)
                 {
-                    int neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(iNeighbor);
+                    int neighborZoneTemp = globalNeighborZonesTemp->GetZoneIndexOfNeighbor(iNeighbor1);
                     if (neighborZoneTemp == iZone)
                     {
-                        neighborOrer = iNeighbor;
+                        neighborOrer = iNeighbor1;
                         break;
                     }
                 }

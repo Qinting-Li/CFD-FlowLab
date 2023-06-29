@@ -130,15 +130,15 @@ void GridManager::DeAllocateMetrics()
 {
     if (oldFaceNormalX)
     {
-        delete[]oldFaceNormalX;
+        delete [] oldFaceNormalX;
     }
     if (oldFaceNormalY)
     {
-        delete[]oldFaceNormalY;
+        delete [] oldFaceNormalY;
     }
     if (oldFaceNormalZ)
     {
-        delete[]oldFaceNormalZ;
+        delete [] oldFaceNormalZ;
     }
 }
 
@@ -201,45 +201,45 @@ void GridManager::DeAllocateALEMetrics()
 {
     if (cellVolumeN1)
     {
-        delete[]cellVolumeN1;
+        delete [] cellVolumeN1;
     }
     if (cellVolumeN2)
     {
-        delete[]cellVolumeN2;
+        delete [] cellVolumeN2;
     }
 
     if (oldFaceVelocityX)
     {
-        delete[]oldFaceVelocityX;
+        delete [] oldFaceVelocityX;
     }
     if (oldFaceVelocityY)
     {
-        delete[]oldFaceVelocityY;
+        delete [] oldFaceVelocityY;
     }
     if (oldFaceVelocityZ)
     {
-        delete[]oldFaceVelocityZ;
+        delete [] oldFaceVelocityZ;
     }
     if (oldFaceNormalVelocity)
     {
-        delete[]oldFaceNormalVelocity;
+        delete [] oldFaceNormalVelocity;
     }
 
     if (newFaceVelocityX)
     {
-        delete[]newFaceVelocityX;
+        delete [] newFaceVelocityX;
     }
     if (newFaceVelocityY)
     {
-        delete[]newFaceVelocityY;
+        delete [] newFaceVelocityY;
     }
     if (newFaceVelocityZ)
     {
-        delete[]newFaceVelocityZ;
+        delete [] newFaceVelocityZ;
     }
     if (newFaceNormalVelocity)
     {
-        delete[]newFaceNormalVelocity;
+        delete [] newFaceNormalVelocity;
     }
 }
 
@@ -468,7 +468,7 @@ void GridManager::ComputeCellCenterVol2D(ActionKey* actkey)
         {
             cellVolume[iCell] = -cellVolume[iCell];
             ++numberOfCellsHaveNegativeVolumes;
-            oss << " negative cell index : " << iCell << " " << cellCenterX[iCell] << " " << cellCenterY[iCell] << "\n";
+            oss << "  Warning: negative volume cell index " << iCell << ", (x, y) " << cellCenterX[iCell] << " " << cellCenterY[iCell] << " !\n";
         }
     }
     if (numberOfCellsHaveNegativeVolumes) oss << numberOfCellsHaveNegativeVolumes << " cells have negative volumes \n";
@@ -770,8 +770,7 @@ void GridManager::ComputeCellCenterVol3D(ActionKey* actkey)
         {
             cellVolume[iCell] = -cellVolume[iCell];
             ++numberOfErrorCells;
-            oss << "zone " << unstructGrid->GetZoneID()
-                << " negative cell index : " << iCell << " " << cellCenterX[iCell] << " " << cellCenterY[iCell] << " " << cellCenterZ[iCell] << " cellVolume = " << cellVolume[iCell] << "\n";
+            oss << "  Warning: negative volume cell index " << iCell << ", (x, y, z) " << cellCenterX[iCell] << " " << cellCenterY[iCell] << " " << cellCenterZ[iCell] << " !\n";
         }
     }
 
@@ -1150,8 +1149,7 @@ void GridManager::ComputeCellCenterVol3DNew()
         {
             cellVolume[iCell] = -cellVolume[iCell];
             ++numberOfCellsHaveNegativeVolumes;
-            oss << "zone " << unstructGrid->GetZoneID()
-                << " negative cell index : " << iCell << " " << cellCenterX[iCell] << " " << cellCenterY[iCell] << " " << cellCenterZ[iCell] << " cellVolume = " << cellVolume[iCell] << "\n";
+            oss << "  Warning: negative volume cell index " << iCell << ", (x, y, z) " << cellCenterX[iCell] << " " << cellCenterY[iCell] << " " << cellCenterZ[iCell] << " !\n";
         }
     }
 
@@ -1259,7 +1257,7 @@ void GridManager::ComputeMassCharacterOfObject()
 
     for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
-        //! minus the origin position later！
+        //! minus the origin position later!
         RDouble x = cellCenterX[ iCell ] - 0.0;
         RDouble y = cellCenterY[ iCell ] - 0.0;
         RDouble z = cellCenterZ[ iCell ] - 0.0;
@@ -1288,7 +1286,7 @@ void GridManager::ComputeMassCharacterOfObject()
 
     for (int iCell = 0; iCell < numberOfCells; ++ iCell)
     {
-        //! minus the mass cell center position later！
+        //! minus the mass cell center position later!
         RDouble x = cellCenterX[ iCell ] - 2.4880824;
         RDouble y = cellCenterY[ iCell ] - 0.0;
         RDouble z = cellCenterZ[ iCell ] - 0.0;
@@ -1351,7 +1349,7 @@ void GridManager::ComputeGridFaceVelocity()
     }
     else
     {
-        //StopProgram("无此strategyForFaceNormalVelocity！");
+        //StopProgram("无此strategyForFaceNormalVelocity!");
     }
 }
 
@@ -1525,7 +1523,7 @@ void GridManager::ComputeGridFaceVelocity2DSatisfyingGCL()
         RDouble dY2 = oldY2 - newY1;
         RDouble dZ2 = oldZ2 - newZ1;
         //! the four points must in the same plane, so the area can be computed by the cross product of the diagonal.
-        //! and it is right for arbitrary quadrilateral！
+        //! and it is right for arbitrary quadrilateral!
         darea = half * (dY1 * dZ2 - dZ1 * dY2 + dZ1 * dX2 - dX1 * dZ2 + dX1 * dY2 - dY1 * dX2);
     
         newFaceNormalVelocity[ iFace ] = darea / physicalTimeStep / (faceArea[iFace] + TINY);
@@ -1690,14 +1688,14 @@ void GridManager::ComputeGridFaceVelocity3DSatisfyingGCL()
     for (int iFace = 0; iFace < numberOfFaces; ++ iFace)
     {
         //! faceVelocity is combined by the one order face velocities of the two times(old and new).
-        faceNormalVelocity[ iFace ] = a * newFaceNormalVelocity[ iFace ] - b * oldFaceNormalVelocity[ iFace ] * (oldFaceArea[ iFace ] / faceArea[ iFace ]);
+        faceNormalVelocity[ iFace ] = a * newFaceNormalVelocity[ iFace ] - b * oldFaceNormalVelocity[ iFace ] * (oldFaceArea[ iFace ] / (faceArea[ iFace ] + TINY));
         faceVelocityX     [ iFace ] = a * newFaceVelocityX     [ iFace ] - b * oldFaceVelocityX     [ iFace ];
         faceVelocityY     [ iFace ] = a * newFaceVelocityY     [ iFace ] - b * oldFaceVelocityY     [ iFace ];
         faceVelocityZ     [ iFace ] = a * newFaceVelocityZ     [ iFace ] - b * oldFaceVelocityZ     [ iFace ];
     }
 }
 
-void GridManager::ComputeLocalToGlobalNodeIndexMappingDirectly(int targetZone)
+void GridManager::ComputeLocalToGlobalNodeIndexMappingDirectly()
 {
     int numberOfNodes = unstructGrid->GetNTotalNode();
 
@@ -1840,7 +1838,7 @@ void GridManager::UpdateGridCoordinateByReadingFile(int targetZone)
 
     if (PHMPI::GetNumberofGlobalZones() == 1)
     {
-        this->ComputeLocalToGlobalNodeIndexMappingDirectly(targetZone);
+        this->ComputeLocalToGlobalNodeIndexMappingDirectly();
     }
     else
     {

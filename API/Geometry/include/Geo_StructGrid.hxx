@@ -33,6 +33,21 @@ inline RDouble3D * StructGrid::GetWallDist() const
     return walldist;
 }
 
+inline RDouble3D * StructGrid::GetNearestWallFaceNormalX() const
+{
+    return nearestwallfacenormalx;
+}
+
+inline RDouble3D * StructGrid::GetNearestWallFaceNormalY() const
+{
+    return nearestwallfacenormaly;
+}
+
+inline RDouble3D * StructGrid::GetNearestWallFaceNormalZ() const
+{
+    return nearestwallfacenormalz;
+}
+
 inline Int3D *StructGrid::GetCellBoundaryType()
 {
     return cellBoundaryType;
@@ -294,28 +309,34 @@ inline void StructGrid::GetFaceIterationIndex(int &iFaceStart, int &iFaceEnd, in
 
 inline void StructGrid::GetNsurfIndex(int &il1, int &jl1, int &kl1, int iDimension)
 {
-	il1 = 0;
-	jl1 = 0;
-	kl1 = 0;
-	int mide[3][3];
-	memset(mide, 0, sizeof(mide));
-	mide[0][0] = 1;
-	mide[1][1] = 1;
-	mide[2][2] = 1;
-
-	il1 = mide[0][iDimension-1];
-    jl1 = mide[1][iDimension-1];
-    kl1 = mide[2][iDimension-1];
+    if(iDimension == 1)
+    {
+        il1 = 1;
+        jl1 = 0;
+        kl1 = 0;
+    }
+    else if(iDimension == 2)
+    {
+        il1 = 0;
+        jl1 = 1;
+        kl1 = 0;
+    }
+    else if(iDimension == 3)
+    {
+        il1 = 0;
+        jl1 = 0;
+        kl1 = 1;
+    }
 }
 
-inline void StructGrid::GetLeftCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ile, int &jle, int &kle, int iDimension)
+inline void StructGrid::GetLeftCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ile, int &jle, int &kle)
 {
 	ile  = i - il1;
 	jle  = j - jl1;
 	kle  = k - kl1;
 }
 
-inline void StructGrid::GetRightCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ire, int &jre, int &kre, int iDimension)
+inline void StructGrid::GetRightCellOfFace(int &i, int &j, int &k, int &il1, int &jl1, int &kl1, int &ire, int &jre, int &kre)
 {
 	ire  = i + il1;
 	jre  = j + jl1;

@@ -71,20 +71,19 @@ void Pre_StructToUnstruct::ConstructCellMapStrToUns()
         for (int iBCRegion = 0; iBCRegion < nBCRegion; ++ iBCRegion)
         {
             StructBC *structBC = structBCSet->GetBCRegion(iBCRegion);
-            int BCType = structBC->GetBCType();
             string bcName = structBC->GetBCName();
 
-            int ist, ied, jst, jed, kst, ked;
-            structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
+            int ist1, ied1, jst1, jed1, kst1, ked1;
+            structBC->GetIJKRegion(ist1, ied1, jst1, jed1, kst1, ked1);
 
             int iSurface         = structBC->GetFaceDirection() + 1;
             int leftOrRightIndex = structBC->GetFaceLeftOrRightIndex();
 
-            for (int k = kst; k <= ked; ++ k)
+            for (int k = kst1; k <= ked1; ++ k)
             {
-                for (int j = jst; j <= jed; ++ j)
+                for (int j = jst1; j <= jed1; ++ j)
                 {
-                    for (int i = ist; i <= ied; ++ i)
+                    for (int i = ist1; i <= ied1; ++ i)
                     {
                         int iGost = i;
                         int jGost = j;
@@ -244,7 +243,6 @@ void Pre_StructToUnstruct::ConstructBCType()
 
             unstructBC->SetBCType(BCType);
             unstructBC->SetBCName(bcName);
-            vector<int> *faceIndex = unstructBC->GetFaceIndex();
             int ist, ied, jst, jed, kst, ked;
             structBC->GetIJKRegion(ist, ied, jst, jed, kst, ked);
 
@@ -332,8 +330,8 @@ void Pre_StructToUnstruct::ConstructFaceTopo()
                         leftCellOfFace [faceIndex] = leftCellIndex;
                         rightCellOfFace[faceIndex] = nTotalCell + faceIndex;
 
-                        int iNodeIndex1, iNodeIndex2, iNodeIndex3, iNodeIndex4;
-                        int jNodeIndex1, jNodeIndex2, jNodeIndex3, jNodeIndex4;
+                        int iNodeIndex1 = 1, iNodeIndex2 = 1, iNodeIndex3, iNodeIndex4;
+                        int jNodeIndex1 = 1, jNodeIndex2 = 1, jNodeIndex3, jNodeIndex4;
                         int kNodeIndex1, kNodeIndex2, kNodeIndex3, kNodeIndex4;
 
                         int iWall, jWall, kWall;

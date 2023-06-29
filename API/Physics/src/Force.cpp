@@ -20,7 +20,7 @@ namespace PHSPACE
 
 Force globalAerodynamicForce;
 
-void InitForce(ActionKey *actkey)
+void InitForce()
 {
 
     RDouble attack, sideslip;
@@ -201,7 +201,7 @@ void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, R
         PHSPACE::SetField(Cm_p, 0.0, numberofTotalPart);
     }
 
-    numberOfBody = GlobalBoundaryCondition::GetNumberOfBody();
+    numberOfBody = static_cast<int>(GlobalBoundaryCondition::GetNumberOfBody());
     if ((myid == server) && (!CA_f_body) && (numberOfBody))
     {
         CA_f_body = new RDouble[numberOfBody];
@@ -267,7 +267,7 @@ void Force::Init(RDouble attack, RDouble sideslip, RDouble forceReferenceArea, R
                 continue;
             }
             string wallName = GlobalBoundaryCondition::GetBoundaryName(iBC);
-            int bodyIndex = GlobalBoundaryCondition::GetBodyIndex(iBC);
+            int bodyIndex = static_cast<int>(GlobalBoundaryCondition::GetBodyIndex(iBC));
             wallNameOfEachBody[bodyIndex].push_back(wallName);
         }
     }
@@ -533,7 +533,6 @@ void Force::CompForce()
         cd_sf[iPart] = cd_tot[iPart] - cd_pr[iPart];
         cd_cl2pa[iPart] = cd_tot[iPart] - (cl_tot[iPart] * cl_tot[iPart]) / (PI * AR);
 
-        const RDouble one = 1.0;
         xcp[iPart] = SIGN(one, cfy) * cmz / (ABS(cfy) + SMALL);
     }
 
@@ -557,7 +556,7 @@ void Force::CompForce()
             continue;
         }
 
-        int bodyIndex = GlobalBoundaryCondition::GetBodyIndex(bcID);
+        int bodyIndex = static_cast<int>(GlobalBoundaryCondition::GetBodyIndex(bcID));
 
         CA_f_body[bodyIndex] += CA_f[iPart];
         CN_f_body[bodyIndex] += CN_f[iPart];
@@ -605,7 +604,7 @@ void Force::DumpForce(int outnstep, std::ostringstream &oss)
     oss << "\n";
 }
 
-void Force::DumpPartForce(int outnstep, int partID, const string &partName, std::ostringstream &oss)
+void Force::DumpPartForce(int outnstep, int partID, std::ostringstream &oss)
 {
     oss << setiosflags(ios::left);
     oss << setiosflags(ios::scientific);
@@ -696,34 +695,34 @@ void Force::DumpForce(ActionKey *actkey, int outnstep)
             isGlobalCoordinate = false;
         }
 
-        fstream file;
-        ParallelOpenFile(file, partAircoefFileName, ios_base::out | ios_base::app);
+        fstream fileTmp;
+        ParallelOpenFile(fileTmp, partAircoefFileName, ios_base::out | ios_base::app);
 
-        ostringstream oss;
-        if (IfFileEmpty(file))
+        ostringstream ossTmp;
+        if (IfFileEmpty(fileTmp))
         {
-            oss << "Title=\"Aerodynamic Force of " << bcName << "\"" << endl;
-            oss << "Variables=" << endl;
-            oss << "iter" << endl;
+            ossTmp << "Title=\"Aerodynamic Force of " << bcName << "\"" << endl;
+            ossTmp << "Variables=" << endl;
+            ossTmp << "iter" << endl;
 
-            oss << "<i>C<sub>L</sub></i>" << endl;
-            oss << "<i>C<sub>D</sub></i>" << endl;
-            oss << "<i>C<sub>Z</sub></i>" << endl;
-            oss << "<i>C<sub>D_p</sub></i>" << endl;
-            oss << "<i>C<sub>D_f</sub></i>" << endl;
-            oss << "<i>C<sub>D</sub></i>-<i>C<sub>L</sub></i><sup>2</sup>/(<greek>p</greek><math>4</math>A<sub>r</sub>)</i>" << endl;
-            oss << "<i>X<sub>cp</sub></i>" << endl;
-            oss << "<i>C<sub>A</sub></i>" << endl;
-            oss << "<i>C<sub>N</sub></i>" << endl;
-            oss << "<i>C<sub>Z1</sub></i>" << endl;
-            oss << "<i>C<sub>ml</sub></i>" << endl;
-            oss << "<i>C<sub>mn</sub></i>" << endl;
-            oss << "<i>C<sub>m</sub></i>" << endl;
+            ossTmp << "<i>C<sub>L</sub></i>" << endl;
+            ossTmp << "<i>C<sub>D</sub></i>" << endl;
+            ossTmp << "<i>C<sub>Z</sub></i>" << endl;
+            ossTmp << "<i>C<sub>D_p</sub></i>" << endl;
+            ossTmp << "<i>C<sub>D_f</sub></i>" << endl;
+            ossTmp << "<i>C<sub>D</sub></i>-<i>C<sub>L</sub></i><sup>2</sup>/(<greek>p</greek><math>4</math>A<sub>r</sub>)</i>" << endl;
+            ossTmp << "<i>X<sub>cp</sub></i>" << endl;
+            ossTmp << "<i>C<sub>A</sub></i>" << endl;
+            ossTmp << "<i>C<sub>N</sub></i>" << endl;
+            ossTmp << "<i>C<sub>Z1</sub></i>" << endl;
+            ossTmp << "<i>C<sub>ml</sub></i>" << endl;
+            ossTmp << "<i>C<sub>mn</sub></i>" << endl;
+            ossTmp << "<i>C<sub>m</sub></i>" << endl;
         }
-        DumpPartForce(outnstep, iPart, bcName, oss);
-        WriteASCIIFile(file, oss.str());
+        DumpPartForce(outnstep, iPart, ossTmp);
+        WriteASCIIFile(fileTmp, ossTmp.str());
 
-        ParallelCloseFile(file);
+        ParallelCloseFile(fileTmp);
     }
 
     DumpAllForceData(actkey, outnstep);
@@ -1068,7 +1067,7 @@ void AerodynamicForceComponent::Initialize()
         int nTBCWall = GlobalBoundaryCondition::GetNumberOfSolidWallPart();
         SimpleBC *boundaryCondition = 0;
         int iComponent = 0;
-        int nTBC = GlobalBoundaryCondition::GetNumberOfBC();
+        int nTBC = static_cast<int>(GlobalBoundaryCondition::GetNumberOfBC());
         if (numberOfAerodynamicForceComponents != nTBCWall)
         {
             TK_Exit::ExceptionExit("Error in AerodynamicForceComponent::initialize : numberOfAerodynamicForceComponents != nTBCWall");

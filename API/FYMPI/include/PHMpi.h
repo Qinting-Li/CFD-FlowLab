@@ -173,36 +173,36 @@ LIB_EXPORT int GetGlobalZoneIDToLocalZoneID(int globalZoneID);
 //! Special functions for HYBRID solver.
 int GetNumberOfProcStructUsed();
 
-void CreateZoneProcessorID(int nZones);
+void CreateZoneProcessorID(int nZonesTmp);
 
-void CreatetZoneProcessorID_INP(int nZones);
+void CreatetZoneProcessorID_INP(int nZonesTmp);
 
-void CreateZoneGridID(int nZones);
+void CreateZoneGridID(int nZonesTmp);
 
-void CreateZoneGridType(int nZones);
+void CreateZoneGridType(int nZonesTmp);
 
-void CreateZoneFileID(int nZones);
+void CreateZoneFileID(int nZonesTmp);
 
 //! Special functions for HYBRID solver.
-void CreateZoneProcessorIDDump(int nZones);
+void CreateZoneProcessorIDDump(int nZonesTmp);
 
-void CreateZoneGroupID(int nZones);
+void CreateZoneGroupID(int nZonesTmp);
 
 void FreeBlockData();
 
-void CreateZoneStartPointContainer(int nZones);
+void CreateZoneStartPointContainer(int nZonesTmp);
 
 int * GetZoneStartPointContainer();
 
 void DeleteZoneStartPointContainer();
 
-void CreateZoneStartCenterContainer(int nZones);
+void CreateZoneStartCenterContainer(int nZonesTmp);
 
 int * GetZoneStartCenterContainer();
 
 void DeleteZoneStartCenterContainer();
 
-void GenerateGlobalBinaryTree(int *zoneStartPointContainer, int nZones, int numberOfPoints);
+void GenerateGlobalBinaryTree(int * zoneStartPointContainerTmp, int nZonesTmp, int numberOfPoints);
 
 //! The following 8 functions should be moved to overset file.
 int GetZoneIndexAccordingToGlobalPointLabel(int globalPointLabel);
@@ -380,7 +380,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
 {
     int nTProcessor = PHMPI::GetNumberOfProcessor() + PHMPI::GetNumberOfGridProcessor();
     int myid        = PHMPI::GetCurrentProcessorID();
-    int server      = PHMPI::GetServerProcessorID();
+    int serverTmp      = PHMPI::GetServerProcessorID();
     int tag = 0;
 
     //! Step1: collection from each other processors by server.
@@ -396,11 +396,11 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
 
     T * globalDataTemp = new int [totalDataSize];
 
-    PH_Gatherv(localData, localSize[myid], globalDataTemp, localSize, stride, server);
+    PH_Gatherv(localData, localSize[myid], globalDataTemp, localSize, stride, serverTmp);
 
     delete [] stride;
 
-    if (myid == server)
+    if (myid == serverTmp)
     {
         int dataCount = 0;
         for (int iProc = 0; iProc < nTProcessor; ++ iProc)
@@ -422,7 +422,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
     //! Step2: broad casting to each other processors by server.
     DataContainer *cdata = new DataContainer();
 
-    if (myid == server)
+    if (myid == serverTmp)
     {
         cdata->moveto_begin();
         for (int iProc = 0; iProc < nTProcessor; ++ iProc)
@@ -434,7 +434,7 @@ void FillGobalDataCollectBcast(T *localData, int *localSize, T **&globalData)
 
     PHSPACE::PHMPI::PH_BcastByServerToClinet(cdata, 2, tag);
 
-    if (myid != server)
+    if (myid != serverTmp)
     {
         cdata->moveto_begin();
         for (int iProc = 0; iProc < nTProcessor; ++ iProc)

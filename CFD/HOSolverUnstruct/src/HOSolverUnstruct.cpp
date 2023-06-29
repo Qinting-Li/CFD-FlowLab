@@ -133,7 +133,7 @@ void HOSolverUnstruct::AllocateGlobalVar(Grid * gridIn)
         for(int img = 0; img < pNLevels; ++ img)
         {
             highOrderGrid.InitHighOrderCellSol(grid, dgSolOrder, img, isUnsteady, viscousType);
-            highOrderGrid.InitHighOrderFaceSol(grid, dgSolOrder, img, isUnsteady, viscousType);
+            highOrderGrid.InitHighOrderFaceSol(grid, img, viscousType);
         }
     }
     else
@@ -143,26 +143,17 @@ void HOSolverUnstruct::AllocateGlobalVar(Grid * gridIn)
         highOrderCellsSol.resize(1);
         highOrderFacesSol.resize(1);
         highOrderGrid.InitHighOrderCellSol(grid, 0, 0, isUnsteady, viscousType);
-        highOrderGrid.InitHighOrderFaceSol(grid, 0, 0, isUnsteady, viscousType);
+        highOrderGrid.InitHighOrderFaceSol(grid, 0, viscousType);
     }    
 
-    //	int ntmodel = parameters->GetNTemperatureModel();
-    //	int ntmodel = parameters->GetNTemperatureModel();
-    //
-    //    RDouble **t = NewPointer2<RDouble>(ntmodel, nTotal);
-    //	grid->UpdateDataPtr("t"  , t);
-
-    RDouble * dt  = new RDouble [ nTotal ];
+    RDouble *dt = new RDouble [ nTotal ];
     grid->UpdateDataPtr("dt" , dt);
 
-    //	RDouble * gama  = new RDouble [ nTotal ];
-    //	grid->UpdateDataPtr("gama", gama);
-
-    int * dofsOfCells = new int[nTotalCell];
+    int *dofsOfCells = new int[nTotalCell];
     highOrderGrid.GetNumberOfDOFs(nTotalCell, dofsOfCells);
 
-    RDouble *** q   = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells);
-    RDouble *** res = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells);
+    RDouble ***q   = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells);
+    RDouble ***res = NewPointer3<RDouble>(nTotalCell, neqn, dofsOfCells);
 
     delete [] dofsOfCells;
     
@@ -180,12 +171,22 @@ void HOSolverUnstruct::AllocateGlobalVar(Grid * gridIn)
 void HOSolverUnstruct::DeAllocateGlobalVar(Grid * gridIn)
 {
     if(HODebug)  cout << "DeAllocateGlobalVar" << endl;
+    UnstructGrid *grid = UnstructGridCast(gridIn);
 
-    RDouble *** q   = reinterpret_cast< RDouble *** > (gridIn->GetDataPtr("q" ));
-    RDouble *** res = reinterpret_cast< RDouble *** > (gridIn->GetDataPtr("res"));
+    RDouble *dt = reinterpret_cast<RDouble *> (gridIn->GetDataPtr("dt"));
+    delete [] dt;
+
+    RDouble ***q   = reinterpret_cast< RDouble *** > (gridIn->GetDataPtr("q" ));
+    RDouble ***res = reinterpret_cast< RDouble *** > (gridIn->GetDataPtr("res"));
 
     DelPointer3(q );
     DelPointer3(res);
+
+    if (grid->GetLevel() == 0)
+    {
+        int *nodeBCType = reinterpret_cast <int *> (grid->GetDataPtr("nodeBCType"));
+        delete[] nodeBCType;
+    }
 }
 
 void HOSolverUnstruct::RegisterCFDSolverInterfaceField()
@@ -488,7 +489,7 @@ void HOSolverUnstruct::Boundary(Grid *gridIn)
         HighOrderFaceSol & highOrderFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         numberGaussPoint = highOrderFaceSol.integNumberOfGaussPoint;
 
-        if (bcType < 0) //! Interface
+        if (IsInterface(bcType)) //! Interface
         {
             continue;
         }
@@ -966,7 +967,7 @@ void HOSolverUnstruct::ComputeQAverage(Grid *gridIn)
             weightCoeff   =   highOrderGrids[hLevel].standardCellElements[uHOCell.standardElementIndex].GetWtIntegration();
             for(int iGaussPoint = 0; iGaussPoint < numberGaussPoint; ++ iGaussPoint)
             {
-                //£¡Compute conservation variable
+                //! Compute conservation variable.
                 uHOCellSol.vislAverage += weightCoeff[iGaussPoint] * uHOCellSol.visl[iGaussPoint] * uHOCellSol.JacDetCellIntegration[iGaussPoint];
             }
             uHOCellSol.vislAverage /= uHOCell.volume;
@@ -2094,7 +2095,7 @@ LIB_EXPORT void HOSolverUnstruct::ComputePostVisualVariables(Post_Visual * postV
         HighOrderFaceSol & highOrderFaceSol = highOrderGrids[hLevel].highOrderFacesSol[pLevel][iFace];
         numberGaussPoint = highOrderFaceSol.integNumberOfGaussPoint;
 
-        if (bcType < 0) //! Interface
+        if (IsInterface(bcType)) //! Interface
         {
             continue;
         }

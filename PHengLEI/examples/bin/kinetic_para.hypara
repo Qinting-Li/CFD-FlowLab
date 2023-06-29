@@ -14,6 +14,10 @@ double gravity_0                  = 0.0;
 double massMatrix_0[]          = 1e-7,     1e-6,     1e-6,     0.0,      0.0,      0.0;
 //initial six DOF position information of parts.    xc        yc        zc
 double massCenter_0[]          = 0.265 ,    0.0,      0.0;
+//if reset mass center while restart
+int resetMassCenter_0          = 0;
+//position offset of parts.       dx       dy        dz
+double massCenterDxyz_0[]      = 0.0,     0.0,      0.0;
 //initial six DOF position information of parts.    angleX    angleY    angleZ
 double attitudeAngle_0[]       = 0.0 ,     0.0,      0.0;
 //initial six DOF motion information of parts.    vc        vy        vz
@@ -35,6 +39,5 @@ double addedForceTime_0[]       = 0.0;
 double addedForce_0[]           = 0.0      ,0.0      ,0.0       ;
 //additional moment of Force  (system axis)              mX        mY        mZ        
 double addedMoment_0[]          = 0.0      ,0.0      ,0.0       ;
-//the deformation method of the parts.
-int    morphing_0               = 0;
+
 int    integralOrder            = 4;

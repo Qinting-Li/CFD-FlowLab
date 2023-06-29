@@ -127,7 +127,7 @@ public:
 public:
     void AllocateData();
 public:
-    void Encode(DataContainer *cdata);
+    void Encode();
     void Decode(DataContainer *cdata);
 };
 
@@ -163,7 +163,7 @@ public:
         return oversetInfo->GetCellIndexForTransfer();
     };
 
-    int FindIthNeighbor(int zone) { return -1; }
+    int FindIthNeighbor() { return -1; }
 
     Data_ParamFieldSuite * GetDataStorage() const { return dataStorage; }
 

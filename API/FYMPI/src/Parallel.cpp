@@ -41,7 +41,7 @@ void PH_Size(int &size)
 void PH_Finalize()
 {
 #ifdef PH_PARALLEL
-    int err = MPI_Finalize();
+    MPI_Finalize();
 #endif
 }
 

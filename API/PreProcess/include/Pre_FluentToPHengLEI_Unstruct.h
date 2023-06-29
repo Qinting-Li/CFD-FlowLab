@@ -106,7 +106,7 @@ public:
     void SetBoundaryName(int zoneIndex, const string &BCName);
     void ResetBCTypeOfSelfDefinePart(int zoneIndex);
     void DumpSelfDefinePartInformation();
-    void Convert2UnsGrid(int nb, UnstructGrid *grid);
+    void Convert2UnsGrid(UnstructGrid *grid);
 };
 
 }

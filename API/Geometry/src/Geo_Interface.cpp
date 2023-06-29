@@ -92,8 +92,18 @@ void InterfacePatch::AllocateData()
     int *recvface = new int [faceNumberOfPatch];
     int *sendface = new int [faceNumberOfPatch];
 
+    //! GMRESParallel
+    int *cellindexLocal = new int[faceNumberOfPatch];
+    int *cellindexNeighbor = new int[faceNumberOfPatch];
+    int *cellindexLocalGhost = new int[faceNumberOfPatch];
+
     this->SetFaceIndexForRecv(recvface);
     this->SetFaceIndexForSend(sendface);
+    
+    //! GMRESParallel
+    this->SetCellIndexOfLocal(cellindexLocal);
+    this->SetCellIndexOfNeighbor(cellindexNeighbor);
+    this->SetCellIndexOfLocalGhost(cellindexLocalGhost);
 }
 
 InterfaceInfo::InterfaceInfo()
@@ -105,6 +115,10 @@ InterfaceInfo::InterfaceInfo()
     interFace2InterFaceID  = NULL;
     interFace2BoundaryFace = NULL;
     interFaceDirection     = NULL;
+    //! GMRESParallel
+    globalNeighborCellIndex = NULL;
+    localInterfaceCellIndex = NULL;
+    localInterfacePhysicalCellIndex = NULL;
     parent                 = NULL;
 
     dsend = new Data_ParamFieldSuite [GetNumberOfGhostCellLayers()];
@@ -149,6 +163,24 @@ InterfaceInfo::InterfaceInfo(const InterfaceInfo &inforIn)
         interFaceDirection = new int [nIFace];
         PHSPACE::CopyField(interFaceDirection, inforIn.GetInterFaceDirection(), nIFace);
     }
+    // GMRESParallel
+    if(inforIn.GetGlobalNeighborCellIndex())
+    {
+        globalNeighborCellIndex = new int[nIFace];
+        PHSPACE::CopyField(globalNeighborCellIndex, inforIn.GetGlobalNeighborCellIndex(), nIFace);
+    }
+
+    if(inforIn.GetLocalInterfaceCellIndex())
+    {
+        localInterfaceCellIndex = new int[nIFace];
+        PHSPACE::CopyField(localInterfaceCellIndex, inforIn.GetLocalInterfaceCellIndex(), nIFace);
+    }
+
+    if(inforIn.GetLocalInterfacePhysicalCellIndex())
+    {
+        localInterfacePhysicalCellIndex = new int[nIFace];
+        PHSPACE::CopyField(localInterfacePhysicalCellIndex, inforIn.GetLocalInterfacePhysicalCellIndex(), nIFace);
+    }
 
     if (inforIn.GetInterfacePatch().size() != 0)
     {
@@ -179,6 +211,10 @@ InterfaceInfo::InterfaceInfo(int nIFace, Grid *parent)
     interFace2InterFaceID  = new int [nIFace];
     interFace2BoundaryFace = new int [nIFace];
     interFaceDirection     = new int [nIFace];
+    //! GMRESParallel
+    globalNeighborCellIndex = new int[nIFace];
+    localInterfaceCellIndex = new int[nIFace];
+    localInterfacePhysicalCellIndex = new int[nIFace];
 
     this->parent = parent;
 
@@ -197,6 +233,10 @@ InterfaceInfo::~InterfaceInfo()
     if (interFace2InterFaceID != NULL) delete [] interFace2InterFaceID;
     if (interFace2BoundaryFace != NULL) delete [] interFace2BoundaryFace;
     if (interFaceDirection != NULL) delete [] interFaceDirection;
+    //! GMRESParallel
+    if (globalNeighborCellIndex!=NULL) delete[] globalNeighborCellIndex;
+    if(localInterfaceCellIndex!=NULL) delete[] localInterfaceCellIndex;
+    if(localInterfacePhysicalCellIndex!=NULL) delete localInterfacePhysicalCellIndex;
 
     if (dsend != NULL) delete [] dsend;
     if (drecv != NULL) delete [] drecv;
@@ -520,7 +560,7 @@ void InterfaceFields::RemoveAnVariable(string varName)
 {
     RemoveInterfaceVar(varName);
 
-    int varIndex = find(variableNames.begin(), variableNames.end(), varName) - variableNames.begin();
+    int varIndex = static_cast<int>(find(variableNames.begin(), variableNames.end(), varName) - variableNames.begin());
     vector< string >::iterator varNameIndexBegin = variableNames.begin();
     vector< int >::iterator varTypeIndexBegin = variableTypes.begin();
     vector< int >::iterator varDimIndexBegin = variableDimensions.begin();

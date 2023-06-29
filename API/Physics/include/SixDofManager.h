@@ -182,7 +182,7 @@ public:
     void Post();
     void Dump();
     void DumpRestart(fstream & file);
-
+    void ResetMassCenter();
 protected:
     void AllocateSixDofSolverContainer();
 
@@ -204,6 +204,7 @@ public:
 protected:
     int bodyIndex;
     int numberOfTimeLayers;
+    int resetMassCenter;
     
     SixDofSolverManager * sixDofSolverManager;
 
@@ -235,6 +236,7 @@ public:
     virtual void InitializeSixDofByFiles(fstream & file);
     virtual void DumpRestartSixDofSolver(fstream & file);
 
+    virtual void ResetMassCenter();
 public:
     SixDofParameter * GetSixDofParameter(int iTimeLayer) { return sixDofParameterContainer[ iTimeLayer ]; };
     vector< RDouble > & GetForceVector    (int iTimeLayer) { return sixDofForceContainer    [ iTimeLayer ]; }
@@ -279,9 +281,6 @@ protected:
     void GetMassCenterAndEulerAngleContainer(vector< RDouble > & massCenterContainer, vector< RDouble > & eulerAngleContainer, int iTimeLayer);
     void GetMomentAboutMassCenterInInertialFrame(vector< RDouble > & massCenterContainer, vector< RDouble > & totalForceVector, vector< RDouble > & momentVector, vector< RDouble > & momentAboutMassCenterInInertialFrame);
     void GetDimensionalAdditionalForceAndMomentOfBody(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
-    void GetDimensionalAdditionalForceAndMomentOfBodyWingStore(vector< RDouble > & dimensionalForceContainer, vector< RDouble > & dimensionalMomentContainer, int iTimeLayer);
-    void GetDimensionalAdditionalForceAndMomentOfBodyWingStore( vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer );
-    void GetDimensionalAdditionalForceAndMomentOfBody611C7(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
     void GetDimensionalAdditionalForceAndMomentOfBodyByParameter(vector< RDouble > & dimensionalGeneralForceContainer, int iTimeLayer);
     void ComputeCurrentSixDofVariables(vector< vector< RDouble > > & qContainer, vector< vector< RDouble > > & fluxContainer, int numberOfEquations);
     void ComputeCurrentSixDofVariables(RDouble * q, RDouble * qN, RDouble * qN1, RDouble * fluxM, RDouble * fluxN, RDouble * fluxN1, int numberOfEquations);

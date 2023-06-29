@@ -23,13 +23,13 @@ namespace HOUnstruct
 {
 
 void ShapeFunctionOfTri(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
-void ShapeFunctionOfTriGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfTriGrad(PHSPACE::RDouble * ret);
 
 void ShapeFunctionOfQuad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 void ShapeFunctionOfQuadGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 
 void ShapeFunctionOfTetr(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
-void ShapeFunctionOfTetrGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
+void ShapeFunctionOfTetrGrad(PHSPACE::RDouble * ret);
 
 void ShapeFunctionOfHex(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);
 void ShapeFunctionOfHexGrad(const PHSPACE::RDouble * refCoord, PHSPACE::RDouble * ret);

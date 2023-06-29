@@ -43,6 +43,37 @@ inline int InterfacePatch::GetZoneID() const
     return zoneid;
 }
 
+//! GMRESParallel
+inline void InterfacePatch::SetCellIndexOfLocal(int *cellIndexOfLocal)
+{
+    this->cellIndexOfLocal = cellIndexOfLocal;
+}
+
+inline int* InterfacePatch::GetCellIndexOfLocal() const
+{
+    return this->cellIndexOfLocal;
+}
+
+inline void InterfacePatch::SetCellIndexOfLocalGhost(int *cellIndexLocalGhost)
+{
+    this->cellIndexOfLocalGhost = cellIndexLocalGhost;
+}
+
+inline int* InterfacePatch::GetCellIndexOfLocalGhost() const
+{
+    return this->cellIndexOfLocalGhost;
+}
+
+inline void InterfacePatch::SetCellIndexOfNeighbor(int *cellIndexOfNeighbor)
+{
+    this->cellIndexOfNeighbor = cellIndexOfNeighbor;
+}
+
+inline int* InterfacePatch::GetCellIndexOfNeighbor() const
+{
+    return this->cellIndexOfNeighbor;
+}
+
 inline void InterfaceInfo::SetNIFace(int nIFace)
 {
     this->nIFace = nIFace;
@@ -124,6 +155,79 @@ inline int * InterfaceInfo::GetFaceIndexForSend(int ineighbor) const
 {
     InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
     return interFacePatch->GetFaceIndexForSend();
+}
+
+//! GMRESParallel
+inline int * InterfaceInfo::GetCellIndexOfNeighbor(int ineighbor) const
+{
+    InterfacePatch *interFacePatch = this->GetInterfacePatch(ineighbor);
+    return interFacePatch->GetCellIndexOfNeighbor();
+}
+
+inline int * InterfaceInfo::GetGlobalNeighborCellIndex() const
+{
+    return this->globalNeighborCellIndex;
+}
+
+inline void InterfaceInfo::SetGlobalNeighborCellIndex(int* globalNeighborCellIndex)
+{
+    this->globalNeighborCellIndex = globalNeighborCellIndex;
+}
+
+inline int * InterfaceInfo::GetLocalInterfaceCellIndex() const
+{
+    return this->localInterfaceCellIndex;
+}
+
+inline void InterfaceInfo::SetLocalInterfaceCellIndex(int* localInterfaceCellIndex)
+{
+    this->localInterfaceCellIndex = localInterfaceCellIndex;
+}
+
+inline int * InterfaceInfo::GetLocalInterfacePhysicalCellIndex() const
+{
+    return this->localInterfacePhysicalCellIndex;
+}
+
+inline void InterfaceInfo::SetLocalInterfacePhysicalCellIndex(int *localInterfacePhysicalCellIndex)
+{
+    this->localInterfacePhysicalCellIndex = localInterfacePhysicalCellIndex;
+}
+
+/**
+ * @brief return the ghost cell index with respect to the global mesh for interface
+ * 
+ * @param cell local ghost cell index
+ * @return int 
+ */
+inline int InterfaceInfo::MatchedGlobalNeighborCellIndex(int cell)
+{
+    for (int i = 0; i < nIFace; ++i)
+    {
+        if(cell == localInterfaceCellIndex[i])
+        {
+            return globalNeighborCellIndex[i];
+        }
+    }
+    return -1;
+}
+
+/**
+ * @brief return the physical cell index with respect to the local mesh for interface
+ * 
+ * @param cell local ghost cell index
+ * @return int 
+ */
+inline int InterfaceInfo::MatchedLocalPhysicalCellIndex(int cell)
+{
+    for (int i = 0; i < nIFace; ++i)
+    {
+        if(cell == localInterfaceCellIndex[i])
+        {
+            return localInterfacePhysicalCellIndex[i];
+        }
+    }
+    return -1;
 }
 
 inline Data_ParamFieldSuite * InterfaceInfo::GetSendDataStorage(int istore) const

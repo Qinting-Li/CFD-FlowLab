@@ -28,6 +28,7 @@
 //! to develop National Numerical Wind-tunnel (NNW) project. PHengLEI, as the most important part of NNW,
 //! is entrusted with a new mission.
 //!    2020, Open source.
+//!    2023, the PHengLEI development team relocated to Chengdu.
 
 //!                     3. Acknowledgements
 //!    During the development of prototype before 2003, we got a lot of help from Dr. Wang and other
@@ -42,7 +43,6 @@
 //!     210-219.
 //! [2] Zhao Z, et al. PHengLEI: A Large Scale Parallel CFD Framework for Arbitrary Grids[J]. Chinese Journal 
 //!     of Computers, 2018, 42(11): 2368-2383.
-//#include <vld.h>
 #include "CFDSimulation.h"
 #include "TK_Time.h"
 using namespace std;

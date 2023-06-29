@@ -12,8 +12,8 @@ using namespace std;
 
 namespace PHSPACE
 {
-using namespace GAS_SPACE;
 
+using namespace GAS_SPACE;
 NSSolver::NSSolver()
 {
 }
@@ -104,16 +104,16 @@ void NSSolver::Post()
     delete actkeyDumpRestartData;
 
     //! To dump residual data.
-    ActionKey *actkeyDumpResidual = new ActionKey();
-    FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, 0);
-    DumpResidual(actkeyDumpResidual);
-    delete actkeyDumpResidual;
+    //ActionKey *actkeyDumpResidual = new ActionKey();
+    //FillActionKey(actkeyDumpResidual, DUMP_RESIDUAL, 0);
+    //DumpResidual(actkeyDumpResidual);
+    //delete actkeyDumpResidual;
 
     //! To dump airforce coefficient data.
-    ActionKey *actkeyDumpAirForceCoef = new ActionKey();
-    FillActionKey(actkeyDumpAirForceCoef, DUMP_AIR_FORCE_COEF, 0);
-    DumpAirForceCoef(actkeyDumpAirForceCoef);
-    delete actkeyDumpAirForceCoef;
+    //ActionKey *actkeyDumpAirForceCoef = new ActionKey();
+    //FillActionKey(actkeyDumpAirForceCoef, DUMP_AIR_FORCE_COEF, 0);
+    //DumpAirForceCoef(actkeyDumpAirForceCoef);
+    //delete actkeyDumpAirForceCoef;
 
     //! To dump wall airforce coefficient data.
     ActionKey *actkeyDumpWallAircoef = new ActionKey();
@@ -152,6 +152,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
 
     int intervalStepPlot = parameters->GetIntervalStepPlot();
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    int maxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
 
     int sys_gridtype = 0;
     GlobalDataBase::GetData("sys_gridtype", &sys_gridtype, PHINT, 1);
@@ -207,8 +208,8 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
 
                     if(PHMPI::IsParallelRun())
                     {
-                        string path = "./results/flow1_0.dat";
-                        remove(path.c_str());
+                        string path1 = "./results/flow1_0.dat";
+                        remove(path1.c_str());
                     }
                 }
 
@@ -219,8 +220,8 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
 
                     if(PHMPI::IsParallelRun())
                     {
-                        string path = "./results/flow0_0.dat";
-                        remove(path.c_str());
+                        string path2 = "./results/flow0_0.dat";
+                        remove(path2.c_str());
                     }
                 }
             }
@@ -249,7 +250,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
     }
 
     int intervalStepRes = parameters->GetIntervalStepRes();
-    if ((outnstep == 1 || outnstep % intervalStepRes == 0) && (!isUnsteady || !isSubIterationDump))
+    if ((outnstep == 1 || outnstep % intervalStepRes == 0 || outnstep == maxSimuStep) && (!isUnsteady || !isSubIterationDump))
     {
         //! To dump residual data.
         ActionKey *actkeyDumpResidual = new ActionKey();
@@ -261,7 +262,7 @@ void NSSolver::DumpResultFile(Grid *grid, int level)
     int intervalStepForce = parameters->GetIntervalStepForce();
     if (intervalStepForce > 0)
     {
-        if (outnstep % intervalStepForce == 0 && isSubIterationDump)
+        if ((outnstep % intervalStepForce == 0  || outnstep == maxSimuStep)&& isSubIterationDump)
         {
             if (level == 0)
             {
@@ -322,8 +323,6 @@ void NSSolver::CheckResult(Grid *grid, int level)
     delete actkeyCheckResidual;
 
     Param_NSSolver *parameters = GetControlParameters();
-    int nChemical = parameters->GetChemicalFlag();
-    int nTModel = parameters->GetTemperatureModel();
     int iBranchCode = parameters->GetSelfAdaptionSolveFlag();
     int interResStep = parameters->GetIntervalStepRes();
     int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
@@ -426,6 +425,36 @@ void NSSolver::CheckResult(Grid *grid, int level)
         oss<<monitorResidual<<endl;
         cout<<oss.str();
         //cout<<"The residual variation of "<<keyVariable<<" is: "<<monitorResidual<<endl;
+    }
+}
+
+void NSSolver::CheckResiduals(Grid *grid, int level)
+{
+    //! Compute the residual variation.
+    ActionKey *actkeyCheckResidual = new ActionKey();
+    FillActionKey(actkeyCheckResidual, DUMP_RESIDUAL, level);
+    CheckResidual(actkeyCheckResidual);
+    delete actkeyCheckResidual;
+
+    int outnstep = GlobalDataBase::GetIntParaFromDB("outnstep");
+    int nMaxSimuStep = GlobalDataBase::GetIntParaFromDB("maxSimuStep");
+    Param_NSSolver *parameters = GetControlParameters();
+    RDouble monitorResidual = GlobalDataBase::GetDoubleParaFromDB("monitorResidual");
+    RDouble secondStepError = 0.001;
+    if (GlobalDataBase::IsExist("secondStepError", PHDOUBLE, 1))
+    {
+        secondStepError = GlobalDataBase::GetDoubleParaFromDB("secondStepError");
+    }
+
+    //Cancel the nonequilibrium condition.
+    if (monitorResidual < secondStepError || outnstep > 0.5 * nMaxSimuStep)
+    {
+        int isUseNoneqCond = 0;
+        PHSPACE::GlobalDataBase::UpdateData("isUseNoneqCond", &isUseNoneqCond, PHINT, 1);
+
+        parameters->SetNonequilibriumConditionFlag(isUseNoneqCond);
+
+        PHSPACE::gas->SetNonequilibriumCondition(isUseNoneqCond);
     }
 }
 
@@ -572,7 +601,7 @@ void NSSolver::FillActionKey(ActionKey *actkey, int action, int level)
     actkey->level      = level;
 }
 
-RDouble NSSolver::ComputeCFL()
+RDouble NSSolver::ComputeCFL(RDouble partialCFL)
 {
     int iterationStep;
 
@@ -594,7 +623,24 @@ RDouble NSSolver::ComputeCFL()
     RDouble cflStart = parameters->GetCFLStart();
     RDouble cflEnd   = parameters->GetCFLEnd();
 
-    RDouble cfl = cflStart + (cflEnd - cflStart) * MIN (iterationStep, cflNstep) / cflNstep;
+    if(partialCFL > 0)
+    {
+        cflEnd = partialCFL;
+    }
+
+   int tscheme = GlobalDataBase::GetIntParaFromDB("tscheme");
+    RDouble cfl;
+    // GMRES1st2nd
+    if(tscheme != GMRES)
+    {
+        cfl = cflStart + (cflEnd - cflStart) * MIN (iterationStep, cflNstep) / cflNstep;
+    }
+    else
+    {
+        int newIterStep = GlobalDataBase::GetIntParaFromDB("newnstep");
+        RDouble GMRESCFLScale = GlobalDataBase::GetDoubleParaFromDB("GMRESCFLScale");
+        cfl = cflStart*pow(GMRESCFLScale,newIterStep);
+    }
 
     return cfl;
 }
@@ -615,6 +661,8 @@ void NSSolver::SourceFlux(Grid *grid)
 
     //! Dual time step source.
     DualTimeSource(grid);
+
+    gravitySource(grid);
 }
 
 bool NSSolver::WantVisualField(Grid *grid)
@@ -690,7 +738,7 @@ void NSSolver::InitDependentVariables()
     //! After boundary condition, the gama and temperature would be changed.
     ComputeGamaAndTemperature(fineGrid);
 
-    int isViscous = parameters->IsViscous();
+    bool isViscous = parameters->IsViscous();
     if (isViscous)
     {
         int nChemical = parameters->GetChemicalFlag();
@@ -716,7 +764,6 @@ void NSSolver::RegisterCFDSolverInterfaceField()
     int nTemperatureModel = parameters->GetTemperatureModel();
     CFDSolver::RegisterInterfaceField("t", PHDOUBLE, nTemperatureModel);
     
-    int viscousType = parameters->GetViscousType();
     int numberOfSpecies = parameters->GetNumberOfSpecies();
     int *visualVariablesType = postVisualWall->GetVisualVariablesType();
     int nWallVariables = postVisualWall->GetVisualVariablesNumber();
@@ -816,16 +863,13 @@ void NSSolver::RegisterCFDSolverInterfaceFieldUnstruct()
 {
     Param_NSSolver *parameters = GetControlParameters();
     
-    int nLaminar  = parameters->GetLaminarNumber();
-    int nChemical = parameters->GetChemicalFlag();
-
     int nEquation = GetNumberOfEquations();
 
     CFDSolver::RegisterInterfaceField("dqdx", PHDOUBLE, nEquation);
     CFDSolver::RegisterInterfaceField("dqdy", PHDOUBLE, nEquation);
     CFDSolver::RegisterInterfaceField("dqdz", PHDOUBLE, nEquation);
 
-    CFDSolver::RegisterInterfaceField("limit", PHDOUBLE, nEquation);
+    CFDSolver::RegisterInterfaceField("limit2D", PHDOUBLE, nEquation);
 
     int ntmodel = parameters->GetTemperatureModel();
     CFDSolver::RegisterInterfaceField("dtdx", PHDOUBLE, ntmodel);
@@ -843,9 +887,6 @@ void NSSolver::RegisterCFDSolverInterpointField()
 {
     Param_NSSolver *parameters = GetControlParameters();
 
-    int nLaminar  = parameters->GetLaminarNumber();
-    int nChemical = parameters->GetChemicalFlag();
-    
     int nEquation = GetNumberOfEquations();
 
     CFDSolver::RegisterInterpointField("qnode", PHDOUBLE, nEquation);
@@ -854,31 +895,13 @@ void NSSolver::RegisterCFDSolverInterpointField()
     CFDSolver::RegisterInterpointField("tnode", PHDOUBLE, ntmodel);
 }
 
-void NSSolver::RegisterCFDSolverOversetField()
+void NSSolver::RegisterOversetField()
 {
     Param_NSSolver *parameters = GetControlParameters();
     int nEquation = GetNumberOfEquations();
     CFDSolver::RegisterOversetField("q", PHDOUBLE, nEquation);
     int nTemperatureModel = parameters->GetTemperatureModel();
     CFDSolver::RegisterOversetField("t", PHDOUBLE, nTemperatureModel);
-}
-
-void NSSolver::AllocateOversetInterfaceVar(int nIOversetFace, Data_ParamFieldSuite *dataStore)
-{
-    if (nIOversetFace <= 0)
-    {
-        return;
-    }
-
-    Param_NSSolver *parameters = GetControlParameters();
-    int nTemperatureModel = parameters->GetTemperatureModel();
-    int nEquation = GetNumberOfEquations();
-
-    RDouble **q = NewPointer2 <RDouble> (nEquation, nIOversetFace);
-    dataStore->UpdateDataPtr("q", q);
-
-    RDouble **t = NewPointer2 <RDouble> (nTemperatureModel, nIOversetFace);
-    dataStore->UpdateDataPtr("t", t);
 }
 
 void NSSolver::DeAllocateOversetInterfaceVar(Data_ParamFieldSuite *dataStore)
@@ -926,7 +949,7 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
     int nIdealState = parameters->GetIfIdealGasState();
     int nNitrogenIndex = parameters->GetIndexOfNitrogen();
     int nElectronIndex = parameters->GetIndexOfElectron();
-    int kPrec = parameters->GetPreconCoefficient();
+    RDouble kPrec = parameters->GetPreconCoefficient();
 
     int RoeEntropyFixMethod  = parameters->GetRoeEntropyFixMethod();
     RDouble entrFixCoefLeft  = parameters->GetRoeEntropyFixCoef1();
@@ -956,9 +979,13 @@ void SetInviscidSchemeParameters(InviscidSchemeParameter *invSchemePara, FacePro
 
     //! Pointer parameters.
     invSchemePara->SetLeftAndRightQ(faceProxy->GetQL(), faceProxy->GetQR());
+    invSchemePara->SetLeftAndRightQC(faceProxy->GetQLC(), faceProxy->GetQRC()); // GMRESPassQC
+    invSchemePara->SetLeftAndRightQSign(faceProxy->GetQLSign(),faceProxy->GetQRSign()); // GMRESnolim GMRESSign
     invSchemePara->SetLeftAndRightTemperature(faceProxy->GetLeftTemperature(), faceProxy->GetRightTemperature());
     invSchemePara->SetFlux(faceProxy->GetFlux());
     invSchemePara->SetLeftAndRightPressureCoefficient(faceProxy->GetPressureCoefficientL(), faceProxy->GetPressureCoefficientR());
+    invSchemePara->SetLeftAndRightTimeCoefficient(faceProxy->GetTimeCoefficientL(), faceProxy->GetTimeCoefficientR());
+    invSchemePara->SetLeftAndRightPreconCoefficient(faceProxy->GetPreconCoefficientL(), faceProxy->GetPreconCoefficientR());
     invSchemePara->SetLeftAndRightGama(faceProxy->GetGamaL(), faceProxy->GetGamaR());
 
     GeomProxy *geomProxy = faceProxy->GetGeomProxy();

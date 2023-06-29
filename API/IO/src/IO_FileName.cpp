@@ -65,6 +65,16 @@ string ChangeExtensionOfFileName(const string &fileName, const string &newExtens
     return oss.str();
 }
 
+string ChangeFileMainName(const string &fileName, const string &newMainName)
+{
+    string mainName, extensionName;
+    GetFileNameExtension(fileName, mainName, extensionName, ".");
+
+    ostringstream oss;
+    oss << newMainName << "." << extensionName;
+    return oss.str();
+}
+
 int ExtractNumberOfPartFromFileName(const string &source)
 {
     int prePosition = -1;
@@ -73,7 +83,8 @@ int ExtractNumberOfPartFromFileName(const string &source)
         char ch = source[iChar];
         if (ch == '_')
         {
-            if (ch == source[iChar - 1])
+            int iCharTmp = iChar - 1;
+            if (ch == source[iCharTmp])
             {
                 prePosition = iChar;
                 break;
@@ -88,7 +99,8 @@ int ExtractNumberOfPartFromFileName(const string &source)
     }
 
     string number;
-    for (std::size_t iChar = prePosition + 1; iChar < source.size(); ++ iChar)
+    int iCharTmp = prePosition + 1;
+    for (std::size_t iChar = iCharTmp; iChar < source.size(); ++ iChar)
     {
         char ch = source[iChar];
         if (ch != '_' && ch != '-' && ch != '.')
@@ -134,6 +146,8 @@ string GetProcessPath()
     return string(abs_path);
 #endif
 }
+
+#pragma warning(disable:4996)
 string GetCurrentWorkDir()
 {
     char buf_ptr[BUF_SIZE];

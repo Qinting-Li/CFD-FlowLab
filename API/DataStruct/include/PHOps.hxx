@@ -610,14 +610,14 @@ PHArray<T_numtype, N_rank>::evaluateWithStackTraversalN(T_expr expr, T_update)
              */
             if (commonStride == 1)
             {
-                for (int i = 0; i < ubound; ++ i)
+                for (i = 0; i < ubound; ++ i)
                 {
                     T_update::update(*data++, expr.fastRead(i));
                 }
             }
             else 
             {
-                for (int i = 0; i != ubound; i += commonStride)
+                for (i = 0; i != ubound; i += commonStride)
                 {
                     T_update::update(data[i], expr.fastRead(i));
                 }
@@ -712,13 +712,14 @@ PHArray<T_numtype, N_rank>::evaluate(T_expr expr, T_update)
      * Array<RDouble,2> A(0,0),B(0,0); B=A(tensor::j,tensor::i);
      * went into an infinite loop.
      */
+    int N_rankTmp = N_rank;
 
     if (numElements() == 0)
     {
         return *this;
     }
 
-    if (N_rank == 1)
+    if (N_rankTmp == 1)
     {
         return evaluateWithStackTraversal1(expr, T_update());
     }

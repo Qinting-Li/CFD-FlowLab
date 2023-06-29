@@ -23,6 +23,7 @@
 //! After verification, this code is come from blitz/aray/storage.h.
 #pragma warning(disable: 4800)
 #pragma warning(disable: 4805)
+#pragma warning(disable: 26495)
 #endif
 namespace PHSPACE
 {

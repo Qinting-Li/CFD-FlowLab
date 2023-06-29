@@ -34,9 +34,9 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
             return;
         }
 
-        int compressible = 1;
+        int compressible = COMPRESSIBLE;
         compressible = GlobalDataBase::GetIntParaFromDB("compressible");
-        if (compressible == 0)
+        if (compressible == INCOMPRESSIBLE)
         {
             Range I(1, ni);
             Range J(1, nj);
@@ -75,7 +75,7 @@ void Geo_NodeTopo_Struct::SetArrayLayout(RDouble *x, RDouble *y, RDouble *z)
         //if (systemGridType != 1) Rwithghost = false;
         if (isOverset) Rwithghost = false;
         //if (nMGLevel != 1) Rwithghost = false;
-        if (compressible != 1) Rwithghost = false;
+        if (compressible != COMPRESSIBLE) Rwithghost = false;
         if (isUnsteady) Rwithghost = false;
         if (nChemical != 0) Rwithghost = false;
         if (ifLowSpeedPrecon != 0) Rwithghost = false;

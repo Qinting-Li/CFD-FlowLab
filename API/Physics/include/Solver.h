@@ -17,6 +17,8 @@
 #include <sstream>
 #include <vector>
 #include "Geo_Grid.h"
+#pragma warning(disable:4100)
+
 using namespace std;
 
 namespace PHSPACE
@@ -25,7 +27,8 @@ typedef enum
 {
     NS_SOLVER,
     TURB_SOLVER,
-    TRANSITION_SOLVER
+    TRANSITION_SOLVER,
+    INCOMPRESSIBLE_SOLVER
 }solverEnum;
 
 class PHNsTag
@@ -111,10 +114,6 @@ public:
     //! here it is a pure virtual function, it should be re-defined in the real solver.
     virtual void InitMemory() = 0;
 
-    //! Re-initialize the data, 
-    //! here it is a pure virtual function, it should be re-defined in the real solver.
-    virtual void IncompressibleInitial() {};
-
     virtual void ReleaseMemory() = 0;
 
     //! Initialize the flow, here it is a pure virtual function, 
@@ -153,6 +152,8 @@ public:
     virtual void ComputePostVisualVariables(Post_Visual * postVisualization) = 0;
     virtual void ComputePostProbesVariables(Post_Probes * postProbesVar){};
     virtual void AirForceCoefBodies(ActionKey *actkey){};
+    virtual void RegisterOversetField(){};
+    virtual void DeAllocateOversetInterfaceVar(Grid *grid){};
 };
 #include "Solver.hxx"
 
